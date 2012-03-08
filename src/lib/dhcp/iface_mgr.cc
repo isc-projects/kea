@@ -23,9 +23,11 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/iface_mgr.h>
 #include <exceptions/exceptions.h>
+#include <util/io/pktinfo_utilities.h>
 
 using namespace std;
 using namespace isc::asiolink;
+using namespace isc::util::io::internal;
 
 namespace isc {
 namespace dhcp {
@@ -154,12 +156,12 @@ IfaceMgr::~IfaceMgr() {
     closeSockets();
 }
 
-void
-IfaceMgr::stubDetectIfaces() {
+void IfaceMgr::stubDetectIfaces() {
     string ifaceName, linkLocal;
 
-    // TODO do the actual detection. Currently interface detection is faked
-    //      by reading a text file.
+    // This is a stub implementation for interface detection. Actual detection
+    // is faked by reading a text file. It will eventually be removed once
+    // we have actual implementations for all supported systems.
 
     cout << "Interface detection is not implemented yet. "
          << "Reading interfaces.txt file instead." << endl;
@@ -177,7 +179,7 @@ IfaceMgr::stubDetectIfaces() {
 
         cout << "Detected interface " << ifaceName << "/" << linkLocal << endl;
 
-        Iface iface(ifaceName, if_nametoindex( ifaceName.c_str() ) );
+        Iface iface(ifaceName, if_nametoindex(ifaceName.c_str()));
         iface.flag_up_ = true;
         iface.flag_running_ = true;
         iface.flag_loopback_ = false;
@@ -200,13 +202,16 @@ IfaceMgr::stubDetectIfaces() {
     }
 }
 
+/// @todo: Remove this once we have OS-specific interface detection
+/// routines (or at least OS-specific files, like iface_mgr_solaris.cc)
+/// for all OSes.
 #if !defined(OS_LINUX) && !defined(OS_BSD)
 void IfaceMgr::detectIfaces() {
     stubDetectIfaces();
 }
 #endif
 
-bool IfaceMgr::openSockets4(uint16_t port) {
+bool IfaceMgr::openSockets4(const uint16_t port) {
     int sock;
     int count = 0;
 
@@ -246,7 +251,7 @@ bool IfaceMgr::openSockets4(uint16_t port) {
 
 }
 
-bool IfaceMgr::openSockets6(uint16_t port) {
+bool IfaceMgr::openSockets6(const uint16_t port) {
     int sock;
     int count = 0;
 
@@ -288,9 +293,12 @@ bool IfaceMgr::openSockets6(uint16_t port) {
             }
 
             count++;
+
+            /// @todo: Remove this ifdef once we start supporting BSD systems.
 #if defined(OS_LINUX)
             // To receive multicast traffic, Linux requires binding socket to
             // a multicast group. That in turn doesn't work on NetBSD.
+
             int sock2 = openSocket(iface->getName(),
                                    IOAddress(ALL_DHCP_RELAY_AGENTS_AND_SERVERS),
                                    port);
@@ -357,7 +365,8 @@ IfaceMgr::getIface(const std::string& ifname) {
     return (NULL); // not found
 }
 
-int IfaceMgr::openSocket(const std::string& ifname, const IOAddress& addr, uint16_t port) {
+int IfaceMgr::openSocket(const std::string& ifname, const IOAddress& addr,
+                         const uint16_t port) {
     Iface* iface = getIface(ifname);
     if (!iface) {
         isc_throw(BadValue, "There is no " << ifname << " interface present.");
@@ -557,6 +566,14 @@ IfaceMgr::send(const Pkt6Ptr& pkt) {
     // Set the data buffer we're sending. (Using this wacky
     // "scatter-gather" stuff... we only have a single chunk
     // of data to send, so we declare a single vector entry.)
+
+    // As v structure is a C-style is used for both sending and
+    // receiving data, it is shared between sending and receiving
+    // (sendmsg and recvmsg). It is also defined in system headers,
+    // so we have no control over its definition. To set iov_base
+    // (defined as void*) we must use const cast from void *.
+    // Otherwise C++ compiler would complain that we are trying
+    // to assign const void* to void*.
     v.iov_base = const_cast<void *>(pkt->getBuffer().getData());
     v.iov_len = pkt->getBuffer().getLength();
     m.msg_iov = &v;
@@ -574,7 +591,7 @@ IfaceMgr::send(const Pkt6Ptr& pkt) {
     cmsg->cmsg_level = IPPROTO_IPV6;
     cmsg->cmsg_type = IPV6_PKTINFO;
     cmsg->cmsg_len = CMSG_LEN(sizeof(*pktinfo));
-    pktinfo = (struct in6_pktinfo *)CMSG_DATA(cmsg);
+    pktinfo = convertPktInfo6(CMSG_DATA(cmsg));
     memset(pktinfo, 0, sizeof(*pktinfo));
     pktinfo->ipi6_ifindex = pkt->getIndex();
     m.msg_controllen = cmsg->cmsg_len;
@@ -635,7 +652,7 @@ IfaceMgr::send(const Pkt4Ptr& pkt)
          << " over socket " << getSocket(*pkt) << " on interface "
          << getIface(pkt->getIface())->getFullName() << endl;
 
-        int result = sendmsg(getSocket(*pkt), &m, 0);
+    int result = sendmsg(getSocket(*pkt), &m, 0);
     if (result < 0) {
         isc_throw(Unexpected, "Pkt4 send failed.");
     }
@@ -754,15 +771,9 @@ IfaceMgr::receive4() {
 }
 
 Pkt6Ptr IfaceMgr::receive6() {
-    struct msghdr m;
-    struct iovec v;
     int result;
-    struct cmsghdr* cmsg;
-    struct in6_pktinfo* pktinfo;
     struct sockaddr_in6 from;
-    struct in6_addr to_addr;
     int ifindex = -1;
-    Pkt6Ptr pkt;
 
     // RFC3315 states that server responses may be
     // fragmented if they are over MTU. There is no
@@ -773,11 +784,10 @@ Pkt6Ptr IfaceMgr::receive6() {
     static uint8_t buf[RCVBUFSIZE];
 
     memset(&control_buf_[0], 0, control_buf_len_);
-
     memset(&from, 0, sizeof(from));
-    memset(&to_addr, 0, sizeof(to_addr));
 
     // Initialize our message header structure.
+    struct msghdr m;
     memset(&m, 0, sizeof(m));
 
     // Point so we can get the from address.
@@ -787,7 +797,9 @@ Pkt6Ptr IfaceMgr::receive6() {
     // Set the data buffer we're receiving. (Using this wacky
     // "scatter-gather" stuff... but we that doesn't really make
     // sense for us, so we use a single vector entry.)
-    v.iov_base = (void*)buf;
+    struct iovec v;
+    memset(&v, 0, sizeof(v));
+    v.iov_base = static_cast<void*>(buf);
     v.iov_len = RCVBUFSIZE;
     m.msg_iov = &v;
     m.msg_iovlen = 1;
@@ -839,7 +851,13 @@ Pkt6Ptr IfaceMgr::receive6() {
          << iface->getFullName() << endl;
     result = recvmsg(candidate->sockfd_, &m, 0);
 
+    struct in6_addr to_addr;
+    memset(&to_addr, 0, sizeof(to_addr));
+
     if (result >= 0) {
+        struct in6_pktinfo* pktinfo = NULL;
+
+
         // If we did read successfully, then we need to loop
         // through the control messages we received and
         // find the one with our destination address.
@@ -847,11 +865,11 @@ Pkt6Ptr IfaceMgr::receive6() {
         // We also keep a flag to see if we found it. If we
         // didn't, then we consider this to be an error.
         int found_pktinfo = 0;
-        cmsg = CMSG_FIRSTHDR(&m);
+        struct cmsghdr* cmsg = CMSG_FIRSTHDR(&m);
         while (cmsg != NULL) {
             if ((cmsg->cmsg_level == IPPROTO_IPV6) &&
                 (cmsg->cmsg_type == IPV6_PKTINFO)) {
-                pktinfo = (struct in6_pktinfo*)CMSG_DATA(cmsg);
+                pktinfo = convertPktInfo6(CMSG_DATA(cmsg));
                 to_addr = pktinfo->ipi6_addr;
                 ifindex = pktinfo->ipi6_ifindex;
                 found_pktinfo = 1;
@@ -867,7 +885,8 @@ Pkt6Ptr IfaceMgr::receive6() {
         return (Pkt6Ptr()); // NULL
     }
 
-
+    // Let's create a packet.
+    Pkt6Ptr pkt;
     try {
         pkt = Pkt6Ptr(new Pkt6(buf, result));
     } catch (const std::exception& ex) {
@@ -891,7 +910,7 @@ Pkt6Ptr IfaceMgr::receive6() {
         return (boost::shared_ptr<Pkt6>()); // NULL
     }
 
-    // TODO Move this to LOG_DEBUG
+    /// @todo: Move this to LOG_DEBUG
     cout << "Received " << pkt->getBuffer().getLength() << " bytes over "
          << pkt->getIface() << "/" << pkt->getIndex() << " interface: "
          << " src=" << pkt->getRemoteAddr().toText()
@@ -914,7 +933,7 @@ uint16_t IfaceMgr::getSocket(const isc::dhcp::Pkt6& pkt) {
              (!s->addr_.getAddress().to_v6().is_multicast()) ) {
             return (s->sockfd_);
         }
-        /// TODO: Add more checks here later. If remote address is
+        /// @todo: Add more checks here later. If remote address is
         /// not link-local, we can't use link local bound socket
         /// to send data.
     }

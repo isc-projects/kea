@@ -35,6 +35,10 @@ namespace dhcp {
 class Dhcpv6Srv : public boost::noncopyable {
 
 public:
+
+    /// @brief Minimum length of a MAC address to be used in DUID generation.
+    static const size_t MIN_MAC_LEN = 6;
+
     /// @brief Default constructor.
     ///
     /// Instantiates necessary services, required to run DHCPv6 server.

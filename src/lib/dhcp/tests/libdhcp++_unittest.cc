@@ -64,7 +64,7 @@ TEST(LibDhcpTest, packOptions6) {
 
     OutputBuffer assembled(512);
 
-    EXPECT_NO_THROW ( LibDHCP::packOptions6(assembled, opts) );
+    EXPECT_NO_THROW(LibDHCP::packOptions6(assembled, opts));
     EXPECT_EQ(35, assembled.getLength()); // options should take 35 bytes
     EXPECT_EQ(0, memcmp(assembled.getData(), packed, 35) );
 }
@@ -164,7 +164,7 @@ TEST(LibDhcpTest, packOptions4) {
     vector<uint8_t> expVect(v4Opts, v4Opts + sizeof(v4Opts));
 
     OutputBuffer buf(100);
-    EXPECT_NO_THROW ( LibDHCP::packOptions(buf, opts) );
+    EXPECT_NO_THROW(LibDHCP::packOptions(buf, opts));
     ASSERT_EQ(buf.getLength(), sizeof(v4Opts));
     EXPECT_EQ(0, memcmp(v4Opts, buf.getData(), sizeof(v4Opts)));
 

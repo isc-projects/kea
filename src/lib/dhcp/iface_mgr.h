@@ -232,6 +232,10 @@ public:
 
     /// @brief Returns container with all interfaces.
     ///
+    /// This reference is only valid as long as IfaceMgr is valid. However,
+    /// since IfaceMgr is a singleton and is expected to be destroyed after
+    /// main() function completes, you should not worry much about this.
+    ///
     /// @return container with all interfaces.
     const IfaceCollection& getIfaces() { return ifaces_; }
 
@@ -330,7 +334,7 @@ public:
     /// @return socket descriptor, if socket creation, binding and multicast
     /// group join were all successful.
     int openSocket(const std::string& ifname,
-                   const isc::asiolink::IOAddress& addr, uint16_t port);
+                   const isc::asiolink::IOAddress& addr, const uint16_t port);
 
     /// Opens IPv6 sockets on detected interfaces.
     ///
@@ -339,7 +343,7 @@ public:
     /// @param port specifies port number (usually DHCP6_SERVER_PORT)
     ///
     /// @return true if any sockets were open
-    bool openSockets6(uint16_t port = DHCP6_SERVER_PORT);
+    bool openSockets6(const uint16_t port = DHCP6_SERVER_PORT);
 
     /// @brief Closes all open sockets.
     /// Is used in destructor, but also from Dhcpv4_srv and Dhcpv6_srv classes.
@@ -351,7 +355,7 @@ public:
     /// @param port specifies port number (usually DHCP4_SERVER_PORT)
     ///
     /// @return true if any sockets were open
-    bool openSockets4(uint16_t port = DHCP4_SERVER_PORT);
+    bool openSockets4(const uint16_t port = DHCP4_SERVER_PORT);
 
     /// @brief returns number of detected interfaces
     ///
