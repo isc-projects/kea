@@ -71,9 +71,19 @@ namespace log {
 /// is referred to using a symbolic name.  The logging code uses this name as
 /// a key in a dictionary from which the message text is obtained.  Such a
 /// system allows for the optional replacement of message text at run time.
-/// More details about the message disction (and the compiler used to create
+/// More details about the message dictionary (and the compiler used to create
 /// the symbol definitions) can be found in other modules in the src/lib/log
 /// directory.
+///
+/// \section LoggingApiImplementationIssues Implementation Issues
+/// Owing to the way that the logging is implemented, notably that loggers can
+/// be declared as static external objects, there is a restriction on the
+/// length of the name of a logger component (i.e. the length of
+/// the string passed to the Logger constructor) to a maximum of 31 characters.
+/// There is no reason for this particular value other than limiting the amount
+/// of memory used.  It is defined by the constant Logger::MAX_LOGGER_NAME_SIZE,
+/// and can be made larger (or smaller) if so desired.  Note however, using a
+/// logger name larger than this limit will cause an assertion failure.
 
 class LoggerImpl;   // Forward declaration of the implementation class
 
@@ -102,9 +112,8 @@ public:
 
 class Logger {
 public:
-    enum {
-        MAX_LOGGER_NAME_SIZE = 32   ///< Maximum size of logger name
-    };
+    /// Maximum size of a logger name
+    static const size_t MAX_LOGGER_NAME_SIZE = 31;
 
     /// \brief Constructor
     ///
@@ -126,7 +135,12 @@ public:
     /// string, so leading to problems mentioned above.
     Logger(const char* name) : loggerptr_(NULL) {
         assert(std::strlen(name) < sizeof(name_));
-        std::strcpy(name_, name);
+        // Do the copy.  Note that the assertion above has checked that the
+        // contents of "name" and a trailing null will fit within the space
+        // allocated for name_, so we could use strcpy here and be safe.
+        // However, a bit of extra paranoia doesn't hurt.
+        std::strncpy(name_, name, sizeof(name_));
+        assert(name_[sizeof(name_) - 1] == '\0');
     }
 
     /// \brief Destructor
@@ -276,7 +290,7 @@ private:
     void initLoggerImpl();
 
     LoggerImpl* loggerptr_;                  ///< Pointer to underlying logger
-    char        name_[MAX_LOGGER_NAME_SIZE]; ///< Copy of the logger name
+    char        name_[MAX_LOGGER_NAME_SIZE + 1]; ///< Copy of the logger name
 };
 
 } // namespace log
