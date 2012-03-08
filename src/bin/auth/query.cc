@@ -411,13 +411,11 @@ Query::process() {
     // indirectly via delegation).  Look into the zone.
     response_->setHeaderFlag(Message::HEADERFLAG_AA);
     response_->setRcode(Rcode::NOERROR());
-    vector<ConstRRsetPtr> target;
-    vector<ConstRRsetPtr> additionals;
     boost::function0<ZoneFinderContextPtr> find;
     const bool qtype_is_any = (qtype_ == RRType::ANY());
     if (qtype_is_any) {
         find = boost::bind(&ZoneFinder::findAll, &zfinder, qname_,
-                           boost::ref(target), dnssec_opt_);
+                           boost::ref(target_), dnssec_opt_);
     } else {
         find = boost::bind(&ZoneFinder::find, &zfinder, qname_, qtype_,
                            dnssec_opt_);
@@ -491,7 +489,7 @@ Query::process() {
             if (qtype_is_any) {
                 // If quety type is ANY, insert all RRs under the domain
                 // into answer section.
-                BOOST_FOREACH(ConstRRsetPtr rrset, target) {
+                BOOST_FOREACH(ConstRRsetPtr rrset, target_) {
                     response_->addRRset(Message::SECTION_ANSWER,
                         boost::const_pointer_cast<AbstractRRset>(rrset), dnssec_);
                 }
@@ -502,7 +500,7 @@ Query::process() {
             }
 
             // Retrieve additional records for the answer
-            getAdditional(qname_, qtype_, *db_context, additionals);
+            getAdditional(qname_, qtype_, *db_context, additionals_);
 
             // If apex NS records haven't been provided in the answer
             // section, insert apex NS records into the authority section
@@ -514,7 +512,7 @@ Query::process() {
                 db_context->code != ZoneFinder::SUCCESS ||
                 (qtype_ != RRType::NS() && !qtype_is_any))
             {
-                addAuthAdditional(*result.zone_finder, additionals);
+                addAuthAdditional(*result.zone_finder, additionals_);
             }
 
             // If the answer is a result of wildcard substitution,
@@ -537,7 +535,7 @@ Query::process() {
                 boost::const_pointer_cast<AbstractRRset>(db_context->rrset),
                 dnssec_);
             // Retrieve additional records for the name servers
-            db_context->getAdditional(A_AND_AAAA(), additionals);
+            db_context->getAdditional(A_AND_AAAA(), additionals_);
 
             // If DNSSEC is requested, see whether there is a DS
             // record for this delegation.
@@ -570,7 +568,7 @@ Query::process() {
             break;
     }
 
-    for_each(additionals.begin(), additionals.end(),
+    for_each(additionals_.begin(), additionals_.end(),
              RRsetInserter(*response_, Message::SECTION_ADDITIONAL,
                            dnssec_));
 }

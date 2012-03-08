@@ -959,6 +959,23 @@ TEST_F(QueryTest, exactMatch) {
                   www_a_txt, zone_ns_txt, ns_addrs_txt);
 }
 
+TEST_F(QueryTest, exactMatchMultipleQueries) {
+    Query query(&memory_client, qname, qtype, &response);
+    EXPECT_NO_THROW(query.process());
+    // find match rrset
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
+                  www_a_txt, zone_ns_txt, ns_addrs_txt);
+    response.clear(isc::dns::Message::RENDER);
+    response.setRcode(Rcode::NOERROR());
+    response.setOpcode(Opcode::QUERY());
+    query.reset(&memory_client, qname, qtype, &response);
+    EXPECT_NO_THROW(query.process());
+    // find match rrset
+    SCOPED_TRACE("Second query");
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 1, 3, 3,
+                  www_a_txt, zone_ns_txt, ns_addrs_txt);
+}
+
 TEST_F(QueryTest, exactMatchIgnoreSIG) {
     // Check that we do not include the RRSIG when not requested even when
     // we receive it from the data source.
