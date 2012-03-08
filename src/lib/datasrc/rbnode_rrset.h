@@ -29,6 +29,12 @@ namespace isc {
 namespace datasrc {
 namespace internal {
 
+/// \brief The actual content of \c RBNodeRRset
+///
+///  This is defined in the namespace-scope (not hidden in the main class)
+/// so that the In-memory data source implementation can refer to it.
+struct RBNodeRRsetImpl;
+
 /// \brief Special RRset for optimizing memory datasource requirement
 ///
 /// To speed up the performance of the in-memory data source, at load time
@@ -84,11 +90,10 @@ public:
     /// Creates an RBNodeRRset from the pointer to the RRset passed to it.
     ///
     /// \param rrset Pointer to underlying RRset encapsulated by this object.
-    explicit RBNodeRRset(const isc::dns::ConstRRsetPtr& rrset) : rrset_(rrset)
-    {}
+    explicit RBNodeRRset(const isc::dns::ConstRRsetPtr& rrset);
 
     /// \brief Destructor
-    virtual ~RBNodeRRset() {}
+    virtual ~RBNodeRRset();
 
     // Getter and Setter Methods
     //
@@ -96,64 +101,34 @@ public:
     // setter methods thrown an exception - this specialisation of the RRset
     // object does not expect the underlying RRset to be modified.
 
-    virtual unsigned int getRdataCount() const {
-        return (rrset_->getRdataCount());
-    }
+    virtual unsigned int getRdataCount() const;
 
-    virtual const isc::dns::Name& getName() const {
-        return (rrset_->getName());
-    }
+    virtual const isc::dns::Name& getName() const;
 
-    virtual const isc::dns::RRClass& getClass() const {
-        return (rrset_->getClass());
-    }
+    virtual const isc::dns::RRClass& getClass() const;
 
-    virtual const isc::dns::RRType& getType() const {
-        return (rrset_->getType());
-    }
+    virtual const isc::dns::RRType& getType() const;
 
-    virtual const isc::dns::RRTTL& getTTL() const {
-        return (rrset_->getTTL());
-    }
+    virtual const isc::dns::RRTTL& getTTL() const;
 
-    virtual void setName(const isc::dns::Name&) {
-        isc_throw(isc::NotImplemented, "RBNodeRRset::setName() not supported");
-    }
+    virtual void setName(const isc::dns::Name&);
 
-    virtual void setTTL(const isc::dns::RRTTL&) {
-        isc_throw(isc::NotImplemented, "RBNodeRRset::setTTL() not supported");
-    }
+    virtual void setTTL(const isc::dns::RRTTL&);
 
-    virtual std::string toText() const {
-        return (rrset_->toText());
-    }
+    virtual std::string toText() const;
 
     virtual unsigned int toWire(
-            isc::dns::AbstractMessageRenderer& renderer) const {
-        return (rrset_->toWire(renderer));
-    }
+        isc::dns::AbstractMessageRenderer& renderer) const;
 
-    virtual unsigned int toWire(isc::util::OutputBuffer& buffer) const {
-        return (rrset_->toWire(buffer));
-    }
+    virtual unsigned int toWire(isc::util::OutputBuffer& buffer) const;
 
-    virtual void addRdata(isc::dns::rdata::ConstRdataPtr) {
-        isc_throw(isc::NotImplemented,
-                  "RBNodeRRset::addRdata() not supported");
-    }
+    virtual void addRdata(isc::dns::rdata::ConstRdataPtr);
 
-    virtual void addRdata(const isc::dns::rdata::Rdata&) {
-        isc_throw(isc::NotImplemented,
-                  "RBNodeRRset::addRdata() not supported");
-    }
+    virtual void addRdata(const isc::dns::rdata::Rdata&);
 
-    virtual isc::dns::RdataIteratorPtr getRdataIterator() const {
-        return (rrset_->getRdataIterator());
-    }
+    virtual isc::dns::RdataIteratorPtr getRdataIterator() const;
 
-    virtual isc::dns::RRsetPtr getRRsig() const {
-        return (rrset_->getRRsig());
-    }
+    virtual isc::dns::RRsetPtr getRRsig() const;
 
     // With all the RRsig methods, we have the problem that we store the
     // underlying RRset using a ConstRRsetPtr - a pointer to a "const" RRset -
@@ -161,45 +136,25 @@ public:
     // this by temporarily violating the "const" nature of the RRset to add the
     // data.
 
-    virtual void addRRsig(const isc::dns::rdata::ConstRdataPtr& rdata) {
-        AbstractRRset* p = const_cast<AbstractRRset*>(rrset_.get());
-        p->addRRsig(rdata);
-    }
+    virtual void addRRsig(const isc::dns::rdata::ConstRdataPtr& rdata);
 
-    virtual void addRRsig(const isc::dns::rdata::RdataPtr& rdata) {
-        AbstractRRset* p = const_cast<AbstractRRset*>(rrset_.get());
-        p->addRRsig(rdata);
-    }
+    virtual void addRRsig(const isc::dns::rdata::RdataPtr& rdata);
 
-    virtual void addRRsig(const AbstractRRset& sigs) {
-        AbstractRRset* p = const_cast<AbstractRRset*>(rrset_.get());
-        p->addRRsig(sigs);
-    }
+    virtual void addRRsig(const AbstractRRset& sigs);
 
-    virtual void addRRsig(const isc::dns::ConstRRsetPtr& sigs) {
-        AbstractRRset* p = const_cast<AbstractRRset*>(rrset_.get());
-        p->addRRsig(sigs);
-    }
+    virtual void addRRsig(const isc::dns::ConstRRsetPtr& sigs);
 
-    virtual void addRRsig(const isc::dns::RRsetPtr& sigs) {
-        AbstractRRset* p = const_cast<AbstractRRset*>(rrset_.get());
-        p->addRRsig(sigs);
-    }
+    virtual void addRRsig(const isc::dns::RRsetPtr& sigs);
 
-    virtual void removeRRsig() {
-        AbstractRRset* p = const_cast<AbstractRRset*>(rrset_.get());
-        p->removeRRsig();
-    }
+    virtual void removeRRsig();
 
     /// \brief Return underlying RRset pointer
     ///
     /// ... mainly for testing.
-    isc::dns::ConstRRsetPtr getUnderlyingRRset() const {
-        return (rrset_);
-    }
+    isc::dns::ConstRRsetPtr getUnderlyingRRset() const;
 
 private:
-    isc::dns::ConstRRsetPtr rrset_;     ///< Underlying RRset
+    RBNodeRRsetImpl* impl_;
 };
 
 }   // namespace internal
