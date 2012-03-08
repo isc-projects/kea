@@ -40,9 +40,9 @@ size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
     size_t end = buf.size();
 
     while (offset +4 <= end) {
-        uint16_t opt_type = buf[offset]*256 + buf[offset+1];
+        uint16_t opt_type = buf[offset] * 256 + buf[offset + 1];
         offset += 2;
-        uint16_t opt_len = buf[offset]*256 + buf[offset+1];
+        uint16_t opt_len = buf[offset] * 256 + buf[offset + 1];
         offset += 2;
 
         if (offset + opt_len > end) {
@@ -160,12 +160,12 @@ void LibDHCP::OptionFactoryRegister(Option::Universe u,
     }
     case Option::V4:
     {
-        // option 0 is special (a one octet-long, equal 0) PAD option. It is never
-        // instantiated as Option object, but rather consumer during packet parsing.
+        // Option 0 is special (a one octet-long, equal 0) PAD option. It is never
+        // instantiated as an Option object, but rather consumed during packet parsing.
         if (opt_type == 0) {
             isc_throw(BadValue, "Cannot redefine PAD option (code=0)");
         }
-        // option 255 is never instantiated as an option object. It is special
+        // Option 255 is never instantiated as an option object. It is special
         // (a one-octet equal 255) option that is added at the end of all options
         // during packet assembly. It is also silently consumed during packet parsing.
         if (opt_type > 254) {

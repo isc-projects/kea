@@ -59,10 +59,9 @@ Dhcpv4Srv::~Dhcpv4Srv() {
 bool
 Dhcpv4Srv::run() {
     while (!shutdown_) {
-
-        // client's message
+        // client's message and server's response
         Pkt4Ptr query = IfaceMgr::instance().receive4();
-        Pkt4Ptr rsp;   // server's response
+        Pkt4Ptr rsp;
 
         if (query) {
             try {

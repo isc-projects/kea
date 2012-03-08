@@ -24,6 +24,7 @@
 #include <dhcp/option6_ia.h>
 #include <dhcp6/dhcp6_srv.h>
 #include <util/buffer.h>
+#include <util/range_utilities.h>
 
 using namespace std;
 using namespace isc;
@@ -136,9 +137,8 @@ TEST_F(Dhcpv6SrvTest, DUID) {
         // there's not much we can check. Just simple
         // check if it is not all zeros
         vector<uint8_t> content(len-2);
-        vector<uint8_t> zeros(0, len-2);
         data.readVector(content, len-2);
-        EXPECT_NE(content, zeros);
+        EXPECT_FALSE(isRangeZero(content.begin(), content.end()));
     }
     case DUID_LL: // not supported yet
     case DUID_UUID: // not supported yet

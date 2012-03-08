@@ -198,7 +198,7 @@ TEST_F(Option6IATest, suboptions_unpack) {
         0xca, 0xfe, // type
         0, 0 // len
     };
-    ASSERT_EQ(sizeof(expected), 48);
+    ASSERT_EQ(48, sizeof(expected));
 
     memcpy(&buf_[0], expected, sizeof(expected));
 
