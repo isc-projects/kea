@@ -66,6 +66,8 @@ typedef boost::shared_ptr<Domain> DomainPtr;
 // The tree stores domains
 typedef RBTree<Domain> DomainTree;
 typedef RBNode<Domain> DomainNode;
+// RRset specified for this implementation
+typedef boost::shared_ptr<internal::RBNodeRRset> RBNodeRRsetPtr;
 
 // Separate storage for NSEC3 RRs (and their RRSIGs).  It's an STL map
 // from string to the NSEC3 RRset.  The map key is the first label
@@ -105,6 +107,139 @@ struct ZoneData {
     scoped_ptr<NSEC3Data> nsec3_data_; // non NULL only when it's NSEC3 signed
 };
 }
+
+// RBNodeRRset details
+namespace internal {
+
+struct RBNodeRRsetImpl {
+public:
+    RBNodeRRsetImpl(const ConstRRsetPtr& rrset) : rrset_(rrset)
+    {}
+
+    ConstRRsetPtr rrset_;     ///< Underlying RRset
+};
+
+RBNodeRRset::RBNodeRRset(const ConstRRsetPtr& rrset) :
+    impl_(new RBNodeRRsetImpl(rrset))
+{
+}
+
+RBNodeRRset::~RBNodeRRset() {
+    delete impl_;
+}
+
+unsigned int
+RBNodeRRset::getRdataCount() const {
+    return (impl_->rrset_->getRdataCount());
+}
+
+const Name&
+RBNodeRRset::getName() const {
+    return (impl_->rrset_->getName());
+}
+
+const RRClass&
+RBNodeRRset::getClass() const {
+    return (impl_->rrset_->getClass());
+}
+
+const RRType&
+RBNodeRRset::getType() const {
+    return (impl_->rrset_->getType());
+}
+
+const RRTTL&
+RBNodeRRset::getTTL() const {
+    return (impl_->rrset_->getTTL());
+}
+
+void
+RBNodeRRset::setName(const Name&) {
+    isc_throw(isc::NotImplemented, "RBNodeRRset::setName() not supported");
+}
+
+void
+RBNodeRRset::setTTL(const RRTTL&) {
+    isc_throw(isc::NotImplemented, "RBNodeRRset::setTTL() not supported");
+}
+
+string
+RBNodeRRset::toText() const {
+    return (impl_->rrset_->toText());
+}
+
+unsigned int
+RBNodeRRset::toWire(AbstractMessageRenderer& renderer) const {
+    return (impl_->rrset_->toWire(renderer));
+}
+
+unsigned int
+RBNodeRRset::toWire(isc::util::OutputBuffer& buffer) const {
+    return (impl_->rrset_->toWire(buffer));
+}
+
+void
+RBNodeRRset::addRdata(ConstRdataPtr) {
+    isc_throw(isc::NotImplemented, "RBNodeRRset::addRdata() not supported");
+}
+
+void
+RBNodeRRset::addRdata(const Rdata&) {
+    isc_throw(isc::NotImplemented, "RBNodeRRset::addRdata() not supported");
+}
+
+RdataIteratorPtr
+RBNodeRRset::getRdataIterator() const {
+    return (impl_->rrset_->getRdataIterator());
+}
+
+RRsetPtr
+RBNodeRRset::getRRsig() const {
+    return (impl_->rrset_->getRRsig());
+}
+
+void
+RBNodeRRset::addRRsig(const ConstRdataPtr& rdata) {
+    AbstractRRset* p = const_cast<AbstractRRset*>(impl_->rrset_.get());
+    p->addRRsig(rdata);
+}
+
+void
+RBNodeRRset::addRRsig(const RdataPtr& rdata) {
+    AbstractRRset* p = const_cast<AbstractRRset*>(impl_->rrset_.get());
+    p->addRRsig(rdata);
+}
+
+void
+RBNodeRRset::addRRsig(const AbstractRRset& sigs) {
+    AbstractRRset* p = const_cast<AbstractRRset*>(impl_->rrset_.get());
+    p->addRRsig(sigs);
+}
+
+void
+RBNodeRRset::addRRsig(const ConstRRsetPtr& sigs) {
+    AbstractRRset* p = const_cast<AbstractRRset*>(impl_->rrset_.get());
+    p->addRRsig(sigs);
+}
+
+void
+RBNodeRRset::addRRsig(const RRsetPtr& sigs) {
+    AbstractRRset* p = const_cast<AbstractRRset*>(impl_->rrset_.get());
+    p->addRRsig(sigs);
+}
+
+void
+RBNodeRRset::removeRRsig() {
+    AbstractRRset* p = const_cast<AbstractRRset*>(impl_->rrset_.get());
+    p->removeRRsig();
+}
+
+ConstRRsetPtr
+RBNodeRRset::getUnderlyingRRset() const {
+    return (impl_->rrset_);
+}
+
+} // end of internal
 
 class InMemoryZoneFinder::Context_ : public ZoneFinder::Context {
 public:
@@ -442,7 +577,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         // ... although instead of loading the RRset directly, we encapsulate
         // it within an RBNodeRRset.  This contains additional information that
         // speeds up queries.
-        ConstRRsetPtr rrset(new internal::RBNodeRRset(rawrrset));
+        RBNodeRRsetPtr rrset(new internal::RBNodeRRset(rawrrset));
 
         if (rrset->getType() == RRType::NSEC3()) {
             return (addNSEC3(rrset, zone_data));
