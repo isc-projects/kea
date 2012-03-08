@@ -218,6 +218,12 @@ private:
     // extracts the pointer to data and puts it into the iterator.
     // The access is read only.
     friend class InMemoryClient;
+
+    /// \brief In-memory version of finder context.
+    ///
+    /// The implementation (and any specialized interface) is completely local
+    /// to the InMemoryZoneFinder class, so it's defined as private
+    class Context_;
 };
 
 /// \brief A data source client that holds all necessary data in memory.
