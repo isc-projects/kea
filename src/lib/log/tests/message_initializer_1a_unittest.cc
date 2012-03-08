@@ -33,7 +33,5 @@ const char* values3[] = {
 
 }
 
-// Statically initialize the global dictionary with those messages.
-// Three sets are used to check that the declaration of separate
-// initializer objects really does combine the messages.
+// Register the messages for loading into the global dictionary
 MessageInitializer init_message_initializer_unittest_3(values3);
