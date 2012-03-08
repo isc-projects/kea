@@ -21,12 +21,16 @@
 
 #include <gtest/gtest.h>
 
+#include <boost/lexical_cast.hpp>
+
+#include <string>
 #include <vector>
 
 using isc::UnitTestUtil;
 using isc::dns::Name;
 using isc::dns::MessageRenderer;
 using isc::util::OutputBuffer;
+using boost::lexical_cast;
 
 namespace {
 class MessageRendererTest : public ::testing::Test {
@@ -212,5 +216,18 @@ TEST_F(MessageRendererTest, setBufferErrors) {
     // It's okay to reset a temporary buffer without using it.
     renderer.setBuffer(&new_buffer);
     EXPECT_NO_THROW(renderer.setBuffer(NULL));
+}
+
+TEST_F(MessageRendererTest, manyRRs) {
+    // Render a large number of names, and the confirm the resulting wire
+    // data store the expected names in the correct order (1000 is an
+    // arbitrary choice).
+    for (size_t i = 0; i < 1000; ++i) {
+        renderer.writeName(Name(lexical_cast<std::string>(i) + ".example"));
+    }
+    isc::util::InputBuffer b(renderer.getData(), renderer.getLength());
+    for (size_t i = 0; i < 1000; ++i) {
+        EXPECT_EQ(Name(lexical_cast<std::string>(i) + ".example"), Name(b));
+    }
 }
 }
