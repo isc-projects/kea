@@ -126,6 +126,7 @@ EXTRA_DIST += rdata_rp_fromWire1.spec rdata_rp_fromWire2.spec
 EXTRA_DIST += rdata_rp_fromWire3.spec rdata_rp_fromWire4.spec
 EXTRA_DIST += rdata_rp_fromWire5.spec rdata_rp_fromWire6.spec
 EXTRA_DIST += rdata_rp_toWire1.spec rdata_rp_toWire2.spec
+EXTRA_DIST += rdata_sshfp_fromWire.wire
 EXTRA_DIST += rdata_sshfp_fromWire1.spec rdata_sshfp_fromWire2.spec
 EXTRA_DIST += rdata_afsdb_fromWire1.spec rdata_afsdb_fromWire2.spec
 EXTRA_DIST += rdata_afsdb_fromWire3.spec rdata_afsdb_fromWire4.spec
