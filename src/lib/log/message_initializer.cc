@@ -20,24 +20,20 @@
 
 // As explained in the header file, initialization of the message dictionary
 // is a two-stage process:
-// 1) In the MessageInitializer constructor, the a pointer to the array of
+// 1) In the MessageInitializer constructor, a pointer to the array of
 //    messages is stored in a pre-defined array.  Since the MessageInitializers
-//    are declared external to a program unit, this takes place before main()
-//    is called.  As no heap storage is allocated in this process, we should
-//    avoid the static initialization fiasco in cases where initialization
-//    of system libraries is also carried out at the same time.
+//    are declared statically outside a program unit, this takes place before
+//    main() is called.  As no heap storage is allocated in this process, we
+//    should avoid the static initialization fiasco in cases where
+//    initialization of system libraries is also carried out at the same time.
 // 2) After main() starts executing, loadDictionary() is called.
 //
 //
 
 namespace {
 
-// Declare the array of pointers to value arrays.  At the time of writing
-// (end of BIND 10's third year of development), only 25 such arrays have
-// been defined, so a value of 64 should allow for significant expansion.
-// (Besides, an assertion will be triggered if the array overflows.)
-const int MAX_LOGGERS = 64;
-const char** logger_values[MAX_LOGGERS];
+// Declare the array of pointers to value arrays.
+const char** logger_values[isc::log::MessageInitializer::MAX_MESSAGE_ARRAYS];
 
 // Declare the index used to access the array.  As this needs to be initialized
 // at first used, it is accessed it via a function.
@@ -56,8 +52,15 @@ namespace log {
 // This method will trigger an assertion failure if the array overflows.
 
 MessageInitializer::MessageInitializer(const char* values[]) {
-    assert(getIndex() < MAX_LOGGERS);
+    assert(getIndex() < MAX_MESSAGE_ARRAYS);
     logger_values[getIndex()++] = values;
+}
+
+// Return the number of arrays registered but not yet loaded.
+
+size_t
+MessageInitializer::getPendingCount() {
+    return (getIndex());
 }
 
 // Load the messages in the arrays registered in the logger_values array
