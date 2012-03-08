@@ -15,6 +15,7 @@
 #ifndef __MESSAGEINITIALIZER_H
 #define __MESSAGEINITIALIZER_H
 
+#include <cstdlib>
 #include <string>
 #include <vector>
 #include <log/message_dictionary.h>
@@ -44,12 +45,18 @@ namespace log {
 ///
 /// To avoid static initialization fiasco problems, the initialization is
 /// carried out in two stages:
-/// -# The constructor a pointer to the values array to a pre-defined array
-///    of pointers.
-/// -# During the run-time initialization of the logging system, the static
-///    method loadDictionary() is called to load the message dictionary.
+/// - The constructor adds a pointer to the values array to a pre-defined array
+///   of pointers.
+/// - During the run-time initialization of the logging system, the static
+///   method loadDictionary() is called to load the message dictionary.
 /// This way, no heap storage is allocated during the static initialization,
 /// something that may give problems on some operating systems.
+///
+/// \note The maximum number of message arrays that can be added to the
+/// dictionary in this way is defined by the constant
+/// MessageInitializer::MAX_MESSAGE_ARRAYS.  This is set to 256 as a compromise
+/// between wasted space and allowing for future expansion, but can be
+/// changed (by editing the source file) to any value desired.
 ///
 /// When messages are added to the dictionary, the are added via the
 /// MessageDictionary::add() method, so any duplicates are stored in the
@@ -58,6 +65,8 @@ namespace log {
 
 class MessageInitializer {
 public:
+    /// Maximum number of message arrays that can be initialized in this way
+    static const size_t MAX_MESSAGE_ARRAYS = 256;
 
     /// \brief Constructor
     ///
@@ -65,8 +74,20 @@ public:
     /// pointers to message arrays.
     ///
     /// \param values NULL-terminated array of alternating identifier strings
-    /// and associated message text.
+    /// and associated message text. N.B. This object stores a pointer to the
+    /// passed array; the array MUST remain valid at least until
+    /// loadDictionary() has been called.
     MessageInitializer(const char* values[]);
+
+    /// \brief Obtain pending load count
+    ///
+    /// Returns a count of the message of message arrays that have been
+    /// registered with this class and will be loaded with the next call
+    /// to loadDictionary().
+    ///
+    /// \return Number of registered message arrays.  This is reset to zero
+    ///         when loadDictionary() is called.
+    static size_t getPendingCount();
 
     /// \brief Run-Time Initialization
     ///

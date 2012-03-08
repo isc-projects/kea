@@ -12,6 +12,24 @@ CLEANFILES = *.gcno *.gcda
 
 TESTS =
 if HAVE_GTEST
+
+# Define the flags used in each set of tests
+COMMON_CXXFLAGS = $(AM_CXXFLAGS)
+if USE_CLANGPP
+# Workaround unused variables tcout and tcerr in log4cplus's streams.h.
+COMMON_CXXFLAGS += -Wno-unused-variable
+endif
+COMMON_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)
+COMMON_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)
+
+COMMON_LDADD  = $(GTEST_LDADD)
+COMMON_LDADD += $(top_builddir)/src/lib/log/liblog.la
+COMMON_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
+COMMON_LDADD += $(top_builddir)/src/lib/util/libutil.la
+COMMON_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
+COMMON_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
+
+# Set of unit tests for the general logging classes
 TESTS += run_unittests
 run_unittests_SOURCES  = run_unittests.cc
 run_unittests_SOURCES += log_formatter_unittest.cc
@@ -23,26 +41,37 @@ run_unittests_SOURCES += logger_support_unittest.cc
 run_unittests_SOURCES += logger_unittest.cc
 run_unittests_SOURCES += logger_specification_unittest.cc
 run_unittests_SOURCES += message_dictionary_unittest.cc
-run_unittests_SOURCES += message_initializer_unittest_2.cc
-run_unittests_SOURCES += message_initializer_unittest.cc
 run_unittests_SOURCES += message_reader_unittest.cc
 run_unittests_SOURCES += output_option_unittest.cc
 
-run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)
-run_unittests_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)
+run_unittests_CPPFLAGS = $(COMMON_CPPFLAGS)
+run_unittests_CXXFLAGS = $(COMMON_CXXFLAGS)
+run_unittests_LDADD    = $(COMMON_LDADD)
+run_unittests_LDFLAGS  = $(COMMON_LDFLAGS)
 
-run_unittests_CXXFLAGS = $(AM_CXXFLAGS)
-if USE_CLANGPP
-# This is to workaround unused variables tcout and tcerr in
-# log4cplus's streams.h.
-run_unittests_CXXFLAGS += -Wno-unused-variable
-endif
-run_unittests_LDADD  = $(GTEST_LDADD)
-run_unittests_LDADD += $(top_builddir)/src/lib/log/liblog.la
-run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
-run_unittests_LDADD += $(top_builddir)/src/lib/util/libutil.la
-run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
-run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
+# logging initialization tests.  These are put in separate programs to
+# ensure that the initialization status at the start of each test is known,
+# and to prevent circumstances where the execution of one test affects the
+# starting conditions of the next.
+TESTS += initializer_unittests_1
+initializer_unittests_1_SOURCES  = run_initializer_unittests.cc
+initializer_unittests_1_SOURCES += message_initializer_1_unittest.cc
+initializer_unittests_1_SOURCES += message_initializer_1a_unittest.cc
+
+initializer_unittests_1_CPPFLAGS = $(COMMON_CPPFLAGS)
+initializer_unittests_1_CXXFLAGS = $(COMMON_CXXFLAGS)
+initializer_unittests_1_LDADD    = $(COMMON_LDADD)
+initializer_unittests_1_LDFLAGS  = $(COMMON_LDFLAGS)
+
+TESTS += initializer_unittests_2
+initializer_unittests_2_SOURCES  = run_initializer_unittests.cc
+initializer_unittests_2_SOURCES += message_initializer_2_unittest.cc
+
+initializer_unittests_2_CPPFLAGS = $(COMMON_CPPFLAGS)
+initializer_unittests_2_CXXFLAGS = $(COMMON_CXXFLAGS)
+initializer_unittests_2_LDADD    = $(COMMON_LDADD)
+initializer_unittests_2_LDFLAGS  = $(COMMON_LDFLAGS)
+
 endif
 
 noinst_PROGRAMS = logger_example

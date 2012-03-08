@@ -12,9 +12,9 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <cstddef>
 #include <string>
 #include <gtest/gtest.h>
+#include <boost/lexical_cast.hpp>
 #include <log/message_dictionary.h>
 #include <log/message_initializer.h>
 
@@ -40,27 +40,36 @@ const char* values2[] = {
 }
 
 // Statically initialize the global dictionary with those messages.  Three sets
-// are used to check that the declaration of separate initializer objects really// does combine the messages. (The third set is declared in the separately-
-// compiled file message_identifier_initializer_unittest_2.cc.)
+// are used to check that the declaration of separate initializer objects really
+// does combine the messages. (The third set - declaring message IDs GLOBAL5
+// and GLOBAL6) is declared in the separately-compiled file,
+// message_identifier_initializer_1a_unittest.cc.)
 
 MessageInitializer init_message_initializer_unittest_1(values1);
 MessageInitializer init_message_initializer_unittest_2(values2);
 
-
-class MessageInitializerTest : public ::testing::Test {
-protected:
-    MessageInitializerTest()
-    {
-    }
-};
-
-
 // Check that the global dictionary is initialized with the specified
 // messages.
 
-TEST_F(MessageInitializerTest, MessageTest) {
+TEST(MessageInitializerTest1, MessageTest) {
     MessageDictionary& global = MessageDictionary::globalDictionary();
 
+    // Pointers to the message arrays should have been stored, but none of the
+    // messages should yet be in the dictionary.
+    for (int i = 1; i <= 6; ++i) {
+        string symbol = string("GLOBAL") + boost::lexical_cast<std::string>(i);
+        EXPECT_EQ(string(""), global.getText(symbol));
+    }
+
+    // Load the dictionary - this should clear the message array pending count.
+    // (N.B. We do not check for a known value before the call, only that the
+    // value is not zero.  This is because libraries against which the test
+    // is linked may have registered ther own message arrays.)
+    EXPECT_NE(0, MessageInitializer::getPendingCount());
+    MessageInitializer::loadDictionary();
+    EXPECT_EQ(0, MessageInitializer::getPendingCount());
+
+    // ... and check the messages loaded.
     EXPECT_EQ(string("global message one"), global.getText("GLOBAL1"));
     EXPECT_EQ(string("global message two"), global.getText("GLOBAL2"));
     EXPECT_EQ(string("global message three"), global.getText("GLOBAL3"));
