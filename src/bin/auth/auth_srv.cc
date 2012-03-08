@@ -553,7 +553,8 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, Message& message,
         if (memory_client_ && memory_client_class_ == question->getClass()) {
             const RRType& qtype = question->getType();
             const Name& qname = question->getName();
-            query_.reset(memory_client_.get(), qname, qtype, &message, dnssec_ok);
+            query_.initialize(memory_client_.get(), qname, qtype, &message,
+                              dnssec_ok);
             query_.process();
         } else {
             datasrc::Query query(message, cache_, dnssec_ok);
