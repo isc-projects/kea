@@ -351,7 +351,7 @@ public:
     void
     reset(datasrc::DataSourceClient* datasrc_client,
           const isc::dns::Name qname, const isc::dns::RRType qtype,
-          isc::dns::Message* response, bool dnssec) {
+          isc::dns::Message* response, bool dnssec = false) {
         datasrc_client_ = datasrc_client;
         qname_ = qname;
         qtype_ = qtype;
@@ -359,6 +359,9 @@ public:
         dnssec_ = dnssec;
         dnssec_opt_ = (dnssec ?  isc::datasrc::ZoneFinder::FIND_DNSSEC :
                        isc::datasrc::ZoneFinder::FIND_DEFAULT);
+
+        target_.clear();
+        additionals_.clear();
     }
 
 private:
@@ -368,6 +371,9 @@ private:
     isc::dns::Message* response_;
     bool dnssec_;
     isc::datasrc::ZoneFinder::FindOptions dnssec_opt_;
+
+    std::vector<isc::dns::ConstRRsetPtr> target_;
+    std::vector<isc::dns::ConstRRsetPtr> additionals_;
 };
 
 }
