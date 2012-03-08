@@ -106,6 +106,20 @@ struct ZoneData {
 };
 }
 
+class InMemoryZoneFinder::Context_ : public ZoneFinder::Context {
+public:
+    Context_(ZoneFinder& finder, ZoneFinder::FindOptions options,
+             const ZoneFinder::ResultContext& result) :
+        ZoneFinder::Context(finder, options, result)
+    {}
+
+    Context_(ZoneFinder& finder, ZoneFinder::FindOptions options,
+             const ZoneFinder::ResultContext& result,
+             const vector<ConstRRsetPtr> &all_set) :
+        ZoneFinder::Context(finder, options, result, all_set)
+    {}
+};
+
 // Private data and hidden methods of InMemoryZoneFinder
 struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
     // Constructor
@@ -890,8 +904,8 @@ InMemoryZoneFinder::find(const Name& name, const RRType& type,
                          const FindOptions options)
 {
     return (ZoneFinderContextPtr(
-                new Context(*this, options,
-                            impl_->find(name, type, NULL, options))));
+                new Context_(*this, options, impl_->find(name, type, NULL,
+                                                         options))));
 }
 
 ZoneFinderContextPtr
@@ -900,9 +914,9 @@ InMemoryZoneFinder::findAll(const Name& name,
                             const FindOptions options)
 {
     return (ZoneFinderContextPtr(
-                new Context(*this, options, impl_->find(name, RRType::ANY(),
-                                                        &target, options),
-                            target)));
+                new Context_(*this, options, impl_->find(name, RRType::ANY(),
+                                                         &target, options),
+                             target)));
 }
 
 ZoneFinder::FindNSEC3Result
