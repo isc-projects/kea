@@ -161,6 +161,8 @@ private:
 
     // validateStatistics
     bool validateStatistics(isc::data::ConstElementPtr data) const;
+
+    auth::Query query_;
 };
 
 AuthSrvImpl::AuthSrvImpl(const bool use_cache,
@@ -551,8 +553,8 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, Message& message,
         if (memory_client_ && memory_client_class_ == question->getClass()) {
             const RRType& qtype = question->getType();
             const Name& qname = question->getName();
-            auth::Query(*memory_client_, qname, qtype, message,
-                        dnssec_ok).process();
+            query_.reset(memory_client_.get(), qname, qtype, &message, dnssec_ok);
+            query_.process();
         } else {
             datasrc::Query query(message, cache_, dnssec_ok);
             data_sources_.doQuery(query);

@@ -238,13 +238,20 @@ public:
     /// \param response The response message to store the answer to the query.
     /// \param dnssec If the answer should include signatures and NSEC/NSEC3 if
     ///     possible.
-    Query(const isc::datasrc::DataSourceClient& datasrc_client,
+    Query(const isc::datasrc::DataSourceClient* datasrc_client,
           const isc::dns::Name& qname, const isc::dns::RRType& qtype,
-          isc::dns::Message& response, bool dnssec = false) :
+          isc::dns::Message* response, bool dnssec = false) :
         datasrc_client_(datasrc_client), qname_(qname), qtype_(qtype),
         response_(response), dnssec_(dnssec),
         dnssec_opt_(dnssec ?  isc::datasrc::ZoneFinder::FIND_DNSSEC :
                     isc::datasrc::ZoneFinder::FIND_DEFAULT)
+    {}
+
+    Query() :
+        datasrc_client_(NULL), qname_("."),
+        qtype_(isc::dns::RRType::A()),
+        response_(NULL), dnssec_(false),
+        dnssec_opt_(isc::datasrc::ZoneFinder::FIND_DEFAULT)
     {}
 
     /// Process the query.
@@ -341,13 +348,26 @@ public:
         {}
     };
 
+    void
+    reset(datasrc::DataSourceClient* datasrc_client,
+          const isc::dns::Name qname, const isc::dns::RRType qtype,
+          isc::dns::Message* response, bool dnssec) {
+        datasrc_client_ = datasrc_client;
+        qname_ = qname;
+        qtype_ = qtype;
+        response_ = response;
+        dnssec_ = dnssec;
+        dnssec_opt_ = (dnssec ?  isc::datasrc::ZoneFinder::FIND_DNSSEC :
+                       isc::datasrc::ZoneFinder::FIND_DEFAULT);
+    }
+
 private:
-    const isc::datasrc::DataSourceClient& datasrc_client_;
-    const isc::dns::Name& qname_;
-    const isc::dns::RRType& qtype_;
-    isc::dns::Message& response_;
-    const bool dnssec_;
-    const isc::datasrc::ZoneFinder::FindOptions dnssec_opt_;
+    const isc::datasrc::DataSourceClient* datasrc_client_;
+    isc::dns::Name qname_;
+    isc::dns::RRType qtype_;
+    isc::dns::Message* response_;
+    bool dnssec_;
+    isc::datasrc::ZoneFinder::FindOptions dnssec_opt_;
 };
 
 }

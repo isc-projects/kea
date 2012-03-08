@@ -103,7 +103,7 @@ Query::addSOA(ZoneFinder& finder) {
          * The const-cast is wrong, but the Message interface seems
          * to insist.
          */
-        response_.addRRset(Message::SECTION_AUTHORITY,
+        response_->addRRset(Message::SECTION_AUTHORITY,
             boost::const_pointer_cast<AbstractRRset>(soa_ctx->rrset), dnssec_);
     }
 }
@@ -123,7 +123,7 @@ Query::addNXDOMAINProofByNSEC(ZoneFinder& finder, ConstRRsetPtr nsec) {
     }
 
     // Add the NSEC proving NXDOMAIN to the authority section.
-    response_.addRRset(Message::SECTION_AUTHORITY,
+    response_->addRRset(Message::SECTION_AUTHORITY,
                        boost::const_pointer_cast<AbstractRRset>(nsec), dnssec_);
 
     // Next, identify the best possible wildcard name that would match
@@ -161,7 +161,7 @@ Query::addNXDOMAINProofByNSEC(ZoneFinder& finder, ConstRRsetPtr nsec) {
     // stage of performance optimization, we should consider optimizing this
     // for some optimized data source implementations.
     if (nsec->getName() != fcontext->rrset->getName()) {
-        response_.addRRset(Message::SECTION_AUTHORITY,
+        response_->addRRset(Message::SECTION_AUTHORITY,
                            boost::const_pointer_cast<AbstractRRset>(fcontext->rrset),
                            dnssec_);
     }
@@ -183,13 +183,13 @@ Query::addClosestEncloserProof(ZoneFinder& finder, const Name& name,
     }
 
     if (add_closest) {
-        response_.addRRset(Message::SECTION_AUTHORITY,
+        response_->addRRset(Message::SECTION_AUTHORITY,
                            boost::const_pointer_cast<AbstractRRset>(
                                result.closest_proof),
                            dnssec_);
     }
     if (result.next_proof) {
-        response_.addRRset(Message::SECTION_AUTHORITY,
+        response_->addRRset(Message::SECTION_AUTHORITY,
                            boost::const_pointer_cast<AbstractRRset>(
                                result.next_proof),
                            dnssec_);
@@ -208,7 +208,7 @@ Query::addNSEC3ForName(ZoneFinder& finder, const Name& name, bool match) {
                   << (result.matched ? "matching" : "covering")
                   << " NSEC3 found for " << name);
     }
-    response_.addRRset(Message::SECTION_AUTHORITY,
+    response_->addRRset(Message::SECTION_AUTHORITY,
                        boost::const_pointer_cast<AbstractRRset>(
                            result.closest_proof),
                        dnssec_);
@@ -246,7 +246,7 @@ Query::addWildcardProof(ZoneFinder& finder,
             isc_throw(BadNSEC,
                       "Unexpected NSEC result for wildcard proof");
         }
-        response_.addRRset(Message::SECTION_AUTHORITY,
+        response_->addRRset(Message::SECTION_AUTHORITY,
                            boost::const_pointer_cast<AbstractRRset>(
                                fcontext->rrset),
                            dnssec_);
@@ -279,7 +279,7 @@ Query::addWildcardNXRRSETProof(ZoneFinder& finder, ConstRRsetPtr nsec) {
    
     if (nsec->getName() != fcontext->rrset->getName()) {
         // one NSEC RR proves wildcard_nxrrset that no matched QNAME.
-        response_.addRRset(Message::SECTION_AUTHORITY,
+        response_->addRRset(Message::SECTION_AUTHORITY,
                            boost::const_pointer_cast<AbstractRRset>(fcontext->rrset),
                            dnssec_);
     }
@@ -290,7 +290,7 @@ Query::addDS(ZoneFinder& finder, const Name& dname) {
     ConstZoneFinderContextPtr ds_context =
         finder.find(dname, RRType::DS(), dnssec_opt_);
     if (ds_context->code == ZoneFinder::SUCCESS) {
-        response_.addRRset(Message::SECTION_AUTHORITY,
+        response_->addRRset(Message::SECTION_AUTHORITY,
                            boost::const_pointer_cast<AbstractRRset>(
                                ds_context->rrset),
                            dnssec_);
@@ -312,7 +312,7 @@ Query::addNXRRsetProof(ZoneFinder& finder,
                        const ZoneFinder::Context& db_context)
 {
     if (db_context.isNSECSigned() && db_context.rrset) {
-        response_.addRRset(Message::SECTION_AUTHORITY,
+        response_->addRRset(Message::SECTION_AUTHORITY,
                            boost::const_pointer_cast<AbstractRRset>(
                                db_context.rrset),
                            dnssec_);
@@ -354,7 +354,7 @@ Query::addAuthAdditional(ZoneFinder& finder,
         isc_throw(NoApexNS, "There's no apex NS records in zone " <<
                   finder.getOrigin().toText());
     }
-    response_.addRRset(Message::SECTION_AUTHORITY,
+    response_->addRRset(Message::SECTION_AUTHORITY,
                        boost::const_pointer_cast<AbstractRRset>(
                            ns_context->rrset), dnssec_);
     getAdditional(qname_, qtype_, *ns_context, additionals);
@@ -378,8 +378,13 @@ findZone(const DataSourceClient& client, const Name& qname, RRType qtype) {
 
 void
 Query::process() {
+    if (datasrc_client_ == NULL) {
+        isc_throw(isc::InvalidOperation,
+                  "Query::process called before setting data source");
+    }
+
     // Found a zone which is the nearest ancestor to QNAME
-    const DataSourceClient::FindResult result = findZone(datasrc_client_,
+    const DataSourceClient::FindResult result = findZone(*datasrc_client_,
                                                          qname_, qtype_);
 
     // If we have no matching authoritative zone for the query name, return
@@ -396,16 +401,16 @@ Query::process() {
             processDSAtChild()) {
             return;
         }
-        response_.setHeaderFlag(Message::HEADERFLAG_AA, false);
-        response_.setRcode(Rcode::REFUSED());
+        response_->setHeaderFlag(Message::HEADERFLAG_AA, false);
+        response_->setRcode(Rcode::REFUSED());
         return;
     }
     ZoneFinder& zfinder = *result.zone_finder;
 
     // We have authority for a zone that contain the query name (possibly
     // indirectly via delegation).  Look into the zone.
-    response_.setHeaderFlag(Message::HEADERFLAG_AA);
-    response_.setRcode(Rcode::NOERROR());
+    response_->setHeaderFlag(Message::HEADERFLAG_AA);
+    response_->setRcode(Rcode::NOERROR());
     vector<ConstRRsetPtr> target;
     vector<ConstRRsetPtr> additionals;
     boost::function0<ZoneFinderContextPtr> find;
@@ -421,7 +426,7 @@ Query::process() {
     switch (db_context->code) {
         case ZoneFinder::DNAME: {
             // First, put the dname into the answer
-            response_.addRRset(Message::SECTION_ANSWER,
+            response_->addRRset(Message::SECTION_ANSWER,
                 boost::const_pointer_cast<AbstractRRset>(db_context->rrset),
                 dnssec_);
             /*
@@ -446,7 +451,7 @@ Query::process() {
                  * In case the synthesized name is too long, section 4.1
                  * of RFC 2672 mandates we return YXDOMAIN.
                  */
-                response_.setRcode(Rcode::YXDOMAIN());
+                response_->setRcode(Rcode::YXDOMAIN());
                 return;
             }
             // The new CNAME we are creating (it will be unsigned even
@@ -459,7 +464,7 @@ Query::process() {
                 qname_.getLabelCount() -
                 db_context->rrset->getName().getLabelCount()).
                 concatenate(dname.getDname())));
-            response_.addRRset(Message::SECTION_ANSWER, cname, dnssec_);
+            response_->addRRset(Message::SECTION_ANSWER, cname, dnssec_);
             break;
         }
         case ZoneFinder::CNAME:
@@ -472,7 +477,7 @@ Query::process() {
              *
              * So, just put it there.
              */
-            response_.addRRset(Message::SECTION_ANSWER,
+            response_->addRRset(Message::SECTION_ANSWER,
                 boost::const_pointer_cast<AbstractRRset>(db_context->rrset),
                 dnssec_);
 
@@ -487,11 +492,11 @@ Query::process() {
                 // If quety type is ANY, insert all RRs under the domain
                 // into answer section.
                 BOOST_FOREACH(ConstRRsetPtr rrset, target) {
-                    response_.addRRset(Message::SECTION_ANSWER,
+                    response_->addRRset(Message::SECTION_ANSWER,
                         boost::const_pointer_cast<AbstractRRset>(rrset), dnssec_);
                 }
             } else {
-                response_.addRRset(Message::SECTION_ANSWER,
+                response_->addRRset(Message::SECTION_ANSWER,
                     boost::const_pointer_cast<AbstractRRset>(db_context->rrset),
                     dnssec_);
             }
@@ -527,8 +532,8 @@ Query::process() {
                 return;
             }
 
-            response_.setHeaderFlag(Message::HEADERFLAG_AA, false);
-            response_.addRRset(Message::SECTION_AUTHORITY,
+            response_->setHeaderFlag(Message::HEADERFLAG_AA, false);
+            response_->addRRset(Message::SECTION_AUTHORITY,
                 boost::const_pointer_cast<AbstractRRset>(db_context->rrset),
                 dnssec_);
             // Retrieve additional records for the name servers
@@ -541,7 +546,7 @@ Query::process() {
             }
             break;
         case ZoneFinder::NXDOMAIN:
-            response_.setRcode(Rcode::NXDOMAIN());
+            response_->setRcode(Rcode::NXDOMAIN());
             addSOA(*result.zone_finder);
             if (dnssec_) {
                 if (db_context->isNSECSigned() && db_context->rrset) {
@@ -566,14 +571,14 @@ Query::process() {
     }
 
     for_each(additionals.begin(), additionals.end(),
-             RRsetInserter(response_, Message::SECTION_ADDITIONAL,
+             RRsetInserter(*response_, Message::SECTION_ADDITIONAL,
                            dnssec_));
 }
 
 bool
 Query::processDSAtChild() {
     const DataSourceClient::FindResult zresult =
-        datasrc_client_.findZone(qname_);
+        datasrc_client_->findZone(qname_);
 
     if (zresult.code != result::SUCCESS) {
         return (false);
@@ -588,8 +593,8 @@ Query::processDSAtChild() {
     // The important point in this case is to return SOA so that the resolver
     // that happens to contact us can hunt for the appropriate parent zone
     // by seeing the SOA.
-    response_.setHeaderFlag(Message::HEADERFLAG_AA);
-    response_.setRcode(Rcode::NOERROR());
+    response_->setHeaderFlag(Message::HEADERFLAG_AA);
+    response_->setRcode(Rcode::NOERROR());
     addSOA(*zresult.zone_finder);
     ConstZoneFinderContextPtr ds_context =
         zresult.zone_finder->find(qname_, RRType::DS(), dnssec_opt_);
