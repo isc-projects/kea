@@ -28,7 +28,7 @@
 //    of system libraries is also carried out at the same time.
 // 2) After main() starts executing, loadDictionary() is called.
 //
-// 
+//
 
 namespace {
 
