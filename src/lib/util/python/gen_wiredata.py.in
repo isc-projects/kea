@@ -822,6 +822,29 @@ class RP(RR):
         f.write('# MAILBOX=%s TEXT=%s\n' % (self.mailbox, self.text))
         f.write('%s %s\n' % (mailbox_wire, text_wire))
 
+class SSHFP(RR):
+    '''Implements rendering SSHFP RDATA in the test data format.
+
+    Configurable parameters are as follows (see the description of the
+    same name of attribute for the default value):
+    - algorithm (int): The algorithm number.
+    - fingerprint_type (int): The fingerprint type.
+    - fingerprint (string): The fingerprint.
+    '''
+    algorithm = 2
+    fingerprint_type = 1
+    fingerprint = '123456789abcdef67890123456789abcdef67890'
+    def dump(self, f):
+        if self.rdlen is None:
+            self.rdlen = 2 + (len(self.fingerprint) / 2)
+        else:
+            self.rdlen = int(self.rdlen)
+        self.dump_header(f, self.rdlen)
+        f.write('# ALGORITHM=%d FINGERPRINT_TYPE=%d FINGERPRINT=%s\n' % (self.algorithm,
+                                                                         self.fingerprint_type,
+                                                                         self.fingerprint))
+        f.write('%02x %02x %s\n' % (self.algorithm, self.fingerprint_type, self.fingerprint))
+
 class MINFO(RR):
     '''Implements rendering MINFO RDATA in the test data format.
 
