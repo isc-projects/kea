@@ -226,6 +226,19 @@ private:
     void addNSEC3ForName(isc::datasrc::ZoneFinder& finder,
                          const isc::dns::Name& name, bool match);
 
+    /// \brief Fill in the response sections
+    ///
+    /// This is the final step of the process() method, and within
+    /// that method, it should be called before it returns (if any
+    /// response data is to be added)
+    ///
+    /// This will take each RRset collected in answer_, authority_, and
+    /// additionals_, and add them to their corresponding sections in
+    /// the response packet.
+    ///
+    /// After they are added, the vectors are cleared.
+    void createResponse();
+
 public:
     /// Constructor from query parameters.
     ///
@@ -348,8 +361,14 @@ public:
         {}
     };
 
+    /// Set up the Query object for a new query lookup
+    ///
+    /// If the empty constructor, has been used to initialize the
+    /// query instance, of if the instance is reused, it should
+    /// be initialized with data to look up.
+    ///
     void
-    reset(datasrc::DataSourceClient* datasrc_client,
+    initialize(datasrc::DataSourceClient* datasrc_client,
           const isc::dns::Name qname, const isc::dns::RRType qtype,
           isc::dns::Message* response, bool dnssec = false) {
         datasrc_client_ = datasrc_client;
@@ -359,8 +378,20 @@ public:
         dnssec_ = dnssec;
         dnssec_opt_ = (dnssec ?  isc::datasrc::ZoneFinder::FIND_DNSSEC :
                        isc::datasrc::ZoneFinder::FIND_DEFAULT);
+        // The call to reset() could in theory be ommitted, but
+        // seems prudent, just in case a previous process() left
+        // data in here.
+        reset();
+    }
 
-        target_.clear();
+    /// \brief Reset any partly built response data
+    ///
+    /// In theory, this is not necessary if the process() call finishes
+    /// successfully, but if it does not, reset() can be used to clean up.
+    void
+    reset() {
+        answer_.clear();
+        authority_.clear();
         additionals_.clear();
     }
 
@@ -372,7 +403,8 @@ private:
     bool dnssec_;
     isc::datasrc::ZoneFinder::FindOptions dnssec_opt_;
 
-    std::vector<isc::dns::ConstRRsetPtr> target_;
+    std::vector<isc::dns::ConstRRsetPtr> answer_;
+    std::vector<isc::dns::ConstRRsetPtr> authority_;
     std::vector<isc::dns::ConstRRsetPtr> additionals_;
 };
 
