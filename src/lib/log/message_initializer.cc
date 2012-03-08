@@ -74,7 +74,8 @@ MessageInitializer::loadDictionary() {
         // global list of duplicate IDs.
         if (!repeats.empty()) {
             std::vector<std::string>& duplicates = getDuplicates();
-            duplicates.insert(duplicates.end(), repeats.begin(), repeats.end());
+            duplicates.insert(duplicates.end(), repeats.begin(),
+                              repeats.end());
         }
     }
 
