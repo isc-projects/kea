@@ -116,13 +116,14 @@ public:
     ///
     /// \note The name of the logger may be no longer than MAX_LOGGER_NAME_SIZE
     /// else the program will halt with an assertion failure.  This restriction
-    /// allows loggers to be declared statically: the name is stored in a fixed-
-    /// size array to avoid the need to allocate heap storage during program
-    /// initialization (which causes problems on some operating systems).
+    /// allows loggers to be declared statically: the name is stored in a
+    /// fixed-size array to avoid the need to allocate heap storage during
+    /// program initialization (which causes problems on some operating
+    /// systems).
     ///
     /// \note Note also that there is no constructor taking a std::string. This
-    /// minimises the possibility of initializing a static logger with a string,
-    /// so leading to problems mentioned above.
+    /// minimises the possibility of initializing a static logger with a
+    /// string, so leading to problems mentioned above.
     Logger(const char* name) : loggerptr_(NULL) {
         assert(std::strlen(name) < sizeof(name_));
         std::strcpy(name_, name);
