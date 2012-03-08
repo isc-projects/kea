@@ -197,6 +197,9 @@ public:
             all_set_(all_set)
         {}
 
+        /// \brief The destructor.
+        virtual ~Context() {}
+
         const Result code;
         const isc::dns::ConstRRsetPtr rrset;
 
@@ -257,7 +260,7 @@ public:
             const std::vector<isc::dns::RRType>& requested_types,
             std::vector<isc::dns::ConstRRsetPtr>& result)
         {
-            // Perform common checks, and delegate the process the default
+            // Perform common checks, and delegate the process to the default
             // or specialized implementation.
             if (code != SUCCESS && code != DELEGATION) {
                 return;
