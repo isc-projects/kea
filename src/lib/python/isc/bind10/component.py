@@ -220,12 +220,6 @@ class BaseComponent:
         if exit_code is not None:
             if os.WIFEXITED(exit_code):
                 exit_str = "process exited normally with exit status %d" % (exit_code)
-            elif os.WIFCONTINUED(exit_code):
-                exit_str = "process continued with exit status %d" % (exit_code)
-            elif os.WIFSTOPPED(exit_code):
-                sig = os.WSTOPSIG(exit_code)
-                signame = get_signame(sig)
-                exit_str = "process stopped with exit status %d (killed by signal %d: %s)" % (exit_code, sig, signame)
             elif os.WIFSIGNALED(exit_code):
                 sig = os.WTERMSIG(exit_code)
                 signame = get_signame(sig)
