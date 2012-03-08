@@ -23,6 +23,7 @@
 #include <asiolink/io_address.h>
 #include <exceptions/exceptions.h>
 #include <util/io_utilities.h>
+#include <util/range_utilities.h>
 
 using namespace std;
 using namespace isc;
@@ -73,8 +74,9 @@ Dhcpv6Srv::~Dhcpv6Srv() {
 bool Dhcpv6Srv::run() {
     while (!shutdown) {
 
-        Pkt6Ptr query = IfaceMgr::instance().receive6(); // client's message
-        Pkt6Ptr rsp;   // server's response
+        // client's message and server's response
+        Pkt6Ptr query = IfaceMgr::instance().receive6();
+        Pkt6Ptr rsp;
 
         if (query) {
             if (!query->unpack()) {
@@ -153,7 +155,7 @@ void Dhcpv6Srv::setServerID() {
     // let's find suitable interface
     for (IfaceMgr::IfaceCollection::const_iterator iface = ifaces.begin();
          iface != ifaces.end(); ++iface) {
-        // all those conditions could be merged into one multi-condition
+        // All the following checks could be merged into one multi-condition
         // statement, but let's keep them separated as perhaps one day
         // we will grow knobs to selectively turn them on or off. Also,
         // this code is used only *once* during first start on a new machine
@@ -162,9 +164,12 @@ void Dhcpv6Srv::setServerID() {
 
         // I wish there was a this_is_a_real_physical_interface flag...
 
-        // mac at least 6 bytes. All decent physical interfaces (Ethernet,
-        // WiFi, Infiniband, etc.) have 6 bytes long MAC address
-        if (iface->mac_len_ < 6) {
+        // MAC address should be at least 6 bytes. Although there is no such
+        // requirement in any RFC, all decent physical interfaces (Ethernet,
+        // WiFi, Infiniband, etc.) have 6 bytes long MAC address. We want to
+        // base our DUID on real hardware address, rather than virtual
+        // interface that pretends that underlying IP address is its MAC.
+        if (iface->mac_len_ < MIN_MAC_LEN) {
             continue;
         }
 
@@ -213,15 +218,14 @@ void Dhcpv6Srv::setServerID() {
     // See Section 9.3 of RFC3315 for details.
 
     OptionBuffer srvid(12);
-    srand(time(NULL));
     writeUint16(DUID_EN, &srvid[0]);
     writeUint32(ENTERPRISE_ID_ISC, &srvid[2]);
 
-    // length of the identifier is company specific. I hereby declare
-    // ISC standard of 6 bytes long random numbers.
-    for (int i = 6; i < 12; i++) {
-        srvid[i] = static_cast<uint8_t>(rand());
-    }
+    // Length of the identifier is company specific. I hereby declare
+    // ISC "standard" of 6 bytes long pseudo-random numbers.
+    srand(time(NULL));
+    fillRandom(&srvid[6],&srvid[12]);
+
     serverid_ = OptionPtr(new Option(Option::V6, D6O_SERVERID,
                                      srvid.begin(), srvid.end()));
 }

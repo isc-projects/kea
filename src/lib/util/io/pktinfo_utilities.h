@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,13 +12,11 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __SOCKADDR_UTIL_H_
-#define __SOCKADDR_UTIL_H_ 1
+#ifndef __PKTINFO_UTIL_H_
+#define __PKTINFO_UTIL_H_ 1
 
 #include <sys/socket.h>
 #include <netinet/in.h>
-
-#include <cassert>
 
 // These definitions in this file are for the convenience of internal
 // implementation and test code, and are not intended to be used publicly.
@@ -29,41 +27,25 @@ namespace util {
 namespace io {
 namespace internal {
 
-inline socklen_t
-getSALength(const struct sockaddr& sa) {
-    if (sa.sa_family == AF_INET) {
-        return (sizeof(struct sockaddr_in));
-    } else {
-        assert(sa.sa_family == AF_INET6);
-        return (sizeof(struct sockaddr_in6));
-    }
-}
-
-// Lower level C-APIs require conversion between various variants of
-// sockaddr's, which is not friendly with C++.  The following templates
+// Lower level C-APIs require conversion between char* pointers
+// (like structures returned by CMSG_DATA macro) and in6_pktinfo,
+// which is not friendly with C++. The following templates
 // are a shortcut of common workaround conversion in such cases.
-
-template <typename SAType>
-const struct sockaddr*
-convertSockAddr(const SAType* sa) {
-    const void* p = sa;
-    return (static_cast<const struct sockaddr*>(p));
+inline struct in6_pktinfo*
+convertPktInfo6(char* pktinfo) {
+    return (static_cast<struct in6_pktinfo*>(static_cast<void*>(pktinfo)));
 }
 
-template <typename SAType>
-struct sockaddr*
-convertSockAddr(SAType* sa) {
-    void* p = sa;
-    return (static_cast<struct sockaddr*>(p));
+inline struct in6_pktinfo*
+convertPktInfo6(unsigned char* pktinfo) {
+    return (static_cast<struct in6_pktinfo*>(static_cast<void*>(pktinfo)));
 }
+
+/// @todo: Do we need const versions as well?
 
 }
 }
 }
 }
 
-#endif  // __SOCKADDR_UTIL_H_
-
-// Local Variables:
-// mode: c++
-// End:
+#endif  // __PKTINFO_UTIL_H_
