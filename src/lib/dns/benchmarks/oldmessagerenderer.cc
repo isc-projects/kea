@@ -15,7 +15,7 @@
 #include <exceptions/exceptions.h>
 #include <util/buffer.h>
 #include <dns/name.h>
-#include <dns/oldmessagerenderer.h>
+#include <oldmessagerenderer.h>
 
 #include <cctype>
 #include <cassert>
