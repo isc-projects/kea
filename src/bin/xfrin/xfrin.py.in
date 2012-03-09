@@ -889,8 +889,9 @@ class XfrinConnection(asyncore.dispatcher):
             self._send_query(self._request_type)
             self.__state = XfrinInitialSOA()
             self._handle_xfrin_responses()
-            # Depending on the transfer type, we log different status reports
-            if request_type == RRType.IXFR():
+            # Depending what data was found, we log different status reports
+            # (In case of an AXFR-style IXFR, print the 'AXFR' message)
+            if self._transfer_stats.axfr_rr_count == 0:
                 logger.info(XFRIN_IXFR_TRANSFER_SUCCESS,
                             self.zone_str(),
                             self._transfer_stats.message_count,
@@ -902,7 +903,8 @@ class XfrinConnection(asyncore.dispatcher):
                             "%.f" % self._transfer_stats.get_bytes_per_second()
                            )
             else:
-                logger.info(XFRIN_AXFR_TRANSFER_SUCCESS,
+                logger.info(XFRIN_TRANSFER_SUCCESS,
+                            req_str,
                             self.zone_str(),
                             self._transfer_stats.message_count,
                             self._transfer_stats.axfr_rr_count,

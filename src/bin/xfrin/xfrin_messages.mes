@@ -31,22 +31,6 @@ turns out to happen with a real world primary server implementation
 and that server actually feeds broken data (e.g. mixed versions of
 zone), we can consider a stricter action.
 
-% XFRIN_AXFR_TRANSFER_SUCCESS full transfer of zone %1 succeeded (messages: %2, records: %3, bytes: %4, run time: %5 seconds, %6 bytes/second)
-The AXFR transfer of the given zone was successful.
-The provided information contains the following values:
-
-messages: Number of overhead DNS messages in the transfer
-
-records: Number of Resource Records in the full transfer, excluding the
-final SOA record that marks the end of the AXFR.
-
-bytes: Full size of the transfer data on the wire.
-
-run time: Time (in seconds) the complete axfr took
-
-bytes/second: Transfer speed
-
-
 % XFRIN_BAD_MASTER_ADDR_FORMAT bad format for master address: %1
 The given master address is not a valid IP address.
 
@@ -89,7 +73,7 @@ is not equal to the requested SOA serial.
 There was an error importing the python DNS module pydnspp. The most
 likely cause is a PYTHONPATH problem.
 
-% XFRIN_IXFR_TRANSFER_SUCCESS incremental transfer of zone %1 succeeded (messages: %2, changesets: %3, deletions: %4, additions: %5, bytes: %6, run time: %7 seconds, %8 bytes/second)
+% XFRIN_IXFR_TRANSFER_SUCCESS incremental IXFR transfer of zone %1 succeeded (messages: %2, changesets: %3, deletions: %4, additions: %5, bytes: %6, run time: %7 seconds, %8 bytes/second)
 The IXFR transfer for the given zone was successful.
 The provided information contains the following values:
 
@@ -151,6 +135,21 @@ An informational message, this is output when the resolver starts up.
 % XFRIN_STOPPED_BY_KEYBOARD keyboard interrupt, shutting down
 There was a keyboard interrupt signal to stop the xfrin daemon. The
 daemon will now shut down.
+
+% XFRIN_TRANSFER_SUCCESS full %1 transfer of zone %2 succeeded (messages: %3, records: %4, bytes: %5, run time: %6 seconds, %7 bytes/second)
+The AXFR transfer of the given zone was successful.
+The provided information contains the following values:
+
+messages: Number of overhead DNS messages in the transfer
+
+records: Number of Resource Records in the full transfer, excluding the
+final SOA record that marks the end of the AXFR.
+
+bytes: Full size of the transfer data on the wire.
+
+run time: Time (in seconds) the complete axfr took
+
+bytes/second: Transfer speed
 
 % XFRIN_UNKNOWN_ERROR unknown error: %1
 An uncaught exception was raised while running the xfrin daemon. The
