@@ -62,7 +62,7 @@ TEST_F(Rdata_SSHFP_Test, copy) {
 TEST_F(Rdata_SSHFP_Test, createFromWire) {
     EXPECT_EQ(0, rdata_sshfp.compare(
                   *rdataFactoryFromFile(RRType("SSHFP"), RRClass("IN"),
-                                        "rdata_sshfp_fromWire.wire")));
+                                        "rdata_sshfp_fromWire")));
     // TBD: more tests
 }
 
