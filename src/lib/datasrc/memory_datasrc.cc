@@ -47,6 +47,8 @@ using boost::scoped_ptr;
 namespace isc {
 namespace datasrc {
 
+using namespace internal;
+
 namespace {
 // Some type aliases
 
@@ -258,6 +260,11 @@ RBNodeRRset::addAdditionalNode(const AdditionalNodeInfo& additional) {
     impl_->additionals_->push_back(additional);
 }
 
+const vector<AdditionalNodeInfo>*
+RBNodeRRset::getAdditionalNodes() const {
+    return (impl_->additionals_.get());
+}
+
 } // end of internal
 
 namespace {
@@ -275,6 +282,27 @@ struct RBNodeResultContext {
     const ConstRBNodeRRsetPtr rrset;
     const ZoneFinder::FindResultFlags flags;
 };
+
+void
+insertRRset(const RRType& type, const AdditionalNodeInfo* additional,
+            vector<ConstRRsetPtr>* result)
+{
+    Domain::const_iterator found =
+        additional->node_->getData()->find(type);
+    if (found != additional->node_->getData()->end()) {
+        // TBD: wildcard consideration
+        result->push_back(found->second);
+    }
+}
+
+void
+insertRRsets(const AdditionalNodeInfo& additional,
+             const vector<RRType>* requested_types,
+             vector<ConstRRsetPtr>* result)
+{
+    for_each(requested_types->begin(), requested_types->end(),
+             boost::bind(insertRRset, _1, &additional, result));
+}
 }
 
 class InMemoryZoneFinder::Context_ : public ZoneFinder::Context {
@@ -282,7 +310,8 @@ public:
     Context_(ZoneFinder& finder, ZoneFinder::FindOptions options,
              const RBNodeResultContext& result) :
         Context(finder, options,
-                ResultContext(result.code, result.rrset, result.flags))
+                ResultContext(result.code, result.rrset, result.flags)),
+        rrset(result.rrset)
     {}
 
     Context_(ZoneFinder& finder, ZoneFinder::FindOptions options,
@@ -297,8 +326,21 @@ protected:
     virtual void getAdditionalImpl(const vector<RRType>& requested_types,
                                    vector<ConstRRsetPtr>& result)
     {
-        ZoneFinder::Context::getAdditionalImpl(requested_types, result);
+        if (!rrset) {
+            ZoneFinder::Context::getAdditionalImpl(requested_types, result);
+            return;
+        }
+        const vector<AdditionalNodeInfo>* additionals_ =
+            rrset->getAdditionalNodes();
+        if (additionals_ == NULL) {
+            return;
+        }
+        for_each(additionals_->begin(), additionals_->end(),
+                 boost::bind(insertRRsets, _1, &requested_types, &result));
     }
+
+private:
+    const ConstRBNodeRRsetPtr rrset;
 };
 
 // Private data and hidden methods of InMemoryZoneFinder
@@ -612,7 +654,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
      */
     // Implementation of InMemoryZoneFinder::add
     result::Result add(const ConstRRsetPtr& rawrrset, ZoneData& zone_data,
-                       vector<internal::RBNodeRRset*>* need_additionals)
+                       vector<RBNodeRRset*>* need_additionals)
     {
         // Sanitize input.  This will cause an exception to be thrown
         // if the input RRset is empty.
@@ -625,7 +667,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         // ... although instead of loading the RRset directly, we encapsulate
         // it within an RBNodeRRset.  This contains additional information that
         // speeds up queries.
-        RBNodeRRsetPtr rrset(new internal::RBNodeRRset(rawrrset));
+        RBNodeRRsetPtr rrset(new RBNodeRRset(rawrrset));
 
         if (rrset->getType() == RRType::NSEC3()) {
             return (addNSEC3(rrset, zone_data));
@@ -717,7 +759,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
      * it throws.
      */
     void addFromLoad(const ConstRRsetPtr& set, ZoneData* zone_data,
-                     vector<internal::RBNodeRRset*>* need_additionals)
+                     vector<RBNodeRRset*>* need_additionals)
     {
         switch (add(set, *zone_data, need_additionals)) {
         case result::EXIST:
@@ -847,7 +889,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                     result_base->addRRsig(result_sig);
                 }
             }
-            return (RBNodeRRsetPtr(new internal::RBNodeRRset(result_base)));
+            return (RBNodeRRsetPtr(new RBNodeRRset(result_base)));
         } else {
             return (rrset);
         }
@@ -1212,7 +1254,7 @@ getAdditionalName(RRType rrtype, const rdata::Rdata& rdata) {
 }
 
 void
-addAdditional(internal::RBNodeRRset* rrset, ZoneData* zone_data) {
+addAdditional(RBNodeRRset* rrset, ZoneData* zone_data) {
     RdataIteratorPtr rdata_iterator = rrset->getRdataIterator();
     for (; !rdata_iterator->isLast(); rdata_iterator->next()) {
         // TODO: zone cut consideration, empty node case
@@ -1235,7 +1277,7 @@ InMemoryZoneFinder::load(const string& filename) {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_LOAD).arg(getOrigin()).
         arg(filename);
     // Load it into temporary zone data.
-    vector<internal::RBNodeRRset*> need_additionals;
+    vector<RBNodeRRset*> need_additionals;
     scoped_ptr<ZoneData> tmp(new ZoneData(getOrigin()));
 
     masterLoad(filename.c_str(), getOrigin(), getClass(),
