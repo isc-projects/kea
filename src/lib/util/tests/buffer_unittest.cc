@@ -283,7 +283,7 @@ TEST_F(BufferTest, inputBufferConstructorVector) {
 
     std::vector<uint8_t> vec2;
     EXPECT_NO_THROW(buf.readVector(vec2, 17));
-    EXPECT_EQ(vec, vec2);
+    EXPECT_TRUE(vec == vec2);
 }
 
 }
