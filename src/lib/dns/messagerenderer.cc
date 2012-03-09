@@ -63,22 +63,12 @@ struct OffsetItem {
 /// condition check.
 template <bool CASE_SENSITIVE>
 struct NameCompare {
-    NameCompare(const OutputBuffer& buffer, const char* name_data,
-                size_t name_len) :
-        buffer_(&buffer), name_data_(name_data), name_len_(name_len)
+    NameCompare(const OutputBuffer& buffer, InputBuffer& data_buf) :
+        buffer_(&buffer), data_buf_(&data_buf)
     {}
 
-    ///
-    /// Returns true if n1 < n2 as a result of case-insensitive comparison;
-    /// otherwise return false.
-    ///
-    /// The name corresponding to \c n1 or \c n2 may be compressed, in which
-    /// case we must follow the compression pointer in the associated buffer.
-    /// The helper private method \c nextPosition() gives the position in the
-    /// buffer for the next character, taking into account compression.
-    ///
     bool operator()(const OffsetItem& item) const {
-        if (item.len_ != name_len_) {
+        if (item.len_ != data_buf_->getLength()) {
             return (false);
         }
 
@@ -90,12 +80,13 @@ struct NameCompare {
         // position for the subsequent label, taking into account name
         // compression, and resets item_label_len to the length of the new
         // label.
+        data_buf_->setPosition(0);
         uint16_t item_pos = item.pos_;
         uint16_t item_label_len = 0;
         for (size_t i = 0; i < item.len_; ++i, ++item_pos) {
             item_pos = nextPosition(*buffer_, item_pos, item_label_len);
             const unsigned char ch1 = (*buffer_)[item_pos];
-            const unsigned char ch2 = name_data_[i];
+            const unsigned char ch2 = data_buf_->readUint8();
             if (CASE_SENSITIVE) {
                 if (ch1 != ch2) {
                     return (false);
@@ -137,8 +128,7 @@ private:
     }
 
     const OutputBuffer* buffer_;
-    const char* const name_data_;
-    const size_t name_len_;
+    InputBuffer* data_buf_;
 };
 }
 
@@ -174,7 +164,7 @@ struct MessageRenderer::MessageRendererImpl {
     }
 
     uint16_t findOffset(const OutputBuffer& buffer,
-                        const char* name_data, size_t name_len,
+                        InputBuffer& data_buf,
                         size_t bucket_id, bool case_sensitive)
     {
         // Find a matching entry, if any.  We use some heuristics here: often
@@ -186,11 +176,11 @@ struct MessageRenderer::MessageRendererImpl {
         if (case_sensitive) {
             found = find_if(table_[bucket_id].rbegin(),
                             table_[bucket_id].rend(),
-                            NameCompare<true>(buffer, name_data, name_len));
+                            NameCompare<true>(buffer, data_buf));
         } else {
             found = find_if(table_[bucket_id].rbegin(),
                             table_[bucket_id].rend(),
-                            NameCompare<false>(buffer, name_data, name_len));
+                            NameCompare<false>(buffer, data_buf));
         }
         if (found != table_[bucket_id].rend()) {
             return (found->pos_);
@@ -308,7 +298,8 @@ MessageRenderer::writeName(const Name& name, const bool compress) {
         bucket_ids[nlabels_uncomp] =
             (sequence.getHash(impl_->compress_mode_) %
              MessageRendererImpl::BUCKETS);
-        ptr_offset = impl_->findOffset(getBuffer(), data, data_len,
+        InputBuffer data_buf(data, data_len);
+        ptr_offset = impl_->findOffset(getBuffer(), data_buf,
                                        bucket_ids[nlabels_uncomp],
                                        case_sensitive);
         if (ptr_offset != MessageRendererImpl::NO_OFFSET) {
