@@ -7,5 +7,5 @@ Feature: Xfrin
     A query for www.example.org should have rcode REFUSED
     Wait for bind10 stderr message CMDCTL_STARTED
     When I send bind10 the command Xfrin retransfer example.org IN 127.0.0.1 47807
-    Then wait for new bind10 stderr message XFRIN_AXFR_TRANSFER_SUCCESS not XFRIN_XFR_PROCESS_FAILURE
+    Then wait for new bind10 stderr message XFRIN_TRANSFER_SUCCESS not XFRIN_XFR_PROCESS_FAILURE
     A query for www.example.org should have rcode NOERROR
