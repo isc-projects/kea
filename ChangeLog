@@ -1,3 +1,12 @@
+398.	[func]		jelte
+	The b10-xfrin module now logs more information on successful
+	incoming transfers. In the case of IXFR, it logs the number of
+	changesets, and the total number of added and deleted resource
+	records. For AXFR (or AXFR-style IXFR), it logs the number of
+	resource records. In both cases, the number of overhead DNS
+	messages, runtime, amount of wire data, and transfer speed are logged.
+	(Trac #1280, git 2b01d944b6a137f95d47673ea8367315289c205d)
+
 397.	[func]		muks
 	The boss process now gives more helpful description when a
 	sub-process exits due to a signal.
