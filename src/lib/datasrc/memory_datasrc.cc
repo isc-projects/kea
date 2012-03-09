@@ -108,15 +108,23 @@ struct ZoneData {
 };
 }
 
-// RBNodeRRset details
 namespace internal {
 
+struct AdditionalNodeInfo {
+    AdditionalNodeInfo(DomainNode* node) : node_(node) {}
+    DomainNode* node_;
+};
+
+//
+// RBNodeRRset details
+//
 struct RBNodeRRsetImpl {
 public:
     RBNodeRRsetImpl(const ConstRRsetPtr& rrset) : rrset_(rrset)
     {}
 
     ConstRRsetPtr rrset_;     ///< Underlying RRset
+    scoped_ptr<vector<AdditionalNodeInfo> > additionals_;
 };
 
 RBNodeRRset::RBNodeRRset(const ConstRRsetPtr& rrset) :
@@ -239,6 +247,14 @@ RBNodeRRset::getUnderlyingRRset() const {
     return (impl_->rrset_);
 }
 
+void
+RBNodeRRset::addAdditionalNode(const AdditionalNodeInfo& additional) {
+    if (!impl_->additionals_) {
+        impl_->additionals_.reset(new vector<AdditionalNodeInfo>);
+    }
+    impl_->additionals_->push_back(additional);
+}
+
 } // end of internal
 
 class InMemoryZoneFinder::Context_ : public ZoneFinder::Context {
@@ -253,6 +269,13 @@ public:
              const vector<ConstRRsetPtr> &all_set) :
         ZoneFinder::Context(finder, options, result, all_set)
     {}
+
+protected:
+    virtual void getAdditionalImpl(const vector<RRType>& requested_types,
+                                   vector<ConstRRsetPtr>& result)
+    {
+        ZoneFinder::Context::getAdditionalImpl(requested_types, result);
+    }
 };
 
 // Private data and hidden methods of InMemoryZoneFinder
@@ -565,7 +588,9 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
      * access is without the impl_-> and it will get inlined anyway.
      */
     // Implementation of InMemoryZoneFinder::add
-    result::Result add(const ConstRRsetPtr& rawrrset, ZoneData& zone_data) {
+    result::Result add(const ConstRRsetPtr& rawrrset, ZoneData& zone_data,
+                       vector<internal::RBNodeRRset*>* need_additionals)
+    {
         // Sanitize input.  This will cause an exception to be thrown
         // if the input RRset is empty.
         addValidation(rawrrset);
@@ -634,6 +659,12 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                 node->setFlag(DomainNode::FLAG_CALLBACK);
             }
 
+            if (need_additionals != NULL &&
+                (rrset->getType() == RRType::NS() ||
+                 rrset->getType() == RRType::MX())) {
+                need_additionals->push_back(rrset.get());
+            }
+
             // If we've added NSEC3PARAM at zone origin, set up NSEC3 specific
             // data or check consistency with already set up parameters.
             if (rrset->getType() == RRType::NSEC3PARAM() &&
@@ -662,8 +693,10 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
      * Same as above, but it checks the return value and if it already exists,
      * it throws.
      */
-    void addFromLoad(const ConstRRsetPtr& set, ZoneData* zone_data) {
-        switch (add(set, *zone_data)) {
+    void addFromLoad(const ConstRRsetPtr& set, ZoneData* zone_data,
+                     vector<internal::RBNodeRRset*>* need_additionals)
+    {
+        switch (add(set, *zone_data, need_additionals)) {
         case result::EXIST:
             LOG_ERROR(logger, DATASRC_MEM_DUP_RRSET).
                 arg(set->getName()).arg(set->getType());
@@ -1133,20 +1166,57 @@ InMemoryZoneFinder::findNSEC3(const Name& name, bool recursive) {
 
 result::Result
 InMemoryZoneFinder::add(const ConstRRsetPtr& rrset) {
-    return (impl_->add(rrset, *impl_->zone_data_));
+    return (impl_->add(rrset, *impl_->zone_data_, NULL));
 }
 
+namespace {
+// This should eventually be more generalized.
+const Name&
+getAdditionalName(RRType rrtype, const rdata::Rdata& rdata) {
+    if (rrtype == RRType::NS()) {
+        const generic::NS& ns = dynamic_cast<const generic::NS&>(rdata);
+        return (ns.getNSName());
+    } else if (rrtype == RRType::MX()) {
+        const generic::MX& mx = dynamic_cast<const generic::MX&>(rdata);
+        return (mx.getMXName());
+    }
+    // In our usage this shouldn't happen.
+    assert(false);
+}
+
+void
+addAdditional(internal::RBNodeRRset* rrset, ZoneData* zone_data) {
+    RdataIteratorPtr rdata_iterator = rrset->getRdataIterator();
+    for (; !rdata_iterator->isLast(); rdata_iterator->next()) {
+        // TODO: zone cut consideration, empty node case
+        RBTreeNodeChain<Domain> node_path;
+        DomainNode* node = NULL;
+        DomainTree::Result result =
+            zone_data->domains_.find<void*>(
+                getAdditionalName(rrset->getType(),
+                                  rdata_iterator->getCurrent()),
+                &node, node_path, NULL, NULL);
+        if (result == DomainTree::EXACTMATCH) {
+            rrset->addAdditionalNode(node);
+        }
+    }
+}
+}
 
 void
 InMemoryZoneFinder::load(const string& filename) {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_LOAD).arg(getOrigin()).
         arg(filename);
-    // Load it into temporary zone data
+    // Load it into temporary zone data.
+    vector<internal::RBNodeRRset*> need_additionals;
     scoped_ptr<ZoneData> tmp(new ZoneData(getOrigin()));
 
     masterLoad(filename.c_str(), getOrigin(), getClass(),
                boost::bind(&InMemoryZoneFinderImpl::addFromLoad, impl_,
-                           _1, tmp.get()));
+                           _1, tmp.get(), &need_additionals));
+
+    for_each(need_additionals.begin(), need_additionals.end(),
+             boost::bind(addAdditional, _1, tmp.get()));
 
     // If the zone is NSEC3-signed, check if it has NSEC3PARAM
     if (tmp->nsec3_data_) {
