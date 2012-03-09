@@ -224,7 +224,7 @@ private:
     /// \brief A common helper to throw an exception on invalid operation.
     ///
     /// Experiments showed that throwing from each method makes the buffer
-    /// operation thrower, so we consolidate it here, and let the methods
+    /// operation slower, so we consolidate it here, and let the methods
     /// call this.
     static void throwError(const char* msg) {
         isc_throw(InvalidBufferPosition, msg);
