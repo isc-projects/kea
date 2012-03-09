@@ -17,7 +17,6 @@
 #include <dns/name.h>
 #include <dns/messagerenderer.h>
 #include <dns/oldmessagerenderer.h>
-#include <dns/expmessagerenderer.h>
 
 #include <cassert>
 #include <vector>
@@ -167,13 +166,6 @@ main(int argc, char* argv[]) {
         cout << "Benchmark for dumb MessageRenderer " << it->second << endl;
         BenchMark<DumbRendererBenchMark>(iteration,
                                          DumbRendererBenchMark(names));
-
-        typedef MessageRendererBenchMark<ExpMessageRenderer>
-            ExpRendererBenchMark;
-        cout << "Benchmark for experimental MessageRenderer " <<
-            it->second << endl;
-        BenchMark<ExpRendererBenchMark>(iteration,
-                                        ExpRendererBenchMark(names));
 
         typedef MessageRendererBenchMark<MessageRenderer> RendererBenchMark;
         cout << "Benchmark for new MessageRenderer " << it->second << endl;

@@ -97,7 +97,6 @@ libdns___la_SOURCES += message.h message.cc
 libdns___la_SOURCES += messagerenderer.h messagerenderer.cc
 # keep the following two during development for performance comparison
 libdns___la_SOURCES += oldmessagerenderer.h oldmessagerenderer.cc
-libdns___la_SOURCES += expmessagerenderer.h expmessagerenderer.cc
 libdns___la_SOURCES += name.h name.cc
 libdns___la_SOURCES += name_internal.h
 libdns___la_SOURCES += nsec3hash.h nsec3hash.cc
