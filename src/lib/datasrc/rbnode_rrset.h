@@ -24,6 +24,7 @@
 #include <util/buffer.h>
 
 #include <string>
+#include <vector>
 
 namespace isc {
 namespace datasrc {
@@ -153,6 +154,9 @@ public:
     /// \brief TBD
     /// Note: this method is mostly private to the in-memory implementation.
     void addAdditionalNode(const AdditionalNodeInfo& additional);
+
+    /// \brief TBD
+    const std::vector<AdditionalNodeInfo>* getAdditionalNodes() const;
 
     /// \brief Return underlying RRset pointer
     ///
