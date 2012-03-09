@@ -43,8 +43,17 @@ const string sshfp_txt("2 1 123456789abcdef67890123456789abcdef67890");
 const generic::SSHFP rdata_sshfp(2, 1, "123456789abcdef67890123456789abcdef67890");
 
 TEST_F(Rdata_SSHFP_Test, createFromText) {
+    // Basic test
     const generic::SSHFP rdata_sshfp2(sshfp_txt);
     EXPECT_EQ(0, rdata_sshfp2.compare(rdata_sshfp));
+
+    // With different spacing
+    const generic::SSHFP rdata_sshfp3("2 1   123456789abcdef67890123456789abcdef67890");
+    EXPECT_EQ(0, rdata_sshfp3.compare(rdata_sshfp));
+
+    // Combination of lowercase and uppercase
+    const generic::SSHFP rdata_sshfp4("2 1   123456789ABCDEF67890123456789abcdef67890");
+    EXPECT_EQ(0, rdata_sshfp4.compare(rdata_sshfp));
 }
 
 TEST_F(Rdata_SSHFP_Test, badText) {
@@ -60,9 +69,14 @@ TEST_F(Rdata_SSHFP_Test, copy) {
 }
 
 TEST_F(Rdata_SSHFP_Test, createFromWire) {
+    // Basic test
     EXPECT_EQ(0, rdata_sshfp.compare(
                   *rdataFactoryFromFile(RRType("SSHFP"), RRClass("IN"),
                                         "rdata_sshfp_fromWire")));
+    // Combination of lowercase and uppercase
+    EXPECT_EQ(0, rdata_sshfp.compare(
+                  *rdataFactoryFromFile(RRType("SSHFP"), RRClass("IN"),
+                                        "rdata_sshfp_fromWire2")));
     // TBD: more tests
 }
 
