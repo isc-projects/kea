@@ -226,12 +226,18 @@ private:
     void addNSEC3ForName(isc::datasrc::ZoneFinder& finder,
                          const isc::dns::Name& name, bool match);
 
-
     /// Set up the Query object for a new query lookup
     ///
     /// This is the first step of the process() method, and initializes
     /// the member data
     ///
+    /// \param datasrc_client The datasource wherein the answer to the query is
+    /// to be found.
+    /// \param qname The query name
+    /// \param qtype The RR type of the query
+    /// \param response The response message to store the answer to the query.
+    /// \param dnssec If the answer should include signatures and NSEC/NSEC3 if
+    ///     possible.
     void initialize(datasrc::DataSourceClient& datasrc_client,
                     const isc::dns::Name qname, const isc::dns::RRType qtype,
                     isc::dns::Message& response, bool dnssec = false);
@@ -242,7 +248,7 @@ private:
     /// that method, it should be called before it returns (if any
     /// response data is to be added)
     ///
-    /// This will take each RRset collected in answer_, authority_, and
+    /// This will take each RRset collected in answers_, authorities_, and
     /// additionals_, and add them to their corresponding sections in
     /// the response packet.
     ///
@@ -252,8 +258,8 @@ private:
     /// \brief Resets any partly built response data
     void
     reset() {
-        answer_.clear();
-        authority_.clear();
+        answers_.clear();
+        authorities_.clear();
         additionals_.clear();
     }
 
@@ -383,8 +389,8 @@ private:
     bool dnssec_;
     isc::datasrc::ZoneFinder::FindOptions dnssec_opt_;
 
-    std::vector<isc::dns::ConstRRsetPtr> answer_;
-    std::vector<isc::dns::ConstRRsetPtr> authority_;
+    std::vector<isc::dns::ConstRRsetPtr> answers_;
+    std::vector<isc::dns::ConstRRsetPtr> authorities_;
     std::vector<isc::dns::ConstRRsetPtr> additionals_;
 };
 
