@@ -894,11 +894,11 @@ Pkt6Ptr IfaceMgr::receive6() {
         return (Pkt6Ptr()); // NULL
     }
 
-    pkt->setLocalAddr(IOAddress::from_bytes(AF_INET6, reinterpret_cast<const uint8_t*>(&to_addr)));
-    pkt->setRemoteAddr(IOAddress::from_bytes(AF_INET6, reinterpret_cast<const uint8_t*>(&from.sin6_addr)));
-
+    pkt->setLocalAddr(IOAddress::from_bytes(AF_INET6,
+                      reinterpret_cast<const uint8_t*>(&to_addr)));
+    pkt->setRemoteAddr(IOAddress::from_bytes(AF_INET6,
+                       reinterpret_cast<const uint8_t*>(&from.sin6_addr)));
     pkt->setRemotePort(ntohs(from.sin6_port));
-
     pkt->setIndex(ifindex);
 
     Iface* received = getIface(pkt->getIndex());
@@ -922,15 +922,15 @@ Pkt6Ptr IfaceMgr::receive6() {
 
 uint16_t IfaceMgr::getSocket(const isc::dhcp::Pkt6& pkt) {
     Iface* iface = getIface(pkt.getIface());
-    if (!iface) {
+    if (iface == NULL) {
         isc_throw(BadValue, "Tried to find socket for non-existent interface "
                   << pkt.getIface());
     }
 
     SocketCollection::const_iterator s;
     for (s = iface->sockets_.begin(); s != iface->sockets_.end(); ++s) {
-        if ( (s->family_ == AF_INET6) &&
-             (!s->addr_.getAddress().to_v6().is_multicast()) ) {
+        if ((s->family_ == AF_INET6) &&
+            (!s->addr_.getAddress().to_v6().is_multicast())) {
             return (s->sockfd_);
         }
         /// @todo: Add more checks here later. If remote address is
@@ -944,7 +944,7 @@ uint16_t IfaceMgr::getSocket(const isc::dhcp::Pkt6& pkt) {
 
 uint16_t IfaceMgr::getSocket(isc::dhcp::Pkt4 const& pkt) {
     Iface* iface = getIface(pkt.getIface());
-    if (!iface) {
+    if (iface == NULL) {
         isc_throw(BadValue, "Tried to find socket for non-existent interface "
                   << pkt.getIface());
     }
