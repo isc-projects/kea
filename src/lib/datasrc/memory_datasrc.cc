@@ -49,6 +49,11 @@ namespace datasrc {
 
 namespace {
 // Some type aliases
+
+// RRset specified for this implementation
+typedef boost::shared_ptr<internal::RBNodeRRset> RBNodeRRsetPtr;
+typedef boost::shared_ptr<const internal::RBNodeRRset> ConstRBNodeRRsetPtr;
+
 /*
  * Each domain consists of some RRsets. They will be looked up by the
  * RRType.
@@ -60,14 +65,12 @@ namespace {
  * critical place and map has better interface for the lookups, so we use
  * that.
  */
-typedef map<RRType, ConstRRsetPtr> Domain;
+typedef map<RRType, ConstRBNodeRRsetPtr> Domain;
 typedef Domain::value_type DomainPair;
 typedef boost::shared_ptr<Domain> DomainPtr;
 // The tree stores domains
 typedef RBTree<Domain> DomainTree;
 typedef RBNode<Domain> DomainNode;
-// RRset specified for this implementation
-typedef boost::shared_ptr<internal::RBNodeRRset> RBNodeRRsetPtr;
 
 // Separate storage for NSEC3 RRs (and their RRSIGs).  It's an STL map
 // from string to the NSEC3 RRset.  The map key is the first label
@@ -257,17 +260,37 @@ RBNodeRRset::addAdditionalNode(const AdditionalNodeInfo& additional) {
 
 } // end of internal
 
+namespace {
+// Specialized version of ZoneFinder::ResultContext, which specifically
+// holds rrset in the form of RBNodeRRset.
+struct RBNodeResultContext {
+    RBNodeResultContext(ZoneFinder::Result code_param,
+                        ConstRBNodeRRsetPtr rrset_param,
+                        ZoneFinder::FindResultFlags flags_param =
+                        ZoneFinder::RESULT_DEFAULT) :
+        code(code_param), rrset(rrset_param), flags(flags_param)
+    {}
+
+    const ZoneFinder::Result code;
+    const ConstRBNodeRRsetPtr rrset;
+    const ZoneFinder::FindResultFlags flags;
+};
+}
+
 class InMemoryZoneFinder::Context_ : public ZoneFinder::Context {
 public:
     Context_(ZoneFinder& finder, ZoneFinder::FindOptions options,
-             const ZoneFinder::ResultContext& result) :
-        ZoneFinder::Context(finder, options, result)
+             const RBNodeResultContext& result) :
+        Context(finder, options,
+                ResultContext(result.code, result.rrset, result.flags))
     {}
 
     Context_(ZoneFinder& finder, ZoneFinder::FindOptions options,
-             const ZoneFinder::ResultContext& result,
+             const RBNodeResultContext& result,
              const vector<ConstRRsetPtr> &all_set) :
-        ZoneFinder::Context(finder, options, result, all_set)
+        Context(finder, options,
+                ResultContext(result.code, result.rrset, result.flags),
+                all_set)
     {}
 
 protected:
@@ -722,7 +745,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         {}
         const DomainNode* zonecut_node_;
         const DomainNode* dname_node_;
-        ConstRRsetPtr rrset_;
+        ConstRBNodeRRsetPtr rrset_;
         const FindOptions options_;
     };
 
@@ -795,18 +818,19 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
      * It is designed for wildcard case, where we create the rrsets
      * dynamically.
      */
-    static ConstRRsetPtr prepareRRset(const Name& name,
-                                      const ConstRRsetPtr& rrset,
-                                      bool rename, FindOptions options)
+    static ConstRBNodeRRsetPtr prepareRRset(const Name& name,
+                                            const ConstRBNodeRRsetPtr& rrset,
+                                            bool rename, FindOptions options)
     {
         if (rename) {
             LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_MEM_RENAME).
                 arg(rrset->getName()).arg(name);
-            RRsetPtr result(new RRset(name, rrset->getClass(),
-                                      rrset->getType(), rrset->getTTL()));
+            RRsetPtr result_base(new RRset(name, rrset->getClass(),
+                                           rrset->getType(),
+                                           rrset->getTTL()));
             for (RdataIteratorPtr i(rrset->getRdataIterator()); !i->isLast();
                  i->next()) {
-                result->addRdata(i->getCurrent());
+                result_base->addRdata(i->getCurrent());
             }
             if ((options & FIND_DNSSEC) != 0) {
                 ConstRRsetPtr sig_rrset = rrset->getRRsig();
@@ -820,10 +844,10 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                     {
                         result_sig->addRdata(i->getCurrent());
                     }
-                    result->addRRsig(result_sig);
+                    result_base->addRRsig(result_sig);
                 }
             }
-            return (result);
+            return (RBNodeRRsetPtr(new internal::RBNodeRRset(result_base)));
         } else {
             return (rrset);
         }
@@ -833,8 +857,9 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
     // account wildcard matches and DNSSEC information.  We set the NSEC/NSEC3
     // flag when applicable regardless of the find option; the caller would
     // simply ignore these when they didn't request DNSSEC related results.
-    ResultContext createFindResult(Result code, ConstRRsetPtr rrset,
-                                   bool wild = false) const
+    RBNodeResultContext createFindResult(Result code,
+                                         ConstRBNodeRRsetPtr rrset,
+                                         bool wild = false) const
     {
         FindResultFlags flags = RESULT_DEFAULT;
         if (wild) {
@@ -844,13 +869,13 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
             zone_data_->nsec3_data_) {
             flags = flags | RESULT_NSEC3_SIGNED;
         }
-        return (ZoneFinder::ResultContext(code, rrset, flags));
+        return (RBNodeResultContext(code, rrset, flags));
     }
 
     // Implementation of InMemoryZoneFinder::find
-    ZoneFinder::ResultContext find(const Name& name, RRType type,
-                                   std::vector<ConstRRsetPtr>* target,
-                                   const FindOptions options) const
+    RBNodeResultContext find(const Name& name, RRType type,
+                             std::vector<ConstRRsetPtr>* target,
+                             const FindOptions options) const
     {
         LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_FIND).arg(name).
             arg(type);
@@ -904,7 +929,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                     NameComparisonResult::SUPERDOMAIN) {
                     LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_SUPER_STOP).
                         arg(name);
-                    return (createFindResult(NXRRSET, ConstRRsetPtr()));
+                    return (createFindResult(NXRRSET, ConstRBNodeRRsetPtr()));
                 }
 
                 /*
@@ -943,7 +968,8 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                         getLastComparisonResult().getCommonLabels() > 1) {
                         LOG_DEBUG(logger, DBG_TRACE_DATA,
                                      DATASRC_MEM_WILDCARD_CANCEL).arg(name);
-                        return (createFindResult(NXDOMAIN, ConstRRsetPtr(),
+                        return (createFindResult(NXDOMAIN,
+                                                 ConstRBNodeRRsetPtr(),
                                                  false));
                     }
                     const Name wildcard(Name("*").concatenate(
@@ -969,7 +995,8 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
             case DomainTree::NOTFOUND:
                 LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_NOT_FOUND).
                     arg(name);
-                return (createFindResult(NXDOMAIN, ConstRRsetPtr(), false));
+                return (createFindResult(NXDOMAIN, ConstRBNodeRRsetPtr(),
+                                         false));
             case DomainTree::EXACTMATCH: // This one is OK, handle it
                 break;
             default:
@@ -982,7 +1009,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         if (node->isEmpty()) {
             LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_DOMAIN_EMPTY).
                 arg(name);
-            return (createFindResult(NXRRSET, ConstRRsetPtr(), rename));
+            return (createFindResult(NXRRSET, ConstRBNodeRRsetPtr(), rename));
         }
 
         Domain::const_iterator found;
@@ -1014,7 +1041,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
             }
             LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_ANY_SUCCESS).
                 arg(name);
-            return (createFindResult(SUCCESS, ConstRRsetPtr(), rename));
+            return (createFindResult(SUCCESS, ConstRBNodeRRsetPtr(), rename));
         }
 
         found = node->getData()->find(type);
@@ -1040,7 +1067,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         // No exact match or CNAME.  Return NXRRSET.
         LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_NXRRSET).arg(type).
             arg(name);
-        return (createFindResult(NXRRSET, ConstRRsetPtr(), rename));
+        return (createFindResult(NXRRSET, ConstRBNodeRRsetPtr(), rename));
     }
 };
 
@@ -1082,9 +1109,9 @@ InMemoryZoneFinder::findAll(const Name& name,
                             const FindOptions options)
 {
     return (ZoneFinderContextPtr(
-                new Context_(*this, options, impl_->find(name, RRType::ANY(),
-                                                         &target, options),
-                             target)));
+                new Context_(*this, options,
+                             impl_->find(name, RRType::ANY(), &target,
+                                         options), target)));
 }
 
 ZoneFinder::FindNSEC3Result
