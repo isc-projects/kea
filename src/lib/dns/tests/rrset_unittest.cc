@@ -112,6 +112,19 @@ TEST_F(RRsetTest, setName) {
     EXPECT_EQ(test_nsname, rrset_a.getName());
 }
 
+TEST_F(RRsetTest, isSameKind) {
+    RRset rrset_w(test_name, RRClass::IN(), RRType::A(), RRTTL(3600));
+    RRset rrset_x(test_name, RRClass::IN(), RRType::A(), RRTTL(3600));
+    RRset rrset_y(test_name, RRClass::IN(), RRType::NS(), RRTTL(3600));
+    RRset rrset_z(test_name, RRClass::CH(), RRType::A(), RRTTL(3600));
+    RRset rrset_p(test_nsname, RRClass::IN(), RRType::A(), RRTTL(3600));
+
+    EXPECT_TRUE(rrset_w.isSameKind(rrset_x));
+    EXPECT_FALSE(rrset_w.isSameKind(rrset_y));
+    EXPECT_FALSE(rrset_w.isSameKind(rrset_z));
+    EXPECT_FALSE(rrset_w.isSameKind(rrset_p));
+}
+
 void
 addRdataTestCommon(const RRset& rrset) {
     EXPECT_EQ(2, rrset.getRdataCount());

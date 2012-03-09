@@ -113,6 +113,17 @@ AbstractRRset::toWire(AbstractMessageRenderer& renderer) const {
     return (rrs_written);
 }
 
+bool
+AbstractRRset::isSameKind(const AbstractRRset& other) {
+    if (getType() != other.getType())
+        return false;
+    if (getClass() != other.getClass())
+        return false;
+    if (getName() != other.getName())
+        return false;
+    return true;
+}
+
 ostream&
 operator<<(ostream& os, const AbstractRRset& rrset) {
     os << rrset.toText();
