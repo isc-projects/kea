@@ -226,6 +226,16 @@ private:
     void addNSEC3ForName(isc::datasrc::ZoneFinder& finder,
                          const isc::dns::Name& name, bool match);
 
+
+    /// Set up the Query object for a new query lookup
+    ///
+    /// This is the first step of the process() method, and initializes
+    /// the member data
+    ///
+    void initialize(datasrc::DataSourceClient& datasrc_client,
+                    const isc::dns::Name qname, const isc::dns::RRType qtype,
+                    isc::dns::Message& response, bool dnssec = false);
+
     /// \brief Fill in the response sections
     ///
     /// This is the final step of the process() method, and within
@@ -239,27 +249,21 @@ private:
     /// After they are added, the vectors are cleared.
     void createResponse();
 
+    /// \brief Resets any partly built response data
+    void
+    reset() {
+        answer_.clear();
+        authority_.clear();
+        additionals_.clear();
+    }
+
 public:
-    /// Constructor from query parameters.
+    /// Empty Constructor.
+    ///
+    /// Query parameters will be set by the call to process()
     ///
     /// This constructor never throws an exception.
     ///
-    /// \param datasrc_client The datasource wherein the answer to the query is
-    /// to be found.
-    /// \param qname The query name
-    /// \param qtype The RR type of the query
-    /// \param response The response message to store the answer to the query.
-    /// \param dnssec If the answer should include signatures and NSEC/NSEC3 if
-    ///     possible.
-    Query(const isc::datasrc::DataSourceClient* datasrc_client,
-          const isc::dns::Name& qname, const isc::dns::RRType& qtype,
-          isc::dns::Message* response, bool dnssec = false) :
-        datasrc_client_(datasrc_client), qname_(qname), qtype_(qtype),
-        response_(response), dnssec_(dnssec),
-        dnssec_opt_(dnssec ?  isc::datasrc::ZoneFinder::FIND_DNSSEC :
-                    isc::datasrc::ZoneFinder::FIND_DEFAULT)
-    {}
-
     Query() :
         datasrc_client_(NULL), qname_("."),
         qtype_(isc::dns::RRType::A()),
@@ -293,7 +297,17 @@ public:
     /// This might throw BadZone or any of its specific subclasses, but that
     /// shouldn't happen in real-life (as BadZone means wrong data, it should
     /// have been rejected upon loading).
-    void process();
+    ///
+    /// \param datasrc_client The datasource wherein the answer to the query is
+    /// to be found.
+    /// \param qname The query name
+    /// \param qtype The RR type of the query
+    /// \param response The response message to store the answer to the query.
+    /// \param dnssec If the answer should include signatures and NSEC/NSEC3 if
+    ///     possible.
+    void process(datasrc::DataSourceClient& datasrc_client,
+                 const isc::dns::Name qname, const isc::dns::RRType qtype,
+                 isc::dns::Message& response, bool dnssec = false);
 
     /// \short Bad zone data encountered.
     ///
@@ -360,40 +374,6 @@ public:
             BadZone(file, line, what)
         {}
     };
-
-    /// Set up the Query object for a new query lookup
-    ///
-    /// If the empty constructor, has been used to initialize the
-    /// query instance, of if the instance is reused, it should
-    /// be initialized with data to look up.
-    ///
-    void
-    initialize(datasrc::DataSourceClient* datasrc_client,
-          const isc::dns::Name qname, const isc::dns::RRType qtype,
-          isc::dns::Message* response, bool dnssec = false) {
-        datasrc_client_ = datasrc_client;
-        qname_ = qname;
-        qtype_ = qtype;
-        response_ = response;
-        dnssec_ = dnssec;
-        dnssec_opt_ = (dnssec ?  isc::datasrc::ZoneFinder::FIND_DNSSEC :
-                       isc::datasrc::ZoneFinder::FIND_DEFAULT);
-        // The call to reset() could in theory be ommitted, but
-        // seems prudent, just in case a previous process() left
-        // data in here.
-        reset();
-    }
-
-    /// \brief Reset any partly built response data
-    ///
-    /// In theory, this is not necessary if the process() call finishes
-    /// successfully, but if it does not, reset() can be used to clean up.
-    void
-    reset() {
-        answer_.clear();
-        authority_.clear();
-        additionals_.clear();
-    }
 
 private:
     const isc::datasrc::DataSourceClient* datasrc_client_;

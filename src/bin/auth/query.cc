@@ -361,11 +361,16 @@ findZone(const DataSourceClient& client, const Name& qname, RRType qtype) {
 }
 
 void
-Query::process() {
-    if (datasrc_client_ == NULL) {
-        isc_throw(isc::InvalidOperation,
-                  "Query::process() called before initialize()");
-    }
+Query::process(datasrc::DataSourceClient& datasrc_client,
+               const isc::dns::Name qname, const isc::dns::RRType qtype,
+               isc::dns::Message& response, bool dnssec) {
+    // First a bit of house cleaning
+    // The call to reset() could in theory be ommitted, but
+    // seems prudent, just in case a previous process() left
+    // data in here.
+    reset();
+    // Set up query parameters for the rest of the (internal) methods
+    initialize(datasrc_client, qname, qtype, response, dnssec);
 
     // Found a zone which is the nearest ancestor to QNAME
     const DataSourceClient::FindResult result = findZone(*datasrc_client_,
@@ -552,6 +557,19 @@ Query::process() {
     }
 
     createResponse();
+}
+
+void
+Query::initialize(datasrc::DataSourceClient& datasrc_client,
+                  const isc::dns::Name qname, const isc::dns::RRType qtype,
+                  isc::dns::Message& response, bool dnssec) {
+    datasrc_client_ = &datasrc_client;
+    qname_ = qname;
+    qtype_ = qtype;
+    response_ = &response;
+    dnssec_ = dnssec;
+    dnssec_opt_ = (dnssec ?  isc::datasrc::ZoneFinder::FIND_DNSSEC :
+                   isc::datasrc::ZoneFinder::FIND_DEFAULT);
 }
 
 void
