@@ -37,7 +37,7 @@ namespace {     // hide internal-only names from the public namespaces
 /// \brief The \c OffsetItem class represents a pointer to a name
 /// rendered in the internal buffer for the \c MessageRendererImpl object.
 ///
-/// A \c MessageRendererImpl object maintains a set of the \c OffsetItem
+/// A \c MessageRendererImpl object maintains a set of \c OffsetItem
 /// objects in a hash table, and searches the table for the position of the
 /// longest match (ancestor) name against each new name to be rendered into
 /// the buffer.
@@ -63,12 +63,17 @@ struct OffsetItem {
 /// condition check.
 template <bool CASE_SENSITIVE>
 struct NameCompare {
-    NameCompare(const OutputBuffer& buffer, InputBuffer& data_buf) :
-        buffer_(&buffer), data_buf_(&data_buf)
+    /// \brief Constructor
+    ///
+    /// \param buffer The buffer for rendering used in the caller renderer
+    /// \param name_buf An input buffer storing the wire-format data of the
+    /// name to be newly rendered (and only that data).
+    NameCompare(const OutputBuffer& buffer, InputBuffer& name_buf) :
+        buffer_(&buffer), name_buf_(&name_buf)
     {}
 
     bool operator()(const OffsetItem& item) const {
-        if (item.len_ != data_buf_->getLength()) {
+        if (item.len_ != name_buf_->getLength()) {
             return (false);
         }
 
@@ -80,13 +85,13 @@ struct NameCompare {
         // position for the subsequent label, taking into account name
         // compression, and resets item_label_len to the length of the new
         // label.
-        data_buf_->setPosition(0);
+        name_buf_->setPosition(0); // buffer can be reused, so reset position
         uint16_t item_pos = item.pos_;
         uint16_t item_label_len = 0;
         for (size_t i = 0; i < item.len_; ++i, ++item_pos) {
             item_pos = nextPosition(*buffer_, item_pos, item_label_len);
             const unsigned char ch1 = (*buffer_)[item_pos];
-            const unsigned char ch2 = data_buf_->readUint8();
+            const unsigned char ch2 = name_buf_->readUint8();
             if (CASE_SENSITIVE) {
                 if (ch1 != ch2) {
                     return (false);
@@ -128,7 +133,7 @@ private:
     }
 
     const OutputBuffer* buffer_;
-    InputBuffer* data_buf_;
+    InputBuffer* name_buf_;
 };
 }
 
@@ -151,8 +156,7 @@ struct MessageRenderer::MessageRendererImpl {
     static const size_t RESERVED_ITEMS = 16;
     static const uint16_t NO_OFFSET = 65535; // used as a marker of 'not found'
 
-    /// \brief Constructor from an output buffer.
-    ///
+    /// \brief Constructor
     MessageRendererImpl() :
         msglength_limit_(512), truncated_(false),
         compress_mode_(MessageRenderer::CASE_INSENSITIVE)
@@ -164,7 +168,7 @@ struct MessageRenderer::MessageRendererImpl {
     }
 
     uint16_t findOffset(const OutputBuffer& buffer,
-                        InputBuffer& data_buf,
+                        InputBuffer& name_buf,
                         size_t bucket_id, bool case_sensitive)
     {
         // Find a matching entry, if any.  We use some heuristics here: often
@@ -176,11 +180,11 @@ struct MessageRenderer::MessageRendererImpl {
         if (case_sensitive) {
             found = find_if(table_[bucket_id].rbegin(),
                             table_[bucket_id].rend(),
-                            NameCompare<true>(buffer, data_buf));
+                            NameCompare<true>(buffer, name_buf));
         } else {
             found = find_if(table_[bucket_id].rbegin(),
                             table_[bucket_id].rend(),
-                            NameCompare<false>(buffer, data_buf));
+                            NameCompare<false>(buffer, name_buf));
         }
         if (found != table_[bucket_id].rend()) {
             return (found->pos_);
@@ -298,8 +302,8 @@ MessageRenderer::writeName(const Name& name, const bool compress) {
         bucket_ids[nlabels_uncomp] =
             (sequence.getHash(impl_->compress_mode_) %
              MessageRendererImpl::BUCKETS);
-        InputBuffer data_buf(data, data_len);
-        ptr_offset = impl_->findOffset(getBuffer(), data_buf,
+        InputBuffer name_buf(data, data_len);
+        ptr_offset = impl_->findOffset(getBuffer(), name_buf,
                                        bucket_ids[nlabels_uncomp],
                                        case_sensitive);
         if (ptr_offset != MessageRendererImpl::NO_OFFSET) {
