@@ -30,7 +30,7 @@ const char* values[] = {
 TEST(MessageInitializerTest2, MessageLoadTest) {
     // Load the maximum number of message arrays allowed.  Some arrays may
     // already have been loaded because of static initialization from modules
-    // in libraries liked against the test program, hence the reason for the
+    // in libraries linked against the test program, hence the reason for the
     // loop starting from the value returned by getPendingCount() instead of 0.
     for (size_t i = MessageInitializer::getPendingCount();
          i < MessageInitializer::MAX_MESSAGE_ARRAYS; ++i) {

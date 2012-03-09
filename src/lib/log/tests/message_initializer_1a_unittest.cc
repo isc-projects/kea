@@ -34,4 +34,4 @@ const char* values3[] = {
 }
 
 // Register the messages for loading into the global dictionary
-MessageInitializer init_message_initializer_unittest_3(values3);
+const MessageInitializer init_message_initializer_unittest_3(values3);
