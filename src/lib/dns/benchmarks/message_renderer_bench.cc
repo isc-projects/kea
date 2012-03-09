@@ -16,7 +16,7 @@
 
 #include <dns/name.h>
 #include <dns/messagerenderer.h>
-#include <dns/oldmessagerenderer.h>
+#include <oldmessagerenderer.h>
 
 #include <cassert>
 #include <vector>

@@ -15,6 +15,11 @@
 #ifndef __OLDMESSAGERENDERER_H
 #define __OLDMESSAGERENDERER_H 1
 
+//
+// This is a copy of an older version of MessageRenderer class.  It is kept
+// here to provide a benchmark target.
+//
+
 #include <dns/messagerenderer.h>
 
 namespace isc {
@@ -45,6 +50,6 @@ private:
 }
 #endif // __OLDMESSAGERENDERER_H
 
-// Local Variables: 
+// Local Variables:
 // mode: c++
-// End: 
+// End:
