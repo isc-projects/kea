@@ -42,8 +42,13 @@ namespace {     // hide internal-only names from the public namespaces
 /// longest match (ancestor) name against each new name to be rendered into
 /// the buffer.
 struct OffsetItem {
-    OffsetItem(size_t pos, size_t len) : pos_(pos), len_(len)
+    OffsetItem(size_t hash, size_t pos, size_t len) :
+        hash_(hash), pos_(pos), len_(len)
     {}
+
+    /// The hash value for the stored name calculated by LabelSequence.getHash.
+    /// This will help make name comparison in \c NameCompare more efficient.
+    size_t hash_;
 
     /// The position (offset from the beginning) in the buffer where the
     /// name starts.
@@ -68,12 +73,16 @@ struct NameCompare {
     /// \param buffer The buffer for rendering used in the caller renderer
     /// \param name_buf An input buffer storing the wire-format data of the
     /// name to be newly rendered (and only that data).
-    NameCompare(const OutputBuffer& buffer, InputBuffer& name_buf) :
-        buffer_(&buffer), name_buf_(&name_buf)
+    /// \param hash The hash value for the name.
+    NameCompare(const OutputBuffer& buffer, InputBuffer& name_buf,
+                size_t hash) :
+        buffer_(&buffer), name_buf_(&name_buf), hash_(hash)
     {}
 
     bool operator()(const OffsetItem& item) const {
-        if (item.len_ != name_buf_->getLength()) {
+        // Trivial inequality check.  If either the hash or the total length
+        // doesn't match, the names are obviously different.
+        if (item.hash_  != hash_ || item.len_ != name_buf_->getLength()) {
             return (false);
         }
 
@@ -134,6 +143,7 @@ private:
 
     const OutputBuffer* buffer_;
     InputBuffer* name_buf_;
+    const size_t hash_;
 };
 }
 
@@ -167,24 +177,24 @@ struct MessageRenderer::MessageRendererImpl {
         }
     }
 
-    uint16_t findOffset(const OutputBuffer& buffer,
-                        InputBuffer& name_buf,
-                        size_t bucket_id, bool case_sensitive)
+    uint16_t findOffset(const OutputBuffer& buffer, InputBuffer& name_buf,
+                        size_t hash, bool case_sensitive)
     {
         // Find a matching entry, if any.  We use some heuristics here: often
         // the same name appers consecutively (like repeating the same owner
         // name for a single RRset), so in case there's a collision in the
         // bucket it will be more likely to find it in the tail side of the
         // bucket.
+        const size_t bucket_id = hash % BUCKETS;
         vector<OffsetItem>::const_reverse_iterator found;
         if (case_sensitive) {
             found = find_if(table_[bucket_id].rbegin(),
                             table_[bucket_id].rend(),
-                            NameCompare<true>(buffer, name_buf));
+                            NameCompare<true>(buffer, name_buf, hash));
         } else {
             found = find_if(table_[bucket_id].rbegin(),
                             table_[bucket_id].rend(),
-                            NameCompare<false>(buffer, name_buf));
+                            NameCompare<false>(buffer, name_buf, hash));
         }
         if (found != table_[bucket_id].rend()) {
             return (found->pos_);
@@ -192,8 +202,8 @@ struct MessageRenderer::MessageRendererImpl {
         return (NO_OFFSET);
     }
 
-    void addOffset(size_t bucket_id, size_t offset, size_t len) {
-        table_[bucket_id].push_back(OffsetItem(offset, len));
+    void addOffset(size_t hash, size_t offset, size_t len) {
+        table_[hash % BUCKETS].push_back(OffsetItem(hash, offset, len));
     }
 
     // The hash table for the (offset + position in the buffer) entries
@@ -280,12 +290,9 @@ MessageRenderer::writeName(const Name& name, const bool compress) {
     size_t data_len;
     const char* data;
 
-    // We store hash bucket ID for label sequences derived from the name
-    // in order to avoid calculating the hash twice.  The assert ensures
-    // uint8_t is sufficient for our table.
-    uint8_t bucket_ids[Name::MAX_LABELS];
-    BOOST_STATIC_ASSERT((1 << numeric_limits<uint8_t>::digits) >
-                        MessageRendererImpl::BUCKETS);
+    // We'll store hash for label sequences derived from the name in order to
+    // avoid calculating the hash twice.
+    size_t seq_hashes[Name::MAX_LABELS];
 
     // Find the offset in the offset table whose name gives the longest
     // match against the name to be rendered.
@@ -299,12 +306,10 @@ MessageRenderer::writeName(const Name& name, const bool compress) {
             ++nlabels_uncomp;
             break;
         }
-        bucket_ids[nlabels_uncomp] =
-            (sequence.getHash(impl_->compress_mode_) %
-             MessageRendererImpl::BUCKETS);
+        seq_hashes[nlabels_uncomp] = sequence.getHash(impl_->compress_mode_);
         InputBuffer name_buf(data, data_len);
         ptr_offset = impl_->findOffset(getBuffer(), name_buf,
-                                       bucket_ids[nlabels_uncomp],
+                                       seq_hashes[nlabels_uncomp],
                                        case_sensitive);
         if (ptr_offset != MessageRendererImpl::NO_OFFSET) {
             break;
@@ -343,9 +348,9 @@ MessageRenderer::writeName(const Name& name, const bool compress) {
         if (offset > Name::MAX_COMPRESS_POINTER) {
             break;
         }
-        // Store the <offset, len> pair to the table.  We already know the
-        // hash value and the bucket ID derived from it.
-        impl_->addOffset(bucket_ids[i], offset, seqlen);
+        // Store the tuple of <hash, offset, len> to the table.  Note that we
+        // already know the hash value for each name.
+        impl_->addOffset(seq_hashes[i], offset, seqlen);
         offset += (label_len + 1);
         seqlen -= (label_len + 1);
     }
