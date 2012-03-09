@@ -16,10 +16,11 @@
 #define __NAME_INTERNAL_H 1
 
 // This is effectively a "private" namespace for the Name class implementation,
-// but exposed publicly so the definitions in it can be shared with the
-// LabelSequence class.  It's not expected to be used even by other modules
-// of this library, much less by normal applications.  This header file is
-// therefore not expected to be installed as part of the library.
+// but exposed publicly so the definitions in it can be shared with other
+// modules of the library (as of its introduction, used by LabelSequence and
+// MessageRenderer).  It's not expected to be used even by normal applications.
+// This header file is therefore not expected to be installed as part of the
+// library.
 namespace isc {
 namespace dns {
 namespace name {
