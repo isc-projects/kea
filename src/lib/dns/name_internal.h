@@ -21,6 +21,12 @@
 // MessageRenderer).  It's not expected to be used even by normal applications.
 // This header file is therefore not expected to be installed as part of the
 // library.
+//
+// Note: if it turns out that we need this shortcut for many other places
+// we may even want to make it expose to other BIND 10 modules, but for now
+// we'll keep it semi-private (note also that except for very performance
+// sensitive applications the standard std::tolower() function should be just
+// sufficient).
 namespace isc {
 namespace dns {
 namespace name {
