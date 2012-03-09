@@ -456,7 +456,7 @@ protected:
     /// @param control_buf_len buffer length
     /// @param pkt packet to be sent
     void os_send4(struct msghdr& m, boost::scoped_array<char>& control_buf,
-                        size_t control_buf_len, const Pkt4Ptr& pkt);
+                  size_t control_buf_len, const Pkt4Ptr& pkt);
 
     /// @brief OS-specific operations during IPv4 packet reception
     ///
@@ -468,7 +468,7 @@ protected:
 
 private:
 
-    /// creates a single instance of this class (a singleton implementation)
+    /// @brief Creates a single instance of this class (a singleton implementation)
     static void
     instanceCreate();
 
