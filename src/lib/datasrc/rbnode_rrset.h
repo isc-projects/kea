@@ -35,6 +35,8 @@ namespace internal {
 /// so that the In-memory data source implementation can refer to it.
 struct RBNodeRRsetImpl;
 
+struct AdditionalNodeInfo;
+
 /// \brief Special RRset for optimizing memory datasource requirement
 ///
 /// To speed up the performance of the in-memory data source, at load time
@@ -147,6 +149,10 @@ public:
     virtual void addRRsig(const isc::dns::RRsetPtr& sigs);
 
     virtual void removeRRsig();
+
+    /// \brief TBD
+    /// Note: this method is mostly private to the in-memory implementation.
+    void addAdditionalNode(const AdditionalNodeInfo& additional);
 
     /// \brief Return underlying RRset pointer
     ///
