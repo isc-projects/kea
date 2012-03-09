@@ -18,6 +18,7 @@ rdatarender_bench_LDADD += $(top_builddir)/src/lib/util/libutil.la
 rdatarender_bench_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 
 message_renderer_bench_SOURCES = message_renderer_bench.cc
+message_renderer_bench_SOURCES += oldmessagerenderer.h oldmessagerenderer.cc
 message_renderer_bench_LDADD = $(top_builddir)/src/lib/dns/libdns++.la
 message_renderer_bench_LDADD += $(top_builddir)/src/lib/util/libutil.la
 message_renderer_bench_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
