@@ -926,7 +926,7 @@ class XfroutServer:
         self._notifier.dispatcher()
 
     def send_notify(self, zone_name, zone_class):
-        self._notifier.send_notify(zone_name, zone_class)
+        return self._notifier.send_notify(zone_name, zone_class)
 
     def config_handler(self, new_config):
         '''Update config data. TODO. Do error check'''
@@ -982,10 +982,16 @@ class XfroutServer:
         elif cmd == notify_out.ZONE_NEW_DATA_READY_CMD:
             zone_name = args.get('zone_name')
             zone_class = args.get('zone_class')
-            if zone_name and zone_class:
+            if not zone_class:
+                zone_class = str(RRClass.IN())
+            if zone_name:
                 logger.info(XFROUT_NOTIFY_COMMAND, zone_name, zone_class)
-                self.send_notify(zone_name, zone_class)
-                answer = create_answer(0)
+                if self.send_notify(zone_name, zone_class):
+                    answer = create_answer(0)
+                else:
+                    zonestr = notify_out.format_zone_str(Name(zone_name),
+                                                         zone_class)
+                    answer = create_answer(1, "Unknown zone: " + zonestr)
             else:
                 answer = create_answer(1, "Bad command parameter:" + str(args))
 
