@@ -1,0 +1,9 @@
+/console_test.sh
+/destination_test.sh
+/init_logger_test
+/init_logger_test.sh
+/local_file_test.sh
+/logger_example
+/run_unittests
+/severity_test.sh
+/tempdir.h
