@@ -19,6 +19,7 @@
 #include <dns/labelsequence.h>
 #include <dns/messagerenderer.h>
 
+#include <boost/array.hpp>
 #include <boost/static_assert.hpp>
 
 #include <limits>
@@ -216,6 +217,9 @@ struct MessageRenderer::MessageRendererImpl {
     bool truncated_;
     /// The name compression mode.
     CompressMode compress_mode_;
+
+    // Placeholder for hash values as they are calculated in writeName().
+    boost::array<size_t, Name::MAX_LABELS> seq_hashes_;
 };
 
 MessageRenderer::MessageRenderer() :
@@ -290,10 +294,6 @@ MessageRenderer::writeName(const Name& name, const bool compress) {
     size_t data_len;
     const char* data;
 
-    // We'll store hash for label sequences derived from the name in order to
-    // avoid calculating the hash twice.
-    size_t seq_hashes[Name::MAX_LABELS];
-
     // Find the offset in the offset table whose name gives the longest
     // match against the name to be rendered.
     size_t nlabels_uncomp;
@@ -306,10 +306,12 @@ MessageRenderer::writeName(const Name& name, const bool compress) {
             ++nlabels_uncomp;
             break;
         }
-        seq_hashes[nlabels_uncomp] = sequence.getHash(impl_->compress_mode_);
+        // write with range check for safety
+        impl_->seq_hashes_.at(nlabels_uncomp) =
+            sequence.getHash(impl_->compress_mode_);
         InputBuffer name_buf(data, data_len);
         ptr_offset = impl_->findOffset(getBuffer(), name_buf,
-                                       seq_hashes[nlabels_uncomp],
+                                       impl_->seq_hashes_[nlabels_uncomp],
                                        case_sensitive);
         if (ptr_offset != MessageRendererImpl::NO_OFFSET) {
             break;
@@ -350,7 +352,7 @@ MessageRenderer::writeName(const Name& name, const bool compress) {
         }
         // Store the tuple of <hash, offset, len> to the table.  Note that we
         // already know the hash value for each name.
-        impl_->addOffset(seq_hashes[i], offset, seqlen);
+        impl_->addOffset(impl_->seq_hashes_[i], offset, seqlen);
         offset += (label_len + 1);
         seqlen -= (label_len + 1);
     }
