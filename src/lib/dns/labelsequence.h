@@ -42,16 +42,6 @@ namespace dns {
 ///
 class LabelSequence {
 public:
-    /// \brief The default constructor
-    ///
-    /// A LabelSequence is expected to be stored in STL containers and
-    /// has to have a default constructor.  A LabelSequence object generated
-    /// by this constructor is only usable as a placeholder; method calls
-    /// on such an object can return a bogus value or result in crash.
-    /// It's caller's responsibility to avoid such invaild usage.
-    LabelSequence() : name_(NULL), first_label_(0), last_label_(0)
-    {}
-
     /// \brief Constructs a LabelSequence for the given name
     ///
     /// \note The associated Name MUST remain in scope during the lifetime
@@ -60,7 +50,7 @@ public:
     /// to the labels in the Name object).
     ///
     /// \param name The Name to construct a LabelSequence for
-    LabelSequence(const Name& name): name_(&name),
+    LabelSequence(const Name& name): name_(name),
                                      first_label_(0),
                                      last_label_(name.getLabelCount())
     {}
@@ -142,7 +132,7 @@ public:
     /// LabelSequence itself.
     ///
     /// \return Reference to the original Name object
-    const Name& getName() const { return (*name_); }
+    const Name& getName() const { return (name_); }
 
     /// \brief Calculate a simple hash for the label sequence.
     ///
@@ -175,7 +165,7 @@ public:
     bool isAbsolute() const;
 
 private:
-    const Name* name_;
+    const Name& name_;
     size_t first_label_;
     size_t last_label_;
 };
