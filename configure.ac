@@ -512,38 +512,38 @@ if test "${botan_config}" != "yes" ; then
             BOTAN_CONFIG="${botan_config}"
         fi
     else
-        AC_MSG_ERROR([${botan_config} not found or not executable])
+            AC_MSG_ERROR([--with-botan-config should point to a botan-config program and not a directory (${botan_config})])
     fi
 else
-    # First see if pkg-config knows of it.
-    # Unfortunately, the botan.pc files have their minor version in them
-    # too, so we need to try them one by one
     BOTAN_CONFIG=""
-    AC_PATH_PROG([PKG_CONFIG], [pkg-config])
-    if test "$PKG_CONFIG" != "" ; then
-        BOTAN_VERSIONS="botan-1.10 botan-1.9 botan-1.8"
-        for version in $BOTAN_VERSIONS; do
-            AC_MSG_CHECKING([Checking botan version with pkg-config $version])
-            
-            if [ $PKG_CONFIG --exists ${version} ]; then
-                AC_MSG_RESULT([found])
-                BOTAN_CONFIG="$PKG_CONFIG ${version}"
-                break
-            else
-                AC_MSG_RESULT([not found])
-            fi
-        done
-    fi
-    # If we had no pkg-config, or it didn't know about botan, use botan-config
-    # Of course, botan-config can have several different names as well...
+    # first try several possible names of the config script
+    # (1.8 is there just in case)
+    BOTAN_CONFIG_VERSIONS="botan-config-1.10 botan-config-1.9 botan-config-1.8 botan-config"
+    for botan_config in $BOTAN_CONFIG_VERSIONS; do
+        AC_PATH_PROG([BOTAN_CONFIG], [${botan_config}])
+        if test -x "${BOTAN_CONFIG}" ; then
+            break
+        fi
+    done
     if test "$BOTAN_CONFIG" = "" ; then
-        BOTAN_CONFIG_VERSIONS="botan-config-1.10 botan-config-1.9 botan-config-1.8 botan-config"
-        for botan_config in $BOTAN_CONFIG_VERSIONS; do
-            AC_PATH_PROG([BOTAN_CONFIG], [${botan_config}])
-            if test -x "${BOTAN_CONFIG}" ; then
-                break
-            fi
-        done
+        AC_PATH_PROG([PKG_CONFIG], [pkg-config])
+        if test "$PKG_CONFIG" != "" ; then
+            # Ok so no script found, see if pkg-config knows of it.
+            # Unfortunately, the botan.pc files also have their minor version
+            # in their name, so we need to try them one by one
+            BOTAN_VERSIONS="botan-1.10 botan-1.9 botan-1.8"
+            for version in $BOTAN_VERSIONS; do
+                AC_MSG_CHECKING([Checking botan version with pkg-config $version])
+                
+                if [ $PKG_CONFIG --exists ${version} ]; then
+                    AC_MSG_RESULT([found])
+                    BOTAN_CONFIG="$PKG_CONFIG ${version}"
+                    break
+                else
+                    AC_MSG_RESULT([not found])
+                fi
+            done
+        fi
     fi
 fi
 if test "x${BOTAN_CONFIG}" != "x"
