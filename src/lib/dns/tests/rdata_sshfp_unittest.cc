@@ -26,6 +26,7 @@
 
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
+#include <boost/algorithm/string.hpp>
 
 using isc::UnitTestUtil;
 using namespace std;
@@ -66,7 +67,7 @@ TEST_F(Rdata_SSHFP_Test, createFromWire) {
 }
 
 TEST_F(Rdata_SSHFP_Test, toText) {
-    EXPECT_EQ("2 1 123456789abcdef67890123456789abcdef67890", rdata_sshfp.toText());
+    EXPECT_TRUE(boost::iequals(sshfp_txt, rdata_sshfp.toText()));
 }
 
 TEST_F(Rdata_SSHFP_Test, getSSHFPAlgorithmNumber) {
