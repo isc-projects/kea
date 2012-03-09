@@ -56,11 +56,16 @@ struct OffsetItem {
 /// \brief The \c NameCompare class is a functor that checks equality
 /// between the name corresponding to an \c OffsetItem object and the name
 /// consists of labels represented by a \c LabelSequence object.
+///
+/// Template parameter CASE_SENSITIVE determines whether to ignore the case
+/// of the names.  This policy doesn't change throughout the lifetime of
+/// this object, so we separate these using template to avoid unnecessary
+/// condition check.
+template <bool CASE_SENSITIVE>
 struct NameCompare {
     NameCompare(const OutputBuffer& buffer, const char* name_data,
-                size_t name_len, bool case_sensitive) :
-        buffer_(&buffer), name_data_(name_data), name_len_(name_len),
-        case_sensitive_(case_sensitive)
+                size_t name_len) :
+        buffer_(&buffer), name_data_(name_data), name_len_(name_len)
     {}
 
     ///
@@ -91,7 +96,7 @@ struct NameCompare {
             item_pos = nextPosition(*buffer_, item_pos, item_label_len);
             const unsigned char ch1 = (*buffer_)[item_pos];
             const unsigned char ch2 = name_data_[i];
-            if (case_sensitive_) {
+            if (CASE_SENSITIVE) {
                 if (ch1 != ch2) {
                     return (false);
                 }
@@ -134,7 +139,6 @@ private:
     const OutputBuffer* buffer_;
     const char* const name_data_;
     const size_t name_len_;
-    const bool case_sensitive_;
 };
 }
 
@@ -171,19 +175,23 @@ struct MessageRenderer::MessageRendererImpl {
 
     uint16_t findOffset(const OutputBuffer& buffer,
                         const char* name_data, size_t name_len,
-                        size_t bucket_id) const
+                        size_t bucket_id, bool case_sensitive)
     {
-        const bool case_sensitive = (compress_mode_ ==
-                                     MessageRenderer::CASE_SENSITIVE);
-
         // Find a matching entry, if any.  We use some heuristics here: often
         // the same name appers consecutively (like repeating the same owner
         // name for a single RRset), so in case there's a collision in the
         // bucket it will be more likely to find it in the tail side of the
         // bucket.
-        vector<OffsetItem>::const_reverse_iterator found =
-            find_if(table_[bucket_id].rbegin(), table_[bucket_id].rend(),
-                    NameCompare(buffer, name_data, name_len, case_sensitive));
+        vector<OffsetItem>::const_reverse_iterator found;
+        if (case_sensitive) {
+            found = find_if(table_[bucket_id].rbegin(),
+                            table_[bucket_id].rend(),
+                            NameCompare<true>(buffer, name_data, name_len));
+        } else {
+            found = find_if(table_[bucket_id].rbegin(),
+                            table_[bucket_id].rend(),
+                            NameCompare<false>(buffer, name_data, name_len));
+        }
         if (found != table_[bucket_id].rend()) {
             return (found->pos_);
         }
@@ -289,6 +297,8 @@ MessageRenderer::writeName(const Name& name, const bool compress) {
     // match against the name to be rendered.
     size_t nlabels_uncomp;
     uint16_t ptr_offset = MessageRendererImpl::NO_OFFSET;
+    const bool case_sensitive = (impl_->compress_mode_ ==
+                                 MessageRenderer::CASE_SENSITIVE);
     for (nlabels_uncomp = 0; nlabels_uncomp < nlabels; ++nlabels_uncomp) {
         data = sequence.getData(&data_len);
         if (data_len == 1) { // trailing dot.
@@ -299,7 +309,8 @@ MessageRenderer::writeName(const Name& name, const bool compress) {
             (sequence.getHash(impl_->compress_mode_) %
              MessageRendererImpl::BUCKETS);
         ptr_offset = impl_->findOffset(getBuffer(), data, data_len,
-                                       bucket_ids[nlabels_uncomp]);
+                                       bucket_ids[nlabels_uncomp],
+                                       case_sensitive);
         if (ptr_offset != MessageRendererImpl::NO_OFFSET) {
             break;
         }
