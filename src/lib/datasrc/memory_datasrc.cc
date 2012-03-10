@@ -1289,7 +1289,7 @@ InMemoryZoneFinder::add(const ConstRRsetPtr& rrset) {
 
 namespace {
 // This should eventually be more generalized.
-const Name&
+const Name
 getAdditionalName(RRType rrtype, const rdata::Rdata& rdata) {
     if (rrtype == RRType::NS()) {
         const generic::NS& ns = dynamic_cast<const generic::NS&>(rdata);
