@@ -124,6 +124,12 @@ struct ZoneData {
 
 namespace internal {
 
+/// \brief An encapsulation type for a pointer of an additional node
+/// associated with an \c RBNodeRRset object.
+///
+/// Currently this is defined as a structure only so that it can declared
+/// in rbnode_rrset.h; this is essentially a pointer to \c DomainNode.
+/// In future, however, this structure may have other attributes.
 struct AdditionalNodeInfo {
     AdditionalNodeInfo(DomainNode* node) : node_(node) {}
     DomainNode* node_;
@@ -263,6 +269,7 @@ RBNodeRRset::getUnderlyingRRset() const {
 
 void
 RBNodeRRset::addAdditionalNode(const AdditionalNodeInfo& additional) {
+    // Lazy initialization
     if (!impl_->additionals_) {
         impl_->additionals_.reset(new vector<AdditionalNodeInfo>);
     }
@@ -300,7 +307,7 @@ struct RBNodeResultContext {
 };
 }
 
-class InMemoryZoneFinder::Context_ : public ZoneFinder::Context {
+class InMemoryZoneFinder::Context : public ZoneFinder::Context {
 public:
     /// \brief Constructor.
     ///
@@ -308,10 +315,11 @@ public:
     /// For (successful) type ANY query, found_node points to the
     /// corresponding RB node, which is recorded within this specialized
     /// context.
-    Context_(ZoneFinder& finder, ZoneFinder::FindOptions options,
-             const RBNodeResultContext& result) :
-        Context(finder, options,
-                ResultContext(result.code, result.rrset, result.flags)),
+    Context(ZoneFinder& finder, ZoneFinder::FindOptions options,
+            const RBNodeResultContext& result) :
+        ZoneFinder::Context(finder, options,
+                            ResultContext(result.code, result.rrset,
+                                          result.flags)),
         rrset(result.rrset), found_node(result.found_node)
     {}
 
@@ -320,7 +328,13 @@ protected:
                                    vector<ConstRRsetPtr>& result)
     {
         if (!rrset) {
-            assert(found_node != NULL && !found_node->isEmpty());
+            // In this case this context should encapsulate the result of
+            // findAll() and found_node should point to a valid answer node.
+            if (found_node == NULL || found_node->isEmpty()) {
+                isc_throw(isc::Unexpected,
+                          "Invalid call to in-memory getAdditional: caller's "
+                          "bug or broken zone");
+            }
             BOOST_FOREACH(const DomainPair& dom_it, *found_node->getData()) {
                 getAdditionalForRRset(dom_it.second, requested_types,
                                       result);
@@ -329,10 +343,15 @@ protected:
             getAdditionalForRRset(rrset, requested_types, result);
         }
     }
+
 private:
+    // Retrieve additional RRsets for a given RRset associated in the context.
+    // The process is straightforward: it examines the link to
+    // AdditionalNodeInfo vector (if set), and find RRsets of the requested
+    // type for each node.
     void getAdditionalForRRset(ConstRBNodeRRsetPtr rrset,
                                const vector<RRType>& requested_types,
-                               vector<ConstRRsetPtr>& result)
+                               vector<ConstRRsetPtr>& result) const
     {
         const vector<AdditionalNodeInfo>* additionals_ =
             rrset->getAdditionalNodes();
@@ -352,7 +371,7 @@ private:
                 Domain::const_iterator found =
                     additional.node_->getData()->find(rrtype);
                 if (found != additional.node_->getData()->end()) {
-                    // TBD: wildcard consideration
+                    // TODO: wildcard consideration
                     result.push_back(found->second);
                 }
             }
@@ -1166,8 +1185,8 @@ InMemoryZoneFinder::find(const Name& name, const RRType& type,
                          const FindOptions options)
 {
     return (ZoneFinderContextPtr(
-                new Context_(*this, options, impl_->find(name, type, NULL,
-                                                         options))));
+                new Context(*this, options, impl_->find(name, type, NULL,
+                                                        options))));
 }
 
 ZoneFinderContextPtr
@@ -1176,8 +1195,8 @@ InMemoryZoneFinder::findAll(const Name& name,
                             const FindOptions options)
 {
     return (ZoneFinderContextPtr(
-                new Context_(*this, options, impl_->find(name, RRType::ANY(),
-                                                         &target, options))));
+                new Context(*this, options, impl_->find(name, RRType::ANY(),
+                                                        &target, options))));
 }
 
 ZoneFinder::FindNSEC3Result
@@ -1340,7 +1359,9 @@ void
 InMemoryZoneFinder::load(const string& filename) {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_LOAD).arg(getOrigin()).
         arg(filename);
-    // Load it into temporary zone data.
+    // Load it into temporary zone data.  As we build the zone, we record
+    // the (RBNode)RRsets that needs to be associated with additional
+    // information in 'need_additionals'.
     vector<RBNodeRRset*> need_additionals;
     scoped_ptr<ZoneData> tmp(new ZoneData(getOrigin()));
 
@@ -1348,6 +1369,8 @@ InMemoryZoneFinder::load(const string& filename) {
                boost::bind(&InMemoryZoneFinderImpl::addFromLoad, impl_,
                            _1, tmp.get(), &need_additionals));
 
+    // For each RRset in need_additionals, identify the corresponding
+    // RBnode for additional processing and associate it in the RRset.
     for_each(need_additionals.begin(), need_additionals.end(),
              boost::bind(addAdditional, _1, tmp.get()));
 

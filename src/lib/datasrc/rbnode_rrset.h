@@ -36,6 +36,9 @@ namespace internal {
 /// so that the In-memory data source implementation can refer to it.
 struct RBNodeRRsetImpl;
 
+// Forward declaration of an opaque data type defined and used within the
+// implementation.  This is public only because it needs to be used outside
+// of the \c RBNodeRRset class, but conceptually this is a private type.
 struct AdditionalNodeInfo;
 
 /// \brief Special RRset for optimizing memory datasource requirement
@@ -151,11 +154,31 @@ public:
 
     virtual void removeRRsig();
 
-    /// \brief TBD
-    /// Note: this method is mostly private to the in-memory implementation.
+    /// \brief Associate a link to an RB node of the additional record.
+    ///
+    /// This method adds a given opaque object that holds a link to an RB node
+    /// of the underlying in-memory data source that is corresponding to an
+    /// RDATA of this RRset.
+    ///
+    /// This method is exposed as public so it can be used within the in-memory
+    /// data source implementation, and only for that purpose.
+    ///
+    /// \param additional An opaque \c AdditionalNodeInfo object to be
+    /// associated with this RRset.
     void addAdditionalNode(const AdditionalNodeInfo& additional);
 
-    /// \brief TBD
+    /// \brief Return a pointer to the list (vector) of additional RB nodes.
+    ///
+    /// This method returns a pointer to a vector storing the opaque
+    /// \c AdditionalNodeInfo object that may be possibly set in this RRset.
+    /// Not all RRsets are associated with additional nodes; if no
+    /// such node is stored, this method returns NULL.
+    ///
+    /// Like \c addAdditionalNode(), this method is exposed as public only for
+    /// the in-memory data source implementation.
+    ///
+    /// \return A pointer to the associated vector of \c AdditionalNodeInfo;
+    /// NULL if no additional nodes are associated to this RRset.
     const std::vector<AdditionalNodeInfo>* getAdditionalNodes() const;
 
     /// \brief Return underlying RRset pointer
