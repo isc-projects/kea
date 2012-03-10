@@ -88,7 +88,12 @@ const DomainNode::Flags DOMAINFLAG_GLUE = DomainNode::FLAG_USER2;
 // (upper cased) of the owner name of the corresponding NSEC3 (i.e., map
 // value).  We can use  the standard string comparison (if the comparison
 // target is also upper cased) due to the nature of NSEC3 owner names.
-typedef map<string, ConstRRsetPtr> NSEC3Map;
+//
+// Note: We maintain the RRsets in the form of RBNodeRRset even if they are
+// not stored in the RB tree.  The reason is because comparison can be
+// more efficient if we make sure all RRsets returned from this module are
+// of the same type.
+typedef map<string, ConstRBNodeRRsetPtr> NSEC3Map;
 typedef NSEC3Map::value_type NSEC3Pair;
 
 // Actual zone data: Essentially a set of zone's RRs.  This is defined as
@@ -683,7 +688,8 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
             return (result::EXIST);
         }
 
-        zone_data.nsec3_data_->map_.insert(NSEC3Pair(fst_label, rrset));
+        zone_data.nsec3_data_->map_.insert(
+            NSEC3Pair(fst_label, ConstRBNodeRRsetPtr(new RBNodeRRset(rrset))));
         return (result::SUCCESS);
     }
 
@@ -1228,7 +1234,7 @@ InMemoryZoneFinder::findNSEC3(const Name& name, bool recursive) {
     const unsigned int olabels = impl_->origin_.getLabelCount();
     const unsigned int qlabels = name.getLabelCount();
 
-    ConstRRsetPtr covering_proof; // placeholder of the next closer proof
+    ConstRBNodeRRsetPtr covering_proof; // placeholder of the next closer proof
     // Examine all names from the query name to the origin name, stripping
     // the deepest label one by one, until we find a name that has a matching
     // NSEC3 hash.
