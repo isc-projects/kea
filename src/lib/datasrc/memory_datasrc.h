@@ -223,7 +223,7 @@ private:
     ///
     /// The implementation (and any specialized interface) is completely local
     /// to the InMemoryZoneFinder class, so it's defined as private
-    class Context_;
+    class Context;
 };
 
 /// \brief A data source client that holds all necessary data in memory.
