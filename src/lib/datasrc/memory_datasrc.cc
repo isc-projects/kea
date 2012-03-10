@@ -12,16 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <algorithm>
-#include <map>
-#include <utility>
-#include <cctype>
-#include <cassert>
-
-#include <boost/shared_ptr.hpp>
-#include <boost/scoped_ptr.hpp>
-#include <boost/bind.hpp>
-
 #include <exceptions/exceptions.h>
 
 #include <dns/name.h>
@@ -38,6 +28,17 @@
 #include <datasrc/iterator.h>
 #include <datasrc/data_source.h>
 #include <datasrc/factory.h>
+
+#include <boost/shared_ptr.hpp>
+#include <boost/scoped_ptr.hpp>
+#include <boost/bind.hpp>
+#include <boost/foreach.hpp>
+
+#include <algorithm>
+#include <map>
+#include <utility>
+#include <cctype>
+#include <cassert>
 
 using namespace std;
 using namespace isc::dns;
@@ -279,62 +280,39 @@ namespace {
 // Specialized version of ZoneFinder::ResultContext, which specifically
 // holds rrset in the form of RBNodeRRset.
 struct RBNodeResultContext {
+    /// \brief Constructor
+    ///
+    /// The first three parameters correspond to those of
+    /// ZoneFinder::ResultContext.  If node is non NULL, it specifies the
+    /// found RBNode in the search.
     RBNodeResultContext(ZoneFinder::Result code_param,
                         ConstRBNodeRRsetPtr rrset_param,
-                        ZoneFinder::FindResultFlags flags_param =
-                        ZoneFinder::RESULT_DEFAULT) :
-        code(code_param), rrset(rrset_param), flags(flags_param)
+                        ZoneFinder::FindResultFlags flags_param,
+                        const DomainNode* node) :
+        code(code_param), rrset(rrset_param), flags(flags_param),
+        found_node(node)
     {}
 
     const ZoneFinder::Result code;
     const ConstRBNodeRRsetPtr rrset;
     const ZoneFinder::FindResultFlags flags;
+    const DomainNode* const found_node;
 };
-
-void
-insertRRset(const RRType& type, const AdditionalNodeInfo* additional,
-            vector<ConstRRsetPtr>* result)
-{
-    Domain::const_iterator found =
-        additional->node_->getData()->find(type);
-    if (found != additional->node_->getData()->end()) {
-        // TBD: wildcard consideration
-        result->push_back(found->second);
-    }
-}
-
-void
-insertRRsets(const AdditionalNodeInfo& additional,
-             const vector<RRType>* requested_types,
-             vector<ConstRRsetPtr>* result, bool glue_ok)
-{
-    assert(additional.node_ != NULL);
-    if (additional.node_->isEmpty()) {
-        return;
-    }
-    if (!glue_ok && additional.node_->getFlag(DOMAINFLAG_GLUE)) {
-        return;
-    }
-    for_each(requested_types->begin(), requested_types->end(),
-             boost::bind(insertRRset, _1, &additional, result));
-}
 }
 
 class InMemoryZoneFinder::Context_ : public ZoneFinder::Context {
 public:
+    /// \brief Constructor.
+    ///
+    /// Note that we don't have a specific constructor for the findAll() case.
+    /// For (successful) type ANY query, found_node points to the
+    /// corresponding RB node, which is recorded within this specialized
+    /// context.
     Context_(ZoneFinder& finder, ZoneFinder::FindOptions options,
              const RBNodeResultContext& result) :
         Context(finder, options,
                 ResultContext(result.code, result.rrset, result.flags)),
-        rrset(result.rrset)
-    {}
-
-    Context_(ZoneFinder& finder, ZoneFinder::FindOptions options,
-             const RBNodeResultContext& result,
-             const vector<ConstRRsetPtr> &all_set) :
-        Context(finder, options,
-                ResultContext(result.code, result.rrset, result.flags),
-                all_set)
+        rrset(result.rrset), found_node(result.found_node)
     {}
 
 protected:
@@ -342,21 +320,47 @@ protected:
                                    vector<ConstRRsetPtr>& result)
     {
         if (!rrset) {
-            ZoneFinder::Context::getAdditionalImpl(requested_types, result);
-            return;
+            assert(found_node != NULL && !found_node->isEmpty());
+            BOOST_FOREACH(const DomainPair& dom_it, *found_node->getData()) {
+                getAdditionalForRRset(dom_it.second, requested_types,
+                                      result);
+            }
+        } else {
+            getAdditionalForRRset(rrset, requested_types, result);
         }
+    }
+private:
+    void getAdditionalForRRset(ConstRBNodeRRsetPtr rrset,
+                               const vector<RRType>& requested_types,
+                               vector<ConstRRsetPtr>& result)
+    {
         const vector<AdditionalNodeInfo>* additionals_ =
             rrset->getAdditionalNodes();
         if (additionals_ == NULL) {
             return;
         }
-        for_each(additionals_->begin(), additionals_->end(),
-                 boost::bind(insertRRsets, _1, &requested_types, &result,
-                             rrset->getType() == RRType::NS()));
+        const bool glue_ok = (rrset->getType() == RRType::NS());
+        BOOST_FOREACH(const AdditionalNodeInfo& additional, *additionals_) {
+            assert(additional.node_ != NULL);
+            if (additional.node_->isEmpty()) {
+                continue;
+            }
+            if (!glue_ok && additional.node_->getFlag(DOMAINFLAG_GLUE)) {
+                continue;
+            }
+            BOOST_FOREACH(const RRType& rrtype, requested_types) {
+                Domain::const_iterator found =
+                    additional.node_->getData()->find(rrtype);
+                if (found != additional.node_->getData()->end()) {
+                    // TBD: wildcard consideration
+                    result.push_back(found->second);
+                }
+            }
+        }
     }
 
-private:
     const ConstRBNodeRRsetPtr rrset;
+    const DomainNode* const found_node;
 };
 
 // Private data and hidden methods of InMemoryZoneFinder
@@ -915,9 +919,13 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
     // account wildcard matches and DNSSEC information.  We set the NSEC/NSEC3
     // flag when applicable regardless of the find option; the caller would
     // simply ignore these when they didn't request DNSSEC related results.
+    // When the optional parameter 'node' is given (in which case it should be
+    // non NULL), it means it's a result of ANY query and the context should
+    // remember the matched node.
     RBNodeResultContext createFindResult(Result code,
                                          ConstRBNodeRRsetPtr rrset,
-                                         bool wild = false) const
+                                         bool wild = false,
+                                         const DomainNode* node = NULL) const
     {
         FindResultFlags flags = RESULT_DEFAULT;
         if (wild) {
@@ -927,7 +935,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
             zone_data_->nsec3_data_) {
             flags = flags | RESULT_NSEC3_SIGNED;
         }
-        return (RBNodeResultContext(code, rrset, flags));
+        return (RBNodeResultContext(code, rrset, flags, node));
     }
 
     // Implementation of InMemoryZoneFinder::find
@@ -1099,7 +1107,8 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
             }
             LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_ANY_SUCCESS).
                 arg(name);
-            return (createFindResult(SUCCESS, ConstRBNodeRRsetPtr(), rename));
+            return (createFindResult(SUCCESS, ConstRBNodeRRsetPtr(), rename,
+                                     node));
         }
 
         found = node->getData()->find(type);
@@ -1167,9 +1176,8 @@ InMemoryZoneFinder::findAll(const Name& name,
                             const FindOptions options)
 {
     return (ZoneFinderContextPtr(
-                new Context_(*this, options,
-                             impl_->find(name, RRType::ANY(), &target,
-                                         options), target)));
+                new Context_(*this, options, impl_->find(name, RRType::ANY(),
+                                                         &target, options))));
 }
 
 ZoneFinder::FindNSEC3Result
