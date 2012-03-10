@@ -1291,7 +1291,7 @@ addAdditional(RBNodeRRset* rrset, ZoneData* zone_data) {
         // child zone), mark the node as "GLUE", so we can selectively
         // include/exclude them when we use it.
 
-        // TODO: zone cut consideration (NS or DNAME), empty node case
+        // TODO: zone cut consideration (DNAME), empty node case, wildcard
         RBTreeNodeChain<Domain> node_path;
         DomainNode* node = NULL;
         // The callback argument is a pair of bools: the first is a flag to
@@ -1305,7 +1305,11 @@ addAdditional(RBNodeRRset* rrset, ZoneData* zone_data) {
                 &node, node_path, checkZoneCut, &callback_arg);
         if (result == DomainTree::EXACTMATCH) {
             assert(node != NULL);
-            if (callback_arg.second) {
+            if (callback_arg.second ||
+                (node->getFlag(DomainNode::FLAG_CALLBACK) &&
+                 node->getData()->find(RRType::NS()) !=
+                 node->getData()->end())) {
+                // The node is under or at a zone cut; mark it as a glue.
                 node->setFlag(DOMAINFLAG_GLUE);
             }
             rrset->addAdditionalNode(node);
