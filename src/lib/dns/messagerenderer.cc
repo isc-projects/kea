@@ -238,8 +238,8 @@ MessageRenderer::clear() {
     impl_->truncated_ = false;
     impl_->compress_mode_ = CASE_INSENSITIVE;
 
-    // Clear the hash table and name placeholders.  We reserve the minimum
-    // space for possible subsequent use of the renderer.
+    // Clear the hash table.  We reserve the minimum space for possible
+    // subsequent use of the renderer.
     for (size_t i = 0; i < MessageRendererImpl::BUCKETS; ++i) {
         if (impl_->table_[i].size() > MessageRendererImpl::RESERVED_ITEMS) {
             // Trim excessive capacity: reserve() invalidates the excessive
