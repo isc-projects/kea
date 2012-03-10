@@ -74,6 +74,14 @@ typedef boost::shared_ptr<Domain> DomainPtr;
 typedef RBTree<Domain> DomainTree;
 typedef RBNode<Domain> DomainNode;
 
+// This flag is used for additional record shortcut.  If a node has this
+// flag, it's under a zone cut for a delegation to a child zone.
+// Note: for a statically built zone this information is stable, but if we
+// change the implementation to be dynamically modifiable, it may not be
+// realistic to keep this flag update for all affected nodes, and we may
+// have to reconsider the mechanism.
+const DomainNode::Flags DOMAINFLAG_GLUE = DomainNode::FLAG_USER2;
+
 // Separate storage for NSEC3 RRs (and their RRSIGs).  It's an STL map
 // from string to the NSEC3 RRset.  The map key is the first label
 // (upper cased) of the owner name of the corresponding NSEC3 (i.e., map
@@ -298,8 +306,12 @@ insertRRset(const RRType& type, const AdditionalNodeInfo* additional,
 void
 insertRRsets(const AdditionalNodeInfo& additional,
              const vector<RRType>* requested_types,
-             vector<ConstRRsetPtr>* result)
+             vector<ConstRRsetPtr>* result, bool glue_ok)
 {
+    assert(additional.node_ != NULL);
+    if (!glue_ok && additional.node_->getFlag(DOMAINFLAG_GLUE)) {
+        return;
+    }
     for_each(requested_types->begin(), requested_types->end(),
              boost::bind(insertRRset, _1, &additional, result));
 }
@@ -336,7 +348,8 @@ protected:
             return;
         }
         for_each(additionals_->begin(), additionals_->end(),
-                 boost::bind(insertRRsets, _1, &requested_types, &result));
+                 boost::bind(insertRRsets, _1, &requested_types, &result,
+                             rrset->getType() == RRType::NS()));
     }
 
 private:
@@ -1253,19 +1266,48 @@ getAdditionalName(RRType rrtype, const rdata::Rdata& rdata) {
     assert(false);
 }
 
+bool
+checkZoneCut(const DomainNode& node, pair<bool, bool>* arg) {
+    // We are only interested in the highest zone cut information.
+    // Ignore others and continue the search.
+    if (arg->first) {
+        return (false);
+    }
+    if (node.getData()->find(RRType::NS()) != node.getData()->end()) {
+        arg->first = true;
+        arg->second = true;
+        return (false);
+    }
+    return (false);
+}
+
 void
 addAdditional(RBNodeRRset* rrset, ZoneData* zone_data) {
     RdataIteratorPtr rdata_iterator = rrset->getRdataIterator();
     for (; !rdata_iterator->isLast(); rdata_iterator->next()) {
-        // TODO: zone cut consideration, empty node case
+        // For each domain name that requires additional section processing
+        // in each RDATA, search the tree for the name and remember it if
+        // found.  If the name is under a zone cut (for a delegation to a
+        // child zone), mark the node as "GLUE", so we can selectively
+        // include/exclude them when we use it.
+
+        // TODO: zone cut consideration (NS or DNAME), empty node case
         RBTreeNodeChain<Domain> node_path;
         DomainNode* node = NULL;
-        DomainTree::Result result =
-            zone_data->domains_.find<void*>(
+        // The callback argument is a pair of bools: the first is a flag to
+        // only check the highest cut; the second one records whether the
+        // search goes under a zone cut.
+        pair<bool, bool> callback_arg(false, false);
+        const DomainTree::Result result =
+            zone_data->domains_.find(
                 getAdditionalName(rrset->getType(),
                                   rdata_iterator->getCurrent()),
-                &node, node_path, NULL, NULL);
+                &node, node_path, checkZoneCut, &callback_arg);
         if (result == DomainTree::EXACTMATCH) {
+            assert(node != NULL);
+            if (callback_arg.second) {
+                node->setFlag(DOMAINFLAG_GLUE);
+            }
             rrset->addAdditionalNode(node);
         }
     }
