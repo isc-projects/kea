@@ -234,6 +234,20 @@ TEST_P(ZoneFinderContextTest, getAdditionalDelegationAtZoneCut) {
                 result_sets_.begin(), result_sets_.end());
 }
 
+TEST_P(ZoneFinderContextTest, getAdditionalDelegationWithDname) {
+    // Delegation: One of the NS names under a DNAME delegation; another
+    // is at the delegation point; yet another is under DNAME below a zone cut.
+    // The first should be hidden.
+    ZoneFinderContextPtr ctx = finder_->find(Name("www.c.example.org"),
+                                             RRType::TXT());
+    EXPECT_EQ(ZoneFinder::DELEGATION, ctx->code);
+
+    ctx->getAdditional(REQUESTED_BOTH, result_sets_);
+    rrsetsCheck("dname.example.org. 3600 IN A 192.0.2.12\n"
+                "ns.deepdname.example.org. 3600 IN AAAA 2001:db8::9\n",
+                result_sets_.begin(), result_sets_.end());
+}
+
 TEST_P(ZoneFinderContextTest, getAdditionalMX) {
     // Similar to the previous cases, but for MX addresses.  The test zone
     // contains MX name under a zone cut.  Its address shouldn't be returned.
