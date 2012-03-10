@@ -248,6 +248,19 @@ TEST_P(ZoneFinderContextTest, getAdditionalDelegationWithDname) {
                 result_sets_.begin(), result_sets_.end());
 }
 
+TEST_P(ZoneFinderContextTest, getAdditionalDelegationWithEmptyName) {
+    // One of NS names is at an empty non terminal node.  It shouldn't cause
+    // any disruption.
+    ZoneFinderContextPtr ctx = finder_->find(Name("www.d.example.org"),
+                                             RRType::A());
+    EXPECT_EQ(ZoneFinder::DELEGATION, ctx->code);
+
+    ctx->getAdditional(REQUESTED_BOTH, result_sets_);
+    rrsetsCheck("ns1.example.org. 3600 IN A 192.0.2.1\n"
+                "ns1.example.org. 3600 IN AAAA 2001:db8::1\n",
+                result_sets_.begin(), result_sets_.end());
+}
+
 TEST_P(ZoneFinderContextTest, getAdditionalMX) {
     // Similar to the previous cases, but for MX addresses.  The test zone
     // contains MX name under a zone cut.  Its address shouldn't be returned.

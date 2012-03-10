@@ -309,6 +309,9 @@ insertRRsets(const AdditionalNodeInfo& additional,
              vector<ConstRRsetPtr>* result, bool glue_ok)
 {
     assert(additional.node_ != NULL);
+    if (additional.node_->isEmpty()) {
+        return;
+    }
     if (!glue_ok && additional.node_->getFlag(DOMAINFLAG_GLUE)) {
         return;
     }
@@ -1295,7 +1298,7 @@ addAdditional(RBNodeRRset* rrset, ZoneData* zone_data) {
         // child zone), mark the node as "GLUE", so we can selectively
         // include/exclude them when we use it.
 
-        // TODO: zone cut consideration (DNAME), empty node case, wildcard
+        // TODO: wildcard
         RBTreeNodeChain<Domain> node_path;
         DomainNode* node = NULL;
         // The callback argument is a pair of bools: the first is a flag to
@@ -1316,6 +1319,9 @@ addAdditional(RBNodeRRset* rrset, ZoneData* zone_data) {
                 // The node is under or at a zone cut; mark it as a glue.
                 node->setFlag(DOMAINFLAG_GLUE);
             }
+            // Note that node may be empty.  We should keep it in the list
+            // in case we dynamically update the tree and it becomes non empty
+            // (which is not supported yet)
             rrset->addAdditionalNode(node);
         }
     }
