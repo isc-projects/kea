@@ -325,27 +325,27 @@ public:
         ZoneFinder::Context(finder, options,
                             ResultContext(result.code, result.rrset,
                                           result.flags)),
-        rrset(result.rrset), found_node(result.found_node)
+        rrset_(result.rrset), found_node_(result.found_node)
     {}
 
 protected:
     virtual void getAdditionalImpl(const vector<RRType>& requested_types,
                                    vector<ConstRRsetPtr>& result)
     {
-        if (!rrset) {
+        if (!rrset_) {
             // In this case this context should encapsulate the result of
-            // findAll() and found_node should point to a valid answer node.
-            if (found_node == NULL || found_node->isEmpty()) {
+            // findAll() and found_node_ should point to a valid answer node.
+            if (found_node_ == NULL || found_node_->isEmpty()) {
                 isc_throw(isc::Unexpected,
                           "Invalid call to in-memory getAdditional: caller's "
                           "bug or broken zone");
             }
-            BOOST_FOREACH(const DomainPair& dom_it, *found_node->getData()) {
-                getAdditionalForRRset(dom_it.second, requested_types,
+            BOOST_FOREACH(const DomainPair& dom_it, *found_node_->getData()) {
+                getAdditionalForRRset(*dom_it.second, requested_types,
                                       result);
             }
         } else {
-            getAdditionalForRRset(rrset, requested_types, result);
+            getAdditionalForRRset(*rrset_, requested_types, result);
         }
     }
 
@@ -354,16 +354,16 @@ private:
     // The process is straightforward: it examines the link to
     // AdditionalNodeInfo vector (if set), and find RRsets of the requested
     // type for each node.
-    void getAdditionalForRRset(ConstRBNodeRRsetPtr rrset,
-                               const vector<RRType>& requested_types,
-                               vector<ConstRRsetPtr>& result) const
+    static void getAdditionalForRRset(const RBNodeRRset& rrset,
+                                      const vector<RRType>& requested_types,
+                                      vector<ConstRRsetPtr>& result)
     {
         const vector<AdditionalNodeInfo>* additionals_ =
-            rrset->getAdditionalNodes();
+            rrset.getAdditionalNodes();
         if (additionals_ == NULL) {
             return;
         }
-        const bool glue_ok = (rrset->getType() == RRType::NS());
+        const bool glue_ok = (rrset.getType() == RRType::NS());
         BOOST_FOREACH(const AdditionalNodeInfo& additional, *additionals_) {
             assert(additional.node_ != NULL);
             if (additional.node_->isEmpty()) {
@@ -383,8 +383,8 @@ private:
         }
     }
 
-    const ConstRBNodeRRsetPtr rrset;
-    const DomainNode* const found_node;
+    const ConstRBNodeRRsetPtr rrset_;
+    const DomainNode* const found_node_;
 };
 
 // Private data and hidden methods of InMemoryZoneFinder
