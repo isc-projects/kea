@@ -214,6 +214,26 @@ TEST_P(ZoneFinderContextTest, getAdditionalDelegation) {
                 result_sets_.begin(), result_sets_.end());
 }
 
+TEST_P(ZoneFinderContextTest, getAdditionalDelegationAtZoneCut) {
+    // Similar to the previous case, but one of the NS addresses is at the
+    // zone cut.
+
+    // XXX: the current database-based data source incorrectly rejects this
+    // setup (see #1771)
+    if (GetParam() == createSQLite3Client) {
+        return;
+    }
+
+    ZoneFinderContextPtr ctx = finder_->find(Name("www.b.example.org"),
+                                             RRType::SOA());
+    EXPECT_EQ(ZoneFinder::DELEGATION, ctx->code);
+
+    ctx->getAdditional(REQUESTED_BOTH, result_sets_);
+    rrsetsCheck("b.example.org. 3600 IN AAAA 2001:db8::8\n"
+                "ns.b.example.org. 3600 IN A 192.0.2.9\n",
+                result_sets_.begin(), result_sets_.end());
+}
+
 TEST_P(ZoneFinderContextTest, getAdditionalMX) {
     // Similar to the previous cases, but for MX addresses.  The test zone
     // contains MX name under a zone cut.  Its address shouldn't be returned.
@@ -237,6 +257,21 @@ TEST_P(ZoneFinderContextTest, getAdditionalMX) {
     ctx->getAdditional(REQUESTED_AAAA, result_sets_);
     rrsetsCheck("mx2.example.org. 3600 IN AAAA 2001:db8::10\n",
                 result_sets_.begin(), result_sets_.end());
+}
+
+TEST_P(ZoneFinderContextTest, getAdditionalMXAtZoneCut) {
+    // XXX: the current database-based data source incorrectly rejects this
+    // setup (see #1771)
+    if (GetParam() == createSQLite3Client) {
+        return;
+    }
+
+    ZoneFinderContextPtr ctx = finder_->find(Name("mxatcut.example.org."),
+                                             RRType::MX());
+    EXPECT_EQ(ZoneFinder::SUCCESS, ctx->code);
+
+    ctx->getAdditional(REQUESTED_BOTH, result_sets_);
+    EXPECT_TRUE(result_sets_.empty());
 }
 
 TEST_P(ZoneFinderContextTest, getAdditionalWithSIG) {
