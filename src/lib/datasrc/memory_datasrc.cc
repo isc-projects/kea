@@ -1273,7 +1273,11 @@ checkZoneCut(const DomainNode& node, pair<bool, bool>* arg) {
     if (arg->first) {
         return (false);
     }
-    if (node.getData()->find(RRType::NS()) != node.getData()->end()) {
+    // Once we encounter a delegation point due to a DNAME, anything under it
+    // should be hidden.
+    if (node.getData()->find(RRType::DNAME()) != node.getData()->end()) {
+        return (true);
+    } else if (node.getData()->find(RRType::NS()) != node.getData()->end()) {
         arg->first = true;
         arg->second = true;
         return (false);
