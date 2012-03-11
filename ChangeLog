@@ -1,3 +1,7 @@
+399.	[func]		muks
+	Add support for the SSHFP RR type (RFC 4255).
+	(Trac #1136, git ea5ac57d508a17611cfae9d9ea1c238f59d52c51)
+
 398.	[func]		jelte
 	The b10-xfrin module now logs more information on successful
 	incoming transfers. In the case of IXFR, it logs the number of
