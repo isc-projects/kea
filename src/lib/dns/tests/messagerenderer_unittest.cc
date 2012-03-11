@@ -229,5 +229,8 @@ TEST_F(MessageRendererTest, manyRRs) {
     for (size_t i = 0; i < 1000; ++i) {
         EXPECT_EQ(Name(lexical_cast<std::string>(i) + ".example"), Name(b));
     }
+    // This will trigger trimming excessive hash items.  It shouldn't cause
+    // any disruption.
+    EXPECT_NO_THROW(renderer.clear());
 }
 }
