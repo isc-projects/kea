@@ -127,6 +127,17 @@ public:
 
     virtual std::string toText() const;
 
+    virtual bool isSameKind(const AbstractRRset& other) {
+        const AbstractRRset* t = &other;
+        const RBNodeRRset* rb;
+
+        rb = dynamic_cast<const RBNodeRRset*>(t);
+        if (rb)
+          return (this == rb);
+        else
+          return AbstractRRset::isSameKind(other);
+    }
+
     virtual unsigned int toWire(
         isc::dns::AbstractMessageRenderer& renderer) const;
 
