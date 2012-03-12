@@ -359,7 +359,17 @@ public:
     virtual CompressMode getCompressMode() const;
     virtual void setTruncated();
     virtual void setLengthLimit(size_t len);
+
+    /// This implementation does not allow this call in the middle of
+    /// rendering (i.e. after at least one name is rendered) due to
+    /// restriction specific to the internal implementation.  Such attempts
+    /// will result in an \c isc::InvalidParameter exception.
+    ///
+    /// This shouldn't be too restrictive in practice; there's no known
+    /// practical case for such a mixed compression policy in a single
+    /// message.
     virtual void setCompressMode(CompressMode mode);
+
     virtual void clear();
     virtual void writeName(const Name& name, bool compress = true);
 private:
