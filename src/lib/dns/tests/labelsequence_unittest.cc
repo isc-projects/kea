@@ -264,19 +264,6 @@ TEST_F(LabelSequenceTest, isAbsolute) {
     ASSERT_TRUE(ls3.isAbsolute());
 }
 
-// A helper function that constructs the textual representation of a name label
-// character for the given char value in the form of \DDD
-string
-getNumericLabel(char ch) {
-    string result;
-    result.push_back(0x5c);     // push '\'
-    result.push_back(0x30 + ((ch / 100) % 10)); // encode the 1st digit
-    result.push_back(0x30 + ((ch / 10) % 10)); // encode the 2nd digit
-    result.push_back(0x30 + (ch % 10));        // encode the 3rd digit
-
-    return (result);
-}
-
 // The following are test data used in the getHash test below.  Normally
 // we use example/documentation domain names for testing, but in this case
 // we'd specifically like to use more realistic data, and are intentionally
