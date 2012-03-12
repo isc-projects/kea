@@ -286,6 +286,15 @@ RBNodeRRset::getAdditionalNodes() const {
     return (impl_->additionals_.get());
 }
 
+void
+RBNodeRRset::copyAdditionalNodes(RBNodeRRset& dst) const {
+    if (impl_->additionals_) {
+        dst.impl_->additionals_.reset(
+            new vector<AdditionalNodeInfo>(impl_->additionals_->begin(),
+                                           impl_->additionals_->end()));
+    }
+}
+
 } // end of internal
 
 namespace {
@@ -934,7 +943,9 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                     result_base->addRRsig(result_sig);
                 }
             }
-            return (RBNodeRRsetPtr(new RBNodeRRset(result_base)));
+            RBNodeRRsetPtr result(new RBNodeRRset(result_base));
+            rrset->copyAdditionalNodes(*result);
+            return (result);
         } else {
             return (rrset);
         }
