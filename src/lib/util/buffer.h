@@ -380,9 +380,7 @@ public:
     /// \param pos The position in the buffer to be returned.
     uint8_t operator[](size_t pos) const
     {
-        if (pos >= size_) {
-            isc_throw(InvalidBufferPosition, "read at invalid position");
-        }
+        assert (pos < size_);
         return (buffer_[pos]);
     }
     //@}
