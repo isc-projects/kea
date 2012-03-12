@@ -129,6 +129,8 @@ class Stats:
         self.module_name = self.mccs.get_module_spec().get_module_name()
         self.modules = {}
         self.statistics_data = {}
+        # statistics data by each pid
+        self.statistics_data_bypid = {}
         # get commands spec
         self.commands_spec = self.mccs.get_module_spec().get_commands_spec()
         # add event handler related command_handler of ModuleCCSession
@@ -265,14 +267,17 @@ class Stats:
                          + "owner: " + str(owner) + ", "
                          + "name: " + str(name))
 
-    def update_statistics_data(self, owner=None, **data):
+    def update_statistics_data(self, owner=None, pid=-1, **data):
         """
         change statistics date of specified module into specified
         data. It updates information of each module first, and it
         updates statistics data. If specified data is invalid for
         statistics spec of specified owner, it returns a list of error
         messeges. If there is no error or if neither owner nor data is
-        specified in args, it returns None.
+        specified in args, it returns None. pid is the process id of
+        the sender module in order for stats to identify which
+        instance sends statistics data in the situation that multiple
+        instances are working.
         """
         self.update_modules()
         statistics_data = {}
@@ -290,7 +295,48 @@ class Stats:
             errors = []
             try:
                 if self.modules[owner].validate_statistics(False, data, errors):
-                    self.statistics_data[owner].update(data)
+                    # This is for multiple instances working. It is
+                    # assumed here that they send different statistics
+                    # data with each pid. Stats should save their
+                    # statistics data by pid. The statistics data,
+                    # which is the existing variable, is preserved by
+                    # summarizing from statistics data by pid. This is
+                    # an ad-hoc fix because administrators can not see
+                    # statistics by each instance via bindctl or
+                    # HTTP/XML. These interfaces aren't changed in
+                    # this fix.
+                    if owner in self.statistics_data_bypid:
+                        if pid in self.statistics_data_bypid[owner]:
+                            self.statistics_data_bypid[owner][pid].update(data)
+                        else:
+                            self.statistics_data_bypid[owner][pid] = data
+                    else:
+                        self.statistics_data_bypid[owner] = { pid : data }
+                    def _sum_bymodule(statistics_data_bypid):
+                        # sum recursively each value under each
+                        # element
+                        def _sum(a, b):
+                            if type(a) == dict:
+                                return dict([ (k, _sum(v, b[k])) if k in b else (k, v) \
+                                                  for (k, v) in a.items() ] \
+                                                + [ (k, v) for (k, v) in b.items() \
+                                                        if k not in a ])
+                            elif type(a) == list:
+                                return [ _sum(a[i], b[i]) if len(b) > i else a[i] \
+                                             for i in range(len(a)) ] \
+                                             + [ b[i] for i in range(len(b)) \
+                                                     if len(a) <= i ]
+                            elif type(a) == float or type(a) == int:
+                                return a + b
+                            # If str or other types than above, then
+                            # just replace with the newer value.
+                            return a
+                        ret = {}
+                        for data in statistics_data_bypid.values():
+                            ret.update(_sum(data, ret))
+                        return ret
+                    self.statistics_data[owner].update(
+                        _sum_bymodule(self.statistics_data_bypid[owner]))
                     return
             except KeyError:
                 errors.append("unknown module name: " + str(owner))
@@ -379,11 +425,11 @@ class Stats:
                 1, "specified arguments are incorrect: " \
                     + "owner: " + str(owner) + ", name: " + str(name))
 
-    def command_set(self, owner, data):
+    def command_set(self, owner, pid=-1, data={}):
         """
         handle set command
         """
-        errors = self.update_statistics_data(owner, **data)
+        errors = self.update_statistics_data(owner, pid, **data)
         if errors:
             return isc.config.create_answer(
                 1, "errors while setting statistics data: " \

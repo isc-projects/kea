@@ -373,6 +373,40 @@ class TestStats(unittest.TestCase):
         self.assertEqual(self.stats.update_statistics_data(owner='Dummy', foo='bar'),
                          ['unknown module name: Dummy'])
 
+    def test_update_modules_withpid(self):
+        # one pid of Auth
+        self.stats.update_statistics_data(owner='Auth',
+                                          pid=9999,
+                                          **{'queries.tcp':1001})
+        self.assertTrue('Auth' in self.stats.statistics_data)
+        self.assertTrue('queries.tcp' in self.stats.statistics_data['Auth'])
+        self.assertEqual(self.stats.statistics_data['Auth']['queries.tcp'], 1001)
+        self.assertTrue('Auth' in self.stats.statistics_data_bypid)
+        self.assertTrue(9999 in self.stats.statistics_data_bypid['Auth'])
+        self.assertTrue('queries.tcp' in self.stats.statistics_data_bypid['Auth'][9999])
+        self.assertEqual(self.stats.statistics_data_bypid['Auth'][9999]['queries.tcp'], 1001)
+        self.assertEqual(self.stats.statistics_data_bypid,
+                         {'Auth': {9999: {'queries.tcp': 1001}}})
+        # another pid of Auth
+        self.stats.update_statistics_data(owner='Auth',
+                                          pid=9998,
+                                          **{'queries.tcp':1002,
+                                             'queries.udp':1003})
+        self.assertTrue('Auth' in self.stats.statistics_data)
+        self.assertTrue('queries.tcp' in self.stats.statistics_data['Auth'])
+        self.assertTrue('queries.udp' in self.stats.statistics_data['Auth'])
+        self.assertEqual(self.stats.statistics_data['Auth']['queries.tcp'], 2003)
+        self.assertEqual(self.stats.statistics_data['Auth']['queries.udp'], 1003)
+        self.assertTrue('Auth' in self.stats.statistics_data_bypid)
+        self.assertTrue(9999 in self.stats.statistics_data_bypid['Auth'])
+        self.assertTrue(9998 in self.stats.statistics_data_bypid['Auth'])
+        self.assertTrue('queries.tcp' in self.stats.statistics_data_bypid['Auth'][9999])
+        self.assertTrue('queries.udp' in self.stats.statistics_data_bypid['Auth'][9998])
+        self.assertTrue('queries.udp' in self.stats.statistics_data_bypid['Auth'][9998])
+        self.assertEqual(self.stats.statistics_data_bypid['Auth'][9999]['queries.tcp'], 1001)
+        self.assertEqual(self.stats.statistics_data_bypid['Auth'][9998]['queries.tcp'], 1002)
+        self.assertEqual(self.stats.statistics_data_bypid['Auth'][9998]['queries.udp'], 1003)
+
     def test_commands(self):
         # status
         self.assertEqual(self.stats.command_status(),
@@ -709,6 +743,44 @@ class TestStats(unittest.TestCase):
                         } ] } )
         self.assertRaises(stats.StatsError,
                           self.stats.command_set, owner='Stats', data={ 'dummy' : '_xxxx_yyyy_zzz_' })
+
+    def test_command_set_withpid(self):
+        # one pid of Auth
+        retval = isc.config.ccsession.parse_answer(
+            self.stats.command_set(owner='Auth',
+                                   pid=9997,
+                                   data={ 'queries.tcp' : 1001 }))
+        self.assertEqual(retval, (0,None))
+        self.assertTrue('Auth' in self.stats.statistics_data)
+        self.assertTrue('queries.tcp' in self.stats.statistics_data['Auth'])
+        self.assertEqual(self.stats.statistics_data['Auth']['queries.tcp'], 1001)
+        self.assertTrue('Stats' in self.stats.statistics_data)
+        self.assertTrue('last_update_time' in self.stats.statistics_data['Stats'])
+        self.assertTrue('Auth' in self.stats.statistics_data_bypid)
+        self.assertTrue(9997 in self.stats.statistics_data_bypid['Auth'])
+        self.assertTrue('queries.tcp' in self.stats.statistics_data_bypid['Auth'][9997])
+        self.assertEqual(self.stats.statistics_data_bypid['Auth'][9997]['queries.tcp'], 1001)
+        # another pid of Auth
+        retval = isc.config.ccsession.parse_answer(
+            self.stats.command_set(owner='Auth',
+                                   pid=9996,
+                                   data={ 'queries.tcp' : 1002,
+                                          'queries.udp' : 1003,}))
+        self.assertEqual(retval, (0,None))
+        self.assertTrue('Auth' in self.stats.statistics_data)
+        self.assertTrue('queries.tcp' in self.stats.statistics_data['Auth'])
+        self.assertTrue('queries.udp' in self.stats.statistics_data['Auth'])
+        self.assertEqual(self.stats.statistics_data['Auth']['queries.tcp'], 2003)
+        self.assertEqual(self.stats.statistics_data['Auth']['queries.udp'], 1003)
+        self.assertTrue('Auth' in self.stats.statistics_data_bypid)
+        self.assertTrue(9997 in self.stats.statistics_data_bypid['Auth'])
+        self.assertTrue(9996 in self.stats.statistics_data_bypid['Auth'])
+        self.assertTrue('queries.tcp' in self.stats.statistics_data_bypid['Auth'][9997])
+        self.assertTrue('queries.udp' in self.stats.statistics_data_bypid['Auth'][9996])
+        self.assertTrue('queries.udp' in self.stats.statistics_data_bypid['Auth'][9996])
+        self.assertEqual(self.stats.statistics_data_bypid['Auth'][9997]['queries.tcp'], 1001)
+        self.assertEqual(self.stats.statistics_data_bypid['Auth'][9996]['queries.tcp'], 1002)
+        self.assertEqual(self.stats.statistics_data_bypid['Auth'][9996]['queries.udp'], 1003)
 
 class TestOSEnv(unittest.TestCase):
     def test_osenv(self):
