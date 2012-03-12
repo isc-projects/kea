@@ -598,7 +598,7 @@ needs a dedicated message bus.
 </varlistentry>
 
 <varlistentry id="BIND10_COMPONENT_FAILED">
-<term>BIND10_COMPONENT_FAILED component %1 (pid %2) failed with %3 exit status</term>
+<term>BIND10_COMPONENT_FAILED component %1 (pid %2) failed: %3</term>
 <listitem><para>
 The process terminated, but the bind10 boss didn't expect it to, which means
 it must have failed.
