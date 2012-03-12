@@ -75,13 +75,25 @@ typedef boost::shared_ptr<Domain> DomainPtr;
 typedef RBTree<Domain> DomainTree;
 typedef RBNode<Domain> DomainNode;
 
+// In the following dedicated namespace we define a few application-specific
+// RBNode flags.  We use a separate namespace so we can consolidate the
+// definition in a single place, which would hopefully reduce the risk of
+// collisions.
+// (Note: it's within an unnamed namespace, so effectively private.)
+namespace domain_flag {
+// This flag indicates the node is at a "wildcard level" (in short, it means
+// one of the node's immediate child is a wildcard).  See addWildcards()
+// for more details.
+const DomainNode::Flags WILD = DomainNode::FLAG_USER1;
+
 // This flag is used for additional record shortcut.  If a node has this
 // flag, it's under a zone cut for a delegation to a child zone.
 // Note: for a statically built zone this information is stable, but if we
 // change the implementation to be dynamically modifiable, it may not be
 // realistic to keep this flag update for all affected nodes, and we may
 // have to reconsider the mechanism.
-const DomainNode::Flags DOMAINFLAG_GLUE = DomainNode::FLAG_USER2;
+const DomainNode::Flags GLUE = DomainNode::FLAG_USER2;
+};
 
 // Separate storage for NSEC3 RRs (and their RRSIGs).  It's an STL map
 // from string to the NSEC3 RRset.  The map key is the first label
@@ -378,7 +390,7 @@ private:
             if (additional.node_->isEmpty()) {
                 continue;
             }
-            if (!glue_ok && additional.node_->getFlag(DOMAINFLAG_GLUE)) {
+            if (!glue_ok && additional.node_->getFlag(domain_flag::GLUE)) {
                 continue;
             }
             BOOST_FOREACH(const RRType& rrtype, requested_types) {
@@ -403,8 +415,6 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         zone_class_(zone_class), origin_(origin),
         zone_data_(new ZoneData(origin_))
     {}
-
-    static const DomainNode::Flags DOMAINFLAG_WILD = DomainNode::FLAG_USER1;
 
     // Information about the zone
     RRClass zone_class_;
@@ -444,7 +454,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                                                          &node));
                 assert(result == DomainTree::SUCCESS ||
                        result == DomainTree::ALREADYEXISTS);
-                node->setFlag(DOMAINFLAG_WILD);
+                node->setFlag(domain_flag::WILD);
 
                 // Ensure a separate level exists for the wildcard name.
                 // Note: for 'name' itself we do this later anyway, but the
@@ -1042,7 +1052,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                  * not match according to 4.3.3 of RFC 1034 (the query name
                  * is known to exist).
                  */
-                if (node->getFlag(DOMAINFLAG_WILD)) {
+                if (node->getFlag(domain_flag::WILD)) {
                     /* Should we cancel this match?
                      *
                      * If we compare with some node and get a common ancestor,
@@ -1079,7 +1089,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                     DomainTree::Result result =
                         zone_data_->domains_.find(wildcard, &node);
                     /*
-                     * Otherwise, why would the DOMAINFLAG_WILD be there if
+                     * Otherwise, why would the domain_flag::WILD be there if
                      * there was no wildcard under it?
                      */
                     assert(result == DomainTree::EXACTMATCH);
@@ -1361,7 +1371,7 @@ addAdditional(RBNodeRRset* rrset, ZoneData* zone_data) {
                  node->getData()->find(RRType::NS()) !=
                  node->getData()->end())) {
                 // The node is under or at a zone cut; mark it as a glue.
-                node->setFlag(DOMAINFLAG_GLUE);
+                node->setFlag(domain_flag::GLUE);
             }
             // Note that node may be empty.  We should keep it in the list
             // in case we dynamically update the tree and it becomes non empty
