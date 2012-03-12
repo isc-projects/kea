@@ -281,6 +281,8 @@ TEST_F(AuthCountersTest, submitStatisticsWithoutValidator) {
                          ->get(0)->stringValue());
     EXPECT_EQ("Auth", statistics_session_.sent_msg->get("command")
                          ->get(1)->get("owner")->stringValue());
+    EXPECT_TRUE(statistics_session_.sent_msg->get("command")
+                ->get(1)->get("pid")->intValue() > 0);
     ConstElementPtr statistics_data = statistics_session_.sent_msg
                                           ->get("command")->get(1)
                                           ->get("data");
