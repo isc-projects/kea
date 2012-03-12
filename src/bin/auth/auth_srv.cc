@@ -36,7 +36,7 @@
 
 #include <dns/edns.h>
 #include <dns/exceptions.h>
-#include <dns/messagerenderer.h>
+#include <dns/messagerendererhandle.h>
 #include <dns/name.h>
 #include <dns/question.h>
 #include <dns/opcode.h>
@@ -99,8 +99,7 @@ public:
 
     IOService io_service_;
 
-    MessageRenderer renderer_;
-    
+    MessageRendererHandle renderer_handle_;
     /// Currently non-configurable, but will be.
     static const uint16_t DEFAULT_LOCAL_UDPSIZE = 4096;
 
@@ -558,18 +557,18 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, MessagePtr message,
         return (true);
     }
 
-    renderer_.setBuffer(buffer.get());
+    renderer_handle_.setBuffer(buffer.get());
     const bool udp_buffer =
         (io_message.getSocket().getProtocol() == IPPROTO_UDP);
-    renderer_.setLengthLimit(udp_buffer ? remote_bufsize : 65535);
+    renderer_handle_.setLengthLimit(udp_buffer ? remote_bufsize : 65535);
     if (tsig_context.get() != NULL) {
-        message->toWire(renderer_, *tsig_context);
+        message->toWire(renderer_handle_.getRenderer(), *tsig_context);
     } else {
-        message->toWire(renderer_);
+        message->toWire(renderer_handle_.getRenderer());
     }
-    renderer_.setBuffer(NULL);
+    renderer_handle_.setBuffer(NULL);
     LOG_DEBUG(auth_logger, DBG_AUTH_MESSAGES, AUTH_SEND_NORMAL_RESPONSE)
-              .arg(renderer_.getLength()).arg(message->toText());
+              .arg(renderer_handle_.getLength()).arg(message->toText());
 
     return (true);
 }
@@ -688,13 +687,13 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, MessagePtr message,
     message->setHeaderFlag(Message::HEADERFLAG_AA);
     message->setRcode(Rcode::NOERROR());
 
-    renderer_.setBuffer(buffer.get());
+    renderer_handle_.setBuffer(buffer.get());
     if (tsig_context.get() != NULL) {
-        message->toWire(renderer_, *tsig_context);
+        message->toWire(renderer_handle_.getRenderer(), *tsig_context);
     } else {
-        message->toWire(renderer_);
+        message->toWire(renderer_handle_.getRenderer());
     }
-    renderer_.setBuffer(NULL);
+    renderer_handle_.setBuffer(NULL);
     return (true);
 }
 
