@@ -219,6 +219,8 @@ struct MessageRenderer::MessageRendererImpl {
     CompressMode compress_mode_;
 
     // Placeholder for hash values as they are calculated in writeName().
+    // Note: we may want to make it a local variable of writeName() if it
+    // works more efficiently.
     boost::array<size_t, Name::MAX_LABELS> seq_hashes_;
 };
 
