@@ -181,6 +181,19 @@ public:
     /// NULL if no additional nodes are associated to this RRset.
     const std::vector<AdditionalNodeInfo>* getAdditionalNodes() const;
 
+    /// \brief Copy the list of additional RB nodes to another RRset.
+    ///
+    /// This method copies the internal list (an STL vector in the actual
+    /// implementation) of additional RB nodes for this RRset to another
+    /// \c RBNodeRRset object.  The copy destination is generally expected to
+    /// be newly created and have an empty list, but this method does not
+    /// check the condition.  If the destination already has a non empty list,
+    /// the existing entries will be lost.
+    ///
+    /// \param dst The \c RBNodeRRset object to which the additional
+    /// RB node list is to be copied.
+    void copyAdditionalNodes(RBNodeRRset& dst) const;
+
     /// \brief Return underlying RRset pointer
     ///
     /// ... mainly for testing.
