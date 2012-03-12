@@ -21,12 +21,16 @@
 
 #include <gtest/gtest.h>
 
+#include <boost/lexical_cast.hpp>
+
+#include <string>
 #include <vector>
 
 using isc::UnitTestUtil;
 using isc::dns::Name;
 using isc::dns::MessageRenderer;
 using isc::util::OutputBuffer;
+using boost::lexical_cast;
 
 namespace {
 class MessageRendererTest : public ::testing::Test {
@@ -142,13 +146,15 @@ TEST_F(MessageRendererTest, writeNameMixedCaseCompress) {
     renderer.writeName(Name("a.example.com."));
     renderer.writeName(Name("b.eXample.com."));
 
-    // Change the compression mode in the middle of rendering.  This is an
-    // unusual operation and is unlikely to happen in practice, but is still
-    // allowed in this API.
-    renderer.setCompressMode(MessageRenderer::CASE_INSENSITIVE);
-    renderer.writeName(Name("c.b.EXAMPLE.com."));
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
-                        renderer.getLength(), &data[0], data.size());
+    // Change the compression mode in the middle of rendering.  This is not
+    // allowed in this implementation.
+    EXPECT_THROW(renderer.setCompressMode(MessageRenderer::CASE_INSENSITIVE),
+                 isc::InvalidParameter);
+
+    // Once the renderer is cleared, it's okay again.
+    renderer.clear();
+    EXPECT_NO_THROW(renderer.setCompressMode(
+                        MessageRenderer::CASE_INSENSITIVE));
 }
 
 TEST_F(MessageRendererTest, writeRootName) {
@@ -210,5 +216,21 @@ TEST_F(MessageRendererTest, setBufferErrors) {
     // It's okay to reset a temporary buffer without using it.
     renderer.setBuffer(&new_buffer);
     EXPECT_NO_THROW(renderer.setBuffer(NULL));
+}
+
+TEST_F(MessageRendererTest, manyRRs) {
+    // Render a large number of names, and the confirm the resulting wire
+    // data store the expected names in the correct order (1000 is an
+    // arbitrary choice).
+    for (size_t i = 0; i < 1000; ++i) {
+        renderer.writeName(Name(lexical_cast<std::string>(i) + ".example"));
+    }
+    isc::util::InputBuffer b(renderer.getData(), renderer.getLength());
+    for (size_t i = 0; i < 1000; ++i) {
+        EXPECT_EQ(Name(lexical_cast<std::string>(i) + ".example"), Name(b));
+    }
+    // This will trigger trimming excessive hash items.  It shouldn't cause
+    // any disruption.
+    EXPECT_NO_THROW(renderer.clear());
 }
 }
