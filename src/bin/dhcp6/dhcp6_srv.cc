@@ -189,7 +189,7 @@ void Dhcpv6Srv::setServerID() {
         // some interfaces (like lo on Linux) report 6-bytes long
         // MAC adress 00:00:00:00:00:00. Let's not use such weird interfaces
         // to generate DUID.
-        if (!memcmp(iface->mac_, zeros, iface->mac_len_)) {
+        if (isRangeZero(iface->mac_, iface->mac_ + iface->mac_len_)) {
             continue;
         }
 
