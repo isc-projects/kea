@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <gtest/gtest.h>
 #include <log/message_initializer.h>
+#include <gtest/gtest.h>
 
 using namespace isc::log;
 
@@ -37,8 +37,12 @@ TEST(MessageInitializerTest2, MessageLoadTest) {
         MessageInitializer initializer1(values);
     }
 
+    // Note: Not all systems have EXPECT_DEATH.  As it is a macro we can just
+    // test for its presence and bypass the test if not available.
+#ifdef EXPECT_DEATH
     // Adding one more should take us over the limit.
-    ASSERT_DEATH({
+    EXPECT_DEATH({
         MessageInitializer initializer2(values);
         }, ".*");
+#endif
 }

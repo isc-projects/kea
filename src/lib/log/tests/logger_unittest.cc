@@ -363,12 +363,15 @@ TEST_F(LoggerTest, LoggerNameLength) {
     Logger l2(ok2.c_str());
     EXPECT_EQ(getRootLoggerName() + "." + ok2, l2.getName());
 
+    // Note: Not all systems have EXPECT_DEATH.  As it is a macro we can just
+    // test for its presence and bypass the test if not available.
+#ifdef EXPECT_DEATH
     // Too long a logger name should trigger an assertion failure.
     // Note that we just check that it dies - we don't check what message is
     // output.
-    ASSERT_DEATH({
+    EXPECT_DEATH({
                     string ok3(Logger::MAX_LOGGER_NAME_SIZE + 1, 'x');
                     Logger l3(ok3.c_str());
                  }, ".*");
-
+#endif
 }

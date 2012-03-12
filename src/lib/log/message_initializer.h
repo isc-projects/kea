@@ -81,9 +81,8 @@ public:
 
     /// \brief Obtain pending load count
     ///
-    /// Returns a count of the message of message arrays that have been
-    /// registered with this class and will be loaded with the next call
-    /// to loadDictionary().
+    /// Returns the number of message arrays that will be loaded by the next
+    /// call to loadDictionary().
     ///
     /// \return Number of registered message arrays.  This is reset to zero
     ///         when loadDictionary() is called.
