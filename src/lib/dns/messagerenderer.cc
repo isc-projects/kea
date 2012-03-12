@@ -242,12 +242,11 @@ MessageRenderer::clear() {
     // subsequent use of the renderer.
     for (size_t i = 0; i < MessageRendererImpl::BUCKETS; ++i) {
         if (impl_->table_[i].size() > MessageRendererImpl::RESERVED_ITEMS) {
-            // Trim excessive capacity: reserve() invalidates the excessive
-            // items, and swap ensures the new capacity is only reasonably
-            // large for the reserved space.
-            impl_->table_[i].reserve(MessageRendererImpl::RESERVED_ITEMS);
-            vector<OffsetItem>(impl_->table_[i].begin(),
-                               impl_->table_[i].end()).swap(impl_->table_[i]);
+            // Trim excessive capacity: swap ensures the new capacity is only
+            // reasonably large for the reserved space.
+            vector<OffsetItem> new_table;
+            new_table.reserve(MessageRendererImpl::RESERVED_ITEMS);
+            new_table.swap(impl_->table_[i]);
         }
         impl_->table_[i].clear();
     }
