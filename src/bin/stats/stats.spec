@@ -72,6 +72,13 @@
             "item_description": "module name of the owner of the statistics data"
           },
 	  {
+	    "item_name": "pid",
+            "item_type": "integer",
+            "item_optional": true,
+            "item_default": -1,
+            "item_description": "process id of the owner module"
+          },
+	  {
 	    "item_name": "data",
             "item_type": "map",
             "item_optional": false,
