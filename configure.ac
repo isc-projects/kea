@@ -495,6 +495,83 @@ if test "$lcov" != "no"; then
 fi
 AC_SUBST(USE_LCOV)
 
+# Simplified, non-caching AC_CHECK_PROG
+# Searches $PATH for the existence of argument 2,
+# and sets the full path to the variable in argument 1.
+# if not found, and a third argument is given, the value
+# is set to that.
+# Does not take full paths into account at this point,
+# and also works for single files only (arguments are not
+# stripped like in AC_CHECK_PROG)
+AC_DEFUN([ACX_CHECK_PROG_NONCACHE], [
+    RESULT=""
+    IFS_SAVED="$IFS"
+    IFS=":"
+    for cur_path in ${PATH} ; do
+      if test -e "${cur_path}/$2" ; then
+          RESULT="${cur_path}/$2"
+      fi
+    done
+    if test "$RESULT" = "" ; then
+        m4_ifvaln([$3], [$1=$3])
+    else
+        $1=$RESULT
+    fi
+    IFS="$IFS_SAVED"
+])
+
+# Botan helper test function
+# Tries to compile a program, given the output of the given
+# Arguments:
+# - name of tool (checked for path), must support --libs and --cflags
+# - fixed argument(s) for tool
+# - action if successful
+# - action if failed
+AC_DEFUN([ACX_TRY_BOTAN_TOOL], [
+    TOOL=$1
+    TOOL_ARG=$2
+    BOTAN_TOOL=""
+    ACX_CHECK_PROG_NONCACHE([BOTAN_TOOL], [${TOOL}], [""])
+    AC_MSG_CHECKING([for usability of ${TOOL} ${TOOL_ARG}])
+    if test "$BOTAN_TOOL" != "" ; then
+        if test -x ${BOTAN_TOOL}; then
+            BOTAN_LIBS=`$BOTAN_TOOL $TOOL_ARG --libs`
+            LIBS_SAVED=${LIBS}
+            LIBS="$LIBS $BOTAN_LIBS"
+            BOTAN_INCLUDES=`$BOTAN_TOOL $TOOL_ARG --cflags`
+            CPPFLAGS_SAVED=${CPPFLAGS}
+            CPPFLAGS="$BOTAN_INCLUDES $CPPFLAGS"
+            #AC_MSG_RESULT([found])
+            AC_LINK_IFELSE(
+                [AC_LANG_PROGRAM([#include <botan/botan.h>
+                                  #include <botan/hash.h>
+                                 ],
+                                 [using namespace Botan;
+                                  LibraryInitializer::initialize();
+                                  HashFunction *h = get_hash("MD5");
+                                 ])],
+                [ AC_MSG_RESULT([ok])
+                  $3
+                ],
+                [ AC_MSG_RESULT([not usable])
+                  $4
+                ]
+            )
+            LIBS=${LIBS_SAVED}
+            CPPFLAGS=${CPPFLAGS_SAVED}
+        else
+            AC_MSG_RESULT([not executable])
+            $4
+        fi
+    else
+        AC_MSG_RESULT([not found])
+        $4
+    fi
+    BOTAN_TOOL=""
+    AC_SUBST(BOTAN_TOOL)
+    ]
+)
+
 # Check for Botan
 botan_config="yes"
 AC_ARG_WITH([botan-config],
@@ -520,8 +597,11 @@ else
     # (1.8 is there just in case)
     BOTAN_CONFIG_VERSIONS="botan-config-1.10 botan-config-1.9 botan-config-1.8 botan-config"
     for botan_config in $BOTAN_CONFIG_VERSIONS; do
-        AC_PATH_PROG([BOTAN_CONFIG], [${botan_config}])
-        if test -x "${BOTAN_CONFIG}" ; then
+        ACX_TRY_BOTAN_TOOL([$botan_config],,
+                           [ BOTAN_CONFIG="$botan_config"  ],
+                           []
+                          )
+        if test "$BOTAN_CONFIG" != "" ; then
             break
         fi
     done
@@ -533,19 +613,18 @@ else
             # in their name, so we need to try them one by one
             BOTAN_VERSIONS="botan-1.10 botan-1.9 botan-1.8"
             for version in $BOTAN_VERSIONS; do
-                AC_MSG_CHECKING([Checking botan version with pkg-config $version])
-                
-                if [ $PKG_CONFIG --exists ${version} ]; then
-                    AC_MSG_RESULT([found])
-                    BOTAN_CONFIG="$PKG_CONFIG ${version}"
-                    break
-                else
-                    AC_MSG_RESULT([not found])
-                fi
+                ACX_TRY_BOTAN_TOOL([pkg-config], ["$version --silence-errors"],
+                                   [ BOTAN_CONFIG="$PKG_CONFIG $version" ],
+                                   []
+                                  )
+            if test "$BOTAN_CONFIG" != "" ; then
+                break
+            fi
             done
         fi
     fi
 fi
+
 if test "x${BOTAN_CONFIG}" != "x"
 then
     BOTAN_LIBS=`${BOTAN_CONFIG} --libs`
@@ -593,6 +672,9 @@ AC_SUBST(BOTAN_LDFLAGS)
 AC_SUBST(BOTAN_LIBS)
 AC_SUBST(BOTAN_INCLUDES)
 
+# Even though chances are high we already performed a real compilation check
+# in the search for the right (pkg)config data, we try again here, to
+# be sure.
 CPPFLAGS_SAVED=$CPPFLAGS
 CPPFLAGS="$BOTAN_INCLUDES $CPPFLAGS"
 LIBS_SAVED="$LIBS"
