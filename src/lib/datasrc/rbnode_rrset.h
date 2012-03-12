@@ -37,8 +37,12 @@ namespace internal {
 struct RBNodeRRsetImpl;
 
 // Forward declaration of an opaque data type defined and used within the
-// implementation.  This is public only because it needs to be used outside
-// of the \c RBNodeRRset class, but conceptually this is a private type.
+// implementation.  This is public only because it needs to be used within
+// the in-memory data source implementation, but conceptually this is a
+// private type for the in-memory data source implementation.
+// Note that the definition of the structure is still hidden within the
+// implementation, so, basically, a normal application should never be able
+// to use it directly even if it peeks into the "internal" namespace.
 struct AdditionalNodeInfo;
 
 /// \brief Special RRset for optimizing memory datasource requirement
