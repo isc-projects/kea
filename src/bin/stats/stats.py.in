@@ -273,7 +273,7 @@ class Stats:
         data. It updates information of each module first, and it
         updates statistics data. If specified data is invalid for
         statistics spec of specified owner, it returns a list of error
-        messeges. If there is no error or if neither owner nor data is
+        messages. If there is no error or if neither owner nor data is
         specified in args, it returns None. pid is the process id of
         the sender module in order for stats to identify which
         instance sends statistics data in the situation that multiple
