@@ -533,11 +533,7 @@ const std::string & mcast) {
 
 bool
 IfaceMgr::send(const Pkt6Ptr& pkt) {
-    struct msghdr m;
-    struct iovec v;
     int result;
-    struct in6_pktinfo *pktinfo;
-    struct cmsghdr *cmsg;
 
     Iface* iface = getIface(pkt->getIface());
     if (!iface) {
@@ -547,8 +543,6 @@ IfaceMgr::send(const Pkt6Ptr& pkt) {
 
     memset(&control_buf_[0], 0, control_buf_len_);
 
-    // Initialize our message header structure.
-    memset(&m, 0, sizeof(m));
 
     // Set the target address we're sending to.
     sockaddr_in6 to;
@@ -560,6 +554,9 @@ IfaceMgr::send(const Pkt6Ptr& pkt) {
            16);
     to.sin6_scope_id = pkt->getIndex();
 
+    // Initialize our message header structure.
+    struct msghdr m;
+    memset(&m, 0, sizeof(m));
     m.msg_name = &to;
     m.msg_namelen = sizeof(to);
 
@@ -574,6 +571,8 @@ IfaceMgr::send(const Pkt6Ptr& pkt) {
     // (defined as void*) we must use const cast from void *.
     // Otherwise C++ compiler would complain that we are trying
     // to assign const void* to void*.
+    struct iovec v;
+    memset(&v, 0, sizeof(v));
     v.iov_base = const_cast<void *>(pkt->getBuffer().getData());
     v.iov_len = pkt->getBuffer().getLength();
     m.msg_iov = &v;
@@ -587,11 +586,11 @@ IfaceMgr::send(const Pkt6Ptr& pkt) {
     // kernel decide what that should be.
     m.msg_control = &control_buf_[0];
     m.msg_controllen = control_buf_len_;
-    cmsg = CMSG_FIRSTHDR(&m);
+    struct cmsghdr *cmsg = CMSG_FIRSTHDR(&m);
     cmsg->cmsg_level = IPPROTO_IPV6;
     cmsg->cmsg_type = IPV6_PKTINFO;
-    cmsg->cmsg_len = CMSG_LEN(sizeof(*pktinfo));
-    pktinfo = convertPktInfo6(CMSG_DATA(cmsg));
+    cmsg->cmsg_len = CMSG_LEN(sizeof(struct in6_pktinfo));
+    struct in6_pktinfo *pktinfo = convertPktInfo6(CMSG_DATA(cmsg));
     memset(pktinfo, 0, sizeof(*pktinfo));
     pktinfo->ipi6_ifindex = pkt->getIndex();
     m.msg_controllen = cmsg->cmsg_len;
@@ -612,8 +611,6 @@ IfaceMgr::send(const Pkt6Ptr& pkt) {
 bool
 IfaceMgr::send(const Pkt4Ptr& pkt)
 {
-    struct msghdr m;
-    struct iovec v;
 
     Iface* iface = getIface(pkt->getIface());
     if (!iface) {
@@ -623,8 +620,6 @@ IfaceMgr::send(const Pkt4Ptr& pkt)
 
     memset(&control_buf_[0], 0, control_buf_len_);
 
-    // Initialize our message header structure.
-    memset(&m, 0, sizeof(m));
 
     // Set the target address we're sending to.
     sockaddr_in to;
@@ -633,13 +628,20 @@ IfaceMgr::send(const Pkt4Ptr& pkt)
     to.sin_port = htons(pkt->getRemotePort());
     to.sin_addr.s_addr = htonl(pkt->getRemoteAddr());
 
+    struct msghdr m;
+    // Initialize our message header structure.
+    memset(&m, 0, sizeof(m));
     m.msg_name = &to;
     m.msg_namelen = sizeof(to);
 
     // Set the data buffer we're sending. (Using this wacky
     // "scatter-gather" stuff... we only have a single chunk
     // of data to send, so we declare a single vector entry.)
-    v.iov_base = (char *) pkt->getBuffer().getData();
+    struct iovec v;
+    memset(&v, 0, sizeof(v));
+    // iov_base field is of void * type. We use it for packet
+    // transmission, so this buffer will not be modified.
+    v.iov_base = const_cast<void *>(pkt->getBuffer().getData());
     v.iov_len = pkt->getBuffer().getLength();
     m.msg_iov = &v;
     m.msg_iovlen = 1;
