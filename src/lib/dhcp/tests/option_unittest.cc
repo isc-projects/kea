@@ -65,10 +65,9 @@ TEST_F(OptionTest, v4_basic) {
         opt = new Option(Option::V4, 256),
         BadValue
     );
-    if (opt) {
-        delete opt;
-        opt = 0;
-    }
+
+    delete opt;
+    opt = 0;
 
     // 0 is a special PAD option
     EXPECT_THROW(
@@ -76,10 +75,8 @@ TEST_F(OptionTest, v4_basic) {
         BadValue
     );
 
-    if (opt) {
-        delete opt;
-        opt = 0;
-    }
+    delete opt;
+    opt = 0;
 
     // 255 is a special END option
     EXPECT_THROW(
@@ -87,10 +84,8 @@ TEST_F(OptionTest, v4_basic) {
         BadValue
     );
 
-    if (opt) {
-        delete opt;
-        opt = 0;
-    }
+    delete opt;
+    opt = 0;
 }
 
 const uint8_t dummyPayload[] =
