@@ -481,7 +481,7 @@ public:
     ///
     /// \param other Pointer to another AbstractRRset to compare
     ///              against.
-    virtual bool isSameKind(const AbstractRRset& other);
+    virtual bool isSameKind(const AbstractRRset& other) const;
 
     //@}
 };

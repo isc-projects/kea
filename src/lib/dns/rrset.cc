@@ -114,14 +114,13 @@ AbstractRRset::toWire(AbstractMessageRenderer& renderer) const {
 }
 
 bool
-AbstractRRset::isSameKind(const AbstractRRset& other) {
-    if (getType() != other.getType())
-        return false;
-    if (getClass() != other.getClass())
-        return false;
-    if (getName() != other.getName())
-        return false;
-    return true;
+AbstractRRset::isSameKind(const AbstractRRset& other) const {
+  // Compare classes last as they're likely to be identical. Compare
+  // names late in the list too, as these are expensive. So we compare
+  // types first, names second and classes last.
+  return (getType() == other.getType() &&
+	  getName() == other.getName() &&
+	  getClass() == other.getClass());
 }
 
 ostream&
