@@ -2142,8 +2142,8 @@ TEST_F(QueryTest, dsNoZone) {
 // DS query for a "grandchild" zone.  This should result in normal
 // delegation (unless this server also has authority of the grandchild zone).
 TEST_F(QueryTest, dsAtGrandParent) {
-    query.process(memory_client, Name("grand.delegation.example.com"), RRType::DS(),
-                  response, true);
+    query.process(memory_client, Name("grand.delegation.example.com"),
+                  RRType::DS(), response, true);
     responseCheck(response, Rcode::NOERROR(), 0, 0, 6, 6, NULL,
                   (string(delegation_txt) + string(delegation_ds_txt) +
                    "delegation.example.com. 3600 IN RRSIG " +
@@ -2213,8 +2213,8 @@ TEST_F(QueryTest, nxrrsetWithNSEC3) {
 
     // NXRRSET with DNSSEC proof.  We should have SOA, NSEC3 that proves the
     // NXRRSET and their RRSIGs.
-    query.process(memory_client, Name("www.example.com"), RRType::TXT(), response,
-                  true);
+    query.process(memory_client, Name("www.example.com"), RRType::TXT(),
+                  response, true);
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 4, 0, NULL,
                   (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
