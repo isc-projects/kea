@@ -133,14 +133,14 @@ Query::addNXDOMAINProofByNSEC(ZoneFinder& finder, ConstRRsetPtr nsec) {
     // and the best possible wildcard is *.b.example.com.  If the NXDOMAIN
     // NSEC is a.example.com. NSEC c.b.example.com., the longer suffix
     // is the next domain of the NSEC, and we get the same wildcard name.
-    const int qlabels = qname_.getLabelCount();
-    const int olabels = qname_.compare(nsec->getName()).getCommonLabels();
-    const int nlabels = qname_.compare(
+    const int qlabels = qname_->getLabelCount();
+    const int olabels = qname_->compare(nsec->getName()).getCommonLabels();
+    const int nlabels = qname_->compare(
         dynamic_cast<const generic::NSEC&>(nsec->getRdataIterator()->
                                            getCurrent()).
         getNextName()).getCommonLabels();
     const int common_labels = std::max(olabels, nlabels);
-    const Name wildname(Name("*").concatenate(qname_.split(qlabels -
+    const Name wildname(Name("*").concatenate(qname_->split(qlabels -
                                                            common_labels)));
 
     // Confirm the wildcard doesn't exist (this should result in NXDOMAIN;
@@ -206,12 +206,12 @@ Query::addNXDOMAINProofByNSEC3(ZoneFinder& finder) {
     // Firstly get the NSEC3 proves for Closest Encloser Proof
     // See Section 7.2.1 of RFC 5155.
     const uint8_t closest_labels =
-        addClosestEncloserProof(finder, qname_, false);
+        addClosestEncloserProof(finder, *qname_, false);
 
     // Next, construct the wildcard name at the closest encloser, i.e.,
     // '*' followed by the closest encloser, and add NSEC3 for it.
     const Name wildname(Name("*").concatenate(
-               qname_.split(qname_.getLabelCount() - closest_labels)));
+               qname_->split(qname_->getLabelCount() - closest_labels)));
     addNSEC3ForName(finder, wildname, false);
 }
 
@@ -226,7 +226,7 @@ Query::addWildcardProof(ZoneFinder& finder,
         // substitution.  Confirm that by specifying NO_WILDCARD.  It should
         // result in NXDOMAIN and an NSEC RR that proves it should be returned.
         ConstZoneFinderContextPtr fcontext =
-            finder.find(qname_, RRType::NSEC(),
+            finder.find(*qname_, RRType::NSEC(),
                         dnssec_opt_ | ZoneFinder::NO_WILDCARD);
         if (fcontext->code != ZoneFinder::NXDOMAIN || !fcontext->rrset ||
             fcontext->rrset->getRdataCount() == 0) {
@@ -241,7 +241,7 @@ Query::addWildcardProof(ZoneFinder& finder,
         // of the matching wildcard, so NSEC3 for its next closer (and only
         // that NSEC3) is what we are expected to provided per the RFC (if
         // this assumption isn't met the zone is broken anyway).
-        addClosestEncloserProof(finder, qname_, false, false);
+        addClosestEncloserProof(finder, *qname_, false, false);
     }
 }
 
@@ -254,7 +254,7 @@ Query::addWildcardNXRRSETProof(ZoneFinder& finder, ConstRRsetPtr nsec) {
     }
     
     ConstZoneFinderContextPtr fcontext =
-        finder.find(qname_, RRType::NSEC(),
+        finder.find(*qname_, RRType::NSEC(),
                     dnssec_opt_ | ZoneFinder::NO_WILDCARD);
     if (fcontext->code != ZoneFinder::NXDOMAIN || !fcontext->rrset ||
         fcontext->rrset->getRdataCount() == 0) {
@@ -296,21 +296,21 @@ Query::addNXRRsetProof(ZoneFinder& finder,
             addWildcardNXRRSETProof(finder, db_context.rrset);
         }
     } else if (db_context.isNSEC3Signed() && !db_context.isWildcard()) {
-        if (qtype_ == RRType::DS()) {
+        if (*qtype_ == RRType::DS()) {
             // RFC 5155, Section 7.2.4.  Add either NSEC3 for the qname or
             // closest (provable) encloser proof in case of optout.
-            addClosestEncloserProof(finder, qname_, true);
+            addClosestEncloserProof(finder, *qname_, true);
         } else {
             // RFC 5155, Section 7.2.3.  Just add NSEC3 for the qname.
-            addNSEC3ForName(finder, qname_, true);
+            addNSEC3ForName(finder, *qname_, true);
         }
     } else if (db_context.isNSEC3Signed() && db_context.isWildcard()) {
         // Case for RFC 5155 Section 7.2.5: add closest encloser proof for the
         // qname, construct the matched wildcard name and add NSEC3 for it.
         const uint8_t closest_labels =
-            addClosestEncloserProof(finder, qname_, false);
+            addClosestEncloserProof(finder, *qname_, false);
         const Name wname = Name("*").concatenate(
-            qname_.split(qname_.getLabelCount() - closest_labels));
+            qname_->split(qname_->getLabelCount() - closest_labels));
         addNSEC3ForName(finder, wname, true);
     }
 }
@@ -331,7 +331,7 @@ Query::addAuthAdditional(ZoneFinder& finder,
                   finder.getOrigin().toText());
     }
     authorities_.push_back(ns_context->rrset);
-    getAdditional(qname_, qtype_, *ns_context, additionals);
+    getAdditional(*qname_, *qtype_, *ns_context, additionals);
 }
 
 namespace {
@@ -352,7 +352,7 @@ findZone(const DataSourceClient& client, const Name& qname, RRType qtype) {
 
 void
 Query::process(datasrc::DataSourceClient& datasrc_client,
-               const isc::dns::Name qname, const isc::dns::RRType qtype,
+               const isc::dns::Name& qname, const isc::dns::RRType& qtype,
                isc::dns::Message& response, bool dnssec)
 {
     // First a bit of house cleaning
@@ -366,7 +366,7 @@ Query::process(datasrc::DataSourceClient& datasrc_client,
 
     // Found a zone which is the nearest ancestor to QNAME
     const DataSourceClient::FindResult result = findZone(*datasrc_client_,
-                                                         qname_, qtype_);
+                                                         *qname_, *qtype_);
 
     // If we have no matching authoritative zone for the query name, return
     // REFUSED.  In short, this is to be compatible with BIND 9, but the
@@ -378,14 +378,12 @@ Query::process(datasrc::DataSourceClient& datasrc_client,
         // If we tried to find a "parent zone" for a DS query and failed,
         // we may still have authority at the child side.  If we do, the query
         // has to be handled there.
-        if (qtype_ == RRType::DS() && qname_.getLabelCount() > 1 &&
+        if (*qtype_ == RRType::DS() && qname_->getLabelCount() > 1 &&
             processDSAtChild()) {
-            createResponse();
             return;
         }
         response_->setHeaderFlag(Message::HEADERFLAG_AA, false);
         response_->setRcode(Rcode::REFUSED());
-        createResponse();
         return;
     }
     ZoneFinder& zfinder = *result.zone_finder;
@@ -395,12 +393,12 @@ Query::process(datasrc::DataSourceClient& datasrc_client,
     response_->setHeaderFlag(Message::HEADERFLAG_AA);
     response_->setRcode(Rcode::NOERROR());
     boost::function0<ZoneFinderContextPtr> find;
-    const bool qtype_is_any = (qtype_ == RRType::ANY());
+    const bool qtype_is_any = (*qtype_ == RRType::ANY());
     if (qtype_is_any) {
-        find = boost::bind(&ZoneFinder::findAll, &zfinder, qname_,
+        find = boost::bind(&ZoneFinder::findAll, &zfinder, *qname_,
                            boost::ref(answers_), dnssec_opt_);
     } else {
-        find = boost::bind(&ZoneFinder::find, &zfinder, qname_, qtype_,
+        find = boost::bind(&ZoneFinder::find, &zfinder, *qname_, *qtype_,
                            dnssec_opt_);
     }
     ZoneFinderContextPtr db_context(find());
@@ -420,7 +418,7 @@ Query::process(datasrc::DataSourceClient& datasrc_client,
                 dynamic_cast<const rdata::generic::DNAME&>(
                 db_context->rrset->getRdataIterator()->getCurrent()));
             // The yet unmatched prefix dname
-            const Name prefix(qname_.split(0, qname_.getLabelCount() -
+            const Name prefix(qname_->split(0, qname_->getLabelCount() -
                 db_context->rrset->getName().getLabelCount()));
             // If we put it together, will it be too long?
             // (The prefix contains trailing ., which will be removed
@@ -436,11 +434,11 @@ Query::process(datasrc::DataSourceClient& datasrc_client,
             // The new CNAME we are creating (it will be unsigned even
             // with DNSSEC, the DNAME is signed and it can be validated
             // by that)
-            RRsetPtr cname(new RRset(qname_, db_context->rrset->getClass(),
+            RRsetPtr cname(new RRset(*qname_, db_context->rrset->getClass(),
                 RRType::CNAME(), db_context->rrset->getTTL()));
             // Construct the new target by replacing the end
-            cname->addRdata(rdata::generic::CNAME(qname_.split(0,
-                qname_.getLabelCount() -
+            cname->addRdata(rdata::generic::CNAME(qname_->split(0,
+                qname_->getLabelCount() -
                 db_context->rrset->getName().getLabelCount()).
                 concatenate(dname.getDname())));
             answers_.push_back(cname);
@@ -471,7 +469,7 @@ Query::process(datasrc::DataSourceClient& datasrc_client,
             }
 
             // Retrieve additional records for the answer
-            getAdditional(qname_, qtype_, *db_context, additionals_);
+            getAdditional(*qname_, *qtype_, *db_context, additionals_);
 
             // If apex NS records haven't been provided in the answer
             // section, insert apex NS records into the authority section
@@ -481,7 +479,7 @@ Query::process(datasrc::DataSourceClient& datasrc_client,
             // qname is the zone origin.
             if (result.code != result::SUCCESS ||
                 db_context->code != ZoneFinder::SUCCESS ||
-                (qtype_ != RRType::NS() && !qtype_is_any))
+                (*qtype_ != RRType::NS() && !qtype_is_any))
             {
                 addAuthAdditional(*result.zone_finder, additionals_);
             }
@@ -497,8 +495,8 @@ Query::process(datasrc::DataSourceClient& datasrc_client,
             // if we are an authority of the child, too.  If so, we need to
             // complete the process in the child as specified in Section
             // 2.2.1.2. of RFC3658.
-            if (qtype_ == RRType::DS() && processDSAtChild()) {
-                break;
+            if (*qtype_ == RRType::DS() && processDSAtChild()) {
+                return;
             }
 
             response_->setHeaderFlag(Message::HEADERFLAG_AA, false);
@@ -542,12 +540,12 @@ Query::process(datasrc::DataSourceClient& datasrc_client,
 
 void
 Query::initialize(datasrc::DataSourceClient& datasrc_client,
-                  const isc::dns::Name qname, const isc::dns::RRType qtype,
+                  const isc::dns::Name& qname, const isc::dns::RRType& qtype,
                   isc::dns::Message& response, bool dnssec)
 {
     datasrc_client_ = &datasrc_client;
-    qname_ = qname;
-    qtype_ = qtype;
+    qname_ = &qname;
+    qtype_ = &qtype;
     response_ = &response;
     dnssec_ = dnssec;
     dnssec_opt_ = (dnssec ? isc::datasrc::ZoneFinder::FIND_DNSSEC :
@@ -570,7 +568,7 @@ Query::createResponse() {
 bool
 Query::processDSAtChild() {
     const DataSourceClient::FindResult zresult =
-        datasrc_client_->findZone(qname_);
+        datasrc_client_->findZone(*qname_);
 
     if (zresult.code != result::SUCCESS) {
         return (false);
@@ -589,13 +587,14 @@ Query::processDSAtChild() {
     response_->setRcode(Rcode::NOERROR());
     addSOA(*zresult.zone_finder);
     ConstZoneFinderContextPtr ds_context =
-        zresult.zone_finder->find(qname_, RRType::DS(), dnssec_opt_);
+        zresult.zone_finder->find(*qname_, RRType::DS(), dnssec_opt_);
     if (ds_context->code == ZoneFinder::NXRRSET) {
         if (dnssec_) {
             addNXRRsetProof(*zresult.zone_finder, *ds_context);
         }
     }
 
+    createResponse();
     return (true);
 }
 
