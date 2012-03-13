@@ -18,6 +18,8 @@
 #include <dns/rrset.h>
 #include <datasrc/zone.h>
 
+#include <boost/noncopyable.hpp>
+
 #include <vector>
 
 namespace isc {
@@ -33,6 +35,13 @@ class DataSourceClient;
 }
 
 namespace auth {
+
+/// \brief Initial reserved size for the vectors in Query
+///
+/// The value is larger than we expect the vectors to even become, and
+/// has been chosen arbitrarily. The reason to set them quite high is
+/// to prevent reallocation on addition.
+const size_t RESERVE_RRSETS = 64;
 
 /// The \c Query class represents a standard DNS query that encapsulates
 /// processing logic to answer the query.
@@ -64,7 +73,7 @@ namespace auth {
 /// likely to misuse one of the classes instead of the other
 /// accidentally, and since it's considered a temporary development state,
 /// we keep this name at the moment.
-class Query {
+class Query : boost::noncopyable {
 private:
 
     /// \brief Adds a SOA.
@@ -239,7 +248,7 @@ private:
     /// \param dnssec If the answer should include signatures and NSEC/NSEC3 if
     ///     possible.
     void initialize(datasrc::DataSourceClient& datasrc_client,
-                    const isc::dns::Name qname, const isc::dns::RRType qtype,
+                    const isc::dns::Name& qname, const isc::dns::RRType& qtype,
                     isc::dns::Message& response, bool dnssec = false);
 
     /// \brief Fill in the response sections
@@ -250,7 +259,7 @@ private:
     ///
     /// This will take each RRset collected in answers_, authorities_, and
     /// additionals_, and add them to their corresponding sections in
-    /// the response packet.
+    /// the response message.
     ///
     /// After they are added, the vectors are cleared.
     void createResponse();
@@ -264,18 +273,19 @@ private:
     }
 
 public:
-    /// Empty Constructor.
+    /// Default constructor.
     ///
     /// Query parameters will be set by the call to process()
     ///
-    /// This constructor never throws an exception.
-    ///
     Query() :
-        datasrc_client_(NULL), qname_("."),
-        qtype_(isc::dns::RRType::A()),
+        datasrc_client_(NULL), qname_(NULL), qtype_(NULL),
         response_(NULL), dnssec_(false),
         dnssec_opt_(isc::datasrc::ZoneFinder::FIND_DEFAULT)
-    {}
+    {
+        answers_.reserve(RESERVE_RRSETS);
+        authorities_.reserve(RESERVE_RRSETS);
+        additionals_.reserve(RESERVE_RRSETS);
+    }
 
     /// Process the query.
     ///
@@ -312,7 +322,7 @@ public:
     /// \param dnssec If the answer should include signatures and NSEC/NSEC3 if
     ///     possible.
     void process(datasrc::DataSourceClient& datasrc_client,
-                 const isc::dns::Name qname, const isc::dns::RRType qtype,
+                 const isc::dns::Name& qname, const isc::dns::RRType& qtype,
                  isc::dns::Message& response, bool dnssec = false);
 
     /// \short Bad zone data encountered.
@@ -383,8 +393,8 @@ public:
 
 private:
     const isc::datasrc::DataSourceClient* datasrc_client_;
-    isc::dns::Name qname_;
-    isc::dns::RRType qtype_;
+    const isc::dns::Name* qname_;
+    const isc::dns::RRType* qtype_;
     isc::dns::Message* response_;
     bool dnssec_;
     isc::datasrc::ZoneFinder::FindOptions dnssec_opt_;
