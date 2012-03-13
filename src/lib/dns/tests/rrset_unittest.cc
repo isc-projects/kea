@@ -119,6 +119,7 @@ TEST_F(RRsetTest, isSameKind) {
     RRset rrset_z(test_name, RRClass::CH(), RRType::A(), RRTTL(3600));
     RRset rrset_p(test_nsname, RRClass::IN(), RRType::A(), RRTTL(3600));
 
+    EXPECT_TRUE(rrset_w.isSameKind(rrset_w));
     EXPECT_TRUE(rrset_w.isSameKind(rrset_x));
     EXPECT_FALSE(rrset_w.isSameKind(rrset_y));
     EXPECT_FALSE(rrset_w.isSameKind(rrset_z));
