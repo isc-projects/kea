@@ -20,6 +20,7 @@
 #include <dhcp/iface_mgr.h>
 #include <exceptions/exceptions.h>
 
+#include <stdint.h>
 #include <net/if.h>
 #include <linux/if_link.h>
 #include <linux/rtnetlink.h>
@@ -29,14 +30,27 @@ using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
 
+/// @brief This code uses netlink interface. See RFC3549 for details.
+///
+/// For detailed description, see http://en.wikipedia.org/wiki/Netlink
+/// or RFC3549. According to Wikipedia: "Netlink was designed for and
+/// is used to transfer miscellaneous networking information between
+/// the Linux kernel space and user space processes. Many networking
+/// utilities use Netlink to communicate with the Linux kernel from
+/// user space, for example iproute2. Netlink consists of a standard
+/// socket-based interface for user space processes and an internal
+/// kernel API for kernel modules. It is designed to be a more
+/// flexible successor to ioctl. Originally, Netlink uses the
+/// AF_NETLINK socket family."
+
 /// This is a structure that defines context for netlink connection.
 struct rtnl_handle
 {
-    int                fd;
+    int fd;
     struct sockaddr_nl local;
     struct sockaddr_nl peer;
-    __u32              seq;
-    __u32              dump;
+    uint32_t seq;
+    uint32_t dump;
 };
 
 struct nlmsg_list
@@ -45,8 +59,8 @@ struct nlmsg_list
     struct nlmsghdr h;
 };
 
-const int sndbuf = 32768;
-const int rcvbuf = 32768;
+const int SNDBUFSIZE = 32768;
+const int RCVBUFSIZE = 32768;
 
 namespace isc {
 
@@ -63,11 +77,11 @@ void rtnl_open_socket(struct rtnl_handle& handle) {
         isc_throw(Unexpected, "Failed to create NETLINK socket.");
     }
 
-    if (setsockopt(handle.fd, SOL_SOCKET, SO_SNDBUF, &sndbuf, sizeof(sndbuf)) < 0) {
+    if (setsockopt(handle.fd, SOL_SOCKET, SO_SNDBUF, &SNDBUFSIZE, sizeof(SNDBUFSIZE)) < 0) {
         isc_throw(Unexpected, "Failed to set send buffer in NETLINK socket.");
     }
 
-    if (setsockopt(handle.fd, SOL_SOCKET, SO_RCVBUF, &sndbuf, sizeof(rcvbuf)) < 0) {
+    if (setsockopt(handle.fd, SOL_SOCKET, SO_RCVBUF, &RCVBUFSIZE, sizeof(RCVBUFSIZE)) < 0) {
         isc_throw(Unexpected, "Failed to set receive buffer in NETLINK socket.");
     }
 
@@ -212,7 +226,7 @@ void rtnl_process_reply(struct rtnl_handle &rth, struct nlmsg_list *&info) {
     msg.msg_iov = &iov;
     msg.msg_iovlen = 1;
 
-    char buf[rcvbuf];
+    char buf[RCVBUFSIZE];
 
     iov.iov_base = buf;
     while (1) {
