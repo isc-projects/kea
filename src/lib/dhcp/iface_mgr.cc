@@ -591,7 +591,7 @@ IfaceMgr::send(const Pkt6Ptr& pkt) {
     cmsg->cmsg_type = IPV6_PKTINFO;
     cmsg->cmsg_len = CMSG_LEN(sizeof(struct in6_pktinfo));
     struct in6_pktinfo *pktinfo = convertPktInfo6(CMSG_DATA(cmsg));
-    memset(pktinfo, 0, sizeof(*pktinfo));
+    memset(pktinfo, 0, sizeof(struct in6_pktinfo));
     pktinfo->ipi6_ifindex = pkt->getIndex();
     m.msg_controllen = cmsg->cmsg_len;
 
@@ -707,7 +707,6 @@ IfaceMgr::receive4() {
 
     // Now we have a socket, let's get some data from it!
     struct sockaddr_in from_addr;
-    const uint32_t RCVBUFSIZE = 1500;
     static uint8_t buf[RCVBUFSIZE];
 
     memset(&control_buf_[0], 0, control_buf_len_);
@@ -773,19 +772,10 @@ IfaceMgr::receive4() {
 }
 
 Pkt6Ptr IfaceMgr::receive6() {
-    int result;
-    struct sockaddr_in6 from;
-    int ifindex = -1;
-
-    // RFC3315 states that server responses may be
-    // fragmented if they are over MTU. There is no
-    // text whether client's packets may be larger
-    // than 1500. For now, we can assume that
-    // we don't support packets larger than 1500.
-    const uint32_t RCVBUFSIZE = 1500;
     static uint8_t buf[RCVBUFSIZE];
 
     memset(&control_buf_[0], 0, control_buf_len_);
+    struct sockaddr_in6 from;
     memset(&from, 0, sizeof(from));
 
     // Initialize our message header structure.
@@ -851,11 +841,12 @@ Pkt6Ptr IfaceMgr::receive6() {
     cout << "Trying to receive over UDP6 socket " << candidate->sockfd_ << " bound to "
          << candidate->addr_.toText() << "/port=" << candidate->port_ << " on "
          << iface->getFullName() << endl;
-    result = recvmsg(candidate->sockfd_, &m, 0);
+    int result = recvmsg(candidate->sockfd_, &m, 0);
 
     struct in6_addr to_addr;
     memset(&to_addr, 0, sizeof(to_addr));
 
+    int ifindex = -1;
     if (result >= 0) {
         struct in6_pktinfo* pktinfo = NULL;
 
@@ -866,7 +857,7 @@ Pkt6Ptr IfaceMgr::receive6() {
         //
         // We also keep a flag to see if we found it. If we
         // didn't, then we consider this to be an error.
-        int found_pktinfo = 0;
+        bool found_pktinfo = false;
         struct cmsghdr* cmsg = CMSG_FIRSTHDR(&m);
         while (cmsg != NULL) {
             if ((cmsg->cmsg_level == IPPROTO_IPV6) &&
@@ -874,7 +865,8 @@ Pkt6Ptr IfaceMgr::receive6() {
                 pktinfo = convertPktInfo6(CMSG_DATA(cmsg));
                 to_addr = pktinfo->ipi6_addr;
                 ifindex = pktinfo->ipi6_ifindex;
-                found_pktinfo = 1;
+                found_pktinfo = true;
+                break;
             }
             cmsg = CMSG_NXTHDR(&m, cmsg);
         }

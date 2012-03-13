@@ -42,6 +42,15 @@ public:
     /// maximum MAC address length (Infiniband uses 20 bytes)
     static const unsigned int MAX_MAC_LEN = 20;
 
+    /// @brief Packet reception buffer size
+    ///
+    /// RFC3315 states that server responses may be
+    /// fragmented if they are over MTU. There is no
+    /// text whether client's packets may be larger
+    /// than 1500. For now, we can assume that
+    /// we don't support packets larger than 1500.
+    static const uint32_t RCVBUFSIZE = 1500;
+
     /// Holds information about socket.
     struct SocketInfo {
         uint16_t sockfd_; /// socket descriptor
