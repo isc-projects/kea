@@ -101,20 +101,10 @@
     </para>
 
     <para>
-<!-- TODO: remove is removed in trac930 -->
-      <command>remove</command> removes the named statistics name and data.
-    </para>
-
-    <para>
-<!-- TODO: reset is removed in trac930 -->
-      <command>reset</command> will reset all statistics data to
-      default values except for constant names.
-      This may re-add previously removed statistics names.
-    </para>
-
-    <para>
-      <command>set</command>
-<!-- TODO: document this -->
+      <command>set</command> will set new statistics data specified in
+      arguments. Statistics data to be set and the module name which owns
+      statistics data are required in argument. Pid of the module in argument
+      is optional.
     </para>
 
     <para>
@@ -124,7 +114,11 @@
       An optional item name may be specified to receive individual output.
     </para>
 
-<!-- TODO: document showschema -->
+    <para>
+      <command>showschema</command> will send the schema of the statistics data
+      in JSON format. The output is equivalent to the statistics part
+      of <filename>stats.spec</filename>.
+    </para>
 
     <para>
       <command>shutdown</command> will shutdown the
