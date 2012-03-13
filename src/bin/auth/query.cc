@@ -543,13 +543,14 @@ Query::process(datasrc::DataSourceClient& datasrc_client,
 void
 Query::initialize(datasrc::DataSourceClient& datasrc_client,
                   const isc::dns::Name qname, const isc::dns::RRType qtype,
-                  isc::dns::Message& response, bool dnssec) {
+                  isc::dns::Message& response, bool dnssec)
+{
     datasrc_client_ = &datasrc_client;
     qname_ = qname;
     qtype_ = qtype;
     response_ = &response;
     dnssec_ = dnssec;
-    dnssec_opt_ = (dnssec ?  isc::datasrc::ZoneFinder::FIND_DNSSEC :
+    dnssec_opt_ = (dnssec ? isc::datasrc::ZoneFinder::FIND_DNSSEC :
                    isc::datasrc::ZoneFinder::FIND_DEFAULT);
 }
 
