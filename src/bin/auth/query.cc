@@ -363,7 +363,8 @@ findZone(const DataSourceClient& client, const Name& qname, RRType qtype) {
 void
 Query::process(datasrc::DataSourceClient& datasrc_client,
                const isc::dns::Name qname, const isc::dns::RRType qtype,
-               isc::dns::Message& response, bool dnssec) {
+               isc::dns::Message& response, bool dnssec)
+{
     // First a bit of house cleaning
     // The call to reset() could in theory be ommitted, but
     // seems prudent, just in case a previous process() left
@@ -569,16 +570,13 @@ Query::initialize(datasrc::DataSourceClient& datasrc_client,
 void
 Query::createResponse() {
     for_each(answers_.begin(), answers_.end(),
-             RRsetInserter(*response_, Message::SECTION_ANSWER,
-                           dnssec_));
+             RRsetInserter(*response_, Message::SECTION_ANSWER, dnssec_));
     answers_.clear();
     for_each(authorities_.begin(), authorities_.end(),
-             RRsetInserter(*response_, Message::SECTION_AUTHORITY,
-                           dnssec_));
+             RRsetInserter(*response_, Message::SECTION_AUTHORITY, dnssec_));
     authorities_.clear();
     for_each(additionals_.begin(), additionals_.end(),
-             RRsetInserter(*response_, Message::SECTION_ADDITIONAL,
-                           dnssec_));
+             RRsetInserter(*response_, Message::SECTION_ADDITIONAL, dnssec_));
     additionals_.clear();
 }
 
