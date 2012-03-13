@@ -127,15 +127,18 @@ public:
 
     virtual std::string toText() const;
 
-    virtual bool isSameKind(const AbstractRRset& other) {
-        const AbstractRRset* t = &other;
-        const RBNodeRRset* rb;
+    virtual bool isSameKind(const AbstractRRset& other) const {
+        // This code is an optimisation for comparing
+        // RBNodeRRsets. However, in doing this optimisation,
+        // semantically the code is not "is same kind" but is instead
+        // "is identical object" in the case where RBNodeRRsets are compared.
 
-        rb = dynamic_cast<const RBNodeRRset*>(t);
-        if (rb)
-          return (this == rb);
-        else
-          return AbstractRRset::isSameKind(other);
+        const RBNodeRRset* rb = dynamic_cast<const RBNodeRRset*>(&other);
+        if (rb != NULL) {
+            return (this == rb);
+        } else {
+            return (AbstractRRset::isSameKind(other));
+        }
     }
 
     virtual unsigned int toWire(
