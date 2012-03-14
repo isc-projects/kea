@@ -83,6 +83,9 @@ TEST_F(NegativeCacheTest, testNXDOMAIN){
     EXPECT_GE(soa_ttl.getValue(), 172799);
     EXPECT_LE(soa_ttl.getValue(), 172800);
 
+    // Sleep for 2 seconds. 2 seconds to make sure the final range check
+    // does not overlap with the original ones (in which case this test
+    // would erroneously pass if the ttl value is not changed)
     sleep(2);
 
     // Query nonexist.example.com again
@@ -209,6 +212,9 @@ TEST_F(NegativeCacheTest, testNoerrorNodata){
     messageFromFile(msg_nodata2, "message_nodata_with_soa.wire");
     msg_nodata2.makeResponse();
 
+    // Sleep for 2 seconds. 2 seconds to make sure the final range check
+    // does not overlap with the original ones (in which case this test
+    // would erroneously pass if the ttl value is not changed)
     sleep(2);
 
     EXPECT_TRUE(cache->lookup(example_dot_com, RRType::MX(), RRClass::IN(), msg_nodata2));
