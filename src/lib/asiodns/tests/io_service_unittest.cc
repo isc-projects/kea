@@ -118,6 +118,6 @@ TEST(IOServiceTest, DISABLED_IPv4MappedDuplicateBind) {
 
 TEST(IOServiceTest, BadUdpServerVersion) {
     IOService io_service;
-     DNSService* dns_service = new DNSService(io_service,NULL,NULL,NULL);
-     EXPECT_THROW(dns_service->addServer(*TEST_SERVER_PORT,"127.0.0.1",UDPVersion(3)),IOError);
+    DNSService* dns_service = new DNSService(io_service, NULL, NULL, NULL);
+    EXPECT_THROW(dns_service->addServer(*TEST_SERVER_PORT, "127.0.0.1", UDPVersion(3)), IOError);
 }
