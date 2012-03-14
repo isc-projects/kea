@@ -251,9 +251,14 @@ public:
 
     virtual IteratorContextPtr getRecords(const std::string&, int, bool)
         const
-        {
+    {
         isc_throw(isc::NotImplemented,
                   "This database datasource can't be iterated");
+    }
+
+    virtual IteratorContextPtr getNSEC3Records(const std::string&, int) const {
+        isc_throw(isc::NotImplemented, "This test database datasource won't "
+                  "give you any NSEC3. Ever. Ask someone else.");
     }
 
     virtual IteratorContextPtr getAllRecords(int) const {
