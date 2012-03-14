@@ -90,6 +90,7 @@ getAdditional(const Name& qname, RRType qtype,
         results.push_back(*it);
     }
 }
+
 }
 
 namespace isc {
@@ -355,11 +356,9 @@ Query::process(datasrc::DataSourceClient& datasrc_client,
                const isc::dns::Name& qname, const isc::dns::RRType& qtype,
                isc::dns::Message& response, bool dnssec)
 {
-    // First a bit of house cleaning
-    // The call to reset() could in theory be ommitted, but
-    // seems prudent, just in case a previous process() left
-    // data in here.
-    reset();
+    // Set up the cleaner object so internal pointers and vectors are
+    // always reset after scope leaves this method
+    QueryCleaner cleaner(*this);
 
     // Set up query parameters for the rest of the (internal) methods
     initialize(datasrc_client, qname, qtype, response, dnssec);
@@ -556,12 +555,20 @@ void
 Query::createResponse() {
     for_each(answers_.begin(), answers_.end(),
              RRsetInserter(*response_, Message::SECTION_ANSWER, dnssec_));
-    answers_.clear();
     for_each(authorities_.begin(), authorities_.end(),
              RRsetInserter(*response_, Message::SECTION_AUTHORITY, dnssec_));
-    authorities_.clear();
     for_each(additionals_.begin(), additionals_.end(),
              RRsetInserter(*response_, Message::SECTION_ADDITIONAL, dnssec_));
+}
+
+void
+Query::reset() {
+    datasrc_client_ = NULL;
+    qname_ = NULL;
+    qtype_ = NULL;
+    response_ = NULL;
+    answers_.clear();
+    authorities_.clear();
     additionals_.clear();
 }
 

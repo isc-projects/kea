@@ -264,13 +264,23 @@ private:
     /// After they are added, the vectors are cleared.
     void createResponse();
 
-    /// \brief Resets any partly built response data
-    void
-    reset() {
-        answers_.clear();
-        authorities_.clear();
-        additionals_.clear();
-    }
+    /// \brief Resets any partly built response data, and internal pointers
+    ///
+    /// Called by the QueryCleaner object upon its destruction
+    void reset();
+
+    /// \brief Internal class used for cleanup of Query members
+    ///
+    /// The process() call creates an object of this class, which
+    /// upon its destruction, calls Query::reset(), so that outside
+    /// of single calls to process(), the query state is always clean.
+    class QueryCleaner {
+    public:
+        QueryCleaner(isc::auth::Query& query) : query_(query) {}
+        ~QueryCleaner() { query_.reset(); }
+    private:
+        isc::auth::Query& query_;
+    };
 
 public:
     /// Default constructor.
@@ -286,6 +296,7 @@ public:
         authorities_.reserve(RESERVE_RRSETS);
         additionals_.reserve(RESERVE_RRSETS);
     }
+
 
     /// Process the query.
     ///
