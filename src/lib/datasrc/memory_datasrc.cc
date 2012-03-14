@@ -1315,12 +1315,12 @@ getAdditionalName(RRType rrtype, const rdata::Rdata& rdata) {
     if (rrtype == RRType::NS()) {
         const generic::NS& ns = dynamic_cast<const generic::NS&>(rdata);
         return (ns.getNSName());
-    } else if (rrtype == RRType::MX()) {
+    } else {
+        // In our usage the only other possible case is MX.
+        assert(rrtype == RRType::MX());
         const generic::MX& mx = dynamic_cast<const generic::MX&>(rdata);
         return (mx.getMXName());
     }
-    // In our usage this shouldn't happen.
-    assert(false);
 }
 
 bool
