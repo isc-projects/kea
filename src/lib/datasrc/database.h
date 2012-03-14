@@ -234,6 +234,38 @@ public:
                                           int id,
                                           bool subdomains = false) const = 0;
 
+    /// \brief Creates an iterator context for the records of NSEC3 namespace
+    ///     for the given hash
+    ///
+    /// Returns an Iteratorcontextptr that contains all the records of the given
+    /// hash in the NSEC3 namespace of the given zone.
+    ///
+    /// The implementation of the iterator that is returned may leave the
+    /// NAME_COLUMN column of the array passed to getNext() untouched,
+    /// as that name is easy to construct on the caller side (both the
+    /// hash and the name of the zone is known). The SIGTYPE_COLUMN can
+    /// be omitted as well, as it would be always empty for NSEC3 RRs or
+    /// contained "NSEC3" in case of RRSIG RRs.
+    ///
+    /// The iterator will contain both the NSEC3 records and the corresponding
+    /// RRSIGs, in arbitrary order.
+    ///
+    /// The iterator might be empty (containing no RRs) in case the zone is not
+    /// signed by NSEC3.
+    ///
+    /// \exception any Since any implementaion can be used, the caller should
+    ///     expect any exception to be thrown.
+    /// \exception isc::NotImplemented in case the database does not support
+    ///     NSEC3
+    ///
+    /// \param hash The hash part of the NSEC3 name (eg. for a name of NSEC3
+    ///     RKBUCQT8T78GV6QBCGBHCHC019LG73SJ.example.com., we the hash would be
+    ///     RKBUCQT8T78GV6QBCGBHCHC019LG73SJ).
+    /// \param id The id of te zone, as returned from getZone().
+    /// \return Newly created iterator context. Must not be NULL.
+    virtual IteratorContextPtr getNSEC3Records(const std::string& hash,
+                                               int id) const = 0;
+
     /// \brief Creates an iterator context for the whole zone.
     ///
     /// Returns an IteratorContextPtr that contains all records of the
