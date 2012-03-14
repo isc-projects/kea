@@ -2,6 +2,8 @@
 /destination_test.sh
 /init_logger_test
 /init_logger_test.sh
+/initializer_unittests_1
+/initializer_unittests_2
 /local_file_test.sh
 /logger_example
 /run_unittests
