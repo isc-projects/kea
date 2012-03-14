@@ -588,6 +588,12 @@ SQLite3Accessor::getRecords(const std::string& name, int id,
 }
 
 DatabaseAccessor::IteratorContextPtr
+SQLite3Accessor::getNSEC3Records(const std::string&, int) const {
+    // TODO: Implement
+    isc_throw(NotImplemented, "Not implemented yet, see ticket #1760");
+}
+
+DatabaseAccessor::IteratorContextPtr
 SQLite3Accessor::getAllRecords(int id) const {
     return (IteratorContextPtr(new Context(shared_from_this(), id)));
 }

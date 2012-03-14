@@ -141,6 +141,14 @@ public:
                                           int id,
                                           bool subdomains = false) const;
 
+    /// \brief Look up NSEC3 records for the given hash
+    ///
+    /// This implements the getNSEC3Records of DatabaseAccessor.
+    ///
+    /// \todo Actually implement, currently throws NotImplemented.
+    virtual IteratorContextPtr getNSEC3Records(const std::string& hash,
+                                               int id) const;
+
     /** \brief Look up all resource records for a zone
      *
      * This implements the getRecords() method from DatabaseAccessor
