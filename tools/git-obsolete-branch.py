@@ -90,13 +90,15 @@ def branch_list_get(verbose):
             # let's get the last contributor with extra formatting
             # see man git-log and search for PRETTY FORMATS.
             # %ai = date, %ae = author e-mail, %an = author name
-            cmd = [ "git" , "log", "-n", "1", "--pretty=\"%ai,%ae,%an\"", branch_info.name ]
+            cmd = [ "git" , "log", "-n", "1", "--pretty=\"%ai,%ae,%an\"",
+                    branch_info.name ]
             offender = subprocess.check_output(cmd)
             offender = offender.strip(b"\n\"")
 
             # comment out this 2 lines to disable obfuscation
             offender = offender.replace(b"@", b"(at)")
-            # Obfuscating a dot does not work too well for folks that use initials
+            # Obfuscating a dot does not work too well for folks that use
+            # initials
             #offender = offender.replace(b".", b"(dot)")
 
             branch_info.last_commit = offender.decode("utf-8")
@@ -122,7 +124,7 @@ def branch_print(branches, csv, print_merged, print_notmerged, print_stats):
     merged_str = ""
     notmerged_str = ""
     for branch in branches:
-        if branch.status==Branch.MERGED:
+        if branch.status == Branch.MERGED:
             merged = merged + 1
             if not print_merged:
                 continue
@@ -152,7 +154,7 @@ def branch_print(branches, csv, print_merged, print_notmerged, print_stats):
         print("#Not merged: %d" % notmerged)
 
 
-def parse_args(args = sys.argv[1:], Parser=OptionParser):
+def parse_args(args=sys.argv[1:], Parser=OptionParser):
 
     parser = Parser(description="This script prints out merged and/or unmerged"
                     " branches of a GIT tree.")
