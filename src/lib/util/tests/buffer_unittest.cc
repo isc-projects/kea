@@ -182,7 +182,17 @@ TEST_F(BufferTest, outputBufferReadat) {
     for (int i = 0; i < sizeof(testdata); i ++) {
         EXPECT_EQ(testdata[i], obuffer[i]);
     }
-    EXPECT_THROW(obuffer[sizeof(testdata)], isc::util::InvalidBufferPosition);
+#ifdef EXPECT_DEATH
+    // We use assert now, so we check it dies
+    EXPECT_DEATH({
+        try {
+            obuffer[sizeof(testdata)];
+        } catch (...) {
+            // Prevent exceptions killing the application, we need
+            // to make sure it dies the real hard way
+        }
+        }, "");
+#endif
 }
 
 TEST_F(BufferTest, outputBufferClear) {
