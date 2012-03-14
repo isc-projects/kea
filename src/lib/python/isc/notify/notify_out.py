@@ -253,7 +253,9 @@ class NotifyOut:
         self._thread.join()
 
         # Clean up
+        self._write_sock.close()
         self._write_sock = None
+        self._read_sock.close()
         self._read_sock = None
         self._thread = None
 

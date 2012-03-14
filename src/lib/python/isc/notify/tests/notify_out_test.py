@@ -195,6 +195,11 @@ class TestNotifyOut(unittest.TestCase):
         # Now make one socket be readable
         self._notify._notify_infos[('example.net.', 'IN')].notify_timeout = time.time() + 10
         self._notify._notify_infos[('example.com.', 'IN')].notify_timeout = time.time() + 10
+
+        if self._notify._read_sock is not None:
+            self._notify._read_sock.close()
+        if self._notify._write_sock is not None:
+            self._notify._write_sock.close()
         self._notify._read_sock, self._notify._write_sock = socket.socketpair()
         self._notify._write_sock.send(SOCK_DATA)
         replied_zones, timeout_zones = self._notify._wait_for_notify_reply()
