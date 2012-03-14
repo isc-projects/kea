@@ -280,7 +280,7 @@ AbstractMessageRenderer::AbstractMessageRenderer() :
 }
 
 void
-AbstractMessageRenderer::setBuffer(OutputBuffer* buffer) { 
+AbstractMessageRenderer::setBuffer(OutputBuffer* buffer) {
     if (buffer != NULL && buffer_->getLength() != 0) {
         isc_throw(isc::InvalidParameter,
                   "MessageRenderer buffer cannot be set when in use");
