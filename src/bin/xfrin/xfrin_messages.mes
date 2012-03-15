@@ -15,92 +15,21 @@
 # No namespace declaration - these constants go in the global namespace
 # of the xfrin messages python module.
 
-% XFRIN_ZONE_CREATED Zone %1 not found in the given data source, newly created
-On starting an xfrin session, it is identified that the zone to be
-transferred is not found in the data source.  This can happen if a
-secondary DNS server first tries to perform AXFR from a primary server
-without creating the zone image beforehand (e.g. by b10-loadzone).  As
-of this writing the xfrin process provides backward compatible
-behavior to previous versions: creating a new one in the data source
-not to surprise existing users too much.  This is probably not a good
-idea, however, in terms of who should be responsible for managing
-zones at a higher level.  In future it is more likely that a separate
-zone management framework is provided, and the situation where the
-given zone isn't found in xfrout will be treated as an error.
-
-% XFRIN_ZONE_NO_SOA Zone %1 does not have SOA
-On starting an xfrin session, it is identified that the zone to be
-transferred does not have an SOA RR in the data source.  This is not
-necessarily an error; if a secondary DNS server first tries to perform
-transfer from a primary server, the zone can be empty, and therefore
-doesn't have an SOA.  Subsequent AXFR will fill in the zone; if the
-attempt is IXFR it will fail in query creation.
-
-% XFRIN_ZONE_MULTIPLE_SOA Zone %1 has %2 SOA RRs
-On starting an xfrin session, it is identified that the zone to be
-transferred has multiple SOA RRs.  Such a zone is broken, but could be
-accidentally configured especially in a data source using "non
-captive" backend database.  The implementation ignores entire SOA RRs
-and tries to continue processing as if the zone were empty.  This
-means subsequent AXFR can succeed and possibly replace the zone with
-valid content, but an IXFR attempt will fail.
-
-% XFRIN_ZONE_SERIAL_AHEAD Serial number (%1) for %2 received from master %3 < ours (%4)
-The response to an SOA query prior to xfr indicated that the zone's
-SOA serial at the primary server is smaller than that of the xfrin
-client.  This is not necessarily an error especially if that
-particular primary server is another secondary server which hasn't got
-the latest version of the zone.  But if the primary server is known to
-be the real source of the zone, some unexpected inconsistency may have
-happened, and you may want to take a closer look.  In this case xfrin
-doesn't perform subsequent zone transfer.
-
-% XFRIN_XFR_OTHER_FAILURE %1 transfer of zone %2 failed: %3
-The XFR transfer for the given zone has failed due to a problem outside
-of the xfrin module.  Possible reasons are a broken DNS message or failure
-in database connection.  The error is shown in the log message.
-
-% XFRIN_XFR_TRANSFER_PROTOCOL_ERROR %1 transfer of zone %2 with %3 failed: %4
-The XFR transfer for the given zone has failed due to a protocol
-error, such as an unexpected response from the primary server.  The
-error is shown in the log message.  It may be because the primary
-server implementation is broken or (although less likely) there was
-some attack attempt, but it can also happen due to configuration
-mismatch such as the remote server does not have authority for the
-zone any more but the local configuration hasn't been updated.  So it
-is recommended to check the primary server configuration.
-
-% XFRIN_XFR_TRANSFER_FAILURE %1 transfer of zone %2 with %3 failed: %4
-The XFR transfer for the given zone has failed due to an internal error.
-The error is shown in the log message.
-
-% XFRIN_XFR_TRANSFER_FALLBACK falling back from IXFR to AXFR for %1
-The IXFR transfer of the given zone failed. This might happen in many cases,
-such that the remote server doesn't support IXFR, we don't have the SOA record
-(or the zone at all), we are out of sync, etc. In many of these situations,
-AXFR could still work. Therefore we try that one in case it helps.
-
-% XFRIN_XFR_PROCESS_FAILURE %1 transfer of zone %2/%3 failed: %4
-An XFR session failed outside the main protocol handling.  This
-includes an error at the data source level at the initialization
-phase, unexpected failure in the network connection setup to the
-master server, or even more unexpected failure due to unlikely events
-such as memory allocation failure.  Details of the error are shown in
-the log message.  In general, these errors are not really expected
-ones, and indicate an installation error or a program bug.  The
-session handler thread tries to clean up all intermediate resources
-even on these errors, but it may be incomplete.  So, if this log
-message continuously appears, system resource consumption should be
-checked, and you may even want to disable the corresponding transfers.
-You may also want to file a bug report if this message appears so
-often.
-
-% XFRIN_XFR_TRANSFER_STARTED %1 transfer of zone %2 started
-A connection to the master server has been made, the serial value in
-the SOA record has been checked, and a zone transfer has been started.
-
-% XFRIN_XFR_TRANSFER_SUCCESS %1 transfer of zone %2 succeeded
-The XFR transfer of the given zone was successfully completed.
+% XFRIN_AXFR_INCONSISTENT_SOA AXFR SOAs are inconsistent for %1: %2 expected, %3 received
+The serial fields of the first and last SOAs of AXFR (including AXFR-style
+IXFR) are not the same.  According to RFC 5936 these two SOAs must be the
+"same" (not only for the serial), but it is still not clear what the
+receiver should do if this condition does not hold.  There was a discussion
+about this at the IETF dnsext wg:
+http://www.ietf.org/mail-archive/web/dnsext/current/msg07908.html
+and the general feeling seems that it would be better to reject the
+transfer if a mismatch is detected.  On the other hand, also as noted
+in that email thread, neither BIND 9 nor NSD performs any comparison
+on the SOAs.  For now, we only check the serials (ignoring other fields)
+and only leave a warning log message when a mismatch is found.  If it
+turns out to happen with a real world primary server implementation
+and that server actually feeds broken data (e.g. mixed versions of
+zone), we can consider a stricter action.
 
 % XFRIN_BAD_MASTER_ADDR_FORMAT bad format for master address: %1
 The given master address is not a valid IP address.
@@ -127,6 +56,58 @@ error is given in the log message.
 There was an error opening a connection to the master. The error is
 shown in the log message.
 
+% XFRIN_GOT_INCREMENTAL_RESP got incremental response for %1
+In an attempt of IXFR processing, the begenning SOA of the first difference
+(following the initial SOA that specified the final SOA for all the
+differences) was found.  This means a connection for xfrin tried IXFR
+and really aot a response for incremental updates.
+
+% XFRIN_GOT_NONINCREMENTAL_RESP got nonincremental response for %1
+Non incremental transfer was detected at the "first data" of a transfer,
+which is the RR following the initial SOA.  Non incremental transfer is
+either AXFR or AXFR-style IXFR.  In the latter case, it means that
+in a response to IXFR query the first data is not SOA or its SOA serial
+is not equal to the requested SOA serial.
+
+% XFRIN_IMPORT_DNS error importing python DNS module: %1
+There was an error importing the python DNS module pydnspp. The most
+likely cause is a PYTHONPATH problem.
+
+% XFRIN_IXFR_TRANSFER_SUCCESS incremental IXFR transfer of zone %1 succeeded (messages: %2, changesets: %3, deletions: %4, additions: %5, bytes: %6, run time: %7 seconds, %8 bytes/second)
+The IXFR transfer for the given zone was successful.
+The provided information contains the following values:
+
+messages: Number of overhead DNS messages in the transfer.
+
+changesets: Number of difference sequences.
+
+deletions: Number of Resource Records deleted by all the changesets combined,
+including the SOA records.
+
+additions: Number of Resource Records added by all the changesets combined,
+including the SOA records.
+
+bytes: Full size of the transfer data on the wire.
+
+run time: Time (in seconds) the complete ixfr took.
+
+bytes/second: Transfer speed.
+
+Note that there is no cross-checking of additions and deletions; if the same
+RR gets added and deleted in multiple changesets, it is counted each time;
+therefore, for each changeset, there should at least be 1 deletion and 1
+addition (the updated SOA record).
+
+% XFRIN_IXFR_UPTODATE IXFR requested serial for %1 is %2, master has %3, not updating
+The first SOA record in an IXFR response indicates the zone's serial
+at the primary server is not newer than the client's.  This is
+basically unexpected event because normally the client first checks
+the SOA serial by an SOA query, but can still happen if the transfer
+is manually invoked or (although unlikely) there is a rapid change at
+the primary server between the SOA and IXFR queries.  The client
+implementation confirms the whole response is this single SOA, and
+aborts the transfer just like a successful case.
+
 % XFRIN_MSGQ_SEND_ERROR error while contacting %1 and %2
 There was a problem sending a message to the xfrout module or the
 zone manager. This most likely means that the msgq daemon has quit or
@@ -142,10 +123,6 @@ from does not match the master address in the Xfrin configuration. The notify
 is ignored. This may indicate that the configuration for the master is wrong,
 that a wrong machine is sending notifies, or that fake notifies are being sent.
 
-% XFRIN_IMPORT_DNS error importing python DNS module: %1
-There was an error importing the python DNS module pydnspp. The most
-likely cause is a PYTHONPATH problem.
-
 % XFRIN_RETRANSFER_UNKNOWN_ZONE got notification to retransfer unknown zone %1
 There was an internal command to retransfer the given zone, but the
 zone is not known to the system. This may indicate that the configuration
@@ -159,45 +136,105 @@ An informational message, this is output when the resolver starts up.
 There was a keyboard interrupt signal to stop the xfrin daemon. The
 daemon will now shut down.
 
+% XFRIN_TRANSFER_SUCCESS full %1 transfer of zone %2 succeeded (messages: %3, records: %4, bytes: %5, run time: %6 seconds, %7 bytes/second)
+The AXFR transfer of the given zone was successful.
+The provided information contains the following values:
+
+messages: Number of overhead DNS messages in the transfer
+
+records: Number of Resource Records in the full transfer, excluding the
+final SOA record that marks the end of the AXFR.
+
+bytes: Full size of the transfer data on the wire.
+
+run time: Time (in seconds) the complete axfr took
+
+bytes/second: Transfer speed
+
 % XFRIN_UNKNOWN_ERROR unknown error: %1
 An uncaught exception was raised while running the xfrin daemon. The
 exception message is printed in the log message.
 
-% XFRIN_IXFR_UPTODATE IXFR requested serial for %1 is %2, master has %3, not updating
-The first SOA record in an IXFR response indicates the zone's serial
-at the primary server is not newer than the client's.  This is
-basically unexpected event because normally the client first checks
-the SOA serial by an SOA query, but can still happen if the transfer
-is manually invoked or (although unlikely) there is a rapid change at
-the primary server between the SOA and IXFR queries.  The client
-implementation confirms the whole response is this single SOA, and
-aborts the transfer just like a successful case.
+% XFRIN_XFR_OTHER_FAILURE %1 transfer of zone %2 failed: %3
+The XFR transfer for the given zone has failed due to a problem outside
+of the xfrin module.  Possible reasons are a broken DNS message or failure
+in database connection.  The error is shown in the log message.
 
-% XFRIN_GOT_INCREMENTAL_RESP got incremental response for %1
-In an attempt of IXFR processing, the begenning SOA of the first difference
-(following the initial SOA that specified the final SOA for all the
-differences) was found.  This means a connection for xfrin tried IXFR
-and really aot a response for incremental updates.
+% XFRIN_XFR_PROCESS_FAILURE %1 transfer of zone %2/%3 failed: %4
+An XFR session failed outside the main protocol handling.  This
+includes an error at the data source level at the initialization
+phase, unexpected failure in the network connection setup to the
+master server, or even more unexpected failure due to unlikely events
+such as memory allocation failure.  Details of the error are shown in
+the log message.  In general, these errors are not really expected
+ones, and indicate an installation error or a program bug.  The
+session handler thread tries to clean up all intermediate resources
+even on these errors, but it may be incomplete.  So, if this log
+message continuously appears, system resource consumption should be
+checked, and you may even want to disable the corresponding transfers.
+You may also want to file a bug report if this message appears so
+often.
 
-% XFRIN_GOT_NONINCREMENTAL_RESP got nonincremental response for %1
-Non incremental transfer was detected at the "first data" of a transfer,
-which is the RR following the initial SOA.  Non incremental transfer is
-either AXFR or AXFR-style IXFR.  In the latter case, it means that
-in a response to IXFR query the first data is not SOA or its SOA serial
-is not equal to the requested SOA serial.
+% XFRIN_XFR_TRANSFER_FAILURE %1 transfer of zone %2 with %3 failed: %4
+The XFR transfer for the given zone has failed due to an internal error.
+The error is shown in the log message.
 
-% XFRIN_AXFR_INCONSISTENT_SOA AXFR SOAs are inconsistent for %1: %2 expected, %3 received
-The serial fields of the first and last SOAs of AXFR (including AXFR-style
-IXFR) are not the same.  According to RFC 5936 these two SOAs must be the
-"same" (not only for the serial), but it is still not clear what the
-receiver should do if this condition does not hold.  There was a discussion
-about this at the IETF dnsext wg:
-http://www.ietf.org/mail-archive/web/dnsext/current/msg07908.html
-and the general feeling seems that it would be better to reject the
-transfer if a mismatch is detected.  On the other hand, also as noted
-in that email thread, neither BIND 9 nor NSD performs any comparison
-on the SOAs.  For now, we only check the serials (ignoring other fields)
-and only leave a warning log message when a mismatch is found.  If it
-turns out to happen with a real world primary server implementation
-and that server actually feeds broken data (e.g. mixed versions of
-zone), we can consider a stricter action.
+% XFRIN_XFR_TRANSFER_FALLBACK falling back from IXFR to AXFR for %1
+The IXFR transfer of the given zone failed. This might happen in many cases,
+such that the remote server doesn't support IXFR, we don't have the SOA record
+(or the zone at all), we are out of sync, etc. In many of these situations,
+AXFR could still work. Therefore we try that one in case it helps.
+
+% XFRIN_XFR_TRANSFER_PROTOCOL_ERROR %1 transfer of zone %2 with %3 failed: %4
+The XFR transfer for the given zone has failed due to a protocol
+error, such as an unexpected response from the primary server.  The
+error is shown in the log message.  It may be because the primary
+server implementation is broken or (although less likely) there was
+some attack attempt, but it can also happen due to configuration
+mismatch such as the remote server does not have authority for the
+zone any more but the local configuration hasn't been updated.  So it
+is recommended to check the primary server configuration.
+
+% XFRIN_XFR_TRANSFER_STARTED %1 transfer of zone %2 started
+A connection to the master server has been made, the serial value in
+the SOA record has been checked, and a zone transfer has been started.
+
+% XFRIN_ZONE_CREATED Zone %1 not found in the given data source, newly created
+On starting an xfrin session, it is identified that the zone to be
+transferred is not found in the data source.  This can happen if a
+secondary DNS server first tries to perform AXFR from a primary server
+without creating the zone image beforehand (e.g. by b10-loadzone).  As
+of this writing the xfrin process provides backward compatible
+behavior to previous versions: creating a new one in the data source
+not to surprise existing users too much.  This is probably not a good
+idea, however, in terms of who should be responsible for managing
+zones at a higher level.  In future it is more likely that a separate
+zone management framework is provided, and the situation where the
+given zone isn't found in xfrout will be treated as an error.
+
+% XFRIN_ZONE_MULTIPLE_SOA Zone %1 has %2 SOA RRs
+On starting an xfrin session, it is identified that the zone to be
+transferred has multiple SOA RRs.  Such a zone is broken, but could be
+accidentally configured especially in a data source using "non
+captive" backend database.  The implementation ignores entire SOA RRs
+and tries to continue processing as if the zone were empty.  This
+means subsequent AXFR can succeed and possibly replace the zone with
+valid content, but an IXFR attempt will fail.
+
+% XFRIN_ZONE_NO_SOA Zone %1 does not have SOA
+On starting an xfrin session, it is identified that the zone to be
+transferred does not have an SOA RR in the data source.  This is not
+necessarily an error; if a secondary DNS server first tries to perform
+transfer from a primary server, the zone can be empty, and therefore
+doesn't have an SOA.  Subsequent AXFR will fill in the zone; if the
+attempt is IXFR it will fail in query creation.
+
+% XFRIN_ZONE_SERIAL_AHEAD Serial number (%1) for %2 received from master %3 < ours (%4)
+The response to an SOA query prior to xfr indicated that the zone's
+SOA serial at the primary server is smaller than that of the xfrin
+client.  This is not necessarily an error especially if that
+particular primary server is another secondary server which hasn't got
+the latest version of the zone.  But if the primary server is known to
+be the real source of the zone, some unexpected inconsistency may have
+happened, and you may want to take a closer look.  In this case xfrin
+doesn't perform subsequent zone transfer.

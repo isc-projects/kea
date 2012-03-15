@@ -37,7 +37,10 @@ import random
 import isc
 import stats_httpd
 import stats
-from test_utils import BaseModules, ThreadingServerManager, MyStats, MyStatsHttpd, SignalHandler, send_command, send_shutdown
+from test_utils import BaseModules, ThreadingServerManager, MyStats,\
+                       MyStatsHttpd, SignalHandler,\
+                       send_command, send_shutdown
+from isc.testutils.ccsession_mock import MockModuleCCSession
 
 DUMMY_DATA = {
     'Boss' : {
@@ -676,7 +679,13 @@ class TestStatsHttpd(unittest.TestCase):
 
     def test_openclose_mccs(self):
         self.stats_httpd = MyStatsHttpd(get_availaddr())
+        mccs = MockModuleCCSession()
+        self.stats_httpd.mccs = mccs
+        self.assertFalse(self.stats_httpd.mccs.stopped)
+        self.assertFalse(self.stats_httpd.mccs.closed)
         self.stats_httpd.close_mccs()
+        self.assertTrue(mccs.stopped)
+        self.assertTrue(mccs.closed)
         self.assertEqual(self.stats_httpd.mccs, None)
         self.stats_httpd.open_mccs()
         self.assertIsNotNone(self.stats_httpd.mccs)

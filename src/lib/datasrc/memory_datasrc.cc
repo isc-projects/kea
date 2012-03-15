@@ -17,10 +17,10 @@
 #include <utility>
 #include <cctype>
 #include <cassert>
+
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/bind.hpp>
-#include <boost/foreach.hpp>
 
 #include <exceptions/exceptions.h>
 
@@ -33,17 +33,15 @@
 
 #include <datasrc/memory_datasrc.h>
 #include <datasrc/rbtree.h>
+#include <datasrc/rbnode_rrset.h>
 #include <datasrc/logger.h>
 #include <datasrc/iterator.h>
 #include <datasrc/data_source.h>
 #include <datasrc/factory.h>
 
-#include <cc/data.h>
-
 using namespace std;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
-using namespace isc::data;
 using boost::scoped_ptr;
 
 namespace isc {
@@ -169,6 +167,12 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         }
     }
 
+    // A helper predicate used in contextCheck() to check if a given domain
+    // name has a RRset of type different than NSEC.
+    static bool isNotNSEC(const DomainPair& element) {
+        return (element.second->getType() != RRType::NSEC());
+    }
+
     /*
      * Does some checks in context of the data that are already in the zone.
      * Currently checks for forbidden combinations of RRsets in the same
@@ -176,24 +180,23 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
      *
      * If such condition is found, it throws AddError.
      */
-    void contextCheck(const ConstRRsetPtr& rrset,
-                      const DomainPtr& domain) const {
+    void contextCheck(const AbstractRRset& rrset, const Domain& domain) const {
         // Ensure CNAME and other type of RR don't coexist for the same
-        // owner name.
-        if (rrset->getType() == RRType::CNAME()) {
-            // TODO: this check will become incorrect when we support DNSSEC
-            // (depending on how we support DNSSEC).  We should revisit it
-            // at that point.
-            if (!domain->empty()) {
+        // owner name except with NSEC, which is the only RR that can coexist
+        // with CNAME (and also RRSIG, which is handled separately)
+        if (rrset.getType() == RRType::CNAME()) {
+            if (find_if(domain.begin(), domain.end(), isNotNSEC)
+                != domain.end()) {
                 LOG_ERROR(logger, DATASRC_MEM_CNAME_TO_NONEMPTY).
-                    arg(rrset->getName());
+                    arg(rrset.getName());
                 isc_throw(AddError, "CNAME can't be added with other data for "
-                          << rrset->getName());
+                          << rrset.getName());
             }
-        } else if (domain->find(RRType::CNAME()) != domain->end()) {
-            LOG_ERROR(logger, DATASRC_MEM_CNAME_COEXIST).arg(rrset->getName());
-            isc_throw(AddError, "CNAME and " << rrset->getType() <<
-                      " can't coexist for " << rrset->getName());
+        } else if (rrset.getType() != RRType::NSEC() &&
+                   domain.find(RRType::CNAME()) != domain.end()) {
+            LOG_ERROR(logger, DATASRC_MEM_CNAME_COEXIST).arg(rrset.getName());
+            isc_throw(AddError, "CNAME and " << rrset.getType() <<
+                      " can't coexist for " << rrset.getName());
         }
 
         /*
@@ -201,17 +204,17 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
          * non-apex domains.
          * RFC 2672 section 3 mentions that it is implied from it and RFC 2181
          */
-        if (rrset->getName() != origin_ &&
+        if (rrset.getName() != origin_ &&
             // Adding DNAME, NS already there
-            ((rrset->getType() == RRType::DNAME() &&
-            domain->find(RRType::NS()) != domain->end()) ||
+            ((rrset.getType() == RRType::DNAME() &&
+            domain.find(RRType::NS()) != domain.end()) ||
             // Adding NS, DNAME already there
-            (rrset->getType() == RRType::NS() &&
-            domain->find(RRType::DNAME()) != domain->end())))
+            (rrset.getType() == RRType::NS() &&
+            domain.find(RRType::DNAME()) != domain.end())))
         {
-            LOG_ERROR(logger, DATASRC_MEM_DNAME_NS).arg(rrset->getName());
+            LOG_ERROR(logger, DATASRC_MEM_DNAME_NS).arg(rrset.getName());
             isc_throw(AddError, "DNAME can't coexist with NS in non-apex "
-                "domain " << rrset->getName());
+                "domain " << rrset.getName());
         }
     }
 
@@ -373,7 +376,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         // Note: there's a slight chance of getting an exception.
         // As noted in add(), we give up strong exception guarantee in such
         // cases.
-        boost::const_pointer_cast<RRset>(covered_rrset)->addRRsig(sig_rrset);
+        boost::const_pointer_cast<AbstractRRset>(covered_rrset)->addRRsig(sig_rrset);
 
         return (result::SUCCESS);
     }
@@ -413,14 +416,19 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
      * access is without the impl_-> and it will get inlined anyway.
      */
     // Implementation of InMemoryZoneFinder::add
-    result::Result add(const ConstRRsetPtr& rrset, ZoneData& zone_data) {
+    result::Result add(const ConstRRsetPtr& rawrrset, ZoneData& zone_data) {
         // Sanitize input.  This will cause an exception to be thrown
         // if the input RRset is empty.
-        addValidation(rrset);
+        addValidation(rawrrset);
 
         // OK, can add the RRset.
         LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_ADD_RRSET).
-            arg(rrset->getName()).arg(rrset->getType()).arg(origin_);
+            arg(rawrrset->getName()).arg(rawrrset->getType()).arg(origin_);
+
+        // ... although instead of loading the RRset directly, we encapsulate
+        // it within an RBNodeRRset.  This contains additional information that
+        // speeds up queries.
+        ConstRRsetPtr rrset(new internal::RBNodeRRset(rawrrset));
 
         if (rrset->getType() == RRType::NSEC3()) {
             return (addNSEC3(rrset, zone_data));
@@ -461,7 +469,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         // break strong exception guarantee.  At the moment we prefer
         // code simplicity and don't bother to introduce complicated
         // recovery code.
-        contextCheck(rrset, domain);
+        contextCheck(*rrset, *domain);
 
         // Try inserting the rrset there
         if (domain->insert(DomainPair(rrset->getType(), rrset)).second) {
@@ -599,26 +607,39 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
      *
      * If rename is false, it returns the one provided. If it is true, it
      * creates a new rrset with the same data but with provided name.
+     * In addition, if DNSSEC records are required by the original caller of
+     * find(), it also creates expanded RRSIG based on the RRSIG of the
+     * wildcard RRset.
      * It is designed for wildcard case, where we create the rrsets
      * dynamically.
      */
-    static ConstRRsetPtr prepareRRset(const Name& name, const ConstRRsetPtr&
-        rrset, bool rename)
+    static ConstRRsetPtr prepareRRset(const Name& name,
+                                      const ConstRRsetPtr& rrset,
+                                      bool rename, FindOptions options)
     {
         if (rename) {
             LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_MEM_RENAME).
                 arg(rrset->getName()).arg(name);
-            /*
-             * We lose a signature here. But it would be wrong anyway, because
-             * the name changed. This might turn out to be unimportant in
-             * future, because wildcards will probably be handled somehow
-             * by DNSSEC.
-             */
             RRsetPtr result(new RRset(name, rrset->getClass(),
-                rrset->getType(), rrset->getTTL()));
+                                      rrset->getType(), rrset->getTTL()));
             for (RdataIteratorPtr i(rrset->getRdataIterator()); !i->isLast();
-                i->next()) {
+                 i->next()) {
                 result->addRdata(i->getCurrent());
+            }
+            if ((options & FIND_DNSSEC) != 0) {
+                ConstRRsetPtr sig_rrset = rrset->getRRsig();
+                if (sig_rrset) {
+                    RRsetPtr result_sig(new RRset(name, sig_rrset->getClass(),
+                                                  RRType::RRSIG(),
+                                                  sig_rrset->getTTL()));
+                    for (RdataIteratorPtr i(sig_rrset->getRdataIterator());
+                         !i->isLast();
+                         i->next())
+                    {
+                        result_sig->addRdata(i->getCurrent());
+                    }
+                    result->addRRsig(result_sig);
+                }
             }
             return (result);
         } else {
@@ -626,12 +647,12 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         }
     }
 
-    // Set up FindResult object as a return value of find(), taking into
+    // Set up FindContext object as a return value of find(), taking into
     // account wildcard matches and DNSSEC information.  We set the NSEC/NSEC3
     // flag when applicable regardless of the find option; the caller would
     // simply ignore these when they didn't request DNSSEC related results.
-    FindResult createFindResult(Result code, ConstRRsetPtr rrset,
-                                bool wild) const
+    ResultContext createFindResult(Result code, ConstRRsetPtr rrset,
+                                   bool wild = false) const
     {
         FindResultFlags flags = RESULT_DEFAULT;
         if (wild) {
@@ -641,13 +662,13 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
             zone_data_->nsec3_data_) {
             flags = flags | RESULT_NSEC3_SIGNED;
         }
-        return (FindResult(code, rrset, flags));
+        return (ZoneFinder::ResultContext(code, rrset, flags));
     }
 
     // Implementation of InMemoryZoneFinder::find
-    FindResult find(const Name& name, RRType type,
-                    std::vector<ConstRRsetPtr> *target,
-                    const FindOptions options) const
+    ZoneFinder::ResultContext find(const Name& name, RRType type,
+                                   std::vector<ConstRRsetPtr>* target,
+                                   const FindOptions options) const
     {
         LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_FIND).arg(name).
             arg(type);
@@ -682,15 +703,16 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                         arg(state.rrset_->getName());
                     // We were traversing a DNAME node (and wanted to go
                     // lower below it), so return the DNAME
-                    return (FindResult(DNAME, prepareRRset(name, state.rrset_,
-                                                           false)));
+                    return (createFindResult(DNAME,
+                                             prepareRRset(name, state.rrset_,
+                                                          false, options)));
                 }
                 if (state.zonecut_node_ != NULL) {
                     LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_DELEG_FOUND).
                         arg(state.rrset_->getName());
-                    return (FindResult(DELEGATION,
-                                       prepareRRset(name, state.rrset_,
-                                                    false)));
+                    return (createFindResult(DELEGATION,
+                                             prepareRRset(name, state.rrset_,
+                                                          false, options)));
                 }
 
                 // If the RBTree search stopped at a node for a super domain
@@ -700,7 +722,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                     NameComparisonResult::SUPERDOMAIN) {
                     LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_SUPER_STOP).
                         arg(name);
-                    return (createFindResult(NXRRSET, ConstRRsetPtr(), false));
+                    return (createFindResult(NXRRSET, ConstRRsetPtr()));
                 }
 
                 /*
@@ -793,8 +815,9 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
             if (found != node->getData()->end()) {
                 LOG_DEBUG(logger, DBG_TRACE_DATA,
                           DATASRC_MEM_EXACT_DELEGATION).arg(name);
-                return (FindResult(DELEGATION,
-                                   prepareRRset(name, found->second, rename)));
+                return (createFindResult(DELEGATION,
+                                         prepareRRset(name, found->second,
+                                                      rename, options)));
             }
         }
 
@@ -804,7 +827,8 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
             for (found = node->getData()->begin();
                  found != node->getData()->end(); ++found)
             {
-                target->push_back(prepareRRset(name, found->second, rename));
+                target->push_back(prepareRRset(name, found->second, rename,
+                                               options));
             }
             LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_ANY_SUCCESS).
                 arg(name);
@@ -818,15 +842,17 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                 arg(type);
             return (createFindResult(SUCCESS, prepareRRset(name,
                                                            found->second,
-                                                           rename), rename));
+                                                           rename, options),
+                                     rename));
         } else {
             // Next, try CNAME.
             found = node->getData()->find(RRType::CNAME());
             if (found != node->getData()->end()) {
                 LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_CNAME).arg(name);
                 return (createFindResult(CNAME,
-                                         prepareRRset(name, found->second,
-                                                      rename), rename));
+                                          prepareRRset(name, found->second,
+                                                       rename, options),
+                                          rename));
             }
         }
         // No exact match or CNAME.  Return NXRRSET.
@@ -859,73 +885,101 @@ InMemoryZoneFinder::getClass() const {
     return (impl_->zone_class_);
 }
 
-ZoneFinder::FindResult
+ZoneFinderContextPtr
 InMemoryZoneFinder::find(const Name& name, const RRType& type,
-                 const FindOptions options)
+                         const FindOptions options)
 {
-    return (impl_->find(name, type, NULL, options));
+    return (ZoneFinderContextPtr(
+                new Context(*this, options,
+                            impl_->find(name, type, NULL, options))));
 }
 
-ZoneFinder::FindResult
+ZoneFinderContextPtr
 InMemoryZoneFinder::findAll(const Name& name,
                             std::vector<ConstRRsetPtr>& target,
                             const FindOptions options)
 {
-    return (impl_->find(name, RRType::ANY(), &target, options));
+    return (ZoneFinderContextPtr(
+                new Context(*this, options, impl_->find(name, RRType::ANY(),
+                                                        &target, options),
+                            target)));
 }
 
 ZoneFinder::FindNSEC3Result
-InMemoryZoneFinder::findNSEC3(const Name&, bool) {
-    isc_throw(NotImplemented, "findNSEC3 is not yet implemented for in memory "
-              "data source");
-}
+InMemoryZoneFinder::findNSEC3(const Name& name, bool recursive) {
+    LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_FINDNSEC3).arg(name).
+        arg(recursive ? "recursive" : "non-recursive");
 
-ZoneFinder::FindNSEC3Result
-InMemoryZoneFinder::findNSEC3Tmp(const Name& name, bool recursive) {
     if (!impl_->zone_data_->nsec3_data_) {
-        isc_throw(Unexpected, "findNSEC3 is called for non NSEC3 zone");
+        isc_throw(DataSourceError,
+                  "findNSEC3 attempt for non NSEC3 signed zone: " <<
+                  impl_->origin_ << "/" << impl_->zone_class_);
     }
-    if (recursive) {
-        isc_throw(Unexpected, "recursive mode isn't expected in tests");
+    const NSEC3Map& map = impl_->zone_data_->nsec3_data_->map_;
+    if (map.empty()) {
+        isc_throw(DataSourceError,
+                  "findNSEC3 attempt but zone has no NSEC3 RR: " <<
+                  impl_->origin_ << "/" << impl_->zone_class_);
     }
-
-    // A temporary workaround for testing: convert the original name to
-    // NSEC3-hashed name using hardcoded mapping.
-    string hname_text;
-    if (name == Name("example.org")) {
-        hname_text = "0P9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
-    } else if (name == Name("www.example.org")) {
-        hname_text = "2S9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
-    } else if (name == Name("xxx.example.org")) {
-        hname_text = "Q09MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
-    } else if (name == Name("yyy.example.org")) {
-        hname_text = "0A9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
-    } else {
-        isc_throw(Unexpected, "unexpected name for NSEC3 test: " << name);
+    const NameComparisonResult cmp_result = name.compare(impl_->origin_);
+    if (cmp_result.getRelation() != NameComparisonResult::EQUAL &&
+        cmp_result.getRelation() != NameComparisonResult::SUBDOMAIN) {
+        isc_throw(InvalidParameter, "findNSEC3 attempt for out-of-zone name: "
+                  << name << ", zone: " << impl_->origin_ << "/"
+                  << impl_->zone_class_);
     }
 
-    // Below we assume the map is not empty for simplicity.
-    NSEC3Map::const_iterator found =
-        impl_->zone_data_->nsec3_data_->map_.lower_bound(hname_text);
-    if (found != impl_->zone_data_->nsec3_data_->map_.end() &&
-        found->first == hname_text) {
-        // exact match
-        return (FindNSEC3Result(true, 2, found->second, ConstRRsetPtr()));
-    } else if (found == impl_->zone_data_->nsec3_data_->map_.end() ||
-               found == impl_->zone_data_->nsec3_data_->map_.begin()) {
-        // the search key is "smaller" than the smallest or "larger" than
-        // largest.  In either case "previous" is the largest one.
-        return (FindNSEC3Result(false, 2,
-                                impl_->zone_data_->nsec3_data_->map_.
-                                rbegin()->second, ConstRRsetPtr()));
-    } else {
-        // Otherwise, H(found_domain-1) < given_hash < H(found_domain)
-        // The covering proof is the first one.
-        return (FindNSEC3Result(false, 2, (--found)->second, ConstRRsetPtr()));
+    // Convenient shortcuts
+    const NSEC3Hash& nsec3hash = *impl_->zone_data_->nsec3_data_->hash_;
+    const unsigned int olabels = impl_->origin_.getLabelCount();
+    const unsigned int qlabels = name.getLabelCount();
+
+    ConstRRsetPtr covering_proof; // placeholder of the next closer proof
+    // Examine all names from the query name to the origin name, stripping
+    // the deepest label one by one, until we find a name that has a matching
+    // NSEC3 hash.
+    for (unsigned int labels = qlabels; labels >= olabels; --labels) {
+        const string hlabel = nsec3hash.calculate(
+            labels == qlabels ? name : name.split(qlabels - labels, labels));
+        NSEC3Map::const_iterator found = map.lower_bound(hlabel);
+        LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_FINDNSEC3_TRYHASH).
+            arg(name).arg(labels).arg(hlabel);
+
+        // If the given hash is larger than the largest stored hash or
+        // the first label doesn't match the target, identify the "previous"
+        // hash value and remember it as the candidate next closer proof.
+        if (found == map.end() || found->first != hlabel) {
+            // If the given hash is larger or smaller than everything,
+            // the covering proof is the NSEC3 that has the largest hash.
+            // Note that we know the map isn't empty, so rbegin() is
+            // safe.
+            if (found == map.end() || found == map.begin()) {
+                covering_proof = map.rbegin()->second;
+            } else {
+                // Otherwise, H(found_entry-1) < given_hash < H(found_entry).
+                // The covering proof is the first one (and it's valid
+                // because found is neither begin nor end)
+                covering_proof = (--found)->second;
+            }
+            if (!recursive) {   // in non recursive mode, we are done.
+                LOG_DEBUG(logger, DBG_TRACE_BASIC,
+                          DATASRC_MEM_FINDNSEC3_COVER).
+                    arg(name).arg(*covering_proof);
+                return (FindNSEC3Result(false, labels, covering_proof,
+                                        ConstRRsetPtr()));
+            }
+        } else {                // found an exact match.
+                LOG_DEBUG(logger, DBG_TRACE_BASIC,
+                          DATASRC_MEM_FINDNSEC3_MATCH).arg(name).arg(labels).
+                    arg(*found->second);
+            return (FindNSEC3Result(true, labels, found->second,
+                                    covering_proof));
+        }
     }
 
-    // We should have covered all cases.
-    isc_throw(Unexpected, "Impossible NSEC3 search result for " << name);
+    isc_throw(DataSourceError, "recursive findNSEC3 mode didn't stop, likely "
+              "a broken NSEC3 zone: " << impl_->origin_ << "/"
+              << impl_->zone_class_);
 }
 
 result::Result
@@ -1168,148 +1222,6 @@ InMemoryClient::getJournalReader(const isc::dns::Name&, uint32_t,
     isc_throw(isc::NotImplemented, "Journaling isn't supported for "
               "in memory data source");
 }
-
-namespace {
-// convencience function to add an error message to a list of those
-// (TODO: move functions like these to some util lib?)
-void
-addError(ElementPtr errors, const std::string& error) {
-    if (errors != ElementPtr() && errors->getType() == Element::list) {
-        errors->add(Element::create(error));
-    }
-}
-
-/// Check if the given element exists in the map, and if it is a string
-bool
-checkConfigElementString(ConstElementPtr config, const std::string& name,
-                         ElementPtr errors)
-{
-    if (!config->contains(name)) {
-        addError(errors,
-                 "Config for memory backend does not contain a '"
-                 +name+
-                 "' value");
-        return false;
-    } else if (!config->get(name) ||
-               config->get(name)->getType() != Element::string) {
-        addError(errors, "value of " + name +
-                 " in memory backend config is not a string");
-        return false;
-    } else {
-        return true;
-    }
-}
-
-bool
-checkZoneConfig(ConstElementPtr config, ElementPtr errors) {
-    bool result = true;
-    if (!config || config->getType() != Element::map) {
-        addError(errors, "Elements in memory backend's zone list must be maps");
-        result = false;
-    } else {
-        if (!checkConfigElementString(config, "origin", errors)) {
-            result = false;
-        }
-        if (!checkConfigElementString(config, "file", errors)) {
-            result = false;
-        }
-        // we could add some existence/readabilty/parsability checks here
-        // if we want
-    }
-    return result;
-}
-
-bool
-checkConfig(ConstElementPtr config, ElementPtr errors) {
-    /* Specific configuration is under discussion, right now this accepts
-     * the 'old' configuration, see [TODO]
-     * So for memory datasource, we get a structure like this:
-     * { "type": string ("memory"),
-     *   "class": string ("IN"/"CH"/etc),
-     *   "zones": list
-     * }
-     * Zones list is a list of maps:
-     * { "origin": string,
-     *     "file": string
-     * }
-     *
-     * At this moment we cannot be completely sure of the contents of the
-     * structure, so we have to do some more extensive tests than should
-     * strictly be necessary (e.g. existence and type of elements)
-     */
-    bool result = true;
-
-    if (!config || config->getType() != Element::map) {
-        addError(errors, "Base config for memory backend must be a map");
-        result = false;
-    } else {
-        if (!checkConfigElementString(config, "type", errors)) {
-            result = false;
-        } else {
-            if (config->get("type")->stringValue() != "memory") {
-                addError(errors,
-                         "Config for memory backend is not of type \"memory\"");
-                result = false;
-            }
-        }
-        if (!checkConfigElementString(config, "class", errors)) {
-            result = false;
-        } else {
-            try {
-                RRClass rrc(config->get("class")->stringValue());
-            } catch (const isc::Exception& rrce) {
-                addError(errors,
-                         "Error parsing class config for memory backend: " +
-                         std::string(rrce.what()));
-                result = false;
-            }
-        }
-        if (!config->contains("zones")) {
-            addError(errors, "No 'zones' element in memory backend config");
-            result = false;
-        } else if (!config->get("zones") ||
-                   config->get("zones")->getType() != Element::list) {
-            addError(errors, "'zones' element in memory backend config is not a list");
-            result = false;
-        } else {
-            BOOST_FOREACH(ConstElementPtr zone_config,
-                          config->get("zones")->listValue()) {
-                if (!checkZoneConfig(zone_config, errors)) {
-                    result = false;
-                }
-            }
-        }
-    }
-
-    return (result);
-    return true;
-}
-
-} // end anonymous namespace
-
-DataSourceClient *
-createInstance(isc::data::ConstElementPtr config, std::string& error) {
-    ElementPtr errors(Element::createList());
-    if (!checkConfig(config, errors)) {
-        error = "Configuration error: " + errors->str();
-        return (NULL);
-    }
-    try {
-        return (new InMemoryClient());
-    } catch (const std::exception& exc) {
-        error = std::string("Error creating memory datasource: ") + exc.what();
-        return (NULL);
-    } catch (...) {
-        error = std::string("Error creating memory datasource, "
-                            "unknown exception");
-        return (NULL);
-    }
-}
-
-void destroyInstance(DataSourceClient* instance) {
-    delete instance;
-}
-
 
 } // end of namespace datasrc
 } // end of namespace isc

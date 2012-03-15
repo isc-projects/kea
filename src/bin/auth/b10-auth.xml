@@ -2,7 +2,7 @@
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
 	       [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2010-2011  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2010-2012  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -20,7 +20,7 @@
 <refentry>
 
   <refentryinfo>
-    <date>December 28, 2011</date>
+    <date>March 1, 2012</date>
   </refentryinfo>
 
   <refmeta>
@@ -36,7 +36,7 @@
 
   <docinfo>
     <copyright>
-      <year>2010</year>
+      <year>2010-2012</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -188,7 +188,10 @@
 
     <para>
       <command>shutdown</command> exits <command>b10-auth</command>.
-      (Note that the BIND 10 boss process will restart this service.)
+      This has an optional <varname>pid</varname> argument to
+      select the process ID to stop.
+      (Note that the BIND 10 boss process may restart this service
+      if configured.)
     </para>
 
   </refsect1>
@@ -198,26 +201,28 @@
 
     <para>
       The statistics data collected by the <command>b10-stats</command>
-      daemon include:
+      daemon for <quote>Auth</quote> include:
     </para>
 
     <variablelist>
 
       <varlistentry>
-        <term>auth.queries.tcp</term>
+        <term>queries.tcp</term>
         <listitem><simpara>Total count of queries received by the
           <command>b10-auth</command> server over TCP since startup.
         </simpara></listitem>
       </varlistentry>
 
       <varlistentry>
-        <term>auth.queries.udp</term>
+        <term>queries.udp</term>
         <listitem><simpara>Total count of queries received by the
           <command>b10-auth</command> server over UDP since startup.
         </simpara></listitem>
       </varlistentry>
 
     </variablelist>
+
+<!-- TODO: missing stats docs. See ticket #1721 -->
 
   </refsect1>
 

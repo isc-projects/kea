@@ -70,7 +70,7 @@ RRsetCache::lookup(const isc::dns::Name& qname,
 }
 
 RRsetEntryPtr
-RRsetCache::update(const isc::dns::RRset& rrset,
+RRsetCache::update(const isc::dns::AbstractRRset& rrset,
                    const RRsetTrustLevel& level)
 {
     LOG_DEBUG(logger, DBG_TRACE_DATA, CACHE_RRSET_UPDATE).arg(rrset.getName()).

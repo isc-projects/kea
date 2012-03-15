@@ -73,9 +73,11 @@ StaticDataSrcImpl::StaticDataSrcImpl() :
     authors->addRdata(generic::TXT("Dmitriy Volodin"));
     authors->addRdata(generic::TXT("Evan Hunt"));
     authors->addRdata(generic::TXT("Haidong Wang")); // Ocean
+    authors->addRdata(generic::TXT("Haikuo Zhang"));
     authors->addRdata(generic::TXT("Han Feng"));
     authors->addRdata(generic::TXT("Jelte Jansen"));
     authors->addRdata(generic::TXT("Jeremy C. Reed")); 
+    authors->addRdata(generic::TXT("Xie Jiagui")); // Kevin Tes
     authors->addRdata(generic::TXT("Jin Jian"));
     authors->addRdata(generic::TXT("JINMEI Tatuya"));
     authors->addRdata(generic::TXT("Kazunori Fujiwara"));

@@ -467,6 +467,14 @@ and it is entering the main loop, waiting for queries to arrive.
 </para></listitem>
 </varlistentry>
 
+<varlistentry id="AUTH_SHUTDOWN">
+<term>AUTH_SHUTDOWN asked to stop, doing so</term>
+<listitem><para>
+This is a debug message indicating the server was asked to shut down and it is
+complying to the request.
+</para></listitem>
+</varlistentry>
+
 <varlistentry id="AUTH_SQLITE3">
 <term>AUTH_SQLITE3 nothing to do for loading sqlite3</term>
 <listitem><para>
@@ -590,7 +598,7 @@ needs a dedicated message bus.
 </varlistentry>
 
 <varlistentry id="BIND10_COMPONENT_FAILED">
-<term>BIND10_COMPONENT_FAILED component %1 (pid %2) failed with %3 exit status</term>
+<term>BIND10_COMPONENT_FAILED component %1 (pid %2) failed: %3</term>
 <listitem><para>
 The process terminated, but the bind10 boss didn't expect it to, which means
 it must have failed.
@@ -1766,6 +1774,26 @@ a bug report.
 </para></listitem>
 </varlistentry>
 
+<varlistentry id="CONFIG_CCSESSION_STOPPING">
+<term>CONFIG_CCSESSION_STOPPING error sending stopping message: %1</term>
+<listitem><para>
+There was a problem when sending a message signaling that the module using
+this CCSession is stopping. This message is sent so that the rest of the
+system is aware that the module is no longer running. Apart from logging
+this message, the error itself is ignored, and the ModuleCCSession is
+still stopped. The specific exception message is printed.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="CONFIG_CCSESSION_STOPPING_UNKNOWN">
+<term>CONFIG_CCSESSION_STOPPING_UNKNOWN unknown error sending stopping message</term>
+<listitem><para>
+Similar to CONFIG_CCSESSION_STOPPING, but in this case the exception that
+is seen is not a standard exception, and further information is unknown.
+This is a bug.
+</para></listitem>
+</varlistentry>
+
 <varlistentry id="CONFIG_GET_FAIL">
 <term>CONFIG_GET_FAIL error getting configuration from cfgmgr: %1</term>
 <listitem><para>
@@ -1870,6 +1898,28 @@ manager.
 <listitem><para>
 There was an error opening the given file. The reason for the failure
 is included in the message.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="CONFIG_SESSION_STOPPING_FAILED">
+<term>CONFIG_SESSION_STOPPING_FAILED error sending stopping message: %1</term>
+<listitem><para>
+There was a problem when sending a message signaling that the module using
+this CCSession is stopping. This message is sent so that the rest of the
+system is aware that the module is no longer running. Apart from logging
+this message, the error itself is ignored, and the ModuleCCSession is
+still stopped. The specific exception message is printed.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="DATASRC_BAD_NSEC3_NAME">
+<term>DATASRC_BAD_NSEC3_NAME NSEC3 record has a bad owner name '%1'</term>
+<listitem><para>
+The software refuses to load NSEC3 records into a wildcard domain or
+the owner name has two or more labels below the zone origin.
+It isn't explicitly forbidden, but no sane zone wouldn have such names
+for NSEC3.  BIND 9 also refuses NSEC3 at wildcard, so this behavior is
+compatible with BIND 9.
 </para></listitem>
 </varlistentry>
 
@@ -2177,15 +2227,6 @@ its class and the database name are printed.
 </para></listitem>
 </varlistentry>
 
-<varlistentry id="DATASRC_DATABASE_UPDATER_COMMIT (1)">
-<term>DATASRC_DATABASE_UPDATER_COMMIT (1) updates committed for '%1/%2' on %3</term>
-<listitem><para>
-Debug information.  A set of updates to a zone has been successfully
-committed to the corresponding database backend.  The zone name,
-its class and the database name are printed.
-</para></listitem>
-</varlistentry>
-
 <varlistentry id="DATASRC_DATABASE_UPDATER_CREATED">
 <term>DATASRC_DATABASE_UPDATER_CREATED zone updater created for '%1/%2' on %3</term>
 <listitem><para>
@@ -2194,25 +2235,8 @@ the shown zone on the shown backend database.
 </para></listitem>
 </varlistentry>
 
-<varlistentry id="DATASRC_DATABASE_UPDATER_CREATED (1)">
-<term>DATASRC_DATABASE_UPDATER_CREATED (1) zone updater created for '%1/%2' on %3</term>
-<listitem><para>
-Debug information.  A zone updater object is created to make updates to
-the shown zone on the shown backend database.
-</para></listitem>
-</varlistentry>
-
 <varlistentry id="DATASRC_DATABASE_UPDATER_DESTROYED">
 <term>DATASRC_DATABASE_UPDATER_DESTROYED zone updater destroyed for '%1/%2' on %3</term>
-<listitem><para>
-Debug information.  A zone updater object is destroyed, either successfully
-or after failure of, making updates to the shown zone on the shown backend
-database.
-</para></listitem>
-</varlistentry>
-
-<varlistentry id="DATASRC_DATABASE_UPDATER_DESTROYED (1)">
-<term>DATASRC_DATABASE_UPDATER_DESTROYED (1) zone updater destroyed for '%1/%2' on %3</term>
 <listitem><para>
 Debug information.  A zone updater object is destroyed, either successfully
 or after failure of, making updates to the shown zone on the shown backend
@@ -2232,37 +2256,8 @@ the underlying database name are shown in the log message.
 </para></listitem>
 </varlistentry>
 
-<varlistentry id="DATASRC_DATABASE_UPDATER_ROLLBACK (1)">
-<term>DATASRC_DATABASE_UPDATER_ROLLBACK (1) zone updates roll-backed for '%1/%2' on %3</term>
-<listitem><para>
-A zone updater is being destroyed without committing the changes.
-This would typically mean the update attempt was aborted due to some
-error, but may also be a bug of the application that forgets committing
-the changes.  The intermediate changes made through the updater won't
-be applied to the underlying database.  The zone name, its class, and
-the underlying database name are shown in the log message.
-</para></listitem>
-</varlistentry>
-
 <varlistentry id="DATASRC_DATABASE_UPDATER_ROLLBACKFAIL">
 <term>DATASRC_DATABASE_UPDATER_ROLLBACKFAIL failed to roll back zone updates for '%1/%2' on %3: %4</term>
-<listitem><para>
-A zone updater is being destroyed without committing the changes to
-the database, and attempts to rollback incomplete updates, but it
-unexpectedly fails.  The higher level implementation does not expect
-it to fail, so this means either a serious operational error in the
-underlying data source (such as a system failure of a database) or
-software bug in the underlying data source implementation.  In either
-case if this message is logged the administrator should carefully
-examine the underlying data source to see what exactly happens and
-whether the data is still valid.  The zone name, its class, and the
-underlying database name as well as the error message thrown from the
-database module are shown in the log message.
-</para></listitem>
-</varlistentry>
-
-<varlistentry id="DATASRC_DATABASE_UPDATER_ROLLBACKFAIL (1)">
-<term>DATASRC_DATABASE_UPDATER_ROLLBACKFAIL (1) failed to roll back zone updates for '%1/%2' on %3: %4</term>
 <listitem><para>
 A zone updater is being destroyed without committing the changes to
 the database, and attempts to rollback incomplete updates, but it
@@ -2497,6 +2492,46 @@ Debug information. A search for the requested RRset is being started.
 </para></listitem>
 </varlistentry>
 
+<varlistentry id="DATASRC_MEM_FINDNSEC3">
+<term>DATASRC_MEM_FINDNSEC3 finding NSEC3 for %1, mode %2</term>
+<listitem><para>
+Debug information. A search in an in-memory data source for NSEC3 that
+matches or covers the given name is being started.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="DATASRC_MEM_FINDNSEC3_COVER">
+<term>DATASRC_MEM_FINDNSEC3_COVER found a covering NSEC3 for %1: %2</term>
+<listitem><para>
+Debug information. An NSEC3 that covers the given name is found and
+being returned.  The found NSEC3 RRset is also displayed.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="DATASRC_MEM_FINDNSEC3_MATCH">
+<term>DATASRC_MEM_FINDNSEC3_MATCH found a matching NSEC3 for %1 at label count %2: %3</term>
+<listitem><para>
+Debug information. An NSEC3 that matches (a possibly superdomain of)
+the given name is found and being returned.  When the shown label
+count is smaller than that of the given name, the matching NSEC3 is
+for a superdomain of the given name (see DATASRC_MEM_FINDNSEC3_TRYHASH).
+The found NSEC3 RRset is also displayed.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="DATASRC_MEM_FINDNSEC3_TRYHASH">
+<term>DATASRC_MEM_FINDNSEC3_TRYHASH looking for NSEC3 for %1 at label count %2 (hash %3)</term>
+<listitem><para>
+Debug information. In an attempt of finding an NSEC3 for the give name,
+(a possibly superdomain of) the name is hashed and searched for in the
+NSEC3 name space.  When the shown label count is smaller than that of the
+shown name, the search tries the superdomain name that share the shown
+(higher) label count of the shown name (e.g., for
+www.example.com. with shown label count of 3, example.com. is being
+tried).
+</para></listitem>
+</varlistentry>
+
 <varlistentry id="DATASRC_MEM_FIND_ZONE">
 <term>DATASRC_MEM_FIND_ZONE looking for zone '%1'</term>
 <listitem><para>
@@ -2516,6 +2551,18 @@ Debug information. The content of master file is being loaded into the memory.
 <term>DATASRC_MEM_NOT_FOUND requested domain '%1' not found</term>
 <listitem><para>
 Debug information. The requested domain does not exist.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="DATASRC_MEM_NO_NSEC3PARAM">
+<term>DATASRC_MEM_NO_NSEC3PARAM NSEC3PARAM is missing for NSEC3-signed zone %1/%2</term>
+<listitem><para>
+The in-memory data source has loaded a zone signed with NSEC3 RRs,
+but it doesn't have a NSEC3PARAM RR at the zone origin.  It's likely that
+the zone is somehow broken, but this RR is not necessarily needed for
+handling lookups with NSEC3 in this data source, so it accepts the given
+content of the zone.  Nevertheless the administrator should look into
+the integrity of the zone data.
 </para></listitem>
 </varlistentry>
 
@@ -2570,11 +2617,13 @@ Debug information. The requested record was found.
 </varlistentry>
 
 <varlistentry id="DATASRC_MEM_SUPER_STOP">
-<term>DATASRC_MEM_SUPER_STOP stopped at superdomain '%1', domain '%2' is empty</term>
+<term>DATASRC_MEM_SUPER_STOP stopped as '%1' is superdomain of a zone node, meaning it's empty</term>
 <listitem><para>
-Debug information. The search stopped at a superdomain of the requested
-domain. The domain is an empty nonterminal, therefore it is treated  as NXRRSET
-case (eg. the domain exists, but it doesn't have the requested record type).
+Debug information. The search stopped because the requested domain was
+detected to be a superdomain of some existing node of zone (while there
+was no exact match).  This means that the domain is an empty nonterminal,
+therefore it is treated  as NXRRSET case (eg. the domain exists, but it
+doesn't have the requested record type).
 </para></listitem>
 </varlistentry>
 
@@ -2925,7 +2974,7 @@ the specific error already.
 </varlistentry>
 
 <varlistentry id="DATASRC_QUERY_RRSIG">
-<term>DATASRC_QUERY_RRSIG unable to answer RRSIG query</term>
+<term>DATASRC_QUERY_RRSIG unable to answer RRSIG query for %1</term>
 <listitem><para>
 The server is unable to answer a direct query for RRSIG type, but was asked
 to do so.
@@ -3232,6 +3281,16 @@ generated.
 </para></listitem>
 </varlistentry>
 
+<varlistentry id="DDNS_ACCEPT_FAILURE">
+<term>DDNS_ACCEPT_FAILURE error accepting a connection: %1</term>
+<listitem><para>
+There was a low-level error when we tried to accept an incoming connection
+(probably coming from b10-auth). We continue serving on whatever other
+connections we already have, but this connection is dropped. The reason
+is logged.
+</para></listitem>
+</varlistentry>
+
 <varlistentry id="DDNS_CC_SESSION_ERROR">
 <term>DDNS_CC_SESSION_ERROR error reading from cc channel: %1</term>
 <listitem><para>
@@ -3257,6 +3316,17 @@ startup time.  Details of the error are included in the log message.
 </para></listitem>
 </varlistentry>
 
+<varlistentry id="DDNS_DROP_CONN">
+<term>DDNS_DROP_CONN dropping connection on file descriptor %1 because of error %2</term>
+<listitem><para>
+There was an error on a connection with the b10-auth server (or whatever
+connects to the ddns daemon). This might be OK, for example when the
+authoritative server shuts down, the connection would get closed. It also
+can mean the system is busy and can't keep up or that the other side got
+confused and sent bad data.
+</para></listitem>
+</varlistentry>
+
 <varlistentry id="DDNS_MODULECC_SESSION_ERROR">
 <term>DDNS_MODULECC_SESSION_ERROR error encountered by configuration/command module: %1</term>
 <listitem><para>
@@ -3265,6 +3335,16 @@ control commands.  This could happen for various reasons, but the most likely
 cause is that the configuration database contains a syntax error and ddns
 failed to start at initialization.  A detailed error message from the module
 will also be displayed.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="DDNS_NEW_CONN">
+<term>DDNS_NEW_CONN new connection on file descriptor %1 from %2</term>
+<listitem><para>
+Debug message. We received a connection and we are going to start handling
+requests from it. The file descriptor number and the address where the request
+comes from is logged. The connection is over a unix domain socket and is likely
+coming from a b10-auth process.
 </para></listitem>
 </varlistentry>
 
@@ -3281,6 +3361,15 @@ and will now shut down.
 <listitem><para>
 The ddns process has successfully started and is now ready to receive commands
 and updates.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="DDNS_SESSION">
+<term>DDNS_SESSION session arrived on file descriptor %1</term>
+<listitem><para>
+A debug message, informing there's some activity on the given file descriptor.
+It will be either a request or the file descriptor will be closed. See
+following log messages to see what of it.
 </para></listitem>
 </varlistentry>
 
@@ -3823,6 +3912,32 @@ an answer with a different given type and class.
 </para><para>
 This message indicates an internal error in the NSAS.  Please raise a
 bug report.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="PYSERVER_COMMON_TSIG_KEYRING_DEINIT">
+<term>PYSERVER_COMMON_TSIG_KEYRING_DEINIT Deinitializing global TSIG keyring</term>
+<listitem><para>
+A debug message noting that the global TSIG keyring is being removed from
+memory. Most programs don't do that, they just exit, which is OK.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="PYSERVER_COMMON_TSIG_KEYRING_INIT">
+<term>PYSERVER_COMMON_TSIG_KEYRING_INIT Initializing global TSIG keyring</term>
+<listitem><para>
+A debug message noting the TSIG keyring storage is being prepared. It should
+appear at most once in the lifetime of a program. The keyring still needs
+to be loaded from configuration.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="PYSERVER_COMMON_TSIG_KEYRING_UPDATE">
+<term>PYSERVER_COMMON_TSIG_KEYRING_UPDATE Updating global TSIG keyring</term>
+<listitem><para>
+A debug message. The TSIG keyring is being (re)loaded from configuration.
+This happens at startup or when the configuration changes. The old keyring
+is removed and new one created with all the keys.
 </para></listitem>
 </varlistentry>
 
@@ -4571,6 +4686,14 @@ This informational message is output when the resolver has shut down.
 </para></listitem>
 </varlistentry>
 
+<varlistentry id="RESOLVER_SHUTDOWN (1)">
+<term>RESOLVER_SHUTDOWN (1) asked to shut down, doing so</term>
+<listitem><para>
+A debug message noting that the server was asked to terminate and is
+complying to the request.
+</para></listitem>
+</varlistentry>
+
 <varlistentry id="RESOLVER_STARTED">
 <term>RESOLVER_STARTED resolver started</term>
 <listitem><para>
@@ -4605,7 +4728,7 @@ a message to the sender with the RCODE set to NOTIMP.
 </varlistentry>
 
 <varlistentry id="SOCKETREQUESTOR_CREATED">
-<term>SOCKETREQUESTOR_CREATED Socket requestor created</term>
+<term>SOCKETREQUESTOR_CREATED Socket requestor created for application %1</term>
 <listitem><para>
 Debug message.  A socket requesor (client of the socket creator) is created
 for the corresponding application.  Normally this should happen at most
@@ -4706,6 +4829,21 @@ be hidden, as it has higher debug level.
 </para></listitem>
 </varlistentry>
 
+<varlistentry id="SRVCOMM_EXCEPTION_ALLOC">
+<term>SRVCOMM_EXCEPTION_ALLOC exception when allocating a socket: %1</term>
+<listitem><para>
+The process tried to allocate a socket using the socket creator, but an error
+occurred. But it is not one of the errors we are sure are "safe". In this case
+it is unclear if the unsuccessful communication left the process and the bind10
+process in inconsistent state, so the process is going to abort to prevent
+further problems in that area.
+</para><para>
+This is probably a bug in the code, but it could be caused by other unusual
+conditions (like insufficient memory, deleted socket file used for
+communication).
+</para></listitem>
+</varlistentry>
+
 <varlistentry id="SRVCOMM_KEYS_DEINIT">
 <term>SRVCOMM_KEYS_DEINIT deinitializing TSIG keyring</term>
 <listitem><para>
@@ -4742,6 +4880,15 @@ specification is outside the valid range of 0 to 65535.
 <listitem><para>
 Debug message, noting that the server is about to start listening on a
 different set of IP addresses and ports than before.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="SRVCOMM_UNKNOWN_EXCEPTION_ALLOC">
+<term>SRVCOMM_UNKNOWN_EXCEPTION_ALLOC unknown exception when allocating a socket</term>
+<listitem><para>
+The situation is the same as in the SRVCOMM_EXCEPTION_ALLOC case, but further
+details about the error are unknown, because it was signaled by throwing
+something not being an exception. This is definitely a bug.
 </para></listitem>
 </varlistentry>
 
