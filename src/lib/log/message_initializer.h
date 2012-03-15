@@ -15,6 +15,7 @@
 #ifndef __MESSAGEINITIALIZER_H
 #define __MESSAGEINITIALIZER_H
 
+#include <cstdlib>
 #include <string>
 #include <vector>
 #include <log/message_dictionary.h>
@@ -37,27 +38,62 @@ namespace log {
 ///             :
 ///         NULL
 ///     };
-///     MessageDictionaryHelper xyz(values);
+///     MessageInitializer xyz(values);
 ///
-/// This will automatically add the message ID/text pairs to the global
-/// dictionary during initialization - all that is required is that the module
-/// containing the definition is included into the final executable.
+/// All that needed is for the module containing the definitions to be
+/// included in the execution unit.
 ///
-/// Messages are added via the MessageDictionary::add() method, so any
-/// duplicates are stored in the the global dictionary's overflow vector whence
-/// they can be retrieved at run-time.
+/// To avoid static initialization fiasco problems, the initialization is
+/// carried out in two stages:
+/// - The constructor adds a pointer to the values array to a pre-defined array
+///   of pointers.
+/// - During the run-time initialization of the logging system, the static
+///   method loadDictionary() is called to load the message dictionary.
+/// This way, no heap storage is allocated during the static initialization,
+/// something that may give problems on some operating systems.
+///
+/// \note The maximum number of message arrays that can be added to the
+/// dictionary in this way is defined by the constant
+/// MessageInitializer::MAX_MESSAGE_ARRAYS.  This is set to 256 as a compromise
+/// between wasted space and allowing for future expansion, but can be
+/// changed (by editing the source file) to any value desired.
+///
+/// When messages are added to the dictionary, the are added via the
+/// MessageDictionary::add() method, so any duplicates are stored in the
+/// global dictionary's overflow vector whence they can be retrieved at
+/// run-time.
 
 class MessageInitializer {
 public:
+    /// Maximum number of message arrays that can be initialized in this way
+    static const size_t MAX_MESSAGE_ARRAYS = 256;
 
     /// \brief Constructor
     ///
-    /// Adds the array of values to the global dictionary, and notes any
-    /// duplicates.
+    /// Adds a pointer to the array of messages to the global array of
+    /// pointers to message arrays.
     ///
     /// \param values NULL-terminated array of alternating identifier strings
-    /// and associated message text.
+    /// and associated message text. N.B. This object stores a pointer to the
+    /// passed array; the array MUST remain valid at least until
+    /// loadDictionary() has been called.
     MessageInitializer(const char* values[]);
+
+    /// \brief Obtain pending load count
+    ///
+    /// Returns the number of message arrays that will be loaded by the next
+    /// call to loadDictionary().
+    ///
+    /// \return Number of registered message arrays.  This is reset to zero
+    ///         when loadDictionary() is called.
+    static size_t getPendingCount();
+
+    /// \brief Run-Time Initialization
+    ///
+    /// Loops through the internal array of pointers to message arrays
+    /// and adds the messages to the internal dictionary.  This is called
+    /// during run-time initialization.
+    static void loadDictionary();
 
     /// \brief Return Duplicates
     ///

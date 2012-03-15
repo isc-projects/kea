@@ -87,8 +87,12 @@ protected:
         server.setXfrinSession(&notify_session);
         server.setStatisticsSession(&statistics_session);
     }
+
     virtual void processMessage() {
-        server.processMessage(*io_message, parse_message, response_obuffer,
+        // If processMessage has been called before, parse_message needs
+        // to be reset. If it hasn't, there's no harm in doing so
+        parse_message->clear(Message::PARSE);
+        server.processMessage(*io_message, *parse_message, *response_obuffer,
                               &dnsserv);
     }
 
@@ -121,6 +125,19 @@ protected:
         }
     }
 
+<<<<<<< HEAD
+=======
+    // Convenience method for tests that expect to return SERVFAIL
+    // It calls processMessage, checks if there is an answer, and
+    // check the header for default SERVFAIL data
+    void processAndCheckSERVFAIL() {
+        processMessage();
+        EXPECT_TRUE(dnsserv.hasAnswer());
+        headerCheck(*parse_message, default_qid, Rcode::SERVFAIL(),
+                    opcode.getCode(), QR_FLAG, 1, 0, 0, 0);
+    }
+
+>>>>>>> master
     IOService ios_;
     DNSService dnss_;
     MockSession statistics_session;
@@ -174,7 +191,7 @@ TEST_F(AuthSrvTest, builtInQuery) {
                                        default_qid, Name("version.bind"),
                                        RRClass::CH(), RRType::TXT());
     createRequestPacket(request_message, IPPROTO_UDP);
-    server.processMessage(*io_message, parse_message, response_obuffer,
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
                           &dnsserv);
     createBuiltinVersionResponse(default_qid, response_data);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
@@ -286,7 +303,8 @@ TEST_F(AuthSrvTest, AXFRSuccess) {
     createRequestPacket(request_message, IPPROTO_TCP);
     // On success, the AXFR query has been passed to a separate process,
     // so we shouldn't have to respond.
-    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
+                          &dnsserv);
     EXPECT_FALSE(dnsserv.hasAnswer());
     EXPECT_TRUE(xfrout.isConnected());
     checkAllRcodeCountersZero();
@@ -307,7 +325,7 @@ TEST_F(AuthSrvTest, TSIGSigned) {
     boost::shared_ptr<TSIGKeyRing> keyring(new TSIGKeyRing);
     keyring->add(key);
     server.setTSIGKeyRing(&keyring);
-    server.processMessage(*io_message, parse_message, response_obuffer,
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
                           &dnsserv);
 
     // What did we get?
@@ -342,7 +360,7 @@ TEST_F(AuthSrvTest, TSIGSignedBadKey) {
     // Process the message, but use a different key there
     boost::shared_ptr<TSIGKeyRing> keyring(new TSIGKeyRing);
     server.setTSIGKeyRing(&keyring);
-    server.processMessage(*io_message, parse_message, response_obuffer,
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
                           &dnsserv);
 
     EXPECT_TRUE(dnsserv.hasAnswer());
@@ -377,7 +395,7 @@ TEST_F(AuthSrvTest, TSIGBadSig) {
     boost::shared_ptr<TSIGKeyRing> keyring(new TSIGKeyRing);
     keyring->add(TSIGKey("key:QkFECg==:hmac-sha1"));
     server.setTSIGKeyRing(&keyring);
-    server.processMessage(*io_message, parse_message, response_obuffer,
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
                           &dnsserv);
 
     EXPECT_TRUE(dnsserv.hasAnswer());
@@ -415,7 +433,7 @@ TEST_F(AuthSrvTest, TSIGCheckFirst) {
     boost::shared_ptr<TSIGKeyRing> keyring(new TSIGKeyRing);
     keyring->add(TSIGKey("key:QkFECg==:hmac-sha1"));
     server.setTSIGKeyRing(&keyring);
-    server.processMessage(*io_message, parse_message, response_obuffer,
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
                           &dnsserv);
 
     EXPECT_TRUE(dnsserv.hasAnswer());
@@ -446,7 +464,8 @@ TEST_F(AuthSrvTest, AXFRConnectFail) {
                                        Name("example.com"), RRClass::IN(),
                                        RRType::AXFR());
     createRequestPacket(request_message, IPPROTO_TCP);
-    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
+                          &dnsserv);
     EXPECT_TRUE(dnsserv.hasAnswer());
     headerCheck(*parse_message, default_qid, Rcode::SERVFAIL(),
                 opcode.getCode(), QR_FLAG, 1, 0, 0, 0);
@@ -460,7 +479,8 @@ TEST_F(AuthSrvTest, AXFRSendFail) {
                                        Name("example.com"), RRClass::IN(),
                                        RRType::AXFR());
     createRequestPacket(request_message, IPPROTO_TCP);
-    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
+                          &dnsserv);
     EXPECT_TRUE(xfrout.isConnected());
 
     xfrout.disableSend();
@@ -470,7 +490,8 @@ TEST_F(AuthSrvTest, AXFRSendFail) {
                                        Name("example.com"), RRClass::IN(),
                                        RRType::AXFR());
     createRequestPacket(request_message, IPPROTO_TCP);
-    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
+                          &dnsserv);
     EXPECT_TRUE(dnsserv.hasAnswer());
     headerCheck(*parse_message, default_qid, Rcode::SERVFAIL(),
                 opcode.getCode(), QR_FLAG, 1, 0, 0, 0);
@@ -480,17 +501,17 @@ TEST_F(AuthSrvTest, AXFRSendFail) {
 }
 
 TEST_F(AuthSrvTest, AXFRDisconnectFail) {
-    // In our usage disconnect() shouldn't fail.  So we'll see the exception
-    // should it be thrown.
+    // In our usage disconnect() shouldn't fail. But even if it does,
+    // it should not disrupt service (so processMessage should have caught it)
     xfrout.disableSend();
     xfrout.disableDisconnect();
     UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
                                        Name("example.com"), RRClass::IN(),
                                        RRType::AXFR());
     createRequestPacket(request_message, IPPROTO_TCP);
-    EXPECT_THROW(server.processMessage(*io_message, parse_message,
-                                       response_obuffer, &dnsserv),
-                 XfroutError);
+    EXPECT_NO_THROW(server.processMessage(*io_message, *parse_message,
+                                          *response_obuffer, &dnsserv));
+    // Since the disconnect failed, we should still be 'connected'
     EXPECT_TRUE(xfrout.isConnected());
     // XXX: we need to re-enable disconnect.  otherwise an exception would be
     // thrown via the destructor of the server.
@@ -504,7 +525,8 @@ TEST_F(AuthSrvTest, IXFRConnectFail) {
                                        Name("example.com"), RRClass::IN(),
                                        RRType::IXFR());
     createRequestPacket(request_message, IPPROTO_TCP);
-    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
+                          &dnsserv);
     EXPECT_TRUE(dnsserv.hasAnswer());
     headerCheck(*parse_message, default_qid, Rcode::SERVFAIL(),
                 opcode.getCode(), QR_FLAG, 1, 0, 0, 0);
@@ -518,7 +540,8 @@ TEST_F(AuthSrvTest, IXFRSendFail) {
                                        Name("example.com"), RRClass::IN(),
                                        RRType::IXFR());
     createRequestPacket(request_message, IPPROTO_TCP);
-    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
+                          &dnsserv);
     EXPECT_TRUE(xfrout.isConnected());
 
     xfrout.disableSend();
@@ -528,7 +551,8 @@ TEST_F(AuthSrvTest, IXFRSendFail) {
                                        Name("example.com"), RRClass::IN(),
                                        RRType::IXFR());
     createRequestPacket(request_message, IPPROTO_TCP);
-    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
+                          &dnsserv);
     EXPECT_TRUE(dnsserv.hasAnswer());
     headerCheck(*parse_message, default_qid, Rcode::SERVFAIL(),
                 opcode.getCode(), QR_FLAG, 1, 0, 0, 0);
@@ -538,17 +562,16 @@ TEST_F(AuthSrvTest, IXFRSendFail) {
 }
 
 TEST_F(AuthSrvTest, IXFRDisconnectFail) {
-    // In our usage disconnect() shouldn't fail.  So we'll see the exception
-    // should it be thrown.
+    // In our usage disconnect() shouldn't fail, but even if it does,
+    // procesMessage() should catch it.
     xfrout.disableSend();
     xfrout.disableDisconnect();
     UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
                                        Name("example.com"), RRClass::IN(),
                                        RRType::IXFR());
     createRequestPacket(request_message, IPPROTO_TCP);
-    EXPECT_THROW(server.processMessage(*io_message, parse_message,
-                                       response_obuffer, &dnsserv),
-                 XfroutError);
+    EXPECT_NO_THROW(server.processMessage(*io_message, *parse_message,
+                                          *response_obuffer, &dnsserv));
     EXPECT_TRUE(xfrout.isConnected());
     // XXX: we need to re-enable disconnect.  otherwise an exception would be
     // thrown via the destructor of the server.
@@ -561,7 +584,8 @@ TEST_F(AuthSrvTest, notify) {
                                        RRClass::IN(), RRType::SOA());
     request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(request_message, IPPROTO_UDP);
-    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
+                          &dnsserv);
     EXPECT_TRUE(dnsserv.hasAnswer());
 
     // An internal command message should have been created and sent to an
@@ -596,7 +620,8 @@ TEST_F(AuthSrvTest, notifyForCHClass) {
                                        RRClass::CH(), RRType::SOA());
     request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(request_message, IPPROTO_UDP);
-    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
+                          &dnsserv);
     EXPECT_TRUE(dnsserv.hasAnswer());
 
     // Other conditions should be the same, so simply confirm the RR class is
@@ -614,7 +639,8 @@ TEST_F(AuthSrvTest, notifyEmptyQuestion) {
     request_message.setQid(default_qid);
     request_message.toWire(request_renderer);
     createRequestPacket(request_message, IPPROTO_UDP);
-    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
+                          &dnsserv);
     EXPECT_TRUE(dnsserv.hasAnswer());
     headerCheck(*parse_message, default_qid, Rcode::FORMERR(),
                 Opcode::NOTIFY().getCode(), QR_FLAG, 0, 0, 0, 0);
@@ -629,7 +655,8 @@ TEST_F(AuthSrvTest, notifyMultiQuestions) {
                                          RRType::SOA()));
     request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(request_message, IPPROTO_UDP);
-    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
+                          &dnsserv);
     EXPECT_TRUE(dnsserv.hasAnswer());
     headerCheck(*parse_message, default_qid, Rcode::FORMERR(),
                 Opcode::NOTIFY().getCode(), QR_FLAG, 2, 0, 0, 0);
@@ -641,7 +668,8 @@ TEST_F(AuthSrvTest, notifyNonSOAQuestion) {
                                        RRClass::IN(), RRType::NS());
     request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(request_message, IPPROTO_UDP);
-    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
+                          &dnsserv);
     EXPECT_TRUE(dnsserv.hasAnswer());
     headerCheck(*parse_message, default_qid, Rcode::FORMERR(),
                 Opcode::NOTIFY().getCode(), QR_FLAG, 1, 0, 0, 0);
@@ -653,7 +681,8 @@ TEST_F(AuthSrvTest, notifyWithoutAA) {
                                        default_qid, Name("example.com"),
                                        RRClass::IN(), RRType::SOA());
     createRequestPacket(request_message, IPPROTO_UDP);
-    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
+                          &dnsserv);
     EXPECT_TRUE(dnsserv.hasAnswer());
     headerCheck(*parse_message, default_qid, Rcode::NOERROR(),
                 Opcode::NOTIFY().getCode(), QR_FLAG | AA_FLAG, 1, 0, 0, 0);
@@ -666,7 +695,8 @@ TEST_F(AuthSrvTest, notifyWithErrorRcode) {
     request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     request_message.setRcode(Rcode::SERVFAIL());
     createRequestPacket(request_message, IPPROTO_UDP);
-    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
+                          &dnsserv);
     EXPECT_TRUE(dnsserv.hasAnswer());
     headerCheck(*parse_message, default_qid, Rcode::NOERROR(),
                 Opcode::NOTIFY().getCode(), QR_FLAG | AA_FLAG, 1, 0, 0, 0);
@@ -683,7 +713,8 @@ TEST_F(AuthSrvTest, notifyWithoutSession) {
 
     // we simply ignore the notify and let it be resent if an internal error
     // happens.
-    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
+                          &dnsserv);
     EXPECT_FALSE(dnsserv.hasAnswer());
 }
 
@@ -696,7 +727,8 @@ TEST_F(AuthSrvTest, notifySendFail) {
     request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(request_message, IPPROTO_UDP);
 
-    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
+                          &dnsserv);
     EXPECT_FALSE(dnsserv.hasAnswer());
 }
 
@@ -708,7 +740,8 @@ TEST_F(AuthSrvTest, notifyReceiveFail) {
                                        RRClass::IN(), RRType::SOA());
     request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(request_message, IPPROTO_UDP);
-    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
+                          &dnsserv);
     EXPECT_FALSE(dnsserv.hasAnswer());
 }
 
@@ -720,7 +753,8 @@ TEST_F(AuthSrvTest, notifyWithBogusSessionMessage) {
                                        RRClass::IN(), RRType::SOA());
     request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(request_message, IPPROTO_UDP);
-    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
+                          &dnsserv);
     EXPECT_FALSE(dnsserv.hasAnswer());
 }
 
@@ -733,7 +767,8 @@ TEST_F(AuthSrvTest, notifyWithSessionMessageError) {
                                        RRClass::IN(), RRType::SOA());
     request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(request_message, IPPROTO_UDP);
-    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
+                          &dnsserv);
     EXPECT_FALSE(dnsserv.hasAnswer());
 }
 
@@ -748,7 +783,8 @@ updateConfig(AuthSrv* server, const char* const config_data,
 
     ConstElementPtr result = config_answer->get("result");
     EXPECT_EQ(Element::list, result->getType());
-    EXPECT_EQ(expect_success ? 0 : 1, result->get(0)->intValue());
+    EXPECT_EQ(expect_success ? 0 : 1, result->get(0)->intValue()) <<
+        "Bad result from updateConfig: " << result->str();
 }
 
 // Install a Sqlite3 data source with testing data.
@@ -759,7 +795,8 @@ TEST_F(AuthSrvTest, updateConfig) {
     // response should have the AA flag on, and have an RR in each answer
     // and authority section.
     createDataFromFile("examplequery_fromWire.wire");
-    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
+                          &dnsserv);
     EXPECT_TRUE(dnsserv.hasAnswer());
     headerCheck(*parse_message, default_qid, Rcode::NOERROR(), opcode.getCode(),
                 QR_FLAG | AA_FLAG, 1, 1, 1, 0);
@@ -773,7 +810,8 @@ TEST_F(AuthSrvTest, datasourceFail) {
     // in a SERVFAIL response, and the answer and authority sections should
     // be empty.
     createDataFromFile("badExampleQuery_fromWire.wire");
-    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
+                          &dnsserv);
     EXPECT_TRUE(dnsserv.hasAnswer());
     headerCheck(*parse_message, default_qid, Rcode::SERVFAIL(),
                 opcode.getCode(), QR_FLAG, 1, 0, 0, 0);
@@ -788,7 +826,8 @@ TEST_F(AuthSrvTest, updateConfigFail) {
 
     // The original data source should still exist.
     createDataFromFile("examplequery_fromWire.wire");
-    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
+                          &dnsserv);
     EXPECT_TRUE(dnsserv.hasAnswer());
     headerCheck(*parse_message, default_qid, Rcode::NOERROR(), opcode.getCode(),
                 QR_FLAG | AA_FLAG, 1, 1, 1, 0);
@@ -808,7 +847,7 @@ TEST_F(AuthSrvTest, updateWithInMemoryClient) {
 
     // The memory data source is empty, should return REFUSED rcode.
     createDataFromFile("examplequery_fromWire.wire");
-    server.processMessage(*io_message, parse_message, response_obuffer,
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
                           &dnsserv);
     EXPECT_TRUE(dnsserv.hasAnswer());
     headerCheck(*parse_message, default_qid, Rcode::REFUSED(),
@@ -825,7 +864,7 @@ TEST_F(AuthSrvTest, queryWithInMemoryClientNoDNSSEC) {
     EXPECT_EQ(1, server.getInMemoryClient(rrclass)->getZoneCount());
 
     createDataFromFile("nsec3query_nodnssec_fromWire.wire");
-    server.processMessage(*io_message, parse_message, response_obuffer,
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
                           &dnsserv);
 
     EXPECT_TRUE(dnsserv.hasAnswer());
@@ -842,7 +881,7 @@ TEST_F(AuthSrvTest, queryWithInMemoryClientDNSSEC) {
     EXPECT_EQ(1, server.getInMemoryClient(rrclass)->getZoneCount());
 
     createDataFromFile("nsec3query_fromWire.wire");
-    server.processMessage(*io_message, parse_message, response_obuffer,
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
                           &dnsserv);
 
     EXPECT_TRUE(dnsserv.hasAnswer());
@@ -860,7 +899,7 @@ TEST_F(AuthSrvTest, chQueryWithInMemoryClient) {
                                        default_qid, Name("version.bind"),
                                        RRClass::CH(), RRType::TXT());
     createRequestPacket(request_message, IPPROTO_UDP);
-    server.processMessage(*io_message, parse_message, response_obuffer,
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
                           &dnsserv);
     EXPECT_TRUE(dnsserv.hasAnswer());
     headerCheck(*parse_message, default_qid, Rcode::NOERROR(),
@@ -886,7 +925,7 @@ TEST_F(AuthSrvTest, queryCounterUDPNormal) {
                                        default_qid, Name("example.com"),
                                        RRClass::IN(), RRType::NS());
     createRequestPacket(request_message, IPPROTO_UDP);
-    server.processMessage(*io_message, parse_message, response_obuffer,
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
                           &dnsserv);
     // After processing UDP query, the counter should be 1.
     EXPECT_EQ(1, server.getCounter(AuthCounters::SERVER_UDP_QUERY));
@@ -905,7 +944,7 @@ TEST_F(AuthSrvTest, queryCounterTCPNormal) {
                                        default_qid, Name("example.com"),
                                        RRClass::IN(), RRType::NS());
     createRequestPacket(request_message, IPPROTO_TCP);
-    server.processMessage(*io_message, parse_message, response_obuffer,
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
                           &dnsserv);
     // After processing TCP query, the counter should be 1.
     EXPECT_EQ(1, server.getCounter(AuthCounters::SERVER_TCP_QUERY));
@@ -924,7 +963,8 @@ TEST_F(AuthSrvTest, queryCounterTCPAXFR) {
     createRequestPacket(request_message, IPPROTO_TCP);
     // On success, the AXFR query has been passed to a separate process,
     // so auth itself shouldn't respond.
-    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
+                          &dnsserv);
     EXPECT_FALSE(dnsserv.hasAnswer());
     // After processing TCP AXFR query, the counter should be 1.
     EXPECT_EQ(1, server.getCounter(AuthCounters::SERVER_TCP_QUERY));
@@ -941,7 +981,8 @@ TEST_F(AuthSrvTest, queryCounterTCPIXFR) {
     createRequestPacket(request_message, IPPROTO_TCP);
     // On success, the IXFR query has been passed to a separate process,
     // so auth itself shouldn't respond.
-    server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
+                          &dnsserv);
     EXPECT_FALSE(dnsserv.hasAnswer());
     // After processing TCP IXFR query, the counter should be 1.
     EXPECT_EQ(1, server.getCounter(AuthCounters::SERVER_TCP_QUERY));
@@ -962,7 +1003,8 @@ TEST_F(AuthSrvTest, queryCounterOpcodes) {
         // we intentionally use different values for each code
         for (int j = 0; j <= i; ++j) {
             parse_message->clear(Message::PARSE);
-            server.processMessage(*io_message, parse_message, response_obuffer,
+            server.processMessage(*io_message, *parse_message,
+                                  *response_obuffer,
                                   &dnsserv);
         }
 
@@ -988,11 +1030,10 @@ getDummyUnknownSocket() {
     return (socket);
 }
 
-// Submit unexpected type of query and check it throws isc::Unexpected
+// Submit unexpected type of query and check it is ignored
 TEST_F(AuthSrvTest, queryCounterUnexpected) {
     // This code isn't exception safe, but we'd rather keep the code
-    // simpler and more readable as this is only for tests and if it throws
-    // the program would immediately terminate anyway.
+    // simpler and more readable as this is only for tests
 
     // Create UDP query packet.
     UnitTestUtil::createRequestMessage(request_message, Opcode::QUERY(),
@@ -1008,9 +1049,7 @@ TEST_F(AuthSrvTest, queryCounterUnexpected) {
                                request_renderer.getLength(),
                                getDummyUnknownSocket(), *endpoint);
 
-    EXPECT_THROW(server.processMessage(*io_message, parse_message,
-                                       response_obuffer, &dnsserv),
-                 isc::Unexpected);
+    EXPECT_FALSE(dnsserv.hasAnswer());
 }
 
 TEST_F(AuthSrvTest, stop) {
@@ -1039,6 +1078,7 @@ TEST_F(AuthSrvTest, listenAddresses) {
                                 "Released tokens");
 }
 
+<<<<<<< HEAD
 TEST_F(AuthSrvTest, processNormalQuery_reuseRenderer1) {
     UnitTestUtil::createRequestMessage(request_message, Opcode::QUERY(),
                                        default_qid, Name("example.com"),
@@ -1060,6 +1100,233 @@ TEST_F(AuthSrvTest, processNormalQuery_reuseRenderer2) {
     server.processMessage(*io_message, parse_message, response_obuffer, &dnsserv);
     ConstQuestionPtr question = *parse_message->beginQuestion();
     EXPECT_STRNE(question->getType().toText().c_str(),RRType::NS().toText().c_str());
+=======
+//
+// Tests for catching exceptions in various stages of the query processing
+//
+// These tests work by defining two proxy classes, that act as an in-memory
+// client by default, but can throw exceptions at various points.
+//
+namespace {
+
+/// A the possible methods to throw in, either in FakeInMemoryClient or
+/// FakeZoneFinder
+enum ThrowWhen {
+    THROW_NEVER,
+    THROW_AT_FIND_ZONE,
+    THROW_AT_GET_ORIGIN,
+    THROW_AT_GET_CLASS,
+    THROW_AT_FIND,
+    THROW_AT_FIND_ALL,
+    THROW_AT_FIND_NSEC3
+};
+
+/// convenience function to check whether and what to throw
+void
+checkThrow(ThrowWhen method, ThrowWhen throw_at, bool isc_exception) {
+    if (method == throw_at) {
+        if (isc_exception) {
+            isc_throw(isc::Exception, "foo");
+        } else {
+            throw std::exception();
+        }
+    }
+}
+
+/// \brief proxy class for the ZoneFinder returned by the InMemoryClient
+///        proxied by FakeInMemoryClient
+///
+/// See the documentation for FakeInMemoryClient for more information,
+/// all methods simply check whether they should throw, and if not, call
+/// their proxied equivalent.
+class FakeZoneFinder : public isc::datasrc::ZoneFinder {
+public:
+    FakeZoneFinder(isc::datasrc::ZoneFinderPtr zone_finder,
+                   ThrowWhen throw_when,
+                   bool isc_exception) :
+        real_zone_finder_(zone_finder),
+        throw_when_(throw_when),
+        isc_exception_(isc_exception)
+    {}
+
+    virtual isc::dns::Name
+    getOrigin() const {
+        checkThrow(THROW_AT_GET_ORIGIN, throw_when_, isc_exception_);
+        return (real_zone_finder_->getOrigin());
+    }
+
+    virtual isc::dns::RRClass
+    getClass() const {
+        checkThrow(THROW_AT_GET_CLASS, throw_when_, isc_exception_);
+        return (real_zone_finder_->getClass());
+    }
+
+    virtual isc::datasrc::ZoneFinderContextPtr
+    find(const isc::dns::Name& name,
+         const isc::dns::RRType& type,
+         isc::datasrc::ZoneFinder::FindOptions options)
+    {
+        checkThrow(THROW_AT_FIND, throw_when_, isc_exception_);
+        return (real_zone_finder_->find(name, type, options));
+    }
+
+    virtual isc::datasrc::ZoneFinderContextPtr
+    findAll(const isc::dns::Name& name,
+            std::vector<isc::dns::ConstRRsetPtr> &target,
+            const FindOptions options = FIND_DEFAULT)
+    {
+        checkThrow(THROW_AT_FIND_ALL, throw_when_, isc_exception_);
+        return (real_zone_finder_->findAll(name, target, options));
+    }
+
+    virtual FindNSEC3Result
+    findNSEC3(const isc::dns::Name& name, bool recursive) {
+        checkThrow(THROW_AT_FIND_NSEC3, throw_when_, isc_exception_);
+        return (real_zone_finder_->findNSEC3(name, recursive));
+    }
+
+    virtual isc::dns::Name
+    findPreviousName(const isc::dns::Name& query) const {
+        return (real_zone_finder_->findPreviousName(query));
+    }
+
+private:
+    isc::datasrc::ZoneFinderPtr real_zone_finder_;
+    ThrowWhen throw_when_;
+    bool isc_exception_;
+};
+
+/// \brief Proxy InMemoryClient that can throw exceptions at specified times
+///
+/// It is based on the memory client since that one is easy to override
+/// (with setInMemoryClient) with the current design of AuthSrv.
+class FakeInMemoryClient : public isc::datasrc::InMemoryClient {
+public:
+    /// \brief Create a proxy memory client
+    ///
+    /// \param real_client The real in-memory client to proxy
+    /// \param throw_when if set to any value other than never, that is
+    ///        the method that will throw an exception (either in this
+    ///        class or the related FakeZoneFinder)
+    /// \param isc_exception if true, throw isc::Exception, otherwise,
+    ///                      throw std::exception
+    FakeInMemoryClient(AuthSrv::InMemoryClientPtr real_client,
+                       ThrowWhen throw_when,
+                       bool isc_exception) :
+        real_client_(real_client),
+        throw_when_(throw_when),
+        isc_exception_(isc_exception)
+    {}
+
+    /// \brief proxy call for findZone
+    ///
+    /// if this instance was constructed with throw_when set to find_zone,
+    /// this method will throw. Otherwise, it will return a FakeZoneFinder
+    /// instance which will throw at the method specified at the
+    /// construction of this instance.
+    virtual FindResult
+    findZone(const isc::dns::Name& name) const {
+        checkThrow(THROW_AT_FIND_ZONE, throw_when_, isc_exception_);
+        const FindResult result = real_client_->findZone(name);
+        return (FindResult(result.code, isc::datasrc::ZoneFinderPtr(
+                                        new FakeZoneFinder(result.zone_finder,
+                                        throw_when_,
+                                        isc_exception_))));
+    }
+
+private:
+    AuthSrv::InMemoryClientPtr real_client_;
+    ThrowWhen throw_when_;
+    bool isc_exception_;
+};
+
+} // end anonymous namespace for throwing proxy classes
+
+// Test for the tests
+//
+// Set the proxies to never throw, this should have the same result as
+// queryWithInMemoryClientNoDNSSEC, and serves to test the two proxy classes
+TEST_F(AuthSrvTest, queryWithInMemoryClientProxy) {
+    // Set real inmem client to proxy
+    updateConfig(&server, CONFIG_INMEMORY_EXAMPLE, true);
+
+    AuthSrv::InMemoryClientPtr fake_client(
+        new FakeInMemoryClient(server.getInMemoryClient(rrclass),
+                               THROW_NEVER,
+                               false));
+
+    ASSERT_NE(AuthSrv::InMemoryClientPtr(), server.getInMemoryClient(rrclass));
+    server.setInMemoryClient(rrclass, fake_client);
+
+    createDataFromFile("nsec3query_nodnssec_fromWire.wire");
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
+                          &dnsserv);
+
+    EXPECT_TRUE(dnsserv.hasAnswer());
+    headerCheck(*parse_message, default_qid, Rcode::NOERROR(),
+                opcode.getCode(), QR_FLAG | AA_FLAG, 1, 1, 2, 1);
+}
+
+// Convenience function for the rest of the tests, set up a proxy
+// to throw in the given method
+// If isc_exception is true, it will throw isc::Exception, otherwise
+// it will throw std::exception
+void
+setupThrow(AuthSrv* server, const char *config, ThrowWhen throw_when,
+                   bool isc_exception)
+{
+    // Set real inmem client to proxy
+    updateConfig(server, config, true);
+
+    // Set it to throw on findZone(), this should result in
+    // SERVFAIL on any exception
+    AuthSrv::InMemoryClientPtr fake_client(
+        new FakeInMemoryClient(
+            server->getInMemoryClient(isc::dns::RRClass::IN()),
+            throw_when,
+            isc_exception));
+
+    ASSERT_NE(AuthSrv::InMemoryClientPtr(),
+              server->getInMemoryClient(isc::dns::RRClass::IN()));
+    server->setInMemoryClient(isc::dns::RRClass::IN(), fake_client);
+}
+
+TEST_F(AuthSrvTest, queryWithThrowingProxyServfails) {
+    // Test the common cases, all of which should simply return SERVFAIL
+    // Use THROW_NEVER as end marker
+    ThrowWhen throws[] = { THROW_AT_FIND_ZONE,
+                           THROW_AT_GET_ORIGIN,
+                           THROW_AT_FIND,
+                           THROW_AT_FIND_NSEC3,
+                           THROW_NEVER };
+    UnitTestUtil::createDNSSECRequestMessage(request_message, opcode,
+                                             default_qid, Name("foo.example."),
+                                             RRClass::IN(), RRType::TXT());
+    for (ThrowWhen* when(throws); *when != THROW_NEVER; ++when) {
+        createRequestPacket(request_message, IPPROTO_UDP);
+        setupThrow(&server, CONFIG_INMEMORY_EXAMPLE, *when, true);
+        processAndCheckSERVFAIL();
+        // To be sure, check same for non-isc-exceptions
+        createRequestPacket(request_message, IPPROTO_UDP);
+        setupThrow(&server, CONFIG_INMEMORY_EXAMPLE, *when, false);
+        processAndCheckSERVFAIL();
+    }
+}
+
+// Throw isc::Exception in getClass(). (Currently?) getClass is not called
+// in the processMessage path, so this should result in a normal answer
+TEST_F(AuthSrvTest, queryWithInMemoryClientProxyGetClass) {
+    createDataFromFile("nsec3query_nodnssec_fromWire.wire");
+    setupThrow(&server, CONFIG_INMEMORY_EXAMPLE, THROW_AT_GET_CLASS, true);
+
+    // getClass is not called so it should just answer
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
+                          &dnsserv);
+
+    EXPECT_TRUE(dnsserv.hasAnswer());
+    headerCheck(*parse_message, default_qid, Rcode::NOERROR(),
+                opcode.getCode(), QR_FLAG | AA_FLAG, 1, 1, 2, 1);
+>>>>>>> master
 }
 
 }

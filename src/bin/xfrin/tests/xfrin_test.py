@@ -1318,6 +1318,14 @@ class TestAXFR(TestXfrinConnection):
         self.assertEqual(self.conn.do_xfrin(False), XFRIN_OK)
         self.assertFalse(self.conn._datasrc_client._journaling_enabled)
 
+        self.assertEqual(2, self.conn._transfer_stats.message_count)
+        self.assertEqual(2, self.conn._transfer_stats.axfr_rr_count)
+        self.assertEqual(0, self.conn._transfer_stats.ixfr_changeset_count)
+        self.assertEqual(0, self.conn._transfer_stats.ixfr_deletion_count)
+        self.assertEqual(0, self.conn._transfer_stats.ixfr_addition_count)
+        self.assertEqual(177, self.conn._transfer_stats.byte_count)
+        self.assertGreater(self.conn._transfer_stats.get_running_time(), 0)
+
     def test_do_xfrin_with_tsig(self):
         # use TSIG with a mock context.  we fake all verify results to
         # emulate successful verification.
@@ -1687,6 +1695,14 @@ class TestIXFRSession(TestXfrinConnection):
         self.assertEqual(TEST_ZONE_NAME, qmsg.get_question()[0].get_name())
         self.assertEqual(RRType.IXFR(), qmsg.get_question()[0].get_type())
 
+        self.assertEqual(1, self.conn._transfer_stats.message_count)
+        self.assertEqual(0, self.conn._transfer_stats.axfr_rr_count)
+        self.assertEqual(1, self.conn._transfer_stats.ixfr_changeset_count)
+        self.assertEqual(1, self.conn._transfer_stats.ixfr_deletion_count)
+        self.assertEqual(1, self.conn._transfer_stats.ixfr_addition_count)
+        self.assertEqual(188, self.conn._transfer_stats.byte_count)
+        self.assertGreater(self.conn._transfer_stats.get_running_time(), 0)
+
     def test_do_xfrin_fail(self):
         '''IXFR fails due to a protocol error.
 
@@ -1718,6 +1734,14 @@ class TestIXFRSession(TestXfrinConnection):
                 answers=[begin_soa_rrset])
         self.conn.response_generator = create_response
         self.assertEqual(XFRIN_OK, self.conn.do_xfrin(False, RRType.IXFR()))
+
+        self.assertEqual(1, self.conn._transfer_stats.message_count)
+        self.assertEqual(0, self.conn._transfer_stats.axfr_rr_count)
+        self.assertEqual(0, self.conn._transfer_stats.ixfr_changeset_count)
+        self.assertEqual(0, self.conn._transfer_stats.ixfr_deletion_count)
+        self.assertEqual(0, self.conn._transfer_stats.ixfr_addition_count)
+        self.assertEqual(80, self.conn._transfer_stats.byte_count)
+        self.assertGreater(self.conn._transfer_stats.get_running_time(), 0)
 
 class TestXFRSessionWithSQLite3(TestXfrinConnection):
     '''Tests for XFR sessions using an SQLite3 DB.
@@ -2714,6 +2738,63 @@ class TestFormatting(unittest.TestCase):
                                      (socket.AF_INET, "asdf"))
         self.assertRaises(TypeError, format_addrinfo,
                                      (socket.AF_INET, "asdf", ()))
+
+class TestXfrinTransferStats(unittest.TestCase):
+    def setUp(self):
+        self.stats = XfrinTransferStats()
+
+    def zero_check(self):
+        # Checks whether all counters are zero
+        self.assertEqual(0, self.stats.message_count)
+        self.assertEqual(0, self.stats.axfr_rr_count)
+        self.assertEqual(0, self.stats.byte_count)
+        self.assertEqual(0, self.stats.ixfr_changeset_count)
+        self.assertEqual(0, self.stats.ixfr_deletion_count)
+        self.assertEqual(0, self.stats.ixfr_addition_count)
+
+    def test_init(self):
+        self.zero_check()
+        self.assertIsNone(self.stats._end_time)
+
+    def test_get_running_time(self):
+        self.assertIsNone(self.stats._end_time)
+        runtime = self.stats.get_running_time()
+        self.assertIsNotNone(self.stats._end_time)
+        self.assertGreater(runtime, 0)
+        # make sure a second get does not change anything
+        runtime2 = self.stats.get_running_time()
+        self.assertEqual(runtime, runtime2)
+        # And that no counters have been modified
+        self.zero_check()
+
+    def test_bytes_per_second(self):
+        zbps = self.stats.get_bytes_per_second()
+        self.assertEqual(0, zbps)
+
+        self.stats._start_time = 1
+        self.stats._end_time = 2
+        self.stats.byte_count += 4
+        zbps = self.stats.get_bytes_per_second()
+        self.assertEqual(4, zbps)
+
+        self.stats._start_time = float(1)
+        self.stats._end_time = float(11)
+        self.assertEqual(10, self.stats.get_running_time())
+        self.stats.byte_count = 1234
+        zbps = self.stats.get_bytes_per_second()
+        self.assertEqual(123.4, zbps)
+
+        # if for some reason the runtime is 0, depending
+        # on whether bytes have actually been seen, bps is either
+        # 0 or 'infinite'
+        self.stats._end_time = self.stats._start_time
+        zbps = self.stats.get_bytes_per_second()
+        self.assertEqual(float("inf"), zbps)
+
+        self.stats.byte_count = 0
+        zbps = self.stats.get_bytes_per_second()
+        self.assertEqual(0, zbps)
+
 
 if __name__== "__main__":
     try:

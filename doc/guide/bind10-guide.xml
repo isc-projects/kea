@@ -1661,7 +1661,7 @@ Xfrout/transfer_acl[0]	{"action": "ACCEPT"}	any	(default)</screen>
 &gt; <userinput>config commit</userinput></screen>
 
     <para>Both Xfrout and Auth will use the system wide keyring to check
-    TSIGs in the incomming messages and to sign responses.</para>
+    TSIGs in the incoming messages and to sign responses.</para>
 
     <note><simpara>
         The way to specify zone specific configuration (ACLs, etc) is

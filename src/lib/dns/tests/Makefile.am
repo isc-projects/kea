@@ -33,6 +33,7 @@ run_unittests_SOURCES += rdata_in_a_unittest.cc rdata_in_aaaa_unittest.cc
 run_unittests_SOURCES += rdata_ns_unittest.cc rdata_soa_unittest.cc
 run_unittests_SOURCES += rdata_txt_like_unittest.cc
 run_unittests_SOURCES += rdata_mx_unittest.cc
+run_unittests_SOURCES += rdata_sshfp_unittest.cc
 run_unittests_SOURCES += rdata_ptr_unittest.cc rdata_cname_unittest.cc
 run_unittests_SOURCES += rdata_dname_unittest.cc
 run_unittests_SOURCES += rdata_afsdb_unittest.cc

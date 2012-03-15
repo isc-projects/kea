@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -33,7 +33,5 @@ const char* values3[] = {
 
 }
 
-// Statically initialize the global dictionary with those messages.
-// Three sets are used to check that the declaration of separate
-// initializer objects really does combine the messages.
-MessageInitializer init_message_initializer_unittest_3(values3);
+// Register the messages for loading into the global dictionary
+const MessageInitializer init_message_initializer_unittest_3(values3);
