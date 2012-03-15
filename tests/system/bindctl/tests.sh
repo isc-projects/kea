@@ -85,12 +85,9 @@ sleep 2
 echo 'Stats show
 ' | $RUN_BINDCTL \
 	--csv-file-dir=$BINDCTL_CSV_DIR > bindctl.out.$n || status=1
-# The statistics counters can not be reset even after auth
-# restarts. Because stats preserves the query counts which the dying
-# auth sent. Then it cumulates them and new counts which the living
-# auth sends.
-cnt_value1=`expr $cnt_value1 + 0`
-cnt_value2=`expr $cnt_value2 + 1`
+# The statistics counters should have been reset while stop/start.
+cnt_value1=0
+cnt_value2=1
 cnt_value3=`expr $cnt_value1 + $cnt_value2`
 grep $cnt_name1".*\<"$cnt_value1"\>" bindctl.out.$n > /dev/null || status=1
 grep $cnt_name2".*\<"$cnt_value2"\>" bindctl.out.$n > /dev/null || status=1
