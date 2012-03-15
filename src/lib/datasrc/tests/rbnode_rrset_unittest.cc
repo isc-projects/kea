@@ -138,6 +138,23 @@ TEST_F(RBNodeRRsetTest, toText) {
     EXPECT_THROW(rrset_a_empty.toText(), EmptyRRset);
 }
 
+TEST_F(RBNodeRRsetTest, isSameKind) {
+    RBNodeRRset rrset_p(ConstRRsetPtr(new RRset(test_name, RRClass::IN(), RRType::A(), RRTTL(3600))));
+    RBNodeRRset rrset_q(ConstRRsetPtr(new RRset(test_name, RRClass::IN(), RRType::A(), RRTTL(3600))));
+    RRset rrset_w(test_name, RRClass::IN(), RRType::A(), RRTTL(3600));
+    RRset rrset_x(test_nsname, RRClass::IN(), RRType::A(), RRTTL(3600));
+    RRset rrset_y(test_name, RRClass::IN(), RRType::NS(), RRTTL(3600));
+    RRset rrset_z(test_name, RRClass::CH(), RRType::A(), RRTTL(3600));
+
+    EXPECT_TRUE(rrset_p.isSameKind(rrset_p));
+    EXPECT_FALSE(rrset_p.isSameKind(rrset_q));
+
+    EXPECT_TRUE(rrset_p.isSameKind(rrset_w));
+    EXPECT_FALSE(rrset_p.isSameKind(rrset_x));
+    EXPECT_FALSE(rrset_p.isSameKind(rrset_y));
+    EXPECT_FALSE(rrset_p.isSameKind(rrset_z));
+}
+
 // Note: although the next two tests are essentially the same and used common
 // test code, they use different test data: the MessageRenderer produces
 // compressed wire data whereas the OutputBuffer does not.

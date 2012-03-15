@@ -201,7 +201,7 @@ TEST_F(LoggerManagerTest, FileLogger) {
         // Scope-limit the logger to ensure it is destroyed after the brief
         // check.  This adds weight to the idea that the logger will not
         // keep the file open.
-        Logger logger(file_spec.getLoggerName());
+        Logger logger(file_spec.getLoggerName().c_str());
 
         LOG_FATAL(logger, LOG_DUPLICATE_MESSAGE_ID).arg("test");
         ids.push_back(LOG_DUPLICATE_MESSAGE_ID);
@@ -223,7 +223,7 @@ TEST_F(LoggerManagerTest, FileLogger) {
     manager.process(spec.begin(), spec.end());
 
     // Create a new instance of the logger and log three more messages.
-    Logger logger(file_spec.getLoggerName());
+    Logger logger(file_spec.getLoggerName().c_str());
 
     LOG_FATAL(logger, LOG_NO_SUCH_MESSAGE).arg("test");
     ids.push_back(LOG_NO_SUCH_MESSAGE);
@@ -275,7 +275,7 @@ TEST_F(LoggerManagerTest, FileSizeRollover) {
     // three files as for the log4cplus implementation, the files appear to
     // be rolled after the message is logged.
     {
-        Logger logger(file_spec.getLoggerName());
+        Logger logger(file_spec.getLoggerName().c_str());
         LOG_FATAL(logger, LOG_NO_SUCH_MESSAGE).arg(big_arg);
         LOG_FATAL(logger, LOG_DUPLICATE_NAMESPACE).arg(big_arg);
     }
@@ -295,7 +295,7 @@ TEST_F(LoggerManagerTest, FileSizeRollover) {
     // a .3 version does not exist.
     manager.process(spec);
     {
-        Logger logger(file_spec.getLoggerName());
+        Logger logger(file_spec.getLoggerName().c_str());
         LOG_FATAL(logger, LOG_NO_MESSAGE_TEXT).arg(big_arg);
     }
 

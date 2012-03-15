@@ -85,11 +85,6 @@ if test $enable_shared = no; then
 	AC_MSG_ERROR([BIND 10 requires shared libraries to be built])
 fi
 
-AC_ARG_ENABLE(boost-threads,
-AC_HELP_STRING([--enable-boost-threads],
-  [use boost threads. Currently this only means using its locks instead of dummy locks, in the cache and NSAS]),
-  use_boost_threads=$enableval, use_boost_threads=no)
-
 # allow configuring without setproctitle.
 AC_ARG_ENABLE(setproctitle-check,
 AC_HELP_STRING([--disable-setproctitle-check],
@@ -679,68 +674,6 @@ AC_CHECK_HEADERS([boost/shared_ptr.hpp boost/foreach.hpp boost/interprocess/sync
   AC_MSG_ERROR([Missing required header files.]))
 CPPFLAGS="$CPPFLAGS_SAVES"
 AC_SUBST(BOOST_INCLUDES)
-
-
-if test "${use_boost_threads}" = "yes" ; then
-    AC_DEFINE([USE_BOOST_THREADS], [], [Use boost threads])
-
-    # Using boost::mutex can result in requiring libboost_thread with older
-    # versions of Boost.  We'd like to avoid relying on a compiled Boost library
-    # whenever possible, so we need to check for it step by step.
-    #
-    # NOTE: another fix of this problem is to simply require newer versions of
-    # boost.  If we choose that solution we should simplify the following tricky
-    # checks accordingly and all Makefile.am's that refer to NEED_LIBBOOST_THREAD.
-    AC_MSG_CHECKING(for boost::mutex)
-    CPPFLAGS_SAVES="$CPPFLAGS"
-    LIBS_SAVES="$LIBS"
-    CPPFLAGS="$BOOST_INCLUDES $CPPFLAGS $MULTITHREADING_FLAG"
-    need_libboost_thread=0
-    need_sunpro_workaround=0
-    AC_TRY_LINK([
-    #include <boost/thread.hpp>
-    ],[
-    boost::mutex m;
-    ],
-        [ AC_MSG_RESULT(yes (without libboost_thread)) ],
-        # there is one specific problem with SunStudio 5.10
-        # where including boost/thread causes a compilation failure
-        # There is a workaround in boost but it checks the version not being 5.10
-        # This will probably be fixed in the future, in which case this
-        # is only a temporary workaround
-        [ AC_TRY_LINK([
-    #if defined(__SUNPRO_CC) && __SUNPRO_CC == 0x5100
-    #undef __SUNPRO_CC
-    #define __SUNPRO_CC 0x5090
-    #endif
-    #include <boost/thread.hpp>
-    ],[
-    boost::mutex m;
-    ],
-        [ AC_MSG_RESULT(yes (with SUNOS workaround))
-          need_sunpro_workaround=1 ],
-            [ LIBS=" $LIBS -lboost_thread"
-          AC_TRY_LINK([
-    #include <boost/thread.hpp>
-    ],[
-    boost::mutex m;
-    ],
-              [ AC_MSG_RESULT(yes (with libboost_thread))
-                need_libboost_thread=1 ],
-              [ AC_MSG_RESULT(no)
-                AC_MSG_ERROR([boost::mutex cannot be linked in this build environment.
-    Perhaps you are using an older version of Boost that requires libboost_thread for the mutex support, which does not appear to be available.
-    You may want to check the availability of the library or to upgrade Boost.])
-              ])])])
-    CPPFLAGS="$CPPFLAGS_SAVES"
-    LIBS="$LIBS_SAVES"
-    AM_CONDITIONAL(NEED_LIBBOOST_THREAD, test $need_libboost_thread = 1)
-    if test $need_sunpro_workaround = 1; then
-        AC_DEFINE([NEED_SUNPRO_WORKAROUND], [], [Need boost sunstudio workaround])
-    fi
-else
-    AM_CONDITIONAL(NEED_LIBBOOST_THREAD, test "${use_boost_threads}" = "yes")
-fi
 
 # I can't get some of the #include <asio.hpp> right without this
 # TODO: find the real cause of asio/boost wanting pthreads
