@@ -71,6 +71,19 @@
             "item_optional": true
           }
         ]
+        },
+        { "command_name": "notify",
+          "command_description": "Send notifies for zone",
+          "command_args": [
+          { "item_name": "zone_name",
+            "item_type": "string",
+            "item_optional": false,
+            "item_default": "" },
+          { "item_name": "zone_class",
+            "item_type": "string",
+            "item_optional": true,
+            "item_default": "IN"
+          } ]
         }
       ]
   }
