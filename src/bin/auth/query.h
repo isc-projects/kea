@@ -18,6 +18,8 @@
 #include <dns/rrset.h>
 #include <datasrc/zone.h>
 
+#include <boost/noncopyable.hpp>
+
 #include <vector>
 
 namespace isc {
@@ -33,6 +35,13 @@ class DataSourceClient;
 }
 
 namespace auth {
+
+/// \brief Initial reserved size for the vectors in Query
+///
+/// The value is larger than we expect the vectors to even become, and
+/// has been chosen arbitrarily. The reason to set them quite high is
+/// to prevent reallocation on addition.
+const size_t RESERVE_RRSETS = 64;
 
 /// The \c Query class represents a standard DNS query that encapsulates
 /// processing logic to answer the query.
@@ -64,7 +73,7 @@ namespace auth {
 /// likely to misuse one of the classes instead of the other
 /// accidentally, and since it's considered a temporary development state,
 /// we keep this name at the moment.
-class Query {
+class Query : boost::noncopyable {
 private:
 
     /// \brief Adds a SOA.
@@ -226,10 +235,10 @@ private:
     void addNSEC3ForName(isc::datasrc::ZoneFinder& finder,
                          const isc::dns::Name& name, bool match);
 
-public:
-    /// Constructor from query parameters.
+    /// Set up the Query object for a new query lookup
     ///
-    /// This constructor never throws an exception.
+    /// This is the first step of the process() method, and initializes
+    /// the member data
     ///
     /// \param datasrc_client The datasource wherein the answer to the query is
     /// to be found.
@@ -238,14 +247,56 @@ public:
     /// \param response The response message to store the answer to the query.
     /// \param dnssec If the answer should include signatures and NSEC/NSEC3 if
     ///     possible.
-    Query(const isc::datasrc::DataSourceClient& datasrc_client,
-          const isc::dns::Name& qname, const isc::dns::RRType& qtype,
-          isc::dns::Message& response, bool dnssec = false) :
-        datasrc_client_(datasrc_client), qname_(qname), qtype_(qtype),
-        response_(response), dnssec_(dnssec),
-        dnssec_opt_(dnssec ?  isc::datasrc::ZoneFinder::FIND_DNSSEC :
-                    isc::datasrc::ZoneFinder::FIND_DEFAULT)
-    {}
+    void initialize(datasrc::DataSourceClient& datasrc_client,
+                    const isc::dns::Name& qname, const isc::dns::RRType& qtype,
+                    isc::dns::Message& response, bool dnssec = false);
+
+    /// \brief Fill in the response sections
+    ///
+    /// This is the final step of the process() method, and within
+    /// that method, it should be called before it returns (if any
+    /// response data is to be added)
+    ///
+    /// This will take each RRset collected in answers_, authorities_, and
+    /// additionals_, and add them to their corresponding sections in
+    /// the response message.
+    ///
+    /// After they are added, the vectors are cleared.
+    void createResponse();
+
+    /// \brief Resets any partly built response data, and internal pointers
+    ///
+    /// Called by the QueryCleaner object upon its destruction
+    void reset();
+
+    /// \brief Internal class used for cleanup of Query members
+    ///
+    /// The process() call creates an object of this class, which
+    /// upon its destruction, calls Query::reset(), so that outside
+    /// of single calls to process(), the query state is always clean.
+    class QueryCleaner {
+    public:
+        QueryCleaner(isc::auth::Query& query) : query_(query) {}
+        ~QueryCleaner() { query_.reset(); }
+    private:
+        isc::auth::Query& query_;
+    };
+
+public:
+    /// Default constructor.
+    ///
+    /// Query parameters will be set by the call to process()
+    ///
+    Query() :
+        datasrc_client_(NULL), qname_(NULL), qtype_(NULL),
+        response_(NULL), dnssec_(false),
+        dnssec_opt_(isc::datasrc::ZoneFinder::FIND_DEFAULT)
+    {
+        answers_.reserve(RESERVE_RRSETS);
+        authorities_.reserve(RESERVE_RRSETS);
+        additionals_.reserve(RESERVE_RRSETS);
+    }
+
 
     /// Process the query.
     ///
@@ -273,7 +324,17 @@ public:
     /// This might throw BadZone or any of its specific subclasses, but that
     /// shouldn't happen in real-life (as BadZone means wrong data, it should
     /// have been rejected upon loading).
-    void process();
+    ///
+    /// \param datasrc_client The datasource wherein the answer to the query is
+    /// to be found.
+    /// \param qname The query name
+    /// \param qtype The RR type of the query
+    /// \param response The response message to store the answer to the query.
+    /// \param dnssec If the answer should include signatures and NSEC/NSEC3 if
+    ///     possible.
+    void process(datasrc::DataSourceClient& datasrc_client,
+                 const isc::dns::Name& qname, const isc::dns::RRType& qtype,
+                 isc::dns::Message& response, bool dnssec = false);
 
     /// \short Bad zone data encountered.
     ///
@@ -342,12 +403,16 @@ public:
     };
 
 private:
-    const isc::datasrc::DataSourceClient& datasrc_client_;
-    const isc::dns::Name& qname_;
-    const isc::dns::RRType& qtype_;
-    isc::dns::Message& response_;
-    const bool dnssec_;
-    const isc::datasrc::ZoneFinder::FindOptions dnssec_opt_;
+    const isc::datasrc::DataSourceClient* datasrc_client_;
+    const isc::dns::Name* qname_;
+    const isc::dns::RRType* qtype_;
+    isc::dns::Message* response_;
+    bool dnssec_;
+    isc::datasrc::ZoneFinder::FindOptions dnssec_opt_;
+
+    std::vector<isc::dns::ConstRRsetPtr> answers_;
+    std::vector<isc::dns::ConstRRsetPtr> authorities_;
+    std::vector<isc::dns::ConstRRsetPtr> additionals_;
 };
 
 }
