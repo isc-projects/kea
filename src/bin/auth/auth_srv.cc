@@ -310,7 +310,7 @@ makeErrorMessage(Message& message, OutputBuffer& buffer,
     for_each(questions.begin(), questions.end(), QuestionInserter(message));
 
     message.setRcode(rcode);
-    
+
     MessageRenderer renderer;
     renderer.setBuffer(&buffer);
     if (tsig_context.get() != NULL) {
