@@ -34,7 +34,7 @@ logger = isc.log.Logger("notify_out")
 # initialized yet. see trac ticket #1103
 from isc.dns import *
 
-ZONE_NEW_DATA_READY_CMD = 'zone_new_data_ready'
+ZONE_NEW_DATA_READY_CMD = 'notify'
 _MAX_NOTIFY_NUM = 30
 _MAX_NOTIFY_TRY_NUM = 5
 _EVENT_NONE = 0
@@ -164,17 +164,19 @@ class NotifyOut:
         the only interface for class NotifyOut which can be called
         by other object.
           Internally, the function only set the zone's notify-reply
-        timeout to now, then notify message will be sent out. '''
+        timeout to now, then notify message will be sent out.
+        Returns False if the zone/class is not known, True if it is
+        (even if there are no slaves)'''
         if zone_name[len(zone_name) - 1] != '.':
             zone_name += '.'
 
         zone_id = (zone_name, zone_class)
         if zone_id not in self._notify_infos:
-            return
+            return False
 
         # Has no slave servers, skip it.
         if (len(self._notify_infos[zone_id].notify_slaves) <= 0):
-            return
+            return True
 
         with self._lock:
             if (self.notify_num >= _MAX_NOTIFY_NUM) or (zone_id in self._notifying_zones):
@@ -186,6 +188,7 @@ class NotifyOut:
                 self._notifying_zones.append(zone_id)
                 if not self._nonblock_event.isSet():
                     self._nonblock_event.set()
+        return True
 
     def _dispatcher(self, started_event):
         started_event.set() # Let the master know we are alive already
@@ -250,7 +253,9 @@ class NotifyOut:
         self._thread.join()
 
         # Clean up
+        self._write_sock.close()
         self._write_sock = None
+        self._read_sock.close()
         self._read_sock = None
         self._thread = None
 
