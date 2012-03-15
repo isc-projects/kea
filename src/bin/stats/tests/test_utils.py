@@ -185,6 +185,10 @@ class MockBoss:
         self.spec_file.close()
         self.cc_session = self.mccs._session
         self.got_command_name = ''
+        self.pid_list = [[ 9999, "b10-auth"   ],
+                         [ 9998, "b10-auth-2" ],
+                         [ 9997, "b10-auth-3" ],
+                         [ 9996, "b10-auth-4" ]]
 
     def run(self):
         self.mccs.start()
@@ -218,10 +222,7 @@ class MockBoss:
         elif command == 'show_processes':
             # Return dummy pids
             return isc.config.create_answer(
-                0, [[ 9999, "b10-auth"   ],
-                    [ 9998, "b10-auth-2" ],
-                    [ 9997, "b10-auth-3" ],
-                    [ 9996, "b10-auth-4" ]])
+                0, self.pid_list)
         return isc.config.create_answer(1, "Unknown Command")
 
 class MockAuth:

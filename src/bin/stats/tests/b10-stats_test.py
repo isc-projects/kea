@@ -400,6 +400,21 @@ class TestStats(unittest.TestCase):
         self.assertEqual(self.stats.statistics_data_bypid['Auth'][9999]['queries.tcp'], 1001)
         self.assertEqual(self.stats.statistics_data_bypid,
                          {'Auth': {9999: {'queries.tcp': 1001}}})
+        # kill running Auth, then statistics is reset
+        self.assertEqual(self.base.boss.server.pid_list[0][0], 9999)
+        killed = self.base.boss.server.pid_list.pop(0)
+        self.stats.update_statistics_data()
+        self.assertTrue('Auth' in self.stats.statistics_data)
+        self.assertTrue('queries.tcp' in self.stats.statistics_data['Auth'])
+        self.assertTrue('queries.udp' in self.stats.statistics_data['Auth'])
+        self.assertEqual(self.stats.statistics_data['Auth']['queries.tcp'], 0)
+        self.assertEqual(self.stats.statistics_data['Auth']['queries.udp'], 0)
+        self.assertFalse('Auth' in self.stats.statistics_data_bypid)
+        # restore statistics data of killed auth
+        self.base.boss.server.pid_list = [ killed ] + self.base.boss.server.pid_list[:]
+        self.stats.update_statistics_data(owner='Auth',
+                                          pid=9999,
+                                          **{'queries.tcp':1001})
         # another pid of Auth
         self.stats.update_statistics_data(owner='Auth',
                                           pid=9998,
