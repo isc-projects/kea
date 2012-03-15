@@ -83,16 +83,6 @@ public:
     ///        we have an answer
     void resume(const bool done);
 
-    /// \brief Check if we have an answer
-    ///
-    /// \return true if we have an answer
-    bool hasAnswer();
-
-    /// \brief Returns the coroutine state value
-    ///
-    /// \return the coroutine state value
-    int value() { return (get_value()); }
-
     /// \brief Clones the object
     ///
     /// \return a newly allocated copy of this object

@@ -1364,7 +1364,7 @@ TYPED_TEST(DatabaseClientTest, iterateThenUpdate) {
 
         // Confirm at least it doesn't contain any SOA
         EXPECT_EQ(ZoneFinder::NXDOMAIN,
-                  this->getFinder()->find(this->zname_, RRType::SOA()).code);
+                  this->getFinder()->find(this->zname_, RRType::SOA())->code);
     } catch (const DataSourceError&) {}
 
     ConstRRsetPtr rrset;
@@ -1422,31 +1422,31 @@ doFindTest(ZoneFinder& finder,
            const ZoneFinder::FindOptions options = ZoneFinder::FIND_DEFAULT)
 {
     SCOPED_TRACE("doFindTest " + name.toText() + " " + type.toText());
-    const ZoneFinder::FindResult result = finder.find(name, type, options);
-    ASSERT_EQ(expected_result, result.code) << name << " " << type;
+    ConstZoneFinderContextPtr result = finder.find(name, type, options);
+    ASSERT_EQ(expected_result, result->code) << name << " " << type;
     EXPECT_EQ((expected_flags & ZoneFinder::RESULT_WILDCARD) != 0,
-              result.isWildcard());
+              result->isWildcard());
     EXPECT_EQ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED) != 0,
-              result.isNSECSigned());
+              result->isNSECSigned());
     EXPECT_EQ((expected_flags & ZoneFinder::RESULT_NSEC3_SIGNED) != 0,
-              result.isNSEC3Signed());
-    if (!expected_rdatas.empty() && result.rrset) {
-        checkRRset(result.rrset, expected_name != Name(".") ? expected_name :
+              result->isNSEC3Signed());
+    if (!expected_rdatas.empty() && result->rrset) {
+        checkRRset(result->rrset, expected_name != Name(".") ? expected_name :
                    name, finder.getClass(), expected_type, expected_ttl,
                    expected_rdatas);
 
-        if (!expected_sig_rdatas.empty() && result.rrset->getRRsig()) {
-            checkRRset(result.rrset->getRRsig(), expected_name != Name(".") ?
+        if (!expected_sig_rdatas.empty() && result->rrset->getRRsig()) {
+            checkRRset(result->rrset->getRRsig(), expected_name != Name(".") ?
                        expected_name : name, finder.getClass(),
                        isc::dns::RRType::RRSIG(), expected_ttl,
                        expected_sig_rdatas);
         } else if (expected_sig_rdatas.empty()) {
-            EXPECT_EQ(isc::dns::RRsetPtr(), result.rrset->getRRsig());
+            EXPECT_EQ(isc::dns::RRsetPtr(), result->rrset->getRRsig());
         } else {
             ADD_FAILURE() << "Missing RRSIG";
         }
     } else if (expected_rdatas.empty()) {
-        EXPECT_EQ(isc::dns::RRsetPtr(), result.rrset);
+        EXPECT_EQ(isc::dns::RRsetPtr(), result->rrset);
     } else {
         ADD_FAILURE() << "Missing result";
     }
@@ -1464,11 +1464,11 @@ doFindAllTestResult(ZoneFinder& finder, const isc::dns::Name& name,
 {
     SCOPED_TRACE("All test for " + name.toText());
     std::vector<ConstRRsetPtr> target;
-    ZoneFinder::FindResult result(finder.findAll(name, target, options));
+    ConstZoneFinderContextPtr result(finder.findAll(name, target, options));
     EXPECT_TRUE(target.empty());
-    EXPECT_EQ(expected_result, result.code);
-    EXPECT_EQ(expected_type, result.rrset->getType());
-    RdataIteratorPtr it(result.rrset->getRdataIterator());
+    EXPECT_EQ(expected_result, result->code);
+    EXPECT_EQ(expected_type, result->rrset->getType());
+    RdataIteratorPtr it(result->rrset->getRdataIterator());
     std::vector<std::string> rdata;
     while (!it->isLast()) {
         rdata.push_back(it->getCurrent().toText());
@@ -1482,7 +1482,7 @@ doFindAllTestResult(ZoneFinder& finder, const isc::dns::Name& name,
     }
     EXPECT_TRUE(expected_rdata == rdata);
     EXPECT_EQ(expected_name == isc::dns::Name::ROOT_NAME() ? name :
-              expected_name, result.rrset->getName());
+              expected_name, result->rrset->getName());
 }
 
 // When asking for an RRset where RRs somehow have different TTLs, it should 
@@ -1787,30 +1787,30 @@ TYPED_TEST(DatabaseClientTest, findOutOfZone) {
     doFindTest(*finder, Name("org"), this->qtype_, this->qtype_,
                this->rrttl_, ZoneFinder::NXDOMAIN,
                this->empty_rdatas_, this->empty_rdatas_);
-    EXPECT_EQ(ZoneFinder::NXDOMAIN, finder->findAll(Name("org"), target).code);
+    EXPECT_EQ(ZoneFinder::NXDOMAIN, finder->findAll(Name("org"), target)->code);
     // sharing a common ancestor
     doFindTest(*finder, Name("noexample.org"), this->qtype_, this->qtype_,
                this->rrttl_, ZoneFinder::NXDOMAIN,
                this->empty_rdatas_, this->empty_rdatas_);
     EXPECT_EQ(ZoneFinder::NXDOMAIN, finder->findAll(Name("noexample.org"),
-                                                    target).code);
+                                                    target)->code);
     // totally unrelated domain, smaller number of labels
     doFindTest(*finder, Name("com"), this->qtype_, this->qtype_,
                this->rrttl_, ZoneFinder::NXDOMAIN,
                this->empty_rdatas_, this->empty_rdatas_);
-    EXPECT_EQ(ZoneFinder::NXDOMAIN, finder->findAll(Name("com"), target).code);
+    EXPECT_EQ(ZoneFinder::NXDOMAIN, finder->findAll(Name("com"), target)->code);
     // totally unrelated domain, same number of labels
     doFindTest(*finder, Name("example.com"), this->qtype_, this->qtype_,
                this->rrttl_, ZoneFinder::NXDOMAIN,
                this->empty_rdatas_, this->empty_rdatas_);
     EXPECT_EQ(ZoneFinder::NXDOMAIN, finder->findAll(Name("example.com"),
-                                                    target).code);
+                                                    target)->code);
     // totally unrelated domain, larger number of labels
     doFindTest(*finder, Name("more.example.com"), this->qtype_, this->qtype_,
                this->rrttl_, ZoneFinder::NXDOMAIN,
                this->empty_rdatas_, this->empty_rdatas_);
     EXPECT_EQ(ZoneFinder::NXDOMAIN, finder->findAll(Name("more.example.com"),
-                                                    target).code);
+                                                    target)->code);
 }
 
 TYPED_TEST(DatabaseClientTest, findDelegation) {
@@ -2363,11 +2363,11 @@ TYPED_TEST(DatabaseClientTest, getAll) {
     std::vector<ConstRRsetPtr> target;
     EXPECT_EQ(ZoneFinder::NXDOMAIN,
               finder->findAll(isc::dns::Name("nothere.example.org."),
-                              target).code);
+                              target)->code);
     EXPECT_TRUE(target.empty());
     EXPECT_EQ(ZoneFinder::NXRRSET,
               finder->findAll(isc::dns::Name("here.wild.example.org."),
-                              target).code);
+                              target)->code);
     this->expected_rdatas_.push_back("ns.delegation.example.org.");
     this->expected_rdatas_.push_back("ns.example.com.");
     doFindAllTestResult(*finder, isc::dns::Name("xx.delegation.example.org."),
@@ -2388,7 +2388,7 @@ TYPED_TEST(DatabaseClientTest, getAll) {
     // It should get the data on success
     EXPECT_EQ(ZoneFinder::SUCCESS,
               finder->findAll(isc::dns::Name("www2.example.org."),
-                              target).code);
+                              target)->code);
     ASSERT_EQ(2, target.size());
     size_t a_idx(target[1]->getType() == RRType::A());
     EXPECT_EQ(RRType::A(), target[a_idx]->getType());
@@ -2412,13 +2412,13 @@ TYPED_TEST(DatabaseClientTest, getAll) {
 
     // And on wildcard. Check the signatures as well.
     target.clear();
-    const ZoneFinder::FindResult result =
+    ConstZoneFinderContextPtr result =
         finder->findAll(Name("a.wild.example.org"), target,
                         ZoneFinder::FIND_DNSSEC);
-    EXPECT_EQ(ZoneFinder::SUCCESS, result.code);
-    EXPECT_TRUE(result.isWildcard());
-    EXPECT_TRUE(result.isNSECSigned());
-    EXPECT_FALSE(result.isNSEC3Signed());
+    EXPECT_EQ(ZoneFinder::SUCCESS, result->code);
+    EXPECT_TRUE(result->isWildcard());
+    EXPECT_TRUE(result->isNSECSigned());
+    EXPECT_FALSE(result->isNSEC3Signed());
     ASSERT_EQ(2, target.size());
     a_idx = target[1]->getType() == RRType::A();
     EXPECT_EQ(RRType::A(), target[a_idx]->getType());
@@ -2496,22 +2496,22 @@ TYPED_TEST(DatabaseClientTest, flushZone) {
 
     // Before update, the name exists.
     EXPECT_EQ(ZoneFinder::SUCCESS, finder->find(this->qname_,
-                                                this->qtype_).code);
+                                                this->qtype_)->code);
 
     // start update in the replace mode.  the normal finder should still
     // be able to see the record, but the updater's finder shouldn't.
     this->updater_ = this->client_->getUpdater(this->zname_, true);
     this->setUpdateAccessor();
     EXPECT_EQ(ZoneFinder::SUCCESS,
-              finder->find(this->qname_, this->qtype_).code);
+              finder->find(this->qname_, this->qtype_)->code);
     EXPECT_EQ(ZoneFinder::NXDOMAIN,
               this->updater_->getFinder().find(this->qname_,
-                                               this->qtype_).code);
+                                               this->qtype_)->code);
 
     // commit the update.  now the normal finder shouldn't see it.
     this->updater_->commit();
     EXPECT_EQ(ZoneFinder::NXDOMAIN, finder->find(this->qname_,
-                                                 this->qtype_).code);
+                                                 this->qtype_)->code);
 
     // Check rollback wasn't accidentally performed.
     EXPECT_FALSE(this->isRollbacked());
@@ -2522,13 +2522,13 @@ TYPED_TEST(DatabaseClientTest, updateCancel) {
 
     ZoneFinderPtr finder = this->client_->findZone(this->zname_).zone_finder;
     EXPECT_EQ(ZoneFinder::SUCCESS, finder->find(this->qname_,
-                                                this->qtype_).code);
+                                                this->qtype_)->code);
 
     this->updater_ = this->client_->getUpdater(this->zname_, true);
     this->setUpdateAccessor();
     EXPECT_EQ(ZoneFinder::NXDOMAIN,
               this->updater_->getFinder().find(this->qname_,
-                                               this->qtype_).code);
+                                               this->qtype_)->code);
     // DB should not have been rolled back yet.
     EXPECT_FALSE(this->isRollbacked());
     this->updater_.reset();            // destruct without commit
@@ -2538,7 +2538,7 @@ TYPED_TEST(DatabaseClientTest, updateCancel) {
     // isRollbacked())
     EXPECT_TRUE(this->isRollbacked(true));
     EXPECT_EQ(ZoneFinder::SUCCESS, finder->find(this->qname_,
-                                                this->qtype_).code);
+                                                this->qtype_)->code);
 }
 
 TYPED_TEST(DatabaseClientTest, exceptionFromRollback) {

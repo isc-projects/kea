@@ -56,9 +56,11 @@ protected:
         authors_data.push_back("Dmitriy Volodin");
         authors_data.push_back("Evan Hunt");
         authors_data.push_back("Haidong Wang");
+        authors_data.push_back("Haikuo Zhang");
         authors_data.push_back("Han Feng");
         authors_data.push_back("Jelte Jansen");
-        authors_data.push_back("Jeremy C. Reed"); 
+        authors_data.push_back("Jeremy C. Reed");
+        authors_data.push_back("Xie Jiagui");
         authors_data.push_back("Jin Jian");
         authors_data.push_back("JINMEI Tatuya");
         authors_data.push_back("Kazunori Fujiwara");

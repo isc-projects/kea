@@ -1,7 +1,192 @@
+398.	[func]		jelte
+	The b10-xfrin module now logs more information on successful
+	incoming transfers. In the case of IXFR, it logs the number of
+	changesets, and the total number of added and deleted resource
+	records. For AXFR (or AXFR-style IXFR), it logs the number of
+	resource records. In both cases, the number of overhead DNS
+	messages, runtime, amount of wire data, and transfer speed are logged.
+	(Trac #1280, git 2b01d944b6a137f95d47673ea8367315289c205d)
+
+397.	[func]		muks
+	The boss process now gives more helpful description when a
+	sub-process exits due to a signal.
+	(Trac #1673, git 1cd0d0e4fc9324bbe7f8593478e2396d06337b1e)
+
+396.	[func]*		jinmei
+	libdatasrc: change the return type of ZoneFinder::find() so it can
+	contain more context of the search, which can be used for
+	optimizing post find() processing.  A new method getAdditional()
+	is added to it for finding additional RRsets based on the result
+	of find().  External behavior shouldn't change.  The query
+	handling code of b10-auth now uses the new interface.
+	(Trac #1607, git 2e940ea65d5b9f371c26352afd9e66719c38a6b9)
+
+395.	[bug]		jelte
+	The log message compiler now errors (resulting in build failures) if
+	duplicate log message identifiers are found in a single message file.
+	Renamed one duplicate that was found (RESOLVER_SHUTDOWN, renamed to
+	RESOLVER_SHUTDOWN_RECEIVED).
+	(Trac #1093, git f537c7e12fb7b25801408f93132ed33410edae76)
+	(Trac #1741, git b8960ab85c717fe70ad282e0052ac0858c5b57f7)
+
+394.	[bug]		jelte
+	b10-auth now catches any exceptions during response building; if any
+	datasource either throws an exception or causes an exception to be
+	thrown, the message processing code will now catch it, log a debug
+	message, and return a SERVFAIL response.
+	(Trac #1612, git b5740c6b3962a55e46325b3c8b14c9d64cf0d845)
+
+393.	[func]		jelte
+	Introduced a new class LabelSequence in libdns++, which provides
+	lightweight accessor functionality to the Name class, for more
+	efficient comparison of parts of names.
+	(Trac #1602, git b33929ed5df7c8f482d095e96e667d4a03180c78)
+
+392.	[func]*		jinmei
+	libdns++: revised the (Abstract)MessageRenderer class so that it
+	has a default internal buffer and the buffer can be temporarily
+	switched.  The constructor interface was modified, and a new
+	method setBuffer() was added.
+	(Trac #1697, git 9cabc799f2bf9a3579dae7f1f5d5467c8bb1aa40)
+
+391.	[bug]*		vorner
+	The long time unused configuration options of Xfrout "log_name",
+	"log_file", "log_severity", "log_version" and "log_max_bytes" were
+	removed, as they had no effect (Xfrout uses the global logging
+	framework).  However, if you have them set, you need to remove
+	them from the configuration file or the configuration will be
+	rejected.
+	(Trac #1090, git ef1eba02e4cf550e48e7318702cff6d67c1ec82e)
+
+bind10-devel-20120301 released on March 1, 2012
+
+390.	[bug]		vorner
+	The UDP IPv6 packets are now correctly fragmented for maximum
+	guaranteed MTU, so they won't get lost because being too large
+	for some hop.
+	(Trac #1534, git ff013364643f9bfa736b2d23fec39ac35872d6ad)
+
+389.	[func]*		vorner
+	Xfrout now uses the global TSIG keyring, instead of its own. This
+	means the keys need to be set only once (in tsig_keys/keys).
+	However, the old configuration of Xfrout/tsig_keys need to be
+	removed for Xfrout to work.
+	(Trac #1643, git 5a7953933a49a0ddd4ee1feaddc908cd2285522d)
+
+388.	[func]		jreed
+	Use prefix "sockcreator-" for the private temporary directory
+	used for b10-sockcreator communication.
+	(git b98523c1260637cb33436964dc18e9763622a242)
+
+387.	[build]		muks
+	Accept a --without-werror configure switch so that some builders can
+	disable the use of -Werror in CFLAGS when building.
+	(Trac #1671, git 8684a411d7718a71ad9fb616f56b26436c4f03e5)
+
+386.	[bug]		jelte
+	Upon initial sqlite3 database creation, the 'diffs' table is now
+	always created. This already happened most of the time, but there
+	are a few cases where it was skipped, resulting in potential errors
+	in xfrout later.
+	(Trac #1717, git 30d7686cb6e2fa64866c983e0cfb7b8fabedc7a2)
+
+385.	[bug]		jinmei
+	libdns++: masterLoad() didn't accept comments placed at the end of
+	an RR.  Due to this the in-memory data source cannot load a master
+	file for a signed zone even if it's preprocessed with BIND 9's
+	named-compilezone.
+	Note: this fix is considered temporary and still only accepts some
+	limited form of such comments.  The main purpose is to allow the
+	in-memory data source to load any signed or unsigned zone files as
+	long as they are at least normalized with named-compilezone.
+	(Trac #1667, git 6f771b28eea25c693fe93a0e2379af924464a562)
+
+384.	[func]		jinmei, jelte, vorner, haikuo, kevin
+	b10-auth now supports NSEC3-signed zones in the in-memory data
+	source.
+	(Trac #1580, #1581, #1582, #1583, #1584, #1585, #1587, and
+	other related changes to the in-memory data source)
+
+383.	[build]		jinmei
+	Fixed build failure on MacOS 10.7 (Lion) due to the use of
+	IPV6_PKTINFO; the OS requires a special definition to make it
+	visible to the compiler.
+	(Trac #1633, git 19ba70c7cc3da462c70e8c4f74b321b8daad0100)
+
+382.	[func]		jelte
+	b10-auth now also experimentally supports statistics counters of
+	the rcode responses it sends. The counters can be shown as
+	rcode.<code name>, where code name is the lowercase textual
+	representation of the rcode (e.g. "noerror", "formerr", etc.).
+	Same note applies as for opcodes, see changelog entry 364.
+	(Trac #1613, git e98da500d7b02e11347431a74f2efce5a7d622aa)
+
+381.	[bug]		jinmei
+	b10-auth: honor the DNSSEC DO bit in the new query handler.
+	(Trac #1695, git 61f4da5053c6a79fbc162fb16f195cdf8f94df64)
+
+380.	[bug]		jinmei
+	libdns++: miscellaneous bug fixes for the NSECPARAM RDATA
+	implementation, including incorrect handling for empty salt and
+	incorrect comparison logic.
+	(Trac #1638, git 966c129cc3c538841421f1e554167d33ef9bdf25)
+
+379.	[bug]		jelte
+	Configuration commands in bindctl now check for list indices if
+	the 'identifier' argument points to a child element of a list
+	item. Previously, it was possible to 'get' non-existent values
+	by leaving out the index, e.g. "config show Auth/listen_on/port,
+	which should be config show Auth/listen_on[<index>]/port, since
+	Auth/listen_on is a list. The command without an index will now
+	show an error. It is still possible to show/set the entire list
+	("config show Auth/listen_on").
+	(Trac #1649, git 003ca8597c8d0eb558b1819dbee203fda346ba77)
+
+378.	[func]		vorner
+	It is possible to start authoritative server or resolver in multiple
+	instances, to use more than one core. Configuration is described in
+	the guide.
+	(Trac #1596, git 17f7af0d8a42a0a67a2aade5bc269533efeb840a)
+
+377.	[bug]		jinmei
+	libdns++: miscellaneous bug fixes for the NSEC and NSEC3 RDATA
+	implementation, including a crash in NSEC3::toText() for some RR
+	types, incorrect handling of empty NSEC3 salt, and incorrect
+	comparison logic in NSEC3::compare().
+	(Trac #1641, git 28ba8bd71ae4d100cb250fd8d99d80a17a6323a2)
+
+376.	[bug]		jinmei, vorner
+	The new query handling module of b10-auth did not handle type DS
+	query correctly: It didn't look for it in the parent zone, and
+	it incorrectly returned a DS from the child zone if it
+	happened to exist there.  Both were corrected, and it now also
+	handles the case of having authority for the child and a grand
+	ancestor.
+	(Trac #1570, git 2858b2098a10a8cc2d34bf87463ace0629d3670e)
+
+375.	[func]		jelte
+	Modules now inform the system when they are stopping. As a result,
+	they are removed from the 'active modules' list in bindctl, which
+	can then inform the user directly when it tries to send them a
+	command or configuration update.  Previously this would result
+	in a 'not responding' error instead of 'not running'.
+	(Trac #640, git 17e78fa1bb1227340aa9815e91ed5c50d174425d)
+
+374.	[func]*		stephen
+	Alter RRsetPtr and ConstRRsetPtr to point to AbstractRRset (instead
+	of RRset) to allow for specialised implementations of RRsets in
+	data sources.
+	(Trac #1604, git 3071211d2c537150a691120b0a5ce2b18d010239)
+
+373.	[bug]		jinmei
+	libdatasrc: the in-memory data source incorrectly rejected loading
+	a zone containing a CNAME RR with RRSIG and/or NSEC.
+	(Trac #1551, git 76f823d42af55ce3f30a0d741fc9297c211d8b38)
+
 372.	[func]		vorner
 	When the allocation of a socket fails for a different reason than the
-	socket not being provided by the OS, the b10-auth and b10-resolver abort,
-	as the system might be in inconsistent state after such error.
+	socket not being provided by the OS, the b10-auth and b10-resolver
+	abort, as the system might be in inconsistent state after such error.
 	(Trac #1543, git 49ac4659f15c443e483922bf9c4f2de982bae25d)
 
 371.	[bug]		jelte
@@ -20,10 +205,11 @@
 	(Trac #1575, git 2c421b58e810028b303d328e4e2f5b74ea124839)
 
 369.	[func]		vorner
-	The SocketRequestor provides more information about what error happened
-	when it throws, by using subclasses of the original exception. This way
-	a user not interested in the difference can still use the original
-	exception, while it can be recognized if necessary.
+	The SocketRequestor provides more information about what error
+	happened when it throws, by using subclasses of the original
+	exception. This way a user not interested in the difference can
+	still use the original exception, while it can be recognized if
+	necessary.
 	(Trac #1542, git 2080e0316a339fa3cadea00e10b1ec4bc322ada0)
 
 368.	[func]*		jinmei
@@ -81,7 +267,8 @@ bind10-devel-20120119 released on January 19, 2012
 	configuration.  If your b10-config.db contains "setuid" for
 	Boss.components, you'll need to remove that entry by hand before
 	starting BIND 10.
-	(Trac #1508-#1510, git edc5b3c12eb45437361484c843794416ad86bb00)
+	(Trac #1508, #1509, #1510,
+	git edc5b3c12eb45437361484c843794416ad86bb00)
 
 361.	[func]		vorner,jelte,jinmei
 	The socket creator is now used to provide sockets. It means you can

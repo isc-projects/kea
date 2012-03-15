@@ -2,7 +2,7 @@
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
 	       [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2010-2012  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -20,7 +20,7 @@
 <refentry>
 
   <refentryinfo>
-    <date>December 15, 2011</date>
+    <date>February 28. 2012</date>
   </refentryinfo>
 
   <refmeta>
@@ -36,7 +36,7 @@
 
   <docinfo>
     <copyright>
-      <year>2010</year>
+      <year>2010-2012</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -98,13 +98,6 @@
       that can run concurrently. The default is 10.
     </para>
     <para>
-      <varname>tsig_key_ring</varname>
-      A list of TSIG keys (each of which is in the form of
-      <replaceable>name:base64-key[:algorithm]</replaceable>)
-      used for access control on transfer requests.
-      The default is an empty list.
-    </para>
-    <para>
       <varname>transfer_acl</varname>
       A list of ACL elements that apply to all transfer requests by
       default (unless overridden in <varname>zone_config</varname>).
@@ -122,33 +115,6 @@
       See the <citetitle>BIND 10 Guide</citetitle> for configuration examples.
       The default is an empty list, that is, no zone specific configuration.
     </para>
-    <para>
-      <varname>log_name</varname>
-<!-- TODO -->
-    </para>
-    <para>
-      <varname>log_file</varname>
-<!-- TODO -->
-      The location of the log file if using a file channel.
-      If undefined, then the file channel is closed.
-      The default is
-      <filename>/usr/local/var/bind10-devel/log/Xfrout.log</filename>.
-    </para>
-    <para>
-      <varname>log_severity</varname>
-<!-- TODO -->
-      The default is "debug".
-    </para>
-    <para>
-      <varname>log_versions</varname>
-<!-- TODO -->
-      The default is 5.
-    </para>
-    <para>
-      <varname>log_max_bytes</varname>
-<!-- TODO -->
-      The default is 1048576.
-    </para>
 
 <!-- TODO: log configurations not documented yet in here. jreed
      has some but waiting on decisions ... -->
@@ -160,21 +126,18 @@
     </simpara></note>
 
 
-<!--
-
-tsig_key_ring list of
-tsig_key string
-
--->
-
 <!-- TODO: formating -->
     <para>
       The configuration commands are:
     </para>
+
     <para>
       <command>shutdown</command> stops all outbound zone transfers
-      and exits <command>b10-xfrout</command>. (Note that the BIND 10
-      boss process will restart this service.)
+      and exits <command>b10-xfrout</command>.
+      This has an optional <varname>pid</varname> argument to
+      select the process ID to stop.
+      (Note that the BIND 10 boss process may restart this service
+      if configured.)
     </para>
 
     <para>

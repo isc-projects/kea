@@ -44,8 +44,6 @@ SrvTestBase::SrvTestBase() : request_message(Message::RENDER),
                              qclass(RRClass::IN()),
                              qtype(RRType::A()), io_sock(NULL),
                              io_message(NULL), endpoint(NULL),
-                             request_obuffer(0),
-                             request_renderer(request_obuffer),
                              response_obuffer(new OutputBuffer(0))
 {}
 
@@ -87,6 +85,7 @@ SrvTestBase::createRequestPacket(Message& message,
                                   IOAddress(DEFAULT_REMOTE_ADDRESS), 53210);
     io_sock = (protocol == IPPROTO_UDP) ? &IOSocket::getDummyUDPSocket() :
         &IOSocket::getDummyTCPSocket();
+
     io_message = new IOMessage(request_renderer.getData(),
                                request_renderer.getLength(),
                                *io_sock, *endpoint);

@@ -19,6 +19,7 @@
 import unittest
 import os
 from isc.testutils.tsigctx_mock import MockTSIGContext
+from isc.testutils.ccsession_mock import MockModuleCCSession
 from isc.cc.session import *
 import isc.config
 from isc.dns import *
@@ -27,6 +28,7 @@ from xfrout import *
 import xfrout
 import isc.log
 import isc.acl.dns
+import isc.server_common.tsig_keyring
 
 TESTDATA_SRCDIR = os.getenv("TESTDATASRCDIR")
 TSIG_KEY = TSIGKey("example.com:SFuWd/q99SzF8Yzd1QbB9g==")
@@ -1154,6 +1156,39 @@ class TestUnixSockServer(unittest.TestCase):
         self.write_sock, self.read_sock = socket.socketpair()
         self.unix = MyUnixSockServer()
 
+    def test_tsig_keyring(self):
+        """
+        Check we use the global keyring when starting a request.
+        """
+        try:
+            # These are just so the keyring can be started
+            self.unix._cc.add_remote_config_by_name = \
+                lambda name, callback: None
+            self.unix._cc.get_remote_config_value = \
+                lambda module, name: ([], True)
+            self.unix._cc.remove_remote_config = lambda name: None
+            isc.server_common.tsig_keyring.init_keyring(self.unix._cc)
+            # These are not really interesting for the test. These are just
+            # handled over, so strings are OK.
+            self.unix._guess_remote = lambda sock: "Address"
+            self.unix._zone_config = "Zone config"
+            self.unix._acl = "acl"
+            # This would be the handler class, but we just check it is passed
+            # the right parametes, so function is enough for that.
+            keys = isc.server_common.tsig_keyring.get_keyring()
+            def handler(sock, data, server, keyring, address, acl, config):
+                self.assertEqual("sock", sock)
+                self.assertEqual("data", data)
+                self.assertEqual(self.unix, server)
+                self.assertEqual(keys, keyring)
+                self.assertEqual("Address", address)
+                self.assertEqual("acl", acl)
+                self.assertEqual("Zone config", config)
+            self.unix.RequestHandlerClass = handler
+            self.unix.finish_request("sock", "data")
+        finally:
+            isc.server_common.tsig_keyring.deinit_keyring()
+
     def test_guess_remote(self):
         """Test we can guess the remote endpoint when we have only the
            file descriptor. This is needed, because we get only that one
@@ -1213,25 +1248,12 @@ class TestUnixSockServer(unittest.TestCase):
 
     def test_update_config_data(self):
         self.check_default_ACL()
-        tsig_key_str = 'example.com:SFuWd/q99SzF8Yzd1QbB9g=='
-        tsig_key_list = [tsig_key_str]
-        bad_key_list = ['bad..example.com:SFuWd/q99SzF8Yzd1QbB9g==']
         self.unix.update_config_data({'transfers_out':10 })
         self.assertEqual(self.unix._max_transfers_out, 10)
-        self.assertTrue(self.unix.tsig_key_ring is not None)
         self.check_default_ACL()
 
-        self.unix.update_config_data({'transfers_out':9,
-                                      'tsig_key_ring':tsig_key_list})
+        self.unix.update_config_data({'transfers_out':9})
         self.assertEqual(self.unix._max_transfers_out, 9)
-        self.assertEqual(self.unix.tsig_key_ring.size(), 1)
-        self.unix.tsig_key_ring.remove(Name("example.com."))
-        self.assertEqual(self.unix.tsig_key_ring.size(), 0)
-
-        # bad tsig key
-        config_data = {'transfers_out':9, 'tsig_key_ring': bad_key_list}
-        self.assertRaises(None, self.unix.update_config_data(config_data))
-        self.assertEqual(self.unix.tsig_key_ring.size(), 0)
 
         # Load the ACL
         self.unix.update_config_data({'transfer_acl': [{'from': '127.0.0.1',
@@ -1422,6 +1444,31 @@ class TestInitialization(unittest.TestCase):
         self.setEnv("BIND10_XFROUT_SOCKET_FILE", "The/Socket/File")
         xfrout.init_paths()
         self.assertEqual(xfrout.UNIX_SOCKET_FILE, "The/Socket/File")
+
+class MyNotifier():
+    def __init__(self):
+        self.shutdown_called = False
+
+    def shutdown(self):
+        self.shutdown_called = True
+
+class MyXfroutServer(XfroutServer):
+    def __init__(self):
+        self._cc = MockModuleCCSession()
+        self._shutdown_event = threading.Event()
+        self._notifier = MyNotifier()
+        self._unix_socket_server = None
+        # Disable the wait for threads
+        self._wait_for_threads = lambda : None
+
+class TestXfroutServer(unittest.TestCase):
+    def setUp(self):
+        self.xfrout_server = MyXfroutServer()
+
+    def test_shutdown(self):
+        self.xfrout_server.shutdown()
+        self.assertTrue(self.xfrout_server._notifier.shutdown_called)
+        self.assertTrue(self.xfrout_server._cc.stopped)
 
 if __name__== "__main__":
     isc.log.resetUnitTestRootLogger()

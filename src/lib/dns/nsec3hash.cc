@@ -142,6 +142,23 @@ NSEC3HashRFC5155::match(const generic::NSEC3PARAM& nsec3param) const {
     return (match(nsec3param.getHashalg(), nsec3param.getIterations(),
                   nsec3param.getSalt()));
 }
+
+// A static pointer that refers to the currently usable creator.
+// Only get/setNSEC3HashCreator are expected to get access to this variable
+// directly.
+const NSEC3HashCreator* creator;
+
+// The accessor to the current creator.  If it's not explicitly set or has
+// been reset from a customized one, the default creator will be used.
+const NSEC3HashCreator*
+getNSEC3HashCreator() {
+    static DefaultNSEC3HashCreator default_creator;
+    if (creator == NULL) {
+        creator = &default_creator;
+    }
+    return (creator);
+}
+
 } // end of unnamed namespace
 
 namespace isc {
@@ -149,14 +166,29 @@ namespace dns {
 
 NSEC3Hash*
 NSEC3Hash::create(const generic::NSEC3PARAM& param) {
+    return (getNSEC3HashCreator()->create(param));
+}
+
+NSEC3Hash*
+NSEC3Hash::create(const generic::NSEC3& nsec3) {
+    return (getNSEC3HashCreator()->create(nsec3));
+}
+
+NSEC3Hash*
+DefaultNSEC3HashCreator::create(const generic::NSEC3PARAM& param) const {
     return (new NSEC3HashRFC5155(param.getHashalg(), param.getIterations(),
                                  param.getSalt()));
 }
 
 NSEC3Hash*
-NSEC3Hash::create(const generic::NSEC3& nsec3) {
+DefaultNSEC3HashCreator::create(const generic::NSEC3& nsec3) const {
     return (new NSEC3HashRFC5155(nsec3.getHashalg(), nsec3.getIterations(),
                                  nsec3.getSalt()));
+}
+
+void
+setNSEC3HashCreator(const NSEC3HashCreator* new_creator) {
+    creator = new_creator;
 }
 
 } // namespace dns

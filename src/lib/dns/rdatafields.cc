@@ -70,8 +70,7 @@ namespace {
 // it's hopefully an acceptable practice.
 class RdataFieldComposer : public AbstractMessageRenderer {
 public:
-    RdataFieldComposer(OutputBuffer& buffer) :
-        AbstractMessageRenderer(buffer),
+    RdataFieldComposer() :
         truncated_(false), length_limit_(65535),
         mode_(CASE_INSENSITIVE), last_data_pos_(0)
     {}
@@ -128,8 +127,7 @@ public:
 }
 
 RdataFields::RdataFields(const Rdata& rdata) {
-    OutputBuffer buffer(0);
-    RdataFieldComposer field_composer(buffer);
+    RdataFieldComposer field_composer;
     rdata.toWire(field_composer);
     nfields_ = field_composer.getFields().size();
     data_length_ = field_composer.getLength();

@@ -2,7 +2,7 @@
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
 	       [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2011-2012  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -20,7 +20,7 @@
 <refentry>
 
   <refentryinfo>
-    <date>Mar 8, 2011</date>
+    <date>February 28, 2012</date>
   </refentryinfo>
 
   <refmeta>
@@ -36,7 +36,7 @@
 
   <docinfo>
     <copyright>
-      <year>2011</year>
+      <year>2011-2012</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -171,9 +171,12 @@
         <term><command>shutdown</command></term>
         <listitem>
 	  <para>
-	    exits the <command>b10-stats-httpd</command> process. (Note that
-	    the BIND 10 boss process will restart this service.)
-	  </para>
+	    exits the <command>b10-stats-httpd</command> process.
+            This has an optional <varname>pid</varname> argument to
+            select the process ID to stop.
+            (Note that the BIND 10 boss process may restart this service
+            if configured.)
+          </para>
         </listitem>
       </varlistentry>
     </variablelist>
@@ -205,7 +208,7 @@
     <title>HISTORY</title>
     <para>
       <command>b10-stats-httpd</command> was designed and implemented by Naoki
-      Kambe of JPRS in Mar 2011.
+      Kambe of JPRS in March 2011.
     </para>
   </refsect1>
 </refentry><!--

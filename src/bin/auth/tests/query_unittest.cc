@@ -52,11 +52,23 @@ namespace {
 // dns::masterLoad().  Some of the RRs are also used as the expected
 // data in specific tests, in which case they are referenced via specific
 // local variables (such as soa_txt).
-const char* const soa_txt = "example.com. 3600 IN SOA . . 0 0 0 0 0\n";
+//
+// For readability consistency, all strings are placed in a separate line,
+// even if they are very short and can reasonably fit in a single line with
+// the corresponding variable.  For example, we write
+// const char* const foo_txt =
+//  "foo.example.com. 3600 IN AAAA 2001:db8::1\n";
+// instead of
+// const char* const foo_txt = "foo.example.com. 3600 IN AAAA 2001:db8::1\n";
+const char* const soa_txt =
+    "example.com. 3600 IN SOA . . 0 0 0 0 0\n";
 const char* const zone_ns_txt =
     "example.com. 3600 IN NS glue.delegation.example.com.\n"
     "example.com. 3600 IN NS noglue.example.com.\n"
     "example.com. 3600 IN NS example.net.\n";
+const char* const zone_ds_txt =
+    "example.com. 3600 IN DS 57855 5 1 "
+        "B6DCD485719ADCA18E5F3D48A2331627FDD3 636B\n";
 const char* const ns_addrs_txt =
     "glue.delegation.example.com. 3600 IN A 192.0.2.153\n"
     "glue.delegation.example.com. 3600 IN AAAA 2001:db8::53\n"
@@ -66,11 +78,16 @@ const char* const delegation_txt =
     "delegation.example.com. 3600 IN NS noglue.example.com.\n"
     "delegation.example.com. 3600 IN NS cname.example.com.\n"
     "delegation.example.com. 3600 IN NS example.org.\n";
+// Borrowed from the RFC4035
+const char* const delegation_ds_txt =
+    "delegation.example.com. 3600 IN DS 57855 5 1 "
+        "B6DCD485719ADCA18E5F3D48A2331627FDD3 636B\n";
 const char* const mx_txt =
     "mx.example.com. 3600 IN MX 10 www.example.com.\n"
     "mx.example.com. 3600 IN MX 20 mailer.example.org.\n"
     "mx.example.com. 3600 IN MX 30 mx.delegation.example.com.\n";
-const char* const www_a_txt = "www.example.com. 3600 IN A 192.0.2.80\n";
+const char* const www_a_txt =
+    "www.example.com. 3600 IN A 192.0.2.80\n";
 const char* const cname_txt =
     "cname.example.com. 3600 IN CNAME www.example.com.\n";
 const char* const cname_nxdom_txt =
@@ -95,13 +112,15 @@ const char* const other_zone_rrs =
     "cnamemx.example.com. 3600 IN MX 10 cnamemailer.example.com.\n"
     "mx.delegation.example.com. 3600 IN A 192.0.2.100\n";
 // Wildcards
-const char* const wild_txt = "*.wild.example.com. 3600 IN A 192.0.2.7\n";
+const char* const wild_txt =
+    "*.wild.example.com. 3600 IN A 192.0.2.7\n";
 const char* const nsec_wild_txt =
     "*.wild.example.com. 3600 IN NSEC www.example.com. A NSEC RRSIG\n";
 const char* const cnamewild_txt =
     "*.cnamewild.example.com. 3600 IN CNAME www.example.org.\n";
-const char* const nsec_cnamewild_txt = "*.cnamewild.example.com. "
-    "3600 IN NSEC delegation.example.com. CNAME NSEC RRSIG\n";
+const char* const nsec_cnamewild_txt =
+    "*.cnamewild.example.com. 3600 IN NSEC "
+    "delegation.example.com. CNAME NSEC RRSIG\n";
 // Wildcard_nxrrset
 const char* const wild_txt_nxrrset =
     "*.uwild.example.com. 3600 IN A 192.0.2.9\n";
@@ -112,10 +131,12 @@ const char* const wild_txt_next =
 const char* const nsec_wild_txt_next =
     "www.uwild.example.com. 3600 IN NSEC *.wild.example.com. A NSEC RRSIG\n";
 // Wildcard empty
-const char* const empty_txt = "b.*.t.example.com. 3600 IN A 192.0.2.13\n";
+const char* const empty_txt =
+    "b.*.t.example.com. 3600 IN A 192.0.2.13\n";
 const char* const nsec_empty_txt =
     "b.*.t.example.com. 3600 IN NSEC *.uwild.example.com. A NSEC RRSIG\n";
-const char* const empty_prev_txt = "t.example.com. 3600 IN A 192.0.2.15\n";
+const char* const empty_prev_txt =
+    "t.example.com. 3600 IN A 192.0.2.15\n";
 const char* const nsec_empty_prev_txt =
     "t.example.com. 3600 IN NSEC b.*.t.example.com. A NSEC RRSIG\n";
 // Used in NXDOMAIN proof test.  We are going to test some unusual case where
@@ -153,7 +174,8 @@ const char* const nsec_www_txt =
     "www.example.com. 3600 IN NSEC example.com. A NSEC RRSIG\n";
 
 // Authoritative data without NSEC
-const char* const nonsec_a_txt = "nonsec.example.com. 3600 IN A 192.0.2.0\n";
+const char* const nonsec_a_txt =
+    "nonsec.example.com. 3600 IN A 192.0.2.0\n";
 
 // NSEC3 RRs.  You may also need to add mapping to MockZoneFinder::hash_map_.
 const char* const nsec3_apex_txt =
@@ -163,6 +185,28 @@ const char* const nsec3_www_txt =
     "q04jkcevqvmu85r014c7dkba38o0ji5r.example.com. 3600 IN NSEC3 1 1 12 "
     "aabbccdd r53bq7cc2uvmubfu5ocmm6pers9tk9en A RRSIG\n";
 
+// NSEC3 for wild.example.com (used in wildcard tests, will be added on
+// demand not to confuse other tests)
+const char* const nsec3_atwild_txt =
+    "ji6neoaepv8b5o6k4ev33abha8ht9fgc.example.com. 3600 IN NSEC3 1 1 12 "
+    "aabbccdd r53bq7cc2uvmubfu5ocmm6pers9tk9en\n";
+
+// NSEC3 for cnamewild.example.com (used in wildcard tests, will be added on
+// demand not to confuse other tests)
+const char* const nsec3_atcnamewild_txt =
+    "k8udemvp1j2f7eg6jebps17vp3n8i58h.example.com. 3600 IN NSEC3 1 1 12 "
+    "aabbccdd r53bq7cc2uvmubfu5ocmm6pers9tk9en\n";
+
+// NSEC3 for *.uwild.example.com (will be added on demand not to confuse
+// other tests)
+const char* const nsec3_wild_txt =
+    "b4um86eghhds6nea196smvmlo4ors995.example.com. 3600 IN NSEC3 1 1 12 "
+    "aabbccdd r53bq7cc2uvmubfu5ocmm6pers9tk9en A RRSIG\n";
+// NSEC3 for uwild.example.com. (will be added on demand)
+const char* const nsec3_uwild_txt =
+    "t644ebqk9bibcna874givr6joj62mlhv.example.com. 3600 IN NSEC3 1 1 12 "
+    "aabbccdd r53bq7cc2uvmubfu5ocmm6pers9tk9en A RRSIG\n";
+
 // (Secure) delegation data; Delegation with DS record
 const char* const signed_delegation_txt =
     "signed-delegation.example.com. 3600 IN NS ns.example.net.\n";
@@ -170,12 +214,23 @@ const char* const signed_delegation_ds_txt =
     "signed-delegation.example.com. 3600 IN DS 12345 8 2 "
     "764501411DE58E8618945054A3F620B36202E115D015A7773F4B78E0F952CECA\n";
 
-// (Secure) delegation data; Delegation without DS record (and NSEC denying
-// its existence.
+// (Secure) delegation data; Delegation without DS record (and both NSEC
+// and NSEC3 denying its existence)
 const char* const unsigned_delegation_txt =
     "unsigned-delegation.example.com. 3600 IN NS ns.example.net.\n";
 const char* const unsigned_delegation_nsec_txt =
     "unsigned-delegation.example.com. 3600 IN NSEC "
+    "unsigned-delegation-optout.example.com. NS RRSIG NSEC\n";
+// This one will be added on demand
+const char* const unsigned_delegation_nsec3_txt =
+    "q81r598950igr1eqvc60aedlq66425b5.example.com. 3600 IN NSEC3 1 1 12 "
+    "aabbccdd 0p9mhaveqvm6t7vbl5lop2u3t2rp3tom NS RRSIG\n";
+
+// Delegation without DS record, and no direct matching NSEC3 record
+const char* const unsigned_delegation_optout_txt =
+    "unsigned-delegation-optout.example.com. 3600 IN NS ns.example.net.\n";
+const char* const unsigned_delegation_optout_nsec_txt =
+    "unsigned-delegation-optout.example.com. 3600 IN NSEC "
     "*.uwild.example.com. NS RRSIG NSEC\n";
 
 // (Secure) delegation data; Delegation where the DS lookup will raise an
@@ -195,13 +250,34 @@ getCommonRRSIGText(const string& type) {
                    "example.com. FAKEFAKEFAKE"));
 }
 
+// A helper callback of masterLoad() used in InMemoryZoneFinderTest.
+void
+setRRset(RRsetPtr rrset, vector<RRsetPtr*>::iterator& it) {
+    *(*it) = rrset;
+    ++it;
+}
+
+// A helper function that converts a textual form of a single RR into a
+// RRsetPtr object.  If it's SOA, origin must be set to its owner name;
+// otherwise masterLoad() will reject it.
+RRsetPtr
+textToRRset(const string& text_rrset, const Name& origin = Name::ROOT_NAME()) {
+    stringstream ss(text_rrset);
+    RRsetPtr rrset;
+    vector<RRsetPtr*> rrsets;
+    rrsets.push_back(&rrset);
+    masterLoad(ss, origin, RRClass::IN(),
+               boost::bind(setRRset, _1, rrsets.begin()));
+    return (rrset);
+}
+
 // This is a mock Zone Finder class for testing.
 // It is a derived class of ZoneFinder for the convenient of tests.
 // Its find() method emulates the common behavior of protocol compliant
 // ZoneFinder classes, but simplifies some minor cases and also supports broken
 // behavior.
-// For simplicity, most names are assumed to be "in zone"; there's only
-// one zone cut at the point of name "delegation.example.com".
+// For simplicity, most names are assumed to be "in zone"; delegations
+// to child zones are identified by the existence of non origin NS records.
 // Another special name is "dname.example.com".  Query names under this name
 // will result in DNAME.
 // This mock zone doesn't handle empty non terminal nodes (if we need to test
@@ -210,22 +286,21 @@ class MockZoneFinder : public ZoneFinder {
 public:
     MockZoneFinder() :
         origin_(Name("example.com")),
-        delegation_name_("delegation.example.com"),
-        signed_delegation_name_("signed-delegation.example.com"),
         bad_signed_delegation_name_("bad-delegation.example.com"),
-        unsigned_delegation_name_("unsigned-delegation.example.com"),
         dname_name_("dname.example.com"),
         has_SOA_(true),
         has_apex_NS_(true),
         rrclass_(RRClass::IN()),
         include_rrsig_anyway_(false),
         use_nsec3_(false),
-        nsec_name_(origin_)
+        nsec_name_(origin_),
+        nsec3_fake_(NULL),
+        nsec3_name_(NULL)
     {
         stringstream zone_stream;
         zone_stream << soa_txt << zone_ns_txt << ns_addrs_txt <<
-            delegation_txt << mx_txt << www_a_txt << cname_txt <<
-            cname_nxdom_txt << cname_out_txt << dname_txt <<
+            delegation_txt << delegation_ds_txt << mx_txt << www_a_txt <<
+            cname_txt << cname_nxdom_txt << cname_out_txt << dname_txt <<
             dname_a_txt << other_zone_rrs << no_txt << nz_txt <<
             nsec_apex_txt << nsec_mx_txt << nsec_no_txt << nsec_nz_txt <<
             nsec_nxdomain_txt << nsec_www_txt << nonsec_a_txt <<
@@ -236,6 +311,8 @@ public:
             nsec3_apex_txt << nsec3_www_txt <<
             signed_delegation_txt << signed_delegation_ds_txt <<
             unsigned_delegation_txt << unsigned_delegation_nsec_txt <<
+            unsigned_delegation_optout_txt <<
+            unsigned_delegation_optout_nsec_txt <<
             bad_delegation_txt;
 
         masterLoad(zone_stream, origin_, rrclass_,
@@ -248,8 +325,12 @@ public:
 
         // (Faked) NSEC3 hash map.  For convenience we use hardcoded built-in
         // map instead of calculating and using actual hash.
-        // The used hash values are borrowed from RFC5155 examples.
+        // The used hash values are borrowed from RFC5155 examples (they are
+        // based on the query name, not that they would correspond directly
+        // to the name).
         hash_map_[Name("example.com")] = "0p9mhaveqvm6t7vbl5lop2u3t2rp3tom";
+        hash_map_[Name("www.example.com")] =
+            "q04jkcevqvmu85r014c7dkba38o0ji5r";
         hash_map_[Name("nxdomain.example.com")] =
             "v644ebqk9bibcna874givr6joj62mlhv";
         hash_map_[Name("nx.domain.example.com")] =
@@ -260,15 +341,43 @@ public:
             "q00jkcevqvmu85r014c7dkba38o0ji5r";
         hash_map_[Name("nxdomain3.example.com")] =
             "009mhaveqvm6t7vbl5lop2u3t2rp3tom";
+        hash_map_[Name("*.example.com")] =
+            "r53bq7cc2uvmubfu5ocmm6pers9tk9en";
+        hash_map_[Name("unsigned-delegation.example.com")] =
+            "q81r598950igr1eqvc60aedlq66425b5"; // a bit larger than H(www)
+        hash_map_[Name("*.uwild.example.com")] =
+            "b4um86eghhds6nea196smvmlo4ors995";
+        hash_map_[Name("unsigned-delegation-optout.example.com")] =
+            "vld46lphhasfapj8og1pglgiasa5o5gt";
+
+        // For wildcard proofs
+        hash_map_[Name("wild.example.com")] =
+            "ji6neoaepv8b5o6k4ev33abha8ht9fgc";
+        hash_map_[Name("y.wild.example.com")] =
+            "0p9mhaveqvm6t7vbl5lop2u3t2rp3ton"; // a bit larger than H(<apex>)
+        hash_map_[Name("x.y.wild.example.com")] =
+            "q04jkcevqvmu85r014c7dkba38o0ji6r"; // a bit larger than H(www)
+        hash_map_[Name("cnamewild.example.com")] =
+            "k8udemvp1j2f7eg6jebps17vp3n8i58h";
+        hash_map_[Name("www.cnamewild.example.com")] =
+            "q04jkcevqvmu85r014c7dkba38o0ji6r"; // a bit larger than H(www)
+
+        // For closest encloser proof for www1.uwild.example.com:
+        hash_map_[Name("uwild.example.com")] =
+            "t644ebqk9bibcna874givr6joj62mlhv";
+        hash_map_[Name("www1.uwild.example.com")] =
+            "q04jkcevqvmu85r014c7dkba38o0ji6r"; // a bit larger than H(www)
     }
     virtual isc::dns::Name getOrigin() const { return (origin_); }
     virtual isc::dns::RRClass getClass() const { return (rrclass_); }
-    virtual FindResult find(const isc::dns::Name& name,
-                            const isc::dns::RRType& type,
-                            const FindOptions options = FIND_DEFAULT);
-    virtual FindResult findAll(const isc::dns::Name& name,
-                               std::vector<ConstRRsetPtr>& target,
-                               const FindOptions options = FIND_DEFAULT);
+    virtual ZoneFinderContextPtr find(const isc::dns::Name& name,
+                                      const isc::dns::RRType& type,
+                                      const FindOptions options =
+                                      FIND_DEFAULT);
+    virtual ZoneFinderContextPtr findAll(const isc::dns::Name& name,
+                                         std::vector<ConstRRsetPtr>& target,
+                                         const FindOptions options =
+                                         FIND_DEFAULT);
 
     virtual ZoneFinder::FindNSEC3Result
     findNSEC3(const Name& name, bool recursive);
@@ -290,31 +399,80 @@ public:
                        ConstRRsetPtr rrset)
     {
         nsec_name_ = nsec_name;
-        nsec_result_.reset(new ZoneFinder::FindResult(code, rrset));
+        nsec_context_.reset(new Context(*this,
+                                        FIND_DEFAULT, // a fake value
+                                        ResultContext(code, rrset,
+                                                      RESULT_NSEC_SIGNED)));
+    }
+
+    // Once called, the findNSEC3 will return the provided result for the next
+    // query. After that, it'll return to operate normally.
+    // NULL disables. Does not take ownership of the pointer (it is generally
+    // expected to be a local variable in the test function).
+    void setNSEC3Result(const FindNSEC3Result* result,
+                        const Name* name = NULL)
+    {
+        nsec3_fake_ = result;
+        nsec3_name_ = name;
     }
 
     // If true is passed return an empty NSEC3 RRset for some negative
     // answers when DNSSEC is required.
     void setNSEC3Flag(bool on) { use_nsec3_ = on; }
 
-    Name findPreviousName(const Name&) const {
+    virtual Name findPreviousName(const Name&) const {
         isc_throw(isc::NotImplemented, "Mock doesn't support previous name");
+    }
+
+    // This method allows tests to insert new record in the middle of the test.
+    //
+    // \param record_txt textual RR representation of RR (such as soa_txt, etc)
+    void addRecord(const string& record_txt) {
+        stringstream record_stream;
+        record_stream << record_txt;
+        masterLoad(record_stream, origin_, rrclass_,
+                   boost::bind(&MockZoneFinder::loadRRset, this, _1));
     }
 
 public:
     // We allow the tests to use these for convenience
-    ConstRRsetPtr delegation_rrset_;
-    ConstRRsetPtr signed_delegation_rrset_;
-    ConstRRsetPtr signed_delegation_ds_rrset_;
-    ConstRRsetPtr bad_signed_delegation_rrset_;
-    ConstRRsetPtr unsigned_delegation_rrset_;
+    ConstRRsetPtr dname_rrset_; // could be used as an arbitrary bogus RRset
     ConstRRsetPtr empty_nsec_rrset_;
+
+protected:
+    // A convenient shortcut.  Will also be used by further derived mocks.
+    ZoneFinderContextPtr createContext(FindOptions options,
+                                       Result code,
+                                       isc::dns::ConstRRsetPtr rrset,
+                                       FindResultFlags flags = RESULT_DEFAULT)
+    {
+        return (ZoneFinderContextPtr(
+                    new Context(*this, options,
+                                ResultContext(code, rrset, flags))));
+    }
 
 private:
     typedef map<RRType, ConstRRsetPtr> RRsetStore;
     typedef map<Name, RRsetStore> Domains;
     Domains domains_;
+    Domains delegations_;
     Domains nsec3_domains_;
+
+    // This is used to identify delegation to a child zone, and used to
+    // find a matching entry in delegations_.  Note that first found entry
+    // is returned, so it's not a longest match.  Test data must be set up
+    // to ensure the first match is always the longest match.
+    struct SubdomainMatch {
+        SubdomainMatch(const Name& name) : name_(name) {}
+        bool operator()(const pair<Name, RRsetStore>& domain_elem) const {
+            return (name_ == domain_elem.first ||
+                    name_.compare(domain_elem.first).getRelation() ==
+                    NameComparisonResult::SUBDOMAIN);
+        }
+    private:
+        const Name& name_;
+    };
+
     void loadRRset(RRsetPtr rrset) {
         if (rrset->getType() == RRType::NSEC3()) {
             // NSEC3 should go to the dedicated table
@@ -328,39 +486,24 @@ private:
             return;
         }
         domains_[rrset->getName()][rrset->getType()] = rrset;
-        if (rrset->getName() == delegation_name_ &&
-            rrset->getType() == RRType::NS()) {
-            delegation_rrset_ = rrset;
-        } else if (rrset->getName() == signed_delegation_name_ &&
-                   rrset->getType() == RRType::NS()) {
-            signed_delegation_rrset_ = rrset;
-        } else if (rrset->getName() == bad_signed_delegation_name_ &&
-                   rrset->getType() == RRType::NS()) {
-            bad_signed_delegation_rrset_ = rrset;
-        } else if (rrset->getName() == unsigned_delegation_name_ &&
-                   rrset->getType() == RRType::NS()) {
-            unsigned_delegation_rrset_ = rrset;
-        } else if (rrset->getName() == signed_delegation_name_ &&
-                   rrset->getType() == RRType::DS()) {
-            signed_delegation_ds_rrset_ = rrset;
-            // Like NSEC(3), by nature it should have an RRSIG.
-            rrset->addRRsig(RdataPtr(new generic::RRSIG(
-                                         getCommonRRSIGText(rrset->getType().
-                                                            toText()))));
+
+        // Remember delegation (NS/DNAME) related RRsets separately.
+        if (rrset->getType() == RRType::NS() && rrset->getName() != origin_) {
+            delegations_[rrset->getName()][rrset->getType()] = rrset;
         } else if (rrset->getName() == dname_name_ &&
-            rrset->getType() == RRType::DNAME()) {
+                   rrset->getType() == RRType::DNAME()) {
             dname_rrset_ = rrset;
-        // Add some signatures
-        } else if (rrset->getName() == Name("example.com.") &&
-                   rrset->getType() == RRType::NS()) {
-            // For NS, we only have RRSIG for the origin name.
-            rrset->addRRsig(RdataPtr(new generic::RRSIG(
-                                         getCommonRRSIGText("NS"))));
-        } else {
-            // For others generate RRSIG unconditionally.  Technically this
-            // is wrong because we shouldn't have it for names under a zone
-            // cut.  But in our tests that doesn't matter, so we add them
-            // just for simplicity.
+        }
+
+        // Add some signatures.  For NS, we only have RRSIG for the origin
+        // name. For others generate RRSIG unconditionally.  Technically this
+        // is wrong because we shouldn't have it for names under a zone
+        // cut.  But in our tests that doesn't matter, so we add them
+        // just for simplicity.
+        // Note that this includes RRSIG for DS with secure delegations.
+        // They should have RRSIGs, so that's actually expected data, not just
+        // for simplicity.
+        if (rrset->getType() != RRType::NS() || rrset->getName() == origin_) {
             rrset->addRRsig(RdataPtr(new generic::RRSIG(
                                          getCommonRRSIGText(rrset->getType().
                                                             toText()))));
@@ -369,27 +512,29 @@ private:
 
     const Name origin_;
     // Names where we delegate somewhere else
-    const Name delegation_name_;
-    const Name signed_delegation_name_;
     const Name bad_signed_delegation_name_;
-    const Name unsigned_delegation_name_;
     const Name dname_name_;
     bool has_SOA_;
     bool has_apex_NS_;
-    ConstRRsetPtr dname_rrset_;
     const RRClass rrclass_;
     bool include_rrsig_anyway_;
     bool use_nsec3_;
     // The following two will be used for faked NSEC cases
     Name nsec_name_;
-    boost::scoped_ptr<ZoneFinder::FindResult> nsec_result_;
+    ZoneFinderContextPtr nsec_context_;
+    // The following two are for faking bad NSEC3 responses
+    // Enabled when not NULL
+    const FindNSEC3Result* nsec3_fake_;
+    const Name* nsec3_name_;
+public:
+    // Public, to allow tests looking up the right names for something
     map<Name, string> hash_map_;
 };
 
 // A helper function that generates a new RRset based on "wild_rrset",
 // replacing its owner name with 'real_name'.
 ConstRRsetPtr
-substituteWild(const RRset& wild_rrset, const Name& real_name) {
+substituteWild(const AbstractRRset& wild_rrset, const Name& real_name) {
     RRsetPtr rrset(new RRset(real_name, wild_rrset.getClass(),
                              wild_rrset.getType(), wild_rrset.getTTL()));
     // For simplicity we only consider the case with one RDATA (for now)
@@ -404,12 +549,12 @@ substituteWild(const RRset& wild_rrset, const Name& real_name) {
     return (rrset);
 }
 
-ZoneFinder::FindResult
+ZoneFinderContextPtr
 MockZoneFinder::findAll(const Name& name, std::vector<ConstRRsetPtr>& target,
                         const FindOptions options)
 {
-    ZoneFinder::FindResult result(find(name, RRType::ANY(), options));
-    if (result.code == NXRRSET) {
+    ZoneFinderContextPtr result(find(name, RRType::ANY(), options));
+    if (result->code == NXRRSET) {
         const Domains::const_iterator found_domain = domains_.find(name);
         if (!found_domain->second.empty()) {
             for (RRsetStore::const_iterator found_rrset =
@@ -418,7 +563,10 @@ MockZoneFinder::findAll(const Name& name, std::vector<ConstRRsetPtr>& target,
                 // Insert RRs under the domain name into target
                 target.push_back(found_rrset->second);
             }
-            return (FindResult(SUCCESS, RRsetPtr()));
+            return (ZoneFinderContextPtr(
+                        new Context(*this, options,
+                                    ResultContext(SUCCESS, RRsetPtr()),
+                                    target)));
         }
     }
 
@@ -427,6 +575,13 @@ MockZoneFinder::findAll(const Name& name, std::vector<ConstRRsetPtr>& target,
 
 ZoneFinder::FindNSEC3Result
 MockZoneFinder::findNSEC3(const Name& name, bool recursive) {
+    // Do we have a fake result set? If so, use it.
+    if (nsec3_fake_ != NULL &&
+        (nsec3_name_ == NULL || *nsec3_name_ == name)) {
+        const FindNSEC3Result* result(nsec3_fake_);
+        return (*result);
+    }
+
     ConstRRsetPtr covering_proof;
     const int labels = name.getLabelCount();
 
@@ -434,6 +589,10 @@ MockZoneFinder::findNSEC3(const Name& name, bool recursive) {
     // expected entry when operator[] is used; maps are not empty.
     for (int i = 0; i < labels; ++i) {
         const string hlabel = hash_map_[name.split(i, labels - i)];
+        if (hlabel.empty()) {
+            isc_throw(isc::Unexpected, "findNSEC3() hash failure for " <<
+                      name.split(i, labels - i));
+        }
         const Name hname = Name(hlabel + ".example.com");
         // We don't use const_iterator so that we can use operator[] below
         Domains::iterator found_domain = nsec3_domains_.lower_bound(hname);
@@ -470,52 +629,35 @@ MockZoneFinder::findNSEC3(const Name& name, bool recursive) {
     isc_throw(isc::Unexpected, "findNSEC3() isn't expected to fail");
 }
 
-ZoneFinder::FindResult
+ZoneFinderContextPtr
 MockZoneFinder::find(const Name& name, const RRType& type,
                      const FindOptions options)
 {
     // Emulating a broken zone: mandatory apex RRs are missing if specifically
     // configured so (which are rare cases).
     if (name == origin_ && type == RRType::SOA() && !has_SOA_) {
-        return (FindResult(NXDOMAIN, RRsetPtr()));
+        return (createContext(options, NXDOMAIN, RRsetPtr()));
     } else if (name == origin_ && type == RRType::NS() && !has_apex_NS_) {
-        return (FindResult(NXDOMAIN, RRsetPtr()));
+        return (createContext(options, NXDOMAIN, RRsetPtr()));
     }
 
-    // Special case for names on or under a zone cut
+    // Special case for names on or under a zone cut and under DNAME
+    Domains::iterator it;
     if ((options & FIND_GLUE_OK) == 0 &&
-        (name == delegation_name_ ||
-         name.compare(delegation_name_).getRelation() ==
-         NameComparisonResult::SUBDOMAIN)) {
-        return (FindResult(DELEGATION, delegation_rrset_));
-    // And under DNAME
+        (it = find_if(delegations_.begin(), delegations_.end(),
+                      SubdomainMatch(name))) != delegations_.end()) {
+        ConstRRsetPtr delegation_ns = it->second[RRType::NS()];
+        assert(delegation_ns); // should be ensured by how we construct it
+
+        // DS query for the delegated domain (i.e. an exact match) will be
+        // handled just like an in-zone case below.  Others result in
+        // DELEGATION.
+        if (type != RRType::DS() || it->first != name) {
+            return (createContext(options, DELEGATION, delegation_ns));
+        }
     } else if (name.compare(dname_name_).getRelation() ==
-        NameComparisonResult::SUBDOMAIN) {
-        if (type != RRType::DS()) {
-            return (FindResult(DNAME, dname_rrset_));
-        }
-    } else if (name == signed_delegation_name_ ||
-               name.compare(signed_delegation_name_).getRelation() ==
                NameComparisonResult::SUBDOMAIN) {
-        if (type != RRType::DS()) {
-            return (FindResult(DELEGATION, signed_delegation_rrset_));
-        } else {
-            return (FindResult(SUCCESS, signed_delegation_ds_rrset_));
-        }
-    } else if (name == unsigned_delegation_name_ ||
-               name.compare(unsigned_delegation_name_).getRelation() ==
-               NameComparisonResult::SUBDOMAIN) {
-        if (type != RRType::DS()) {
-            return (FindResult(DELEGATION, unsigned_delegation_rrset_));
-        }
-    } else if (name == bad_signed_delegation_name_ ||
-               name.compare(bad_signed_delegation_name_).getRelation() ==
-               NameComparisonResult::SUBDOMAIN) {
-        if (type != RRType::DS()) {
-            return (FindResult(DELEGATION, bad_signed_delegation_rrset_));
-        } else {
-            return (FindResult(NXDOMAIN, RRsetPtr()));
-        }
+        return (createContext(options, DNAME, dname_rrset_));
     }
 
     // normal cases.  names are searched for only per exact-match basis
@@ -545,27 +687,35 @@ MockZoneFinder::find(const Name& name, const RRType& type,
                 }
                 rrset = noconst;
             }
-            return (FindResult(SUCCESS, rrset));
+            return (createContext(options, SUCCESS, rrset));
         }
 
         // Otherwise, if this domain name has CNAME, return it.
         found_rrset = found_domain->second.find(RRType::CNAME());
         if (found_rrset != found_domain->second.end()) {
-            return (FindResult(CNAME, found_rrset->second));
+            return (createContext(options, CNAME, found_rrset->second));
         }
 
-        // Otherwise it's NXRRSET case.
+        // Otherwise it's NXRRSET case...
+        // ...but a special pathological case first:
+        if (found_domain->first == bad_signed_delegation_name_ &&
+            type == RRType::DS()) {
+            return (createContext(options, NXDOMAIN, RRsetPtr()));
+        }
+        // normal cases follow.
         if ((options & FIND_DNSSEC) != 0) {
             if (use_nsec3_) {
-                return (FindResult(NXRRSET, RRsetPtr(), RESULT_NSEC3_SIGNED));
+                return (createContext(options, NXRRSET, RRsetPtr(),
+                                      RESULT_NSEC3_SIGNED));
             }
             found_rrset = found_domain->second.find(RRType::NSEC());
             if (found_rrset != found_domain->second.end()) {
-                return (FindResult(NXRRSET, found_rrset->second,
-                                   RESULT_NSEC_SIGNED));
+                return (createContext(options, NXRRSET, found_rrset->second,
+                                      RESULT_NSEC_SIGNED));
             }
         }
-        return (FindResult(NXRRSET, RRsetPtr(), RESULT_NSEC_SIGNED));
+        return (createContext(options, NXRRSET, RRsetPtr(),
+                              RESULT_NSEC_SIGNED));
     }
 
     // query name isn't found in our domains.
@@ -585,27 +735,30 @@ MockZoneFinder::find(const Name& name, const RRType& type,
         --domain;               // reset domain to the "previous name"
         if ((options & FIND_DNSSEC) != 0) {
             if (use_nsec3_) {
-                return (FindResult(NXRRSET, RRsetPtr(), RESULT_NSEC3_SIGNED));
+                return (createContext(options, NXRRSET, RRsetPtr(),
+                                      RESULT_NSEC3_SIGNED));
             }
             RRsetStore::const_iterator found_rrset =
                 (*domain).second.find(RRType::NSEC());
             if (found_rrset != (*domain).second.end()) {
-                return (FindResult(NXRRSET, found_rrset->second,
-                                   RESULT_NSEC_SIGNED));
+                return (createContext(options, NXRRSET, found_rrset->second,
+                                      RESULT_NSEC_SIGNED));
             }
         }
-        return (FindResult(NXRRSET, RRsetPtr()));
+        return (createContext(options, NXRRSET, RRsetPtr()));
     }
 
     // Another possibility is wildcard.  For simplicity we only check
     // hardcoded specific cases, ignoring other details such as canceling
     // due to the existence of closer name.
     if ((options & NO_WILDCARD) == 0) {
-        const Name wild_suffix(name.split(1));
+        const Name wild_suffix(name == Name("x.y.wild.example.com") ?
+                               Name("wild.example.com") : name.split(1));
         // Unit Tests use those domains for Wildcard test.
-        if (name.equals(Name("www.wild.example.com"))||
-           name.equals(Name("www1.uwild.example.com"))||
-           name.equals(Name("a.t.example.com"))) {
+        if (name.equals(Name("www.wild.example.com")) ||
+            name.equals(Name("x.y.wild.example.com")) ||
+            name.equals(Name("www1.uwild.example.com")) ||
+            name.equals(Name("a.t.example.com"))) {
             if (name.compare(wild_suffix).getRelation() ==
                 NameComparisonResult::SUBDOMAIN) {
                 domain = domains_.find(Name("*").concatenate(wild_suffix));
@@ -615,38 +768,37 @@ MockZoneFinder::find(const Name& name, const RRType& type,
                         domain->second.find(type);
                     // Matched the QTYPE
                     if(found_rrset != domain->second.end()) {
-                        return (FindResult(SUCCESS,
-                                           substituteWild(
-                                               *found_rrset->second, name),
-                                           RESULT_WILDCARD |
-                                           (use_nsec3_ ?
-                                            RESULT_NSEC3_SIGNED :
-                                            RESULT_NSEC_SIGNED)));
+                        return (createContext(options,SUCCESS, substituteWild(
+                                                  *found_rrset->second, name),
+                                              RESULT_WILDCARD |
+                                              (use_nsec3_ ?
+                                               RESULT_NSEC3_SIGNED :
+                                               RESULT_NSEC_SIGNED)));
                     } else {
-                        // No matched QTYPE, this case is for WILDCARD_NXRRSET
+                        // No matched QTYPE, this case is for NXRRSET with
+                        // WILDCARD
                         if (use_nsec3_) {
-                            return (FindResult(NXRRSET, RRsetPtr(),
-                                               RESULT_WILDCARD |
-                                               RESULT_NSEC3_SIGNED));
+                            return (createContext(options, NXRRSET, RRsetPtr(),
+                                                  RESULT_WILDCARD |
+                                                  RESULT_NSEC3_SIGNED));
                         }
                         const Name new_name =
                             Name("*").concatenate(wild_suffix);
                         found_rrset = domain->second.find(RRType::NSEC());
                         assert(found_rrset != domain->second.end());
-                        return (FindResult(NXRRSET,
-                                           substituteWild(
-                                               *found_rrset->second,
-                                               new_name),
-                                           RESULT_WILDCARD |
-                                           RESULT_NSEC_SIGNED));
+                        return (createContext(options, NXRRSET, substituteWild(
+                                                  *found_rrset->second,
+                                                  new_name),
+                                              RESULT_WILDCARD |
+                                              RESULT_NSEC_SIGNED));
                     }
                 } else {
                     // This is empty non terminal name case on wildcard.
                     const Name empty_name = Name("*").concatenate(wild_suffix);
                     if (use_nsec3_) {
-                        return (FindResult(NXRRSET, RRsetPtr(),
-                                           RESULT_WILDCARD |
-                                           RESULT_NSEC3_SIGNED));
+                        return (createContext(options, NXRRSET, RRsetPtr(),
+                                              RESULT_WILDCARD |
+                                              RESULT_NSEC3_SIGNED));
                     }
                     for (Domains::reverse_iterator it = domains_.rbegin();
                          it != domains_.rend();
@@ -655,13 +807,15 @@ MockZoneFinder::find(const Name& name, const RRType& type,
                         if ((*it).first < empty_name &&
                             (nsec_it = (*it).second.find(RRType::NSEC()))
                             != (*it).second.end()) {
-                            return (FindResult(NXRRSET, (*nsec_it).second,
-                                               RESULT_WILDCARD |
-                                               RESULT_NSEC_SIGNED));
+                            return (createContext(options, NXRRSET,
+                                                  (*nsec_it).second,
+                                                  RESULT_WILDCARD |
+                                                  RESULT_NSEC_SIGNED));
                         }
                     }
                 }
-                return (FindResult(NXRRSET, RRsetPtr(), RESULT_WILDCARD));
+                return (createContext(options, NXRRSET, RRsetPtr(),
+                                      RESULT_WILDCARD));
              }
         }
         const Name cnamewild_suffix("cnamewild.example.com");
@@ -672,11 +826,11 @@ MockZoneFinder::find(const Name& name, const RRType& type,
             RRsetStore::const_iterator found_rrset =
                 domain->second.find(RRType::CNAME());
             assert(found_rrset != domain->second.end());
-            return (FindResult(CNAME,
-                               substituteWild(*found_rrset->second, name),
-                               RESULT_WILDCARD |
-                               (use_nsec3_ ? RESULT_NSEC3_SIGNED :
-                                RESULT_NSEC_SIGNED)));
+            return (createContext(options, CNAME,
+                                  substituteWild(*found_rrset->second, name),
+                                  RESULT_WILDCARD |
+                                  (use_nsec3_ ? RESULT_NSEC3_SIGNED :
+                                   RESULT_NSEC_SIGNED)));
         }
     }
 
@@ -689,12 +843,13 @@ MockZoneFinder::find(const Name& name, const RRType& type,
     // than the origin)
     if ((options & FIND_DNSSEC) != 0) {
         if (use_nsec3_) {
-            return (FindResult(NXDOMAIN, RRsetPtr(), RESULT_NSEC3_SIGNED));
+            return (createContext(options, NXDOMAIN, RRsetPtr(),
+                                  RESULT_NSEC3_SIGNED));
         }
 
         // Emulate a broken DataSourceClient for some special names.
-        if (nsec_result_ && nsec_name_ == name) {
-            return (*nsec_result_);
+        if (nsec_context_ && nsec_name_ == name) {
+            return (nsec_context_);
         }
 
         // Normal case
@@ -707,12 +862,12 @@ MockZoneFinder::find(const Name& name, const RRType& type,
             if ((*it).first < name &&
                 (nsec_it = (*it).second.find(RRType::NSEC()))
                 != (*it).second.end()) {
-                return (FindResult(NXDOMAIN, (*nsec_it).second,
-                                   RESULT_NSEC_SIGNED));
+                return (createContext(options, NXDOMAIN, (*nsec_it).second,
+                                      RESULT_NSEC_SIGNED));
             }
         }
     }
-    return (FindResult(NXDOMAIN, RRsetPtr()));
+    return (createContext(options,NXDOMAIN, RRsetPtr()));
 }
 
 class QueryTest : public ::testing::Test {
@@ -720,7 +875,14 @@ protected:
     QueryTest() :
         qname(Name("www.example.com")), qclass(RRClass::IN()),
         qtype(RRType::A()), response(Message::RENDER),
-        qid(response.getQid()), query_code(Opcode::QUERY().getCode())
+        qid(response.getQid()), query_code(Opcode::QUERY().getCode()),
+        ns_addrs_and_sig_txt(string(ns_addrs_txt) +
+                             "glue.delegation.example.com. 3600 IN RRSIG " +
+                             getCommonRRSIGText("A") + "\n" +
+                             "glue.delegation.example.com. 3600 IN RRSIG " +
+                             getCommonRRSIGText("AAAA") + "\n" +
+                             "noglue.example.com. 3600 IN RRSIG " +
+                             getCommonRRSIGText("A"))
     {
         response.setRcode(Rcode::NOERROR());
         response.setOpcode(Opcode::QUERY());
@@ -740,6 +902,7 @@ protected:
     Message response;
     const qid_t qid;
     const uint16_t query_code;
+    const string ns_addrs_and_sig_txt; // convenient shortcut
 };
 
 // A wrapper to check resulting response message commonly used in
@@ -812,10 +975,6 @@ TEST_F(QueryTest, dnssecPositive) {
     Query query(memory_client, qname, qtype, response, true);
     EXPECT_NO_THROW(query.process());
     // find match rrset
-    // We can't let responseCheck to check the additional section as well,
-    // it gets confused by the two RRs for glue.delegation.../RRSIG due
-    // to it's design and fixing it would be hard. Therefore we simply
-    // check manually this one time.
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 2, 4, 6,
                   (www_a_txt + std::string("www.example.com. 3600 IN RRSIG "
                                            "A 5 3 3600 20000101000000 "
@@ -825,27 +984,8 @@ TEST_F(QueryTest, dnssecPositive) {
                                              "3 3600 20000101000000 "
                                              "20000201000000 12345 "
                                              "example.com. FAKEFAKEFAKE\n")).
-                  c_str(), NULL);
-    RRsetIterator iterator(response.beginSection(Message::SECTION_ADDITIONAL));
-    const char* additional[] = {
-        "glue.delegation.example.com. 3600 IN A 192.0.2.153\n",
-        "glue.delegation.example.com. 3600 IN RRSIG A 5 3 3600 20000101000000 "
-            "20000201000000 12345 example.com. FAKEFAKEFAKE\n",
-        "glue.delegation.example.com. 3600 IN AAAA 2001:db8::53\n",
-        "glue.delegation.example.com. 3600 IN RRSIG AAAA 5 3 3600 "
-            "20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE\n",
-        "noglue.example.com. 3600 IN A 192.0.2.53\n",
-        "noglue.example.com. 3600 IN RRSIG A 5 3 3600 20000101000000 "
-            "20000201000000 12345 example.com. FAKEFAKEFAKE\n",
-        NULL
-    };
-    for (const char** rr(additional); *rr != NULL; ++ rr) {
-        ASSERT_FALSE(iterator ==
-                     response.endSection(Message::SECTION_ADDITIONAL));
-        EXPECT_EQ(*rr, (*iterator)->toText());
-        iterator ++;
-    }
-    EXPECT_TRUE(iterator == response.endSection(Message::SECTION_ADDITIONAL));
+                  c_str(),
+                  ns_addrs_and_sig_txt.c_str());
 }
 
 TEST_F(QueryTest, exactAddrMatch) {
@@ -968,6 +1108,52 @@ TEST_F(QueryTest, secureUnsignedDelegation) {
                   NULL);
 }
 
+TEST_F(QueryTest, secureUnsignedDelegationWithNSEC3) {
+    // Similar to the previous case, but the zone is signed with NSEC3,
+    // and this delegation is NOT an optout.
+    const Name insecurechild_name("unsigned-delegation.example.com");
+    mock_finder->setNSEC3Flag(true);
+    mock_finder->addRecord(unsigned_delegation_nsec3_txt);
+
+    Query(memory_client, Name("foo.unsigned-delegation.example.com"),
+          qtype, response, true).process();
+
+    // The response should contain the NS and matching NSEC3 with its RRSIG
+    responseCheck(response, Rcode::NOERROR(), 0, 0, 3, 0,
+                  NULL,
+                  (string(unsigned_delegation_txt) +
+                   string(unsigned_delegation_nsec3_txt) +
+                   mock_finder->hash_map_[insecurechild_name] +
+                   ".example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC3")).c_str(),
+                  NULL);
+}
+
+TEST_F(QueryTest, secureUnsignedDelegationWithNSEC3OptOut) {
+    // Similar to the previous case, but the delegation is an optout.
+    mock_finder->setNSEC3Flag(true);
+
+    Query(memory_client, Name("foo.unsigned-delegation.example.com"),
+          qtype, response, true).process();
+
+    // The response should contain the NS and the closest provable encloser
+    // proof (and their RRSIGs).  The closest encloser is the apex (origin),
+    // and with our faked hash the covering NSEC3 for the next closer
+    // (= child zone name) is that for www.example.com.
+    responseCheck(response, Rcode::NOERROR(), 0, 0, 5, 0,
+                  NULL,
+                  (string(unsigned_delegation_txt) +
+                   string(nsec3_apex_txt) +
+                   mock_finder->hash_map_[mock_finder->getOrigin()] +
+                   ".example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC3") + "\n" +
+                   string(nsec3_www_txt) +
+                   mock_finder->hash_map_[Name("www.example.com")] +
+                   ".example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC3")).c_str(),
+                  NULL);
+}
+
 TEST_F(QueryTest, badSecureDelegation) {
     // Test whether exception is raised if DS query at delegation results in
     // something different than SUCCESS or NXRRSET
@@ -1046,7 +1232,7 @@ TEST_F(QueryTest, nxdomainBadNSEC1) {
     // ZoneFinder::find() returns NXDOMAIN with non NSEC RR.
     mock_finder->setNSECResult(Name("badnsec.example.com"),
                                ZoneFinder::NXDOMAIN,
-                               mock_finder->delegation_rrset_);
+                               mock_finder->dname_rrset_);
     EXPECT_THROW(Query(memory_client, Name("badnsec.example.com"), qtype,
                        response, true).process(),
                  std::bad_cast);
@@ -1066,7 +1252,7 @@ TEST_F(QueryTest, nxdomainBadNSEC3) {
     // "no-wildcard proof" returns SUCCESS.  it should be NXDOMAIN.
     mock_finder->setNSECResult(Name("*.example.com"),
                                ZoneFinder::SUCCESS,
-                               mock_finder->delegation_rrset_);
+                               mock_finder->dname_rrset_);
     EXPECT_THROW(Query(memory_client, Name("nxdomain.example.com"), qtype,
                        response, true).process(),
                  Query::BadNSEC);
@@ -1085,18 +1271,20 @@ TEST_F(QueryTest, nxdomainBadNSEC5) {
     // "no-wildcard proof" returns non NSEC.
     mock_finder->setNSECResult(Name("*.example.com"),
                                ZoneFinder::NXDOMAIN,
-                               mock_finder->delegation_rrset_);
+                               mock_finder->dname_rrset_);
     // This is a bit odd, but we'll simply include the returned RRset.
     Query(memory_client, Name("nxdomain.example.com"), qtype,
           response, true).process();
-    responseCheck(response, Rcode::NXDOMAIN(), AA_FLAG, 0, 8, 0,
+    responseCheck(response, Rcode::NXDOMAIN(), AA_FLAG, 0, 6, 0,
                   NULL, (string(soa_txt) +
                          string("example.com. 3600 IN RRSIG ") +
                          getCommonRRSIGText("SOA") + "\n" +
                          string(nsec_nxdomain_txt) + "\n" +
                          string("noglue.example.com. 3600 IN RRSIG ") +
                          getCommonRRSIGText("NSEC") + "\n" +
-                         delegation_txt).c_str(),
+                         dname_txt + "\n" +
+                         string("dname.example.com. 3600 IN RRSIG ") +
+                         getCommonRRSIGText("DNAME")).c_str(),
                   NULL, mock_finder->getOrigin());
 }
 
@@ -1203,12 +1391,75 @@ TEST_F(QueryTest, CNAMEwildNSEC) {
                   mock_finder->getOrigin());
 }
 
+TEST_F(QueryTest, wildcardNSEC3) {
+    // Similar to wildcardNSEC, but the zone is signed with NSEC3.
+    // The next closer is y.wild.example.com, the covering NSEC3 for it
+    // is (in our setup) the NSEC3 for the apex.
+    mock_finder->setNSEC3Flag(true);
+
+    // This is NSEC3 for wild.example.com, which will be used in the middle
+    // of identifying the next closer name.
+    mock_finder->addRecord(nsec3_atwild_txt);
+
+    Query(memory_client, Name("x.y.wild.example.com"), RRType::A(), response,
+          true).process();
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 2, 6, 6,
+                  (string(wild_txt).replace(0, 1, "x.y") +
+                   string("x.y.wild.example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("A") + "\n").c_str(),
+                  // 3 NSes and their RRSIG
+                  (zone_ns_txt + string("example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("NS") + "\n" +
+                   // NSEC3 for the wildcard proof and its RRSIG
+                   string(nsec3_apex_txt) +
+                   mock_finder->hash_map_[Name("example.com.")] +
+                   string(".example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("NSEC3")).c_str(),
+                  NULL, // we are not interested in additionals in this test
+                  mock_finder->getOrigin());
+}
+
+TEST_F(QueryTest, CNAMEwildNSEC3) {
+    // Similar to CNAMEwildNSEC, but with NSEC3.
+    // The next closer is qname itself, the covering NSEC3 for it
+    // is (in our setup) the NSEC3 for the www.example.com.
+    mock_finder->setNSEC3Flag(true);
+    mock_finder->addRecord(nsec3_atcnamewild_txt);
+
+    Query(memory_client, Name("www.cnamewild.example.com"), RRType::A(),
+          response, true).process();
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 2, 2, 0,
+                  (string(cnamewild_txt).replace(0, 1, "www") +
+                   string("www.cnamewild.example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("CNAME") + "\n").c_str(),
+                  (string(nsec3_www_txt) +
+                   mock_finder->hash_map_[Name("www.example.com.")] +
+                   string(".example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("NSEC3")).c_str(),
+                  NULL, // we are not interested in additionals in this test
+                  mock_finder->getOrigin());
+}
+
+TEST_F(QueryTest, badWildcardNSEC3) {
+    // Similar to wildcardNSEC3, but emulating run time collision by
+    // returning NULL in the next closer proof for the closest encloser
+    // proof.
+    mock_finder->setNSEC3Flag(true);
+    ZoneFinder::FindNSEC3Result nsec3(true, 0, textToRRset(nsec3_apex_txt),
+                                      ConstRRsetPtr());
+    mock_finder->setNSEC3Result(&nsec3);
+
+    EXPECT_THROW(Query(memory_client, Name("www.wild.example.com"),
+                       RRType::A(), response, true).process(),
+                 Query::BadNSEC3);
+}
+
 TEST_F(QueryTest, badWildcardProof1) {
     // Unexpected case in wildcard proof: ZoneFinder::find() returns SUCCESS
     // when NXDOMAIN is expected.
     mock_finder->setNSECResult(Name("www.wild.example.com"),
                                ZoneFinder::SUCCESS,
-                               mock_finder->delegation_rrset_);
+                               mock_finder->dname_rrset_);
     EXPECT_THROW(Query(memory_client, Name("www.wild.example.com"),
                        RRType::A(), response, true).process(),
                  Query::BadNSEC);
@@ -1234,8 +1485,8 @@ TEST_F(QueryTest, badWildcardProof3) {
 }
 
 TEST_F(QueryTest, wildcardNxrrsetWithDuplicateNSEC) {
-    // WILDCARD_NXRRSET with DNSSEC proof.  We should have SOA, NSEC that proves the
-    // NXRRSET and their RRSIGs. In this case we only need one NSEC,
+    // NXRRSET on WILDCARD with DNSSEC proof.  We should have SOA, NSEC that
+    // proves the NXRRSET and their RRSIGs. In this case we only need one NSEC,
     // which proves both NXDOMAIN and the non existence RRSETs of wildcard.
     Query(memory_client, Name("www.wild.example.com"), RRType::TXT(), response,
           true).process();
@@ -1250,11 +1501,12 @@ TEST_F(QueryTest, wildcardNxrrsetWithDuplicateNSEC) {
 }
 
 TEST_F(QueryTest, wildcardNxrrsetWithNSEC) {
-    // WILDCARD_NXRRSET with DNSSEC proof.  We should have SOA, NSEC that proves the
-    // NXRRSET and their RRSIGs. In this case we need two NSEC RRs,
-    // one proves NXDOMAIN and the other proves non existence RRSETs of wildcard.
-    Query(memory_client, Name("www1.uwild.example.com"), RRType::TXT(), response,
-          true).process();
+    // WILDCARD + NXRRSET with DNSSEC proof.  We should have SOA, NSEC that
+    // proves the NXRRSET and their RRSIGs. In this case we need two NSEC RRs,
+    // one proves NXDOMAIN and the other proves non existence RRSETs of
+    // wildcard.
+    Query(memory_client, Name("www1.uwild.example.com"), RRType::TXT(),
+          response, true).process();
 
     responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 6, 0, NULL,
                   (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
@@ -1268,9 +1520,73 @@ TEST_F(QueryTest, wildcardNxrrsetWithNSEC) {
                   NULL, mock_finder->getOrigin());
 }
 
+TEST_F(QueryTest, wildcardNxrrsetWithNSEC3) {
+    // Similar to the previous case, but providing NSEC3 proofs according to
+    // RFC5155 Section 7.2.5.
+
+    mock_finder->addRecord(nsec3_wild_txt);
+    mock_finder->addRecord(nsec3_uwild_txt);
+    mock_finder->setNSEC3Flag(true);
+
+    Query(memory_client, Name("www1.uwild.example.com"), RRType::TXT(),
+          response, true).process();
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 8, 0, NULL,
+                  // SOA + its RRSIG
+                  (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("SOA") + "\n" +
+                   // NSEC3 for the closest encloser + its RRSIG
+                   string(nsec3_uwild_txt) +
+                   mock_finder->hash_map_[Name("uwild.example.com.")] +
+                   ".example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC3") + "\n" +
+                   // NSEC3 for the next closer + its RRSIG
+                   string(nsec3_www_txt) +
+                   mock_finder->hash_map_[Name("www.example.com.")] +
+                   ".example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC3") + "\n" +
+                   // NSEC3 for the wildcard + its RRSIG
+                   string(nsec3_wild_txt) +
+                   mock_finder->hash_map_[Name("*.uwild.example.com.")] +
+                   ".example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC3")).c_str(),
+                  NULL, mock_finder->getOrigin());
+}
+
+TEST_F(QueryTest, wildcardNxrrsetWithNSEC3Collision) {
+    // Similar to the previous case, but emulating run time collision by
+    // returning NULL in the next closer proof for the closest encloser
+    // proof.
+    mock_finder->setNSEC3Flag(true);
+    ZoneFinder::FindNSEC3Result nsec3(true, 0, textToRRset(nsec3_apex_txt),
+                                      ConstRRsetPtr());
+    mock_finder->setNSEC3Result(&nsec3);
+
+    EXPECT_THROW(Query(memory_client, Name("www1.uwild.example.com"),
+                       RRType::TXT(), response, true).process(),
+                 Query::BadNSEC3);
+}
+
+TEST_F(QueryTest, wildcardNxrrsetWithNSEC3Broken) {
+    // Similar to wildcardNxrrsetWithNSEC3, but no matching NSEC3 for the
+    // wildcard name will be returned.  This shouldn't happen in a reasonably
+    // NSEC-signed zone, and should result in an exception.
+    mock_finder->setNSEC3Flag(true);
+    const Name wname("*.uwild.example.com.");
+    ZoneFinder::FindNSEC3Result nsec3(false, 0, textToRRset(nsec3_apex_txt),
+                                      ConstRRsetPtr());
+    mock_finder->setNSEC3Result(&nsec3, &wname);
+    mock_finder->addRecord(nsec3_wild_txt);
+    mock_finder->addRecord(nsec3_uwild_txt);
+
+    EXPECT_THROW(Query(memory_client, Name("www1.uwild.example.com"),
+                       RRType::TXT(), response, true).process(),
+                 Query::BadNSEC3);
+}
+
 TEST_F(QueryTest, wildcardEmptyWithNSEC) {
-    // WILDCARD_EMPTY with DNSSEC proof.  We should have SOA, NSEC that proves the
-    // NXDOMAIN and their RRSIGs. In this case we need two NSEC RRs,
+    // Empty WILDCARD with DNSSEC proof.  We should have SOA, NSEC that proves
+    // the NXDOMAIN and their RRSIGs. In this case we need two NSEC RRs,
     // one proves NXDOMAIN and the other proves non existence wildcard.
     Query(memory_client, Name("a.t.example.com"), RRType::A(), response,
           true).process();
@@ -1594,87 +1910,435 @@ TEST_F(QueryTest, findNSEC3) {
         Name("example.com").getLabelCount();
 
     // Apex name.  It should have a matching NSEC3
-    nsec3Check(true, expected_closest_labels, nsec3_apex_txt,
-               mock_finder->findNSEC3(Name("example.com"), false));
+    {
+        SCOPED_TRACE("apex, non recursive");
+        nsec3Check(true, expected_closest_labels, nsec3_apex_txt,
+                   mock_finder->findNSEC3(Name("example.com"), false));
+    }
 
     // Recursive mode doesn't change the result in this case.
-    nsec3Check(true, expected_closest_labels, nsec3_apex_txt,
-               mock_finder->findNSEC3(Name("example.com"), true)); 
+    {
+        SCOPED_TRACE("apex, recursive");
+        nsec3Check(true, expected_closest_labels, nsec3_apex_txt,
+                   mock_finder->findNSEC3(Name("example.com"), true));
+    }
 
     // Non existent name.  Disabling recursion, a covering NSEC3 should be
     // returned.
-    nsec3Check(false, 4, nsec3_www_txt,
-               mock_finder->findNSEC3(Name("nxdomain.example.com"), false));
+    {
+        SCOPED_TRACE("nxdomain, non recursive");
+        nsec3Check(false, 4, nsec3_www_txt,
+                   mock_finder->findNSEC3(Name("nxdomain.example.com"),
+                                          false));
+    }
 
     // Non existent name.  The closest provable encloser is the apex,
     // and next closer is the query name.
-    nsec3Check(true, expected_closest_labels,
-               string(nsec3_apex_txt) + string(nsec3_www_txt),
-               mock_finder->findNSEC3(Name("nxdomain.example.com"), true));
+    {
+        SCOPED_TRACE("nxdomain, recursive");
+        nsec3Check(true, expected_closest_labels,
+                   string(nsec3_apex_txt) + string(nsec3_www_txt),
+                   mock_finder->findNSEC3(Name("nxdomain.example.com"), true));
+    }
 
     // Similar to the previous case, but next closer name is different
     // (is the parent) of the non existent name.
-    nsec3Check(true, expected_closest_labels,
-               string(nsec3_apex_txt) + string(nsec3_www_txt),
-               mock_finder->findNSEC3(Name("nx.domain.example.com"), true));
+    {
+        SCOPED_TRACE("nxdomain, next closer != qname");
+        nsec3Check(true, expected_closest_labels,
+                   string(nsec3_apex_txt) + string(nsec3_www_txt),
+                   mock_finder->findNSEC3(Name("nx.domain.example.com"),
+                                          true));
+    }
 
     // In the rest of test we check hash comparison for wrap around cases.
-    nsec3Check(false, 4, nsec3_apex_txt,
-               mock_finder->findNSEC3(Name("nxdomain2.example.com"), false));
-    nsec3Check(false, 4, nsec3_www_txt,
-               mock_finder->findNSEC3(Name("nxdomain3.example.com"), false));
+    {
+        SCOPED_TRACE("largest");
+        nsec3Check(false, 4, nsec3_apex_txt,
+                   mock_finder->findNSEC3(Name("nxdomain2.example.com"),
+                                          false));
+    }
+    {
+        SCOPED_TRACE("smallest");
+        nsec3Check(false, 4, nsec3_www_txt,
+                   mock_finder->findNSEC3(Name("nxdomain3.example.com"),
+                                          false));
+    }
+}
+
+// This tests that the DS is returned above the delegation point as
+// an authoritative answer, not a delegation. This is as described in
+// RFC 4035, section 3.1.4.1.
+
+// This mock finder is used for some DS-query tests to support the cases
+// where the query is expected to be handled in a different zone than our
+// main test zone, example.com.  Only limited methods are expected to called
+// (and for limited purposes) on this class object in these tests, which
+// are overridden below.
+class AlternateZoneFinder : public MockZoneFinder {
+public:
+    // This zone is expected not to have a DS by default and return NXRRSET
+    // for a DS query.  If have_ds is set to true on construction, it will
+    // return a faked DS answer.
+    AlternateZoneFinder(const Name& origin, bool have_ds = false) :
+        MockZoneFinder(), origin_(origin), have_ds_(have_ds)
+    {}
+    virtual isc::dns::Name getOrigin() const { return (origin_); }
+    virtual ZoneFinderContextPtr find(const isc::dns::Name&,
+                                      const isc::dns::RRType& type,
+                                      const FindOptions options)
+    {
+        if (type == RRType::SOA()) {
+            RRsetPtr soa = textToRRset(origin_.toText() + " 3600 IN SOA . . "
+                                       "0 0 0 0 0\n", origin_);
+            soa->addRRsig(RdataPtr(new generic::RRSIG(
+                                       getCommonRRSIGText("SOA"))));
+            return (createContext(options, SUCCESS, soa));
+        }
+        if (type == RRType::NS()) {
+            RRsetPtr ns = textToRRset(origin_.toText() + " 3600 IN NS " +
+                                      Name("ns").concatenate(origin_).toText());
+            ns->addRRsig(RdataPtr(new generic::RRSIG(
+                                      getCommonRRSIGText("NS"))));
+            return (createContext(options, SUCCESS, ns));
+        }
+        if (type == RRType::DS()) {
+            if (have_ds_) {
+                RRsetPtr ds = textToRRset(origin_.toText() +
+                                          " 3600 IN DS 57855 5 1 " +
+                                          "49FD46E6C4B45C55D4AC69CBD"
+                                          "3CD34AC1AFE51DE");
+                ds->addRRsig(RdataPtr(new generic::RRSIG(
+                                          getCommonRRSIGText("DS"))));
+                return (createContext(options, SUCCESS, ds));
+            } else {
+                RRsetPtr nsec = textToRRset(origin_.toText() +
+                                            " 3600 IN NSEC " +
+                                            origin_.toText() +
+                                            " SOA NSEC RRSIG");
+                nsec->addRRsig(RdataPtr(new generic::RRSIG(
+                                            getCommonRRSIGText("NSEC"))));
+                return (createContext(options, NXRRSET, nsec,
+                                      RESULT_NSEC_SIGNED));
+            }
+        }
+
+        // Returning NXDOMAIN is not correct, but doesn't matter for our tests.
+        return (createContext(options, NXDOMAIN, ConstRRsetPtr()));
+    }
+private:
+    const Name origin_;
+    const bool have_ds_;
+};
+
+TEST_F(QueryTest, dsAboveDelegation) {
+    // Pretending to have authority for the child zone, too.
+    memory_client.addZone(ZoneFinderPtr(new AlternateZoneFinder(
+                                            Name("delegation.example.com"))));
+
+    // The following will succeed only if the search goes to the parent
+    // zone, not the child one we added above.
+    EXPECT_NO_THROW(Query(memory_client, Name("delegation.example.com"),
+                          RRType::DS(), response, true).process());
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 2, 4, 6,
+                  (string(delegation_ds_txt) + "\n" +
+                   "delegation.example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("DS")).c_str(),
+                  (string(zone_ns_txt) + "\n" +
+                   "example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("NS")).c_str(),
+                  ns_addrs_and_sig_txt.c_str());
+}
+
+TEST_F(QueryTest, dsAboveDelegationNoData) {
+    // Similar to the previous case, but the query is for an unsigned zone
+    // (which doesn't have a DS at the parent).  The response should be a
+    // "no data" error.  The query should still be handled at the parent.
+    memory_client.addZone(ZoneFinderPtr(
+                              new AlternateZoneFinder(
+                                  Name("unsigned-delegation.example.com"))));
+
+    // The following will succeed only if the search goes to the parent
+    // zone, not the child one we added above.
+    EXPECT_NO_THROW(Query(memory_client,
+                          Name("unsigned-delegation.example.com"),
+                          RRType::DS(), response, true).process());
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 4, 0, NULL,
+                  (string(soa_txt) +
+                   string("example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("SOA") + "\n" +
+                   string(unsigned_delegation_nsec_txt) +
+                   "unsigned-delegation.example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC")).c_str(),
+                  NULL, mock_finder->getOrigin());
+}
+
+// This one checks that type-DS query results in a "no data" response
+// when it happens to be sent to the child zone, as described in RFC 4035,
+// section 3.1.4.1. The example is inspired by the B.8. example from the RFC.
+TEST_F(QueryTest, dsBelowDelegation) {
+    EXPECT_NO_THROW(Query(memory_client, Name("example.com"),
+                          RRType::DS(), response, true).process());
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 4, 0, NULL,
+                  (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("SOA") + "\n" +
+                   string(nsec_apex_txt) + "\n" +
+                   string("example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("NSEC")).c_str(), NULL,
+                  mock_finder->getOrigin());
+}
+
+// Similar to the previous case, but even more pathological: the DS somehow
+// exists in the child zone.  The Query module should still return SOA.
+// In our implementation NSEC/NSEC3 isn't attached in this case.
+TEST_F(QueryTest, dsBelowDelegationWithDS) {
+    mock_finder->addRecord(zone_ds_txt); // add the DS to the child's apex
+    EXPECT_NO_THROW(Query(memory_client, Name("example.com"),
+                          RRType::DS(), response, true).process());
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 2, 0, NULL,
+                  (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("SOA")).c_str(), NULL,
+                  mock_finder->getOrigin());
+}
+
+// DS query received at a completely irrelevant (neither parent nor child)
+// server.  It should just like the "noZone" test case, but DS query involves
+// special processing, so we test it explicitly.
+TEST_F(QueryTest, dsNoZone) {
+    Query(memory_client, Name("example"), RRType::DS(), response,
+          true).process();
+    responseCheck(response, Rcode::REFUSED(), 0, 0, 0, 0, NULL, NULL, NULL);
+}
+
+// DS query for a "grandchild" zone.  This should result in normal
+// delegation (unless this server also has authority of the grandchild zone).
+TEST_F(QueryTest, dsAtGrandParent) {
+    Query(memory_client, Name("grand.delegation.example.com"), RRType::DS(),
+          response, true).process();
+    responseCheck(response, Rcode::NOERROR(), 0, 0, 6, 6, NULL,
+                  (string(delegation_txt) + string(delegation_ds_txt) +
+                   "delegation.example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("DS")).c_str(),
+                  ns_addrs_and_sig_txt.c_str());
+}
+
+// DS query sent to a "grandparent" server that also has authority for the
+// child zone.  In this case the query should be handled in the child
+// side and should result in no data with SOA.  Note that the server doesn't
+// have authority for the "parent".  Unlike the dsAboveDelegation test case
+// the query should be handled in the child zone, not in the grandparent.
+TEST_F(QueryTest, dsAtGrandParentAndChild) {
+    // Pretending to have authority for the child zone, too.
+    const Name childname("grand.delegation.example.com");
+    memory_client.addZone(ZoneFinderPtr(
+                              new AlternateZoneFinder(childname)));
+    Query(memory_client, childname, RRType::DS(), response, true).process();
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 4, 0, NULL,
+                  (childname.toText() + " 3600 IN SOA . . 0 0 0 0 0\n" +
+                   childname.toText() + " 3600 IN RRSIG " +
+                   getCommonRRSIGText("SOA") + "\n" +
+                   childname.toText() + " 3600 IN NSEC " +
+                   childname.toText() + " SOA NSEC RRSIG\n" +
+                   childname.toText() + " 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC")).c_str(), NULL, childname);
+}
+
+// DS query for the root name (quite pathological).  Since there's no "parent",
+// the query will be handled in the root zone anyway, and should (normally)
+// result in no data.
+TEST_F(QueryTest, dsAtRoot) {
+    // Pretend to be a root server.
+    memory_client.addZone(ZoneFinderPtr(
+                              new AlternateZoneFinder(Name::ROOT_NAME())));
+    Query(memory_client, Name::ROOT_NAME(), RRType::DS(), response,
+          true).process();
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 4, 0, NULL,
+                  (string(". 3600 IN SOA . . 0 0 0 0 0\n") +
+                   ". 3600 IN RRSIG " + getCommonRRSIGText("SOA") + "\n" +
+                   ". 3600 IN NSEC " + ". SOA NSEC RRSIG\n" +
+                   ". 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC")).c_str(), NULL);
+}
+
+// Even more pathological case: A faked root zone actually has its own DS
+// query.  How we respond wouldn't matter much in practice, but check if
+// it behaves as it's intended.  This implementation should return the DS.
+TEST_F(QueryTest, dsAtRootWithDS) {
+    memory_client.addZone(ZoneFinderPtr(
+                              new AlternateZoneFinder(Name::ROOT_NAME(),
+                                                      true)));
+    Query(memory_client, Name::ROOT_NAME(), RRType::DS(), response,
+          true).process();
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 2, 2, 0,
+                  (string(". 3600 IN DS 57855 5 1 49FD46E6C4B45C55D4AC69CBD"
+                          "3CD34AC1AFE51DE\n") +
+                   ". 3600 IN RRSIG " + getCommonRRSIGText("DS")).c_str(),
+                  (string(". 3600 IN NS ns.\n") +
+                   ". 3600 IN RRSIG " + getCommonRRSIGText("NS")).c_str(),
+                  NULL);
+}
+
+// Check the signature is present when an NXRRSET is returned
+TEST_F(QueryTest, nxrrsetWithNSEC3) {
+    mock_finder->setNSEC3Flag(true);
+
+    // NXRRSET with DNSSEC proof.  We should have SOA, NSEC3 that proves the
+    // NXRRSET and their RRSIGs.
+    Query(memory_client, Name("www.example.com"), RRType::TXT(), response,
+          true).process();
+
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 4, 0, NULL,
+                  (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("SOA") + "\n" +
+                   string(nsec3_www_txt) + "\n" +
+                   mock_finder->hash_map_[Name("www.example.com.")] +
+                   ".example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC3") + "\n").c_str(),
+                  NULL, mock_finder->getOrigin());
+}
+
+// Check the exception is correctly raised when the NSEC3 thing isn't in the
+// zone
+TEST_F(QueryTest, nxrrsetMissingNSEC3) {
+    mock_finder->setNSEC3Flag(true);
+    // We just need it to return false for "matched". This indicates
+    // there's no exact match for NSEC3 on www.example.com.
+    ZoneFinder::FindNSEC3Result nsec3(false, 0, ConstRRsetPtr(),
+                                      ConstRRsetPtr());
+    mock_finder->setNSEC3Result(&nsec3);
+
+    EXPECT_THROW(Query(memory_client, Name("www.example.com"), RRType::TXT(),
+                       response, true).process(), Query::BadNSEC3);
+}
+
+TEST_F(QueryTest, nxrrsetWithNSEC3_ds_exact) {
+    mock_finder->addRecord(unsigned_delegation_nsec3_txt);
+    mock_finder->setNSEC3Flag(true);
+
+    // This delegation has no DS, but does have a matching NSEC3 record
+    // (See RFC5155 section 7.2.4)
+    Query(memory_client, Name("unsigned-delegation.example.com."),
+          RRType::DS(), response, true).process();
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 4, 0, NULL,
+                  (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("SOA") + "\n" +
+                   string(unsigned_delegation_nsec3_txt) + "\n" +
+                   mock_finder->
+                        hash_map_[Name("unsigned-delegation.example.com.")] +
+                   ".example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC3") + "\n").c_str(),
+                  NULL, mock_finder->getOrigin());
+}
+
+TEST_F(QueryTest, nxrrsetWithNSEC3_ds_no_exact) {
+    mock_finder->addRecord(unsigned_delegation_nsec3_txt);
+    mock_finder->setNSEC3Flag(true);
+
+    // This delegation has no DS, and no directly matching NSEC3 record
+    // So the response should contain closest encloser proof (and the
+    // 'next closer' should have opt-out set, though that is not
+    // actually checked)
+    // (See RFC5155 section 7.2.4)
+    Query(memory_client, Name("unsigned-delegation-optout.example.com."),
+          RRType::DS(), response, true).process();
+    responseCheck(response, Rcode::NOERROR(), AA_FLAG, 0, 6, 0, NULL,
+                  (string(soa_txt) + string("example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("SOA") + "\n" +
+                   string(nsec3_apex_txt) + "\n" +
+                   mock_finder->hash_map_[Name("example.com.")] +
+                   ".example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC3") + "\n" +
+                   string(unsigned_delegation_nsec3_txt) + "\n" +
+                   mock_finder->
+                        hash_map_[Name("unsigned-delegation.example.com.")] +
+                   ".example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC3") + "\n").c_str(),
+                  NULL, mock_finder->getOrigin());
+}
+
+TEST_F(QueryTest, nxdomainWithNSEC3Proof) {
+    // Name Error (NXDOMAIN) case with NSEC3 proof per RFC5155 Section 7.2.2.
+
+    // Enable NSEC3
+    mock_finder->setNSEC3Flag(true);
+    // This will be the covering NSEC3 for the next closer
+    mock_finder->addRecord(nsec3_uwild_txt);
+    // This will be the covering NSEC3 for the possible wildcard
+    mock_finder->addRecord(unsigned_delegation_nsec3_txt);
+
+    Query(memory_client, Name("nxdomain.example.com"), qtype,
+          response, true).process();
+    responseCheck(response, Rcode::NXDOMAIN(), AA_FLAG, 0, 8, 0, NULL,
+                  // SOA + its RRSIG
+                  (string(soa_txt) +
+                   string("example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("SOA") + "\n" +
+                   // NSEC3 for the closest encloser + its RRSIG
+                   string(nsec3_apex_txt) + "\n" +
+                   mock_finder->hash_map_[mock_finder->getOrigin()] +
+                   string(".example.com. 3600 IN RRSIG ") +
+                   getCommonRRSIGText("NSEC3") + "\n" +
+                   // NSEC3 for the next closer + its RRSIG
+                   string(nsec3_uwild_txt) + "\n" +
+                   mock_finder->hash_map_[Name("uwild.example.com")] +
+                   ".example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC3") + "\n" +
+                   // NSEC3 for the wildcard + its RRSIG
+                   string(unsigned_delegation_nsec3_txt) +
+                   mock_finder->hash_map_[
+                       Name("unsigned-delegation.example.com")] +
+                   ".example.com. 3600 IN RRSIG " +
+                   getCommonRRSIGText("NSEC3")).c_str(),
+                  NULL, mock_finder->getOrigin());
+}
+
+TEST_F(QueryTest, nxdomainWithBadNextNSEC3Proof) {
+    // Similar to the previous case, but emulating run time collision by
+    // returning NULL in the next closer proof for the closest encloser
+    // proof.
+    mock_finder->setNSEC3Flag(true);
+    ZoneFinder::FindNSEC3Result nsec3(true, 0, textToRRset(nsec3_apex_txt),
+                                      ConstRRsetPtr());
+    mock_finder->setNSEC3Result(&nsec3);
+
+    EXPECT_THROW(Query(memory_client, Name("nxdomain.example.com"),
+                       RRType::TXT(), response, true).process(),
+                 Query::BadNSEC3);
+}
+
+TEST_F(QueryTest, nxdomainWithBadWildcardNSEC3Proof) {
+    // Similar to nxdomainWithNSEC3Proof, but let findNSEC3() return a matching
+    // NSEC3 for the possible wildcard name, emulating run-time collision.
+    // This should result in BadNSEC3 exception.
+
+    mock_finder->setNSEC3Flag(true);
+    mock_finder->addRecord(nsec3_uwild_txt);
+    mock_finder->addRecord(unsigned_delegation_nsec3_txt);
+
+    const Name wname("*.example.com");
+    ZoneFinder::FindNSEC3Result nsec3(true, 0, textToRRset(nsec3_apex_txt),
+                                      ConstRRsetPtr());
+    mock_finder->setNSEC3Result(&nsec3, &wname);
+
+    EXPECT_THROW(Query(memory_client, Name("nxdomain.example.com"), qtype,
+                       response, true).process(),
+                 Query::BadNSEC3);
 }
 
 // The following are tentative tests until we really add tests for the
 // query logic for these cases.  At that point it's probably better to
 // clean them up.
-TEST_F(QueryTest, nxdomainWithNSEC3) {
-    mock_finder->setNSEC3Flag(true);
-    ZoneFinder::FindResult result = mock_finder->find(
-        Name("nxdomain.example.com"), RRType::A(), ZoneFinder::FIND_DNSSEC);
-    EXPECT_EQ(ZoneFinder::NXDOMAIN, result.code);
-    EXPECT_FALSE(result.rrset);
-    EXPECT_TRUE(result.isNSEC3Signed());
-    EXPECT_FALSE(result.isWildcard());
-}
-
-TEST_F(QueryTest, nxrrsetWithNSEC3) {
-    mock_finder->setNSEC3Flag(true);
-    ZoneFinder::FindResult result = mock_finder->find(
-        Name("www.example.com"), RRType::TXT(), ZoneFinder::FIND_DNSSEC);
-    EXPECT_EQ(ZoneFinder::NXRRSET, result.code);
-    EXPECT_FALSE(result.rrset);
-    EXPECT_TRUE(result.isNSEC3Signed());
-    EXPECT_FALSE(result.isWildcard());
-}
-
 TEST_F(QueryTest, emptyNameWithNSEC3) {
     mock_finder->setNSEC3Flag(true);
-    ZoneFinder::FindResult result = mock_finder->find(
+    ZoneFinderContextPtr result = mock_finder->find(
         Name("no.example.com"), RRType::A(), ZoneFinder::FIND_DNSSEC);
-    EXPECT_EQ(ZoneFinder::NXRRSET, result.code);
-    EXPECT_FALSE(result.rrset);
-    EXPECT_TRUE(result.isNSEC3Signed());
-    EXPECT_FALSE(result.isWildcard());
-}
-
-TEST_F(QueryTest, wildcardNxrrsetWithNSEC3) {
-    mock_finder->setNSEC3Flag(true);
-    ZoneFinder::FindResult result = mock_finder->find(
-        Name("www1.uwild.example.com"), RRType::TXT(),
-        ZoneFinder::FIND_DNSSEC);
-    EXPECT_EQ(ZoneFinder::NXRRSET, result.code);
-    EXPECT_FALSE(result.rrset);
-    EXPECT_TRUE(result.isNSEC3Signed());
-    EXPECT_TRUE(result.isWildcard());
-}
-
-TEST_F(QueryTest, wildcardEmptyWithNSEC3) {
-    mock_finder->setNSEC3Flag(true);
-    ZoneFinder::FindResult result = mock_finder->find(
-        Name("a.t.example.com"), RRType::A(), ZoneFinder::FIND_DNSSEC);
-    EXPECT_EQ(ZoneFinder::NXRRSET, result.code);
-    EXPECT_TRUE(result.isNSEC3Signed());
-    EXPECT_TRUE(result.isWildcard());
+    EXPECT_EQ(ZoneFinder::NXRRSET, result->code);
+    EXPECT_FALSE(result->rrset);
+    EXPECT_TRUE(result->isNSEC3Signed());
+    EXPECT_FALSE(result->isWildcard());
 }
 }

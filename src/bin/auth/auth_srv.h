@@ -115,14 +115,14 @@ public:
     /// send the reply.
     ///
     /// \param io_message The raw message received
-    /// \param message Pointer to the \c Message object
-    /// \param buffer Pointer to an \c OutputBuffer for the resposne
+    /// \param message the \c Message object
+    /// \param buffer an \c OutputBuffer for the resposne
     /// \param server Pointer to the \c DNSServer
     ///
     /// \throw isc::Unexpected Protocol type of \a message is unexpected
     void processMessage(const isc::asiolink::IOMessage& io_message,
-                        isc::dns::MessagePtr message,
-                        isc::util::OutputBufferPtr buffer,
+                        isc::dns::Message& message,
+                        isc::util::OutputBuffer& buffer,
                         isc::asiodns::DNSServer* server);
 
     /// \brief Updates the data source for the \c AuthSrv object.
@@ -344,6 +344,7 @@ public:
     /// \param type Type of a counter to get the value of
     ///
     /// \return the value of the counter.
+
     uint64_t getCounter(const AuthCounters::ServerCounterType type) const;
 
     /// \brief Get the value of per Opcode counter in the Auth Counters.
@@ -359,6 +360,20 @@ public:
     /// \param opcode The opcode of the counter to get the value of
     /// \return the value of the counter.
     uint64_t getCounter(const isc::dns::Opcode opcode) const;
+
+    /// \brief Get the value of per Rcode counter in the Auth Counters.
+    ///
+    /// This function calls AuthCounters::getCounter(isc::dns::Rcode) and
+    /// returns its return value.
+    ///
+    /// \note This is a tentative interface as an attempt of experimentally
+    /// supporting more statistics counters.  This should eventually be more
+    /// generalized.  In any case, this method is mainly for testing.
+    ///
+    /// \throw None
+    /// \param rcode The rcode of the counter to get the value of
+    /// \return the value of the counter.
+    uint64_t getCounter(const isc::dns::Rcode rcode) const;
 
     /**
      * \brief Set and get the addresses we listen on.

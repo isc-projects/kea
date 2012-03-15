@@ -2,12 +2,12 @@
 .\"     Title: b10-cmdctl
 .\"    Author: [see the "AUTHORS" section]
 .\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: March 9, 2010
+.\"      Date: February 28, 2012
 .\"    Manual: BIND10
 .\"    Source: BIND10
 .\"  Language: English
 .\"
-.TH "B10\-CMDCTL" "8" "March 9, 2010" "BIND10" "BIND10"
+.TH "B10\-CMDCTL" "8" "February 28, 2012" "BIND10" "BIND10"
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -70,6 +70,33 @@ Enable verbose mode\&.
 .RS 4
 Display the version number and exit\&.
 .RE
+.SH "CONFIGURATION AND COMMANDS"
+.PP
+The configurable settings are:
+.PP
+
+\fIaccounts_file\fR
+defines the path to the user accounts database\&. The default is
+/usr/local/etc/bind10\-devel/cmdctl\-accounts\&.csv\&.
+.PP
+
+\fIcert_file\fR
+defines the path to the PEM certificate file\&. The default is
+/usr/local/etc/bind10\-devel/cmdctl\-certfile\&.pem\&.
+.PP
+
+\fIkey_file\fR
+defines the path to the PEM private key file\&. The default is
+/usr/local/etc/bind10\-devel/cmdctl\-keyfile\&.pem\&.
+.PP
+The configuration command is:
+.PP
+
+\fBshutdown\fR
+exits
+\fBb10\-cmdctl\fR\&. This has an optional
+\fIpid\fR
+argument to select the process ID to stop\&. (Note that the BIND 10 boss process may restart this service if configured\&.)
 .SH "FILES"
 .PP
 /usr/local/etc/bind10\-devel/cmdctl\-accounts\&.csv
@@ -93,5 +120,5 @@ The
 daemon was initially designed and coded by Zhang Likun of CNNIC\&.
 .SH "COPYRIGHT"
 .br
-Copyright \(co 2010 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2010-2012 Internet Systems Consortium, Inc. ("ISC")
 .br

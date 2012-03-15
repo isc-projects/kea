@@ -332,6 +332,30 @@ should be followed. The requested domain is an apex of some zone.
 % DATASRC_MEM_FIND find '%1/%2'
 Debug information. A search for the requested RRset is being started.
 
+% DATASRC_MEM_FINDNSEC3 finding NSEC3 for %1, mode %2
+Debug information. A search in an in-memory data source for NSEC3 that
+matches or covers the given name is being started.
+
+% DATASRC_MEM_FINDNSEC3_COVER found a covering NSEC3 for %1: %2
+Debug information. An NSEC3 that covers the given name is found and
+being returned.  The found NSEC3 RRset is also displayed.
+
+% DATASRC_MEM_FINDNSEC3_MATCH found a matching NSEC3 for %1 at label count %2: %3
+Debug information. An NSEC3 that matches (a possibly superdomain of)
+the given name is found and being returned.  When the shown label
+count is smaller than that of the given name, the matching NSEC3 is
+for a superdomain of the given name (see DATASRC_MEM_FINDNSEC3_TRYHASH).
+The found NSEC3 RRset is also displayed.
+
+% DATASRC_MEM_FINDNSEC3_TRYHASH looking for NSEC3 for %1 at label count %2 (hash %3)
+Debug information. In an attempt of finding an NSEC3 for the give name,
+(a possibly superdomain of) the name is hashed and searched for in the
+NSEC3 name space.  When the shown label count is smaller than that of the
+shown name, the search tries the superdomain name that share the shown
+(higher) label count of the shown name (e.g., for
+www.example.com. with shown label count of 3, example.com. is being
+tried).
+
 % DATASRC_MEM_FIND_ZONE looking for zone '%1'
 Debug information. A zone object for this zone is being searched for in the
 in-memory data source.
@@ -561,7 +585,7 @@ The underlying data source failed to answer the query for referral information.
 1 means some error, 2 is not implemented. The data source should have logged
 the specific error already.
 
-% DATASRC_QUERY_RRSIG unable to answer RRSIG query
+% DATASRC_QUERY_RRSIG unable to answer RRSIG query for %1
 The server is unable to answer a direct query for RRSIG type, but was asked
 to do so.
 
