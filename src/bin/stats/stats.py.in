@@ -291,6 +291,29 @@ class Stats:
             else:
                 statistics_data[name] = value
         self.statistics_data = statistics_data
+        def _sum_bymodule(statistics_data_bypid):
+            # sum recursively each value under each
+            # element
+            def _sum(a, b):
+                if type(a) is dict:
+                    return dict([ (k, _sum(v, b[k])) if k in b else (k, v) \
+                                      for (k, v) in a.items() ] \
+                                    + [ (k, v) for (k, v) in b.items() \
+                                            if k not in a ])
+                elif type(a) is list:
+                    return [ _sum(a[i], b[i]) if len(b) > i else a[i] \
+                                 for i in range(len(a)) ] \
+                                 + [ b[i] for i in range(len(b)) \
+                                         if len(a) <= i ]
+                elif type(a) is float or type(a) is int:
+                    return a + b
+                # If str or other types than above, then
+                # just replace with the newer value.
+                return a
+            ret = {}
+            for data in statistics_data_bypid.values():
+                ret.update(_sum(data, ret))
+            return ret
         if owner and data:
             errors = []
             try:
@@ -312,35 +335,41 @@ class Stats:
                             self.statistics_data_bypid[owner][pid] = data
                     else:
                         self.statistics_data_bypid[owner] = { pid : data }
-                    def _sum_bymodule(statistics_data_bypid):
-                        # sum recursively each value under each
-                        # element
-                        def _sum(a, b):
-                            if type(a) == dict:
-                                return dict([ (k, _sum(v, b[k])) if k in b else (k, v) \
-                                                  for (k, v) in a.items() ] \
-                                                + [ (k, v) for (k, v) in b.items() \
-                                                        if k not in a ])
-                            elif type(a) == list:
-                                return [ _sum(a[i], b[i]) if len(b) > i else a[i] \
-                                             for i in range(len(a)) ] \
-                                             + [ b[i] for i in range(len(b)) \
-                                                     if len(a) <= i ]
-                            elif type(a) == float or type(a) == int:
-                                return a + b
-                            # If str or other types than above, then
-                            # just replace with the newer value.
-                            return a
-                        ret = {}
-                        for data in statistics_data_bypid.values():
-                            ret.update(_sum(data, ret))
-                        return ret
                     self.statistics_data[owner].update(
                         _sum_bymodule(self.statistics_data_bypid[owner]))
-                    return
             except KeyError:
                 errors.append("unknown module name: " + str(owner))
-            return errors
+            if errors: return errors
+        # Find dead instances by invoking "show_processes" to Boss,
+        # then remove their statistics data if there are ones
+        seq = self.cc_session.group_sendmsg(
+            isc.config.ccsession.create_command("show_processes", None),
+            "Boss")
+        (answer, env) = self.cc_session.group_recvmsg(False, seq)
+        if answer:
+            (rcode, value) = isc.config.ccsession.parse_answer(answer)
+            if rcode == 0:
+                if type(value) is not list:
+                    return
+                for v in value:
+                    if type(v) is not list or len(v) < 2:
+                        return
+                mlist = [ k for k in self.statistics_data_bypid.keys() ]
+                for m in mlist:
+                    plist1 = [ p for p in self.statistics_data_bypid[m].keys() ]
+                    plist2 = [ v[0] for v in value \
+                                   if v[1].lower().find(m.lower()) >= 0 ] \
+                                   + [-1] # add the default pid
+                    # set object difference: nplist = plist1 - plist2
+                    nplist = set(plist1).difference(set(plist2))
+                    for p in nplist:
+                        self.statistics_data_bypid[m].pop(p)
+                    if self.statistics_data_bypid[m]:
+                        if m in self.statistics_data:
+                            self.statistics_data[m].update(
+                                _sum_bymodule(self.statistics_data_bypid[m]))
+                    else:
+                        self.statistics_data_bypid.pop(m)
 
     def command_status(self):
         """
