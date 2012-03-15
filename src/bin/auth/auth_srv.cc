@@ -578,8 +578,9 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, Message& message,
     } else {
         message.toWire(renderer_);
     }
+    renderer_.setBuffer(NULL);
     LOG_DEBUG(auth_logger, DBG_AUTH_MESSAGES, AUTH_SEND_NORMAL_RESPONSE)
-              .arg(renderer_.getLength()).arg(message.toText());
+              .arg(renderer_.getLength()).arg(message);
     return (true);
 }
 
@@ -704,6 +705,7 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
     } else {
         message.toWire(renderer_);
     }
+    renderer_.setBuffer(NULL);
     return (true);
 }
 
