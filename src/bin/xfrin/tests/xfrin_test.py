@@ -76,6 +76,27 @@ example_soa_question = Question(TEST_ZONE_NAME, TEST_RRCLASS, RRType.SOA())
 default_questions = [example_axfr_question]
 default_answers = [soa_rrset]
 
+def get_fake_time_time():
+    '''Returns a temporary replacement function for time.time(), which
+       always returns 0.1 more than the previous call. This is to make
+       sure these tests do not fail on systems where the time.time()
+       function has a high minimal accuracy.
+       This fake time.time() is usually set in place of the real one
+       where we need testing of get_running_time(). It is done is
+       as low a scope as possible, so as not to mess up unit test
+       framework time related tests. It must be set before
+       XfrinTransferState (or any class that initializes that) is
+       initialized.
+       And every time it is set up, in must be reset later (again, so
+       as not to mess up the framework's concept of time).
+    '''
+    fake_time = 0.0
+    def fake_time_time():
+        nonlocal fake_time
+        fake_time += 0.1
+        return fake_time
+    return fake_time_time
+
 def check_diffs(assert_fn, expected, actual):
     '''A helper function checking the differences made in the XFR session.
 
@@ -561,7 +582,7 @@ class TestXfrinIXFREnd(TestXfrinState):
     def test_finish_message(self):
         self.assertFalse(self.state.finish_message(self.conn))
 
-class TestXfrinIXFREnd(TestXfrinState):
+class TestXfrinIXFREndUpToDate(TestXfrinState):
     def setUp(self):
         super().setUp()
         self.state = XfrinIXFRUptodate()
@@ -759,8 +780,14 @@ class TestXfrinConnection(unittest.TestCase):
 
 class TestAXFR(TestXfrinConnection):
     def setUp(self):
+        # replace time.time with a steadily increasing fake one
+        self.orig_time_time = time.time
+        time.time = get_fake_time_time()
         super().setUp()
         XfrinInitialSOA().set_xfrstate(self.conn, XfrinInitialSOA())
+
+    def tearDown(self):
+        time.time = self.orig_time_time
 
     def __create_mock_tsig(self, key, error):
         # This helper function creates a MockTSIGContext for a given key
@@ -1469,12 +1496,19 @@ class TestAXFR(TestXfrinConnection):
 
 class TestIXFRResponse(TestXfrinConnection):
     def setUp(self):
+        # replace time.time with a steadily increasing fake one
+        self.orig_time_time = time.time
+        time.time = get_fake_time_time()
+
         super().setUp()
         self.conn._query_id = self.conn.qid = 1035
         self.conn._request_serial = isc.dns.Serial(1230)
         self.conn._request_type = RRType.IXFR()
         self.conn._datasrc_client = MockDataSourceClient()
         XfrinInitialSOA().set_xfrstate(self.conn, XfrinInitialSOA())
+
+    def tearDown(self):
+        time.time = self.orig_time_time
 
     def test_ixfr_response(self):
         '''A simplest form of IXFR response.
@@ -1670,7 +1704,13 @@ class TestIXFRSession(TestXfrinConnection):
     the general logic flow.
     '''
     def setUp(self):
+        # replace time.time with a steadily increasing fake one
+        self.orig_time_time = time.time
+        time.time = get_fake_time_time()
         super().setUp()
+
+    def tearDown(self):
+        time.time = self.orig_time_time
 
     def test_do_xfrin(self):
         def create_ixfr_response():
@@ -1758,6 +1798,9 @@ class TestXFRSessionWithSQLite3(TestXfrinConnection):
         self.empty_sqlite3db_obj = TESTDATA_OBJDIR + '/empty.sqlite3'
         self.sqlite3db_cfg = "{ \"database_file\": \"" +\
                              self.sqlite3db_obj + "\"}"
+        # replace time.time with a steadily increasing fake one
+        self.orig_time_time = time.time
+        time.time = get_fake_time_time()
         super().setUp()
         if os.path.exists(self.sqlite3db_obj):
             os.unlink(self.sqlite3db_obj)
@@ -1772,6 +1815,7 @@ class TestXFRSessionWithSQLite3(TestXfrinConnection):
             os.unlink(self.sqlite3db_obj)
         if os.path.exists(self.empty_sqlite3db_obj):
             os.unlink(self.empty_sqlite3db_obj)
+        time.time = self.orig_time_time
 
     def get_zone_serial(self):
         result, finder = self.conn._datasrc_client.find_zone(TEST_ZONE_NAME)
@@ -2741,7 +2785,13 @@ class TestFormatting(unittest.TestCase):
 
 class TestXfrinTransferStats(unittest.TestCase):
     def setUp(self):
+        # replace time.time with a steadily increasing fake one
+        self.orig_time_time = time.time
+        time.time = get_fake_time_time()
         self.stats = XfrinTransferStats()
+
+    def tearDown(self):
+        time.time = self.orig_time_time
 
     def zero_check(self):
         # Checks whether all counters are zero
@@ -2794,7 +2844,6 @@ class TestXfrinTransferStats(unittest.TestCase):
         self.stats.byte_count = 0
         zbps = self.stats.get_bytes_per_second()
         self.assertEqual(0, zbps)
-
 
 if __name__== "__main__":
     try:
