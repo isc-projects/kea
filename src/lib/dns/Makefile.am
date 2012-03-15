@@ -61,6 +61,8 @@ EXTRA_DIST += rdata/generic/soa_6.cc
 EXTRA_DIST += rdata/generic/soa_6.h
 EXTRA_DIST += rdata/generic/spf_99.cc
 EXTRA_DIST += rdata/generic/spf_99.h
+EXTRA_DIST += rdata/generic/sshfp_44.cc
+EXTRA_DIST += rdata/generic/sshfp_44.h
 EXTRA_DIST += rdata/generic/txt_16.cc
 EXTRA_DIST += rdata/generic/txt_16.h
 EXTRA_DIST += rdata/generic/minfo_14.cc
@@ -96,6 +98,7 @@ libdns___la_SOURCES += masterload.h masterload.cc
 libdns___la_SOURCES += message.h message.cc
 libdns___la_SOURCES += messagerenderer.h messagerenderer.cc
 libdns___la_SOURCES += name.h name.cc
+libdns___la_SOURCES += name_internal.h
 libdns___la_SOURCES += nsec3hash.h nsec3hash.cc
 libdns___la_SOURCES += opcode.h opcode.cc
 libdns___la_SOURCES += rcode.h rcode.cc
@@ -154,7 +157,7 @@ libdns___include_HEADERS = \
 	rrttl.h \
 	tsigkey.h
 # Purposely not installing these headers:
-# util/*.h: used only internally, and not actually DNS specific
+# name_internal.h: used only internally, and not actually DNS specific
 # rdata/*/detail/*.h: these are internal use only
 # rrclass-placeholder.h
 # rrtype-placeholder.h

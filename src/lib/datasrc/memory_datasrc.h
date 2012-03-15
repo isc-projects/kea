@@ -70,18 +70,20 @@ public:
     /// See documentation in \c Zone.
     ///
     /// It returns NULL pointer in case of NXDOMAIN and NXRRSET.
-    virtual FindResult find(const isc::dns::Name& name,
-                            const isc::dns::RRType& type,
-                            const FindOptions options = FIND_DEFAULT);
+    virtual ZoneFinderContextPtr find(const isc::dns::Name& name,
+                                      const isc::dns::RRType& type,
+                                      const FindOptions options =
+                                      FIND_DEFAULT);
 
     /// \brief Version of find that returns all types at once
     ///
     /// It acts the same as find, just that when the correct node is found,
     /// all the RRsets are filled into the target parameter instead of being
     /// returned by the result.
-    virtual FindResult findAll(const isc::dns::Name& name,
-                               std::vector<isc::dns::ConstRRsetPtr>& target,
-                               const FindOptions options = FIND_DEFAULT);
+    virtual ZoneFinderContextPtr findAll(
+        const isc::dns::Name& name,
+        std::vector<isc::dns::ConstRRsetPtr>& target,
+        const FindOptions options = FIND_DEFAULT);
 
     /// Look for NSEC3 for proving (non)existence of given name.
     ///
@@ -216,6 +218,12 @@ private:
     // extracts the pointer to data and puts it into the iterator.
     // The access is read only.
     friend class InMemoryClient;
+
+    /// \brief In-memory version of finder context.
+    ///
+    /// The implementation (and any specialized interface) is completely local
+    /// to the InMemoryZoneFinder class, so it's defined as private
+    class Context;
 };
 
 /// \brief A data source client that holds all necessary data in memory.

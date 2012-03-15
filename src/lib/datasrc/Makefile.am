@@ -24,7 +24,7 @@ libdatasrc_la_SOURCES += cache.h cache.cc
 libdatasrc_la_SOURCES += rbnode_rrset.h
 libdatasrc_la_SOURCES += rbtree.h
 libdatasrc_la_SOURCES += zonetable.h zonetable.cc
-libdatasrc_la_SOURCES += zone.h
+libdatasrc_la_SOURCES += zone.h zone_finder_context.cc
 libdatasrc_la_SOURCES += result.h
 libdatasrc_la_SOURCES += logger.h logger.cc
 libdatasrc_la_SOURCES += client.h iterator.h
@@ -35,6 +35,7 @@ nodist_libdatasrc_la_SOURCES = datasrc_messages.h datasrc_messages.cc
 pkglib_LTLIBRARIES =  sqlite3_ds.la memory_ds.la
 
 sqlite3_ds_la_SOURCES = sqlite3_accessor.h sqlite3_accessor.cc
+sqlite3_ds_la_SOURCES += sqlite3_accessor_link.cc
 sqlite3_ds_la_LDFLAGS = -module
 sqlite3_ds_la_LDFLAGS += -no-undefined -version-info 1:0:0
 sqlite3_ds_la_LIBADD = $(top_builddir)/src/lib/exceptions/libexceptions.la
@@ -42,6 +43,7 @@ sqlite3_ds_la_LIBADD += libdatasrc.la
 sqlite3_ds_la_LIBADD += $(SQLITE_LIBS)
 
 memory_ds_la_SOURCES = memory_datasrc.h memory_datasrc.cc
+memory_ds_la_SOURCES += memory_datasrc_link.cc
 memory_ds_la_LDFLAGS = -module
 memory_ds_la_LIBADD = $(top_builddir)/src/lib/exceptions/libexceptions.la
 memory_ds_la_LIBADD += libdatasrc.la
