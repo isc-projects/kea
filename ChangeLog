@@ -1,3 +1,28 @@
+402.	[func]		jelte
+	b10-xfrout now has a visible command to send out notifies for
+	a given zone, callable from bindctl. Xfrout notify <zone> [class]
+	(Trac #1321, git 0bb258f8610620191d75cfd5d2308b6fc558c280)
+
+401.	[func]*		jinmei
+	libdns++: updated the internal implementation of the
+	MessageRenderer class.  This is mostly a transparent change, but
+	the new version now doesn't allow changing compression mode in the
+	middle of rendering (which shouldn't be an issue in practice).
+	On the other hand, name compression performance was significantly
+	improved: depending on the number of names, micro benchmark tests
+	showed the new version is several times faster than the previous
+	version .
+	(Trac #1603, git 9a2a86f3f47b60ff017ce1a040941d0c145cfe16)
+
+400.	[bug]		stephen
+	Fix crash on Max OS X 10.7 by altering logging so as not to allocate
+	heap storage in the static initialization of logging objects.
+	(Trac #1698, git a8e53be7039ad50d8587c0972244029ff3533b6e)
+
+399.	[func]		muks
+	Add support for the SSHFP RR type (RFC 4255).
+	(Trac #1136, git ea5ac57d508a17611cfae9d9ea1c238f59d52c51)
+
 398.	[func]		jelte
 	The b10-xfrin module now logs more information on successful
 	incoming transfers. In the case of IXFR, it logs the number of
