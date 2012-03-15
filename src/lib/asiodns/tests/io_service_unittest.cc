@@ -19,8 +19,11 @@
 #include <asiolink/asiolink.h>
 #include <asiodns/asiodns.h>
 
+#include <boost/scoped_ptr.hpp>
+
 using namespace isc::asiolink;
 using namespace isc::asiodns;
+using boost::scoped_ptr;
 
 const char* const TEST_SERVER_PORT = "53535";
 const char* const TEST_CLIENT_PORT = "53536";
@@ -118,6 +121,8 @@ TEST(IOServiceTest, DISABLED_IPv4MappedDuplicateBind) {
 
 TEST(IOServiceTest, BadUdpServerVersion) {
     IOService io_service;
-    DNSService* dns_service = new DNSService(io_service, NULL, NULL, NULL);
-    EXPECT_THROW(dns_service->addServer(*TEST_SERVER_PORT, "127.0.0.1", UDPVersion(3)), IOError);
+    scoped_ptr<DNSService> dns_service(new DNSService(io_service, NULL, NULL,
+                                                      NULL));
+    EXPECT_THROW(dns_service->addServer(*TEST_SERVER_PORT, "127.0.0.1",
+                                        UDPVersion(3)), IOError);
 }
