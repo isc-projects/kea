@@ -2,7 +2,7 @@
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
 	       [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2010-2011  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2010-2012  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -20,7 +20,7 @@
 <refentry>
 
   <refentryinfo>
-    <date>November 23, 2011</date>
+    <date>March 1, 2012</date>
   </refentryinfo>
 
   <refmeta>
@@ -36,7 +36,7 @@
 
   <docinfo>
     <copyright>
-      <year>2011</year>
+      <year>2010-2012</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -97,8 +97,8 @@
         <listitem>
           <para>The configuration filename to use. Can be either absolute or
           relative to data path. In case it is absolute, value of data path is
-          not considered.</para>
-          <para>Defaults to b10-config.db.</para>
+          not considered.
+          Defaults to <filename>b10-config.db</filename>.</para>
         </listitem>
       </varlistentry>
 
@@ -123,9 +123,11 @@
         </term>
         <listitem>
           <para>The path where BIND 10 programs look for various data files.
-          Currently only b10-cfgmgr uses it to locate the configuration file,
-          but the usage might be extended for other programs and other types
-          of files.</para>
+	  Currently only
+	  <citerefentry><refentrytitle>b10-cfgmgr</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+	  uses it to locate the configuration file, but the usage
+	  might be extended for other programs and other types of
+	  files.</para>
         </listitem>
       </varlistentry>
 
@@ -155,9 +157,9 @@
 
       <varlistentry>
         <term><option>-u</option> <replaceable>user</replaceable>, <option>--user</option> <replaceable>name</replaceable></term>
+<!-- TODO: example more detail. -->
         <listitem>
           <para>The username for <command>bind10</command> to run as.
-<!-- TODO: example more detail. -->
             <command>bind10</command> must be initially ran as the
             root user to use this option.
             The default is to run as the current user.</para>
@@ -169,7 +171,6 @@
         <listitem>
           <para>If defined, the PID of the <command>bind10</command> is stored
              in this file.
-             This is used for testing purposes.
           </para>
          </listitem>
       </varlistentry>
@@ -201,11 +202,12 @@ The default is the basename of ARG 0.
       <varlistentry>
         <term><option>-w</option> <replaceable>wait_time</replaceable>, <option>--wait</option> <replaceable>wait_time</replaceable></term>
         <listitem>
-          <para>Sets the amount of time that BIND 10 will wait for
-          the configuration manager (a key component of BIND 10) to
-          initialize itself before abandoning the start up and
-          terminating with an error.  The wait_time is specified in
-          seconds and has a default value of 10.
+	  <para>Sets the amount of time that BIND 10 will wait for
+	  the configuration manager (a key component of BIND 10)
+	  to initialize itself before abandoning the start up and
+	  terminating with an error.  The
+	  <replaceable>wait_time</replaceable> is specified in
+	  seconds and has a default value of 10.
           </para>
         </listitem>
       </varlistentry>
@@ -238,10 +240,6 @@ TODO: configuration section
       </listitem>
 
       <listitem>
-        <para> <varname>/Boss/components/setuid</varname> </para>
-      </listitem>
-
-      <listitem>
         <para> <varname>/Boss/components/b10-stats</varname> </para>
       </listitem>
 
@@ -266,12 +264,12 @@ TODO: configuration section
     <para>
       (Note that the startup of <command>b10-sockcreator</command>,
       <command>b10-cfgmgr</command>, and <command>b10-msgq</command>
-      is not configurable. It is hardcoded and <command>bind10</command>
+      is not configurable. They are hardcoded and <command>bind10</command>
       will not run without them.)
     </para>
 
     <para>
-      These named sets (listed above) contain the following settings:
+      The named sets for components contain the following settings:
     </para>
 
     <variablelist>
@@ -346,7 +344,7 @@ list
           <term> <varname>special</varname> </term>
         <listitem>
           <para>
-            This defines if the component is started a special
+            This defines if the component is started a special, hardcoded
             way.
 <!--
 TODO: document this ... but maybe some of these will be removed
@@ -357,7 +355,6 @@ cfgmgr
 cmdctl
 msgq
 resolver
-setuid
 sockcreator
 xfrin
 -->
@@ -373,6 +370,22 @@ xfrin
       The <varname>Boss</varname> configuration commands are:
     </para>
 <!-- TODO: let's just let bind10 be known as bind10 and not Boss -->
+
+<!-- TODO -->
+<!--
+    <para>
+      <command>drop_socket</command>
+      This is an internal command and not exposed to the administrator.
+    </para>
+-->
+
+<!-- TODO -->
+<!--
+    <para>
+      <command>get_socket</command>
+      This is an internal command and not exposed to the administrator.
+    </para>
+-->
 
     <para>
       <command>getstats</command> tells <command>bind10</command>
@@ -420,13 +433,13 @@ xfrin
 
     <para>
       The statistics data collected by the <command>b10-stats</command>
-      daemon include:
+      daemon for <quote>Boss</quote> include:
     </para>
 
     <variablelist>
 
       <varlistentry>
-        <term>bind10.boot_time</term>
+        <term>boot_time</term>
         <listitem><para>
           The date and time that the <command>bind10</command>
           process started.
@@ -438,13 +451,16 @@ xfrin
 
   </refsect1>
 
-<!--
   <refsect1>
     <title>FILES</title>
-    <para><filename></filename>
+    <para><filename>sockcreator-XXXXXX/sockcreator</filename>
+    &mdash;
+    the Unix Domain socket located in a temporary file directory for
+    <command>b10-sockcreator</command>
+<!--    <citerefentry><refentrytitle>b10-sockcreator</refentrytitle><manvolnum>8</manvolnum></citerefentry> -->
+    communication.
     </para>
   </refsect1>
--->
 
   <refsect1>
     <title>SEE ALSO</title>
@@ -476,6 +492,9 @@ xfrin
       <citetitle>BIND 10 Guide</citetitle>.
     </para>
   </refsect1>
+<!-- <citerefentry>
+        <refentrytitle>b10-sockcreator</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>, -->
 
   <refsect1 id='history'><title>HISTORY</title>
     <para>The development of <command>bind10</command>

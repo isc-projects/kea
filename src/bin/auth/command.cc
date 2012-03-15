@@ -12,24 +12,23 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <auth/command.h>
+#include <auth/auth_log.h>
+#include <auth/auth_srv.h>
+
+#include <cc/data.h>
+#include <datasrc/memory_datasrc.h>
+#include <config/ccsession.h>
+#include <exceptions/exceptions.h>
+#include <dns/rrclass.h>
+
 #include <string>
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include <exceptions/exceptions.h>
-
-#include <dns/rrclass.h>
-
-#include <cc/data.h>
-
-#include <datasrc/memory_datasrc.h>
-
-#include <config/ccsession.h>
-
-#include <auth/auth_log.h>
-#include <auth/auth_srv.h>
-#include <auth/command.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 using boost::scoped_ptr;
 using namespace isc::auth;
@@ -104,10 +103,30 @@ public:
     virtual void exec(AuthSrv& server, isc::data::ConstElementPtr args) = 0;
 };
 
-// Handle the "shutdown" command.  No argument is assumed.
+// Handle the "shutdown" command. An optional parameter "pid" is used to
+// see if it is really for our instance.
 class ShutdownCommand : public AuthCommand {
 public:
-    virtual void exec(AuthSrv& server, isc::data::ConstElementPtr) {
+    virtual void exec(AuthSrv& server, isc::data::ConstElementPtr args) {
+        // Is the pid argument provided?
+        if (args && args->contains("pid")) {
+            // If it is, we check it is the same as our PID
+
+            // This might throw in case the type is not an int, but that's
+            // OK, as it'll get converted to an error on higher level.
+            const int pid(args->get("pid")->intValue());
+            const pid_t my_pid(getpid());
+            if (my_pid != pid) {
+                // It is not for us
+                //
+                // Note that this is completely expected situation, if
+                // there are multiple instances of the server running and
+                // another instance is being shut down, we get the message
+                // too, due to the multicast nature of our message bus.
+                return;
+            }
+        }
+        LOG_DEBUG(auth_logger, DBG_AUTH_SHUT, AUTH_SHUTDOWN);
         server.stop();
     }
 };

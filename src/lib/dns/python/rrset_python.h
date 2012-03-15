@@ -36,7 +36,7 @@ extern PyTypeObject rrset_type;
 /// returns a NULL pointer).
 /// This function is expected to be called within a try block
 /// followed by necessary setup for python exception.
-PyObject* createRRsetObject(const RRset& source);
+PyObject* createRRsetObject(const AbstractRRset& source);
 
 /// \brief Checks if the given python object is a RRset object
 ///
@@ -56,7 +56,7 @@ bool PyRRset_Check(PyObject* obj);
 /// may be destroyed, the caller must copy it itself.
 ///
 /// \param rrset_obj The rrset object to convert
-RRset& PyRRset_ToRRset(PyObject* rrset_obj);
+AbstractRRset& PyRRset_ToRRset(PyObject* rrset_obj);
 
 /// \brief Returns the shared_ptr of the RRset object contained within the
 ///        given Python object.

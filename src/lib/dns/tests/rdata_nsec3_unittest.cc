@@ -39,34 +39,25 @@ using namespace isc::util::encode;
 using namespace isc::dns::rdata;
 
 namespace {
+
+// Note: some tests can be shared with NSEC3PARAM.  They are unified as
+// typed tests defined in nsec3param_like_unittest.
 class Rdata_NSEC3_Test : public RdataTest {
     // there's nothing to specialize
 public:
     Rdata_NSEC3_Test() :
         nsec3_txt("1 1 1 D399EAAB H9RSFB7FPF2L8HG35CMPC765TDK23RP6 "
-                  "NS SOA RRSIG DNSKEY NSEC3PARAM") {}
-    string nsec3_txt;
+                  "NS SOA RRSIG DNSKEY NSEC3PARAM"),
+        nsec3_nosalt_txt("1 1 1 - H9RSFB7FPF2L8HG35CMPC765TDK23RP6 A" )
+    {}
+    const string nsec3_txt;
+    const string nsec3_nosalt_txt;
 };
 
 TEST_F(Rdata_NSEC3_Test, fromText) {
     // A normal case: the test constructor should successfully parse the
     // text and construct nsec3_txt.  It will be tested against the wire format
     // representation in the createFromWire test.
-
-    // Numeric parameters have possible maximum values.  Unusual, but must
-    // be accepted.
-    EXPECT_NO_THROW(generic::NSEC3("255 255 65535 D399EAAB "
-                                   "H9RSFB7FPF2L8HG35CMPC765TDK23RP6 "
-                                   "NS SOA RRSIG DNSKEY NSEC3PARAM"));
-
-    // 0-length salt
-    EXPECT_EQ(0, generic::NSEC3("1 1 1 - H9RSFB7FPF2L8HG35CMPC765TDK23RP6 "
-                                "A").getSalt().size());
-
-    // salt that has the possible max length
-    EXPECT_EQ(255, generic::NSEC3("1 1 1 " + string(255 * 2, '0') +
-                                  " H9RSFB7FPF2L8HG35CMPC765TDK23RP6 "
-                                  "NS").getSalt().size());
 
     // hash that has the possible max length (see badText about the magic
     // numbers)
@@ -79,43 +70,20 @@ TEST_F(Rdata_NSEC3_Test, fromText) {
                         "1 1 1 D399EAAB H9RSFB7FPF2L8HG35CMPC765TDK23RP6"));
 }
 
-TEST_F(Rdata_NSEC3_Test, toText) {
-    const generic::NSEC3 rdata_nsec3(nsec3_txt);
-    EXPECT_EQ(nsec3_txt, rdata_nsec3.toText());
-}
-
 TEST_F(Rdata_NSEC3_Test, badText) {
     EXPECT_THROW(generic::NSEC3("1 1 1 ADDAFEEE "
                                 "0123456789ABCDEFGHIJKLMNOPQRSTUV "
                                 "BIFF POW SPOON"),
                  InvalidRdataText);
-    EXPECT_THROW(generic::NSEC3("1 1 1 ADDAFEE "
-                                "WXYZWXYZWXYZ=WXYZWXYZ==WXYZWXYZW A NS SOA"),
-                 BadValue);     // bad hex
-    EXPECT_THROW(generic::NSEC3("1 1 1 -- H9RSFB7FPF2L8HG35CMPC765TDK23RP6 "
-                                "A"),
-                 BadValue); // this shouldn't be confused a valid empty salt
     EXPECT_THROW(generic::NSEC3("1 1 1 ADDAFEEE "
                                 "WXYZWXYZWXYZ=WXYZWXYZ==WXYZWXYZW A NS SOA"),
                  BadValue);     // bad base32hex
-    EXPECT_THROW(generic::NSEC3("1000000 1 1 ADDAFEEE "
-                                "0123456789ABCDEFGHIJKLMNOPQRSTUV A NS SOA"),
-                 InvalidRdataText);
-    EXPECT_THROW(generic::NSEC3("1 1000000 1 ADDAFEEE "
-                                "0123456789ABCDEFGHIJKLMNOPQRSTUV A NS SOA"),
-                 InvalidRdataText);
     EXPECT_THROW(generic::NSEC3("1 1 1000000 ADDAFEEE "
                                 "0123456789ABCDEFGHIJKLMNOPQRSTUV A NS SOA"),
                  InvalidRdataText);
 
-    // There should be a space between "1" and "D399EAAB" (salt)
-    EXPECT_THROW(generic::NSEC3(
-                     "1 1 1D399EAAB H9RSFB7FPF2L8HG35CMPC765TDK23RP6 "
-                     "NS SOA RRSIG DNSKEY NSEC3PARAM"), InvalidRdataText);
-
-    // Salt is too long (possible max + 1 bytes)
-    EXPECT_THROW(generic::NSEC3("1 1 1 " + string(256 * 2, '0') +
-                                " H9RSFB7FPF2L8HG35CMPC765TDK23RP6 NS"),
+    // Next hash shouldn't be padded
+    EXPECT_THROW(generic::NSEC3("1 1 1 ADDAFEEE CPNMU=== A NS SOA"),
                  InvalidRdataText);
 
     // Hash is too long.  Max = 255 bytes, base32-hex converts each 5 bytes
@@ -127,33 +95,11 @@ TEST_F(Rdata_NSEC3_Test, badText) {
 }
 
 TEST_F(Rdata_NSEC3_Test, createFromWire) {
-    // Normal case
-    const generic::NSEC3 rdata_nsec3(nsec3_txt);
-    EXPECT_EQ(0, rdata_nsec3.compare(
-                  *rdataFactoryFromFile(RRType::NSEC3(), RRClass::IN(),
-                                        "rdata_nsec3_fromWire1")));
-
     // A valid NSEC3 RR with empty type bitmap.
     EXPECT_NO_THROW(rdataFactoryFromFile(RRType::NSEC3(), RRClass::IN(),
                                          "rdata_nsec3_fromWire15.wire"));
 
-    // Too short RDLENGTH: it doesn't even contain the first 5 octets.
-    EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC3(), RRClass::IN(),
-                                      "rdata_nsec3_fromWire2.wire"),
-                 DNSMessageFORMERR);
-
     // Invalid bitmap cases are tested in Rdata_NSECBITMAP_Test.
-
-    // salt length is too large
-    EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC3(), RRClass::IN(),
-                                      "rdata_nsec3_fromWire11.wire"),
-                 DNSMessageFORMERR);
-
-    // empty salt.  unusual, but valid.
-    ConstRdataPtr rdata =
-        rdataFactoryFromFile(RRType::NSEC3(), RRClass::IN(),
-                             "rdata_nsec3_fromWire13.wire");
-    EXPECT_EQ(0, dynamic_cast<const generic::NSEC3&>(*rdata).getSalt().size());
 
     // hash length is too large
     EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC3(), RRClass::IN(),
@@ -165,7 +111,11 @@ TEST_F(Rdata_NSEC3_Test, createFromWire) {
                                       "rdata_nsec3_fromWire14.wire"),
                  DNSMessageFORMERR);
 
-    //
+    // RDLEN is too short to hold the hash length field
+    EXPECT_THROW(rdataFactoryFromFile(RRType::NSEC3(), RRClass::IN(),
+                                      "rdata_nsec3_fromWire17.wire"),
+                 DNSMessageFORMERR);
+
     // Short buffer cases.  The data is valid NSEC3 RDATA, but the buffer
     // is trimmed at the end.  All cases should result in an exception from
     // the buffer class.
@@ -180,27 +130,35 @@ TEST_F(Rdata_NSEC3_Test, createFromWire) {
     }
 }
 
-TEST_F(Rdata_NSEC3_Test, toWireRenderer) {
-    renderer.skip(2);
-    const generic::NSEC3 rdata_nsec3(nsec3_txt);
-    rdata_nsec3.toWire(renderer);
-
-    vector<unsigned char> data;
-    UnitTestUtil::readWireData("rdata_nsec3_fromWire1", data);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        static_cast<const uint8_t *>(obuffer.getData()) + 2,
-                        obuffer.getLength() - 2, &data[2], data.size() - 2);
-}
-
-TEST_F(Rdata_NSEC3_Test, toWireBuffer) {
-    const generic::NSEC3 rdata_nsec3(nsec3_txt);
-    rdata_nsec3.toWire(obuffer);
-}
-
 TEST_F(Rdata_NSEC3_Test, assign) {
     generic::NSEC3 rdata_nsec3(nsec3_txt);
     generic::NSEC3 other_nsec3 = rdata_nsec3;
     EXPECT_EQ(0, rdata_nsec3.compare(other_nsec3));
+}
+
+TEST_F(Rdata_NSEC3_Test, compare) {
+    // trivial case: self equivalence
+    EXPECT_EQ(0, generic::NSEC3(nsec3_txt).compare(generic::NSEC3(nsec3_txt)));
+
+    // comparison attempt between incompatible RR types should be rejected
+    EXPECT_THROW(generic::NSEC3(nsec3_txt).compare(*rdata_nomatch),
+                 bad_cast);
+
+    // test RDATAs, sorted in the ascendent order.  We only check comparison
+    // on NSEC3-specific fields.  Bitmap comparison is tested in the bitmap
+    // tests.  Common cases for NSEC3 and NSECPARAM3 are in their shared tests.
+    vector<generic::NSEC3> compare_set;
+    compare_set.push_back(generic::NSEC3("1 1 1 FF99EA0000 D1K6GQ38"));
+    compare_set.push_back(generic::NSEC3("1 1 1 FF99EA0000 D1K6GQ0000000000"));
+    compare_set.push_back(generic::NSEC3("1 1 1 FF99EA0000 D1K6GQ00UUUUUUUU"));
+
+    vector<generic::NSEC3>::const_iterator it;
+    const vector<generic::NSEC3>::const_iterator it_end = compare_set.end();
+    for (it = compare_set.begin(); it != it_end - 1; ++it) {
+        SCOPED_TRACE("compare " + it->toText() + " to " + (it + 1)->toText());
+        EXPECT_GT(0, (*it).compare(*(it + 1)));
+        EXPECT_LT(0, (*(it + 1)).compare(*it));
+    }
 }
 
 }

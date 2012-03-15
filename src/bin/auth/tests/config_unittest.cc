@@ -46,7 +46,10 @@ protected:
         dnss_(ios_, NULL, NULL, NULL),
         rrclass(RRClass::IN()),
         server(true, xfrout),
-        sock_requestor_(dnss_, address_store_, 53210)
+        // The empty string is expected value of the parameter of
+        // requestSocket, not the app_name (there's no fallback, it checks
+        // the empty string is passed).
+        sock_requestor_(dnss_, address_store_, 53210, "")
     {
         server.setDNSService(dnss_);
     }
@@ -188,7 +191,7 @@ TEST_F(MemoryDatasrcConfigTest, addOneZone) {
     // Check it actually loaded something
     EXPECT_EQ(ZoneFinder::SUCCESS, server.getInMemoryClient(rrclass)->findZone(
         Name("ns.example.com.")).zone_finder->find(Name("ns.example.com."),
-        RRType::A()).code);
+        RRType::A())->code);
 }
 
 TEST_F(MemoryDatasrcConfigTest, addMultiZones) {

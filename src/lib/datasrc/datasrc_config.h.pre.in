@@ -23,7 +23,7 @@ namespace datasrc {
 /// such as memory_ds.so and sqlite3_ds.so are found. It is used by the
 /// DataSourceClient loader if no absolute path is used and
 /// B10_FROM_BUILD is not set in the environment.
-const char* const BACKEND_LIBRARY_PATH = "@@PKGLIBEXECDIR@@/";
+const char* const BACKEND_LIBRARY_PATH = "@@PKGLIBDIR@@/";
 
 } // end namespace datasrc
 } // end namespace isc

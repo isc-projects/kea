@@ -43,7 +43,7 @@ LocalZoneData::lookup(const isc::dns::Name& name,
 }
 
 void
-LocalZoneData::update(const isc::dns::RRset& rrset) {
+LocalZoneData::update(const isc::dns::AbstractRRset& rrset) {
     //TODO Do we really need to recreate the rrset again?
     string key = genCacheEntryName(rrset.getName(), rrset.getType());
     LOG_DEBUG(logger, DBG_TRACE_DATA, CACHE_LOCALZONE_UPDATE).arg(key);

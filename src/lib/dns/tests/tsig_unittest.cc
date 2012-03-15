@@ -71,7 +71,7 @@ protected:
     TSIGTest() :
         tsig_ctx(NULL), qid(0x2d65), test_name("www.example.com"),
         badkey_name("badkey.example.com"), test_class(RRClass::IN()),
-        test_ttl(86400), message(Message::RENDER), buffer(0), renderer(buffer),
+        test_ttl(86400), message(Message::RENDER),
         dummy_data(1024, 0xdd),  // should be sufficiently large for all tests
         dummy_record(badkey_name, any::TSIG(TSIGKey::HMACMD5_NAME(),
                                             0x4da8877a,
@@ -125,7 +125,6 @@ protected:
     const RRClass test_class;
     const RRTTL test_ttl;
     Message message;
-    OutputBuffer buffer;
     MessageRenderer renderer;
     vector<uint8_t> secret;
     vector<uint8_t> dummy_data;

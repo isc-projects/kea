@@ -20,6 +20,7 @@ import unittest
 import os
 import tempfile
 from zonemgr import *
+from isc.testutils.ccsession_mock import MockModuleCCSession
 
 ZONE_NAME_CLASS1_IN = ("example.net.", "IN")
 ZONE_NAME_CLASS1_CH = ("example.net.", "CH")
@@ -48,10 +49,11 @@ class MySession():
     def group_recvmsg(self, nonblock, seq):
         return None, None
 
-class FakeCCSession(isc.config.ConfigData):
+class FakeCCSession(isc.config.ConfigData, MockModuleCCSession):
     def __init__(self):
         module_spec = isc.config.module_spec_from_file(SPECFILE_LOCATION)
         ConfigData.__init__(self, module_spec)
+        MockModuleCCSession.__init__(self)
 
     def get_remote_config_value(self, module_name, identifier):
         if module_name == "Auth" and identifier == "database_file":
@@ -682,6 +684,12 @@ class TestZonemgr(unittest.TestCase):
         self.assertEqual(0.2, config_data2.get("refresh_jitter"))
         self.zonemgr._config_data_check(config_data3)
         self.assertEqual(0.5, config_data3.get("refresh_jitter"))
+
+    def test_shutdown(self):
+        self.assertFalse(self.zonemgr._module_cc.stopped)
+        self.zonemgr._shutdown_event.set()
+        self.zonemgr.run()
+        self.assertTrue(self.zonemgr._module_cc.stopped)
 
     def tearDown(self):
         pass

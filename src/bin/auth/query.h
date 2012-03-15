@@ -15,7 +15,10 @@
  */
 
 #include <exceptions/exceptions.h>
+#include <dns/rrset.h>
 #include <datasrc/zone.h>
+
+#include <vector>
 
 namespace isc {
 namespace dns {
@@ -86,27 +89,36 @@ private:
     void addDS(isc::datasrc::ZoneFinder& finder,
                const isc::dns::Name& ds_name);
 
-    /// \brief Adds NSEC denial proof for the given NXRRset result
+    /// \brief Adds NSEC(3) denial proof for the given NXRRset result
     ///
-    /// NSEC records, if available (signaled by isNSECSigned(), are added
-    /// to the authority section.
+    /// If available, NSEC or NSEC3 records are added to the authority
+    /// section (depending on whether isNSECSigned() or isNSEC3Signed()
+    /// returns true).
     ///
     /// \param finder The ZoneFinder that was used to search for the missing
     ///               data
     /// \param db_result The ZoneFinder::FindResult returned by find()
     void addNXRRsetProof(isc::datasrc::ZoneFinder& finder,
-        const isc::datasrc::ZoneFinder::FindResult& db_result);
+                         const isc::datasrc::ZoneFinder::Context& db_context);
 
     /// Add NSEC RRs that prove an NXDOMAIN result.
     ///
     /// This corresponds to Section 3.1.3.2 of RFC 4035.
-    void addNXDOMAINProof(isc::datasrc::ZoneFinder& finder,
-                          isc::dns::ConstRRsetPtr nsec);
+    void addNXDOMAINProofByNSEC(isc::datasrc::ZoneFinder& finder,
+                                isc::dns::ConstRRsetPtr nsec);
 
-    /// Add NSEC RRs that prove a wildcard answer is the best one.
+    /// Add NSEC3 RRs that prove an NXDOMAIN result.
     ///
-    /// This corresponds to Section 3.1.3.3 of RFC 4035.
-    void addWildcardProof(isc::datasrc::ZoneFinder& finder);
+    /// This corresponds to Section 7.2.2 of RFC 5155.
+    void addNXDOMAINProofByNSEC3(isc::datasrc::ZoneFinder& finder);
+
+    /// Add NSEC or NSEC3 RRs that prove a wildcard answer is the best one.
+    ///
+    /// This corresponds to Section 3.1.3.3 of RFC 4035 and Section 7.2.6
+    /// of RFC5155.
+    void addWildcardProof(
+        isc::datasrc::ZoneFinder& finder,
+        const isc::datasrc::ZoneFinder::Context& db_context);
 
     /// \brief Adds one NSEC RR proved no matched QNAME,one NSEC RR proved no
     /// matched <QNAME,QTYPE> through wildcard extension.
@@ -119,44 +131,6 @@ private:
     /// <QNAME,QTTYPE>.
     void addWildcardNXRRSETProof(isc::datasrc::ZoneFinder& finder,
                                  isc::dns::ConstRRsetPtr nsec);
-    
-    /// \brief Look up additional data (i.e., address records for the names
-    /// included in NS or MX records) and add them to the additional section.
-    ///
-    /// Note: Any additional data which has already been provided in the
-    /// answer section (i.e., if the original query happend to be for the
-    /// address of the DNS server), it should be omitted from the additional.
-    ///
-    /// This method may throw a exception because its underlying methods may
-    /// throw exceptions.
-    ///
-    /// \param zone The ZoneFinder through which the additional data for the
-    /// query is to be found.
-    /// \param rrset The RRset (i.e., NS or MX rrset) which require additional
-    /// processing.
-    void addAdditional(isc::datasrc::ZoneFinder& zone,
-                       const isc::dns::RRset& rrset);
-
-    /// \brief Find address records for a specified name.
-    ///
-    /// Search the specified zone for AAAA/A RRs of each of the NS/MX RDATA
-    /// (domain name), and insert the found ones into the additional section
-    /// if address records are available. By default the search will stop
-    /// once it encounters a zone cut.
-    ///
-    /// Note: we need to perform the search in the "GLUE OK" mode for NS RDATA,
-    /// which means that we should include A/AAAA RRs under a zone cut.
-    /// The glue records must exactly match the name in the NS RDATA, without
-    /// CNAME or wildcard processing.
-    ///
-    /// \param zone The \c ZoneFinder through which the address records is to
-    /// be found.
-    /// \param qname The name in rrset RDATA.
-    /// \param options The search options.
-    void addAdditionalAddrs(isc::datasrc::ZoneFinder& zone,
-                            const isc::dns::Name& qname,
-                            const isc::datasrc::ZoneFinder::FindOptions options
-                            = isc::datasrc::ZoneFinder::FIND_DEFAULT);
 
     /// \brief Look up a zone's NS RRset and their address records for an
     /// authoritative answer, and add them to the additional section.
@@ -176,7 +150,81 @@ private:
     ///
     /// \param finder The \c ZoneFinder through which the NS and additional
     /// data for the query are to be found.
-    void addAuthAdditional(isc::datasrc::ZoneFinder& finder);
+    void addAuthAdditional(isc::datasrc::ZoneFinder& finder,
+                           std::vector<isc::dns::ConstRRsetPtr>& additionals);
+
+    /// \brief Process a DS query possible at the child side of zone cut.
+    ///
+    /// This private method is a subroutine of process(), and is called if
+    /// there's a possibility that this server has authority for the child
+    /// side of the DS's owner name (and it's detected that the server at
+    /// least doesn't have authority at the parent side).  This method
+    /// first checks if it has authority for the child, and if does,
+    /// just build a "no data" response with SOA for the zone origin
+    /// (possibly with a proof for the no data) as specified in Section
+    /// 2.2.1.1 of RFC3658.
+    ///
+    /// It returns true if this server has authority of the child; otherwise
+    /// it returns false.  In the former case, the caller is expected to
+    /// terminate the query processing, because it should have been completed
+    /// within this method.
+    bool processDSAtChild();
+
+    /// \brief Add NSEC3 to the response for a closest encloser proof for a
+    /// given name.
+    ///
+    /// This method calls \c findNSEC3() of the given zone finder for the
+    /// given name in the recursive mode, and adds the returned NSEC3(s) to
+    /// the authority section of the response message associated with the
+    /// \c Query object.
+    ///
+    /// It returns the number of labels of the closest encloser (returned via
+    /// the \c findNSEC3() call) in case the caller needs to use that value
+    /// for subsequent processing, i.e, constructing the best possible wildcard
+    /// name that (would) match the query name.
+    ///
+    /// Unless \c exact_ok is true, \c name is expected to be non existent,
+    /// in which case findNSEC3() in the recursive mode must return both
+    /// closest and next proofs.  If the latter is NULL, it means a run time
+    /// collision (or the zone is broken in other way), and this method throws
+    /// a BadNSEC3 exception.
+    ///
+    /// If \c exact_ok is true, this method takes into account the case
+    /// where the name exists and may or may not be at a zone cut to an
+    /// optout zone.  In this case, depending on whether the zone is optout
+    /// or not, findNSEC3() may return non-NULL or NULL next_proof
+    /// (respectively).  This method adds the next proof if and only if
+    /// findNSEC3() returns non NULL value for it.  The Opt-Out flag
+    /// must be set or cleared accordingly, but this method doesn't check that
+    /// in this level (as long as the zone is signed validly and findNSEC3()
+    /// for the data source is implemented as documented, the condition
+    /// should be met; otherwise we'd let the validator detect the error).
+    ///
+    /// By default this method always adds the closest proof.
+    /// If \c add_closest is false, it only adds the next proof to the message.
+    /// This correspond to the case of "wildcard answer responses" as described
+    /// in Section 7.2.6 of RFC5155.
+    uint8_t addClosestEncloserProof(isc::datasrc::ZoneFinder& finder,
+                                    const isc::dns::Name& name, bool exact_ok,
+                                    bool add_closest = true);
+
+    /// \brief Add matching or covering NSEC3 to the response for a give name.
+    ///
+    /// This method calls \c findNSEC3() of the given zone finder for the
+    /// given name in the non recursive mode, and adds the returned NSEC3 to
+    /// the authority section of the response message associated with the
+    /// \c Query object.
+    ///
+    /// Depending on the caller's context, the returned NSEC3 is one and
+    /// only one of matching or covering NSEC3.  If \c match is true the
+    /// returned NSEC3 must be a matching one; otherwise it must be a covering
+    /// one.  If this assumption isn't met this method throws a BadNSEC3
+    /// exception (if it must be a matching NSEC3 but is not, it means a broken
+    /// zone, maybe with incorrect optout NSEC3s; if it must be a covering
+    /// NSEC3 but is not, it means a run time collision; or the \c findNSEC3()
+    /// implementation is broken for both cases.)
+    void addNSEC3ForName(isc::datasrc::ZoneFinder& finder,
+                         const isc::dns::Name& name, bool match);
 
 public:
     /// Constructor from query parameters.
@@ -266,6 +314,17 @@ public:
     /// as SERVFAIL.
     struct BadNSEC : public BadZone {
         BadNSEC(const char* file, size_t line, const char* what) :
+            BadZone(file, line, what)
+        {}
+    };
+
+    /// An invalid result is given when a valid NSEC3 is expected
+    ///
+    /// This can only happen when the underlying data source implementation or
+    /// the zone is broken.  By throwing an exception we treat such cases
+    /// as SERVFAIL.
+    struct BadNSEC3 : public BadZone {
+        BadNSEC3(const char* file, size_t line, const char* what) :
             BadZone(file, line, what)
         {}
     };

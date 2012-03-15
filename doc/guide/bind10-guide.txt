@@ -221,18 +221,22 @@ Chapter 1. Introduction
    processes as needed. The processes started by the bind10 command have
    names starting with "b10-", including:
 
-     o b10-msgq -- Message bus daemon. This process coordinates communication
-       between all of the other BIND 10 processes.
      o b10-auth -- Authoritative DNS server. This process serves DNS
        requests.
      o b10-cfgmgr -- Configuration manager. This process maintains all of the
        configuration for BIND 10.
      o b10-cmdctl -- Command and control service. This process allows
        external control of the BIND 10 system.
+     o b10-msgq -- Message bus daemon. This process coordinates communication
+       between all of the other BIND 10 processes.
      o b10-resolver -- Recursive name server. This process handles incoming
        queries.
+     o b10-sockcreator -- Socket creator daemon. This process creates sockets
+       used by network-listening BIND 10 processes.
      o b10-stats -- Statistics collection daemon. This process collects and
        reports statistics data.
+     o b10-stats-httpd -- HTTP server for statistics reporting. This process
+       reports statistics data in XML format over HTTP.
      o b10-xfrin -- Incoming zone transfer service. This process is used to
        transfer a new copy of a zone into BIND 10, when acting as a secondary
        server.
@@ -249,8 +253,9 @@ Chapter 1. Introduction
    Once BIND 10 is running, a few commands are used to interact directly with
    the system:
 
-     o bindctl -- interactive administration interface. This is a
-       command-line tool which allows an administrator to control BIND 10.
+     o bindctl -- interactive administration interface. This is a low-level
+       command-line tool which allows a developer or an experienced
+       administrator to control BIND 10.
      o b10-loadzone -- zone file loader. This tool will load standard
        masterfile-format zone files into BIND 10.
      o b10-cmdctl-usermgr -- user access control. This tool allows an
@@ -491,10 +496,11 @@ Chapter 3. Starting BIND10 with bind10
    b10-sockcreator will allocate sockets for the rest of the system.
 
    In its default configuration, the bind10 master process will also start up
-   b10-cmdctl for admins to communicate with the system, b10-auth for
-   authoritative DNS service, b10-stats for statistics collection, b10-xfrin
-   for inbound DNS zone transfers, b10-xfrout for outbound DNS zone
-   transfers, and b10-zonemgr for secondary service.
+   b10-cmdctl for administration tools to communicate with the system,
+   b10-auth for authoritative DNS service, b10-stats for statistics
+   collection, b10-stats-httpd for statistics reporting, b10-xfrin for
+   inbound DNS zone transfers, b10-xfrout for outbound DNS zone transfers,
+   and b10-zonemgr for secondary service.
 
 3.1. Starting BIND 10
 
@@ -599,6 +605,22 @@ Chapter 3. Starting BIND10 with bind10
    needs the b10-auth to be running, etc.
 
    In short, you should think twice before disabling something here.
+
+   It is possible to start some components multiple times (currently b10-auth
+   and b10-resolzer). You might want to do that to gain more performance
+   (each one uses only single core). Just put multiple entries under
+   different names, like this, with the same config:
+
+ > config add Boss/components b10-resolver-2
+ > config set Boss/components/b10-resolver-2/special resolver
+ > config set Boss/components/b10-resolver-2/kind needed
+ > config commit
+
+   However, this is work in progress and the support is not yet complete. For
+   example, each resolver will have its own cache, each authoritative server
+   will keep its own copy of in-memory data and there could be problems with
+   locking the sqlite database, if used. The configuration might be changed
+   to something more convenient in future.
 
 Chapter 4. Command channel
 
@@ -939,26 +961,22 @@ Chapter 10. Outbound Zone Transfers
    In the above example the lines for transfer_acl were divided for
    readability. In the actual input it must be in a single line.
 
-   If you want to require TSIG in access control, a separate TSIG "key ring"
-   must be configured specifically for b10-xfrout as well as a system wide
-   key ring, both containing a consistent set of keys. For example, to change
-   the previous example to allowing requests from 192.0.2.1 signed by a TSIG
-   with a key name of "key.example", you'll need to do this:
+   If you want to require TSIG in access control, a system wide TSIG "key
+   ring" must be configured. For example, to change the previous example to
+   allowing requests from 192.0.2.1 signed by a TSIG with a key name of
+   "key.example", you'll need to do this:
 
  > config set tsig_keys/keys ["key.example:<base64-key>"]
- > config set Xfrout/tsig_keys/keys ["key.example:<base64-key>"]
  > config set Xfrout/zone_config[0]/transfer_acl [{"action": "ACCEPT", "from": "192.0.2.1", "key": "key.example"}]
  > config commit
 
-   The first line of configuration defines a system wide key ring. This is
-   necessary because the b10-auth server also checks TSIGs and it uses the
-   system wide configuration.
+   Both Xfrout and Auth will use the system wide keyring to check TSIGs in
+   the incomming messages and to sign responses.
 
   Note
 
-   In a future version, b10-xfrout will also use the system wide TSIG
-   configuration. The way to specify zone specific configuration (ACLs, etc)
-   is likely to be changed, too.
+   The way to specify zone specific configuration (ACLs, etc) is likely to be
+   changed.
 
 Chapter 11. Recursive Name Server
 

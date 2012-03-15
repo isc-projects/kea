@@ -75,7 +75,8 @@ public:
     /// \brief Constructor
     /// \param rrset The RRset used to initialize the RRset entry.
     /// \param level trustworthiness of the RRset.
-    RRsetEntry(const isc::dns::RRset& rrset, const RRsetTrustLevel& level);
+    RRsetEntry(const isc::dns::AbstractRRset& rrset,
+               const RRsetTrustLevel& level);
 
     /// The destructor.
     ~RRsetEntry() {}

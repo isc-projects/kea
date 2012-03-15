@@ -12,89 +12,89 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <algorithm>            // for std::max
-#include <vector>
-#include <boost/foreach.hpp>
-#include <boost/bind.hpp>
-#include <boost/function.hpp>
-
 #include <dns/message.h>
 #include <dns/rcode.h>
+#include <dns/rrtype.h>
 #include <dns/rdataclass.h>
 
 #include <datasrc/client.h>
 
 #include <auth/query.h>
 
+#include <boost/foreach.hpp>
+#include <boost/bind.hpp>
+#include <boost/function.hpp>
+
+#include <algorithm>            // for std::max
+#include <vector>
+
+using namespace std;
 using namespace isc::dns;
 using namespace isc::datasrc;
 using namespace isc::dns::rdata;
+
+// Commonly used helper callback object for vector<ConstRRsetPtr> to
+// insert them to (the specified section of) a message.
+namespace {
+class RRsetInserter {
+public:
+    RRsetInserter(Message& msg, Message::Section section, bool dnssec) :
+        msg_(msg), section_(section), dnssec_(dnssec)
+    {}
+    void operator()(const ConstRRsetPtr& rrset) {
+        msg_.addRRset(section_,
+                      boost::const_pointer_cast<AbstractRRset>(rrset),
+                      dnssec_);
+    }
+
+private:
+    Message& msg_;
+    const Message::Section section_;
+    const bool dnssec_;
+};
+
+// This is a "constant" vector storing desired RR types for the additional
+// section.  The vector is filled first time it's used.
+const vector<RRType>&
+A_AND_AAAA() {
+    static vector<RRType> needed_types;
+    if (needed_types.empty()) {
+        needed_types.push_back(RRType::A());
+        needed_types.push_back(RRType::AAAA());
+    }
+    return (needed_types);
+}
+
+// A wrapper for ZoneFinder::Context::getAdditional() so we don't include
+// duplicate RRs.  This is not efficient, and we should actually unify
+// this at the end of the process() method.  See also #1688.
+void
+getAdditional(const Name& qname, RRType qtype,
+              ZoneFinder::Context& ctx, vector<ConstRRsetPtr>& results)
+{
+    vector<ConstRRsetPtr> additionals;
+    ctx.getAdditional(A_AND_AAAA(), additionals);
+
+    vector<ConstRRsetPtr>::const_iterator it = additionals.begin();
+    vector<ConstRRsetPtr>::const_iterator it_end = additionals.end();
+    for (; it != it_end; ++it) {
+        if ((qtype == (*it)->getType() || qtype == RRType::ANY()) &&
+            qname == (*it)->getName()) {
+            continue;
+        }
+        results.push_back(*it);
+    }
+}
+}
 
 namespace isc {
 namespace auth {
 
 void
-Query::addAdditional(ZoneFinder& zone, const RRset& rrset) {
-    RdataIteratorPtr rdata_iterator(rrset.getRdataIterator());
-    for (; !rdata_iterator->isLast(); rdata_iterator->next()) {
-        const Rdata& rdata(rdata_iterator->getCurrent());
-        if (rrset.getType() == RRType::NS()) {
-            // Need to perform the search in the "GLUE OK" mode.
-            const generic::NS& ns = dynamic_cast<const generic::NS&>(rdata);
-            addAdditionalAddrs(zone, ns.getNSName(), ZoneFinder::FIND_GLUE_OK);
-        } else if (rrset.getType() == RRType::MX()) {
-            const generic::MX& mx(dynamic_cast<const generic::MX&>(rdata));
-            addAdditionalAddrs(zone, mx.getMXName());
-        }
-    }
-}
-
-void
-Query::addAdditionalAddrs(ZoneFinder& zone, const Name& qname,
-                          const ZoneFinder::FindOptions options)
-{
-    // Out of zone name
-    NameComparisonResult result = zone.getOrigin().compare(qname);
-    if ((result.getRelation() != NameComparisonResult::SUPERDOMAIN) &&
-        (result.getRelation() != NameComparisonResult::EQUAL))
-        return;
-
-    // Omit additional data which has already been provided in the answer
-    // section from the additional.
-    //
-    // All the address rrset with the owner name of qname have been inserted
-    // into ANSWER section.
-    if (qname_ == qname && qtype_ == RRType::ANY())
-        return;
-
-    // Find A rrset
-    if (qname_ != qname || qtype_ != RRType::A()) {
-        ZoneFinder::FindResult a_result = zone.find(qname, RRType::A(),
-                                                    options | dnssec_opt_);
-        if (a_result.code == ZoneFinder::SUCCESS) {
-            response_.addRRset(Message::SECTION_ADDITIONAL,
-                    boost::const_pointer_cast<RRset>(a_result.rrset), dnssec_);
-        }
-    }
-
-    // Find AAAA rrset
-    if (qname_ != qname || qtype_ != RRType::AAAA()) {
-        ZoneFinder::FindResult aaaa_result = zone.find(qname, RRType::AAAA(),
-                                                       options | dnssec_opt_);
-        if (aaaa_result.code == ZoneFinder::SUCCESS) {
-            response_.addRRset(Message::SECTION_ADDITIONAL,
-                    boost::const_pointer_cast<RRset>(aaaa_result.rrset),
-                    dnssec_);
-        }
-    }
-}
-
-void
 Query::addSOA(ZoneFinder& finder) {
-    ZoneFinder::FindResult soa_result = finder.find(finder.getOrigin(),
-                                                    RRType::SOA(),
-                                                    dnssec_opt_);
-    if (soa_result.code != ZoneFinder::SUCCESS) {
+    ZoneFinderContextPtr soa_ctx = finder.find(finder.getOrigin(),
+                                               RRType::SOA(), dnssec_opt_);
+    if (soa_ctx->code != ZoneFinder::SUCCESS) {
         isc_throw(NoSOA, "There's no SOA record in zone " <<
             finder.getOrigin().toText());
     } else {
@@ -104,7 +104,7 @@ Query::addSOA(ZoneFinder& finder) {
          * to insist.
          */
         response_.addRRset(Message::SECTION_AUTHORITY,
-            boost::const_pointer_cast<RRset>(soa_result.rrset), dnssec_);
+            boost::const_pointer_cast<AbstractRRset>(soa_ctx->rrset), dnssec_);
     }
 }
 
@@ -117,14 +117,14 @@ Query::addSOA(ZoneFinder& finder) {
 // either an SERVFAIL response or just ignoring the query.  We at least prevent
 // a complete crash due to such broken behavior.
 void
-Query::addNXDOMAINProof(ZoneFinder& finder, ConstRRsetPtr nsec) {
+Query::addNXDOMAINProofByNSEC(ZoneFinder& finder, ConstRRsetPtr nsec) {
     if (nsec->getRdataCount() == 0) {
         isc_throw(BadNSEC, "NSEC for NXDOMAIN is empty");
     }
 
     // Add the NSEC proving NXDOMAIN to the authority section.
     response_.addRRset(Message::SECTION_AUTHORITY,
-                       boost::const_pointer_cast<RRset>(nsec), dnssec_);
+                       boost::const_pointer_cast<AbstractRRset>(nsec), dnssec_);
 
     // Next, identify the best possible wildcard name that would match
     // the query name.  It's the longer common suffix with the qname
@@ -148,10 +148,10 @@ Query::addNXDOMAINProof(ZoneFinder& finder, ConstRRsetPtr nsec) {
     // Confirm the wildcard doesn't exist (this should result in NXDOMAIN;
     // otherwise we shouldn't have got NXDOMAIN for the original query in
     // the first place).
-    const ZoneFinder::FindResult fresult =
+    ConstZoneFinderContextPtr fcontext =
         finder.find(wildname, RRType::NSEC(), dnssec_opt_);
-    if (fresult.code != ZoneFinder::NXDOMAIN || !fresult.rrset ||
-        fresult.rrset->getRdataCount() == 0) {
+    if (fcontext->code != ZoneFinder::NXDOMAIN || !fcontext->rrset ||
+        fcontext->rrset->getRdataCount() == 0) {
         isc_throw(BadNSEC, "Unexpected result for wildcard NXDOMAIN proof");
     }
 
@@ -160,28 +160,105 @@ Query::addNXDOMAINProof(ZoneFinder& finder, ConstRRsetPtr nsec) {
     // Note: name comparison is relatively expensive.  When we are at the
     // stage of performance optimization, we should consider optimizing this
     // for some optimized data source implementations.
-    if (nsec->getName() != fresult.rrset->getName()) {
+    if (nsec->getName() != fcontext->rrset->getName()) {
         response_.addRRset(Message::SECTION_AUTHORITY,
-                           boost::const_pointer_cast<RRset>(fresult.rrset),
+                           boost::const_pointer_cast<AbstractRRset>(fcontext->rrset),
                            dnssec_);
     }
 }
 
+uint8_t
+Query::addClosestEncloserProof(ZoneFinder& finder, const Name& name,
+                               bool exact_ok, bool add_closest)
+{
+    const ZoneFinder::FindNSEC3Result result = finder.findNSEC3(name, true);
+
+    // Validity check (see the method description).  Note that a completely
+    // broken findNSEC3 implementation could even return NULL RRset in
+    // closest_proof.  We don't explicitly check such case; addRRset() will
+    // throw an exception, and it will be converted to SERVFAIL at the caller.
+    if (!exact_ok && !result.next_proof) {
+        isc_throw(BadNSEC3, "Matching NSEC3 found for a non existent name: "
+                  << qname_);
+    }
+
+    if (add_closest) {
+        response_.addRRset(Message::SECTION_AUTHORITY,
+                           boost::const_pointer_cast<AbstractRRset>(
+                               result.closest_proof),
+                           dnssec_);
+    }
+    if (result.next_proof) {
+        response_.addRRset(Message::SECTION_AUTHORITY,
+                           boost::const_pointer_cast<AbstractRRset>(
+                               result.next_proof),
+                           dnssec_);
+    }
+    return (result.closest_labels);
+}
+
 void
-Query::addWildcardProof(ZoneFinder& finder) {
-    // The query name shouldn't exist in the zone if there were no wildcard
-    // substitution.  Confirm that by specifying NO_WILDCARD.  It should result
-    // in NXDOMAIN and an NSEC RR that proves it should be returned.
-    const ZoneFinder::FindResult fresult =
-        finder.find(qname_, RRType::NSEC(),
-                    dnssec_opt_ | ZoneFinder::NO_WILDCARD);
-    if (fresult.code != ZoneFinder::NXDOMAIN || !fresult.rrset ||
-        fresult.rrset->getRdataCount() == 0) {
-        isc_throw(BadNSEC, "Unexpected result for wildcard proof");
+Query::addNSEC3ForName(ZoneFinder& finder, const Name& name, bool match) {
+    const ZoneFinder::FindNSEC3Result result = finder.findNSEC3(name, false);
+
+    // See the comment for addClosestEncloserProof().  We don't check a
+    // totally bogus case where closest_proof is NULL here.
+    if (match != result.matched) {
+        isc_throw(BadNSEC3, "Unexpected "
+                  << (result.matched ? "matching" : "covering")
+                  << " NSEC3 found for " << name);
     }
     response_.addRRset(Message::SECTION_AUTHORITY,
-                       boost::const_pointer_cast<RRset>(fresult.rrset),
+                       boost::const_pointer_cast<AbstractRRset>(
+                           result.closest_proof),
                        dnssec_);
+}
+
+void
+Query::addNXDOMAINProofByNSEC3(ZoneFinder& finder) {
+    // Firstly get the NSEC3 proves for Closest Encloser Proof
+    // See Section 7.2.1 of RFC 5155.
+    const uint8_t closest_labels =
+        addClosestEncloserProof(finder, qname_, false);
+
+    // Next, construct the wildcard name at the closest encloser, i.e.,
+    // '*' followed by the closest encloser, and add NSEC3 for it.
+    const Name wildname(Name("*").concatenate(
+               qname_.split(qname_.getLabelCount() - closest_labels)));
+    addNSEC3ForName(finder, wildname, false);
+}
+
+void
+Query::addWildcardProof(ZoneFinder& finder,
+                        const ZoneFinder::Context& db_context)
+{
+    if (db_context.isNSECSigned()) {
+        // Case for RFC4035 Section 3.1.3.3.
+        //
+        // The query name shouldn't exist in the zone if there were no wildcard
+        // substitution.  Confirm that by specifying NO_WILDCARD.  It should
+        // result in NXDOMAIN and an NSEC RR that proves it should be returned.
+        ConstZoneFinderContextPtr fcontext =
+            finder.find(qname_, RRType::NSEC(),
+                        dnssec_opt_ | ZoneFinder::NO_WILDCARD);
+        if (fcontext->code != ZoneFinder::NXDOMAIN || !fcontext->rrset ||
+            fcontext->rrset->getRdataCount() == 0) {
+            isc_throw(BadNSEC,
+                      "Unexpected NSEC result for wildcard proof");
+        }
+        response_.addRRset(Message::SECTION_AUTHORITY,
+                           boost::const_pointer_cast<AbstractRRset>(
+                               fcontext->rrset),
+                           dnssec_);
+    } else if (db_context.isNSEC3Signed()) {
+        // Case for RFC 5155 Section 7.2.6.
+        //
+        // Note that the closest encloser must be the immediate ancestor
+        // of the matching wildcard, so NSEC3 for its next closer (and only
+        // that NSEC3) is what we are expected to provided per the RFC (if
+        // this assumption isn't met the zone is broken anyway).
+        addClosestEncloserProof(finder, qname_, false, false);
+    }
 }
 
 void
@@ -192,32 +269,38 @@ Query::addWildcardNXRRSETProof(ZoneFinder& finder, ConstRRsetPtr nsec) {
         isc_throw(BadNSEC, "NSEC for WILDCARD_NXRRSET is empty");
     }
     
-    const ZoneFinder::FindResult fresult =
+    ConstZoneFinderContextPtr fcontext =
         finder.find(qname_, RRType::NSEC(),
                     dnssec_opt_ | ZoneFinder::NO_WILDCARD);
-    if (fresult.code != ZoneFinder::NXDOMAIN || !fresult.rrset ||
-        fresult.rrset->getRdataCount() == 0) {
+    if (fcontext->code != ZoneFinder::NXDOMAIN || !fcontext->rrset ||
+        fcontext->rrset->getRdataCount() == 0) {
         isc_throw(BadNSEC, "Unexpected result for no match QNAME proof");
     }
    
-    if (nsec->getName() != fresult.rrset->getName()) {
+    if (nsec->getName() != fcontext->rrset->getName()) {
         // one NSEC RR proves wildcard_nxrrset that no matched QNAME.
         response_.addRRset(Message::SECTION_AUTHORITY,
-                           boost::const_pointer_cast<RRset>(fresult.rrset),
+                           boost::const_pointer_cast<AbstractRRset>(fcontext->rrset),
                            dnssec_);
     }
 }
 
 void
 Query::addDS(ZoneFinder& finder, const Name& dname) {
-    ZoneFinder::FindResult ds_result =
+    ConstZoneFinderContextPtr ds_context =
         finder.find(dname, RRType::DS(), dnssec_opt_);
-    if (ds_result.code == ZoneFinder::SUCCESS) {
+    if (ds_context->code == ZoneFinder::SUCCESS) {
         response_.addRRset(Message::SECTION_AUTHORITY,
-                           boost::const_pointer_cast<RRset>(ds_result.rrset),
+                           boost::const_pointer_cast<AbstractRRset>(
+                               ds_context->rrset),
                            dnssec_);
-    } else if (ds_result.code == ZoneFinder::NXRRSET) {
-        addNXRRsetProof(finder, ds_result);
+    } else if (ds_context->code == ZoneFinder::NXRRSET &&
+               ds_context->isNSECSigned()) {
+        addNXRRsetProof(finder, *ds_context);
+    } else if (ds_context->code == ZoneFinder::NXRRSET &&
+               ds_context->isNSEC3Signed()) {
+        // Add no DS proof with NSEC3 as specified in RFC 5155 Section 7.2.7.
+        addClosestEncloserProof(finder, dname, true);
     } else {
         // Any other case should be an error
         isc_throw(BadDS, "Unexpected result for DS lookup for delegation");
@@ -226,44 +309,78 @@ Query::addDS(ZoneFinder& finder, const Name& dname) {
 
 void
 Query::addNXRRsetProof(ZoneFinder& finder,
-                       const ZoneFinder::FindResult& db_result)
+                       const ZoneFinder::Context& db_context)
 {
-    if (db_result.isNSECSigned() && db_result.rrset) {
+    if (db_context.isNSECSigned() && db_context.rrset) {
         response_.addRRset(Message::SECTION_AUTHORITY,
-                           boost::const_pointer_cast<RRset>(
-                               db_result.rrset),
+                           boost::const_pointer_cast<AbstractRRset>(
+                               db_context.rrset),
                            dnssec_);
-        if (db_result.isWildcard()) {
-            addWildcardNXRRSETProof(finder, db_result.rrset);
+        if (db_context.isWildcard()) {
+            addWildcardNXRRSETProof(finder, db_context.rrset);
         }
+    } else if (db_context.isNSEC3Signed() && !db_context.isWildcard()) {
+        if (qtype_ == RRType::DS()) {
+            // RFC 5155, Section 7.2.4.  Add either NSEC3 for the qname or
+            // closest (provable) encloser proof in case of optout.
+            addClosestEncloserProof(finder, qname_, true);
+        } else {
+            // RFC 5155, Section 7.2.3.  Just add NSEC3 for the qname.
+            addNSEC3ForName(finder, qname_, true);
+        }
+    } else if (db_context.isNSEC3Signed() && db_context.isWildcard()) {
+        // Case for RFC 5155 Section 7.2.5: add closest encloser proof for the
+        // qname, construct the matched wildcard name and add NSEC3 for it.
+        const uint8_t closest_labels =
+            addClosestEncloserProof(finder, qname_, false);
+        const Name wname = Name("*").concatenate(
+            qname_.split(qname_.getLabelCount() - closest_labels));
+        addNSEC3ForName(finder, wname, true);
     }
 }
 
 void
-Query::addAuthAdditional(ZoneFinder& finder) {
+Query::addAuthAdditional(ZoneFinder& finder,
+                         vector<ConstRRsetPtr>& additionals)
+{
+    const Name& origin = finder.getOrigin();
+
     // Fill in authority and addtional sections.
-    ZoneFinder::FindResult ns_result =
-        finder.find(finder.getOrigin(), RRType::NS(), dnssec_opt_);
+    ConstZoneFinderContextPtr ns_context = finder.find(origin, RRType::NS(),
+                                                       dnssec_opt_);
 
     // zone origin name should have NS records
-    if (ns_result.code != ZoneFinder::SUCCESS) {
+    if (ns_context->code != ZoneFinder::SUCCESS) {
         isc_throw(NoApexNS, "There's no apex NS records in zone " <<
-                finder.getOrigin().toText());
-    } else {
-        response_.addRRset(Message::SECTION_AUTHORITY,
-            boost::const_pointer_cast<RRset>(ns_result.rrset), dnssec_);
-        // Handle additional for authority section
-        addAdditional(finder, *ns_result.rrset);
+                  finder.getOrigin().toText());
     }
+    response_.addRRset(Message::SECTION_AUTHORITY,
+                       boost::const_pointer_cast<AbstractRRset>(
+                           ns_context->rrset), dnssec_);
+    getAdditional(qname_, qtype_, *ns_context, additionals);
+}
+
+namespace {
+// A simple wrapper for DataSourceClient::findZone().  Normally we can simply
+// check the closest zone to the qname, but for type DS query we need to
+// look into the parent zone.  Nevertheless, if there is no "parent" (i.e.,
+// the qname consists of a single label, which also means it's the root name),
+// we should search the deepest zone we have (which should be the root zone;
+// otherwise it's a query error).
+DataSourceClient::FindResult
+findZone(const DataSourceClient& client, const Name& qname, RRType qtype) {
+    if (qtype != RRType::DS() || qname.getLabelCount() == 1) {
+        return (client.findZone(qname));
+    }
+    return (client.findZone(qname.split(1)));
+}
 }
 
 void
 Query::process() {
-    const bool qtype_is_any = (qtype_ == RRType::ANY());
-
-    response_.setHeaderFlag(Message::HEADERFLAG_AA, false);
-    const DataSourceClient::FindResult result =
-        datasrc_client_.findZone(qname_);
+    // Found a zone which is the nearest ancestor to QNAME
+    const DataSourceClient::FindResult result = findZone(datasrc_client_,
+                                                         qname_, qtype_);
 
     // If we have no matching authoritative zone for the query name, return
     // REFUSED.  In short, this is to be compatible with BIND 9, but the
@@ -272,16 +389,27 @@ Query::process() {
     // https://lists.isc.org/mailman/htdig/bind10-dev/2010-December/001633.html
     if (result.code != result::SUCCESS &&
         result.code != result::PARTIALMATCH) {
+        // If we tried to find a "parent zone" for a DS query and failed,
+        // we may still have authority at the child side.  If we do, the query
+        // has to be handled there.
+        if (qtype_ == RRType::DS() && qname_.getLabelCount() > 1 &&
+            processDSAtChild()) {
+            return;
+        }
+        response_.setHeaderFlag(Message::HEADERFLAG_AA, false);
         response_.setRcode(Rcode::REFUSED());
         return;
     }
     ZoneFinder& zfinder = *result.zone_finder;
 
-    // Found a zone which is the nearest ancestor to QNAME, set the AA bit
+    // We have authority for a zone that contain the query name (possibly
+    // indirectly via delegation).  Look into the zone.
     response_.setHeaderFlag(Message::HEADERFLAG_AA);
     response_.setRcode(Rcode::NOERROR());
-    std::vector<ConstRRsetPtr> target;
-    boost::function0<ZoneFinder::FindResult> find;
+    vector<ConstRRsetPtr> target;
+    vector<ConstRRsetPtr> additionals;
+    boost::function0<ZoneFinderContextPtr> find;
+    const bool qtype_is_any = (qtype_ == RRType::ANY());
     if (qtype_is_any) {
         find = boost::bind(&ZoneFinder::findAll, &zfinder, qname_,
                            boost::ref(target), dnssec_opt_);
@@ -289,12 +417,12 @@ Query::process() {
         find = boost::bind(&ZoneFinder::find, &zfinder, qname_, qtype_,
                            dnssec_opt_);
     }
-    ZoneFinder::FindResult db_result(find());
-    switch (db_result.code) {
+    ZoneFinderContextPtr db_context(find());
+    switch (db_context->code) {
         case ZoneFinder::DNAME: {
             // First, put the dname into the answer
             response_.addRRset(Message::SECTION_ANSWER,
-                boost::const_pointer_cast<RRset>(db_result.rrset),
+                boost::const_pointer_cast<AbstractRRset>(db_context->rrset),
                 dnssec_);
             /*
              * Empty DNAME should never get in, as it is impossible to
@@ -302,14 +430,14 @@ Query::process() {
              *
              * FIXME: Other way to prevent this should be done
              */
-            assert(db_result.rrset->getRdataCount() > 0);
+            assert(db_context->rrset->getRdataCount() > 0);
             // Get the data of DNAME
             const rdata::generic::DNAME& dname(
                 dynamic_cast<const rdata::generic::DNAME&>(
-                db_result.rrset->getRdataIterator()->getCurrent()));
+                db_context->rrset->getRdataIterator()->getCurrent()));
             // The yet unmatched prefix dname
             const Name prefix(qname_.split(0, qname_.getLabelCount() -
-                db_result.rrset->getName().getLabelCount()));
+                db_context->rrset->getName().getLabelCount()));
             // If we put it together, will it be too long?
             // (The prefix contains trailing ., which will be removed
             if (prefix.getLength() - Name::ROOT_NAME().getLength() +
@@ -324,12 +452,12 @@ Query::process() {
             // The new CNAME we are creating (it will be unsigned even
             // with DNSSEC, the DNAME is signed and it can be validated
             // by that)
-            RRsetPtr cname(new RRset(qname_, db_result.rrset->getClass(),
-                RRType::CNAME(), db_result.rrset->getTTL()));
+            RRsetPtr cname(new RRset(qname_, db_context->rrset->getClass(),
+                RRType::CNAME(), db_context->rrset->getTTL()));
             // Construct the new target by replacing the end
             cname->addRdata(rdata::generic::CNAME(qname_.split(0,
                 qname_.getLabelCount() -
-                db_result.rrset->getName().getLabelCount()).
+                db_context->rrset->getName().getLabelCount()).
                 concatenate(dname.getDname())));
             response_.addRRset(Message::SECTION_ANSWER, cname, dnssec_);
             break;
@@ -345,13 +473,13 @@ Query::process() {
              * So, just put it there.
              */
             response_.addRRset(Message::SECTION_ANSWER,
-                boost::const_pointer_cast<RRset>(db_result.rrset),
+                boost::const_pointer_cast<AbstractRRset>(db_context->rrset),
                 dnssec_);
 
             // If the answer is a result of wildcard substitution,
             // add a proof that there's no closer name.
-            if (dnssec_ && db_result.isWildcard()) {
-                addWildcardProof(*result.zone_finder);
+            if (dnssec_ && db_context->isWildcard()) {
+                addWildcardProof(*result.zone_finder, *db_context);
             }
             break;
         case ZoneFinder::SUCCESS:
@@ -360,57 +488,73 @@ Query::process() {
                 // into answer section.
                 BOOST_FOREACH(ConstRRsetPtr rrset, target) {
                     response_.addRRset(Message::SECTION_ANSWER,
-                        boost::const_pointer_cast<RRset>(rrset), dnssec_);
-                    // Handle additional for answer section
-                    addAdditional(*result.zone_finder, *rrset.get());
+                        boost::const_pointer_cast<AbstractRRset>(rrset), dnssec_);
                 }
             } else {
                 response_.addRRset(Message::SECTION_ANSWER,
-                    boost::const_pointer_cast<RRset>(db_result.rrset),
+                    boost::const_pointer_cast<AbstractRRset>(db_context->rrset),
                     dnssec_);
-                // Handle additional for answer section
-                addAdditional(*result.zone_finder, *db_result.rrset);
             }
+
+            // Retrieve additional records for the answer
+            getAdditional(qname_, qtype_, *db_context, additionals);
+
             // If apex NS records haven't been provided in the answer
             // section, insert apex NS records into the authority section
             // and AAAA/A RRS of each of the NS RDATA into the additional
             // section.
-            if (qname_ != result.zone_finder->getOrigin() ||
-                db_result.code != ZoneFinder::SUCCESS ||
+            // Checking the findZone() is a lightweight check to see if
+            // qname is the zone origin.
+            if (result.code != result::SUCCESS ||
+                db_context->code != ZoneFinder::SUCCESS ||
                 (qtype_ != RRType::NS() && !qtype_is_any))
             {
-                addAuthAdditional(*result.zone_finder);
+                addAuthAdditional(*result.zone_finder, additionals);
             }
 
             // If the answer is a result of wildcard substitution,
             // add a proof that there's no closer name.
-            if (dnssec_ && db_result.isWildcard()) {
-                addWildcardProof(*result.zone_finder);
+            if (dnssec_ && db_context->isWildcard()) {
+                addWildcardProof(*result.zone_finder, *db_context);
             }
             break;
         case ZoneFinder::DELEGATION:
+            // If a DS query resulted in delegation, we also need to check
+            // if we are an authority of the child, too.  If so, we need to
+            // complete the process in the child as specified in Section
+            // 2.2.1.2. of RFC3658.
+            if (qtype_ == RRType::DS() && processDSAtChild()) {
+                return;
+            }
+
             response_.setHeaderFlag(Message::HEADERFLAG_AA, false);
             response_.addRRset(Message::SECTION_AUTHORITY,
-                boost::const_pointer_cast<RRset>(db_result.rrset),
+                boost::const_pointer_cast<AbstractRRset>(db_context->rrset),
                 dnssec_);
+            // Retrieve additional records for the name servers
+            db_context->getAdditional(A_AND_AAAA(), additionals);
+
             // If DNSSEC is requested, see whether there is a DS
             // record for this delegation.
             if (dnssec_) {
-                addDS(*result.zone_finder, db_result.rrset->getName());
+                addDS(*result.zone_finder, db_context->rrset->getName());
             }
-            addAdditional(*result.zone_finder, *db_result.rrset);
             break;
         case ZoneFinder::NXDOMAIN:
             response_.setRcode(Rcode::NXDOMAIN());
             addSOA(*result.zone_finder);
-            if (dnssec_ && db_result.rrset) {
-                addNXDOMAINProof(zfinder, db_result.rrset);
+            if (dnssec_) {
+                if (db_context->isNSECSigned() && db_context->rrset) {
+                    addNXDOMAINProofByNSEC(zfinder, db_context->rrset);
+                } else if (db_context->isNSEC3Signed()) {
+                    addNXDOMAINProofByNSEC3(zfinder);
+                }
             }
             break;
         case ZoneFinder::NXRRSET:
             addSOA(*result.zone_finder);
             if (dnssec_) {
-                addNXRRsetProof(zfinder, db_result);
+                addNXRRsetProof(zfinder, *db_context);
             }
             break;
         default:
@@ -420,6 +564,42 @@ Query::process() {
             isc_throw(isc::NotImplemented, "Unknown result code");
             break;
     }
+
+    for_each(additionals.begin(), additionals.end(),
+             RRsetInserter(response_, Message::SECTION_ADDITIONAL,
+                           dnssec_));
+}
+
+bool
+Query::processDSAtChild() {
+    const DataSourceClient::FindResult zresult =
+        datasrc_client_.findZone(qname_);
+
+    if (zresult.code != result::SUCCESS) {
+        return (false);
+    }
+
+    // We are receiving a DS query at the child side of the owner name,
+    // where the DS isn't supposed to belong.  We should return a "no data"
+    // response as described in Section 3.1.4.1 of RFC4035 and Section
+    // 2.2.1.1 of RFC 3658.  find(DS) should result in NXRRSET, in which
+    // case (and if DNSSEC is required) we also add the proof for that,
+    // but even if find() returns an unexpected result, we don't bother.
+    // The important point in this case is to return SOA so that the resolver
+    // that happens to contact us can hunt for the appropriate parent zone
+    // by seeing the SOA.
+    response_.setHeaderFlag(Message::HEADERFLAG_AA);
+    response_.setRcode(Rcode::NOERROR());
+    addSOA(*zresult.zone_finder);
+    ConstZoneFinderContextPtr ds_context =
+        zresult.zone_finder->find(qname_, RRType::DS(), dnssec_opt_);
+    if (ds_context->code == ZoneFinder::NXRRSET) {
+        if (dnssec_) {
+            addNXRRsetProof(*zresult.zone_finder, *ds_context);
+        }
+    }
+
+    return (true);
 }
 
 }

@@ -115,8 +115,8 @@ TYPED_TEST(Rdata_DS_LIKE_Test, toWireRenderer) {
     UnitTestUtil::readWireData("rdata_ds_fromWire", data);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
                         static_cast<const uint8_t*>
-                        (this->obuffer.getData()) + 2,
-                        this->obuffer.getLength() - 2,
+                        (this->renderer.getData()) + 2,
+                        this->renderer.getLength() - 2,
                         &data[2], data.size() - 2);
 }
 

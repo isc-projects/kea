@@ -133,10 +133,15 @@ public:
         EDNSPtr msg_edns(new EDNS());
         msg_edns->setUDPSize(Message::DEFAULT_MAX_EDNS0_UDPSIZE);
         msg.setEDNS(msg_edns);
-        MessageRenderer renderer(*msgbuf_);
+
+        MessageRenderer renderer;
+        renderer.setBuffer(msgbuf_.get());
         msg.toWire(renderer);
-        MessageRenderer renderer2(*expected_buffer_);
-        msg.toWire(renderer2);
+        renderer.setBuffer(NULL);
+
+        renderer.setBuffer(expected_buffer_.get());
+        msg.toWire(renderer);
+        renderer.setBuffer(NULL);
 
         // Initialize the test data to be returned: tests will return a
         // substring of this data. (It's convenient to have this as a member of
@@ -581,20 +586,22 @@ public:
         return_data_ = "Message returned to the client";
 
         udp::endpoint remote;
-        socket.async_receive_from(asio::buffer(receive_buffer_, sizeof(receive_buffer_)),
-            remote,
-            boost::bind(&IOFetchTest::udpReceiveHandler, this, &remote, &socket,
-                        _1, _2, bad_qid, second_send));
+        socket.async_receive_from(asio::buffer(receive_buffer_,
+                                               sizeof(receive_buffer_)),
+                                  remote,
+                                  boost::bind(&IOFetchTest::udpReceiveHandler,
+                                              this, &remote, &socket,
+                                              _1, _2, bad_qid, second_send));
         service_.get_io_service().post(udp_fetch_);
         if (debug_) {
-            cout << "udpSendReceive: async_receive_from posted, waiting for callback" <<
-                    endl;
+            cout << "udpSendReceive: async_receive_from posted,"
+                "waiting for callback" << endl;
         }
         service_.run();
 
         socket.close();
 
-        EXPECT_TRUE(run_);;
+        EXPECT_TRUE(run_);
     }
 };
 
