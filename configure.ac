@@ -499,20 +499,21 @@ AC_SUBST(USE_LCOV)
 # Searches $PATH for the existence of argument 2,
 # and sets the full path to the variable in argument 1.
 # if not found, and a third argument is given, the value
-# is set to that.
-# Does not take full paths into account at this point,
+# is set to that. If not, the value is untouched.
+# Does not take absolute paths into account at this point,
 # and also works for single files only (arguments are not
 # stripped like in AC_CHECK_PROG)
 AC_DEFUN([ACX_CHECK_PROG_NONCACHE], [
     RESULT=""
     IFS_SAVED="$IFS"
-    IFS=":"
+    IFS=${PATH_SEPARATOR}
     for cur_path in ${PATH} ; do
       if test -e "${cur_path}/$2" ; then
           RESULT="${cur_path}/$2"
       fi
     done
     if test "$RESULT" = "" ; then
+        :
         m4_ifvaln([$3], [$1=$3])
     else
         $1=$RESULT
@@ -521,18 +522,18 @@ AC_DEFUN([ACX_CHECK_PROG_NONCACHE], [
 ])
 
 # Botan helper test function
-# Tries to compile a program, given the output of the given
+# Tries to compile a botan program, given the output of the given
+# config tool
 # Arguments:
 # - name of tool (checked for path), must support --libs and --cflags
 # - fixed argument(s) for tool
 # - action if successful
-# - action if failed
 AC_DEFUN([ACX_TRY_BOTAN_TOOL], [
     TOOL=$1
     TOOL_ARG=$2
     BOTAN_TOOL=""
-    ACX_CHECK_PROG_NONCACHE([BOTAN_TOOL], [${TOOL}], [""])
-    AC_MSG_CHECKING([for usability of ${TOOL} ${TOOL_ARG}])
+    ACX_CHECK_PROG_NONCACHE([BOTAN_TOOL], [${TOOL}])
+    AC_MSG_CHECKING([usability of ${TOOL} ${TOOL_ARG}])
     if test "$BOTAN_TOOL" != "" ; then
         if test -x ${BOTAN_TOOL}; then
             BOTAN_LIBS=`$BOTAN_TOOL $TOOL_ARG --libs`
@@ -553,19 +554,15 @@ AC_DEFUN([ACX_TRY_BOTAN_TOOL], [
                 [ AC_MSG_RESULT([ok])
                   $3
                 ],
-                [ AC_MSG_RESULT([not usable])
-                  $4
-                ]
+                [ AC_MSG_RESULT([not usable]) ]
             )
             LIBS=${LIBS_SAVED}
             CPPFLAGS=${CPPFLAGS_SAVED}
         else
             AC_MSG_RESULT([not executable])
-            $4
         fi
     else
         AC_MSG_RESULT([not found])
-        $4
     fi
     BOTAN_TOOL=""
     AC_SUBST(BOTAN_TOOL)
@@ -573,6 +570,21 @@ AC_DEFUN([ACX_TRY_BOTAN_TOOL], [
 )
 
 # Check for Botan
+#
+# Unless --with-botan-config is given, we first try to find these config
+# scripts ourselves. Unfortunately, on some systems, these scripts do not
+# provide the correct implementation, so for each script found, we try
+# a compilation test (ACX_TRY_BOTAN_TOOL). If none are found, or none of
+# them work, we see if pkg-config is available. If so, we try the several
+# potential pkg-config .pc files. Again, on some systems, these can return
+# incorrect information as well, so the try-compile test is repeated for
+# each.
+#
+# If a working config script or pkgconfig file is found, we then munge its
+# output for use in our Makefiles, and to make sure it works, another header
+# and compilation test is done (this should also check whether we can compile
+# against botan should neither -config scripts nor pkgconfig data exist).
+#
 botan_config="yes"
 AC_ARG_WITH([botan-config],
   AC_HELP_STRING([--with-botan-config=PATH],
@@ -589,17 +601,17 @@ if test "${botan_config}" != "yes" ; then
             BOTAN_CONFIG="${botan_config}"
         fi
     else
-            AC_MSG_ERROR([--with-botan-config should point to a botan-config program and not a directory (${botan_config})])
+        AC_MSG_ERROR([--with-botan-config should point to a botan-config program and not a directory (${botan_config})])
     fi
 else
     BOTAN_CONFIG=""
     # first try several possible names of the config script
-    # (1.8 is there just in case)
+    # (botan-config-1.8 is there just in case, the official name change
+    # came later)
     BOTAN_CONFIG_VERSIONS="botan-config-1.10 botan-config-1.9 botan-config-1.8 botan-config"
     for botan_config in $BOTAN_CONFIG_VERSIONS; do
         ACX_TRY_BOTAN_TOOL([$botan_config],,
-                           [ BOTAN_CONFIG="$botan_config"  ],
-                           []
+                           [ BOTAN_CONFIG="$botan_config"  ]
                           )
         if test "$BOTAN_CONFIG" != "" ; then
             break
@@ -614,8 +626,7 @@ else
             BOTAN_VERSIONS="botan-1.10 botan-1.9 botan-1.8"
             for version in $BOTAN_VERSIONS; do
                 ACX_TRY_BOTAN_TOOL([pkg-config], ["$version --silence-errors"],
-                                   [ BOTAN_CONFIG="$PKG_CONFIG $version" ],
-                                   []
+                                   [ BOTAN_CONFIG="$PKG_CONFIG $version" ]
                                   )
             if test "$BOTAN_CONFIG" != "" ; then
                 break
