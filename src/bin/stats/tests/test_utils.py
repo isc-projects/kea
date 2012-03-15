@@ -150,6 +150,11 @@ class MockBoss:
         "command_name": "sendstats",
         "command_description": "Send data to a statistics module at once",
         "command_args": []
+      },
+      {
+        "command_name": "show_processes",
+        "command_description": "List the running BIND 10 processes",
+        "command_args": []
       }
     ],
     "statistics": [
@@ -210,6 +215,13 @@ class MockBoss:
             return isc.config.create_answer(0)
         elif command == 'getstats':
             return isc.config.create_answer(0, params)
+        elif command == 'show_processes':
+            # Return dummy pids
+            return isc.config.create_answer(
+                0, [[ 9999, "b10-auth"   ],
+                    [ 9998, "b10-auth-2" ],
+                    [ 9997, "b10-auth-3" ],
+                    [ 9996, "b10-auth-4" ]])
         return isc.config.create_answer(1, "Unknown Command")
 
 class MockAuth:
@@ -340,7 +352,7 @@ class MockAuth:
             params = { "owner": "Auth",
                        "data": { 'queries.tcp': self.queries_tcp,
                                  'queries.udp': self.queries_udp,
-                                 'queries.per-zone' : self.queries_per_zone } }
+                                 'queries.perzone' : self.queries_per_zone } }
             return send_command("set", "Stats", params=params, session=self.cc_session)
         return isc.config.create_answer(1, "Unknown Command")
 
