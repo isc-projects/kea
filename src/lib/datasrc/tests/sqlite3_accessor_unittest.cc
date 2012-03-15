@@ -173,6 +173,39 @@ TEST_F(SQLite3AccessorTest, iterator) {
     EXPECT_FALSE(context->getNext(data));
 }
 
+// This tests getting NSEC3 records
+TEST_F(SQLite3AccessorTest, nsec3) {
+    const std::pair<bool, int>
+        zone_info(accessor->getZone("sql2.example.com."));
+    ASSERT_TRUE(zone_info.first);
+
+    DatabaseAccessor::IteratorContextPtr
+        context(accessor->getNSEC3Records("1BB7SO0452U1QHL98UISNDD9218GELR5",
+                                          zone_info.second));
+    // This relies on specific ordering in the DB. Is it OK?
+    checkRR(context, "1BB7SO0452U1QHL98UISNDD9218GELR5", "7200", "NSEC3",
+            "1 0 10 FEEDABEE 4KLSVDE8KH8G95VU68R7AHBE1CPQN38J");
+    checkRR(context, "1BB7SO0452U1QHL98UISNDD9218GELR5", "7200", "RRSIG",
+            "NSEC3 5 4 7200 20100410172647 20100311172647 63192 "
+            "sql2.example.com. gNIVj4T8t51fEU6kOPpvK7HOGBFZGbalN5ZK "
+            "mInyrww6UWZsUNdw07ge6/U6HfG+/s61RZ/L is2M6yUWHyXbNbj/"
+            "QqwqgadG5dhxTArfuR02 xP600x0fWX8LXzW4yLMdKVxGbzYT+vvGz71o "
+            "8gHSY5vYTtothcZQa4BMKhmGQEk=");
+
+    // And that's all
+    std::string data[DatabaseAccessor::COLUMN_COUNT];
+    EXPECT_FALSE(context->getNext(data));
+
+    // Calling again won't hurt
+    EXPECT_FALSE(context->getNext(data));
+
+    // This one should be empty ‒ no data here
+    context = accessor->getNSEC3Records("NO_SUCH_HASH", zone_info.second);
+    EXPECT_FALSE(context->getNext(data));
+    // Still nothing? ;-)
+    EXPECT_FALSE(context->getNext(data));
+}
+
 // This tests the difference iterator context
 
 // Test that at attempt to create a difference iterator for a serial number
