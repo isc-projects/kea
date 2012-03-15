@@ -58,8 +58,8 @@ TEST_F(LoggerTest, Name) {
 
 TEST_F(LoggerTest, GetLogger) {
 
-    const string name1 = "alpha";
-    const string name2 = "beta";
+    const char* name1 = "alpha";
+    const char* name2 = "beta";
 
     // Instantiate two loggers that should be the same
     Logger logger1(name1);
@@ -347,4 +347,31 @@ TEST_F(LoggerTest, IsDebugEnabledLevel) {
     EXPECT_TRUE(logger.isDebugEnabled(MIN_DEBUG_LEVEL));
     EXPECT_TRUE(logger.isDebugEnabled(MID_LEVEL));
     EXPECT_TRUE(logger.isDebugEnabled(MAX_DEBUG_LEVEL));
+}
+
+// Check that if a logger name is too long, it triggers the appropriate
+// assertion.
+
+TEST_F(LoggerTest, LoggerNameLength) {
+    // The following statements should just declare a logger and nothing
+    // should happen.
+    string ok1(Logger::MAX_LOGGER_NAME_SIZE - 1, 'x');
+    Logger l1(ok1.c_str());
+    EXPECT_EQ(getRootLoggerName() + "." + ok1, l1.getName());
+
+    string ok2(Logger::MAX_LOGGER_NAME_SIZE, 'x');
+    Logger l2(ok2.c_str());
+    EXPECT_EQ(getRootLoggerName() + "." + ok2, l2.getName());
+
+    // Note: Not all systems have EXPECT_DEATH.  As it is a macro we can just
+    // test for its presence and bypass the test if not available.
+#ifdef EXPECT_DEATH
+    // Too long a logger name should trigger an assertion failure.
+    // Note that we just check that it dies - we don't check what message is
+    // output.
+    EXPECT_DEATH({
+                    string ok3(Logger::MAX_LOGGER_NAME_SIZE + 1, 'x');
+                    Logger l3(ok3.c_str());
+                 }, ".*");
+#endif
 }

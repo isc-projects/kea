@@ -12,16 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <algorithm>
-#include <map>
-#include <utility>
-#include <cctype>
-#include <cassert>
-
-#include <boost/shared_ptr.hpp>
-#include <boost/scoped_ptr.hpp>
-#include <boost/bind.hpp>
-
 #include <exceptions/exceptions.h>
 
 #include <dns/name.h>
@@ -39,6 +29,17 @@
 #include <datasrc/data_source.h>
 #include <datasrc/factory.h>
 
+#include <boost/shared_ptr.hpp>
+#include <boost/scoped_ptr.hpp>
+#include <boost/bind.hpp>
+#include <boost/foreach.hpp>
+
+#include <algorithm>
+#include <map>
+#include <utility>
+#include <cctype>
+#include <cassert>
+
 using namespace std;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
@@ -47,8 +48,15 @@ using boost::scoped_ptr;
 namespace isc {
 namespace datasrc {
 
+using namespace internal;
+
 namespace {
 // Some type aliases
+
+// RRset specified for this implementation
+typedef boost::shared_ptr<internal::RBNodeRRset> RBNodeRRsetPtr;
+typedef boost::shared_ptr<const internal::RBNodeRRset> ConstRBNodeRRsetPtr;
+
 /*
  * Each domain consists of some RRsets. They will be looked up by the
  * RRType.
@@ -60,19 +68,44 @@ namespace {
  * critical place and map has better interface for the lookups, so we use
  * that.
  */
-typedef map<RRType, ConstRRsetPtr> Domain;
+typedef map<RRType, ConstRBNodeRRsetPtr> Domain;
 typedef Domain::value_type DomainPair;
 typedef boost::shared_ptr<Domain> DomainPtr;
 // The tree stores domains
 typedef RBTree<Domain> DomainTree;
 typedef RBNode<Domain> DomainNode;
 
+// In the following dedicated namespace we define a few application-specific
+// RBNode flags.  We use a separate namespace so we can consolidate the
+// definition in a single place, which would hopefully reduce the risk of
+// collisions.
+// (Note: it's within an unnamed namespace, so effectively private.)
+namespace domain_flag {
+// This flag indicates the node is at a "wildcard level" (in short, it means
+// one of the node's immediate child is a wildcard).  See addWildcards()
+// for more details.
+const DomainNode::Flags WILD = DomainNode::FLAG_USER1;
+
+// This flag is used for additional record shortcut.  If a node has this
+// flag, it's under a zone cut for a delegation to a child zone.
+// Note: for a statically built zone this information is stable, but if we
+// change the implementation to be dynamically modifiable, it may not be
+// realistic to keep this flag update for all affected nodes, and we may
+// have to reconsider the mechanism.
+const DomainNode::Flags GLUE = DomainNode::FLAG_USER2;
+};
+
 // Separate storage for NSEC3 RRs (and their RRSIGs).  It's an STL map
 // from string to the NSEC3 RRset.  The map key is the first label
 // (upper cased) of the owner name of the corresponding NSEC3 (i.e., map
 // value).  We can use  the standard string comparison (if the comparison
 // target is also upper cased) due to the nature of NSEC3 owner names.
-typedef map<string, ConstRRsetPtr> NSEC3Map;
+//
+// Note: We maintain the RRsets in the form of RBNodeRRset even if they are
+// not stored in the RB tree.  The reason is because comparison can be
+// more efficient if we make sure all RRsets returned from this module are
+// of the same type.
+typedef map<string, ConstRBNodeRRsetPtr> NSEC3Map;
 typedef NSEC3Map::value_type NSEC3Pair;
 
 // Actual zone data: Essentially a set of zone's RRs.  This is defined as
@@ -106,6 +139,275 @@ struct ZoneData {
 };
 }
 
+namespace internal {
+
+/// \brief An encapsulation type for a pointer of an additional node
+/// associated with an \c RBNodeRRset object.
+///
+/// Currently this is defined as a structure only so that it can declared
+/// in rbnode_rrset.h; this is essentially a pointer to \c DomainNode.
+/// In future, however, this structure may have other attributes.
+struct AdditionalNodeInfo {
+    AdditionalNodeInfo(DomainNode* node) : node_(node) {}
+    DomainNode* node_;
+};
+
+//
+// RBNodeRRset details
+//
+struct RBNodeRRsetImpl {
+public:
+    RBNodeRRsetImpl(const ConstRRsetPtr& rrset) : rrset_(rrset)
+    {}
+
+    ConstRRsetPtr rrset_;     ///< Underlying RRset
+    scoped_ptr<vector<AdditionalNodeInfo> > additionals_;
+};
+
+RBNodeRRset::RBNodeRRset(const ConstRRsetPtr& rrset) :
+    impl_(new RBNodeRRsetImpl(rrset))
+{
+}
+
+RBNodeRRset::~RBNodeRRset() {
+    delete impl_;
+}
+
+unsigned int
+RBNodeRRset::getRdataCount() const {
+    return (impl_->rrset_->getRdataCount());
+}
+
+const Name&
+RBNodeRRset::getName() const {
+    return (impl_->rrset_->getName());
+}
+
+const RRClass&
+RBNodeRRset::getClass() const {
+    return (impl_->rrset_->getClass());
+}
+
+const RRType&
+RBNodeRRset::getType() const {
+    return (impl_->rrset_->getType());
+}
+
+const RRTTL&
+RBNodeRRset::getTTL() const {
+    return (impl_->rrset_->getTTL());
+}
+
+void
+RBNodeRRset::setName(const Name&) {
+    isc_throw(isc::NotImplemented, "RBNodeRRset::setName() not supported");
+}
+
+void
+RBNodeRRset::setTTL(const RRTTL&) {
+    isc_throw(isc::NotImplemented, "RBNodeRRset::setTTL() not supported");
+}
+
+string
+RBNodeRRset::toText() const {
+    return (impl_->rrset_->toText());
+}
+
+unsigned int
+RBNodeRRset::toWire(AbstractMessageRenderer& renderer) const {
+    return (impl_->rrset_->toWire(renderer));
+}
+
+unsigned int
+RBNodeRRset::toWire(isc::util::OutputBuffer& buffer) const {
+    return (impl_->rrset_->toWire(buffer));
+}
+
+void
+RBNodeRRset::addRdata(ConstRdataPtr) {
+    isc_throw(isc::NotImplemented, "RBNodeRRset::addRdata() not supported");
+}
+
+void
+RBNodeRRset::addRdata(const Rdata&) {
+    isc_throw(isc::NotImplemented, "RBNodeRRset::addRdata() not supported");
+}
+
+RdataIteratorPtr
+RBNodeRRset::getRdataIterator() const {
+    return (impl_->rrset_->getRdataIterator());
+}
+
+RRsetPtr
+RBNodeRRset::getRRsig() const {
+    return (impl_->rrset_->getRRsig());
+}
+
+void
+RBNodeRRset::addRRsig(const ConstRdataPtr& rdata) {
+    AbstractRRset* p = const_cast<AbstractRRset*>(impl_->rrset_.get());
+    p->addRRsig(rdata);
+}
+
+void
+RBNodeRRset::addRRsig(const RdataPtr& rdata) {
+    AbstractRRset* p = const_cast<AbstractRRset*>(impl_->rrset_.get());
+    p->addRRsig(rdata);
+}
+
+void
+RBNodeRRset::addRRsig(const AbstractRRset& sigs) {
+    AbstractRRset* p = const_cast<AbstractRRset*>(impl_->rrset_.get());
+    p->addRRsig(sigs);
+}
+
+void
+RBNodeRRset::addRRsig(const ConstRRsetPtr& sigs) {
+    AbstractRRset* p = const_cast<AbstractRRset*>(impl_->rrset_.get());
+    p->addRRsig(sigs);
+}
+
+void
+RBNodeRRset::addRRsig(const RRsetPtr& sigs) {
+    AbstractRRset* p = const_cast<AbstractRRset*>(impl_->rrset_.get());
+    p->addRRsig(sigs);
+}
+
+void
+RBNodeRRset::removeRRsig() {
+    AbstractRRset* p = const_cast<AbstractRRset*>(impl_->rrset_.get());
+    p->removeRRsig();
+}
+
+ConstRRsetPtr
+RBNodeRRset::getUnderlyingRRset() const {
+    return (impl_->rrset_);
+}
+
+void
+RBNodeRRset::addAdditionalNode(const AdditionalNodeInfo& additional) {
+    // Lazy initialization
+    if (!impl_->additionals_) {
+        impl_->additionals_.reset(new vector<AdditionalNodeInfo>);
+    }
+    impl_->additionals_->push_back(additional);
+}
+
+const vector<AdditionalNodeInfo>*
+RBNodeRRset::getAdditionalNodes() const {
+    return (impl_->additionals_.get());
+}
+
+void
+RBNodeRRset::copyAdditionalNodes(RBNodeRRset& dst) const {
+    if (impl_->additionals_) {
+        dst.impl_->additionals_.reset(
+            new vector<AdditionalNodeInfo>(impl_->additionals_->begin(),
+                                           impl_->additionals_->end()));
+    }
+}
+
+} // end of internal
+
+namespace {
+// Specialized version of ZoneFinder::ResultContext, which specifically
+// holds rrset in the form of RBNodeRRset.
+struct RBNodeResultContext {
+    /// \brief Constructor
+    ///
+    /// The first three parameters correspond to those of
+    /// ZoneFinder::ResultContext.  If node is non NULL, it specifies the
+    /// found RBNode in the search.
+    RBNodeResultContext(ZoneFinder::Result code_param,
+                        ConstRBNodeRRsetPtr rrset_param,
+                        ZoneFinder::FindResultFlags flags_param,
+                        const DomainNode* node) :
+        code(code_param), rrset(rrset_param), flags(flags_param),
+        found_node(node)
+    {}
+
+    const ZoneFinder::Result code;
+    const ConstRBNodeRRsetPtr rrset;
+    const ZoneFinder::FindResultFlags flags;
+    const DomainNode* const found_node;
+};
+}
+
+class InMemoryZoneFinder::Context : public ZoneFinder::Context {
+public:
+    /// \brief Constructor.
+    ///
+    /// Note that we don't have a specific constructor for the findAll() case.
+    /// For (successful) type ANY query, found_node points to the
+    /// corresponding RB node, which is recorded within this specialized
+    /// context.
+    Context(ZoneFinder& finder, ZoneFinder::FindOptions options,
+            const RBNodeResultContext& result) :
+        ZoneFinder::Context(finder, options,
+                            ResultContext(result.code, result.rrset,
+                                          result.flags)),
+        rrset_(result.rrset), found_node_(result.found_node)
+    {}
+
+protected:
+    virtual void getAdditionalImpl(const vector<RRType>& requested_types,
+                                   vector<ConstRRsetPtr>& result)
+    {
+        if (!rrset_) {
+            // In this case this context should encapsulate the result of
+            // findAll() and found_node_ should point to a valid answer node.
+            if (found_node_ == NULL || found_node_->isEmpty()) {
+                isc_throw(isc::Unexpected,
+                          "Invalid call to in-memory getAdditional: caller's "
+                          "bug or broken zone");
+            }
+            BOOST_FOREACH(const DomainPair& dom_it, *found_node_->getData()) {
+                getAdditionalForRRset(*dom_it.second, requested_types,
+                                      result);
+            }
+        } else {
+            getAdditionalForRRset(*rrset_, requested_types, result);
+        }
+    }
+
+private:
+    // Retrieve additional RRsets for a given RRset associated in the context.
+    // The process is straightforward: it examines the link to
+    // AdditionalNodeInfo vector (if set), and find RRsets of the requested
+    // type for each node.
+    static void getAdditionalForRRset(const RBNodeRRset& rrset,
+                                      const vector<RRType>& requested_types,
+                                      vector<ConstRRsetPtr>& result)
+    {
+        const vector<AdditionalNodeInfo>* additionals_ =
+            rrset.getAdditionalNodes();
+        if (additionals_ == NULL) {
+            return;
+        }
+        const bool glue_ok = (rrset.getType() == RRType::NS());
+        BOOST_FOREACH(const AdditionalNodeInfo& additional, *additionals_) {
+            assert(additional.node_ != NULL);
+            if (additional.node_->isEmpty()) {
+                continue;
+            }
+            if (!glue_ok && additional.node_->getFlag(domain_flag::GLUE)) {
+                continue;
+            }
+            BOOST_FOREACH(const RRType& rrtype, requested_types) {
+                Domain::const_iterator found =
+                    additional.node_->getData()->find(rrtype);
+                if (found != additional.node_->getData()->end()) {
+                    // TODO: wildcard consideration
+                    result.push_back(found->second);
+                }
+            }
+        }
+    }
+
+    const ConstRBNodeRRsetPtr rrset_;
+    const DomainNode* const found_node_;
+};
+
 // Private data and hidden methods of InMemoryZoneFinder
 struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
     // Constructor
@@ -113,8 +415,6 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         zone_class_(zone_class), origin_(origin),
         zone_data_(new ZoneData(origin_))
     {}
-
-    static const DomainNode::Flags DOMAINFLAG_WILD = DomainNode::FLAG_USER1;
 
     // Information about the zone
     RRClass zone_class_;
@@ -154,7 +454,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                                                          &node));
                 assert(result == DomainTree::SUCCESS ||
                        result == DomainTree::ALREADYEXISTS);
-                node->setFlag(DOMAINFLAG_WILD);
+                node->setFlag(domain_flag::WILD);
 
                 // Ensure a separate level exists for the wildcard name.
                 // Note: for 'name' itself we do this later anyway, but the
@@ -407,7 +707,8 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
             return (result::EXIST);
         }
 
-        zone_data.nsec3_data_->map_.insert(NSEC3Pair(fst_label, rrset));
+        zone_data.nsec3_data_->map_.insert(
+            NSEC3Pair(fst_label, ConstRBNodeRRsetPtr(new RBNodeRRset(rrset))));
         return (result::SUCCESS);
     }
 
@@ -416,7 +717,9 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
      * access is without the impl_-> and it will get inlined anyway.
      */
     // Implementation of InMemoryZoneFinder::add
-    result::Result add(const ConstRRsetPtr& rawrrset, ZoneData& zone_data) {
+    result::Result add(const ConstRRsetPtr& rawrrset, ZoneData& zone_data,
+                       vector<RBNodeRRset*>* need_additionals)
+    {
         // Sanitize input.  This will cause an exception to be thrown
         // if the input RRset is empty.
         addValidation(rawrrset);
@@ -428,7 +731,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         // ... although instead of loading the RRset directly, we encapsulate
         // it within an RBNodeRRset.  This contains additional information that
         // speeds up queries.
-        ConstRRsetPtr rrset(new internal::RBNodeRRset(rawrrset));
+        RBNodeRRsetPtr rrset(new RBNodeRRset(rawrrset));
 
         if (rrset->getType() == RRType::NSEC3()) {
             return (addNSEC3(rrset, zone_data));
@@ -485,6 +788,12 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                 node->setFlag(DomainNode::FLAG_CALLBACK);
             }
 
+            if (need_additionals != NULL &&
+                (rrset->getType() == RRType::NS() ||
+                 rrset->getType() == RRType::MX())) {
+                need_additionals->push_back(rrset.get());
+            }
+
             // If we've added NSEC3PARAM at zone origin, set up NSEC3 specific
             // data or check consistency with already set up parameters.
             if (rrset->getType() == RRType::NSEC3PARAM() &&
@@ -513,8 +822,10 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
      * Same as above, but it checks the return value and if it already exists,
      * it throws.
      */
-    void addFromLoad(const ConstRRsetPtr& set, ZoneData* zone_data) {
-        switch (add(set, *zone_data)) {
+    void addFromLoad(const ConstRRsetPtr& set, ZoneData* zone_data,
+                     vector<RBNodeRRset*>* need_additionals)
+    {
+        switch (add(set, *zone_data, need_additionals)) {
         case result::EXIST:
             LOG_ERROR(logger, DATASRC_MEM_DUP_RRSET).
                 arg(set->getName()).arg(set->getType());
@@ -540,7 +851,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         {}
         const DomainNode* zonecut_node_;
         const DomainNode* dname_node_;
-        ConstRRsetPtr rrset_;
+        ConstRBNodeRRsetPtr rrset_;
         const FindOptions options_;
     };
 
@@ -613,18 +924,19 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
      * It is designed for wildcard case, where we create the rrsets
      * dynamically.
      */
-    static ConstRRsetPtr prepareRRset(const Name& name,
-                                      const ConstRRsetPtr& rrset,
-                                      bool rename, FindOptions options)
+    static ConstRBNodeRRsetPtr prepareRRset(const Name& name,
+                                            const ConstRBNodeRRsetPtr& rrset,
+                                            bool rename, FindOptions options)
     {
         if (rename) {
             LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_MEM_RENAME).
                 arg(rrset->getName()).arg(name);
-            RRsetPtr result(new RRset(name, rrset->getClass(),
-                                      rrset->getType(), rrset->getTTL()));
+            RRsetPtr result_base(new RRset(name, rrset->getClass(),
+                                           rrset->getType(),
+                                           rrset->getTTL()));
             for (RdataIteratorPtr i(rrset->getRdataIterator()); !i->isLast();
                  i->next()) {
-                result->addRdata(i->getCurrent());
+                result_base->addRdata(i->getCurrent());
             }
             if ((options & FIND_DNSSEC) != 0) {
                 ConstRRsetPtr sig_rrset = rrset->getRRsig();
@@ -638,9 +950,11 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                     {
                         result_sig->addRdata(i->getCurrent());
                     }
-                    result->addRRsig(result_sig);
+                    result_base->addRRsig(result_sig);
                 }
             }
+            RBNodeRRsetPtr result(new RBNodeRRset(result_base));
+            rrset->copyAdditionalNodes(*result);
             return (result);
         } else {
             return (rrset);
@@ -651,8 +965,13 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
     // account wildcard matches and DNSSEC information.  We set the NSEC/NSEC3
     // flag when applicable regardless of the find option; the caller would
     // simply ignore these when they didn't request DNSSEC related results.
-    ResultContext createFindResult(Result code, ConstRRsetPtr rrset,
-                                   bool wild = false) const
+    // When the optional parameter 'node' is given (in which case it should be
+    // non NULL), it means it's a result of ANY query and the context should
+    // remember the matched node.
+    RBNodeResultContext createFindResult(Result code,
+                                         ConstRBNodeRRsetPtr rrset,
+                                         bool wild = false,
+                                         const DomainNode* node = NULL) const
     {
         FindResultFlags flags = RESULT_DEFAULT;
         if (wild) {
@@ -662,13 +981,13 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
             zone_data_->nsec3_data_) {
             flags = flags | RESULT_NSEC3_SIGNED;
         }
-        return (ZoneFinder::ResultContext(code, rrset, flags));
+        return (RBNodeResultContext(code, rrset, flags, node));
     }
 
     // Implementation of InMemoryZoneFinder::find
-    ZoneFinder::ResultContext find(const Name& name, RRType type,
-                                   std::vector<ConstRRsetPtr>* target,
-                                   const FindOptions options) const
+    RBNodeResultContext find(const Name& name, RRType type,
+                             std::vector<ConstRRsetPtr>* target,
+                             const FindOptions options) const
     {
         LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_FIND).arg(name).
             arg(type);
@@ -722,7 +1041,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                     NameComparisonResult::SUPERDOMAIN) {
                     LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_SUPER_STOP).
                         arg(name);
-                    return (createFindResult(NXRRSET, ConstRRsetPtr()));
+                    return (createFindResult(NXRRSET, ConstRBNodeRRsetPtr()));
                 }
 
                 /*
@@ -733,7 +1052,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                  * not match according to 4.3.3 of RFC 1034 (the query name
                  * is known to exist).
                  */
-                if (node->getFlag(DOMAINFLAG_WILD)) {
+                if (node->getFlag(domain_flag::WILD)) {
                     /* Should we cancel this match?
                      *
                      * If we compare with some node and get a common ancestor,
@@ -761,7 +1080,8 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                         getLastComparisonResult().getCommonLabels() > 1) {
                         LOG_DEBUG(logger, DBG_TRACE_DATA,
                                      DATASRC_MEM_WILDCARD_CANCEL).arg(name);
-                        return (createFindResult(NXDOMAIN, ConstRRsetPtr(),
+                        return (createFindResult(NXDOMAIN,
+                                                 ConstRBNodeRRsetPtr(),
                                                  false));
                     }
                     const Name wildcard(Name("*").concatenate(
@@ -769,7 +1089,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                     DomainTree::Result result =
                         zone_data_->domains_.find(wildcard, &node);
                     /*
-                     * Otherwise, why would the DOMAINFLAG_WILD be there if
+                     * Otherwise, why would the domain_flag::WILD be there if
                      * there was no wildcard under it?
                      */
                     assert(result == DomainTree::EXACTMATCH);
@@ -787,7 +1107,8 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
             case DomainTree::NOTFOUND:
                 LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_NOT_FOUND).
                     arg(name);
-                return (createFindResult(NXDOMAIN, ConstRRsetPtr(), false));
+                return (createFindResult(NXDOMAIN, ConstRBNodeRRsetPtr(),
+                                         false));
             case DomainTree::EXACTMATCH: // This one is OK, handle it
                 break;
             default:
@@ -800,7 +1121,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         if (node->isEmpty()) {
             LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_DOMAIN_EMPTY).
                 arg(name);
-            return (createFindResult(NXRRSET, ConstRRsetPtr(), rename));
+            return (createFindResult(NXRRSET, ConstRBNodeRRsetPtr(), rename));
         }
 
         Domain::const_iterator found;
@@ -832,7 +1153,8 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
             }
             LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_ANY_SUCCESS).
                 arg(name);
-            return (createFindResult(SUCCESS, ConstRRsetPtr(), rename));
+            return (createFindResult(SUCCESS, ConstRBNodeRRsetPtr(), rename,
+                                     node));
         }
 
         found = node->getData()->find(type);
@@ -858,7 +1180,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         // No exact match or CNAME.  Return NXRRSET.
         LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_NXRRSET).arg(type).
             arg(name);
-        return (createFindResult(NXRRSET, ConstRRsetPtr(), rename));
+        return (createFindResult(NXRRSET, ConstRBNodeRRsetPtr(), rename));
     }
 };
 
@@ -890,8 +1212,8 @@ InMemoryZoneFinder::find(const Name& name, const RRType& type,
                          const FindOptions options)
 {
     return (ZoneFinderContextPtr(
-                new Context(*this, options,
-                            impl_->find(name, type, NULL, options))));
+                new Context(*this, options, impl_->find(name, type, NULL,
+                                                        options))));
 }
 
 ZoneFinderContextPtr
@@ -901,8 +1223,7 @@ InMemoryZoneFinder::findAll(const Name& name,
 {
     return (ZoneFinderContextPtr(
                 new Context(*this, options, impl_->find(name, RRType::ANY(),
-                                                        &target, options),
-                            target)));
+                                                        &target, options))));
 }
 
 ZoneFinder::FindNSEC3Result
@@ -934,7 +1255,7 @@ InMemoryZoneFinder::findNSEC3(const Name& name, bool recursive) {
     const unsigned int olabels = impl_->origin_.getLabelCount();
     const unsigned int qlabels = name.getLabelCount();
 
-    ConstRRsetPtr covering_proof; // placeholder of the next closer proof
+    ConstRBNodeRRsetPtr covering_proof; // placeholder of the next closer proof
     // Examine all names from the query name to the origin name, stripping
     // the deepest label one by one, until we find a name that has a matching
     // NSEC3 hash.
@@ -984,20 +1305,101 @@ InMemoryZoneFinder::findNSEC3(const Name& name, bool recursive) {
 
 result::Result
 InMemoryZoneFinder::add(const ConstRRsetPtr& rrset) {
-    return (impl_->add(rrset, *impl_->zone_data_));
+    return (impl_->add(rrset, *impl_->zone_data_, NULL));
 }
 
+namespace {
+// This should eventually be more generalized.
+const Name
+getAdditionalName(RRType rrtype, const rdata::Rdata& rdata) {
+    if (rrtype == RRType::NS()) {
+        const generic::NS& ns = dynamic_cast<const generic::NS&>(rdata);
+        return (ns.getNSName());
+    } else {
+        // In our usage the only other possible case is MX.
+        assert(rrtype == RRType::MX());
+        const generic::MX& mx = dynamic_cast<const generic::MX&>(rdata);
+        return (mx.getMXName());
+    }
+}
+
+bool
+checkZoneCut(const DomainNode& node, pair<bool, bool>* arg) {
+    // We are only interested in the highest zone cut information.
+    // Ignore others and continue the search.
+    if (arg->first) {
+        return (false);
+    }
+    // Once we encounter a delegation point due to a DNAME, anything under it
+    // should be hidden.
+    if (node.getData()->find(RRType::DNAME()) != node.getData()->end()) {
+        return (true);
+    } else if (node.getData()->find(RRType::NS()) != node.getData()->end()) {
+        arg->first = true;
+        arg->second = true;
+        return (false);
+    }
+    return (false);
+}
+
+void
+addAdditional(RBNodeRRset* rrset, ZoneData* zone_data) {
+    RdataIteratorPtr rdata_iterator = rrset->getRdataIterator();
+    for (; !rdata_iterator->isLast(); rdata_iterator->next()) {
+        // For each domain name that requires additional section processing
+        // in each RDATA, search the tree for the name and remember it if
+        // found.  If the name is under a zone cut (for a delegation to a
+        // child zone), mark the node as "GLUE", so we can selectively
+        // include/exclude them when we use it.
+
+        // TODO: wildcard
+        RBTreeNodeChain<Domain> node_path;
+        DomainNode* node = NULL;
+        // The callback argument is a pair of bools: the first is a flag to
+        // only check the highest cut; the second one records whether the
+        // search goes under a zone cut.
+        pair<bool, bool> callback_arg(false, false);
+        const DomainTree::Result result =
+            zone_data->domains_.find(
+                getAdditionalName(rrset->getType(),
+                                  rdata_iterator->getCurrent()),
+                &node, node_path, checkZoneCut, &callback_arg);
+        if (result == DomainTree::EXACTMATCH) {
+            assert(node != NULL);
+            if (callback_arg.second ||
+                (node->getFlag(DomainNode::FLAG_CALLBACK) &&
+                 node->getData()->find(RRType::NS()) !=
+                 node->getData()->end())) {
+                // The node is under or at a zone cut; mark it as a glue.
+                node->setFlag(domain_flag::GLUE);
+            }
+            // Note that node may be empty.  We should keep it in the list
+            // in case we dynamically update the tree and it becomes non empty
+            // (which is not supported yet)
+            rrset->addAdditionalNode(node);
+        }
+    }
+}
+}
 
 void
 InMemoryZoneFinder::load(const string& filename) {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_LOAD).arg(getOrigin()).
         arg(filename);
-    // Load it into temporary zone data
+    // Load it into temporary zone data.  As we build the zone, we record
+    // the (RBNode)RRsets that needs to be associated with additional
+    // information in 'need_additionals'.
+    vector<RBNodeRRset*> need_additionals;
     scoped_ptr<ZoneData> tmp(new ZoneData(getOrigin()));
 
     masterLoad(filename.c_str(), getOrigin(), getClass(),
                boost::bind(&InMemoryZoneFinderImpl::addFromLoad, impl_,
-                           _1, tmp.get()));
+                           _1, tmp.get(), &need_additionals));
+
+    // For each RRset in need_additionals, identify the corresponding
+    // RBnode for additional processing and associate it in the RRset.
+    for_each(need_additionals.begin(), need_additionals.end(),
+             boost::bind(addAdditional, _1, tmp.get()));
 
     // If the zone is NSEC3-signed, check if it has NSEC3PARAM
     if (tmp->nsec3_data_) {

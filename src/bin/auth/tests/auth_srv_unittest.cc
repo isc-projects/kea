@@ -1075,6 +1075,28 @@ TEST_F(AuthSrvTest, listenAddresses) {
                                 "Released tokens");
 }
 
+TEST_F(AuthSrvTest, processNormalQuery_reuseRenderer1) {
+    UnitTestUtil::createRequestMessage(request_message, Opcode::QUERY(),
+                                       default_qid, Name("example.com"),
+                                       RRClass::IN(), RRType::NS());
+    
+    request_message.setHeaderFlag(Message::HEADERFLAG_AA);
+    createRequestPacket(request_message, IPPROTO_UDP);
+    server.processMessage(*io_message, *parse_message, *response_obuffer, &dnsserv);
+    EXPECT_NE(request_message.getRcode(), parse_message->getRcode());
+}
+
+TEST_F(AuthSrvTest, processNormalQuery_reuseRenderer2) {
+    UnitTestUtil::createRequestMessage(request_message, Opcode::QUERY(),
+                                       default_qid, Name("example.com"),
+                                       RRClass::IN(), RRType::SOA());
+    
+    request_message.setHeaderFlag(Message::HEADERFLAG_AA);
+    createRequestPacket(request_message, IPPROTO_UDP);
+    server.processMessage(*io_message, *parse_message, *response_obuffer, &dnsserv);
+    ConstQuestionPtr question = *parse_message->beginQuestion();
+    EXPECT_STRNE(question->getType().toText().c_str(),RRType::NS().toText().c_str());
+}
 //
 // Tests for catching exceptions in various stages of the query processing
 //

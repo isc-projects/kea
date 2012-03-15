@@ -3,6 +3,7 @@
 *.o
 .deps/
 .libs/
+__pycache__/
 Makefile
 Makefile.in
 TAGS

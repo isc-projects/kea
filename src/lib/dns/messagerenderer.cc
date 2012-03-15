@@ -15,102 +15,105 @@
 #include <exceptions/exceptions.h>
 #include <util/buffer.h>
 #include <dns/name.h>
+#include <dns/name_internal.h>
+#include <dns/labelsequence.h>
 #include <dns/messagerenderer.h>
 
-#include <cctype>
-#include <cassert>
-#include <set>
+#include <boost/array.hpp>
+#include <boost/static_assert.hpp>
 
+#include <limits>
+#include <cassert>
+#include <vector>
+
+using namespace std;
 using namespace isc::util;
+using isc::dns::name::internal::maptolower;
 
 namespace isc {
 namespace dns {
 
 namespace {     // hide internal-only names from the public namespaces
 ///
-/// \brief The \c NameCompressNode class represents a pointer to a name
+/// \brief The \c OffsetItem class represents a pointer to a name
 /// rendered in the internal buffer for the \c MessageRendererImpl object.
 ///
-/// A \c MessageRendererImpl object maintains a set of the \c NameCompressNode
-/// objects, and searches the set for the position of the longest match
-/// (ancestor) name against each new name to be rendered into the buffer.
-struct NameCompressNode {
-    NameCompressNode(const MessageRenderer& renderer,
-                     const OutputBuffer& buffer, const size_t pos,
-                     const size_t len) :
-        renderer_(renderer), buffer_(buffer), pos_(pos), len_(len) {}
-    /// The renderer that performs name compression using the node.
-    /// This is kept in each node to detect the compression mode
-    /// (case-sensitive or not) in the comparison functor (\c NameCompare).
-    const MessageRenderer& renderer_;
-    /// The buffer in which the corresponding name is rendered.
-    const OutputBuffer& buffer_;
+/// A \c MessageRendererImpl object maintains a set of \c OffsetItem
+/// objects in a hash table, and searches the table for the position of the
+/// longest match (ancestor) name against each new name to be rendered into
+/// the buffer.
+struct OffsetItem {
+    OffsetItem(size_t hash, size_t pos, size_t len) :
+        hash_(hash), pos_(pos), len_(len)
+    {}
+
+    /// The hash value for the stored name calculated by LabelSequence.getHash.
+    /// This will help make name comparison in \c NameCompare more efficient.
+    size_t hash_;
+
     /// The position (offset from the beginning) in the buffer where the
     /// name starts.
     uint16_t pos_;
-    /// The length of the corresponding name.
+
+    /// The length of the corresponding sequence (which is a domain name).
     uint16_t len_;
 };
 
+/// \brief The \c NameCompare class is a functor that checks equality
+/// between the name corresponding to an \c OffsetItem object and the name
+/// consists of labels represented by a \c LabelSequence object.
 ///
-/// \brief The \c NameCompare class is a functor that gives ordering among
-/// \c NameCompressNode objects stored in \c MessageRendererImpl::nodeset_.
-///
-/// Its only public method as a functor, \c operator(), gives the ordering
-/// between two \c NameCompressNode objects in terms of equivalence, that is,
-/// returns whether one is "less than" the other.
-/// For our purpose we only need to distinguish two different names, so the
-/// ordering is different from the canonical DNS name order used in DNSSEC;
-/// basically, it gives the case-insensitive ordering of the two names as their
-/// textual representation.
-struct NameCompare : public std::binary_function<NameCompressNode,
-                                                 NameCompressNode,
-                                                 bool> {
+/// Template parameter CASE_SENSITIVE determines whether to ignore the case
+/// of the names.  This policy doesn't change throughout the lifetime of
+/// this object, so we separate these using template to avoid unnecessary
+/// condition check.
+template <bool CASE_SENSITIVE>
+struct NameCompare {
+    /// \brief Constructor
     ///
-    /// Returns true if n1 < n2 as a result of case-insensitive comparison;
-    /// otherwise return false.
-    ///
-    /// The name corresponding to \c n1 or \c n2 may be compressed, in which
-    /// case we must follow the compression pointer in the associated buffer.
-    /// The helper private method \c nextPosition() gives the position in the
-    /// buffer for the next character, taking into account compression.
-    ///
-    bool operator()(const NameCompressNode& n1,
-                    const NameCompressNode& n2) const
-    {
-        if (n1.len_ < n2.len_) {
-            return (true);
-        } else if (n1.len_ > n2.len_) {
+    /// \param buffer The buffer for rendering used in the caller renderer
+    /// \param name_buf An input buffer storing the wire-format data of the
+    /// name to be newly rendered (and only that data).
+    /// \param hash The hash value for the name.
+    NameCompare(const OutputBuffer& buffer, InputBuffer& name_buf,
+                size_t hash) :
+        buffer_(&buffer), name_buf_(&name_buf), hash_(hash)
+    {}
+
+    bool operator()(const OffsetItem& item) const {
+        // Trivial inequality check.  If either the hash or the total length
+        // doesn't match, the names are obviously different.
+        if (item.hash_  != hash_ || item.len_ != name_buf_->getLength()) {
             return (false);
         }
 
-        const bool case_sensitive =
-            (n1.renderer_.getCompressMode() == MessageRenderer::CASE_SENSITIVE);
-
-        uint16_t pos1 = n1.pos_;
-        uint16_t pos2 = n2.pos_;
-        uint16_t l1 = 0;
-        uint16_t l2 = 0;
-        for (uint16_t i = 0; i < n1.len_; i++, pos1++, pos2++) {
-            pos1 = nextPosition(n1.buffer_, pos1, l1);
-            pos2 = nextPosition(n2.buffer_, pos2, l2);
-            if (case_sensitive) {
-                if (n1.buffer_[pos1] < n2.buffer_[pos2]) {
-                    return (true);
-                } else if (n1.buffer_[pos1] > n2.buffer_[pos2]) {
+        // Compare the name data, character-by-character.
+        // item_pos keeps track of the position in the buffer corresponding to
+        // the character to compare.  item_label_len is the number of
+        // characters in the labels where the character pointed by item_pos
+        // belongs.  When it reaches zero, nextPosition() identifies the
+        // position for the subsequent label, taking into account name
+        // compression, and resets item_label_len to the length of the new
+        // label.
+        name_buf_->setPosition(0); // buffer can be reused, so reset position
+        uint16_t item_pos = item.pos_;
+        uint16_t item_label_len = 0;
+        for (size_t i = 0; i < item.len_; ++i, ++item_pos) {
+            item_pos = nextPosition(*buffer_, item_pos, item_label_len);
+            const unsigned char ch1 = (*buffer_)[item_pos];
+            const unsigned char ch2 = name_buf_->readUint8();
+            if (CASE_SENSITIVE) {
+                if (ch1 != ch2) {
                     return (false);
                 }
             } else {
-                if (tolower(n1.buffer_[pos1]) < tolower(n2.buffer_[pos2])) {
-                    return (true);
-                } else if (tolower(n1.buffer_[pos1]) >
-                           tolower(n2.buffer_[pos2])) {
+                if (maptolower[ch1] != maptolower[ch2]) {
                     return (false);
                 }
             }
         }
 
-        return (false);
+        return (true);
     }
 
 private:
@@ -138,6 +141,10 @@ private:
         }
         return (pos);
     }
+
+    const OutputBuffer* buffer_;
+    InputBuffer* name_buf_;
+    const size_t hash_;
 };
 }
 
@@ -148,20 +155,60 @@ private:
 /// The implementation is hidden from applications.  We can refer to specific
 /// members of this class only within the implementation source file.
 ///
+/// It internally holds a hash table for OffsetItem objects corresponding
+/// to portions of names rendered in this renderer.  The offset information
+/// is used to compress subsequent names to be rendered.
 struct MessageRenderer::MessageRendererImpl {
-    /// \brief Constructor from an output buffer.
-    ///
+    // The size of hash buckets and number of hash entries per bucket for
+    // which space is preallocated and kept reserved for subsequent rendering
+    // to provide better performance.  These values are derived from the
+    // BIND 9 implementation that uses a similar hash table.
+    static const size_t BUCKETS = 64;
+    static const size_t RESERVED_ITEMS = 16;
+    static const uint16_t NO_OFFSET = 65535; // used as a marker of 'not found'
+
+    /// \brief Constructor
     MessageRendererImpl() :
-        nbuffer_(Name::MAX_WIRE), msglength_limit_(512),
-        truncated_(false), compress_mode_(MessageRenderer::CASE_INSENSITIVE)
-    {}
-    /// A local working buffer to convert each given name into wire format.
-    /// This could be a local variable of the \c writeName() method, but
-    /// we keep it in the class so that we can reuse it and avoid construction
-    /// overhead.
-    OutputBuffer nbuffer_;
-    /// A set of compression pointers.
-    std::set<NameCompressNode, NameCompare> nodeset_;
+        msglength_limit_(512), truncated_(false),
+        compress_mode_(MessageRenderer::CASE_INSENSITIVE)
+    {
+        // Reserve some spaces for hash table items.
+        for (size_t i = 0; i < BUCKETS; ++i) {
+            table_[i].reserve(RESERVED_ITEMS);
+        }
+    }
+
+    uint16_t findOffset(const OutputBuffer& buffer, InputBuffer& name_buf,
+                        size_t hash, bool case_sensitive) const
+    {
+        // Find a matching entry, if any.  We use some heuristics here: often
+        // the same name appers consecutively (like repeating the same owner
+        // name for a single RRset), so in case there's a collision in the
+        // bucket it will be more likely to find it in the tail side of the
+        // bucket.
+        const size_t bucket_id = hash % BUCKETS;
+        vector<OffsetItem>::const_reverse_iterator found;
+        if (case_sensitive) {
+            found = find_if(table_[bucket_id].rbegin(),
+                            table_[bucket_id].rend(),
+                            NameCompare<true>(buffer, name_buf, hash));
+        } else {
+            found = find_if(table_[bucket_id].rbegin(),
+                            table_[bucket_id].rend(),
+                            NameCompare<false>(buffer, name_buf, hash));
+        }
+        if (found != table_[bucket_id].rend()) {
+            return (found->pos_);
+        }
+        return (NO_OFFSET);
+    }
+
+    void addOffset(size_t hash, size_t offset, size_t len) {
+        table_[hash % BUCKETS].push_back(OffsetItem(hash, offset, len));
+    }
+
+    // The hash table for the (offset + position in the buffer) entries
+    vector<OffsetItem> table_[BUCKETS];
     /// The maximum length of rendered data that can fit without
     /// truncation.
     uint16_t msglength_limit_;
@@ -170,6 +217,11 @@ struct MessageRenderer::MessageRendererImpl {
     bool truncated_;
     /// The name compression mode.
     CompressMode compress_mode_;
+
+    // Placeholder for hash values as they are calculated in writeName().
+    // Note: we may want to make it a local variable of writeName() if it
+    // works more efficiently.
+    boost::array<size_t, Name::MAX_LABELS> seq_hashes_;
 };
 
 MessageRenderer::MessageRenderer() :
@@ -184,11 +236,22 @@ MessageRenderer::~MessageRenderer() {
 void
 MessageRenderer::clear() {
     AbstractMessageRenderer::clear();
-    impl_->nbuffer_.clear();
-    impl_->nodeset_.clear();
     impl_->msglength_limit_ = 512;
     impl_->truncated_ = false;
     impl_->compress_mode_ = CASE_INSENSITIVE;
+
+    // Clear the hash table.  We reserve the minimum space for possible
+    // subsequent use of the renderer.
+    for (size_t i = 0; i < MessageRendererImpl::BUCKETS; ++i) {
+        if (impl_->table_[i].size() > MessageRendererImpl::RESERVED_ITEMS) {
+            // Trim excessive capacity: swap ensures the new capacity is only
+            // reasonably large for the reserved space.
+            vector<OffsetItem> new_table;
+            new_table.reserve(MessageRendererImpl::RESERVED_ITEMS);
+            new_table.swap(impl_->table_[i]);
+        }
+        impl_->table_[i].clear();
+    }
 }
 
 size_t
@@ -218,59 +281,81 @@ MessageRenderer::getCompressMode() const {
 
 void
 MessageRenderer::setCompressMode(const CompressMode mode) {
+    if (getLength() != 0) {
+        isc_throw(isc::InvalidParameter,
+                  "compress mode cannot be changed during rendering");
+    }
     impl_->compress_mode_ = mode;
 }
 
 void
 MessageRenderer::writeName(const Name& name, const bool compress) {
-    impl_->nbuffer_.clear();
-    name.toWire(impl_->nbuffer_);
+    LabelSequence sequence(name);
+    const size_t nlabels = sequence.getLabelCount();
+    size_t data_len;
+    const char* data;
 
-    unsigned int i;
-    std::set<NameCompressNode, NameCompare>::const_iterator notfound =
-        impl_->nodeset_.end();
-    std::set<NameCompressNode, NameCompare>::const_iterator n = notfound;
-
-    // Find the longest ancestor name in the rendered set that matches the
-    // given name.
-    for (i = 0; i < impl_->nbuffer_.getLength(); i += impl_->nbuffer_[i] + 1) {
-        // skip the trailing null label
-        if (impl_->nbuffer_[i] == 0) {
-            continue;
-        }
-        n = impl_->nodeset_.find(NameCompressNode(*this, impl_->nbuffer_, i,
-                                                  impl_->nbuffer_.getLength() -
-                                                  i));
-        if (n != notfound) {
+    // Find the offset in the offset table whose name gives the longest
+    // match against the name to be rendered.
+    size_t nlabels_uncomp;
+    uint16_t ptr_offset = MessageRendererImpl::NO_OFFSET;
+    const bool case_sensitive = (impl_->compress_mode_ ==
+                                 MessageRenderer::CASE_SENSITIVE);
+    for (nlabels_uncomp = 0; nlabels_uncomp < nlabels; ++nlabels_uncomp) {
+        data = sequence.getData(&data_len);
+        if (data_len == 1) { // trailing dot.
+            ++nlabels_uncomp;
             break;
         }
-    }
-
-    // Record the current offset before extending the buffer.
-    const size_t offset = getLength();
-    // Write uncompress part...
-    writeData(impl_->nbuffer_.getData(),
-              compress ? i : impl_->nbuffer_.getLength());
-    if (compress && n != notfound) {
-        // ...and compression pointer if available.
-        uint16_t pointer = (*n).pos_;
-        pointer |= Name::COMPRESS_POINTER_MARK16;
-        writeUint16(pointer);
-    }
-
-    // Finally, add to the set the newly rendered name and its ancestors that
-    // have not been in the set.
-    for (unsigned int j = 0; j < i; j += impl_->nbuffer_[j] + 1) {
-        if (impl_->nbuffer_[j] == 0) {
-            continue;
-        }
-        if (offset + j > Name::MAX_COMPRESS_POINTER) {
+        // write with range check for safety
+        impl_->seq_hashes_.at(nlabels_uncomp) =
+            sequence.getHash(impl_->compress_mode_);
+        InputBuffer name_buf(data, data_len);
+        ptr_offset = impl_->findOffset(getBuffer(), name_buf,
+                                       impl_->seq_hashes_[nlabels_uncomp],
+                                       case_sensitive);
+        if (ptr_offset != MessageRendererImpl::NO_OFFSET) {
             break;
         }
-        impl_->nodeset_.insert(NameCompressNode(*this, getBuffer(),
-                                                offset + j,
-                                                impl_->nbuffer_.getLength() -
-                                                j));
+        sequence.stripLeft(1);
+    }
+
+    // Record the current offset before updating the offset table
+    size_t offset = getLength();
+    // Write uncompress part:
+    if (nlabels_uncomp > 0 || !compress) {
+        LabelSequence uncomp_sequence(name);
+        if (compress && nlabels > nlabels_uncomp) {
+            // If there's compressed part, strip off that part.
+            uncomp_sequence.stripRight(nlabels - nlabels_uncomp);
+        }
+        data = uncomp_sequence.getData(&data_len);
+        writeData(data, data_len);
+    }
+    // And write compression pointer if available:
+    if (compress && ptr_offset != MessageRendererImpl::NO_OFFSET) {
+        ptr_offset |= Name::COMPRESS_POINTER_MARK16;
+        writeUint16(ptr_offset);
+    }
+
+    // Finally, record the offset and length for each uncompressed sequence
+    // in the hash table.  The renderer's buffer has just stored the
+    // corresponding data, so we use the rendered data to get the length
+    // of each label of the names.
+    size_t seqlen = name.getLength();
+    for (size_t i = 0; i < nlabels_uncomp; ++i) {
+        const uint8_t label_len = getBuffer()[offset];
+        if (label_len == 0) { // offset for root doesn't need to be stored.
+            break;
+        }
+        if (offset > Name::MAX_COMPRESS_POINTER) {
+            break;
+        }
+        // Store the tuple of <hash, offset, len> to the table.  Note that we
+        // already know the hash value for each name.
+        impl_->addOffset(impl_->seq_hashes_[i], offset, seqlen);
+        offset += (label_len + 1);
+        seqlen -= (label_len + 1);
     }
 }
 
