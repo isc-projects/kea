@@ -123,6 +123,35 @@ AbstractRRset::isSameKind(const AbstractRRset& other) const {
 	  getClass() == other.getClass());
 }
 
+bool
+AbstractRRset::lthan(const AbstractRRset& other) const {
+
+    // Check on type first...
+    const uint16_t my_type = getType().getCode();
+    const uint16_t other_type = other.getType().getCode();
+    if (my_type < other_type) {
+        return (true);
+
+    } else if (my_type == other_type) {
+        // Types equal, so check class
+        const uint16_t my_class = getClass().getCode();
+        const uint16_t other_class = other.getClass().getCode();
+        if (my_class < other_class) {
+            return (true);
+
+        } else if (my_class == other_class) {
+            // Class equal, so check name
+            return (getName().lthan(other.getName()));
+
+        } else {
+            return (false);
+        }
+
+    } else {
+        return (false);
+    }
+}
+
 ostream&
 operator<<(ostream& os, const AbstractRRset& rrset) {
     os << rrset.toText();
