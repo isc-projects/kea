@@ -26,6 +26,7 @@
 
 #include <boost/bind.hpp>
 
+#include <sys/types.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <unistd.h>             // for some IPC/network system calls
