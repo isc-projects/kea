@@ -205,6 +205,13 @@ const char* const TEST_RECORDS[][5] = {
     {NULL, NULL, NULL, NULL, NULL},
 };
 
+// FIXME: Taken from a different test. Fill with proper data when creating a test.
+const char* TEST_NSEC3_RECORDS[][5] = {
+    {"1BB7SO0452U1QHL98UISNDD9218GELR5", "NSEC3", "3600", "", "1 0 10 FEEDABEE 4KLSVDE8KH8G95VU68R7AHBE1CPQN38J"},
+    {"1BB7SO0452U1QHL98UISNDD9218GELR5", "RRSIG", "3600", "", "NSEC3 5 4 7200 20100410172647 20100311172647 63192 example.org. gNIVj4T8t51fEU6kOPpvK7HOGBFZGbalN5ZK mInyrww6UWZsUNdw07ge6/U6HfG+/s61RZ/L is2M6yUWHyXbNbj/QqwqgadG5dhxTArfuR02 xP600x0fWX8LXzW4yLMdKVxGbzYT+vvGz71o 8gHSY5vYTtothcZQa4BMKhmGQEk="},
+    {NULL, NULL, NULL, NULL, NULL}
+};
+
 /*
  * An accessor with minimum implementation, keeping the original
  * "NotImplemented" methods.
@@ -383,6 +390,28 @@ public:
     }
 
 private:
+    class DomainIterator : public IteratorContext {
+    public:
+        DomainIterator(const std::vector<std::vector<std::string> >& domain) :
+            domain_(domain),
+            position_(domain_.begin())
+        {}
+        virtual bool getNext(std::string (&columns)[COLUMN_COUNT]) {
+            if (position_ == domain_.end()) {
+                return (false);
+            } else {
+                for (size_t i(0); i < COLUMN_COUNT; ++ i) {
+                    columns[i] = (*position_)[i];
+                }
+                ++ position_;
+                return (true);
+            }
+        }
+    private:
+        const std::vector<std::vector<std::string> > domain_;
+        std::vector<std::vector<std::string> >::const_iterator position_;
+    };
+
     class MockNameIteratorContext : public IteratorContext {
     public:
         MockNameIteratorContext(const MockAccessor& mock_accessor, int zone_id,
@@ -615,6 +644,17 @@ public:
         }
     }
 
+    virtual IteratorContextPtr getNSEC3Records(const std::string& hash,
+                                               int) const
+    {
+        Domains::const_iterator it(nsec_namespace_.find(hash));
+        if (it == nsec_namespace_.end()) {
+            return (IteratorContextPtr(new EmptyIteratorContext()));
+        } else {
+            return (IteratorContextPtr(new DomainIterator(it->second)));
+        }
+    }
+
     virtual pair<bool, int> startUpdateZone(const std::string& zone_name,
                                             bool replace)
     {
@@ -835,6 +875,9 @@ private:
     const Domains empty_records_master_;
     const Domains* empty_records_;
 
+    // The NSEC3 namespace. The above trick will be added once it is needed.
+    Domains nsec_namespace_;
+
     // The journal data
     std::vector<JournalEntry> journal_entries_master_;
     std::vector<JournalEntry>* journal_entries_;
@@ -895,6 +938,20 @@ private:
         cur_name_.clear();
     }
 
+    // Works in a similar way to addCurName, but it is added to
+    // the NSEC3 namespace. You don't provide the full name, only
+    // the hash part.
+    void addCurHash(const std::string& hash) {
+        ASSERT_EQ(0, nsec_namespace_.count(hash));
+        // Append the name to all of them
+        for (std::vector<std::vector<std::string> >::iterator
+             i = cur_name_.begin(); i != cur_name_.end(); ++ i) {
+            i->push_back(hash);
+        }
+        (*readonly_records_)[hash] = cur_name_;
+        cur_name_.clear();
+    }
+
     // Fills the database with zone data.
     // This method constructs a number of resource records (with addRecord),
     // which will all be added for one domain name to the fake database
@@ -917,6 +974,17 @@ private:
                       TEST_RECORDS[i][3], TEST_RECORDS[i][4]);
         }
         addCurName(prev_name);
+        prev_name = NULL;
+        for (int i = 0; TEST_NSEC3_RECORDS[i][0] != NULL; ++i) {
+            if (prev_name != NULL &&
+                strcmp(prev_name, TEST_NSEC3_RECORDS[i][0]) != 0) {
+                addCurHash(prev_name);
+            }
+            prev_name = TEST_NSEC3_RECORDS[i][0];
+            addRecord(TEST_NSEC3_RECORDS[i][1], TEST_NSEC3_RECORDS[i][2],
+                      TEST_NSEC3_RECORDS[i][3], TEST_NSEC3_RECORDS[i][4]);
+        }
+        addCurHash(prev_name);
     }
 };
 
