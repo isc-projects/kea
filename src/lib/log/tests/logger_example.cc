@@ -105,7 +105,7 @@ void usage() {
 // messages.  Looking at the output determines whether the program worked.
 
 int main(int argc, char** argv) {
-    const string ROOT_NAME = "example";
+    const char* ROOT_NAME = "example";
 
     bool                sw_found = false;   // Set true if switch found
     bool                c_found = false;    // Set true if "-c" found

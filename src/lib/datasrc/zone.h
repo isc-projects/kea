@@ -252,6 +252,13 @@ public:
         /// call resulted in SUCCESS or DELEGATION.  Otherwise this method
         /// does nothing.
         ///
+        /// \note The additional RRsets returned via method are limited to
+        /// ones contained in the zone which the corresponding find/findAll
+        /// call searched (possibly including glues under a zone cut where
+        /// they are applicable).  If the caller needs to get out-of-zone
+        /// additional RRsets, it needs to explicitly finds them by
+        /// identifying the corresponding zone and calls \c find() for it.
+        ///
         /// \param requested_types A vector of RR types for desired additional
         ///  RRsets.
         /// \param result A vector to which any found additional RRsets are

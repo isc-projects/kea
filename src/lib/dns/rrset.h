@@ -475,6 +475,14 @@ public:
     /// \brief Clear the RRSIGs for this RRset
     virtual void removeRRsig() = 0;
 
+    /// \brief Check whether two RRsets are of the same kind
+    ///
+    /// Checks if two RRsets have the same name, RR type, and RR class.
+    ///
+    /// \param other Pointer to another AbstractRRset to compare
+    ///              against.
+    virtual bool isSameKind(const AbstractRRset& other) const;
+
     //@}
 };
 

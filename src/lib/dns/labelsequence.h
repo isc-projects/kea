@@ -69,6 +69,22 @@ public:
     /// \return Pointer to the wire-format data of this label sequence
     const char* getData(size_t* len) const;
 
+    /// \brief Return the length of the wire-format data of this LabelSequence
+    ///
+    /// This method returns the number of octets for the data that would
+    /// be returned by the \c getData() method.
+    ///
+    /// Note that the return value of this method is always positive.
+    /// Note also that if the return value of this method is 1, it means the
+    /// sequence consists of the null label, i.e., a single "dot", and vice
+    /// versa.
+    ///
+    /// \note The data pointed to is only valid if the original Name
+    /// object is still in scope
+    ///
+    /// \return The length of the data of the label sequence in octets.
+    size_t getDataLength() const;
+
     /// \brief Compares two label sequences.
     ///
     /// Performs a (optionally case-insensitive) comparison between this
@@ -105,7 +121,7 @@ public:
     /// \brief Returns the current number of labels for this LabelSequence
     ///
     /// \return The number of labels
-    size_t getLabelCount() const { return last_label_ - first_label_; }
+    size_t getLabelCount() const { return (last_label_ - first_label_); }
 
     /// \brief Returns the original Name object associated with this
     ///        LabelSequence
@@ -116,7 +132,32 @@ public:
     /// LabelSequence itself.
     ///
     /// \return Reference to the original Name object
-    const Name& getName() const { return name_; }
+    const Name& getName() const { return (name_); }
+
+    /// \brief Calculate a simple hash for the label sequence.
+    ///
+    /// This method calculates a hash value for the label sequence as binary
+    /// data.  If \c case_sensitive is false, it ignores the case stored in
+    /// the labels; specifically, it normalizes the labels by converting all
+    /// upper case characters to lower case ones and calculates the hash value
+    /// for the result.
+    ///
+    /// This method is intended to provide a lightweight way to store a
+    /// relatively small number of label sequences in a hash table.
+    /// For this reason it only takes into account data up to 16 octets
+    /// (16 was derived from BIND 9's implementation).  Also, the function does
+    /// not provide any unpredictability; a specific sequence will always have
+    /// the same hash value.  It should therefore not be used in the context
+    /// where an untrusted third party can mount a denial of service attack by
+    /// forcing the application to create a very large number of label
+    /// sequences that have the same hash value and expected to be stored in
+    /// a hash table.
+    ///
+    /// \exception None
+    ///
+    /// \param case_sensitive
+    /// \return A hash value for this label sequence.
+    size_t getHash(bool case_sensitive) const;
 
     /// \brief Checks whether the label sequence is absolute
     ///
