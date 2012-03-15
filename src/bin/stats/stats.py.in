@@ -279,55 +279,66 @@ class Stats:
         instance sends statistics data in the situation that multiple
         instances are working.
         """
+        # Note:
+        # The fix of #1751 is for multiple instances working. It is
+        # assumed here that they send different statistics data with
+        # each PID. Stats should save their statistics data by
+        # PID. The statistics data, which is the existing variable, is
+        # preserved by accumlating from statistics data by PID. This
+        # is an ad-hoc fix because administrators can not see
+        # statistics by each instance via bindctl or HTTP/XML. These
+        # interfaces aren't changed in this fix.
+
+        def _accum_bymodule(statistics_data_bypid):
+            # This is an internal function for the superordinate
+            # function. It accumulates statistics data of each PID by
+            # module. It returns the accumulation result.
+            def _accum(a, b):
+                # If the first arg is dict or list type, two values
+                # would be merged and accumlated.
+                if type(a) is dict:
+                    return dict([ (k, _accum(v, b[k])) \
+                                      if k in b else (k, v) \
+                                      for (k, v) in a.items() ] \
+                                    + [ (k, v) \
+                                            for (k, v) in b.items() \
+                                            if k not in a ])
+                elif type(a) is list:
+                    return [ _accum(a[i], b[i]) \
+                                 if len(b) > i else a[i] \
+                                 for i in range(len(a)) ] \
+                                 + [ b[i] \
+                                         for i in range(len(b)) \
+                                         if len(a) <= i ]
+                # If the first arg is integer or float type, two
+                # values are just added.
+                elif type(a) is int or type(a) is float:
+                    return a + b
+                # If the first arg is str or other types than above,
+                # then it just returns the first arg which is assumed
+                # to be the newer value.
+                return a
+            ret = {}
+            for data in statistics_data_bypid.values():
+                ret.update(_accum(data, ret))
+            return ret
+
+        # Firstly, it gets default statistics data in each spec file.
         self.update_modules()
         statistics_data = {}
         for (name, module) in self.modules.items():
             value = get_spec_defaults(module.get_statistics_spec())
             if module.validate_statistics(True, value):
                 statistics_data[name] = value
-        for (name, value) in self.statistics_data.items():
-            if name in statistics_data:
-                statistics_data[name].update(value)
-            else:
-                statistics_data[name] = value
         self.statistics_data = statistics_data
-        def _sum_bymodule(statistics_data_bypid):
-            # sum recursively each value under each
-            # element
-            def _sum(a, b):
-                if type(a) is dict:
-                    return dict([ (k, _sum(v, b[k])) if k in b else (k, v) \
-                                      for (k, v) in a.items() ] \
-                                    + [ (k, v) for (k, v) in b.items() \
-                                            if k not in a ])
-                elif type(a) is list:
-                    return [ _sum(a[i], b[i]) if len(b) > i else a[i] \
-                                 for i in range(len(a)) ] \
-                                 + [ b[i] for i in range(len(b)) \
-                                         if len(a) <= i ]
-                elif type(a) is float or type(a) is int:
-                    return a + b
-                # If str or other types than above, then
-                # just replace with the newer value.
-                return a
-            ret = {}
-            for data in statistics_data_bypid.values():
-                ret.update(_sum(data, ret))
-            return ret
+
+        # If the "owner" and "data" arguments in this function are
+        # specified, then the variable of statistics data of each pid
+        # would be updated.
+        errors = []
         if owner and data:
-            errors = []
             try:
                 if self.modules[owner].validate_statistics(False, data, errors):
-                    # This is for multiple instances working. It is
-                    # assumed here that they send different statistics
-                    # data with each pid. Stats should save their
-                    # statistics data by pid. The statistics data,
-                    # which is the existing variable, is preserved by
-                    # summarizing from statistics data by pid. This is
-                    # an ad-hoc fix because administrators can not see
-                    # statistics by each instance via bindctl or
-                    # HTTP/XML. These interfaces aren't changed in
-                    # this fix.
                     if owner in self.statistics_data_bypid:
                         if pid in self.statistics_data_bypid[owner]:
                             self.statistics_data_bypid[owner][pid].update(data)
@@ -335,13 +346,16 @@ class Stats:
                             self.statistics_data_bypid[owner][pid] = data
                     else:
                         self.statistics_data_bypid[owner] = { pid : data }
-                    self.statistics_data[owner].update(
-                        _sum_bymodule(self.statistics_data_bypid[owner]))
             except KeyError:
                 errors.append("unknown module name: " + str(owner))
-            if errors: return errors
-        # Find dead instances by invoking "show_processes" to Boss,
-        # then remove their statistics data if there are ones
+
+        # If there are inactive instances, which was actually running
+        # on the system before, their statistics data would be
+        # removed. To find inactive instances, it invokes the
+        # "show_processes" command to Boss via the cc session. Then it
+        # gets active instance list and compares its PIDs with PIDs in
+        # statistics data which it already has. If inactive instances
+        # are found, it would remove their statistics data.
         seq = self.cc_session.group_sendmsg(
             isc.config.ccsession.create_command("show_processes", None),
             "Boss")
@@ -349,27 +363,33 @@ class Stats:
         if answer:
             (rcode, value) = isc.config.ccsession.parse_answer(answer)
             if rcode == 0:
-                if type(value) is not list:
-                    return
-                for v in value:
-                    if type(v) is not list or len(v) < 2:
-                        return
-                mlist = [ k for k in self.statistics_data_bypid.keys() ]
-                for m in mlist:
-                    plist1 = [ p for p in self.statistics_data_bypid[m].keys() ]
-                    plist2 = [ v[0] for v in value \
-                                   if v[1].lower().find(m.lower()) >= 0 ] \
-                                   + [-1] # add the default pid
-                    # set object difference: nplist = plist1 - plist2
-                    nplist = set(plist1).difference(set(plist2))
-                    for p in nplist:
-                        self.statistics_data_bypid[m].pop(p)
-                    if self.statistics_data_bypid[m]:
-                        if m in self.statistics_data:
-                            self.statistics_data[m].update(
-                                _sum_bymodule(self.statistics_data_bypid[m]))
-                    else:
-                        self.statistics_data_bypid.pop(m)
+                if type(value) is list and len(value) > 0 \
+                        and type(value[0]) is list and len(value[0]) > 1:
+                    mlist = [ k for k in self.statistics_data_bypid.keys() ]
+                    for m in mlist:
+                        # PID list which it has before except for -1
+                        plist1 = [ p for p in self.statistics_data_bypid[m]\
+                                       .keys() if p != -1]
+                        # PID list of active instances which is
+                        # received from Boss
+                        plist2 = [ v[0] for v in value \
+                                       if v[1].lower().find(m.lower()) \
+                                       >= 0 ]
+                        # get inactive instance list by the difference
+                        # between plist1 and plist2
+                        nplist = set(plist1).difference(set(plist2))
+                        for p in nplist:
+                            self.statistics_data_bypid[m].pop(p)
+                        if self.statistics_data_bypid[m]:
+                            if m in self.statistics_data:
+                                self.statistics_data[m].update(
+                                    _accum_bymodule(
+                                        self.statistics_data_bypid[m]))
+                        # remove statistics data of the module with no
+                        # PID
+                        else:
+                            self.statistics_data_bypid.pop(m)
+        if errors: return errors
 
     def command_status(self):
         """
