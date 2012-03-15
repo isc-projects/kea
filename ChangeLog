@@ -1,3 +1,8 @@
+402.	[func]		jelte
+	b10-xfrout now has a visible command to send out notifies for
+	a given zone, callable from bindctl. Xfrout notify <zone> [class]
+	(Trac #1321, git 0bb258f8610620191d75cfd5d2308b6fc558c280)
+
 401.	[func]*		jinmei
 	libdns++: updated the internal implementation of the
 	MessageRenderer class.  This is mostly a transparent change, but
