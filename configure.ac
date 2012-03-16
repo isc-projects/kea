@@ -814,7 +814,8 @@ if test "X$ac_cv_have_kqueue" = "Xyes"; then
 #include <sys/param.h>
 #include <sys/event.h>],
 [char* udata;
-EV_SET(NULL, 0, 0, 0, 0, 0, udata);],
+struct kevent kevent;
+EV_SET(&kevent, 0, 0, 0, 0, 0, udata);],
 	[AC_MSG_RESULT(yes)],
 	[AC_MSG_RESULT([no, disable kqueue for ASIO])
 	 CPPFLAGS="$CPPFLAGS -DASIO_DISABLE_KQUEUE=1"
