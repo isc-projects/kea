@@ -109,27 +109,6 @@ A_AND_AAAA() {
     return (needed_types);
 }
 
-// A wrapper for ZoneFinder::Context::getAdditional() so we don't include
-// duplicate RRs.  This is not efficient, and we should actually unify
-// this at the end of the process() method.  See also #1688.
-void
-getAdditional(const Name& qname, RRType qtype,
-              ZoneFinder::Context& ctx, vector<ConstRRsetPtr>& results)
-{
-    vector<ConstRRsetPtr> additionals;
-    ctx.getAdditional(A_AND_AAAA(), additionals);
-
-    vector<ConstRRsetPtr>::const_iterator it = additionals.begin();
-    vector<ConstRRsetPtr>::const_iterator it_end = additionals.end();
-    for (; it != it_end; ++it) {
-        if ((qtype == (*it)->getType() || qtype == RRType::ANY()) &&
-            qname == (*it)->getName()) {
-            continue;
-        }
-        results.push_back(*it);
-    }
-}
-
 }
 
 namespace isc {
@@ -371,7 +350,7 @@ Query::addAuthAdditional(ZoneFinder& finder,
                   finder.getOrigin().toText());
     }
     authorities_.push_back(ns_context->rrset);
-    getAdditional(*qname_, *qtype_, *ns_context, additionals);
+    ns_context->getAdditional(A_AND_AAAA(), additionals);
 }
 
 namespace {
@@ -507,7 +486,7 @@ Query::process(datasrc::DataSourceClient& datasrc_client,
             }
 
             // Retrieve additional records for the answer
-            getAdditional(*qname_, *qtype_, *db_context, additionals_);
+            db_context->getAdditional(A_AND_AAAA(), additionals_);
 
             // If apex NS records haven't been provided in the answer
             // section, insert apex NS records into the authority section
