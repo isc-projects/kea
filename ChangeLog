@@ -1,3 +1,11 @@
+403.	[build]*	jelte
+	The configure option for botan (--with-botan=PATH) is replaced by
+	--with-botan-config=PATH, which takes a full path to a botan-config
+	script, instead of the botan 'install' directory. Also, if not
+	provided, configure will try out config scripts and pkg-config
+	options until it finds one that works.
+	(Trac #1640, git 582bcd66dbd8d39f48aef952902f797260280637)
+
 402.	[func]		jelte
 	b10-xfrout now has a visible command to send out notifies for
 	a given zone, callable from bindctl. Xfrout notify <zone> [class]
