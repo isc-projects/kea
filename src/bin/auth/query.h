@@ -251,19 +251,6 @@ private:
                     const isc::dns::Name& qname, const isc::dns::RRType& qtype,
                     isc::dns::Message& response, bool dnssec = false);
 
-    /// \brief Fill in the response sections
-    ///
-    /// This is the final step of the process() method, and within
-    /// that method, it should be called before it returns (if any
-    /// response data is to be added)
-    ///
-    /// This will take each RRset collected in answers_, authorities_, and
-    /// additionals_, and add them to their corresponding sections in
-    /// the response message.
-    ///
-    /// After they are added, the vectors are cleared.
-    void createResponse();
-
     /// \brief Resets any partly built response data, and internal pointers
     ///
     /// Called by the QueryCleaner object upon its destruction
@@ -282,6 +269,24 @@ private:
         isc::auth::Query& query_;
     };
 
+protected:
+    // Following methods declared protected so they can be accessed
+    // by unit tests.
+
+    /// \brief Fill in the response sections
+    ///
+    /// This is the final step of the process() method, and within
+    /// that method, it should be called before it returns (if any
+    /// response data is to be added)
+    ///
+    /// This will take each RRset collected in answers_, authorities_, and
+    /// additionals_, and add them to their corresponding sections in
+    /// the response message.  The RRsets are filtered such that a
+    /// particular RRset appears only once in the message.
+    ///
+    /// After they are added, the vectors are cleared.
+    void createResponse();
+
 public:
     /// Default constructor.
     ///
@@ -289,8 +294,8 @@ public:
     ///
     Query() :
         datasrc_client_(NULL), qname_(NULL), qtype_(NULL),
-        response_(NULL), dnssec_(false),
-        dnssec_opt_(isc::datasrc::ZoneFinder::FIND_DEFAULT)
+        dnssec_(false), dnssec_opt_(isc::datasrc::ZoneFinder::FIND_DEFAULT),
+        response_(NULL)
     {
         answers_.reserve(RESERVE_RRSETS);
         authorities_.reserve(RESERVE_RRSETS);
@@ -406,10 +411,13 @@ private:
     const isc::datasrc::DataSourceClient* datasrc_client_;
     const isc::dns::Name* qname_;
     const isc::dns::RRType* qtype_;
-    isc::dns::Message* response_;
     bool dnssec_;
     isc::datasrc::ZoneFinder::FindOptions dnssec_opt_;
 
+protected:
+    // Following members declared protected to allow them to be accessed
+    // by unit tests.
+    isc::dns::Message* response_;
     std::vector<isc::dns::ConstRRsetPtr> answers_;
     std::vector<isc::dns::ConstRRsetPtr> authorities_;
     std::vector<isc::dns::ConstRRsetPtr> additionals_;
