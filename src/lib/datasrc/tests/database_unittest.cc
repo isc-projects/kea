@@ -652,8 +652,8 @@ public:
     virtual IteratorContextPtr getNSEC3Records(const std::string& hash,
                                                int) const
     {
-        Domains::const_iterator it(nsec_namespace_.find(hash));
-        if (it == nsec_namespace_.end()) {
+        Domains::const_iterator it(nsec3_namespace_.find(hash));
+        if (it == nsec3_namespace_.end()) {
             return (IteratorContextPtr(new EmptyIteratorContext()));
         } else {
             return (IteratorContextPtr(new DomainIterator(it->second)));
@@ -797,6 +797,21 @@ public:
             isc_throw(isc::Unexpected, "Unknown zone ID");
         }
     }
+    virtual std::string findPreviousNSEC3Hash(int,
+                                              const std::string& hash) const
+    {
+        // TODO: Provide some broken data, but it is not known yet how broken
+        // they'll have to be.
+        Domains::const_iterator it(nsec3_namespace_.lower_bound(hash));
+        // We got just after the one we want
+        if (it == nsec3_namespace_.begin()) {
+            // Hmm, we got something really small. So we wrap around.
+            // This is one after the last, so after decreasing it we'll get
+            // the biggest.
+            it = nsec3_namespace_.end();
+        }
+        return ((--it)->first);
+    }
     virtual void addRecordDiff(int id, uint32_t serial,
                                DiffOperation operation,
                                const std::string (&data)[DIFF_PARAM_COUNT])
@@ -881,7 +896,7 @@ private:
     const Domains* empty_records_;
 
     // The NSEC3 namespace. The above trick will be added once it is needed.
-    Domains nsec_namespace_;
+    Domains nsec3_namespace_;
 
     // The journal data
     std::vector<JournalEntry> journal_entries_master_;
@@ -947,7 +962,7 @@ private:
     // the NSEC3 namespace. You don't provide the full name, only
     // the hash part.
     void addCurHash(const std::string& hash) {
-        ASSERT_EQ(0, nsec_namespace_.count(hash));
+        ASSERT_EQ(0, nsec3_namespace_.count(hash));
         // Append the name to all of them
         for (std::vector<std::vector<std::string> >::iterator
              i = cur_name_.begin(); i != cur_name_.end(); ++ i) {
