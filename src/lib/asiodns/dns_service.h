@@ -136,7 +136,7 @@ public:
     /// \throw isc::InvalidParameter if af is neither AF_INET nor AF_INET6.
     /// \throw isc::asiolink::IOError when a low-level error happens, like the
     ///     fd is not a valid descriptor or it can't be listened on.
-    void addServerUDPFromFD(int fd, int af,const UDPVersion param_flags = SYNC_);
+    void addServerUDPFromFD(int fd, int af,const UDPVersion param_flags = ASYNC_);
 
     /// \brief Remove all servers from the service
     void clearServers();
