@@ -12,12 +12,13 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <map>
 #include <sstream>
 #include <vector>
-#include <map>
 
 #include <boost/bind.hpp>
 #include <boost/scoped_ptr.hpp>
+#include <boost/static_assert.hpp>
 
 #include <exceptions/exceptions.h>
 
@@ -2366,5 +2367,173 @@ TEST_F(QueryTest, emptyNameWithNSEC3) {
     EXPECT_FALSE(result->rrset);
     EXPECT_TRUE(result->isNSEC3Signed());
     EXPECT_FALSE(result->isWildcard());
+}
+
+// Class to allow checking of duplication removal in messages resulting from.
+// the query.  This class allows the setting of the answers, authorities and
+// additionals vector in the Query class, as well as the ability to call the
+// createResponse() method.
+
+class DuplicateQuery : public isc::auth::Query {
+public:
+    // \brief Constructor
+    //
+    // Fill in the parts of Query that we test in the DuplicateRemoval test.
+    DuplicateQuery(isc::dns::Message* message,
+                   const vector<RRsetPtr>& answers,
+                   const vector<RRsetPtr>& authorities,
+                   const vector<RRsetPtr>& additionals) : Query() {
+        response_ = message;
+        copy(answers.begin(), answers.end(),
+             back_inserter(answers_));
+        copy(authorities.begin(), authorities.end(),
+             back_inserter(authorities_));
+        copy(additionals.begin(), additionals.end(),
+             back_inserter(additionals_));
+    }
+
+    // \brief Create Response
+    //
+    // Public interface to the (protected) Query::createResponse() method.
+    void produceResponse() {
+        createResponse();
+    }
+};
+
+// Vector of RRsets used for the test.   Having this external to functions and
+// classes used for the testing simplifies the code.
+std::vector<RRsetPtr> rrset_vector;
+
+// Callback function for masterLoad.
+void
+loadRRsetVectorCallback(RRsetPtr rrsetptr) {
+    rrset_vector.push_back(rrsetptr);
+}
+
+// Load a set of RRsets into a vector for use in the duplicate RRset test.
+// They don't make a lot of sense as a zone, they are just different.  The
+// variables used in the stringstream input have been chosen so that each
+// represents just one RRset.
+void
+loadRRsetVector() {
+    stringstream ss;
+
+    // Comments indicate offset in the rrset_vector (when loaded) and the
+    // number of RRs in that RRset.
+    ss << soa_txt               // 0(1)
+       << zone_ns_txt           // 1(3)
+       << delegation_txt        // 2(4)
+       << delegation_ds_txt     // 3(1)
+       << mx_txt                // 4(3)
+       << www_a_txt             // 5(1)
+       << cname_txt             // 6(1)
+       << cname_nxdom_txt       // 7(1)
+       << cname_out_txt;        // 8(1)
+    rrset_vector.clear();
+    masterLoad(ss, Name("example.com."), RRClass::IN(), loadRRsetVectorCallback);
+}
+
+TEST_F(QueryTest, DuplicateNameRemoval) {
+
+    // Load some RRsets into the master vector.
+    loadRRsetVector();
+    EXPECT_EQ(9, rrset_vector.size());
+
+    // Create an answer, authority and authority vector with some overlapping
+    // entries.  The following indicate which elements from rrset_vector
+    // go into each section vector.  (The values have been separated to show
+    // the overlap.)
+    //
+    // answer     = 0 1 2 3
+    // authority  =     2 3 4 5 6 7
+    // additional = 0     3       7 8
+    //
+    // If the duplicate removal works, we should end up with the following in
+    // the message created from the three vectors:
+    //
+    // answer     = 0 1 2 3
+    // authority  =         4 5 6 7
+    // additional =                 8
+    //
+    // The expected section into which each RRset is placed is indicated in the
+    // array below.
+    const Message::Section expected_section[] = {
+        Message::SECTION_ANSWER,
+        Message::SECTION_ANSWER,
+        Message::SECTION_ANSWER,
+        Message::SECTION_ANSWER,
+        Message::SECTION_AUTHORITY,
+        Message::SECTION_AUTHORITY,
+        Message::SECTION_AUTHORITY,
+        Message::SECTION_AUTHORITY,
+        Message::SECTION_ADDITIONAL
+    };
+    EXPECT_EQ(rrset_vector.size(),
+              (sizeof(expected_section) / sizeof(Message::Section)));
+
+    // Create the vectors of RRsets (with the RRsets in a semi-random order).
+    std::vector<RRsetPtr> answer;
+    copy(rrset_vector.begin() + 2, rrset_vector.begin() + 4,
+         back_inserter(answer));
+    copy(rrset_vector.begin() + 0, rrset_vector.begin() + 2,
+         back_inserter(answer));
+
+    std::vector<RRsetPtr> authority;
+    copy(rrset_vector.begin() + 3, rrset_vector.begin() + 8,
+         back_inserter(authority));
+    authority.push_back(rrset_vector[2]);
+
+    std::vector<RRsetPtr> additional;
+    copy(rrset_vector.begin() + 7, rrset_vector.begin() + 9,
+         back_inserter(additional));
+    additional.push_back(rrset_vector[3]);
+    additional.push_back(rrset_vector[0]);
+
+    // Create the message object into which the RRsets are put
+    Message message(Message::RENDER);
+    EXPECT_EQ(0, message.getRRCount(Message::SECTION_ANSWER));
+    EXPECT_EQ(0, message.getRRCount(Message::SECTION_AUTHORITY));
+    EXPECT_EQ(0, message.getRRCount(Message::SECTION_ADDITIONAL));
+
+    // ... and fill it.
+    DuplicateQuery query(&message, answer, authority, additional);
+    query.produceResponse();
+
+    // Check counts in each section.  Note that these are RR counts,
+    // not RRset counts.
+    EXPECT_EQ(9, message.getRRCount(Message::SECTION_ANSWER));
+    EXPECT_EQ(6, message.getRRCount(Message::SECTION_AUTHORITY));
+    EXPECT_EQ(1, message.getRRCount(Message::SECTION_ADDITIONAL));
+
+    // ... and check that the RRsets are in the correct section
+    BOOST_STATIC_ASSERT(Message::SECTION_QUESTION == 0);
+    BOOST_STATIC_ASSERT(Message::SECTION_ANSWER == 1);
+    BOOST_STATIC_ASSERT(Message::SECTION_AUTHORITY == 2);
+    BOOST_STATIC_ASSERT(Message::SECTION_ADDITIONAL == 3);
+    Message::Section sections[] = {
+        Message::SECTION_QUESTION,
+        Message::SECTION_ANSWER,
+        Message::SECTION_AUTHORITY,
+        Message::SECTION_ADDITIONAL
+    };
+    for (int section = 1; section <= 3; ++section) {
+        for (int vecindex = 0; vecindex < rrset_vector.size(); ++vecindex) {
+            // Prepare error message in case an assertion fails (as the default
+            // message will only refer to the loop indexes).
+            stringstream ss;
+            ss << "section " << section << ", name "
+               << rrset_vector[vecindex]->getName().toText();
+            SCOPED_TRACE(ss.str());
+
+            // Check RRset is in the right section and not in the wrong section.
+            if (sections[section] == expected_section[vecindex]) {
+                EXPECT_TRUE(message.hasRRset(sections[section],
+                            rrset_vector[vecindex]));
+            } else {
+                EXPECT_FALSE(message.hasRRset(sections[section],
+                             rrset_vector[vecindex]));
+            }
+        }
+    }
 }
 }

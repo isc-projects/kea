@@ -15,6 +15,7 @@
 #include <dns/message.h>
 #include <dns/rcode.h>
 #include <dns/rrtype.h>
+#include <dns/rrset.h>
 #include <dns/rdataclass.h>
 
 #include <datasrc/client.h>
@@ -26,6 +27,7 @@
 #include <boost/function.hpp>
 
 #include <algorithm>            // for std::max
+#include <set>
 #include <vector>
 
 using namespace std;
@@ -35,27 +37,64 @@ using namespace isc::dns::rdata;
 
 // Commonly used helper callback object for vector<ConstRRsetPtr> to
 // insert them to (the specified section of) a message.
+//
+// One feature is that it maintains an internal set of raw pointers to the
+// RRsets as they are added (this is safe - the object is only in scope in
+// the createResponse() method and during this time, all RRsets referred to
+// remain in existence due to the presence of the ConstRRsetPtr objects
+// from which the raw objects were derived).  The set is used to detect
+// and discard duplicates.
 namespace {
 class RRsetInserter {
+private:
+    // \brief RRset comparison functor.
+    struct RRsetLthan {
+        bool operator()(const AbstractRRset* r1, const AbstractRRset* r2) {
+            return (r1->lthan(*r2));
+        }
+    };
+
+    typedef std::set<const AbstractRRset*, RRsetLthan> AddedRRsets;
+
 public:
-    RRsetInserter(Message& msg, Message::Section section, bool dnssec) :
-        msg_(msg), section_(section), dnssec_(dnssec)
+    RRsetInserter(Message& msg, const Message::Section section,
+                  const bool dnssec) :
+                  msg_(msg), section_(section), dnssec_(dnssec)
     {}
-    void operator()(const ConstRRsetPtr& rrset) {
-        /*
-         * FIXME:
-         * The const-cast is wrong, but the Message interface seems
-         * to insist.
-         */
-        msg_.addRRset(section_,
-                      boost::const_pointer_cast<AbstractRRset>(rrset),
-                      dnssec_);
+
+    // \brief Set Target Section
+    // 
+    // Sets the section into which the information added by addRRset will be
+    // inserted.
+    //
+    // \param section New section number
+    void setSection(Message::Section section) {
+        section_ = section;
+    }
+
+    // Insertion operation
+    //
+    // \param rrset Pointer to RRset to be added to the message
+    void addRRset(const ConstRRsetPtr& rrset) {
+        // Has the RRset already been added to this message?
+        std::pair<AddedRRsets::iterator, bool> result =
+            rrsets_added_.insert(rrset.get());
+        if (result.second) {
+            // Were able to add the pointer to the RRset to rrsets_added_, so
+            // the RRset has not already been seen.  Add it to the message.
+            // The const-cast is wrong, but the Message interface seems
+            // to insist.
+            msg_.addRRset(section_,
+                          boost::const_pointer_cast<AbstractRRset>(rrset),
+                          dnssec_);
+        }
     }
 
 private:
     Message& msg_;
-    const Message::Section section_;
+    Message::Section section_;
     const bool dnssec_;
+    AddedRRsets rrsets_added_;
 };
 
 // This is a "constant" vector storing desired RR types for the additional
@@ -553,12 +592,26 @@ Query::initialize(datasrc::DataSourceClient& datasrc_client,
 
 void
 Query::createResponse() {
-    for_each(answers_.begin(), answers_.end(),
-             RRsetInserter(*response_, Message::SECTION_ANSWER, dnssec_));
-    for_each(authorities_.begin(), authorities_.end(),
-             RRsetInserter(*response_, Message::SECTION_AUTHORITY, dnssec_));
-    for_each(additionals_.begin(), additionals_.end(),
-             RRsetInserter(*response_, Message::SECTION_ADDITIONAL, dnssec_));
+    // Add the RRsets to the message.  The order of sections is important,
+    // as the RRsetInserter remembers RRsets added and will not add
+    // duplicates.  Adding in the order answer, authory, additional will
+    // guarantee that if there are duplicates, the single RRset added will
+    // appear in the most important section.
+    std::vector<isc::dns::ConstRRsetPtr>::const_iterator i;
+    RRsetInserter inserter(*response_, Message::SECTION_ANSWER, dnssec_);
+    for (i = answers_.begin(); i != answers_.end(); ++i) {
+        inserter.addRRset(*i);
+    }
+
+    inserter.setSection(Message::SECTION_AUTHORITY);
+    for (i = authorities_.begin(); i != authorities_.end(); ++i) {
+        inserter.addRRset(*i);
+    }
+
+    inserter.setSection(Message::SECTION_ADDITIONAL);
+    for (i = additionals_.begin(); i != additionals_.end(); ++i) {
+        inserter.addRRset(*i);
+    }
 }
 
 void
