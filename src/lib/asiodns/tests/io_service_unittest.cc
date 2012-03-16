@@ -123,6 +123,6 @@ TEST(IOServiceTest, BadUdpServerVersion) {
     IOService io_service;
     scoped_ptr<DNSService> dns_service(new DNSService(io_service, NULL, NULL,
                                                       NULL));
-    EXPECT_THROW(dns_service->addServer(*TEST_SERVER_PORT, "127.0.0.1",
-                                        UDPVersion(3)), IOError);
+    EXPECT_THROW(dns_service->addServerUDPFromFD(42, AF_INET6,
+                                                 UDPVersion(3)), IOError);
 }
