@@ -27,7 +27,7 @@
  */
 namespace isc {
 namespace asiodns {
-class DNSService;
+class DNSServiceBase;
 }
 }
 
@@ -120,10 +120,14 @@ parseAddresses(isc::data::ConstElementPtr addresses,
 void
 installListenAddresses(const AddressList& newAddresses,
                        AddressList& addressStore,
-                       asiodns::DNSService& dnsService);
+                       asiodns::DNSServiceBase& dnsService);
 
 }
 }
 }
 
 #endif
+
+// Local Variables:
+// mode: c++
+// End:

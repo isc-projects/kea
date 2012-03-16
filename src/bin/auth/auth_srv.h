@@ -28,6 +28,7 @@
 #include <util/buffer.h>
 
 #include <asiodns/dns_server.h>
+#include <asiodns/dns_service.h>
 #include <asiodns/dns_lookup.h>
 #include <asiodns/dns_answer.h>
 #include <asiolink/io_message.h>
