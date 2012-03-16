@@ -1098,5 +1098,10 @@ SQLite3Accessor::findPreviousName(int zone_id, const std::string& rname)
     return (result);
 }
 
+std::string
+SQLite3Accessor::findPreviousNSEC3Hash(int, const std::string&) const {
+    isc_throw(NotImplemented, "Not implemented yet, see #1760");
+}
+
 } // end of namespace datasrc
 } // end of namespace isc
