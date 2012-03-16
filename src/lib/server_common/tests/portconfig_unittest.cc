@@ -14,6 +14,7 @@
 
 #include <server_common/portconfig.h>
 #include <testutils/socket_request.h>
+#include <testutils/mockups.h>
 
 #include <cc/data.h>
 #include <exceptions/exceptions.h>
@@ -30,6 +31,7 @@ using namespace isc;
 using namespace std;
 using namespace isc::asiolink;
 using namespace isc::asiodns;
+using namespace isc::testutils;
 using boost::lexical_cast;
 
 namespace {
@@ -132,7 +134,6 @@ TEST_F(ParseAddresses, invalid) {
 // Test fixture for installListenAddresses
 struct InstallListenAddresses : public ::testing::Test {
     InstallListenAddresses() :
-        dnss_(ios_, NULL, NULL, NULL),
         // The empty string is expected parameter of requestSocket,
         // not app_name - the request does not fall back to this, it
         // is checked to be the same.
@@ -143,8 +144,7 @@ struct InstallListenAddresses : public ::testing::Test {
         invalid_.push_back(AddressPair("127.0.0.1", 5288));
         invalid_.push_back(AddressPair("192.0.2.2", 1));
     }
-    IOService ios_;
-    DNSService dnss_;
+    MockDNSService dnss_;
     AddressList store_;
     isc::testutils::TestSocketRequestor sock_requestor_;
     // We should be able to bind to these addresses

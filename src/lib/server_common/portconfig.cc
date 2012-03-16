@@ -31,11 +31,6 @@ namespace isc {
 namespace server_common {
 namespace portconfig {
 
-// This flags disables pushing the sockets to the DNSService. It prevents
-// the clearServers() method to close the file descriptors we made up.
-// It is not presented in any header, but we use it from the tests anyway.
-bool test_mode(false);
-
 AddressList
 parseAddresses(isc::data::ConstElementPtr addresses,
                const std::string& elemName)
