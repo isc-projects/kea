@@ -12,6 +12,9 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#ifndef __ISC_TESTUTILS_SOCKETREQUEST_H
+#define __ISC_TESTUTILS_SOCKETREQUEST_H 1
+
 #include <server_common/socket_request.h>
 #include <server_common/portconfig.h>
 
@@ -64,7 +67,7 @@ public:
     ///     not fall back to this value if its share_name is left empty, if
     ///     you want to check the code relies on the requestor to use the
     ///     app name, you set this to empty string.
-    TestSocketRequestor(asiodns::DNSService& dnss,
+    TestSocketRequestor(asiodns::DNSServiceBase& dnss,
                         server_common::portconfig::AddressList& store,
                         uint16_t expect_port,
                         const std::string& expected_app) :
@@ -216,7 +219,7 @@ public:
     }
 
 private:
-    asiodns::DNSService& dnss_;
+    asiodns::DNSServiceBase& dnss_;
     server_common::portconfig::AddressList& store_;
     const uint16_t expect_port_;
     const std::string expected_app_;
@@ -224,3 +227,4 @@ private:
 
 }
 }
+#endif  // __ISC_TESTUTILS_SOCKETREQUEST_H

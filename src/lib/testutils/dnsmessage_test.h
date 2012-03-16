@@ -12,6 +12,9 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#ifndef __ISC_TESTUTILS_DNSMESSAGETEST_H
+#define __ISC_TESTUTILS_DNSMESSAGETEST_H 1
+
 #include <algorithm>
 #include <functional>
 #include <iosfwd>
@@ -339,6 +342,7 @@ rrsetsCheck(const std::string& expected,
 
 } // end of namespace testutils
 } // end of namespace isc
+#endif  // __ISC_TESTUTILS_DNSMESSAGETEST_H
 
 // Local Variables:
 // mode: c++

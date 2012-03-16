@@ -41,6 +41,7 @@
 #include <dns/tests/unittest_util.h>
 #include <testutils/dnsmessage_test.h>
 #include <testutils/srv_test.h>
+#include <testutils/mockups.h>
 #include <testutils/portconfig.h>
 #include <testutils/socket_request.h>
 
@@ -75,7 +76,7 @@ const char* const CONFIG_INMEMORY_EXAMPLE =
 class AuthSrvTest : public SrvTestBase {
 protected:
     AuthSrvTest() :
-        dnss_(ios_, NULL, NULL, NULL),
+        dnss_(),
         server(true, xfrout),
         rrclass(RRClass::IN()),
         // The empty string is expected value of the parameter of
@@ -135,8 +136,7 @@ protected:
                     opcode.getCode(), QR_FLAG, 1, 0, 0, 0);
     }
 
-    IOService ios_;
-    DNSService dnss_;
+    MockDNSService dnss_;
     MockSession statistics_session;
     MockXfroutClient xfrout;
     AuthSrv server;

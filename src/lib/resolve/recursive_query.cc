@@ -128,7 +128,7 @@ typedef std::vector<std::pair<std::string, uint16_t> > AddressVector;
 // mishandles this in its name mangling, and wouldn't compile.
 // We can probably use a typedef, but need to move it to a central
 // location and use it consistently.
-RecursiveQuery::RecursiveQuery(DNSService& dns_service,
+RecursiveQuery::RecursiveQuery(DNSServiceBase& dns_service,
     isc::nsas::NameserverAddressStore& nsas,
     isc::cache::ResolverCache& cache,
     const std::vector<std::pair<std::string, uint16_t> >& upstream,
