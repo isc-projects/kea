@@ -532,6 +532,39 @@ TEST_F(IfaceMgrTest, iface) {
     );
 }
 
+TEST_F(IfaceMgrTest, iface_methods) {
+    IfaceMgr::Iface iface("foo", 1234);
+
+    iface.setHWType(42);
+    EXPECT_EQ(42, iface.getHWType());
+
+    uint8_t mac[IfaceMgr::MAX_MAC_LEN+10];
+    for (int i = 0; i < IfaceMgr::MAX_MAC_LEN + 10; i++)
+        mac[i] = 255 - i;
+
+    EXPECT_EQ("foo", iface.getName());
+    EXPECT_EQ(1234, iface.getIndex());
+
+    // MAC is too long. Exception should be thrown and
+    // MAC length should not be set.
+    EXPECT_THROW(
+        iface.setMac(mac, IfaceMgr::MAX_MAC_LEN + 1),
+        OutOfRange
+    );
+
+    // MAC length should stay not set as excep
+    EXPECT_EQ(0, iface.getMacLen());
+
+    // Setting maximum length MAC should be ok.
+    iface.setMac(mac, IfaceMgr::MAX_MAC_LEN);
+
+    // For some reason constants cannot be used directly in EXPECT_EQ
+    // as this produces linking error.
+    size_t len = IfaceMgr::MAX_MAC_LEN;
+    EXPECT_EQ(len, iface.getMacLen());
+    EXPECT_EQ(0, memcmp(mac, iface.getMac(), iface.getMacLen()));
+}
+
 TEST_F(IfaceMgrTest, socketInfo) {
 
     // check that socketinfo for IPv4 socket is functional
@@ -679,6 +712,8 @@ size_t parse_mac(const std::string& textMac, uint8_t* mac, size_t macLen) {
 /// of text that ifconfig prints and robustness to handle slight differences
 /// in ifconfig output.
 ///
+/// @todo: Consider using isc::util::str::tokens here.
+///
 /// @param textFile name of a text file that holds output of ifconfig -a
 /// @param ifaces empty list of interfaces to be filled
 void parse_ifconfig(const std::string& textFile, IfaceMgr::IfaceCollection& ifaces) {
@@ -710,7 +745,7 @@ void parse_ifconfig(const std::string& textFile, IfaceMgr::IfaceCollection& ifac
             }
 
             // ifconfig in Gentoo prints out eth0: instead of eth0
-            if (line[offset-1] == ':') {
+            if (line[offset - 1] == ':') {
                 offset--;
             }
             string name = line.substr(0, offset);
@@ -739,10 +774,10 @@ void parse_ifconfig(const std::string& textFile, IfaceMgr::IfaceCollection& ifac
             string addr;
             if (line.find("addr:", line.find("inet6")) != string::npos) {
                 // Ubuntu style format: inet6 addr: ::1/128 Scope:Host
-                addr = line.substr(line.find("addr:")+6, string::npos);
+                addr = line.substr(line.find("addr:") + 6, string::npos);
             } else {
                 // Gentoo style format: inet6 fe80::6ef0:49ff:fe96:ba17  prefixlen 64  scopeid 0x20<link>
-                addr = line.substr(line.find("inet6")+6, string::npos);
+                addr = line.substr(line.find("inet6") + 6, string::npos);
             }
 
             // handle Ubuntu format: inet6 addr: fe80::f66d:4ff:fe96:58f2/64 Scope:Link
@@ -757,10 +792,10 @@ void parse_ifconfig(const std::string& textFile, IfaceMgr::IfaceCollection& ifac
             string addr;
             if (line.find("addr:", line.find("inet")) != string::npos) {
                 // Ubuntu style format: inet addr:127.0.0.1  Mask:255.0.0.0
-                addr = line.substr(line.find("addr:")+5, string::npos);
+                addr = line.substr(line.find("addr:") + 5, string::npos);
             } else {
                 // Gentoo style format: inet 10.53.0.4  netmask 255.255.255.0
-                addr = line.substr(line.find("inet")+5, string::npos);
+                addr = line.substr(line.find("inet") + 5, string::npos);
             }
 
             addr = addr.substr(0, addr.find_first_of(" "));
