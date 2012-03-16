@@ -54,9 +54,9 @@ IfaceMgr::instance() {
 }
 
 IfaceMgr::Iface::Iface(const std::string& name, int ifindex)
-    :name_(name), ifindex_(ifindex), mac_len_(0), flag_loopback_(false),
-     flag_up_(false), flag_running_(false), flag_multicast_(false),
-     flag_broadcast_(false), flags_(0), hardware_type_(0)
+    :name_(name), ifindex_(ifindex), mac_len_(0), hardware_type_(0),
+     flag_loopback_(false), flag_up_(false), flag_running_(false),
+     flag_multicast_(false), flag_broadcast_(false), flags_(0)
 {
     memset(mac_, 0, sizeof(mac_));
 }
@@ -81,6 +81,17 @@ IfaceMgr::Iface::getPlainMac() const {
         }
     }
     return (tmp.str());
+}
+
+void IfaceMgr::Iface::setMac(const uint8_t* mac, size_t len) {
+    if (len > IfaceMgr::MAX_MAC_LEN) {
+        isc_throw(OutOfRange, "Interface " << getFullName()
+                  << " was detected to have link address of length "
+                  << len << ", but maximum supported length is "
+                  << IfaceMgr::MAX_MAC_LEN);
+    }
+    mac_len_ = len;
+    memcpy(mac_, mac, len);
 }
 
 bool IfaceMgr::Iface::delAddress(const isc::asiolink::IOAddress& addr) {
@@ -305,8 +316,8 @@ IfaceMgr::printIfaces(std::ostream& out /*= std::cout*/) {
         const AddressCollection& addrs = iface->getAddresses();
 
         out << "Detected interface " << iface->getFullName()
-             << ", hwtype=" << iface->hardware_type_ << ", maclen=" << iface->mac_len_
-             << ", mac=" << iface->getPlainMac();
+            << ", hwtype=" << iface->getHWType()
+            << ", mac=" << iface->getPlainMac();
         out << ", flags=" << hex << iface->flags_ << dec << "("
             << (iface->flag_loopback_?"LOOPBACK ":"")
             << (iface->flag_up_?"UP ":"")

@@ -728,7 +728,9 @@ void parse_ifconfig(const std::string& textFile, IfaceMgr::IfaceCollection& ifac
                 mac = line.substr(offset, string::npos);
                 mac = mac.substr(0, mac.find_first_of(" "));
 
-                iface->mac_len_ = parse_mac(mac, iface->mac_, IfaceMgr::MAX_MAC_LEN);
+                uint8_t buf[IfaceMgr::MAX_MAC_LEN];
+                int mac_len = parse_mac(mac, buf, IfaceMgr::MAX_MAC_LEN);
+                iface->setMac(buf, mac_len);
             }
         }
 
@@ -870,8 +872,8 @@ TEST_F(IfaceMgrTest, DISABLED_detectIfaces_linux) {
             // skip MAC comparison for loopback as netlink returns MAC
             // 00:00:00:00:00:00 for lo
             if (!detected->flag_loopback_) {
-                ASSERT_EQ(detected->mac_len_, i->mac_len_);
-                EXPECT_EQ(0, memcmp(detected->mac_, i->mac_, i->mac_len_));
+                ASSERT_EQ(detected->getMacLen(), i->getMacLen());
+                EXPECT_EQ(0, memcmp(detected->getMac(), i->getMac(), i->getMacLen()));
             }
 
             EXPECT_EQ(detected->getAddresses().size(), i->getAddresses().size());

@@ -63,10 +63,17 @@ BOOST_STATIC_ASSERT(IFLA_MAX>=IFA_MAX);
 /// @brief This structure defines context for netlink connection.
 struct rtnl_handle
 {
-    rtnl_handle() :fd(0), seq(0), dump(0) {
+    rtnl_handle() :fd(-1), seq(0), dump(0) {
         memset(&local, 0, sizeof(struct sockaddr_nl));
         memset(&peer, 0, sizeof(struct sockaddr_nl));
     }
+
+    ~rtnl_handle() {
+        if (fd != -1) {
+            close(fd);
+        }
+    }
+
     int fd; // netlink file descriptor
     sockaddr_nl local; // local and remote addresses
     sockaddr_nl peer;
@@ -119,7 +126,7 @@ void rtnl_open_socket(struct rtnl_handle& handle) {
 
 /// @brief Sends request over NETLINK socket.
 ///
-/// @param handle context structure
+/// @param handle structure that contains necessary information about netlink
 /// @param family requested information family
 /// @param type request type (RTM_GETLINK or RTM_GETADDR)
 void rtnl_send_request(rtnl_handle& handle, int family, int type) {
@@ -241,7 +248,7 @@ void ipaddrs_get(IfaceMgr::Iface& iface, NetlinkMessages& addr_info) {
             continue;
         }
 
-        if (ifa->ifa_family == AF_INET6) {
+        if ((ifa->ifa_family == AF_INET6) || (ifa->ifa_family == AF_INET)) {
             std::fill(rta_tb.begin(), rta_tb.end(), static_cast<rtattr*>(NULL));
             parse_rtattr(rta_tb, IFA_RTA(ifa), (*msg)->nlmsg_len - NLMSG_LENGTH(sizeof(*ifa)));
             if (!rta_tb[IFA_LOCAL]) {
@@ -251,24 +258,12 @@ void ipaddrs_get(IfaceMgr::Iface& iface, NetlinkMessages& addr_info) {
                 rta_tb[IFA_ADDRESS] = rta_tb[IFA_LOCAL];
             }
 
-            memcpy(addr,(char*)RTA_DATA(rta_tb[IFLA_ADDRESS]), V6ADDRESS_LEN);
-            IOAddress a = IOAddress::from_bytes(AF_INET6, addr);
+            memcpy(addr, RTA_DATA(rta_tb[IFLA_ADDRESS]),
+                   ifa->ifa_family==AF_INET?V4ADDRESS_LEN:V6ADDRESS_LEN);
+            IOAddress a = IOAddress::from_bytes(ifa->ifa_family, addr);
             iface.addAddress(a);
 
-            /// TODO: Read lifetimes of configured addresses
-        }
-
-        if ( ifa->ifa_family == AF_INET ) {
-            std::fill(rta_tb.begin(), rta_tb.end(), static_cast<struct rtattr*>(NULL));
-            parse_rtattr(rta_tb, IFA_RTA(ifa), (*msg)->nlmsg_len - NLMSG_LENGTH(sizeof(*ifa)));
-            if (!rta_tb[IFA_LOCAL])
-                rta_tb[IFA_LOCAL]   = rta_tb[IFA_ADDRESS];
-            if (!rta_tb[IFA_ADDRESS])
-                rta_tb[IFA_ADDRESS] = rta_tb[IFA_LOCAL];
-
-            memcpy(addr,(char*)RTA_DATA(rta_tb[IFLA_ADDRESS]),4);
-            IOAddress a = IOAddress::from_bytes(AF_INET, addr);
-            iface.addAddress(a);
+            /// TODO: Read lifetimes of configured IPv6 addresses
         }
     }
 }
@@ -277,18 +272,18 @@ void ipaddrs_get(IfaceMgr::Iface& iface, NetlinkMessages& addr_info) {
 ///
 /// This method parses received buffer (a collection of concatenated
 /// netlink messages), copies each received message to newly allocated
-/// memory and stores pointers to it in info.
+/// memory and stores pointers to it in info container.
 ///
 /// Make sure to release this memory, e.g. using release_info() function.
 ///
-/// @param rth netlink parameters
+/// @param context netlink parameters
 /// @param info received netlink messages will be stored here
-void rtnl_process_reply(const rtnl_handle& rth, NetlinkMessages& info) {
+void rtnl_process_reply(const rtnl_handle& handle, NetlinkMessages& info) {
 
-    struct sockaddr_nl nladdr;
-    struct iovec iov;
-    struct msghdr msg;
-    memset(&msg, 0, sizeof(struct msghdr));
+    sockaddr_nl nladdr;
+    iovec iov;
+    msghdr msg;
+    memset(&msg, 0, sizeof(msghdr));
     msg.msg_name = &nladdr;
     msg.msg_namelen = sizeof(nladdr);
     msg.msg_iov = &iov;
@@ -297,43 +292,44 @@ void rtnl_process_reply(const rtnl_handle& rth, NetlinkMessages& info) {
     char buf[rcvbuf];
 
     iov.iov_base = buf;
+    iov.iov_len = sizeof(buf);
     while (true) {
-        int status;
-        struct nlmsghdr* header;
-
-        iov.iov_len = sizeof(buf);
-        status = recvmsg(rth.fd, &msg, 0);
+        int status = recvmsg(handle.fd, &msg, 0);
 
         if (status < 0) {
-            if (errno == EINTR)
+            if (errno == EINTR) {
                 continue;
-            isc_throw(Unexpected, "Overrun while processing reply from netlink socket.");
+            }
+            isc_throw(Unexpected, "Error " << errno
+                      << " while processing reply from netlink socket.");
         }
 
         if (status == 0) {
             isc_throw(Unexpected, "EOF while reading netlink socket.");
         }
 
-        header = (struct nlmsghdr*)buf;
+        nlmsghdr* header = static_cast<nlmsghdr*>(static_cast<void*>(buf));
         while (NLMSG_OK(header, status)) {
 
-            // why we received this anyway?
+            // Received a message not addressed to our process, or not
+            // with a sequence number we are expecting.  Ignore, and
+            // look at the next one.
             if (nladdr.nl_pid != 0 ||
-                header->nlmsg_pid != rth.local.nl_pid ||
-                header->nlmsg_seq != rth.dump) {
+                header->nlmsg_pid != handle.local.nl_pid ||
+                header->nlmsg_seq != handle.dump) {
                 header = NLMSG_NEXT(header, status);
                 continue;
             }
 
             if (header->nlmsg_type == NLMSG_DONE) {
-                // end of message
+                // End of message.
                 return;
             }
 
             if (header->nlmsg_type == NLMSG_ERROR) {
-                struct nlmsgerr* err = (struct nlmsgerr*)NLMSG_DATA(header);
+                nlmsgerr* err = static_cast<nlmsgerr*>(NLMSG_DATA(header));
                 if (header->nlmsg_len < NLMSG_LENGTH(sizeof(struct nlmsgerr))) {
-                    // we are really out of luck here. We can't even say what is
+                    // We are really out of luck here. We can't even say what is
                     // wrong as error message is truncated. D'oh.
                     isc_throw(Unexpected, "Netlink reply read failed.");
                 } else {
@@ -396,11 +392,10 @@ void IfaceMgr::detectIfaces() {
     // Copies of netlink messages about addresses will be stored here.
     NetlinkMessages addr_info;
 
-    // socket descriptors other rtnl-related parameters
+    // Socket descriptors and other rtnl-related parameters.
     struct rtnl_handle handle;
 
     RTattribPtrs attribs_table; // table with pointers to address attributes
-    int len = 0;
     std::fill(attribs_table.begin(), attribs_table.end(),
               static_cast<struct rtattr*>(NULL));
 
@@ -435,7 +430,7 @@ void IfaceMgr::detectIfaces() {
     for (NetlinkMessages::iterator msg = link_info.begin(); msg != link_info.end(); ++msg) {
         // required to display information about interface
         struct ifinfomsg* interface_info = static_cast<ifinfomsg*>(NLMSG_DATA(*msg));
-        len = (*msg)->nlmsg_len;
+        int len = (*msg)->nlmsg_len;
         len -= NLMSG_LENGTH(sizeof(*interface_info));
         parse_rtattr(attribs_table, IFLA_RTA(interface_info), len);
 
@@ -447,28 +442,17 @@ void IfaceMgr::detectIfaces() {
         string iface_name(tmp); // <--- (probably bogus) valgrind warning here
         Iface iface = Iface(iface_name, interface_info->ifi_index);
 
-        iface.hardware_type_ = interface_info->ifi_type;
+        iface.setHWType(interface_info->ifi_type);
         iface.setFlags(interface_info->ifi_flags);
 
-        iface.mac_len_ = 0;
-        memset(iface.mac_, 0, IfaceMgr::MAX_MAC_LEN);
         // Does inetface has LL_ADDR?
         if (attribs_table[IFLA_ADDRESS]) {
-            iface.mac_len_ = RTA_PAYLOAD(attribs_table[IFLA_ADDRESS]);
-            if (iface.mac_len_ > IfaceMgr::MAX_MAC_LEN) {
-                iface.mac_len_ = 0;
-                isc_throw(Unexpected, "Interface " << iface.getFullName()
-                          << " was detected to have link address of length "
-                          << RTA_PAYLOAD(attribs_table[IFLA_ADDRESS])
-                          << ", but maximum supported length is " << IfaceMgr::MAX_MAC_LEN);
-            }
-            memcpy(iface.mac_, RTA_DATA(attribs_table[IFLA_ADDRESS]), iface.mac_len_);
+            iface.setMac(static_cast<const uint8_t*>(RTA_DATA(attribs_table[IFLA_ADDRESS])),
+                         RTA_PAYLOAD(attribs_table[IFLA_ADDRESS]));
         }
         else {
             // Tunnels can have no LL_ADDR. RTA_PAYLOAD doesn't check it and try to
             // dereference it in this manner
-            // #define RTA_PAYLOAD(rta) ((int)((rta)->rta_len) - RTA_LENGTH(0))
-            iface.mac_len_ = 0;
         }
 
         ipaddrs_get(iface, addr_info);
@@ -479,8 +463,6 @@ void IfaceMgr::detectIfaces() {
     release_list(addr_info);
 
     printIfaces();
-
-    close(handle.fd);
 }
 
 /// @brief sets flag_*_ fields.

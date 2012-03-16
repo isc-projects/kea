@@ -87,6 +87,23 @@ public:
         /// @return MAC address as a plain text (string)
         std::string getPlainMac() const;
 
+        /// @brief Sets MAC address of the interface.
+        ///
+        /// @param mac pointer to MAC address buffer
+        /// @param macLen length of mac address
+        void setMac(const uint8_t* mac, size_t macLen);
+
+        /// @brief Returns MAC length.
+        ///
+        /// @return length of MAC address
+        size_t getMacLen() const { return mac_len_; }
+
+        /// @brief Returns pointer to MAC address.
+        ///
+        /// Note: Returned pointer is only valid as long as the interface object
+        /// that returned it.
+        const uint8_t* getMac() const { return mac_; }
+
         /// @brief Sets flag_*_ fields based on bitmask value returned by OS
         ///
         /// Note: Implementation of this method is OS-dependent as bits have
@@ -104,6 +121,16 @@ public:
         ///
         /// @return interface name
         std::string getName() const { return name_; };
+
+        /// @brief Sets up hardware type of the interface.
+        ///
+        /// @param type hardware type
+        void setHWType(uint16_t type ) { hardware_type_ = type; }
+
+        /// @brief Returns hardware type of the interface.
+        ///
+        /// @return hardware type
+        uint16_t getHWType() const { return hardware_type_; }
 
         /// @brief Returns all interfaces available on an interface.
         ///
@@ -167,13 +194,16 @@ public:
         /// list of assigned addresses
         AddressCollection addrs_;
 
-    public:
         /// link-layer address
         uint8_t mac_[MAX_MAC_LEN];
 
         /// length of link-layer address (usually 6)
-        int mac_len_;
+        size_t mac_len_;
 
+        /// hardware type
+        uint16_t hardware_type_;
+
+    public:
         /// specifies if selected interface is loopback
         bool flag_loopback_;
 
@@ -193,9 +223,6 @@ public:
         /// interface flags (this value is as is returned by OS,
         /// it may mean different things on different OSes)
         uint32_t flags_;
-
-        /// hardware type
-        uint16_t hardware_type_;
     };
 
     // TODO performance improvement: we may change this into
