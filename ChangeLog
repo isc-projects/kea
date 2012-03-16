@@ -1,11 +1,7 @@
 xxx.	[bug]		naokikambe
-	Fix inconsistent statistics counts of Auth via bindctl or
-	b10-stats-httpd while multiple b10-auth instances are running. Each
-	count of Auth is accumulated across the instances except an inactive
-	instances. Introduce a pid argument into the set command of b10-stats
-	so that b10-stats identifies which instance sends by the PID which the
-	b10-auth instance sends together with statistics data. Also add a
-	regression check into systest against that inconsistency.
+	The statistic counters are now properly accumulated across multiple
+	instances of b10-auth (if there are multiple instances), instead of
+	providing result for random instance.
 	(Trac #1751, git TBD)
 
 401.	[func]*		jinmei
