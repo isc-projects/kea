@@ -207,17 +207,13 @@ void DNSService::addServerTCPFromFD(int fd, int af) {
     impl_->addServerFromFD<DNSServiceImpl::TCPServerPtr, TCPServer>(fd, af);
 }
 
-void DNSService::addServerUDPFromFD(int fd, int af,
-                                    const UDPVersion param_flags)
-{
-    if (SYNC_ == param_flags) {
+void DNSService::addServerUDPFromFD(int fd, int af, ServerFlag options) {
+    if ((options & SERVER_SYNC_OK) != 0) {
         impl_->addServerFromFD<DNSServiceImpl::SyncUDPServerPtr,
             SyncUDPServer>(fd, af);
-    } else if (ASYNC_ == param_flags) {
+    } else {
         impl_->addServerFromFD<DNSServiceImpl::UDPServerPtr, UDPServer>(
             fd, af);
-    } else {
-        isc_throw(IOError, "Bad UDPServer Version!");
     }
 }
 
