@@ -37,14 +37,13 @@ using namespace isc::dns;
 using namespace isc::data;
 using namespace isc::datasrc;
 using namespace isc::asiodns;
-using namespace isc::asiolink;
 using namespace isc::testutils;
 
 namespace {
 class AuthConfigTest : public ::testing::Test {
 protected:
     AuthConfigTest() :
-        dnss_(ios_, NULL, NULL, NULL),
+        dnss_(),
         rrclass(RRClass::IN()),
         server(true, xfrout),
         // The empty string is expected value of the parameter of
@@ -54,8 +53,7 @@ protected:
     {
         server.setDNSService(dnss_);
     }
-    IOService ios_;
-    DNSService dnss_;
+    MockDNSService dnss_;
     const RRClass rrclass;
     MockXfroutClient xfrout;
     AuthSrv server;
@@ -147,6 +145,14 @@ TEST_F(AuthConfigTest, invalidListenAddressConfig) {
 // Try setting addresses trough config
 TEST_F(AuthConfigTest, listenAddressConfig) {
     isc::testutils::portconfig::listenAddressConfig(server);
+
+    // listenAddressConfig should have attempted to create 4 DNS server
+    // objects: two IP addresses, TCP and UDP for each.  For UDP, the "SYNC_OK"
+    // option should have been specified.
+    EXPECT_EQ(2, dnss_.getTCPFdParams().size());
+    EXPECT_EQ(2, dnss_.getUDPFdParams().size());
+    EXPECT_EQ(DNSService::SERVER_SYNC_OK, dnss_.getUDPFdParams().at(0).options);
+    EXPECT_EQ(DNSService::SERVER_SYNC_OK, dnss_.getUDPFdParams().at(1).options);
 }
 
 class MemoryDatasrcConfigTest : public AuthConfigTest {

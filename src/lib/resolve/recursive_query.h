@@ -87,7 +87,7 @@ public:
     /// \param lookup_timeout Timeout value for when we give up, in ms
     /// \param retries how many times we try again (0 means just send and
     ///     and return if it returs).
-    RecursiveQuery(DNSService& dns_service,
+    RecursiveQuery(DNSServiceBase& dns_service,
                    isc::nsas::NameserverAddressStore& nsas,
                    isc::cache::ResolverCache& cache,
                    const std::vector<std::pair<std::string, uint16_t> >&
@@ -178,7 +178,7 @@ public:
     void setTestServer(const std::string& address, uint16_t port);
 
 private:
-    DNSService& dns_service_;
+    DNSServiceBase& dns_service_;
     isc::nsas::NameserverAddressStore& nsas_;
     isc::cache::ResolverCache& cache_;
     boost::shared_ptr<std::vector<std::pair<std::string, uint16_t> > >

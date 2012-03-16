@@ -82,6 +82,8 @@ public:
     virtual void addServerUDPFromFD(int fd, int af,
                                     ServerFlag options = SERVER_DEFAULT) = 0;
     virtual void clearServers() = 0;
+
+    virtual asiolink::IOService& getIOService() = 0;
 };
 
 /// \brief Handle DNS Queries
@@ -92,9 +94,6 @@ public:
 /// server implementations. As such, it handles asio, including config
 /// updates (through the 'Checkinprovider'), and listening sockets.
 class DNSService : public DNSServiceBase {
-public:
-    using DNSServiceBase::ServerFlag;
-
     ///
     /// \name Constructors and Destructor
     ///
@@ -208,7 +207,7 @@ public:
     /// \brief Return the IO Service Object
     ///
     /// \return IOService object for this DNS service.
-    asiolink::IOService& getIOService() { return (io_service_);}
+    virtual asiolink::IOService& getIOService() { return (io_service_);}
 
 private:
     DNSServiceImpl* impl_;
