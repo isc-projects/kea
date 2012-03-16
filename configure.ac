@@ -490,46 +490,147 @@ if test "$lcov" != "no"; then
 fi
 AC_SUBST(USE_LCOV)
 
+# Simplified, non-caching AC_CHECK_PROG
+# Searches $PATH for the existence of argument 2,
+# and sets the full path to the variable in argument 1.
+# if not found, and a third argument is given, the value
+# is set to that. If not, the value is untouched.
+# Does not take absolute paths into account at this point,
+# and also works for single files only (arguments are not
+# stripped like in AC_CHECK_PROG)
+AC_DEFUN([ACX_CHECK_PROG_NONCACHE], [
+    RESULT=""
+    IFS_SAVED="$IFS"
+    IFS=${PATH_SEPARATOR}
+    for cur_path in ${PATH} ; do
+      if test -e "${cur_path}/$2" ; then
+          RESULT="${cur_path}/$2"
+      fi
+    done
+    if test "$RESULT" = "" ; then
+        :
+        m4_ifvaln([$3], [$1=$3])
+    else
+        $1=$RESULT
+    fi
+    IFS="$IFS_SAVED"
+])
+
+# Botan helper test function
+# Tries to compile a botan program, given the output of the given
+# config tool
+# Arguments:
+# - name of tool (checked for path), must support --libs and --cflags
+# - fixed argument(s) for tool
+# - action if successful
+AC_DEFUN([ACX_TRY_BOTAN_TOOL], [
+    TOOL=$1
+    TOOL_ARG=$2
+    BOTAN_TOOL=""
+    ACX_CHECK_PROG_NONCACHE([BOTAN_TOOL], [${TOOL}])
+    AC_MSG_CHECKING([usability of ${TOOL} ${TOOL_ARG}])
+    if test "$BOTAN_TOOL" != "" ; then
+        if test -x ${BOTAN_TOOL}; then
+            BOTAN_LIBS=`$BOTAN_TOOL $TOOL_ARG --libs`
+            LIBS_SAVED=${LIBS}
+            LIBS="$LIBS $BOTAN_LIBS"
+            BOTAN_INCLUDES=`$BOTAN_TOOL $TOOL_ARG --cflags`
+            CPPFLAGS_SAVED=${CPPFLAGS}
+            CPPFLAGS="$BOTAN_INCLUDES $CPPFLAGS"
+            #AC_MSG_RESULT([found])
+            AC_LINK_IFELSE(
+                [AC_LANG_PROGRAM([#include <botan/botan.h>
+                                  #include <botan/hash.h>
+                                 ],
+                                 [using namespace Botan;
+                                  LibraryInitializer::initialize();
+                                  HashFunction *h = get_hash("MD5");
+                                 ])],
+                [ AC_MSG_RESULT([ok])
+                  $3
+                ],
+                [ AC_MSG_RESULT([not usable]) ]
+            )
+            LIBS=${LIBS_SAVED}
+            CPPFLAGS=${CPPFLAGS_SAVED}
+        else
+            AC_MSG_RESULT([not executable])
+        fi
+    else
+        AC_MSG_RESULT([not found])
+    fi
+    BOTAN_TOOL=""
+    AC_SUBST(BOTAN_TOOL)
+    ]
+)
+
 # Check for Botan
-botan_path="yes"
-AC_ARG_WITH([botan],
-  AC_HELP_STRING([--with-botan=PATH],
-    [specify the path to botan-config (PATH/bin/botan-config will be used)]),
-    [botan_path="$withval"])
-if test "${botan_path}" = "no" ; then
+#
+# Unless --with-botan-config is given, we first try to find these config
+# scripts ourselves. Unfortunately, on some systems, these scripts do not
+# provide the correct implementation, so for each script found, we try
+# a compilation test (ACX_TRY_BOTAN_TOOL). If none are found, or none of
+# them work, we see if pkg-config is available. If so, we try the several
+# potential pkg-config .pc files. Again, on some systems, these can return
+# incorrect information as well, so the try-compile test is repeated for
+# each.
+#
+# If a working config script or pkgconfig file is found, we then munge its
+# output for use in our Makefiles, and to make sure it works, another header
+# and compilation test is done (this should also check whether we can compile
+# against botan should neither -config scripts nor pkgconfig data exist).
+#
+botan_config="yes"
+AC_ARG_WITH([botan-config],
+  AC_HELP_STRING([--with-botan-config=PATH],
+    [specify the path to the botan-config script]),
+    [botan_config="$withval"])
+if test "${botan_config}" = "no" ; then
     AC_MSG_ERROR([Need botan for libcryptolink])
 fi
-if test "${botan_path}" != "yes" ; then
-    if test -x "${botan_path}/bin/botan-config" ; then
-        BOTAN_CONFIG="${botan_path}/bin/botan-config"
+if test "${botan_config}" != "yes" ; then
+    if test -x "${botan_config}" ; then
+        if test -d "${botan_config}" ; then
+            AC_MSG_ERROR([${botan_config} is a directory])
+        else
+            BOTAN_CONFIG="${botan_config}"
+        fi
     else
-        AC_MSG_ERROR([${botan_path}/bin/botan-config not found])
+        AC_MSG_ERROR([--with-botan-config should point to a botan-config program and not a directory (${botan_config})])
     fi
 else
-    # First see if pkg-config knows of it.
-    # Unfortunately, the botan.pc files have their minor version in them
-    # too, so we need to try them one by one
     BOTAN_CONFIG=""
-    AC_PATH_PROG([PKG_CONFIG], [pkg-config])
-    if test "$PKG_CONFIG" != "" ; then
-        BOTAN_VERSIONS="botan-1.10 botan-1.9 botan-1.8"
-        for version in $BOTAN_VERSIONS; do
-            AC_MSG_CHECKING([Checking botan version with pkg-config $version])
-            
-            if [ $PKG_CONFIG --exists ${version} ]; then
-                AC_MSG_RESULT([found])
-                BOTAN_CONFIG="$PKG_CONFIG ${version}"
-                break
-            else
-                AC_MSG_RESULT([not found])
-            fi
-        done
-    fi
-    # If we had no pkg-config, or it didn't know about botan, use botan-config
+    # first try several possible names of the config script
+    # (botan-config-1.8 is there just in case, the official name change
+    # came later)
+    BOTAN_CONFIG_VERSIONS="botan-config-1.10 botan-config-1.9 botan-config-1.8 botan-config"
+    for botan_config in $BOTAN_CONFIG_VERSIONS; do
+        ACX_TRY_BOTAN_TOOL([$botan_config],,
+                           [ BOTAN_CONFIG="$botan_config"  ]
+                          )
+        if test "$BOTAN_CONFIG" != "" ; then
+            break
+        fi
+    done
     if test "$BOTAN_CONFIG" = "" ; then
-        AC_PATH_PROG([BOTAN_CONFIG], [botan-config])
+        AC_PATH_PROG([PKG_CONFIG], [pkg-config])
+        if test "$PKG_CONFIG" != "" ; then
+            # Ok so no script found, see if pkg-config knows of it.
+            # Unfortunately, the botan.pc files also have their minor version
+            # in their name, so we need to try them one by one
+            BOTAN_VERSIONS="botan-1.10 botan-1.9 botan-1.8"
+            for version in $BOTAN_VERSIONS; do
+                ACX_TRY_BOTAN_TOOL([pkg-config], ["$version --silence-errors"],
+                                   [ BOTAN_CONFIG="$PKG_CONFIG $version" ]
+                                  )
+            if test "$BOTAN_CONFIG" != "" ; then
+                break
+            fi
+            done
+        fi
     fi
 fi
+
 if test "x${BOTAN_CONFIG}" != "x"
 then
     BOTAN_LIBS=`${BOTAN_CONFIG} --libs`
@@ -577,6 +678,9 @@ AC_SUBST(BOTAN_LDFLAGS)
 AC_SUBST(BOTAN_LIBS)
 AC_SUBST(BOTAN_INCLUDES)
 
+# Even though chances are high we already performed a real compilation check
+# in the search for the right (pkg)config data, we try again here, to
+# be sure.
 CPPFLAGS_SAVED=$CPPFLAGS
 CPPFLAGS="$BOTAN_INCLUDES $CPPFLAGS"
 LIBS_SAVED="$LIBS"
@@ -592,7 +696,11 @@ AC_LINK_IFELSE(
                          ])],
         [AC_MSG_RESULT([checking for Botan library... yes])],
         [AC_MSG_RESULT([checking for Botan library... no])
-         AC_MSG_ERROR([Needs Botan library 1.8 or higher])]
+         AC_MSG_ERROR([Needs Botan library 1.8 or higher. On some systems,
+         the botan package has a few missing dependencies (libbz2 and
+         libgmp), if libbotan has been installed and you see this error,
+         try upgrading to a higher version of botan or installing libbz2
+         and libgmp.])]
 )
 CPPFLAGS=$CPPFLAGS_SAVED
 LIBS=$LIBS_SAVED
