@@ -84,7 +84,7 @@ namespace {
 vector<string> current_sockets;
 
 void
-setAddresses(DNSService& service, const AddressList& addresses) {
+setAddresses(DNSServiceBase& service, const AddressList& addresses) {
     service.clearServers();
     BOOST_FOREACH(const string& token, current_sockets) {
         socketRequestor().releaseSocket(token);
@@ -118,7 +118,7 @@ setAddresses(DNSService& service, const AddressList& addresses) {
 void
 installListenAddresses(const AddressList& newAddresses,
                        AddressList& addressStore,
-                       isc::asiodns::DNSService& service)
+                       isc::asiodns::DNSServiceBase& service)
 {
     try {
         LOG_DEBUG(logger, DBG_TRACE_BASIC, SRVCOMM_SET_LISTEN);
