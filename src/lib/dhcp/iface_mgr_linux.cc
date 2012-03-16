@@ -28,7 +28,17 @@ using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
 
+BOOST_STATIC_ASSERT(IFLA_MAX>=IFA_MAX);
+
 namespace {
+
+/// @brief This class offers utility methods for netlink connection.
+///
+/// See IfaceMgr::detectIfaces() (Linux implementation) for example
+/// usage.
+class Netlink
+{
+public:
 /// @brief Holds pointers to netlink messages.
 ///
 /// netlink (a Linux interface for getting information about network
@@ -40,7 +50,7 @@ namespace {
 /// as nlmsghdr with followed variable number of bytes that are
 /// message-specific. The only reasonable way to represent this in
 /// C++ is to use vector of pointers to nlmsghdr (the common structure).
-typedef vector<nlmsghdr*> NetlinkMessages;
+    typedef vector<nlmsghdr*> NetlinkMessages;
 
 /// @brief Holds pointers to interface or address attributes.
 ///
@@ -56,29 +66,32 @@ typedef vector<nlmsghdr*> NetlinkMessages;
 ///     unsigned short<>rta_type;
 /// };
 ///
-typedef boost::array<struct rtattr*, IFLA_MAX+1> RTattribPtrs;
+    typedef boost::array<struct rtattr*, IFLA_MAX+1> RTattribPtrs;
 
-BOOST_STATIC_ASSERT(IFLA_MAX>=IFA_MAX);
-
-/// @brief This structure defines context for netlink connection.
-struct rtnl_handle
-{
-    rtnl_handle() :fd(-1), seq(0), dump(0) {
-        memset(&local, 0, sizeof(struct sockaddr_nl));
-        memset(&peer, 0, sizeof(struct sockaddr_nl));
+    Netlink() :fd_(-1), seq_(0), dump_(0) {
+        memset(&local_, 0, sizeof(struct sockaddr_nl));
+        memset(&peer_, 0, sizeof(struct sockaddr_nl));
     }
 
-    ~rtnl_handle() {
-        if (fd != -1) {
-            close(fd);
-        }
+    ~Netlink() {
+        rtnl_close_socket();
     }
 
-    int fd; // netlink file descriptor
-    sockaddr_nl local; // local and remote addresses
-    sockaddr_nl peer;
-    __u32 seq; // counter used for generating unique sequence numbers
-    __u32 dump; // number of expected message response
+    void rtnl_open_socket();
+    void rtnl_send_request(int family, int type);
+    void rtnl_store_reply(NetlinkMessages& storage, const nlmsghdr* msg);
+    void parse_rtattr(RTattribPtrs& table, rtattr* rta, int len);
+    void ipaddrs_get(IfaceMgr::Iface& iface, NetlinkMessages& addr_info);
+    void rtnl_process_reply(NetlinkMessages& info);
+    void release_list(NetlinkMessages& messages);
+    void rtnl_close_socket();
+
+private:
+    int fd_; // netlink file descriptor
+    sockaddr_nl local_; // local and remote addresses
+    sockaddr_nl peer_;
+    uint32_t seq_; // counter used for generating unique sequence numbers
+    uint32_t dump_; // number of expected message response
 };
 
 const size_t sndbuf = 32768;
@@ -89,39 +102,45 @@ const size_t rcvbuf = 32768;
 /// @exception Unexpected Thrown if socket configuration fails.
 ///
 /// @param handle Context will be stored in this structure.
-void rtnl_open_socket(struct rtnl_handle& handle) {
+void Netlink::rtnl_open_socket() {
     // equivalent of rtnl_open
-    handle.fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
-    if (handle.fd < 0) {
+    fd_ = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
+    if (fd_ < 0) {
         isc_throw(Unexpected, "Failed to create NETLINK socket.");
     }
 
-    if (setsockopt(handle.fd, SOL_SOCKET, SO_SNDBUF, &sndbuf, sizeof(sndbuf)) < 0) {
+    if (setsockopt(fd_, SOL_SOCKET, SO_SNDBUF, &sndbuf, sizeof(sndbuf)) < 0) {
         isc_throw(Unexpected, "Failed to set send buffer in NETLINK socket.");
     }
 
-    if (setsockopt(handle.fd, SOL_SOCKET, SO_RCVBUF, &sndbuf, sizeof(rcvbuf)) < 0) {
+    if (setsockopt(fd_, SOL_SOCKET, SO_RCVBUF, &sndbuf, sizeof(rcvbuf)) < 0) {
         isc_throw(Unexpected, "Failed to set receive buffer in NETLINK socket.");
     }
 
-    memset(&handle.local, 0, sizeof(handle.local));
-    handle.local.nl_family = AF_NETLINK;
-    handle.local.nl_groups = 0;
+    local_.nl_family = AF_NETLINK;
+    local_.nl_groups = 0;
 
-    if (bind(handle.fd, (struct sockaddr*)&handle.local, sizeof(handle.local)) < 0) {
+    if (bind(fd_, (struct sockaddr*)&local_, sizeof(local_)) < 0) {
         isc_throw(Unexpected, "Failed to bind netlink socket.");
     }
 
-    socklen_t addr_len = sizeof(handle.local);
-    if (getsockname(handle.fd, (struct sockaddr*)&handle.local, &addr_len) < 0) {
+    socklen_t addr_len = sizeof(local_);
+    if (getsockname(fd_, (struct sockaddr*)&local_, &addr_len) < 0) {
         isc_throw(Unexpected, "Getsockname for netlink socket failed.");
     }
 
     // just 2 sanity checks and we are done
-    if ( (addr_len != sizeof(handle.local)) ||
-         (handle.local.nl_family != AF_NETLINK) ) {
+    if ( (addr_len != sizeof(local_)) ||
+         (local_.nl_family != AF_NETLINK) ) {
         isc_throw(Unexpected, "getsockname() returned unexpected data for netlink socket.");
     }
+}
+
+void Netlink::rtnl_close_socket() {
+    if (fd_ != -1) {
+        close(fd_);
+    }
+    fd_ = -1;
 }
 
 /// @brief Sends request over NETLINK socket.
@@ -129,7 +148,7 @@ void rtnl_open_socket(struct rtnl_handle& handle) {
 /// @param handle structure that contains necessary information about netlink
 /// @param family requested information family
 /// @param type request type (RTM_GETLINK or RTM_GETADDR)
-void rtnl_send_request(rtnl_handle& handle, int family, int type) {
+void Netlink::rtnl_send_request(int family, int type) {
     struct {
         nlmsghdr netlink_header;
         rtgenmsg generic;
@@ -151,22 +170,22 @@ void rtnl_send_request(rtnl_handle& handle, int family, int type) {
     // not really useful, as we send a single request and get a single
     // response at a time, but still it better to obey man page suggestion
     // and just set this to monotonically increasing numbers.
-    handle.seq++;
+    seq_++;
 
     // this will be used to finding correct response (responses
     // sent by kernel are supposed to have the same sequence number
     // as the request we sent)
-    handle.dump = handle.seq;
+    dump_ = seq_;
 
     memset(&req, 0, sizeof(req));
     req.netlink_header.nlmsg_len = sizeof(req);
     req.netlink_header.nlmsg_type = type;
     req.netlink_header.nlmsg_flags = NLM_F_ROOT | NLM_F_MATCH | NLM_F_REQUEST;
     req.netlink_header.nlmsg_pid = 0;
-    req.netlink_header.nlmsg_seq = handle.seq;
+    req.netlink_header.nlmsg_seq = seq_;
     req.generic.rtgen_family = family;
 
-    int status =  sendto(handle.fd, static_cast<void*>(&req), sizeof(req), 0,
+    int status =  sendto(fd_, static_cast<void*>(&req), sizeof(req), 0,
                          static_cast<struct sockaddr*>(static_cast<void*>(&nladdr)),
                          sizeof(nladdr));
 
@@ -183,7 +202,7 @@ void rtnl_send_request(rtnl_handle& handle, int family, int type) {
 ///
 /// @param storage a vector that holds netlink messages
 /// @param msg a netlink message to be added
-void rtnl_store_reply(NetlinkMessages& storage, const struct nlmsghdr *msg)
+void Netlink::rtnl_store_reply(NetlinkMessages& storage, const struct nlmsghdr *msg)
 {
     // we need to make a copy of this message. We really can't allocate
     // nlmsghdr directly as it is only part of the structure. There are
@@ -205,7 +224,7 @@ void rtnl_store_reply(NetlinkMessages& storage, const struct nlmsghdr *msg)
 /// @param table rtattr messages will be stored here
 /// @param rta pointer to first rtattr object
 /// @param len length (in bytes) of concatenated rtattr list.
-void parse_rtattr(RTattribPtrs& table, struct rtattr * rta, int len)
+void Netlink::parse_rtattr(RTattribPtrs& table, struct rtattr * rta, int len)
 {
     std::fill(table.begin(), table.end(), static_cast<struct rtattr*>(NULL));
     // RTA_OK and RTA_NEXT() are macros defined in linux/rtnetlink.h
@@ -235,7 +254,7 @@ void parse_rtattr(RTattribPtrs& table, struct rtattr * rta, int len)
 ///
 /// @param iface interface representation (addresses will be added here)
 /// @param addr_info collection of parsed netlink messages
-void ipaddrs_get(IfaceMgr::Iface& iface, NetlinkMessages& addr_info) {
+void Netlink::ipaddrs_get(IfaceMgr::Iface& iface, NetlinkMessages& addr_info) {
     uint8_t addr[V6ADDRESS_LEN];
     RTattribPtrs rta_tb;
 
@@ -276,10 +295,8 @@ void ipaddrs_get(IfaceMgr::Iface& iface, NetlinkMessages& addr_info) {
 ///
 /// Make sure to release this memory, e.g. using release_info() function.
 ///
-/// @param context netlink parameters
 /// @param info received netlink messages will be stored here
-void rtnl_process_reply(const rtnl_handle& handle, NetlinkMessages& info) {
-
+void Netlink::rtnl_process_reply(NetlinkMessages& info) {
     sockaddr_nl nladdr;
     iovec iov;
     msghdr msg;
@@ -294,7 +311,7 @@ void rtnl_process_reply(const rtnl_handle& handle, NetlinkMessages& info) {
     iov.iov_base = buf;
     iov.iov_len = sizeof(buf);
     while (true) {
-        int status = recvmsg(handle.fd, &msg, 0);
+        int status = recvmsg(fd_, &msg, 0);
 
         if (status < 0) {
             if (errno == EINTR) {
@@ -315,8 +332,8 @@ void rtnl_process_reply(const rtnl_handle& handle, NetlinkMessages& info) {
             // with a sequence number we are expecting.  Ignore, and
             // look at the next one.
             if (nladdr.nl_pid != 0 ||
-                header->nlmsg_pid != handle.local.nl_pid ||
-                header->nlmsg_seq != handle.dump) {
+                header->nlmsg_pid != local_.nl_pid ||
+                header->nlmsg_seq != dump_) {
                 header = NLMSG_NEXT(header, status);
                 continue;
             }
@@ -356,7 +373,7 @@ void rtnl_process_reply(const rtnl_handle& handle, NetlinkMessages& info) {
 /// @brief releases nlmsg structure
 ///
 /// @param messages first element of the list to be released
-void release_list(NetlinkMessages& messages) {
+void Netlink::release_list(NetlinkMessages& messages) {
     // let's free local copies of stored messages
     for (NetlinkMessages::iterator msg = messages.begin(); msg != messages.end(); ++msg) {
         delete (*msg);
@@ -387,24 +404,25 @@ void IfaceMgr::detectIfaces() {
     cout << "Linux: detecting interfaces." << endl;
 
     // Copies of netlink messages about links will be stored here.
-    NetlinkMessages link_info;
+    Netlink::NetlinkMessages link_info;
 
     // Copies of netlink messages about addresses will be stored here.
-    NetlinkMessages addr_info;
+    Netlink::NetlinkMessages addr_info;
 
     // Socket descriptors and other rtnl-related parameters.
-    struct rtnl_handle handle;
+    Netlink nl;
 
-    RTattribPtrs attribs_table; // table with pointers to address attributes
+    // table with pointers to address attributes
+    Netlink::RTattribPtrs attribs_table;
     std::fill(attribs_table.begin(), attribs_table.end(),
               static_cast<struct rtattr*>(NULL));
 
     // open socket
-    rtnl_open_socket(handle);
+    nl.rtnl_open_socket();
 
     // now we have open functional socket, let's use it!
     // ask for list of network interfaces...
-    rtnl_send_request(handle, AF_PACKET, RTM_GETLINK);
+    nl.rtnl_send_request(AF_PACKET, RTM_GETLINK);
 
     // Get reply and store it in link_info list:
     // response is received as with any other socket - just a series
@@ -413,33 +431,33 @@ void IfaceMgr::detectIfaces() {
     // buffer, copy each message to a newly allocated memory and
     // store pointers to it in link_info. This allocated memory will
     // be released later. See release_info(link_info) below.
-    rtnl_process_reply(handle, link_info);
+    nl.rtnl_process_reply(link_info);
 
     // Now ask for list of addresses (AF_UNSPEC = of any family)
     // Let's repeat, but this time ask for any addresses.
     // That includes IPv4, IPv6 and any other address families that
     // are happen to be supported by this system.
-    rtnl_send_request(handle, AF_UNSPEC, RTM_GETADDR);
+    nl.rtnl_send_request(AF_UNSPEC, RTM_GETADDR);
 
     // Get reply and store it in addr_info list.
     // Again, we will allocate new memory and store messages in
     // addr_info. It will be released later using release_info(addr_info).
-    rtnl_process_reply(handle, addr_info);
+    nl.rtnl_process_reply(addr_info);
 
     // Now build list with interface names
-    for (NetlinkMessages::iterator msg = link_info.begin(); msg != link_info.end(); ++msg) {
+    for (Netlink::NetlinkMessages::iterator msg = link_info.begin();
+         msg != link_info.end(); ++msg) {
         // required to display information about interface
         struct ifinfomsg* interface_info = static_cast<ifinfomsg*>(NLMSG_DATA(*msg));
         int len = (*msg)->nlmsg_len;
         len -= NLMSG_LENGTH(sizeof(*interface_info));
-        parse_rtattr(attribs_table, IFLA_RTA(interface_info), len);
+        nl.parse_rtattr(attribs_table, IFLA_RTA(interface_info), len);
 
         // valgrind reports *possible* memory leak in the line below,
-        // but I do believe that this report is bogus. Nevertheless,
-        // I've split the whole interface definition into three
-        // separate steps for easier debugging.
+        // but it is bogus. Nevertheless, I've split the whole interface
+        // definition into three separate steps for easier debugging.
         const char* tmp = static_cast<const char*>(RTA_DATA(attribs_table[IFLA_IFNAME]));
-        string iface_name(tmp); // <--- (probably bogus) valgrind warning here
+        string iface_name(tmp); // <--- bogus valgrind warning here
         Iface iface = Iface(iface_name, interface_info->ifi_index);
 
         iface.setHWType(interface_info->ifi_type);
@@ -455,12 +473,12 @@ void IfaceMgr::detectIfaces() {
             // dereference it in this manner
         }
 
-        ipaddrs_get(iface, addr_info);
+        nl.ipaddrs_get(iface, addr_info);
         ifaces_.push_back(iface);
     }
 
-    release_list(link_info);
-    release_list(addr_info);
+    nl.release_list(link_info);
+    nl.release_list(addr_info);
 
     printIfaces();
 }

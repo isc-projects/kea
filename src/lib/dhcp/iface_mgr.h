@@ -204,6 +204,9 @@ public:
         uint16_t hardware_type_;
 
     public:
+        /// @todo: Make those fields protected once we start supporting more
+        /// than just Linux
+
         /// specifies if selected interface is loopback
         bool flag_loopback_;
 
