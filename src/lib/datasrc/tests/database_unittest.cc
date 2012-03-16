@@ -282,6 +282,11 @@ public:
         isc_throw(isc::NotImplemented,
                   "This data source doesn't support DNSSEC");
     }
+
+    virtual std::string findPreviousNSEC3Hash(int, const std::string&) const {
+        isc_throw(isc::NotImplemented,
+                  "This test database knows nothing about NSEC3 nor order");
+    }
 private:
     const std::string database_name_;
 
