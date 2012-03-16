@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <algorithm>
+#include <sstream>
 #include <stdexcept>
 
 #include <exceptions/exceptions.h>
@@ -153,6 +155,84 @@ TEST_F(RBNodeRRsetTest, isSameKind) {
     EXPECT_FALSE(rrset_p.isSameKind(rrset_x));
     EXPECT_FALSE(rrset_p.isSameKind(rrset_y));
     EXPECT_FALSE(rrset_p.isSameKind(rrset_z));
+}
+
+
+// Utility function to create an add an RRset to a vector of RRsets for the
+// "less" test.  It's only purpose is to allow the RRset creation to be
+// written with arguments in an order that reflects the RRset ordering.
+void
+addRRset(std::vector<ConstRRsetPtr>& vec, const RRType& rrtype,
+            const RRClass& rrclass, const char* rrname)
+{
+    vec.push_back(ConstRRsetPtr(new RRset(Name(rrname), rrclass, rrtype,
+                                          RRTTL(3600))));
+}
+
+TEST_F(RBNodeRRsetTest, lthan) {
+    // Check values of type codes: this effectively documents the expected
+    // order of the rrsets created.
+    ASSERT_EQ(1, RRType::A().getCode());
+    ASSERT_EQ(2, RRType::NS().getCode());
+
+    ASSERT_EQ(1, RRClass::IN().getCode());
+    ASSERT_EQ(3, RRClass::CH().getCode());
+
+    // Create a vector of RRsets in ascending (conventional) sort order.
+    std::vector<ConstRRsetPtr> rrsets;
+    addRRset(rrsets, RRType::A(),  RRClass::IN(), "alpha.com");
+    addRRset(rrsets, RRType::A(),  RRClass::IN(), "beta.com");
+    addRRset(rrsets, RRType::A(),  RRClass::CH(), "alpha.com");
+    addRRset(rrsets, RRType::A(),  RRClass::CH(), "beta.com");
+
+    // ... and create eight RBNodeRRsets for the underlying objects (two
+    // sets of four - the reason becomes apparent below).
+    std::vector<ConstRRsetPtr> rbrrsets;
+    for (int i = 0; i < 2; ++i) {
+        for (int j = 0; j < rrsets.size(); ++j) {
+            rbrrsets.push_back(ConstRRsetPtr(new RBNodeRRset(rrsets[j])));
+        }
+    }
+
+    // Using the first four of the RBNodeRRsets, check that they order
+    // correctly when compared with the standard RRsets.
+    for (int i = 0; i < rrsets.size(); ++i) {
+        for (int j = 0; j < rrsets.size(); ++j) {
+            stringstream ss;
+            ss << "Comparing RbNodeRRset[" << i << "] against RRset["
+               << j << "]";
+            SCOPED_TRACE(ss.str());
+            if (i < j) {
+                EXPECT_TRUE(rbrrsets[i]->lthan(*rrsets[j]));
+            } else {
+                EXPECT_FALSE(rbrrsets[i]->lthan(*rrsets[j]));
+            }
+        }
+    }
+
+    // Put the raw pointers of the eight RBNodeRRsets into a vector and
+    // sort in ascending order.
+    std::vector<const AbstractRRset*> rbptrs;
+    for (int i = 0; i < rbrrsets.size(); ++i) {
+        rbptrs.push_back(rbrrsets[i].get());
+    }
+    sort(rbptrs.begin(), rbptrs.end());
+
+    // Now iterate through and check the relationships.  Addresses with lower
+    // indexes should sort lower than addresses with higher indexes, regardless
+    // of what they point to.
+    for (int i = 0; i < rbptrs.size(); ++i) {
+        for (int j = 0; j < rbptrs.size(); ++j) {
+            stringstream ss;
+            ss << "Comparing address[" << i << "] against address[" << j << "]";
+            SCOPED_TRACE(ss.str());
+            if (i < j) {
+                EXPECT_TRUE(rbptrs[i]->lthan(*rbptrs[j]));
+            } else {
+                EXPECT_FALSE(rbptrs[i]->lthan(*rbptrs[j]));
+            }
+        }
+    }
 }
 
 // Note: although the next two tests are essentially the same and used common
