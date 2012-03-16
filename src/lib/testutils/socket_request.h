@@ -27,13 +27,6 @@
 #include <string>
 
 namespace isc {
-namespace server_common {
-namespace portconfig {
-// Access the private hidden flag
-extern bool test_mode;
-}
-}
-
 namespace testutils {
 
 /// \brief A testcase part for faking the SocketRequestor in tests
@@ -77,8 +70,6 @@ public:
     {
         // Prepare the requestor (us) for the test
         server_common::initTestSocketRequestor(this);
-        // Don't manipulate the real sockets
-        server_common::portconfig::test_mode = true;
     }
 
     /// \brief Destructor
@@ -93,8 +84,6 @@ public:
         server_common::portconfig::installListenAddresses(list, store_, dnss_);
         // Don't leave invalid pointers here
         server_common::initTestSocketRequestor(NULL);
-        // And return the mode
-        server_common::portconfig::test_mode = false;
     }
 
     /// \brief Tokens released by releaseSocket
