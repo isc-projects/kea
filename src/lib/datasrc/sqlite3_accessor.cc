@@ -54,7 +54,8 @@ enum StatementID {
     LOW_DIFF_ID = 13,
     HIGH_DIFF_ID = 14,
     DIFF_RECS = 15,
-    NUM_STATEMENTS = 16
+    NSEC3 = 16,
+    NUM_STATEMENTS = 17
 };
 
 const char* const text_statements[NUM_STATEMENTS] = {
@@ -103,7 +104,15 @@ const char* const text_statements[NUM_STATEMENTS] = {
     // that the columns match the column IDs passed to the iterator
     "SELECT rrtype, ttl, id, rdata, name FROM diffs "   // DIFF_RECS
         "WHERE zone_id=?1 AND id>=?2 and id<=?3 "
-        "ORDER BY id ASC"
+        "ORDER BY id ASC",
+
+    // Query to get the NSEC3 records
+    //
+    // The "1" in SELECT is for positioning the rdata column to the
+    // expected position, so we can reuse the same code as for other
+    // lookups.
+    "SELECT rdtype, ttl, 1, rdata FROM nsec3 WHERE zone_id=?1 AND "
+        "hash=?2"
 };
 
 struct SQLite3Parameters {
@@ -482,19 +491,46 @@ public:
         bindZoneId(id);
     }
 
+    // What kind of query it is - selection of the statement for DB
+    enum QueryType {
+        QT_ANY, // Directly for a domain
+        QT_SUBDOMAINS, // Subdomains of a given domain
+        QT_NSEC3 // Domain in the NSEC3 namespace (the name is is the hash,
+                 // not the whole name)
+    };
+
     // Construct an iterator for records with a specific name. When constructed
     // this way, the getNext() call will copy all fields except name
     Context(const boost::shared_ptr<const SQLite3Accessor>& accessor, int id,
-            const std::string& name, bool subdomains) :
-        iterator_type_(ITT_NAME),
+            const std::string& name, QueryType qtype) :
+        iterator_type_(qtype == QT_NSEC3 ? ITT_NSEC3 : ITT_NAME),
         accessor_(accessor),
         statement_(NULL),
         name_(name)
     {
+        // Choose the statement text depending on the query type
+        const char* statement(NULL);
+        switch (qtype) {
+            case QT_ANY:
+                statement = text_statements[ANY];
+                break;
+            case QT_SUBDOMAINS:
+                statement = text_statements[ANY_SUB];
+                break;
+            case QT_NSEC3:
+                statement = text_statements[NSEC3];
+                break;
+            default:
+                // Can Not Happen - there isn't any other type of query
+                // and all the calls to the constructor are from this
+                // file. Therefore no way to test it throws :-(.
+                isc_throw(Unexpected,
+                          "Invalid qtype passed - unreachable code branch "
+                          "reached");
+        }
+
         // We create the statement now and then just keep getting data from it
-        statement_ = prepare(accessor->dbparameters_->db_,
-                             subdomains ? text_statements[ANY_SUB] :
-                             text_statements[ANY]);
+        statement_ = prepare(accessor->dbparameters_->db_, statement);
         bindZoneId(id);
         bindName(name_);
     }
@@ -511,7 +547,11 @@ public:
             // For both types, we copy the first four columns
             copyColumn(data, TYPE_COLUMN);
             copyColumn(data, TTL_COLUMN);
-            copyColumn(data, SIGTYPE_COLUMN);
+            // The NSEC3 lookup does not provide the SIGTYPE, it is not
+            // necessary and not contained in the table.
+            if (iterator_type_ != ITT_NSEC3) {
+                copyColumn(data, SIGTYPE_COLUMN);
+            }
             copyColumn(data, RDATA_COLUMN);
             // Only copy Name if we are iterating over every record
             if (iterator_type_ == ITT_ALL) {
@@ -537,7 +577,8 @@ private:
     // See description of getNext() and the constructors
     enum IteratorType {
         ITT_ALL,
-        ITT_NAME
+        ITT_NAME,
+        ITT_NSEC3
     };
 
     void copyColumn(std::string (&data)[COLUMN_COUNT], int column) {
@@ -584,13 +625,15 @@ SQLite3Accessor::getRecords(const std::string& name, int id,
                             bool subdomains) const
 {
     return (IteratorContextPtr(new Context(shared_from_this(), id, name,
-                                           subdomains)));
+                                           subdomains ?
+                                           Context::QT_SUBDOMAINS :
+                                           Context::QT_ANY)));
 }
 
 DatabaseAccessor::IteratorContextPtr
-SQLite3Accessor::getNSEC3Records(const std::string&, int) const {
-    // TODO: Implement
-    isc_throw(NotImplemented, "Not implemented yet, see ticket #1760");
+SQLite3Accessor::getNSEC3Records(const std::string& hash, int id) const {
+    return (IteratorContextPtr(new Context(shared_from_this(), id, hash,
+                                           Context::QT_NSEC3)));
 }
 
 DatabaseAccessor::IteratorContextPtr

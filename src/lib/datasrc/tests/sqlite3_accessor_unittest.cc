@@ -183,9 +183,11 @@ TEST_F(SQLite3AccessorTest, nsec3) {
         context(accessor->getNSEC3Records("1BB7SO0452U1QHL98UISNDD9218GELR5",
                                           zone_info.second));
     // This relies on specific ordering in the DB. Is it OK?
-    checkRR(context, "1BB7SO0452U1QHL98UISNDD9218GELR5", "7200", "NSEC3",
+    // The name field is empty, as well as the sigtype one. This is OK, as
+    // both are not needed and the interface allows it.
+    checkRR(context, "", "7200", "NSEC3",
             "1 0 10 FEEDABEE 4KLSVDE8KH8G95VU68R7AHBE1CPQN38J");
-    checkRR(context, "1BB7SO0452U1QHL98UISNDD9218GELR5", "7200", "RRSIG",
+    checkRR(context, "", "7200", "RRSIG",
             "NSEC3 5 4 7200 20100410172647 20100311172647 63192 "
             "sql2.example.com. gNIVj4T8t51fEU6kOPpvK7HOGBFZGbalN5ZK "
             "mInyrww6UWZsUNdw07ge6/U6HfG+/s61RZ/L is2M6yUWHyXbNbj/"
