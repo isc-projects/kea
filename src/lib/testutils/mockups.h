@@ -21,6 +21,9 @@
 
 #include <asiodns/asiodns.h>
 
+namespace isc {
+namespace testutils {
+
 // A minimal mock configuration session.  Most the methods are
 // stubbed out, except for a very basic group_sendmsg() and
 // group_recvmsg().  hasQueuedMessages() always returns false.
@@ -149,3 +152,9 @@ private:
     bool disconnect_ok_;
 };
 
+} // end of testutils
+} // end of isc
+
+// Local Variables:
+// mode: c++
+// End:
