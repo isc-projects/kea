@@ -78,6 +78,31 @@ using namespace isc::asiolink;
 using namespace isc::asiodns;
 using namespace isc::server_common::portconfig;
 
+namespace {
+// A helper class for cleaning up message renderer.
+//
+// A temporary object of this class is expected to be created before starting
+// response message rendering.  On construction, it (re)initialize the given
+// message renderer with the given buffer.  On destruction, it releases
+// the previously set buffer and then release any internal resource in the
+// renderer, no matter what happened during the rendering, especially even
+// when it resulted in an exception.
+class  RendererHolder {
+public:
+    RendererHolder(MessageRenderer& renderer, OutputBuffer* buffer) :
+        renderer_(renderer)
+    {
+        renderer.setBuffer(buffer);
+    }
+    ~RendererHolder() {
+        renderer_.setBuffer(NULL);
+        renderer_.clear();
+    }
+private:
+    MessageRenderer& renderer_;
+};
+}
+
 class AuthSrvImpl {
 private:
     // prohibit copy
@@ -277,8 +302,8 @@ public:
 };
 
 void
-makeErrorMessage(Message& message, OutputBuffer& buffer,
-                 const Rcode& rcode,
+makeErrorMessage(MessageRenderer& renderer, Message& message,
+                 OutputBuffer& buffer, const Rcode& rcode,
                  std::auto_ptr<TSIGContext> tsig_context =
                  std::auto_ptr<TSIGContext>())
 {
@@ -311,14 +336,12 @@ makeErrorMessage(Message& message, OutputBuffer& buffer,
 
     message.setRcode(rcode);
     
-    MessageRenderer renderer;
-    renderer.setBuffer(&buffer);
+    RendererHolder holder(renderer, &buffer);
     if (tsig_context.get() != NULL) {
         message.toWire(renderer, *tsig_context);
     } else {
         message.toWire(renderer);
     }
-    renderer.setBuffer(NULL);
     LOG_DEBUG(auth_logger, DBG_AUTH_MESSAGES, AUTH_SEND_ERROR_RESPONSE)
               .arg(renderer.getLength()).arg(message);
 }
@@ -447,13 +470,13 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
     } catch (const DNSProtocolError& error) {
         LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_PACKET_PROTOCOL_ERROR)
                   .arg(error.getRcode().toText()).arg(error.what());
-        makeErrorMessage(message, buffer, error.getRcode());
+        makeErrorMessage(impl_->renderer_, message, buffer, error.getRcode());
         impl_->resumeServer(server, message, true);
         return;
     } catch (const Exception& ex) {
         LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_PACKET_PARSE_ERROR)
                   .arg(ex.what());
-        makeErrorMessage(message, buffer, Rcode::SERVFAIL());
+        makeErrorMessage(impl_->renderer_, message, buffer, Rcode::SERVFAIL());
         impl_->resumeServer(server, message, true);
         return;
     } // other exceptions will be handled at a higher layer.
@@ -480,7 +503,8 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
     }
 
     if (tsig_error != TSIGError::NOERROR()) {
-        makeErrorMessage(message, buffer, tsig_error.toRcode(), tsig_context);
+        makeErrorMessage(impl_->renderer_, message, buffer,
+                         tsig_error.toRcode(), tsig_context);
         impl_->resumeServer(server, message, true);
         return;
     }
@@ -497,9 +521,11 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
         } else if (message.getOpcode() != Opcode::QUERY()) {
             LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_UNSUPPORTED_OPCODE)
                       .arg(message.getOpcode().toText());
-            makeErrorMessage(message, buffer, Rcode::NOTIMP(), tsig_context);
+            makeErrorMessage(impl_->renderer_, message, buffer,
+                             Rcode::NOTIMP(), tsig_context);
         } else if (message.getRRCount(Message::SECTION_QUESTION) != 1) {
-            makeErrorMessage(message, buffer, Rcode::FORMERR(), tsig_context);
+            makeErrorMessage(impl_->renderer_, message, buffer,
+                             Rcode::FORMERR(), tsig_context);
         } else {
             ConstQuestionPtr question = *message.beginQuestion();
             const RRType &qtype = question->getType();
@@ -517,10 +543,10 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
     } catch (const std::exception& ex) {
         LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_RESPONSE_FAILURE)
                   .arg(ex.what());
-        makeErrorMessage(message, buffer, Rcode::SERVFAIL());
+        makeErrorMessage(impl_->renderer_, message, buffer, Rcode::SERVFAIL());
     } catch (...) {
         LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_RESPONSE_FAILURE_UNKNOWN);
-        makeErrorMessage(message, buffer, Rcode::SERVFAIL());
+        makeErrorMessage(impl_->renderer_, message, buffer, Rcode::SERVFAIL());
     }
     impl_->resumeServer(server, message, send_answer);
 }
@@ -563,13 +589,11 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, Message& message,
         }
     } catch (const Exception& ex) {
         LOG_ERROR(auth_logger, AUTH_PROCESS_FAIL).arg(ex.what());
-        makeErrorMessage(message, buffer, Rcode::SERVFAIL());
+        makeErrorMessage(renderer_, message, buffer, Rcode::SERVFAIL());
         return (true);
     }
 
-    renderer_.clear();
-    renderer_.setBuffer(&buffer);
-    
+    RendererHolder holder(renderer_, &buffer);
     const bool udp_buffer =
         (io_message.getSocket().getProtocol() == IPPROTO_UDP);
     renderer_.setLengthLimit(udp_buffer ? remote_bufsize : 65535);
@@ -578,7 +602,6 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, Message& message,
     } else {
         message.toWire(renderer_);
     }
-    renderer_.setBuffer(NULL);
     LOG_DEBUG(auth_logger, DBG_AUTH_MESSAGES, AUTH_SEND_NORMAL_RESPONSE)
               .arg(renderer_.getLength()).arg(message);
     return (true);
@@ -594,7 +617,8 @@ AuthSrvImpl::processXfrQuery(const IOMessage& io_message, Message& message,
 
     if (io_message.getSocket().getProtocol() == IPPROTO_UDP) {
         LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_AXFR_UDP);
-        makeErrorMessage(message, buffer, Rcode::FORMERR(), tsig_context);
+        makeErrorMessage(renderer_, message, buffer, Rcode::FORMERR(),
+                         tsig_context);
         return (true);
     }
 
@@ -619,7 +643,8 @@ AuthSrvImpl::processXfrQuery(const IOMessage& io_message, Message& message,
 
         LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_AXFR_ERROR)
                   .arg(err.what());
-        makeErrorMessage(message, buffer, Rcode::SERVFAIL(), tsig_context);
+        makeErrorMessage(renderer_, message, buffer, Rcode::SERVFAIL(),
+                         tsig_context);
         return (true);
     }
 
@@ -636,14 +661,16 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
     if (message.getRRCount(Message::SECTION_QUESTION) != 1) {
         LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_NOTIFY_QUESTIONS)
                   .arg(message.getRRCount(Message::SECTION_QUESTION));
-        makeErrorMessage(message, buffer, Rcode::FORMERR(), tsig_context);
+        makeErrorMessage(renderer_, message, buffer, Rcode::FORMERR(),
+                         tsig_context);
         return (true);
     }
     ConstQuestionPtr question = *message.beginQuestion();
     if (question->getType() != RRType::SOA()) {
         LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_NOTIFY_RRTYPE)
                   .arg(question->getType().toText());
-        makeErrorMessage(message, buffer, Rcode::FORMERR(), tsig_context);
+        makeErrorMessage(renderer_, message, buffer, Rcode::FORMERR(),
+                         tsig_context);
         return (true);
     }
 
@@ -698,14 +725,12 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
     message.setHeaderFlag(Message::HEADERFLAG_AA);
     message.setRcode(Rcode::NOERROR());
 
-    renderer_.clear();
-    renderer_.setBuffer(&buffer);
+    RendererHolder holder(renderer_, &buffer);
     if (tsig_context.get() != NULL) {
         message.toWire(renderer_, *tsig_context);
     } else {
         message.toWire(renderer_);
     }
-    renderer_.setBuffer(NULL);
     return (true);
 }
 
