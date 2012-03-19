@@ -33,12 +33,21 @@
 # ".backup" already exists).  This is used to restore the database if the
 # upgrade fails.
 
-import os, sqlite3, shutil, sys
+import sys; sys.path.append("@@PYTHONPATH@@")
+import os, sqlite3, shutil
 from optparse import OptionParser
+import isc.util.process
+
+isc.util.process.rename()
 
 # Default database to use if the database is not given on the command line.
 # (This is the same string as in "auth.spec.pre.in".)
-default_database_file = "@@LOCALSTATEDIR@@/@PACKAGE@/zone.sqlite3"
+DEFAULT_DATABASE_FILE = "@@LOCALSTATEDIR@@/@PACKAGE@/zone.sqlite3"
+
+# This is the version displayed to the user.  It comprises the module name,
+# the module version number, and the overall BIND 10 version number (set in
+# configure.ac)
+VERSION = "b10-dbutil 20120319 (BIND 10 @PACKAGE_VERSION@)"
 
 # Statements to update the database.
 #
@@ -174,12 +183,53 @@ upgrades = [
 class DbutilException(Exception):
     pass
 
+# Functions for outputting messages in a consistent format.  As this is intended
+# to be an interactive utility, it was not considered necessary to use the full
+# logging framework for messages.
 
-def info(text):
+def output(writer, prefix, text, ex = None):
+    """
+    @brief Write error message to output stream
+
+    @param writer Function to do the writing
+    @param prefix Prefix to the message
+    @param text Text to output
+    @param ex Possible exception holding additiona information
+    """
+    writer(prefix + ": " + text)
+    if ex is not None:
+        writer(" - " + str(ex))
+    writer("\n")
+
+
+def error(text, ex = None):
+    """
+    @brief Write error message to stderr.
+
+    @param text Text to output
+    @param ex Possible exception holding additiona information
+    """
+    output(sys.stderr.write, "ERROR", text, ex)
+
+
+def warn(text, ex = None):
+    """
+    @brief Write warning message to stderr.
+
+    @param text Text to output
+    @param ex Possible exception holding additiona information
+    """
+    output(sys.stderr.write, "WARN", text, ex)
+
+
+def info(text, ex = None):
     """
     @brief Write informational message to stdout.
+
+    @param text Text to output
+    @param ex Possible exception holding additiona information
     """
-    sys.stdout.write("INFO: " + text + "\n")
+    output(sys.stdout.write, "INFO", text, ex)
 
 
 # @brief Database Encapsulation
@@ -294,12 +344,12 @@ def prompt_user():
     """
     sys.stdout.write(
 """You have selected the upgrade option.  This will upgrade the schema of the
-selected BIND 10 database to the latest version.
+selected BIND 10 zone database to the latest version.
 
-The utility will take a copy of the database file before running so, in the
-unlikely event of a problem, you will be able to restore the database from
+The utility will take a copy of the zone database file before executing so, in
+the event of a problem, you will be able to restore the zone database from
 the backup.  To ensure that the integrity of this backup, please ensure that
-BIND 10 is not running before proceeding.
+BIND 10 is not running before continuing.
 """)
     yes_entered = False
     no_entered = False
@@ -474,7 +524,7 @@ def parse_command():
     """
     usage = ("usage: %prog --check [options] [db_file]\n" +
              "       %prog --upgrade [--noconfirm] [options] [db_file]")
-    parser = OptionParser(usage=usage)
+    parser = OptionParser(usage = usage, version = VERSION)
     parser.add_option("-c", "--check", action="store_true",
                       dest="check", default=False,
                       help="Print database version and check if it " +
@@ -492,20 +542,20 @@ def parse_command():
 
     # Set the database file on which to operate
     if (len(args) > 1):
-        sys.stderr.write(usage + "\n")
+        error("too many arguments to the command, maximum of one expected")
+        parser.print_usage()
         sys.exit(1)
     elif len(args) == 0:
-        args.append(default_database_file)
+        args.append(DEFAULT_DATABASE_FILE)
 
     # Check for conflicting options.  If some are found, output a suitable
     # error message and print the usage.
     if options.check and options.upgrade:
-        sys.stderr.write("cannot select both --check and --upgrade, " +
-                         "please choose one")
+        error("--upgrade is not compatible with --check")
     elif (not options.check) and (not options.upgrade):
-        sys.stderr.write("must select one of --check or --upgrade")
+        error("must select one of --check or --upgrade")
     elif (options.check and options.noconfirm):
-        sys.stderr.write("--noconfirm is not compatible with --check")
+        error("--noconfirm is not compatible with --check")
     else:
         return (options, args)
 
@@ -525,8 +575,7 @@ if __name__ == "__main__":
             check_version(db)
             db.close()
         except Exception as ex:
-            sys.stderr.write("ERROR: unable to check database version - " +
-                             str(ex) + "\n")
+            error("unable to check database version - " + str(ex))
             sys.exit(1)
 
     elif options.upgrade:
@@ -547,15 +596,12 @@ if __name__ == "__main__":
             db.close()
         except Exception as ex:
             if in_progress:
-                sys.stderr.write("ERROR: upgrade failed - " + str(ex) + "\n")
-                sys.stderr.write("WARN: database may be corrupt, " +
-                                 "restore database from backup\n")
+                error("upgrade failed - " + str(ex))
+                warn("database may be corrupt, restore it from backup")
             else:
-                sys.stderr.write("ERROR: upgrade preparation failed - " +
-                                 str(ex) + "\n")
-                sys.stderr.write("INFO: database upgrade was not attempted\n")
+                error("upgrade preparation failed - " + str(ex))
+                info("database upgrade was not attempted")
             sys.exit(1)
     else:
-        sys.stderr.write("ERROR: internal error, neither --check nor " +
-                         " --upgrade selected")
+        error("internal error, neither --check nor --upgrade selected")
         sys.exit(1)

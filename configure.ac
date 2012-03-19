@@ -1125,6 +1125,7 @@ AC_OUTPUT([doc/version.ent
            src/bin/cmdctl/tests/cmdctl_test
            src/bin/cmdctl/cmdctl.spec.pre
            src/bin/dbutil/dbutil.py
+           src/bin/dbutil/run_dbutil.sh
            src/bin/dbutil/tests/dbutil_test.sh
            src/bin/ddns/ddns.py
            src/bin/xfrin/tests/xfrin_test
@@ -1209,6 +1210,7 @@ AC_OUTPUT([doc/version.ent
            chmod +x src/bin/zonemgr/run_b10-zonemgr.sh
            chmod +x src/bin/bind10/run_bind10.sh
            chmod +x src/bin/cmdctl/tests/cmdctl_test
+           chmod +x src/bin/dbutil/run_dbutil.sh
            chmod +x src/bin/dbutil/tests/dbutil_test.sh
            chmod +x src/bin/xfrin/tests/xfrin_test
            chmod +x src/bin/xfrout/tests/xfrout_test
