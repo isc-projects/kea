@@ -1,0 +1,35 @@
+/**
+ *
+ * @mainpage BIND10 Developer's Guide
+ *
+ * Welcome to BIND10 Developer's Guide. This documentation is addressed
+ * at existing and prospecting developers and programmers, who would like
+ * to gain insight into internal workings of BIND 10. It could also be useful
+ * for existing and prospective contributors.
+ *
+ * If you are a user or system administrator, rather than software engineer,
+ * you should read BIND10 Guide (Administrator Reference for BIND10) instead.
+ *
+ * Regardless of your field of expertise, you are encouraged to visit
+ * <a href="http://bind10.isc.org/">BIND10 webpage (http://bind10.isc.org)</a>
+ *
+ * @section DNS
+ * - @subpage DataScrubbing
+ *
+ * @section DHCP
+ * - @subpage dhcpv4
+ * - @subpage dhcpv6
+ * - @subpage libdhcp
+ *
+ * @section misc Miscellaneous topics
+ * - @subpage LoggingApi
+ *   - @subpage LoggingApiOverview
+ *   - @subpage LoggingApiLoggerNames
+ *   - @subpage LoggingApiLoggingMessages
+ * - @subpage SocketSessionUtility
+ * - <a href="./doxygen-error.log">Documentation warnings and errors</a>
+ *
+ * @todo: Move this logo to the right (and possibly up). Not sure what
+ * is the best way to do it in Doxygen, without using CSS hacks.
+ * @image html isc-logo.png
+ */
