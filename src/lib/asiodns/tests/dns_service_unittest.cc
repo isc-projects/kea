@@ -177,6 +177,8 @@ protected:
         asio_service(io_service.get_io_service())
     {
         current_service = &io_service;
+        // Content shouldn't matter for the tests, but initialize anyway
+        memset(data, 1, sizeof(data));
     }
 
     ~UDPDNSServiceTest() {
@@ -226,7 +228,7 @@ protected:
 private:
     asio::ip::udp::socket client_socket;
     const asio::ip::udp::endpoint server_ep;
-    char data[4];           // the content doesn't matter for the test
+    char data[4];
 
     // To access them in signal handle function, the following
     // variables have to be static.
@@ -235,6 +237,11 @@ private:
 
     asio::io_service& asio_service;
 };
+
+// Need to define the non-const static members outside of the class
+// declaration
+IOService* UDPDNSServiceTest::current_service;
+bool UDPDNSServiceTest::io_service_is_time_out;
 
 // A helper socket FD creator for given address and port.  It's generally
 // expected to succeed; on failure it simply throws an exception to make
@@ -250,13 +257,13 @@ getSocketFD(int family, const char* const address, const char* const port) {
     int s = -1;
     int error = getaddrinfo(address, port, &hints, &res);
     if (error == 0) {
-        s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-        if (s >= 0) {
-            error = bind(s, res->ai_addr, res->ai_addrlen);
+        if (res != NULL) {
+            s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+            if (s >= 0) {
+                error = bind(s, res->ai_addr, res->ai_addrlen);
+            }
+            freeaddrinfo(res);
         }
-    }
-    if (res != NULL) {
-        freeaddrinfo(res);
     }
     if (error != 0) {
         if (s >= 0) {
