@@ -257,6 +257,9 @@ getSocketFD(int family, const char* const address, const char* const port) {
     int s = -1;
     int error = getaddrinfo(address, port, &hints, &res);
     if (error == 0) {
+        // If getaddrinfo returns 0, res should be set to a non NULL valid
+        // pointer, but some variants of cppcheck reportedly complains about
+        // it, so we satisfy them here.
         if (res != NULL) {
             s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
             if (s >= 0) {
