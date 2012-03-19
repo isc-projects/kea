@@ -1,8 +1,8 @@
-xxx.	[bug]		naokikambe
+404.	[bug]		naokikambe
 	The statistic counters are now properly accumulated across multiple
 	instances of b10-auth (if there are multiple instances), instead of
 	providing result for random instance.
-	(Trac #1751, git TBD)
+	(Trac #1751, git 3285353a660e881ec2b645e1bc10d94e5020f357)
 
 403.	[build]*	jelte
 	The configure option for botan (--with-botan=PATH) is replaced by
