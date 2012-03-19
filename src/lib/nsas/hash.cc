@@ -101,7 +101,7 @@ Hash::Hash(uint32_t tablesize, uint32_t maxkeylen, bool randomise) :
         init_value.curtime = time(NULL);
     }
     else {
-        init_value.seed = 0;
+        init_value.seed = 1;
     }
     srandom(init_value.seed);
 
