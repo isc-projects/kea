@@ -75,6 +75,7 @@ public:
                            ///< information given by the client.
     };
 
+public:
     /// \brief The destructor.
     virtual ~DNSServiceBase() {}
 
@@ -103,6 +104,12 @@ class DNSService : public DNSServiceBase {
 private:
     DNSService(const DNSService& source);
     DNSService& operator=(const DNSService& source);
+
+private:
+    // Bit or'ed all defined \c ServerFlag values.  Used internally for
+    // compatibility check.  Note that this doesn't have to be used by
+    // applications, and doesn't have to be defined in the "base" class.
+    static const unsigned int SERVER_DEFINED_FLAGS = 1;
 
 public:
     /// \brief The constructor with a specific IP address and port on which
@@ -187,7 +194,8 @@ public:
     ///     AF_INET or AF_INET6.
     /// \param options Optional properties of the server (see ServerFlag).
     ///
-    /// \throw isc::InvalidParameter if af is neither AF_INET nor AF_INET6.
+    /// \throw isc::InvalidParameter if af is neither AF_INET nor AF_INET6,
+    ///     or the given \c options include an unsupported or invalid value.
     /// \throw isc::asiolink::IOError when a low-level error happens, like the
     ///     fd is not a valid descriptor or it can't be listened on.
     virtual void addServerUDPFromFD(int fd, int af,

@@ -15,6 +15,8 @@
 #include <config.h>
 #include <gtest/gtest.h>
 
+#include <exceptions/exceptions.h>
+
 #include <asio.hpp>
 #include <asiolink/asiolink.h>
 #include <asiodns/asiodns.h>
@@ -308,6 +310,14 @@ TEST_F(UDPDNSServiceTest, syncUDPServerFromFD) {
     runService();
     EXPECT_TRUE(serverStopSucceed());
     EXPECT_EQ(first_buffer_, second_buffer_);
+}
+
+TEST_F(UDPDNSServiceTest, addUDPServerFromFDWithUnknownOption) {
+    // Use of undefined/incompatible options should result in an exception.
+    EXPECT_THROW(dns_service.addServerUDPFromFD(
+                     getSocketFD(AF_INET6, TEST_IPV6_ADDR, TEST_SERVER_PORT),
+                     AF_INET6, static_cast<DNSService::ServerFlag>(2)),
+                 isc::InvalidParameter);
 }
 
 } // unnamed namespace
