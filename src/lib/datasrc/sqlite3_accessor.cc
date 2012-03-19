@@ -86,7 +86,7 @@ const char* const text_statements[NUM_STATEMENTS] = {
      */
     "SELECT name FROM records " // FIND_PREVIOUS
         "WHERE zone_id=?1 AND rdtype = 'NSEC' AND "
-        "rname < $2 ORDER BY rname DESC LIMIT 1",
+        "rname < ?2 ORDER BY rname DESC LIMIT 1",
     "INSERT INTO diffs "        // ADD_RECORD_DIFF
         "(zone_id, version, operation, name, rrtype, ttl, rdata) "
         "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
