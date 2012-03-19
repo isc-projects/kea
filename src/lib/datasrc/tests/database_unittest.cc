@@ -2281,6 +2281,31 @@ TYPED_TEST(DatabaseClientTest, wildcardNXRRSET_NSEC) {
                Name("*.wild.example.org"), ZoneFinder::FIND_DNSSEC);
 }
 
+TYPED_TEST(DatabaseClientTest,dbNegativeCaseFind){
+    //ZoneFinder::find() for negative case should show whether the zone is 
+    //signed by NSEC or NSEC3,that is good for upper layer caller.
+
+    //First off, add an NSEC3PARAM RR
+    this->updater_ = this->client_->getUpdater(this->zname_, false);
+    this->rrset_.reset(new RRset(this->zname_, this->qclass_,
+                                isc::dns::RRType::NSEC3PARAM(),
+                                this->rrttl_));
+    this->rrset_->addRdata(rdata::createRdata(this->rrset_->getType(),
+                                              this->rrset_->getClass(),
+                                              "1 0 12 aabbccdd"));
+    this->updater_->addRRset(*this->rrset_);
+    this->expected_rdatas_.clear();
+    this->expected_sig_rdatas_.clear();
+    //If there is a NSEC3PARM RRset, the result of find() function should
+    //contain RESULT_NSEC3_SIGNED flag when NXDOMAIN or NXRRSET.
+    doFindTest(this->updater_->getFinder(),
+               isc::dns::Name("doesnotexist.example.org."),
+               this->qtype_, this->qtype_, this->rrttl_,
+               ZoneFinder::NXDOMAIN,this->expected_rdatas_, 
+               this->expected_sig_rdatas_,
+               ZoneFinder::RESULT_NSEC3_SIGNED);
+}
+
 TYPED_TEST(DatabaseClientTest, NXDOMAIN_NSEC) {
     // The domain doesn't exist, so we must get the right NSEC
     boost::shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
