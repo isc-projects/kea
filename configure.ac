@@ -270,7 +270,7 @@ AC_DEFUN([BIND10_CXX_TRY_FLAG], [
   bind10_save_CXXFLAGS="$CXXFLAGS"
   CXXFLAGS="$CXXFLAGS $1"
 
-  AC_LINK_IFELSE([int main(void){ return 0;}],
+  AC_LINK_IFELSE([AC_LANG_SOURCE([int main(void){ return 0;}])],
                  [bind10_cxx_flag=yes], [bind10_cxx_flag=no])
   CXXFLAGS="$bind10_save_CXXFLAGS"
 
