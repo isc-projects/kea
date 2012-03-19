@@ -208,6 +208,73 @@ TEST_F(SQLite3AccessorTest, nsec3) {
     EXPECT_FALSE(context->getNext(data));
 }
 
+// This tests getting a previoeus hash in the NSEC3 namespace of a zone,
+// including a wrap-around and asking for a hash that does not exist in the.
+// zone at all.
+TEST_F(SQLite3AccessorTest, nsec3Previous) {
+    // Get the zone
+    const std::pair<bool, int>
+        zone_info(accessor->getZone("sql2.example.com."));
+    ASSERT_TRUE(zone_info.first);
+
+    std::string data[DatabaseAccessor::COLUMN_COUNT];
+
+    // Test a previous hash for something that is in the zone
+    // (ensuring it is really there)
+    DatabaseAccessor::IteratorContextPtr
+        context(accessor->getNSEC3Records("703OOGCKF8VEV1N7U64D1JG19URETN8N",
+                                          zone_info.second));
+    EXPECT_TRUE(context->getNext(data));
+    EXPECT_EQ("56IEQ664LHDAKVPE2FL179MSM3QAOFVC", accessor->
+              findPreviousNSEC3Hash(zone_info.second,
+                                    "703OOGCKF8VEV1N7U64D1JG19URETN8N"));
+
+    // Test a previous hash for something that is not in the
+    // zone
+    context = accessor->getNSEC3Records("702OOGCKF8VEV1N7U64D1JG19URETN8N",
+                                        zone_info.second);
+    EXPECT_FALSE(context->getNext(data));
+    EXPECT_EQ("56IEQ664LHDAKVPE2FL179MSM3QAOFVC", accessor->
+              findPreviousNSEC3Hash(zone_info.second,
+                                    "702OOGCKF8VEV1N7U64D1JG19URETN8N"));
+
+    // Search at the first item, should wrap around
+    context = accessor->getNSEC3Records("1BB7SO0452U1QHL98UISNDD9218GELR5",
+                                        zone_info.second);
+    EXPECT_TRUE(context->getNext(data));
+    EXPECT_EQ("RKBUCQT8T78GV6QBCGBHCHC019LG73SJ", accessor->
+              findPreviousNSEC3Hash(zone_info.second,
+                                    "1BB7SO0452U1QHL98UISNDD9218GELR5"));
+
+    // Search before the first item, should wrap around
+    context = accessor->getNSEC3Records("0BB7SO0452U1QHL98UISNDD9218GELR5",
+                                        zone_info.second);
+    EXPECT_FALSE(context->getNext(data));
+    EXPECT_EQ("RKBUCQT8T78GV6QBCGBHCHC019LG73SJ", accessor->
+              findPreviousNSEC3Hash(zone_info.second,
+                                    "0BB7SO0452U1QHL98UISNDD9218GELR5"));
+
+    // Search after the last item (should return the last one)
+    context = accessor->getNSEC3Records("RRBUCQT8T78GV6QBCGBHCHC019LG73SJ",
+                                        zone_info.second);
+    EXPECT_FALSE(context->getNext(data));
+    EXPECT_EQ("RKBUCQT8T78GV6QBCGBHCHC019LG73SJ", accessor->
+              findPreviousNSEC3Hash(zone_info.second,
+                                    "RRBUCQT8T78GV6QBCGBHCHC019LG73SJ"));
+}
+
+// Check it throws when we want a previous NSEC3 hash in an unsigned zone
+TEST_F(SQLite3AccessorTest, nsec3PreviousUnsigned) {
+    // This zone did not look signed in the test file.
+    const std::pair<bool, int>
+        unsigned_zone_info(accessor->getZone("example.com."));
+
+    EXPECT_THROW(accessor->
+                 findPreviousNSEC3Hash(unsigned_zone_info.second,
+                                       "0BB7SO0452U1QHL98UISNDD9218GELR5"),
+                 DataSourceError);
+}
+
 // This tests the difference iterator context
 
 // Test that at attempt to create a difference iterator for a serial number
