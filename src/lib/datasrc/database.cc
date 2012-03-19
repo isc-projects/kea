@@ -815,14 +815,14 @@ DatabaseClient::Finder::findNoNameResult(const Name& name, const RRType& type,
     //verify whether the zonefile is signed by NSEC3 method
     //If the NSEC3PARAMETER type exists in the zonefile,NSEC3 is definitly used
     //in this zone signature.
-    bool is_NSEC3 = false;
+    bool is_nsec3 = false;
     WantedTypes nsec3PARAM;
-    nsec3PARAM.insert(RRType::NSEC3PARAM()); 
-    const FoundRRsets NSEC3Found = getRRsets(origin_.toText(),nsec3PARAM,
-                                        false);
+    nsec3PARAM.insert(RRType::NSEC3PARAM());
+    const FoundRRsets NSEC3Found = getRRsets(origin_.toText(), nsec3PARAM,
+                                             false);
     const FoundIterator nfi(NSEC3Found.second.find(RRType::NSEC3PARAM()));
     if (nfi != NSEC3Found.second.end()) {
-        is_NSEC3 = true;
+        is_nsec3 = true;
     }
     // On entry to this method, we know that the database doesn't have any
     // entry for this name.  Before returning NXDOMAIN, we need to check
@@ -837,12 +837,14 @@ DatabaseClient::Finder::findNoNameResult(const Name& name, const RRType& type,
             arg(accessor_->getDBName()).arg(name);
         const ConstRRsetPtr nsec = dnssec_data ? findNSECCover(name) :
             ConstRRsetPtr();
-        if (is_NSEC3 == true) {
+        if (is_nsec3 == true) {
             return (ResultContext(NXRRSET, nsec,
-                                  nsec ? RESULT_NSEC_SIGNED : RESULT_NSEC3_SIGNED));
+                                  nsec ? RESULT_NSEC_SIGNED :
+                                  RESULT_NSEC3_SIGNED));
         } else {
             return (ResultContext(NXRRSET, nsec,
-                                  nsec ? RESULT_NSEC_SIGNED : RESULT_DEFAULT));
+                                  nsec ? RESULT_NSEC_SIGNED :
+                                  RESULT_DEFAULT));
         }
     } else if ((options & NO_WILDCARD) == 0) {
         // It's not an empty non-terminal and wildcard matching is not
@@ -862,7 +864,7 @@ DatabaseClient::Finder::findNoNameResult(const Name& name, const RRType& type,
               arg(accessor_->getDBName()).arg(name).arg(type).arg(getClass());
     const ConstRRsetPtr nsec = dnssec_data ? findNSECCover(name) :
         ConstRRsetPtr();
-    if (is_NSEC3 == true ) {
+    if (is_nsec3 == true) {
         return (ResultContext(NXDOMAIN, nsec,
                               nsec ? RESULT_NSEC_SIGNED : RESULT_NSEC3_SIGNED));
     } else {
