@@ -22,6 +22,8 @@
 
 #include <log/dummylog.h>
 
+#include <exceptions/exceptions.h>
+
 #include <asio.hpp>
 #include <dns_service.h>
 #include <asiolink/io_service.h>
@@ -208,6 +210,10 @@ void DNSService::addServerTCPFromFD(int fd, int af) {
 }
 
 void DNSService::addServerUDPFromFD(int fd, int af, ServerFlag options) {
+    if ((~SERVER_DEFINED_FLAGS & static_cast<int>(options)) != 0) {
+        isc_throw(isc::InvalidParameter, "Invalid DNS/UDP server option: "
+                  << options);
+    }
     if ((options & SERVER_SYNC_OK) != 0) {
         impl_->addServerFromFD<DNSServiceImpl::SyncUDPServerPtr,
             SyncUDPServer>(fd, af);
