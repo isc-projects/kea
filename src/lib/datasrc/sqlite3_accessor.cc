@@ -55,7 +55,9 @@ enum StatementID {
     HIGH_DIFF_ID = 14,
     DIFF_RECS = 15,
     NSEC3 = 16,
-    NUM_STATEMENTS = 17
+    NSEC3_PREVIOUS = 17,
+    NSEC3_LAST = 18,
+    NUM_STATEMENTS = 19
 };
 
 const char* const text_statements[NUM_STATEMENTS] = {
@@ -112,7 +114,13 @@ const char* const text_statements[NUM_STATEMENTS] = {
     // expected position, so we can reuse the same code as for other
     // lookups.
     "SELECT rdtype, ttl, 1, rdata FROM nsec3 WHERE zone_id=?1 AND "
-        "hash=?2"
+        "hash=?2",
+    // For getting the previous NSEC3 hash
+    "SELECT DISTINCT hash FROM nsec3 WHERE zone_id=?1 AND hash < ?2 "
+        "ORDER BY hash DESC LIMIT 1",
+    // And for wrap-around
+    "SELECT DISTINCT hash FROM nsec3 WHERE zone_id=?1 "
+        "ORDER BY hash DESC LIMIT 1",
 };
 
 struct SQLite3Parameters {
@@ -1142,8 +1150,73 @@ SQLite3Accessor::findPreviousName(int zone_id, const std::string& rname)
 }
 
 std::string
-SQLite3Accessor::findPreviousNSEC3Hash(int, const std::string&) const {
-    isc_throw(NotImplemented, "Not implemented yet, see #1760");
+SQLite3Accessor::findPreviousNSEC3Hash(int zone_id, const std::string& hash)
+    const
+{
+    sqlite3_stmt* const stmt = dbparameters_->getStatement(NSEC3_PREVIOUS);
+    sqlite3_reset(stmt);
+    sqlite3_clear_bindings(stmt);
+
+    if (sqlite3_bind_int(stmt, 1, zone_id) != SQLITE_OK) {
+        isc_throw(SQLite3Error, "Could not bind zone ID " << zone_id <<
+                  " to SQL statement (find previous NSEC3): " <<
+                  sqlite3_errmsg(dbparameters_->db_));
+    }
+    if (sqlite3_bind_text(stmt, 2, hash.c_str(), -1, SQLITE_STATIC) !=
+        SQLITE_OK) {
+        isc_throw(SQLite3Error, "Could not bind hash " << hash <<
+                  " to SQL statement (find previous NSEC3): " <<
+                  sqlite3_errmsg(dbparameters_->db_));
+    }
+
+    std::string result;
+    const int rc = sqlite3_step(stmt);
+    if (rc == SQLITE_ROW) {
+        // We found it
+        result = convertToPlainChar(sqlite3_column_text(stmt, 0),
+                                    dbparameters_->db_);
+    }
+    sqlite3_reset(stmt);
+
+    if (rc != SQLITE_ROW && rc != SQLITE_DONE) {
+        // Some kind of error
+        isc_throw(SQLite3Error, "Could not get data for previous hash");
+    }
+
+    if (rc == SQLITE_DONE) {
+        // No NSEC3 records before this hash. This means we should wrap
+        // around and take the last one.
+        sqlite3_stmt* const stmt = dbparameters_->getStatement(NSEC3_LAST);
+        sqlite3_reset(stmt);
+        sqlite3_clear_bindings(stmt);
+
+        if (sqlite3_bind_int(stmt, 1, zone_id) != SQLITE_OK) {
+            isc_throw(SQLite3Error, "Could not bind zone ID " << zone_id <<
+                      " to SQL statement (find last NSEC3): " <<
+                      sqlite3_errmsg(dbparameters_->db_));
+        }
+
+        const int rc = sqlite3_step(stmt);
+        if (rc == SQLITE_ROW) {
+            // We found it
+            result = convertToPlainChar(sqlite3_column_text(stmt, 0),
+                                        dbparameters_->db_);
+        }
+        sqlite3_reset(stmt);
+
+        if (rc != SQLITE_ROW && rc != SQLITE_DONE) {
+            // Some kind of error
+            isc_throw(SQLite3Error, "Could not get data for last hash");
+        }
+
+        if (rc == SQLITE_DONE) {
+            // No NSEC3 at all in the zone. Well, bad luck, but you should not
+            // have asked in the first place.
+            isc_throw(DataSourceError, "No NSEC3 in this zone");
+        }
+    }
+
+    return (result);
 }
 
 } // end of namespace datasrc
