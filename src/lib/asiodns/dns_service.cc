@@ -210,7 +210,7 @@ void DNSService::addServerTCPFromFD(int fd, int af) {
 }
 
 void DNSService::addServerUDPFromFD(int fd, int af, ServerFlag options) {
-    if ((~SERVER_DEFINED_FLAGS & static_cast<int>(options)) != 0) {
+    if ((~SERVER_DEFINED_FLAGS & static_cast<unsigned int>(options)) != 0) {
         isc_throw(isc::InvalidParameter, "Invalid DNS/UDP server option: "
                   << options);
     }
