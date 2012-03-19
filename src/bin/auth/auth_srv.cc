@@ -87,7 +87,11 @@ namespace {
 // the previously set buffer and then release any internal resource in the
 // renderer, no matter what happened during the rendering, especially even
 // when it resulted in an exception.
-class  RendererHolder {
+//
+// Note: if we need this helper in many other places we might consider making
+// it visible to other modules.  As of this implementation this is the only
+// user of this class, so we hide it within the implementation.
+class RendererHolder {
 public:
     RendererHolder(MessageRenderer& renderer, OutputBuffer* buffer) :
         renderer_(renderer)
