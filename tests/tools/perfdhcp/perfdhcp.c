@@ -93,7 +93,7 @@ pselect (int nfds, fd_set *readfds, fd_set *writefds,
     return select(nfds, readfds, writefds, exceptfds, &my_timeout);
 }
 
-#endif
+#endif /* HAVE_PSELECT */
 
 /* DHCPv4 defines (to be moved/shared) */
 
