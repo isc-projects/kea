@@ -25,9 +25,12 @@ status=0
 n=0
 
 # TODO: consider consistency with statistics definition in auth.spec
-auth_queries_tcp="\<queries\.tcp\>"
-auth_queries_udp="\<queries\.udp\>"
-auth_opcode_queries="\<opcode\.query\>"
+cnt_name1="\<queries\.tcp\>"
+cnt_name2="\<queries\.udp\>"
+cnt_name3="\<opcode\.query\>"
+cnt_value1=0
+cnt_value2=0
+cnt_value3=0
 
 echo "I:Checking b10-auth is working by default ($n)"
 $DIG +norec @10.53.0.1 -p 53210 ns.example.com. A >dig.out.$n || status=1
@@ -45,9 +48,12 @@ echo 'Stats show
 	--csv-file-dir=$BINDCTL_CSV_DIR > bindctl.out.$n || status=1
 # the server should have received 1 UDP and 1 TCP queries (TCP query was
 # sent from the server startup script)
-grep $auth_queries_tcp".*\<1\>" bindctl.out.$n > /dev/null || status=1
-grep $auth_queries_udp".*\<1\>" bindctl.out.$n > /dev/null || status=1
-grep $auth_opcode_queries".*\<2\>" bindctl.out.$n > /dev/null || status=1
+cnt_value1=`expr $cnt_value1 + 1`
+cnt_value2=`expr $cnt_value2 + 1`
+cnt_value3=`expr $cnt_value1 + $cnt_value2`
+grep $cnt_name1".*\<"$cnt_value1"\>" bindctl.out.$n > /dev/null || status=1
+grep $cnt_name2".*\<"$cnt_value2"\>" bindctl.out.$n > /dev/null || status=1
+grep $cnt_name3".*\<"$cnt_value3"\>" bindctl.out.$n > /dev/null || status=1
 if [ $status != 0 ]; then echo "I:failed"; fi
 n=`expr $n + 1`
 
@@ -80,9 +86,12 @@ echo 'Stats show
 ' | $RUN_BINDCTL \
 	--csv-file-dir=$BINDCTL_CSV_DIR > bindctl.out.$n || status=1
 # The statistics counters should have been reset while stop/start.
-grep $auth_queries_tcp".*\<0\>" bindctl.out.$n > /dev/null || status=1
-grep $auth_queries_udp".*\<1\>" bindctl.out.$n > /dev/null || status=1
-grep $auth_opcode_queries".*\<1\>" bindctl.out.$n > /dev/null || status=1
+cnt_value1=0
+cnt_value2=1
+cnt_value3=`expr $cnt_value1 + $cnt_value2`
+grep $cnt_name1".*\<"$cnt_value1"\>" bindctl.out.$n > /dev/null || status=1
+grep $cnt_name2".*\<"$cnt_value2"\>" bindctl.out.$n > /dev/null || status=1
+grep $cnt_name3".*\<"$cnt_value3"\>" bindctl.out.$n > /dev/null || status=1
 if [ $status != 0 ]; then echo "I:failed"; fi
 n=`expr $n + 1`
 
@@ -105,11 +114,68 @@ echo 'Stats show
 ' | $RUN_BINDCTL \
 	--csv-file-dir=$BINDCTL_CSV_DIR > bindctl.out.$n || status=1
 # The statistics counters shouldn't be reset due to hot-swapping datasource.
-grep $auth_queries_tcp".*\<0\>" bindctl.out.$n > /dev/null || status=1
-grep $auth_queries_udp".*\<2\>" bindctl.out.$n > /dev/null || status=1
-grep $auth_opcode_queries".*\<2\>" bindctl.out.$n > /dev/null || status=1
+cnt_value1=`expr $cnt_value1 + 0`
+cnt_value2=`expr $cnt_value2 + 1`
+cnt_value3=`expr $cnt_value1 + $cnt_value2`
+grep $cnt_name1".*\<"$cnt_value1"\>" bindctl.out.$n > /dev/null || status=1
+grep $cnt_name2".*\<"$cnt_value2"\>" bindctl.out.$n > /dev/null || status=1
+grep $cnt_name3".*\<"$cnt_value3"\>" bindctl.out.$n > /dev/null || status=1
 if [ $status != 0 ]; then echo "I:failed"; fi
 n=`expr $n + 1`
+
+echo "I:Starting more b10-auths and checking that ($n)"
+for i in 2 3
+do
+    echo 'config add Boss/components b10-auth-'$i'
+config set Boss/components/b10-auth-'$i' { "special": "auth", "kind": "needed" }
+config commit
+quit
+' | $RUN_BINDCTL \
+	--csv-file-dir=$BINDCTL_CSV_DIR 2>&1 > /dev/null || status=1
+done
+$DIG +norec @10.53.0.1 -p 53210 ns.example.com. A >dig.out.$n || status=1
+grep 192.0.2.2 dig.out.$n > /dev/null || status=1
+if [ $status != 0 ]; then echo "I:failed"; fi
+n=`expr $n + 1`
+
+echo "I:Rechecking BIND 10 statistics consistency after a pause ($n)"
+sleep 2
+cnt_value1=`expr $cnt_value1 + 0`
+cnt_value2=`expr $cnt_value2 + 1`
+cnt_value3=`expr $cnt_value1 + $cnt_value2`
+# Rechecking some times
+for i in 1 2 3 4
+do
+    echo 'Stats show
+' | $RUN_BINDCTL \
+	--csv-file-dir=$BINDCTL_CSV_DIR > bindctl.out.$n || status=1
+    # The statistics counters should keep being consistent even while
+    # multiple b10-auths are running.
+    grep $cnt_name1".*\<"$cnt_value1"\>" bindctl.out.$n > /dev/null || status=1
+    grep $cnt_name2".*\<"$cnt_value2"\>" bindctl.out.$n > /dev/null || status=1
+    grep $cnt_name3".*\<"$cnt_value3"\>" bindctl.out.$n > /dev/null || status=1
+    if [ $status != 0 ]; then echo "I:failed "; break ; fi
+done
+n=`expr $n + 1`
+
+echo "I:Stopping extra b10-auths and checking that ($n)"
+for i in 3 2
+do
+    echo 'config remove Boss/components b10-auth-'$i'
+config commit
+quit
+' | $RUN_BINDCTL \
+	--csv-file-dir=$BINDCTL_CSV_DIR 2>&1 > /dev/null || status=1
+done
+$DIG +norec @10.53.0.1 -p 53210 ns.example.com. A >dig.out.$n || status=1
+grep 192.0.2.2 dig.out.$n > /dev/null || status=1
+if [ $status != 0 ]; then echo "I:failed"; fi
+n=`expr $n + 1`
+
+# The statistics counters can not be rechecked here because the auth
+# instance seems to hang up after one of the multiple auth instances
+# was removed via bindctl. This reason seems to be the same reason as
+# #1703.
 
 echo "I:exit status: $status"
 exit $status
