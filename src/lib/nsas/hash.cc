@@ -99,8 +99,7 @@ Hash::Hash(uint32_t tablesize, uint32_t maxkeylen, bool randomise) :
 
     if (randomise) {
         init_value.curtime = time(NULL);
-    }
-    else {
+    } else {
         init_value.seed = 1;
     }
     srandom(init_value.seed);
