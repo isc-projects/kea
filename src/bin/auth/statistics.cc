@@ -112,9 +112,13 @@ AuthCountersImpl::submitStatistics() const {
         return (false);
     }
     std::stringstream statistics_string;
+    // add pid in order for stats to identify which auth sends
+    // statistics in the situation that multiple auth instances are
+    // working
     statistics_string << "{\"command\": [\"set\","
                       <<   "{ \"owner\": \"Auth\","
-                      <<   "  \"data\":"
+                      <<   "  \"pid\":" << getpid()
+                      <<   ", \"data\":"
                       <<     "{ \"queries.udp\": "
                       <<     server_counter_.get(AuthCounters::SERVER_UDP_QUERY)
                       <<     ", \"queries.tcp\": "
