@@ -13,7 +13,7 @@ pyunittests_util_la_CXXFLAGS = $(AM_CXXFLAGS) $(PYTHON_CXXFLAGS)
 
 # Python prefers .so, while some OSes (specifically MacOS) use a different
 # suffix for dynamic objects.  -module is necessary to work this around.
-pyunittests_util_la_LDFLAGS += -module
+pyunittests_util_la_LDFLAGS += -module -avoid-version
 pyunittests_util_la_LIBADD = $(top_builddir)/src/lib/util/libutil.la
 pyunittests_util_la_LIBADD += $(PYTHON_LIB)
 
