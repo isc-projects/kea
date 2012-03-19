@@ -1,0 +1,409 @@
+#!/bin/sh
+# Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+
+# Checks that the logger will limit the output of messages less severe than
+# the severity/debug setting.
+
+testname="Database Upgrade Test"
+echo $testname
+
+failcount=0
+tempfile=@abs_builddir@/dbutil_test_tempfile_$$
+backupfile=${tempfile}.backup
+testdata=@abs_srcdir@/testdata
+verfile=@abs_builddir@/dbutil_test_verfile_$$
+
+# @brief Record a success
+succeed() {
+    echo "--- PASS"
+}
+
+
+# @brief Record a fail
+#
+# @param $1 Optional additional reason to output
+fail() {
+    if [ "x$1" != "x" ]
+    then
+        echo "ERROR: $1"
+    fi
+    echo "*** FAIL"
+    failcount=`expr $failcount + 1`
+}
+
+
+# @brief Record a pass if the argument is zero
+#
+# @param $1 Value to test
+passzero() {
+    if [ $1 -eq 0 ]; then
+        succeed
+    else
+        fail
+    fi
+}
+
+
+# @brief Record a fail if the argument is non-zero
+#
+# @param $1 Value to test
+failzero() {
+    if [ $1 -ne 0 ]; then
+        succeed
+    else
+        fail
+    fi
+}
+
+
+# @brief Check backup file
+#
+# Record a failure if the backup file does not exist or if it is different
+# to the data file. (N.B. No success is recorded if they are the same.)
+#
+# @param $1 Source database file
+# @param $2 Backup file
+check_backup() {
+    if [ ! -e $1 ]
+    then
+        fail "database file $1 not found"
+
+    elif [ ! -e $2 ]
+    then
+        fail "backup file $2 not found"
+
+    else
+        diff $1 $2 > /dev/null
+        if [ $? -ne 0 ]
+        then
+            fail "database file $1 different to backup file $2"
+        fi
+    fi
+}
+
+
+# @brief Check No Backup File
+#
+# Record a failure if the backup file exists.  (N.B. No success is recorded if
+# it does not.)
+#
+# @param $1 Source database file (unused, present for symmetry)
+# @param $2 Backup file
+check_no_backup() {
+    if [ -e $2 ]
+    then
+        fail "backup of database $2 exists when it should not"
+    fi
+}
+
+
+# @brief Get Database Schema
+#
+# As the schema stored in the database is format-dependent - how it is printed
+# depends on how the commands were entered (on one line, split across two
+# lines etc.) - comparing schema is awkward.
+#
+# The function sets the local variable db_schema to the output of the
+# .schema command, with spaces removed and upper converted to lowercase.
+#
+# The database is copied before the schema is taken (and removed after)
+# as SQLite3 assummes a writeable database, which may not be the case if
+# getting the schema from a reference copy.
+#
+# @param $1 Database for which the schema is required
+get_schema() {
+    db1=@abs_builddir@/dbutil_test_schema_$$
+    cp $1 $db1
+
+    db_schema=`sqlite3 $db1 '.schema' | \
+               awk '{line = line $0} END {print line}' | \
+               sed -e 's/ //g' | \
+               tr [:upper:] [:lower:]`
+    rm -f $db1
+}
+
+
+# @brief Successful Schema Upgrade Test
+#
+# This test is done where the upgrade is expected to be successful - when
+# the end result of the test is that the test database is upgraded to a
+# database of the expected schema.
+#
+# Note: the caller must ensure that $tempfile and $backupfile do not exist
+#       on entry, and is responsible for removing them afterwards.
+#
+# @param $1 Database to upgrade
+upgrade_ok_test() {
+    cp $1 $tempfile
+    ../b10-dbutil --upgrade --noconfirm $tempfile
+    if [ $? -eq 0 ]
+    then
+        # Compare schema with the reference
+        get_schema $testdata/v2_0.sqlite3
+        expected_schema=$db_schema
+        get_schema $tempfile
+        actual_schema=$db_schema
+        if [ x$expected_schema = x$actual_schema ]
+        then
+            succeed
+        else
+            fail "upgraded schema not as expected"
+        fi
+
+        # and check the version is set correctly
+        check_version $tempfile "V2.0"
+    else
+        # Error should have been output already
+        fail
+    fi
+}
+
+
+# @brief Record Count Test
+#
+# Checks that the count of records in each table is preserved in the upgrade.
+#
+# Note 1: This test assumes that the "diffs" table is present.
+# Note 2: The caller must ensure that $tempfile and $backupfile do not exist
+#         on entry, and is responsible for removing them afterwards.
+#
+# @brief $1 Database to upgrade
+record_count_test() {
+    cp $1 $tempfile
+
+    diffs_count=`sqlite3 $tempfile 'select count(*) from diffs'`
+    nsec3_count=`sqlite3 $tempfile 'select count(*) from nsec3'`
+    records_count=`sqlite3 $tempfile 'select count(*) from records'`
+    zones_count=`sqlite3 $tempfile 'select count(*) from zones'`
+
+    ../b10-dbutil --upgrade --noconfirm $tempfile
+    if [ $? -ne 0 ]
+    then
+        # Reason for failure should already have been output
+        fail
+    else
+        new_diffs_count=`sqlite3 $tempfile 'select count(*) from diffs'`
+        new_nsec3_count=`sqlite3 $tempfile 'select count(*) from nsec3'`
+        new_records_count=`sqlite3 $tempfile 'select count(*) from records'`
+        new_zones_count=`sqlite3 $tempfile 'select count(*) from zones'`
+
+        if [ $diffs_count -ne $new_diffs_count ]
+        then
+            fail "diffs table was not completely copied"
+        fi
+
+        if [ $nsec3_count -ne $new_nsec3_count ]
+        then
+            fail "nsec3 table was not completely copied"
+        fi
+
+        if [ $records_count -ne $new_records_count ]
+        then
+            fail "records table was not completely copied"
+        fi
+
+        if [ $zones_count -ne $new_zones_count ]
+        then
+            fail "zones table was not completely copied"
+        fi
+
+        # As an extra check, test that the backup was successful
+        check_backup $1 $backupfile
+    fi
+}
+
+
+# @brief Version Check
+#
+# Checks that the database is at the specified version (and so checks the
+# --check function).  On success, a pass is recorded.
+#
+# @param $1 Database to check
+# @param $2 Expected version string
+check_version() {
+    cp $1 $verfile
+    ../b10-dbutil --check $verfile
+    if [ $? -ne 0 ]
+    then
+        fail "version check failed on database $1"
+    else
+        ../b10-dbutil --check $verfile | grep "$2"
+        if [ $? -ne 0 ]
+        then
+            fail "database $1 not at expected version $2"
+        else
+            succeed
+        fi
+    fi
+    rm -f $verfile
+}
+
+
+# Main test sequence
+
+rm -f $tempfile $backupfile
+
+# Test 1 - check that the utility fails if the database does not exist
+echo "1.1. Non-existent database - check"
+../b10-dbutil --check $tempfile
+failzero $?
+check_no_backup $tempfile $backupfile
+
+echo "1.2. Non-existent database - upgrade"
+../b10-dbutil --upgrade --noconfirm $tempfile
+failzero $?
+check_no_backup $tempfile $backupfile
+rm -f $tempfile $backupfile
+
+
+# Test 2 - should fail to check an empty file and fail to upgrade it
+echo "2.1. Database is an empty file - check"
+touch $tempfile
+../b10-dbutil --check $tempfile
+failzero $?
+check_no_backup $tempfile $backupfile
+rm -f $tempfile $backupfile
+
+echo "2.2. Database is an empty file - upgrade"
+touch $tempfile
+../b10-dbutil --upgrade --noconfirm $tempfile
+failzero $?
+# A backup is performed before anything else, so the backup should exist.
+check_backup $tempfile $backupfile
+rm -f $tempfile $backupfile
+
+
+echo "3.1. Database is not an SQLite file - check"
+echo "This is not an sqlite3 database" > $tempfile
+../b10-dbutil --check $tempfile 
+failzero $?
+check_no_backup $tempfile $backupfile
+
+echo "3.2. Database is not an SQLite file - upgrade"
+../b10-dbutil --upgrade --noconfirm $tempfile 
+failzero $?
+# ...and as before, a backup should have been created
+check_backup $tempfile $backupfile
+rm -f $tempfile $backupfile
+
+
+echo "4.1. Database is an SQLite3 file without the schema table - check"
+cp $testdata/no_schema.sqlite3 $tempfile
+../b10-dbutil --check $tempfile
+failzero $?
+check_no_backup $tempfile $backupfile
+rm -f $tempfile $backupfile
+
+echo "4.1. Database is an SQLite3 file without the schema table - upgrade"
+cp $testdata/no_schema.sqlite3 $tempfile
+../b10-dbutil --upgrade --noconfirm $tempfile
+failzero $?
+check_backup $testdata/no_schema.sqlite3 $backupfile
+rm -f $tempfile $backupfile
+
+
+echo "5.1. Database is an old V1 database - check"
+check_version $testdata/old_v1.sqlite3 "V1.0"
+check_no_backup $tempfile $backupfile
+rm -f $tempfile $backupfile
+
+echo "5.2. Database is an old V1 database - upgrade"
+upgrade_ok_test $testdata/old_v1.sqlite3
+check_backup $testdata/old_v1.sqlite3 $backupfile
+rm -f $tempfile $backupfile
+
+
+echo "6.1. Database is new V1 database - check"
+check_version $testdata/new_v1.sqlite3 "V1.0"
+check_no_backup $tempfile $backupfile
+rm -f $tempfile $backupfile
+
+echo "6.2. Database is a new V1 database - upgrade"
+upgrade_ok_test $testdata/new_v1.sqlite3
+check_backup $testdata/new_v1.sqlite3 $backupfile
+rm -f $tempfile $backupfile
+
+
+echo "7.1. Database is V2.0 database - check"
+check_version $testdata/v2_0.sqlite3 "V2.0"
+check_no_backup $tempfile $backupfile
+rm -f $tempfile $backupfile
+
+echo "7.2. Database is a V2.0 database - upgrade"
+upgrade_ok_test $testdata/v2_0.sqlite3
+check_backup $testdata/v2_0.sqlite3 $backupfile
+rm -f $tempfile $backupfile
+
+
+echo "8. Record count test"
+record_count_test testdata/new_v1.sqlite3
+rm -f $tempfile $backupfile
+
+
+echo "9. Backup file already exists"
+touch $backupfile
+touch ${backupfile}-1
+upgrade_ok_test $testdata/v2_0.sqlite3
+check_backup $testdata/v2_0.sqlite3 ${backupfile}-2
+rm -f $tempfile $backupfile ${backupfile}-1 ${backupfile}-2
+
+
+echo "10.1 Incompatible flags"
+cp $testdata/old_v1.sqlite3 $tempfile
+../b10-util --upgrade --check $tempfile
+failzero $?
+../b10-util --upgrade --check $tempfile
+failzero $?
+../b10-util --noconfirm --check $tempfile
+failzero $?
+rm -f $tempfile $backupfile
+
+echo "10.2 verbose flag"
+cp $testdata/old_v1.sqlite3 $tempfile
+../b10-dbutil --upgrade --noconfirm --verbose $tempfile
+passzero $?
+rm -f $tempfile $backupfile
+
+echo "10.3 Interactive prompt - yes"
+cp $testdata/old_v1.sqlite3 $tempfile
+../b10-dbutil --upgrade $tempfile << .
+Yes
+.
+passzero $?
+check_version $tempfile "V2.0"
+rm -f $tempfile $backupfile
+
+echo "10.4 Interactive prompt - no"
+cp $testdata/old_v1.sqlite3 $tempfile
+../b10-dbutil --upgrade $tempfile << .
+no
+.
+passzero $?
+diff $testdata/old_v1.sqlite3 $tempfile > /dev/null
+passzero $?
+rm -f $tempfile $backupfile
+
+
+# Report the result
+if [ $failcount -eq 0 ]; then
+    echo "PASS: $testname"
+elif [ $failcount -eq 1 ]; then
+    echo "FAIL: $testname - 1 test failed"
+else
+    echo "FAIL: $testname - $failcount tests failed"
+fi
+
+# Exit with appropriate error status
+exit $failcount
