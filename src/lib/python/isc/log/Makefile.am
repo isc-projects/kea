@@ -13,7 +13,7 @@ log_la_CPPFLAGS = $(AM_CPPFLAGS) $(PYTHON_INCLUDES)
 # placed after -Wextra defined in AM_CXXFLAGS
 log_la_CXXFLAGS = $(AM_CXXFLAGS) $(PYTHON_CXXFLAGS)
 log_la_LDFLAGS = $(PYTHON_LDFLAGS)
-log_la_LDFLAGS += -module
+log_la_LDFLAGS += -module -avoid-version
 log_la_LIBADD = $(top_builddir)/src/lib/log/liblog.la
 log_la_LIBADD += $(top_builddir)/src/lib/cc/libcc.la
 log_la_LIBADD += $(top_builddir)/src/lib/config/libcfgclient.la
