@@ -59,21 +59,17 @@ command does not have any configurable settings\&.
 The configuration commands are:
 .PP
 
-
-\fBremove\fR
-removes the named statistics name and data\&.
-.PP
-
-
-\fBreset\fR
-will reset all statistics data to default values except for constant names\&. This may re\-add previously removed statistics names\&.
-.PP
-
 \fBset\fR
+will set new statistics data specified in arguments\&. Statistics data to be set and the module name which owns statistics data are required in argument\&. Pid of the module in argument is optional\&.
 .PP
 
 \fBshow\fR
 will send the statistics data in JSON format\&. By default, it outputs all the statistics data it has collected\&. An optional item name may be specified to receive individual output\&.
+.PP
+
+\fBshowschema\fR
+will send the schema of the statistics data in JSON format\&. The output is equivalent to the statistics part of
+stats\&.spec\&.
 .PP
 
 \fBshutdown\fR
