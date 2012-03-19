@@ -930,6 +930,9 @@ EV_SET(&kevent, 0, 0, 0, 0, 0, udata);],
 	])
 fi
 
+# Check for pselect() for use in perfdhcp
+AC_CHECK_FUNCS([pselect])
+
 # perfdhcp: If the clock_gettime() function does not exist on the system,
 # use an alternative supplied in the code based on gettimeofday().
 CLOCK_GETTIME_LDFLAGS=
