@@ -277,7 +277,7 @@ class Database:
         if self.connection is not None:
             self.connection.close()
 
-    def execute(self, statement, what = None):
+    def execute(self, statement):
         """
         @brief Execute Statement
 
@@ -286,8 +286,6 @@ class Database:
         execution.
 
         @param statement SQL statement to execute
-        @param what Reason for the action (used in the error message if the
-               action fails)
         """
         if self.verbose:
             sys.stdout.write(statement + "\n")
@@ -295,10 +293,8 @@ class Database:
         try:
             self.cursor.execute(statement)
         except Exception as ex:
-            if (what is None):
-                raise DbutilException("SQL Error - " + str(ex))
-            else:
-                raise DbutilException("failed to " + what + " - " + str(ex))
+            error("failed to execute " + statement)
+            raise DbutilException(str(ex))
 
     def result(self):
         """
@@ -397,7 +393,7 @@ def get_version(db):
     """
 
     # Check only one row of data in the version table.
-    db.execute("SELECT COUNT(*) FROM schema_version", "get database version")
+    db.execute("SELECT COUNT(*) FROM schema_version")
     result = db.result()
     if result[0] == 0:
         raise DbutilException("unable to determine database version - " +
@@ -407,7 +403,7 @@ def get_version(db):
                               "too many rows in schema_version table")
 
     # Get the version information.
-    db.execute("SELECT * FROM schema_version", "get database version")
+    db.execute("SELECT * FROM schema_version")
     result = db.result()
     major = result[0]
     if (major == 1):
@@ -451,13 +447,12 @@ def perform_upgrade(db, upgrade):
     action = "upgrading database from " + increment
     info(action)
     for statement in upgrade['statements']:
-        db.execute(statement, "upgrade database from " + increment)
+        db.execute(statement)
 
     # Update the version information
-    db.execute("DELETE FROM schema_version", "update version information")
+    db.execute("DELETE FROM schema_version")
     db.execute("INSERT INTO schema_version VALUES (" +
-                    str(upgrade['to'][0]) + "," + str(upgrade['to'][1]) + ")",
-               "update version information")
+                    str(upgrade['to'][0]) + "," + str(upgrade['to'][1]) + ")")
 
 
 def perform_all_upgrades(db):
