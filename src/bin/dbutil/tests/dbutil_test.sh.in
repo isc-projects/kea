@@ -147,7 +147,7 @@ get_schema() {
 # @param $1 Database to upgrade
 upgrade_ok_test() {
     cp $1 $tempfile
-    ../b10-dbutil --upgrade --noconfirm $tempfile
+    ../run_dbutil.sh --upgrade --noconfirm $tempfile
     if [ $? -eq 0 ]
     then
         # Compare schema with the reference
@@ -188,7 +188,7 @@ record_count_test() {
     records_count=`sqlite3 $tempfile 'select count(*) from records'`
     zones_count=`sqlite3 $tempfile 'select count(*) from zones'`
 
-    ../b10-dbutil --upgrade --noconfirm $tempfile
+    ../run_dbutil.sh --upgrade --noconfirm $tempfile
     if [ $? -ne 0 ]
     then
         # Reason for failure should already have been output
@@ -234,12 +234,12 @@ record_count_test() {
 # @param $2 Expected version string
 check_version() {
     cp $1 $verfile
-    ../b10-dbutil --check $verfile
+    ../run_dbutil.sh --check $verfile
     if [ $? -ne 0 ]
     then
         fail "version check failed on database $1"
     else
-        ../b10-dbutil --check $verfile | grep "$2"
+        ../run_dbutil.sh --check $verfile | grep "$2" > /dev/null
         if [ $? -ne 0 ]
         then
             fail "database $1 not at expected version $2"
@@ -257,12 +257,12 @@ rm -f $tempfile $backupfile
 
 # Test 1 - check that the utility fails if the database does not exist
 echo "1.1. Non-existent database - check"
-../b10-dbutil --check $tempfile
+../run_dbutil.sh --check $tempfile
 failzero $?
 check_no_backup $tempfile $backupfile
 
 echo "1.2. Non-existent database - upgrade"
-../b10-dbutil --upgrade --noconfirm $tempfile
+../run_dbutil.sh --upgrade --noconfirm $tempfile
 failzero $?
 check_no_backup $tempfile $backupfile
 rm -f $tempfile $backupfile
@@ -271,14 +271,14 @@ rm -f $tempfile $backupfile
 # Test 2 - should fail to check an empty file and fail to upgrade it
 echo "2.1. Database is an empty file - check"
 touch $tempfile
-../b10-dbutil --check $tempfile
+../run_dbutil.sh --check $tempfile
 failzero $?
 check_no_backup $tempfile $backupfile
 rm -f $tempfile $backupfile
 
 echo "2.2. Database is an empty file - upgrade"
 touch $tempfile
-../b10-dbutil --upgrade --noconfirm $tempfile
+../run_dbutil.sh --upgrade --noconfirm $tempfile
 failzero $?
 # A backup is performed before anything else, so the backup should exist.
 check_backup $tempfile $backupfile
@@ -287,12 +287,12 @@ rm -f $tempfile $backupfile
 
 echo "3.1. Database is not an SQLite file - check"
 echo "This is not an sqlite3 database" > $tempfile
-../b10-dbutil --check $tempfile 
+../run_dbutil.sh --check $tempfile 
 failzero $?
 check_no_backup $tempfile $backupfile
 
 echo "3.2. Database is not an SQLite file - upgrade"
-../b10-dbutil --upgrade --noconfirm $tempfile 
+../run_dbutil.sh --upgrade --noconfirm $tempfile 
 failzero $?
 # ...and as before, a backup should have been created
 check_backup $tempfile $backupfile
@@ -301,14 +301,14 @@ rm -f $tempfile $backupfile
 
 echo "4.1. Database is an SQLite3 file without the schema table - check"
 cp $testdata/no_schema.sqlite3 $tempfile
-../b10-dbutil --check $tempfile
+../run_dbutil.sh --check $tempfile
 failzero $?
 check_no_backup $tempfile $backupfile
 rm -f $tempfile $backupfile
 
 echo "4.1. Database is an SQLite3 file without the schema table - upgrade"
 cp $testdata/no_schema.sqlite3 $tempfile
-../b10-dbutil --upgrade --noconfirm $tempfile
+../run_dbutil.sh --upgrade --noconfirm $tempfile
 failzero $?
 check_backup $testdata/no_schema.sqlite3 $backupfile
 rm -f $tempfile $backupfile
@@ -360,25 +360,27 @@ check_backup $testdata/v2_0.sqlite3 ${backupfile}-2
 rm -f $tempfile $backupfile ${backupfile}-1 ${backupfile}-2
 
 
-echo "10.1 Incompatible flags"
+echo "10.1 Command-line errors"
 cp $testdata/old_v1.sqlite3 $tempfile
-../b10-util --upgrade --check $tempfile
+../run_dbutil.sh $tempfile
 failzero $?
-../b10-util --upgrade --check $tempfile
+../run_dbutil.sh --upgrade --check $tempfile
 failzero $?
-../b10-util --noconfirm --check $tempfile
+../run_dbutil.sh --noconfirm --check $tempfile
+failzero $?
+../run_dbutil.sh --check $tempfile $backupfile
 failzero $?
 rm -f $tempfile $backupfile
 
 echo "10.2 verbose flag"
 cp $testdata/old_v1.sqlite3 $tempfile
-../b10-dbutil --upgrade --noconfirm --verbose $tempfile
+../run_dbutil.sh --upgrade --noconfirm --verbose $tempfile
 passzero $?
 rm -f $tempfile $backupfile
 
 echo "10.3 Interactive prompt - yes"
 cp $testdata/old_v1.sqlite3 $tempfile
-../b10-dbutil --upgrade $tempfile << .
+../run_dbutil.sh --upgrade $tempfile << .
 Yes
 .
 passzero $?
@@ -387,7 +389,7 @@ rm -f $tempfile $backupfile
 
 echo "10.4 Interactive prompt - no"
 cp $testdata/old_v1.sqlite3 $tempfile
-../b10-dbutil --upgrade $tempfile << .
+../run_dbutil.sh --upgrade $tempfile << .
 no
 .
 passzero $?
