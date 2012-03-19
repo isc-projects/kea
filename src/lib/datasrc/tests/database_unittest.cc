@@ -2282,7 +2282,7 @@ TYPED_TEST(DatabaseClientTest, wildcardNXRRSET_NSEC) {
 }
 
 TYPED_TEST(DatabaseClientTest,dbNegativeCaseFind){
-    //ZoneFinder::find() for negative case should show whether the zone is 
+    //ZoneFinder::find() for negative case should show whether the zone is
     //signed by NSEC or NSEC3,that is good for upper layer caller.
 
     //First off, add an NSEC3PARAM RR
@@ -2301,7 +2301,7 @@ TYPED_TEST(DatabaseClientTest,dbNegativeCaseFind){
     doFindTest(this->updater_->getFinder(),
                isc::dns::Name("doesnotexist.example.org."),
                this->qtype_, this->qtype_, this->rrttl_,
-               ZoneFinder::NXDOMAIN,this->expected_rdatas_, 
+               ZoneFinder::NXDOMAIN, this->expected_rdatas_,
                this->expected_sig_rdatas_,
                ZoneFinder::RESULT_NSEC3_SIGNED);
 }
