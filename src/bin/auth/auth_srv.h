@@ -28,6 +28,7 @@
 #include <util/buffer.h>
 
 #include <asiodns/dns_server.h>
+#include <asiodns/dns_service.h>
 #include <asiodns/dns_lookup.h>
 #include <asiodns/dns_answer.h>
 #include <asiolink/io_message.h>
@@ -384,7 +385,7 @@ public:
         const;
 
     /// \brief Assign an ASIO DNS Service queue to this Auth object
-    void setDNSService(isc::asiodns::DNSService& dnss);
+    void setDNSService(isc::asiodns::DNSServiceBase& dnss);
 
     /// \brief Sets the keyring used for verifying and signing
     ///
@@ -400,7 +401,7 @@ private:
     isc::asiolink::SimpleCallback* checkin_;
     isc::asiodns::DNSLookup* dns_lookup_;
     isc::asiodns::DNSAnswer* dns_answer_;
-    isc::asiodns::DNSService* dnss_;
+    isc::asiodns::DNSServiceBase* dnss_;
 };
 
 #endif // __AUTH_SRV_H
