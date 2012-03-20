@@ -497,7 +497,7 @@ public:
     /// This is because with ordering based on A, B and C (in that order), the
     /// algorithm needs to do two checks on A and B - a "less than" check and a
     /// check for equality.  It only needs to do a "less than" check on C.
-    /// equality.  It only needs to do one check on C, 
+    /// equality.  It only needs to do one check on C,
     ///
     /// \param other The other AbstractRRset to compare against.
     ///
