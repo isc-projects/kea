@@ -256,6 +256,70 @@ private:
     /// Called by the QueryCleaner object upon its destruction
     void reset();
 
+    /// \brief Inserter Class
+    ///
+    /// Used during the construction of the response message, this performs
+    /// the duplicate RRset detection check.  It keeps a list of RRsets added
+    /// to the message and does not add an RRset if it is the same as one
+    /// already added.
+    class RRsetInserter {
+    public:
+        // \brief RRset comparison functor.
+        struct isSameKind : public std::binary_function<
+                            const isc::dns::AbstractRRset*,
+                            const isc::dns::AbstractRRset*,
+                            bool> {
+            bool operator()(const isc::dns::AbstractRRset* r1,
+                            const isc::dns::AbstractRRset* r2) const {
+                return (r1->isSameKind(*r2));
+            }
+        };
+
+        /// \brief Constructor
+        ///
+        /// Reserves space for the list of RRsets.  Although the RRInserter
+        /// will be used to create a message from the contents of the Query
+        /// object's answers_, authorities_ and additionals_ elements, and
+        /// each of these are sized to RESERVE_RRSETS, it is _extremely_
+        /// unlikely that all three will be filled to capacity.  So we reserve
+        /// more elements than in each of these components, but not three
+        /// times the amount.
+        ///
+        /// As with the answers_, authorities_ and additionals_ elements, the
+        /// reservation is made in the constructor to avoid dynamic allocation
+        /// of memory.  The RRsetInserter is a member variable of the Query
+        /// object so is constructed once and lasts as long as that object.
+        /// Internal state is cleared through the clear() method.
+        RRsetInserter() {
+            added_.reserve(2 * RESERVE_RRSETS);
+        }
+
+        /// \brief Reset internal state
+        void clear() {
+            added_.clear();
+        }
+
+        /// \brief Return true if empty
+        bool empty() const {
+            return (added_.empty());
+        }
+
+        /// Insertion operation
+        ///
+        /// \param message Message to which the RRset is to be added
+        /// \param section Section of the message in which the RRset is put
+        /// \param rrset Pointer to RRset to be added to the message
+        /// \param dnssec Whether RRSIG records should be added as well
+        void addRRset(isc::dns::Message& message,
+                      const isc::dns::Message::Section section,
+                      const isc::dns::ConstRRsetPtr& rrset, const bool dnssec);
+
+    private:
+        /// List of RRsets already added to the message
+        std::vector<const isc::dns::AbstractRRset*> added_;
+    };
+
+
     /// \brief Internal class used for cleanup of Query members
     ///
     /// The process() call creates an object of this class, which
@@ -421,6 +485,7 @@ protected:
     std::vector<isc::dns::ConstRRsetPtr> answers_;
     std::vector<isc::dns::ConstRRsetPtr> authorities_;
     std::vector<isc::dns::ConstRRsetPtr> additionals_;
+    RRsetInserter inserter_;
 };
 
 }
