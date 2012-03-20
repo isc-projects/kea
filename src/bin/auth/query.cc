@@ -63,7 +63,7 @@ public:
     {}
 
     // \brief Set Target Section
-    // 
+    //
     // Sets the section into which the information added by addRRset will be
     // inserted.
     //
