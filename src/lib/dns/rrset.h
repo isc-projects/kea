@@ -482,28 +482,6 @@ public:
     /// \param other Pointer to another AbstractRRset to compare
     ///              against.
     virtual bool isSameKind(const AbstractRRset& other) const;
-
-    /// \brief Check if one RRset is "less" than another
-    ///
-    /// This method is needed for storing RRsets in STL containers such
-    /// as multisets.  It applies an ordering based on
-    /// - Type
-    /// - Class
-    /// - Name
-    /// (Type and Class are ordered by the values associated with those
-    /// constants.  Name is ordered according to case-insensitive comparison.)
-    ///
-    /// Note that unlike isSameKind, type and class are checked before name.
-    /// This is because with ordering based on A, B and C (in that order), the
-    /// algorithm needs to do two checks on A and B - a "less than" check and a
-    /// check for equality.  It only needs to do a "less than" check on C.
-    /// equality.  It only needs to do one check on C,
-    ///
-    /// \param other The other AbstractRRset to compare against.
-    ///
-    /// \return true if "this" is less than the given RRset according to
-    ///         the criteria given.
-    virtual bool lthan(const AbstractRRset& other) const;
     //@}
 
 };

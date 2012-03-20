@@ -127,66 +127,6 @@ TEST_F(RRsetTest, isSameKind) {
     EXPECT_FALSE(rrset_w.isSameKind(rrset_p));
 }
 
-// Utility function to create an add an RRset to a vector of RRsets for the
-// "less" test.  It's only purpose is to allow the RRset creation to be
-// written with arguments in an order that reflects the RRset ordering.
-void
-addRRset(std::vector<ConstRRsetPtr>& vec, const RRType& rrtype,
-            const RRClass& rrclass, const char* rrname)
-{
-    vec.push_back(ConstRRsetPtr(new RRset(Name(rrname), rrclass, rrtype,
-                                          RRTTL(3600))));
-}
-
-TEST_F(RRsetTest, lthan) {
-    // Check values of type codes: this effectively documents the expected
-    // order of the rrsets created.
-    ASSERT_EQ(1, RRType::A().getCode());
-    ASSERT_EQ(2, RRType::NS().getCode());
-
-    ASSERT_EQ(1, RRClass::IN().getCode());
-    ASSERT_EQ(3, RRClass::CH().getCode());
-
-    // Create a vector of RRsets in ascending sort order.
-    std::vector<ConstRRsetPtr> rrsets;
-    addRRset(rrsets, RRType::A(),  RRClass::IN(), "alpha.com");
-    addRRset(rrsets, RRType::A(),  RRClass::IN(), "beta.com");
-    addRRset(rrsets, RRType::A(),  RRClass::CH(), "alpha.com");
-    addRRset(rrsets, RRType::A(),  RRClass::CH(), "beta.com");
-    addRRset(rrsets, RRType::NS(), RRClass::IN(), "alpha.com");
-    addRRset(rrsets, RRType::NS(), RRClass::IN(), "beta.com");
-    addRRset(rrsets, RRType::NS(), RRClass::CH(), "alpha.com");
-    addRRset(rrsets, RRType::NS(), RRClass::CH(), "beta.com");
-
-    // ... and do the checks.  The ASSERT_ form is used to avoid a plethora
-    // of messages if there is an error.  And if there is an error, supply
-    // a more informative message.
-    for (int i = 0; i < rrsets.size(); ++i) {
-        // Check that an RRset is not less than itself
-        ostringstream ossi;
-        ossi << "i = ("
-             << rrsets[i]->getType().toText() << ", "
-             << rrsets[i]->getClass().toText() << ", "
-             << rrsets[i]->getName().toText()
-             << ")";
-        ASSERT_FALSE(rrsets[i]->lthan(*rrsets[i])) << ossi.str();
-        for (int j = i + 1; j < rrsets.size(); ++j) {
-            // Check it against the remaining RRsets.
-            ostringstream ossj;
-            ossj << ", j = ("
-                 << rrsets[j]->getType().toText() << ", "
-                 << rrsets[j]->getClass().toText() << ", "
-                 << rrsets[j]->getName().toText()
-                 << ")";
-            ASSERT_TRUE(rrsets[i]->lthan(*rrsets[j]))
-                << ossi.str() << ossj.str();
-            ASSERT_FALSE(rrsets[j]->lthan(*rrsets[i]))
-                << ossi.str() << ossj.str();
-        }
-    }
-}
-
-
 void
 addRdataTestCommon(const RRset& rrset) {
     EXPECT_EQ(2, rrset.getRdataCount());
