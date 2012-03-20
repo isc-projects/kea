@@ -31,11 +31,6 @@ namespace isc {
 namespace server_common {
 namespace portconfig {
 
-// This flags disables pushing the sockets to the DNSService. It prevents
-// the clearServers() method to close the file descriptors we made up.
-// It is not presented in any header, but we use it from the tests anyway.
-bool test_mode(false);
-
 AddressList
 parseAddresses(isc::data::ConstElementPtr addresses,
                const std::string& elemName)
@@ -84,7 +79,9 @@ namespace {
 vector<string> current_sockets;
 
 void
-setAddresses(DNSService& service, const AddressList& addresses) {
+setAddresses(DNSServiceBase& service, const AddressList& addresses,
+             DNSService::ServerFlag server_options)
+{
     service.clearServers();
     BOOST_FOREACH(const string& token, current_sockets) {
         socketRequestor().releaseSocket(token);
@@ -99,35 +96,32 @@ setAddresses(DNSService& service, const AddressList& addresses) {
                                                 address.first, address.second,
                                                 SocketRequestor::SHARE_SAME));
         current_sockets.push_back(tcp.second);
-        if (!test_mode) {
-            service.addServerTCPFromFD(tcp.first, af);
-        }
+        service.addServerTCPFromFD(tcp.first, af);
         const SocketRequestor::SocketID
             udp(socketRequestor().requestSocket(SocketRequestor::UDP,
                                                 address.first, address.second,
                                                 SocketRequestor::SHARE_SAME));
         current_sockets.push_back(udp.second);
-        if (!test_mode) {
-            service.addServerUDPFromFD(udp.first, af);
-        }
+        service.addServerUDPFromFD(udp.first, af, server_options);
     }
 }
 
 }
 
 void
-installListenAddresses(const AddressList& newAddresses,
-                       AddressList& addressStore,
-                       isc::asiodns::DNSService& service)
+installListenAddresses(const AddressList& new_addresses,
+                       AddressList& address_store,
+                       DNSServiceBase& service,
+                       DNSService::ServerFlag server_options)
 {
     try {
         LOG_DEBUG(logger, DBG_TRACE_BASIC, SRVCOMM_SET_LISTEN);
-        BOOST_FOREACH(const AddressPair& addr, newAddresses) {
+        BOOST_FOREACH(const AddressPair& addr, new_addresses) {
             LOG_DEBUG(logger, DBG_TRACE_VALUES, SRVCOMM_ADDRESS_VALUE).
                 arg(addr.first).arg(addr.second);
         }
-        setAddresses(service, newAddresses);
-        addressStore = newAddresses;
+        setAddresses(service, new_addresses, server_options);
+        address_store = new_addresses;
     } catch (const SocketRequestor::NonFatalSocketError& e) {
         /*
          * If one of the addresses isn't set successfully, we will restore
@@ -144,14 +138,14 @@ installListenAddresses(const AddressList& newAddresses,
          */
         LOG_ERROR(logger, SRVCOMM_ADDRESS_FAIL).arg(e.what());
         try {
-            setAddresses(service, addressStore);
+            setAddresses(service, address_store, server_options);
         } catch (const SocketRequestor::NonFatalSocketError& e2) {
             LOG_FATAL(logger, SRVCOMM_ADDRESS_UNRECOVERABLE).arg(e2.what());
             // If we can't set the new ones, nor the old ones, at least
             // releasing everything should work. If it doesn't, there isn't
             // anything else we could do.
-            setAddresses(service, AddressList());
-            addressStore.clear();
+            setAddresses(service, AddressList(), server_options);
+            address_store.clear();
         }
         //Anyway the new configure has problem, we need to notify configure
         //manager the new configure doesn't work
