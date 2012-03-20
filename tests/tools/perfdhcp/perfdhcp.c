@@ -80,17 +80,17 @@ pselect (int nfds, fd_set *readfds, fd_set *writefds,
          fd_set *exceptfds, const struct timespec *timeout,
          const sigset_t *sigmask)
 {
-    struct timeval my_timeout;
+	struct timeval my_timeout;
 
-    /* Our particular usage of pselect() doesn't use these fields. */
-    assert(writefds == NULL);
-    assert(exceptfds == NULL);
-    assert(sigmask == NULL);
+	/* Our particular usage of pselect() doesn't use these fields. */
+	assert(writefds == NULL);
+	assert(exceptfds == NULL);
+	assert(sigmask == NULL);
 
-    my_timeout.tv_sec = timeout->tv_sec;
-    my_timeout.tv_usec = timeout->tv_nsec / 1000;
+	my_timeout.tv_sec = timeout->tv_sec;
+	my_timeout.tv_usec = timeout->tv_nsec / 1000;
 
-    return select(nfds, readfds, writefds, exceptfds, &my_timeout);
+	return (select(nfds, readfds, writefds, exceptfds, &my_timeout));
 }
 
 #endif /* HAVE_PSELECT */
