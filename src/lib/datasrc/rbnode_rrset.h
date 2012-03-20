@@ -141,24 +141,6 @@ public:
         }
     }
 
-    virtual bool lthan(const AbstractRRset& other) const {
-        // Like "isSameKind", this method is an optimisation for the case where
-        // there will only ever be one object containing a particular RRset,
-        // and if the objects are different, the RRset they represent are
-        // different.
-        //
-        // lthan() is only used as an ordering for objects like std::set.
-        // Therefore the only criteria is that two objects are consistently
-        // ordered in the same way.  The quickest way to do this is to use
-        // a comparison based on the address of the objects.
-        const RBNodeRRset* rb = dynamic_cast<const RBNodeRRset*>(&other);
-        if (rb != NULL) {
-            return (this < rb);
-        } else {
-            return (AbstractRRset::lthan(other));
-        }
-    }
-
 
     virtual unsigned int toWire(
         isc::dns::AbstractMessageRenderer& renderer) const;

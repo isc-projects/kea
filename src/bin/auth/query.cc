@@ -26,8 +26,9 @@
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
 
+#include <cassert>
 #include <algorithm>            // for std::max
-#include <set>
+#include <functional>
 #include <vector>
 
 using namespace std;
@@ -35,70 +36,9 @@ using namespace isc::dns;
 using namespace isc::datasrc;
 using namespace isc::dns::rdata;
 
-// Commonly used helper callback object for vector<ConstRRsetPtr> to
-// insert them to (the specified section of) a message.
-//
-// One feature is that it maintains an internal set of raw pointers to the
-// RRsets as they are added (this is safe - the object is only in scope in
-// the createResponse() method and during this time, all RRsets referred to
-// remain in existence due to the presence of the ConstRRsetPtr objects
-// from which the raw objects were derived).  The set is used to detect
-// and discard duplicates.
-namespace {
-class RRsetInserter {
-private:
-    // \brief RRset comparison functor.
-    struct RRsetLthan {
-        bool operator()(const AbstractRRset* r1, const AbstractRRset* r2) {
-            return (r1->lthan(*r2));
-        }
-    };
-
-    typedef std::set<const AbstractRRset*, RRsetLthan> AddedRRsets;
-
-public:
-    RRsetInserter(Message& msg, const Message::Section section,
-                  const bool dnssec) :
-                  msg_(msg), section_(section), dnssec_(dnssec)
-    {}
-
-    // \brief Set Target Section
-    //
-    // Sets the section into which the information added by addRRset will be
-    // inserted.
-    //
-    // \param section New section number
-    void setSection(Message::Section section) {
-        section_ = section;
-    }
-
-    // Insertion operation
-    //
-    // \param rrset Pointer to RRset to be added to the message
-    void addRRset(const ConstRRsetPtr& rrset) {
-        // Has the RRset already been added to this message?
-        std::pair<AddedRRsets::iterator, bool> result =
-            rrsets_added_.insert(rrset.get());
-        if (result.second) {
-            // Were able to add the pointer to the RRset to rrsets_added_, so
-            // the RRset has not already been seen.  Add it to the message.
-            // The const-cast is wrong, but the Message interface seems
-            // to insist.
-            msg_.addRRset(section_,
-                          boost::const_pointer_cast<AbstractRRset>(rrset),
-                          dnssec_);
-        }
-    }
-
-private:
-    Message& msg_;
-    Message::Section section_;
-    const bool dnssec_;
-    AddedRRsets rrsets_added_;
-};
-
 // This is a "constant" vector storing desired RR types for the additional
 // section.  The vector is filled first time it's used.
+namespace {
 const vector<RRType>&
 A_AND_AAAA() {
     static vector<RRType> needed_types;
@@ -108,11 +48,31 @@ A_AND_AAAA() {
     }
     return (needed_types);
 }
-
 }
 
 namespace isc {
 namespace auth {
+
+void
+Query::RRsetInserter::addRRset(isc::dns::Message& message,
+                               const isc::dns::Message::Section section,
+                               const ConstRRsetPtr& rrset, const bool dnssec)
+{
+    /// Is this RRset already in the list of RRsets added to the message?
+    std::vector<const AbstractRRset*>::iterator i =
+        std::find_if(added_.begin(), added_.end(),
+                     std::bind1st(Query::RRsetInserter::isSameKind(),
+                                  rrset.get()));
+    if (i == added_.end()) {
+        // No - add it to both the message and the list of RRsets processed.
+        // The const-cast is wrong, but the message interface seems to insist.
+        message.addRRset(section,
+                         boost::const_pointer_cast<AbstractRRset>(rrset),
+                         dnssec);
+        added_.push_back(rrset.get());
+    }
+}
+
 
 void
 Query::addSOA(ZoneFinder& finder) {
@@ -571,25 +531,26 @@ Query::initialize(datasrc::DataSourceClient& datasrc_client,
 
 void
 Query::createResponse() {
+    // Inserter should be reset each time the query is reset, so should be
+    // empty at this point.
+    assert(inserter_.empty());
+
     // Add the RRsets to the message.  The order of sections is important,
     // as the RRsetInserter remembers RRsets added and will not add
     // duplicates.  Adding in the order answer, authory, additional will
     // guarantee that if there are duplicates, the single RRset added will
     // appear in the most important section.
     std::vector<isc::dns::ConstRRsetPtr>::const_iterator i;
-    RRsetInserter inserter(*response_, Message::SECTION_ANSWER, dnssec_);
     for (i = answers_.begin(); i != answers_.end(); ++i) {
-        inserter.addRRset(*i);
+        inserter_.addRRset(*response_, Message::SECTION_ANSWER, *i, dnssec_);
     }
 
-    inserter.setSection(Message::SECTION_AUTHORITY);
     for (i = authorities_.begin(); i != authorities_.end(); ++i) {
-        inserter.addRRset(*i);
+        inserter_.addRRset(*response_, Message::SECTION_AUTHORITY, *i, dnssec_);
     }
 
-    inserter.setSection(Message::SECTION_ADDITIONAL);
     for (i = additionals_.begin(); i != additionals_.end(); ++i) {
-        inserter.addRRset(*i);
+        inserter_.addRRset(*response_, Message::SECTION_ADDITIONAL, *i, dnssec_);
     }
 }
 
@@ -602,6 +563,7 @@ Query::reset() {
     answers_.clear();
     authorities_.clear();
     additionals_.clear();
+    inserter_.clear();
 }
 
 bool
