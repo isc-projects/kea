@@ -1,4 +1,4 @@
-SUBDIRS = .
+SUBDIRS = . testdata
 
 # Tests of the update script.
 

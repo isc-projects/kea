@@ -21,6 +21,9 @@ empty_v1.sqlite3: A database conforming to the new V1 schema.
 The database is empty, except for the schema_version table, where the
 "version" column is set to 1.
 
+empty_version.sqlite3: A database conforming to the V2.0 schema but without
+anything in the schema_version table.
+
 no_schema.sqlite3: A valid SQLite3 database, but without a schema_version
 table.
 
@@ -33,3 +36,6 @@ is marked as V1, does not have the nsec3 table.
 new_v1.sqlite3: A valid SQLite3 database with data in all the tables
 (although the single rows in both the nsec3 and diffs table make no
 sense, but are valid).
+
+too_many_version.sqlite3: A database conforming to the V2.0 schema but with
+too many rows of data.

@@ -996,6 +996,7 @@ AC_CONFIG_FILES([Makefile
                  src/bin/cfgmgr/tests/Makefile
                  src/bin/dbutil/Makefile
                  src/bin/dbutil/tests/Makefile
+                 src/bin/dbutil/tests/testdata/Makefile
                  src/bin/host/Makefile
                  src/bin/loadzone/Makefile
                  src/bin/loadzone/tests/correct/Makefile
