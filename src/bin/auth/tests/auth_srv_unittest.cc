@@ -41,6 +41,7 @@
 #include <dns/tests/unittest_util.h>
 #include <testutils/dnsmessage_test.h>
 #include <testutils/srv_test.h>
+#include <testutils/mockups.h>
 #include <testutils/portconfig.h>
 #include <testutils/socket_request.h>
 
@@ -75,7 +76,7 @@ const char* const CONFIG_INMEMORY_EXAMPLE =
 class AuthSrvTest : public SrvTestBase {
 protected:
     AuthSrvTest() :
-        dnss_(ios_, NULL, NULL, NULL),
+        dnss_(),
         server(true, xfrout),
         rrclass(RRClass::IN()),
         // The empty string is expected value of the parameter of
@@ -135,8 +136,7 @@ protected:
                     opcode.getCode(), QR_FLAG, 1, 0, 0, 0);
     }
 
-    IOService ios_;
-    DNSService dnss_;
+    MockDNSService dnss_;
     MockSession statistics_session;
     MockXfroutClient xfrout;
     AuthSrv server;
@@ -1079,10 +1079,11 @@ TEST_F(AuthSrvTest, processNormalQuery_reuseRenderer1) {
     UnitTestUtil::createRequestMessage(request_message, Opcode::QUERY(),
                                        default_qid, Name("example.com"),
                                        RRClass::IN(), RRType::NS());
-    
+
     request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(request_message, IPPROTO_UDP);
-    server.processMessage(*io_message, *parse_message, *response_obuffer, &dnsserv);
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
+                          &dnsserv);
     EXPECT_NE(request_message.getRcode(), parse_message->getRcode());
 }
 
@@ -1090,12 +1091,14 @@ TEST_F(AuthSrvTest, processNormalQuery_reuseRenderer2) {
     UnitTestUtil::createRequestMessage(request_message, Opcode::QUERY(),
                                        default_qid, Name("example.com"),
                                        RRClass::IN(), RRType::SOA());
-    
+
     request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(request_message, IPPROTO_UDP);
-    server.processMessage(*io_message, *parse_message, *response_obuffer, &dnsserv);
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
+                          &dnsserv);
     ConstQuestionPtr question = *parse_message->beginQuestion();
-    EXPECT_STRNE(question->getType().toText().c_str(),RRType::NS().toText().c_str());
+    EXPECT_STRNE(question->getType().toText().c_str(),
+                 RRType::NS().toText().c_str());
 }
 //
 // Tests for catching exceptions in various stages of the query processing

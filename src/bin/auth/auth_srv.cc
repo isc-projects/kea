@@ -47,6 +47,8 @@
 #include <dns/message.h>
 #include <dns/tsig.h>
 
+#include <asiodns/dns_service.h>
+
 #include <datasrc/query.h>
 #include <datasrc/data_source.h>
 #include <datasrc/memory_datasrc.h>
@@ -866,11 +868,14 @@ AuthSrv::getListenAddresses() const {
 
 void
 AuthSrv::setListenAddresses(const AddressList& addresses) {
-    installListenAddresses(addresses, impl_->listen_addresses_, *dnss_);
+    // For UDP servers we specify the "SYNC_OK" option because in our usage
+    // it can act in the synchronous mode.
+    installListenAddresses(addresses, impl_->listen_addresses_, *dnss_,
+                           DNSService::SERVER_SYNC_OK);
 }
 
 void
-AuthSrv::setDNSService(isc::asiodns::DNSService& dnss) {
+AuthSrv::setDNSService(isc::asiodns::DNSServiceBase& dnss) {
     dnss_ = &dnss;
 }
 
