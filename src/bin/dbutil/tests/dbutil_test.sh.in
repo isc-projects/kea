@@ -287,12 +287,12 @@ rm -f $tempfile $backupfile
 
 echo "3.1. Database is not an SQLite file - check"
 echo "This is not an sqlite3 database" > $tempfile
-../run_dbutil.sh --check $tempfile 
+../run_dbutil.sh --check $tempfile
 failzero $?
 check_no_backup $tempfile $backupfile
 
 echo "3.2. Database is not an SQLite file - upgrade"
-../run_dbutil.sh --upgrade --noconfirm $tempfile 
+../run_dbutil.sh --upgrade --noconfirm $tempfile
 failzero $?
 # ...and as before, a backup should have been created
 check_backup $tempfile $backupfile

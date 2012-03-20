@@ -78,7 +78,7 @@ upgrades = [
             # Move to the latest "V1" state of the database if not there
             # already.
             "CREATE TABLE IF NOT EXISTS diffs (" +
-                "id INTEGER PRIMARY KEY, " + 
+                "id INTEGER PRIMARY KEY, " +
                 "zone_id INTEGER NOT NULL," +
                 "version INTEGER NOT NULL, " +
                 "operation INTEGER NOT NULL, " +
@@ -419,7 +419,7 @@ def get_version(db):
 def match_version(db, expected):
     """
     @brief Check database version against that expected
-    
+
     Checks whether the version of the database matches that expected for
     the upgrade.  Both the major and minor versions must match.
 
