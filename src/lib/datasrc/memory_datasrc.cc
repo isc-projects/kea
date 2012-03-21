@@ -148,14 +148,14 @@ struct ZoneData {
         static const unsigned int FIND_ZONECUT = 2;
 
         FindNodeResult(ZoneFinder::Result code_param,
-                       DomainNode* node_param,
+                       const DomainNode* node_param,
                        ConstRBNodeRRsetPtr rrset_param,
                        unsigned int flags_param = 0) :
             code(code_param), node(node_param), rrset(rrset_param),
             flags(flags_param)
         {}
         const ZoneFinder::Result code;
-        DomainNode* const node;
+        const DomainNode* const node;
         ConstRBNodeRRsetPtr const rrset;
         const unsigned int flags;
     };
@@ -164,6 +164,28 @@ struct ZoneData {
     // See implementation notes below.
     FindNodeResult findNode(const Name& name,
                             ZoneFinder::FindOptions options) const;
+
+    // Mutable version of findNode().  If it finds an exact match for the
+    // given name, it returns a mutable pointer to that node via nodep.
+    // This is intentionally separated from findNode() and is expected to
+    // be used during the construction of zone, while keeping the const
+    // version as efficient and safe as possible.
+    FindNodeResult findMutableNode(const Name& name,
+                                   ZoneFinder::FindOptions options,
+                                   DomainNode** nodep)
+    {
+        FindNodeResult result = findNode(name, options);
+        if (result.code != ZoneFinder::SUCCESS) {
+            *nodep = NULL;
+        } else {
+            // For the tradeoff between safety and performance (of the
+            // const version), we discard the constness here.  In practice
+            // this should be okay because internally this node was retrieved
+            // from the zone tree as a mutable pointer anyway.
+            *nodep = const_cast<DomainNode*>(result.node);
+        }
+        return (result);
+    }
 };
 
 /// Maintain intermediate data specific to the search context used in
@@ -1401,16 +1423,16 @@ addAdditional(RBNodeRRset* rrset, ZoneData* zone_data) {
         // child zone), mark the node as "GLUE", so we can selectively
         // include/exclude them when we use it.
 
+        DomainNode* node = NULL;
         const ZoneData::FindNodeResult result =
-            zone_data->findNode(getAdditionalName(
-                                    rrset->getType(),
-                                    rdata_iterator->getCurrent()),
-                                ZoneFinder::FIND_GLUE_OK);
+            zone_data->findMutableNode(getAdditionalName(
+                                           rrset->getType(),
+                                           rdata_iterator->getCurrent()),
+                                       ZoneFinder::FIND_GLUE_OK, &node);
         if (result.code != ZoneFinder::SUCCESS) {
             // We are not interested in anything but a successful match.
             continue;
         }
-        DomainNode* node = result.node;
         assert(node != NULL);
         if ((result.flags & ZoneData::FindNodeResult::FIND_ZONECUT) != 0 ||
             (node->getFlag(DomainNode::FLAG_CALLBACK) &&
