@@ -1401,32 +1401,27 @@ addAdditional(RBNodeRRset* rrset, ZoneData* zone_data) {
         // child zone), mark the node as "GLUE", so we can selectively
         // include/exclude them when we use it.
 
-        // TODO: wildcard
-        RBTreeNodeChain<Domain> node_path;
-        DomainNode* node = NULL;
-        // The callback argument is a pair of bools: the first is a flag to
-        // only check the highest cut; the second one records whether the
-        // search goes under a zone cut.
-        pair<bool, bool> callback_arg(false, false);
-        const DomainTree::Result result =
-            zone_data->domains_.find(
-                getAdditionalName(rrset->getType(),
-                                  rdata_iterator->getCurrent()),
-                &node, node_path, checkZoneCut, &callback_arg);
-        if (result == DomainTree::EXACTMATCH) {
-            assert(node != NULL);
-            if (callback_arg.second ||
-                (node->getFlag(DomainNode::FLAG_CALLBACK) &&
-                 node->getData()->find(RRType::NS()) !=
-                 node->getData()->end())) {
-                // The node is under or at a zone cut; mark it as a glue.
-                node->setFlag(domain_flag::GLUE);
-            }
-            // Note that node may be empty.  We should keep it in the list
-            // in case we dynamically update the tree and it becomes non empty
-            // (which is not supported yet)
-            rrset->addAdditionalNode(AdditionalNodeInfo(node));
+        const ZoneData::FindNodeResult result =
+            zone_data->findNode(getAdditionalName(
+                                    rrset->getType(),
+                                    rdata_iterator->getCurrent()),
+                                ZoneFinder::FIND_GLUE_OK);
+        if (result.code != ZoneFinder::SUCCESS) {
+            // We are not interested in anything but a successful match.
+            continue;
         }
+        DomainNode* node = result.node;
+        assert(node != NULL);
+        if ((result.flags & ZoneData::FindNodeResult::FIND_ZONECUT) != 0 ||
+            (node->getFlag(DomainNode::FLAG_CALLBACK) &&
+             node->getData()->find(RRType::NS()) != node->getData()->end())) {
+            // The node is under or at a zone cut; mark it as a glue.
+            node->setFlag(domain_flag::GLUE);
+        }
+        // Note that node may be empty.  We should keep it in the list
+        // in case we dynamically update the tree and it becomes non empty
+        // (which is not supported yet)
+        rrset->addAdditionalNode(AdditionalNodeInfo(node));
     }
 }
 }
