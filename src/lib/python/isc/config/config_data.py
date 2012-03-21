@@ -109,14 +109,17 @@ def convert_type(spec_part, value):
 
             return ret
         elif data_type == "map":
-            map = ast.literal_eval(value)
-            if type(map) == dict:
-                # todo: check types of map contents too
-                return map
-            else:
-                raise isc.cc.data.DataTypeError(
-                           "Value in convert_type not a string "
-                           "specifying a dict")
+            try:
+                map = ast.literal_eval(value)
+                if type(map) == dict:
+                    # todo: check types of map contents too
+                    return map
+                else:
+                    raise isc.cc.data.DataTypeError(
+                               "Value in convert_type not a string "
+                               "specifying a dict")
+            except SyntaxError as se:
+                raise isc.cc.data.DataTypeError("Error parsing map: " + str(se))
         else:
             return value
     except ValueError as err:
