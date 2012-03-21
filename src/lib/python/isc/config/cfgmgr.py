@@ -178,14 +178,16 @@ class ConfigManager:
        channel session. If not, a new session will be created.
        The ability to specify a custom session is for testing purposes
        and should not be needed for normal usage."""
-    def __init__(self, data_path, database_filename, session=None):
+    def __init__(self, data_path, database_filename, session=None,
+                 clear_config=False):
         """Initialize the configuration manager. The data_path string
            is the path to the directory where the configuration is
            stored (in <data_path>/<database_filename> or in
            <database_filename>, if it is absolute). The dabase_filename
            is the config file to load. Session is an optional
            cc-channel session. If this is not given, a new one is
-           created."""
+           created. If clear_config is True, the configuration file is
+           renamed and a new one is created."""
         self.data_path = data_path
         self.database_filename = database_filename
         self.module_specs = {}
@@ -194,6 +196,8 @@ class ConfigManager:
         # of some other process
         self.virtual_modules = {}
         self.config = ConfigManagerData(data_path, database_filename)
+        if clear_config:
+            self.config.rename_config_file()
         if session:
             self.cc = session
         else:
