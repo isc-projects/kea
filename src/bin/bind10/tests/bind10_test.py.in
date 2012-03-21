@@ -1012,6 +1012,12 @@ class TestParseArgs(unittest.TestCase):
         options = parse_args(['--config-file=config-file'], TestOptParser)
         self.assertEqual('config-file', options.config_file)
 
+    def test_clear_config(self):
+        options = parse_args([], TestOptParser)
+        self.assertEqual(False, options.clear_config)
+        options = parse_args(['--clear-config'], TestOptParser)
+        self.assertEqual(True, options.clear_config)
+
     def test_cmdctl_port(self):
         """
         Test it can parse the command control port.
