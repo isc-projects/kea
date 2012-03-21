@@ -57,8 +57,12 @@ class ParamInfo:
     def __str__(self):        
         return str("\t%s <type: %s> \t(%s)" % (self.name, self.type, self.desc))
 
-    def get_name(self):
-        return "%s <type: %s>" % (self.name, self.type)
+    def get_basic_info(self):
+        if self.is_optional:
+            opt_str = "optional"
+        else:
+            opt_str = "mandatory"
+        return "%s (%s, %s)" % (self.name, self.type, opt_str)
 
     def get_desc(self):
         return self.desc
@@ -155,36 +159,23 @@ class CommandInfo:
         """Prints the help info for this command to stdout"""
         print("Command ", self)
         print("\t\thelp (Get help for command)")
-                
+
         params = self.params.copy()
         del params["help"]
 
         if len(params) == 0:
-            print("No parameters for the command")
+            print("This command has no parameters")
             return
-        
-        print("\nMandatory parameters:")
-        mandatory_infos = []
-        for info in params.values():            
-            if not info.is_optional:
-                print("    %s" % info.get_name())
-                print(textwrap.fill(info.get_desc(),
+
+        print("Parameters:")
+        for info in params.values():
+            print("    %s" % info.get_basic_info())
+            description = info.get_desc()
+            if description != "":
+                print(textwrap.fill(description,
                       initial_indent="        ",
                       subsequent_indent="        ",
                       width=70))
-                mandatory_infos.append(info)
-
-        optional_infos = [info for info in params.values() 
-                          if info not in mandatory_infos]
-        if len(optional_infos) > 0:
-            print("\nOptional parameters:")      
-            for info in optional_infos:
-                print("    %s" % info.get_name())
-                print(textwrap.fill(info.get_desc(),
-                      initial_indent="        ",
-                      subsequent_indent="        ",
-                      width=70))
-
 
 class ModuleInfo:
     """Define the information of one module, include module name, 

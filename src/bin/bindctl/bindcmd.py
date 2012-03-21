@@ -319,6 +319,8 @@ class BindCmdInterpreter(Cmd):
                                   param_spec = arg)
                 if ("item_default" in arg):
                     param.default = arg["item_default"]
+                if ("item_description" in arg):
+                    param.desc = arg["item_description"]
                 cmd.add_param(param)
             module.add_command(cmd)
         self.add_module_info(module)
