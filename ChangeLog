@@ -3,7 +3,7 @@
 	make a wrapper around select() in perfdhcp.
 	(Trac #1639, git 6ea0b1d62e7b8b6596209291aa6c8b34b8e73191)
 
-405.?	[bug]		jinmei
+405.	[bug]		jinmei
 	Make sure disabling Boost threads if the default configuration is
 	to disable it for the system.  This fixes a crash and hang up
 	problem on OpenBSD, where the use of Boost thread could be
@@ -12,7 +12,7 @@
 	states between a library and a program.  Explicitly forcing the
 	original default throughout the BIND 10 build environment will
 	prevent this from happening.
-	(Trac #1727, git TBD)
+	(Trac #1727, git 23f9c3670b544c5f8105958ff148aeba050bc1b4)
 
 404.	[bug]		naokikambe
 	The statistic counters are now properly accumulated across multiple
