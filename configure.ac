@@ -930,7 +930,7 @@ EV_SET(&kevent, 0, 0, 0, 0, 0, udata);],
 	])
 fi
 
-# Check for pselect() for use in perfdhcp
+# Check for functions that are not available on all platforms
 AC_CHECK_FUNCS([pselect])
 
 # perfdhcp: If the clock_gettime() function does not exist on the system,
