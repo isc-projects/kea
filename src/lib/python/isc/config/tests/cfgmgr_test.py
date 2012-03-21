@@ -74,6 +74,37 @@ class TestConfigManagerData(unittest.TestCase):
         self.assertEqual(self.config_manager_data, new_config)
         os.remove(output_file_name)
 
+    def test_rename_config_file(self):
+        output_file_name = "b10-config-rename-test"
+        renamed_file_name = "b10-config-rename-test.bak"
+        if os.path.exists(output_file_name):
+            os.remove(output_file_name)
+        if os.path.exists(renamed_file_name):
+            os.remove(renamed_file_name)
+
+        # The original does not exist, so the new one should not be created
+        self.config_manager_data.rename_config_file(output_file_name)
+        self.assertFalse(os.path.exists(output_file_name))
+        self.assertFalse(os.path.exists(renamed_file_name))
+
+        # now create a file to rename, and call rename again
+        self.config_manager_data.write_to_file(output_file_name)
+        self.config_manager_data.rename_config_file(output_file_name)
+        self.assertFalse(os.path.exists(output_file_name))
+        self.assertTrue(os.path.exists(renamed_file_name))
+
+        # Test with explicit renamed file argument
+        self.config_manager_data.rename_config_file(renamed_file_name,
+                                                    output_file_name)
+        self.assertTrue(os.path.exists(output_file_name))
+        self.assertFalse(os.path.exists(renamed_file_name))
+
+        # clean up again to be nice
+        if os.path.exists(output_file_name):
+            os.remove(output_file_name)
+        if os.path.exists(renamed_file_name):
+            os.remove(renamed_file_name)
+
     def test_equality(self):
         # tests the __eq__ function. Equality is only defined
         # by equality of the .data element. If data_path or db_filename
@@ -570,5 +601,6 @@ if __name__ == '__main__':
     if not 'CONFIG_TESTDATA_PATH' in os.environ or not 'CONFIG_WR_TESTDATA_PATH' in os.environ:
         print("You need to set the environment variable CONFIG_TESTDATA_PATH and CONFIG_WR_TESTDATA_PATH to point to the directory containing the test data files")
         exit(1)
+    isc.log.init("unittests")
+    isc.log.resetUnitTestRootLogger()
     unittest.main()
-

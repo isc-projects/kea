@@ -148,6 +148,21 @@ class ConfigManagerData:
             # Ok if we really can't delete it anymore, leave it
             pass
 
+    def rename_config_file(self, old_file_name=None, new_file_name=None):
+        """Renames the given configuration file to the given new file name,
+           if it exists. If it does not exist, nothing happens.
+           If old_file_name is None (default), the file used in
+           read_from_file is used. If new_file_name is None (default), the
+           file old_file_name appended with .bak is used.
+        """
+        if old_file_name is None:
+            old_file_name = self.db_filename
+        if new_file_name is None:
+            new_file_name = old_file_name + ".bak"
+        if os.path.exists(old_file_name):
+            logger.info(CFGMGR_RENAMED_CONFIG_FILE, old_file_name, new_file_name)
+            os.rename(old_file_name, new_file_name)
+
     def __eq__(self, other):
         """Returns True if the data contained is equal. data_path and
            db_filename may be different."""
