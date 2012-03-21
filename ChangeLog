@@ -1,3 +1,8 @@
+406.	[bug]		muks
+	On platforms such as OpenBSD where pselect() is not available,
+	make a wrapper around select() in perfdhcp.
+	(Trac #1639, git 6ea0b1d62e7b8b6596209291aa6c8b34b8e73191)
+
 405.?	[bug]		jinmei
 	Make sure disabling Boost threads if the default configuration is
 	to disable it for the system.  This fixes a crash and hang up
