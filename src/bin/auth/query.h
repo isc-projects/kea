@@ -265,7 +265,7 @@ private:
     class RRsetInserter {
     public:
         // \brief RRset comparison functor.
-        struct isSameKind : public std::binary_function<
+        struct IsSameKind : public std::binary_function<
                             const isc::dns::AbstractRRset*,
                             const isc::dns::AbstractRRset*,
                             bool> {

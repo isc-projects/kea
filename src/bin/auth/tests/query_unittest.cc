@@ -2430,7 +2430,8 @@ loadRRsetVector() {
        << cname_nxdom_txt       // 7(1)
        << cname_out_txt;        // 8(1)
     rrset_vector.clear();
-    masterLoad(ss, Name("example.com."), RRClass::IN(), loadRRsetVectorCallback);
+    masterLoad(ss, Name("example.com."), RRClass::IN(),
+               loadRRsetVectorCallback);
 }
 
 TEST_F(QueryTest, DuplicateNameRemoval) {

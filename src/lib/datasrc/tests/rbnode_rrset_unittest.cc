@@ -157,18 +157,6 @@ TEST_F(RBNodeRRsetTest, isSameKind) {
     EXPECT_FALSE(rrset_p.isSameKind(rrset_z));
 }
 
-
-// Utility function to create an add an RRset to a vector of RRsets for the
-// "less" test.  It's only purpose is to allow the RRset creation to be
-// written with arguments in an order that reflects the RRset ordering.
-void
-addRRset(std::vector<ConstRRsetPtr>& vec, const RRType& rrtype,
-            const RRClass& rrclass, const char* rrname)
-{
-    vec.push_back(ConstRRsetPtr(new RRset(Name(rrname), rrclass, rrtype,
-                                          RRTTL(3600))));
-}
-
 // Note: although the next two tests are essentially the same and used common
 // test code, they use different test data: the MessageRenderer produces
 // compressed wire data whereas the OutputBuffer does not.
