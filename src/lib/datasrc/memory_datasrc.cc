@@ -121,6 +121,19 @@ struct ZoneData {
     // The main data (name + RRsets)
     DomainTree domains_;
 
+    // An auxiliary tree for wildcard expanded data used in additional data
+    // processing.  It should be rare that we need to build such a tree,
+    // so we create it only when we need it.
+private:
+    scoped_ptr<DomainTree> aux_wild_domains_;
+public:
+    DomainTree& getAuxWildDomains() {
+        if (!aux_wild_domains_) {
+            aux_wild_domains_.reset(new DomainTree);
+        }
+        return (*aux_wild_domains_);
+    }
+
     // Shortcut to the origin node, which should always exist
     DomainNode* origin_data_;
 
@@ -565,6 +578,53 @@ RBNodeRRset::copyAdditionalNodes(RBNodeRRset& dst) const {
 } // end of internal
 
 namespace {
+/*
+ * Prepares a rrset to be return as a result.
+ *
+ * If rename is false, it returns the one provided. If it is true, it
+ * creates a new rrset with the same data but with provided name.
+ * In addition, if DNSSEC records are required by the original caller of
+ * find(), it also creates expanded RRSIG based on the RRSIG of the
+ * wildcard RRset.
+ * It is designed for wildcard case, where we create the rrsets
+ * dynamically.
+ */
+ConstRBNodeRRsetPtr
+prepareRRset(const Name& name, const ConstRBNodeRRsetPtr& rrset, bool rename,
+             ZoneFinder::FindOptions options)
+{
+    if (rename) {
+        LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_MEM_RENAME).
+            arg(rrset->getName()).arg(name);
+        RRsetPtr result_base(new RRset(name, rrset->getClass(),
+                                       rrset->getType(), rrset->getTTL()));
+        for (RdataIteratorPtr i(rrset->getRdataIterator()); !i->isLast();
+             i->next()) {
+            result_base->addRdata(i->getCurrent());
+        }
+        if ((options & ZoneFinder::FIND_DNSSEC) != 0) {
+            ConstRRsetPtr sig_rrset = rrset->getRRsig();
+            if (sig_rrset) {
+                RRsetPtr result_sig(new RRset(name, sig_rrset->getClass(),
+                                              RRType::RRSIG(),
+                                              sig_rrset->getTTL()));
+                for (RdataIteratorPtr i(sig_rrset->getRdataIterator());
+                     !i->isLast();
+                     i->next())
+                {
+                    result_sig->addRdata(i->getCurrent());
+                }
+                result_base->addRRsig(result_sig);
+            }
+        }
+        RBNodeRRsetPtr result(new RBNodeRRset(result_base));
+        rrset->copyAdditionalNodes(*result);
+        return (result);
+    } else {
+        return (rrset);
+    }
+}
+
 // Specialized version of ZoneFinder::ResultContext, which specifically
 // holds rrset in the form of RBNodeRRset.
 struct RBNodeResultContext {
@@ -652,7 +712,6 @@ private:
                 Domain::const_iterator found =
                     additional.node_->getData()->find(rrtype);
                 if (found != additional.node_->getData()->end()) {
-                    // TODO: wildcard consideration
                     result.push_back(found->second);
                 }
             }
@@ -1093,54 +1152,6 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         }
     }
 
-    /*
-     * Prepares a rrset to be return as a result.
-     *
-     * If rename is false, it returns the one provided. If it is true, it
-     * creates a new rrset with the same data but with provided name.
-     * In addition, if DNSSEC records are required by the original caller of
-     * find(), it also creates expanded RRSIG based on the RRSIG of the
-     * wildcard RRset.
-     * It is designed for wildcard case, where we create the rrsets
-     * dynamically.
-     */
-    static ConstRBNodeRRsetPtr prepareRRset(const Name& name,
-                                            const ConstRBNodeRRsetPtr& rrset,
-                                            bool rename, FindOptions options)
-    {
-        if (rename) {
-            LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_MEM_RENAME).
-                arg(rrset->getName()).arg(name);
-            RRsetPtr result_base(new RRset(name, rrset->getClass(),
-                                           rrset->getType(),
-                                           rrset->getTTL()));
-            for (RdataIteratorPtr i(rrset->getRdataIterator()); !i->isLast();
-                 i->next()) {
-                result_base->addRdata(i->getCurrent());
-            }
-            if ((options & FIND_DNSSEC) != 0) {
-                ConstRRsetPtr sig_rrset = rrset->getRRsig();
-                if (sig_rrset) {
-                    RRsetPtr result_sig(new RRset(name, sig_rrset->getClass(),
-                                                  RRType::RRSIG(),
-                                                  sig_rrset->getTTL()));
-                    for (RdataIteratorPtr i(sig_rrset->getRdataIterator());
-                         !i->isLast();
-                         i->next())
-                    {
-                        result_sig->addRdata(i->getCurrent());
-                    }
-                    result_base->addRRsig(result_sig);
-                }
-            }
-            RBNodeRRsetPtr result(new RBNodeRRset(result_base));
-            rrset->copyAdditionalNodes(*result);
-            return (result);
-        } else {
-            return (rrset);
-        }
-    }
-
     // Set up FindContext object as a return value of find(), taking into
     // account wildcard matches and DNSSEC information.  We set the NSEC/NSEC3
     // flag when applicable regardless of the find option; the caller would
@@ -1394,23 +1405,16 @@ getAdditionalName(RRType rrtype, const rdata::Rdata& rdata) {
     }
 }
 
-bool
-checkZoneCut(const DomainNode& node, pair<bool, bool>* arg) {
-    // We are only interested in the highest zone cut information.
-    // Ignore others and continue the search.
-    if (arg->first) {
-        return (false);
-    }
-    // Once we encounter a delegation point due to a DNAME, anything under it
-    // should be hidden.
-    if (node.getData()->find(RRType::DNAME()) != node.getData()->end()) {
-        return (true);
-    } else if (node.getData()->find(RRType::NS()) != node.getData()->end()) {
-        arg->first = true;
-        arg->second = true;
-        return (false);
-    }
-    return (false);
+void
+convertAndInsert(const DomainPair& rrset_item, DomainPtr dst_domain,
+                 const Name* dstname)
+{
+    // We copy RRSIGs, too, if they are attached in case we need it in
+    // getAdditional().
+    dst_domain->insert(DomainPair(rrset_item.first,
+                                  prepareRRset(*dstname, rrset_item.second,
+                                               true,
+                                               ZoneFinder::FIND_DNSSEC)));
 }
 
 void
@@ -1424,11 +1428,10 @@ addAdditional(RBNodeRRset* rrset, ZoneData* zone_data) {
         // include/exclude them when we use it.
 
         DomainNode* node = NULL;
+        const Name& name = getAdditionalName(rrset->getType(),
+                                             rdata_iterator->getCurrent());
         const ZoneData::FindNodeResult result =
-            zone_data->findMutableNode(getAdditionalName(
-                                           rrset->getType(),
-                                           rdata_iterator->getCurrent()),
-                                       ZoneFinder::FIND_GLUE_OK, &node);
+            zone_data->findMutableNode(name, ZoneFinder::FIND_GLUE_OK, &node);
         if (result.code != ZoneFinder::SUCCESS) {
             // We are not interested in anything but a successful match.
             continue;
@@ -1439,6 +1442,25 @@ addAdditional(RBNodeRRset* rrset, ZoneData* zone_data) {
              node->getData()->find(RRType::NS()) != node->getData()->end())) {
             // The node is under or at a zone cut; mark it as a glue.
             node->setFlag(domain_flag::GLUE);
+        }
+
+        // A rare case: the additional name may have to be expanded with a
+        // wildcard.  We'll store the name in a separate auxiliary tree,
+        // copying all RRsets of the original wildcard node with expanding
+        // the owner name.  This is costly in terms of memory, but this case
+        // should be pretty rare.  On the other hand we won't have to worry
+        // about wildcard expansion in getAdditional, which is quite
+        // performance sensitive.
+        if ((result.flags & ZoneData::FindNodeResult::FIND_WILDCARD) != 0) {
+            DomainNode* wildnode = NULL;
+            zone_data->getAuxWildDomains().insert(name, &wildnode);
+            if (wildnode->isEmpty()) {
+                DomainPtr dst_domain(new Domain);
+                for_each(node->getData()->begin(), node->getData()->end(),
+                         boost::bind(convertAndInsert, _1, dst_domain, &name));
+                wildnode->setData(dst_domain);
+            }
+            node = wildnode;
         }
         // Note that node may be empty.  We should keep it in the list
         // in case we dynamically update the tree and it becomes non empty

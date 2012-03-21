@@ -262,12 +262,7 @@ TEST_P(ZoneFinderContextTest, getAdditionalDelegationWithEmptyName) {
 }
 
 TEST_P(ZoneFinderContextTest, getAdditionalDelegationWithWild) {
-    // The NS name needs to be expanded by a wildcard.  Currently it doesn't
-    // work for the optimized in-memory version.
-    if (GetParam() == createInMemoryClient) {
-        return;
-    }
-
+    // The NS name needs to be expanded by a wildcard.
     ZoneFinderContextPtr ctx = finder_->find(Name("www.e.example.org"),
                                              RRType::AAAA());
     EXPECT_EQ(ZoneFinder::DELEGATION, ctx->code);
