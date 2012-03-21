@@ -59,9 +59,9 @@ Query::RRsetInserter::addRRset(isc::dns::Message& message,
                                const ConstRRsetPtr& rrset, const bool dnssec)
 {
     /// Is this RRset already in the list of RRsets added to the message?
-    std::vector<const AbstractRRset*>::iterator i =
+    const std::vector<const AbstractRRset*>::const_iterator i =
         std::find_if(added_.begin(), added_.end(),
-                     std::bind1st(Query::RRsetInserter::isSameKind(),
+                     std::bind1st(Query::RRsetInserter::IsSameKind(),
                                   rrset.get()));
     if (i == added_.end()) {
         // No - add it to both the message and the list of RRsets processed.
