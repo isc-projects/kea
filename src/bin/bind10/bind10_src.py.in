@@ -685,6 +685,7 @@ class BoB:
 
     def shutdown(self):
         """Stop the BoB instance."""
+        global options
         logger.info(BIND10_SHUTDOWN)
         # If ccsession is still there, inform rest of the system this module
         # is stopping. Since everything will be stopped shortly, this is not
@@ -702,32 +703,36 @@ class BoB:
         # still not enough.
         time.sleep(1)
         self.reap_children()
-        # next try sending a SIGTERM
-        components_to_stop = list(self.components.values())
-        for component in components_to_stop:
-            logger.info(BIND10_SEND_SIGTERM, component.name(), component.pid())
-            try:
-                component.kill()
-            except OSError:
-                # ignore these (usually ESRCH because the child
-                # finally exited)
-                pass
-        # finally, send SIGKILL (unmaskable termination) until everybody dies
-        while self.components:
-            # XXX: some delay probably useful... how much is uncertain
-            time.sleep(0.1)  
-            self.reap_children()
+
+        # Send TERM and KILL signals to modules if we're not prevented
+        # from doing so
+        if not options.nokill:
+            # next try sending a SIGTERM
             components_to_stop = list(self.components.values())
             for component in components_to_stop:
-                logger.info(BIND10_SEND_SIGKILL, component.name(),
-                            component.pid())
+                logger.info(BIND10_SEND_SIGTERM, component.name(), component.pid())
                 try:
-                    component.kill(True)
+                    component.kill()
                 except OSError:
                     # ignore these (usually ESRCH because the child
                     # finally exited)
                     pass
-        logger.info(BIND10_SHUTDOWN_COMPLETE)
+            # finally, send SIGKILL (unmaskable termination) until everybody dies
+            while self.components:
+                # XXX: some delay probably useful... how much is uncertain
+                time.sleep(0.1)
+                self.reap_children()
+                components_to_stop = list(self.components.values())
+                for component in components_to_stop:
+                    logger.info(BIND10_SEND_SIGKILL, component.name(),
+                                component.pid())
+                    try:
+                        component.kill(True)
+                    except OSError:
+                        # ignore these (usually ESRCH because the child
+                        # finally exited)
+                        pass
+            logger.info(BIND10_SHUTDOWN_COMPLETE)
 
     def _get_process_exit_status(self):
         return os.waitpid(-1, os.WNOHANG)
@@ -1043,6 +1048,8 @@ def parse_args(args=sys.argv[1:], Parser=OptionParser):
                       help="UNIX domain socket file the b10-msgq daemon will use")
     parser.add_option("-n", "--no-cache", action="store_true", dest="nocache",
                       default=False, help="disable hot-spot cache in authoritative DNS server")
+    parser.add_option("-i", "--no-kill-i", action="store_true", dest="nokill",
+                      default=False, help="do not send SIGTERM or SIGKILL signals to modules")
     parser.add_option("-u", "--user", dest="user", type="string", default=None,
                       help="Change user after startup (must run as root)")
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
