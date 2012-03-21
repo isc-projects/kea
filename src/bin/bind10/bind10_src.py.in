@@ -167,8 +167,8 @@ class BoB:
     """Boss of BIND class."""
     
     def __init__(self, msgq_socket_file=None, data_path=None,
-    config_filename=None, nocache=False, verbose=False, setuid=None,
-    username=None, cmdctl_port=None, wait_time=10):
+    config_filename=None, clear_config=False, nocache=False, verbose=False,
+    setuid=None, username=None, cmdctl_port=None, wait_time=10):
         """
             Initialize the Boss of BIND. This is a singleton (only one can run).
         
@@ -210,6 +210,7 @@ class BoB:
         self.verbose = verbose
         self.data_path = data_path
         self.config_filename = config_filename
+        self.clear_config = clear_config
         self.cmdctl_port = cmdctl_port
         self.wait_time = wait_time
         self._component_configurator = isc.bind10.component.Configurator(self,
@@ -465,6 +466,8 @@ class BoB:
             args.append("--data-path=" + self.data_path)
         if self.config_filename is not None:
             args.append("--config-filename=" + self.config_filename)
+        if self.clear_config is not None:
+            args.append("--clear-config")
         bind_cfgd = ProcessInfo("b10-cfgmgr", args,
                                 self.c_channel_env)
         bind_cfgd.spawn()
@@ -1053,6 +1056,9 @@ def parse_args(args=sys.argv[1:], Parser=OptionParser):
     parser.add_option("-c", "--config-file", action="store",
                       dest="config_file", default=None,
                       help="Configuration database filename")
+    parser.add_option("--clear-config", action="store_true",
+                      dest="clear_config", default=False,
+                      help="Back up the configuration file and start with a clean one")
     parser.add_option("-p", "--data-path", dest="data_path",
                       help="Directory to search for configuration files",
                       default=None)
@@ -1165,8 +1171,8 @@ def main():
     try:
         # Go bob!
         boss_of_bind = BoB(options.msgq_socket_file, options.data_path,
-                           options.config_file, options.nocache,
-                           options.verbose, setuid, username,
+                           options.config_file, options.clear_config,
+                           options.nocache, options.verbose, setuid, username,
                            options.cmdctl_port, options.wait_time)
         startup_result = boss_of_bind.startup()
         if startup_result:
