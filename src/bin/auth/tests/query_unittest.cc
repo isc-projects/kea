@@ -2369,7 +2369,7 @@ TEST_F(QueryTest, emptyNameWithNSEC3) {
     EXPECT_FALSE(result->isWildcard());
 }
 
-// Class to allow checking of duplication removal in messages resulting from.
+// Class to allow checking of duplication removal in messages resulting from
 // the query.  This class allows the setting of the answers, authorities and
 // additionals vector in the Query class, as well as the ability to call the
 // createResponse() method.
@@ -2440,7 +2440,7 @@ TEST_F(QueryTest, DuplicateNameRemoval) {
     loadRRsetVector();
     EXPECT_EQ(9, rrset_vector.size());
 
-    // Create an answer, authority and authority vector with some overlapping
+    // Create an answer, authority and additional vector with some overlapping
     // entries.  The following indicate which elements from rrset_vector
     // go into each section vector.  (The values have been separated to show
     // the overlap.)
@@ -2523,10 +2523,11 @@ TEST_F(QueryTest, DuplicateNameRemoval) {
             // message will only refer to the loop indexes).
             stringstream ss;
             ss << "section " << section << ", name "
-               << rrset_vector[vecindex]->getName().toText();
+               << rrset_vector[vecindex]->getName();
             SCOPED_TRACE(ss.str());
 
-            // Check RRset is in the right section and not in the wrong section.
+            // Check RRset is in the right section and not in the wrong
+            // section.
             if (sections[section] == expected_section[vecindex]) {
                 EXPECT_TRUE(message.hasRRset(sections[section],
                             rrset_vector[vecindex]));
