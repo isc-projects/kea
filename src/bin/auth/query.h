@@ -452,7 +452,7 @@ public:
             isc::dns::Message& message,
             const std::vector<isc::dns::ConstRRsetPtr>& answers_,
             const std::vector<isc::dns::ConstRRsetPtr>& authorities_,
-            const std::vector<isc::dns::ConstRRsetPtr> additionals_,
+            const std::vector<isc::dns::ConstRRsetPtr>& additionals_,
             const bool dnssec);
 
     private:
