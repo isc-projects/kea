@@ -54,14 +54,14 @@ namespace isc {
 namespace auth {
 
 void
-Query::RRsetInserter::addRRset(isc::dns::Message& message,
-                               const isc::dns::Message::Section section,
-                               const ConstRRsetPtr& rrset, const bool dnssec)
+Query::ResponseCreator::addRRset(isc::dns::Message& message,
+                                 const isc::dns::Message::Section section,
+                                 const ConstRRsetPtr& rrset, const bool dnssec)
 {
     /// Is this RRset already in the list of RRsets added to the message?
     const std::vector<const AbstractRRset*>::const_iterator i =
         std::find_if(added_.begin(), added_.end(),
-                     std::bind1st(Query::RRsetInserter::IsSameKind(),
+                     std::bind1st(Query::ResponseCreator::IsSameKind(),
                                   rrset.get()));
     if (i == added_.end()) {
         // No - add it to both the message and the list of RRsets processed.
@@ -73,6 +73,35 @@ Query::RRsetInserter::addRRset(isc::dns::Message& message,
     }
 }
 
+void
+Query::ResponseCreator::create(Message& response,
+                               const vector<ConstRRsetPtr>& answers,
+                               const vector<ConstRRsetPtr>& authorities,
+                               const vector<ConstRRsetPtr> additionals,
+                               const bool dnssec)
+{
+    // Inserter should be reset each time the query is reset, so should be
+    // empty at this point.
+    assert(added_.empty());
+
+    // Add the RRsets to the message.  The order of sections is important,
+    // as the RRsetInserter remembers RRsets added and will not add
+    // duplicates.  Adding in the order answer, authory, additional will
+    // guarantee that if there are duplicates, the single RRset added will
+    // appear in the most important section.
+    std::vector<isc::dns::ConstRRsetPtr>::const_iterator i;
+    for (i = answers.begin(); i != answers.end(); ++i) {
+        addRRset(response, Message::SECTION_ANSWER, *i, dnssec);
+    }
+
+    for (i = authorities.begin(); i != authorities.end(); ++i) {
+        addRRset(response, Message::SECTION_AUTHORITY, *i, dnssec);
+    }
+
+    for (i = additionals.begin(); i != additionals.end(); ++i) {
+        addRRset(response, Message::SECTION_ADDITIONAL, *i, dnssec);
+    }
+}
 
 void
 Query::addSOA(ZoneFinder& finder) {
@@ -512,7 +541,8 @@ Query::process(datasrc::DataSourceClient& datasrc_client,
             break;
     }
 
-    createResponse();
+    response_creator_.create(*response_, answers_, authorities_, additionals_,
+                             dnssec_);
 }
 
 void
@@ -530,31 +560,6 @@ Query::initialize(datasrc::DataSourceClient& datasrc_client,
 }
 
 void
-Query::createResponse() {
-    // Inserter should be reset each time the query is reset, so should be
-    // empty at this point.
-    assert(inserter_.empty());
-
-    // Add the RRsets to the message.  The order of sections is important,
-    // as the RRsetInserter remembers RRsets added and will not add
-    // duplicates.  Adding in the order answer, authory, additional will
-    // guarantee that if there are duplicates, the single RRset added will
-    // appear in the most important section.
-    std::vector<isc::dns::ConstRRsetPtr>::const_iterator i;
-    for (i = answers_.begin(); i != answers_.end(); ++i) {
-        inserter_.addRRset(*response_, Message::SECTION_ANSWER, *i, dnssec_);
-    }
-
-    for (i = authorities_.begin(); i != authorities_.end(); ++i) {
-        inserter_.addRRset(*response_, Message::SECTION_AUTHORITY, *i, dnssec_);
-    }
-
-    for (i = additionals_.begin(); i != additionals_.end(); ++i) {
-        inserter_.addRRset(*response_, Message::SECTION_ADDITIONAL, *i, dnssec_);
-    }
-}
-
-void
 Query::reset() {
     datasrc_client_ = NULL;
     qname_ = NULL;
@@ -563,7 +568,7 @@ Query::reset() {
     answers_.clear();
     authorities_.clear();
     additionals_.clear();
-    inserter_.clear();
+    response_creator_.clear();
 }
 
 bool
@@ -595,7 +600,8 @@ Query::processDSAtChild() {
         }
     }
 
-    createResponse();
+    response_creator_.create(*response_, answers_, authorities_, additionals_,
+                             dnssec_);
     return (true);
 }
 

@@ -2369,37 +2369,6 @@ TEST_F(QueryTest, emptyNameWithNSEC3) {
     EXPECT_FALSE(result->isWildcard());
 }
 
-// Class to allow checking of duplication removal in messages resulting from
-// the query.  This class allows the setting of the answers, authorities and
-// additionals vector in the Query class, as well as the ability to call the
-// createResponse() method.
-
-class DuplicateQuery : public isc::auth::Query {
-public:
-    // \brief Constructor
-    //
-    // Fill in the parts of Query that we test in the DuplicateRemoval test.
-    DuplicateQuery(isc::dns::Message* message,
-                   const vector<RRsetPtr>& answers,
-                   const vector<RRsetPtr>& authorities,
-                   const vector<RRsetPtr>& additionals) : Query() {
-        response_ = message;
-        copy(answers.begin(), answers.end(),
-             back_inserter(answers_));
-        copy(authorities.begin(), authorities.end(),
-             back_inserter(authorities_));
-        copy(additionals.begin(), additionals.end(),
-             back_inserter(additionals_));
-    }
-
-    // \brief Create Response
-    //
-    // Public interface to the (protected) Query::createResponse() method.
-    void produceResponse() {
-        createResponse();
-    }
-};
-
 // Vector of RRsets used for the test.   Having this external to functions and
 // classes used for the testing simplifies the code.
 std::vector<RRsetPtr> rrset_vector;
@@ -2474,19 +2443,19 @@ TEST_F(QueryTest, DuplicateNameRemoval) {
               (sizeof(expected_section) / sizeof(Message::Section)));
 
     // Create the vectors of RRsets (with the RRsets in a semi-random order).
-    std::vector<RRsetPtr> answer;
+    std::vector<ConstRRsetPtr> answer;
     answer.insert(answer.end(), rrset_vector.begin() + 2,
                   rrset_vector.begin() + 4);
     answer.insert(answer.end(), rrset_vector.begin() + 0,
                   rrset_vector.begin() + 2);
 
-    std::vector<RRsetPtr> authority;
+    std::vector<ConstRRsetPtr> authority;
     authority.insert(authority.end(), rrset_vector.begin() + 3,
                      rrset_vector.begin() + 8);
     authority.push_back(rrset_vector[2]);
     authority.push_back(rrset_vector[5]);
 
-    std::vector<RRsetPtr> additional;
+    std::vector<ConstRRsetPtr> additional;
     additional.insert(additional.end(), rrset_vector.begin() + 7,
                       rrset_vector.end());
     additional.push_back(rrset_vector[3]);
@@ -2499,8 +2468,8 @@ TEST_F(QueryTest, DuplicateNameRemoval) {
     EXPECT_EQ(0, message.getRRCount(Message::SECTION_ADDITIONAL));
 
     // ... and fill it.
-    DuplicateQuery query(&message, answer, authority, additional);
-    query.produceResponse();
+    Query::ResponseCreator().create(message, answer, authority, additional,
+                                    false);
 
     // Check counts in each section.  Note that these are RR counts,
     // not RRset counts.
