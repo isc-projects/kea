@@ -37,13 +37,6 @@ class DataSourceClient;
 
 namespace auth {
 
-/// \brief Initial reserved size for the vectors in Query
-///
-/// The value is larger than we expect the vectors to even become, and
-/// has been chosen arbitrarily. The reason to set them quite high is
-/// to prevent reallocation on addition.
-const size_t RESERVE_RRSETS = 64;
-
 /// The \c Query class represents a standard DNS query that encapsulates
 /// processing logic to answer the query.
 ///
@@ -76,6 +69,12 @@ const size_t RESERVE_RRSETS = 64;
 /// we keep this name at the moment.
 class Query : boost::noncopyable {
 private:
+    /// \brief Initial reserved size for the vectors in Query
+    ///
+    /// The value is larger than we expect the vectors to even become, and
+    /// has been chosen arbitrarily. The reason to set them quite high is
+    /// to prevent reallocation on addition.
+    static const size_t RESERVE_RRSETS = 64;
 
     /// \brief Adds a SOA.
     ///
