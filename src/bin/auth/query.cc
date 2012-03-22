@@ -158,14 +158,10 @@ Query::addNXDOMAINProofByNSEC(ZoneFinder& finder, ConstRRsetPtr nsec) {
         isc_throw(BadNSEC, "Unexpected result for wildcard NXDOMAIN proof");
     }
 
-    // Add the (no-) wildcard proof only when it's different from the NSEC
-    // that proves NXDOMAIN; sometimes they can be the same.
-    // Note: name comparison is relatively expensive.  When we are at the
-    // stage of performance optimization, we should consider optimizing this
-    // for some optimized data source implementations.
-    if (nsec->getName() != fcontext->rrset->getName()) {
-        authorities_.push_back(fcontext->rrset);
-    }
+    // Add the (no-) wildcard proof.  This can be the same NSEC we already
+    // added, but we'd add it here anyway; duplicate checks will take place
+    // later in a unified manner.
+    authorities_.push_back(fcontext->rrset);
 }
 
 uint8_t
@@ -265,11 +261,8 @@ Query::addWildcardNXRRSETProof(ZoneFinder& finder, ConstRRsetPtr nsec) {
         fcontext->rrset->getRdataCount() == 0) {
         isc_throw(BadNSEC, "Unexpected result for no match QNAME proof");
     }
-   
-    if (nsec->getName() != fcontext->rrset->getName()) {
-        // one NSEC RR proves wildcard_nxrrset that no matched QNAME.
-        authorities_.push_back(fcontext->rrset);
-    }
+
+    authorities_.push_back(fcontext->rrset);
 }
 
 void
