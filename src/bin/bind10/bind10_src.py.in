@@ -167,8 +167,8 @@ class BoB:
     """Boss of BIND class."""
     
     def __init__(self, msgq_socket_file=None, data_path=None,
-    config_filename=None, nocache=False, verbose=False, setuid=None,
-    username=None, cmdctl_port=None, wait_time=10):
+    config_filename=None, nocache=False, verbose=False, nokill=False,
+    setuid=None, username=None, cmdctl_port=None, wait_time=10):
         """
             Initialize the Boss of BIND. This is a singleton (only one can run).
         
@@ -208,6 +208,7 @@ class BoB:
         self.uid = setuid
         self.username = username
         self.verbose = verbose
+        self.nokill = nokill
         self.data_path = data_path
         self.config_filename = config_filename
         self.cmdctl_port = cmdctl_port
@@ -685,7 +686,6 @@ class BoB:
 
     def shutdown(self):
         """Stop the BoB instance."""
-        global options
         logger.info(BIND10_SHUTDOWN)
         # If ccsession is still there, inform rest of the system this module
         # is stopping. Since everything will be stopped shortly, this is not
@@ -706,7 +706,7 @@ class BoB:
 
         # Send TERM and KILL signals to modules if we're not prevented
         # from doing so
-        if not options.nokill:
+        if not self.nokill:
             # next try sending a SIGTERM
             components_to_stop = list(self.components.values())
             for component in components_to_stop:
@@ -1173,7 +1173,7 @@ def main():
         # Go bob!
         boss_of_bind = BoB(options.msgq_socket_file, options.data_path,
                            options.config_file, options.nocache,
-                           options.verbose, setuid, username,
+                           options.verbose, options.nokill, setuid, username,
                            options.cmdctl_port, options.wait_time)
         startup_result = boss_of_bind.startup()
         if startup_result:
