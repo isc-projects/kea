@@ -1425,7 +1425,7 @@ addAdditional(RBNodeRRset* rrset, ZoneData* zone_data,
               vector<RBNodeRRset*>* wild_rrsets)
 {
     RdataIteratorPtr rdata_iterator = rrset->getRdataIterator();
-    bool match_wild = false;
+    bool match_wild = false;    // will be true if wildcard match is found
     for (; !rdata_iterator->isLast(); rdata_iterator->next()) {
         // For each domain name that requires additional section processing
         // in each RDATA, search the tree for the name and remember it if
@@ -1460,6 +1460,9 @@ addAdditional(RBNodeRRset* rrset, ZoneData* zone_data,
         // performance sensitive.
         DomainNode* wildnode = NULL;
         if ((result.flags & ZoneData::FindNodeResult::FIND_WILDCARD) != 0) {
+            // Wildcard and glue shouldn't coexist.  Make it sure here.
+            assert(!node->getFlag(domain_flag::GLUE));
+
             if (zone_data->getAuxWildDomains().insert(name, &wildnode)
                 == DomainTree::SUCCESS) {
                 // If we first insert the node, copy the RRsets.  If the
