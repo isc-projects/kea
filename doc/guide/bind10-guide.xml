@@ -2865,7 +2865,7 @@ Logging/loggers[0]/output_options[0]/maxver	0	integer	(default)
 
           <screen>&gt; <userinput> config set Logging/loggers[0]/output_options[0]/destination file</userinput>
 &gt; <userinput> config set Logging/loggers[0]/output_options[0]/output /var/log/bind10.log</userinput>
-&gt; <userinput> config set Logging/loggers[0]/output_options[0]/maxsize 30000</userinput>
+&gt; <userinput> config set Logging/loggers[0]/output_options[0]/maxsize 204800</userinput>
 &gt; <userinput> config set Logging/loggers[0]/output_options[0]/maxver 8</userinput>
 </screen>
 
@@ -2888,7 +2888,7 @@ Logging/loggers[0]/additive	false	boolean	(default)
 Logging/loggers[0]/output_options[0]/destination	"file"	string	(modified)
 Logging/loggers[0]/output_options[0]/output	"/var/log/bind10.log"	string	(modified)
 Logging/loggers[0]/output_options[0]/flush	false	boolean	(default)
-Logging/loggers[0]/output_options[0]/maxsize	30000	integer	(modified)
+Logging/loggers[0]/output_options[0]/maxsize	204800	integer	(modified)
 Logging/loggers[0]/output_options[0]/maxver	8	integer	(modified)
 </screen>
 
