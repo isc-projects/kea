@@ -85,21 +85,18 @@ Query::ResponseCreator::create(Message& response,
     assert(added_.empty());
 
     // Add the RRsets to the message.  The order of sections is important,
-    // as the RRsetInserter remembers RRsets added and will not add
+    // as the ResponseCreator remembers RRsets added and will not add
     // duplicates.  Adding in the order answer, authory, additional will
     // guarantee that if there are duplicates, the single RRset added will
     // appear in the most important section.
-    std::vector<isc::dns::ConstRRsetPtr>::const_iterator i;
-    for (i = answers.begin(); i != answers.end(); ++i) {
-        addRRset(response, Message::SECTION_ANSWER, *i, dnssec);
+    BOOST_FOREACH(const ConstRRsetPtr& rrset, answers) {
+        addRRset(response, Message::SECTION_ANSWER, rrset, dnssec);
     }
-
-    for (i = authorities.begin(); i != authorities.end(); ++i) {
-        addRRset(response, Message::SECTION_AUTHORITY, *i, dnssec);
+    BOOST_FOREACH(const ConstRRsetPtr& rrset, authorities) {
+        addRRset(response, Message::SECTION_AUTHORITY, rrset, dnssec);
     }
-
-    for (i = additionals.begin(); i != additionals.end(); ++i) {
-        addRRset(response, Message::SECTION_ADDITIONAL, *i, dnssec);
+    BOOST_FOREACH(const ConstRRsetPtr& rrset, additionals) {
+        addRRset(response, Message::SECTION_ADDITIONAL, rrset, dnssec);
     }
 }
 
