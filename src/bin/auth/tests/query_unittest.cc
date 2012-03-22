@@ -2446,7 +2446,8 @@ TEST_F(QueryTest, DuplicateNameRemoval) {
     // the overlap.)
     //
     // answer     = 0 1 2 3
-    // authority  =     2 3 4 5 6 7
+    // authority  =     2 3 4 5 6 7...
+    //                     ...5 (duplicate in the same section)
     // additional = 0     3       7 8
     //
     // If the duplicate removal works, we should end up with the following in
@@ -2483,6 +2484,7 @@ TEST_F(QueryTest, DuplicateNameRemoval) {
     authority.insert(authority.end(), rrset_vector.begin() + 3,
                      rrset_vector.begin() + 8);
     authority.push_back(rrset_vector[2]);
+    authority.push_back(rrset_vector[5]);
 
     std::vector<RRsetPtr> additional;
     additional.insert(additional.end(), rrset_vector.begin() + 7,
