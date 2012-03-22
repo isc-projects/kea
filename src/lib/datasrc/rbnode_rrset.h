@@ -141,7 +141,6 @@ public:
         }
     }
 
-
     virtual unsigned int toWire(
         isc::dns::AbstractMessageRenderer& renderer) const;
 
