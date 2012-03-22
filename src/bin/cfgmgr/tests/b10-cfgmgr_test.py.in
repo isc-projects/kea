@@ -24,7 +24,7 @@ import bind10_config
 from isc.testutils.parse_args import OptsError, TestOptParser
 
 class MyConfigManager:
-    def __init__(self, path, filename, session=None, rename_config_file=None):
+    def __init__(self, path, filename, session=None, rename_config_file=False):
         self._path = path
         self.read_config_called = False
         self.notify_boss_called = False
