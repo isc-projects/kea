@@ -162,8 +162,16 @@ public:
     };
     scoped_ptr<NSEC3Data> nsec3_data_; // non NULL only when it's NSEC3 signed
 
-    // This structure encapsulates the find result of findNode() method below.
-    struct FindNodeResult {
+    // This templated structure encapsulates the find result of findNode()
+    // method (also templated) below.
+    // The template parameter is expected to be either 'const DomainNode' or
+    // 'DomainNode' (to avoid misuse the template definition itself is kept
+    // private - we only expose expected typedefs).  The former is expected
+    // to be used for lookups, and the latter is expected to be used for
+    // constructing the zone.
+private:
+    template <typename NodeType>
+    struct FindNodeResultBase {
         // Bitwise flags to represent supplemental information of the
         // search result:
         // Search resulted in a wildcard match.
@@ -172,45 +180,27 @@ public:
         // a glue.
         static const unsigned int FIND_ZONECUT = 2;
 
-        FindNodeResult(ZoneFinder::Result code_param,
-                       const DomainNode* node_param,
-                       ConstRBNodeRRsetPtr rrset_param,
-                       unsigned int flags_param = 0) :
+        FindNodeResultBase(ZoneFinder::Result code_param,
+                           NodeType* node_param,
+                           ConstRBNodeRRsetPtr rrset_param,
+                           unsigned int flags_param = 0) :
             code(code_param), node(node_param), rrset(rrset_param),
             flags(flags_param)
         {}
         const ZoneFinder::Result code;
-        const DomainNode* const node;
+        NodeType* const node;
         ConstRBNodeRRsetPtr const rrset;
         const unsigned int flags;
     };
+public:
+    typedef FindNodeResultBase<const DomainNode> FindNodeResult;
+    typedef FindNodeResultBase<DomainNode> FindMutableNodeResult;
 
     // Identify the RBTree node that best matches the given name.
     // See implementation notes below.
-    FindNodeResult findNode(const Name& name,
-                            ZoneFinder::FindOptions options) const;
-
-    // Mutable version of findNode().  If it finds an exact match for the
-    // given name, it returns a mutable pointer to that node via nodep.
-    // This is intentionally separated from findNode() and is expected to
-    // be used during the construction of zone, while keeping the const
-    // version as efficient and safe as possible.
-    FindNodeResult findMutableNode(const Name& name,
-                                   ZoneFinder::FindOptions options,
-                                   DomainNode** nodep)
-    {
-        FindNodeResult result = findNode(name, options);
-        if (result.code != ZoneFinder::SUCCESS) {
-            *nodep = NULL;
-        } else {
-            // For the tradeoff between safety and performance (of the
-            // const version), we discard the constness here.  In practice
-            // this should be okay because internally this node was retrieved
-            // from the zone tree as a mutable pointer anyway.
-            *nodep = const_cast<DomainNode*>(result.node);
-        }
-        return (result);
-    }
+    template <typename ResultType>
+    ResultType findNode(const Name& name,
+                        ZoneFinder::FindOptions options) const;
 };
 
 /// Maintain intermediate data specific to the search context used in
@@ -353,7 +343,8 @@ bool cutCallback(const DomainNode& node, FindState* state) {
 //
 // If none of the above succeeds, we conclude the name doesn't exist in
 // the zone.
-ZoneData::FindNodeResult
+template <typename ResultType>
+ResultType
 ZoneData::findNode(const Name& name, ZoneFinder::FindOptions options) const {
     DomainNode* node = NULL;
     RBTreeNodeChain<Domain> node_path;
@@ -364,27 +355,26 @@ ZoneData::findNode(const Name& name, ZoneFinder::FindOptions options) const {
     const unsigned int zonecut_flag =
         (state.zonecut_node_ != NULL) ? FindNodeResult::FIND_ZONECUT : 0;
     if (result == DomainTree::EXACTMATCH) {
-        return (FindNodeResult(ZoneFinder::SUCCESS, node, state.rrset_,
-                               zonecut_flag));
+        return (ResultType(ZoneFinder::SUCCESS, node, state.rrset_,
+                           zonecut_flag));
     }
     if (result == DomainTree::PARTIALMATCH) {
         assert(node != NULL);
         if (state.dname_node_ != NULL) { // DNAME
             LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_DNAME_FOUND).
                 arg(state.rrset_->getName());
-            return (FindNodeResult(ZoneFinder::DNAME, NULL, state.rrset_));
+            return (ResultType(ZoneFinder::DNAME, NULL, state.rrset_));
         }
         if (state.zonecut_node_ != NULL) { // DELEGATION due to NS
             LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_DELEG_FOUND).
                 arg(state.rrset_->getName());
-            return (FindNodeResult(ZoneFinder::DELEGATION, NULL,
-                                   state.rrset_));
+            return (ResultType(ZoneFinder::DELEGATION, NULL, state.rrset_));
         }
         if (node_path.getLastComparisonResult().getRelation() ==
             NameComparisonResult::SUPERDOMAIN) { // empty node, so NXRRSET
             LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_SUPER_STOP).arg(name);
-            return (FindNodeResult(ZoneFinder::NXRRSET, node,
-                                   ConstRBNodeRRsetPtr()));
+            return (ResultType(ZoneFinder::NXRRSET, node,
+                               ConstRBNodeRRsetPtr()));
         }
         if (node->getFlag(domain_flag::WILD)) { // maybe a wildcard
             if (node_path.getLastComparisonResult().getRelation() ==
@@ -399,8 +389,8 @@ ZoneData::findNode(const Name& name, ZoneFinder::FindOptions options) const {
                 // little bit).
                 LOG_DEBUG(logger, DBG_TRACE_DATA,
                           DATASRC_MEM_WILDCARD_CANCEL).arg(name);
-                return (FindNodeResult(ZoneFinder::NXDOMAIN, NULL,
-                                       ConstRBNodeRRsetPtr()));
+                return (ResultType(ZoneFinder::NXDOMAIN, NULL,
+                                   ConstRBNodeRRsetPtr()));
             }
             // Now the wildcard should be the best match.
             const Name wildcard(Name("*").concatenate(
@@ -409,14 +399,14 @@ ZoneData::findNode(const Name& name, ZoneFinder::FindOptions options) const {
             // Otherwise, why would the domain_flag::WILD be there if
             // there was no wildcard under it?
             assert(result == DomainTree::EXACTMATCH);
-            return (FindNodeResult(ZoneFinder::SUCCESS, node, state.rrset_,
-                                   FindNodeResult::FIND_WILDCARD |
-                                   zonecut_flag));
+            return (ResultType(ZoneFinder::SUCCESS, node, state.rrset_,
+                               FindNodeResult::FIND_WILDCARD |
+                               zonecut_flag));
         }
     }
     // Nothing really matched.  The name may even be out-of-bailiwick.
     LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_NOT_FOUND).arg(name);
-    return (FindNodeResult(ZoneFinder::NXDOMAIN, node, state.rrset_));
+    return (ResultType(ZoneFinder::NXDOMAIN, node, state.rrset_));
 }
 } // unnamed namespace
 
@@ -1199,7 +1189,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         // Get the node.  All other cases than an exact match are handled
         // in findNode().  We simply construct a result structure and return.
         const ZoneData::FindNodeResult node_result =
-            zone_data_->findNode(name, options);
+            zone_data_->findNode<ZoneData::FindNodeResult>(name, options);
         if (node_result.code != SUCCESS) {
             return (createFindResult(node_result.code, node_result.rrset));
         }
@@ -1443,12 +1433,14 @@ addAdditional(RBNodeRRset* rrset, ZoneData* zone_data) {
         DomainNode* node = NULL;
         const Name& name = getAdditionalName(rrset->getType(),
                                              rdata_iterator->getCurrent());
-        const ZoneData::FindNodeResult result =
-            zone_data->findMutableNode(name, ZoneFinder::FIND_GLUE_OK, &node);
+        const ZoneData::FindMutableNodeResult result =
+            zone_data->findNode<ZoneData::FindMutableNodeResult>(
+                name, ZoneFinder::FIND_GLUE_OK);
         if (result.code != ZoneFinder::SUCCESS) {
             // We are not interested in anything but a successful match.
             continue;
         }
+        node = result.node;
         assert(node != NULL);
         if ((result.flags & ZoneData::FindNodeResult::FIND_ZONECUT) != 0 ||
             (node->getFlag(DomainNode::FLAG_CALLBACK) &&
