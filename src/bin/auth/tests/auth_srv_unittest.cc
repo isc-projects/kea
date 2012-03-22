@@ -41,6 +41,7 @@
 #include <dns/tests/unittest_util.h>
 #include <testutils/dnsmessage_test.h>
 #include <testutils/srv_test.h>
+#include <testutils/mockups.h>
 #include <testutils/portconfig.h>
 #include <testutils/socket_request.h>
 
@@ -75,7 +76,7 @@ const char* const CONFIG_INMEMORY_EXAMPLE =
 class AuthSrvTest : public SrvTestBase {
 protected:
     AuthSrvTest() :
-        dnss_(ios_, NULL, NULL, NULL),
+        dnss_(),
         server(true, xfrout),
         rrclass(RRClass::IN()),
         // The empty string is expected value of the parameter of
@@ -135,8 +136,7 @@ protected:
                     opcode.getCode(), QR_FLAG, 1, 0, 0, 0);
     }
 
-    IOService ios_;
-    DNSService dnss_;
+    MockDNSService dnss_;
     MockSession statistics_session;
     MockXfroutClient xfrout;
     AuthSrv server;
@@ -1079,10 +1079,11 @@ TEST_F(AuthSrvTest, processNormalQuery_reuseRenderer1) {
     UnitTestUtil::createRequestMessage(request_message, Opcode::QUERY(),
                                        default_qid, Name("example.com"),
                                        RRClass::IN(), RRType::NS());
-    
+
     request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(request_message, IPPROTO_UDP);
-    server.processMessage(*io_message, *parse_message, *response_obuffer, &dnsserv);
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
+                          &dnsserv);
     EXPECT_NE(request_message.getRcode(), parse_message->getRcode());
 }
 
@@ -1090,12 +1091,14 @@ TEST_F(AuthSrvTest, processNormalQuery_reuseRenderer2) {
     UnitTestUtil::createRequestMessage(request_message, Opcode::QUERY(),
                                        default_qid, Name("example.com"),
                                        RRClass::IN(), RRType::SOA());
-    
+
     request_message.setHeaderFlag(Message::HEADERFLAG_AA);
     createRequestPacket(request_message, IPPROTO_UDP);
-    server.processMessage(*io_message, *parse_message, *response_obuffer, &dnsserv);
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
+                          &dnsserv);
     ConstQuestionPtr question = *parse_message->beginQuestion();
-    EXPECT_STRNE(question->getType().toText().c_str(),RRType::NS().toText().c_str());
+    EXPECT_STRNE(question->getType().toText().c_str(),
+                 RRType::NS().toText().c_str());
 }
 //
 // Tests for catching exceptions in various stages of the query processing
@@ -1138,11 +1141,12 @@ checkThrow(ThrowWhen method, ThrowWhen throw_at, bool isc_exception) {
 class FakeZoneFinder : public isc::datasrc::ZoneFinder {
 public:
     FakeZoneFinder(isc::datasrc::ZoneFinderPtr zone_finder,
-                   ThrowWhen throw_when,
-                   bool isc_exception) :
+                   ThrowWhen throw_when, bool isc_exception,
+                   ConstRRsetPtr fake_rrset) :
         real_zone_finder_(zone_finder),
         throw_when_(throw_when),
-        isc_exception_(isc_exception)
+        isc_exception_(isc_exception),
+        fake_rrset_(fake_rrset)
     {}
 
     virtual isc::dns::Name
@@ -1162,7 +1166,18 @@ public:
          const isc::dns::RRType& type,
          isc::datasrc::ZoneFinder::FindOptions options)
     {
+        using namespace isc::datasrc;
         checkThrow(THROW_AT_FIND, throw_when_, isc_exception_);
+        // If faked RRset was specified on construction and it matches the
+        // query, return it instead of searching the real data source.
+        if (fake_rrset_ && fake_rrset_->getName() == name &&
+            fake_rrset_->getType() == type)
+        {
+            return (ZoneFinderContextPtr(new ZoneFinder::Context(
+                                             *this, options,
+                                             ResultContext(SUCCESS,
+                                                           fake_rrset_))));
+        }
         return (real_zone_finder_->find(name, type, options));
     }
 
@@ -1190,6 +1205,7 @@ private:
     isc::datasrc::ZoneFinderPtr real_zone_finder_;
     ThrowWhen throw_when_;
     bool isc_exception_;
+    ConstRRsetPtr fake_rrset_;
 };
 
 /// \brief Proxy InMemoryClient that can throw exceptions at specified times
@@ -1206,12 +1222,15 @@ public:
     ///        class or the related FakeZoneFinder)
     /// \param isc_exception if true, throw isc::Exception, otherwise,
     ///                      throw std::exception
+    /// \param fake_rrset If non NULL, it will be used as an answer to
+    /// find() for that name and type.
     FakeInMemoryClient(AuthSrv::InMemoryClientPtr real_client,
-                       ThrowWhen throw_when,
-                       bool isc_exception) :
+                       ThrowWhen throw_when, bool isc_exception,
+                       ConstRRsetPtr fake_rrset = ConstRRsetPtr()) :
         real_client_(real_client),
         throw_when_(throw_when),
-        isc_exception_(isc_exception)
+        isc_exception_(isc_exception),
+        fake_rrset_(fake_rrset)
     {}
 
     /// \brief proxy call for findZone
@@ -1226,14 +1245,16 @@ public:
         const FindResult result = real_client_->findZone(name);
         return (FindResult(result.code, isc::datasrc::ZoneFinderPtr(
                                         new FakeZoneFinder(result.zone_finder,
-                                        throw_when_,
-                                        isc_exception_))));
+                                                           throw_when_,
+                                                           isc_exception_,
+                                                           fake_rrset_))));
     }
 
 private:
     AuthSrv::InMemoryClientPtr real_client_;
     ThrowWhen throw_when_;
     bool isc_exception_;
+    ConstRRsetPtr fake_rrset_;
 };
 
 } // end anonymous namespace for throwing proxy classes
@@ -1248,9 +1269,7 @@ TEST_F(AuthSrvTest, queryWithInMemoryClientProxy) {
 
     AuthSrv::InMemoryClientPtr fake_client(
         new FakeInMemoryClient(server.getInMemoryClient(rrclass),
-                               THROW_NEVER,
-                               false));
-
+                               THROW_NEVER, false));
     ASSERT_NE(AuthSrv::InMemoryClientPtr(), server.getInMemoryClient(rrclass));
     server.setInMemoryClient(rrclass, fake_client);
 
@@ -1267,9 +1286,11 @@ TEST_F(AuthSrvTest, queryWithInMemoryClientProxy) {
 // to throw in the given method
 // If isc_exception is true, it will throw isc::Exception, otherwise
 // it will throw std::exception
+// If non null rrset is given, it will be passed to the proxy so it can
+// return some faked response.
 void
 setupThrow(AuthSrv* server, const char *config, ThrowWhen throw_when,
-                   bool isc_exception)
+           bool isc_exception, ConstRRsetPtr rrset = ConstRRsetPtr())
 {
     // Set real inmem client to proxy
     updateConfig(server, config, true);
@@ -1279,8 +1300,7 @@ setupThrow(AuthSrv* server, const char *config, ThrowWhen throw_when,
     AuthSrv::InMemoryClientPtr fake_client(
         new FakeInMemoryClient(
             server->getInMemoryClient(isc::dns::RRClass::IN()),
-            throw_when,
-            isc_exception));
+            throw_when, isc_exception, rrset));
 
     ASSERT_NE(AuthSrv::InMemoryClientPtr(),
               server->getInMemoryClient(isc::dns::RRClass::IN()));
@@ -1322,6 +1342,47 @@ TEST_F(AuthSrvTest, queryWithInMemoryClientProxyGetClass) {
     EXPECT_TRUE(dnsserv.hasAnswer());
     headerCheck(*parse_message, default_qid, Rcode::NOERROR(),
                 opcode.getCode(), QR_FLAG | AA_FLAG, 1, 1, 2, 1);
+}
+
+TEST_F(AuthSrvTest, queryWithThrowingInToWire) {
+    // Set up a faked data source.  It will return an empty RRset for the
+    // query.
+    ConstRRsetPtr empty_rrset(new RRset(Name("foo.example"),
+                                        RRClass::IN(), RRType::TXT(),
+                                        RRTTL(0)));
+    setupThrow(&server, CONFIG_INMEMORY_EXAMPLE, THROW_NEVER, true,
+               empty_rrset);
+
+    // Repeat the query processing two times.  Due to the faked RRset,
+    // toWire() should throw, and it should result in SERVFAIL.
+    OutputBufferPtr orig_buffer;
+    for (int i = 0; i < 2; ++i) {
+        UnitTestUtil::createDNSSECRequestMessage(request_message, opcode,
+                                                 default_qid,
+                                                 Name("foo.example."),
+                                                 RRClass::IN(), RRType::TXT());
+        createRequestPacket(request_message, IPPROTO_UDP);
+        server.processMessage(*io_message, *parse_message, *response_obuffer,
+                              &dnsserv);
+        headerCheck(*parse_message, default_qid, Rcode::SERVFAIL(),
+                    opcode.getCode(), QR_FLAG, 1, 0, 0, 0);
+
+        // Make a backup of the original buffer for latest tests and replace
+        // it with a new one
+        if (!orig_buffer) {
+            orig_buffer = response_obuffer;
+            response_obuffer.reset(new OutputBuffer(0));
+        }
+        request_message.clear(Message::RENDER);
+        parse_message->clear(Message::PARSE);
+    }
+
+    // Now check if the original buffer is intact
+    parse_message->clear(Message::PARSE);
+    InputBuffer ibuffer(orig_buffer->getData(), orig_buffer->getLength());
+    parse_message->fromWire(ibuffer);
+    headerCheck(*parse_message, default_qid, Rcode::SERVFAIL(),
+                opcode.getCode(), QR_FLAG, 1, 0, 0, 0);
 }
 
 }

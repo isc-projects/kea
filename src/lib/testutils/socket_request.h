@@ -12,6 +12,9 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#ifndef __ISC_TESTUTILS_SOCKETREQUEST_H
+#define __ISC_TESTUTILS_SOCKETREQUEST_H 1
+
 #include <server_common/socket_request.h>
 #include <server_common/portconfig.h>
 
@@ -24,13 +27,6 @@
 #include <string>
 
 namespace isc {
-namespace server_common {
-namespace portconfig {
-// Access the private hidden flag
-extern bool test_mode;
-}
-}
-
 namespace testutils {
 
 /// \brief A testcase part for faking the SocketRequestor in tests
@@ -64,7 +60,7 @@ public:
     ///     not fall back to this value if its share_name is left empty, if
     ///     you want to check the code relies on the requestor to use the
     ///     app name, you set this to empty string.
-    TestSocketRequestor(asiodns::DNSService& dnss,
+    TestSocketRequestor(asiodns::DNSServiceBase& dnss,
                         server_common::portconfig::AddressList& store,
                         uint16_t expect_port,
                         const std::string& expected_app) :
@@ -74,8 +70,6 @@ public:
     {
         // Prepare the requestor (us) for the test
         server_common::initTestSocketRequestor(this);
-        // Don't manipulate the real sockets
-        server_common::portconfig::test_mode = true;
     }
 
     /// \brief Destructor
@@ -90,8 +84,6 @@ public:
         server_common::portconfig::installListenAddresses(list, store_, dnss_);
         // Don't leave invalid pointers here
         server_common::initTestSocketRequestor(NULL);
-        // And return the mode
-        server_common::portconfig::test_mode = false;
     }
 
     /// \brief Tokens released by releaseSocket
@@ -216,7 +208,7 @@ public:
     }
 
 private:
-    asiodns::DNSService& dnss_;
+    asiodns::DNSServiceBase& dnss_;
     server_common::portconfig::AddressList& store_;
     const uint16_t expect_port_;
     const std::string expected_app_;
@@ -224,3 +216,4 @@ private:
 
 }
 }
+#endif  // __ISC_TESTUTILS_SOCKETREQUEST_H

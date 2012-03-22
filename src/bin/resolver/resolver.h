@@ -104,7 +104,7 @@ public:
                                             bool startup = false);
 
     /// \brief Assign an ASIO IO Service queue to this Resolver object
-    void setDNSService(isc::asiodns::DNSService& dnss);
+    void setDNSService(isc::asiodns::DNSServiceBase& dnss);
 
     /// \brief Assign a NameserverAddressStore to this Resolver object
     void setNameserverAddressStore(isc::nsas::NameserverAddressStore &nsas);
@@ -113,7 +113,7 @@ public:
     void setCache(isc::cache::ResolverCache& cache);
 
     /// \brief Return this object's ASIO IO Service queue
-    isc::asiodns::DNSService& getDNSService() const { return (*dnss_); }
+    isc::asiodns::DNSServiceBase& getDNSService() const { return (*dnss_); }
 
     /// \brief Returns this object's NSAS
     isc::nsas::NameserverAddressStore& getNameserverAddressStore() const {
@@ -258,7 +258,7 @@ public:
 
 private:
     ResolverImpl* impl_;
-    isc::asiodns::DNSService* dnss_;
+    isc::asiodns::DNSServiceBase* dnss_;
     isc::asiolink::SimpleCallback* checkin_;
     isc::asiodns::DNSLookup* dns_lookup_;
     isc::asiodns::DNSAnswer* dns_answer_;

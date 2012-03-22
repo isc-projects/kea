@@ -66,6 +66,35 @@ main(const int argc, char* const argv[])
 #include <time.h>
 #include <unistd.h>
 
+#ifndef HAVE_PSELECT
+
+#include <assert.h>
+
+/* Platforms such as OpenBSD don't provide a pselect(), so we use our
+   own implementation for this testcase, which wraps around select() and
+   hence doesn't implement the high precision timer. This implementation
+   is fine for our purpose. */
+
+static int
+pselect (int nfds, fd_set *readfds, fd_set *writefds,
+         fd_set *exceptfds, const struct timespec *timeout,
+         const sigset_t *sigmask)
+{
+	struct timeval my_timeout;
+
+	/* Our particular usage of pselect() doesn't use these fields. */
+	assert(writefds == NULL);
+	assert(exceptfds == NULL);
+	assert(sigmask == NULL);
+
+	my_timeout.tv_sec = timeout->tv_sec;
+	my_timeout.tv_usec = timeout->tv_nsec / 1000;
+
+	return (select(nfds, readfds, writefds, exceptfds, &my_timeout));
+}
+
+#endif /* HAVE_PSELECT */
+
 /* DHCPv4 defines (to be moved/shared) */
 
 #define DHCP_OFF_OPCODE		0

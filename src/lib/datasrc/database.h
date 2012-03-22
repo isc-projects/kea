@@ -234,6 +234,41 @@ public:
                                           int id,
                                           bool subdomains = false) const = 0;
 
+    /// \brief Creates an iterator context for the records of NSEC3 namespace
+    ///     for the given hash
+    ///
+    /// Returns an Iteratorcontextptr that contains all the records of the given
+    /// hash in the NSEC3 namespace of the given zone.
+    ///
+    /// The implementation of the iterator that is returned may leave the
+    /// NAME_COLUMN column of the array passed to getNext() untouched,
+    /// as that name is easy to construct on the caller side (both the
+    /// hash and the name of the zone is known). The SIGTYPE_COLUMN can
+    /// be omitted as well, as it would be always empty for NSEC3 RRs or
+    /// contained "NSEC3" in case of RRSIG RRs.
+    ///
+    /// The iterator will contain both the NSEC3 records and the corresponding
+    /// RRSIGs, in arbitrary order.
+    ///
+    /// The iterator might be empty (containing no RRs) in case the zone is not
+    /// signed by NSEC3.
+    ///
+    /// \note In case there are multiple NSEC3 chains and they collide
+    ///     (unlikely, but it can happen), this can return multiple NSEC3
+    ///     records.
+    /// \exception any Since any implementaion can be used, the caller should
+    ///     expect any exception to be thrown.
+    /// \exception isc::NotImplemented in case the database does not support
+    ///     NSEC3
+    ///
+    /// \param hash The hash part of the NSEC3 name (eg. for a name of NSEC3
+    ///     RKBUCQT8T78GV6QBCGBHCHC019LG73SJ.example.com., we the hash would be
+    ///     RKBUCQT8T78GV6QBCGBHCHC019LG73SJ).
+    /// \param id The id of te zone, as returned from getZone().
+    /// \return Newly created iterator context. Must not be NULL.
+    virtual IteratorContextPtr getNSEC3Records(const std::string& hash,
+                                               int id) const = 0;
+
     /// \brief Creates an iterator context for the whole zone.
     ///
     /// Returns an IteratorContextPtr that contains all records of the
@@ -643,6 +678,34 @@ public:
     ///     apex of the zone).
     virtual std::string findPreviousName(int zone_id,
                                          const std::string& rname) const = 0;
+
+    /// \brief It returns the previous hash in the NSEC3 chain.
+    ///
+    /// This is used to find previous NSEC3 hashes, to find covering NSEC3 in
+    /// case none match exactly.
+    ///
+    /// In case a hash before before the lowest or the lowest is provided,
+    /// this should return the largest one in the zone (NSEC3 needs a
+    /// wrap-around semantics).
+    ///
+    /// \param zone_id Specifies the zone to look into, as returned by getZone.
+    /// \param hash The hash to look before.
+    /// \return The nearest smaller hash than the provided one, or the largest
+    ///     hash in the zone if something smaller or equal to the lowest one
+    ///     is provided.
+    /// \note If the zone contains multiple NSEC3 chains, you should check that
+    ///     the returned result contains the NSEC3 for correct parameters. If
+    ///     not, query again and get something smaller - this will eventually
+    ///     get to the correct one. This interface and semantics might change
+    ///     in future.
+    ///
+    /// \throw DataSourceError if there's a problem with the database or if
+    ///     this zone is not signed with NSEC3.
+    /// \throw NotImplemented if this database doesn't support NSEC3.
+    /// \throw anything else, as this might be any implementation.
+    virtual std::string findPreviousNSEC3Hash(int zone_id,
+                                              const std::string& hash)
+        const = 0;
 };
 
 /// \brief Concrete data source client oriented at database backends.

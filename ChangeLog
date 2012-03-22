@@ -1,3 +1,25 @@
+406.	[bug]		muks
+	On platforms such as OpenBSD where pselect() is not available,
+	make a wrapper around select() in perfdhcp.
+	(Trac #1639, git 6ea0b1d62e7b8b6596209291aa6c8b34b8e73191)
+
+405.	[bug]		jinmei
+	Make sure disabling Boost threads if the default configuration is
+	to disable it for the system.  This fixes a crash and hang up
+	problem on OpenBSD, where the use of Boost thread could be
+	different in different program files depending on the order of
+	including various header files, and could introduce inconsistent
+	states between a library and a program.  Explicitly forcing the
+	original default throughout the BIND 10 build environment will
+	prevent this from happening.
+	(Trac #1727, git 23f9c3670b544c5f8105958ff148aeba050bc1b4)
+
+404.	[bug]		naokikambe
+	The statistic counters are now properly accumulated across multiple
+	instances of b10-auth (if there are multiple instances), instead of
+	providing result for random instance.
+	(Trac #1751, git 3285353a660e881ec2b645e1bc10d94e5020f357)
+
 403.	[build]*	jelte
 	The configure option for botan (--with-botan=PATH) is replaced by
 	--with-botan-config=PATH, which takes a full path to a botan-config

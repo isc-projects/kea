@@ -15,21 +15,14 @@
 #ifndef ISC_SERVER_COMMON_PORTCONFIG_H
 #define ISC_SERVER_COMMON_PORTCONFIG_H
 
+#include <cc/data.h>
+
+#include <asiodns/dns_service.h>
+
 #include <utility>
 #include <string>
 #include <stdint.h>
 #include <vector>
-
-#include <cc/data.h>
-
-/*
- * Some forward declarations.
- */
-namespace isc {
-namespace asiodns {
-class DNSService;
-}
-}
 
 namespace isc {
 namespace server_common {
@@ -88,42 +81,49 @@ AddressList
 parseAddresses(isc::data::ConstElementPtr addresses,
                const std::string& elemName);
 
-/**
- * \brief Changes current listening addresses and ports.
- *
- * Removes all sockets we currently listen on and starts listening on the
- * addresses and ports requested in newAddresses.
- *
- * If it fails to set up the new addresses, it attempts to roll back to the
- * previous addresses (but it still propagates the exception). If the rollback
- * fails as well, it doesn't abort the application (to allow reconfiguration),
- * but removes all the sockets it listened on. One of the exceptions is
- * propagated.
- *
- * The ports are requested from the socket creator through boss. Therefore
- * you need to initialize the SocketRequestor before using this function.
- *
- * \param newAddresses are the addresses you want to listen on.
- * \param addressStore is the place you store your current addresses. It is
- *     used when there's a need for rollback. The newAddresses are copied here
- *     when the change is successful.
- * \param dnsService is the DNSService object we use now. The requests from
- *     the new sockets are handled using this dnsService (and all current
- *     sockets on the service are closed first).
- * \throw asiolink::IOError when initialization or closing of socket fails.
- * \throw isc::server_common::SocketRequestor::Socket error when the
- *     boss/socket creator doesn't want to give us the socket.
- * \throw std::bad_alloc when allocation fails.
- * \throw isc::InvalidOperation when the function is called and the
- *     SocketRequestor isn't initialized yet.
- */
+/// \brief Changes current listening addresses and ports.
+///
+/// Removes all sockets we currently listen on and starts listening on the
+/// addresses and ports requested in new_addresses.
+///
+/// If it fails to set up the new addresses, it attempts to roll back to the
+/// previous addresses (but it still propagates the exception). If the rollback
+/// fails as well, it doesn't abort the application (to allow reconfiguration),
+/// but removes all the sockets it listened on. One of the exceptions is
+/// propagated.
+///
+/// The ports are requested from the socket creator through boss. Therefore
+/// you need to initialize the SocketRequestor before using this function.
+///
+/// \param new_addresses are the addresses you want to listen on.
+/// \param address_store is the place you store your current addresses. It is
+///     used when there's a need for rollback. The new_addresses are copied
+///     here when the change is successful.
+/// \param dns_service is the DNSService object we use now. The requests from
+///     the new sockets are handled using this dns_service (and all current
+///     sockets on the service are closed first).
+/// \param server_options specifies optional properties for the servers
+///        created via \c dns_service.
+///
+/// \throw asiolink::IOError when initialization or closing of socket fails.
+/// \throw isc::server_common::SocketRequestor::Socket error when the
+///     boss/socket creator doesn't want to give us the socket.
+/// \throw std::bad_alloc when allocation fails.
+/// \throw isc::InvalidOperation when the function is called and the
+///     SocketRequestor isn't initialized yet.
 void
-installListenAddresses(const AddressList& newAddresses,
-                       AddressList& addressStore,
-                       asiodns::DNSService& dnsService);
+installListenAddresses(const AddressList& new_addresses,
+                       AddressList& address_store,
+                       asiodns::DNSServiceBase& dns_service,
+                       asiodns::DNSService::ServerFlag server_options =
+                       asiodns::DNSService::SERVER_DEFAULT);
 
 }
 }
 }
 
 #endif
+
+// Local Variables:
+// mode: c++
+// End:
