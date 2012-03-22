@@ -12,9 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <stdexcept>
-#include <iostream>
-
 #include <util/buffer.h>
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
@@ -25,9 +22,12 @@
 #include <dns/rrttl.h>
 #include <dns/rrset.h>
 
+#include <dns/tests/unittest_util.h>
+
 #include <gtest/gtest.h>
 
-#include <dns/tests/unittest_util.h>
+#include <stdexcept>
+#include <sstream>
 
 using isc::UnitTestUtil;
 
