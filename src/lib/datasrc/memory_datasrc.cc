@@ -122,8 +122,20 @@ struct ZoneData {
     DomainTree domains_;
 
     // An auxiliary tree for wildcard expanded data used in additional data
-    // processing.  It should be rare that we need to build such a tree,
-    // so we create it only when we need it.
+    // processing.  It contains names like "ns.wild.example" in the following
+    // example:
+    // child.wild.example. NS ns.wild.example.
+    // *.wild.example IN AAAA 2001:db8::1234
+    // (and there's no exact ns.wild.example. in the zone).  This tree contains
+    // such names with a copy of the RRsets of the matching wildcard name
+    // with its owner name expanded, e.g.:
+    // ns.wild.example. IN AAAA 2001:db8::1234
+    // In theory, this tree could have many such wildcard-expandable names,
+    // each of which has a copy of the original list of RRsets.  In practice,
+    // however, it should be very rare that names for additional section
+    // processing are subject to wildcard expansion, so in most cases this tree
+    // should be even empty, and even if it has content it should be very
+    // small.
 private:
     scoped_ptr<DomainTree> aux_wild_domains_;
 public:
