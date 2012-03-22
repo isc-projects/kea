@@ -54,7 +54,10 @@ enum StatementID {
     LOW_DIFF_ID = 13,
     HIGH_DIFF_ID = 14,
     DIFF_RECS = 15,
-    NUM_STATEMENTS = 16
+    NSEC3 = 16,
+    NSEC3_PREVIOUS = 17,
+    NSEC3_LAST = 18,
+    NUM_STATEMENTS = 19
 };
 
 const char* const text_statements[NUM_STATEMENTS] = {
@@ -83,7 +86,7 @@ const char* const text_statements[NUM_STATEMENTS] = {
      */
     "SELECT name FROM records " // FIND_PREVIOUS
         "WHERE zone_id=?1 AND rdtype = 'NSEC' AND "
-        "rname < $2 ORDER BY rname DESC LIMIT 1",
+        "rname < ?2 ORDER BY rname DESC LIMIT 1",
     "INSERT INTO diffs "        // ADD_RECORD_DIFF
         "(zone_id, version, operation, name, rrtype, ttl, rdata) "
         "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
@@ -103,7 +106,21 @@ const char* const text_statements[NUM_STATEMENTS] = {
     // that the columns match the column IDs passed to the iterator
     "SELECT rrtype, ttl, id, rdata, name FROM diffs "   // DIFF_RECS
         "WHERE zone_id=?1 AND id>=?2 and id<=?3 "
-        "ORDER BY id ASC"
+        "ORDER BY id ASC",
+
+    // Query to get the NSEC3 records
+    //
+    // The "1" in SELECT is for positioning the rdata column to the
+    // expected position, so we can reuse the same code as for other
+    // lookups.
+    "SELECT rdtype, ttl, 1, rdata FROM nsec3 WHERE zone_id=?1 AND "
+        "hash=?2",
+    // For getting the previous NSEC3 hash
+    "SELECT DISTINCT hash FROM nsec3 WHERE zone_id=?1 AND hash < ?2 "
+        "ORDER BY hash DESC LIMIT 1",
+    // And for wrap-around
+    "SELECT DISTINCT hash FROM nsec3 WHERE zone_id=?1 "
+        "ORDER BY hash DESC LIMIT 1",
 };
 
 struct SQLite3Parameters {
@@ -482,19 +499,46 @@ public:
         bindZoneId(id);
     }
 
+    // What kind of query it is - selection of the statement for DB
+    enum QueryType {
+        QT_ANY, // Directly for a domain
+        QT_SUBDOMAINS, // Subdomains of a given domain
+        QT_NSEC3 // Domain in the NSEC3 namespace (the name is is the hash,
+                 // not the whole name)
+    };
+
     // Construct an iterator for records with a specific name. When constructed
     // this way, the getNext() call will copy all fields except name
     Context(const boost::shared_ptr<const SQLite3Accessor>& accessor, int id,
-            const std::string& name, bool subdomains) :
-        iterator_type_(ITT_NAME),
+            const std::string& name, QueryType qtype) :
+        iterator_type_(qtype == QT_NSEC3 ? ITT_NSEC3 : ITT_NAME),
         accessor_(accessor),
         statement_(NULL),
         name_(name)
     {
+        // Choose the statement text depending on the query type
+        const char* statement(NULL);
+        switch (qtype) {
+            case QT_ANY:
+                statement = text_statements[ANY];
+                break;
+            case QT_SUBDOMAINS:
+                statement = text_statements[ANY_SUB];
+                break;
+            case QT_NSEC3:
+                statement = text_statements[NSEC3];
+                break;
+            default:
+                // Can Not Happen - there isn't any other type of query
+                // and all the calls to the constructor are from this
+                // file. Therefore no way to test it throws :-(.
+                isc_throw(Unexpected,
+                          "Invalid qtype passed - unreachable code branch "
+                          "reached");
+        }
+
         // We create the statement now and then just keep getting data from it
-        statement_ = prepare(accessor->dbparameters_->db_,
-                             subdomains ? text_statements[ANY_SUB] :
-                             text_statements[ANY]);
+        statement_ = prepare(accessor->dbparameters_->db_, statement);
         bindZoneId(id);
         bindName(name_);
     }
@@ -511,7 +555,11 @@ public:
             // For both types, we copy the first four columns
             copyColumn(data, TYPE_COLUMN);
             copyColumn(data, TTL_COLUMN);
-            copyColumn(data, SIGTYPE_COLUMN);
+            // The NSEC3 lookup does not provide the SIGTYPE, it is not
+            // necessary and not contained in the table.
+            if (iterator_type_ != ITT_NSEC3) {
+                copyColumn(data, SIGTYPE_COLUMN);
+            }
             copyColumn(data, RDATA_COLUMN);
             // Only copy Name if we are iterating over every record
             if (iterator_type_ == ITT_ALL) {
@@ -537,7 +585,8 @@ private:
     // See description of getNext() and the constructors
     enum IteratorType {
         ITT_ALL,
-        ITT_NAME
+        ITT_NAME,
+        ITT_NSEC3
     };
 
     void copyColumn(std::string (&data)[COLUMN_COUNT], int column) {
@@ -584,7 +633,15 @@ SQLite3Accessor::getRecords(const std::string& name, int id,
                             bool subdomains) const
 {
     return (IteratorContextPtr(new Context(shared_from_this(), id, name,
-                                           subdomains)));
+                                           subdomains ?
+                                           Context::QT_SUBDOMAINS :
+                                           Context::QT_ANY)));
+}
+
+DatabaseAccessor::IteratorContextPtr
+SQLite3Accessor::getNSEC3Records(const std::string& hash, int id) const {
+    return (IteratorContextPtr(new Context(shared_from_this(), id, hash,
+                                           Context::QT_NSEC3)));
 }
 
 DatabaseAccessor::IteratorContextPtr
@@ -1087,6 +1144,76 @@ SQLite3Accessor::findPreviousName(int zone_id, const std::string& rname)
     if (rc != SQLITE_ROW && rc != SQLITE_DONE) {
         // Some kind of error
         isc_throw(SQLite3Error, "Could not get data for previous name");
+    }
+
+    return (result);
+}
+
+std::string
+SQLite3Accessor::findPreviousNSEC3Hash(int zone_id, const std::string& hash)
+    const
+{
+    sqlite3_stmt* const stmt = dbparameters_->getStatement(NSEC3_PREVIOUS);
+    sqlite3_reset(stmt);
+    sqlite3_clear_bindings(stmt);
+
+    if (sqlite3_bind_int(stmt, 1, zone_id) != SQLITE_OK) {
+        isc_throw(SQLite3Error, "Could not bind zone ID " << zone_id <<
+                  " to SQL statement (find previous NSEC3): " <<
+                  sqlite3_errmsg(dbparameters_->db_));
+    }
+    if (sqlite3_bind_text(stmt, 2, hash.c_str(), -1, SQLITE_STATIC) !=
+        SQLITE_OK) {
+        isc_throw(SQLite3Error, "Could not bind hash " << hash <<
+                  " to SQL statement (find previous NSEC3): " <<
+                  sqlite3_errmsg(dbparameters_->db_));
+    }
+
+    std::string result;
+    const int rc = sqlite3_step(stmt);
+    if (rc == SQLITE_ROW) {
+        // We found it
+        result = convertToPlainChar(sqlite3_column_text(stmt, 0),
+                                    dbparameters_->db_);
+    }
+    sqlite3_reset(stmt);
+
+    if (rc != SQLITE_ROW && rc != SQLITE_DONE) {
+        // Some kind of error
+        isc_throw(SQLite3Error, "Could not get data for previous hash");
+    }
+
+    if (rc == SQLITE_DONE) {
+        // No NSEC3 records before this hash. This means we should wrap
+        // around and take the last one.
+        sqlite3_stmt* const stmt = dbparameters_->getStatement(NSEC3_LAST);
+        sqlite3_reset(stmt);
+        sqlite3_clear_bindings(stmt);
+
+        if (sqlite3_bind_int(stmt, 1, zone_id) != SQLITE_OK) {
+            isc_throw(SQLite3Error, "Could not bind zone ID " << zone_id <<
+                      " to SQL statement (find last NSEC3): " <<
+                      sqlite3_errmsg(dbparameters_->db_));
+        }
+
+        const int rc = sqlite3_step(stmt);
+        if (rc == SQLITE_ROW) {
+            // We found it
+            result = convertToPlainChar(sqlite3_column_text(stmt, 0),
+                                        dbparameters_->db_);
+        }
+        sqlite3_reset(stmt);
+
+        if (rc != SQLITE_ROW && rc != SQLITE_DONE) {
+            // Some kind of error
+            isc_throw(SQLite3Error, "Could not get data for last hash");
+        }
+
+        if (rc == SQLITE_DONE) {
+            // No NSEC3 at all in the zone. Well, bad luck, but you should not
+            // have asked in the first place.
+            isc_throw(DataSourceError, "No NSEC3 in this zone");
+        }
     }
 
     return (result);

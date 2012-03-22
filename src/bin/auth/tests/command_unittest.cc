@@ -49,6 +49,7 @@ using namespace isc::dns;
 using namespace isc::data;
 using namespace isc::datasrc;
 using namespace isc::config;
+using namespace isc::testutils;
 
 namespace {
 class AuthCommandTest : public ::testing::Test {
