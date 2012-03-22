@@ -466,7 +466,7 @@ class BoB:
             args.append("--data-path=" + self.data_path)
         if self.config_filename is not None:
             args.append("--config-filename=" + self.config_filename)
-        if self.clear_config is not None:
+        if self.clear_config:
             args.append("--clear-config")
         bind_cfgd = ProcessInfo("b10-cfgmgr", args,
                                 self.c_channel_env)
@@ -1058,7 +1058,8 @@ def parse_args(args=sys.argv[1:], Parser=OptionParser):
                       help="Configuration database filename")
     parser.add_option("--clear-config", action="store_true",
                       dest="clear_config", default=False,
-                      help="Back up the configuration file and start with a clean one")
+                      help="Create backup of the configuration file and " +
+                           "start with a clean configuration")
     parser.add_option("-p", "--data-path", dest="data_path",
                       help="Directory to search for configuration files",
                       default=None)
