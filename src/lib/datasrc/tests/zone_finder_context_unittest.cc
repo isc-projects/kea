@@ -262,12 +262,16 @@ TEST_P(ZoneFinderContextTest, getAdditionalDelegationWithEmptyName) {
 }
 
 TEST_P(ZoneFinderContextTest, getAdditionalDelegationWithWild) {
-    // The NS name needs to be expanded by a wildcard.
+    // An NS name needs to be expanded by a wildcard.  Another NS name
+    // also matches a wildcard, but it's an empty node, so there's no
+    // corresponding additional RR.  The other NS name isn't subject to
+    // wildcard expansion, which shouldn't cause any disruption.
     ZoneFinderContextPtr ctx = finder_->find(Name("www.e.example.org"),
                                              RRType::AAAA());
     EXPECT_EQ(ZoneFinder::DELEGATION, ctx->code);
     ctx->getAdditional(REQUESTED_BOTH, result_sets_);
-    rrsetsCheck("ns.wild.example.org. 3600 IN A 192.0.2.15\n",
+    rrsetsCheck("ns.wild.example.org. 3600 IN A 192.0.2.15\n"
+                "ns2.example.org. 3600 IN A 192.0.2.2\n",
                 result_sets_.begin(), result_sets_.end());
 }
 
