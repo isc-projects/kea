@@ -123,6 +123,9 @@ case "$host" in
 *-netbsd*)
 	SET_ENV_LIBRARY_PATH=yes
 	;;
+*-openbsd*)
+	SET_ENV_LIBRARY_PATH=yes
+	;;
 esac
 AM_CONDITIONAL(SET_ENV_LIBRARY_PATH, test $SET_ENV_LIBRARY_PATH = yes)
 AC_SUBST(SET_ENV_LIBRARY_PATH)
