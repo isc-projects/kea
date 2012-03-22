@@ -330,6 +330,17 @@ NSEC_TYPES() {
 }
 
 const WantedTypes&
+NSEC3PARAM_TYPES() {
+    static bool initialized(false);
+    static WantedTypes result;
+    if (!initialized) {
+        result.insert(RRType::NSEC3PARAM());
+        initialized = true;
+    }
+    return (result);
+}
+
+const WantedTypes&
 DELEGATION_TYPES() {
     static bool initialized(false);
     static WantedTypes result;
@@ -812,18 +823,6 @@ DatabaseClient::Finder::findNoNameResult(const Name& name, const RRType& type,
                                          target)
 {
     const bool dnssec_data = ((options & FIND_DNSSEC) != 0);
-    //verify whether the zonefile is signed by NSEC3 method
-    //If the NSEC3PARAMETER type exists in the zonefile,NSEC3 is definitly used
-    //in this zone signature.
-    bool is_nsec3 = false;
-    WantedTypes nsec3PARAM;
-    nsec3PARAM.insert(RRType::NSEC3PARAM());
-    const FoundRRsets NSEC3Found = getRRsets(origin_.toText(), nsec3PARAM,
-                                             false);
-    const FoundIterator nfi(NSEC3Found.second.find(RRType::NSEC3PARAM()));
-    if (nfi != NSEC3Found.second.end()) {
-        is_nsec3 = true;
-    }
     // On entry to this method, we know that the database doesn't have any
     // entry for this name.  Before returning NXDOMAIN, we need to check
     // for special cases.
@@ -836,16 +835,9 @@ DatabaseClient::Finder::findNoNameResult(const Name& name, const RRType& type,
                   DATASRC_DATABASE_FOUND_EMPTY_NONTERMINAL).
             arg(accessor_->getDBName()).arg(name);
         const ConstRRsetPtr nsec = dnssec_data ? findNSECCover(name) :
-            ConstRRsetPtr();
-        if (is_nsec3 == true) {
-            return (ResultContext(NXRRSET, nsec,
-                                  nsec ? RESULT_NSEC_SIGNED :
-                                  RESULT_NSEC3_SIGNED));
-        } else {
-            return (ResultContext(NXRRSET, nsec,
-                                  nsec ? RESULT_NSEC_SIGNED :
-                                  RESULT_DEFAULT));
-        }
+                                   ConstRRsetPtr();
+        return (ResultContext(NXRRSET, nsec, nsec ? RESULT_NSEC_SIGNED :
+                              RESULT_DEFAULT));
     } else if ((options & NO_WILDCARD) == 0) {
         // It's not an empty non-terminal and wildcard matching is not
         // disabled, so check for wildcards. If there is a wildcard match
@@ -864,13 +856,8 @@ DatabaseClient::Finder::findNoNameResult(const Name& name, const RRType& type,
               arg(accessor_->getDBName()).arg(name).arg(type).arg(getClass());
     const ConstRRsetPtr nsec = dnssec_data ? findNSECCover(name) :
         ConstRRsetPtr();
-    if (is_nsec3 == true) {
-        return (ResultContext(NXDOMAIN, nsec,
-                              nsec ? RESULT_NSEC_SIGNED : RESULT_NSEC3_SIGNED));
-    } else {
-        return (ResultContext(NXDOMAIN, nsec,
-                              nsec ? RESULT_NSEC_SIGNED : RESULT_DEFAULT));
-    }
+    return (ResultContext(NXDOMAIN, nsec,
+                          nsec ? RESULT_NSEC_SIGNED : RESULT_DEFAULT));
 }
 
 ZoneFinder::ResultContext
@@ -920,16 +907,56 @@ DatabaseClient::Finder::findInternal(const Name& name, const RRType& type,
     const FoundRRsets found = getRRsets(name.toText(), final_types,
                                         !is_origin, NULL,
                                         type == RRType::ANY());
-
+    // verify whether the zonefile is signed by NSEC3 method
+    // If the NSEC3PARAMETER type exists in the zonefile,NSEC3 is definitly used
+    // in this zone signature.
+    bool is_nsec3 = false;
+    const FoundRRsets nsec3_found = getRRsets(origin_.toText(), NSEC3PARAM_TYPES(),
+                                              false);
+    const FoundIterator nfi(nsec3_found.second.find(RRType::NSEC3PARAM()));
+    if (nfi != nsec3_found.second.end()) {
+        is_nsec3 = true;
+    }
     if (found.first) {
         // Something found at the domain name.  Look into it further to get
         // the final result.
-        return (findOnNameResult(name, type, options, is_origin, found, NULL,
-                                 target));
+        if (true == is_nsec3) {
+            const ZoneFinder::ResultContext result_context = 
+                findOnNameResult(name, type, options, is_origin, found, NULL,
+                                 target);
+            if ((result_context.code & NXRRSET) ||
+                (result_context.flags & RESULT_WILDCARD)) {
+                return (ZoneFinder::ResultContext(result_context.code,
+                                                  result_context.rrset,
+                                                  (result_context.flags |
+                                                   RESULT_NSEC3_SIGNED)));
+            } else {
+                return result_context; 
+            }
+        } else {
+            return (findOnNameResult(name, type, options, is_origin, found, NULL,
+                                     target));
+        }
     } else {
         // Did not find anything at all at the domain name, so check for
         // subdomains or wildcards.
-        return (findNoNameResult(name, type, options, dresult, target));
+        if (true == is_nsec3) {
+            // NSEC3 is used for this zonefile
+            const ZoneFinder::ResultContext result_context = 
+                findNoNameResult(name, type, options, dresult, target);
+            if ((result_context.code & (NXRRSET | NXDOMAIN)) ||
+                (result_context.flags & RESULT_WILDCARD)){
+                // NXRRSET NXDOMAIN and wildcard should set RESULT_NSEC3_SIGNED
+                return (ZoneFinder::ResultContext(result_context.code, 
+                                                  result_context.rrset,
+                                                  (result_context.flags |
+                                                   RESULT_NSEC3_SIGNED)));
+            } else {
+                return result_context;
+            }
+        } else { 
+            return (findNoNameResult(name, type, options, dresult, target));
+        }
     }
 }
 
