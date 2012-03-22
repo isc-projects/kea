@@ -356,6 +356,7 @@ ZoneData::findNode(const Name& name, ZoneFinder::FindOptions options) const {
                                zonecut_flag));
     }
     if (result == DomainTree::PARTIALMATCH) {
+        assert(node != NULL);
         if (state.dname_node_ != NULL) { // DNAME
             LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_DNAME_FOUND).
                 arg(state.rrset_->getName());
