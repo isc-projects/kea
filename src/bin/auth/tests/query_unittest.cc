@@ -2474,19 +2474,19 @@ TEST_F(QueryTest, DuplicateNameRemoval) {
 
     // Create the vectors of RRsets (with the RRsets in a semi-random order).
     std::vector<RRsetPtr> answer;
-    copy(rrset_vector.begin() + 2, rrset_vector.begin() + 4,
-         back_inserter(answer));
-    copy(rrset_vector.begin() + 0, rrset_vector.begin() + 2,
-         back_inserter(answer));
+    answer.insert(answer.end(), rrset_vector.begin() + 2,
+                  rrset_vector.begin() + 4);
+    answer.insert(answer.end(), rrset_vector.begin() + 0,
+                  rrset_vector.begin() + 2);
 
     std::vector<RRsetPtr> authority;
-    copy(rrset_vector.begin() + 3, rrset_vector.begin() + 8,
-         back_inserter(authority));
+    authority.insert(authority.end(), rrset_vector.begin() + 3,
+                     rrset_vector.begin() + 8);
     authority.push_back(rrset_vector[2]);
 
     std::vector<RRsetPtr> additional;
-    copy(rrset_vector.begin() + 7, rrset_vector.begin() + 9,
-         back_inserter(additional));
+    additional.insert(additional.end(), rrset_vector.begin() + 7,
+                      rrset_vector.end());
     additional.push_back(rrset_vector[3]);
     additional.push_back(rrset_vector[0]);
 
