@@ -48,6 +48,7 @@
 
 #include <dns/tests/unittest_util.h>
 #include <testutils/srv_test.h>
+#include <testutils/mockups.h>
 #include <testutils/portconfig.h>
 #include <testutils/socket_request.h>
 
@@ -76,15 +77,13 @@ public:
 
 class ResolverConfig : public ::testing::Test {
 protected:
-    IOService ios;
-    DNSService dnss;
+    MockDNSService dnss;
     Resolver server;
     scoped_ptr<const IOEndpoint> endpoint;
     scoped_ptr<const IOMessage> query_message;
     scoped_ptr<const Client> client;
     scoped_ptr<const RequestContext> request;
     ResolverConfig() :
-        dnss(ios, NULL, NULL, NULL),
         // The empty string is expected value of the parameter of
         // requestSocket, not the app_name (there's no fallback, it checks
         // the empty string is passed).
@@ -320,6 +319,15 @@ TEST_F(ResolverConfig, invalidForwardAddresses) {
 // Try setting the addresses directly
 TEST_F(ResolverConfig, listenAddresses) {
     isc::testutils::portconfig::listenAddresses(server);
+
+    // listenAddressConfig should have attempted to create 4 DNS server
+    // objects: two IP addresses, TCP and UDP for each.  For UDP, the "SYNC_OK"
+    // option (or anything else) should have NOT been specified.
+    EXPECT_EQ(2, dnss.getTCPFdParams().size());
+    EXPECT_EQ(2, dnss.getUDPFdParams().size());
+    EXPECT_EQ(DNSService::SERVER_DEFAULT, dnss.getUDPFdParams().at(0).options);
+    EXPECT_EQ(DNSService::SERVER_DEFAULT, dnss.getUDPFdParams().at(1).options);
+
     // Check it requests the correct addresses
     const char* tokens[] = {
         "TCP:127.0.0.1:53210:1",

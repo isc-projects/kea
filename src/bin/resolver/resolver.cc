@@ -92,7 +92,7 @@ public:
         queryShutdown();
     }
 
-    void querySetup(DNSService& dnss,
+    void querySetup(DNSServiceBase& dnss,
                     isc::nsas::NameserverAddressStore& nsas,
                     isc::cache::ResolverCache& cache)
     {
@@ -121,10 +121,10 @@ public:
     }
 
     void setForwardAddresses(const AddressList& upstream,
-        DNSService *dnss)
+                             DNSServiceBase* dnss)
     {
         upstream_ = upstream;
-        if (dnss) {
+        if (dnss != NULL) {
             if (!upstream_.empty()) {
                 BOOST_FOREACH(const AddressPair& address, upstream) {
                     LOG_INFO(resolver_logger, RESOLVER_FORWARD_ADDRESS)
@@ -137,10 +137,10 @@ public:
     }
 
     void setRootAddresses(const AddressList& upstream_root,
-                          DNSService *dnss)
+                          DNSServiceBase* dnss)
     {
         upstream_root_ = upstream_root;
-        if (dnss) {
+        if (dnss != NULL) {
             if (!upstream_root_.empty()) {
                 BOOST_FOREACH(const AddressPair& address, upstream_root) {
                     LOG_INFO(resolver_logger, RESOLVER_SET_ROOT_ADDRESS)
@@ -377,7 +377,7 @@ Resolver::~Resolver() {
 }
 
 void
-Resolver::setDNSService(isc::asiodns::DNSService& dnss) {
+Resolver::setDNSService(isc::asiodns::DNSServiceBase& dnss) {
     dnss_ = &dnss;
 }
 
