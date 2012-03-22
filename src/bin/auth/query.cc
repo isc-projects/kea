@@ -77,7 +77,7 @@ void
 Query::ResponseCreator::create(Message& response,
                                const vector<ConstRRsetPtr>& answers,
                                const vector<ConstRRsetPtr>& authorities,
-                               const vector<ConstRRsetPtr> additionals,
+                               const vector<ConstRRsetPtr>& additionals,
                                const bool dnssec)
 {
     // Inserter should be reset each time the query is reset, so should be
