@@ -1421,8 +1421,11 @@ convertAndInsert(const DomainPair& rrset_item, DomainPtr dst_domain,
 }
 
 void
-addAdditional(RBNodeRRset* rrset, ZoneData* zone_data) {
+addAdditional(RBNodeRRset* rrset, ZoneData* zone_data,
+              vector<RBNodeRRset*>* wild_rrsets)
+{
     RdataIteratorPtr rdata_iterator = rrset->getRdataIterator();
+    bool match_wild = false;
     for (; !rdata_iterator->isLast(); rdata_iterator->next()) {
         // For each domain name that requires additional section processing
         // in each RDATA, search the tree for the name and remember it if
@@ -1430,7 +1433,6 @@ addAdditional(RBNodeRRset* rrset, ZoneData* zone_data) {
         // child zone), mark the node as "GLUE", so we can selectively
         // include/exclude them when we use it.
 
-        DomainNode* node = NULL;
         const Name& name = getAdditionalName(rrset->getType(),
                                              rdata_iterator->getCurrent());
         const ZoneData::FindMutableNodeResult result =
@@ -1440,7 +1442,7 @@ addAdditional(RBNodeRRset* rrset, ZoneData* zone_data) {
             // We are not interested in anything but a successful match.
             continue;
         }
-        node = result.node;
+        DomainNode* node = result.node;
         assert(node != NULL);
         if ((result.flags & ZoneData::FindNodeResult::FIND_ZONECUT) != 0 ||
             (node->getFlag(DomainNode::FLAG_CALLBACK) &&
@@ -1456,21 +1458,61 @@ addAdditional(RBNodeRRset* rrset, ZoneData* zone_data) {
         // should be pretty rare.  On the other hand we won't have to worry
         // about wildcard expansion in getAdditional, which is quite
         // performance sensitive.
+        DomainNode* wildnode = NULL;
         if ((result.flags & ZoneData::FindNodeResult::FIND_WILDCARD) != 0) {
-            DomainNode* wildnode = NULL;
-            zone_data->getAuxWildDomains().insert(name, &wildnode);
-            if (wildnode->isEmpty()) {
+            if (zone_data->getAuxWildDomains().insert(name, &wildnode)
+                == DomainTree::SUCCESS) {
+                // If we first insert the node, copy the RRsets.  If the
+                // original node was empty, we add empty data so
+                // addWildAdditional() can get an exactmatch for this name.
                 DomainPtr dst_domain(new Domain);
-                for_each(node->getData()->begin(), node->getData()->end(),
-                         boost::bind(convertAndInsert, _1, dst_domain, &name));
+                if (!node->isEmpty()) {
+                    for_each(node->getData()->begin(), node->getData()->end(),
+                             boost::bind(convertAndInsert, _1, dst_domain,
+                                         &name));
+                }
                 wildnode->setData(dst_domain);
             }
+            match_wild = true;
             node = wildnode;
         }
-        // Note that node may be empty.  We should keep it in the list
-        // in case we dynamically update the tree and it becomes non empty
-        // (which is not supported yet)
-        rrset->addAdditionalNode(AdditionalNodeInfo(node));
+
+        // If this name wasn't subject to wildcard substitution, we can add
+        // the additional information to the RRset now; otherwise I'll defer
+        // it until the entire auxiliary tree is built (pointers may be
+        // invalidated as we build it).
+        if (wildnode == NULL) {
+            // Note that node may be empty.  We should keep it in the list
+            // in case we dynamically update the tree and it becomes non empty
+            // (which is not supported yet)
+            rrset->addAdditionalNode(AdditionalNodeInfo(node));
+        }
+    }
+
+    if (match_wild) {
+        wild_rrsets->push_back(rrset);
+    }
+}
+
+void
+addWildAdditional(RBNodeRRset* rrset, ZoneData* zone_data) {
+    // Similar to addAdditional(), but due to the first stage we know that
+    // the rrset should contain a name stored in the auxiliary trees, and
+    // that it should be found as an exact match.  The RRset may have other
+    // names that didn't require wildcard expansion, but we can simply ignore
+    // them in this context.  (Note that if we find an exact match in the
+    // auxiliary tree, it shouldn't be in the original zone; otherwise it
+    // shouldn't have resulted in wildcard in the first place).
+
+    RdataIteratorPtr rdata_iterator = rrset->getRdataIterator();
+    for (; !rdata_iterator->isLast(); rdata_iterator->next()) {
+        const Name& name = getAdditionalName(rrset->getType(),
+                                             rdata_iterator->getCurrent());
+        DomainNode* wildnode = NULL;
+        if (zone_data->getAuxWildDomains().find(name, &wildnode) ==
+            DomainTree::EXACTMATCH) {
+            rrset->addAdditionalNode(AdditionalNodeInfo(wildnode));
+        }
     }
 }
 }
@@ -1491,8 +1533,14 @@ InMemoryZoneFinder::load(const string& filename) {
 
     // For each RRset in need_additionals, identify the corresponding
     // RBnode for additional processing and associate it in the RRset.
+    // If some additional names in an RRset RDATA as additional need wildcard
+    // expansion, we'll remember them in a separate vector, and handle them
+    // with addWildAdditional.
+    vector<RBNodeRRset*> wild_additionals;
     for_each(need_additionals.begin(), need_additionals.end(),
-             boost::bind(addAdditional, _1, tmp.get()));
+             boost::bind(addAdditional, _1, tmp.get(), &wild_additionals));
+    for_each(wild_additionals.begin(), wild_additionals.end(),
+             boost::bind(addWildAdditional, _1, tmp.get()));
 
     // If the zone is NSEC3-signed, check if it has NSEC3PARAM
     if (tmp->nsec3_data_) {
