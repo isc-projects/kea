@@ -93,6 +93,11 @@ const DomainNode::Flags WILD = DomainNode::FLAG_USER1;
 // realistic to keep this flag update for all affected nodes, and we may
 // have to reconsider the mechanism.
 const DomainNode::Flags GLUE = DomainNode::FLAG_USER2;
+
+// This flag indicates the node is generated as a result of wildcard
+// expansion.  In this implementation, this flag can be set only in
+// the separate auxiliary tree of ZoneData (see the structure description).
+const DomainNode::Flags WILD_EXPANDED = DomainNode::FLAG_USER3;
 };
 
 // Separate storage for NSEC3 RRs (and their RRSIGs).  It's an STL map
@@ -711,11 +716,22 @@ private:
             if (!glue_ok && additional.node_->getFlag(domain_flag::GLUE)) {
                 continue;
             }
+            const bool wild_expanded =
+                additional.node_->getFlag(domain_flag::WILD_EXPANDED);
             BOOST_FOREACH(const RRType& rrtype, requested_types) {
                 Domain::const_iterator found =
                     additional.node_->getData()->find(rrtype);
                 if (found != additional.node_->getData()->end()) {
-                    result.push_back(found->second);
+                    // If the additional node was generated as a result of
+                    // wildcard expansion, we return the underlying RRset,
+                    // in case the caller has the same RRset but as a result
+                    // of normal find() and needs to know they are of the same
+                    // kind; otherwise we simply use the stored RBNodeRRset.
+                    if (wild_expanded) {
+                        result.push_back(found->second->getUnderlyingRRset());
+                    } else {
+                        result.push_back(found->second);
+                    }
                 }
             }
         }
@@ -1475,6 +1491,9 @@ addAdditional(RBNodeRRset* rrset, ZoneData* zone_data,
                                          &name));
                 }
                 wildnode->setData(dst_domain);
+                // Mark the node as "wildcard expanded" so it can be
+                // distinguished at lookup time.
+                wildnode->setFlag(domain_flag::WILD_EXPANDED);
             }
             match_wild = true;
             node = wildnode;

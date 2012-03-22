@@ -273,6 +273,17 @@ TEST_P(ZoneFinderContextTest, getAdditionalDelegationWithWild) {
     rrsetsCheck("ns.wild.example.org. 3600 IN A 192.0.2.15\n"
                 "ns2.example.org. 3600 IN A 192.0.2.2\n",
                 result_sets_.begin(), result_sets_.end());
+
+    // ns.wild.example.org/A (expanded from a wildcard) should be considered
+    // the same kind, whether it's a direct result of find() or a result of
+    // getAdditional().
+    ctx = finder_->find(Name("ns.wild.example.org"), RRType::A());
+    EXPECT_EQ(ZoneFinder::SUCCESS, ctx->code);
+    for (vector<ConstRRsetPtr>::const_iterator it = result_sets_.begin();
+         it != result_sets_.end(); ++it) {
+        const bool same_kind = (*it)->isSameKind(*ctx->rrset);
+        EXPECT_EQ((*it)->getName() == ctx->rrset->getName(), same_kind);
+    }
 }
 
 TEST_P(ZoneFinderContextTest, getAdditionalDelegationForWild) {
