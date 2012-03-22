@@ -12,18 +12,17 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <algorithm>
-#include <sstream>
-#include <stdexcept>
-
 #include <exceptions/exceptions.h>
 #include <dns/rdataclass.h>
 #include <datasrc/rbnode_rrset.h>
 #include <testutils/dnsmessage_test.h>
 
+#include <dns/tests/unittest_util.h>
+
 #include <gtest/gtest.h>
 
-#include <dns/tests/unittest_util.h>
+#include <sstream>
+#include <stdexcept>
 
 using isc::UnitTestUtil;
 
