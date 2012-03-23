@@ -1049,7 +1049,7 @@ def parse_args(args=sys.argv[1:], Parser=OptionParser):
     parser.add_option("-n", "--no-cache", action="store_true", dest="nocache",
                       default=False, help="disable hot-spot cache in authoritative DNS server")
     parser.add_option("-i", "--no-kill", action="store_true", dest="nokill",
-                      default=False, help="do not send SIGTERM and SIGKILL signals to modules")
+                      default=False, help="do not send SIGTERM and SIGKILL signals to modules during shutdown")
     parser.add_option("-u", "--user", dest="user", type="string", default=None,
                       help="Change user after startup (must run as root)")
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
