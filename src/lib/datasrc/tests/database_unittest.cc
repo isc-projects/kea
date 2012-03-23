@@ -2283,7 +2283,7 @@ TYPED_TEST(DatabaseClientTest, wildcardNXRRSET_NSEC) {
 
 TYPED_TEST(DatabaseClientTest, dbNegativeCaseFind) {
     // ZoneFinder::find() for negative cases should show whether the zone is
-    // signed by NSEC or NSEC3,that is good for upper layer caller.
+    // signed with NSEC or NSEC3, that is good for upper layer caller.
 
     // First off, everything should be okay if no NSEC3PARAM rrset
     this->updater_ = this->client_->getUpdater(this->zname_, false);
@@ -2320,11 +2320,12 @@ TYPED_TEST(DatabaseClientTest, dbNegativeCaseFind) {
                this->empty_rdatas_,
                ZoneFinder::RESULT_WILDCARD);
 
-    // Then,If NSEC3PARAM exists in zonefile,the flags of result should
+    // Then, if NSEC3PARAM exists at the origin, the flags of result should
     // contain RESULT_NSEC3_SIGNED flag when NXDOMAIN NXRRSET or wildcard
 
-    // Add NSEC3PARAM RRSET to zonefile. It looks weird if zonefile only have
-    // NSEC3PARM RRSET, but it is okay for unit test.
+    // Add NSEC3PARAM RRSET at the apex of the zone. It looks weird if the
+    // zone only has NSEC3PARM RRset (but no NSEC3s), but it is okay for unit
+    // test.
     this->rrset_.reset(new RRset(this->zname_, this->qclass_,
                                 isc::dns::RRType::NSEC3PARAM(),
                                 this->rrttl_));
@@ -2347,11 +2348,9 @@ TYPED_TEST(DatabaseClientTest, dbNegativeCaseFind) {
     this->expected_sig_rdatas_.clear();
     doFindTest(this->updater_->getFinder(),
                isc::dns::Name("www.example.org."),
-               isc::dns::RRType::TXT(), isc::dns::RRType::TXT(),
-               this->rrttl_,
-               ZoneFinder::NXRRSET,
-               this->expected_rdatas_, this->expected_sig_rdatas_,
-               ZoneFinder::RESULT_NSEC3_SIGNED);
+               isc::dns::RRType::TXT(), isc::dns::RRType::TXT(), this->rrttl_,
+               ZoneFinder::NXRRSET, this->expected_rdatas_,
+               this->expected_sig_rdatas_, ZoneFinder::RESULT_NSEC3_SIGNED);
     // check flags if wildcard matches
     this->expected_rdatas_.push_back("192.0.2.5");
     this->expected_sig_rdatas_.push_back("A 5 3 3600 20000101000000 "
@@ -2371,7 +2370,6 @@ TYPED_TEST(DatabaseClientTest, dbNegativeCaseFind) {
                this->rrttl_, ZoneFinder::NXRRSET, this->expected_rdatas_,
                this->empty_rdatas_,
                ZoneFinder::RESULT_WILDCARD | ZoneFinder::RESULT_NSEC3_SIGNED);
-
 }
 
 TYPED_TEST(DatabaseClientTest, NXDOMAIN_NSEC) {
