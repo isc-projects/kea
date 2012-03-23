@@ -9,6 +9,15 @@
 .\"
 .TH "B10\-XFROUT" "8" "February 28\&. 2012" "BIND10" "BIND10"
 .\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
 .\" disable hyphenation
@@ -82,26 +91,6 @@ A list of JSON objects (i\&.e\&. maps) that define per zone configuration concer
 \fBb10\-xfrout\fR\&. The supported names of each object are "origin" (the origin name of the zone), "class" (the RR class of the zone, optional, default to "IN"), and "transfer_acl" (ACL only applicable to transfer requests for that zone)\&. See the
 BIND 10 Guide
 for configuration examples\&. The default is an empty list, that is, no zone specific configuration\&.
-.PP
-
-\fIlog_name\fR
-.PP
-
-\fIlog_file\fR
-The location of the log file if using a file channel\&. If undefined, then the file channel is closed\&. The default is
-/usr/local/var/bind10\-devel/log/Xfrout\&.log\&.
-.PP
-
-\fIlog_severity\fR
-The default is "debug"\&.
-.PP
-
-\fIlog_versions\fR
-The default is 5\&.
-.PP
-
-\fIlog_max_bytes\fR
-The default is 1048576\&.
 .if n \{\
 .sp
 .\}
