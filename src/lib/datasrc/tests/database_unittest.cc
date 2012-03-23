@@ -2285,7 +2285,7 @@ TYPED_TEST(DatabaseClientTest, dbNegativeCaseFind) {
     // ZoneFinder::find() for negative cases should show whether the zone is
     // signed by NSEC or NSEC3,that is good for upper layer caller.
 
-    // First off, everything should be okay if no NSEC3PARAM rrset 
+    // First off, everything should be okay if no NSEC3PARAM rrset
     this->updater_ = this->client_->getUpdater(this->zname_, false);
     this->expected_rdatas_.clear();
     this->expected_sig_rdatas_.clear();
@@ -2320,10 +2320,10 @@ TYPED_TEST(DatabaseClientTest, dbNegativeCaseFind) {
                this->empty_rdatas_,
                ZoneFinder::RESULT_WILDCARD);
 
-    // Then,If NSEC3PARAM exists in zonefile,the flags of result should 
+    // Then,If NSEC3PARAM exists in zonefile,the flags of result should
     // contain RESULT_NSEC3_SIGNED flag when NXDOMAIN NXRRSET or wildcard
-    
-    // Add NSEC3PARAM RRSET to zonefile. It looks weird if zonefile only have 
+
+    // Add NSEC3PARAM RRSET to zonefile. It looks weird if zonefile only have
     // NSEC3PARM RRSET, but it is okay for unit test.
     this->rrset_.reset(new RRset(this->zname_, this->qclass_,
                                 isc::dns::RRType::NSEC3PARAM(),

@@ -911,8 +911,8 @@ DatabaseClient::Finder::findInternal(const Name& name, const RRType& type,
     // If the NSEC3PARAMETER type exists in the zonefile,NSEC3 is definitly used
     // in this zone signature.
     bool is_nsec3 = false;
-    const FoundRRsets nsec3_found = getRRsets(origin_.toText(), NSEC3PARAM_TYPES(),
-                                              false);
+    const FoundRRsets nsec3_found = getRRsets(origin_.toText(),
+                                              NSEC3PARAM_TYPES(), false);
     const FoundIterator nfi(nsec3_found.second.find(RRType::NSEC3PARAM()));
     if (nfi != nsec3_found.second.end()) {
         is_nsec3 = true;
@@ -921,7 +921,7 @@ DatabaseClient::Finder::findInternal(const Name& name, const RRType& type,
         // Something found at the domain name.  Look into it further to get
         // the final result.
         if (true == is_nsec3) {
-            const ZoneFinder::ResultContext result_context = 
+            const ZoneFinder::ResultContext result_context =
                 findOnNameResult(name, type, options, is_origin, found, NULL,
                                  target);
             if ((result_context.code & NXRRSET) ||
@@ -931,30 +931,30 @@ DatabaseClient::Finder::findInternal(const Name& name, const RRType& type,
                                                   (result_context.flags |
                                                    RESULT_NSEC3_SIGNED)));
             } else {
-                return result_context; 
+                return (result_context);
             }
         } else {
-            return (findOnNameResult(name, type, options, is_origin, found, NULL,
-                                     target));
+            return (findOnNameResult(name, type, options, is_origin, found,
+                                     NULL, target));
         }
     } else {
         // Did not find anything at all at the domain name, so check for
         // subdomains or wildcards.
         if (true == is_nsec3) {
             // NSEC3 is used for this zonefile
-            const ZoneFinder::ResultContext result_context = 
+            const ZoneFinder::ResultContext result_context =
                 findNoNameResult(name, type, options, dresult, target);
             if ((result_context.code & (NXRRSET | NXDOMAIN)) ||
                 (result_context.flags & RESULT_WILDCARD)){
                 // NXRRSET NXDOMAIN and wildcard should set RESULT_NSEC3_SIGNED
-                return (ZoneFinder::ResultContext(result_context.code, 
+                return (ZoneFinder::ResultContext(result_context.code,
                                                   result_context.rrset,
                                                   (result_context.flags |
                                                    RESULT_NSEC3_SIGNED)));
             } else {
-                return result_context;
+                return (result_context);
             }
-        } else { 
+        } else {
             return (findNoNameResult(name, type, options, dresult, target));
         }
     }
