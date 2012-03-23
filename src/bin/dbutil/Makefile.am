@@ -6,7 +6,7 @@ man_MANS = b10-dbutil.8
 nodist_pylogmessage_PYTHON = $(PYTHON_LOGMSGPKG_DIR)/work/dbutil_messages.py
 pylogmessagedir = $(pyexecdir)/isc/log_messages/
 
-EXTRA_DIST = $(man_MANS) b10-dbutil.xml
+EXTRA_DIST = $(man_MANS) b10-dbutil.xml dbutil_messages.mes
 
 noinst_SCRIPTS = run_dbutil.sh
 
