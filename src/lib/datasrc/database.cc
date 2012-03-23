@@ -907,9 +907,10 @@ DatabaseClient::Finder::findInternal(const Name& name, const RRType& type,
     const FoundRRsets found = getRRsets(name.toText(), final_types,
                                         !is_origin, NULL,
                                         type == RRType::ANY());
-    // verify whether the zonefile is signed by NSEC3 method
-    // If the NSEC3PARAMETER type exists in the zonefile,NSEC3 is definitly used
-    // in this zone signature.
+
+    // If an NSEC3PARAM RR exists at the zone apex, it's quite likely that
+    // the zone is signed with NSEC3.  (If not the zone is more or less broken,
+    // but it's caller's responsibility how to handle such cases).
     bool is_nsec3 = false;
     const FoundRRsets nsec3_found = getRRsets(origin_.toText(),
                                               NSEC3PARAM_TYPES(), false);
