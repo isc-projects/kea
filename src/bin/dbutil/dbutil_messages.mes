@@ -1,0 +1,117 @@
+# Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+
+# No namespace declaration - these constants go in the global namespace
+# of the ddns messages python module.
+
+# When you add a message to this file, it is a good idea to run
+# <topsrcdir>/tools/reorder_message_file.py to make sure the
+# messages are in the correct order.
+
+% DBUTIL_BACKUP created backup of %1 in %2
+A backup for the given database file was created. Same of original file and
+backup are given in the output message.
+
+% DBUTIL_CHECK_ERROR unable to check database version: %1
+There was an error while trying to check the current version of the database
+schema. The error is shown in the message.
+
+% DBUTIL_CHECK_NOCONFIRM --noconfirm is not compatible with --check
+b10-dbutil was called with --check and --noconfirm. --noconfirm only has
+meaning with --upgrade, so this is considered an error.
+
+% DBUTIL_CHECK_OK this is the latest version of the database schema. No upgrade is required
+The database schema version has been checked, and is up to date.
+No action is required.
+
+% DBUTIL_CHECK_UPGRADE_NEEDED re-run this program with the --upgrade switch to upgrade
+The database schema version is not up to date, and an update is required.
+Please run the dbutil tool again, with the --upgrade argument.
+
+% DBUTIL_COMMAND_NONE must select one of --check or --upgrade
+b10-dbutil was called with neither --check nor --upgrade. One action must be
+provided.
+
+% DBUTIL_COMMAND_UPGRADE_CHECK --upgrade is not compatible with --check
+b10-dbutil was called with both the commands --upgrade and --check. Only one
+action can be performed at a time.
+
+% DBUTIL_DATABASE_MAY_BE_CORRUPTED database may be corrupt, restore it from backup
+The upgrade failed while it was in progress; the database may now be in an
+inconsistent state, and it is advised to restore it from the backup that was
+created when b10-dbutil started.
+
+% DBUTIL_EXECUTE Executing SQL statement: %1
+Debug message; the given SQL statement is executed
+
+% DBUTIL_FILE Database file: %1
+The database file that is being checked.
+
+% DBUTIL_NO_ACTION_SPECIFIED Command error: neither --check nor --upgrade selected
+b10-dbutil was called without either --check or --upgrade.
+
+% DBUTIL_NO_FILE must supply name of the database file to upgrade
+b10-dbutil was called without a database file. Currently, it cannot find this
+file on its own, and it must be provided.
+
+% DBUTIL_STATEMENT_ERROR failed to execute %1: %2
+The given database statement failed to execute. The error is shown in the
+message.
+
+% DBUTIL_TOO_MANY_ARGUMENTS too many arguments to the command, maximum of one expected
+There were too many command-line arguments to b10-dbutil
+
+% DBUTIL_UPGRADE_CANCELED upgrade canceled; database has not been changed
+The user aborted the upgrade, and b10-dbutil will now exit.
+
+% DBUTIL_UPGRADE_DBUTIL please get the latest version of b10-dbutil and re-run
+A database schema was found that was newer than this version of dbutil, which
+is apparently out of date and should be upgraded itself.
+
+% DBUTIL_UPGRADE_FAILED upgrade failed: %1
+While the upgrade was in progress, an unexpected error occurred. The error
+is shown in the message.
+
+% DBUTIL_UPGRADE_NOT_ATTEMPTED database upgrade was not attempted
+Due to the earlier failure, the database schema upgrade was not attempted,
+and b10-dbutil will now exit.
+
+% DBUTIL_UPGRADE_NOT_NEEDED database already at latest version, no upgrade necessary
+b10-dbutil was told to upgrade the database schema, but it is already at the
+latest version.
+
+% DBUTIL_UPGRADE_NOT_POSSIBLE database at a later version than this utility can support
+b10-dbutil was told to upgrade the database schema, but it is at a higher
+version than this tool currently supports. Please update b10-dbutil and try
+again.
+
+% DBUTIL_UPGRADE_PREPARATION_FAILED upgrade preparation failed: %1
+An unexpected error occurred while b10-dbutil was preparing to upgrade the
+database schema. The error is shown in the message
+
+% DBUTIL_UPGRADE_SUCCESFUL database upgrade successfully completed
+The database schema update was completed successfully.
+
+% DBUTIL_UPGRADING upgrading database from %1 to %2
+An upgrade is in progress, the versions of the current upgrade action are shown.
+
+% DBUTIL_VERSION_CURRENT database version %1
+The current version of the database schema.
+
+% DBUTIL_VERSION_HIGH database is at a later version (%1) than this program can cope with (%2)
+The database schema is at a higher version than b10-dbutil knows about.
+
+% DBUTIL_VERSION_LOW database version %1, latest version is %2.
+The database schema is not up to date, the current version and the latest
+version are in the message.

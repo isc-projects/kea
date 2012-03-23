@@ -273,10 +273,10 @@ check_version() {
     then
         fail "version check failed on database $1; return code $?"
     else
-        ../run_dbutil.sh --check $verfile | grep "$2" > /dev/null
+        ../run_dbutil.sh --check $verfile 2>&1 | grep "$2" > /dev/null
         if [ $? -ne 0 ]
         then
-            fail "database $1 not at expected version $2"
+            fail "database $1 not at expected version $2 (output: $?)"
         else
             succeed
         fi
