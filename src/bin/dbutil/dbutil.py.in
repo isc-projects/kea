@@ -38,7 +38,11 @@ import sys; sys.path.append("@@PYTHONPATH@@")
 import os, sqlite3, shutil
 from optparse import OptionParser
 import isc.util.process
+import isc.log
+from isc.log_messages.dbutil_messages import *
 
+isc.log.init("b10-dbutil")
+logger = isc.log.Logger("dbutil")
 isc.util.process.rename()
 
 # @brief Version String
@@ -54,7 +58,6 @@ EXIT_VERSION_TOO_HIGH = 2
 EXIT_COMMAND_ERROR = 3
 EXIT_READ_ERROR = 4
 EXIT_UPGRADE_ERROR = 5
-
 
 # @brief Statements to Update the Database
 # These are in the form of a list of dictionaries, each of which contains the
@@ -190,55 +193,6 @@ class DbutilException(Exception):
     """
     pass
 
-# Functions for outputting messages in a consistent format.  As this is intended
-# to be an interactive utility, it was not considered necessary to use the full
-# logging framework for messages.
-
-def output(writer, prefix, text, ex = None):
-    """
-    @brief Write error message to output stream
-
-    @param writer Function to do the writing
-    @param prefix Prefix to the message
-    @param text Text to output
-    @param ex Possible exception holding additiona information
-    """
-    writer(prefix + ": " + text)
-    if ex is not None:
-        writer(" - " + str(ex))
-    writer("\n")
-
-
-def error(text, ex = None):
-    """
-    @brief Write error message to stderr.
-
-    @param text Text to output
-    @param ex Possible exception holding additiona information
-    """
-    output(sys.stderr.write, "ERROR", text, ex)
-
-
-def warn(text, ex = None):
-    """
-    @brief Write warning message to stderr.
-
-    @param text Text to output
-    @param ex Possible exception holding additiona information
-    """
-    output(sys.stderr.write, "WARN", text, ex)
-
-
-def info(text, ex = None):
-    """
-    @brief Write informational message to stdout.
-
-    @param text Text to output
-    @param ex Possible exception holding additiona information
-    """
-    output(sys.stdout.write, "INFO", text, ex)
-
-
 class Database:
     """
     @brief Database Encapsulation
@@ -297,12 +251,12 @@ class Database:
         @param statement SQL statement to execute
         """
         if self.verbose:
-            sys.stdout.write(statement + "\n")
+            logger.debug(40, DBUTIL_EXECUTE, statement)
 
         try:
             self.cursor.execute(statement)
         except Exception as ex:
-            error("failed to execute " + statement)
+            logger.error(DBUTIL_STATEMENT_ERROR, statement, ex)
             raise DbutilException(str(ex))
 
     def result(self):
@@ -337,7 +291,7 @@ class Database:
 
         # Do the backup
         shutil.copyfile(self.db_file, self.backup_file)
-        info("database " + self.db_file + " backed up to " + self.backup_file)
+        logger.info(DBUTIL_BACKUP, self.db_file, self.backup_file)
 
 def prompt_user():
     """
@@ -360,7 +314,7 @@ BIND 10 is not running before continuing.
     no_entered = False
     while (not yes_entered) and (not no_entered):
         sys.stdout.write("Enter 'Yes' to proceed with the upgrade, " +
-                         "'No' to exit the program: ")
+                         "'No' to exit the program: \n")
         response = sys.stdin.readline()
         if response.lower() == "yes\n":
             yes_entered = True
@@ -466,20 +420,18 @@ def check_version(db):
 
     match = compare_versions(current, latest)
     if match == 0:
-        info("database version " + version_string(current))
-        info("this is the latest version of the database schema, " +
-             "no upgrade is required")
+        logger.info(DBUTIL_VERSION_CURRENT, version_string(current))
+        logger.info(DBUTIL_CHECK_OK)
         return EXIT_SUCCESS
     elif match < 0:
-        info("database version " + version_string(current) +
-             ", latest version is " + version_string(latest))
-        info("re-run this program with the --upgrade switch to upgrade")
+        logger.info(DBUTIL_VERSION_LOW, version_string(current),
+                    version_string(latest))
+        logger.info(DBUTIL_CHECK_UPGRADE_NEEDED)
         return EXIT_NEED_UPDATE
     else:
-        warn("database is at a later version (" + version_string(current) +
-             ") than this program can cope with (" +
-             version_string(get_latest_version()) + ")")
-        info("please get the latest version of b10-dbutil and re-run")
+        logger.warn(DBUTIL_VERSION_HIGH, version_string(current),
+                    version_string(get_latest_version()))
+        logger.info(DBUTIL_UPGRADE_DBUTIL)
         return EXIT_VERSION_TOO_HIGH
 
 def perform_upgrade(db, upgrade):
@@ -492,10 +444,8 @@ def perform_upgrade(db, upgrade):
     @param db Database object
     @param upgrade Upgrade dictionary, holding "from", "to" and "statements".
     """
-    increment = (version_string(upgrade['from']) + " to " +
-                 version_string(upgrade['to']))
-    action = "upgrading database from " + increment
-    info(action)
+    logger.info(DBUTIL_UPGRADING, version_string(upgrade['from']),
+         version_string(upgrade['to']))
     for statement in upgrade['statements']:
         db.execute(statement)
 
@@ -516,10 +466,10 @@ def perform_all_upgrades(db):
     """
     match = compare_versions(get_version(db), get_latest_version())
     if match == 0:
-        info("database already at latest version, no upgrade necessary")
+        logger.info(DBUTIL_UPGRADE_NOT_NEEDED)
 
     elif match > 0:
-        warn("database at a later version than this utility can support")
+        logger.warn(DBUTIL_UPGRADE_NOT_POSSIBLE)
 
     else:
         # Work our way through all upgrade increments
@@ -530,7 +480,7 @@ def perform_all_upgrades(db):
                 count = count + 1
 
         if count > 0:
-            info("database upgrade successfully completed")
+            logger.info(DBUTIL_UPGRADE_SUCCESFUL)
         else:
             # Should not get here, as we established earlier that the database
             # was not at the latest version so we should have upgraded.
@@ -567,22 +517,22 @@ def parse_command():
 
     # Set the database file on which to operate
     if (len(args) > 1):
-        error("too many arguments to the command, maximum of one expected")
+        logger.error(DBUTIL_TOO_MANY_ARGUMENTS)
         parser.print_usage()
         sys.exit(EXIT_COMMAND_ERROR)
     elif len(args) == 0:
-        error("must supply name of the database file to upgrade")
+        logger.error(DBUTIL_NO_FILE)
         parser.print_usage()
         sys.exit(EXIT_COMMAND_ERROR)
 
     # Check for conflicting options.  If some are found, output a suitable
     # error message and print the usage.
     if options.check and options.upgrade:
-        error("--upgrade is not compatible with --check")
+        logger.error(DBUTIL_COMMAND_UPGRADE_CHECK)
     elif (not options.check) and (not options.upgrade):
-        error("must select one of --check or --upgrade")
+        logger.error(DBUTIL_COMMAND_NONE)
     elif (options.check and options.noconfirm):
-        error("--noconfirm is not compatible with --check")
+        logger.error(DBUTIL_CHECK_NOCONFIRM)
     else:
         return (options, args)
 
@@ -596,6 +546,7 @@ if __name__ == "__main__":
     db = Database(args[0], options.verbose)
     exit_code = EXIT_SUCCESS
 
+    logger.info(DBUTIL_FILE, args[0])
     if options.check:
         # Check database - open, report, and close
         try:
@@ -603,7 +554,7 @@ if __name__ == "__main__":
             exit_code = check_version(db)
             db.close()
         except Exception as ex:
-            error("unable to check database version - " + str(ex))
+            logger.error(DBUTIL_CHECK_ERROR, ex)
             exit_code = EXIT_READ_ERROR
 
     elif options.upgrade:
@@ -611,7 +562,7 @@ if __name__ == "__main__":
         if not options.noconfirm:
             proceed = prompt_user()
             if not proceed:
-                info("upgrade abandoned - database has not been changed\n")
+                logger.info(DBUTIL_UPGRADE_CANCELED)
                 sys.exit(EXIT_SUCCESS)
 
         # It is.  Do a backup then do the upgrade.
@@ -624,14 +575,14 @@ if __name__ == "__main__":
             db.close()
         except Exception as ex:
             if in_progress:
-                error("upgrade failed - " + str(ex))
-                warn("database may be corrupt, restore it from backup")
+                logger.error(DBUTIL_UPGRADE_FAILED, ex)
+                logger.warn(DBUTIL_DATABASE_MAY_BE_CORRUPTED)
             else:
-                error("upgrade preparation failed - " + str(ex))
-                info("database upgrade was not attempted")
+                logger.error(DBUTIL_UPGRADE_PREPARATION_FAILED, ex)
+                logger.info(DBUTIL_UPGRADE_NOT_ATTEMPTED)
             exit_code = EXIT_UPGRADE_ERROR
     else:
-        error("internal error, neither --check nor --upgrade selected")
+        logger.error(DBUTIL_NO_ACTION_SPECIFIED)
         exit_code = EXIT_COMMAND_ERROR
 
     sys.exit(exit_code)
