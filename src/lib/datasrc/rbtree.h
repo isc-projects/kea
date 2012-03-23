@@ -1162,6 +1162,10 @@ RBTree<T>::insert(const isc::dns::Name& target_name, RBNode<T>** new_node) {
 }
 
 
+// Note: when we redesign this (still keeping the basic concept), we should
+// change this part so the newly created node will be used for the inserted
+// name (and therefore the name for the existing node doesn't change).
+// Otherwise, things like shortcut links between nodes won't work.
 template <typename T>
 void
 RBTree<T>::nodeFission(RBNode<T>& node, const isc::dns::Name& base_name) {
