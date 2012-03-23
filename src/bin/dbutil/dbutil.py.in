@@ -45,6 +45,8 @@ isc.log.init("b10-dbutil")
 logger = isc.log.Logger("dbutil")
 isc.util.process.rename()
 
+TRACE_BASIC = logger.DBGLVL_TRACE_BASIC
+
 # @brief Version String
 # This is the version displayed to the user.  It comprises the module name,
 # the module version number, and the overall BIND 10 version number (set in
@@ -200,19 +202,16 @@ class Database:
     Encapsulates the SQL database, both the connection and the cursor.  The
     methods will cause a program exit on any error.
     """
-    def __init__(self, db_file, verbose = False):
+    def __init__(self, db_file):
         """
         @brief Constructor
 
         @param db_file Name of the database file
-        @param verbose If True, print all SQL statements to stdout before
-               executing them.
         """
         self.connection = None
         self.cursor = None
         self.db_file = db_file
         self.backup_file = None
-        self.verbose = verbose
 
     def open(self):
         """
@@ -244,14 +243,11 @@ class Database:
         """
         @brief Execute Statement
 
-        Executes the given statement, exiting the program on error.  If
-        verbose mode is set, the statement is printed to stdout before
-        execution.
+        Executes the given statement, exiting the program on error.
 
         @param statement SQL statement to execute
         """
-        if self.verbose:
-            logger.debug(40, DBUTIL_EXECUTE, statement)
+        logger.debug(TRACE_BASIC, DBUTIL_EXECUTE, statement)
 
         try:
             self.cursor.execute(statement)
@@ -543,7 +539,12 @@ def parse_command():
 
 if __name__ == "__main__":
     (options, args) = parse_command()
-    db = Database(args[0], options.verbose)
+
+    if options.verbose:
+        isc.log.init("b10-dbutil", "DEBUG", 99)
+        logger = isc.log.Logger("dbutil")
+
+    db = Database(args[0])
     exit_code = EXIT_SUCCESS
 
     logger.info(DBUTIL_FILE, args[0])
