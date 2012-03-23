@@ -911,17 +911,14 @@ DatabaseClient::Finder::findInternal(const Name& name, const RRType& type,
     // If an NSEC3PARAM RR exists at the zone apex, it's quite likely that
     // the zone is signed with NSEC3.  (If not the zone is more or less broken,
     // but it's caller's responsibility how to handle such cases).
-    bool is_nsec3 = false;
     const FoundRRsets nsec3_found = getRRsets(origin_.toText(),
                                               NSEC3PARAM_TYPES(), false);
     const FoundIterator nfi(nsec3_found.second.find(RRType::NSEC3PARAM()));
-    if (nfi != nsec3_found.second.end()) {
-        is_nsec3 = true;
-    }
+    const bool is_nsec3 = (nfi != nsec3_found.second.end());
     if (found.first) {
         // Something found at the domain name.  Look into it further to get
         // the final result.
-        if (true == is_nsec3) {
+        if (is_nsec3) {
             const ZoneFinder::ResultContext result_context =
                 findOnNameResult(name, type, options, is_origin, found, NULL,
                                  target);
@@ -941,7 +938,7 @@ DatabaseClient::Finder::findInternal(const Name& name, const RRType& type,
     } else {
         // Did not find anything at all at the domain name, so check for
         // subdomains or wildcards.
-        if (true == is_nsec3) {
+        if (is_nsec3) {
             // NSEC3 is used for this zonefile
             const ZoneFinder::ResultContext result_context =
                 findNoNameResult(name, type, options, dresult, target);
