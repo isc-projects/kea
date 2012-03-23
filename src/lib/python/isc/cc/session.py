@@ -72,7 +72,7 @@ class Session:
         self._lname = None
         self._closed = True
 
-    def sendmsg(self, env, msg = None):
+    def sendmsg(self, env, msg=None):
         with self._lock:
             if self._closed:
                 raise SessionError("Session has been closed.")
@@ -82,15 +82,24 @@ class Session:
                 raise ProtocolError("Envelope too large")
             if type(msg) == dict:
                 msg = isc.cc.message.to_wire(msg)
-            self._socket.setblocking(1)
             length = 2 + len(env);
-            if msg:
+            if msg is not None:
                 length += len(msg)
-            self._socket.send(struct.pack("!I", length))
-            self._socket.send(struct.pack("!H", len(env)))
-            self._socket.send(env)
-            if msg:
-                self._socket.send(msg)
+
+            # Build entire message.
+            data = struct.pack("!I", length)
+            data += struct.pack("!H", len(env))
+            data += env
+            if msg is not None:
+                data += msg
+
+            # Send it in the blocking mode.  On some systems send() may
+            # actually send only part of the data, so we need to repeat it
+            # until all data have been sent out.
+            self._socket.setblocking(1)
+            while len(data) > 0:
+                cc = self._socket.send(data)
+                data = data[cc:]
 
     def recvmsg(self, nonblock = True, seq = None):
         """Reads a message. If nonblock is true, and there is no
