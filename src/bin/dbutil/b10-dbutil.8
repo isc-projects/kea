@@ -31,9 +31,9 @@
 b10-dbutil \- Zone Database Maintenance Utility
 .SH "SYNOPSIS"
 .HP \w'\fBb10\-dbutil\ \-\-check\fR\ 'u
-\fBb10\-dbutil \-\-check\fR [\-\-verbose] [\fIdbfile\fR]
+\fBb10\-dbutil \-\-check\fR [\-\-verbose] [\-\-quiet] [\fIdbfile\fR]
 .HP \w'\fBb10\-dbutil\ \-\-upgrade\fR\ 'u
-\fBb10\-dbutil \-\-upgrade\fR [\-\-noconfirm] [\-\-verbose] [\fIdbfile\fR]
+\fBb10\-dbutil \-\-upgrade\fR [\-\-noconfirm] [\-\-verbose] [\-\-quiet] [\fIdbfile\fR]
 .SH "DESCRIPTION"
 .PP
 The
@@ -75,6 +75,11 @@ The upgrade function will upgrade a BIND 10 database \- no matter how old the sc
 \fB\-\-verbose\fR
 .RS 4
 Enable verbose mode\&. Each SQL command issued by the utility will be printed to stdout before it is executed\&.
+.RE
+.PP
+\fB\-\-quiet\fR
+.RS 4
+Enable quiet mode\&. No output is printed, except errors during command\-line argument parsing, or the user confirmation dialog\&.
 .RE
 .PP
 \fB\fIdbfile\fR\fR
