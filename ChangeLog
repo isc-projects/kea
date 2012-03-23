@@ -1,3 +1,10 @@
+408.	[bug]		stephen, jinmei
+	b10-auth now filters out duplicate RRsets when building a
+	response message using the new query handling logic.  It's
+	currently only used with the in-memory data source, but will
+	also be used for others soon.
+	(Trac #1688, git b77baca56ffb1b9016698c00ae0a1496d603d197)
+
 407.    [build]     haikuo
 	Remove "--enable-boost-threads" switch in configure command. This
 	thread lock mechanism is useless for bind10 and causes performance 
