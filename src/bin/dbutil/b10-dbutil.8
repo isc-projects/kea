@@ -44,9 +44,9 @@ utility is a general administration utility for SQL databases\&. (Currently only
 \fBb10\-dbutil\fR
 operates in one of two modes, check mode or upgrade mode\&.
 .PP
-In check mode (\fBb10\-dbutil \-\-check\fR), the utility reads the version of the database schema from the database and prints it\&. It will tell you whether the schema is at the latest version supported by BIND 10\&.
+In check mode (\fBb10\-dbutil \-\-check\fR), the utility reads the version of the database schema from the database and prints it\&. It will tell you whether the schema is at the latest version supported by BIND 10\&. Exit status is 0 if the schema is at the correct version, 1 if the schema is at an older version, 2 if the schema is at a version not yet supported by this version of b10\-dbutil\&. Any higher value indicates a read or command\-line error\&.
 .PP
-When the upgrade function is selected (\fBb10\-dbutil \-\-upgrade\fR), the utility takes a copy of the database, then upgrades it to the latest version of the schema\&. The contents of the database remain intact\&. (The backup file is a file in the same directory as the database file\&. It has the same name, with "\&.backup" appended to it\&. If a file of that name already exists, the file will have the suffix "\&.backup\-1"\&. If that exists, the file will be suffixed "\&.backup\-2", and so on\&.)
+When the upgrade function is selected (\fBb10\-dbutil \-\-upgrade\fR), the utility takes a copy of the database, then upgrades it to the latest version of the schema\&. The contents of the database remain intact\&. (The backup file is a file in the same directory as the database file\&. It has the same name, with "\&.backup" appended to it\&. If a file of that name already exists, the file will have the suffix "\&.backup\-1"\&. If that exists, the file will be suffixed "\&.backup\-2", and so on)\&. Exit status is 0 if the upgrade is either succesful or aborted by the user, and non\-zero if there is an error\&.
 .PP
 When upgrading the database, it is
 \fIstrongly\fR
