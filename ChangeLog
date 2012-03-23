@@ -1,5 +1,5 @@
 411.   [func]          muks
-	Add a -i/--no-kill-i command-line argument to bind10, which stops
+	Add a -i/--no-kill command-line argument to bind10, which stops
 	it from sending SIGTERM and SIGKILL to other b10 processes when
 	they're shutting down.
 	(Trac #1819, git 774554f46b20ca5ec2ef6c6d5e608114f14e2102)
