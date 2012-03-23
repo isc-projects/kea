@@ -37,5 +37,4 @@ export B10_FROM_SOURCE
 BIND10_MSGQ_SOCKET_FILE=@abs_top_builddir@/msgq_socket
 export BIND10_MSGQ_SOCKET_FILE
 
-cd ${DBUTIL_PATH}
-exec ${PYTHON_EXEC} -O b10-dbutil "$@"
+exec ${PYTHON_EXEC} -O ${DBUTIL_PATH}/b10-dbutil "$@"
