@@ -12,7 +12,7 @@ CLEANFILES = b10-dbutil b10-dbutil.pyc
 if ENABLE_MAN
 
 b10-dbutil.8: b10-dbutil.xml
-	xsltproc --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/bindctl.xml
+	xsltproc --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/b10-dbutil.xml
 
 endif
 
