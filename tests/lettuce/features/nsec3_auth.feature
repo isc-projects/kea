@@ -160,45 +160,41 @@ Feature: NSEC3 Authoritative service
     # Below are additional tests, not explicitely stated in RFC5155
     #
 
-    # THIS TEST CURRENTLY FAILS: An NSEC3 record is added twice
-    # See ticket #1688
-    #Scenario: 7.2.2 other; Name Error where one NSEC3 covers multiple parts of proof (closest encloser)
-    #    Given I have bind10 running with configuration nsec3/nsec3_auth.config
-    #    A dnssec query for b.x.w.example. should have rcode NXDOMAIN
-    #    The last query response should have flags qr aa rd
-    #    The last query response should have edns_flags do
-    #    The last query response should have ancount 0
-    #    The last query response should have nscount 6
-    #    The last query response should have adcount 1
-    #    The authority section of the last query response should be
-    #    """
-    #    example.	3600	IN	SOA	ns1.example. bugs.x.w.example. 1 3600 300 3600000 3600
-    #    example.	3600	IN	RRSIG	SOA 7 1 3600 20150420235959 20051021000000 40430 example. Hu25UIyNPmvPIVBrldN+9Mlp9Zql39qaUd8iq4ZLlYWfUUbbAS41pG+6 8z81q1xhkYAcEyHdVI2LmKusbZsT0Q==
-    #    b4um86eghhds6nea196smvmlo4ors995.example.	3600	IN	NSEC3	1 1 12 aabbccdd  gjeqe526plbf1g8mklp59enfd789njgi MX RRSIG 
-    #    b4um86eghhds6nea196smvmlo4ors995.example.	3600	IN	RRSIG	NSEC3 7 2 3600 20150420235959 20051021000000 40430 example. ZkPG3M32lmoHM6pa3D6gZFGB/rhL//Bs3Omh5u4m/CUiwtblEVOaAKKZ d7S959OeiX43aLX3pOv0TSTyiTxIZg==
-    #    35mthgpgcu1qg68fab165klnsnk3dpvl.example.	3600	IN	NSEC3	1 1 12 aabbccdd  b4um86eghhds6nea196smvmlo4ors995 NS DS RRSIG 
-    #    35mthgpgcu1qg68fab165klnsnk3dpvl.example.	3600	IN	RRSIG	NSEC3 7 2 3600 20150420235959 20051021000000 40430 example. g6jPUUpduAJKRljUsN8gB4UagAX0NxY9shwQAynzo8EUWH+z6hEIBlUT PGj15eZll6VhQqgZXtAIR3chwgW+SA==
-    #    """
+    Scenario: 7.2.2 other; Name Error where one NSEC3 covers multiple parts of proof (closest encloser)
+        Given I have bind10 running with configuration nsec3/nsec3_auth.config
+        A dnssec query for b.x.w.example. should have rcode NXDOMAIN
+        The last query response should have flags qr aa rd
+        The last query response should have edns_flags do
+        The last query response should have ancount 0
+        The last query response should have nscount 6
+        The last query response should have adcount 1
+        The authority section of the last query response should be
+        """
+        example.	3600	IN	SOA	ns1.example. bugs.x.w.example. 1 3600 300 3600000 3600
+        example.	3600	IN	RRSIG	SOA 7 1 3600 20150420235959 20051021000000 40430 example. Hu25UIyNPmvPIVBrldN+9Mlp9Zql39qaUd8iq4ZLlYWfUUbbAS41pG+6 8z81q1xhkYAcEyHdVI2LmKusbZsT0Q==
+        b4um86eghhds6nea196smvmlo4ors995.example.	3600	IN	NSEC3	1 1 12 aabbccdd  gjeqe526plbf1g8mklp59enfd789njgi MX RRSIG 
+        b4um86eghhds6nea196smvmlo4ors995.example.	3600	IN	RRSIG	NSEC3 7 2 3600 20150420235959 20051021000000 40430 example. ZkPG3M32lmoHM6pa3D6gZFGB/rhL//Bs3Omh5u4m/CUiwtblEVOaAKKZ d7S959OeiX43aLX3pOv0TSTyiTxIZg==
+        35mthgpgcu1qg68fab165klnsnk3dpvl.example.	3600	IN	NSEC3	1 1 12 aabbccdd  b4um86eghhds6nea196smvmlo4ors995 NS DS RRSIG 
+        35mthgpgcu1qg68fab165klnsnk3dpvl.example.	3600	IN	RRSIG	NSEC3 7 2 3600 20150420235959 20051021000000 40430 example. g6jPUUpduAJKRljUsN8gB4UagAX0NxY9shwQAynzo8EUWH+z6hEIBlUT PGj15eZll6VhQqgZXtAIR3chwgW+SA==
+        """
 
-    # THIS TEST CURRENTLY FAILS: An NSEC3 record is added twice
-    # See ticket #1688
-    #Scenario: 7.2.2 other; Name Error where one NSEC3 covers multiple parts of proof (wildcard)
-    #    Given I have bind10 running with configuration nsec3/nsec3_auth.config
-    #    A dnssec query for a.w.example. should have rcode NXDOMAIN
-    #    The last query response should have flags qr aa rd
-    #    The last query response should have edns_flags do
-    #    The last query response should have ancount 0
-    #    The last query response should have nscount 6
-    #    The last query response should have adcount 1
-    #    The authority section of the last query response should be
-    #    """
-    #    example.		3600	IN	SOA	ns1.example. bugs.x.w.example. 1 3600 300 3600000 3600
-    #    example.		3600	IN	RRSIG	SOA 7 1 3600 20150420235959 20051021000000 40430 example. Hu25UIyNPmvPIVBrldN+9Mlp9Zql39qaUd8iq4ZLlYWfUUbbAS41pG+6 8z81q1xhkYAcEyHdVI2LmKusbZsT0Q==
-    #    k8udemvp1j2f7eg6jebps17vp3n8i58h.example. 3600 IN NSEC3	1 1 12 AABBCCDD KOHAR7MBB8DC2CE8A9QVL8HON4K53UHI
-    #    k8udemvp1j2f7eg6jebps17vp3n8i58h.example. 3600 IN RRSIG	NSEC3 7 2 3600 20150420235959 20051021000000 40430 example. FtXGbvF0+wf8iWkyo73enAuVx03klN+pILBKS6qCcftVtfH4yVzsEZqu J27NHR7ruxJWDNMtOtx7w9WfcIg62A==
-    #    r53bq7cc2uvmubfu5ocmm6pers9tk9en.example. 3600 IN NSEC3	1 1 12 AABBCCDD T644EBQK9BIBCNA874GIVR6JOJ62MLHV MX RRSIG
-    #    r53bq7cc2uvmubfu5ocmm6pers9tk9en.example. 3600 IN RRSIG	NSEC3 7 2 3600 20150420235959 20051021000000 40430 example. aupviViruXs4bDg9rCbezzBMf9h1ZlDvbW/CZFKulIGXXLj8B/fsDJar XVDA9bnUoRhEbKp+HF1FWKW7RIJdtQ==
-    #    """
+    Scenario: 7.2.2 other; Name Error where one NSEC3 covers multiple parts of proof (wildcard)
+        Given I have bind10 running with configuration nsec3/nsec3_auth.config
+        A dnssec query for a.w.example. should have rcode NOERROR
+        The last query response should have flags qr aa rd
+        The last query response should have edns_flags do
+        The last query response should have ancount 0
+        The last query response should have nscount 6
+        The last query response should have adcount 1
+        The authority section of the last query response should be
+        """
+        example.		3600	IN	SOA	ns1.example. bugs.x.w.example. 1 3600 300 3600000 3600
+        example.		3600	IN	RRSIG	SOA 7 1 3600 20150420235959 20051021000000 40430 example. Hu25UIyNPmvPIVBrldN+9Mlp9Zql39qaUd8iq4ZLlYWfUUbbAS41pG+6 8z81q1xhkYAcEyHdVI2LmKusbZsT0Q==
+        k8udemvp1j2f7eg6jebps17vp3n8i58h.example. 3600 IN NSEC3	1 1 12 AABBCCDD KOHAR7MBB8DC2CE8A9QVL8HON4K53UHI
+        k8udemvp1j2f7eg6jebps17vp3n8i58h.example. 3600 IN RRSIG	NSEC3 7 2 3600 20150420235959 20051021000000 40430 example. FtXGbvF0+wf8iWkyo73enAuVx03klN+pILBKS6qCcftVtfH4yVzsEZqu J27NHR7ruxJWDNMtOtx7w9WfcIg62A==
+        r53bq7cc2uvmubfu5ocmm6pers9tk9en.example. 3600 IN NSEC3	1 1 12 AABBCCDD T644EBQK9BIBCNA874GIVR6JOJ62MLHV MX RRSIG
+        r53bq7cc2uvmubfu5ocmm6pers9tk9en.example. 3600 IN RRSIG	NSEC3 7 2 3600 20150420235959 20051021000000 40430 example. aupviViruXs4bDg9rCbezzBMf9h1ZlDvbW/CZFKulIGXXLj8B/fsDJar XVDA9bnUoRhEbKp+HF1FWKW7RIJdtQ==
+        """
 
     Scenario: Wildcard other: Wildcard name itself
         Given I have bind10 running with configuration nsec3/nsec3_auth.config

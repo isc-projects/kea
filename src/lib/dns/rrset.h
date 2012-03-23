@@ -482,8 +482,8 @@ public:
     /// \param other Pointer to another AbstractRRset to compare
     ///              against.
     virtual bool isSameKind(const AbstractRRset& other) const;
-
     //@}
+
 };
 
 /// \brief The \c RdataIterator class is an abstract base class that
