@@ -157,7 +157,7 @@
         </term>
         <listitem>
           <para>Enable verbose mode.  Each SQL command issued by the
-          utility will be printed to before it is executed.</para>
+          utility will be printed to stdout before it is executed.</para>
         </listitem>
       </varlistentry>
 
