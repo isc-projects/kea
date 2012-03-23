@@ -1,3 +1,9 @@
+407.    [build]     haikuo
+	Remove "--enable-boost-threads" switch in configure command. This
+	thread lock mechanism is useless for bind10 and causes performance 
+	hits. 
+	(Trac #1680, git 9c4d0cadf4adc802cc41a2610dc2c30b25aad728)
+
 406.	[bug]		muks
 	On platforms such as OpenBSD where pselect() is not available,
 	make a wrapper around select() in perfdhcp.
