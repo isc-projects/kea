@@ -269,9 +269,9 @@ record_count_test() {
 check_version() {
     copy_file $1 $verfile
     ../run_dbutil.sh --check $verfile
-    if [ $? -ne 0 ]
+    if [ $? -gt 2 ]
     then
-        fail "version check failed on database $1"
+        fail "version check failed on database $1; return code $?"
     else
         ../run_dbutil.sh --check $verfile | grep "$2" > /dev/null
         if [ $? -ne 0 ]
