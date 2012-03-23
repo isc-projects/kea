@@ -922,8 +922,8 @@ DatabaseClient::Finder::findInternal(const Name& name, const RRType& type,
             const ZoneFinder::ResultContext result_context =
                 findOnNameResult(name, type, options, is_origin, found, NULL,
                                  target);
-            if ((result_context.code & NXRRSET) ||
-                (result_context.flags & RESULT_WILDCARD)) {
+            if ((result_context.code & NXRRSET) != 0 ||
+                (result_context.flags & RESULT_WILDCARD) != 0) {
                 return (ZoneFinder::ResultContext(result_context.code,
                                                   result_context.rrset,
                                                   (result_context.flags |
@@ -939,11 +939,11 @@ DatabaseClient::Finder::findInternal(const Name& name, const RRType& type,
         // Did not find anything at all at the domain name, so check for
         // subdomains or wildcards.
         if (is_nsec3) {
-            // NSEC3 is used for this zonefile
+            // NSEC3 is used for this zone
             const ZoneFinder::ResultContext result_context =
                 findNoNameResult(name, type, options, dresult, target);
-            if ((result_context.code & (NXRRSET | NXDOMAIN)) ||
-                (result_context.flags & RESULT_WILDCARD)){
+            if ((result_context.code & (NXRRSET | NXDOMAIN)) != 0 ||
+                (result_context.flags & RESULT_WILDCARD) != 0) {
                 // NXRRSET NXDOMAIN and wildcard should set RESULT_NSEC3_SIGNED
                 return (ZoneFinder::ResultContext(result_context.code,
                                                   result_context.rrset,
