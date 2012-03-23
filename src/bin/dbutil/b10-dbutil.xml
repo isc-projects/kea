@@ -45,12 +45,14 @@
     <cmdsynopsis>
       <command>b10-dbutil --check</command>
         <arg>--verbose</arg>
+        <arg>--quiet</arg>
         <arg><replaceable choice='req'>dbfile</replaceable></arg>
     </cmdsynopsis>
     <cmdsynopsis>
       <command>b10-dbutil --upgrade</command>
         <arg>--noconfirm</arg>
         <arg>--verbose</arg>
+        <arg>--quiet</arg>
         <arg><replaceable choice='req'>dbfile</replaceable></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
@@ -158,6 +160,17 @@
         <listitem>
           <para>Enable verbose mode.  Each SQL command issued by the
           utility will be printed to stdout before it is executed.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+         <option>--quiet</option>
+        </term>
+        <listitem>
+          <para>Enable quiet mode. No output is printed, except errors during
+            command-line argument parsing, or the user confirmation dialog.
+          </para>
         </listitem>
       </varlistentry>
 
