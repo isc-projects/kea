@@ -47,6 +47,15 @@ isc.util.process.rename()
 # configure.ac)
 VERSION = "b10-dbutil 20120319 (BIND 10 @PACKAGE_VERSION@)"
 
+# Exit codes
+EXIT_SUCCESS = 0
+EXIT_NEED_UPDATE = 1
+EXIT_VERSION_TOO_HIGH = 2
+EXIT_COMMAND_ERROR = 3
+EXIT_READ_ERROR = 4
+EXIT_UPGRADE_ERROR = 5
+
+
 # @brief Statements to Update the Database
 # These are in the form of a list of dictionaries, each of which contains the
 # information to perform an incremental upgrade from one version of the
@@ -445,6 +454,12 @@ def check_version(db):
     an upgrade is needed.
 
     @param db Database object
+
+    returns 0 if the database is up to date
+    returns EXIT_NEED_UPDATE if the database needs updating
+    returns EXIT_VERSION_TOO_HIGH if the database is at a later version
+            than this program knows about
+    These return values are intended to be passed on to sys.exit.
     """
     current = get_version(db)
     latest = get_latest_version()
@@ -454,18 +469,18 @@ def check_version(db):
         info("database version " + version_string(current))
         info("this is the latest version of the database schema, " +
              "no upgrade is required")
-
+        return EXIT_SUCCESS
     elif match < 0:
         info("database version " + version_string(current) +
              ", latest version is " + version_string(latest))
         info("re-run this program with the --upgrade switch to upgrade")
-
+        return EXIT_NEED_UPDATE
     else:
         warn("database is at a later version (" + version_string(current) +
              ") than this program can cope with (" +
              version_string(get_latest_version()) + ")")
         info("please get the latest version of b10-dbutil and re-run")
-
+        return EXIT_VERSION_TOO_HIGH
 
 def perform_upgrade(db, upgrade):
     """
@@ -554,11 +569,11 @@ def parse_command():
     if (len(args) > 1):
         error("too many arguments to the command, maximum of one expected")
         parser.print_usage()
-        sys.exit(1)
+        sys.exit(EXIT_COMMAND_ERROR)
     elif len(args) == 0:
         error("must supply name of the database file to upgrade")
         parser.print_usage()
-        sys.exit(1)
+        sys.exit(EXIT_COMMAND_ERROR)
 
     # Check for conflicting options.  If some are found, output a suitable
     # error message and print the usage.
@@ -573,22 +588,23 @@ def parse_command():
 
     # Only get here on conflicting options
     parser.print_usage()
-    sys.exit(1)
+    sys.exit(EXIT_COMMAND_ERROR)
 
 
 if __name__ == "__main__":
     (options, args) = parse_command()
     db = Database(args[0], options.verbose)
+    exit_code = EXIT_SUCCESS
 
     if options.check:
         # Check database - open, report, and close
         try:
             db.open()
-            check_version(db)
+            exit_code = check_version(db)
             db.close()
         except Exception as ex:
             error("unable to check database version - " + str(ex))
-            sys.exit(1)
+            exit_code = EXIT_READ_ERROR
 
     elif options.upgrade:
         # Upgrade.  Check if this is what they really want to do
@@ -596,7 +612,7 @@ if __name__ == "__main__":
             proceed = prompt_user()
             if not proceed:
                 info("upgrade abandoned - database has not been changed\n")
-                sys.exit(0)
+                sys.exit(EXIT_SUCCESS)
 
         # It is.  Do a backup then do the upgrade.
         in_progress = False
@@ -613,9 +629,9 @@ if __name__ == "__main__":
             else:
                 error("upgrade preparation failed - " + str(ex))
                 info("database upgrade was not attempted")
-            sys.exit(1)
+            exit_code = EXIT_UPGRADE_ERROR
     else:
         error("internal error, neither --check nor --upgrade selected")
-        sys.exit(1)
+        exit_code = EXIT_COMMAND_ERROR
 
-    sys.exit(0)
+    sys.exit(exit_code)
