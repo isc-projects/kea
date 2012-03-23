@@ -771,12 +771,8 @@ as a dependency earlier -->
       master process will also start up
       <command>b10-cmdctl</command> for administration tools to
       communicate with the system,
-      <command>b10-auth</command> for authoritative DNS service,
-      <command>b10-stats</command> for statistics collection,
-      <command>b10-stats-httpd</command> for statistics reporting,
-      <command>b10-xfrin</command> for inbound DNS zone transfers,
-      <command>b10-xfrout</command> for outbound DNS zone transfers,
-      and <command>b10-zonemgr</command> for secondary service.
+      <command>b10-stats</command> for statistics collection, and
+      <command>b10-stats-httpd</command> for statistics reporting.
     </para>
 
     <section id="start">
@@ -810,12 +806,7 @@ as a dependency earlier -->
         The configuration is in the Boss/components section. Each element
         represents one component, which is an abstraction of a process
         (currently there's also one component which doesn't represent
-        a process). If you didn't want to transfer out at all (your server
-        is a slave only), you would just remove the corresponding component
-        from the set, like this and the process would be stopped immediately
-        (and not started on the next startup):
-      <screen>&gt; <userinput>config remove Boss/components b10-xfrout</userinput>
-&gt; <userinput>config commit</userinput></screen>
+        a process).
       </para>
 
       <para>
@@ -1861,15 +1852,10 @@ what is XfroutClient xfr_client??
     <para>
       The main <command>bind10</command> process can be configured
       to select to run either the authoritative or resolver or both.
-      By default, it starts the authoritative service.
-<!-- TODO: later both -->
-
-      You may change this using <command>bindctl</command>, for example:
+      By default, it doesn't start either one. You may change this using
+      <command>bindctl</command>, for example:
 
       <screen>
-&gt; <userinput>config remove Boss/components b10-xfrout</userinput>
-&gt; <userinput>config remove Boss/components b10-xfrin</userinput>
-&gt; <userinput>config remove Boss/components b10-auth</userinput>
 &gt; <userinput>config add Boss/components b10-resolver</userinput>
 &gt; <userinput>config set Boss/components/b10-resolver/special resolver</userinput>
 &gt; <userinput>config set Boss/components/b10-resolver/kind needed</userinput>
