@@ -509,6 +509,9 @@ def parse_command():
     parser.add_option("-v", "--verbose", action="store_true",
                       dest="verbose", default=False,
                       help="Print SQL statements as they are executed")
+    parser.add_option("-q", "--quiet", action="store_true",
+                      dest="quiet", default=False,
+                      help="Don't print any info, warnings or errors")
     (options, args) = parser.parse_args()
 
     # Set the database file on which to operate
@@ -542,6 +545,11 @@ if __name__ == "__main__":
 
     if options.verbose:
         isc.log.init("b10-dbutil", "DEBUG", 99)
+        logger = isc.log.Logger("dbutil")
+    elif options.quiet:
+        # We don't use FATAL, so setting the logger to use
+        # it should essentially make it silent.
+        isc.log.init("b10-dbutil", "FATAL")
         logger = isc.log.Logger("dbutil")
 
     db = Database(args[0])

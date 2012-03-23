@@ -443,6 +443,12 @@ copy_file $testdata/old_v1.sqlite3 $tempfile
 passzero $?
 rm -f $tempfile $backupfile
 
+echo "13.3 quiet flag"
+copy_file $testdata/old_v1.sqlite3 $tempfile
+../run_dbutil.sh --check --quiet $tempfile 2>&1 | grep dbutil
+failzero $?
+rm -f $tempfile $backupfile
+
 echo "13.3 Interactive prompt - yes"
 copy_file $testdata/old_v1.sqlite3 $tempfile
 ../run_dbutil.sh --upgrade $tempfile << .
