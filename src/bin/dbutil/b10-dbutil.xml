@@ -78,7 +78,8 @@
       version supported by BIND 10. Exit status is 0 if the schema is at
       the correct version, 1 if the schema is at an older version, 2 if
       the schema is at a version not yet supported by this version of
-      b10-dbutil. Any higher value indicates a read or command-line error.
+      b10-dbutil. Any higher value indicates an error during command-line
+      parsing or execution.
     </para>
 
     <para>
@@ -159,7 +160,7 @@
         </term>
         <listitem>
           <para>Enable verbose mode.  Each SQL command issued by the
-          utility will be printed to stdout before it is executed.</para>
+          utility will be printed to stderr before it is executed.</para>
         </listitem>
       </varlistentry>
 
