@@ -153,7 +153,8 @@ class ConfigManagerData:
            if it exists. If it does not exist, nothing happens.
            If old_file_name is None (default), the file used in
            read_from_file is used. If new_file_name is None (default), the
-           file old_file_name appended with .bak is used.
+           file old_file_name appended with .bak is used. If that file exists
+           already, .1 is appended. If that file exists, .2 is appended, etc.
         """
         if old_file_name is None:
             old_file_name = self.db_filename
