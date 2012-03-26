@@ -1,3 +1,9 @@
+409.	[bug]		jelte
+	Fixed a parser bug in bindctl that could make bindctl crash. Also
+	improved 'command help' output; argument order is now shown
+	correctly, and parameter descriptions are shown as well.
+	(Trac #1172, git bec26c6137c9b0a59a3a8ca0f55a17cfcb8a23de)
+
 408.	[bug]		stephen, jinmei
 	b10-auth now filters out duplicate RRsets when building a
 	response message using the new query handling logic.  It's
