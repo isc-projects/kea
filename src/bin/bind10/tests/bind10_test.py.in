@@ -1209,6 +1209,49 @@ class TestBossComponents(unittest.TestCase):
 
         bob._component_configurator.shutdown = orig
 
+    def test_nokill(self):
+        """
+        Test that the boss *doesn't* kill components which don't want to
+        stop, when asked not to (by passing the --no-kill option which
+        sets bob.nokill to True).
+        """
+        bob = MockBob()
+        bob.nokill = True
+
+        killed = []
+        class ImmortalComponent:
+            """
+            An immortal component. It does not stop when it is told so
+            (anyway it is not told so). It does not die if it is killed
+            the first time. It dies only when killed forcefully.
+            """
+            def kill(self, forceful=False):
+                killed.append(forceful)
+                if forceful:
+                    bob.components = {}
+            def pid(self):
+                return 1
+            def name(self):
+                return "Immortal"
+        bob.components = {}
+        bob.register_process(1, ImmortalComponent())
+
+        # While at it, we check the configurator shutdown is actually called
+        orig = bob._component_configurator.shutdown
+        bob._component_configurator.shutdown = self.__nullary_hook
+        self.__called = False
+
+        bob.ccs = MockModuleCCSession()
+        self.assertFalse(bob.ccs.stopped)
+
+        bob.shutdown()
+
+        self.assertTrue(bob.ccs.stopped)
+        self.assertEqual([], killed)
+        self.assertTrue(self.__called)
+
+        bob._component_configurator.shutdown = orig
+
     def test_component_shutdown(self):
         """
         Test the component_shutdown sets all variables accordingly.
