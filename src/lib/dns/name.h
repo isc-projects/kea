@@ -32,33 +32,42 @@ namespace dns {
 class AbstractMessageRenderer;
 
 ///
+/// \brief Base class for name parser exceptions.
+///
+class NameParserException : public Exception {
+public:
+    NameParserException(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
+///
 /// \brief A standard DNS module exception that is thrown if the name parser
 /// encounters an empty label in the middle of a name.
 ///
-class EmptyLabel : public Exception {
+class EmptyLabel : public NameParserException {
 public:
     EmptyLabel(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
+        NameParserException(file, line, what) {}
 };
 
 ///
 /// \brief A standard DNS module exception that is thrown if the name parser
 /// encounters too long a name.
 ///
-class TooLongName : public Exception {
+class TooLongName : public NameParserException {
 public:
     TooLongName(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
+        NameParserException(file, line, what) {}
 };
 
 ///
 /// \brief A standard DNS module exception that is thrown if the name parser
 /// encounters too long a label.
 ///
-class TooLongLabel : public Exception {
+class TooLongLabel : public NameParserException {
 public:
     TooLongLabel(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
+        NameParserException(file, line, what) {}
 };
 
 ///
@@ -67,20 +76,20 @@ public:
 /// applies to bitstring labels, which would begin with "\[".  Incomplete cases
 /// include an incomplete escaped sequence such as "\12".
 ///
-class BadLabelType : public Exception {
+class BadLabelType : public NameParserException {
 public:
     BadLabelType(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
+        NameParserException(file, line, what) {}
 };
 
 ///
 /// \brief A standard DNS module exception that is thrown if the name parser
 /// fails to decode a "\"-escaped sequence.
 ///
-class BadEscape : public Exception {
+class BadEscape : public NameParserException {
 public:
     BadEscape(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
+        NameParserException(file, line, what) {}
 };
 
 ///
@@ -90,10 +99,10 @@ public:
 /// An attempt of constructing a name from an empty string will trigger this
 /// exception.
 ///
-class IncompleteName : public Exception {
+class IncompleteName : public NameParserException {
 public:
     IncompleteName(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
+        NameParserException(file, line, what) {}
 };
 
 ///
