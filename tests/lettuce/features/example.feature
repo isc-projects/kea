@@ -133,10 +133,10 @@ Feature: Example feature
         Then wait for bind10 auth of bind10_one to start
         Then wait for bind10 auth of bind10_two to start
         A query for www.example.org to 127.0.0.1:47806 should have rcode NOERROR
-        A query for www.example.org to 127.0.0.1:47807 should have rcode NOERROR
+        A query for www.example.org to [::1]:47807 should have rcode NOERROR
 
         Then set bind10 configuration Auth/database_file to data/empty_db.sqlite3
         And wait for bind10_one stderr message DATASRC_SQLITE_OPEN
 
         A query for www.example.org to 127.0.0.1:47806 should have rcode REFUSED
-        A query for www.example.org to 127.0.0.1:47807 should have rcode NOERROR
+        A query for www.example.org to [::1]:47807 should have rcode NOERROR
