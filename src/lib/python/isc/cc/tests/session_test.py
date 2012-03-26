@@ -29,6 +29,7 @@ class MySocket():
         self.recvqueue = bytearray()
         self.sendqueue = bytearray()
         self._blocking = True
+        self.send_limit = None
 
     def connect(self, to):
         pass
@@ -40,7 +41,14 @@ class MySocket():
         self._blocking = val
 
     def send(self, data):
-        self.sendqueue.extend(data);
+        # If the upper limit is specified, only "send" up to the specified
+        # limit
+        if self.send_limit is not None and len(data) > self.send_limit:
+            self.sendqueue.extend(data[0:self.send_limit])
+            return self.send_limit
+        else:
+            self.sendqueue.extend(data)
+            return len(data)
 
     def readsent(self, length):
         if length > len(self.sendqueue):
@@ -101,6 +109,17 @@ class MySocket():
     def gettimeout(self):
         return 0
 
+    def set_send_limit(self, limit):
+        '''Specify the upper limit of the transmittable data at once.
+
+        By default, the send() method of this class "sends" all given data.
+        If this method is called and the its parameter is not None,
+        subsequent calls to send() will only transmit the specified amount
+        of data.  This can be used to emulate the situation where send()
+        on a real socket object results in partial write.
+        '''
+        self.send_limit = limit
+
 #
 # We subclass the Session class we're testing here, only
 # to override the __init__() method, which wants a socket,
@@ -156,6 +175,16 @@ class testSession(unittest.TestCase):
         sent = sess._socket.readsentmsg();
         #print(sent)
         #self.assertRaises(SessionError, sess.sendmsg, {}, {"hello": "a"})
+
+    def test_session_sendmsg_shortwrite(self):
+        sess = MySession()
+        # Specify the upper limit of the size that can be transmitted at
+        # a single send() call on the faked socket (10 is an arbitrary choice,
+        # just reasonably small).
+        sess._socket.set_send_limit(10)
+        sess.sendmsg({'to': 'someone', 'reply': 1}, {"hello": "a"})
+        # The complete message should still have been transmitted in the end.
+        sent = sess._socket.readsentmsg();
 
     def recv_and_compare(self, session, bytes, env, msg):
         """Adds bytes to the recvqueue (which will be read by the
