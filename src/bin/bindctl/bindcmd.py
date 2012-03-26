@@ -319,6 +319,8 @@ class BindCmdInterpreter(Cmd):
                                   param_spec = arg)
                 if ("item_default" in arg):
                     param.default = arg["item_default"]
+                if ("item_description" in arg):
+                    param.desc = arg["item_description"]
                 cmd.add_param(param)
             module.add_command(cmd)
         self.add_module_info(module)
@@ -361,12 +363,12 @@ class BindCmdInterpreter(Cmd):
                 if type(name) == int:
                     # lump all extraneous arguments together as one big final one
                     # todo: check if last param type is a string?
-                    if (param_count > 2):
-                        while (param_count > len(command_info.params) - 1):
-                            params[param_count - 2] += params[param_count - 1]
-                            del(params[param_count - 1])
-                            param_count = len(params)
-                            cmd.params = params.copy()
+                    while (param_count > 2 and
+                           param_count > len(command_info.params) - 1):
+                        params[param_count - 2] += " " + params[param_count - 1]
+                        del(params[param_count - 1])
+                        param_count = len(params)
+                        cmd.params = params.copy()
 
                     # (-1, help is always in the all_params list)
                     if name >= len(all_params) - 1:
