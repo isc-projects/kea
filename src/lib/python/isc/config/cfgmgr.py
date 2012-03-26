@@ -159,6 +159,11 @@ class ConfigManagerData:
             old_file_name = self.db_filename
         if new_file_name is None:
             new_file_name = old_file_name + ".bak"
+        if os.path.exists(new_file_name):
+            i = 1
+            while os.path.exists(new_file_name + "." + str(i)):
+                i += 1
+            new_file_name = new_file_name + "." + str(i)
         if os.path.exists(old_file_name):
             logger.info(CFGMGR_RENAMED_CONFIG_FILE, old_file_name, new_file_name)
             os.rename(old_file_name, new_file_name)
