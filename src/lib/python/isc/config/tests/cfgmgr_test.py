@@ -74,7 +74,14 @@ class TestConfigManagerData(unittest.TestCase):
         self.assertEqual(self.config_manager_data, new_config)
         os.remove(output_file_name)
 
-    def check_existance(self, files, should_exist=[], should_not_exist=[]):
+    def check_existence(self, files, should_exist=[], should_not_exist=[]):
+        """Helper function for test_rename_config_file.
+           Arguments:
+           files: array of file names to check.
+           should_exist: array of indices, the files in 'files' with these
+                         indices should exist.
+           should_not_exist: array of indices, the files in 'files' with
+                             these indices should not exist."""
         for n in should_exist:
             self.assertTrue(os.path.exists(files[n]))
         for n in should_not_exist:
@@ -93,28 +100,28 @@ class TestConfigManagerData(unittest.TestCase):
 
         # The original does not exist, so the new one should not be created
         self.config_manager_data.rename_config_file(filenames[0])
-        self.check_existance(filenames, [], [0, 1, 2, 3])
+        self.check_existence(filenames, [], [0, 1, 2, 3])
 
         # now create a file to rename, and call rename again
         self.config_manager_data.write_to_file(filenames[0])
         self.config_manager_data.rename_config_file(filenames[0])
-        self.check_existance(filenames, [1], [0, 2, 3])
+        self.check_existence(filenames, [1], [0, 2, 3])
 
         # If backup already exists, give it a new name automatically
         self.config_manager_data.write_to_file(filenames[0])
         self.config_manager_data.rename_config_file(filenames[0])
-        self.check_existance(filenames, [1, 2], [0, 3])
+        self.check_existence(filenames, [1, 2], [0, 3])
 
         # If backup already exists, give it a new name automatically with
         # increasing postfix
         self.config_manager_data.write_to_file(filenames[0])
         self.config_manager_data.rename_config_file(filenames[0])
-        self.check_existance(filenames, [1, 2, 3], [0])
+        self.check_existence(filenames, [1, 2, 3], [0])
 
         # Test with explicit renamed file argument
         self.config_manager_data.rename_config_file(filenames[1],
                                                     filenames[0])
-        self.check_existance(filenames, [0, 2, 3], [1])
+        self.check_existence(filenames, [0, 2, 3], [1])
 
         # clean up again to be nice
         for filename in filenames:
