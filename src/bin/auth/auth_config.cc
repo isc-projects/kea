@@ -163,9 +163,16 @@ MemoryDatasourceConfig::build(ConstElementPtr config_value) {
             isc_throw(AuthConfigError, "Missing zone file for zone: "
                       << origin->str());
         }
-        boost::shared_ptr<InMemoryZoneFinder> zone_finder(new
-                                                   InMemoryZoneFinder(rrclass_,
-            Name(origin->stringValue())));
+
+	InMemoryZoneFinder *imzf = NULL;
+	try {
+	    imzf = new InMemoryZoneFinder(rrclass_, Name(origin->stringValue()));
+	} catch (const isc::dns::NameParserException& ex) {
+	    isc_throw(AuthConfigError, "Error parsing zone's origin: " <<
+		      ex.what());
+	}
+
+	boost::shared_ptr<InMemoryZoneFinder> zone_finder(imzf);
         const result::Result result = memory_client_->addZone(zone_finder);
         if (result == result::EXIST) {
             isc_throw(AuthConfigError, "zone "<< origin->str()
