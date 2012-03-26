@@ -923,16 +923,9 @@ DatabaseClient::Finder::findPreviousName(const Name& name) const {
     try {
         return (Name(str));
     }
-
-    // To avoid having the same code many times, we just catch all the
-    // exceptions and handle them in a common code below
-    catch (const isc::dns::EmptyLabel&) {}
-    catch (const isc::dns::TooLongLabel&) {}
-    catch (const isc::dns::BadLabelType&) {}
-    catch (const isc::dns::BadEscape&) {}
-    catch (const isc::dns::TooLongName&) {}
-    catch (const isc::dns::IncompleteName&) {}
-    isc_throw(DataSourceError, "Bad name " + str + " from findPreviousName");
+    catch (const isc::dns::NameParserException&) {
+        isc_throw(DataSourceError, "Bad name " + str + " from findPreviousName");
+    }
 }
 
 Name
