@@ -34,7 +34,27 @@ The is the database name with ".backup" appended to it (or ".backup-n" if
 upgrade fails.
 """
 
+# Exit codes
+# These are defined here because one of them is already used before most
+# of the import statements.
+EXIT_SUCCESS = 0
+EXIT_NEED_UPDATE = 1
+EXIT_VERSION_TOO_HIGH = 2
+EXIT_COMMAND_ERROR = 3
+EXIT_READ_ERROR = 4
+EXIT_UPGRADE_ERROR = 5
+EXIT_UNCAUGHT_EXCEPTION = 6
+
 import sys; sys.path.append("@@PYTHONPATH@@")
+
+# Normally, python exits with a status code of 1 on uncaught exceptions
+# Since we reserve exit status 1 for 'database needs upgrade', we
+# override the excepthook to exit with a different status
+def my_except_hook(a, b, c):
+    sys.__excepthook__(a,b,c)
+    sys.exit(EXIT_UNCAUGHT_EXCEPTION)
+sys.excepthook = my_except_hook
+
 import os, sqlite3, shutil
 from optparse import OptionParser
 import isc.util.process
@@ -47,19 +67,12 @@ isc.util.process.rename()
 
 TRACE_BASIC = logger.DBGLVL_TRACE_BASIC
 
+
 # @brief Version String
 # This is the version displayed to the user.  It comprises the module name,
 # the module version number, and the overall BIND 10 version number (set in
 # configure.ac)
 VERSION = "b10-dbutil 20120319 (BIND 10 @PACKAGE_VERSION@)"
-
-# Exit codes
-EXIT_SUCCESS = 0
-EXIT_NEED_UPDATE = 1
-EXIT_VERSION_TOO_HIGH = 2
-EXIT_COMMAND_ERROR = 3
-EXIT_READ_ERROR = 4
-EXIT_UPGRADE_ERROR = 5
 
 # @brief Statements to Update the Database
 # These are in the form of a list of dictionaries, each of which contains the
@@ -585,13 +598,11 @@ if __name__ == "__main__":
         except Exception as ex:
             if in_progress:
                 logger.error(DBUTIL_UPGRADE_FAILED, ex)
-                logger.warn(DBUTIL_DATABASE_MAY_BE_CORRUPTED)
+                logger.warn(DBUTIL_DATABASE_MAY_BE_CORRUPT, db.db_file,
+                            db.backup_file)
             else:
                 logger.error(DBUTIL_UPGRADE_PREPARATION_FAILED, ex)
                 logger.info(DBUTIL_UPGRADE_NOT_ATTEMPTED)
             exit_code = EXIT_UPGRADE_ERROR
-    else:
-        logger.error(DBUTIL_NO_ACTION_SPECIFIED)
-        exit_code = EXIT_COMMAND_ERROR
 
     sys.exit(exit_code)

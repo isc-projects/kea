@@ -47,7 +47,7 @@ provided.
 b10-dbutil was called with both the commands --upgrade and --check. Only one
 action can be performed at a time.
 
-% DBUTIL_DATABASE_MAY_BE_CORRUPTED database may be corrupt, restore it from backup
+% DBUTIL_DATABASE_MAY_BE_CORRUPT database file %1 may be corrupt, restore it from backup (%2)
 The upgrade failed while it was in progress; the database may now be in an
 inconsistent state, and it is advised to restore it from the backup that was
 created when b10-dbutil started.
@@ -57,9 +57,6 @@ Debug message; the given SQL statement is executed
 
 % DBUTIL_FILE Database file: %1
 The database file that is being checked.
-
-% DBUTIL_NO_ACTION_SPECIFIED Command error: neither --check nor --upgrade selected
-b10-dbutil was called without either --check or --upgrade.
 
 % DBUTIL_NO_FILE must supply name of the database file to upgrade
 b10-dbutil was called without a database file. Currently, it cannot find this
