@@ -164,15 +164,16 @@ MemoryDatasourceConfig::build(ConstElementPtr config_value) {
                       << origin->str());
         }
 
-	InMemoryZoneFinder *imzf = NULL;
-	try {
-	    imzf = new InMemoryZoneFinder(rrclass_, Name(origin->stringValue()));
-	} catch (const isc::dns::NameParserException& ex) {
-	    isc_throw(AuthConfigError, "unable to parse zone's origin: " <<
-		      ex.what());
-	}
+        InMemoryZoneFinder* imzf = NULL;
+        try {
+            imzf = new InMemoryZoneFinder(rrclass_,
+                                          Name(origin->stringValue()));
+        } catch (const isc::dns::NameParserException& ex) {
+            isc_throw(AuthConfigError, "unable to parse zone's origin: " <<
+                      ex.what());
+        }
 
-	boost::shared_ptr<InMemoryZoneFinder> zone_finder(imzf);
+        boost::shared_ptr<InMemoryZoneFinder> zone_finder(imzf);
         const result::Result result = memory_client_->addZone(zone_finder);
         if (result == result::EXIST) {
             isc_throw(AuthConfigError, "zone "<< origin->str()
