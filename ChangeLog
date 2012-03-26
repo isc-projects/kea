@@ -1,3 +1,12 @@
+410.	[bug]		jinmei
+	Python CC library now ensures write operations transmit all given
+	data (unless an error happens).  Previously it didn't check the
+	size of transmitted data, which could result in partial write on
+	some systems (notably on OpenBSD) and subsequently cause system
+	hang up or other broken state.  This fix specifically solves start
+	up failure on OpenBSD.
+	(Trac #1829, git 5e5a33213b60d89e146cd5e47d65f3f9833a9297)
+
 409.	[bug]		jelte
 	Fixed a parser bug in bindctl that could make bindctl crash. Also
 	improved 'command help' output; argument order is now shown
