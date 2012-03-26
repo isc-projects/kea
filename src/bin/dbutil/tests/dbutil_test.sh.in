@@ -445,7 +445,7 @@ rm -f $tempfile $backupfile
 
 echo "13.3 quiet flag"
 copy_file $testdata/old_v1.sqlite3 $tempfile
-../run_dbutil.sh --check --quiet $tempfile 2>&1 | grep dbutil
+../run_dbutil.sh --check --quiet $tempfile 2>&1 | grep .
 failzero $?
 rm -f $tempfile $backupfile
 
