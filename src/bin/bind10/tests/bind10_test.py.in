@@ -1204,7 +1204,12 @@ class TestBossComponents(unittest.TestCase):
         bob.shutdown()
 
         self.assertTrue(bob.ccs.stopped)
+
+        # Here, killed is an array where False is added if SIGTERM
+        # should be sent, or True if SIGKILL should be sent, in order in
+        # which they're sent.
         self.assertEqual([False, True], killed)
+
         self.assertTrue(self.__called)
 
         bob._component_configurator.shutdown = orig
@@ -1247,7 +1252,12 @@ class TestBossComponents(unittest.TestCase):
         bob.shutdown()
 
         self.assertTrue(bob.ccs.stopped)
+
+        # Here, killed is an array where False is added if SIGTERM
+        # should be sent, or True if SIGKILL should be sent, in order in
+        # which they're sent.
         self.assertEqual([], killed)
+
         self.assertTrue(self.__called)
 
         bob._component_configurator.shutdown = orig
