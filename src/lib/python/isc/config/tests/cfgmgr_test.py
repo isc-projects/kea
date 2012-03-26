@@ -74,36 +74,52 @@ class TestConfigManagerData(unittest.TestCase):
         self.assertEqual(self.config_manager_data, new_config)
         os.remove(output_file_name)
 
+    def check_existance(self, files, should_exist=[], should_not_exist=[]):
+        for n in should_exist:
+            self.assertTrue(os.path.exists(files[n]))
+        for n in should_not_exist:
+            self.assertFalse(os.path.exists(files[n]))
+
     def test_rename_config_file(self):
-        output_file_name = "b10-config-rename-test"
-        renamed_file_name = "b10-config-rename-test.bak"
-        if os.path.exists(output_file_name):
-            os.remove(output_file_name)
-        if os.path.exists(renamed_file_name):
-            os.remove(renamed_file_name)
+        # test file names, put in array for easy cleanup
+        filenames = [ "b10-config-rename-test",
+                      "b10-config-rename-test.bak",
+                      "b10-config-rename-test.bak.1",
+                      "b10-config-rename-test.bak.2" ]
+
+        for filename in filenames:
+            if os.path.exists(filename):
+                os.remove(filename)
 
         # The original does not exist, so the new one should not be created
-        self.config_manager_data.rename_config_file(output_file_name)
-        self.assertFalse(os.path.exists(output_file_name))
-        self.assertFalse(os.path.exists(renamed_file_name))
+        self.config_manager_data.rename_config_file(filenames[0])
+        self.check_existance(filenames, [], [0, 1, 2, 3])
 
         # now create a file to rename, and call rename again
-        self.config_manager_data.write_to_file(output_file_name)
-        self.config_manager_data.rename_config_file(output_file_name)
-        self.assertFalse(os.path.exists(output_file_name))
-        self.assertTrue(os.path.exists(renamed_file_name))
+        self.config_manager_data.write_to_file(filenames[0])
+        self.config_manager_data.rename_config_file(filenames[0])
+        self.check_existance(filenames, [1], [0, 2, 3])
+
+        # If backup already exists, give it a new name automatically
+        self.config_manager_data.write_to_file(filenames[0])
+        self.config_manager_data.rename_config_file(filenames[0])
+        self.check_existance(filenames, [1, 2], [0, 3])
+
+        # If backup already exists, give it a new name automatically with
+        # increasing postfix
+        self.config_manager_data.write_to_file(filenames[0])
+        self.config_manager_data.rename_config_file(filenames[0])
+        self.check_existance(filenames, [1, 2, 3], [0])
 
         # Test with explicit renamed file argument
-        self.config_manager_data.rename_config_file(renamed_file_name,
-                                                    output_file_name)
-        self.assertTrue(os.path.exists(output_file_name))
-        self.assertFalse(os.path.exists(renamed_file_name))
+        self.config_manager_data.rename_config_file(filenames[1],
+                                                    filenames[0])
+        self.check_existance(filenames, [0, 2, 3], [1])
 
         # clean up again to be nice
-        if os.path.exists(output_file_name):
-            os.remove(output_file_name)
-        if os.path.exists(renamed_file_name):
-            os.remove(renamed_file_name)
+        for filename in filenames:
+            if os.path.exists(filename):
+                os.remove(filename)
 
     def test_equality(self):
         # tests the __eq__ function. Equality is only defined
