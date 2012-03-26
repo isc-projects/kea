@@ -168,7 +168,7 @@ MemoryDatasourceConfig::build(ConstElementPtr config_value) {
 	try {
 	    imzf = new InMemoryZoneFinder(rrclass_, Name(origin->stringValue()));
 	} catch (const isc::dns::NameParserException& ex) {
-	    isc_throw(AuthConfigError, "Error parsing zone's origin: " <<
+	    isc_throw(AuthConfigError, "unable to parse zone's origin: " <<
 		      ex.what());
 	}
 
