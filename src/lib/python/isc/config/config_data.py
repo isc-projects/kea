@@ -42,7 +42,7 @@ def spec_part_is_map(spec_part):
 def spec_part_is_named_set(spec_part):
     """Returns True if the given spec_part is a dict that contains a
        named_set specification, and False otherwise."""
-    return (type(spec_part) == dict and 'named_map_item_spec' in spec_part)
+    return (type(spec_part) == dict and 'named_set_item_spec' in spec_part)
 
 def check_type(spec_part, value):
     """Does nothing if the value is of the correct type given the
@@ -720,6 +720,15 @@ class MultiConfigData:
                                     cur_id_part + id,
                                     cur_value)
             cur_id_part = cur_id_part + id_part + "/"
+
+            # We also need to copy to local if we are changing a named set,
+            # so that the other items in the set do not disappear
+            if spec_part_is_named_set(self.find_spec_part(cur_id_part)):
+                ns_value, ns_status = self.get_value(cur_id_part)
+                if ns_status != MultiConfigData.LOCAL:
+                    isc.cc.data.set(self._local_changes,
+                                    cur_id_part,
+                                    ns_value)
         isc.cc.data.set(self._local_changes, identifier, value)
 
     def _get_list_items(self, item_name):
