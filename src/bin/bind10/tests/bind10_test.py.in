@@ -1176,11 +1176,13 @@ class TestBossComponents(unittest.TestCase):
         # We check somewhere else that the shutdown is actually called
         # from there (the test_kills).
 
-    def test_kills(self):
+    def __real_test_kill(self, nokill = False):
         """
-        Test that the boss kills components which don't want to stop.
+        Helper function that does the actual kill functionality testing.
         """
         bob = MockBob()
+        bob.nokill = nokill
+
         killed = []
         class ImmortalComponent:
             """
@@ -1214,11 +1216,20 @@ class TestBossComponents(unittest.TestCase):
         # Here, killed is an array where False is added if SIGTERM
         # should be sent, or True if SIGKILL should be sent, in order in
         # which they're sent.
-        self.assertEqual([False, True], killed)
+        if nokill:
+            self.assertEqual([], killed)
+        else:
+            self.assertEqual([False, True], killed)
 
         self.assertTrue(self.__called)
 
         bob._component_configurator.shutdown = orig
+
+    def test_kills(self):
+        """
+        Test that the boss kills components which don't want to stop.
+        """
+        self.__real_test_kill()
 
     def test_nokill(self):
         """
@@ -1226,47 +1237,7 @@ class TestBossComponents(unittest.TestCase):
         stop, when asked not to (by passing the --no-kill option which
         sets bob.nokill to True).
         """
-        bob = MockBob()
-        bob.nokill = True
-
-        killed = []
-        class ImmortalComponent:
-            """
-            An immortal component. It does not stop when it is told so
-            (anyway it is not told so). It does not die if it is killed
-            the first time. It dies only when killed forcefully.
-            """
-            def kill(self, forceful=False):
-                killed.append(forceful)
-                if forceful:
-                    bob.components = {}
-            def pid(self):
-                return 1
-            def name(self):
-                return "Immortal"
-        bob.components = {}
-        bob.register_process(1, ImmortalComponent())
-
-        # While at it, we check the configurator shutdown is actually called
-        orig = bob._component_configurator.shutdown
-        bob._component_configurator.shutdown = self.__nullary_hook
-        self.__called = False
-
-        bob.ccs = MockModuleCCSession()
-        self.assertFalse(bob.ccs.stopped)
-
-        bob.shutdown()
-
-        self.assertTrue(bob.ccs.stopped)
-
-        # Here, killed is an array where False is added if SIGTERM
-        # should be sent, or True if SIGKILL should be sent, in order in
-        # which they're sent.
-        self.assertEqual([], killed)
-
-        self.assertTrue(self.__called)
-
-        bob._component_configurator.shutdown = orig
+        self.__real_test_kill(True)
 
     def test_component_shutdown(self):
         """
