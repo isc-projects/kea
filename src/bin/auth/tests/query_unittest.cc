@@ -239,6 +239,10 @@ const char* const unsigned_delegation_optout_nsec_txt =
 const char* const bad_delegation_txt =
     "bad-delegation.example.com. 3600 IN NS ns.example.net.\n";
 
+// Delegation from an unsigned parent.  There's no DS, and there's no NSEC
+// or NSEC3 that proves it.
+const char* const nosec_delegation_txt =
+    "nosec-delegation.example.com. 3600 IN NS ns.nosec.example.net.\n";
 
 // A helper function that generates a textual representation of RRSIG RDATA
 // for the given covered type.  The resulting RRSIG may not necessarily make
@@ -314,7 +318,7 @@ public:
             unsigned_delegation_txt << unsigned_delegation_nsec_txt <<
             unsigned_delegation_optout_txt <<
             unsigned_delegation_optout_nsec_txt <<
-            bad_delegation_txt;
+            bad_delegation_txt << nosec_delegation_txt;
 
         masterLoad(zone_stream, origin_, rrclass_,
                    boost::bind(&MockZoneFinder::loadRRset, this, _1));
@@ -715,8 +719,9 @@ MockZoneFinder::find(const Name& name, const RRType& type,
                                       RESULT_NSEC_SIGNED));
             }
         }
-        return (createContext(options, NXRRSET, RRsetPtr(),
-                              RESULT_NSEC_SIGNED));
+        // If no NSEC is found or DNSSEC isn't specified, behave as if the
+        // zone is unsigned.
+        return (createContext(options, NXRRSET, RRsetPtr()));
     }
 
     // query name isn't found in our domains.
@@ -1095,6 +1100,17 @@ TEST_F(QueryTest, delegation) {
 
     responseCheck(response, Rcode::NOERROR(), 0, 0, 4, 3,
                   NULL, delegation_txt, ns_addrs_txt);
+}
+
+TEST_F(QueryTest, delegationWithDNSSEC) {
+    // Similar to the previous one, but with requesting DNSSEC.
+    // In this case the parent zone would behave as unsigned, so the result
+    // should be just like non DNSSEC delegation.
+    query.process(memory_client, Name("www.nosec-delegation.example.com"),
+                  qtype, response, true);
+
+    responseCheck(response, Rcode::NOERROR(), 0, 0, 1, 0,
+                  NULL, nosec_delegation_txt, NULL);
 }
 
 TEST_F(QueryTest, secureDelegation) {
