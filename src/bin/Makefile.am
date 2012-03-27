@@ -1,4 +1,4 @@
 SUBDIRS = bind10 bindctl cfgmgr ddns loadzone msgq host cmdctl auth xfrin \
-	xfrout usermgr zonemgr stats tests resolver sockcreator dhcp4 dhcp6
+	xfrout usermgr zonemgr stats tests resolver sockcreator dhcp4 dhcp6 dbutil
 
 check-recursive: all-recursive

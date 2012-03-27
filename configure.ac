@@ -1015,6 +1015,9 @@ AC_CONFIG_FILES([Makefile
                  src/bin/cfgmgr/plugins/Makefile
                  src/bin/cfgmgr/plugins/tests/Makefile
                  src/bin/cfgmgr/tests/Makefile
+                 src/bin/dbutil/Makefile
+                 src/bin/dbutil/tests/Makefile
+                 src/bin/dbutil/tests/testdata/Makefile
                  src/bin/host/Makefile
                  src/bin/loadzone/Makefile
                  src/bin/loadzone/tests/correct/Makefile
@@ -1028,8 +1031,8 @@ AC_CONFIG_FILES([Makefile
                  src/bin/ddns/tests/Makefile
                  src/bin/dhcp6/Makefile
                  src/bin/dhcp6/tests/Makefile
-		 src/bin/dhcp4/Makefile
-		 src/bin/dhcp4/tests/Makefile
+                 src/bin/dhcp4/Makefile
+                 src/bin/dhcp4/tests/Makefile
                  src/bin/resolver/Makefile
                  src/bin/resolver/tests/Makefile
                  src/bin/sockcreator/Makefile
@@ -1143,6 +1146,9 @@ AC_OUTPUT([doc/version.ent
            src/bin/cmdctl/run_b10-cmdctl.sh
            src/bin/cmdctl/tests/cmdctl_test
            src/bin/cmdctl/cmdctl.spec.pre
+           src/bin/dbutil/dbutil.py
+           src/bin/dbutil/run_dbutil.sh
+           src/bin/dbutil/tests/dbutil_test.sh
            src/bin/ddns/ddns.py
            src/bin/xfrin/tests/xfrin_test
            src/bin/xfrin/xfrin.py
@@ -1226,6 +1232,8 @@ AC_OUTPUT([doc/version.ent
            chmod +x src/bin/zonemgr/run_b10-zonemgr.sh
            chmod +x src/bin/bind10/run_bind10.sh
            chmod +x src/bin/cmdctl/tests/cmdctl_test
+           chmod +x src/bin/dbutil/run_dbutil.sh
+           chmod +x src/bin/dbutil/tests/dbutil_test.sh
            chmod +x src/bin/xfrin/tests/xfrin_test
            chmod +x src/bin/xfrout/tests/xfrout_test
            chmod +x src/bin/zonemgr/tests/zonemgr_test
