@@ -234,4 +234,4 @@ class SendNonblock(unittest.TestCase):
         self.send_many(data)
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(verbosity=2)

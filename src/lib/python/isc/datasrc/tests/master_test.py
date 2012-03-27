@@ -32,4 +32,4 @@ class TestTTL(unittest.TestCase):
         self.assertFalse(isttl('1X'))
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(verbosity=2)

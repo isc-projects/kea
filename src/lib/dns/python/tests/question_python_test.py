@@ -98,4 +98,4 @@ class QuestionTest(unittest.TestCase):
         self.assertEqual(0, renderer.get_length())
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(verbosity=2)

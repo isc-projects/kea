@@ -82,4 +82,4 @@ class TestCheckIP(unittest.TestCase):
         self.assertEqual("2001:bd8::", str(addr_parse("2001:bd8::0.0.0.0")))
 
 if __name__ == "__main__":
-    unittest.main()
+    unittest.main(verbosity=2)

@@ -624,4 +624,4 @@ test.example.com. 3600 IN A 192.0.2.2
                           self.p, "message_fromWire16.wire")
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(verbosity=2)

@@ -57,4 +57,4 @@ class TestCCWireEncoding(unittest.TestCase):
         self.assertEqual(env["instance"], "i4")
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(verbosity=2)

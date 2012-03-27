@@ -470,5 +470,5 @@ class TestCommandLineOptions(unittest.TestCase):
                           ['--csv-file-dir'])
 
 if __name__== "__main__":
-    unittest.main()
+    unittest.main(verbosity=2)
 

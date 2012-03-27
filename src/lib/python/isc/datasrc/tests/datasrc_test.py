@@ -893,4 +893,4 @@ class JournalRead(unittest.TestCase):
 if __name__ == "__main__":
     isc.log.init("bind10")
     isc.log.resetUnitTestRootLogger()
-    unittest.main()
+    unittest.main(verbosity=2)

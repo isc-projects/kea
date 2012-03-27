@@ -239,6 +239,6 @@ if __name__ == '__main__':
     #if not 'CONFIG_TESTDATA_PATH' in os.environ:
     #    print("You need to set the environment variable CONFIG_TESTDATA_PATH to point to the directory containing the test data files")
     #    exit(1)
-    unittest.main()
+    unittest.main(verbosity=2)
 
 
