@@ -125,4 +125,4 @@ class NSEC3HashTest(unittest.TestCase):
                           Rdata(RRType.A(), RRClass.IN(), "192.0.2.1"))
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(verbosity=2)

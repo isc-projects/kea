@@ -483,6 +483,6 @@ class TestFuncNotInClass(unittest.TestCase):
 
 if __name__== "__main__":
     isc.log.resetUnitTestRootLogger()
-    unittest.main()
+    unittest.main(verbosity=2)
 
 

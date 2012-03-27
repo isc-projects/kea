@@ -141,4 +141,4 @@ class TestModuleSpec(unittest.TestCase):
         self.assertEqual(255, RRType.ANY().get_code())
         
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(verbosity=2)

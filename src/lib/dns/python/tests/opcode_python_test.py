@@ -109,4 +109,4 @@ class OpcodeTest(unittest.TestCase):
             self.assertEqual(TypeError, type(err))
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(verbosity=2)

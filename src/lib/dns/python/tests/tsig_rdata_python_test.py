@@ -27,4 +27,4 @@ class TSIGRdataTest(unittest.TestCase):
         self.assertEqual(1, sys.getrefcount(tsig.get_algorithm()))
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(verbosity=2)
