@@ -14,6 +14,7 @@ EXTRA_DIST += config_messages.py
 EXTRA_DIST += notify_out_messages.py
 EXTRA_DIST += libxfrin_messages.py
 EXTRA_DIST += server_common_messages.py
+EXTRA_DIST += dbutil_messages.py
 
 CLEANFILES = __init__.pyc
 CLEANFILES += bind10_messages.pyc
