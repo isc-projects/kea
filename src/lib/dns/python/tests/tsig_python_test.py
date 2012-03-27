@@ -551,4 +551,4 @@ class TSIGContextTest(unittest.TestCase):
                                 TSIGContext.STATE_RECEIVED_REQUEST)
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(verbosity=2)
