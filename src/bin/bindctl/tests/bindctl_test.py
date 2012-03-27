@@ -365,9 +365,19 @@ class TestConfigCommands(unittest.TestCase):
         self.assertEqual((5, MultiConfigData.LOCAL),
                          self.tool.config_data.get_value("/foo/an_int"))
 
+        cmd = cmdparse.BindCmdParse("config unset identifier=\"foo/an_int\"")
+        self.tool.apply_config_cmd(cmd)
+
+        self.assertEqual((1, MultiConfigData.DEFAULT),
+                         self.tool.config_data.get_value("/foo/an_int"))
+
         # this should raise a NotFoundError
         cmd = cmdparse.BindCmdParse("config set identifier=\"foo/bar\" value=\"[]\"")
         self.assertRaises(isc.cc.data.DataNotFoundError, self.tool.apply_config_cmd, cmd)
+
+        cmd = cmdparse.BindCmdParse("config unset identifier=\"foo/bar\"")
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          self.tool.apply_config_cmd, cmd)
 
         # this should raise a TypeError
         cmd = cmdparse.BindCmdParse("config set identifier=\"foo/an_int\" value=\"[]\"")
