@@ -1,0 +1,41 @@
+The versioning of BIND 10 databases to date has not been the best:
+
+The original database is known here as the "old V1" schema.  It had a
+schema_version table, with the single "version" value set to 1.
+
+The schema was then updated with a "diffs" table.  This is referred to
+here as the "new V1" schema.
+
+The Spring 2012 release of BIND 10 modified the schema.  The
+schema_version table was updated to include a "minor" column, holding the
+minor version number. Other changes to the database included redefining
+"STRING" columns as "TEXT" columns.  This is referred to as the "V2.0
+schema".
+
+The following test data files are present:
+
+empty_schema.sqlite3: A database conforming to the new V1 schema.
+However, there is nothing in the schema_version table.
+
+empty_v1.sqlite3: A database conforming to the new V1 schema.
+The database is empty, except for the schema_version table, where the
+"version" column is set to 1.
+
+empty_version.sqlite3: A database conforming to the V2.0 schema but without
+anything in the schema_version table.
+
+no_schema.sqlite3: A valid SQLite3 database, but without a schema_version
+table.
+
+old_v1.sqlite3: A valid SQLite3 database conforming to the old V1 schema.
+It does not have a diffs table.
+
+invalid_v1.sqlite3: A valid SQLite3 database that, although the schema
+is marked as V1, does not have the nsec3 table.
+
+new_v1.sqlite3: A valid SQLite3 database with data in all the tables
+(although the single rows in both the nsec3 and diffs table make no
+sense, but are valid).
+
+too_many_version.sqlite3: A database conforming to the V2.0 schema but with
+too many rows of data.
