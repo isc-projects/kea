@@ -130,6 +130,15 @@ TEST_F(NameTest, nonlocalObject) {
     EXPECT_EQ("\\255.example.com.", downcased_global.toText());
 }
 
+template <typename ExceptionType>
+void
+checkBadTextName(const string& txt) {
+    // Check it results in the specified type of exception as well as
+    // NameParserException.
+    EXPECT_THROW(Name(txt, false), ExceptionType);
+    EXPECT_THROW(Name(txt, false), NameParserException);
+}
+
 TEST_F(NameTest, fromText) {
     vector<string> strnames;
     strnames.push_back("www.example.com");
@@ -154,42 +163,42 @@ TEST_F(NameTest, fromText) {
     // Tests for bogus names.  These should trigger exceptions.
     //
     // empty label cannot be followed by another label
-    EXPECT_THROW(Name(".a"), EmptyLabel);
+    checkBadTextName<EmptyLabel>(".a");
     // duplicate period
-    EXPECT_THROW(Name("a.."), EmptyLabel);
+    checkBadTextName<EmptyLabel>("a..");
     // label length must be < 64
-    EXPECT_THROW(Name("012345678901234567890123456789"
-                      "012345678901234567890123456789"
-                      "0123"), TooLongLabel);
+    checkBadTextName<TooLongLabel>("012345678901234567890123456789"
+                                   "012345678901234567890123456789"
+                                   "0123");
     // now-unsupported bitstring labels
-    EXPECT_THROW(Name("\\[b11010000011101]"), BadLabelType);
+    checkBadTextName<BadLabelType>("\\[b11010000011101]");
     // label length must be < 64
-    EXPECT_THROW(Name("012345678901234567890123456789"
-                      "012345678901234567890123456789"
-                      "012\\x"), TooLongLabel);
+    checkBadTextName<TooLongLabel>("012345678901234567890123456789"
+                                   "012345678901234567890123456789"
+                                   "012\\x");
     // but okay as long as resulting len < 64 even if the original string is
     // "too long"
     EXPECT_NO_THROW(Name("012345678901234567890123456789"
                          "012345678901234567890123456789"
                          "01\\x"));
     // incomplete \DDD pattern (exactly 3 D's must appear)
-    EXPECT_THROW(Name("\\12abc"), BadEscape);
+    checkBadTextName<BadEscape>("\\12abc");
     // \DDD must not exceed 255
-    EXPECT_THROW(Name("\\256"), BadEscape);
+    checkBadTextName<BadEscape>("\\256");
     // Same tests for \111 as for \\x above
-    EXPECT_THROW(Name("012345678901234567890123456789"
-                      "012345678901234567890123456789"
-                      "012\\111"), TooLongLabel);
+    checkBadTextName<TooLongLabel>("012345678901234567890123456789"
+                                   "012345678901234567890123456789"
+                                   "012\\111");
     EXPECT_NO_THROW(Name("012345678901234567890123456789"
                          "012345678901234567890123456789"
                          "01\\111"));
     // A domain name must be 255 octets or less
-    EXPECT_THROW(Name("123456789.123456789.123456789.123456789.123456789."
-                      "123456789.123456789.123456789.123456789.123456789."
-                      "123456789.123456789.123456789.123456789.123456789."
-                      "123456789.123456789.123456789.123456789.123456789."
-                      "123456789.123456789.123456789.123456789.123456789."
-                      "1234"), TooLongName);
+    checkBadTextName<TooLongName>("123456789.123456789.123456789.123456789.123456789."
+                                  "123456789.123456789.123456789.123456789.123456789."
+                                  "123456789.123456789.123456789.123456789.123456789."
+                                  "123456789.123456789.123456789.123456789.123456789."
+                                  "123456789.123456789.123456789.123456789.123456789."
+                                  "1234");
     // This is a possible longest name and should be accepted
     EXPECT_NO_THROW(Name("123456789.123456789.123456789.123456789.123456789."
                          "123456789.123456789.123456789.123456789.123456789."
@@ -198,7 +207,7 @@ TEST_F(NameTest, fromText) {
                          "123456789.123456789.123456789.123456789.123456789."
                          "123"));
     // \DDD must consist of 3 digits.
-    EXPECT_THROW(Name("\\12"), IncompleteName);
+    checkBadTextName<IncompleteName>("\\12");
 
     // a name with the max number of labels.  should be constructed without
     // an error, and its length should be the max value.
@@ -210,43 +219,6 @@ TEST_F(NameTest, fromText) {
                           "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9." // 240
                           "0.1.2.3.4.5.6.");
     EXPECT_EQ(Name::MAX_LABELS, maxlabels.getLabelCount());
-}
-
-TEST_F(NameTest, testNameParserExceptions) {
-    //
-    // Tests for bogus names.  These should trigger exceptions.
-    //
-    // empty label cannot be followed by another label
-    EXPECT_THROW(Name(".a"), NameParserException);
-    // duplicate period
-    EXPECT_THROW(Name("a.."), NameParserException);
-    // label length must be < 64
-    EXPECT_THROW(Name("012345678901234567890123456789"
-                      "012345678901234567890123456789"
-                      "0123"), NameParserException);
-    // now-unsupported bitstring labels
-    EXPECT_THROW(Name("\\[b11010000011101]"), NameParserException);
-    // label length must be < 64
-    EXPECT_THROW(Name("012345678901234567890123456789"
-                      "012345678901234567890123456789"
-                      "012\\x"), NameParserException);
-    // incomplete \DDD pattern (exactly 3 D's must appear)
-    EXPECT_THROW(Name("\\12abc"), NameParserException);
-    // \DDD must not exceed 255
-    EXPECT_THROW(Name("\\256"), NameParserException);
-    // Same tests for \111 as for \\x above
-    EXPECT_THROW(Name("012345678901234567890123456789"
-                      "012345678901234567890123456789"
-                      "012\\111"), NameParserException);
-    // A domain name must be 255 octets or less
-    EXPECT_THROW(Name("123456789.123456789.123456789.123456789.123456789."
-                      "123456789.123456789.123456789.123456789.123456789."
-                      "123456789.123456789.123456789.123456789.123456789."
-                      "123456789.123456789.123456789.123456789.123456789."
-                      "123456789.123456789.123456789.123456789.123456789."
-                      "1234"), NameParserException);
-    // \DDD must consist of 3 digits.
-    EXPECT_THROW(Name("\\12"), NameParserException);
 }
 
 TEST_F(NameTest, fromWire) {
