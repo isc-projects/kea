@@ -167,8 +167,9 @@ class BoB:
     """Boss of BIND class."""
     
     def __init__(self, msgq_socket_file=None, data_path=None,
-    config_filename=None, clear_config=False, nocache=False, verbose=False,
-    setuid=None, username=None, cmdctl_port=None, wait_time=10):
+                 config_filename=None, clear_config=False, nocache=False,
+                 verbose=False, nokill=False, setuid=None, username=None,
+                 cmdctl_port=None, wait_time=10):
         """
             Initialize the Boss of BIND. This is a singleton (only one can run).
         
@@ -208,6 +209,7 @@ class BoB:
         self.uid = setuid
         self.username = username
         self.verbose = verbose
+        self.nokill = nokill
         self.data_path = data_path
         self.config_filename = config_filename
         self.clear_config = clear_config
@@ -705,32 +707,36 @@ class BoB:
         # still not enough.
         time.sleep(1)
         self.reap_children()
-        # next try sending a SIGTERM
-        components_to_stop = list(self.components.values())
-        for component in components_to_stop:
-            logger.info(BIND10_SEND_SIGTERM, component.name(), component.pid())
-            try:
-                component.kill()
-            except OSError:
-                # ignore these (usually ESRCH because the child
-                # finally exited)
-                pass
-        # finally, send SIGKILL (unmaskable termination) until everybody dies
-        while self.components:
-            # XXX: some delay probably useful... how much is uncertain
-            time.sleep(0.1)  
-            self.reap_children()
+
+        # Send TERM and KILL signals to modules if we're not prevented
+        # from doing so
+        if not self.nokill:
+            # next try sending a SIGTERM
             components_to_stop = list(self.components.values())
             for component in components_to_stop:
-                logger.info(BIND10_SEND_SIGKILL, component.name(),
-                            component.pid())
+                logger.info(BIND10_SEND_SIGTERM, component.name(), component.pid())
                 try:
-                    component.kill(True)
+                    component.kill()
                 except OSError:
                     # ignore these (usually ESRCH because the child
                     # finally exited)
                     pass
-        logger.info(BIND10_SHUTDOWN_COMPLETE)
+            # finally, send SIGKILL (unmaskable termination) until everybody dies
+            while self.components:
+                # XXX: some delay probably useful... how much is uncertain
+                time.sleep(0.1)
+                self.reap_children()
+                components_to_stop = list(self.components.values())
+                for component in components_to_stop:
+                    logger.info(BIND10_SEND_SIGKILL, component.name(),
+                                component.pid())
+                    try:
+                        component.kill(True)
+                    except OSError:
+                        # ignore these (usually ESRCH because the child
+                        # finally exited)
+                        pass
+            logger.info(BIND10_SHUTDOWN_COMPLETE)
 
     def _get_process_exit_status(self):
         return os.waitpid(-1, os.WNOHANG)
@@ -1046,6 +1052,8 @@ def parse_args(args=sys.argv[1:], Parser=OptionParser):
                       help="UNIX domain socket file the b10-msgq daemon will use")
     parser.add_option("-n", "--no-cache", action="store_true", dest="nocache",
                       default=False, help="disable hot-spot cache in authoritative DNS server")
+    parser.add_option("-i", "--no-kill", action="store_true", dest="nokill",
+                      default=False, help="do not send SIGTERM and SIGKILL signals to modules during shutdown")
     parser.add_option("-u", "--user", dest="user", type="string", default=None,
                       help="Change user after startup (must run as root)")
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
@@ -1173,8 +1181,9 @@ def main():
         # Go bob!
         boss_of_bind = BoB(options.msgq_socket_file, options.data_path,
                            options.config_file, options.clear_config,
-                           options.nocache, options.verbose, setuid, username,
-                           options.cmdctl_port, options.wait_time)
+                           options.nocache, options.verbose, options.nokill,
+                           setuid, username, options.cmdctl_port,
+                           options.wait_time)
         startup_result = boss_of_bind.startup()
         if startup_result:
             logger.fatal(BIND10_STARTUP_ERROR, startup_result)
