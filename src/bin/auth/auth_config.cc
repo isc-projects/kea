@@ -155,11 +155,13 @@ MemoryDatasourceConfig::build(ConstElementPtr config_value) {
 
     BOOST_FOREACH(ConstElementPtr zone_config, zones_config->listValue()) {
         ConstElementPtr origin = zone_config->get("origin");
-        if (!origin) {
+        const string origin_txt = origin ? origin->stringValue() : "";
+        if (origin_txt.empty()) {
             isc_throw(AuthConfigError, "Missing zone origin");
         }
         ConstElementPtr file = zone_config->get("file");
-        if (!file) {
+        const string file_txt = file ? file->stringValue() : "";
+        if (file_txt.empty()) {
             isc_throw(AuthConfigError, "Missing zone file for zone: "
                       << origin->str());
         }
