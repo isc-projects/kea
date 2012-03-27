@@ -162,7 +162,8 @@
         <listitem>
 	  <para>When this option is passed, <command>bind10</command>
 	  does not send SIGTERM and SIGKILL signals to modules during
-	  shutdown.</para>
+	  shutdown. (This option was introduced for use during
+	  testing.)</para>
         </listitem>
       </varlistentry>
 
