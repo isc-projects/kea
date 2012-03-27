@@ -1,4 +1,43 @@
-405.?	[bug]		jinmei
+411.   [func]          muks
+	Add a -i/--no-kill command-line argument to bind10, which stops
+	it from sending SIGTERM and SIGKILL to other b10 processes when
+	they're shutting down.
+	(Trac #1819, git 774554f46b20ca5ec2ef6c6d5e608114f14e2102)
+
+410.	[bug]		jinmei
+	Python CC library now ensures write operations transmit all given
+	data (unless an error happens).  Previously it didn't check the
+	size of transmitted data, which could result in partial write on
+	some systems (notably on OpenBSD) and subsequently cause system
+	hang up or other broken state.  This fix specifically solves start
+	up failure on OpenBSD.
+	(Trac #1829, git 5e5a33213b60d89e146cd5e47d65f3f9833a9297)
+
+409.	[bug]		jelte
+	Fixed a parser bug in bindctl that could make bindctl crash. Also
+	improved 'command help' output; argument order is now shown
+	correctly, and parameter descriptions are shown as well.
+	(Trac #1172, git bec26c6137c9b0a59a3a8ca0f55a17cfcb8a23de)
+
+408.	[bug]		stephen, jinmei
+	b10-auth now filters out duplicate RRsets when building a
+	response message using the new query handling logic.  It's
+	currently only used with the in-memory data source, but will
+	also be used for others soon.
+	(Trac #1688, git b77baca56ffb1b9016698c00ae0a1496d603d197)
+
+407.    [build]		haikuo
+	Remove "--enable-boost-threads" switch in configure command. This
+	thread lock mechanism is useless for bind10 and causes performance 
+	hits. 
+	(Trac #1680, git 9c4d0cadf4adc802cc41a2610dc2c30b25aad728)
+
+406.	[bug]		muks
+	On platforms such as OpenBSD where pselect() is not available,
+	make a wrapper around select() in perfdhcp.
+	(Trac #1639, git 6ea0b1d62e7b8b6596209291aa6c8b34b8e73191)
+
+405.	[bug]		jinmei
 	Make sure disabling Boost threads if the default configuration is
 	to disable it for the system.  This fixes a crash and hang up
 	problem on OpenBSD, where the use of Boost thread could be
@@ -7,7 +46,7 @@
 	states between a library and a program.  Explicitly forcing the
 	original default throughout the BIND 10 build environment will
 	prevent this from happening.
-	(Trac #1727, git TBD)
+	(Trac #1727, git 23f9c3670b544c5f8105958ff148aeba050bc1b4)
 
 404.	[bug]		naokikambe
 	The statistic counters are now properly accumulated across multiple

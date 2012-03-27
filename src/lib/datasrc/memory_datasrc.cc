@@ -93,6 +93,11 @@ const DomainNode::Flags WILD = DomainNode::FLAG_USER1;
 // realistic to keep this flag update for all affected nodes, and we may
 // have to reconsider the mechanism.
 const DomainNode::Flags GLUE = DomainNode::FLAG_USER2;
+
+// This flag indicates the node is generated as a result of wildcard
+// expansion.  In this implementation, this flag can be set only in
+// the separate auxiliary tree of ZoneData (see the structure description).
+const DomainNode::Flags WILD_EXPANDED = DomainNode::FLAG_USER3;
 };
 
 // Separate storage for NSEC3 RRs (and their RRSIGs).  It's an STL map
@@ -121,6 +126,31 @@ struct ZoneData {
     // The main data (name + RRsets)
     DomainTree domains_;
 
+    // An auxiliary tree for wildcard expanded data used in additional data
+    // processing.  It contains names like "ns.wild.example" in the following
+    // example:
+    // child.wild.example. NS ns.wild.example.
+    // *.wild.example IN AAAA 2001:db8::1234
+    // (and there's no exact ns.wild.example. in the zone).  This tree contains
+    // such names with a copy of the RRsets of the matching wildcard name
+    // with its owner name expanded, e.g.:
+    // ns.wild.example. IN AAAA 2001:db8::1234
+    // In theory, this tree could have many such wildcard-expandable names,
+    // each of which has a copy of the original list of RRsets.  In practice,
+    // however, it should be very rare that names for additional section
+    // processing are subject to wildcard expansion, so in most cases this tree
+    // should be even empty, and even if it has content it should be very
+    // small.
+private:
+    scoped_ptr<DomainTree> aux_wild_domains_;
+public:
+    DomainTree& getAuxWildDomains() {
+        if (!aux_wild_domains_) {
+            aux_wild_domains_.reset(new DomainTree);
+        }
+        return (*aux_wild_domains_);
+    }
+
     // Shortcut to the origin node, which should always exist
     DomainNode* origin_data_;
 
@@ -136,8 +166,254 @@ struct ZoneData {
         const scoped_ptr<NSEC3Hash> hash_; // hash parameter/calculator
     };
     scoped_ptr<NSEC3Data> nsec3_data_; // non NULL only when it's NSEC3 signed
+
+    // This templated structure encapsulates the find result of findNode()
+    // method (also templated) below.
+    // The template parameter is expected to be either 'const DomainNode' or
+    // 'DomainNode' (to avoid misuse the template definition itself is kept
+    // private - we only expose expected typedefs).  The former is expected
+    // to be used for lookups, and the latter is expected to be used for
+    // constructing the zone.
+private:
+    template <typename NodeType>
+    struct FindNodeResultBase {
+        // Bitwise flags to represent supplemental information of the
+        // search result:
+        // Search resulted in a wildcard match.
+        static const unsigned int FIND_WILDCARD = 1;
+        // Search encountered a zone cut due to NS but continued to look for
+        // a glue.
+        static const unsigned int FIND_ZONECUT = 2;
+
+        FindNodeResultBase(ZoneFinder::Result code_param,
+                           NodeType* node_param,
+                           ConstRBNodeRRsetPtr rrset_param,
+                           unsigned int flags_param = 0) :
+            code(code_param), node(node_param), rrset(rrset_param),
+            flags(flags_param)
+        {}
+        const ZoneFinder::Result code;
+        NodeType* const node;
+        ConstRBNodeRRsetPtr const rrset;
+        const unsigned int flags;
+    };
+public:
+    typedef FindNodeResultBase<const DomainNode> FindNodeResult;
+    typedef FindNodeResultBase<DomainNode> FindMutableNodeResult;
+
+    // Identify the RBTree node that best matches the given name.
+    // See implementation notes below.
+    template <typename ResultType>
+    ResultType findNode(const Name& name,
+                        ZoneFinder::FindOptions options) const;
 };
+
+/// Maintain intermediate data specific to the search context used in
+/// \c find().
+///
+/// It will be passed to \c cutCallback() (see below) and record a possible
+/// zone cut node and related RRset (normally NS or DNAME).
+struct FindState {
+    FindState(bool glue_ok) :
+        zonecut_node_(NULL),
+        dname_node_(NULL),
+        glue_ok_(glue_ok)
+    {}
+
+    // These will be set to a domain node of the highest delegation point,
+    // if any.  In fact, we could use a single variable instead of both.
+    // But then we would need to distinquish these two cases by something
+    // else and it seemed little more confusing when this was written.
+    const DomainNode* zonecut_node_;
+    const DomainNode* dname_node_;
+
+    // Delegation RRset (NS or DNAME), if found.
+    ConstRBNodeRRsetPtr rrset_;
+
+    // Whether to continue search below a delegation point.
+    // Set at construction time.
+    const bool glue_ok_;
+};
+
+// A callback called from possible zone cut nodes and nodes with DNAME.
+// This will be passed from findNode() to \c RBTree::find().
+bool cutCallback(const DomainNode& node, FindState* state) {
+    // We need to look for DNAME first, there's allowed case where
+    // DNAME and NS coexist in the apex. DNAME is the one to notice,
+    // the NS is authoritative, not delegation (corner case explicitly
+    // allowed by section 3 of 2672)
+    const Domain::const_iterator found_dname(node.getData()->find(
+                                                 RRType::DNAME()));
+    if (found_dname != node.getData()->end()) {
+        LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_MEM_DNAME_ENCOUNTERED);
+        state->dname_node_ = &node;
+        state->rrset_ = found_dname->second;
+        // No more processing below the DNAME (RFC 2672, section 3
+        // forbids anything to exist below it, so there's no need
+        // to actually search for it). This is strictly speaking
+        // a different way than described in 4.1 of that RFC,
+        // but because of the assumption in section 3, it has the
+        // same behaviour.
+        return (true);
+    }
+
+    // Look for NS
+    const Domain::const_iterator found_ns(node.getData()->find(RRType::NS()));
+    if (found_ns != node.getData()->end()) {
+        // We perform callback check only for the highest zone cut in the
+        // rare case of nested zone cuts.
+        if (state->zonecut_node_ != NULL) {
+            return (false);
+        }
+
+        LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_MEM_NS_ENCOUNTERED);
+
+        // BIND 9 checks if this node is not the origin.  That's probably
+        // because it can support multiple versions for dynamic updates
+        // and IXFR, and it's possible that the callback is called at
+        // the apex and the DNAME doesn't exist for a particular version.
+        // It cannot happen for us (at least for now), so we don't do
+        // that check.
+        state->zonecut_node_ = &node;
+        state->rrset_ = found_ns->second;
+
+        // Unless glue is allowed the search stops here, so we return
+        // false; otherwise return true to continue the search.
+        return (!state->glue_ok_);
+    }
+
+    // This case should not happen because we enable callback only
+    // when we add an RR searched for above.
+    assert(0);
+    // This is here to avoid warning (therefore compilation error)
+    // in case assert is turned off. Otherwise we could get "Control
+    // reached end of non-void function".
+    return (false);
 }
+
+// Implementation notes: this method identifies an RBT node that best matches
+// the give name in terms of DNS query handling.  In many cases,
+// DomainTree::find() will result in EXACTMATCH or PARTIALMATCH (note that
+// the given name is generally expected to be contained in the zone, so
+// even if it doesn't exist, it should at least match the zone origin).
+// If it finds an exact match, that's obviously the best one.  The partial
+// match case is more complicated.
+//
+// We first need to consider the case where search hits a delegation point,
+// either due to NS or DNAME.  They are indicated as either dname_node_ or
+// zonecut_node_ being non NULL.  Usually at most one of them will be
+// something else than NULL (it might happen both are NULL, in which case we
+// consider it NOT FOUND). There's one corner case when both might be
+// something else than NULL and it is in case there's a DNAME under a zone
+// cut and we search in glue OK mode ‒ in that case we don't stop on the
+// domain with NS and ignore it for the answer, but it gets set anyway. Then
+// we find the DNAME and we need to act by it, therefore we first check for
+// DNAME and then for NS. In all other cases it doesn't matter, as at least
+// one of them is NULL.
+//
+// Next, we need to check if the RBTree search stopped at a node for a
+// subdomain of the search name (so the comparison result that stopped the
+// search is "SUPERDOMAIN"), it means the stopping node is an empty
+// non-terminal node.  In this case the search name is considered to exist
+// but no data should be found there.
+//
+// If none of above is the case, we then consider whether there's a matching
+// wildcard.  DomainTree::find() records the node if it encounters a
+// "wildcarding" node, i.e., the immediate ancestor of a wildcard name
+// (e.g., wild.example.com for *.wild.example.com), and returns it if it
+// doesn't find any node that better matches the query name.  In this case
+// we'll check if there's indeed a wildcard below the wildcarding node.
+//
+// Note, first, that the wildcard is checked after the empty
+// non-terminal domain case above, because if that one triggers, it
+// means we should not match according to 4.3.3 of RFC 1034 (the query
+// name is known to exist).
+//
+// Before we try to find a wildcard, we should check whether there's
+// an existing node that would cancel the wildcard match.  If
+// DomainTree::find() stopped at a node which has a common ancestor
+// with the query name, it might mean we are comparing with a
+// non-wildcard node. In that case, we check which part is common. If
+// we have something in common that lives below the node we got (the
+// one above *), then we should cancel the match according to section
+// 4.3.3 of RFC 1034 (as the name between the wildcard domain and the
+// query name is known to exist).
+//
+// If there's no node below the wildcarding node that shares a common ancestor
+// of the query name, we can conclude the wildcard is the best match.
+// We'll then identify the wildcard node via an incremental search.  Note that
+// there's no possibility that the query name is at an empty non terminal
+// node below the wildcarding node at this stage; that case should have been
+// caught above.
+//
+// If none of the above succeeds, we conclude the name doesn't exist in
+// the zone.
+template <typename ResultType>
+ResultType
+ZoneData::findNode(const Name& name, ZoneFinder::FindOptions options) const {
+    DomainNode* node = NULL;
+    RBTreeNodeChain<Domain> node_path;
+    FindState state((options & ZoneFinder::FIND_GLUE_OK) != 0);
+
+    const DomainTree::Result result =
+        domains_.find(name, &node, node_path, cutCallback, &state);
+    const unsigned int zonecut_flag =
+        (state.zonecut_node_ != NULL) ? FindNodeResult::FIND_ZONECUT : 0;
+    if (result == DomainTree::EXACTMATCH) {
+        return (ResultType(ZoneFinder::SUCCESS, node, state.rrset_,
+                           zonecut_flag));
+    }
+    if (result == DomainTree::PARTIALMATCH) {
+        assert(node != NULL);
+        if (state.dname_node_ != NULL) { // DNAME
+            LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_DNAME_FOUND).
+                arg(state.rrset_->getName());
+            return (ResultType(ZoneFinder::DNAME, NULL, state.rrset_));
+        }
+        if (state.zonecut_node_ != NULL) { // DELEGATION due to NS
+            LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_DELEG_FOUND).
+                arg(state.rrset_->getName());
+            return (ResultType(ZoneFinder::DELEGATION, NULL, state.rrset_));
+        }
+        if (node_path.getLastComparisonResult().getRelation() ==
+            NameComparisonResult::SUPERDOMAIN) { // empty node, so NXRRSET
+            LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_SUPER_STOP).arg(name);
+            return (ResultType(ZoneFinder::NXRRSET, node,
+                               ConstRBNodeRRsetPtr()));
+        }
+        if (node->getFlag(domain_flag::WILD)) { // maybe a wildcard
+            if (node_path.getLastComparisonResult().getRelation() ==
+                NameComparisonResult::COMMONANCESTOR &&
+                node_path.getLastComparisonResult().getCommonLabels() > 1) {
+                // Wildcard canceled.  Treat it as NXDOMAIN.
+                // Note: Because the way the tree stores relative names, we
+                // will have exactly one common label (the ".") in case we have
+                // nothing common under the node we got, and we will get
+                // more common labels otherwise (yes, this relies on the
+                // internal RBTree structure, which leaks out through this
+                // little bit).
+                LOG_DEBUG(logger, DBG_TRACE_DATA,
+                          DATASRC_MEM_WILDCARD_CANCEL).arg(name);
+                return (ResultType(ZoneFinder::NXDOMAIN, NULL,
+                                   ConstRBNodeRRsetPtr()));
+            }
+            // Now the wildcard should be the best match.
+            const Name wildcard(Name("*").concatenate(
+                                    node_path.getAbsoluteName()));
+            DomainTree::Result result = domains_.find(wildcard, &node);
+            // Otherwise, why would the domain_flag::WILD be there if
+            // there was no wildcard under it?
+            assert(result == DomainTree::EXACTMATCH);
+            return (ResultType(ZoneFinder::SUCCESS, node, state.rrset_,
+                               FindNodeResult::FIND_WILDCARD |
+                               zonecut_flag));
+        }
+    }
+    // Nothing really matched.  The name may even be out-of-bailiwick.
+    LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_NOT_FOUND).arg(name);
+    return (ResultType(ZoneFinder::NXDOMAIN, node, state.rrset_));
+}
+} // unnamed namespace
 
 namespace internal {
 
@@ -148,7 +424,7 @@ namespace internal {
 /// in rbnode_rrset.h; this is essentially a pointer to \c DomainNode.
 /// In future, however, this structure may have other attributes.
 struct AdditionalNodeInfo {
-    AdditionalNodeInfo(DomainNode* node) : node_(node) {}
+    explicit AdditionalNodeInfo(DomainNode* node) : node_(node) {}
     DomainNode* node_;
 };
 
@@ -310,6 +586,53 @@ RBNodeRRset::copyAdditionalNodes(RBNodeRRset& dst) const {
 } // end of internal
 
 namespace {
+/*
+ * Prepares a rrset to be return as a result.
+ *
+ * If rename is false, it returns the one provided. If it is true, it
+ * creates a new rrset with the same data but with provided name.
+ * In addition, if DNSSEC records are required by the original caller of
+ * find(), it also creates expanded RRSIG based on the RRSIG of the
+ * wildcard RRset.
+ * It is designed for wildcard case, where we create the rrsets
+ * dynamically.
+ */
+ConstRBNodeRRsetPtr
+prepareRRset(const Name& name, const ConstRBNodeRRsetPtr& rrset, bool rename,
+             ZoneFinder::FindOptions options)
+{
+    if (rename) {
+        LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_MEM_RENAME).
+            arg(rrset->getName()).arg(name);
+        RRsetPtr result_base(new RRset(name, rrset->getClass(),
+                                       rrset->getType(), rrset->getTTL()));
+        for (RdataIteratorPtr i(rrset->getRdataIterator()); !i->isLast();
+             i->next()) {
+            result_base->addRdata(i->getCurrent());
+        }
+        if ((options & ZoneFinder::FIND_DNSSEC) != 0) {
+            ConstRRsetPtr sig_rrset = rrset->getRRsig();
+            if (sig_rrset) {
+                RRsetPtr result_sig(new RRset(name, sig_rrset->getClass(),
+                                              RRType::RRSIG(),
+                                              sig_rrset->getTTL()));
+                for (RdataIteratorPtr i(sig_rrset->getRdataIterator());
+                     !i->isLast();
+                     i->next())
+                {
+                    result_sig->addRdata(i->getCurrent());
+                }
+                result_base->addRRsig(result_sig);
+            }
+        }
+        RBNodeRRsetPtr result(new RBNodeRRset(result_base));
+        rrset->copyAdditionalNodes(*result);
+        return (result);
+    } else {
+        return (rrset);
+    }
+}
+
 // Specialized version of ZoneFinder::ResultContext, which specifically
 // holds rrset in the form of RBNodeRRset.
 struct RBNodeResultContext {
@@ -393,12 +716,22 @@ private:
             if (!glue_ok && additional.node_->getFlag(domain_flag::GLUE)) {
                 continue;
             }
+            const bool wild_expanded =
+                additional.node_->getFlag(domain_flag::WILD_EXPANDED);
             BOOST_FOREACH(const RRType& rrtype, requested_types) {
                 Domain::const_iterator found =
                     additional.node_->getData()->find(rrtype);
                 if (found != additional.node_->getData()->end()) {
-                    // TODO: wildcard consideration
-                    result.push_back(found->second);
+                    // If the additional node was generated as a result of
+                    // wildcard expansion, we return the underlying RRset,
+                    // in case the caller has the same RRset but as a result
+                    // of normal find() and needs to know they are of the same
+                    // kind; otherwise we simply use the stored RBNodeRRset.
+                    if (wild_expanded) {
+                        result.push_back(found->second->getUnderlyingRRset());
+                    } else {
+                        result.push_back(found->second);
+                    }
                 }
             }
         }
@@ -838,129 +1171,6 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         }
     }
 
-    // Maintain intermediate data specific to the search context used in
-    /// \c find().
-    ///
-    /// It will be passed to \c zonecutCallback() and record a possible
-    /// zone cut node and related RRset (normally NS or DNAME).
-    struct FindState {
-        FindState(FindOptions options) :
-            zonecut_node_(NULL),
-            dname_node_(NULL),
-            options_(options)
-        {}
-        const DomainNode* zonecut_node_;
-        const DomainNode* dname_node_;
-        ConstRBNodeRRsetPtr rrset_;
-        const FindOptions options_;
-    };
-
-    // A callback called from possible zone cut nodes and nodes with DNAME.
-    // This will be passed from the \c find() method to \c RBTree::find().
-    static bool cutCallback(const DomainNode& node, FindState* state) {
-        // We need to look for DNAME first, there's allowed case where
-        // DNAME and NS coexist in the apex. DNAME is the one to notice,
-        // the NS is authoritative, not delegation (corner case explicitly
-        // allowed by section 3 of 2672)
-        const Domain::const_iterator foundDNAME(node.getData()->find(
-            RRType::DNAME()));
-        if (foundDNAME != node.getData()->end()) {
-            LOG_DEBUG(logger, DBG_TRACE_DETAILED,
-                      DATASRC_MEM_DNAME_ENCOUNTERED);
-            state->dname_node_ = &node;
-            state->rrset_ = foundDNAME->second;
-            // No more processing below the DNAME (RFC 2672, section 3
-            // forbids anything to exist below it, so there's no need
-            // to actually search for it). This is strictly speaking
-            // a different way than described in 4.1 of that RFC,
-            // but because of the assumption in section 3, it has the
-            // same behaviour.
-            return (true);
-        }
-
-        // Look for NS
-        const Domain::const_iterator foundNS(node.getData()->find(
-            RRType::NS()));
-        if (foundNS != node.getData()->end()) {
-            // We perform callback check only for the highest zone cut in the
-            // rare case of nested zone cuts.
-            if (state->zonecut_node_ != NULL) {
-                return (false);
-            }
-
-            LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_MEM_NS_ENCOUNTERED);
-
-            // BIND 9 checks if this node is not the origin.  That's probably
-            // because it can support multiple versions for dynamic updates
-            // and IXFR, and it's possible that the callback is called at
-            // the apex and the DNAME doesn't exist for a particular version.
-            // It cannot happen for us (at least for now), so we don't do
-            // that check.
-            state->zonecut_node_ = &node;
-            state->rrset_ = foundNS->second;
-
-            // Unless glue is allowed the search stops here, so we return
-            // false; otherwise return true to continue the search.
-            return ((state->options_ & FIND_GLUE_OK) == 0);
-        }
-
-        // This case should not happen because we enable callback only
-        // when we add an RR searched for above.
-        assert(0);
-        // This is here to avoid warning (therefore compilation error)
-        // in case assert is turned off. Otherwise we could get "Control
-        // reached end of non-void function".
-        return (false);
-    }
-
-    /*
-     * Prepares a rrset to be return as a result.
-     *
-     * If rename is false, it returns the one provided. If it is true, it
-     * creates a new rrset with the same data but with provided name.
-     * In addition, if DNSSEC records are required by the original caller of
-     * find(), it also creates expanded RRSIG based on the RRSIG of the
-     * wildcard RRset.
-     * It is designed for wildcard case, where we create the rrsets
-     * dynamically.
-     */
-    static ConstRBNodeRRsetPtr prepareRRset(const Name& name,
-                                            const ConstRBNodeRRsetPtr& rrset,
-                                            bool rename, FindOptions options)
-    {
-        if (rename) {
-            LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_MEM_RENAME).
-                arg(rrset->getName()).arg(name);
-            RRsetPtr result_base(new RRset(name, rrset->getClass(),
-                                           rrset->getType(),
-                                           rrset->getTTL()));
-            for (RdataIteratorPtr i(rrset->getRdataIterator()); !i->isLast();
-                 i->next()) {
-                result_base->addRdata(i->getCurrent());
-            }
-            if ((options & FIND_DNSSEC) != 0) {
-                ConstRRsetPtr sig_rrset = rrset->getRRsig();
-                if (sig_rrset) {
-                    RRsetPtr result_sig(new RRset(name, sig_rrset->getClass(),
-                                                  RRType::RRSIG(),
-                                                  sig_rrset->getTTL()));
-                    for (RdataIteratorPtr i(sig_rrset->getRdataIterator());
-                         !i->isLast();
-                         i->next())
-                    {
-                        result_sig->addRdata(i->getCurrent());
-                    }
-                    result_base->addRRsig(result_sig);
-                }
-            }
-            RBNodeRRsetPtr result(new RBNodeRRset(result_base));
-            rrset->copyAdditionalNodes(*result);
-            return (result);
-        } else {
-            return (rrset);
-        }
-    }
-
     // Set up FindContext object as a return value of find(), taking into
     // account wildcard matches and DNSSEC information.  We set the NSEC/NSEC3
     // flag when applicable regardless of the find option; the caller would
@@ -991,130 +1201,20 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
     {
         LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_FIND).arg(name).
             arg(type);
-        // Get the node
-        DomainNode* node(NULL);
-        FindState state(options);
-        RBTreeNodeChain<Domain> node_path;
-        bool rename(false);
-        switch (zone_data_->domains_.find(name, &node, node_path, cutCallback,
-                                          &state)) {
-            case DomainTree::PARTIALMATCH:
-                /*
-                 * In fact, we could use a single variable instead of
-                 * dname_node_ and zonecut_node_. But then we would need
-                 * to distinquish these two cases by something else and
-                 * it seemed little more confusing to me when I wrote it.
-                 *
-                 * Usually at most one of them will be something else than
-                 * NULL (it might happen both are NULL, in which case we
-                 * consider it NOT FOUND). There's one corner case when
-                 * both might be something else than NULL and it is in case
-                 * there's a DNAME under a zone cut and we search in
-                 * glue OK mode ‒ in that case we don't stop on the domain
-                 * with NS and ignore it for the answer, but it gets set
-                 * anyway. Then we find the DNAME and we need to act by it,
-                 * therefore we first check for DNAME and then for NS. In
-                 * all other cases it doesn't matter, as at least one of them
-                 * is NULL.
-                 */
-                if (state.dname_node_ != NULL) {
-                    LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_DNAME_FOUND).
-                        arg(state.rrset_->getName());
-                    // We were traversing a DNAME node (and wanted to go
-                    // lower below it), so return the DNAME
-                    return (createFindResult(DNAME,
-                                             prepareRRset(name, state.rrset_,
-                                                          false, options)));
-                }
-                if (state.zonecut_node_ != NULL) {
-                    LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_DELEG_FOUND).
-                        arg(state.rrset_->getName());
-                    return (createFindResult(DELEGATION,
-                                             prepareRRset(name, state.rrset_,
-                                                          false, options)));
-                }
 
-                // If the RBTree search stopped at a node for a super domain
-                // of the search name, it means the search name exists in
-                // the zone but is empty.  Treat it as NXRRSET.
-                if (node_path.getLastComparisonResult().getRelation() ==
-                    NameComparisonResult::SUPERDOMAIN) {
-                    LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_SUPER_STOP).
-                        arg(name);
-                    return (createFindResult(NXRRSET, ConstRBNodeRRsetPtr()));
-                }
-
-                /*
-                 * No redirection anywhere. Let's try if it is a wildcard.
-                 *
-                 * The wildcard is checked after the empty non-terminal domain
-                 * case above, because if that one triggers, it means we should
-                 * not match according to 4.3.3 of RFC 1034 (the query name
-                 * is known to exist).
-                 */
-                if (node->getFlag(domain_flag::WILD)) {
-                    /* Should we cancel this match?
-                     *
-                     * If we compare with some node and get a common ancestor,
-                     * it might mean we are comparing with a non-wildcard node.
-                     * In that case, we check which part is common. If we have
-                     * something in common that lives below the node we got
-                     * (the one above *), then we should cancel the match
-                     * according to section 4.3.3 of RFC 1034 (as the name
-                     * between the wildcard domain and the query name is known
-                     * to exist).
-                     *
-                     * Because the way the tree stores relative names, we will
-                     * have exactly one common label (the ".") in case we have
-                     * nothing common under the node we got and we will get
-                     * more common labels otherwise (yes, this relies on the
-                     * internal RBTree structure, which leaks out through this
-                     * little bit).
-                     *
-                     * If the empty non-terminal node actually exists in the
-                     * tree, then this cancellation is not needed, because we
-                     * will not get here at all.
-                     */
-                    if (node_path.getLastComparisonResult().getRelation() ==
-                        NameComparisonResult::COMMONANCESTOR && node_path.
-                        getLastComparisonResult().getCommonLabels() > 1) {
-                        LOG_DEBUG(logger, DBG_TRACE_DATA,
-                                     DATASRC_MEM_WILDCARD_CANCEL).arg(name);
-                        return (createFindResult(NXDOMAIN,
-                                                 ConstRBNodeRRsetPtr(),
-                                                 false));
-                    }
-                    const Name wildcard(Name("*").concatenate(
-                        node_path.getAbsoluteName()));
-                    DomainTree::Result result =
-                        zone_data_->domains_.find(wildcard, &node);
-                    /*
-                     * Otherwise, why would the domain_flag::WILD be there if
-                     * there was no wildcard under it?
-                     */
-                    assert(result == DomainTree::EXACTMATCH);
-                    /*
-                     * We have the wildcard node now. Jump below the switch,
-                     * where handling of the common (exact-match) case is.
-                     *
-                     * However, rename it to the searched name.
-                     */
-                    rename = true;
-                    break;
-                }
-
-                // fall through
-            case DomainTree::NOTFOUND:
-                LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_NOT_FOUND).
-                    arg(name);
-                return (createFindResult(NXDOMAIN, ConstRBNodeRRsetPtr(),
-                                         false));
-            case DomainTree::EXACTMATCH: // This one is OK, handle it
-                break;
-            default:
-                assert(0);
+        // Get the node.  All other cases than an exact match are handled
+        // in findNode().  We simply construct a result structure and return.
+        const ZoneData::FindNodeResult node_result =
+            zone_data_->findNode<ZoneData::FindNodeResult>(name, options);
+        if (node_result.code != SUCCESS) {
+            return (createFindResult(node_result.code, node_result.rrset));
         }
+
+        // We've found an exact match, may or may not be a result of wildcard.
+        const DomainNode* node = node_result.node;
         assert(node != NULL);
+        const bool rename = ((node_result.flags &
+                              ZoneData::FindNodeResult::FIND_WILDCARD) != 0);
 
         // If there is an exact match but the node is empty, it's equivalent
         // to NXRRSET.
@@ -1184,7 +1284,8 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
     }
 };
 
-InMemoryZoneFinder::InMemoryZoneFinder(const RRClass& zone_class, const Name& origin) :
+InMemoryZoneFinder::InMemoryZoneFinder(const RRClass& zone_class,
+                                       const Name& origin) :
     impl_(new InMemoryZoneFinderImpl(zone_class, origin))
 {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_CREATE).arg(origin).
@@ -1323,28 +1424,24 @@ getAdditionalName(RRType rrtype, const rdata::Rdata& rdata) {
     }
 }
 
-bool
-checkZoneCut(const DomainNode& node, pair<bool, bool>* arg) {
-    // We are only interested in the highest zone cut information.
-    // Ignore others and continue the search.
-    if (arg->first) {
-        return (false);
-    }
-    // Once we encounter a delegation point due to a DNAME, anything under it
-    // should be hidden.
-    if (node.getData()->find(RRType::DNAME()) != node.getData()->end()) {
-        return (true);
-    } else if (node.getData()->find(RRType::NS()) != node.getData()->end()) {
-        arg->first = true;
-        arg->second = true;
-        return (false);
-    }
-    return (false);
+void
+convertAndInsert(const DomainPair& rrset_item, DomainPtr dst_domain,
+                 const Name* dstname)
+{
+    // We copy RRSIGs, too, if they are attached in case we need it in
+    // getAdditional().
+    dst_domain->insert(DomainPair(rrset_item.first,
+                                  prepareRRset(*dstname, rrset_item.second,
+                                               true,
+                                               ZoneFinder::FIND_DNSSEC)));
 }
 
 void
-addAdditional(RBNodeRRset* rrset, ZoneData* zone_data) {
+addAdditional(RBNodeRRset* rrset, ZoneData* zone_data,
+              vector<RBNodeRRset*>* wild_rrsets)
+{
     RdataIteratorPtr rdata_iterator = rrset->getRdataIterator();
+    bool match_wild = false;    // will be true if wildcard match is found
     for (; !rdata_iterator->isLast(); rdata_iterator->next()) {
         // For each domain name that requires additional section processing
         // in each RDATA, search the tree for the name and remember it if
@@ -1352,31 +1449,91 @@ addAdditional(RBNodeRRset* rrset, ZoneData* zone_data) {
         // child zone), mark the node as "GLUE", so we can selectively
         // include/exclude them when we use it.
 
-        // TODO: wildcard
-        RBTreeNodeChain<Domain> node_path;
-        DomainNode* node = NULL;
-        // The callback argument is a pair of bools: the first is a flag to
-        // only check the highest cut; the second one records whether the
-        // search goes under a zone cut.
-        pair<bool, bool> callback_arg(false, false);
-        const DomainTree::Result result =
-            zone_data->domains_.find(
-                getAdditionalName(rrset->getType(),
-                                  rdata_iterator->getCurrent()),
-                &node, node_path, checkZoneCut, &callback_arg);
-        if (result == DomainTree::EXACTMATCH) {
-            assert(node != NULL);
-            if (callback_arg.second ||
-                (node->getFlag(DomainNode::FLAG_CALLBACK) &&
-                 node->getData()->find(RRType::NS()) !=
-                 node->getData()->end())) {
-                // The node is under or at a zone cut; mark it as a glue.
-                node->setFlag(domain_flag::GLUE);
+        const Name& name = getAdditionalName(rrset->getType(),
+                                             rdata_iterator->getCurrent());
+        const ZoneData::FindMutableNodeResult result =
+            zone_data->findNode<ZoneData::FindMutableNodeResult>(
+                name, ZoneFinder::FIND_GLUE_OK);
+        if (result.code != ZoneFinder::SUCCESS) {
+            // We are not interested in anything but a successful match.
+            continue;
+        }
+        DomainNode* node = result.node;
+        assert(node != NULL);
+        if ((result.flags & ZoneData::FindNodeResult::FIND_ZONECUT) != 0 ||
+            (node->getFlag(DomainNode::FLAG_CALLBACK) &&
+             node->getData()->find(RRType::NS()) != node->getData()->end())) {
+            // The node is under or at a zone cut; mark it as a glue.
+            node->setFlag(domain_flag::GLUE);
+        }
+
+        // A rare case: the additional name may have to be expanded with a
+        // wildcard.  We'll store the name in a separate auxiliary tree,
+        // copying all RRsets of the original wildcard node with expanding
+        // the owner name.  This is costly in terms of memory, but this case
+        // should be pretty rare.  On the other hand we won't have to worry
+        // about wildcard expansion in getAdditional, which is quite
+        // performance sensitive.
+        DomainNode* wildnode = NULL;
+        if ((result.flags & ZoneData::FindNodeResult::FIND_WILDCARD) != 0) {
+            // Wildcard and glue shouldn't coexist.  Make it sure here.
+            assert(!node->getFlag(domain_flag::GLUE));
+
+            if (zone_data->getAuxWildDomains().insert(name, &wildnode)
+                == DomainTree::SUCCESS) {
+                // If we first insert the node, copy the RRsets.  If the
+                // original node was empty, we add empty data so
+                // addWildAdditional() can get an exactmatch for this name.
+                DomainPtr dst_domain(new Domain);
+                if (!node->isEmpty()) {
+                    for_each(node->getData()->begin(), node->getData()->end(),
+                             boost::bind(convertAndInsert, _1, dst_domain,
+                                         &name));
+                }
+                wildnode->setData(dst_domain);
+                // Mark the node as "wildcard expanded" so it can be
+                // distinguished at lookup time.
+                wildnode->setFlag(domain_flag::WILD_EXPANDED);
             }
+            match_wild = true;
+            node = wildnode;
+        }
+
+        // If this name wasn't subject to wildcard substitution, we can add
+        // the additional information to the RRset now; otherwise I'll defer
+        // it until the entire auxiliary tree is built (pointers may be
+        // invalidated as we build it).
+        if (wildnode == NULL) {
             // Note that node may be empty.  We should keep it in the list
             // in case we dynamically update the tree and it becomes non empty
             // (which is not supported yet)
-            rrset->addAdditionalNode(node);
+            rrset->addAdditionalNode(AdditionalNodeInfo(node));
+        }
+    }
+
+    if (match_wild) {
+        wild_rrsets->push_back(rrset);
+    }
+}
+
+void
+addWildAdditional(RBNodeRRset* rrset, ZoneData* zone_data) {
+    // Similar to addAdditional(), but due to the first stage we know that
+    // the rrset should contain a name stored in the auxiliary trees, and
+    // that it should be found as an exact match.  The RRset may have other
+    // names that didn't require wildcard expansion, but we can simply ignore
+    // them in this context.  (Note that if we find an exact match in the
+    // auxiliary tree, it shouldn't be in the original zone; otherwise it
+    // shouldn't have resulted in wildcard in the first place).
+
+    RdataIteratorPtr rdata_iterator = rrset->getRdataIterator();
+    for (; !rdata_iterator->isLast(); rdata_iterator->next()) {
+        const Name& name = getAdditionalName(rrset->getType(),
+                                             rdata_iterator->getCurrent());
+        DomainNode* wildnode = NULL;
+        if (zone_data->getAuxWildDomains().find(name, &wildnode) ==
+            DomainTree::EXACTMATCH) {
+            rrset->addAdditionalNode(AdditionalNodeInfo(wildnode));
         }
     }
 }
@@ -1398,8 +1555,14 @@ InMemoryZoneFinder::load(const string& filename) {
 
     // For each RRset in need_additionals, identify the corresponding
     // RBnode for additional processing and associate it in the RRset.
+    // If some additional names in an RRset RDATA as additional need wildcard
+    // expansion, we'll remember them in a separate vector, and handle them
+    // with addWildAdditional.
+    vector<RBNodeRRset*> wild_additionals;
     for_each(need_additionals.begin(), need_additionals.end(),
-             boost::bind(addAdditional, _1, tmp.get()));
+             boost::bind(addAdditional, _1, tmp.get(), &wild_additionals));
+    for_each(wild_additionals.begin(), wild_additionals.end(),
+             boost::bind(addWildAdditional, _1, tmp.get()));
 
     // If the zone is NSEC3-signed, check if it has NSEC3PARAM
     if (tmp->nsec3_data_) {

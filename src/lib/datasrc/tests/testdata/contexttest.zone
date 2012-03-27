@@ -1,7 +1,7 @@
 ;; test zone file used for ZoneFinderContext tests.
 ;; RRSIGs are (obviouslly) faked ones for testing.
 
-example.org. 3600 IN SOA	ns1.example.org. bugs.x.w.example.org. 56 3600 300 3600000 3600
+example.org. 3600 IN SOA	ns1.example.org. bugs.x.w.example.org. 67 3600 300 3600000 3600
 example.org.			      3600 IN NS	ns1.example.org.
 example.org.			      3600 IN NS	ns2.example.org.
 example.org.			      3600 IN MX	1 mx1.example.org.
@@ -57,9 +57,15 @@ d.example.org. 	      	      3600 IN NS	ns1.example.org.
 foo.ns.empty.example.org.     3600 IN A		192.0.2.13
 bar.ns.empty.example.org.     3600 IN A		192.0.2.14
 
-;; delegation; the NS name matches a wildcard (and there's no exact match)
+;; delegation; the NS name matches a wildcard (and there's no exact
+;; match).  One of the NS names matches an empty wildcard node, for
+;; which no additional record should be provided (or any other
+;; disruption should happen).
 e.example.org. 	      	      3600 IN NS	ns.wild.example.org.
+e.example.org. 	      	      3600 IN NS	ns.emptywild.example.org.
+e.example.org. 	      	      3600 IN NS	ns2.example.org.
 *.wild.example.org.	      3600 IN A		192.0.2.15
+a.*.emptywild.example.org.    3600 IN AAAA	2001:db8::2
 
 ;; additional for an answer RRset (MX) as a result of wildcard
 ;; expansion

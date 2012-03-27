@@ -15,6 +15,7 @@
 #include <dns/message.h>
 #include <dns/rcode.h>
 #include <dns/rrtype.h>
+#include <dns/rrset.h>
 #include <dns/rdataclass.h>
 
 #include <datasrc/client.h>
@@ -25,7 +26,9 @@
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
 
+#include <cassert>
 #include <algorithm>            // for std::max
+#include <functional>
 #include <vector>
 
 using namespace std;
@@ -33,33 +36,9 @@ using namespace isc::dns;
 using namespace isc::datasrc;
 using namespace isc::dns::rdata;
 
-// Commonly used helper callback object for vector<ConstRRsetPtr> to
-// insert them to (the specified section of) a message.
-namespace {
-class RRsetInserter {
-public:
-    RRsetInserter(Message& msg, Message::Section section, bool dnssec) :
-        msg_(msg), section_(section), dnssec_(dnssec)
-    {}
-    void operator()(const ConstRRsetPtr& rrset) {
-        /*
-         * FIXME:
-         * The const-cast is wrong, but the Message interface seems
-         * to insist.
-         */
-        msg_.addRRset(section_,
-                      boost::const_pointer_cast<AbstractRRset>(rrset),
-                      dnssec_);
-    }
-
-private:
-    Message& msg_;
-    const Message::Section section_;
-    const bool dnssec_;
-};
-
 // This is a "constant" vector storing desired RR types for the additional
 // section.  The vector is filled first time it's used.
+namespace {
 const vector<RRType>&
 A_AND_AAAA() {
     static vector<RRType> needed_types;
@@ -69,32 +48,57 @@ A_AND_AAAA() {
     }
     return (needed_types);
 }
-
-// A wrapper for ZoneFinder::Context::getAdditional() so we don't include
-// duplicate RRs.  This is not efficient, and we should actually unify
-// this at the end of the process() method.  See also #1688.
-void
-getAdditional(const Name& qname, RRType qtype,
-              ZoneFinder::Context& ctx, vector<ConstRRsetPtr>& results)
-{
-    vector<ConstRRsetPtr> additionals;
-    ctx.getAdditional(A_AND_AAAA(), additionals);
-
-    vector<ConstRRsetPtr>::const_iterator it = additionals.begin();
-    vector<ConstRRsetPtr>::const_iterator it_end = additionals.end();
-    for (; it != it_end; ++it) {
-        if ((qtype == (*it)->getType() || qtype == RRType::ANY()) &&
-            qname == (*it)->getName()) {
-            continue;
-        }
-        results.push_back(*it);
-    }
-}
-
 }
 
 namespace isc {
 namespace auth {
+
+void
+Query::ResponseCreator::addRRset(isc::dns::Message& message,
+                                 const isc::dns::Message::Section section,
+                                 const ConstRRsetPtr& rrset, const bool dnssec)
+{
+    /// Is this RRset already in the list of RRsets added to the message?
+    const std::vector<const AbstractRRset*>::const_iterator i =
+        std::find_if(added_.begin(), added_.end(),
+                     std::bind1st(Query::ResponseCreator::IsSameKind(),
+                                  rrset.get()));
+    if (i == added_.end()) {
+        // No - add it to both the message and the list of RRsets processed.
+        // The const-cast is wrong, but the message interface seems to insist.
+        message.addRRset(section,
+                         boost::const_pointer_cast<AbstractRRset>(rrset),
+                         dnssec);
+        added_.push_back(rrset.get());
+    }
+}
+
+void
+Query::ResponseCreator::create(Message& response,
+                               const vector<ConstRRsetPtr>& answers,
+                               const vector<ConstRRsetPtr>& authorities,
+                               const vector<ConstRRsetPtr>& additionals,
+                               const bool dnssec)
+{
+    // Inserter should be reset each time the query is reset, so should be
+    // empty at this point.
+    assert(added_.empty());
+
+    // Add the RRsets to the message.  The order of sections is important,
+    // as the ResponseCreator remembers RRsets added and will not add
+    // duplicates.  Adding in the order answer, authory, additional will
+    // guarantee that if there are duplicates, the single RRset added will
+    // appear in the most important section.
+    BOOST_FOREACH(const ConstRRsetPtr& rrset, answers) {
+        addRRset(response, Message::SECTION_ANSWER, rrset, dnssec);
+    }
+    BOOST_FOREACH(const ConstRRsetPtr& rrset, authorities) {
+        addRRset(response, Message::SECTION_AUTHORITY, rrset, dnssec);
+    }
+    BOOST_FOREACH(const ConstRRsetPtr& rrset, additionals) {
+        addRRset(response, Message::SECTION_ADDITIONAL, rrset, dnssec);
+    }
+}
 
 void
 Query::addSOA(ZoneFinder& finder) {
@@ -154,14 +158,10 @@ Query::addNXDOMAINProofByNSEC(ZoneFinder& finder, ConstRRsetPtr nsec) {
         isc_throw(BadNSEC, "Unexpected result for wildcard NXDOMAIN proof");
     }
 
-    // Add the (no-) wildcard proof only when it's different from the NSEC
-    // that proves NXDOMAIN; sometimes they can be the same.
-    // Note: name comparison is relatively expensive.  When we are at the
-    // stage of performance optimization, we should consider optimizing this
-    // for some optimized data source implementations.
-    if (nsec->getName() != fcontext->rrset->getName()) {
-        authorities_.push_back(fcontext->rrset);
-    }
+    // Add the (no-) wildcard proof.  This can be the same NSEC we already
+    // added, but we'd add it here anyway; duplicate checks will take place
+    // later in a unified manner.
+    authorities_.push_back(fcontext->rrset);
 }
 
 uint8_t
@@ -261,11 +261,8 @@ Query::addWildcardNXRRSETProof(ZoneFinder& finder, ConstRRsetPtr nsec) {
         fcontext->rrset->getRdataCount() == 0) {
         isc_throw(BadNSEC, "Unexpected result for no match QNAME proof");
     }
-   
-    if (nsec->getName() != fcontext->rrset->getName()) {
-        // one NSEC RR proves wildcard_nxrrset that no matched QNAME.
-        authorities_.push_back(fcontext->rrset);
-    }
+
+    authorities_.push_back(fcontext->rrset);
 }
 
 void
@@ -332,7 +329,7 @@ Query::addAuthAdditional(ZoneFinder& finder,
                   finder.getOrigin().toText());
     }
     authorities_.push_back(ns_context->rrset);
-    getAdditional(*qname_, *qtype_, *ns_context, additionals);
+    ns_context->getAdditional(A_AND_AAAA(), additionals);
 }
 
 namespace {
@@ -468,7 +465,7 @@ Query::process(datasrc::DataSourceClient& datasrc_client,
             }
 
             // Retrieve additional records for the answer
-            getAdditional(*qname_, *qtype_, *db_context, additionals_);
+            db_context->getAdditional(A_AND_AAAA(), additionals_);
 
             // If apex NS records haven't been provided in the answer
             // section, insert apex NS records into the authority section
@@ -534,7 +531,8 @@ Query::process(datasrc::DataSourceClient& datasrc_client,
             break;
     }
 
-    createResponse();
+    response_creator_.create(*response_, answers_, authorities_, additionals_,
+                             dnssec_);
 }
 
 void
@@ -552,16 +550,6 @@ Query::initialize(datasrc::DataSourceClient& datasrc_client,
 }
 
 void
-Query::createResponse() {
-    for_each(answers_.begin(), answers_.end(),
-             RRsetInserter(*response_, Message::SECTION_ANSWER, dnssec_));
-    for_each(authorities_.begin(), authorities_.end(),
-             RRsetInserter(*response_, Message::SECTION_AUTHORITY, dnssec_));
-    for_each(additionals_.begin(), additionals_.end(),
-             RRsetInserter(*response_, Message::SECTION_ADDITIONAL, dnssec_));
-}
-
-void
 Query::reset() {
     datasrc_client_ = NULL;
     qname_ = NULL;
@@ -570,6 +558,7 @@ Query::reset() {
     answers_.clear();
     authorities_.clear();
     additionals_.clear();
+    response_creator_.clear();
 }
 
 bool
@@ -601,7 +590,8 @@ Query::processDSAtChild() {
         }
     }
 
-    createResponse();
+    response_creator_.create(*response_, answers_, authorities_, additionals_,
+                             dnssec_);
     return (true);
 }
 

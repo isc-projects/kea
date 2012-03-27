@@ -115,8 +115,8 @@ void
 LoggerManagerImpl::createFileAppender(log4cplus::Logger& logger,
                                          const OutputOption& opt)
 {
-    LOG4CPLUS_OPEN_MODE_TYPE mode = 
-        LOG4CPLUS_FSTREAM_NAMESPACE::ios::app;  // Append to existing file
+    // Append to existing file
+    std::ios::openmode mode = std::ios::app;
 
     log4cplus::SharedAppenderPtr fileapp;
     if (opt.maxsize == 0) {
