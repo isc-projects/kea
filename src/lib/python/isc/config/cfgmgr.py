@@ -148,6 +148,27 @@ class ConfigManagerData:
             # Ok if we really can't delete it anymore, leave it
             pass
 
+    def rename_config_file(self, old_file_name=None, new_file_name=None):
+        """Renames the given configuration file to the given new file name,
+           if it exists. If it does not exist, nothing happens.
+           If old_file_name is None (default), the file used in
+           read_from_file is used. If new_file_name is None (default), the
+           file old_file_name appended with .bak is used. If that file exists
+           already, .1 is appended. If that file exists, .2 is appended, etc.
+        """
+        if old_file_name is None:
+            old_file_name = self.db_filename
+        if new_file_name is None:
+            new_file_name = old_file_name + ".bak"
+        if os.path.exists(new_file_name):
+            i = 1
+            while os.path.exists(new_file_name + "." + str(i)):
+                i += 1
+            new_file_name = new_file_name + "." + str(i)
+        if os.path.exists(old_file_name):
+            logger.info(CFGMGR_RENAMED_CONFIG_FILE, old_file_name, new_file_name)
+            os.rename(old_file_name, new_file_name)
+
     def __eq__(self, other):
         """Returns True if the data contained is equal. data_path and
            db_filename may be different."""
@@ -163,14 +184,16 @@ class ConfigManager:
        channel session. If not, a new session will be created.
        The ability to specify a custom session is for testing purposes
        and should not be needed for normal usage."""
-    def __init__(self, data_path, database_filename, session=None):
+    def __init__(self, data_path, database_filename, session=None,
+                 clear_config=False):
         """Initialize the configuration manager. The data_path string
            is the path to the directory where the configuration is
            stored (in <data_path>/<database_filename> or in
            <database_filename>, if it is absolute). The dabase_filename
            is the config file to load. Session is an optional
            cc-channel session. If this is not given, a new one is
-           created."""
+           created. If clear_config is True, the configuration file is
+           renamed and a new one is created."""
         self.data_path = data_path
         self.database_filename = database_filename
         self.module_specs = {}
@@ -179,6 +202,8 @@ class ConfigManager:
         # of some other process
         self.virtual_modules = {}
         self.config = ConfigManagerData(data_path, database_filename)
+        if clear_config:
+            self.config.rename_config_file()
         if session:
             self.cc = session
         else:

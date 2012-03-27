@@ -20,6 +20,7 @@
 
 #include <boost/noncopyable.hpp>
 
+#include <functional>
 #include <vector>
 
 namespace isc {
@@ -35,13 +36,6 @@ class DataSourceClient;
 }
 
 namespace auth {
-
-/// \brief Initial reserved size for the vectors in Query
-///
-/// The value is larger than we expect the vectors to even become, and
-/// has been chosen arbitrarily. The reason to set them quite high is
-/// to prevent reallocation on addition.
-const size_t RESERVE_RRSETS = 64;
 
 /// The \c Query class represents a standard DNS query that encapsulates
 /// processing logic to answer the query.
@@ -75,6 +69,12 @@ const size_t RESERVE_RRSETS = 64;
 /// we keep this name at the moment.
 class Query : boost::noncopyable {
 private:
+    /// \brief Initial reserved size for the vectors in Query
+    ///
+    /// The value is larger than we expect the vectors to even become, and
+    /// has been chosen arbitrarily. The reason to set them quite high is
+    /// to prevent reallocation on addition.
+    static const size_t RESERVE_RRSETS = 64;
 
     /// \brief Adds a SOA.
     ///
@@ -251,19 +251,6 @@ private:
                     const isc::dns::Name& qname, const isc::dns::RRType& qtype,
                     isc::dns::Message& response, bool dnssec = false);
 
-    /// \brief Fill in the response sections
-    ///
-    /// This is the final step of the process() method, and within
-    /// that method, it should be called before it returns (if any
-    /// response data is to be added)
-    ///
-    /// This will take each RRset collected in answers_, authorities_, and
-    /// additionals_, and add them to their corresponding sections in
-    /// the response message.
-    ///
-    /// After they are added, the vectors are cleared.
-    void createResponse();
-
     /// \brief Resets any partly built response data, and internal pointers
     ///
     /// Called by the QueryCleaner object upon its destruction
@@ -282,6 +269,12 @@ private:
         isc::auth::Query& query_;
     };
 
+protected:
+    // Following methods declared protected so they can be accessed
+    // by unit tests.
+
+    void createResponse();
+
 public:
     /// Default constructor.
     ///
@@ -289,8 +282,8 @@ public:
     ///
     Query() :
         datasrc_client_(NULL), qname_(NULL), qtype_(NULL),
-        response_(NULL), dnssec_(false),
-        dnssec_opt_(isc::datasrc::ZoneFinder::FIND_DEFAULT)
+        dnssec_(false), dnssec_opt_(isc::datasrc::ZoneFinder::FIND_DEFAULT),
+        response_(NULL)
     {
         answers_.reserve(RESERVE_RRSETS);
         authorities_.reserve(RESERVE_RRSETS);
@@ -402,14 +395,102 @@ public:
         {}
     };
 
+    /// \brief Response Creator Class
+    ///
+    /// This is a helper class of Query, and is expected to be used during the
+    /// construction of the response message. This class performs the
+    /// duplicate RRset detection check.  It keeps a list of RRsets added
+    /// to the message and does not add an RRset if it is the same as one
+    /// already added.
+    ///
+    /// This class is essentially private to Query, but is visible to public
+    /// for testing purposes.  It's not expected to be used from a normal
+    /// application.
+    class ResponseCreator {
+    public:
+        /// \brief Constructor
+        ///
+        /// Reserves space for the list of RRsets.  Although the
+        /// ResponseCreator will be used to create a message from the
+        /// contents of the Query object's answers_, authorities_ and
+        /// additionals_ elements, and each of these are sized to
+        /// RESERVE_RRSETS, it is _extremely_ unlikely that all three will be
+        /// filled to capacity.  So we reserve more elements than in each of
+        /// these components, but not three times the amount.
+        ///
+        /// As with the answers_, authorities_ and additionals_ elements, the
+        /// reservation is made in the constructor to avoid dynamic allocation
+        /// of memory.  The ResponseCreator is a member variable of the Query
+        /// object so is constructed once and lasts as long as that object.
+        /// Internal state is cleared through the clear() method.
+        ResponseCreator() {
+            added_.reserve(2 * RESERVE_RRSETS);
+        }
+
+        /// \brief Reset internal state
+        void clear() {
+            added_.clear();
+        }
+
+        /// \brief Complete the response message with filling in the
+        /// response sections.
+        ///
+        /// This is the final step of the Query::process() method, and within
+        /// that method, it should be called before it returns (if any
+        /// response data is to be added)
+        ///
+        /// This will take a message to build and each RRsets for the answer,
+        /// authority, and additional sections, and add them to their
+        /// corresponding sections in the given message.  The RRsets are
+        /// filtered such that a particular RRset appears only once in the
+        /// message.
+        ///
+        /// If \c dnssec is true, it tells the message to include any RRSIGs
+        /// attached to the RRsets.
+        void create(
+            isc::dns::Message& message,
+            const std::vector<isc::dns::ConstRRsetPtr>& answers_,
+            const std::vector<isc::dns::ConstRRsetPtr>& authorities_,
+            const std::vector<isc::dns::ConstRRsetPtr>& additionals_,
+            const bool dnssec);
+
+    private:
+        // \brief RRset comparison functor.
+        struct IsSameKind : public std::binary_function<
+                            const isc::dns::AbstractRRset*,
+                            const isc::dns::AbstractRRset*,
+                            bool> {
+            bool operator()(const isc::dns::AbstractRRset* r1,
+                            const isc::dns::AbstractRRset* r2) const {
+                return (r1->isSameKind(*r2));
+            }
+        };
+
+        /// Insertion operation
+        ///
+        /// \param message Message to which the RRset is to be added
+        /// \param section Section of the message in which the RRset is put
+        /// \param rrset Pointer to RRset to be added to the message
+        /// \param dnssec Whether RRSIG records should be added as well
+        void addRRset(isc::dns::Message& message,
+                      const isc::dns::Message::Section section,
+                      const isc::dns::ConstRRsetPtr& rrset, const bool dnssec);
+
+
+    private:
+        /// List of RRsets already added to the message
+        std::vector<const isc::dns::AbstractRRset*> added_;
+    };
+
 private:
     const isc::datasrc::DataSourceClient* datasrc_client_;
     const isc::dns::Name* qname_;
     const isc::dns::RRType* qtype_;
-    isc::dns::Message* response_;
     bool dnssec_;
     isc::datasrc::ZoneFinder::FindOptions dnssec_opt_;
+    ResponseCreator response_creator_;
 
+    isc::dns::Message* response_;
     std::vector<isc::dns::ConstRRsetPtr> answers_;
     std::vector<isc::dns::ConstRRsetPtr> authorities_;
     std::vector<isc::dns::ConstRRsetPtr> additionals_;
