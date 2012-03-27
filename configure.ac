@@ -123,6 +123,9 @@ case "$host" in
 *-netbsd*)
 	SET_ENV_LIBRARY_PATH=yes
 	;;
+*-openbsd*)
+	SET_ENV_LIBRARY_PATH=yes
+	;;
 esac
 AM_CONDITIONAL(SET_ENV_LIBRARY_PATH, test $SET_ENV_LIBRARY_PATH = yes)
 AC_SUBST(SET_ENV_LIBRARY_PATH)
@@ -270,7 +273,7 @@ AC_DEFUN([BIND10_CXX_TRY_FLAG], [
   bind10_save_CXXFLAGS="$CXXFLAGS"
   CXXFLAGS="$CXXFLAGS $1"
 
-  AC_LINK_IFELSE([int main(void){ return 0;}],
+  AC_LINK_IFELSE([AC_LANG_SOURCE([int main(void){ return 0;}])],
                  [bind10_cxx_flag=yes], [bind10_cxx_flag=no])
   CXXFLAGS="$bind10_save_CXXFLAGS"
 
@@ -780,7 +783,22 @@ if test "${boost_include_path}" ; then
 fi
 AC_CHECK_HEADERS([boost/shared_ptr.hpp boost/foreach.hpp boost/interprocess/sync/interprocess_upgradable_mutex.hpp boost/date_time/posix_time/posix_time_types.hpp boost/bind.hpp boost/function.hpp],,
   AC_MSG_ERROR([Missing required header files.]))
-CPPFLAGS="$CPPFLAGS_SAVES"
+
+# Detect whether Boost tries to use threads by default, and, if not,
+# make it sure explicitly.  In some systems the automatic detection
+# may depend on preceding header files, and if inconsistency happens
+# it could lead to a critical disruption.
+AC_MSG_CHECKING([whether Boost tries to use threads])
+AC_TRY_COMPILE([
+#include <boost/config.hpp>
+#ifdef BOOST_HAS_THREADS
+#error "boost will use threads"
+#endif],,
+[AC_MSG_RESULT(no)
+ CPPFLAGS_BOOST_THREADCONF="-DBOOST_DISABLE_THREADS=1"],
+[AC_MSG_RESULT(yes)])
+
+CPPFLAGS="$CPPFLAGS_SAVES $CPPFLAGS_BOOST_THREADCONF"
 AC_SUBST(BOOST_INCLUDES)
 
 # I can't get some of the #include <asio.hpp> right without this

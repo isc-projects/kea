@@ -569,8 +569,10 @@ An attempt to add a NSEC3 record into the message failed, because the zone does
 not have any DS record. This indicates problem with the provided data.
 
 % DATASRC_QUERY_NO_ZONE no zone containing '%1' in class '%2'
-Lookup of domain failed because the data have no zone that contain the
-domain. Maybe someone sent a query to the wrong server for some reason.
+Debug information. Lookup of domain failed because the datasource
+has no zone that contains the domain. Maybe someone sent a query
+to the wrong server for some reason. This may also happen when
+looking in the datasource for addresses for NS records.
 
 % DATASRC_QUERY_PROCESS processing query '%1/%2' in the '%3' class
 Debug information. A sure query is being processed now.
