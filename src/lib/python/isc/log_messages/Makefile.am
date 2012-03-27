@@ -30,6 +30,7 @@ CLEANFILES += config_messages.pyc
 CLEANFILES += notify_out_messages.pyc
 CLEANFILES += libxfrin_messages.pyc
 CLEANFILES += server_common_messages.pyc
+CLEANFILES += dbutil_messages.pyc
 
 CLEANDIRS = __pycache__
 
