@@ -672,6 +672,16 @@ class MultiConfigData:
                 self._append_value_item(result, spec_part, identifier, all, True)
         return result
 
+    def unset(self, identifier):
+        """
+        Reset the value to default.
+        """
+        spec_part = self.find_spec_part(identifier)
+        if spec_part is not None:
+            isc.cc.data.unset(self._local_changes, identifier)
+        else:
+            raise isc.cc.data.DataNotFoundError(identifier + "not found")
+
     def set_value(self, identifier, value):
         """Set the local value at the given identifier to value. If
            there is a specification for the given identifier, the type
