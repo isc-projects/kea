@@ -1,4 +1,13 @@
-411.   [func]          muks
+412.	[func]		jelte
+	Added a command-line option '--clear-config' to bind10, which causes
+	the system to create a backup of the existing configuration database
+	file, and start out with a clean default configuration. This can be
+	used if the configuration file is corrupted to the point where it
+	cannot be read anymore, and BIND 10 refuses to start. The name of
+	the backup file can be found in the logs (CFGMGR_RENAMED_CONFIG_FILE).
+	(Trac #1443, git 52b36c921ee59ec69deefb6123cbdb1b91dc3bc7)
+
+411.	[func]		muks
 	Add a -i/--no-kill command-line argument to bind10, which stops
 	it from sending SIGTERM and SIGKILL to other b10 processes when
 	they're shutting down.
