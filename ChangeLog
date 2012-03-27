@@ -1,3 +1,9 @@
+414.	[bug]		jinmei
+	b10-auth now correctly handles delegation from an unsigned zone
+	(defined in the in-memory data source) when the query has DNSSEC
+	DO bit on.  It previously returned SERVFAIL.
+	(Trac #1836, git 78bb8f4b9676d6345f3fdd1e5cc89039806a9aba)
+
 413.	[func]		stephen, jelte
 	Created a new tool b10-dbutil, that can check and upgrade database
 	schemas, to be used when incompatible changes are introduced in the
