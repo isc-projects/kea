@@ -1,4 +1,47 @@
-407.    [build]     haikuo
+413.	[func]		stephen, jelte
+	Created a new tool b10-dbutil, that can check and upgrade database
+	schemas, to be used when incompatible changes are introduced in the
+	backend database schema. Currently it only supports sqlite3 databases.
+	(Trac #963, git 49ba2cf8ac63246f389ab5e8ea3b3d081dba9adf)
+
+412.	[func]		jelte
+	Added a command-line option '--clear-config' to bind10, which causes
+	the system to create a backup of the existing configuration database
+	file, and start out with a clean default configuration. This can be
+	used if the configuration file is corrupted to the point where it
+	cannot be read anymore, and BIND 10 refuses to start. The name of
+	the backup file can be found in the logs (CFGMGR_RENAMED_CONFIG_FILE).
+	(Trac #1443, git 52b36c921ee59ec69deefb6123cbdb1b91dc3bc7)
+
+411.	[func]		muks
+	Add a -i/--no-kill command-line argument to bind10, which stops
+	it from sending SIGTERM and SIGKILL to other b10 processes when
+	they're shutting down.
+	(Trac #1819, git 774554f46b20ca5ec2ef6c6d5e608114f14e2102)
+
+410.	[bug]		jinmei
+	Python CC library now ensures write operations transmit all given
+	data (unless an error happens).  Previously it didn't check the
+	size of transmitted data, which could result in partial write on
+	some systems (notably on OpenBSD) and subsequently cause system
+	hang up or other broken state.  This fix specifically solves start
+	up failure on OpenBSD.
+	(Trac #1829, git 5e5a33213b60d89e146cd5e47d65f3f9833a9297)
+
+409.	[bug]		jelte
+	Fixed a parser bug in bindctl that could make bindctl crash. Also
+	improved 'command help' output; argument order is now shown
+	correctly, and parameter descriptions are shown as well.
+	(Trac #1172, git bec26c6137c9b0a59a3a8ca0f55a17cfcb8a23de)
+
+408.	[bug]		stephen, jinmei
+	b10-auth now filters out duplicate RRsets when building a
+	response message using the new query handling logic.  It's
+	currently only used with the in-memory data source, but will
+	also be used for others soon.
+	(Trac #1688, git b77baca56ffb1b9016698c00ae0a1496d603d197)
+
+407.    [build]		haikuo
 	Remove "--enable-boost-threads" switch in configure command. This
 	thread lock mechanism is useless for bind10 and causes performance 
 	hits. 

@@ -157,6 +157,7 @@ class TestConfigData(unittest.TestCase):
         self.assertRaises(isc.cc.data.DataTypeError, convert_type, spec_part, [ "a", "b" ])
         self.assertRaises(isc.cc.data.DataTypeError, convert_type, spec_part, [ "1", "b" ])
         self.assertRaises(isc.cc.data.DataTypeError, convert_type, spec_part, { "a": 1 })
+        self.assertRaises(isc.cc.data.DataTypeError, convert_type, spec_part, "\"{ \"a\": 1 }\"")
 
         spec_part = find_spec_part(config_spec, "value7")
         self.assertEqual(['1', '2'], convert_type(spec_part, '1, 2'))

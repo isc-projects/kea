@@ -124,7 +124,8 @@ public:
     enum Flags {
         FLAG_CALLBACK = 1, ///< Callback enabled. See \ref callback
         FLAG_USER1 = 0x80000000U, ///< Application specific flag
-        FLAG_USER2 = 0x40000000U  ///< Application specific flag
+        FLAG_USER2 = 0x40000000U, ///< Application specific flag
+        FLAG_USER3 = 0x20000000U  ///< Application specific flag
     };
 private:
     // Some flag values are expected to be used for internal purposes
@@ -133,7 +134,7 @@ private:
     // explicitly defined in \c Flags.  This constant represents all
     // such flags.
     static const uint32_t SETTABLE_FLAGS = (FLAG_CALLBACK | FLAG_USER1 |
-                                            FLAG_USER2);
+                                            FLAG_USER2 | FLAG_USER3);
 
 public:
 
@@ -1161,6 +1162,10 @@ RBTree<T>::insert(const isc::dns::Name& target_name, RBNode<T>** new_node) {
 }
 
 
+// Note: when we redesign this (still keeping the basic concept), we should
+// change this part so the newly created node will be used for the inserted
+// name (and therefore the name for the existing node doesn't change).
+// Otherwise, things like shortcut links between nodes won't work.
 template <typename T>
 void
 RBTree<T>::nodeFission(RBNode<T>& node, const isc::dns::Name& base_name) {
