@@ -169,7 +169,8 @@ Name::Name(const std::string &namestring, bool downcase) {
             //
             if (c == '.') {
                 if (s != send) {
-                    isc_throw(EmptyLabel, "non terminating empty label");
+                    isc_throw(EmptyLabel,
+                              "non terminating empty label in " << namestring);
                 }
                 is_root = true;
             } else if (c == '@' && s == send) {
@@ -197,7 +198,8 @@ Name::Name(const std::string &namestring, bool downcase) {
         case ft_ordinary:
             if (c == '.') {
                 if (count == 0) {
-                    isc_throw(EmptyLabel, "duplicate period");
+                    isc_throw(EmptyLabel,
+                              "duplicate period in " << namestring);
                 }
                 ndata.at(offsets.back()) = count;
                 offsets.push_back(ndata.size());
@@ -210,7 +212,8 @@ Name::Name(const std::string &namestring, bool downcase) {
                 state = ft_escape;
             } else {
                 if (++count > MAX_LABELLEN) {
-                    isc_throw(TooLongLabel, "label is too long");
+                    isc_throw(TooLongLabel,
+                              "label is too long in " << namestring);
                 }
                 ndata.push_back(downcase ? maptolower[c] : c);
             }
@@ -219,14 +222,16 @@ Name::Name(const std::string &namestring, bool downcase) {
             if (c == '[') {
                 // This looks like a bitstring label, which was deprecated.
                 // Intentionally drop it.
-                isc_throw(BadLabelType, "invalid label type");
+                isc_throw(BadLabelType,
+                          "invalid label type in " << namestring);
             }
             state = ft_escape;
             // FALLTHROUGH
         case ft_escape:
             if (!isdigit(c & 0xff)) {
                 if (++count > MAX_LABELLEN) {
-                    isc_throw(TooLongLabel, "label is too long");
+                    isc_throw(TooLongLabel,
+                              "label is too long in " << namestring);
                 }
                 ndata.push_back(downcase ? maptolower[c] : c);
                 state = ft_ordinary;
@@ -238,17 +243,20 @@ Name::Name(const std::string &namestring, bool downcase) {
             // FALLTHROUGH
         case ft_escdecimal:
             if (!isdigit(c & 0xff)) {
-                isc_throw(BadEscape, "mixture of escaped digit and non-digit");
+                isc_throw(BadEscape,
+                          "mixture of escaped digit and non-digit in " << namestring);
             }
             value *= 10;
             value += digitvalue[c];
             digits++;
             if (digits == 3) {
                 if (value > 255) {
-                    isc_throw(BadEscape, "escaped decimal is too large");
+                    isc_throw(BadEscape,
+                              "escaped decimal is too large in " << namestring);
                 }
                 if (++count > MAX_LABELLEN) {
-                    isc_throw(TooLongLabel, "label is too long");
+                    isc_throw(TooLongLabel,
+                              "label is too long in " << namestring);
                 }
                 ndata.push_back(downcase ? maptolower[value] : value);
                 state = ft_ordinary;
@@ -262,11 +270,14 @@ Name::Name(const std::string &namestring, bool downcase) {
 
     if (!done) {                // no trailing '.' was found.
         if (ndata.size() == Name::MAX_WIRE) {
-            isc_throw(TooLongName, "name is too long for termination");
+            isc_throw(TooLongName,
+                      "name is too long for termination in " << namestring);
         }
         assert(s == send);
         if (state != ft_ordinary && state != ft_at) {
-            isc_throw(IncompleteName, "incomplete textual name");
+            isc_throw(IncompleteName,
+                      "incomplete textual name in " <<
+                      (namestring.empty() ? "<empty>" : namestring));
         }
         if (state == ft_ordinary) {
             assert(count != 0);
