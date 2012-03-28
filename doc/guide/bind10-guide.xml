@@ -1463,7 +1463,7 @@ This may be a temporary setting until then.
 	<quote>database_file</quote> configuration.
       </para>
 
-      <section>
+      <section id="in-memory-datasource">
 	<title>In-memory Data Source</title>
 
 	<para>
