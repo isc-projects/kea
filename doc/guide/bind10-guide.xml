@@ -1317,6 +1317,13 @@ This may be a temporary setting until then.
             </listitem>
           </varlistentry>
 
+          <varlistentry>
+            <term>datasources</term>
+            <listitem>
+              <simpara>TBD</simpara>
+            </listitem>
+          </varlistentry>
+
         </variablelist>
 
       </para>
@@ -1362,9 +1369,28 @@ This may be a temporary setting until then.
         (The full path is what was defined at build configure time for
         <option>--localstatedir</option>.
         The default is <filename>/usr/local/var/</filename>.)
-  This data file location may be changed by defining the
-  <quote>database_file</quote> configuration.
+	This data file location may be changed by defining the
+	<quote>database_file</quote> configuration.
       </para>
+
+      <section>
+	<title>In-memory Data Source</title>
+
+	<para>
+	  How to configure it.
+	  For example, the following command to bindctl
+	  will configure an in-memory data source containing the "example.com"
+	  zone with the zone file named "example.com.zone":
+
+	  <screen>&gt; <userinput> config set Auth/datasources/ [{"type": "memory", "zones": [{"origin": "example.com", "file": "example.com.zone"}]}]</userinput></screen>
+	</para>
+	By default, the memory data source is disabled; it must be
+	configured explicitly.  To disable it again, specify a null list
+	for Auth/datasources:
+
+	Notes: it's currently for class IN only.
+
+      </section>
 
     </section>
 
@@ -1373,7 +1399,7 @@ This may be a temporary setting until then.
 
       <para>
         RFC 1035 style DNS master zone files may imported
-        into a BIND 10 data source by using the
+        into a BIND 10 SQLite3 data source by using the
         <command>b10-loadzone</command> utility.
       </para>
 
