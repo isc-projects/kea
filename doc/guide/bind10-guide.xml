@@ -1467,18 +1467,50 @@ This may be a temporary setting until then.
 	<title>In-memory Data Source</title>
 
 	<para>
-	  How to configure it.
-	  For example, the following command to bindctl
-	  will configure an in-memory data source containing the "example.com"
-	  zone with the zone file named "example.com.zone":
+<!--	  How to configure it. -->
+	  The following commands to <command>bindctl</command>
+	  provide an example of configuring an in-memory data
+	  source containing the <quote>example.com</quote> zone
+	  with the zone file named <quote>example.com.zone</quote>:
 
+<!--
 	  <screen>&gt; <userinput> config set Auth/datasources/ [{"type": "memory", "zones": [{"origin": "example.com", "file": "example.com.zone"}]}]</userinput></screen>
+-->
+
+          <screen>&gt; <userinput>config add Auth/datasources</userinput>
+&gt; <userinput>config set Auth/datasources[0]/type "<option>memory</option>"</userinput>
+&gt; <userinput>config add Auth/datasources[0]/zones</userinput>
+&gt; <userinput>config set Auth/datasources[0]/zones[0]/origin "<option>example.com</option>"</userinput>
+&gt; <userinput>config set Auth/datasources[0]/zones[0]/file "<option>example.com.zone</option>"</userinput>
+&gt; <userinput>config commit</userinput></screen>
+
 	</para>
+
+	<note><simpara>Note: it's currently for class IN only.</simpara></note>
+
+<!--
+        <para>
+          The <varname>file</varname> may be an absolute path to the
+          master zone file or it is relative to the directory BIND 10 is
+          started from.
+	</para>
+-->
+
+        <para>
 	By default, the memory data source is disabled; it must be
 	configured explicitly.  To disable it again, specify a null list
-	for Auth/datasources:
+	for <varname>Auth/datasources</varname>:
 
-	Notes: it's currently for class IN only.
+	  <screen>&gt; <userinput>config set Auth/datasources/ []</userinput>
+&gt; <userinput>config commit</userinput></screen>
+	</para>
+
+	<para>
+          The following example stops serving a specific zone:
+
+	  <screen>&gt; <userinput>config remove Auth/datasources[<option>0</option>]/zones[<option>0</option>]</userinput>
+&gt; <userinput>config commit</userinput></screen>
+	</para>
 
       </section>
 
