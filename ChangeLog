@@ -1,3 +1,5 @@
+bind10-devel-20120329 released on March 29, 2012
+
 415.	[doc]		jinmei, jreed
 	BIND 10 Guide updated to now describe the in-memory data source
         configurations for b10-auth.
@@ -56,7 +58,7 @@
 	also be used for others soon.
 	(Trac #1688, git b77baca56ffb1b9016698c00ae0a1496d603d197)
 
-407.    [build]		haikuo
+407.	[build]		haikuo
 	Remove "--enable-boost-threads" switch in configure command. This
 	thread lock mechanism is useless for bind10 and causes performance 
 	hits. 
@@ -84,7 +86,7 @@
 	providing result for random instance.
 	(Trac #1751, git 3285353a660e881ec2b645e1bc10d94e5020f357)
 
-403.	[build]*	jelte
+403.	[build]*		jelte
 	The configure option for botan (--with-botan=PATH) is replaced by
 	--with-botan-config=PATH, which takes a full path to a botan-config
 	script, instead of the botan 'install' directory. Also, if not
