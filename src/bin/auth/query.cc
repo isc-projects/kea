@@ -278,8 +278,10 @@ Query::addDS(ZoneFinder& finder, const Name& dname) {
                ds_context->isNSEC3Signed()) {
         // Add no DS proof with NSEC3 as specified in RFC 5155 Section 7.2.7.
         addClosestEncloserProof(finder, dname, true);
-    } else {
-        // Any other case should be an error
+    } else if (ds_context->code != ZoneFinder::NXRRSET) {
+        // We know this domain should exist, so the result must be NXRRSET.
+        // If not, the zone is broken, so we'll return SERVFAIL by triggering
+        // an exception.
         isc_throw(BadDS, "Unexpected result for DS lookup for delegation");
     }
 }

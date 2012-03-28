@@ -20,7 +20,7 @@
 <refentry>
 
   <refentryinfo>
-    <date>March 1, 2012</date>
+    <date>March 28, 2012</date>
   </refentryinfo>
 
   <refmeta>
@@ -119,7 +119,7 @@
     <para>
       <varname>datasources</varname> configures data sources.
       The list items include:
-      <varname>type</varname> to optionally choose the data source type
+      <varname>type</varname> to define the required data source type
       (such as <quote>memory</quote>);
       <varname>class</varname> to optionally select the class
       (it defaults to <quote>IN</quote>);

@@ -13,6 +13,7 @@ noinst_SCRIPTS = run_dbutil.sh
 CLEANFILES = b10-dbutil b10-dbutil.pyc
 CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/dbutil_messages.py
 CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/dbutil_messages.pyc
+CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/dbutil_messages.pyo
 
 if ENABLE_MAN
 
