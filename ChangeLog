@@ -8,6 +8,10 @@
 	Created a new tool b10-dbutil, that can check and upgrade database
 	schemas, to be used when incompatible changes are introduced in the
 	backend database schema. Currently it only supports sqlite3 databases.
+	Note: there's no schema change that requires this utility as of
+	the March 29th release.  While running it shouldn't break
+	an existing database file, it should be even more advisable not to
+	run it at the moment.
 	(Trac #963, git 49ba2cf8ac63246f389ab5e8ea3b3d081dba9adf)
 
 412.	[func]		jelte
