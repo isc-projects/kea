@@ -1484,6 +1484,18 @@ This may be a temporary setting until then.
 &gt; <userinput>config set Auth/datasources[0]/zones[0]/file "<option>example.com.zone</option>"</userinput>
 &gt; <userinput>config commit</userinput></screen>
 
+	  The authoritative server will begin serving it immediately
+	  after it is loaded.
+	</para>
+
+	<para>
+	  Use the <command>Auth loadzone</command> command in
+	  <command>bindctl</command> to reload a changed master
+	  file into memory; for example:
+
+	  <screen>&gt; <userinput>Auth loadzone origin="example.com"</userinput>
+</screen>
+
 	</para>
 
 <!--
@@ -1496,8 +1508,10 @@ This may be a temporary setting until then.
 
         <para>
 	By default, the memory data source is disabled; it must be
-	configured explicitly.  To disable it again, specify a null list
-	for <varname>Auth/datasources</varname>:
+	configured explicitly.  To disable all the in-memory zones,
+	specify a null list for <varname>Auth/datasources</varname>:
+
+<!-- TODO: this assumes that Auth/datasources is for memory only -->
 
 	  <screen>&gt; <userinput>config set Auth/datasources/ []</userinput>
 &gt; <userinput>config commit</userinput></screen>
@@ -1508,6 +1522,12 @@ This may be a temporary setting until then.
 
 	  <screen>&gt; <userinput>config remove Auth/datasources[<option>0</option>]/zones[<option>0</option>]</userinput>
 &gt; <userinput>config commit</userinput></screen>
+
+	  (Replace the list number(s) in
+	  <varname>datasources[<replaceable>0</replaceable>]</varname>
+	  and/or <varname>zones[<replaceable>0</replaceable>]</varname>
+	  for the relevant zone as needed.)
+
 	</para>
 
       </section>
@@ -1566,7 +1586,7 @@ This may be a temporary setting until then.
       <note>
       <para>
         In the development prototype release, only the SQLite3 back
-        end is used.
+        end is used by <command>b10-loadzone</command>.
         By default, it stores the zone data in
         <filename>/usr/local/var/bind10-devel/zone.sqlite3</filename>
         unless the <option>-d</option> switch is used to set the
