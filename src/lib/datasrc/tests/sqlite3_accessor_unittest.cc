@@ -771,7 +771,8 @@ TEST_F(SQLite3Update, rollback) {
     checkRecords(*accessor, zone_id, "foo.bar.example.com.", expected_stored);
 }
 
-TEST_F(SQLite3Update, rollbackFailure) {
+// TODO: ticket #1845
+TEST_F(SQLite3Update,  DISABLED_rollbackFailure) {
     // This test emulates a rare scenario of making rollback attempt fail.
     // The iterator is paused in the middle of getting records, which prevents
     // the rollback operation at the end of the test.
