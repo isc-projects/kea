@@ -201,7 +201,7 @@ class QueryResult(object):
         pass
 
 @step('A (dnssec )?query for ([\S]+) (?:type ([A-Z0-9]+) )?' +
-      '(?:class ([A-Z]+) )?(?:to ([^:]+)(?::([0-9]+))? )?' +
+      '(?:class ([A-Z]+) )?(?:to ([^:]+|\[[0-9a-fA-F:]+\])(?::([0-9]+))? )?' +
       'should have rcode ([\w.]+)')
 def query(step, dnssec, query_name, qtype, qclass, addr, port, rcode):
     """
@@ -223,6 +223,7 @@ def query(step, dnssec, query_name, qtype, qclass, addr, port, rcode):
         qclass = "IN"
     if addr is None:
         addr = "127.0.0.1"
+    addr = re.sub(r"\[(.+)\]", r"\1", addr) # convert [IPv6_addr] to IPv6_addr
     if port is None:
         port = 47806
     additional_arguments = []
