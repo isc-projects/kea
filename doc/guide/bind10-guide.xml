@@ -1486,8 +1486,6 @@ This may be a temporary setting until then.
 
 	</para>
 
-	<note><simpara>Note: it's currently for class IN only.</simpara></note>
-
 <!--
         <para>
           The <varname>file</varname> may be an absolute path to the
