@@ -1,7 +1,7 @@
 415.	[doc]		jinmei, jreed
 	BIND 10 Guide updated to now describe the in-memory data source
         configurations for b10-auth.
-	(Trac #1732, git TBD)
+	(Trac #1732, git 434d8db8dfcd23a87b8e798e5702e91f0bbbdcf6)
 
 414.	[bug]		jinmei
 	b10-auth now correctly handles delegation from an unsigned zone
