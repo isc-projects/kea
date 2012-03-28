@@ -13,6 +13,7 @@ CLEANFILES = $(PYTHON_LOGMSGPKG_DIR)/work/cfgmgr_messages.py
 CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/cfgmgr_messages.pyc
 CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/config_messages.py
 CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/config_messages.pyc
+CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/config_messages.pyo
 
 CLEANDIRS = __pycache__
 

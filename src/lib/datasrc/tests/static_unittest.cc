@@ -66,6 +66,7 @@ protected:
         authors_data.push_back("Kazunori Fujiwara");
         authors_data.push_back("Michael Graff");
         authors_data.push_back("Michal Vaner");
+        authors_data.push_back("Mukund Sivaraman");
         authors_data.push_back("Naoki Kambe");
         authors_data.push_back("Shane Kerr");
         authors_data.push_back("Shen Tingting");
