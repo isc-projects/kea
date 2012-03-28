@@ -1,3 +1,8 @@
+415.	[doc]		jinmei, jreed
+	BIND 10 Guide updated to now describe the in-memory data source
+        configurations for b10-auth.
+	(Trac #1732, git TBD)
+
 414.	[bug]		jinmei
 	b10-auth now correctly handles delegation from an unsigned zone
 	(defined in the in-memory data source) when the query has DNSSEC
