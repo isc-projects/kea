@@ -1326,7 +1326,7 @@ This may be a temporary setting until then.
               <simpara>
       <varname>datasources</varname> configures data sources.
       The list items include:
-      <varname>type</varname> to optionally choose the data source type
+      <varname>type</varname> to define the required data source type
       (such as <quote>memory</quote>);
       <varname>class</varname> to optionally select the class
       (it defaults to <quote>IN</quote>);
