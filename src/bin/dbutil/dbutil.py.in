@@ -378,7 +378,10 @@ def get_latest_version():
 
     This is the 'to' version held in the last element of the upgrades list
     """
-    return UPGRADES[-1]['to']
+    # Temporarily hardcoded to return 1 as the schema version, until
+    # #324 is merged.
+    #return UPGRADES[-1]['to']
+    return (1, 0)
 
 
 def get_version(db):
