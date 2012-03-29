@@ -999,7 +999,7 @@ InMemoryZoneFinderTest::findCheck(ZoneFinder::FindResultFlags expected_flags) {
     findTest(Name("nothere.example.org"), RRType::A(), ZoneFinder::NXDOMAIN,
              true, ConstRRsetPtr(), expected_flags);
     EXPECT_THROW(zone_finder_.find(Name("example.net"), RRType::A(),
-                 ZoneFinder::FIND_DEFAULT), OutOfZoneFind);
+                                   ZoneFinder::FIND_DEFAULT), OutOfZoneFind);
 }
 
 TEST_F(InMemoryZoneFinderTest, find) {
