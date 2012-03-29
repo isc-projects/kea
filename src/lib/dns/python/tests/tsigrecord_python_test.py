@@ -41,4 +41,4 @@ class TSIGRecordTest(unittest.TestCase):
         self.assertEqual(expected_text, str(self.test_record))
 
 if __name__ == '__main__':
-    unittest.main(verbosity=2)
+    unittest.main()

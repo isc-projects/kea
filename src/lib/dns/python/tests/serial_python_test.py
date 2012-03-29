@@ -108,4 +108,4 @@ class SerialTest(unittest.TestCase):
         self.assertRaises(TypeError, lambda: "bad" + self.zero)
 
 if __name__ == '__main__':
-    unittest.main(verbosity=2)
+    unittest.main()

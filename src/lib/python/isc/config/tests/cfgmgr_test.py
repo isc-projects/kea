@@ -626,4 +626,4 @@ if __name__ == '__main__':
         exit(1)
     isc.log.init("unittests")
     isc.log.resetUnitTestRootLogger()
-    unittest.main(verbosity=2)
+    unittest.main()
