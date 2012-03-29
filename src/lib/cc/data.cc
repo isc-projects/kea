@@ -317,7 +317,6 @@ str_from_stringstream(std::istream &in, const std::string& file, const int line,
 
     while (c != EOF && c != '"') {
         if (c == '\\') {
-            // next char must be either another \ or "
             // see the spec for allowed escape characters
             if (strchr("\"\\/\b\f\n\r\t", in.peek()) != NULL) {
                 // drop the escape
