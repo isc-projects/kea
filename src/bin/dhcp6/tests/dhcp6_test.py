@@ -68,4 +68,4 @@ class TestDhcpv6Daemon(unittest.TestCase):
             print("Ignoring failed kill attempt. Process is dead already.")
 
 if __name__ == '__main__':
-    unittest.main(verbosity=2)
+    unittest.main()

@@ -354,4 +354,4 @@ class RequestLoaderTest(unittest.TestCase):
         self.assertRaises(Error, RequestLoader)
 
 if __name__ == '__main__':
-    unittest.main(verbosity=2)
+    unittest.main()

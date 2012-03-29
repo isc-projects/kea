@@ -58,6 +58,6 @@ class TestNoPollMixIn(unittest.TestCase):
         self.assertTrue(server._is_shut_down.is_set())
 
 if __name__== "__main__":
-    unittest.main(verbosity=2)
+    unittest.main()
 
 

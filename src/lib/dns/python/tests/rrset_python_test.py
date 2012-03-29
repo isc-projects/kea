@@ -119,4 +119,4 @@ class TestModuleSpec(unittest.TestCase):
         self.assertEqual(1, sys.getrefcount(self.rrset_a.get_rdata()[0]))
         
 if __name__ == '__main__':
-    unittest.main(verbosity=2)
+    unittest.main()

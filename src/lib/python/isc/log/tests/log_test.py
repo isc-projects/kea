@@ -201,4 +201,4 @@ class Logger(unittest.TestCase):
         self.assertRaises(ValueError, logger.info, self.TEST_MSG, LogParam())
 
 if __name__ == '__main__':
-    unittest.main(verbosity=2)
+    unittest.main()
