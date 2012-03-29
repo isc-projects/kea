@@ -244,7 +244,8 @@ Name::Name(const std::string &namestring, bool downcase) {
         case ft_escdecimal:
             if (!isdigit(c & 0xff)) {
                 isc_throw(BadEscape,
-                          "mixture of escaped digit and non-digit in " << namestring);
+                          "mixture of escaped digit and non-digit in "
+                          << namestring);
             }
             value *= 10;
             value += digitvalue[c];
@@ -252,7 +253,8 @@ Name::Name(const std::string &namestring, bool downcase) {
             if (digits == 3) {
                 if (value > 255) {
                     isc_throw(BadEscape,
-                              "escaped decimal is too large in " << namestring);
+                              "escaped decimal is too large in "
+                              << namestring);
                 }
                 if (++count > MAX_LABELLEN) {
                     isc_throw(TooLongLabel,
