@@ -258,31 +258,38 @@ const char* const SCHEMA_LIST[] = {
     "CREATE TABLE schema_version (version INTEGER NOT NULL)",
     "INSERT INTO schema_version VALUES (1)",
     "CREATE TABLE zones (id INTEGER PRIMARY KEY, "
-    "name STRING NOT NULL COLLATE NOCASE, "
-    "rdclass STRING NOT NULL COLLATE NOCASE DEFAULT 'IN', "
+    "name TEXT NOT NULL COLLATE NOCASE, "
+    "rdclass TEXT NOT NULL COLLATE NOCASE DEFAULT 'IN', "
     "dnssec BOOLEAN NOT NULL DEFAULT 0)",
     "CREATE INDEX zones_byname ON zones (name)",
     "CREATE TABLE records (id INTEGER PRIMARY KEY, "
-        "zone_id INTEGER NOT NULL, name STRING NOT NULL COLLATE NOCASE, "
-        "rname STRING NOT NULL COLLATE NOCASE, ttl INTEGER NOT NULL, "
-        "rdtype STRING NOT NULL COLLATE NOCASE, sigtype STRING COLLATE NOCASE, "
-        "rdata STRING NOT NULL)",
+        "zone_id INTEGER NOT NULL, name TEXT NOT NULL COLLATE NOCASE, "
+        "rname TEXT NOT NULL COLLATE NOCASE, ttl INTEGER NOT NULL, "
+        "rdtype TEXT NOT NULL COLLATE NOCASE, sigtype TEXT COLLATE NOCASE, "
+        "rdata TEXT NOT NULL)",
     "CREATE INDEX records_byname ON records (name)",
     "CREATE INDEX records_byrname ON records (rname)",
+    // The next index is a tricky one.  It's necessary for
+    // FIND_PREVIOUS to use the index efficiently; since there's an
+    // "inequality", the rname column must be placed later.  records_byrname
+    // may not be sufficient especially when the zone is not signed (and
+    // defining a separate index for rdtype only doesn't work either; SQLite3
+    // would then create a temporary B-tree for "ORDER BY").
+    "CREATE INDEX records_bytype_and_rname ON records (rdtype, rname)",
     "CREATE TABLE nsec3 (id INTEGER PRIMARY KEY, zone_id INTEGER NOT NULL, "
-        "hash STRING NOT NULL COLLATE NOCASE, "
-        "owner STRING NOT NULL COLLATE NOCASE, "
-        "ttl INTEGER NOT NULL, rdtype STRING NOT NULL COLLATE NOCASE, "
-        "rdata STRING NOT NULL)",
+        "hash TEXT NOT NULL COLLATE NOCASE, "
+        "owner TEXT NOT NULL COLLATE NOCASE, "
+        "ttl INTEGER NOT NULL, rdtype TEXT NOT NULL COLLATE NOCASE, "
+        "rdata TEXT NOT NULL)",
     "CREATE INDEX nsec3_byhash ON nsec3 (hash)",
     "CREATE TABLE diffs (id INTEGER PRIMARY KEY, "
         "zone_id INTEGER NOT NULL, "
         "version INTEGER NOT NULL, "
         "operation INTEGER NOT NULL, "
-        "name STRING NOT NULL COLLATE NOCASE, "
-        "rrtype STRING NOT NULL COLLATE NOCASE, "
+        "name TEXT NOT NULL COLLATE NOCASE, "
+        "rrtype TEXT NOT NULL COLLATE NOCASE, "
         "ttl INTEGER NOT NULL, "
-        "rdata STRING NOT NULL)",
+        "rdata TEXT NOT NULL)",
     NULL
 };
 
