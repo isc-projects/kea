@@ -20,6 +20,7 @@
 
 using namespace isc::data;
 
+#include <sstream>
 #include <iostream>
 using std::oct;
 #include <iomanip>
@@ -297,6 +298,38 @@ TEST(Element, create_and_value_throws) {
     EXPECT_FALSE(el->getValue(v));
     EXPECT_TRUE(el->getValue(m));
 
+}
+
+// Helper for escape check; it puts the given string in a StringElement,
+// then checks for the following conditions:
+// stringValue() must be same as input
+// toJSON() output must be escaped
+// fromJSON() on the previous output must result in original input
+void
+escapeHelper(const std::string& input, const std::string& expected) {
+    StringElement str_element = StringElement(input);
+    EXPECT_EQ(input, str_element.stringValue());
+    std::stringstream os;
+    str_element.toJSON(os);
+    EXPECT_EQ(expected, os.str());
+    ElementPtr str_element2 = Element::fromJSON(os.str());
+    EXPECT_EQ(str_element.stringValue(), str_element2->stringValue());
+}
+
+TEST(Element, escape) {
+    // Test whether quotes are escaped correctly when creating direct
+    // String elements.
+    escapeHelper("foo\"bar", "\"foo\\\"bar\"");
+    escapeHelper("foo\\bar", "\"foo\\\\bar\"");
+    escapeHelper("foo/bar", "\"foo\\/bar\"");
+    escapeHelper("foo\bbar", "\"foo\\\bbar\"");
+    escapeHelper("foo\fbar", "\"foo\\\fbar\"");
+    escapeHelper("foo\nbar", "\"foo\\\nbar\"");
+    escapeHelper("foo\rbar", "\"foo\\\rbar\"");
+    escapeHelper("foo\tbar", "\"foo\\\tbar\"");
+    // Bad escapes
+    EXPECT_THROW(Element::fromJSON("\\a"), JSONError);
+    EXPECT_THROW(Element::fromJSON("\\"), JSONError);
 }
 
 TEST(Element, ListElement) {
