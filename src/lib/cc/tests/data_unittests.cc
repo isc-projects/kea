@@ -321,7 +321,6 @@ TEST(Element, escape) {
     // String elements.
     escapeHelper("foo\"bar", "\"foo\\\"bar\"");
     escapeHelper("foo\\bar", "\"foo\\\\bar\"");
-    escapeHelper("foo/bar", "\"foo\\/bar\"");
     escapeHelper("foo\bbar", "\"foo\\\bbar\"");
     escapeHelper("foo\fbar", "\"foo\\\fbar\"");
     escapeHelper("foo\nbar", "\"foo\\\nbar\"");
