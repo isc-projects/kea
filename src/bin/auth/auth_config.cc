@@ -168,8 +168,7 @@ MemoryDatasourceConfig::build(ConstElementPtr config_value) {
 
         InMemoryZoneFinder* imzf = NULL;
         try {
-            imzf = new InMemoryZoneFinder(rrclass_,
-                                          Name(origin->stringValue()));
+            imzf = new InMemoryZoneFinder(rrclass_, Name(origin_txt));
         } catch (const isc::dns::NameParserException& ex) {
             isc_throw(AuthConfigError, "unable to parse zone's origin: " <<
                       ex.what());
@@ -188,7 +187,7 @@ MemoryDatasourceConfig::build(ConstElementPtr config_value) {
          * need the load method to be split into some kind of build and
          * commit/abort parts.
          */
-        zone_finder->load(file->stringValue());
+        zone_finder->load(file_txt);
     }
 }
 
