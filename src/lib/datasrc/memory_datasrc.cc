@@ -1206,8 +1206,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
             name.compare(origin_).getRelation();
         if (reln != NameComparisonResult::SUBDOMAIN &&
             reln != NameComparisonResult::EQUAL) {
-            isc_throw(OutOfZoneFind, "out-of-zone find(): " <<
-                                     name.toText() <<
+            isc_throw(OutOfZoneFind, name.toText() <<
                                      " not in " << origin_.toText());
         }
 
