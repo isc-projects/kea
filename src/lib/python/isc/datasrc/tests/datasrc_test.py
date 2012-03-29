@@ -379,11 +379,10 @@ class DataSrcClient(unittest.TestCase):
         self.assertEqual(finder.NXDOMAIN, result)
         self.assertEqual(None, rrset)
 
-        result, rrset, _ = finder.find(isc.dns.Name("www.some.other.domain"),
-                                       isc.dns.RRType.A(),
-                                       finder.FIND_DEFAULT)
-        self.assertEqual(finder.NXDOMAIN, result)
-        self.assertEqual(None, rrset)
+
+        self.assertRaises(isc.datasrc.OutOfZoneFind, finder.find,
+                          isc.dns.Name("www.some.other.domain"),
+                          isc.dns.RRType.A(), finder.FIND_DEFAULT)
 
         result, rrset, _ = finder.find(isc.dns.Name("www.example.com"),
                                        isc.dns.RRType.TXT(),
