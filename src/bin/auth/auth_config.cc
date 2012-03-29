@@ -166,6 +166,10 @@ MemoryDatasourceConfig::build(ConstElementPtr config_value) {
                       << origin->str());
         }
 
+        // Note: we don't want to have such small try-catch blocks for each
+        // specific error.  We may eventually want to introduce some unified
+        // error handling framework as we have more configuration parameters.
+        // See bug #1627 for the relevant discussion.
         InMemoryZoneFinder* imzf = NULL;
         try {
             imzf = new InMemoryZoneFinder(rrclass_, Name(origin_txt));
