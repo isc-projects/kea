@@ -313,11 +313,25 @@ TEST_F(MemoryDatasrcConfigTest, addDuplicateZones) {
 }
 
 TEST_F(MemoryDatasrcConfigTest, addBadZone) {
+    // origin and file are missing
+    EXPECT_THROW(parser->build(
+                     Element::fromJSON(
+                         "[{\"type\": \"memory\","
+                         "  \"zones\": [{}]}]")),
+                 AuthConfigError);
+
     // origin is missing
     EXPECT_THROW(parser->build(
                      Element::fromJSON(
                          "[{\"type\": \"memory\","
                          "  \"zones\": [{\"file\": \"example.zone\"}]}]")),
+                 AuthConfigError);
+
+    // file is missing
+    EXPECT_THROW(parser->build(
+                     Element::fromJSON(
+                         "[{\"type\": \"memory\","
+                         "  \"zones\": [{\"origin\": \"example.com\"}]}]")),
                  AuthConfigError);
 
     // missing zone file
