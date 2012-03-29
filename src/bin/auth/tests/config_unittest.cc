@@ -332,7 +332,7 @@ TEST_F(MemoryDatasrcConfigTest, addBadZone) {
                       "[{\"type\": \"memory\","
                       "  \"zones\": [{\"origin\": \"example..com\","
                       "               \"file\": \"example.zone\"}]}]")),
-                 EmptyLabel);
+                 AuthConfigError);
 
     // bogus RR class name
     EXPECT_THROW(parser->build(
