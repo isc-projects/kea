@@ -29,4 +29,4 @@ class FileTest(unittest.TestCase):
         self.assertRaises(IOError, isc.util.file.path_search, 'no file', ['/no/such/directory'])
 
 if __name__ == "__main__":
-    unittest.main(verbosity=2)
+    unittest.main()

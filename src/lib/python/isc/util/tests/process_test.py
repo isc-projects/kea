@@ -36,4 +36,4 @@ class TestRename(unittest.TestCase):
         self.assertEqual("process_test.py", self.__get_self_name())
 
 if __name__ == "__main__":
-    unittest.main(verbosity=2)
+    unittest.main()

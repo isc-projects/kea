@@ -417,4 +417,4 @@ class TestNotifyOut(unittest.TestCase):
 if __name__== "__main__":
     isc.log.init("bind10")
     isc.log.resetUnitTestRootLogger()
-    unittest.main(verbosity=2)
+    unittest.main()

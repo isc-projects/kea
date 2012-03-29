@@ -416,4 +416,4 @@ class TestMain(unittest.TestCase):
 
 if __name__== "__main__":
     isc.log.resetUnitTestRootLogger()
-    unittest.main(verbosity=2)
+    unittest.main()

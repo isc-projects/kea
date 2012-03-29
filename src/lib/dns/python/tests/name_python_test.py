@@ -219,4 +219,4 @@ class NameTest(unittest.TestCase):
         self.assertFalse(self.name2 >= self.name1)
 
 if __name__ == '__main__':
-    unittest.main(verbosity=2)
+    unittest.main()

@@ -54,6 +54,6 @@ class MessageTest(unittest.TestCase):
         self.assertRaises(ValueError, isc.cc.message.from_wire, b']')
 
 if __name__ == '__main__':
-    unittest.main(verbosity=2)
+    unittest.main()
 
 
