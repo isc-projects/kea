@@ -26,7 +26,7 @@
 #include <dns/rrset.h>
 #include <dns/rrsetlist.h>
 
-#define SQLITE_SCHEMA_VERSION 1
+#define SQLITE_SCHEMA_VERSION 2
 
 using namespace std;
 using namespace isc::dns;
@@ -57,33 +57,34 @@ struct Sqlite3Parameters {
 namespace {
 const char* const SCHEMA_LIST[] = {
     "CREATE TABLE schema_version (version INTEGER NOT NULL)",
-    "INSERT INTO schema_version VALUES (1)",
+    "INSERT INTO schema_version VALUES (2)",
     "CREATE TABLE zones (id INTEGER PRIMARY KEY, "
-    "name STRING NOT NULL COLLATE NOCASE, "
-    "rdclass STRING NOT NULL COLLATE NOCASE DEFAULT 'IN', "
+    "name TEXT NOT NULL COLLATE NOCASE, "
+    "rdclass TEXT NOT NULL COLLATE NOCASE DEFAULT 'IN', "
     "dnssec BOOLEAN NOT NULL DEFAULT 0)",
     "CREATE INDEX zones_byname ON zones (name)",
     "CREATE TABLE records (id INTEGER PRIMARY KEY, "
-    "zone_id INTEGER NOT NULL, name STRING NOT NULL COLLATE NOCASE, "
-    "rname STRING NOT NULL COLLATE NOCASE, ttl INTEGER NOT NULL, "
-    "rdtype STRING NOT NULL COLLATE NOCASE, sigtype STRING COLLATE NOCASE, "
-    "rdata STRING NOT NULL)",
+    "zone_id INTEGER NOT NULL, name TEXT NOT NULL COLLATE NOCASE, "
+    "rname TEXT NOT NULL COLLATE NOCASE, ttl INTEGER NOT NULL, "
+    "rdtype TEXT NOT NULL COLLATE NOCASE, sigtype TEXT COLLATE NOCASE, "
+    "rdata TEXT NOT NULL)",
     "CREATE INDEX records_byname ON records (name)",
     "CREATE INDEX records_byrname ON records (rname)",
+    "CREATE INDEX records_bytype_and_rname ON records (rdtype, rname)",
     "CREATE TABLE nsec3 (id INTEGER PRIMARY KEY, zone_id INTEGER NOT NULL, "
-    "hash STRING NOT NULL COLLATE NOCASE, "
-    "owner STRING NOT NULL COLLATE NOCASE, "
-    "ttl INTEGER NOT NULL, rdtype STRING NOT NULL COLLATE NOCASE, "
-    "rdata STRING NOT NULL)",
+    "hash TEXT NOT NULL COLLATE NOCASE, "
+    "owner TEXT NOT NULL COLLATE NOCASE, "
+    "ttl INTEGER NOT NULL, rdtype TEXT NOT NULL COLLATE NOCASE, "
+    "rdata TEXT NOT NULL)",
     "CREATE INDEX nsec3_byhash ON nsec3 (hash)",
     "CREATE TABLE diffs (id INTEGER PRIMARY KEY, "
         "zone_id INTEGER NOT NULL, "
         "version INTEGER NOT NULL, "
         "operation INTEGER NOT NULL, "
-        "name STRING NOT NULL COLLATE NOCASE, "
-        "rrtype STRING NOT NULL COLLATE NOCASE, "
+        "name TEXT NOT NULL COLLATE NOCASE, "
+        "rrtype TEXT NOT NULL COLLATE NOCASE, "
         "ttl INTEGER NOT NULL, "
-        "rdata STRING NOT NULL)",
+        "rdata TEXT NOT NULL)",
     NULL
 };
 
@@ -109,12 +110,16 @@ const char* const q_referral_str = "SELECT rdtype, ttl, sigtype, rdata FROM "
 const char* const q_any_str = "SELECT rdtype, ttl, sigtype, rdata "
     "FROM records WHERE zone_id=?1 AND name=?2";
 
+// Note: the wildcard symbol '%' is expected to be added to the text
+// for the placeholder for LIKE given via sqlite3_bind_text().  We don't
+// use the expression such as (?2 || '%') because it would disable the use
+// of indices and could result in terrible performance.
 const char* const q_count_str = "SELECT COUNT(*) FROM records "
-    "WHERE zone_id=?1 AND rname LIKE (?2 || '%');";
+    "WHERE zone_id=?1 AND rname LIKE ?2;";
 
 const char* const q_previous_str = "SELECT name FROM records "
-    "WHERE zone_id=?1 AND rdtype = 'NSEC' AND "
-    "rname < $2 ORDER BY rname DESC LIMIT 1";
+    "WHERE rname < ?2 AND zone_id=?1 AND rdtype = 'NSEC' "
+    "ORDER BY rname DESC LIMIT 1";
 
 const char* const q_nsec3_str = "SELECT rdtype, ttl, rdata FROM nsec3 "
     "WHERE zone_id = ?1 AND hash = $2";
@@ -314,8 +319,9 @@ Sqlite3DataSrc::findRecords(const Name& name, const RRType& rdtype,
                   " to SQL statement (qcount)");
     }
 
-    const string revname_text = name.reverse().toText();
-    rc = sqlite3_bind_text(dbparameters->q_count_, 2, revname_text.c_str(),
+    const string revname_text = name.reverse().toText() + "%";
+    rc = sqlite3_bind_text(dbparameters->q_count_, 2,
+                           revname_text.c_str(),
                            -1, SQLITE_STATIC);
     if (rc != SQLITE_OK) {
         isc_throw(Sqlite3Error, "Could not bind name " << name.reverse() <<
