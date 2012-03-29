@@ -899,8 +899,9 @@ TEST_F(InMemoryZoneFinderTest, findAny) {
     findAllTest(origin_, ZoneFinder::SUCCESS, expected_sets);
 
     // out zone name
-    findAllTest(Name("example.com"), ZoneFinder::NXDOMAIN,
-                vector<ConstRRsetPtr>());
+    EXPECT_THROW(findAllTest(Name("example.com"), ZoneFinder::NXDOMAIN,
+                             vector<ConstRRsetPtr>()),
+                 OutOfZoneFind);
 
     expected_sets.clear();
     expected_sets.push_back(rr_child_glue_);
@@ -997,8 +998,8 @@ InMemoryZoneFinderTest::findCheck(ZoneFinder::FindResultFlags expected_flags) {
     // These domains don't exist (and one is out of the zone)
     findTest(Name("nothere.example.org"), RRType::A(), ZoneFinder::NXDOMAIN,
              true, ConstRRsetPtr(), expected_flags);
-    findTest(Name("example.net"), RRType::A(), ZoneFinder::NXDOMAIN, true,
-             ConstRRsetPtr(), expected_flags);
+    EXPECT_THROW(zone_finder_.find(Name("example.net"), RRType::A(),
+                 ZoneFinder::FIND_DEFAULT), OutOfZoneFind);
 }
 
 TEST_F(InMemoryZoneFinderTest, find) {
@@ -1053,8 +1054,9 @@ InMemoryZoneFinderTest::emptyNodeCheck(
     // Note: basically we don't expect such a query to be performed (the common
     // operation is to identify the best matching zone first then perform
     // search it), but we shouldn't be confused even in the unexpected case.
-    findTest(Name("org"), RRType::A(), ZoneFinder::NXDOMAIN, true,
-             ConstRRsetPtr(), expected_flags);
+    EXPECT_THROW(zone_finder_.find(Name("org"), RRType::A(),
+                                   ZoneFinder::FIND_DEFAULT),
+                 OutOfZoneFind);
 }
 
 TEST_F(InMemoryZoneFinderTest, emptyNode) {
@@ -1512,14 +1514,16 @@ TEST_F(InMemoryZoneFinderTest, swap) {
     EXPECT_EQ(RRClass::CH(), finder1.getClass());
     EXPECT_EQ(RRClass::IN(), finder2.getClass());
     // make sure the zone data is swapped, too
-    findTest(origin_, RRType::NS(), ZoneFinder::NXDOMAIN, false,
-             ConstRRsetPtr(), ZoneFinder::RESULT_DEFAULT, &finder1);
+    EXPECT_THROW(finder1.find(origin_, RRType::NS(),
+                              ZoneFinder::FIND_DEFAULT),
+                 OutOfZoneFind);
     findTest(other_origin, RRType::TXT(), ZoneFinder::SUCCESS, false,
              ConstRRsetPtr(), ZoneFinder::RESULT_DEFAULT, &finder1);
     findTest(origin_, RRType::NS(), ZoneFinder::SUCCESS, false,
              ConstRRsetPtr(), ZoneFinder::RESULT_DEFAULT, &finder2);
-    findTest(other_origin, RRType::TXT(), ZoneFinder::NXDOMAIN, false,
-             ConstRRsetPtr(), ZoneFinder::RESULT_DEFAULT, &finder2);
+    EXPECT_THROW(finder2.find(other_origin, RRType::TXT(),
+                              ZoneFinder::FIND_DEFAULT),
+                 OutOfZoneFind);
 }
 
 TEST_F(InMemoryZoneFinderTest, getFileName) {

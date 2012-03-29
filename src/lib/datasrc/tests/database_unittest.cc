@@ -1877,33 +1877,31 @@ TYPED_TEST(DatabaseClientTest, findOutOfZone) {
     vector<ConstRRsetPtr> target;
 
     // Superdomain
-    doFindTest(*finder, Name("org"), this->qtype_, this->qtype_,
-               this->rrttl_, ZoneFinder::NXDOMAIN,
-               this->empty_rdatas_, this->empty_rdatas_);
-    EXPECT_EQ(ZoneFinder::NXDOMAIN, finder->findAll(Name("org"), target)->code);
+    EXPECT_THROW(finder->find(Name("org"), this->qtype_,
+                 ZoneFinder::FIND_DEFAULT), OutOfZoneFind);
+    EXPECT_THROW(finder->findAll(Name("org"), target), OutOfZoneFind);
+
     // sharing a common ancestor
-    doFindTest(*finder, Name("noexample.org"), this->qtype_, this->qtype_,
-               this->rrttl_, ZoneFinder::NXDOMAIN,
-               this->empty_rdatas_, this->empty_rdatas_);
-    EXPECT_EQ(ZoneFinder::NXDOMAIN, finder->findAll(Name("noexample.org"),
-                                                    target)->code);
+    EXPECT_THROW(finder->find(Name("noexample.org"), this->qtype_,
+                 ZoneFinder::FIND_DEFAULT), OutOfZoneFind);
+    EXPECT_THROW(finder->findAll(Name("noexample.org"), target),
+                 OutOfZoneFind);
+
     // totally unrelated domain, smaller number of labels
-    doFindTest(*finder, Name("com"), this->qtype_, this->qtype_,
-               this->rrttl_, ZoneFinder::NXDOMAIN,
-               this->empty_rdatas_, this->empty_rdatas_);
-    EXPECT_EQ(ZoneFinder::NXDOMAIN, finder->findAll(Name("com"), target)->code);
+    EXPECT_THROW(finder->find(Name("com"), this->qtype_,
+                 ZoneFinder::FIND_DEFAULT), OutOfZoneFind);
+    EXPECT_THROW(finder->findAll(Name("com"), target), OutOfZoneFind);
+
     // totally unrelated domain, same number of labels
-    doFindTest(*finder, Name("example.com"), this->qtype_, this->qtype_,
-               this->rrttl_, ZoneFinder::NXDOMAIN,
-               this->empty_rdatas_, this->empty_rdatas_);
-    EXPECT_EQ(ZoneFinder::NXDOMAIN, finder->findAll(Name("example.com"),
-                                                    target)->code);
+    EXPECT_THROW(finder->find(Name("example.com"), this->qtype_,
+                 ZoneFinder::FIND_DEFAULT), OutOfZoneFind);
+    EXPECT_THROW(finder->findAll(Name("example.com"), target), OutOfZoneFind);
+
     // totally unrelated domain, larger number of labels
-    doFindTest(*finder, Name("more.example.com"), this->qtype_, this->qtype_,
-               this->rrttl_, ZoneFinder::NXDOMAIN,
-               this->empty_rdatas_, this->empty_rdatas_);
-    EXPECT_EQ(ZoneFinder::NXDOMAIN, finder->findAll(Name("more.example.com"),
-                                                    target)->code);
+    EXPECT_THROW(finder->find(Name("more.example.com"), this->qtype_,
+                 ZoneFinder::FIND_DEFAULT), OutOfZoneFind);
+    EXPECT_THROW(finder->findAll(Name("more.example.com"), target),
+                 OutOfZoneFind);
 }
 
 TYPED_TEST(DatabaseClientTest, findDelegation) {
@@ -2835,10 +2833,10 @@ TYPED_TEST(DatabaseClientTest, addDeviantRR) {
         // regardless of whether adding the RR succeeded, so this check
         // actually doesn't confirm it.
         SCOPED_TRACE("add out-of-zone RR");
-        doFindTest(this->updater_->getFinder(), Name("example.com"),
-                   this->qtype_, this->qtype_, this->rrttl_,
-                   ZoneFinder::NXDOMAIN, this->empty_rdatas_,
-                   this->empty_rdatas_);
+        EXPECT_THROW(this->updater_->getFinder().find(Name("example.com"),
+                                                      this->qtype_,
+                                                      ZoneFinder::FIND_DEFAULT),
+                     OutOfZoneFind);
     }
 }
 

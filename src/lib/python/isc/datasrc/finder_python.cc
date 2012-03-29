@@ -97,6 +97,10 @@ PyObject* ZoneFinder_helper(ZoneFinder* finder, PyObject* args) {
             } else {
                 return (Py_BuildValue("IOI", r, Py_None, result_flags));
             }
+        } catch (const OutOfZoneFind& oozf) {
+            PyErr_SetString(getDataSourceException("OutOfZoneFind"),
+                            oozf.what());
+            return (NULL);
         } catch (const DataSourceError& dse) {
             PyErr_SetString(getDataSourceException("Error"), dse.what());
             return (NULL);

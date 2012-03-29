@@ -1202,6 +1202,15 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_FIND).arg(name).
             arg(type);
 
+        const NameComparisonResult::NameRelation reln =
+            name.compare(origin_).getRelation();
+        if (reln != NameComparisonResult::SUBDOMAIN &&
+            reln != NameComparisonResult::EQUAL) {
+            isc_throw(OutOfZoneFind, "out-of-zone find(): " <<
+                                     name.toText() <<
+                                     " not in " << origin_.toText());
+        }
+
         // Get the node.  All other cases than an exact match are handled
         // in findNode().  We simply construct a result structure and return.
         const ZoneData::FindNodeResult node_result =
