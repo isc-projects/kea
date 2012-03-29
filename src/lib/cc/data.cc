@@ -324,8 +324,7 @@ str_from_stringstream(std::istream &in, const std::string& file, const int line,
                 c = in.get();
                 ++pos;
             } else {
-                std::cout << "[XX] cur string: " << ss.str() << std::endl;
-                throwJSONError(std::string("Bad escape for: ") + (char)in.peek(), file, line, pos);
+                throwJSONError("Bad escape", file, line, pos);
             }
         }
         ss << c;
@@ -656,7 +655,9 @@ StringElement::toJSON(std::ostream& ss) const {
     for (size_t i = 0; i < str.size(); ++i) {
         c = str[i];
         // Escape characters as defined in JSON spec
-        if (strchr("\"\\/\b\f\n\r\t", c) != NULL) {
+        // Note that we do not escape forward slash; this
+        // is allowed, but not mandatory.
+        if (strchr("\"\\\b\f\n\r\t", c) != NULL) {
             ss << '\\';
         }
         ss << c;
