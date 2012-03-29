@@ -299,7 +299,7 @@ TEST_F(MemoryDatasrcConfigTest, remove) {
     EXPECT_EQ(AuthSrv::InMemoryClientPtr(), server.getInMemoryClient(rrclass));
 }
 
-TEST_F(MemoryDatasrcConfigTest, adDuplicateZones) {
+TEST_F(MemoryDatasrcConfigTest, addDuplicateZones) {
     EXPECT_THROW(parser->build(
                      Element::fromJSON(
                          "[{\"type\": \"memory\","
