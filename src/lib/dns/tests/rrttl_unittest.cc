@@ -161,6 +161,7 @@ TEST_F(RRTTLTest, lthan) {
     EXPECT_TRUE(ttl_small < ttl_large);
 
     EXPECT_FALSE(ttl_small.lthan(ttl_small));
+    // cppcheck-suppress duplicateExpression
     EXPECT_FALSE(ttl_small < ttl_small);
 
     EXPECT_FALSE(ttl_large.lthan(ttl_small));
@@ -172,6 +173,7 @@ TEST_F(RRTTLTest, gthan) {
     EXPECT_TRUE(ttl_large > ttl_small);
 
     EXPECT_FALSE(ttl_large.gthan(ttl_large));
+    // cppcheck-suppress duplicateExpression
     EXPECT_FALSE(ttl_large > ttl_large);
 
     EXPECT_FALSE(ttl_small.gthan(ttl_large));

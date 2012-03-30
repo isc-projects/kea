@@ -91,6 +91,7 @@ TEST_F(Rdata_IN_AAAA_Test, compare) {
     in::AAAA large2("8:7:6:5:4:3:2:1");
 
     // trivial case: self equivalence
+    // cppcheck-suppress uselessCallsCompare
     EXPECT_EQ(0, small1.compare(small1));
 
     // confirm these are compared as unsigned values

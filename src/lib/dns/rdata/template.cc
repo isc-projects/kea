@@ -58,6 +58,7 @@ MyType::toWire(AbstractMessageRenderer& renderer) const {
 int
 MyType::compare(const Rdata& other) const {
     // The compare method normally begins with this dynamic cast.
+    // cppcheck-suppress unreadVariable
     const MyType& other_mytype = dynamic_cast<const MyType&>(other);
     // ...
 }

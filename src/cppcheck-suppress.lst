@@ -2,21 +2,12 @@
 // the following two will suppress, depending on the cppcheck version
 debug
 missingInclude
-// This is a template, and should be excluded from the check
-unreadVariable:src/lib/dns/rdata/template.cc:61
 
-// Intentional self-comparisons
-duplicateExpression:src/lib/dns/tests/name_unittest.cc:569
-duplicateExpression:src/lib/dns/tests/name_unittest.cc:580
-duplicateExpression:src/lib/dns/tests/rrttl_unittest.cc:164
-duplicateExpression:src/lib/dns/tests/rrttl_unittest.cc:175
-duplicateExpression:src/lib/dns/tests/name_unittest.cc:568
-duplicateExpression:src/lib/dns/tests/name_unittest.cc:579
-
-// Intentional self-comparisons
-uselessCallsCompare:src/lib/dns/tests/rdata_dhcid_unittest.cc:96
-uselessCallsCompare:src/lib/dns/tests/rdata_in_a_unittest.cc:98
-uselessCallsCompare:src/lib/dns/tests/rdata_in_aaaa_unittest.cc:94
-uselessCallsCompare:src/lib/dns/tests/rdata_mx_unittest.cc:104
-uselessCallsCompare:src/lib/dns/tests/rdata_unittest.cc:254
-uselessCallsCompare:src/lib/dns/tests/rdata_unittest.cc:253
+// Please don't add any suppressions here. We now use inline
+// suppressions (in the .cc files) so that we don't have to
+// maintain line numbers in this file.
+//
+// See the cppcheck manual for syntax. It is something like:
+//
+//    // cppcheck-suppress duplicateExpression
+//    EXPECT_FALSE(small_name < small_name);
