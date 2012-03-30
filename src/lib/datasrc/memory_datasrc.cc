@@ -362,8 +362,7 @@ ZoneData::findNode(const Name& name, ZoneFinder::FindOptions options) const {
     if (result == DomainTree::EXACTMATCH) {
         return (ResultType(ZoneFinder::SUCCESS, node, state.rrset_,
                            zonecut_flag));
-    }
-    if (result == DomainTree::PARTIALMATCH) {
+    } else if (result == DomainTree::PARTIALMATCH) {
         assert(node != NULL);
         if (state.dname_node_ != NULL) { // DNAME
             LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_DNAME_FOUND).
@@ -408,10 +407,15 @@ ZoneData::findNode(const Name& name, ZoneFinder::FindOptions options) const {
                                FindNodeResult::FIND_WILDCARD |
                                zonecut_flag));
         }
+        // Nothing really matched.
+        LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_NOT_FOUND).arg(name);
+        return (ResultType(ZoneFinder::NXDOMAIN, node, state.rrset_));
+    } else {
+        // If the name is neither an exact or partial match, it is
+        // out of bailiwick, which is considered an error.
+        isc_throw(OutOfZoneFind, name.toText() << " not in " <<
+                                 origin_data_->getName());
     }
-    // Nothing really matched.  The name may even be out-of-bailiwick.
-    LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_NOT_FOUND).arg(name);
-    return (ResultType(ZoneFinder::NXDOMAIN, node, state.rrset_));
 }
 } // unnamed namespace
 
@@ -1202,14 +1206,6 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_FIND).arg(name).
             arg(type);
 
-        const NameComparisonResult::NameRelation reln =
-            name.compare(origin_).getRelation();
-        if (reln != NameComparisonResult::SUBDOMAIN &&
-            reln != NameComparisonResult::EQUAL) {
-            isc_throw(OutOfZoneFind, name.toText() <<
-                                     " not in " << origin_.toText());
-        }
-
         // Get the node.  All other cases than an exact match are handled
         // in findNode().  We simply construct a result structure and return.
         const ZoneData::FindNodeResult node_result =
@@ -1459,6 +1455,13 @@ addAdditional(RBNodeRRset* rrset, ZoneData* zone_data,
 
         const Name& name = getAdditionalName(rrset->getType(),
                                              rdata_iterator->getCurrent());
+        // if the name is not in or below this zone, skip it
+        const NameComparisonResult::NameRelation reln =
+            name.compare(zone_data->origin_data_->getName()).getRelation();
+         if (reln != NameComparisonResult::SUBDOMAIN &&
+             reln != NameComparisonResult::EQUAL) {
+            continue;
+        }
         const ZoneData::FindMutableNodeResult result =
             zone_data->findNode<ZoneData::FindMutableNodeResult>(
                 name, ZoneFinder::FIND_GLUE_OK);
