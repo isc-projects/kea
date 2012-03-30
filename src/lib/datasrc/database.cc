@@ -424,7 +424,7 @@ DatabaseClient::Finder::findAll(const isc::dns::Name& name,
                                 const FindOptions options)
 {
     const bool need_nsec3 = (((options & FIND_DNSSEC) != 0) && isNSEC3());
-    if ((need_nsec3 == true) && (isNSEC() == true)){
+    if (need_nsec3 && isNSEC()) {
         isc_throw(DataSourceError, "nsec and nsec3 coexist");
     }
     // If the zone is signed with NSEC3, need to add RESULT_NSEC3_SIGNED to the
@@ -449,7 +449,7 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
     // flags in FindContext when NXRRSET NXDOMAIN or WILDCARD in the DNSSEC
     // query, no need NSEC RRset at the same time.
     const bool need_nsec3 = (((options & FIND_DNSSEC) != 0) && isNSEC3());
-    if ((need_nsec3 == true) && (isNSEC() == true)){
+    if (need_nsec3 && isNSEC()) {
         isc_throw(DataSourceError, "nsec and nsec3 coexist");
     }
     return (ZoneFinderContextPtr(new Context(*this, options,
@@ -680,7 +680,7 @@ DatabaseClient::Finder::findWildcardMatch(
             LOG_DEBUG(logger, DBG_TRACE_DETAILED,
                       DATASRC_DATABASE_WILDCARD_EMPTY).
                 arg(accessor_->getDBName()).arg(wildcard).arg(name);
-            if (((options & FIND_DNSSEC) != 0) && (need_nsec3 == false)) {
+            if (((options & FIND_DNSSEC) != 0) && !need_nsec3) {
                 ConstRRsetPtr nsec = findNSECCover(Name(wildcard));
                 if (nsec) {
                     return (ResultContext(NXRRSET, nsec,
@@ -845,8 +845,8 @@ DatabaseClient::Finder::findOnNameResult(const Name& name,
     }
     return (logAndCreateResult(name, wildname, type, NXRRSET, nsec_rrset,
                                wild ? DATASRC_DATABASE_WILDCARD_NXRRSET :
-                               DATASRC_DATABASE_FOUND_NXRRSET, need_nsec3?
-                               (flags | RESULT_NSEC3_SIGNED):flags));
+                               DATASRC_DATABASE_FOUND_NXRRSET, need_nsec3 ?
+                               (flags | RESULT_NSEC3_SIGNED) : flags));
 }
 
 ZoneFinder::ResultContext
@@ -857,7 +857,7 @@ DatabaseClient::Finder::findNoNameResult(const Name& name, const RRType& type,
                                          target, const bool need_nsec3)
 {
     const bool dnssec_data = ((options & FIND_DNSSEC) != 0);
-    const bool need_nsec = ((dnssec_data == true) && (need_nsec3 == false));
+    const bool need_nsec = (dnssec_data && !need_nsec3);
     // On entry to this method, we know that the database doesn't have any
     // entry for this name.  Before returning NXDOMAIN, we need to check
     // for special cases.
@@ -879,7 +879,8 @@ DatabaseClient::Finder::findNoNameResult(const Name& name, const RRType& type,
         // (i.e. all results except NXDOMAIN) return it; otherwise fall
         // through to the NXDOMAIN case below.
         const ResultContext wcontext =
-            findWildcardMatch(name, type, options, dresult, target, need_nsec3);
+            findWildcardMatch(name, type, options, dresult, target,
+                              need_nsec3);
         if (wcontext.code != NXDOMAIN) {
             return (wcontext);
         }
