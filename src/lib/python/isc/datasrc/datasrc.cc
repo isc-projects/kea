@@ -233,7 +233,7 @@ initModulePart_ZoneJournalReader(PyObject* mod) {
 }
 
 PyObject* po_DataSourceError;
-PyObject* po_OutOfZoneFind;
+PyObject* po_OutOfZone;
 PyObject* po_NotImplemented;
 
 PyModuleDef iscDataSrc = {
@@ -288,10 +288,9 @@ PyInit_datasrc(void) {
         po_DataSourceError = PyErr_NewException("isc.datasrc.Error", NULL,
                                                 NULL);
         PyObjectContainer(po_DataSourceError).installToModule(mod, "Error");
-        po_OutOfZoneFind = PyErr_NewException("isc.datasrc.OutOfZoneFind",
-                                              NULL, NULL);
-        PyObjectContainer(po_OutOfZoneFind).installToModule(mod,
-                                                            "OutOfZoneFind");
+        po_OutOfZone = PyErr_NewException("isc.datasrc.OutOfZone", NULL,
+                                          NULL);
+        PyObjectContainer(po_OutOfZone).installToModule(mod, "OutOfZone");
         po_NotImplemented = PyErr_NewException("isc.datasrc.NotImplemented",
                                                NULL, NULL);
         PyObjectContainer(po_NotImplemented).installToModule(mod,
