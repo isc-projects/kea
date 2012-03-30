@@ -413,8 +413,8 @@ ZoneData::findNode(const Name& name, ZoneFinder::FindOptions options) const {
     } else {
         // If the name is neither an exact or partial match, it is
         // out of bailiwick, which is considered an error.
-        isc_throw(OutOfZoneFind, name.toText() << " not in " <<
-                                 origin_data_->getName());
+        isc_throw(OutOfZone, name.toText() << " not in " <<
+                             origin_data_->getName());
     }
 }
 } // unnamed namespace

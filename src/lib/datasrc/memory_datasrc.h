@@ -125,16 +125,6 @@ public:
     ///    exists).
     result::Result add(const isc::dns::ConstRRsetPtr& rrset);
 
-    /// \brief RRSet out of zone exception.
-    ///
-    /// This is thrown if addition of an RRset that doesn't belong under the
-    /// zone's origin is requested.
-    struct OutOfZone : public InvalidParameter {
-        OutOfZone(const char* file, size_t line, const char* what) :
-            InvalidParameter(file, line, what)
-        { }
-    };
-
     /// \brief RRset is NULL exception.
     ///
     /// This is thrown if the provided RRset parameter is NULL.

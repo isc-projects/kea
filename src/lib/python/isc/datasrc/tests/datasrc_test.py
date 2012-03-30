@@ -380,7 +380,7 @@ class DataSrcClient(unittest.TestCase):
         self.assertEqual(None, rrset)
 
 
-        self.assertRaises(isc.datasrc.OutOfZoneFind, finder.find,
+        self.assertRaises(isc.datasrc.OutOfZone, finder.find,
                           isc.dns.Name("www.some.other.domain"),
                           isc.dns.RRType.A())
 
