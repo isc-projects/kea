@@ -101,6 +101,7 @@ TEST_F(Rdata_MX_Test, compare) {
     generic::MX large2(256, Name("mx.example.com"));
 
     // trivial case: self equivalence
+    // cppcheck-suppress uselessCallsCompare
     EXPECT_EQ(0, small1.compare(small1));
 
     // confirm these are compared as unsigned values

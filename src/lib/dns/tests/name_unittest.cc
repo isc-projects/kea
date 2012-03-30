@@ -575,6 +575,7 @@ TEST_F(NameTest, lthan) {
     EXPECT_TRUE(small_name < large_name);
 
     EXPECT_FALSE(small_name.lthan(small_name));
+    // cppcheck-suppress duplicateExpression
     EXPECT_FALSE(small_name < small_name);
 
     EXPECT_FALSE(large_name.lthan(small_name));
@@ -586,6 +587,7 @@ TEST_F(NameTest, gthan) {
     EXPECT_TRUE(large_name > small_name);
 
     EXPECT_FALSE(large_name.gthan(large_name));
+    // cppcheck-suppress duplicateExpression
     EXPECT_FALSE(large_name > large_name);
 
     EXPECT_FALSE(small_name.gthan(large_name));

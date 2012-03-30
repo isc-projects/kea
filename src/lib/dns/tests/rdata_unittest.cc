@@ -250,6 +250,7 @@ TEST_F(Rdata_Unknown_Test, toWireRenderer) {
 
 TEST_F(Rdata_Unknown_Test, compare) {
     // comparison as left-justified unsigned octet sequences:
+    // cppcheck-suppress uselessCallsCompare
     EXPECT_EQ(0, rdata_unknown.compare(rdata_unknown));
 
     generic::Generic rdata_unknown_small("\\# 4 00b2c3ff");
