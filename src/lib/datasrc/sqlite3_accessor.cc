@@ -429,7 +429,9 @@ checkAndSetupSchema(Initializer* initializer) {
         LOG_ERROR(logger, DATASRC_SQLITE_INCOMPATIBLE_VERSION)
             .arg(schema_version.first).arg(schema_version.second)
             .arg(SQLITE_SCHEMA_MAJOR_VERSION).arg(SQLITE_SCHEMA_MINOR_VERSION);
-        isc_throw(IncompatibleDbVersion, "incompatible database version");
+        isc_throw(IncompatibleDbVersion,
+                  "incompatible SQLite3 database version: " <<
+                  schema_version.first << "." << schema_version.second);
     } else if (schema_version.second < SQLITE_SCHEMA_MINOR_VERSION) {
         LOG_WARN(logger, DATASRC_SQLITE_COMPATIBLE_VERSION)
             .arg(schema_version.first).arg(schema_version.second)
