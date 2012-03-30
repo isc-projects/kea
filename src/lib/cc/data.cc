@@ -318,13 +318,37 @@ str_from_stringstream(std::istream &in, const std::string& file, const int line,
     while (c != EOF && c != '"') {
         if (c == '\\') {
             // see the spec for allowed escape characters
-            if (strchr("\"\\/\b\f\n\r\t", in.peek()) != NULL) {
-                // drop the escape
-                c = in.get();
-                ++pos;
-            } else {
+            switch (in.peek()) {
+            case '"':
+                c = '"';
+                break;
+            case '/':
+                c = '/';
+                break;
+            case '\\':
+                c = '\\';
+                break;
+            case 'b':
+                c = '\b';
+                break;
+            case 'f':
+                c = '\f';
+                break;
+            case 'n':
+                c = '\n';
+                break;
+            case 'r':
+                c = '\r';
+                break;
+            case 't':
+                c = '\t';
+                break;
+            default:
                 throwJSONError("Bad escape", file, line, pos);
             }
+            // drop the escaped char
+            in.get();
+            ++pos;
         }
         ss << c;
         c = in.get();
@@ -656,10 +680,31 @@ StringElement::toJSON(std::ostream& ss) const {
         // Escape characters as defined in JSON spec
         // Note that we do not escape forward slash; this
         // is allowed, but not mandatory.
-        if (strchr("\"\\\b\f\n\r\t", c) != NULL) {
-            ss << '\\';
+        switch (c) {
+        case '"':
+            ss << '\\' << c;
+            break;
+        case '\\':
+            ss << '\\' << c;
+            break;
+        case '\b':
+            ss << '\\' << 'b';
+            break;
+        case '\f':
+            ss << '\\' << 'f';
+            break;
+        case '\n':
+            ss << '\\' << 'n';
+            break;
+        case '\r':
+            ss << '\\' << 'r';
+            break;
+        case '\t':
+            ss << '\\' << 't';
+            break;
+        default:
+            ss << c;
         }
-        ss << c;
     }
     ss << "\"";
 }
