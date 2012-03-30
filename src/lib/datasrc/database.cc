@@ -757,7 +757,7 @@ DatabaseClient::Finder::findOnNameResult(const Name& name,
     // TODO: this part should be revised when we support NSEC3; ideally we
     // should use more effective and efficient way to identify (whether and)
     // in which way the zone is signed.
-    if (wild && (options & FIND_DNSSEC) != 0 && (need_nsec3 == false) &&
+    if (wild && (options & FIND_DNSSEC) != 0 && !need_nsec3 &&
         found.second.find(RRType::NSEC()) != found.second.end()) {
         flags = flags | RESULT_NSEC_SIGNED;
     }
@@ -821,7 +821,7 @@ DatabaseClient::Finder::findOnNameResult(const Name& name,
     // NSEC records in the name of the wildcard, not the substituted one,
     // so we need to search the tree again.
     ConstRRsetPtr nsec_rrset;   // possibly used with DNSSEC, otherwise NULL
-    if ((options & FIND_DNSSEC) != 0 && (need_nsec3 == false)) {
+    if ((options & FIND_DNSSEC) != 0 && !need_nsec3) {
         if (wild) {
             const FoundRRsets wfound = getRRsets(*wildname, NSEC_TYPES(),
                                                  true);
