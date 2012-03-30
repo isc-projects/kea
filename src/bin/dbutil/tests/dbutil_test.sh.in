@@ -359,22 +359,19 @@ check_version $testdata/old_v1.sqlite3 "V1.0"
 check_no_backup $tempfile $backupfile
 rm -f $tempfile $backupfile
 
-# Temporarily disabled until #324 is merged
-#echo "5.2. Database is an old V1 database - upgrade"
-#upgrade_ok_test $testdata/old_v1.sqlite3 $backupfile
-#rm -f $tempfile $backupfile
+echo "5.2. Database is an old V1 database - upgrade"
+upgrade_ok_test $testdata/old_v1.sqlite3 $backupfile
+rm -f $tempfile $backupfile
 
 
-# Temporarily disabled until #324 is merged
-#echo "6.1. Database is new V1 database - check"
-#check_version $testdata/new_v1.sqlite3 "V1.0"
-#check_no_backup $tempfile $backupfile
-#rm -f $tempfile $backupfile
+echo "6.1. Database is new V1 database - check"
+check_version $testdata/new_v1.sqlite3 "V1.0"
+check_no_backup $tempfile $backupfile
+rm -f $tempfile $backupfile
 
-# Temporarily disabled until #324 is merged
-#echo "6.2. Database is a new V1 database - upgrade"
-#upgrade_ok_test $testdata/new_v1.sqlite3 $backupfile
-#rm -f $tempfile $backupfile
+echo "6.2. Database is a new V1 database - upgrade"
+upgrade_ok_test $testdata/new_v1.sqlite3 $backupfile
+rm -f $tempfile $backupfile
 
 
 echo "7.1. Database is V2.0 database - check"
@@ -405,10 +402,9 @@ upgrade_fail_test $testdata/too_many_version.sqlite3 $backupfile
 rm -f $tempfile $backupfile
 
 
-# Temporarily disabled until #324 is merged
-#echo "10.0. Upgrade corrupt database"
-#upgrade_fail_test $testdata/corrupt.sqlite3 $backupfile
-#rm -f $tempfile $backupfile
+echo "10.0. Upgrade corrupt database"
+upgrade_fail_test $testdata/corrupt.sqlite3 $backupfile
+rm -f $tempfile $backupfile
 
 
 echo "11. Record count test"
@@ -447,15 +443,14 @@ copy_file $testdata/old_v1.sqlite3 $tempfile
 passzero $?
 rm -f $tempfile $backupfile
 
-# Temporarily disabled until #324 is merged
-#echo "13.3 Interactive prompt - yes"
-#copy_file $testdata/old_v1.sqlite3 $tempfile
-#../run_dbutil.sh --upgrade $tempfile << .
-#Yes
-#.
-#passzero $?
-#check_version $tempfile "V2.0"
-#rm -f $tempfile $backupfile
+echo "13.3 Interactive prompt - yes"
+copy_file $testdata/old_v1.sqlite3 $tempfile
+../run_dbutil.sh --upgrade $tempfile << .
+Yes
+.
+passzero $?
+check_version $tempfile "V2.0"
+rm -f $tempfile $backupfile
 
 echo "13.4 Interactive prompt - no"
 copy_file $testdata/old_v1.sqlite3 $tempfile
