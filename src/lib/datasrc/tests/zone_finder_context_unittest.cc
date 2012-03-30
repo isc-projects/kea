@@ -297,7 +297,6 @@ TEST_P(ZoneFinderContextTest, getAdditionalForAny) {
     vector<ConstRRsetPtr> all_rrsets;
     ZoneFinderContextPtr ctx = finder_->findAll(qzone_, all_rrsets);
     EXPECT_EQ(ZoneFinder::SUCCESS, ctx->code);
-
     ctx->getAdditional(REQUESTED_BOTH, result_sets_);
     rrsetsCheck("ns1.example.org. 3600 IN A 192.0.2.1\n"
                 "ns1.example.org. 3600 IN AAAA 2001:db8::1\n"

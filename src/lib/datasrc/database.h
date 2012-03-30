@@ -706,6 +706,17 @@ public:
         virtual isc::dns::Name getOrigin() const;
         virtual isc::dns::RRClass getClass() const;
 
+
+        /// \brief check whether zone is signed with nsec3
+        ///
+        /// searches the NSEC3PARAM RRset in the zone apex, if it exists, the 
+        /// zone looks signed with nsec3
+        bool isNSEC3();
+        /// \brief check whether zone is signed with nsec
+        ///
+        /// searches the NSEC RRset in the zone apex, if it exists, the 
+        /// zone looks signed with nsec
+        bool isNSEC();
         /// \brief Find an RRset in the datasource
         ///
         /// Searches the datasource for an RRset of the given name and
@@ -801,7 +812,8 @@ public:
                                    const isc::dns::RRType& type,
                                    std::vector<isc::dns::ConstRRsetPtr>*
                                    target,
-                                   const FindOptions options = FIND_DEFAULT);
+                                   const FindOptions options = FIND_DEFAULT,
+                                   const bool need_nsec3 = false);
 
         /// \brief Searches database for RRsets of one domain.
         ///
@@ -939,7 +951,8 @@ public:
         /// \param target If the type happens to be ANY, it will insert all
         ///        the RRsets of the found name (if any is found) here instead
         ///        of being returned by the result.
-        ///
+        /// \param need_nsec3 When zone is signed with nsec3, no need to find 
+        ///        nsec rrset
         /// \return Tuple holding the result of the search - the RRset of the
         ///         wildcard records matching the name, together with a status
         ///         indicating the match type (e.g. CNAME at the wildcard
@@ -952,7 +965,8 @@ public:
             const isc::dns::RRType& type,
             const FindOptions options,
             const DelegationSearchResult& dresult,
-            std::vector<isc::dns::ConstRRsetPtr>* target);
+            std::vector<isc::dns::ConstRRsetPtr>* target, 
+            const bool need_nsec3);
 
         /// \brief Handle matching results for name
         ///
@@ -985,7 +999,8 @@ public:
         ///                 it's NULL in the case of non wildcard match.
         /// \param target When the query is any, this must be set to a vector
         ///    where the result will be stored.
-        ///
+        /// \param need_nsec3 When zone is signed with nsec3, no need to find 
+        ///    nsec rrset
         /// \return Tuple holding the result of the search - the RRset of the
         ///         wildcard records matching the name, together with a status
         ///         indicating the match type (corresponding to the each of
@@ -999,7 +1014,7 @@ public:
                                        const FoundRRsets& found,
                                        const std::string* wildname,
                                        std::vector<isc::dns::ConstRRsetPtr>*
-                                       target);
+                                       target, const bool need_nsec3);
 
         /// \brief Handle no match for name
         ///
@@ -1024,7 +1039,8 @@ public:
         /// \param target If the query is for type ANY, the successfull result,
         ///        if there happens to be one, will be returned through the
         ///        parameter, as it doesn't fit into the result.
-        ///
+        /// \param need_nsec3 When zone is signed with nsec3, no need to find
+        ///        nsec rrset
         /// \return Tuple holding the result of the search - the RRset of the
         ///         wildcard records matching the name, together with a status
         ///         indicating the match type (e.g. CNAME at the wildcard
@@ -1035,7 +1051,7 @@ public:
                                        FindOptions options,
                                        const DelegationSearchResult& dresult,
                                        std::vector<isc::dns::ConstRRsetPtr>*
-                                       target);
+                                       targeti, const bool need_nsec3);
 
         /// Logs condition and creates result
         ///
