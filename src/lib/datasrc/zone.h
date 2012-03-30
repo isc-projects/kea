@@ -27,11 +27,13 @@
 namespace isc {
 namespace datasrc {
 
-/// \brief Thrown when ZoneFinder::find() is called for out-of-zone data
+/// \brief Out of zone exception
 ///
-class OutOfZoneFind : public Exception {
+/// This is thrown when a method is called for a name or RRset which
+/// is not in or below the zone.
+class OutOfZone : public Exception {
 public:
-    OutOfZoneFind(const char* file, size_t line, const char* what) :
+    OutOfZone(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
 };
 
@@ -474,8 +476,8 @@ public:
     ///
     /// \exception std::bad_alloc Memory allocation such as for constructing
     ///  the resulting RRset fails
-    /// \throw OutOfZoneFind The Name \c name is outside of the origin
-    /// of the zone of this ZoneFinder.
+    /// \throw OutOfZone The Name \c name is outside of the origin of the
+    /// zone of this ZoneFinder.
     /// \exception DataSourceError Derived class specific exception, e.g.
     /// when encountering a bad zone configuration or database connection
     /// failure.  Although these are considered rare, exceptional events,
