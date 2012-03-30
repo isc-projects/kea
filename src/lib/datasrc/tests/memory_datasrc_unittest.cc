@@ -998,8 +998,8 @@ InMemoryZoneFinderTest::findCheck(ZoneFinder::FindResultFlags expected_flags) {
     // These domains don't exist (and one is out of the zone)
     findTest(Name("nothere.example.org"), RRType::A(), ZoneFinder::NXDOMAIN,
              true, ConstRRsetPtr(), expected_flags);
-    EXPECT_THROW(zone_finder_.find(Name("example.net"), RRType::A(),
-                                   ZoneFinder::FIND_DEFAULT), OutOfZoneFind);
+    EXPECT_THROW(zone_finder_.find(Name("example.net"), RRType::A()),
+                 OutOfZoneFind);
 }
 
 TEST_F(InMemoryZoneFinderTest, find) {
@@ -1054,8 +1054,7 @@ InMemoryZoneFinderTest::emptyNodeCheck(
     // Note: basically we don't expect such a query to be performed (the common
     // operation is to identify the best matching zone first then perform
     // search it), but we shouldn't be confused even in the unexpected case.
-    EXPECT_THROW(zone_finder_.find(Name("org"), RRType::A(),
-                                   ZoneFinder::FIND_DEFAULT),
+    EXPECT_THROW(zone_finder_.find(Name("org"), RRType::A()),
                  OutOfZoneFind);
 }
 
@@ -1514,16 +1513,12 @@ TEST_F(InMemoryZoneFinderTest, swap) {
     EXPECT_EQ(RRClass::CH(), finder1.getClass());
     EXPECT_EQ(RRClass::IN(), finder2.getClass());
     // make sure the zone data is swapped, too
-    EXPECT_THROW(finder1.find(origin_, RRType::NS(),
-                              ZoneFinder::FIND_DEFAULT),
-                 OutOfZoneFind);
+    EXPECT_THROW(finder1.find(origin_, RRType::NS()), OutOfZoneFind);
     findTest(other_origin, RRType::TXT(), ZoneFinder::SUCCESS, false,
              ConstRRsetPtr(), ZoneFinder::RESULT_DEFAULT, &finder1);
     findTest(origin_, RRType::NS(), ZoneFinder::SUCCESS, false,
              ConstRRsetPtr(), ZoneFinder::RESULT_DEFAULT, &finder2);
-    EXPECT_THROW(finder2.find(other_origin, RRType::TXT(),
-                              ZoneFinder::FIND_DEFAULT),
-                 OutOfZoneFind);
+    EXPECT_THROW(finder2.find(other_origin, RRType::TXT()), OutOfZoneFind);
 }
 
 TEST_F(InMemoryZoneFinderTest, getFileName) {
