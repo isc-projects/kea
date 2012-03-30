@@ -15,7 +15,10 @@
 #include <sqlite3.h>
 
 #include <string>
+#include <utility>
 #include <vector>
+
+#include <exceptions/exceptions.h>
 
 #include <datasrc/sqlite3_accessor.h>
 #include <datasrc/logger.h>
@@ -27,7 +30,20 @@
 using namespace std;
 using namespace isc::data;
 
-#define SQLITE_SCHEMA_VERSION 1
+namespace {
+// Expected schema.  The major version must match else there is an error.  If
+// the minor version of the database is less than this, a warning is output.
+//
+// It is assumed that a program written to run on m.n of the database will run
+// with a database version m.p, where p is any number.  However, if p < n,
+// we assume that the database structure was upgraded for some reason, and that
+// some advantage may result if the database is upgraded. Conversely, if p > n,
+// The database is at a later version than the program was written for and the
+// program may not be taking advantage of features (possibly performance
+// improvements) added to the database.
+const int SQLITE_SCHEMA_MAJOR_VERSION = 2;
+const int SQLITE_SCHEMA_MINOR_VERSION = 0;
+}
 
 namespace isc {
 namespace datasrc {
@@ -125,8 +141,8 @@ const char* const text_statements[NUM_STATEMENTS] = {
 
 struct SQLite3Parameters {
     SQLite3Parameters() :
-        db_(NULL), version_(-1), in_transaction(false), updating_zone(false),
-        updated_zone_id(-1)
+        db_(NULL), version_(-1), minor_(-1), in_transaction(false),
+        updating_zone(false), updated_zone_id(-1)
     {
         for (int i = 0; i < NUM_STATEMENTS; ++i) {
             statements_[i] = NULL;
@@ -165,6 +181,7 @@ struct SQLite3Parameters {
 
     sqlite3* db_;
     int version_;
+    int minor_;
     bool in_transaction; // whether or not a transaction has been started
     bool updating_zone;          // whether or not updating the zone
     int updated_zone_id;        // valid only when in_transaction is true
@@ -255,8 +272,9 @@ public:
 };
 
 const char* const SCHEMA_LIST[] = {
-    "CREATE TABLE schema_version (version INTEGER NOT NULL)",
-    "INSERT INTO schema_version VALUES (1)",
+    "CREATE TABLE schema_version (version INTEGER NOT NULL, "
+        "minor INTEGER NOT NULL DEFAULT 0)",
+    "INSERT INTO schema_version VALUES (2, 0)",
     "CREATE TABLE zones (id INTEGER PRIMARY KEY, "
     "name TEXT NOT NULL COLLATE NOCASE, "
     "rdclass TEXT NOT NULL COLLATE NOCASE DEFAULT 'IN', "
@@ -315,14 +333,13 @@ void doSleep() {
 
 // returns the schema version if the schema version table exists
 // returns -1 if it does not
-int checkSchemaVersion(sqlite3* db) {
+int checkSchemaVersionElement(sqlite3* db, const char* const query) {
     sqlite3_stmt* prepared = NULL;
     // At this point in time, the database might be exclusively locked, in
     // which case even prepare() will return BUSY, so we may need to try a
     // few times
     for (size_t i = 0; i < 50; ++i) {
-        int rc = sqlite3_prepare_v2(db, "SELECT version FROM schema_version",
-                                    -1, &prepared, NULL);
+        int rc = sqlite3_prepare_v2(db, query, -1, &prepared, NULL);
         if (rc == SQLITE_ERROR) {
             // this is the error that is returned when the table does not
             // exist
@@ -344,8 +361,26 @@ int checkSchemaVersion(sqlite3* db) {
     return (version);
 }
 
+// Returns the schema major and minor version numbers in a pair.
+// Returns (-1, -1) if the table does not exist, (1, 0) for a V1
+// database, and (n, m) for any other.
+pair<int, int> checkSchemaVersion(sqlite3* db) {
+    int major = checkSchemaVersionElement(db,
+        "SELECT version FROM schema_version");
+    if (major == -1) {
+        return (make_pair(-1, -1));
+    } else if (major == 1) {
+        return (make_pair(1, 0));
+    } else {
+        int minor = checkSchemaVersionElement(db,
+            "SELECT minor FROM schema_version");
+        return (make_pair(major, minor));
+    }
+}
+
 // return db version
-int create_database(sqlite3* db) {
+pair<int, int>
+createDatabase(sqlite3* db) {
     // try to get an exclusive lock. Once that is obtained, do the version
     // check *again*, just in case this process was racing another
     //
@@ -363,8 +398,8 @@ int create_database(sqlite3* db) {
         }
         doSleep();
     }
-    int schema_version = checkSchemaVersion(db);
-    if (schema_version == -1) {
+    pair<int, int> schema_version = checkSchemaVersion(db);
+    if (schema_version.first == -1) {
         for (int i = 0; SCHEMA_LIST[i] != NULL; ++i) {
             if (sqlite3_exec(db, SCHEMA_LIST[i], NULL, NULL, NULL) !=
                 SQLITE_OK) {
@@ -373,21 +408,36 @@ int create_database(sqlite3* db) {
             }
         }
         sqlite3_exec(db, "COMMIT TRANSACTION", NULL, NULL, NULL);
-        return (SQLITE_SCHEMA_VERSION);
-    } else {
-        return (schema_version);
+
+        // Return the version.  We query again to ensure that the only point
+        // in which the current schema version is defined is in the create
+        // statements.
+        schema_version = checkSchemaVersion(db);
     }
+
+    return (schema_version);
 }
 
 void
 checkAndSetupSchema(Initializer* initializer) {
     sqlite3* const db = initializer->params_.db_;
 
-    int schema_version = checkSchemaVersion(db);
-    if (schema_version != SQLITE_SCHEMA_VERSION) {
-        schema_version = create_database(db);
+    pair<int, int> schema_version = checkSchemaVersion(db);
+    if (schema_version.first == -1) {
+        schema_version = createDatabase(db);
+    } else if (schema_version.first != SQLITE_SCHEMA_MAJOR_VERSION) {
+        LOG_ERROR(logger, DATASRC_SQLITE_INCOMPATIBLE_VERSION)
+            .arg(schema_version.first).arg(schema_version.second)
+            .arg(SQLITE_SCHEMA_MAJOR_VERSION).arg(SQLITE_SCHEMA_MINOR_VERSION);
+        isc_throw(IncompatibleDbVersion, "incompatible database version");
+    } else if (schema_version.second < SQLITE_SCHEMA_MINOR_VERSION) {
+        LOG_WARN(logger, DATASRC_SQLITE_COMPATIBLE_VERSION)
+            .arg(schema_version.first).arg(schema_version.second)
+            .arg(SQLITE_SCHEMA_MAJOR_VERSION).arg(SQLITE_SCHEMA_MINOR_VERSION);
     }
-    initializer->params_.version_ = schema_version;
+
+    initializer->params_.version_ = schema_version.first;
+    initializer->params_.minor_ = schema_version.second;
 }
 
 }
