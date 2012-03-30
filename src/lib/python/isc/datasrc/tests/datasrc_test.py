@@ -382,7 +382,7 @@ class DataSrcClient(unittest.TestCase):
 
         self.assertRaises(isc.datasrc.OutOfZoneFind, finder.find,
                           isc.dns.Name("www.some.other.domain"),
-                          isc.dns.RRType.A(), finder.FIND_DEFAULT)
+                          isc.dns.RRType.A())
 
         result, rrset, _ = finder.find(isc.dns.Name("www.example.com"),
                                        isc.dns.RRType.TXT(),

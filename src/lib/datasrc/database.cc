@@ -865,8 +865,7 @@ DatabaseClient::Finder::findInternal(const Name& name, const RRType& type,
         name.compare(getOrigin()).getRelation();
     if (reln != NameComparisonResult::SUBDOMAIN &&
         reln != NameComparisonResult::EQUAL) {
-        isc_throw(OutOfZoneFind, name.toText() << " not in " <<
-                                 getOrigin().toText());
+        isc_throw(OutOfZoneFind, name.toText() << " not in " << getOrigin());
     }
 
     // First, go through all superdomains from the origin down, searching for
