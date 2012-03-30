@@ -1460,7 +1460,7 @@ doFindAllTestResult(ZoneFinder& finder, const isc::dns::Name& name,
                     const isc::dns::Name& expected_name =
                     isc::dns::Name::ROOT_NAME(),
                     const ZoneFinder::FindOptions options =
-                    ZoneFinder::FIND_DEFAULT, 
+                    ZoneFinder::FIND_DEFAULT,
                     ZoneFinder::FindResultFlags expected_flags =
                                           ZoneFinder::RESULT_DEFAULT)
 {
@@ -2329,7 +2329,7 @@ TYPED_TEST(DatabaseClientTest, dbNegativeCaseFind) {
                                          "FAKEFAKEFAKE");
     doFindTest(*finder, isc::dns::Name("b.a.wild.example.org"),
                isc::dns::RRType::A(), isc::dns::RRType::A(),
-               this->rrttl_, ZoneFinder::SUCCESS, this->expected_rdatas_, 
+               this->rrttl_, ZoneFinder::SUCCESS, this->expected_rdatas_,
                this->expected_sig_rdatas_,
                (ZoneFinder::RESULT_WILDCARD | ZoneFinder::RESULT_NSEC_SIGNED),
                isc::dns::Name("b.a.wild.example.org"), ZoneFinder::FIND_DNSSEC);
@@ -2356,11 +2356,11 @@ TYPED_TEST(DatabaseClientTest, dbNegativeCaseFind) {
     try {
         this->expected_rdatas_.clear();
         this->expected_sig_rdatas_.clear();
-        doFindTest(this->updater_->getFinder(), isc::dns::Name("www1.example.org."),
-                   this->qtype_, this->qtype_, this->rrttl_, ZoneFinder::NXDOMAIN, 
-                   this->expected_rdatas_, this->expected_sig_rdatas_, 
-                   ZoneFinder::RESULT_NSEC3_SIGNED, isc::dns::Name::ROOT_NAME(), 
-                   ZoneFinder::FIND_DNSSEC);
+        doFindTest(this->updater_->getFinder(), Name("www1.example.org."),
+                   this->qtype_, this->qtype_, this->rrttl_,
+                   ZoneFinder::NXDOMAIN, this->expected_rdatas_,
+                   this->expected_sig_rdatas_, ZoneFinder::RESULT_NSEC3_SIGNED,
+                   Name::ROOT_NAME(), ZoneFinder::FIND_DNSSEC);
     } catch (const DataSourceError&) {}
     // The following test should be tested in zone which is signed by NSEC3
 #if 0
@@ -2372,8 +2372,7 @@ TYPED_TEST(DatabaseClientTest, dbNegativeCaseFind) {
     // test.
     this->updater_ = this->client_->getUpdater(this->zname_, false);
     this->rrset_.reset(new RRset(this->zname_, this->qclass_,
-                                isc::dns::RRType::NSEC3PARAM(),
-                                this->rrttl_));
+                                 RRType::NSEC3PARAM(), this->rrttl_));
     this->rrset_->addRdata(rdata::createRdata(this->rrset_->getType(),
                                               this->rrset_->getClass(),
                                               "1 0 12 aabbccdd"));
@@ -2384,13 +2383,13 @@ TYPED_TEST(DatabaseClientTest, dbNegativeCaseFind) {
     doFindTest(this->updater_->getFinder(),
             isc::dns::Name("www1.example.org."), this->qtype_, this->qtype_, 
             this->rrttl_, ZoneFinder::NXDOMAIN, this->expected_rdatas_,
-            this->expected_sig_rdatas_, ZoneFinder::RESULT_NSEC3_SIGNED, 
+            this->expected_sig_rdatas_, ZoneFinder::RESULT_NSEC3_SIGNED,
             isc::dns::Name::ROOT_NAME(), ZoneFinder::FIND_DNSSEC);
     // check NXRRSET
     this->expected_rdatas_.clear();
     this->expected_sig_rdatas_.clear();
-    doFindTest(this->updater_->getFinder(), isc::dns::Name("www.example.org."),
-               isc::dns::RRType::TXT(), isc::dns::RRType::TXT(), this->rrttl_,
+    doFindTest(this->updater_->getFinder(), Name("www.example.org."),
+               RRType::TXT(), RRType::TXT(), this->rrttl_,
                ZoneFinder::NXRRSET, this->expected_rdatas_,
                this->expected_sig_rdatas_, ZoneFinder::RESULT_NSEC3_SIGNED,
                isc::dns::Name::ROOT_NAME(), ZoneFinder::FIND_DNSSEC);
@@ -2399,20 +2398,20 @@ TYPED_TEST(DatabaseClientTest, dbNegativeCaseFind) {
     this->expected_sig_rdatas_.push_back("A 5 3 3600 20000101000000 "
                                          "20000201000000 12345 example.org. "
                                          "FAKEFAKEFAKE");
-    doFindTest(this->updater_->getFinder(), isc::dns::Name("b.a.wild.example.org"),
+    doFindTest(this->updater_->getFinder(), Name("b.a.wild.example.org"),
                this->qtype_, this->qtype_, this->rrttl_, ZoneFinder::SUCCESS,
                this->expected_rdatas_, this->expected_sig_rdatas_,
                ZoneFinder::RESULT_WILDCARD | ZoneFinder::RESULT_NSEC3_SIGNED,
-               isc::dns::Name::ROOT_NAME(), ZoneFinder::FIND_DNSSEC);
+               Name::ROOT_NAME(), ZoneFinder::FIND_DNSSEC);
     // check flags if NXRRSET in wildcard case
     this->expected_rdatas_.clear();
     this->expected_sig_rdatas_.clear();
-    doFindTest(this->updater_->getFinder(), isc::dns::Name("b.a.wild.example.org"),
-               isc::dns::RRType::TXT(), isc::dns::RRType::TXT(),
-               this->rrttl_, ZoneFinder::NXRRSET, this->expected_rdatas_,
-               this->empty_rdatas_, (ZoneFinder::RESULT_WILDCARD | 
+    doFindTest(this->updater_->getFinder(), Name("b.a.wild.example.org"),
+               RRType::TXT(), RRType::TXT(), this->rrttl_,
+               ZoneFinder::NXRRSET, this->expected_rdatas_,
+               this->empty_rdatas_, (ZoneFinder::RESULT_WILDCARD |
                                      ZoneFinder::RESULT_NSEC3_SIGNED),
-               isc::dns::Name::ROOT_NAME(), ZoneFinder::FIND_DNSSEC);
+               Name::ROOT_NAME(), ZoneFinder::FIND_DNSSEC);
 #endif
 }
 
