@@ -286,13 +286,11 @@ DatabaseClient::Finder::getRRsets(const string& name, const WantedTypes& types,
          i != result.end(); ++ i) {
         sig_store.appendSignatures(i->second);
     }
-
     if (records_found && any) {
         result[RRType::ANY()] = RRsetPtr();
         // These will be sitting on the other RRsets.
         result.erase(RRType::RRSIG());
     }
-
     return (FoundRRsets(records_found, result));
 }
 
@@ -367,6 +365,19 @@ FINAL_TYPES() {
     return (result);
 }
 
+const WantedTypes&
+FINAL_TYPES_NO_NSEC() {
+    static bool initialized(false);
+    static WantedTypes result;
+
+    if (!initialized) {
+        result.insert(RRType::CNAME());
+        result.insert(RRType::NS());
+        initialized = true;
+    }    
+    return (result);
+}
+
 }
 
 ConstRRsetPtr
@@ -412,10 +423,16 @@ DatabaseClient::Finder::findAll(const isc::dns::Name& name,
                                 std::vector<isc::dns::ConstRRsetPtr>& target,
                                 const FindOptions options)
 {
+    const bool need_nsec3 = (((options & FIND_DNSSEC) != 0) && isNSEC3());
+    if ((need_nsec3 == true) && (isNSEC() == true)){
+        isc_throw(DataSourceError, "nsec and nsec3 coexist"); 
+    }
+    // If the zone is signed with NSEC3, need to add RESULT_NSEC3_SIGNED to the flags
+    // in FindContext when NXRRSET NXDOMAIN or WILDCARD in the DNSSEC query, no need 
+    // NSEC RRset at the same time.
     return (ZoneFinderContextPtr(new Context(*this, options,
-                                             findInternal(name, RRType::ANY(),
-                                                          &target, options),
-                                             target)));
+                                             findInternal(name, RRType::ANY(), &target, 
+                                                          options, need_nsec3),target)));
 }
 
 ZoneFinderContextPtr
@@ -426,9 +443,16 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
     if (type == RRType::ANY()) {
         isc_throw(isc::Unexpected, "Use findAll to answer ANY");
     }
+    // If the zone is signed with NSEC3, need to add RESULT_NSEC3_SIGNED to the flags
+    // in FindContext when NXRRSET NXDOMAIN or WILDCARD in the DNSSEC query, no need 
+    // NSEC RRset at the same time.
+    const bool need_nsec3 = (((options & FIND_DNSSEC) != 0) && isNSEC3());
+    if ((need_nsec3 == true) && (isNSEC() == true)){
+        isc_throw(DataSourceError, "nsec and nsec3 coexist"); 
+    }
     return (ZoneFinderContextPtr(new Context(*this, options,
                                              findInternal(name, type,
-                                                          NULL, options))));
+                                                          NULL, options,need_nsec3))));
 }
 
 DatabaseClient::Finder::DelegationSearchResult
@@ -593,12 +617,12 @@ ZoneFinder::ResultContext
 DatabaseClient::Finder::findWildcardMatch(
     const isc::dns::Name& name, const isc::dns::RRType& type,
     const FindOptions options, const DelegationSearchResult& dresult,
-    std::vector<isc::dns::ConstRRsetPtr>* target)
+    std::vector<isc::dns::ConstRRsetPtr>* target, const bool need_nsec3)
 {
     // Note that during the search we are going to search not only for the
     // requested type, but also for types that indicate a delegation -
     // NS and DNAME.
-    WantedTypes final_types(FINAL_TYPES());
+    WantedTypes final_types(need_nsec3 ? FINAL_TYPES_NO_NSEC() : FINAL_TYPES());
     final_types.insert(type);
 
     const size_t remove_labels = name.getLabelCount() - dresult.last_known;
@@ -632,12 +656,12 @@ DatabaseClient::Finder::findWildcardMatch(
                           DATASRC_DATABASE_WILDCARD_CANCEL_NS).
                     arg(accessor_->getDBName()).arg(wildcard).
                     arg(dresult.first_ns->getName());
-                return (ResultContext(DELEGATION, dresult.first_ns));
+                return (ResultContext(DELEGATION, dresult.first_ns)); 
             } else if (!hasSubdomains(name.split(i - 1).toText())) {
                 // The wildcard match is the best one, find the final result
                 // at it.  Note that wildcard should never be the zone origin.
                 return (findOnNameResult(name, type, options, false,
-                                         found, &wildcard, target));
+                                         found, &wildcard, target, need_nsec3));
             } else {
 
                 // more specified match found, cancel wildcard match
@@ -653,7 +677,7 @@ DatabaseClient::Finder::findWildcardMatch(
             LOG_DEBUG(logger, DBG_TRACE_DETAILED,
                       DATASRC_DATABASE_WILDCARD_EMPTY).
                 arg(accessor_->getDBName()).arg(wildcard).arg(name);
-            if ((options & FIND_DNSSEC) != 0) {
+            if (((options & FIND_DNSSEC) != 0) && (need_nsec3 == false)) {
                 ConstRRsetPtr nsec = findNSECCover(Name(wildcard));
                 if (nsec) {
                     return (ResultContext(NXRRSET, nsec,
@@ -661,7 +685,8 @@ DatabaseClient::Finder::findWildcardMatch(
                                           RESULT_NSEC_SIGNED));
                 }
             }
-            return (ResultContext(NXRRSET, ConstRRsetPtr(), RESULT_WILDCARD));
+            return (ResultContext(NXRRSET, ConstRRsetPtr(), need_nsec3 ? 
+                        (RESULT_WILDCARD | RESULT_NSEC3_SIGNED) : RESULT_WILDCARD));
         }
     }
 
@@ -707,11 +732,16 @@ DatabaseClient::Finder::findOnNameResult(const Name& name,
                                          const FoundRRsets& found,
                                          const string* wildname,
                                          std::vector<isc::dns::ConstRRsetPtr>*
-                                         target)
+                                         target, const bool need_nsec3)
 {
     const bool wild = (wildname != NULL);
-    FindResultFlags flags = wild ? RESULT_WILDCARD : RESULT_DEFAULT;
-
+    FindResultFlags flags;
+    if (need_nsec3) {
+        flags = wild ? (RESULT_WILDCARD | RESULT_NSEC3_SIGNED) : 
+            RESULT_DEFAULT;
+    } else {
+        flags = wild ? RESULT_WILDCARD : RESULT_DEFAULT;
+    }
     // Get iterators for the different types of records we are interested in -
     // CNAME, NS and Wanted types.
     const FoundIterator nsi(found.second.find(RRType::NS()));
@@ -723,7 +753,7 @@ DatabaseClient::Finder::findOnNameResult(const Name& name,
     // TODO: this part should be revised when we support NSEC3; ideally we
     // should use more effective and efficient way to identify (whether and)
     // in which way the zone is signed.
-    if (wild && (options & FIND_DNSSEC) != 0 &&
+    if (wild && (options & FIND_DNSSEC) != 0 && (need_nsec3 == false) &&
         found.second.find(RRType::NSEC()) != found.second.end()) {
         flags = flags | RESULT_NSEC_SIGNED;
     }
@@ -755,7 +785,6 @@ DatabaseClient::Finder::findOnNameResult(const Name& name,
                                    wild ? DATASRC_DATABASE_WILDCARD_CNAME :
                                    DATASRC_DATABASE_FOUND_CNAME,
                                    flags));
-
     } else if (wti != found.second.end()) {
         bool any(type == RRType::ANY());
         isc::log::MessageID lid(wild ? DATASRC_DATABASE_WILDCARD_MATCH :
@@ -788,7 +817,7 @@ DatabaseClient::Finder::findOnNameResult(const Name& name,
     // NSEC records in the name of the wildcard, not the substituted one,
     // so we need to search the tree again.
     ConstRRsetPtr nsec_rrset;   // possibly used with DNSSEC, otherwise NULL
-    if ((options & FIND_DNSSEC) != 0) {
+    if ((options & FIND_DNSSEC) != 0 && (need_nsec3 == false)) {
         if (wild) {
             const FoundRRsets wfound = getRRsets(*wildname, NSEC_TYPES(),
                                                  true);
@@ -812,7 +841,8 @@ DatabaseClient::Finder::findOnNameResult(const Name& name,
     }
     return (logAndCreateResult(name, wildname, type, NXRRSET, nsec_rrset,
                                wild ? DATASRC_DATABASE_WILDCARD_NXRRSET :
-                               DATASRC_DATABASE_FOUND_NXRRSET, flags));
+                               DATASRC_DATABASE_FOUND_NXRRSET, need_nsec3?
+                               (flags | RESULT_NSEC3_SIGNED):flags));
 }
 
 ZoneFinder::ResultContext
@@ -820,9 +850,10 @@ DatabaseClient::Finder::findNoNameResult(const Name& name, const RRType& type,
                                          FindOptions options,
                                          const DelegationSearchResult& dresult,
                                          std::vector<isc::dns::ConstRRsetPtr>*
-                                         target)
+                                         target, const bool need_nsec3)
 {
     const bool dnssec_data = ((options & FIND_DNSSEC) != 0);
+    const bool need_nsec = ((dnssec_data == true) && (need_nsec3 == false));
     // On entry to this method, we know that the database doesn't have any
     // entry for this name.  Before returning NXDOMAIN, we need to check
     // for special cases.
@@ -834,17 +865,17 @@ DatabaseClient::Finder::findNoNameResult(const Name& name, const RRType& type,
         LOG_DEBUG(logger, DBG_TRACE_DETAILED,
                   DATASRC_DATABASE_FOUND_EMPTY_NONTERMINAL).
             arg(accessor_->getDBName()).arg(name);
-        const ConstRRsetPtr nsec = dnssec_data ? findNSECCover(name) :
-                                   ConstRRsetPtr();
+        const ConstRRsetPtr nsec = need_nsec ? findNSECCover(name) :
+            ConstRRsetPtr();
         return (ResultContext(NXRRSET, nsec, nsec ? RESULT_NSEC_SIGNED :
-                              RESULT_DEFAULT));
+            (need_nsec3 ? RESULT_NSEC3_SIGNED : RESULT_DEFAULT)));
     } else if ((options & NO_WILDCARD) == 0) {
         // It's not an empty non-terminal and wildcard matching is not
         // disabled, so check for wildcards. If there is a wildcard match
         // (i.e. all results except NXDOMAIN) return it; otherwise fall
         // through to the NXDOMAIN case below.
         const ResultContext wcontext =
-            findWildcardMatch(name, type, options, dresult, target);
+            findWildcardMatch(name, type, options, dresult, target, need_nsec3);
         if (wcontext.code != NXDOMAIN) {
             return (wcontext);
         }
@@ -854,16 +885,41 @@ DatabaseClient::Finder::findNoNameResult(const Name& name, const RRType& type,
     // NSEC records if requested).
     LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_DATABASE_NO_MATCH).
               arg(accessor_->getDBName()).arg(name).arg(type).arg(getClass());
-    const ConstRRsetPtr nsec = dnssec_data ? findNSECCover(name) :
+    const ConstRRsetPtr nsec = need_nsec ? findNSECCover(name) :
         ConstRRsetPtr();
     return (ResultContext(NXDOMAIN, nsec,
-                          nsec ? RESULT_NSEC_SIGNED : RESULT_DEFAULT));
+                          nsec ? RESULT_NSEC_SIGNED : (need_nsec3 ?
+                          RESULT_NSEC3_SIGNED : RESULT_DEFAULT)));
+}
+
+bool
+DatabaseClient::Finder::isNSEC3()
+{
+    // If an NSEC3PARAM RR exists at the zone apex, it's quite likely that
+    // the zone is signed with NSEC3.  (If not the zone is more or less broken,
+    // but it's caller's responsibility how to handle such cases).
+    const FoundRRsets nsec3_found = getRRsets(origin_.toText(),
+                                              NSEC3PARAM_TYPES(), false);
+    const FoundIterator nfi(nsec3_found.second.find(RRType::NSEC3PARAM()));
+    return (nfi != nsec3_found.second.end());
+}
+
+bool
+DatabaseClient::Finder::isNSEC()
+{
+    // If an NSEC RRsets exists at the zone apex, it's quite likely that
+    // the zone is signed with NSEC. (If not the zone is more or less broken,
+    // but it's caller's responsibility how to handle such cases)
+    const FoundRRsets nsec_found = getRRsets(origin_.toText(),
+                                             NSEC_TYPES(), false);
+    const FoundIterator nfi(nsec_found.second.find(RRType::NSEC()));
+    return (nfi != nsec_found.second.end());
 }
 
 ZoneFinder::ResultContext
 DatabaseClient::Finder::findInternal(const Name& name, const RRType& type,
                                      std::vector<ConstRRsetPtr>* target,
-                                     const FindOptions options)
+                                     const FindOptions options, const bool is_nsec3)
 {
     LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_DATABASE_FIND_RECORDS)
               .arg(accessor_->getDBName()).arg(name).arg(type).arg(getClass());
@@ -902,59 +958,20 @@ DatabaseClient::Finder::findInternal(const Name& name, const RRType& type,
     //   apex - DNAME is ignored here as it redirects DNS names subordinate to
     //   the owner name - the owner name itself is not redirected.)
     const bool is_origin = (name == getOrigin());
-    WantedTypes final_types(FINAL_TYPES());
+    WantedTypes final_types(is_nsec3 ? FINAL_TYPES_NO_NSEC() : FINAL_TYPES());
     final_types.insert(type);
     const FoundRRsets found = getRRsets(name.toText(), final_types,
                                         !is_origin, NULL,
                                         type == RRType::ANY());
-
-    // If an NSEC3PARAM RR exists at the zone apex, it's quite likely that
-    // the zone is signed with NSEC3.  (If not the zone is more or less broken,
-    // but it's caller's responsibility how to handle such cases).
-    const FoundRRsets nsec3_found = getRRsets(origin_.toText(),
-                                              NSEC3PARAM_TYPES(), false);
-    const FoundIterator nfi(nsec3_found.second.find(RRType::NSEC3PARAM()));
-    const bool is_nsec3 = (nfi != nsec3_found.second.end());
     if (found.first) {
         // Something found at the domain name.  Look into it further to get
         // the final result.
-        if (is_nsec3) {
-            const ZoneFinder::ResultContext result_context =
-                findOnNameResult(name, type, options, is_origin, found, NULL,
-                                 target);
-            if ((result_context.code & NXRRSET) != 0 ||
-                (result_context.flags & RESULT_WILDCARD) != 0) {
-                return (ZoneFinder::ResultContext(result_context.code,
-                                                  result_context.rrset,
-                                                  (result_context.flags |
-                                                   RESULT_NSEC3_SIGNED)));
-            } else {
-                return (result_context);
-            }
-        } else {
-            return (findOnNameResult(name, type, options, is_origin, found,
-                                     NULL, target));
-        }
+        return (findOnNameResult(name, type, options, is_origin, found,
+                                 NULL, target, is_nsec3));
     } else {
         // Did not find anything at all at the domain name, so check for
         // subdomains or wildcards.
-        if (is_nsec3) {
-            // NSEC3 is used for this zone
-            const ZoneFinder::ResultContext result_context =
-                findNoNameResult(name, type, options, dresult, target);
-            if ((result_context.code & (NXRRSET | NXDOMAIN)) != 0 ||
-                (result_context.flags & RESULT_WILDCARD) != 0) {
-                // NXRRSET NXDOMAIN and wildcard should set RESULT_NSEC3_SIGNED
-                return (ZoneFinder::ResultContext(result_context.code,
-                                                  result_context.rrset,
-                                                  (result_context.flags |
-                                                   RESULT_NSEC3_SIGNED)));
-            } else {
-                return (result_context);
-            }
-        } else {
-            return (findNoNameResult(name, type, options, dresult, target));
-        }
+        return (findNoNameResult(name, type, options, dresult, target, is_nsec3));
     }
 }
 
