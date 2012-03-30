@@ -23,7 +23,7 @@ RR_NAME_INDEX = 2
 RR_TTL_INDEX = 4
 RR_RDATA_INDEX = 7
 
-# Current version of schema (maybe we need a minor version, too)
+# Current major version of schema
 SCHEMA_VERSION = 2
 
 class Sqlite3DSError(Exception):
@@ -50,9 +50,10 @@ def create(cur):
         cur.execute("SELECT version FROM schema_version")
         row = cur.fetchone()
     except sqlite3.OperationalError:
-        cur.execute("CREATE TABLE schema_version (version INTEGER NOT NULL)")
+        cur.execute("""CREATE TABLE schema_version (version INTEGER NOT NULL),
+                    minor INTEGER NOT NULL DEFAULT 0""")
         cur.execute("INSERT INTO schema_version VALUES (" +
-                    str(SCHEMA_VERSION) + ")")
+                    str(SCHEMA_VERSION) + ")") # use the default minor version
         cur.execute("""CREATE TABLE zones (id INTEGER PRIMARY KEY,
                     name TEXT NOT NULL COLLATE NOCASE,
                     rdclass TEXT NOT NULL COLLATE NOCASE DEFAULT 'IN',

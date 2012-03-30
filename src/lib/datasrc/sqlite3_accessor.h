@@ -47,6 +47,12 @@ public:
         DataSourceError(file, line, what) {}
 };
 
+class IncompatibleDbVersion : public Exception {
+public:
+    IncompatibleDbVersion(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
 /**
  * \brief Too Much Data
  *
