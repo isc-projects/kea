@@ -6,7 +6,6 @@ EXTRA_DIST = $(PYTESTS)
 
 EXTRA_DIST += testdata/brokendb.sqlite3
 EXTRA_DIST += testdata/example.com.sqlite3
-EXTRA_DIST += testdata/test.sqlite3.nodiffs
 CLEANFILES = $(abs_builddir)/rwtest.sqlite3.copied
 
 # If necessary (rare cases), explicitly specify paths to dynamic libraries
