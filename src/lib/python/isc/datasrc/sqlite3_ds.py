@@ -23,8 +23,9 @@ RR_NAME_INDEX = 2
 RR_TTL_INDEX = 4
 RR_RDATA_INDEX = 7
 
-# Current major version of schema
-SCHEMA_VERSION = 2
+# Current major and minor versions of schema
+SCHEMA_MAJOR_VERSION = 2
+SCHEMA_MINOR_VERSION = 0
 
 class Sqlite3DSError(Exception):
     """ Define exceptions."""
@@ -50,10 +51,11 @@ def create(cur):
         cur.execute("SELECT version FROM schema_version")
         row = cur.fetchone()
     except sqlite3.OperationalError:
-        cur.execute("""CREATE TABLE schema_version (version INTEGER NOT NULL),
-                    minor INTEGER NOT NULL DEFAULT 0""")
+        cur.execute("""CREATE TABLE schema_version (version INTEGER NOT NULL,
+                    minor INTEGER NOT NULL DEFAULT 0)""")
         cur.execute("INSERT INTO schema_version VALUES (" +
-                    str(SCHEMA_VERSION) + ")") # use the default minor version
+                    str(SCHEMA_MAJOR_VERSION) + ", " +
+                    str(SCHEMA_MINOR_VERSION) + ")")
         cur.execute("""CREATE TABLE zones (id INTEGER PRIMARY KEY,
                     name TEXT NOT NULL COLLATE NOCASE,
                     rdclass TEXT NOT NULL COLLATE NOCASE DEFAULT 'IN',
@@ -123,7 +125,7 @@ def open(dbfile, connect_timeout=5.0):
         row = create(cur)
         conn.isolation_level = iso_lvl
 
-    if row == None or row[0] != SCHEMA_VERSION:
+    if row == None or row[0] != SCHEMA_MAJOR_VERSION:
         bad_version = "(unknown)" if row is None else str(row[0])
         raise Sqlite3DSError("Bad database schema version: " + bad_version)
 
