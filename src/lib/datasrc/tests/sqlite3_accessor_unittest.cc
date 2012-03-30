@@ -1301,17 +1301,4 @@ TEST_F(SQLite3Update, addDiffWithUpdate) {
 
     checkDiffs(expected_stored, accessor->getRecordDiff(zone_id));
 }
-
-TEST_F(SQLite3Update, addDiffWithNoTable) {
-    // An attempt of adding diffs to an old version of database that doesn't
-    // have a diffs table.  This will fail in preparing the statement.
-    initAccessor(string(SQLITE_DBFILE_EXAMPLE) + ".nodiffs", "IN");
-    zone_id = accessor->startUpdateZone("example.com.", false).second;
-    copy(diff_begin_data, diff_begin_data + DatabaseAccessor::DIFF_PARAM_COUNT,
-         diff_params);
-    EXPECT_THROW(accessor->addRecordDiff(zone_id, getVersion(diff_begin_data),
-                                         getOperation(diff_begin_data),
-                                         diff_params),
-                 SQLite3Error);
-}
 } // end anonymous namespace
