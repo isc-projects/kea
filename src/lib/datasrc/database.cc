@@ -975,7 +975,8 @@ DatabaseClient::Finder::findInternal(const Name& name, const RRType& type,
     } else {
         // Did not find anything at all at the domain name, so check for
         // subdomains or wildcards.
-        return (findNoNameResult(name, type, options, dresult, target, is_nsec3));
+        return (findNoNameResult(name, type, options, dresult, target,
+                                 is_nsec3));
     }
 }
 
