@@ -2332,7 +2332,7 @@ TYPED_TEST(DatabaseClientTest, dbNegativeCaseFind) {
                this->rrttl_, ZoneFinder::SUCCESS, this->expected_rdatas_,
                this->expected_sig_rdatas_,
                (ZoneFinder::RESULT_WILDCARD | ZoneFinder::RESULT_NSEC_SIGNED),
-               isc::dns::Name("b.a.wild.example.org"), ZoneFinder::FIND_DNSSEC);
+               Name("b.a.wild.example.org"), ZoneFinder::FIND_DNSSEC);
     this->expected_rdatas_.clear();
     this->expected_sig_rdatas_.clear();
     this->expected_rdatas_.push_back("cancel.here.wild.example.org. A NSEC "
@@ -2343,9 +2343,9 @@ TYPED_TEST(DatabaseClientTest, dbNegativeCaseFind) {
     doFindTest(*finder, isc::dns::Name("b.a.wild.example.org"),
                isc::dns::RRType::TXT(), isc::dns::RRType::NSEC(),
                this->rrttl_, ZoneFinder::NXRRSET, this->expected_rdatas_,
-               this->expected_sig_rdatas_, (ZoneFinder::RESULT_WILDCARD |
-               ZoneFinder::RESULT_NSEC_SIGNED),Name("*.wild.example.org"),
-               ZoneFinder::FIND_DNSSEC);
+               this->expected_sig_rdatas_,
+               (ZoneFinder::RESULT_WILDCARD | ZoneFinder::RESULT_NSEC_SIGNED),
+               Name("*.wild.example.org"), ZoneFinder::FIND_DNSSEC);
     this->updater_ = this->client_->getUpdater(this->zname_, false);
     this->rrset_.reset(new RRset(this->zname_, this->qclass_,
                        isc::dns::RRType::NSEC3PARAM(), this->rrttl_));
