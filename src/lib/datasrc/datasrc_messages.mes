@@ -70,25 +70,6 @@ The maximum allowed number of items of the hotspot cache is set to the given
 number. If there are too many, some of them will be dropped. The size of 0
 means no limit.
 
-% DATASRC_SQLITE_COMPATIBLE_VERSION database schema V%1.%2 not up to date (expecting V%3.%4) but is compatible
-The version of the SQLite3 database schema used to hold the zone data
-is not the latest one - the current version of BIND 10 was written
-with a later schema version in mind.  However, the database is
-compatible with the current version of BIND 10, and BIND 10 will run
-without any problems.
-
-Consult the release notes for your version of BIND 10.  Depending on
-the changes made to the database schema, it is possible that improved
-performance could result if the database were upgraded.
-
-% DATASRC_SQLITE_INCOMPATIBLE_VERSION database schema V%1.%2 incompatible with version (V%3.%4) expected
-The version of the SQLite3 database schema used to hold the zone data
-is incompatible with the version expected by BIND 10.  As a result,
-BIND 10 is unable to run using the database file as the data source.
-
-The database should be updated using the means described in the BIND
-10 documentation.
-
 % DATASRC_DATABASE_COVER_NSEC_UNSUPPORTED %1 doesn't support DNSSEC when asked for NSEC data covering %2
 The datasource tried to provide an NSEC proof that the named domain does not
 exist, but the database backend doesn't support DNSSEC. No proof is included
@@ -653,6 +634,17 @@ enough information for it.  The code is 1 for error, 2 for not implemented.
 % DATASRC_SQLITE_CLOSE closing SQLite database
 Debug information. The SQLite data source is closing the database file.
 
+% DATASRC_SQLITE_COMPATIBLE_VERSION database schema V%1.%2 not up to date (expecting V%3.%4) but is compatible
+The version of the SQLite3 database schema used to hold the zone data
+is not the latest one - the current version of BIND 10 was written
+with a later schema version in mind.  However, the database is
+compatible with the current version of BIND 10, and BIND 10 will run
+without any problems.
+
+Consult the release notes for your version of BIND 10.  Depending on
+the changes made to the database schema, it is possible that improved
+performance could result if the database were upgraded.
+
 % DATASRC_SQLITE_CONNCLOSE Closing sqlite database
 The database file is no longer needed and is being closed.
 
@@ -719,6 +711,14 @@ source.
 % DATASRC_SQLITE_FIND_NSEC3_NO_ZONE no such zone '%1'
 The SQLite data source was asked to provide a NSEC3 record for given zone.
 But it doesn't contain that zone.
+
+% DATASRC_SQLITE_INCOMPATIBLE_VERSION database schema V%1.%2 incompatible with version (V%3.%4) expected
+The version of the SQLite3 database schema used to hold the zone data
+is incompatible with the version expected by BIND 10.  As a result,
+BIND 10 is unable to run using the database file as the data source.
+
+The database should be updated using the means described in the BIND
+10 documentation.
 
 % DATASRC_SQLITE_NEWCONN SQLite3Database is being initialized
 A wrapper object to hold database connection is being initialized.
