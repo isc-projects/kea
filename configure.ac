@@ -1139,7 +1139,6 @@ AC_CONFIG_FILES([Makefile
                  tests/tools/perfdhcp/Makefile
                ])
 AC_OUTPUT([doc/version.ent
-           compatcheck/sqlite3-difftbl-check.py
            src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/cfgmgr/tests/b10-cfgmgr_test.py
            src/bin/cmdctl/cmdctl.py
