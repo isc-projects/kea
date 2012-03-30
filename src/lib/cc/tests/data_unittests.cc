@@ -321,11 +321,11 @@ TEST(Element, escape) {
     // String elements.
     escapeHelper("foo\"bar", "\"foo\\\"bar\"");
     escapeHelper("foo\\bar", "\"foo\\\\bar\"");
-    escapeHelper("foo\bbar", "\"foo\\\bbar\"");
-    escapeHelper("foo\fbar", "\"foo\\\fbar\"");
-    escapeHelper("foo\nbar", "\"foo\\\nbar\"");
-    escapeHelper("foo\rbar", "\"foo\\\rbar\"");
-    escapeHelper("foo\tbar", "\"foo\\\tbar\"");
+    escapeHelper("foo\bbar", "\"foo\\bbar\"");
+    escapeHelper("foo\fbar", "\"foo\\fbar\"");
+    escapeHelper("foo\nbar", "\"foo\\nbar\"");
+    escapeHelper("foo\rbar", "\"foo\\rbar\"");
+    escapeHelper("foo\tbar", "\"foo\\tbar\"");
     // Bad escapes
     EXPECT_THROW(Element::fromJSON("\\a"), JSONError);
     EXPECT_THROW(Element::fromJSON("\\"), JSONError);
