@@ -712,11 +712,13 @@ public:
         /// searches the NSEC3PARAM RRset in the zone apex, if it exists, the 
         /// zone looks signed with nsec3
         bool isNSEC3();
+
         /// \brief check whether zone is signed with nsec
         ///
-        /// searches the NSEC RRset in the zone apex, if it exists, the 
+        /// searches the NSEC RRset in the zone apex, if it exists, the
         /// zone looks signed with nsec
         bool isNSEC();
+
         /// \brief Find an RRset in the datasource
         ///
         /// Searches the datasource for an RRset of the given name and
@@ -965,7 +967,7 @@ public:
             const isc::dns::RRType& type,
             const FindOptions options,
             const DelegationSearchResult& dresult,
-            std::vector<isc::dns::ConstRRsetPtr>* target, 
+            std::vector<isc::dns::ConstRRsetPtr>* target,
             const bool need_nsec3);
 
         /// \brief Handle matching results for name
