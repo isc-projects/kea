@@ -32,7 +32,7 @@ public:
     DataNotFoundError(const char* file, size_t line, const std::string& what) :
         isc::Exception(file, line, what) {}
 };
-    
+
 class ConfigData {
 public:
     /// Constructs a ConfigData option with no specification and an
