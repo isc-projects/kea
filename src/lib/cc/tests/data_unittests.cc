@@ -91,7 +91,7 @@ TEST(Element, from_and_to_json) {
     sv.push_back("-1");
     sv.push_back("-1.234");
     sv.push_back("-123.456");
-    
+
     BOOST_FOREACH(const std::string& s, sv) {
         // test << operator, which uses Element::str()
         std::ostringstream stream;
@@ -127,8 +127,12 @@ TEST(Element, from_and_to_json) {
     sv.push_back("\"foobar\"hello");
     sv.push_back("[]hello");
     sv.push_back("{}hello");
+    // String not delimited correctly
+    sv.push_back("\"hello");
+    sv.push_back("hello\"");
+
+
     BOOST_FOREACH(std::string s, sv) {
-        
         EXPECT_THROW(el = Element::fromJSON(s), isc::data::JSONError);
     }
 
@@ -155,6 +159,9 @@ TEST(Element, from_and_to_json) {
     EXPECT_EQ("false", Element::fromJSON("FALSE")->str());
     EXPECT_EQ("true", Element::fromJSON("True")->str());
     EXPECT_EQ("true", Element::fromJSON("TRUE")->str());
+    EXPECT_EQ("\"\"", Element::fromJSON("  \n \t \r \f \b \"\" \n \f \t \r \b")->str());
+    EXPECT_EQ("{  }", Element::fromJSON("{  \n  \r \t  \b \f }")->str());
+    EXPECT_EQ("[  ]", Element::fromJSON("[  \n  \r \f \t  \b  ]")->str());
 
     // number overflows
     EXPECT_THROW(Element::fromJSON("12345678901234567890")->str(), JSONError);
@@ -337,15 +344,8 @@ TEST(Element, escape) {
     EXPECT_THROW(Element::fromJSON("\\\"\\\""), JSONError);
     // Inside strings is OK
     EXPECT_NO_THROW(Element::fromJSON("\"\\\"\\\"\""));
-    // String not delimited correctly
-    EXPECT_THROW(Element::fromJSON("\"hello"), JSONError);
-    EXPECT_THROW(Element::fromJSON("hello\""), JSONError);
     // A whitespace test
     EXPECT_NO_THROW(Element::fromJSON("\"  \n  \r \t \f  \n \n    \t\""));
-    // Whitespace outside of json element
-    EXPECT_NO_THROW(Element::fromJSON("  \n \t \r \f \b \"\" \n \f \t \r \b"));
-    EXPECT_NO_THROW(Element::fromJSON("{  \n  \r \t  \b \f }"));
-    EXPECT_NO_THROW(Element::fromJSON("[  \n  \r \f \t  \b  ]"));
 }
 
 TEST(Element, ListElement) {
