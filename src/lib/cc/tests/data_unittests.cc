@@ -123,6 +123,10 @@ TEST(Element, from_and_to_json) {
     sv.push_back("{ \"a\": None}");
     sv.push_back("");
     sv.push_back("nul");
+    sv.push_back("hello\"foobar\"");
+    sv.push_back("\"foobar\"hello");
+    sv.push_back("[]hello");
+    sv.push_back("{}hello");
     BOOST_FOREACH(std::string s, sv) {
         
         EXPECT_THROW(el = Element::fromJSON(s), isc::data::JSONError);
@@ -336,9 +340,6 @@ TEST(Element, escape) {
     // String not delimited correctly
     EXPECT_THROW(Element::fromJSON("\"hello"), JSONError);
     EXPECT_THROW(Element::fromJSON("hello\""), JSONError);
-    // Bad strings
-    EXPECT_THROW(Element::fromJSON("hello\"foobar\""), JSONError);
-    EXPECT_THROW(Element::fromJSON("\"foobar\"hello"), JSONError);
     // A whitespace test
     EXPECT_NO_THROW(Element::fromJSON("\"  \n  \r \t \f  \n \n    \t\""));
     // Whitespace outside of json element
