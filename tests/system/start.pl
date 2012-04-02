@@ -220,6 +220,8 @@ sub verify_server {
 			print "R:FAIL\n";
 			system("$PERL $topdir/stop.pl $testdir");
 			exit 1;
+		} else {
+			print "I:no response from $server. retrying.\n";
 		}
 		sleep 2;
 	}
