@@ -241,14 +241,16 @@ public:
     ///
     /// This method will be called from \c run() before starting the benchmark.
     /// By default it's empty, but can be customized via template
-    /// specialization.
+    /// specialization.  When specialized, a reference to the target object
+    /// given to the constructor will be passed to the implementation.
     void setUp(T&) {}
 
     /// \brief Hook to be called after benchmark.
     ///
     /// This method will be called from \c run() when the benchmark completes.
     /// By default it's empty, but can be customized via template
-    /// specialization.
+    /// specialization.  When specialized, a reference to the target object
+    /// given to the constructor will be passed to the implementation.
     void tearDown(T&) {}
 
     /// \brief Perform benchmark.
