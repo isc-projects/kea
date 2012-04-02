@@ -743,28 +743,56 @@ pair<int, int> check_schema_version(sqlite3* db) {
     }
 }
 
+// A helper class used in create_database() below so we manage the one shot
+// transaction safely.
+class ScopedTransaction {
+public:
+    ScopedTransaction(sqlite3* db) : db_(NULL) {
+        // try for 5 secs (50*0.1)
+        for (size_t i = 0; i < 50; ++i) {
+            const int rc = sqlite3_exec(db, "BEGIN EXCLUSIVE TRANSACTION",
+                                        NULL, NULL, NULL);
+            if (rc == SQLITE_OK) {
+                break;
+            } else if (rc != SQLITE_BUSY || i == 50) {
+                isc_throw(Sqlite3Error, "Unable to acquire exclusive lock "
+                          "for database creation: " << sqlite3_errmsg(db));
+            }
+            do_sleep();
+        }
+        // Hold the DB pointer once we have successfully acquired the lock.
+        db_ = db;
+    }
+    ~ScopedTransaction() {
+        if (db_ != NULL) {
+            // Note: even rollback could fail in theory, but in that case
+            // we cannot do much for safe recovery anyway.  We could at least
+            // log the event, but for now don't even bother to do that, with
+            // the expectation that we'll soon stop creating the schema in this
+            // module.
+            sqlite3_exec(db_, "ROLLBACK", NULL, NULL, NULL);
+        }
+    }
+    void commit() {
+        if (sqlite3_exec(db_, "COMMIT TRANSACTION", NULL, NULL, NULL) !=
+            SQLITE_OK) {
+            isc_throw(Sqlite3Error, "Unable to commit newly created database "
+                      "schema: " << sqlite3_errmsg(db_));
+        }
+        db_ = NULL;
+    }
 
+private:
+    sqlite3* db_;
+};
 
 // return db version
 pair<int, int> create_database(sqlite3* db) {
+    logger.info(DATASRC_SQLITE_SETUP);
+
     // try to get an exclusive lock. Once that is obtained, do the version
     // check *again*, just in case this process was racing another
-    //
-    // try for 5 secs (50*0.1)
-    int rc;
-    logger.info(DATASRC_SQLITE_SETUP);
-    for (size_t i = 0; i < 50; ++i) {
-        rc = sqlite3_exec(db, "BEGIN EXCLUSIVE TRANSACTION", NULL, NULL,
-                            NULL);
-        if (rc == SQLITE_OK) {
-            break;
-        } else if (rc != SQLITE_BUSY || i == 50) {
-            isc_throw(Sqlite3Error, "Unable to acquire exclusive lock "
-                        "for database creation: " << sqlite3_errmsg(db));
-        }
-        do_sleep();
-    }
-
+    ScopedTransaction transaction(db);
     pair<int, int> schema_version = check_schema_version(db);
     if (schema_version.first == -1) {
         for (int i = 0; SCHEMA_LIST[i] != NULL; ++i) {
@@ -774,7 +802,7 @@ pair<int, int> create_database(sqlite3* db) {
                         "Failed to set up schema " << SCHEMA_LIST[i]);
             }
         }
-        sqlite3_exec(db, "COMMIT TRANSACTION", NULL, NULL, NULL);
+        transaction.commit();
 
         // Return the version. We query again to ensure that the only point
         // in which the current schema version is defined is in the
