@@ -99,10 +99,9 @@ Their semantics is as follows (they are or bit-field):\n\
   of the non existence of any matching wildcard or non existence of an\n\
   exact match when a wildcard match is found.\n\
 \n\
-In general, name is expected to be included in the zone, that is, it\n\
-should be equal to or a subdomain of the zone origin. Otherwise this\n\
-method will return NXDOMAIN with an empty RRset. But such a case\n\
-should rather be considered a caller's bug.\n\
+Name is expected to be included in the zone, that is, it\n\
+should be equal to or a subdomain of the zone origin. Otherwise an\n\
+OutOfZoneFind exception is raised.\n\
 \n\
 Note: For this reason it's probably better to throw an exception than\n\
 returning NXDOMAIN. This point should be revisited in a near future\n\
