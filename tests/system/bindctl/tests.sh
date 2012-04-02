@@ -57,9 +57,9 @@ sleep 2
 echo 'Stats show
 ' | $RUN_BINDCTL \
 	--csv-file-dir=$BINDCTL_CSV_DIR > bindctl.out.$n || status=1
-# the server should have received 1 UDP and 1 TCP queries (TCP query was
-# sent from the server startup script)
-cnt_value1=`expr $cnt_value1 + 1`
+# the server should have received 1 UDP and 0 TCP queries (the server
+# startup script no longer sends any TCP queries)
+cnt_value1=`expr $cnt_value1 + 0`
 cnt_value2=`expr $cnt_value2 + 1`
 cnt_value3=`expr $cnt_value1 + $cnt_value2`
 grep $cnt_name1".*\<"$cnt_value1"\>" bindctl.out.$n > /dev/null || status=1
