@@ -601,7 +601,7 @@ public:
     /// algorithm, and salt) from the zone as noted above.  If these
     /// assumptions aren't met, \c DataSourceError exception will be thrown.
     ///
-    /// \exception InvalidParameter name is not a subdomain of the zone origin
+    /// \exception OutOfZone name is not a subdomain of the zone origin
     /// \exception DataSourceError Low-level or internal datasource errors
     /// happened, or the zone isn't properly signed with NSEC3
     /// (NSEC3 parameters cannot be found, no NSEC3s are available, etc).

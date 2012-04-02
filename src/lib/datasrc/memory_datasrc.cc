@@ -1350,7 +1350,7 @@ InMemoryZoneFinder::findNSEC3(const Name& name, bool recursive) {
     const NameComparisonResult cmp_result = name.compare(impl_->origin_);
     if (cmp_result.getRelation() != NameComparisonResult::EQUAL &&
         cmp_result.getRelation() != NameComparisonResult::SUBDOMAIN) {
-        isc_throw(InvalidParameter, "findNSEC3 attempt for out-of-zone name: "
+        isc_throw(OutOfZone, "findNSEC3 attempt for out-of-zone name: "
                   << name << ", zone: " << impl_->origin_ << "/"
                   << impl_->zone_class_);
     }
