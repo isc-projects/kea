@@ -27,6 +27,16 @@
 namespace isc {
 namespace datasrc {
 
+/// \brief Out of zone exception
+///
+/// This is thrown when a method is called for a name or RRset which
+/// is not in or below the zone.
+class OutOfZone : public Exception {
+public:
+    OutOfZone(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
 /// \brief The base class to search a zone for RRsets
 ///
 /// The \c ZoneFinder class is an abstract base class for representing
@@ -466,6 +476,8 @@ public:
     ///
     /// \exception std::bad_alloc Memory allocation such as for constructing
     ///  the resulting RRset fails
+    /// \throw OutOfZone The Name \c name is outside of the origin of the
+    /// zone of this ZoneFinder.
     /// \exception DataSourceError Derived class specific exception, e.g.
     /// when encountering a bad zone configuration or database connection
     /// failure.  Although these are considered rare, exceptional events,
@@ -589,7 +601,7 @@ public:
     /// algorithm, and salt) from the zone as noted above.  If these
     /// assumptions aren't met, \c DataSourceError exception will be thrown.
     ///
-    /// \exception InvalidParameter name is not a subdomain of the zone origin
+    /// \exception OutOfZone name is not a subdomain of the zone origin
     /// \exception DataSourceError Low-level or internal datasource errors
     /// happened, or the zone isn't properly signed with NSEC3
     /// (NSEC3 parameters cannot be found, no NSEC3s are available, etc).
