@@ -1,3 +1,14 @@
+417.	[bug]		jelte
+	The notify-out code now looks up notify targets in their correct
+	zones (and no longer just in the zone that the notify is about).
+	(Trac #1535, git 66300a3c4769a48b765f70e2d0dbf8bbb714435b)
+
+416.	[func]*		jelte
+	The implementations of ZoneFinder::find() now throw an OutOfZone
+	exception when the name argument is not in or below the zone this
+	zonefinder contains.
+	(Trac #1535, git 66300a3c4769a48b765f70e2d0dbf8bbb714435b)
+
 bind10-devel-20120329 released on March 29, 2012
 
 415.	[doc]		jinmei, jreed
