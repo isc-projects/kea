@@ -1969,10 +1969,8 @@ TEST_F(InMemoryZoneFinderTest, findNSEC3) {
     EXPECT_EQ(result::SUCCESS, zone_finder_.add(textToRRset(zzz_nsec3_text)));
 
     // Parameter validation: the query name must be in or below the zone
-    EXPECT_THROW(zone_finder_.findNSEC3(Name("example.com"), false),
-                 isc::InvalidParameter);
-    EXPECT_THROW(zone_finder_.findNSEC3(Name("org"), true),
-                 isc::InvalidParameter);
+    EXPECT_THROW(zone_finder_.findNSEC3(Name("example.com"), false), OutOfZone);
+    EXPECT_THROW(zone_finder_.findNSEC3(Name("org"), true), OutOfZone);
 
     // Apex name.  It should have a matching NSEC3.
     {
