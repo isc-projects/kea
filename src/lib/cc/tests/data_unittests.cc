@@ -333,16 +333,18 @@ TEST(Element, escape) {
     EXPECT_THROW(Element::fromJSON("\\\"\\\""), JSONError);
     // Inside strings is OK
     EXPECT_NO_THROW(Element::fromJSON("\"\\\"\\\"\""));
-    // String not terminated
+    // String not delimited correctly
     EXPECT_THROW(Element::fromJSON("\"hello"), JSONError);
-    // Bad string
+    EXPECT_THROW(Element::fromJSON("hello\""), JSONError);
+    // Bad strings
     EXPECT_THROW(Element::fromJSON("hello\"foobar\""), JSONError);
+    EXPECT_THROW(Element::fromJSON("\"foobar\"hello"), JSONError);
     // A whitespace test
-    EXPECT_NO_THROW(Element::fromJSON("\"  \n  \r \t  \n \n    \t\""));
+    EXPECT_NO_THROW(Element::fromJSON("\"  \n  \r \t \f  \n \n    \t\""));
     // Whitespace outside of json element
-    EXPECT_NO_THROW(Element::fromJSON("  \n \t \r \b \"\" \n \t \r \b"));
-    EXPECT_NO_THROW(Element::fromJSON("{  \n  \r \t  \b  }"));
-    EXPECT_NO_THROW(Element::fromJSON("[  \n  \r \t  \b  ]"));
+    EXPECT_NO_THROW(Element::fromJSON("  \n \t \r \f \b \"\" \n \f \t \r \b"));
+    EXPECT_NO_THROW(Element::fromJSON("{  \n  \r \t  \b \f }"));
+    EXPECT_NO_THROW(Element::fromJSON("[  \n  \r \f \t  \b  ]"));
 }
 
 TEST(Element, ListElement) {
