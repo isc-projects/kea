@@ -354,6 +354,9 @@ str_from_stringstream(std::istream &in, const std::string& file, const int line,
         c = in.get();
         ++pos;
     }
+    if (c == EOF) {
+        throwJSONError("Unterminated string", file, line, pos);
+    }
     return (ss.str());
 }
 
@@ -458,7 +461,7 @@ from_stringstream_list(std::istream &in, const std::string& file, int& line,
     ElementPtr list = Element::createList();
     ConstElementPtr cur_list_element;
 
-    skip_chars(in, " \t\n", line, pos);
+    skip_chars(in, " \t\n\r\b", line, pos);
     while (c != EOF && c != ']') {
         if (in.peek() != ']') {
             cur_list_element = Element::fromJSON(in, file, line, pos);
@@ -476,7 +479,7 @@ from_stringstream_map(std::istream &in, const std::string& file, int& line,
                       int& pos)
 {
     ElementPtr map = Element::createMap();
-    skip_chars(in, " \t\n", line, pos);
+    skip_chars(in, " \t\n\r\b", line, pos);
     char c = in.peek();
     if (c == EOF) {
         throwJSONError(std::string("Unterminated map, <string> or } expected"), file, line, pos);
@@ -574,7 +577,7 @@ Element::fromJSON(std::istream &in, const std::string& file, int& line,
     char c = 0;
     ElementPtr element;
     bool el_read = false;
-    skip_chars(in, " \n\t", line, pos);
+    skip_chars(in, " \n\t\r\b", line, pos);
     while (c != EOF && !el_read) {
         c = in.get();
         pos++;

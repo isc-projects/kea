@@ -338,7 +338,11 @@ TEST(Element, escape) {
     // Bad string
     EXPECT_THROW(Element::fromJSON("hello\"foobar\""), JSONError);
     // A whitespace test
-    EXPECT_NO_THROW(Element::fromJSON("  \n  \r \t  \n \n    \t"));
+    EXPECT_NO_THROW(Element::fromJSON("\"  \n  \r \t  \n \n    \t\""));
+    // Whitespace outside of json element
+    EXPECT_NO_THROW(Element::fromJSON("  \n \t \r \b \"\" \n \t \r \b"));
+    EXPECT_NO_THROW(Element::fromJSON("{  \n  \r \t  \b  }"));
+    EXPECT_NO_THROW(Element::fromJSON("[  \n  \r \t  \b  ]"));
 }
 
 TEST(Element, ListElement) {
