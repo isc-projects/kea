@@ -329,6 +329,16 @@ TEST(Element, escape) {
     // Bad escapes
     EXPECT_THROW(Element::fromJSON("\\a"), JSONError);
     EXPECT_THROW(Element::fromJSON("\\"), JSONError);
+    // Can't have escaped quotes outside strings
+    EXPECT_THROW(Element::fromJSON("\\\"\\\""), JSONError);
+    // Inside strings is OK
+    EXPECT_NO_THROW(Element::fromJSON("\"\\\"\\\"\""));
+    // String not terminated
+    EXPECT_THROW(Element::fromJSON("\"hello"), JSONError);
+    // Bad string
+    EXPECT_THROW(Element::fromJSON("hello\"foobar\""), JSONError);
+    // A whitespace test
+    EXPECT_NO_THROW(Element::fromJSON("  \n  \r \t  \n \n    \t"));
 }
 
 TEST(Element, ListElement) {
