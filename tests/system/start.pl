@@ -53,6 +53,8 @@ if ($server && !-d "$test/$server") {
 my $topdir = abs_path("$test/..");
 my $testdir = abs_path("$test");
 my $RUN_BIND10 = $ENV{'RUN_BIND10'};
+my $RUN_BINDCTL = $ENV{'RUN_BINDCTL'};
+my $BINDCTL_CSV_DIR = $ENV{'BINDCTL_CSV_DIR'};
 my $NAMED = $ENV{'BIND9_NAMED'};
 my $LWRESD = $ENV{'LWRESD'};
 my $DIG = $ENV{'DIG'};
@@ -211,9 +213,8 @@ sub verify_server {
 
 	my $tries = 0;
 	while (1) {
-		my $return = system("$DIG +tcp +noadd +nosea +nostat +noquest +nocomm +nocmd -p 53210 version.bind. chaos txt \@10.53.0.$n > dig.out");
+		my $return = system("echo \"Stats show\" | $RUN_BINDCTL --csv-file-dir=$BINDCTL_CSV_DIR > bindctl.out");
 		last if ($return == 0);
-		print `grep ";" dig.out`;
 		if (++$tries >= 30) {
 			print "I:no response from $server\n";
 			print "R:FAIL\n";
