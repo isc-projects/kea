@@ -141,8 +141,8 @@ const char* const text_statements[NUM_STATEMENTS] = {
 
 struct SQLite3Parameters {
     SQLite3Parameters() :
-        db_(NULL), version_(-1), minor_(-1), in_transaction(false),
-        updating_zone(false), updated_zone_id(-1)
+        db_(NULL), major_version_(-1), minor_version_(-1),
+        in_transaction(false), updating_zone(false), updated_zone_id(-1)
     {
         for (int i = 0; i < NUM_STATEMENTS; ++i) {
             statements_[i] = NULL;
@@ -180,8 +180,8 @@ struct SQLite3Parameters {
     }
 
     sqlite3* db_;
-    int version_;
-    int minor_;
+    int major_version_;
+    int minor_version_;
     bool in_transaction; // whether or not a transaction has been started
     bool updating_zone;          // whether or not updating the zone
     int updated_zone_id;        // valid only when in_transaction is true
@@ -469,8 +469,8 @@ checkAndSetupSchema(Initializer* initializer) {
             .arg(SQLITE_SCHEMA_MAJOR_VERSION).arg(SQLITE_SCHEMA_MINOR_VERSION);
     }
 
-    initializer->params_.version_ = schema_version.first;
-    initializer->params_.minor_ = schema_version.second;
+    initializer->params_.major_version_ = schema_version.first;
+    initializer->params_.minor_version_ = schema_version.second;
 }
 
 }
