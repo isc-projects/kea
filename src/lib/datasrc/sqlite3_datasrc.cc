@@ -50,14 +50,14 @@ namespace isc {
 namespace datasrc {
 
 struct Sqlite3Parameters {
-    Sqlite3Parameters() :  db_(NULL), version_(-1), minor_(-1),
+    Sqlite3Parameters() :  db_(NULL), major_version_(-1), minor_version_(-1),
         q_zone_(NULL), q_record_(NULL), q_addrs_(NULL), q_referral_(NULL),
         q_any_(NULL), q_count_(NULL), q_previous_(NULL), q_nsec3_(NULL),
         q_prevnsec3_(NULL)
     {}
     sqlite3* db_;
-    int version_;
-    int minor_;
+    int major_version_;
+    int minor_version_;
     sqlite3_stmt* q_zone_;
     sqlite3_stmt* q_record_;
     sqlite3_stmt* q_addrs_;
@@ -834,8 +834,8 @@ checkAndSetupSchema(Sqlite3Initializer* initializer) {
             .arg(SQLITE_SCHEMA_MAJOR_VERSION).arg(SQLITE_SCHEMA_MINOR_VERSION);
     }
 
-    initializer->params_.version_ = schema_version.first;
-    initializer->params_.minor_ = schema_version.second;
+    initializer->params_.major_version_ = schema_version.first;
+    initializer->params_.minor_version_ = schema_version.second;
     initializer->params_.q_zone_ = prepare(db, q_zone_str);
     initializer->params_.q_record_ = prepare(db, q_record_str);
     initializer->params_.q_addrs_ = prepare(db, q_addrs_str);
