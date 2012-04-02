@@ -278,12 +278,12 @@ class NotifyOut:
         # data sources.
         datasrc_config = '{ "database_file": "' + self._db_file + '"}'
         try:
-            result, finder = DataSourceClient('sqlite3',
-                                              datasrc_config).find_zone(
-                zone_name)
+            ds_client = DataSourceClient('sqlite3', datasrc_config)
         except isc.datasrc.Error as ex:
             logger.error(NOTIFY_OUT_DATASRC_ACCESS_FAILURE, ex)
             return []
+
+        result, finder = ds_client.find_zone(zone_name)
         if result is not DataSourceClient.SUCCESS:
             logger.error(NOTIFY_OUT_DATASRC_ZONE_NOT_FOUND,
                          format_zone_str(zone_name, zone_class))
@@ -307,13 +307,17 @@ class NotifyOut:
             ns_name = Name(ns_rdata.to_text())
             if soa_mname == ns_name:
                 continue
-            result, rrset, _ = finder.find(ns_name, RRType.A())
-            if result is finder.SUCCESS and rrset is not None:
-                addrs.extend([a.to_text() for a in rrset.get_rdata()])
+            ns_result, ns_finder = ds_client.find_zone(ns_name)
+            if ns_result is DataSourceClient.SUCCESS or \
+               ns_result is DataSourceClient.PARTIALMATCH:
+                result, rrset, _ = ns_finder.find(ns_name, RRType.A())
+                if result is ns_finder.SUCCESS and rrset is not None:
+                    addrs.extend([a.to_text() for a in rrset.get_rdata()])
 
-            result, rrset, _ = finder.find(ns_name, RRType.AAAA())
-            if result is finder.SUCCESS and rrset is not None:
-                addrs.extend([aaaa.to_text() for aaaa in rrset.get_rdata()])
+                result, rrset, _ = ns_finder.find(ns_name, RRType.AAAA())
+                if result is ns_finder.SUCCESS and rrset is not None:
+                    addrs.extend([aaaa.to_text()
+                                    for aaaa in rrset.get_rdata()])
 
         return addrs
 
