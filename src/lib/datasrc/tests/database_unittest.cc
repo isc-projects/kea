@@ -1881,10 +1881,8 @@ TYPED_TEST(DatabaseClientTest, findOutOfZone) {
     EXPECT_THROW(finder->findAll(Name("org"), target), OutOfZone);
 
     // sharing a common ancestor
-    EXPECT_THROW(finder->find(Name("noexample.org"), this->qtype_),
-                 OutOfZone);
-    EXPECT_THROW(finder->findAll(Name("noexample.org"), target),
-                 OutOfZone);
+    EXPECT_THROW(finder->find(Name("noexample.org"), this->qtype_), OutOfZone);
+    EXPECT_THROW(finder->findAll(Name("noexample.org"), target), OutOfZone);
 
     // totally unrelated domain, smaller number of labels
     EXPECT_THROW(finder->find(Name("com"), this->qtype_), OutOfZone);
@@ -1897,8 +1895,7 @@ TYPED_TEST(DatabaseClientTest, findOutOfZone) {
     // totally unrelated domain, larger number of labels
     EXPECT_THROW(finder->find(Name("more.example.com"), this->qtype_),
                  OutOfZone);
-    EXPECT_THROW(finder->findAll(Name("more.example.com"), target),
-                 OutOfZone);
+    EXPECT_THROW(finder->findAll(Name("more.example.com"), target), OutOfZone);
 }
 
 TYPED_TEST(DatabaseClientTest, findDelegation) {
