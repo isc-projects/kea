@@ -97,7 +97,7 @@ bind10-devel-20120329 released on March 29, 2012
 	providing result for random instance.
 	(Trac #1751, git 3285353a660e881ec2b645e1bc10d94e5020f357)
 
-403.	[build]*		jelte
+403.	[build]*	jelte
 	The configure option for botan (--with-botan=PATH) is replaced by
 	--with-botan-config=PATH, which takes a full path to a botan-config
 	script, instead of the botan 'install' directory. Also, if not
