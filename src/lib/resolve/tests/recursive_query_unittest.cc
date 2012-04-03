@@ -18,10 +18,11 @@
 #include <sys/socket.h>
 #include <sys/time.h>
 
-#include <string.h>
+#include <cstring>
 
 #include <boost/lexical_cast.hpp>
 #include <boost/bind.hpp>
+#include <boost/scoped_ptr.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 
 #include <gtest/gtest.h>
@@ -62,6 +63,7 @@ using namespace isc::asiodns;
 using namespace isc::asiolink;
 using namespace isc::dns;
 using namespace isc::util;
+using boost::scoped_ptr;
 
 namespace isc {
 namespace asiodns {
@@ -85,18 +87,14 @@ const char* const TEST_IPV4_ADDR = "127.0.0.1";
 // for the tests below.
 const uint8_t test_data[] = {0, 4, 1, 2, 3, 4};
 
-// This function returns an addrinfo structure for use by tests, using
-// different addresses and ports depending on whether we're testing
-// IPv4 or v6, TCP or UDP, and client or server operation.
+// This function returns an addrinfo structure for use by tests.
 struct addrinfo*
-resolveAddress(const int family, const int protocol, const bool client) {
-    const char* const addr = (family == AF_INET6) ?
-        TEST_IPV6_ADDR : TEST_IPV4_ADDR;
-    const char* const port = client ? TEST_CLIENT_PORT : TEST_SERVER_PORT;
-
+resolveAddress(const int protocol, const char* const addr,
+               const char* const port)
+{
     struct addrinfo hints;
     memset(&hints, 0, sizeof(hints));
-    hints.ai_family = family;
+    hints.ai_family = AF_UNSPEC; // let the address decide it.
     hints.ai_socktype = (protocol == IPPROTO_UDP) ? SOCK_DGRAM : SOCK_STREAM;
     hints.ai_protocol = protocol;
     hints.ai_flags = AI_NUMERICSERV;
@@ -109,6 +107,42 @@ resolveAddress(const int family, const int protocol, const bool client) {
 
     return (res);
 }
+
+// convenience shortcut of the other version using different addresses and
+// ports depending on whether we're testing IPv4 or v6, TCP or UDP, and
+// client or server operation.
+struct addrinfo*
+resolveAddress(const int family, const int protocol, const bool client) {
+    return (resolveAddress(protocol,
+                           (family == AF_INET6) ? TEST_IPV6_ADDR :
+                           TEST_IPV4_ADDR,
+                           client ? TEST_CLIENT_PORT : TEST_SERVER_PORT));
+}
+
+// A helper holder of addrinfo so we can safely release the resource
+// either when leaving the defined scope either normally or due to exception.
+struct ScopedAddrInfo {
+    ScopedAddrInfo(struct addrinfo* res) : res_(res) {}
+    ~ScopedAddrInfo() { freeaddrinfo(res_); }
+    struct addrinfo* res_;
+};
+
+// Similar to ScopedAddrInfo but for socket FD.  It also supports the "release"
+// operation so it can release the ownership of the FD.
+struct ScopedSocket {
+    ScopedSocket(int s) : s_(s) {}
+    ~ScopedSocket() {
+        if (s_ >= 0) {
+            close(s_);
+        }
+    }
+    int release() {
+        int s = s_;
+        s_ = -1;
+        return (s);
+    }
+    int s_;
+};
 
 // This fixture is a framework for various types of network operations
 // using the ASIO interfaces.  Each test case creates an IOService object,
@@ -129,27 +163,22 @@ protected:
         // It would delete itself, but after the io_service_, which could
         // segfailt in case there were unhandled requests
         resolver_.reset();
-        if (res_ != NULL) {
-            freeaddrinfo(res_);
-        }
         if (sock_ != -1) {
             close(sock_);
         }
-        delete dns_service_;
-        delete callback_;
-        delete io_service_;
     }
 
     // Send a test UDP packet to a mock server
     void sendUDP(const int family) {
-        res_ = resolveAddress(family, IPPROTO_UDP, false);
+        ScopedAddrInfo sai(resolveAddress(family, IPPROTO_UDP, false));
+        struct addrinfo* res = sai.res_;
 
-        sock_ = socket(res_->ai_family, res_->ai_socktype, res_->ai_protocol);
+        sock_ = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
         if (sock_ < 0) {
             isc_throw(IOError, "failed to open test socket");
         }
         const int cc = sendto(sock_, test_data, sizeof(test_data), 0,
-                              res_->ai_addr, res_->ai_addrlen);
+                              res->ai_addr, res->ai_addrlen);
         if (cc != sizeof(test_data)) {
             isc_throw(IOError, "unexpected sendto result: " << cc);
         }
@@ -158,13 +187,14 @@ protected:
 
     // Send a test TCP packet to a mock server
     void sendTCP(const int family) {
-        res_ = resolveAddress(family, IPPROTO_TCP, false);
+        ScopedAddrInfo sai(resolveAddress(family, IPPROTO_TCP, false));
+        struct addrinfo* res = sai.res_;
 
-        sock_ = socket(res_->ai_family, res_->ai_socktype, res_->ai_protocol);
+        sock_ = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
         if (sock_ < 0) {
             isc_throw(IOError, "failed to open test socket");
         }
-        if (connect(sock_, res_->ai_addr, res_->ai_addrlen) < 0) {
+        if (connect(sock_, res->ai_addr, res->ai_addrlen) < 0) {
             isc_throw(IOError, "failed to connect to the test server");
         }
         const int cc = send(sock_, test_data, sizeof(test_data), 0);
@@ -178,14 +208,15 @@ protected:
     // recursive lookup.  The caller must place a RecursiveQuery 
     // on the IO Service queue before running this routine.
     void recvUDP(const int family, void* buffer, size_t& size) {
-        res_ = resolveAddress(family, IPPROTO_UDP, true);
+        ScopedAddrInfo sai(resolveAddress(family, IPPROTO_UDP, true));
+        struct addrinfo* res = sai.res_;
 
-        sock_ = socket(res_->ai_family, res_->ai_socktype, res_->ai_protocol);
+        sock_ = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
         if (sock_ < 0) {
             isc_throw(IOError, "failed to open test socket");
         }
 
-        if (bind(sock_, res_->ai_addr, res_->ai_addrlen) < 0) {
+        if (bind(sock_, res->ai_addr, res->ai_addrlen) < 0) {
             isc_throw(IOError, "bind failed: " << strerror(errno));
         }
 
@@ -227,38 +258,68 @@ protected:
         size = ret;
     }
 
+    void
+    addServer(const string& address, const char* const port, int protocol) {
+        ScopedAddrInfo sai(resolveAddress(protocol, address.c_str(), port));
+        struct addrinfo* res = sai.res_;
+        const int family = res->ai_family;
+
+        ScopedSocket sock(socket(res->ai_family, res->ai_socktype,
+                                 res->ai_protocol));
+        const int s = sock.s_;
+        if (s < 0) {
+            isc_throw(isc::Unexpected, "failed to open a test socket");
+        }
+        const int on = 1;
+        if (family == AF_INET6) {
+            if (setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, &on, sizeof(on)) ==
+                -1) {
+                isc_throw(isc::Unexpected,
+                          "failed to set socket option(IPV6_V6ONLY)");
+            }
+        }
+        if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) == -1) {
+            isc_throw(isc::Unexpected,
+                      "failed to set socket option(SO_REUSEADDR)");
+        }
+        if (bind(s, res->ai_addr, res->ai_addrlen) != 0) {
+            isc_throw(isc::Unexpected, "failed to bind a test socket");
+        }
+        if (protocol == IPPROTO_TCP) {
+            dns_service_->addServerTCPFromFD(sock.release(), family);
+        } else {
+            dns_service_->addServerUDPFromFD(sock.release(), family);
+        }
+    }
 
     // Set up an IO Service queue using the specified address
-    void setDNSService(const char& address) {
-        delete dns_service_;
-        dns_service_ = NULL;
-        delete io_service_;
-        io_service_ = new IOService();
-        callback_ = new ASIOCallBack(this);
-        dns_service_ = new DNSService(*io_service_, *TEST_SERVER_PORT, address, callback_, NULL, NULL);
+    void setDNSService(const string& address) {
+        setDNSService();
+        addServer(address, TEST_SERVER_PORT, IPPROTO_TCP);
+        addServer(address, TEST_SERVER_PORT, IPPROTO_UDP);
     }
 
     // Set up an IO Service queue using the "any" address, on IPv4 if
     // 'use_ipv4' is true and on IPv6 if 'use_ipv6' is true.
     void setDNSService(const bool use_ipv4, const bool use_ipv6) {
-        delete dns_service_;
-        dns_service_ = NULL;
-        delete io_service_;
-        io_service_ = new IOService();
-        callback_ = new ASIOCallBack(this);
-        dns_service_ = new DNSService(*io_service_, *TEST_SERVER_PORT, use_ipv4, use_ipv6, callback_,
-                                      NULL, NULL);
+        setDNSService();
+        if (use_ipv6) {
+            addServer("::", TEST_SERVER_PORT, IPPROTO_TCP);
+            addServer("::", TEST_SERVER_PORT, IPPROTO_UDP);
+        }
+        if (use_ipv4) {
+            addServer("0.0.0.0", TEST_SERVER_PORT, IPPROTO_TCP);
+            addServer("0.0.0.0", TEST_SERVER_PORT, IPPROTO_UDP);
+        }
     }
 
     // Set up empty DNS Service
     // Set up an IO Service queue without any addresses
     void setDNSService() {
-        delete dns_service_;
-        dns_service_ = NULL;
-        delete io_service_;
-        io_service_ = new IOService();
-        callback_ = new ASIOCallBack(this);
-        dns_service_ = new DNSService(*io_service_, callback_, NULL, NULL);
+        io_service_.reset(new IOService());
+        callback_.reset(new ASIOCallBack(this));
+        dns_service_.reset(new DNSService(*io_service_, callback_.get(), NULL,
+                                          NULL));
     }
 
     // Run a simple server test, on either IPv4 or IPv6, and over either
@@ -425,28 +486,27 @@ private:
 protected:
     // We use a pointer for io_service_, because for some tests we
     // need to recreate a new one within one onstance of this class
-    IOService* io_service_;
-    DNSService* dns_service_;
-    isc::nsas::NameserverAddressStore* nsas_;
+    scoped_ptr<IOService> io_service_;
+    scoped_ptr<DNSService> dns_service_;
+    scoped_ptr<isc::nsas::NameserverAddressStore> nsas_;
     isc::cache::ResolverCache cache_;
-    ASIOCallBack* callback_;
+    scoped_ptr<ASIOCallBack> callback_;
     int callback_protocol_;
     int callback_native_;
     string callback_address_;
     vector<uint8_t> callback_data_;
     int sock_;
-    struct addrinfo* res_;
     boost::shared_ptr<isc::util::unittests::TestResolver> resolver_;
 };
 
 RecursiveQueryTest::RecursiveQueryTest() :
     dns_service_(NULL), callback_(NULL), callback_protocol_(0),
-    callback_native_(-1), sock_(-1), res_(NULL),
+    callback_native_(-1), sock_(-1),
     resolver_(new isc::util::unittests::TestResolver())
 {
-    io_service_ = new IOService();
+    io_service_.reset(new IOService());
     setDNSService(true, true);
-    nsas_ = new isc::nsas::NameserverAddressStore(resolver_);
+    nsas_.reset(new isc::nsas::NameserverAddressStore(resolver_));
 }
 
 TEST_F(RecursiveQueryTest, v6UDPSend) {
@@ -477,24 +537,24 @@ TEST_F(RecursiveQueryTest, v6UDPSendSpecific) {
     // an error on a subsequent read operation.  We could do it, but for
     // simplicity we only tests the easier cases for now.
 
-    setDNSService(*TEST_IPV6_ADDR);
+    setDNSService(TEST_IPV6_ADDR);
     doTest(AF_INET6, IPPROTO_UDP);
 }
 
 TEST_F(RecursiveQueryTest, v6TCPSendSpecific) {
-    setDNSService(*TEST_IPV6_ADDR);
+    setDNSService(TEST_IPV6_ADDR);
     doTest(AF_INET6, IPPROTO_TCP);
 
     EXPECT_THROW(sendTCP(AF_INET), IOError);
 }
 
 TEST_F(RecursiveQueryTest, v4UDPSendSpecific) {
-    setDNSService(*TEST_IPV4_ADDR);
+    setDNSService(TEST_IPV4_ADDR);
     doTest(AF_INET, IPPROTO_UDP);
 }
 
 TEST_F(RecursiveQueryTest, v4TCPSendSpecific) {
-    setDNSService(*TEST_IPV4_ADDR);
+    setDNSService(TEST_IPV4_ADDR);
     doTest(AF_INET, IPPROTO_TCP);
 
     EXPECT_THROW(sendTCP(AF_INET6), IOError);
@@ -502,7 +562,7 @@ TEST_F(RecursiveQueryTest, v4TCPSendSpecific) {
 
 TEST_F(RecursiveQueryTest, v6AddServer) {
     setDNSService();
-    dns_service_->addServer(*TEST_SERVER_PORT, TEST_IPV6_ADDR);
+    addServer(TEST_IPV6_ADDR, TEST_SERVER_PORT, IPPROTO_TCP);
     doTest(AF_INET6, IPPROTO_TCP);
 
     EXPECT_THROW(sendTCP(AF_INET), IOError);
@@ -510,7 +570,7 @@ TEST_F(RecursiveQueryTest, v6AddServer) {
 
 TEST_F(RecursiveQueryTest, v4AddServer) {
     setDNSService();
-    dns_service_->addServer(*TEST_SERVER_PORT, TEST_IPV4_ADDR);
+    addServer(TEST_IPV4_ADDR, TEST_SERVER_PORT, IPPROTO_TCP);
     doTest(AF_INET, IPPROTO_TCP);
 
     EXPECT_THROW(sendTCP(AF_INET6), IOError);
@@ -607,17 +667,18 @@ TEST_F(RecursiveQueryTest, forwarderSend) {
 }
 
 int
-createTestSocket()
-{
-    struct addrinfo* res_ = resolveAddress(AF_INET, IPPROTO_UDP, true);
-    int sock_ = socket(res_->ai_family, res_->ai_socktype, res_->ai_protocol);
+createTestSocket() {
+    ScopedAddrInfo sai(resolveAddress(AF_INET, IPPROTO_UDP, true));
+    struct addrinfo* res = sai.res_;
+
+    int sock_ = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
     if (sock_ < 0) {
         isc_throw(IOError, "failed to open test socket");
     }
-    if (bind(sock_, res_->ai_addr, res_->ai_addrlen) < 0) {
+    if (bind(sock_, res->ai_addr, res->ai_addrlen) < 0) {
         isc_throw(IOError, "failed to bind test socket");
     }
-    return sock_;
+    return (sock_);
 }
 
 int
