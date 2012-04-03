@@ -1,6 +1,12 @@
+419.	[bug]		jelte
+	JSON handler has been improved; escaping now works correctly
+	(including quotes in strings), and it now rejects more types of
+	malformed input.
+	(Trac #1626, git 3b09268518e4e90032218083bcfebf7821be7bd5)
+
 418.	[bug]		vorner
 	Fixed crash in bindctl when config unset was called.
-	(Trac #1715, 098da24dddad497810aa2787f54126488bb1095c)
+	(Trac #1715, git 098da24dddad497810aa2787f54126488bb1095c)
 
 417.	[bug]		jelte
 	The notify-out code now looks up notify targets in their correct
