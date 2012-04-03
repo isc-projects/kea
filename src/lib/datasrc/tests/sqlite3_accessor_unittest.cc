@@ -1152,7 +1152,7 @@ TEST_F(SQLite3Update, addRecordOfLargeSerial) {
     expected_stored.clear();
     expected_stored.push_back(begin_data);
     expected_stored.push_back(diff_end_data);
-    checkDiffs(expected_stored, accessor->getDiffs(zone_id, 4294967295, 1300));
+    checkDiffs(expected_stored, accessor->getDiffs(zone_id, 4294967295U, 1300));
 }
 
 TEST_F(SQLite3Update, addDiffWithoutUpdate) {
