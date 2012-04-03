@@ -1050,7 +1050,7 @@ const char* const diff_end_data[] = {
     "1300", DIFF_ADD_TEXT
 };
 const char* const diff_add_a_data[] = {
-    "dns01.example.com.", "A", "3600", "192.0.2.10", "1234", DIFF_ADD_TEXT
+    "dns01.example.com.", "A", "3600", "192.0.2.10", "1300", DIFF_ADD_TEXT
 };
 
 // The following two are helper functions to convert textual test data
@@ -1071,8 +1071,19 @@ getOperation(const char* const diff_data[]) {
 // diffs.
 void
 checkDiffs(const vector<const char* const*>& expected,
-           const vector<vector<string> >& actual)
+           DatabaseAccessor::IteratorContextPtr rr_iterator)
 {
+    vector<vector<string> > actual;
+    string columns_holder[DatabaseAccessor::COLUMN_COUNT];
+    while (rr_iterator->getNext(columns_holder)) {
+        // Reorder the 'actual' vector to be compatible with the expected one.
+        vector<string> columns;
+        columns.push_back(columns_holder[DatabaseAccessor::NAME_COLUMN]);
+        columns.push_back(columns_holder[DatabaseAccessor::TYPE_COLUMN]);
+        columns.push_back(columns_holder[DatabaseAccessor::TTL_COLUMN]);
+        columns.push_back(columns_holder[DatabaseAccessor::RDATA_COLUMN]);
+        actual.push_back(columns);
+    }
     EXPECT_EQ(expected.size(), actual.size());
     const size_t n_diffs = std::min(expected.size(), actual.size());
     for (size_t i = 0; i < n_diffs; ++i) {
@@ -1098,16 +1109,18 @@ TEST_F(SQLite3Update, addRecordDiff) {
                             getOperation(diff_end_data), diff_params);
 
     // Until the diffs are committed, they are not visible to other accessors.
-    EXPECT_TRUE(another_accessor->getRecordDiff(zone_id).empty());
+    EXPECT_THROW(another_accessor->getDiffs(zone_id, 1234, 1300),
+                 NoSuchSerial);
 
     accessor->commit();
 
     expected_stored.clear();
     expected_stored.push_back(diff_begin_data);
     expected_stored.push_back(diff_end_data);
-    checkDiffs(expected_stored, accessor->getRecordDiff(zone_id));
+    checkDiffs(expected_stored, accessor->getDiffs(zone_id, 1234, 1300));
     // Now it should be visible to others, too.
-    checkDiffs(expected_stored, another_accessor->getRecordDiff(zone_id));
+    checkDiffs(expected_stored, another_accessor->getDiffs(zone_id, 1234,
+                                                           1300));
 }
 
 TEST_F(SQLite3Update, addRecordOfLargeSerial) {
@@ -1139,7 +1152,7 @@ TEST_F(SQLite3Update, addRecordOfLargeSerial) {
     expected_stored.clear();
     expected_stored.push_back(begin_data);
     expected_stored.push_back(diff_end_data);
-    checkDiffs(expected_stored, accessor->getRecordDiff(zone_id));
+    checkDiffs(expected_stored, accessor->getDiffs(zone_id, 4294967295, 1300));
 }
 
 TEST_F(SQLite3Update, addDiffWithoutUpdate) {
@@ -1184,7 +1197,7 @@ TEST_F(SQLite3Update, addDiffRollback) {
                             getOperation(diff_begin_data), diff_params);
     accessor->rollback();
 
-    EXPECT_TRUE(accessor->getRecordDiff(zone_id).empty());
+    EXPECT_THROW(accessor->getDiffs(zone_id, 1234, 1234), NoSuchSerial);
 }
 
 TEST_F(SQLite3Update, addDiffInBadOrder) {
@@ -1196,19 +1209,23 @@ TEST_F(SQLite3Update, addDiffInBadOrder) {
     copy(diff_end_data, diff_end_data + DatabaseAccessor::DIFF_PARAM_COUNT,
          diff_params);
     accessor->addRecordDiff(zone_id, getVersion(diff_end_data),
-                            getOperation(diff_end_data), diff_params);
+                            static_cast<DatabaseAccessor::DiffOperation>(
+                                lexical_cast<int>(DIFF_DELETE_TEXT)),
+                            diff_params);
 
     copy(diff_begin_data, diff_begin_data + DatabaseAccessor::DIFF_PARAM_COUNT,
          diff_params);
     accessor->addRecordDiff(zone_id, getVersion(diff_begin_data),
-                            getOperation(diff_begin_data), diff_params);
+                            static_cast<DatabaseAccessor::DiffOperation>(
+                                lexical_cast<int>(DIFF_ADD_TEXT)),
+                            diff_params);
 
     accessor->commit();
 
     expected_stored.clear();
     expected_stored.push_back(diff_end_data);
     expected_stored.push_back(diff_begin_data);
-    checkDiffs(expected_stored, accessor->getRecordDiff(zone_id));
+    checkDiffs(expected_stored, accessor->getDiffs(zone_id, 1300, 1234));
 }
 
 TEST_F(SQLite3Update, addDiffWithUpdate) {
@@ -1278,7 +1295,7 @@ TEST_F(SQLite3Update, addDiffWithUpdate) {
     expected_stored.push_back(diff_end_data);
     expected_stored.push_back(diff_add_a_data);
 
-    checkDiffs(expected_stored, accessor->getRecordDiff(zone_id));
+    checkDiffs(expected_stored, accessor->getDiffs(zone_id, 1234, 1300));
 }
 
 TEST_F(SQLite3Update, addDiffWithNoTable) {
