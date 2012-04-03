@@ -657,7 +657,38 @@ class TestMultiConfigData(unittest.TestCase):
         self.assertEqual(MultiConfigData.LOCAL, status)
 
         self.assertRaises(isc.cc.data.DataTypeError, self.mcd.set_value, "Spec2/item5[a]", "asdf")
-        
+
+
+    def test_unset(self):
+        """
+        Test the unset command works.
+        """
+        module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec2.spec")
+        self.mcd.set_specification(module_spec)
+        self.mcd.set_specification(module_spec)
+        value, status = self.mcd.get_value("Spec2/item1")
+        # This is the default first
+        self.assertEqual(1, value)
+        self.assertEqual(MultiConfigData.DEFAULT, status)
+        # Unseting a default item does nothing.
+        self.mcd.unset("Spec2/item1")
+        value, status = self.mcd.get_value("Spec2/item1")
+        # This should be the default
+        self.assertEqual(1, value)
+        self.assertEqual(MultiConfigData.DEFAULT, status)
+        # Set it to something else
+        self.mcd.set_value("Spec2/item1", 42)
+        value, status = self.mcd.get_value("Spec2/item1")
+        self.assertEqual(42, value)
+        self.assertEqual(MultiConfigData.LOCAL, status)
+        # Try to unset it
+        self.mcd.unset("Spec2/item1")
+        value, status = self.mcd.get_value("Spec2/item1")
+        # This should be the default
+        self.assertEqual(1, value)
+        self.assertEqual(MultiConfigData.DEFAULT, status)
+        # Unset a nonexisting item. Should raise.
+        self.assertRaises(isc.cc.data.DataNotFoundError, self.mcd.unset, "Spec2/doesnotexist")
 
     def test_get_config_item_list(self):
         config_items = self.mcd.get_config_item_list()
