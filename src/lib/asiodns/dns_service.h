@@ -112,40 +112,14 @@ private:
     static const unsigned int SERVER_DEFINED_FLAGS = 1;
 
 public:
-    /// \brief The constructor with a specific IP address and port on which
-    /// the services listen on.
-    ///
-    /// \param io_service The IOService to work with
-    /// \param port the port to listen on
-    /// \param address the IP address to listen on
-    /// \param checkin Provider for cc-channel events (see \c SimpleCallback)
-    /// \param lookup The lookup provider (see \c DNSLookup)
-    /// \param answer The answer provider (see \c DNSAnswer)
-    DNSService(asiolink::IOService& io_service, const char& port,
-               const char& address, isc::asiolink::SimpleCallback* checkin,
-               DNSLookup* lookup, DNSAnswer* answer);
-
-    /// \brief The constructor with a specific port on which the services
-    /// listen on.
-    ///
-    /// It effectively listens on "any" IPv4 and/or IPv6 addresses.
-    /// IPv4/IPv6 services will be available if and only if \c use_ipv4
-    /// or \c use_ipv6 is \c true, respectively.
-    ///
-    /// \param io_service The IOService to work with
-    /// \param port the port to listen on
-    /// \param use_ipv4 If true, listen on ipv4 'any'
-    /// \param use_ipv6 If true, listen on ipv6 'any'
-    /// \param checkin Provider for cc-channel events (see \c SimpleCallback)
-    /// \param lookup The lookup provider (see \c DNSLookup)
-    /// \param answer The answer provider (see \c DNSAnswer)
-    DNSService(asiolink::IOService& io_service, const char& port,
-               const bool use_ipv4, const bool use_ipv6,
-               isc::asiolink::SimpleCallback* checkin, DNSLookup* lookup,
-               DNSAnswer* answer);
     /// \brief The constructor without any servers.
     ///
-    /// Use addServer() to add some servers.
+    /// Use addServerTCPFromFD() or addServerUDPFromFD() to add some servers.
+    ///
+    /// \param io_service The IOService to work with
+    /// \param checkin Provider for cc-channel events (see \c SimpleCallback)
+    /// \param lookup The lookup provider (see \c DNSLookup)
+    /// \param answer The answer provider (see \c DNSAnswer)
     DNSService(asiolink::IOService& io_service,
                isc::asiolink::SimpleCallback* checkin,
                DNSLookup* lookup, DNSAnswer* answer);
@@ -153,10 +127,6 @@ public:
     /// \brief The destructor.
     virtual ~DNSService();
     //@}
-
-    /// \brief Add another server to the service
-    void addServer(uint16_t port, const std::string &address);
-    void addServer(const char& port, const std::string& address);
 
     /// \brief Add another TCP server/listener to the service from already
     /// opened file descriptor
