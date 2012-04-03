@@ -858,7 +858,7 @@ private:
             // No data returned but the SQL query succeeded.  Only possibility
             // is that there is no entry in the differences table for the given
             // zone and version.
-            isc_throw(NoSuchSerial, "No entry in differences table for " <<
+            isc_throw(NoSuchSerial, "No entry in differences table for" <<
                       " zone ID " << zone_id << ", serial number " << serial);
         }
 
@@ -1083,26 +1083,6 @@ SQLite3Accessor::addRecordDiff(int zone_id, uint32_t serial,
         }
     }
     executer.exec();
-}
-
-vector<vector<string> >
-SQLite3Accessor::getRecordDiff(int zone_id) {
-    sqlite3_stmt* const stmt = dbparameters_->getStatement(GET_RECORD_DIFF);
-    sqlite3_bind_int(stmt, 1, zone_id);
-
-    vector<vector<string> > result;
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        vector<string> row_result;
-        for (int i = 0; i < 6; ++i) {
-            row_result.push_back(convertToPlainChar(sqlite3_column_text(stmt,
-                                                                        i),
-                                                    dbparameters_->db_));
-        }
-        result.push_back(row_result);
-    }
-    sqlite3_reset(stmt);
-
-    return (result);
 }
 
 std::string
