@@ -1,3 +1,7 @@
+418.	[bug]		vorner
+	Fixed crash in bindctl when config unset was called.
+	(Trac #1715, 098da24dddad497810aa2787f54126488bb1095c)
+
 417.	[bug]		jelte
 	The notify-out code now looks up notify targets in their correct
 	zones (and no longer just in the zone that the notify is about).
@@ -13,7 +17,7 @@ bind10-devel-20120329 released on March 29, 2012
 
 415.	[doc]		jinmei, jreed
 	BIND 10 Guide updated to now describe the in-memory data source
-        configurations for b10-auth.
+	configurations for b10-auth.
 	(Trac #1732, git 434d8db8dfcd23a87b8e798e5702e91f0bbbdcf6)
 
 414.	[bug]		jinmei
