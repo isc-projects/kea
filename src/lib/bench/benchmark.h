@@ -211,7 +211,7 @@ public:
     /// \param target The templated class object that
     /// implements the code to be benchmarked.
     BenchMark(const int iterations, T target) :
-        iterations_(iterations), sub_iterations_(0)
+        iterations_(iterations), sub_iterations_(0), target_(NULL)
     {
         initialize(target, true);
     }
