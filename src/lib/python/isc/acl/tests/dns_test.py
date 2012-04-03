@@ -321,7 +321,7 @@ class RequestACLTest(unittest.TestCase):
                                   '     "from": "192.0.2.0/24"},' +
                                   '    {"action": "DROP",' +
                                   '     "from": "2001:db8::1"},' +
-                                  '] }')
+                                  ']')
         self.assertEqual(ACCEPT, acl.execute(CONTEXT4))
         self.assertEqual(REJECT, acl.execute(get_context('192.0.2.2')))
         self.assertEqual(DROP, acl.execute(get_context('2001:db8::1')))

@@ -30,6 +30,10 @@
 
 using namespace std;
 
+namespace {
+const char* WHITESPACE = " \b\f\n\r\t";
+} // end anonymous namespace
+
 namespace isc {
 namespace data {
 
@@ -314,14 +318,48 @@ str_from_stringstream(std::istream &in, const std::string& file, const int line,
     } else {
         throwJSONError("String expected", file, line, pos);
     }
+
     while (c != EOF && c != '"') {
-        ss << c;
-        if (c == '\\' && in.peek() == '"') {
-            ss << in.get();
+        if (c == '\\') {
+            // see the spec for allowed escape characters
+            switch (in.peek()) {
+            case '"':
+                c = '"';
+                break;
+            case '/':
+                c = '/';
+                break;
+            case '\\':
+                c = '\\';
+                break;
+            case 'b':
+                c = '\b';
+                break;
+            case 'f':
+                c = '\f';
+                break;
+            case 'n':
+                c = '\n';
+                break;
+            case 'r':
+                c = '\r';
+                break;
+            case 't':
+                c = '\t';
+                break;
+            default:
+                throwJSONError("Bad escape", file, line, pos);
+            }
+            // drop the escaped char
+            in.get();
             ++pos;
         }
+        ss << c;
         c = in.get();
         ++pos;
+    }
+    if (c == EOF) {
+        throwJSONError("Unterminated string", file, line, pos);
     }
     return (ss.str());
 }
@@ -427,12 +465,12 @@ from_stringstream_list(std::istream &in, const std::string& file, int& line,
     ElementPtr list = Element::createList();
     ConstElementPtr cur_list_element;
 
-    skip_chars(in, " \t\n", line, pos);
+    skip_chars(in, WHITESPACE, line, pos);
     while (c != EOF && c != ']') {
         if (in.peek() != ']') {
             cur_list_element = Element::fromJSON(in, file, line, pos);
             list->add(cur_list_element);
-            skip_to(in, file, line, pos, ",]", " \t\n");
+            skip_to(in, file, line, pos, ",]", WHITESPACE);
         }
         c = in.get();
         pos++;
@@ -445,7 +483,7 @@ from_stringstream_map(std::istream &in, const std::string& file, int& line,
                       int& pos)
 {
     ElementPtr map = Element::createMap();
-    skip_chars(in, " \t\n", line, pos);
+    skip_chars(in, WHITESPACE, line, pos);
     char c = in.peek();
     if (c == EOF) {
         throwJSONError(std::string("Unterminated map, <string> or } expected"), file, line, pos);
@@ -456,7 +494,7 @@ from_stringstream_map(std::istream &in, const std::string& file, int& line,
         while (c != EOF && c != '}') {
             std::string key = str_from_stringstream(in, file, line, pos);
 
-            skip_to(in, file, line, pos, ":", " \t\n");
+            skip_to(in, file, line, pos, ":", WHITESPACE);
             // skip the :
             in.get();
             pos++;
@@ -464,7 +502,7 @@ from_stringstream_map(std::istream &in, const std::string& file, int& line,
             ConstElementPtr value = Element::fromJSON(in, file, line, pos);
             map->set(key, value);
             
-            skip_to(in, file, line, pos, ",}", " \t\n");
+            skip_to(in, file, line, pos, ",}", WHITESPACE);
             c = in.get();
             pos++;
         }
@@ -543,7 +581,7 @@ Element::fromJSON(std::istream &in, const std::string& file, int& line,
     char c = 0;
     ElementPtr element;
     bool el_read = false;
-    skip_chars(in, " \n\t", line, pos);
+    skip_chars(in, WHITESPACE, line, pos);
     while (c != EOF && !el_read) {
         c = in.get();
         pos++;
@@ -610,7 +648,14 @@ ElementPtr
 Element::fromJSON(const std::string &in) {
     std::stringstream ss;
     ss << in;
-    return (fromJSON(ss, "<string>"));
+    int line = 1, pos = 1;
+    ElementPtr result(fromJSON(ss, "<string>", line, pos));
+    skip_chars(ss, WHITESPACE, line, pos);
+    // ss must now be at end
+    if (ss.peek() != EOF) {
+        throwJSONError("Extra data", "<string>", line, pos);
+    }
+    return result;
 }
 
 // to JSON format
@@ -642,7 +687,39 @@ NullElement::toJSON(std::ostream& ss) const {
 void
 StringElement::toJSON(std::ostream& ss) const {
     ss << "\"";
-    ss << stringValue();
+    char c;
+    const std::string& str = stringValue();
+    for (size_t i = 0; i < str.size(); ++i) {
+        c = str[i];
+        // Escape characters as defined in JSON spec
+        // Note that we do not escape forward slash; this
+        // is allowed, but not mandatory.
+        switch (c) {
+        case '"':
+            ss << '\\' << c;
+            break;
+        case '\\':
+            ss << '\\' << c;
+            break;
+        case '\b':
+            ss << '\\' << 'b';
+            break;
+        case '\f':
+            ss << '\\' << 'f';
+            break;
+        case '\n':
+            ss << '\\' << 'n';
+            break;
+        case '\r':
+            ss << '\\' << 'r';
+            break;
+        case '\t':
+            ss << '\\' << 't';
+            break;
+        default:
+            ss << c;
+        }
+    }
     ss << "\"";
 }
 
