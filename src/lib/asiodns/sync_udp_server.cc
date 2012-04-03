@@ -38,29 +38,6 @@ using namespace isc::asiolink;
 namespace isc {
 namespace asiodns {
 
-SyncUDPServer::SyncUDPServer(asio::io_service& io_service,
-                             const asio::ip::address& addr,
-                             const uint16_t port,
-                             asiolink::SimpleCallback* checkin,
-                             DNSLookup* lookup, DNSAnswer* answer) :
-    output_buffer_(new isc::util::OutputBuffer(0)),
-    query_(new isc::dns::Message(isc::dns::Message::PARSE)),
-    answer_(new isc::dns::Message(isc::dns::Message::RENDER)),
-    io_(io_service), checkin_callback_(checkin), lookup_callback_(lookup),
-    answer_callback_(answer), stopped_(false)
-{
-    // We must use different instantiations for v4 and v6;
-    // otherwise ASIO will bind to both
-    asio::ip::udp proto = addr.is_v4() ? asio::ip::udp::v4() :
-        asio::ip::udp::v6();
-    socket_.reset(new asio::ip::udp::socket(io_service, proto));
-    socket_->set_option(asio::socket_base::reuse_address(true));
-    if (addr.is_v6()) {
-        socket_->set_option(asio::ip::v6_only(true));
-    }
-    socket_->bind(asio::ip::udp::endpoint(addr, port));
-}
-
 SyncUDPServer::SyncUDPServer(asio::io_service& io_service, const int fd,
                              const int af, asiolink::SimpleCallback* checkin,
                              DNSLookup* lookup, DNSAnswer* answer) :
