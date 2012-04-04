@@ -79,9 +79,9 @@ namespace isc {
 namespace bench {
 template<>
 void
-BenchMark<SetSearchBenchMark>::setUp(SetSearchBenchMark& target) {
+BenchMark<SetSearchBenchMark>::setUp() {
     cout << "Benchmark for searching std::set (size="
-         << target.data_.size() << ")" << endl;
+         << target_.data_.size() << ")" << endl;    
 }
 }
 }

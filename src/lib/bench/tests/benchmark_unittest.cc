@@ -46,14 +46,14 @@ namespace isc {
 namespace bench {
 template <>
 void
-BenchMark<TestBenchMark>::setUp(TestBenchMark& target) {
-    target.setup_completed_ = true;
+BenchMark<TestBenchMark>::setUp() {
+    target_.setup_completed_ = true;
 };
 
 template <>
 void
-BenchMark<TestBenchMark>::tearDown(TestBenchMark& target) {
-    target.teardown_completed_ = true;
+BenchMark<TestBenchMark>::tearDown() {
+    target_.teardown_completed_ = true;
 };
 
 // XXX: some compilers cannot find class static constants used in
