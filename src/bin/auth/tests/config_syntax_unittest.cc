@@ -26,11 +26,9 @@ const char* const SPEC_FILE = AUTH_OBJ_DIR "/auth.spec";
 
 class AuthConfigSyntaxTest : public ::testing::Test {
 protected:
-    AuthConfigSyntaxTest() : mspec_(moduleSpecFromFile(SPEC_FILE)),
-                             errors_(Element::createList())
+    AuthConfigSyntaxTest() : mspec_(moduleSpecFromFile(SPEC_FILE))
     {}
     ModuleSpec mspec_;
-    ElementPtr errors_;
 };
 
 TEST_F(AuthConfigSyntaxTest, inmemoryDefaultFileType) {
@@ -42,8 +40,7 @@ TEST_F(AuthConfigSyntaxTest, inmemoryDefaultFileType) {
                 "  [{\"type\": \"memory\", \"class\": \"IN\", "
                 "    \"zones\": [{\"origin\": \"example.com\","
                 "                 \"file\": \""
-                TEST_DATA_DIR "/example.zone\"}]}]}"),
-            true, errors_));
+                TEST_DATA_DIR "/example.zone\"}]}]}"), true));
 }
 
 TEST_F(AuthConfigSyntaxTest, inmemorySQLite3Backend) {
@@ -56,8 +53,7 @@ TEST_F(AuthConfigSyntaxTest, inmemorySQLite3Backend) {
                 "    \"zones\": [{\"origin\": \"example.com\","
                 "                 \"file\": \""
                 TEST_DATA_DIR "/example.zone\","
-                "                 \"filetype\": \"sqlite3\"}]}]}"),
-            false, errors_));
+                "                 \"filetype\": \"sqlite3\"}]}]}"), false));
 }
 
 TEST_F(AuthConfigSyntaxTest, badInmemoryFileType) {
@@ -70,7 +66,6 @@ TEST_F(AuthConfigSyntaxTest, badInmemoryFileType) {
                 "    \"zones\": [{\"origin\": \"example.com\","
                 "                 \"file\": \""
                 TEST_DATA_DIR "/example.zone\","
-                "                 \"filetype\": 42}]}]}"),
-            false, errors_));
+                "                 \"filetype\": 42}]}]}"), false));
 }
 }
