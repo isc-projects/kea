@@ -14,9 +14,18 @@
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 from lettuce import *
+import time
 import subprocess
 import re
 import json
+
+@step('sleep for (\d+) seconds')
+def wait_seconds(step, seconds):
+    """Sleep for some seconds.
+       Parameters:
+       seconds number of seconds to sleep for.
+    """
+    time.sleep(float(seconds))
 
 @step('start bind10(?: with configuration (\S+))?' +\
       '(?: with cmdctl port (\d+))?' +\
