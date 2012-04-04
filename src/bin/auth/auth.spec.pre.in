@@ -52,8 +52,7 @@
                 "item_type": "string",
                 "item_optional": true,
                 "item_default": "text"
-              }
-	      ]
+              }]
             }
           }]
         }
