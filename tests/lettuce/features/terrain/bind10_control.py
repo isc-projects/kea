@@ -100,18 +100,15 @@ def wait_for_xfrout(step, process_name):
 def have_bind10_running(step, config_file, cmdctl_port, process_name):
     """
     Compound convenience step for running bind10, which consists of
-    start_bind10 and wait_for_auth.
+    start_bind10.
     Currently only supports the 'with configuration' option.
     """
     start_step = 'start bind10 with configuration ' + config_file
-    wait_step = 'wait for bind10 auth to start'
     if cmdctl_port is not None:
         start_step += ' with cmdctl port ' + str(cmdctl_port)
     if process_name is not None:
         start_step += ' as ' + process_name
-        wait_step = 'wait for bind10 auth of ' + process_name + ' to start'
     step.given(start_step)
-    step.given(wait_step)
 
 # function to send lines to bindctl, and store the result
 def run_bindctl(commands, cmdctl_port=None):
