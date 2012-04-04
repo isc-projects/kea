@@ -3,6 +3,7 @@ AM_CPPFLAGS += -I$(top_builddir)/src/bin # for generated spec_config.h header
 AM_CPPFLAGS += -I$(top_builddir)/src/lib/dns -I$(top_srcdir)/src/bin
 AM_CPPFLAGS += -I$(top_builddir)/src/lib/cc
 AM_CPPFLAGS += $(BOOST_INCLUDES)
+AM_CPPFLAGS += -DAUTH_OBJ_DIR=\"$(abs_top_builddir)/src/bin/auth\"
 AM_CPPFLAGS += -DTEST_DATA_DIR=\"$(abs_top_srcdir)/src/lib/testutils/testdata\"
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/lib/testutils/testdata\"
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
@@ -30,6 +31,7 @@ run_unittests_SOURCES += ../common.h ../common.cc
 run_unittests_SOURCES += ../statistics.h ../statistics.cc
 run_unittests_SOURCES += auth_srv_unittest.cc
 run_unittests_SOURCES += config_unittest.cc
+run_unittests_SOURCES += config_syntax_unittest.cc
 run_unittests_SOURCES += command_unittest.cc
 run_unittests_SOURCES += common_unittest.cc
 run_unittests_SOURCES += query_unittest.cc
