@@ -37,6 +37,7 @@ def read_wire_data(filename):
                     cur_data = bytes.fromhex(line)
                     data += cur_data
 
+            file.close()
             return data
         except IOError:
             pass

@@ -1055,22 +1055,33 @@ class TestPIDFile(unittest.TestCase):
         # dump PID to the file, and confirm the content is correct
         dump_pid(self.pid_file)
         my_pid = os.getpid()
-        self.assertEqual(my_pid, int(open(self.pid_file, "r").read()))
+        fd = open(self.pid_file, "r")
+        self.assertEqual(my_pid, int(fd.read()))
+        fd.close()
 
     def test_dump_pid(self):
         self.check_pid_file()
 
         # make sure any existing content will be removed
-        open(self.pid_file, "w").write('dummy data\n')
+        fd = open(self.pid_file, "w")
+        fd.write('dummy data\n')
+        fd.close()
         self.check_pid_file()
 
     def test_unlink_pid_file_notexist(self):
         dummy_data = 'dummy_data\n'
-        open(self.pid_file, "w").write(dummy_data)
+
+        fd = open(self.pid_file, "w")
+        fd.write(dummy_data)
+        fd.close()
+
         unlink_pid_file("no_such_pid_file")
+
         # the file specified for unlink_pid_file doesn't exist,
         # and the original content of the file should be intact.
-        self.assertEqual(dummy_data, open(self.pid_file, "r").read())
+        fd = open(self.pid_file, "r")
+        self.assertEqual(dummy_data, fd.read())
+        fd.close()
 
     def test_dump_pid_with_none(self):
         # Check the behavior of dump_pid() and unlink_pid_file() with None.
@@ -1079,9 +1090,16 @@ class TestPIDFile(unittest.TestCase):
         self.assertFalse(os.path.exists(self.pid_file))
 
         dummy_data = 'dummy_data\n'
-        open(self.pid_file, "w").write(dummy_data)
+
+        fd = open(self.pid_file, "w")
+        fd.write(dummy_data)
+        fd.close()
+
         unlink_pid_file(None)
-        self.assertEqual(dummy_data, open(self.pid_file, "r").read())
+
+        fd = open(self.pid_file, "r")
+        self.assertEqual(dummy_data, fd.read())
+        fd.close()
 
     def test_dump_pid_failure(self):
         # the attempt to open file will fail, which should result in exception.

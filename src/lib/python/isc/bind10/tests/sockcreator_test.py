@@ -303,6 +303,7 @@ class WrapTests(unittest.TestCase):
 
         # Transfer the descriptor
         send_fd(t1.fileno(), p1.fileno())
+        p1.close()
         p1 = socket.fromfd(t2.read_fd(), socket.AF_UNIX, socket.SOCK_STREAM)
 
         # Now, pass some data trough the socket
@@ -317,6 +318,11 @@ class WrapTests(unittest.TestCase):
         t2.send(b'C')
         data = t1.recv(1)
         self.assertEqual(b'C', data)
+
+        p1.close()
+        p2.close()
+        t1.close()
+        t2.close()
 
 if __name__ == '__main__':
     isc.log.init("bind10") # FIXME Should this be needed?

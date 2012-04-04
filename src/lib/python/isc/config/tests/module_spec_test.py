@@ -48,6 +48,7 @@ class TestModuleSpec(unittest.TestCase):
     def test_open_file_obj(self):
         file1 = open(self.spec_file("spec1.spec"))
         dd = isc.config.module_spec_from_file(file1)
+        file1.close()
         self.spec1(dd)
 
     def test_open_bad_file_obj(self):
@@ -91,6 +92,7 @@ class TestModuleSpec(unittest.TestCase):
         dd = self.read_spec_file(specfile_name);
         data_file = open(self.spec_file(datafile_name))
         data_str = data_file.read()
+        data_file.close()
         data = isc.cc.data.parse_value_str(data_str)
         return dd.validate_config(True, data)
         
@@ -111,6 +113,7 @@ class TestModuleSpec(unittest.TestCase):
         dd = self.read_spec_file(specfile_name);
         data_file = open(self.spec_file(datafile_name))
         data_str = data_file.read()
+        data_file.close()
         params = isc.cc.data.parse_value_str(data_str)
         return dd.validate_command(cmd_name, params)
 
@@ -133,6 +136,7 @@ class TestModuleSpec(unittest.TestCase):
             dd = self.read_spec_file(specfile_name);
             data_file = open(self.spec_file(datafile_name))
             data_str = data_file.read()
+            data_file.close()
             data = isc.cc.data.parse_value_str(data_str)
             return dd.validate_statistics(True, data, [])
         self.assertFalse(self.read_spec_file("spec1.spec").validate_statistics(True, None, None));
