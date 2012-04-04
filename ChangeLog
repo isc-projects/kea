@@ -1,3 +1,14 @@
+420.	[bug]*		jinmei, stephen
+	Updated the DB schema used in the SQLite3 data source so it can
+	use SQL indices more effectively.  The previous schema had several
+	issues in this sense and could be very slow for some queries on a
+	very large zone (especially for negative answers).  This change
+	requires a major version up of the schema; use b10-dbutil to
+	upgrade existing database files.  Note: 'make install' will fail
+	unless old DB files installed in the standard location have been
+	upgraded.
+	(Trac #324, git 8644866497053f91ada4e99abe444d7876ed00ff)
+
 419.	[bug]		jelte
 	JSON handler has been improved; escaping now works correctly
 	(including quotes in strings), and it now rejects more types of
