@@ -165,7 +165,6 @@ MemoryDatasourceConfig::build(ConstElementPtr config_value) {
             isc_throw(AuthConfigError, "Missing zone file for zone: "
                       << origin_txt);
         }
-        // XXX: we need to hardcode the default, see above.
         ConstElementPtr filetype = zone_config->get("filetype");
         const string filetype_txt = filetype ? filetype->stringValue() :
             "text";
