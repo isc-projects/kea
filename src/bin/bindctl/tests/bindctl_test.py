@@ -458,6 +458,7 @@ class TestBindCmdInterpreter(unittest.TestCase):
         users = cmd._get_saved_user_info('./', csvfilename)
         self.assertEqual([], users)
         os.remove(csvfilename)
+        sys.stdout.close()
         sys.stdout = old_stdout
 
 
