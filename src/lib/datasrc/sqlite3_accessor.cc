@@ -15,7 +15,10 @@
 #include <sqlite3.h>
 
 #include <string>
+#include <utility>
 #include <vector>
+
+#include <exceptions/exceptions.h>
 
 #include <datasrc/sqlite3_accessor.h>
 #include <datasrc/logger.h>
@@ -27,7 +30,20 @@
 using namespace std;
 using namespace isc::data;
 
-#define SQLITE_SCHEMA_VERSION 1
+namespace {
+// Expected schema.  The major version must match else there is an error.  If
+// the minor version of the database is less than this, a warning is output.
+//
+// It is assumed that a program written to run on m.n of the database will run
+// with a database version m.p, where p is any number.  However, if p < n,
+// we assume that the database structure was upgraded for some reason, and that
+// some advantage may result if the database is upgraded. Conversely, if p > n,
+// The database is at a later version than the program was written for and the
+// program may not be taking advantage of features (possibly performance
+// improvements) added to the database.
+const int SQLITE_SCHEMA_MAJOR_VERSION = 2;
+const int SQLITE_SCHEMA_MINOR_VERSION = 0;
+}
 
 namespace isc {
 namespace datasrc {
@@ -125,8 +141,8 @@ const char* const text_statements[NUM_STATEMENTS] = {
 
 struct SQLite3Parameters {
     SQLite3Parameters() :
-        db_(NULL), version_(-1), in_transaction(false), updating_zone(false),
-        updated_zone_id(-1)
+        db_(NULL), major_version_(-1), minor_version_(-1),
+        in_transaction(false), updating_zone(false), updated_zone_id(-1)
     {
         for (int i = 0; i < NUM_STATEMENTS; ++i) {
             statements_[i] = NULL;
@@ -164,7 +180,8 @@ struct SQLite3Parameters {
     }
 
     sqlite3* db_;
-    int version_;
+    int major_version_;
+    int minor_version_;
     bool in_transaction; // whether or not a transaction has been started
     bool updating_zone;          // whether or not updating the zone
     int updated_zone_id;        // valid only when in_transaction is true
@@ -255,34 +272,42 @@ public:
 };
 
 const char* const SCHEMA_LIST[] = {
-    "CREATE TABLE schema_version (version INTEGER NOT NULL)",
-    "INSERT INTO schema_version VALUES (1)",
+    "CREATE TABLE schema_version (version INTEGER NOT NULL, "
+        "minor INTEGER NOT NULL DEFAULT 0)",
+    "INSERT INTO schema_version VALUES (2, 0)",
     "CREATE TABLE zones (id INTEGER PRIMARY KEY, "
-    "name STRING NOT NULL COLLATE NOCASE, "
-    "rdclass STRING NOT NULL COLLATE NOCASE DEFAULT 'IN', "
+    "name TEXT NOT NULL COLLATE NOCASE, "
+    "rdclass TEXT NOT NULL COLLATE NOCASE DEFAULT 'IN', "
     "dnssec BOOLEAN NOT NULL DEFAULT 0)",
     "CREATE INDEX zones_byname ON zones (name)",
     "CREATE TABLE records (id INTEGER PRIMARY KEY, "
-        "zone_id INTEGER NOT NULL, name STRING NOT NULL COLLATE NOCASE, "
-        "rname STRING NOT NULL COLLATE NOCASE, ttl INTEGER NOT NULL, "
-        "rdtype STRING NOT NULL COLLATE NOCASE, sigtype STRING COLLATE NOCASE, "
-        "rdata STRING NOT NULL)",
+        "zone_id INTEGER NOT NULL, name TEXT NOT NULL COLLATE NOCASE, "
+        "rname TEXT NOT NULL COLLATE NOCASE, ttl INTEGER NOT NULL, "
+        "rdtype TEXT NOT NULL COLLATE NOCASE, sigtype TEXT COLLATE NOCASE, "
+        "rdata TEXT NOT NULL)",
     "CREATE INDEX records_byname ON records (name)",
     "CREATE INDEX records_byrname ON records (rname)",
+    // The next index is a tricky one.  It's necessary for
+    // FIND_PREVIOUS to use the index efficiently; since there's an
+    // "inequality", the rname column must be placed later.  records_byrname
+    // may not be sufficient especially when the zone is not signed (and
+    // defining a separate index for rdtype only doesn't work either; SQLite3
+    // would then create a temporary B-tree for "ORDER BY").
+    "CREATE INDEX records_bytype_and_rname ON records (rdtype, rname)",
     "CREATE TABLE nsec3 (id INTEGER PRIMARY KEY, zone_id INTEGER NOT NULL, "
-        "hash STRING NOT NULL COLLATE NOCASE, "
-        "owner STRING NOT NULL COLLATE NOCASE, "
-        "ttl INTEGER NOT NULL, rdtype STRING NOT NULL COLLATE NOCASE, "
-        "rdata STRING NOT NULL)",
+        "hash TEXT NOT NULL COLLATE NOCASE, "
+        "owner TEXT NOT NULL COLLATE NOCASE, "
+        "ttl INTEGER NOT NULL, rdtype TEXT NOT NULL COLLATE NOCASE, "
+        "rdata TEXT NOT NULL)",
     "CREATE INDEX nsec3_byhash ON nsec3 (hash)",
     "CREATE TABLE diffs (id INTEGER PRIMARY KEY, "
         "zone_id INTEGER NOT NULL, "
         "version INTEGER NOT NULL, "
         "operation INTEGER NOT NULL, "
-        "name STRING NOT NULL COLLATE NOCASE, "
-        "rrtype STRING NOT NULL COLLATE NOCASE, "
+        "name TEXT NOT NULL COLLATE NOCASE, "
+        "rrtype TEXT NOT NULL COLLATE NOCASE, "
         "ttl INTEGER NOT NULL, "
-        "rdata STRING NOT NULL)",
+        "rdata TEXT NOT NULL)",
     NULL
 };
 
@@ -308,14 +333,13 @@ void doSleep() {
 
 // returns the schema version if the schema version table exists
 // returns -1 if it does not
-int checkSchemaVersion(sqlite3* db) {
+int checkSchemaVersionElement(sqlite3* db, const char* const query) {
     sqlite3_stmt* prepared = NULL;
     // At this point in time, the database might be exclusively locked, in
     // which case even prepare() will return BUSY, so we may need to try a
     // few times
     for (size_t i = 0; i < 50; ++i) {
-        int rc = sqlite3_prepare_v2(db, "SELECT version FROM schema_version",
-                                    -1, &prepared, NULL);
+        int rc = sqlite3_prepare_v2(db, query, -1, &prepared, NULL);
         if (rc == SQLITE_ERROR) {
             // this is the error that is returned when the table does not
             // exist
@@ -337,50 +361,116 @@ int checkSchemaVersion(sqlite3* db) {
     return (version);
 }
 
+// Returns the schema major and minor version numbers in a pair.
+// Returns (-1, -1) if the table does not exist, (1, 0) for a V1
+// database, and (n, m) for any other.
+pair<int, int> checkSchemaVersion(sqlite3* db) {
+    int major = checkSchemaVersionElement(db,
+        "SELECT version FROM schema_version");
+    if (major == -1) {
+        return (make_pair(-1, -1));
+    } else if (major == 1) {
+        return (make_pair(1, 0));
+    } else {
+        int minor = checkSchemaVersionElement(db,
+            "SELECT minor FROM schema_version");
+        return (make_pair(major, minor));
+    }
+}
+
+// A helper class used in createDatabase() below so we manage the one shot
+// transaction safely.
+class ScopedTransaction {
+public:
+    ScopedTransaction(sqlite3* db) : db_(NULL) {
+        // try for 5 secs (50*0.1)
+        for (size_t i = 0; i < 50; ++i) {
+            const int rc = sqlite3_exec(db, "BEGIN EXCLUSIVE TRANSACTION",
+                                        NULL, NULL, NULL);
+            if (rc == SQLITE_OK) {
+                break;
+            } else if (rc != SQLITE_BUSY || i == 50) {
+                isc_throw(SQLite3Error, "Unable to acquire exclusive lock "
+                          "for database creation: " << sqlite3_errmsg(db));
+            }
+            doSleep();
+        }
+        // Hold the DB pointer once we have successfully acquired the lock.
+        db_ = db;
+    }
+    ~ScopedTransaction() {
+        if (db_ != NULL) {
+            // Note: even rollback could fail in theory, but in that case
+            // we cannot do much for safe recovery anyway.  We could at least
+            // log the event, but for now don't even bother to do that, with
+            // the expectation that we'll soon stop creating the schema in this
+            // module.
+            sqlite3_exec(db_, "ROLLBACK", NULL, NULL, NULL);
+        }
+    }
+    void commit() {
+        if (sqlite3_exec(db_, "COMMIT TRANSACTION", NULL, NULL, NULL) !=
+            SQLITE_OK) {
+            isc_throw(SQLite3Error, "Unable to commit newly created database "
+                      "schema: " << sqlite3_errmsg(db_));
+        }
+        db_ = NULL;
+    }
+
+private:
+    sqlite3* db_;
+};
+
 // return db version
-int create_database(sqlite3* db) {
+pair<int, int>
+createDatabase(sqlite3* db) {
+    logger.info(DATASRC_SQLITE_SETUP);
+
     // try to get an exclusive lock. Once that is obtained, do the version
     // check *again*, just in case this process was racing another
-    //
-    // try for 5 secs (50*0.1)
-    int rc;
-    logger.info(DATASRC_SQLITE_SETUP);
-    for (size_t i = 0; i < 50; ++i) {
-        rc = sqlite3_exec(db, "BEGIN EXCLUSIVE TRANSACTION", NULL, NULL,
-                            NULL);
-        if (rc == SQLITE_OK) {
-            break;
-        } else if (rc != SQLITE_BUSY || i == 50) {
-            isc_throw(SQLite3Error, "Unable to acquire exclusive lock "
-                        "for database creation: " << sqlite3_errmsg(db));
-        }
-        doSleep();
-    }
-    int schema_version = checkSchemaVersion(db);
-    if (schema_version == -1) {
+    ScopedTransaction trasaction(db);
+    pair<int, int> schema_version = checkSchemaVersion(db);
+    if (schema_version.first == -1) {
         for (int i = 0; SCHEMA_LIST[i] != NULL; ++i) {
             if (sqlite3_exec(db, SCHEMA_LIST[i], NULL, NULL, NULL) !=
                 SQLITE_OK) {
                 isc_throw(SQLite3Error,
-                        "Failed to set up schema " << SCHEMA_LIST[i]);
+                          "Failed to set up schema " << SCHEMA_LIST[i]);
             }
         }
-        sqlite3_exec(db, "COMMIT TRANSACTION", NULL, NULL, NULL);
-        return (SQLITE_SCHEMA_VERSION);
-    } else {
-        return (schema_version);
+        trasaction.commit();
+
+        // Return the version.  We query again to ensure that the only point
+        // in which the current schema version is defined is in the create
+        // statements.
+        schema_version = checkSchemaVersion(db);
     }
+
+    return (schema_version);
 }
 
 void
 checkAndSetupSchema(Initializer* initializer) {
     sqlite3* const db = initializer->params_.db_;
 
-    int schema_version = checkSchemaVersion(db);
-    if (schema_version != SQLITE_SCHEMA_VERSION) {
-        schema_version = create_database(db);
+    pair<int, int> schema_version = checkSchemaVersion(db);
+    if (schema_version.first == -1) {
+        schema_version = createDatabase(db);
+    } else if (schema_version.first != SQLITE_SCHEMA_MAJOR_VERSION) {
+        LOG_ERROR(logger, DATASRC_SQLITE_INCOMPATIBLE_VERSION)
+            .arg(schema_version.first).arg(schema_version.second)
+            .arg(SQLITE_SCHEMA_MAJOR_VERSION).arg(SQLITE_SCHEMA_MINOR_VERSION);
+        isc_throw(IncompatibleDbVersion,
+                  "incompatible SQLite3 database version: " <<
+                  schema_version.first << "." << schema_version.second);
+    } else if (schema_version.second < SQLITE_SCHEMA_MINOR_VERSION) {
+        LOG_WARN(logger, DATASRC_SQLITE_COMPATIBLE_VERSION)
+            .arg(schema_version.first).arg(schema_version.second)
+            .arg(SQLITE_SCHEMA_MAJOR_VERSION).arg(SQLITE_SCHEMA_MINOR_VERSION);
     }
-    initializer->params_.version_ = schema_version;
+
+    initializer->params_.major_version_ = schema_version.first;
+    initializer->params_.minor_version_ = schema_version.second;
 }
 
 }

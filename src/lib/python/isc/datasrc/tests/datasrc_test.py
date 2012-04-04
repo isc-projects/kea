@@ -880,15 +880,6 @@ class JournalRead(unittest.TestCase):
         # ZoneJournalReader can only be constructed via a factory
         self.assertRaises(TypeError, ZoneJournalReader)
 
-    def test_journal_reader_old_schema(self):
-        # The database doesn't have a "diffs" table.
-        dbfile = TESTDATA_PATH + 'test.sqlite3.nodiffs'
-        client = isc.datasrc.DataSourceClient("sqlite3",
-                                              "{ \"database_file\": \"" + \
-                                                  dbfile + "\" }")
-        self.assertRaises(isc.datasrc.Error, client.get_journal_reader,
-                          self.zname, 0, 1)
-
 if __name__ == "__main__":
     isc.log.init("bind10")
     isc.log.resetUnitTestRootLogger()
