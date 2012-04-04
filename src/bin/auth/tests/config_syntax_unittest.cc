@@ -33,6 +33,19 @@ protected:
     ElementPtr errors_;
 };
 
+TEST_F(AuthConfigSyntaxTest, inmemoryDefaultFileType) {
+    // filetype is optional
+    EXPECT_TRUE(
+        mspec_.validateConfig(
+            Element::fromJSON(
+                "{\"listen_on\": [], \"datasources\": "
+                "  [{\"type\": \"memory\", \"class\": \"IN\", "
+                "    \"zones\": [{\"origin\": \"example.com\","
+                "                 \"file\": \""
+                TEST_DATA_DIR "/example.zone\"}]}]}"),
+            true, errors_));
+}
+
 TEST_F(AuthConfigSyntaxTest, inmemorySQLite3Backend) {
     // Specifying non-default in-memory filetype
     EXPECT_TRUE(
@@ -48,7 +61,7 @@ TEST_F(AuthConfigSyntaxTest, inmemorySQLite3Backend) {
 }
 
 TEST_F(AuthConfigSyntaxTest, badInmemoryFileType) {
-    // Filetype must be a string
+    // filetype must be a string
     EXPECT_FALSE(
         mspec_.validateConfig(
             Element::fromJSON(

@@ -201,6 +201,15 @@ TEST_F(MemoryDatasrcConfigTest, addOneZone) {
         RRType::A())->code);
 }
 
+TEST_F(MemoryDatasrcConfigTest, addOneSQLite3Zone) {
+    parser->build(Element::fromJSON(
+                      "[{\"type\": \"memory\","
+                      "  \"zones\": [{\"origin\": \"example.com\","
+                      "               \"file\": \""
+                      TEST_DATA_DIR "/example.zone\","
+                      "               \"filetype\": \"sqlite3\"}]}]"));
+}
+
 TEST_F(MemoryDatasrcConfigTest, addMultiZones) {
     EXPECT_NO_THROW(parser->build(Element::fromJSON(
                       "[{\"type\": \"memory\","
