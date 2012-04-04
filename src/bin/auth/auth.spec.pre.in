@@ -50,8 +50,7 @@
               },
               { "item_name": "filetype",
                 "item_type": "string",
-                "item_optional": true,
-                "item_default": "text"
+                "item_optional": true
               }]
             }
           }]
