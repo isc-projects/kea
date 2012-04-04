@@ -34,5 +34,5 @@ Feature: control with bindctl
     bind10 module Zonemgr should not be running
     bind10 module Xfrin should not be running
     bind10 module Auth should not be running
-    bind10 module Stats should not be running
 #    bind10 module StatsHttpd should not be running
+    bind10 module Stats should not be running
