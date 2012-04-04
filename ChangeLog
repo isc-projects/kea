@@ -1,3 +1,9 @@
+421.	[build]		jinmei
+	Made sure BIND 10 can be built with clang++ 3.1.  (It failed on
+	MacOS 10.7 using Xcode 4.3, but it's more likely to be a matter of
+	clang version.)
+	(Trac #1773, git ceaa247d89ac7d97594572bc17f005144c5efb8d)
+
 420.	[bug]*		jinmei, stephen
 	Updated the DB schema used in the SQLite3 data source so it can
 	use SQL indices more effectively.  The previous schema had several
