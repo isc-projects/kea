@@ -37,15 +37,22 @@ using isc::dns::Name;
 
 namespace {
 // Some test data
-std::string SQLITE_DBFILE_EXAMPLE = TEST_DATA_DIR "/test.sqlite3";
-std::string SQLITE_DBFILE_EXAMPLE2 = TEST_DATA_DIR "/example2.com.sqlite3";
-std::string SQLITE_DBNAME_EXAMPLE2 = "sqlite3_example2.com.sqlite3";
-std::string SQLITE_DBFILE_EXAMPLE_ROOT = TEST_DATA_DIR "/test-root.sqlite3";
-std::string SQLITE_DBNAME_EXAMPLE_ROOT = "sqlite3_test-root.sqlite3";
-std::string SQLITE_DBFILE_BROKENDB = TEST_DATA_DIR "/brokendb.sqlite3";
-std::string SQLITE_DBFILE_MEMORY = ":memory:";
-std::string SQLITE_DBFILE_EXAMPLE_ORG = TEST_DATA_DIR "/example.org.sqlite3";
-std::string SQLITE_DBFILE_DIFFS = TEST_DATA_DIR "/diffs.sqlite3";
+const char* const SQLITE_DBFILE_EXAMPLE = TEST_DATA_DIR "/test.sqlite3";
+const char* const SQLITE_DBFILE_EXAMPLE2 =
+    TEST_DATA_DIR "/example2.com.sqlite3";
+const char* const SQLITE_DBNAME_EXAMPLE2 = "sqlite3_example2.com.sqlite3";
+const char* const SQLITE_DBFILE_EXAMPLE_ROOT =
+    TEST_DATA_DIR "/test-root.sqlite3";
+const char* const SQLITE_DBNAME_EXAMPLE_ROOT = "sqlite3_test-root.sqlite3";
+const char* const SQLITE_DBFILE_BROKENDB = TEST_DATA_DIR "/brokendb.sqlite3";
+const char* const SQLITE_DBFILE_MEMORY = ":memory:";
+const char* const SQLITE_DBFILE_EXAMPLE_ORG =
+    TEST_DATA_DIR "/example.org.sqlite3";
+const char* const SQLITE_DBFILE_DIFFS = TEST_DATA_DIR "/diffs.sqlite3";
+const char* const SQLITE_DBFILE_NEWSCHEMA = TEST_DATA_DIR "/newschema.sqlite3";
+const char* const SQLITE_DBFILE_OLDSCHEMA = TEST_DATA_DIR "/oldschema.sqlite3";
+const char* const SQLITE_DBFILE_NEW_MINOR_SCHEMA =
+    TEST_DATA_DIR "/new_minor_schema.sqlite3";
 
 // The following file must be non existent and must be non"creatable";
 // the sqlite3 library will try to create a new DB file if it doesn't exist,
@@ -72,6 +79,20 @@ TEST(SQLite3Open, notExist) {
 TEST(SQLite3Open, brokenDB) {
     EXPECT_THROW(SQLite3Accessor accessor(SQLITE_DBFILE_BROKENDB, "IN"),
                  SQLite3Error);
+}
+
+// Different schema versions
+TEST(SQLite3Open, differentSchemaVersions) {
+    // If the major version is different from the current one, it should fail.
+    EXPECT_THROW(SQLite3Accessor(SQLITE_DBFILE_NEWSCHEMA, "IN"),
+                 IncompatibleDbVersion);
+    EXPECT_THROW(SQLite3Accessor(SQLITE_DBFILE_OLDSCHEMA, "IN"),
+                 IncompatibleDbVersion);
+
+    // Difference in the minor version is okay (as of this test written
+    // the current minor version is 0, so we can only test the case with a
+    // higher minor version).
+    EXPECT_NO_THROW(SQLite3Accessor(SQLITE_DBFILE_NEW_MINOR_SCHEMA, "IN"));
 }
 
 // Test we can create the schema on the fly
@@ -1296,18 +1317,5 @@ TEST_F(SQLite3Update, addDiffWithUpdate) {
     expected_stored.push_back(diff_add_a_data);
 
     checkDiffs(expected_stored, accessor->getDiffs(zone_id, 1234, 1300));
-}
-
-TEST_F(SQLite3Update, addDiffWithNoTable) {
-    // An attempt of adding diffs to an old version of database that doesn't
-    // have a diffs table.  This will fail in preparing the statement.
-    initAccessor(SQLITE_DBFILE_EXAMPLE + ".nodiffs", "IN");
-    zone_id = accessor->startUpdateZone("example.com.", false).second;
-    copy(diff_begin_data, diff_begin_data + DatabaseAccessor::DIFF_PARAM_COUNT,
-         diff_params);
-    EXPECT_THROW(accessor->addRecordDiff(zone_id, getVersion(diff_begin_data),
-                                         getOperation(diff_begin_data),
-                                         diff_params),
-                 SQLite3Error);
 }
 } // end anonymous namespace

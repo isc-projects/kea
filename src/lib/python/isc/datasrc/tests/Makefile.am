@@ -1,12 +1,14 @@
 PYCOVERAGE_RUN = @PYCOVERAGE_RUN@
 # old tests, TODO remove or change to use new API?
-#PYTESTS = master_test.py sqlite3_ds_test.py
-PYTESTS =  datasrc_test.py
+#PYTESTS = master_test.py
+PYTESTS =  datasrc_test.py sqlite3_ds_test.py
 EXTRA_DIST = $(PYTESTS)
 
 EXTRA_DIST += testdata/brokendb.sqlite3
 EXTRA_DIST += testdata/example.com.sqlite3
-EXTRA_DIST += testdata/test.sqlite3.nodiffs
+EXTRA_DIST += testdata/newschema.sqlite3
+EXTRA_DIST += testdata/oldschema.sqlite3
+EXTRA_DIST += testdata/new_minor_schema.sqlite3
 CLEANFILES = $(abs_builddir)/rwtest.sqlite3.copied
 
 # If necessary (rare cases), explicitly specify paths to dynamic libraries
