@@ -414,22 +414,7 @@ class DNSServerTestBase : public::testing::Test {
         static bool io_service_is_time_out;
 };
 
-// Initialization with name and port
-template<class UDPServerClass>
-class AddrPortInit : public DNSServerTestBase<UDPServerClass> {
-protected:
-    AddrPortInit() {
-        this->udp_server_ = new UDPServerClass(this->service,
-                                               this->server_address_,
-                                               server_port, this->checker_,
-                                               this->lookup_, this->answer_);
-        this->tcp_server_ = new TCPServer(this->service, this->server_address_,
-                                          server_port, this->checker_,
-                                          this->lookup_, this->answer_);
-    }
-};
-
-// Initialization by the file descriptor
+// Initialization (by the file descriptor)
 template<class UDPServerClass>
 class FdInit : public DNSServerTestBase<UDPServerClass> {
 private:
@@ -494,8 +479,7 @@ protected:
 template<class Parent>
 class DNSServerTest : public Parent { };
 
-typedef ::testing::Types<AddrPortInit<UDPServer>, AddrPortInit<SyncUDPServer>,
-                         FdInit<UDPServer>, FdInit<SyncUDPServer> >
+typedef ::testing::Types<FdInit<UDPServer>, FdInit<SyncUDPServer> >
     ServerTypes;
 TYPED_TEST_CASE(DNSServerTest, ServerTypes);
 
@@ -506,12 +490,6 @@ template<class UDPServerClass>
 bool DNSServerTestBase<UDPServerClass>::io_service_is_time_out = false;
 template<class UDPServerClass>
 asio::io_service* DNSServerTestBase<UDPServerClass>::current_service(NULL);
-
-typedef ::testing::Types<AddrPortInit<SyncUDPServer>, FdInit<SyncUDPServer> >
-    SyncTypes;
-template<class Parent>
-class SyncServerTest : public Parent { };
-TYPED_TEST_CASE(SyncServerTest, SyncTypes);
 
 // Test whether server stopped successfully after client get response
 // client will send query and start to wait for response, once client
@@ -558,7 +536,8 @@ TYPED_TEST(DNSServerTest, stopUDPServerDuringPrepareAnswer) {
     EXPECT_TRUE(this->serverStopSucceed());
 }
 
-static void stopServerManyTimes(DNSServer *server, unsigned int times) {
+void
+stopServerManyTimes(DNSServer *server, unsigned int times) {
     for (unsigned int i = 0; i < times; ++i) {
         server->stop();
     }
@@ -680,18 +659,19 @@ TYPED_TEST(DNSServerTestBase, DISABLED_invalidUDPFD) {
                  isc::asiolink::IOError);
 }
 
-// Check it rejects some of the unsupported operatirons
-TYPED_TEST(SyncServerTest, unsupportedOps) {
-    EXPECT_THROW(this->udp_server_->clone(), isc::Unexpected);
-    EXPECT_THROW(this->udp_server_->asyncLookup(), isc::Unexpected);
+// A specialized test type for SyncUDPServer.
+typedef FdInit<SyncUDPServer> SyncServerTest;
+
+// Check it rejects some of the unsupported operations
+TEST_F(SyncServerTest, unsupportedOps) {
+    EXPECT_THROW(udp_server_->clone(), isc::Unexpected);
+    EXPECT_THROW(udp_server_->asyncLookup(), isc::Unexpected);
 }
 
 // Check it rejects forgotten resume (eg. insists that it is synchronous)
-TYPED_TEST(SyncServerTest, mustResume) {
-    this->lookup_->allow_resume_ = false;
-    ASSERT_THROW(this->testStopServerByStopper(this->udp_server_,
-                                               this->udp_client_,
-                                               this->lookup_),
+TEST_F(SyncServerTest, mustResume) {
+    lookup_->allow_resume_ = false;
+    ASSERT_THROW(testStopServerByStopper(udp_server_, udp_client_, lookup_),
                  isc::Unexpected);
 }
 
