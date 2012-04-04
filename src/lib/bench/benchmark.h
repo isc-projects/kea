@@ -17,6 +17,7 @@
 
 #include <sys/time.h>
 
+#include <cassert>
 #include <iostream>
 #include <ios>
 
@@ -210,9 +211,9 @@ public:
     /// \param target The templated class object that
     /// implements the code to be benchmarked.
     BenchMark(const int iterations, T target) :
-        iterations_(iterations), sub_iterations_(0), target_(target)
+        iterations_(iterations), sub_iterations_(0)
     {
-        initialize(true);
+        initialize(target, true);
     }
 
     /// \brief Constructor for finer-grained control.
@@ -230,9 +231,9 @@ public:
     /// \param immediate If \c true the benchmark will be performed within
     /// the constructor; otherwise it only does initialization.
     BenchMark(const int iterations, T& target, const bool immediate) :
-        iterations_(iterations), sub_iterations_(0), target_(target)
+        iterations_(iterations), sub_iterations_(0), target_(&target)
     {
-        initialize(immediate);
+        initialize(target, immediate);
     }
     //@}
 
@@ -241,14 +242,14 @@ public:
     /// This method will be called from \c run() before starting the benchmark.
     /// By default it's empty, but can be customized via template
     /// specialization.
-    void setUp() {}
+    void setUp(T&) {}
 
     /// \brief Hook to be called after benchmark.
     ///
     /// This method will be called from \c run() when the benchmark completes.
     /// By default it's empty, but can be customized via template
     /// specialization.
-    void tearDown() {}
+    void tearDown(T&) {}
 
     /// \brief Perform benchmark.
     ///
@@ -257,17 +258,8 @@ public:
     /// of times specified on construction, and records the time on completion.
     /// Finally, it calls \c tearDown().
     void run() {
-        setUp();
-
-        struct timeval beg, end;
-        gettimeofday(&beg, NULL);
-        for (unsigned int i = 0; i < iterations_; ++i) {
-            sub_iterations_ += target_.run();
-        }
-        gettimeofday(&end, NULL);
-        tv_diff_ = tv_subtract(end, beg);
-
-        tearDown();
+        assert(target_ != NULL);
+        run(*target_);
     }
 
     /// \brief Print the benchmark result.
@@ -361,9 +353,23 @@ public:
     /// performed implicitly.
     static const int ITERATION_FAILURE = -1;
 private:
-    void initialize(const bool immediate) {
+    void run(T& target) {
+        setUp(target);
+
+        struct timeval beg, end;
+        gettimeofday(&beg, NULL);
+        for (unsigned int i = 0; i < iterations_; ++i) {
+            sub_iterations_ += target.run();
+        }
+        gettimeofday(&end, NULL);
+        tv_diff_ = tv_subtract(end, beg);
+
+        tearDown(target);
+    }
+
+    void initialize(T& target, const bool immediate) {
         if (immediate) {
-            run();
+            run(target);
             printResult();
         }
     }
@@ -388,7 +394,7 @@ private:
     static const int ONE_MILLION = 1000000;
     const unsigned int iterations_;
     unsigned int sub_iterations_;
-    T& target_;
+    T* target_;
     struct timeval tv_diff_;
 };
 
