@@ -603,7 +603,8 @@ class TestZonemgrRefresh(unittest.TestCase):
                           config, self.cc_session)
 
     def tearDown(self):
-        sys.stderr= self.stderr_backup
+        sys.stderr.close()
+        sys.stderr = self.stderr_backup
 
 class MyZonemgr(Zonemgr):
 

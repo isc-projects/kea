@@ -2124,7 +2124,8 @@ class TestXfrin(unittest.TestCase):
         self.assertFalse(self.xfr._module_cc.stopped);
         self.xfr.shutdown()
         self.assertTrue(self.xfr._module_cc.stopped);
-        sys.stderr= self.stderr_backup
+        sys.stderr.close()
+        sys.stderr = self.stderr_backup
 
     def _do_parse_zone_name_class(self):
         return self.xfr._parse_zone_name_and_class(self.args)
