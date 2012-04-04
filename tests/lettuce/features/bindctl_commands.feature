@@ -24,15 +24,15 @@ Feature: control with bindctl
     last bindctl output should not contain Error
     # assuming it won't error for further modules (if it does, the final
     # 'should not be running' tests would fail anyway)
+    Then remove bind10 configuration Boss/components value b10-stats-httpd
     Then remove bind10 configuration Boss/components value b10-stats
     Then remove bind10 configuration Boss/components value b10-zonemgr
     Then remove bind10 configuration Boss/components value b10-xfrin
     Then remove bind10 configuration Boss/components value b10-auth
-    Then remove bind10 configuration Boss/components value b10-stats-httpd
 
     bind10 module Xfrout should not be running
-    bind10 module Stats should not be running
     bind10 module Zonemgr should not be running
     bind10 module Xfrin should not be running
     bind10 module Auth should not be running
-    bind10 module StatsHttpd should not be running
+    bind10 module Stats should not be running
+#    bind10 module StatsHttpd should not be running
