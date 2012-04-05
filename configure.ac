@@ -924,29 +924,6 @@ CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/ext/coroutine"
 #
 # Disable threads: Currently we don't use them.
 CPPFLAGS="$CPPFLAGS -DASIO_DISABLE_THREADS=1"
-#
-# kqueue portability: ASIO uses kqueue by default if it's available (it's
-# generally available in BSD variants).  Unfortunately, some public
-# implementation of kqueue forces a conversion from a pointer to an integer,
-# which is prohibited in C++ unless reinterpret_cast, C++'s most evil beast
-# (and ASIO doesn't use it anyway) is used.  This will cause build error for
-# some of our C++ files including ASIO header files.  The following check
-# detects such cases and tells ASIO not to use kqueue if so.
-AC_CHECK_FUNC(kqueue, ac_cv_have_kqueue=yes, ac_cv_have_kqueue=no)
-if test "X$ac_cv_have_kqueue" = "Xyes"; then
-	AC_MSG_CHECKING([whether kqueue EV_SET compiles in C++])
-	AC_TRY_COMPILE([
-#include <sys/types.h>
-#include <sys/param.h>
-#include <sys/event.h>],
-[char* udata;
-struct kevent kevent;
-EV_SET(&kevent, 0, 0, 0, 0, 0, udata);],
-	[AC_MSG_RESULT(yes)],
-	[AC_MSG_RESULT([no, disable kqueue for ASIO])
-	 CPPFLAGS="$CPPFLAGS -DASIO_DISABLE_KQUEUE=1"
-	])
-fi
 
 # Check for functions that are not available on all platforms
 AC_CHECK_FUNCS([pselect])
