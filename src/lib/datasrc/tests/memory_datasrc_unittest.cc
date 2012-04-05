@@ -290,14 +290,15 @@ setRRset(RRsetPtr rrset, vector<RRsetPtr*>::iterator& it) {
     ++it;
 }
 
-ConstRRsetPtr
-textToRRset(const string& text_rrset, const RRClass& rrclass = RRClass::IN()) {
+RRsetPtr
+textToRRset(const string& text_rrset, const RRClass& rrclass = RRClass::IN(),
+            const Name& origin = Name::ROOT_NAME())
+{
     stringstream ss(text_rrset);
     RRsetPtr rrset;
     vector<RRsetPtr*> rrsets;
     rrsets.push_back(&rrset);
-    masterLoad(ss, Name::ROOT_NAME(), rrclass,
-               boost::bind(setRRset, _1, rrsets.begin()));
+    masterLoad(ss, origin, rrclass, boost::bind(setRRset, _1, rrsets.begin()));
     return (rrset);
 }
 
@@ -552,6 +553,8 @@ public:
                   ZoneFinder::FindOptions options = ZoneFinder::FIND_DEFAULT,
                   bool check_wild_answer = false)
     {
+        SCOPED_TRACE("findTest for " + name.toText() + "/" + rrtype.toText());
+
         if (zone_finder == NULL) {
             zone_finder = &zone_finder_;
         }
@@ -1108,14 +1111,39 @@ TEST_F(InMemoryZoneFinderTest, loadFromIterator) {
     findTest(origin_, RRType::SOA(), ZoneFinder::NXRRSET, false,
              ConstRRsetPtr());
 
-    stringstream ss("example.org. 300 IN SOA . . 0 0 0 0 0");
+    // The content of the new version of zone to be first installed to
+    // the SQLite3 data source, then to in-memory via SQLite3.  The data are
+    // chosen to cover major check points of the implementation:
+    // - the previously non-existent record is added (SOA)
+    // - An RRSIG is given from the iterator before the RRset it covers
+    //   (RRSIG for SOA, because they are sorted by name then rrtype as text)
+    // - An RRset containing multiple RRs (ns1/A)
+    // - RRSIGs for different owner names
+    stringstream ss;
+    const char* const soa_txt = "example.org. 300 IN SOA . . 0 0 0 0 0\n";
+    const char* const soa_sig_txt = "example.org. 300 IN RRSIG SOA 5 3 300 "
+        "20000101000000 20000201000000 12345 example.org. FAKEFAKE\n";
+    const char* const a_txt =
+        "ns1.example.org. 300 IN A 192.0.2.1\n"
+        "ns1.example.org. 300 IN A 192.0.2.2\n";
+    const char* const a_sig_txt = "ns1.example.org. 300 IN RRSIG A 5 3 300 "
+        "20000101000000 20000201000000 12345 example.org. FAKEFAKE\n";
+    ss << soa_txt << soa_sig_txt << a_txt << a_sig_txt;
     shared_ptr<DataSourceClient> db_client = unittest::createSQLite3Client(
         class_, origin_, TEST_DATA_BUILDDIR "/contexttest.sqlite3.copied", ss);
-    zone_finder_.load(*db_client->getIterator(origin_, true));
+    zone_finder_.load(*db_client->getIterator(origin_));
 
-    // Now the zone should have an SOA.
-    findTest(origin_, RRType::SOA(), ZoneFinder::SUCCESS, false,
-             ConstRRsetPtr());
+    // The new content should be visible, including the previously-nonexistent
+    // SOA.
+    RRsetPtr expected_answer = textToRRset(soa_txt, RRClass::IN(), origin_);
+    expected_answer->addRRsig(textToRRset(soa_sig_txt));
+    findTest(origin_, RRType::SOA(), ZoneFinder::SUCCESS, true,
+             expected_answer);
+
+    expected_answer = textToRRset(a_txt);
+    expected_answer->addRRsig(textToRRset(a_sig_txt));
+    findTest(Name("ns1.example.org"), RRType::A(), ZoneFinder::SUCCESS, true,
+             expected_answer);
 
     // File name should be (re)set to empty.
     EXPECT_TRUE(zone_finder_.getFileName().empty());
