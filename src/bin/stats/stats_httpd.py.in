@@ -189,7 +189,12 @@ class StatsHttpd:
         self.load_config()
         self.http_addrs = []
         self.mccs.start()
-        self.open_httpd()
+        try:
+            self.open_httpd()
+        except HttpServerError:
+            # if some exception, e.g. address in use, is raised, then it closes mccs and httpd
+            self.close_mccs()
+            raise
 
     def open_mccs(self):
         """Opens a ModuleCCSession object"""
