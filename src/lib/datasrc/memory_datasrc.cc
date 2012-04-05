@@ -1601,6 +1601,7 @@ InMemoryZoneFinder::InMemoryZoneFinderImpl::load(
     // And let the old data die with tmp
 }
 
+namespace {
 // A wrapper for dns::masterLoad used by load() below.  Essentially it
 // converts the two callback types.
 void
@@ -1608,6 +1609,38 @@ masterLoadWrapper(const char* const filename, const Name& origin,
                   const RRClass& zone_class, LoadCallback callback)
 {
     masterLoad(filename, origin, zone_class, callback);
+}
+
+// The installer called from Impl::load() for the iterator version of load().
+void
+generateRRsetFromIterator(ZoneIterator* iterator, LoadCallback callback) {
+    ConstRRsetPtr rrset;
+    vector<ConstRRsetPtr> rrsigs; // placeholder for RRSIGs until "commitable".
+
+    // The current internal implementation assumes an RRSIG is always added
+    // after the RRset they cover.  So we store any RRSIGs in 'rrsigs' until
+    // it's safe to add them; based on our assumption if the owner name
+    // changes, all covered RRsets of the previous name should have been
+    // installed and any pending RRSIGs can be added at that point.  RRSIGs
+    // of the last name from the iterator must be added separately.
+    while ((rrset = iterator->getNextRRset()) != NULL) {
+        if (!rrsigs.empty() && rrset->getName() != rrsigs[0]->getName()) {
+            BOOST_FOREACH(ConstRRsetPtr sig_rrset, rrsigs) {
+                callback(sig_rrset);
+            }
+            rrsigs.clear();
+        }
+        if (rrset->getType() == RRType::RRSIG()) {
+            rrsigs.push_back(rrset);
+        } else {
+            callback(rrset);
+        }
+    }
+
+    BOOST_FOREACH(ConstRRsetPtr sig_rrset, rrsigs) {
+        callback(sig_rrset);
+    }
+}
 }
 
 void
@@ -1618,14 +1651,6 @@ InMemoryZoneFinder::load(const string& filename) {
     impl_->load(filename,
                 boost::bind(masterLoadWrapper, filename.c_str(), getOrigin(),
                             getClass(), _1));
-}
-
-void
-generateRRsetFromIterator(ZoneIterator* iterator, LoadCallback callback) {
-    ConstRRsetPtr rrset;
-    while ((rrset = iterator->getNextRRset()) != NULL) {
-        callback(rrset);
-    }
 }
 
 void
