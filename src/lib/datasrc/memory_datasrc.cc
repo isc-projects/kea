@@ -29,6 +29,7 @@
 #include <datasrc/data_source.h>
 #include <datasrc/factory.h>
 
+#include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/bind.hpp>
@@ -52,6 +53,9 @@ using namespace internal;
 
 namespace {
 // Some type aliases
+
+// A functor type used for loading.
+typedef boost::function<void(ConstRRsetPtr)> LoadCallback;
 
 // RRset specified for this implementation
 typedef boost::shared_ptr<internal::RBNodeRRset> RBNodeRRsetPtr;
@@ -760,6 +764,17 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
 
     // The actual zone data
     scoped_ptr<ZoneData> zone_data_;
+
+    // Common process for zone load.
+    // rrset_installer is a functor that takes another functor as an argument,
+    // and expected to call the latter for each RRset of the zone.  How the
+    // sequence of the RRsets is generated depends on the internal
+    // details  of the loader: either from a textual master file or from
+    // another data source.
+    // filename is the file name of the master file or empty if the zone is
+    // loaded from another data source.
+    void load(const string& filename,
+              boost::function<void(LoadCallback)> rrset_installer);
 
     // Add the necessary magic for any wildcard contained in 'name'
     // (including itself) to be found in the zone.
@@ -1551,24 +1566,16 @@ addWildAdditional(RBNodeRRset* rrset, ZoneData* zone_data) {
 }
 
 void
-InMemoryZoneFinder::load(const string& filename) {
-    LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_LOAD).arg(getOrigin()).
-        arg(filename);
-    // Load it into temporary zone data.  As we build the zone, we record
-    // the (RBNode)RRsets that needs to be associated with additional
-    // information in 'need_additionals'.
+InMemoryZoneFinder::InMemoryZoneFinderImpl::load(
+    const string& filename,
+    boost::function<void(LoadCallback)> rrset_installer)
+{
     vector<RBNodeRRset*> need_additionals;
-    scoped_ptr<ZoneData> tmp(new ZoneData(getOrigin()));
+    scoped_ptr<ZoneData> tmp(new ZoneData(origin_));
 
-    masterLoad(filename.c_str(), getOrigin(), getClass(),
-               boost::bind(&InMemoryZoneFinderImpl::addFromLoad, impl_,
-                           _1, tmp.get(), &need_additionals));
+    rrset_installer(boost::bind(&InMemoryZoneFinderImpl::addFromLoad, this,
+                                _1, tmp.get(), &need_additionals));
 
-    // For each RRset in need_additionals, identify the corresponding
-    // RBnode for additional processing and associate it in the RRset.
-    // If some additional names in an RRset RDATA as additional need wildcard
-    // expansion, we'll remember them in a separate vector, and handle them
-    // with addWildAdditional.
     vector<RBNodeRRset*> wild_additionals;
     for_each(need_additionals.begin(), need_additionals.end(),
              boost::bind(addAdditional, _1, tmp.get(), &wild_additionals));
@@ -1584,14 +1591,72 @@ InMemoryZoneFinder::load(const string& filename) {
         if (tmp->origin_data_->getData()->find(RRType::NSEC3PARAM()) ==
             tmp->origin_data_->getData()->end()) {
             LOG_WARN(logger, DATASRC_MEM_NO_NSEC3PARAM).
-                arg(getOrigin()).arg(getClass());
+                arg(origin_).arg(zone_class_);
         }
     }
 
     // If it went well, put it inside
-    impl_->file_name_ = filename;
-    tmp.swap(impl_->zone_data_);
+    file_name_ = filename;
+    tmp.swap(zone_data_);
     // And let the old data die with tmp
+}
+
+namespace {
+// A wrapper for dns::masterLoad used by load() below.  Essentially it
+// converts the two callback types.
+void
+masterLoadWrapper(const char* const filename, const Name& origin,
+                  const RRClass& zone_class, LoadCallback callback)
+{
+    masterLoad(filename, origin, zone_class, callback);
+}
+
+// The installer called from Impl::load() for the iterator version of load().
+void
+generateRRsetFromIterator(ZoneIterator* iterator, LoadCallback callback) {
+    ConstRRsetPtr rrset;
+    vector<ConstRRsetPtr> rrsigs; // placeholder for RRSIGs until "commitable".
+
+    // The current internal implementation assumes an RRSIG is always added
+    // after the RRset they cover.  So we store any RRSIGs in 'rrsigs' until
+    // it's safe to add them; based on our assumption if the owner name
+    // changes, all covered RRsets of the previous name should have been
+    // installed and any pending RRSIGs can be added at that point.  RRSIGs
+    // of the last name from the iterator must be added separately.
+    while ((rrset = iterator->getNextRRset()) != NULL) {
+        if (!rrsigs.empty() && rrset->getName() != rrsigs[0]->getName()) {
+            BOOST_FOREACH(ConstRRsetPtr sig_rrset, rrsigs) {
+                callback(sig_rrset);
+            }
+            rrsigs.clear();
+        }
+        if (rrset->getType() == RRType::RRSIG()) {
+            rrsigs.push_back(rrset);
+        } else {
+            callback(rrset);
+        }
+    }
+
+    BOOST_FOREACH(ConstRRsetPtr sig_rrset, rrsigs) {
+        callback(sig_rrset);
+    }
+}
+}
+
+void
+InMemoryZoneFinder::load(const string& filename) {
+    LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_LOAD).arg(getOrigin()).
+        arg(filename);
+
+    impl_->load(filename,
+                boost::bind(masterLoadWrapper, filename.c_str(), getOrigin(),
+                            getClass(), _1));
+}
+
+void
+InMemoryZoneFinder::load(ZoneIterator& iterator) {
+    impl_->load(string(),
+                boost::bind(generateRRsetFromIterator, &iterator, _1));
 }
 
 void

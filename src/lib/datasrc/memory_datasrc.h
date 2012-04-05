@@ -188,6 +188,26 @@ public:
     ///     configuration reloading is written.
     void load(const std::string& filename);
 
+    /// \brief Load zone from another data source.
+    ///
+    /// This is similar to the other version, but zone's RRsets are provided
+    /// by an iterator of another data source.  On successful load, the
+    /// internal filename will be cleared.
+    ///
+    /// This implementation assumes the iterator produces combined RRsets,
+    /// that is, there should exactly one RRset for the same owner name and
+    /// RR type.  This means the caller is expected to create the iterator
+    /// with \c separate_rrs being \c false.  This implementation also assumes
+    /// RRsets of different names are not mixed; so if the iterator produces
+    /// an RRset of a different name than that of the previous RRset, that
+    /// previous name must never appear in the subsequent sequence of RRsets.
+    /// Note that the iterator API does not ensure this.  If the underlying
+    /// implementation does not follow it, load() will fail.  Note, however,
+    /// that this whole interface is tentative.  in-memory zone loading will
+    /// have to be revisited fundamentally, and at that point this restriction
+    /// probably won't matter.
+    void load(ZoneIterator& iterator);
+
     /// Exchanges the content of \c this zone finder with that of the given
     /// \c zone_finder.
     ///
