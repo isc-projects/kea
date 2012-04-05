@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <exceptions/exceptions.h>
+
 #include <dns/masterload.h>
 #include <dns/name.h>
 #include <dns/rrclass.h>
@@ -21,6 +23,7 @@
 #include <datasrc/database.h>
 #include <datasrc/sqlite3_accessor.h>
 
+#include "test_client.h"
 #include <testutils/dnsmessage_test.h>
 
 #include <gtest/gtest.h>
@@ -29,6 +32,8 @@
 #include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include <fstream>
+#include <sstream>
 #include <cstdlib>
 #include <vector>
 
@@ -66,8 +71,6 @@ createInMemoryClient(RRClass zclass, const Name& zname) {
     return (client);
 }
 
-// Creator for the SQLite3 client to be tested.  addRRset() is a helper
-// subroutine.
 void
 addRRset(ZoneUpdaterPtr updater, ConstRRsetPtr rrset) {
     updater->addRRset(*rrset);
@@ -78,25 +81,14 @@ createSQLite3Client(RRClass zclass, const Name& zname) {
     // We always begin with an empty template SQLite3 DB file and install
     // the zone data from the zone file to ensure both cases have the
     // same test data.
+    DataSourceClientPtr client = unittest::createSQLite3Client(
+        zclass, zname, TEST_DATA_BUILDDIR "/contexttest.sqlite3.copied",
+        TEST_ZONE_FILE);
 
-    const char* const install_cmd = INSTALL_PROG " " TEST_DATA_DIR
-        "/rwtest.sqlite3 " TEST_DATA_BUILDDIR "/contexttest.sqlite3.copied";
-    if (system(install_cmd) != 0) {
-        isc_throw(isc::Unexpected,
-                  "Error setting up; command failed: " << install_cmd);
-    }
-
-    shared_ptr<SQLite3Accessor> accessor(
-        new SQLite3Accessor(TEST_DATA_BUILDDIR "/contexttest.sqlite3.copied",
-                            zclass.toText()));
-    shared_ptr<DatabaseClient> client(new DatabaseClient(zclass, accessor));
-
-    ZoneUpdaterPtr updater = client->getUpdater(zname, true);
-    masterLoad(TEST_ZONE_FILE, zname, zclass, boost::bind(addRRset, updater,
-                                                          _1));
     // Insert an out-of-zone name to test if it's incorrectly returned.
     // Note that neither updater nor SQLite3 accessor checks this condition,
     // so this should succeed.
+    ZoneUpdaterPtr updater = client->getUpdater(zname, false);
     stringstream ss("ns.example.com. 3600 IN A 192.0.2.7");
     masterLoad(ss, Name::ROOT_NAME(), zclass,
                boost::bind(addRRset, updater, _1));
