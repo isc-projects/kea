@@ -12,12 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <sstream>
-#include <vector>
-
-#include <boost/bind.hpp>
-#include <boost/foreach.hpp>
-
 #include <exceptions/exceptions.h>
 
 #include <dns/masterload.h>
@@ -30,19 +24,30 @@
 #include <dns/rrttl.h>
 #include <dns/masterload.h>
 
+#include <datasrc/client.h>
 #include <datasrc/memory_datasrc.h>
 #include <datasrc/data_source.h>
 #include <datasrc/iterator.h>
 
+#include "test_client.h"
+
 #include <testutils/dnsmessage_test.h>
 
 #include <gtest/gtest.h>
+
+#include <boost/bind.hpp>
+#include <boost/foreach.hpp>
+#include <boost/shared_ptr.hpp>
+
+#include <sstream>
+#include <vector>
 
 using namespace std;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
 using namespace isc::datasrc;
 using namespace isc::testutils;
+using boost::shared_ptr;
 
 namespace {
 // Commonly used result codes (Who should write the prefix all the time)
@@ -398,6 +403,8 @@ public:
         // Build test RRsets.  Below, we construct an RRset for
         // each textual RR(s) of zone_data, and assign it to the corresponding
         // rr_xxx.
+        // Note that this contains an out-of-zone RR, and due to the
+        // validation check of masterLoad() used below, we cannot add SOA.
         const RRsetData zone_data[] = {
             {"example.org. 300 IN NS ns.example.org.", &rr_ns_},
             {"example.org. 300 IN A 192.0.2.1", &rr_a_},
@@ -1094,6 +1101,24 @@ TEST_F(InMemoryZoneFinderTest, load) {
     // Try loading zone that is wrong in a different way
     EXPECT_THROW(zone_finder_.load(TEST_DATA_DIR "/duplicate_rrset.zone"),
         MasterLoadError);
+}
+
+TEST_F(InMemoryZoneFinderTest, loadFromIterator) {
+    // The initial test set doesn't have SOA at the apex.
+    findTest(origin_, RRType::SOA(), ZoneFinder::NXRRSET, false,
+             ConstRRsetPtr());
+
+    stringstream ss("example.org. 300 IN SOA . . 0 0 0 0 0");
+    shared_ptr<DataSourceClient> db_client = unittest::createSQLite3Client(
+        class_, origin_, TEST_DATA_BUILDDIR "/contexttest.sqlite3.copied", ss);
+    zone_finder_.load(*db_client->getIterator(origin_, true));
+
+    // Now the zone should have an SOA.
+    findTest(origin_, RRType::SOA(), ZoneFinder::SUCCESS, false,
+             ConstRRsetPtr());
+
+    // File name should be (re)set to empty.
+    EXPECT_TRUE(zone_finder_.getFileName().empty());
 }
 
 /*

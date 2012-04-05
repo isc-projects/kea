@@ -188,6 +188,13 @@ public:
     ///     configuration reloading is written.
     void load(const std::string& filename);
 
+    /// \brief Load zone from another data source.
+    ///
+    /// This is similar to the other version, but zone's RRsets are provided
+    /// by an iterator of another data source.  On successful load, the
+    // internal filename will be cleared.
+    void load(ZoneIterator& iterator);
+
     /// Exchanges the content of \c this zone finder with that of the given
     /// \c zone_finder.
     ///
