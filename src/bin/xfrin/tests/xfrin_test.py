@@ -139,6 +139,9 @@ class MockCC(MockModuleCCSession):
         if identifier == "zones/use_ixfr":
             return False
 
+    def remove_remote_config(self, module_name):
+        pass
+
 class MockDataSourceClient():
     '''A simple mock data source client.
 
