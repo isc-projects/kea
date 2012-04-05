@@ -155,6 +155,8 @@ class SendNonblock(unittest.TestCase):
                 sender(msgq, write)
         except socket.error:
             pass
+        read.close()
+        write.close()
 
     def test_infinite_sendmsg(self):
         """
@@ -217,6 +219,8 @@ class SendNonblock(unittest.TestCase):
                 finally:
                     os.kill(queue_pid, signal.SIGTERM)
         self.terminate_check(run)
+        queue.close()
+        out.close()
 
     def test_small_sends(self):
         """

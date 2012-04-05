@@ -25,7 +25,9 @@ class TestRename(unittest.TestCase):
     def __scan(self, directory, script, fun):
         # Scan one script if it contains call to the renaming function
         filename = os.path.join(directory, script)
-        data = ''.join(open(filename).readlines())
+        fd = open(filename)
+        data = ''.join(fd.readlines())
+        fd.close()
         prettyname = 'src' + filename[filename.rfind('../') + 2:]
         self.assertTrue(fun.search(data),
             "Didn't find a call to isc.util.process.rename in " + prettyname)
@@ -53,8 +55,9 @@ class TestRename(unittest.TestCase):
         # Find all Makefile and extract names of scripts
         for (d, _, fs) in os.walk('@top_builddir@'):
             if 'Makefile' in fs:
-                makefile = ''.join(open(os.path.join(d,
-                    "Makefile")).readlines())
+                fd = open(os.path.join(d, "Makefile"))
+                makefile = ''.join(fd.readlines())
+                fd.close()
                 for (var, _) in lines.findall(re.sub(excluded_lines, '',
                                                      makefile)):
                     for (script, _) in scripts.findall(var):
