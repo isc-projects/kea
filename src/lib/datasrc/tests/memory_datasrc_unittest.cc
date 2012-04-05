@@ -1103,7 +1103,7 @@ TEST_F(InMemoryZoneFinderTest, load) {
 
     // Try loading zone that is wrong in a different way
     EXPECT_THROW(zone_finder_.load(TEST_DATA_DIR "/duplicate_rrset.zone"),
-        MasterLoadError);
+                 MasterLoadError);
 }
 
 TEST_F(InMemoryZoneFinderTest, loadFromIterator) {
@@ -1147,6 +1147,26 @@ TEST_F(InMemoryZoneFinderTest, loadFromIterator) {
 
     // File name should be (re)set to empty.
     EXPECT_TRUE(zone_finder_.getFileName().empty());
+
+    // Loading the zone with an iterator separating RRs of the same RRset
+    // will fail because the resulting sequence doesn't meet assumptions of
+    // the (current) in-memory implementation.
+    EXPECT_THROW(zone_finder_.load(*db_client->getIterator(origin_, true)),
+                 MasterLoadError);
+
+    // Load the zone from a file that contains more realistic data (borrowed
+    // from a different test).  There's nothing special in this case for the
+    // purpose of this test, so it should just succeed.
+    db_client = unittest::createSQLite3Client(
+        class_, origin_, TEST_DATA_BUILDDIR "/contexttest.sqlite3.copied",
+        TEST_DATA_DIR "/contexttest.zone");
+    zone_finder_.load(*db_client->getIterator(origin_));
+
+    // just checking a couple of RRs in the new version of zone.
+    findTest(Name("mx1.example.org"), RRType::A(), ZoneFinder::SUCCESS, true,
+             textToRRset("mx1.example.org. 3600 IN A 192.0.2.10"));
+    findTest(Name("ns1.example.org"), RRType::AAAA(), ZoneFinder::SUCCESS,
+             true, textToRRset("ns1.example.org. 3600 IN AAAA 2001:db8::1"));
 }
 
 /*
