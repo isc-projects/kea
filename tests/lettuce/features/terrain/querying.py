@@ -229,6 +229,11 @@ def query(step, dnssec, query_name, qtype, qclass, addr, port, rcode):
     additional_arguments = []
     if dnssec is not None:
         additional_arguments.append("+dnssec")
+    else:
+        # some builds of dig add edns0 by default. This could muck up
+        # additional counts, so unless we need dnssec, explicitly
+        # disable edns0
+        additional_arguments.append("+noedns")
     query_result = QueryResult(query_name, qtype, qclass, addr, port,
                                additional_arguments)
     assert query_result.rcode == rcode,\
