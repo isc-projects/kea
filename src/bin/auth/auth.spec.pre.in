@@ -47,6 +47,10 @@
                 "item_type": "string",
                 "item_optional": false,
                 "item_default": ""
+              },
+              { "item_name": "filetype",
+                "item_type": "string",
+                "item_optional": true
               }]
             }
           }]
