@@ -501,7 +501,7 @@ private:
             }
 
             // Return faked data for tests
-            switch (step ++) {
+            switch (step++) {
                 case 0:
                     data[DatabaseAccessor::NAME_COLUMN] = "example.org";
                     data[DatabaseAccessor::TYPE_COLUMN] = "A";
@@ -540,12 +540,30 @@ private:
                     data[DatabaseAccessor::RDATA_COLUMN] = "2001:db8::2";
                     return (true);
                 case 6:
+                    data[DatabaseAccessor::NAME_COLUMN] = "x.example.org";
+                    data[DatabaseAccessor::TYPE_COLUMN] = "RRSIG";
+                    data[DatabaseAccessor::TTL_COLUMN] = "300";
+                    data[DatabaseAccessor::RDATA_COLUMN] =
+                        "A 5 3 3600 20000101000000 20000201000000 12345 "
+                        "example.org. FAKEFAKEFAKE";
+                    return (true);
+                case 7:
+                    // RRSIG for the same owner name but for a different type
+                    // to cover.  These two should be distinguished.
+                    data[DatabaseAccessor::NAME_COLUMN] = "x.example.org";
+                    data[DatabaseAccessor::TYPE_COLUMN] = "RRSIG";
+                    data[DatabaseAccessor::TTL_COLUMN] = "300";
+                    data[DatabaseAccessor::RDATA_COLUMN] =
+                        "AAAA 5 3 3600 20000101000000 20000201000000 12345 "
+                        "example.org. FAKEFAKEFAKEFAKE";
+                    return (true);
+                case 8:
                     data[DatabaseAccessor::NAME_COLUMN] = "ttldiff.example.org";
                     data[DatabaseAccessor::TYPE_COLUMN] = "A";
                     data[DatabaseAccessor::TTL_COLUMN] = "300";
                     data[DatabaseAccessor::RDATA_COLUMN] = "192.0.2.1";
                     return (true);
-                case 7:
+                case 9:
                     data[DatabaseAccessor::NAME_COLUMN] = "ttldiff.example.org";
                     data[DatabaseAccessor::TYPE_COLUMN] = "A";
                     data[DatabaseAccessor::TTL_COLUMN] = "600";
@@ -554,7 +572,7 @@ private:
                 default:
                     ADD_FAILURE() <<
                         "Request past the end of iterator context";
-                case 8:
+                case 10:
                     return (false);
             }
         }
@@ -1387,6 +1405,22 @@ TYPED_TEST(DatabaseClientTest, iterator) {
     this->expected_rdatas_.push_back("2001:db8::1");
     this->expected_rdatas_.push_back("2001:db8::2");
     checkRRset(rrset, Name("x.example.org"), this->qclass_, RRType::AAAA(),
+               RRTTL(300), this->expected_rdatas_);
+
+    rrset = it->getNextRRset();
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back(
+        "A 5 3 3600 20000101000000 20000201000000 "
+        "12345 example.org. FAKEFAKEFAKE");
+    checkRRset(rrset, Name("x.example.org"), this->qclass_, RRType::RRSIG(),
+               RRTTL(300), this->expected_rdatas_);
+
+    rrset = it->getNextRRset();
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back(
+        "AAAA 5 3 3600 20000101000000 20000201000000 "
+        "12345 example.org. FAKEFAKEFAKEFAKE");
+    checkRRset(rrset, Name("x.example.org"), this->qclass_, RRType::RRSIG(),
                RRTTL(300), this->expected_rdatas_);
 
     rrset = it->getNextRRset();
