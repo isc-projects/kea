@@ -1013,7 +1013,21 @@ public:
         const Name name(name_str);
         const RRType rtype(rtype_str);
         RRsetPtr rrset(new RRset(name, class_, rtype, RRTTL(ttl)));
-        while (data_ready_ && name_ == name_str && rtype_str == rtype_) {
+        const ConstRdataPtr rdata_base =
+            rdata::createRdata(rtype, class_, rdata_);
+        ConstRdataPtr rdata;
+        while (data_ready_) {
+            bool same_type = true;
+            if (rdata) { // for subsequent data, replace it with the new RDATA.
+                const RRType next_rtype(rtype_);
+                rdata = rdata::createRdata(next_rtype, class_, rdata_);
+                same_type = isSameType(rtype, rdata_base, next_rtype, rdata);
+            } else {
+                rdata = rdata_base;
+            }
+            if (Name(name_) != name || !same_type) {
+                break;
+            }
             if (ttl_ != ttl) {
                 if (ttl < ttl_) {
                     ttl_ = ttl;
@@ -1022,7 +1036,7 @@ public:
                 LOG_WARN(logger, DATASRC_DATABASE_ITERATE_TTL_MISMATCH).
                     arg(name_).arg(class_).arg(rtype_).arg(rrset->getTTL());
             }
-            rrset->addRdata(rdata::createRdata(rtype, class_, rdata_));
+            rrset->addRdata(rdata);
             getData();
             if (separate_rrs_) {
                 break;
@@ -1034,6 +1048,23 @@ public:
     }
 
 private:
+    // Check two RDATA types are equivalent.  Basically it's a trivial
+    // comparison, but if both are of RRSIG, we should also compare the types
+    // covered.
+    bool isSameType(RRType type1, ConstRdataPtr rdata1,
+                    RRType type2, ConstRdataPtr rdata2)
+    {
+        if (type1 != type2) {
+            return (false);
+        }
+        if (type1 == RRType::RRSIG()) {
+            return (dynamic_cast<const generic::RRSIG&>(*rdata1).typeCovered()
+                    == dynamic_cast<const generic::RRSIG&>(*rdata2).
+                    typeCovered());
+        }
+        return (true);
+    }
+
     // Load next row of data
     void getData() {
         string data[DatabaseAccessor::COLUMN_COUNT];
