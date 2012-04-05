@@ -201,6 +201,28 @@ TEST_F(MemoryDatasrcConfigTest, addOneZone) {
         RRType::A())->code);
 }
 
+TEST_F(MemoryDatasrcConfigTest, addOneWithFiletype) {
+    // Until #1792 is completed, only "text" filetype is allowed.
+    EXPECT_THROW(parser->build(
+                     Element::fromJSON(
+                         "[{\"type\": \"memory\","
+                         "  \"zones\": [{\"origin\": \"example.com\","
+                         "               \"file\": \""
+                         TEST_DATA_DIR "/example.zone\","
+                         "               \"filetype\": \"sqlite3\"}]}]")),
+                 AuthConfigError);
+
+    // Explicitly specifying "text" is okay.
+    parser->build(Element::fromJSON(
+                      "[{\"type\": \"memory\","
+                      "  \"zones\": [{\"origin\": \"example.com\","
+                      "               \"file\": \""
+                      TEST_DATA_DIR "/example.zone\","
+                      "               \"filetype\": \"text\"}]}]"));
+    parser->commit();
+    EXPECT_EQ(1, server.getInMemoryClient(rrclass)->getZoneCount());
+}
+
 TEST_F(MemoryDatasrcConfigTest, addMultiZones) {
     EXPECT_NO_THROW(parser->build(Element::fromJSON(
                       "[{\"type\": \"memory\","
