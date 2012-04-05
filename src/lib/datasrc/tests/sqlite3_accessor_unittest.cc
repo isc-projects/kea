@@ -777,15 +777,20 @@ TEST_F(SQLite3Update,  rollbackFailure) {
     // the rollback operation at the end of the test.
 
     // Since SQLite3 version 3.7.11, rollbacks do not fail on pending
-    // transactions anymore, making this test fail (and moot). So
-    // we'll only try on older versions
-#if SQLITE_VERSION_NUMBER < 3007011
+    // transactions anymore, making this test fail (and moot), but the
+    // transactions will fail after it, so, depending on version,
+    // we test whether that happens and is caught
     string columns[DatabaseAccessor::COLUMN_COUNT];
     iterator = accessor->getRecords("example.com.", zone_id);
     EXPECT_TRUE(iterator->getNext(columns));
 
     accessor->startUpdateZone("example.com.", true);
+#if SQLITE_VERSION_NUMBER < 3007011
     EXPECT_THROW(accessor->rollback(), DataSourceError);
+    EXPECT_NO_THROW(iterator->getNext(columns));
+#else
+    EXPECT_NO_THROW(accessor->rollback());
+    EXPECT_THROW(iterator->getNext(columns), DataSourceError);
 #endif
 }
 
