@@ -82,13 +82,15 @@ createInstance(isc::data::ConstElementPtr config, std::string& error) {
         error = "Configuration error: " + errors->str();
         return (NULL);
     }
-    std::string dbfile = config->get(CONFIG_ITEM_DATABASE_FILE)->stringValue();
+    const std::string dbfile =
+        config->get(CONFIG_ITEM_DATABASE_FILE)->stringValue();
     try {
         boost::shared_ptr<DatabaseAccessor> sqlite3_accessor(
             new SQLite3Accessor(dbfile, "IN")); // XXX: avoid hardcode RR class
         return (new DatabaseClient(isc::dns::RRClass::IN(), sqlite3_accessor));
     } catch (const std::exception& exc) {
-        error = std::string("Error creating sqlite3 datasource: ") + exc.what();
+        error = std::string("Error creating sqlite3 datasource: ") +
+            exc.what();
         return (NULL);
     } catch (...) {
         error = std::string("Error creating sqlite3 datasource, "
