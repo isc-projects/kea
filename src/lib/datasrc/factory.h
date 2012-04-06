@@ -163,7 +163,7 @@ public:
     ///
     /// \return Reference to the DataSourceClient instance contained in this
     ///         container.
-    DataSourceClient& getInstance() { return *instance_; }
+    DataSourceClient& getInstance() { return (*instance_); }
 
 private:
     DataSourceClient* instance_;
