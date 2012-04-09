@@ -12,14 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <set>
-#include <string>
-#include <utility>
-#include <vector>
-
-#include <boost/foreach.hpp>
-#include <boost/shared_ptr.hpp>
-
 #include <dns/name.h>
 #include <dns/rrclass.h>
 
@@ -27,12 +19,22 @@
 
 #include <datasrc/memory_datasrc.h>
 #include <datasrc/zonetable.h>
+#include <datasrc/factory.h>
 
 #include <auth/auth_srv.h>
 #include <auth/auth_config.h>
 #include <auth/common.h>
 
 #include <server_common/portconfig.h>
+
+#include <boost/foreach.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/scoped_ptr.hpp>
+
+#include <set>
+#include <string>
+#include <utility>
+#include <vector>
 
 using namespace std;
 using namespace isc::dns;
@@ -165,10 +167,21 @@ MemoryDatasourceConfig::build(ConstElementPtr config_value) {
             isc_throw(AuthConfigError, "Missing zone file for zone: "
                       << origin_txt);
         }
+
+        // We support the traditional text type and SQLite3 backend.  For the
+        // latter we create a client for the underlying SQLite3 data source,
+        // and build the in-memory zone using an iterator of the underlying
+        // zone.
         ConstElementPtr filetype = zone_config->get("filetype");
         const string filetype_txt = filetype ? filetype->stringValue() :
             "text";
-        if (filetype_txt != "text") {
+        boost::scoped_ptr<DataSourceClientContainer> container;
+        if (filetype_txt == "sqlite3") {
+            container.reset(new DataSourceClientContainer(
+                                "sqlite3",
+                                Element::fromJSON("{\"database_file\": \"" +
+                                                  file_txt + "\"}")));
+        } else if (filetype_txt != "text") {
             isc_throw(AuthConfigError, "Invalid filetype for zone "
                       << origin_txt << ": " << filetype_txt);
         }
@@ -198,7 +211,12 @@ MemoryDatasourceConfig::build(ConstElementPtr config_value) {
          * need the load method to be split into some kind of build and
          * commit/abort parts.
          */
-        zone_finder->load(file_txt);
+        if (filetype_txt == "text") {
+            zone_finder->load(file_txt);
+        } else {
+            zone_finder->load(*container->getInstance().getIterator(
+                                  Name(origin_txt)));
+        }
     }
 }
 
