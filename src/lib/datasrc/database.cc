@@ -1005,41 +1005,44 @@ public:
             // At the end of zone
             accessor_->commit();
             ready_ = false;
-            LOG_DEBUG(logger, DBG_TRACE_DETAILED,
-                      DATASRC_DATABASE_ITERATE_END);
+            LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_DATABASE_ITERATE_END);
             return (ConstRRsetPtr());
         }
-        const string name_str(name_), rtype_str(rtype_), ttl(ttl_);
-        const Name name(name_str);
-        const RRType rtype(rtype_str);
-        RRsetPtr rrset(new RRset(name, class_, rtype, RRTTL(ttl)));
+        const Name name(name_);
+        const RRType rtype(rtype_);
+        RRsetPtr rrset(new RRset(name, class_, rtype, RRTTL(ttl_)));
         const ConstRdataPtr rdata_base =
             rdata::createRdata(rtype, class_, rdata_);
-        ConstRdataPtr rdata;
-        while (data_ready_) {
-            bool same_type = true;
-            if (rdata) { // for subsequent data, replace it with the new RDATA.
-                const RRType next_rtype(rtype_);
-                rdata = rdata::createRdata(next_rtype, class_, rdata_);
-                same_type = isSameType(rtype, rdata_base, next_rtype, rdata);
-            } else {
-                rdata = rdata_base;
-            }
-            if (Name(name_) != name || !same_type) {
+        ConstRdataPtr rdata = rdata_base;
+        while (true) {
+            // Extend the RRset with the new RDATA.
+            rrset->addRdata(rdata);
+
+            // Retrieve the next record from the database.  If we reach the
+            // end of the zone, done; if we were requested to separate all RRs,
+            // just remember this record and return the single RR.
+            getData();
+            if (separate_rrs_ || !data_ready_) {
                 break;
             }
-            if (ttl_ != ttl) {
-                if (ttl < ttl_) {
-                    ttl_ = ttl;
-                    rrset->setTTL(RRTTL(ttl));
+
+            // Check if the next record belongs to the same RRset.  If not,
+            // we are done.
+            const RRType next_rtype(rtype_);
+            rdata = rdata::createRdata(next_rtype, class_, rdata_);
+            if (Name(name_) != name ||
+                !isSameType(rtype, rdata_base, next_rtype, rdata)) {
+                break;
+            }
+
+            // Adjust TTL if necessary
+            const RRTTL next_ttl(ttl_);
+            if (next_ttl != rrset->getTTL()) {
+                if (next_ttl < rrset->getTTL()) {
+                    rrset->setTTL(next_ttl);
                 }
                 LOG_WARN(logger, DATASRC_DATABASE_ITERATE_TTL_MISMATCH).
                     arg(name_).arg(class_).arg(rtype_).arg(rrset->getTTL());
-            }
-            rrset->addRdata(rdata);
-            getData();
-            if (separate_rrs_) {
-                break;
             }
         }
         LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_DATABASE_ITERATE_NEXT).
