@@ -1571,52 +1571,6 @@ TEST_F(InMemoryZoneFinderTest, addbadRRsig) {
                  InMemoryZoneFinder::AddError);
 }
 
-//
-// (Faked) NSEC3 hash data.  Arbitrarily borrowed from RFC515 examples.
-//
-// Commonly used NSEC3 suffix.  It's incorrect to use it for all NSEC3s, but
-// doesn't matter for the purpose of our tests.
-const char* const nsec3_common = " 300 IN NSEC3 1 1 12 aabbccdd "
-    "2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A RRSIG";
-// Likewise, common RRSIG suffix for NSEC3s.
-const char* const nsec3_rrsig_common = " 300 IN RRSIG NSEC3 5 3 3600 "
-    "20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE";
-
-void
-findNSEC3Check(bool expected_matched, uint8_t expected_labels,
-               const string& expected_closest,
-               const string& expected_next,
-               const ZoneFinder::FindNSEC3Result& result,
-               bool expected_sig = false)
-{
-    EXPECT_EQ(expected_matched, result.matched);
-    // Convert to int so the error messages would be more readable:
-    EXPECT_EQ(static_cast<int>(expected_labels),
-              static_cast<int>(result.closest_labels));
-
-    vector<ConstRRsetPtr> actual_rrsets;
-    ASSERT_TRUE(result.closest_proof);
-    actual_rrsets.push_back(result.closest_proof);
-    if (expected_sig) {
-        actual_rrsets.push_back(result.closest_proof->getRRsig());
-    }
-    rrsetsCheck(expected_closest, actual_rrsets.begin(),
-                actual_rrsets.end());
-
-    actual_rrsets.clear();
-    if (expected_next.empty()) {
-        EXPECT_FALSE(result.next_proof);
-    } else {
-        ASSERT_TRUE(result.next_proof);
-        actual_rrsets.push_back(result.next_proof);
-        if (expected_sig) {
-            actual_rrsets.push_back(result.next_proof->getRRsig());
-        }
-        rrsetsCheck(expected_next, actual_rrsets.begin(),
-                    actual_rrsets.end());
-    }
-}
-
 TEST_F(InMemoryZoneFinderTest, addNSEC3) {
     // Set up the faked hash calculator.
     setNSEC3HashCreator(&nsec3_hash_creator_);

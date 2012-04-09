@@ -15,11 +15,14 @@
 #include "faked_nsec3.h"
 
 #include <dns/name.h>
+#include <testutils/dnsmessage_test.h>
 
 #include <map>
+#include <gtest/gtest.h>
 
 using namespace std;
 using namespace isc::dns;
+using namespace isc::testutils;
 
 namespace isc {
 namespace datasrc {
@@ -71,6 +74,41 @@ NSEC3Hash* TestNSEC3HashCreator::create(const rdata::generic::NSEC3PARAM&)
 
 NSEC3Hash* TestNSEC3HashCreator::create(const rdata::generic::NSEC3&) const {
     return (new TestNSEC3Hash);
+}
+
+void
+findNSEC3Check(bool expected_matched, uint8_t expected_labels,
+               const string& expected_closest,
+               const string& expected_next,
+               const ZoneFinder::FindNSEC3Result& result,
+               bool expected_sig)
+{
+    EXPECT_EQ(expected_matched, result.matched);
+    // Convert to int so the error messages would be more readable:
+    EXPECT_EQ(static_cast<int>(expected_labels),
+              static_cast<int>(result.closest_labels));
+
+    vector<ConstRRsetPtr> actual_rrsets;
+    ASSERT_TRUE(result.closest_proof);
+    actual_rrsets.push_back(result.closest_proof);
+    if (expected_sig) {
+        actual_rrsets.push_back(result.closest_proof->getRRsig());
+    }
+    rrsetsCheck(expected_closest, actual_rrsets.begin(),
+                actual_rrsets.end());
+
+    actual_rrsets.clear();
+    if (expected_next.empty()) {
+        EXPECT_FALSE(result.next_proof);
+    } else {
+        ASSERT_TRUE(result.next_proof);
+        actual_rrsets.push_back(result.next_proof);
+        if (expected_sig) {
+            actual_rrsets.push_back(result.next_proof->getRRsig());
+        }
+        rrsetsCheck(expected_next, actual_rrsets.begin(),
+                    actual_rrsets.end());
+    }
 }
 
 }
