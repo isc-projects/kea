@@ -501,80 +501,46 @@ private:
             }
 
             // Return faked data for tests
-            switch (step++) {
-                case 0:
-                    data[DatabaseAccessor::NAME_COLUMN] = "example.org";
-                    data[DatabaseAccessor::TYPE_COLUMN] = "A";
-                    data[DatabaseAccessor::TTL_COLUMN] = "3600";
-                    data[DatabaseAccessor::RDATA_COLUMN] = "192.0.2.1";
-                    return (true);
-                case 1:
-                    data[DatabaseAccessor::NAME_COLUMN] = "example.org";
-                    data[DatabaseAccessor::TYPE_COLUMN] = "SOA";
-                    data[DatabaseAccessor::TTL_COLUMN] = "3600";
-                    data[DatabaseAccessor::RDATA_COLUMN] = "ns1.example.org. admin.example.org. "
-                        "1234 3600 1800 2419200 7200";
-                    return (true);
-                case 2:
-                    data[DatabaseAccessor::NAME_COLUMN] = "x.example.org";
-                    data[DatabaseAccessor::TYPE_COLUMN] = "A";
-                    data[DatabaseAccessor::TTL_COLUMN] = "300";
-                    data[DatabaseAccessor::RDATA_COLUMN] = "192.0.2.1";
-                    return (true);
-                case 3:
-                    data[DatabaseAccessor::NAME_COLUMN] = "x.example.org";
-                    data[DatabaseAccessor::TYPE_COLUMN] = "A";
-                    data[DatabaseAccessor::TTL_COLUMN] = "300";
-                    data[DatabaseAccessor::RDATA_COLUMN] = "192.0.2.2";
-                    return (true);
-                case 4:
-                    data[DatabaseAccessor::NAME_COLUMN] = "x.example.org";
-                    data[DatabaseAccessor::TYPE_COLUMN] = "AAAA";
-                    data[DatabaseAccessor::TTL_COLUMN] = "300";
-                    data[DatabaseAccessor::RDATA_COLUMN] = "2001:db8::1";
-                    return (true);
-                case 5:
-                    data[DatabaseAccessor::NAME_COLUMN] = "x.example.org";
-                    data[DatabaseAccessor::TYPE_COLUMN] = "AAAA";
-                    data[DatabaseAccessor::TTL_COLUMN] = "300";
-                    data[DatabaseAccessor::RDATA_COLUMN] = "2001:db8::2";
-                    return (true);
-                case 6:
-                    data[DatabaseAccessor::NAME_COLUMN] = "x.example.org";
-                    data[DatabaseAccessor::TYPE_COLUMN] = "RRSIG";
-                    data[DatabaseAccessor::TTL_COLUMN] = "300";
-                    data[DatabaseAccessor::RDATA_COLUMN] =
-                        "A 5 3 3600 20000101000000 20000201000000 12345 "
-                        "example.org. FAKEFAKEFAKE";
-                    return (true);
-                case 7:
-                    // RRSIG for the same owner name but for a different type
-                    // to cover.  These two should be distinguished.
-                    data[DatabaseAccessor::NAME_COLUMN] = "x.example.org";
-                    data[DatabaseAccessor::TYPE_COLUMN] = "RRSIG";
-                    data[DatabaseAccessor::TTL_COLUMN] = "300";
-                    data[DatabaseAccessor::RDATA_COLUMN] =
-                        "AAAA 5 3 3600 20000101000000 20000201000000 12345 "
-                        "example.org. FAKEFAKEFAKEFAKE";
-                    return (true);
-                case 8:
-                    data[DatabaseAccessor::NAME_COLUMN] = "ttldiff.example.org";
-                    data[DatabaseAccessor::TYPE_COLUMN] = "A";
-                    data[DatabaseAccessor::TTL_COLUMN] = "300";
-                    data[DatabaseAccessor::RDATA_COLUMN] = "192.0.2.1";
-                    return (true);
-                case 9:
-                    data[DatabaseAccessor::NAME_COLUMN] = "ttldiff.example.org";
-                    data[DatabaseAccessor::TYPE_COLUMN] = "A";
-                    data[DatabaseAccessor::TTL_COLUMN] = "600";
-                    data[DatabaseAccessor::RDATA_COLUMN] = "192.0.2.2";
-                    return (true);
-                default:
-                    ADD_FAILURE() <<
-                        "Request past the end of iterator context";
-                case 10:
-                    return (false);
+            // This is the sequence of zone data in the order of appearance
+            // in the returned sequence from this iterator.
+            typedef const char* ColumnText[4];
+            const ColumnText zone_data[] = {
+                // A couple of basic RRs at the zone origin.
+                {"example.org", "A", "3600", "192.0.2.1"},
+                {"example.org", "SOA", "3600", "ns1.example.org. "
+                 "admin.example.org. 1234 3600 1800 2419200 7200"},
+                // RRsets sharing the same owner name with multiple RRs.
+                {"x.example.org", "A", "300", "192.0.2.1"},
+                {"x.example.org", "A", "300", "192.0.2.2"},
+                {"x.example.org", "AAAA", "300", "2001:db8::1"},
+                {"x.example.org", "AAAA", "300", "2001:db8::2"},
+                // RRSIGs.  Covered types are different and these two should
+                // be distinguished.
+                {"x.example.org", "RRSIG", "300",
+                 "A 5 3 3600 20000101000000 20000201000000 12345 "
+                 "example.org. FAKEFAKEFAKE"},
+                {"x.example.org", "RRSIG", "300",
+                 "AAAA 5 3 3600 20000101000000 20000201000000 12345 "
+                 "example.org. FAKEFAKEFAKEFAKE"},
+                // Mixture of different TTLs.  Covering both cases of small
+                // then large and large then small.  In either case the smaller
+                // TTL should win.
+                {"ttldiff.example.org", "A", "300", "192.0.2.1"},
+                {"ttldiff.example.org", "A", "600", "192.0.2.2"},
+                {"ttldiff2.example.org", "AAAA", "600", "2001:db8::1"},
+                {"ttldiff2.example.org", "AAAA", "300", "2001:db8::2"}};
+            const size_t num_rrs = sizeof(zone_data) / sizeof(zone_data[0]);
+            if (step > num_rrs) {
+                ADD_FAILURE() << "Request past the end of iterator context";
+            } else if (step < num_rrs) {
+                data[DatabaseAccessor::NAME_COLUMN] = zone_data[step][0];
+                data[DatabaseAccessor::TYPE_COLUMN] = zone_data[step][1];
+                data[DatabaseAccessor::TTL_COLUMN] = zone_data[step][2];
+                data[DatabaseAccessor::RDATA_COLUMN] = zone_data[step][3];
+                ++step;
+                return (true);
             }
+            return (false);
         }
     };
     class EmptyIteratorContext : public IteratorContext {
@@ -1430,6 +1396,14 @@ TYPED_TEST(DatabaseClientTest, iterator) {
     this->expected_rdatas_.push_back("192.0.2.2");
     checkRRset(rrset, Name("ttldiff.example.org"), this->qclass_, RRType::A(),
                RRTTL(300), this->expected_rdatas_);
+
+    rrset = it->getNextRRset();
+    ASSERT_NE(ConstRRsetPtr(), rrset);
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back("2001:db8::1");
+    this->expected_rdatas_.push_back("2001:db8::2");
+    checkRRset(rrset, Name("ttldiff2.example.org"), this->qclass_,
+               RRType::AAAA(), RRTTL(300), this->expected_rdatas_);
 
     EXPECT_EQ(ConstRRsetPtr(), it->getNextRRset());
 }
