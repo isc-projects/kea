@@ -106,7 +106,6 @@ EXTRA_DIST += testdata/mkbrokendb.c
 EXTRA_DIST += testdata/root.zone
 EXTRA_DIST += testdata/rrset_toWire1
 EXTRA_DIST += testdata/rrset_toWire2
-EXTRA_DIST += testdata/rwtest.sqlite3
 EXTRA_DIST += testdata/sql1.example.com.signed
 EXTRA_DIST += testdata/sql2.example.com.signed
 EXTRA_DIST += testdata/test-root.sqlite3
