@@ -58,6 +58,7 @@ run_unittests_SOURCES += sqlite3_accessor_unittest.cc
 run_unittests_SOURCES += memory_datasrc_unittest.cc
 run_unittests_SOURCES += rbnode_rrset_unittest.cc
 run_unittests_SOURCES += zone_finder_context_unittest.cc
+run_unittests_SOURCES += faked_nsec3.h faked_nsec3.cc
 
 # We need the actual module implementation in the tests (they are not part
 # of libdatasrc)
