@@ -27,6 +27,7 @@
 #include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include <cstdlib>
 #include <istream>
 #include <fstream>
 
