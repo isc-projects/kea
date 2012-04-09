@@ -145,10 +145,12 @@ While iterating through the zone, the program extracted next RRset from it.
 The name and RRtype of the RRset is indicated in the message.
 
 % DATASRC_DATABASE_ITERATE_TTL_MISMATCH TTL values differ for RRs of %1/%2/%3, setting to %4
-While iterating through the zone, the time to live for RRs of the given RRset
-were found to be different. This isn't allowed on the wire and is considered
-an error, so we set it to the lowest value we found (but we don't modify the
-database). The data in database should be checked and fixed.
+While iterating through the zone, the time to live for RRs of the
+given RRset were found to be different. Since an RRset cannot have
+multiple TTLs, we set it to the lowest value we found (but we don't
+modify the database). This is what the client would do when such RRs
+were given in a DNS response according to RFC2181. The data in
+database should be checked and fixed.
 
 % DATASRC_DATABASE_JOURNALREADER_END %1/%2 on %3 from %4 to %5
 This is a debug message indicating that the program (successfully)
