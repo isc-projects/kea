@@ -15,11 +15,27 @@
 #ifndef FAKED_NSEC3_H
 #define FAKED_NSEC3_H
 
+#include <datasrc/zone.h>
+
 #include <dns/nsec3hash.h>
+
+#include <stdint.h>
+#include <string>
 
 namespace isc {
 namespace datasrc {
 namespace test {
+
+//
+// (Faked) NSEC3 hash data.  Arbitrarily borrowed from RFC515 examples.
+//
+// Commonly used NSEC3 suffix.  It's incorrect to use it for all NSEC3s, but
+// doesn't matter for the purpose of our tests.
+const char* const nsec3_common = " 300 IN NSEC3 1 1 12 aabbccdd "
+    "2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A RRSIG";
+// Likewise, common RRSIG suffix for NSEC3s.
+const char* const nsec3_rrsig_common = " 300 IN RRSIG NSEC3 5 3 3600 "
+    "20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE";
 
 // Some faked NSEC3 hash values commonly used in tests and the faked NSEC3Hash
 // object.
@@ -49,6 +65,13 @@ public:
     virtual isc::dns::NSEC3Hash* create(const isc::dns::rdata::generic::NSEC3&)
         const;
 };
+
+void
+findNSEC3Check(bool expected_matched, uint8_t expected_labels,
+               const std::string& expected_closest,
+               const std::string& expected_next,
+               const isc::datasrc::ZoneFinder::FindNSEC3Result& result,
+               bool expected_sig = false);
 
 }
 }

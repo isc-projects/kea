@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include "faked_nsec3.h"
+
 #include <stdlib.h>
 
 #include <boost/shared_ptr.hpp>
@@ -24,6 +26,7 @@
 #include <dns/name.h>
 #include <dns/rrttl.h>
 #include <dns/rrset.h>
+#include <dns/nsec3hash.h>
 #include <exceptions/exceptions.h>
 
 #include <datasrc/database.h>
@@ -44,6 +47,7 @@ using namespace std;
 using boost::dynamic_pointer_cast;
 using boost::lexical_cast;
 using namespace isc::dns;
+using namespace isc::datasrc::test;
 
 namespace {
 
@@ -1059,6 +1063,11 @@ public:
                                                "FAKEFAKEFAKE"));
     }
 
+    ~ DatabaseClientTest() {
+        // Make sure we return the default creator no matter if we set it or not
+        setNSEC3HashCreator(NULL);
+    }
+
     /*
      * We initialize the client from a function, so we can call it multiple
      * times per test.
@@ -1219,6 +1228,9 @@ public:
     const std::vector<std::string> empty_rdatas_; // for NXRRSET/NXDOMAIN
     std::vector<std::string> expected_rdatas_;
     std::vector<std::string> expected_sig_rdatas_;
+
+    // A creator for use in several NSEC3 related tests.
+    TestNSEC3HashCreator test_nsec3_hash_creator_;
 };
 
 class TestSQLite3Accessor : public SQLite3Accessor {
@@ -3531,6 +3543,91 @@ TEST_F(MockDatabaseClientTest, journalWithBadData) {
                  second->getNextDiff(), DataSourceError);
     EXPECT_THROW(this->client_->getJournalReader(this->zname_, 7, 8).
                  second->getNextDiff(), DataSourceError);
+}
+
+/// Let us test a little bit of NSEC3. This is borrowed from the in-memory tests
+/// Maybe unify the code a little bit somehow?
+TEST_F(MockDatabaseClientTest, findNSEC3) {
+    // Set up the faked hash calculator.
+    setNSEC3HashCreator(&test_nsec3_hash_creator_);
+
+    DataSourceClient::FindResult
+        zone(this->client_->findZone(Name("example.org")));
+    ASSERT_EQ(result::SUCCESS, zone.code);
+    boost::shared_ptr<DatabaseClient::Finder> finder(
+        dynamic_pointer_cast<DatabaseClient::Finder>(zone.zone_finder));
+
+    // Parameter validation: the query name must be in or below the zone
+    EXPECT_THROW(finder->findNSEC3(Name("example.com"), false), OutOfZone);
+    EXPECT_THROW(finder->findNSEC3(Name("org"), true), OutOfZone);
+
+    Name origin("example.org");
+    const string apex_nsec3_text = string(apex_hash) + ".example.org." +
+        string(nsec3_common);
+
+    // Apex name.  It should have a matching NSEC3.
+    {
+        SCOPED_TRACE("apex, non recursive mode");
+        findNSEC3Check(true, origin.getLabelCount(), apex_nsec3_text, "",
+                       finder->findNSEC3(origin, false));
+    }
+
+#if 0
+    // Recursive mode doesn't change the result in this case.
+    {
+        SCOPED_TRACE("apex, recursive mode");
+        findNSEC3Check(true, origin_.getLabelCount(), apex_nsec3_text, "",
+                       zone_finder_.findNSEC3(origin_, true));
+    }
+
+    // Non existent name.  Disabling recursion, a covering NSEC3 should be
+    // returned.
+    const Name www_name("www.example.org");
+    {
+        SCOPED_TRACE("non existent name, non recursive mode");
+        findNSEC3Check(false, www_name.getLabelCount(), apex_nsec3_text, "",
+                       zone_finder_.findNSEC3(www_name, false));
+    }
+
+    // Non existent name.  The closest provable encloser is the apex,
+    // and next closer is the query name itself (which NSEC3 for ns1
+    // covers)
+    // H(ns1) = 2T... < H(xxx) = Q0... < H(zzz) = R5...
+    {
+        SCOPED_TRACE("non existent name, recursive mode");
+        findNSEC3Check(true, origin_.getLabelCount(), apex_nsec3_text,
+                       ns1_nsec3_text,
+                       zone_finder_.findNSEC3(Name("xxx.example.org"), true));
+    }
+
+    // Similar to the previous case, but next closer name is different
+    // from the query name.  The closet encloser is w.example.org, and
+    // next closer is y.w.example.org.
+    // H(ns1) = 2T.. < H(y.w) = K8.. < H(zzz) = R5
+    {
+        SCOPED_TRACE("non existent name, non qname next closer");
+        findNSEC3Check(true, Name("w.example.org").getLabelCount(),
+                       w_nsec3_text, ns1_nsec3_text,
+                       zone_finder_.findNSEC3(Name("x.y.w.example.org"),
+                                              true));
+    }
+
+    // In the rest of test we check hash comparison for wrap around cases.
+    {
+        SCOPED_TRACE("very small hash");
+        const Name smallest_name("smallest.example.org");
+        findNSEC3Check(false, smallest_name.getLabelCount(),
+                       zzz_nsec3_text, "",
+                       zone_finder_.findNSEC3(smallest_name, false));
+    }
+    {
+        SCOPED_TRACE("very large hash");
+        const Name largest_name("largest.example.org");
+        findNSEC3Check(false, largest_name.getLabelCount(),
+                       zzz_nsec3_text, "",
+                       zone_finder_.findNSEC3(largest_name, false));
+    }
+#endif
 }
 
 }
