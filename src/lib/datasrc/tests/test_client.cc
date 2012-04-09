@@ -65,8 +65,8 @@ createSQLite3Client(RRClass zclass, const Name& zname,
                     const char* const db_file, istream& rr_stream)
 {
     // We always begin with an empty template SQLite3 DB file and install
-    // the zone data from the zone file to ensure both cases have the
-    // same test data.
+    // the zone data from the zone file to ensure that the data source contains
+    // the exact given data, and only that data.
     const char* const install_cmd_prefix = INSTALL_PROG " " TEST_DATA_DIR
         "/rwtest.sqlite3 ";
     const string install_cmd = string(install_cmd_prefix) + db_file;
