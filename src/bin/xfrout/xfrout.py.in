@@ -755,6 +755,9 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
             socket.inet_pton(socket.AF_INET6, peer[0])
         except socket.error:
             family = socket.AF_INET
+
+        sock.close()
+
         return (family, socket.SOCK_STREAM, peer)
 
     def finish_request(self, sock_fd, request_data):
@@ -799,8 +802,10 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
             sock = socket.socket(socket.AF_UNIX)
             sock.connect(sock_file)
         except socket.error as err:
+            sock.close()
             return False
         else:
+            sock.close()
             return True
 
     def shutdown(self):
