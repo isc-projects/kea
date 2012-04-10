@@ -1333,7 +1333,7 @@ checkRRset(isc::dns::ConstRRsetPtr rrset,
     isc::testutils::rrsetCheck(expected_rrset, rrset);
 }
 
-// Iterate through a zone
+// Iterate through a zone, common case
 TYPED_TEST(DatabaseClientTest, iterator) {
     ZoneIteratorPtr it(this->client_->getIterator(Name("example.org")));
     ConstRRsetPtr rrset(it->getNextRRset());
@@ -1341,71 +1341,100 @@ TYPED_TEST(DatabaseClientTest, iterator) {
 
     // The first name should be the zone origin.
     EXPECT_EQ(this->zname_, rrset->getName());
+}
 
-    // The rest of the checks work only for the mock accessor.
-    if (!this->is_mock_) {
-        return;
+// Supplemental structure used in the couple of tests below.  It represents
+// parameters of an expected RRset containing up to two RDATAs.  If it contains
+// only one RDATA, rdata2 is NULL.
+struct ExpectedRRset {
+    const char* const name;
+    const RRType rrtype;
+    const RRTTL rrttl;
+    const char* const rdata1;
+    const char* const rdata2;
+};
+
+// Common checker for the iterator tests below.  It extracts RRsets from the
+// give iterator and compare them to the expected sequence.
+void
+checkIteratorSequence(ZoneIterator& it, ExpectedRRset expected_sequence[],
+                      size_t num_rrsets)
+{
+    vector<string> expected_rdatas;
+    for (size_t i = 0; i < num_rrsets; ++i) {
+        const ConstRRsetPtr rrset = it.getNextRRset();
+        ASSERT_TRUE(rrset);
+
+        expected_rdatas.clear();
+        expected_rdatas.push_back(expected_sequence[i].rdata1);
+        if (expected_sequence[i].rdata2 != NULL) {
+            expected_rdatas.push_back(expected_sequence[i].rdata2);
+        }
+        checkRRset(rrset, Name(expected_sequence[i].name), RRClass::IN(),
+                   expected_sequence[i].rrtype, expected_sequence[i].rrttl,
+                   expected_rdatas);
     }
+    EXPECT_FALSE(it.getNextRRset());
+}
 
-    this->expected_rdatas_.clear();
-    this->expected_rdatas_.push_back("192.0.2.1");
-    checkRRset(rrset, Name("example.org"), this->qclass_, RRType::A(),
-               this->rrttl_, this->expected_rdatas_);
+TEST_F(MockDatabaseClientTest, iterator) {
+    // This version of test creates an iterator that combines same types of
+    // RRs into single RRsets.
+    ExpectedRRset expected_sequence[] = {
+        {"example.org", RRType::A(), rrttl_, "192.0.2.1", NULL},
+        {"example.org", RRType::SOA(), rrttl_,
+         "ns1.example.org. admin.example.org. 1234 3600 1800 2419200 7200",
+         NULL},
+        {"x.example.org", RRType::A(), RRTTL(300), "192.0.2.1", "192.0.2.2"},
+        {"x.example.org", RRType::AAAA(), RRTTL(300),
+         "2001:db8::1", "2001:db8::2"},
+        {"x.example.org", RRType::RRSIG(), RRTTL(300),
+         "A 5 3 3600 20000101000000 20000201000000 12345 example.org. "
+         "FAKEFAKEFAKE", NULL},
+        {"x.example.org", RRType::RRSIG(), RRTTL(300),
+         "AAAA 5 3 3600 20000101000000 20000201000000 12345 example.org. "
+         "FAKEFAKEFAKEFAKE", NULL},
+        {"ttldiff.example.org", RRType::A(), RRTTL(300),
+         "192.0.2.1", "192.0.2.2"},
+        {"ttldiff2.example.org", RRType::AAAA(), RRTTL(300),
+         "2001:db8::1", "2001:db8::2"}
+    };
+    checkIteratorSequence(*client_->getIterator(Name("example.org")),
+                          expected_sequence,
+                          sizeof(expected_sequence) /
+                          sizeof(expected_sequence[0]));
+}
 
-    rrset = it->getNextRRset();
-    this->expected_rdatas_.clear();
-    this->expected_rdatas_.push_back("ns1.example.org. admin.example.org. "
-                                     "1234 3600 1800 2419200 7200");
-    checkRRset(rrset, Name("example.org"), this->qclass_, RRType::SOA(),
-               this->rrttl_, this->expected_rdatas_);
-
-    rrset = it->getNextRRset();
-    this->expected_rdatas_.clear();
-    this->expected_rdatas_.push_back("192.0.2.1");
-    this->expected_rdatas_.push_back("192.0.2.2");
-    checkRRset(rrset, Name("x.example.org"), this->qclass_, RRType::A(),
-               RRTTL(300), this->expected_rdatas_);
-
-    rrset = it->getNextRRset();
-    this->expected_rdatas_.clear();
-    this->expected_rdatas_.push_back("2001:db8::1");
-    this->expected_rdatas_.push_back("2001:db8::2");
-    checkRRset(rrset, Name("x.example.org"), this->qclass_, RRType::AAAA(),
-               RRTTL(300), this->expected_rdatas_);
-
-    rrset = it->getNextRRset();
-    this->expected_rdatas_.clear();
-    this->expected_rdatas_.push_back(
-        "A 5 3 3600 20000101000000 20000201000000 "
-        "12345 example.org. FAKEFAKEFAKE");
-    checkRRset(rrset, Name("x.example.org"), this->qclass_, RRType::RRSIG(),
-               RRTTL(300), this->expected_rdatas_);
-
-    rrset = it->getNextRRset();
-    this->expected_rdatas_.clear();
-    this->expected_rdatas_.push_back(
-        "AAAA 5 3 3600 20000101000000 20000201000000 "
-        "12345 example.org. FAKEFAKEFAKEFAKE");
-    checkRRset(rrset, Name("x.example.org"), this->qclass_, RRType::RRSIG(),
-               RRTTL(300), this->expected_rdatas_);
-
-    rrset = it->getNextRRset();
-    ASSERT_NE(ConstRRsetPtr(), rrset);
-    this->expected_rdatas_.clear();
-    this->expected_rdatas_.push_back("192.0.2.1");
-    this->expected_rdatas_.push_back("192.0.2.2");
-    checkRRset(rrset, Name("ttldiff.example.org"), this->qclass_, RRType::A(),
-               RRTTL(300), this->expected_rdatas_);
-
-    rrset = it->getNextRRset();
-    ASSERT_NE(ConstRRsetPtr(), rrset);
-    this->expected_rdatas_.clear();
-    this->expected_rdatas_.push_back("2001:db8::1");
-    this->expected_rdatas_.push_back("2001:db8::2");
-    checkRRset(rrset, Name("ttldiff2.example.org"), this->qclass_,
-               RRType::AAAA(), RRTTL(300), this->expected_rdatas_);
-
-    EXPECT_EQ(ConstRRsetPtr(), it->getNextRRset());
+TEST_F(MockDatabaseClientTest, iteratorSeparateRRs) {
+    // This version of test creates an iterator that separates all RRs as
+    // individual RRsets.  In particular, it preserves the TTLs of an RRset
+    // even if they are different.
+    ExpectedRRset expected_sequence[] = {
+        {"example.org", RRType::A(), rrttl_, "192.0.2.1", NULL},
+        {"example.org", RRType::SOA(), rrttl_,
+         "ns1.example.org. admin.example.org. 1234 3600 1800 2419200 7200",
+         NULL},
+        {"x.example.org", RRType::A(), RRTTL(300), "192.0.2.1", NULL},
+        {"x.example.org", RRType::A(), RRTTL(300), "192.0.2.2", NULL},
+        {"x.example.org", RRType::AAAA(), RRTTL(300), "2001:db8::1", NULL},
+        {"x.example.org", RRType::AAAA(), RRTTL(300), "2001:db8::2", NULL},
+        {"x.example.org", RRType::RRSIG(), RRTTL(300),
+         "A 5 3 3600 20000101000000 20000201000000 12345 example.org. "
+         "FAKEFAKEFAKE", NULL},
+        {"x.example.org", RRType::RRSIG(), RRTTL(300),
+         "AAAA 5 3 3600 20000101000000 20000201000000 12345 example.org. "
+         "FAKEFAKEFAKEFAKE", NULL},
+        {"ttldiff.example.org", RRType::A(), RRTTL(300), "192.0.2.1", NULL},
+        {"ttldiff.example.org", RRType::A(), RRTTL(600), "192.0.2.2", NULL},
+        {"ttldiff2.example.org", RRType::AAAA(), RRTTL(600), "2001:db8::1",
+         NULL},
+        {"ttldiff2.example.org", RRType::AAAA(), RRTTL(300), "2001:db8::2",
+         NULL}
+    };
+    checkIteratorSequence(*client_->getIterator(Name("example.org"), true),
+                          expected_sequence,
+                          sizeof(expected_sequence) /
+                          sizeof(expected_sequence[0]));
 }
 
 // This has inconsistent TTL in the set (the rest, like nonsense in
