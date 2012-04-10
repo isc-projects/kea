@@ -684,7 +684,7 @@ class TestMultiConfigData(unittest.TestCase):
         self.mcd.set_specification(module_spec)
         spec_part = self.mcd.find_spec_part("Spec32/named_set_item")
         self.assertTrue(spec_part_is_named_set(spec_part))
-        
+
     def test_get_config_item_list_named_set(self):
         config_items = self.mcd.get_config_item_list()
         self.assertEqual([], config_items)
