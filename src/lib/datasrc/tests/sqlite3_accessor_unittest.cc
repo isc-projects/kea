@@ -792,18 +792,27 @@ TEST_F(SQLite3Update, rollback) {
     checkRecords(*accessor, zone_id, "foo.bar.example.com.", expected_stored);
 }
 
-// TODO: ticket #1845
-TEST_F(SQLite3Update,  DISABLED_rollbackFailure) {
+TEST_F(SQLite3Update,  rollbackFailure) {
     // This test emulates a rare scenario of making rollback attempt fail.
     // The iterator is paused in the middle of getting records, which prevents
     // the rollback operation at the end of the test.
 
+    // Since SQLite3 version 3.7.11, rollbacks do not fail on pending
+    // transactions anymore, making this test fail (and moot), but the
+    // transactions will fail after it, so, depending on version,
+    // we test whether that happens and is caught
     string columns[DatabaseAccessor::COLUMN_COUNT];
     iterator = accessor->getRecords("example.com.", zone_id);
     EXPECT_TRUE(iterator->getNext(columns));
 
     accessor->startUpdateZone("example.com.", true);
+#if SQLITE_VERSION_NUMBER < 3007011
     EXPECT_THROW(accessor->rollback(), DataSourceError);
+    EXPECT_NO_THROW(iterator->getNext(columns));
+#else
+    EXPECT_NO_THROW(accessor->rollback());
+    EXPECT_THROW(iterator->getNext(columns), DataSourceError);
+#endif
 }
 
 TEST_F(SQLite3Update, commitConflict) {
