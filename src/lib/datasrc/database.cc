@@ -911,7 +911,17 @@ DatabaseClient::Finder::findInternal(const Name& name, const RRType& type,
 }
 
 ZoneFinder::FindNSEC3Result
-DatabaseClient::Finder::findNSEC3(const Name&, bool) {
+DatabaseClient::Finder::findNSEC3(const Name& name, bool) {
+    // TODO: Some logging.
+
+    // First, validate the input
+    const NameComparisonResult cmp_result(name.compare(getOrigin()));
+    if (cmp_result.getRelation() != NameComparisonResult::EQUAL &&
+        cmp_result.getRelation() != NameComparisonResult::SUBDOMAIN) {
+        isc_throw(OutOfZone, "findNSEC3 attempt for out-of-zone name: " <<
+                  name << ", zone: " << getOrigin() << "/" << getClass());
+    }
+
     isc_throw(NotImplemented, "findNSEC3 is not yet implemented for database "
               "data source");
 }
