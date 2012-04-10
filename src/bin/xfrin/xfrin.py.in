@@ -1246,10 +1246,11 @@ class Xfrin:
     def __init__(self):
         self._max_transfers_in = 10
         self._zones = {}
-        # keep a separate list so we can more easily update either for now
-        # these are the zones that are served by the in-memory datasource,
-        # but transfers are handled by sqlite3
-        self._memory_zones = {}
+        # This is a set of (zone/class) tuples (both as strings),
+        # representing the in-memory zones maintaned by Xfrin. It
+        # is used to trigger Auth/in-memory so that it reloads
+        # zones when they have been transfered in
+        self._memory_zones = set()
         self._cc_setup()
         self.recorder = XfrinRecorder()
         self._shutdown_event = threading.Event()
@@ -1316,10 +1317,48 @@ class Xfrin:
 
         return create_answer(0)
 
-    def auth_config_handler(self, new_config, foo):
+    def auth_config_handler(self, new_config, config_data):
         # Config handler for changes in Auth configuration
-        print("[XX] Hi. XFRIN HERE. AUTH CONFIG UPDATE")
         self._set_db_file()
+        self._set_memory_zones(new_config, config_data)
+
+    def _clear_memory_zones(self):
+        """Clears the memory_zones set; called before processing the
+           changed list of memory datasource zones that have file type
+           sqlite3"""
+        self._memory_zones.clear()
+
+    def _is_memory_zone(self, zone_name_str, zone_class_str):
+        """Returns true if the given zone/class combination is configured
+           in the in-memory datasource of the Auth process with file type
+           'sqlite3'.
+        """
+        return (zone_name_str, zone_class_str) in self._memory_zones
+
+    def _add_memory_zone(self, zone_name_str, zone_class_str):
+        """Add the given zone and class to the internal list of zones
+           in memory datasources with file type 'sqlite3'"""
+        self._memory_zones.add((zone_name_str, zone_class_str))
+
+    def _set_memory_zones(self, new_config, config_data):
+        """Part of the auth_config_handler function, keeps an internal set
+           of zones in the datasources config subset that have 'sqlite3' as
+           their file type"""
+        if "datasources" in new_config:
+            self._clear_memory_zones()
+            for datasource in new_config["datasources"]:
+                if "class" in datasource:
+                    ds_class = datasource["class"]
+                else:
+                    # Get the default
+                    ds_class =\
+                        config_data.get_default_value("datasources/class")
+                if datasource["type"] == "memory":
+                    zones = []
+                    for zone in datasource["zones"]:
+                        if zone["filetype"] == "sqlite3":
+                            zone_name = zone["origin"]
+                            self._add_memory_zone(zone_name, ds_class)
 
     def shutdown(self):
         ''' shutdown the xfrin process. the thread which is doing xfrin should be
