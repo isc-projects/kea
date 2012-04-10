@@ -1011,12 +1011,8 @@ public:
         const RRType rtype(rtype_txt_);
         RRsetPtr rrset(new RRset(Name(name_txt_), class_, rtype,
                                  RRTTL(ttl_txt_)));
-        // For the first RR, rdata_ is null, so we need to create it here.
-        // After that, rdata_ will be updated in the while loop below.
-        if (!rdata_) {
-            rdata_ = rdata::createRdata(rtype, class_, rdata_txt_);
-        }
-        const ConstRdataPtr rdata_base = rdata_; // remember it for comparison
+        // Remember the first RDATA of the RRset for comparison:
+        const ConstRdataPtr rdata_base = rdata_;
         while (true) {
             // Extend the RRset with the new RDATA.
             rrset->addRdata(rdata_);
@@ -1030,13 +1026,11 @@ public:
             }
 
             // Check if the next record belongs to the same RRset.  If not,
-            // we are done.  The next RDATA is stored in rdata_, which is used
-            // within this loop (if it belongs to the same RRset) or in the
-            // next call.
-            const RRType next_rtype(rtype_txt_);
-            rdata_ = rdata::createRdata(next_rtype, class_, rdata_txt_);
+            // we are done.  The next RDATA has been stored in rdata_, which
+            // is used within this loop (if it belongs to the same RRset) or
+            // in the next call.
             if (Name(name_txt_) != rrset->getName() ||
-                !isSameType(rtype, rdata_base, next_rtype, rdata_)) {
+                !isSameType(rtype, rdata_base, RRType(rtype_txt_), rdata_)) {
                 break;
             }
 
@@ -1059,8 +1053,8 @@ private:
     // Check two RDATA types are equivalent.  Basically it's a trivial
     // comparison, but if both are of RRSIG, we should also compare the types
     // covered.
-    bool isSameType(RRType type1, ConstRdataPtr rdata1,
-                    RRType type2, ConstRdataPtr rdata2)
+    static bool isSameType(RRType type1, ConstRdataPtr rdata1,
+                           RRType type2, ConstRdataPtr rdata2)
     {
         if (type1 != type2) {
             return (false);
@@ -1077,10 +1071,13 @@ private:
     void getData() {
         string data[DatabaseAccessor::COLUMN_COUNT];
         data_ready_ = context_->getNext(data);
-        name_txt_ = data[DatabaseAccessor::NAME_COLUMN];
-        rtype_txt_ = data[DatabaseAccessor::TYPE_COLUMN];
-        ttl_txt_ = data[DatabaseAccessor::TTL_COLUMN];
-        rdata_txt_= data[DatabaseAccessor::RDATA_COLUMN];
+        if (data_ready_) {
+            name_txt_ = data[DatabaseAccessor::NAME_COLUMN];
+            rtype_txt_ = data[DatabaseAccessor::TYPE_COLUMN];
+            ttl_txt_ = data[DatabaseAccessor::TTL_COLUMN];
+            rdata_ = rdata::createRdata(RRType(rtype_txt_), class_,
+                                        data[DatabaseAccessor::RDATA_COLUMN]);
+        }
     }
 
     // The dedicated accessor
@@ -1094,12 +1091,12 @@ private:
     // Status
     bool ready_, data_ready_;
     // Data of the next row
-    string name_txt_, rtype_txt_, rdata_txt_, ttl_txt_;
-    // RDATA of the next row; created from rdata_txt_.
+    string name_txt_, rtype_txt_, ttl_txt_;
+    // RDATA of the next row
     ConstRdataPtr rdata_;
     // Whether to modify differing TTL values, or treat a different TTL as
     // a different RRset
-    bool separate_rrs_;
+    const bool separate_rrs_;
 };
 
 }
