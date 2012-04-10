@@ -177,6 +177,9 @@ class TestForwarder(unittest.TestCase):
             client_sock.setblocking(True)
             client_sock.settimeout(10)
             self.assertEqual(TEST_DATA, client_sock.recv(len(TEST_DATA)))
+            client_sock.close()
+
+        sock.close()
 
     def test_push_and_pop(self):
         # This is a straightforward port of C++ pushAndPop test.
