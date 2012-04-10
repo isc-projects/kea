@@ -2577,6 +2577,76 @@ class TestXfrin(unittest.TestCase):
         self.common_ixfr_setup('refresh', False)
         self.assertEqual(RRType.AXFR(), self.xfr.xfrin_started_request_type)
 
+    def test_memory_zones(self):
+        # Configuration snippet containing 2 memory datasources,
+        # one for IN and one for CH. Both contain a zone 'example.com'
+        # the IN ds also contains a zone example2.com, and a zone example3.com,
+        # which is of file type 'text' (and hence, should be ignored)
+        config = { 'datasources': [
+                     { 'type': 'memory',
+                       'class': 'IN',
+                       'zones': [
+                         { 'origin': 'example.com',
+                           'filetype': 'sqlite3' },
+                         { 'origin': 'example2.com',
+                           'filetype': 'sqlite3' },
+                         { 'origin': 'example3.com',
+                           'filetype': 'text' }
+                       ]
+                     },
+                     { 'type': 'memory',
+                       'class': 'CH',
+                       'zones': [
+                         { 'origin': 'example.com',
+                           'filetype': 'sqlite3' }
+                       ]
+                     }
+                 ] }
+
+        self.assertFalse(self.xfr._is_memory_zone("example.com", "IN"))
+        self.assertFalse(self.xfr._is_memory_zone("example2.com", "IN"))
+        self.assertFalse(self.xfr._is_memory_zone("example3.com", "IN"))
+        self.assertFalse(self.xfr._is_memory_zone("example.com", "CH"))
+
+        # add them all
+        self.xfr._set_memory_zones(config, None)
+        self.assertTrue(self.xfr._is_memory_zone("example.com", "IN"))
+        self.assertTrue(self.xfr._is_memory_zone("example2.com", "IN"))
+        self.assertFalse(self.xfr._is_memory_zone("example3.com", "IN"))
+        self.assertTrue(self.xfr._is_memory_zone("example.com", "CH"))
+
+        # Remove the CH data source from the config snippet, and update
+        del config['datasources'][1]
+        self.xfr._set_memory_zones(config, None)
+        self.assertTrue(self.xfr._is_memory_zone("example.com", "IN"))
+        self.assertTrue(self.xfr._is_memory_zone("example2.com", "IN"))
+        self.assertFalse(self.xfr._is_memory_zone("example3.com", "IN"))
+        self.assertFalse(self.xfr._is_memory_zone("example.com", "CH"))
+
+        # Remove example2.com from the datasource, and update
+        del config['datasources'][0]['zones'][1]
+        self.xfr._set_memory_zones(config, None)
+        self.assertTrue(self.xfr._is_memory_zone("example.com", "IN"))
+        self.assertFalse(self.xfr._is_memory_zone("example2.com", "IN"))
+        self.assertFalse(self.xfr._is_memory_zone("example3.com", "IN"))
+        self.assertFalse(self.xfr._is_memory_zone("example.com", "CH"))
+
+        # If 'datasources' is not in the config update list (i.e. its config
+        # has not changed), no difference should be found
+        self.xfr._set_memory_zones({}, None)
+        self.assertTrue(self.xfr._is_memory_zone("example.com", "IN"))
+        self.assertFalse(self.xfr._is_memory_zone("example2.com", "IN"))
+        self.assertFalse(self.xfr._is_memory_zone("example3.com", "IN"))
+        self.assertFalse(self.xfr._is_memory_zone("example.com", "CH"))
+
+        # If datasources list becomes empty, everything should be removed
+        config['datasources'][0]['zones'] = []
+        self.xfr._set_memory_zones(config, None)
+        self.assertFalse(self.xfr._is_memory_zone("example.com", "IN"))
+        self.assertFalse(self.xfr._is_memory_zone("example2.com", "IN"))
+        self.assertFalse(self.xfr._is_memory_zone("example3.com", "IN"))
+        self.assertFalse(self.xfr._is_memory_zone("example.com", "CH"))
+
 def raise_interrupt():
     raise KeyboardInterrupt()
 
