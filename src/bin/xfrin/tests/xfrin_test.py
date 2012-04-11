@@ -2634,8 +2634,8 @@ class TextXfrinMemoryZones(unittest.TestCase):
         self.assertFalse(self.xfr._is_memory_zone("example3.com", "IN"))
         self.assertFalse(self.xfr._is_memory_zone("example.com", "CH"))
 
-        # If 'datasources' is not in the self.config update list (i.e. its self.config
-        # has not changed), no difference should be found
+        # If 'datasources' is not in the self.config update list (i.e. its
+        # self.config has not changed), no difference should be found
         self.xfr._set_memory_zones({}, None)
         self.assertTrue(self.xfr._is_memory_zone("example.com", "IN"))
         self.assertFalse(self.xfr._is_memory_zone("example2.com", "IN"))
@@ -2657,7 +2657,7 @@ class TextXfrinMemoryZones(unittest.TestCase):
         self.assertTrue(self.xfr._is_memory_zone("EXAMPLE.com", "IN"))
         self.assertTrue(self.xfr._is_memory_zone("example2.com.", "IN"))
         self.assertTrue(self.xfr._is_memory_zone("example.com", "CLASS3"))
-        
+
     def test_bad_name(self):
         # First set it to some config
         self.xfr._set_memory_zones(self.config, None)
