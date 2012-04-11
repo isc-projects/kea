@@ -180,15 +180,17 @@ private:
 DatabaseClient::Finder::FoundRRsets
 DatabaseClient::Finder::getRRsets(const string& name, const WantedTypes& types,
                                   bool check_ns, const string* construct_name,
-                                  bool any)
+                                  bool any,
+                                  DatabaseAccessor::IteratorContextPtr context)
 {
     RRsigStore sig_store;
     bool records_found = false;
     std::map<RRType, RRsetPtr> result;
 
-    // Request the context
-    DatabaseAccessor::IteratorContextPtr
-        context(accessor_->getRecords(name, zone_id_));
+    // Request the context in case we didn't get one
+    if (!context) {
+        context = accessor_->getRecords(name, zone_id_);
+    }
     // It must not return NULL, that's a bug of the implementation
     if (!context) {
         isc_throw(isc::Unexpected, "Iterator context null at " + name);
@@ -319,6 +321,30 @@ namespace {
 // Bunch of functions to construct specific sets of RRTypes we will
 // ask from it.
 typedef std::set<RRType> WantedTypes;
+
+const WantedTypes&
+NSEC3_TYPES() {
+    static bool initialized(false);
+    static WantedTypes result;
+
+    if (!initialized) {
+        result.insert(RRType::NSEC3());
+        initialized = true;
+    }
+    return (result);
+}
+
+const WantedTypes&
+NSEC3PARAM_TYPES() {
+    static bool initialized(false);
+    static WantedTypes result;
+
+    if (!initialized) {
+        result.insert(RRType::NSEC3PARAM());
+        initialized = true;
+    }
+    return (result);
+}
 
 const WantedTypes&
 NSEC_TYPES() {
@@ -928,8 +954,11 @@ DatabaseClient::Finder::findNSEC3(const Name& name, bool) {
     // Now, we need to get the NSEC3 params from the apex and create the hash
     // creator for it.
 
-    ZoneFinderContextPtr nsec3param(find(getOrigin(), RRType::NSEC3PARAM()));
-    if (nsec3param->code != SUCCESS) { // No NSEC3 params? :-(
+    const FoundRRsets nsec3param(getRRsets(getOrigin().toText(),
+                                 NSEC3PARAM_TYPES(), false));
+    const FoundIterator param(nsec3param.second.find(RRType::NSEC3PARAM()));
+    if (!nsec3param.first || param == nsec3param.second.end()) {
+        // No NSEC3 params? :-(
         isc_throw(DataSourceError, "findNSEC3 attempt for non NSEC3 signed " <<
                   "zone: " << getOrigin() << "/" << getClass());
     }
@@ -938,24 +967,20 @@ DatabaseClient::Finder::findNSEC3(const Name& name, bool) {
     // the hash calculator class from it.
     const scoped_ptr<NSEC3Hash> calculator(NSEC3Hash::create(
         dynamic_cast<const generic::NSEC3PARAM&>(
-            nsec3param->rrset->getRdataIterator()->getCurrent())));
+            param->second->getRdataIterator()->getCurrent())));
 
     // Compute the hash and find the corresponding NSEC3
     const string hash(calculator->calculate(name));
     DatabaseAccessor::IteratorContextPtr
         context(accessor_->getNSEC3Records(hash, zone_id_));
 
-    // We store the data here
-    string columns[DatabaseAccessor::COLUMN_COUNT];
-    // TODO: Stop assuming the data is there. This is temporary, just for this
-    // commit.
-    context->getNext(columns);
-    RRsetPtr result(new RRset(Name(hash).concatenate(getOrigin()), getClass(),
-                              RRType::NSEC3(),
-                              RRTTL(columns[DatabaseAccessor::TTL_COLUMN])));
-    result->addRdata(generic::NSEC3(columns[DatabaseAccessor::RDATA_COLUMN]));
+    const FoundRRsets nsec3(getRRsets(hash + "." + getOrigin().toText(),
+                                      NSEC3_TYPES(), false, NULL, false,
+                                      context));
+
     // Return an expected exact match for now
-    return (FindNSEC3Result(true, name.getLabelCount(), result,
+    return (FindNSEC3Result(true, name.getLabelCount(),
+                            nsec3.second.find(RRType::NSEC3())->second,
                             ConstRRsetPtr()));
 }
 
