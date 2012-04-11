@@ -4,10 +4,16 @@ Feature: default bind10 config
     Scenario: Check that only the default components are running
     Given I have bind10 running with configuration default.config
 
+    And wait for bind10 stderr message STATS_STARTING
+    And wait for bind10 stderr message STATHTTPD_STARTED
+
+    # These should be running
     bind10 module Boss should be running
     bind10 module Logging should be running
     bind10 module Stats should be running
     bind10 module StatsHttpd should be running
+
+    # These should not be running
     bind10 module Resolver should not be running
     bind10 module Xfrout should not be running
     bind10 module Zonemgr should not be running

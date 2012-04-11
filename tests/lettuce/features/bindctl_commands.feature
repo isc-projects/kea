@@ -10,6 +10,13 @@ Feature: control with bindctl
     # currently less standardized than 'help')
     Given I have bind10 running with configuration example.org.config
 
+    And wait for bind10 stderr message ZONEMGR_STARTED
+    And wait for bind10 stderr message AUTH_SERVER_STARTED
+    And wait for bind10 stderr message XFRIN_STARTED
+    And wait for bind10 stderr message XFROUT_STARTED
+    And wait for bind10 stderr message STATS_STARTING
+    And wait for bind10 stderr message STATHTTPD_STARTED
+
     Then remove bind10 configuration Boss/components/NOSUCHMODULE
     last bindctl output should contain Error
 
@@ -21,14 +28,25 @@ Feature: control with bindctl
     bind10 module StatsHttpd should be running
 
     Then remove bind10 configuration Boss/components value b10-xfrout
+    And wait for new bind10 stderr message BIND10_PROCESS_ENDED
     last bindctl output should not contain Error
     # assuming it won't error for further modules (if it does, the final
     # 'should not be running' tests would fail anyway)
     Then remove bind10 configuration Boss/components value b10-stats-httpd
+    And wait for new bind10 stderr message BIND10_PROCESS_ENDED
+    last bindctl output should not contain Error
     Then remove bind10 configuration Boss/components value b10-stats
+    And wait for new bind10 stderr message BIND10_PROCESS_ENDED
+    last bindctl output should not contain Error
     Then remove bind10 configuration Boss/components value b10-zonemgr
+    And wait for new bind10 stderr message BIND10_PROCESS_ENDED
+    last bindctl output should not contain Error
     Then remove bind10 configuration Boss/components value b10-xfrin
+    And wait for new bind10 stderr message BIND10_PROCESS_ENDED
+    last bindctl output should not contain Error
     Then remove bind10 configuration Boss/components value b10-auth
+    And wait for new bind10 stderr message BIND10_PROCESS_ENDED
+    last bindctl output should not contain Error
 
     bind10 module Xfrout should not be running
     bind10 module Zonemgr should not be running
