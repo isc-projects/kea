@@ -3,7 +3,8 @@ Feature: default bind10 config
 
     Scenario: Check that only the default components are running
     Given I have bind10 running with configuration default.config
-
+    And wait for bind10 stderr message BIND10_STARTED_CC
+    And wait for bind10 stderr message CMDCTL_STARTED
     And wait for bind10 stderr message STATS_STARTING
     And wait for bind10 stderr message STATHTTPD_STARTED
 

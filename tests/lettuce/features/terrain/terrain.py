@@ -42,6 +42,8 @@ import time
 # The first element is the original, the second is the target that will be
 # used by the tests that need them
 copylist = [
+    ["configurations/bindctl_commands.config.orig",
+     "configurations/bindctl_commands.config"],
     ["configurations/example.org.config.orig",
      "configurations/example.org.config"],
     ["configurations/resolver/resolver_basic.config.orig",
