@@ -1,3 +1,15 @@
+423.	[bug]		jinmei
+	The database based zone iterator now correctly resets mixed TTLs
+	of the same RRset (when that happens) to the lowest one.  The
+	previous implementation could miss lower ones if it appears in a
+	later part of the RRset.
+	(part of Trac #1791, git f1f0bc00441057e7050241415ee0367a09c35032)
+
+422.	[bug]		jinmei
+	The database based zone iterator now separates RRSIGs of the same
+	name and type but for different covered types.
+	(part of Trac #1791, git b4466188150a50872bc3c426242bc7bba4c5f38d)
+
 421.	[build]		jinmei
 	Made sure BIND 10 can be built with clang++ 3.1.  (It failed on
 	MacOS 10.7 using Xcode 4.3, but it's more likely to be a matter of
