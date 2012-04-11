@@ -133,6 +133,10 @@ be a result of rare local error such as memory allocation failure and
 shouldn't happen under normal conditions. The error is included in the
 log message.
 
+% XFROUT_STARTED xfrout started
+This informational message is output by xfrout when all initialization
+has been completed and it is entering its main loop.
+
 % XFROUT_STOPPED_BY_KEYBOARD keyboard interrupt, shutting down
 There was a keyboard interrupt signal to stop the xfrout daemon. The
 daemon will now shut down.

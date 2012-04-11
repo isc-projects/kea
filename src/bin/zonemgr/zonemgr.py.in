@@ -657,6 +657,7 @@ class Zonemgr:
         return answer
 
     def run(self):
+        logger.info(ZONEMGR_STARTED)
         self.running = True
         try:
             while not self._shutdown_event.is_set():
