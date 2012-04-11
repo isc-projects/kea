@@ -1270,7 +1270,7 @@ class Xfrin:
         config_data = self._module_cc.get_full_config()
         self.config_handler(config_data)
         self._module_cc.add_remote_config(AUTH_SPECFILE_LOCATION,
-                                          self.auth_config_handler)
+                                          self._auth_config_handler)
 
     def _cc_check_command(self):
         '''This is a straightforward wrapper for cc.check_command,
@@ -1317,7 +1317,7 @@ class Xfrin:
 
         return create_answer(0)
 
-    def auth_config_handler(self, new_config, config_data):
+    def _auth_config_handler(self, new_config, config_data):
         # Config handler for changes in Auth configuration
         self._set_db_file()
         self._set_memory_zones(new_config, config_data)
@@ -1333,6 +1333,13 @@ class Xfrin:
            in the in-memory datasource of the Auth process with file type
            'sqlite3'.
         """
+        # Normalize them first, if either conversion fails, return false
+        # (they won't be in the set anyway)
+        try:
+            zone_name_str = Name(zone_name_str).to_text().lower()
+            zone_class_str = RRClass(zone_class_str).to_text()
+        except Exception:
+            return False
         return (zone_name_str, zone_class_str) in self._memory_zones
 
     def _add_memory_zone(self, zone_name_str, zone_class_str):
@@ -1341,24 +1348,39 @@ class Xfrin:
         self._memory_zones.add((zone_name_str, zone_class_str))
 
     def _set_memory_zones(self, new_config, config_data):
-        """Part of the auth_config_handler function, keeps an internal set
+        """Part of the _auth_config_handler function, keeps an internal set
            of zones in the datasources config subset that have 'sqlite3' as
            their file type"""
-        if "datasources" in new_config:
-            self._clear_memory_zones()
-            for datasource in new_config["datasources"]:
-                if "class" in datasource:
-                    ds_class = datasource["class"]
-                else:
-                    # Get the default
-                    ds_class =\
-                        config_data.get_default_value("datasources/class")
-                if datasource["type"] == "memory":
-                    zones = []
-                    for zone in datasource["zones"]:
-                        if zone["filetype"] == "sqlite3":
-                            zone_name = zone["origin"]
-                            self._add_memory_zone(zone_name, ds_class)
+        # walk through the data and collect the memory zones
+        # If this causes any exception, assume we were passed bad data
+        # and keep the original set
+        new_memory_zones = set()
+        try:
+            if "datasources" in new_config:
+                for datasource in new_config["datasources"]:
+                    if "class" in datasource:
+                        ds_class = RRClass(datasource["class"])
+                    else:
+                        # Get the default
+                        ds_class = RRClass(config_data.get_default_value(
+                                               "datasources/class"))
+                    if datasource["type"] == "memory":
+                        for zone in datasource["zones"]:
+                            if "filetype" in zone and \
+                               zone["filetype"] == "sqlite3":
+                                zone_name = Name(zone["origin"])
+                                zone_name_str = zone_name.to_text().lower()
+                                new_memory_zones.add((zone_name_str,
+                                                      ds_class.to_text()))
+                # Ok, we can use the data, update our list
+                self._clear_memory_zones()
+                for zone_str, class_str in new_memory_zones:
+                    self._add_memory_zone(zone_str, class_str)
+        except Exception as eee:
+            # Something is wrong with the data. If this data even reached us,
+            # we cannot do more than assume the real module has logged and
+            # reported an error. Keep the old set.
+            return
 
     def shutdown(self):
         ''' shutdown the xfrin process. the thread which is doing xfrin should be
@@ -1503,9 +1525,8 @@ class Xfrin:
         db_file, is_default =\
             self._module_cc.get_remote_config_value("Auth", "database_file")
         if is_default and "B10_FROM_BUILD" in os.environ:
-            # this too should be unnecessary, but currently the
-            # 'from build' override isn't stored in the config
-            # (and we don't have writable datasources yet)
+            # override the local database setting if it is default and we
+            # are running from the source tree
             db_file = os.environ["B10_FROM_BUILD"] + os.sep +\
                       "bind10_zones.sqlite3"
         self._db_file = db_file
