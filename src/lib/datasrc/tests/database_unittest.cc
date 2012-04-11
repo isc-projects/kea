@@ -2292,11 +2292,18 @@ TYPED_TEST(DatabaseClientTest, wildcardNXRRSET_NSEC) {
                Name("*.wild.example.org"), ZoneFinder::FIND_DNSSEC);
 }
 
-TYPED_TEST(DatabaseClientTest, dbNegativeCaseFind) {
-    // ZoneFinder::find() for negative cases should show whether the zone is
-    // signed with NSEC or NSEC3, that is good for upper layer caller.
+TYPED_TEST(DatabaseClientTest, nsec3FlagFindDB) {
+    // ZoneFinder::find() for negative cases and wildcard cases should check
+    // whether the zone is signed with NSEC or NSEC3. If it is signed with
+    // NSEC3, RESULT_NSEC3_SIGNED flag should be returned. That is good for
+    // upper layer caller.
 
-    // First off, everything should be okay if no NSEC3PARAM rrset
+    // First off, everything should be okay if no NSEC3PARAM rrset. If
+    // NSEC3PARAM RRset doesn't exist and NSEC RRset exist at apex, it looks
+    // like signed with NSEC, and the RESULT_NSEC_SIGNED flag should be return.
+
+    // Check NXDOMAIN case in NSEC signed zone, and RESULT_NSEC_SIGNED flag
+    // should be returned to upper layer caller.
     this->expected_rdatas_.clear();
     this->expected_sig_rdatas_.clear();
     this->expected_rdatas_.push_back("www2.example.org. A AAAA NSEC RRSIG");
@@ -2309,6 +2316,9 @@ TYPED_TEST(DatabaseClientTest, dbNegativeCaseFind) {
                ZoneFinder::NXDOMAIN, this->expected_rdatas_,
                this->expected_sig_rdatas_, ZoneFinder::RESULT_NSEC_SIGNED,
                Name("www.example.org."), ZoneFinder::FIND_DNSSEC);
+
+    // Check NXRRSET case in NSEC signed zone, and RESULT_NSEC_SIGNED flag
+    // should be return.
     this->expected_rdatas_.clear();
     this->expected_sig_rdatas_.clear();
     this->expected_rdatas_.push_back("www2.example.org. A AAAA NSEC RRSIG");
@@ -2316,11 +2326,12 @@ TYPED_TEST(DatabaseClientTest, dbNegativeCaseFind) {
                                          "20000201000000 12345 example.org. "
                                          "FAKEFAKEFAKE");
     doFindTest(*finder, isc::dns::Name("www.example.org."),
-               isc::dns::RRType::TXT(), isc::dns::RRType::NSEC(),
-               this->rrttl_, ZoneFinder::NXRRSET,
-               this->expected_rdatas_, this->expected_sig_rdatas_,
-               ZoneFinder::RESULT_NSEC_SIGNED, isc::dns::Name::ROOT_NAME(),
-               ZoneFinder::FIND_DNSSEC);
+               isc::dns::RRType::TXT(), isc::dns::RRType::NSEC(), this->rrttl_,
+               ZoneFinder::NXRRSET, this->expected_rdatas_,
+               this->expected_sig_rdatas_, ZoneFinder::RESULT_NSEC_SIGNED,
+               isc::dns::Name::ROOT_NAME(), ZoneFinder::FIND_DNSSEC);
+
+    // Check wildcase cases, and the RESULT_NSEC_SIGNED should be return.
     this->expected_rdatas_.clear();
     this->expected_sig_rdatas_.clear();
     this->expected_rdatas_.push_back("192.0.2.5");
@@ -2346,26 +2357,10 @@ TYPED_TEST(DatabaseClientTest, dbNegativeCaseFind) {
                this->expected_sig_rdatas_,
                (ZoneFinder::RESULT_WILDCARD | ZoneFinder::RESULT_NSEC_SIGNED),
                Name("*.wild.example.org"), ZoneFinder::FIND_DNSSEC);
-    this->updater_ = this->client_->getUpdater(this->zname_, false);
-    this->rrset_.reset(new RRset(this->zname_, this->qclass_,
-                       isc::dns::RRType::NSEC3PARAM(), this->rrttl_));
-    this->rrset_->addRdata(rdata::createRdata(isc::dns::RRType::NSEC3PARAM(), 
-                           this->rrset_->getClass(), "1 0 12 aabbccdd"));
-    this->updater_->addRRset(*this->rrset_);
-    this->updater_->commit();
-    try {
-        this->expected_rdatas_.clear();
-        this->expected_sig_rdatas_.clear();
-        doFindTest(this->updater_->getFinder(), Name("www1.example.org."),
-                   this->qtype_, this->qtype_, this->rrttl_,
-                   ZoneFinder::NXDOMAIN, this->expected_rdatas_,
-                   this->expected_sig_rdatas_, ZoneFinder::RESULT_NSEC3_SIGNED,
-                   Name::ROOT_NAME(), ZoneFinder::FIND_DNSSEC);
-    } catch (const DataSourceError&) {}
-    // The following test should be tested in zone which is signed by NSEC3
-#if 0
-    // Then, if NSEC3PARAM exists at the origin, the flags of result should
+
+    // Then, if NSEC3PARAM exists at the apex, the flags of result should
     // contain RESULT_NSEC3_SIGNED flag when NXDOMAIN NXRRSET or wildcard
+    // cases.
 
     // Add NSEC3PARAM RRSET at the apex of the zone. It looks weird if the
     // zone only has NSEC3PARM RRset (but no NSEC3s), but it is okay for unit
@@ -2377,23 +2372,27 @@ TYPED_TEST(DatabaseClientTest, dbNegativeCaseFind) {
                                               this->rrset_->getClass(),
                                               "1 0 12 aabbccdd"));
     this->updater_->addRRset(*this->rrset_);
-    // check NXDOMAIN
+
+    // check NXDOMAIN, it should set RESULT_NSEC3_SIGNED in the flags.
     this->expected_rdatas_.clear();
     this->expected_sig_rdatas_.clear();
-    doFindTest(this->updater_->getFinder(),
-            isc::dns::Name("www1.example.org."), this->qtype_, this->qtype_, 
-            this->rrttl_, ZoneFinder::NXDOMAIN, this->expected_rdatas_,
-            this->expected_sig_rdatas_, ZoneFinder::RESULT_NSEC3_SIGNED,
-            isc::dns::Name::ROOT_NAME(), ZoneFinder::FIND_DNSSEC);
-    // check NXRRSET
+    doFindTest(this->updater_->getFinder(), Name("www1.example.org."),
+            this->qtype_, this->qtype_, this->rrttl_, ZoneFinder::NXDOMAIN,
+            this->expected_rdatas_, this->expected_sig_rdatas_,
+            ZoneFinder::RESULT_NSEC3_SIGNED,Name::ROOT_NAME(),
+            ZoneFinder::FIND_DNSSEC);
+
+    // check NXRRSET, it should set RESULT_NSEC3_SIGNED in the flags.
     this->expected_rdatas_.clear();
     this->expected_sig_rdatas_.clear();
     doFindTest(this->updater_->getFinder(), Name("www.example.org."),
                RRType::TXT(), RRType::TXT(), this->rrttl_,
                ZoneFinder::NXRRSET, this->expected_rdatas_,
                this->expected_sig_rdatas_, ZoneFinder::RESULT_NSEC3_SIGNED,
-               isc::dns::Name::ROOT_NAME(), ZoneFinder::FIND_DNSSEC);
-    // check flags if wildcard matches
+               Name::ROOT_NAME(), ZoneFinder::FIND_DNSSEC);
+
+    // check flags if wildcard matches, it should set RESULT_NSEC3_SIGNED in
+    // the flags.
     this->expected_rdatas_.push_back("192.0.2.5");
     this->expected_sig_rdatas_.push_back("A 5 3 3600 20000101000000 "
                                          "20000201000000 12345 example.org. "
@@ -2403,16 +2402,17 @@ TYPED_TEST(DatabaseClientTest, dbNegativeCaseFind) {
                this->expected_rdatas_, this->expected_sig_rdatas_,
                ZoneFinder::RESULT_WILDCARD | ZoneFinder::RESULT_NSEC3_SIGNED,
                Name::ROOT_NAME(), ZoneFinder::FIND_DNSSEC);
-    // check flags if NXRRSET in wildcard case
+
+    // check flags if NXRRSET in wildcard case, it should set
+    // RESULT_NSEC3_SIGNED in the flags.
     this->expected_rdatas_.clear();
     this->expected_sig_rdatas_.clear();
     doFindTest(this->updater_->getFinder(), Name("b.a.wild.example.org"),
                RRType::TXT(), RRType::TXT(), this->rrttl_,
                ZoneFinder::NXRRSET, this->expected_rdatas_,
                this->empty_rdatas_, (ZoneFinder::RESULT_WILDCARD |
-                                     ZoneFinder::RESULT_NSEC3_SIGNED),
-               Name::ROOT_NAME(), ZoneFinder::FIND_DNSSEC);
-#endif
+               ZoneFinder::RESULT_NSEC3_SIGNED), Name::ROOT_NAME(),
+               ZoneFinder::FIND_DNSSEC);
 }
 
 TYPED_TEST(DatabaseClientTest, NXDOMAIN_NSEC) {
@@ -2444,14 +2444,17 @@ TYPED_TEST(DatabaseClientTest, NXDOMAIN_NSEC) {
     if (!this->is_mock_) {
         return; // We don't make the real DB to throw
     }
-    EXPECT_NO_THROW(doFindTest(*finder,
+    // If the zone is signed with NSEC, find function should throw an error
+    // when no NSEC RRset for NXDOMAIN case.
+    EXPECT_THROW(doFindTest(*finder,
                                isc::dns::Name("notimplnsec.example.org."),
                                isc::dns::RRType::TXT(),
                                isc::dns::RRType::NSEC(), this->rrttl_,
                                ZoneFinder::NXDOMAIN, this->empty_rdatas_,
                                this->empty_rdatas_,
                                ZoneFinder::RESULT_DEFAULT,
-                               Name::ROOT_NAME(), ZoneFinder::FIND_DNSSEC));
+                               Name::ROOT_NAME(), ZoneFinder::FIND_DNSSEC),
+                 DataSourceError);
 }
 
 TYPED_TEST(DatabaseClientTest, emptyNonterminalNSEC) {
@@ -2471,14 +2474,17 @@ TYPED_TEST(DatabaseClientTest, emptyNonterminalNSEC) {
     if (!this->is_mock_) {
         return; // We don't make the real DB to throw
     }
-    EXPECT_NO_THROW(doFindTest(*finder,
+    // If the zone is signed with NSEC, find function should throw an error
+    // when no NSEC RRset for NXRRset case
+    EXPECT_THROW(doFindTest(*finder,
                                isc::dns::Name("here.wild.example.org."),
                                isc::dns::RRType::TXT(),
                                isc::dns::RRType::NSEC(),
                                this->rrttl_, ZoneFinder::NXRRSET,
                                this->empty_rdatas_, this->empty_rdatas_,
                                ZoneFinder::RESULT_DEFAULT,
-                               Name::ROOT_NAME(), ZoneFinder::FIND_DNSSEC));
+                               Name::ROOT_NAME(), ZoneFinder::FIND_DNSSEC),
+                 DataSourceError);
 }
 
 TYPED_TEST(DatabaseClientTest, anyFromFind) {
