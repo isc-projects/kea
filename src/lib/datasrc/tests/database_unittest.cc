@@ -12,13 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <stdlib.h>
-
-#include <boost/shared_ptr.hpp>
-#include <boost/lexical_cast.hpp>
-
-#include <gtest/gtest.h>
-
 #include <exceptions/exceptions.h>
 
 #include <dns/name.h>
@@ -34,6 +27,12 @@
 
 #include <testutils/dnsmessage_test.h>
 
+#include <gtest/gtest.h>
+
+#include <boost/shared_ptr.hpp>
+#include <boost/lexical_cast.hpp>
+
+#include <cstdlib>
 #include <map>
 #include <vector>
 
@@ -206,7 +205,7 @@ const char* const TEST_RECORDS[][5] = {
 };
 
 // FIXME: Taken from a different test. Fill with proper data when creating a test.
-const char* TEST_NSEC3_RECORDS[][5] = {
+const char* const TEST_NSEC3_RECORDS[][5] = {
     {"1BB7SO0452U1QHL98UISNDD9218GELR5", "NSEC3", "3600", "", "1 0 10 FEEDABEE 4KLSVDE8KH8G95VU68R7AHBE1CPQN38J"},
     {"1BB7SO0452U1QHL98UISNDD9218GELR5", "RRSIG", "3600", "", "NSEC3 5 4 7200 20100410172647 20100311172647 63192 example.org. gNIVj4T8t51fEU6kOPpvK7HOGBFZGbalN5ZK mInyrww6UWZsUNdw07ge6/U6HfG+/s61RZ/L is2M6yUWHyXbNbj/QqwqgadG5dhxTArfuR02 xP600x0fWX8LXzW4yLMdKVxGbzYT+vvGz71o 8gHSY5vYTtothcZQa4BMKhmGQEk="},
     {NULL, NULL, NULL, NULL, NULL}
