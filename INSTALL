@@ -1,4 +1,4 @@
-f using git (not the tarball), build the "configure" file:
+If using git (not the tarball), build the "configure" file:
     autoreconf --install
 
 To then build from source:
