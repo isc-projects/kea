@@ -501,62 +501,46 @@ private:
             }
 
             // Return faked data for tests
-            switch (step ++) {
-                case 0:
-                    data[DatabaseAccessor::NAME_COLUMN] = "example.org";
-                    data[DatabaseAccessor::TYPE_COLUMN] = "A";
-                    data[DatabaseAccessor::TTL_COLUMN] = "3600";
-                    data[DatabaseAccessor::RDATA_COLUMN] = "192.0.2.1";
-                    return (true);
-                case 1:
-                    data[DatabaseAccessor::NAME_COLUMN] = "example.org";
-                    data[DatabaseAccessor::TYPE_COLUMN] = "SOA";
-                    data[DatabaseAccessor::TTL_COLUMN] = "3600";
-                    data[DatabaseAccessor::RDATA_COLUMN] = "ns1.example.org. admin.example.org. "
-                        "1234 3600 1800 2419200 7200";
-                    return (true);
-                case 2:
-                    data[DatabaseAccessor::NAME_COLUMN] = "x.example.org";
-                    data[DatabaseAccessor::TYPE_COLUMN] = "A";
-                    data[DatabaseAccessor::TTL_COLUMN] = "300";
-                    data[DatabaseAccessor::RDATA_COLUMN] = "192.0.2.1";
-                    return (true);
-                case 3:
-                    data[DatabaseAccessor::NAME_COLUMN] = "x.example.org";
-                    data[DatabaseAccessor::TYPE_COLUMN] = "A";
-                    data[DatabaseAccessor::TTL_COLUMN] = "300";
-                    data[DatabaseAccessor::RDATA_COLUMN] = "192.0.2.2";
-                    return (true);
-                case 4:
-                    data[DatabaseAccessor::NAME_COLUMN] = "x.example.org";
-                    data[DatabaseAccessor::TYPE_COLUMN] = "AAAA";
-                    data[DatabaseAccessor::TTL_COLUMN] = "300";
-                    data[DatabaseAccessor::RDATA_COLUMN] = "2001:db8::1";
-                    return (true);
-                case 5:
-                    data[DatabaseAccessor::NAME_COLUMN] = "x.example.org";
-                    data[DatabaseAccessor::TYPE_COLUMN] = "AAAA";
-                    data[DatabaseAccessor::TTL_COLUMN] = "300";
-                    data[DatabaseAccessor::RDATA_COLUMN] = "2001:db8::2";
-                    return (true);
-                case 6:
-                    data[DatabaseAccessor::NAME_COLUMN] = "ttldiff.example.org";
-                    data[DatabaseAccessor::TYPE_COLUMN] = "A";
-                    data[DatabaseAccessor::TTL_COLUMN] = "300";
-                    data[DatabaseAccessor::RDATA_COLUMN] = "192.0.2.1";
-                    return (true);
-                case 7:
-                    data[DatabaseAccessor::NAME_COLUMN] = "ttldiff.example.org";
-                    data[DatabaseAccessor::TYPE_COLUMN] = "A";
-                    data[DatabaseAccessor::TTL_COLUMN] = "600";
-                    data[DatabaseAccessor::RDATA_COLUMN] = "192.0.2.2";
-                    return (true);
-                default:
-                    ADD_FAILURE() <<
-                        "Request past the end of iterator context";
-                case 8:
-                    return (false);
+            // This is the sequence of zone data in the order of appearance
+            // in the returned sequence from this iterator.
+            typedef const char* ColumnText[4];
+            const ColumnText zone_data[] = {
+                // A couple of basic RRs at the zone origin.
+                {"example.org", "A", "3600", "192.0.2.1"},
+                {"example.org", "SOA", "3600", "ns1.example.org. "
+                 "admin.example.org. 1234 3600 1800 2419200 7200"},
+                // RRsets sharing the same owner name with multiple RRs.
+                {"x.example.org", "A", "300", "192.0.2.1"},
+                {"x.example.org", "A", "300", "192.0.2.2"},
+                {"x.example.org", "AAAA", "300", "2001:db8::1"},
+                {"x.example.org", "AAAA", "300", "2001:db8::2"},
+                // RRSIGs.  Covered types are different and these two should
+                // be distinguished.
+                {"x.example.org", "RRSIG", "300",
+                 "A 5 3 3600 20000101000000 20000201000000 12345 "
+                 "example.org. FAKEFAKEFAKE"},
+                {"x.example.org", "RRSIG", "300",
+                 "AAAA 5 3 3600 20000101000000 20000201000000 12345 "
+                 "example.org. FAKEFAKEFAKEFAKE"},
+                // Mixture of different TTLs.  Covering both cases of small
+                // then large and large then small.  In either case the smaller
+                // TTL should win.
+                {"ttldiff.example.org", "A", "300", "192.0.2.1"},
+                {"ttldiff.example.org", "A", "600", "192.0.2.2"},
+                {"ttldiff2.example.org", "AAAA", "600", "2001:db8::1"},
+                {"ttldiff2.example.org", "AAAA", "300", "2001:db8::2"}};
+            const size_t num_rrs = sizeof(zone_data) / sizeof(zone_data[0]);
+            if (step > num_rrs) {
+                ADD_FAILURE() << "Request past the end of iterator context";
+            } else if (step < num_rrs) {
+                data[DatabaseAccessor::NAME_COLUMN] = zone_data[step][0];
+                data[DatabaseAccessor::TYPE_COLUMN] = zone_data[step][1];
+                data[DatabaseAccessor::TTL_COLUMN] = zone_data[step][2];
+                data[DatabaseAccessor::RDATA_COLUMN] = zone_data[step][3];
+                ++step;
+                return (true);
             }
+            return (false);
         }
     };
     class EmptyIteratorContext : public IteratorContext {
@@ -1349,7 +1333,7 @@ checkRRset(isc::dns::ConstRRsetPtr rrset,
     isc::testutils::rrsetCheck(expected_rrset, rrset);
 }
 
-// Iterate through a zone
+// Iterate through a zone, common case
 TYPED_TEST(DatabaseClientTest, iterator) {
     ZoneIteratorPtr it(this->client_->getIterator(Name("example.org")));
     ConstRRsetPtr rrset(it->getNextRRset());
@@ -1357,47 +1341,100 @@ TYPED_TEST(DatabaseClientTest, iterator) {
 
     // The first name should be the zone origin.
     EXPECT_EQ(this->zname_, rrset->getName());
+}
 
-    // The rest of the checks work only for the mock accessor.
-    if (!this->is_mock_) {
-        return;
+// Supplemental structure used in the couple of tests below.  It represents
+// parameters of an expected RRset containing up to two RDATAs.  If it contains
+// only one RDATA, rdata2 is NULL.
+struct ExpectedRRset {
+    const char* const name;
+    const RRType rrtype;
+    const RRTTL rrttl;
+    const char* const rdata1;
+    const char* const rdata2;
+};
+
+// Common checker for the iterator tests below.  It extracts RRsets from the
+// give iterator and compare them to the expected sequence.
+void
+checkIteratorSequence(ZoneIterator& it, ExpectedRRset expected_sequence[],
+                      size_t num_rrsets)
+{
+    vector<string> expected_rdatas;
+    for (size_t i = 0; i < num_rrsets; ++i) {
+        const ConstRRsetPtr rrset = it.getNextRRset();
+        ASSERT_TRUE(rrset);
+
+        expected_rdatas.clear();
+        expected_rdatas.push_back(expected_sequence[i].rdata1);
+        if (expected_sequence[i].rdata2 != NULL) {
+            expected_rdatas.push_back(expected_sequence[i].rdata2);
+        }
+        checkRRset(rrset, Name(expected_sequence[i].name), RRClass::IN(),
+                   expected_sequence[i].rrtype, expected_sequence[i].rrttl,
+                   expected_rdatas);
     }
+    EXPECT_FALSE(it.getNextRRset());
+}
 
-    this->expected_rdatas_.clear();
-    this->expected_rdatas_.push_back("192.0.2.1");
-    checkRRset(rrset, Name("example.org"), this->qclass_, RRType::A(),
-               this->rrttl_, this->expected_rdatas_);
+TEST_F(MockDatabaseClientTest, iterator) {
+    // This version of test creates an iterator that combines same types of
+    // RRs into single RRsets.
+    ExpectedRRset expected_sequence[] = {
+        {"example.org", RRType::A(), rrttl_, "192.0.2.1", NULL},
+        {"example.org", RRType::SOA(), rrttl_,
+         "ns1.example.org. admin.example.org. 1234 3600 1800 2419200 7200",
+         NULL},
+        {"x.example.org", RRType::A(), RRTTL(300), "192.0.2.1", "192.0.2.2"},
+        {"x.example.org", RRType::AAAA(), RRTTL(300),
+         "2001:db8::1", "2001:db8::2"},
+        {"x.example.org", RRType::RRSIG(), RRTTL(300),
+         "A 5 3 3600 20000101000000 20000201000000 12345 example.org. "
+         "FAKEFAKEFAKE", NULL},
+        {"x.example.org", RRType::RRSIG(), RRTTL(300),
+         "AAAA 5 3 3600 20000101000000 20000201000000 12345 example.org. "
+         "FAKEFAKEFAKEFAKE", NULL},
+        {"ttldiff.example.org", RRType::A(), RRTTL(300),
+         "192.0.2.1", "192.0.2.2"},
+        {"ttldiff2.example.org", RRType::AAAA(), RRTTL(300),
+         "2001:db8::1", "2001:db8::2"}
+    };
+    checkIteratorSequence(*client_->getIterator(Name("example.org")),
+                          expected_sequence,
+                          sizeof(expected_sequence) /
+                          sizeof(expected_sequence[0]));
+}
 
-    rrset = it->getNextRRset();
-    this->expected_rdatas_.clear();
-    this->expected_rdatas_.push_back("ns1.example.org. admin.example.org. "
-                                     "1234 3600 1800 2419200 7200");
-    checkRRset(rrset, Name("example.org"), this->qclass_, RRType::SOA(),
-               this->rrttl_, this->expected_rdatas_);
-
-    rrset = it->getNextRRset();
-    this->expected_rdatas_.clear();
-    this->expected_rdatas_.push_back("192.0.2.1");
-    this->expected_rdatas_.push_back("192.0.2.2");
-    checkRRset(rrset, Name("x.example.org"), this->qclass_, RRType::A(),
-               RRTTL(300), this->expected_rdatas_);
-
-    rrset = it->getNextRRset();
-    this->expected_rdatas_.clear();
-    this->expected_rdatas_.push_back("2001:db8::1");
-    this->expected_rdatas_.push_back("2001:db8::2");
-    checkRRset(rrset, Name("x.example.org"), this->qclass_, RRType::AAAA(),
-               RRTTL(300), this->expected_rdatas_);
-
-    rrset = it->getNextRRset();
-    ASSERT_NE(ConstRRsetPtr(), rrset);
-    this->expected_rdatas_.clear();
-    this->expected_rdatas_.push_back("192.0.2.1");
-    this->expected_rdatas_.push_back("192.0.2.2");
-    checkRRset(rrset, Name("ttldiff.example.org"), this->qclass_, RRType::A(),
-               RRTTL(300), this->expected_rdatas_);
-
-    EXPECT_EQ(ConstRRsetPtr(), it->getNextRRset());
+TEST_F(MockDatabaseClientTest, iteratorSeparateRRs) {
+    // This version of test creates an iterator that separates all RRs as
+    // individual RRsets.  In particular, it preserves the TTLs of an RRset
+    // even if they are different.
+    ExpectedRRset expected_sequence[] = {
+        {"example.org", RRType::A(), rrttl_, "192.0.2.1", NULL},
+        {"example.org", RRType::SOA(), rrttl_,
+         "ns1.example.org. admin.example.org. 1234 3600 1800 2419200 7200",
+         NULL},
+        {"x.example.org", RRType::A(), RRTTL(300), "192.0.2.1", NULL},
+        {"x.example.org", RRType::A(), RRTTL(300), "192.0.2.2", NULL},
+        {"x.example.org", RRType::AAAA(), RRTTL(300), "2001:db8::1", NULL},
+        {"x.example.org", RRType::AAAA(), RRTTL(300), "2001:db8::2", NULL},
+        {"x.example.org", RRType::RRSIG(), RRTTL(300),
+         "A 5 3 3600 20000101000000 20000201000000 12345 example.org. "
+         "FAKEFAKEFAKE", NULL},
+        {"x.example.org", RRType::RRSIG(), RRTTL(300),
+         "AAAA 5 3 3600 20000101000000 20000201000000 12345 example.org. "
+         "FAKEFAKEFAKEFAKE", NULL},
+        {"ttldiff.example.org", RRType::A(), RRTTL(300), "192.0.2.1", NULL},
+        {"ttldiff.example.org", RRType::A(), RRTTL(600), "192.0.2.2", NULL},
+        {"ttldiff2.example.org", RRType::AAAA(), RRTTL(600), "2001:db8::1",
+         NULL},
+        {"ttldiff2.example.org", RRType::AAAA(), RRTTL(300), "2001:db8::2",
+         NULL}
+    };
+    checkIteratorSequence(*client_->getIterator(Name("example.org"), true),
+                          expected_sequence,
+                          sizeof(expected_sequence) /
+                          sizeof(expected_sequence[0]));
 }
 
 // This has inconsistent TTL in the set (the rest, like nonsense in

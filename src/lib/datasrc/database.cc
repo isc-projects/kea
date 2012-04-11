@@ -1005,27 +1005,43 @@ public:
             // At the end of zone
             accessor_->commit();
             ready_ = false;
-            LOG_DEBUG(logger, DBG_TRACE_DETAILED,
-                      DATASRC_DATABASE_ITERATE_END);
+            LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_DATABASE_ITERATE_END);
             return (ConstRRsetPtr());
         }
-        const string name_str(name_), rtype_str(rtype_), ttl(ttl_);
-        const Name name(name_str);
-        const RRType rtype(rtype_str);
-        RRsetPtr rrset(new RRset(name, class_, rtype, RRTTL(ttl)));
-        while (data_ready_ && name_ == name_str && rtype_str == rtype_) {
-            if (ttl_ != ttl) {
-                if (ttl < ttl_) {
-                    ttl_ = ttl;
-                    rrset->setTTL(RRTTL(ttl));
+        const RRType rtype(rtype_txt_);
+        RRsetPtr rrset(new RRset(Name(name_txt_), class_, rtype,
+                                 RRTTL(ttl_txt_)));
+        // Remember the first RDATA of the RRset for comparison:
+        const ConstRdataPtr rdata_base = rdata_;
+        while (true) {
+            // Extend the RRset with the new RDATA.
+            rrset->addRdata(rdata_);
+
+            // Retrieve the next record from the database.  If we reach the
+            // end of the zone, done; if we were requested to separate all RRs,
+            // just remember this record and return the single RR.
+            getData();
+            if (separate_rrs_ || !data_ready_) {
+                break;
+            }
+
+            // Check if the next record belongs to the same RRset.  If not,
+            // we are done.  The next RDATA has been stored in rdata_, which
+            // is used within this loop (if it belongs to the same RRset) or
+            // in the next call.
+            if (Name(name_txt_) != rrset->getName() ||
+                !isSameType(rtype, rdata_base, RRType(rtype_txt_), rdata_)) {
+                break;
+            }
+
+            // Adjust TTL if necessary
+            const RRTTL next_ttl(ttl_txt_);
+            if (next_ttl != rrset->getTTL()) {
+                if (next_ttl < rrset->getTTL()) {
+                    rrset->setTTL(next_ttl);
                 }
                 LOG_WARN(logger, DATASRC_DATABASE_ITERATE_TTL_MISMATCH).
-                    arg(name_).arg(class_).arg(rtype_).arg(rrset->getTTL());
-            }
-            rrset->addRdata(rdata::createRdata(rtype, class_, rdata_));
-            getData();
-            if (separate_rrs_) {
-                break;
+                    arg(name_txt_).arg(class_).arg(rtype).arg(rrset->getTTL());
             }
         }
         LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_DATABASE_ITERATE_NEXT).
@@ -1034,14 +1050,34 @@ public:
     }
 
 private:
+    // Check two RDATA types are equivalent.  Basically it's a trivial
+    // comparison, but if both are of RRSIG, we should also compare the types
+    // covered.
+    static bool isSameType(RRType type1, ConstRdataPtr rdata1,
+                           RRType type2, ConstRdataPtr rdata2)
+    {
+        if (type1 != type2) {
+            return (false);
+        }
+        if (type1 == RRType::RRSIG()) {
+            return (dynamic_cast<const generic::RRSIG&>(*rdata1).typeCovered()
+                    == dynamic_cast<const generic::RRSIG&>(*rdata2).
+                    typeCovered());
+        }
+        return (true);
+    }
+
     // Load next row of data
     void getData() {
         string data[DatabaseAccessor::COLUMN_COUNT];
         data_ready_ = context_->getNext(data);
-        name_ = data[DatabaseAccessor::NAME_COLUMN];
-        rtype_ = data[DatabaseAccessor::TYPE_COLUMN];
-        ttl_ = data[DatabaseAccessor::TTL_COLUMN];
-        rdata_ = data[DatabaseAccessor::RDATA_COLUMN];
+        if (data_ready_) {
+            name_txt_ = data[DatabaseAccessor::NAME_COLUMN];
+            rtype_txt_ = data[DatabaseAccessor::TYPE_COLUMN];
+            ttl_txt_ = data[DatabaseAccessor::TTL_COLUMN];
+            rdata_ = rdata::createRdata(RRType(rtype_txt_), class_,
+                                        data[DatabaseAccessor::RDATA_COLUMN]);
+        }
     }
 
     // The dedicated accessor
@@ -1055,10 +1091,12 @@ private:
     // Status
     bool ready_, data_ready_;
     // Data of the next row
-    string name_, rtype_, rdata_, ttl_;
+    string name_txt_, rtype_txt_, ttl_txt_;
+    // RDATA of the next row
+    ConstRdataPtr rdata_;
     // Whether to modify differing TTL values, or treat a different TTL as
     // a different RRset
-    bool separate_rrs_;
+    const bool separate_rrs_;
 };
 
 }
