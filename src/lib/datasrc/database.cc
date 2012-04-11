@@ -27,15 +27,18 @@
 #include <dns/rrset.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
+#include <dns/nsec3hash.h>
 
 #include <datasrc/data_source.h>
 #include <datasrc/logger.h>
 
 #include <boost/foreach.hpp>
+#include <boost/scoped_ptr.hpp>
 
 using namespace isc::dns;
 using namespace std;
 using namespace isc::dns::rdata;
+using namespace boost;
 
 namespace isc {
 namespace datasrc {
@@ -922,8 +925,38 @@ DatabaseClient::Finder::findNSEC3(const Name& name, bool) {
                   name << ", zone: " << getOrigin() << "/" << getClass());
     }
 
-    isc_throw(NotImplemented, "findNSEC3 is not yet implemented for database "
-              "data source");
+    // Now, we need to get the NSEC3 params from the apex and create the hash
+    // creator for it.
+
+    ZoneFinderContextPtr nsec3param(find(getOrigin(), RRType::NSEC3PARAM()));
+    if (nsec3param->code != SUCCESS) { // No NSEC3 params? :-(
+        isc_throw(DataSourceError, "findNSEC3 attempt for non NSEC3 signed " <<
+                  "zone: " << getOrigin() << "/" << getClass());
+    }
+    // This takes the RRset received from the find method, takes the first RR
+    // in it, casts it to NSEC3PARAM (as it should be that one) and then creates
+    // the hash calculator class from it.
+    const scoped_ptr<NSEC3Hash> calculator(NSEC3Hash::create(
+        dynamic_cast<const generic::NSEC3PARAM&>(
+            nsec3param->rrset->getRdataIterator()->getCurrent())));
+
+    // Compute the hash and find the corresponding NSEC3
+    const string hash(calculator->calculate(name));
+    DatabaseAccessor::IteratorContextPtr
+        context(accessor_->getNSEC3Records(hash, zone_id_));
+
+    // We store the data here
+    string columns[DatabaseAccessor::COLUMN_COUNT];
+    // TODO: Stop assuming the data is there. This is temporary, just for this
+    // commit.
+    context->getNext(columns);
+    RRsetPtr result(new RRset(Name(hash).concatenate(getOrigin()), getClass(),
+                              RRType::NSEC3(),
+                              RRTTL(columns[DatabaseAccessor::TTL_COLUMN])));
+    result->addRdata(generic::NSEC3(columns[DatabaseAccessor::RDATA_COLUMN]));
+    // Return an expected exact match for now
+    return (FindNSEC3Result(true, name.getLabelCount(), result,
+                            ConstRRsetPtr()));
 }
 
 Name
