@@ -15,6 +15,7 @@ Feature: Querying feature
 	And bind10 module Zonemgr should not be running
 	And bind10 module Xfrin should not be running
 	And bind10 module Stats should not be running
+	And bind10 module StatsHttpd should not be running
 
         A query for www.example.org should have rcode NOERROR
         The last query response should have flags qr aa rd
@@ -82,6 +83,7 @@ Feature: Querying feature
 	And bind10 module Zonemgr should not be running
 	And bind10 module Xfrin should not be running
 	And bind10 module Stats should not be running
+	And bind10 module StatsHttpd should not be running
 
         A query for example.org type ANY should have rcode NOERROR
         The last query response should have flags qr aa rd
