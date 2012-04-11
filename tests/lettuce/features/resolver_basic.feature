@@ -21,6 +21,7 @@ Feature: Basic Resolver
 	And bind10 module Zonemgr should not be running
 	And bind10 module Xfrin should not be running
 	And bind10 module Stats should not be running
+	And bind10 module StatsHttpd should not be running
 
         # The ACL is set to reject any queries
         A query for l.root-servers.net. should have rcode REFUSED

@@ -15,6 +15,7 @@ Feature: Multiple instances
 	And bind10 module Zonemgr should not be running
 	And bind10 module Xfrin should not be running
 	And bind10 module Stats should not be running
+	And bind10 module StatsHttpd should not be running
 
         A query for example.com should have rcode REFUSED
 
