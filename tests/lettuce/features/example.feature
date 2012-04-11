@@ -13,6 +13,11 @@ Feature: Example feature
         And wait for bind10 stderr message AUTH_SERVER_STARTED
 
         bind10 module Auth should be running
+        And bind10 module Resolver should not be running
+	And bind10 module Xfrout should not be running
+	And bind10 module Zonemgr should not be running
+	And bind10 module Xfrin should not be running
+	And bind10 module Stats should not be running
 
         A query for www.example.org should have rcode NOERROR
         A query for www.doesnotexist.org should have rcode REFUSED
@@ -38,6 +43,11 @@ Feature: Example feature
         And wait for bind10 stderr message AUTH_SERVER_STARTED
 
         bind10 module Auth should be running
+        And bind10 module Resolver should not be running
+	And bind10 module Xfrout should not be running
+	And bind10 module Zonemgr should not be running
+	And bind10 module Xfrin should not be running
+	And bind10 module Stats should not be running
 
         # This is a general step to stop a named process. By convention,
         # the default name for any process is the same as the one we
@@ -65,6 +75,11 @@ Feature: Example feature
         And wait for bind10 stderr message AUTH_SERVER_STARTED
 
         bind10 module Auth should be running
+        And bind10 module Resolver should not be running
+	And bind10 module Xfrout should not be running
+	And bind10 module Zonemgr should not be running
+	And bind10 module Xfrin should not be running
+	And bind10 module Stats should not be running
 
         # Some simple queries that is not examined further
         A query for www.example.com should have rcode REFUSED
@@ -133,6 +148,11 @@ Feature: Example feature
         And wait for bind10 stderr message AUTH_SERVER_STARTED
 
         bind10 module Auth should be running
+        And bind10 module Resolver should not be running
+	And bind10 module Xfrout should not be running
+	And bind10 module Zonemgr should not be running
+	And bind10 module Xfrin should not be running
+	And bind10 module Stats should not be running
 
         A query for www.example.org should have rcode NOERROR
         Wait for new bind10 stderr message AUTH_SEND_NORMAL_RESPONSE
@@ -150,13 +170,11 @@ Feature: Example feature
         And wait for bind10_one stderr message BIND10_STARTED_CC
         And wait for bind10_one stderr message CMDCTL_STARTED
         And wait for bind10_one stderr message AUTH_SERVER_STARTED
-        Then wait for bind10 auth of bind10_one to start
 
         And I start bind10 with configuration example2.org.config with cmdctl port 47804 as bind10_two
         And wait for bind10_two stderr message BIND10_STARTED_CC
         And wait for bind10_two stderr message CMDCTL_STARTED
         And wait for bind10_two stderr message AUTH_SERVER_STARTED
-        Then wait for bind10 auth of bind10_two to start
 
         A query for www.example.org to 127.0.0.1:47806 should have rcode NOERROR
         A query for www.example.org to [::1]:47807 should have rcode NOERROR

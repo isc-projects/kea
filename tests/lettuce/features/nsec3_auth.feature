@@ -12,6 +12,17 @@ Feature: NSEC3 Authoritative service
 
     Scenario: B.1. Name Error
         Given I have bind10 running with configuration nsec3/nsec3_auth.config
+        And wait for bind10 stderr message BIND10_STARTED_CC
+        And wait for bind10 stderr message CMDCTL_STARTED
+        And wait for bind10 stderr message AUTH_SERVER_STARTED
+
+        bind10 module Auth should be running
+        And bind10 module Resolver should not be running
+	And bind10 module Xfrout should not be running
+	And bind10 module Zonemgr should not be running
+	And bind10 module Xfrin should not be running
+	And bind10 module Stats should not be running
+
         A dnssec query for a.c.x.w.example. should have rcode NXDOMAIN
         The last query response should have flags qr aa rd
         The last query response should have edns_flags do
@@ -32,6 +43,17 @@ Feature: NSEC3 Authoritative service
 
     Scenario: B.2. No Data Error
         Given I have bind10 running with configuration nsec3/nsec3_auth.config
+        And wait for bind10 stderr message BIND10_STARTED_CC
+        And wait for bind10 stderr message CMDCTL_STARTED
+        And wait for bind10 stderr message AUTH_SERVER_STARTED
+
+        bind10 module Auth should be running
+        And bind10 module Resolver should not be running
+	And bind10 module Xfrout should not be running
+	And bind10 module Zonemgr should not be running
+	And bind10 module Xfrin should not be running
+	And bind10 module Stats should not be running
+
         A dnssec query for ns1.example. type MX should have rcode NOERROR
         The last query response should have flags qr aa rd
         The last query response should have edns_flags do
@@ -48,6 +70,17 @@ Feature: NSEC3 Authoritative service
 
     Scenario: B2.1. No Data Error, Empty Non-Terminal
         Given I have bind10 running with configuration nsec3/nsec3_auth.config
+        And wait for bind10 stderr message BIND10_STARTED_CC
+        And wait for bind10 stderr message CMDCTL_STARTED
+        And wait for bind10 stderr message AUTH_SERVER_STARTED
+
+        bind10 module Auth should be running
+        And bind10 module Resolver should not be running
+	And bind10 module Xfrout should not be running
+	And bind10 module Zonemgr should not be running
+	And bind10 module Xfrin should not be running
+	And bind10 module Stats should not be running
+
         A dnssec query for y.w.example. should have rcode NOERROR
         The last query response should have flags qr aa rd
         The last query response should have edns_flags do
@@ -64,6 +97,17 @@ Feature: NSEC3 Authoritative service
 
     Scenario: B.3. Referral to an Opt-Out Unsigned Zone
         Given I have bind10 running with configuration nsec3/nsec3_auth.config
+        And wait for bind10 stderr message BIND10_STARTED_CC
+        And wait for bind10 stderr message CMDCTL_STARTED
+        And wait for bind10 stderr message AUTH_SERVER_STARTED
+
+        bind10 module Auth should be running
+        And bind10 module Resolver should not be running
+	And bind10 module Xfrout should not be running
+	And bind10 module Zonemgr should not be running
+	And bind10 module Xfrin should not be running
+	And bind10 module Stats should not be running
+
         A dnssec query for mc.c.example. type MX should have rcode NOERROR
         The last query response should have flags qr rd
         The last query response should have edns_flags do
@@ -87,6 +131,17 @@ Feature: NSEC3 Authoritative service
 
     Scenario: B.4. Wildcard Expansion
         Given I have bind10 running with configuration nsec3/nsec3_auth.config
+        And wait for bind10 stderr message BIND10_STARTED_CC
+        And wait for bind10 stderr message CMDCTL_STARTED
+        And wait for bind10 stderr message AUTH_SERVER_STARTED
+
+        bind10 module Auth should be running
+        And bind10 module Resolver should not be running
+	And bind10 module Xfrout should not be running
+	And bind10 module Zonemgr should not be running
+	And bind10 module Xfrin should not be running
+	And bind10 module Stats should not be running
+
         A dnssec query for a.z.w.example. type MX should have rcode NOERROR
         The last query response should have flags qr aa rd
         The last query response should have edns_flags do
@@ -122,6 +177,17 @@ Feature: NSEC3 Authoritative service
 
     Scenario: B.5. Wildcard No Data Error
         Given I have bind10 running with configuration nsec3/nsec3_auth.config
+        And wait for bind10 stderr message BIND10_STARTED_CC
+        And wait for bind10 stderr message CMDCTL_STARTED
+        And wait for bind10 stderr message AUTH_SERVER_STARTED
+
+        bind10 module Auth should be running
+        And bind10 module Resolver should not be running
+	And bind10 module Xfrout should not be running
+	And bind10 module Zonemgr should not be running
+	And bind10 module Xfrin should not be running
+	And bind10 module Stats should not be running
+
         A dnssec query for a.z.w.example. type AAAA should have rcode NOERROR
         The last query response should have flags qr aa rd
         The last query response should have edns_flags do
@@ -142,6 +208,17 @@ Feature: NSEC3 Authoritative service
 
     Scenario: B.6. DS Child Zone No Data Error
         Given I have bind10 running with configuration nsec3/nsec3_auth.config
+        And wait for bind10 stderr message BIND10_STARTED_CC
+        And wait for bind10 stderr message CMDCTL_STARTED
+        And wait for bind10 stderr message AUTH_SERVER_STARTED
+
+        bind10 module Auth should be running
+        And bind10 module Resolver should not be running
+	And bind10 module Xfrout should not be running
+	And bind10 module Zonemgr should not be running
+	And bind10 module Xfrin should not be running
+	And bind10 module Stats should not be running
+
         A dnssec query for example. type DS should have rcode NOERROR
         The last query response should have flags qr aa rd
         The last query response should have edns_flags do
@@ -162,6 +239,17 @@ Feature: NSEC3 Authoritative service
 
     Scenario: 7.2.2 other; Name Error where one NSEC3 covers multiple parts of proof (closest encloser)
         Given I have bind10 running with configuration nsec3/nsec3_auth.config
+        And wait for bind10 stderr message BIND10_STARTED_CC
+        And wait for bind10 stderr message CMDCTL_STARTED
+        And wait for bind10 stderr message AUTH_SERVER_STARTED
+
+        bind10 module Auth should be running
+        And bind10 module Resolver should not be running
+	And bind10 module Xfrout should not be running
+	And bind10 module Zonemgr should not be running
+	And bind10 module Xfrin should not be running
+	And bind10 module Stats should not be running
+
         A dnssec query for b.x.w.example. should have rcode NXDOMAIN
         The last query response should have flags qr aa rd
         The last query response should have edns_flags do
@@ -180,6 +268,17 @@ Feature: NSEC3 Authoritative service
 
     Scenario: 7.2.2 other; Name Error where one NSEC3 covers multiple parts of proof (wildcard)
         Given I have bind10 running with configuration nsec3/nsec3_auth.config
+        And wait for bind10 stderr message BIND10_STARTED_CC
+        And wait for bind10 stderr message CMDCTL_STARTED
+        And wait for bind10 stderr message AUTH_SERVER_STARTED
+
+        bind10 module Auth should be running
+        And bind10 module Resolver should not be running
+	And bind10 module Xfrout should not be running
+	And bind10 module Zonemgr should not be running
+	And bind10 module Xfrin should not be running
+	And bind10 module Stats should not be running
+
         A dnssec query for a.w.example. should have rcode NOERROR
         The last query response should have flags qr aa rd
         The last query response should have edns_flags do
@@ -198,6 +297,17 @@ Feature: NSEC3 Authoritative service
 
     Scenario: Wildcard other: Wildcard name itself
         Given I have bind10 running with configuration nsec3/nsec3_auth.config
+        And wait for bind10 stderr message BIND10_STARTED_CC
+        And wait for bind10 stderr message CMDCTL_STARTED
+        And wait for bind10 stderr message AUTH_SERVER_STARTED
+
+        bind10 module Auth should be running
+        And bind10 module Resolver should not be running
+	And bind10 module Xfrout should not be running
+	And bind10 module Zonemgr should not be running
+	And bind10 module Xfrin should not be running
+	And bind10 module Stats should not be running
+
         A dnssec query for *.w.example. type MX should have rcode NOERROR
         The last query response should have flags qr aa rd
         The last query response should have edns_flags do
@@ -229,6 +339,17 @@ Feature: NSEC3 Authoritative service
 
     Scenario: Wildcard other: Wildcard name itself nodata
         Given I have bind10 running with configuration nsec3/nsec3_auth.config
+        And wait for bind10 stderr message BIND10_STARTED_CC
+        And wait for bind10 stderr message CMDCTL_STARTED
+        And wait for bind10 stderr message AUTH_SERVER_STARTED
+
+        bind10 module Auth should be running
+        And bind10 module Resolver should not be running
+	And bind10 module Xfrout should not be running
+	And bind10 module Zonemgr should not be running
+	And bind10 module Xfrin should not be running
+	And bind10 module Stats should not be running
+
         A dnssec query for *.w.example. type A should have rcode NOERROR
         The last query response should have flags qr aa rd
         The last query response should have edns_flags do
@@ -245,6 +366,17 @@ Feature: NSEC3 Authoritative service
 
     Scenario: Direct query for NSEC3 record
         Given I have bind10 running with configuration nsec3/nsec3_auth.config
+        And wait for bind10 stderr message BIND10_STARTED_CC
+        And wait for bind10 stderr message CMDCTL_STARTED
+        And wait for bind10 stderr message AUTH_SERVER_STARTED
+
+        bind10 module Auth should be running
+        And bind10 module Resolver should not be running
+	And bind10 module Xfrout should not be running
+	And bind10 module Zonemgr should not be running
+	And bind10 module Xfrin should not be running
+	And bind10 module Stats should not be running
+
         A dnssec query for 0p9mhaveqvm6t7vbl5lop2u3t2rp3tom.example. type NSEC3 should have rcode NXDOMAIN
         The last query response should have flags qr aa rd
         The last query response should have edns_flags do
@@ -265,6 +397,17 @@ Feature: NSEC3 Authoritative service
 
     Scenario: No data, type DS, in-zone
         Given I have bind10 running with configuration nsec3/nsec3_auth.config
+        And wait for bind10 stderr message BIND10_STARTED_CC
+        And wait for bind10 stderr message CMDCTL_STARTED
+        And wait for bind10 stderr message AUTH_SERVER_STARTED
+
+        bind10 module Auth should be running
+        And bind10 module Resolver should not be running
+	And bind10 module Xfrout should not be running
+	And bind10 module Zonemgr should not be running
+	And bind10 module Xfrin should not be running
+	And bind10 module Stats should not be running
+
         A dnssec query for ai.example. type DS should have rcode NOERROR
         The last query response should have flags qr aa rd
         The last query response should have edns_flags do
@@ -281,6 +424,17 @@ Feature: NSEC3 Authoritative service
 
     Scenario: No data, type DS, optout delegation
         Given I have bind10 running with configuration nsec3/nsec3_auth.config
+        And wait for bind10 stderr message BIND10_STARTED_CC
+        And wait for bind10 stderr message CMDCTL_STARTED
+        And wait for bind10 stderr message AUTH_SERVER_STARTED
+
+        bind10 module Auth should be running
+        And bind10 module Resolver should not be running
+	And bind10 module Xfrout should not be running
+	And bind10 module Zonemgr should not be running
+	And bind10 module Xfrin should not be running
+	And bind10 module Stats should not be running
+
         A dnssec query for c.example. type DS should have rcode NOERROR
         The last query response should have flags qr aa rd
         The last query response should have edns_flags do
