@@ -3575,14 +3575,18 @@ TEST_F(MockDatabaseClientTest, journalWithBadData) {
 TEST_F(MockDatabaseClientTest, findNSEC3) {
     // Set up the faked hash calculator.
     setNSEC3HashCreator(&test_nsec3_hash_creator_);
-    // And enable NSEC3 in the zone.
-    this->current_accessor_->enableNSEC3();
 
     DataSourceClient::FindResult
         zone(this->client_->findZone(Name("example.org")));
     ASSERT_EQ(result::SUCCESS, zone.code);
     boost::shared_ptr<DatabaseClient::Finder> finder(
         dynamic_pointer_cast<DatabaseClient::Finder>(zone.zone_finder));
+
+    // It'll complain if there is no NSEC3PARAM yet
+    EXPECT_THROW(finder->findNSEC3(Name("example.org"), false),
+                 DataSourceError);
+    // And enable NSEC3 in the zone.
+    this->current_accessor_->enableNSEC3();
 
     // Parameter validation: the query name must be in or below the zone
     EXPECT_THROW(finder->findNSEC3(Name("example.com"), false), OutOfZone);
