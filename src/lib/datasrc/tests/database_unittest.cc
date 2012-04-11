@@ -211,8 +211,8 @@ const char* const TEST_RECORDS[][5] = {
 
 // FIXME: Taken from a different test. Fill with proper data when creating a test.
 const char* TEST_NSEC3_RECORDS[][5] = {
-    {"1BB7SO0452U1QHL98UISNDD9218GELR5", "NSEC3", "3600", "", "1 0 10 FEEDABEE 4KLSVDE8KH8G95VU68R7AHBE1CPQN38J"},
-    {"1BB7SO0452U1QHL98UISNDD9218GELR5", "RRSIG", "3600", "", "NSEC3 5 4 7200 20100410172647 20100311172647 63192 example.org. gNIVj4T8t51fEU6kOPpvK7HOGBFZGbalN5ZK mInyrww6UWZsUNdw07ge6/U6HfG+/s61RZ/L is2M6yUWHyXbNbj/QqwqgadG5dhxTArfuR02 xP600x0fWX8LXzW4yLMdKVxGbzYT+vvGz71o 8gHSY5vYTtothcZQa4BMKhmGQEk="},
+    {"0P9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM", "NSEC3", "300", "", "1 1 12 AABBCCDD 2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A RRSIG"},
+    {"0P9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM", "RRSIG", "300", "", "NSEC3 5 4 7200 20100410172647 20100311172647 63192 example.org. gNIVj4T8t51fEU6kOPpvK7HOGBFZGbalN5ZK mInyrww6UWZsUNdw07ge6/U6HfG+/s61RZ/L is2M6yUWHyXbNbj/QqwqgadG5dhxTArfuR02 xP600x0fWX8LXzW4yLMdKVxGbzYT+vvGz71o 8gHSY5vYTtothcZQa4BMKhmGQEk="},
     {NULL, NULL, NULL, NULL, NULL}
 };
 
@@ -972,7 +972,7 @@ private:
              i = cur_name_.begin(); i != cur_name_.end(); ++ i) {
             i->push_back(hash);
         }
-        (*readonly_records_)[hash] = cur_name_;
+        nsec3_namespace_[hash] = cur_name_;
         cur_name_.clear();
     }
 
@@ -1009,6 +1009,31 @@ private:
                       TEST_NSEC3_RECORDS[i][3], TEST_NSEC3_RECORDS[i][4]);
         }
         addCurHash(prev_name);
+    }
+
+public:
+    // This adds the NSEC3PARAM into the apex, so we can perform some NSEC3
+    // tests. Note that the NSEC3 namespace is available in other tests, but
+    // it should not be accessed at that time.
+    void enableNSEC3() {
+        // We place the signature first, so it's in the block with the other
+        // signatures
+        vector<string> signature;
+        signature.push_back("RRSIG");
+        signature.push_back("3600");
+        signature.push_back("");
+        signature.push_back("NSEC3PARAM 5 3 3600 20000101000000 20000201000000 "
+                            "12345 example.org. FAKEFAKEFAKE");
+        signature.push_back("exmaple.org.");
+        (*readonly_records_)["example.org."].push_back(signature);
+        // Now the NSEC3 param itself
+        vector<string> param;
+        param.push_back("NSEC3PARAM");
+        param.push_back("3600");
+        param.push_back("");
+        param.push_back("1 0 12 aabbccdd");
+        param.push_back("example.org.");
+        (*readonly_records_)["example.org."].push_back(param);
     }
 };
 
@@ -3550,6 +3575,8 @@ TEST_F(MockDatabaseClientTest, journalWithBadData) {
 TEST_F(MockDatabaseClientTest, findNSEC3) {
     // Set up the faked hash calculator.
     setNSEC3HashCreator(&test_nsec3_hash_creator_);
+    // And enable NSEC3 in the zone.
+    this->current_accessor_->enableNSEC3();
 
     DataSourceClient::FindResult
         zone(this->client_->findZone(Name("example.org")));
