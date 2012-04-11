@@ -51,7 +51,7 @@ def wait_for_stderr_message(step, new, process_name, message, not_message):
         assert found != not_message, line
 
 @step('wait for (new )?(\w+) stdout message (\w+)(?: not (\w+))?')
-def wait_for_stdout_message(step, process_name, message, not_message):
+def wait_for_stdout_message(step, new, process_name, message, not_message):
     """
     Block until the given message is printed to the given process's stdout
     output.
