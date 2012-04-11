@@ -8,6 +8,12 @@ Feature: Example feature
     
     Scenario: A simple example
         Given I have bind10 running with configuration example.org.config
+        And wait for bind10 stderr message BIND10_STARTED_CC
+        And wait for bind10 stderr message CMDCTL_STARTED
+        And wait for bind10 stderr message AUTH_SERVER_STARTED
+
+        bind10 module Auth should be running
+
         A query for www.example.org should have rcode NOERROR
         A query for www.doesnotexist.org should have rcode REFUSED
         The SOA serial for example.org should be 1234
@@ -26,8 +32,12 @@ Feature: Example feature
         # is actually a compound step consisting of the following two
         # one to start the server
         When I start bind10 with configuration no_db_file.config
-        # And one to wait until it reports that b10-auth has started
-        Then wait for bind10 auth to start
+
+        And wait for bind10 stderr message BIND10_STARTED_CC
+        And wait for bind10 stderr message CMDCTL_STARTED
+        And wait for bind10 stderr message AUTH_SERVER_STARTED
+
+        bind10 module Auth should be running
 
         # This is a general step to stop a named process. By convention,
         # the default name for any process is the same as the one we
@@ -50,6 +60,11 @@ Feature: Example feature
         # This is a compound statement that starts and waits for the
         # started message
         Given I have bind10 running with configuration example.org.config
+        And wait for bind10 stderr message BIND10_STARTED_CC
+        And wait for bind10 stderr message CMDCTL_STARTED
+        And wait for bind10 stderr message AUTH_SERVER_STARTED
+
+        bind10 module Auth should be running
 
         # Some simple queries that is not examined further
         A query for www.example.com should have rcode REFUSED
@@ -113,8 +128,12 @@ Feature: Example feature
         # the system
 
         When I start bind10 with configuration example.org.config
-        Then wait for bind10 auth to start
-        Wait for bind10 stderr message CMDCTL_STARTED
+        And wait for bind10 stderr message BIND10_STARTED_CC
+        And wait for bind10 stderr message CMDCTL_STARTED
+        And wait for bind10 stderr message AUTH_SERVER_STARTED
+
+        bind10 module Auth should be running
+
         A query for www.example.org should have rcode NOERROR
         Wait for new bind10 stderr message AUTH_SEND_NORMAL_RESPONSE
         Then set bind10 configuration Auth/database_file to data/empty_db.sqlite3
@@ -128,10 +147,17 @@ Feature: Example feature
     Scenario: two bind10 instances
         # This is more a test of the test system, start 2 bind10's
         When I start bind10 with configuration example.org.config as bind10_one
-        And I start bind10 with configuration example2.org.config with cmdctl port 47804 as bind10_two
-
+        And wait for bind10_one stderr message BIND10_STARTED_CC
+        And wait for bind10_one stderr message CMDCTL_STARTED
+        And wait for bind10_one stderr message AUTH_SERVER_STARTED
         Then wait for bind10 auth of bind10_one to start
+
+        And I start bind10 with configuration example2.org.config with cmdctl port 47804 as bind10_two
+        And wait for bind10_two stderr message BIND10_STARTED_CC
+        And wait for bind10_two stderr message CMDCTL_STARTED
+        And wait for bind10_two stderr message AUTH_SERVER_STARTED
         Then wait for bind10 auth of bind10_two to start
+
         A query for www.example.org to 127.0.0.1:47806 should have rcode NOERROR
         A query for www.example.org to [::1]:47807 should have rcode NOERROR
 
