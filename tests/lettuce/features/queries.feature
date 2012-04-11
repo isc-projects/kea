@@ -5,6 +5,17 @@ Feature: Querying feature
 
     Scenario: Repeated queries
         Given I have bind10 running with configuration example.org.inmem.config
+        And wait for bind10 stderr message BIND10_STARTED_CC
+        And wait for bind10 stderr message CMDCTL_STARTED
+        And wait for bind10 stderr message AUTH_SERVER_STARTED
+
+        bind10 module Auth should be running
+        And bind10 module Resolver should not be running
+	And bind10 module Xfrout should not be running
+	And bind10 module Zonemgr should not be running
+	And bind10 module Xfrin should not be running
+	And bind10 module Stats should not be running
+
         A query for www.example.org should have rcode NOERROR
         The last query response should have flags qr aa rd
         The last query response should have ancount 1
@@ -61,6 +72,17 @@ Feature: Querying feature
 
     Scenario: ANY query
         Given I have bind10 running with configuration example.org.inmem.config
+        And wait for bind10 stderr message BIND10_STARTED_CC
+        And wait for bind10 stderr message CMDCTL_STARTED
+        And wait for bind10 stderr message AUTH_SERVER_STARTED
+
+        bind10 module Auth should be running
+        And bind10 module Resolver should not be running
+	And bind10 module Xfrout should not be running
+	And bind10 module Zonemgr should not be running
+	And bind10 module Xfrin should not be running
+	And bind10 module Stats should not be running
+
         A query for example.org type ANY should have rcode NOERROR
         The last query response should have flags qr aa rd
         The last query response should have ancount 4

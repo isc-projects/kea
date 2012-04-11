@@ -9,12 +9,12 @@ Feature: Multiple instances
 	And wait for bind10 stderr message CMDCTL_STARTED
 	And wait for bind10 stderr message AUTH_SERVER_STARTED
 
-        And bind10 module Auth should be running
+        bind10 module Auth should be running
         And bind10 module Resolver should not be running
-	bind10 module Xfrout should not be running
-	bind10 module Zonemgr should not be running
-	bind10 module Xfrin should not be running
-	bind10 module Stats should not be running
+	And bind10 module Xfrout should not be running
+	And bind10 module Zonemgr should not be running
+	And bind10 module Xfrin should not be running
+	And bind10 module Stats should not be running
 
         A query for example.com should have rcode REFUSED
 

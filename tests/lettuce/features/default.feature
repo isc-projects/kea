@@ -10,13 +10,13 @@ Feature: default bind10 config
 
     # These should be running
     bind10 module Boss should be running
-    bind10 module Logging should be running
-    bind10 module Stats should be running
-    bind10 module StatsHttpd should be running
+    And bind10 module Logging should be running
+    And bind10 module Stats should be running
+    And bind10 module StatsHttpd should be running
 
     # These should not be running
     bind10 module Resolver should not be running
-    bind10 module Xfrout should not be running
-    bind10 module Zonemgr should not be running
-    bind10 module Xfrin should not be running
-    bind10 module Auth should not be running
+    And bind10 module Xfrout should not be running
+    And bind10 module Zonemgr should not be running
+    And bind10 module Xfrin should not be running
+    And bind10 module Auth should not be running
