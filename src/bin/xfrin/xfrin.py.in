@@ -1576,6 +1576,7 @@ class Xfrin:
                 logger.error(XFRIN_MSGQ_SEND_ERROR_ZONE_MANAGER, ZONE_MANAGER_MODULE_NAME)
 
     def startup(self):
+        logger.info(XFRIN_STARTED)
         while not self._shutdown_event.is_set():
             self._cc_check_command()
 
