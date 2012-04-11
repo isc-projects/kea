@@ -16,7 +16,7 @@
     },
     "Boss": {
         "components": {
-            "b10-auth": {"kind": "needed", "special": "auth" },
+            "b10-auth": {"kind": "dispensable", "special": "auth" },
             "b10-xfrin": { "address": "Xfrin", "kind": "dispensable" },
             "b10-xfrout": { "address": "Xfrout", "kind": "dispensable" },
             "b10-zonemgr": { "address": "Zonemgr", "kind": "dispensable" },
