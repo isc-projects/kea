@@ -2597,7 +2597,7 @@ class TextXfrinMemoryZones(unittest.TestCase):
                             ]
                           },
                           { 'type': 'memory',
-                            'class': 'CH',
+                            'class': 'ch',
                             'zones': [
                               { 'origin': 'example.com',
                                 'filetype': 'sqlite3' }
@@ -2655,6 +2655,7 @@ class TextXfrinMemoryZones(unittest.TestCase):
         # make sure it is case insensitive, root-dot-insensitive,
         # and supports CLASSXXX notation
         self.assertTrue(self.xfr._is_memory_zone("EXAMPLE.com", "IN"))
+        self.assertTrue(self.xfr._is_memory_zone("example.com", "in"))
         self.assertTrue(self.xfr._is_memory_zone("example2.com.", "IN"))
         self.assertTrue(self.xfr._is_memory_zone("example.com", "CLASS3"))
 
@@ -2703,9 +2704,6 @@ class TextXfrinMemoryZones(unittest.TestCase):
         self.assertTrue(self.xfr._is_memory_zone("example2.com", "IN"))
         self.assertFalse(self.xfr._is_memory_zone("example3.com", "IN"))
         self.assertTrue(self.xfr._is_memory_zone("example.com", "CH"))
-
-
-
 
 def raise_interrupt():
     raise KeyboardInterrupt()

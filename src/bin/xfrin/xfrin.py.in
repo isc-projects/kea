@@ -1332,6 +1332,10 @@ class Xfrin:
         """Returns true if the given zone/class combination is configured
            in the in-memory datasource of the Auth process with file type
            'sqlite3'.
+           Note: this method is not thread-safe. We are considering
+           changing the threaded model here, but if we do not, take
+           care in accessing and updating the memory zone set (or add
+           locks)
         """
         # Normalize them first, if either conversion fails, return false
         # (they won't be in the set anyway)
@@ -1342,15 +1346,15 @@ class Xfrin:
             return False
         return (zone_name_str, zone_class_str) in self._memory_zones
 
-    def _add_memory_zone(self, zone_name_str, zone_class_str):
-        """Add the given zone and class to the internal list of zones
-           in memory datasources with file type 'sqlite3'"""
-        self._memory_zones.add((zone_name_str, zone_class_str))
-
     def _set_memory_zones(self, new_config, config_data):
         """Part of the _auth_config_handler function, keeps an internal set
            of zones in the datasources config subset that have 'sqlite3' as
-           their file type"""
+           their file type.
+           Note: this method is not thread-safe. We are considering
+           changing the threaded model here, but if we do not, take
+           care in accessing and updating the memory zone set (or add
+           locks)
+        """
         # walk through the data and collect the memory zones
         # If this causes any exception, assume we were passed bad data
         # and keep the original set
@@ -1373,10 +1377,8 @@ class Xfrin:
                                 new_memory_zones.add((zone_name_str,
                                                       ds_class.to_text()))
                 # Ok, we can use the data, update our list
-                self._clear_memory_zones()
-                for zone_str, class_str in new_memory_zones:
-                    self._add_memory_zone(zone_str, class_str)
-        except Exception as eee:
+                self._memory_zones = new_memory_zones
+        except Exception:
             # Something is wrong with the data. If this data even reached us,
             # we cannot do more than assume the real module has logged and
             # reported an error. Keep the old set.
@@ -1527,6 +1529,8 @@ class Xfrin:
         if is_default and "B10_FROM_BUILD" in os.environ:
             # override the local database setting if it is default and we
             # are running from the source tree
+            # This should be hidden inside the data source library and/or
+            # done as a configuration, and this special case should be gone).
             db_file = os.environ["B10_FROM_BUILD"] + os.sep +\
                       "bind10_zones.sqlite3"
         self._db_file = db_file
