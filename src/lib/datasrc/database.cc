@@ -609,8 +609,7 @@ DatabaseClient::Finder::findWildcardMatch(
     // Note that during the search we are going to search not only for the
     // requested type, but also for types that indicate a delegation -
     // NS and DNAME.
-    WantedTypes final_types(dnssec_ctx.isNSEC3() ? FINAL_TYPES_NO_NSEC() :
-        FINAL_TYPES());
+    WantedTypes final_types(FINAL_TYPES());
     final_types.insert(type);
 
     const size_t remove_labels = name.getLabelCount() - dresult.last_known;
@@ -667,13 +666,9 @@ DatabaseClient::Finder::findWildcardMatch(
                 arg(accessor_->getDBName()).arg(wildcard).arg(name);
             const FindResultFlags flags = (RESULT_WILDCARD |
                                            dnssec_ctx.getResultFlags());
-            if (dnssec_ctx.isNSEC()) {
-                ConstRRsetPtr nsec = findNSECCover(Name(wildcard));
-                if (nsec) {
-                    return (ResultContext(NXRRSET, nsec, flags));
-                }
-            }
-            return (ResultContext(NXRRSET, ConstRRsetPtr(), flags));
+            return (ResultContext(NXRRSET,
+                                  dnssec_ctx.getDNSSECRRset(Name(wildcard),
+                                                            true), flags));
         }
     }
 
@@ -778,15 +773,19 @@ DatabaseClient::Finder::FindDNSSECContext::getDNSSECRRset(
 }
 
 isc::dns::ConstRRsetPtr
-DatabaseClient::Finder::FindDNSSECContext::getDNSSECRRset(const Name &name) {
+DatabaseClient::Finder::FindDNSSECContext::getDNSSECRRset(const Name &name,
+                                                          bool covering)
+{
     if (!isNSEC()) {
         return (ConstRRsetPtr());
     }
 
-    const FoundRRsets wfound = finder_.getRRsets(name.toText(), NSEC_TYPES(),
-                                                 true);
-    const FoundIterator nci = wfound.second.find(RRType::NSEC());
-    if (nci != wfound.second.end()) {
+    const Name& nsec_name = covering ? finder_.findPreviousName(name) : name;
+    const bool need_nscheck = (nsec_name == finder_.getOrigin());
+    const FoundRRsets found = finder_.getRRsets(nsec_name.toText(),
+                                                NSEC_TYPES(), need_nscheck);
+    const FoundIterator nci = found.second.find(RRType::NSEC());
+    if (nci != found.second.end()) {
         return (nci->second);
     } else {
         return (ConstRRsetPtr());
@@ -892,7 +891,7 @@ DatabaseClient::Finder::findOnNameResult(const Name& name,
     // NSEC records in the name of the wildcard, not the substituted one,
     // so we need to search the tree again.
     const ConstRRsetPtr dnssec_rrset =
-        wild ? dnssec_ctx.getDNSSECRRset(Name(*wildname)) :
+        wild ? dnssec_ctx.getDNSSECRRset(Name(*wildname), false) :
         dnssec_ctx.getDNSSECRRset(found);
     if (dnssec_rrset) {
         // This log message covers both normal and wildcard cases, so we pass
