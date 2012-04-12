@@ -723,14 +723,12 @@ DatabaseClient::Finder::FindDNSSECContext::FindDNSSECContext(
 {}
 
 ZoneFinder::FindOptions
-DatabaseClient::Finder::FindDNSSECContext::getOptions() const
-{
-    return options_;
+DatabaseClient::Finder::FindDNSSECContext::getOptions() const {
+    return (options_);
 }
 
 void
-DatabaseClient::Finder::FindDNSSECContext::init()
-{
+DatabaseClient::Finder::FindDNSSECContext::init() {
     if (finderp_ == NULL) {
         isc_throw(DataSourceError, "no Finder to query");
     }
@@ -754,30 +752,27 @@ DatabaseClient::Finder::FindDNSSECContext::init()
 }
 
 bool
-DatabaseClient::Finder::FindDNSSECContext::isInited()
-{
-    return initialized_;
+DatabaseClient::Finder::FindDNSSECContext::isInited() {
+    return (initialized_);
 }
 
 bool
-DatabaseClient::Finder::FindDNSSECContext::isNSEC3()
-{
+DatabaseClient::Finder::FindDNSSECContext::isNSEC3() {
     if (isInited()) {
-        return is_nsec3_;
+        return (is_nsec3_);
     } else {
         init();
-        return is_nsec3_;
+        return (is_nsec3_);
     }
 }
 
 bool
-DatabaseClient::Finder::FindDNSSECContext::isNSEC()
-{
+DatabaseClient::Finder::FindDNSSECContext::isNSEC() {
     if (isInited()) {
-        return is_nsec_;
+        return (is_nsec_);
     } else {
         init();
-        return is_nsec_;
+        return (is_nsec_);
     }
 }
 
@@ -787,9 +782,9 @@ DatabaseClient::Finder::FindDNSSECContext::getNSECRRset(
 {
     const FoundIterator nci = found_set.second.find(RRType::NSEC());
     if (nci != found_set.second.end()) {
-        return nci->second;
+        return (nci->second);
     } else {
-        return ConstRRsetPtr();
+        return (ConstRRsetPtr());
     }
 }
 
@@ -803,9 +798,9 @@ DatabaseClient::Finder::FindDNSSECContext::getNSECRRset(const Name &name) const
                                                    true);
     const FoundIterator nci = wfound.second.find(RRType::NSEC());
     if (nci != wfound.second.end()) {
-        return nci->second;
+        return (nci->second);
     } else {
-        return ConstRRsetPtr();
+        return (ConstRRsetPtr());
     }
 }
 
@@ -825,22 +820,20 @@ DatabaseClient::Finder::FindDNSSECContext::getDNSSECRRset(const Name& name,
 }
 
 bool
-DatabaseClient::Finder::FindDNSSECContext::isOrigin(const Name &name) const
-{
+DatabaseClient::Finder::FindDNSSECContext::isOrigin(const Name &name) const {
     return (name == origin_);
 }
 
 ZoneFinder::FindResultFlags
-DatabaseClient::Finder::FindDNSSECContext::getResultFlags()
-{
+DatabaseClient::Finder::FindDNSSECContext::getResultFlags() {
     // If it is not DNSSEC query, it should return RESULT_DEFAULT
     if ((options_ & FIND_DNSSEC) == 0) {
-        return RESULT_DEFAULT;
+        return (RESULT_DEFAULT);
     }
     // If it is a DNSSEC query and the zone is signed with NSEC3, it should
     // return RESULT_NSEC3_SIGNED
     if (isNSEC3()) {
-        return RESULT_NSEC3_SIGNED;
+        return (RESULT_NSEC3_SIGNED);
     } else {
         // If it is a DNSSEC query and the zone is signed with NSEC, it should
         // return RESULT_NSEC_SIGNED, other else, return RESULT_DEFAULT
@@ -965,7 +958,7 @@ DatabaseClient::Finder::findNoNameResult(const Name& name, const RRType& type,
     // for special cases.
 
     if (hasSubdomains(name.toText())) {
-        // Does the domain have a subdomain (i.e. it is an empty non-terminal)
+        // Does the domain have a subdomain (i.e. it is an empty non-terminal)?
         // If so, return NXRRSET instead of NXDOMAIN (as although the name does
         // not exist in the database, it does exist in the DNS tree).
         LOG_DEBUG(logger, DBG_TRACE_DETAILED,
@@ -973,7 +966,7 @@ DatabaseClient::Finder::findNoNameResult(const Name& name, const RRType& type,
             arg(accessor_->getDBName()).arg(name);
         const ConstRRsetPtr nsec = dnssec_ctx.isNSEC() ? findNSECCover(name) :
             ConstRRsetPtr();
-        if(dnssec_ctx.isNSEC() && (!nsec)){
+        if(dnssec_ctx.isNSEC() && !nsec){
             isc_throw(DataSourceError,
                       "no NSEC RR covers in the NSEC signed zone");
         }
@@ -996,7 +989,7 @@ DatabaseClient::Finder::findNoNameResult(const Name& name, const RRType& type,
               arg(accessor_->getDBName()).arg(name).arg(type).arg(getClass());
     const ConstRRsetPtr nsec = dnssec_ctx.isNSEC() ? findNSECCover(name) :
         ConstRRsetPtr();
-    if(dnssec_ctx.isNSEC() && (!nsec)){
+    if(dnssec_ctx.isNSEC() && !nsec){
         isc_throw(DataSourceError, "no NSEC RR covers in the NSEC signed zone");
     }
     return (ResultContext(NXDOMAIN, nsec, dnssec_ctx.getResultFlags()));
