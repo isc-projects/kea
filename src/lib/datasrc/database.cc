@@ -821,25 +821,17 @@ DatabaseClient::Finder::findOnNameResult(const Name& name,
                                          target, FindDNSSECContext& dnssec_ctx)
 {
     const bool wild = (wildname != NULL);
-    FindResultFlags flags = wild ? RESULT_WILDCARD : RESULT_DEFAULT;
-    // If the zone file is signed with NSEC3, need to set RESULT_NSEC3_SIGNED
-    // flag in the flags. It is good for upper caller to deal with the query
-    // response message.
-    if (wild && dnssec_ctx.isNSEC3()) {
-        flags = (flags | RESULT_NSEC3_SIGNED);
-    }
+    // For wildcard case with DNSSEC required, the caller would need to
+    // know whether it's NSEC or NSEC3 signed.  getResultFlags returns
+    // appropriate flag based on the query context and zone status.
+    const FindResultFlags flags =
+        wild ? (RESULT_WILDCARD | dnssec_ctx.getResultFlags()) : RESULT_DEFAULT;
+
     // Get iterators for the different types of records we are interested in -
     // CNAME, NS and Wanted types.
     const FoundIterator nsi(found.second.find(RRType::NS()));
     const FoundIterator cni(found.second.find(RRType::CNAME()));
     const FoundIterator wti(found.second.find(type));
-    // For wildcard case with DNSSEC required, the caller would need to know
-    // whether it's NSEC or NSEC3 signed.  So we need to do an additional
-    // search here, even though the NSEC RR may not be returned.
-    if (wild && dnssec_ctx.isNSEC() &&
-        found.second.find(RRType::NSEC()) != found.second.end()) {
-        flags = (flags | RESULT_NSEC_SIGNED);
-    }
 
     if (!is_origin && (options & FIND_GLUE_OK) == 0 &&
         nsi != found.second.end()) {
