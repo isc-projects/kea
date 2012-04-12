@@ -780,18 +780,6 @@ public:
         }
 
     private:
-        /// \brief check whether zone is signed with nsec
-        ///
-        /// searches the NSEC3PARAM RRset in the zone apex, if it exists, the
-        /// zone looks signed with nsec
-        bool isNSEC();
-
-        /// \brief check whether zone is signed with nsec3
-        ///
-        /// searches the NSEC3PARAM RRset in the zone apex, if it exists, the
-        /// zone looks signed with nsec3
-        bool isNSEC3();
-
         boost::shared_ptr<DatabaseAccessor> accessor_;
         const int zone_id_;
         const isc::dns::Name origin_;
@@ -907,6 +895,7 @@ public:
             isc::dns::ConstRRsetPtr getDNSSECRRset(const FoundRRsets&
                                                    found_set);
 
+        private:
             /// \brief Check whether the zone file is signed with NSECi3.
             ///
             /// It checks whether the zone file is signed with NSEC3. If
@@ -923,7 +912,6 @@ public:
             /// \return True for NSEC, false otherwise.
             bool isNSEC();
 
-        private:
             /// \brief Init the attributes in this entity.
             ///
             /// It should init the attributes of this entity. Check whether
@@ -932,14 +920,6 @@ public:
             /// \note If the entity is initialized, no need to init it
             /// again.
             void init();
-
-            /// \brief Check whether the entity is initialized.
-            ///
-            /// It should return true if the entity is inited, else return
-            /// false.
-            ///
-            /// \return True for inited, else return false.
-            bool isInited();
 
             DatabaseClient::Finder& finder_;
             const bool need_dnssec_;

@@ -669,24 +669,35 @@ DatabaseClient::Finder::FindDNSSECContext::init() {
     if (!initialized_) {
         initialized_ = true;
         if (need_dnssec_) {
-            // If NSEC3PARAM rrset exists, the zone looks like signed with
-            // NSEC3
-            is_nsec3_ = finder_.isNSEC3();
-            // If no NSEC3PARAM and it is DNSSEC query, check whether NSEC
-            // exist in apex of zone
-            is_nsec_ = is_nsec3_ ? false : finder_.isNSEC();
+            // If an NSEC3PARAM RR exists at the zone apex, it's quite likely
+            // that the zone is signed with NSEC3.  (If not the zone is more
+            // or less broken, but it's caller's responsibility how to handle
+            // such cases).
+            const string origin = finder_.getOrigin().toText();
+            const FoundRRsets nsec3_found =
+                finder_.getRRsets(origin, NSEC3PARAM_TYPES(), false);
+            const FoundIterator nfi=
+                nsec3_found.second.find(RRType::NSEC3PARAM());
+            is_nsec3_ = (nfi != nsec3_found.second.end());
+
+            // Likewise for NSEC, depending on the apex has an NSEC RR.
+            // If we know the zone is NSEC3-signed, however, we don't bother
+            // to check that.  This is aligned with the transition guideline
+            // described in Section 10.4 of RFC 5155.
+            if (!is_nsec3_) {
+                const FoundRRsets nsec_found =
+                    finder_.getRRsets(origin, NSEC_TYPES(), false);
+                const FoundIterator nfi =
+                    nsec_found.second.find(RRType::NSEC());
+                is_nsec_ = (nfi != nsec_found.second.end());
+            }
         }
     }
 }
 
 bool
-DatabaseClient::Finder::FindDNSSECContext::isInited() {
-    return (initialized_);
-}
-
-bool
 DatabaseClient::Finder::FindDNSSECContext::isNSEC3() {
-    if (isInited()) {
+    if (initialized_) {
         return (is_nsec3_);
     } else {
         init();
@@ -696,7 +707,7 @@ DatabaseClient::Finder::FindDNSSECContext::isNSEC3() {
 
 bool
 DatabaseClient::Finder::FindDNSSECContext::isNSEC() {
-    if (isInited()) {
+    if (initialized_) {
         return (is_nsec_);
     } else {
         init();
@@ -754,19 +765,12 @@ DatabaseClient::Finder::FindDNSSECContext::getDNSSECRRset(const Name &name,
 
 ZoneFinder::FindResultFlags
 DatabaseClient::Finder::FindDNSSECContext::getResultFlags() {
-    // If it is not DNSSEC query, it should return RESULT_DEFAULT
-    if (!need_dnssec_) {
-        return (RESULT_DEFAULT);
-    }
-    // If it is a DNSSEC query and the zone is signed with NSEC3, it should
-    // return RESULT_NSEC3_SIGNED
     if (isNSEC3()) {
         return (RESULT_NSEC3_SIGNED);
-    } else {
-        // If it is a DNSSEC query and the zone is signed with NSEC, it should
-        // return RESULT_NSEC_SIGNED, otherwise, return RESULT_DEFAULT
-        return (isNSEC() ? RESULT_NSEC_SIGNED : RESULT_DEFAULT);
+    } else if (isNSEC()) {
+        return (RESULT_NSEC_SIGNED);
     }
+    return (RESULT_DEFAULT);
 }
 
 ZoneFinder::ResultContext
@@ -905,28 +909,6 @@ DatabaseClient::Finder::findNoNameResult(const Name& name, const RRType& type,
               arg(accessor_->getDBName()).arg(name).arg(type).arg(getClass());
     return (ResultContext(NXDOMAIN, dnssec_ctx.getDNSSECRRset(name, true),
                           dnssec_ctx.getResultFlags()));
-}
-
-bool
-DatabaseClient::Finder::isNSEC3() {
-    // If an NSEC3PARAM RR exists at the zone apex, it's quite likely that
-    // the zone is signed with NSEC3.  (If not the zone is more or less broken,
-    // but it's caller's responsibility how to handle such cases).
-    const FoundRRsets nsec3_found = getRRsets(origin_.toText(),
-                                              NSEC3PARAM_TYPES(), false);
-    const FoundIterator nfi(nsec3_found.second.find(RRType::NSEC3PARAM()));
-    return (nfi != nsec3_found.second.end());
-}
-
-bool
-DatabaseClient::Finder::isNSEC() {
-    // If an NSEC RR exists at the zone apex, it's quite likely that
-    // the zone is signed with NSEC.  (If not the zone is more or less broken,
-    // but it's caller's responsibility how to handle such cases).
-    const FoundRRsets nsec_found = getRRsets(origin_.toText(),
-                                             NSEC_TYPES(), false);
-    const FoundIterator nfi(nsec_found.second.find(RRType::NSEC()));
-    return (nfi != nsec_found.second.end());
 }
 
 ZoneFinder::ResultContext
