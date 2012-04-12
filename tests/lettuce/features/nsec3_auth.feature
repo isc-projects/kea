@@ -34,11 +34,11 @@ Feature: NSEC3 Authoritative service
         """
         example.        3600    IN      SOA     ns1.example. bugs.x.w.example. 1 3600 300 3600000 3600
         example.        3600    IN      RRSIG   SOA 7 1 3600 20150420235959 20051021000000 40430 example. Hu25UIyNPmvPIVBrldN+9Mlp9Zql39qaUd8iq4ZLlYWfUUbbAS41pG+6 8z81q1xhkYAcEyHdVI2LmKusbZsT0Q==
-        0p9mhaveqvm6t7vbl5lop2u3t2rp3tom.example.       3600    IN      NSEC3   1 1 12 aabbccdd  2t7b4g4vsa5smi47k61mv5bv1a22bojr NS SOA MX RRSIG DNSKEY NSEC3PARAM 
+        0p9mhaveqvm6t7vbl5lop2u3t2rp3tom.example.       3600    IN      NSEC3   1 1 12 aabbccdd  2t7b4g4vsa5smi47k61mv5bv1a22bojr NS SOA MX RRSIG DNSKEY NSEC3PARAM
         0p9mhaveqvm6t7vbl5lop2u3t2rp3tom.example.       3600    IN      RRSIG   NSEC3 7 2 3600 20150420235959 20051021000000 40430 example. OSgWSm26B+cS+dDL8b5QrWr/dEWhtCsKlwKLIBHYH6blRxK9rC0bMJPw Q4mLIuw85H2EY762BOCXJZMnpuwhpA==
-        b4um86eghhds6nea196smvmlo4ors995.example.       3600    IN      NSEC3   1 1 12 aabbccdd  gjeqe526plbf1g8mklp59enfd789njgi MX RRSIG 
+        b4um86eghhds6nea196smvmlo4ors995.example.       3600    IN      NSEC3   1 1 12 aabbccdd  gjeqe526plbf1g8mklp59enfd789njgi MX RRSIG
         b4um86eghhds6nea196smvmlo4ors995.example.       3600    IN      RRSIG   NSEC3 7 2 3600 20150420235959 20051021000000 40430 example. ZkPG3M32lmoHM6pa3D6gZFGB/rhL//Bs3Omh5u4m/CUiwtblEVOaAKKZ d7S959OeiX43aLX3pOv0TSTyiTxIZg==
-        35mthgpgcu1qg68fab165klnsnk3dpvl.example.       3600    IN      NSEC3   1 1 12 aabbccdd  b4um86eghhds6nea196smvmlo4ors995 NS DS RRSIG 
+        35mthgpgcu1qg68fab165klnsnk3dpvl.example.       3600    IN      NSEC3   1 1 12 aabbccdd  b4um86eghhds6nea196smvmlo4ors995 NS DS RRSIG
         35mthgpgcu1qg68fab165klnsnk3dpvl.example.       3600    IN      RRSIG   NSEC3 7 2 3600 20150420235959 20051021000000 40430 example. g6jPUUpduAJKRljUsN8gB4UagAX0NxY9shwQAynzo8EUWH+z6hEIBlUT PGj15eZll6VhQqgZXtAIR3chwgW+SA==
         """
 
@@ -66,7 +66,7 @@ Feature: NSEC3 Authoritative service
         """
         example.        3600    IN      SOA     ns1.example. bugs.x.w.example. 1 3600 300 3600000 3600
         example.        3600    IN      RRSIG   SOA 7 1 3600 20150420235959 20051021000000 40430 example. Hu25UIyNPmvPIVBrldN+9Mlp9Zql39qaUd8iq4ZLlYWfUUbbAS41pG+6 8z81q1xhkYAcEyHdVI2LmKusbZsT0Q==
-        2t7b4g4vsa5smi47k61mv5bv1a22bojr.example.       3600    IN      NSEC3   1 1 12 aabbccdd  2vptu5timamqttgl4luu9kg21e0aor3s A RRSIG 
+        2t7b4g4vsa5smi47k61mv5bv1a22bojr.example.       3600    IN      NSEC3   1 1 12 aabbccdd  2vptu5timamqttgl4luu9kg21e0aor3s A RRSIG
         2t7b4g4vsa5smi47k61mv5bv1a22bojr.example.       3600    IN      RRSIG   NSEC3 7 2 3600 20150420235959 20051021000000 40430 example. OmBvJ1Vgg1hCKMXHFiNeIYHK9XVW0iLDLwJN4TFoNxZuP03gAXEI634Y wOc4YBNITrj413iqNI6mRk/r1dOSUw==
         """
 
@@ -122,9 +122,9 @@ Feature: NSEC3 Authoritative service
         """
         c.example.      3600    IN      NS      ns1.c.example.
         c.example.      3600    IN      NS      ns2.c.example.
-        35mthgpgcu1qg68fab165klnsnk3dpvl.example.       3600    IN      NSEC3   1 1 12 aabbccdd  b4um86eghhds6nea196smvmlo4ors995 NS DS RRSIG 
+        35mthgpgcu1qg68fab165klnsnk3dpvl.example.       3600    IN      NSEC3   1 1 12 aabbccdd  b4um86eghhds6nea196smvmlo4ors995 NS DS RRSIG
         35mthgpgcu1qg68fab165klnsnk3dpvl.example.       3600    IN      RRSIG   NSEC3 7 2 3600 20150420235959 20051021000000 40430 example. g6jPUUpduAJKRljUsN8gB4UagAX0NxY9shwQAynzo8EUWH+z6hEIBlUT PGj15eZll6VhQqgZXtAIR3chwgW+SA==
-        0p9mhaveqvm6t7vbl5lop2u3t2rp3tom.example.       3600    IN      NSEC3   1 1 12 aabbccdd  2t7b4g4vsa5smi47k61mv5bv1a22bojr NS SOA MX RRSIG DNSKEY NSEC3PARAM 
+        0p9mhaveqvm6t7vbl5lop2u3t2rp3tom.example.       3600    IN      NSEC3   1 1 12 aabbccdd  2t7b4g4vsa5smi47k61mv5bv1a22bojr NS SOA MX RRSIG DNSKEY NSEC3PARAM
         0p9mhaveqvm6t7vbl5lop2u3t2rp3tom.example.       3600    IN      RRSIG   NSEC3 7 2 3600 20150420235959 20051021000000 40430 example. OSgWSm26B+cS+dDL8b5QrWr/dEWhtCsKlwKLIBHYH6blRxK9rC0bMJPw Q4mLIuw85H2EY762BOCXJZMnpuwhpA==
         """
         The additional section of the last query response should be
@@ -163,7 +163,7 @@ Feature: NSEC3 Authoritative service
         example.        3600    IN      NS      ns1.example.
         example.        3600    IN      NS      ns2.example.
         example.        3600    IN      RRSIG   NS 7 1 3600 20150420235959 20051021000000 40430 example. PVOgtMK1HHeSTau+HwDWC8Ts+6C8qtqd4pQJqOtdEVgg+MA+ai4fWDEh u3qHJyLcQ9tbD2vvCnMXjtz6SyObxA==
-        q04jkcevqvmu85r014c7dkba38o0ji5r.example.       3600    IN      NSEC3   1 1 12 aabbccdd  r53bq7cc2uvmubfu5ocmm6pers9tk9en A RRSIG 
+        q04jkcevqvmu85r014c7dkba38o0ji5r.example.       3600    IN      NSEC3   1 1 12 aabbccdd  r53bq7cc2uvmubfu5ocmm6pers9tk9en A RRSIG
         q04jkcevqvmu85r014c7dkba38o0ji5r.example.       3600    IN      RRSIG   NSEC3 7 2 3600 20150420235959 20051021000000 40430 example. hV5I89b+4FHJDATp09g4bbN0R1F845CaXpL3ZxlMKimoPAyqletMlEWw LfFia7sdpSzn+ZlNNlkxWcLsIlMmUg==
         """
         # This is slightly different from the example in RFC5155; there are
@@ -206,9 +206,9 @@ Feature: NSEC3 Authoritative service
         example.        3600    IN      RRSIG   SOA 7 1 3600 20150420235959 20051021000000 40430 example. Hu25UIyNPmvPIVBrldN+9Mlp9Zql39qaUd8iq4ZLlYWfUUbbAS41pG+6 8z81q1xhkYAcEyHdVI2LmKusbZsT0Q==
         k8udemvp1j2f7eg6jebps17vp3n8i58h.example.       3600    IN      NSEC3   1 1 12 aabbccdd  kohar7mbb8dc2ce8a9qvl8hon4k53uhi
         k8udemvp1j2f7eg6jebps17vp3n8i58h.example.       3600    IN      RRSIG   NSEC3 7 2 3600 20150420235959 20051021000000 40430 example. FtXGbvF0+wf8iWkyo73enAuVx03klN+pILBKS6qCcftVtfH4yVzsEZqu J27NHR7ruxJWDNMtOtx7w9WfcIg62A==
-        q04jkcevqvmu85r014c7dkba38o0ji5r.example.       3600    IN      NSEC3   1 1 12 aabbccdd  r53bq7cc2uvmubfu5ocmm6pers9tk9en A RRSIG 
+        q04jkcevqvmu85r014c7dkba38o0ji5r.example.       3600    IN      NSEC3   1 1 12 aabbccdd  r53bq7cc2uvmubfu5ocmm6pers9tk9en A RRSIG
         q04jkcevqvmu85r014c7dkba38o0ji5r.example.       3600    IN      RRSIG   NSEC3 7 2 3600 20150420235959 20051021000000 40430 example. hV5I89b+4FHJDATp09g4bbN0R1F845CaXpL3ZxlMKimoPAyqletMlEWw LfFia7sdpSzn+ZlNNlkxWcLsIlMmUg==
-        r53bq7cc2uvmubfu5ocmm6pers9tk9en.example.       3600    IN      NSEC3   1 1 12 aabbccdd  t644ebqk9bibcna874givr6joj62mlhv MX RRSIG 
+        r53bq7cc2uvmubfu5ocmm6pers9tk9en.example.       3600    IN      NSEC3   1 1 12 aabbccdd  t644ebqk9bibcna874givr6joj62mlhv MX RRSIG
         r53bq7cc2uvmubfu5ocmm6pers9tk9en.example.       3600    IN      RRSIG   NSEC3 7 2 3600 20150420235959 20051021000000 40430 example. aupviViruXs4bDg9rCbezzBMf9h1ZlDvbW/CZFKulIGXXLj8B/fsDJar XVDA9bnUoRhEbKp+HF1FWKW7RIJdtQ==
         """
 
@@ -236,7 +236,7 @@ Feature: NSEC3 Authoritative service
         """
         example.        3600    IN      SOA     ns1.example. bugs.x.w.example. 1 3600 300 3600000 3600
         example.        3600    IN      RRSIG   SOA 7 1 3600 20150420235959 20051021000000 40430 example. Hu25UIyNPmvPIVBrldN+9Mlp9Zql39qaUd8iq4ZLlYWfUUbbAS41pG+6 8z81q1xhkYAcEyHdVI2LmKusbZsT0Q==
-        0p9mhaveqvm6t7vbl5lop2u3t2rp3tom.example.       3600    IN      NSEC3   1 1 12 aabbccdd  2t7b4g4vsa5smi47k61mv5bv1a22bojr NS SOA MX RRSIG DNSKEY NSEC3PARAM 
+        0p9mhaveqvm6t7vbl5lop2u3t2rp3tom.example.       3600    IN      NSEC3   1 1 12 aabbccdd  2t7b4g4vsa5smi47k61mv5bv1a22bojr NS SOA MX RRSIG DNSKEY NSEC3PARAM
         0p9mhaveqvm6t7vbl5lop2u3t2rp3tom.example.       3600    IN      RRSIG   NSEC3 7 2 3600 20150420235959 20051021000000 40430 example. OSgWSm26B+cS+dDL8b5QrWr/dEWhtCsKlwKLIBHYH6blRxK9rC0bMJPw Q4mLIuw85H2EY762BOCXJZMnpuwhpA==
         """
 
@@ -268,9 +268,9 @@ Feature: NSEC3 Authoritative service
         """
         example.        3600    IN      SOA     ns1.example. bugs.x.w.example. 1 3600 300 3600000 3600
         example.        3600    IN      RRSIG   SOA 7 1 3600 20150420235959 20051021000000 40430 example. Hu25UIyNPmvPIVBrldN+9Mlp9Zql39qaUd8iq4ZLlYWfUUbbAS41pG+6 8z81q1xhkYAcEyHdVI2LmKusbZsT0Q==
-        b4um86eghhds6nea196smvmlo4ors995.example.       3600    IN      NSEC3   1 1 12 aabbccdd  gjeqe526plbf1g8mklp59enfd789njgi MX RRSIG 
+        b4um86eghhds6nea196smvmlo4ors995.example.       3600    IN      NSEC3   1 1 12 aabbccdd  gjeqe526plbf1g8mklp59enfd789njgi MX RRSIG
         b4um86eghhds6nea196smvmlo4ors995.example.       3600    IN      RRSIG   NSEC3 7 2 3600 20150420235959 20051021000000 40430 example. ZkPG3M32lmoHM6pa3D6gZFGB/rhL//Bs3Omh5u4m/CUiwtblEVOaAKKZ d7S959OeiX43aLX3pOv0TSTyiTxIZg==
-        35mthgpgcu1qg68fab165klnsnk3dpvl.example.       3600    IN      NSEC3   1 1 12 aabbccdd  b4um86eghhds6nea196smvmlo4ors995 NS DS RRSIG 
+        35mthgpgcu1qg68fab165klnsnk3dpvl.example.       3600    IN      NSEC3   1 1 12 aabbccdd  b4um86eghhds6nea196smvmlo4ors995 NS DS RRSIG
         35mthgpgcu1qg68fab165klnsnk3dpvl.example.       3600    IN      RRSIG   NSEC3 7 2 3600 20150420235959 20051021000000 40430 example. g6jPUUpduAJKRljUsN8gB4UagAX0NxY9shwQAynzo8EUWH+z6hEIBlUT PGj15eZll6VhQqgZXtAIR3chwgW+SA==
         """
 
