@@ -688,127 +688,7 @@ public:
     ///
     /// Methods directly corresponds to the ones in ZoneFinder.
     class Finder : public ZoneFinder {
-
-        /// \brief Helper to the findInterval.
-        ///
-        /// Get the ResultFlags for findInterval. If the zone is signed with
-        /// NSEC3, it will return RESULT_NSEC3_SIGNED. If it is signed with
-        /// NSEC, it wll return RESULT_NSEC_SIGNED. Otherwise it will return
-        /// RESULT_DEFAULT. It wraps getRRsets function to do some special
-        /// search, like searching NSEC RRset by getNSECRRset function,
-        /// searching DNSSEC related RRset and RRsig by getNSECRRset.
-        class FindDNSSECContext {
-            public:
-
-                /// \brief Constructor for FindDNSSECContext class.
-                ///
-                /// It initalize a helper for findInterval function.
-                ///
-                /// \param finderp The Finder piont for search.
-                /// \param options Search options.
-                /// \param origin The origin name for this finder.
-                FindDNSSECContext(Finder* finderp, const FindOptions options,
-                                  const isc::dns::Name& origin);
-
-                /// \brief Get result flags of this query.
-                /// \return ResultFlags for this query. If the zone file is
-                /// signed with NSEC, is will return RESULT_NSEC_SIGNED with
-                /// dnssec query. If the zone file is signed with NSEC3, it
-                /// will return RESULT_NSEC3_SIGNED with dnssec query, others
-                /// it should return RESULT_DEFAULT.
-                ZoneFinder::FindResultFlags getResultFlags();
-
-                typedef std::pair<bool, std::map<dns::RRType, dns::RRsetPtr> >
-                    FoundRRsets;
-                /// \brief Get DNSSEC RRset for the queried name.
-                ///
-                /// It should return the RRsets and RRsigs for the queried
-                /// name with designated type.
-                ///
-                /// \param name The queried name.
-                /// \param type The queried type.
-                /// \return RRsets and RRsigs that are matched.
-                FoundRRsets getDNSSECRRset(const isc::dns::Name& name,
-                                           const isc::dns::RRType& type);
-
-                /// \brief Get the needed NSEC RRset.
-                ///
-                /// It should return the needed NSEC RRset.
-                ///
-                /// \param name The name which the NSEC RRset belong to.
-                /// \return the needed NSEC RRsets.
-                isc::dns::ConstRRsetPtr getNSECRRset(const isc::dns::Name&
-                                                     name) const;
-
-                /// \brief Get the needed NSEC RRset.
-                ///
-                /// It should return the needed NSEC RRset.
-                ///
-                /// \param found_set The RRset which contain the NSEC an other
-                /// type RRs.
-                /// \return the needed NSEC RRsets.
-                isc::dns::ConstRRsetPtr getNSECRRset(const FoundRRsets&
-                                                     found_set) const;
-
-                /// \brief Check whether the zone file is signed with NSECi3.
-                ///
-                /// It checks whether the zone file is signed with NSEC3. If
-                /// yes, return true, otherwise return false.
-                ///
-                /// \return True for NSEC3, false otherwise.
-                bool isNSEC3();
-
-                /// \brief Check whether the zone file is signed with NSEC.
-                ///
-                /// It checks whether the zone file is signed with NSEC, If
-                /// yes, return true, otherwise return false.
-                ///
-                /// \return True for NSEC, false otherwise.
-                bool isNSEC();
-
-                /// \brief Check whether the name is origin name of the zone.
-                ///
-                /// It checks whether the name is origin name of the zone. Yes
-                /// for the origin name, false for not.
-                ///
-                /// \param name The queried name.
-                /// \return True for origin name, false for not.
-                bool isOrigin(const isc::dns::Name& name) const;
-
-                /// \brief get the options of queried.
-                ///
-                /// It return the queried options.
-                ///
-                /// \return It return the queried options.
-                ZoneFinder::FindOptions getOptions() const;
-            private:
-
-                /// \brief Init the attributes in this entity.
-                ///
-                /// It should init the attributes of this entity. Check whether
-                /// it is the NSEC or NSEC3 zone file if it is a dnssec query.
-                ///
-                /// \note If the entity is initialized, no need to init it
-                /// again.
-                void init();
-
-                /// \brief Check whether the entity is initalized.
-                ///
-                /// It should return true if the entity is inited, else return
-                /// false.
-                ///
-                /// \return True for inited, else return false.
-                bool isInited();
-                DatabaseClient::Finder* finderp_;
-                ZoneFinder::ZoneFinder::FindOptions options_;
-                FindResultFlags flags_;
-                isc::dns::Name origin_;
-                bool is_nsec3_;
-                bool is_nsec_;
-                bool initialized_;
-        };
-
-        public:
+    public:
         /// \brief Constructor
         ///
         /// \param database The database (shared with DatabaseClient) to
@@ -971,7 +851,94 @@ public:
                               const std::string* construct_name = NULL,
                               bool any = false);
 
-    private:
+        /// \brief Helper to the findInterval.
+        ///
+        /// Get the ResultFlags for findInterval. If the zone is signed with
+        /// NSEC3, it will return RESULT_NSEC3_SIGNED. If it is signed with
+        /// NSEC, it wll return RESULT_NSEC_SIGNED. Otherwise it will return
+        /// RESULT_DEFAULT. It wraps getRRsets function to do some special
+        /// search, like searching NSEC RRset by getNSECRRset function,
+        /// searching DNSSEC related RRset and RRsig by getNSECRRset.
+        class FindDNSSECContext {
+        public:
+            /// \brief Constructor for FindDNSSECContext class.
+            ///
+            /// It initalize a helper for findInterval function.
+            ///
+            /// \param finderp The Finder piont for search.
+            /// \param options Search options.
+            FindDNSSECContext(Finder* finderp, const FindOptions options);
+
+            /// \brief Get result flags of this query.
+            /// \return ResultFlags for this query. If the zone file is
+            /// signed with NSEC, is will return RESULT_NSEC_SIGNED with
+            /// dnssec query. If the zone file is signed with NSEC3, it
+            /// will return RESULT_NSEC3_SIGNED with dnssec query, others
+            /// it should return RESULT_DEFAULT.
+            ZoneFinder::FindResultFlags getResultFlags();
+
+            /// \brief Get the needed NSEC RRset.
+            ///
+            /// It should return the needed NSEC RRset.
+            ///
+            /// \param name The name which the NSEC RRset belong to.
+            /// \return the needed NSEC RRsets.
+            isc::dns::ConstRRsetPtr getNSECRRset(const isc::dns::Name&
+                                                 name) const;
+
+            /// \brief Get the needed NSEC RRset.
+            ///
+            /// It should return the needed NSEC RRset.
+            ///
+            /// \param found_set The RRset which contain the NSEC an other
+            /// type RRs.
+            /// \return the needed NSEC RRsets.
+            isc::dns::ConstRRsetPtr getNSECRRset(const FoundRRsets&
+                                                 found_set) const;
+
+            /// \brief Check whether the zone file is signed with NSECi3.
+            ///
+            /// It checks whether the zone file is signed with NSEC3. If
+            /// yes, return true, otherwise return false.
+            ///
+            /// \return True for NSEC3, false otherwise.
+            bool isNSEC3();
+
+            /// \brief Check whether the zone file is signed with NSEC.
+            ///
+            /// It checks whether the zone file is signed with NSEC, If
+            /// yes, return true, otherwise return false.
+            ///
+            /// \return True for NSEC, false otherwise.
+            bool isNSEC();
+
+        private:
+            /// \brief Init the attributes in this entity.
+            ///
+            /// It should init the attributes of this entity. Check whether
+            /// it is the NSEC or NSEC3 zone file if it is a dnssec query.
+            ///
+            /// \note If the entity is initialized, no need to init it
+            /// again.
+            void init();
+
+            /// \brief Check whether the entity is initialized.
+            ///
+            /// It should return true if the entity is inited, else return
+            /// false.
+            ///
+            /// \return True for inited, else return false.
+            bool isInited();
+
+            DatabaseClient::Finder* const finderp_;
+            const bool need_dnssec_;
+
+            FindResultFlags flags_;
+            bool is_nsec3_;
+            bool is_nsec_;
+            bool initialized_;
+        };
+
         /// \brief Search result of \c findDelegationPoint().
         ///
         /// This is a tuple combining the result of the search - a status code
@@ -1067,6 +1034,8 @@ public:
         ///
         /// \param name The name to find
         /// \param type The RRType to find
+        /// \param options Options about how to search. See the documentation
+        ///        for ZoneFinder::FindOptions.
         /// \param dresult Result of the search through the zone for a
         ///        delegation.
         /// \param target If the type happens to be ANY, it will insert all
@@ -1083,6 +1052,7 @@ public:
         ///         NXDOMAIN or an NXRRSET.
         ResultContext findWildcardMatch(const isc::dns::Name& name,
                                         const isc::dns::RRType& type,
+                                        const FindOptions options,
                                         const DelegationSearchResult& dresult,
                                         std::vector<isc::dns::ConstRRsetPtr>*
                                         target, FindDNSSECContext& dnssec_ctx);
@@ -1106,6 +1076,9 @@ public:
         ///
         /// \param name The name to find
         /// \param type The RRType to find
+        /// \param options Options about how to search. See the documentation
+        ///        for ZoneFinder::FindOptions.
+        /// \param is_origin If name is the zone's origin name.
         /// \param found A set of found RRsets in the search for the name
         ///        and type.  It could contain one or more of the requested
         ///        type, CNAME, NS, and NSEC RRsets of the name.
@@ -1126,6 +1099,8 @@ public:
         ///         method.
         ResultContext findOnNameResult(const isc::dns::Name& name,
                                        const isc::dns::RRType& type,
+                                       const FindOptions options,
+                                       const bool is_origin,
                                        const FoundRRsets& found,
                                        const std::string* wildname,
                                        std::vector<isc::dns::ConstRRsetPtr>*
@@ -1163,6 +1138,7 @@ public:
         ///         success due to an exact match).
         ResultContext findNoNameResult(const isc::dns::Name& name,
                                        const isc::dns::RRType& type,
+                                       FindOptions options,
                                        const DelegationSearchResult& dresult,
                                        std::vector<isc::dns::ConstRRsetPtr>*
                                        target, FindDNSSECContext& dnssec_ctx);
@@ -1218,8 +1194,6 @@ public:
         /// To find stuff in the result of getRRsets.
         typedef std::map<dns::RRType, dns::RRsetPtr>::const_iterator
             FoundIterator;
-
-
     };
 
     /// \brief Find a zone in the database
