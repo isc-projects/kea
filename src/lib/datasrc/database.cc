@@ -940,7 +940,7 @@ DatabaseClient::Finder::findInternal(const Name& name, const RRType& type,
 }
 
 ZoneFinder::FindNSEC3Result
-DatabaseClient::Finder::findNSEC3(const Name& name, bool) {
+DatabaseClient::Finder::findNSEC3(const Name& name, bool recursive) {
     // TODO: Some logging.
 
     // First, validate the input
@@ -969,19 +969,66 @@ DatabaseClient::Finder::findNSEC3(const Name& name, bool) {
         dynamic_cast<const generic::NSEC3PARAM&>(
             param->second->getRdataIterator()->getCurrent())));
 
-    // Compute the hash and find the corresponding NSEC3
-    const string hash(calculator->calculate(name));
-    DatabaseAccessor::IteratorContextPtr
-        context(accessor_->getNSEC3Records(hash, zone_id_));
+    const unsigned olabels(getOrigin().getLabelCount());
+    const unsigned qlabels(name.getLabelCount());
 
-    const FoundRRsets nsec3(getRRsets(hash + "." + getOrigin().toText(),
-                                      NSEC3_TYPES(), false, NULL, false,
-                                      context));
+    const string otext(getOrigin().toText());
 
-    // Return an expected exact match for now
-    return (FindNSEC3Result(true, name.getLabelCount(),
-                            nsec3.second.find(RRType::NSEC3())->second,
-                            ConstRRsetPtr()));
+    ConstRRsetPtr covering_proof;
+
+    for (unsigned labels(qlabels); labels >= olabels; -- labels) {
+        const string hash(calculator->calculate(labels == qlabels ? name :
+                                                name.split(qlabels - labels,
+                                                           labels)));
+
+        DatabaseAccessor::IteratorContextPtr
+            context(accessor_->getNSEC3Records(hash, zone_id_));
+
+        if (!context) {
+            isc_throw(Unexpected, "Iterator context null for hash " + hash);
+        }
+
+        const FoundRRsets nsec3(getRRsets(hash + "." + otext, NSEC3_TYPES(),
+                                          false, NULL, false, context));
+
+        if (nsec3.first) {
+            // We found an exact match against the current label.
+            const FoundIterator it(nsec3.second.find(RRType::NSEC3()));
+            if (it == nsec3.second.end()) {
+                isc_throw(DataSourceError, "Hash " + hash +
+                          "exists, but no NSEC3 there");
+            }
+
+            return (FindNSEC3Result(true, labels, it->second, covering_proof));
+        } else {
+            const string prevHash(accessor_->findPreviousNSEC3Hash(zone_id_,
+                                                                   hash));
+            context = accessor_->getNSEC3Records(prevHash, zone_id_);
+            const FoundRRsets prev_nsec3(getRRsets(prevHash + "." + otext,
+                                                   NSEC3_TYPES(), false, NULL,
+                                                   false, context));
+
+            if (!prev_nsec3.first) {
+                isc_throw(DataSourceError, "Hash " + prevHash + " returned "
+                          "from findPreviousNSEC3Hash, but it is empty");
+            }
+            const FoundIterator
+                prev_it(prev_nsec3.second.find(RRType::NSEC3()));
+            if (prev_it == prev_nsec3.second.end()) {
+                isc_throw(DataSourceError, "The previous hash " + prevHash +
+                          "exists, but does not contain the NSEC3");
+            }
+
+            covering_proof = prev_it->second;
+            if (!recursive) {
+                return (FindNSEC3Result(false, labels, covering_proof,
+                                        ConstRRsetPtr()));
+            }
+        }
+    }
+
+    isc_throw(DataSourceError, "recursive findNSEC3 mode didn't stop, likely a "
+              "broken NSEC3 zone: " << otext << "/" << getClass());
 }
 
 Name

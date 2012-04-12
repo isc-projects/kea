@@ -684,7 +684,7 @@ public:
     /// This is used to find previous NSEC3 hashes, to find covering NSEC3 in
     /// case none match exactly.
     ///
-    /// In case a hash before before the lowest or the lowest is provided,
+    /// In case a hash before the lowest or the lowest is provided,
     /// this should return the largest one in the zone (NSEC3 needs a
     /// wrap-around semantics).
     ///

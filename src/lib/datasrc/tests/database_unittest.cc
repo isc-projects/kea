@@ -211,8 +211,14 @@ const char* const TEST_RECORDS[][5] = {
 
 // FIXME: Taken from a different test. Fill with proper data when creating a test.
 const char* TEST_NSEC3_RECORDS[][5] = {
-    {"0P9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM", "NSEC3", "300", "", "1 1 12 AABBCCDD 2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A RRSIG"},
-    {"0P9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM", "RRSIG", "300", "", "NSEC3 5 4 7200 20100410172647 20100311172647 63192 example.org. gNIVj4T8t51fEU6kOPpvK7HOGBFZGbalN5ZK mInyrww6UWZsUNdw07ge6/U6HfG+/s61RZ/L is2M6yUWHyXbNbj/QqwqgadG5dhxTArfuR02 xP600x0fWX8LXzW4yLMdKVxGbzYT+vvGz71o 8gHSY5vYTtothcZQa4BMKhmGQEk="},
+    {apex_hash, "NSEC3", "300", "", "1 1 12 AABBCCDD 2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A RRSIG"},
+    {apex_hash, "RRSIG", "300", "", "NSEC3 5 4 7200 20100410172647 20100311172647 63192 example.org. gNIVj4T8t51fEU6kOPpvK7HOGBFZGbalN5ZK mInyrww6UWZsUNdw07ge6/U6HfG+/s61RZ/L is2M6yUWHyXbNbj/QqwqgadG5dhxTArfuR02 xP600x0fWX8LXzW4yLMdKVxGbzYT+vvGz71o 8gHSY5vYTtothcZQa4BMKhmGQEk="},
+    {ns1_hash, "NSEC3", "300", "", "1 1 12 AABBCCDD 2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A RRSIG"},
+    {ns1_hash, "RRSIG", "300", "", "NSEC3 5 4 7200 20100410172647 20100311172647 63192 example.org. gNIVj4T8t51fEU6kOPpvK7HOGBFZGbalN5ZK mInyrww6UWZsUNdw07ge6/U6HfG+/s61RZ/L is2M6yUWHyXbNbj/QqwqgadG5dhxTArfuR02 xP600x0fWX8LXzW4yLMdKVxGbzYT+vvGz71o 8gHSY5vYTtothcZQa4BMKhmGQEk="},
+    {w_hash, "NSEC3", "300", "", "1 1 12 AABBCCDD 2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A RRSIG"},
+    {w_hash, "RRSIG", "300", "", "NSEC3 5 4 7200 20100410172647 20100311172647 63192 example.org. gNIVj4T8t51fEU6kOPpvK7HOGBFZGbalN5ZK mInyrww6UWZsUNdw07ge6/U6HfG+/s61RZ/L is2M6yUWHyXbNbj/QqwqgadG5dhxTArfuR02 xP600x0fWX8LXzW4yLMdKVxGbzYT+vvGz71o 8gHSY5vYTtothcZQa4BMKhmGQEk="},
+    {zzz_hash, "NSEC3", "300", "", "1 1 12 AABBCCDD 2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A RRSIG"},
+    {zzz_hash, "RRSIG", "300", "", "NSEC3 5 4 7200 20100410172647 20100311172647 63192 example.org. gNIVj4T8t51fEU6kOPpvK7HOGBFZGbalN5ZK mInyrww6UWZsUNdw07ge6/U6HfG+/s61RZ/L is2M6yUWHyXbNbj/QqwqgadG5dhxTArfuR02 xP600x0fWX8LXzW4yLMdKVxGbzYT+vvGz71o 8gHSY5vYTtothcZQa4BMKhmGQEk="},
     {NULL, NULL, NULL, NULL, NULL}
 };
 
@@ -3595,6 +3601,12 @@ TEST_F(MockDatabaseClientTest, findNSEC3) {
     Name origin("example.org");
     const string apex_nsec3_text = string(apex_hash) + ".example.org." +
         string(nsec3_common);
+    const string ns1_nsec3_text = string(ns1_hash) + ".example.org." +
+        string(nsec3_common);
+    const string w_nsec3_text = string(w_hash) + ".example.org." +
+        string(nsec3_common);
+    const string zzz_nsec3_text = string(zzz_hash) + ".example.org." +
+        string(nsec3_common);
 
     // Apex name.  It should have a matching NSEC3.
     {
@@ -3603,21 +3615,21 @@ TEST_F(MockDatabaseClientTest, findNSEC3) {
                        finder->findNSEC3(origin, false));
     }
 
-#if 0
     // Recursive mode doesn't change the result in this case.
     {
         SCOPED_TRACE("apex, recursive mode");
-        findNSEC3Check(true, origin_.getLabelCount(), apex_nsec3_text, "",
-                       zone_finder_.findNSEC3(origin_, true));
+        findNSEC3Check(true, origin.getLabelCount(), apex_nsec3_text, "",
+                       finder->findNSEC3(origin, true));
     }
 
-    // Non existent name.  Disabling recursion, a covering NSEC3 should be
-    // returned.
+    // Non existent name (in the NSEC3 namespace -- the findNSEC3 does
+    // not look into the normal data).  Disabling recursion, a covering
+    // NSEC3 should be returned.
     const Name www_name("www.example.org");
     {
         SCOPED_TRACE("non existent name, non recursive mode");
         findNSEC3Check(false, www_name.getLabelCount(), apex_nsec3_text, "",
-                       zone_finder_.findNSEC3(www_name, false));
+                       finder->findNSEC3(www_name, false));
     }
 
     // Non existent name.  The closest provable encloser is the apex,
@@ -3626,9 +3638,9 @@ TEST_F(MockDatabaseClientTest, findNSEC3) {
     // H(ns1) = 2T... < H(xxx) = Q0... < H(zzz) = R5...
     {
         SCOPED_TRACE("non existent name, recursive mode");
-        findNSEC3Check(true, origin_.getLabelCount(), apex_nsec3_text,
+        findNSEC3Check(true, origin.getLabelCount(), apex_nsec3_text,
                        ns1_nsec3_text,
-                       zone_finder_.findNSEC3(Name("xxx.example.org"), true));
+                       finder->findNSEC3(Name("xxx.example.org"), true));
     }
 
     // Similar to the previous case, but next closer name is different
@@ -3639,8 +3651,8 @@ TEST_F(MockDatabaseClientTest, findNSEC3) {
         SCOPED_TRACE("non existent name, non qname next closer");
         findNSEC3Check(true, Name("w.example.org").getLabelCount(),
                        w_nsec3_text, ns1_nsec3_text,
-                       zone_finder_.findNSEC3(Name("x.y.w.example.org"),
-                                              true));
+                       finder->findNSEC3(Name("x.y.w.example.org"),
+                                         true));
     }
 
     // In the rest of test we check hash comparison for wrap around cases.
@@ -3649,16 +3661,15 @@ TEST_F(MockDatabaseClientTest, findNSEC3) {
         const Name smallest_name("smallest.example.org");
         findNSEC3Check(false, smallest_name.getLabelCount(),
                        zzz_nsec3_text, "",
-                       zone_finder_.findNSEC3(smallest_name, false));
+                       finder->findNSEC3(smallest_name, false));
     }
     {
         SCOPED_TRACE("very large hash");
         const Name largest_name("largest.example.org");
         findNSEC3Check(false, largest_name.getLabelCount(),
                        zzz_nsec3_text, "",
-                       zone_finder_.findNSEC3(largest_name, false));
+                       finder->findNSEC3(largest_name, false));
     }
-#endif
 }
 
 }
