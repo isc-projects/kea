@@ -780,16 +780,28 @@ DatabaseClient::Finder::FindDNSSECContext::getDNSSECRRset(const Name &name,
         return (ConstRRsetPtr());
     }
 
-    const Name& nsec_name = covering ? finder_.findPreviousName(name) : name;
-    const bool need_nscheck = (nsec_name == finder_.getOrigin());
-    const FoundRRsets found = finder_.getRRsets(nsec_name.toText(),
-                                                NSEC_TYPES(), need_nscheck);
-    const FoundIterator nci = found.second.find(RRType::NSEC());
-    if (nci != found.second.end()) {
-        return (nci->second);
-    } else {
-        return (ConstRRsetPtr());
+    try {
+        const Name& nsec_name =
+            covering ? finder_.findPreviousName(name) : name;
+        const bool need_nscheck = (nsec_name == finder_.getOrigin());
+        const FoundRRsets found = finder_.getRRsets(nsec_name.toText(),
+                                                    NSEC_TYPES(),
+                                                    need_nscheck);
+        const FoundIterator nci = found.second.find(RRType::NSEC());
+        if (nci != found.second.end()) {
+            return (nci->second);
+        }
+    } catch (const isc::NotImplemented&) {
+        // This happens when the underlying database accessor doesn't support
+        // findPreviousName() (it probably doesn't support DNSSEC at all) but
+        // there is somehow an NSEC RR at the zone apex.  We log the fact but
+        // otherwise let the caller decide what to do (so, for example, a
+        // higher level query processing won't completely fail but can return
+        // anything it can get).
+        LOG_INFO(logger, DATASRC_DATABASE_COVER_NSEC_UNSUPPORTED).
+            arg(finder_.accessor_->getDBName()).arg(name);
     }
+    return (ConstRRsetPtr());
 }
 
 ZoneFinder::FindResultFlags
@@ -924,13 +936,8 @@ DatabaseClient::Finder::findNoNameResult(const Name& name, const RRType& type,
         LOG_DEBUG(logger, DBG_TRACE_DETAILED,
                   DATASRC_DATABASE_FOUND_EMPTY_NONTERMINAL).
             arg(accessor_->getDBName()).arg(name);
-        const ConstRRsetPtr nsec = dnssec_ctx.isNSEC() ? findNSECCover(name) :
-            ConstRRsetPtr();
-        if (dnssec_ctx.isNSEC() && !nsec) {
-            isc_throw(DataSourceError,
-                      "no NSEC RR covers in the NSEC signed zone");
-        }
-        return (ResultContext(NXRRSET, nsec, dnssec_ctx.getResultFlags()));
+        return (ResultContext(NXRRSET, dnssec_ctx.getDNSSECRRset(name, true),
+                              dnssec_ctx.getResultFlags()));
     } else if ((options & NO_WILDCARD) == 0) {
         // It's not an empty non-terminal and wildcard matching is not
         // disabled, so check for wildcards. If there is a wildcard match
