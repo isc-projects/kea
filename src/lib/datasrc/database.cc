@@ -939,11 +939,11 @@ DatabaseClient::Finder::findInternal(const Name& name, const RRType& type,
     }
 }
 
+// The behaviour is inspired by the one in the in-memory implementation.
 ZoneFinder::FindNSEC3Result
 DatabaseClient::Finder::findNSEC3(const Name& name, bool recursive) {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_DATABASE_FINDNSEC3).arg(name).
         arg(recursive ? "recursive" : "non-recursive");
-
 
     // First, validate the input
     const NameComparisonResult cmp_result(name.compare(getOrigin()));
@@ -955,7 +955,6 @@ DatabaseClient::Finder::findNSEC3(const Name& name, bool recursive) {
 
     // Now, we need to get the NSEC3 params from the apex and create the hash
     // creator for it.
-
     const FoundRRsets nsec3param(getRRsets(getOrigin().toText(),
                                  NSEC3PARAM_TYPES(), false));
     const FoundIterator param(nsec3param.second.find(RRType::NSEC3PARAM()));
@@ -971,17 +970,21 @@ DatabaseClient::Finder::findNSEC3(const Name& name, bool recursive) {
         dynamic_cast<const generic::NSEC3PARAM&>(
             param->second->getRdataIterator()->getCurrent())));
 
+    // Few shortcut variables
     const unsigned olabels(getOrigin().getLabelCount());
     const unsigned qlabels(name.getLabelCount());
-
     const string otext(getOrigin().toText());
 
+    // This will be set to the one covering the query name
     ConstRRsetPtr covering_proof;
 
+    // We keep stripping the leftmost label until we find something.
+    // In case it is recursive, we'll exit the loop at the first iteration.
     for (unsigned labels(qlabels); labels >= olabels; -- labels) {
         const string hash(calculator->calculate(labels == qlabels ? name :
                                                 name.split(qlabels - labels,
                                                            labels)));
+        // Get the exact match for the name.
         LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_DATABASE_FINDNSEC3_TRYHASH).
             arg(name).arg(labels).arg(hash);
 
@@ -1006,8 +1009,11 @@ DatabaseClient::Finder::findNSEC3(const Name& name, bool recursive) {
             LOG_DEBUG(logger, DBG_TRACE_BASIC,
                       DATASRC_DATABASE_FINDNSEC3_MATCH).arg(name).arg(labels).
                 arg(*it->second);
+            // Yes, we win
             return (FindNSEC3Result(true, labels, it->second, covering_proof));
         } else {
+            // There's no exact match. We try a previous one. We must find it
+            // (if the zone is properly signed).
             const string prevHash(accessor_->findPreviousNSEC3Hash(zone_id_,
                                                                    hash));
             LOG_DEBUG(logger, DBG_TRACE_BASIC,
@@ -1030,6 +1036,9 @@ DatabaseClient::Finder::findNSEC3(const Name& name, bool recursive) {
             }
 
             covering_proof = prev_it->second;
+            // In case it is recursive, we try to get an exact match a level
+            // up. If it is not recursive, the caller is ok with a covering
+            // one, so we just return it.
             if (!recursive) {
                 LOG_DEBUG(logger, DBG_TRACE_BASIC,
                           DATASRC_DATABASE_FINDNSEC3_COVER).arg(name).
@@ -1040,6 +1049,8 @@ DatabaseClient::Finder::findNSEC3(const Name& name, bool recursive) {
         }
     }
 
+    // The zone must contain at least the apex and that one should match
+    // exactly. If that doesn't happen, we have a problem.
     isc_throw(DataSourceError, "recursive findNSEC3 mode didn't stop, likely a "
               "broken NSEC3 zone: " << otext << "/" << getClass());
 }
