@@ -1603,12 +1603,15 @@ InMemoryZoneFinder::InMemoryZoneFinderImpl::load(
 
 namespace {
 // A wrapper for dns::masterLoad used by load() below.  Essentially it
-// converts the two callback types.
+// converts the two callback types.  Note the mostly redundant wrapper of
+// boost::bind.  It converts function<void(ConstRRsetPtr)> to
+// function<void(RRsetPtr)> (masterLoad() expects the latter).  SunStudio
+// doesn't seem to do this conversion if we just pass 'callback'.
 void
 masterLoadWrapper(const char* const filename, const Name& origin,
                   const RRClass& zone_class, LoadCallback callback)
 {
-    masterLoad(filename, origin, zone_class, callback);
+    masterLoad(filename, origin, zone_class, boost::bind(callback, _1));
 }
 
 // The installer called from Impl::load() for the iterator version of load().
