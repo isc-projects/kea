@@ -867,7 +867,7 @@ public:
             ///
             /// \param finderp The Finder piont for search.
             /// \param options Search options.
-            FindDNSSECContext(Finder* finderp, const FindOptions options);
+            FindDNSSECContext(Finder& finder, const FindOptions options);
 
             /// \brief Get result flags of this query.
             /// \return ResultFlags for this query. If the zone file is
@@ -930,7 +930,7 @@ public:
             /// \return True for inited, else return false.
             bool isInited();
 
-            DatabaseClient::Finder* const finderp_;
+            DatabaseClient::Finder& finder_;
             const bool need_dnssec_;
 
             FindResultFlags flags_;
