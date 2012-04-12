@@ -2471,14 +2471,13 @@ TYPED_TEST(DatabaseClientTest, emptyNonterminalNSEC) {
     if (!this->is_mock_) {
         return; // We don't make the real DB to throw
     }
-    // If the zone is signed with NSEC, find function should throw an error
-    // when no NSEC RRset for NXRRset case
-    EXPECT_THROW(doFindTest(*finder, Name("here.wild.example.org."),
-                            RRType::TXT(), RRType::NSEC(), this->rrttl_,
-                            ZoneFinder::NXRRSET, this->empty_rdatas_,
-                            this->empty_rdatas_, ZoneFinder::RESULT_DEFAULT,
-                            Name::ROOT_NAME(), ZoneFinder::FIND_DNSSEC),
-                 DataSourceError);
+    // In this case the accessor doesn't support findPreviousName(), but the
+    // zone apex has NSEC, and the zone itself is considered NSEC-signed.
+    doFindTest(*finder, Name("here.wild.example.org."),
+               RRType::TXT(), RRType::NSEC(), this->rrttl_,
+               ZoneFinder::NXRRSET, this->empty_rdatas_,
+               this->empty_rdatas_, ZoneFinder::RESULT_NSEC_SIGNED,
+               Name::ROOT_NAME(), ZoneFinder::FIND_DNSSEC);
 }
 
 TYPED_TEST(DatabaseClientTest, anyFromFind) {
