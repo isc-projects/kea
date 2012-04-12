@@ -712,9 +712,9 @@ DatabaseClient::Finder::logAndCreateResult(
 }
 
 DatabaseClient::Finder::FindDNSSECContext::FindDNSSECContext(
-    DatabaseClient::Finder* finderp,
+    DatabaseClient::Finder& finder,
     const FindOptions options) :
-    finderp_(finderp),
+    finder_(finder),
     need_dnssec_((options & FIND_DNSSEC) != 0),
     is_nsec3_(false),
     is_nsec_(false),
@@ -723,18 +723,15 @@ DatabaseClient::Finder::FindDNSSECContext::FindDNSSECContext(
 
 void
 DatabaseClient::Finder::FindDNSSECContext::init() {
-    if (finderp_ == NULL) {
-        isc_throw(DataSourceError, "no Finder to query");
-    }
     if (!initialized_) {
         initialized_ = true;
         if (need_dnssec_) {
             // If NSEC3PARAM rrset exists, the zone looks like signed with
             // NSEC3
-            is_nsec3_ = finderp_->isNSEC3();
+            is_nsec3_ = finder_.isNSEC3();
             // If no NSEC3PARAM and it is DNSSEC query, check whether NSEC
             // exist in apex of zone
-            is_nsec_ = is_nsec3_ ? false : finderp_->isNSEC();
+            is_nsec_ = is_nsec3_ ? false : finder_.isNSEC();
         }
     }
 }
@@ -779,11 +776,8 @@ DatabaseClient::Finder::FindDNSSECContext::getNSECRRset(
 isc::dns::ConstRRsetPtr
 DatabaseClient::Finder::FindDNSSECContext::getNSECRRset(const Name &name) const
 {
-    if (finderp_ == NULL) {
-        isc_throw(DataSourceError, "no Finder to query");
-    }
-    const FoundRRsets wfound = finderp_->getRRsets(name.toText(), NSEC_TYPES(),
-                                                   true);
+    const FoundRRsets wfound = finder_.getRRsets(name.toText(), NSEC_TYPES(),
+                                                 true);
     const FoundIterator nci = wfound.second.find(RRType::NSEC());
     if (nci != wfound.second.end()) {
         return (nci->second);
@@ -1035,7 +1029,7 @@ DatabaseClient::Finder::findInternal(const Name& name, const RRType& type,
     const FoundRRsets found = getRRsets(name.toText(), final_types,
                                         !is_origin, NULL,
                                         type == RRType::ANY());
-    FindDNSSECContext dnssec_ctx(this, options);
+    FindDNSSECContext dnssec_ctx(*this, options);
     if (found.first) {
         // Something found at the domain name.  Look into it further to get
         // the final result.
