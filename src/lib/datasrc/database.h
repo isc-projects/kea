@@ -883,8 +883,8 @@ public:
             ///
             /// \param name The name which the NSEC RRset belong to.
             /// \return the needed NSEC RRsets.
-            isc::dns::ConstRRsetPtr getNSECRRset(const isc::dns::Name&
-                                                 name) const;
+            isc::dns::ConstRRsetPtr getDNSSECRRset(const isc::dns::Name&
+                                                   name);
 
             /// \brief Get the needed NSEC RRset.
             ///
@@ -893,8 +893,8 @@ public:
             /// \param found_set The RRset which contain the NSEC an other
             /// type RRs.
             /// \return the needed NSEC RRsets.
-            isc::dns::ConstRRsetPtr getNSECRRset(const FoundRRsets&
-                                                 found_set) const;
+            isc::dns::ConstRRsetPtr getDNSSECRRset(const FoundRRsets&
+                                                   found_set);
 
             /// \brief Check whether the zone file is signed with NSECi3.
             ///
