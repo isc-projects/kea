@@ -666,8 +666,8 @@ DatabaseClient::Finder::findWildcardMatch(const isc::dns::Name& name,
             LOG_DEBUG(logger, DBG_TRACE_DETAILED,
                       DATASRC_DATABASE_WILDCARD_EMPTY).
                 arg(accessor_->getDBName()).arg(wildcard).arg(name);
-            FindResultFlags flags = (RESULT_WILDCARD |
-                dnssec_ctx.getResultFlags());
+            const FindResultFlags flags = (RESULT_WILDCARD |
+                                           dnssec_ctx.getResultFlags());
             if (dnssec_ctx.isNSEC()) {
                 ConstRRsetPtr nsec = findNSECCover(Name(wildcard));
                 if (nsec) {
@@ -812,11 +812,10 @@ DatabaseClient::Finder::FindDNSSECContext::getDNSSECRRset(const Name& name,
         isc_throw(DataSourceError, "no Finder to query");
     }
     const bool is_origin = isOrigin(name);
-    bool is_nsec = isNSEC();
-    WantedTypes final_types(is_nsec ? FINAL_TYPES() : FINAL_TYPES_NO_NSEC());
+    WantedTypes final_types(isNSEC() ? FINAL_TYPES() : FINAL_TYPES_NO_NSEC());
     final_types.insert(type);
     return (finderp_->getRRsets(name.toText(), final_types, !is_origin, NULL,
-            type == RRType::ANY()));
+                                type == RRType::ANY()));
 }
 
 bool
@@ -836,7 +835,7 @@ DatabaseClient::Finder::FindDNSSECContext::getResultFlags() {
         return (RESULT_NSEC3_SIGNED);
     } else {
         // If it is a DNSSEC query and the zone is signed with NSEC, it should
-        // return RESULT_NSEC_SIGNED, other else, return RESULT_DEFAULT
+        // return RESULT_NSEC_SIGNED, otherwise, return RESULT_DEFAULT
         return (isNSEC() ? RESULT_NSEC_SIGNED : RESULT_DEFAULT);
     }
 }
