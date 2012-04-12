@@ -898,18 +898,19 @@ public:
             return (*accessor_);
         }
 
+    private:
         /// \brief check whether zone is signed with nsec
         ///
         /// searches the NSEC3PARAM RRset in the zone apex, if it exists, the
         /// zone looks signed with nsec
         bool isNSEC();
+
         /// \brief check whether zone is signed with nsec3
         ///
         /// searches the NSEC3PARAM RRset in the zone apex, if it exists, the
         /// zone looks signed with nsec3
         bool isNSEC3();
 
-    private:
         boost::shared_ptr<DatabaseAccessor> accessor_;
         const int zone_id_;
         const isc::dns::Name origin_;
@@ -934,7 +935,7 @@ public:
                                    std::vector<isc::dns::ConstRRsetPtr>*
                                    target,
                                    const FindOptions options = FIND_DEFAULT);
-    public:
+
         /// \brief Searches database for RRsets of one domain.
         ///
         /// This method scans RRs of single domain specified by name and
