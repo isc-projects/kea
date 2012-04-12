@@ -877,9 +877,18 @@ public:
             /// it should return RESULT_DEFAULT.
             ZoneFinder::FindResultFlags getResultFlags();
 
-            /// \brief Get the needed NSEC RRset.
+            /// \brief Get DNSSEC negative proof for a given name.
             ///
-            /// It should return the needed NSEC RRset.
+            /// If the zone is considered NSEC-signed and the context
+            /// requested DNSSEC proofs, this method tries to find NSEC RRs
+            /// for the give name.  If \c covering is true, it means a
+            /// "no name" proof is requested, so it calls findPreviousName on
+            /// the given name and extracts an NSEC record on the result;
+            /// otherwise it tries to get NSEC RRs for the given name.  If
+            /// the NSEC is found, this method returns it; otherwise it returns
+            /// NULL.
+            ///
+            /// In all other cases this method simply returns NULL.
             ///
             /// \param name The name which the NSEC RRset belong to.
             /// \param covering true if a covering NSEC is required; false if
@@ -1183,13 +1192,6 @@ public:
         ///
         /// \return true if the name has subdomains, false if not.
         bool hasSubdomains(const std::string& name);
-
-        /// \brief Get the NSEC covering a name.
-        ///
-        /// This one calls findPreviousName on the given name and extracts an
-        /// NSEC record on the result. It handles various error cases. The
-        /// method exists to share code present at more than one location.
-        dns::ConstRRsetPtr findNSECCover(const dns::Name& name);
 
         /// \brief Convenience type shortcut.
         ///
