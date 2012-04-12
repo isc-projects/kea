@@ -189,7 +189,7 @@ class ConfigManager:
         """Initialize the configuration manager. The data_path string
            is the path to the directory where the configuration is
            stored (in <data_path>/<database_filename> or in
-           <database_filename>, if it is absolute). The dabase_filename
+           <database_filename>, if it is absolute). The database_filename
            is the config file to load. Session is an optional
            cc-channel session. If this is not given, a new one is
            created. If clear_config is True, the configuration file is
