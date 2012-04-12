@@ -839,30 +839,54 @@ public:
                               const std::string* construct_name = NULL,
                               bool any = false);
 
-        /// \brief Helper to the findInterval.
+        /// \brief DNSSEC related context for ZoneFinder::findInternal.
         ///
-        /// Get the ResultFlags for findInterval. If the zone is signed with
-        /// NSEC3, it will return RESULT_NSEC3_SIGNED. If it is signed with
-        /// NSEC, it wll return RESULT_NSEC_SIGNED. Otherwise it will return
-        /// RESULT_DEFAULT. It wraps getRRsets function to do some special
-        /// search, like searching NSEC RRset by getNSECRRset function,
-        /// searching DNSSEC related RRset and RRsig by getNSECRRset.
+        /// This class is a helper for the ZoneFinder::findInternal method,
+        /// encapsulating DNSSEC related information and processing logic.
+        /// Specifically, it tells the finder whether the zone under search
+        /// is DNSSEC signed or not, and if it is, whether it's with NSEC or
+        /// with NSEC3.  It also provides a RRset DNSSEC proof RRset for some
+        /// specific situations (in practice, this means an NSEC RRs for
+        /// negative proof when they are needed and expected).
+        ///
+        /// The purpose of this class is to keep the main finder implementation
+        /// unaware of DNSSEC related details.  It's also intended to help
+        /// avoid unnecessary lookup for DNSSEC proof RRsets; this class
+        /// doesn't look into the DB for these RRsets unless it's known to
+        /// be needed.  The same optimization could be implemented in the
+        /// main code, but it will result in duplicate similar code logic
+        /// and make the code more complicated.  By encapsulating and unifying
+        /// the logic in a single separate class, we can keep the main
+        /// search logic readable.
         class FindDNSSECContext {
         public:
             /// \brief Constructor for FindDNSSECContext class.
             ///
-            /// It initalize a helper for findInterval function.
+            /// This constructor doesn't involve any expensive operation such
+            /// as database lookups.  It only initializes some internal
+            /// states (in a cheap way) and remembers if DNSSEC proof
+            /// is requested.
             ///
-            /// \param finderp The Finder piont for search.
-            /// \param options Search options.
+            /// \param finder The Finder for the findInternal that uses this
+            /// context.
+            /// \param options Find options given to the finder.
             FindDNSSECContext(Finder& finder, const FindOptions options);
 
-            /// \brief Get result flags of this query.
-            /// \return ResultFlags for this query. If the zone file is
-            /// signed with NSEC, is will return RESULT_NSEC_SIGNED with
-            /// dnssec query. If the zone file is signed with NSEC3, it
-            /// will return RESULT_NSEC3_SIGNED with dnssec query, others
-            /// it should return RESULT_DEFAULT.
+            /// \brief Return DNSSEC related result flags for the context.
+            ///
+            /// This method returns a FindResultFlags value related to
+            /// DNSSEC, based on the context.  If DNSSEC proof is requested
+            /// and the zone is signed with NSEC/NSEC3, it returns
+            /// RESULT_NSEC_SIGNED/RESULT_NSEC3_SIGNED, respectively;
+            /// otherwise it returns RESULT_DEFAULT.  So the caller can simply
+            /// take a logical OR for the returned value of this method and
+            /// whatever other flags it's going to set, without knowing
+            /// DNSSEC specific information.
+            ///
+            /// If it's not yet identified whether and how the zone is DNSSEC
+            /// signed at the time of the call, it now detects that via
+            /// database lookups (if necessary).  (And this is because why
+            /// this method cannot be a const member function).
             ZoneFinder::FindResultFlags getResultFlags();
 
             /// \brief Get DNSSEC negative proof for a given name.
@@ -881,52 +905,51 @@ public:
             /// \param name The name which the NSEC RRset belong to.
             /// \param covering true if a covering NSEC is required; false if
             /// a matching NSEC is required.
-            /// \return the needed NSEC RRsets.
+            /// \return Any found DNSSEC proof RRset or NULL
             isc::dns::ConstRRsetPtr getDNSSECRRset(
                 const isc::dns::Name& name, bool covering);
 
-            /// \brief Get the needed NSEC RRset.
+            /// \brief Get DNSSEC negative proof for a given name.
             ///
-            /// It should return the needed NSEC RRset.
+            /// If the zone is considered NSEC-signed and the context
+            /// requested DNSSEC proofs, this method tries to find NSEC RRset
+            /// from the given set (\c found_set) and returns it if found;
+            /// in other cases this method simply returns NULL.
             ///
-            /// \param found_set The RRset which contain the NSEC an other
-            /// type RRs.
-            /// \return the needed NSEC RRsets.
+            /// \param found_set The RRset which may contain an NSEC RRset.
+            /// \return Any found DNSSEC proof RRset or NULL
             isc::dns::ConstRRsetPtr getDNSSECRRset(const FoundRRsets&
                                                    found_set);
 
         private:
-            /// \brief Check whether the zone file is signed with NSECi3.
+            /// \brief Returns whether the zone is signed with NSEC3.
             ///
-            /// It checks whether the zone file is signed with NSEC3. If
-            /// yes, return true, otherwise return false.
-            ///
-            /// \return True for NSEC3, false otherwise.
+            /// This method returns true if the zone for the finder that
+            /// uses this context is considered DNSSEC signed with NSEC3;
+            /// otherwise it returns false.  If it's not yet detected,
+            /// this method now detects that via database lookups (if
+            /// necessary).
             bool isNSEC3();
 
-            /// \brief Check whether the zone file is signed with NSEC.
+            /// \brief Returns whether the zone is signed with NSEC.
             ///
-            /// It checks whether the zone file is signed with NSEC, If
-            /// yes, return true, otherwise return false.
-            ///
-            /// \return True for NSEC, false otherwise.
+            /// This is similar to isNSEC3(), but works for NSEC.
             bool isNSEC();
 
-            /// \brief Init the attributes in this entity.
+            /// \brief Probe into the database to see if/how the zone is
+            /// signed.
             ///
-            /// It should init the attributes of this entity. Check whether
-            /// it is the NSEC or NSEC3 zone file if it is a dnssec query.
-            ///
-            /// \note If the entity is initialized, no need to init it
-            /// again.
-            void init();
+            /// This is a subroutine of isNSEC3() and isNSEC(), and performs
+            /// delayed database probe to detect whether the zone used by
+            /// the finder is DNSSEC signed, and if it is, with NSEC or NSEC3.
+            void probe();
 
             DatabaseClient::Finder& finder_;
             const bool need_dnssec_;
 
             bool is_nsec3_;
             bool is_nsec_;
-            bool initialized_;
+            bool probed_;
         };
 
         /// \brief Search result of \c findDelegationPoint().

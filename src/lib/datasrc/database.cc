@@ -661,13 +661,13 @@ DatabaseClient::Finder::FindDNSSECContext::FindDNSSECContext(
     need_dnssec_((options & FIND_DNSSEC) != 0),
     is_nsec3_(false),
     is_nsec_(false),
-    initialized_(false)
+    probed_(false)
 {}
 
 void
-DatabaseClient::Finder::FindDNSSECContext::init() {
-    if (!initialized_) {
-        initialized_ = true;
+DatabaseClient::Finder::FindDNSSECContext::probe() {
+    if (!probed_) {
+        probed_ = true;
         if (need_dnssec_) {
             // If an NSEC3PARAM RR exists at the zone apex, it's quite likely
             // that the zone is signed with NSEC3.  (If not the zone is more
@@ -697,22 +697,18 @@ DatabaseClient::Finder::FindDNSSECContext::init() {
 
 bool
 DatabaseClient::Finder::FindDNSSECContext::isNSEC3() {
-    if (initialized_) {
-        return (is_nsec3_);
-    } else {
-        init();
-        return (is_nsec3_);
+    if (!probed_) {
+        probe();
     }
+    return (is_nsec3_);
 }
 
 bool
 DatabaseClient::Finder::FindDNSSECContext::isNSEC() {
-    if (initialized_) {
-        return (is_nsec_);
-    } else {
-        init();
-        return (is_nsec_);
+    if (!probed_) {
+        probe();
     }
+    return (is_nsec_);
 }
 
 isc::dns::ConstRRsetPtr
