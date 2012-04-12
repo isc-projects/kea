@@ -882,9 +882,11 @@ public:
             /// It should return the needed NSEC RRset.
             ///
             /// \param name The name which the NSEC RRset belong to.
+            /// \param covering true if a covering NSEC is required; false if
+            /// a matching NSEC is required.
             /// \return the needed NSEC RRsets.
-            isc::dns::ConstRRsetPtr getDNSSECRRset(const isc::dns::Name&
-                                                   name);
+            isc::dns::ConstRRsetPtr getDNSSECRRset(
+                const isc::dns::Name& name, bool covering);
 
             /// \brief Get the needed NSEC RRset.
             ///
