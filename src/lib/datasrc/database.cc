@@ -364,58 +364,6 @@ FINAL_TYPES() {
     }
     return (result);
 }
-
-const WantedTypes&
-FINAL_TYPES_NO_NSEC() {
-    static bool initialized(false);
-    static WantedTypes result;
-
-    if (!initialized) {
-        result.insert(RRType::CNAME());
-        result.insert(RRType::NS());
-        initialized = true;
-    }
-    return (result);
-}
-
-}
-
-ConstRRsetPtr
-DatabaseClient::Finder::findNSECCover(const Name& name) {
-    try {
-        // Which one should contain the NSEC record?
-        const Name coverName(findPreviousName(name));
-        // Get the record and copy it out
-        const FoundRRsets found = getRRsets(coverName.toText(), NSEC_TYPES(),
-                                            coverName != getOrigin());
-        const FoundIterator
-            nci(found.second.find(RRType::NSEC()));
-        if (nci != found.second.end()) {
-            return (nci->second);
-        } else {
-            // The previous doesn't contain NSEC.
-            // Badly signed zone or a bug?
-
-            // FIXME: Currently, if the zone is not signed, we could get
-            // here. In that case we can't really throw, but for now, we can't
-            // recognize it. So we don't throw at all, enable it once
-            // we have a is_signed flag or something.
-#if 0
-            isc_throw(DataSourceError, "No NSEC in " +
-                      coverName.toText() + ", but it was "
-                      "returned as previous - "
-                      "accessor error? Badly signed zone?");
-#endif
-        }
-    }
-    catch (const isc::NotImplemented&) {
-        // Well, they want DNSSEC, but there is no available.
-        // So we don't provide anything.
-        LOG_INFO(logger, DATASRC_DATABASE_COVER_NSEC_UNSUPPORTED).
-            arg(accessor_->getDBName()).arg(name);
-    }
-    // We didn't find it, return nothing
-    return (ConstRRsetPtr());
 }
 
 ZoneFinderContextPtr
