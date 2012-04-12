@@ -924,7 +924,6 @@ public:
             DatabaseClient::Finder& finder_;
             const bool need_dnssec_;
 
-            FindResultFlags flags_;
             bool is_nsec3_;
             bool is_nsec_;
             bool initialized_;
