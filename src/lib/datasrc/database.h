@@ -693,7 +693,7 @@ public:
         ///
         /// Get the ResultFlags for findInterval. If the zone is signed with
         /// NSEC3, it will return RESULT_NSEC3_SIGNED. If it is signed with
-        /// NSEC, it wll return RESULT_NSEC_SIGNED. Other else it will return
+        /// NSEC, it wll return RESULT_NSEC_SIGNED. Otherwise it will return
         /// RESULT_DEFAULT. It wraps getRRsets function to do some special
         /// search, like searching NSEC RRset by getNSECRRset function,
         /// searching DNSSEC related RRset and RRsig by getNSECRRset.
@@ -753,17 +753,17 @@ public:
                 /// \brief Check whether the zone file is signed with NSECi3.
                 ///
                 /// It checks whether the zone file is signed with NSEC3. If
-                /// yes, return true, other else return false.
+                /// yes, return true, otherwise return false.
                 ///
-                /// \return True for NSEC3, false for other else.
+                /// \return True for NSEC3, false otherwise.
                 bool isNSEC3();
 
                 /// \brief Check whether the zone file is signed with NSEC.
                 ///
                 /// It checks whether the zone file is signed with NSEC, If
-                /// yes, return true, other else return false.
+                /// yes, return true, otherwise return false.
                 ///
-                /// \return True for NSEC, false for other else.
+                /// \return True for NSEC, false otherwise.
                 bool isNSEC();
 
                 /// \brief Check whether the name is origin name of the zone.
@@ -788,7 +788,8 @@ public:
                 /// It should init the attributes of this entity. Check whether
                 /// it is the NSEC or NSEC3 zone file if it is a dnssec query.
                 ///
-                /// \note If the entity is initalized, no need to init it again.
+                /// \note If the entity is initialized, no need to init it
+                /// again.
                 void init();
 
                 /// \brief Check whether the entity is initalized.
