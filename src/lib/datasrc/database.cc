@@ -941,7 +941,9 @@ DatabaseClient::Finder::findInternal(const Name& name, const RRType& type,
 
 ZoneFinder::FindNSEC3Result
 DatabaseClient::Finder::findNSEC3(const Name& name, bool recursive) {
-    // TODO: Some logging.
+    LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_DATABASE_FINDNSEC3).arg(name).
+        arg(recursive ? "recursive" : "non-recursive");
+
 
     // First, validate the input
     const NameComparisonResult cmp_result(name.compare(getOrigin()));
@@ -980,6 +982,8 @@ DatabaseClient::Finder::findNSEC3(const Name& name, bool recursive) {
         const string hash(calculator->calculate(labels == qlabels ? name :
                                                 name.split(qlabels - labels,
                                                            labels)));
+        LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_DATABASE_FINDNSEC3_TRYHASH).
+            arg(name).arg(labels).arg(hash);
 
         DatabaseAccessor::IteratorContextPtr
             context(accessor_->getNSEC3Records(hash, zone_id_));
@@ -999,10 +1003,16 @@ DatabaseClient::Finder::findNSEC3(const Name& name, bool recursive) {
                           "exists, but no NSEC3 there");
             }
 
+            LOG_DEBUG(logger, DBG_TRACE_BASIC,
+                      DATASRC_DATABASE_FINDNSEC3_MATCH).arg(name).arg(labels).
+                arg(*it->second);
             return (FindNSEC3Result(true, labels, it->second, covering_proof));
         } else {
             const string prevHash(accessor_->findPreviousNSEC3Hash(zone_id_,
                                                                    hash));
+            LOG_DEBUG(logger, DBG_TRACE_BASIC,
+                      DATASRC_DATABASE_FINDNSEC3_TRYHASH_PREV).arg(name).
+                arg(labels).arg(prevHash);
             context = accessor_->getNSEC3Records(prevHash, zone_id_);
             const FoundRRsets prev_nsec3(getRRsets(prevHash + "." + otext,
                                                    NSEC3_TYPES(), false, NULL,
@@ -1021,6 +1031,9 @@ DatabaseClient::Finder::findNSEC3(const Name& name, bool recursive) {
 
             covering_proof = prev_it->second;
             if (!recursive) {
+                LOG_DEBUG(logger, DBG_TRACE_BASIC,
+                          DATASRC_DATABASE_FINDNSEC3_COVER).arg(name).
+                    arg(labels).arg(*covering_proof);
                 return (FindNSEC3Result(false, labels, covering_proof,
                                         ConstRRsetPtr()));
             }
