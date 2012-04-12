@@ -2377,10 +2377,10 @@ TYPED_TEST(DatabaseClientTest, nsec3FlagFindDB) {
     this->expected_rdatas_.clear();
     this->expected_sig_rdatas_.clear();
     doFindTest(this->updater_->getFinder(), Name("www1.example.org."),
-            this->qtype_, this->qtype_, this->rrttl_, ZoneFinder::NXDOMAIN,
-            this->expected_rdatas_, this->expected_sig_rdatas_,
-            ZoneFinder::RESULT_NSEC3_SIGNED,Name::ROOT_NAME(),
-            ZoneFinder::FIND_DNSSEC);
+               this->qtype_, this->qtype_, this->rrttl_, ZoneFinder::NXDOMAIN,
+               this->expected_rdatas_, this->expected_sig_rdatas_,
+               ZoneFinder::RESULT_NSEC3_SIGNED,Name::ROOT_NAME(),
+               ZoneFinder::FIND_DNSSEC);
 
     // check NXRRSET, it should set RESULT_NSEC3_SIGNED in the flags.
     this->expected_rdatas_.clear();
@@ -2446,14 +2446,11 @@ TYPED_TEST(DatabaseClientTest, NXDOMAIN_NSEC) {
     }
     // If the zone is signed with NSEC, find function should throw an error
     // when no NSEC RRset for NXDOMAIN case.
-    EXPECT_THROW(doFindTest(*finder,
-                               isc::dns::Name("notimplnsec.example.org."),
-                               isc::dns::RRType::TXT(),
-                               isc::dns::RRType::NSEC(), this->rrttl_,
-                               ZoneFinder::NXDOMAIN, this->empty_rdatas_,
-                               this->empty_rdatas_,
-                               ZoneFinder::RESULT_DEFAULT,
-                               Name::ROOT_NAME(), ZoneFinder::FIND_DNSSEC),
+    EXPECT_THROW(doFindTest(*finder, Name("notimplnsec.example.org."),
+                            RRType::TXT(), RRType::NSEC(), this->rrttl_,
+                            ZoneFinder::NXDOMAIN, this->empty_rdatas_,
+                            this->empty_rdatas_, ZoneFinder::RESULT_DEFAULT,
+                            Name::ROOT_NAME(), ZoneFinder::FIND_DNSSEC),
                  DataSourceError);
 }
 
@@ -2476,14 +2473,11 @@ TYPED_TEST(DatabaseClientTest, emptyNonterminalNSEC) {
     }
     // If the zone is signed with NSEC, find function should throw an error
     // when no NSEC RRset for NXRRset case
-    EXPECT_THROW(doFindTest(*finder,
-                               isc::dns::Name("here.wild.example.org."),
-                               isc::dns::RRType::TXT(),
-                               isc::dns::RRType::NSEC(),
-                               this->rrttl_, ZoneFinder::NXRRSET,
-                               this->empty_rdatas_, this->empty_rdatas_,
-                               ZoneFinder::RESULT_DEFAULT,
-                               Name::ROOT_NAME(), ZoneFinder::FIND_DNSSEC),
+    EXPECT_THROW(doFindTest(*finder, Name("here.wild.example.org."),
+                            RRType::TXT(), RRType::NSEC(), this->rrttl_,
+                            ZoneFinder::NXRRSET, this->empty_rdatas_,
+                            this->empty_rdatas_, ZoneFinder::RESULT_DEFAULT,
+                            Name::ROOT_NAME(), ZoneFinder::FIND_DNSSEC),
                  DataSourceError);
 }
 
