@@ -762,9 +762,13 @@ DatabaseClient::Finder::FindDNSSECContext::isNSEC() {
 }
 
 isc::dns::ConstRRsetPtr
-DatabaseClient::Finder::FindDNSSECContext::getNSECRRset(
-        const FoundRRsets& found_set) const
+DatabaseClient::Finder::FindDNSSECContext::getDNSSECRRset(
+    const FoundRRsets& found_set)
 {
+    if (!isNSEC()) {
+        return (ConstRRsetPtr());
+    }
+
     const FoundIterator nci = found_set.second.find(RRType::NSEC());
     if (nci != found_set.second.end()) {
         return (nci->second);
@@ -774,8 +778,11 @@ DatabaseClient::Finder::FindDNSSECContext::getNSECRRset(
 }
 
 isc::dns::ConstRRsetPtr
-DatabaseClient::Finder::FindDNSSECContext::getNSECRRset(const Name &name) const
-{
+DatabaseClient::Finder::FindDNSSECContext::getDNSSECRRset(const Name &name) {
+    if (!isNSEC()) {
+        return (ConstRRsetPtr());
+    }
+
     const FoundRRsets wfound = finder_.getRRsets(name.toText(), NSEC_TYPES(),
                                                  true);
     const FoundIterator nci = wfound.second.find(RRType::NSEC());
@@ -892,19 +899,17 @@ DatabaseClient::Finder::findOnNameResult(const Name& name,
     // provide the NSEC records.  If it's for wildcard, we need to get the
     // NSEC records in the name of the wildcard, not the substituted one,
     // so we need to search the tree again.
-    ConstRRsetPtr nsec_rrset;   // possibly used with DNSSEC, otherwise NULL
-    if (dnssec_ctx.isNSEC()) {
-        nsec_rrset = wild ? dnssec_ctx.getNSECRRset(Name(*wildname)) :
-            dnssec_ctx.getNSECRRset(found);
-    }
-    if (nsec_rrset) {
+    const ConstRRsetPtr dnssec_rrset =
+        wild ? dnssec_ctx.getDNSSECRRset(Name(*wildname)) :
+        dnssec_ctx.getDNSSECRRset(found);
+    if (dnssec_rrset) {
         // This log message covers both normal and wildcard cases, so we pass
         // NULL for 'wildname'.
-        return (logAndCreateResult(name, NULL, type, NXRRSET, nsec_rrset,
+        return (logAndCreateResult(name, NULL, type, NXRRSET, dnssec_rrset,
                                    DATASRC_DATABASE_FOUND_NXRRSET_NSEC,
                                    flags | RESULT_NSEC_SIGNED));
     }
-    return (logAndCreateResult(name, wildname, type, NXRRSET, nsec_rrset,
+    return (logAndCreateResult(name, wildname, type, NXRRSET, dnssec_rrset,
                                wild ? DATASRC_DATABASE_WILDCARD_NXRRSET :
                                DATASRC_DATABASE_FOUND_NXRRSET,
                                flags | dnssec_ctx.getResultFlags()));
