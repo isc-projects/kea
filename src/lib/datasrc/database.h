@@ -697,7 +697,7 @@ public:
         /// RESULT_DEFAULT. It wraps getRRsets function to do some special
         /// search, like searching NSEC RRset by getNSECRRset function,
         /// searching DNSSEC related RRset and RRsig by getNSECRRset.
-        class FindDNSSECContext{
+        class FindDNSSECContext {
             public:
 
                 /// \brief Constructor for FindDNSSECContext class.
