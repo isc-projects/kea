@@ -17,11 +17,11 @@ Feature: Basic Resolver
 
         bind10 module Resolver should be running
         And bind10 module Auth should not be running
-	And bind10 module Xfrout should not be running
-	And bind10 module Zonemgr should not be running
-	And bind10 module Xfrin should not be running
-	And bind10 module Stats should not be running
-	And bind10 module StatsHttpd should not be running
+        And bind10 module Xfrout should not be running
+        And bind10 module Zonemgr should not be running
+        And bind10 module Xfrin should not be running
+        And bind10 module Stats should not be running
+        And bind10 module StatsHttpd should not be running
 
         # The ACL is set to reject any queries
         A query for l.root-servers.net. should have rcode REFUSED

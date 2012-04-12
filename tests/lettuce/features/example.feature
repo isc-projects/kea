@@ -14,11 +14,11 @@ Feature: Example feature
 
         bind10 module Auth should be running
         And bind10 module Resolver should not be running
-	And bind10 module Xfrout should not be running
-	And bind10 module Zonemgr should not be running
-	And bind10 module Xfrin should not be running
-	And bind10 module Stats should not be running
-	And bind10 module StatsHttpd should not be running
+        And bind10 module Xfrout should not be running
+        And bind10 module Zonemgr should not be running
+        And bind10 module Xfrin should not be running
+        And bind10 module Stats should not be running
+        And bind10 module StatsHttpd should not be running
 
         A query for www.example.org should have rcode NOERROR
         A query for www.doesnotexist.org should have rcode REFUSED
@@ -45,11 +45,11 @@ Feature: Example feature
 
         bind10 module Auth should be running
         And bind10 module Resolver should not be running
-	And bind10 module Xfrout should not be running
-	And bind10 module Zonemgr should not be running
-	And bind10 module Xfrin should not be running
-	And bind10 module Stats should not be running
-	And bind10 module StatsHttpd should not be running
+        And bind10 module Xfrout should not be running
+        And bind10 module Zonemgr should not be running
+        And bind10 module Xfrin should not be running
+        And bind10 module Stats should not be running
+        And bind10 module StatsHttpd should not be running
 
         # This is a general step to stop a named process. By convention,
         # the default name for any process is the same as the one we
@@ -78,11 +78,11 @@ Feature: Example feature
 
         bind10 module Auth should be running
         And bind10 module Resolver should not be running
-	And bind10 module Xfrout should not be running
-	And bind10 module Zonemgr should not be running
-	And bind10 module Xfrin should not be running
-	And bind10 module Stats should not be running
-	And bind10 module StatsHttpd should not be running
+        And bind10 module Xfrout should not be running
+        And bind10 module Zonemgr should not be running
+        And bind10 module Xfrin should not be running
+        And bind10 module Stats should not be running
+        And bind10 module StatsHttpd should not be running
 
         # Some simple queries that is not examined further
         A query for www.example.com should have rcode REFUSED
@@ -152,11 +152,11 @@ Feature: Example feature
 
         bind10 module Auth should be running
         And bind10 module Resolver should not be running
-	And bind10 module Xfrout should not be running
-	And bind10 module Zonemgr should not be running
-	And bind10 module Xfrin should not be running
-	And bind10 module Stats should not be running
-	And bind10 module StatsHttpd should not be running
+        And bind10 module Xfrout should not be running
+        And bind10 module Zonemgr should not be running
+        And bind10 module Xfrin should not be running
+        And bind10 module Stats should not be running
+        And bind10 module StatsHttpd should not be running
 
         A query for www.example.org should have rcode NOERROR
         Wait for new bind10 stderr message AUTH_SEND_NORMAL_RESPONSE
