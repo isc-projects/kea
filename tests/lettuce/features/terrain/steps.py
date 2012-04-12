@@ -30,12 +30,13 @@ def stop_a_named_process(step, process_name):
     """
     world.processes.stop_process(process_name)
 
-@step('wait for (new )?(\w+) stderr message (\w+)(?: not (\w+))?')
-def wait_for_stderr_message(step, new, process_name, message, not_message):
+@step('wait (?:(\d+) times )?for (new )?(\w+) stderr message (\w+)(?: not (\w+))?')
+def wait_for_stderr_message(step, times, new, process_name, message, not_message):
     """
     Block until the given message is printed to the given process's stderr
     output.
     Parameter:
+    times: Check for the string this many times.
     new: (' new', optional): Only check the output printed since last time
                              this step was used for this process.
     process_name ('<name> stderr'): Name of the process to check the output of.
@@ -46,16 +47,19 @@ def wait_for_stderr_message(step, new, process_name, message, not_message):
     strings = [message]
     if not_message is not None:
         strings.append(not_message)
-    (found, line) = world.processes.wait_for_stderr_str(process_name, strings, new)
+    if times is None:
+        times = 1
+    (found, line) = world.processes.wait_for_stderr_str(process_name, strings, new, int(times))
     if not_message is not None:
         assert found != not_message, line
 
-@step('wait for (new )?(\w+) stdout message (\w+)(?: not (\w+))?')
-def wait_for_stdout_message(step, new, process_name, message, not_message):
+@step('wait (?:(\d+) times )?for (new )?(\w+) stdout message (\w+)(?: not (\w+))?')
+def wait_for_stdout_message(step, times, new, process_name, message, not_message):
     """
     Block until the given message is printed to the given process's stdout
     output.
     Parameter:
+    times: Check for the string this many times.
     new: (' new', optional): Only check the output printed since last time
                              this step was used for this process.
     process_name ('<name> stderr'): Name of the process to check the output of.
@@ -66,7 +70,9 @@ def wait_for_stdout_message(step, new, process_name, message, not_message):
     strings = [message]
     if not_message is not None:
         strings.append(not_message)
-    (found, line) = world.processes.wait_for_stdout_str(process_name, strings, new)
+    if times is None:
+        times = 1
+    (found, line) = world.processes.wait_for_stdout_str(process_name, strings, new, int(times))
     if not_message is not None:
         assert found != not_message, line
 
