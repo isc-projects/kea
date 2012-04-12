@@ -783,7 +783,7 @@ DatabaseClient::Finder::FindDNSSECContext::getDNSSECRRset(const Name &name,
     try {
         const Name& nsec_name =
             covering ? finder_.findPreviousName(name) : name;
-        const bool need_nscheck = (nsec_name == finder_.getOrigin());
+        const bool need_nscheck = (nsec_name != finder_.getOrigin());
         const FoundRRsets found = finder_.getRRsets(nsec_name.toText(),
                                                     NSEC_TYPES(),
                                                     need_nscheck);
@@ -955,12 +955,8 @@ DatabaseClient::Finder::findNoNameResult(const Name& name, const RRType& type,
     // NSEC records if requested).
     LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_DATABASE_NO_MATCH).
               arg(accessor_->getDBName()).arg(name).arg(type).arg(getClass());
-    const ConstRRsetPtr nsec = dnssec_ctx.isNSEC() ? findNSECCover(name) :
-        ConstRRsetPtr();
-    if (dnssec_ctx.isNSEC() && !nsec) {
-        isc_throw(DataSourceError, "no NSEC RR covers in the NSEC signed zone");
-    }
-    return (ResultContext(NXDOMAIN, nsec, dnssec_ctx.getResultFlags()));
+    return (ResultContext(NXDOMAIN, dnssec_ctx.getDNSSECRRset(name, true),
+                          dnssec_ctx.getResultFlags()));
 }
 
 bool
