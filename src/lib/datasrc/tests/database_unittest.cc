@@ -1444,12 +1444,14 @@ doFindTest(ZoneFinder& finder,
                        isc::dns::RRType::RRSIG(), expected_ttl,
                        expected_sig_rdatas);
         } else if (expected_sig_rdatas.empty()) {
-            EXPECT_EQ(isc::dns::RRsetPtr(), result->rrset->getRRsig());
+            EXPECT_EQ(isc::dns::RRsetPtr(), result->rrset->getRRsig()) <<
+                "Unexpected RRSIG: " << result->rrset->getRRsig()->toText();
         } else {
             ADD_FAILURE() << "Missing RRSIG";
         }
     } else if (expected_rdatas.empty()) {
-        EXPECT_EQ(isc::dns::RRsetPtr(), result->rrset);
+        EXPECT_EQ(isc::dns::RRsetPtr(), result->rrset) <<
+            "Unexpected RRset: " << result->rrset->toText();
     } else {
         ADD_FAILURE() << "Missing result";
     }
@@ -2347,6 +2349,19 @@ dnssecFlagCheck(ZoneFinder& finder, ZoneFinder::FindResultFlags sec_flag) {
                expected_sig_rdatas, sec_flag, Name::ROOT_NAME(),
                ZoneFinder::FIND_DNSSEC);
 
+    // Empty name, should result in NXRRSET (in this test setup the NSEC
+    // doesn't have RRSIG).
+    expected_rdatas.clear();
+    expected_sig_rdatas.clear();
+    if ((sec_flag & ZoneFinder::RESULT_NSEC_SIGNED) != 0) {
+        expected_rdatas.push_back("empty.nonterminal.example.org. NSEC");
+    }
+    doFindTest(finder, Name("nonterminal.example.org."), RRType::A(),
+               RRType::NSEC(), RRTTL(3600), ZoneFinder::NXRRSET,
+               expected_rdatas,expected_sig_rdatas, sec_flag,
+               Name("l.example.org."), ZoneFinder::FIND_DNSSEC);
+    dnssecFlagCheckForAny(finder, Name("nonterminal.example.org"), sec_flag);
+
     // Wildcard match
     expected_rdatas.clear();
     expected_sig_rdatas.clear();
@@ -2383,7 +2398,10 @@ TYPED_TEST(DatabaseClientTest, dnssecResultFlags) {
 
     // In the default test setup, the zone should be considered NSEC-signed
     // (the apex node has an NSEC RR).
-    dnssecFlagCheck(*this->getFinder(), ZoneFinder::RESULT_NSEC_SIGNED);
+    {
+        SCOPED_TRACE("NSEC only");
+        dnssecFlagCheck(*this->getFinder(), ZoneFinder::RESULT_NSEC_SIGNED);
+    }
 
     // Then add an NSEC3PARAM RRset at the apex (it may look weird if the
     // zone only has NSEC3PARM RRset (but no NSEC3s), but it is okay for the
@@ -2396,8 +2414,11 @@ TYPED_TEST(DatabaseClientTest, dnssecResultFlags) {
                                               this->rrset_->getClass(),
                                               "1 0 12 aabbccdd"));
     this->updater_->addRRset(*this->rrset_);
-    dnssecFlagCheck(this->updater_->getFinder(),
-                    ZoneFinder::RESULT_NSEC3_SIGNED);
+    {
+        SCOPED_TRACE("NSEC and NSEC3");
+        dnssecFlagCheck(this->updater_->getFinder(),
+                        ZoneFinder::RESULT_NSEC3_SIGNED);
+    }
 
     // Next, delete the apex NSEC.  Since NSEC3PARAM remains, the zone should
     // still be considered NSEC3-signed.
@@ -2407,13 +2428,20 @@ TYPED_TEST(DatabaseClientTest, dnssecResultFlags) {
                                             "acnamesig1.example.org. NS A "
                                             "NSEC RRSIG"));
     this->updater_->deleteRRset(*nsec_rrset);
-    dnssecFlagCheck(this->updater_->getFinder(),
-                    ZoneFinder::RESULT_NSEC3_SIGNED);
+    {
+        SCOPED_TRACE("NSEC3 only");
+        dnssecFlagCheck(this->updater_->getFinder(),
+                        ZoneFinder::RESULT_NSEC3_SIGNED);
+    }
 
     // Finally, delete the NSEC3PARAM we just added above.  The zone should
     // then be considered unsigned.
     this->updater_->deleteRRset(*this->rrset_);
-    dnssecFlagCheck(this->updater_->getFinder(), ZoneFinder::RESULT_DEFAULT);
+    {
+        SCOPED_TRACE("unsigned");
+        dnssecFlagCheck(this->updater_->getFinder(),
+                        ZoneFinder::RESULT_DEFAULT);
+    }
 }
 
 TYPED_TEST(DatabaseClientTest, NXDOMAIN_NSEC) {
