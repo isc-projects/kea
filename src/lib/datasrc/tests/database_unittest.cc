@@ -167,7 +167,10 @@ const char* const TEST_RECORDS[][5] = {
      "1234 3600 1800 2419200 7200" },
     {"example.org.", "NS", "3600", "", "ns.example.com."},
     {"example.org.", "A", "3600", "", "192.0.2.1"},
-    {"example.org.", "NSEC", "3600", "", "acnamesig1.example.org. NS A NSEC RRSIG"},
+    // Note that the RDATA text is "normalized", i.e., identical to what
+    // Rdata::toText() would produce.  some tests rely on that behavior.
+    {"example.org.", "NSEC", "3600", "",
+     "acnamesig1.example.org. A NS RRSIG NSEC"},
     {"example.org.", "RRSIG", "3600", "", "SOA 5 3 3600 20000101000000 "
               "20000201000000 12345 example.org. FAKEFAKEFAKE"},
     {"example.org.", "RRSIG", "3600", "", "NSEC 5 3 3600 20000101000000 "
@@ -2292,79 +2295,100 @@ TYPED_TEST(DatabaseClientTest, wildcardNXRRSET_NSEC) {
                Name("*.wild.example.org"), ZoneFinder::FIND_DNSSEC);
 }
 
-TYPED_TEST(DatabaseClientTest, nsec3FlagFindDB) {
-    // ZoneFinder::find() for negative cases and wildcard cases should check
-    // whether the zone is signed with NSEC or NSEC3. If it is signed with
-    // NSEC3, RESULT_NSEC3_SIGNED flag should be returned. That is good for
-    // upper layer caller.
+// Subroutine for dnssecFlagCheck defined below.  It performs some simple
+// checks regarding DNSSEC related result flags for findAll().
+void
+dnssecFlagCheckForAny(ZoneFinder& finder, const Name& name,
+                      ZoneFinder::FindResultFlags sec_flag)
+{
+    std::vector<ConstRRsetPtr> target; // just for placeholder
+    ConstZoneFinderContextPtr all_result =
+        finder.findAll(name, target, ZoneFinder::FIND_DNSSEC);
+    EXPECT_EQ((sec_flag & ZoneFinder::RESULT_NSEC_SIGNED) != 0,
+              all_result->isNSECSigned());
+    EXPECT_EQ((sec_flag & ZoneFinder::RESULT_NSEC3_SIGNED) != 0,
+              all_result->isNSEC3Signed());
+}
 
-    // First off, everything should be okay if no NSEC3PARAM rrset. If
-    // NSEC3PARAM RRset doesn't exist and NSEC RRset exist at apex, it looks
-    // like signed with NSEC, and the RESULT_NSEC_SIGNED flag should be return.
+// Common tests about DNSSEC related result flags.  Shared for the NSEC
+// and NSEC3 cases.
+void
+dnssecFlagCheck(ZoneFinder& finder, ZoneFinder::FindResultFlags sec_flag) {
+    std::vector<std::string> expected_rdatas;
+    std::vector<std::string> expected_sig_rdatas;
 
     // Check NXDOMAIN case in NSEC signed zone, and RESULT_NSEC_SIGNED flag
     // should be returned to upper layer caller.
-    this->expected_rdatas_.clear();
-    this->expected_sig_rdatas_.clear();
-    this->expected_rdatas_.push_back("www2.example.org. A AAAA NSEC RRSIG");
-    this->expected_sig_rdatas_.push_back("NSEC 5 3 3600 20000101000000 "
-                                         "20000201000000 12345 example.org. "
-                                         "FAKEFAKEFAKE");
-    boost::shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
-    doFindTest(*finder, isc::dns::Name("www1.example.org."),
-               this->qtype_, isc::dns::RRType::NSEC(), this->rrttl_,
-               ZoneFinder::NXDOMAIN, this->expected_rdatas_,
-               this->expected_sig_rdatas_, ZoneFinder::RESULT_NSEC_SIGNED,
-               Name("www.example.org."), ZoneFinder::FIND_DNSSEC);
+    if ((sec_flag & ZoneFinder::RESULT_NSEC_SIGNED) != 0) {
+        expected_rdatas.push_back("www2.example.org. A AAAA NSEC RRSIG");
+        expected_sig_rdatas.push_back("NSEC 5 3 3600 20000101000000 "
+                                      "20000201000000 12345 example.org. "
+                                      "FAKEFAKEFAKE");
+    }
+    doFindTest(finder, Name("www1.example.org"), RRType::A(), RRType::NSEC(),
+               RRTTL(3600), ZoneFinder::NXDOMAIN, expected_rdatas,
+               expected_sig_rdatas, sec_flag, Name("www.example.org."),
+               ZoneFinder::FIND_DNSSEC);
+    dnssecFlagCheckForAny(finder, Name("www1.example.org"), sec_flag);
 
     // Check NXRRSET case in NSEC signed zone, and RESULT_NSEC_SIGNED flag
     // should be return.
-    this->expected_rdatas_.clear();
-    this->expected_sig_rdatas_.clear();
-    this->expected_rdatas_.push_back("www2.example.org. A AAAA NSEC RRSIG");
-    this->expected_sig_rdatas_.push_back("NSEC 5 3 3600 20000101000000 "
-                                         "20000201000000 12345 example.org. "
-                                         "FAKEFAKEFAKE");
-    doFindTest(*finder, isc::dns::Name("www.example.org."),
-               isc::dns::RRType::TXT(), isc::dns::RRType::NSEC(), this->rrttl_,
-               ZoneFinder::NXRRSET, this->expected_rdatas_,
-               this->expected_sig_rdatas_, ZoneFinder::RESULT_NSEC_SIGNED,
-               isc::dns::Name::ROOT_NAME(), ZoneFinder::FIND_DNSSEC);
+    // No "findAll" test case for this because NXRRSET shouldn't happen for it.
+    expected_rdatas.clear();
+    expected_sig_rdatas.clear();
+    if ((sec_flag & ZoneFinder::RESULT_NSEC_SIGNED) != 0) {
+        expected_rdatas.push_back("www2.example.org. A AAAA NSEC RRSIG");
+        expected_sig_rdatas.push_back("NSEC 5 3 3600 20000101000000 "
+                                      "20000201000000 12345 example.org. "
+                                      "FAKEFAKEFAKE");
+    }
+    doFindTest(finder, Name("www.example.org."), RRType::TXT(), RRType::NSEC(),
+               RRTTL(3600), ZoneFinder::NXRRSET, expected_rdatas,
+               expected_sig_rdatas, sec_flag, Name::ROOT_NAME(),
+               ZoneFinder::FIND_DNSSEC);
 
-    // Check wildcase cases, and the RESULT_NSEC_SIGNED should be return.
-    this->expected_rdatas_.clear();
-    this->expected_sig_rdatas_.clear();
-    this->expected_rdatas_.push_back("192.0.2.5");
-    this->expected_sig_rdatas_.push_back("A 5 3 3600 20000101000000 "
-                                         "20000201000000 12345 example.org. "
-                                         "FAKEFAKEFAKE");
-    doFindTest(*finder, isc::dns::Name("b.a.wild.example.org"),
-               isc::dns::RRType::A(), isc::dns::RRType::A(),
-               this->rrttl_, ZoneFinder::SUCCESS, this->expected_rdatas_,
-               this->expected_sig_rdatas_,
-               (ZoneFinder::RESULT_WILDCARD | ZoneFinder::RESULT_NSEC_SIGNED),
+    // Wildcard match
+    expected_rdatas.clear();
+    expected_sig_rdatas.clear();
+    expected_rdatas.push_back("192.0.2.5");
+    expected_sig_rdatas.push_back("A 5 3 3600 20000101000000 "
+                                  "20000201000000 12345 example.org. "
+                                  "FAKEFAKEFAKE");
+    doFindTest(finder, Name("b.a.wild.example.org"), RRType::A(),
+               RRType::A(), RRTTL(3600), ZoneFinder::SUCCESS, expected_rdatas,
+               expected_sig_rdatas, (ZoneFinder::RESULT_WILDCARD | sec_flag),
                Name("b.a.wild.example.org"), ZoneFinder::FIND_DNSSEC);
-    this->expected_rdatas_.clear();
-    this->expected_sig_rdatas_.clear();
-    this->expected_rdatas_.push_back("cancel.here.wild.example.org. A NSEC "
-                                     "RRSIG");
-    this->expected_sig_rdatas_.push_back("NSEC 5 3 3600 20000101000000 "
-                                         "20000201000000 12345 example.org. "
-                                         "FAKEFAKEFAKE");
-    doFindTest(*finder, isc::dns::Name("b.a.wild.example.org"),
-               isc::dns::RRType::TXT(), isc::dns::RRType::NSEC(),
-               this->rrttl_, ZoneFinder::NXRRSET, this->expected_rdatas_,
-               this->expected_sig_rdatas_,
-               (ZoneFinder::RESULT_WILDCARD | ZoneFinder::RESULT_NSEC_SIGNED),
+    dnssecFlagCheckForAny(finder, Name("b.a.wild.example.org"), sec_flag);
+
+    // Wildcard + NXRRSET (no "findAll" test for this case)
+    expected_rdatas.clear();
+    expected_sig_rdatas.clear();
+    if ((sec_flag & ZoneFinder::RESULT_NSEC_SIGNED) != 0) {
+        expected_rdatas.push_back("cancel.here.wild.example.org. "
+                                  "A NSEC RRSIG");
+        expected_sig_rdatas.push_back("NSEC 5 3 3600 20000101000000 "
+                                      "20000201000000 12345 example.org. "
+                                      "FAKEFAKEFAKE");
+    }
+    doFindTest(finder, Name("b.a.wild.example.org"),
+               RRType::TXT(), RRType::NSEC(), RRTTL(3600), ZoneFinder::NXRRSET,
+               expected_rdatas, expected_sig_rdatas,
+               (ZoneFinder::RESULT_WILDCARD | sec_flag),
                Name("*.wild.example.org"), ZoneFinder::FIND_DNSSEC);
+}
 
-    // Then, if NSEC3PARAM exists at the apex, the flags of result should
-    // contain RESULT_NSEC3_SIGNED flag when NXDOMAIN NXRRSET or wildcard
-    // cases.
+TYPED_TEST(DatabaseClientTest, dnssecResultFlags) {
+    // ZoneFinder::find() for negative cases and wildcard cases should check
+    // whether the zone is signed with NSEC or NSEC3.
 
-    // Add NSEC3PARAM RRSET at the apex of the zone. It looks weird if the
-    // zone only has NSEC3PARM RRset (but no NSEC3s), but it is okay for unit
-    // test.
+    // In the default test setup, the zone should be considered NSEC-signed
+    // (the apex node has an NSEC RR).
+    dnssecFlagCheck(*this->getFinder(), ZoneFinder::RESULT_NSEC_SIGNED);
+
+    // Then add an NSEC3PARAM RRset at the apex (it may look weird if the
+    // zone only has NSEC3PARM RRset (but no NSEC3s), but it is okay for the
+    // purpose of this test).  The zone should now be considered NSEC3-signed.
+    // Note that the apex NSEC still exists; NSEC3 should override NSEC.
     this->updater_ = this->client_->getUpdater(this->zname_, false);
     this->rrset_.reset(new RRset(this->zname_, this->qclass_,
                                  RRType::NSEC3PARAM(), this->rrttl_));
@@ -2372,47 +2396,24 @@ TYPED_TEST(DatabaseClientTest, nsec3FlagFindDB) {
                                               this->rrset_->getClass(),
                                               "1 0 12 aabbccdd"));
     this->updater_->addRRset(*this->rrset_);
+    dnssecFlagCheck(this->updater_->getFinder(),
+                    ZoneFinder::RESULT_NSEC3_SIGNED);
 
-    // check NXDOMAIN, it should set RESULT_NSEC3_SIGNED in the flags.
-    this->expected_rdatas_.clear();
-    this->expected_sig_rdatas_.clear();
-    doFindTest(this->updater_->getFinder(), Name("www1.example.org."),
-               this->qtype_, this->qtype_, this->rrttl_, ZoneFinder::NXDOMAIN,
-               this->expected_rdatas_, this->expected_sig_rdatas_,
-               ZoneFinder::RESULT_NSEC3_SIGNED,Name::ROOT_NAME(),
-               ZoneFinder::FIND_DNSSEC);
+    // Next, delete the apex NSEC.  Since NSEC3PARAM remains, the zone should
+    // still be considered NSEC3-signed.
+    RRsetPtr nsec_rrset(new RRset(this->zname_, this->qclass_, RRType::NSEC(),
+                                  this->rrttl_));
+    nsec_rrset->addRdata(rdata::createRdata(RRType::NSEC(), this->qclass_,
+                                            "acnamesig1.example.org. NS A "
+                                            "NSEC RRSIG"));
+    this->updater_->deleteRRset(*nsec_rrset);
+    dnssecFlagCheck(this->updater_->getFinder(),
+                    ZoneFinder::RESULT_NSEC3_SIGNED);
 
-    // check NXRRSET, it should set RESULT_NSEC3_SIGNED in the flags.
-    this->expected_rdatas_.clear();
-    this->expected_sig_rdatas_.clear();
-    doFindTest(this->updater_->getFinder(), Name("www.example.org."),
-               RRType::TXT(), RRType::TXT(), this->rrttl_,
-               ZoneFinder::NXRRSET, this->expected_rdatas_,
-               this->expected_sig_rdatas_, ZoneFinder::RESULT_NSEC3_SIGNED,
-               Name::ROOT_NAME(), ZoneFinder::FIND_DNSSEC);
-
-    // check flags if wildcard matches, it should set RESULT_NSEC3_SIGNED in
-    // the flags.
-    this->expected_rdatas_.push_back("192.0.2.5");
-    this->expected_sig_rdatas_.push_back("A 5 3 3600 20000101000000 "
-                                         "20000201000000 12345 example.org. "
-                                         "FAKEFAKEFAKE");
-    doFindTest(this->updater_->getFinder(), Name("b.a.wild.example.org"),
-               this->qtype_, this->qtype_, this->rrttl_, ZoneFinder::SUCCESS,
-               this->expected_rdatas_, this->expected_sig_rdatas_,
-               ZoneFinder::RESULT_WILDCARD | ZoneFinder::RESULT_NSEC3_SIGNED,
-               Name::ROOT_NAME(), ZoneFinder::FIND_DNSSEC);
-
-    // check flags if NXRRSET in wildcard case, it should set
-    // RESULT_NSEC3_SIGNED in the flags.
-    this->expected_rdatas_.clear();
-    this->expected_sig_rdatas_.clear();
-    doFindTest(this->updater_->getFinder(), Name("b.a.wild.example.org"),
-               RRType::TXT(), RRType::TXT(), this->rrttl_,
-               ZoneFinder::NXRRSET, this->expected_rdatas_,
-               this->empty_rdatas_, (ZoneFinder::RESULT_WILDCARD |
-               ZoneFinder::RESULT_NSEC3_SIGNED), Name::ROOT_NAME(),
-               ZoneFinder::FIND_DNSSEC);
+    // Finally, delete the NSEC3PARAM we just added above.  The zone should
+    // then be considered unsigned.
+    this->updater_->deleteRRset(*this->rrset_);
+    dnssecFlagCheck(this->updater_->getFinder(), ZoneFinder::RESULT_DEFAULT);
 }
 
 TYPED_TEST(DatabaseClientTest, NXDOMAIN_NSEC) {
