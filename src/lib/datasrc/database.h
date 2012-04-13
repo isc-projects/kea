@@ -736,6 +736,7 @@ public:
     DatabaseClient(isc::dns::RRClass rrclass,
                    boost::shared_ptr<DatabaseAccessor> accessor);
 
+
     /// \brief Corresponding ZoneFinder implementation
     ///
     /// The zone finder implementation for database data sources. Similarly
@@ -845,6 +846,7 @@ public:
         boost::shared_ptr<DatabaseAccessor> accessor_;
         const int zone_id_;
         const isc::dns::Name origin_;
+
         /// \brief Shortcut name for the result of getRRsets
         typedef std::pair<bool, std::map<dns::RRType, dns::RRsetPtr> >
             FoundRRsets;
@@ -899,6 +901,119 @@ public:
                               const WantedTypes& types, bool check_ns,
                               const std::string* construct_name = NULL,
                               bool any = false);
+
+        /// \brief DNSSEC related context for ZoneFinder::findInternal.
+        ///
+        /// This class is a helper for the ZoneFinder::findInternal method,
+        /// encapsulating DNSSEC related information and processing logic.
+        /// Specifically, it tells the finder whether the zone under search
+        /// is DNSSEC signed or not, and if it is, whether it's with NSEC or
+        /// with NSEC3.  It also provides a RRset DNSSEC proof RRset for some
+        /// specific situations (in practice, this means an NSEC RRs for
+        /// negative proof when they are needed and expected).
+        ///
+        /// The purpose of this class is to keep the main finder implementation
+        /// unaware of DNSSEC related details.  It's also intended to help
+        /// avoid unnecessary lookup for DNSSEC proof RRsets; this class
+        /// doesn't look into the DB for these RRsets unless it's known to
+        /// be needed.  The same optimization could be implemented in the
+        /// main code, but it will result in duplicate similar code logic
+        /// and make the code more complicated.  By encapsulating and unifying
+        /// the logic in a single separate class, we can keep the main
+        /// search logic readable.
+        class FindDNSSECContext {
+        public:
+            /// \brief Constructor for FindDNSSECContext class.
+            ///
+            /// This constructor doesn't involve any expensive operation such
+            /// as database lookups.  It only initializes some internal
+            /// states (in a cheap way) and remembers if DNSSEC proof
+            /// is requested.
+            ///
+            /// \param finder The Finder for the findInternal that uses this
+            /// context.
+            /// \param options Find options given to the finder.
+            FindDNSSECContext(Finder& finder, const FindOptions options);
+
+            /// \brief Return DNSSEC related result flags for the context.
+            ///
+            /// This method returns a FindResultFlags value related to
+            /// DNSSEC, based on the context.  If DNSSEC proof is requested
+            /// and the zone is signed with NSEC/NSEC3, it returns
+            /// RESULT_NSEC_SIGNED/RESULT_NSEC3_SIGNED, respectively;
+            /// otherwise it returns RESULT_DEFAULT.  So the caller can simply
+            /// take a logical OR for the returned value of this method and
+            /// whatever other flags it's going to set, without knowing
+            /// DNSSEC specific information.
+            ///
+            /// If it's not yet identified whether and how the zone is DNSSEC
+            /// signed at the time of the call, it now detects that via
+            /// database lookups (if necessary).  (And this is because why
+            /// this method cannot be a const member function).
+            ZoneFinder::FindResultFlags getResultFlags();
+
+            /// \brief Get DNSSEC negative proof for a given name.
+            ///
+            /// If the zone is considered NSEC-signed and the context
+            /// requested DNSSEC proofs, this method tries to find NSEC RRs
+            /// for the give name.  If \c covering is true, it means a
+            /// "no name" proof is requested, so it calls findPreviousName on
+            /// the given name and extracts an NSEC record on the result;
+            /// otherwise it tries to get NSEC RRs for the given name.  If
+            /// the NSEC is found, this method returns it; otherwise it returns
+            /// NULL.
+            ///
+            /// In all other cases this method simply returns NULL.
+            ///
+            /// \param name The name which the NSEC RRset belong to.
+            /// \param covering true if a covering NSEC is required; false if
+            /// a matching NSEC is required.
+            /// \return Any found DNSSEC proof RRset or NULL
+            isc::dns::ConstRRsetPtr getDNSSECRRset(
+                const isc::dns::Name& name, bool covering);
+
+            /// \brief Get DNSSEC negative proof for a given name.
+            ///
+            /// If the zone is considered NSEC-signed and the context
+            /// requested DNSSEC proofs, this method tries to find NSEC RRset
+            /// from the given set (\c found_set) and returns it if found;
+            /// in other cases this method simply returns NULL.
+            ///
+            /// \param found_set The RRset which may contain an NSEC RRset.
+            /// \return Any found DNSSEC proof RRset or NULL
+            isc::dns::ConstRRsetPtr getDNSSECRRset(const FoundRRsets&
+                                                   found_set);
+
+        private:
+            /// \brief Returns whether the zone is signed with NSEC3.
+            ///
+            /// This method returns true if the zone for the finder that
+            /// uses this context is considered DNSSEC signed with NSEC3;
+            /// otherwise it returns false.  If it's not yet detected,
+            /// this method now detects that via database lookups (if
+            /// necessary).
+            bool isNSEC3();
+
+            /// \brief Returns whether the zone is signed with NSEC.
+            ///
+            /// This is similar to isNSEC3(), but works for NSEC.
+            bool isNSEC();
+
+            /// \brief Probe into the database to see if/how the zone is
+            /// signed.
+            ///
+            /// This is a subroutine of isNSEC3() and isNSEC(), and performs
+            /// delayed database probe to detect whether the zone used by
+            /// the finder is DNSSEC signed, and if it is, with NSEC or NSEC3.
+            void probe();
+
+            DatabaseClient::Finder& finder_;
+            const bool need_dnssec_;
+
+            bool is_nsec3_;
+            bool is_nsec_;
+            bool probed_;
+        };
 
         /// \brief Search result of \c findDelegationPoint().
         ///
@@ -1002,7 +1117,8 @@ public:
         /// \param target If the type happens to be ANY, it will insert all
         ///        the RRsets of the found name (if any is found) here instead
         ///        of being returned by the result.
-        ///
+        /// \param dnssec_ctx The dnssec context, it is a DNSSEC wrapper for
+        ///        find function.
         /// \return Tuple holding the result of the search - the RRset of the
         ///         wildcard records matching the name, together with a status
         ///         indicating the match type (e.g. CNAME at the wildcard
@@ -1010,12 +1126,12 @@ public:
         ///         success due to an exact match).  Also returned if there
         ///         is no match is an indication as to whether there was an
         ///         NXDOMAIN or an NXRRSET.
-        ResultContext findWildcardMatch(
-            const isc::dns::Name& name,
-            const isc::dns::RRType& type,
-            const FindOptions options,
-            const DelegationSearchResult& dresult,
-            std::vector<isc::dns::ConstRRsetPtr>* target);
+        ResultContext findWildcardMatch(const isc::dns::Name& name,
+                                        const isc::dns::RRType& type,
+                                        const FindOptions options,
+                                        const DelegationSearchResult& dresult,
+                                        std::vector<isc::dns::ConstRRsetPtr>*
+                                        target, FindDNSSECContext& dnssec_ctx);
 
         /// \brief Handle matching results for name
         ///
@@ -1048,7 +1164,9 @@ public:
         ///                 it's NULL in the case of non wildcard match.
         /// \param target When the query is any, this must be set to a vector
         ///    where the result will be stored.
-        ///
+        /// \param dnssec_ctx The dnssec context, it is a DNSSEC wrapper for
+        ///        find function.
+
         /// \return Tuple holding the result of the search - the RRset of the
         ///         wildcard records matching the name, together with a status
         ///         indicating the match type (corresponding to the each of
@@ -1062,7 +1180,7 @@ public:
                                        const FoundRRsets& found,
                                        const std::string* wildname,
                                        std::vector<isc::dns::ConstRRsetPtr>*
-                                       target);
+                                       target, FindDNSSECContext& dnssec_ctx);
 
         /// \brief Handle no match for name
         ///
@@ -1087,7 +1205,8 @@ public:
         /// \param target If the query is for type ANY, the successfull result,
         ///        if there happens to be one, will be returned through the
         ///        parameter, as it doesn't fit into the result.
-        ///
+        /// \param dnssec_ctx The dnssec context, it is a DNSSEC wrapper for
+        ///        find function.
         /// \return Tuple holding the result of the search - the RRset of the
         ///         wildcard records matching the name, together with a status
         ///         indicating the match type (e.g. CNAME at the wildcard
@@ -1098,7 +1217,7 @@ public:
                                        FindOptions options,
                                        const DelegationSearchResult& dresult,
                                        std::vector<isc::dns::ConstRRsetPtr>*
-                                       target);
+                                       target, FindDNSSECContext& dnssec_ctx);
 
         /// Logs condition and creates result
         ///
@@ -1138,13 +1257,6 @@ public:
         ///
         /// \return true if the name has subdomains, false if not.
         bool hasSubdomains(const std::string& name);
-
-        /// \brief Get the NSEC covering a name.
-        ///
-        /// This one calls findPreviousName on the given name and extracts an
-        /// NSEC record on the result. It handles various error cases. The
-        /// method exists to share code present at more than one location.
-        dns::ConstRRsetPtr findNSECCover(const dns::Name& name);
 
         /// \brief Convenience type shortcut.
         ///
