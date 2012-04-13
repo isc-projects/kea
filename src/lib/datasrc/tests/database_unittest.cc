@@ -364,6 +364,8 @@ public:
     MockAccessor() : rollbacked_(false), did_transaction_(false) {
         readonly_records_ = &readonly_records_master_;
         update_records_ = &update_records_master_;
+        nsec3_namespace_ = &nsec3_namespace_master_;
+        update_nsec3_namespace_ = &update_nsec3_namespace_master_;
         empty_records_ = &empty_records_master_;
         journal_entries_ = &journal_entries_master_;
         fillData();
@@ -373,6 +375,9 @@ public:
         boost::shared_ptr<MockAccessor> cloned_accessor(new MockAccessor());
         cloned_accessor->readonly_records_ = &readonly_records_master_;
         cloned_accessor->update_records_ = &update_records_master_;
+        cloned_accessor->nsec3_namespace_ = &nsec3_namespace_master_;
+        cloned_accessor->update_nsec3_namespace_ =
+            &update_nsec3_namespace_master_;
         cloned_accessor->empty_records_ = &empty_records_master_;
         cloned_accessor->journal_entries_ = &journal_entries_master_;
         latest_clone_ = cloned_accessor;
@@ -655,8 +660,8 @@ public:
     virtual IteratorContextPtr getNSEC3Records(const std::string& hash,
                                                int) const
     {
-        Domains::const_iterator it(nsec3_namespace_.find(hash));
-        if (it == nsec3_namespace_.end()) {
+        Domains::const_iterator it(nsec3_namespace_->find(hash));
+        if (it == nsec3_namespace_->end()) {
             return (IteratorContextPtr(new EmptyIteratorContext()));
         } else {
             return (IteratorContextPtr(new DomainIterator(it->second)));
@@ -676,8 +681,10 @@ public:
         // original.
         if (replace) {
             update_records_->clear();
+            update_nsec3_namespace_->clear();
         } else {
             *update_records_ = *readonly_records_;
+            *update_nsec3_namespace_ = nsec3_namespace_master_;
         }
 
         if (zone_name == "bad.example.org.") {
@@ -690,6 +697,7 @@ public:
     }
     virtual void commit() {
         *readonly_records_ = *update_records_;
+        *nsec3_namespace_ = *update_nsec3_namespace_;
     }
 
     virtual void rollback() {
@@ -703,36 +711,50 @@ public:
         rollbacked_ = true;
     }
 
-    virtual void addRecordToZone(const string (&columns)[ADD_COLUMN_COUNT]) {
+private:
+    // Common subroutine for addRecordToZone and addRecordToNSEC3Zone.
+    void addRecord(Domains& domains,
+                   const string (&columns)[ADD_COLUMN_COUNT])
+    {
         // Copy the current value to cur_name.  If it doesn't exist,
         // operator[] will create a new one.
-        cur_name_ = (*update_records_)[columns[DatabaseAccessor::ADD_NAME]];
+        cur_name_ = domains[columns[ADD_NAME]];
 
         vector<string> record_columns;
-        record_columns.push_back(columns[DatabaseAccessor::ADD_TYPE]);
-        record_columns.push_back(columns[DatabaseAccessor::ADD_TTL]);
-        record_columns.push_back(columns[DatabaseAccessor::ADD_SIGTYPE]);
-        record_columns.push_back(columns[DatabaseAccessor::ADD_RDATA]);
-        record_columns.push_back(columns[DatabaseAccessor::ADD_NAME]);
+        record_columns.push_back(columns[ADD_TYPE]);
+        record_columns.push_back(columns[ADD_TTL]);
+        record_columns.push_back(columns[ADD_SIGTYPE]);
+        record_columns.push_back(columns[ADD_RDATA]);
+        record_columns.push_back(columns[ADD_NAME]);
 
         // copy back the added entry
         cur_name_.push_back(record_columns);
-        (*update_records_)[columns[DatabaseAccessor::ADD_NAME]] = cur_name_;
+        domains[columns[DatabaseAccessor::ADD_NAME]] = cur_name_;
 
         // remember this one so that test cases can check it.
         copy(columns, columns + DatabaseAccessor::ADD_COLUMN_COUNT,
              columns_lastadded_);
     }
 
+public:
+    virtual void addRecordToZone(const string (&columns)[ADD_COLUMN_COUNT]) {
+        addRecord(*update_records_, columns);
+    }
+
     virtual void addRecordToNSEC3Zone(
         const string (&columns)[ADD_NSEC3_COLUMN_COUNT])
     {
-        columns_lastadded_[ADD_NAME] = columns[ADD_NSEC3_HASH];
-        columns_lastadded_[ADD_REV_NAME].clear();
-        columns_lastadded_[ADD_TTL] = columns[ADD_NSEC3_TTL];
-        columns_lastadded_[ADD_TYPE] = columns[ADD_NSEC3_TYPE];
-        columns_lastadded_[ADD_SIGTYPE].clear();
-        columns_lastadded_[ADD_RDATA] = columns[ADD_NSEC3_RDATA];
+        // Convert the NSEC3 parameters in the normal (non NSEC3) style so
+        // we can share the merge code, and then update using addRecord().
+        string normal_columns[ADD_COLUMN_COUNT];
+
+        normal_columns[ADD_TYPE] = columns[ADD_NSEC3_TYPE];
+        normal_columns[ADD_TTL] = columns[ADD_NSEC3_TTL];
+        normal_columns[ADD_SIGTYPE] = "";
+        normal_columns[ADD_RDATA] = columns[ADD_NSEC3_RDATA];
+        normal_columns[ADD_NAME] = columns[ADD_NSEC3_HASH];
+
+        addRecord(*update_nsec3_namespace_, normal_columns);
     }
 
     // Helper predicate class used in deleteRecordInZone().
@@ -818,13 +840,13 @@ public:
     {
         // TODO: Provide some broken data, but it is not known yet how broken
         // they'll have to be.
-        Domains::const_iterator it(nsec3_namespace_.lower_bound(hash));
+        Domains::const_iterator it(nsec3_namespace_->lower_bound(hash));
         // We got just after the one we want
-        if (it == nsec3_namespace_.begin()) {
+        if (it == nsec3_namespace_->begin()) {
             // Hmm, we got something really small. So we wrap around.
             // This is one after the last, so after decreasing it we'll get
             // the biggest.
-            it = nsec3_namespace_.end();
+            it = nsec3_namespace_->end();
         }
         return ((--it)->first);
     }
@@ -908,11 +930,12 @@ private:
     Domains* readonly_records_;
     Domains update_records_master_;
     Domains* update_records_;
+    Domains nsec3_namespace_master_;
+    Domains* nsec3_namespace_;
+    Domains update_nsec3_namespace_master_;
+    Domains* update_nsec3_namespace_;
     const Domains empty_records_master_;
     const Domains* empty_records_;
-
-    // The NSEC3 namespace. The above trick will be added once it is needed.
-    Domains nsec3_namespace_;
 
     // The journal data
     std::vector<JournalEntry> journal_entries_master_;
@@ -978,13 +1001,13 @@ private:
     // the NSEC3 namespace. You don't provide the full name, only
     // the hash part.
     void addCurHash(const std::string& hash) {
-        ASSERT_EQ(0, nsec3_namespace_.count(hash));
+        ASSERT_EQ(0, nsec3_namespace_->count(hash));
         // Append the name to all of them
         for (std::vector<std::vector<std::string> >::iterator
              i = cur_name_.begin(); i != cur_name_.end(); ++ i) {
             i->push_back(hash);
         }
-        (*readonly_records_)[hash] = cur_name_;
+        (*nsec3_namespace_)[hash] = cur_name_;
         cur_name_.clear();
     }
 
@@ -2736,14 +2759,29 @@ TEST_F(MockDatabaseClientTest, addNSEC3ToZone) {
     const char* const nsec3_rdata = "1 1 12 AABBCCDD "
         "2T7B4G4VSA5SMI47K61MV5BV1A22BOJR NS SOA RRSIG NSEC3PARAM";
 
+    // Add one NSEC3 RR to the zone.
     this->updater_ = this->client_->getUpdater(this->zname_, true);
     this->updater_->addRRset(
         *textToRRset(string(nsec3_hash) + ".example.org. 3600 IN NSEC3 " +
                      string(nsec3_rdata)));
     this->updater_->commit();
-    const char* const rrset_added[] = {
-        nsec3_hash, "", "3600", "NSEC3", "", nsec3_rdata };
-    this->checkLastAdded(rrset_added);
+
+    // Check if we can get the expected record.  According to the API,
+    // implementations can skip filling in columns other than those explicitly
+    // checked below, so we don't check them.
+    const int zone_id =
+        this->current_accessor_->getZone(this->zname_.toText()).second;
+    DatabaseAccessor::IteratorContextPtr itctx =
+        this->current_accessor_->getNSEC3Records(nsec3_hash, zone_id);
+    ASSERT_TRUE(itctx);
+    string columns[DatabaseAccessor::COLUMN_COUNT];
+    EXPECT_TRUE(itctx->getNext(columns));
+    EXPECT_EQ("NSEC3", columns[DatabaseAccessor::TYPE_COLUMN]);
+    EXPECT_EQ("3600", columns[DatabaseAccessor::TTL_COLUMN]);
+    EXPECT_EQ(nsec3_rdata, columns[DatabaseAccessor::RDATA_COLUMN]);
+
+    // There should be no more records.
+    EXPECT_FALSE(itctx->getNext(columns));
 }
 
 TYPED_TEST(DatabaseClientTest, addRRsetToCurrentZone) {
