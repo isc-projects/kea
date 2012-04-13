@@ -88,7 +88,7 @@ BUILT_SOURCES += rdataclass.h rdataclass.cc
 
 lib_LTLIBRARIES = libdns++.la
 
-libdns___la_LDFLAGS = -no-undefined -version-info 1:0:1
+libdns___la_LDFLAGS = -no-undefined -version-info 2:0:0
 
 libdns___la_SOURCES =
 libdns___la_SOURCES += edns.h edns.cc
