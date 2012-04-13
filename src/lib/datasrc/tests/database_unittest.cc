@@ -2390,6 +2390,19 @@ dnssecFlagCheck(ZoneFinder& finder, ZoneFinder::FindResultFlags sec_flag) {
                expected_rdatas, expected_sig_rdatas,
                (ZoneFinder::RESULT_WILDCARD | sec_flag),
                Name("*.wild.example.org"), ZoneFinder::FIND_DNSSEC);
+
+    // Empty wildcard (this NSEC doesn't have RRSIG in our test data)
+    expected_rdatas.clear();
+    expected_sig_rdatas.clear();
+    if ((sec_flag & ZoneFinder::RESULT_NSEC_SIGNED) != 0) {
+        expected_rdatas.push_back("wild.*.foo.*.bar.example.org. NSEC");
+    }
+    doFindTest(finder, Name("foo.wild.bar.example.org"),
+               RRType::TXT(), RRType::NSEC(), RRTTL(3600), ZoneFinder::NXRRSET,
+               expected_rdatas, expected_sig_rdatas,
+               (ZoneFinder::RESULT_WILDCARD | sec_flag),
+               Name("bao.example.org"), ZoneFinder::FIND_DNSSEC);
+    dnssecFlagCheckForAny(finder, Name("foo.wild.bar.example.org"), sec_flag);
 }
 
 TYPED_TEST(DatabaseClientTest, dnssecResultFlags) {
