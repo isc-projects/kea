@@ -93,8 +93,19 @@ const char* const text_statements[NUM_STATEMENTS] = {
         "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
     "DELETE FROM records WHERE zone_id=?1 AND name=?2 " // DEL_RECORD
         "AND rdtype=?3 AND rdata=?4",
-    "SELECT rdtype, ttl, sigtype, rdata, name FROM records " // ITERATE
-        "WHERE zone_id = ?1 ORDER BY rname, rdtype",
+    // The following iterates the whole zone. As the NSEC3 records
+    // (and corresponding RRSIGs) live in separate table, we need to
+    // take both of them. As the RRSIGs are for NSEC3s in the other
+    // table, we can easily hardcode the sigtype.
+    //
+    // The extra column is so we can order it by rname. This is to
+    // preserve the previous order, mostly for tests.
+    // TODO: Is it possible to get rid of the ordering?
+    "SELECT rdtype, ttl, sigtype, rdata, name, rname FROM records " // ITERATE
+        "WHERE zone_id = ?1 "
+        "UNION "
+        "SELECT rdtype, ttl, \"NSEC3\", rdata, owner, owner FROM nsec3 "
+        "WHERE zone_id = ?1 ORDER by rname, rdtype",
     /*
      * This one looks for previous name with NSEC record. It is done by
      * using the reversed name. The NSEC is checked because we need to
