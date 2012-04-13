@@ -1191,31 +1191,80 @@ DatabaseUpdater::validateAddOrDelete(const char* const op_str,
     }
 }
 
+// This is a helper class used in adding/deleting RRsets to/from a database.
+// The purpose of this class is to provide conversion interface from various
+// parameters of the RRset to corresponding textual representations that the
+// underlying database interface expects.  The necessary parameters and how
+// to convert them depend on several things, such as whether it's NSEC3 related
+// or not, or whether journaling is requested.  In order to avoid unnecessary
+// conversion, this class also performs the conversion in a lazy manner.
+// Also, in order to avoid redundant conversion when the conversion is
+// requested for the same parameter multiple times, it remembers the
+// conversion result first time, and reuses it for subsequent requests
+// (this implicitly assumes copying std::string objects is not very expensive;
+// this is often the case in some common implementations that have
+// copy-on-write semantics for the string class).
+class RRParameterConverter {
+public:
+    RRParameterConverter(const AbstractRRset& rrset) : rrset_(rrset)
+    {}
+    const string& getName() {
+        if (name_.empty()) {
+            name_ = rrset_.getName().toText();
+        }
+        return (name_);
+    }
+    const string& getNSEC3Name() {
+        if (nsec3_name_.empty()) {
+            nsec3_name_ = rrset_.getName().split(0, 1).toText(true);
+        }
+        return (nsec3_name_);
+    }
+    const string& getRevName() {
+        if (revname_.empty()) {
+            revname_ = rrset_.getName().reverse().toText();
+        }
+        return (revname_);
+    }
+    const string& getTTL() {
+        if (ttl_.empty()) {
+            ttl_ = rrset_.getTTL().toText();
+        }
+        return (ttl_);
+    }
+    const string& getType() {
+        if (type_.empty()) {
+            type_ = rrset_.getType().toText();
+        }
+        return (type_);
+    }
+
+private:
+    string name_;
+    string nsec3_name_;
+    string revname_;
+    string ttl_;
+    string type_;
+    const AbstractRRset& rrset_;
+};
+
 void
 DatabaseUpdater::addRRset(const AbstractRRset& rrset) {
     validateAddOrDelete("add", rrset, DELETE, ADD);
 
     // It's guaranteed rrset has at least one RDATA at this point.
     RdataIteratorPtr it = rrset.getRdataIterator();
-
-    string columns[Accessor::ADD_COLUMN_COUNT]; // initialized with ""
-    columns[Accessor::ADD_NAME] = rrset.getName().toText();
-    columns[Accessor::ADD_REV_NAME] = rrset.getName().reverse().toText();
-    columns[Accessor::ADD_TTL] = rrset.getTTL().toText();
-    columns[Accessor::ADD_TYPE] = rrset.getType().toText();
-    string journal[Accessor::DIFF_PARAM_COUNT];
     if (journaling_) {
-        journal[Accessor::DIFF_NAME] = columns[Accessor::ADD_NAME];
-        journal[Accessor::DIFF_TYPE] = columns[Accessor::ADD_TYPE];
-        journal[Accessor::DIFF_TTL] = columns[Accessor::ADD_TTL];
         diff_phase_ = ADD;
         if (rrset.getType() == RRType::SOA()) {
-            serial_ =
-                dynamic_cast<const generic::SOA&>(it->getCurrent()).
+            serial_ = dynamic_cast<const generic::SOA&>(it->getCurrent()).
                 getSerial();
         }
     }
+
+    RRParameterConverter cvtr(rrset);
     for (; !it->isLast(); it->next()) {
+        string sigtype;
         if (rrset.getType() == RRType::RRSIG()) {
             // XXX: the current interface (based on the current sqlite3
             // data source schema) requires a separate "sigtype" column,
@@ -1224,16 +1273,25 @@ DatabaseUpdater::addRRset(const AbstractRRset& rrset) {
             // the interface, but until then we have to conform to the schema.
             const generic::RRSIG& rrsig_rdata =
                 dynamic_cast<const generic::RRSIG&>(it->getCurrent());
-            columns[Accessor::ADD_SIGTYPE] =
-                rrsig_rdata.typeCovered().toText();
+            sigtype = rrsig_rdata.typeCovered().toText();
         }
-        columns[Accessor::ADD_RDATA] = it->getCurrent().toText();
+        const string rdata = it->getCurrent().toText();
         if (journaling_) {
-            journal[Accessor::DIFF_RDATA] = columns[Accessor::ADD_RDATA];
+            const string journal[Accessor::DIFF_PARAM_COUNT] =
+                { cvtr.getName(), cvtr.getType(), cvtr.getTTL(), rdata };
             accessor_->addRecordDiff(zone_id_, serial_.getValue(),
                                      Accessor::DIFF_ADD, journal);
         }
-        accessor_->addRecordToZone(columns);
+        if (rrset.getType() == RRType::NSEC3()) {
+            const string nsec3_columns[Accessor::ADD_NSEC3_COLUMN_COUNT] =
+                { cvtr.getNSEC3Name(), cvtr.getTTL(), cvtr.getType(), rdata };
+            accessor_->addRecordToNSEC3Zone(nsec3_columns);
+        } else {
+            const string columns[Accessor::ADD_COLUMN_COUNT] =
+                { cvtr.getName(), cvtr.getRevName(), cvtr.getTTL(),
+                  cvtr.getType(), sigtype, rdata };
+            accessor_->addRecordToZone(columns);
+        }
     }
 }
 
