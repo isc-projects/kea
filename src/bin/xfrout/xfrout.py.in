@@ -40,6 +40,12 @@ from isc.log_messages.xfrout_messages import *
 
 isc.log.init("b10-xfrout")
 logger = isc.log.Logger("xfrout")
+
+# Pending system-wide debug level definitions, the ones we
+# use here are hardcoded for now
+DBG_PROCESS = logger.DBGLVL_TRACE_BASIC
+DBG_COMMANDS = logger.DBGLVL_TRACE_DETAIL
+
 DBG_XFROUT_TRACE = logger.DBGLVL_TRACE_BASIC
 
 try:
@@ -1002,7 +1008,7 @@ class XfroutServer:
 
     def run(self):
         '''Get and process all commands sent from cfgmgr or other modules. '''
-        logger.info(XFROUT_STARTED)
+        logger.debug(DBG_PROCESS, XFROUT_STARTED)
         while not self._shutdown_event.is_set():
             self._cc.check_command(False)
 

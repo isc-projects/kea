@@ -38,6 +38,11 @@ from isc.log_messages.xfrin_messages import *
 isc.log.init("b10-xfrin")
 logger = isc.log.Logger("xfrin")
 
+# Pending system-wide debug level definitions, the ones we
+# use here are hardcoded for now
+DBG_PROCESS = logger.DBGLVL_TRACE_BASIC
+DBG_COMMANDS = logger.DBGLVL_TRACE_DETAIL
+
 try:
     from pydnspp import *
 except ImportError as e:
@@ -1576,7 +1581,7 @@ class Xfrin:
                 logger.error(XFRIN_MSGQ_SEND_ERROR_ZONE_MANAGER, ZONE_MANAGER_MODULE_NAME)
 
     def startup(self):
-        logger.info(XFRIN_STARTED)
+        logger.debug(DBG_PROCESS, XFRIN_STARTED)
         while not self._shutdown_event.is_set():
             self._cc_check_command()
 
