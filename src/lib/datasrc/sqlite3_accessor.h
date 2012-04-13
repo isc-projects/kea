@@ -214,6 +214,9 @@ public:
     virtual void addRecordToZone(
         const std::string (&columns)[ADD_COLUMN_COUNT]);
 
+    virtual void addRecordToNSEC3Zone(
+        const std::string (&columns)[ADD_NSEC3_COLUMN_COUNT]);
+
     virtual void deleteRecordInZone(
         const std::string (&params)[DEL_PARAM_COUNT]);
 

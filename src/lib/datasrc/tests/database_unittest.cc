@@ -14,6 +14,7 @@
 
 #include <exceptions/exceptions.h>
 
+#include <dns/masterload.h>
 #include <dns/name.h>
 #include <dns/rrttl.h>
 #include <dns/rrset.h>
@@ -29,6 +30,7 @@
 
 #include <gtest/gtest.h>
 
+#include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/lexical_cast.hpp>
 
@@ -247,6 +249,8 @@ public:
     virtual void commit() {}
     virtual void rollback() {}
     virtual void addRecordToZone(const string (&)[ADD_COLUMN_COUNT]) {}
+    virtual void addRecordToNSEC3Zone(const string (&)[ADD_NSEC3_COLUMN_COUNT])
+    {}
     virtual void deleteRecordInZone(const string (&)[DEL_PARAM_COUNT]) {}
     virtual void addRecordDiff(int, uint32_t, DiffOperation,
                                const std::string (&)[DIFF_PARAM_COUNT]) {}
@@ -687,6 +691,7 @@ public:
     virtual void commit() {
         *readonly_records_ = *update_records_;
     }
+
     virtual void rollback() {
         // Special hook: if something with a name of "throw.example.org"
         // has been added, trigger an imaginary unexpected event with an
@@ -697,6 +702,7 @@ public:
 
         rollbacked_ = true;
     }
+
     virtual void addRecordToZone(const string (&columns)[ADD_COLUMN_COUNT]) {
         // Copy the current value to cur_name.  If it doesn't exist,
         // operator[] will create a new one.
@@ -716,6 +722,17 @@ public:
         // remember this one so that test cases can check it.
         copy(columns, columns + DatabaseAccessor::ADD_COLUMN_COUNT,
              columns_lastadded_);
+    }
+
+    virtual void addRecordToNSEC3Zone(
+        const string (&columns)[ADD_NSEC3_COLUMN_COUNT])
+    {
+        columns_lastadded_[ADD_NAME] = columns[ADD_NSEC3_HASH];
+        columns_lastadded_[ADD_REV_NAME].clear();
+        columns_lastadded_[ADD_TTL] = columns[ADD_NSEC3_TTL];
+        columns_lastadded_[ADD_TYPE] = columns[ADD_NSEC3_TYPE];
+        columns_lastadded_[ADD_SIGTYPE].clear();
+        columns_lastadded_[ADD_RDATA] = columns[ADD_NSEC3_RDATA];
     }
 
     // Helper predicate class used in deleteRecordInZone().
@@ -2690,6 +2707,42 @@ TYPED_TEST(DatabaseClientTest, addRRsetToNewZone) {
     const char* const rrset_added[] = {
         "www.example.org.", "org.example.www.", "3600", "A", "", "192.0.2.2"
     };
+    this->checkLastAdded(rrset_added);
+}
+
+// TODO: maybe we should share this stuff
+// A helper callback of masterLoad() used in InMemoryZoneFinderTest.
+void
+setRRset(RRsetPtr rrset, vector<RRsetPtr*>::iterator& it) {
+    *(*it) = rrset;
+    ++it;
+}
+
+ConstRRsetPtr
+textToRRset(const string& text_rrset, const RRClass& rrclass = RRClass::IN()) {
+    stringstream ss(text_rrset);
+    RRsetPtr rrset;
+    vector<RRsetPtr*> rrsets;
+    rrsets.push_back(&rrset);
+    masterLoad(ss, Name::ROOT_NAME(), rrclass,
+               boost::bind(setRRset, _1, rrsets.begin()));
+    return (rrset);
+}
+
+// Right now this only works for the mock DB, but the plan is to make it
+// a TYPED_TEST to share the case with SQLite3 implementation, too.
+TEST_F(MockDatabaseClientTest, addNSEC3ToZone) {
+    const char* const nsec3_hash = "1BB7SO0452U1QHL98UISNDD9218GELR5";
+    const char* const nsec3_rdata = "1 1 12 AABBCCDD "
+        "2T7B4G4VSA5SMI47K61MV5BV1A22BOJR NS SOA RRSIG NSEC3PARAM";
+
+    this->updater_ = this->client_->getUpdater(this->zname_, true);
+    this->updater_->addRRset(
+        *textToRRset(string(nsec3_hash) + ".example.org. 3600 IN NSEC3 " +
+                     string(nsec3_rdata)));
+    this->updater_->commit();
+    const char* const rrset_added[] = {
+        nsec3_hash, "", "3600", "NSEC3", "", nsec3_rdata };
     this->checkLastAdded(rrset_added);
 }
 

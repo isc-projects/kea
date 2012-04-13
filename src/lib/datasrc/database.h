@@ -95,6 +95,16 @@ public:
         ADD_COLUMN_COUNT = 6 ///< Number of columns
     };
 
+    enum AddNSEC3RecordColumns {
+        ADD_NSEC3_HASH = 0, ///< The owner name of the record (a domain name)
+        ADD_NSEC3_TTL = 1,  ///< The TTL of the record (in numeric form)
+        ADD_NSEC3_TYPE = 2, ///< The RRType of the record (either NSEC3 or
+                            ///< RRSIG)
+        ADD_NSEC3_RDATA = 3, ///< Full text representation of the record's
+                             ///< RDATA
+        ADD_NSEC3_COLUMN_COUNT = 4 ///< Number of columns
+    };
+
     /// \brief Definitions of the fields to be passed to deleteRecordInZone()
     ///
     /// Each derived implementation of deleteRecordInZone() should expect
@@ -432,6 +442,9 @@ public:
     virtual void addRecordToZone(
         const std::string (&columns)[ADD_COLUMN_COUNT]) = 0;
 
+    virtual void addRecordToNSEC3Zone(
+        const std::string (&columns)[ADD_NSEC3_COLUMN_COUNT]) = 0;
+
     /// \brief Delete a single record from the zone to be updated.
     ///
     /// This method provides a simple interface to delete a record
@@ -684,7 +697,7 @@ public:
     /// This is used to find previous NSEC3 hashes, to find covering NSEC3 in
     /// case none match exactly.
     ///
-    /// In case a hash before before the lowest or the lowest is provided,
+    /// In case a hash before the lowest or the lowest is provided,
     /// this should return the largest one in the zone (NSEC3 needs a
     /// wrap-around semantics).
     ///
