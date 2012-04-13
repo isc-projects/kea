@@ -506,7 +506,7 @@ class BoB:
                                       self.command_handler,
                                       socket_file = self.msgq_socket_file)
         self.ccs.start()
-        logger.info(BIND10_STARTED_CC)
+        logger.debug(DBG_PROCESS, BIND10_STARTED_CC)
 
     # A couple of utility methods for starting processes...
 
