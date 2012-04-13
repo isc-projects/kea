@@ -1122,6 +1122,13 @@ SQLite3Accessor::addRecordToZone(const string (&columns)[ADD_COLUMN_COUNT]) {
 }
 
 void
+SQLite3Accessor::addRecordToNSEC3Zone(
+    const string (&/*columns*/)[ADD_NSEC3_COLUMN_COUNT])
+{
+    isc_throw(NotImplemented, "not yet implemented");
+}
+
+void
 SQLite3Accessor::deleteRecordInZone(const string (&params)[DEL_PARAM_COUNT]) {
     if (!dbparameters_->updating_zone) {
         isc_throw(DataSourceError, "deleting record in SQLite3 "
