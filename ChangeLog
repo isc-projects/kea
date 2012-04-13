@@ -1,3 +1,8 @@
+424.	[bug]		jelte
+	Fixed a bug in bindctl where in some cases, configuration settings
+	in a named set could disappear, if a child element is modified.
+	(Trac #1491, git 00a36e752802df3cc683023d256687bf222e256a)
+
 423.	[bug]		jinmei
 	The database based zone iterator now correctly resets mixed TTLs
 	of the same RRset (when that happens) to the lowest one.  The
