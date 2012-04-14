@@ -1248,6 +1248,28 @@ private:
     const AbstractRRset& rrset_;
 };
 
+namespace {
+// A shared shortcut to detect if the given type of RDATA is NSEC3 or
+// RRSIG covering NSEC3.  RRSIG for NSEC3 should go to the (conceptual)
+// separate namespace, so we need to check the covered type.
+// Note: in principle the type covered should be the same for
+// all RDATA, but the RRset interface doesn't ensure that condition.
+// So we explicitly check that for every RDATA below.
+bool
+isNSEC3KindType(RRType rrtype, const Rdata& rdata) {
+    if (rrtype == RRType::NSEC3()) {
+        return (true);
+    }
+    if (rrtype == RRType::RRSIG() &&
+        dynamic_cast<const generic::RRSIG&>(rdata).typeCovered() ==
+        RRType::NSEC3())
+    {
+        return (true);
+    }
+    return (false);
+}
+}
+
 void
 DatabaseUpdater::addRRset(const AbstractRRset& rrset) {
     validateAddOrDelete("add", rrset, DELETE, ADD);
@@ -1264,41 +1286,35 @@ DatabaseUpdater::addRRset(const AbstractRRset& rrset) {
 
     RRParameterConverter cvtr(rrset);
     for (; !it->isLast(); it->next()) {
-        bool nsec3_type = (rrset.getType() == RRType::NSEC3());
+        const Rdata& rdata = it->getCurrent();
+        const bool nsec3_type = isNSEC3KindType(rrset.getType(), rdata);
+
         string sigtype;
         if (rrset.getType() == RRType::RRSIG()) {
-            // RRSIG for NSEC3 should go to the (conceptual) separate
-            // namespace, so we need to check the covered type.
-            // Note: in principle the type covered should be the same for
-            // all RDATA, but the RRset interface doesn't ensure the condition.
-            // So we explicitly check that for every RDATA.
-            const RRType& covered_type =
-                dynamic_cast<const generic::RRSIG&>(it->getCurrent()).
-                typeCovered();
-            nsec3_type = (covered_type == RRType::NSEC3());
-
             // XXX: the current interface (based on the current sqlite3
             // data source schema) requires a separate "sigtype" column,
             // even though it won't be used in a newer implementation.
             // We should eventually clean up the schema design and simplify
             // the interface, but until then we have to conform to the schema.
-            sigtype = covered_type.toText();
+            sigtype = dynamic_cast<const generic::RRSIG&>(rdata).
+                typeCovered().toText();
         }
-        const string& rdata = it->getCurrent().toText();
+        const string& rdata_txt = rdata.toText();
         if (journaling_) {
             const string journal[Accessor::DIFF_PARAM_COUNT] =
-                { cvtr.getName(), cvtr.getType(), cvtr.getTTL(), rdata };
+                { cvtr.getName(), cvtr.getType(), cvtr.getTTL(), rdata_txt };
             accessor_->addRecordDiff(zone_id_, serial_.getValue(),
                                      Accessor::DIFF_ADD, journal);
         }
         if (nsec3_type) {
             const string nsec3_columns[Accessor::ADD_NSEC3_COLUMN_COUNT] =
-                { cvtr.getNSEC3Name(), cvtr.getTTL(), cvtr.getType(), rdata };
+                { cvtr.getNSEC3Name(), cvtr.getTTL(), cvtr.getType(),
+                  rdata_txt };
             accessor_->addRecordToNSEC3Zone(nsec3_columns);
         } else {
             const string columns[Accessor::ADD_COLUMN_COUNT] =
                 { cvtr.getName(), cvtr.getRevName(), cvtr.getTTL(),
-                  cvtr.getType(), sigtype, rdata };
+                  cvtr.getType(), sigtype, rdata_txt };
             accessor_->addRecordToZone(columns);
         }
     }
@@ -1326,17 +1342,19 @@ DatabaseUpdater::deleteRRset(const AbstractRRset& rrset) {
 
     RRParameterConverter cvtr(rrset);
     for (; !it->isLast(); it->next()) {
-        bool nsec3_type = (rrset.getType() == RRType::NSEC3());
-        const string& rdata = it->getCurrent().toText();
+        const Rdata& rdata = it->getCurrent();
+        const bool nsec3_type = isNSEC3KindType(rrset.getType(), rdata);
+        const string& rdata_txt = it->getCurrent().toText();
+
         if (journaling_) {
             const string journal[Accessor::DIFF_PARAM_COUNT] =
-                { cvtr.getName(), cvtr.getType(), cvtr.getTTL(), rdata };
+                { cvtr.getName(), cvtr.getType(), cvtr.getTTL(), rdata_txt };
             accessor_->addRecordDiff(zone_id_, serial_.getValue(),
                                      Accessor::DIFF_DELETE, journal);
         }
         const string params[Accessor::DEL_PARAM_COUNT] =
             { nsec3_type ? cvtr.getNSEC3Name() : cvtr.getName(),
-              cvtr.getType(), rdata };
+              cvtr.getType(), rdata_txt };
         if (nsec3_type) {
             accessor_->deleteRecordInNSEC3Zone(params);
         } else {
