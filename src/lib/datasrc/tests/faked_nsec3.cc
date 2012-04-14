@@ -111,6 +111,86 @@ findNSEC3Check(bool expected_matched, uint8_t expected_labels,
     }
 }
 
+void
+performNSEC3Test(ZoneFinder &finder) {
+    // Parameter validation: the query name must be in or below the zone
+    EXPECT_THROW(finder.findNSEC3(Name("example.com"), false), OutOfZone);
+    EXPECT_THROW(finder.findNSEC3(Name("org"), true), OutOfZone);
+
+    Name origin("example.org");
+    const string apex_nsec3_text = string(apex_hash) + ".example.org." +
+        string(nsec3_common);
+    const string ns1_nsec3_text = string(ns1_hash) + ".example.org." +
+        string(nsec3_common);
+    const string w_nsec3_text = string(w_hash) + ".example.org." +
+        string(nsec3_common);
+    const string zzz_nsec3_text = string(zzz_hash) + ".example.org." +
+        string(nsec3_common);
+
+    // Apex name.  It should have a matching NSEC3.
+    {
+        SCOPED_TRACE("apex, non recursive mode");
+        findNSEC3Check(true, origin.getLabelCount(), apex_nsec3_text, "",
+                       finder.findNSEC3(origin, false));
+    }
+
+    // Recursive mode doesn't change the result in this case.
+    {
+        SCOPED_TRACE("apex, recursive mode");
+        findNSEC3Check(true, origin.getLabelCount(), apex_nsec3_text, "",
+                       finder.findNSEC3(origin, true));
+    }
+
+    // Non existent name (in the NSEC3 namespace -- the findNSEC3 does
+    // not look into the normal data).  Disabling recursion, a covering
+    // NSEC3 should be returned.
+    const Name www_name("www.example.org");
+    {
+        SCOPED_TRACE("non existent name, non recursive mode");
+        findNSEC3Check(false, www_name.getLabelCount(), apex_nsec3_text, "",
+                       finder.findNSEC3(www_name, false));
+    }
+
+    // Non existent name.  The closest provable encloser is the apex,
+    // and next closer is the query name itself (which NSEC3 for ns1
+    // covers)
+    // H(ns1) = 2T... < H(xxx) = Q0... < H(zzz) = R5...
+    {
+        SCOPED_TRACE("non existent name, recursive mode");
+        findNSEC3Check(true, origin.getLabelCount(), apex_nsec3_text,
+                       ns1_nsec3_text,
+                       finder.findNSEC3(Name("xxx.example.org"), true));
+    }
+
+    // Similar to the previous case, but next closer name is different
+    // from the query name.  The closet encloser is w.example.org, and
+    // next closer is y.w.example.org.
+    // H(ns1) = 2T.. < H(y.w) = K8.. < H(zzz) = R5
+    {
+        SCOPED_TRACE("non existent name, non qname next closer");
+        findNSEC3Check(true, Name("w.example.org").getLabelCount(),
+                       w_nsec3_text, ns1_nsec3_text,
+                       finder.findNSEC3(Name("x.y.w.example.org"),
+                                         true));
+    }
+
+    // In the rest of test we check hash comparison for wrap around cases.
+    {
+        SCOPED_TRACE("very small hash");
+        const Name smallest_name("smallest.example.org");
+        findNSEC3Check(false, smallest_name.getLabelCount(),
+                       zzz_nsec3_text, "",
+                       finder.findNSEC3(smallest_name, false));
+    }
+    {
+        SCOPED_TRACE("very large hash");
+        const Name largest_name("largest.example.org");
+        findNSEC3Check(false, largest_name.getLabelCount(),
+                       zzz_nsec3_text, "",
+                       finder.findNSEC3(largest_name, false));
+    }
+}
+
 }
 }
 }
