@@ -1859,71 +1859,7 @@ TEST_F(InMemoryZoneFinderTest, findNSEC3) {
         string(nsec3_common);
     EXPECT_EQ(result::SUCCESS, zone_finder_.add(textToRRset(zzz_nsec3_text)));
 
-    // Parameter validation: the query name must be in or below the zone
-    EXPECT_THROW(zone_finder_.findNSEC3(Name("example.com"), false), OutOfZone);
-    EXPECT_THROW(zone_finder_.findNSEC3(Name("org"), true), OutOfZone);
-
-    // Apex name.  It should have a matching NSEC3.
-    {
-        SCOPED_TRACE("apex, non recursive mode");
-        findNSEC3Check(true, origin_.getLabelCount(), apex_nsec3_text, "",
-                       zone_finder_.findNSEC3(origin_, false));
-    }
-
-    // Recursive mode doesn't change the result in this case.
-    {
-        SCOPED_TRACE("apex, recursive mode");
-        findNSEC3Check(true, origin_.getLabelCount(), apex_nsec3_text, "",
-                       zone_finder_.findNSEC3(origin_, true));
-    }
-
-    // Non existent name.  Disabling recursion, a covering NSEC3 should be
-    // returned.
-    const Name www_name("www.example.org");
-    {
-        SCOPED_TRACE("non existent name, non recursive mode");
-        findNSEC3Check(false, www_name.getLabelCount(), apex_nsec3_text, "",
-                       zone_finder_.findNSEC3(www_name, false));
-    }
-
-    // Non existent name.  The closest provable encloser is the apex,
-    // and next closer is the query name itself (which NSEC3 for ns1
-    // covers)
-    // H(ns1) = 2T... < H(xxx) = Q0... < H(zzz) = R5...
-    {
-        SCOPED_TRACE("non existent name, recursive mode");
-        findNSEC3Check(true, origin_.getLabelCount(), apex_nsec3_text,
-                       ns1_nsec3_text,
-                       zone_finder_.findNSEC3(Name("xxx.example.org"), true));
-    }
-
-    // Similar to the previous case, but next closer name is different
-    // from the query name.  The closet encloser is w.example.org, and
-    // next closer is y.w.example.org.
-    // H(ns1) = 2T.. < H(y.w) = K8.. < H(zzz) = R5
-    {
-        SCOPED_TRACE("non existent name, non qname next closer");
-        findNSEC3Check(true, Name("w.example.org").getLabelCount(),
-                       w_nsec3_text, ns1_nsec3_text,
-                       zone_finder_.findNSEC3(Name("x.y.w.example.org"),
-                                              true));
-    }
-
-    // In the rest of test we check hash comparison for wrap around cases.
-    {
-        SCOPED_TRACE("very small hash");
-        const Name smallest_name("smallest.example.org");
-        findNSEC3Check(false, smallest_name.getLabelCount(),
-                       zzz_nsec3_text, "",
-                       zone_finder_.findNSEC3(smallest_name, false));
-    }
-    {
-        SCOPED_TRACE("very large hash");
-        const Name largest_name("largest.example.org");
-        findNSEC3Check(false, largest_name.getLabelCount(),
-                       zzz_nsec3_text, "",
-                       zone_finder_.findNSEC3(largest_name, false));
-    }
+    performNSEC3Test(zone_finder_);
 }
 
 TEST_F(InMemoryZoneFinderTest, findNSEC3ForBadZone) {
