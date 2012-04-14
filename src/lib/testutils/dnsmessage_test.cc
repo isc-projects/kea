@@ -23,6 +23,12 @@
 
 #include <testutils/dnsmessage_test.h>
 
+#include <boost/bind.hpp>
+
+#include <string>
+#include <sstream>
+
+using namespace std;
 using namespace isc::dns;
 
 namespace isc {
@@ -80,6 +86,26 @@ matchRdata(const char*, const char*,
     }
     return (::testing::AssertionSuccess());
 }
+}
+
+// TODO: maybe we should share this stuff
+// A helper callback of masterLoad() used in InMemoryZoneFinderTest.
+void
+setRRset(RRsetPtr rrset, RRsetPtr* rrsetp) {
+    if (*rrsetp) {
+        isc_throw(isc::Unexpected,
+                  "multiple RRsets are given to textToRRset");
+    }
+    *rrsetp = rrset;
+}
+
+RRsetPtr
+textToRRset(const string& text_rrset, const RRClass& rrclass) {
+    stringstream ss(text_rrset);
+    RRsetPtr rrset;
+    masterLoad(ss, Name::ROOT_NAME(), rrclass,
+               boost::bind(setRRset, _1, &rrset));
+    return (rrset);
 }
 
 void
