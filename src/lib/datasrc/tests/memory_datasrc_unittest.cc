@@ -285,17 +285,6 @@ setRRset(RRsetPtr rrset, vector<RRsetPtr*>::iterator& it) {
     ++it;
 }
 
-ConstRRsetPtr
-textToRRset(const string& text_rrset, const RRClass& rrclass = RRClass::IN()) {
-    stringstream ss(text_rrset);
-    RRsetPtr rrset;
-    vector<RRsetPtr*> rrsets;
-    rrsets.push_back(&rrset);
-    masterLoad(ss, Name::ROOT_NAME(), rrclass,
-               boost::bind(setRRset, _1, rrsets.begin()));
-    return (rrset);
-}
-
 // Some faked NSEC3 hash values commonly used in tests and the faked NSEC3Hash
 // object.
 //
