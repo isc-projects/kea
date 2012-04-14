@@ -253,6 +253,7 @@ public:
     virtual void addRecordToNSEC3Zone(const string (&)[ADD_NSEC3_COLUMN_COUNT])
     {}
     virtual void deleteRecordInZone(const string (&)[DEL_PARAM_COUNT]) {}
+    virtual void deleteRecordInNSEC3Zone(const string (&)[DEL_PARAM_COUNT]) {}
     virtual void addRecordDiff(int, uint32_t, DiffOperation,
                                const std::string (&)[DIFF_PARAM_COUNT]) {}
 
@@ -758,6 +759,7 @@ public:
         addRecord(*update_nsec3_namespace_, normal_columns);
     }
 
+private:
     // Helper predicate class used in deleteRecordInZone().
     struct deleteMatch {
         deleteMatch(const string& type, const string& rdata) :
@@ -770,17 +772,31 @@ public:
         const string& rdata_;
     };
 
-    virtual void deleteRecordInZone(const string (&params)[DEL_PARAM_COUNT]) {
+    // Common subroutine for deleteRecordinZone and deleteRecordInNSEC3Zone.
+    void deleteRecord(Domains& domains,
+                      const string (&params)[DEL_PARAM_COUNT])
+    {
         vector<vector<string> >& records =
-            (*update_records_)[params[DatabaseAccessor::DEL_NAME]];
+            domains[params[DatabaseAccessor::DEL_NAME]];
         records.erase(remove_if(records.begin(), records.end(),
                                 deleteMatch(
                                     params[DatabaseAccessor::DEL_TYPE],
                                     params[DatabaseAccessor::DEL_RDATA])),
                       records.end());
         if (records.empty()) {
-            (*update_records_).erase(params[DatabaseAccessor::DEL_NAME]);
+            domains.erase(params[DatabaseAccessor::DEL_NAME]);
         }
+    }
+
+public:
+    virtual void deleteRecordInZone(const string (&params)[DEL_PARAM_COUNT]) {
+        deleteRecord(*update_records_, params);
+    }
+
+    virtual void deleteRecordInNSEC3Zone(
+        const string (&params)[DEL_PARAM_COUNT])
+    {
+        deleteRecord(*update_nsec3_namespace_, params);
     }
 
     //
@@ -2761,6 +2777,8 @@ textToRRset(const string& text_rrset, const RRClass& rrclass = RRClass::IN()) {
 const char* const nsec3_hash = "1BB7SO0452U1QHL98UISNDD9218GELR5";
 const char* const nsec3_rdata = "1 1 12 AABBCCDD "
     "2T7B4G4VSA5SMI47K61MV5BV1A22BOJR NS SOA RRSIG NSEC3PARAM";
+const char* const nsec3_rdata2 = "1 1 12 AABBCCDD "
+    "2T7B4G4VSA5SMI47K61MV5BV1A22BOJR NS SOA RRSIG"; // differ in bitmaps
 const char* const nsec3_sig_rdata = "NSEC3 5 3 3600 20000101000000 "
     "20000201000000 12345 example.org. FAKEFAKEFAKE";
 
@@ -2825,6 +2843,27 @@ TEST_F(MockDatabaseClientTest, addNSEC3AndRRSIGToZone) {
     vector<ConstRRsetPtr> expected_rrsets;
     expected_rrsets.push_back(nsec3_rrset);
     expected_rrsets.push_back(nsec3_sig_rrset);
+    nsec3Check(expected_rrsets, this->zname_, nsec3_hash,
+               *this->current_accessor_);
+}
+
+TEST_F(MockDatabaseClientTest, deleteNSEC3InZone) {
+    // Add one NSEC3 RR to the zone, delete it, and add another one.
+    this->updater_ = this->client_->getUpdater(this->zname_, true);
+    ConstRRsetPtr nsec3_rrset =
+        textToRRset(string(nsec3_hash) + ".example.org. 3600 IN NSEC3 " +
+                    string(nsec3_rdata));
+    ConstRRsetPtr nsec3_rrset2 =
+        textToRRset(string(nsec3_hash) + ".example.org. 3600 IN NSEC3 " +
+                    string(nsec3_rdata2));
+    this->updater_->addRRset(*nsec3_rrset);
+    this->updater_->deleteRRset(*nsec3_rrset);
+    this->updater_->addRRset(*nsec3_rrset2);
+    this->updater_->commit();
+
+    // Check if we can get the expected record.
+    vector<ConstRRsetPtr> expected_rrsets;
+    expected_rrsets.push_back(nsec3_rrset2);
     nsec3Check(expected_rrsets, this->zname_, nsec3_hash,
                *this->current_accessor_);
 }
