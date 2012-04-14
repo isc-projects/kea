@@ -3406,6 +3406,52 @@ TYPED_TEST(DatabaseClientTest, journal) {
     this->checkJournal(expected);
 }
 
+// At the moment this only works for the mock accessor.  Once sqlite3
+// accessor supports updating NSEC3, this should be merged to the previous
+// test
+TEST_F(MockDatabaseClientTest, journalForNSEC3) {
+    // Similar to the previous test, but adding/deleting NSEC3 RRs, just to
+    // confirm that NSEC3 is not special for managing diffs.
+    const ConstRRsetPtr nsec3_rrset =
+        textToRRset(string(nsec3_hash) + ".example.org. 3600 IN NSEC3 " +
+                    string(nsec3_rdata));
+
+    this->updater_ = this->client_->getUpdater(this->zname_, false, true);
+    this->updater_->deleteRRset(*this->soa_);
+    this->updater_->deleteRRset(*nsec3_rrset);
+
+    this->soa_.reset(new RRset(this->zname_, this->qclass_, RRType::SOA(),
+                               this->rrttl_));
+    this->soa_->addRdata(rdata::createRdata(this->soa_->getType(),
+                                            this->soa_->getClass(),
+                                            "ns1.example.org. "
+                                            "admin.example.org. "
+                                            "1235 3600 1800 2419200 7200"));
+    this->updater_->addRRset(*this->soa_);
+    this->updater_->addRRset(*nsec3_rrset);
+    this->updater_->commit();
+    std::vector<JournalEntry> expected;
+    expected.push_back(JournalEntry(WRITABLE_ZONE_ID, 1234,
+                                    DatabaseAccessor::DIFF_DELETE,
+                                    "example.org.", "SOA", "3600",
+                                    "ns1.example.org. admin.example.org. "
+                                    "1234 3600 1800 2419200 7200"));
+    expected.push_back(JournalEntry(WRITABLE_ZONE_ID, 1234,
+                                    DatabaseAccessor::DIFF_DELETE,
+                                    string(nsec3_hash) + ".example.org.",
+                                    "NSEC3", "3600", nsec3_rdata));
+    expected.push_back(JournalEntry(WRITABLE_ZONE_ID, 1235,
+                                    DatabaseAccessor::DIFF_ADD,
+                                    "example.org.", "SOA", "3600",
+                                    "ns1.example.org. admin.example.org. "
+                                    "1235 3600 1800 2419200 7200"));
+    expected.push_back(JournalEntry(WRITABLE_ZONE_ID, 1235,
+                                    DatabaseAccessor::DIFF_ADD,
+                                    string(nsec3_hash) + ".example.org.",
+                                    "NSEC3", "3600", nsec3_rdata));
+    this->checkJournal(expected);
+}
+
 /*
  * Push multiple delete-add sequences. Checks it is allowed and all is
  * saved.
