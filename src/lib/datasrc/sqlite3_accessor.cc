@@ -1139,6 +1139,13 @@ SQLite3Accessor::deleteRecordInZone(const string (&params)[DEL_PARAM_COUNT]) {
 }
 
 void
+SQLite3Accessor::deleteRecordInNSEC3Zone(
+    const string (&/*params*/)[DEL_PARAM_COUNT])
+{
+    isc_throw(NotImplemented, "not yet implemented");
+}
+
+void
 SQLite3Accessor::addRecordDiff(int zone_id, uint32_t serial,
                                DiffOperation operation,
                                const std::string (&params)[DIFF_PARAM_COUNT])

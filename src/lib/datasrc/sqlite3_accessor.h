@@ -220,6 +220,9 @@ public:
     virtual void deleteRecordInZone(
         const std::string (&params)[DEL_PARAM_COUNT]);
 
+    virtual void deleteRecordInNSEC3Zone(
+        const std::string (&params)[DEL_PARAM_COUNT]);
+
     /// This derived version of the method prepares an SQLite3 statement
     /// for adding the diff first time it's called, and if it fails throws
     // an \c SQLite3Error exception.
