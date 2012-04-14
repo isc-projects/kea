@@ -2750,25 +2750,6 @@ TYPED_TEST(DatabaseClientTest, addRRsetToNewZone) {
     this->checkLastAdded(rrset_added);
 }
 
-// TODO: maybe we should share this stuff
-// A helper callback of masterLoad() used in InMemoryZoneFinderTest.
-void
-setRRset(RRsetPtr rrset, vector<RRsetPtr*>::iterator& it) {
-    *(*it) = rrset;
-    ++it;
-}
-
-ConstRRsetPtr
-textToRRset(const string& text_rrset, const RRClass& rrclass = RRClass::IN()) {
-    stringstream ss(text_rrset);
-    RRsetPtr rrset;
-    vector<RRsetPtr*> rrsets;
-    rrsets.push_back(&rrset);
-    masterLoad(ss, Name::ROOT_NAME(), rrclass,
-               boost::bind(setRRset, _1, rrsets.begin()));
-    return (rrset);
-}
-
 // Below we define a set of NSEC3 update tests.   Right now this only works
 // for the mock DB, but the plan is to make it a TYPED_TEST to share the case
 // with SQLite3 implementation, too.
