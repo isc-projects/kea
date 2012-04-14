@@ -482,6 +482,9 @@ public:
     virtual void deleteRecordInZone(
         const std::string (&params)[DEL_PARAM_COUNT]) = 0;
 
+    virtual void deleteRecordInNSEC3Zone(
+        const std::string (&params)[DEL_PARAM_COUNT]) = 0;
+
     /// \brief Start a general transaction.
     ///
     /// Each derived class version of this method starts a database

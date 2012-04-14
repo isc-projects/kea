@@ -1284,7 +1284,7 @@ DatabaseUpdater::addRRset(const AbstractRRset& rrset) {
             // the interface, but until then we have to conform to the schema.
             sigtype = covered_type.toText();
         }
-        const string rdata = it->getCurrent().toText();
+        const string& rdata = it->getCurrent().toText();
         if (journaling_) {
             const string journal[Accessor::DIFF_PARAM_COUNT] =
                 { cvtr.getName(), cvtr.getType(), cvtr.getTTL(), rdata };
@@ -1315,15 +1315,7 @@ DatabaseUpdater::deleteRRset(const AbstractRRset& rrset) {
     validateAddOrDelete("delete", rrset, ADD, DELETE);
 
     RdataIteratorPtr it = rrset.getRdataIterator();
-
-    string params[Accessor::DEL_PARAM_COUNT]; // initialized with ""
-    params[Accessor::DEL_NAME] = rrset.getName().toText();
-    params[Accessor::DEL_TYPE] = rrset.getType().toText();
-    string journal[Accessor::DIFF_PARAM_COUNT];
     if (journaling_) {
-        journal[Accessor::DIFF_NAME] = params[Accessor::DEL_NAME];
-        journal[Accessor::DIFF_TYPE] = params[Accessor::DEL_TYPE];
-        journal[Accessor::DIFF_TTL] = rrset.getTTL().toText();
         diff_phase_ = DELETE;
         if (rrset.getType() == RRType::SOA()) {
             serial_ =
@@ -1331,14 +1323,25 @@ DatabaseUpdater::deleteRRset(const AbstractRRset& rrset) {
                 getSerial();
         }
     }
+
+    RRParameterConverter cvtr(rrset);
     for (; !it->isLast(); it->next()) {
-        params[Accessor::DEL_RDATA] = it->getCurrent().toText();
+        bool nsec3_type = (rrset.getType() == RRType::NSEC3());
+        const string& rdata = it->getCurrent().toText();
         if (journaling_) {
-            journal[Accessor::DIFF_RDATA] = params[Accessor::DEL_RDATA];
+            const string journal[Accessor::DIFF_PARAM_COUNT] =
+                { cvtr.getName(), cvtr.getType(), cvtr.getTTL(), rdata };
             accessor_->addRecordDiff(zone_id_, serial_.getValue(),
                                      Accessor::DIFF_DELETE, journal);
         }
-        accessor_->deleteRecordInZone(params);
+        const string params[Accessor::DEL_PARAM_COUNT] =
+            { nsec3_type ? cvtr.getNSEC3Name() : cvtr.getName(),
+              cvtr.getType(), rdata };
+        if (nsec3_type) {
+            accessor_->deleteRecordInNSEC3Zone(params);
+        } else {
+            accessor_->deleteRecordInZone(params);
+        }
     }
 }
 
