@@ -2781,6 +2781,8 @@ const char* const nsec3_rdata2 = "1 1 12 AABBCCDD "
     "2T7B4G4VSA5SMI47K61MV5BV1A22BOJR NS SOA RRSIG"; // differ in bitmaps
 const char* const nsec3_sig_rdata = "NSEC3 5 3 3600 20000101000000 "
     "20000201000000 12345 example.org. FAKEFAKEFAKE";
+const char* const nsec3_sig_rdata2 = "NSEC3 5 3 3600 20000101000000 "
+    "20000201000000 12345 example.org. FAKEFAKE"; // differ in the signature
 
 // Commonly used subroutine that checks if we can get the expected record.
 // According to the API, implementations can skip filling in columns other
@@ -2810,50 +2812,13 @@ nsec3Check(const vector<ConstRRsetPtr>& expected_rrsets,
                 actual_rrsets.begin(), actual_rrsets.end());
 }
 
-TEST_F(MockDatabaseClientTest, addNSEC3ToZone) {
-    // Add one NSEC3 RR to the zone.
-    this->updater_ = this->client_->getUpdater(this->zname_, true);
-    ConstRRsetPtr nsec3_rrset =
-        textToRRset(string(nsec3_hash) + ".example.org. 3600 IN NSEC3 " +
-                    string(nsec3_rdata));
-    this->updater_->addRRset(*nsec3_rrset);
-    this->updater_->commit();
-
-    // Check if we can get the expected record.
-    vector<ConstRRsetPtr> expected_rrsets;
-    expected_rrsets.push_back(nsec3_rrset);
-    nsec3Check(expected_rrsets, this->zname_, nsec3_hash,
-               *this->current_accessor_);
-}
-
-TEST_F(MockDatabaseClientTest, addNSEC3AndRRSIGToZone) {
-    // Add one NSEC3 RR and its RRSIG to the zone.
-    this->updater_ = this->client_->getUpdater(this->zname_, true);
-    ConstRRsetPtr nsec3_rrset =
-        textToRRset(string(nsec3_hash) + ".example.org. 3600 IN NSEC3 " +
-                    string(nsec3_rdata));
-    ConstRRsetPtr nsec3_sig_rrset =
-        textToRRset(string(nsec3_hash) + ".example.org. 3600 IN RRSIG " +
-                    string(nsec3_sig_rdata));
-    this->updater_->addRRset(*nsec3_rrset);
-    this->updater_->addRRset(*nsec3_sig_rrset);
-    this->updater_->commit();
-
-    // Check if we can get the expected record.
-    vector<ConstRRsetPtr> expected_rrsets;
-    expected_rrsets.push_back(nsec3_rrset);
-    expected_rrsets.push_back(nsec3_sig_rrset);
-    nsec3Check(expected_rrsets, this->zname_, nsec3_hash,
-               *this->current_accessor_);
-}
-
-TEST_F(MockDatabaseClientTest, deleteNSEC3InZone) {
+TEST_F(MockDatabaseClientTest, addDeleteNSEC3InZone) {
     // Add one NSEC3 RR to the zone, delete it, and add another one.
     this->updater_ = this->client_->getUpdater(this->zname_, true);
-    ConstRRsetPtr nsec3_rrset =
+    const ConstRRsetPtr nsec3_rrset =
         textToRRset(string(nsec3_hash) + ".example.org. 3600 IN NSEC3 " +
                     string(nsec3_rdata));
-    ConstRRsetPtr nsec3_rrset2 =
+    const ConstRRsetPtr nsec3_rrset2 =
         textToRRset(string(nsec3_hash) + ".example.org. 3600 IN NSEC3 " +
                     string(nsec3_rdata2));
     this->updater_->addRRset(*nsec3_rrset);
@@ -2864,6 +2829,33 @@ TEST_F(MockDatabaseClientTest, deleteNSEC3InZone) {
     // Check if we can get the expected record.
     vector<ConstRRsetPtr> expected_rrsets;
     expected_rrsets.push_back(nsec3_rrset2);
+    nsec3Check(expected_rrsets, this->zname_, nsec3_hash,
+               *this->current_accessor_);
+}
+
+TEST_F(MockDatabaseClientTest, addDeleteNSEC3AndRRSIGToZone) {
+    // Add one NSEC3 RR and its RRSIG to the zone, delete the RRSIG and add
+    // a new one.
+    this->updater_ = this->client_->getUpdater(this->zname_, true);
+    const ConstRRsetPtr nsec3_rrset =
+        textToRRset(string(nsec3_hash) + ".example.org. 3600 IN NSEC3 " +
+                    string(nsec3_rdata));
+    const ConstRRsetPtr nsec3_sig_rrset =
+        textToRRset(string(nsec3_hash) + ".example.org. 3600 IN RRSIG " +
+                    string(nsec3_sig_rdata));
+    const ConstRRsetPtr nsec3_sig_rrset2 =
+        textToRRset(string(nsec3_hash) + ".example.org. 3600 IN RRSIG " +
+                    string(nsec3_sig_rdata2));
+    this->updater_->addRRset(*nsec3_rrset);
+    this->updater_->addRRset(*nsec3_sig_rrset);
+    this->updater_->deleteRRset(*nsec3_sig_rrset);
+    this->updater_->addRRset(*nsec3_sig_rrset2);
+    this->updater_->commit();
+
+    // Check if we can get the expected record.
+    vector<ConstRRsetPtr> expected_rrsets;
+    expected_rrsets.push_back(nsec3_rrset);
+    expected_rrsets.push_back(nsec3_sig_rrset2);
     nsec3Check(expected_rrsets, this->zname_, nsec3_hash,
                *this->current_accessor_);
 }
