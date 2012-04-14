@@ -45,6 +45,7 @@ using namespace std;
 using boost::dynamic_pointer_cast;
 using boost::lexical_cast;
 using namespace isc::dns;
+using namespace isc::testutils;
 
 namespace {
 
@@ -1219,7 +1220,7 @@ public:
                     rdata::createRdata(expected_rrset->getType(),
                                        expected_rrset->getClass(),
                                        (*it).data_[Accessor::DIFF_RDATA]));
-                isc::testutils::rrsetCheck(expected_rrset, rrset);
+                rrsetCheck(expected_rrset, rrset);
             }
             // We should have examined all entries of both expected and
             // actual data.
@@ -1385,7 +1386,7 @@ checkRRset(isc::dns::ConstRRsetPtr rrset,
             isc::dns::rdata::createRdata(rrtype, rrclass,
                                          rdatas[i]));
     }
-    isc::testutils::rrsetCheck(expected_rrset, rrset);
+    rrsetCheck(expected_rrset, rrset);
 }
 
 // Iterate through a zone
@@ -1468,7 +1469,7 @@ TYPED_TEST(DatabaseClientTest, getSOAFromIterator) {
     }
     ASSERT_TRUE(rrset);
     // It should be identical to the result of getSOA().
-    isc::testutils::rrsetCheck(it->getSOA(), rrset);
+    rrsetCheck(it->getSOA(), rrset);
 }
 
 TYPED_TEST(DatabaseClientTest, noSOAFromIterator) {
@@ -1506,7 +1507,7 @@ TYPED_TEST(DatabaseClientTest, iterateThenUpdate) {
     }
     ASSERT_TRUE(rrset);
     // It should be identical to the result of getSOA().
-    isc::testutils::rrsetCheck(it->getSOA(), rrset);
+    rrsetCheck(it->getSOA(), rrset);
 }
 
 TYPED_TEST(DatabaseClientTest, updateThenIterateThenUpdate) {
@@ -2752,36 +2753,80 @@ textToRRset(const string& text_rrset, const RRClass& rrclass = RRClass::IN()) {
     return (rrset);
 }
 
-// Right now this only works for the mock DB, but the plan is to make it
-// a TYPED_TEST to share the case with SQLite3 implementation, too.
-TEST_F(MockDatabaseClientTest, addNSEC3ToZone) {
-    const char* const nsec3_hash = "1BB7SO0452U1QHL98UISNDD9218GELR5";
-    const char* const nsec3_rdata = "1 1 12 AABBCCDD "
-        "2T7B4G4VSA5SMI47K61MV5BV1A22BOJR NS SOA RRSIG NSEC3PARAM";
+// Below we define a set of NSEC3 update tests.   Right now this only works
+// for the mock DB, but the plan is to make it a TYPED_TEST to share the case
+// with SQLite3 implementation, too.
 
+// Commonly used data for NSEC3 update tests below.
+const char* const nsec3_hash = "1BB7SO0452U1QHL98UISNDD9218GELR5";
+const char* const nsec3_rdata = "1 1 12 AABBCCDD "
+    "2T7B4G4VSA5SMI47K61MV5BV1A22BOJR NS SOA RRSIG NSEC3PARAM";
+const char* const nsec3_sig_rdata = "NSEC3 5 3 3600 20000101000000 "
+    "20000201000000 12345 example.org. FAKEFAKEFAKE";
+
+// Commonly used subroutine that checks if we can get the expected record.
+// According to the API, implementations can skip filling in columns other
+// than those explicitly checked below, so we don't check them.
+void
+nsec3Check(const vector<ConstRRsetPtr>& expected_rrsets,
+           const Name& zone_name, const string& expected_hash,
+           DatabaseAccessor& accessor)
+{
+    const int zone_id = accessor.getZone(zone_name.toText()).second;
+    DatabaseAccessor::IteratorContextPtr itctx =
+        accessor.getNSEC3Records(expected_hash, zone_id);
+    ASSERT_TRUE(itctx);
+
+    // Build a list of matched RRsets and compare the both expected and built
+    // ones as sets.
+    string columns[DatabaseAccessor::COLUMN_COUNT];
+    vector<ConstRRsetPtr> actual_rrsets;
+    while (itctx->getNext(columns)) {
+        actual_rrsets.push_back(
+            textToRRset(expected_hash + "." + zone_name.toText() + " " +
+                        columns[DatabaseAccessor::TTL_COLUMN] + " IN " +
+                        columns[DatabaseAccessor::TYPE_COLUMN] + " " +
+                        columns[DatabaseAccessor::RDATA_COLUMN]));
+    }
+    rrsetsCheck(expected_rrsets.begin(), expected_rrsets.end(),
+                actual_rrsets.begin(), actual_rrsets.end());
+}
+
+TEST_F(MockDatabaseClientTest, addNSEC3ToZone) {
     // Add one NSEC3 RR to the zone.
     this->updater_ = this->client_->getUpdater(this->zname_, true);
-    this->updater_->addRRset(
-        *textToRRset(string(nsec3_hash) + ".example.org. 3600 IN NSEC3 " +
-                     string(nsec3_rdata)));
+    ConstRRsetPtr nsec3_rrset =
+        textToRRset(string(nsec3_hash) + ".example.org. 3600 IN NSEC3 " +
+                    string(nsec3_rdata));
+    this->updater_->addRRset(*nsec3_rrset);
     this->updater_->commit();
 
-    // Check if we can get the expected record.  According to the API,
-    // implementations can skip filling in columns other than those explicitly
-    // checked below, so we don't check them.
-    const int zone_id =
-        this->current_accessor_->getZone(this->zname_.toText()).second;
-    DatabaseAccessor::IteratorContextPtr itctx =
-        this->current_accessor_->getNSEC3Records(nsec3_hash, zone_id);
-    ASSERT_TRUE(itctx);
-    string columns[DatabaseAccessor::COLUMN_COUNT];
-    EXPECT_TRUE(itctx->getNext(columns));
-    EXPECT_EQ("NSEC3", columns[DatabaseAccessor::TYPE_COLUMN]);
-    EXPECT_EQ("3600", columns[DatabaseAccessor::TTL_COLUMN]);
-    EXPECT_EQ(nsec3_rdata, columns[DatabaseAccessor::RDATA_COLUMN]);
+    // Check if we can get the expected record.
+    vector<ConstRRsetPtr> expected_rrsets;
+    expected_rrsets.push_back(nsec3_rrset);
+    nsec3Check(expected_rrsets, this->zname_, nsec3_hash,
+               *this->current_accessor_);
+}
 
-    // There should be no more records.
-    EXPECT_FALSE(itctx->getNext(columns));
+TEST_F(MockDatabaseClientTest, addNSEC3AndRRSIGToZone) {
+    // Add one NSEC3 RR and its RRSIG to the zone.
+    this->updater_ = this->client_->getUpdater(this->zname_, true);
+    ConstRRsetPtr nsec3_rrset =
+        textToRRset(string(nsec3_hash) + ".example.org. 3600 IN NSEC3 " +
+                    string(nsec3_rdata));
+    ConstRRsetPtr nsec3_sig_rrset =
+        textToRRset(string(nsec3_hash) + ".example.org. 3600 IN RRSIG " +
+                    string(nsec3_sig_rdata));
+    this->updater_->addRRset(*nsec3_rrset);
+    this->updater_->addRRset(*nsec3_sig_rrset);
+    this->updater_->commit();
+
+    // Check if we can get the expected record.
+    vector<ConstRRsetPtr> expected_rrsets;
+    expected_rrsets.push_back(nsec3_rrset);
+    expected_rrsets.push_back(nsec3_sig_rrset);
+    nsec3Check(expected_rrsets, this->zname_, nsec3_hash,
+               *this->current_accessor_);
 }
 
 TYPED_TEST(DatabaseClientTest, addRRsetToCurrentZone) {
@@ -3511,10 +3556,10 @@ TYPED_TEST(DatabaseClientTest, journalReader) {
     ASSERT_TRUE(jnl_reader);
     ConstRRsetPtr rrset = jnl_reader->getNextDiff();
     ASSERT_TRUE(rrset);
-    isc::testutils::rrsetCheck(this->soa_, rrset);
+    rrsetCheck(this->soa_, rrset);
     rrset = jnl_reader->getNextDiff();
     ASSERT_TRUE(rrset);
-    isc::testutils::rrsetCheck(soa_end, rrset);
+    rrsetCheck(soa_end, rrset);
     rrset = jnl_reader->getNextDiff();
     ASSERT_FALSE(rrset);
 
@@ -3558,7 +3603,7 @@ TYPED_TEST(DatabaseClientTest, readLargeJournal) {
     ConstRRsetPtr actual;
     int i = 0;
     while ((actual = jnl_reader->getNextDiff()) != NULL) {
-        isc::testutils::rrsetCheck(expected.at(i++), actual);
+        rrsetCheck(expected.at(i++), actual);
     }
     EXPECT_EQ(expected.size(), i); // we should have eaten all expected data
 }

@@ -1264,16 +1264,25 @@ DatabaseUpdater::addRRset(const AbstractRRset& rrset) {
 
     RRParameterConverter cvtr(rrset);
     for (; !it->isLast(); it->next()) {
+        bool nsec3_type = (rrset.getType() == RRType::NSEC3());
         string sigtype;
         if (rrset.getType() == RRType::RRSIG()) {
+            // RRSIG for NSEC3 should go to the (conceptual) separate
+            // namespace, so we need to check the covered type.
+            // Note: in principle the type covered should be the same for
+            // all RDATA, but the RRset interface doesn't ensure the condition.
+            // So we explicitly check that for every RDATA.
+            const RRType& covered_type =
+                dynamic_cast<const generic::RRSIG&>(it->getCurrent()).
+                typeCovered();
+            nsec3_type = (covered_type == RRType::NSEC3());
+
             // XXX: the current interface (based on the current sqlite3
             // data source schema) requires a separate "sigtype" column,
             // even though it won't be used in a newer implementation.
             // We should eventually clean up the schema design and simplify
             // the interface, but until then we have to conform to the schema.
-            const generic::RRSIG& rrsig_rdata =
-                dynamic_cast<const generic::RRSIG&>(it->getCurrent());
-            sigtype = rrsig_rdata.typeCovered().toText();
+            sigtype = covered_type.toText();
         }
         const string rdata = it->getCurrent().toText();
         if (journaling_) {
@@ -1282,7 +1291,7 @@ DatabaseUpdater::addRRset(const AbstractRRset& rrset) {
             accessor_->addRecordDiff(zone_id_, serial_.getValue(),
                                      Accessor::DIFF_ADD, journal);
         }
-        if (rrset.getType() == RRType::NSEC3()) {
+        if (nsec3_type) {
             const string nsec3_columns[Accessor::ADD_NSEC3_COLUMN_COUNT] =
                 { cvtr.getNSEC3Name(), cvtr.getTTL(), cvtr.getType(), rdata };
             accessor_->addRecordToNSEC3Zone(nsec3_columns);
