@@ -1,3 +1,8 @@
+425.    [func]*          muks
+	Don't autostart b10-auth, b10-xfrin, b10-xfrout and b10-zonemgr in
+	the default configuration.
+	(Trac #1818, git 31de885ba0409f54d9a1615eff5a4b03ed420393)
+
 424.	[bug]		jelte
 	Fixed a bug in bindctl where in some cases, configuration settings
 	in a named set could disappear, if a child element is modified.
