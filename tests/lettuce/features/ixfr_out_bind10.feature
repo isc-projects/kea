@@ -31,7 +31,14 @@ Feature: IXFR out
 
     Scenario: Test Set 1
         Given I have bind10 running with configuration ixfr-out/testset1-config.db
-        Then wait for bind10 xfrout to start
+
+        And wait for bind10 stderr message BIND10_STARTED_CC
+        And wait for bind10 stderr message CMDCTL_STARTED
+        And wait for bind10 stderr message AUTH_SERVER_STARTED
+        And wait for bind10 stderr message XFROUT_STARTED
+        And wait for bind10 stderr message XFRIN_STARTED
+        And wait for bind10 stderr message ZONEMGR_STARTED
+
         The SOA serial for example.com should be 22
 
         #
@@ -146,7 +153,14 @@ Feature: IXFR out
 
     Scenario: Test Set 2
         Given I have bind10 running with configuration ixfr-out/testset1-config.db
-        Then wait for bind10 xfrout to start
+
+        And wait for bind10 stderr message BIND10_STARTED_CC
+        And wait for bind10 stderr message CMDCTL_STARTED
+        And wait for bind10 stderr message AUTH_SERVER_STARTED
+        And wait for bind10 stderr message XFROUT_STARTED
+        And wait for bind10 stderr message XFRIN_STARTED
+        And wait for bind10 stderr message ZONEMGR_STARTED
+
         The SOA serial for example.com should be 22
 
         #

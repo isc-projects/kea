@@ -1201,7 +1201,6 @@ AC_OUTPUT([doc/version.ent
            tests/system/ixfr/in-3/setup.sh
            tests/system/ixfr/in-4/setup.sh
           ], [
-           chmod +x compatcheck/sqlite3-difftbl-check.py
            chmod +x src/bin/cmdctl/run_b10-cmdctl.sh
            chmod +x src/bin/xfrin/run_b10-xfrin.sh
            chmod +x src/bin/xfrout/run_b10-xfrout.sh
