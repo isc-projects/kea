@@ -111,6 +111,7 @@ class TestSubscriptionManager(unittest.TestCase):
     def test_open_socket_bad(self):
         msgq = MsgQ("/does/not/exist")
         self.assertRaises(socket.error, msgq.setup)
+        msgq.listen_socket.close()
 
 class SendNonblock(unittest.TestCase):
     """
