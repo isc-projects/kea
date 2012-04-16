@@ -1122,7 +1122,7 @@ SQLite3Accessor::addRecordToZone(const string (&columns)[ADD_COLUMN_COUNT]) {
 }
 
 void
-SQLite3Accessor::addRecordToNSEC3Zone(
+SQLite3Accessor::addNSEC3RecordToZone(
     const string (&/*columns*/)[ADD_NSEC3_COLUMN_COUNT])
 {
     isc_throw(NotImplemented, "not yet implemented");
@@ -1139,7 +1139,7 @@ SQLite3Accessor::deleteRecordInZone(const string (&params)[DEL_PARAM_COUNT]) {
 }
 
 void
-SQLite3Accessor::deleteRecordInNSEC3Zone(
+SQLite3Accessor::deleteNSEC3RecordInZone(
     const string (&/*params*/)[DEL_PARAM_COUNT])
 {
     isc_throw(NotImplemented, "not yet implemented");

@@ -250,10 +250,10 @@ public:
     virtual void commit() {}
     virtual void rollback() {}
     virtual void addRecordToZone(const string (&)[ADD_COLUMN_COUNT]) {}
-    virtual void addRecordToNSEC3Zone(const string (&)[ADD_NSEC3_COLUMN_COUNT])
+    virtual void addNSEC3RecordToZone(const string (&)[ADD_NSEC3_COLUMN_COUNT])
     {}
     virtual void deleteRecordInZone(const string (&)[DEL_PARAM_COUNT]) {}
-    virtual void deleteRecordInNSEC3Zone(const string (&)[DEL_PARAM_COUNT]) {}
+    virtual void deleteNSEC3RecordInZone(const string (&)[DEL_PARAM_COUNT]) {}
     virtual void addRecordDiff(int, uint32_t, DiffOperation,
                                const std::string (&)[DIFF_PARAM_COUNT]) {}
 
@@ -714,7 +714,7 @@ public:
     }
 
 private:
-    // Common subroutine for addRecordToZone and addRecordToNSEC3Zone.
+    // Common subroutine for addRecordToZone and addNSEC3RecordToZone.
     void addRecord(Domains& domains,
                    const string (&columns)[ADD_COLUMN_COUNT])
     {
@@ -743,7 +743,7 @@ public:
         addRecord(*update_records_, columns);
     }
 
-    virtual void addRecordToNSEC3Zone(
+    virtual void addNSEC3RecordToZone(
         const string (&columns)[ADD_NSEC3_COLUMN_COUNT])
     {
         // Convert the NSEC3 parameters in the normal (non NSEC3) style so
@@ -772,7 +772,7 @@ private:
         const string& rdata_;
     };
 
-    // Common subroutine for deleteRecordinZone and deleteRecordInNSEC3Zone.
+    // Common subroutine for deleteRecordinZone and deleteNSEC3RecordInZone.
     void deleteRecord(Domains& domains,
                       const string (&params)[DEL_PARAM_COUNT])
     {
@@ -793,7 +793,7 @@ public:
         deleteRecord(*update_records_, params);
     }
 
-    virtual void deleteRecordInNSEC3Zone(
+    virtual void deleteNSEC3RecordInZone(
         const string (&params)[DEL_PARAM_COUNT])
     {
         deleteRecord(*update_nsec3_namespace_, params);

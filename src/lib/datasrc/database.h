@@ -95,9 +95,9 @@ public:
         ADD_COLUMN_COUNT = 6 ///< Number of columns
     };
 
-    /// \brief Definitions of the fields to be passed to addRecordToNSEC3Zone()
+    /// \brief Definitions of the fields to be passed to addNSEC3RecordToZone()
     ///
-    /// Each derived implementation of addRecordToNSEC3Zone() should expect
+    /// Each derived implementation of addNSEC3RecordToZone() should expect
     /// the "columns" array to be filled with the values as described in this
     /// enumeration, in this order.
     ///
@@ -117,14 +117,14 @@ public:
     };
 
     /// \brief Definitions of the fields to be passed to deleteRecordInZone()
-    /// and deleteRecordInNSEC3Zone()
+    /// and deleteNSEC3RecordInZone()
     ///
     /// Each derived implementation of deleteRecordInZone() should expect
     /// the "params" array to be filled with the values as described in this
     /// enumeration, in this order.
     enum DeleteRecordParams {
         DEL_NAME = 0, ///< The owner name of the record (a domain name)
-                      ///< or the hash label for deleteRecordInNSEC3Zone()
+                      ///< or the hash label for deleteNSEC3RecordInZone()
         DEL_TYPE = 1, ///< The RRType of the record (A/NS/TXT etc.)
         DEL_RDATA = 2, ///< Full text representation of the record's RDATA
         DEL_PARAM_COUNT = 3 ///< Number of parameters
@@ -492,7 +492,7 @@ public:
     ///
     /// \param columns An array of strings that defines a record to be added
     /// to the NSEC3 namespace of the zone.
-    virtual void addRecordToNSEC3Zone(
+    virtual void addNSEC3RecordToZone(
         const std::string (&columns)[ADD_NSEC3_COLUMN_COUNT]) = 0;
 
     /// \brief Delete a single record from the zone to be updated.
@@ -538,14 +538,14 @@ public:
     /// This method is similar to \c deleteRecordInZone(), but is expected to
     /// be only used for NSEC3 RRs or RRSIG RRs that cover NSEC3.  The
     /// relationship between these two methods is similar to that between
-    /// \c addRecordToZone() and \c addRecordToNSEC3Zone(), and the same
+    /// \c addRecordToZone() and \c addNSEC3RecordToZone(), and the same
     /// notes apply to this method.
     ///
     /// This method uses the same set of parameters to specify the record
     /// to be deleted as \c deleteRecordInZone(), but the \c DEL_NAME column
     /// is expected to only store the hash label of the owner name.
     /// This is the same as \c ADD_NSEC3_HASH column for
-    /// \c addRecordToNSEC3Zone().
+    /// \c addNSEC3RecordToZone().
     ///
     /// \exception DataSourceError Invalid call without starting a transaction,
     /// or other internal database error.
@@ -554,7 +554,7 @@ public:
     ///
     /// \param params An array of strings that defines a record to be deleted
     /// from the NSEC3 namespace of the zone.
-    virtual void deleteRecordInNSEC3Zone(
+    virtual void deleteNSEC3RecordInZone(
         const std::string (&params)[DEL_PARAM_COUNT]) = 0;
 
     /// \brief Start a general transaction.
