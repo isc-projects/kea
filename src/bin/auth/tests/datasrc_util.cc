@@ -18,56 +18,44 @@
 #include <dns/name.h>
 #include <dns/rrclass.h>
 
+#include <cc/data.h>
+
 #include <datasrc/client.h>
 #include <datasrc/zone.h>
-#include <datasrc/sqlite3_accessor.h>
+#include <datasrc/factory.h>
 
-#include "test_client.h"
+#include "datasrc_util.h"
 
 #include <boost/bind.hpp>
-#include <boost/shared_ptr.hpp>
+
+#include <istream>
 
 #include <cstdlib>
-#include <istream>
-#include <fstream>
 
 using namespace std;
-using boost::shared_ptr;
 
 using namespace isc::dns;
+using namespace isc::data;
+using namespace isc::datasrc;
 
 namespace isc {
-namespace datasrc {
+namespace auth {
 namespace unittest {
 
 namespace {
-// A helper subroutine for the SQLite3Client creator.
 void
 addRRset(ZoneUpdaterPtr updater, ConstRRsetPtr rrset) {
     updater->addRRset(*rrset);
 }
 }
 
-shared_ptr<DataSourceClient>
-createSQLite3Client(RRClass zclass, const Name& zname,
-                    const char* const db_file, const char* const zone_file)
-{
-    ifstream ifs(zone_file, ios_base::in);
-    if (ifs.fail()) {
-        isc_throw(isc::Unexpected, "Failed to open test zone file: "
-                  << zone_file);
-    }
-    return (createSQLite3Client(zclass, zname, db_file, ifs));
-}
-
-shared_ptr<DataSourceClient>
-createSQLite3Client(RRClass zclass, const Name& zname,
-                    const char* const db_file, istream& rr_stream)
+void
+createSQLite3DB(RRClass zclass, const Name& zname,
+                const char* const db_file, istream& rr_stream)
 {
     // We always begin with an empty template SQLite3 DB file and install
-    // the zone data from the zone file to ensure both cases have the
-    // same test data.
-    const char* const install_cmd_prefix = INSTALL_PROG " " TEST_DATA_COMMONDIR
+    // the zone data from the zone file.
+    const char* const install_cmd_prefix = INSTALL_PROG " " TEST_DATA_DIR
         "/rwtest.sqlite3 ";
     const string install_cmd = string(install_cmd_prefix) + db_file;
     if (system(install_cmd.c_str()) != 0) {
@@ -75,18 +63,15 @@ createSQLite3Client(RRClass zclass, const Name& zname,
                   "Error setting up; command failed: " << install_cmd);
     }
 
-    shared_ptr<SQLite3Accessor> accessor(
-        new SQLite3Accessor(db_file, zclass.toText()));
-    shared_ptr<DatabaseClient> client(new DatabaseClient(zclass, accessor));
-
-    ZoneUpdaterPtr updater = client->getUpdater(zname, true);
+    DataSourceClientContainer container("sqlite3",
+                                        Element::fromJSON(
+                                            "{\"database_file\": \"" +
+                                            string(db_file) + "\"}"));
+    ZoneUpdaterPtr updater = container.getInstance().getUpdater(zname, true);
     masterLoad(rr_stream, zname, zclass, boost::bind(addRRset, updater, _1));
-
     updater->commit();
-
-    return (client);
 }
 
-}
-}
-}
+} // end of unittest
+} // end of auth
+} // end of isc
