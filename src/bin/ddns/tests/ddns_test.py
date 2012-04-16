@@ -111,6 +111,8 @@ class TestDDNSServer(unittest.TestCase):
         self.__select_answer = None
         self.__select_exception = None
         self.__hook_called = False
+        if self.ddns_server._listen_socket is not None:
+            self.ddns_server._listen_socket.close()
         self.ddns_server._listen_socket = FakeSocket(2)
         ddns.select.select = self.__select
 
@@ -139,6 +141,7 @@ class TestDDNSServer(unittest.TestCase):
         self.assertIsNone(self.__hook_called)
         # Now make sure the clear_socket really works
         ddns.clear_socket()
+        ddnss._listen_socket.close()
         self.assertFalse(os.path.exists(ddns.SOCKET_FILE))
 
     def test_config_handler(self):
