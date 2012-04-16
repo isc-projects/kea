@@ -27,6 +27,7 @@ EXTRA_DIST += rfc5155-example.zone.signed
 
 EXTRA_DIST += example.com
 EXTRA_DIST += example.sqlite3
+EXTRA_DIST += rwtest.sqlite3	# SQLite3 DB file as a template data source
 
 EXTRA_DIST += test1.zone.in
 EXTRA_DIST += test1-new.zone.in
