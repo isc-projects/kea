@@ -172,13 +172,15 @@ class TestForwarder(unittest.TestCase):
             sock.settimeout(10)
             self.assertEqual(TEST_DATA, sock.recvfrom(len(TEST_DATA))[0])
         else:
-            server_sock.close()
             self.assertEqual(len(TEST_DATA), passed_sock.send(TEST_DATA))
             client_sock.setblocking(True)
             client_sock.settimeout(10)
             self.assertEqual(TEST_DATA, client_sock.recv(len(TEST_DATA)))
+            server_sock.close()
             client_sock.close()
 
+        self.listen_sock.close()
+        passed_sock.close()
         sock.close()
 
     def test_push_and_pop(self):
@@ -238,6 +240,7 @@ class TestForwarder(unittest.TestCase):
         receiver = SocketSessionReceiver(accept_sock)
         s.close()
         self.assertRaises(SocketSessionError, receiver.pop)
+        accept_sock.close()
 
 class TestReceiver(unittest.TestCase):
     # We only check a couple of failure cases on construction.  Valid cases
