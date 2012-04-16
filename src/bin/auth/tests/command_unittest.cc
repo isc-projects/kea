@@ -14,6 +14,8 @@
 
 #include <config.h>
 
+#include "datasrc_util.h"
+
 #include <auth/auth_srv.h>
 #include <auth/auth_config.h>
 #include <auth/command.h>
@@ -50,8 +52,12 @@ using namespace isc::data;
 using namespace isc::datasrc;
 using namespace isc::config;
 using namespace isc::testutils;
+using namespace isc::auth::unittest;
 
 namespace {
+
+const char* const SPEC_FILE = AUTH_OBJ_DIR "/auth.spec";
+
 class AuthCommandTest : public ::testing::Test {
 protected:
     AuthCommandTest() :
@@ -244,6 +250,65 @@ TEST_F(AuthCommandTest, loadZone) {
                                         "{\"origin\": \"test1.example\"}"));
     checkAnswer(0);
     newZoneChecks(server_);
+}
+
+// This test uses dynamic load of a data source module, and won't work when
+// statically linked.
+TEST_F(AuthCommandTest,
+#ifdef USE_STATIC_LINK
+       DISABLED_loadZoneSQLite3
+#else
+       loadZoneSQLite3
+#endif
+    )
+{
+    // Prepare the database first
+    const string test_db = TEST_DATA_BUILDDIR "/auth_test.sqlite3.copied";
+    stringstream ss("example.org. 3600 IN SOA . . 0 0 0 0 0\n");
+    createSQLite3DB(RRClass::IN(), Name("example.org"), test_db.c_str(), ss);
+
+    // Then store a config of the zone to the auth server
+    // This omits many config options of the auth server, but these are
+    // not read now.
+    isc::testutils::MockSession session;
+    // The session should not take care of anything or start anything, we
+    // need it only to hold the config we're going to put into it.
+    ModuleCCSession moduleSession(SPEC_FILE, session, NULL, NULL, false,
+                                  false);
+    // This describes the data source in the configuration
+    ElementPtr map(Element::fromJSON("{\"datasources\": ["
+                                     "  {"
+                                     "    \"type\": \"memory\","
+                                     "    \"zones\": ["
+                                     "      {"
+                                     "        \"origin\": \"example.org\","
+                                     "        \"file\": \"" + test_db + "\","
+                                     "        \"filetype\": \"sqlite3\""
+                                     "      }"
+                                     "    ]"
+                                     "  }"
+                                     "]}"));
+    moduleSession.setLocalConfig(map);
+    server_.setConfigSession(&moduleSession);
+
+    // The loadzone command needs the zone to be already loaded, because
+    // it is used for reloading only
+    AuthSrv::InMemoryClientPtr dsrc(new InMemoryClient());
+    dsrc->addZone(ZoneFinderPtr(new InMemoryZoneFinder(RRClass::IN(),
+                                                       Name("example.org"))));
+    server_.setInMemoryClient(RRClass::IN(), dsrc);
+
+    // Now send the command to reload it
+    result_ = execAuthServerCommand(server_, "loadzone",
+        Element::fromJSON("{\"origin\": \"example.org\"}"));
+    checkAnswer(0);
+
+    // Get the zone and look if there are data in it (the original one was
+    // empty)
+    ASSERT_TRUE(server_.getInMemoryClient(RRClass::IN()));
+    EXPECT_EQ(ZoneFinder::SUCCESS, server_.getInMemoryClient(RRClass::IN())->
+              findZone(Name("example.org")).zone_finder->
+              find(Name("example.org"), RRType::SOA())->code);
 }
 
 TEST_F(AuthCommandTest, loadBrokenZone) {
