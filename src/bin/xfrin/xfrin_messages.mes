@@ -129,8 +129,9 @@ zone is not known to the system. This may indicate that the configuration
 for xfrin is incomplete, or there was a typographical error in the
 zone name in the configuration.
 
-% XFRIN_STARTING starting resolver with command line '%1'
-An informational message, this is output when the resolver starts up.
+% XFRIN_STARTED xfrin started
+This informational message is output by xfrin when all initialization
+has been completed and it is entering its main loop.
 
 % XFRIN_STOPPED_BY_KEYBOARD keyboard interrupt, shutting down
 There was a keyboard interrupt signal to stop the xfrin daemon. The
