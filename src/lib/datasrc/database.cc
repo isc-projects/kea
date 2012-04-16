@@ -1310,7 +1310,7 @@ DatabaseUpdater::addRRset(const AbstractRRset& rrset) {
             const string nsec3_columns[Accessor::ADD_NSEC3_COLUMN_COUNT] =
                 { cvtr.getNSEC3Name(), cvtr.getTTL(), cvtr.getType(),
                   rdata_txt };
-            accessor_->addRecordToNSEC3Zone(nsec3_columns);
+            accessor_->addNSEC3RecordToZone(nsec3_columns);
         } else {
             const string columns[Accessor::ADD_COLUMN_COUNT] =
                 { cvtr.getName(), cvtr.getRevName(), cvtr.getTTL(),
@@ -1356,7 +1356,7 @@ DatabaseUpdater::deleteRRset(const AbstractRRset& rrset) {
             { nsec3_type ? cvtr.getNSEC3Name() : cvtr.getName(),
               cvtr.getType(), rdata_txt };
         if (nsec3_type) {
-            accessor_->deleteRecordInNSEC3Zone(params);
+            accessor_->deleteNSEC3RecordInZone(params);
         } else {
             accessor_->deleteRecordInZone(params);
         }
