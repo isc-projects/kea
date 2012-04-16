@@ -482,9 +482,11 @@ public:
     /// unexpected type of RRs (and the result of subsequent lookups) is
     /// undefined.
     ///
-    /// Other general notes for \c addRecordToZone() also applies to this
+    /// Other general notes for \c addRecordToZone() also apply to this
     /// method.
     ///
+    /// \exception DataSourceError Invalid call without starting a transaction,
+    /// or other internal database error.
     /// \exception isc::NotImplemented in case the database does not support
     ///     NSEC3
     ///
@@ -545,6 +547,8 @@ public:
     /// This is the same as \c ADD_NSEC3_HASH column for
     /// \c addRecordToNSEC3Zone().
     ///
+    /// \exception DataSourceError Invalid call without starting a transaction,
+    /// or other internal database error.
     /// \exception isc::NotImplemented in case the database does not support
     ///     NSEC3
     ///
