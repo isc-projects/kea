@@ -86,10 +86,8 @@ matchRdata(const char*, const char*,
     }
     return (::testing::AssertionSuccess());
 }
-}
 
-// TODO: maybe we should share this stuff
-// A helper callback of masterLoad() used in InMemoryZoneFinderTest.
+// A helper callback of masterLoad() used by textToRRset() below.
 void
 setRRset(RRsetPtr rrset, RRsetPtr* rrsetp) {
     if (*rrsetp) {
@@ -97,6 +95,7 @@ setRRset(RRsetPtr rrset, RRsetPtr* rrsetp) {
                   "multiple RRsets are given to textToRRset");
     }
     *rrsetp = rrset;
+}
 }
 
 RRsetPtr
