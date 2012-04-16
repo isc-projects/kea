@@ -27,15 +27,18 @@
 #include <dns/rrset.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
+#include <dns/nsec3hash.h>
 
 #include <datasrc/data_source.h>
 #include <datasrc/logger.h>
 
 #include <boost/foreach.hpp>
+#include <boost/scoped_ptr.hpp>
 
 using namespace isc::dns;
 using namespace std;
 using namespace isc::dns::rdata;
+using namespace boost;
 
 namespace isc {
 namespace datasrc {
@@ -177,15 +180,17 @@ private:
 DatabaseClient::Finder::FoundRRsets
 DatabaseClient::Finder::getRRsets(const string& name, const WantedTypes& types,
                                   bool check_ns, const string* construct_name,
-                                  bool any)
+                                  bool any,
+                                  DatabaseAccessor::IteratorContextPtr context)
 {
     RRsigStore sig_store;
     bool records_found = false;
     std::map<RRType, RRsetPtr> result;
 
-    // Request the context
-    DatabaseAccessor::IteratorContextPtr
-        context(accessor_->getRecords(name, zone_id_));
+    // Request the context in case we didn't get one
+    if (!context) {
+        context = accessor_->getRecords(name, zone_id_);
+    }
     // It must not return NULL, that's a bug of the implementation
     if (!context) {
         isc_throw(isc::Unexpected, "Iterator context null at " + name);
@@ -316,12 +321,12 @@ namespace {
 typedef std::set<RRType> WantedTypes;
 
 const WantedTypes&
-NSEC_TYPES() {
+NSEC3_TYPES() {
     static bool initialized(false);
     static WantedTypes result;
 
     if (!initialized) {
-        result.insert(RRType::NSEC());
+        result.insert(RRType::NSEC3());
         initialized = true;
     }
     return (result);
@@ -331,8 +336,21 @@ const WantedTypes&
 NSEC3PARAM_TYPES() {
     static bool initialized(false);
     static WantedTypes result;
+
     if (!initialized) {
         result.insert(RRType::NSEC3PARAM());
+        initialized = true;
+    }
+    return (result);
+}
+
+const WantedTypes&
+NSEC_TYPES() {
+    static bool initialized(false);
+    static WantedTypes result;
+
+    if (!initialized) {
+        result.insert(RRType::NSEC());
         initialized = true;
     }
     return (result);
@@ -968,10 +986,120 @@ DatabaseClient::Finder::findInternal(const Name& name, const RRType& type,
     }
 }
 
+// The behaviour is inspired by the one in the in-memory implementation.
 ZoneFinder::FindNSEC3Result
-DatabaseClient::Finder::findNSEC3(const Name&, bool) {
-    isc_throw(NotImplemented, "findNSEC3 is not yet implemented for database "
-              "data source");
+DatabaseClient::Finder::findNSEC3(const Name& name, bool recursive) {
+    LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_DATABASE_FINDNSEC3).arg(name).
+        arg(recursive ? "recursive" : "non-recursive");
+
+    // First, validate the input
+    const NameComparisonResult cmp_result(name.compare(getOrigin()));
+    if (cmp_result.getRelation() != NameComparisonResult::EQUAL &&
+        cmp_result.getRelation() != NameComparisonResult::SUBDOMAIN) {
+        isc_throw(OutOfZone, "findNSEC3 attempt for out-of-zone name: " <<
+                  name << ", zone: " << getOrigin() << "/" << getClass());
+    }
+
+    // Now, we need to get the NSEC3 params from the apex and create the hash
+    // creator for it.
+    const FoundRRsets nsec3param(getRRsets(getOrigin().toText(),
+                                 NSEC3PARAM_TYPES(), false));
+    const FoundIterator param(nsec3param.second.find(RRType::NSEC3PARAM()));
+    if (!nsec3param.first || param == nsec3param.second.end()) {
+        // No NSEC3 params? :-(
+        isc_throw(DataSourceError, "findNSEC3 attempt for non NSEC3 signed " <<
+                  "zone: " << getOrigin() << "/" << getClass());
+    }
+    // This takes the RRset received from the find method, takes the first RR
+    // in it, casts it to NSEC3PARAM (as it should be that one) and then creates
+    // the hash calculator class from it.
+    const scoped_ptr<NSEC3Hash> calculator(NSEC3Hash::create(
+        dynamic_cast<const generic::NSEC3PARAM&>(
+            param->second->getRdataIterator()->getCurrent())));
+
+    // Few shortcut variables
+    const unsigned olabels(getOrigin().getLabelCount());
+    const unsigned qlabels(name.getLabelCount());
+    const string otext(getOrigin().toText());
+
+    // This will be set to the one covering the query name
+    ConstRRsetPtr covering_proof;
+
+    // We keep stripping the leftmost label until we find something.
+    // In case it is recursive, we'll exit the loop at the first iteration.
+    for (unsigned labels(qlabels); labels >= olabels; -- labels) {
+        const string hash(calculator->calculate(labels == qlabels ? name :
+                                                name.split(qlabels - labels,
+                                                           labels)));
+        // Get the exact match for the name.
+        LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_DATABASE_FINDNSEC3_TRYHASH).
+            arg(name).arg(labels).arg(hash);
+
+        DatabaseAccessor::IteratorContextPtr
+            context(accessor_->getNSEC3Records(hash, zone_id_));
+
+        if (!context) {
+            isc_throw(Unexpected, "Iterator context null for hash " + hash);
+        }
+
+        const FoundRRsets nsec3(getRRsets(hash + "." + otext, NSEC3_TYPES(),
+                                          false, NULL, false, context));
+
+        if (nsec3.first) {
+            // We found an exact match against the current label.
+            const FoundIterator it(nsec3.second.find(RRType::NSEC3()));
+            if (it == nsec3.second.end()) {
+                isc_throw(DataSourceError, "Hash " + hash +
+                          "exists, but no NSEC3 there");
+            }
+
+            LOG_DEBUG(logger, DBG_TRACE_BASIC,
+                      DATASRC_DATABASE_FINDNSEC3_MATCH).arg(name).arg(labels).
+                arg(*it->second);
+            // Yes, we win
+            return (FindNSEC3Result(true, labels, it->second, covering_proof));
+        } else {
+            // There's no exact match. We try a previous one. We must find it
+            // (if the zone is properly signed).
+            const string prevHash(accessor_->findPreviousNSEC3Hash(zone_id_,
+                                                                   hash));
+            LOG_DEBUG(logger, DBG_TRACE_BASIC,
+                      DATASRC_DATABASE_FINDNSEC3_TRYHASH_PREV).arg(name).
+                arg(labels).arg(prevHash);
+            context = accessor_->getNSEC3Records(prevHash, zone_id_);
+            const FoundRRsets prev_nsec3(getRRsets(prevHash + "." + otext,
+                                                   NSEC3_TYPES(), false, NULL,
+                                                   false, context));
+
+            if (!prev_nsec3.first) {
+                isc_throw(DataSourceError, "Hash " + prevHash + " returned "
+                          "from findPreviousNSEC3Hash, but it is empty");
+            }
+            const FoundIterator
+                prev_it(prev_nsec3.second.find(RRType::NSEC3()));
+            if (prev_it == prev_nsec3.second.end()) {
+                isc_throw(DataSourceError, "The previous hash " + prevHash +
+                          "exists, but does not contain the NSEC3");
+            }
+
+            covering_proof = prev_it->second;
+            // In case it is recursive, we try to get an exact match a level
+            // up. If it is not recursive, the caller is ok with a covering
+            // one, so we just return it.
+            if (!recursive) {
+                LOG_DEBUG(logger, DBG_TRACE_BASIC,
+                          DATASRC_DATABASE_FINDNSEC3_COVER).arg(name).
+                    arg(labels).arg(*covering_proof);
+                return (FindNSEC3Result(false, labels, covering_proof,
+                                        ConstRRsetPtr()));
+            }
+        }
+    }
+
+    // The zone must contain at least the apex and that one should match
+    // exactly. If that doesn't happen, we have a problem.
+    isc_throw(DataSourceError, "recursive findNSEC3 mode didn't stop, likely a "
+              "broken NSEC3 zone: " << otext << "/" << getClass());
 }
 
 Name
