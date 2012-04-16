@@ -244,10 +244,6 @@ TODO: configuration section
     <itemizedlist>
 
       <listitem>
-        <para> <varname>/Boss/components/b10-auth</varname> </para>
-      </listitem>
-
-      <listitem>
         <para> <varname>/Boss/components/b10-cmdctl</varname> </para>
       </listitem>
 
@@ -257,18 +253,6 @@ TODO: configuration section
 
       <listitem>
         <para> <varname>/Boss/components/b10-stats-httpd</varname> </para>
-      </listitem>
-
-      <listitem>
-        <para> <varname>/Boss/components/b10-xfrin</varname> </para>
-      </listitem>
-
-      <listitem>
-        <para> <varname>/Boss/components/b10-xfrout</varname> </para>
-      </listitem>
-
-      <listitem>
-        <para> <varname>/Boss/components/b10-zonemgr</varname> </para>
       </listitem>
 
     </itemizedlist>
