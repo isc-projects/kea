@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include "faked_nsec3.h"
+
 #include <exceptions/exceptions.h>
 
 #include <dns/masterload.h>
@@ -48,6 +50,7 @@ using namespace isc::dns::rdata;
 using namespace isc::datasrc;
 using namespace isc::testutils;
 using boost::shared_ptr;
+using namespace isc::datasrc::test;
 
 namespace {
 // Commonly used result codes (Who should write the prefix all the time)
@@ -301,72 +304,6 @@ textToRRset(const string& text_rrset, const RRClass& rrclass = RRClass::IN(),
     masterLoad(ss, origin, rrclass, boost::bind(setRRset, _1, rrsets.begin()));
     return (rrset);
 }
-
-// Some faked NSEC3 hash values commonly used in tests and the faked NSEC3Hash
-// object.
-//
-// For apex (example.org)
-const char* const apex_hash = "0P9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
-const char* const apex_hash_lower = "0p9mhaveqvm6t7vbl5lop2u3t2rp3tom";
-// For ns1.example.org
-const char* const ns1_hash = "2T7B4G4VSA5SMI47K61MV5BV1A22BOJR";
-// For w.example.org
-const char* const w_hash = "01UDEMVP1J2F7EG6JEBPS17VP3N8I58H";
-// For x.y.w.example.org (lower-cased)
-const char* const xyw_hash = "2vptu5timamqttgl4luu9kg21e0aor3s";
-// For zzz.example.org.
-const char* const zzz_hash = "R53BQ7CC2UVMUBFU5OCMM6PERS9TK9EN";
-
-// A simple faked NSEC3 hash calculator with a dedicated creator for it.
-//
-// This is used in some NSEC3-related tests below.
-class TestNSEC3HashCreator : public NSEC3HashCreator {
-    class TestNSEC3Hash : public NSEC3Hash {
-    private:
-        typedef map<Name, string> NSEC3HashMap;
-        typedef NSEC3HashMap::value_type NSEC3HashPair;
-        NSEC3HashMap map_;
-    public:
-        TestNSEC3Hash() {
-            // Build pre-defined hash
-            map_[Name("example.org")] = apex_hash;
-            map_[Name("www.example.org")] = "2S9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
-            map_[Name("xxx.example.org")] = "Q09MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
-            map_[Name("yyy.example.org")] = "0A9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
-            map_[Name("x.y.w.example.org")] =
-                "2VPTU5TIMAMQTTGL4LUU9KG21E0AOR3S";
-            map_[Name("y.w.example.org")] = "K8UDEMVP1J2F7EG6JEBPS17VP3N8I58H";
-            map_[Name("w.example.org")] = w_hash;
-            map_[Name("zzz.example.org")] = zzz_hash;
-            map_[Name("smallest.example.org")] =
-                "00000000000000000000000000000000";
-            map_[Name("largest.example.org")] =
-                "UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU";
-        }
-        virtual string calculate(const Name& name) const {
-            const NSEC3HashMap::const_iterator found = map_.find(name);
-            if (found != map_.end()) {
-                return (found->second);
-            }
-            isc_throw(isc::Unexpected, "unexpected name for NSEC3 test: "
-                      << name);
-        }
-        virtual bool match(const generic::NSEC3PARAM&) const {
-            return (true);
-        }
-        virtual bool match(const generic::NSEC3&) const {
-            return (true);
-        }
-    };
-
-public:
-    virtual NSEC3Hash* create(const generic::NSEC3PARAM&) const {
-        return (new TestNSEC3Hash);
-    }
-    virtual NSEC3Hash* create(const generic::NSEC3&) const {
-        return (new TestNSEC3Hash);
-    }
-};
 
 /// \brief Test fixture for the InMemoryZoneFinder class
 class InMemoryZoneFinderTest : public ::testing::Test {
@@ -1707,52 +1644,6 @@ TEST_F(InMemoryZoneFinderTest, addbadRRsig) {
                  InMemoryZoneFinder::AddError);
 }
 
-//
-// (Faked) NSEC3 hash data.  Arbitrarily borrowed from RFC515 examples.
-//
-// Commonly used NSEC3 suffix.  It's incorrect to use it for all NSEC3s, but
-// doesn't matter for the purpose of our tests.
-const char* const nsec3_common = " 300 IN NSEC3 1 1 12 aabbccdd "
-    "2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A RRSIG";
-// Likewise, common RRSIG suffix for NSEC3s.
-const char* const nsec3_rrsig_common = " 300 IN RRSIG NSEC3 5 3 3600 "
-    "20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE";
-
-void
-findNSEC3Check(bool expected_matched, uint8_t expected_labels,
-               const string& expected_closest,
-               const string& expected_next,
-               const ZoneFinder::FindNSEC3Result& result,
-               bool expected_sig = false)
-{
-    EXPECT_EQ(expected_matched, result.matched);
-    // Convert to int so the error messages would be more readable:
-    EXPECT_EQ(static_cast<int>(expected_labels),
-              static_cast<int>(result.closest_labels));
-
-    vector<ConstRRsetPtr> actual_rrsets;
-    ASSERT_TRUE(result.closest_proof);
-    actual_rrsets.push_back(result.closest_proof);
-    if (expected_sig) {
-        actual_rrsets.push_back(result.closest_proof->getRRsig());
-    }
-    rrsetsCheck(expected_closest, actual_rrsets.begin(),
-                actual_rrsets.end());
-
-    actual_rrsets.clear();
-    if (expected_next.empty()) {
-        EXPECT_FALSE(result.next_proof);
-    } else {
-        ASSERT_TRUE(result.next_proof);
-        actual_rrsets.push_back(result.next_proof);
-        if (expected_sig) {
-            actual_rrsets.push_back(result.next_proof->getRRsig());
-        }
-        rrsetsCheck(expected_next, actual_rrsets.begin(),
-                    actual_rrsets.end());
-    }
-}
-
 TEST_F(InMemoryZoneFinderTest, addNSEC3) {
     // Set up the faked hash calculator.
     setNSEC3HashCreator(&nsec3_hash_creator_);
@@ -2041,71 +1932,7 @@ TEST_F(InMemoryZoneFinderTest, findNSEC3) {
         string(nsec3_common);
     EXPECT_EQ(result::SUCCESS, zone_finder_.add(textToRRset(zzz_nsec3_text)));
 
-    // Parameter validation: the query name must be in or below the zone
-    EXPECT_THROW(zone_finder_.findNSEC3(Name("example.com"), false), OutOfZone);
-    EXPECT_THROW(zone_finder_.findNSEC3(Name("org"), true), OutOfZone);
-
-    // Apex name.  It should have a matching NSEC3.
-    {
-        SCOPED_TRACE("apex, non recursive mode");
-        findNSEC3Check(true, origin_.getLabelCount(), apex_nsec3_text, "",
-                       zone_finder_.findNSEC3(origin_, false));
-    }
-
-    // Recursive mode doesn't change the result in this case.
-    {
-        SCOPED_TRACE("apex, recursive mode");
-        findNSEC3Check(true, origin_.getLabelCount(), apex_nsec3_text, "",
-                       zone_finder_.findNSEC3(origin_, true));
-    }
-
-    // Non existent name.  Disabling recursion, a covering NSEC3 should be
-    // returned.
-    const Name www_name("www.example.org");
-    {
-        SCOPED_TRACE("non existent name, non recursive mode");
-        findNSEC3Check(false, www_name.getLabelCount(), apex_nsec3_text, "",
-                       zone_finder_.findNSEC3(www_name, false));
-    }
-
-    // Non existent name.  The closest provable encloser is the apex,
-    // and next closer is the query name itself (which NSEC3 for ns1
-    // covers)
-    // H(ns1) = 2T... < H(xxx) = Q0... < H(zzz) = R5...
-    {
-        SCOPED_TRACE("non existent name, recursive mode");
-        findNSEC3Check(true, origin_.getLabelCount(), apex_nsec3_text,
-                       ns1_nsec3_text,
-                       zone_finder_.findNSEC3(Name("xxx.example.org"), true));
-    }
-
-    // Similar to the previous case, but next closer name is different
-    // from the query name.  The closet encloser is w.example.org, and
-    // next closer is y.w.example.org.
-    // H(ns1) = 2T.. < H(y.w) = K8.. < H(zzz) = R5
-    {
-        SCOPED_TRACE("non existent name, non qname next closer");
-        findNSEC3Check(true, Name("w.example.org").getLabelCount(),
-                       w_nsec3_text, ns1_nsec3_text,
-                       zone_finder_.findNSEC3(Name("x.y.w.example.org"),
-                                              true));
-    }
-
-    // In the rest of test we check hash comparison for wrap around cases.
-    {
-        SCOPED_TRACE("very small hash");
-        const Name smallest_name("smallest.example.org");
-        findNSEC3Check(false, smallest_name.getLabelCount(),
-                       zzz_nsec3_text, "",
-                       zone_finder_.findNSEC3(smallest_name, false));
-    }
-    {
-        SCOPED_TRACE("very large hash");
-        const Name largest_name("largest.example.org");
-        findNSEC3Check(false, largest_name.getLabelCount(),
-                       zzz_nsec3_text, "",
-                       zone_finder_.findNSEC3(largest_name, false));
-    }
+    performNSEC3Test(zone_finder_);
 }
 
 TEST_F(InMemoryZoneFinderTest, findNSEC3ForBadZone) {

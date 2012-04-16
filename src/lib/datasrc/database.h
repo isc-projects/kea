@@ -684,7 +684,7 @@ public:
     /// This is used to find previous NSEC3 hashes, to find covering NSEC3 in
     /// case none match exactly.
     ///
-    /// In case a hash before before the lowest or the lowest is provided,
+    /// In case a hash before the lowest or the lowest is provided,
     /// this should return the largest one in the zone (NSEC3 needs a
     /// wrap-around semantics).
     ///
@@ -889,6 +889,9 @@ public:
         ///     ones requested by types. It also puts a NULL pointer under the
         ///     ANY type into the result, if it finds any RRs at all, to easy the
         ///     identification of success.
+        /// \param srcContext This can be set to non-NULL value to override the
+        ///     iterator context used for obtaining the data. This can be used,
+        ///     for example, to get data from the NSEC3 namespace.
         /// \return A pair, where the first element indicates if the domain
         ///     contains any RRs at all (not only the requested, it may happen
         ///     this is set to true, but the second part is empty). The second
@@ -900,7 +903,9 @@ public:
         FoundRRsets getRRsets(const std::string& name,
                               const WantedTypes& types, bool check_ns,
                               const std::string* construct_name = NULL,
-                              bool any = false);
+                              bool any = false,
+                              DatabaseAccessor::IteratorContextPtr srcContext =
+                              DatabaseAccessor::IteratorContextPtr());
 
         /// \brief DNSSEC related context for ZoneFinder::findInternal.
         ///
