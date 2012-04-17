@@ -187,9 +187,15 @@ private:
 ///  It must meets the assumption of the \c dns::masterLoad() function.
 /// \param rrclass The RR class of the RRset.  Note that \c text_rrset should
 /// contain the RR class, but it's needed for \c dns::masterLoad().
+/// \param origin The zone origin where the RR is expected to belong.  This
+/// parameter normally doesn't have to be specified, but for an SOA RR it
+/// must be set to its owner name, due to the internal check of
+/// \c dns::masterLoad().
 isc::dns::RRsetPtr textToRRset(const std::string& text_rrset,
                                const isc::dns::RRClass& rrclass =
-                               isc::dns::RRClass::IN());
+                               isc::dns::RRClass::IN(),
+                               const isc::dns::Name& origin =
+                               isc::dns::Name::ROOT_NAME());
 
 /// Set of unit tests to check if two sets of RRsets are identical.
 ///

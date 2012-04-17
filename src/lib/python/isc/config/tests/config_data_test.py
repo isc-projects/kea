@@ -720,6 +720,12 @@ class TestMultiConfigData(unittest.TestCase):
         config_items = self.mcd.get_config_item_list("Spec2", True)
         self.assertEqual(['Spec2/item1', 'Spec2/item2', 'Spec2/item3', 'Spec2/item4', 'Spec2/item5', 'Spec2/item6/value1', 'Spec2/item6/value2'], config_items)
 
+    def test_is_named_set(self):
+        module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec32.spec")
+        self.mcd.set_specification(module_spec)
+        spec_part = self.mcd.find_spec_part("Spec32/named_set_item")
+        self.assertTrue(spec_part_is_named_set(spec_part))
+
     def test_get_config_item_list_named_set(self):
         config_items = self.mcd.get_config_item_list()
         self.assertEqual([], config_items)
@@ -737,6 +743,20 @@ class TestMultiConfigData(unittest.TestCase):
                           'Spec32/named_set_item/aabb',
                           'Spec32/named_set_item/bbbb',
                          ], config_items)
+
+    def test_set_named_set_nonlocal(self):
+        # Test whether a default named set is copied to local if a subitem
+        # is changed, and that other items in the set do not get lost
+        module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + 'spec32.spec')
+        self.mcd.set_specification(module_spec)
+        value, status = self.mcd.get_value('Spec32/named_set_item')
+        self.assertEqual({'a': 1, 'b': 2}, value)
+        self.assertEqual(MultiConfigData.DEFAULT, status)
+
+        self.mcd.set_value('Spec32/named_set_item/b', 3)
+        value, status = self.mcd.get_value('Spec32/named_set_item')
+        self.assertEqual({'a': 1, 'b': 3}, value)
+        self.assertEqual(MultiConfigData.LOCAL, status)
 
 if __name__ == '__main__':
     unittest.main()
