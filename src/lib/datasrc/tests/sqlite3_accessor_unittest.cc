@@ -851,6 +851,26 @@ TEST_F(SQLite3Update, flushZone) {
     checkRecords(*accessor, zone_id, "foo.bar.example.com.", empty_stored);
 }
 
+TEST_F(SQLite3Update, flushZoneWithNSEC3) {
+    // Similar to the previous case, but make sure the separate nsec3 table
+    // is also cleared.  We first need to add something to the table.
+    zone_id = accessor->startUpdateZone("example.com.", false).second;
+    copy(nsec3_data, nsec3_data + DatabaseAccessor::ADD_NSEC3_COLUMN_COUNT,
+         add_nsec3_columns);
+    accessor->addNSEC3RecordToZone(add_nsec3_columns);
+    accessor->commit();
+
+    // Confirm it surely exists.
+    expected_stored.clear();
+    expected_stored.push_back(nsec3_data);
+    checkNSEC3Records(*accessor, zone_id, apex_hash, expected_stored);
+
+    // Then starting zone replacement.  the NSEC3 record should have been
+    // removed.
+    zone_id = accessor->startUpdateZone("example.com.", true).second;
+    checkNSEC3Records(*accessor, zone_id, apex_hash, empty_stored);
+}
+
 TEST_F(SQLite3Update, readWhileUpdate) {
     zone_id = accessor->startUpdateZone("example.com.", true).second;
     checkRecords(*accessor, zone_id, "foo.bar.example.com.", empty_stored);
