@@ -264,6 +264,7 @@ TEST_F(AuthCommandTest,
 {
     // Prepare the database first
     const string test_db = TEST_DATA_BUILDDIR "/auth_test.sqlite3.copied";
+    const string bad_db = TEST_DATA_BUILDDIR "/does-not-exist.sqlite3";
     stringstream ss("example.org. 3600 IN SOA . . 0 0 0 0 0\n");
     createSQLite3DB(RRClass::IN(), Name("example.org"), test_db.c_str(), ss);
 
@@ -276,18 +277,19 @@ TEST_F(AuthCommandTest,
     ModuleCCSession moduleSession(SPEC_FILE, session, NULL, NULL, false,
                                   false);
     // This describes the data source in the configuration
-    ElementPtr map(Element::fromJSON("{\"datasources\": ["
-                                     "  {"
-                                     "    \"type\": \"memory\","
-                                     "    \"zones\": ["
-                                     "      {"
-                                     "        \"origin\": \"example.org\","
-                                     "        \"file\": \"" + test_db + "\","
-                                     "        \"filetype\": \"sqlite3\""
-                                     "      }"
-                                     "    ]"
-                                     "  }"
-                                     "]}"));
+    const ElementPtr
+        map(Element::fromJSON("{\"datasources\": ["
+                              "  {"
+                              "    \"type\": \"memory\","
+                              "    \"zones\": ["
+                              "      {"
+                              "        \"origin\": \"example.org\","
+                              "        \"file\": \"" + test_db + "\","
+                              "        \"filetype\": \"sqlite3\""
+                              "      }"
+                              "    ]"
+                              "  }"
+                              "]}"));
     moduleSession.setLocalConfig(map);
     server_.setConfigSession(&moduleSession);
 
@@ -306,6 +308,65 @@ TEST_F(AuthCommandTest,
     // Get the zone and look if there are data in it (the original one was
     // empty)
     ASSERT_TRUE(server_.getInMemoryClient(RRClass::IN()));
+    EXPECT_EQ(ZoneFinder::SUCCESS, server_.getInMemoryClient(RRClass::IN())->
+              findZone(Name("example.org")).zone_finder->
+              find(Name("example.org"), RRType::SOA())->code);
+
+    // Some error cases. First, the zone has no configuration.
+    dsrc->addZone(ZoneFinderPtr(new InMemoryZoneFinder(RRClass::IN(),
+                                                       Name("example.com"))));
+    result_ = execAuthServerCommand(server_, "loadzone",
+        Element::fromJSON("{\"origin\": \"example.com\"}"));
+    checkAnswer(1);
+
+    EXPECT_EQ(ZoneFinder::SUCCESS, server_.getInMemoryClient(RRClass::IN())->
+              findZone(Name("example.org")).zone_finder->
+              find(Name("example.org"), RRType::SOA())->code);
+
+    moduleSession.setLocalConfig(Element::fromJSON("{\"datasources\": []}"));
+    result_ = execAuthServerCommand(server_, "loadzone",
+        Element::fromJSON("{\"origin\": \"example.org\"}"));
+    checkAnswer(1);
+
+    // The previous zone is not hurt in any way
+    EXPECT_EQ(ZoneFinder::SUCCESS, server_.getInMemoryClient(RRClass::IN())->
+              findZone(Name("example.org")).zone_finder->
+              find(Name("example.org"), RRType::SOA())->code);
+    // Configure an unreadable zone. Should fail, but leave the original zone
+    // data there
+    const ElementPtr
+        mapBad(Element::fromJSON("{\"datasources\": ["
+                                 "  {"
+                                 "    \"type\": \"memory\","
+                                 "    \"zones\": ["
+                                 "      {"
+                                 "        \"origin\": \"example.org\","
+                                 "        \"file\": \"" + bad_db + "\","
+                                 "        \"filetype\": \"sqlite3\""
+                                 "      }"
+                                 "    ]"
+                                 "  }"
+                                 "]}"));
+    moduleSession.setLocalConfig(mapBad);
+    result_ = execAuthServerCommand(server_, "loadzone",
+        Element::fromJSON("{\"origin\": \"example.com\"}"));
+    checkAnswer(1);
+    // The previous zone is not hurt in any way
+    EXPECT_EQ(ZoneFinder::SUCCESS, server_.getInMemoryClient(RRClass::IN())->
+              findZone(Name("example.org")).zone_finder->
+              find(Name("example.org"), RRType::SOA())->code);
+
+    // Broken configuration (not valid against the spec)
+    const ElementPtr
+        broken(Element::fromJSON("{\"datasources\": ["
+                                 "  {"
+                                 "    \"type\": \"memory\","
+                                 "    \"zones\": [[]]"
+                                 "  }"
+                                 "]}"));
+    moduleSession.setLocalConfig(broken);
+    checkAnswer(1);
+    // The previous zone is not hurt in any way
     EXPECT_EQ(ZoneFinder::SUCCESS, server_.getInMemoryClient(RRClass::IN())->
               findZone(Name("example.org")).zone_finder->
               find(Name("example.org"), RRType::SOA())->code);
