@@ -1104,6 +1104,7 @@ SQLite3Accessor::rollback() {
     StatementProcessor(*dbparameters_, ROLLBACK,
                        "rollback an SQLite3 transaction").exec();
     dbparameters_->in_transaction = false;
+    dbparameters_->updating_zone = false;
     dbparameters_->updated_zone_id = -1;
 }
 
