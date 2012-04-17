@@ -28,6 +28,19 @@ namespace isc {
 namespace datasrc {
 namespace test {
 
+// Constant data definitions
+
+const char* const nsec3_common = " 300 IN NSEC3 1 1 12 aabbccdd "
+    "2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A RRSIG";
+const char* const nsec3_rrsig_common = " 300 IN RRSIG NSEC3 5 3 3600 "
+    "20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE";
+const char* const apex_hash = "0P9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
+const char* const apex_hash_lower = "0p9mhaveqvm6t7vbl5lop2u3t2rp3tom";
+const char* const ns1_hash = "2T7B4G4VSA5SMI47K61MV5BV1A22BOJR";
+const char* const w_hash = "01UDEMVP1J2F7EG6JEBPS17VP3N8I58H";
+const char* const xyw_hash = "2vptu5timamqttgl4luu9kg21e0aor3s";
+const char* const zzz_hash = "R53BQ7CC2UVMUBFU5OCMM6PERS9TK9EN";
+
 class TestNSEC3HashCreator::TestNSEC3Hash : public NSEC3Hash {
 private:
     typedef map<Name, string> NSEC3HashMap;
