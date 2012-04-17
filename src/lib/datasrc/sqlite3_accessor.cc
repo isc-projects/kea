@@ -73,7 +73,8 @@ enum StatementID {
     NSEC3 = 16,
     NSEC3_PREVIOUS = 17,
     NSEC3_LAST = 18,
-    NUM_STATEMENTS = 19
+    ADD_NSEC3_RECORD = 19,
+    NUM_STATEMENTS = 20
 };
 
 const char* const text_statements[NUM_STATEMENTS] = {
@@ -135,19 +136,22 @@ const char* const text_statements[NUM_STATEMENTS] = {
         "WHERE zone_id=?1 AND id>=?2 and id<=?3 "
         "ORDER BY id ASC",
 
-    // Query to get the NSEC3 records
+    // NSEC3: Query to get the NSEC3 records
     //
     // The "1" in SELECT is for positioning the rdata column to the
     // expected position, so we can reuse the same code as for other
     // lookups.
     "SELECT rdtype, ttl, 1, rdata FROM nsec3 WHERE zone_id=?1 AND "
         "hash=?2",
-    // For getting the previous NSEC3 hash
+    // NSEC3_PREVIOUS: For getting the previous NSEC3 hash
     "SELECT DISTINCT hash FROM nsec3 WHERE zone_id=?1 AND hash < ?2 "
         "ORDER BY hash DESC LIMIT 1",
-    // And for wrap-around
+    // NSEC3_LAST: And for wrap-around
     "SELECT DISTINCT hash FROM nsec3 WHERE zone_id=?1 "
         "ORDER BY hash DESC LIMIT 1",
+    // ADD_NSEC3_RECORD: Add NSEC3-related (NSEC3 or NSEC3-covering RRSIG) RR
+    "INSERT INTO nsec3 (zone_id, hash, owner, ttl, rdtype, rdata) "
+    "VALUES (?1, ?2, '', ?3, ?4, ?5)"
 };
 
 struct SQLite3Parameters {
@@ -1128,15 +1132,17 @@ SQLite3Accessor::addRecordToZone(const string (&columns)[ADD_COLUMN_COUNT]) {
         isc_throw(DataSourceError, "adding record to SQLite3 "
                   "data source without transaction");
     }
-    doUpdate<const string (&)[DatabaseAccessor::ADD_COLUMN_COUNT]>(
+    doUpdate<const string (&)[ADD_COLUMN_COUNT]>(
         *dbparameters_, ADD_RECORD, columns, "add record to zone");
 }
 
 void
 SQLite3Accessor::addNSEC3RecordToZone(
-    const string (&/*columns*/)[ADD_NSEC3_COLUMN_COUNT])
+    const string (&columns)[ADD_NSEC3_COLUMN_COUNT])
 {
-    isc_throw(NotImplemented, "not yet implemented");
+    // TODO: no transaction case
+    doUpdate<const string (&)[ADD_NSEC3_COLUMN_COUNT]>(
+        *dbparameters_, ADD_NSEC3_RECORD, columns, "add NSEC3 record to zone");
 }
 
 void
@@ -1145,7 +1151,7 @@ SQLite3Accessor::deleteRecordInZone(const string (&params)[DEL_PARAM_COUNT]) {
         isc_throw(DataSourceError, "deleting record in SQLite3 "
                   "data source without transaction");
     }
-    doUpdate<const string (&)[DatabaseAccessor::DEL_PARAM_COUNT]>(
+    doUpdate<const string (&)[DEL_PARAM_COUNT]>(
         *dbparameters_, DEL_RECORD, params, "delete record from zone");
 }
 
