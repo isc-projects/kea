@@ -1,4 +1,8 @@
-425.    [func]*          muks
+426.	[bug]		vorner
+	The NSEC3 records are now included when transferring a signed zone out.
+	(Trac #1782, git 36efa7d10ecc4efd39d2ce4dfffa0cbdeffa74b0)
+
+425.	[func]*		muks
 	Don't autostart b10-auth, b10-xfrin, b10-xfrout and b10-zonemgr in
 	the default configuration.
 	(Trac #1818, git 31de885ba0409f54d9a1615eff5a4b03ed420393)
