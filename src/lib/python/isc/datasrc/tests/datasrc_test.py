@@ -262,16 +262,16 @@ class DataSrcClient(unittest.TestCase):
         rrets = dsc.get_iterator(isc.dns.Name("example.com"))
         # there are more than 80 RRs in this zone... let's just count them
         # (already did a full check of the smaller zone above)
-        self.assertEqual(55, len(list(rrets)))
+        # There are 40 non-RRSIG RRsets and 32 dinstinct RRSIGs.
+        self.assertEqual(72, len(list(rrets)))
 
         # same test, but now with explicit False argument for separate_rrs
         dsc = isc.datasrc.DataSourceClient("sqlite3", READ_ZONE_DB_CONFIG)
         rrets = dsc.get_iterator(isc.dns.Name("example.com"), False)
         # there are more than 80 RRs in this zone... let's just count them
         # (already did a full check of the smaller zone above)
-        self.assertEqual(55, len(list(rrets)))
+        self.assertEqual(72, len(list(rrets)))
 
-        # Count should be 71 if we request individual rrsets for differing ttls
         dsc = isc.datasrc.DataSourceClient("sqlite3", READ_ZONE_DB_CONFIG)
         rrets = dsc.get_iterator(isc.dns.Name("example.com"), True)
         # there are more than 80 RRs in this zone... let's just count them

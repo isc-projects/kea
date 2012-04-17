@@ -99,11 +99,12 @@ setRRset(RRsetPtr rrset, RRsetPtr* rrsetp) {
 }
 
 RRsetPtr
-textToRRset(const string& text_rrset, const RRClass& rrclass) {
+textToRRset(const string& text_rrset, const RRClass& rrclass,
+            const Name& origin)
+{
     stringstream ss(text_rrset);
     RRsetPtr rrset;
-    masterLoad(ss, Name::ROOT_NAME(), rrclass,
-               boost::bind(setRRset, _1, &rrset));
+    masterLoad(ss, origin, rrclass, boost::bind(setRRset, _1, &rrset));
     return (rrset);
 }
 
