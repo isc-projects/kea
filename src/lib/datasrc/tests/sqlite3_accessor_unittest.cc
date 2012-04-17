@@ -1026,7 +1026,11 @@ TEST_F(SQLite3Update, addThenRollback) {
     expected_stored.push_back(new_data);
     checkRecords(*accessor, zone_id, "newdata.example.com.", expected_stored);
 
+    // Rollback the transaction, and confirm the zone reverts to the previous
+    // state.  We also start another update to check if the accessor can be
+    // reused for a new update after rollback.
     accessor->rollback();
+    zone_id = accessor->startUpdateZone("example.com.", false).second;
     checkRecords(*accessor, zone_id, "newdata.example.com.", empty_stored);
 }
 
