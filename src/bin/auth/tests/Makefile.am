@@ -19,10 +19,11 @@ endif
 
 CLEANFILES = *.gcno *.gcda
 
+# Do not define global tests, use check-local so
+# environment can be set (needed for dynamic loading)
 TESTS =
 if HAVE_GTEST
 
-TESTS += run_unittests
 run_unittests_SOURCES = $(top_srcdir)/src/lib/dns/tests/unittest_util.h
 run_unittests_SOURCES += $(top_srcdir)/src/lib/dns/tests/unittest_util.cc
 run_unittests_SOURCES += ../auth_srv.h ../auth_srv.cc
@@ -70,6 +71,8 @@ run_unittests_LDADD += $(top_builddir)/src/lib/server_common/libserver_common.la
 run_unittests_LDADD += $(top_builddir)/src/lib/nsas/libnsas.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 run_unittests_LDADD += $(top_builddir)/src/lib/statistics/libstatistics.la
+
+check-local:
+       B10_FROM_BUILD=${abs_top_builddir} ./run_unittests
 endif
 
-noinst_PROGRAMS = $(TESTS)
