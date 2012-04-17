@@ -36,7 +36,7 @@ public:
         BOOST_FOREACH(const Environ &env, restoreEnviron) {
             if (env.second == NULL) {
                 EXPECT_EQ(0, unsetenv(env.first.c_str())) <<
-                    "Couldn't restore environment, results of other tests"
+                    "Couldn't restore environment, results of other tests "
                     "are uncertain";
             } else {
                 EXPECT_EQ(0, setenv(env.first.c_str(), env.second->c_str(),
