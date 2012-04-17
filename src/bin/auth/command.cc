@@ -18,6 +18,7 @@
 
 #include <cc/data.h>
 #include <datasrc/memory_datasrc.h>
+#include <datasrc/factory.h>
 #include <config/ccsession.h>
 #include <exceptions/exceptions.h>
 #include <dns/rrclass.h>
@@ -154,10 +155,21 @@ public:
         // that doesn't block other server operations.
         // TODO: we may (should?) want to check the "last load time" and
         // the timestamp of the file and skip loading if the file isn't newer.
+        const ConstElementPtr type(zone_config_->get("filetype"));
         boost::shared_ptr<InMemoryZoneFinder> zone_finder(
             new InMemoryZoneFinder(old_zone_finder->getClass(),
                                    old_zone_finder->getOrigin()));
-        zone_finder->load(old_zone_finder->getFileName());
+        if (type && type->stringValue() == "sqlite3") {
+            scoped_ptr<DataSourceClientContainer>
+                container(new DataSourceClientContainer("sqlite3",
+                                                        Element::fromJSON(
+                    "{\"database_file\": \"" +
+                    zone_config_->get("file")->stringValue() + "\"}")));
+            zone_finder->load(*container->getInstance().getIterator(
+                old_zone_finder->getOrigin()));
+        } else {
+            zone_finder->load(old_zone_finder->getFileName());
+        }
         old_zone_finder->swap(*zone_finder);
         LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_LOAD_ZONE)
                   .arg(zone_finder->getOrigin()).arg(zone_finder->getClass());
@@ -166,6 +178,8 @@ public:
 private:
     // zone finder to be updated with the new file.
     boost::shared_ptr<InMemoryZoneFinder> old_zone_finder;
+    // The configuration corresponding to the zone.
+    ConstElementPtr zone_config_;
 
     // A helper private method to parse and validate command parameters.
     // On success, it sets 'old_zone_finder' to the zone to be updated.
@@ -196,7 +210,8 @@ private:
         const RRClass zone_class = class_elem ?
             RRClass(class_elem->stringValue()) : RRClass::IN();
 
-        AuthSrv::InMemoryClientPtr datasrc(server.getInMemoryClient(zone_class));
+        AuthSrv::InMemoryClientPtr datasrc(server.
+                                           getInMemoryClient(zone_class));
         if (datasrc == NULL) {
             isc_throw(AuthCommandError, "Memory data source is disabled");
         }
@@ -216,6 +231,66 @@ private:
 
         old_zone_finder = boost::dynamic_pointer_cast<InMemoryZoneFinder>(
             result.zone_finder);
+
+        if (!server.getConfigSession()) {
+            // FIXME: This is a hack to make older tests pass. We should
+            // update these tests as well sometime and remove this hack.
+            // (note that under normal situation, the
+            // server.getConfigSession() does not return NULL)
+
+            // We provide an empty map, which means no configuration --
+            // defaults.
+            zone_config_ = ConstElementPtr(new MapElement());
+            return (true);
+        }
+
+        // Find the config corresponding to the zone.
+        // We expect the configuration to be valid, as we have it and we
+        // accepted it before, therefore it must be validated.
+        const ConstElementPtr config(server.getConfigSession()->
+                                     getValue("datasources"));
+        ConstElementPtr zone_list;
+        // Unfortunately, we need to walk the list to find the correct data
+        // source.
+        // TODO: Make it named sets. These lists are uncomfortable.
+        for (size_t i(0); i < config->size(); ++ i) {
+            // We use the getValue to get defaults as well
+            const ConstElementPtr dsrc_config(config->get(i));
+            const ConstElementPtr class_config(dsrc_config->get("class"));
+            const string class_type(class_config ?
+                                    class_config->stringValue() : "IN");
+            // It is in-memory and our class matches.
+            // FIXME: Is it allowed to have two datasources for the same
+            // type and class at once? It probably would not work now
+            // anyway and we may want to change the configuration of
+            // datasources somehow.
+            if (dsrc_config->get("type")->stringValue() == "memory" &&
+                RRClass(class_type) == zone_class) {
+                zone_list = dsrc_config->get("zones");
+                break;
+            }
+        }
+
+        if (!zone_list) {
+            isc_throw(AuthCommandError,
+                      "Corresponding data source configuration was not found");
+        }
+
+        // Now we need to walk the zones and find the correct one.
+        for (size_t i(0); i < zone_list->size(); ++ i) {
+            const ConstElementPtr zone_config(zone_list->get(i));
+            if (Name(zone_config->get("origin")->stringValue()) == origin) {
+                // The origins are the same, so we consider this config to be
+                // for the zone.
+                zone_config_ = zone_config;
+                break;
+            }
+        }
+
+        if (!zone_config_) {
+            isc_throw(AuthCommandError,
+                      "Corresponding zone configuration was not found");
+        }
 
         return (true);
     }
