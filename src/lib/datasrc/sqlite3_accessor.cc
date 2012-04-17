@@ -74,7 +74,8 @@ enum StatementID {
     NSEC3_PREVIOUS = 17,
     NSEC3_LAST = 18,
     ADD_NSEC3_RECORD = 19,
-    NUM_STATEMENTS = 20
+    DEL_ZONE_NSEC3_RECORDS = 20,
+    NUM_STATEMENTS = 21
 };
 
 const char* const text_statements[NUM_STATEMENTS] = {
@@ -151,7 +152,9 @@ const char* const text_statements[NUM_STATEMENTS] = {
         "ORDER BY hash DESC LIMIT 1",
     // ADD_NSEC3_RECORD: Add NSEC3-related (NSEC3 or NSEC3-covering RRSIG) RR
     "INSERT INTO nsec3 (zone_id, hash, owner, ttl, rdtype, rdata) "
-    "VALUES (?1, ?2, '', ?3, ?4, ?5)"
+    "VALUES (?1, ?2, '', ?3, ?4, ?5)",
+    // DEL_ZONE_NSEC3_RECORDS: delete all NSEC3-related records from the zone
+    "DELETE FROM nsec3 WHERE zone_id=?1"
 };
 
 struct SQLite3Parameters {
@@ -1025,19 +1028,29 @@ SQLite3Accessor::startUpdateZone(const string& zone_name, const bool replace) {
                        "start an SQLite3 update transaction").exec();
 
     if (replace) {
+        // First, clear all current data from tables.
+        typedef pair<StatementID, const char* const> StatementSpec;
+        const StatementSpec delzone_stmts[] =
+            { StatementSpec(DEL_ZONE_RECORDS, "delete zone records"),
+              StatementSpec(DEL_ZONE_NSEC3_RECORDS,
+                            "delete zone NSEC3 records") };
         try {
-            StatementProcessor delzone_exec(*dbparameters_, DEL_ZONE_RECORDS,
-                                            "delete zone records");
-
-            sqlite3_stmt* stmt = dbparameters_->getStatement(DEL_ZONE_RECORDS);
-            sqlite3_clear_bindings(stmt);
-            if (sqlite3_bind_int(stmt, 1, zone_info.second) != SQLITE_OK) {
-                isc_throw(DataSourceError,
-                          "failed to bind SQLite3 parameter: " <<
-                          sqlite3_errmsg(dbparameters_->db_));
+            for (size_t i = 0;
+                 i < sizeof(delzone_stmts) / sizeof(delzone_stmts[0]);
+                 ++i) {
+                StatementProcessor delzone_exec(*dbparameters_,
+                                                delzone_stmts[i].first,
+                                                delzone_stmts[i].second);
+                sqlite3_stmt* stmt =
+                    dbparameters_->getStatement(delzone_stmts[i].first);
+                sqlite3_clear_bindings(stmt);
+                if (sqlite3_bind_int(stmt, 1, zone_info.second) != SQLITE_OK) {
+                    isc_throw(DataSourceError,
+                              "failed to bind SQLite3 parameter: " <<
+                              sqlite3_errmsg(dbparameters_->db_));
+                }
+                delzone_exec.exec();
             }
-
-            delzone_exec.exec();
         } catch (const DataSourceError&) {
             // Once we start a transaction, if something unexpected happens
             // we need to rollback the transaction so that a subsequent update
@@ -1077,6 +1090,7 @@ SQLite3Accessor::commit() {
     StatementProcessor(*dbparameters_, COMMIT,
                        "commit an SQLite3 transaction").exec();
     dbparameters_->in_transaction = false;
+    dbparameters_->updating_zone = false;
     dbparameters_->updated_zone_id = -1;
 }
 
