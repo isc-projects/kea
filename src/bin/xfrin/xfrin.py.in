@@ -66,6 +66,7 @@ else:
 SPECFILE_LOCATION = SPECFILE_PATH + "/xfrin.spec"
 AUTH_SPECFILE_LOCATION = AUTH_SPECFILE_PATH + "/auth.spec"
 
+AUTH_MODULE_NAME = 'Auth'
 XFROUT_MODULE_NAME = 'Xfrout'
 ZONE_MANAGER_MODULE_NAME = 'Zonemgr'
 REFRESH_FROM_ZONEMGR = 'refresh_from_zonemgr'
@@ -1529,7 +1530,7 @@ class Xfrin:
 
     def _set_db_file(self):
         db_file, is_default =\
-            self._module_cc.get_remote_config_value("Auth", "database_file")
+            self._module_cc.get_remote_config_value(AUTH_MODULE_NAME, "database_file")
         if is_default and "B10_FROM_BUILD" in os.environ:
             # override the local database setting if it is default and we
             # are running from the source tree
@@ -1539,7 +1540,41 @@ class Xfrin:
                       "bind10_zones.sqlite3"
         self._db_file = db_file
 
-    def publish_xfrin_news(self, zone_name, zone_class,  xfr_result):
+    def _do_auth_loadzone(self, zone_name, zone_class):
+        # On a successful zone transfer, if the zone is served by
+        # b10-auth in the in-memory data source using sqlite3 as a
+        # backend, send the "loadzone" command for the zone to auth.
+        datasources, is_default =\
+            self._module_cc.get_remote_config_value(AUTH_MODULE_NAME, "datasources")
+        if is_default:
+            return
+        for d in datasources:
+            if d.has_key("class"):
+                dclass = d["class"]
+            else:
+                dclass = "IN"
+            if d["type"].lower() == "memory" and dclass.lower() == zone_class.lower():
+                for zone in d["zones"]:
+                    if zone["filetype"].lower() == "sqlite3" and\
+                            zone["origin"].lower() == zone_name.lower():
+                        param = {"origin": zone_name.to_text(),
+                                 "class": zone_class.to_text(),
+                                 "datasrc": d["type"]}
+                        logger.debug(XFRIN_AUTH_LOADZONE,
+                                     param["origin"], param["class"], param["datasrc"])
+
+                        msg = create_command("loadzone", param)
+                        # catch the exception, in case msgq has been killed.
+                        try:
+                            seq = self._send_cc_session.group_sendmsg(msg, AUTH_MODULE_NAME)
+                            try:
+                                answer, env = self._send_cc_session.group_recvmsg(False, seq)
+                            except isc.cc.session.SessionTimeout:
+                                pass        # for now we just ignore the failure
+                        except socket.error as err:
+                            logger.error(XFRIN_MSGQ_SEND_ERROR_AUTH, AUTH_MODULE_NAME)
+
+    def publish_xfrin_news(self, zone_name, zone_class, xfr_result):
         '''Send command to xfrout/zone manager module.
         If xfrin has finished successfully for one zone, tell the good
         news(command: zone_new_data_ready) to zone manager and xfrout.
@@ -1566,6 +1601,9 @@ class Xfrin:
                     pass        # for now we just ignore the failure
             except socket.error as err:
                 logger.error(XFRIN_MSGQ_SEND_ERROR, XFROUT_MODULE_NAME, ZONE_MANAGER_MODULE_NAME)
+
+            self._do_auth_loadzone(zone_name, zone_class)
+
         else:
             msg = create_command(ZONE_XFRIN_FAILED, param)
             # catch the exception, in case msgq has been killed.

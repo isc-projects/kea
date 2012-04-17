@@ -117,6 +117,15 @@ was killed.
 There was a problem sending a message to the zone manager. This most
 likely means that the msgq daemon has quit or was killed.
 
+% XFRIN_MSGQ_SEND_ERROR_AUTH error while contacting %1
+There was a problem sending a message to b10-auth. This most likely
+means that the msgq daemon has quit or was killed.
+
+% XFRIN_AUTH_LOADZONE sending Auth loadzone for origin=%1, class=%2, datasrc=%3
+There was a successful zone transfer, and the zone is served by b10-auth
+in the in-memory data source using sqlite3 as a backend. We send the
+"loadzone" command for the zone to b10-auth.
+
 % XFRIN_NOTIFY_UNKNOWN_MASTER got notification to retransfer zone %1 from %2, expected %3
 The system received a notify for the given zone, but the address it came
 from does not match the master address in the Xfrin configuration. The notify
