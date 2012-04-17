@@ -194,6 +194,49 @@ TEST_F(SQLite3AccessorTest, iterator) {
     EXPECT_FALSE(context->getNext(data));
 }
 
+// This tests the iterator through the whole zone returns NSEC3 records as
+// well. We test this specifically, as it lives in separate table and needs
+// extra handling.
+TEST_F(SQLite3AccessorTest, nsec3Iterator) {
+    // Get the zone
+    const std::pair<bool, int>
+        zone_info(accessor->getZone("sql2.example.com."));
+    ASSERT_TRUE(zone_info.first);
+
+    // Iterate through it
+    DatabaseAccessor::IteratorContextPtr
+        context(accessor->getAllRecords(zone_info.second));
+
+    // We just pick a random NSEC3 to check, the check of complete iterator
+    // is in the above test. In addition, we count the number of NSEC3, RRSIG
+    // and all records, as some kind of check it returns all the data.
+    std::string data[DatabaseAccessor::COLUMN_COUNT];
+
+    size_t nsec3count(0), rrsigcount(0), recordcount(0);
+    bool nsec3match(false);
+    while (context->getNext(data)) {
+        if (data[DatabaseAccessor::TYPE_COLUMN] == "NSEC3") {
+            nsec3count ++;
+            if (data[DatabaseAccessor::NAME_COLUMN] ==
+                "1BB7SO0452U1QHL98UISNDD9218GELR5.sql2.example.com.") {
+                nsec3match = true;
+                EXPECT_EQ("7200", data[DatabaseAccessor::TTL_COLUMN]);
+                EXPECT_EQ("1 0 10 FEEDABEE 4KLSVDE8KH8G95VU68R7AHBE1CPQN38J",
+                          data[DatabaseAccessor::RDATA_COLUMN]);
+            }
+        } else if (data[DatabaseAccessor::TYPE_COLUMN] == "RRSIG") {
+            rrsigcount ++;
+        }
+        recordcount ++;
+    }
+
+    // We counted everything now, so check there's nothing else to count
+    EXPECT_EQ(11, nsec3count);
+    EXPECT_EQ(22, rrsigcount);
+    EXPECT_EQ(46, recordcount);
+    EXPECT_TRUE(nsec3match) << "No NSEC3 found when iterating the zone";
+}
+
 // This tests getting NSEC3 records
 TEST_F(SQLite3AccessorTest, nsec3) {
     const std::pair<bool, int>
