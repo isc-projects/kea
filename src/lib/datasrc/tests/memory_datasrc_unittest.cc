@@ -12,11 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <sstream>
-#include <vector>
-
-#include <boost/bind.hpp>
-#include <boost/foreach.hpp>
+#include "faked_nsec3.h"
 
 #include <exceptions/exceptions.h>
 
@@ -30,19 +26,31 @@
 #include <dns/rrttl.h>
 #include <dns/masterload.h>
 
+#include <datasrc/client.h>
 #include <datasrc/memory_datasrc.h>
 #include <datasrc/data_source.h>
 #include <datasrc/iterator.h>
 
+#include "test_client.h"
+
 #include <testutils/dnsmessage_test.h>
 
 #include <gtest/gtest.h>
+
+#include <boost/bind.hpp>
+#include <boost/foreach.hpp>
+#include <boost/shared_ptr.hpp>
+
+#include <sstream>
+#include <vector>
 
 using namespace std;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
 using namespace isc::datasrc;
 using namespace isc::testutils;
+using boost::shared_ptr;
+using namespace isc::datasrc::test;
 
 namespace {
 // Commonly used result codes (Who should write the prefix all the time)
@@ -387,6 +395,8 @@ public:
         // Build test RRsets.  Below, we construct an RRset for
         // each textual RR(s) of zone_data, and assign it to the corresponding
         // rr_xxx.
+        // Note that this contains an out-of-zone RR, and due to the
+        // validation check of masterLoad() used below, we cannot add SOA.
         const RRsetData zone_data[] = {
             {"example.org. 300 IN NS ns.example.org.", &rr_ns_},
             {"example.org. 300 IN A 192.0.2.1", &rr_a_},
@@ -534,6 +544,8 @@ public:
                   ZoneFinder::FindOptions options = ZoneFinder::FIND_DEFAULT,
                   bool check_wild_answer = false)
     {
+        SCOPED_TRACE("findTest for " + name.toText() + "/" + rrtype.toText());
+
         if (zone_finder == NULL) {
             zone_finder = &zone_finder_;
         }
@@ -1082,7 +1094,70 @@ TEST_F(InMemoryZoneFinderTest, load) {
 
     // Try loading zone that is wrong in a different way
     EXPECT_THROW(zone_finder_.load(TEST_DATA_DIR "/duplicate_rrset.zone"),
-        MasterLoadError);
+                 MasterLoadError);
+}
+
+TEST_F(InMemoryZoneFinderTest, loadFromIterator) {
+    // The initial test set doesn't have SOA at the apex.
+    findTest(origin_, RRType::SOA(), ZoneFinder::NXRRSET, false,
+             ConstRRsetPtr());
+
+    // The content of the new version of zone to be first installed to
+    // the SQLite3 data source, then to in-memory via SQLite3.  The data are
+    // chosen to cover major check points of the implementation:
+    // - the previously non-existent record is added (SOA)
+    // - An RRSIG is given from the iterator before the RRset it covers
+    //   (RRSIG for SOA, because they are sorted by name then rrtype as text)
+    // - An RRset containing multiple RRs (ns1/A)
+    // - RRSIGs for different owner names
+    stringstream ss;
+    const char* const soa_txt = "example.org. 300 IN SOA . . 0 0 0 0 0\n";
+    const char* const soa_sig_txt = "example.org. 300 IN RRSIG SOA 5 3 300 "
+        "20000101000000 20000201000000 12345 example.org. FAKEFAKE\n";
+    const char* const a_txt =
+        "ns1.example.org. 300 IN A 192.0.2.1\n"
+        "ns1.example.org. 300 IN A 192.0.2.2\n";
+    const char* const a_sig_txt = "ns1.example.org. 300 IN RRSIG A 5 3 300 "
+        "20000101000000 20000201000000 12345 example.org. FAKEFAKE\n";
+    ss << soa_txt << soa_sig_txt << a_txt << a_sig_txt;
+    shared_ptr<DataSourceClient> db_client = unittest::createSQLite3Client(
+        class_, origin_, TEST_DATA_BUILDDIR "/contexttest.sqlite3.copied", ss);
+    zone_finder_.load(*db_client->getIterator(origin_));
+
+    // The new content should be visible, including the previously-nonexistent
+    // SOA.
+    RRsetPtr expected_answer = textToRRset(soa_txt, RRClass::IN(), origin_);
+    expected_answer->addRRsig(textToRRset(soa_sig_txt));
+    findTest(origin_, RRType::SOA(), ZoneFinder::SUCCESS, true,
+             expected_answer);
+
+    expected_answer = textToRRset(a_txt);
+    expected_answer->addRRsig(textToRRset(a_sig_txt));
+    findTest(Name("ns1.example.org"), RRType::A(), ZoneFinder::SUCCESS, true,
+             expected_answer);
+
+    // File name should be (re)set to empty.
+    EXPECT_TRUE(zone_finder_.getFileName().empty());
+
+    // Loading the zone with an iterator separating RRs of the same RRset
+    // will fail because the resulting sequence doesn't meet assumptions of
+    // the (current) in-memory implementation.
+    EXPECT_THROW(zone_finder_.load(*db_client->getIterator(origin_, true)),
+                 MasterLoadError);
+
+    // Load the zone from a file that contains more realistic data (borrowed
+    // from a different test).  There's nothing special in this case for the
+    // purpose of this test, so it should just succeed.
+    db_client = unittest::createSQLite3Client(
+        class_, origin_, TEST_DATA_BUILDDIR "/contexttest.sqlite3.copied",
+        TEST_DATA_DIR "/contexttest.zone");
+    zone_finder_.load(*db_client->getIterator(origin_));
+
+    // just checking a couple of RRs in the new version of zone.
+    findTest(Name("mx1.example.org"), RRType::A(), ZoneFinder::SUCCESS, true,
+             textToRRset("mx1.example.org. 3600 IN A 192.0.2.10"));
+    findTest(Name("ns1.example.org"), RRType::AAAA(), ZoneFinder::SUCCESS,
+             true, textToRRset("ns1.example.org. 3600 IN AAAA 2001:db8::1"));
 }
 
 /*
@@ -1623,52 +1698,6 @@ TEST_F(InMemoryZoneFinderTest, addbadRRsig) {
                  InMemoryZoneFinder::AddError);
 }
 
-//
-// (Faked) NSEC3 hash data.  Arbitrarily borrowed from RFC515 examples.
-//
-// Commonly used NSEC3 suffix.  It's incorrect to use it for all NSEC3s, but
-// doesn't matter for the purpose of our tests.
-const char* const nsec3_common = " 300 IN NSEC3 1 1 12 aabbccdd "
-    "2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A RRSIG";
-// Likewise, common RRSIG suffix for NSEC3s.
-const char* const nsec3_rrsig_common = " 300 IN RRSIG NSEC3 5 3 3600 "
-    "20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE";
-
-void
-findNSEC3Check(bool expected_matched, uint8_t expected_labels,
-               const string& expected_closest,
-               const string& expected_next,
-               const ZoneFinder::FindNSEC3Result& result,
-               bool expected_sig = false)
-{
-    EXPECT_EQ(expected_matched, result.matched);
-    // Convert to int so the error messages would be more readable:
-    EXPECT_EQ(static_cast<int>(expected_labels),
-              static_cast<int>(result.closest_labels));
-
-    vector<ConstRRsetPtr> actual_rrsets;
-    ASSERT_TRUE(result.closest_proof);
-    actual_rrsets.push_back(result.closest_proof);
-    if (expected_sig) {
-        actual_rrsets.push_back(result.closest_proof->getRRsig());
-    }
-    rrsetsCheck(expected_closest, actual_rrsets.begin(),
-                actual_rrsets.end());
-
-    actual_rrsets.clear();
-    if (expected_next.empty()) {
-        EXPECT_FALSE(result.next_proof);
-    } else {
-        ASSERT_TRUE(result.next_proof);
-        actual_rrsets.push_back(result.next_proof);
-        if (expected_sig) {
-            actual_rrsets.push_back(result.next_proof->getRRsig());
-        }
-        rrsetsCheck(expected_next, actual_rrsets.begin(),
-                    actual_rrsets.end());
-    }
-}
-
 TEST_F(InMemoryZoneFinderTest, addNSEC3) {
     // Set up the faked hash calculator.
     setNSEC3HashCreator(&nsec3_hash_creator_);
@@ -1957,71 +1986,7 @@ TEST_F(InMemoryZoneFinderTest, findNSEC3) {
         string(nsec3_common);
     EXPECT_EQ(result::SUCCESS, zone_finder_.add(textToRRset(zzz_nsec3_text)));
 
-    // Parameter validation: the query name must be in or below the zone
-    EXPECT_THROW(zone_finder_.findNSEC3(Name("example.com"), false), OutOfZone);
-    EXPECT_THROW(zone_finder_.findNSEC3(Name("org"), true), OutOfZone);
-
-    // Apex name.  It should have a matching NSEC3.
-    {
-        SCOPED_TRACE("apex, non recursive mode");
-        findNSEC3Check(true, origin_.getLabelCount(), apex_nsec3_text, "",
-                       zone_finder_.findNSEC3(origin_, false));
-    }
-
-    // Recursive mode doesn't change the result in this case.
-    {
-        SCOPED_TRACE("apex, recursive mode");
-        findNSEC3Check(true, origin_.getLabelCount(), apex_nsec3_text, "",
-                       zone_finder_.findNSEC3(origin_, true));
-    }
-
-    // Non existent name.  Disabling recursion, a covering NSEC3 should be
-    // returned.
-    const Name www_name("www.example.org");
-    {
-        SCOPED_TRACE("non existent name, non recursive mode");
-        findNSEC3Check(false, www_name.getLabelCount(), apex_nsec3_text, "",
-                       zone_finder_.findNSEC3(www_name, false));
-    }
-
-    // Non existent name.  The closest provable encloser is the apex,
-    // and next closer is the query name itself (which NSEC3 for ns1
-    // covers)
-    // H(ns1) = 2T... < H(xxx) = Q0... < H(zzz) = R5...
-    {
-        SCOPED_TRACE("non existent name, recursive mode");
-        findNSEC3Check(true, origin_.getLabelCount(), apex_nsec3_text,
-                       ns1_nsec3_text,
-                       zone_finder_.findNSEC3(Name("xxx.example.org"), true));
-    }
-
-    // Similar to the previous case, but next closer name is different
-    // from the query name.  The closet encloser is w.example.org, and
-    // next closer is y.w.example.org.
-    // H(ns1) = 2T.. < H(y.w) = K8.. < H(zzz) = R5
-    {
-        SCOPED_TRACE("non existent name, non qname next closer");
-        findNSEC3Check(true, Name("w.example.org").getLabelCount(),
-                       w_nsec3_text, ns1_nsec3_text,
-                       zone_finder_.findNSEC3(Name("x.y.w.example.org"),
-                                              true));
-    }
-
-    // In the rest of test we check hash comparison for wrap around cases.
-    {
-        SCOPED_TRACE("very small hash");
-        const Name smallest_name("smallest.example.org");
-        findNSEC3Check(false, smallest_name.getLabelCount(),
-                       zzz_nsec3_text, "",
-                       zone_finder_.findNSEC3(smallest_name, false));
-    }
-    {
-        SCOPED_TRACE("very large hash");
-        const Name largest_name("largest.example.org");
-        findNSEC3Check(false, largest_name.getLabelCount(),
-                       zzz_nsec3_text, "",
-                       zone_finder_.findNSEC3(largest_name, false));
-    }
+    performNSEC3Test(zone_finder_);
 }
 
 TEST_F(InMemoryZoneFinderTest, findNSEC3ForBadZone) {

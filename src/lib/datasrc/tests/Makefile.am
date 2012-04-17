@@ -48,6 +48,7 @@ run_unittests_SOURCES += datasrc_unittest.cc
 run_unittests_SOURCES += static_unittest.cc
 run_unittests_SOURCES += query_unittest.cc
 run_unittests_SOURCES += cache_unittest.cc
+run_unittests_SOURCES += test_client.h test_client.cc
 run_unittests_SOURCES += test_datasrc.h test_datasrc.cc
 run_unittests_SOURCES += rbtree_unittest.cc
 run_unittests_SOURCES += logger_unittest.cc
@@ -58,6 +59,7 @@ run_unittests_SOURCES += sqlite3_accessor_unittest.cc
 run_unittests_SOURCES += memory_datasrc_unittest.cc
 run_unittests_SOURCES += rbnode_rrset_unittest.cc
 run_unittests_SOURCES += zone_finder_context_unittest.cc
+run_unittests_SOURCES += faked_nsec3.h faked_nsec3.cc
 
 # We need the actual module implementation in the tests (they are not part
 # of libdatasrc)
@@ -105,7 +107,6 @@ EXTRA_DIST += testdata/mkbrokendb.c
 EXTRA_DIST += testdata/root.zone
 EXTRA_DIST += testdata/rrset_toWire1
 EXTRA_DIST += testdata/rrset_toWire2
-EXTRA_DIST += testdata/rwtest.sqlite3
 EXTRA_DIST += testdata/sql1.example.com.signed
 EXTRA_DIST += testdata/sql2.example.com.signed
 EXTRA_DIST += testdata/test-root.sqlite3

@@ -12,6 +12,9 @@ AM_CXXFLAGS = $(B10_CXXFLAGS)
 
 if USE_STATIC_LINK
 AM_LDFLAGS = -static
+# Some test cases cannot work with static link.  To selectively disable such
+# tests we signal it via a definition.
+AM_CPPFLAGS += -DUSE_STATIC_LINK=1
 endif
 
 CLEANFILES = *.gcno *.gcda
@@ -29,6 +32,7 @@ run_unittests_SOURCES += ../auth_config.h ../auth_config.cc
 run_unittests_SOURCES += ../command.h ../command.cc
 run_unittests_SOURCES += ../common.h ../common.cc
 run_unittests_SOURCES += ../statistics.h ../statistics.cc
+run_unittests_SOURCES += datasrc_util.h datasrc_util.cc
 run_unittests_SOURCES += auth_srv_unittest.cc
 run_unittests_SOURCES += config_unittest.cc
 run_unittests_SOURCES += config_syntax_unittest.cc

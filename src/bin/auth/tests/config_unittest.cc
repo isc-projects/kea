@@ -21,6 +21,7 @@
 
 #include <cc/data.h>
 
+#include <datasrc/data_source.h>
 #include <datasrc/memory_datasrc.h>
 
 #include <xfr/xfrout_client.h>
@@ -29,14 +30,20 @@
 #include <auth/auth_config.h>
 #include <auth/common.h>
 
+#include "datasrc_util.h"
+
 #include <testutils/mockups.h>
 #include <testutils/portconfig.h>
 #include <testutils/socket_request.h>
 
+#include <sstream>
+
+using namespace std;
 using namespace isc::dns;
 using namespace isc::data;
 using namespace isc::datasrc;
 using namespace isc::asiodns;
+using namespace isc::auth::unittest;
 using namespace isc::testutils;
 
 namespace {
@@ -201,17 +208,44 @@ TEST_F(MemoryDatasrcConfigTest, addOneZone) {
         RRType::A())->code);
 }
 
-TEST_F(MemoryDatasrcConfigTest, addOneWithFiletype) {
-    // Until #1792 is completed, only "text" filetype is allowed.
+// This test uses dynamic load of a data source module, and won't work when
+// statically linked.
+TEST_F(MemoryDatasrcConfigTest,
+#ifdef USE_STATIC_LINK
+       DISABLED_addOneWithFiletypeSQLite3
+#else
+       addOneWithFiletypeSQLite3
+#endif
+    )
+{
+    const string test_db = TEST_DATA_BUILDDIR "/auth_test.sqlite3.copied";
+    stringstream ss("example.org. 3600 IN SOA . . 0 0 0 0 0\n");
+    createSQLite3DB(rrclass, Name("example.org"), test_db.c_str(), ss);
+
+    // In-memory with an SQLite3 data source as the backend.
+    parser->build(Element::fromJSON(
+                      "[{\"type\": \"memory\","
+                      "  \"zones\": [{\"origin\": \"example.org\","
+                      "               \"file\": \""
+                      + test_db +  "\","
+                      "               \"filetype\": \"sqlite3\"}]}]"));
+    parser->commit();
+    EXPECT_EQ(1, server.getInMemoryClient(rrclass)->getZoneCount());
+
+    // Failure case: the specified zone doesn't exist in the DB file.
+    delete parser;
+    parser = createAuthConfigParser(server, "datasources");
     EXPECT_THROW(parser->build(
                      Element::fromJSON(
                          "[{\"type\": \"memory\","
                          "  \"zones\": [{\"origin\": \"example.com\","
                          "               \"file\": \""
-                         TEST_DATA_DIR "/example.zone\","
+                         + test_db +  "\","
                          "               \"filetype\": \"sqlite3\"}]}]")),
-                 AuthConfigError);
+                 DataSourceError);
+}
 
+TEST_F(MemoryDatasrcConfigTest, addOneWithFiletypeText) {
     // Explicitly specifying "text" is okay.
     parser->build(Element::fromJSON(
                       "[{\"type\": \"memory\","

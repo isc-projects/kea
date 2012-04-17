@@ -12,12 +12,15 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include "faked_nsec3.h"
+
 #include <exceptions/exceptions.h>
 
 #include <dns/masterload.h>
 #include <dns/name.h>
 #include <dns/rrttl.h>
 #include <dns/rrset.h>
+#include <dns/nsec3hash.h>
 #include <exceptions/exceptions.h>
 
 #include <datasrc/database.h>
@@ -46,6 +49,7 @@ using boost::dynamic_pointer_cast;
 using boost::lexical_cast;
 using namespace isc::dns;
 using namespace isc::testutils;
+using namespace isc::datasrc::test;
 
 namespace {
 
@@ -169,7 +173,10 @@ const char* const TEST_RECORDS[][5] = {
      "1234 3600 1800 2419200 7200" },
     {"example.org.", "NS", "3600", "", "ns.example.com."},
     {"example.org.", "A", "3600", "", "192.0.2.1"},
-    {"example.org.", "NSEC", "3600", "", "acnamesig1.example.org. NS A NSEC RRSIG"},
+    // Note that the RDATA text is "normalized", i.e., identical to what
+    // Rdata::toText() would produce.  some tests rely on that behavior.
+    {"example.org.", "NSEC", "3600", "",
+     "acnamesig1.example.org. A NS RRSIG NSEC"},
     {"example.org.", "RRSIG", "3600", "", "SOA 5 3 3600 20000101000000 "
               "20000201000000 12345 example.org. FAKEFAKEFAKE"},
     {"example.org.", "RRSIG", "3600", "", "NSEC 5 3 3600 20000101000000 "
@@ -208,9 +215,15 @@ const char* const TEST_RECORDS[][5] = {
 };
 
 // FIXME: Taken from a different test. Fill with proper data when creating a test.
-const char* const TEST_NSEC3_RECORDS[][5] = {
-    {"1BB7SO0452U1QHL98UISNDD9218GELR5", "NSEC3", "3600", "", "1 0 10 FEEDABEE 4KLSVDE8KH8G95VU68R7AHBE1CPQN38J"},
-    {"1BB7SO0452U1QHL98UISNDD9218GELR5", "RRSIG", "3600", "", "NSEC3 5 4 7200 20100410172647 20100311172647 63192 example.org. gNIVj4T8t51fEU6kOPpvK7HOGBFZGbalN5ZK mInyrww6UWZsUNdw07ge6/U6HfG+/s61RZ/L is2M6yUWHyXbNbj/QqwqgadG5dhxTArfuR02 xP600x0fWX8LXzW4yLMdKVxGbzYT+vvGz71o 8gHSY5vYTtothcZQa4BMKhmGQEk="},
+const char* TEST_NSEC3_RECORDS[][5] = {
+    {apex_hash, "NSEC3", "300", "", "1 1 12 AABBCCDD 2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A RRSIG"},
+    {apex_hash, "RRSIG", "300", "", "NSEC3 5 4 7200 20100410172647 20100311172647 63192 example.org. gNIVj4T8t51fEU6kOPpvK7HOGBFZGbalN5ZK mInyrww6UWZsUNdw07ge6/U6HfG+/s61RZ/L is2M6yUWHyXbNbj/QqwqgadG5dhxTArfuR02 xP600x0fWX8LXzW4yLMdKVxGbzYT+vvGz71o 8gHSY5vYTtothcZQa4BMKhmGQEk="},
+    {ns1_hash, "NSEC3", "300", "", "1 1 12 AABBCCDD 2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A RRSIG"},
+    {ns1_hash, "RRSIG", "300", "", "NSEC3 5 4 7200 20100410172647 20100311172647 63192 example.org. gNIVj4T8t51fEU6kOPpvK7HOGBFZGbalN5ZK mInyrww6UWZsUNdw07ge6/U6HfG+/s61RZ/L is2M6yUWHyXbNbj/QqwqgadG5dhxTArfuR02 xP600x0fWX8LXzW4yLMdKVxGbzYT+vvGz71o 8gHSY5vYTtothcZQa4BMKhmGQEk="},
+    {w_hash, "NSEC3", "300", "", "1 1 12 AABBCCDD 2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A RRSIG"},
+    {w_hash, "RRSIG", "300", "", "NSEC3 5 4 7200 20100410172647 20100311172647 63192 example.org. gNIVj4T8t51fEU6kOPpvK7HOGBFZGbalN5ZK mInyrww6UWZsUNdw07ge6/U6HfG+/s61RZ/L is2M6yUWHyXbNbj/QqwqgadG5dhxTArfuR02 xP600x0fWX8LXzW4yLMdKVxGbzYT+vvGz71o 8gHSY5vYTtothcZQa4BMKhmGQEk="},
+    {zzz_hash, "NSEC3", "300", "", "1 1 12 AABBCCDD 2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A RRSIG"},
+    {zzz_hash, "RRSIG", "300", "", "NSEC3 5 4 7200 20100410172647 20100311172647 63192 example.org. gNIVj4T8t51fEU6kOPpvK7HOGBFZGbalN5ZK mInyrww6UWZsUNdw07ge6/U6HfG+/s61RZ/L is2M6yUWHyXbNbj/QqwqgadG5dhxTArfuR02 xP600x0fWX8LXzW4yLMdKVxGbzYT+vvGz71o 8gHSY5vYTtothcZQa4BMKhmGQEk="},
     {NULL, NULL, NULL, NULL, NULL}
 };
 
@@ -511,62 +524,46 @@ private:
             }
 
             // Return faked data for tests
-            switch (step ++) {
-                case 0:
-                    data[DatabaseAccessor::NAME_COLUMN] = "example.org";
-                    data[DatabaseAccessor::TYPE_COLUMN] = "A";
-                    data[DatabaseAccessor::TTL_COLUMN] = "3600";
-                    data[DatabaseAccessor::RDATA_COLUMN] = "192.0.2.1";
-                    return (true);
-                case 1:
-                    data[DatabaseAccessor::NAME_COLUMN] = "example.org";
-                    data[DatabaseAccessor::TYPE_COLUMN] = "SOA";
-                    data[DatabaseAccessor::TTL_COLUMN] = "3600";
-                    data[DatabaseAccessor::RDATA_COLUMN] = "ns1.example.org. admin.example.org. "
-                        "1234 3600 1800 2419200 7200";
-                    return (true);
-                case 2:
-                    data[DatabaseAccessor::NAME_COLUMN] = "x.example.org";
-                    data[DatabaseAccessor::TYPE_COLUMN] = "A";
-                    data[DatabaseAccessor::TTL_COLUMN] = "300";
-                    data[DatabaseAccessor::RDATA_COLUMN] = "192.0.2.1";
-                    return (true);
-                case 3:
-                    data[DatabaseAccessor::NAME_COLUMN] = "x.example.org";
-                    data[DatabaseAccessor::TYPE_COLUMN] = "A";
-                    data[DatabaseAccessor::TTL_COLUMN] = "300";
-                    data[DatabaseAccessor::RDATA_COLUMN] = "192.0.2.2";
-                    return (true);
-                case 4:
-                    data[DatabaseAccessor::NAME_COLUMN] = "x.example.org";
-                    data[DatabaseAccessor::TYPE_COLUMN] = "AAAA";
-                    data[DatabaseAccessor::TTL_COLUMN] = "300";
-                    data[DatabaseAccessor::RDATA_COLUMN] = "2001:db8::1";
-                    return (true);
-                case 5:
-                    data[DatabaseAccessor::NAME_COLUMN] = "x.example.org";
-                    data[DatabaseAccessor::TYPE_COLUMN] = "AAAA";
-                    data[DatabaseAccessor::TTL_COLUMN] = "300";
-                    data[DatabaseAccessor::RDATA_COLUMN] = "2001:db8::2";
-                    return (true);
-                case 6:
-                    data[DatabaseAccessor::NAME_COLUMN] = "ttldiff.example.org";
-                    data[DatabaseAccessor::TYPE_COLUMN] = "A";
-                    data[DatabaseAccessor::TTL_COLUMN] = "300";
-                    data[DatabaseAccessor::RDATA_COLUMN] = "192.0.2.1";
-                    return (true);
-                case 7:
-                    data[DatabaseAccessor::NAME_COLUMN] = "ttldiff.example.org";
-                    data[DatabaseAccessor::TYPE_COLUMN] = "A";
-                    data[DatabaseAccessor::TTL_COLUMN] = "600";
-                    data[DatabaseAccessor::RDATA_COLUMN] = "192.0.2.2";
-                    return (true);
-                default:
-                    ADD_FAILURE() <<
-                        "Request past the end of iterator context";
-                case 8:
-                    return (false);
+            // This is the sequence of zone data in the order of appearance
+            // in the returned sequence from this iterator.
+            typedef const char* ColumnText[4];
+            const ColumnText zone_data[] = {
+                // A couple of basic RRs at the zone origin.
+                {"example.org", "A", "3600", "192.0.2.1"},
+                {"example.org", "SOA", "3600", "ns1.example.org. "
+                 "admin.example.org. 1234 3600 1800 2419200 7200"},
+                // RRsets sharing the same owner name with multiple RRs.
+                {"x.example.org", "A", "300", "192.0.2.1"},
+                {"x.example.org", "A", "300", "192.0.2.2"},
+                {"x.example.org", "AAAA", "300", "2001:db8::1"},
+                {"x.example.org", "AAAA", "300", "2001:db8::2"},
+                // RRSIGs.  Covered types are different and these two should
+                // be distinguished.
+                {"x.example.org", "RRSIG", "300",
+                 "A 5 3 3600 20000101000000 20000201000000 12345 "
+                 "example.org. FAKEFAKEFAKE"},
+                {"x.example.org", "RRSIG", "300",
+                 "AAAA 5 3 3600 20000101000000 20000201000000 12345 "
+                 "example.org. FAKEFAKEFAKEFAKE"},
+                // Mixture of different TTLs.  Covering both cases of small
+                // then large and large then small.  In either case the smaller
+                // TTL should win.
+                {"ttldiff.example.org", "A", "300", "192.0.2.1"},
+                {"ttldiff.example.org", "A", "600", "192.0.2.2"},
+                {"ttldiff2.example.org", "AAAA", "600", "2001:db8::1"},
+                {"ttldiff2.example.org", "AAAA", "300", "2001:db8::2"}};
+            const size_t num_rrs = sizeof(zone_data) / sizeof(zone_data[0]);
+            if (step > num_rrs) {
+                ADD_FAILURE() << "Request past the end of iterator context";
+            } else if (step < num_rrs) {
+                data[DatabaseAccessor::NAME_COLUMN] = zone_data[step][0];
+                data[DatabaseAccessor::TYPE_COLUMN] = zone_data[step][1];
+                data[DatabaseAccessor::TTL_COLUMN] = zone_data[step][2];
+                data[DatabaseAccessor::RDATA_COLUMN] = zone_data[step][3];
+                ++step;
+                return (true);
             }
+            return (false);
         }
     };
     class EmptyIteratorContext : public IteratorContext {
@@ -1062,6 +1059,31 @@ private:
         }
         addCurHash(prev_name);
     }
+
+public:
+    // This adds the NSEC3PARAM into the apex, so we can perform some NSEC3
+    // tests. Note that the NSEC3 namespace is available in other tests, but
+    // it should not be accessed at that time.
+    void enableNSEC3() {
+        // We place the signature first, so it's in the block with the other
+        // signatures
+        vector<string> signature;
+        signature.push_back("RRSIG");
+        signature.push_back("3600");
+        signature.push_back("");
+        signature.push_back("NSEC3PARAM 5 3 3600 20000101000000 20000201000000 "
+                            "12345 example.org. FAKEFAKEFAKE");
+        signature.push_back("exmaple.org.");
+        (*readonly_records_)["example.org."].push_back(signature);
+        // Now the NSEC3 param itself
+        vector<string> param;
+        param.push_back("NSEC3PARAM");
+        param.push_back("3600");
+        param.push_back("");
+        param.push_back("1 0 12 aabbccdd");
+        param.push_back("example.org.");
+        (*readonly_records_)["example.org."].push_back(param);
+    }
 };
 
 // This tests the default getRecords behaviour, throwing NotImplemented
@@ -1115,6 +1137,11 @@ public:
                                                "FAKEFAKEFAKE"));
     }
 
+    ~ DatabaseClientTest() {
+        // Make sure we return the default creator no matter if we set it or not
+        setNSEC3HashCreator(NULL);
+    }
+
     /*
      * We initialize the client from a function, so we can call it multiple
      * times per test.
@@ -1128,7 +1155,7 @@ public:
         // probably move this to some specialized templated method specific
         // to SQLite3 (or for even a longer term we should add an API to
         // purge the diffs table).
-        const char* const install_cmd = INSTALL_PROG " " TEST_DATA_DIR
+        const char* const install_cmd = INSTALL_PROG " " TEST_DATA_COMMONDIR
             "/rwtest.sqlite3 " TEST_DATA_BUILDDIR
             "/rwtest.sqlite3.copied";
         if (system(install_cmd) != 0) {
@@ -1275,6 +1302,9 @@ public:
     const std::vector<std::string> empty_rdatas_; // for NXRRSET/NXDOMAIN
     std::vector<std::string> expected_rdatas_;
     std::vector<std::string> expected_sig_rdatas_;
+
+    // A creator for use in several NSEC3 related tests.
+    TestNSEC3HashCreator test_nsec3_hash_creator_;
 };
 
 class TestSQLite3Accessor : public SQLite3Accessor {
@@ -1405,7 +1435,7 @@ checkRRset(isc::dns::ConstRRsetPtr rrset,
     rrsetCheck(expected_rrset, rrset);
 }
 
-// Iterate through a zone
+// Iterate through a zone, common case
 TYPED_TEST(DatabaseClientTest, iterator) {
     ZoneIteratorPtr it(this->client_->getIterator(Name("example.org")));
     ConstRRsetPtr rrset(it->getNextRRset());
@@ -1413,47 +1443,100 @@ TYPED_TEST(DatabaseClientTest, iterator) {
 
     // The first name should be the zone origin.
     EXPECT_EQ(this->zname_, rrset->getName());
+}
 
-    // The rest of the checks work only for the mock accessor.
-    if (!this->is_mock_) {
-        return;
+// Supplemental structure used in the couple of tests below.  It represents
+// parameters of an expected RRset containing up to two RDATAs.  If it contains
+// only one RDATA, rdata2 is NULL.
+struct ExpectedRRset {
+    const char* const name;
+    const RRType rrtype;
+    const RRTTL rrttl;
+    const char* const rdata1;
+    const char* const rdata2;
+};
+
+// Common checker for the iterator tests below.  It extracts RRsets from the
+// give iterator and compare them to the expected sequence.
+void
+checkIteratorSequence(ZoneIterator& it, ExpectedRRset expected_sequence[],
+                      size_t num_rrsets)
+{
+    vector<string> expected_rdatas;
+    for (size_t i = 0; i < num_rrsets; ++i) {
+        const ConstRRsetPtr rrset = it.getNextRRset();
+        ASSERT_TRUE(rrset);
+
+        expected_rdatas.clear();
+        expected_rdatas.push_back(expected_sequence[i].rdata1);
+        if (expected_sequence[i].rdata2 != NULL) {
+            expected_rdatas.push_back(expected_sequence[i].rdata2);
+        }
+        checkRRset(rrset, Name(expected_sequence[i].name), RRClass::IN(),
+                   expected_sequence[i].rrtype, expected_sequence[i].rrttl,
+                   expected_rdatas);
     }
+    EXPECT_FALSE(it.getNextRRset());
+}
 
-    this->expected_rdatas_.clear();
-    this->expected_rdatas_.push_back("192.0.2.1");
-    checkRRset(rrset, Name("example.org"), this->qclass_, RRType::A(),
-               this->rrttl_, this->expected_rdatas_);
+TEST_F(MockDatabaseClientTest, iterator) {
+    // This version of test creates an iterator that combines same types of
+    // RRs into single RRsets.
+    ExpectedRRset expected_sequence[] = {
+        {"example.org", RRType::A(), rrttl_, "192.0.2.1", NULL},
+        {"example.org", RRType::SOA(), rrttl_,
+         "ns1.example.org. admin.example.org. 1234 3600 1800 2419200 7200",
+         NULL},
+        {"x.example.org", RRType::A(), RRTTL(300), "192.0.2.1", "192.0.2.2"},
+        {"x.example.org", RRType::AAAA(), RRTTL(300),
+         "2001:db8::1", "2001:db8::2"},
+        {"x.example.org", RRType::RRSIG(), RRTTL(300),
+         "A 5 3 3600 20000101000000 20000201000000 12345 example.org. "
+         "FAKEFAKEFAKE", NULL},
+        {"x.example.org", RRType::RRSIG(), RRTTL(300),
+         "AAAA 5 3 3600 20000101000000 20000201000000 12345 example.org. "
+         "FAKEFAKEFAKEFAKE", NULL},
+        {"ttldiff.example.org", RRType::A(), RRTTL(300),
+         "192.0.2.1", "192.0.2.2"},
+        {"ttldiff2.example.org", RRType::AAAA(), RRTTL(300),
+         "2001:db8::1", "2001:db8::2"}
+    };
+    checkIteratorSequence(*client_->getIterator(Name("example.org")),
+                          expected_sequence,
+                          sizeof(expected_sequence) /
+                          sizeof(expected_sequence[0]));
+}
 
-    rrset = it->getNextRRset();
-    this->expected_rdatas_.clear();
-    this->expected_rdatas_.push_back("ns1.example.org. admin.example.org. "
-                                     "1234 3600 1800 2419200 7200");
-    checkRRset(rrset, Name("example.org"), this->qclass_, RRType::SOA(),
-               this->rrttl_, this->expected_rdatas_);
-
-    rrset = it->getNextRRset();
-    this->expected_rdatas_.clear();
-    this->expected_rdatas_.push_back("192.0.2.1");
-    this->expected_rdatas_.push_back("192.0.2.2");
-    checkRRset(rrset, Name("x.example.org"), this->qclass_, RRType::A(),
-               RRTTL(300), this->expected_rdatas_);
-
-    rrset = it->getNextRRset();
-    this->expected_rdatas_.clear();
-    this->expected_rdatas_.push_back("2001:db8::1");
-    this->expected_rdatas_.push_back("2001:db8::2");
-    checkRRset(rrset, Name("x.example.org"), this->qclass_, RRType::AAAA(),
-               RRTTL(300), this->expected_rdatas_);
-
-    rrset = it->getNextRRset();
-    ASSERT_NE(ConstRRsetPtr(), rrset);
-    this->expected_rdatas_.clear();
-    this->expected_rdatas_.push_back("192.0.2.1");
-    this->expected_rdatas_.push_back("192.0.2.2");
-    checkRRset(rrset, Name("ttldiff.example.org"), this->qclass_, RRType::A(),
-               RRTTL(300), this->expected_rdatas_);
-
-    EXPECT_EQ(ConstRRsetPtr(), it->getNextRRset());
+TEST_F(MockDatabaseClientTest, iteratorSeparateRRs) {
+    // This version of test creates an iterator that separates all RRs as
+    // individual RRsets.  In particular, it preserves the TTLs of an RRset
+    // even if they are different.
+    ExpectedRRset expected_sequence[] = {
+        {"example.org", RRType::A(), rrttl_, "192.0.2.1", NULL},
+        {"example.org", RRType::SOA(), rrttl_,
+         "ns1.example.org. admin.example.org. 1234 3600 1800 2419200 7200",
+         NULL},
+        {"x.example.org", RRType::A(), RRTTL(300), "192.0.2.1", NULL},
+        {"x.example.org", RRType::A(), RRTTL(300), "192.0.2.2", NULL},
+        {"x.example.org", RRType::AAAA(), RRTTL(300), "2001:db8::1", NULL},
+        {"x.example.org", RRType::AAAA(), RRTTL(300), "2001:db8::2", NULL},
+        {"x.example.org", RRType::RRSIG(), RRTTL(300),
+         "A 5 3 3600 20000101000000 20000201000000 12345 example.org. "
+         "FAKEFAKEFAKE", NULL},
+        {"x.example.org", RRType::RRSIG(), RRTTL(300),
+         "AAAA 5 3 3600 20000101000000 20000201000000 12345 example.org. "
+         "FAKEFAKEFAKEFAKE", NULL},
+        {"ttldiff.example.org", RRType::A(), RRTTL(300), "192.0.2.1", NULL},
+        {"ttldiff.example.org", RRType::A(), RRTTL(600), "192.0.2.2", NULL},
+        {"ttldiff2.example.org", RRType::AAAA(), RRTTL(600), "2001:db8::1",
+         NULL},
+        {"ttldiff2.example.org", RRType::AAAA(), RRTTL(300), "2001:db8::2",
+         NULL}
+    };
+    checkIteratorSequence(*client_->getIterator(Name("example.org"), true),
+                          expected_sequence,
+                          sizeof(expected_sequence) /
+                          sizeof(expected_sequence[0]));
 }
 
 // This has inconsistent TTL in the set (the rest, like nonsense in
@@ -1590,12 +1673,14 @@ doFindTest(ZoneFinder& finder,
                        isc::dns::RRType::RRSIG(), expected_ttl,
                        expected_sig_rdatas);
         } else if (expected_sig_rdatas.empty()) {
-            EXPECT_EQ(isc::dns::RRsetPtr(), result->rrset->getRRsig());
+            EXPECT_EQ(isc::dns::RRsetPtr(), result->rrset->getRRsig()) <<
+                "Unexpected RRSIG: " << result->rrset->getRRsig()->toText();
         } else {
             ADD_FAILURE() << "Missing RRSIG";
         }
     } else if (expected_rdatas.empty()) {
-        EXPECT_EQ(isc::dns::RRsetPtr(), result->rrset);
+        EXPECT_EQ(isc::dns::RRsetPtr(), result->rrset) <<
+            "Unexpected RRset: " << result->rrset->toText();
     } else {
         ADD_FAILURE() << "Missing result";
     }
@@ -1609,7 +1694,9 @@ doFindAllTestResult(ZoneFinder& finder, const isc::dns::Name& name,
                     const isc::dns::Name& expected_name =
                     isc::dns::Name::ROOT_NAME(),
                     const ZoneFinder::FindOptions options =
-                    ZoneFinder::FIND_DEFAULT)
+                    ZoneFinder::FIND_DEFAULT,
+                    ZoneFinder::FindResultFlags expected_flags =
+                                          ZoneFinder::RESULT_DEFAULT)
 {
     SCOPED_TRACE("All test for " + name.toText());
     std::vector<ConstRRsetPtr> target;
@@ -1617,6 +1704,15 @@ doFindAllTestResult(ZoneFinder& finder, const isc::dns::Name& name,
     EXPECT_TRUE(target.empty());
     EXPECT_EQ(expected_result, result->code);
     EXPECT_EQ(expected_type, result->rrset->getType());
+    if (expected_flags != ZoneFinder::RESULT_DEFAULT){
+        EXPECT_EQ((expected_flags & ZoneFinder::RESULT_WILDCARD) != 0,
+                  result->isWildcard());
+        EXPECT_EQ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED) != 0,
+                  result->isNSECSigned());
+        EXPECT_EQ((expected_flags & ZoneFinder::RESULT_NSEC3_SIGNED) != 0,
+                  result->isNSEC3Signed());
+
+    }
     RdataIteratorPtr it(result->rrset->getRdataIterator());
     std::vector<std::string> rdata;
     while (!it->isLast()) {
@@ -2422,10 +2518,169 @@ TYPED_TEST(DatabaseClientTest, wildcardNXRRSET_NSEC) {
                Name("*.wild.example.org"), ZoneFinder::FIND_DNSSEC);
 }
 
+// Subroutine for dnssecFlagCheck defined below.  It performs some simple
+// checks regarding DNSSEC related result flags for findAll().
+void
+dnssecFlagCheckForAny(ZoneFinder& finder, const Name& name,
+                      ZoneFinder::FindResultFlags sec_flag)
+{
+    std::vector<ConstRRsetPtr> target; // just for placeholder
+    ConstZoneFinderContextPtr all_result =
+        finder.findAll(name, target, ZoneFinder::FIND_DNSSEC);
+    EXPECT_EQ((sec_flag & ZoneFinder::RESULT_NSEC_SIGNED) != 0,
+              all_result->isNSECSigned());
+    EXPECT_EQ((sec_flag & ZoneFinder::RESULT_NSEC3_SIGNED) != 0,
+              all_result->isNSEC3Signed());
+}
+
+// Common tests about DNSSEC related result flags.  Shared for the NSEC
+// and NSEC3 cases.
+void
+dnssecFlagCheck(ZoneFinder& finder, ZoneFinder::FindResultFlags sec_flag) {
+    std::vector<std::string> expected_rdatas;
+    std::vector<std::string> expected_sig_rdatas;
+
+    // Check NXDOMAIN case in NSEC signed zone, and RESULT_NSEC_SIGNED flag
+    // should be returned to upper layer caller.
+    if ((sec_flag & ZoneFinder::RESULT_NSEC_SIGNED) != 0) {
+        expected_rdatas.push_back("www2.example.org. A AAAA NSEC RRSIG");
+        expected_sig_rdatas.push_back("NSEC 5 3 3600 20000101000000 "
+                                      "20000201000000 12345 example.org. "
+                                      "FAKEFAKEFAKE");
+    }
+    doFindTest(finder, Name("www1.example.org"), RRType::A(), RRType::NSEC(),
+               RRTTL(3600), ZoneFinder::NXDOMAIN, expected_rdatas,
+               expected_sig_rdatas, sec_flag, Name("www.example.org."),
+               ZoneFinder::FIND_DNSSEC);
+    dnssecFlagCheckForAny(finder, Name("www1.example.org"), sec_flag);
+
+    // Check NXRRSET case in NSEC signed zone, and RESULT_NSEC_SIGNED flag
+    // should be return.
+    // No "findAll" test case for this because NXRRSET shouldn't happen for it.
+    expected_rdatas.clear();
+    expected_sig_rdatas.clear();
+    if ((sec_flag & ZoneFinder::RESULT_NSEC_SIGNED) != 0) {
+        expected_rdatas.push_back("www2.example.org. A AAAA NSEC RRSIG");
+        expected_sig_rdatas.push_back("NSEC 5 3 3600 20000101000000 "
+                                      "20000201000000 12345 example.org. "
+                                      "FAKEFAKEFAKE");
+    }
+    doFindTest(finder, Name("www.example.org."), RRType::TXT(), RRType::NSEC(),
+               RRTTL(3600), ZoneFinder::NXRRSET, expected_rdatas,
+               expected_sig_rdatas, sec_flag, Name::ROOT_NAME(),
+               ZoneFinder::FIND_DNSSEC);
+
+    // Empty name, should result in NXRRSET (in this test setup the NSEC
+    // doesn't have RRSIG).
+    expected_rdatas.clear();
+    expected_sig_rdatas.clear();
+    if ((sec_flag & ZoneFinder::RESULT_NSEC_SIGNED) != 0) {
+        expected_rdatas.push_back("empty.nonterminal.example.org. NSEC");
+    }
+    doFindTest(finder, Name("nonterminal.example.org."), RRType::A(),
+               RRType::NSEC(), RRTTL(3600), ZoneFinder::NXRRSET,
+               expected_rdatas,expected_sig_rdatas, sec_flag,
+               Name("l.example.org."), ZoneFinder::FIND_DNSSEC);
+    dnssecFlagCheckForAny(finder, Name("nonterminal.example.org"), sec_flag);
+
+    // Wildcard match
+    expected_rdatas.clear();
+    expected_sig_rdatas.clear();
+    expected_rdatas.push_back("192.0.2.5");
+    expected_sig_rdatas.push_back("A 5 3 3600 20000101000000 "
+                                  "20000201000000 12345 example.org. "
+                                  "FAKEFAKEFAKE");
+    doFindTest(finder, Name("b.a.wild.example.org"), RRType::A(),
+               RRType::A(), RRTTL(3600), ZoneFinder::SUCCESS, expected_rdatas,
+               expected_sig_rdatas, (ZoneFinder::RESULT_WILDCARD | sec_flag),
+               Name("b.a.wild.example.org"), ZoneFinder::FIND_DNSSEC);
+    dnssecFlagCheckForAny(finder, Name("b.a.wild.example.org"), sec_flag);
+
+    // Wildcard + NXRRSET (no "findAll" test for this case)
+    expected_rdatas.clear();
+    expected_sig_rdatas.clear();
+    if ((sec_flag & ZoneFinder::RESULT_NSEC_SIGNED) != 0) {
+        expected_rdatas.push_back("cancel.here.wild.example.org. "
+                                  "A NSEC RRSIG");
+        expected_sig_rdatas.push_back("NSEC 5 3 3600 20000101000000 "
+                                      "20000201000000 12345 example.org. "
+                                      "FAKEFAKEFAKE");
+    }
+    doFindTest(finder, Name("b.a.wild.example.org"),
+               RRType::TXT(), RRType::NSEC(), RRTTL(3600), ZoneFinder::NXRRSET,
+               expected_rdatas, expected_sig_rdatas,
+               (ZoneFinder::RESULT_WILDCARD | sec_flag),
+               Name("*.wild.example.org"), ZoneFinder::FIND_DNSSEC);
+
+    // Empty wildcard (this NSEC doesn't have RRSIG in our test data)
+    expected_rdatas.clear();
+    expected_sig_rdatas.clear();
+    if ((sec_flag & ZoneFinder::RESULT_NSEC_SIGNED) != 0) {
+        expected_rdatas.push_back("wild.*.foo.*.bar.example.org. NSEC");
+    }
+    doFindTest(finder, Name("foo.wild.bar.example.org"),
+               RRType::TXT(), RRType::NSEC(), RRTTL(3600), ZoneFinder::NXRRSET,
+               expected_rdatas, expected_sig_rdatas,
+               (ZoneFinder::RESULT_WILDCARD | sec_flag),
+               Name("bao.example.org"), ZoneFinder::FIND_DNSSEC);
+    dnssecFlagCheckForAny(finder, Name("foo.wild.bar.example.org"), sec_flag);
+}
+
+TYPED_TEST(DatabaseClientTest, dnssecResultFlags) {
+    // ZoneFinder::find() for negative cases and wildcard cases should check
+    // whether the zone is signed with NSEC or NSEC3.
+
+    // In the default test setup, the zone should be considered NSEC-signed
+    // (the apex node has an NSEC RR).
+    {
+        SCOPED_TRACE("NSEC only");
+        dnssecFlagCheck(*this->getFinder(), ZoneFinder::RESULT_NSEC_SIGNED);
+    }
+
+    // Then add an NSEC3PARAM RRset at the apex (it may look weird if the
+    // zone only has NSEC3PARM RRset (but no NSEC3s), but it is okay for the
+    // purpose of this test).  The zone should now be considered NSEC3-signed.
+    // Note that the apex NSEC still exists; NSEC3 should override NSEC.
+    this->updater_ = this->client_->getUpdater(this->zname_, false);
+    this->rrset_.reset(new RRset(this->zname_, this->qclass_,
+                                 RRType::NSEC3PARAM(), this->rrttl_));
+    this->rrset_->addRdata(rdata::createRdata(this->rrset_->getType(),
+                                              this->rrset_->getClass(),
+                                              "1 0 12 aabbccdd"));
+    this->updater_->addRRset(*this->rrset_);
+    {
+        SCOPED_TRACE("NSEC and NSEC3");
+        dnssecFlagCheck(this->updater_->getFinder(),
+                        ZoneFinder::RESULT_NSEC3_SIGNED);
+    }
+
+    // Next, delete the apex NSEC.  Since NSEC3PARAM remains, the zone should
+    // still be considered NSEC3-signed.
+    RRsetPtr nsec_rrset(new RRset(this->zname_, this->qclass_, RRType::NSEC(),
+                                  this->rrttl_));
+    nsec_rrset->addRdata(rdata::createRdata(RRType::NSEC(), this->qclass_,
+                                            "acnamesig1.example.org. NS A "
+                                            "NSEC RRSIG"));
+    this->updater_->deleteRRset(*nsec_rrset);
+    {
+        SCOPED_TRACE("NSEC3 only");
+        dnssecFlagCheck(this->updater_->getFinder(),
+                        ZoneFinder::RESULT_NSEC3_SIGNED);
+    }
+
+    // Finally, delete the NSEC3PARAM we just added above.  The zone should
+    // then be considered unsigned.
+    this->updater_->deleteRRset(*this->rrset_);
+    {
+        SCOPED_TRACE("unsigned");
+        dnssecFlagCheck(this->updater_->getFinder(),
+                        ZoneFinder::RESULT_DEFAULT);
+    }
+}
+
 TYPED_TEST(DatabaseClientTest, NXDOMAIN_NSEC) {
     // The domain doesn't exist, so we must get the right NSEC
     boost::shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
-
     this->expected_rdatas_.push_back("www2.example.org. A AAAA NSEC RRSIG");
     this->expected_sig_rdatas_.push_back("NSEC 5 3 3600 20000101000000 "
                                          "20000201000000 12345 example.org. "
@@ -2452,14 +2707,13 @@ TYPED_TEST(DatabaseClientTest, NXDOMAIN_NSEC) {
     if (!this->is_mock_) {
         return; // We don't make the real DB to throw
     }
-    EXPECT_NO_THROW(doFindTest(*finder,
-                               isc::dns::Name("notimplnsec.example.org."),
-                               isc::dns::RRType::TXT(),
-                               isc::dns::RRType::NSEC(), this->rrttl_,
-                               ZoneFinder::NXDOMAIN, this->empty_rdatas_,
-                               this->empty_rdatas_,
-                               ZoneFinder::RESULT_DEFAULT,
-                               Name::ROOT_NAME(), ZoneFinder::FIND_DNSSEC));
+    // In this case the accessor doesn't support findPreviousName(), but the
+    // zone apex has NSEC, and the zone itself is considered NSEC-signed.
+    doFindTest(*finder, Name("notimplnsec.example.org."),
+               RRType::TXT(), RRType::NSEC(), this->rrttl_,
+               ZoneFinder::NXDOMAIN, this->empty_rdatas_,
+               this->empty_rdatas_, ZoneFinder::RESULT_NSEC_SIGNED,
+               Name::ROOT_NAME(), ZoneFinder::FIND_DNSSEC);
 }
 
 TYPED_TEST(DatabaseClientTest, emptyNonterminalNSEC) {
@@ -2479,14 +2733,12 @@ TYPED_TEST(DatabaseClientTest, emptyNonterminalNSEC) {
     if (!this->is_mock_) {
         return; // We don't make the real DB to throw
     }
-    EXPECT_NO_THROW(doFindTest(*finder,
-                               isc::dns::Name("here.wild.example.org."),
-                               isc::dns::RRType::TXT(),
-                               isc::dns::RRType::NSEC(),
-                               this->rrttl_, ZoneFinder::NXRRSET,
-                               this->empty_rdatas_, this->empty_rdatas_,
-                               ZoneFinder::RESULT_DEFAULT,
-                               Name::ROOT_NAME(), ZoneFinder::FIND_DNSSEC));
+    // See the corresponding case of NXDOMAIN_NSEC.
+    doFindTest(*finder, Name("here.wild.example.org."),
+               RRType::TXT(), RRType::NSEC(), this->rrttl_,
+               ZoneFinder::NXRRSET, this->empty_rdatas_,
+               this->empty_rdatas_, ZoneFinder::RESULT_NSEC_SIGNED,
+               Name::ROOT_NAME(), ZoneFinder::FIND_DNSSEC);
 }
 
 TYPED_TEST(DatabaseClientTest, anyFromFind) {
@@ -3724,6 +3976,27 @@ TEST_F(MockDatabaseClientTest, journalWithBadData) {
                  second->getNextDiff(), DataSourceError);
     EXPECT_THROW(this->client_->getJournalReader(this->zname_, 7, 8).
                  second->getNextDiff(), DataSourceError);
+}
+
+/// Let us test a little bit of NSEC3.
+TEST_F(MockDatabaseClientTest, findNSEC3) {
+    // Set up the faked hash calculator.
+    setNSEC3HashCreator(&test_nsec3_hash_creator_);
+
+    DataSourceClient::FindResult
+        zone(this->client_->findZone(Name("example.org")));
+    ASSERT_EQ(result::SUCCESS, zone.code);
+    boost::shared_ptr<DatabaseClient::Finder> finder(
+        dynamic_pointer_cast<DatabaseClient::Finder>(zone.zone_finder));
+
+    // It'll complain if there is no NSEC3PARAM yet
+    EXPECT_THROW(finder->findNSEC3(Name("example.org"), false),
+                 DataSourceError);
+    // And enable NSEC3 in the zone.
+    this->current_accessor_->enableNSEC3();
+
+    // The rest is in the function, it is shared with in-memory tests
+    performNSEC3Test(*finder);
 }
 
 }
