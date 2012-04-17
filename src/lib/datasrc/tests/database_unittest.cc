@@ -14,15 +14,9 @@
 
 #include "faked_nsec3.h"
 
-#include <stdlib.h>
-
-#include <boost/shared_ptr.hpp>
-#include <boost/lexical_cast.hpp>
-
-#include <gtest/gtest.h>
-
 #include <exceptions/exceptions.h>
 
+#include <dns/masterload.h>
 #include <dns/name.h>
 #include <dns/rrttl.h>
 #include <dns/rrset.h>
@@ -37,6 +31,13 @@
 
 #include <testutils/dnsmessage_test.h>
 
+#include <gtest/gtest.h>
+
+#include <boost/bind.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/lexical_cast.hpp>
+
+#include <cstdlib>
 #include <map>
 #include <vector>
 
@@ -47,6 +48,7 @@ using namespace std;
 using boost::dynamic_pointer_cast;
 using boost::lexical_cast;
 using namespace isc::dns;
+using namespace isc::testutils;
 using namespace isc::datasrc::test;
 
 namespace {
@@ -261,7 +263,10 @@ public:
     virtual void commit() {}
     virtual void rollback() {}
     virtual void addRecordToZone(const string (&)[ADD_COLUMN_COUNT]) {}
+    virtual void addNSEC3RecordToZone(const string (&)[ADD_NSEC3_COLUMN_COUNT])
+    {}
     virtual void deleteRecordInZone(const string (&)[DEL_PARAM_COUNT]) {}
+    virtual void deleteNSEC3RecordInZone(const string (&)[DEL_PARAM_COUNT]) {}
     virtual void addRecordDiff(int, uint32_t, DiffOperation,
                                const std::string (&)[DIFF_PARAM_COUNT]) {}
 
@@ -374,6 +379,8 @@ public:
     MockAccessor() : rollbacked_(false), did_transaction_(false) {
         readonly_records_ = &readonly_records_master_;
         update_records_ = &update_records_master_;
+        nsec3_namespace_ = &nsec3_namespace_master_;
+        update_nsec3_namespace_ = &update_nsec3_namespace_master_;
         empty_records_ = &empty_records_master_;
         journal_entries_ = &journal_entries_master_;
         fillData();
@@ -383,6 +390,9 @@ public:
         boost::shared_ptr<MockAccessor> cloned_accessor(new MockAccessor());
         cloned_accessor->readonly_records_ = &readonly_records_master_;
         cloned_accessor->update_records_ = &update_records_master_;
+        cloned_accessor->nsec3_namespace_ = &nsec3_namespace_master_;
+        cloned_accessor->update_nsec3_namespace_ =
+            &update_nsec3_namespace_master_;
         cloned_accessor->empty_records_ = &empty_records_master_;
         cloned_accessor->journal_entries_ = &journal_entries_master_;
         latest_clone_ = cloned_accessor;
@@ -649,8 +659,8 @@ public:
     virtual IteratorContextPtr getNSEC3Records(const std::string& hash,
                                                int) const
     {
-        Domains::const_iterator it(nsec3_namespace_.find(hash));
-        if (it == nsec3_namespace_.end()) {
+        Domains::const_iterator it(nsec3_namespace_->find(hash));
+        if (it == nsec3_namespace_->end()) {
             return (IteratorContextPtr(new EmptyIteratorContext()));
         } else {
             return (IteratorContextPtr(new DomainIterator(it->second)));
@@ -670,8 +680,10 @@ public:
         // original.
         if (replace) {
             update_records_->clear();
+            update_nsec3_namespace_->clear();
         } else {
             *update_records_ = *readonly_records_;
+            *update_nsec3_namespace_ = nsec3_namespace_master_;
         }
 
         if (zone_name == "bad.example.org.") {
@@ -684,7 +696,9 @@ public:
     }
     virtual void commit() {
         *readonly_records_ = *update_records_;
+        *nsec3_namespace_ = *update_nsec3_namespace_;
     }
+
     virtual void rollback() {
         // Special hook: if something with a name of "throw.example.org"
         // has been added, trigger an imaginary unexpected event with an
@@ -695,27 +709,54 @@ public:
 
         rollbacked_ = true;
     }
-    virtual void addRecordToZone(const string (&columns)[ADD_COLUMN_COUNT]) {
+
+private:
+    // Common subroutine for addRecordToZone and addNSEC3RecordToZone.
+    void addRecord(Domains& domains,
+                   const string (&columns)[ADD_COLUMN_COUNT])
+    {
         // Copy the current value to cur_name.  If it doesn't exist,
         // operator[] will create a new one.
-        cur_name_ = (*update_records_)[columns[DatabaseAccessor::ADD_NAME]];
+        cur_name_ = domains[columns[ADD_NAME]];
 
         vector<string> record_columns;
-        record_columns.push_back(columns[DatabaseAccessor::ADD_TYPE]);
-        record_columns.push_back(columns[DatabaseAccessor::ADD_TTL]);
-        record_columns.push_back(columns[DatabaseAccessor::ADD_SIGTYPE]);
-        record_columns.push_back(columns[DatabaseAccessor::ADD_RDATA]);
-        record_columns.push_back(columns[DatabaseAccessor::ADD_NAME]);
+        record_columns.push_back(columns[ADD_TYPE]);
+        record_columns.push_back(columns[ADD_TTL]);
+        record_columns.push_back(columns[ADD_SIGTYPE]);
+        record_columns.push_back(columns[ADD_RDATA]);
+        record_columns.push_back(columns[ADD_NAME]);
 
         // copy back the added entry
         cur_name_.push_back(record_columns);
-        (*update_records_)[columns[DatabaseAccessor::ADD_NAME]] = cur_name_;
+        domains[columns[DatabaseAccessor::ADD_NAME]] = cur_name_;
 
         // remember this one so that test cases can check it.
         copy(columns, columns + DatabaseAccessor::ADD_COLUMN_COUNT,
              columns_lastadded_);
     }
 
+public:
+    virtual void addRecordToZone(const string (&columns)[ADD_COLUMN_COUNT]) {
+        addRecord(*update_records_, columns);
+    }
+
+    virtual void addNSEC3RecordToZone(
+        const string (&columns)[ADD_NSEC3_COLUMN_COUNT])
+    {
+        // Convert the NSEC3 parameters in the normal (non NSEC3) style so
+        // we can share the merge code, and then update using addRecord().
+        string normal_columns[ADD_COLUMN_COUNT];
+
+        normal_columns[ADD_TYPE] = columns[ADD_NSEC3_TYPE];
+        normal_columns[ADD_TTL] = columns[ADD_NSEC3_TTL];
+        normal_columns[ADD_SIGTYPE] = "";
+        normal_columns[ADD_RDATA] = columns[ADD_NSEC3_RDATA];
+        normal_columns[ADD_NAME] = columns[ADD_NSEC3_HASH];
+
+        addRecord(*update_nsec3_namespace_, normal_columns);
+    }
+
+private:
     // Helper predicate class used in deleteRecordInZone().
     struct deleteMatch {
         deleteMatch(const string& type, const string& rdata) :
@@ -728,17 +769,31 @@ public:
         const string& rdata_;
     };
 
-    virtual void deleteRecordInZone(const string (&params)[DEL_PARAM_COUNT]) {
+    // Common subroutine for deleteRecordinZone and deleteNSEC3RecordInZone.
+    void deleteRecord(Domains& domains,
+                      const string (&params)[DEL_PARAM_COUNT])
+    {
         vector<vector<string> >& records =
-            (*update_records_)[params[DatabaseAccessor::DEL_NAME]];
+            domains[params[DatabaseAccessor::DEL_NAME]];
         records.erase(remove_if(records.begin(), records.end(),
                                 deleteMatch(
                                     params[DatabaseAccessor::DEL_TYPE],
                                     params[DatabaseAccessor::DEL_RDATA])),
                       records.end());
         if (records.empty()) {
-            (*update_records_).erase(params[DatabaseAccessor::DEL_NAME]);
+            domains.erase(params[DatabaseAccessor::DEL_NAME]);
         }
+    }
+
+public:
+    virtual void deleteRecordInZone(const string (&params)[DEL_PARAM_COUNT]) {
+        deleteRecord(*update_records_, params);
+    }
+
+    virtual void deleteNSEC3RecordInZone(
+        const string (&params)[DEL_PARAM_COUNT])
+    {
+        deleteRecord(*update_nsec3_namespace_, params);
     }
 
     //
@@ -799,13 +854,13 @@ public:
     {
         // TODO: Provide some broken data, but it is not known yet how broken
         // they'll have to be.
-        Domains::const_iterator it(nsec3_namespace_.lower_bound(hash));
+        Domains::const_iterator it(nsec3_namespace_->lower_bound(hash));
         // We got just after the one we want
-        if (it == nsec3_namespace_.begin()) {
+        if (it == nsec3_namespace_->begin()) {
             // Hmm, we got something really small. So we wrap around.
             // This is one after the last, so after decreasing it we'll get
             // the biggest.
-            it = nsec3_namespace_.end();
+            it = nsec3_namespace_->end();
         }
         return ((--it)->first);
     }
@@ -889,11 +944,12 @@ private:
     Domains* readonly_records_;
     Domains update_records_master_;
     Domains* update_records_;
+    Domains nsec3_namespace_master_;
+    Domains* nsec3_namespace_;
+    Domains update_nsec3_namespace_master_;
+    Domains* update_nsec3_namespace_;
     const Domains empty_records_master_;
     const Domains* empty_records_;
-
-    // The NSEC3 namespace. The above trick will be added once it is needed.
-    Domains nsec3_namespace_;
 
     // The journal data
     std::vector<JournalEntry> journal_entries_master_;
@@ -959,13 +1015,13 @@ private:
     // the NSEC3 namespace. You don't provide the full name, only
     // the hash part.
     void addCurHash(const std::string& hash) {
-        ASSERT_EQ(0, nsec3_namespace_.count(hash));
+        ASSERT_EQ(0, nsec3_namespace_->count(hash));
         // Append the name to all of them
         for (std::vector<std::vector<std::string> >::iterator
              i = cur_name_.begin(); i != cur_name_.end(); ++ i) {
             i->push_back(hash);
         }
-        nsec3_namespace_[hash] = cur_name_;
+        (*nsec3_namespace_)[hash] = cur_name_;
         cur_name_.clear();
     }
 
@@ -1207,7 +1263,7 @@ public:
                     rdata::createRdata(expected_rrset->getType(),
                                        expected_rrset->getClass(),
                                        (*it).data_[Accessor::DIFF_RDATA]));
-                isc::testutils::rrsetCheck(expected_rrset, rrset);
+                rrsetCheck(expected_rrset, rrset);
             }
             // We should have examined all entries of both expected and
             // actual data.
@@ -1376,7 +1432,7 @@ checkRRset(isc::dns::ConstRRsetPtr rrset,
             isc::dns::rdata::createRdata(rrtype, rrclass,
                                          rdatas[i]));
     }
-    isc::testutils::rrsetCheck(expected_rrset, rrset);
+    rrsetCheck(expected_rrset, rrset);
 }
 
 // Iterate through a zone, common case
@@ -1512,7 +1568,7 @@ TYPED_TEST(DatabaseClientTest, getSOAFromIterator) {
     }
     ASSERT_TRUE(rrset);
     // It should be identical to the result of getSOA().
-    isc::testutils::rrsetCheck(it->getSOA(), rrset);
+    rrsetCheck(it->getSOA(), rrset);
 }
 
 TYPED_TEST(DatabaseClientTest, noSOAFromIterator) {
@@ -1550,7 +1606,7 @@ TYPED_TEST(DatabaseClientTest, iterateThenUpdate) {
     }
     ASSERT_TRUE(rrset);
     // It should be identical to the result of getSOA().
-    isc::testutils::rrsetCheck(it->getSOA(), rrset);
+    rrsetCheck(it->getSOA(), rrset);
 }
 
 TYPED_TEST(DatabaseClientTest, updateThenIterateThenUpdate) {
@@ -2946,6 +3002,97 @@ TYPED_TEST(DatabaseClientTest, addRRsetToNewZone) {
     this->checkLastAdded(rrset_added);
 }
 
+// Below we define a set of NSEC3 update tests.   Right now this only works
+// for the mock DB, but the plan is to make it a TYPED_TEST to share the case
+// with SQLite3 implementation, too.
+
+// Commonly used data for NSEC3 update tests below.
+const char* const nsec3_hash = "1BB7SO0452U1QHL98UISNDD9218GELR5";
+const char* const nsec3_rdata = "1 1 12 AABBCCDD "
+    "2T7B4G4VSA5SMI47K61MV5BV1A22BOJR NS SOA RRSIG NSEC3PARAM";
+const char* const nsec3_rdata2 = "1 1 12 AABBCCDD "
+    "2T7B4G4VSA5SMI47K61MV5BV1A22BOJR NS SOA RRSIG"; // differ in bitmaps
+const char* const nsec3_sig_rdata = "NSEC3 5 3 3600 20000101000000 "
+    "20000201000000 12345 example.org. FAKEFAKEFAKE";
+const char* const nsec3_sig_rdata2 = "NSEC3 5 3 3600 20000101000000 "
+    "20000201000000 12345 example.org. FAKEFAKE"; // differ in the signature
+
+// Commonly used subroutine that checks if we can get the expected record.
+// According to the API, implementations can skip filling in columns other
+// than those explicitly checked below, so we don't check them.
+void
+nsec3Check(const vector<ConstRRsetPtr>& expected_rrsets,
+           const Name& zone_name, const string& expected_hash,
+           DatabaseAccessor& accessor)
+{
+    const int zone_id = accessor.getZone(zone_name.toText()).second;
+    DatabaseAccessor::IteratorContextPtr itctx =
+        accessor.getNSEC3Records(expected_hash, zone_id);
+    ASSERT_TRUE(itctx);
+
+    // Build a list of matched RRsets and compare the both expected and built
+    // ones as sets.
+    string columns[DatabaseAccessor::COLUMN_COUNT];
+    vector<ConstRRsetPtr> actual_rrsets;
+    while (itctx->getNext(columns)) {
+        actual_rrsets.push_back(
+            textToRRset(expected_hash + "." + zone_name.toText() + " " +
+                        columns[DatabaseAccessor::TTL_COLUMN] + " IN " +
+                        columns[DatabaseAccessor::TYPE_COLUMN] + " " +
+                        columns[DatabaseAccessor::RDATA_COLUMN]));
+    }
+    rrsetsCheck(expected_rrsets.begin(), expected_rrsets.end(),
+                actual_rrsets.begin(), actual_rrsets.end());
+}
+
+TEST_F(MockDatabaseClientTest, addDeleteNSEC3InZone) {
+    // Add one NSEC3 RR to the zone, delete it, and add another one.
+    this->updater_ = this->client_->getUpdater(this->zname_, true);
+    const ConstRRsetPtr nsec3_rrset =
+        textToRRset(string(nsec3_hash) + ".example.org. 3600 IN NSEC3 " +
+                    string(nsec3_rdata));
+    const ConstRRsetPtr nsec3_rrset2 =
+        textToRRset(string(nsec3_hash) + ".example.org. 3600 IN NSEC3 " +
+                    string(nsec3_rdata2));
+    this->updater_->addRRset(*nsec3_rrset);
+    this->updater_->deleteRRset(*nsec3_rrset);
+    this->updater_->addRRset(*nsec3_rrset2);
+    this->updater_->commit();
+
+    // Check if we can get the expected record.
+    vector<ConstRRsetPtr> expected_rrsets;
+    expected_rrsets.push_back(nsec3_rrset2);
+    nsec3Check(expected_rrsets, this->zname_, nsec3_hash,
+               *this->current_accessor_);
+}
+
+TEST_F(MockDatabaseClientTest, addDeleteNSEC3AndRRSIGToZone) {
+    // Add one NSEC3 RR and its RRSIG to the zone, delete the RRSIG and add
+    // a new one.
+    this->updater_ = this->client_->getUpdater(this->zname_, true);
+    const ConstRRsetPtr nsec3_rrset =
+        textToRRset(string(nsec3_hash) + ".example.org. 3600 IN NSEC3 " +
+                    string(nsec3_rdata));
+    const ConstRRsetPtr nsec3_sig_rrset =
+        textToRRset(string(nsec3_hash) + ".example.org. 3600 IN RRSIG " +
+                    string(nsec3_sig_rdata));
+    const ConstRRsetPtr nsec3_sig_rrset2 =
+        textToRRset(string(nsec3_hash) + ".example.org. 3600 IN RRSIG " +
+                    string(nsec3_sig_rdata2));
+    this->updater_->addRRset(*nsec3_rrset);
+    this->updater_->addRRset(*nsec3_sig_rrset);
+    this->updater_->deleteRRset(*nsec3_sig_rrset);
+    this->updater_->addRRset(*nsec3_sig_rrset2);
+    this->updater_->commit();
+
+    // Check if we can get the expected record.
+    vector<ConstRRsetPtr> expected_rrsets;
+    expected_rrsets.push_back(nsec3_rrset);
+    expected_rrsets.push_back(nsec3_sig_rrset2);
+    nsec3Check(expected_rrsets, this->zname_, nsec3_hash,
+               *this->current_accessor_);
+}
+
 TYPED_TEST(DatabaseClientTest, addRRsetToCurrentZone) {
     // Similar to the previous test, but not replacing the existing data.
     boost::shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
@@ -3492,6 +3639,52 @@ TYPED_TEST(DatabaseClientTest, journal) {
     this->checkJournal(expected);
 }
 
+// At the moment this only works for the mock accessor.  Once sqlite3
+// accessor supports updating NSEC3, this should be merged to the previous
+// test
+TEST_F(MockDatabaseClientTest, journalForNSEC3) {
+    // Similar to the previous test, but adding/deleting NSEC3 RRs, just to
+    // confirm that NSEC3 is not special for managing diffs.
+    const ConstRRsetPtr nsec3_rrset =
+        textToRRset(string(nsec3_hash) + ".example.org. 3600 IN NSEC3 " +
+                    string(nsec3_rdata));
+
+    this->updater_ = this->client_->getUpdater(this->zname_, false, true);
+    this->updater_->deleteRRset(*this->soa_);
+    this->updater_->deleteRRset(*nsec3_rrset);
+
+    this->soa_.reset(new RRset(this->zname_, this->qclass_, RRType::SOA(),
+                               this->rrttl_));
+    this->soa_->addRdata(rdata::createRdata(this->soa_->getType(),
+                                            this->soa_->getClass(),
+                                            "ns1.example.org. "
+                                            "admin.example.org. "
+                                            "1235 3600 1800 2419200 7200"));
+    this->updater_->addRRset(*this->soa_);
+    this->updater_->addRRset(*nsec3_rrset);
+    this->updater_->commit();
+    std::vector<JournalEntry> expected;
+    expected.push_back(JournalEntry(WRITABLE_ZONE_ID, 1234,
+                                    DatabaseAccessor::DIFF_DELETE,
+                                    "example.org.", "SOA", "3600",
+                                    "ns1.example.org. admin.example.org. "
+                                    "1234 3600 1800 2419200 7200"));
+    expected.push_back(JournalEntry(WRITABLE_ZONE_ID, 1234,
+                                    DatabaseAccessor::DIFF_DELETE,
+                                    string(nsec3_hash) + ".example.org.",
+                                    "NSEC3", "3600", nsec3_rdata));
+    expected.push_back(JournalEntry(WRITABLE_ZONE_ID, 1235,
+                                    DatabaseAccessor::DIFF_ADD,
+                                    "example.org.", "SOA", "3600",
+                                    "ns1.example.org. admin.example.org. "
+                                    "1235 3600 1800 2419200 7200"));
+    expected.push_back(JournalEntry(WRITABLE_ZONE_ID, 1235,
+                                    DatabaseAccessor::DIFF_ADD,
+                                    string(nsec3_hash) + ".example.org.",
+                                    "NSEC3", "3600", nsec3_rdata));
+    this->checkJournal(expected);
+}
+
 /*
  * Push multiple delete-add sequences. Checks it is allowed and all is
  * saved.
@@ -3673,10 +3866,10 @@ TYPED_TEST(DatabaseClientTest, journalReader) {
     ASSERT_TRUE(jnl_reader);
     ConstRRsetPtr rrset = jnl_reader->getNextDiff();
     ASSERT_TRUE(rrset);
-    isc::testutils::rrsetCheck(this->soa_, rrset);
+    rrsetCheck(this->soa_, rrset);
     rrset = jnl_reader->getNextDiff();
     ASSERT_TRUE(rrset);
-    isc::testutils::rrsetCheck(soa_end, rrset);
+    rrsetCheck(soa_end, rrset);
     rrset = jnl_reader->getNextDiff();
     ASSERT_FALSE(rrset);
 
@@ -3720,7 +3913,7 @@ TYPED_TEST(DatabaseClientTest, readLargeJournal) {
     ConstRRsetPtr actual;
     int i = 0;
     while ((actual = jnl_reader->getNextDiff()) != NULL) {
-        isc::testutils::rrsetCheck(expected.at(i++), actual);
+        rrsetCheck(expected.at(i++), actual);
     }
     EXPECT_EQ(expected.size(), i); // we should have eaten all expected data
 }
