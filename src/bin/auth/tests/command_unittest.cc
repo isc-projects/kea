@@ -56,8 +56,6 @@ using namespace isc::auth::unittest;
 
 namespace {
 
-const char* const SPEC_FILE = AUTH_OBJ_DIR "/auth.spec";
-
 class AuthCommandTest : public ::testing::Test {
 protected:
     AuthCommandTest() :
@@ -262,6 +260,8 @@ TEST_F(AuthCommandTest,
 #endif
     )
 {
+    const char* const SPEC_FILE = AUTH_OBJ_DIR "/auth.spec";
+
     // Prepare the database first
     const string test_db = TEST_DATA_BUILDDIR "/auth_test.sqlite3.copied";
     const string bad_db = TEST_DATA_BUILDDIR "/does-not-exist.sqlite3";
@@ -319,6 +319,7 @@ TEST_F(AuthCommandTest,
         Element::fromJSON("{\"origin\": \"example.com\"}"));
     checkAnswer(1);
 
+    // The previous zone is not hurt in any way
     EXPECT_EQ(ZoneFinder::SUCCESS, server_.getInMemoryClient(RRClass::IN())->
               findZone(Name("example.org")).zone_finder->
               find(Name("example.org"), RRType::SOA())->code);

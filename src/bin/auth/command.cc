@@ -270,7 +270,7 @@ private:
         // Unfortunately, we need to walk the list to find the correct data
         // source.
         // TODO: Make it named sets. These lists are uncomfortable.
-        for (size_t i(0); i < config->size(); ++ i) {
+        for (size_t i(0); i < config->size(); ++i) {
             // We use the getValue to get defaults as well
             const ConstElementPtr dsrc_config(config->get(i));
             const ConstElementPtr class_config(dsrc_config->get("class"));
@@ -294,7 +294,7 @@ private:
         }
 
         // Now we need to walk the zones and find the correct one.
-        for (size_t i(0); i < zone_list->size(); ++ i) {
+        for (size_t i(0); i < zone_list->size(); ++i) {
             const ConstElementPtr zone_config(zone_list->get(i));
             if (Name(zone_config->get("origin")->stringValue()) == origin_) {
                 // The origins are the same, so we consider this config to be
