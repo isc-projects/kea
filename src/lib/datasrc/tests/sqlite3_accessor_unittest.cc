@@ -1079,6 +1079,12 @@ TEST_F(SQLite3Update, duplicateAdd) {
 TEST_F(SQLite3Update, invalidAdd) {
     // An attempt of add before an explicit start of transaction
     EXPECT_THROW(accessor->addRecordToZone(add_columns), DataSourceError);
+
+    // Same for addNSEC3.
+    copy(nsec3_data, nsec3_data + DatabaseAccessor::ADD_NSEC3_COLUMN_COUNT,
+         add_nsec3_columns);
+    EXPECT_THROW(accessor->addNSEC3RecordToZone(add_nsec3_columns),
+                 DataSourceError);
 }
 
 TEST_F(SQLite3Update, deleteRecord) {
