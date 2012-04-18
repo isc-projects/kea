@@ -66,17 +66,16 @@ enum StatementID {
     ITERATE = 9,
     FIND_PREVIOUS = 10,
     ADD_RECORD_DIFF = 11,
-    GET_RECORD_DIFF = 12,       // This is temporary for testing "add diff"
-    LOW_DIFF_ID = 13,
-    HIGH_DIFF_ID = 14,
-    DIFF_RECS = 15,
-    NSEC3 = 16,
-    NSEC3_PREVIOUS = 17,
-    NSEC3_LAST = 18,
-    ADD_NSEC3_RECORD = 19,
-    DEL_ZONE_NSEC3_RECORDS = 20,
-    DEL_NSEC3_RECORD = 21,
-    NUM_STATEMENTS = 22
+    LOW_DIFF_ID = 12,
+    HIGH_DIFF_ID = 13,
+    DIFF_RECS = 14,
+    NSEC3 = 15,
+    NSEC3_PREVIOUS = 16,
+    NSEC3_LAST = 17,
+    ADD_NSEC3_RECORD = 18,
+    DEL_ZONE_NSEC3_RECORDS = 19,
+    DEL_NSEC3_RECORD = 20,
+    NUM_STATEMENTS = 21
 };
 
 const char* const text_statements[NUM_STATEMENTS] = {
@@ -120,8 +119,6 @@ const char* const text_statements[NUM_STATEMENTS] = {
     "INSERT INTO diffs "        // ADD_RECORD_DIFF
         "(zone_id, version, operation, name, rrtype, ttl, rdata) "
         "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
-    "SELECT name, rrtype, ttl, rdata, version, operation " // GET_RECORD_DIFF
-        "FROM diffs WHERE zone_id = ?1 ORDER BY id, operation",
 
     // Two statements to select the lowest ID and highest ID in a set of
     // differences.
