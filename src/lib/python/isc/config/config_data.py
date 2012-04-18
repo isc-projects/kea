@@ -23,6 +23,7 @@ two through the classes in ccsession)
 import isc.cc.data
 import isc.config.module_spec
 import ast
+import copy
 
 class ConfigDataError(Exception): pass
 
@@ -210,7 +211,8 @@ def find_spec_part(element, identifier, strict_identifier = True):
         cur_el = _get_map_or_list(cur_el)
 
     cur_el = _find_spec_part_single(cur_el, id_parts[-1])
-    return cur_el
+    # Due to the raw datatypes we use, it is safer to return a deep copy here
+    return copy.deepcopy(cur_el)
 
 def spec_name_list(spec, prefix="", recurse=False):
     """Returns a full list of all possible item identifiers in the
