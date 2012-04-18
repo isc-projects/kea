@@ -214,7 +214,13 @@ public:
     virtual void addRecordToZone(
         const std::string (&columns)[ADD_COLUMN_COUNT]);
 
+    virtual void addNSEC3RecordToZone(
+        const std::string (&columns)[ADD_NSEC3_COLUMN_COUNT]);
+
     virtual void deleteRecordInZone(
+        const std::string (&params)[DEL_PARAM_COUNT]);
+
+    virtual void deleteNSEC3RecordInZone(
         const std::string (&params)[DEL_PARAM_COUNT]);
 
     /// This derived version of the method prepares an SQLite3 statement
