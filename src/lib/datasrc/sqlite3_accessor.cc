@@ -219,6 +219,10 @@ private:
 // statement, which is completed with a single "step" (normally within a
 // single call to an SQLite3Database method).  In particular, it cannot be
 // used for "SELECT" variants, which generally expect multiple matching rows.
+//
+// The bindXXX methods are straightforward wrappers for the corresponding
+// sqlite3_bind_xxx functions that make bindings with the given parameters
+// on the statement maintained in this class.
 class StatementProcessor {
 public:
     // desc will be used on failure in the what() message of the resulting
@@ -233,6 +237,33 @@ public:
 
     ~StatementProcessor() {
         sqlite3_reset(stmt_);
+    }
+
+    void bindInt(int index, int val) {
+        if (sqlite3_bind_int(stmt_, index, val) != SQLITE_OK) {
+            isc_throw(DataSourceError,
+                      "failed to bind SQLite3 parameter: " <<
+                      sqlite3_errmsg(dbparameters_.db_));
+        }
+    }
+
+    void bindInt64(int index, sqlite3_int64 val) {
+        if (sqlite3_bind_int64(stmt_, index, val) != SQLITE_OK) {
+            isc_throw(DataSourceError,
+                      "failed to bind SQLite3 parameter: " <<
+                      sqlite3_errmsg(dbparameters_.db_));
+        }
+    }
+
+    // For simplicity, we assume val is a NULL-terminated string, and the
+    // entire non NUL characters are to be bound.  The destructor parameter
+    // is normally either SQLITE_TRANSIENT or SQLITE_STATIC.
+    void bindText(int index, const char* val, void(*destructor)(void*)) {
+        if (sqlite3_bind_text(stmt_, index, val, -1, destructor)
+            != SQLITE_OK) {
+            isc_throw(DataSourceError, "failed to bind SQLite3 parameter: " <<
+                      sqlite3_errmsg(dbparameters_.db_));
+        }
     }
 
     void exec() {
@@ -1040,18 +1071,11 @@ SQLite3Accessor::startUpdateZone(const string& zone_name, const bool replace) {
             for (size_t i = 0;
                  i < sizeof(delzone_stmts) / sizeof(delzone_stmts[0]);
                  ++i) {
-                StatementProcessor delzone_exec(*dbparameters_,
+                StatementProcessor delzone_proc(*dbparameters_,
                                                 delzone_stmts[i].first,
                                                 delzone_stmts[i].second);
-                sqlite3_stmt* stmt =
-                    dbparameters_->getStatement(delzone_stmts[i].first);
-                sqlite3_clear_bindings(stmt);
-                if (sqlite3_bind_int(stmt, 1, zone_info.second) != SQLITE_OK) {
-                    isc_throw(DataSourceError,
-                              "failed to bind SQLite3 parameter: " <<
-                              sqlite3_errmsg(dbparameters_->db_));
-                }
-                delzone_exec.exec();
+                delzone_proc.bindInt(1, zone_info.second);
+                delzone_proc.exec();
             }
         } catch (const DataSourceError&) {
             // Once we start a transaction, if something unexpected happens
@@ -1120,29 +1144,19 @@ void
 doUpdate(SQLite3Parameters& dbparams, StatementID stmt_id,
          COLUMNS_TYPE update_params, const char* exec_desc)
 {
-    sqlite3_stmt* const stmt = dbparams.getStatement(stmt_id);
-    StatementProcessor executer(dbparams, stmt_id, exec_desc);
+    StatementProcessor proc(dbparams, stmt_id, exec_desc);
 
     int param_id = 0;
-    if (sqlite3_bind_int(stmt, ++param_id, dbparams.updated_zone_id)
-        != SQLITE_OK) {
-        isc_throw(DataSourceError, "failed to bind SQLite3 parameter: " <<
-                  sqlite3_errmsg(dbparams.db_));
-    }
+    proc.bindInt(++param_id, dbparams.updated_zone_id);
     const size_t column_count =
         sizeof(update_params) / sizeof(update_params[0]);
     for (int i = 0; i < column_count; ++i) {
         // The old sqlite3 data source API assumes NULL for an empty column.
         // We need to provide compatibility at least for now.
-        if (sqlite3_bind_text(stmt, ++param_id,
-                              update_params[i].empty() ? NULL :
-                              update_params[i].c_str(),
-                              -1, SQLITE_TRANSIENT) != SQLITE_OK) {
-            isc_throw(DataSourceError, "failed to bind SQLite3 parameter: " <<
-                      sqlite3_errmsg(dbparams.db_));
-        }
+        proc.bindText(++param_id, update_params[i].empty() ? NULL :
+                      update_params[i].c_str(), SQLITE_TRANSIENT);
     }
-    executer.exec();
+    proc.exec();
 }
 }
 
@@ -1218,33 +1232,16 @@ SQLite3Accessor::addRecordDiff(int zone_id, uint32_t serial,
                   << dbparameters_->updated_zone_id);
     }
 
-    sqlite3_stmt* const stmt = dbparameters_->getStatement(ADD_RECORD_DIFF);
-    StatementProcessor executer(*dbparameters_, ADD_RECORD_DIFF,
-                                "add record diff");
+    StatementProcessor proc(*dbparameters_, ADD_RECORD_DIFF,
+                            "add record diff");
     int param_id = 0;
-    if (sqlite3_bind_int(stmt, ++param_id, zone_id)
-        != SQLITE_OK) {
-        isc_throw(DataSourceError, "failed to bind SQLite3 parameter: " <<
-                  sqlite3_errmsg(dbparameters_->db_));
-    }
-    if (sqlite3_bind_int64(stmt, ++param_id, serial)
-        != SQLITE_OK) {
-        isc_throw(DataSourceError, "failed to bind SQLite3 parameter: " <<
-                  sqlite3_errmsg(dbparameters_->db_));
-    }
-    if (sqlite3_bind_int(stmt, ++param_id, operation)
-        != SQLITE_OK) {
-        isc_throw(DataSourceError, "failed to bind SQLite3 parameter: " <<
-                  sqlite3_errmsg(dbparameters_->db_));
-    }
+    proc.bindInt(++param_id, zone_id);
+    proc.bindInt64(++param_id, serial);
+    proc.bindInt(++param_id, operation);
     for (int i = 0; i < DIFF_PARAM_COUNT; ++i) {
-        if (sqlite3_bind_text(stmt, ++param_id, params[i].c_str(),
-                              -1, SQLITE_TRANSIENT) != SQLITE_OK) {
-            isc_throw(DataSourceError, "failed to bind SQLite3 parameter: " <<
-                      sqlite3_errmsg(dbparameters_->db_));
-        }
+        proc.bindText(++param_id, params[i].c_str(), SQLITE_TRANSIENT);
     }
-    executer.exec();
+    proc.exec();
 }
 
 std::string
