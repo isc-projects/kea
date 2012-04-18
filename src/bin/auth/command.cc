@@ -144,11 +144,20 @@ public:
 // Handle the "loadzone" command.
 class LoadZoneCommand : public AuthCommand {
 public:
+    LoadZoneCommand() :
+        // Just fill in something, these can't be created "without data",
+        // by constructor without parameters. These values will be overwritten
+        // in validate().
+        origin_(Name::ROOT_NAME()),
+        zone_class_(RRClass::IN())
+    { }
     virtual void exec(AuthSrv& server, isc::data::ConstElementPtr args) {
         // parse and validate the args.
         if (!validate(server, args)) {
             return;
         }
+
+        getZoneConfig(server);
 
         // Load a new zone and replace the current zone with the new one.
         // TODO: eventually this should be incremental or done in some way
@@ -181,6 +190,10 @@ private:
     // The configuration corresponding to the zone.
     ConstElementPtr zone_config_;
 
+    // Parameters of the zone
+    Name origin_;
+    RRClass zone_class_;
+
     // A helper private method to parse and validate command parameters.
     // On success, it sets 'old_zone_finder' to the zone to be updated.
     // It returns true if everything is okay; and false if the command is
@@ -207,11 +220,11 @@ private:
         }
 
         ConstElementPtr class_elem = args->get("class");
-        const RRClass zone_class = class_elem ?
-            RRClass(class_elem->stringValue()) : RRClass::IN();
+        zone_class_ = class_elem ? RRClass(class_elem->stringValue()) :
+            RRClass::IN();
 
         AuthSrv::InMemoryClientPtr datasrc(server.
-                                           getInMemoryClient(zone_class));
+                                           getInMemoryClient(zone_class_));
         if (datasrc == NULL) {
             isc_throw(AuthCommandError, "Memory data source is disabled");
         }
@@ -220,18 +233,22 @@ private:
         if (!origin_elem) {
             isc_throw(AuthCommandError, "Zone origin is missing");
         }
-        const Name origin(origin_elem->stringValue());
+        origin_ = Name(origin_elem->stringValue());
 
         // Get the current zone
-        const InMemoryClient::FindResult result = datasrc->findZone(origin);
+        const InMemoryClient::FindResult result = datasrc->findZone(origin_);
         if (result.code != result::SUCCESS) {
-            isc_throw(AuthCommandError, "Zone " << origin <<
+            isc_throw(AuthCommandError, "Zone " << origin_ <<
                       " is not found in data source");
         }
 
         old_zone_finder = boost::dynamic_pointer_cast<InMemoryZoneFinder>(
             result.zone_finder);
 
+        return (true);
+    }
+
+    void getZoneConfig(const AuthSrv &server) {
         if (!server.getConfigSession()) {
             // FIXME: This is a hack to make older tests pass. We should
             // update these tests as well sometime and remove this hack.
@@ -241,7 +258,7 @@ private:
             // We provide an empty map, which means no configuration --
             // defaults.
             zone_config_ = ConstElementPtr(new MapElement());
-            return (true);
+            return;
         }
 
         // Find the config corresponding to the zone.
@@ -265,7 +282,7 @@ private:
             // anyway and we may want to change the configuration of
             // datasources somehow.
             if (dsrc_config->get("type")->stringValue() == "memory" &&
-                RRClass(class_type) == zone_class) {
+                RRClass(class_type) == zone_class_) {
                 zone_list = dsrc_config->get("zones");
                 break;
             }
@@ -279,7 +296,7 @@ private:
         // Now we need to walk the zones and find the correct one.
         for (size_t i(0); i < zone_list->size(); ++ i) {
             const ConstElementPtr zone_config(zone_list->get(i));
-            if (Name(zone_config->get("origin")->stringValue()) == origin) {
+            if (Name(zone_config->get("origin")->stringValue()) == origin_) {
                 // The origins are the same, so we consider this config to be
                 // for the zone.
                 zone_config_ = zone_config;
@@ -291,8 +308,6 @@ private:
             isc_throw(AuthCommandError,
                       "Corresponding zone configuration was not found");
         }
-
-        return (true);
     }
 };
 
