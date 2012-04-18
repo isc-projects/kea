@@ -1,0 +1,6 @@
+# this is a comment: commentexample1
+!echo this is an echo: echoexample
+!verbose on
+# this is a comment with verbose on: verbosecommentexample
+!verbose off
+# this is a comment with verbose off again: commentexample2
