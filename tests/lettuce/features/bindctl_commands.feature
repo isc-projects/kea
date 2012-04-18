@@ -70,5 +70,34 @@ Feature: control with bindctl
     Given I have bind10 running with configuration bindctl_commands.config
     And wait for bind10 stderr message BIND10_STARTED_CC
     And wait for bind10 stderr message CMDCTL_STARTED
+
+    # first a few bad commands
+    When I send bind10 the command execute
+    last bindctl output should contain Error
+    When I send bind10 the command execute file
+    last bindctl output should contain Error
+    When I send bind10 the command execute file data/commands/nosuchfile
+    last bindctl output should contain Error
+
+    # empty list should be no-op
     When I send bind10 the command execute file data/commands/empty
     last bindctl output should not contain Error
+
+    # some tests of directives like !echo and !verbose
+    When I send bind10 the command execute file data/commands/directives
+    last bindctl output should not contain Error
+    last bindctl output should not contain commentexample1
+    last bindctl output should contain echoexample
+    last bindctl output should contain verbosecommentexample
+    last bindctl output should not contain commentexample2
+
+    # bad_command contains a bad command, at which point execution should stop
+    When I send bind10 the command execute file data/commands/bad_command
+    last bindctl output should contain shouldshow
+    last bindctl output should contain Error
+    last bindctl output should not contain shouldnotshow
+
+    # nested_command contains another execute script
+    When I send bind10 the command execute file data/commands/nested
+    last bindctl output should contain shouldshow
+    last bindctl output should not contain Error    

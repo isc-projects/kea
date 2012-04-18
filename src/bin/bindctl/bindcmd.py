@@ -737,7 +737,52 @@ class BindCmdInterpreter(Cmd):
         '''Handles the 'execute' command, which executes a number of
            (preset) statements. Currently only 'file' commands are supported,
            e.g. 'execute file <file>'.'''
-        pass
+        try:
+            command_file = open(command.params['filename'])
+            self.apply_commands_from_file(command_file)
+        except IOError as ioe:
+            print("Error: " + str(ioe))
+
+    def apply_commands_from_file(self, command_file):
+        '''Applies the configuration commands from the given opened file.
+           This is the method that catches, comments, echo statements, and
+           other directives. All commands not filtered by this method are
+           interpreted as if they are directly entered in an active session.
+           Lines starting with any of the following characters are not
+           passed directly:
+           # - These are comments
+           ! - These are directives
+               !echo: print the rest of the line
+               !verbose on/off: print the commands themselves too
+               Unknown directives are ignored (with a warning)
+           The execution is stopped if there are any errors.
+        '''
+        verbose = False
+        try:
+            for line in command_file:
+                line = line.strip()
+                if verbose:
+                    print(line)
+                if line.startswith('#'):
+                    continue
+                elif line.startswith('!'):
+                    if line.startswith('!echo ') and len(line) > 6:
+                        print(line[6:])
+                    elif line.startswith('!verbose on'):
+                        verbose = True
+                    elif line.startswith('!verbose off'):
+                        verbose = False
+                    else:
+                        print("Warning: ignoring unknown directive: " + line)
+                else:
+                    cmd = BindCmdParse(line)
+                    self._validate_cmd(cmd)
+                    self._handle_cmd(cmd)
+        except isc.config.ModuleCCSessionError as mcse:
+            print(str(mcse))
+        except (IOError, http.client.HTTPException,
+                BindCtlException, isc.cc.data.DataTypeError) as err:
+            print('Error: ', err)
 
     def apply_cmd(self, cmd):
         '''Handles a general module command'''
