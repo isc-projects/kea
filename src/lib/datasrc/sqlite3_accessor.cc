@@ -1159,7 +1159,10 @@ void
 SQLite3Accessor::addNSEC3RecordToZone(
     const string (&columns)[ADD_NSEC3_COLUMN_COUNT])
 {
-    // TODO: no transaction case
+    if (!dbparameters_->updating_zone) {
+        isc_throw(DataSourceError, "adding NSEC3-related record to SQLite3 "
+                  "data source without transaction");
+    }
 
     // XXX: the current implementation of SQLite3 schema requires the 'owner'
     // column, and the current implementation of getAllRecords() relies on it,
