@@ -781,6 +781,7 @@ class BindCmdInterpreter(Cmd):
            The execution is stopped if there are any errors.
         '''
         verbose = False
+        # TODO: revert local changes on failure
         try:
             for line in commands:
                 line = line.strip()

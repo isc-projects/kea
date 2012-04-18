@@ -128,8 +128,6 @@ def prepare_execute_commands(tool):
         desc="Show the list of commands without executing them"))
     module.add_command(cmd)
 
-
-
     tool.add_module_info(module)
 
 def check_port(option, opt_str, value, parser):
