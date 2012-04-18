@@ -1016,6 +1016,29 @@ TEST_F(SQLite3Update, addNSEC3Record) {
     }
 }
 
+TEST_F(SQLite3Update, nsec3IteratorOnAdd) {
+    // This test checks if an added NSEC3 record will appear in the iterator
+    // result, meeting the expectation of addNSEC3RecordToZone.
+    // Specifically, it checks if the name column is filled with the complete
+    // owner name.
+
+    // We'll replace the zone, and add one NSEC3 record, and only that one.
+    zone_id = accessor->startUpdateZone("example.com.", true).second;
+    copy(nsec3_data, nsec3_data + DatabaseAccessor::ADD_NSEC3_COLUMN_COUNT,
+         add_nsec3_columns);
+    accessor->addNSEC3RecordToZone(add_nsec3_columns);
+    accessor->commit();
+
+    // the zone should contain only one record we just added.
+    DatabaseAccessor::IteratorContextPtr context =
+        accessor->getAllRecords(zone_id);
+    string data[DatabaseAccessor::COLUMN_COUNT];
+    EXPECT_TRUE(context->getNext(data));
+    EXPECT_EQ(string(apex_hash) + ".example.com.",
+              data[DatabaseAccessor::NAME_COLUMN]);
+    EXPECT_FALSE(context->getNext(data));
+}
+
 TEST_F(SQLite3Update, addThenRollback) {
     zone_id = accessor->startUpdateZone("example.com.", false).second;
     copy(new_data, new_data + DatabaseAccessor::ADD_COLUMN_COUNT,
