@@ -23,6 +23,7 @@ from cmd import Cmd
 from bindctl.exception import *
 from bindctl.moduleinfo import *
 from bindctl.cmdparse import BindCmdParse
+import command_sets
 from xml.dom import minidom
 import isc
 import isc.cc.data
@@ -410,18 +411,8 @@ class BindCmdInterpreter(Cmd):
         if cmd.command == "help" or ("help" in cmd.params.keys()):
             self._handle_help(cmd)
         elif cmd.module == CONFIG_MODULE_NAME:
-            try:
-                self.apply_config_cmd(cmd)
-            except isc.cc.data.DataTypeError as dte:
-                print("Error: " + str(dte))
-            except isc.cc.data.DataNotFoundError as dnfe:
-                print("Error: " + str(dnfe))
-            except isc.cc.data.DataAlreadyPresentError as dape:
-                print("Error: " + str(dape))
-            except KeyError as ke:
-                print("Error: missing " + str(ke))
+            self.apply_config_cmd(cmd)
         elif cmd.module == EXECUTE_MODULE_NAME:
-            # TODO: catch errors
             self.apply_execute_cmd(cmd)
         else:
             self.apply_cmd(cmd)
@@ -581,6 +572,14 @@ class BindCmdInterpreter(Cmd):
             self._print_correct_usage(err)
         except isc.cc.data.DataTypeError as err:
             print("Error! ", err)
+        except isc.cc.data.DataTypeError as dte:
+            print("Error: " + str(dte))
+        except isc.cc.data.DataNotFoundError as dnfe:
+            print("Error: " + str(dnfe))
+        except isc.cc.data.DataAlreadyPresentError as dape:
+            print("Error: " + str(dape))
+        except KeyError as ke:
+            print("Error: missing " + str(ke))
 
     def _print_correct_usage(self, ept):
         if isinstance(ept, CmdUnknownModuleSyntaxError):
@@ -737,14 +736,38 @@ class BindCmdInterpreter(Cmd):
         '''Handles the 'execute' command, which executes a number of
            (preset) statements. Currently only 'file' commands are supported,
            e.g. 'execute file <file>'.'''
-        try:
-            command_file = open(command.params['filename'])
-            self.apply_commands_from_file(command_file)
-        except IOError as ioe:
-            print("Error: " + str(ioe))
+        if command.command == 'file':
+            try:
+                command_file = open(command.params['filename'])
+                # copy them into a list for consistency with the built-in
+                # sets of commands
+                commands = []
+                for line in command_file:
+                    commands.append(line)
+                command_file.close()
+            except IOError as ioe:
+                print("Error: " + str(ioe))
+                return
+        elif command.command == 'init_authoritative_server':
+            commands = command_sets.init_auth_server
+        else:
+            # Should not be reachable; parser should've caught this
+            raise Exception("Unknown execute command type " + command.command)
 
-    def apply_commands_from_file(self, command_file):
-        '''Applies the configuration commands from the given opened file.
+        # We have our set of commands now, depending on whether 'show' was
+        # specified, show or execute them
+        if 'show' in command.params and command.params['show'] == 'show':
+            self.__show_execute_commands(commands)
+        else:
+            self.__apply_execute_commands(commands)
+
+    def __show_execute_commands(self, commands):
+        '''Prints the command list without executing them'''
+        for line in commands:
+            print(line.strip())
+
+    def __apply_execute_commands(self, commands):
+        '''Applies the configuration commands from the given iterator.
            This is the method that catches, comments, echo statements, and
            other directives. All commands not filtered by this method are
            interpreted as if they are directly entered in an active session.
@@ -759,7 +782,7 @@ class BindCmdInterpreter(Cmd):
         '''
         verbose = False
         try:
-            for line in command_file:
+            for line in commands:
                 line = line.strip()
                 if verbose:
                     print(line)
@@ -781,7 +804,10 @@ class BindCmdInterpreter(Cmd):
         except isc.config.ModuleCCSessionError as mcse:
             print(str(mcse))
         except (IOError, http.client.HTTPException,
-                BindCtlException, isc.cc.data.DataTypeError) as err:
+                BindCtlException, isc.cc.data.DataTypeError,
+                isc.cc.data.DataNotFoundError,
+                isc.cc.data.DataAlreadyPresentError,
+                KeyError) as err:
             print('Error: ', err)
 
     def apply_cmd(self, cmd):
