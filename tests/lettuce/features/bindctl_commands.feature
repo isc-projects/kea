@@ -63,3 +63,12 @@ Feature: control with bindctl
     bind10 module StatsHttpd should not be running
     bind10 module Stats should not be running
     bind10 module Resolver should not be running
+
+    Scenario: Executing scripts
+    # This test tests the 'execute' command, which reads and executes
+    # bindctl commands from a file
+    Given I have bind10 running with configuration bindctl_commands.config
+    And wait for bind10 stderr message BIND10_STARTED_CC
+    And wait for bind10 stderr message CMDCTL_STARTED
+    When I send bind10 the command execute file data/commands/empty
+    last bindctl output should not contain Error

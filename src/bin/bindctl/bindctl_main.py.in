@@ -103,6 +103,15 @@ def prepare_config_commands(tool):
 
     tool.add_module_info(module)
 
+    module = ModuleInfo(name=EXECUTE_MODULE_NAME,
+                        desc="Execute a given set of commands")
+    cmd = CommandInfo(name="file", desc="Read commands from file")
+    param = ParamInfo(name="filename", type="string", optional=False,
+                      desc="File to read the set of commands from.")
+    cmd.add_param(param)
+    module.add_command(cmd)
+    tool.add_module_info(module)
+
 def check_port(option, opt_str, value, parser):
     if (value < 0) or (value > 65535):
         raise OptionValueError('%s requires a port number (0-65535)' % opt_str)
