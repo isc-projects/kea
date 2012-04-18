@@ -103,13 +103,33 @@ def prepare_config_commands(tool):
 
     tool.add_module_info(module)
 
+def prepare_execute_commands(tool):
+    # common parameter
+    param_show = ParamInfo(name="show", type="string", optional=True,
+        desc="Show the list of commands without executing them")
+
+    # The command module
     module = ModuleInfo(name=EXECUTE_MODULE_NAME,
                         desc="Execute a given set of commands")
+
+    # Command to execute a file
     cmd = CommandInfo(name="file", desc="Read commands from file")
     param = ParamInfo(name="filename", type="string", optional=False,
                       desc="File to read the set of commands from.")
     cmd.add_param(param)
+    cmd.add_param(param_show)
     module.add_command(cmd)
+
+    cmd = CommandInfo(name="init_authoritative_server", desc=
+        "Configure and run a basic Authoritative server, with default "
+        "SQLite3 backend, and xfrin and xfrout functionality")
+    cmd.add_param(param_show)
+    cmd.add_param(ParamInfo(name="show", type="string", optional=True,
+        desc="Show the list of commands without executing them"))
+    module.add_command(cmd)
+
+
+
     tool.add_module_info(module)
 
 def check_port(option, opt_str, value, parser):
@@ -155,5 +175,6 @@ if __name__ == '__main__':
     tool = BindCmdInterpreter(server_addr, pem_file=options.cert_chain,
                               csv_file_dir=options.csv_file_dir)
     prepare_config_commands(tool)
+    prepare_execute_commands(tool)
     result = tool.run()
     sys.exit(result)
