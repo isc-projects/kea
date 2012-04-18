@@ -58,7 +58,7 @@ class TransferResult(object):
             if len(line) > 0 and line[0] != ';':
                 self.records.append(line)
 
-@step('An AXFR transfer of ([\w.]+)(?: from ([^:]+)(?::([0-9]+))?)?')
+@step('An AXFR transfer of ([\w.]+)(?: from ([^:]+|\[[0-9a-fA-F:]+\])(?::([0-9]+))?)?')
 def perform_axfr(step, zone_name, address, port):
     """
     Perform an AXFR transfer, and store the result as an instance of
@@ -72,6 +72,8 @@ def perform_axfr(step, zone_name, address, port):
     """
     if address is None:
         address = "127.0.0.1"
+    # convert [IPv6_addr] to IPv6_addr:
+    address = re.sub(r"\[(.+)\]", r"\1", address)
     if port is None:
         port = 47806
     args = [ 'dig', 'AXFR', '@' + str(address), '-p', str(port), zone_name ]
