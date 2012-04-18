@@ -742,7 +742,7 @@ const char* const deleted_data[] = {
     "foo.bar.example.com.", "A", "192.0.2.1"
 };
 const char* const nsec3_data[DatabaseAccessor::ADD_NSEC3_COLUMN_COUNT] = {
-    // example NSEC parameters.  Using "apex_hash" just as a convenient
+    // example NSEC3 parameters.  Using "apex_hash" just as a convenient
     // shortcut; otherwise it has nothing to do with the zone apex for the
     // purpose of this test.
     apex_hash, "3600", "NSEC3",
@@ -752,6 +752,11 @@ const char* const nsec3_sig_data[DatabaseAccessor::ADD_NSEC3_COLUMN_COUNT] = {
     ns1_hash, "3600", "RRSIG",
     "NSEC3 5 3 3600 20000101000000 20000201000000 12345 "
     "example.com. FAKEFAKEFAKE"
+};
+const char* const nsec3_deleted_data[] = {
+    // Delete parameters for nsec3_data
+    apex_hash, nsec3_data[DatabaseAccessor::ADD_NSEC3_TYPE],
+    nsec3_data[DatabaseAccessor::ADD_NSEC3_RDATA]
 };
 
 class SQLite3Update : public SQLite3AccessorTest {
@@ -994,6 +999,7 @@ TEST_F(SQLite3Update, addNSEC3Record) {
     copy(nsec3_data, nsec3_data + DatabaseAccessor::ADD_NSEC3_COLUMN_COUNT,
          add_nsec3_columns);
     accessor->addNSEC3RecordToZone(add_nsec3_columns);
+
     // Add an RRSIG for NSEC3
     copy(nsec3_sig_data,
          nsec3_sig_data + DatabaseAccessor::ADD_NSEC3_COLUMN_COUNT,
@@ -1100,6 +1106,32 @@ TEST_F(SQLite3Update, deleteRecord) {
     // Commit the change, and confirm the deleted data still isn't there.
     accessor->commit();
     checkRecords(*accessor, zone_id, "foo.bar.example.com.", empty_stored);
+}
+
+TEST_F(SQLite3Update, deleteNSEC3Record) {
+    // Similar to the previous test, but for NSEC3.
+    zone_id = accessor->startUpdateZone("example.com.", false).second;
+    checkNSEC3Records(*accessor, zone_id, apex_hash, empty_stored);
+
+    // We first need to add some record.
+    copy(nsec3_data, nsec3_data + DatabaseAccessor::ADD_NSEC3_COLUMN_COUNT,
+         add_nsec3_columns);
+    accessor->addNSEC3RecordToZone(add_nsec3_columns);
+
+    // Now it should exist.
+    expected_stored.clear();
+    expected_stored.push_back(nsec3_data);
+    checkNSEC3Records(*accessor, zone_id, apex_hash, expected_stored);
+
+    // Delete it, and confirm that.
+    copy(nsec3_deleted_data,
+         nsec3_deleted_data + DatabaseAccessor::DEL_PARAM_COUNT, del_params);
+    accessor->deleteNSEC3RecordInZone(del_params);
+    checkNSEC3Records(*accessor, zone_id, apex_hash, empty_stored);
+
+    // Commit the change, and confirm the deleted data still isn't there.
+    accessor->commit();
+    checkNSEC3Records(*accessor, zone_id, apex_hash, empty_stored);
 }
 
 TEST_F(SQLite3Update, deleteThenRollback) {

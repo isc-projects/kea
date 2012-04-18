@@ -75,7 +75,8 @@ enum StatementID {
     NSEC3_LAST = 18,
     ADD_NSEC3_RECORD = 19,
     DEL_ZONE_NSEC3_RECORDS = 20,
-    NUM_STATEMENTS = 21
+    DEL_NSEC3_RECORD = 21,
+    NUM_STATEMENTS = 22
 };
 
 const char* const text_statements[NUM_STATEMENTS] = {
@@ -154,7 +155,10 @@ const char* const text_statements[NUM_STATEMENTS] = {
     "INSERT INTO nsec3 (zone_id, hash, owner, ttl, rdtype, rdata) "
     "VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
     // DEL_ZONE_NSEC3_RECORDS: delete all NSEC3-related records from the zone
-    "DELETE FROM nsec3 WHERE zone_id=?1"
+    "DELETE FROM nsec3 WHERE zone_id=?1",
+    // DEL_NSEC3_RECORD: delete specified NSEC3-related records
+    "DELETE FROM nsec3 WHERE zone_id=?1 AND hash=?2 "
+    "AND rdtype=?3 AND rdata=?4"
 };
 
 struct SQLite3Parameters {
@@ -1191,9 +1195,13 @@ SQLite3Accessor::deleteRecordInZone(const string (&params)[DEL_PARAM_COUNT]) {
 
 void
 SQLite3Accessor::deleteNSEC3RecordInZone(
-    const string (&/*params*/)[DEL_PARAM_COUNT])
+    const string (&params)[DEL_PARAM_COUNT])
 {
-    isc_throw(NotImplemented, "not yet implemented");
+    // TBD: no transaction check
+
+    doUpdate<const string (&)[DEL_PARAM_COUNT]>(
+        *dbparameters_, DEL_NSEC3_RECORD, params,
+        "delete NSEC3 record from zone");
 }
 
 void
