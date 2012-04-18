@@ -1180,6 +1180,10 @@ TEST_F(SQLite3Update, deleteNonexistent) {
 TEST_F(SQLite3Update, invalidDelete) {
     // An attempt of delete before an explicit start of transaction
     EXPECT_THROW(accessor->deleteRecordInZone(del_params), DataSourceError);
+
+    // Same for NSEC3.
+    EXPECT_THROW(accessor->deleteNSEC3RecordInZone(del_params),
+                 DataSourceError);
 }
 
 TEST_F(SQLite3Update, emptyTransaction) {

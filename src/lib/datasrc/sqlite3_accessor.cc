@@ -1197,8 +1197,10 @@ void
 SQLite3Accessor::deleteNSEC3RecordInZone(
     const string (&params)[DEL_PARAM_COUNT])
 {
-    // TBD: no transaction check
-
+    if (!dbparameters_->updating_zone) {
+        isc_throw(DataSourceError, "deleting NSEC3-related record in SQLite3 "
+                  "data source without transaction");
+    }
     doUpdate<const string (&)[DEL_PARAM_COUNT]>(
         *dbparameters_, DEL_NSEC3_RECORD, params,
         "delete NSEC3 record from zone");
