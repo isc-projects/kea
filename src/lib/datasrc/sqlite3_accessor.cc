@@ -152,7 +152,7 @@ const char* const text_statements[NUM_STATEMENTS] = {
         "ORDER BY hash DESC LIMIT 1",
     // ADD_NSEC3_RECORD: Add NSEC3-related (NSEC3 or NSEC3-covering RRSIG) RR
     "INSERT INTO nsec3 (zone_id, hash, owner, ttl, rdtype, rdata) "
-    "VALUES (?1, ?2, '', ?3, ?4, ?5)",
+    "VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
     // DEL_ZONE_NSEC3_RECORDS: delete all NSEC3-related records from the zone
     "DELETE FROM nsec3 WHERE zone_id=?1"
 };
@@ -203,6 +203,7 @@ struct SQLite3Parameters {
     bool in_transaction; // whether or not a transaction has been started
     bool updating_zone;          // whether or not updating the zone
     int updated_zone_id;        // valid only when in_transaction is true
+    string updated_zone_origin_; // ditto, and only needed to handle NSEC3s
 private:
     // statements_ are private and must be accessed via getStatement() outside
     // of this structure.
@@ -1064,6 +1065,7 @@ SQLite3Accessor::startUpdateZone(const string& zone_name, const bool replace) {
     dbparameters_->in_transaction = true;
     dbparameters_->updating_zone = true;
     dbparameters_->updated_zone_id = zone_info.second;
+    dbparameters_->updated_zone_origin_ = zone_name;
 
     return (zone_info);
 }
@@ -1092,6 +1094,7 @@ SQLite3Accessor::commit() {
     dbparameters_->in_transaction = false;
     dbparameters_->updating_zone = false;
     dbparameters_->updated_zone_id = -1;
+    dbparameters_->updated_zone_origin_.clear();
 }
 
 void
@@ -1106,6 +1109,7 @@ SQLite3Accessor::rollback() {
     dbparameters_->in_transaction = false;
     dbparameters_->updating_zone = false;
     dbparameters_->updated_zone_id = -1;
+    dbparameters_->updated_zone_origin_.clear();
 }
 
 namespace {
@@ -1156,8 +1160,20 @@ SQLite3Accessor::addNSEC3RecordToZone(
     const string (&columns)[ADD_NSEC3_COLUMN_COUNT])
 {
     // TODO: no transaction case
-    doUpdate<const string (&)[ADD_NSEC3_COLUMN_COUNT]>(
-        *dbparameters_, ADD_NSEC3_RECORD, columns, "add NSEC3 record to zone");
+
+    // XXX: the current implementation of SQLite3 schema requires the 'owner'
+    // column, and the current implementation of getAllRecords() relies on it,
+    // while the addNSEC3RecordToZone interface doesn't provide it explicitly.
+    // We should revisit it at the design level, but for now we internally
+    // convert the given parameter to satisfy the internal requirements.
+    const string sqlite3_columns[ADD_NSEC3_COLUMN_COUNT + 1] =
+        { columns[ADD_NSEC3_HASH],
+          columns[ADD_NSEC3_HASH] + "." + dbparameters_->updated_zone_origin_,
+          columns[ADD_NSEC3_TTL],
+          columns[ADD_NSEC3_TYPE], columns[ADD_NSEC3_RDATA] };
+    doUpdate<const string (&)[ADD_NSEC3_COLUMN_COUNT + 1]>(
+        *dbparameters_, ADD_NSEC3_RECORD, sqlite3_columns,
+        "add NSEC3 record to zone");
 }
 
 void
