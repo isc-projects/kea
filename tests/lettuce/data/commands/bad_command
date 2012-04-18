@@ -1,0 +1,3 @@
+!echo shouldshow
+some bad command
+!echo shouldnotshow
