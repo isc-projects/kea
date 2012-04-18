@@ -62,6 +62,7 @@ except ImportError:
 
 CSV_FILE_NAME = 'default_user.csv'
 CONFIG_MODULE_NAME = 'config'
+EXECUTE_MODULE_NAME = 'execute'
 CONST_BINDCTL_HELP = """
 usage: <module name> <command name> [param1 = value1 [, param2 = value2]]
 Type Tab character to get the hint of module/command/parameters.
@@ -393,8 +394,9 @@ class BindCmdInterpreter(Cmd):
                 param_nr += 1
 
         # Convert parameter value according parameter spec file.
-        # Ignore check for commands belongs to module 'config'
-        if cmd.module != CONFIG_MODULE_NAME:
+        # Ignore check for commands belongs to module 'config' or 'execute
+        if cmd.module != CONFIG_MODULE_NAME and\
+           cmd.module != EXECUTE_MODULE_NAME:
             for param_name in cmd.params:
                 param_spec = command_info.get_param_with_name(param_name).param_spec
                 try:
@@ -418,6 +420,9 @@ class BindCmdInterpreter(Cmd):
                 print("Error: " + str(dape))
             except KeyError as ke:
                 print("Error: missing " + str(ke))
+        elif cmd.module == EXECUTE_MODULE_NAME:
+            # TODO: catch errors
+            self.apply_execute_cmd(cmd)
         else:
             self.apply_cmd(cmd)
 
@@ -727,6 +732,12 @@ class BindCmdInterpreter(Cmd):
             return
 
         self.location = new_location
+
+    def apply_execute_cmd(self, command):
+        '''Handles the 'execute' command, which executes a number of
+           (preset) statements. Currently only 'file' commands are supported,
+           e.g. 'execute file <file>'.'''
+        pass
 
     def apply_cmd(self, cmd):
         '''Handles a general module command'''
