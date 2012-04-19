@@ -274,7 +274,7 @@ TEST_F(AuthCommandTest,
     isc::testutils::MockSession session;
     // The session should not take care of anything or start anything, we
     // need it only to hold the config we're going to put into it.
-    ModuleCCSession moduleSession(SPEC_FILE, session, NULL, NULL, false,
+    ModuleCCSession module_session(SPEC_FILE, session, NULL, NULL, false,
                                   false);
     // This describes the data source in the configuration
     const ElementPtr
@@ -290,8 +290,8 @@ TEST_F(AuthCommandTest,
                               "    ]"
                               "  }"
                               "]}"));
-    moduleSession.setLocalConfig(map);
-    server_.setConfigSession(&moduleSession);
+    module_session.setLocalConfig(map);
+    server_.setConfigSession(&module_session);
 
     // The loadzone command needs the zone to be already loaded, because
     // it is used for reloading only
@@ -324,7 +324,7 @@ TEST_F(AuthCommandTest,
               findZone(Name("example.org")).zone_finder->
               find(Name("example.org"), RRType::SOA())->code);
 
-    moduleSession.setLocalConfig(Element::fromJSON("{\"datasources\": []}"));
+    module_session.setLocalConfig(Element::fromJSON("{\"datasources\": []}"));
     result_ = execAuthServerCommand(server_, "loadzone",
         Element::fromJSON("{\"origin\": \"example.org\"}"));
     checkAnswer(1);
@@ -348,7 +348,7 @@ TEST_F(AuthCommandTest,
                                  "    ]"
                                  "  }"
                                  "]}"));
-    moduleSession.setLocalConfig(mapBad);
+    module_session.setLocalConfig(mapBad);
     result_ = execAuthServerCommand(server_, "loadzone",
         Element::fromJSON("{\"origin\": \"example.com\"}"));
     checkAnswer(1);
@@ -365,7 +365,7 @@ TEST_F(AuthCommandTest,
                                  "    \"zones\": [[]]"
                                  "  }"
                                  "]}"));
-    moduleSession.setLocalConfig(broken);
+    module_session.setLocalConfig(broken);
     checkAnswer(1);
     // The previous zone is not hurt in any way
     EXPECT_EQ(ZoneFinder::SUCCESS, server_.getInMemoryClient(RRClass::IN())->
