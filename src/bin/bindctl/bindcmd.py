@@ -64,7 +64,6 @@ except ImportError:
 
 CSV_FILE_NAME = 'default_user.csv'
 CONFIG_MODULE_NAME = 'config'
-EXECUTE_MODULE_NAME = 'execute'
 CONST_BINDCTL_HELP = """
 usage: <module name> <command name> [param1 = value1 [, param2 = value2]]
 Type Tab character to get the hint of module/command/parameters.
@@ -398,7 +397,7 @@ class BindCmdInterpreter(Cmd):
         # Convert parameter value according parameter spec file.
         # Ignore check for commands belongs to module 'config' or 'execute
         if cmd.module != CONFIG_MODULE_NAME and\
-           cmd.module != EXECUTE_MODULE_NAME:
+           cmd.module != command_sets.EXECUTE_MODULE_NAME:
             for param_name in cmd.params:
                 param_spec = command_info.get_param_with_name(param_name).param_spec
                 try:
@@ -413,7 +412,7 @@ class BindCmdInterpreter(Cmd):
             self._handle_help(cmd)
         elif cmd.module == CONFIG_MODULE_NAME:
             self.apply_config_cmd(cmd)
-        elif cmd.module == EXECUTE_MODULE_NAME:
+        elif cmd.module == command_sets.EXECUTE_MODULE_NAME:
             self.apply_execute_cmd(cmd)
         else:
             self.apply_cmd(cmd)
@@ -749,8 +748,8 @@ class BindCmdInterpreter(Cmd):
             except IOError as ioe:
                 print("Error: " + str(ioe))
                 return
-        elif command.command == 'init_authoritative_server':
-            commands = command_sets.init_auth_server
+        elif command_sets.has_command_set(command.command):
+            commands = command_sets.get_commands(command.command)
         else:
             # Should not be reachable; parser should've caught this
             raise Exception("Unknown execute command type " + command.command)
