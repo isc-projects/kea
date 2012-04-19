@@ -23,7 +23,7 @@ from cmd import Cmd
 from bindctl.exception import *
 from bindctl.moduleinfo import *
 from bindctl.cmdparse import BindCmdParse
-import command_sets
+from bindctl import command_sets
 from xml.dom import minidom
 import isc
 import isc.cc.data
@@ -734,8 +734,9 @@ class BindCmdInterpreter(Cmd):
 
     def apply_execute_cmd(self, command):
         '''Handles the 'execute' command, which executes a number of
-           (preset) statements. Currently only 'file' commands are supported,
-           e.g. 'execute file <file>'.'''
+           (preset) statements. The command set to execute is either
+           read from a file (e.g. 'execute file <file>'.) or one
+           of the sets as defined in command_sets.py'''
         if command.command == 'file':
             try:
                 command_file = open(command.params['filename'])
