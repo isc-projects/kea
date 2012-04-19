@@ -420,6 +420,14 @@ class MultiConfigData:
            manager or the modules."""
         return self._local_changes
 
+    def set_local_changes(self, new_local_changes):
+        """Sets the entire set of local changes, used when reverting
+           changes done automatically in case there was a problem (e.g.
+           when executing commands from a script that fails halfway
+           through).
+        """
+        self._local_changes = new_local_changes
+
     def clear_local_changes(self):
         """Reverts all local changes"""
         self._local_changes = {}

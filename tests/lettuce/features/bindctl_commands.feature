@@ -68,7 +68,7 @@ Feature: control with bindctl
     Scenario: Executing scripts from files
         # This test tests the 'execute' command, which reads and executes
         # bindctl commands from a file
-        Given I have bind10 running with configuration bindctl_commands.config
+        Given I have bind10 running with configuration bindctl/bindctl.config
         And wait for bind10 stderr message BIND10_STARTED_CC
         And wait for bind10 stderr message CMDCTL_STARTED
 
@@ -97,6 +97,29 @@ Feature: control with bindctl
         last bindctl output should contain shouldshow
         last bindctl output should contain Error
         last bindctl output should not contain shouldnotshow
+        # This would fail if the entire list was passed, or the configuratio
+        send bind10 the command config show Boss/components
+        last bindctl output should not contain b10-auth
+
+        # the bad command should also keep existing changes intact,
+        # i.e. if we add something, then run a failing script, our
+        # addition should still be there, but those from the script
+        # should not
+        When I send bind10 the following commands:
+        """
+        config add Boss/components b10-resolver
+        config set Boss/components/b10-resolver/kind dispensable
+        config set Boss/components/b10-resolver/special resolver
+        execute file data/commands/bad_command
+        config commit
+        """
+        last bindctl output should contain shouldshow
+        last bindctl output should contain Error
+        last bindctl output should not contain shouldnotshow
+        # This would fail if the entire list was passed, or the configuratio
+        send bind10 the command config show Boss/components
+        last bindctl output should not contain b10-auth
+        last bindctl output should contain b10-resolver
 
         # nested_command contains another execute script
         When I send bind10 the command execute file data/commands/nested
