@@ -24,10 +24,7 @@ namespace isc {
 namespace auth {
 namespace unittest {
 
-// Here we define utility modules for the convenience of tests that create
-// a data source client according to the specified conditions.
-
-/// \brief Create an SQLite3 data source client from a stream.
+/// \brief Create an SQLite3 database file for a given zone from a stream.
 ///
 /// This function creates an SQLite3 DB file for the specified zone
 /// with specified content.  The zone will be created in the given
