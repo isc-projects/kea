@@ -1,3 +1,12 @@
+427.	[bug]		jinmei
+	libdatasrc, b10-xfrin: the zone updater for database-based data
+	sources now correctly distinguishes NSEC3-related RRs (NSEC3 and
+	NSEC3-covering RRSIG) from others, and the SQLite3 implementation
+	now manipulates them in the separate table for the NSEC3 namespace.
+	As a result b10-xfrin now correctly updates NSEC3-signed zones by
+	inbound zone transfers.
+	(Trac #1891, git 672f129700dae33b701bb02069cf276238d66be3)
+
 426.	[bug]		vorner
 	The NSEC3 records are now included when transferring a signed zone out.
 	(Trac #1782, git 36efa7d10ecc4efd39d2ce4dfffa0cbdeffa74b0)
