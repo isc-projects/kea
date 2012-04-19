@@ -12,8 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <algorithm>
-#include <vector>
+#include "faked_nsec3.h"
 
 #include <datasrc/sqlite3_accessor.h>
 
@@ -21,14 +20,20 @@
 
 #include <dns/rrclass.h>
 
+#include <sqlite3.h>
+
 #include <gtest/gtest.h>
+
 #include <boost/lexical_cast.hpp>
 #include <boost/scoped_ptr.hpp>
+
+#include <algorithm>
+#include <vector>
 #include <fstream>
-#include <sqlite3.h>
 
 using namespace std;
 using namespace isc::datasrc;
+using namespace isc::datasrc::test;
 using boost::lexical_cast;
 using isc::data::ConstElementPtr;
 using isc::data::Element;
@@ -463,11 +468,11 @@ TEST(SQLite3Open, getDBNameExampleROOT) {
 // Simple function to match records
 void
 checkRecordRow(const std::string columns[],
-               const std::string& field0,
-               const std::string& field1,
-               const std::string& field2,
-               const std::string& field3,
-               const std::string& field4)
+               const std::string& field0, // for type
+               const std::string& field1, // for TTL
+               const std::string& field2, // for "sigtype"
+               const std::string& field3, // for rdata
+               const std::string& field4) // for name
 {
     EXPECT_EQ(field0, columns[DatabaseAccessor::TYPE_COLUMN]);
     EXPECT_EQ(field1, columns[DatabaseAccessor::TTL_COLUMN]);
@@ -736,6 +741,23 @@ const char* const deleted_data[] = {
     // Existing data to be removed commonly used by some of the tests below
     "foo.bar.example.com.", "A", "192.0.2.1"
 };
+const char* const nsec3_data[DatabaseAccessor::ADD_NSEC3_COLUMN_COUNT] = {
+    // example NSEC3 parameters.  Using "apex_hash" just as a convenient
+    // shortcut; otherwise it has nothing to do with the zone apex for the
+    // purpose of this test.
+    apex_hash, "3600", "NSEC3",
+    "1 1 12 AABBCCDD 2T7B4G4VSA5SMI47K61MV5BV1A22BOJR NS SOA"
+};
+const char* const nsec3_sig_data[DatabaseAccessor::ADD_NSEC3_COLUMN_COUNT] = {
+    ns1_hash, "3600", "RRSIG",
+    "NSEC3 5 3 3600 20000101000000 20000201000000 12345 "
+    "example.com. FAKEFAKEFAKE"
+};
+const char* const nsec3_deleted_data[] = {
+    // Delete parameters for nsec3_data
+    apex_hash, nsec3_data[DatabaseAccessor::ADD_NSEC3_TYPE],
+    nsec3_data[DatabaseAccessor::ADD_NSEC3_RDATA]
+};
 
 class SQLite3Update : public SQLite3AccessorTest {
 protected:
@@ -762,6 +784,7 @@ protected:
     int zone_id;
     std::string get_columns[DatabaseAccessor::COLUMN_COUNT];
     std::string add_columns[DatabaseAccessor::ADD_COLUMN_COUNT];
+    std::string add_nsec3_columns[DatabaseAccessor::ADD_NSEC3_COLUMN_COUNT];
     std::string del_params[DatabaseAccessor::DEL_PARAM_COUNT];
     std::string diff_params[DatabaseAccessor::DIFF_PARAM_COUNT];
 
@@ -789,6 +812,28 @@ checkRecords(SQLite3Accessor& accessor, int zone_id, const std::string& name,
     EXPECT_TRUE(it == expected_rows.end());
 }
 
+// Similar to the previous one, but checking transactions on the nsec3 table.
+void
+checkNSEC3Records(SQLite3Accessor& accessor, int zone_id,
+                  const std::string& hash,
+                  vector<const char* const*> expected_rows)
+{
+    DatabaseAccessor::IteratorContextPtr iterator =
+        accessor.getNSEC3Records(hash, zone_id);
+    std::string columns[DatabaseAccessor::COLUMN_COUNT];
+    vector<const char* const*>::const_iterator it = expected_rows.begin();
+    while (iterator->getNext(columns)) {
+        ASSERT_TRUE(it != expected_rows.end());
+        checkRecordRow(columns, (*it)[DatabaseAccessor::ADD_NSEC3_TYPE],
+                       (*it)[DatabaseAccessor::ADD_NSEC3_TTL],
+                       "",      // sigtype, should always be empty
+                       (*it)[DatabaseAccessor::ADD_NSEC3_RDATA],
+                       "");     // name, always empty
+        ++it;
+    }
+    EXPECT_TRUE(it == expected_rows.end());
+}
+
 TEST_F(SQLite3Update, emptyUpdate) {
     // If we do nothing between start and commit, the zone content
     // should be intact.
@@ -809,6 +854,26 @@ TEST_F(SQLite3Update, flushZone) {
     checkRecords(*accessor, zone_id, "foo.bar.example.com.", empty_stored);
     accessor->commit();
     checkRecords(*accessor, zone_id, "foo.bar.example.com.", empty_stored);
+}
+
+TEST_F(SQLite3Update, flushZoneWithNSEC3) {
+    // Similar to the previous case, but make sure the separate nsec3 table
+    // is also cleared.  We first need to add something to the table.
+    zone_id = accessor->startUpdateZone("example.com.", false).second;
+    copy(nsec3_data, nsec3_data + DatabaseAccessor::ADD_NSEC3_COLUMN_COUNT,
+         add_nsec3_columns);
+    accessor->addNSEC3RecordToZone(add_nsec3_columns);
+    accessor->commit();
+
+    // Confirm it surely exists.
+    expected_stored.clear();
+    expected_stored.push_back(nsec3_data);
+    checkNSEC3Records(*accessor, zone_id, apex_hash, expected_stored);
+
+    // Then starting zone replacement.  the NSEC3 record should have been
+    // removed.
+    zone_id = accessor->startUpdateZone("example.com.", true).second;
+    checkNSEC3Records(*accessor, zone_id, apex_hash, empty_stored);
 }
 
 TEST_F(SQLite3Update, readWhileUpdate) {
@@ -924,6 +989,62 @@ TEST_F(SQLite3Update, addRecord) {
     checkRecords(*accessor, zone_id, "newdata.example.com.", expected_stored);
 }
 
+TEST_F(SQLite3Update, addNSEC3Record) {
+    // Similar to the previous test, but for NSEC3-related records
+    checkRecords(*accessor, zone_id, apex_hash, empty_stored);
+    checkRecords(*accessor, zone_id, ns1_hash, empty_stored);
+
+    zone_id = accessor->startUpdateZone("example.com.", false).second;
+    // Add an NSEC3
+    copy(nsec3_data, nsec3_data + DatabaseAccessor::ADD_NSEC3_COLUMN_COUNT,
+         add_nsec3_columns);
+    accessor->addNSEC3RecordToZone(add_nsec3_columns);
+
+    // Add an RRSIG for NSEC3
+    copy(nsec3_sig_data,
+         nsec3_sig_data + DatabaseAccessor::ADD_NSEC3_COLUMN_COUNT,
+         add_nsec3_columns);
+    accessor->addNSEC3RecordToZone(add_nsec3_columns);
+
+    // Check the stored data, before and after commit().
+    for (size_t i = 0; i < 2; ++i) {
+        expected_stored.clear();
+        expected_stored.push_back(nsec3_data);
+        checkNSEC3Records(*accessor, zone_id, apex_hash, expected_stored);
+
+        expected_stored.clear();
+        expected_stored.push_back(nsec3_sig_data);
+        checkNSEC3Records(*accessor, zone_id, ns1_hash, expected_stored);
+
+        if (i == 0) {          // make sure commit() happens only once
+            accessor->commit();
+        }
+    }
+}
+
+TEST_F(SQLite3Update, nsec3IteratorOnAdd) {
+    // This test checks if an added NSEC3 record will appear in the iterator
+    // result, meeting the expectation of addNSEC3RecordToZone.
+    // Specifically, it checks if the name column is filled with the complete
+    // owner name.
+
+    // We'll replace the zone, and add one NSEC3 record, and only that one.
+    zone_id = accessor->startUpdateZone("example.com.", true).second;
+    copy(nsec3_data, nsec3_data + DatabaseAccessor::ADD_NSEC3_COLUMN_COUNT,
+         add_nsec3_columns);
+    accessor->addNSEC3RecordToZone(add_nsec3_columns);
+    accessor->commit();
+
+    // the zone should contain only one record we just added.
+    DatabaseAccessor::IteratorContextPtr context =
+        accessor->getAllRecords(zone_id);
+    string data[DatabaseAccessor::COLUMN_COUNT];
+    EXPECT_TRUE(context->getNext(data));
+    EXPECT_EQ(string(apex_hash) + ".example.com.",
+              data[DatabaseAccessor::NAME_COLUMN]);
+    EXPECT_FALSE(context->getNext(data));
+}
+
 TEST_F(SQLite3Update, addThenRollback) {
     zone_id = accessor->startUpdateZone("example.com.", false).second;
     copy(new_data, new_data + DatabaseAccessor::ADD_COLUMN_COUNT,
@@ -934,7 +1055,11 @@ TEST_F(SQLite3Update, addThenRollback) {
     expected_stored.push_back(new_data);
     checkRecords(*accessor, zone_id, "newdata.example.com.", expected_stored);
 
+    // Rollback the transaction, and confirm the zone reverts to the previous
+    // state.  We also start another update to check if the accessor can be
+    // reused for a new update after rollback.
     accessor->rollback();
+    zone_id = accessor->startUpdateZone("example.com.", false).second;
     checkRecords(*accessor, zone_id, "newdata.example.com.", empty_stored);
 }
 
@@ -960,6 +1085,12 @@ TEST_F(SQLite3Update, duplicateAdd) {
 TEST_F(SQLite3Update, invalidAdd) {
     // An attempt of add before an explicit start of transaction
     EXPECT_THROW(accessor->addRecordToZone(add_columns), DataSourceError);
+
+    // Same for addNSEC3.
+    copy(nsec3_data, nsec3_data + DatabaseAccessor::ADD_NSEC3_COLUMN_COUNT,
+         add_nsec3_columns);
+    EXPECT_THROW(accessor->addNSEC3RecordToZone(add_nsec3_columns),
+                 DataSourceError);
 }
 
 TEST_F(SQLite3Update, deleteRecord) {
@@ -975,6 +1106,32 @@ TEST_F(SQLite3Update, deleteRecord) {
     // Commit the change, and confirm the deleted data still isn't there.
     accessor->commit();
     checkRecords(*accessor, zone_id, "foo.bar.example.com.", empty_stored);
+}
+
+TEST_F(SQLite3Update, deleteNSEC3Record) {
+    // Similar to the previous test, but for NSEC3.
+    zone_id = accessor->startUpdateZone("example.com.", false).second;
+    checkNSEC3Records(*accessor, zone_id, apex_hash, empty_stored);
+
+    // We first need to add some record.
+    copy(nsec3_data, nsec3_data + DatabaseAccessor::ADD_NSEC3_COLUMN_COUNT,
+         add_nsec3_columns);
+    accessor->addNSEC3RecordToZone(add_nsec3_columns);
+
+    // Now it should exist.
+    expected_stored.clear();
+    expected_stored.push_back(nsec3_data);
+    checkNSEC3Records(*accessor, zone_id, apex_hash, expected_stored);
+
+    // Delete it, and confirm that.
+    copy(nsec3_deleted_data,
+         nsec3_deleted_data + DatabaseAccessor::DEL_PARAM_COUNT, del_params);
+    accessor->deleteNSEC3RecordInZone(del_params);
+    checkNSEC3Records(*accessor, zone_id, apex_hash, empty_stored);
+
+    // Commit the change, and confirm the deleted data still isn't there.
+    accessor->commit();
+    checkNSEC3Records(*accessor, zone_id, apex_hash, empty_stored);
 }
 
 TEST_F(SQLite3Update, deleteThenRollback) {
@@ -1023,6 +1180,10 @@ TEST_F(SQLite3Update, deleteNonexistent) {
 TEST_F(SQLite3Update, invalidDelete) {
     // An attempt of delete before an explicit start of transaction
     EXPECT_THROW(accessor->deleteRecordInZone(del_params), DataSourceError);
+
+    // Same for NSEC3.
+    EXPECT_THROW(accessor->deleteNSEC3RecordInZone(del_params),
+                 DataSourceError);
 }
 
 TEST_F(SQLite3Update, emptyTransaction) {
