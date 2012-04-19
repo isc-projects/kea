@@ -74,6 +74,7 @@ run_unittests_LDADD += $(top_builddir)/src/lib/statistics/libstatistics.la
 
 check-local:
 	B10_FROM_BUILD=${abs_top_builddir} ./run_unittests
-endif
 
 noinst_PROGRAMS = run_unittests
+
+endif
