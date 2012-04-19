@@ -781,8 +781,8 @@ class BindCmdInterpreter(Cmd):
            The execution is stopped if there are any errors.
         '''
         verbose = False
-        # TODO: revert local changes on failure
-        # make sure it's a copy
+        # Keep a copy of the original local changes, in case the
+        # given command set changes things but fails later
         local_changes_backup =\
             copy.deepcopy(self.config_data.get_local_changes())
         try:

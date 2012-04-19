@@ -559,7 +559,6 @@ class UIModuleCCSession(MultiConfigData):
                                                           " already in " +
                                                           identifier)
 
-
     def add_value(self, identifier, value_str = None, set_value_str = None):
         """Add a value to a configuration list. Raises a DataTypeError
            if the value does not conform to the list_item_spec field
