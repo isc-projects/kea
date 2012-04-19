@@ -22,10 +22,10 @@ import sys; sys.path.append ('@@PYTHONPATH@@')
 
 from bindctl.moduleinfo import *
 from bindctl.bindcmd import *
+from bindctl import command_sets
 import pprint
 from optparse import OptionParser, OptionValueError
 import isc.util.process
-import command_sets
 
 isc.util.process.rename()
 
