@@ -38,6 +38,7 @@ from hashlib import sha1
 import csv
 import pwd
 import getpass
+import copy
 
 try:
     from collections import OrderedDict
@@ -782,6 +783,9 @@ class BindCmdInterpreter(Cmd):
         '''
         verbose = False
         # TODO: revert local changes on failure
+        # make sure it's a copy
+        local_changes_backup =\
+            copy.deepcopy(self.config_data.get_local_changes())
         try:
             for line in commands:
                 line = line.strip()
@@ -802,14 +806,15 @@ class BindCmdInterpreter(Cmd):
                     cmd = BindCmdParse(line)
                     self._validate_cmd(cmd)
                     self._handle_cmd(cmd)
-        except isc.config.ModuleCCSessionError as mcse:
-            print(str(mcse))
-        except (IOError, http.client.HTTPException,
+        except (isc.config.ModuleCCSessionError,
+                IOError, http.client.HTTPException,
                 BindCtlException, isc.cc.data.DataTypeError,
                 isc.cc.data.DataNotFoundError,
                 isc.cc.data.DataAlreadyPresentError,
                 KeyError) as err:
             print('Error: ', err)
+            # revert changes
+            self.config_data.set_local_changes(local_changes_backup)
 
     def apply_cmd(self, cmd):
         '''Handles a general module command'''
