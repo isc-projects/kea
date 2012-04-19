@@ -66,14 +66,16 @@ enum StatementID {
     ITERATE = 9,
     FIND_PREVIOUS = 10,
     ADD_RECORD_DIFF = 11,
-    GET_RECORD_DIFF = 12,       // This is temporary for testing "add diff"
-    LOW_DIFF_ID = 13,
-    HIGH_DIFF_ID = 14,
-    DIFF_RECS = 15,
-    NSEC3 = 16,
-    NSEC3_PREVIOUS = 17,
-    NSEC3_LAST = 18,
-    NUM_STATEMENTS = 19
+    LOW_DIFF_ID = 12,
+    HIGH_DIFF_ID = 13,
+    DIFF_RECS = 14,
+    NSEC3 = 15,
+    NSEC3_PREVIOUS = 16,
+    NSEC3_LAST = 17,
+    ADD_NSEC3_RECORD = 18,
+    DEL_ZONE_NSEC3_RECORDS = 19,
+    DEL_NSEC3_RECORD = 20,
+    NUM_STATEMENTS = 21
 };
 
 const char* const text_statements[NUM_STATEMENTS] = {
@@ -117,8 +119,6 @@ const char* const text_statements[NUM_STATEMENTS] = {
     "INSERT INTO diffs "        // ADD_RECORD_DIFF
         "(zone_id, version, operation, name, rrtype, ttl, rdata) "
         "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
-    "SELECT name, rrtype, ttl, rdata, version, operation " // GET_RECORD_DIFF
-        "FROM diffs WHERE zone_id = ?1 ORDER BY id, operation",
 
     // Two statements to select the lowest ID and highest ID in a set of
     // differences.
@@ -135,19 +135,27 @@ const char* const text_statements[NUM_STATEMENTS] = {
         "WHERE zone_id=?1 AND id>=?2 and id<=?3 "
         "ORDER BY id ASC",
 
-    // Query to get the NSEC3 records
+    // NSEC3: Query to get the NSEC3 records
     //
     // The "1" in SELECT is for positioning the rdata column to the
     // expected position, so we can reuse the same code as for other
     // lookups.
     "SELECT rdtype, ttl, 1, rdata FROM nsec3 WHERE zone_id=?1 AND "
         "hash=?2",
-    // For getting the previous NSEC3 hash
+    // NSEC3_PREVIOUS: For getting the previous NSEC3 hash
     "SELECT DISTINCT hash FROM nsec3 WHERE zone_id=?1 AND hash < ?2 "
         "ORDER BY hash DESC LIMIT 1",
-    // And for wrap-around
+    // NSEC3_LAST: And for wrap-around
     "SELECT DISTINCT hash FROM nsec3 WHERE zone_id=?1 "
         "ORDER BY hash DESC LIMIT 1",
+    // ADD_NSEC3_RECORD: Add NSEC3-related (NSEC3 or NSEC3-covering RRSIG) RR
+    "INSERT INTO nsec3 (zone_id, hash, owner, ttl, rdtype, rdata) "
+    "VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+    // DEL_ZONE_NSEC3_RECORDS: delete all NSEC3-related records from the zone
+    "DELETE FROM nsec3 WHERE zone_id=?1",
+    // DEL_NSEC3_RECORD: delete specified NSEC3-related records
+    "DELETE FROM nsec3 WHERE zone_id=?1 AND hash=?2 "
+    "AND rdtype=?3 AND rdata=?4"
 };
 
 struct SQLite3Parameters {
@@ -196,6 +204,7 @@ struct SQLite3Parameters {
     bool in_transaction; // whether or not a transaction has been started
     bool updating_zone;          // whether or not updating the zone
     int updated_zone_id;        // valid only when in_transaction is true
+    string updated_zone_origin_; // ditto, and only needed to handle NSEC3s
 private:
     // statements_ are private and must be accessed via getStatement() outside
     // of this structure.
@@ -210,6 +219,10 @@ private:
 // statement, which is completed with a single "step" (normally within a
 // single call to an SQLite3Database method).  In particular, it cannot be
 // used for "SELECT" variants, which generally expect multiple matching rows.
+//
+// The bindXXX methods are straightforward wrappers for the corresponding
+// sqlite3_bind_xxx functions that make bindings with the given parameters
+// on the statement maintained in this class.
 class StatementProcessor {
 public:
     // desc will be used on failure in the what() message of the resulting
@@ -224,6 +237,33 @@ public:
 
     ~StatementProcessor() {
         sqlite3_reset(stmt_);
+    }
+
+    void bindInt(int index, int val) {
+        if (sqlite3_bind_int(stmt_, index, val) != SQLITE_OK) {
+            isc_throw(DataSourceError,
+                      "failed to bind SQLite3 parameter: " <<
+                      sqlite3_errmsg(dbparameters_.db_));
+        }
+    }
+
+    void bindInt64(int index, sqlite3_int64 val) {
+        if (sqlite3_bind_int64(stmt_, index, val) != SQLITE_OK) {
+            isc_throw(DataSourceError,
+                      "failed to bind SQLite3 parameter: " <<
+                      sqlite3_errmsg(dbparameters_.db_));
+        }
+    }
+
+    // For simplicity, we assume val is a NULL-terminated string, and the
+    // entire non NUL characters are to be bound.  The destructor parameter
+    // is normally either SQLITE_TRANSIENT or SQLITE_STATIC.
+    void bindText(int index, const char* val, void(*destructor)(void*)) {
+        if (sqlite3_bind_text(stmt_, index, val, -1, destructor)
+            != SQLITE_OK) {
+            isc_throw(DataSourceError, "failed to bind SQLite3 parameter: " <<
+                      sqlite3_errmsg(dbparameters_.db_));
+        }
     }
 
     void exec() {
@@ -1021,19 +1061,22 @@ SQLite3Accessor::startUpdateZone(const string& zone_name, const bool replace) {
                        "start an SQLite3 update transaction").exec();
 
     if (replace) {
+        // First, clear all current data from tables.
+        typedef pair<StatementID, const char* const> StatementSpec;
+        const StatementSpec delzone_stmts[] =
+            { StatementSpec(DEL_ZONE_RECORDS, "delete zone records"),
+              StatementSpec(DEL_ZONE_NSEC3_RECORDS,
+                            "delete zone NSEC3 records") };
         try {
-            StatementProcessor delzone_exec(*dbparameters_, DEL_ZONE_RECORDS,
-                                            "delete zone records");
-
-            sqlite3_stmt* stmt = dbparameters_->getStatement(DEL_ZONE_RECORDS);
-            sqlite3_clear_bindings(stmt);
-            if (sqlite3_bind_int(stmt, 1, zone_info.second) != SQLITE_OK) {
-                isc_throw(DataSourceError,
-                          "failed to bind SQLite3 parameter: " <<
-                          sqlite3_errmsg(dbparameters_->db_));
+            for (size_t i = 0;
+                 i < sizeof(delzone_stmts) / sizeof(delzone_stmts[0]);
+                 ++i) {
+                StatementProcessor delzone_proc(*dbparameters_,
+                                                delzone_stmts[i].first,
+                                                delzone_stmts[i].second);
+                delzone_proc.bindInt(1, zone_info.second);
+                delzone_proc.exec();
             }
-
-            delzone_exec.exec();
         } catch (const DataSourceError&) {
             // Once we start a transaction, if something unexpected happens
             // we need to rollback the transaction so that a subsequent update
@@ -1047,6 +1090,7 @@ SQLite3Accessor::startUpdateZone(const string& zone_name, const bool replace) {
     dbparameters_->in_transaction = true;
     dbparameters_->updating_zone = true;
     dbparameters_->updated_zone_id = zone_info.second;
+    dbparameters_->updated_zone_origin_ = zone_name;
 
     return (zone_info);
 }
@@ -1073,7 +1117,9 @@ SQLite3Accessor::commit() {
     StatementProcessor(*dbparameters_, COMMIT,
                        "commit an SQLite3 transaction").exec();
     dbparameters_->in_transaction = false;
+    dbparameters_->updating_zone = false;
     dbparameters_->updated_zone_id = -1;
+    dbparameters_->updated_zone_origin_.clear();
 }
 
 void
@@ -1086,7 +1132,9 @@ SQLite3Accessor::rollback() {
     StatementProcessor(*dbparameters_, ROLLBACK,
                        "rollback an SQLite3 transaction").exec();
     dbparameters_->in_transaction = false;
+    dbparameters_->updating_zone = false;
     dbparameters_->updated_zone_id = -1;
+    dbparameters_->updated_zone_origin_.clear();
 }
 
 namespace {
@@ -1096,29 +1144,19 @@ void
 doUpdate(SQLite3Parameters& dbparams, StatementID stmt_id,
          COLUMNS_TYPE update_params, const char* exec_desc)
 {
-    sqlite3_stmt* const stmt = dbparams.getStatement(stmt_id);
-    StatementProcessor executer(dbparams, stmt_id, exec_desc);
+    StatementProcessor proc(dbparams, stmt_id, exec_desc);
 
     int param_id = 0;
-    if (sqlite3_bind_int(stmt, ++param_id, dbparams.updated_zone_id)
-        != SQLITE_OK) {
-        isc_throw(DataSourceError, "failed to bind SQLite3 parameter: " <<
-                  sqlite3_errmsg(dbparams.db_));
-    }
+    proc.bindInt(++param_id, dbparams.updated_zone_id);
     const size_t column_count =
         sizeof(update_params) / sizeof(update_params[0]);
     for (int i = 0; i < column_count; ++i) {
         // The old sqlite3 data source API assumes NULL for an empty column.
         // We need to provide compatibility at least for now.
-        if (sqlite3_bind_text(stmt, ++param_id,
-                              update_params[i].empty() ? NULL :
-                              update_params[i].c_str(),
-                              -1, SQLITE_TRANSIENT) != SQLITE_OK) {
-            isc_throw(DataSourceError, "failed to bind SQLite3 parameter: " <<
-                      sqlite3_errmsg(dbparams.db_));
-        }
+        proc.bindText(++param_id, update_params[i].empty() ? NULL :
+                      update_params[i].c_str(), SQLITE_TRANSIENT);
     }
-    executer.exec();
+    proc.exec();
 }
 }
 
@@ -1128,15 +1166,32 @@ SQLite3Accessor::addRecordToZone(const string (&columns)[ADD_COLUMN_COUNT]) {
         isc_throw(DataSourceError, "adding record to SQLite3 "
                   "data source without transaction");
     }
-    doUpdate<const string (&)[DatabaseAccessor::ADD_COLUMN_COUNT]>(
+    doUpdate<const string (&)[ADD_COLUMN_COUNT]>(
         *dbparameters_, ADD_RECORD, columns, "add record to zone");
 }
 
 void
 SQLite3Accessor::addNSEC3RecordToZone(
-    const string (&/*columns*/)[ADD_NSEC3_COLUMN_COUNT])
+    const string (&columns)[ADD_NSEC3_COLUMN_COUNT])
 {
-    isc_throw(NotImplemented, "not yet implemented");
+    if (!dbparameters_->updating_zone) {
+        isc_throw(DataSourceError, "adding NSEC3-related record to SQLite3 "
+                  "data source without transaction");
+    }
+
+    // XXX: the current implementation of SQLite3 schema requires the 'owner'
+    // column, and the current implementation of getAllRecords() relies on it,
+    // while the addNSEC3RecordToZone interface doesn't provide it explicitly.
+    // We should revisit it at the design level, but for now we internally
+    // convert the given parameter to satisfy the internal requirements.
+    const string sqlite3_columns[ADD_NSEC3_COLUMN_COUNT + 1] =
+        { columns[ADD_NSEC3_HASH],
+          columns[ADD_NSEC3_HASH] + "." + dbparameters_->updated_zone_origin_,
+          columns[ADD_NSEC3_TTL],
+          columns[ADD_NSEC3_TYPE], columns[ADD_NSEC3_RDATA] };
+    doUpdate<const string (&)[ADD_NSEC3_COLUMN_COUNT + 1]>(
+        *dbparameters_, ADD_NSEC3_RECORD, sqlite3_columns,
+        "add NSEC3 record to zone");
 }
 
 void
@@ -1145,15 +1200,21 @@ SQLite3Accessor::deleteRecordInZone(const string (&params)[DEL_PARAM_COUNT]) {
         isc_throw(DataSourceError, "deleting record in SQLite3 "
                   "data source without transaction");
     }
-    doUpdate<const string (&)[DatabaseAccessor::DEL_PARAM_COUNT]>(
+    doUpdate<const string (&)[DEL_PARAM_COUNT]>(
         *dbparameters_, DEL_RECORD, params, "delete record from zone");
 }
 
 void
 SQLite3Accessor::deleteNSEC3RecordInZone(
-    const string (&/*params*/)[DEL_PARAM_COUNT])
+    const string (&params)[DEL_PARAM_COUNT])
 {
-    isc_throw(NotImplemented, "not yet implemented");
+    if (!dbparameters_->updating_zone) {
+        isc_throw(DataSourceError, "deleting NSEC3-related record in SQLite3 "
+                  "data source without transaction");
+    }
+    doUpdate<const string (&)[DEL_PARAM_COUNT]>(
+        *dbparameters_, DEL_NSEC3_RECORD, params,
+        "delete NSEC3 record from zone");
 }
 
 void
@@ -1171,33 +1232,16 @@ SQLite3Accessor::addRecordDiff(int zone_id, uint32_t serial,
                   << dbparameters_->updated_zone_id);
     }
 
-    sqlite3_stmt* const stmt = dbparameters_->getStatement(ADD_RECORD_DIFF);
-    StatementProcessor executer(*dbparameters_, ADD_RECORD_DIFF,
-                                "add record diff");
+    StatementProcessor proc(*dbparameters_, ADD_RECORD_DIFF,
+                            "add record diff");
     int param_id = 0;
-    if (sqlite3_bind_int(stmt, ++param_id, zone_id)
-        != SQLITE_OK) {
-        isc_throw(DataSourceError, "failed to bind SQLite3 parameter: " <<
-                  sqlite3_errmsg(dbparameters_->db_));
-    }
-    if (sqlite3_bind_int64(stmt, ++param_id, serial)
-        != SQLITE_OK) {
-        isc_throw(DataSourceError, "failed to bind SQLite3 parameter: " <<
-                  sqlite3_errmsg(dbparameters_->db_));
-    }
-    if (sqlite3_bind_int(stmt, ++param_id, operation)
-        != SQLITE_OK) {
-        isc_throw(DataSourceError, "failed to bind SQLite3 parameter: " <<
-                  sqlite3_errmsg(dbparameters_->db_));
-    }
+    proc.bindInt(++param_id, zone_id);
+    proc.bindInt64(++param_id, serial);
+    proc.bindInt(++param_id, operation);
     for (int i = 0; i < DIFF_PARAM_COUNT; ++i) {
-        if (sqlite3_bind_text(stmt, ++param_id, params[i].c_str(),
-                              -1, SQLITE_TRANSIENT) != SQLITE_OK) {
-            isc_throw(DataSourceError, "failed to bind SQLite3 parameter: " <<
-                      sqlite3_errmsg(dbparameters_->db_));
-        }
+        proc.bindText(++param_id, params[i].c_str(), SQLITE_TRANSIENT);
     }
-    executer.exec();
+    proc.exec();
 }
 
 std::string

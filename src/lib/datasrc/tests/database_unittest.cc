@@ -3002,10 +3002,9 @@ TYPED_TEST(DatabaseClientTest, addRRsetToNewZone) {
     this->checkLastAdded(rrset_added);
 }
 
-// Below we define a set of NSEC3 update tests.   Right now this only works
-// for the mock DB, but the plan is to make it a TYPED_TEST to share the case
-// with SQLite3 implementation, too.
-
+//
+// Below we define a set of NSEC3 update tests.
+//
 // Commonly used data for NSEC3 update tests below.
 const char* const nsec3_hash = "1BB7SO0452U1QHL98UISNDD9218GELR5";
 const char* const nsec3_rdata = "1 1 12 AABBCCDD "
@@ -3045,7 +3044,7 @@ nsec3Check(const vector<ConstRRsetPtr>& expected_rrsets,
                 actual_rrsets.begin(), actual_rrsets.end());
 }
 
-TEST_F(MockDatabaseClientTest, addDeleteNSEC3InZone) {
+TYPED_TEST(DatabaseClientTest, addDeleteNSEC3InZone) {
     // Add one NSEC3 RR to the zone, delete it, and add another one.
     this->updater_ = this->client_->getUpdater(this->zname_, true);
     const ConstRRsetPtr nsec3_rrset =
@@ -3066,7 +3065,7 @@ TEST_F(MockDatabaseClientTest, addDeleteNSEC3InZone) {
                *this->current_accessor_);
 }
 
-TEST_F(MockDatabaseClientTest, addDeleteNSEC3AndRRSIGToZone) {
+TYPED_TEST(DatabaseClientTest, addDeleteNSEC3AndRRSIGToZone) {
     // Add one NSEC3 RR and its RRSIG to the zone, delete the RRSIG and add
     // a new one.
     this->updater_ = this->client_->getUpdater(this->zname_, true);
@@ -3639,10 +3638,7 @@ TYPED_TEST(DatabaseClientTest, journal) {
     this->checkJournal(expected);
 }
 
-// At the moment this only works for the mock accessor.  Once sqlite3
-// accessor supports updating NSEC3, this should be merged to the previous
-// test
-TEST_F(MockDatabaseClientTest, journalForNSEC3) {
+TYPED_TEST(DatabaseClientTest, journalForNSEC3) {
     // Similar to the previous test, but adding/deleting NSEC3 RRs, just to
     // confirm that NSEC3 is not special for managing diffs.
     const ConstRRsetPtr nsec3_rrset =
