@@ -105,6 +105,9 @@ Feature: Querying feature
         """
     Scenario: Delegation query for unsigned child zone
         Given I have bind10 running with configuration example.org.inmem.config
+        And wait for bind10 stderr message BIND10_STARTED_CC
+        And wait for bind10 stderr message CMDCTL_STARTED
+        And wait for bind10 stderr message AUTH_SERVER_STARTED
         A dnssec query for www.sub.example.org type AAAA should have rcode NOERROR
         The last query response should have flags qr rd
         The last query response should have edns_flags do
