@@ -2819,7 +2819,7 @@ TODO; there's a ticket to determine these levels, see #1074
                 Note: if output is set to <quote>stderr</quote> and a lot of
                 messages are produced in a short time (e.g. if the logging
                 level is set to DEBUG), you may occasionally see some messages
-                jumbled up together.  This is a due to a combination of the way
+                jumbled up together.  This is due to a combination of the way
                 that messages are written to the screen and the unbuffered
                 nature of the standard error stream.  If this occurs, it is
                 recommended that output be set to <quote>stdout</quote>.
