@@ -19,7 +19,7 @@ Feature: Xfrin
     And wait for bind10 stderr message ZONEMGR_STARTED
 
     A query for www.example.org should have rcode REFUSED
-    When I send bind10 the command Xfrin retransfer example.org IN ::1 47807
+    When I send bind10 the command Xfrin retransfer example.org IN 127.0.0.1 47807
     Then wait for new bind10 stderr message XFRIN_TRANSFER_SUCCESS not XFRIN_XFR_PROCESS_FAILURE
     A query for www.example.org should have rcode NOERROR
 
@@ -28,7 +28,7 @@ Feature: Xfrin
     # should be 13, counting the duplicated SOA.
     # At this point we can confirm both in and out of AXFR for a zone
     # containing an NSEC3 RR.
-    When I do an AXFR transfer of example.org from ::1 47807
+    When I do an AXFR transfer of example.org from 127.0.0.1 47807
     Then transfer result should have 13 rrs
 
     The file data/test_nonexistent_db.sqlite3 should exist
