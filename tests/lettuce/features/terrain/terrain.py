@@ -52,7 +52,9 @@ copylist = [
     ["configurations/resolver/resolver_basic.config.orig",
      "configurations/resolver/resolver_basic.config"],
     ["configurations/multi_instance/multi_auth.config.orig",
-     "configurations/multi_instance/multi_auth.config"]
+     "configurations/multi_instance/multi_auth.config"],
+    ["data/inmem-xfrin.sqlite3.orig",
+     "data/inmem-xfrin.sqlite3"]
 ]
 
 # This is a list of files that, if present, will be removed before a scenario
