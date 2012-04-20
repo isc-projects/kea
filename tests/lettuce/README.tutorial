@@ -54,7 +54,7 @@ The one scenario we have has no steps, so if we run it we should
 see something like:
 
 -- output
-> lettuce
+> ./run_lettuce.sh
 Feature: showing off BIND 10
   This is to show BIND 10 running and that it answer queries
 
@@ -95,7 +95,7 @@ it to be started before we continue.
 And let's run the tests again.
 
 --
-> lettuce
+> ./run_lettuce.sh
 
 Feature: showing off BIND 10
   This is to show BIND 10 running and that it answer queries
