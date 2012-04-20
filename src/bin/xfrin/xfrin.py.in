@@ -1549,24 +1549,30 @@ class Xfrin:
         if is_default:
             return
         for d in datasources:
-            if "class" in d:
-                dclass = d["class"]
-            else:
-                dclass = "IN"
-            if d["type"].lower() == "memory" and dclass.lower() == zone_class.to_text().lower():
-                for zone in d["zones"]:
-                    # Remove trailing periods
-                    n1 = zone["origin"]
-                    if n1[-1] == '.':
-                        n1 = n1[:-1]
-                    n2 = zone_name.to_text()
-                    if n2[-1] == '.':
-                        n2 = n2[:-1]
+            try:
+                if "class" in d:
+                    dclass = RRClass(d["class"])
+                else:
+                    dclass = RRClass("IN")
+            except InvalidRRType as err:
+                logger.info(XFRIN_AUTH_CONFIG_ERROR, str(err))
+                continue
 
-                    if zone["filetype"].lower() == "sqlite3" and n1.lower() == n2.lower():
-                        param = {"origin": n1,
+            if d["type"].lower() == "memory" and dclass == zone_class:
+                for zone in d["zones"]:
+                    if "filetype" not in zone:
+                        continue
+                    try:
+                        name = Name(zone["origin"])
+                    except (EmptyLabel, TooLongLabel, BadLabelType, BadEscape, TooLongName, IncompleteName):
+                        logger.info(XFRIN_AUTH_CONFIG_ERROR, str(err))
+                        continue
+
+                    if zone["filetype"].lower() == "sqlite3" and name == zone_name:
+                        param = {"origin": zone_name.to_text(),
                                  "class": zone_class.to_text(),
                                  "datasrc": d["type"]}
+
                         logger.debug(DBG_XFRIN_TRACE, XFRIN_AUTH_LOADZONE,
                                      param["origin"], param["class"], param["datasrc"])
 
