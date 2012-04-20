@@ -26,15 +26,11 @@ namespace isc { namespace config {
     /// A standard ModuleSpec exception that is thrown when a
     /// specification is not in the correct form.
     ///
-    /// TODO: use jinmei's exception class as a base and not c_str in
-    /// what() there
-    class ModuleSpecError : public std::exception {
+    class ModuleSpecError : public isc::Exception {
     public:
-        ModuleSpecError(std::string m = "Module specification is invalid") : msg(m) {}
-        ~ModuleSpecError() throw() {}
-        const char* what() const throw() { return (msg.c_str()); }
-    private:
-        std::string msg;
+        ModuleSpecError(const char* file, size_t line,
+                        const char* what = "Module specification is invalid") :
+            isc::Exception(file, line, what) {}
     };
 
     ///
