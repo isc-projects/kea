@@ -44,3 +44,5 @@ export B10_FROM_BUILD
 
 BIND10_MSGQ_SOCKET_FILE=@abs_top_builddir@/msgq_socket
 export BIND10_MSGQ_SOCKET_FILE
+
+export LETTUCE_SETUP_COMPLETED=1
