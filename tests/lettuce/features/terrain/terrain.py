@@ -28,6 +28,7 @@ import subprocess
 import os.path
 import shutil
 import re
+import sys
 import time
 
 # In order to make sure we start all tests with a 'clean' environment,
@@ -383,4 +384,13 @@ def cleanup(scenario):
         world.processes.keep_files()
     # Stop any running processes we may have had around
     world.processes.stop_all_processes()
-    
+
+# Environment check
+# Checks if LETTUCE_SETUP_COMPLETED is set in the environment
+# If not, abort with an error to use the run-script
+if 'LETTUCE_SETUP_COMPLETED' not in os.environ:
+    print("Environment check failure; LETTUCE_SETUP_COMPLETED not set")
+    print("Please use the run_lettuce.sh script. If you want to test an")
+    print("installed version of bind10 with these tests, use")
+    print("run_lettuce.sh -I [lettuce arguments]")
+    sys.exit(1)
