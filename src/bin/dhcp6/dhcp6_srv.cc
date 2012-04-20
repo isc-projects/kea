@@ -183,9 +183,6 @@ void Dhcpv6Srv::setServerID() {
             continue;
         }
 
-        uint8_t zeros[IfaceMgr::MAX_MAC_LEN];
-        memset(zeros, 0, IfaceMgr::MAX_MAC_LEN);
-
         // some interfaces (like lo on Linux) report 6-bytes long
         // MAC adress 00:00:00:00:00:00. Let's not use such weird interfaces
         // to generate DUID.
