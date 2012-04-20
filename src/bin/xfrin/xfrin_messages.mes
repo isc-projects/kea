@@ -121,6 +121,9 @@ likely means that the msgq daemon has quit or was killed.
 There was a problem sending a message to b10-auth. This most likely
 means that the msgq daemon has quit or was killed.
 
+% XFRIN_AUTH_CONFIG_ERROR Error parsing Auth configuration: %1
+There was an error when parsing Auth configuration.
+
 % XFRIN_AUTH_LOADZONE sending Auth loadzone for origin=%1, class=%2, datasrc=%3
 There was a successful zone transfer, and the zone is served by b10-auth
 in the in-memory data source using sqlite3 as a backend. We send the
