@@ -1,7 +1,7 @@
 if [ "$1" = "-I" ]; then
     shift
     echo "$@"
-    LETTUCE_SETUP_COMPLETED=1 lettuce $@
+    LETTUCE_SETUP_COMPLETED=1 exec lettuce $@
 else
     source ./setup_intree_bind10.sh
     exec lettuce $@
