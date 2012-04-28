@@ -1236,6 +1236,13 @@ getsock6(void)
 		perror("socket");
 		exit(1);
 	}
+	ret = bind(sock,
+		   (struct sockaddr *) &localaddr,
+		   sizeof(struct sockaddr_in6));
+	if (ret < 0) {
+		perror("Failed to bind v6 socket to local-link address");
+		exit(1);
+	}
 	/* perform the multicast stuff when the destination is multicast */
 	if (IN6_IS_ADDR_MULTICAST(&s6->sin6_addr)) {
 		int hops = 1;
