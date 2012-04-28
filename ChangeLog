@@ -1,3 +1,8 @@
+428.	[bug]		marcin
+	perfdhcp: bind to local address to allow reception of replies from IPv6
+	DHCP servers.
+	(Trac #1908, git 597e059afaa4a89e767f8f10d2a4d78223af3940)
+
 427.	[bug]		jinmei
 	libdatasrc, b10-xfrin: the zone updater for database-based data
 	sources now correctly distinguishes NSEC3-related RRs (NSEC3 and
