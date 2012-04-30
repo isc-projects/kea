@@ -3,6 +3,10 @@ Feature: Multiple instances
     removing them does not affect the running of other instances
 
     Scenario: Multiple instances of Auth
+        # Standard check to test (non-)existence of a file
+        # This file is actually automatically
+        The file data/test_nonexistent_db.sqlite3 should not exist
+
         # This config should have two running instances
         Given I have bind10 running with configuration multi_instance/multi_auth.config
         And wait for bind10 stderr message BIND10_STARTED_CC
@@ -20,6 +24,9 @@ Feature: Multiple instances
         And bind10 module Xfrin should not be running
         And bind10 module Stats should not be running
         And bind10 module StatsHttpd should not be running
+
+        # Now we use the first step again to see if the file has been created
+        The file data/test_nonexistent_db.sqlite3 should exist
 
         A query for example.com should have rcode REFUSED
 
