@@ -7,6 +7,7 @@ AC_CONFIG_SRCDIR(README)
 AM_INIT_AUTOMAKE
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])dnl be backward compatible
 AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_MACRO_DIR([m4macros])
 
 # Checks for programs.
 AC_PROG_CXX
