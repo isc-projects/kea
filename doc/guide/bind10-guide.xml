@@ -770,9 +770,8 @@ as a dependency earlier -->
       In its default configuration, the <command>bind10</command>
       master process will also start up
       <command>b10-cmdctl</command> for administration tools to
-      communicate with the system,
-      <command>b10-stats</command> for statistics collection, and
-      <command>b10-stats-httpd</command> for statistics reporting.
+      communicate with the system, and
+      <command>b10-stats</command> for statistics collection.
     </para>
 
     <section id="start">

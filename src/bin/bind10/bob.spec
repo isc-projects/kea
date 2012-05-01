@@ -9,10 +9,6 @@
         "item_optional": false,
         "item_default": {
           "b10-stats": { "address": "Stats", "kind": "dispensable" },
-          "b10-stats-httpd": {
-            "address": "StatsHttpd",
-            "kind": "dispensable"
-          },
           "b10-cmdctl": { "special": "cmdctl", "kind": "needed" }
         },
         "named_set_item_spec": {
