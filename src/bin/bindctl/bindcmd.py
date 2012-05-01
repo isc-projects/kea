@@ -739,13 +739,8 @@ class BindCmdInterpreter(Cmd):
            of the sets as defined in command_sets.py'''
         if command.command == 'file':
             try:
-                command_file = open(command.params['filename'])
-                # copy them into a list for consistency with the built-in
-                # sets of commands
-                commands = []
-                for line in command_file:
-                    commands.append(line)
-                command_file.close()
+                with open(command.params['filename']) as command_file:
+                    commands = command_file.readlines()
             except IOError as ioe:
                 print("Error: " + str(ioe))
                 return
@@ -787,14 +782,14 @@ class BindCmdInterpreter(Cmd):
                 line = line.strip()
                 if verbose:
                     print(line)
-                if line.startswith('#'):
+                if line.startswith('#') or len(line) == 0:
                     continue
                 elif line.startswith('!'):
-                    if line.startswith('!echo ') and len(line) > 6:
+                    if re.match('^!echo ', line, re.I) and len(line) > 6:
                         print(line[6:])
-                    elif line.startswith('!verbose on'):
+                    elif re.match('^!verbose\s+on\s*$', line, re.I):
                         verbose = True
-                    elif line.startswith('!verbose off'):
+                    elif re.match('^!verbose\s+off$', line, re.I):
                         verbose = False
                     else:
                         print("Warning: ignoring unknown directive: " + line)
