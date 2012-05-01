@@ -30,8 +30,8 @@ Feature: Example feature
         # that we are sure this file does not exist, see
         # features/terrain/terrain.py
 
-        # Standard check to test (non-)existence of a file
-        # This file is actually automatically
+        # Standard check to test (non-)existence of a file.
+        # This file is actually automatically created.
         The file data/test_nonexistent_db.sqlite3 should not exist
 
         # In the first scenario, we used 'given I have bind10 running', which
