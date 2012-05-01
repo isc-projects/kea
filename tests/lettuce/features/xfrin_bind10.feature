@@ -2,6 +2,8 @@ Feature: Xfrin
     Tests for Xfrin, specific for BIND 10 behaviour.
     
     Scenario: Retransfer command
+    # Standard check to test (non-)existence of a file.
+    # This file is actually automatically created.
     The file data/test_nonexistent_db.sqlite3 should not exist
 
     Given I have bind10 running with configuration xfrin/retransfer_master.conf with cmdctl port 47804 as master
@@ -18,6 +20,9 @@ Feature: Xfrin
     And wait for bind10 stderr message XFRIN_STARTED
     And wait for bind10 stderr message ZONEMGR_STARTED
 
+    # Now we use the first step again to see if the file has been created
+    The file data/test_nonexistent_db.sqlite3 should exist
+
     A query for www.example.org should have rcode REFUSED
     When I send bind10 the command Xfrin retransfer example.org IN 127.0.0.1 47807
     Then wait for new bind10 stderr message XFRIN_TRANSFER_SUCCESS not XFRIN_XFR_PROCESS_FAILURE
@@ -30,5 +35,3 @@ Feature: Xfrin
     # containing an NSEC3 RR.
     When I do an AXFR transfer of example.org from 127.0.0.1 47807
     Then transfer result should have 13 rrs
-
-    The file data/test_nonexistent_db.sqlite3 should exist
