@@ -296,7 +296,7 @@ TEST_F(LoggerManagerTest, FileSizeRollover) {
     manager.process(spec);
     {
         Logger logger(file_spec.getLoggerName().c_str());
-        LOG_FATAL(logger, LOG_NO_MESSAGE_TEXT).arg(big_arg);
+        LOG_FATAL(logger, LOG_NO_MESSAGE_TEXT).arg("42").arg(big_arg);
     }
 
     LoggerManager::reset();     // Ensure files are closed
