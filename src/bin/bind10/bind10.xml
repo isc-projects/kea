@@ -251,10 +251,6 @@ TODO: configuration section
         <para> <varname>/Boss/components/b10-stats</varname> </para>
       </listitem>
 
-      <listitem>
-        <para> <varname>/Boss/components/b10-stats-httpd</varname> </para>
-      </listitem>
-
     </itemizedlist>
 
     <para>
