@@ -101,7 +101,8 @@ Feature: control with bindctl
         last bindctl output should contain shouldshow
         last bindctl output should contain Error
         last bindctl output should not contain shouldnotshow
-        # This would fail if the entire list was passed, or the configuratio
+        # This would fail if the entire list was passed, or the configuration
+        # was committed
         send bind10 the command config show Boss/components
         last bindctl output should not contain b10-auth
 
@@ -153,4 +154,3 @@ Feature: control with bindctl
         bind10 module Xfrout should be running
         bind10 module Xfrin should be running
         bind10 module Zonemgr should be running
-        
