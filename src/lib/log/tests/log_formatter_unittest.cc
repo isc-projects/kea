@@ -12,6 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include "config.h"
 #include <gtest/gtest.h>
 #include <log/log_formatter.h>
 #include <log/logger_level.h>
@@ -94,15 +95,40 @@ TEST_F(FormatterTest, multiArg) {
     EXPECT_EQ("The arguments are switched", outputs[0].second);
 }
 
-// Can survive and complains if placeholder is missing
-TEST_F(FormatterTest, missingPlace) {
+#ifdef ENABLE_LOGGER_CHECKS
+
+#ifdef EXPECT_ABORT
+// Throws MismatchedPlaceholders exception if number of placeholders
+// don't match number of arguments. This causes it to abort.
+TEST_F(FormatterTest, mismatchedPlaceholders) {
+    EXPECT_ABORT({
+        Formatter(isc::log::INFO, s("Missing the first %2"), this).arg("missing").arg("argument");
+    }, ".*");
+
+    EXPECT_ABORT({
+	Formatter(isc::log::INFO, s("Too many arguments in %1 %2"), this).arg("only one");
+    }, ".*");
+}
+#endif /* EXPECT_ABORT */
+
+#else
+
+// If logger checks are not enabled, nothing is thrown
+TEST_F(FormatterTest, mismatchedPlaceholders) {
     EXPECT_NO_THROW(Formatter(isc::log::INFO, s("Missing the first %2"), this).
                     arg("missing").arg("argument"));
     ASSERT_EQ(1, outputs.size());
     EXPECT_EQ(isc::log::INFO, outputs[0].first);
-    EXPECT_EQ("Missing the first argument "
-              "@@Missing placeholder %1 for 'missing'@@", outputs[0].second);
+    EXPECT_EQ("Missing the first argument", outputs[0].second);
+
+    EXPECT_NO_THROW(Formatter(isc::log::INFO, s("Too many arguments in %1 %2"), this).
+                    arg("only one"));
+    ASSERT_EQ(2, outputs.size());
+    EXPECT_EQ(isc::log::INFO, outputs[1].first);
+    EXPECT_EQ("Too many arguments in only one %2", outputs[1].second);
 }
+
+#endif /* ENABLE_LOGGER_CHECKS */
 
 // Can replace multiple placeholders
 TEST_F(FormatterTest, multiPlaceholder) {
