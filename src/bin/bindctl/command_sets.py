@@ -14,16 +14,19 @@
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 # This file provides a built-in set of 'execute' commands, for common
-# functions, such as adding an initial auth server
-# These sets must have an associated CommandInfo defined in
-# bindctl_main.py.in, in prepare_execute_commands, and
-# a handler in 
+# functions, such as adding an initial auth server.
+# By calling the function prepare_execute_commands, the
+# commands in the command_sets map are added to the virtual
+# component called 'execute'. This is done in bindctl_main.
 
 from bindctl.moduleinfo import *
 # The name of the 'virtual' command set execution module in bindctl
 EXECUTE_MODULE_NAME = 'execute'
 
 # This is a map of command names to lists
+# Each element in the set should itself be a dict containing:
+# 'description': A string with a description of the command set
+# 'commands': A list of bindctl commands
 command_sets = {
     'init_authoritative_server': {
         'description':
@@ -47,8 +50,8 @@ command_sets = {
             'config add /Boss/components b10-zonemgr',
             'config set /Boss/components/b10-zonemgr/address Zonemgr',
             'config set /Boss/components/b10-zonemgr/kind dispensable',
-            '!echo Components added. Please enter "config commit" to finalize'+
-            'initial setup and run the components.'
+            '!echo Components added. Please enter "config commit" to',
+            '!echo finalize initial setup and run the components.'
             ]
     }
 }
