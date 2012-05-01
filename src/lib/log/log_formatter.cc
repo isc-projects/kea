@@ -12,6 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include "config.h"
 #include <log/log_formatter.h>
 
 using namespace std;
@@ -31,11 +32,28 @@ replacePlaceholder(string* message, const string& arg,
             message->replace(pos, mark.size(), arg);
             pos = message->find(mark, pos + arg.size());
         } while (pos != string::npos);
-    } else {
-        // We're missing the placeholder, so add some complain
-        message->append(" @@Missing placeholder " + mark + " for '" + arg +
-                        "'@@");
     }
+#ifdef ENABLE_LOGGER_CHECKS
+    else {
+        // We're missing the placeholder, so throw an exception
+        isc_throw(MismatchedPlaceholders,
+		  "Missing logger placeholder in message: " << message);
+    }
+#endif /* ENABLE_LOGGER_CHECKS */
+}
+
+void
+checkExcessPlaceholders(string* message, unsigned int placeholder)
+{
+#ifdef ENABLE_LOGGER_CHECKS
+    string mark("%" + lexical_cast<string>(placeholder));
+    size_t pos(message->find(mark));
+    if (pos != string::npos) {
+        // Excess placeholders were found, so throw an exception
+        isc_throw(MismatchedPlaceholders,
+		  "Excess logger placeholders still exist in message: " << message);
+    }
+#endif /* ENABLE_LOGGER_CHECKS */
 }
 
 }
