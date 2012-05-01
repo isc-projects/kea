@@ -88,9 +88,13 @@ Feature: control with bindctl
         When I send bind10 the command execute file data/commands/directives
         last bindctl output should not contain Error
         last bindctl output should not contain commentexample1
-        last bindctl output should contain echoexample
-        last bindctl output should contain verbosecommentexample
-        last bindctl output should not contain commentexample2
+        last bindctl output should contain echoexample2
+        last bindctl output should contain verbosecommentexample3
+        last bindctl output should not contain commentexample4
+        last bindctl output should contain echoexample5
+        last bindctl output should contain echoexample6
+        last bindctl output should contain verbosecommentexample7
+        last bindctl output should not contain commentexample8
 
         # bad_command contains a bad command, at which point execution should stop
         When I send bind10 the command execute file data/commands/bad_command
