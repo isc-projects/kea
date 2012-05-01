@@ -782,10 +782,6 @@ class BindCmdInterpreter(Cmd):
            The execution is stopped if there are any errors.
         '''
         verbose = False
-        # Keep a copy of the original local changes, in case the
-        # given command set changes things but fails later
-        local_changes_backup =\
-            copy.deepcopy(self.config_data.get_local_changes())
         try:
             for line in commands:
                 line = line.strip()
@@ -813,8 +809,11 @@ class BindCmdInterpreter(Cmd):
                 isc.cc.data.DataAlreadyPresentError,
                 KeyError) as err:
             print('Error: ', err)
-            # revert changes
-            self.config_data.set_local_changes(local_changes_backup)
+            print()
+            print('Depending on the contents of the script, and which')
+            print('commands it has called, there can be committed and')
+            print('local changes. It is advised to check your settings,')
+            print('and revert local changes with "config revert".')
 
     def apply_cmd(self, cmd):
         '''Handles a general module command'''
