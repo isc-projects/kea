@@ -20,6 +20,6 @@ if [ "$1" = "-I" ]; then
     echo "$@"
     LETTUCE_SETUP_COMPLETED=1 exec lettuce $@
 else
-    source ./setup_intree_bind10.sh
+    . ./setup_intree_bind10.sh
     exec lettuce $@
 fi
