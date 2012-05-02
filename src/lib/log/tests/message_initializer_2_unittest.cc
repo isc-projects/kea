@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <sys/time.h>
+#include <sys/resource.h>
 #include <log/message_initializer.h>
 #include <gtest/gtest.h>
 
@@ -42,7 +44,16 @@ TEST(MessageInitializerTest2, MessageLoadTest) {
 #ifdef EXPECT_DEATH
     // Adding one more should take us over the limit.
     EXPECT_DEATH({
+        /* Set rlimits so that no coredumps are created. As a new
+           process is forked to run this EXPECT_DEATH test, the rlimits
+           of the parent process that runs the other tests should be
+           unaffected. */
+        rlimit core_limit;
+        core_limit.rlim_cur = 0;
+        core_limit.rlim_max = 0;
+        EXPECT_EQ(setrlimit(RLIMIT_CORE, &core_limit), 0);
+
         MessageInitializer initializer2(values);
-        }, ".*");
+      }, ".*");
 #endif
 }
