@@ -1,3 +1,8 @@
+430.	[bug]		jelte
+	When displaying configuration data, bindctl no longer treats
+	optional list items as an error, but shows them as an empty list.
+	(Trac #1520, git 0f18039bc751a8f498c1f832196e2ecc7b997b2a)
+
 429.	[func]		jelte
 	Added an 'execute' component to bindctl, which executes either a set
 	of commands from a file or a built-in set of commands. Currently,
