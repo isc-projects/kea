@@ -47,6 +47,8 @@ copylist = [
      "configurations/bindctl_commands.config"],
     ["configurations/example.org.config.orig",
      "configurations/example.org.config"],
+    ["configurations/bindctl/bindctl.config.orig",
+     "configurations/bindctl/bindctl.config"],
     ["configurations/resolver/resolver_basic.config.orig",
      "configurations/resolver/resolver_basic.config"],
     ["configurations/multi_instance/multi_auth.config.orig",

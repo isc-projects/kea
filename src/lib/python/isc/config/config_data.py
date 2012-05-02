@@ -23,6 +23,7 @@ two through the classes in ccsession)
 import isc.cc.data
 import isc.config.module_spec
 import ast
+import copy
 
 class ConfigDataError(Exception): pass
 
@@ -210,7 +211,8 @@ def find_spec_part(element, identifier, strict_identifier = True):
         cur_el = _get_map_or_list(cur_el)
 
     cur_el = _find_spec_part_single(cur_el, id_parts[-1])
-    return cur_el
+    # Due to the raw datatypes we use, it is safer to return a deep copy here
+    return copy.deepcopy(cur_el)
 
 def spec_name_list(spec, prefix="", recurse=False):
     """Returns a full list of all possible item identifiers in the
@@ -417,6 +419,14 @@ class MultiConfigData:
            been committed yet and are not known by the configuration
            manager or the modules."""
         return self._local_changes
+
+    def set_local_changes(self, new_local_changes):
+        """Sets the entire set of local changes, used when reverting
+           changes done automatically in case there was a problem (e.g.
+           when executing commands from a script that fails halfway
+           through).
+        """
+        self._local_changes = new_local_changes
 
     def clear_local_changes(self):
         """Reverts all local changes"""
