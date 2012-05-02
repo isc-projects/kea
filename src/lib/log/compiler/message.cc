@@ -25,6 +25,8 @@
 #include <time.h>
 #include <unistd.h>
 
+#include <exceptions/exceptions.h>
+
 #include <util/filename.h>
 #include <util/strutil.h>
 
@@ -325,8 +327,8 @@ writeHeaderFile(const string& file, const vector<string>& ns_components,
     ofstream hfile(header_file.fullName().c_str());
 
     if (hfile.fail()) {
-        throw MessageException(LOG_OPEN_OUTPUT_FAIL, header_file.fullName(),
-            strerror(errno));
+        isc_throw_2(MessageException, LOG_OPEN_OUTPUT_FAIL,
+                    header_file.fullName(), strerror(errno));
     }
 
     // Write the header preamble.  If there is an error, we'll pick it up
@@ -359,8 +361,8 @@ writeHeaderFile(const string& file, const vector<string>& ns_components,
 
     // Report errors (if any) and exit
     if (hfile.fail()) {
-        throw MessageException(LOG_WRITE_ERROR, header_file.fullName(),
-            strerror(errno));
+        isc_throw_2(MessageException, LOG_WRITE_ERROR, header_file.fullName(),
+                    strerror(errno));
     }
 
     hfile.close();
@@ -425,8 +427,8 @@ writeProgramFile(const string& file, const vector<string>& ns_components,
     ofstream ccfile(program_file.fullName().c_str());
 
     if (ccfile.fail()) {
-        throw MessageException(LOG_OPEN_OUTPUT_FAIL, program_file.fullName(),
-            strerror(errno));
+        isc_throw_2(MessageException, LOG_OPEN_OUTPUT_FAIL,
+                    program_file.fullName(), strerror(errno));
     }
 
     // Write the preamble.  If there is an error, we'll pick it up after
@@ -483,8 +485,8 @@ writeProgramFile(const string& file, const vector<string>& ns_components,
 
     // Report errors (if any) and exit
     if (ccfile.fail()) {
-        throw MessageException(LOG_WRITE_ERROR, program_file.fullName(),
-            strerror(errno));
+        isc_throw_2(MessageException, LOG_WRITE_ERROR, program_file.fullName(),
+                    strerror(errno));
     }
 
     ccfile.close();
