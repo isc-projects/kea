@@ -186,6 +186,10 @@ class TestConfigData(unittest.TestCase):
         spec_part = find_spec_part(config_spec, "item6/value1")
         self.assertEqual({'item_name': 'value1', 'item_type': 'string', 'item_optional': True, 'item_default': 'default'}, spec_part)
 
+        # make sure the returned data is a copy
+        spec_part['item_default'] = 'foo'
+        self.assertNotEqual(spec_part, find_spec_part(config_spec, "item6/value1"))
+
     def test_find_spec_part_lists(self):
         # A few specific tests for list data
         module_spec = isc.config.module_spec_from_file(self.data_path +
@@ -420,7 +424,14 @@ class TestMultiConfigData(unittest.TestCase):
         self.mcd.set_value("Spec2/item1", 2)
         local_changes = self.mcd.get_local_changes()
         self.assertEqual({"Spec2": { "item1": 2}}, local_changes)
-        
+
+    def test_set_local_changes(self):
+        module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec2.spec")
+        self.mcd.set_specification(module_spec)
+        self.assertEqual({}, self.mcd.get_local_changes())
+        new_local_changes = {"Spec2": { "item1": 2}}
+        self.mcd.set_local_changes(new_local_changes)
+        self.assertEqual(new_local_changes, self.mcd.get_local_changes())
 
     def test_clear_local_changes(self):
         module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec2.spec")
