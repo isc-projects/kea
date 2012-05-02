@@ -1,3 +1,10 @@
+429.	[func]		jelte
+	Added an 'execute' component to bindctl, which executes either a set
+	of commands from a file or a built-in set of commands. Currently,
+	only 'init_authoritative_server' is provided as a built-in set, but
+	it is expected that more will be added later.
+	(Trac #1843, git 551657702a4197ef302c567b5c0eaf2fded3e121)
+
 428.	[bug]		marcin
 	perfdhcp: bind to local address to allow reception of replies from IPv6
 	DHCP servers.
