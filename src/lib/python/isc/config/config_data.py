@@ -589,8 +589,10 @@ class MultiConfigData:
             if item_type == "list" and (all or first):
                 spec_part_list = spec_part['list_item_spec']
                 list_value, status = self.get_value(identifier)
+                # If not set, and no default, lists will show up as 'None',
+                # but it's better to treat it as an empty list then
                 if list_value is None:
-                    raise isc.cc.data.DataNotFoundError(identifier + " not found")
+                    list_value = []
 
                 if type(list_value) != list:
                     # the identifier specified a single element
