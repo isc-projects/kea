@@ -119,7 +119,8 @@ TEST_F(FormatterTest, mismatchedPlaceholders) {
                     arg("missing").arg("argument"));
     ASSERT_EQ(1, outputs.size());
     EXPECT_EQ(isc::log::INFO, outputs[0].first);
-    EXPECT_EQ("Missing the first argument", outputs[0].second);
+    EXPECT_EQ("Missing the first argument "
+              "@@Missing placeholder %1 for 'missing'@@", outputs[0].second);
 
     EXPECT_NO_THROW(Formatter(isc::log::INFO, s("Too many arguments in %1 %2"), this).
                     arg("only one"));
