@@ -67,6 +67,7 @@ run_unittests_CPPFLAGS = $(AM_CPPFLAGS)
 run_unittests_CXXFLAGS = $(AM_CXXFLAGS)
 run_unittests_LDADD    = $(AM_LDADD)
 run_unittests_LDFLAGS  = $(AM_LDFLAGS)
+run_unittests_LDFLAGS  += $(top_builddir)/src/lib/testutils/libtestutils.la
 
 # logging initialization tests.  These are put in separate programs to
 # ensure that the initialization status at the start of each test is known,
@@ -90,6 +91,7 @@ initializer_unittests_2_CPPFLAGS = $(AM_CPPFLAGS)
 initializer_unittests_2_CXXFLAGS = $(AM_CXXFLAGS)
 initializer_unittests_2_LDADD    = $(AM_LDADD)
 initializer_unittests_2_LDFLAGS  = $(AM_LDFLAGS)
+initializer_unittests_2_LDFLAGS  += $(top_builddir)/src/lib/testutils/libtestutils.la
 
 noinst_PROGRAMS += $(TESTS)
 endif
