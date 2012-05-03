@@ -1,3 +1,7 @@
+431.	[func]*         muks
+	BIND 10 no longer starts b10-stats-httpd by default.
+	(Trac #1885, git 5c8bbd7ab648b6b7c48e366e7510dedca5386f6c)
+
 430.	[bug]		jelte
 	When displaying configuration data, bindctl no longer treats
 	optional list items as an error, but shows them as an empty list.
