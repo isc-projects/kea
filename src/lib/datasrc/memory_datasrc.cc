@@ -120,7 +120,11 @@ typedef NSEC3Map::value_type NSEC3Pair;
 // Actual zone data: Essentially a set of zone's RRs.  This is defined as
 // a separate structure so that it'll be replaceable on reload.
 struct ZoneData {
-    ZoneData(const Name& origin) : domains_(true), origin_data_(NULL) {
+    ZoneData(const Name& origin) :
+        domains_(true),
+        origin_data_(NULL),
+        nsec_signed_(false)
+    {
         // We create the node for origin (it needs to exist anyway in future)
         domains_.insert(origin, &origin_data_);
         DomainPtr origin_domain(new Domain);
@@ -170,6 +174,7 @@ public:
         const scoped_ptr<NSEC3Hash> hash_; // hash parameter/calculator
     };
     scoped_ptr<NSEC3Data> nsec3_data_; // non NULL only when it's NSEC3 signed
+    bool nsec_signed_; // True if there's at least one NSEC record
 
     // This templated structure encapsulates the find result of findNode()
     // method (also templated) below.
@@ -1162,6 +1167,10 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                     isc_throw(AddError, "NSEC3PARAM with inconsistent "
                               "parameters: " << rrset->toText());
                 }
+            } else if (rrset->getType() == RRType::NSEC()) {
+                // If it is NSEC signed zone, so we put a flag there
+                // (flag is enough)
+                zone_data.nsec_signed_ = true;
             }
             return (result::SUCCESS);
         } else {
