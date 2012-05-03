@@ -197,6 +197,16 @@ public:
         throw type(__FILE__, __LINE__, oss__.str().c_str(), param1); \
     } while (1)
 
+///
+/// Similar as isc_throw, but allows the exception to have two additional
+/// parameters (the stream/text goes first)
+#define isc_throw_2(type, stream, param1, param2) \
+    do { \
+        std::ostringstream oss__; \
+        oss__ << stream; \
+        throw type(__FILE__, __LINE__, oss__.str().c_str(), param1, param2); \
+    } while (1)
+
 }
 #endif // __EXCEPTIONS_H
 

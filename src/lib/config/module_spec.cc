@@ -40,13 +40,14 @@ check_leaf_item(ConstElementPtr spec, const std::string& name,
         if (spec->get(name)->getType() == type) {
             return;
         } else {
-            throw ModuleSpecError(name + " not of type " + Element::typeToName(type));
+            isc_throw(ModuleSpecError,
+                      name + " not of type " + Element::typeToName(type));
         }
     } else if (mandatory) {
         // todo: want parent item name, and perhaps some info about location
         // in list? or just catch and throw new...
         // or make this part non-throwing and check return value...
-        throw ModuleSpecError(name + " missing in " + spec->str());
+        isc_throw(ModuleSpecError, name + " missing in " + spec->str());
     }
 }
 
@@ -80,7 +81,7 @@ check_config_item(ConstElementPtr spec) {
 void
 check_config_item_list(ConstElementPtr spec) {
     if (spec->getType() != Element::list) {
-        throw ModuleSpecError("config_data is not a list of elements");
+        isc_throw(ModuleSpecError, "config_data is not a list of elements");
     }
     BOOST_FOREACH(ConstElementPtr item, spec->listValue()) {
         check_config_item(item);
@@ -122,7 +123,7 @@ void check_statistics_item_list(ConstElementPtr spec);
 void
 check_statistics_item_list(ConstElementPtr spec) {
     if (spec->getType() != Element::list) {
-        throw ModuleSpecError("statistics is not a list of elements");
+        isc_throw(ModuleSpecError, "statistics is not a list of elements");
     }
     BOOST_FOREACH(ConstElementPtr item, spec->listValue()) {
         check_config_item(item);
@@ -135,7 +136,7 @@ check_statistics_item_list(ConstElementPtr spec) {
             && item->contains("item_default")) {
             if(!check_format(item->get("item_default"),
                              item->get("item_format"))) {
-                throw ModuleSpecError(
+                isc_throw(ModuleSpecError, 
                     "item_default not valid type of item_format");
             }
         }
@@ -152,7 +153,7 @@ check_command(ConstElementPtr spec) {
 void
 check_command_list(ConstElementPtr spec) {
     if (spec->getType() != Element::list) {
-        throw ModuleSpecError("commands is not a list of elements");
+        isc_throw(ModuleSpecError, "commands is not a list of elements");
     }
     BOOST_FOREACH(ConstElementPtr item, spec->listValue()) {
         check_command(item);
@@ -183,7 +184,7 @@ check_module_specification(ConstElementPtr def) {
     try {
         check_data_specification(def);
     } catch (const TypeError& te) {
-        throw ModuleSpecError(te.what());
+        isc_throw(ModuleSpecError, te.what());
     }
 }
 }
@@ -314,14 +315,14 @@ moduleSpecFromFile(const std::string& file_name, const bool check)
     if (!file) {
         std::stringstream errs;
         errs << "Error opening " << file_name << ": " << strerror(errno);
-        throw ModuleSpecError(errs.str());
+        isc_throw(ModuleSpecError, errs.str());
     }
 
     ConstElementPtr module_spec_element = Element::fromJSON(file, file_name);
     if (module_spec_element->contains("module_spec")) {
         return (ModuleSpec(module_spec_element->get("module_spec"), check));
     } else {
-        throw ModuleSpecError("No module_spec in specification");
+        isc_throw(ModuleSpecError, "No module_spec in specification");
     }
 }
 
@@ -333,7 +334,7 @@ moduleSpecFromFile(std::ifstream& in, const bool check)
     if (module_spec_element->contains("module_spec")) {
         return (ModuleSpec(module_spec_element->get("module_spec"), check));
     } else {
-        throw ModuleSpecError("No module_spec in specification");
+        isc_throw(ModuleSpecError, "No module_spec in specification");
     }
 }
 
