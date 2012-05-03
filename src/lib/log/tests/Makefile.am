@@ -41,12 +41,12 @@ endif
 AM_CPPFLAGS += $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)
 AM_LDFLAGS  += $(GTEST_LDFLAGS)
 
-AM_LDADD += $(GTEST_LDADD)
 AM_LDADD += $(top_builddir)/src/lib/log/liblog.la
 AM_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 AM_LDADD += $(top_builddir)/src/lib/util/libutil.la
 AM_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 AM_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
+AM_LDADD += $(GTEST_LDADD)
 
 # Set of unit tests for the general logging classes
 TESTS += run_unittests
