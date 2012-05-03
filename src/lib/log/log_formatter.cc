@@ -39,6 +39,11 @@ replacePlaceholder(string* message, const string& arg,
         isc_throw(MismatchedPlaceholders,
 		  "Missing logger placeholder in message: " << message);
     }
+#else
+    else {
+        // We're missing the placeholder, so add some complain
+        message->append(" @@Missing placeholder " + mark + " for '" + arg + "'@@");
+    }
 #endif /* ENABLE_LOGGER_CHECKS */
 }
 
