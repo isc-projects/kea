@@ -1215,9 +1215,13 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         if (wild) {
             flags = flags | RESULT_WILDCARD;
         }
-        if ((code == NXRRSET || code == NXDOMAIN || wild) &&
-            zone_data_->nsec3_data_) {
-            flags = flags | RESULT_NSEC3_SIGNED;
+        if (code == NXRRSET || code == NXDOMAIN || wild) {
+            if (zone_data_->nsec3_data_) {
+                flags = flags | RESULT_NSEC3_SIGNED;
+            }
+            if (zone_data_->nsec_signed_) {
+                flags = flags | RESULT_NSEC_SIGNED;
+            }
         }
         return (RBNodeResultContext(code, rrset, flags, node));
     }
