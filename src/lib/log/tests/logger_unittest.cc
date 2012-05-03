@@ -14,10 +14,10 @@
 
 #include <iostream>
 #include <string>
-#include <sys/time.h>
-#include <sys/resource.h>
 
 #include <gtest/gtest.h>
+
+#include <testutils/resource.h>
 
 #include <log/logger.h>
 #include <log/logger_manager.h>
@@ -372,14 +372,7 @@ TEST_F(LoggerTest, LoggerNameLength) {
     // Note that we just check that it dies - we don't check what message is
     // output.
     EXPECT_DEATH({
-        /* Set rlimits so that no coredumps are created. As a new
-           process is forked to run this EXPECT_DEATH test, the rlimits
-           of the parent process that runs the other tests should be
-           unaffected. */
-        rlimit core_limit;
-        core_limit.rlim_cur = 0;
-        core_limit.rlim_max = 0;
-        EXPECT_EQ(setrlimit(RLIMIT_CORE, &core_limit), 0);
+        isc::testutils::dontCreateCoreDumps();
 
         string ok3(Logger::MAX_LOGGER_NAME_SIZE + 1, 'x');
         Logger l3(ok3.c_str());

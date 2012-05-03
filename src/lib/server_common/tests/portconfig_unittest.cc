@@ -12,12 +12,10 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <sys/time.h>
-#include <sys/resource.h>
-
 #include <server_common/portconfig.h>
 #include <testutils/socket_request.h>
 #include <testutils/mockups.h>
+#include <testutils/resource.h>
 
 #include <cc/data.h>
 #include <exceptions/exceptions.h>
@@ -316,14 +314,7 @@ TEST_F(InstallListenAddressesDeathTest, inconsistent) {
     // Make sure it actually kills the application (there should be an abort
     // in this case)
     EXPECT_DEATH({
-        /* Set rlimits so that no coredumps are created. As a new
-           process is forked to run this EXPECT_DEATH test, the rlimits
-           of the parent process that runs the other tests should be
-           unaffected. */
-        rlimit core_limit;
-        core_limit.rlim_cur = 0;
-        core_limit.rlim_max = 0;
-        EXPECT_EQ(setrlimit(RLIMIT_CORE, &core_limit), 0);
+        isc::testutils::dontCreateCoreDumps();
 
         try {
           installListenAddresses(deathAddresses, store_, dnss_);
@@ -342,14 +333,7 @@ TEST_F(InstallListenAddressesDeathTest, cantClose) {
     // Instruct it to fail on close
     sock_requestor_.break_release_ = true;
     EXPECT_DEATH({
-        /* Set rlimits so that no coredumps are created. As a new
-           process is forked to run this EXPECT_DEATH test, the rlimits
-           of the parent process that runs the other tests should be
-           unaffected. */
-        rlimit core_limit;
-        core_limit.rlim_cur = 0;
-        core_limit.rlim_max = 0;
-        EXPECT_EQ(setrlimit(RLIMIT_CORE, &core_limit), 0);
+        isc::testutils::dontCreateCoreDumps();
 
 	try {
 	  // Setting to empty will close all current sockets.
