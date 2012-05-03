@@ -327,8 +327,9 @@ writeHeaderFile(const string& file, const vector<string>& ns_components,
     ofstream hfile(header_file.fullName().c_str());
 
     if (hfile.fail()) {
-        isc_throw_2(MessageException, LOG_OPEN_OUTPUT_FAIL,
-                    header_file.fullName(), strerror(errno));
+        isc_throw_4(MessageException, "Failed to open output file",
+                    LOG_OPEN_OUTPUT_FAIL, header_file.fullName(),
+                    strerror(errno), 0);
     }
 
     // Write the header preamble.  If there is an error, we'll pick it up
@@ -361,8 +362,9 @@ writeHeaderFile(const string& file, const vector<string>& ns_components,
 
     // Report errors (if any) and exit
     if (hfile.fail()) {
-        isc_throw_2(MessageException, LOG_WRITE_ERROR, header_file.fullName(),
-                    strerror(errno));
+        isc_throw_4(MessageException, "Error writing to output file",
+                    LOG_WRITE_ERROR, header_file.fullName(), strerror(errno),
+                    0);
     }
 
     hfile.close();
@@ -427,8 +429,9 @@ writeProgramFile(const string& file, const vector<string>& ns_components,
     ofstream ccfile(program_file.fullName().c_str());
 
     if (ccfile.fail()) {
-        isc_throw_2(MessageException, LOG_OPEN_OUTPUT_FAIL,
-                    program_file.fullName(), strerror(errno));
+        isc_throw_4(MessageException, "Error opening output file",
+                    LOG_OPEN_OUTPUT_FAIL, program_file.fullName(),
+                    strerror(errno), 0);
     }
 
     // Write the preamble.  If there is an error, we'll pick it up after
@@ -485,8 +488,9 @@ writeProgramFile(const string& file, const vector<string>& ns_components,
 
     // Report errors (if any) and exit
     if (ccfile.fail()) {
-        isc_throw_2(MessageException, LOG_WRITE_ERROR, program_file.fullName(),
-                    strerror(errno));
+        isc_throw_4(MessageException, "Error writing to output file",
+                    LOG_WRITE_ERROR, program_file.fullName(), strerror(errno),
+                    0);
     }
 
     ccfile.close();
