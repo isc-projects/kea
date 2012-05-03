@@ -48,6 +48,7 @@ run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 run_unittests_LDADD += $(top_builddir)/src/lib/config/libcfgclient.la
 run_unittests_LDADD += $(top_builddir)/src/lib/config/tests/libfake_session.la
+run_unittests_LDADD += $(top_builddir)/src/lib/testutils/libtestutils.la
 endif
 
 noinst_PROGRAMS = $(TESTS)
