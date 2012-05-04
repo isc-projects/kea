@@ -339,6 +339,11 @@ TEST_F(RBTreeTest, getAbsoluteNameError) {
  *               /   \
  *              o     q
  */
+const char* const names[] = {
+    "a", "b", "c", "d.e.f", "x.d.e.f", "w.y.d.e.f", "o.w.y.d.e.f",
+    "p.w.y.d.e.f", "q.w.y.d.e.f", "z.d.e.f", "j.z.d.e.f", "g.h", "i.g.h"};
+const size_t name_count(sizeof(names) / sizeof(*names));
+
 TEST_F(RBTreeTest, nextNode) {
     const char* const names[] = {
         "a", "b", "c", "d.e.f", "x.d.e.f", "w.y.d.e.f", "o.w.y.d.e.f",
@@ -359,29 +364,26 @@ TEST_F(RBTreeTest, nextNode) {
     EXPECT_EQ(static_cast<void*>(NULL), node);
 }
 
-// Check the previousNode
-TEST_F(RBTreeTest, previousNode) {
-    // First, iterate the whole tree from the end to the beginning.
-    const char* const names[] = {
-        "a", "b", "c", "d.e.f", "x.d.e.f", "w.y.d.e.f", "o.w.y.d.e.f",
-        "p.w.y.d.e.f", "q.w.y.d.e.f", "z.d.e.f", "j.z.d.e.f", "g.h", "i.g.h"};
-    const size_t name_count(sizeof(names) / sizeof(*names));
-    RBTreeNodeChain<int> node_path;
-    const RBNode<int>* node(NULL);
-    EXPECT_EQ(RBTree<int>::EXACTMATCH,
-              rbtree.find<void*>(Name(names[name_count - 1]), &node, node_path,
-                                 NULL, NULL));
-    for (size_t i = name_count; i > 0; --i) {
+// Just walk until the beginning of the tree and check it is OK
+void
+previousWalk(RBTree<int>& rbtree, const RBNode<int>* node,
+             RBTreeNodeChain<int>& node_path, size_t position)
+{
+    for (size_t i(position); i > 0; --i) {
         EXPECT_NE(static_cast<void*>(NULL), node);
         EXPECT_EQ(Name(names[i - 1]), node_path.getAbsoluteName());
         // Find the node at the path and check the value is the same
         // (that it really returns the correct corresponding node)
-        const RBNode<int>* node2(NULL);
-        RBTreeNodeChain<int> node_path2;
-        EXPECT_EQ(RBTree<int>::EXACTMATCH,
-                  rbtree.find<void*>(Name(names[i - 1]), &node2, node_path2,
-                                     NULL, NULL));
-        EXPECT_EQ(node, node2);
+        //
+        // The "hidden" nodes can not be found
+        if (node->getData()) {
+            const RBNode<int>* node2(NULL);
+            RBTreeNodeChain<int> node_path2;
+            EXPECT_EQ(RBTree<int>::EXACTMATCH,
+                      rbtree.find<void*>(Name(names[i - 1]), &node2,
+                                         node_path2, NULL, NULL));
+            EXPECT_EQ(node, node2);
+        }
         node = rbtree.previousNode(node_path);
     }
 
@@ -389,28 +391,25 @@ TEST_F(RBTreeTest, previousNode) {
     EXPECT_EQ(static_cast<void*>(NULL), node);
     // This is all the same then
     EXPECT_EQ(static_cast<void*>(NULL), node);
+}
+
+// Check the previousNode
+TEST_F(RBTreeTest, previousNode) {
+    // First, iterate the whole tree from the end to the beginning.
+    RBTreeNodeChain<int> node_path;
+    const RBNode<int>* node(NULL);
+    EXPECT_EQ(RBTree<int>::EXACTMATCH,
+              rbtree.find<void*>(Name(names[name_count - 1]), &node, node_path,
+                                 NULL, NULL));
+    previousWalk(rbtree, node, node_path, name_count);
+    node_path.clear();
 
     // Now, start somewhere in the middle, but within the real node.
     EXPECT_EQ(RBTree<int>::EXACTMATCH,
-              rbtree.find<void*>(Name(names[3]), &node, node_path,
+              rbtree.find<void*>(Name(names[4]), &node, node_path,
                                  NULL, NULL));
-
-    for (size_t i = 4; i > 0; --i) {
-        EXPECT_NE(static_cast<void*>(NULL), node);
-        EXPECT_EQ(Name(names[i - 1]), node_path.getAbsoluteName());
-        // Find the node at the path and check the value is the same
-        // (that it really returns the correct corresponding node)
-        const RBNode<int>* node2(NULL);
-        RBTreeNodeChain<int> node_path2;
-        EXPECT_EQ(RBTree<int>::EXACTMATCH,
-                  rbtree.find<void*>(Name(names[i - 1]), &node2, node_path2,
-                                     NULL, NULL));
-        EXPECT_EQ(node, node2);
-        node = rbtree.previousNode(node_path);
-    }
-
-    // We should have reached the end of the tree.
-    EXPECT_EQ(static_cast<void*>(NULL), node);
+    previousWalk(rbtree, node, node_path, 5);
+    node_path.clear();
 
     // TODO: The tests where we start in between of the nodes somewhere
 }
