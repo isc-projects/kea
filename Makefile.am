@@ -402,3 +402,6 @@ EXTRA_DIST += ext/asio/asio/system_error.hpp
 EXTRA_DIST += ext/asio/asio/deadline_timer.hpp
 EXTRA_DIST += ext/asio/asio/stream_socket_service.hpp
 EXTRA_DIST += ext/coroutine/coroutine.h
+
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = dns++.pc

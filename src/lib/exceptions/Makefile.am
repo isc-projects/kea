@@ -8,5 +8,5 @@ libexceptions_la_SOURCES = exceptions.h exceptions.cc
 
 CLEANFILES = *.gcno *.gcda
 
-libexceptions_includedir = $(includedir)/exceptions
+libexceptions_includedir = $(includedir)/$(PACKAGE_NAME)/exceptions
 libexceptions_include_HEADERS = exceptions.h
