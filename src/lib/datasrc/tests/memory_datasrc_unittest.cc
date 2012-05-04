@@ -441,6 +441,8 @@ public:
             {"0P9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM.example.org. 300 IN "
              "NSEC3 1 1 12 aabbccdd 2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A RRSIG",
              &rr_nsec3_},
+            {"example.org. 300 IN NSEC cname.example.org. A NS NSEC",
+             &rr_nsec_},
             {NULL, NULL}
         };
 
@@ -505,6 +507,7 @@ public:
     RRsetPtr rr_not_wild_;
     RRsetPtr rr_not_wild_another_;
     RRsetPtr rr_nsec3_;
+    RRsetPtr rr_nsec_;
 
     // A faked NSEC3 hash calculator for convenience.
     // Tests that need to use the faked hashed values should call
@@ -984,6 +987,9 @@ InMemoryZoneFinderTest::findCheck(ZoneFinder::FindResultFlags expected_flags) {
     if ((expected_flags & ZoneFinder::RESULT_NSEC3_SIGNED) != 0) {
         EXPECT_EQ(SUCCESS, zone_finder_.add(rr_nsec3_));
     }
+    if ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED) != 0) {
+        EXPECT_EQ(SUCCESS, zone_finder_.add(rr_nsec_));
+    }
 
     // These two should be successful
     findTest(origin_, RRType::NS(), ZoneFinder::SUCCESS, true, rr_ns_);
@@ -1009,6 +1015,10 @@ TEST_F(InMemoryZoneFinderTest, find) {
 
 TEST_F(InMemoryZoneFinderTest, findNSEC3Signed) {
     findCheck(ZoneFinder::RESULT_NSEC3_SIGNED);
+}
+
+TEST_F(InMemoryZoneFinderTest, findNSECSigned) {
+    findCheck(ZoneFinder::RESULT_NSEC_SIGNED);
 }
 
 void
@@ -1039,6 +1049,9 @@ InMemoryZoneFinderTest::emptyNodeCheck(
     if ((expected_flags & ZoneFinder::RESULT_NSEC3_SIGNED) != 0) {
         EXPECT_EQ(SUCCESS, zone_finder_.add(rr_nsec3_));
     }
+    if ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED) != 0) {
+        EXPECT_EQ(SUCCESS, zone_finder_.add(rr_nsec_));
+    }
 
     // empty node matching, easy case: the node for 'baz' exists with
     // no data.
@@ -1064,6 +1077,10 @@ TEST_F(InMemoryZoneFinderTest, emptyNode) {
 
 TEST_F(InMemoryZoneFinderTest, emptyNodeNSEC3) {
     emptyNodeCheck(ZoneFinder::RESULT_NSEC3_SIGNED);
+}
+
+TEST_F(InMemoryZoneFinderTest, emptyNodeNSEC) {
+    emptyNodeCheck(ZoneFinder::RESULT_NSEC_SIGNED);
 }
 
 TEST_F(InMemoryZoneFinderTest, load) {
@@ -1200,6 +1217,9 @@ InMemoryZoneFinderTest::wildcardCheck(
     if ((expected_flags & ZoneFinder::RESULT_NSEC3_SIGNED) != 0) {
         EXPECT_EQ(SUCCESS, zone_finder_.add(rr_nsec3_));
     }
+    if ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED) != 0) {
+        EXPECT_EQ(SUCCESS, zone_finder_.add(rr_nsec_));
+    }
 
     // Search at the parent. The parent will not have the A, but it will
     // be in the wildcard (so check the wildcard isn't matched at the parent)
@@ -1267,6 +1287,11 @@ TEST_F(InMemoryZoneFinderTest, wildcardNSEC3) {
     wildcardCheck(ZoneFinder::RESULT_NSEC3_SIGNED);
 }
 
+TEST_F(InMemoryZoneFinderTest, wildcardNSEC) {
+    // Similar to the previous one, but the zone signed with NSEC
+    wildcardCheck(ZoneFinder::RESULT_NSEC_SIGNED);
+}
+
 /*
  * Test that we don't match a wildcard if we get under delegation.
  * By 4.3.3 of RFC1034:
@@ -1300,6 +1325,9 @@ InMemoryZoneFinderTest::anyWildcardCheck(
     EXPECT_EQ(SUCCESS, zone_finder_.add(rr_wild_));
     if ((expected_flags & ZoneFinder::RESULT_NSEC3_SIGNED) != 0) {
         EXPECT_EQ(SUCCESS, zone_finder_.add(rr_nsec3_));
+    }
+    if ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED) != 0) {
+        EXPECT_EQ(SUCCESS, zone_finder_.add(rr_nsec_));
     }
 
     vector<ConstRRsetPtr> expected_sets;
@@ -1335,6 +1363,10 @@ TEST_F(InMemoryZoneFinderTest, anyWildcardNSEC3) {
     anyWildcardCheck(ZoneFinder::RESULT_NSEC3_SIGNED);
 }
 
+TEST_F(InMemoryZoneFinderTest, anyWildcardNSEC) {
+    anyWildcardCheck(ZoneFinder::RESULT_NSEC_SIGNED);
+}
+
 // Test there's nothing in the wildcard in the middle if we load
 // wild.*.foo.example.org.
 void
@@ -1350,6 +1382,9 @@ InMemoryZoneFinderTest::emptyWildcardCheck(
     EXPECT_EQ(SUCCESS, zone_finder_.add(rr_emptywild_));
     if ((expected_flags & ZoneFinder::RESULT_NSEC3_SIGNED) != 0) {
         EXPECT_EQ(SUCCESS, zone_finder_.add(rr_nsec3_));
+    }
+    if ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED) != 0) {
+        EXPECT_EQ(SUCCESS, zone_finder_.add(rr_nsec_));
     }
 
     {
@@ -1393,6 +1428,10 @@ TEST_F(InMemoryZoneFinderTest, emptyWildcard) {
 
 TEST_F(InMemoryZoneFinderTest, emptyWildcardNSEC3) {
     emptyWildcardCheck(ZoneFinder::RESULT_NSEC3_SIGNED);
+}
+
+TEST_F(InMemoryZoneFinderTest, emptyWildcardNSEC) {
+    emptyWildcardCheck(ZoneFinder::RESULT_NSEC_SIGNED);
 }
 
 // Same as emptyWildcard, but with multiple * in the path.
