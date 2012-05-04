@@ -14,7 +14,10 @@
 
 #include <log/message_initializer.h>
 #include <gtest/gtest.h>
+
+#ifdef EXPECT_DEATH
 #include <testutils/resource.h>
+#endif /* EXPECT_DEATH */
 
 using namespace isc::log;
 
