@@ -335,15 +335,15 @@ TEST_F(InstallListenAddressesDeathTest, cantClose) {
     EXPECT_DEATH({
         isc::testutils::dontCreateCoreDumps();
 
-	try {
-	  // Setting to empty will close all current sockets.
-	  // And thanks to the break_release_, the close will
-	  // throw, which will make it crash.
-	  installListenAddresses(empty, store_, dnss_);
-	} catch (...) {
-	  // To make sure it is killed by abort, not by some
-	  // (unhandled) exception
-	};
+        try {
+          // Setting to empty will close all current sockets.
+          // And thanks to the break_release_, the close will
+          // throw, which will make it crash.
+          installListenAddresses(empty, store_, dnss_);
+        } catch (...) {
+          // To make sure it is killed by abort, not by some
+          // (unhandled) exception
+        };
       }, "");
     // And reset it back, so it can safely clean up itself.
     sock_requestor_.break_release_ = false;
