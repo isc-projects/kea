@@ -35,7 +35,9 @@ namespace testutils {
 /// be a circular dependency from
 /// testutils->asiolink->log->testutils. See bug #1880.
 
-static inline void
+namespace {
+
+inline void
 dontCreateCoreDumps(void)
 {
     /* Set rlimits so that no coredumps are created. As a new
@@ -47,6 +49,8 @@ dontCreateCoreDumps(void)
 
     EXPECT_EQ(setrlimit(RLIMIT_CORE, &core_limit), 0);
 }
+
+} // end of anonymous namespace
 
 } // end of namespace testutils
 } // end of namespace isc
