@@ -280,6 +280,20 @@ private:
     /// This method never throws an exception.
     const RBNode<T>* predecessor() const;
 
+    /// \brief private shared implementation of successor and predecessor
+    ///
+    /// As the two mentioned functions are merely mirror images of each other,
+    /// it makes little sense to keep both versions. So this is the body of the
+    /// functions and we call it with the correct pointers.
+    ///
+    /// Not to be called directly, not even by friends.
+    ///
+    /// The overhead of the member pointers should be optimised out, as this
+    /// will probably get completely inlined into predecessor and successor
+    /// methods.
+    const RBNode<T>* abstractSuccessor(RBNode<T>* RBNode<T>::*left,
+                                       RBNode<T>* RBNode<T>::*right) const;
+
     /// \name Data to maintain the rbtree structure.
     //@{
     RBNode<T>*  parent_;
@@ -350,55 +364,47 @@ RBNode<T>::~RBNode() {
 
 template <typename T>
 const RBNode<T>*
-RBNode<T>::successor() const {
+RBNode<T>::abstractSuccessor(RBNode<T>* RBNode<T>::*left, RBNode<T>*
+                             RBNode<T>::*right) const
+{
+    // This function is written as a successor. It becomes predecessor if
+    // the left and right pointers are swapped. So in case of predecessor,
+    // the left pointer points to right and vice versa. Don't get confused
+    // by the idea, just imagine the pointers look into a mirror.
+
     const RBNode<T>* current = this;
     // If it has right node, the successor is the left-most node of the right
     // subtree.
-    if (right_ != NULL_NODE()) {
-        current = right_;
-        while (current->left_ != NULL_NODE()) {
-            current = current->left_;
+    if (current->*right != RBNode<T>::NULL_NODE()) {
+        current = current->*right;
+        while (current->*left != RBNode<T>::NULL_NODE()) {
+            current = current->*left;
         }
         return (current);
     }
-
 
     // Otherwise go up until we find the first left branch on our path to
     // root.  If found, the parent of the branch is the successor.
     // Otherwise, we return the null node
     const RBNode<T>* parent = current->parent_;
-    while (parent != NULL_NODE() && current == parent->right_) {
+    while (parent != RBNode<T>::NULL_NODE() && current == parent->*right) {
         current = parent;
         parent = parent->parent_;
     }
     return (parent);
 }
 
-// This is just mirror image of the above. It works the same way.
-// Any idea how to reuse the code?
+template <typename T>
+const RBNode<T>*
+RBNode<T>::successor() const {
+    return (abstractSuccessor(&RBNode<T>::left_, &RBNode<T>::right_));
+}
+
 template <typename T>
 const RBNode<T>*
 RBNode<T>::predecessor() const {
-    const RBNode<T>* current = this;
-    // If it has left node, the predecessor is the right-most node of the left
-    // subtree.
-    if (left_ != NULL_NODE()) {
-        current = left_;
-        while (current->right_ != NULL_NODE()) {
-            current = current->right_;
-        }
-        return (current);
-    }
-
-    // Otherwise go up until we find the first right branch on our path to
-    // root.  If found, the parent of the branch is the predecessor.
-    // Otherwise, we return the null node
-    const RBNode<T>* parent = current->parent_;
-    while (parent != NULL_NODE() && current == parent->left_) {
-        current = parent;
-        parent = parent->parent_;
-    }
-    return (parent);
+    // Swap the left and right pointers for the abstractSuccessor
+    return (abstractSuccessor(&RBNode<T>::right_, &RBNode<T>::left_));
 }
 
 /// \brief RBTreeNodeChain stores detailed information of \c RBTree::find()
