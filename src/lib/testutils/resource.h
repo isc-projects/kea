@@ -15,6 +15,11 @@
 #ifndef __ISC_TESTUTILS_RESOURCE_H
 #define __ISC_TESTUTILS_RESOURCE_H
 
+#include <sys/time.h>
+#include <sys/resource.h>
+
+#include <gtest/gtest.h>
+
 namespace isc {
 namespace testutils {
 
@@ -25,9 +30,23 @@ namespace testutils {
 /// is used, where processes abort (and create cores in the process).
 /// As a new process is forked to run EXPECT_DEATH tests, the rlimits of
 /// the parent process that runs the other tests should be unaffected.
+///
+/// This function definition is in the header file as otherwise there'd
+/// be a circular dependency from
+/// testutils->asiolink->log->testutils. See bug #1880.
 
-void
-dontCreateCoreDumps(void);
+static inline void
+dontCreateCoreDumps(void)
+{
+    /* Set rlimits so that no coredumps are created. As a new
+       process is forked to run this EXPECT_DEATH test, the rlimits
+       of the parent process that runs the other tests should be
+       unaffected. */
+
+    rlimit core_limit = {0, 0};
+
+    EXPECT_EQ(setrlimit(RLIMIT_CORE, &core_limit), 0);
+}
 
 } // end of namespace testutils
 } // end of namespace isc
