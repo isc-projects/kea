@@ -263,6 +263,23 @@ private:
     /// This method never throws an exception.
     const RBNode<T>* successor() const;
 
+    /// \brief return the next node which is smaller than current node
+    /// in the same subtree
+    ///
+    /// The predecessor for this node is the next smaller node in terms of
+    /// the DNSSEC order relation within the same single subtree.
+    /// Note that it may NOT be the next smaller node in the entire RBTree;
+    /// RBTree is a tree in tree, and the real next node may reside in
+    /// an upper or lower subtree of the subtree where this node belongs.
+    /// For example, if the predecessor node has a sub domain, the real next
+    /// node is the largest node in the sub domain tree.
+    ///
+    /// If this node is the smallest node within the subtree, this method
+    /// returns \c NULL_NODE().
+    ///
+    /// This method never throws an exception.
+    const RBNode<T>* predecessor() const;
+
     /// \name Data to maintain the rbtree structure.
     //@{
     RBNode<T>*  parent_;
@@ -357,6 +374,32 @@ RBNode<T>::successor() const {
     return (parent);
 }
 
+// This is just mirror image of the above. It works the same way.
+// Any idea how to reuse the code?
+template <typename T>
+const RBNode<T>*
+RBNode<T>::predecessor() const {
+    const RBNode<T>* current = this;
+    // If it has left node, the predecessor is the right-most node of the left
+    // subtree.
+    if (left_ != NULL_NODE()) {
+        current = left_;
+        while (current->right_ != NULL_NODE()) {
+            current = current->right_;
+        }
+        return (current);
+    }
+
+    // Otherwise go up until we find the first right branch on our path to
+    // root.  If found, the parent of the branch is the predecessor.
+    // Otherwise, we return the null node
+    const RBNode<T>* parent = current->parent_;
+    while (parent != NULL_NODE() && current == parent->left_) {
+        current = parent;
+        parent = parent->parent_;
+    }
+    return (parent);
+}
 
 /// \brief RBTreeNodeChain stores detailed information of \c RBTree::find()
 /// result.
@@ -1106,6 +1149,52 @@ RBTree<T>::nextNode(RBTreeNodeChain<T>& node_path) const {
     return (NULL);
 }
 
+template <typename T>
+const RBNode<T>*
+RBTree<T>::previousNode(RBTreeNodeChain<T>& node_path) const {
+    if (node_path.isEmpty()) {
+        isc_throw(isc::BadValue, "RBTree::nextNode is given an empty chain");
+    }
+
+    const RBNode<T>* node(node_path.top());
+
+    // Try going left in this tree
+    node = node->predecessor();
+    if (node == NULLNODE) {
+        // We are the smallest ones in this tree. We go one level
+        // up. That one is the smaller one than us.
+
+        if (node_path.getLevelCount() == 1) {
+            // This was the root of the tree. We can't go up, sorry, we end.
+            return (NULL);
+        }
+
+        node_path.pop();
+        return (node_path.top());
+    }
+
+    // Exchange the node at the top of the path, as we move horizontaly
+    // through the domain tree
+    node_path.pop();
+    node_path.push(node);
+
+    // Try going as deep as possible, keeping on the right side of the trees
+    while (node->down_ != NULLNODE) {
+        // Move to the tree below
+        node = node->down_;
+        // And get as much to the right of the tree as possible
+        while (node->right_ != NULLNODE) {
+            node = node->right_;
+        }
+        // Now, we found the right-most node in the sub-tree, we need to
+        // include it in the path
+        node_path.push(node);
+    }
+
+    // Now, if the current node has no down_ pointer any more, it's the
+    // correct one.
+    return (node);
+}
 
 template <typename T>
 typename RBTree<T>::Result
