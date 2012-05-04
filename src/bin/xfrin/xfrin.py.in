@@ -1577,15 +1577,8 @@ class Xfrin:
                                      param["origin"], param["class"], param["datasrc"])
 
                         msg = create_command("loadzone", param)
-                        # catch the exception, in case msgq has been killed.
-                        try:
-                            seq = self._send_cc_session.group_sendmsg(msg, AUTH_MODULE_NAME)
-                            try:
-                                answer, env = self._send_cc_session.group_recvmsg(False, seq)
-                            except isc.cc.session.SessionTimeout:
-                                pass        # for now we just ignore the failure
-                        except socket.error as err:
-                            logger.error(XFRIN_MSGQ_SEND_ERROR_AUTH, AUTH_MODULE_NAME)
+                        seq = self._send_cc_session.group_sendmsg(msg, AUTH_MODULE_NAME)
+                        answer, env = self._send_cc_session.group_recvmsg(False, seq)
 
     def publish_xfrin_news(self, zone_name, zone_class, xfr_result):
         '''Send command to xfrout/zone manager module.
