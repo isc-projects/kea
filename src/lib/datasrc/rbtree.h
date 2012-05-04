@@ -826,6 +826,28 @@ public:
     /// the largest, \c NULL will be returned.
     const RBNode<T>* nextNode(RBTreeNodeChain<T>& node_path) const;
 
+    /// \brief return the next smaller node in DNSSEC order from a node
+    ///     searched by RBTree::find().
+    ///
+    /// This acts similarly to \c nextNode(), but it walks in the other
+    /// direction. But unlike that, this can start even if the node requested
+    /// by find was not found. In that case, it will identify the node that is
+    /// previous to the queried name.
+    ///
+    /// \note \c previousNode() will iterate over all the nodes in RBTree
+    /// including empty nodes. If empty node isn't desired, it's easy to add
+    /// logic to check return node and keep invoking \c previousNode() until the
+    /// non-empty node is retrieved.
+    ///
+    /// \exception isc::BadValue node_path is empty.
+    ///
+    /// \param node_path A node chain that stores all the nodes along the path
+    /// from root to node and the result of \c find(). This will get modified.
+    ///
+    /// \return An \c RBNode that is next smaller than \c node; if \c node is
+    /// the smallest, \c NULL will be returned.
+    const RBNode<T>* previousNode(RBTreeNodeChain<T>& node_path) const;
+
     /// \brief Get the total number of nodes in the tree
     ///
     /// It includes nodes internally created as a result of adding a domain
