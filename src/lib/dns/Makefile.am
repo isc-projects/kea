@@ -140,7 +140,7 @@ rrparamregistry.cc: rrparamregistry-placeholder.cc
 rrclass.h rrtype.h rrparamregistry.cc rdataclass.h rdataclass.cc: Makefile
 	./gen-rdatacode.py
 
-libdns___includedir = $(includedir)/dns
+libdns___includedir = $(includedir)/$(PACKAGE_NAME)/dns
 libdns___include_HEADERS = \
 	edns.h \
 	exceptions.h \
