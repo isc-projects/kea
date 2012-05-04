@@ -12,12 +12,15 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <gtest/gtest.h>
+
 #include <exceptions/exceptions.h>
+
+#ifdef EXPECT_DEATH
 #include <testutils/resource.h>
+#endif /* EXPECT_DEATH */
 
 #include <util/buffer.h>
-
-#include <gtest/gtest.h>
 
 using namespace isc;
 

@@ -17,7 +17,9 @@
 
 #include <gtest/gtest.h>
 
+#ifdef EXPECT_DEATH
 #include <testutils/resource.h>
+#endif /* EXPECT_DEATH */
 
 #include <log/logger.h>
 #include <log/logger_manager.h>

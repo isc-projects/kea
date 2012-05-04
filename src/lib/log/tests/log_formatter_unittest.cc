@@ -14,9 +14,11 @@
 
 #include "config.h"
 #include <gtest/gtest.h>
+
 #ifdef EXPECT_ABORT
 #include <testutils/resource.h>
 #endif /* EXPECT_ABORT */
+
 #include <log/log_formatter.h>
 #include <log/logger_level.h>
 

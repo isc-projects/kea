@@ -12,17 +12,21 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <gtest/gtest.h>
+
 #include <server_common/portconfig.h>
 #include <testutils/socket_request.h>
 #include <testutils/mockups.h>
+
+#ifdef EXPECT_DEATH
 #include <testutils/resource.h>
+#endif /* EXPECT_DEATH */
 
 #include <cc/data.h>
 #include <exceptions/exceptions.h>
 #include <asiolink/asiolink.h>
 #include <asiodns/asiodns.h>
 
-#include <gtest/gtest.h>
 #include <string>
 
 using namespace isc::server_common::portconfig;
