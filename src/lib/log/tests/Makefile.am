@@ -16,19 +16,19 @@ noinst_PROGRAMS = logger_example
 logger_example_SOURCES = logger_example.cc
 logger_example_CPPFLAGS = $(AM_CPPFLAGS)
 logger_example_LDFLAGS = $(AM_LDFLAGS)
-logger_example_LDADD  = $(AM_LDADD) $(LOG4CPLUS_LIBS)
-logger_example_LDADD += $(top_builddir)/src/lib/log/liblog.la
+logger_example_LDADD  = $(top_builddir)/src/lib/log/liblog.la
 logger_example_LDADD += $(top_builddir)/src/lib/util/libutil.la
 logger_example_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
+logger_example_LDADD += $(AM_LDADD) $(LOG4CPLUS_LIBS)
 
 noinst_PROGRAMS += init_logger_test
 init_logger_test_SOURCES = init_logger_test.cc
 init_logger_test_CPPFLAGS = $(AM_CPPFLAGS)
 init_logger_test_LDFLAGS = $(AM_LDFLAGS)
-init_logger_test_LDADD  = $(AM_LDADD) $(LOG4CPLUS_LIBS)
-init_logger_test_LDADD += $(top_builddir)/src/lib/log/liblog.la
+init_logger_test_LDADD  = $(top_builddir)/src/lib/log/liblog.la
 init_logger_test_LDADD += $(top_builddir)/src/lib/util/libutil.la
 init_logger_test_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
+init_logger_test_LDADD += $(AM_LDADD) $(LOG4CPLUS_LIBS)
 
 if HAVE_GTEST
 TESTS =
