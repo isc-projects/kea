@@ -23,6 +23,7 @@
 
 #include <cc/data.h>
 #include <config/ccsession.h>
+#include <datasrc/factory.h>
 #include <dns/message.h>
 #include <dns/opcode.h>
 #include <util/buffer.h>
@@ -281,6 +282,8 @@ public:
     /// \param memory_datasrc A (shared) pointer to \c InMemoryClient to be set.
     void setInMemoryClient(const isc::dns::RRClass& rrclass,
                            InMemoryClientPtr memory_client);
+    void setInMemoryClient(const isc::dns::RRClass& rrclass,
+        isc::datasrc::DataSourceClientContainerPtr memory_client);
 
     /// \brief Set the communication session with Statistics.
     ///
