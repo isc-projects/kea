@@ -195,9 +195,9 @@ zoneChecks(AuthSrv& server) {
 
 void
 configureZones(AuthSrv& server) {
-    ASSERT_EQ(0, system(INSTALL_PROG " " TEST_DATA_DIR "/test1.zone.in "
+    ASSERT_EQ(0, system(INSTALL_PROG " -c " TEST_DATA_DIR "/test1.zone.in "
                         TEST_DATA_BUILDDIR "/test1.zone.copied"));
-    ASSERT_EQ(0, system(INSTALL_PROG " " TEST_DATA_DIR "/test2.zone.in "
+    ASSERT_EQ(0, system(INSTALL_PROG " -c " TEST_DATA_DIR "/test2.zone.in "
                         TEST_DATA_BUILDDIR "/test2.zone.copied"));
     configureAuthServer(server, Element::fromJSON(
                             "{\"datasources\": "
@@ -236,10 +236,10 @@ newZoneChecks(AuthSrv& server) {
 TEST_F(AuthCommandTest, loadZone) {
     configureZones(server_);
 
-    ASSERT_EQ(0, system(INSTALL_PROG " " TEST_DATA_DIR
+    ASSERT_EQ(0, system(INSTALL_PROG " -c " TEST_DATA_DIR
                         "/test1-new.zone.in "
                         TEST_DATA_BUILDDIR "/test1.zone.copied"));
-    ASSERT_EQ(0, system(INSTALL_PROG " " TEST_DATA_DIR
+    ASSERT_EQ(0, system(INSTALL_PROG " -c " TEST_DATA_DIR
                         "/test2-new.zone.in "
                         TEST_DATA_BUILDDIR "/test2.zone.copied"));
 
@@ -376,7 +376,7 @@ TEST_F(AuthCommandTest,
 TEST_F(AuthCommandTest, loadBrokenZone) {
     configureZones(server_);
 
-    ASSERT_EQ(0, system(INSTALL_PROG " " TEST_DATA_DIR
+    ASSERT_EQ(0, system(INSTALL_PROG " -c " TEST_DATA_DIR
                         "/test1-broken.zone.in "
                         TEST_DATA_BUILDDIR "/test1.zone.copied"));
     result_ = execAuthServerCommand(server_, "loadzone",
@@ -390,7 +390,7 @@ TEST_F(AuthCommandTest, loadUnreadableZone) {
     configureZones(server_);
 
     // install the zone file as unreadable
-    ASSERT_EQ(0, system(INSTALL_PROG " -m 000 " TEST_DATA_DIR
+    ASSERT_EQ(0, system(INSTALL_PROG " -c -m 000 " TEST_DATA_DIR
                         "/test1.zone.in "
                         TEST_DATA_BUILDDIR "/test1.zone.copied"));
     result_ = execAuthServerCommand(server_, "loadzone",

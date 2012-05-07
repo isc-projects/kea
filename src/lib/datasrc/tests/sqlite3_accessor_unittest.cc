@@ -764,7 +764,7 @@ protected:
     SQLite3Update() {
         // Note: if "installing" the test file fails some of the subsequent
         // tests would fail.
-        const char *install_cmd = INSTALL_PROG " " TEST_DATA_DIR
+        const char *install_cmd = INSTALL_PROG " -c " TEST_DATA_DIR
                                   "/test.sqlite3 " TEST_DATA_BUILDDIR
                                   "/test.sqlite3.copied";
         if (system(install_cmd) != 0) {
