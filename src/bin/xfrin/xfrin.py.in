@@ -367,7 +367,6 @@ class XfrinFirstData(XfrinState):
                  conn.zone_str())
             # We are now going to add RRs to the new zone.  We need create
             # a Diff object.  It will be used throughtout the XFR session.
-            # DISABLE FOR DEBUG
             conn._diff = Diff(conn._datasrc_client, conn._zone_name, True)
             self.set_xfrstate(conn, XfrinAXFR())
         return False
