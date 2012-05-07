@@ -1,3 +1,8 @@
+432.	[bug]*		muks
+	BIND 10 now installs its header files in a BIND 10 specific
+	sub-directory in the install prefix.
+	(Trac #1930, git fcf2f08db9ebc2198236bfa25cf73286821cba6b)
+
 431.	[func]*         muks
 	BIND 10 no longer starts b10-stats-httpd by default.
 	(Trac #1885, git 5c8bbd7ab648b6b7c48e366e7510dedca5386f6c)
