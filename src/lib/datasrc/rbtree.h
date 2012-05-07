@@ -892,6 +892,8 @@ public:
     ///
     /// \param node_path A node chain that stores all the nodes along the path
     /// from root to node and the result of \c find(). This will get modified.
+    /// You should not use the node_path again except for repetetive calls
+    /// of this method.
     ///
     /// \return An \c RBNode that is next smaller than \c node; if \c node is
     /// the smallest, \c NULL will be returned.
@@ -1158,9 +1160,23 @@ RBTree<T>::nextNode(RBTreeNodeChain<T>& node_path) const {
 template <typename T>
 const RBNode<T>*
 RBTree<T>::previousNode(RBTreeNodeChain<T>& node_path) const {
-    if (node_path.isEmpty()) {
+    if (getNodeCount() == 0) {
+        // Special case for empty trees. It would look every time like
+        // we didn't search, because the last compared is empty. This is
+        // a slight hack and not perfect, but this is better than throwing
+        // on empty tree. And we probably won't meet an empty tree in practice
+        // anyway.
+        return (NULL);
+    }
+    if (node_path.getLastComparedNode() == NULL) {
         isc_throw(isc::BadValue,
-                  "RBTree::previousNode is given an empty chain");
+                  "RBTree::previousNode called before find");
+    }
+
+    if (node_path.getLevelCount() == 0) {
+        // We got past the first one. So, we're returning NULL from
+        // now on.
+        return (NULL);
     }
 
     const RBNode<T>* node(node_path.top());
@@ -1171,13 +1187,13 @@ RBTree<T>::previousNode(RBTreeNodeChain<T>& node_path) const {
         // We are the smallest ones in this tree. We go one level
         // up. That one is the smaller one than us.
 
-        if (node_path.getLevelCount() == 1) {
-            // This was the root of the tree. We can't go up, sorry, we end.
-            return (NULL);
-        }
-
         node_path.pop();
-        return (node_path.top());
+        if (node_path.getLevelCount() == 0) {
+            // We're past the first one
+            return (NULL);
+        } else {
+            return (node_path.top());
+        }
     }
 
     // Exchange the node at the top of the path, as we move horizontaly
