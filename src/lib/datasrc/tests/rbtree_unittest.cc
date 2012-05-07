@@ -367,8 +367,14 @@ TEST_F(RBTreeTest, nextNode) {
 // Just walk until the beginning of the tree and check it is OK
 void
 previousWalk(RBTree<int>& rbtree, const RBNode<int>* node,
-             RBTreeNodeChain<int>& node_path, size_t position)
+             RBTreeNodeChain<int>& node_path, size_t position, bool skipFirst)
 {
+    if (skipFirst) {
+        // If the first is not found, this is supposed to be NULL and we skip
+        // it in our checks.
+        EXPECT_EQ(static_cast<void*>(NULL), node);
+        node = rbtree.previousNode(node_path);
+    }
     for (size_t i(position); i > 0; --i) {
         EXPECT_NE(static_cast<void*>(NULL), node);
         EXPECT_EQ(Name(names[i - 1]), node_path.getAbsoluteName());
@@ -397,21 +403,112 @@ previousWalk(RBTree<int>& rbtree, const RBNode<int>* node,
 TEST_F(RBTreeTest, previousNode) {
     // First, iterate the whole tree from the end to the beginning.
     RBTreeNodeChain<int> node_path;
+    EXPECT_THROW(rbtree.previousNode(node_path), isc::BadValue) <<
+        "Throw before a search was done on the path";
     const RBNode<int>* node(NULL);
-    EXPECT_EQ(RBTree<int>::EXACTMATCH,
-              rbtree.find<void*>(Name(names[name_count - 1]), &node, node_path,
-                                 NULL, NULL));
-    previousWalk(rbtree, node, node_path, name_count);
-    node_path.clear();
+    {
+        SCOPED_TRACE("Iterate through");
+        EXPECT_EQ(RBTree<int>::EXACTMATCH,
+                  rbtree.find<void*>(Name(names[name_count - 1]), &node,
+                                     node_path, NULL, NULL));
+        previousWalk(rbtree, node, node_path, name_count, false);
+        node = NULL;
+        node_path.clear();
+    }
 
-    // Now, start somewhere in the middle, but within the real node.
-    EXPECT_EQ(RBTree<int>::EXACTMATCH,
-              rbtree.find<void*>(Name(names[4]), &node, node_path,
-                                 NULL, NULL));
-    previousWalk(rbtree, node, node_path, 5);
-    node_path.clear();
+    {
+        SCOPED_TRACE("Iterate from the middle");
+        // Now, start somewhere in the middle, but within the real node.
+        EXPECT_EQ(RBTree<int>::EXACTMATCH,
+                  rbtree.find<void*>(Name(names[4]), &node, node_path,
+                                     NULL, NULL));
+        previousWalk(rbtree, node, node_path, 5, false);
+        node = NULL;
+        node_path.clear();
+    }
 
-    // TODO: The tests where we start in between of the nodes somewhere
+    {
+        SCOPED_TRACE("Start at the first");
+        // If we start at the lowest (which is "a"), we get to the beginning
+        // right away.
+        EXPECT_EQ(RBTree<int>::EXACTMATCH,
+                  rbtree.find<void*>(Name(names[0]), &node, node_path, NULL,
+                                     NULL));
+        EXPECT_NE(static_cast<void*>(NULL), node);
+        EXPECT_EQ(NULL, rbtree.previousNode(node_path));
+        node = NULL;
+        node_path.clear();
+    }
+
+    {
+        SCOPED_TRACE("Start before the first");
+        // If we start before the lowest (0 < a), we should not get a node nor
+        EXPECT_EQ(RBTree<int>::NOTFOUND,
+                  rbtree.find<void*>(Name("0"), &node, node_path, NULL, NULL));
+        EXPECT_EQ(NULL, node);
+        EXPECT_EQ(NULL, rbtree.previousNode(node_path));
+        node = NULL;
+        node_path.clear();
+    }
+
+    {
+        SCOPED_TRACE("Start after the last");
+        EXPECT_EQ(RBTree<int>::NOTFOUND,
+                  rbtree.find<void*>(Name("z"), &node, node_path, NULL, NULL));
+        previousWalk(rbtree, node, node_path, name_count, true);
+        node = NULL;
+        node_path.clear();
+    }
+
+    {
+        SCOPED_TRACE("Start to the right of a leaf");
+        // When searching for this, we exit the 'x' node to the right side,
+        // so we should go x afterwards.
+        EXPECT_EQ(RBTree<int>::PARTIALMATCH,
+                  rbtree.find<void*>(Name("xy.d.e.f"), &node, node_path,
+                                     NULL, NULL));
+        previousWalk(rbtree, node, node_path, 5, true);
+        node = NULL;
+        node_path.clear();
+    }
+
+    {
+        SCOPED_TRACE("Start to the left of a leaf");
+        // This is similar to the previous, but we exit the 'z' leaf to the
+        // left side, so should not visit z at all then.
+        EXPECT_EQ(RBTree<int>::PARTIALMATCH,
+                  rbtree.find<void*>(Name("yz.d.e.f"), &node, node_path,
+                                     NULL, NULL));
+        previousWalk(rbtree, node, node_path, 9, true);
+        node = NULL;
+        node_path.clear();
+    }
+
+    {
+        SCOPED_TRACE("Start inside a wrong node");
+        // The d.e.f is a single node, but we want only part of it. We
+        // should start iterating before it.
+        EXPECT_EQ(RBTree<int>::NOTFOUND,
+                  rbtree.find<void*>(Name("e.f"), &node, node_path,
+                                     NULL, NULL));
+        previousWalk(rbtree, node, node_path, 3, true);
+        node = NULL;
+        node_path.clear();
+    }
+
+    {
+        SCOPED_TRACE("Lookup in empty tree");
+        // Just check it doesn't crash, etc.
+        RBTree<int> empty_tree;
+        EXPECT_EQ(RBTree<int>::NOTFOUND,
+                  empty_tree.find<void*>(Name("x"), &node, node_path,
+                                         NULL, NULL));
+        EXPECT_EQ(static_cast<void*>(NULL), node);
+        EXPECT_EQ(static_cast<void*>(NULL),
+                  empty_tree.previousNode(node_path));
+        node = NULL;
+        node_path.clear();
+    }
 }
 
 TEST_F(RBTreeTest, nextNodeError) {
