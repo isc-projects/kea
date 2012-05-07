@@ -265,6 +265,7 @@ public:
     /// otherwise NULL.
     InMemoryClientPtr getInMemoryClient(const isc::dns::RRClass& rrclass);
     isc::datasrc::InMemoryClient* getInMemoryClientP(const isc::dns::RRClass& rrclass);
+    isc::datasrc::DataSourceClientContainerPtr getInMemoryClientContainer(const isc::dns::RRClass& rrclass);
 
     /// Sets or replaces the in-memory data source of the specified RR class.
     ///
