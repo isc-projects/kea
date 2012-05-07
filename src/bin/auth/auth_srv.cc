@@ -142,6 +142,7 @@ public:
     /// In-memory data source.  Currently class IN only for simplicity.
     const RRClass memory_client_class_;
     AuthSrv::InMemoryClientPtr memory_client_;
+    isc::datasrc::InMemoryClient* memory_client_p_;
 
     /// Hot spot cache
     isc::datasrc::HotCache cache_;
@@ -203,6 +204,7 @@ AuthSrvImpl::AuthSrvImpl(const bool use_cache,
     config_session_(NULL),
     xfrin_session_(NULL),
     memory_client_class_(RRClass::IN()),
+    memory_client_p_(NULL),
     statistics_timer_(io_service_),
     counters_(),
     keyring_(NULL),
@@ -400,6 +402,20 @@ AuthSrv::getInMemoryClient(const RRClass& rrclass) {
     return (impl_->memory_client_);
 }
 
+isc::datasrc::InMemoryClient*
+AuthSrv::getInMemoryClientP(const RRClass& rrclass) {
+    // XXX: for simplicity, we only support the IN class right now.
+    if (rrclass != impl_->memory_client_class_) {
+        isc_throw(InvalidParameter,
+                  "Memory data source is not supported for RR class "
+                  << rrclass);
+    }
+    if (!impl_->memory_client_) {
+        isc_throw(Exception, "no memory client set");
+    }
+    return (impl_->memory_client_p_);
+}
+
 void
 AuthSrv::setInMemoryClient(const isc::dns::RRClass& rrclass,
                            InMemoryClientPtr memory_client)
@@ -417,6 +433,7 @@ AuthSrv::setInMemoryClient(const isc::dns::RRClass& rrclass,
                   .arg(rrclass);
     }
     impl_->memory_client_ = memory_client;
+    impl_->memory_client_p_ = memory_client.get();
 }
 
 uint32_t
@@ -585,10 +602,10 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, Message& message,
         // If a memory data source is configured call the separate
         // Query::process()
         const ConstQuestionPtr question = *message.beginQuestion();
-        if (memory_client_ && memory_client_class_ == question->getClass()) {
+        if (memory_client_p_ && memory_client_class_ == question->getClass()) {
             const RRType& qtype = question->getType();
             const Name& qname = question->getName();
-            query_.process(*memory_client_, qname, qtype, message, dnssec_ok);
+            query_.process(*memory_client_p_, qname, qtype, message, dnssec_ok);
         } else {
             datasrc::Query query(message, cache_, dnssec_ok);
             data_sources_.doQuery(query);
