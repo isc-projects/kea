@@ -15,13 +15,14 @@
 #ifndef __DATA_SOURCE_FACTORY_H
 #define __DATA_SOURCE_FACTORY_H 1
 
-#include <boost/noncopyable.hpp>
-
 #include <datasrc/data_source.h>
 #include <datasrc/client.h>
 #include <exceptions/exceptions.h>
 
 #include <cc/data.h>
+
+#include <boost/noncopyable.hpp>
+#include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace datasrc {
@@ -170,6 +171,12 @@ private:
     ds_destructor* destructor_;
     LibraryContainer ds_lib_;
 };
+
+///
+/// Shared pointer type for datasource client containers
+///
+typedef boost::shared_ptr<DataSourceClientContainer>
+    DataSourceClientContainerPtr;
 
 } // end namespace datasrc
 } // end namespace isc
