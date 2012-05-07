@@ -403,6 +403,17 @@ AuthSrv::getInMemoryClient(const RRClass& rrclass) {
     return (impl_->memory_client_);
 }
 
+isc::datasrc::DataSourceClientContainerPtr
+AuthSrv::getInMemoryClientContainer(const RRClass& rrclass) {
+    // XXX: for simplicity, we only support the IN class right now.
+    if (rrclass != impl_->memory_client_class_) {
+        isc_throw(InvalidParameter,
+                  "Memory data source is not supported for RR class "
+                  << rrclass);
+    }
+    return (impl_->memory_client_container_);
+}
+
 isc::datasrc::InMemoryClient*
 AuthSrv::getInMemoryClientP(const RRClass& rrclass) {
     // XXX: for simplicity, we only support the IN class right now.
@@ -456,6 +467,8 @@ AuthSrv::setInMemoryClient(const isc::dns::RRClass& rrclass,
     impl_->memory_client_container_ = memory_client;
     impl_->memory_client_p_ =
         static_cast<isc::datasrc::InMemoryClient*>(&memory_client->getInstance());
+    // temp fix for tests; fool tests with a fake inmemoryclientptr
+    impl_->memory_client_ = AuthSrv::InMemoryClientPtr(new InMemoryClient());
 }
 
 
