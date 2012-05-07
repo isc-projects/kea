@@ -840,7 +840,7 @@ TEST_F(AuthSrvTest, updateWithInMemoryClient) {
                  "{\"datasources\": [{\"type\": \"memory\"}]}", true);
     // after successful configuration, we should have one (with empty zoneset).
     ASSERT_NE(AuthSrv::InMemoryClientPtr(), server.getInMemoryClient(rrclass));
-    EXPECT_EQ(0, server.getInMemoryClient(rrclass)->getZoneCount());
+    EXPECT_EQ(0, server.getInMemoryClientP(rrclass)->getZoneCount());
 
     // The memory data source is empty, should return REFUSED rcode.
     createDataFromFile("examplequery_fromWire.wire");
@@ -858,7 +858,7 @@ TEST_F(AuthSrvTest, queryWithInMemoryClientNoDNSSEC) {
     // for various types of queries are tested in the query tests.
     updateConfig(&server, CONFIG_INMEMORY_EXAMPLE, true);
     ASSERT_NE(AuthSrv::InMemoryClientPtr(), server.getInMemoryClient(rrclass));
-    EXPECT_EQ(1, server.getInMemoryClient(rrclass)->getZoneCount());
+    EXPECT_EQ(1, server.getInMemoryClientP(rrclass)->getZoneCount());
 
     createDataFromFile("nsec3query_nodnssec_fromWire.wire");
     server.processMessage(*io_message, *parse_message, *response_obuffer,
@@ -875,7 +875,7 @@ TEST_F(AuthSrvTest, queryWithInMemoryClientDNSSEC) {
     // the previous case.
     updateConfig(&server, CONFIG_INMEMORY_EXAMPLE, true);
     ASSERT_NE(AuthSrv::InMemoryClientPtr(), server.getInMemoryClient(rrclass));
-    EXPECT_EQ(1, server.getInMemoryClient(rrclass)->getZoneCount());
+    EXPECT_EQ(1, server.getInMemoryClientP(rrclass)->getZoneCount());
 
     createDataFromFile("nsec3query_fromWire.wire");
     server.processMessage(*io_message, *parse_message, *response_obuffer,
@@ -1214,20 +1214,10 @@ private:
 /// (with setInMemoryClient) with the current design of AuthSrv.
 class FakeInMemoryClient : public isc::datasrc::InMemoryClient {
 public:
-    /// \brief Create a proxy memory client
-    ///
-    /// \param real_client The real in-memory client to proxy
-    /// \param throw_when if set to any value other than never, that is
-    ///        the method that will throw an exception (either in this
-    ///        class or the related FakeZoneFinder)
-    /// \param isc_exception if true, throw isc::Exception, otherwise,
-    ///                      throw std::exception
-    /// \param fake_rrset If non NULL, it will be used as an answer to
-    /// find() for that name and type.
-    FakeInMemoryClient(AuthSrv::InMemoryClientPtr real_client,
+    FakeInMemoryClient(isc::datasrc::DataSourceClientContainerPtr real_client,
                        ThrowWhen throw_when, bool isc_exception,
                        ConstRRsetPtr fake_rrset = ConstRRsetPtr()) :
-        real_client_(real_client),
+        real_client_ptr_(real_client),
         throw_when_(throw_when),
         isc_exception_(isc_exception),
         fake_rrset_(fake_rrset)
@@ -1242,7 +1232,7 @@ public:
     virtual FindResult
     findZone(const isc::dns::Name& name) const {
         checkThrow(THROW_AT_FIND_ZONE, throw_when_, isc_exception_);
-        const FindResult result = real_client_->findZone(name);
+        const FindResult result = real_client_ptr_->getInstance().findZone(name);
         return (FindResult(result.code, isc::datasrc::ZoneFinderPtr(
                                         new FakeZoneFinder(result.zone_finder,
                                                            throw_when_,
@@ -1251,7 +1241,7 @@ public:
     }
 
 private:
-    AuthSrv::InMemoryClientPtr real_client_;
+    isc::datasrc::DataSourceClientContainerPtr real_client_ptr_;
     ThrowWhen throw_when_;
     bool isc_exception_;
     ConstRRsetPtr fake_rrset_;
@@ -1268,7 +1258,7 @@ TEST_F(AuthSrvTest, queryWithInMemoryClientProxy) {
     updateConfig(&server, CONFIG_INMEMORY_EXAMPLE, true);
 
     AuthSrv::InMemoryClientPtr fake_client(
-        new FakeInMemoryClient(server.getInMemoryClient(rrclass),
+        new FakeInMemoryClient(server.getInMemoryClientContainer(rrclass),
                                THROW_NEVER, false));
     ASSERT_NE(AuthSrv::InMemoryClientPtr(), server.getInMemoryClient(rrclass));
     server.setInMemoryClient(rrclass, fake_client);
@@ -1299,7 +1289,7 @@ setupThrow(AuthSrv* server, const char *config, ThrowWhen throw_when,
     // SERVFAIL on any exception
     AuthSrv::InMemoryClientPtr fake_client(
         new FakeInMemoryClient(
-            server->getInMemoryClient(isc::dns::RRClass::IN()),
+            server->getInMemoryClientContainer(isc::dns::RRClass::IN()),
             throw_when, isc_exception, rrset));
 
     ASSERT_NE(AuthSrv::InMemoryClientPtr(),

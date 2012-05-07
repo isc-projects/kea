@@ -17,9 +17,13 @@
 #include <dns/rrclass.h>
 
 #include <datasrc/client.h>
+#include <datasrc/factory.h>
 #include <datasrc/memory_datasrc.h>
 
+#include <exceptions/exceptions.h>
+
 #include <boost/foreach.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include <string>
 
@@ -28,6 +32,12 @@ using namespace isc::data;
 
 namespace isc {
 namespace datasrc {
+
+class InMemoryConfigError : public isc::Exception {
+public:
+    InMemoryConfigError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
 
 namespace {
 // convencience function to add an error message to a list of those
@@ -112,21 +122,24 @@ checkConfig(ConstElementPtr config, ElementPtr errors) {
                 result = false;
             }
         }
-        if (!checkConfigElementString(config, "class", errors)) {
-            result = false;
-        } else {
-            try {
-                RRClass rrc(config->get("class")->stringValue());
-            } catch (const isc::Exception& rrce) {
-                addError(errors,
-                         "Error parsing class config for memory backend: " +
-                         std::string(rrce.what()));
+        if (config->contains("class")) {
+            if (!checkConfigElementString(config, "class", errors)) {
                 result = false;
+            } else {
+                try {
+                    RRClass rrc(config->get("class")->stringValue());
+                } catch (const isc::Exception& rrce) {
+                    addError(errors,
+                             "Error parsing class config for memory backend: " +
+                             std::string(rrce.what()));
+                    result = false;
+                }
             }
         }
         if (!config->contains("zones")) {
-            addError(errors, "No 'zones' element in memory backend config");
-            result = false;
+            // Assume empty list of zones
+            //addError(errors, "No 'zones' element in memory backend config");
+            //result = false;
         } else if (!config->get("zones") ||
                    config->get("zones")->getType() != Element::list) {
             addError(errors, "'zones' element in memory backend config is not a list");
@@ -144,6 +157,89 @@ checkConfig(ConstElementPtr config, ElementPtr errors) {
     return (result);
 }
 
+// Apply the given config to the just-initialized client
+// client must be freshly allocated, and config_value should have been
+// checked by the caller
+void
+applyConfig(isc::datasrc::InMemoryClient* client,
+            isc::data::ConstElementPtr config_value) {
+    ConstElementPtr zones_config = config_value->get("zones");
+    if (!zones_config) {
+        // XXX: Like the RR class, we cannot retrieve the default value here,
+        // so we assume an empty zone list in this case.
+        return;
+    }
+
+    isc::dns::RRClass rrclass = RRClass::IN();
+    if (config_value->contains("class")) {
+        rrclass = RRClass(config_value->get("class")->stringValue());
+    }
+
+    BOOST_FOREACH(ConstElementPtr zone_config, zones_config->listValue()) {
+        ConstElementPtr origin = zone_config->get("origin");
+        const std::string origin_txt = origin ? origin->stringValue() : "";
+        if (origin_txt.empty()) {
+            isc_throw(InMemoryConfigError, "Missing zone origin");
+        }
+        ConstElementPtr file = zone_config->get("file");
+        const std::string file_txt = file ? file->stringValue() : "";
+        if (file_txt.empty()) {
+            isc_throw(InMemoryConfigError, "Missing zone file for zone: "
+                      << origin_txt);
+        }
+
+        // We support the traditional text type and SQLite3 backend.  For the
+        // latter we create a client for the underlying SQLite3 data source,
+        // and build the in-memory zone using an iterator of the underlying
+        // zone.
+        ConstElementPtr filetype = zone_config->get("filetype");
+        const std::string filetype_txt = filetype ? filetype->stringValue() :
+            "text";
+        boost::scoped_ptr<DataSourceClientContainer> container;
+        if (filetype_txt == "sqlite3") {
+            container.reset(new DataSourceClientContainer(
+                                "sqlite3",
+                                Element::fromJSON("{\"database_file\": \"" +
+                                                  file_txt + "\"}")));
+        } else if (filetype_txt != "text") {
+            isc_throw(InMemoryConfigError, "Invalid filetype for zone "
+                      << origin_txt << ": " << filetype_txt);
+        }
+
+        // Note: we don't want to have such small try-catch blocks for each
+        // specific error.  We may eventually want to introduce some unified
+        // error handling framework as we have more configuration parameters.
+        // See bug #1627 for the relevant discussion.
+        InMemoryZoneFinder* imzf = NULL;
+        try {
+            imzf = new InMemoryZoneFinder(rrclass, Name(origin_txt));
+        } catch (const isc::dns::NameParserException& ex) {
+            isc_throw(InMemoryConfigError, "unable to parse zone's origin: " <<
+                      ex.what());
+        }
+
+        boost::shared_ptr<InMemoryZoneFinder> zone_finder(imzf);
+        const result::Result result = client->addZone(zone_finder);
+        if (result == result::EXIST) {
+            isc_throw(InMemoryConfigError, "zone "<< origin->str()
+                      << " already exists");
+        }
+
+        /*
+         * TODO: Once we have better reloading of configuration (something
+         * else than throwing everything away and loading it again), we will
+         * need the load method to be split into some kind of build and
+         * commit/abort parts.
+         */
+        if (filetype_txt == "text") {
+            zone_finder->load(file_txt);
+        } else {
+            zone_finder->load(*container->getInstance().getIterator(
+                                  Name(origin_txt)));
+        }
+    }
+}
+
 } // end unnamed namespace
 
 DataSourceClient *
@@ -153,12 +249,21 @@ createInstance(isc::data::ConstElementPtr config, std::string& error) {
         error = "Configuration error: " + errors->str();
         return (NULL);
     }
+    isc::datasrc::InMemoryClient* client = NULL;
     try {
-        return (new isc::datasrc::InMemoryClient());
+        client = new isc::datasrc::InMemoryClient();
+        applyConfig(client, config);
+        return client;
+    } catch (isc::Exception& isce) {
+        delete client;
+        error = isce.what();
+        return (NULL);
     } catch (const std::exception& exc) {
+        delete client;
         error = std::string("Error creating memory datasource: ") + exc.what();
         return (NULL);
     } catch (...) {
+        delete client;
         error = std::string("Error creating memory datasource, "
                             "unknown exception");
         return (NULL);

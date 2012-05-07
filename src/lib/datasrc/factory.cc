@@ -23,6 +23,9 @@
 
 #include <datasrc/logger.h>
 
+#include <exceptions/exceptions.h>
+#include <dns/masterload.h>
+
 #include <dlfcn.h>
 #include <cstdlib>
 
