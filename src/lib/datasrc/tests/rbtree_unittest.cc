@@ -381,7 +381,7 @@ previousWalk(RBTree<int>& rbtree, const RBNode<int>* node,
         // Find the node at the path and check the value is the same
         // (that it really returns the correct corresponding node)
         //
-        // The "hidden" nodes can not be found
+        // The "empty" nodes can not be found
         if (node->getData()) {
             const RBNode<int>* node2(NULL);
             RBTreeNodeChain<int> node_path2;
@@ -461,10 +461,26 @@ TEST_F(RBTreeTest, previousNode) {
     }
 
     {
+        SCOPED_TRACE("Start below a leaf");
+        // We exit a leaf by going down. We should start by the one
+        // we exited - 'c' (actually, we should get it by the find, as partial
+        // match).
+        EXPECT_EQ(RBTree<int>::PARTIALMATCH,
+                  rbtree.find<void*>(Name("b.c"), &node, node_path, NULL,
+                                     NULL));
+        previousWalk(rbtree, node, node_path, 3, false);
+        node = NULL;
+        node_path.clear();
+    }
+
+    {
         SCOPED_TRACE("Start to the right of a leaf");
         // When searching for this, we exit the 'x' node to the right side,
         // so we should go x afterwards.
-        EXPECT_EQ(RBTree<int>::PARTIALMATCH,
+
+        // The d.e.f is empty node, so it is hidden by find. Therefore NOTFOUND
+        // and not PARTIALMATCH.
+        EXPECT_EQ(RBTree<int>::NOTFOUND,
                   rbtree.find<void*>(Name("xy.d.e.f"), &node, node_path,
                                      NULL, NULL));
         previousWalk(rbtree, node, node_path, 5, true);
@@ -476,7 +492,10 @@ TEST_F(RBTreeTest, previousNode) {
         SCOPED_TRACE("Start to the left of a leaf");
         // This is similar to the previous, but we exit the 'z' leaf to the
         // left side, so should not visit z at all then.
-        EXPECT_EQ(RBTree<int>::PARTIALMATCH,
+
+        // The d.e.f is empty node, so it is hidden by find. Therefore NOTFOUND
+        // and not PARTIALMATCH.
+        EXPECT_EQ(RBTree<int>::NOTFOUND,
                   rbtree.find<void*>(Name("yz.d.e.f"), &node, node_path,
                                      NULL, NULL));
         previousWalk(rbtree, node, node_path, 9, true);

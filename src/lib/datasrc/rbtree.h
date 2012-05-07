@@ -1173,6 +1173,82 @@ RBTree<T>::previousNode(RBTreeNodeChain<T>& node_path) const {
                   "RBTree::previousNode called before find");
     }
 
+    // If the relation isn't EQUAL, it means the find was called previously
+    // and didn't find the exact node. Therefore we need to locate the place
+    // to start iterating the chain of domains.
+    //
+    // The logic here is not too complex, we just need to take care to handle
+    // all the cases and decide where to go from there.
+    switch (node_path.getLastComparisonResult().getRelation()) {
+        case dns::NameComparisonResult::COMMONANCESTOR:
+            // We compared with a leaf in the tree and wanted to go to one of
+            // the sons. But the son was not there. It now depends on the
+            // direction in which we wanted to go.
+            if (node_path.getLastComparisonResult().getOrder() < 0) {
+                // We wanted to go left. So the one we compared with is
+                // the one higher than we wanted. If we just put it into
+                // the node_path, then the following algorithm below will find
+                // the smaller one.
+                //
+                // This is exactly the same as with superdomain below.
+                // Therefore, we just fall through to the next case.
+            } else {
+                // We wanted to go right. That means we want to output the
+                // one which is the largest in the tree defined by the
+                // compared one (it is either the compared one, or some
+                // subdomain of it). There probably is not an easy trick
+                // for this, so we just find the correct place.
+                const RBNode<T>* current(node_path.getLastComparedNode());
+                while (current != NULLNODE) {
+                    node_path.push(current);
+                    // Go a level down and as much right there as possible
+                    current = current->down_;
+                    while (current->right_ != NULLNODE) {
+                        // A small trick. The current may be NULLNODE, but
+                        // such node has the right_ pointer and it is equal
+                        // to NULLNODE.
+                        current = current->right_;
+                    }
+                }
+                // Now, the one on top of the path is the one we want. We
+                // return it now and leave it there, so we can search for
+                // previous of it the next time we'are called.
+                node_path.last_comparison_ =
+                    dns::NameComparisonResult(0, 0,
+                                              dns::NameComparisonResult::EQUAL);
+                return (node_path.top());
+            }
+            // No break; here - we want to fall through. See above.
+        case dns::NameComparisonResult::SUPERDOMAIN:
+            // This is the case there's a "compressed" node and we looked for
+            // only part of it. The node itself is larger than we wanted, but
+            // if we put it to the node_path and then go one step left from it,
+            // we get the correct result.
+            node_path.push(node_path.getLastComparedNode());
+            // Correct the comparison result, so we won't trigger this case
+            // next time previousNode is called. We already located the correct
+            // place to start. The value is partly nonsense, but that doesn't
+            // matter any more.
+            node_path.last_comparison_ =
+                dns::NameComparisonResult(0, 0,
+                                          dns::NameComparisonResult::EQUAL);
+            break;
+        case dns::NameComparisonResult::SUBDOMAIN:
+            // A subdomain means we returned the one above the searched one
+            // already and it is on top of the stack. This is was smaller
+            // than the one already, but we want to return yet smaller one.
+            // So we act as if it was EQUAL.
+            break;
+        case dns::NameComparisonResult::EQUAL:
+            // The find gave us an exact match or the previousNode was called
+            // already, which located the exact node. The rest of the function
+            // goes one domain left and returns it for us.
+            break;
+    }
+
+    // So, the node_path now contains the path to a node we want previous for.
+    // We just need to go one step left.
+
     if (node_path.getLevelCount() == 0) {
         // We got past the first one. So, we're returning NULL from
         // now on.
