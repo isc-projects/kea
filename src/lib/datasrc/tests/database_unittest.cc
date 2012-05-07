@@ -1155,7 +1155,7 @@ public:
         // probably move this to some specialized templated method specific
         // to SQLite3 (or for even a longer term we should add an API to
         // purge the diffs table).
-        const char* const install_cmd = INSTALL_PROG " " TEST_DATA_COMMONDIR
+        const char* const install_cmd = INSTALL_PROG " -c " TEST_DATA_COMMONDIR
             "/rwtest.sqlite3 " TEST_DATA_BUILDDIR
             "/rwtest.sqlite3.copied";
         if (system(install_cmd) != 0) {
