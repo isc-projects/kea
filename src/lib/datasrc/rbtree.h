@@ -1159,7 +1159,8 @@ template <typename T>
 const RBNode<T>*
 RBTree<T>::previousNode(RBTreeNodeChain<T>& node_path) const {
     if (node_path.isEmpty()) {
-        isc_throw(isc::BadValue, "RBTree::nextNode is given an empty chain");
+        isc_throw(isc::BadValue,
+                  "RBTree::previousNode is given an empty chain");
     }
 
     const RBNode<T>* node(node_path.top());
