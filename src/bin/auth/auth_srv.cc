@@ -142,6 +142,7 @@ public:
     /// In-memory data source.  Currently class IN only for simplicity.
     const RRClass memory_client_class_;
     AuthSrv::InMemoryClientPtr memory_client_;
+    isc::datasrc::DataSourceClientContainerPtr memory_client_container_;
     isc::datasrc::InMemoryClient* memory_client_p_;
 
     /// Hot spot cache
@@ -410,7 +411,7 @@ AuthSrv::getInMemoryClientP(const RRClass& rrclass) {
                   "Memory data source is not supported for RR class "
                   << rrclass);
     }
-    if (!impl_->memory_client_) {
+    if (!impl_->memory_client_p_) {
         isc_throw(Exception, "no memory client set");
     }
     return (impl_->memory_client_p_);
@@ -435,6 +436,28 @@ AuthSrv::setInMemoryClient(const isc::dns::RRClass& rrclass,
     impl_->memory_client_ = memory_client;
     impl_->memory_client_p_ = memory_client.get();
 }
+
+void
+AuthSrv::setInMemoryClient(const isc::dns::RRClass& rrclass,
+    isc::datasrc::DataSourceClientContainerPtr memory_client)
+{
+    // XXX: see above
+    if (rrclass != impl_->memory_client_class_) {
+        isc_throw(InvalidParameter,
+                  "Memory data source is not supported for RR class "
+                  << rrclass);
+    } else if (!impl_->memory_client_ && memory_client) {
+        LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_MEM_DATASRC_ENABLED)
+                  .arg(rrclass);
+    } else if (impl_->memory_client_ && !memory_client) {
+        LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_MEM_DATASRC_DISABLED)
+                  .arg(rrclass);
+    }
+    impl_->memory_client_container_ = memory_client;
+    impl_->memory_client_p_ =
+        static_cast<isc::datasrc::InMemoryClient*>(&memory_client->getInstance());
+}
+
 
 uint32_t
 AuthSrv::getStatisticsTimerInterval() const {
