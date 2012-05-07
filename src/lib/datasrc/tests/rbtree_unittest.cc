@@ -364,18 +364,31 @@ TEST_F(RBTreeTest, nextNode) {
     EXPECT_EQ(static_cast<void*>(NULL), node);
 }
 
-// Just walk until the beginning of the tree and check it is OK
+// Just walk using previousNode until the beginning of the tree and check it is
+// OK
+//
+// rbtree - the tree to walk
+// node - result of previous call to find(), starting position of the walk
+// node_path - the path from the previous call to find(), will be modified
+// chain_length - the number of names that should be in the chain to be walked
+//   (0 means it should be empty, 3 means 'a', 'b' and 'c' should be there -
+//   this is always from the beginning of the names[] list).
+// skip_first - if this is false, the node should already contain the node with
+//   the first name of the chain. If it is true, the node should be NULL
+//   (true is for finds that return no match, false for the ones that return
+//   match)
 void
 previousWalk(RBTree<int>& rbtree, const RBNode<int>* node,
-             RBTreeNodeChain<int>& node_path, size_t position, bool skipFirst)
+             RBTreeNodeChain<int>& node_path, size_t chain_length,
+             bool skip_first)
 {
-    if (skipFirst) {
+    if (skip_first) {
         // If the first is not found, this is supposed to be NULL and we skip
         // it in our checks.
         EXPECT_EQ(static_cast<void*>(NULL), node);
         node = rbtree.previousNode(node_path);
     }
-    for (size_t i(position); i > 0; --i) {
+    for (size_t i(chain_length); i > 0; --i) {
         EXPECT_NE(static_cast<void*>(NULL), node);
         EXPECT_EQ(Name(names[i - 1]), node_path.getAbsoluteName());
         // Find the node at the path and check the value is the same
