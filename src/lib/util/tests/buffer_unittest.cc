@@ -17,7 +17,7 @@
 #include <exceptions/exceptions.h>
 
 #ifdef EXPECT_DEATH
-#include <testutils/resource.h>
+#include <util/unittests/resource.h>
 #endif /* EXPECT_DEATH */
 
 #include <util/buffer.h>
@@ -189,7 +189,7 @@ TEST_F(BufferTest, outputBufferReadat) {
 #ifdef EXPECT_DEATH
     // We use assert now, so we check it dies
     EXPECT_DEATH({
-        isc::testutils::dontCreateCoreDumps();
+        isc::util::unittests::dontCreateCoreDumps();
 
         try {
             obuffer[sizeof(testdata)];

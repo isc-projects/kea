@@ -15,9 +15,7 @@
 #include <log/message_initializer.h>
 #include <gtest/gtest.h>
 
-#ifdef EXPECT_DEATH
-#include <testutils/resource.h>
-#endif /* EXPECT_DEATH */
+#include <util/unittests/resource.h>
 
 using namespace isc::log;
 
@@ -46,7 +44,7 @@ TEST(MessageInitializerTest2, MessageLoadTest) {
 #ifdef EXPECT_DEATH
     // Adding one more should take us over the limit.
     EXPECT_DEATH({
-        isc::testutils::dontCreateCoreDumps();
+        isc::util::unittests::dontCreateCoreDumps();
 
         MessageInitializer initializer2(values);
       }, ".*");
