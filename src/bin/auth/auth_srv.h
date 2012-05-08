@@ -286,7 +286,7 @@ public:
     ///
     /// If there is already an in memory data source configured, it will be
     /// replaced with the newly specified one.
-    /// \c memory_datasrc can be an empty shared pointer, in which case it
+    /// \c memory_client can be an empty shared pointer, in which case it
     /// will (re)disable the in-memory data source.
     ///
     /// \param rrclass The RR class of the in-memory data source to be set.
