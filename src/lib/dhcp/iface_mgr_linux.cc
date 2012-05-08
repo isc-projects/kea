@@ -252,7 +252,7 @@ void Netlink::parse_rtattr(RTattribPtrs& table, struct rtattr* rta, int len)
     // immediately follows pointed rta structure. See aforementioned
     // header for details.
     while (RTA_OK(rta, len)) {
-        if (rta->rta_type <= table.size()-1) {
+        if (rta->rta_type < table.size()) {
             table[rta->rta_type] = rta;
         }
         rta = RTA_NEXT(rta,len);
