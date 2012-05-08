@@ -15,9 +15,7 @@
 #include "config.h"
 #include <gtest/gtest.h>
 
-#ifdef EXPECT_DEATH
-#include <testutils/resource.h>
-#endif /* EXPECT_DEATH */
+#include <util/unittests/resource.h>
 
 #include <log/log_formatter.h>
 #include <log/logger_level.h>
@@ -107,12 +105,12 @@ TEST_F(FormatterTest, multiArg) {
 // don't match number of arguments. This causes it to abort.
 TEST_F(FormatterTest, mismatchedPlaceholders) {
     EXPECT_DEATH({
-        isc::testutils::dontCreateCoreDumps();
+        isc::util::unittests::dontCreateCoreDumps();
         Formatter(isc::log::INFO, s("Missing the first %2"), this).arg("missing").arg("argument");
     }, ".*");
 
     EXPECT_DEATH({
-        isc::testutils::dontCreateCoreDumps();
+        isc::util::unittests::dontCreateCoreDumps();
         Formatter(isc::log::INFO, s("Too many arguments in %1 %2"), this).arg("only one");
     }, ".*");
 }
