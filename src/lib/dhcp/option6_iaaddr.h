@@ -45,6 +45,7 @@ public:
     ///
     /// @param type option type
     /// @param buf pointer to a buffer
+    /// @param buf_len length of the buffer passed in buf
     /// @param offset offset to first data byte in that buffer
     /// @param len data length of this option
     Option6IAAddr(unsigned short type, boost::shared_array<uint8_t> buf,

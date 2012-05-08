@@ -41,8 +41,8 @@ public:
     /// @param msg_type type of message (SOLICIT=1, ADVERTISE=2, ...)
     /// @param transid transaction-id
     /// @param proto protocol (TCP or UDP)
-    Pkt6(unsigned char msg_type,
-         unsigned int transid,
+    Pkt6(uint8_t msg_type,
+         uint32_t transid,
          DHCPv6Proto proto = UDP);
 
     /// Constructor, used in message transmission
@@ -106,18 +106,18 @@ public:
     /// Returns message type (e.g. 1 = SOLICIT)
     ///
     /// @return message type
-    unsigned char
+    uint8_t
     getType() { return (msg_type_); }
 
     /// Sets message type (e.g. 1 = SOLICIT)
     ///
     /// @param type message type to be set
-    void setType(unsigned char type) { msg_type_=type; };
+    void setType(uint8_t type) { msg_type_=type; };
 
     /// Returns value of transaction-id field
     ///
     /// @return transaction-id
-    unsigned int getTransid() { return (transid_); };
+    uint32_t getTransid() { return (transid_); };
 
     /// Adds an option to this packet.
     ///
@@ -130,11 +130,11 @@ public:
     /// instances of the same option are allowed (and frequently used).
     /// See getOptions().
     ///
-    /// @param opt_type option type we are looking for
+    /// @param type option type we are looking for
     ///
     /// @return pointer to found option (or NULL)
     boost::shared_ptr<isc::dhcp::Option>
-    getOption(unsigned short type);
+    getOption(uint16_t type);
 
     /// Attempts to delete first suboption of requested type
     ///
@@ -142,7 +142,7 @@ public:
     ///
     /// @return true if option was deleted, false if no such option existed
     bool
-    delOption(unsigned short type);
+    delOption(uint16_t type);
 
     /// TODO need getter/setter wrappers
     ///      and hide following fields as protected
@@ -172,10 +172,10 @@ public:
     int ifindex_;
 
     /// local TDP or UDP port
-    int local_port_;
+    uint16_t local_port_;
 
     /// remote TCP or UDP port
-    int remote_port_;
+    uint16_t remote_port_;
 
     /// TODO Need to implement getOptions() as well
 
@@ -221,10 +221,10 @@ protected:
     DHCPv6Proto proto_;
 
     /// DHCPv6 message type
-    int msg_type_;
+    uint8_t msg_type_;
 
     /// DHCPv6 transaction-id
-    unsigned int transid_;
+    uint32_t transid_;
 }; // Pkt6 class
 
 } // isc::dhcp namespace

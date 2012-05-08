@@ -240,6 +240,7 @@ public:
     /// Sets sname field
     ///
     /// @param sname value to be set
+    /// @param snameLen length of the buffer passed in sname
     void
     setSname(const uint8_t* sname, size_t snameLen = MAX_SNAME_LEN);
 
@@ -255,6 +256,7 @@ public:
     /// Sets file field
     ///
     /// @param file value to be set
+    /// @param fileLen length of the buffer passed in file
     void
     setFile(const uint8_t* file, size_t fileLen = MAX_FILE_LEN);
 
@@ -266,7 +268,7 @@ public:
     ///
     /// Note: macAddr must be a buffer of at least hlen bytes.
     ///
-    /// @param hwType hardware type (will be sent in htype field)
+    /// @param hType hardware type (will be sent in htype field)
     /// @param hlen hardware length (will be sent in hlen field)
     /// @param macAddr pointer to hardware address
     void setHWAddr(uint8_t hType, uint8_t hlen,
@@ -350,7 +352,7 @@ public:
 
     /// @brief Sets remote address.
     ///
-    /// @params remote specifies remote address
+    /// @param remote specifies remote address
     void setRemoteAddr(const isc::asiolink::IOAddress& remote) {
         remote_addr_ = remote;
     }
@@ -364,7 +366,7 @@ public:
 
     /// @brief Sets local address.
     ///
-    /// @params local specifies local address
+    /// @param local specifies local address
     void setLocalAddr(const isc::asiolink::IOAddress& local) {
         local_addr_ = local;
     }
@@ -378,7 +380,7 @@ public:
 
     /// @brief Sets local port.
     ///
-    /// @params local specifies local port
+    /// @param local specifies local port
     void setLocalPort(uint16_t local) { local_port_ = local; }
 
     /// @brief Returns local port.
@@ -388,7 +390,7 @@ public:
 
     /// @brief Sets remote port.
     ///
-    /// @params remote specifies remote port
+    /// @param remote specifies remote port
     void setRemotePort(uint16_t remote) { remote_port_ = remote; }
 
     /// @brief Returns remote port.
