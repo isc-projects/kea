@@ -37,7 +37,7 @@ replacePlaceholder(string* message, const string& arg,
     else {
         // We're missing the placeholder, so throw an exception
         isc_throw(MismatchedPlaceholders,
-		  "Missing logger placeholder in message: " << message);
+		  "Missing logger placeholder in message: " << *message);
     }
 #else
     else {
@@ -56,7 +56,7 @@ checkExcessPlaceholders(string* message, unsigned int placeholder)
     if (pos != string::npos) {
         // Excess placeholders were found, so throw an exception
         isc_throw(MismatchedPlaceholders,
-		  "Excess logger placeholders still exist in message: " << message);
+		  "Excess logger placeholders still exist in message: " << *message);
     }
 #endif /* ENABLE_LOGGER_CHECKS */
 }
