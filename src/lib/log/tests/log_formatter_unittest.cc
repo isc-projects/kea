@@ -15,9 +15,9 @@
 #include "config.h"
 #include <gtest/gtest.h>
 
-#ifdef EXPECT_ABORT
+#ifdef EXPECT_DEATH
 #include <testutils/resource.h>
-#endif /* EXPECT_ABORT */
+#endif /* EXPECT_DEATH */
 
 #include <log/log_formatter.h>
 #include <log/logger_level.h>
@@ -102,21 +102,21 @@ TEST_F(FormatterTest, multiArg) {
 
 #ifdef ENABLE_LOGGER_CHECKS
 
-#ifdef EXPECT_ABORT
+#ifdef EXPECT_DEATH
 // Throws MismatchedPlaceholders exception if number of placeholders
 // don't match number of arguments. This causes it to abort.
 TEST_F(FormatterTest, mismatchedPlaceholders) {
-    EXPECT_ABORT({
+    EXPECT_DEATH({
         isc::testutils::dontCreateCoreDumps();
         Formatter(isc::log::INFO, s("Missing the first %2"), this).arg("missing").arg("argument");
     }, ".*");
 
-    EXPECT_ABORT({
+    EXPECT_DEATH({
         isc::testutils::dontCreateCoreDumps();
         Formatter(isc::log::INFO, s("Too many arguments in %1 %2"), this).arg("only one");
     }, ".*");
 }
-#endif /* EXPECT_ABORT */
+#endif /* EXPECT_DEATH */
 
 #else
 
