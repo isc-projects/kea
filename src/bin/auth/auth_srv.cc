@@ -432,7 +432,6 @@ AuthSrv::setInMemoryClient(const isc::dns::RRClass& rrclass,
     impl_->memory_client_container_ = memory_client;
 }
 
-
 uint32_t
 AuthSrv::getStatisticsTimerInterval() const {
     return (impl_->statistics_timer_.getInterval() / 1000);

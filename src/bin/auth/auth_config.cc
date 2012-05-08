@@ -145,7 +145,8 @@ MemoryDatasourceConfig::build(ConstElementPtr config_value) {
 
     // We'd eventually optimize building zones (in case of reloading) by
     // selectively loading fresh zones.  Right now we simply check the
-    // RR class is supported by the server implementation.
+    // RR class is supported by the server implementation, by calling
+    // the get (it should throw on the wrong class).
     (void)server_.getInMemoryClientContainer(rrclass_);
     memory_client_ = isc::datasrc::DataSourceClientContainerPtr(
         new isc::datasrc::DataSourceClientContainer("memory", config_value));
