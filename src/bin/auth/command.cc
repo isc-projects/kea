@@ -211,7 +211,7 @@ private:
             class_elem ? RRClass(class_elem->stringValue()) : RRClass::IN();
 
         isc::datasrc::DataSourceClient* datasrc(
-            server.getInMemoryClientP(zone_class));
+            server.getInMemoryClient(zone_class));
         if (datasrc == NULL) {
             isc_throw(AuthCommandError, "Memory data source is disabled");
         }

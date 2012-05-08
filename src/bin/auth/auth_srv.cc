@@ -400,7 +400,7 @@ AuthSrv::getInMemoryClientContainer(const RRClass& rrclass) {
 }
 
 isc::datasrc::DataSourceClient*
-AuthSrv::getInMemoryClientP(const RRClass& rrclass) {
+AuthSrv::getInMemoryClient(const RRClass& rrclass) {
     if (hasInMemoryClient()) {
         return (&getInMemoryClientContainer(rrclass)->getInstance());
     } else {

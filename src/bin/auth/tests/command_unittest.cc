@@ -68,7 +68,7 @@ protected:
     }
     void checkAnswer(const int expected_code) {
         parseAnswer(rcode_, result_);
-        ASSERT_EQ(expected_code, rcode_) << result_->str();
+        EXPECT_EQ(expected_code, rcode_) << result_->str();
     }
     MockSession statistics_session_;
     MockXfroutClient xfrout_;
@@ -178,17 +178,17 @@ TEST_F(AuthCommandTest, shutdownIncorrectPID) {
 // zones, and checks the zones are correctly loaded.
 void
 zoneChecks(AuthSrv& server) {
-    EXPECT_TRUE(server.getInMemoryClientP(RRClass::IN()));
-    EXPECT_EQ(ZoneFinder::SUCCESS, server.getInMemoryClientP(RRClass::IN())->
+    EXPECT_TRUE(server.getInMemoryClient(RRClass::IN()));
+    EXPECT_EQ(ZoneFinder::SUCCESS, server.getInMemoryClient(RRClass::IN())->
               findZone(Name("ns.test1.example")).zone_finder->
               find(Name("ns.test1.example"), RRType::A())->code);
-    EXPECT_EQ(ZoneFinder::NXRRSET, server.getInMemoryClientP(RRClass::IN())->
+    EXPECT_EQ(ZoneFinder::NXRRSET, server.getInMemoryClient(RRClass::IN())->
               findZone(Name("ns.test1.example")).zone_finder->
               find(Name("ns.test1.example"), RRType::AAAA())->code);
-    EXPECT_EQ(ZoneFinder::SUCCESS, server.getInMemoryClientP(RRClass::IN())->
+    EXPECT_EQ(ZoneFinder::SUCCESS, server.getInMemoryClient(RRClass::IN())->
               findZone(Name("ns.test2.example")).zone_finder->
               find(Name("ns.test2.example"), RRType::A())->code);
-    EXPECT_EQ(ZoneFinder::NXRRSET, server.getInMemoryClientP(RRClass::IN())->
+    EXPECT_EQ(ZoneFinder::NXRRSET, server.getInMemoryClient(RRClass::IN())->
               findZone(Name("ns.test2.example")).zone_finder->
               find(Name("ns.test2.example"), RRType::AAAA())->code);
 }
@@ -215,20 +215,20 @@ configureZones(AuthSrv& server) {
 
 void
 newZoneChecks(AuthSrv& server) {
-    EXPECT_TRUE(server.getInMemoryClientP(RRClass::IN()));
-    EXPECT_EQ(ZoneFinder::SUCCESS, server.getInMemoryClientP(RRClass::IN())->
+    EXPECT_TRUE(server.getInMemoryClient(RRClass::IN()));
+    EXPECT_EQ(ZoneFinder::SUCCESS, server.getInMemoryClient(RRClass::IN())->
               findZone(Name("ns.test1.example")).zone_finder->
               find(Name("ns.test1.example"), RRType::A())->code);
     // now test1.example should have ns/AAAA
-    EXPECT_EQ(ZoneFinder::SUCCESS, server.getInMemoryClientP(RRClass::IN())->
+    EXPECT_EQ(ZoneFinder::SUCCESS, server.getInMemoryClient(RRClass::IN())->
               findZone(Name("ns.test1.example")).zone_finder->
               find(Name("ns.test1.example"), RRType::AAAA())->code);
 
     // test2.example shouldn't change
-    EXPECT_EQ(ZoneFinder::SUCCESS, server.getInMemoryClientP(RRClass::IN())->
+    EXPECT_EQ(ZoneFinder::SUCCESS, server.getInMemoryClient(RRClass::IN())->
               findZone(Name("ns.test2.example")).zone_finder->
               find(Name("ns.test2.example"), RRType::A())->code);
-    EXPECT_EQ(ZoneFinder::NXRRSET, server.getInMemoryClientP(RRClass::IN())->
+    EXPECT_EQ(ZoneFinder::NXRRSET, server.getInMemoryClient(RRClass::IN())->
               findZone(Name("ns.test2.example")).zone_finder->
               find(Name("ns.test2.example"), RRType::AAAA())->code);
 }
@@ -314,7 +314,7 @@ TEST_F(AuthCommandTest,
     // Get the zone and look if there are data in it (the original one was
     // empty)
     ASSERT_TRUE(server_.getInMemoryClientContainer(RRClass::IN()));
-    EXPECT_EQ(ZoneFinder::SUCCESS, server_.getInMemoryClientP(RRClass::IN())->
+    EXPECT_EQ(ZoneFinder::SUCCESS, server_.getInMemoryClient(RRClass::IN())->
               findZone(Name("example.org")).zone_finder->
               find(Name("example.org"), RRType::SOA())->code);
 
@@ -329,7 +329,7 @@ TEST_F(AuthCommandTest,
     checkAnswer(1);
 
     // The previous zone is not hurt in any way
-    EXPECT_EQ(ZoneFinder::SUCCESS, server_.getInMemoryClientP(RRClass::IN())->
+    EXPECT_EQ(ZoneFinder::SUCCESS, server_.getInMemoryClient(RRClass::IN())->
               findZone(Name("example.org")).zone_finder->
               find(Name("example.org"), RRType::SOA())->code);
 
@@ -339,7 +339,7 @@ TEST_F(AuthCommandTest,
     checkAnswer(1);
 
     // The previous zone is not hurt in any way
-    EXPECT_EQ(ZoneFinder::SUCCESS, server_.getInMemoryClientP(RRClass::IN())->
+    EXPECT_EQ(ZoneFinder::SUCCESS, server_.getInMemoryClient(RRClass::IN())->
               findZone(Name("example.org")).zone_finder->
               find(Name("example.org"), RRType::SOA())->code);
     // Configure an unreadable zone. Should fail, but leave the original zone
@@ -362,7 +362,7 @@ TEST_F(AuthCommandTest,
         Element::fromJSON("{\"origin\": \"example.com\"}"));
     checkAnswer(1);
     // The previous zone is not hurt in any way
-    EXPECT_EQ(ZoneFinder::SUCCESS, server_.getInMemoryClientP(RRClass::IN())->
+    EXPECT_EQ(ZoneFinder::SUCCESS, server_.getInMemoryClient(RRClass::IN())->
               findZone(Name("example.org")).zone_finder->
               find(Name("example.org"), RRType::SOA())->code);
 
