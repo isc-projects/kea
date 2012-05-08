@@ -251,7 +251,7 @@ public:
     /// \param rrclass The RR class of the requested in-memory data source.
     /// \return A pointer to the in-memory data source, if configured;
     /// otherwise NULL.
-    isc::datasrc::DataSourceClient* getInMemoryClientP(
+    isc::datasrc::DataSourceClient* getInMemoryClient(
         const isc::dns::RRClass& rrclass);
 
     /// Returns the DataSourceClientContainer of the in-memory datasource

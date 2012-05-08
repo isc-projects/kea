@@ -840,7 +840,7 @@ TEST_F(AuthSrvTest, updateWithInMemoryClient) {
                  "{\"datasources\": [{\"type\": \"memory\"}]}", true);
     // after successful configuration, we should have one (with empty zoneset).
     EXPECT_TRUE(server.hasInMemoryClient());
-    EXPECT_EQ(0, server.getInMemoryClientP(rrclass)->getZoneCount());
+    EXPECT_EQ(0, server.getInMemoryClient(rrclass)->getZoneCount());
 
     // The memory data source is empty, should return REFUSED rcode.
     createDataFromFile("examplequery_fromWire.wire");
@@ -858,7 +858,7 @@ TEST_F(AuthSrvTest, queryWithInMemoryClientNoDNSSEC) {
     // for various types of queries are tested in the query tests.
     updateConfig(&server, CONFIG_INMEMORY_EXAMPLE, true);
     EXPECT_TRUE(server.hasInMemoryClient());
-    EXPECT_EQ(1, server.getInMemoryClientP(rrclass)->getZoneCount());
+    EXPECT_EQ(1, server.getInMemoryClient(rrclass)->getZoneCount());
 
     createDataFromFile("nsec3query_nodnssec_fromWire.wire");
     server.processMessage(*io_message, *parse_message, *response_obuffer,
@@ -875,7 +875,7 @@ TEST_F(AuthSrvTest, queryWithInMemoryClientDNSSEC) {
     // the previous case.
     updateConfig(&server, CONFIG_INMEMORY_EXAMPLE, true);
     EXPECT_TRUE(server.hasInMemoryClient());
-    EXPECT_EQ(1, server.getInMemoryClientP(rrclass)->getZoneCount());
+    EXPECT_EQ(1, server.getInMemoryClient(rrclass)->getZoneCount());
 
     createDataFromFile("nsec3query_fromWire.wire");
     server.processMessage(*io_message, *parse_message, *response_obuffer,
@@ -1214,6 +1214,16 @@ private:
 /// (with setInMemoryClient) with the current design of AuthSrv.
 class FakeInMemoryClient : public isc::datasrc::InMemoryClient {
 public:
+    /// \brief Create a proxy memory client
+    ///
+    /// \param real_client The real (in-memory) client to proxy
+    /// \param throw_when if set to any value other than never, that is
+    ///        the method that will throw an exception (either in this
+    ///        class or the related FakeZoneFinder)
+    /// \param isc_exception if true, throw isc::Exception, otherwise,
+    ///                      throw std::exception
+    /// \param fake_rrset If non NULL, it will be used as an answer to
+    /// find() for that name and type.
     FakeInMemoryClient(isc::datasrc::DataSourceClientContainerPtr real_client,
                        ThrowWhen throw_when, bool isc_exception,
                        ConstRRsetPtr fake_rrset = ConstRRsetPtr()) :
@@ -1232,7 +1242,8 @@ public:
     virtual FindResult
     findZone(const isc::dns::Name& name) const {
         checkThrow(THROW_AT_FIND_ZONE, throw_when_, isc_exception_);
-        const FindResult result = real_client_ptr_->getInstance().findZone(name);
+        const FindResult result =
+            real_client_ptr_->getInstance().findZone(name);
         return (FindResult(result.code, isc::datasrc::ZoneFinderPtr(
                                         new FakeZoneFinder(result.zone_finder,
                                                            throw_when_,
