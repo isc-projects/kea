@@ -2737,10 +2737,10 @@ class TestMain(unittest.TestCase):
         main(MockXfrin, False)
 
 class TestXfrinProcessMockCC:
-    def __init__(self, config = []):
+    def __init__(self):
         self.get_called = False
         self.get_called_correctly = False
-        self.config = config
+        self.config = []
 
     def get_remote_config_value(self, module, identifier):
         self.get_called = True
