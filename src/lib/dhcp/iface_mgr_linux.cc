@@ -37,11 +37,13 @@
 #include <dhcp/iface_mgr.h>
 #include <exceptions/exceptions.h>
 #include <asiolink/io_address.h>
+#include <util/io/sockaddr_util.h>
 
 using namespace std;
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
+using namespace isc::util::io::internal;
 
 BOOST_STATIC_ASSERT(IFLA_MAX>=IFA_MAX);
 
@@ -54,6 +56,7 @@ namespace {
 class Netlink
 {
 public:
+
 /// @brief Holds pointers to netlink messages.
 ///
 /// netlink (a Linux interface for getting information about network
@@ -108,8 +111,11 @@ private:
     uint32_t dump_;     // Number of expected message response
 };
 
-const size_t sndbuf = 32768;
-const size_t rcvbuf = 32768;
+/// @brief defines a size of a sent netlink buffer
+const static size_t SNDBUF_SIZE = 32768;
+
+/// @brief defines a size of a received netlink buffer
+const static size_t RCVBUF_SIZE = 32768;
 
 /// @brief Opens netlink socket and initializes handle structure.
 ///
@@ -121,23 +127,23 @@ void Netlink::rtnl_open_socket() {
         isc_throw(Unexpected, "Failed to create NETLINK socket.");
     }
 
-    if (setsockopt(fd_, SOL_SOCKET, SO_SNDBUF, &sndbuf, sizeof(sndbuf)) < 0) {
+    if (setsockopt(fd_, SOL_SOCKET, SO_SNDBUF, &SNDBUF_SIZE, sizeof(SNDBUF_SIZE)) < 0) {
         isc_throw(Unexpected, "Failed to set send buffer in NETLINK socket.");
     }
 
-    if (setsockopt(fd_, SOL_SOCKET, SO_RCVBUF, &sndbuf, sizeof(rcvbuf)) < 0) {
+    if (setsockopt(fd_, SOL_SOCKET, SO_RCVBUF, &RCVBUF_SIZE, sizeof(RCVBUF_SIZE)) < 0) {
         isc_throw(Unexpected, "Failed to set receive buffer in NETLINK socket.");
     }
 
     local_.nl_family = AF_NETLINK;
     local_.nl_groups = 0;
 
-    if (bind(fd_, (struct sockaddr*)&local_, sizeof(local_)) < 0) {
+    if (bind(fd_, convertSockAddr(&local_), sizeof(local_)) < 0) {
         isc_throw(Unexpected, "Failed to bind netlink socket.");
     }
 
     socklen_t addr_len = sizeof(local_);
-    if (getsockname(fd_, (struct sockaddr*)&local_, &addr_len) < 0) {
+    if (getsockname(fd_, convertSockAddr(&local_), &addr_len) < 0) {
         isc_throw(Unexpected, "Getsockname for netlink socket failed.");
     }
 
@@ -161,16 +167,16 @@ void Netlink::rtnl_close_socket() {
 /// @param family requested information family.
 /// @param type request type (RTM_GETLINK or RTM_GETADDR).
 void Netlink::rtnl_send_request(int family, int type) {
-    struct {
+    struct Req {
         nlmsghdr netlink_header;
         rtgenmsg generic;
-    } req;
+    };
+    Req req; // we need this type named for offsetof() used in assert
     struct sockaddr_nl nladdr;
 
-    // This doesn't work as gcc is confused with a comma appearing in
-    // the expression and thinks that there are two parameters passed to
-    // BOOST_STATIC_ASSERT macro, while it only takes one.
-    // BOOST_STATIC_ASSERT(sizeof(nlmsghdr) == offsetof(req, generic));
+    // do a sanity check. Verify that Req structure is aligned properly
+    BOOST_STATIC_ASSERT(sizeof(nlmsghdr) == offsetof(Req, generic));
+
     memset(&nladdr, 0, sizeof(nladdr));
     nladdr.nl_family = AF_NETLINK;
 
@@ -318,7 +324,7 @@ void Netlink::rtnl_process_reply(NetlinkMessages& info) {
     msg.msg_iov = &iov;
     msg.msg_iovlen = 1;
 
-    char buf[rcvbuf];
+    char buf[RCVBUF_SIZE];
 
     iov.iov_base = buf;
     iov.iov_len = sizeof(buf);
