@@ -24,6 +24,7 @@ using namespace std;
 using namespace isc::dhcp;
 
 namespace isc {
+namespace dhcp {
 
 Pkt6::Pkt6(unsigned int dataLen, DHCPv6Proto proto /* = UDP */)
     :data_len_(dataLen),
@@ -43,14 +44,14 @@ Pkt6::Pkt6(unsigned int dataLen, DHCPv6Proto proto /* = UDP */)
 }
 
 Pkt6::Pkt6(uint8_t msg_type,
-           unsigned int transid,
+           uint32_t transid,
            DHCPv6Proto proto /*= UDP*/)
     :local_addr_("::"),
      remote_addr_("::"),
      iface_(""),
      ifindex_(-1),
-     local_port_(-1),
-     remote_port_(-1),
+     local_port_(0),
+     remote_port_(0),
      proto_(proto),
      msg_type_(msg_type),
      transid_(transid) {
@@ -206,7 +207,7 @@ Pkt6::toText() {
 }
 
 boost::shared_ptr<isc::dhcp::Option>
-Pkt6::getOption(unsigned short opt_type) {
+Pkt6::getOption(uint16_t opt_type) {
     isc::dhcp::Option::OptionCollection::const_iterator x = options_.find(opt_type);
     if (x!=options_.end()) {
         return (*x).second;
@@ -220,7 +221,7 @@ Pkt6::addOption(boost::shared_ptr<Option> opt) {
 }
 
 bool
-Pkt6::delOption(unsigned short type) {
+Pkt6::delOption(uint16_t type) {
     isc::dhcp::Option::OptionCollection::iterator x = options_.find(type);
     if (x!=options_.end()) {
         options_.erase(x);
@@ -229,4 +230,5 @@ Pkt6::delOption(unsigned short type) {
     return (false); // can't find option to be deleted
 }
 
-};
+} // end of isc::dhcp namespace
+} // end of isc namespace

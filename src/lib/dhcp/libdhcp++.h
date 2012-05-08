@@ -68,7 +68,9 @@ public:
     /// in options container.
     ///
     /// @param buf Buffer to be parsed.
+    /// @param buf_len length of the buffer passed in buf.
     /// @param offset Specifies offset for the first option.
+    /// @param parse_len length of buffer to be parsed.
     /// @param options Reference to option container. Options will be
     ///        put here.
     ///
@@ -77,20 +79,18 @@ public:
     static unsigned int
     unpackOptions6(const boost::shared_array<uint8_t> buf, unsigned int buf_len,
                    unsigned int offset, unsigned int parse_len,
-                   isc::dhcp::Option::OptionCollection& options_);
+                   isc::dhcp::Option::OptionCollection& options);
 
-    ///
     /// Registers factory method that produces options of specific option types.
     ///
     /// @param u universe of the option (V4 or V6)
-    /// @param opt_type option-type
+    /// @param type option-type
     /// @param factory function pointer
     ///
     /// @return true, if registration was successful, false otherwise
-    ///
     static bool
     OptionFactoryRegister(Option::Universe u,
-                          unsigned short type,
+                          uint16_t type,
                           Option::Factory * factory);
 protected:
     // pointers to factories that produce DHCPv6 options
