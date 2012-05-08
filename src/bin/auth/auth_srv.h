@@ -17,10 +17,6 @@
 
 #include <string>
 
-// For InMemoryClientPtr below.  This should be a temporary definition until
-// we reorganize the data source framework.
-#include <boost/shared_ptr.hpp>
-
 #include <cc/data.h>
 #include <config/ccsession.h>
 #include <datasrc/factory.h>
@@ -41,9 +37,6 @@
 #include <auth/statistics.h>
 
 namespace isc {
-namespace datasrc {
-class InMemoryClient;
-}
 namespace xfr {
 class AbstractXfroutClient;
 }
@@ -236,19 +229,14 @@ public:
     ///
     void setXfrinSession(isc::cc::AbstractSession* xfrin_session);
 
-    /// A shared pointer type for \c InMemoryClient.
-    ///
-    /// This is defined inside the \c AuthSrv class as it's supposed to be
-    /// a short term interface until we integrate the in-memory and other
-    /// data source frameworks.
-    typedef boost::shared_ptr<isc::datasrc::InMemoryClient> InMemoryClientPtr;
-
-    /// An immutable shared pointer type for \c InMemoryClient.
-    typedef boost::shared_ptr<const isc::datasrc::InMemoryClient>
-    ConstInMemoryClientPtr;
-
     /// Returns the in-memory data source configured for the \c AuthSrv,
-    /// if any.
+    /// if any, as a pointer.
+    ///
+    /// This is mostly a convenience function around
+    /// \c getInMemoryClientContainer, which saves the caller the step
+    /// of having to call getInstance().
+    /// The pointer is of course only valid as long as the container
+    /// exists.
     ///
     /// The in-memory data source is configured per RR class.  However,
     /// the data source may not be available for all RR classes.
@@ -263,7 +251,7 @@ public:
     /// \param rrclass The RR class of the requested in-memory data source.
     /// \return A pointer to the in-memory data source, if configured;
     /// otherwise NULL.
-    isc::datasrc::InMemoryClient* getInMemoryClientP(
+    isc::datasrc::DataSourceClient* getInMemoryClientP(
         const isc::dns::RRClass& rrclass);
 
     /// Returns the DataSourceClientContainer of the in-memory datasource
@@ -292,9 +280,8 @@ public:
 
     /// Sets or replaces the in-memory data source of the specified RR class.
     ///
-    /// As noted in \c getInMemoryClient(), some RR classes may not be
-    /// supported, in which case an exception of class \c InvalidParameter
-    /// will be thrown.
+    /// Some RR classes may not be supported, in which case an exception
+    /// of class \c InvalidParameter will be thrown.
     /// This method never throws an exception otherwise.
     ///
     /// If there is already an in memory data source configured, it will be
