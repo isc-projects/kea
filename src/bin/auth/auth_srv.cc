@@ -141,9 +141,7 @@ public:
 
     /// In-memory data source.  Currently class IN only for simplicity.
     const RRClass memory_client_class_;
-    //AuthSrv::InMemoryClientPtr memory_client_;
     isc::datasrc::DataSourceClientContainerPtr memory_client_container_;
-    isc::datasrc::InMemoryClient* memory_client_p_;
 
     /// Hot spot cache
     isc::datasrc::HotCache cache_;
@@ -205,7 +203,6 @@ AuthSrvImpl::AuthSrvImpl(const bool use_cache,
     config_session_(NULL),
     xfrin_session_(NULL),
     memory_client_class_(RRClass::IN()),
-    memory_client_p_(NULL),
     statistics_timer_(io_service_),
     counters_(),
     keyring_(NULL),
@@ -402,23 +399,19 @@ AuthSrv::getInMemoryClientContainer(const RRClass& rrclass) {
     return (impl_->memory_client_container_);
 }
 
-isc::datasrc::InMemoryClient*
+isc::datasrc::DataSourceClient*
 AuthSrv::getInMemoryClientP(const RRClass& rrclass) {
-    if (rrclass != impl_->memory_client_class_) {
-        isc_throw(InvalidParameter,
-                  "Memory data source is not supported for RR class "
-                  << rrclass);
+    if (hasInMemoryClient()) {
+        return (&getInMemoryClientContainer(rrclass)->getInstance());
+    } else {
+        return (NULL);
     }
-    if (!impl_->memory_client_p_) {
-        isc_throw(InvalidOperation, "no memory client set");
-    }
-    return static_cast<isc::datasrc::InMemoryClient*>(
-        &getInMemoryClientContainer(rrclass)->getInstance());
 }
 
 bool
 AuthSrv::hasInMemoryClient() {
-    return (impl_->memory_client_p_ != NULL);
+    return (impl_->memory_client_container_ !=
+            isc::datasrc::DataSourceClientContainerPtr());
 }
 
 void
@@ -437,14 +430,6 @@ AuthSrv::setInMemoryClient(const isc::dns::RRClass& rrclass,
                   .arg(rrclass);
     }
     impl_->memory_client_container_ = memory_client;
-    // temp fix for tests; fool tests with a fake inmemoryclientptr
-    if (memory_client) {
-        impl_->memory_client_p_ =
-            static_cast<isc::datasrc::InMemoryClient*>(
-                &memory_client->getInstance());
-    } else {
-        impl_->memory_client_p_ = NULL;
-    }
 }
 
 
@@ -614,10 +599,12 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, Message& message,
         // If a memory data source is configured call the separate
         // Query::process()
         const ConstQuestionPtr question = *message.beginQuestion();
-        if (memory_client_p_ && memory_client_class_ == question->getClass()) {
+        if (memory_client_container_ &&
+            memory_client_class_ == question->getClass()) {
             const RRType& qtype = question->getType();
             const Name& qname = question->getName();
-            query_.process(*memory_client_p_, qname, qtype, message, dnssec_ok);
+            query_.process(memory_client_container_->getInstance(),
+                           qname, qtype, message, dnssec_ok);
         } else {
             datasrc::Query query(message, cache_, dnssec_ok);
             data_sources_.doQuery(query);

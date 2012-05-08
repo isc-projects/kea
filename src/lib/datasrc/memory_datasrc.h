@@ -286,7 +286,7 @@ public:
     /// This method never throws an exception.
     ///
     /// \return The number of zones stored in the client.
-    unsigned int getZoneCount() const;
+    virtual unsigned int getZoneCount() const;
 
     /// Add a zone (in the form of \c ZoneFinder) to the \c InMemoryClient.
     ///

@@ -362,6 +362,20 @@ public:
     virtual std::pair<ZoneJournalReader::Result, ZoneJournalReaderPtr>
     getJournalReader(const isc::dns::Name& zone, uint32_t begin_serial,
                      uint32_t end_serial) const = 0;
+
+    /// Return the number of zones currently known to this datasource
+    ///
+    /// This is an optional convenience method, currently only implemented
+    /// by the InMemory datasource. By default, it throws NotImplemented
+    ///
+    /// \exception NotImplemented Thrown if this method is not supported
+    ///            by the datasource
+    ///
+    /// \return The number of zones known to this datasource
+    virtual unsigned int getZoneCount() const {
+        isc_throw(isc::NotImplemented,
+                  "Data source doesn't support getZoneCount");
+    }
 };
 }
 }
