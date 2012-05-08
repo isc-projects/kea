@@ -68,7 +68,7 @@ protected:
     }
     void checkAnswer(const int expected_code) {
         parseAnswer(rcode_, result_);
-        EXPECT_EQ(expected_code, rcode_) << result_->str();
+        ASSERT_EQ(expected_code, rcode_) << result_->str();
     }
     MockSession statistics_session_;
     MockXfroutClient xfrout_;
@@ -295,9 +295,15 @@ TEST_F(AuthCommandTest,
 
     // The loadzone command needs the zone to be already loaded, because
     // it is used for reloading only
-    AuthSrv::InMemoryClientPtr dsrc(new InMemoryClient());
-    dsrc->addZone(ZoneFinderPtr(new InMemoryZoneFinder(RRClass::IN(),
-                                                       Name("example.org"))));
+    //AuthSrv::InMemoryClientPtr dsrc(new InMemoryClient());
+    isc::datasrc::DataSourceClientContainerPtr dsrc(
+        new isc::datasrc::DataSourceClientContainer("memory",
+            Element::fromJSON("{\"type\": \"memory\"}")));
+    // The 'public' factory API does not allow for direct internal calls such
+    // as addZone, so purely for this test we do a quick cast
+    static_cast<InMemoryClient*>(&dsrc->getInstance())->addZone(
+        ZoneFinderPtr(new InMemoryZoneFinder(RRClass::IN(),
+                                             Name("example.org"))));
     server_.setInMemoryClient(RRClass::IN(), dsrc);
 
     // Now send the command to reload it
@@ -307,20 +313,23 @@ TEST_F(AuthCommandTest,
 
     // Get the zone and look if there are data in it (the original one was
     // empty)
-    ASSERT_TRUE(server_.getInMemoryClient(RRClass::IN()));
-    EXPECT_EQ(ZoneFinder::SUCCESS, server_.getInMemoryClient(RRClass::IN())->
+    ASSERT_TRUE(server_.getInMemoryClientContainer(RRClass::IN()));
+    EXPECT_EQ(ZoneFinder::SUCCESS, server_.getInMemoryClientP(RRClass::IN())->
               findZone(Name("example.org")).zone_finder->
               find(Name("example.org"), RRType::SOA())->code);
 
     // Some error cases. First, the zone has no configuration.
-    dsrc->addZone(ZoneFinderPtr(new InMemoryZoneFinder(RRClass::IN(),
-                                                       Name("example.com"))));
+    // The 'public' factory API does not allow for direct internal calls such
+    // as addZone, so purely for this test we do a quick cast
+    static_cast<InMemoryClient*>(&dsrc->getInstance())->addZone(
+        ZoneFinderPtr(new InMemoryZoneFinder(RRClass::IN(),
+                                             Name("example.com"))));
     result_ = execAuthServerCommand(server_, "loadzone",
         Element::fromJSON("{\"origin\": \"example.com\"}"));
     checkAnswer(1);
 
     // The previous zone is not hurt in any way
-    EXPECT_EQ(ZoneFinder::SUCCESS, server_.getInMemoryClient(RRClass::IN())->
+    EXPECT_EQ(ZoneFinder::SUCCESS, server_.getInMemoryClientP(RRClass::IN())->
               findZone(Name("example.org")).zone_finder->
               find(Name("example.org"), RRType::SOA())->code);
 
@@ -330,7 +339,7 @@ TEST_F(AuthCommandTest,
     checkAnswer(1);
 
     // The previous zone is not hurt in any way
-    EXPECT_EQ(ZoneFinder::SUCCESS, server_.getInMemoryClient(RRClass::IN())->
+    EXPECT_EQ(ZoneFinder::SUCCESS, server_.getInMemoryClientP(RRClass::IN())->
               findZone(Name("example.org")).zone_finder->
               find(Name("example.org"), RRType::SOA())->code);
     // Configure an unreadable zone. Should fail, but leave the original zone
@@ -353,7 +362,7 @@ TEST_F(AuthCommandTest,
         Element::fromJSON("{\"origin\": \"example.com\"}"));
     checkAnswer(1);
     // The previous zone is not hurt in any way
-    EXPECT_EQ(ZoneFinder::SUCCESS, server_.getInMemoryClient(RRClass::IN())->
+    EXPECT_EQ(ZoneFinder::SUCCESS, server_.getInMemoryClientP(RRClass::IN())->
               findZone(Name("example.org")).zone_finder->
               find(Name("example.org"), RRType::SOA())->code);
 
@@ -368,7 +377,7 @@ TEST_F(AuthCommandTest,
     module_session.setLocalConfig(broken);
     checkAnswer(1);
     // The previous zone is not hurt in any way
-    EXPECT_EQ(ZoneFinder::SUCCESS, server_.getInMemoryClient(RRClass::IN())->
+    EXPECT_EQ(ZoneFinder::SUCCESS, server_.getInMemoryClientContainer(RRClass::IN())->getInstance().
               findZone(Name("example.org")).zone_finder->
               find(Name("example.org"), RRType::SOA())->code);
 }

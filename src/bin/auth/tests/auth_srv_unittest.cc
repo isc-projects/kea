@@ -835,11 +835,11 @@ TEST_F(AuthSrvTest, updateWithInMemoryClient) {
     // in the configuration tests.  We only check the AuthSrv interface here.
 
     // By default memory data source isn't enabled
-    EXPECT_EQ(AuthSrv::InMemoryClientPtr(), server.getInMemoryClient(rrclass));
+    EXPECT_FALSE(server.hasInMemoryClient());
     updateConfig(&server,
                  "{\"datasources\": [{\"type\": \"memory\"}]}", true);
     // after successful configuration, we should have one (with empty zoneset).
-    ASSERT_NE(AuthSrv::InMemoryClientPtr(), server.getInMemoryClient(rrclass));
+    EXPECT_TRUE(server.hasInMemoryClient());
     EXPECT_EQ(0, server.getInMemoryClientP(rrclass)->getZoneCount());
 
     // The memory data source is empty, should return REFUSED rcode.
@@ -857,7 +857,7 @@ TEST_F(AuthSrvTest, queryWithInMemoryClientNoDNSSEC) {
     // answer section.  Detailed examination on the response content
     // for various types of queries are tested in the query tests.
     updateConfig(&server, CONFIG_INMEMORY_EXAMPLE, true);
-    ASSERT_NE(AuthSrv::InMemoryClientPtr(), server.getInMemoryClient(rrclass));
+    EXPECT_TRUE(server.hasInMemoryClient());
     EXPECT_EQ(1, server.getInMemoryClientP(rrclass)->getZoneCount());
 
     createDataFromFile("nsec3query_nodnssec_fromWire.wire");
@@ -874,7 +874,7 @@ TEST_F(AuthSrvTest, queryWithInMemoryClientDNSSEC) {
     // The response should contain RRSIGs, and should have more RRs than
     // the previous case.
     updateConfig(&server, CONFIG_INMEMORY_EXAMPLE, true);
-    ASSERT_NE(AuthSrv::InMemoryClientPtr(), server.getInMemoryClient(rrclass));
+    EXPECT_TRUE(server.hasInMemoryClient());
     EXPECT_EQ(1, server.getInMemoryClientP(rrclass)->getZoneCount());
 
     createDataFromFile("nsec3query_fromWire.wire");
@@ -1247,6 +1247,27 @@ private:
     ConstRRsetPtr fake_rrset_;
 };
 
+class FakeContainer : public isc::datasrc::DataSourceClientContainer {
+public:
+    /// \brief Creates a fake container for the given in-memory client
+    ///
+    /// The initializer creates a fresh instance of a memory datasource,
+    /// which is ignored for the rest (but we do not allow 'null' containers
+    /// atm, and this is only needed in these tests)
+    FakeContainer(AuthSrv::InMemoryClientPtr client) :
+        DataSourceClientContainer("memory",
+                                  Element::fromJSON("{\"type\": \"memory\"}")),
+        client_(client)
+    {}
+
+    isc::datasrc::DataSourceClient& getInstance() {
+        return (*client_);
+    }
+
+private:
+    AuthSrv::InMemoryClientPtr client_;
+};
+
 } // end anonymous namespace for throwing proxy classes
 
 // Test for the tests
@@ -1260,9 +1281,12 @@ TEST_F(AuthSrvTest, queryWithInMemoryClientProxy) {
     AuthSrv::InMemoryClientPtr fake_client(
         new FakeInMemoryClient(server.getInMemoryClientContainer(rrclass),
                                THROW_NEVER, false));
-    ASSERT_NE(AuthSrv::InMemoryClientPtr(), server.getInMemoryClient(rrclass));
-    server.setInMemoryClient(rrclass, fake_client);
-
+    EXPECT_TRUE(server.hasInMemoryClient());
+/*
+    isc::datasrc::DataSourceClientContainerPtr fake_client_container(
+        new FakeContainer(fake_client));
+    server.setInMemoryClient(rrclass, fake_client_container);
+*/
     createDataFromFile("nsec3query_nodnssec_fromWire.wire");
     server.processMessage(*io_message, *parse_message, *response_obuffer,
                           &dnsserv);
@@ -1291,10 +1315,11 @@ setupThrow(AuthSrv* server, const char *config, ThrowWhen throw_when,
         new FakeInMemoryClient(
             server->getInMemoryClientContainer(isc::dns::RRClass::IN()),
             throw_when, isc_exception, rrset));
+    isc::datasrc::DataSourceClientContainerPtr fake_client_container(
+        new FakeContainer(fake_client));
 
-    ASSERT_NE(AuthSrv::InMemoryClientPtr(),
-              server->getInMemoryClient(isc::dns::RRClass::IN()));
-    server->setInMemoryClient(isc::dns::RRClass::IN(), fake_client);
+    ASSERT_TRUE(server->hasInMemoryClient());
+    server->setInMemoryClient(isc::dns::RRClass::IN(), fake_client_container);
 }
 
 TEST_F(AuthSrvTest, queryWithThrowingProxyServfails) {

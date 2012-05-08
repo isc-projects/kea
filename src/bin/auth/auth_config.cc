@@ -108,7 +108,8 @@ DatasourcesConfig::commit() {
     // server implementation details, and isn't scalable wrt the number of
     // data source types, and should eventually be improved.
     // Currently memory data source for class IN is the only possibility.
-    server_.setInMemoryClient(RRClass::IN(), AuthSrv::InMemoryClientPtr());
+    server_.setInMemoryClient(RRClass::IN(),
+        isc::datasrc::DataSourceClientContainerPtr());
 
     BOOST_FOREACH(boost::shared_ptr<AuthConfigParser> datasrc_config,
                   datasources_) {
@@ -145,7 +146,7 @@ MemoryDatasourceConfig::build(ConstElementPtr config_value) {
     // We'd eventually optimize building zones (in case of reloading) by
     // selectively loading fresh zones.  Right now we simply check the
     // RR class is supported by the server implementation.
-    server_.getInMemoryClient(rrclass_);
+    (void)server_.getInMemoryClientContainer(rrclass_);
     memory_client_ = isc::datasrc::DataSourceClientContainerPtr(
         new isc::datasrc::DataSourceClientContainer("memory", config_value));
 }
