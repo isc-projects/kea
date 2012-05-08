@@ -106,12 +106,14 @@ TEST_F(FormatterTest, multiArg) {
 TEST_F(FormatterTest, mismatchedPlaceholders) {
     EXPECT_DEATH({
         isc::util::unittests::dontCreateCoreDumps();
-        Formatter(isc::log::INFO, s("Missing the first %2"), this).arg("missing").arg("argument");
+        Formatter(isc::log::INFO, s("Missing the first %2"), this).
+            arg("missing").arg("argument");
     }, ".*");
 
     EXPECT_DEATH({
         isc::util::unittests::dontCreateCoreDumps();
-        Formatter(isc::log::INFO, s("Too many arguments in %1 %2"), this).arg("only one");
+        Formatter(isc::log::INFO, s("Too many arguments in %1 %2"), this).
+            arg("only one");
     }, ".*");
 }
 #endif /* EXPECT_DEATH */
