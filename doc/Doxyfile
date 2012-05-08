@@ -25,13 +25,17 @@ DOXYFILE_ENCODING      = UTF-8
 # The PROJECT_NAME tag is a single word (or a sequence of words surrounded
 # by quotes) that should identify the project.
 
-PROJECT_NAME           = BIND
+PROJECT_NAME           = BIND10
 
 # The PROJECT_NUMBER tag can be used to enter a project or revision number.
 # This could be handy for archiving the generated documentation or
 # if some version control system is used.
 
-PROJECT_NUMBER         = 10.0.0
+# Currently this variable is overwritten (see devel target in Makefile.am)
+# If the number of paramters to overwrite increases, we should generate
+# Doxyfile (rename it to Doxyfile.in and generate during configure phase)
+
+PROJECT_NUMBER         =
 
 # The OUTPUT_DIRECTORY tag is used to specify the (relative or absolute)
 # base path where the generated documentation will be put.
