@@ -100,23 +100,33 @@ TEST_F(FormatterTest, multiArg) {
 
 #ifdef ENABLE_LOGGER_CHECKS
 
-#ifdef EXPECT_DEATH
-// Throws MismatchedPlaceholders exception if number of placeholders
-// don't match number of arguments. This causes it to abort.
 TEST_F(FormatterTest, mismatchedPlaceholders) {
-    EXPECT_DEATH({
-        isc::util::unittests::dontCreateCoreDumps();
-        Formatter(isc::log::INFO, s("Missing the first %2"), this).
-            arg("missing").arg("argument");
-    }, ".*");
+    // Throws MismatchedPlaceholders exception if the placeholder is missing
+    // for a supplied argument.
+    EXPECT_THROW(Formatter(isc::log::INFO, s("Missing the second %1"), this).
+                 arg("missing").arg("argument"),
+                 isc::log::MismatchedPlaceholders);
 
+#ifdef EXPECT_DEATH
+    // Likewise, if there's a redundant placeholder (or missing argument), the
+    // check detects it and aborts the program.  Due to the restriction of the
+    // current implementation, it doesn't throw.
     EXPECT_DEATH({
         isc::util::unittests::dontCreateCoreDumps();
         Formatter(isc::log::INFO, s("Too many arguments in %1 %2"), this).
             arg("only one");
     }, ".*");
-}
+
+    // Mixed case of above two: the exception will be thrown due to the missing
+    // placeholder, but before even it's caught the program will be aborted
+    // due to the unused placeholder as a result of the exception.
+    EXPECT_DEATH({
+        isc::util::unittests::dontCreateCoreDumps();
+        Formatter(isc::log::INFO, s("Missing the first %2"), this).
+            arg("missing").arg("argument");
+    }, ".*");
 #endif /* EXPECT_DEATH */
+}
 
 #else
 
