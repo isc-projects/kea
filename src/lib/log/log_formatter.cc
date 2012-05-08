@@ -25,7 +25,7 @@ void
 replacePlaceholder(string* message, const string& arg,
                    const unsigned placeholder)
 {
-    string mark("%" + lexical_cast<string>(placeholder));
+    const string mark("%" + lexical_cast<string>(placeholder));
     size_t pos(message->find(mark));
     if (pos != string::npos) {
         do {
@@ -48,17 +48,19 @@ replacePlaceholder(string* message, const string& arg,
 }
 
 void
-checkExcessPlaceholders(string* message, unsigned int placeholder)
-{
-#ifdef ENABLE_LOGGER_CHECKS
-    string mark("%" + lexical_cast<string>(placeholder));
-    size_t pos(message->find(mark));
+checkExcessPlaceholders(string* message, unsigned int placeholder) {
+    const string mark("%" + lexical_cast<string>(placeholder));
+    const size_t pos(message->find(mark));
     if (pos != string::npos) {
+#ifdef ENABLE_LOGGER_CHECKS
         // Excess placeholders were found, so throw an exception
         isc_throw(MismatchedPlaceholders,
-		  "Excess logger placeholders still exist in message: " << *message);
-    }
+		  "Excess logger placeholders still exist in message: "
+                  << *message);
+#else
+        message->append(" @@Excess logger placeholders still exist@@");
 #endif /* ENABLE_LOGGER_CHECKS */
+    }
 }
 
 }
