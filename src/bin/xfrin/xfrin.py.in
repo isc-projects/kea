@@ -1247,6 +1247,46 @@ class ZoneInfo:
         return (self.master_addr.family, socket.SOCK_STREAM,
                 (str(self.master_addr), self.master_port))
 
+def _do_auth_loadzone(server, zone_name, zone_class):
+    # On a successful zone transfer, if the zone is served by
+    # b10-auth in the in-memory data source using sqlite3 as a
+    # backend, send the "loadzone" command for the zone to auth.
+    datasources, is_default =\
+        server._module_cc.get_remote_config_value(AUTH_MODULE_NAME, "datasources")
+    if is_default:
+        return
+    for d in datasources:
+        try:
+            if "class" in d:
+                dclass = RRClass(d["class"])
+            else:
+                dclass = RRClass("IN")
+        except InvalidRRClass as err:
+            logger.info(XFRIN_AUTH_CONFIG_RRCLASS_ERROR, str(err))
+            continue
+
+        if d["type"].lower() == "memory" and dclass == zone_class:
+            for zone in d["zones"]:
+                if "filetype" not in zone:
+                    continue
+                try:
+                    name = Name(zone["origin"])
+                except (EmptyLabel, TooLongLabel, BadLabelType, BadEscape, TooLongName, IncompleteName):
+                    logger.info(XFRIN_AUTH_CONFIG_NAME_PARSER_ERROR, str(err))
+                    continue
+
+                if zone["filetype"].lower() == "sqlite3" and name == zone_name:
+                    param = {"origin": zone_name.to_text(),
+                             "class": zone_class.to_text(),
+                             "datasrc": d["type"]}
+
+                    logger.debug(DBG_XFRIN_TRACE, XFRIN_AUTH_LOADZONE,
+                                 param["origin"], param["class"], param["datasrc"])
+
+                    msg = create_command("loadzone", param)
+                    seq = server._send_cc_session.group_sendmsg(msg, AUTH_MODULE_NAME)
+                    answer, env = server._send_cc_session.group_recvmsg(False, seq)
+
 class Xfrin:
     def __init__(self):
         self._max_transfers_in = 10
@@ -1540,46 +1580,6 @@ class Xfrin:
                       "bind10_zones.sqlite3"
         self._db_file = db_file
 
-    def _do_auth_loadzone(self, zone_name, zone_class):
-        # On a successful zone transfer, if the zone is served by
-        # b10-auth in the in-memory data source using sqlite3 as a
-        # backend, send the "loadzone" command for the zone to auth.
-        datasources, is_default =\
-            self._module_cc.get_remote_config_value(AUTH_MODULE_NAME, "datasources")
-        if is_default:
-            return
-        for d in datasources:
-            try:
-                if "class" in d:
-                    dclass = RRClass(d["class"])
-                else:
-                    dclass = RRClass("IN")
-            except InvalidRRClass as err:
-                logger.info(XFRIN_AUTH_CONFIG_RRCLASS_ERROR, str(err))
-                continue
-
-            if d["type"].lower() == "memory" and dclass == zone_class:
-                for zone in d["zones"]:
-                    if "filetype" not in zone:
-                        continue
-                    try:
-                        name = Name(zone["origin"])
-                    except (EmptyLabel, TooLongLabel, BadLabelType, BadEscape, TooLongName, IncompleteName):
-                        logger.info(XFRIN_AUTH_CONFIG_NAME_PARSER_ERROR, str(err))
-                        continue
-
-                    if zone["filetype"].lower() == "sqlite3" and name == zone_name:
-                        param = {"origin": zone_name.to_text(),
-                                 "class": zone_class.to_text(),
-                                 "datasrc": d["type"]}
-
-                        logger.debug(DBG_XFRIN_TRACE, XFRIN_AUTH_LOADZONE,
-                                     param["origin"], param["class"], param["datasrc"])
-
-                        msg = create_command("loadzone", param)
-                        seq = self._send_cc_session.group_sendmsg(msg, AUTH_MODULE_NAME)
-                        answer, env = self._send_cc_session.group_recvmsg(False, seq)
-
     def publish_xfrin_news(self, zone_name, zone_class, xfr_result):
         '''Send command to xfrout/zone manager module.
         If xfrin has finished successfully for one zone, tell the good
@@ -1589,7 +1589,7 @@ class Xfrin:
         param = {'zone_name': zone_name.to_text(),
                  'zone_class': zone_class.to_text()}
         if xfr_result == XFRIN_OK:
-            self._do_auth_loadzone(zone_name, zone_class)
+            _do_auth_loadzone(self, zone_name, zone_class)
             msg = create_command(notify_out.ZONE_NEW_DATA_READY_CMD, param)
             # catch the exception, in case msgq has been killed.
             try:
