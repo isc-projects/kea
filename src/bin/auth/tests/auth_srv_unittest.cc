@@ -1254,18 +1254,24 @@ public:
     /// The initializer creates a fresh instance of a memory datasource,
     /// which is ignored for the rest (but we do not allow 'null' containers
     /// atm, and this is only needed in these tests)
-    FakeContainer(AuthSrv::InMemoryClientPtr client) :
+    ///
+    /// The client given will be deleted upon destruction of this container
+    FakeContainer(isc::datasrc::DataSourceClient* client) :
         DataSourceClientContainer("memory",
                                   Element::fromJSON("{\"type\": \"memory\"}")),
         client_(client)
     {}
+
+    ~FakeContainer() {
+        delete client_;
+    }
 
     isc::datasrc::DataSourceClient& getInstance() {
         return (*client_);
     }
 
 private:
-    AuthSrv::InMemoryClientPtr client_;
+    isc::datasrc::DataSourceClient* client_;
 };
 
 } // end anonymous namespace for throwing proxy classes
@@ -1278,15 +1284,15 @@ TEST_F(AuthSrvTest, queryWithInMemoryClientProxy) {
     // Set real inmem client to proxy
     updateConfig(&server, CONFIG_INMEMORY_EXAMPLE, true);
 
-    AuthSrv::InMemoryClientPtr fake_client(
+    isc::datasrc::InMemoryClient* fake_client(
         new FakeInMemoryClient(server.getInMemoryClientContainer(rrclass),
                                THROW_NEVER, false));
     EXPECT_TRUE(server.hasInMemoryClient());
-/*
+
     isc::datasrc::DataSourceClientContainerPtr fake_client_container(
         new FakeContainer(fake_client));
     server.setInMemoryClient(rrclass, fake_client_container);
-*/
+
     createDataFromFile("nsec3query_nodnssec_fromWire.wire");
     server.processMessage(*io_message, *parse_message, *response_obuffer,
                           &dnsserv);
@@ -1311,7 +1317,7 @@ setupThrow(AuthSrv* server, const char *config, ThrowWhen throw_when,
 
     // Set it to throw on findZone(), this should result in
     // SERVFAIL on any exception
-    AuthSrv::InMemoryClientPtr fake_client(
+    isc::datasrc::InMemoryClient* fake_client(
         new FakeInMemoryClient(
             server->getInMemoryClientContainer(isc::dns::RRClass::IN()),
             throw_when, isc_exception, rrset));
