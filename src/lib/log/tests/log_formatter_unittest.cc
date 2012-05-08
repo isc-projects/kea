@@ -104,7 +104,7 @@ TEST_F(FormatterTest, mismatchedPlaceholders) {
     // Throws MismatchedPlaceholders exception if the placeholder is missing
     // for a supplied argument.
     EXPECT_THROW(Formatter(isc::log::INFO, s("Missing the second %1"), this).
-                 arg("missing").arg("argument"),
+                 arg("argument").arg("missing"),
                  isc::log::MismatchedPlaceholders);
 
 #ifdef EXPECT_DEATH
@@ -132,18 +132,28 @@ TEST_F(FormatterTest, mismatchedPlaceholders) {
 
 // If logger checks are not enabled, nothing is thrown
 TEST_F(FormatterTest, mismatchedPlaceholders) {
-    EXPECT_NO_THROW(Formatter(isc::log::INFO, s("Missing the first %2"), this).
-                    arg("missing").arg("argument"));
+    Formatter(isc::log::INFO, s("Missing the second %1"), this).
+        arg("argument").arg("missing");
     ASSERT_EQ(1, outputs.size());
     EXPECT_EQ(isc::log::INFO, outputs[0].first);
-    EXPECT_EQ("Missing the first argument "
-              "@@Missing placeholder %1 for 'missing'@@", outputs[0].second);
+    EXPECT_EQ("Missing the second argument "
+              "@@Missing placeholder %2 for 'missing'@@", outputs[0].second);
 
-    EXPECT_NO_THROW(Formatter(isc::log::INFO, s("Too many arguments in %1 %2"), this).
+    EXPECT_NO_THROW(Formatter(isc::log::INFO,
+                              s("Too many arguments in %1 %2"), this).
                     arg("only one"));
     ASSERT_EQ(2, outputs.size());
     EXPECT_EQ(isc::log::INFO, outputs[1].first);
-    EXPECT_EQ("Too many arguments in only one %2", outputs[1].second);
+    EXPECT_EQ("Too many arguments in only one %2 "
+              "@@Excess logger placeholders still exist@@",
+              outputs[1].second);
+
+    EXPECT_NO_THROW(Formatter(isc::log::INFO, s("Missing the first %2"), this).
+                    arg("missing").arg("argument"));
+    ASSERT_EQ(3, outputs.size());
+    EXPECT_EQ(isc::log::INFO, outputs[2].first);
+    EXPECT_EQ("Missing the first argument "
+              "@@Missing placeholder %1 for 'missing'@@", outputs[2].second);
 }
 
 #endif /* ENABLE_LOGGER_CHECKS */
