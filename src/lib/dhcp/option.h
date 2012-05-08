@@ -300,6 +300,7 @@ protected:
     /// @param buf buffer that contains raw buffer to parse (on-wire format)
     /// @param buf_len buffer length (used for buffer overflow checks)
     /// @param offset offset from start of the buf buffer
+    /// @param parse_len number of bytes to be parsed.
     ///
     /// @return offset to the next byte after last parsed byte
     virtual unsigned int
@@ -313,6 +314,7 @@ protected:
     /// @param buf buffer that contains raw buffer to parse (on-wire format)
     /// @param buf_len buffer length (used for buffer overflow checks)
     /// @param offset offset from start of the buf buffer
+    /// @param parse_len number of bytes to be parsed.
     ///
     /// @return offset to the next byte after last parsed byte
     virtual unsigned int
