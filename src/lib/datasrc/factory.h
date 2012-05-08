@@ -158,13 +158,13 @@ public:
                               isc::data::ConstElementPtr config);
 
     /// \brief Destructor
-    ~DataSourceClientContainer();
+    virtual ~DataSourceClientContainer();
 
     /// \brief Accessor to the instance
     ///
     /// \return Reference to the DataSourceClient instance contained in this
     ///         container.
-    DataSourceClient& getInstance() { return (*instance_); }
+    virtual DataSourceClient& getInstance() { return (*instance_); }
 
 private:
     DataSourceClient* instance_;
