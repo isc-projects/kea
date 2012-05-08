@@ -2871,6 +2871,9 @@ class TestXfrinProcess(unittest.TestCase):
         if published == XFRIN_OK:
             self.assertEqual(True, self._module_cc.get_called)
             self.assertEqual(True, self._module_cc.get_called_correctly)
+        else:
+            self.assertEqual(False, self._module_cc.get_called)
+            self.assertEqual(False, self._module_cc.get_called_correctly)
 
     def test_ixfr_ok(self):
         """
