@@ -141,7 +141,7 @@ public:
 
     /// In-memory data source.  Currently class IN only for simplicity.
     const RRClass memory_client_class_;
-    AuthSrv::InMemoryClientPtr memory_client_;
+    //AuthSrv::InMemoryClientPtr memory_client_;
     isc::datasrc::DataSourceClientContainerPtr memory_client_container_;
     isc::datasrc::InMemoryClient* memory_client_p_;
 
@@ -392,20 +392,8 @@ AuthSrv::getConfigSession() const {
     return (impl_->config_session_);
 }
 
-AuthSrv::InMemoryClientPtr
-AuthSrv::getInMemoryClient(const RRClass& rrclass) {
-    // XXX: for simplicity, we only support the IN class right now.
-    if (rrclass != impl_->memory_client_class_) {
-        isc_throw(InvalidParameter,
-                  "Memory data source is not supported for RR class "
-                  << rrclass);
-    }
-    return (impl_->memory_client_);
-}
-
 isc::datasrc::DataSourceClientContainerPtr
 AuthSrv::getInMemoryClientContainer(const RRClass& rrclass) {
-    // XXX: for simplicity, we only support the IN class right now.
     if (rrclass != impl_->memory_client_class_) {
         isc_throw(InvalidParameter,
                   "Memory data source is not supported for RR class "
@@ -416,59 +404,47 @@ AuthSrv::getInMemoryClientContainer(const RRClass& rrclass) {
 
 isc::datasrc::InMemoryClient*
 AuthSrv::getInMemoryClientP(const RRClass& rrclass) {
-    // XXX: for simplicity, we only support the IN class right now.
     if (rrclass != impl_->memory_client_class_) {
         isc_throw(InvalidParameter,
                   "Memory data source is not supported for RR class "
                   << rrclass);
     }
     if (!impl_->memory_client_p_) {
-        isc_throw(Exception, "no memory client set");
+        isc_throw(InvalidOperation, "no memory client set");
     }
-    return (impl_->memory_client_p_);
+    return static_cast<isc::datasrc::InMemoryClient*>(
+        &getInMemoryClientContainer(rrclass)->getInstance());
 }
 
-void
-AuthSrv::setInMemoryClient(const isc::dns::RRClass& rrclass,
-                           InMemoryClientPtr memory_client)
-{
-    // XXX: see above
-    if (rrclass != impl_->memory_client_class_) {
-        isc_throw(InvalidParameter,
-                  "Memory data source is not supported for RR class "
-                  << rrclass);
-    } else if (!impl_->memory_client_ && memory_client) {
-        LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_MEM_DATASRC_ENABLED)
-                  .arg(rrclass);
-    } else if (impl_->memory_client_ && !memory_client) {
-        LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_MEM_DATASRC_DISABLED)
-                  .arg(rrclass);
-    }
-    impl_->memory_client_ = memory_client;
-    impl_->memory_client_p_ = memory_client.get();
+bool
+AuthSrv::hasInMemoryClient() {
+    return (impl_->memory_client_p_ != NULL);
 }
 
 void
 AuthSrv::setInMemoryClient(const isc::dns::RRClass& rrclass,
     isc::datasrc::DataSourceClientContainerPtr memory_client)
 {
-    // XXX: see above
     if (rrclass != impl_->memory_client_class_) {
         isc_throw(InvalidParameter,
                   "Memory data source is not supported for RR class "
                   << rrclass);
-    } else if (!impl_->memory_client_ && memory_client) {
+    } else if (!impl_->memory_client_container_ && memory_client) {
         LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_MEM_DATASRC_ENABLED)
                   .arg(rrclass);
-    } else if (impl_->memory_client_ && !memory_client) {
+    } else if (impl_->memory_client_container_ && !memory_client) {
         LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_MEM_DATASRC_DISABLED)
                   .arg(rrclass);
     }
     impl_->memory_client_container_ = memory_client;
-    impl_->memory_client_p_ =
-        static_cast<isc::datasrc::InMemoryClient*>(&memory_client->getInstance());
     // temp fix for tests; fool tests with a fake inmemoryclientptr
-    impl_->memory_client_ = AuthSrv::InMemoryClientPtr(new InMemoryClient());
+    if (memory_client) {
+        impl_->memory_client_p_ =
+            static_cast<isc::datasrc::InMemoryClient*>(
+                &memory_client->getInstance());
+    } else {
+        impl_->memory_client_p_ = NULL;
+    }
 }
 
 

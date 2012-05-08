@@ -71,11 +71,11 @@ private:
 
 TEST_F(AuthConfigTest, datasourceConfig) {
     // By default, we don't have any in-memory data source.
-    EXPECT_EQ(AuthSrv::InMemoryClientPtr(), server.getInMemoryClient(rrclass));
+    EXPECT_FALSE(server.hasInMemoryClient());
     configureAuthServer(server, Element::fromJSON(
                             "{\"datasources\": [{\"type\": \"memory\"}]}"));
     // after successful configuration, we should have one (with empty zoneset).
-    ASSERT_NE(AuthSrv::InMemoryClientPtr(), server.getInMemoryClient(rrclass));
+    EXPECT_TRUE(server.hasInMemoryClient());
     EXPECT_EQ(0, server.getInMemoryClientP(rrclass)->getZoneCount());
 }
 
@@ -96,7 +96,7 @@ TEST_F(AuthConfigTest, versionConfig) {
 }
 
 TEST_F(AuthConfigTest, exceptionGuarantee) {
-    EXPECT_EQ(AuthSrv::InMemoryClientPtr(), server.getInMemoryClient(rrclass));
+    EXPECT_FALSE(server.hasInMemoryClient());
     // This configuration contains an invalid item, which will trigger
     // an exception.
     EXPECT_THROW(configureAuthServer(
@@ -106,7 +106,7 @@ TEST_F(AuthConfigTest, exceptionGuarantee) {
                          " \"no_such_config_var\": 1}")),
                  AuthConfigError);
     // The server state shouldn't change
-    EXPECT_EQ(AuthSrv::InMemoryClientPtr(), server.getInMemoryClient(rrclass));
+    EXPECT_FALSE(server.hasInMemoryClient());
 }
 
 TEST_F(AuthConfigTest, exceptionConversion) {
@@ -176,12 +176,12 @@ protected:
 TEST_F(MemoryDatasrcConfigTest, addZeroDataSrc) {
     parser->build(Element::fromJSON("[]"));
     parser->commit();
-    EXPECT_EQ(AuthSrv::InMemoryClientPtr(), server.getInMemoryClient(rrclass));
+    EXPECT_FALSE(server.hasInMemoryClient());
 }
 
 TEST_F(MemoryDatasrcConfigTest, addEmpty) {
     // By default, we don't have any in-memory data source.
-    EXPECT_EQ(AuthSrv::InMemoryClientPtr(), server.getInMemoryClient(rrclass));
+    EXPECT_FALSE(server.hasInMemoryClient());
     parser->build(Element::fromJSON("[{\"type\": \"memory\"}]"));
     parser->commit();
     EXPECT_EQ(0, server.getInMemoryClientP(rrclass)->getZoneCount());
@@ -354,7 +354,7 @@ TEST_F(MemoryDatasrcConfigTest, remove) {
     parser = createAuthConfigParser(server, "datasources"); 
     EXPECT_NO_THROW(parser->build(Element::fromJSON("[]")));
     EXPECT_NO_THROW(parser->commit());
-    EXPECT_EQ(AuthSrv::InMemoryClientPtr(), server.getInMemoryClient(rrclass));
+    EXPECT_FALSE(server.hasInMemoryClient());
 }
 
 TEST_F(MemoryDatasrcConfigTest, addDuplicateZones) {
