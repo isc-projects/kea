@@ -707,7 +707,7 @@ IfaceMgr::receive4() {
 
     // Now we have a socket, let's get some data from it!
     struct sockaddr_in from_addr;
-    static uint8_t buf[RCVBUFSIZE];
+    uint8_t buf[RCVBUFSIZE];
 
     memset(&control_buf_[0], 0, control_buf_len_);
     memset(&from_addr, 0, sizeof(from_addr));
@@ -772,7 +772,7 @@ IfaceMgr::receive4() {
 }
 
 Pkt6Ptr IfaceMgr::receive6() {
-    static uint8_t buf[RCVBUFSIZE];
+    uint8_t buf[RCVBUFSIZE];
 
     memset(&control_buf_[0], 0, control_buf_len_);
     struct sockaddr_in6 from;
