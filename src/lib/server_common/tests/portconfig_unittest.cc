@@ -18,9 +18,7 @@
 #include <testutils/socket_request.h>
 #include <testutils/mockups.h>
 
-#ifdef EXPECT_DEATH
-#include <testutils/resource.h>
-#endif /* EXPECT_DEATH */
+#include <util/unittests/resource.h>
 
 #include <cc/data.h>
 #include <exceptions/exceptions.h>
@@ -318,7 +316,7 @@ TEST_F(InstallListenAddressesDeathTest, inconsistent) {
     // Make sure it actually kills the application (there should be an abort
     // in this case)
     EXPECT_DEATH({
-        isc::testutils::dontCreateCoreDumps();
+        isc::util::unittests::dontCreateCoreDumps();
 
         try {
           installListenAddresses(deathAddresses, store_, dnss_);
@@ -337,7 +335,7 @@ TEST_F(InstallListenAddressesDeathTest, cantClose) {
     // Instruct it to fail on close
     sock_requestor_.break_release_ = true;
     EXPECT_DEATH({
-        isc::testutils::dontCreateCoreDumps();
+        isc::util::unittests::dontCreateCoreDumps();
 
         try {
           // Setting to empty will close all current sockets.

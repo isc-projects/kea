@@ -17,9 +17,7 @@
 
 #include <gtest/gtest.h>
 
-#ifdef EXPECT_DEATH
-#include <testutils/resource.h>
-#endif /* EXPECT_DEATH */
+#include <util/unittests/resource.h>
 
 #include <log/logger.h>
 #include <log/logger_manager.h>
@@ -374,7 +372,7 @@ TEST_F(LoggerTest, LoggerNameLength) {
     // Note that we just check that it dies - we don't check what message is
     // output.
     EXPECT_DEATH({
-        isc::testutils::dontCreateCoreDumps();
+        isc::util::unittests::dontCreateCoreDumps();
 
         string ok3(Logger::MAX_LOGGER_NAME_SIZE + 1, 'x');
         Logger l3(ok3.c_str());
