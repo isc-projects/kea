@@ -2577,7 +2577,7 @@ class TestXfrin(unittest.TestCase):
         self.common_ixfr_setup('refresh', False)
         self.assertEqual(RRType.AXFR(), self.xfr.xfrin_started_request_type)
 
-class TextXfrinMemoryZones(unittest.TestCase):
+class TestXfrinMemoryZones(unittest.TestCase):
     def setUp(self):
         self.xfr = MockXfrin()
         # Configuration snippet containing 2 memory datasources,
