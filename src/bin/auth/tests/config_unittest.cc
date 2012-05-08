@@ -321,7 +321,6 @@ TEST_F(MemoryDatasrcConfigTest, exception) {
     // the given master file should not exist
     delete parser;
     parser = createAuthConfigParser(server, "datasources");
-
     EXPECT_THROW(parser->build(Element::fromJSON(
                       "[{\"type\": \"memory\","
                       "  \"zones\": [{\"origin\": \"example.org\","

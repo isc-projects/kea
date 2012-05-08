@@ -247,7 +247,7 @@ TEST_F(AuthCommandTest, loadZone) {
                                     Element::fromJSON(
                                         "{\"origin\": \"test1.example\"}"));
     checkAnswer(0);
-    //newZoneChecks(server_);
+    newZoneChecks(server_);
 }
 
 // This test uses dynamic load of a data source module, and won't work when
@@ -295,7 +295,6 @@ TEST_F(AuthCommandTest,
 
     // The loadzone command needs the zone to be already loaded, because
     // it is used for reloading only
-    //AuthSrv::InMemoryClientPtr dsrc(new InMemoryClient());
     isc::datasrc::DataSourceClientContainerPtr dsrc(
         new isc::datasrc::DataSourceClientContainer("memory",
             Element::fromJSON("{\"type\": \"memory\"}")));
@@ -313,7 +312,7 @@ TEST_F(AuthCommandTest,
 
     // Get the zone and look if there are data in it (the original one was
     // empty)
-    ASSERT_TRUE(server_.getInMemoryClientContainer(RRClass::IN()));
+    ASSERT_TRUE(server_.hasInMemoryClient());
     EXPECT_EQ(ZoneFinder::SUCCESS, server_.getInMemoryClient(RRClass::IN())->
               findZone(Name("example.org")).zone_finder->
               find(Name("example.org"), RRType::SOA())->code);
@@ -377,7 +376,7 @@ TEST_F(AuthCommandTest,
     module_session.setLocalConfig(broken);
     checkAnswer(1);
     // The previous zone is not hurt in any way
-    EXPECT_EQ(ZoneFinder::SUCCESS, server_.getInMemoryClientContainer(RRClass::IN())->getInstance().
+    EXPECT_EQ(ZoneFinder::SUCCESS, server_.getInMemoryClient(RRClass::IN())->
               findZone(Name("example.org")).zone_finder->
               find(Name("example.org"), RRType::SOA())->code);
 }
