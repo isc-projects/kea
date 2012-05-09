@@ -1,7 +1,7 @@
-434.	[func]	tomek
+434.	[func]		tomek
 	libdhcp++: Linux interface detection refactored. The code is
 	now cleaner. Tests better support certain versions of ifconfig.
-	(Trac #1528, git TBD)
+	(Trac #1528, git 221f5649496821d19a40863e53e72685524b9ab2)
 
 433.	[func]		tomek
 	libdhcp++: Option6 and Pkt6 now follow the same design as
