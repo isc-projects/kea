@@ -12,6 +12,9 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#ifndef __ISC_TESTUTILS_SRVTEST_H
+#define __ISC_TESTUTILS_SRVTEST_H 1
+
 #include <util/buffer.h>
 #include <dns/name.h>
 #include <dns/message.h>
@@ -100,13 +103,13 @@ protected:
     asiolink::IOSocket* io_sock;
     asiolink::IOMessage* io_message;
     const asiolink::IOEndpoint* endpoint;
-    isc::util::OutputBuffer request_obuffer;
     isc::dns::MessageRenderer request_renderer;
     isc::util::OutputBufferPtr response_obuffer;
     std::vector<uint8_t> data;
 };
 } // end of namespace testutils
 } // end of namespace isc
+#endif  // __ISC_TESTUTILS_SRVTEST_H
 
 // Local Variables: 
 // mode: c++

@@ -262,16 +262,16 @@ class DataSrcClient(unittest.TestCase):
         rrets = dsc.get_iterator(isc.dns.Name("example.com"))
         # there are more than 80 RRs in this zone... let's just count them
         # (already did a full check of the smaller zone above)
-        self.assertEqual(55, len(list(rrets)))
+        # There are 40 non-RRSIG RRsets and 32 dinstinct RRSIGs.
+        self.assertEqual(72, len(list(rrets)))
 
         # same test, but now with explicit False argument for separate_rrs
         dsc = isc.datasrc.DataSourceClient("sqlite3", READ_ZONE_DB_CONFIG)
         rrets = dsc.get_iterator(isc.dns.Name("example.com"), False)
         # there are more than 80 RRs in this zone... let's just count them
         # (already did a full check of the smaller zone above)
-        self.assertEqual(55, len(list(rrets)))
+        self.assertEqual(72, len(list(rrets)))
 
-        # Count should be 71 if we request individual rrsets for differing ttls
         dsc = isc.datasrc.DataSourceClient("sqlite3", READ_ZONE_DB_CONFIG)
         rrets = dsc.get_iterator(isc.dns.Name("example.com"), True)
         # there are more than 80 RRs in this zone... let's just count them
@@ -379,11 +379,10 @@ class DataSrcClient(unittest.TestCase):
         self.assertEqual(finder.NXDOMAIN, result)
         self.assertEqual(None, rrset)
 
-        result, rrset, _ = finder.find(isc.dns.Name("www.some.other.domain"),
-                                       isc.dns.RRType.A(),
-                                       finder.FIND_DEFAULT)
-        self.assertEqual(finder.NXDOMAIN, result)
-        self.assertEqual(None, rrset)
+
+        self.assertRaises(isc.datasrc.OutOfZone, finder.find,
+                          isc.dns.Name("www.some.other.domain"),
+                          isc.dns.RRType.A())
 
         result, rrset, _ = finder.find(isc.dns.Name("www.example.com"),
                                        isc.dns.RRType.TXT(),
@@ -880,15 +879,6 @@ class JournalRead(unittest.TestCase):
     def test_journal_reader_direct_construct(self):
         # ZoneJournalReader can only be constructed via a factory
         self.assertRaises(TypeError, ZoneJournalReader)
-
-    def test_journal_reader_old_schema(self):
-        # The database doesn't have a "diffs" table.
-        dbfile = TESTDATA_PATH + 'test.sqlite3.nodiffs'
-        client = isc.datasrc.DataSourceClient("sqlite3",
-                                              "{ \"database_file\": \"" + \
-                                                  dbfile + "\" }")
-        self.assertRaises(isc.datasrc.Error, client.get_journal_reader,
-                          self.zname, 0, 1)
 
 if __name__ == "__main__":
     isc.log.init("bind10")

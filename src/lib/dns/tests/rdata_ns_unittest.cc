@@ -96,11 +96,11 @@ TEST_F(Rdata_NS_Test, toWireBuffer) {
 TEST_F(Rdata_NS_Test, toWireRenderer) {
     rdata_ns.toWire(renderer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        obuffer.getData(), obuffer.getLength(),
+                        renderer.getData(), renderer.getLength(),
                         wiredata_ns, sizeof(wiredata_ns));
     rdata_ns2.toWire(renderer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        obuffer.getData(), obuffer.getLength(),
+                        renderer.getData(), renderer.getLength(),
                         wiredata_ns2, sizeof(wiredata_ns2));
 }
 

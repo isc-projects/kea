@@ -86,8 +86,8 @@ GlueHints::GlueHints(const std::string& zone_name,
 
 bool
 GlueHints::hasGlue(AddressFamily family) const {
-    return ((addresses_v4.size() > 0 && (family == ANY_OK || family == V4_ONLY)) ||
-            (addresses_v6.size() > 0 && (family == ANY_OK || family == V6_ONLY)));
+    return ((!addresses_v4.empty() && (family == ANY_OK || family == V4_ONLY)) ||
+            (!addresses_v6.empty() && (family == ANY_OK || family == V6_ONLY)));
 }
 
 NameserverAddress

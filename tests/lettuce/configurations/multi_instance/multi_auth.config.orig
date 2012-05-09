@@ -1,0 +1,24 @@
+{
+    "version": 2,
+    "Logging": {
+        "loggers": [ {
+            "debuglevel": 99,
+            "severity": "DEBUG",
+            "name": "*"
+        } ]
+    },
+    "Auth": {
+        "database_file": "data/test_nonexistent_db.sqlite3",
+        "listen_on": [ {
+            "port": 47806,
+            "address": "127.0.0.1"
+        } ]
+    },
+    "Boss": {
+        "components": {
+            "b10-auth-2": {"kind": "dispensable", "special": "auth"},
+            "b10-auth": {"kind": "dispensable", "special": "auth"},
+            "b10-cmdctl": {"kind": "needed", "special": "cmdctl"}
+        }
+    }
+}

@@ -93,6 +93,7 @@ TEST_F(Rdata_DHCID_Test, getDHCIDDigest) {
 
 TEST_F(Rdata_DHCID_Test, compare) {
     // trivial case: self equivalence
+    // cppcheck-suppress uselessCallsCompare
     EXPECT_EQ(0, rdata_dhcid.compare(rdata_dhcid));
 
     in::DHCID rdata_dhcid1("0YLQvtC/0L7Qu9GPINC00LLQsCDRgNGD0LHQu9GP");

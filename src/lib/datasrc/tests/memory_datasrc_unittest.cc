@@ -12,11 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <sstream>
-#include <vector>
-
-#include <boost/bind.hpp>
-#include <boost/foreach.hpp>
+#include "faked_nsec3.h"
 
 #include <exceptions/exceptions.h>
 
@@ -30,19 +26,31 @@
 #include <dns/rrttl.h>
 #include <dns/masterload.h>
 
+#include <datasrc/client.h>
 #include <datasrc/memory_datasrc.h>
 #include <datasrc/data_source.h>
 #include <datasrc/iterator.h>
 
+#include "test_client.h"
+
 #include <testutils/dnsmessage_test.h>
 
 #include <gtest/gtest.h>
+
+#include <boost/bind.hpp>
+#include <boost/foreach.hpp>
+#include <boost/shared_ptr.hpp>
+
+#include <sstream>
+#include <vector>
 
 using namespace std;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
 using namespace isc::datasrc;
 using namespace isc::testutils;
+using boost::shared_ptr;
+using namespace isc::datasrc::test;
 
 namespace {
 // Commonly used result codes (Who should write the prefix all the time)
@@ -172,14 +180,23 @@ TEST_F(InMemoryClientTest, iterator) {
     EXPECT_EQ(result::SUCCESS, zone->add(aRRsetA));
     EXPECT_EQ(result::SUCCESS, zone->add(aRRsetAAAA));
     EXPECT_EQ(result::SUCCESS, zone->add(subRRsetA));
-    // Check it with full zone, one by one.
-    // It should be in ascending order in case of InMemory data source
-    // (isn't guaranteed in general)
+
+    // Check it with full zone.
+    vector<ConstRRsetPtr> expected_rrsets;
+    expected_rrsets.push_back(aRRsetA);
+    expected_rrsets.push_back(aRRsetAAAA);
+    expected_rrsets.push_back(subRRsetA);
+
     iterator = memory_client.getIterator(Name("a"));
-    EXPECT_EQ(aRRsetA, iterator->getNextRRset());
-    EXPECT_EQ(aRRsetAAAA, iterator->getNextRRset());
-    EXPECT_EQ(subRRsetA, iterator->getNextRRset());
-    EXPECT_EQ(ConstRRsetPtr(), iterator->getNextRRset());
+    vector<ConstRRsetPtr> actual_rrsets;
+    ConstRRsetPtr actual;
+    while ((actual = iterator->getNextRRset()) != NULL) {
+        actual_rrsets.push_back(actual);
+    }
+
+    rrsetsCheck(expected_rrsets.begin(), expected_rrsets.end(),
+                actual_rrsets.begin(), actual_rrsets.end());
+
 }
 
 TEST_F(InMemoryClientTest, iterator_separate_rrs) {
@@ -274,17 +291,6 @@ void
 setRRset(RRsetPtr rrset, vector<RRsetPtr*>::iterator& it) {
     *(*it) = rrset;
     ++it;
-}
-
-ConstRRsetPtr
-textToRRset(const string& text_rrset, const RRClass& rrclass = RRClass::IN()) {
-    stringstream ss(text_rrset);
-    RRsetPtr rrset;
-    vector<RRsetPtr*> rrsets;
-    rrsets.push_back(&rrset);
-    masterLoad(ss, Name::ROOT_NAME(), rrclass,
-               boost::bind(setRRset, _1, rrsets.begin()));
-    return (rrset);
 }
 
 // Some faked NSEC3 hash values commonly used in tests and the faked NSEC3Hash
@@ -389,6 +395,8 @@ public:
         // Build test RRsets.  Below, we construct an RRset for
         // each textual RR(s) of zone_data, and assign it to the corresponding
         // rr_xxx.
+        // Note that this contains an out-of-zone RR, and due to the
+        // validation check of masterLoad() used below, we cannot add SOA.
         const RRsetData zone_data[] = {
             {"example.org. 300 IN NS ns.example.org.", &rr_ns_},
             {"example.org. 300 IN A 192.0.2.1", &rr_a_},
@@ -433,6 +441,8 @@ public:
             {"0P9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM.example.org. 300 IN "
              "NSEC3 1 1 12 aabbccdd 2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A RRSIG",
              &rr_nsec3_},
+            {"example.org. 300 IN NSEC cname.example.org. A NS NSEC",
+             &rr_nsec_},
             {NULL, NULL}
         };
 
@@ -497,6 +507,7 @@ public:
     RRsetPtr rr_not_wild_;
     RRsetPtr rr_not_wild_another_;
     RRsetPtr rr_nsec3_;
+    RRsetPtr rr_nsec_;
 
     // A faked NSEC3 hash calculator for convenience.
     // Tests that need to use the faked hashed values should call
@@ -536,34 +547,43 @@ public:
                   ZoneFinder::FindOptions options = ZoneFinder::FIND_DEFAULT,
                   bool check_wild_answer = false)
     {
+        SCOPED_TRACE("findTest for " + name.toText() + "/" + rrtype.toText());
+
         if (zone_finder == NULL) {
             zone_finder = &zone_finder_;
         }
+        const ConstRRsetPtr answer_sig = answer ? answer->getRRsig() :
+            RRsetPtr(); // note we use the same type as of retval of getRRsig()
         // The whole block is inside, because we need to check the result and
         // we can't assign to FindResult
         EXPECT_NO_THROW({
-                ZoneFinder::FindResult find_result(zone_finder->find(
-                                                       name, rrtype, options));
+                ZoneFinderContextPtr find_result(zone_finder->find(
+                                                     name, rrtype, options));
                 // Check it returns correct answers
-                EXPECT_EQ(result, find_result.code);
+                EXPECT_EQ(result, find_result->code);
                 EXPECT_EQ((expected_flags & ZoneFinder::RESULT_WILDCARD) != 0,
-                          find_result.isWildcard());
+                          find_result->isWildcard());
                 EXPECT_EQ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED)
-                          != 0, find_result.isNSECSigned());
+                          != 0, find_result->isNSECSigned());
                 EXPECT_EQ((expected_flags & ZoneFinder::RESULT_NSEC3_SIGNED)
-                          != 0, find_result.isNSEC3Signed());
+                          != 0, find_result->isNSEC3Signed());
                 if (check_answer) {
                     if (!answer) {
-                        ASSERT_FALSE(find_result.rrset);
+                        ASSERT_FALSE(find_result->rrset);
                     } else {
-                        ASSERT_TRUE(find_result.rrset);
-                        rrsetCheck(answer, find_result.rrset);
+                        ASSERT_TRUE(find_result->rrset);
+                        rrsetCheck(answer, find_result->rrset);
+                        if (answer_sig) {
+                            ASSERT_TRUE(find_result->rrset->getRRsig());
+                            rrsetCheck(answer_sig,
+                                       find_result->rrset->getRRsig());
+                        }
                     }
                 } else if (check_wild_answer) {
                     ASSERT_NE(ConstRRsetPtr(), answer) <<
                         "Wrong test, don't check for wild names if you expect "
                         "empty answer";
-                    ASSERT_NE(ConstRRsetPtr(), find_result.rrset) <<
+                    ASSERT_NE(ConstRRsetPtr(), find_result->rrset) <<
                         "No answer found";
                     // Build the expected answer using the given name and
                     // other parameter of the base wildcard RRset.
@@ -574,7 +594,23 @@ public:
                     for (; !expectedIt->isLast(); expectedIt->next()) {
                         wildanswer->addRdata(expectedIt->getCurrent());
                     }
-                    rrsetCheck(wildanswer, find_result.rrset);
+                    rrsetCheck(wildanswer, find_result->rrset);
+
+                    // Same for the RRSIG, if any.
+                    if (answer_sig) {
+                        ASSERT_TRUE(find_result->rrset->getRRsig());
+
+                        RRsetPtr wildsig(new RRset(name,
+                                                   answer_sig->getClass(),
+                                                   RRType::RRSIG(),
+                                                   answer_sig->getTTL()));
+                        RdataIteratorPtr expectedIt(
+                            answer_sig->getRdataIterator());
+                        for (; !expectedIt->isLast(); expectedIt->next()) {
+                            wildsig->addRdata(expectedIt->getCurrent());
+                        }
+                        rrsetCheck(wildsig, find_result->rrset->getRRsig());
+                    }
                 }
             });
     }
@@ -594,21 +630,21 @@ public:
             finder = &zone_finder_;
         }
         std::vector<ConstRRsetPtr> target;
-        ZoneFinder::FindResult find_result(finder->findAll(name, target,
-                                                           options));
-        EXPECT_EQ(result, find_result.code);
+        ZoneFinderContextPtr find_result(finder->findAll(name, target,
+                                                         options));
+        EXPECT_EQ(result, find_result->code);
         if (!rrset_result) {
-            EXPECT_FALSE(find_result.rrset);
+            EXPECT_FALSE(find_result->rrset);
         } else {
-            ASSERT_TRUE(find_result.rrset);
-            rrsetCheck(rrset_result, find_result.rrset);
+            ASSERT_TRUE(find_result->rrset);
+            rrsetCheck(rrset_result, find_result->rrset);
         }
         EXPECT_EQ((expected_flags & ZoneFinder::RESULT_WILDCARD) != 0,
-                  find_result.isWildcard());
+                  find_result->isWildcard());
         EXPECT_EQ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED)
-                  != 0, find_result.isNSECSigned());
+                  != 0, find_result->isNSECSigned());
         EXPECT_EQ((expected_flags & ZoneFinder::RESULT_NSEC3_SIGNED)
-                  != 0, find_result.isNSEC3Signed());
+                  != 0, find_result->isNSEC3Signed());
         rrsetsCheck(expected_rrsets.begin(), expected_rrsets.end(),
                     target.begin(), target.end());
     }
@@ -640,7 +676,7 @@ TEST_F(InMemoryZoneFinderTest, constructor) {
  */
 TEST_F(InMemoryZoneFinderTest, add) {
     // This one does not belong to this zone
-    EXPECT_THROW(zone_finder_.add(rr_out_), InMemoryZoneFinder::OutOfZone);
+    EXPECT_THROW(zone_finder_.add(rr_out_), OutOfZone);
     // Test null pointer
     EXPECT_THROW(zone_finder_.add(ConstRRsetPtr()),
                  InMemoryZoneFinder::NullRRset);
@@ -867,8 +903,9 @@ TEST_F(InMemoryZoneFinderTest, findAny) {
     findAllTest(origin_, ZoneFinder::SUCCESS, expected_sets);
 
     // out zone name
-    findAllTest(Name("example.com"), ZoneFinder::NXDOMAIN,
-                vector<ConstRRsetPtr>());
+    EXPECT_THROW(findAllTest(Name("example.com"), ZoneFinder::NXDOMAIN,
+                             vector<ConstRRsetPtr>()),
+                 OutOfZone);
 
     expected_sets.clear();
     expected_sets.push_back(rr_child_glue_);
@@ -950,6 +987,9 @@ InMemoryZoneFinderTest::findCheck(ZoneFinder::FindResultFlags expected_flags) {
     if ((expected_flags & ZoneFinder::RESULT_NSEC3_SIGNED) != 0) {
         EXPECT_EQ(SUCCESS, zone_finder_.add(rr_nsec3_));
     }
+    if ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED) != 0) {
+        EXPECT_EQ(SUCCESS, zone_finder_.add(rr_nsec_));
+    }
 
     // These two should be successful
     findTest(origin_, RRType::NS(), ZoneFinder::SUCCESS, true, rr_ns_);
@@ -965,8 +1005,8 @@ InMemoryZoneFinderTest::findCheck(ZoneFinder::FindResultFlags expected_flags) {
     // These domains don't exist (and one is out of the zone)
     findTest(Name("nothere.example.org"), RRType::A(), ZoneFinder::NXDOMAIN,
              true, ConstRRsetPtr(), expected_flags);
-    findTest(Name("example.net"), RRType::A(), ZoneFinder::NXDOMAIN, true,
-             ConstRRsetPtr(), expected_flags);
+    EXPECT_THROW(zone_finder_.find(Name("example.net"), RRType::A()),
+                 OutOfZone);
 }
 
 TEST_F(InMemoryZoneFinderTest, find) {
@@ -975,6 +1015,10 @@ TEST_F(InMemoryZoneFinderTest, find) {
 
 TEST_F(InMemoryZoneFinderTest, findNSEC3Signed) {
     findCheck(ZoneFinder::RESULT_NSEC3_SIGNED);
+}
+
+TEST_F(InMemoryZoneFinderTest, findNSECSigned) {
+    findCheck(ZoneFinder::RESULT_NSEC_SIGNED);
 }
 
 void
@@ -1005,6 +1049,9 @@ InMemoryZoneFinderTest::emptyNodeCheck(
     if ((expected_flags & ZoneFinder::RESULT_NSEC3_SIGNED) != 0) {
         EXPECT_EQ(SUCCESS, zone_finder_.add(rr_nsec3_));
     }
+    if ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED) != 0) {
+        EXPECT_EQ(SUCCESS, zone_finder_.add(rr_nsec_));
+    }
 
     // empty node matching, easy case: the node for 'baz' exists with
     // no data.
@@ -1021,8 +1068,7 @@ InMemoryZoneFinderTest::emptyNodeCheck(
     // Note: basically we don't expect such a query to be performed (the common
     // operation is to identify the best matching zone first then perform
     // search it), but we shouldn't be confused even in the unexpected case.
-    findTest(Name("org"), RRType::A(), ZoneFinder::NXDOMAIN, true,
-             ConstRRsetPtr(), expected_flags);
+    EXPECT_THROW(zone_finder_.find(Name("org"), RRType::A()), OutOfZone);
 }
 
 TEST_F(InMemoryZoneFinderTest, emptyNode) {
@@ -1031,6 +1077,10 @@ TEST_F(InMemoryZoneFinderTest, emptyNode) {
 
 TEST_F(InMemoryZoneFinderTest, emptyNodeNSEC3) {
     emptyNodeCheck(ZoneFinder::RESULT_NSEC3_SIGNED);
+}
+
+TEST_F(InMemoryZoneFinderTest, emptyNodeNSEC) {
+    emptyNodeCheck(ZoneFinder::RESULT_NSEC_SIGNED);
 }
 
 TEST_F(InMemoryZoneFinderTest, load) {
@@ -1061,7 +1111,70 @@ TEST_F(InMemoryZoneFinderTest, load) {
 
     // Try loading zone that is wrong in a different way
     EXPECT_THROW(zone_finder_.load(TEST_DATA_DIR "/duplicate_rrset.zone"),
-        MasterLoadError);
+                 MasterLoadError);
+}
+
+TEST_F(InMemoryZoneFinderTest, loadFromIterator) {
+    // The initial test set doesn't have SOA at the apex.
+    findTest(origin_, RRType::SOA(), ZoneFinder::NXRRSET, false,
+             ConstRRsetPtr());
+
+    // The content of the new version of zone to be first installed to
+    // the SQLite3 data source, then to in-memory via SQLite3.  The data are
+    // chosen to cover major check points of the implementation:
+    // - the previously non-existent record is added (SOA)
+    // - An RRSIG is given from the iterator before the RRset it covers
+    //   (RRSIG for SOA, because they are sorted by name then rrtype as text)
+    // - An RRset containing multiple RRs (ns1/A)
+    // - RRSIGs for different owner names
+    stringstream ss;
+    const char* const soa_txt = "example.org. 300 IN SOA . . 0 0 0 0 0\n";
+    const char* const soa_sig_txt = "example.org. 300 IN RRSIG SOA 5 3 300 "
+        "20000101000000 20000201000000 12345 example.org. FAKEFAKE\n";
+    const char* const a_txt =
+        "ns1.example.org. 300 IN A 192.0.2.1\n"
+        "ns1.example.org. 300 IN A 192.0.2.2\n";
+    const char* const a_sig_txt = "ns1.example.org. 300 IN RRSIG A 5 3 300 "
+        "20000101000000 20000201000000 12345 example.org. FAKEFAKE\n";
+    ss << soa_txt << soa_sig_txt << a_txt << a_sig_txt;
+    shared_ptr<DataSourceClient> db_client = unittest::createSQLite3Client(
+        class_, origin_, TEST_DATA_BUILDDIR "/contexttest.sqlite3.copied", ss);
+    zone_finder_.load(*db_client->getIterator(origin_));
+
+    // The new content should be visible, including the previously-nonexistent
+    // SOA.
+    RRsetPtr expected_answer = textToRRset(soa_txt, RRClass::IN(), origin_);
+    expected_answer->addRRsig(textToRRset(soa_sig_txt));
+    findTest(origin_, RRType::SOA(), ZoneFinder::SUCCESS, true,
+             expected_answer);
+
+    expected_answer = textToRRset(a_txt);
+    expected_answer->addRRsig(textToRRset(a_sig_txt));
+    findTest(Name("ns1.example.org"), RRType::A(), ZoneFinder::SUCCESS, true,
+             expected_answer);
+
+    // File name should be (re)set to empty.
+    EXPECT_TRUE(zone_finder_.getFileName().empty());
+
+    // Loading the zone with an iterator separating RRs of the same RRset
+    // will fail because the resulting sequence doesn't meet assumptions of
+    // the (current) in-memory implementation.
+    EXPECT_THROW(zone_finder_.load(*db_client->getIterator(origin_, true)),
+                 MasterLoadError);
+
+    // Load the zone from a file that contains more realistic data (borrowed
+    // from a different test).  There's nothing special in this case for the
+    // purpose of this test, so it should just succeed.
+    db_client = unittest::createSQLite3Client(
+        class_, origin_, TEST_DATA_BUILDDIR "/contexttest.sqlite3.copied",
+        TEST_DATA_DIR "/contexttest.zone");
+    zone_finder_.load(*db_client->getIterator(origin_));
+
+    // just checking a couple of RRs in the new version of zone.
+    findTest(Name("mx1.example.org"), RRType::A(), ZoneFinder::SUCCESS, true,
+             textToRRset("mx1.example.org. 3600 IN A 192.0.2.10"));
+    findTest(Name("ns1.example.org"), RRType::AAAA(), ZoneFinder::SUCCESS,
+             true, textToRRset("ns1.example.org. 3600 IN AAAA 2001:db8::1"));
 }
 
 /*
@@ -1079,6 +1192,24 @@ InMemoryZoneFinderTest::wildcardCheck(
      *                 |
      *                 *
      */
+
+    // If the zone is "signed" (detecting it by the NSEC/NSEC3 signed flags),
+    // add RRSIGs to the records.
+    ZoneFinder::FindOptions find_options = ZoneFinder::FIND_DEFAULT;
+    if ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED) != 0 ||
+        (expected_flags & ZoneFinder::RESULT_NSEC3_SIGNED) != 0) {
+        // Convenience shortcut.  The RDATA is not really validatable, but
+        // it doesn't matter for our tests.
+        const char* const rrsig_common = "5 3 3600 "
+            "20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE";
+
+        find_options = find_options | ZoneFinder::FIND_DNSSEC;
+        rr_wild_->addRRsig(textToRRset("*.wild.example.org. 300 IN RRSIG A " +
+                                       string(rrsig_common)));
+        rr_cnamewild_->addRRsig(textToRRset("*.cnamewild.example.org. 300 IN "
+                                            "RRSIG CNAME " +
+                                            string(rrsig_common)));
+    }
     EXPECT_EQ(SUCCESS, zone_finder_.add(rr_wild_));
     EXPECT_EQ(SUCCESS, zone_finder_.add(rr_cnamewild_));
     // If the zone is expected to be "signed" with NSEC3, add an NSEC3.
@@ -1086,20 +1217,24 @@ InMemoryZoneFinderTest::wildcardCheck(
     if ((expected_flags & ZoneFinder::RESULT_NSEC3_SIGNED) != 0) {
         EXPECT_EQ(SUCCESS, zone_finder_.add(rr_nsec3_));
     }
+    if ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED) != 0) {
+        EXPECT_EQ(SUCCESS, zone_finder_.add(rr_nsec_));
+    }
 
     // Search at the parent. The parent will not have the A, but it will
     // be in the wildcard (so check the wildcard isn't matched at the parent)
     {
         SCOPED_TRACE("Search at parent");
         findTest(Name("wild.example.org"), RRType::A(), ZoneFinder::NXRRSET,
-                 true, ConstRRsetPtr(), expected_flags);
+                 true, ConstRRsetPtr(), expected_flags, NULL, find_options);
     }
 
     // Search the original name of wildcard
     {
         SCOPED_TRACE("Search directly at *");
         findTest(Name("*.wild.example.org"), RRType::A(), ZoneFinder::SUCCESS,
-                 true, rr_wild_);
+                 true, rr_wild_, ZoneFinder::RESULT_DEFAULT, NULL,
+                 find_options);
     }
     // Search "created" name.
     {
@@ -1107,11 +1242,12 @@ InMemoryZoneFinderTest::wildcardCheck(
         findTest(Name("a.wild.example.org"), RRType::A(), ZoneFinder::SUCCESS,
                  false, rr_wild_,
                  ZoneFinder::RESULT_WILDCARD | expected_flags, NULL,
-                 ZoneFinder::FIND_DEFAULT, true);
+                 find_options, true);
         // Wildcard match, but no data
         findTest(Name("a.wild.example.org"), RRType::AAAA(),
                  ZoneFinder::NXRRSET, true, ConstRRsetPtr(),
-                 ZoneFinder::RESULT_WILDCARD | expected_flags);
+                 ZoneFinder::RESULT_WILDCARD | expected_flags, NULL,
+                 find_options);
     }
 
     // Search name that has CNAME.
@@ -1120,7 +1256,7 @@ InMemoryZoneFinderTest::wildcardCheck(
         findTest(Name("a.cnamewild.example.org"), RRType::A(),
                  ZoneFinder::CNAME, false, rr_cnamewild_,
                  ZoneFinder::RESULT_WILDCARD | expected_flags, NULL,
-                 ZoneFinder::FIND_DEFAULT, true);
+                 find_options, true);
     }
 
     // Search another created name, this time little bit lower
@@ -1129,14 +1265,15 @@ InMemoryZoneFinderTest::wildcardCheck(
         findTest(Name("a.b.wild.example.org"), RRType::A(),
                  ZoneFinder::SUCCESS, false, rr_wild_,
                  ZoneFinder::RESULT_WILDCARD | expected_flags, NULL,
-                 ZoneFinder::FIND_DEFAULT, true);
+                 find_options, true);
     }
 
     EXPECT_EQ(SUCCESS, zone_finder_.add(rr_under_wild_));
     {
         SCOPED_TRACE("Search under non-wildcard");
         findTest(Name("bar.foo.wild.example.org"), RRType::A(),
-                 ZoneFinder::NXDOMAIN, true, ConstRRsetPtr(), expected_flags);
+                 ZoneFinder::NXDOMAIN, true, ConstRRsetPtr(), expected_flags,
+                 NULL, find_options);
     }
 }
 
@@ -1148,6 +1285,11 @@ TEST_F(InMemoryZoneFinderTest, wildcard) {
 TEST_F(InMemoryZoneFinderTest, wildcardNSEC3) {
     // Similar to the previous one, but the zone signed with NSEC3
     wildcardCheck(ZoneFinder::RESULT_NSEC3_SIGNED);
+}
+
+TEST_F(InMemoryZoneFinderTest, wildcardNSEC) {
+    // Similar to the previous one, but the zone signed with NSEC
+    wildcardCheck(ZoneFinder::RESULT_NSEC_SIGNED);
 }
 
 /*
@@ -1184,6 +1326,9 @@ InMemoryZoneFinderTest::anyWildcardCheck(
     if ((expected_flags & ZoneFinder::RESULT_NSEC3_SIGNED) != 0) {
         EXPECT_EQ(SUCCESS, zone_finder_.add(rr_nsec3_));
     }
+    if ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED) != 0) {
+        EXPECT_EQ(SUCCESS, zone_finder_.add(rr_nsec_));
+    }
 
     vector<ConstRRsetPtr> expected_sets;
 
@@ -1218,6 +1363,10 @@ TEST_F(InMemoryZoneFinderTest, anyWildcardNSEC3) {
     anyWildcardCheck(ZoneFinder::RESULT_NSEC3_SIGNED);
 }
 
+TEST_F(InMemoryZoneFinderTest, anyWildcardNSEC) {
+    anyWildcardCheck(ZoneFinder::RESULT_NSEC_SIGNED);
+}
+
 // Test there's nothing in the wildcard in the middle if we load
 // wild.*.foo.example.org.
 void
@@ -1233,6 +1382,9 @@ InMemoryZoneFinderTest::emptyWildcardCheck(
     EXPECT_EQ(SUCCESS, zone_finder_.add(rr_emptywild_));
     if ((expected_flags & ZoneFinder::RESULT_NSEC3_SIGNED) != 0) {
         EXPECT_EQ(SUCCESS, zone_finder_.add(rr_nsec3_));
+    }
+    if ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED) != 0) {
+        EXPECT_EQ(SUCCESS, zone_finder_.add(rr_nsec_));
     }
 
     {
@@ -1276,6 +1428,10 @@ TEST_F(InMemoryZoneFinderTest, emptyWildcard) {
 
 TEST_F(InMemoryZoneFinderTest, emptyWildcardNSEC3) {
     emptyWildcardCheck(ZoneFinder::RESULT_NSEC3_SIGNED);
+}
+
+TEST_F(InMemoryZoneFinderTest, emptyWildcardNSEC) {
+    emptyWildcardCheck(ZoneFinder::RESULT_NSEC_SIGNED);
 }
 
 // Same as emptyWildcard, but with multiple * in the path.
@@ -1459,14 +1615,12 @@ TEST_F(InMemoryZoneFinderTest, swap) {
     EXPECT_EQ(RRClass::CH(), finder1.getClass());
     EXPECT_EQ(RRClass::IN(), finder2.getClass());
     // make sure the zone data is swapped, too
-    findTest(origin_, RRType::NS(), ZoneFinder::NXDOMAIN, false,
-             ConstRRsetPtr(), ZoneFinder::RESULT_DEFAULT, &finder1);
+    EXPECT_THROW(finder1.find(origin_, RRType::NS()), OutOfZone);
     findTest(other_origin, RRType::TXT(), ZoneFinder::SUCCESS, false,
              ConstRRsetPtr(), ZoneFinder::RESULT_DEFAULT, &finder1);
     findTest(origin_, RRType::NS(), ZoneFinder::SUCCESS, false,
              ConstRRsetPtr(), ZoneFinder::RESULT_DEFAULT, &finder2);
-    findTest(other_origin, RRType::TXT(), ZoneFinder::NXDOMAIN, false,
-             ConstRRsetPtr(), ZoneFinder::RESULT_DEFAULT, &finder2);
+    EXPECT_THROW(finder2.find(other_origin, RRType::TXT()), OutOfZone);
 }
 
 TEST_F(InMemoryZoneFinderTest, getFileName) {
@@ -1499,37 +1653,35 @@ TEST_F(InMemoryZoneFinderTest, addRRsig) {
     // that covers the first RRset
     zone_finder_.add(rr_a_);
     zone_finder_.add(textToRRset(rrsig_a_txt));
-    ZoneFinder::FindResult result = zone_finder_.find(origin_, RRType::A(),
-                                                      ZoneFinder::FIND_DNSSEC);
-    EXPECT_EQ(ZoneFinder::SUCCESS, result.code);
-    ASSERT_TRUE(result.rrset);
-    ASSERT_TRUE(result.rrset->getRRsig());
-    actual_rrsets_.push_back(result.rrset->getRRsig());
+    ZoneFinderContextPtr result = zone_finder_.find(origin_, RRType::A(),
+                                                    ZoneFinder::FIND_DNSSEC);
+    EXPECT_EQ(ZoneFinder::SUCCESS, result->code);
+    ASSERT_TRUE(result->rrset);
+    ASSERT_TRUE(result->rrset->getRRsig());
+    actual_rrsets_.push_back(result->rrset->getRRsig());
     rrsetsCheck(rrsig_a_txt, actual_rrsets_.begin(), actual_rrsets_.end());
 
     // Confirm a separate RRISG for a different type can be added
     actual_rrsets_.clear();
     zone_finder_.add(rr_ns_);
     zone_finder_.add(textToRRset(rrsig_ns_txt));
-    ZoneFinder::FindResult result2 =
-        zone_finder_.find(origin_, RRType::NS(), ZoneFinder::FIND_DNSSEC);
-    EXPECT_EQ(ZoneFinder::SUCCESS, result2.code);
-    ASSERT_TRUE(result2.rrset);
-    ASSERT_TRUE(result2.rrset->getRRsig());
-    actual_rrsets_.push_back(result2.rrset->getRRsig());
+    result = zone_finder_.find(origin_, RRType::NS(), ZoneFinder::FIND_DNSSEC);
+    EXPECT_EQ(ZoneFinder::SUCCESS, result->code);
+    ASSERT_TRUE(result->rrset);
+    ASSERT_TRUE(result->rrset->getRRsig());
+    actual_rrsets_.push_back(result->rrset->getRRsig());
     rrsetsCheck(rrsig_ns_txt, actual_rrsets_.begin(), actual_rrsets_.end());
 
     // Check a case with multiple RRSIGs
     actual_rrsets_.clear();
     zone_finder_.add(rr_ns_aaaa_);
     zone_finder_.add(textToRRset(rrsig_aaaa_txt));
-    ZoneFinder::FindResult result3 =
-        zone_finder_.find(Name("ns.example.org"), RRType::AAAA(),
-                          ZoneFinder::FIND_DNSSEC);
-    EXPECT_EQ(ZoneFinder::SUCCESS, result3.code);
-    ASSERT_TRUE(result3.rrset);
-    ASSERT_TRUE(result3.rrset->getRRsig());
-    actual_rrsets_.push_back(result3.rrset->getRRsig());
+    result = zone_finder_.find(Name("ns.example.org"), RRType::AAAA(),
+                               ZoneFinder::FIND_DNSSEC);
+    EXPECT_EQ(ZoneFinder::SUCCESS, result->code);
+    ASSERT_TRUE(result->rrset);
+    ASSERT_TRUE(result->rrset->getRRsig());
+    actual_rrsets_.push_back(result->rrset->getRRsig());
     rrsetsCheck(rrsig_aaaa_txt, actual_rrsets_.begin(), actual_rrsets_.end());
 }
 
@@ -1585,52 +1737,6 @@ TEST_F(InMemoryZoneFinderTest, addbadRRsig) {
                  InMemoryZoneFinder::AddError);
 }
 
-//
-// (Faked) NSEC3 hash data.  Arbitrarily borrowed from RFC515 examples.
-//
-// Commonly used NSEC3 suffix.  It's incorrect to use it for all NSEC3s, but
-// doesn't matter for the purpose of our tests.
-const char* const nsec3_common = " 300 IN NSEC3 1 1 12 aabbccdd "
-    "2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A RRSIG";
-// Likewise, common RRSIG suffix for NSEC3s.
-const char* const nsec3_rrsig_common = " 300 IN RRSIG NSEC3 5 3 3600 "
-    "20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE";
-
-void
-findNSEC3Check(bool expected_matched, uint8_t expected_labels,
-               const string& expected_closest,
-               const string& expected_next,
-               const ZoneFinder::FindNSEC3Result& result,
-               bool expected_sig = false)
-{
-    EXPECT_EQ(expected_matched, result.matched);
-    // Convert to int so the error messages would be more readable:
-    EXPECT_EQ(static_cast<int>(expected_labels),
-              static_cast<int>(result.closest_labels));
-
-    vector<ConstRRsetPtr> actual_rrsets;
-    ASSERT_TRUE(result.closest_proof);
-    actual_rrsets.push_back(result.closest_proof);
-    if (expected_sig) {
-        actual_rrsets.push_back(result.closest_proof->getRRsig());
-    }
-    rrsetsCheck(expected_closest, actual_rrsets.begin(),
-                actual_rrsets.end());
-
-    actual_rrsets.clear();
-    if (expected_next.empty()) {
-        EXPECT_FALSE(result.next_proof);
-    } else {
-        ASSERT_TRUE(result.next_proof);
-        actual_rrsets.push_back(result.next_proof);
-        if (expected_sig) {
-            actual_rrsets.push_back(result.next_proof->getRRsig());
-        }
-        rrsetsCheck(expected_next, actual_rrsets.begin(),
-                    actual_rrsets.end());
-    }
-}
-
 TEST_F(InMemoryZoneFinderTest, addNSEC3) {
     // Set up the faked hash calculator.
     setNSEC3HashCreator(&nsec3_hash_creator_);
@@ -1641,7 +1747,7 @@ TEST_F(InMemoryZoneFinderTest, addNSEC3) {
     EXPECT_EQ(result::SUCCESS, zone_finder_.add(textToRRset(nsec3_text)));
     EXPECT_EQ(ZoneFinder::NXDOMAIN,
               zone_finder_.find(Name(string(apex_hash) + ".example.org"),
-                                RRType::NSEC3()).code);
+                                RRType::NSEC3())->code);
     // Dedicated NSEC3 find should be able to find it.
     findNSEC3Check(true, origin_.getLabelCount(), nsec3_text, "",
                    zone_finder_.findNSEC3(Name("example.org"), false));
@@ -1661,7 +1767,7 @@ TEST_F(InMemoryZoneFinderTest, addNSEC3) {
     EXPECT_EQ(result::SUCCESS, zone_finder_.add(textToRRset(nonsec3_text)));
     EXPECT_EQ(ZoneFinder::SUCCESS,
               zone_finder_.find(Name(string(apex_hash) + ".example.org"),
-                                RRType::A()).code);
+                                RRType::A())->code);
 }
 
 TEST_F(InMemoryZoneFinderTest, addNSEC3Lower) {
@@ -1919,73 +2025,7 @@ TEST_F(InMemoryZoneFinderTest, findNSEC3) {
         string(nsec3_common);
     EXPECT_EQ(result::SUCCESS, zone_finder_.add(textToRRset(zzz_nsec3_text)));
 
-    // Parameter validation: the query name must be in or below the zone
-    EXPECT_THROW(zone_finder_.findNSEC3(Name("example.com"), false),
-                 isc::InvalidParameter);
-    EXPECT_THROW(zone_finder_.findNSEC3(Name("org"), true),
-                 isc::InvalidParameter);
-
-    // Apex name.  It should have a matching NSEC3.
-    {
-        SCOPED_TRACE("apex, non recursive mode");
-        findNSEC3Check(true, origin_.getLabelCount(), apex_nsec3_text, "",
-                       zone_finder_.findNSEC3(origin_, false));
-    }
-
-    // Recursive mode doesn't change the result in this case.
-    {
-        SCOPED_TRACE("apex, recursive mode");
-        findNSEC3Check(true, origin_.getLabelCount(), apex_nsec3_text, "",
-                       zone_finder_.findNSEC3(origin_, true));
-    }
-
-    // Non existent name.  Disabling recursion, a covering NSEC3 should be
-    // returned.
-    const Name www_name("www.example.org");
-    {
-        SCOPED_TRACE("non existent name, non recursive mode");
-        findNSEC3Check(false, www_name.getLabelCount(), apex_nsec3_text, "",
-                       zone_finder_.findNSEC3(www_name, false));
-    }
-
-    // Non existent name.  The closest provable encloser is the apex,
-    // and next closer is the query name itself (which NSEC3 for ns1
-    // covers)
-    // H(ns1) = 2T... < H(xxx) = Q0... < H(zzz) = R5...
-    {
-        SCOPED_TRACE("non existent name, recursive mode");
-        findNSEC3Check(true, origin_.getLabelCount(), apex_nsec3_text,
-                       ns1_nsec3_text,
-                       zone_finder_.findNSEC3(Name("xxx.example.org"), true));
-    }
-
-    // Similar to the previous case, but next closer name is different
-    // from the query name.  The closet encloser is w.example.org, and
-    // next closer is y.w.example.org.
-    // H(ns1) = 2T.. < H(y.w) = K8.. < H(zzz) = R5
-    {
-        SCOPED_TRACE("non existent name, non qname next closer");
-        findNSEC3Check(true, Name("w.example.org").getLabelCount(),
-                       w_nsec3_text, ns1_nsec3_text,
-                       zone_finder_.findNSEC3(Name("x.y.w.example.org"),
-                                              true));
-    }
-
-    // In the rest of test we check hash comparison for wrap around cases.
-    {
-        SCOPED_TRACE("very small hash");
-        const Name smallest_name("smallest.example.org");
-        findNSEC3Check(false, smallest_name.getLabelCount(),
-                       zzz_nsec3_text, "",
-                       zone_finder_.findNSEC3(smallest_name, false));
-    }
-    {
-        SCOPED_TRACE("very large hash");
-        const Name largest_name("largest.example.org");
-        findNSEC3Check(false, largest_name.getLabelCount(),
-                       zzz_nsec3_text, "",
-                       zone_finder_.findNSEC3(largest_name, false));
-    }
+    performNSEC3Test(zone_finder_);
 }
 
 TEST_F(InMemoryZoneFinderTest, findNSEC3ForBadZone) {

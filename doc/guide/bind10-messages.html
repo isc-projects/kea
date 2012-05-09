@@ -1,10 +1,10 @@
-<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>BIND 10 Messages Manual</title><link rel="stylesheet" href="./bind10-guide.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"><meta name="description" content="BIND 10 is a Domain Name System (DNS) suite managed by Internet Systems Consortium (ISC). It includes DNS libraries and modular components for controlling authoritative and recursive DNS servers. This is the messages manual for BIND 10 version 20111129. The most up-to-date version of this document, along with other documents for BIND 10, can be found at ."></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="book" title="BIND 10 Messages Manual"><div class="titlepage"><div><div><h1 class="title"><a name="id1168229451102"></a>BIND 10 Messages Manual</h1></div><div><p class="releaseinfo">This is the messages manual for BIND 10 version
-        20111129.</p></div><div><p class="copyright">Copyright © 2011-2012 Internet Systems Consortium, Inc.</p></div><div><div class="abstract" title="Abstract"><p class="title"><b>Abstract</b></p><p>BIND 10 is a Domain Name System (DNS) suite managed by
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>BIND 10 Messages Manual</title><link rel="stylesheet" href="./bind10-guide.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"><meta name="description" content="BIND 10 is a Domain Name System (DNS) suite managed by Internet Systems Consortium (ISC). It includes DNS libraries and modular components for controlling authoritative and recursive DNS servers. This is the messages manual for BIND 10 version 20120127. The most up-to-date version of this document, along with other documents for BIND 10, can be found at ."></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="book" title="BIND 10 Messages Manual"><div class="titlepage"><div><div><h1 class="title"><a name="id1168229451102"></a>BIND 10 Messages Manual</h1></div><div><p class="releaseinfo">This is the messages manual for BIND 10 version
+        20120127.</p></div><div><p class="copyright">Copyright © 2011-2012 Internet Systems Consortium, Inc.</p></div><div><div class="abstract" title="Abstract"><p class="title"><b>Abstract</b></p><p>BIND 10 is a Domain Name System (DNS) suite managed by
 	  Internet Systems Consortium (ISC). It includes DNS libraries
 	  and modular components for controlling authoritative and
 	  recursive DNS servers.
       </p><p>
-        This is the messages manual for BIND 10 version 20111129.
+        This is the messages manual for BIND 10 version 20120127.
 	    The most up-to-date version of this document, along with
 	    other documents for BIND 10, can be found at
         <a class="ulink" href="http://bind10.isc.org/docs" target="_top">http://bind10.isc.org/docs</a>.
@@ -215,6 +215,9 @@ reason for the failure is included in the message.
 </p></dd><dt><a name="AUTH_SERVER_STARTED"></a><span class="term">AUTH_SERVER_STARTED server started</span></dt><dd><p>
 Initialization of the authoritative server has completed successfully
 and it is entering the main loop, waiting for queries to arrive.
+</p></dd><dt><a name="AUTH_SHUTDOWN"></a><span class="term">AUTH_SHUTDOWN asked to stop, doing so</span></dt><dd><p>
+This is a debug message indicating the server was asked to shut down and it is
+complying to the request.
 </p></dd><dt><a name="AUTH_SQLITE3"></a><span class="term">AUTH_SQLITE3 nothing to do for loading sqlite3</span></dt><dd><p>
 This is a debug message indicating that the authoritative server has
 found that the data source it is loading is an SQLite3 data source,
@@ -754,6 +757,16 @@ but will not send back an answer.
 </p><p>
 The most likely cause of this error is a programming error.  Please raise
 a bug report.
+</p></dd><dt><a name="CONFIG_CCSESSION_STOPPING"></a><span class="term">CONFIG_CCSESSION_STOPPING error sending stopping message: %1</span></dt><dd><p>
+There was a problem when sending a message signaling that the module using
+this CCSession is stopping. This message is sent so that the rest of the
+system is aware that the module is no longer running. Apart from logging
+this message, the error itself is ignored, and the ModuleCCSession is
+still stopped. The specific exception message is printed.
+</p></dd><dt><a name="CONFIG_CCSESSION_STOPPING_UNKNOWN"></a><span class="term">CONFIG_CCSESSION_STOPPING_UNKNOWN unknown error sending stopping message</span></dt><dd><p>
+Similar to CONFIG_CCSESSION_STOPPING, but in this case the exception that
+is seen is not a standard exception, and further information is unknown.
+This is a bug.
 </p></dd><dt><a name="CONFIG_GET_FAIL"></a><span class="term">CONFIG_GET_FAIL error getting configuration from cfgmgr: %1</span></dt><dd><p>
 The configuration manager returned an error when this module requested
 the configuration. The full error message answer from the configuration
@@ -806,6 +819,18 @@ manager.
 </p></dd><dt><a name="CONFIG_OPEN_FAIL"></a><span class="term">CONFIG_OPEN_FAIL error opening %1: %2</span></dt><dd><p>
 There was an error opening the given file. The reason for the failure
 is included in the message.
+</p></dd><dt><a name="CONFIG_SESSION_STOPPING_FAILED"></a><span class="term">CONFIG_SESSION_STOPPING_FAILED error sending stopping message: %1</span></dt><dd><p>
+There was a problem when sending a message signaling that the module using
+this CCSession is stopping. This message is sent so that the rest of the
+system is aware that the module is no longer running. Apart from logging
+this message, the error itself is ignored, and the ModuleCCSession is
+still stopped. The specific exception message is printed.
+</p></dd><dt><a name="DATASRC_BAD_NSEC3_NAME"></a><span class="term">DATASRC_BAD_NSEC3_NAME NSEC3 record has a bad owner name '%1'</span></dt><dd><p>
+The software refuses to load NSEC3 records into a wildcard domain or
+the owner name has two or more labels below the zone origin.
+It isn't explicitly forbidden, but no sane zone wouldn have such names
+for NSEC3.  BIND 9 also refuses NSEC3 at wildcard, so this behavior is
+compatible with BIND 9.
 </p></dd><dt><a name="DATASRC_CACHE_CREATE"></a><span class="term">DATASRC_CACHE_CREATE creating the hotspot cache</span></dt><dd><p>
 This is a debug message issued during startup when the hotspot cache
 is created.
@@ -935,21 +960,10 @@ name/type/class in the data source.
 Debug information.  A set of updates to a zone has been successfully
 committed to the corresponding database backend.  The zone name,
 its class and the database name are printed.
-</p></dd><dt><a name="DATASRC_DATABASE_UPDATER_COMMIT%20(1)"></a><span class="term">DATASRC_DATABASE_UPDATER_COMMIT (1) updates committed for '%1/%2' on %3</span></dt><dd><p>
-Debug information.  A set of updates to a zone has been successfully
-committed to the corresponding database backend.  The zone name,
-its class and the database name are printed.
 </p></dd><dt><a name="DATASRC_DATABASE_UPDATER_CREATED"></a><span class="term">DATASRC_DATABASE_UPDATER_CREATED zone updater created for '%1/%2' on %3</span></dt><dd><p>
 Debug information.  A zone updater object is created to make updates to
 the shown zone on the shown backend database.
-</p></dd><dt><a name="DATASRC_DATABASE_UPDATER_CREATED%20(1)"></a><span class="term">DATASRC_DATABASE_UPDATER_CREATED (1) zone updater created for '%1/%2' on %3</span></dt><dd><p>
-Debug information.  A zone updater object is created to make updates to
-the shown zone on the shown backend database.
 </p></dd><dt><a name="DATASRC_DATABASE_UPDATER_DESTROYED"></a><span class="term">DATASRC_DATABASE_UPDATER_DESTROYED zone updater destroyed for '%1/%2' on %3</span></dt><dd><p>
-Debug information.  A zone updater object is destroyed, either successfully
-or after failure of, making updates to the shown zone on the shown backend
-database.
-</p></dd><dt><a name="DATASRC_DATABASE_UPDATER_DESTROYED%20(1)"></a><span class="term">DATASRC_DATABASE_UPDATER_DESTROYED (1) zone updater destroyed for '%1/%2' on %3</span></dt><dd><p>
 Debug information.  A zone updater object is destroyed, either successfully
 or after failure of, making updates to the shown zone on the shown backend
 database.
@@ -960,26 +974,7 @@ error, but may also be a bug of the application that forgets committing
 the changes.  The intermediate changes made through the updater won't
 be applied to the underlying database.  The zone name, its class, and
 the underlying database name are shown in the log message.
-</p></dd><dt><a name="DATASRC_DATABASE_UPDATER_ROLLBACK%20(1)"></a><span class="term">DATASRC_DATABASE_UPDATER_ROLLBACK (1) zone updates roll-backed for '%1/%2' on %3</span></dt><dd><p>
-A zone updater is being destroyed without committing the changes.
-This would typically mean the update attempt was aborted due to some
-error, but may also be a bug of the application that forgets committing
-the changes.  The intermediate changes made through the updater won't
-be applied to the underlying database.  The zone name, its class, and
-the underlying database name are shown in the log message.
 </p></dd><dt><a name="DATASRC_DATABASE_UPDATER_ROLLBACKFAIL"></a><span class="term">DATASRC_DATABASE_UPDATER_ROLLBACKFAIL failed to roll back zone updates for '%1/%2' on %3: %4</span></dt><dd><p>
-A zone updater is being destroyed without committing the changes to
-the database, and attempts to rollback incomplete updates, but it
-unexpectedly fails.  The higher level implementation does not expect
-it to fail, so this means either a serious operational error in the
-underlying data source (such as a system failure of a database) or
-software bug in the underlying data source implementation.  In either
-case if this message is logged the administrator should carefully
-examine the underlying data source to see what exactly happens and
-whether the data is still valid.  The zone name, its class, and the
-underlying database name as well as the error message thrown from the
-database module are shown in the log message.
-</p></dd><dt><a name="DATASRC_DATABASE_UPDATER_ROLLBACKFAIL%20(1)"></a><span class="term">DATASRC_DATABASE_UPDATER_ROLLBACKFAIL (1) failed to roll back zone updates for '%1/%2' on %3: %4</span></dt><dd><p>
 A zone updater is being destroyed without committing the changes to
 the database, and attempts to rollback incomplete updates, but it
 unexpectedly fails.  The higher level implementation does not expect
@@ -1080,6 +1075,26 @@ this zone is not authoritative for the requested domain, but a delegation
 should be followed. The requested domain is an apex of some zone.
 </p></dd><dt><a name="DATASRC_MEM_FIND"></a><span class="term">DATASRC_MEM_FIND find '%1/%2'</span></dt><dd><p>
 Debug information. A search for the requested RRset is being started.
+</p></dd><dt><a name="DATASRC_MEM_FINDNSEC3"></a><span class="term">DATASRC_MEM_FINDNSEC3 finding NSEC3 for %1, mode %2</span></dt><dd><p>
+Debug information. A search in an in-memory data source for NSEC3 that
+matches or covers the given name is being started.
+</p></dd><dt><a name="DATASRC_MEM_FINDNSEC3_COVER"></a><span class="term">DATASRC_MEM_FINDNSEC3_COVER found a covering NSEC3 for %1: %2</span></dt><dd><p>
+Debug information. An NSEC3 that covers the given name is found and
+being returned.  The found NSEC3 RRset is also displayed.
+</p></dd><dt><a name="DATASRC_MEM_FINDNSEC3_MATCH"></a><span class="term">DATASRC_MEM_FINDNSEC3_MATCH found a matching NSEC3 for %1 at label count %2: %3</span></dt><dd><p>
+Debug information. An NSEC3 that matches (a possibly superdomain of)
+the given name is found and being returned.  When the shown label
+count is smaller than that of the given name, the matching NSEC3 is
+for a superdomain of the given name (see DATASRC_MEM_FINDNSEC3_TRYHASH).
+The found NSEC3 RRset is also displayed.
+</p></dd><dt><a name="DATASRC_MEM_FINDNSEC3_TRYHASH"></a><span class="term">DATASRC_MEM_FINDNSEC3_TRYHASH looking for NSEC3 for %1 at label count %2 (hash %3)</span></dt><dd><p>
+Debug information. In an attempt of finding an NSEC3 for the give name,
+(a possibly superdomain of) the name is hashed and searched for in the
+NSEC3 name space.  When the shown label count is smaller than that of the
+shown name, the search tries the superdomain name that share the shown
+(higher) label count of the shown name (e.g., for
+www.example.com. with shown label count of 3, example.com. is being
+tried).
 </p></dd><dt><a name="DATASRC_MEM_FIND_ZONE"></a><span class="term">DATASRC_MEM_FIND_ZONE looking for zone '%1'</span></dt><dd><p>
 Debug information. A zone object for this zone is being searched for in the
 in-memory data source.
@@ -1087,6 +1102,13 @@ in-memory data source.
 Debug information. The content of master file is being loaded into the memory.
 </p></dd><dt><a name="DATASRC_MEM_NOT_FOUND"></a><span class="term">DATASRC_MEM_NOT_FOUND requested domain '%1' not found</span></dt><dd><p>
 Debug information. The requested domain does not exist.
+</p></dd><dt><a name="DATASRC_MEM_NO_NSEC3PARAM"></a><span class="term">DATASRC_MEM_NO_NSEC3PARAM NSEC3PARAM is missing for NSEC3-signed zone %1/%2</span></dt><dd><p>
+The in-memory data source has loaded a zone signed with NSEC3 RRs,
+but it doesn't have a NSEC3PARAM RR at the zone origin.  It's likely that
+the zone is somehow broken, but this RR is not necessarily needed for
+handling lookups with NSEC3 in this data source, so it accepts the given
+content of the zone.  Nevertheless the administrator should look into
+the integrity of the zone data.
 </p></dd><dt><a name="DATASRC_MEM_NS_ENCOUNTERED"></a><span class="term">DATASRC_MEM_NS_ENCOUNTERED encountered a NS</span></dt><dd><p>
 Debug information. While searching for the requested domain, a NS was
 encountered on the way (a delegation). This may lead to stop of the search.
@@ -1107,10 +1129,12 @@ Some resource types are singletons -- only one is allowed in a domain
 (for example CNAME or SOA). This indicates a problem with provided data.
 </p></dd><dt><a name="DATASRC_MEM_SUCCESS"></a><span class="term">DATASRC_MEM_SUCCESS query for '%1/%2' successful</span></dt><dd><p>
 Debug information. The requested record was found.
-</p></dd><dt><a name="DATASRC_MEM_SUPER_STOP"></a><span class="term">DATASRC_MEM_SUPER_STOP stopped at superdomain '%1', domain '%2' is empty</span></dt><dd><p>
-Debug information. The search stopped at a superdomain of the requested
-domain. The domain is an empty nonterminal, therefore it is treated  as NXRRSET
-case (eg. the domain exists, but it doesn't have the requested record type).
+</p></dd><dt><a name="DATASRC_MEM_SUPER_STOP"></a><span class="term">DATASRC_MEM_SUPER_STOP stopped as '%1' is superdomain of a zone node, meaning it's empty</span></dt><dd><p>
+Debug information. The search stopped because the requested domain was
+detected to be a superdomain of some existing node of zone (while there
+was no exact match).  This means that the domain is an empty nonterminal,
+therefore it is treated  as NXRRSET case (eg. the domain exists, but it
+doesn't have the requested record type).
 </p></dd><dt><a name="DATASRC_MEM_SWAP"></a><span class="term">DATASRC_MEM_SWAP swapping contents of two zone representations ('%1' and '%2')</span></dt><dd><p>
 Debug information. The contents of two in-memory zones are being exchanged.
 This is usual practice to do some manipulation in exception-safe manner -- the
@@ -1247,7 +1271,7 @@ to prove the nonexistence.
 The underlying data source failed to answer the query for referral information.
 1 means some error, 2 is not implemented. The data source should have logged
 the specific error already.
-</p></dd><dt><a name="DATASRC_QUERY_RRSIG"></a><span class="term">DATASRC_QUERY_RRSIG unable to answer RRSIG query</span></dt><dd><p>
+</p></dd><dt><a name="DATASRC_QUERY_RRSIG"></a><span class="term">DATASRC_QUERY_RRSIG unable to answer RRSIG query for %1</span></dt><dd><p>
 The server is unable to answer a direct query for RRSIG type, but was asked
 to do so.
 </p></dd><dt><a name="DATASRC_QUERY_SIMPLE_FAIL"></a><span class="term">DATASRC_QUERY_SIMPLE_FAIL the underlying data source failed with %1</span></dt><dd><p>
@@ -1365,6 +1389,11 @@ data source.
 </p></dd><dt><a name="DATASRC_UNEXPECTED_QUERY_STATE"></a><span class="term">DATASRC_UNEXPECTED_QUERY_STATE unexpected query state</span></dt><dd><p>
 This indicates a programming error. An internal task of unknown type was
 generated.
+</p></dd><dt><a name="DDNS_ACCEPT_FAILURE"></a><span class="term">DDNS_ACCEPT_FAILURE error accepting a connection: %1</span></dt><dd><p>
+There was a low-level error when we tried to accept an incoming connection
+(probably coming from b10-auth). We continue serving on whatever other
+connections we already have, but this connection is dropped. The reason
+is logged.
 </p></dd><dt><a name="DDNS_CC_SESSION_ERROR"></a><span class="term">DDNS_CC_SESSION_ERROR error reading from cc channel: %1</span></dt><dd><p>
 There was a problem reading from the command and control channel. The
 most likely cause is that the msgq process is not running.
@@ -1375,18 +1404,33 @@ configuration manager b10-cfgmgr is not running.
 </p></dd><dt><a name="DDNS_CONFIG_ERROR"></a><span class="term">DDNS_CONFIG_ERROR error found in configuration data: %1</span></dt><dd><p>
 The ddns process encountered an error when installing the configuration at
 startup time.  Details of the error are included in the log message.
+</p></dd><dt><a name="DDNS_DROP_CONN"></a><span class="term">DDNS_DROP_CONN dropping connection on file descriptor %1 because of error %2</span></dt><dd><p>
+There was an error on a connection with the b10-auth server (or whatever
+connects to the ddns daemon). This might be OK, for example when the
+authoritative server shuts down, the connection would get closed. It also
+can mean the system is busy and can't keep up or that the other side got
+confused and sent bad data.
 </p></dd><dt><a name="DDNS_MODULECC_SESSION_ERROR"></a><span class="term">DDNS_MODULECC_SESSION_ERROR error encountered by configuration/command module: %1</span></dt><dd><p>
 There was a problem in the lower level module handling configuration and
 control commands.  This could happen for various reasons, but the most likely
 cause is that the configuration database contains a syntax error and ddns
 failed to start at initialization.  A detailed error message from the module
 will also be displayed.
+</p></dd><dt><a name="DDNS_NEW_CONN"></a><span class="term">DDNS_NEW_CONN new connection on file descriptor %1 from %2</span></dt><dd><p>
+Debug message. We received a connection and we are going to start handling
+requests from it. The file descriptor number and the address where the request
+comes from is logged. The connection is over a unix domain socket and is likely
+coming from a b10-auth process.
 </p></dd><dt><a name="DDNS_RECEIVED_SHUTDOWN_COMMAND"></a><span class="term">DDNS_RECEIVED_SHUTDOWN_COMMAND shutdown command received</span></dt><dd><p>
 The ddns process received a shutdown command from the command channel
 and will now shut down.
 </p></dd><dt><a name="DDNS_RUNNING"></a><span class="term">DDNS_RUNNING ddns server is running and listening for updates</span></dt><dd><p>
 The ddns process has successfully started and is now ready to receive commands
 and updates.
+</p></dd><dt><a name="DDNS_SESSION"></a><span class="term">DDNS_SESSION session arrived on file descriptor %1</span></dt><dd><p>
+A debug message, informing there's some activity on the given file descriptor.
+It will be either a request or the file descriptor will be closed. See
+following log messages to see what of it.
 </p></dd><dt><a name="DDNS_SHUTDOWN"></a><span class="term">DDNS_SHUTDOWN ddns server shutting down</span></dt><dd><p>
 The ddns process is shutting down. It will no longer listen for new commands
 or updates. Any command or update that is being addressed at this moment will
@@ -1659,6 +1703,17 @@ an answer with a different given type and class.
 </p><p>
 This message indicates an internal error in the NSAS.  Please raise a
 bug report.
+</p></dd><dt><a name="PYSERVER_COMMON_TSIG_KEYRING_DEINIT"></a><span class="term">PYSERVER_COMMON_TSIG_KEYRING_DEINIT Deinitializing global TSIG keyring</span></dt><dd><p>
+A debug message noting that the global TSIG keyring is being removed from
+memory. Most programs don't do that, they just exit, which is OK.
+</p></dd><dt><a name="PYSERVER_COMMON_TSIG_KEYRING_INIT"></a><span class="term">PYSERVER_COMMON_TSIG_KEYRING_INIT Initializing global TSIG keyring</span></dt><dd><p>
+A debug message noting the TSIG keyring storage is being prepared. It should
+appear at most once in the lifetime of a program. The keyring still needs
+to be loaded from configuration.
+</p></dd><dt><a name="PYSERVER_COMMON_TSIG_KEYRING_UPDATE"></a><span class="term">PYSERVER_COMMON_TSIG_KEYRING_UPDATE Updating global TSIG keyring</span></dt><dd><p>
+A debug message. The TSIG keyring is being (re)loaded from configuration.
+This happens at startup or when the configuration changes. The old keyring
+is removed and new one created with all the keys.
 </p></dd><dt><a name="RESLIB_ANSWER"></a><span class="term">RESLIB_ANSWER answer received in response to query for &lt;%1&gt;</span></dt><dd><p>
 A debug message reporting that an answer has been received to an upstream
 query for the specified question.  Previous debug messages will have
@@ -2009,6 +2064,9 @@ resolver.  It is output during startup and may appear multiple times,
 once for each root server address.
 </p></dd><dt><a name="RESOLVER_SHUTDOWN"></a><span class="term">RESOLVER_SHUTDOWN resolver shutdown complete</span></dt><dd><p>
 This informational message is output when the resolver has shut down.
+</p></dd><dt><a name="RESOLVER_SHUTDOWN%20(1)"></a><span class="term">RESOLVER_SHUTDOWN (1) asked to shut down, doing so</span></dt><dd><p>
+A debug message noting that the server was asked to terminate and is
+complying to the request.
 </p></dd><dt><a name="RESOLVER_STARTED"></a><span class="term">RESOLVER_STARTED resolver started</span></dt><dd><p>
 This informational message is output by the resolver when all initialization
 has been completed and it is entering its main loop.
@@ -2022,7 +2080,7 @@ has been ignored.
 This is debug message output when the resolver received a message with an
 unsupported opcode (it can only process QUERY opcodes).  It will return
 a message to the sender with the RCODE set to NOTIMP.
-</p></dd><dt><a name="SOCKETREQUESTOR_CREATED"></a><span class="term">SOCKETREQUESTOR_CREATED Socket requestor created</span></dt><dd><p>
+</p></dd><dt><a name="SOCKETREQUESTOR_CREATED"></a><span class="term">SOCKETREQUESTOR_CREATED Socket requestor created for application %1</span></dt><dd><p>
 Debug message.  A socket requesor (client of the socket creator) is created
 for the corresponding application.  Normally this should happen at most
 one time throughout the lifetime of the application.
@@ -2074,6 +2132,16 @@ Debug message. This lists one address and port value of the set of
 addresses we are going to listen on (eg. there will be one log message
 per pair). This appears only after SRVCOMM_SET_LISTEN, but might
 be hidden, as it has higher debug level.
+</p></dd><dt><a name="SRVCOMM_EXCEPTION_ALLOC"></a><span class="term">SRVCOMM_EXCEPTION_ALLOC exception when allocating a socket: %1</span></dt><dd><p>
+The process tried to allocate a socket using the socket creator, but an error
+occurred. But it is not one of the errors we are sure are "safe". In this case
+it is unclear if the unsuccessful communication left the process and the bind10
+process in inconsistent state, so the process is going to abort to prevent
+further problems in that area.
+</p><p>
+This is probably a bug in the code, but it could be caused by other unusual
+conditions (like insufficient memory, deleted socket file used for
+communication).
 </p></dd><dt><a name="SRVCOMM_KEYS_DEINIT"></a><span class="term">SRVCOMM_KEYS_DEINIT deinitializing TSIG keyring</span></dt><dd><p>
 Debug message indicating that the server is deinitializing the TSIG keyring.
 </p></dd><dt><a name="SRVCOMM_KEYS_INIT"></a><span class="term">SRVCOMM_KEYS_INIT initializing TSIG keyring</span></dt><dd><p>
@@ -2088,6 +2156,10 @@ specification is outside the valid range of 0 to 65535.
 </p></dd><dt><a name="SRVCOMM_SET_LISTEN"></a><span class="term">SRVCOMM_SET_LISTEN setting addresses to listen to</span></dt><dd><p>
 Debug message, noting that the server is about to start listening on a
 different set of IP addresses and ports than before.
+</p></dd><dt><a name="SRVCOMM_UNKNOWN_EXCEPTION_ALLOC"></a><span class="term">SRVCOMM_UNKNOWN_EXCEPTION_ALLOC unknown exception when allocating a socket</span></dt><dd><p>
+The situation is the same as in the SRVCOMM_EXCEPTION_ALLOC case, but further
+details about the error are unknown, because it was signaled by throwing
+something not being an exception. This is definitely a bug.
 </p></dd><dt><a name="STATHTTPD_BAD_OPTION_VALUE"></a><span class="term">STATHTTPD_BAD_OPTION_VALUE bad command line argument: %1</span></dt><dd><p>
 The stats-httpd module was called with a bad command-line argument
 and will not start.

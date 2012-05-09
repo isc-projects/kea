@@ -180,11 +180,9 @@ class TestCmdSyntax(unittest.TestCase):
         self.my_assert_raise(isc.cc.data.DataTypeError, "zone set zone_name ='cn', port='cn'")
         self.no_assert_raise("zone reload_all")
 
-
     def testCmdUnknownModuleSyntaxError(self):
         self.my_assert_raise(CmdUnknownModuleSyntaxError, "zoned d")
         self.my_assert_raise(CmdUnknownModuleSyntaxError, "dd dd  ")
-
 
     def testCmdUnknownCmdSyntaxError(self):
         self.my_assert_raise(CmdUnknownCmdSyntaxError, "zone dd")
@@ -198,6 +196,7 @@ class TestCmdSyntax(unittest.TestCase):
     def testCmdUnknownParamSyntaxError(self):
         self.my_assert_raise(CmdUnknownParamSyntaxError, "zone load zone_d='cn'")
         self.my_assert_raise(CmdUnknownParamSyntaxError, "zone reload_all zone_name = 'cn'")
+        self.my_assert_raise(CmdUnknownParamSyntaxError, "zone help a b c")
 
 class TestModuleInfo(unittest.TestCase):
 
@@ -366,9 +365,19 @@ class TestConfigCommands(unittest.TestCase):
         self.assertEqual((5, MultiConfigData.LOCAL),
                          self.tool.config_data.get_value("/foo/an_int"))
 
+        cmd = cmdparse.BindCmdParse("config unset identifier=\"foo/an_int\"")
+        self.tool.apply_config_cmd(cmd)
+
+        self.assertEqual((1, MultiConfigData.DEFAULT),
+                         self.tool.config_data.get_value("/foo/an_int"))
+
         # this should raise a NotFoundError
         cmd = cmdparse.BindCmdParse("config set identifier=\"foo/bar\" value=\"[]\"")
         self.assertRaises(isc.cc.data.DataNotFoundError, self.tool.apply_config_cmd, cmd)
+
+        cmd = cmdparse.BindCmdParse("config unset identifier=\"foo/bar\"")
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          self.tool.apply_config_cmd, cmd)
 
         # this should raise a TypeError
         cmd = cmdparse.BindCmdParse("config set identifier=\"foo/an_int\" value=\"[]\"")

@@ -40,7 +40,7 @@ protected:
     NSEC3PARAMLikeTest() :
         salt_txt("1 1 1 D399EAAB" + getCommonText()),
         nosalt_txt("1 1 1 -" + getCommonText()),
-        obuffer(0), renderer(obuffer)
+        obuffer(0)
     {}
 
     RDATA_TYPE fromText(const string& rdata_text) {

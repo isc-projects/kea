@@ -676,6 +676,24 @@ class TestStatsHttpd(unittest.TestCase):
         self.assertTrue('address' in self.stats_httpd.config['listen_on'][0])
         self.assertTrue('port' in self.stats_httpd.config['listen_on'][0])
         self.assertTrue(server_address in set(self.stats_httpd.http_addrs))
+        ans = send_command(
+            isc.config.ccsession.COMMAND_GET_MODULE_SPEC,
+            "ConfigManager", {"module_name":"StatsHttpd"})
+        # assert StatsHttpd is added to ConfigManager
+        self.assertNotEqual(ans, (0,{}))
+        self.assertTrue(ans[1]['module_name'], 'StatsHttpd')
+
+    def test_init_hterr(self):
+        orig_open_httpd = stats_httpd.StatsHttpd.open_httpd
+        def err_open_httpd(arg): raise stats_httpd.HttpServerError
+        stats_httpd.StatsHttpd.open_httpd = err_open_httpd
+        self.assertRaises(stats_httpd.HttpServerError, stats_httpd.StatsHttpd)
+        ans = send_command(
+            isc.config.ccsession.COMMAND_GET_MODULE_SPEC,
+            "ConfigManager", {"module_name":"StatsHttpd"})
+        # assert StatsHttpd is removed from ConfigManager
+        self.assertEqual(ans, (0,{}))
+        stats_httpd.StatsHttpd.open_httpd = orig_open_httpd
 
     def test_openclose_mccs(self):
         self.stats_httpd = MyStatsHttpd(get_availaddr())
