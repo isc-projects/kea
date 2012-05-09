@@ -12,15 +12,19 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <gtest/gtest.h>
+
 #include <server_common/portconfig.h>
 #include <testutils/socket_request.h>
+#include <testutils/mockups.h>
+
+#include <util/unittests/resource.h>
 
 #include <cc/data.h>
 #include <exceptions/exceptions.h>
 #include <asiolink/asiolink.h>
 #include <asiodns/asiodns.h>
 
-#include <gtest/gtest.h>
 #include <string>
 
 using namespace isc::server_common::portconfig;
@@ -30,6 +34,7 @@ using namespace isc;
 using namespace std;
 using namespace isc::asiolink;
 using namespace isc::asiodns;
+using namespace isc::testutils;
 using boost::lexical_cast;
 
 namespace {
@@ -132,7 +137,6 @@ TEST_F(ParseAddresses, invalid) {
 // Test fixture for installListenAddresses
 struct InstallListenAddresses : public ::testing::Test {
     InstallListenAddresses() :
-        dnss_(ios_, NULL, NULL, NULL),
         // The empty string is expected parameter of requestSocket,
         // not app_name - the request does not fall back to this, it
         // is checked to be the same.
@@ -143,8 +147,7 @@ struct InstallListenAddresses : public ::testing::Test {
         invalid_.push_back(AddressPair("127.0.0.1", 5288));
         invalid_.push_back(AddressPair("192.0.2.2", 1));
     }
-    IOService ios_;
-    DNSService dnss_;
+    MockDNSService dnss_;
     AddressList store_;
     isc::testutils::TestSocketRequestor sock_requestor_;
     // We should be able to bind to these addresses
@@ -313,13 +316,15 @@ TEST_F(InstallListenAddressesDeathTest, inconsistent) {
     // Make sure it actually kills the application (there should be an abort
     // in this case)
     EXPECT_DEATH({
-                    try {
-                        installListenAddresses(deathAddresses, store_, dnss_);
-                    } catch (...) {
-                        // Prevent exceptions killing the application, we need
-                        // to make sure it dies the real hard way
-                    };
-                 }, "");
+        isc::util::unittests::dontCreateCoreDumps();
+
+        try {
+          installListenAddresses(deathAddresses, store_, dnss_);
+        } catch (...) {
+          // Prevent exceptions killing the application, we need
+          // to make sure it dies the real hard way
+        };
+      }, "");
 }
 
 // If we are unable to tell the boss we closed a socket, we abort, as we are
@@ -330,16 +335,18 @@ TEST_F(InstallListenAddressesDeathTest, cantClose) {
     // Instruct it to fail on close
     sock_requestor_.break_release_ = true;
     EXPECT_DEATH({
-                    try {
-                        // Setting to empty will close all current sockets.
-                        // And thanks to the break_release_, the close will
-                        // throw, which will make it crash.
-                        installListenAddresses(empty, store_, dnss_);
-                    } catch (...) {
-                        // To make sure it is killed by abort, not by some
-                        // (unhandled) exception
-                    };
-                }, "");
+        isc::util::unittests::dontCreateCoreDumps();
+
+        try {
+          // Setting to empty will close all current sockets.
+          // And thanks to the break_release_, the close will
+          // throw, which will make it crash.
+          installListenAddresses(empty, store_, dnss_);
+        } catch (...) {
+          // To make sure it is killed by abort, not by some
+          // (unhandled) exception
+        };
+      }, "");
     // And reset it back, so it can safely clean up itself.
     sock_requestor_.break_release_ = false;
 }

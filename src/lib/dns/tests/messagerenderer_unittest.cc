@@ -12,8 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <vector>
-
+#include <exceptions/exceptions.h>
 #include <util/buffer.h>
 #include <dns/name.h>
 #include <dns/messagerenderer.h>
@@ -22,23 +21,27 @@
 
 #include <gtest/gtest.h>
 
+#include <boost/lexical_cast.hpp>
+
+#include <string>
+#include <vector>
+
 using isc::UnitTestUtil;
 using isc::dns::Name;
 using isc::dns::MessageRenderer;
 using isc::util::OutputBuffer;
+using boost::lexical_cast;
 
 namespace {
 class MessageRendererTest : public ::testing::Test {
 protected:
-    MessageRendererTest() : expected_size(0), buffer(0), renderer(buffer)
-    {
+    MessageRendererTest() : expected_size(0) {
         data16 = (2 << 8) | 3;
         data32 = (4 << 24) | (5 << 16) | (6 << 8) | 7;
     }
     size_t expected_size;
     uint16_t data16;
     uint32_t data32;
-    OutputBuffer buffer;
     MessageRenderer renderer;
     std::vector<unsigned char> data;
     static const uint8_t testdata[5];
@@ -60,21 +63,22 @@ TEST_F(MessageRendererTest, writeName) {
     renderer.writeName(Name("a.example.com."));
     renderer.writeName(Name("b.example.com."));
     renderer.writeName(Name("a.example.org."));
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, buffer.getData(),
-                        buffer.getLength(), &data[0], data.size());
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
+                        renderer.getLength(), &data[0], data.size());
 }
 
 TEST_F(MessageRendererTest, writeNameInLargeBuffer) {
     size_t offset = 0x3fff;
-    buffer.skip(offset);
+    renderer.skip(offset);
 
     UnitTestUtil::readWireData("name_toWire2", data);
     renderer.writeName(Name("a.example.com."));
     renderer.writeName(Name("a.example.com."));
     renderer.writeName(Name("b.example.com."));
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        static_cast<const uint8_t*>(buffer.getData()) + offset,
-                        buffer.getLength() - offset,
+                        static_cast<const uint8_t*>(renderer.getData()) +
+                        offset,
+                        renderer.getLength() - offset,
                         &data[0], data.size());
 }
 
@@ -83,8 +87,8 @@ TEST_F(MessageRendererTest, writeNameWithUncompressed) {
     renderer.writeName(Name("a.example.com."));
     renderer.writeName(Name("b.example.com."), false);
     renderer.writeName(Name("b.example.com."));
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, buffer.getData(),
-                        buffer.getLength(), &data[0], data.size());
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
+                        renderer.getLength(), &data[0], data.size());
 }
 
 TEST_F(MessageRendererTest, writeNamePointerChain) {
@@ -92,8 +96,8 @@ TEST_F(MessageRendererTest, writeNamePointerChain) {
     renderer.writeName(Name("a.example.com."));
     renderer.writeName(Name("b.example.com."));
     renderer.writeName(Name("b.example.com."));
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, buffer.getData(),
-                        buffer.getLength(), &data[0], data.size());
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
+                        renderer.getLength(), &data[0], data.size());
 }
 
 TEST_F(MessageRendererTest, compressMode) {
@@ -120,8 +124,8 @@ TEST_F(MessageRendererTest, writeNameCaseCompress) {
     // this should match the first name in terms of compression:
     renderer.writeName(Name("b.exAmple.CoM."));
     renderer.writeName(Name("a.example.org."));
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, buffer.getData(),
-                        buffer.getLength(), &data[0], data.size());
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
+                        renderer.getLength(), &data[0], data.size());
 }
 
 TEST_F(MessageRendererTest, writeNameCaseSensitiveCompress) {
@@ -132,8 +136,8 @@ TEST_F(MessageRendererTest, writeNameCaseSensitiveCompress) {
     renderer.writeName(Name("a.example.com."));
     renderer.writeName(Name("b.eXample.com."));
     renderer.writeName(Name("c.eXample.com."));
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, buffer.getData(),
-                        buffer.getLength(), &data[0], data.size());
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
+                        renderer.getLength(), &data[0], data.size());
 }
 
 TEST_F(MessageRendererTest, writeNameMixedCaseCompress) {
@@ -142,13 +146,15 @@ TEST_F(MessageRendererTest, writeNameMixedCaseCompress) {
     renderer.writeName(Name("a.example.com."));
     renderer.writeName(Name("b.eXample.com."));
 
-    // Change the compression mode in the middle of rendering.  This is an
-    // unusual operation and is unlikely to happen in practice, but is still
-    // allowed in this API.
-    renderer.setCompressMode(MessageRenderer::CASE_INSENSITIVE);
-    renderer.writeName(Name("c.b.EXAMPLE.com."));
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, buffer.getData(),
-                        buffer.getLength(), &data[0], data.size());
+    // Change the compression mode in the middle of rendering.  This is not
+    // allowed in this implementation.
+    EXPECT_THROW(renderer.setCompressMode(MessageRenderer::CASE_INSENSITIVE),
+                 isc::InvalidParameter);
+
+    // Once the renderer is cleared, it's okay again.
+    renderer.clear();
+    EXPECT_NO_THROW(renderer.setCompressMode(
+                        MessageRenderer::CASE_INSENSITIVE));
 }
 
 TEST_F(MessageRendererTest, writeRootName) {
@@ -164,9 +170,67 @@ TEST_F(MessageRendererTest, writeRootName) {
     renderer.writeName(Name("."));
     renderer.writeName(example_name);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        static_cast<const uint8_t*>(buffer.getData()),
-                        buffer.getLength(),
+                        static_cast<const uint8_t*>(renderer.getData()),
+                        renderer.getLength(),
                         static_cast<const uint8_t*>(expected.getData()),
                         expected.getLength());
+}
+
+TEST_F(MessageRendererTest, setBuffer) {
+    OutputBuffer new_buffer(0);
+    renderer.setBuffer(&new_buffer);
+    EXPECT_EQ(0, new_buffer.getLength()); // the buffer should be still empty
+    renderer.writeUint32(42);
+    EXPECT_EQ(sizeof(uint32_t), new_buffer.getLength());
+    EXPECT_EQ(sizeof(uint32_t), renderer.getLength());
+
+    // Change some other internal state for the reset test below.
+    EXPECT_EQ(512, renderer.getLengthLimit());
+    renderer.setLengthLimit(4096);
+    EXPECT_EQ(4096, renderer.getLengthLimit());
+
+    // Reset the buffer to the default again.  Other internal states and
+    // resources should be cleared.  The used buffer should be intact.
+    renderer.setBuffer(NULL);
+    EXPECT_EQ(sizeof(uint32_t), new_buffer.getLength());
+    EXPECT_EQ(0, renderer.getLength());
+    EXPECT_EQ(512, renderer.getLengthLimit());
+}
+
+TEST_F(MessageRendererTest, setBufferErrors) {
+    OutputBuffer new_buffer(0);
+
+    // Buffer cannot be reset when the renderer is in use.
+    renderer.writeUint32(10);
+    EXPECT_THROW(renderer.setBuffer(&new_buffer), isc::InvalidParameter);
+
+    renderer.clear();
+    renderer.setBuffer(&new_buffer);
+    renderer.writeUint32(10);
+    EXPECT_THROW(renderer.setBuffer(&new_buffer), isc::InvalidParameter);
+
+    // Resetting the buffer isn't allowed for the default buffer.
+    renderer.setBuffer(NULL);
+    EXPECT_THROW(renderer.setBuffer(NULL), isc::InvalidParameter);
+
+    // It's okay to reset a temporary buffer without using it.
+    renderer.setBuffer(&new_buffer);
+    EXPECT_NO_THROW(renderer.setBuffer(NULL));
+}
+
+TEST_F(MessageRendererTest, manyRRs) {
+    // Render a large number of names, and the confirm the resulting wire
+    // data store the expected names in the correct order (1000 is an
+    // arbitrary choice).
+    for (size_t i = 0; i < 1000; ++i) {
+        renderer.writeName(Name(lexical_cast<std::string>(i) + ".example"));
+    }
+    isc::util::InputBuffer b(renderer.getData(), renderer.getLength());
+    for (size_t i = 0; i < 1000; ++i) {
+        EXPECT_EQ(Name(lexical_cast<std::string>(i) + ".example"), Name(b));
+    }
+    // This will trigger trimming excessive hash items.  It shouldn't cause
+    // any disruption.
+    EXPECT_NO_THROW(renderer.clear());
 }
 }

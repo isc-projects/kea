@@ -249,7 +249,7 @@ SessionImpl::internalRead(const asio::error_code& error,
         }
         user_handler_();
     } else {
-        LOG_ERROR(logger, CC_ASYNC_READ_FAILED);
+        LOG_ERROR(logger, CC_ASYNC_READ_FAILED).arg(error.value());
         isc_throw(SessionError, "asynchronous read failed");
     }
 }

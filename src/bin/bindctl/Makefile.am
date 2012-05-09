@@ -8,7 +8,7 @@ EXTRA_DIST = $(man_MANS) bindctl.xml
 noinst_SCRIPTS = run_bindctl.sh
 
 python_PYTHON = __init__.py bindcmd.py cmdparse.py exception.py moduleinfo.py \
-		mycollections.py
+		mycollections.py command_sets.py
 pythondir = $(pyexecdir)/bindctl
 
 bindctldir = $(pkgdatadir)

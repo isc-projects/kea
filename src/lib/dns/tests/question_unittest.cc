@@ -37,7 +37,7 @@ using namespace isc::util;
 namespace {
 class QuestionTest : public ::testing::Test {
 protected:
-    QuestionTest() : obuffer(0), renderer(obuffer),
+    QuestionTest() : obuffer(0),
                      example_name1(Name("foo.example.com")),
                      example_name2(Name("bar.example.com")),
                      test_question1(example_name1, RRClass::IN(),
@@ -102,8 +102,8 @@ TEST_F(QuestionTest, toWireRenderer) {
     test_question1.toWire(renderer);
     test_question2.toWire(renderer);
     UnitTestUtil::readWireData("question_toWire2", wiredata);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, obuffer.getData(),
-                        obuffer.getLength(), &wiredata[0], wiredata.size());
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
+                        renderer.getLength(), &wiredata[0], wiredata.size());
 }
 
 TEST_F(QuestionTest, toWireTruncated) {
