@@ -385,6 +385,9 @@ protected:
                           ZoneFinder::RESULT_DEFAULT);
     void emptyWildcardCheck(ZoneFinder::FindResultFlags expected_flags =
                             ZoneFinder::RESULT_DEFAULT);
+    void findNSECENTCheck(const Name& ent_name,
+                          ZoneFinder::FindResultFlags expected_flags =
+                          ZoneFinder::RESULT_DEFAULT);
 
 public:
     InMemoryZoneFinderTest() :
@@ -443,10 +446,6 @@ public:
              &rr_nsec3_},
             {"example.org. 300 IN NSEC cname.example.org. A NS NSEC",
              &rr_nsec_},
-            {"www.ent.example.org. 300 IN A 192.0.2.1",
-             &rr_ent_},
-            {"example.org. 300 IN NSEC www.ent.example.org. A NS NSEC",
-             &rr_ent_nsec_},
             {NULL, NULL}
         };
 
@@ -512,8 +511,6 @@ public:
     RRsetPtr rr_not_wild_another_;
     RRsetPtr rr_nsec3_;
     RRsetPtr rr_nsec_;
-    RRsetPtr rr_ent_;
-    RRsetPtr rr_ent_nsec_;
 
     // A faked NSEC3 hash calculator for convenience.
     // Tests that need to use the faked hashed values should call
@@ -1045,28 +1042,43 @@ TEST_F(InMemoryZoneFinderTest, findNSECSigned) {
     findCheck(ZoneFinder::RESULT_NSEC_SIGNED);
 }
 
-TEST_F(InMemoryZoneFinderTest,findNSECEmptyNonterminal) {
-    zone_finder_.add(rr_ent_);
-    const Name ent_name = Name("ent.example.org");
+// Generalized test for Empty Nonterminal (ENT) cases with NSEC
+void
+InMemoryZoneFinderTest::findNSECENTCheck(const Name& ent_name,
+    ZoneFinder::FindResultFlags expected_flags)
+{
+    EXPECT_EQ(SUCCESS, zone_finder_.add(rr_emptywild_));
 
     // Sanity check: Should result in NXRRSET
     findTest(ent_name, RRType::A(), ZoneFinder::NXRRSET, true,
-             ConstRRsetPtr());
+             ConstRRsetPtr(), expected_flags);
     // Sanity check: No NSEC added yet
     findTest(ent_name, RRType::A(), ZoneFinder::NXRRSET, true,
-             ConstRRsetPtr(), ZoneFinder::RESULT_DEFAULT,
+             ConstRRsetPtr(), expected_flags,
              NULL, ZoneFinder::FIND_DNSSEC);
 
-    zone_finder_.add(rr_ent_nsec_);
+    zone_finder_.add(rr_nsec_);
     // Should result in NXRRSET, and RESULT_NSEC_SIGNED
     findTest(ent_name, RRType::A(), ZoneFinder::NXRRSET, true,
-             ConstRRsetPtr(), ZoneFinder::RESULT_NSEC_SIGNED);
+             ConstRRsetPtr(),
+             expected_flags | ZoneFinder::RESULT_NSEC_SIGNED);
 
     // And check for the NSEC if DNSSEC_OK
     findTest(ent_name, RRType::A(), ZoneFinder::NXRRSET, true,
-             rr_ent_nsec_, ZoneFinder::RESULT_NSEC_SIGNED,
+             rr_nsec_, expected_flags | ZoneFinder::RESULT_NSEC_SIGNED,
              NULL, ZoneFinder::FIND_DNSSEC);
 }
+
+TEST_F(InMemoryZoneFinderTest,findNSECEmptyNonterminal) {
+    // Non-wildcard case
+    findNSECENTCheck(Name("foo.example.org"));
+}
+
+TEST_F(InMemoryZoneFinderTest,findNSECEmptyNonterminalWildcard) {
+    // Wildcard case
+    findNSECENTCheck(Name("bar.foo.example.org"), ZoneFinder::RESULT_WILDCARD);
+}
+
 
 void
 InMemoryZoneFinderTest::emptyNodeCheck(
@@ -1272,8 +1284,15 @@ InMemoryZoneFinderTest::wildcardCheck(
     // be in the wildcard (so check the wildcard isn't matched at the parent)
     {
         SCOPED_TRACE("Search at parent");
-        findTest(Name("wild.example.org"), RRType::A(), ZoneFinder::NXRRSET,
-                 true, ConstRRsetPtr(), expected_flags, NULL, find_options);
+        if ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED) != 0) {
+            findTest(Name("wild.example.org"), RRType::A(),
+                     ZoneFinder::NXRRSET, true, rr_nsec_, expected_flags,
+                     NULL, find_options);
+        } else {
+            findTest(Name("wild.example.org"), RRType::A(),
+                     ZoneFinder::NXRRSET, true, ConstRRsetPtr(),
+                     expected_flags, NULL, find_options);
+        }
     }
 
     // Search the original name of wildcard
