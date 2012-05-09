@@ -212,11 +212,60 @@ public:
 
     // Identify the RBTree node that best matches the given name.
     // See implementation notes below.
+    // The caller should pass an empty node_path, and it will contain the
+    // search context for possible later use at the caller side.
     template <typename ResultType>
     ResultType findNode(const Name& name,
                         RBTreeNodeChain<Domain>& node_path,
                         ZoneFinder::FindOptions options) const;
+
+private:
+    // A helper method for NSEC-signed zones.  It searches the zone for
+    // the "closest" NSEC corresponding to the search context stored in
+    // node_path (it should contain sufficient information to identify the
+    // previous name of the query name in the zone).  In some cases the
+    // immediate closest name may not have NSEC (when it's under a zone cut
+    // for glue records, or even when the zone is partly broken), so this
+    // method continues the search until it finds a name that has NSEC,
+    // and returns the one found first.  Due to the prerequisite (see below),
+    // it should always succeed.
+    //
+    // node_path must store valid search context (in practice, it's expected
+    // to be set by findNode()); otherwise the underlying RBTree implementation
+    // throws.
+    //
+    // If the zone is not considered NSEC-signed or DNSSEC records were not
+    // required in the original search context (specified in options), this
+    // method doesn't bother to find NSEC, and simply returns NULL.  So, by
+    // definition of "NSEC-signed", when it really tries to find an NSEC it
+    // should succeed; there should be one at least at the zone origin.
+    ConstRBNodeRRsetPtr
+    getClosestNSEC(RBTreeNodeChain<Domain>& node_path,
+                   ZoneFinder::FindOptions options) const;
 };
+
+ConstRBNodeRRsetPtr
+ZoneData::getClosestNSEC(RBTreeNodeChain<Domain>& node_path,
+                         ZoneFinder::FindOptions options) const
+{
+    if ((options & ZoneFinder::FIND_DNSSEC) == 0 || !nsec_signed_) {
+        return (ConstRBNodeRRsetPtr());
+    }
+
+    const DomainNode* prev_node;
+    while ((prev_node = domains_.previousNode(node_path)) != NULL) {
+        if (!prev_node->isEmpty()) {
+            const Domain::const_iterator found =
+                prev_node->getData()->find(RRType::NSEC());
+            if (found != prev_node->getData()->end()) {
+                return (found->second);
+            }
+        }
+    }
+    // This must be impossible and should be an internal bug.
+    // See the description at the method declaration.
+    assert(false);
+}
 
 /// Maintain intermediate data specific to the search context used in
 /// \c find().
@@ -420,7 +469,8 @@ ZoneData::findNode(const Name& name, RBTreeNodeChain<Domain>& node_path,
         }
         // Nothing really matched.
         LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_NOT_FOUND).arg(name);
-        return (ResultType(ZoneFinder::NXDOMAIN, node, state.rrset_));
+        return (ResultType(ZoneFinder::NXDOMAIN, node,
+                           getClosestNSEC(node_path, options)));
     } else {
         // If the name is neither an exact or partial match, it is
         // out of bailiwick, which is considered an error.
