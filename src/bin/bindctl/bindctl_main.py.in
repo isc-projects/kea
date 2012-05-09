@@ -22,6 +22,7 @@ import sys; sys.path.append ('@@PYTHONPATH@@')
 
 from bindctl.moduleinfo import *
 from bindctl.bindcmd import *
+from bindctl import command_sets
 import pprint
 from optparse import OptionParser, OptionValueError
 import isc.util.process
@@ -146,5 +147,6 @@ if __name__ == '__main__':
     tool = BindCmdInterpreter(server_addr, pem_file=options.cert_chain,
                               csv_file_dir=options.csv_file_dir)
     prepare_config_commands(tool)
+    command_sets.prepare_execute_commands(tool)
     result = tool.run()
     sys.exit(result)

@@ -23,6 +23,7 @@ two through the classes in ccsession)
 import isc.cc.data
 import isc.config.module_spec
 import ast
+import copy
 
 class ConfigDataError(Exception): pass
 
@@ -42,7 +43,7 @@ def spec_part_is_map(spec_part):
 def spec_part_is_named_set(spec_part):
     """Returns True if the given spec_part is a dict that contains a
        named_set specification, and False otherwise."""
-    return (type(spec_part) == dict and 'named_map_item_spec' in spec_part)
+    return (type(spec_part) == dict and 'named_set_item_spec' in spec_part)
 
 def check_type(spec_part, value):
     """Does nothing if the value is of the correct type given the
@@ -109,14 +110,17 @@ def convert_type(spec_part, value):
 
             return ret
         elif data_type == "map":
-            map = ast.literal_eval(value)
-            if type(map) == dict:
-                # todo: check types of map contents too
-                return map
-            else:
-                raise isc.cc.data.DataTypeError(
-                           "Value in convert_type not a string "
-                           "specifying a dict")
+            try:
+                map = ast.literal_eval(value)
+                if type(map) == dict:
+                    # todo: check types of map contents too
+                    return map
+                else:
+                    raise isc.cc.data.DataTypeError(
+                               "Value in convert_type not a string "
+                               "specifying a dict")
+            except SyntaxError as se:
+                raise isc.cc.data.DataTypeError("Error parsing map: " + str(se))
         else:
             return value
     except ValueError as err:
@@ -207,7 +211,8 @@ def find_spec_part(element, identifier, strict_identifier = True):
         cur_el = _get_map_or_list(cur_el)
 
     cur_el = _find_spec_part_single(cur_el, id_parts[-1])
-    return cur_el
+    # Due to the raw datatypes we use, it is safer to return a deep copy here
+    return copy.deepcopy(cur_el)
 
 def spec_name_list(spec, prefix="", recurse=False):
     """Returns a full list of all possible item identifiers in the
@@ -415,6 +420,14 @@ class MultiConfigData:
            manager or the modules."""
         return self._local_changes
 
+    def set_local_changes(self, new_local_changes):
+        """Sets the entire set of local changes, used when reverting
+           changes done automatically in case there was a problem (e.g.
+           when executing commands from a script that fails halfway
+           through).
+        """
+        self._local_changes = new_local_changes
+
     def clear_local_changes(self):
         """Reverts all local changes"""
         self._local_changes = {}
@@ -576,8 +589,10 @@ class MultiConfigData:
             if item_type == "list" and (all or first):
                 spec_part_list = spec_part['list_item_spec']
                 list_value, status = self.get_value(identifier)
+                # If not set, and no default, lists will show up as 'None',
+                # but it's better to treat it as an empty list then
                 if list_value is None:
-                    raise isc.cc.data.DataNotFoundError(identifier + " not found")
+                    list_value = []
 
                 if type(list_value) != list:
                     # the identifier specified a single element
@@ -669,6 +684,16 @@ class MultiConfigData:
                 self._append_value_item(result, spec_part, identifier, all, True)
         return result
 
+    def unset(self, identifier):
+        """
+        Reset the value to default.
+        """
+        spec_part = self.find_spec_part(identifier)
+        if spec_part is not None:
+            isc.cc.data.unset(self._local_changes, identifier)
+        else:
+            raise isc.cc.data.DataNotFoundError(identifier + "not found")
+
     def set_value(self, identifier, value):
         """Set the local value at the given identifier to value. If
            there is a specification for the given identifier, the type
@@ -717,6 +742,15 @@ class MultiConfigData:
                                     cur_id_part + id,
                                     cur_value)
             cur_id_part = cur_id_part + id_part + "/"
+
+            # We also need to copy to local if we are changing a named set,
+            # so that the other items in the set do not disappear
+            if spec_part_is_named_set(self.find_spec_part(cur_id_part)):
+                ns_value, ns_status = self.get_value(cur_id_part)
+                if ns_status != MultiConfigData.LOCAL:
+                    isc.cc.data.set(self._local_changes,
+                                    cur_id_part,
+                                    ns_value)
         isc.cc.data.set(self._local_changes, identifier, value)
 
     def _get_list_items(self, item_name):

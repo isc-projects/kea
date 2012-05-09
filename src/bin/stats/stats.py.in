@@ -129,6 +129,8 @@ class Stats:
         self.module_name = self.mccs.get_module_spec().get_module_name()
         self.modules = {}
         self.statistics_data = {}
+        # statistics data by each pid
+        self.statistics_data_bypid = {}
         # get commands spec
         self.commands_spec = self.mccs.get_module_spec().get_commands_spec()
         # add event handler related command_handler of ModuleCCSession
@@ -265,36 +267,129 @@ class Stats:
                          + "owner: " + str(owner) + ", "
                          + "name: " + str(name))
 
-    def update_statistics_data(self, owner=None, **data):
+    def update_statistics_data(self, owner=None, pid=-1, **data):
         """
         change statistics date of specified module into specified
         data. It updates information of each module first, and it
         updates statistics data. If specified data is invalid for
         statistics spec of specified owner, it returns a list of error
-        messeges. If there is no error or if neither owner nor data is
-        specified in args, it returns None.
+        messages. If there is no error or if neither owner nor data is
+        specified in args, it returns None. pid is the process id of
+        the sender module in order for stats to identify which
+        instance sends statistics data in the situation that multiple
+        instances are working.
         """
+        # Note:
+        # The fix of #1751 is for multiple instances working. It is
+        # assumed here that they send different statistics data with
+        # each PID. Stats should save their statistics data by
+        # PID. The statistics data, which is the existing variable, is
+        # preserved by accumlating from statistics data by PID. This
+        # is an ad-hoc fix because administrators can not see
+        # statistics by each instance via bindctl or HTTP/XML. These
+        # interfaces aren't changed in this fix.
+
+        def _accum_bymodule(statistics_data_bypid):
+            # This is an internal function for the superordinate
+            # function. It accumulates statistics data of each PID by
+            # module. It returns the accumulation result.
+            def _accum(a, b):
+                # If the first arg is dict or list type, two values
+                # would be merged and accumlated.
+                if type(a) is dict:
+                    return dict([ (k, _accum(v, b[k])) \
+                                      if k in b else (k, v) \
+                                      for (k, v) in a.items() ] \
+                                    + [ (k, v) \
+                                            for (k, v) in b.items() \
+                                            if k not in a ])
+                elif type(a) is list:
+                    return [ _accum(a[i], b[i]) \
+                                 if len(b) > i else a[i] \
+                                 for i in range(len(a)) ] \
+                                 + [ b[i] \
+                                         for i in range(len(b)) \
+                                         if len(a) <= i ]
+                # If the first arg is integer or float type, two
+                # values are just added.
+                elif type(a) is int or type(a) is float:
+                    return a + b
+                # If the first arg is str or other types than above,
+                # then it just returns the first arg which is assumed
+                # to be the newer value.
+                return a
+            ret = {}
+            for data in statistics_data_bypid.values():
+                ret.update(_accum(data, ret))
+            return ret
+
+        # Firstly, it gets default statistics data in each spec file.
         self.update_modules()
         statistics_data = {}
         for (name, module) in self.modules.items():
             value = get_spec_defaults(module.get_statistics_spec())
             if module.validate_statistics(True, value):
                 statistics_data[name] = value
-        for (name, value) in self.statistics_data.items():
-            if name in statistics_data:
-                statistics_data[name].update(value)
-            else:
-                statistics_data[name] = value
         self.statistics_data = statistics_data
+
+        # If the "owner" and "data" arguments in this function are
+        # specified, then the variable of statistics data of each pid
+        # would be updated.
+        errors = []
         if owner and data:
-            errors = []
             try:
                 if self.modules[owner].validate_statistics(False, data, errors):
-                    self.statistics_data[owner].update(data)
-                    return
+                    if owner in self.statistics_data_bypid:
+                        if pid in self.statistics_data_bypid[owner]:
+                            self.statistics_data_bypid[owner][pid].update(data)
+                        else:
+                            self.statistics_data_bypid[owner][pid] = data
+                    else:
+                        self.statistics_data_bypid[owner] = { pid : data }
             except KeyError:
                 errors.append("unknown module name: " + str(owner))
-            return errors
+
+        # If there are inactive instances, which was actually running
+        # on the system before, their statistics data would be
+        # removed. To find inactive instances, it invokes the
+        # "show_processes" command to Boss via the cc session. Then it
+        # gets active instance list and compares its PIDs with PIDs in
+        # statistics data which it already has. If inactive instances
+        # are found, it would remove their statistics data.
+        seq = self.cc_session.group_sendmsg(
+            isc.config.ccsession.create_command("show_processes", None),
+            "Boss")
+        (answer, env) = self.cc_session.group_recvmsg(False, seq)
+        if answer:
+            (rcode, value) = isc.config.ccsession.parse_answer(answer)
+            if rcode == 0:
+                if type(value) is list and len(value) > 0 \
+                        and type(value[0]) is list and len(value[0]) > 1:
+                    mlist = [ k for k in self.statistics_data_bypid.keys() ]
+                    for m in mlist:
+                        # PID list which it has before except for -1
+                        plist1 = [ p for p in self.statistics_data_bypid[m]\
+                                       .keys() if p != -1]
+                        # PID list of active instances which is
+                        # received from Boss
+                        plist2 = [ v[0] for v in value \
+                                       if v[1].lower().find(m.lower()) \
+                                       >= 0 ]
+                        # get inactive instance list by the difference
+                        # between plist1 and plist2
+                        nplist = set(plist1).difference(set(plist2))
+                        for p in nplist:
+                            self.statistics_data_bypid[m].pop(p)
+                        if self.statistics_data_bypid[m]:
+                            if m in self.statistics_data:
+                                self.statistics_data[m].update(
+                                    _accum_bymodule(
+                                        self.statistics_data_bypid[m]))
+                        # remove statistics data of the module with no
+                        # PID
+                        else:
+                            self.statistics_data_bypid.pop(m)
+        if errors: return errors
 
     def command_status(self):
         """
@@ -379,11 +474,11 @@ class Stats:
                 1, "specified arguments are incorrect: " \
                     + "owner: " + str(owner) + ", name: " + str(name))
 
-    def command_set(self, owner, data):
+    def command_set(self, owner, pid=-1, data={}):
         """
         handle set command
         """
-        errors = self.update_statistics_data(owner, **data)
+        errors = self.update_statistics_data(owner, pid, **data)
         if errors:
             return isc.config.create_answer(
                 1, "errors while setting statistics data: " \

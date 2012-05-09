@@ -48,7 +48,8 @@ MessageReader::readFile(const string& file, MessageReader::Mode mode) {
     // Open the file.
     ifstream infile(file.c_str());
     if (infile.fail()) {
-        throw MessageException(LOG_INPUT_OPEN_FAIL, file, strerror(errno));
+        isc_throw_4(MessageException, "Failed to open message file",
+                    LOG_INPUT_OPEN_FAIL, file, strerror(errno), 0);
     }
 
     // Loop round reading it.  As we process the file one line at a time,
@@ -65,7 +66,8 @@ MessageReader::readFile(const string& file, MessageReader::Mode mode) {
 
     // Why did the loop terminate?
     if (!infile.eof()) {
-        throw MessageException(LOG_READ_ERROR, file, strerror(errno));
+        isc_throw_4(MessageException, "Error reading message file",
+                    LOG_READ_ERROR, file, strerror(errno), 0);
     }
     infile.close();
 }
@@ -114,7 +116,9 @@ MessageReader::parseDirective(const std::string& text) {
     } else {
 
         // Unrecognised directive
-        throw MessageException(LOG_UNRECOGNISED_DIRECTIVE, tokens[0], lineno_);
+        isc_throw_3(MessageException, "Unrecognized directive",
+                    LOG_UNRECOGNISED_DIRECTIVE, tokens[0],
+                    lineno_);
     }
 }
 
@@ -138,13 +142,15 @@ MessageReader::parsePrefix(const vector<string>& tokens) {
         // and numeric characters (and underscores) and does not start with a
         // digit.
         if (invalidSymbol(prefix_)) {
-            throw MessageException(LOG_PREFIX_INVALID_ARG, prefix_, lineno_);
+            isc_throw_3(MessageException, "Invalid prefix",
+                        LOG_PREFIX_INVALID_ARG, prefix_, lineno_);
         }
 
     } else {
 
         // Too many arguments
-        throw MessageException(LOG_PREFIX_EXTRA_ARGS, lineno_);
+        isc_throw_2(MessageException, "Too many arguments",
+                    LOG_PREFIX_EXTRA_ARGS, lineno_);
     }
 }
 
@@ -172,10 +178,12 @@ MessageReader::parseNamespace(const vector<string>& tokens) {
 
     // Check argument count
     if (tokens.size() < 2) {
-        throw MessageException(LOG_NAMESPACE_NO_ARGS, lineno_);
+        isc_throw_2(MessageException, "No arguments", LOG_NAMESPACE_NO_ARGS,
+                    lineno_);
 
     } else if (tokens.size() > 2) {
-        throw MessageException(LOG_NAMESPACE_EXTRA_ARGS, lineno_);
+        isc_throw_2(MessageException, "Too many arguments",
+                    LOG_NAMESPACE_EXTRA_ARGS, lineno_);
 
     }
 
@@ -187,12 +195,14 @@ MessageReader::parseNamespace(const vector<string>& tokens) {
                                       "abcdefghijklmnopqrstuvwxyz"
                                       "0123456789_:";
     if (tokens[1].find_first_not_of(valid_chars) != string::npos) {
-        throw MessageException(LOG_NAMESPACE_INVALID_ARG, tokens[1], lineno_);
+        isc_throw_3(MessageException, "Invalid argument",
+                    LOG_NAMESPACE_INVALID_ARG, tokens[1], lineno_);
     }
 
     // All OK - unless the namespace has already been set.
     if (ns_.size() != 0) {
-        throw MessageException(LOG_DUPLICATE_NAMESPACE, lineno_);
+        isc_throw_2(MessageException, "Duplicate namespace",
+                    LOG_DUPLICATE_NAMESPACE, lineno_);
     }
 
     // Prefix has not been set, so set it and return success.
@@ -219,7 +229,8 @@ MessageReader::parseMessage(const std::string& text, MessageReader::Mode mode) {
 
     // A line comprising just the message introducer is not valid.
     if (text.size() == 1) {
-        throw MessageException(LOG_NO_MESSAGE_ID, text, lineno_);
+        isc_throw_3(MessageException, "No message ID", LOG_NO_MESSAGE_ID,
+                    text, lineno_);
     }
 
     // Strip off the introducer and any leading space after that.
@@ -230,7 +241,8 @@ MessageReader::parseMessage(const std::string& text, MessageReader::Mode mode) {
     if (first_delim == string::npos) {
 
         // Just a single token in the line - this is not valid
-        throw MessageException(LOG_NO_MESSAGE_TEXT, message_line, lineno_);
+        isc_throw_3(MessageException, "No message text", LOG_NO_MESSAGE_TEXT,
+                    message_line, lineno_);
     }
 
     // Extract the first token into the message ID, preceding it with the
@@ -240,7 +252,8 @@ MessageReader::parseMessage(const std::string& text, MessageReader::Mode mode) {
     string ident = prefix_ + message_line.substr(0, first_delim);
     if (prefix_.empty()) {
         if (invalidSymbol(ident)) {
-            throw MessageException(LOG_INVALID_MESSAGE_ID, ident, lineno_);
+            isc_throw_3(MessageException, "Invalid message ID",
+                        LOG_INVALID_MESSAGE_ID, ident, lineno_);
         }
     }
     isc::util::str::uppercase(ident);
@@ -252,7 +265,8 @@ MessageReader::parseMessage(const std::string& text, MessageReader::Mode mode) {
         // ?? This happens if there are trailing delimiters, which should not
         // occur as we have stripped trailing spaces off the line.  Just treat
         // this as a single-token error for simplicity's sake.
-        throw MessageException(LOG_NO_MESSAGE_TEXT, message_line, lineno_);
+        isc_throw_3(MessageException, "No message text", LOG_NO_MESSAGE_TEXT,
+                    message_line, lineno_);
     }
 
     // Add the result to the dictionary and to the non-added list if the add to

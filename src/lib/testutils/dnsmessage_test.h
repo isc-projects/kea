@@ -12,6 +12,9 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#ifndef __ISC_TESTUTILS_DNSMESSAGETEST_H
+#define __ISC_TESTUTILS_DNSMESSAGETEST_H 1
+
 #include <algorithm>
 #include <functional>
 #include <iosfwd>
@@ -157,7 +160,42 @@ public:
 private:
     std::vector<isc::dns::ConstRRsetPtr>& rrsets_;
 };
+
+class RRsetDumper {
+public:
+    RRsetDumper(std::string& output) :
+        output_(output)
+    {}
+    void operator()(isc::dns::ConstRRsetPtr rrset) {
+        output_ += "  " + rrset->toText();
+    }
+private:
+    std::string& output_;
+};
 }
+
+/// \brief A converter from a string to RRset.
+///
+/// This is a convenient shortcut for tests that need to create an RRset
+/// from textual representation with a single call to a function.
+///
+/// An RRset consisting of multiple RRs can be constructed, but only one
+/// RRset is allowed.  If the given string contains mixed types of RRs
+/// it throws an \c isc::Unexpected exception.
+///
+/// \param text_rrset A complete textual representation of an RRset.
+///  It must meets the assumption of the \c dns::masterLoad() function.
+/// \param rrclass The RR class of the RRset.  Note that \c text_rrset should
+/// contain the RR class, but it's needed for \c dns::masterLoad().
+/// \param origin The zone origin where the RR is expected to belong.  This
+/// parameter normally doesn't have to be specified, but for an SOA RR it
+/// must be set to its owner name, due to the internal check of
+/// \c dns::masterLoad().
+isc::dns::RRsetPtr textToRRset(const std::string& text_rrset,
+                               const isc::dns::RRClass& rrclass =
+                               isc::dns::RRClass::IN(),
+                               const isc::dns::Name& origin =
+                               isc::dns::Name::ROOT_NAME());
 
 /// Set of unit tests to check if two sets of RRsets are identical.
 ///
@@ -195,6 +233,10 @@ rrsetsCheck(EXPECTED_ITERATOR expected_begin, EXPECTED_ITERATOR expected_end,
             ACTUAL_ITERATOR actual_begin, ACTUAL_ITERATOR actual_end)
 {
     std::vector<isc::dns::ConstRRsetPtr> checked_rrsets; // for duplicate check
+    std::string expected_text, actual_text;
+    std::for_each(expected_begin, expected_end,
+                  detail::RRsetDumper(expected_text));
+    std::for_each(actual_begin, actual_end, detail::RRsetDumper(actual_text));
     unsigned int rrset_matched = 0;
     ACTUAL_ITERATOR it;
     for (it = actual_begin; it != actual_end; ++it) {
@@ -217,11 +259,16 @@ rrsetsCheck(EXPECTED_ITERATOR expected_begin, EXPECTED_ITERATOR expected_end,
         }
     }
 
-    // make sure all expected RRsets are in actual sets
-    EXPECT_EQ(std::distance(expected_begin, expected_end), rrset_matched);
-    // make sure rrsets only contains expected RRsets
-    EXPECT_EQ(std::distance(expected_begin, expected_end),
-              std::distance(actual_begin, actual_end));
+    {
+        SCOPED_TRACE(std::string("Comparing two RRsets:\n") +
+                     "Actual:\n" + actual_text +
+                     "Expected:\n" + expected_text);
+        // make sure all expected RRsets are in actual sets
+        EXPECT_EQ(std::distance(expected_begin, expected_end), rrset_matched);
+        // make sure rrsets only contains expected RRsets
+        EXPECT_EQ(std::distance(expected_begin, expected_end),
+                  std::distance(actual_begin, actual_end));
+    }
 }
 
 /// Set of unit tests to check if two sets of RRsets are identical using
@@ -318,6 +365,7 @@ rrsetsCheck(const std::string& expected,
 
 } // end of namespace testutils
 } // end of namespace isc
+#endif  // __ISC_TESTUTILS_DNSMESSAGETEST_H
 
 // Local Variables:
 // mode: c++

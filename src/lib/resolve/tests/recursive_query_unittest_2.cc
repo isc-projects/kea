@@ -343,7 +343,8 @@ public:
 
         // Convert to wire format
         udp_send_buffer_->clear();
-        MessageRenderer renderer(*udp_send_buffer_);
+        MessageRenderer renderer;
+        renderer.setBuffer(udp_send_buffer_.get());
         msg.toWire(renderer);
 
         if (mangle_response) {
@@ -477,10 +478,9 @@ public:
         setReferralExampleOrg(msg);
 
         // Convert to wire format
-        // Use a temporary buffer for the dns wire data (we copy it
+        // Use a temporary renderer for the dns wire data (we copy it
         // to the 'real' buffer below)
-        OutputBuffer msg_buf(BUFFER_SIZE);
-        MessageRenderer renderer(msg_buf);
+        MessageRenderer renderer;
         msg.toWire(renderer);
 
         // Expected next state (when checked) is the UDP query to example.org.
@@ -496,12 +496,13 @@ public:
         // followed by the actual data. We copy them to a new buffer
         // first
         tcp_send_buffer_->clear();
-        tcp_send_buffer_->writeUint16(msg_buf.getLength());
-        tcp_send_buffer_->writeData(msg_buf.getData(), msg_buf.getLength());
+        tcp_send_buffer_->writeUint16(renderer.getLength());
+        tcp_send_buffer_->writeData(renderer.getData(), renderer.getLength());
         tcp_socket_.async_send(asio::buffer(tcp_send_buffer_->getData(),
                                             tcp_send_buffer_->getLength()),
-                               boost::bind(&RecursiveQueryTest2::tcpSendHandler, this,
-                                           tcp_send_buffer_->getLength(), _1, _2));
+                               boost::bind(
+                                   &RecursiveQueryTest2::tcpSendHandler, this,
+                                   tcp_send_buffer_->getLength(), _1, _2));
     }
 
     /// \brief Completion Handler for Sending TCP data

@@ -12,8 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <algorithm>
-#include <vector>
+#include "faked_nsec3.h"
 
 #include <datasrc/sqlite3_accessor.h>
 
@@ -21,14 +20,20 @@
 
 #include <dns/rrclass.h>
 
+#include <sqlite3.h>
+
 #include <gtest/gtest.h>
+
 #include <boost/lexical_cast.hpp>
 #include <boost/scoped_ptr.hpp>
+
+#include <algorithm>
+#include <vector>
 #include <fstream>
-#include <sqlite3.h>
 
 using namespace std;
 using namespace isc::datasrc;
+using namespace isc::datasrc::test;
 using boost::lexical_cast;
 using isc::data::ConstElementPtr;
 using isc::data::Element;
@@ -37,15 +42,22 @@ using isc::dns::Name;
 
 namespace {
 // Some test data
-std::string SQLITE_DBFILE_EXAMPLE = TEST_DATA_DIR "/test.sqlite3";
-std::string SQLITE_DBFILE_EXAMPLE2 = TEST_DATA_DIR "/example2.com.sqlite3";
-std::string SQLITE_DBNAME_EXAMPLE2 = "sqlite3_example2.com.sqlite3";
-std::string SQLITE_DBFILE_EXAMPLE_ROOT = TEST_DATA_DIR "/test-root.sqlite3";
-std::string SQLITE_DBNAME_EXAMPLE_ROOT = "sqlite3_test-root.sqlite3";
-std::string SQLITE_DBFILE_BROKENDB = TEST_DATA_DIR "/brokendb.sqlite3";
-std::string SQLITE_DBFILE_MEMORY = ":memory:";
-std::string SQLITE_DBFILE_EXAMPLE_ORG = TEST_DATA_DIR "/example.org.sqlite3";
-std::string SQLITE_DBFILE_DIFFS = TEST_DATA_DIR "/diffs.sqlite3";
+const char* const SQLITE_DBFILE_EXAMPLE = TEST_DATA_DIR "/test.sqlite3";
+const char* const SQLITE_DBFILE_EXAMPLE2 =
+    TEST_DATA_DIR "/example2.com.sqlite3";
+const char* const SQLITE_DBNAME_EXAMPLE2 = "sqlite3_example2.com.sqlite3";
+const char* const SQLITE_DBFILE_EXAMPLE_ROOT =
+    TEST_DATA_DIR "/test-root.sqlite3";
+const char* const SQLITE_DBNAME_EXAMPLE_ROOT = "sqlite3_test-root.sqlite3";
+const char* const SQLITE_DBFILE_BROKENDB = TEST_DATA_DIR "/brokendb.sqlite3";
+const char* const SQLITE_DBFILE_MEMORY = ":memory:";
+const char* const SQLITE_DBFILE_EXAMPLE_ORG =
+    TEST_DATA_DIR "/example.org.sqlite3";
+const char* const SQLITE_DBFILE_DIFFS = TEST_DATA_DIR "/diffs.sqlite3";
+const char* const SQLITE_DBFILE_NEWSCHEMA = TEST_DATA_DIR "/newschema.sqlite3";
+const char* const SQLITE_DBFILE_OLDSCHEMA = TEST_DATA_DIR "/oldschema.sqlite3";
+const char* const SQLITE_DBFILE_NEW_MINOR_SCHEMA =
+    TEST_DATA_DIR "/new_minor_schema.sqlite3";
 
 // The following file must be non existent and must be non"creatable";
 // the sqlite3 library will try to create a new DB file if it doesn't exist,
@@ -72,6 +84,20 @@ TEST(SQLite3Open, notExist) {
 TEST(SQLite3Open, brokenDB) {
     EXPECT_THROW(SQLite3Accessor accessor(SQLITE_DBFILE_BROKENDB, "IN"),
                  SQLite3Error);
+}
+
+// Different schema versions
+TEST(SQLite3Open, differentSchemaVersions) {
+    // If the major version is different from the current one, it should fail.
+    EXPECT_THROW(SQLite3Accessor(SQLITE_DBFILE_NEWSCHEMA, "IN"),
+                 IncompatibleDbVersion);
+    EXPECT_THROW(SQLite3Accessor(SQLITE_DBFILE_OLDSCHEMA, "IN"),
+                 IncompatibleDbVersion);
+
+    // Difference in the minor version is okay (as of this test written
+    // the current minor version is 0, so we can only test the case with a
+    // higher minor version).
+    EXPECT_NO_THROW(SQLite3Accessor(SQLITE_DBFILE_NEW_MINOR_SCHEMA, "IN"));
 }
 
 // Test we can create the schema on the fly
@@ -171,6 +197,151 @@ TEST_F(SQLite3AccessorTest, iterator) {
 
     // And make sure calling it again won't cause problems.
     EXPECT_FALSE(context->getNext(data));
+}
+
+// This tests the iterator through the whole zone returns NSEC3 records as
+// well. We test this specifically, as it lives in separate table and needs
+// extra handling.
+TEST_F(SQLite3AccessorTest, nsec3Iterator) {
+    // Get the zone
+    const std::pair<bool, int>
+        zone_info(accessor->getZone("sql2.example.com."));
+    ASSERT_TRUE(zone_info.first);
+
+    // Iterate through it
+    DatabaseAccessor::IteratorContextPtr
+        context(accessor->getAllRecords(zone_info.second));
+
+    // We just pick a random NSEC3 to check, the check of complete iterator
+    // is in the above test. In addition, we count the number of NSEC3, RRSIG
+    // and all records, as some kind of check it returns all the data.
+    std::string data[DatabaseAccessor::COLUMN_COUNT];
+
+    size_t nsec3count(0), rrsigcount(0), recordcount(0);
+    bool nsec3match(false);
+    while (context->getNext(data)) {
+        if (data[DatabaseAccessor::TYPE_COLUMN] == "NSEC3") {
+            nsec3count ++;
+            if (data[DatabaseAccessor::NAME_COLUMN] ==
+                "1BB7SO0452U1QHL98UISNDD9218GELR5.sql2.example.com.") {
+                nsec3match = true;
+                EXPECT_EQ("7200", data[DatabaseAccessor::TTL_COLUMN]);
+                EXPECT_EQ("1 0 10 FEEDABEE 4KLSVDE8KH8G95VU68R7AHBE1CPQN38J",
+                          data[DatabaseAccessor::RDATA_COLUMN]);
+            }
+        } else if (data[DatabaseAccessor::TYPE_COLUMN] == "RRSIG") {
+            rrsigcount ++;
+        }
+        recordcount ++;
+    }
+
+    // We counted everything now, so check there's nothing else to count
+    EXPECT_EQ(11, nsec3count);
+    EXPECT_EQ(22, rrsigcount);
+    EXPECT_EQ(46, recordcount);
+    EXPECT_TRUE(nsec3match) << "No NSEC3 found when iterating the zone";
+}
+
+// This tests getting NSEC3 records
+TEST_F(SQLite3AccessorTest, nsec3) {
+    const std::pair<bool, int>
+        zone_info(accessor->getZone("sql2.example.com."));
+    ASSERT_TRUE(zone_info.first);
+
+    DatabaseAccessor::IteratorContextPtr
+        context(accessor->getNSEC3Records("1BB7SO0452U1QHL98UISNDD9218GELR5",
+                                          zone_info.second));
+    // This relies on specific ordering in the DB. Is it OK?
+    // The name field is empty, as well as the sigtype one. This is OK, as
+    // both are not needed and the interface allows it.
+    checkRR(context, "", "7200", "NSEC3",
+            "1 0 10 FEEDABEE 4KLSVDE8KH8G95VU68R7AHBE1CPQN38J");
+    checkRR(context, "", "7200", "RRSIG",
+            "NSEC3 5 4 7200 20100410172647 20100311172647 63192 "
+            "sql2.example.com. gNIVj4T8t51fEU6kOPpvK7HOGBFZGbalN5ZK "
+            "mInyrww6UWZsUNdw07ge6/U6HfG+/s61RZ/L is2M6yUWHyXbNbj/"
+            "QqwqgadG5dhxTArfuR02 xP600x0fWX8LXzW4yLMdKVxGbzYT+vvGz71o "
+            "8gHSY5vYTtothcZQa4BMKhmGQEk=");
+
+    // And that's all
+    std::string data[DatabaseAccessor::COLUMN_COUNT];
+    EXPECT_FALSE(context->getNext(data));
+
+    // Calling again won't hurt
+    EXPECT_FALSE(context->getNext(data));
+
+    // This one should be empty ‒ no data here
+    context = accessor->getNSEC3Records("NO_SUCH_HASH", zone_info.second);
+    EXPECT_FALSE(context->getNext(data));
+    // Still nothing? ;-)
+    EXPECT_FALSE(context->getNext(data));
+}
+
+// This tests getting a previoeus hash in the NSEC3 namespace of a zone,
+// including a wrap-around and asking for a hash that does not exist in the.
+// zone at all.
+TEST_F(SQLite3AccessorTest, nsec3Previous) {
+    // Get the zone
+    const std::pair<bool, int>
+        zone_info(accessor->getZone("sql2.example.com."));
+    ASSERT_TRUE(zone_info.first);
+
+    std::string data[DatabaseAccessor::COLUMN_COUNT];
+
+    // Test a previous hash for something that is in the zone
+    // (ensuring it is really there)
+    DatabaseAccessor::IteratorContextPtr
+        context(accessor->getNSEC3Records("703OOGCKF8VEV1N7U64D1JG19URETN8N",
+                                          zone_info.second));
+    EXPECT_TRUE(context->getNext(data));
+    EXPECT_EQ("56IEQ664LHDAKVPE2FL179MSM3QAOFVC", accessor->
+              findPreviousNSEC3Hash(zone_info.second,
+                                    "703OOGCKF8VEV1N7U64D1JG19URETN8N"));
+
+    // Test a previous hash for something that is not in the
+    // zone
+    context = accessor->getNSEC3Records("702OOGCKF8VEV1N7U64D1JG19URETN8N",
+                                        zone_info.second);
+    EXPECT_FALSE(context->getNext(data));
+    EXPECT_EQ("56IEQ664LHDAKVPE2FL179MSM3QAOFVC", accessor->
+              findPreviousNSEC3Hash(zone_info.second,
+                                    "702OOGCKF8VEV1N7U64D1JG19URETN8N"));
+
+    // Search at the first item, should wrap around
+    context = accessor->getNSEC3Records("1BB7SO0452U1QHL98UISNDD9218GELR5",
+                                        zone_info.second);
+    EXPECT_TRUE(context->getNext(data));
+    EXPECT_EQ("RKBUCQT8T78GV6QBCGBHCHC019LG73SJ", accessor->
+              findPreviousNSEC3Hash(zone_info.second,
+                                    "1BB7SO0452U1QHL98UISNDD9218GELR5"));
+
+    // Search before the first item, should wrap around
+    context = accessor->getNSEC3Records("0BB7SO0452U1QHL98UISNDD9218GELR5",
+                                        zone_info.second);
+    EXPECT_FALSE(context->getNext(data));
+    EXPECT_EQ("RKBUCQT8T78GV6QBCGBHCHC019LG73SJ", accessor->
+              findPreviousNSEC3Hash(zone_info.second,
+                                    "0BB7SO0452U1QHL98UISNDD9218GELR5"));
+
+    // Search after the last item (should return the last one)
+    context = accessor->getNSEC3Records("RRBUCQT8T78GV6QBCGBHCHC019LG73SJ",
+                                        zone_info.second);
+    EXPECT_FALSE(context->getNext(data));
+    EXPECT_EQ("RKBUCQT8T78GV6QBCGBHCHC019LG73SJ", accessor->
+              findPreviousNSEC3Hash(zone_info.second,
+                                    "RRBUCQT8T78GV6QBCGBHCHC019LG73SJ"));
+}
+
+// Check it throws when we want a previous NSEC3 hash in an unsigned zone
+TEST_F(SQLite3AccessorTest, nsec3PreviousUnsigned) {
+    // This zone did not look signed in the test file.
+    const std::pair<bool, int>
+        unsigned_zone_info(accessor->getZone("example.com."));
+
+    EXPECT_THROW(accessor->
+                 findPreviousNSEC3Hash(unsigned_zone_info.second,
+                                       "0BB7SO0452U1QHL98UISNDD9218GELR5"),
+                 DataSourceError);
 }
 
 // This tests the difference iterator context
@@ -297,11 +468,11 @@ TEST(SQLite3Open, getDBNameExampleROOT) {
 // Simple function to match records
 void
 checkRecordRow(const std::string columns[],
-               const std::string& field0,
-               const std::string& field1,
-               const std::string& field2,
-               const std::string& field3,
-               const std::string& field4)
+               const std::string& field0, // for type
+               const std::string& field1, // for TTL
+               const std::string& field2, // for "sigtype"
+               const std::string& field3, // for rdata
+               const std::string& field4) // for name
 {
     EXPECT_EQ(field0, columns[DatabaseAccessor::TYPE_COLUMN]);
     EXPECT_EQ(field1, columns[DatabaseAccessor::TTL_COLUMN]);
@@ -570,13 +741,30 @@ const char* const deleted_data[] = {
     // Existing data to be removed commonly used by some of the tests below
     "foo.bar.example.com.", "A", "192.0.2.1"
 };
+const char* const nsec3_data[DatabaseAccessor::ADD_NSEC3_COLUMN_COUNT] = {
+    // example NSEC3 parameters.  Using "apex_hash" just as a convenient
+    // shortcut; otherwise it has nothing to do with the zone apex for the
+    // purpose of this test.
+    apex_hash, "3600", "NSEC3",
+    "1 1 12 AABBCCDD 2T7B4G4VSA5SMI47K61MV5BV1A22BOJR NS SOA"
+};
+const char* const nsec3_sig_data[DatabaseAccessor::ADD_NSEC3_COLUMN_COUNT] = {
+    ns1_hash, "3600", "RRSIG",
+    "NSEC3 5 3 3600 20000101000000 20000201000000 12345 "
+    "example.com. FAKEFAKEFAKE"
+};
+const char* const nsec3_deleted_data[] = {
+    // Delete parameters for nsec3_data
+    apex_hash, nsec3_data[DatabaseAccessor::ADD_NSEC3_TYPE],
+    nsec3_data[DatabaseAccessor::ADD_NSEC3_RDATA]
+};
 
 class SQLite3Update : public SQLite3AccessorTest {
 protected:
     SQLite3Update() {
         // Note: if "installing" the test file fails some of the subsequent
         // tests would fail.
-        const char *install_cmd = INSTALL_PROG " " TEST_DATA_DIR
+        const char *install_cmd = INSTALL_PROG " -c " TEST_DATA_DIR
                                   "/test.sqlite3 " TEST_DATA_BUILDDIR
                                   "/test.sqlite3.copied";
         if (system(install_cmd) != 0) {
@@ -596,6 +784,7 @@ protected:
     int zone_id;
     std::string get_columns[DatabaseAccessor::COLUMN_COUNT];
     std::string add_columns[DatabaseAccessor::ADD_COLUMN_COUNT];
+    std::string add_nsec3_columns[DatabaseAccessor::ADD_NSEC3_COLUMN_COUNT];
     std::string del_params[DatabaseAccessor::DEL_PARAM_COUNT];
     std::string diff_params[DatabaseAccessor::DIFF_PARAM_COUNT];
 
@@ -623,6 +812,28 @@ checkRecords(SQLite3Accessor& accessor, int zone_id, const std::string& name,
     EXPECT_TRUE(it == expected_rows.end());
 }
 
+// Similar to the previous one, but checking transactions on the nsec3 table.
+void
+checkNSEC3Records(SQLite3Accessor& accessor, int zone_id,
+                  const std::string& hash,
+                  vector<const char* const*> expected_rows)
+{
+    DatabaseAccessor::IteratorContextPtr iterator =
+        accessor.getNSEC3Records(hash, zone_id);
+    std::string columns[DatabaseAccessor::COLUMN_COUNT];
+    vector<const char* const*>::const_iterator it = expected_rows.begin();
+    while (iterator->getNext(columns)) {
+        ASSERT_TRUE(it != expected_rows.end());
+        checkRecordRow(columns, (*it)[DatabaseAccessor::ADD_NSEC3_TYPE],
+                       (*it)[DatabaseAccessor::ADD_NSEC3_TTL],
+                       "",      // sigtype, should always be empty
+                       (*it)[DatabaseAccessor::ADD_NSEC3_RDATA],
+                       "");     // name, always empty
+        ++it;
+    }
+    EXPECT_TRUE(it == expected_rows.end());
+}
+
 TEST_F(SQLite3Update, emptyUpdate) {
     // If we do nothing between start and commit, the zone content
     // should be intact.
@@ -643,6 +854,26 @@ TEST_F(SQLite3Update, flushZone) {
     checkRecords(*accessor, zone_id, "foo.bar.example.com.", empty_stored);
     accessor->commit();
     checkRecords(*accessor, zone_id, "foo.bar.example.com.", empty_stored);
+}
+
+TEST_F(SQLite3Update, flushZoneWithNSEC3) {
+    // Similar to the previous case, but make sure the separate nsec3 table
+    // is also cleared.  We first need to add something to the table.
+    zone_id = accessor->startUpdateZone("example.com.", false).second;
+    copy(nsec3_data, nsec3_data + DatabaseAccessor::ADD_NSEC3_COLUMN_COUNT,
+         add_nsec3_columns);
+    accessor->addNSEC3RecordToZone(add_nsec3_columns);
+    accessor->commit();
+
+    // Confirm it surely exists.
+    expected_stored.clear();
+    expected_stored.push_back(nsec3_data);
+    checkNSEC3Records(*accessor, zone_id, apex_hash, expected_stored);
+
+    // Then starting zone replacement.  the NSEC3 record should have been
+    // removed.
+    zone_id = accessor->startUpdateZone("example.com.", true).second;
+    checkNSEC3Records(*accessor, zone_id, apex_hash, empty_stored);
 }
 
 TEST_F(SQLite3Update, readWhileUpdate) {
@@ -669,17 +900,27 @@ TEST_F(SQLite3Update, rollback) {
     checkRecords(*accessor, zone_id, "foo.bar.example.com.", expected_stored);
 }
 
-TEST_F(SQLite3Update, rollbackFailure) {
+TEST_F(SQLite3Update,  rollbackFailure) {
     // This test emulates a rare scenario of making rollback attempt fail.
     // The iterator is paused in the middle of getting records, which prevents
     // the rollback operation at the end of the test.
 
+    // Since SQLite3 version 3.7.11, rollbacks do not fail on pending
+    // transactions anymore, making this test fail (and moot), but the
+    // transactions will fail after it, so, depending on version,
+    // we test whether that happens and is caught
     string columns[DatabaseAccessor::COLUMN_COUNT];
     iterator = accessor->getRecords("example.com.", zone_id);
     EXPECT_TRUE(iterator->getNext(columns));
 
     accessor->startUpdateZone("example.com.", true);
+#if SQLITE_VERSION_NUMBER < 3007011
     EXPECT_THROW(accessor->rollback(), DataSourceError);
+    EXPECT_NO_THROW(iterator->getNext(columns));
+#else
+    EXPECT_NO_THROW(accessor->rollback());
+    EXPECT_THROW(iterator->getNext(columns), DataSourceError);
+#endif
 }
 
 TEST_F(SQLite3Update, commitConflict) {
@@ -748,6 +989,62 @@ TEST_F(SQLite3Update, addRecord) {
     checkRecords(*accessor, zone_id, "newdata.example.com.", expected_stored);
 }
 
+TEST_F(SQLite3Update, addNSEC3Record) {
+    // Similar to the previous test, but for NSEC3-related records
+    checkRecords(*accessor, zone_id, apex_hash, empty_stored);
+    checkRecords(*accessor, zone_id, ns1_hash, empty_stored);
+
+    zone_id = accessor->startUpdateZone("example.com.", false).second;
+    // Add an NSEC3
+    copy(nsec3_data, nsec3_data + DatabaseAccessor::ADD_NSEC3_COLUMN_COUNT,
+         add_nsec3_columns);
+    accessor->addNSEC3RecordToZone(add_nsec3_columns);
+
+    // Add an RRSIG for NSEC3
+    copy(nsec3_sig_data,
+         nsec3_sig_data + DatabaseAccessor::ADD_NSEC3_COLUMN_COUNT,
+         add_nsec3_columns);
+    accessor->addNSEC3RecordToZone(add_nsec3_columns);
+
+    // Check the stored data, before and after commit().
+    for (size_t i = 0; i < 2; ++i) {
+        expected_stored.clear();
+        expected_stored.push_back(nsec3_data);
+        checkNSEC3Records(*accessor, zone_id, apex_hash, expected_stored);
+
+        expected_stored.clear();
+        expected_stored.push_back(nsec3_sig_data);
+        checkNSEC3Records(*accessor, zone_id, ns1_hash, expected_stored);
+
+        if (i == 0) {          // make sure commit() happens only once
+            accessor->commit();
+        }
+    }
+}
+
+TEST_F(SQLite3Update, nsec3IteratorOnAdd) {
+    // This test checks if an added NSEC3 record will appear in the iterator
+    // result, meeting the expectation of addNSEC3RecordToZone.
+    // Specifically, it checks if the name column is filled with the complete
+    // owner name.
+
+    // We'll replace the zone, and add one NSEC3 record, and only that one.
+    zone_id = accessor->startUpdateZone("example.com.", true).second;
+    copy(nsec3_data, nsec3_data + DatabaseAccessor::ADD_NSEC3_COLUMN_COUNT,
+         add_nsec3_columns);
+    accessor->addNSEC3RecordToZone(add_nsec3_columns);
+    accessor->commit();
+
+    // the zone should contain only one record we just added.
+    DatabaseAccessor::IteratorContextPtr context =
+        accessor->getAllRecords(zone_id);
+    string data[DatabaseAccessor::COLUMN_COUNT];
+    EXPECT_TRUE(context->getNext(data));
+    EXPECT_EQ(string(apex_hash) + ".example.com.",
+              data[DatabaseAccessor::NAME_COLUMN]);
+    EXPECT_FALSE(context->getNext(data));
+}
+
 TEST_F(SQLite3Update, addThenRollback) {
     zone_id = accessor->startUpdateZone("example.com.", false).second;
     copy(new_data, new_data + DatabaseAccessor::ADD_COLUMN_COUNT,
@@ -758,7 +1055,11 @@ TEST_F(SQLite3Update, addThenRollback) {
     expected_stored.push_back(new_data);
     checkRecords(*accessor, zone_id, "newdata.example.com.", expected_stored);
 
+    // Rollback the transaction, and confirm the zone reverts to the previous
+    // state.  We also start another update to check if the accessor can be
+    // reused for a new update after rollback.
     accessor->rollback();
+    zone_id = accessor->startUpdateZone("example.com.", false).second;
     checkRecords(*accessor, zone_id, "newdata.example.com.", empty_stored);
 }
 
@@ -784,6 +1085,12 @@ TEST_F(SQLite3Update, duplicateAdd) {
 TEST_F(SQLite3Update, invalidAdd) {
     // An attempt of add before an explicit start of transaction
     EXPECT_THROW(accessor->addRecordToZone(add_columns), DataSourceError);
+
+    // Same for addNSEC3.
+    copy(nsec3_data, nsec3_data + DatabaseAccessor::ADD_NSEC3_COLUMN_COUNT,
+         add_nsec3_columns);
+    EXPECT_THROW(accessor->addNSEC3RecordToZone(add_nsec3_columns),
+                 DataSourceError);
 }
 
 TEST_F(SQLite3Update, deleteRecord) {
@@ -799,6 +1106,32 @@ TEST_F(SQLite3Update, deleteRecord) {
     // Commit the change, and confirm the deleted data still isn't there.
     accessor->commit();
     checkRecords(*accessor, zone_id, "foo.bar.example.com.", empty_stored);
+}
+
+TEST_F(SQLite3Update, deleteNSEC3Record) {
+    // Similar to the previous test, but for NSEC3.
+    zone_id = accessor->startUpdateZone("example.com.", false).second;
+    checkNSEC3Records(*accessor, zone_id, apex_hash, empty_stored);
+
+    // We first need to add some record.
+    copy(nsec3_data, nsec3_data + DatabaseAccessor::ADD_NSEC3_COLUMN_COUNT,
+         add_nsec3_columns);
+    accessor->addNSEC3RecordToZone(add_nsec3_columns);
+
+    // Now it should exist.
+    expected_stored.clear();
+    expected_stored.push_back(nsec3_data);
+    checkNSEC3Records(*accessor, zone_id, apex_hash, expected_stored);
+
+    // Delete it, and confirm that.
+    copy(nsec3_deleted_data,
+         nsec3_deleted_data + DatabaseAccessor::DEL_PARAM_COUNT, del_params);
+    accessor->deleteNSEC3RecordInZone(del_params);
+    checkNSEC3Records(*accessor, zone_id, apex_hash, empty_stored);
+
+    // Commit the change, and confirm the deleted data still isn't there.
+    accessor->commit();
+    checkNSEC3Records(*accessor, zone_id, apex_hash, empty_stored);
 }
 
 TEST_F(SQLite3Update, deleteThenRollback) {
@@ -847,6 +1180,10 @@ TEST_F(SQLite3Update, deleteNonexistent) {
 TEST_F(SQLite3Update, invalidDelete) {
     // An attempt of delete before an explicit start of transaction
     EXPECT_THROW(accessor->deleteRecordInZone(del_params), DataSourceError);
+
+    // Same for NSEC3.
+    EXPECT_THROW(accessor->deleteNSEC3RecordInZone(del_params),
+                 DataSourceError);
 }
 
 TEST_F(SQLite3Update, emptyTransaction) {
@@ -947,7 +1284,7 @@ const char* const diff_end_data[] = {
     "1300", DIFF_ADD_TEXT
 };
 const char* const diff_add_a_data[] = {
-    "dns01.example.com.", "A", "3600", "192.0.2.10", "1234", DIFF_ADD_TEXT
+    "dns01.example.com.", "A", "3600", "192.0.2.10", "1300", DIFF_ADD_TEXT
 };
 
 // The following two are helper functions to convert textual test data
@@ -968,8 +1305,19 @@ getOperation(const char* const diff_data[]) {
 // diffs.
 void
 checkDiffs(const vector<const char* const*>& expected,
-           const vector<vector<string> >& actual)
+           DatabaseAccessor::IteratorContextPtr rr_iterator)
 {
+    vector<vector<string> > actual;
+    string columns_holder[DatabaseAccessor::COLUMN_COUNT];
+    while (rr_iterator->getNext(columns_holder)) {
+        // Reorder the 'actual' vector to be compatible with the expected one.
+        vector<string> columns;
+        columns.push_back(columns_holder[DatabaseAccessor::NAME_COLUMN]);
+        columns.push_back(columns_holder[DatabaseAccessor::TYPE_COLUMN]);
+        columns.push_back(columns_holder[DatabaseAccessor::TTL_COLUMN]);
+        columns.push_back(columns_holder[DatabaseAccessor::RDATA_COLUMN]);
+        actual.push_back(columns);
+    }
     EXPECT_EQ(expected.size(), actual.size());
     const size_t n_diffs = std::min(expected.size(), actual.size());
     for (size_t i = 0; i < n_diffs; ++i) {
@@ -995,16 +1343,18 @@ TEST_F(SQLite3Update, addRecordDiff) {
                             getOperation(diff_end_data), diff_params);
 
     // Until the diffs are committed, they are not visible to other accessors.
-    EXPECT_TRUE(another_accessor->getRecordDiff(zone_id).empty());
+    EXPECT_THROW(another_accessor->getDiffs(zone_id, 1234, 1300),
+                 NoSuchSerial);
 
     accessor->commit();
 
     expected_stored.clear();
     expected_stored.push_back(diff_begin_data);
     expected_stored.push_back(diff_end_data);
-    checkDiffs(expected_stored, accessor->getRecordDiff(zone_id));
+    checkDiffs(expected_stored, accessor->getDiffs(zone_id, 1234, 1300));
     // Now it should be visible to others, too.
-    checkDiffs(expected_stored, another_accessor->getRecordDiff(zone_id));
+    checkDiffs(expected_stored, another_accessor->getDiffs(zone_id, 1234,
+                                                           1300));
 }
 
 TEST_F(SQLite3Update, addRecordOfLargeSerial) {
@@ -1036,7 +1386,7 @@ TEST_F(SQLite3Update, addRecordOfLargeSerial) {
     expected_stored.clear();
     expected_stored.push_back(begin_data);
     expected_stored.push_back(diff_end_data);
-    checkDiffs(expected_stored, accessor->getRecordDiff(zone_id));
+    checkDiffs(expected_stored, accessor->getDiffs(zone_id, 4294967295U, 1300));
 }
 
 TEST_F(SQLite3Update, addDiffWithoutUpdate) {
@@ -1081,7 +1431,7 @@ TEST_F(SQLite3Update, addDiffRollback) {
                             getOperation(diff_begin_data), diff_params);
     accessor->rollback();
 
-    EXPECT_TRUE(accessor->getRecordDiff(zone_id).empty());
+    EXPECT_THROW(accessor->getDiffs(zone_id, 1234, 1234), NoSuchSerial);
 }
 
 TEST_F(SQLite3Update, addDiffInBadOrder) {
@@ -1093,19 +1443,23 @@ TEST_F(SQLite3Update, addDiffInBadOrder) {
     copy(diff_end_data, diff_end_data + DatabaseAccessor::DIFF_PARAM_COUNT,
          diff_params);
     accessor->addRecordDiff(zone_id, getVersion(diff_end_data),
-                            getOperation(diff_end_data), diff_params);
+                            static_cast<DatabaseAccessor::DiffOperation>(
+                                lexical_cast<int>(DIFF_DELETE_TEXT)),
+                            diff_params);
 
     copy(diff_begin_data, diff_begin_data + DatabaseAccessor::DIFF_PARAM_COUNT,
          diff_params);
     accessor->addRecordDiff(zone_id, getVersion(diff_begin_data),
-                            getOperation(diff_begin_data), diff_params);
+                            static_cast<DatabaseAccessor::DiffOperation>(
+                                lexical_cast<int>(DIFF_ADD_TEXT)),
+                            diff_params);
 
     accessor->commit();
 
     expected_stored.clear();
     expected_stored.push_back(diff_end_data);
     expected_stored.push_back(diff_begin_data);
-    checkDiffs(expected_stored, accessor->getRecordDiff(zone_id));
+    checkDiffs(expected_stored, accessor->getDiffs(zone_id, 1300, 1234));
 }
 
 TEST_F(SQLite3Update, addDiffWithUpdate) {
@@ -1175,19 +1529,6 @@ TEST_F(SQLite3Update, addDiffWithUpdate) {
     expected_stored.push_back(diff_end_data);
     expected_stored.push_back(diff_add_a_data);
 
-    checkDiffs(expected_stored, accessor->getRecordDiff(zone_id));
-}
-
-TEST_F(SQLite3Update, addDiffWithNoTable) {
-    // An attempt of adding diffs to an old version of database that doesn't
-    // have a diffs table.  This will fail in preparing the statement.
-    initAccessor(SQLITE_DBFILE_EXAMPLE + ".nodiffs", "IN");
-    zone_id = accessor->startUpdateZone("example.com.", false).second;
-    copy(diff_begin_data, diff_begin_data + DatabaseAccessor::DIFF_PARAM_COUNT,
-         diff_params);
-    EXPECT_THROW(accessor->addRecordDiff(zone_id, getVersion(diff_begin_data),
-                                         getOperation(diff_begin_data),
-                                         diff_params),
-                 SQLite3Error);
+    checkDiffs(expected_stored, accessor->getDiffs(zone_id, 1234, 1300));
 }
 } // end anonymous namespace

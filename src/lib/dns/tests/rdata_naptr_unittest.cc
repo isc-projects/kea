@@ -140,8 +140,9 @@ TEST_F(Rdata_NAPTR_Test, toWireRenderer) {
     NAPTR naptr(naptr_str);
 
     naptr.toWire(renderer);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, obuffer.getData(),
-                        obuffer.getLength(), naptr_rdata, sizeof(naptr_rdata));
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
+                        renderer.getLength(), naptr_rdata,
+                        sizeof(naptr_rdata));
 }
 
 TEST_F(Rdata_NAPTR_Test, toText) {

@@ -38,7 +38,7 @@ protected:
         // this also serves as a test for "from text" constructor in a normal
         // case.
         rdata_rp("root.example.com. rp-text.example.com."),
-        obuffer(0), renderer(obuffer)
+        obuffer(0)
     {}
 
     const Name mailbox_name, text_name;
