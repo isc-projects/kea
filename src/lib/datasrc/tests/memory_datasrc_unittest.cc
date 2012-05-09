@@ -1049,9 +1049,13 @@ TEST_F(InMemoryZoneFinderTest,findNSECEmptyNonterminal) {
     zone_finder_.add(rr_ent_);
     const Name ent_name = Name("ent.example.org");
 
-    // Should result in NXRRSET
+    // Sanity check: Should result in NXRRSET
     findTest(ent_name, RRType::A(), ZoneFinder::NXRRSET, true,
              ConstRRsetPtr());
+    // Sanity check: No NSEC added yet
+    findTest(ent_name, RRType::A(), ZoneFinder::NXRRSET, true,
+             ConstRRsetPtr(), ZoneFinder::RESULT_DEFAULT,
+             NULL, ZoneFinder::FIND_DNSSEC);
 
     zone_finder_.add(rr_ent_nsec_);
     // Should result in NXRRSET, and RESULT_NSEC_SIGNED
