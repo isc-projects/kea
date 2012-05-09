@@ -219,7 +219,6 @@ public:
                         RBTreeNodeChain<Domain>& node_path,
                         ZoneFinder::FindOptions options) const;
 
-private:
     // A helper method for NSEC-signed zones.  It searches the zone for
     // the "closest" NSEC corresponding to the search context stored in
     // node_path (it should contain sufficient information to identify the
@@ -1309,7 +1308,10 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         if (node->isEmpty()) {
             LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_DOMAIN_EMPTY).
                 arg(name);
-            return (createFindResult(NXRRSET, ConstRBNodeRRsetPtr(), rename));
+            return (createFindResult(NXRRSET,
+                                     zone_data_->getClosestNSEC(node_path,
+                                                                options),
+                                     rename));
         }
 
         Domain::const_iterator found;
