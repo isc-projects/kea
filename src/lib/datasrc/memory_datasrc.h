@@ -68,8 +68,6 @@ public:
     /// \brief Looks up an RRset in the zone.
     ///
     /// See documentation in \c Zone.
-    ///
-    /// It returns NULL pointer in case of NXDOMAIN and NXRRSET.
     virtual ZoneFinderContextPtr find(const isc::dns::Name& name,
                                       const isc::dns::RRType& type,
                                       const FindOptions options =
