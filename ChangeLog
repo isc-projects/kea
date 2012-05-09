@@ -2,7 +2,7 @@
 	libdhcp++: Option6 and Pkt6 now follow the same design as
 	options and packet for DHCPv4. General code refactoring after
 	end of 2011 year release.
-	(Trac #1540, git be560f4516ae9b0bbbad1740a519feed99c04170TBD)
+	(Trac #1540, git a40b6c665617125eeb8716b12d92d806f0342396)
 
 432.	[bug]*		muks
 	BIND 10 now installs its header files in a BIND 10 specific
