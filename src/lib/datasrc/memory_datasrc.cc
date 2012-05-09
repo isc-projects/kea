@@ -1309,8 +1309,8 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                                           rename));
             }
         }
-        // No exact match or CNAME. This is NXRRSET case.If with DNSSEC query, 
-        // get the NSEC RRSets,returns with result code NXRRSET.
+        // No exact match or CNAME. This is NXRRSET case. If with DNSSEC query,
+        // get the NSEC RRset, returns with result code NXRRSET.
         if (zone_data_->nsec_signed_) {
             found = node->getData()->find(RRType::NSEC());
             if (found != node->getData()->end()) {
