@@ -68,12 +68,12 @@ TEST_F(Rdata_MX_Test, toWireRenderer) {
 
     vector<unsigned char> data;
     UnitTestUtil::readWireData("rdata_mx_toWire1", data);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, obuffer.getData(),
-                        obuffer.getLength(), &data[0], data.size());
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
+                        renderer.getLength(), &data[0], data.size());
 }
 
 TEST_F(Rdata_MX_Test, toWireBuffer) {
-    renderer.writeName(Name("example.com"));
+    Name("example.com").toWire(obuffer);
     rdata_mx.toWire(obuffer);
 
     vector<unsigned char> data;
@@ -101,6 +101,7 @@ TEST_F(Rdata_MX_Test, compare) {
     generic::MX large2(256, Name("mx.example.com"));
 
     // trivial case: self equivalence
+    // cppcheck-suppress uselessCallsCompare
     EXPECT_EQ(0, small1.compare(small1));
 
     // confirm these are compared as unsigned values

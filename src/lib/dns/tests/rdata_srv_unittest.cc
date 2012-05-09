@@ -134,12 +134,12 @@ TEST_F(Rdata_SRV_Test, toWireBuffer) {
 TEST_F(Rdata_SRV_Test, toWireRenderer) {
     rdata_srv.toWire(renderer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        obuffer.getData(), obuffer.getLength(),
+                        renderer.getData(), renderer.getLength(),
                         wiredata_srv, sizeof(wiredata_srv));
     renderer.clear();
     rdata_srv2.toWire(renderer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        obuffer.getData(), obuffer.getLength(),
+                        renderer.getData(), renderer.getLength(),
                         wiredata_srv2, sizeof(wiredata_srv2));
 }
 

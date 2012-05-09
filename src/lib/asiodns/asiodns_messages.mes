@@ -14,6 +14,14 @@
 
 $NAMESPACE isc::asiodns
 
+% ASIODNS_FD_ADD_TCP adding a new TCP server by opened fd %1
+A debug message informing about installing a file descriptor as a server.
+The file descriptor number is noted.
+
+% ASIODNS_FD_ADD_UDP adding a new UDP server by opened fd %1
+A debug message informing about installing a file descriptor as a server.
+The file descriptor number is noted.
+
 % ASIODNS_FETCH_COMPLETED upstream fetch to %1(%2) has now completed
 A debug message, this records that the upstream fetch (a query made by the
 resolver on behalf of its client) to the specified address has completed.

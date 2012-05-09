@@ -12,7 +12,13 @@
       {
         "command_name": "shutdown",
         "command_description": "Shut down the stats module",
-        "command_args": []
+        "command_args": [
+          {
+            "item_name": "pid",
+            "item_type": "integer",
+            "item_optional": true
+          }
+        ]
       },
       {
         "command_name": "show",
@@ -64,6 +70,13 @@
             "item_optional": false,
             "item_default": "",
             "item_description": "module name of the owner of the statistics data"
+          },
+	  {
+	    "item_name": "pid",
+            "item_type": "integer",
+            "item_optional": true,
+            "item_default": -1,
+            "item_description": "process id of the owner module"
           },
 	  {
 	    "item_name": "data",

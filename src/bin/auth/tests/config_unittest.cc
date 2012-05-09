@@ -21,6 +21,7 @@
 
 #include <cc/data.h>
 
+#include <datasrc/data_source.h>
 #include <datasrc/memory_datasrc.h>
 
 #include <xfr/xfrout_client.h>
@@ -29,30 +30,43 @@
 #include <auth/auth_config.h>
 #include <auth/common.h>
 
+#include "datasrc_util.h"
+
 #include <testutils/mockups.h>
 #include <testutils/portconfig.h>
+#include <testutils/socket_request.h>
 
+#include <sstream>
+
+using namespace std;
 using namespace isc::dns;
 using namespace isc::data;
 using namespace isc::datasrc;
 using namespace isc::asiodns;
-using namespace isc::asiolink;
+using namespace isc::auth::unittest;
+using namespace isc::testutils;
 
 namespace {
 class AuthConfigTest : public ::testing::Test {
 protected:
     AuthConfigTest() :
-        dnss_(ios_, NULL, NULL, NULL),
+        dnss_(),
         rrclass(RRClass::IN()),
-        server(true, xfrout)
+        server(true, xfrout),
+        // The empty string is expected value of the parameter of
+        // requestSocket, not the app_name (there's no fallback, it checks
+        // the empty string is passed).
+        sock_requestor_(dnss_, address_store_, 53210, "")
     {
         server.setDNSService(dnss_);
     }
-    IOService ios_;
-    DNSService dnss_;
+    MockDNSService dnss_;
     const RRClass rrclass;
     MockXfroutClient xfrout;
     AuthSrv server;
+    isc::server_common::portconfig::AddressList address_store_;
+private:
+    isc::testutils::TestSocketRequestor sock_requestor_;
 };
 
 TEST_F(AuthConfigTest, datasourceConfig) {
@@ -138,6 +152,14 @@ TEST_F(AuthConfigTest, invalidListenAddressConfig) {
 // Try setting addresses trough config
 TEST_F(AuthConfigTest, listenAddressConfig) {
     isc::testutils::portconfig::listenAddressConfig(server);
+
+    // listenAddressConfig should have attempted to create 4 DNS server
+    // objects: two IP addresses, TCP and UDP for each.  For UDP, the "SYNC_OK"
+    // option should have been specified.
+    EXPECT_EQ(2, dnss_.getTCPFdParams().size());
+    EXPECT_EQ(2, dnss_.getUDPFdParams().size());
+    EXPECT_EQ(DNSService::SERVER_SYNC_OK, dnss_.getUDPFdParams().at(0).options);
+    EXPECT_EQ(DNSService::SERVER_SYNC_OK, dnss_.getUDPFdParams().at(1).options);
 }
 
 class MemoryDatasrcConfigTest : public AuthConfigTest {
@@ -183,7 +205,56 @@ TEST_F(MemoryDatasrcConfigTest, addOneZone) {
     // Check it actually loaded something
     EXPECT_EQ(ZoneFinder::SUCCESS, server.getInMemoryClient(rrclass)->findZone(
         Name("ns.example.com.")).zone_finder->find(Name("ns.example.com."),
-        RRType::A()).code);
+        RRType::A())->code);
+}
+
+// This test uses dynamic load of a data source module, and won't work when
+// statically linked.
+TEST_F(MemoryDatasrcConfigTest,
+#ifdef USE_STATIC_LINK
+       DISABLED_addOneWithFiletypeSQLite3
+#else
+       addOneWithFiletypeSQLite3
+#endif
+    )
+{
+    const string test_db = TEST_DATA_BUILDDIR "/auth_test.sqlite3.copied";
+    stringstream ss("example.org. 3600 IN SOA . . 0 0 0 0 0\n");
+    createSQLite3DB(rrclass, Name("example.org"), test_db.c_str(), ss);
+
+    // In-memory with an SQLite3 data source as the backend.
+    parser->build(Element::fromJSON(
+                      "[{\"type\": \"memory\","
+                      "  \"zones\": [{\"origin\": \"example.org\","
+                      "               \"file\": \""
+                      + test_db +  "\","
+                      "               \"filetype\": \"sqlite3\"}]}]"));
+    parser->commit();
+    EXPECT_EQ(1, server.getInMemoryClient(rrclass)->getZoneCount());
+
+    // Failure case: the specified zone doesn't exist in the DB file.
+    delete parser;
+    parser = createAuthConfigParser(server, "datasources");
+    EXPECT_THROW(parser->build(
+                     Element::fromJSON(
+                         "[{\"type\": \"memory\","
+                         "  \"zones\": [{\"origin\": \"example.com\","
+                         "               \"file\": \""
+                         + test_db +  "\","
+                         "               \"filetype\": \"sqlite3\"}]}]")),
+                 DataSourceError);
+}
+
+TEST_F(MemoryDatasrcConfigTest, addOneWithFiletypeText) {
+    // Explicitly specifying "text" is okay.
+    parser->build(Element::fromJSON(
+                      "[{\"type\": \"memory\","
+                      "  \"zones\": [{\"origin\": \"example.com\","
+                      "               \"file\": \""
+                      TEST_DATA_DIR "/example.zone\","
+                      "               \"filetype\": \"text\"}]}]"));
+    parser->commit();
+    EXPECT_EQ(1, server.getInMemoryClient(rrclass)->getZoneCount());
 }
 
 TEST_F(MemoryDatasrcConfigTest, addMultiZones) {
@@ -284,7 +355,7 @@ TEST_F(MemoryDatasrcConfigTest, remove) {
     EXPECT_EQ(AuthSrv::InMemoryClientPtr(), server.getInMemoryClient(rrclass));
 }
 
-TEST_F(MemoryDatasrcConfigTest, adDuplicateZones) {
+TEST_F(MemoryDatasrcConfigTest, addDuplicateZones) {
     EXPECT_THROW(parser->build(
                      Element::fromJSON(
                          "[{\"type\": \"memory\","
@@ -298,11 +369,25 @@ TEST_F(MemoryDatasrcConfigTest, adDuplicateZones) {
 }
 
 TEST_F(MemoryDatasrcConfigTest, addBadZone) {
+    // origin and file are missing
+    EXPECT_THROW(parser->build(
+                     Element::fromJSON(
+                         "[{\"type\": \"memory\","
+                         "  \"zones\": [{}]}]")),
+                 AuthConfigError);
+
     // origin is missing
     EXPECT_THROW(parser->build(
                      Element::fromJSON(
                          "[{\"type\": \"memory\","
                          "  \"zones\": [{\"file\": \"example.zone\"}]}]")),
+                 AuthConfigError);
+
+    // file is missing
+    EXPECT_THROW(parser->build(
+                     Element::fromJSON(
+                         "[{\"type\": \"memory\","
+                         "  \"zones\": [{\"origin\": \"example.com\"}]}]")),
                  AuthConfigError);
 
     // missing zone file
@@ -317,7 +402,7 @@ TEST_F(MemoryDatasrcConfigTest, addBadZone) {
                       "[{\"type\": \"memory\","
                       "  \"zones\": [{\"origin\": \"example..com\","
                       "               \"file\": \"example.zone\"}]}]")),
-                 EmptyLabel);
+                 AuthConfigError);
 
     // bogus RR class name
     EXPECT_THROW(parser->build(

@@ -4,6 +4,10 @@ AM_CPPFLAGS += $(BOOST_INCLUDES)
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
+if USE_STATIC_LINK
+AM_LDFLAGS = -static
+endif
+
 CLEANFILES = *.gcno *.gcda
 
 noinst_PROGRAMS = query_bench

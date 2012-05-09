@@ -13,10 +13,10 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 
-#include "dhcp/dhcp6.h"
-#include "dhcp/pkt6.h"
-#include "dhcp/libdhcp++.h"
-#include "exceptions/exceptions.h"
+#include <dhcp/dhcp6.h>
+#include <dhcp/pkt6.h>
+#include <dhcp/libdhcp++.h>
+#include <exceptions/exceptions.h>
 #include <iostream>
 #include <sstream>
 
@@ -33,8 +33,8 @@ Pkt6::Pkt6(const uint8_t* buf, uint32_t buf_len, DHCPv6Proto proto /* = UDP */) 
     ifindex_(-1),
     local_addr_("::"),
     remote_addr_("::"),
-    local_port_(-1),
-    remote_port_(-1),
+    local_port_(0),
+    remote_port_(0),
     bufferOut_(0) {
     data_.resize(buf_len);
     memcpy(&data_[0], buf, buf_len);
@@ -48,8 +48,8 @@ Pkt6::Pkt6(uint8_t msg_type, uint32_t transid, DHCPv6Proto proto /*= UDP*/) :
     ifindex_(-1),
     local_addr_("::"),
     remote_addr_("::"),
-    local_port_(-1),
-    remote_port_(-1),
+    local_port_(0),
+    remote_port_(0),
     bufferOut_(0) {
 }
 
@@ -173,7 +173,7 @@ Pkt6::toText() {
 }
 
 boost::shared_ptr<isc::dhcp::Option>
-Pkt6::getOption(unsigned short opt_type) {
+Pkt6::getOption(uint16_t opt_type) {
     isc::dhcp::Option::OptionCollection::const_iterator x = options_.find(opt_type);
     if (x!=options_.end()) {
         return (*x).second;
@@ -187,7 +187,7 @@ Pkt6::addOption(boost::shared_ptr<Option> opt) {
 }
 
 bool
-Pkt6::delOption(unsigned short type) {
+Pkt6::delOption(uint16_t type) {
     isc::dhcp::Option::OptionCollection::iterator x = options_.find(type);
     if (x!=options_.end()) {
         options_.erase(x);
@@ -202,5 +202,5 @@ void Pkt6::repack() {
     bufferOut_.writeData(&data_[0], data_.size());
 }
 
-} // end of namespace isc::dhcp
-} // end of namespace isc
+} // end of isc::dhcp namespace
+} // end of isc namespace

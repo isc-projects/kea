@@ -65,3 +65,4 @@ EXTRA_DIST += spec35.spec
 EXTRA_DIST += spec36.spec
 EXTRA_DIST += spec37.spec
 EXTRA_DIST += spec38.spec
+EXTRA_DIST += spec39.spec

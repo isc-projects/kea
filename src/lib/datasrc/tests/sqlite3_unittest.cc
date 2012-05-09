@@ -51,6 +51,10 @@ ConstElementPtr SQLITE_DBFILE_BROKENDB = Element::fromJSON(
     "{ \"database_file\": \"" TEST_DATA_DIR "/brokendb.sqlite3\"}");
 ConstElementPtr SQLITE_DBFILE_MEMORY = Element::fromJSON(
     "{ \"database_file\": \":memory:\"}");
+ConstElementPtr SQLITE_DBFILE_NEWSCHEMA = Element::fromJSON(
+    "{ \"database_file\": \"" TEST_DATA_DIR "/newschema.sqlite3\"}");
+ConstElementPtr SQLITE_DBFILE_OLDSCHEMA = Element::fromJSON(
+    "{ \"database_file\": \"" TEST_DATA_DIR "/oldschema.sqlite3\"}");
 
 // The following file must be non existent and must be non"creatable";
 // the sqlite3 library will try to create a new DB file if it doesn't exist,
@@ -401,6 +405,17 @@ TEST_F(Sqlite3DataSourceTest, openBrokenDB) {
     // Confirming the strong exception guarantee: the data source must be
     // in the closed state.
     EXPECT_EQ(DataSrc::SUCCESS, data_source.init(SQLITE_DBFILE_EXAMPLE));
+}
+
+// Different schema versions, see sqlite3_accessor_unittest.
+TEST_F(Sqlite3DataSourceTest, differentSchemaVersions) {
+    EXPECT_EQ(DataSrc::SUCCESS, data_source.close());
+    EXPECT_THROW(data_source.init(SQLITE_DBFILE_NEWSCHEMA),
+                 IncompatibleDbVersion);
+    EXPECT_THROW(data_source.init(SQLITE_DBFILE_OLDSCHEMA),
+                 IncompatibleDbVersion);
+    // Don't bother to test the new_minor case; we should retire this stuff
+    // before it really happens.
 }
 
 // This test only confirms that on-the-fly schema creation works.

@@ -39,6 +39,7 @@
 #include "message_python.h"
 #include "messagerenderer_python.h"
 #include "name_python.h"
+#include "nsec3hash_python.h"
 #include "opcode_python.h"
 #include "pydnspp_common.h"
 #include "pydnspp_towire.h"
@@ -164,6 +165,10 @@ initModulePart_Message(PyObject* mod) {
             PyErr_NewException("pydnspp.DNSMessageBADVERS", NULL, NULL);
         PyObjectContainer(po_DNSMessageBADVERS).installToModule(
             mod, "DNSMessageBADVERS");
+        po_UnknownNSEC3HashAlgorithm =
+            PyErr_NewException("pydnspp.UnknownNSEC3HashAlgorithm", NULL, NULL);
+        PyObjectContainer(po_UnknownNSEC3HashAlgorithm).installToModule(
+            mod, "UnknownNSEC3HashAlgorithm");
     } catch (const std::exception& ex) {
         const std::string ex_what =
             "Unexpected failure in Message initialization: " +
@@ -774,6 +779,10 @@ PyInit_pydnspp(void) {
     }
 
     if (!initModulePart_MessageRenderer(mod)) {
+        return (NULL);
+    }
+
+    if (!initModulePart_NSEC3Hash(mod)) {
         return (NULL);
     }
 

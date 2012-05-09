@@ -6,4 +6,4 @@ To then build from source:
     make
 
 For detailed installation directions, see the guide
-at doc/guide/bind10-guide.html.
+at doc/guide/bind10-guide.txt or doc/guide/bind10-guide.html.

@@ -14,4 +14,4 @@ libtestutils_la_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 libtestutils_la_LIBADD = $(top_builddir)/src/lib/asiolink/libasiolink.la
 endif
 
-EXTRA_DIST = portconfig.h
+EXTRA_DIST = portconfig.h socket_request.h

@@ -24,6 +24,7 @@ import struct
 import threading
 import socket
 import random
+import time
 from functools import reduce
 from optparse import OptionParser, OptionValueError
 from isc.config.ccsession import *
@@ -36,6 +37,11 @@ from isc.log_messages.xfrin_messages import *
 
 isc.log.init("b10-xfrin")
 logger = isc.log.Logger("xfrin")
+
+# Pending system-wide debug level definitions, the ones we
+# use here are hardcoded for now
+DBG_PROCESS = logger.DBGLVL_TRACE_BASIC
+DBG_COMMANDS = logger.DBGLVL_TRACE_DETAIL
 
 try:
     from pydnspp import *
@@ -361,7 +367,6 @@ class XfrinFirstData(XfrinState):
                  conn.zone_str())
             # We are now going to add RRs to the new zone.  We need create
             # a Diff object.  It will be used throughtout the XFR session.
-            # DISABLE FOR DEBUG
             conn._diff = Diff(conn._datasrc_client, conn._zone_name, True)
             self.set_xfrstate(conn, XfrinAXFR())
         return False
@@ -381,6 +386,7 @@ class XfrinIXFRDeleteSOA(XfrinState):
         conn._diff = Diff(conn._datasrc_client, conn._zone_name, False, True)
         conn._diff.delete_data(rr)
         self.set_xfrstate(conn, XfrinIXFRDelete())
+        conn.get_transfer_stats().ixfr_deletion_count += 1
         return True
 
 class XfrinIXFRDelete(XfrinState):
@@ -391,6 +397,7 @@ class XfrinIXFRDelete(XfrinState):
             self.set_xfrstate(conn, XfrinIXFRAddSOA())
             return False
         conn._diff.delete_data(rr)
+        conn.get_transfer_stats().ixfr_deletion_count += 1
         return True
 
 class XfrinIXFRAddSOA(XfrinState):
@@ -402,11 +409,14 @@ class XfrinIXFRAddSOA(XfrinState):
                                  ' RR is given in IXFRAddSOA state')
         conn._diff.add_data(rr)
         self.set_xfrstate(conn, XfrinIXFRAdd())
+        conn.get_transfer_stats().ixfr_addition_count += 1
         return True
 
 class XfrinIXFRAdd(XfrinState):
     def handle_rr(self, conn, rr):
         if rr.get_type() == RRType.SOA():
+            # This SOA marks the end of a difference sequence
+            conn.get_transfer_stats().ixfr_changeset_count += 1
             soa_serial = get_soa_serial(rr.get_rdata()[0])
             if soa_serial == conn._end_serial:
                 conn._diff.commit()
@@ -422,6 +432,7 @@ class XfrinIXFRAdd(XfrinState):
                 self.set_xfrstate(conn, XfrinIXFRDeleteSOA())
                 return False
         conn._diff.add_data(rr)
+        conn.get_transfer_stats().ixfr_addition_count += 1
         return True
 
 class XfrinIXFREnd(XfrinState):
@@ -462,6 +473,7 @@ class XfrinAXFR(XfrinState):
                             conn._end_serial, soa_serial)
 
             self.set_xfrstate(conn, XfrinAXFREnd())
+        conn.get_transfer_stats().axfr_rr_count += 1
         # Yes, we've eaten this RR.
         return True
 
@@ -483,6 +495,55 @@ class XfrinAXFREnd(XfrinState):
         """
         conn._diff.commit()
         return False
+
+class XfrinTransferStats:
+    """
+    This class keeps a record of transfer data for logging purposes.
+    It records number of messages, rrs, and bytes transfered, as well
+    as the start and end time. The start time is set upon instantiation of
+    this class. The end time is set the first time finalize(),
+    get_running_time(), or get_bytes_per_second() is called. The end time is
+    set only once; subsequent calls to any of these methods does not modify
+    it further.
+    All _count instance variables can be directly set as needed by the
+    class collecting these results.
+    """
+    def __init__(self):
+        self.message_count = 0
+        self.axfr_rr_count = 0
+        self.byte_count = 0
+        self.ixfr_changeset_count = 0;
+        self.ixfr_deletion_count = 0;
+        self.ixfr_addition_count = 0;
+        self._start_time = time.time()
+        self._end_time = None
+
+    def finalize(self):
+        """Sets the end time to time.time() if not done already."""
+        if self._end_time is None:
+            self._end_time = time.time()
+
+    def get_running_time(self):
+        """Calls finalize(), then returns the difference between creation
+           and finalization time"""
+        self.finalize()
+        return self._end_time - self._start_time
+
+    def get_bytes_per_second(self):
+        """Returns the number of bytes per second, based on the result of
+           get_running_time() and the value of bytes_count."""
+        runtime = self.get_running_time()
+        if runtime > 0.0:
+            return float(self.byte_count) / runtime
+        else:
+            # This should never happen, but if some clock is so
+            # off or reset in the meantime, we do need to return
+            # *something* (and not raise an error)
+            if self.byte_count == 0:
+                return 0.0
+            else:
+                return float("inf")
+
 
 class XfrinConnection(asyncore.dispatcher):
     '''Do xfrin in this class. '''
@@ -534,6 +595,10 @@ class XfrinConnection(asyncore.dispatcher):
         # easier tests (in normal case we always use the default)
         self._tsig_ctx_creator = lambda key : TSIGContext(key)
 
+        # keep a record of this specific transfer to log on success
+        # (time, rr/s, etc)
+        self._transfer_stats = XfrinTransferStats()
+
     def init_socket(self):
         '''Initialize the underlyig socket.
 
@@ -583,7 +648,7 @@ class XfrinConnection(asyncore.dispatcher):
             result, finder = self._datasrc_client.find_zone(self._zone_name)
         if result != DataSourceClient.SUCCESS:
             return None
-        result, soa_rrset = finder.find(self._zone_name, RRType.SOA())
+        result, soa_rrset, _ = finder.find(self._zone_name, RRType.SOA())
         if result != ZoneFinder.SUCCESS:
             logger.info(XFRIN_ZONE_NO_SOA, self.zone_str())
             return None
@@ -598,6 +663,11 @@ class XfrinConnection(asyncore.dispatcher):
 
     def get_xfrstate(self):
         return self.__state
+
+    def get_transfer_stats(self):
+        """Returns the transfer stats object, used to measure transfer time,
+           and number of messages/records/bytes transfered."""
+        return self._transfer_stats
 
     def zone_str(self):
         '''A convenience function for logging to include zone name and class'''
@@ -823,7 +893,29 @@ class XfrinConnection(asyncore.dispatcher):
             self._send_query(self._request_type)
             self.__state = XfrinInitialSOA()
             self._handle_xfrin_responses()
-            logger.info(XFRIN_XFR_TRANSFER_SUCCESS, req_str, self.zone_str())
+            # Depending what data was found, we log different status reports
+            # (In case of an AXFR-style IXFR, print the 'AXFR' message)
+            if self._transfer_stats.axfr_rr_count == 0:
+                logger.info(XFRIN_IXFR_TRANSFER_SUCCESS,
+                            self.zone_str(),
+                            self._transfer_stats.message_count,
+                            self._transfer_stats.ixfr_changeset_count,
+                            self._transfer_stats.ixfr_deletion_count,
+                            self._transfer_stats.ixfr_addition_count,
+                            self._transfer_stats.byte_count,
+                            "%.3f" % self._transfer_stats.get_running_time(),
+                            "%.f" % self._transfer_stats.get_bytes_per_second()
+                           )
+            else:
+                logger.info(XFRIN_TRANSFER_SUCCESS,
+                            req_str,
+                            self.zone_str(),
+                            self._transfer_stats.message_count,
+                            self._transfer_stats.axfr_rr_count,
+                            self._transfer_stats.byte_count,
+                            "%.3f" % self._transfer_stats.get_running_time(),
+                            "%.f" % self._transfer_stats.get_bytes_per_second()
+                           )
 
         except XfrinZoneUptodate:
             # Eventually we'll probably have to treat this case as a trigger
@@ -895,9 +987,11 @@ class XfrinConnection(asyncore.dispatcher):
         while read_next_msg:
             data_len = self._get_request_response(2)
             msg_len = socket.htons(struct.unpack('H', data_len)[0])
+            self._transfer_stats.byte_count += msg_len + 2
             recvdata = self._get_request_response(msg_len)
             msg = Message(Message.PARSE)
             msg.from_wire(recvdata, Message.PRESERVE_ORDER)
+            self._transfer_stats.message_count += 1
 
             # TSIG related checks, including an unexpected signed response
             self._check_response_tsig(msg, recvdata)
@@ -1156,6 +1250,11 @@ class Xfrin:
     def __init__(self):
         self._max_transfers_in = 10
         self._zones = {}
+        # This is a set of (zone/class) tuples (both as strings),
+        # representing the in-memory zones maintaned by Xfrin. It
+        # is used to trigger Auth/in-memory so that it reloads
+        # zones when they have been transfered in
+        self._memory_zones = set()
         self._cc_setup()
         self.recorder = XfrinRecorder()
         self._shutdown_event = threading.Event()
@@ -1174,6 +1273,8 @@ class Xfrin:
         self._module_cc.start()
         config_data = self._module_cc.get_full_config()
         self.config_handler(config_data)
+        self._module_cc.add_remote_config(AUTH_SPECFILE_LOCATION,
+                                          self._auth_config_handler)
 
     def _cc_check_command(self):
         '''This is a straightforward wrapper for cc.check_command,
@@ -1220,10 +1321,79 @@ class Xfrin:
 
         return create_answer(0)
 
+    def _auth_config_handler(self, new_config, config_data):
+        # Config handler for changes in Auth configuration
+        self._set_db_file()
+        self._set_memory_zones(new_config, config_data)
+
+    def _clear_memory_zones(self):
+        """Clears the memory_zones set; called before processing the
+           changed list of memory datasource zones that have file type
+           sqlite3"""
+        self._memory_zones.clear()
+
+    def _is_memory_zone(self, zone_name_str, zone_class_str):
+        """Returns true if the given zone/class combination is configured
+           in the in-memory datasource of the Auth process with file type
+           'sqlite3'.
+           Note: this method is not thread-safe. We are considering
+           changing the threaded model here, but if we do not, take
+           care in accessing and updating the memory zone set (or add
+           locks)
+        """
+        # Normalize them first, if either conversion fails, return false
+        # (they won't be in the set anyway)
+        try:
+            zone_name_str = Name(zone_name_str).to_text().lower()
+            zone_class_str = RRClass(zone_class_str).to_text()
+        except Exception:
+            return False
+        return (zone_name_str, zone_class_str) in self._memory_zones
+
+    def _set_memory_zones(self, new_config, config_data):
+        """Part of the _auth_config_handler function, keeps an internal set
+           of zones in the datasources config subset that have 'sqlite3' as
+           their file type.
+           Note: this method is not thread-safe. We are considering
+           changing the threaded model here, but if we do not, take
+           care in accessing and updating the memory zone set (or add
+           locks)
+        """
+        # walk through the data and collect the memory zones
+        # If this causes any exception, assume we were passed bad data
+        # and keep the original set
+        new_memory_zones = set()
+        try:
+            if "datasources" in new_config:
+                for datasource in new_config["datasources"]:
+                    if "class" in datasource:
+                        ds_class = RRClass(datasource["class"])
+                    else:
+                        # Get the default
+                        ds_class = RRClass(config_data.get_default_value(
+                                               "datasources/class"))
+                    if datasource["type"] == "memory":
+                        for zone in datasource["zones"]:
+                            if "filetype" in zone and \
+                               zone["filetype"] == "sqlite3":
+                                zone_name = Name(zone["origin"])
+                                zone_name_str = zone_name.to_text().lower()
+                                new_memory_zones.add((zone_name_str,
+                                                      ds_class.to_text()))
+                # Ok, we can use the data, update our list
+                self._memory_zones = new_memory_zones
+        except Exception:
+            # Something is wrong with the data. If this data even reached us,
+            # we cannot do more than assume the real module has logged and
+            # reported an error. Keep the old set.
+            return
+
     def shutdown(self):
         ''' shutdown the xfrin process. the thread which is doing xfrin should be
         terminated.
         '''
+        self._module_cc.remove_remote_config(AUTH_SPECFILE_LOCATION)
+        self._module_cc.send_stopping()
         self._shutdown_event.set()
         main_thread = threading.currentThread()
         for th in threading.enumerate():
@@ -1355,20 +1525,19 @@ class Xfrin:
         return (addr.family, socket.SOCK_STREAM, (str(addr), port))
 
     def _get_db_file(self):
-        #TODO, the db file path should be got in auth server's configuration
-        # if we need access to this configuration more often, we
-        # should add it on start, and not remove it here
-        # (or, if we have writable ds, we might not need this in
-        # the first place)
-        self._module_cc.add_remote_config(AUTH_SPECFILE_LOCATION)
-        db_file, is_default = self._module_cc.get_remote_config_value("Auth", "database_file")
+        return self._db_file
+
+    def _set_db_file(self):
+        db_file, is_default =\
+            self._module_cc.get_remote_config_value("Auth", "database_file")
         if is_default and "B10_FROM_BUILD" in os.environ:
-            # this too should be unnecessary, but currently the
-            # 'from build' override isn't stored in the config
-            # (and we don't have writable datasources yet)
-            db_file = os.environ["B10_FROM_BUILD"] + os.sep + "bind10_zones.sqlite3"
-        self._module_cc.remove_remote_config(AUTH_SPECFILE_LOCATION)
-        return db_file
+            # override the local database setting if it is default and we
+            # are running from the source tree
+            # This should be hidden inside the data source library and/or
+            # done as a configuration, and this special case should be gone).
+            db_file = os.environ["B10_FROM_BUILD"] + os.sep +\
+                      "bind10_zones.sqlite3"
+        self._db_file = db_file
 
     def publish_xfrin_news(self, zone_name, zone_class,  xfr_result):
         '''Send command to xfrout/zone manager module.
@@ -1411,6 +1580,7 @@ class Xfrin:
                 logger.error(XFRIN_MSGQ_SEND_ERROR_ZONE_MANAGER, ZONE_MANAGER_MODULE_NAME)
 
     def startup(self):
+        logger.debug(DBG_PROCESS, XFRIN_STARTED)
         while not self._shutdown_event.is_set():
             self._cc_check_command()
 

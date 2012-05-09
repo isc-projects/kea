@@ -29,6 +29,8 @@ namespace auth {
 
 // Debug messages indicating normal startup are logged at this debug level.
 const int DBG_AUTH_START = DBGLVL_START_SHUT;
+// Debug messages upon shutdown
+const int DBG_AUTH_SHUT = DBGLVL_START_SHUT;
 
 // Debug level used to log setting information (such as configuration changes).
 const int DBG_AUTH_OPS = DBGLVL_COMMAND;

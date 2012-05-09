@@ -47,6 +47,12 @@ public:
         DataSourceError(file, line, what) {}
 };
 
+class IncompatibleDbVersion : public Exception {
+public:
+    IncompatibleDbVersion(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
 /**
  * \brief Too Much Data
  *
@@ -141,6 +147,14 @@ public:
                                           int id,
                                           bool subdomains = false) const;
 
+    /// \brief Look up NSEC3 records for the given hash
+    ///
+    /// This implements the getNSEC3Records of DatabaseAccessor.
+    ///
+    /// \todo Actually implement, currently throws NotImplemented.
+    virtual IteratorContextPtr getNSEC3Records(const std::string& hash,
+                                               int id) const;
+
     /** \brief Look up all resource records for a zone
      *
      * This implements the getRecords() method from DatabaseAccessor
@@ -200,7 +214,13 @@ public:
     virtual void addRecordToZone(
         const std::string (&columns)[ADD_COLUMN_COUNT]);
 
+    virtual void addNSEC3RecordToZone(
+        const std::string (&columns)[ADD_NSEC3_COLUMN_COUNT]);
+
     virtual void deleteRecordInZone(
+        const std::string (&params)[DEL_PARAM_COUNT]);
+
+    virtual void deleteNSEC3RecordInZone(
         const std::string (&params)[DEL_PARAM_COUNT]);
 
     /// This derived version of the method prepares an SQLite3 statement
@@ -209,16 +229,6 @@ public:
     virtual void addRecordDiff(
         int zone_id, uint32_t serial, DiffOperation operation,
         const std::string (&params)[DIFF_PARAM_COUNT]);
-
-    // A short term method for tests until we implement more complete
-    // API to retrieve diffs (#1330).  It returns all records of the diffs
-    // table whose zone_id column is identical to the given value.
-    // Since this is a short term workaround, it ignores some corner cases
-    // (such as an SQLite3 execution failure) and is not very efficient,
-    // in favor of brevity.  Once #1330 is completed, this method must be
-    // removed, and the tests using this method must be rewritten using the
-    // official API.
-    std::vector<std::vector<std::string> > getRecordDiff(int zone_id);
 
     /// The SQLite3 implementation of this method returns a string starting
     /// with a fixed prefix of "sqlite3_" followed by the DB file name
@@ -230,6 +240,11 @@ public:
     /// \brief Concrete implementation of the pure virtual method
     virtual std::string findPreviousName(int zone_id, const std::string& rname)
         const;
+
+    /// \brief Conrete implemantion of the pure virtual method of
+    /// DatabaseAccessor
+    virtual std::string findPreviousNSEC3Hash(int zone_id,
+                                              const std::string& hash) const;
 
 private:
     /// \brief Private database data

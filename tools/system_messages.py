@@ -71,7 +71,7 @@ SEC_HEADER="""<?xml version="1.0" encoding="UTF-8"?>
     <title>BIND 10 Messages Manual</title>
 
     <copyright>
-      <year>2011</year><holder>Internet Systems Consortium, Inc.</holder>
+      <year>2011-2012</year><holder>Internet Systems Consortium, Inc.</holder>
     </copyright>
 
     <abstract>

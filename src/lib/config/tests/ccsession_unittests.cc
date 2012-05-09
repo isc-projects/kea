@@ -26,6 +26,8 @@
 
 #include <log/logger_name.h>
 
+#include <boost/scoped_ptr.hpp>
+
 using namespace isc::data;
 using namespace isc::config;
 using namespace isc::cc;
@@ -189,6 +191,67 @@ TEST_F(CCSessionTest, session2) {
     EXPECT_EQ("*", to);
     EXPECT_EQ(0, session.getMsgQueue()->size());
 }
+
+TEST_F(CCSessionTest, session_close) {
+    // Test whether ModuleCCSession automatically sends a 'stopping'
+    // message when it is destroyed
+    ConstElementPtr msg;
+    std::string group, to;
+
+    EXPECT_FALSE(session.haveSubscription("Spec2", "*"));
+
+    boost::scoped_ptr<ModuleCCSession> mccs(new ModuleCCSession(
+                                         ccspecfile("spec2.spec"),
+                                         session, NULL, NULL,
+                                         true, false));
+    EXPECT_TRUE(session.haveSubscription("Spec2", "*"));
+    // The initial message is irrelevant for this test
+    // (see session2 test), drop it
+    session.getFirstMessage(group, to);
+    // Queue should now be empty
+    ASSERT_EQ(0, session.getMsgQueue()->size());
+    // Invoke the destructor
+    mccs.reset();
+    // Destructor should have caused a new message
+    ASSERT_EQ(1, session.getMsgQueue()->size());
+    msg = session.getFirstMessage(group, to);
+    EXPECT_EQ("{ \"command\": [ \"stopping\", "
+              "{ \"module_name\": \"Spec2\" } ] }", msg->str());
+    EXPECT_EQ("ConfigManager", group);
+    EXPECT_EQ("*", to);
+    EXPECT_EQ(0, session.getMsgQueue()->size());
+}
+
+TEST_F(CCSessionTest, session_close_exception) {
+    // Test whether an exception encountered during the destructor is
+    // handled correctly
+    ConstElementPtr msg;
+    std::string group, to;
+
+    EXPECT_FALSE(session.haveSubscription("Spec2", "*"));
+
+    boost::scoped_ptr<ModuleCCSession> mccs(new ModuleCCSession(
+                                         ccspecfile("spec2.spec"),
+                                         session, NULL, NULL,
+                                         true, false));
+    EXPECT_TRUE(session.haveSubscription("Spec2", "*"));
+    // The initial message is irrelevant for this test
+    // (see session2 test), drop it
+    session.getFirstMessage(group, to);
+    // Queue should now be empty
+    ASSERT_EQ(0, session.getMsgQueue()->size());
+
+    // Set fake session to throw an exception
+    session.setThrowOnSend(true);
+
+    // Invoke the destructor
+    mccs.reset();
+    // Destructor should not have caused a new message (since fakesession
+    // should have thrown an exception)
+    ASSERT_EQ(0, session.getMsgQueue()->size());
+    //EXPECT_EQ(0, session.getMsgQueue()->size());
+}
+
 
 ConstElementPtr my_config_handler(ConstElementPtr new_config) {
     if (new_config && new_config->contains("item1") &&

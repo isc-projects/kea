@@ -20,6 +20,7 @@ import unittest
 import os
 import tempfile
 from zonemgr import *
+from isc.testutils.ccsession_mock import MockModuleCCSession
 
 ZONE_NAME_CLASS1_IN = ("example.net.", "IN")
 ZONE_NAME_CLASS1_CH = ("example.net.", "CH")
@@ -33,6 +34,8 @@ LOWERBOUND_REFRESH = 10
 LOWERBOUND_RETRY = 5
 REFRESH_JITTER = 0.10
 RELOAD_JITTER = 0.75
+
+TEST_SQLITE3_DBFILE = os.getenv("TESTDATAOBJDIR") + '/initdb.file'
 
 class ZonemgrTestException(Exception):
     pass
@@ -48,14 +51,15 @@ class MySession():
     def group_recvmsg(self, nonblock, seq):
         return None, None
 
-class FakeCCSession(isc.config.ConfigData):
+class FakeCCSession(isc.config.ConfigData, MockModuleCCSession):
     def __init__(self):
         module_spec = isc.config.module_spec_from_file(SPECFILE_LOCATION)
         ConfigData.__init__(self, module_spec)
+        MockModuleCCSession.__init__(self)
 
     def get_remote_config_value(self, module_name, identifier):
         if module_name == "Auth" and identifier == "database_file":
-            return "initdb.file", False
+            return TEST_SQLITE3_DBFILE, False
         else:
             return "unknown", False
 
@@ -79,7 +83,7 @@ class MyZonemgrRefresh(ZonemgrRefresh):
                 return None
         sqlite3_ds.get_zone_soa = get_zone_soa
 
-        ZonemgrRefresh.__init__(self, MySession(), "initdb.file",
+        ZonemgrRefresh.__init__(self, MySession(), TEST_SQLITE3_DBFILE,
                                 self._slave_socket, FakeCCSession())
         current_time = time.time()
         self._zonemgr_refresh_info = {
@@ -97,10 +101,17 @@ class MyZonemgrRefresh(ZonemgrRefresh):
 
 class TestZonemgrRefresh(unittest.TestCase):
     def setUp(self):
+        if os.path.exists(TEST_SQLITE3_DBFILE):
+            os.unlink(TEST_SQLITE3_DBFILE)
         self.stderr_backup = sys.stderr
         sys.stderr = open(os.devnull, 'w')
         self.zone_refresh = MyZonemgrRefresh()
         self.cc_session = FakeCCSession()
+
+    def tearDown(self):
+        if os.path.exists(TEST_SQLITE3_DBFILE):
+            os.unlink(TEST_SQLITE3_DBFILE)
+        sys.stderr = self.stderr_backup
 
     def test_random_jitter(self):
         max = 100025.120
@@ -600,13 +611,10 @@ class TestZonemgrRefresh(unittest.TestCase):
                           self.zone_refresh.update_config_data,
                           config, self.cc_session)
 
-    def tearDown(self):
-        sys.stderr= self.stderr_backup
-
 class MyZonemgr(Zonemgr):
 
     def __init__(self):
-        self._db_file = "initdb.file"
+        self._db_file = TEST_SQLITE3_DBFILE
         self._zone_refresh = None
         self._shutdown_event = threading.Event()
         self._cc = MySession()
@@ -626,7 +634,13 @@ class MyZonemgr(Zonemgr):
 class TestZonemgr(unittest.TestCase):
 
     def setUp(self):
+        if os.path.exists(TEST_SQLITE3_DBFILE):
+            os.unlink(TEST_SQLITE3_DBFILE)
         self.zonemgr = MyZonemgr()
+
+    def tearDown(self):
+        if os.path.exists(TEST_SQLITE3_DBFILE):
+            os.unlink(TEST_SQLITE3_DBFILE)
 
     def test_config_handler(self):
         config_data1 = {
@@ -648,8 +662,8 @@ class TestZonemgr(unittest.TestCase):
         self.zonemgr.config_handler(config_data3)
         self.assertEqual(0.5, self.zonemgr._config_data.get("refresh_jitter"))
         # The zone doesn't exist in database, simply skip loading soa for it and log an warning
-        self.zonemgr._zone_refresh = ZonemgrRefresh(None, "initdb.file", None,
-                                                    FakeCCSession())
+        self.zonemgr._zone_refresh = ZonemgrRefresh(None, TEST_SQLITE3_DBFILE,
+                                                    None, FakeCCSession())
         config_data1["secondary_zones"] = [{"name": "nonexistent.example",
                                             "class": "IN"}]
         self.assertEqual(self.zonemgr.config_handler(config_data1),
@@ -661,7 +675,7 @@ class TestZonemgr(unittest.TestCase):
         self.assertEqual(0.1, self.zonemgr._config_data.get("refresh_jitter"))
 
     def test_get_db_file(self):
-        self.assertEqual("initdb.file", self.zonemgr.get_db_file())
+        self.assertEqual(TEST_SQLITE3_DBFILE, self.zonemgr.get_db_file())
 
     def test_parse_cmd_params(self):
         params1 = {"zone_name" : "example.com.", "zone_class" : "CH", "master" : "127.0.0.1"}
@@ -683,8 +697,11 @@ class TestZonemgr(unittest.TestCase):
         self.zonemgr._config_data_check(config_data3)
         self.assertEqual(0.5, config_data3.get("refresh_jitter"))
 
-    def tearDown(self):
-        pass
+    def test_shutdown(self):
+        self.assertFalse(self.zonemgr._module_cc.stopped)
+        self.zonemgr._shutdown_event.set()
+        self.zonemgr.run()
+        self.assertTrue(self.zonemgr._module_cc.stopped)
 
 if __name__== "__main__":
     isc.log.resetUnitTestRootLogger()

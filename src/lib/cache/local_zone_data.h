@@ -47,7 +47,7 @@ public:
     /// Otherwise, the existed one will be overwritten.
     ///
     /// \param rrset The rrset to update
-    void update(const isc::dns::RRset& rrset);
+    void update(const isc::dns::AbstractRRset& rrset);
 
 private:
     std::map<std::string, isc::dns::RRsetPtr> rrsets_map_; // RRsets of the zone

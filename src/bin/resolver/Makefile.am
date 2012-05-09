@@ -49,9 +49,9 @@ pkglibexec_PROGRAMS = b10-resolver
 b10_resolver_SOURCES = resolver.cc resolver.h
 b10_resolver_SOURCES += resolver_log.cc resolver_log.h
 b10_resolver_SOURCES += response_scrubber.cc response_scrubber.h
-b10_resolver_SOURCES += $(top_builddir)/src/bin/auth/change_user.h
 b10_resolver_SOURCES += $(top_builddir)/src/bin/auth/common.h
 b10_resolver_SOURCES += main.cc
+b10_resolver_SOURCES += common.cc common.h
 
 nodist_b10_resolver_SOURCES = resolver_messages.cc resolver_messages.h
 
@@ -70,7 +70,6 @@ b10_resolver_LDADD += $(top_builddir)/src/lib/server_common/libserver_common.la
 b10_resolver_LDADD += $(top_builddir)/src/lib/cache/libcache.la
 b10_resolver_LDADD += $(top_builddir)/src/lib/nsas/libnsas.la
 b10_resolver_LDADD += $(top_builddir)/src/lib/resolve/libresolve.la
-b10_resolver_LDADD += $(top_builddir)/src/bin/auth/change_user.o
 b10_resolver_LDFLAGS = -pthread
 
 # TODO: config.h.in is wrong because doesn't honor pkgdatadir

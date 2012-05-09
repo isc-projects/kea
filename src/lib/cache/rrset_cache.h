@@ -73,7 +73,7 @@ public:
     /// \param level trustworthiness of the rrset.
     /// \return return the rrset entry in the cache, it may be the
     /// new added rrset entry or existed one if it is not replaced.
-    RRsetEntryPtr update(const isc::dns::RRset& rrset,
+    RRsetEntryPtr update(const isc::dns::AbstractRRset& rrset,
                          const RRsetTrustLevel& level);
 
     /// \short Protected memebers, so they can be accessed by tests.
