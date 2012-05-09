@@ -130,7 +130,7 @@ TEST_F(Dhcpv6SrvTest, DUID) {
         vector<uint8_t> mac(len-8);
         vector<uint8_t> zeros(len-8, 0);
         data.readVector(mac, len-8);
-        EXPECT_NE(mac, zeros);
+        EXPECT_TRUE(mac != zeros);
         break;
     }
     case DUID_EN: {
@@ -139,8 +139,12 @@ TEST_F(Dhcpv6SrvTest, DUID) {
         vector<uint8_t> content(len-2);
         data.readVector(content, len-2);
         EXPECT_FALSE(isRangeZero(content.begin(), content.end()));
+        break;
     }
-    case DUID_LL: // not supported yet
+    case DUID_LL: {
+        // not supported yet
+        cout << "Test not implemented for DUID-LL yet." << endl;
+    }
     case DUID_UUID: // not supported yet
     default:
         cout << "Not supported duid type=" << duid_type << endl;
