@@ -20,7 +20,7 @@ namespace isc {
 namespace cache {
 
 void
-rrsetCopy(const isc::dns::RRset& src, isc::dns::RRset& dst) {
+rrsetCopy(const isc::dns::AbstractRRset& src, isc::dns::AbstractRRset& dst) {
     RdataIteratorPtr rdata_itor = src.getRdataIterator();
     rdata_itor->first();
     while(!rdata_itor->isLast()){

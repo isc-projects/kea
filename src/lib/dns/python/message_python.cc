@@ -377,8 +377,9 @@ Message_getTSIGRecord(s_Message* self) {
 
         if (tsig_record == NULL) {
             Py_RETURN_NONE;
+        } else {
+            return (createTSIGRecordObject(*tsig_record));
         }
-        return (createTSIGRecordObject(*tsig_record));
     } catch (const InvalidMessageOperation& ex) {
         PyErr_SetString(po_InvalidMessageOperation, ex.what());
     } catch (const exception& ex) {
@@ -433,7 +434,7 @@ private:
 };
 
 typedef SectionInserter<ConstQuestionPtr, Question> QuestionInserter;
-typedef SectionInserter<ConstRRsetPtr, RRset> RRsetInserter;
+typedef SectionInserter<ConstRRsetPtr, AbstractRRset> RRsetInserter;
 
 // TODO use direct iterators for these? (or simply lists for now?)
 PyObject*

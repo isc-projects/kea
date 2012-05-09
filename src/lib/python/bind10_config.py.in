@@ -23,24 +23,37 @@ def reload():
     global DATA_PATH
     global PLUGIN_PATHS
     global PREFIX
-    global LIBEXECDIR
-    LIBEXECDIR = ("@libexecdir@/@PACKAGE@"). \
-        replace("${exec_prefix}", "@exec_prefix@"). \
-        replace("${prefix}", "@prefix@")
+    global LIBEXECPATH
     BIND10_MSGQ_SOCKET_FILE = os.path.join("@localstatedir@",
                                            "@PACKAGE_NAME@",
                                            "msgq_socket").replace("${prefix}",
                                                                   "@prefix@")
     PREFIX = "@prefix@"
 
-    # If B10_FROM_SOURCE is set in the environment, we use data files
-    # from a directory relative to the value of that variable, or, if defined,
-    # relative to the value of B10_FROM_SOURCE_LOCALSTATEDIR.  Otherwise
-    # we use the ones installed on the system.
+    # B10_FROM_SOURCE is set in the environment for internal tests and
+    # an experimental run without installagion.  In that case we need to
+    # specialize some configuration variables, generally so that they refer
+    # to somewhere in the source tree instead of the appropriate places
+    # after installation.
+    #
+    # DATA_PATH: used by the config manager to find configuration files.
+    #  When "FROM_SOURCE", we use data files from a directory relative to the
+    #  value of that variable, or, if defined, relative to the value of
+    #  B10_FROM_SOURCE_LOCALSTATEDIR.  Otherwise we use the ones installed on
+    #  the system.
+    # PLUGIN_PATHS: configuration modules that are not associated to specific
+    #  process
+    # LIBEXECPATH: Paths to programs invoked by the boss process
+    #  The boss process (directly or via a helper module) uses this as
+    #  the prefererred PATH before starting a child process.
+    #  When "FROM_SOURCE", it lists the directories where the programs are
+    #  built so that when BIND 10 is experimentally started on the source
+    #  tree the programs in the tree (not installed ones) will be used.
+    #
     # B10_FROM_SOURCE_LOCALSTATEDIR is specifically intended to be used for
     # tests where we want to use variuos types of configuration within the test
-    # environment.  (We may want to make it even more generic so that the path is
-    # passed from the boss process)
+    # environment.  (We may want to make it even more generic so that the path
+    # is passed from the boss process)
     if "B10_FROM_SOURCE" in os.environ:
         if "B10_FROM_SOURCE_LOCALSTATEDIR" in os.environ:
             DATA_PATH = os.environ["B10_FROM_SOURCE_LOCALSTATEDIR"]
@@ -48,9 +61,17 @@ def reload():
             DATA_PATH = os.environ["B10_FROM_SOURCE"]
         PLUGIN_PATHS = [os.environ["B10_FROM_SOURCE"] +
                             '/src/bin/cfgmgr/plugins']
+        programdirs = ['auth', 'cfgmgr', 'cmdctl', 'ddns', 'dhcp6', 'msgq',
+                       'resolver', 'sockcreator', 'stats', 'xfrin', 'xfrout',
+                       'zonemgr']
+        LIBEXECPATH = ':'.join(['@abs_top_builddir@/src/bin/' + p for p in
+                                programdirs])
     else:
         DATA_PATH = "@localstatedir@/@PACKAGE@".replace("${prefix}", PREFIX)
         PLUGIN_PATHS = ["@prefix@/share/@PACKAGE@/config_plugins"]
+        LIBEXECPATH = ("@libexecdir@/@PACKAGE@"). \
+            replace("${exec_prefix}", "@exec_prefix@"). \
+            replace("${prefix}", "@prefix@")
     # For testing the plugins so they can find their own spec files
     if "B10_TEST_PLUGIN_DIR" in os.environ:
         PLUGIN_PATHS = os.environ["B10_TEST_PLUGIN_DIR"].split(':')

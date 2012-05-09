@@ -44,7 +44,6 @@ pkglibexec_PROGRAMS = b10-auth
 b10_auth_SOURCES = query.cc query.h
 b10_auth_SOURCES += auth_srv.cc auth_srv.h
 b10_auth_SOURCES += auth_log.cc auth_log.h
-b10_auth_SOURCES += change_user.cc change_user.h
 b10_auth_SOURCES += auth_config.cc auth_config.h
 b10_auth_SOURCES += command.cc command.h
 b10_auth_SOURCES += common.h common.cc

@@ -272,10 +272,10 @@ protected:
     DHCPv6Proto proto_;
 
     /// DHCPv6 message type
-    int msg_type_;
+    uint8_t msg_type_;
 
     /// DHCPv6 transaction-id
-    unsigned int transid_;
+    uint32_t transid_;
 
     /// unparsed data (in received packets)
     OptionBuffer data_;
@@ -298,14 +298,13 @@ protected:
     isc::asiolink::IOAddress remote_addr_;
 
     /// local TDP or UDP port
-    int local_port_;
+    uint16_t local_port_;
 
     /// remote TCP or UDP port
-    int remote_port_;
+    uint16_t remote_port_;
 
     /// output buffer (used during message transmission)
     isc::util::OutputBuffer bufferOut_;
-
 }; // Pkt6 class
 
 typedef boost::shared_ptr<Pkt6> Pkt6Ptr;

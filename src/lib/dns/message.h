@@ -462,15 +462,19 @@ public:
     /// This interface takes into account the RRSIG possibly attached to
     /// \c rrset.  This interface design needs to be revisited later.
     ///
-    /// This method is only allowed in the \c RENDER mode;
-    /// if the \c Message is in other mode, an exception of class
-    /// InvalidMessageOperation will be thrown.
-    /// \c section must be a valid constant of the \c Section type;
-    /// otherwise, an exception of class \c OutOfRange will be thrown.
-    ///
     /// Note that \c addRRset() does not currently check for duplicate
     /// data before inserting RRsets.  The caller is responsible for
     /// checking for these (see \c hasRRset() below).
+    ///
+    /// \throw InvalidParameter rrset is NULL
+    /// \throw InvalidMessageOperation The message is not in the \c RENDER
+    /// mode.
+    /// \throw OutOfRange \c section doesn't specify a valid \c Section value.
+    ///
+    /// \param section The message section to which the rrset is to be added
+    /// \param rrset The rrset to be added.  Must not be NULL.
+    /// \param sign If true, and if \c rrset has associated RRSIGs, the
+    /// RRSIGs will also be added to the same section of the message.
     void addRRset(const Section section, RRsetPtr rrset, bool sign = false);
 
     /// \brief Determine whether the given section already has an RRset

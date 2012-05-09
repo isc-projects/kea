@@ -16,6 +16,13 @@ $NAMESPACE isc::datasrc
 
 # \brief Messages for the data source library
 
+% DATASRC_BAD_NSEC3_NAME NSEC3 record has a bad owner name '%1'
+The software refuses to load NSEC3 records into a wildcard domain or
+the owner name has two or more labels below the zone origin.
+It isn't explicitly forbidden, but no sane zone wouldn have such names
+for NSEC3.  BIND 9 also refuses NSEC3 at wildcard, so this behavior is
+compatible with BIND 9.
+
 % DATASRC_CACHE_CREATE creating the hotspot cache
 This is a debug message issued during startup when the hotspot cache
 is created.
@@ -67,6 +74,35 @@ means no limit.
 The datasource tried to provide an NSEC proof that the named domain does not
 exist, but the database backend doesn't support DNSSEC. No proof is included
 in the answer as a result.
+
+% DATASRC_DATABASE_FINDNSEC3 Looking for NSEC3 for %1 in %2 mode
+Debug information. A search in an database data source for NSEC3 that
+matches or covers the given name is being started.
+
+% DATASRC_DATABASE_FINDNSEC3_COVER found a covering NSEC3 for %1: %2
+Debug information. An NSEC3 that covers the given name is found and
+being returned.  The found NSEC3 RRset is also displayed.
+
+% DATASRC_DATABASE_FINDNSEC3_MATCH found a matching NSEC3 for %1 at label count %2: %3
+Debug information. An NSEC3 that matches (a possibly superdomain of)
+the given name is found and being returned.  When the shown label
+count is smaller than that of the given name, the matching NSEC3 is
+for a superdomain of the given name (see DATASRC_DATABSE_FINDNSEC3_TRYHASH).
+The found NSEC3 RRset is also displayed.
+
+% DATASRC_DATABASE_FINDNSEC3_TRYHASH looking for NSEC3 for %1 at label count %2 (hash %3)
+Debug information. In an attempt of finding an NSEC3 for the give name,
+(a possibly superdomain of) the name is hashed and searched for in the
+NSEC3 name space.  When the shown label count is smaller than that of the
+shown name, the search tries the superdomain name that share the shown
+(higher) label count of the shown name (e.g., for
+www.example.com. with shown label count of 3, example.com. is being
+tried, as "." is 1 label long).
+
+% DATASRC_DATABASE_FINDNSEC3_TRYHASH_PREV looking for previous NSEC3 for %1 at label count %2 (hash %3)
+Debug information. An exact match on hash (see
+DATASRC_DATABASE_FINDNSEC3_TRYHASH) was unsuccessful. We get the previous hash
+to that one instead.
 
 % DATASRC_DATABASE_FIND_RECORDS looking in datasource %1 for record %2/%3/%4
 Debug information. The database data source is looking up records with the given
@@ -138,10 +174,40 @@ While iterating through the zone, the program extracted next RRset from it.
 The name and RRtype of the RRset is indicated in the message.
 
 % DATASRC_DATABASE_ITERATE_TTL_MISMATCH TTL values differ for RRs of %1/%2/%3, setting to %4
-While iterating through the zone, the time to live for RRs of the given RRset
-were found to be different. This isn't allowed on the wire and is considered
-an error, so we set it to the lowest value we found (but we don't modify the
-database). The data in database should be checked and fixed.
+While iterating through the zone, the time to live for RRs of the
+given RRset were found to be different. Since an RRset cannot have
+multiple TTLs, we set it to the lowest value we found (but we don't
+modify the database). This is what the client would do when such RRs
+were given in a DNS response according to RFC2181. The data in
+database should be checked and fixed.
+
+% DATASRC_DATABASE_JOURNALREADER_END %1/%2 on %3 from %4 to %5
+This is a debug message indicating that the program (successfully)
+reaches the end of sequences of a zone's differences.  The zone's name
+and class, database name, and the start and end serials are shown in
+the message.
+
+% DATASRC_DATABASE_JOURNALREADER_NEXT %1/%2 in %3/%4 on %5
+This is a debug message indicating that the program retrieves one
+difference in difference sequences of a zone and successfully converts
+it to an RRset.  The zone's name and class, database name, and the
+name and RR type of the retrieved diff are shown in the message.
+
+% DATASRC_DATABASE_JOURNALREADER_START %1/%2 on %3 from %4 to %5
+This is a debug message indicating that the program starts reading
+a zone's difference sequences from a database-based data source.  The
+zone's name and class, database name, and the start and end serials
+are shown in the message.
+
+% DATASRC_DATABASE_JOURNALREADR_BADDATA failed to convert a diff to RRset in %1/%2 on %3 between %4 and %5: %6
+This is an error message indicating that a zone's diff is broken and
+the data source library failed to convert it to a valid RRset.  The
+most likely cause of this is that someone has manually modified the
+zone's diff in the database and inserted invalid data as a result.
+The zone's name and class, database name, and the start and end
+serials, and an additional detail of the error are shown in the
+message.  The administrator should examine the diff in the database
+to find any invalid data and fix it.
 
 % DATASRC_DATABASE_NO_MATCH not match for %2/%3/%4 in %1
 No match (not even a wildcard) was found in the named data source for the given
@@ -297,6 +363,30 @@ should be followed. The requested domain is an apex of some zone.
 % DATASRC_MEM_FIND find '%1/%2'
 Debug information. A search for the requested RRset is being started.
 
+% DATASRC_MEM_FINDNSEC3 finding NSEC3 for %1, mode %2
+Debug information. A search in an in-memory data source for NSEC3 that
+matches or covers the given name is being started.
+
+% DATASRC_MEM_FINDNSEC3_COVER found a covering NSEC3 for %1: %2
+Debug information. An NSEC3 that covers the given name is found and
+being returned.  The found NSEC3 RRset is also displayed.
+
+% DATASRC_MEM_FINDNSEC3_MATCH found a matching NSEC3 for %1 at label count %2: %3
+Debug information. An NSEC3 that matches (a possibly superdomain of)
+the given name is found and being returned.  When the shown label
+count is smaller than that of the given name, the matching NSEC3 is
+for a superdomain of the given name (see DATASRC_MEM_FINDNSEC3_TRYHASH).
+The found NSEC3 RRset is also displayed.
+
+% DATASRC_MEM_FINDNSEC3_TRYHASH looking for NSEC3 for %1 at label count %2 (hash %3)
+Debug information. In an attempt of finding an NSEC3 for the give name,
+(a possibly superdomain of) the name is hashed and searched for in the
+NSEC3 name space.  When the shown label count is smaller than that of the
+shown name, the search tries the superdomain name that share the shown
+(higher) label count of the shown name (e.g., for
+www.example.com. with shown label count of 3, example.com. is being
+tried).
+
 % DATASRC_MEM_FIND_ZONE looking for zone '%1'
 Debug information. A zone object for this zone is being searched for in the
 in-memory data source.
@@ -306,6 +396,14 @@ Debug information. The content of master file is being loaded into the memory.
 
 % DATASRC_MEM_NOT_FOUND requested domain '%1' not found
 Debug information. The requested domain does not exist.
+
+% DATASRC_MEM_NO_NSEC3PARAM NSEC3PARAM is missing for NSEC3-signed zone %1/%2
+The in-memory data source has loaded a zone signed with NSEC3 RRs,
+but it doesn't have a NSEC3PARAM RR at the zone origin.  It's likely that
+the zone is somehow broken, but this RR is not necessarily needed for
+handling lookups with NSEC3 in this data source, so it accepts the given
+content of the zone.  Nevertheless the administrator should look into
+the integrity of the zone data.
 
 % DATASRC_MEM_NS_ENCOUNTERED encountered a NS
 Debug information. While searching for the requested domain, a NS was
@@ -333,10 +431,12 @@ Some resource types are singletons -- only one is allowed in a domain
 % DATASRC_MEM_SUCCESS query for '%1/%2' successful
 Debug information. The requested record was found.
 
-% DATASRC_MEM_SUPER_STOP stopped at superdomain '%1', domain '%2' is empty
-Debug information. The search stopped at a superdomain of the requested
-domain. The domain is an empty nonterminal, therefore it is treated  as NXRRSET
-case (eg. the domain exists, but it doesn't have the requested record type).
+% DATASRC_MEM_SUPER_STOP stopped as '%1' is superdomain of a zone node, meaning it's empty
+Debug information. The search stopped because the requested domain was
+detected to be a superdomain of some existing node of zone (while there
+was no exact match).  This means that the domain is an empty nonterminal,
+therefore it is treated  as NXRRSET case (eg. the domain exists, but it
+doesn't have the requested record type).
 
 % DATASRC_MEM_SWAP swapping contents of two zone representations ('%1' and '%2')
 Debug information. The contents of two in-memory zones are being exchanged.
@@ -500,8 +600,10 @@ An attempt to add a NSEC3 record into the message failed, because the zone does
 not have any DS record. This indicates problem with the provided data.
 
 % DATASRC_QUERY_NO_ZONE no zone containing '%1' in class '%2'
-Lookup of domain failed because the data have no zone that contain the
-domain. Maybe someone sent a query to the wrong server for some reason.
+Debug information. Lookup of domain failed because the datasource
+has no zone that contains the domain. Maybe someone sent a query
+to the wrong server for some reason. This may also happen when
+looking in the datasource for addresses for NS records.
 
 % DATASRC_QUERY_PROCESS processing query '%1/%2' in the '%3' class
 Debug information. A sure query is being processed now.
@@ -516,7 +618,7 @@ The underlying data source failed to answer the query for referral information.
 1 means some error, 2 is not implemented. The data source should have logged
 the specific error already.
 
-% DATASRC_QUERY_RRSIG unable to answer RRSIG query
+% DATASRC_QUERY_RRSIG unable to answer RRSIG query for %1
 The server is unable to answer a direct query for RRSIG type, but was asked
 to do so.
 
@@ -562,6 +664,17 @@ enough information for it.  The code is 1 for error, 2 for not implemented.
 
 % DATASRC_SQLITE_CLOSE closing SQLite database
 Debug information. The SQLite data source is closing the database file.
+
+% DATASRC_SQLITE_COMPATIBLE_VERSION database schema V%1.%2 not up to date (expecting V%3.%4) but is compatible
+The version of the SQLite3 database schema used to hold the zone data
+is not the latest one - the current version of BIND 10 was written
+with a later schema version in mind.  However, the database is
+compatible with the current version of BIND 10, and BIND 10 will run
+without any problems.
+
+Consult the release notes for your version of BIND 10.  Depending on
+the changes made to the database schema, it is possible that improved
+performance could result if the database were upgraded.
 
 % DATASRC_SQLITE_CONNCLOSE Closing sqlite database
 The database file is no longer needed and is being closed.
@@ -630,6 +743,14 @@ source.
 The SQLite data source was asked to provide a NSEC3 record for given zone.
 But it doesn't contain that zone.
 
+% DATASRC_SQLITE_INCOMPATIBLE_VERSION database schema V%1.%2 incompatible with version (V%3.%4) expected
+The version of the SQLite3 database schema used to hold the zone data
+is incompatible with the version expected by BIND 10.  As a result,
+BIND 10 is unable to run using the database file as the data source.
+
+The database should be updated using the means described in the BIND
+10 documentation.
+
 % DATASRC_SQLITE_NEWCONN SQLite3Database is being initialized
 A wrapper object to hold database connection is being initialized.
 
@@ -671,66 +792,3 @@ data source.
 % DATASRC_UNEXPECTED_QUERY_STATE unexpected query state
 This indicates a programming error. An internal task of unknown type was
 generated.
-
-% DATASRC_DATABASE_UPDATER_CREATED zone updater created for '%1/%2' on %3
-Debug information.  A zone updater object is created to make updates to
-the shown zone on the shown backend database.
-
-% DATASRC_DATABASE_UPDATER_DESTROYED zone updater destroyed for '%1/%2' on %3
-Debug information.  A zone updater object is destroyed, either successfully
-or after failure of, making updates to the shown zone on the shown backend
-database.
-
-%DATASRC_DATABASE_UPDATER_ROLLBACK zone updates roll-backed for '%1/%2' on %3
-A zone updater is being destroyed without committing the changes.
-This would typically mean the update attempt was aborted due to some
-error, but may also be a bug of the application that forgets committing
-the changes.  The intermediate changes made through the updater won't
-be applied to the underlying database.  The zone name, its class, and
-the underlying database name are shown in the log message.
-
-%DATASRC_DATABASE_UPDATER_ROLLBACKFAIL failed to roll back zone updates for '%1/%2' on %3: %4
-A zone updater is being destroyed without committing the changes to
-the database, and attempts to rollback incomplete updates, but it
-unexpectedly fails.  The higher level implementation does not expect
-it to fail, so this means either a serious operational error in the
-underlying data source (such as a system failure of a database) or
-software bug in the underlying data source implementation.  In either
-case if this message is logged the administrator should carefully
-examine the underlying data source to see what exactly happens and
-whether the data is still valid.  The zone name, its class, and the
-underlying database name as well as the error message thrown from the
-database module are shown in the log message.
-
-% DATASRC_DATABASE_UPDATER_COMMIT updates committed for '%1/%2' on %3
-Debug information.  A set of updates to a zone has been successfully
-committed to the corresponding database backend.  The zone name,
-its class and the database name are printed.
-
-% DATASRC_DATABASE_JOURNALREADER_START %1/%2 on %3 from %4 to %5
-This is a debug message indicating that the program starts reading
-a zone's difference sequences from a database-based data source.  The
-zone's name and class, database name, and the start and end serials
-are shown in the message.
-
-% DATASRC_DATABASE_JOURNALREADER_NEXT %1/%2 in %3/%4 on %5
-This is a debug message indicating that the program retrieves one
-difference in difference sequences of a zone and successfully converts
-it to an RRset.  The zone's name and class, database name, and the
-name and RR type of the retrieved diff are shown in the message.
-
-% DATASRC_DATABASE_JOURNALREADER_END %1/%2 on %3 from %4 to %5
-This is a debug message indicating that the program (successfully)
-reaches the end of sequences of a zone's differences.  The zone's name
-and class, database name, and the start and end serials are shown in
-the message.
-
-% DATASRC_DATABASE_JOURNALREADR_BADDATA failed to convert a diff to RRset in %1/%2 on %3 between %4 and %5: %6
-This is an error message indicating that a zone's diff is broken and
-the data source library failed to convert it to a valid RRset.  The
-most likely cause of this is that someone has manually modified the
-zone's diff in the database and inserted invalid data as a result.
-The zone's name and class, database name, and the start and end
-serials, and an additional detail of the error are shown in the
-message.  The administrator should examine the diff in the database
-to find any invalid data and fix it.

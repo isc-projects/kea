@@ -2,7 +2,7 @@
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
 	       [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2011-2012  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -20,7 +20,7 @@
 <refentry>
 
   <refentryinfo>
-    <date>December 9, 2011</date>
+    <date>February 28, 2012</date>
   </refentryinfo>
 
   <refmeta>
@@ -36,7 +36,7 @@
 
   <docinfo>
     <copyright>
-      <year>2011</year>
+      <year>2011-2012</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -62,6 +62,13 @@
       a DDNS update, <command>b10-ddns</command> updates the zone
       in the BIND 10 zone data store.
     </para>
+
+    <note><para>
+      Currently installed is a dummy component. It does not provide
+      any functionality. It is a skeleton implementation that
+      will be expanded later.
+<!-- TODO: #1458 -->
+    </para></note>
 
     <para>
       This daemon communicates with BIND 10 over a
@@ -115,8 +122,11 @@
       The module commands are:
     </para>
     <para>
-      <command>shutdown</command> Exits <command>b10-ddns</command>.
-      (Note that the BIND 10 boss process will restart this service.)
+      <command>shutdown</command> exits <command>b10-ddns</command>.
+      This has an optional <varname>pid</varname> argument to
+      select the process ID to stop.
+      (Note that the BIND 10 boss process may restart this service
+      if configured.)
     </para>
 
   </refsect1>
@@ -133,12 +143,6 @@
       </citerefentry>,
       <citerefentry>
         <refentrytitle>b10-msgq</refentrytitle><manvolnum>8</manvolnum>
-      </citerefentry>,
-      <citerefentry>
-        <refentrytitle>b10-xfrin</refentrytitle><manvolnum>8</manvolnum>
-      </citerefentry>,
-      <citerefentry>
-        <refentrytitle>b10-xfrout</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citerefentry>
         <refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum>

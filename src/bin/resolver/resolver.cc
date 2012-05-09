@@ -15,6 +15,7 @@
 #include <config.h>
 
 #include <stdint.h>
+#include <sys/types.h>
 #include <netinet/in.h>
 
 #include <algorithm>
@@ -91,7 +92,7 @@ public:
         queryShutdown();
     }
 
-    void querySetup(DNSService& dnss,
+    void querySetup(DNSServiceBase& dnss,
                     isc::nsas::NameserverAddressStore& nsas,
                     isc::cache::ResolverCache& cache)
     {
@@ -120,10 +121,10 @@ public:
     }
 
     void setForwardAddresses(const AddressList& upstream,
-        DNSService *dnss)
+                             DNSServiceBase* dnss)
     {
         upstream_ = upstream;
-        if (dnss) {
+        if (dnss != NULL) {
             if (!upstream_.empty()) {
                 BOOST_FOREACH(const AddressPair& address, upstream) {
                     LOG_INFO(resolver_logger, RESOLVER_FORWARD_ADDRESS)
@@ -136,10 +137,10 @@ public:
     }
 
     void setRootAddresses(const AddressList& upstream_root,
-                          DNSService *dnss)
+                          DNSServiceBase* dnss)
     {
         upstream_root_ = upstream_root;
-        if (dnss) {
+        if (dnss != NULL) {
             if (!upstream_root_.empty()) {
                 BOOST_FOREACH(const AddressPair& address, upstream_root) {
                     LOG_INFO(resolver_logger, RESOLVER_SET_ROOT_ADDRESS)
@@ -252,7 +253,8 @@ makeErrorMessage(MessagePtr message, MessagePtr answer_message,
     }
     for_each(questions.begin(), questions.end(), QuestionInserter(message));
     message->setRcode(rcode);
-    MessageRenderer renderer(*buffer);
+    MessageRenderer renderer;
+    renderer.setBuffer(buffer.get());
     message->toWire(renderer);
 }
 
@@ -303,7 +305,8 @@ public:
 
         // Now we can clear the buffer and render the new message into it
         buffer->clear();
-        MessageRenderer renderer(*buffer);
+        MessageRenderer renderer;
+        renderer.setBuffer(buffer.get());
 
         ConstEDNSPtr edns(query_message->getEDNS());
         const bool dnssec_ok = edns && edns->getDNSSECAwareness();
@@ -327,6 +330,7 @@ public:
         }
 
         answer_message->toWire(renderer);
+        renderer.setBuffer(NULL);
 
         LOG_DEBUG(resolver_logger, RESOLVER_DBG_DETAIL,
                   RESOLVER_DNS_MESSAGE_SENT)
@@ -373,7 +377,7 @@ Resolver::~Resolver() {
 }
 
 void
-Resolver::setDNSService(isc::asiodns::DNSService& dnss) {
+Resolver::setDNSService(isc::asiodns::DNSServiceBase& dnss) {
     dnss_ = &dnss;
 }
 

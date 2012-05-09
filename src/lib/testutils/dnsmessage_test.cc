@@ -23,6 +23,12 @@
 
 #include <testutils/dnsmessage_test.h>
 
+#include <boost/bind.hpp>
+
+#include <string>
+#include <sstream>
+
+using namespace std;
 using namespace isc::dns;
 
 namespace isc {
@@ -80,12 +86,35 @@ matchRdata(const char*, const char*,
     }
     return (::testing::AssertionSuccess());
 }
+
+// A helper callback of masterLoad() used by textToRRset() below.
+void
+setRRset(RRsetPtr rrset, RRsetPtr* rrsetp) {
+    if (*rrsetp) {
+        isc_throw(isc::Unexpected,
+                  "multiple RRsets are given to textToRRset");
+    }
+    *rrsetp = rrset;
+}
+}
+
+RRsetPtr
+textToRRset(const string& text_rrset, const RRClass& rrclass,
+            const Name& origin)
+{
+    stringstream ss(text_rrset);
+    RRsetPtr rrset;
+    masterLoad(ss, origin, rrclass, boost::bind(setRRset, _1, &rrset));
+    return (rrset);
 }
 
 void
 rrsetCheck(isc::dns::ConstRRsetPtr expected_rrset,
            isc::dns::ConstRRsetPtr actual_rrset)
 {
+    SCOPED_TRACE("Comparing RRsets\n"
+                 "  Actual: " + actual_rrset->toText() +
+                 "  Expected: " + expected_rrset->toText());
     EXPECT_EQ(expected_rrset->getName(), actual_rrset->getName());
     EXPECT_EQ(expected_rrset->getClass(), actual_rrset->getClass());
     EXPECT_EQ(expected_rrset->getType(), actual_rrset->getType());

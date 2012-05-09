@@ -14,18 +14,10 @@
 
 #include <config.h>
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/select.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <stdlib.h>
-#include <errno.h>
-
-#include <string>
-#include <iostream>
-
-#include <boost/foreach.hpp>
+#include <resolver/spec_config.h>
+#include <resolver/resolver.h>
+#include "resolver_log.h"
+#include "common.h"
 
 #include <asiodns/asiodns.h>
 #include <asiolink/asiolink.h>
@@ -41,13 +33,11 @@
 #include <cc/data.h>
 #include <config/ccsession.h>
 
+#include <server_common/socket_request.h>
+
 #include <xfr/xfrout_client.h>
 
-#include <auth/change_user.h>
 #include <auth/common.h>
-
-#include <resolver/spec_config.h>
-#include <resolver/resolver.h>
 
 #include <cache/resolver_cache.h>
 #include <nsas/nameserver_address_store.h>
@@ -55,6 +45,20 @@
 #include <log/logger_support.h>
 #include <log/logger_level.h>
 #include "resolver_log.h"
+
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/select.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <unistd.h>
+
+#include <string>
+#include <iostream>
+
+#include <boost/foreach.hpp>
 
 using namespace std;
 using namespace isc::cc;
@@ -79,21 +83,37 @@ ConstElementPtr
 my_command_handler(const string& command, ConstElementPtr args) {
     ConstElementPtr answer = createAnswer();
 
-    if (command == "print_message") {
-        LOG_INFO(resolver_logger, RESOLVER_PRINT_COMMAND).arg(args);
-        /* let's add that message to our answer as well */
-        answer = createAnswer(0, args);
-    } else if (command == "shutdown") {
-        io_service.stop();
-    }
+    try {
+        if (command == "print_message") {
+            LOG_INFO(resolver_logger, RESOLVER_PRINT_COMMAND).arg(args);
+            /* let's add that message to our answer as well */
+            answer = createAnswer(0, args);
+        } else if (command == "shutdown") {
+            // Is the pid argument provided?
+            if (args && args->contains("pid")) {
+                // If it is, we check it is the same as our PID
+                const int pid(args->get("pid")->intValue());
+                const pid_t my_pid(getpid());
+                if (my_pid != pid) {
+                    // It is not for us (this is expected, see auth/command.cc
+                    // and the ShutdownCommand there).
+                    return (answer);
+                }
+            }
+            LOG_DEBUG(resolver_logger, RESOLVER_DBG_INIT,
+                      RESOLVER_SHUTDOWN_RECEIVED);
+            io_service.stop();
+        }
 
-    return (answer);
+        return (answer);
+    } catch (const std::exception& e) {
+        return (createAnswer(1, e.what()));
+    }
 }
 
 void
 usage() {
     cerr << "Usage:  b10-resolver [-u user] [-v]" << endl;
-    cerr << "\t-u: change process UID to the specified user" << endl;
     cerr << "\t-v: verbose output" << endl;
     exit(1);
 }
@@ -103,13 +123,9 @@ int
 main(int argc, char* argv[]) {
     bool verbose = false;
     int ch;
-    const char* uid = NULL;
 
     while ((ch = getopt(argc, argv, "u:v")) != -1) {
         switch (ch) {
-        case 'u':
-            uid = optarg;
-            break;
         case 'v':
             verbose = true;
             break;
@@ -125,7 +141,7 @@ main(int argc, char* argv[]) {
 
     // Until proper logging comes along, initialize the logging with the
     // temporary initLogger() code.  If verbose, we'll use maximum verbosity.
-    isc::log::initLogger("b10-resolver",
+    isc::log::initLogger(RESOLVER_NAME,
                          (verbose ? isc::log::DEBUG : isc::log::INFO),
                          isc::log::MAX_DEBUG_LEVEL, NULL);
 
@@ -206,15 +222,14 @@ main(int argc, char* argv[]) {
         LOG_DEBUG(resolver_logger, RESOLVER_DBG_INIT, RESOLVER_SERVICE_CREATED);
 
         cc_session = new Session(io_service.get_io_service());
+        isc::server_common::initSocketRequestor(*cc_session, RESOLVER_NAME);
+
+        // We delay starting listening to new commands/config just before we
+        // go into the main loop.   See auth/main.cc for the rationale.
         config_session = new ModuleCCSession(specfile, *cc_session,
                                              my_config_handler,
-                                             my_command_handler);
+                                             my_command_handler, false);
         LOG_DEBUG(resolver_logger, RESOLVER_DBG_INIT, RESOLVER_CONFIG_CHANNEL);
-
-        // FIXME: This does not belong here, but inside Boss
-        if (uid != NULL) {
-            changeUser(uid);
-        }
 
         resolver->setConfigSession(config_session);
         // Install all initial configurations.  If loading configuration
@@ -225,6 +240,9 @@ main(int argc, char* argv[]) {
         // fails.
         resolver->updateConfig(config_session->getFullConfig(), true);
         LOG_DEBUG(resolver_logger, RESOLVER_DBG_INIT, RESOLVER_CONFIG_LOADED);
+
+        // Now start asynchronous read.
+        config_session->start();
 
         LOG_INFO(resolver_logger, RESOLVER_STARTED);
         io_service.run();

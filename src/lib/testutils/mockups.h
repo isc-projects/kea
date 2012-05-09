@@ -12,7 +12,12 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#ifndef __ISC_TESTUTILS_MOCKUPS_H
+#define __ISC_TESTUTILS_MOCKUPS_H 1
+
 #include <config.h>
+
+#include <exceptions/exceptions.h>
 
 #include <cc/data.h>
 #include <cc/session.h>
@@ -20,6 +25,12 @@
 #include <xfr/xfrout_client.h>
 
 #include <asiodns/asiodns.h>
+
+#include <utility>
+#include <vector>
+
+namespace isc {
+namespace testutils {
 
 // A minimal mock configuration session.  Most the methods are
 // stubbed out, except for a very basic group_sendmsg() and
@@ -93,6 +104,45 @@ private:
     bool receive_ok_;
 };
 
+// This mock object does nothing except for recording passed parameters
+// to addServerXXX methods so the test code subsequently checks the parameters.
+class MockDNSService : public isc::asiodns::DNSServiceBase {
+public:
+    // A helper tuple of parameters passed to addServerUDPFromFD().
+    struct UDPFdParams {
+        int fd;
+        int af;
+        ServerFlag options;
+    };
+
+    virtual void addServerTCPFromFD(int fd, int af) {
+        tcp_fd_params_.push_back(std::pair<int, int>(fd, af));
+    }
+    virtual void addServerUDPFromFD(int fd, int af, ServerFlag options) {
+        UDPFdParams params = { fd, af, options };
+        udp_fd_params_.push_back(params);
+    }
+    virtual void clearServers() {}
+
+    virtual asiolink::IOService& getIOService() {
+        isc_throw(isc::Unexpected,
+                  "MockDNSService::getIOService() shouldn't be called");
+    }
+
+    // These two allow the tests to check how the servers have been created
+    // through this object.
+    const std::vector<std::pair<int, int> >& getTCPFdParams() const {
+        return (tcp_fd_params_);
+    }
+    const std::vector<UDPFdParams>& getUDPFdParams() const {
+        return (udp_fd_params_);
+    }
+
+private:
+    std::vector<std::pair<int, int> > tcp_fd_params_;
+    std::vector<UDPFdParams> udp_fd_params_;
+};
+
 // A nonoperative DNSServer object to be used in calls to processMessage().
 class MockServer : public isc::asiodns::DNSServer {
 public:
@@ -149,3 +199,10 @@ private:
     bool disconnect_ok_;
 };
 
+} // end of testutils
+} // end of isc
+#endif  // __ISC_TESTUTILS_MOCKUPS_H
+
+// Local Variables:
+// mode: c++
+// End:

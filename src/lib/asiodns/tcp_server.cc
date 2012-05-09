@@ -14,9 +14,9 @@
 
 #include <config.h>
 
+#include <unistd.h>             // for some IPC/network system calls
 #include <netinet/in.h>
 #include <sys/socket.h>
-#include <unistd.h>             // for some IPC/network system calls
 #include <errno.h>
 
 #include <boost/shared_array.hpp>
@@ -29,8 +29,8 @@
 #include <asiolink/dummy_io_cb.h>
 #include <asiolink/tcp_endpoint.h>
 #include <asiolink/tcp_socket.h>
-#include <tcp_server.h>
-
+#include <asiodns/tcp_server.h>
+#include <asiodns/logger.h>
 
 using namespace asio;
 using asio::ip::udp;
@@ -47,8 +47,7 @@ namespace asiodns {
 /// The following functions implement the \c TCPServer class.
 ///
 /// The constructor
-TCPServer::TCPServer(io_service& io_service,
-                     const ip::address& addr, const uint16_t port, 
+TCPServer::TCPServer(io_service& io_service, int fd, int af,
                      const SimpleCallback* checkin,
                      const DNSLookup* lookup,
                      const DNSAnswer* answer) :
@@ -56,17 +55,21 @@ TCPServer::TCPServer(io_service& io_service,
     checkin_callback_(checkin), lookup_callback_(lookup),
     answer_callback_(answer)
 {
-    tcp::endpoint endpoint(addr, port);
-    acceptor_.reset(new tcp::acceptor(io_service));
-    acceptor_->open(endpoint.protocol());
-    // Set v6-only (we use a separate instantiation for v4,
-    // otherwise asio will bind to both v4 and v6
-    if (addr.is_v6()) {
-        acceptor_->set_option(ip::v6_only(true));
+    if (af != AF_INET && af != AF_INET6) {
+        isc_throw(InvalidParameter, "Address family must be either AF_INET "
+                  "or AF_INET6, not " << af);
     }
-    acceptor_->set_option(tcp::acceptor::reuse_address(true));
-    acceptor_->bind(endpoint);
-    acceptor_->listen();
+    LOG_DEBUG(logger, DBGLVL_TRACE_BASIC, ASIODNS_FD_ADD_TCP).arg(fd);
+
+    try {
+        acceptor_.reset(new tcp::acceptor(io_service));
+        acceptor_->assign(af == AF_INET6 ? tcp::v6() : tcp::v4(), fd);
+        acceptor_->listen();
+    } catch (const std::exception& exception) {
+        // Whatever the thing throws, it is something from ASIO and we convert
+        // it
+        isc_throw(IOError, exception.what());
+    }
 }
 
 void

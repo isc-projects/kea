@@ -131,7 +131,7 @@ IfaceMgr::IfaceMgr()
         // interface detection is implemented. Otherwise
         // it is not possible to run tests in a portable
         // way (see detectIfaces() method).
-        throw ex;
+        throw;
     }
 }
 
@@ -198,7 +198,7 @@ void IfaceMgr::stubDetectIfaces() {
 
         // TODO Do LOG_FATAL here
         std::cerr << "Interface detection failed." << std::endl;
-        throw ex;
+        throw;
     }
 }
 

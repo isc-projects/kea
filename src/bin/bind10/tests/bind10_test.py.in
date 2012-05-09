@@ -36,6 +36,7 @@ import isc.bind10.socket_cache
 import errno
 
 from isc.testutils.parse_args import TestOptParser, OptsError
+from isc.testutils.ccsession_mock import MockModuleCCSession
 
 class TestProcessInfo(unittest.TestCase):
     def setUp(self):
@@ -146,7 +147,7 @@ class TestCacheCommands(unittest.TestCase):
         socket.
         """
         def __init__(self):
-            self.send = ""
+            self.send = b""
         def fileno(self):
             """
             The file number. Used for identifying the remote application.
@@ -207,17 +208,17 @@ class TestCacheCommands(unittest.TestCase):
         socket = self.FalseSocket()
         # An exception from the cache
         self.__raise_exception = ValueError("Test value error")
-        self.__boss.socket_request_handler("token", socket)
+        self.__boss.socket_request_handler(b"token", socket)
         # It was called, but it threw, so it is not noted here
         self.assertIsNone(self.__get_socket_called)
-        self.assertEqual("0\n", socket.send)
+        self.assertEqual(b"0\n", socket.send)
         # It should not have sent any socket.
         self.assertIsNone(self.__send_fd_called)
         # Now prepare a valid scenario
         self.__raise_exception = None
-        socket.send = ""
-        self.__boss.socket_request_handler("token", socket)
-        self.assertEqual("1\n", socket.send)
+        socket.send = b""
+        self.__boss.socket_request_handler(b"token", socket)
+        self.assertEqual(b"1\n", socket.send)
         self.assertEqual((42, 13), self.__send_fd_called)
         self.assertEqual(("token", 42), self.__get_socket_called)
 
@@ -263,10 +264,11 @@ class TestCacheCommands(unittest.TestCase):
             """
             [rcode, ranswer] = self.__boss._get_socket(args)['result']
             self.assertEqual(code, rcode)
-            if code == 1:
+            if code != 0:
                 # This should be an error message. The exact formatting
                 # is unknown, but we check it is string at least
                 self.assertTrue(isinstance(ranswer, str))
+
         def mod_args(name, value):
             """
             Override a parameter in the args.
@@ -296,6 +298,13 @@ class TestCacheCommands(unittest.TestCase):
         # to an error, not propagated
         self.__raise_exception = Exception("Test exception")
         check_code(1, self.__socket_args)
+        # The special "expected" exceptions
+        self.__raise_exception = \
+            isc.bind10.socket_cache.ShareError("Not shared")
+        check_code(3, self.__socket_args)
+        self.__raise_exception = \
+            isc.bind10.socket_cache.SocketError("Not shared", 13)
+        check_code(2, self.__socket_args)
 
     def drop_socket(self, token):
         """
@@ -451,6 +460,22 @@ class TestBoB(unittest.TestCase):
         # The drop_socket is not tested here, but in TestCacheCommands.
         # It needs the cache mocks to be in place and they are there.
 
+    def test_stop_process(self):
+        """
+        Test checking the stop_process method sends the right message over
+        the message bus.
+        """
+        class DummySession():
+            def group_sendmsg(self, msg, group, instance="*"):
+                (self.msg, self.group, self.instance) = (msg, group, instance)
+        bob = BoB()
+        bob.cc_session = DummySession()
+        bob.stop_process('process', 'address', 42)
+        self.assertEqual('address', bob.cc_session.group)
+        self.assertEqual('address', bob.cc_session.instance)
+        self.assertEqual({'command': ['shutdown', {'pid': 42}]},
+                         bob.cc_session.msg)
+
 # Class for testing the BoB without actually starting processes.
 # This is used for testing the start/stop components routines and
 # the BoB commands.
@@ -589,7 +614,7 @@ class MockBob(BoB):
         procinfo.pid = 14
         return procinfo
 
-    def stop_process(self, process, recipient):
+    def stop_process(self, process, recipient, pid):
         procmap = { 'b10-auth': self.stop_auth,
                     'b10-resolver': self.stop_resolver,
                     'b10-xfrout': self.stop_xfrout,
@@ -987,6 +1012,22 @@ class TestParseArgs(unittest.TestCase):
         options = parse_args(['--config-file=config-file'], TestOptParser)
         self.assertEqual('config-file', options.config_file)
 
+    def test_clear_config(self):
+        options = parse_args([], TestOptParser)
+        self.assertEqual(False, options.clear_config)
+        options = parse_args(['--clear-config'], TestOptParser)
+        self.assertEqual(True, options.clear_config)
+
+    def test_nokill(self):
+        options = parse_args([], TestOptParser)
+        self.assertEqual(False, options.nokill)
+        options = parse_args(['--no-kill'], TestOptParser)
+        self.assertEqual(True, options.nokill)
+        options = parse_args([], TestOptParser)
+        self.assertEqual(False, options.nokill)
+        options = parse_args(['-i'], TestOptParser)
+        self.assertEqual(True, options.nokill)
+
     def test_cmdctl_port(self):
         """
         Test it can parse the command control port.
@@ -1135,11 +1176,13 @@ class TestBossComponents(unittest.TestCase):
         # We check somewhere else that the shutdown is actually called
         # from there (the test_kills).
 
-    def test_kills(self):
+    def __real_test_kill(self, nokill = False):
         """
-        Test that the boss kills components which don't want to stop.
+        Helper function that does the actual kill functionality testing.
         """
         bob = MockBob()
+        bob.nokill = nokill
+
         killed = []
         class ImmortalComponent:
             """
@@ -1163,12 +1206,38 @@ class TestBossComponents(unittest.TestCase):
         bob._component_configurator.shutdown = self.__nullary_hook
         self.__called = False
 
+        bob.ccs = MockModuleCCSession()
+        self.assertFalse(bob.ccs.stopped)
+
         bob.shutdown()
 
-        self.assertEqual([False, True], killed)
+        self.assertTrue(bob.ccs.stopped)
+
+        # Here, killed is an array where False is added if SIGTERM
+        # should be sent, or True if SIGKILL should be sent, in order in
+        # which they're sent.
+        if nokill:
+            self.assertEqual([], killed)
+        else:
+            self.assertEqual([False, True], killed)
+
         self.assertTrue(self.__called)
 
         bob._component_configurator.shutdown = orig
+
+    def test_kills(self):
+        """
+        Test that the boss kills components which don't want to stop.
+        """
+        self.__real_test_kill()
+
+    def test_nokill(self):
+        """
+        Test that the boss *doesn't* kill components which don't want to
+        stop, when asked not to (by passing the --no-kill option which
+        sets bob.nokill to True).
+        """
+        self.__real_test_kill(True)
 
     def test_component_shutdown(self):
         """
@@ -1235,7 +1304,7 @@ class SocketSrvTest(unittest.TestCase):
             return self.__fileno
 
         def accept(self):
-            return self.__class__(self.__owner, 13)
+            return (self.__class__(self.__owner, 13), "/path/to/socket")
 
         def recv(self, bufsize, flags=0):
             self.__owner.assertEqual(1, bufsize)

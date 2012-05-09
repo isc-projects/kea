@@ -38,7 +38,7 @@ class Rdata_NSEC_Test : public RdataTest {
     // there's nothing to specialize
 };
 
-string nsec_txt("www2.isc.org. CNAME RRSIG NSEC");
+const char* const nsec_txt = "www2.isc.org. CNAME RRSIG NSEC";
 
 TEST_F(Rdata_NSEC_Test, toText_NSEC) {
     const generic::NSEC rdata_nsec(nsec_txt);
@@ -74,8 +74,8 @@ TEST_F(Rdata_NSEC_Test, toWireRenderer_NSEC) {
     vector<unsigned char> data;
     UnitTestUtil::readWireData("rdata_nsec_fromWire1", data);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        static_cast<const uint8_t *>(obuffer.getData()) + 2,
-                        obuffer.getLength() - 2, &data[2], data.size() - 2);
+                        static_cast<const uint8_t *>(renderer.getData()) + 2,
+                        renderer.getLength() - 2, &data[2], data.size() - 2);
 }
 
 TEST_F(Rdata_NSEC_Test, toWireBuffer_NSEC) {
@@ -93,6 +93,33 @@ TEST_F(Rdata_NSEC_Test, getNextName) {
     // The implementation is quite trivial, so we simply check it's actually
     // defined and does work as intended in a simple case.
     EXPECT_EQ(Name("www2.isc.org"), generic::NSEC((nsec_txt)).getNextName());
+}
+
+TEST_F(Rdata_NSEC_Test, compare) {
+    // trivial case: self equivalence
+    EXPECT_EQ(0, generic::NSEC("example A").
+              compare(generic::NSEC("example. A")));
+    EXPECT_EQ(0, generic::NSEC("EXAMPLE A"). // should be case insensitive
+              compare(generic::NSEC("example. A")));
+
+    // comparison attempt between incompatible RR types should be rejected
+    EXPECT_THROW(generic::NSEC(nsec_txt).compare(*rdata_nomatch),
+                 bad_cast);
+
+    // test RDATAs, sorted in the ascendent order.  We only compare the
+    // next name here.  Bitmap comparison is tested in the bitmap tests.
+    // Note that names are compared as wire-format data, not based on the
+    // domain name comparison.
+    vector<generic::NSEC> compare_set;
+    compare_set.push_back(generic::NSEC("a.example. A"));
+    compare_set.push_back(generic::NSEC("example. A"));
+    vector<generic::NSEC>::const_iterator it;
+    const vector<generic::NSEC>::const_iterator it_end = compare_set.end();
+    for (it = compare_set.begin(); it != it_end - 1; ++it) {
+        SCOPED_TRACE("compare " + it->toText() + " to " + (it + 1)->toText());
+        EXPECT_GT(0, (*it).compare(*(it + 1)));
+        EXPECT_LT(0, (*(it + 1)).compare(*it));
+    }
 }
 
 }

@@ -23,9 +23,11 @@
 #include <dhcp/option4_addrlst.h>
 
 using namespace std;
-using namespace isc::dhcp;
 using namespace isc::util;
 using namespace isc::asiolink;
+
+namespace isc {
+namespace dhcp {
 
 Option4AddrLst::Option4AddrLst(uint8_t type)
     :Option(V4, type) {
@@ -132,3 +134,6 @@ std::string Option4AddrLst::toText(int indent /* =0 */ ) {
 
     return tmp.str();
 }
+
+} // end of isc::dhcp namespace
+} // end of isc namespace

@@ -107,5 +107,5 @@ uint16_t Option6IA::len() {
     return (length);
 }
 
-} // end of namespace isc::dhcp
-} // end of namespace isc
+} // end of isc::dhcp namespace
+} // end of isc namespace

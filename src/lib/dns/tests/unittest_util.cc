@@ -191,3 +191,21 @@ UnitTestUtil::createRequestMessage(Message& message,
     message.addQuestion(Question(name, rrclass, rrtype));
 }
 
+void
+UnitTestUtil::createDNSSECRequestMessage(Message& message,
+                                         const Opcode& opcode,
+                                         const uint16_t qid,
+                                         const Name& name,
+                                         const RRClass& rrclass,
+                                         const RRType& rrtype)
+{
+    message.clear(Message::RENDER);
+    message.setOpcode(opcode);
+    message.setRcode(Rcode::NOERROR());
+    message.setQid(qid);
+    message.addQuestion(Question(name, rrclass, rrtype));
+    EDNSPtr edns(new EDNS());
+    edns->setUDPSize(4096);
+    edns->setDNSSECAwareness(true);
+    message.setEDNS(edns);
+}

@@ -38,8 +38,7 @@ namespace isc {
 namespace dns {
 namespace rdata {
 RdataTest::RdataTest() :
-    obuffer(0), renderer(obuffer),
-    rdata_nomatch(createRdata(RRType(0), RRClass(1), "\\# 0"))
+    obuffer(0), rdata_nomatch(createRdata(RRType(0), RRClass(1), "\\# 0"))
 {}
 
 RdataPtr
@@ -245,12 +244,13 @@ TEST_F(Rdata_Unknown_Test, toWireBuffer) {
 TEST_F(Rdata_Unknown_Test, toWireRenderer) {
     rdata_unknown.toWire(renderer);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        obuffer.getData(), obuffer.getLength(),
+                        renderer.getData(), renderer.getLength(),
                         wiredata_unknown, sizeof(wiredata_unknown));
 }
 
 TEST_F(Rdata_Unknown_Test, compare) {
     // comparison as left-justified unsigned octet sequences:
+    // cppcheck-suppress uselessCallsCompare
     EXPECT_EQ(0, rdata_unknown.compare(rdata_unknown));
 
     generic::Generic rdata_unknown_small("\\# 4 00b2c3ff");
