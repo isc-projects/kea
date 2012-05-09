@@ -443,6 +443,10 @@ public:
              &rr_nsec3_},
             {"example.org. 300 IN NSEC cname.example.org. A NS NSEC",
              &rr_nsec_},
+            {"www.ent.example.org. 300 IN A 192.0.2.1",
+             &rr_ent_},
+            {"example.org. 300 IN NSEC www.ent.example.org. A NS NSEC",
+             &rr_ent_nsec_},
             {NULL, NULL}
         };
 
@@ -508,6 +512,8 @@ public:
     RRsetPtr rr_not_wild_another_;
     RRsetPtr rr_nsec3_;
     RRsetPtr rr_nsec_;
+    RRsetPtr rr_ent_;
+    RRsetPtr rr_ent_nsec_;
 
     // A faked NSEC3 hash calculator for convenience.
     // Tests that need to use the faked hashed values should call
@@ -1037,6 +1043,25 @@ TEST_F(InMemoryZoneFinderTest, findNSEC3Signed) {
 
 TEST_F(InMemoryZoneFinderTest, findNSECSigned) {
     findCheck(ZoneFinder::RESULT_NSEC_SIGNED);
+}
+
+TEST_F(InMemoryZoneFinderTest,findNSECEmptyNonterminal) {
+    zone_finder_.add(rr_ent_);
+    const Name ent_name = Name("ent.example.org");
+
+    // Should result in NXRRSET
+    findTest(ent_name, RRType::A(), ZoneFinder::NXRRSET, true,
+             ConstRRsetPtr());
+
+    zone_finder_.add(rr_ent_nsec_);
+    // Should result in NXRRSET, and RESULT_NSEC_SIGNED
+    findTest(ent_name, RRType::A(), ZoneFinder::NXRRSET, true,
+             ConstRRsetPtr(), ZoneFinder::RESULT_NSEC_SIGNED);
+
+    // And check for the NSEC if DNSSEC_OK
+    findTest(ent_name, RRType::A(), ZoneFinder::NXRRSET, true,
+             rr_ent_nsec_, ZoneFinder::RESULT_NSEC_SIGNED,
+             NULL, ZoneFinder::FIND_DNSSEC);
 }
 
 void
