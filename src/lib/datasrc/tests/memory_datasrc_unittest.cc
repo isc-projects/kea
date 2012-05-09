@@ -1010,13 +1010,14 @@ InMemoryZoneFinderTest::findCheck(ZoneFinder::FindResultFlags expected_flags) {
 }
 
 // Test if NSEC works
-TEST_F(InMemoryZoneFinderTest,NSEC4NXRRSET) {
+TEST_F(InMemoryZoneFinderTest, NSEC4NXRRSET) {
     findTest(origin_, RRType::TXT(), ZoneFinder::NXRRSET, true,
-            ConstRRsetPtr());
-    
+             ConstRRsetPtr());
+
     EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_finder_.add(rr_nsec_)));
     findTest(origin_, RRType::A(), ZoneFinder::NXRRSET, true,
-            rr_nsec_,ZoneFinder::RESULT_NSEC_SIGNED,NULL,ZoneFinder::FIND_DNSSEC);
+             rr_nsec_, ZoneFinder::RESULT_NSEC_SIGNED, NULL,
+             ZoneFinder::FIND_DNSSEC);
 }
 
 TEST_F(InMemoryZoneFinderTest, find) {
