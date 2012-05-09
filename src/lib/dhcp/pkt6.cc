@@ -32,10 +32,10 @@ Pkt6::Pkt6(unsigned int dataLen, DHCPv6Proto proto /* = UDP */)
      remote_addr_("::"),
      iface_(""),
      ifindex_(-1),
-     local_port_(-1),
-     remote_port_(-1),
+     local_port_(0),
+     remote_port_(0),
      proto_(proto),
-     msg_type_(-1),
+     msg_type_(0),
      transid_(rand()%0xffffff)
 {
 
