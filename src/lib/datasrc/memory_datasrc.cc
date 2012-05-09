@@ -214,6 +214,7 @@ public:
     // See implementation notes below.
     template <typename ResultType>
     ResultType findNode(const Name& name,
+                        RBTreeNodeChain<Domain>& node_path,
                         ZoneFinder::FindOptions options) const;
 };
 
@@ -359,9 +360,10 @@ bool cutCallback(const DomainNode& node, FindState* state) {
 // the zone.
 template <typename ResultType>
 ResultType
-ZoneData::findNode(const Name& name, ZoneFinder::FindOptions options) const {
+ZoneData::findNode(const Name& name, RBTreeNodeChain<Domain>& node_path,
+                   ZoneFinder::FindOptions options) const
+{
     DomainNode* node = NULL;
-    RBTreeNodeChain<Domain> node_path;
     FindState state((options & ZoneFinder::FIND_GLUE_OK) != 0);
 
     const DomainTree::Result result =
@@ -1236,8 +1238,10 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
 
         // Get the node.  All other cases than an exact match are handled
         // in findNode().  We simply construct a result structure and return.
+        RBTreeNodeChain<Domain> node_path;
         const ZoneData::FindNodeResult node_result =
-            zone_data_->findNode<ZoneData::FindNodeResult>(name, options);
+            zone_data_->findNode<ZoneData::FindNodeResult>(name, node_path,
+                                                           options);
         if (node_result.code != SUCCESS) {
             return (createFindResult(node_result.code, node_result.rrset));
         }
@@ -1474,6 +1478,7 @@ addAdditional(RBNodeRRset* rrset, ZoneData* zone_data,
 {
     RdataIteratorPtr rdata_iterator = rrset->getRdataIterator();
     bool match_wild = false;    // will be true if wildcard match is found
+    RBTreeNodeChain<Domain> node_path;
     for (; !rdata_iterator->isLast(); rdata_iterator->next()) {
         // For each domain name that requires additional section processing
         // in each RDATA, search the tree for the name and remember it if
@@ -1486,13 +1491,14 @@ addAdditional(RBNodeRRset* rrset, ZoneData* zone_data,
         // if the name is not in or below this zone, skip it
         const NameComparisonResult::NameRelation reln =
             name.compare(zone_data->origin_data_->getName()).getRelation();
-         if (reln != NameComparisonResult::SUBDOMAIN &&
-             reln != NameComparisonResult::EQUAL) {
+        if (reln != NameComparisonResult::SUBDOMAIN &&
+            reln != NameComparisonResult::EQUAL) {
             continue;
         }
+        node_path.clear();
         const ZoneData::FindMutableNodeResult result =
             zone_data->findNode<ZoneData::FindMutableNodeResult>(
-                name, ZoneFinder::FIND_GLUE_OK);
+                name, node_path, ZoneFinder::FIND_GLUE_OK);
         if (result.code != ZoneFinder::SUCCESS) {
             // We are not interested in anything but a successful match.
             continue;
