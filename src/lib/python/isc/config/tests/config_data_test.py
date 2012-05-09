@@ -157,6 +157,7 @@ class TestConfigData(unittest.TestCase):
         self.assertRaises(isc.cc.data.DataTypeError, convert_type, spec_part, [ "a", "b" ])
         self.assertRaises(isc.cc.data.DataTypeError, convert_type, spec_part, [ "1", "b" ])
         self.assertRaises(isc.cc.data.DataTypeError, convert_type, spec_part, { "a": 1 })
+        self.assertRaises(isc.cc.data.DataTypeError, convert_type, spec_part, "\"{ \"a\": 1 }\"")
 
         spec_part = find_spec_part(config_spec, "value7")
         self.assertEqual(['1', '2'], convert_type(spec_part, '1, 2'))
@@ -184,6 +185,47 @@ class TestConfigData(unittest.TestCase):
         self.assertRaises(isc.cc.data.DataNotFoundError, find_spec_part, 1, "item6/multilevel")
         spec_part = find_spec_part(config_spec, "item6/value1")
         self.assertEqual({'item_name': 'value1', 'item_type': 'string', 'item_optional': True, 'item_default': 'default'}, spec_part)
+
+        # make sure the returned data is a copy
+        spec_part['item_default'] = 'foo'
+        self.assertNotEqual(spec_part, find_spec_part(config_spec, "item6/value1"))
+
+    def test_find_spec_part_lists(self):
+        # A few specific tests for list data
+        module_spec = isc.config.module_spec_from_file(self.data_path +
+                                                       os.sep +
+                                                       "spec31.spec")
+        config_spec = module_spec.get_config_spec()
+
+        expected_spec_part = {'item_name': 'number',
+                              'item_type': 'integer',
+                              'item_default': 1,
+                              'item_optional': False}
+
+        # First a check for a correct fetch
+        spec_part = find_spec_part(config_spec,
+                                   "/first_list_items[0]/second_list_items[1]/"
+                                   "map_element/list1[1]/list2[1]")
+        self.assertEqual(expected_spec_part, spec_part)
+
+        # Leaving out an index should fail by default
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          find_spec_part, config_spec,
+                          "/first_list_items[0]/second_list_items/"
+                          "map_element/list1[1]/list2[1]")
+
+        # But not for the last element
+        spec_part = find_spec_part(config_spec,
+                                   "/first_list_items[0]/second_list_items[1]/"
+                                   "map_element/list1[1]/list2")
+        self.assertEqual(expected_spec_part, spec_part)
+
+        # And also not if strict_identifier is false (third argument)
+        spec_part = find_spec_part(config_spec,
+                                   "/first_list_items[0]/second_list_items/"
+                                   "map_element/list1[1]/list2[1]", False)
+        self.assertEqual(expected_spec_part, spec_part)
+
 
     def test_spec_name_list(self):
         name_list = spec_name_list(self.cd.get_module_spec().get_config_spec())
@@ -312,6 +354,16 @@ class TestMultiConfigData(unittest.TestCase):
         self.mcd.remove_specification(module_spec.get_module_name())
         self.assertFalse(self.mcd.have_specification(module_spec.get_module_name()))
 
+    def test_clear_specifications(self):
+        self.assertEqual(0, len(self.mcd._specifications))
+        module_spec = isc.config.module_spec_from_file(self.data_path +
+                                                       os.sep +
+                                                       "spec1.spec")
+        self.mcd.set_specification(module_spec)
+        self.assertEqual(1, len(self.mcd._specifications))
+        self.mcd.clear_specifications()
+        self.assertEqual(0, len(self.mcd._specifications))
+
     def test_get_module_spec(self):
         module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec1.spec")
         self.mcd.set_specification(module_spec)
@@ -372,7 +424,14 @@ class TestMultiConfigData(unittest.TestCase):
         self.mcd.set_value("Spec2/item1", 2)
         local_changes = self.mcd.get_local_changes()
         self.assertEqual({"Spec2": { "item1": 2}}, local_changes)
-        
+
+    def test_set_local_changes(self):
+        module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec2.spec")
+        self.mcd.set_specification(module_spec)
+        self.assertEqual({}, self.mcd.get_local_changes())
+        new_local_changes = {"Spec2": { "item1": 2}}
+        self.mcd.set_local_changes(new_local_changes)
+        self.assertEqual(new_local_changes, self.mcd.get_local_changes())
 
     def test_clear_local_changes(self):
         module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec2.spec")
@@ -473,15 +532,25 @@ class TestMultiConfigData(unittest.TestCase):
         self.assertEqual(MultiConfigData.DEFAULT, status)
 
 
-
     def test_get_value_maps(self):
         maps = self.mcd.get_value_maps()
         self.assertEqual([], maps)
         
         module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec1.spec")
         self.mcd.set_specification(module_spec)
+
+        expected = [{'default': False,
+                     'type': 'module',
+                     'name': 'Spec1',
+                     'value': None,
+                     'modified': False}]
+
         maps = self.mcd.get_value_maps()
-        self.assertEqual([{'default': False, 'type': 'module', 'name': 'Spec1', 'value': None, 'modified': False}], maps)
+        self.assertEqual(expected, maps)
+
+        maps = self.mcd.get_value_maps("/")
+        self.assertEqual(expected, maps)
+
         maps = self.mcd.get_value_maps('Spec2')
         self.assertEqual([], maps)
         maps = self.mcd.get_value_maps('Spec1')
@@ -527,8 +596,10 @@ class TestMultiConfigData(unittest.TestCase):
 
         module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec24.spec")
         self.mcd.set_specification(module_spec)
-        self.assertRaises(isc.cc.data.DataNotFoundError,
-                          self.mcd.get_value_maps, "/Spec24/item", 4)
+        # optional list item that is not set should return as empty list
+        maps = self.mcd.get_value_maps("/Spec24/item", 4)
+        self.assertEqual([{'default': False, 'type': 'list', 'name': 'Spec24/item', 'value': [], 'modified': False}], maps)
+
         self.mcd._set_current_config({ "Spec24": { "item": [] } })
         maps = self.mcd.get_value_maps("/Spec24/item")
         self.assertEqual([{'default': False, 'modified': False, 'name': 'Spec24/item', 'type': 'list', 'value': []}], maps)
@@ -555,6 +626,20 @@ class TestMultiConfigData(unittest.TestCase):
                    ]
         maps = self.mcd.get_value_maps("/Spec22/value9")
         self.assertEqual(expected, maps)
+
+        # A slash at the end should not produce different output
+        maps = self.mcd.get_value_maps("/Spec22/value9/")
+        self.assertEqual(expected, maps)
+
+        # A slash at the end should not produce different output with
+        # indices too
+        expected2 = [{'default': True,
+                      'type': 'integer',
+                      'name': 'Spec22/value5[1]',
+                      'value': 'b',
+                      'modified': False}]
+        maps = self.mcd.get_value_maps("/Spec22/value5[1]/")
+        self.assertEqual(expected2, maps)
 
     def test_get_value_maps_named_set(self):
         module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec32.spec")
@@ -595,7 +680,38 @@ class TestMultiConfigData(unittest.TestCase):
         self.assertEqual(MultiConfigData.LOCAL, status)
 
         self.assertRaises(isc.cc.data.DataTypeError, self.mcd.set_value, "Spec2/item5[a]", "asdf")
-        
+
+
+    def test_unset(self):
+        """
+        Test the unset command works.
+        """
+        module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec2.spec")
+        self.mcd.set_specification(module_spec)
+        self.mcd.set_specification(module_spec)
+        value, status = self.mcd.get_value("Spec2/item1")
+        # This is the default first
+        self.assertEqual(1, value)
+        self.assertEqual(MultiConfigData.DEFAULT, status)
+        # Unseting a default item does nothing.
+        self.mcd.unset("Spec2/item1")
+        value, status = self.mcd.get_value("Spec2/item1")
+        # This should be the default
+        self.assertEqual(1, value)
+        self.assertEqual(MultiConfigData.DEFAULT, status)
+        # Set it to something else
+        self.mcd.set_value("Spec2/item1", 42)
+        value, status = self.mcd.get_value("Spec2/item1")
+        self.assertEqual(42, value)
+        self.assertEqual(MultiConfigData.LOCAL, status)
+        # Try to unset it
+        self.mcd.unset("Spec2/item1")
+        value, status = self.mcd.get_value("Spec2/item1")
+        # This should be the default
+        self.assertEqual(1, value)
+        self.assertEqual(MultiConfigData.DEFAULT, status)
+        # Unset a nonexisting item. Should raise.
+        self.assertRaises(isc.cc.data.DataNotFoundError, self.mcd.unset, "Spec2/doesnotexist")
 
     def test_get_config_item_list(self):
         config_items = self.mcd.get_config_item_list()
@@ -617,6 +733,12 @@ class TestMultiConfigData(unittest.TestCase):
         config_items = self.mcd.get_config_item_list("Spec2", True)
         self.assertEqual(['Spec2/item1', 'Spec2/item2', 'Spec2/item3', 'Spec2/item4', 'Spec2/item5', 'Spec2/item6/value1', 'Spec2/item6/value2'], config_items)
 
+    def test_is_named_set(self):
+        module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec32.spec")
+        self.mcd.set_specification(module_spec)
+        spec_part = self.mcd.find_spec_part("Spec32/named_set_item")
+        self.assertTrue(spec_part_is_named_set(spec_part))
+
     def test_get_config_item_list_named_set(self):
         config_items = self.mcd.get_config_item_list()
         self.assertEqual([], config_items)
@@ -634,6 +756,20 @@ class TestMultiConfigData(unittest.TestCase):
                           'Spec32/named_set_item/aabb',
                           'Spec32/named_set_item/bbbb',
                          ], config_items)
+
+    def test_set_named_set_nonlocal(self):
+        # Test whether a default named set is copied to local if a subitem
+        # is changed, and that other items in the set do not get lost
+        module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + 'spec32.spec')
+        self.mcd.set_specification(module_spec)
+        value, status = self.mcd.get_value('Spec32/named_set_item')
+        self.assertEqual({'a': 1, 'b': 2}, value)
+        self.assertEqual(MultiConfigData.DEFAULT, status)
+
+        self.mcd.set_value('Spec32/named_set_item/b', 3)
+        value, status = self.mcd.get_value('Spec32/named_set_item')
+        self.assertEqual({'a': 1, 'b': 3}, value)
+        self.assertEqual(MultiConfigData.LOCAL, status)
 
 if __name__ == '__main__':
     unittest.main()

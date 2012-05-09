@@ -14,7 +14,7 @@
 
 $NAMESPACE isc::cc
 
-% CC_ASYNC_READ_FAILED asynchronous read failed
+% CC_ASYNC_READ_FAILED asynchronous read failed (error code = %1)
 This marks a low level error, we tried to read data from the message queue
 daemon asynchronously, but the ASIO library returned an error.
 

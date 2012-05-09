@@ -22,14 +22,16 @@ Dependencies between them are not yet handled. It might turn out they are
 needed, in that case they will be added sometime in future.
 
 This framework allows for a single process to be started multiple times (by
-specifying multiple components with the same configuration). However, the rest
-of the system might not handle such situation well, so until it is made so,
-it would be better to start each process at most once.
+specifying multiple components with the same configuration). We might want
+to add a more convenient support (like providing a count argument to the
+configuration). This is yet to be designed.
 """
 
 import isc.log
 from isc.log_messages.bind10_messages import *
 import time
+import os
+import signal
 
 logger = isc.log.Logger("boss")
 DBG_TRACE_DATA = 20
@@ -44,6 +46,14 @@ COMPONENT_RESTART_DELAY = 10
 STATE_DEAD = 'dead'
 STATE_STOPPED = 'stopped'
 STATE_RUNNING = 'running'
+
+def get_signame(signal_number):
+    """Return the symbolic name for a signal."""
+    for sig in dir(signal):
+        if sig.startswith("SIG") and sig[3].isalnum():
+            if getattr(signal, sig) == signal_number:
+                return sig
+    return "unknown signal"
 
 class BaseComponent:
     """
@@ -206,8 +216,24 @@ class BaseComponent:
                 it is considered a core or needed component, or because
                 the component is to be restarted later.
         """
+
+        if exit_code is not None:
+            if os.WIFEXITED(exit_code):
+                exit_str = "process exited normally with exit status %d" % (exit_code)
+            elif os.WIFSIGNALED(exit_code):
+                sig = os.WTERMSIG(exit_code)
+                signame = get_signame(sig)
+                if os.WCOREDUMP(exit_code):
+                    exit_str = "process dumped core with exit status %d (killed by signal %d: %s)" % (exit_code, sig, signame)
+                else:
+                    exit_str = "process terminated with exit status %d (killed by signal %d: %s)" % (exit_code, sig, signame)
+            else:
+                exit_str = "unknown condition with exit status %d" % (exit_code)
+        else:
+            exit_str = "unknown condition"
+
         logger.error(BIND10_COMPONENT_FAILED, self.name(), self.pid(),
-                     exit_code if exit_code is not None else "unknown")
+                     exit_str)
         if not self.running():
             raise ValueError("Can't fail component that isn't running")
         self.__state = STATE_STOPPED
@@ -408,7 +434,7 @@ class Component(BaseComponent):
         self._boss.register_process(self.pid(), self)
 
     def _stop_internal(self):
-        self._boss.stop_process(self._process, self._address)
+        self._boss.stop_process(self._process, self._address, self.pid())
         # TODO Some way to wait for the process that doesn't want to
         # terminate and kill it would prove nice (or add it to boss somewhere?)
 

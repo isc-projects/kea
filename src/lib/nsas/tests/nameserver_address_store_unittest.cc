@@ -475,7 +475,7 @@ TEST_F(NameserverAddressStoreTest, updateRTT) {
     // for ns.example.com (the nameserver set for example.net in the class
     // initialization).  We'll set two addresses.
     Name ns_example_com(ns_name);
-    RRsetPtr ns_address = boost::shared_ptr<RRset>(new RRset(
+    isc::dns::RRsetPtr ns_address = boost::shared_ptr<RRset>(new RRset(
         ns_example_com, RRClass::IN(), RRType::A(), RRTTL(300)));
     BOOST_FOREACH(string addr, address) {
         ns_address->addRdata(rdata::in::A(addr));

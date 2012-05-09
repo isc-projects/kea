@@ -21,6 +21,7 @@ endif
 	for pytest in $(PYTESTS) ; do \
 	echo Running test: $$pytest ; \
 	B10_FROM_SOURCE=$(abs_top_srcdir) \
+	B10_FROM_BUILD=$(abs_top_builddir) \
 	$(LIBRARY_PATH_PLACEHOLDER) \
 	PYTHONPATH=$(COMMON_PYTHON_PATH):$(abs_top_builddir)/src/bin/ddns:$(abs_top_builddir)/src/lib/dns/python/.libs:$(abs_top_builddir)/src/lib/util/io/.libs \
 	TESTDATASRCDIR=$(abs_srcdir)/testdata/ \

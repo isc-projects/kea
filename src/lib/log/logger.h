@@ -15,13 +15,16 @@
 #ifndef __LOGGER_H
 #define __LOGGER_H
 
+#include <cassert>
 #include <cstdlib>
 #include <string>
+#include <cstring>
 
 #include <exceptions/exceptions.h>
 #include <log/logger_level.h>
 #include <log/message_types.h>
 #include <log/log_formatter.h>
+
 
 namespace isc {
 namespace log {
@@ -68,9 +71,19 @@ namespace log {
 /// is referred to using a symbolic name.  The logging code uses this name as
 /// a key in a dictionary from which the message text is obtained.  Such a
 /// system allows for the optional replacement of message text at run time.
-/// More details about the message disction (and the compiler used to create
+/// More details about the message dictionary (and the compiler used to create
 /// the symbol definitions) can be found in other modules in the src/lib/log
 /// directory.
+///
+/// \section LoggingApiImplementationIssues Implementation Issues
+/// Owing to the way that the logging is implemented, notably that loggers can
+/// be declared as static external objects, there is a restriction on the
+/// length of the name of a logger component (i.e. the length of
+/// the string passed to the Logger constructor) to a maximum of 31 characters.
+/// There is no reason for this particular value other than limiting the amount
+/// of memory used.  It is defined by the constant Logger::MAX_LOGGER_NAME_SIZE,
+/// and can be made larger (or smaller) if so desired.  Note however, using a
+/// logger name larger than this limit will cause an assertion failure.
 
 class LoggerImpl;   // Forward declaration of the implementation class
 
@@ -99,6 +112,8 @@ public:
 
 class Logger {
 public:
+    /// Maximum size of a logger name
+    static const size_t MAX_LOGGER_NAME_SIZE = 31;
 
     /// \brief Constructor
     ///
@@ -107,8 +122,26 @@ public:
     /// \param name Name of the logger.  If the name is that of the root name,
     /// this creates an instance of the root logger; otherwise it creates a
     /// child of the root logger.
-    Logger(const std::string& name) : loggerptr_(NULL), name_(name)
-    {}
+    ///
+    /// \note The name of the logger may be no longer than MAX_LOGGER_NAME_SIZE
+    /// else the program will halt with an assertion failure.  This restriction
+    /// allows loggers to be declared statically: the name is stored in a
+    /// fixed-size array to avoid the need to allocate heap storage during
+    /// program initialization (which causes problems on some operating
+    /// systems).
+    ///
+    /// \note Note also that there is no constructor taking a std::string. This
+    /// minimises the possibility of initializing a static logger with a
+    /// string, so leading to problems mentioned above.
+    Logger(const char* name) : loggerptr_(NULL) {
+        assert(std::strlen(name) < sizeof(name_));
+        // Do the copy.  Note that the assertion above has checked that the
+        // contents of "name" and a trailing null will fit within the space
+        // allocated for name_, so we could use strcpy here and be safe.
+        // However, a bit of extra paranoia doesn't hurt.
+        std::strncpy(name_, name, sizeof(name_));
+        assert(name_[sizeof(name_) - 1] == '\0');
+    }
 
     /// \brief Destructor
     virtual ~Logger();
@@ -256,8 +289,8 @@ private:
     /// \brief Initialize Underlying Implementation and Set loggerptr_
     void initLoggerImpl();
 
-    LoggerImpl*     loggerptr_;     ///< Pointer to the underlying logger
-    std::string     name_;          ///< Copy of the logger name
+    LoggerImpl* loggerptr_;                  ///< Pointer to underlying logger
+    char        name_[MAX_LOGGER_NAME_SIZE + 1]; ///< Copy of the logger name
 };
 
 } // namespace log

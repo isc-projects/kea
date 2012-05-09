@@ -14,6 +14,7 @@
 
 #include <server_common/portconfig.h>
 #include <server_common/logger.h>
+#include <server_common/socket_request.h>
 
 #include <asiolink/io_address.h>
 #include <asiodns/dns_service.h>
@@ -58,8 +59,7 @@ parseAddresses(isc::data::ConstElementPtr addresses,
                     }
                     result.push_back(AddressPair(addr->stringValue(),
                         port->intValue()));
-                }
-                catch (const TypeError&) { // Better error message
+                } catch (const TypeError&) { // Better error message
                     LOG_ERROR(logger, SRVCOMM_ADDRESS_TYPE).
                         arg(addrPair->str());
                     isc_throw(TypeError,
@@ -76,31 +76,53 @@ parseAddresses(isc::data::ConstElementPtr addresses,
 
 namespace {
 
+vector<string> current_sockets;
+
 void
-setAddresses(DNSService& service, const AddressList& addresses) {
+setAddresses(DNSServiceBase& service, const AddressList& addresses,
+             DNSService::ServerFlag server_options)
+{
     service.clearServers();
+    BOOST_FOREACH(const string& token, current_sockets) {
+        socketRequestor().releaseSocket(token);
+    }
+    current_sockets.clear();
     BOOST_FOREACH(const AddressPair &address, addresses) {
-        service.addServer(address.second, address.first);
+        const int af(IOAddress(address.first).getFamily());
+        // We use the application name supplied to the socket requestor on
+        // creation. So we can freely use the SHARE_SAME
+        const SocketRequestor::SocketID
+            tcp(socketRequestor().requestSocket(SocketRequestor::TCP,
+                                                address.first, address.second,
+                                                SocketRequestor::SHARE_SAME));
+        current_sockets.push_back(tcp.second);
+        service.addServerTCPFromFD(tcp.first, af);
+        const SocketRequestor::SocketID
+            udp(socketRequestor().requestSocket(SocketRequestor::UDP,
+                                                address.first, address.second,
+                                                SocketRequestor::SHARE_SAME));
+        current_sockets.push_back(udp.second);
+        service.addServerUDPFromFD(udp.first, af, server_options);
     }
 }
 
 }
 
 void
-installListenAddresses(const AddressList& newAddresses,
-                       AddressList& addressStore,
-                       isc::asiodns::DNSService& service)
+installListenAddresses(const AddressList& new_addresses,
+                       AddressList& address_store,
+                       DNSServiceBase& service,
+                       DNSService::ServerFlag server_options)
 {
     try {
         LOG_DEBUG(logger, DBG_TRACE_BASIC, SRVCOMM_SET_LISTEN);
-        BOOST_FOREACH(const AddressPair& addr, newAddresses) {
+        BOOST_FOREACH(const AddressPair& addr, new_addresses) {
             LOG_DEBUG(logger, DBG_TRACE_VALUES, SRVCOMM_ADDRESS_VALUE).
                 arg(addr.first).arg(addr.second);
         }
-        setAddresses(service, newAddresses);
-        addressStore = newAddresses;
-    }
-    catch (const exception& e) {
+        setAddresses(service, new_addresses, server_options);
+        address_store = new_addresses;
+    } catch (const SocketRequestor::NonFatalSocketError& e) {
         /*
          * If one of the addresses isn't set successfully, we will restore
          * the old addresses, the behavior is that either all address are
@@ -116,14 +138,28 @@ installListenAddresses(const AddressList& newAddresses,
          */
         LOG_ERROR(logger, SRVCOMM_ADDRESS_FAIL).arg(e.what());
         try {
-            setAddresses(service, addressStore);
-        }
-        catch (const exception& e2) {
+            setAddresses(service, address_store, server_options);
+        } catch (const SocketRequestor::NonFatalSocketError& e2) {
             LOG_FATAL(logger, SRVCOMM_ADDRESS_UNRECOVERABLE).arg(e2.what());
+            // If we can't set the new ones, nor the old ones, at least
+            // releasing everything should work. If it doesn't, there isn't
+            // anything else we could do.
+            setAddresses(service, AddressList(), server_options);
+            address_store.clear();
         }
         //Anyway the new configure has problem, we need to notify configure
         //manager the new configure doesn't work
         throw;
+    } catch (const exception& e) {
+        // Any other kind of exception is fatal. It might mean we are in
+        // inconsistent state with the boss/socket creator, so we abort
+        // to make sure it doesn't last.
+        LOG_FATAL(logger, SRVCOMM_EXCEPTION_ALLOC).arg(e.what());
+        abort();
+    } catch (...) {
+        // As the previous one, but we know even less info
+        LOG_FATAL(logger, SRVCOMM_UNKNOWN_EXCEPTION_ALLOC);
+        abort();
     }
 }
 

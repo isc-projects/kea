@@ -23,10 +23,27 @@ two through the classes in ccsession)
 import isc.cc.data
 import isc.config.module_spec
 import ast
+import copy
 
 class ConfigDataError(Exception): pass
 
 BIND10_CONFIG_DATA_VERSION = 2
+
+# Helper functions
+def spec_part_is_list(spec_part):
+    """Returns True if the given spec_part is a dict that contains a
+       list specification, and False otherwise."""
+    return (type(spec_part) == dict and 'list_item_spec' in spec_part)
+
+def spec_part_is_map(spec_part):
+    """Returns True if the given spec_part is a dict that contains a
+       map specification, and False otherwise."""
+    return (type(spec_part) == dict and 'map_item_spec' in spec_part)
+
+def spec_part_is_named_set(spec_part):
+    """Returns True if the given spec_part is a dict that contains a
+       named_set specification, and False otherwise."""
+    return (type(spec_part) == dict and 'named_set_item_spec' in spec_part)
 
 def check_type(spec_part, value):
     """Does nothing if the value is of the correct type given the
@@ -93,14 +110,17 @@ def convert_type(spec_part, value):
 
             return ret
         elif data_type == "map":
-            map = ast.literal_eval(value)
-            if type(map) == dict:
-                # todo: check types of map contents too
-                return map
-            else:
-                raise isc.cc.data.DataTypeError(
-                           "Value in convert_type not a string "
-                           "specifying a dict")
+            try:
+                map = ast.literal_eval(value)
+                if type(map) == dict:
+                    # todo: check types of map contents too
+                    return map
+                else:
+                    raise isc.cc.data.DataTypeError(
+                               "Value in convert_type not a string "
+                               "specifying a dict")
+            except SyntaxError as se:
+                raise isc.cc.data.DataTypeError("Error parsing map: " + str(se))
         else:
             return value
     except ValueError as err:
@@ -112,9 +132,9 @@ def _get_map_or_list(spec_part):
     """Returns the list or map specification if this is a list or a
        map specification part. If not, returns the given spec_part
        itself"""
-    if "map_item_spec" in spec_part:
+    if spec_part_is_map(spec_part):
         return spec_part["map_item_spec"]
-    elif "list_item_spec" in spec_part:
+    elif spec_part_is_list(spec_part):
         return spec_part["list_item_spec"]
     else:
         return spec_part
@@ -134,13 +154,13 @@ def _find_spec_part_single(cur_spec, id_part):
     # list or a map, which is internally represented by a dict with
     # an element 'map_item_spec', a dict with an element 'list_item_spec',
     # or a list (when it is the 'main' config_data element of a module).
-    if type(cur_spec) == dict and 'map_item_spec' in cur_spec.keys():
+    if spec_part_is_map(cur_spec):
         for cur_spec_item in cur_spec['map_item_spec']:
             if cur_spec_item['item_name'] == id:
                 return cur_spec_item
         # not found
         raise isc.cc.data.DataNotFoundError(id + " not found")
-    elif type(cur_spec) == dict and 'list_item_spec' in cur_spec.keys():
+    elif spec_part_is_list(cur_spec):
         if cur_spec['item_name'] == id:
             return cur_spec['list_item_spec']
         # not found
@@ -156,9 +176,22 @@ def _find_spec_part_single(cur_spec, id_part):
     else:
         raise isc.cc.data.DataNotFoundError("Not a correct config specification")
 
-def find_spec_part(element, identifier):
+def find_spec_part(element, identifier, strict_identifier = True):
     """find the data definition for the given identifier
-       returns either a map with 'item_name' etc, or a list of those"""
+       returns either a map with 'item_name' etc, or a list of those
+       Parameters:
+       element: The specification element to start the search in
+       identifier: The element to find (relative to element above)
+       strict_identifier: If True (the default), additional checking occurs.
+                          Currently the only check is whether a list index is
+                          specified (except for the last part of the
+                          identifier)
+       Raises a DataNotFoundError if the data is not found, or if
+       strict_identifier is True and any non-final identifier parts
+       (i.e. before the last /) identify a list element and do not contain
+       an index.
+       Returns the spec element identified by the given identifier.
+    """
     if identifier == "":
         return element
     id_parts = identifier.split("/")
@@ -171,10 +204,15 @@ def find_spec_part(element, identifier):
     # always want the 'full' spec of the item
     for id_part in id_parts[:-1]:
         cur_el = _find_spec_part_single(cur_el, id_part)
+        if strict_identifier and spec_part_is_list(cur_el) and\
+           not isc.cc.data.identifier_has_list_index(id_part):
+            raise isc.cc.data.DataNotFoundError(id_part +
+                                                " is a list and needs an index")
         cur_el = _get_map_or_list(cur_el)
 
     cur_el = _find_spec_part_single(cur_el, id_parts[-1])
-    return cur_el
+    # Due to the raw datatypes we use, it is safer to return a deep copy here
+    return copy.deepcopy(cur_el)
 
 def spec_name_list(spec, prefix="", recurse=False):
     """Returns a full list of all possible item identifiers in the
@@ -184,12 +222,12 @@ def spec_name_list(spec, prefix="", recurse=False):
     if prefix != "" and not prefix.endswith("/"):
         prefix += "/"
     if type(spec) == dict:
-        if 'map_item_spec' in spec:
+        if spec_part_is_map(spec):
             for map_el in spec['map_item_spec']:
                 name = map_el['item_name']
                 if map_el['item_type'] == 'map':
                     name += "/"
-                if recurse and 'map_item_spec' in map_el:
+                if recurse and spec_part_is_map(map_el):
                     result.extend(spec_name_list(map_el['map_item_spec'], prefix + map_el['item_name'], recurse))
                 else:
                     result.append(prefix + name)
@@ -244,7 +282,12 @@ class ConfigData:
     def get_default_value(self, identifier):
         """Returns the default from the specification, or None if there
            is no default"""
-        spec = find_spec_part(self.specification.get_config_spec(), identifier)
+        # We are searching for the default value, so we can set
+        # strict_identifier to false (in fact, we need to; we may not know
+        # some list indices, or they may not exist, we are looking for
+        # a default value for a reason here).
+        spec = find_spec_part(self.specification.get_config_spec(),
+                              identifier, False)
         if spec and 'item_default' in spec:
             return spec['item_default']
         else:
@@ -313,6 +356,10 @@ class MultiConfigData:
         self._current_config = {}
         self._local_changes = {}
 
+    def clear_specifications(self):
+        """Remove all known module specifications"""
+        self._specifications = {}
+
     def set_specification(self, spec):
         """Add or update a ModuleSpec. Raises a ConfigDataError is spec is not a ModuleSpec"""
         if type(spec) != isc.config.ModuleSpec:
@@ -372,6 +419,14 @@ class MultiConfigData:
            been committed yet and are not known by the configuration
            manager or the modules."""
         return self._local_changes
+
+    def set_local_changes(self, new_local_changes):
+        """Sets the entire set of local changes, used when reverting
+           changes done automatically in case there was a problem (e.g.
+           when executing commands from a script that fails halfway
+           through).
+        """
+        self._local_changes = new_local_changes
 
     def clear_local_changes(self):
         """Reverts all local changes"""
@@ -534,8 +589,10 @@ class MultiConfigData:
             if item_type == "list" and (all or first):
                 spec_part_list = spec_part['list_item_spec']
                 list_value, status = self.get_value(identifier)
+                # If not set, and no default, lists will show up as 'None',
+                # but it's better to treat it as an empty list then
                 if list_value is None:
-                    raise isc.cc.data.DataNotFoundError(identifier + " not found")
+                    list_value = []
 
                 if type(list_value) != list:
                     # the identifier specified a single element
@@ -603,7 +660,7 @@ class MultiConfigData:
            Throws DataNotFoundError if the identifier is bad
         """
         result = []
-        if not identifier:
+        if not identifier or identifier == "/":
             # No identifier, so we need the list of current modules
             for module in self._specifications.keys():
                 if all:
@@ -615,14 +672,27 @@ class MultiConfigData:
                     entry = _create_value_map_entry(module, 'module', None)
                     result.append(entry)
         else:
-            if identifier[0] == '/':
+            # Strip off start and end slashes, if they are there
+            if len(identifier) > 0 and identifier[0] == '/':
                 identifier = identifier[1:]
+            if len(identifier) > 0 and identifier[-1] == '/':
+                identifier = identifier[:-1]
             module, sep, id = identifier.partition('/')
             spec = self.get_module_spec(module)
             if spec:
                 spec_part = find_spec_part(spec.get_config_spec(), id)
                 self._append_value_item(result, spec_part, identifier, all, True)
         return result
+
+    def unset(self, identifier):
+        """
+        Reset the value to default.
+        """
+        spec_part = self.find_spec_part(identifier)
+        if spec_part is not None:
+            isc.cc.data.unset(self._local_changes, identifier)
+        else:
+            raise isc.cc.data.DataNotFoundError(identifier + "not found")
 
     def set_value(self, identifier, value):
         """Set the local value at the given identifier to value. If
@@ -672,6 +742,15 @@ class MultiConfigData:
                                     cur_id_part + id,
                                     cur_value)
             cur_id_part = cur_id_part + id_part + "/"
+
+            # We also need to copy to local if we are changing a named set,
+            # so that the other items in the set do not disappear
+            if spec_part_is_named_set(self.find_spec_part(cur_id_part)):
+                ns_value, ns_status = self.get_value(cur_id_part)
+                if ns_status != MultiConfigData.LOCAL:
+                    isc.cc.data.set(self._local_changes,
+                                    cur_id_part,
+                                    ns_value)
         isc.cc.data.set(self._local_changes, identifier, value)
 
     def _get_list_items(self, item_name):

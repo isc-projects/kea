@@ -94,8 +94,9 @@ TEST_F(Rdata_HINFO_Test, toWireRenderer) {
     HINFO hinfo(hinfo_str);
 
     hinfo.toWire(renderer);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, obuffer.getData(),
-                        obuffer.getLength(), hinfo_rdata, sizeof(hinfo_rdata));
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
+                        renderer.getLength(), hinfo_rdata,
+                        sizeof(hinfo_rdata));
 }
 
 TEST_F(Rdata_HINFO_Test, compare) {

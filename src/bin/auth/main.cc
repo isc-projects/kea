@@ -42,13 +42,13 @@
 #include <auth/common.h>
 #include <auth/auth_config.h>
 #include <auth/command.h>
-#include <auth/change_user.h>
 #include <auth/auth_srv.h>
 #include <auth/auth_log.h>
 #include <asiodns/asiodns.h>
 #include <asiolink/asiolink.h>
 #include <log/logger_support.h>
 #include <server_common/keyring.h>
+#include <server_common/socket_request.h>
 
 using namespace std;
 using namespace isc::asiodns;
@@ -85,7 +85,6 @@ usage() {
     cerr << "Usage:  b10-auth [-u user] [-nv]"
          << endl;
     cerr << "\t-n: do not cache answers in memory" << endl;
-    cerr << "\t-u: change process UID to the specified user" << endl;
     cerr << "\t-v: verbose output" << endl;
     exit(1);
 }
@@ -95,7 +94,6 @@ usage() {
 int
 main(int argc, char* argv[]) {
     int ch;
-    const char* uid = NULL;
     bool cache = true;
     bool verbose = false;
 
@@ -103,9 +101,6 @@ main(int argc, char* argv[]) {
         switch (ch) {
         case 'n':
             cache = false;
-            break;
-        case 'u':
-            uid = optarg;
             break;
         case 'v':
             verbose = true;
@@ -121,7 +116,7 @@ main(int argc, char* argv[]) {
     }
 
     // Initialize logging.  If verbose, we'll use maximum verbosity.
-    isc::log::initLogger("b10-auth",
+    isc::log::initLogger(AUTH_NAME,
                          (verbose ? isc::log::DEBUG : isc::log::INFO),
                          isc::log::MAX_DEBUG_LEVEL, NULL);
 
@@ -158,12 +153,16 @@ main(int argc, char* argv[]) {
 
         cc_session = new Session(io_service.get_io_service());
         LOG_DEBUG(auth_logger, DBG_AUTH_START, AUTH_CONFIG_CHANNEL_CREATED);
+        // Initialize the Socket Requestor
+        isc::server_common::initSocketRequestor(*cc_session, AUTH_NAME);
 
         // We delay starting listening to new commands/config just before we
         // go into the main loop to avoid confusion due to mixture of
         // synchronous and asynchronous operations (this would happen in
-        // initializing TSIG keys below).  Until then all operations on the
-        // CC session will take place synchronously.
+        // initial communication with the boss that takes place in
+        // updateConfig() for listen_on and in initializing TSIG keys below).
+        // Until then all operations on the CC session will take place
+        // synchronously.
         config_session = new ModuleCCSession(specfile, *cc_session,
                                              my_config_handler,
                                              my_command_handler, false);
@@ -196,10 +195,6 @@ main(int argc, char* argv[]) {
             auth_server->updateConfig(ElementPtr());
         } catch (const AuthConfigError& ex) {
             LOG_ERROR(auth_logger, AUTH_CONFIG_LOAD_FAIL).arg(ex.what());
-        }
-
-        if (uid != NULL) {
-            changeUser(uid);
         }
 
         LOG_DEBUG(auth_logger, DBG_AUTH_START, AUTH_LOAD_TSIG);

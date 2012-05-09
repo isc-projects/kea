@@ -21,6 +21,7 @@
 #
 
 import json
+import re
 
 class DataNotFoundError(Exception):
     """Raised if an identifier does not exist according to a spec file,
@@ -85,6 +86,13 @@ def split_identifier(identifier):
     id_parts = identifier.split('/')
     id_parts[:] = (value for value in id_parts if value != "")
     return id_parts
+
+def identifier_has_list_index(identifier):
+    """Returns True if the given identifier string has at least one
+       list index (with [I], where I is a number"""
+    return (type(identifier) == str and
+            re.search("\[\d+\]", identifier) is not None)
+
 
 def split_identifier_list_indices(identifier):
     """Finds list indexes in the given identifier, which are of the

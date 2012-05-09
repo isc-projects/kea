@@ -2,12 +2,12 @@
 .\"     Title: b10-auth
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: August 11, 2011
+.\"      Date: March 28, 2012
 .\"    Manual: BIND10
 .\"    Source: BIND10
 .\"  Language: English
 .\"
-.TH "B10\-AUTH" "8" "August 11, 2011" "BIND10" "BIND10"
+.TH "B10\-AUTH" "8" "March 28, 2012" "BIND10" "BIND10"
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -22,7 +22,7 @@
 b10-auth \- Authoritative DNS server
 .SH "SYNOPSIS"
 .HP \w'\fBb10\-auth\fR\ 'u
-\fBb10\-auth\fR [\fB\-n\fR] [\fB\-u\ \fR\fB\fIusername\fR\fR] [\fB\-v\fR]
+\fBb10\-auth\fR [\fB\-n\fR] [\fB\-v\fR]
 .SH "DESCRIPTION"
 .PP
 The
@@ -47,15 +47,6 @@ The arguments are as follows:
 Do not cache answers in memory\&. The default is to use the cache for faster responses\&. The cache keeps the most recent 30,000 answers (positive and negative) in memory for 30 seconds (instead of querying the data source, such as SQLite3 database, each time)\&.
 .RE
 .PP
-\fB\-u \fR\fB\fIusername\fR\fR
-.RS 4
-The user name of the
-\fBb10\-auth\fR
-daemon\&. If specified, the daemon changes the process owner to the specified user\&. The
-\fIusername\fR
-must be either a valid numeric user ID or a valid user name\&. By default the daemon runs as the user who invokes it\&.
-.RE
-.PP
 \fB\-v\fR
 .RS 4
 Enabled verbose mode\&. This enables diagnostic messages to STDERR\&.
@@ -73,7 +64,7 @@ defines the path to the SQLite3 zone file when using the sqlite datasource\&. Th
 \fIdatasources\fR
 configures data sources\&. The list items include:
 \fItype\fR
-to optionally choose the data source type (such as
+to define the required data source type (such as
 \(lqmemory\(rq);
 \fIclass\fR
 to optionally select the class (it defaults to
@@ -163,21 +154,25 @@ immediately\&.
 
 \fBshutdown\fR
 exits
-\fBb10\-auth\fR\&. (Note that the BIND 10 boss process will restart this service\&.)
+\fBb10\-auth\fR\&. This has an optional
+\fIpid\fR
+argument to select the process ID to stop\&. (Note that the BIND 10 boss process may restart this service if configured\&.)
 .SH "STATISTICS DATA"
 .PP
 The statistics data collected by the
 \fBb10\-stats\fR
-daemon include:
+daemon for
+\(lqAuth\(rq
+include:
 .PP
-auth\&.queries\&.tcp
+queries\&.tcp
 .RS 4
 Total count of queries received by the
 \fBb10\-auth\fR
 server over TCP since startup\&.
 .RE
 .PP
-auth\&.queries\&.udp
+queries\&.udp
 .RS 4
 Total count of queries received by the
 \fBb10\-auth\fR
@@ -207,5 +202,5 @@ The
 daemon was first coded in October 2009\&.
 .SH "COPYRIGHT"
 .br
-Copyright \(co 2010 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2010-2012 Internet Systems Consortium, Inc. ("ISC")
 .br

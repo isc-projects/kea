@@ -15,9 +15,10 @@
 #include <sqlite3.h>
 
 #include <string>
+#include <utility>
 #include <vector>
 
-#include <boost/foreach.hpp>
+#include <exceptions/exceptions.h>
 
 #include <datasrc/sqlite3_accessor.h>
 #include <datasrc/logger.h>
@@ -29,9 +30,20 @@
 using namespace std;
 using namespace isc::data;
 
-#define SQLITE_SCHEMA_VERSION 1
-
-#define CONFIG_ITEM_DATABASE_FILE "database_file"
+namespace {
+// Expected schema.  The major version must match else there is an error.  If
+// the minor version of the database is less than this, a warning is output.
+//
+// It is assumed that a program written to run on m.n of the database will run
+// with a database version m.p, where p is any number.  However, if p < n,
+// we assume that the database structure was upgraded for some reason, and that
+// some advantage may result if the database is upgraded. Conversely, if p > n,
+// The database is at a later version than the program was written for and the
+// program may not be taking advantage of features (possibly performance
+// improvements) added to the database.
+const int SQLITE_SCHEMA_MAJOR_VERSION = 2;
+const int SQLITE_SCHEMA_MINOR_VERSION = 0;
+}
 
 namespace isc {
 namespace datasrc {
@@ -54,11 +66,16 @@ enum StatementID {
     ITERATE = 9,
     FIND_PREVIOUS = 10,
     ADD_RECORD_DIFF = 11,
-    GET_RECORD_DIFF = 12,       // This is temporary for testing "add diff"
-    LOW_DIFF_ID = 13,
-    HIGH_DIFF_ID = 14,
-    DIFF_RECS = 15,
-    NUM_STATEMENTS = 16
+    LOW_DIFF_ID = 12,
+    HIGH_DIFF_ID = 13,
+    DIFF_RECS = 14,
+    NSEC3 = 15,
+    NSEC3_PREVIOUS = 16,
+    NSEC3_LAST = 17,
+    ADD_NSEC3_RECORD = 18,
+    DEL_ZONE_NSEC3_RECORDS = 19,
+    DEL_NSEC3_RECORD = 20,
+    NUM_STATEMENTS = 21
 };
 
 const char* const text_statements[NUM_STATEMENTS] = {
@@ -78,8 +95,19 @@ const char* const text_statements[NUM_STATEMENTS] = {
         "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
     "DELETE FROM records WHERE zone_id=?1 AND name=?2 " // DEL_RECORD
         "AND rdtype=?3 AND rdata=?4",
-    "SELECT rdtype, ttl, sigtype, rdata, name FROM records " // ITERATE
-        "WHERE zone_id = ?1 ORDER BY rname, rdtype",
+    // The following iterates the whole zone. As the NSEC3 records
+    // (and corresponding RRSIGs) live in separate table, we need to
+    // take both of them. As the RRSIGs are for NSEC3s in the other
+    // table, we can easily hardcode the sigtype.
+    //
+    // The extra column is so we can order it by rname. This is to
+    // preserve the previous order, mostly for tests.
+    // TODO: Is it possible to get rid of the ordering?
+    "SELECT rdtype, ttl, sigtype, rdata, name, rname FROM records " // ITERATE
+        "WHERE zone_id = ?1 "
+        "UNION "
+        "SELECT rdtype, ttl, \"NSEC3\", rdata, owner, owner FROM nsec3 "
+        "WHERE zone_id = ?1 ORDER by rname, rdtype",
     /*
      * This one looks for previous name with NSEC record. It is done by
      * using the reversed name. The NSEC is checked because we need to
@@ -87,12 +115,10 @@ const char* const text_statements[NUM_STATEMENTS] = {
      */
     "SELECT name FROM records " // FIND_PREVIOUS
         "WHERE zone_id=?1 AND rdtype = 'NSEC' AND "
-        "rname < $2 ORDER BY rname DESC LIMIT 1",
+        "rname < ?2 ORDER BY rname DESC LIMIT 1",
     "INSERT INTO diffs "        // ADD_RECORD_DIFF
         "(zone_id, version, operation, name, rrtype, ttl, rdata) "
         "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
-    "SELECT name, rrtype, ttl, rdata, version, operation " // GET_RECORD_DIFF
-        "FROM diffs WHERE zone_id = ?1 ORDER BY id, operation",
 
     // Two statements to select the lowest ID and highest ID in a set of
     // differences.
@@ -107,13 +133,35 @@ const char* const text_statements[NUM_STATEMENTS] = {
     // that the columns match the column IDs passed to the iterator
     "SELECT rrtype, ttl, id, rdata, name FROM diffs "   // DIFF_RECS
         "WHERE zone_id=?1 AND id>=?2 and id<=?3 "
-        "ORDER BY id ASC"
+        "ORDER BY id ASC",
+
+    // NSEC3: Query to get the NSEC3 records
+    //
+    // The "1" in SELECT is for positioning the rdata column to the
+    // expected position, so we can reuse the same code as for other
+    // lookups.
+    "SELECT rdtype, ttl, 1, rdata FROM nsec3 WHERE zone_id=?1 AND "
+        "hash=?2",
+    // NSEC3_PREVIOUS: For getting the previous NSEC3 hash
+    "SELECT DISTINCT hash FROM nsec3 WHERE zone_id=?1 AND hash < ?2 "
+        "ORDER BY hash DESC LIMIT 1",
+    // NSEC3_LAST: And for wrap-around
+    "SELECT DISTINCT hash FROM nsec3 WHERE zone_id=?1 "
+        "ORDER BY hash DESC LIMIT 1",
+    // ADD_NSEC3_RECORD: Add NSEC3-related (NSEC3 or NSEC3-covering RRSIG) RR
+    "INSERT INTO nsec3 (zone_id, hash, owner, ttl, rdtype, rdata) "
+    "VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+    // DEL_ZONE_NSEC3_RECORDS: delete all NSEC3-related records from the zone
+    "DELETE FROM nsec3 WHERE zone_id=?1",
+    // DEL_NSEC3_RECORD: delete specified NSEC3-related records
+    "DELETE FROM nsec3 WHERE zone_id=?1 AND hash=?2 "
+    "AND rdtype=?3 AND rdata=?4"
 };
 
 struct SQLite3Parameters {
     SQLite3Parameters() :
-        db_(NULL), version_(-1), in_transaction(false), updating_zone(false),
-        updated_zone_id(-1)
+        db_(NULL), major_version_(-1), minor_version_(-1),
+        in_transaction(false), updating_zone(false), updated_zone_id(-1)
     {
         for (int i = 0; i < NUM_STATEMENTS; ++i) {
             statements_[i] = NULL;
@@ -151,10 +199,12 @@ struct SQLite3Parameters {
     }
 
     sqlite3* db_;
-    int version_;
+    int major_version_;
+    int minor_version_;
     bool in_transaction; // whether or not a transaction has been started
     bool updating_zone;          // whether or not updating the zone
     int updated_zone_id;        // valid only when in_transaction is true
+    string updated_zone_origin_; // ditto, and only needed to handle NSEC3s
 private:
     // statements_ are private and must be accessed via getStatement() outside
     // of this structure.
@@ -169,6 +219,10 @@ private:
 // statement, which is completed with a single "step" (normally within a
 // single call to an SQLite3Database method).  In particular, it cannot be
 // used for "SELECT" variants, which generally expect multiple matching rows.
+//
+// The bindXXX methods are straightforward wrappers for the corresponding
+// sqlite3_bind_xxx functions that make bindings with the given parameters
+// on the statement maintained in this class.
 class StatementProcessor {
 public:
     // desc will be used on failure in the what() message of the resulting
@@ -183,6 +237,33 @@ public:
 
     ~StatementProcessor() {
         sqlite3_reset(stmt_);
+    }
+
+    void bindInt(int index, int val) {
+        if (sqlite3_bind_int(stmt_, index, val) != SQLITE_OK) {
+            isc_throw(DataSourceError,
+                      "failed to bind SQLite3 parameter: " <<
+                      sqlite3_errmsg(dbparameters_.db_));
+        }
+    }
+
+    void bindInt64(int index, sqlite3_int64 val) {
+        if (sqlite3_bind_int64(stmt_, index, val) != SQLITE_OK) {
+            isc_throw(DataSourceError,
+                      "failed to bind SQLite3 parameter: " <<
+                      sqlite3_errmsg(dbparameters_.db_));
+        }
+    }
+
+    // For simplicity, we assume val is a NULL-terminated string, and the
+    // entire non NUL characters are to be bound.  The destructor parameter
+    // is normally either SQLITE_TRANSIENT or SQLITE_STATIC.
+    void bindText(int index, const char* val, void(*destructor)(void*)) {
+        if (sqlite3_bind_text(stmt_, index, val, -1, destructor)
+            != SQLITE_OK) {
+            isc_throw(DataSourceError, "failed to bind SQLite3 parameter: " <<
+                      sqlite3_errmsg(dbparameters_.db_));
+        }
     }
 
     void exec() {
@@ -242,34 +323,42 @@ public:
 };
 
 const char* const SCHEMA_LIST[] = {
-    "CREATE TABLE schema_version (version INTEGER NOT NULL)",
-    "INSERT INTO schema_version VALUES (1)",
+    "CREATE TABLE schema_version (version INTEGER NOT NULL, "
+        "minor INTEGER NOT NULL DEFAULT 0)",
+    "INSERT INTO schema_version VALUES (2, 0)",
     "CREATE TABLE zones (id INTEGER PRIMARY KEY, "
-    "name STRING NOT NULL COLLATE NOCASE, "
-    "rdclass STRING NOT NULL COLLATE NOCASE DEFAULT 'IN', "
+    "name TEXT NOT NULL COLLATE NOCASE, "
+    "rdclass TEXT NOT NULL COLLATE NOCASE DEFAULT 'IN', "
     "dnssec BOOLEAN NOT NULL DEFAULT 0)",
     "CREATE INDEX zones_byname ON zones (name)",
     "CREATE TABLE records (id INTEGER PRIMARY KEY, "
-        "zone_id INTEGER NOT NULL, name STRING NOT NULL COLLATE NOCASE, "
-        "rname STRING NOT NULL COLLATE NOCASE, ttl INTEGER NOT NULL, "
-        "rdtype STRING NOT NULL COLLATE NOCASE, sigtype STRING COLLATE NOCASE, "
-        "rdata STRING NOT NULL)",
+        "zone_id INTEGER NOT NULL, name TEXT NOT NULL COLLATE NOCASE, "
+        "rname TEXT NOT NULL COLLATE NOCASE, ttl INTEGER NOT NULL, "
+        "rdtype TEXT NOT NULL COLLATE NOCASE, sigtype TEXT COLLATE NOCASE, "
+        "rdata TEXT NOT NULL)",
     "CREATE INDEX records_byname ON records (name)",
     "CREATE INDEX records_byrname ON records (rname)",
+    // The next index is a tricky one.  It's necessary for
+    // FIND_PREVIOUS to use the index efficiently; since there's an
+    // "inequality", the rname column must be placed later.  records_byrname
+    // may not be sufficient especially when the zone is not signed (and
+    // defining a separate index for rdtype only doesn't work either; SQLite3
+    // would then create a temporary B-tree for "ORDER BY").
+    "CREATE INDEX records_bytype_and_rname ON records (rdtype, rname)",
     "CREATE TABLE nsec3 (id INTEGER PRIMARY KEY, zone_id INTEGER NOT NULL, "
-        "hash STRING NOT NULL COLLATE NOCASE, "
-        "owner STRING NOT NULL COLLATE NOCASE, "
-        "ttl INTEGER NOT NULL, rdtype STRING NOT NULL COLLATE NOCASE, "
-        "rdata STRING NOT NULL)",
+        "hash TEXT NOT NULL COLLATE NOCASE, "
+        "owner TEXT NOT NULL COLLATE NOCASE, "
+        "ttl INTEGER NOT NULL, rdtype TEXT NOT NULL COLLATE NOCASE, "
+        "rdata TEXT NOT NULL)",
     "CREATE INDEX nsec3_byhash ON nsec3 (hash)",
     "CREATE TABLE diffs (id INTEGER PRIMARY KEY, "
         "zone_id INTEGER NOT NULL, "
         "version INTEGER NOT NULL, "
         "operation INTEGER NOT NULL, "
-        "name STRING NOT NULL COLLATE NOCASE, "
-        "rrtype STRING NOT NULL COLLATE NOCASE, "
+        "name TEXT NOT NULL COLLATE NOCASE, "
+        "rrtype TEXT NOT NULL COLLATE NOCASE, "
         "ttl INTEGER NOT NULL, "
-        "rdata STRING NOT NULL)",
+        "rdata TEXT NOT NULL)",
     NULL
 };
 
@@ -295,14 +384,13 @@ void doSleep() {
 
 // returns the schema version if the schema version table exists
 // returns -1 if it does not
-int checkSchemaVersion(sqlite3* db) {
+int checkSchemaVersionElement(sqlite3* db, const char* const query) {
     sqlite3_stmt* prepared = NULL;
     // At this point in time, the database might be exclusively locked, in
     // which case even prepare() will return BUSY, so we may need to try a
     // few times
     for (size_t i = 0; i < 50; ++i) {
-        int rc = sqlite3_prepare_v2(db, "SELECT version FROM schema_version",
-                                    -1, &prepared, NULL);
+        int rc = sqlite3_prepare_v2(db, query, -1, &prepared, NULL);
         if (rc == SQLITE_ERROR) {
             // this is the error that is returned when the table does not
             // exist
@@ -324,50 +412,116 @@ int checkSchemaVersion(sqlite3* db) {
     return (version);
 }
 
+// Returns the schema major and minor version numbers in a pair.
+// Returns (-1, -1) if the table does not exist, (1, 0) for a V1
+// database, and (n, m) for any other.
+pair<int, int> checkSchemaVersion(sqlite3* db) {
+    int major = checkSchemaVersionElement(db,
+        "SELECT version FROM schema_version");
+    if (major == -1) {
+        return (make_pair(-1, -1));
+    } else if (major == 1) {
+        return (make_pair(1, 0));
+    } else {
+        int minor = checkSchemaVersionElement(db,
+            "SELECT minor FROM schema_version");
+        return (make_pair(major, minor));
+    }
+}
+
+// A helper class used in createDatabase() below so we manage the one shot
+// transaction safely.
+class ScopedTransaction {
+public:
+    ScopedTransaction(sqlite3* db) : db_(NULL) {
+        // try for 5 secs (50*0.1)
+        for (size_t i = 0; i < 50; ++i) {
+            const int rc = sqlite3_exec(db, "BEGIN EXCLUSIVE TRANSACTION",
+                                        NULL, NULL, NULL);
+            if (rc == SQLITE_OK) {
+                break;
+            } else if (rc != SQLITE_BUSY || i == 50) {
+                isc_throw(SQLite3Error, "Unable to acquire exclusive lock "
+                          "for database creation: " << sqlite3_errmsg(db));
+            }
+            doSleep();
+        }
+        // Hold the DB pointer once we have successfully acquired the lock.
+        db_ = db;
+    }
+    ~ScopedTransaction() {
+        if (db_ != NULL) {
+            // Note: even rollback could fail in theory, but in that case
+            // we cannot do much for safe recovery anyway.  We could at least
+            // log the event, but for now don't even bother to do that, with
+            // the expectation that we'll soon stop creating the schema in this
+            // module.
+            sqlite3_exec(db_, "ROLLBACK", NULL, NULL, NULL);
+        }
+    }
+    void commit() {
+        if (sqlite3_exec(db_, "COMMIT TRANSACTION", NULL, NULL, NULL) !=
+            SQLITE_OK) {
+            isc_throw(SQLite3Error, "Unable to commit newly created database "
+                      "schema: " << sqlite3_errmsg(db_));
+        }
+        db_ = NULL;
+    }
+
+private:
+    sqlite3* db_;
+};
+
 // return db version
-int create_database(sqlite3* db) {
+pair<int, int>
+createDatabase(sqlite3* db) {
+    logger.info(DATASRC_SQLITE_SETUP);
+
     // try to get an exclusive lock. Once that is obtained, do the version
     // check *again*, just in case this process was racing another
-    //
-    // try for 5 secs (50*0.1)
-    int rc;
-    logger.info(DATASRC_SQLITE_SETUP);
-    for (size_t i = 0; i < 50; ++i) {
-        rc = sqlite3_exec(db, "BEGIN EXCLUSIVE TRANSACTION", NULL, NULL,
-                            NULL);
-        if (rc == SQLITE_OK) {
-            break;
-        } else if (rc != SQLITE_BUSY || i == 50) {
-            isc_throw(SQLite3Error, "Unable to acquire exclusive lock "
-                        "for database creation: " << sqlite3_errmsg(db));
-        }
-        doSleep();
-    }
-    int schema_version = checkSchemaVersion(db);
-    if (schema_version == -1) {
+    ScopedTransaction trasaction(db);
+    pair<int, int> schema_version = checkSchemaVersion(db);
+    if (schema_version.first == -1) {
         for (int i = 0; SCHEMA_LIST[i] != NULL; ++i) {
             if (sqlite3_exec(db, SCHEMA_LIST[i], NULL, NULL, NULL) !=
                 SQLITE_OK) {
                 isc_throw(SQLite3Error,
-                        "Failed to set up schema " << SCHEMA_LIST[i]);
+                          "Failed to set up schema " << SCHEMA_LIST[i]);
             }
         }
-        sqlite3_exec(db, "COMMIT TRANSACTION", NULL, NULL, NULL);
-        return (SQLITE_SCHEMA_VERSION);
-    } else {
-        return (schema_version);
+        trasaction.commit();
+
+        // Return the version.  We query again to ensure that the only point
+        // in which the current schema version is defined is in the create
+        // statements.
+        schema_version = checkSchemaVersion(db);
     }
+
+    return (schema_version);
 }
 
 void
 checkAndSetupSchema(Initializer* initializer) {
     sqlite3* const db = initializer->params_.db_;
 
-    int schema_version = checkSchemaVersion(db);
-    if (schema_version != SQLITE_SCHEMA_VERSION) {
-        schema_version = create_database(db);
+    pair<int, int> schema_version = checkSchemaVersion(db);
+    if (schema_version.first == -1) {
+        schema_version = createDatabase(db);
+    } else if (schema_version.first != SQLITE_SCHEMA_MAJOR_VERSION) {
+        LOG_ERROR(logger, DATASRC_SQLITE_INCOMPATIBLE_VERSION)
+            .arg(schema_version.first).arg(schema_version.second)
+            .arg(SQLITE_SCHEMA_MAJOR_VERSION).arg(SQLITE_SCHEMA_MINOR_VERSION);
+        isc_throw(IncompatibleDbVersion,
+                  "incompatible SQLite3 database version: " <<
+                  schema_version.first << "." << schema_version.second);
+    } else if (schema_version.second < SQLITE_SCHEMA_MINOR_VERSION) {
+        LOG_WARN(logger, DATASRC_SQLITE_COMPATIBLE_VERSION)
+            .arg(schema_version.first).arg(schema_version.second)
+            .arg(SQLITE_SCHEMA_MAJOR_VERSION).arg(SQLITE_SCHEMA_MINOR_VERSION);
     }
-    initializer->params_.version_ = schema_version;
+
+    initializer->params_.major_version_ = schema_version.first;
+    initializer->params_.minor_version_ = schema_version.second;
 }
 
 }
@@ -486,19 +640,46 @@ public:
         bindZoneId(id);
     }
 
+    // What kind of query it is - selection of the statement for DB
+    enum QueryType {
+        QT_ANY, // Directly for a domain
+        QT_SUBDOMAINS, // Subdomains of a given domain
+        QT_NSEC3 // Domain in the NSEC3 namespace (the name is is the hash,
+                 // not the whole name)
+    };
+
     // Construct an iterator for records with a specific name. When constructed
     // this way, the getNext() call will copy all fields except name
     Context(const boost::shared_ptr<const SQLite3Accessor>& accessor, int id,
-            const std::string& name, bool subdomains) :
-        iterator_type_(ITT_NAME),
+            const std::string& name, QueryType qtype) :
+        iterator_type_(qtype == QT_NSEC3 ? ITT_NSEC3 : ITT_NAME),
         accessor_(accessor),
         statement_(NULL),
         name_(name)
     {
+        // Choose the statement text depending on the query type
+        const char* statement(NULL);
+        switch (qtype) {
+            case QT_ANY:
+                statement = text_statements[ANY];
+                break;
+            case QT_SUBDOMAINS:
+                statement = text_statements[ANY_SUB];
+                break;
+            case QT_NSEC3:
+                statement = text_statements[NSEC3];
+                break;
+            default:
+                // Can Not Happen - there isn't any other type of query
+                // and all the calls to the constructor are from this
+                // file. Therefore no way to test it throws :-(.
+                isc_throw(Unexpected,
+                          "Invalid qtype passed - unreachable code branch "
+                          "reached");
+        }
+
         // We create the statement now and then just keep getting data from it
-        statement_ = prepare(accessor->dbparameters_->db_,
-                             subdomains ? text_statements[ANY_SUB] :
-                             text_statements[ANY]);
+        statement_ = prepare(accessor->dbparameters_->db_, statement);
         bindZoneId(id);
         bindName(name_);
     }
@@ -515,7 +696,11 @@ public:
             // For both types, we copy the first four columns
             copyColumn(data, TYPE_COLUMN);
             copyColumn(data, TTL_COLUMN);
-            copyColumn(data, SIGTYPE_COLUMN);
+            // The NSEC3 lookup does not provide the SIGTYPE, it is not
+            // necessary and not contained in the table.
+            if (iterator_type_ != ITT_NSEC3) {
+                copyColumn(data, SIGTYPE_COLUMN);
+            }
             copyColumn(data, RDATA_COLUMN);
             // Only copy Name if we are iterating over every record
             if (iterator_type_ == ITT_ALL) {
@@ -541,7 +726,8 @@ private:
     // See description of getNext() and the constructors
     enum IteratorType {
         ITT_ALL,
-        ITT_NAME
+        ITT_NAME,
+        ITT_NSEC3
     };
 
     void copyColumn(std::string (&data)[COLUMN_COUNT], int column) {
@@ -588,7 +774,15 @@ SQLite3Accessor::getRecords(const std::string& name, int id,
                             bool subdomains) const
 {
     return (IteratorContextPtr(new Context(shared_from_this(), id, name,
-                                           subdomains)));
+                                           subdomains ?
+                                           Context::QT_SUBDOMAINS :
+                                           Context::QT_ANY)));
+}
+
+DatabaseAccessor::IteratorContextPtr
+SQLite3Accessor::getNSEC3Records(const std::string& hash, int id) const {
+    return (IteratorContextPtr(new Context(shared_from_this(), id, hash,
+                                           Context::QT_NSEC3)));
 }
 
 DatabaseAccessor::IteratorContextPtr
@@ -652,7 +846,7 @@ public:
     ///
     /// \return bool true if data is returned, false if not.
     ///
-    /// \exceptions any Varied
+    /// \exception any Varied
     bool getNext(std::string (&data)[COLUMN_COUNT]) {
 
         if (last_status_ != SQLITE_DONE) {
@@ -805,7 +999,7 @@ private:
             // No data returned but the SQL query succeeded.  Only possibility
             // is that there is no entry in the differences table for the given
             // zone and version.
-            isc_throw(NoSuchSerial, "No entry in differences table for " <<
+            isc_throw(NoSuchSerial, "No entry in differences table for" <<
                       " zone ID " << zone_id << ", serial number " << serial);
         }
 
@@ -867,19 +1061,22 @@ SQLite3Accessor::startUpdateZone(const string& zone_name, const bool replace) {
                        "start an SQLite3 update transaction").exec();
 
     if (replace) {
+        // First, clear all current data from tables.
+        typedef pair<StatementID, const char* const> StatementSpec;
+        const StatementSpec delzone_stmts[] =
+            { StatementSpec(DEL_ZONE_RECORDS, "delete zone records"),
+              StatementSpec(DEL_ZONE_NSEC3_RECORDS,
+                            "delete zone NSEC3 records") };
         try {
-            StatementProcessor delzone_exec(*dbparameters_, DEL_ZONE_RECORDS,
-                                            "delete zone records");
-
-            sqlite3_stmt* stmt = dbparameters_->getStatement(DEL_ZONE_RECORDS);
-            sqlite3_clear_bindings(stmt);
-            if (sqlite3_bind_int(stmt, 1, zone_info.second) != SQLITE_OK) {
-                isc_throw(DataSourceError,
-                          "failed to bind SQLite3 parameter: " <<
-                          sqlite3_errmsg(dbparameters_->db_));
+            for (size_t i = 0;
+                 i < sizeof(delzone_stmts) / sizeof(delzone_stmts[0]);
+                 ++i) {
+                StatementProcessor delzone_proc(*dbparameters_,
+                                                delzone_stmts[i].first,
+                                                delzone_stmts[i].second);
+                delzone_proc.bindInt(1, zone_info.second);
+                delzone_proc.exec();
             }
-
-            delzone_exec.exec();
         } catch (const DataSourceError&) {
             // Once we start a transaction, if something unexpected happens
             // we need to rollback the transaction so that a subsequent update
@@ -893,6 +1090,7 @@ SQLite3Accessor::startUpdateZone(const string& zone_name, const bool replace) {
     dbparameters_->in_transaction = true;
     dbparameters_->updating_zone = true;
     dbparameters_->updated_zone_id = zone_info.second;
+    dbparameters_->updated_zone_origin_ = zone_name;
 
     return (zone_info);
 }
@@ -919,7 +1117,9 @@ SQLite3Accessor::commit() {
     StatementProcessor(*dbparameters_, COMMIT,
                        "commit an SQLite3 transaction").exec();
     dbparameters_->in_transaction = false;
+    dbparameters_->updating_zone = false;
     dbparameters_->updated_zone_id = -1;
+    dbparameters_->updated_zone_origin_.clear();
 }
 
 void
@@ -932,7 +1132,9 @@ SQLite3Accessor::rollback() {
     StatementProcessor(*dbparameters_, ROLLBACK,
                        "rollback an SQLite3 transaction").exec();
     dbparameters_->in_transaction = false;
+    dbparameters_->updating_zone = false;
     dbparameters_->updated_zone_id = -1;
+    dbparameters_->updated_zone_origin_.clear();
 }
 
 namespace {
@@ -942,29 +1144,19 @@ void
 doUpdate(SQLite3Parameters& dbparams, StatementID stmt_id,
          COLUMNS_TYPE update_params, const char* exec_desc)
 {
-    sqlite3_stmt* const stmt = dbparams.getStatement(stmt_id);
-    StatementProcessor executer(dbparams, stmt_id, exec_desc);
+    StatementProcessor proc(dbparams, stmt_id, exec_desc);
 
     int param_id = 0;
-    if (sqlite3_bind_int(stmt, ++param_id, dbparams.updated_zone_id)
-        != SQLITE_OK) {
-        isc_throw(DataSourceError, "failed to bind SQLite3 parameter: " <<
-                  sqlite3_errmsg(dbparams.db_));
-    }
+    proc.bindInt(++param_id, dbparams.updated_zone_id);
     const size_t column_count =
         sizeof(update_params) / sizeof(update_params[0]);
     for (int i = 0; i < column_count; ++i) {
         // The old sqlite3 data source API assumes NULL for an empty column.
         // We need to provide compatibility at least for now.
-        if (sqlite3_bind_text(stmt, ++param_id,
-                              update_params[i].empty() ? NULL :
-                              update_params[i].c_str(),
-                              -1, SQLITE_TRANSIENT) != SQLITE_OK) {
-            isc_throw(DataSourceError, "failed to bind SQLite3 parameter: " <<
-                      sqlite3_errmsg(dbparams.db_));
-        }
+        proc.bindText(++param_id, update_params[i].empty() ? NULL :
+                      update_params[i].c_str(), SQLITE_TRANSIENT);
     }
-    executer.exec();
+    proc.exec();
 }
 }
 
@@ -974,8 +1166,32 @@ SQLite3Accessor::addRecordToZone(const string (&columns)[ADD_COLUMN_COUNT]) {
         isc_throw(DataSourceError, "adding record to SQLite3 "
                   "data source without transaction");
     }
-    doUpdate<const string (&)[DatabaseAccessor::ADD_COLUMN_COUNT]>(
+    doUpdate<const string (&)[ADD_COLUMN_COUNT]>(
         *dbparameters_, ADD_RECORD, columns, "add record to zone");
+}
+
+void
+SQLite3Accessor::addNSEC3RecordToZone(
+    const string (&columns)[ADD_NSEC3_COLUMN_COUNT])
+{
+    if (!dbparameters_->updating_zone) {
+        isc_throw(DataSourceError, "adding NSEC3-related record to SQLite3 "
+                  "data source without transaction");
+    }
+
+    // XXX: the current implementation of SQLite3 schema requires the 'owner'
+    // column, and the current implementation of getAllRecords() relies on it,
+    // while the addNSEC3RecordToZone interface doesn't provide it explicitly.
+    // We should revisit it at the design level, but for now we internally
+    // convert the given parameter to satisfy the internal requirements.
+    const string sqlite3_columns[ADD_NSEC3_COLUMN_COUNT + 1] =
+        { columns[ADD_NSEC3_HASH],
+          columns[ADD_NSEC3_HASH] + "." + dbparameters_->updated_zone_origin_,
+          columns[ADD_NSEC3_TTL],
+          columns[ADD_NSEC3_TYPE], columns[ADD_NSEC3_RDATA] };
+    doUpdate<const string (&)[ADD_NSEC3_COLUMN_COUNT + 1]>(
+        *dbparameters_, ADD_NSEC3_RECORD, sqlite3_columns,
+        "add NSEC3 record to zone");
 }
 
 void
@@ -984,8 +1200,21 @@ SQLite3Accessor::deleteRecordInZone(const string (&params)[DEL_PARAM_COUNT]) {
         isc_throw(DataSourceError, "deleting record in SQLite3 "
                   "data source without transaction");
     }
-    doUpdate<const string (&)[DatabaseAccessor::DEL_PARAM_COUNT]>(
+    doUpdate<const string (&)[DEL_PARAM_COUNT]>(
         *dbparameters_, DEL_RECORD, params, "delete record from zone");
+}
+
+void
+SQLite3Accessor::deleteNSEC3RecordInZone(
+    const string (&params)[DEL_PARAM_COUNT])
+{
+    if (!dbparameters_->updating_zone) {
+        isc_throw(DataSourceError, "deleting NSEC3-related record in SQLite3 "
+                  "data source without transaction");
+    }
+    doUpdate<const string (&)[DEL_PARAM_COUNT]>(
+        *dbparameters_, DEL_NSEC3_RECORD, params,
+        "delete NSEC3 record from zone");
 }
 
 void
@@ -1003,53 +1232,16 @@ SQLite3Accessor::addRecordDiff(int zone_id, uint32_t serial,
                   << dbparameters_->updated_zone_id);
     }
 
-    sqlite3_stmt* const stmt = dbparameters_->getStatement(ADD_RECORD_DIFF);
-    StatementProcessor executer(*dbparameters_, ADD_RECORD_DIFF,
-                                "add record diff");
+    StatementProcessor proc(*dbparameters_, ADD_RECORD_DIFF,
+                            "add record diff");
     int param_id = 0;
-    if (sqlite3_bind_int(stmt, ++param_id, zone_id)
-        != SQLITE_OK) {
-        isc_throw(DataSourceError, "failed to bind SQLite3 parameter: " <<
-                  sqlite3_errmsg(dbparameters_->db_));
-    }
-    if (sqlite3_bind_int64(stmt, ++param_id, serial)
-        != SQLITE_OK) {
-        isc_throw(DataSourceError, "failed to bind SQLite3 parameter: " <<
-                  sqlite3_errmsg(dbparameters_->db_));
-    }
-    if (sqlite3_bind_int(stmt, ++param_id, operation)
-        != SQLITE_OK) {
-        isc_throw(DataSourceError, "failed to bind SQLite3 parameter: " <<
-                  sqlite3_errmsg(dbparameters_->db_));
-    }
+    proc.bindInt(++param_id, zone_id);
+    proc.bindInt64(++param_id, serial);
+    proc.bindInt(++param_id, operation);
     for (int i = 0; i < DIFF_PARAM_COUNT; ++i) {
-        if (sqlite3_bind_text(stmt, ++param_id, params[i].c_str(),
-                              -1, SQLITE_TRANSIENT) != SQLITE_OK) {
-            isc_throw(DataSourceError, "failed to bind SQLite3 parameter: " <<
-                      sqlite3_errmsg(dbparameters_->db_));
-        }
+        proc.bindText(++param_id, params[i].c_str(), SQLITE_TRANSIENT);
     }
-    executer.exec();
-}
-
-vector<vector<string> >
-SQLite3Accessor::getRecordDiff(int zone_id) {
-    sqlite3_stmt* const stmt = dbparameters_->getStatement(GET_RECORD_DIFF);
-    sqlite3_bind_int(stmt, 1, zone_id);
-
-    vector<vector<string> > result;
-    while (sqlite3_step(stmt) == SQLITE_ROW) {
-        vector<string> row_result;
-        for (int i = 0; i < 6; ++i) {
-            row_result.push_back(convertToPlainChar(sqlite3_column_text(stmt,
-                                                                        i),
-                                                    dbparameters_->db_));
-        }
-        result.push_back(row_result);
-    }
-    sqlite3_reset(stmt);
-
-    return (result);
+    proc.exec();
 }
 
 std::string
@@ -1096,74 +1288,74 @@ SQLite3Accessor::findPreviousName(int zone_id, const std::string& rname)
     return (result);
 }
 
-namespace {
-void
-addError(ElementPtr errors, const std::string& error) {
-    if (errors != ElementPtr() && errors->getType() == Element::list) {
-        errors->add(Element::create(error));
+std::string
+SQLite3Accessor::findPreviousNSEC3Hash(int zone_id, const std::string& hash)
+    const
+{
+    sqlite3_stmt* const stmt = dbparameters_->getStatement(NSEC3_PREVIOUS);
+    sqlite3_reset(stmt);
+    sqlite3_clear_bindings(stmt);
+
+    if (sqlite3_bind_int(stmt, 1, zone_id) != SQLITE_OK) {
+        isc_throw(SQLite3Error, "Could not bind zone ID " << zone_id <<
+                  " to SQL statement (find previous NSEC3): " <<
+                  sqlite3_errmsg(dbparameters_->db_));
     }
-}
+    if (sqlite3_bind_text(stmt, 2, hash.c_str(), -1, SQLITE_STATIC) !=
+        SQLITE_OK) {
+        isc_throw(SQLite3Error, "Could not bind hash " << hash <<
+                  " to SQL statement (find previous NSEC3): " <<
+                  sqlite3_errmsg(dbparameters_->db_));
+    }
 
-bool
-checkConfig(ConstElementPtr config, ElementPtr errors) {
-    /* Specific configuration is under discussion, right now this accepts
-     * the 'old' configuration, see header file
-     */
-    bool result = true;
+    std::string result;
+    const int rc = sqlite3_step(stmt);
+    if (rc == SQLITE_ROW) {
+        // We found it
+        result = convertToPlainChar(sqlite3_column_text(stmt, 0),
+                                    dbparameters_->db_);
+    }
+    sqlite3_reset(stmt);
 
-    if (!config || config->getType() != Element::map) {
-        addError(errors, "Base config for SQlite3 backend must be a map");
-        result = false;
-    } else {
-        if (!config->contains(CONFIG_ITEM_DATABASE_FILE)) {
-            addError(errors,
-                     "Config for SQlite3 backend does not contain a '"
-                     CONFIG_ITEM_DATABASE_FILE
-                     "' value");
-            result = false;
-        } else if (!config->get(CONFIG_ITEM_DATABASE_FILE) ||
-                   config->get(CONFIG_ITEM_DATABASE_FILE)->getType() !=
-                   Element::string) {
-            addError(errors, "value of " CONFIG_ITEM_DATABASE_FILE
-                     " in SQLite3 backend is not a string");
-            result = false;
-        } else if (config->get(CONFIG_ITEM_DATABASE_FILE)->stringValue() ==
-                   "") {
-            addError(errors, "value of " CONFIG_ITEM_DATABASE_FILE
-                     " in SQLite3 backend is empty");
-            result = false;
+    if (rc != SQLITE_ROW && rc != SQLITE_DONE) {
+        // Some kind of error
+        isc_throw(SQLite3Error, "Could not get data for previous hash");
+    }
+
+    if (rc == SQLITE_DONE) {
+        // No NSEC3 records before this hash. This means we should wrap
+        // around and take the last one.
+        sqlite3_stmt* const stmt = dbparameters_->getStatement(NSEC3_LAST);
+        sqlite3_reset(stmt);
+        sqlite3_clear_bindings(stmt);
+
+        if (sqlite3_bind_int(stmt, 1, zone_id) != SQLITE_OK) {
+            isc_throw(SQLite3Error, "Could not bind zone ID " << zone_id <<
+                      " to SQL statement (find last NSEC3): " <<
+                      sqlite3_errmsg(dbparameters_->db_));
+        }
+
+        const int rc = sqlite3_step(stmt);
+        if (rc == SQLITE_ROW) {
+            // We found it
+            result = convertToPlainChar(sqlite3_column_text(stmt, 0),
+                                        dbparameters_->db_);
+        }
+        sqlite3_reset(stmt);
+
+        if (rc != SQLITE_ROW && rc != SQLITE_DONE) {
+            // Some kind of error
+            isc_throw(SQLite3Error, "Could not get data for last hash");
+        }
+
+        if (rc == SQLITE_DONE) {
+            // No NSEC3 at all in the zone. Well, bad luck, but you should not
+            // have asked in the first place.
+            isc_throw(DataSourceError, "No NSEC3 in this zone");
         }
     }
 
     return (result);
-}
-
-} // end anonymous namespace
-
-DataSourceClient *
-createInstance(isc::data::ConstElementPtr config, std::string& error) {
-    ElementPtr errors(Element::createList());
-    if (!checkConfig(config, errors)) {
-        error = "Configuration error: " + errors->str();
-        return (NULL);
-    }
-    std::string dbfile = config->get(CONFIG_ITEM_DATABASE_FILE)->stringValue();
-    try {
-        boost::shared_ptr<DatabaseAccessor> sqlite3_accessor(
-            new SQLite3Accessor(dbfile, "IN")); // XXX: avoid hardcode RR class
-        return (new DatabaseClient(isc::dns::RRClass::IN(), sqlite3_accessor));
-    } catch (const std::exception& exc) {
-        error = std::string("Error creating sqlite3 datasource: ") + exc.what();
-        return (NULL);
-    } catch (...) {
-        error = std::string("Error creating sqlite3 datasource, "
-                            "unknown exception");
-        return (NULL);
-    }
-}
-
-void destroyInstance(DataSourceClient* instance) {
-    delete instance;
 }
 
 } // end of namespace datasrc

@@ -79,7 +79,6 @@ namespace {
 class MessageTest : public ::testing::Test {
 protected:
     MessageTest() : test_name("test.example.com"), obuffer(0),
-                    renderer(obuffer),
                     message_parse(Message::PARSE),
                     message_render(Message::RENDER),
                     bogus_section(static_cast<Message::Section>(
@@ -324,6 +323,10 @@ TEST_F(MessageTest, badAddRRset) {
                                         rrset_a), InvalidMessageOperation);
     // out-of-band section ID
     EXPECT_THROW(message_render.addRRset(bogus_section, rrset_a), OutOfRange);
+
+    // NULL RRset
+    EXPECT_THROW(message_render.addRRset(Message::SECTION_ANSWER, RRsetPtr()),
+                 InvalidParameter);
 }
 
 TEST_F(MessageTest, hasRRset) {
@@ -727,8 +730,8 @@ TEST_F(MessageTest, toWire) {
     message_render.toWire(renderer);
     vector<unsigned char> data;
     UnitTestUtil::readWireData("message_toWire1", data);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, obuffer.getData(),
-                        obuffer.getLength(), &data[0], data.size());
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
+                        renderer.getLength(), &data[0], data.size());
 }
 
 TEST_F(MessageTest, toWireInParseMode) {
@@ -957,9 +960,6 @@ TEST_F(MessageTest, toWireTSIGNoTruncation) {
 // rendering fail unexpectedly in the test that follows.
 class BadRenderer : public MessageRenderer {
 public:
-    BadRenderer(isc::util::OutputBuffer& buffer) :
-        MessageRenderer(buffer)
-    {}
     virtual void setLengthLimit(size_t len) {
         if (getLength() > 0) {
             MessageRenderer::setLengthLimit(getLength());
@@ -990,8 +990,7 @@ TEST_F(MessageTest, toWireTSIGLengthErrors) {
                  InvalidParameter);
 
     // Trying to render a message with TSIG using a buggy renderer.
-    obuffer.clear();
-    BadRenderer bad_renderer(obuffer);
+    BadRenderer bad_renderer;
     bad_renderer.setLengthLimit(512);
     message_render.clear(Message::RENDER);
     EXPECT_THROW(commonTSIGToWireCheck(message_render, bad_renderer, tsig_ctx,

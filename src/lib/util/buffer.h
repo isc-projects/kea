@@ -133,10 +133,10 @@ public:
     /// an exception of class \c isc::dns::InvalidBufferPosition will be thrown.
     /// \param position The new position (offset from the beginning of the
     /// buffer).
-    void setPosition(size_t position)
-    {
-        if (position > len_)
-            isc_throw(InvalidBufferPosition, "position is too large");
+    void setPosition(size_t position) {
+        if (position > len_) {
+            throwError("position is too large");
+        }
         position_ = position;
     }
     //@}
@@ -148,10 +148,9 @@ public:
     ///
     /// If the remaining length of the buffer is smaller than 8-bit, an
     /// exception of class \c isc::dns::InvalidBufferPosition will be thrown.
-    uint8_t readUint8()
-    {
+    uint8_t readUint8() {
         if (position_ + sizeof(uint8_t) > len_) {
-            isc_throw(InvalidBufferPosition, "read beyond end of buffer");
+            throwError("read beyond end of buffer");
         }
 
         return (data_[position_++]);
@@ -161,13 +160,12 @@ public:
     ///
     /// If the remaining length of the buffer is smaller than 16-bit, an
     /// exception of class \c isc::dns::InvalidBufferPosition will be thrown.
-    uint16_t readUint16()
-    {
+    uint16_t readUint16() {
         uint16_t data;
         const uint8_t* cp;
 
         if (position_ + sizeof(data) > len_) {
-            isc_throw(InvalidBufferPosition, "read beyond end of buffer");
+            throwError("read beyond end of buffer");
         }
 
         cp = &data_[position_];
@@ -182,13 +180,12 @@ public:
     ///
     /// If the remaining length of the buffer is smaller than 32-bit, an
     /// exception of class \c isc::dns::InvalidBufferPosition will be thrown.
-    uint32_t readUint32()
-    {
+    uint32_t readUint32() {
         uint32_t data;
         const uint8_t* cp;
 
         if (position_ + sizeof(data) > len_) {
-            isc_throw(InvalidBufferPosition, "read beyond end of buffer");
+            throwError("read beyond end of buffer");
         }
 
         cp = &data_[position_];
@@ -207,10 +204,9 @@ public:
     /// If the remaining length of the buffer is smaller than the specified
     /// length, an exception of class \c isc::dns::InvalidBufferPosition will
     /// be thrown.
-    void readData(void* data, size_t len)
-    {
+    void readData(void* data, size_t len) {
         if (position_ + len > len_) {
-            isc_throw(InvalidBufferPosition, "read beyond end of buffer");
+            throwError("read beyond end of buffer");
         }
 
         memcpy(data, &data_[position_], len);
@@ -226,10 +222,9 @@ public:
     /// @param Reference to a buffer (data will be stored there).
     /// @param Size specified number of bytes to read in a vector.
     ///
-    void readVector(std::vector<uint8_t>& data, size_t len)
-    {
+    void readVector(std::vector<uint8_t>& data, size_t len) {
         if (position_ + len > len_) {
-            isc_throw(InvalidBufferPosition, "read beyond end of buffer");
+            throwError("read beyond end of buffer");
         }
 
         data.resize(len);
@@ -237,6 +232,15 @@ public:
     }
 
 private:
+    /// \brief A common helper to throw an exception on invalid operation.
+    ///
+    /// Experiments showed that throwing from each method makes the buffer
+    /// operation slower, so we consolidate it here, and let the methods
+    /// call this.
+    static void throwError(const char* msg) {
+        isc_throw(InvalidBufferPosition, msg);
+    }
+
     size_t position_;
 
     // XXX: The following must be private, but for a short term workaround with
@@ -387,9 +391,7 @@ public:
     /// \param pos The position in the buffer to be returned.
     uint8_t operator[](size_t pos) const
     {
-        if (pos >= size_) {
-            isc_throw(InvalidBufferPosition, "read at invalid position");
-        }
+        assert (pos < size_);
         return (buffer_[pos]);
     }
     //@}

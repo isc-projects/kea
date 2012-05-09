@@ -5,7 +5,7 @@ python_PYTHON = __init__.py
 
 pythondir = $(pyexecdir)/isc/log_messages/
 
-CLEANFILES = __init__.pyc
+CLEANFILES = __init__.pyc __init__.pyo
 CLEANDIRS = __pycache__
 
 clean-local:

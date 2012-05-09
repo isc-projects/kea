@@ -27,15 +27,18 @@
 #include <dns/rrset.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
+#include <dns/nsec3hash.h>
 
 #include <datasrc/data_source.h>
 #include <datasrc/logger.h>
 
 #include <boost/foreach.hpp>
+#include <boost/scoped_ptr.hpp>
 
 using namespace isc::dns;
 using namespace std;
 using namespace isc::dns::rdata;
+using namespace boost;
 
 namespace isc {
 namespace datasrc {
@@ -177,15 +180,17 @@ private:
 DatabaseClient::Finder::FoundRRsets
 DatabaseClient::Finder::getRRsets(const string& name, const WantedTypes& types,
                                   bool check_ns, const string* construct_name,
-                                  bool any)
+                                  bool any,
+                                  DatabaseAccessor::IteratorContextPtr context)
 {
     RRsigStore sig_store;
     bool records_found = false;
     std::map<RRType, RRsetPtr> result;
 
-    // Request the context
-    DatabaseAccessor::IteratorContextPtr
-        context(accessor_->getRecords(name, zone_id_));
+    // Request the context in case we didn't get one
+    if (!context) {
+        context = accessor_->getRecords(name, zone_id_);
+    }
     // It must not return NULL, that's a bug of the implementation
     if (!context) {
         isc_throw(isc::Unexpected, "Iterator context null at " + name);
@@ -286,13 +291,11 @@ DatabaseClient::Finder::getRRsets(const string& name, const WantedTypes& types,
          i != result.end(); ++ i) {
         sig_store.appendSignatures(i->second);
     }
-
     if (records_found && any) {
         result[RRType::ANY()] = RRsetPtr();
         // These will be sitting on the other RRsets.
         result.erase(RRType::RRSIG());
     }
-
     return (FoundRRsets(records_found, result));
 }
 
@@ -316,6 +319,30 @@ namespace {
 // Bunch of functions to construct specific sets of RRTypes we will
 // ask from it.
 typedef std::set<RRType> WantedTypes;
+
+const WantedTypes&
+NSEC3_TYPES() {
+    static bool initialized(false);
+    static WantedTypes result;
+
+    if (!initialized) {
+        result.insert(RRType::NSEC3());
+        initialized = true;
+    }
+    return (result);
+}
+
+const WantedTypes&
+NSEC3PARAM_TYPES() {
+    static bool initialized(false);
+    static WantedTypes result;
+
+    if (!initialized) {
+        result.insert(RRType::NSEC3PARAM());
+        initialized = true;
+    }
+    return (result);
+}
 
 const WantedTypes&
 NSEC_TYPES() {
@@ -355,56 +382,20 @@ FINAL_TYPES() {
     }
     return (result);
 }
-
 }
 
-ConstRRsetPtr
-DatabaseClient::Finder::findNSECCover(const Name& name) {
-    try {
-        // Which one should contain the NSEC record?
-        const Name coverName(findPreviousName(name));
-        // Get the record and copy it out
-        const FoundRRsets found = getRRsets(coverName.toText(), NSEC_TYPES(),
-                                            coverName != getOrigin());
-        const FoundIterator
-            nci(found.second.find(RRType::NSEC()));
-        if (nci != found.second.end()) {
-            return (nci->second);
-        } else {
-            // The previous doesn't contain NSEC.
-            // Badly signed zone or a bug?
-
-            // FIXME: Currently, if the zone is not signed, we could get
-            // here. In that case we can't really throw, but for now, we can't
-            // recognize it. So we don't throw at all, enable it once
-            // we have a is_signed flag or something.
-#if 0
-            isc_throw(DataSourceError, "No NSEC in " +
-                      coverName.toText() + ", but it was "
-                      "returned as previous - "
-                      "accessor error? Badly signed zone?");
-#endif
-        }
-    }
-    catch (const isc::NotImplemented&) {
-        // Well, they want DNSSEC, but there is no available.
-        // So we don't provide anything.
-        LOG_INFO(logger, DATASRC_DATABASE_COVER_NSEC_UNSUPPORTED).
-            arg(accessor_->getDBName()).arg(name);
-    }
-    // We didn't find it, return nothing
-    return (ConstRRsetPtr());
-}
-
-ZoneFinder::FindResult
+ZoneFinderContextPtr
 DatabaseClient::Finder::findAll(const isc::dns::Name& name,
                                 std::vector<isc::dns::ConstRRsetPtr>& target,
                                 const FindOptions options)
 {
-    return (findInternal(name, RRType::ANY(), &target, options));
+    return (ZoneFinderContextPtr(new Context(*this, options,
+                                             findInternal(name, RRType::ANY(),
+                                                          &target, options),
+                                             target)));
 }
 
-ZoneFinder::FindResult
+ZoneFinderContextPtr
 DatabaseClient::Finder::find(const isc::dns::Name& name,
                              const isc::dns::RRType& type,
                              const FindOptions options)
@@ -412,7 +403,9 @@ DatabaseClient::Finder::find(const isc::dns::Name& name,
     if (type == RRType::ANY()) {
         isc_throw(isc::Unexpected, "Use findAll to answer ANY");
     }
-    return (findInternal(name, type, NULL, options));
+    return (ZoneFinderContextPtr(new Context(*this, options,
+                                             findInternal(name, type, NULL,
+                                                          options))));
 }
 
 DatabaseClient::Finder::DelegationSearchResult
@@ -573,11 +566,11 @@ DatabaseClient::Finder::findDelegationPoint(const isc::dns::Name& name,
 // covering NSEC record.
 //
 // If none of the above applies in any level, the search fails with NXDOMAIN.
-ZoneFinder::FindResult
+ZoneFinder::ResultContext
 DatabaseClient::Finder::findWildcardMatch(
-    const isc::dns::Name& name, const isc::dns::RRType& type,
-    const FindOptions options, const DelegationSearchResult& dresult,
-    std::vector<isc::dns::ConstRRsetPtr>* target)
+    const Name& name, const RRType& type, const FindOptions options,
+    const DelegationSearchResult& dresult, vector<ConstRRsetPtr>* target,
+    FindDNSSECContext& dnssec_ctx)
 {
     // Note that during the search we are going to search not only for the
     // requested type, but also for types that indicate a delegation -
@@ -616,13 +609,12 @@ DatabaseClient::Finder::findWildcardMatch(
                           DATASRC_DATABASE_WILDCARD_CANCEL_NS).
                     arg(accessor_->getDBName()).arg(wildcard).
                     arg(dresult.first_ns->getName());
-                return (ZoneFinder::FindResult(DELEGATION, dresult.first_ns));
-
+                return (ResultContext(DELEGATION, dresult.first_ns));
             } else if (!hasSubdomains(name.split(i - 1).toText())) {
                 // The wildcard match is the best one, find the final result
                 // at it.  Note that wildcard should never be the zone origin.
-                return (findOnNameResult(name, type, options, false,
-                                         found, &wildcard, target));
+                return (findOnNameResult(name, type, options, false, found,
+                                         &wildcard, target, dnssec_ctx));
             } else {
 
                 // more specified match found, cancel wildcard match
@@ -630,7 +622,7 @@ DatabaseClient::Finder::findWildcardMatch(
                           DATASRC_DATABASE_WILDCARD_CANCEL_SUB).
                     arg(accessor_->getDBName()).arg(wildcard).
                     arg(name).arg(superdomain);
-                return (ZoneFinder::FindResult(NXDOMAIN, ConstRRsetPtr()));
+                return (ResultContext(NXDOMAIN, ConstRRsetPtr()));
             }
 
         } else if (hasSubdomains(wildcard)) {
@@ -638,25 +630,23 @@ DatabaseClient::Finder::findWildcardMatch(
             LOG_DEBUG(logger, DBG_TRACE_DETAILED,
                       DATASRC_DATABASE_WILDCARD_EMPTY).
                 arg(accessor_->getDBName()).arg(wildcard).arg(name);
-            if ((options & FIND_DNSSEC) != 0) {
-                ConstRRsetPtr nsec = findNSECCover(Name(wildcard));
-                if (nsec) {
-                    return (ZoneFinder::FindResult(WILDCARD_NXRRSET, nsec));
-                }
-            }
-            return (ZoneFinder::FindResult(NXRRSET, ConstRRsetPtr()));
+            const FindResultFlags flags = (RESULT_WILDCARD |
+                                           dnssec_ctx.getResultFlags());
+            return (ResultContext(NXRRSET,
+                                  dnssec_ctx.getDNSSECRRset(Name(wildcard),
+                                                            true), flags));
         }
     }
 
     // Nothing found at any level.
-    return (ZoneFinder::FindResult(NXDOMAIN, ConstRRsetPtr()));
+    return (ResultContext(NXDOMAIN, ConstRRsetPtr()));
 }
 
-ZoneFinder::FindResult
+ZoneFinder::ResultContext
 DatabaseClient::Finder::logAndCreateResult(
     const Name& name, const string* wildname, const RRType& type,
     ZoneFinder::Result code, ConstRRsetPtr rrset,
-    const isc::log::MessageID& log_id) const
+    const isc::log::MessageID& log_id, FindResultFlags flags) const
 {
     if (rrset) {
         if (wildname == NULL) {
@@ -679,10 +669,125 @@ DatabaseClient::Finder::logAndCreateResult(
                 arg(getClass()).arg(*wildname);
         }
     }
-    return (ZoneFinder::FindResult(code, rrset));
+    return (ResultContext(code, rrset, flags));
 }
 
-ZoneFinder::FindResult
+DatabaseClient::Finder::FindDNSSECContext::FindDNSSECContext(
+    DatabaseClient::Finder& finder,
+    const FindOptions options) :
+    finder_(finder),
+    need_dnssec_((options & FIND_DNSSEC) != 0),
+    is_nsec3_(false),
+    is_nsec_(false),
+    probed_(false)
+{}
+
+void
+DatabaseClient::Finder::FindDNSSECContext::probe() {
+    if (!probed_) {
+        probed_ = true;
+        if (need_dnssec_) {
+            // If an NSEC3PARAM RR exists at the zone apex, it's quite likely
+            // that the zone is signed with NSEC3.  (If not the zone is more
+            // or less broken, but it's caller's responsibility how to handle
+            // such cases).
+            const string origin = finder_.getOrigin().toText();
+            const FoundRRsets nsec3_found =
+                finder_.getRRsets(origin, NSEC3PARAM_TYPES(), false);
+            const FoundIterator nfi=
+                nsec3_found.second.find(RRType::NSEC3PARAM());
+            is_nsec3_ = (nfi != nsec3_found.second.end());
+
+            // Likewise for NSEC, depending on the apex has an NSEC RR.
+            // If we know the zone is NSEC3-signed, however, we don't bother
+            // to check that.  This is aligned with the transition guideline
+            // described in Section 10.4 of RFC 5155.
+            if (!is_nsec3_) {
+                const FoundRRsets nsec_found =
+                    finder_.getRRsets(origin, NSEC_TYPES(), false);
+                const FoundIterator nfi =
+                    nsec_found.second.find(RRType::NSEC());
+                is_nsec_ = (nfi != nsec_found.second.end());
+            }
+        }
+    }
+}
+
+bool
+DatabaseClient::Finder::FindDNSSECContext::isNSEC3() {
+    if (!probed_) {
+        probe();
+    }
+    return (is_nsec3_);
+}
+
+bool
+DatabaseClient::Finder::FindDNSSECContext::isNSEC() {
+    if (!probed_) {
+        probe();
+    }
+    return (is_nsec_);
+}
+
+isc::dns::ConstRRsetPtr
+DatabaseClient::Finder::FindDNSSECContext::getDNSSECRRset(
+    const FoundRRsets& found_set)
+{
+    if (!isNSEC()) {
+        return (ConstRRsetPtr());
+    }
+
+    const FoundIterator nci = found_set.second.find(RRType::NSEC());
+    if (nci != found_set.second.end()) {
+        return (nci->second);
+    } else {
+        return (ConstRRsetPtr());
+    }
+}
+
+isc::dns::ConstRRsetPtr
+DatabaseClient::Finder::FindDNSSECContext::getDNSSECRRset(const Name &name,
+                                                          bool covering)
+{
+    if (!isNSEC()) {
+        return (ConstRRsetPtr());
+    }
+
+    try {
+        const Name& nsec_name =
+            covering ? finder_.findPreviousName(name) : name;
+        const bool need_nscheck = (nsec_name != finder_.getOrigin());
+        const FoundRRsets found = finder_.getRRsets(nsec_name.toText(),
+                                                    NSEC_TYPES(),
+                                                    need_nscheck);
+        const FoundIterator nci = found.second.find(RRType::NSEC());
+        if (nci != found.second.end()) {
+            return (nci->second);
+        }
+    } catch (const isc::NotImplemented&) {
+        // This happens when the underlying database accessor doesn't support
+        // findPreviousName() (it probably doesn't support DNSSEC at all) but
+        // there is somehow an NSEC RR at the zone apex.  We log the fact but
+        // otherwise let the caller decide what to do (so, for example, a
+        // higher level query processing won't completely fail but can return
+        // anything it can get).
+        LOG_INFO(logger, DATASRC_DATABASE_COVER_NSEC_UNSUPPORTED).
+            arg(finder_.accessor_->getDBName()).arg(name);
+    }
+    return (ConstRRsetPtr());
+}
+
+ZoneFinder::FindResultFlags
+DatabaseClient::Finder::FindDNSSECContext::getResultFlags() {
+    if (isNSEC3()) {
+        return (RESULT_NSEC3_SIGNED);
+    } else if (isNSEC()) {
+        return (RESULT_NSEC_SIGNED);
+    }
+    return (RESULT_DEFAULT);
+}
+
+ZoneFinder::ResultContext
 DatabaseClient::Finder::findOnNameResult(const Name& name,
                                          const RRType& type,
                                          const FindOptions options,
@@ -690,9 +795,14 @@ DatabaseClient::Finder::findOnNameResult(const Name& name,
                                          const FoundRRsets& found,
                                          const string* wildname,
                                          std::vector<isc::dns::ConstRRsetPtr>*
-                                         target)
+                                         target, FindDNSSECContext& dnssec_ctx)
 {
     const bool wild = (wildname != NULL);
+    // For wildcard case with DNSSEC required, the caller would need to
+    // know whether it's NSEC or NSEC3 signed.  getResultFlags returns
+    // appropriate flag based on the query context and zone status.
+    const FindResultFlags flags =
+        wild ? (RESULT_WILDCARD | dnssec_ctx.getResultFlags()) : RESULT_DEFAULT;
 
     // Get iterators for the different types of records we are interested in -
     // CNAME, NS and Wanted types.
@@ -700,7 +810,7 @@ DatabaseClient::Finder::findOnNameResult(const Name& name,
     const FoundIterator cni(found.second.find(RRType::CNAME()));
     const FoundIterator wti(found.second.find(type));
 
-    if (!is_origin && ((options & FIND_GLUE_OK) == 0) &&
+    if (!is_origin && (options & FIND_GLUE_OK) == 0 &&
         nsi != found.second.end()) {
         // A NS RRset was found at the domain we were searching for.  As it is
         // not at the origin of the zone, it is a delegation and indicates that
@@ -709,7 +819,8 @@ DatabaseClient::Finder::findOnNameResult(const Name& name,
         return (logAndCreateResult(name, wildname, type, DELEGATION,
                                    nsi->second,
                                    wild ? DATASRC_DATABASE_WILDCARD_NS :
-                                   DATASRC_DATABASE_FOUND_DELEGATION_EXACT));
+                                   DATASRC_DATABASE_FOUND_DELEGATION_EXACT,
+                                   flags));
 
     } else if (type != RRType::CNAME() && cni != found.second.end()) {
         // We are not searching for a CNAME but nevertheless we have found one
@@ -722,11 +833,10 @@ DatabaseClient::Finder::findOnNameResult(const Name& name,
                       cni->second->getRdataCount() << " rdata at " << name <<
                       ", expected 1");
         }
-        return (logAndCreateResult(name, wildname, type,
-                                   wild ? WILDCARD_CNAME : CNAME, cni->second,
+        return (logAndCreateResult(name, wildname, type, CNAME, cni->second,
                                    wild ? DATASRC_DATABASE_WILDCARD_CNAME :
-                                   DATASRC_DATABASE_FOUND_CNAME));
-
+                                   DATASRC_DATABASE_FOUND_CNAME,
+                                   flags));
     } else if (wti != found.second.end()) {
         bool any(type == RRType::ANY());
         isc::log::MessageID lid(wild ? DATASRC_DATABASE_WILDCARD_MATCH :
@@ -748,9 +858,8 @@ DatabaseClient::Finder::findOnNameResult(const Name& name,
         // includes the case where we were explicitly querying for a CNAME and
         // found it.  It also includes the case where we were querying for an
         // NS RRset and found it at the apex of the zone.)
-        return (logAndCreateResult(name, wildname, type,
-                                   wild ? WILDCARD : SUCCESS, wti->second,
-                                   lid));
+        return (logAndCreateResult(name, wildname, type, SUCCESS,
+                                   wti->second, lid, flags));
     }
 
     // If we get here, we have found something at the requested name but not
@@ -759,45 +868,29 @@ DatabaseClient::Finder::findOnNameResult(const Name& name,
     // provide the NSEC records.  If it's for wildcard, we need to get the
     // NSEC records in the name of the wildcard, not the substituted one,
     // so we need to search the tree again.
-    ConstRRsetPtr nsec_rrset;   // possibly used with DNSSEC, otherwise NULL
-    if ((options & FIND_DNSSEC) != 0) {
-        if (wild) {
-            const FoundRRsets wfound = getRRsets(*wildname, NSEC_TYPES(),
-                                                 true);
-            const FoundIterator nci = wfound.second.find(RRType::NSEC());
-            if (nci != wfound.second.end()) {
-                nsec_rrset = nci->second;
-            }
-        } else {
-            const FoundIterator nci = found.second.find(RRType::NSEC());
-            if (nci != found.second.end()) {
-                nsec_rrset = nci->second;
-            }
-        }
-    }
-    if (nsec_rrset) {
+    const ConstRRsetPtr dnssec_rrset =
+        wild ? dnssec_ctx.getDNSSECRRset(Name(*wildname), false) :
+        dnssec_ctx.getDNSSECRRset(found);
+    if (dnssec_rrset) {
         // This log message covers both normal and wildcard cases, so we pass
         // NULL for 'wildname'.
-        return (logAndCreateResult(name, NULL, type,
-                                   wild ? WILDCARD_NXRRSET : NXRRSET,
-                                   nsec_rrset,
-                                   DATASRC_DATABASE_FOUND_NXRRSET_NSEC));
+        return (logAndCreateResult(name, NULL, type, NXRRSET, dnssec_rrset,
+                                   DATASRC_DATABASE_FOUND_NXRRSET_NSEC,
+                                   flags | RESULT_NSEC_SIGNED));
     }
-    return (logAndCreateResult(name, wildname, type,
-                               wild ? WILDCARD_NXRRSET : NXRRSET, nsec_rrset,
+    return (logAndCreateResult(name, wildname, type, NXRRSET, dnssec_rrset,
                                wild ? DATASRC_DATABASE_WILDCARD_NXRRSET :
-                               DATASRC_DATABASE_FOUND_NXRRSET));
+                               DATASRC_DATABASE_FOUND_NXRRSET,
+                               flags | dnssec_ctx.getResultFlags()));
 }
 
-ZoneFinder::FindResult
+ZoneFinder::ResultContext
 DatabaseClient::Finder::findNoNameResult(const Name& name, const RRType& type,
                                          FindOptions options,
                                          const DelegationSearchResult& dresult,
                                          std::vector<isc::dns::ConstRRsetPtr>*
-                                         target)
+                                         target, FindDNSSECContext& dnssec_ctx)
 {
-    const bool dnssec_data = ((options & FIND_DNSSEC) != 0);
-
     // On entry to this method, we know that the database doesn't have any
     // entry for this name.  Before returning NXDOMAIN, we need to check
     // for special cases.
@@ -809,18 +902,18 @@ DatabaseClient::Finder::findNoNameResult(const Name& name, const RRType& type,
         LOG_DEBUG(logger, DBG_TRACE_DETAILED,
                   DATASRC_DATABASE_FOUND_EMPTY_NONTERMINAL).
             arg(accessor_->getDBName()).arg(name);
-        return (FindResult(NXRRSET, dnssec_data ? findNSECCover(name) :
-                           ConstRRsetPtr()));
-
+        return (ResultContext(NXRRSET, dnssec_ctx.getDNSSECRRset(name, true),
+                              dnssec_ctx.getResultFlags()));
     } else if ((options & NO_WILDCARD) == 0) {
         // It's not an empty non-terminal and wildcard matching is not
         // disabled, so check for wildcards. If there is a wildcard match
         // (i.e. all results except NXDOMAIN) return it; otherwise fall
         // through to the NXDOMAIN case below.
-        const ZoneFinder::FindResult wresult =
-            findWildcardMatch(name, type, options, dresult, target);
-        if (wresult.code != NXDOMAIN) {
-            return (FindResult(wresult.code, wresult.rrset));
+        const ResultContext wcontext =
+            findWildcardMatch(name, type, options, dresult, target,
+                              dnssec_ctx);
+        if (wcontext.code != NXDOMAIN) {
+            return (wcontext);
         }
     }
 
@@ -828,15 +921,14 @@ DatabaseClient::Finder::findNoNameResult(const Name& name, const RRType& type,
     // NSEC records if requested).
     LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_DATABASE_NO_MATCH).
               arg(accessor_->getDBName()).arg(name).arg(type).arg(getClass());
-    return (FindResult(NXDOMAIN, dnssec_data ? findNSECCover(name) :
-                           ConstRRsetPtr()));
+    return (ResultContext(NXDOMAIN, dnssec_ctx.getDNSSECRRset(name, true),
+                          dnssec_ctx.getResultFlags()));
 }
 
-ZoneFinder::FindResult
-DatabaseClient::Finder::findInternal(const isc::dns::Name& name,
-                             const isc::dns::RRType& type,
-                             std::vector<isc::dns::ConstRRsetPtr>* target,
-                             const FindOptions options)
+ZoneFinder::ResultContext
+DatabaseClient::Finder::findInternal(const Name& name, const RRType& type,
+                                     std::vector<ConstRRsetPtr>* target,
+                                     const FindOptions options)
 {
     LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_DATABASE_FIND_RECORDS)
               .arg(accessor_->getDBName()).arg(name).arg(type).arg(getClass());
@@ -848,7 +940,7 @@ DatabaseClient::Finder::findInternal(const isc::dns::Name& name,
         name.compare(getOrigin()).getRelation();
     if (reln != NameComparisonResult::SUBDOMAIN &&
         reln != NameComparisonResult::EQUAL) {
-        return (FindResult(NXDOMAIN, ConstRRsetPtr()));
+        isc_throw(OutOfZone, name.toText() << " not in " << getOrigin());
     }
 
     // First, go through all superdomains from the origin down, searching for
@@ -864,7 +956,8 @@ DatabaseClient::Finder::findInternal(const isc::dns::Name& name,
     // presence of the delegation.)
     const DelegationSearchResult dresult = findDelegationPoint(name, options);
     if (dresult.rrset) {
-        return (FindResult(dresult.code, dresult.rrset));
+        // In this case no special flags are needed.
+        return (ResultContext(dresult.code, dresult.rrset));
     }
 
     // If there is no delegation, look for the exact match to the request
@@ -879,17 +972,134 @@ DatabaseClient::Finder::findInternal(const isc::dns::Name& name,
     const FoundRRsets found = getRRsets(name.toText(), final_types,
                                         !is_origin, NULL,
                                         type == RRType::ANY());
-
+    FindDNSSECContext dnssec_ctx(*this, options);
     if (found.first) {
         // Something found at the domain name.  Look into it further to get
         // the final result.
         return (findOnNameResult(name, type, options, is_origin, found, NULL,
-                                 target));
+                                 target, dnssec_ctx));
     } else {
         // Did not find anything at all at the domain name, so check for
         // subdomains or wildcards.
-        return (findNoNameResult(name, type, options, dresult, target));
+        return (findNoNameResult(name, type, options, dresult, target,
+                                 dnssec_ctx));
     }
+}
+
+// The behaviour is inspired by the one in the in-memory implementation.
+ZoneFinder::FindNSEC3Result
+DatabaseClient::Finder::findNSEC3(const Name& name, bool recursive) {
+    LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_DATABASE_FINDNSEC3).arg(name).
+        arg(recursive ? "recursive" : "non-recursive");
+
+    // First, validate the input
+    const NameComparisonResult cmp_result(name.compare(getOrigin()));
+    if (cmp_result.getRelation() != NameComparisonResult::EQUAL &&
+        cmp_result.getRelation() != NameComparisonResult::SUBDOMAIN) {
+        isc_throw(OutOfZone, "findNSEC3 attempt for out-of-zone name: " <<
+                  name << ", zone: " << getOrigin() << "/" << getClass());
+    }
+
+    // Now, we need to get the NSEC3 params from the apex and create the hash
+    // creator for it.
+    const FoundRRsets nsec3param(getRRsets(getOrigin().toText(),
+                                 NSEC3PARAM_TYPES(), false));
+    const FoundIterator param(nsec3param.second.find(RRType::NSEC3PARAM()));
+    if (!nsec3param.first || param == nsec3param.second.end()) {
+        // No NSEC3 params? :-(
+        isc_throw(DataSourceError, "findNSEC3 attempt for non NSEC3 signed " <<
+                  "zone: " << getOrigin() << "/" << getClass());
+    }
+    // This takes the RRset received from the find method, takes the first RR
+    // in it, casts it to NSEC3PARAM (as it should be that one) and then creates
+    // the hash calculator class from it.
+    const scoped_ptr<NSEC3Hash> calculator(NSEC3Hash::create(
+        dynamic_cast<const generic::NSEC3PARAM&>(
+            param->second->getRdataIterator()->getCurrent())));
+
+    // Few shortcut variables
+    const unsigned olabels(getOrigin().getLabelCount());
+    const unsigned qlabels(name.getLabelCount());
+    const string otext(getOrigin().toText());
+
+    // This will be set to the one covering the query name
+    ConstRRsetPtr covering_proof;
+
+    // We keep stripping the leftmost label until we find something.
+    // In case it is recursive, we'll exit the loop at the first iteration.
+    for (unsigned labels(qlabels); labels >= olabels; -- labels) {
+        const string hash(calculator->calculate(labels == qlabels ? name :
+                                                name.split(qlabels - labels,
+                                                           labels)));
+        // Get the exact match for the name.
+        LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_DATABASE_FINDNSEC3_TRYHASH).
+            arg(name).arg(labels).arg(hash);
+
+        DatabaseAccessor::IteratorContextPtr
+            context(accessor_->getNSEC3Records(hash, zone_id_));
+
+        if (!context) {
+            isc_throw(Unexpected, "Iterator context null for hash " + hash);
+        }
+
+        const FoundRRsets nsec3(getRRsets(hash + "." + otext, NSEC3_TYPES(),
+                                          false, NULL, false, context));
+
+        if (nsec3.first) {
+            // We found an exact match against the current label.
+            const FoundIterator it(nsec3.second.find(RRType::NSEC3()));
+            if (it == nsec3.second.end()) {
+                isc_throw(DataSourceError, "Hash " + hash +
+                          "exists, but no NSEC3 there");
+            }
+
+            LOG_DEBUG(logger, DBG_TRACE_BASIC,
+                      DATASRC_DATABASE_FINDNSEC3_MATCH).arg(name).arg(labels).
+                arg(*it->second);
+            // Yes, we win
+            return (FindNSEC3Result(true, labels, it->second, covering_proof));
+        } else {
+            // There's no exact match. We try a previous one. We must find it
+            // (if the zone is properly signed).
+            const string prevHash(accessor_->findPreviousNSEC3Hash(zone_id_,
+                                                                   hash));
+            LOG_DEBUG(logger, DBG_TRACE_BASIC,
+                      DATASRC_DATABASE_FINDNSEC3_TRYHASH_PREV).arg(name).
+                arg(labels).arg(prevHash);
+            context = accessor_->getNSEC3Records(prevHash, zone_id_);
+            const FoundRRsets prev_nsec3(getRRsets(prevHash + "." + otext,
+                                                   NSEC3_TYPES(), false, NULL,
+                                                   false, context));
+
+            if (!prev_nsec3.first) {
+                isc_throw(DataSourceError, "Hash " + prevHash + " returned "
+                          "from findPreviousNSEC3Hash, but it is empty");
+            }
+            const FoundIterator
+                prev_it(prev_nsec3.second.find(RRType::NSEC3()));
+            if (prev_it == prev_nsec3.second.end()) {
+                isc_throw(DataSourceError, "The previous hash " + prevHash +
+                          "exists, but does not contain the NSEC3");
+            }
+
+            covering_proof = prev_it->second;
+            // In case it is recursive, we try to get an exact match a level
+            // up. If it is not recursive, the caller is ok with a covering
+            // one, so we just return it.
+            if (!recursive) {
+                LOG_DEBUG(logger, DBG_TRACE_BASIC,
+                          DATASRC_DATABASE_FINDNSEC3_COVER).arg(name).
+                    arg(labels).arg(*covering_proof);
+                return (FindNSEC3Result(false, labels, covering_proof,
+                                        ConstRRsetPtr()));
+            }
+        }
+    }
+
+    // The zone must contain at least the apex and that one should match
+    // exactly. If that doesn't happen, we have a problem.
+    isc_throw(DataSourceError, "recursive findNSEC3 mode didn't stop, likely a "
+              "broken NSEC3 zone: " << otext << "/" << getClass());
 }
 
 Name
@@ -899,16 +1109,9 @@ DatabaseClient::Finder::findPreviousName(const Name& name) const {
     try {
         return (Name(str));
     }
-
-    // To avoid having the same code many times, we just catch all the
-    // exceptions and handle them in a common code below
-    catch (const isc::dns::EmptyLabel&) {}
-    catch (const isc::dns::TooLongLabel&) {}
-    catch (const isc::dns::BadLabelType&) {}
-    catch (const isc::dns::BadEscape&) {}
-    catch (const isc::dns::TooLongName&) {}
-    catch (const isc::dns::IncompleteName&) {}
-    isc_throw(DataSourceError, "Bad name " + str + " from findPreviousName");
+    catch (const isc::dns::NameParserException&) {
+        isc_throw(DataSourceError, "Bad name " + str + " from findPreviousName");
+    }
 }
 
 Name
@@ -956,7 +1159,7 @@ public:
         // Find the SOA of the zone (may or may not succeed).  Note that
         // this must be done before starting the iteration context.
         soa_ = DatabaseClient::Finder(accessor_, zone.second, zone_name).
-            find(zone_name, RRType::SOA()).rrset;
+            find(zone_name, RRType::SOA())->rrset;
 
         // Request the context
         context_ = accessor_->getAllRecords(zone.second);
@@ -988,27 +1191,43 @@ public:
             // At the end of zone
             accessor_->commit();
             ready_ = false;
-            LOG_DEBUG(logger, DBG_TRACE_DETAILED,
-                      DATASRC_DATABASE_ITERATE_END);
+            LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_DATABASE_ITERATE_END);
             return (ConstRRsetPtr());
         }
-        const string name_str(name_), rtype_str(rtype_), ttl(ttl_);
-        const Name name(name_str);
-        const RRType rtype(rtype_str);
-        RRsetPtr rrset(new RRset(name, class_, rtype, RRTTL(ttl)));
-        while (data_ready_ && name_ == name_str && rtype_str == rtype_) {
-            if (ttl_ != ttl) {
-                if (ttl < ttl_) {
-                    ttl_ = ttl;
-                    rrset->setTTL(RRTTL(ttl));
+        const RRType rtype(rtype_txt_);
+        RRsetPtr rrset(new RRset(Name(name_txt_), class_, rtype,
+                                 RRTTL(ttl_txt_)));
+        // Remember the first RDATA of the RRset for comparison:
+        const ConstRdataPtr rdata_base = rdata_;
+        while (true) {
+            // Extend the RRset with the new RDATA.
+            rrset->addRdata(rdata_);
+
+            // Retrieve the next record from the database.  If we reach the
+            // end of the zone, done; if we were requested to separate all RRs,
+            // just remember this record and return the single RR.
+            getData();
+            if (separate_rrs_ || !data_ready_) {
+                break;
+            }
+
+            // Check if the next record belongs to the same RRset.  If not,
+            // we are done.  The next RDATA has been stored in rdata_, which
+            // is used within this loop (if it belongs to the same RRset) or
+            // in the next call.
+            if (Name(name_txt_) != rrset->getName() ||
+                !isSameType(rtype, rdata_base, RRType(rtype_txt_), rdata_)) {
+                break;
+            }
+
+            // Adjust TTL if necessary
+            const RRTTL next_ttl(ttl_txt_);
+            if (next_ttl != rrset->getTTL()) {
+                if (next_ttl < rrset->getTTL()) {
+                    rrset->setTTL(next_ttl);
                 }
                 LOG_WARN(logger, DATASRC_DATABASE_ITERATE_TTL_MISMATCH).
-                    arg(name_).arg(class_).arg(rtype_).arg(rrset->getTTL());
-            }
-            rrset->addRdata(rdata::createRdata(rtype, class_, rdata_));
-            getData();
-            if (separate_rrs_) {
-                break;
+                    arg(name_txt_).arg(class_).arg(rtype).arg(rrset->getTTL());
             }
         }
         LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_DATABASE_ITERATE_NEXT).
@@ -1017,14 +1236,34 @@ public:
     }
 
 private:
+    // Check two RDATA types are equivalent.  Basically it's a trivial
+    // comparison, but if both are of RRSIG, we should also compare the types
+    // covered.
+    static bool isSameType(RRType type1, ConstRdataPtr rdata1,
+                           RRType type2, ConstRdataPtr rdata2)
+    {
+        if (type1 != type2) {
+            return (false);
+        }
+        if (type1 == RRType::RRSIG()) {
+            return (dynamic_cast<const generic::RRSIG&>(*rdata1).typeCovered()
+                    == dynamic_cast<const generic::RRSIG&>(*rdata2).
+                    typeCovered());
+        }
+        return (true);
+    }
+
     // Load next row of data
     void getData() {
         string data[DatabaseAccessor::COLUMN_COUNT];
         data_ready_ = context_->getNext(data);
-        name_ = data[DatabaseAccessor::NAME_COLUMN];
-        rtype_ = data[DatabaseAccessor::TYPE_COLUMN];
-        ttl_ = data[DatabaseAccessor::TTL_COLUMN];
-        rdata_ = data[DatabaseAccessor::RDATA_COLUMN];
+        if (data_ready_) {
+            name_txt_ = data[DatabaseAccessor::NAME_COLUMN];
+            rtype_txt_ = data[DatabaseAccessor::TYPE_COLUMN];
+            ttl_txt_ = data[DatabaseAccessor::TTL_COLUMN];
+            rdata_ = rdata::createRdata(RRType(rtype_txt_), class_,
+                                        data[DatabaseAccessor::RDATA_COLUMN]);
+        }
     }
 
     // The dedicated accessor
@@ -1038,10 +1277,12 @@ private:
     // Status
     bool ready_, data_ready_;
     // Data of the next row
-    string name_, rtype_, rdata_, ttl_;
+    string name_txt_, rtype_txt_, ttl_txt_;
+    // RDATA of the next row
+    ConstRdataPtr rdata_;
     // Whether to modify differing TTL values, or treat a different TTL as
     // a different RRset
-    bool separate_rrs_;
+    const bool separate_rrs_;
 };
 
 }
@@ -1101,8 +1342,8 @@ public:
 
     virtual ZoneFinder& getFinder() { return (*finder_); }
 
-    virtual void addRRset(const RRset& rrset);
-    virtual void deleteRRset(const RRset& rrset);
+    virtual void addRRset(const AbstractRRset& rrset);
+    virtual void deleteRRset(const AbstractRRset& rrset);
     virtual void commit();
 
 private:
@@ -1129,14 +1370,15 @@ private:
     // This is a set of validation checks commonly used for addRRset() and
     // deleteRRset to minimize duplicate code logic and to make the main
     // code concise.
-    void validateAddOrDelete(const char* const op_str, const RRset& rrset,
+    void validateAddOrDelete(const char* const op_str,
+                             const AbstractRRset& rrset,
                              DiffPhase prev_phase,
                              DiffPhase current_phase) const;
 };
 
 void
 DatabaseUpdater::validateAddOrDelete(const char* const op_str,
-                                     const RRset& rrset,
+                                     const AbstractRRset& rrset,
                                      DiffPhase prev_phase,
                                      DiffPhase current_phase) const
 {
@@ -1173,54 +1415,137 @@ DatabaseUpdater::validateAddOrDelete(const char* const op_str,
     }
 }
 
+// This is a helper class used in adding/deleting RRsets to/from a database.
+// The purpose of this class is to provide conversion interface from various
+// parameters of the RRset to corresponding textual representations that the
+// underlying database interface expects.  The necessary parameters and how
+// to convert them depend on several things, such as whether it's NSEC3 related
+// or not, or whether journaling is requested.  In order to avoid unnecessary
+// conversion, this class also performs the conversion in a lazy manner.
+// Also, in order to avoid redundant conversion when the conversion is
+// requested for the same parameter multiple times, it remembers the
+// conversion result first time, and reuses it for subsequent requests
+// (this implicitly assumes copying std::string objects is not very expensive;
+// this is often the case in some common implementations that have
+// copy-on-write semantics for the string class).
+class RRParameterConverter {
+public:
+    RRParameterConverter(const AbstractRRset& rrset) : rrset_(rrset)
+    {}
+    const string& getName() {
+        if (name_.empty()) {
+            name_ = rrset_.getName().toText();
+        }
+        return (name_);
+    }
+    const string& getNSEC3Name() {
+        if (nsec3_name_.empty()) {
+            nsec3_name_ = rrset_.getName().split(0, 1).toText(true);
+        }
+        return (nsec3_name_);
+    }
+    const string& getRevName() {
+        if (revname_.empty()) {
+            revname_ = rrset_.getName().reverse().toText();
+        }
+        return (revname_);
+    }
+    const string& getTTL() {
+        if (ttl_.empty()) {
+            ttl_ = rrset_.getTTL().toText();
+        }
+        return (ttl_);
+    }
+    const string& getType() {
+        if (type_.empty()) {
+            type_ = rrset_.getType().toText();
+        }
+        return (type_);
+    }
+
+private:
+    string name_;
+    string nsec3_name_;
+    string revname_;
+    string ttl_;
+    string type_;
+    const AbstractRRset& rrset_;
+};
+
+namespace {
+// A shared shortcut to detect if the given type of RDATA is NSEC3 or
+// RRSIG covering NSEC3.  RRSIG for NSEC3 should go to the (conceptual)
+// separate namespace, so we need to check the covered type.
+// Note: in principle the type covered should be the same for
+// all RDATA, but the RRset interface doesn't ensure that condition.
+// So we explicitly check that for every RDATA below.
+bool
+isNSEC3KindType(RRType rrtype, const Rdata& rdata) {
+    if (rrtype == RRType::NSEC3()) {
+        return (true);
+    }
+    if (rrtype == RRType::RRSIG() &&
+        dynamic_cast<const generic::RRSIG&>(rdata).typeCovered() ==
+        RRType::NSEC3())
+    {
+        return (true);
+    }
+    return (false);
+}
+}
+
 void
-DatabaseUpdater::addRRset(const RRset& rrset) {
+DatabaseUpdater::addRRset(const AbstractRRset& rrset) {
     validateAddOrDelete("add", rrset, DELETE, ADD);
 
     // It's guaranteed rrset has at least one RDATA at this point.
     RdataIteratorPtr it = rrset.getRdataIterator();
-
-    string columns[Accessor::ADD_COLUMN_COUNT]; // initialized with ""
-    columns[Accessor::ADD_NAME] = rrset.getName().toText();
-    columns[Accessor::ADD_REV_NAME] = rrset.getName().reverse().toText();
-    columns[Accessor::ADD_TTL] = rrset.getTTL().toText();
-    columns[Accessor::ADD_TYPE] = rrset.getType().toText();
-    string journal[Accessor::DIFF_PARAM_COUNT];
     if (journaling_) {
-        journal[Accessor::DIFF_NAME] = columns[Accessor::ADD_NAME];
-        journal[Accessor::DIFF_TYPE] = columns[Accessor::ADD_TYPE];
-        journal[Accessor::DIFF_TTL] = columns[Accessor::ADD_TTL];
         diff_phase_ = ADD;
         if (rrset.getType() == RRType::SOA()) {
-            serial_ =
-                dynamic_cast<const generic::SOA&>(it->getCurrent()).
+            serial_ = dynamic_cast<const generic::SOA&>(it->getCurrent()).
                 getSerial();
         }
     }
+
+    RRParameterConverter cvtr(rrset);
     for (; !it->isLast(); it->next()) {
+        const Rdata& rdata = it->getCurrent();
+        const bool nsec3_type = isNSEC3KindType(rrset.getType(), rdata);
+
+        string sigtype;
         if (rrset.getType() == RRType::RRSIG()) {
             // XXX: the current interface (based on the current sqlite3
             // data source schema) requires a separate "sigtype" column,
             // even though it won't be used in a newer implementation.
             // We should eventually clean up the schema design and simplify
             // the interface, but until then we have to conform to the schema.
-            const generic::RRSIG& rrsig_rdata =
-                dynamic_cast<const generic::RRSIG&>(it->getCurrent());
-            columns[Accessor::ADD_SIGTYPE] =
-                rrsig_rdata.typeCovered().toText();
+            sigtype = dynamic_cast<const generic::RRSIG&>(rdata).
+                typeCovered().toText();
         }
-        columns[Accessor::ADD_RDATA] = it->getCurrent().toText();
+        const string& rdata_txt = rdata.toText();
         if (journaling_) {
-            journal[Accessor::DIFF_RDATA] = columns[Accessor::ADD_RDATA];
+            const string journal[Accessor::DIFF_PARAM_COUNT] =
+                { cvtr.getName(), cvtr.getType(), cvtr.getTTL(), rdata_txt };
             accessor_->addRecordDiff(zone_id_, serial_.getValue(),
                                      Accessor::DIFF_ADD, journal);
         }
-        accessor_->addRecordToZone(columns);
+        if (nsec3_type) {
+            const string nsec3_columns[Accessor::ADD_NSEC3_COLUMN_COUNT] =
+                { cvtr.getNSEC3Name(), cvtr.getTTL(), cvtr.getType(),
+                  rdata_txt };
+            accessor_->addNSEC3RecordToZone(nsec3_columns);
+        } else {
+            const string columns[Accessor::ADD_COLUMN_COUNT] =
+                { cvtr.getName(), cvtr.getRevName(), cvtr.getTTL(),
+                  cvtr.getType(), sigtype, rdata_txt };
+            accessor_->addRecordToZone(columns);
+        }
     }
 }
 
 void
-DatabaseUpdater::deleteRRset(const RRset& rrset) {
+DatabaseUpdater::deleteRRset(const AbstractRRset& rrset) {
     // If this is the first operation, pretend we are starting a new delete
     // sequence after adds.  This will simplify the validation below.
     if (diff_phase_ == NOT_STARTED) {
@@ -1230,15 +1555,7 @@ DatabaseUpdater::deleteRRset(const RRset& rrset) {
     validateAddOrDelete("delete", rrset, ADD, DELETE);
 
     RdataIteratorPtr it = rrset.getRdataIterator();
-
-    string params[Accessor::DEL_PARAM_COUNT]; // initialized with ""
-    params[Accessor::DEL_NAME] = rrset.getName().toText();
-    params[Accessor::DEL_TYPE] = rrset.getType().toText();
-    string journal[Accessor::DIFF_PARAM_COUNT];
     if (journaling_) {
-        journal[Accessor::DIFF_NAME] = params[Accessor::DEL_NAME];
-        journal[Accessor::DIFF_TYPE] = params[Accessor::DEL_TYPE];
-        journal[Accessor::DIFF_TTL] = rrset.getTTL().toText();
         diff_phase_ = DELETE;
         if (rrset.getType() == RRType::SOA()) {
             serial_ =
@@ -1246,14 +1563,27 @@ DatabaseUpdater::deleteRRset(const RRset& rrset) {
                 getSerial();
         }
     }
+
+    RRParameterConverter cvtr(rrset);
     for (; !it->isLast(); it->next()) {
-        params[Accessor::DEL_RDATA] = it->getCurrent().toText();
+        const Rdata& rdata = it->getCurrent();
+        const bool nsec3_type = isNSEC3KindType(rrset.getType(), rdata);
+        const string& rdata_txt = it->getCurrent().toText();
+
         if (journaling_) {
-            journal[Accessor::DIFF_RDATA] = params[Accessor::DEL_RDATA];
+            const string journal[Accessor::DIFF_PARAM_COUNT] =
+                { cvtr.getName(), cvtr.getType(), cvtr.getTTL(), rdata_txt };
             accessor_->addRecordDiff(zone_id_, serial_.getValue(),
                                      Accessor::DIFF_DELETE, journal);
         }
-        accessor_->deleteRecordInZone(params);
+        const string params[Accessor::DEL_PARAM_COUNT] =
+            { nsec3_type ? cvtr.getNSEC3Name() : cvtr.getName(),
+              cvtr.getType(), rdata_txt };
+        if (nsec3_type) {
+            accessor_->deleteNSEC3RecordInZone(params);
+        } else {
+            accessor_->deleteRecordInZone(params);
+        }
     }
 }
 

@@ -384,7 +384,8 @@ doQueryTask(QueryTask& task, ZoneInfo& zoneinfo, RRsetList& target) {
     const Name* const zonename = zoneinfo.getEnclosingZone();
     if (ds == NULL) {
         task.flags |= DataSrc::NO_SUCH_ZONE;
-        logger.info(DATASRC_QUERY_NO_ZONE).arg(task.qname).arg(task.qclass);
+        LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_QUERY_NO_ZONE).
+            arg(task.qname).arg(task.qclass);
         return (DataSrc::SUCCESS);
     }
 

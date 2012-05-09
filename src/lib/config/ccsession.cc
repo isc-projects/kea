@@ -489,6 +489,18 @@ ModuleCCSession::ModuleCCSession(
 
 }
 
+ModuleCCSession::~ModuleCCSession() {
+    try {
+        sendStopping();
+    } catch (const std::exception& exc) {
+        LOG_ERROR(config_logger,
+                  CONFIG_CCSESSION_STOPPING).arg(exc.what());
+    } catch (...) {
+        LOG_ERROR(config_logger,
+                  CONFIG_CCSESSION_STOPPING_UNKNOWN);
+    }
+};
+
 void
 ModuleCCSession::start() {
     if (started_) {
@@ -739,6 +751,17 @@ ModuleCCSession::updateRemoteConfig(const std::string& module_name,
             hit->second(module_name, new_config, it->second);
         }
     }
+}
+
+void
+ModuleCCSession::sendStopping() {
+    // Inform the configuration manager that this module is stopping
+    ConstElementPtr cmd(createCommand("stopping",
+                                      Element::fromJSON(
+                                          "{\"module_name\": \"" +
+                                          module_name_ + "\"}")));
+    // It's just an FYI, configmanager is not expected to respond.
+    session_.group_sendmsg(cmd, "ConfigManager");
 }
 
 }

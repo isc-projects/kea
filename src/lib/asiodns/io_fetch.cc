@@ -14,10 +14,10 @@
 
 #include <config.h>
 
+#include <unistd.h>             // for some IPC/network system calls
 #include <netinet/in.h>
 #include <stdint.h>
 #include <sys/socket.h>
-#include <unistd.h>             // for some IPC/network system calls
 
 #include <boost/bind.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -38,15 +38,13 @@
 #include <dns/messagerenderer.h>
 #include <dns/opcode.h>
 #include <dns/rcode.h>
-#include <log/logger.h>
-#include <log/macros.h>
 
-#include <asiodns/asiodns_messages.h>
 #include <asiodns/io_fetch.h>
 
 #include <util/buffer.h>
 #include <util/random/qid_gen.h>
 
+#include <asiodns/logger.h>
 
 using namespace asio;
 using namespace isc::asiolink;
@@ -58,10 +56,6 @@ using namespace std;
 
 namespace isc {
 namespace asiodns {
-
-/// Use the ASIO logger
-
-isc::log::Logger logger("asiolink");
 
 // Log debug verbosity
 
@@ -211,7 +205,8 @@ IOFetch::IOFetch(Protocol protocol, IOService& service,
 }
 
 void
-IOFetch::initIOFetch(MessagePtr& query_msg, Protocol protocol, IOService& service,
+IOFetch::initIOFetch(MessagePtr& query_msg, Protocol protocol,
+                     IOService& service,
                      const isc::dns::Question& question,
                      const IOAddress& address, uint16_t port,
                      OutputBufferPtr& buff, Callback* cb, int wait, bool edns)
@@ -231,8 +226,10 @@ IOFetch::initIOFetch(MessagePtr& query_msg, Protocol protocol, IOService& servic
         query_msg->setEDNS(edns_query);
     }
 
-    MessageRenderer renderer(*data_->msgbuf);
+    MessageRenderer renderer;
+    renderer.setBuffer(data_->msgbuf.get());
     query_msg->toWire(renderer);
+    renderer.setBuffer(NULL);
 }
 
 // Return protocol in use.

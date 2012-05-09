@@ -17,7 +17,7 @@ pkglibexecdir = $(libexecdir)/@PACKAGE@
 CLEANFILES = *.gcno *.gcda spec_config.h
 
 man_MANS = b10-dhcp6.8
-EXTRA_DIST = $(man_MANS) dhcp6.spec interfaces.txt
+EXTRA_DIST = $(man_MANS) b10-dhcp6.xml dhcp6.spec interfaces.txt
 
 if ENABLE_MAN
 

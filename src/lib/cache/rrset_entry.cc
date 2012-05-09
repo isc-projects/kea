@@ -25,7 +25,8 @@ using namespace isc::dns;
 namespace isc {
 namespace cache {
 
-RRsetEntry::RRsetEntry(const isc::dns::RRset& rrset, const RRsetTrustLevel& level):
+RRsetEntry::RRsetEntry(const isc::dns::AbstractRRset& rrset,
+                       const RRsetTrustLevel& level):
     entry_name_(genCacheEntryName(rrset.getName(), rrset.getType())),
     expire_time_(time(NULL) + rrset.getTTL().getValue()),
     trust_level_(level),

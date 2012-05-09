@@ -25,6 +25,8 @@
 #include <time.h>
 #include <unistd.h>
 
+#include <exceptions/exceptions.h>
+
 #include <util/filename.h>
 #include <util/strutil.h>
 
@@ -245,7 +247,7 @@ writeClosingNamespace(ostream& output, const vector<string>& ns) {
     }
 }
 
-/// \breif Write python file
+/// \brief Write python file
 ///
 /// Writes the python file containing the symbol definitions as module level
 /// constants. These are objects which register themself at creation time,
@@ -301,8 +303,8 @@ writePythonFile(const string& file, MessageDictionary& dictionary,
 ///
 /// \param file Name of the message file.  The header file is written to a
 /// file of the same name but with a .h suffix.
-/// \param ns Namespace in which the definitions are to be placed.  An empty
-/// string indicates no namespace.
+/// \param ns_components Namespace in which the definitions are to be placed.
+/// An empty string indicates no namespace.
 /// \param dictionary Dictionary holding the message definitions.
 /// \param output_directory if not null NULL, output files are written
 ///     to the given directory. If NULL, they are written to the current
@@ -325,8 +327,9 @@ writeHeaderFile(const string& file, const vector<string>& ns_components,
     ofstream hfile(header_file.fullName().c_str());
 
     if (hfile.fail()) {
-        throw MessageException(LOG_OPEN_OUTPUT_FAIL, header_file.fullName(),
-            strerror(errno));
+        isc_throw_4(MessageException, "Failed to open output file",
+                    LOG_OPEN_OUTPUT_FAIL, header_file.fullName(),
+                    strerror(errno), 0);
     }
 
     // Write the header preamble.  If there is an error, we'll pick it up
@@ -359,8 +362,9 @@ writeHeaderFile(const string& file, const vector<string>& ns_components,
 
     // Report errors (if any) and exit
     if (hfile.fail()) {
-        throw MessageException(LOG_WRITE_ERROR, header_file.fullName(),
-            strerror(errno));
+        isc_throw_4(MessageException, "Error writing to output file",
+                    LOG_WRITE_ERROR, header_file.fullName(), strerror(errno),
+                    0);
     }
 
     hfile.close();
@@ -404,8 +408,8 @@ replaceNonAlphaNum(char c) {
 ///
 /// \param file Name of the message file.  The header file is written to a
 /// file of the same name but with a .h suffix.
-/// \param ns Namespace in which the definitions are to be placed.  An empty
-/// string indicates no namespace.
+/// \param ns_components Namespace in which the definitions are to be placed.
+/// An empty string indicates no namespace.
 /// \param dictionary Dictionary holding the message definitions.
 /// \param output_directory if not null NULL, output files are written
 ///     to the given directory. If NULL, they are written to the current
@@ -425,8 +429,9 @@ writeProgramFile(const string& file, const vector<string>& ns_components,
     ofstream ccfile(program_file.fullName().c_str());
 
     if (ccfile.fail()) {
-        throw MessageException(LOG_OPEN_OUTPUT_FAIL, program_file.fullName(),
-            strerror(errno));
+        isc_throw_4(MessageException, "Error opening output file",
+                    LOG_OPEN_OUTPUT_FAIL, program_file.fullName(),
+                    strerror(errno), 0);
     }
 
     // Write the preamble.  If there is an error, we'll pick it up after
@@ -483,30 +488,31 @@ writeProgramFile(const string& file, const vector<string>& ns_components,
 
     // Report errors (if any) and exit
     if (ccfile.fail()) {
-        throw MessageException(LOG_WRITE_ERROR, program_file.fullName(),
-            strerror(errno));
+        isc_throw_4(MessageException, "Error writing to output file",
+                    LOG_WRITE_ERROR, program_file.fullName(), strerror(errno),
+                    0);
     }
 
     ccfile.close();
 }
 
 
-/// \brief Warn of Duplicate Entries
+/// \brief Error and exit if there are duplicate entries
 ///
-/// If the input file contained duplicate message IDs, only the first will be
-/// processed.  However, we should warn about it.
+/// If the input file contained duplicate message IDs, we print an
+/// error for each of them, then exit the program with a non-0 value.
 ///
 /// \param reader Message Reader used to read the file
 
 void
-warnDuplicates(MessageReader& reader) {
+errorDuplicates(MessageReader& reader) {
 
     // Get the duplicates (the overflow) and, if present, sort them into some
     // order and remove those which occur more than once (which mean that they
     // occur more than twice in the input file).
     MessageReader::MessageIDCollection duplicates = reader.getNotAdded();
-    if (duplicates.size() > 0) {
-        cout << "Warning: the following duplicate IDs were found:\n";
+    if (!duplicates.empty()) {
+        cout << "Error: the following duplicate IDs were found:\n";
 
         sort(duplicates.begin(), duplicates.end());
         MessageReader::MessageIDCollection::iterator new_end =
@@ -515,6 +521,7 @@ warnDuplicates(MessageReader& reader) {
             i != new_end; ++i) {
             cout << "    " << *i << "\n";
         }
+        exit(1);
     }
 }
 
@@ -580,6 +587,9 @@ main(int argc, char* argv[]) {
         MessageReader reader(&dictionary);
         reader.readFile(message_file);
 
+        // Error (and quit) if there are of any duplicates encountered.
+        errorDuplicates(reader);
+
         if (doPython) {
             // Warn in case of ignored directives
             if (!reader.getNamespace().empty()) {
@@ -604,8 +614,6 @@ main(int argc, char* argv[]) {
                              output_directory);
         }
 
-        // Finally, warn of any duplicates encountered.
-        warnDuplicates(reader);
     }
     catch (const MessageException& e) {
         // Create an error message from the ID and the text
