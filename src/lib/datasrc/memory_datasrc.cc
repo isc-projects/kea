@@ -212,8 +212,11 @@ public:
 
     // Identify the RBTree node that best matches the given name.
     // See implementation notes below.
+    //
     // The caller should pass an empty node_path, and it will contain the
-    // search context for possible later use at the caller side.
+    // search context (all ancestor nodes that the underlying RBTree search
+    // traverses, and how the search stops) for possible later use at the
+    // caller side.
     template <typename ResultType>
     ResultType findNode(const Name& name,
                         RBTreeNodeChain<Domain>& node_path,
@@ -1288,7 +1291,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
 
         // Get the node.  All other cases than an exact match are handled
         // in findNode().  We simply construct a result structure and return.
-        RBTreeNodeChain<Domain> node_path;
+        RBTreeNodeChain<Domain> node_path; // findNode will fill in this
         const ZoneData::FindNodeResult node_result =
             zone_data_->findNode<ZoneData::FindNodeResult>(name, node_path,
                                                            options);
@@ -1528,7 +1531,7 @@ addAdditional(RBNodeRRset* rrset, ZoneData* zone_data,
 {
     RdataIteratorPtr rdata_iterator = rrset->getRdataIterator();
     bool match_wild = false;    // will be true if wildcard match is found
-    RBTreeNodeChain<Domain> node_path;
+    RBTreeNodeChain<Domain> node_path;  // placeholder for findNode()
     for (; !rdata_iterator->isLast(); rdata_iterator->next()) {
         // For each domain name that requires additional section processing
         // in each RDATA, search the tree for the name and remember it if
