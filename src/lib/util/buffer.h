@@ -18,7 +18,7 @@
 #include <stdlib.h>
 #include <cstring>
 #include <vector>
-
+#include <iterator>
 #include <string.h>
 
 #include <stdint.h>
@@ -111,7 +111,7 @@ public:
     /// @param end iterator to end of the vector
     InputBuffer(std::vector<uint8_t>::const_iterator begin,
                 std::vector<uint8_t>::const_iterator end) :
-        position_(0), data_(&(*begin)), len_(distance(begin, end)) {}
+        position_(0), data_(&(*begin)), len_(std::distance(begin, end)) {}
     //@}
 
     ///
