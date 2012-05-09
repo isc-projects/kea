@@ -152,7 +152,7 @@ TEST_F(Dhcpv6SrvTest, DUID) {
     }
 }
 
-TEST_F(Dhcpv6SrvTest, Solicit_basic) {
+TEST_F(Dhcpv6SrvTest, DISABLED_Solicit_basic) {
     NakedDhcpv6Srv* srv = NULL;
     ASSERT_NO_THROW( srv = new NakedDhcpv6Srv(); );
 
