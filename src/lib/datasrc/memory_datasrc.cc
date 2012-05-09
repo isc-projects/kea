@@ -251,7 +251,7 @@ ConstRBNodeRRsetPtr
 ZoneData::getClosestNSEC(RBTreeNodeChain<Domain>& node_path,
                          ZoneFinder::FindOptions options) const
 {
-    if ((options & ZoneFinder::FIND_DNSSEC) == 0 || !nsec_signed_) {
+    if (!nsec_signed_ || (options & ZoneFinder::FIND_DNSSEC) == 0) {
         return (ConstRBNodeRRsetPtr());
     }
 
