@@ -1309,6 +1309,19 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                                           rename));
             }
         }
+        // No exact match or CNAME. This is NXRRSET case.If with DNSSEC query, 
+        // get the NSEC RRSets,returns with result code NXRRSET.
+        if (zone_data_->nsec_signed_) {
+            found = node->getData()->find(RRType::NSEC());
+            if (found != node->getData()->end()) {
+                LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_NXRRSET).arg(type).
+                          arg(name);
+                return (createFindResult(NXRRSET,
+                                          prepareRRset(name, found->second,
+                                                       rename, options),
+                                                       rename));
+            }
+        }
         // No exact match or CNAME.  Return NXRRSET.
         LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_NXRRSET).arg(type).
             arg(name);
