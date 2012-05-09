@@ -437,8 +437,13 @@ ZoneData::findNode(const Name& name, RBTreeNodeChain<Domain>& node_path,
         if (node_path.getLastComparisonResult().getRelation() ==
             NameComparisonResult::SUPERDOMAIN) { // empty node, so NXRRSET
             LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_SUPER_STOP).arg(name);
-            return (ResultType(ZoneFinder::NXRRSET, node,
-                               ConstRBNodeRRsetPtr()));
+            if (nsec_signed_ && (options & ZoneFinder::FIND_DNSSEC) != 0) {
+                return (ResultType(ZoneFinder::NXRRSET, node,
+                                   getClosestNSEC(node_path, options)));
+            } else {
+                return (ResultType(ZoneFinder::NXRRSET, node,
+                                   ConstRBNodeRRsetPtr()));
+            }
         }
         if (node->getFlag(domain_flag::WILD)) { // maybe a wildcard
             if (node_path.getLastComparisonResult().getRelation() ==
