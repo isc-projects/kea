@@ -460,7 +460,13 @@ ZoneData::findNode(const Name& name, RBTreeNodeChain<Domain>& node_path,
             // Now the wildcard should be the best match.
             const Name wildcard(Name("*").concatenate(
                                     node_path.getAbsoluteName()));
-            DomainTree::Result result = domains_.find(wildcard, &node);
+
+            // Clear the node_path so that we don't keep incorrect (NSEC)
+            // context
+            node_path.clear();
+            DomainTree::Result result(domains_.find<void*>(wildcard, &node,
+                                                           node_path, NULL,
+                                                           NULL));
             // Otherwise, why would the domain_flag::WILD be there if
             // there was no wildcard under it?
             assert(result == DomainTree::EXACTMATCH);
