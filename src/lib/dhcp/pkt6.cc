@@ -27,7 +27,7 @@ namespace dhcp {
 
 Pkt6::Pkt6(const uint8_t* buf, uint32_t buf_len, DHCPv6Proto proto /* = UDP */) :
     proto_(proto),
-    msg_type_(-1),
+    msg_type_(0),
     transid_(rand()%0xffffff),
     iface_(""),
     ifindex_(-1),
