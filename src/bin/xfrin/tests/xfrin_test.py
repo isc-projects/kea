@@ -2869,21 +2869,21 @@ class TestXfrinProcess(unittest.TestCase):
         self.assertEqual(len(transfers), self.__created_connections)
         self.assertEqual([published], self.__published)
         if published == XFRIN_OK:
-            self.assertEqual(True, self._module_cc.get_called)
-            self.assertEqual(True, self._module_cc.get_called_correctly)
+            self.assertTrue(self._module_cc.get_called)
+            self.assertTrue(self._module_cc.get_called_correctly)
         else:
-            self.assertEqual(False, self._module_cc.get_called)
-            self.assertEqual(False, self._module_cc.get_called_correctly)
+            self.assertFalse(self._module_cc.get_called)
+            self.assertFalse(self._module_cc.get_called_correctly)
 
     def test_ixfr_ok(self):
         """
         Everything OK the first time, over IXFR.
         """
         self.__do_test([XFRIN_OK], [RRType.IXFR()], RRType.IXFR())
-        self.assertEqual(False, self._send_cc_session.send_called)
-        self.assertEqual(False, self._send_cc_session.send_called_correctly)
-        self.assertEqual(False, self._send_cc_session.recv_called)
-        self.assertEqual(False, self._send_cc_session.recv_called_correctly)
+        self.assertFalse(self._send_cc_session.send_called)
+        self.assertFalse(self._send_cc_session.send_called_correctly)
+        self.assertFalse(self._send_cc_session.recv_called)
+        self.assertFalse(self._send_cc_session.recv_called_correctly)
 
     def test_axfr_ok(self):
         """
@@ -2926,10 +2926,10 @@ class TestXfrinProcess(unittest.TestCase):
                                               'file': 'data/inmem-xfrin.sqlite3'}],
                                    'type': 'memory', 'class': 'IN'}]
         self.__do_test([XFRIN_OK], [RRType.IXFR()], RRType.IXFR())
-        self.assertEqual(True, self._send_cc_session.send_called)
-        self.assertEqual(True, self._send_cc_session.send_called_correctly)
-        self.assertEqual(True, self._send_cc_session.recv_called)
-        self.assertEqual(True, self._send_cc_session.recv_called_correctly)
+        self.assertTrue(self._send_cc_session.send_called)
+        self.assertTrue(self._send_cc_session.send_called_correctly)
+        self.assertTrue(self._send_cc_session.recv_called)
+        self.assertTrue(self._send_cc_session.recv_called_correctly)
 
     def test_inmem_not_memory(self):
         """
@@ -2940,10 +2940,10 @@ class TestXfrinProcess(unittest.TestCase):
                                               'file': 'data/inmem-xfrin.sqlite3'}],
                                    'type': 'punched-card', 'class': 'IN'}]
         self.__do_test([XFRIN_OK], [RRType.IXFR()], RRType.IXFR())
-        self.assertEqual(False, self._send_cc_session.send_called)
-        self.assertEqual(False, self._send_cc_session.send_called_correctly)
-        self.assertEqual(False, self._send_cc_session.recv_called)
-        self.assertEqual(False, self._send_cc_session.recv_called_correctly)
+        self.assertFalse(self._send_cc_session.send_called)
+        self.assertFalse(self._send_cc_session.send_called_correctly)
+        self.assertFalse(self._send_cc_session.recv_called)
+        self.assertFalse(self._send_cc_session.recv_called_correctly)
 
     def test_inmem_not_sqlite3(self):
         """
@@ -2955,10 +2955,10 @@ class TestXfrinProcess(unittest.TestCase):
                                               'file': 'data/inmem-xfrin.sqlite3'}],
                                    'type': 'memory', 'class': 'IN'}]
         self.__do_test([XFRIN_OK], [RRType.IXFR()], RRType.IXFR())
-        self.assertEqual(False, self._send_cc_session.send_called)
-        self.assertEqual(False, self._send_cc_session.send_called_correctly)
-        self.assertEqual(False, self._send_cc_session.recv_called)
-        self.assertEqual(False, self._send_cc_session.recv_called_correctly)
+        self.assertFalse(self._send_cc_session.send_called)
+        self.assertFalse(self._send_cc_session.send_called_correctly)
+        self.assertFalse(self._send_cc_session.recv_called)
+        self.assertFalse(self._send_cc_session.recv_called_correctly)
 
     def test_inmem_not_of_same_class(self):
         """
@@ -2970,10 +2970,10 @@ class TestXfrinProcess(unittest.TestCase):
                                               'file': 'data/inmem-xfrin.sqlite3'}],
                                    'type': 'memory', 'class': 'XX'}]
         self.__do_test([XFRIN_OK], [RRType.IXFR()], RRType.IXFR())
-        self.assertEqual(False, self._send_cc_session.send_called)
-        self.assertEqual(False, self._send_cc_session.send_called_correctly)
-        self.assertEqual(False, self._send_cc_session.recv_called)
-        self.assertEqual(False, self._send_cc_session.recv_called_correctly)
+        self.assertFalse(self._send_cc_session.send_called)
+        self.assertFalse(self._send_cc_session.send_called_correctly)
+        self.assertFalse(self._send_cc_session.recv_called)
+        self.assertFalse(self._send_cc_session.recv_called_correctly)
 
     def test_inmem_not_present(self):
         """
@@ -2984,10 +2984,10 @@ class TestXfrinProcess(unittest.TestCase):
                                               'file': 'data/inmem-xfrin.sqlite3'}],
                                    'type': 'memory', 'class': 'IN'}]
         self.__do_test([XFRIN_OK], [RRType.IXFR()], RRType.IXFR())
-        self.assertEqual(False, self._send_cc_session.send_called)
-        self.assertEqual(False, self._send_cc_session.send_called_correctly)
-        self.assertEqual(False, self._send_cc_session.recv_called)
-        self.assertEqual(False, self._send_cc_session.recv_called_correctly)
+        self.assertFalse(self._send_cc_session.send_called)
+        self.assertFalse(self._send_cc_session.send_called_correctly)
+        self.assertFalse(self._send_cc_session.recv_called)
+        self.assertFalse(self._send_cc_session.recv_called_correctly)
 
 class TestFormatting(unittest.TestCase):
     # If the formatting functions are moved to a more general library
