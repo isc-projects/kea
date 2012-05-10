@@ -2917,7 +2917,10 @@ class TestXfrinProcess(unittest.TestCase):
 
     def test_inmem_ok(self):
         """
-        Inmem configuration 1.
+        Inmem configuration where all the configuration is just right
+        for loadzone to be sent to b10-auth (origin is the name received
+        by xfrin, filetype is sqlite3, type is memory and class is the
+        one received by xfrin).
         """
         self._module_cc.config = [{'zones': [{'origin': 'example.org', 'filetype': 'sqlite3',
                                               'file': 'data/inmem-xfrin.sqlite3'}],
@@ -2930,7 +2933,8 @@ class TestXfrinProcess(unittest.TestCase):
 
     def test_inmem_not_memory(self):
         """
-        Inmem configuration 2.
+        Inmem configuration where the datasource type is not memory. In
+        this case, loadzone should not be sent to b10-auth.
         """
         self._module_cc.config = [{'zones': [{'origin': 'example.org', 'filetype': 'sqlite3',
                                               'file': 'data/inmem-xfrin.sqlite3'}],
@@ -2943,7 +2947,9 @@ class TestXfrinProcess(unittest.TestCase):
 
     def test_inmem_not_sqlite3(self):
         """
-        Inmem configuration 3.
+        Inmem configuration where the datasource backing file is not of
+        type sqlite3. In this case, loadzone should not be sent to
+        b10-auth.
         """
         self._module_cc.config = [{'zones': [{'origin': 'example.org', 'filetype': 'postgresql',
                                               'file': 'data/inmem-xfrin.sqlite3'}],
@@ -2956,7 +2962,9 @@ class TestXfrinProcess(unittest.TestCase):
 
     def test_inmem_not_of_same_class(self):
         """
-        Inmem configuration 4.
+        Inmem configuration where the datasource class does not match
+        the received class. In this case, loadzone should not be sent to
+        b10-auth.
         """
         self._module_cc.config = [{'zones': [{'origin': 'example.org', 'filetype': 'sqlite3',
                                               'file': 'data/inmem-xfrin.sqlite3'}],
@@ -2969,7 +2977,8 @@ class TestXfrinProcess(unittest.TestCase):
 
     def test_inmem_not_present(self):
         """
-        Inmem configuration 5.
+        Inmem configuration where the origin does not match the received
+        name. In this case, loadzone should not be sent to b10-auth.
         """
         self._module_cc.config = [{'zones': [{'origin': 'isc.org', 'filetype': 'sqlite3',
                                               'file': 'data/inmem-xfrin.sqlite3'}],
