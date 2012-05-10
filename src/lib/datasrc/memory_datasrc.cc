@@ -464,9 +464,8 @@ ZoneData::findNode(const Name& name, RBTreeNodeChain<Domain>& node_path,
             // Clear the node_path so that we don't keep incorrect (NSEC)
             // context
             node_path.clear();
-            DomainTree::Result result(domains_.find<void*>(wildcard, &node,
-                                                           node_path, NULL,
-                                                           NULL));
+            DomainTree::Result result(domains_.find(wildcard, &node,
+                                                    node_path));
             // Otherwise, why would the domain_flag::WILD be there if
             // there was no wildcard under it?
             assert(result == DomainTree::EXACTMATCH);
@@ -1828,8 +1827,7 @@ public:
     {
         // Find the first node (origin) and preserve the node chain for future
         // searches
-        DomainTree::Result result(tree_.find<void*>(origin, &node_, chain_,
-                                                    NULL, NULL));
+        DomainTree::Result result(tree_.find(origin, &node_, chain_));
         // It can't happen that the origin is not in there
         if (result != DomainTree::EXACTMATCH) {
             isc_throw(Unexpected,

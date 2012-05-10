@@ -759,6 +759,30 @@ public:
         return (ret);
     }
 
+    /// \brief Simple find, with node_path tracking
+    ///
+    /// Acts as described in the \ref find section.
+    Result find(const isc::dns::Name& name, RBNode<T>** node,
+                RBTreeNodeChain<T>& node_path) const
+    {
+        return (find<void*>(name, node, node_path, NULL, NULL));
+    }
+
+    /// \brief Simple find returning immutable node, with node_path tracking
+    ///
+    /// Acts as described in the \ref find section, but returns immutable node
+    /// pointer.
+    Result find(const isc::dns::Name& name, const RBNode<T>** node,
+                RBTreeNodeChain<T>& node_path) const
+    {
+        RBNode<T> *target_node = NULL;
+        Result ret = (find<void*>(name, &target_node, node_path, NULL, NULL));
+        if (ret != NOTFOUND) {
+            *node = target_node;
+        }
+        return (ret);
+    }
+
     /// \brief Find with callback and node chain.
     /// \anchor callback
     ///
