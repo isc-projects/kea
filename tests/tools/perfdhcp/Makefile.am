@@ -10,3 +10,4 @@ endif
 
 pkglibexec_PROGRAMS  = perfdhcp
 perfdhcp_SOURCES  = perfdhcp.c
+perfdhcp_SOURCES += command_options.cc command_options.h
