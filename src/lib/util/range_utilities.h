@@ -15,7 +15,7 @@
 #ifndef __RANGE_UTIL_H_
 #define __RANGE_UTIL_H_ 1
 
-#include <cstdlib>
+#include <stdlib.h>
 #include <algorithm>
 
 // This header contains useful methods for conduction operations on
@@ -58,7 +58,7 @@ template <typename Iterator>
 void
 fillRandom(Iterator begin, Iterator end) {
     for (Iterator x = begin; x != end; ++x) {
-        *x = std::rand();
+        *x = random();
     }
 }
 
