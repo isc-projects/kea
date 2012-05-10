@@ -14,6 +14,7 @@
 
 #include <config.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 #include <gtest/gtest.h>
 #include <vector>
@@ -37,6 +38,8 @@ TEST(RangeUtilitiesTest, isZero) {
 }
 
 TEST(RangeUtilitiesTest, randomFill) {
+
+    srandom(time(NULL));
 
     vector<uint8_t> vec1(16,0);
     vector<uint8_t> vec2(16,0);
