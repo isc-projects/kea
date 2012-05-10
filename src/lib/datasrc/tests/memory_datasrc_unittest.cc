@@ -373,8 +373,12 @@ protected:
     // expected_flags is set to either RESULT_NSEC_SIGNED or
     // RESULT_NSEC3_SIGNED when it's NSEC/NSEC3 signed respectively and
     // find() is expected to set the corresponding flags.
+    // find_options should be set to FIND_DNSSEC for NSEC-signed case when
+    // NSEC is expected to be returned.
     void findCheck(ZoneFinder::FindResultFlags expected_flags =
-                   ZoneFinder::RESULT_DEFAULT);
+                   ZoneFinder::RESULT_DEFAULT,
+                   ZoneFinder::FindOptions find_options =
+                   ZoneFinder::FIND_DEFAULT);
     void emptyNodeCheck(ZoneFinder::FindResultFlags expected_flags =
                         ZoneFinder::RESULT_DEFAULT);
     void wildcardCheck(ZoneFinder::FindResultFlags expected_flags =
@@ -977,7 +981,9 @@ TEST_F(InMemoryZoneFinderTest, glue) {
  *     directly there, it just tells it doesn't exist.
  */
 void
-InMemoryZoneFinderTest::findCheck(ZoneFinder::FindResultFlags expected_flags) {
+InMemoryZoneFinderTest::findCheck(ZoneFinder::FindResultFlags expected_flags,
+                                  ZoneFinder::FindOptions find_options)
+{
     // Fill some data inside
     // Now put all the data we have there. It should throw nothing
     EXPECT_NO_THROW(EXPECT_EQ(SUCCESS, zone_finder_.add(rr_ns_)));
@@ -1003,25 +1009,30 @@ InMemoryZoneFinderTest::findCheck(ZoneFinder::FindResultFlags expected_flags) {
              ConstRRsetPtr(), expected_flags);
 
     // These domains don't exist. (and one is out of the zone).  In an
-    // NSEC-signed zone, it should return the covering NSEC for the query
-    // name (the actual NSEC in the test data may not really "cover" it,
-    // but for the purpose of this test it's okay).
+    // NSEC-signed zone with DNSSEC records requested, it should return the
+    // covering NSEC for the query name (the actual NSEC in the test data may
+    // not really "cover" it, but for the purpose of this test it's okay).
     if ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED) != 0) {
+        const ConstRRsetPtr expected_nsec =
+            (find_options & ZoneFinder::FIND_DNSSEC) != 0 ? rr_nsec_ :
+            ConstRRsetPtr();
+
         // There's no other name between this one and the origin, so it
         // should return the origin NSEC.
         findTest(Name("nothere.example.org"), RRType::A(),
-                 ZoneFinder::NXDOMAIN, true, rr_nsec_, expected_flags,
-                 NULL, ZoneFinder::FIND_DNSSEC);
+                 ZoneFinder::NXDOMAIN, true, expected_nsec, expected_flags,
+                 NULL, find_options);
 
         // The previous name in the zone is "ns.example.org", but it doesn't
         // have an NSEC.  It should be skipped and the origin NSEC will be
         // returned as the "closest NSEC".
         findTest(Name("nxdomain.example.org"), RRType::A(),
-                 ZoneFinder::NXDOMAIN, true, rr_nsec_, expected_flags,
-                 NULL, ZoneFinder::FIND_DNSSEC);
+                 ZoneFinder::NXDOMAIN, true, expected_nsec, expected_flags,
+                 NULL, find_options);
     } else {
         findTest(Name("nothere.example.org"), RRType::A(),
-                 ZoneFinder::NXDOMAIN, true, ConstRRsetPtr(), expected_flags);
+                 ZoneFinder::NXDOMAIN, true, ConstRRsetPtr(), expected_flags,
+                 NULL, find_options);
     }
     EXPECT_THROW(zone_finder_.find(Name("example.net"), RRType::A()),
                  OutOfZone);
@@ -1031,12 +1042,25 @@ TEST_F(InMemoryZoneFinderTest, find) {
     findCheck();
 }
 
-TEST_F(InMemoryZoneFinderTest, findNSEC3Signed) {
+TEST_F(InMemoryZoneFinderTest, findNSEC3Signe) {
     findCheck(ZoneFinder::RESULT_NSEC3_SIGNED);
 }
 
+TEST_F(InMemoryZoneFinderTest, findNSEC3SignedWithDNSSEC) {
+    // For NSEC3-signed zones, specifying the DNSSEC option shouldn't change
+    // anything (the NSEC3_SIGNED flag is always set, and no records are
+    // returned for negative cases regardless).
+    findCheck(ZoneFinder::RESULT_NSEC3_SIGNED, ZoneFinder::FIND_DNSSEC);
+}
+
 TEST_F(InMemoryZoneFinderTest, findNSECSigned) {
+    // NSEC-signed zone, without requesting DNSSEC (no NSEC should be provided)
     findCheck(ZoneFinder::RESULT_NSEC_SIGNED);
+}
+
+TEST_F(InMemoryZoneFinderTest, findNSECSignedWithDNSSEC) {
+    // NSEC-signed zone, requesting DNSSEC (NSEC should be provided)
+    findCheck(ZoneFinder::RESULT_NSEC_SIGNED, ZoneFinder::FIND_DNSSEC);
 }
 
 void
