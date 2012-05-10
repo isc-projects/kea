@@ -12,6 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <stdlib.h>
 #include <time.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/pkt6.h>
@@ -220,7 +221,7 @@ void Dhcpv6Srv::setServerID() {
 
     // Length of the identifier is company specific. I hereby declare
     // ISC "standard" of 6 bytes long pseudo-random numbers.
-    srand(time(NULL));
+    srandom(time(NULL));
     fillRandom(&srvid[6],&srvid[12]);
 
     serverid_ = OptionPtr(new Option(Option::V6, D6O_SERVERID,
