@@ -1256,6 +1256,8 @@ def _do_auth_loadzone(server, zone_name, zone_class):
     if is_default:
         return
     for d in datasources:
+        if "type" not in d:
+            continue
         try:
             if "class" in d:
                 dclass = RRClass(d["class"])
@@ -1267,6 +1269,10 @@ def _do_auth_loadzone(server, zone_name, zone_class):
 
         if d["type"].lower() == "memory" and dclass == zone_class:
             for zone in d["zones"]:
+                if "filetype" not in zone:
+                    continue
+                if "origin" not in zone:
+                    continue
                 if "filetype" not in zone:
                     continue
                 try:
