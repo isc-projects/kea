@@ -413,8 +413,7 @@ RBNode<T>::predecessor() const {
 /// - The \c RBNode that was last compared with the search name, and
 ///   the comparison result at that point in the form of
 ///   \c isc::dns::NameComparisonResult.
-/// - A sequence of nodes that forms a path to the found node (which is
-///   not yet implemented).
+/// - A sequence of nodes that forms a path to the found node.
 ///
 /// The comparison result can be used to handle some rare cases such as
 /// empty node processing.
@@ -445,7 +444,7 @@ RBNode<T>::predecessor() const {
 template <typename T>
 class RBTreeNodeChain {
     /// RBTreeNodeChain is initialized by RBTree, only RBTree has
-    /// knowledge to manipuate it.
+    /// knowledge to manipulate it.
     friend class RBTree<T>;
 public:
     /// \name Constructors and Assignment Operator.
@@ -547,10 +546,10 @@ public:
 private:
     // the following private functions check invariants about the internal
     // state using assert() instead of exception.  The state of a chain
-    // can only be modified operations within this file, so if any of the
+    // can only be modified by operations within this file, so if any of the
     // assumptions fails it means an internal bug.
 
-    /// \brief return whther node chain has node in it.
+    /// \brief return whether node chain has node in it.
     ///
     /// \exception None
     bool isEmpty() const { return (node_count_ == 0); }
@@ -704,7 +703,7 @@ public:
     /// By default, nodes that don't have data (see RBNode::isEmpty) are
     /// ignored and the result can be NOTFOUND even if there's a node whose
     /// name matches.  If the \c RBTree is constructed with its
-    /// \c returnEmptyNode parameter being \c true, an empty node will also
+    /// \c returnEmptyNode parameter being \c true, empty nodes will also
     /// be match candidates.
     ///
     /// \note Even when \c returnEmptyNode is \c true, not all empty nodes
@@ -722,7 +721,7 @@ public:
     /// if it throws, the exception will be propagated to the caller.
     ///
     /// The \c name parameter says what should be found. The node parameter
-    /// is output only and in case of EXACTMATCH and PARTIALMATCH, it is set
+    /// is output-only, and in case of EXACTMATCH or PARTIALMATCH, it is set
     /// to a pointer to the found node.
     ///
     /// They return:
@@ -769,12 +768,15 @@ public:
     ///
     /// This version of \c find() calls the callback whenever traversing (on
     /// the way from root down the tree) a marked node on the way down through
-    /// the domain namespace (see \c RBNode::enableCallback and related
-    /// functions).
+    /// the domain namespace (see \c RBNode::FLAG_CALLBACK).
     ///
     /// If you return true from the callback, the search is stopped and a
     /// PARTIALMATCH is returned with the given node. Note that this node
     /// doesn't really need to be the one with longest possible match.
+    ///
+    /// The callback is not called for the node which matches exactly
+    /// (EXACTMATCH is returned). This is typically the last node in the
+    /// traversal during a successful search.
     ///
     /// This callback mechanism was designed with zone cut (delegation)
     /// processing in mind. The marked nodes would be the ones at delegation
@@ -790,38 +792,36 @@ public:
     /// which is an object of class \c RBTreeNodeChain.
     /// The passed parameter must be empty.
     ///
-    /// \note The rest of the description isn't yet implemented.  It will be
-    /// handled in Trac ticket #517.
-    ///
-    /// On success, the node sequence stoed in \c node_path will contain all
+    /// On success, the node sequence stored in \c node_path will contain all
     /// the ancestor nodes from the found node towards the root.
     /// For example, if we look for o.w.y.d.e.f in the example \ref diagram,
     /// \c node_path will contain w.y and d.e.f; the \c top() node of the
-    /// chain will be o, w.f and d.e.f will be stored below it.
+    /// chain will be o, w.y and d.e.f will be stored below it.
     ///
     /// This feature can be used to get the absolute name for a node;
     /// to do so, we need to travel upside from the node toward the root,
     /// concatenating all ancestor names.  With the current implementation
     /// it's not possible without a node chain, because there is a no pointer
     /// from the root of a subtree to the parent subtree (this may change
-    /// in a future version).  A node chain can also be used to find the next
-    /// node of a given node in the entire RBTree; the \c nextNode() method
-    /// takes a node chain as a parameter.
+    /// in a future version).  A node chain can also be used to find the
+    /// next and previous nodes of a given node in the entire RBTree;
+    /// the \c nextNode() and \c previousNode() methods take a node
+    /// chain as a parameter.
     ///
-    /// \exception isc::BadValue node_path is not empty (not yet implemented).
+    /// \exception isc::BadValue node_path is not empty.
     ///
     /// \param name Target to be found
     /// \param node On success (either \c EXACTMATCH or \c PARTIALMATCH)
     ///     it will store a pointer to the matching node
     /// \param node_path Other search details will be stored (see the
     ///        description)
-    /// \param callback If non \c NULL, a call back function to be called
-    ///     at marked nodes (see above).
+    /// \param callback If non- \c NULL, a call back function to be called
+    ///     at marked nodes (see the description).
     /// \param callback_arg A caller supplied argument to be passed to
     ///     \c callback.
     ///
-    /// \return As described above, but in case of callback returning true,
-    ///     it returns immediately with the current node.
+    /// \return As in the description, but in case of callback returning
+    ///     \c true, it returns immediately with the current node.
     template <typename CBARG>
     Result find(const isc::dns::Name& name,
                 RBNode<T>** node,
@@ -879,9 +879,9 @@ public:
     ///     searched by RBTree::find().
     ///
     /// This acts similarly to \c nextNode(), but it walks in the other
-    /// direction. But unlike that, this can start even if the node requested
-    /// by find was not found. In that case, it will identify the node that is
-    /// previous to the queried name.
+    /// direction. But unlike \c nextNode(), this can start even if the
+    /// node requested by \c find() was not found. In that case, it will
+    /// identify the node that is previous to the queried name.
     ///
     /// \note \c previousNode() will iterate over all the nodes in RBTree
     /// including empty nodes. If empty node isn't desired, it's easy to add
@@ -892,7 +892,7 @@ public:
     ///
     /// \param node_path A node chain that stores all the nodes along the path
     /// from root to node and the result of \c find(). This will get modified.
-    /// You should not use the node_path again except for repetetive calls
+    /// You should not use the node_path again except for repetitive calls
     /// of this method.
     ///
     /// \return An \c RBNode that is next smaller than \c node; if \c node is
@@ -921,8 +921,8 @@ public:
     //@{
     /// \brief Insert the domain name into the tree.
     ///
-    /// It either finds an already existing node of the given name or inserts
-    /// a new one, if none exists yet. In any case, the inserted_node parameter
+    /// It either finds an already existing node of the given name, or inserts
+    /// a new one if none exists yet. In any case, the \c inserted_node parameter
     /// is set to point to that node. You can fill data into it or modify it.
     /// So, if you don't know if a node exists or not and you need to modify
     /// it, just call insert and act by the result.
