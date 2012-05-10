@@ -237,7 +237,7 @@ private:
     /// Return if callback is enabled at the node.
     //@}
 
-private:
+
     /// \brief Define rbnode color
     enum RBNodeColor {BLACK, RED};
     /// This is a factory class method of a special singleton null node.
@@ -314,7 +314,7 @@ private:
     /// \par Adding down pointer to \c RBNode has two purposes:
     /// \li Accelerate the search process, with sub domain tree, it splits the
     ///     big flat tree into several hierarchy trees.
-    /// \li It saves memory useage as it allows storing only relative names,
+    /// \li It saves memory usage as it allows storing only relative names,
     ///     avoiding storage of the same domain labels multiple times.
     RBNode<T>*  down_;
 
