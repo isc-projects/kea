@@ -1073,7 +1073,7 @@ InMemoryZoneFinderTest::findNSECENTCheck(const Name& ent_name,
              ConstRRsetPtr(), expected_flags,
              NULL, ZoneFinder::FIND_DNSSEC);
 
-    // Now add the NSEC rrs makeing it a 'complete' zone (in terms of NSEC,
+    // Now add the NSEC rrs making it a 'complete' zone (in terms of NSEC,
     // there are no sigs)
     EXPECT_EQ(SUCCESS, zone_finder_.add(rr_nsec_));
     EXPECT_EQ(SUCCESS, zone_finder_.add(rr_ent_nsec2_));
