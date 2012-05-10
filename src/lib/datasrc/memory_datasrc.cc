@@ -457,7 +457,7 @@ ZoneData::findNode(const Name& name, RBTreeNodeChain<Domain>& node_path,
                 LOG_DEBUG(logger, DBG_TRACE_DATA,
                           DATASRC_MEM_WILDCARD_CANCEL).arg(name);
                 return (ResultType(ZoneFinder::NXDOMAIN, NULL,
-                                   ConstRBNodeRRsetPtr()));
+                                   getClosestNSEC(node_path, options)));
             }
             // Now the wildcard should be the best match.
             const Name wildcard(Name("*").concatenate(

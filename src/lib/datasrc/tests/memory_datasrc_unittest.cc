@@ -384,7 +384,9 @@ protected:
     void wildcardCheck(ZoneFinder::FindResultFlags expected_flags =
                        ZoneFinder::RESULT_DEFAULT);
     void doCancelWildcardCheck(ZoneFinder::FindResultFlags expected_flags =
-                               ZoneFinder::RESULT_DEFAULT);
+                               ZoneFinder::RESULT_DEFAULT,
+                               ZoneFinder::FindOptions find_options =
+                               ZoneFinder::FIND_DEFAULT);
     void anyWildcardCheck(ZoneFinder::FindResultFlags expected_flags =
                           ZoneFinder::RESULT_DEFAULT);
     void emptyWildcardCheck(ZoneFinder::FindResultFlags expected_flags =
@@ -1014,7 +1016,7 @@ InMemoryZoneFinderTest::findCheck(ZoneFinder::FindResultFlags expected_flags,
     // not really "cover" it, but for the purpose of this test it's okay).
     ConstRRsetPtr expected_nsec; // by default it's NULL
     if ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED) != 0 &&
-        (find_options & ZoneFinder::FIND_DNSSEC)) {
+        (find_options & ZoneFinder::FIND_DNSSEC) != 0) {
         expected_nsec = rr_nsec_;
     }
 
@@ -1542,15 +1544,29 @@ TEST_F(InMemoryZoneFinderTest, nestedEmptyWildcard) {
 // situations
 void
 InMemoryZoneFinderTest::doCancelWildcardCheck(
-    ZoneFinder::FindResultFlags expected_flags)
+    ZoneFinder::FindResultFlags expected_flags,
+    ZoneFinder::FindOptions find_options)
 {
     // These should be canceled
     {
         SCOPED_TRACE("Canceled under foo.wild.example.org");
+
+        // For an NSEC-signed zone with DNSSEC requested, the covering NSEC
+        // should be returned.  The expected NSEC is actually just the only
+        // NSEC in the test data, but in this context it doesn't matter;
+        // it's sufficient just to check any NSEC is returned (or not).
+        ConstRRsetPtr expected_nsec; // by default it's NULL
+        if ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED) != 0 &&
+            (find_options & ZoneFinder::FIND_DNSSEC)) {
+            expected_nsec = rr_nsec_;
+        }
+
         findTest(Name("aaa.foo.wild.example.org"), RRType::A(),
-                 ZoneFinder::NXDOMAIN, true, ConstRRsetPtr(), expected_flags);
+                 ZoneFinder::NXDOMAIN, true, expected_nsec, expected_flags,
+                 NULL, find_options);
         findTest(Name("zzz.foo.wild.example.org"), RRType::A(),
-                 ZoneFinder::NXDOMAIN, true, ConstRRsetPtr(), expected_flags);
+                 ZoneFinder::NXDOMAIN, true, expected_nsec, expected_flags,
+                 NULL, find_options);
     }
 
     // This is existing, non-wildcard domain, shouldn't wildcard at all
@@ -1618,6 +1634,7 @@ TEST_F(InMemoryZoneFinderTest, cancelWildcard) {
     }
 }
 
+// Same tests as cancelWildcard for NSEC3-signed zone
 TEST_F(InMemoryZoneFinderTest, cancelWildcardNSEC3) {
     EXPECT_EQ(SUCCESS, zone_finder_.add(rr_wild_));
     EXPECT_EQ(SUCCESS, zone_finder_.add(rr_not_wild_));
@@ -1631,6 +1648,29 @@ TEST_F(InMemoryZoneFinderTest, cancelWildcardNSEC3) {
     {
         SCOPED_TRACE("Runnig with two entries under foo.wild.example.org");
         doCancelWildcardCheck(ZoneFinder::RESULT_NSEC3_SIGNED);
+    }
+}
+
+// Same tests as cancelWildcard for NSEC-signed zone.  Check both cases with
+// or without FIND_DNSSEC option.  NSEC should be returned only when the option
+// is given.
+TEST_F(InMemoryZoneFinderTest, cancelWildcardNSEC) {
+    EXPECT_EQ(SUCCESS, zone_finder_.add(rr_wild_));
+    EXPECT_EQ(SUCCESS, zone_finder_.add(rr_not_wild_));
+    EXPECT_EQ(SUCCESS, zone_finder_.add(rr_nsec_));
+
+    {
+        SCOPED_TRACE("Runnig with single entry under foo.wild.example.org");
+        doCancelWildcardCheck(ZoneFinder::RESULT_NSEC_SIGNED,
+                              ZoneFinder::FIND_DNSSEC);
+        doCancelWildcardCheck(ZoneFinder::RESULT_NSEC_SIGNED);
+    }
+    EXPECT_EQ(SUCCESS, zone_finder_.add(rr_not_wild_another_));
+    {
+        SCOPED_TRACE("Runnig with two entries under foo.wild.example.org");
+        doCancelWildcardCheck(ZoneFinder::RESULT_NSEC_SIGNED,
+                              ZoneFinder::FIND_DNSSEC);
+        doCancelWildcardCheck(ZoneFinder::RESULT_NSEC_SIGNED);
     }
 }
 
