@@ -1,4 +1,4 @@
-SUBDIRS = .
+SUBDIRS = . tests
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
