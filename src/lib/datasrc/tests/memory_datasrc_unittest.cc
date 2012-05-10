@@ -1012,28 +1012,24 @@ InMemoryZoneFinderTest::findCheck(ZoneFinder::FindResultFlags expected_flags,
     // NSEC-signed zone with DNSSEC records requested, it should return the
     // covering NSEC for the query name (the actual NSEC in the test data may
     // not really "cover" it, but for the purpose of this test it's okay).
-    if ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED) != 0) {
-        const ConstRRsetPtr expected_nsec =
-            (find_options & ZoneFinder::FIND_DNSSEC) != 0 ? rr_nsec_ :
-            ConstRRsetPtr();
-
-        // There's no other name between this one and the origin, so it
-        // should return the origin NSEC.
-        findTest(Name("nothere.example.org"), RRType::A(),
-                 ZoneFinder::NXDOMAIN, true, expected_nsec, expected_flags,
-                 NULL, find_options);
-
-        // The previous name in the zone is "ns.example.org", but it doesn't
-        // have an NSEC.  It should be skipped and the origin NSEC will be
-        // returned as the "closest NSEC".
-        findTest(Name("nxdomain.example.org"), RRType::A(),
-                 ZoneFinder::NXDOMAIN, true, expected_nsec, expected_flags,
-                 NULL, find_options);
-    } else {
-        findTest(Name("nothere.example.org"), RRType::A(),
-                 ZoneFinder::NXDOMAIN, true, ConstRRsetPtr(), expected_flags,
-                 NULL, find_options);
+    ConstRRsetPtr expected_nsec; // by default it's NULL
+    if ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED) != 0 &&
+        (find_options & ZoneFinder::FIND_DNSSEC)) {
+        expected_nsec = rr_nsec_;
     }
+
+    // There's no other name between this one and the origin, so when NSEC
+    // is to be returned it should be the origin NSEC.
+    findTest(Name("nothere.example.org"), RRType::A(),
+             ZoneFinder::NXDOMAIN, true, expected_nsec, expected_flags,
+             NULL, find_options);
+
+    // The previous name in the zone is "ns.example.org", but it doesn't
+    // have an NSEC.  It should be skipped and the origin NSEC will be
+    // returned as the "closest NSEC".
+    findTest(Name("nxdomain.example.org"), RRType::A(),
+             ZoneFinder::NXDOMAIN, true, expected_nsec, expected_flags,
+             NULL, find_options);
     EXPECT_THROW(zone_finder_.find(Name("example.net"), RRType::A()),
                  OutOfZone);
 }
