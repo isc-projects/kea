@@ -386,6 +386,7 @@ protected:
     void emptyWildcardCheck(ZoneFinder::FindResultFlags expected_flags =
                             ZoneFinder::RESULT_DEFAULT);
     void findNSECENTCheck(const Name& ent_name,
+                          ConstRRsetPtr expected_nsec,
                           ZoneFinder::FindResultFlags expected_flags =
                           ZoneFinder::RESULT_DEFAULT);
 
@@ -444,8 +445,18 @@ public:
             {"0P9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM.example.org. 300 IN "
              "NSEC3 1 1 12 aabbccdd 2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A RRSIG",
              &rr_nsec3_},
-            {"example.org. 300 IN NSEC cname.example.org. A NS NSEC",
-             &rr_nsec_},
+            {"example.org. 300 IN NSEC wild.*.foo.example.org. "
+             "NS SOA RRSIG NSEC DNSKEY", &rr_nsec_},
+            // Together with the apex NSEC, these next NSECs make a complete
+            // chain in the case of the zone for the emptyNonterminal tests
+            // (We may want to clean up this generator code and/or masterLoad
+            // so that we can prepare conflicting datasets better)
+            {"wild.*.foo.example.org. 3600 IN NSEC ns.example.org. "
+             "A RRSIG NSEC", &rr_ent_nsec2_},
+            {"ns.example.org. 3600 IN NSEC foo.wild.example.org. A RRSIG NSEC",
+             &rr_ent_nsec3_},
+            {"foo.wild.example.org. 3600 IN NSEC example.org. A RRSIG NSEC",
+             &rr_ent_nsec4_},
             {NULL, NULL}
         };
 
@@ -511,6 +522,9 @@ public:
     RRsetPtr rr_not_wild_another_;
     RRsetPtr rr_nsec3_;
     RRsetPtr rr_nsec_;
+    RRsetPtr rr_ent_nsec2_;
+    RRsetPtr rr_ent_nsec3_;
+    RRsetPtr rr_ent_nsec4_;
 
     // A faked NSEC3 hash calculator for convenience.
     // Tests that need to use the faked hashed values should call
@@ -1045,6 +1059,7 @@ TEST_F(InMemoryZoneFinderTest, findNSECSigned) {
 // Generalized test for Empty Nonterminal (ENT) cases with NSEC
 void
 InMemoryZoneFinderTest::findNSECENTCheck(const Name& ent_name,
+    ConstRRsetPtr expected_nsec,
     ZoneFinder::FindResultFlags expected_flags)
 {
     EXPECT_EQ(SUCCESS, zone_finder_.add(rr_emptywild_));
@@ -1058,7 +1073,13 @@ InMemoryZoneFinderTest::findNSECENTCheck(const Name& ent_name,
              ConstRRsetPtr(), expected_flags,
              NULL, ZoneFinder::FIND_DNSSEC);
 
-    zone_finder_.add(rr_nsec_);
+    // Now add the NSEC rrs makeing it a 'complete' zone (in terms of NSEC,
+    // there are no sigs)
+    EXPECT_EQ(SUCCESS, zone_finder_.add(rr_nsec_));
+    EXPECT_EQ(SUCCESS, zone_finder_.add(rr_ent_nsec2_));
+    EXPECT_EQ(SUCCESS, zone_finder_.add(rr_ent_nsec3_));
+    EXPECT_EQ(SUCCESS, zone_finder_.add(rr_ent_nsec4_));
+
     // Should result in NXRRSET, and RESULT_NSEC_SIGNED
     findTest(ent_name, RRType::A(), ZoneFinder::NXRRSET, true,
              ConstRRsetPtr(),
@@ -1066,25 +1087,25 @@ InMemoryZoneFinderTest::findNSECENTCheck(const Name& ent_name,
 
     // And check for the NSEC if DNSSEC_OK
     findTest(ent_name, RRType::A(), ZoneFinder::NXRRSET, true,
-             rr_nsec_, expected_flags | ZoneFinder::RESULT_NSEC_SIGNED,
+             expected_nsec, expected_flags | ZoneFinder::RESULT_NSEC_SIGNED,
              NULL, ZoneFinder::FIND_DNSSEC);
 }
 
 TEST_F(InMemoryZoneFinderTest,findNSECEmptyNonterminal) {
     // Non-wildcard case
-    findNSECENTCheck(Name("wild.example.org"));
+    findNSECENTCheck(Name("wild.example.org"), rr_ent_nsec3_);
 }
 
 TEST_F(InMemoryZoneFinderTest,findNSECEmptyNonterminalWildcard) {
-    // Wildcard case, above
-    findNSECENTCheck(Name("foo.example.org"));
+    // Wildcard case, above actual wildcard
+    findNSECENTCheck(Name("foo.example.org"), rr_nsec_);
 }
 
-TEST_F(InMemoryZoneFinderTest,findNSECEmptyNonterminalUnderWildcard) {
-    // Wildcard case, under
-    findNSECENTCheck(Name("bar.foo.example.org"), ZoneFinder::RESULT_WILDCARD);
+TEST_F(InMemoryZoneFinderTest,findNSECEmptyNonterminalAtWildcard) {
+    // Wildcard case, at actual wildcard
+    findNSECENTCheck(Name("bar.foo.example.org"), rr_nsec_,
+                     ZoneFinder::RESULT_WILDCARD);
 }
-
 
 void
 InMemoryZoneFinderTest::emptyNodeCheck(
