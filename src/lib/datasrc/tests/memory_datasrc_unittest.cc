@@ -1048,6 +1048,7 @@ InMemoryZoneFinderTest::findNSECENTCheck(const Name& ent_name,
     ZoneFinder::FindResultFlags expected_flags)
 {
     EXPECT_EQ(SUCCESS, zone_finder_.add(rr_emptywild_));
+    EXPECT_EQ(SUCCESS, zone_finder_.add(rr_under_wild_));
 
     // Sanity check: Should result in NXRRSET
     findTest(ent_name, RRType::A(), ZoneFinder::NXRRSET, true,
@@ -1071,11 +1072,16 @@ InMemoryZoneFinderTest::findNSECENTCheck(const Name& ent_name,
 
 TEST_F(InMemoryZoneFinderTest,findNSECEmptyNonterminal) {
     // Non-wildcard case
-    findNSECENTCheck(Name("foo.example.org"));
+    findNSECENTCheck(Name("wild.example.org"));
 }
 
 TEST_F(InMemoryZoneFinderTest,findNSECEmptyNonterminalWildcard) {
-    // Wildcard case
+    // Wildcard case, above
+    findNSECENTCheck(Name("foo.example.org"));
+}
+
+TEST_F(InMemoryZoneFinderTest,findNSECEmptyNonterminalUnderWildcard) {
+    // Wildcard case, under
     findNSECENTCheck(Name("bar.foo.example.org"), ZoneFinder::RESULT_WILDCARD);
 }
 
