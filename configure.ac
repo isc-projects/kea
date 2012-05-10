@@ -407,9 +407,9 @@ case $system in
       OS_TYPE="BSD"
       CPPFLAGS="$CPPFLAGS -DOS_BSD"
       ;;
-    Solaris)
+    SunOS)
       OS_TYPE="Solaris"
-      CPPFLAGS="$CPPFLAGS -DOS_SOLARIS"
+      CPPFLAGS="$CPPFLAGS -DOS_SUN"
       ;;
     *)
       OS_TYPE="Unknown"

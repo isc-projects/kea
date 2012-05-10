@@ -13,6 +13,7 @@ libdhcp___la_SOURCES += libdhcp++.cc libdhcp++.h
 libdhcp___la_SOURCES += iface_mgr.cc iface_mgr.h
 libdhcp___la_SOURCES += iface_mgr_linux.cc
 libdhcp___la_SOURCES += iface_mgr_bsd.cc
+libdhcp___la_SOURCES += iface_mgr_sun.cc
 libdhcp___la_SOURCES += option.cc option.h
 libdhcp___la_SOURCES += option6_ia.cc option6_ia.h
 libdhcp___la_SOURCES += option6_iaaddr.cc option6_iaaddr.h
