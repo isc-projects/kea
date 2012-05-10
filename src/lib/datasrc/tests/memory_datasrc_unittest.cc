@@ -1288,36 +1288,46 @@ InMemoryZoneFinderTest::wildcardCheck(
                  true, rr_wild_, ZoneFinder::RESULT_DEFAULT, NULL,
                  find_options);
     }
+
+    // Below some of the test cases will normally result in a wildcard match;
+    // if NO_WILDCARD is specified, it should result in NXDOMAIN instead,
+    // and, when available and requested, the covering NSEC will be returned.
+    // The following are shortcut parameters to unify these cases.
+    const bool wild_ok = ((find_options & ZoneFinder::NO_WILDCARD) == 0);
+    const ZoneFinder::FindResultFlags wild_expected_flags =
+        wild_ok ? (ZoneFinder::RESULT_WILDCARD | expected_flags) :
+        expected_flags;
+
     // Search "created" name.
     {
         SCOPED_TRACE("Search at created child");
-        findTest(Name("a.wild.example.org"), RRType::A(), ZoneFinder::SUCCESS,
-                 false, rr_wild_,
-                 ZoneFinder::RESULT_WILDCARD | expected_flags, NULL,
-                 find_options, true);
+        findTest(Name("a.wild.example.org"), RRType::A(),
+                 wild_ok ? ZoneFinder::SUCCESS : ZoneFinder::NXDOMAIN, false,
+                 wild_ok ? rr_wild_ : expected_nsec,
+                 wild_expected_flags, NULL, find_options, wild_ok);
         // Wildcard match, but no data
         findTest(Name("a.wild.example.org"), RRType::AAAA(),
-                 ZoneFinder::NXRRSET, true, ConstRRsetPtr(),
-                 ZoneFinder::RESULT_WILDCARD | expected_flags, NULL,
-                 find_options);
+                 wild_ok ? ZoneFinder::NXRRSET : ZoneFinder::NXDOMAIN, true,
+                 wild_ok ? ConstRRsetPtr() : expected_nsec,
+                 wild_expected_flags, NULL, find_options);
     }
 
     // Search name that has CNAME.
     {
         SCOPED_TRACE("Matching CNAME");
         findTest(Name("a.cnamewild.example.org"), RRType::A(),
-                 ZoneFinder::CNAME, false, rr_cnamewild_,
-                 ZoneFinder::RESULT_WILDCARD | expected_flags, NULL,
-                 find_options, true);
+                 wild_ok ? ZoneFinder::CNAME : ZoneFinder::NXDOMAIN, false,
+                 wild_ok ? rr_cnamewild_ : expected_nsec,
+                 wild_expected_flags, NULL, find_options, wild_ok);
     }
 
     // Search another created name, this time little bit lower
     {
         SCOPED_TRACE("Search at created grand-child");
         findTest(Name("a.b.wild.example.org"), RRType::A(),
-                 ZoneFinder::SUCCESS, false, rr_wild_,
-                 ZoneFinder::RESULT_WILDCARD | expected_flags, NULL,
-                 find_options, true);
+                 wild_ok ? ZoneFinder::SUCCESS : ZoneFinder::NXDOMAIN, false,
+                 wild_ok ? rr_wild_ : expected_nsec,
+                 wild_expected_flags, NULL, find_options, wild_ok);
     }
 
     EXPECT_EQ(SUCCESS, zone_finder_.add(rr_under_wild_));
@@ -1342,6 +1352,18 @@ TEST_F(InMemoryZoneFinderTest, wildcardNSEC3) {
 TEST_F(InMemoryZoneFinderTest, wildcardNSEC) {
     // Similar to the previous one, but the zone signed with NSEC
     wildcardCheck(ZoneFinder::RESULT_NSEC_SIGNED);
+}
+
+TEST_F(InMemoryZoneFinderTest, wildcardDisabledWithNSEC) {
+    // Wildcard is disabled.  In practice, this is used as part of query
+    // processing for an NSEC-signed zone, so we test that case specifically.
+    wildcardCheck(ZoneFinder::RESULT_NSEC_SIGNED, ZoneFinder::NO_WILDCARD);
+}
+
+TEST_F(InMemoryZoneFinderTest, wildcardDisabledWithoutNSEC) {
+    // Similar to the previous once, but check the behavior for a non signed
+    // zone just in case.
+    wildcardCheck(ZoneFinder::RESULT_DEFAULT, ZoneFinder::NO_WILDCARD);
 }
 
 /*
