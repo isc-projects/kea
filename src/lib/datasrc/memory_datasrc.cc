@@ -443,7 +443,8 @@ ZoneData::findNode(const Name& name, RBTreeNodeChain<Domain>& node_path,
             return (ResultType(ZoneFinder::NXRRSET, node,
                                ConstRBNodeRRsetPtr()));
         }
-        if (node->getFlag(domain_flag::WILD)) { // maybe a wildcard
+        if (node->getFlag(domain_flag::WILD) && // maybe a wildcard, check only
+            (options & ZoneFinder::NO_WILDCARD) == 0) { // if not disabled.
             if (node_path.getLastComparisonResult().getRelation() ==
                 NameComparisonResult::COMMONANCESTOR &&
                 node_path.getLastComparisonResult().getCommonLabels() > 1) {
