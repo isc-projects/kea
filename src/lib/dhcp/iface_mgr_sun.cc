@@ -25,7 +25,7 @@ using namespace isc::asiolink;
 using namespace isc::dhcp;
 
 namespace isc {
-namespace isc::dhcp {
+namespace dhcp {
 
 void
 IfaceMgr::detectIfaces() {
