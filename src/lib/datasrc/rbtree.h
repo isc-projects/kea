@@ -1160,7 +1160,7 @@ RBTree<T>::previousNode(RBTreeNodeChain<T>& node_path) const {
         // anyway.
         return (NULL);
     }
-    if (node_path.getLastComparedNode() == NULL) {
+    if (node_path.last_compared_ == NULL) {
         isc_throw(isc::BadValue,
                   "RBTree::previousNode() called before find()");
     }
@@ -1171,12 +1171,12 @@ RBTree<T>::previousNode(RBTreeNodeChain<T>& node_path) const {
     //
     // The logic here is not too complex, we just need to take care to handle
     // all the cases and decide where to go from there.
-    switch (node_path.getLastComparisonResult().getRelation()) {
+    switch (node_path.last_comparison_.getRelation()) {
         case dns::NameComparisonResult::COMMONANCESTOR:
             // We compared with a leaf in the tree and wanted to go to one of
             // the children. But the child was not there. It now depends on the
             // direction in which we wanted to go.
-            if (node_path.getLastComparisonResult().getOrder() < 0) {
+            if (node_path.last_comparison_.getOrder() < 0) {
                 // We wanted to go left. So the one we compared with is
                 // the one higher than we wanted. If we just put it into
                 // the node_path, then the following algorithm below will find
@@ -1190,7 +1190,7 @@ RBTree<T>::previousNode(RBTreeNodeChain<T>& node_path) const {
                 // compared one (it is either the compared one, or some
                 // subdomain of it). There probably is not an easy trick
                 // for this, so we just find the correct place.
-                const RBNode<T>* current(node_path.getLastComparedNode());
+                const RBNode<T>* current(node_path.last_compared_);
                 while (current != NULLNODE) {
                     node_path.push(current);
                     // Go a level down and as much right there as possible
@@ -1216,7 +1216,7 @@ RBTree<T>::previousNode(RBTreeNodeChain<T>& node_path) const {
             // only part of it. The node itself is larger than we wanted, but
             // if we put it to the node_path and then go one step left from it,
             // we get the correct result.
-            node_path.push(node_path.getLastComparedNode());
+            node_path.push(node_path.last_compared_);
             // Correct the comparison result, so we won't trigger this case
             // next time previousNode is called. We already located the correct
             // place to start. The value is partly nonsense, but that doesn't
