@@ -180,10 +180,10 @@ TEST_F(RBTreeTest, findName) {
 TEST_F(RBTreeTest, findError) {
     // For the version that takes a node chain, the chain must be empty.
     RBTreeNodeChain<int> chain;
-    EXPECT_EQ(RBTree<int>::EXACTMATCH, rbtree.find<void*>(Name("a"), &crbtnode,
-                                                          chain, NULL, NULL));
+    EXPECT_EQ(RBTree<int>::EXACTMATCH, rbtree.find(Name("a"), &crbtnode,
+                                                   chain));
     // trying to reuse the same chain.  it should result in an exception.
-    EXPECT_THROW(rbtree.find<void*>(Name("a"), &crbtnode, chain, NULL, NULL),
+    EXPECT_THROW(rbtree.find(Name("a"), &crbtnode, chain),
                  BadValue);
 }
 
@@ -280,7 +280,7 @@ TEST_F(RBTreeTest, chainLevel) {
     Name node_name(Name::ROOT_NAME());
     EXPECT_EQ(RBTree<int>::SUCCESS, tree.insert(node_name, &rbtnode));
     EXPECT_EQ(RBTree<int>::EXACTMATCH,
-              tree.find<void*>(node_name, &crbtnode, chain, NULL, NULL));
+              tree.find(node_name, &crbtnode, chain));
     EXPECT_EQ(1, chain.getLevelCount());
 
     /*
@@ -303,8 +303,7 @@ TEST_F(RBTreeTest, chainLevel) {
         EXPECT_EQ(RBTree<int>::SUCCESS, tree.insert(node_name, &rbtnode));
         RBTreeNodeChain<int> found_chain;
         EXPECT_EQ(RBTree<int>::EXACTMATCH,
-                  tree.find<void*>(node_name, &crbtnode, found_chain,
-                                   NULL, NULL));
+                  tree.find(node_name, &crbtnode, found_chain));
         EXPECT_EQ(i, found_chain.getLevelCount());
     }
 
@@ -352,8 +351,7 @@ TEST_F(RBTreeTest, nextNode) {
     RBTreeNodeChain<int> node_path;
     const RBNode<int>* node = NULL;
     EXPECT_EQ(RBTree<int>::EXACTMATCH,
-              rbtree.find<void*>(Name(names[0]), &node, node_path, NULL,
-                                 NULL));
+              rbtree.find(Name(names[0]), &node, node_path));
     for (int i = 0; i < name_count; ++i) {
         EXPECT_NE(static_cast<void*>(NULL), node);
         EXPECT_EQ(Name(names[i]), node_path.getAbsoluteName());
@@ -399,8 +397,7 @@ previousWalk(RBTree<int>& rbtree, const RBNode<int>* node,
             const RBNode<int>* node2(NULL);
             RBTreeNodeChain<int> node_path2;
             EXPECT_EQ(RBTree<int>::EXACTMATCH,
-                      rbtree.find<void*>(Name(names[i - 1]), &node2,
-                                         node_path2, NULL, NULL));
+                      rbtree.find(Name(names[i - 1]), &node2, node_path2));
             EXPECT_EQ(node, node2);
         }
         node = rbtree.previousNode(node_path);
@@ -420,8 +417,7 @@ TEST_F(RBTreeTest, previousNode) {
     {
         SCOPED_TRACE("Iterate through");
         EXPECT_EQ(RBTree<int>::EXACTMATCH,
-                  rbtree.find<void*>(Name(names[name_count - 1]), &node,
-                                     node_path, NULL, NULL));
+                  rbtree.find(Name(names[name_count - 1]), &node, node_path));
         previousWalk(rbtree, node, node_path, name_count, false);
         node = NULL;
         node_path.clear();
@@ -431,8 +427,7 @@ TEST_F(RBTreeTest, previousNode) {
         SCOPED_TRACE("Iterate from the middle");
         // Now, start somewhere in the middle, but within the real node.
         EXPECT_EQ(RBTree<int>::EXACTMATCH,
-                  rbtree.find<void*>(Name(names[4]), &node, node_path,
-                                     NULL, NULL));
+                  rbtree.find(Name(names[4]), &node, node_path));
         previousWalk(rbtree, node, node_path, 5, false);
         node = NULL;
         node_path.clear();
@@ -443,8 +438,7 @@ TEST_F(RBTreeTest, previousNode) {
         // If we start at the lowest (which is "a"), we get to the beginning
         // right away.
         EXPECT_EQ(RBTree<int>::EXACTMATCH,
-                  rbtree.find<void*>(Name(names[0]), &node, node_path, NULL,
-                                     NULL));
+                  rbtree.find(Name(names[0]), &node, node_path));
         EXPECT_NE(static_cast<void*>(NULL), node);
         EXPECT_EQ(static_cast<void*>(NULL), rbtree.previousNode(node_path));
         node = NULL;
@@ -465,7 +459,7 @@ TEST_F(RBTreeTest, previousNode) {
     {
         SCOPED_TRACE("Start after the last");
         EXPECT_EQ(RBTree<int>::NOTFOUND,
-                  rbtree.find<void*>(Name("z"), &node, node_path, NULL, NULL));
+                  rbtree.find(Name("z"), &node, node_path));
         previousWalk(rbtree, node, node_path, name_count, true);
         node = NULL;
         node_path.clear();
@@ -477,8 +471,7 @@ TEST_F(RBTreeTest, previousNode) {
         // we exited - 'c' (actually, we should get it by the find, as partial
         // match).
         EXPECT_EQ(RBTree<int>::PARTIALMATCH,
-                  rbtree.find<void*>(Name("b.c"), &node, node_path, NULL,
-                                     NULL));
+                  rbtree.find(Name("b.c"), &node, node_path));
         previousWalk(rbtree, node, node_path, 3, false);
         node = NULL;
         node_path.clear();
@@ -492,8 +485,7 @@ TEST_F(RBTreeTest, previousNode) {
         // The d.e.f is empty node, so it is hidden by find. Therefore NOTFOUND
         // and not PARTIALMATCH.
         EXPECT_EQ(RBTree<int>::NOTFOUND,
-                  rbtree.find<void*>(Name("xy.d.e.f"), &node, node_path,
-                                     NULL, NULL));
+                  rbtree.find(Name("xy.d.e.f"), &node, node_path));
         previousWalk(rbtree, node, node_path, 5, true);
         node = NULL;
         node_path.clear();
@@ -507,8 +499,7 @@ TEST_F(RBTreeTest, previousNode) {
         // The d.e.f is empty node, so it is hidden by find. Therefore NOTFOUND
         // and not PARTIALMATCH.
         EXPECT_EQ(RBTree<int>::NOTFOUND,
-                  rbtree.find<void*>(Name("yz.d.e.f"), &node, node_path,
-                                     NULL, NULL));
+                  rbtree.find(Name("yz.d.e.f"), &node, node_path));
         previousWalk(rbtree, node, node_path, 9, true);
         node = NULL;
         node_path.clear();
@@ -519,8 +510,7 @@ TEST_F(RBTreeTest, previousNode) {
         // The d.e.f is a single node, but we want only part of it. We
         // should start iterating before it.
         EXPECT_EQ(RBTree<int>::NOTFOUND,
-                  rbtree.find<void*>(Name("e.f"), &node, node_path,
-                                     NULL, NULL));
+                  rbtree.find(Name("e.f"), &node, node_path));
         previousWalk(rbtree, node, node_path, 3, true);
         node = NULL;
         node_path.clear();
@@ -531,8 +521,7 @@ TEST_F(RBTreeTest, previousNode) {
         // Just check it doesn't crash, etc.
         RBTree<int> empty_tree;
         EXPECT_EQ(RBTree<int>::NOTFOUND,
-                  empty_tree.find<void*>(Name("x"), &node, node_path,
-                                         NULL, NULL));
+                  empty_tree.find(Name("x"), &node, node_path));
         EXPECT_EQ(static_cast<void*>(NULL), node);
         EXPECT_EQ(static_cast<void*>(NULL),
                   empty_tree.previousNode(node_path));
@@ -576,7 +565,7 @@ TEST_F(RBTreeTest, getLastComparedNode) {
     // A search for an empty tree should result in no 'last compared', too.
     RBTree<int> empty_tree;
     EXPECT_EQ(RBTree<int>::NOTFOUND,
-              empty_tree.find<void*>(Name("a"), &crbtnode, chain, NULL, NULL));
+              empty_tree.find(Name("a"), &crbtnode, chain));
     EXPECT_EQ(static_cast<void*>(NULL), chain.getLastComparedNode());
     chain.clear();
 
@@ -584,8 +573,7 @@ TEST_F(RBTreeTest, getLastComparedNode) {
 
     // Exact match case.  The returned node should be last compared.
     EXPECT_EQ(RBTree<int>::EXACTMATCH,
-              tree.find<void*>(Name("x.d.e.f"), &expected_node, chain,
-                               NULL, NULL));
+              tree.find(Name("x.d.e.f"), &expected_node, chain));
     EXPECT_EQ(expected_node, chain.getLastComparedNode());
     // 2 = # labels of "x."
     comparisonChecks(chain, 0, 2, NameComparisonResult::EQUAL);
@@ -596,8 +584,7 @@ TEST_F(RBTreeTest, getLastComparedNode) {
     EXPECT_EQ(RBTree<int>::EXACTMATCH,
               tree.find(Name("i.g.h"), &expected_node));
     EXPECT_EQ(RBTree<int>::PARTIALMATCH,
-              tree.find<void*>(Name("x.i.g.h"), &crbtnode, chain,
-                                 NULL, NULL));
+              tree.find(Name("x.i.g.h"), &crbtnode, chain));
     EXPECT_EQ(expected_node, chain.getLastComparedNode());
     // i.g.h < x.i.g.h, 2 = # labels of "i."
     comparisonChecks(chain, 1, 2, NameComparisonResult::SUBDOMAIN);
@@ -608,8 +595,7 @@ TEST_F(RBTreeTest, getLastComparedNode) {
     EXPECT_EQ(RBTree<int>::EXACTMATCH,
               tree.find(Name("x.d.e.f"), &expected_node));
     EXPECT_EQ(RBTree<int>::PARTIALMATCH,
-              tree.find<void*>(Name("a.d.e.f"), &crbtnode, chain,
-                                 NULL, NULL));
+              tree.find(Name("a.d.e.f"), &crbtnode, chain));
     EXPECT_EQ(expected_node, chain.getLastComparedNode());
     // a < x, 1 = # labels of "." (trailing dot)
     comparisonChecks(chain, -1, 1, NameComparisonResult::COMMONANCESTOR);
@@ -620,8 +606,7 @@ TEST_F(RBTreeTest, getLastComparedNode) {
     EXPECT_EQ(RBTree<int>::EXACTMATCH,
               tree.find(Name("z.d.e.f"), &expected_node));
     EXPECT_EQ(RBTree<int>::PARTIALMATCH,
-              tree.find<void*>(Name("zz.d.e.f"), &crbtnode, chain,
-                                 NULL, NULL));
+              tree.find(Name("zz.d.e.f"), &crbtnode, chain));
     EXPECT_EQ(expected_node, chain.getLastComparedNode());
     // zz > z, 1 = # labels of "." (trailing dot)
     comparisonChecks(chain, 1, 1, NameComparisonResult::COMMONANCESTOR);
@@ -632,8 +617,7 @@ TEST_F(RBTreeTest, getLastComparedNode) {
     EXPECT_EQ(RBTree<int>::EXACTMATCH,
               tree.find(Name("w.y.d.e.f"), &expected_node));
     EXPECT_EQ(RBTree<int>::PARTIALMATCH,
-              tree.find<void*>(Name("y.d.e.f"), &crbtnode, chain,
-                                 NULL, NULL));
+              tree.find(Name("y.d.e.f"), &crbtnode, chain));
     EXPECT_EQ(expected_node, chain.getLastComparedNode());
     // y < w.y, 2 = # labels of "y."
     comparisonChecks(chain, -1, 2, NameComparisonResult::SUPERDOMAIN);
@@ -643,8 +627,7 @@ TEST_F(RBTreeTest, getLastComparedNode) {
     // with the search name in the subtree below the matching node.
     // (the expected node is the same as the previous case)
     EXPECT_EQ(RBTree<int>::PARTIALMATCH,
-              tree.find<void*>(Name("z.y.d.e.f"), &crbtnode, chain,
-                                 NULL, NULL));
+              tree.find(Name("z.y.d.e.f"), &crbtnode, chain));
     EXPECT_EQ(expected_node, chain.getLastComparedNode());
     // z.y > w.y, 2 = # labels of "y."
     comparisonChecks(chain, 1, 2, NameComparisonResult::COMMONANCESTOR);
@@ -653,7 +636,7 @@ TEST_F(RBTreeTest, getLastComparedNode) {
     // Search stops in the highest level after following a left branch.
     EXPECT_EQ(RBTree<int>::EXACTMATCH, tree.find(Name("c"), &expected_node));
     EXPECT_EQ(RBTree<int>::NOTFOUND,
-              tree.find<void*>(Name("bb"), &crbtnode, chain, NULL, NULL));
+              tree.find(Name("bb"), &crbtnode, chain));
     EXPECT_EQ(expected_node, chain.getLastComparedNode());
     // bb < c, 1 = # labels of "." (trailing dot)
     comparisonChecks(chain, -1, 1, NameComparisonResult::COMMONANCESTOR);
@@ -662,7 +645,7 @@ TEST_F(RBTreeTest, getLastComparedNode) {
     // Search stops in the highest level after following a right branch.
     // (the expected node is the same as the previous case)
     EXPECT_EQ(RBTree<int>::NOTFOUND,
-              tree.find<void*>(Name("d"), &crbtnode, chain, NULL, NULL));
+              tree.find(Name("d"), &crbtnode, chain));
     EXPECT_EQ(expected_node, chain.getLastComparedNode());
     // d > c, 1 = # labels of "." (trailing dot)
     comparisonChecks(chain, 1, 1, NameComparisonResult::COMMONANCESTOR);

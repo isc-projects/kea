@@ -222,7 +222,6 @@ public:
                         RBTreeNodeChain<Domain>& node_path,
                         ZoneFinder::FindOptions options) const;
 
-private:
     // A helper method for NSEC-signed zones.  It searches the zone for
     // the "closest" NSEC corresponding to the search context stored in
     // node_path (it should contain sufficient information to identify the
@@ -441,7 +440,7 @@ ZoneData::findNode(const Name& name, RBTreeNodeChain<Domain>& node_path,
             NameComparisonResult::SUPERDOMAIN) { // empty node, so NXRRSET
             LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_SUPER_STOP).arg(name);
             return (ResultType(ZoneFinder::NXRRSET, node,
-                               ConstRBNodeRRsetPtr()));
+                               getClosestNSEC(node_path, options)));
         }
         if (node->getFlag(domain_flag::WILD)) { // maybe a wildcard
             if (node_path.getLastComparisonResult().getRelation() ==
@@ -462,7 +461,12 @@ ZoneData::findNode(const Name& name, RBTreeNodeChain<Domain>& node_path,
             // Now the wildcard should be the best match.
             const Name wildcard(Name("*").concatenate(
                                     node_path.getAbsoluteName()));
-            DomainTree::Result result = domains_.find(wildcard, &node);
+
+            // Clear the node_path so that we don't keep incorrect (NSEC)
+            // context
+            node_path.clear();
+            DomainTree::Result result(domains_.find(wildcard, &node,
+                                                    node_path));
             // Otherwise, why would the domain_flag::WILD be there if
             // there was no wildcard under it?
             assert(result == DomainTree::EXACTMATCH);
@@ -1310,7 +1314,10 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         if (node->isEmpty()) {
             LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_DOMAIN_EMPTY).
                 arg(name);
-            return (createFindResult(NXRRSET, ConstRBNodeRRsetPtr(), rename));
+            return (createFindResult(NXRRSET,
+                                     zone_data_->getClosestNSEC(node_path,
+                                                                options),
+                                     rename));
         }
 
         Domain::const_iterator found;
@@ -1821,8 +1828,7 @@ public:
     {
         // Find the first node (origin) and preserve the node chain for future
         // searches
-        DomainTree::Result result(tree_.find<void*>(origin, &node_, chain_,
-                                                    NULL, NULL));
+        DomainTree::Result result(tree_.find(origin, &node_, chain_));
         // It can't happen that the origin is not in there
         if (result != DomainTree::EXACTMATCH) {
             isc_throw(Unexpected,
