@@ -1,6 +1,6 @@
 {
   "module_spec": {
-    "module_name": "dhcp4",
+    "module_name": "Dhcp4",
     "module_description": "DHCPv4 server daemon",
     "config_data": [
       { "item_name": "interface",
@@ -12,8 +12,14 @@
     "commands": [
         {
             "command_name": "shutdown",
-            "command_description": "Shut down DHCPv4 server",
-            "command_args": []
+            "command_description": "Shuts down DHCPv4 server.",
+            "command_args": [
+                {
+                    "item_name": "pid",
+                    "item_type": "integer",
+                    "item_optional": true
+                }
+            ]
         }
     ]
   }
