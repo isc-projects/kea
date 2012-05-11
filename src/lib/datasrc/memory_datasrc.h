@@ -65,11 +65,7 @@ public:
     /// \brief Returns the class of the zone.
     virtual isc::dns::RRClass getClass() const;
 
-    /// \brief Looks up an RRset in the zone.
-    ///
-    /// See documentation in \c Zone.
-    ///
-    /// It returns NULL pointer in case of NXDOMAIN and NXRRSET.
+    /// \brief Find an RRset in the datasource
     virtual ZoneFinderContextPtr find(const isc::dns::Name& name,
                                       const isc::dns::RRType& type,
                                       const FindOptions options =
