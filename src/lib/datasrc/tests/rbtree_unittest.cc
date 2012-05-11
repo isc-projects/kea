@@ -448,7 +448,7 @@ TEST_F(RBTreeTest, previousNode) {
                   rbtree.find<void*>(Name(names[0]), &node, node_path, NULL,
                                      NULL));
         EXPECT_NE(static_cast<void*>(NULL), node);
-        EXPECT_EQ(NULL, rbtree.previousNode(node_path));
+        EXPECT_EQ(static_cast<void*>(NULL), rbtree.previousNode(node_path));
         node = NULL;
         node_path.clear();
     }
@@ -458,8 +458,8 @@ TEST_F(RBTreeTest, previousNode) {
         // If we start before the lowest (0 < a), we should not get a node nor
         EXPECT_EQ(RBTree<int>::NOTFOUND,
                   rbtree.find<void*>(Name("0"), &node, node_path, NULL, NULL));
-        EXPECT_EQ(NULL, node);
-        EXPECT_EQ(NULL, rbtree.previousNode(node_path));
+        EXPECT_EQ(static_cast<void*>(NULL), node);
+        EXPECT_EQ(static_cast<void*>(NULL), rbtree.previousNode(node_path));
         node = NULL;
         node_path.clear();
     }
