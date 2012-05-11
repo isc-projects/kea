@@ -1074,7 +1074,7 @@ TEST_F(InMemoryZoneFinderTest, find) {
     findCheck();
 }
 
-TEST_F(InMemoryZoneFinderTest, findNSEC3Signe) {
+TEST_F(InMemoryZoneFinderTest, findNSEC3Signed) {
     findCheck(ZoneFinder::RESULT_NSEC3_SIGNED);
 }
 
