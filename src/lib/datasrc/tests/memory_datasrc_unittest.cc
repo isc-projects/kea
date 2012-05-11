@@ -451,6 +451,8 @@ public:
              &rr_nsec3_},
             {"example.org. 300 IN NSEC cname.example.org. A NS NSEC",
              &rr_nsec_},
+            {"ns.example.org. 300 IN NSEC *.nswild.example.org. A AAAA NSEC",
+             &rr_ns_nsec_},
             {NULL, NULL}
         };
 
@@ -516,6 +518,7 @@ public:
     RRsetPtr rr_not_wild_another_;
     RRsetPtr rr_nsec3_;
     RRsetPtr rr_nsec_;
+    RRsetPtr rr_ns_nsec_;
 
     // A faked NSEC3 hash calculator for convenience.
     // Tests that need to use the faked hashed values should call
@@ -1006,12 +1009,6 @@ InMemoryZoneFinderTest::findCheck(ZoneFinder::FindResultFlags expected_flags,
     findTest(rr_ns_a_->getName(), RRType::A(), ZoneFinder::SUCCESS, true,
              rr_ns_a_);
 
-    // These domain exist but don't have the provided RRType
-    findTest(origin_, RRType::AAAA(), ZoneFinder::NXRRSET, true,
-             ConstRRsetPtr(), expected_flags);
-    findTest(rr_ns_a_->getName(), RRType::NS(), ZoneFinder::NXRRSET, true,
-             ConstRRsetPtr(), expected_flags);
-
     // These domains don't exist. (and one is out of the zone).  In an
     // NSEC-signed zone with DNSSEC records requested, it should return the
     // covering NSEC for the query name (the actual NSEC in the test data may
@@ -1036,6 +1033,20 @@ InMemoryZoneFinderTest::findCheck(ZoneFinder::FindResultFlags expected_flags,
              NULL, find_options);
     EXPECT_THROW(zone_finder_.find(Name("example.net"), RRType::A()),
                  OutOfZone);
+
+    // These domain exist but don't have the provided RRType.  For the latter
+    // one we now add its NSEC (which was delayed so that it wouldn't break
+    // other cases above).
+    findTest(origin_, RRType::AAAA(), ZoneFinder::NXRRSET, true,
+             expected_nsec, expected_flags, NULL, find_options);
+    if ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED) != 0) {
+        EXPECT_EQ(SUCCESS, zone_finder_.add(rr_ns_nsec_));
+        if ((find_options & ZoneFinder::FIND_DNSSEC) != 0) {
+            expected_nsec = rr_ns_nsec_;
+        }
+    }
+    findTest(rr_ns_a_->getName(), RRType::NS(), ZoneFinder::NXRRSET, true,
+             expected_nsec, expected_flags, NULL, find_options);
 }
 
 // Test if NSEC works
