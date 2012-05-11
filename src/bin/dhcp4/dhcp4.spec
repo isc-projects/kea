@@ -9,6 +9,12 @@
         "item_default": "eth0"
       }
     ],
-    "commands": []
+    "commands": [
+        {
+            "command_name": "shutdown",
+            "command_description": "Shut down DHCPv4 server",
+            "command_args": []
+        }
+    ]
   }
 }
