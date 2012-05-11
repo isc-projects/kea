@@ -1,0 +1,12 @@
+EXTRA_DIST =
+EXTRA_DIST += corrupt.sqlite3
+EXTRA_DIST += empty_schema.sqlite3
+EXTRA_DIST += empty_v1.sqlite3
+EXTRA_DIST += empty_version.sqlite3
+EXTRA_DIST += invalid_v1.sqlite3
+EXTRA_DIST += new_v1.sqlite3
+EXTRA_DIST += no_schema.sqlite3
+EXTRA_DIST += old_v1.sqlite3
+EXTRA_DIST += README
+EXTRA_DIST += too_many_version.sqlite3
+EXTRA_DIST += v2_0.sqlite3

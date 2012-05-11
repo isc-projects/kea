@@ -14,6 +14,8 @@
 
 #include <config.h>
 
+#include "datasrc_util.h"
+
 #include <auth/auth_srv.h>
 #include <auth/auth_config.h>
 #include <auth/command.h>
@@ -49,8 +51,11 @@ using namespace isc::dns;
 using namespace isc::data;
 using namespace isc::datasrc;
 using namespace isc::config;
+using namespace isc::testutils;
+using namespace isc::auth::unittest;
 
 namespace {
+
 class AuthCommandTest : public ::testing::Test {
 protected:
     AuthCommandTest() :
@@ -176,23 +181,23 @@ zoneChecks(AuthSrv& server) {
     EXPECT_TRUE(server.getInMemoryClient(RRClass::IN()));
     EXPECT_EQ(ZoneFinder::SUCCESS, server.getInMemoryClient(RRClass::IN())->
               findZone(Name("ns.test1.example")).zone_finder->
-              find(Name("ns.test1.example"), RRType::A()).code);
+              find(Name("ns.test1.example"), RRType::A())->code);
     EXPECT_EQ(ZoneFinder::NXRRSET, server.getInMemoryClient(RRClass::IN())->
               findZone(Name("ns.test1.example")).zone_finder->
-              find(Name("ns.test1.example"), RRType::AAAA()).code);
+              find(Name("ns.test1.example"), RRType::AAAA())->code);
     EXPECT_EQ(ZoneFinder::SUCCESS, server.getInMemoryClient(RRClass::IN())->
               findZone(Name("ns.test2.example")).zone_finder->
-              find(Name("ns.test2.example"), RRType::A()).code);
+              find(Name("ns.test2.example"), RRType::A())->code);
     EXPECT_EQ(ZoneFinder::NXRRSET, server.getInMemoryClient(RRClass::IN())->
               findZone(Name("ns.test2.example")).zone_finder->
-              find(Name("ns.test2.example"), RRType::AAAA()).code);
+              find(Name("ns.test2.example"), RRType::AAAA())->code);
 }
 
 void
 configureZones(AuthSrv& server) {
-    ASSERT_EQ(0, system(INSTALL_PROG " " TEST_DATA_DIR "/test1.zone.in "
+    ASSERT_EQ(0, system(INSTALL_PROG " -c " TEST_DATA_DIR "/test1.zone.in "
                         TEST_DATA_BUILDDIR "/test1.zone.copied"));
-    ASSERT_EQ(0, system(INSTALL_PROG " " TEST_DATA_DIR "/test2.zone.in "
+    ASSERT_EQ(0, system(INSTALL_PROG " -c " TEST_DATA_DIR "/test2.zone.in "
                         TEST_DATA_BUILDDIR "/test2.zone.copied"));
     configureAuthServer(server, Element::fromJSON(
                             "{\"datasources\": "
@@ -213,28 +218,28 @@ newZoneChecks(AuthSrv& server) {
     EXPECT_TRUE(server.getInMemoryClient(RRClass::IN()));
     EXPECT_EQ(ZoneFinder::SUCCESS, server.getInMemoryClient(RRClass::IN())->
               findZone(Name("ns.test1.example")).zone_finder->
-              find(Name("ns.test1.example"), RRType::A()).code);
+              find(Name("ns.test1.example"), RRType::A())->code);
     // now test1.example should have ns/AAAA
     EXPECT_EQ(ZoneFinder::SUCCESS, server.getInMemoryClient(RRClass::IN())->
               findZone(Name("ns.test1.example")).zone_finder->
-              find(Name("ns.test1.example"), RRType::AAAA()).code);
+              find(Name("ns.test1.example"), RRType::AAAA())->code);
 
     // test2.example shouldn't change
     EXPECT_EQ(ZoneFinder::SUCCESS, server.getInMemoryClient(RRClass::IN())->
               findZone(Name("ns.test2.example")).zone_finder->
-              find(Name("ns.test2.example"), RRType::A()).code);
+              find(Name("ns.test2.example"), RRType::A())->code);
     EXPECT_EQ(ZoneFinder::NXRRSET, server.getInMemoryClient(RRClass::IN())->
               findZone(Name("ns.test2.example")).zone_finder->
-              find(Name("ns.test2.example"), RRType::AAAA()).code);
+              find(Name("ns.test2.example"), RRType::AAAA())->code);
 }
 
 TEST_F(AuthCommandTest, loadZone) {
     configureZones(server_);
 
-    ASSERT_EQ(0, system(INSTALL_PROG " " TEST_DATA_DIR
+    ASSERT_EQ(0, system(INSTALL_PROG " -c " TEST_DATA_DIR
                         "/test1-new.zone.in "
                         TEST_DATA_BUILDDIR "/test1.zone.copied"));
-    ASSERT_EQ(0, system(INSTALL_PROG " " TEST_DATA_DIR
+    ASSERT_EQ(0, system(INSTALL_PROG " -c " TEST_DATA_DIR
                         "/test2-new.zone.in "
                         TEST_DATA_BUILDDIR "/test2.zone.copied"));
 
@@ -245,10 +250,133 @@ TEST_F(AuthCommandTest, loadZone) {
     newZoneChecks(server_);
 }
 
+// This test uses dynamic load of a data source module, and won't work when
+// statically linked.
+TEST_F(AuthCommandTest,
+#ifdef USE_STATIC_LINK
+       DISABLED_loadZoneSQLite3
+#else
+       loadZoneSQLite3
+#endif
+    )
+{
+    const char* const SPEC_FILE = AUTH_OBJ_DIR "/auth.spec";
+
+    // Prepare the database first
+    const string test_db = TEST_DATA_BUILDDIR "/auth_test.sqlite3.copied";
+    const string bad_db = TEST_DATA_BUILDDIR "/does-not-exist.sqlite3";
+    stringstream ss("example.org. 3600 IN SOA . . 0 0 0 0 0\n");
+    createSQLite3DB(RRClass::IN(), Name("example.org"), test_db.c_str(), ss);
+
+    // Then store a config of the zone to the auth server
+    // This omits many config options of the auth server, but these are
+    // not read now.
+    isc::testutils::MockSession session;
+    // The session should not take care of anything or start anything, we
+    // need it only to hold the config we're going to put into it.
+    ModuleCCSession module_session(SPEC_FILE, session, NULL, NULL, false,
+                                  false);
+    // This describes the data source in the configuration
+    const ElementPtr
+        map(Element::fromJSON("{\"datasources\": ["
+                              "  {"
+                              "    \"type\": \"memory\","
+                              "    \"zones\": ["
+                              "      {"
+                              "        \"origin\": \"example.org\","
+                              "        \"file\": \"" + test_db + "\","
+                              "        \"filetype\": \"sqlite3\""
+                              "      }"
+                              "    ]"
+                              "  }"
+                              "]}"));
+    module_session.setLocalConfig(map);
+    server_.setConfigSession(&module_session);
+
+    // The loadzone command needs the zone to be already loaded, because
+    // it is used for reloading only
+    AuthSrv::InMemoryClientPtr dsrc(new InMemoryClient());
+    dsrc->addZone(ZoneFinderPtr(new InMemoryZoneFinder(RRClass::IN(),
+                                                       Name("example.org"))));
+    server_.setInMemoryClient(RRClass::IN(), dsrc);
+
+    // Now send the command to reload it
+    result_ = execAuthServerCommand(server_, "loadzone",
+        Element::fromJSON("{\"origin\": \"example.org\"}"));
+    checkAnswer(0);
+
+    // Get the zone and look if there are data in it (the original one was
+    // empty)
+    ASSERT_TRUE(server_.getInMemoryClient(RRClass::IN()));
+    EXPECT_EQ(ZoneFinder::SUCCESS, server_.getInMemoryClient(RRClass::IN())->
+              findZone(Name("example.org")).zone_finder->
+              find(Name("example.org"), RRType::SOA())->code);
+
+    // Some error cases. First, the zone has no configuration.
+    dsrc->addZone(ZoneFinderPtr(new InMemoryZoneFinder(RRClass::IN(),
+                                                       Name("example.com"))));
+    result_ = execAuthServerCommand(server_, "loadzone",
+        Element::fromJSON("{\"origin\": \"example.com\"}"));
+    checkAnswer(1);
+
+    // The previous zone is not hurt in any way
+    EXPECT_EQ(ZoneFinder::SUCCESS, server_.getInMemoryClient(RRClass::IN())->
+              findZone(Name("example.org")).zone_finder->
+              find(Name("example.org"), RRType::SOA())->code);
+
+    module_session.setLocalConfig(Element::fromJSON("{\"datasources\": []}"));
+    result_ = execAuthServerCommand(server_, "loadzone",
+        Element::fromJSON("{\"origin\": \"example.org\"}"));
+    checkAnswer(1);
+
+    // The previous zone is not hurt in any way
+    EXPECT_EQ(ZoneFinder::SUCCESS, server_.getInMemoryClient(RRClass::IN())->
+              findZone(Name("example.org")).zone_finder->
+              find(Name("example.org"), RRType::SOA())->code);
+    // Configure an unreadable zone. Should fail, but leave the original zone
+    // data there
+    const ElementPtr
+        mapBad(Element::fromJSON("{\"datasources\": ["
+                                 "  {"
+                                 "    \"type\": \"memory\","
+                                 "    \"zones\": ["
+                                 "      {"
+                                 "        \"origin\": \"example.org\","
+                                 "        \"file\": \"" + bad_db + "\","
+                                 "        \"filetype\": \"sqlite3\""
+                                 "      }"
+                                 "    ]"
+                                 "  }"
+                                 "]}"));
+    module_session.setLocalConfig(mapBad);
+    result_ = execAuthServerCommand(server_, "loadzone",
+        Element::fromJSON("{\"origin\": \"example.com\"}"));
+    checkAnswer(1);
+    // The previous zone is not hurt in any way
+    EXPECT_EQ(ZoneFinder::SUCCESS, server_.getInMemoryClient(RRClass::IN())->
+              findZone(Name("example.org")).zone_finder->
+              find(Name("example.org"), RRType::SOA())->code);
+
+    // Broken configuration (not valid against the spec)
+    const ElementPtr
+        broken(Element::fromJSON("{\"datasources\": ["
+                                 "  {"
+                                 "    \"type\": \"memory\","
+                                 "    \"zones\": [[]]"
+                                 "  }"
+                                 "]}"));
+    module_session.setLocalConfig(broken);
+    checkAnswer(1);
+    // The previous zone is not hurt in any way
+    EXPECT_EQ(ZoneFinder::SUCCESS, server_.getInMemoryClient(RRClass::IN())->
+              findZone(Name("example.org")).zone_finder->
+              find(Name("example.org"), RRType::SOA())->code);
+}
+
 TEST_F(AuthCommandTest, loadBrokenZone) {
     configureZones(server_);
 
-    ASSERT_EQ(0, system(INSTALL_PROG " " TEST_DATA_DIR
+    ASSERT_EQ(0, system(INSTALL_PROG " -c " TEST_DATA_DIR
                         "/test1-broken.zone.in "
                         TEST_DATA_BUILDDIR "/test1.zone.copied"));
     result_ = execAuthServerCommand(server_, "loadzone",
@@ -262,7 +390,7 @@ TEST_F(AuthCommandTest, loadUnreadableZone) {
     configureZones(server_);
 
     // install the zone file as unreadable
-    ASSERT_EQ(0, system(INSTALL_PROG " -m 000 " TEST_DATA_DIR
+    ASSERT_EQ(0, system(INSTALL_PROG " -c -m 000 " TEST_DATA_DIR
                         "/test1.zone.in "
                         TEST_DATA_BUILDDIR "/test1.zone.copied"));
     result_ = execAuthServerCommand(server_, "loadzone",

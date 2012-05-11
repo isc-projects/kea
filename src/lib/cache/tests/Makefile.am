@@ -47,11 +47,6 @@ run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS  = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 run_unittests_LDADD    = $(GTEST_LDADD)
 
-# NOTE: we may have to clean up this hack later (see the note in configure.ac)
-if NEED_LIBBOOST_THREAD
-run_unittests_LDADD += -lboost_thread
-endif
-
 run_unittests_LDADD += $(top_builddir)/src/lib/cache/libcache.la
 run_unittests_LDADD += $(top_builddir)/src/lib/log/liblog.la
 run_unittests_LDADD += $(top_builddir)/src/lib/nsas/libnsas.la

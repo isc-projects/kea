@@ -9,10 +9,16 @@ endif
 
 CLEANFILES = *.gcno *.gcda
 
-noinst_PROGRAMS = rdatarender_bench
+noinst_PROGRAMS = rdatarender_bench message_renderer_bench
+
 rdatarender_bench_SOURCES = rdatarender_bench.cc
 
 rdatarender_bench_LDADD = $(top_builddir)/src/lib/dns/libdns++.la
 rdatarender_bench_LDADD += $(top_builddir)/src/lib/util/libutil.la
 rdatarender_bench_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
-rdatarender_bench_LDADD += $(SQLITE_LIBS)
+
+message_renderer_bench_SOURCES = message_renderer_bench.cc
+message_renderer_bench_SOURCES += oldmessagerenderer.h oldmessagerenderer.cc
+message_renderer_bench_LDADD = $(top_builddir)/src/lib/dns/libdns++.la
+message_renderer_bench_LDADD += $(top_builddir)/src/lib/util/libutil.la
+message_renderer_bench_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la

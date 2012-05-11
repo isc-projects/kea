@@ -172,15 +172,6 @@
 
           <listitem>
             <simpara>
-              <command>b10-msgq</command> &mdash;
-              Message bus daemon.
-              This process coordinates communication between all of the other
-              BIND 10 processes.
-            </simpara>
-          </listitem>
-
-          <listitem>
-            <simpara>
               <command>b10-auth</command> &mdash;
               Authoritative DNS server.
               This process serves DNS requests.
@@ -205,6 +196,15 @@
 
           <listitem>
             <simpara>
+              <command>b10-msgq</command> &mdash;
+              Message bus daemon.
+              This process coordinates communication between all of the other
+              BIND 10 processes.
+            </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara>
               <command>b10-resolver</command> &mdash;
               Recursive name server.
               This process handles incoming queries.
@@ -214,9 +214,26 @@
 
           <listitem>
             <simpara>
+              <command>b10-sockcreator</command> &mdash;
+              Socket creator daemon.
+              This process creates sockets used by
+              network-listening BIND 10 processes.
+            </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara>
               <command>b10-stats</command> &mdash;
               Statistics collection daemon.
               This process collects and reports statistics data.
+            </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara>
+              <command>b10-stats-httpd</command> &mdash;
+              HTTP server for statistics reporting.
+              This process reports statistics data in XML format over HTTP.
             </simpara>
           </listitem>
 
@@ -269,8 +286,9 @@
             <simpara>
               <command>bindctl</command> &mdash;
               interactive administration interface.
-              This is a command-line tool which allows an administrator
-              to control BIND 10.
+              This is a low-level command-line tool which allows
+              a developer or an experienced administrator to control
+              BIND 10.
             </simpara>
           </listitem>
           <listitem>
@@ -751,12 +769,9 @@ as a dependency earlier -->
     <para>
       In its default configuration, the <command>bind10</command>
       master process will also start up
-      <command>b10-cmdctl</command> for admins to communicate with the
-      system, <command>b10-auth</command> for authoritative DNS service,
-      <command>b10-stats</command> for statistics collection,
-      <command>b10-xfrin</command> for inbound DNS zone transfers,
-      <command>b10-xfrout</command> for outbound DNS zone transfers,
-      and <command>b10-zonemgr</command> for secondary service.
+      <command>b10-cmdctl</command> for administration tools to
+      communicate with the system, and
+      <command>b10-stats</command> for statistics collection.
     </para>
 
     <section id="start">
@@ -790,12 +805,7 @@ as a dependency earlier -->
         The configuration is in the Boss/components section. Each element
         represents one component, which is an abstraction of a process
         (currently there's also one component which doesn't represent
-        a process). If you didn't want to transfer out at all (your server
-        is a slave only), you would just remove the corresponding component
-        from the set, like this and the process would be stopped immediately
-        (and not started on the next startup):
-      <screen>&gt; <userinput>config remove Boss/components b10-xfrout</userinput>
-&gt; <userinput>config commit</userinput></screen>
+        a process).
       </para>
 
       <para>
@@ -889,7 +899,7 @@ address, but the usual ones don't." mean? -->
           This system allows you to start the same component multiple times
           (by including it in the configuration with different names, but the
           same process setting). However, the rest of the system doesn't expect
-          such situation, so it would probably not do what you want. Such
+          such a situation, so it would probably not do what you want. Such
           support is yet to be implemented.
         </para>
       </note>
@@ -901,10 +911,10 @@ address, but the usual ones don't." mean? -->
           <command>b10-cmdctl</command>, but then you couldn't
           change it back the usual way, as it would require it to
           be running (you would have to find and edit the configuration
-          directly).  Also, some modules might have dependencies
-          -- <command>b10-stats-httpd</command> need
+          directly).  Also, some modules might have dependencies:
+          <command>b10-stats-httpd</command> needs
           <command>b10-stats</command>, <command>b10-xfrout</command>
-          needs the <command>b10-auth</command> to be running, etc.
+          needs <command>b10-auth</command> to be running, etc.
 
 <!-- TODO: should we define dependencies? -->
 
@@ -999,7 +1009,7 @@ Unix domain sockets
 <!-- TODO -->
       <note>
         <para>
-          The development prototype release only provides the
+          The development prototype release only provides
           <command>bindctl</command> as a user interface to
           <command>b10-cmdctl</command>.
           Upcoming releases will provide another interactive command-line
@@ -1190,7 +1200,7 @@ or accounts database -->
       The port can be set by using the <option>--port</option> command line option.
       The address to listen on can be set using the <option>--address</option> command
       line argument.
-      Each HTTPS connection is stateless and timesout in 1200 seconds
+      Each HTTPS connection is stateless and times out in 1200 seconds
       by default.  This can be
       redefined by using the <option>--idle-timeout</option> command line argument.
     </para>
@@ -1281,7 +1291,7 @@ since we used bind10 -->
         <command>b10-auth</command> is configured via the
         <command>b10-cfgmgr</command> configuration manager.
         The module name is <quote>Auth</quote>.
-        The configuration data item is:
+        The configuration data items are:
 
         <variablelist>
 
@@ -1297,22 +1307,119 @@ This may be a temporary setting until then.
             </listitem>
           </varlistentry>
 
+<!-- NOTE: docs pulled in verbatim from the b10-auth.xml manual page.
+     TODO: automate this if want this or rewrite
+-->
+          <varlistentry>
+            <term>datasources</term>
+            <listitem>
+              <simpara>
+      <varname>datasources</varname> configures data sources.
+      The list items include:
+      <varname>type</varname> to define the required data source type
+      (such as <quote>memory</quote>);
+      <varname>class</varname> to optionally select the class
+      (it defaults to <quote>IN</quote>);
+      and
+      <varname>zones</varname> to define the
+      <varname>file</varname> path name and the
+      <varname>origin</varname> (default domain).
+
+      By default, this is empty.
+
+      <note><simpara>
+        In this development version, currently this is only used for the
+        memory data source.
+        Only the IN class is supported at this time.
+        By default, the memory data source is disabled.
+        Also, currently the zone file must be canonical such as
+        generated by <command>named-compilezone -D</command>.
+      </simpara></note>
+
+              </simpara>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>listen_on</term>
+            <listitem>
+              <simpara>
+      <varname>listen_on</varname> is a list of addresses and ports for
+      <command>b10-auth</command> to listen on.
+      The list items are the <varname>address</varname> string
+      and <varname>port</varname> number.
+      By default, <command>b10-auth</command> listens on port 53
+      on the IPv6 (::) and IPv4 (0.0.0.0) wildcard addresses.
+              </simpara>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>statistics-interval</term>
+            <listitem>
+              <simpara>
+      <varname>statistics-interval</varname> is the timer interval
+      in seconds for <command>b10-auth</command> to share its
+      statistics information to
+      <citerefentry><refentrytitle>b10-stats</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
+      Statistics updates can be disabled by setting this to 0.
+      The default is 60.
+              </simpara>
+            </listitem>
+          </varlistentry>
+
         </variablelist>
 
       </para>
 
       <para>
 
-        The configuration command is:
+        The configuration commands are:
 
         <variablelist>
+
+          <varlistentry>
+            <term>loadzone</term>
+            <listitem>
+              <simpara>
+      <command>loadzone</command> tells <command>b10-auth</command>
+      to load or reload a zone file. The arguments include:
+      <varname>class</varname> which optionally defines the class
+      (it defaults to <quote>IN</quote>);
+      <varname>origin</varname> is the domain name of the zone;
+      and
+      <varname>datasrc</varname> optionally defines the type of datasource
+      (it defaults to <quote>memory</quote>).
+
+      <note><simpara>
+        In this development version, currently this only supports the
+        IN class and the memory data source.
+      </simpara></note>
+              </simpara>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term>sendstats</term>
+            <listitem>
+              <simpara>
+      <command>sendstats</command> tells <command>b10-auth</command>
+      to send its statistics data to
+      <citerefentry><refentrytitle>b10-stats</refentrytitle><manvolnum>8</manvolnum></citerefentry>
+      immediately.
+              </simpara>
+            </listitem>
+          </varlistentry>
 
           <varlistentry>
             <term>shutdown</term>
             <listitem>
               <simpara>Stop the authoritative DNS server.
+      This has an optional <varname>pid</varname> argument to
+      select the process ID to stop.
+      (Note that the BIND 10 boss process may restart this service
+      if configured.)
               </simpara>
-<!-- TODO: what happens when this is sent, will bind10 restart? -->
             </listitem>
           </varlistentry>
 
@@ -1342,9 +1449,78 @@ This may be a temporary setting until then.
         (The full path is what was defined at build configure time for
         <option>--localstatedir</option>.
         The default is <filename>/usr/local/var/</filename>.)
-  This data file location may be changed by defining the
-  <quote>database_file</quote> configuration.
+	This data file location may be changed by defining the
+	<quote>database_file</quote> configuration.
       </para>
+
+      <section id="in-memory-datasource">
+	<title>In-memory Data Source</title>
+
+	<para>
+<!--	  How to configure it. -->
+	  The following commands to <command>bindctl</command>
+	  provide an example of configuring an in-memory data
+	  source containing the <quote>example.com</quote> zone
+	  with the zone file named <quote>example.com.zone</quote>:
+
+<!--
+	  <screen>&gt; <userinput> config set Auth/datasources/ [{"type": "memory", "zones": [{"origin": "example.com", "file": "example.com.zone"}]}]</userinput></screen>
+-->
+
+          <screen>&gt; <userinput>config add Auth/datasources</userinput>
+&gt; <userinput>config set Auth/datasources[0]/type "<option>memory</option>"</userinput>
+&gt; <userinput>config add Auth/datasources[0]/zones</userinput>
+&gt; <userinput>config set Auth/datasources[0]/zones[0]/origin "<option>example.com</option>"</userinput>
+&gt; <userinput>config set Auth/datasources[0]/zones[0]/file "<option>example.com.zone</option>"</userinput>
+&gt; <userinput>config commit</userinput></screen>
+
+	  The authoritative server will begin serving it immediately
+	  after it is loaded.
+	</para>
+
+	<para>
+	  Use the <command>Auth loadzone</command> command in
+	  <command>bindctl</command> to reload a changed master
+	  file into memory; for example:
+
+	  <screen>&gt; <userinput>Auth loadzone origin="example.com"</userinput>
+</screen>
+
+	</para>
+
+<!--
+        <para>
+          The <varname>file</varname> may be an absolute path to the
+          master zone file or it is relative to the directory BIND 10 is
+          started from.
+	</para>
+-->
+
+        <para>
+	By default, the memory data source is disabled; it must be
+	configured explicitly.  To disable all the in-memory zones,
+	specify a null list for <varname>Auth/datasources</varname>:
+
+<!-- TODO: this assumes that Auth/datasources is for memory only -->
+
+	  <screen>&gt; <userinput>config set Auth/datasources/ []</userinput>
+&gt; <userinput>config commit</userinput></screen>
+	</para>
+
+	<para>
+          The following example stops serving a specific zone:
+
+	  <screen>&gt; <userinput>config remove Auth/datasources[<option>0</option>]/zones[<option>0</option>]</userinput>
+&gt; <userinput>config commit</userinput></screen>
+
+	  (Replace the list number(s) in
+	  <varname>datasources[<replaceable>0</replaceable>]</varname>
+	  and/or <varname>zones[<replaceable>0</replaceable>]</varname>
+	  for the relevant zone as needed.)
+
+	</para>
+
+      </section>
 
     </section>
 
@@ -1353,7 +1529,7 @@ This may be a temporary setting until then.
 
       <para>
         RFC 1035 style DNS master zone files may imported
-        into a BIND 10 data source by using the
+        into a BIND 10 SQLite3 data source by using the
         <command>b10-loadzone</command> utility.
       </para>
 
@@ -1400,7 +1576,7 @@ This may be a temporary setting until then.
       <note>
       <para>
         In the development prototype release, only the SQLite3 back
-        end is used.
+        end is used by <command>b10-loadzone</command>.
         By default, it stores the zone data in
         <filename>/usr/local/var/bind10-devel/zone.sqlite3</filename>
         unless the <option>-d</option> switch is used to set the
@@ -1629,31 +1805,23 @@ Xfrout/transfer_acl[0]	{"action": "ACCEPT"}	any	(default)</screen>
     </simpara></note>
 
     <para>
-      If you want to require TSIG in access control, a separate TSIG
-      "key ring" must be configured specifically
-      for <command>b10-xfrout</command> as well as a system wide
-      key ring, both containing a consistent set of keys.
+      If you want to require TSIG in access control, a system wide TSIG
+      "key ring" must be configured.
       For example, to change the previous example to allowing requests
       from 192.0.2.1 signed by a TSIG with a key name of
       "key.example", you'll need to do this:
     </para>
 
     <screen>&gt; <userinput>config set tsig_keys/keys ["key.example:&lt;base64-key&gt;"]</userinput>
-&gt; <userinput>config set Xfrout/tsig_keys/keys ["key.example:&lt;base64-key&gt;"]</userinput>
 &gt; <userinput>config set Xfrout/zone_config[0]/transfer_acl [{"action": "ACCEPT", "from": "192.0.2.1", "key": "key.example"}]</userinput>
 &gt; <userinput>config commit</userinput></screen>
 
-    <para>
-      The first line of configuration defines a system wide key ring.
-      This is necessary because the <command>b10-auth</command> server
-      also checks TSIGs and it uses the system wide configuration.
-    </para>
+    <para>Both Xfrout and Auth will use the system wide keyring to check
+    TSIGs in the incoming messages and to sign responses.</para>
 
     <note><simpara>
-        In a future version, <command>b10-xfrout</command> will also
-        use the system wide TSIG configuration.
         The way to specify zone specific configuration (ACLs, etc) is
-        likely to be changed, too.
+        likely to be changed.
     </simpara></note>
 
 <!--
@@ -1683,15 +1851,10 @@ what is XfroutClient xfr_client??
     <para>
       The main <command>bind10</command> process can be configured
       to select to run either the authoritative or resolver or both.
-      By default, it starts the authoritative service.
-<!-- TODO: later both -->
-
-      You may change this using <command>bindctl</command>, for example:
+      By default, it doesn't start either one. You may change this using
+      <command>bindctl</command>, for example:
 
       <screen>
-&gt; <userinput>config remove Boss/components b10-xfrout</userinput>
-&gt; <userinput>config remove Boss/components b10-xfrin</userinput>
-&gt; <userinput>config remove Boss/components b10-auth</userinput>
 &gt; <userinput>config add Boss/components b10-resolver</userinput>
 &gt; <userinput>config set Boss/components/b10-resolver/special resolver</userinput>
 &gt; <userinput>config set Boss/components/b10-resolver/kind needed</userinput>
@@ -2359,7 +2522,7 @@ eth0 fe80::21e:8cff:fe9b:7349
 
           In the Logging module, you can specify the configuration
           for zero or more loggers; any that are not specified will
-          take appropriate default values..
+          take appropriate default values.
 
         </para>
 
@@ -2645,34 +2808,43 @@ TODO; there's a ticket to determine these levels, see #1074
           <varlistentry>
             <term><option>destination</option> is <quote>console</quote></term>
             <listitem>
-              <simpara>
+              <para>
                  The value of output must be one of <quote>stdout</quote>
                  (messages printed to standard output) or
                  <quote>stderr</quote> (messages printed to standard
                  error).
-              </simpara>
+              </para>
+              <para>
+                Note: if output is set to <quote>stderr</quote> and a lot of
+                messages are produced in a short time (e.g. if the logging
+                level is set to DEBUG), you may occasionally see some messages
+                jumbled up together.  This is due to a combination of the way
+                that messages are written to the screen and the unbuffered
+                nature of the standard error stream.  If this occurs, it is
+                recommended that output be set to <quote>stdout</quote>.
+              </para>
             </listitem>
           </varlistentry>
 
           <varlistentry>
             <term><option>destination</option> is <quote>file</quote></term>
             <listitem>
-              <simpara>
+              <para>
                 The value of output is interpreted as a file name;
                 log messages will be appended to this file.
-              </simpara>
+              </para>
             </listitem>
           </varlistentry>
 
           <varlistentry>
             <term><option>destination</option> is <quote>syslog</quote></term>
             <listitem>
-              <simpara>
+              <para>
                 The value of output is interpreted as the
                 <command>syslog</command> facility (e.g.
                 <emphasis>local0</emphasis>) that should be used
                 for log messages.
-              </simpara>
+              </para>
             </listitem>
           </varlistentry>
 
@@ -2853,7 +3025,7 @@ Logging/loggers[0]/output_options[0]/maxver	0	integer	(default)
 
           <screen>&gt; <userinput> config set Logging/loggers[0]/output_options[0]/destination file</userinput>
 &gt; <userinput> config set Logging/loggers[0]/output_options[0]/output /var/log/bind10.log</userinput>
-&gt; <userinput> config set Logging/loggers[0]/output_options[0]/maxsize 30000</userinput>
+&gt; <userinput> config set Logging/loggers[0]/output_options[0]/maxsize 204800</userinput>
 &gt; <userinput> config set Logging/loggers[0]/output_options[0]/maxver 8</userinput>
 </screen>
 
@@ -2876,7 +3048,7 @@ Logging/loggers[0]/additive	false	boolean	(default)
 Logging/loggers[0]/output_options[0]/destination	"file"	string	(modified)
 Logging/loggers[0]/output_options[0]/output	"/var/log/bind10.log"	string	(modified)
 Logging/loggers[0]/output_options[0]/flush	false	boolean	(default)
-Logging/loggers[0]/output_options[0]/maxsize	30000	integer	(modified)
+Logging/loggers[0]/output_options[0]/maxsize	204800	integer	(modified)
 Logging/loggers[0]/output_options[0]/maxver	8	integer	(modified)
 </screen>
 
