@@ -1,0 +1,608 @@
+#!@PYTHON@
+
+# Copyright (C) 2012  Internet Systems Consortium.
+#
+# Permission to use, copy, modify, and distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SYSTEMS CONSORTIUM
+# DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+# INTERNET SYSTEMS CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+# FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+# NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+# WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+"""
+@file Dabase Utilities
+
+This file holds the "dbutil" program, a general utility program for doing
+management of the BIND 10 database.  There are two modes of operation:
+
+      b10-dbutil --check [--verbose] database
+      b10-dbutil --upgrade [--noconfirm] [--verbose] database
+
+The first form checks the version of the given database.  The second form
+upgrades the database to the latest version of the schema, omitting the
+warning prompt if --noconfirm is given.
+
+For maximum safety, prior to the upgrade a backup database is created.
+The is the database name with ".backup" appended to it (or ".backup-n" if
+".backup" already exists).  This is used to restore the database if the
+upgrade fails.
+"""
+
+# Exit codes
+# These are defined here because one of them is already used before most
+# of the import statements.
+EXIT_SUCCESS = 0
+EXIT_NEED_UPDATE = 1
+EXIT_VERSION_TOO_HIGH = 2
+EXIT_COMMAND_ERROR = 3
+EXIT_READ_ERROR = 4
+EXIT_UPGRADE_ERROR = 5
+EXIT_UNCAUGHT_EXCEPTION = 6
+
+import sys; sys.path.append("@@PYTHONPATH@@")
+
+# Normally, python exits with a status code of 1 on uncaught exceptions
+# Since we reserve exit status 1 for 'database needs upgrade', we
+# override the excepthook to exit with a different status
+def my_except_hook(a, b, c):
+    sys.__excepthook__(a,b,c)
+    sys.exit(EXIT_UNCAUGHT_EXCEPTION)
+sys.excepthook = my_except_hook
+
+import os, sqlite3, shutil
+from optparse import OptionParser
+import isc.util.process
+import isc.log
+from isc.log_messages.dbutil_messages import *
+
+isc.log.init("b10-dbutil")
+logger = isc.log.Logger("dbutil")
+isc.util.process.rename()
+
+TRACE_BASIC = logger.DBGLVL_TRACE_BASIC
+
+
+# @brief Version String
+# This is the version displayed to the user.  It comprises the module name,
+# the module version number, and the overall BIND 10 version number (set in
+# configure.ac)
+VERSION = "b10-dbutil 20120319 (BIND 10 @PACKAGE_VERSION@)"
+
+# @brief Statements to Update the Database
+# These are in the form of a list of dictionaries, each of which contains the
+# information to perform an incremental upgrade from one version of the
+# database to the next.  The information is:
+#
+# a) from: (major, minor) version that the database is expected to be at
+#    to perform this upgrade.
+# b) to: (major, minor) version of the database to which this set of statements
+#    upgrades the database to.  (This is used for documentation purposes,
+#    and to update the schema_version table when the upgrade is complete.)
+# c) statements: List of SQL statments to perform the upgrade.
+#
+# The incremental upgrades are performed one after the other.  If the version
+# of the database does not exactly match that required for the incremental
+# upgrade, the upgrade is skipped.  For this reason, the list must be in
+# ascending order (e.g. upgrade 1.0 to 2.0, 2.0 to 2.1, 2.1 to 2.2 etc.).
+#
+# Note that apart from the 1.0 to 2.0 upgrade, no upgrade need alter the
+# schema_version table: that is done by the upgrade process using the
+# information in the "to" field.
+UPGRADES = [
+    {'from': (1, 0), 'to': (2, 0),
+        'statements': [
+
+            # Move to the latest "V1" state of the database if not there
+            # already.
+            "CREATE TABLE IF NOT EXISTS diffs (" +
+                "id INTEGER PRIMARY KEY, " +
+                "zone_id INTEGER NOT NULL," +
+                "version INTEGER NOT NULL, " +
+                "operation INTEGER NOT NULL, " +
+                "name STRING NOT NULL COLLATE NOCASE, " +
+                "rrtype STRING NOT NULL COLLATE NOCASE, " +
+                "ttl INTEGER NOT NULL, " +
+                "rdata STRING NOT NULL)",
+
+            # Within SQLite with can only rename tables and add columns; we
+            # can't drop columns nor can we alter column characteristics.
+            # So the strategy is to rename the table, create the new table,
+            # then copy all data across.  This means creating new indexes
+            # as well; these are created after the data has been copied.
+
+            # zones table
+            "DROP INDEX zones_byname",
+            "ALTER TABLE zones RENAME TO old_zones",
+            "CREATE TABLE zones (" +
+                "id INTEGER PRIMARY KEY, " +
+                "name TEXT NOT NULL COLLATE NOCASE, " +
+                "rdclass TEXT NOT NULL COLLATE NOCASE DEFAULT 'IN', " +
+                "dnssec BOOLEAN NOT NULL DEFAULT 0)",
+            "INSERT INTO ZONES " +
+                "SELECT id, name, rdclass, dnssec FROM old_zones",
+            "CREATE INDEX zones_byname ON zones (name)",
+            "DROP TABLE old_zones",
+
+            # records table
+            "DROP INDEX records_byname",
+            "DROP INDEX records_byrname",
+            "ALTER TABLE records RENAME TO old_records",
+            "CREATE TABLE records (" +
+                "id INTEGER PRIMARY KEY, " +
+                "zone_id INTEGER NOT NULL, " +
+                "name TEXT NOT NULL COLLATE NOCASE, " +
+                "rname TEXT NOT NULL COLLATE NOCASE, " +
+                "ttl INTEGER NOT NULL, " +
+                "rdtype TEXT NOT NULL COLLATE NOCASE, " +
+                "sigtype TEXT COLLATE NOCASE, " +
+                "rdata TEXT NOT NULL)",
+            "INSERT INTO records " +
+                "SELECT id, zone_id, name, rname, ttl, rdtype, sigtype, " +
+                    "rdata FROM old_records",
+            "CREATE INDEX records_byname ON records (name)",
+            "CREATE INDEX records_byrname ON records (rname)",
+            "CREATE INDEX records_bytype_and_rname ON records (rdtype, rname)",
+            "DROP TABLE old_records",
+
+            # nsec3 table
+            "DROP INDEX nsec3_byhash",
+            "ALTER TABLE nsec3 RENAME TO old_nsec3",
+            "CREATE TABLE nsec3 (" +
+                "id INTEGER PRIMARY KEY, " +
+                "zone_id INTEGER NOT NULL, " +
+                "hash TEXT NOT NULL COLLATE NOCASE, " +
+                "owner TEXT NOT NULL COLLATE NOCASE, " +
+                "ttl INTEGER NOT NULL, " +
+                "rdtype TEXT NOT NULL COLLATE NOCASE, " +
+                "rdata TEXT NOT NULL)",
+            "INSERT INTO nsec3 " +
+                "SELECT id, zone_id, hash, owner, ttl, rdtype, rdata " +
+                    "FROM old_nsec3",
+            "CREATE INDEX nsec3_byhash ON nsec3 (hash)",
+            "DROP TABLE old_nsec3",
+
+            # diffs table
+            "ALTER TABLE diffs RENAME TO old_diffs",
+            "CREATE TABLE diffs (" +
+                "id INTEGER PRIMARY KEY, " +
+                "zone_id INTEGER NOT NULL, " +
+                "version INTEGER NOT NULL, " +
+                "operation INTEGER NOT NULL, " +
+                "name TEXT NOT NULL COLLATE NOCASE, " +
+                "rrtype TEXT NOT NULL COLLATE NOCASE, " +
+                "ttl INTEGER NOT NULL, " +
+                "rdata TEXT NOT NULL)",
+            "INSERT INTO diffs " +
+                "SELECT id, zone_id, version, operation, name, rrtype, " +
+                    "ttl, rdata FROM old_diffs",
+            "DROP TABLE old_diffs",
+
+            # Schema table.  This is updated to include a second column for
+            # future changes.  The idea is that if a version of BIND 10 is
+            # written for schema M.N, it should be able to work for all
+            # versions of N; if not, M must be incremented.
+            #
+            # For backwards compatibility, the column holding the major
+            # version number is left named "version".
+            "ALTER TABLE schema_version " +
+                "ADD COLUMN minor INTEGER NOT NULL DEFAULT 0"
+        ]
+    }
+
+# To extend this, leave the above statements in place and add another
+# dictionary to the list.  The "from" version should be (2, 0), the "to" 
+# version whatever the version the update is to, and the SQL statements are
+# the statements required to perform the upgrade.  This way, the upgrade
+# program will be able to upgrade both a V1.0 and a V2.0 database.
+]
+
+class DbutilException(Exception):
+    """
+    @brief Exception class to indicate error exit
+    """
+    pass
+
+class Database:
+    """
+    @brief Database Encapsulation
+
+    Encapsulates the SQL database, both the connection and the cursor.  The
+    methods will cause a program exit on any error.
+    """
+    def __init__(self, db_file):
+        """
+        @brief Constructor
+
+        @param db_file Name of the database file
+        """
+        self.connection = None
+        self.cursor = None
+        self.db_file = db_file
+        self.backup_file = None
+
+    def open(self):
+        """
+        @brief Open Database
+
+        Opens the passed file as an sqlite3 database and stores a connection
+        and a cursor.
+        """
+        if not os.path.exists(self.db_file):
+            raise DbutilException("database " + self.db_file +
+                                 " does not exist");
+
+        try:
+            self.connection = sqlite3.connect(self.db_file)
+            self.connection.isolation_level = None  # set autocommit
+            self.cursor = self.connection.cursor()
+        except sqlite3.OperationalError as ex:
+            raise DbutilException("unable to open " + self.db_file +
+                                  " - " + str(ex))
+
+    def close(self):
+        """
+        @brief Closes the database
+        """
+        if self.connection is not None:
+            self.connection.close()
+
+    def execute(self, statement):
+        """
+        @brief Execute Statement
+
+        Executes the given statement, exiting the program on error.
+
+        @param statement SQL statement to execute
+        """
+        logger.debug(TRACE_BASIC, DBUTIL_EXECUTE, statement)
+
+        try:
+            self.cursor.execute(statement)
+        except Exception as ex:
+            logger.error(DBUTIL_STATEMENT_ERROR, statement, ex)
+            raise DbutilException(str(ex))
+
+    def result(self):
+        """
+        @brief Return result of last execute
+
+        Returns a single row that is the result of the last "execute".
+        """
+        return self.cursor.fetchone()
+
+    def backup(self):
+        """
+        @brief Backup Database
+
+        Attempts to copy the given database file to a backup database, the
+        backup database file being the file name with ".backup" appended.
+        If the ".backup" file exists, a new name is constructed by appending
+        ".backup-n" (n starting at 1) and the action repeated until an
+        unused filename is found.
+
+        @param db_file Database file to backup
+        """
+        if not os.path.exists(self.db_file):
+            raise DbutilException("database " + self.db_file +
+                                  " does not exist");
+
+        self.backup_file = self.db_file + ".backup"
+        count = 0
+        while os.path.exists(self.backup_file):
+            count = count + 1
+            self.backup_file = self.db_file + ".backup-" + str(count)
+
+        # Do the backup
+        shutil.copyfile(self.db_file, self.backup_file)
+        logger.info(DBUTIL_BACKUP, self.db_file, self.backup_file)
+
+def prompt_user():
+    """
+    @brief Prompt the User
+
+    Explains about the upgrade and requests authorisation to continue.
+
+    @return True if user entered 'Yes', False if 'No'
+    """
+    sys.stdout.write(
+"""You have selected the upgrade option.  This will upgrade the schema of the
+selected BIND 10 zone database to the latest version.
+
+The utility will take a copy of the zone database file before executing so, in
+the event of a problem, you will be able to restore the zone database from
+the backup.  To ensure that the integrity of this backup, please ensure that
+BIND 10 is not running before continuing.
+""")
+    yes_entered = False
+    no_entered = False
+    while (not yes_entered) and (not no_entered):
+        sys.stdout.write("Enter 'Yes' to proceed with the upgrade, " +
+                         "'No' to exit the program: \n")
+        response = sys.stdin.readline()
+        if response.lower() == "yes\n":
+            yes_entered = True
+        elif response.lower() == "no\n":
+            no_entered = True
+        else:
+            sys.stdout.write("Please enter 'Yes' or 'No'\n")
+
+    return yes_entered
+
+
+def version_string(version):
+    """
+    @brief Format Database Version
+
+    Converts a (major, minor) tuple into a 'Vn.m' string.
+
+    @param version Version tuple to convert
+
+    @return Version string
+    """
+    return "V" + str(version[0]) + "." + str(version[1])
+
+
+def compare_versions(first, second):
+    """
+    @brief Compare Versions
+
+    Compares two database version numbers.
+
+    @param first First version number to check (in the form of a
+           "(major, minor)" tuple).
+    @param second Second version number to check (in the form of a
+           "(major, minor)" tuple).
+
+    @return -1, 0, +1 if "first" is <, ==, > "second"
+    """
+    if first == second:
+        return 0
+
+    elif ((first[0] < second[0]) or
+          ((first[0] == second[0]) and (first[1] < second[1]))):
+        return -1
+
+    else:
+        return 1
+
+
+def get_latest_version():
+    """
+    @brief Returns the version to which this utility can upgrade the database
+
+    This is the 'to' version held in the last element of the upgrades list
+    """
+    return UPGRADES[-1]['to']
+
+
+def get_version(db):
+    """
+    @brief Return version of database
+
+    @return Version of database in form (major version, minor version)
+    """
+
+    # Get the version information.
+    db.execute("SELECT * FROM schema_version")
+    result = db.result()
+    if result is None:
+        raise DbutilException("nothing in schema_version table")
+
+    major = result[0]
+    if (major == 1):
+        # If the version number is 1, there will be no "minor" column, so
+        # assume a minor version number of 0.
+        minor = 0
+    else:
+        minor = result[1]
+
+    result = db.result()
+    if result is not None:
+        raise DbutilException("too many rows in schema_version table")
+
+    return (major, minor)
+
+
+def check_version(db):
+    """
+    @brief Check the version
+
+    Checks the version of the database and the latest version, and advises if
+    an upgrade is needed.
+
+    @param db Database object
+
+    returns 0 if the database is up to date
+    returns EXIT_NEED_UPDATE if the database needs updating
+    returns EXIT_VERSION_TOO_HIGH if the database is at a later version
+            than this program knows about
+    These return values are intended to be passed on to sys.exit.
+    """
+    current = get_version(db)
+    latest = get_latest_version()
+
+    match = compare_versions(current, latest)
+    if match == 0:
+        logger.info(DBUTIL_VERSION_CURRENT, version_string(current))
+        logger.info(DBUTIL_CHECK_OK)
+        return EXIT_SUCCESS
+    elif match < 0:
+        logger.info(DBUTIL_VERSION_LOW, version_string(current),
+                    version_string(latest))
+        logger.info(DBUTIL_CHECK_UPGRADE_NEEDED)
+        return EXIT_NEED_UPDATE
+    else:
+        logger.warn(DBUTIL_VERSION_HIGH, version_string(current),
+                    version_string(get_latest_version()))
+        logger.info(DBUTIL_UPGRADE_DBUTIL)
+        return EXIT_VERSION_TOO_HIGH
+
+def perform_upgrade(db, upgrade):
+    """
+    @brief Perform upgrade
+
+    Performs the upgrade.  At the end of the upgrade, updates the schema_version
+    table with the expected version.
+
+    @param db Database object
+    @param upgrade Upgrade dictionary, holding "from", "to" and "statements".
+    """
+    logger.info(DBUTIL_UPGRADING, version_string(upgrade['from']),
+         version_string(upgrade['to']))
+    for statement in upgrade['statements']:
+        db.execute(statement)
+
+    # Update the version information
+    db.execute("DELETE FROM schema_version")
+    db.execute("INSERT INTO schema_version VALUES (" +
+                    str(upgrade['to'][0]) + "," + str(upgrade['to'][1]) + ")")
+
+
+def perform_all_upgrades(db):
+    """
+    @brief Performs all the upgrades
+
+    @brief db Database object
+
+    For each upgrade, checks that the database is at the expected version.
+    If so, calls perform_upgrade to update the database.
+    """
+    match = compare_versions(get_version(db), get_latest_version())
+    if match == 0:
+        logger.info(DBUTIL_UPGRADE_NOT_NEEDED)
+
+    elif match > 0:
+        logger.warn(DBUTIL_UPGRADE_NOT_POSSIBLE)
+
+    else:
+        # Work our way through all upgrade increments
+        count = 0
+        for upgrade in UPGRADES:
+            if compare_versions(get_version(db), upgrade['from']) == 0:
+                perform_upgrade(db, upgrade)
+                count = count + 1
+
+        if count > 0:
+            logger.info(DBUTIL_UPGRADE_SUCCESFUL)
+        else:
+            # Should not get here, as we established earlier that the database
+            # was not at the latest version so we should have upgraded.
+            raise DbutilException("internal error in upgrade tool - no " +
+                                  "upgrade was performed on an old version " +
+                                  "the database")
+
+
+def parse_command():
+    """
+    @brief Parse Command
+
+    Parses the command line and sets the global command options.
+
+    @return Tuple of parser options and parser arguments
+    """
+    usage = ("usage: %prog --check [options] db_file\n" +
+             "       %prog --upgrade [--noconfirm] [options] db_file")
+    parser = OptionParser(usage = usage, version = VERSION)
+    parser.add_option("-c", "--check", action="store_true",
+                      dest="check", default=False,
+                      help="Print database version and check if it " +
+                           "needs upgrading")
+    parser.add_option("-n", "--noconfirm", action="store_true",
+                      dest="noconfirm", default=False,
+                      help="Do not prompt for confirmation before upgrading")
+    parser.add_option("-u", "--upgrade", action="store_true",
+                      dest="upgrade", default=False,
+                      help="Upgrade the database file to the latest version")
+    parser.add_option("-v", "--verbose", action="store_true",
+                      dest="verbose", default=False,
+                      help="Print SQL statements as they are executed")
+    parser.add_option("-q", "--quiet", action="store_true",
+                      dest="quiet", default=False,
+                      help="Don't print any info, warnings or errors")
+    (options, args) = parser.parse_args()
+
+    # Set the database file on which to operate
+    if (len(args) > 1):
+        logger.error(DBUTIL_TOO_MANY_ARGUMENTS)
+        parser.print_usage()
+        sys.exit(EXIT_COMMAND_ERROR)
+    elif len(args) == 0:
+        logger.error(DBUTIL_NO_FILE)
+        parser.print_usage()
+        sys.exit(EXIT_COMMAND_ERROR)
+
+    # Check for conflicting options.  If some are found, output a suitable
+    # error message and print the usage.
+    if options.check and options.upgrade:
+        logger.error(DBUTIL_COMMAND_UPGRADE_CHECK)
+    elif (not options.check) and (not options.upgrade):
+        logger.error(DBUTIL_COMMAND_NONE)
+    elif (options.check and options.noconfirm):
+        logger.error(DBUTIL_CHECK_NOCONFIRM)
+    else:
+        return (options, args)
+
+    # Only get here on conflicting options
+    parser.print_usage()
+    sys.exit(EXIT_COMMAND_ERROR)
+
+
+if __name__ == "__main__":
+    (options, args) = parse_command()
+
+    if options.verbose:
+        isc.log.init("b10-dbutil", "DEBUG", 99)
+        logger = isc.log.Logger("dbutil")
+    elif options.quiet:
+        # We don't use FATAL, so setting the logger to use
+        # it should essentially make it silent.
+        isc.log.init("b10-dbutil", "FATAL")
+        logger = isc.log.Logger("dbutil")
+
+    db = Database(args[0])
+    exit_code = EXIT_SUCCESS
+
+    logger.info(DBUTIL_FILE, args[0])
+    if options.check:
+        # Check database - open, report, and close
+        try:
+            db.open()
+            exit_code = check_version(db)
+            db.close()
+        except Exception as ex:
+            logger.error(DBUTIL_CHECK_ERROR, ex)
+            exit_code = EXIT_READ_ERROR
+
+    elif options.upgrade:
+        # Upgrade.  Check if this is what they really want to do
+        if not options.noconfirm:
+            proceed = prompt_user()
+            if not proceed:
+                logger.info(DBUTIL_UPGRADE_CANCELED)
+                sys.exit(EXIT_SUCCESS)
+
+        # It is.  Do a backup then do the upgrade.
+        in_progress = False
+        try:
+            db.backup()
+            db.open()
+            in_progress = True
+            perform_all_upgrades(db)
+            db.close()
+        except Exception as ex:
+            if in_progress:
+                logger.error(DBUTIL_UPGRADE_FAILED, ex)
+                logger.warn(DBUTIL_DATABASE_MAY_BE_CORRUPT, db.db_file,
+                            db.backup_file)
+            else:
+                logger.error(DBUTIL_UPGRADE_PREPARATION_FAILED, ex)
+                logger.info(DBUTIL_UPGRADE_NOT_ATTEMPTED)
+            exit_code = EXIT_UPGRADE_ERROR
+
+    sys.exit(exit_code)

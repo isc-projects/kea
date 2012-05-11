@@ -49,6 +49,10 @@ def parse_options(args=sys.argv[1:], Parser=OptionParser):
                       help="Configuration database filename " +
                       "(default=" + DEFAULT_CONFIG_FILE + ")",
                       default=DEFAULT_CONFIG_FILE)
+    parser.add_option("--clear-config", action="store_true",
+                      dest="clear_config", default=False,
+                      help="Back up the configuration file and start with " +
+                           "a clean one")
     (options, args) = parser.parse_args(args)
     if args:
         parser.error("No non-option arguments allowed")
@@ -85,7 +89,8 @@ def main():
     options = parse_options()
     global cm
     try:
-        cm = ConfigManager(options.data_path, options.config_file)
+        cm = ConfigManager(options.data_path, options.config_file,
+                           None, options.clear_config)
         signal.signal(signal.SIGINT, signal_handler)
         signal.signal(signal.SIGTERM, signal_handler)
         cm.read_config()

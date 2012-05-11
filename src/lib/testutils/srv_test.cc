@@ -14,6 +14,7 @@
 
 #include <config.h>
 
+#include <sys/types.h>
 #include <netinet/in.h>
 
 #include <dns/message.h>
@@ -43,8 +44,6 @@ SrvTestBase::SrvTestBase() : request_message(Message::RENDER),
                              qclass(RRClass::IN()),
                              qtype(RRType::A()), io_sock(NULL),
                              io_message(NULL), endpoint(NULL),
-                             request_obuffer(0),
-                             request_renderer(request_obuffer),
                              response_obuffer(new OutputBuffer(0))
 {}
 

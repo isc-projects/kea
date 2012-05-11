@@ -28,6 +28,7 @@ import subprocess
 import os.path
 import shutil
 import re
+import sys
 import time
 
 # In order to make sure we start all tests with a 'clean' environment,
@@ -42,10 +43,16 @@ import time
 # The first element is the original, the second is the target that will be
 # used by the tests that need them
 copylist = [
+    ["configurations/bindctl_commands.config.orig",
+     "configurations/bindctl_commands.config"],
     ["configurations/example.org.config.orig",
      "configurations/example.org.config"],
+    ["configurations/bindctl/bindctl.config.orig",
+     "configurations/bindctl/bindctl.config"],
     ["configurations/resolver/resolver_basic.config.orig",
-     "configurations/resolver/resolver_basic.config"]
+     "configurations/resolver/resolver_basic.config"],
+    ["configurations/multi_instance/multi_auth.config.orig",
+     "configurations/multi_instance/multi_auth.config"]
 ]
 
 # This is a list of files that, if present, will be removed before a scenario
@@ -162,7 +169,7 @@ class RunningProcess:
         os.remove(self.stderr_filename)
         os.remove(self.stdout_filename)
 
-    def _wait_for_output_str(self, filename, running_file, strings, only_new):
+    def _wait_for_output_str(self, filename, running_file, strings, only_new, matches = 1):
         """
         Wait for a line of output in this process. This will (if only_new is
         False) first check all previous output from the process, and if not
@@ -176,18 +183,22 @@ class RunningProcess:
         strings: Array of strings to look for.
         only_new: If true, only check output since last time this method was
                   called. If false, first check earlier output.
+        matches: Check for the string this many times.
         Returns a tuple containing the matched string, and the complete line
         it was found in.
         Fails if none of the strings was read after 10 seconds
         (OUTPUT_WAIT_INTERVAL * OUTPUT_WAIT_MAX_INTERVALS).
         """
+        match_count = 0
         if not only_new:
             full_file = open(filename, "r")
             for line in full_file:
                 for string in strings:
                     if line.find(string) != -1:
-                        full_file.close()
-                        return (string, line)
+                        match_count += 1
+                        if match_count >= matches:
+                            full_file.close()
+                            return (string, line)
         wait_count = 0
         while wait_count < OUTPUT_WAIT_MAX_INTERVALS:
             where = running_file.tell()
@@ -195,42 +206,46 @@ class RunningProcess:
             if line:
                 for string in strings:
                     if line.find(string) != -1:
-                        return (string, line)
+                        match_count += 1
+                        if match_count >= matches:
+                            return (string, line)
             else:
                 wait_count += 1
                 time.sleep(OUTPUT_WAIT_INTERVAL)
                 running_file.seek(where)
         assert False, "Timeout waiting for process output: " + str(strings)
 
-    def wait_for_stderr_str(self, strings, only_new = True):
+    def wait_for_stderr_str(self, strings, only_new = True, matches = 1):
         """
         Wait for one of the given strings in this process's stderr output.
         Parameters:
         strings: Array of strings to look for.
         only_new: If true, only check output since last time this method was
                   called. If false, first check earlier output.
+        matches: Check for the string this many times.
         Returns a tuple containing the matched string, and the complete line
         it was found in.
         Fails if none of the strings was read after 10 seconds
         (OUTPUT_WAIT_INTERVAL * OUTPUT_WAIT_MAX_INTERVALS).
         """
         return self._wait_for_output_str(self.stderr_filename, self.stderr,
-                                         strings, only_new)
+                                         strings, only_new, matches)
 
-    def wait_for_stdout_str(self, strings, only_new = True):
+    def wait_for_stdout_str(self, strings, only_new = True, matches = 1):
         """
         Wait for one of the given strings in this process's stdout output.
         Parameters:
         strings: Array of strings to look for.
         only_new: If true, only check output since last time this method was
                   called. If false, first check earlier output.
+        matches: Check for the string this many times.
         Returns a tuple containing the matched string, and the complete line
         it was found in.
         Fails if none of the strings was read after 10 seconds
         (OUTPUT_WAIT_INTERVAL * OUTPUT_WAIT_MAX_INTERVALS).
         """
         return self._wait_for_output_str(self.stdout_filename, self.stdout,
-                                         strings, only_new)
+                                         strings, only_new, matches)
 
 # Container class for a number of running processes
 # i.e. servers like bind10, etc
@@ -296,7 +311,7 @@ class RunningProcesses:
         for process in self.processes.values():
             process.remove_files_on_exit = False
 
-    def wait_for_stderr_str(self, process_name, strings, only_new = True):
+    def wait_for_stderr_str(self, process_name, strings, only_new = True, matches = 1):
         """
         Wait for one of the given strings in the given process's stderr output.
         Parameters:
@@ -304,6 +319,7 @@ class RunningProcesses:
         strings: Array of strings to look for.
         only_new: If true, only check output since last time this method was
                   called. If false, first check earlier output.
+        matches: Check for the string this many times.
         Returns the matched string.
         Fails if none of the strings was read after 10 seconds
         (OUTPUT_WAIT_INTERVAL * OUTPUT_WAIT_MAX_INTERVALS).
@@ -312,9 +328,10 @@ class RunningProcesses:
         assert process_name in self.processes,\
            "Process " + process_name + " unknown"
         return self.processes[process_name].wait_for_stderr_str(strings,
-                                                                only_new)
+                                                                only_new,
+                                                                matches)
 
-    def wait_for_stdout_str(self, process_name, strings, only_new = True):
+    def wait_for_stdout_str(self, process_name, strings, only_new = True, matches = 1):
         """
         Wait for one of the given strings in the given process's stdout output.
         Parameters:
@@ -322,6 +339,7 @@ class RunningProcesses:
         strings: Array of strings to look for.
         only_new: If true, only check output since last time this method was
                   called. If false, first check earlier output.
+        matches: Check for the string this many times.
         Returns the matched string.
         Fails if none of the strings was read after 10 seconds
         (OUTPUT_WAIT_INTERVAL * OUTPUT_WAIT_MAX_INTERVALS).
@@ -330,7 +348,8 @@ class RunningProcesses:
         assert process_name in self.processes,\
            "Process " + process_name + " unknown"
         return self.processes[process_name].wait_for_stdout_str(strings,
-                                                                only_new)
+                                                                only_new,
+                                                                matches)
 
 @before.each_scenario
 def initialize(scenario):
@@ -342,6 +361,10 @@ def initialize(scenario):
 
     # Convenience variable to access the last query result from querying.py
     world.last_query_result = None
+
+    # For slightly better errors, initialize a process_pids for the relevant
+    # steps
+    world.process_pids = None
 
     # Some tests can modify the settings. If the tests fail half-way, or
     # don't clean up, this can leave configurations or data in a bad state,
@@ -363,4 +386,13 @@ def cleanup(scenario):
         world.processes.keep_files()
     # Stop any running processes we may have had around
     world.processes.stop_all_processes()
-    
+
+# Environment check
+# Checks if LETTUCE_SETUP_COMPLETED is set in the environment
+# If not, abort with an error to use the run-script
+if 'LETTUCE_SETUP_COMPLETED' not in os.environ:
+    print("Environment check failure; LETTUCE_SETUP_COMPLETED not set")
+    print("Please use the run_lettuce.sh script. If you want to test an")
+    print("installed version of bind10 with these tests, use")
+    print("run_lettuce.sh -I [lettuce arguments]")
+    sys.exit(1)

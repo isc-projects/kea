@@ -61,7 +61,8 @@ Scan::scan(const CommandOptions& options) {
                         RRType::A()));
 
     OutputBufferPtr msgbuf(new OutputBuffer(512));
-    MessageRenderer renderer(*msgbuf);
+    MessageRenderer renderer;
+    renderer.setBuffer(msgbuf.get());
     message.toWire(renderer);
 
     iterateFlagsStart(msgbuf, options);

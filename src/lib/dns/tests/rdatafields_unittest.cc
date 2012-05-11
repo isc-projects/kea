@@ -36,9 +36,7 @@ using isc::util::InputBuffer;
 namespace {
 class RdataFieldsTest : public ::testing::Test {
 protected:
-    RdataFieldsTest() : obuffer(0), renderer_buffer(0),
-                        renderer(renderer_buffer),
-                        ns_name("example.com"),
+    RdataFieldsTest() : obuffer(0), ns_name("example.com"),
                         other_name("www.example.com")
     {}
     void constructCommonTests(const RdataFields& fields,
@@ -49,7 +47,6 @@ protected:
     void constructCommonTestsRRSIG(const RdataFields& fields);
     void constructCommonTestsOPT(const RdataFields& fields);
     OutputBuffer obuffer;
-    OutputBuffer renderer_buffer;
     MessageRenderer renderer;
     const Name ns_name;
     const Name other_name;

@@ -11,7 +11,17 @@ Feature: Basic Resolver
         # to be revised (as it would then leak, which is probably true
         # for any resolver system test)
         When I start bind10 with configuration resolver/resolver_basic.config
-        And wait for new bind10 stderr message RESOLVER_STARTED
+        And wait for bind10 stderr message BIND10_STARTED_CC
+        And wait for bind10 stderr message CMDCTL_STARTED
+        And wait for bind10 stderr message RESOLVER_STARTED
+
+        bind10 module Resolver should be running
+        And bind10 module Auth should not be running
+        And bind10 module Xfrout should not be running
+        And bind10 module Zonemgr should not be running
+        And bind10 module Xfrin should not be running
+        And bind10 module Stats should not be running
+        And bind10 module StatsHttpd should not be running
 
         # The ACL is set to reject any queries
         A query for l.root-servers.net. should have rcode REFUSED
