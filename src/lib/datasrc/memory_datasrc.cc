@@ -212,10 +212,63 @@ public:
 
     // Identify the RBTree node that best matches the given name.
     // See implementation notes below.
+    //
+    // The caller should pass an empty node_path, and it will contain the
+    // search context (all ancestor nodes that the underlying RBTree search
+    // traverses, and how the search stops) for possible later use at the
+    // caller side.
     template <typename ResultType>
     ResultType findNode(const Name& name,
+                        RBTreeNodeChain<Domain>& node_path,
                         ZoneFinder::FindOptions options) const;
+
+private:
+    // A helper method for NSEC-signed zones.  It searches the zone for
+    // the "closest" NSEC corresponding to the search context stored in
+    // node_path (it should contain sufficient information to identify the
+    // previous name of the query name in the zone).  In some cases the
+    // immediate closest name may not have NSEC (when it's under a zone cut
+    // for glue records, or even when the zone is partly broken), so this
+    // method continues the search until it finds a name that has NSEC,
+    // and returns the one found first.  Due to the prerequisite (see below),
+    // it should always succeed.
+    //
+    // node_path must store valid search context (in practice, it's expected
+    // to be set by findNode()); otherwise the underlying RBTree implementation
+    // throws.
+    //
+    // If the zone is not considered NSEC-signed or DNSSEC records were not
+    // required in the original search context (specified in options), this
+    // method doesn't bother to find NSEC, and simply returns NULL.  So, by
+    // definition of "NSEC-signed", when it really tries to find an NSEC it
+    // should succeed; there should be one at least at the zone origin.
+    ConstRBNodeRRsetPtr
+    getClosestNSEC(RBTreeNodeChain<Domain>& node_path,
+                   ZoneFinder::FindOptions options) const;
 };
+
+ConstRBNodeRRsetPtr
+ZoneData::getClosestNSEC(RBTreeNodeChain<Domain>& node_path,
+                         ZoneFinder::FindOptions options) const
+{
+    if (!nsec_signed_ || (options & ZoneFinder::FIND_DNSSEC) == 0) {
+        return (ConstRBNodeRRsetPtr());
+    }
+
+    const DomainNode* prev_node;
+    while ((prev_node = domains_.previousNode(node_path)) != NULL) {
+        if (!prev_node->isEmpty()) {
+            const Domain::const_iterator found =
+                prev_node->getData()->find(RRType::NSEC());
+            if (found != prev_node->getData()->end()) {
+                return (found->second);
+            }
+        }
+    }
+    // This must be impossible and should be an internal bug.
+    // See the description at the method declaration.
+    assert(false);
+}
 
 /// Maintain intermediate data specific to the search context used in
 /// \c find().
@@ -359,9 +412,10 @@ bool cutCallback(const DomainNode& node, FindState* state) {
 // the zone.
 template <typename ResultType>
 ResultType
-ZoneData::findNode(const Name& name, ZoneFinder::FindOptions options) const {
+ZoneData::findNode(const Name& name, RBTreeNodeChain<Domain>& node_path,
+                   ZoneFinder::FindOptions options) const
+{
     DomainNode* node = NULL;
-    RBTreeNodeChain<Domain> node_path;
     FindState state((options & ZoneFinder::FIND_GLUE_OK) != 0);
 
     const DomainTree::Result result =
@@ -418,7 +472,8 @@ ZoneData::findNode(const Name& name, ZoneFinder::FindOptions options) const {
         }
         // Nothing really matched.
         LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_NOT_FOUND).arg(name);
-        return (ResultType(ZoneFinder::NXDOMAIN, node, state.rrset_));
+        return (ResultType(ZoneFinder::NXDOMAIN, node,
+                           getClosestNSEC(node_path, options)));
     } else {
         // If the name is neither an exact or partial match, it is
         // out of bailiwick, which is considered an error.
@@ -1236,8 +1291,10 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
 
         // Get the node.  All other cases than an exact match are handled
         // in findNode().  We simply construct a result structure and return.
+        RBTreeNodeChain<Domain> node_path; // findNode will fill in this
         const ZoneData::FindNodeResult node_result =
-            zone_data_->findNode<ZoneData::FindNodeResult>(name, options);
+            zone_data_->findNode<ZoneData::FindNodeResult>(name, node_path,
+                                                           options);
         if (node_result.code != SUCCESS) {
             return (createFindResult(node_result.code, node_result.rrset));
         }
@@ -1487,6 +1544,7 @@ addAdditional(RBNodeRRset* rrset, ZoneData* zone_data,
 {
     RdataIteratorPtr rdata_iterator = rrset->getRdataIterator();
     bool match_wild = false;    // will be true if wildcard match is found
+    RBTreeNodeChain<Domain> node_path;  // placeholder for findNode()
     for (; !rdata_iterator->isLast(); rdata_iterator->next()) {
         // For each domain name that requires additional section processing
         // in each RDATA, search the tree for the name and remember it if
@@ -1499,13 +1557,14 @@ addAdditional(RBNodeRRset* rrset, ZoneData* zone_data,
         // if the name is not in or below this zone, skip it
         const NameComparisonResult::NameRelation reln =
             name.compare(zone_data->origin_data_->getName()).getRelation();
-         if (reln != NameComparisonResult::SUBDOMAIN &&
-             reln != NameComparisonResult::EQUAL) {
+        if (reln != NameComparisonResult::SUBDOMAIN &&
+            reln != NameComparisonResult::EQUAL) {
             continue;
         }
+        node_path.clear();
         const ZoneData::FindMutableNodeResult result =
             zone_data->findNode<ZoneData::FindMutableNodeResult>(
-                name, ZoneFinder::FIND_GLUE_OK);
+                name, node_path, ZoneFinder::FIND_GLUE_OK);
         if (result.code != ZoneFinder::SUCCESS) {
             // We are not interested in anything but a successful match.
             continue;
