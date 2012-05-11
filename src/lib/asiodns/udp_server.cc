@@ -12,9 +12,9 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <unistd.h>             // for some IPC/network system calls
 #include <netinet/in.h>
 #include <sys/socket.h>
-#include <unistd.h>             // for some IPC/network system calls
 #include <errno.h>
 
 #include <boost/shared_array.hpp>
@@ -182,12 +182,6 @@ struct UDPServer::Data {
 ///
 /// The constructor. It just creates new internal state object
 /// and lets it handle the initialization.
-UDPServer::UDPServer(io_service& io_service, const ip::address& addr,
-                     const uint16_t port, SimpleCallback* checkin,
-                     DNSLookup* lookup, DNSAnswer* answer) :
-    data_(new Data(io_service, addr, port, checkin, lookup, answer))
-{ }
-
 UDPServer::UDPServer(io_service& io_service, int fd, int af,
                      SimpleCallback* checkin, DNSLookup* lookup,
                      DNSAnswer* answer) :
@@ -341,11 +335,6 @@ void
 UDPServer::resume(const bool done) {
     data_->done_ = done;
     data_->io_.post(*this);
-}
-
-bool
-UDPServer::hasAnswer() {
-    return (data_->done_);
 }
 
 } // namespace asiodns

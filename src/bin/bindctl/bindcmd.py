@@ -23,6 +23,7 @@ from cmd import Cmd
 from bindctl.exception import *
 from bindctl.moduleinfo import *
 from bindctl.cmdparse import BindCmdParse
+from bindctl import command_sets
 from xml.dom import minidom
 import isc
 import isc.cc.data
@@ -37,6 +38,7 @@ from hashlib import sha1
 import csv
 import pwd
 import getpass
+import copy
 
 try:
     from collections import OrderedDict
@@ -319,6 +321,8 @@ class BindCmdInterpreter(Cmd):
                                   param_spec = arg)
                 if ("item_default" in arg):
                     param.default = arg["item_default"]
+                if ("item_description" in arg):
+                    param.desc = arg["item_description"]
                 cmd.add_param(param)
             module.add_command(cmd)
         self.add_module_info(module)
@@ -361,12 +365,12 @@ class BindCmdInterpreter(Cmd):
                 if type(name) == int:
                     # lump all extraneous arguments together as one big final one
                     # todo: check if last param type is a string?
-                    if (param_count > 2):
-                        while (param_count > len(command_info.params) - 1):
-                            params[param_count - 2] += params[param_count - 1]
-                            del(params[param_count - 1])
-                            param_count = len(params)
-                            cmd.params = params.copy()
+                    while (param_count > 2 and
+                           param_count > len(command_info.params) - 1):
+                        params[param_count - 2] += " " + params[param_count - 1]
+                        del(params[param_count - 1])
+                        param_count = len(params)
+                        cmd.params = params.copy()
 
                     # (-1, help is always in the all_params list)
                     if name >= len(all_params) - 1:
@@ -391,8 +395,9 @@ class BindCmdInterpreter(Cmd):
                 param_nr += 1
 
         # Convert parameter value according parameter spec file.
-        # Ignore check for commands belongs to module 'config'
-        if cmd.module != CONFIG_MODULE_NAME:
+        # Ignore check for commands belongs to module 'config' or 'execute
+        if cmd.module != CONFIG_MODULE_NAME and\
+           cmd.module != command_sets.EXECUTE_MODULE_NAME:
             for param_name in cmd.params:
                 param_spec = command_info.get_param_with_name(param_name).param_spec
                 try:
@@ -406,16 +411,9 @@ class BindCmdInterpreter(Cmd):
         if cmd.command == "help" or ("help" in cmd.params.keys()):
             self._handle_help(cmd)
         elif cmd.module == CONFIG_MODULE_NAME:
-            try:
-                self.apply_config_cmd(cmd)
-            except isc.cc.data.DataTypeError as dte:
-                print("Error: " + str(dte))
-            except isc.cc.data.DataNotFoundError as dnfe:
-                print("Error: " + str(dnfe))
-            except isc.cc.data.DataAlreadyPresentError as dape:
-                print("Error: " + str(dape))
-            except KeyError as ke:
-                print("Error: missing " + str(ke))
+            self.apply_config_cmd(cmd)
+        elif cmd.module == command_sets.EXECUTE_MODULE_NAME:
+            self.apply_execute_cmd(cmd)
         else:
             self.apply_cmd(cmd)
 
@@ -574,6 +572,14 @@ class BindCmdInterpreter(Cmd):
             self._print_correct_usage(err)
         except isc.cc.data.DataTypeError as err:
             print("Error! ", err)
+        except isc.cc.data.DataTypeError as dte:
+            print("Error: " + str(dte))
+        except isc.cc.data.DataNotFoundError as dnfe:
+            print("Error: " + str(dnfe))
+        except isc.cc.data.DataAlreadyPresentError as dape:
+            print("Error: " + str(dape))
+        except KeyError as ke:
+            print("Error: missing " + str(ke))
 
     def _print_correct_usage(self, ept):
         if isinstance(ept, CmdUnknownModuleSyntaxError):
@@ -725,6 +731,84 @@ class BindCmdInterpreter(Cmd):
             return
 
         self.location = new_location
+
+    def apply_execute_cmd(self, command):
+        '''Handles the 'execute' command, which executes a number of
+           (preset) statements. The command set to execute is either
+           read from a file (e.g. 'execute file <file>'.) or one
+           of the sets as defined in command_sets.py'''
+        if command.command == 'file':
+            try:
+                with open(command.params['filename']) as command_file:
+                    commands = command_file.readlines()
+            except IOError as ioe:
+                print("Error: " + str(ioe))
+                return
+        elif command_sets.has_command_set(command.command):
+            commands = command_sets.get_commands(command.command)
+        else:
+            # Should not be reachable; parser should've caught this
+            raise Exception("Unknown execute command type " + command.command)
+
+        # We have our set of commands now, depending on whether 'show' was
+        # specified, show or execute them
+        if 'show' in command.params and command.params['show'] == 'show':
+            self.__show_execute_commands(commands)
+        else:
+            self.__apply_execute_commands(commands)
+
+    def __show_execute_commands(self, commands):
+        '''Prints the command list without executing them'''
+        for line in commands:
+            print(line.strip())
+
+    def __apply_execute_commands(self, commands):
+        '''Applies the configuration commands from the given iterator.
+           This is the method that catches, comments, echo statements, and
+           other directives. All commands not filtered by this method are
+           interpreted as if they are directly entered in an active session.
+           Lines starting with any of the following characters are not
+           passed directly:
+           # - These are comments
+           ! - These are directives
+               !echo: print the rest of the line
+               !verbose on/off: print the commands themselves too
+               Unknown directives are ignored (with a warning)
+           The execution is stopped if there are any errors.
+        '''
+        verbose = False
+        try:
+            for line in commands:
+                line = line.strip()
+                if verbose:
+                    print(line)
+                if line.startswith('#') or len(line) == 0:
+                    continue
+                elif line.startswith('!'):
+                    if re.match('^!echo ', line, re.I) and len(line) > 6:
+                        print(line[6:])
+                    elif re.match('^!verbose\s+on\s*$', line, re.I):
+                        verbose = True
+                    elif re.match('^!verbose\s+off$', line, re.I):
+                        verbose = False
+                    else:
+                        print("Warning: ignoring unknown directive: " + line)
+                else:
+                    cmd = BindCmdParse(line)
+                    self._validate_cmd(cmd)
+                    self._handle_cmd(cmd)
+        except (isc.config.ModuleCCSessionError,
+                IOError, http.client.HTTPException,
+                BindCtlException, isc.cc.data.DataTypeError,
+                isc.cc.data.DataNotFoundError,
+                isc.cc.data.DataAlreadyPresentError,
+                KeyError) as err:
+            print('Error: ', err)
+            print()
+            print('Depending on the contents of the script, and which')
+            print('commands it has called, there can be committed and')
+            print('local changes. It is advised to check your settings,')
+            print('and revert local changes with "config revert".')
 
     def apply_cmd(self, cmd):
         '''Handles a general module command'''

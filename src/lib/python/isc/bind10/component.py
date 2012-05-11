@@ -30,6 +30,8 @@ configuration). This is yet to be designed.
 import isc.log
 from isc.log_messages.bind10_messages import *
 import time
+import os
+import signal
 
 logger = isc.log.Logger("boss")
 DBG_TRACE_DATA = 20
@@ -44,6 +46,14 @@ COMPONENT_RESTART_DELAY = 10
 STATE_DEAD = 'dead'
 STATE_STOPPED = 'stopped'
 STATE_RUNNING = 'running'
+
+def get_signame(signal_number):
+    """Return the symbolic name for a signal."""
+    for sig in dir(signal):
+        if sig.startswith("SIG") and sig[3].isalnum():
+            if getattr(signal, sig) == signal_number:
+                return sig
+    return "unknown signal"
 
 class BaseComponent:
     """
@@ -206,8 +216,24 @@ class BaseComponent:
                 it is considered a core or needed component, or because
                 the component is to be restarted later.
         """
+
+        if exit_code is not None:
+            if os.WIFEXITED(exit_code):
+                exit_str = "process exited normally with exit status %d" % (exit_code)
+            elif os.WIFSIGNALED(exit_code):
+                sig = os.WTERMSIG(exit_code)
+                signame = get_signame(sig)
+                if os.WCOREDUMP(exit_code):
+                    exit_str = "process dumped core with exit status %d (killed by signal %d: %s)" % (exit_code, sig, signame)
+                else:
+                    exit_str = "process terminated with exit status %d (killed by signal %d: %s)" % (exit_code, sig, signame)
+            else:
+                exit_str = "unknown condition with exit status %d" % (exit_code)
+        else:
+            exit_str = "unknown condition"
+
         logger.error(BIND10_COMPONENT_FAILED, self.name(), self.pid(),
-                     exit_code if exit_code is not None else "unknown")
+                     exit_str)
         if not self.running():
             raise ValueError("Can't fail component that isn't running")
         self.__state = STATE_STOPPED

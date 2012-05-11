@@ -8,15 +8,7 @@
         "item_type": "named_set",
         "item_optional": false,
         "item_default": {
-          "b10-auth": { "special": "auth", "kind": "needed" },
-          "b10-xfrin": { "address": "Xfrin", "kind": "dispensable" },
-          "b10-xfrout": { "address": "Xfrout", "kind": "dispensable" },
-          "b10-zonemgr": { "address": "Zonemgr", "kind": "dispensable" },
           "b10-stats": { "address": "Stats", "kind": "dispensable" },
-          "b10-stats-httpd": {
-            "address": "StatsHttpd",
-            "kind": "dispensable"
-          },
           "b10-cmdctl": { "special": "cmdctl", "kind": "needed" }
         },
         "named_set_item_spec": {

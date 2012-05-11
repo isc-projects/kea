@@ -24,7 +24,7 @@ needs a dedicated message bus.
 An error was encountered when the boss module specified
 statistics data which is invalid for the boss specification file.
 
-% BIND10_COMPONENT_FAILED component %1 (pid %2) failed with %3 exit status
+% BIND10_COMPONENT_FAILED component %1 (pid %2) failed: %3
 The process terminated, but the bind10 boss didn't expect it to, which means
 it must have failed.
 

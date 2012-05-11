@@ -20,7 +20,7 @@
 
 #include <cassert>
 
-// This definitions in this file are for the convenience of internal
+// These definitions in this file are for the convenience of internal
 // implementation and test code, and are not intended to be used publicly.
 // The namespace "internal" indicates the intent.
 

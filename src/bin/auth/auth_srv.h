@@ -28,6 +28,7 @@
 #include <util/buffer.h>
 
 #include <asiodns/dns_server.h>
+#include <asiodns/dns_service.h>
 #include <asiodns/dns_lookup.h>
 #include <asiodns/dns_answer.h>
 #include <asiolink/io_message.h>
@@ -115,14 +116,14 @@ public:
     /// send the reply.
     ///
     /// \param io_message The raw message received
-    /// \param message Pointer to the \c Message object
-    /// \param buffer Pointer to an \c OutputBuffer for the resposne
+    /// \param message the \c Message object
+    /// \param buffer an \c OutputBuffer for the resposne
     /// \param server Pointer to the \c DNSServer
     ///
     /// \throw isc::Unexpected Protocol type of \a message is unexpected
     void processMessage(const isc::asiolink::IOMessage& io_message,
-                        isc::dns::MessagePtr message,
-                        isc::util::OutputBufferPtr buffer,
+                        isc::dns::Message& message,
+                        isc::util::OutputBuffer& buffer,
                         isc::asiodns::DNSServer* server);
 
     /// \brief Updates the data source for the \c AuthSrv object.
@@ -276,7 +277,7 @@ public:
     /// in-memory data source.
     ///
     /// \param rrclass The RR class of the in-memory data source to be set.
-    /// \param memory_datasrc A (shared) pointer to \c InMemoryClient to be set.
+    /// \param memory_client A (shared) pointer to \c InMemoryClient to be set.
     void setInMemoryClient(const isc::dns::RRClass& rrclass,
                            InMemoryClientPtr memory_client);
 
@@ -384,7 +385,7 @@ public:
         const;
 
     /// \brief Assign an ASIO DNS Service queue to this Auth object
-    void setDNSService(isc::asiodns::DNSService& dnss);
+    void setDNSService(isc::asiodns::DNSServiceBase& dnss);
 
     /// \brief Sets the keyring used for verifying and signing
     ///
@@ -400,7 +401,7 @@ private:
     isc::asiolink::SimpleCallback* checkin_;
     isc::asiodns::DNSLookup* dns_lookup_;
     isc::asiodns::DNSAnswer* dns_answer_;
-    isc::asiodns::DNSService* dnss_;
+    isc::asiodns::DNSServiceBase* dnss_;
 };
 
 #endif // __AUTH_SRV_H

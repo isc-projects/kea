@@ -74,6 +74,60 @@ class TestConfigManagerData(unittest.TestCase):
         self.assertEqual(self.config_manager_data, new_config)
         os.remove(output_file_name)
 
+    def check_existence(self, files, should_exist=[], should_not_exist=[]):
+        """Helper function for test_rename_config_file.
+           Arguments:
+           files: array of file names to check.
+           should_exist: array of indices, the files in 'files' with these
+                         indices should exist.
+           should_not_exist: array of indices, the files in 'files' with
+                             these indices should not exist."""
+        for n in should_exist:
+            self.assertTrue(os.path.exists(files[n]))
+        for n in should_not_exist:
+            self.assertFalse(os.path.exists(files[n]))
+
+    def test_rename_config_file(self):
+        # test file names, put in array for easy cleanup
+        filenames = [ "b10-config-rename-test",
+                      "b10-config-rename-test.bak",
+                      "b10-config-rename-test.bak.1",
+                      "b10-config-rename-test.bak.2" ]
+
+        for filename in filenames:
+            if os.path.exists(filename):
+                os.remove(filename)
+
+        # The original does not exist, so the new one should not be created
+        self.config_manager_data.rename_config_file(filenames[0])
+        self.check_existence(filenames, [], [0, 1, 2, 3])
+
+        # now create a file to rename, and call rename again
+        self.config_manager_data.write_to_file(filenames[0])
+        self.config_manager_data.rename_config_file(filenames[0])
+        self.check_existence(filenames, [1], [0, 2, 3])
+
+        # If backup already exists, give it a new name automatically
+        self.config_manager_data.write_to_file(filenames[0])
+        self.config_manager_data.rename_config_file(filenames[0])
+        self.check_existence(filenames, [1, 2], [0, 3])
+
+        # If backup already exists, give it a new name automatically with
+        # increasing postfix
+        self.config_manager_data.write_to_file(filenames[0])
+        self.config_manager_data.rename_config_file(filenames[0])
+        self.check_existence(filenames, [1, 2, 3], [0])
+
+        # Test with explicit renamed file argument
+        self.config_manager_data.rename_config_file(filenames[1],
+                                                    filenames[0])
+        self.check_existence(filenames, [0, 2, 3], [1])
+
+        # clean up again to be nice
+        for filename in filenames:
+            if os.path.exists(filename):
+                os.remove(filename)
+
     def test_equality(self):
         # tests the __eq__ function. Equality is only defined
         # by equality of the .data element. If data_path or db_filename
@@ -570,5 +624,6 @@ if __name__ == '__main__':
     if not 'CONFIG_TESTDATA_PATH' in os.environ or not 'CONFIG_WR_TESTDATA_PATH' in os.environ:
         print("You need to set the environment variable CONFIG_TESTDATA_PATH and CONFIG_WR_TESTDATA_PATH to point to the directory containing the test data files")
         exit(1)
+    isc.log.init("unittests")
+    isc.log.resetUnitTestRootLogger()
     unittest.main()
-

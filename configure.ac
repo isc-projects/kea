@@ -2,10 +2,12 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.59])
-AC_INIT(bind10-devel, 20120127, bind10-dev@isc.org)
+AC_INIT(bind10-devel, 20120405, bind10-dev@isc.org)
 AC_CONFIG_SRCDIR(README)
 AM_INIT_AUTOMAKE
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])dnl be backward compatible
 AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_MACRO_DIR([m4macros])
 
 # Checks for programs.
 AC_PROG_CXX
@@ -84,11 +86,6 @@ if test $enable_shared = no; then
 	AC_MSG_ERROR([BIND 10 requires shared libraries to be built])
 fi
 
-AC_ARG_ENABLE(boost-threads,
-AC_HELP_STRING([--enable-boost-threads],
-  [use boost threads. Currently this only means using its locks instead of dummy locks, in the cache and NSAS]),
-  use_boost_threads=$enableval, use_boost_threads=no)
-
 # allow configuring without setproctitle.
 AC_ARG_ENABLE(setproctitle-check,
 AC_HELP_STRING([--disable-setproctitle-check],
@@ -125,6 +122,9 @@ case "$host" in
 	SET_ENV_LIBRARY_PATH=yes
 	;;
 *-netbsd*)
+	SET_ENV_LIBRARY_PATH=yes
+	;;
+*-openbsd*)
 	SET_ENV_LIBRARY_PATH=yes
 	;;
 esac
@@ -274,7 +274,7 @@ AC_DEFUN([BIND10_CXX_TRY_FLAG], [
   bind10_save_CXXFLAGS="$CXXFLAGS"
   CXXFLAGS="$CXXFLAGS $1"
 
-  AC_LINK_IFELSE([int main(void){ return 0;} ],
+  AC_LINK_IFELSE([AC_LANG_SOURCE([int main(void){ return 0;}])],
                  [bind10_cxx_flag=yes], [bind10_cxx_flag=no])
   CXXFLAGS="$bind10_save_CXXFLAGS"
 
@@ -287,8 +287,6 @@ AC_DEFUN([BIND10_CXX_TRY_FLAG], [
   AC_MSG_RESULT([$bind10_cxx_flag])
 ])
 
-werror_ok=0
-
 # SunStudio compiler requires special compiler options for boost
 # (http://blogs.sun.com/sga/entry/boost_mini_howto)
 if test "$SUNCXX" = "yes"; then
@@ -296,7 +294,7 @@ CXXFLAGS="$CXXFLAGS -library=stlport4 -features=tmplife -features=tmplrefstatic"
 MULTITHREADING_FLAG="-mt"
 fi
 
-BIND10_CXX_TRY_FLAG(-Wno-missing-field-initializers,
+BIND10_CXX_TRY_FLAG([-Wno-missing-field-initializers],
 	[WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG="-Wno-missing-field-initializers"])
 AC_SUBST(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 
@@ -314,19 +312,34 @@ case "$host" in
 	;;
 esac
 
+# Don't use -Werror if configured not to
+AC_ARG_WITH(werror,
+    AC_HELP_STRING([--with-werror], [Compile using -Werror (default=yes)]),
+    [
+     case "${withval}" in
+         yes) with_werror=1 ;;
+         no)  with_werror=0 ;;
+         *)   AC_MSG_ERROR(bad value ${withval} for --with-werror) ;;
+     esac],
+     [with_werror=1])
+
+werror_ok=0
+
 # Certain versions of gcc (g++) have a bug that incorrectly warns about
 # the use of anonymous name spaces even if they're closed in a single
 # translation unit.  For these versions we have to disable -Werror.
-CXXFLAGS_SAVED="$CXXFLAGS"
-CXXFLAGS="$CXXFLAGS $B10_CXXFLAGS -Werror"
-AC_MSG_CHECKING(for in-TU anonymous namespace breakage)
-AC_TRY_COMPILE([namespace { class Foo {}; }
-namespace isc {class Bar {Foo foo_;};} ],,
+if test $with_werror = 1; then
+   CXXFLAGS_SAVED="$CXXFLAGS"
+   CXXFLAGS="$CXXFLAGS $B10_CXXFLAGS -Werror"
+   AC_MSG_CHECKING(for in-TU anonymous namespace breakage)
+   AC_TRY_COMPILE([namespace { class Foo {}; }
+   namespace isc {class Bar {Foo foo_;};} ],,
 	[AC_MSG_RESULT(no)
 	 werror_ok=1
 	 B10_CXXFLAGS="$B10_CXXFLAGS -Werror"],
 	[AC_MSG_RESULT(yes)])
-CXXFLAGS="$CXXFLAGS_SAVED"
+   CXXFLAGS="$CXXFLAGS_SAVED"
+fi
 
 # Python 3.2 has an unused parameter in one of its headers. This
 # has been reported, but not fixed as of yet, so we check if we need
@@ -481,61 +494,163 @@ if test "$lcov" != "no"; then
 fi
 AC_SUBST(USE_LCOV)
 
+# Simplified, non-caching AC_CHECK_PROG
+# Searches $PATH for the existence of argument 2,
+# and sets the full path to the variable in argument 1.
+# if not found, and a third argument is given, the value
+# is set to that. If not, the value is untouched.
+# Does not take absolute paths into account at this point,
+# and also works for single files only (arguments are not
+# stripped like in AC_CHECK_PROG)
+AC_DEFUN([ACX_CHECK_PROG_NONCACHE], [
+    RESULT=""
+    IFS_SAVED="$IFS"
+    IFS=${PATH_SEPARATOR}
+    for cur_path in ${PATH} ; do
+      if test -e "${cur_path}/$2" ; then
+          RESULT="${cur_path}/$2"
+      fi
+    done
+    if test "$RESULT" = "" ; then
+        :
+        m4_ifvaln([$3], [$1=$3])
+    else
+        $1=$RESULT
+    fi
+    IFS="$IFS_SAVED"
+])
+
+# Botan helper test function
+# Tries to compile a botan program, given the output of the given
+# config tool
+# Arguments:
+# - name of tool (checked for path), must support --libs and --cflags
+# - fixed argument(s) for tool
+# - action if successful
+AC_DEFUN([ACX_TRY_BOTAN_TOOL], [
+    TOOL=$1
+    TOOL_ARG=$2
+    BOTAN_TOOL=""
+    ACX_CHECK_PROG_NONCACHE([BOTAN_TOOL], [${TOOL}])
+    AC_MSG_CHECKING([usability of ${TOOL} ${TOOL_ARG}])
+    if test "$BOTAN_TOOL" != "" ; then
+        if test -x ${BOTAN_TOOL}; then
+            BOTAN_LIBS=`$BOTAN_TOOL $TOOL_ARG --libs`
+            LIBS_SAVED=${LIBS}
+            LIBS="$LIBS $BOTAN_LIBS"
+            BOTAN_INCLUDES=`$BOTAN_TOOL $TOOL_ARG --cflags`
+            CPPFLAGS_SAVED=${CPPFLAGS}
+            CPPFLAGS="$BOTAN_INCLUDES $CPPFLAGS"
+            #AC_MSG_RESULT([found])
+            AC_LINK_IFELSE(
+                [AC_LANG_PROGRAM([#include <botan/botan.h>
+                                  #include <botan/hash.h>
+                                 ],
+                                 [using namespace Botan;
+                                  LibraryInitializer::initialize();
+                                  HashFunction *h = get_hash("MD5");
+                                 ])],
+                [ AC_MSG_RESULT([ok])
+                  $3
+                ],
+                [ AC_MSG_RESULT([not usable]) ]
+            )
+            LIBS=${LIBS_SAVED}
+            CPPFLAGS=${CPPFLAGS_SAVED}
+        else
+            AC_MSG_RESULT([not executable])
+        fi
+    else
+        AC_MSG_RESULT([not found])
+    fi
+    BOTAN_TOOL=""
+    AC_SUBST(BOTAN_TOOL)
+    ]
+)
+
 # Check for Botan
-botan_path="yes"
-AC_ARG_WITH([botan],
-  AC_HELP_STRING([--with-botan=PATH],
-    [specify the path to botan-config (PATH/bin/botan-config will be used)]),
-    [botan_path="$withval"])
-if test "${botan_path}" = "no" ; then
+#
+# Unless --with-botan-config is given, we first try to find these config
+# scripts ourselves. Unfortunately, on some systems, these scripts do not
+# provide the correct implementation, so for each script found, we try
+# a compilation test (ACX_TRY_BOTAN_TOOL). If none are found, or none of
+# them work, we see if pkg-config is available. If so, we try the several
+# potential pkg-config .pc files. Again, on some systems, these can return
+# incorrect information as well, so the try-compile test is repeated for
+# each.
+#
+# If a working config script or pkgconfig file is found, we then munge its
+# output for use in our Makefiles, and to make sure it works, another header
+# and compilation test is done (this should also check whether we can compile
+# against botan should neither -config scripts nor pkgconfig data exist).
+#
+botan_config="yes"
+AC_ARG_WITH([botan-config],
+  AC_HELP_STRING([--with-botan-config=PATH],
+    [specify the path to the botan-config script]),
+    [botan_config="$withval"])
+if test "${botan_config}" = "no" ; then
     AC_MSG_ERROR([Need botan for libcryptolink])
 fi
-if test "${botan_path}" != "yes" ; then
-    if test -x "${botan_path}/bin/botan-config" ; then
-        BOTAN_CONFIG="${botan_path}/bin/botan-config"
+if test "${botan_config}" != "yes" ; then
+    if test -x "${botan_config}" ; then
+        if test -d "${botan_config}" ; then
+            AC_MSG_ERROR([${botan_config} is a directory])
+        else
+            BOTAN_CONFIG="${botan_config}"
+        fi
     else
-        AC_MSG_ERROR([${botan_path}/bin/botan-config not found])
+        AC_MSG_ERROR([--with-botan-config should point to a botan-config program and not a directory (${botan_config})])
     fi
 else
-    # First see if pkg-config knows of it.
-    # Unfortunately, the botan.pc files have their minor version in them
-    # too, so we need to try them one by one
     BOTAN_CONFIG=""
-    AC_PATH_PROG([PKG_CONFIG], [pkg-config])
-    if test "$PKG_CONFIG" != "" ; then
-        BOTAN_VERSIONS="botan-1.10 botan-1.9 botan-1.8"
-        for version in $BOTAN_VERSIONS; do
-            AC_MSG_CHECKING([Checking botan version with pkg-config $version])
-            
-            if [ $PKG_CONFIG --exists ${version} ]; then
-                AC_MSG_RESULT([found])
-                BOTAN_CONFIG="$PKG_CONFIG ${version}"
-                break
-            else
-                AC_MSG_RESULT([not found])
-            fi
-        done
-    fi
-    # If we had no pkg-config, or it didn't know about botan, use botan-config
+    # first try several possible names of the config script
+    # (botan-config-1.8 is there just in case, the official name change
+    # came later)
+    BOTAN_CONFIG_VERSIONS="botan-config-1.10 botan-config-1.9 botan-config-1.8 botan-config"
+    for botan_config in $BOTAN_CONFIG_VERSIONS; do
+        ACX_TRY_BOTAN_TOOL([$botan_config],,
+                           [ BOTAN_CONFIG="$botan_config"  ]
+                          )
+        if test "$BOTAN_CONFIG" != "" ; then
+            break
+        fi
+    done
     if test "$BOTAN_CONFIG" = "" ; then
-        AC_PATH_PROG([BOTAN_CONFIG], [botan-config])
+        AC_PATH_PROG([PKG_CONFIG], [pkg-config])
+        if test "$PKG_CONFIG" != "" ; then
+            # Ok so no script found, see if pkg-config knows of it.
+            # Unfortunately, the botan.pc files also have their minor version
+            # in their name, so we need to try them one by one
+            BOTAN_VERSIONS="botan-1.10 botan-1.9 botan-1.8"
+            for version in $BOTAN_VERSIONS; do
+                ACX_TRY_BOTAN_TOOL([pkg-config], ["$version --silence-errors"],
+                                   [ BOTAN_CONFIG="$PKG_CONFIG $version" ]
+                                  )
+            if test "$BOTAN_CONFIG" != "" ; then
+                break
+            fi
+            done
+        fi
     fi
 fi
 
-BOTAN_LIBS=`${BOTAN_CONFIG} --libs`
-BOTAN_INCLUDES=`${BOTAN_CONFIG} --cflags`
+if test "x${BOTAN_CONFIG}" != "x"
+then
+    BOTAN_LIBS=`${BOTAN_CONFIG} --libs`
+    BOTAN_INCLUDES=`${BOTAN_CONFIG} --cflags`
 
-# We expect botan-config --libs to contain -L<path_to_libbotan>, but
-# this is not always the case.  As a heuristics workaround we add
-# -L`botan-config --prefix/lib` in this case (if not present already).
-# Same for BOTAN_INCLUDES (but using include instead of lib) below.
-if [ $BOTAN_CONFIG --prefix >/dev/null 2>&1 ] ; then
-    echo ${BOTAN_LIBS} | grep -- -L > /dev/null || \
-        BOTAN_LIBS="-L`${BOTAN_CONFIG} --prefix`/lib ${BOTAN_LIBS}"
-    echo ${BOTAN_INCLUDES} | grep -- -I > /dev/null || \
-        BOTAN_INCLUDES="-I`${BOTAN_CONFIG} --prefix`/include ${BOTAN_INCLUDES}"
+    # We expect botan-config --libs to contain -L<path_to_libbotan>, but
+    # this is not always the case.  As a heuristics workaround we add
+    # -L`botan-config --prefix/lib` in this case (if not present already).
+    # Same for BOTAN_INCLUDES (but using include instead of lib) below.
+    if [ ${BOTAN_CONFIG} --prefix >/dev/null 2>&1 ] ; then
+        echo ${BOTAN_LIBS} | grep -- -L > /dev/null || \
+            BOTAN_LIBS="-L`${BOTAN_CONFIG} --prefix`/lib ${BOTAN_LIBS}"
+        echo ${BOTAN_INCLUDES} | grep -- -I > /dev/null || \
+            BOTAN_INCLUDES="-I`${BOTAN_CONFIG} --prefix`/include ${BOTAN_INCLUDES}"
+    fi
 fi
-
 # botan-config script (and the way we call pkg-config) returns -L and -l
 # as one string, but we need them in separate values
 BOTAN_LDFLAGS=
@@ -567,6 +682,9 @@ AC_SUBST(BOTAN_LDFLAGS)
 AC_SUBST(BOTAN_LIBS)
 AC_SUBST(BOTAN_INCLUDES)
 
+# Even though chances are high we already performed a real compilation check
+# in the search for the right (pkg)config data, we try again here, to
+# be sure.
 CPPFLAGS_SAVED=$CPPFLAGS
 CPPFLAGS="$BOTAN_INCLUDES $CPPFLAGS"
 LIBS_SAVED="$LIBS"
@@ -582,7 +700,11 @@ AC_LINK_IFELSE(
                          ])],
         [AC_MSG_RESULT([checking for Botan library... yes])],
         [AC_MSG_RESULT([checking for Botan library... no])
-         AC_MSG_ERROR([Needs Botan library 1.8 or higher])]
+         AC_MSG_ERROR([Needs Botan library 1.8 or higher. On some systems,
+         the botan package has a few missing dependencies (libbz2 and
+         libgmp), if libbotan has been installed and you see this error,
+         try upgrading to a higher version of botan or installing libbz2
+         and libgmp.])]
 )
 CPPFLAGS=$CPPFLAGS_SAVED
 LIBS=$LIBS_SAVED
@@ -662,70 +784,23 @@ if test "${boost_include_path}" ; then
 fi
 AC_CHECK_HEADERS([boost/shared_ptr.hpp boost/foreach.hpp boost/interprocess/sync/interprocess_upgradable_mutex.hpp boost/date_time/posix_time/posix_time_types.hpp boost/bind.hpp boost/function.hpp],,
   AC_MSG_ERROR([Missing required header files.]))
-CPPFLAGS="$CPPFLAGS_SAVES"
+
+# Detect whether Boost tries to use threads by default, and, if not,
+# make it sure explicitly.  In some systems the automatic detection
+# may depend on preceding header files, and if inconsistency happens
+# it could lead to a critical disruption.
+AC_MSG_CHECKING([whether Boost tries to use threads])
+AC_TRY_COMPILE([
+#include <boost/config.hpp>
+#ifdef BOOST_HAS_THREADS
+#error "boost will use threads"
+#endif],,
+[AC_MSG_RESULT(no)
+ CPPFLAGS_BOOST_THREADCONF="-DBOOST_DISABLE_THREADS=1"],
+[AC_MSG_RESULT(yes)])
+
+CPPFLAGS="$CPPFLAGS_SAVES $CPPFLAGS_BOOST_THREADCONF"
 AC_SUBST(BOOST_INCLUDES)
-
-
-if test "${use_boost_threads}" = "yes" ; then
-    AC_DEFINE([USE_BOOST_THREADS], [], [Use boost threads])
-
-    # Using boost::mutex can result in requiring libboost_thread with older
-    # versions of Boost.  We'd like to avoid relying on a compiled Boost library
-    # whenever possible, so we need to check for it step by step.
-    #
-    # NOTE: another fix of this problem is to simply require newer versions of
-    # boost.  If we choose that solution we should simplify the following tricky
-    # checks accordingly and all Makefile.am's that refer to NEED_LIBBOOST_THREAD.
-    AC_MSG_CHECKING(for boost::mutex)
-    CPPFLAGS_SAVES="$CPPFLAGS"
-    LIBS_SAVES="$LIBS"
-    CPPFLAGS="$BOOST_INCLUDES $CPPFLAGS $MULTITHREADING_FLAG"
-    need_libboost_thread=0
-    need_sunpro_workaround=0
-    AC_TRY_LINK([
-    #include <boost/thread.hpp>
-    ],[
-    boost::mutex m;
-    ],
-        [ AC_MSG_RESULT(yes (without libboost_thread)) ],
-        # there is one specific problem with SunStudio 5.10
-        # where including boost/thread causes a compilation failure
-        # There is a workaround in boost but it checks the version not being 5.10
-        # This will probably be fixed in the future, in which case this
-        # is only a temporary workaround
-        [ AC_TRY_LINK([
-    #if defined(__SUNPRO_CC) && __SUNPRO_CC == 0x5100
-    #undef __SUNPRO_CC
-    #define __SUNPRO_CC 0x5090
-    #endif
-    #include <boost/thread.hpp>
-    ],[
-    boost::mutex m;
-    ],
-        [ AC_MSG_RESULT(yes (with SUNOS workaround))
-          need_sunpro_workaround=1 ],
-            [ LIBS=" $LIBS -lboost_thread"
-          AC_TRY_LINK([
-    #include <boost/thread.hpp>
-    ],[
-    boost::mutex m;
-    ],
-              [ AC_MSG_RESULT(yes (with libboost_thread))
-                need_libboost_thread=1 ],
-              [ AC_MSG_RESULT(no)
-                AC_MSG_ERROR([boost::mutex cannot be linked in this build environment.
-    Perhaps you are using an older version of Boost that requires libboost_thread for the mutex support, which does not appear to be available.
-    You may want to check the availability of the library or to upgrade Boost.])
-              ])])])
-    CPPFLAGS="$CPPFLAGS_SAVES"
-    LIBS="$LIBS_SAVES"
-    AM_CONDITIONAL(NEED_LIBBOOST_THREAD, test $need_libboost_thread = 1)
-    if test $need_sunpro_workaround = 1; then
-        AC_DEFINE([NEED_SUNPRO_WORKAROUND], [], [Need boost sunstudio workaround])
-    fi
-else
-    AM_CONDITIONAL(NEED_LIBBOOST_THREAD, test "${use_boost_threads}" = "yes")
-fi
 
 # I can't get some of the #include <asio.hpp> right without this
 # TODO: find the real cause of asio/boost wanting pthreads
@@ -850,28 +925,9 @@ CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/ext/coroutine"
 #
 # Disable threads: Currently we don't use them.
 CPPFLAGS="$CPPFLAGS -DASIO_DISABLE_THREADS=1"
-#
-# kqueue portability: ASIO uses kqueue by default if it's available (it's
-# generally available in BSD variants).  Unfortunately, some public
-# implementation of kqueue forces a conversion from a pointer to an integer,
-# which is prohibited in C++ unless reinterpret_cast, C++'s most evil beast
-# (and ASIO doesn't use it anyway) is used.  This will cause build error for
-# some of our C++ files including ASIO header files.  The following check
-# detects such cases and tells ASIO not to use kqueue if so.
-AC_CHECK_FUNC(kqueue, ac_cv_have_kqueue=yes, ac_cv_have_kqueue=no)
-if test "X$ac_cv_have_kqueue" = "Xyes"; then
-	AC_MSG_CHECKING([whether kqueue EV_SET compiles in C++])
-	AC_TRY_COMPILE([
-#include <sys/types.h>
-#include <sys/param.h>
-#include <sys/event.h>],
-[char* udata;
-EV_SET(NULL, 0, 0, 0, 0, 0, udata);],
-	[AC_MSG_RESULT(yes)],
-	[AC_MSG_RESULT([no, disable kqueue for ASIO])
-	 CPPFLAGS="$CPPFLAGS -DASIO_DISABLE_KQUEUE=1"
-	])
-fi
+
+# Check for functions that are not available on all platforms
+AC_CHECK_FUNCS([pselect])
 
 # perfdhcp: If the clock_gettime() function does not exist on the system,
 # use an alternative supplied in the code based on gettimeofday().
@@ -921,6 +977,11 @@ AC_ARG_ENABLE(install-configurations,
 
 AM_CONDITIONAL(INSTALL_CONFIGURATIONS, test x$install_configurations = xyes || test x$install_configurations = xtrue)
 
+AC_ARG_ENABLE(logger-checks, [AC_HELP_STRING([--enable-logger-checks],
+  [check logger messages [default=no]])], enable_logger_checks=$enableval, enable_logger_checks=no)
+AM_CONDITIONAL(ENABLE_LOGGER_CHECKS, test x$enable_logger_checks != xno)
+AM_COND_IF([ENABLE_LOGGER_CHECKS], [AC_DEFINE([ENABLE_LOGGER_CHECKS], [1], [Check logger messages?])])
+
 AC_CONFIG_FILES([Makefile
                  doc/Makefile
                  doc/guide/Makefile
@@ -937,6 +998,9 @@ AC_CONFIG_FILES([Makefile
                  src/bin/cfgmgr/plugins/Makefile
                  src/bin/cfgmgr/plugins/tests/Makefile
                  src/bin/cfgmgr/tests/Makefile
+                 src/bin/dbutil/Makefile
+                 src/bin/dbutil/tests/Makefile
+                 src/bin/dbutil/tests/testdata/Makefile
                  src/bin/host/Makefile
                  src/bin/loadzone/Makefile
                  src/bin/loadzone/tests/correct/Makefile
@@ -950,8 +1014,8 @@ AC_CONFIG_FILES([Makefile
                  src/bin/ddns/tests/Makefile
                  src/bin/dhcp6/Makefile
                  src/bin/dhcp6/tests/Makefile
-		 src/bin/dhcp4/Makefile
-		 src/bin/dhcp4/tests/Makefile
+                 src/bin/dhcp4/Makefile
+                 src/bin/dhcp4/tests/Makefile
                  src/bin/resolver/Makefile
                  src/bin/resolver/tests/Makefile
                  src/bin/sockcreator/Makefile
@@ -1005,6 +1069,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/python/isc/bind10/tests/Makefile
                  src/lib/python/isc/xfrin/Makefile
                  src/lib/python/isc/xfrin/tests/Makefile
+                 src/lib/python/isc/server_common/Makefile
+                 src/lib/python/isc/server_common/tests/Makefile
                  src/lib/config/Makefile
                  src/lib/config/tests/Makefile
                  src/lib/config/tests/testdata/Makefile
@@ -1054,15 +1120,18 @@ AC_CONFIG_FILES([Makefile
                  tests/tools/badpacket/Makefile
                  tests/tools/badpacket/tests/Makefile
                  tests/tools/perfdhcp/Makefile
+                 dns++.pc
                ])
 AC_OUTPUT([doc/version.ent
-           compatcheck/sqlite3-difftbl-check.py
            src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/cfgmgr/tests/b10-cfgmgr_test.py
            src/bin/cmdctl/cmdctl.py
            src/bin/cmdctl/run_b10-cmdctl.sh
            src/bin/cmdctl/tests/cmdctl_test
            src/bin/cmdctl/cmdctl.spec.pre
+           src/bin/dbutil/dbutil.py
+           src/bin/dbutil/run_dbutil.sh
+           src/bin/dbutil/tests/dbutil_test.sh
            src/bin/ddns/ddns.py
            src/bin/xfrin/tests/xfrin_test
            src/bin/xfrin/xfrin.py
@@ -1139,13 +1208,14 @@ AC_OUTPUT([doc/version.ent
            tests/system/ixfr/in-3/setup.sh
            tests/system/ixfr/in-4/setup.sh
           ], [
-           chmod +x compatcheck/sqlite3-difftbl-check.py
            chmod +x src/bin/cmdctl/run_b10-cmdctl.sh
            chmod +x src/bin/xfrin/run_b10-xfrin.sh
            chmod +x src/bin/xfrout/run_b10-xfrout.sh
            chmod +x src/bin/zonemgr/run_b10-zonemgr.sh
            chmod +x src/bin/bind10/run_bind10.sh
            chmod +x src/bin/cmdctl/tests/cmdctl_test
+           chmod +x src/bin/dbutil/run_dbutil.sh
+           chmod +x src/bin/dbutil/tests/dbutil_test.sh
            chmod +x src/bin/xfrin/tests/xfrin_test
            chmod +x src/bin/xfrout/tests/xfrout_test
            chmod +x src/bin/zonemgr/tests/zonemgr_test

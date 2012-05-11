@@ -6,6 +6,7 @@ libutil_unittests_la_SOURCES = fork.h fork.cc resolver.h
 libutil_unittests_la_SOURCES += newhook.h newhook.cc
 libutil_unittests_la_SOURCES += testdata.h testdata.cc
 if HAVE_GTEST
+libutil_unittests_la_SOURCES += resource.h resource.cc
 libutil_unittests_la_SOURCES += run_all.h run_all.cc
 libutil_unittests_la_SOURCES += textdata.h
 endif
