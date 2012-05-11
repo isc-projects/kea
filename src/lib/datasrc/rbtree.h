@@ -1162,7 +1162,7 @@ RBTree<T>::previousNode(RBTreeNodeChain<T>& node_path) const {
     }
     if (node_path.getLastComparedNode() == NULL) {
         isc_throw(isc::BadValue,
-                  "RBTree::previousNode called before find");
+                  "RBTree::previousNode() called before find()");
     }
 
     // If the relation isn't EQUAL, it means the find was called previously
@@ -1174,7 +1174,7 @@ RBTree<T>::previousNode(RBTreeNodeChain<T>& node_path) const {
     switch (node_path.getLastComparisonResult().getRelation()) {
         case dns::NameComparisonResult::COMMONANCESTOR:
             // We compared with a leaf in the tree and wanted to go to one of
-            // the sons. But the son was not there. It now depends on the
+            // the children. But the child was not there. It now depends on the
             // direction in which we wanted to go.
             if (node_path.getLastComparisonResult().getOrder() < 0) {
                 // We wanted to go left. So the one we compared with is
