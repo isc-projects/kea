@@ -267,6 +267,9 @@ ZoneData::getClosestNSEC(RBTreeNodeChain<Domain>& node_path,
     // This must be impossible and should be an internal bug.
     // See the description at the method declaration.
     assert(false);
+    // Even though there is an assert here, strict compilers
+    // will still need some return value.
+    return (ConstRBNodeRRsetPtr());
 }
 
 /// Maintain intermediate data specific to the search context used in
