@@ -89,6 +89,10 @@ protected:
         server.setStatisticsSession(&statistics_session);
     }
 
+    ~AuthSrvTest() {
+        parse_message->clear(Message::PARSE);
+    }
+
     virtual void processMessage() {
         // If processMessage has been called before, parse_message needs
         // to be reset. If it hasn't, there's no harm in doing so
