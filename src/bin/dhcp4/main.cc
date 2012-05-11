@@ -65,11 +65,13 @@ usage() {
 }
 } // end of anonymous namespace
 
+IOService io_service;
+
 ConstElementPtr
 dhcp4_config_handler(ConstElementPtr new_config) {
     cout << "b10-dhcp4: Received new config:" << new_config->str() << endl;
     ConstElementPtr answer = isc::config::createAnswer(0,
-                             "All good here. Thanks for sending config.");
+                             "Thanks for sending config.");
     return (answer);
 }
 
@@ -77,8 +79,16 @@ ConstElementPtr
 dhcp4_command_handler(const string& command, ConstElementPtr args) {
     cout << "b10-dhcp4: Received new command: [" << command << "], args="
          << args->str() << endl;
-    ConstElementPtr answer = isc::config::createAnswer(0,
-                             "All good here. Thanks for asking.");
+    if (command == "shutdown") {
+        io_service.stop();
+        ConstElementPtr answer = isc::config::createAnswer(0,
+                                 "Shutting down.");
+        return (answer);
+    }
+
+    ConstElementPtr answer = isc::config::createAnswer(1,
+                             "Unrecognized command.");
+
     return (answer);
 }
 
@@ -97,8 +107,6 @@ void establish_session() {
     }
 
     cout << "b10-dhcp4: my specfile is " << specfile << endl;
-
-    IOService io_service;
 
     cc_session = new Session(io_service.get_io_service());
 

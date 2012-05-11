@@ -2037,21 +2037,22 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
       </para>
 
       <para>
-        The DHCPv4 server is implemented as <command>b10-dhcp4</command>
-        daemon. As it is not configurable yet, it is fully autonomous,
-        that is it does not interact with <command>b10-cfgmgr</command>.
-        To start DHCPv4 server, simply input:
+        <command>b10-dhcp4</command> is a BIND10 component and is being
+        run under BIND10 framework. To add a DHCPv4 process to the set of running
+        BIND10 services, you can use following commands in <command>bindctl</command>:
+        <screen>&gt; <userinput>config add Boss/components b10-dhcp4</userinput>
+&gt; <userinput>config set Boss/components/b10-resolver/kind dispensable</userinput>
+&gt; <userinput>config commit</userinput></screen></para>
 
-        <screen>
-#<userinput>cd src/bin/dhcp4</userinput>
-#<userinput>./b10-dhcp4</userinput>
-</screen>
+       <para>
+         To shutdown running <command>b10-dhcp4</command>, please use the
+         following command:
+         <screen>&gt; <userinput>dhcp4 shutdown</userinput></screen>
+         or
+         <screen>&gt; <userinput>config remove Boss/components b10-dhcp4</userinput>
+&gt; <userinput>config commit</userinput></screen></para>
 
-        Depending on your installation, <command>b10-dhcp4</command>
-        binary may reside in src/bin/dhcp4 in your source code
-        directory, in /usr/local/bin/b10-dhcp4 or other directory
-        you specified during compilation.
-
+      <para>
         At start, the server will detect available network interfaces
         and will attempt to open UDP sockets on all interfaces that
         are up, running, are not loopback, and have IPv4 address
