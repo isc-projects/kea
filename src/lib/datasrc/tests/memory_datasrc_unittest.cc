@@ -1370,6 +1370,10 @@ InMemoryZoneFinderTest::wildcardCheck(
         (find_options & ZoneFinder::FIND_DNSSEC) != 0) {
         expected_nsec = rr_nsec_;
     }
+    // Explicitly converting the following to const pointers; some compilers
+    // would complain about mixed use of const and non const in ?: below.
+    const ConstRRsetPtr rr_wild = rr_wild_;
+    const ConstRRsetPtr rr_cnamewild = rr_cnamewild_;
 
     // Search the original name of wildcard
     {
@@ -1393,7 +1397,7 @@ InMemoryZoneFinderTest::wildcardCheck(
         SCOPED_TRACE("Search at created child");
         findTest(Name("a.wild.example.org"), RRType::A(),
                  wild_ok ? ZoneFinder::SUCCESS : ZoneFinder::NXDOMAIN, false,
-                 wild_ok ? rr_wild_ : expected_nsec,
+                 wild_ok ? rr_wild : expected_nsec,
                  wild_expected_flags, NULL, find_options, wild_ok);
     }
 
@@ -1402,7 +1406,7 @@ InMemoryZoneFinderTest::wildcardCheck(
         SCOPED_TRACE("Matching CNAME");
         findTest(Name("a.cnamewild.example.org"), RRType::A(),
                  wild_ok ? ZoneFinder::CNAME : ZoneFinder::NXDOMAIN, false,
-                 wild_ok ? rr_cnamewild_ : expected_nsec,
+                 wild_ok ? rr_cnamewild : expected_nsec,
                  wild_expected_flags, NULL, find_options, wild_ok);
     }
 
@@ -1411,7 +1415,7 @@ InMemoryZoneFinderTest::wildcardCheck(
         SCOPED_TRACE("Search at created grand-child");
         findTest(Name("a.b.wild.example.org"), RRType::A(),
                  wild_ok ? ZoneFinder::SUCCESS : ZoneFinder::NXDOMAIN, false,
-                 wild_ok ? rr_wild_ : expected_nsec,
+                 wild_ok ? rr_wild : expected_nsec,
                  wild_expected_flags, NULL, find_options, wild_ok);
     }
 
