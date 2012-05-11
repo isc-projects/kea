@@ -1369,7 +1369,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         }
         // No exact match or CNAME. This is NXRRSET case. If with DNSSEC query,
         // get the NSEC RRset, returns with result code NXRRSET.
-        if (zone_data_->nsec_signed_) {
+        if (zone_data_->nsec_signed_ && (options & ZoneFinder::FIND_DNSSEC) != 0) {
             found = node->getData()->find(RRType::NSEC());
             if (found != node->getData()->end()) {
                 LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_NXRRSET).arg(type).
