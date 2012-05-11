@@ -1132,15 +1132,7 @@ RBTree<T>::nextNode(RBTreeNodeChain<T>& node_path) const {
         return (left_most);
     }
 
-    // node_path go to up level
-    node_path.pop();
-    // otherwise found the successor node in current level
-    const RBNode<T>* successor = node->successor();
-    if (successor != NULLNODE) {
-        node_path.push(successor);
-        return (successor);
-    }
-
+    // try to find a successor.
     // if no successor found move to up level, the next successor
     // is the successor of up node in the up level tree, if
     // up node doesn't have successor we gonna keep moving to up
