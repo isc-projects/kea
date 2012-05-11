@@ -443,7 +443,8 @@ ZoneData::findNode(const Name& name, RBTreeNodeChain<Domain>& node_path,
             return (ResultType(ZoneFinder::NXRRSET, node,
                                ConstRBNodeRRsetPtr()));
         }
-        if (node->getFlag(domain_flag::WILD)) { // maybe a wildcard
+        if (node->getFlag(domain_flag::WILD) && // maybe a wildcard, check only
+            (options & ZoneFinder::NO_WILDCARD) == 0) { // if not disabled.
             if (node_path.getLastComparisonResult().getRelation() ==
                 NameComparisonResult::COMMONANCESTOR &&
                 node_path.getLastComparisonResult().getCommonLabels() > 1) {
@@ -457,7 +458,7 @@ ZoneData::findNode(const Name& name, RBTreeNodeChain<Domain>& node_path,
                 LOG_DEBUG(logger, DBG_TRACE_DATA,
                           DATASRC_MEM_WILDCARD_CANCEL).arg(name);
                 return (ResultType(ZoneFinder::NXDOMAIN, NULL,
-                                   ConstRBNodeRRsetPtr()));
+                                   getClosestNSEC(node_path, options)));
             }
             // Now the wildcard should be the best match.
             const Name wildcard(Name("*").concatenate(
