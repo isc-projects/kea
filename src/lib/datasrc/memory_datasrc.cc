@@ -442,7 +442,8 @@ ZoneData::findNode(const Name& name, RBTreeNodeChain<Domain>& node_path,
             return (ResultType(ZoneFinder::NXRRSET, node,
                                getClosestNSEC(node_path, options)));
         }
-        if (node->getFlag(domain_flag::WILD)) { // maybe a wildcard
+        if (node->getFlag(domain_flag::WILD) && // maybe a wildcard, check only
+            (options & ZoneFinder::NO_WILDCARD) == 0) { // if not disabled.
             if (node_path.getLastComparisonResult().getRelation() ==
                 NameComparisonResult::COMMONANCESTOR &&
                 node_path.getLastComparisonResult().getCommonLabels() > 1) {
@@ -456,7 +457,7 @@ ZoneData::findNode(const Name& name, RBTreeNodeChain<Domain>& node_path,
                 LOG_DEBUG(logger, DBG_TRACE_DATA,
                           DATASRC_MEM_WILDCARD_CANCEL).arg(name);
                 return (ResultType(ZoneFinder::NXDOMAIN, NULL,
-                                   ConstRBNodeRRsetPtr()));
+                                   getClosestNSEC(node_path, options)));
             }
             // Now the wildcard should be the best match.
             const Name wildcard(Name("*").concatenate(
@@ -1258,6 +1259,24 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         }
     }
 
+    // A helper function for the NXRRSET case in find().  If the zone is
+    // NSEC-signed and DNSSEC records are requested, try to find NSEC
+    // on the given node, and return it if found; return NULL for all other
+    // cases.
+    ConstRBNodeRRsetPtr getNSECForNXRRSET(FindOptions options,
+                                          const DomainNode& node) const
+    {
+        if (zone_data_->nsec_signed_ &&
+            (options & ZoneFinder::FIND_DNSSEC) != 0) {
+            const Domain::const_iterator found =
+                node.getData()->find(RRType::NSEC());
+            if (found != node.getData()->end()) {
+                return (found->second);
+            }
+        }
+        return (ConstRBNodeRRsetPtr());
+    }
+
     // Set up FindContext object as a return value of find(), taking into
     // account wildcard matches and DNSSEC information.  We set the NSEC/NSEC3
     // flag when applicable regardless of the find option; the caller would
@@ -1373,10 +1392,9 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                                           rename));
             }
         }
-        // No exact match or CNAME.  Return NXRRSET.
-        LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_NXRRSET).arg(type).
-            arg(name);
-        return (createFindResult(NXRRSET, ConstRBNodeRRsetPtr(), rename));
+        // No exact match or CNAME.  Get NSEC if necessary and return NXRRSET.
+        return (createFindResult(NXRRSET, getNSECForNXRRSET(options, *node),
+                                 rename));
     }
 };
 
