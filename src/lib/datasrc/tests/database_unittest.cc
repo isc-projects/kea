@@ -214,6 +214,15 @@ const char* const TEST_RECORDS[][5] = {
     {NULL, NULL, NULL, NULL, NULL},
 };
 
+// NSEC3PARAM at the zone origin and its RRSIG.  These will be added
+// separately for some NSEC3 related tests.
+const char* TEST_NSEC3PARAM_RECORDS[][5] = {
+    {"example.org.", "NSEC3PARAM", "3600", "", "1 0 12 aabbccdd"},
+    {"example.org.", "RRSIG", "3600", "", "NSEC3PARAM 5 3 3600 20000101000000 "
+     "20000201000000 12345 example.org. FAKEFAKEFAKE"},
+    {NULL, NULL, NULL, NULL, NULL}
+};
+
 // FIXME: Taken from a different test. Fill with proper data when creating a test.
 const char* TEST_NSEC3_RECORDS[][5] = {
     {apex_hash, "NSEC3", "300", "", "1 1 12 AABBCCDD 2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A RRSIG"},
@@ -1065,24 +1074,15 @@ public:
     // tests. Note that the NSEC3 namespace is available in other tests, but
     // it should not be accessed at that time.
     void enableNSEC3() {
-        // We place the signature first, so it's in the block with the other
-        // signatures
-        vector<string> signature;
-        signature.push_back("RRSIG");
-        signature.push_back("3600");
-        signature.push_back("");
-        signature.push_back("NSEC3PARAM 5 3 3600 20000101000000 20000201000000 "
-                            "12345 example.org. FAKEFAKEFAKE");
-        signature.push_back("exmaple.org.");
-        (*readonly_records_)["example.org."].push_back(signature);
-        // Now the NSEC3 param itself
-        vector<string> param;
-        param.push_back("NSEC3PARAM");
-        param.push_back("3600");
-        param.push_back("");
-        param.push_back("1 0 12 aabbccdd");
-        param.push_back("example.org.");
-        (*readonly_records_)["example.org."].push_back(param);
+        for (int i = 0; TEST_NSEC3PARAM_RECORDS[i][0] != NULL; ++i) {
+            vector<string> param;
+            param.push_back(TEST_NSEC3PARAM_RECORDS[i][1]); // RRtype
+            param.push_back(TEST_NSEC3PARAM_RECORDS[i][2]); // TTL
+            param.push_back("");                            // sigtype, unused
+            param.push_back(TEST_NSEC3PARAM_RECORDS[i][4]); // RDATA
+            param.push_back(TEST_NSEC3PARAM_RECORDS[i][0]); // owner name
+            (*readonly_records_)[param.back()].push_back(param);
+        }
     }
 };
 
