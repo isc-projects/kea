@@ -23,6 +23,8 @@
 #include <botan/hash.h>
 #include <botan/types.h>
 
+#include <cstring>
+
 namespace {
 const char*
 getBotanHashAlgorithmName(isc::cryptolink::HashAlgorithm algorithm) {
@@ -155,7 +157,7 @@ public:
             if (output_size > len) {
                 output_size = len;
             }
-            memcpy(result, b_result.begin(), output_size);
+            std::memcpy(result, b_result.begin(), output_size);
         } catch (const Botan::Exception& exc) {
             isc_throw(isc::cryptolink::LibraryError, exc.what());
         }
