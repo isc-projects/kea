@@ -67,7 +67,7 @@ usage() {
 
 ConstElementPtr
 dhcp4_config_handler(ConstElementPtr new_config) {
-    cout << "#### dhcp4: Received new config:" << new_config->str() << endl;
+    cout << "b10-dhcp4: Received new config:" << new_config->str() << endl;
     ConstElementPtr answer = isc::config::createAnswer(0,
                              "All good here. Thanks for sending config.");
     return (answer);
@@ -75,7 +75,7 @@ dhcp4_config_handler(ConstElementPtr new_config) {
 
 ConstElementPtr
 dhcp4_command_handler(const string& command, ConstElementPtr args) {
-    cout << "#### dhcp4: Received new command: [" << command << "], args="
+    cout << "b10-dhcp4: Received new command: [" << command << "], args="
          << args->str() << endl;
     ConstElementPtr answer = isc::config::createAnswer(0,
                              "All good here. Thanks for asking.");
@@ -96,7 +96,7 @@ void establish_session() {
         specfile = string(DHCP4_SPECFILE_LOCATION);
     }
 
-    cout << "#### specfile=" << specfile << endl;
+    cout << "b10-dhcp4: my specfile is " << specfile << endl;
 
     IOService io_service;
 
@@ -105,8 +105,14 @@ void establish_session() {
     config_session = new ModuleCCSession(specfile, *cc_session,
                                          dhcp4_config_handler,
                                          dhcp4_command_handler, false);
+    cout << "b10-dhcp4: hasQueuedMsgs()=" << config_session->hasQueuedMsgs() << endl;
 
-    cout << "#### hasQueuedMsgs()=" << config_session->hasQueuedMsgs() << endl;
+    config_session->start();
+    cout << "b10-dhcp4: After session start." << endl;
+
+    cout << "b10-dhcp4: About to call io_service.run()" << endl;
+    io_service.run();
+    cout << "b10-dhcp4: Returned from io_service.run()" << endl;
 }
 
 int
