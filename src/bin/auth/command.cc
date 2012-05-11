@@ -229,7 +229,7 @@ private:
                       " is not found in data source");
         }
 
-        old_zone_finder_ = boost::dynamic_pointer_cast<InMemoryZoneFinder>(
+        old_zone_finder_ = boost::static_pointer_cast<InMemoryZoneFinder>(
             result.zone_finder);
 
         return (true);
