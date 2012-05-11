@@ -1,3 +1,7 @@
+435.	[func]		team
+	The in-memory datasource now supports NSEC-signed zones.
+	(Trac #1802-#1810, git 2f9aa4a553a05aa1d9eac06f1140d78f0c99408b)
+
 434.	[func]		tomek
 	libdhcp++: Linux interface detection refactored. The code is
 	now cleaner. Tests better support certain versions of ifconfig.
