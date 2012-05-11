@@ -406,9 +406,7 @@ previousWalk(RBTree<int>& rbtree, const RBNode<int>* node,
         node = rbtree.previousNode(node_path);
     }
 
-    // We should have reached the end of the tree.
-    EXPECT_EQ(static_cast<void*>(NULL), node);
-    // This is all the same then
+    // We should have reached the start of the tree.
     EXPECT_EQ(static_cast<void*>(NULL), node);
 }
 
