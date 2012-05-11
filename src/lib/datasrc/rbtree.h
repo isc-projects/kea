@@ -1241,7 +1241,7 @@ RBTree<T>::previousNode(RBTreeNodeChain<T>& node_path) const {
     // So, the node_path now contains the path to a node we want previous for.
     // We just need to go one step left.
 
-    if (node_path.getLevelCount() == 0) {
+    if (node_path.isEmpty()) {
         // We got past the first one. So, we're returning NULL from
         // now on.
         return (NULL);
@@ -1256,7 +1256,7 @@ RBTree<T>::previousNode(RBTreeNodeChain<T>& node_path) const {
         // up. That one is the smaller one than us.
 
         node_path.pop();
-        if (node_path.getLevelCount() == 0) {
+        if (node_path.isEmpty()) {
             // We're past the first one
             return (NULL);
         } else {
