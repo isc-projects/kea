@@ -1002,9 +1002,27 @@ InMemoryZoneFinderTest::findCheck(ZoneFinder::FindResultFlags expected_flags) {
     findTest(rr_ns_a_->getName(), RRType::NS(), ZoneFinder::NXRRSET, true,
              ConstRRsetPtr(), expected_flags);
 
-    // These domains don't exist (and one is out of the zone)
-    findTest(Name("nothere.example.org"), RRType::A(), ZoneFinder::NXDOMAIN,
-             true, ConstRRsetPtr(), expected_flags);
+    // These domains don't exist. (and one is out of the zone).  In an
+    // NSEC-signed zone, it should return the covering NSEC for the query
+    // name (the actual NSEC in the test data may not really "cover" it,
+    // but for the purpose of this test it's okay).
+    if ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED) != 0) {
+        // There's no other name between this one and the origin, so it
+        // should return the origin NSEC.
+        findTest(Name("nothere.example.org"), RRType::A(),
+                 ZoneFinder::NXDOMAIN, true, rr_nsec_, expected_flags,
+                 NULL, ZoneFinder::FIND_DNSSEC);
+
+        // The previous name in the zone is "ns.example.org", but it doesn't
+        // have an NSEC.  It should be skipped and the origin NSEC will be
+        // returned as the "closest NSEC".
+        findTest(Name("nxdomain.example.org"), RRType::A(),
+                 ZoneFinder::NXDOMAIN, true, rr_nsec_, expected_flags,
+                 NULL, ZoneFinder::FIND_DNSSEC);
+    } else {
+        findTest(Name("nothere.example.org"), RRType::A(),
+                 ZoneFinder::NXDOMAIN, true, ConstRRsetPtr(), expected_flags);
+    }
     EXPECT_THROW(zone_finder_.find(Name("example.net"), RRType::A()),
                  OutOfZone);
 }
@@ -1271,9 +1289,18 @@ InMemoryZoneFinderTest::wildcardCheck(
     EXPECT_EQ(SUCCESS, zone_finder_.add(rr_under_wild_));
     {
         SCOPED_TRACE("Search under non-wildcard");
-        findTest(Name("bar.foo.wild.example.org"), RRType::A(),
-                 ZoneFinder::NXDOMAIN, true, ConstRRsetPtr(), expected_flags,
-                 NULL, find_options);
+        if ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED) != 0) {
+            // For the test setup of "nsec-signed" zone, there's actually
+            // only one NSEC; the one at the apex.  So find() will return it
+            // as the covering NSEC.
+            findTest(Name("bar.foo.wild.example.org"), RRType::A(),
+                     ZoneFinder::NXDOMAIN, true, rr_nsec_, expected_flags,
+                     NULL, find_options);
+        } else {
+            findTest(Name("bar.foo.wild.example.org"), RRType::A(),
+                     ZoneFinder::NXDOMAIN, true, ConstRRsetPtr(),
+                     expected_flags, NULL, find_options);
+        }
     }
 }
 
