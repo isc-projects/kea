@@ -1324,6 +1324,36 @@ public:
 
             addRecordToZone(columns);
         }
+        // We don't add NSEC3s until we are explicitly told we need them
+        // in enableNSEC3(); these would break some non NSEC3 tests.
+        commit();
+    }
+
+    void enableNSEC3() {
+        startUpdateZone("example.org.", false);
+
+        // Add NSECPARAM at the zone origin
+        for (int i = 0; TEST_NSEC3PARAM_RECORDS[i][0] != NULL; ++i) {
+            const string param_columns[ADD_COLUMN_COUNT] = {
+                TEST_NSEC3PARAM_RECORDS[i][0], // name
+                Name(param_columns[ADD_NAME]).reverse().toText(), // revname
+                TEST_NSEC3PARAM_RECORDS[i][2],   // TTL
+                TEST_NSEC3PARAM_RECORDS[i][1],   // RR type
+                TEST_NSEC3PARAM_RECORDS[i][3],   // sigtype
+                TEST_NSEC3PARAM_RECORDS[i][4] }; // RDATA
+            addRecordToZone(param_columns);
+        }
+
+        // Add NSEC3s
+        for (int i = 0; TEST_NSEC3_RECORDS[i][0] != NULL; ++i) {
+            const string nsec3_columns[ADD_NSEC3_COLUMN_COUNT] = {
+                Name(TEST_NSEC3_RECORDS[i][0]).split(0, 1).toText(true),
+                TEST_NSEC3_RECORDS[i][2], // TTL
+                TEST_NSEC3_RECORDS[i][1], // RR type
+                TEST_NSEC3_RECORDS[i][4] }; // RDATA
+            addNSEC3RecordToZone(nsec3_columns);
+        }
+
         commit();
     }
 };
@@ -3975,11 +4005,11 @@ TEST_F(MockDatabaseClientTest, journalWithBadData) {
 }
 
 /// Let us test a little bit of NSEC3.
-TEST_F(MockDatabaseClientTest, findNSEC3) {
+TYPED_TEST(DatabaseClientTest, findNSEC3) {
     // Set up the faked hash calculator.
-    setNSEC3HashCreator(&test_nsec3_hash_creator_);
+    setNSEC3HashCreator(&this->test_nsec3_hash_creator_);
 
-    DataSourceClient::FindResult
+    const DataSourceClient::FindResult
         zone(this->client_->findZone(Name("example.org")));
     ASSERT_EQ(result::SUCCESS, zone.code);
     boost::shared_ptr<DatabaseClient::Finder> finder(
