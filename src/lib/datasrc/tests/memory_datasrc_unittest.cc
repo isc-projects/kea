@@ -453,6 +453,8 @@ public:
              &rr_nsec_},
             {"ns.example.org. 300 IN NSEC *.nswild.example.org. A AAAA NSEC",
              &rr_ns_nsec_},
+            {"*.wild.example.org. 300 IN NSEC foo.wild.example.org. A NSEC",
+             &rr_wild_nsec_},
             {NULL, NULL}
         };
 
@@ -519,6 +521,7 @@ public:
     RRsetPtr rr_nsec3_;
     RRsetPtr rr_nsec_;
     RRsetPtr rr_ns_nsec_;
+    RRsetPtr rr_wild_nsec_;
 
     // A faked NSEC3 hash calculator for convenience.
     // Tests that need to use the faked hashed values should call
@@ -1316,11 +1319,6 @@ InMemoryZoneFinderTest::wildcardCheck(
                  wild_ok ? ZoneFinder::SUCCESS : ZoneFinder::NXDOMAIN, false,
                  wild_ok ? rr_wild_ : expected_nsec,
                  wild_expected_flags, NULL, find_options, wild_ok);
-        // Wildcard match, but no data
-        findTest(Name("a.wild.example.org"), RRType::AAAA(),
-                 wild_ok ? ZoneFinder::NXRRSET : ZoneFinder::NXDOMAIN, true,
-                 wild_ok ? ConstRRsetPtr() : expected_nsec,
-                 wild_expected_flags, NULL, find_options);
     }
 
     // Search name that has CNAME.
@@ -1348,6 +1346,26 @@ InMemoryZoneFinderTest::wildcardCheck(
                  ZoneFinder::NXDOMAIN, true, expected_nsec, expected_flags,
                  NULL, find_options);
     }
+
+    // Wildcard match, but no data.  We add the additional NSEC at the wildcard
+    // at this point so that it wouldn't break other tests above.  Note also
+    // that in the NO_WILDCARD case the resulting NSEC is the same.  Ideally
+    // we could use a more tricky setup so we can distinguish these cases,
+    // but for this purpose it's not bad; what we'd like to test here is that
+    // wildcard substitution doesn't happen for either case, and the
+    // NO_WILDCARD effect itself can be checked by the result code (NXDOMAIN).
+    ConstRRsetPtr expected_wild_nsec; // by default it's NULL
+    if ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED) != 0) {
+        EXPECT_EQ(SUCCESS, zone_finder_.add(rr_wild_nsec_));
+        expected_wild_nsec = rr_wild_nsec_;
+    }
+    {
+        SCOPED_TRACE("Search at wildcard, no data");
+        findTest(Name("a.wild.example.org"), RRType::AAAA(),
+                 wild_ok ? ZoneFinder::NXRRSET : ZoneFinder::NXDOMAIN, true,
+                 wild_ok ? expected_wild_nsec : expected_wild_nsec,
+                 wild_expected_flags, NULL, find_options);
+    }
 }
 
 TEST_F(InMemoryZoneFinderTest, wildcard) {
@@ -1361,7 +1379,7 @@ TEST_F(InMemoryZoneFinderTest, wildcardNSEC3) {
 }
 
 TEST_F(InMemoryZoneFinderTest, wildcardNSEC) {
-    // Similar to the previous one, but the zone signed with NSEC
+    // Similar to the previous one, but the zone is signed with NSEC
     wildcardCheck(ZoneFinder::RESULT_NSEC_SIGNED);
 }
 
