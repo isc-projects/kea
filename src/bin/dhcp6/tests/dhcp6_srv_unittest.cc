@@ -148,11 +148,12 @@ TEST_F(Dhcpv6SrvTest, DUID) {
     case DUID_UUID: // not supported yet
     default:
         cout << "Not supported duid type=" << duid_type << endl;
-        FAIL();
+        ADD_FAILURE();
     }
+    delete srv; // destructor will close sockets, causing next test to succeed
 }
 
-TEST_F(Dhcpv6SrvTest, DISABLED_Solicit_basic) {
+TEST_F(Dhcpv6SrvTest, Solicit_basic) {
     NakedDhcpv6Srv* srv = NULL;
     ASSERT_NO_THROW( srv = new NakedDhcpv6Srv(); );
 
