@@ -511,6 +511,28 @@ TEST_F(RBTreeTest, previousNode) {
     }
 
     {
+        SCOPED_TRACE("Start to the right of a parent");
+        // When searching for this, we exit the 'g.h' node to the right
+        // side, so we should go to g.h's children afterwards.
+
+        // 'g.h' is an empty node, so we get a NOTFOUND and not
+        // PARTIALMATCH.
+        EXPECT_EQ(RBTree<int>::NOTFOUND,
+                  rbtree.find(Name("x.h"), &node, node_path));
+        // 'g.h' is the COMMONANCESTOR.
+        EXPECT_EQ(node_path.getLastComparedNode()->getName(), Name("g.h"));
+        EXPECT_EQ(NameComparisonResult::COMMONANCESTOR,
+                  node_path.getLastComparisonResult().getRelation());
+        // find() exits to the right of 'g.h'
+        EXPECT_GT(node_path.getLastComparisonResult().getOrder(), 0);
+        // We then descend into 'i.g.h' and walk all the nodes in the
+        // tree.
+        previousWalk(rbtree, node, node_path, name_count, true);
+        node = NULL;
+        node_path.clear();
+    }
+
+    {
         SCOPED_TRACE("Start inside a wrong node");
         // The d.e.f is a single node, but we want only part of it. We
         // should start iterating before it.
