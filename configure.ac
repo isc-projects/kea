@@ -1012,6 +1012,10 @@ AC_CONFIG_FILES([Makefile
                  src/bin/auth/benchmarks/Makefile
                  src/bin/ddns/Makefile
                  src/bin/ddns/tests/Makefile
+                 src/bin/dhcp6/Makefile
+                 src/bin/dhcp6/tests/Makefile
+                 src/bin/dhcp4/Makefile
+                 src/bin/dhcp4/tests/Makefile
                  src/bin/resolver/Makefile
                  src/bin/resolver/tests/Makefile
                  src/bin/sockcreator/Makefile
@@ -1078,6 +1082,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/dns/python/Makefile
                  src/lib/dns/python/tests/Makefile
                  src/lib/dns/benchmarks/Makefile
+                 src/lib/dhcp/Makefile
+                 src/lib/dhcp/tests/Makefile
                  src/lib/exceptions/Makefile
                  src/lib/exceptions/tests/Makefile
                  src/lib/datasrc/Makefile
