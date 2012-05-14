@@ -1790,12 +1790,12 @@ what if a NOTIFY is sent?
       <title>Incoming Transfers with In-memory Datasource</title>
 
       <para>
-        In the case of an incoming zone which is served by an in-memory
-        datasource with an SQLite3 backend, the zone is first stored in
-        the corresponding backend file. Then,
-        <command>b10-auth</command> is automatically sent a
-        <varname>loadzone</varname> command to reload the corresponding
-        zone into memory from the backend file.
+        In the case of an incoming zone transfer, the received zone is
+        first stored in the corresponding BIND 10 data source file. In
+        case the secondary zone is served by an in-memory datasource
+        with an SQLite3 backend, <command>b10-auth</command> is
+        automatically sent a <varname>loadzone</varname> command to
+        reload the corresponding zone into memory from the backend file.
       </para>
     </section>
 
