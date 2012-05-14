@@ -410,7 +410,6 @@ void Netlink::release_list(NetlinkMessages& messages) {
 } // end of anonymous namespace
 
 namespace isc {
-
 namespace dhcp {
 
 /// @brief Detect available interfaces on Linux systems.

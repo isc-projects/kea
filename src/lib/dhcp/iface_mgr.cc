@@ -213,15 +213,6 @@ void IfaceMgr::stubDetectIfaces() {
     }
 }
 
-/// @todo: Remove this once we have OS-specific interface detection
-/// routines (or at least OS-specific files, like iface_mgr_solaris.cc)
-/// for all OSes.
-#if !defined(OS_LINUX) && !defined(OS_BSD)
-void IfaceMgr::detectIfaces() {
-    stubDetectIfaces();
-}
-#endif
-
 bool IfaceMgr::openSockets4(const uint16_t port) {
     int sock;
     int count = 0;

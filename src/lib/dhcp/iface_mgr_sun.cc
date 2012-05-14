@@ -14,7 +14,7 @@
 
 #include <config.h>
 
-#if defined(OS_BSD)
+#if defined(OS_SUN)
 
 #include <dhcp/iface_mgr.h>
 #include <exceptions/exceptions.h>
@@ -29,7 +29,7 @@ namespace dhcp {
 
 void
 IfaceMgr::detectIfaces() {
-    /// @todo do the actual detection on BSDs. Currently just calling
+    /// @todo do the actual detection on Solaris. Currently just calling
     /// stub implementation.
     stubDetectIfaces();
 }
