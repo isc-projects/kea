@@ -344,10 +344,6 @@ const char* const names[] = {
 const size_t name_count(sizeof(names) / sizeof(*names));
 
 TEST_F(RBTreeTest, nextNode) {
-    const char* const names[] = {
-        "a", "b", "c", "d.e.f", "x.d.e.f", "w.y.d.e.f", "o.w.y.d.e.f",
-        "p.w.y.d.e.f", "q.w.y.d.e.f", "z.d.e.f", "j.z.d.e.f", "g.h", "i.g.h"};
-    const int name_count = sizeof(names) / sizeof(names[0]);
     RBTreeNodeChain<int> node_path;
     const RBNode<int>* node = NULL;
     EXPECT_EQ(RBTree<int>::EXACTMATCH,
