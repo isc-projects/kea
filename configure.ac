@@ -362,7 +362,7 @@ if test $werror_ok = 1; then
 		 PYTHON_CXXFLAGS="${PYTHON_CXXFLAGS} -Wno-unused-parameter"
 		 AC_SUBST(PYTHON_CXXFLAGS)
 		],
-		[AC_MSG_ERROR([Can't compile against Python.h])]
+		[AC_MSG_ERROR([Can't compile against Python.h.  If you're using MacOS X and have installed Python with Homebrew, see http://bind10.isc.org/wiki/SystemNotesMacOSX])]
                 )
                 ]
 	)
