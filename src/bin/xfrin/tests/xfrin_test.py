@@ -2966,7 +2966,7 @@ class TestXfrinProcess(unittest.TestCase):
         b10-auth.
         """
         self._module_cc.config = [{'zones': [{'origin': 'example.org', 'filetype': 'postgresql',
-                                              'file': 'data/inmem-xfrin.sqlite3'}],
+                                              'file': 'data/inmem-xfrin.db'}],
                                    'type': 'memory', 'class': 'IN'}]
         self.__do_test([XFRIN_OK], [RRType.IXFR()], RRType.IXFR())
         self.assertFalse(self._send_cc_session.send_called)
@@ -2980,7 +2980,7 @@ class TestXfrinProcess(unittest.TestCase):
         not set. In this case, loadzone should not be sent to b10-auth.
         """
         self._module_cc.config = [{'zones': [{'origin': 'example.org',
-                                              'file': 'data/inmem-xfrin.sqlite3'}],
+                                              'file': 'data/inmem-xfrin'}],
                                    'type': 'memory', 'class': 'IN'}]
         self.__do_test([XFRIN_OK], [RRType.IXFR()], RRType.IXFR())
         self.assertFalse(self._send_cc_session.send_called)
