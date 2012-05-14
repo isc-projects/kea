@@ -143,12 +143,18 @@ TEST_F(Dhcpv6SrvTest, DUID) {
     }
     case DUID_LL: {
         // not supported yet
-        cout << "Test not implemented for DUID-LL yet." << endl;
+        cout << "Test not implemented for DUID-LL." << endl;
+
+        // No failure here. There's really no way for test LL DUID. It doesn't
+        // even make sense to check if that Link Layer is actually present on
+        // a physical interface. RFC3315 says a server should write its DUID
+        // and keep it despite hardware changes.
+        break;
     }
     case DUID_UUID: // not supported yet
     default:
-        cout << "Not supported duid type=" << duid_type << endl;
-        ADD_FAILURE();
+        ADD_FAILURE() << "Not supported duid type=" << duid_type << endl;
+        break;
     }
     delete srv; // destructor will close sockets, causing next test to succeed
 }
