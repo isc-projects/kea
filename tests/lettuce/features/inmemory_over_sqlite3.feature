@@ -31,7 +31,7 @@ Feature: In-memory zone using SQLite3 backend
         www.example.org.        3600    IN      A       192.0.2.63
         """
         A query for mail.example.org should have rcode NXDOMAIN
-        When I send bind10 the command Xfrin retransfer example.org IN 127.0.0.1 47807
+        When I send bind10 the command Xfrin retransfer example.org IN ::1 47807
         Then wait for new bind10 stderr message XFRIN_TRANSFER_SUCCESS not XFRIN_XFR_PROCESS_FAILURE
         Then wait for new bind10 stderr message AUTH_LOAD_ZONE
 
