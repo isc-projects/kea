@@ -409,14 +409,14 @@ AuthSrv::getInMemoryClient(const RRClass& rrclass) {
 }
 
 bool
-AuthSrv::hasInMemoryClient() {
+AuthSrv::hasInMemoryClient() const {
     return (impl_->memory_client_container_ !=
             isc::datasrc::DataSourceClientContainerPtr());
 }
 
 void
 AuthSrv::setInMemoryClient(const isc::dns::RRClass& rrclass,
-    isc::datasrc::DataSourceClientContainerPtr memory_client)
+                           DataSourceClientContainerPtr memory_client)
 {
     if (rrclass != impl_->memory_client_class_) {
         isc_throw(InvalidParameter,

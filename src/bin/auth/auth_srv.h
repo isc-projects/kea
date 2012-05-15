@@ -276,7 +276,7 @@ public:
     /// multi-data-source framework is completed.
     ///
     /// \return True if the in-memory datasource has been set.
-    bool hasInMemoryClient();
+    bool hasInMemoryClient() const;
 
     /// Sets or replaces the in-memory data source of the specified RR class.
     ///
