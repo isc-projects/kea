@@ -59,7 +59,7 @@ protected:
     RBTreeTest() : rbtree_expose_empty_node(true), crbtnode(NULL) {
         const char* const domain_names[] = {
             "c", "b", "a", "x.d.e.f", "z.d.e.f", "g.h", "i.g.h", "o.w.y.d.e.f",
-            "j.z.d.e.f", "p.w.y.d.e.f", "q.w.y.d.e.f", "k.i.g.h"};
+            "j.z.d.e.f", "p.w.y.d.e.f", "q.w.y.d.e.f", "k.g.h"};
         int name_count = sizeof(domain_names) / sizeof(domain_names[0]);
         for (int i = 0; i < name_count; ++i) {
             rbtree.insert(Name(domain_names[i]), &rbtnode);
@@ -323,7 +323,7 @@ TEST_F(RBTreeTest, getAbsoluteNameError) {
 /*
  *the domain order should be:
  * a, b, c, d.e.f, x.d.e.f, w.y.d.e.f, o.w.y.d.e.f, p.w.y.d.e.f, q.w.y.d.e.f,
- * z.d.e.f, j.z.d.e.f, g.h, i.g.h, k.i.g.h
+ * z.d.e.f, j.z.d.e.f, g.h, i.g.h, k.g.h
  *             b
  *           /   \
  *          a    d.e.f
@@ -341,7 +341,7 @@ TEST_F(RBTreeTest, getAbsoluteNameError) {
 const char* const names[] = {
     "a", "b", "c", "d.e.f", "x.d.e.f", "w.y.d.e.f", "o.w.y.d.e.f",
     "p.w.y.d.e.f", "q.w.y.d.e.f", "z.d.e.f", "j.z.d.e.f",
-    "g.h", "i.g.h", "k.i.g.h"};
+    "g.h", "i.g.h", "k.g.h"};
 const size_t name_count(sizeof(names) / sizeof(*names));
 
 TEST_F(RBTreeTest, nextNode) {
@@ -606,11 +606,11 @@ TEST_F(RBTreeTest, getLastComparedNode) {
     // Partial match, search stopped at the matching node, which should be
     // the last compared node.
     EXPECT_EQ(RBTree<int>::EXACTMATCH,
-              tree.find(Name("k.i.g.h"), &expected_node));
+              tree.find(Name("k.g.h"), &expected_node));
     EXPECT_EQ(RBTree<int>::PARTIALMATCH,
-              tree.find(Name("x.k.i.g.h"), &crbtnode, chain));
+              tree.find(Name("x.k.g.h"), &crbtnode, chain));
     EXPECT_EQ(expected_node, chain.getLastComparedNode());
-    // k.i.g.h < x.k.i.g.h, 2 = # labels of "k."
+    // k.g.h < x.k.g.h, 2 = # labels of "k."
     comparisonChecks(chain, 1, 2, NameComparisonResult::SUBDOMAIN);
     chain.clear();
 
@@ -680,7 +680,7 @@ TEST_F(RBTreeTest, dumpTree) {
     std::ostringstream str;
     std::ostringstream str2;
     rbtree.dumpTree(str);
-    str2 << "tree has 14 node(s)\nb. (black)\n     a. (black)\n          NULL\n          NULL\n     d.e.f. (black)[invisible] \n          begin down from d.e.f.\n          w.y. (black)[invisible] \n               begin down from w.y.\n               p. (black)\n                    o. (red)\n                         NULL\n                         NULL\n                    q. (red)\n                         NULL\n                         NULL\n               end down from w.y.\n               x. (red)\n                    NULL\n                    NULL\n               z. (red)\n                    begin down from z.\n                    j. (black)\n                         NULL\n                         NULL\n                    end down from z.\n                    NULL\n                    NULL\n          end down from d.e.f.\n          c. (red)\n               NULL\n               NULL\n          g.h. (red)\n               begin down from g.h.\n               i. (black)\n                    begin down from i.\n                    k. (black)\n                         NULL\n                         NULL\n                    end down from i.\n                    NULL\n                    NULL\n               end down from g.h.\n               NULL\n               NULL\n";
+    str2 << "tree has 14 node(s)\nb. (black)\n     a. (black)\n          NULL\n          NULL\n     d.e.f. (black)[invisible] \n          begin down from d.e.f.\n          w.y. (black)[invisible] \n               begin down from w.y.\n               p. (black)\n                    o. (red)\n                         NULL\n                         NULL\n                    q. (red)\n                         NULL\n                         NULL\n               end down from w.y.\n               x. (red)\n                    NULL\n                    NULL\n               z. (red)\n                    begin down from z.\n                    j. (black)\n                         NULL\n                         NULL\n                    end down from z.\n                    NULL\n                    NULL\n          end down from d.e.f.\n          c. (red)\n               NULL\n               NULL\n          g.h. (red)\n               begin down from g.h.\n               i. (black)\n                    NULL\n                    k. (red)\n                         NULL\n                         NULL\n               end down from g.h.\n               NULL\n               NULL\n";
     EXPECT_EQ(str.str(), str2.str());
 }
 
