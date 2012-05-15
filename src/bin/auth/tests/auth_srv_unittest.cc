@@ -1256,7 +1256,7 @@ public:
     }
 
 private:
-    isc::datasrc::DataSourceClientContainerPtr real_client_ptr_;
+    const isc::datasrc::DataSourceClientContainerPtr real_client_ptr_;
     ThrowWhen throw_when_;
     bool isc_exception_;
     ConstRRsetPtr fake_rrset_;
@@ -1286,7 +1286,7 @@ public:
     }
 
 private:
-    isc::datasrc::DataSourceClient* client_;
+    isc::datasrc::DataSourceClient* const client_;
 };
 
 } // end anonymous namespace for throwing proxy classes

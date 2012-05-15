@@ -59,14 +59,14 @@ checkConfigElementString(ConstElementPtr config, const std::string& name,
                  "Config for memory backend does not contain a '"
                  +name+
                  "' value");
-        return false;
+        return (false);
     } else if (!config->get(name) ||
                config->get(name)->getType() != Element::string) {
         addError(errors, "value of " + name +
                  " in memory backend config is not a string");
-        return false;
+        return (false);
     } else {
-        return true;
+        return (true);
     }
 }
 
@@ -162,7 +162,8 @@ checkConfig(ConstElementPtr config, ElementPtr errors) {
 // checked by the caller
 void
 applyConfig(isc::datasrc::InMemoryClient* client,
-            isc::data::ConstElementPtr config_value) {
+            isc::data::ConstElementPtr config_value)
+{
     ConstElementPtr zones_config = config_value->get("zones");
     if (!zones_config) {
         // XXX: Like the RR class, we cannot retrieve the default value here,
@@ -253,8 +254,8 @@ createInstance(isc::data::ConstElementPtr config, std::string& error) {
     try {
         client = new isc::datasrc::InMemoryClient();
         applyConfig(client, config);
-        return client;
-    } catch (isc::Exception& isce) {
+        return (client);
+    } catch (const isc::Exception& isce) {
         delete client;
         error = isce.what();
         return (NULL);

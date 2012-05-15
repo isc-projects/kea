@@ -109,7 +109,7 @@ DatasourcesConfig::commit() {
     // data source types, and should eventually be improved.
     // Currently memory data source for class IN is the only possibility.
     server_.setInMemoryClient(RRClass::IN(),
-        isc::datasrc::DataSourceClientContainerPtr());
+                              isc::datasrc::DataSourceClientContainerPtr());
 
     BOOST_FOREACH(boost::shared_ptr<AuthConfigParser> datasrc_config,
                   datasources_) {
