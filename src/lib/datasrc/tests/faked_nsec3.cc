@@ -130,7 +130,7 @@ performNSEC3Test(ZoneFinder &finder) {
     EXPECT_THROW(finder.findNSEC3(Name("example.com"), false), OutOfZone);
     EXPECT_THROW(finder.findNSEC3(Name("org"), true), OutOfZone);
 
-    Name origin("example.org");
+    const Name origin("example.org");
     const string apex_nsec3_text = string(apex_hash) + ".example.org." +
         string(nsec3_common);
     const string ns1_nsec3_text = string(ns1_hash) + ".example.org." +
