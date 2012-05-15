@@ -31,6 +31,10 @@ assumed to have failed, and will not be stored.
 The configuration manager daemon was unable to connect to the messaging
 system. The most likely cause is that msgq is not running.
 
+% CFGMGR_CONFIG_FILE Configuration manager starting with configuration file: %1
+The configuration manager is starting, reading and saving the configuration
+settings to the shown file.
+
 % CFGMGR_DATA_READ_ERROR error reading configuration database from disk: %1
 There was a problem reading the persistent configuration data as stored
 on disk. The file may be corrupted, or it is of a version from where

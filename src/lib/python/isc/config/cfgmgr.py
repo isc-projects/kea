@@ -81,6 +81,7 @@ class ConfigManagerData:
            and stop loading the system.
            """
         config = ConfigManagerData(data_path, file_name)
+        logger.info(CFGMGR_CONFIG_FILE, config.db_filename)
         file = None
         try:
             file = open(config.db_filename, 'r')
