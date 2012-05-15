@@ -1791,11 +1791,11 @@ what if a NOTIFY is sent?
 
       <para>
         In the case of an incoming zone transfer, the received zone is
-        first stored in the corresponding BIND 10 data source file. In
+        first stored in the corresponding BIND 10 datasource. In
         case the secondary zone is served by an in-memory datasource
         with an SQLite3 backend, <command>b10-auth</command> is
         automatically sent a <varname>loadzone</varname> command to
-        reload the corresponding zone into memory from the backend file.
+        reload the corresponding zone into memory from the backend.
       </para>
     </section>
 
