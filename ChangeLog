@@ -1,3 +1,8 @@
+436.	[bug]		jelte
+	The --config-file option now works correctly with relative paths if
+	--data-path is not given.
+	(Trac #1889, git ce7d1aef2ca88084e4dacef97132337dd3e50d6c)
+
 435.	[func]		team
 	The in-memory datasource now supports NSEC-signed zones.
 	(Trac #1802-#1810, git 2f9aa4a553a05aa1d9eac06f1140d78f0c99408b)
