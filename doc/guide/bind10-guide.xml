@@ -1797,6 +1797,13 @@ what if a NOTIFY is sent?
         automatically sent a <varname>loadzone</varname> command to
         reload the corresponding zone into memory from the backend.
       </para>
+
+      <para>
+	The administrator doesn't have to do anything for
+	<command>b10-auth</command> to serve the new version of the
+	zone, except for the configuration such as the one described in
+	<xref linkend="in-memory-datasource-with-sqlite3-backend" />.
+      </para>
     </section>
 
 <!-- TODO: can that retransfer be used to identify a new zone? -->
