@@ -27,21 +27,65 @@ namespace perfdhcp {
 // Reset stored values to the defaults.
 void
 CommandOptions::reset() {
+    uint8_t mac[6] = { 0x0, 0xC, 0x1, 0x2, 0x3, 0x4 };
+    double lt[2] = { 1., 1. };
+
     ipversion_ = 4;
+    exchange_mode_ = DORR_SARR;
+    rate_ = 0;
+    report_delay_ = 0;
+    random_range_ = 0;
+    max_random_ = 0;
+    mac_prefix_.assign(mac, mac+6);
+    base_.resize(0);
+    num_request_.resize(0);
+    period_ = 0;
+    lost_time_set_ = 0;
+    lost_time_.assign(lt, lt+2);
+    max_drop_set_ = 0;
+    max_drop_.push_back(0);
+    max_drop_.push_back(0);
+    max_pdrop_.push_back(0.);
+    max_pdrop_.push_back(0.);
+    localname_.resize(0);
+    is_interface_ = false;
+    preload_ = 0;
+    aggressivity_ = 1;
+    local_port_ = 0;
+    seeded_ = false;
+    seed_ = 0;
+    broadcast_ = false;
+    rapid_commit_ = false;
+    use_first_ = false;
+    template_file_.resize(0);
+    xid_offset_.resize(0);
+    rnd_offset_.resize(0);
+    elp_offset_ = -1;
+    sid_offset_ = -1;
+    rip_offset_ = -1;
+    diags_.resize(0);
+    wrapped_.resize(0);
+    server_name_.resize(0);
 }
 
-/// Parses the command-line options and records the results.
-void
-CommandOptions::parse(int argc, char* const argv[]) {
+int
+CommandOptions::parse(int argc, char** argv, bool force_reset /*=false */) {
     int ch;
-
-    while((ch = getopt(argc, argv, ":h")) != -1) {
+    if (force_reset) {
+        reset();
+    }
+    // Reset internal variable used by getopt to index elements
+    optind = 1;
+    while((ch = getopt(argc, argv, "hv46r:t:R:b:n:p:d:D:l:P:a:L:s:iBc1T:X:O:E:S:I:x:w:")) != -1) {
         switch (ch) {
         case 'h':
-        default:
             usage();
+            break;
+        default:
+            ;
         }
     }
+    return(0);
 }
 
 void
