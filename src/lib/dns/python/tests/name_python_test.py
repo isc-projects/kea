@@ -218,5 +218,16 @@ class NameTest(unittest.TestCase):
         self.assertTrue(self.name4 <= self.name1)
         self.assertFalse(self.name2 >= self.name1)
 
+    def test_hash(self):
+        # The same name should have the same hash value.
+        self.assertEqual(hash(Name('example.com')), hash(Name('example.com')))
+        # Hash is case insensitive.
+        self.assertEqual(hash(Name('example.com')), hash(Name('EXAMPLE.COM')))
+        # We cannot reliably test the case for different hash values, but
+        # we can at least confirm inequality is case insensitive.
+        if hash(Name('example.com')) != hash(Name('example.org')):
+            self.assertNotEqual(hash(Name('example.com')),
+                                hash(Name('EXAMPLE.ORG')))
+
 if __name__ == '__main__':
     unittest.main()

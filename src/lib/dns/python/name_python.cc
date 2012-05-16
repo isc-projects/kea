@@ -20,6 +20,7 @@
 #include <dns/exceptions.h>
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
+#include <dns/labelsequence.h>
 
 #include "pydnspp_common.h"
 #include "messagerenderer_python.h"
@@ -114,6 +115,7 @@ PyObject* Name_reverse(s_Name* self);
 PyObject* Name_concatenate(s_Name* self, PyObject* args);
 PyObject* Name_downcase(s_Name* self);
 PyObject* Name_isWildCard(s_Name* self);
+long Name_hash(PyObject* py_self);
 
 PyMethodDef Name_methods[] = {
     { "at", reinterpret_cast<PyCFunction>(Name_at), METH_VARARGS,
@@ -518,6 +520,12 @@ Name_isWildCard(s_Name* self) {
     }
 }
 
+long
+Name_hash(PyObject* pyself) {
+    s_Name* const self = static_cast<s_Name*>(pyself);
+    return (LabelSequence(*self->cppobj).getHash(false));
+}
+
 } // end of unnamed namespace
 
 namespace isc {
@@ -615,7 +623,7 @@ PyTypeObject name_type = {
     NULL,                               // tp_as_number
     NULL,                               // tp_as_sequence
     NULL,                               // tp_as_mapping
-    NULL,                               // tp_hash
+    Name_hash,                          // tp_hash
     NULL,                               // tp_call
     Name_str,                           // tp_str
     NULL,                               // tp_getattro
