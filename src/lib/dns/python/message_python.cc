@@ -76,6 +76,7 @@ PyObject* Message_getSection(PyObject* self, PyObject* args);
 PyObject* Message_addQuestion(s_Message* self, PyObject* args);
 PyObject* Message_addRRset(s_Message* self, PyObject* args);
 PyObject* Message_clear(s_Message* self, PyObject* args);
+PyObject* Message_clearSection(PyObject* pyself, PyObject* args);
 PyObject* Message_makeResponse(s_Message* self);
 PyObject* Message_toText(s_Message* self);
 PyObject* Message_str(PyObject* self);
@@ -149,6 +150,8 @@ PyMethodDef Message_methods[] = {
       "Clears the message content (if any) and reinitialize the "
       "message in the given mode\n"
       "The argument must be either Message.PARSE or Message.RENDER"},
+    { "clear_section", Message_clearSection, METH_VARARGS,
+      Message_clearSection_doc },
     { "make_response", reinterpret_cast<PyCFunction>(Message_makeResponse), METH_NOARGS,
       "Prepare for making a response from a request.\n"
       "This will clear the DNS header except those fields that should be kept "
@@ -559,6 +562,30 @@ Message_clear(s_Message* self, PyObject* args) {
             return (NULL);
         }
     } else {
+        return (NULL);
+    }
+}
+
+PyObject*
+Message_clearSection(PyObject* pyself, PyObject* args) {
+    s_Message* const self = static_cast<s_Message*>(pyself);
+    int section;
+
+    if (!PyArg_ParseTuple(args, "i", &section)) {
+        return (NULL);
+    }
+    try {
+        self->cppobj->clearSection(static_cast<Message::Section>(section));
+        Py_RETURN_NONE;
+    } catch (const InvalidMessageOperation& imo) {
+        PyErr_SetString(po_InvalidMessageOperation, imo.what());
+        return (NULL);
+    } catch (const isc::OutOfRange& ex) {
+        PyErr_SetString(PyExc_OverflowError, ex.what());
+        return (NULL);
+    } catch (...) {
+        PyErr_SetString(po_IscException,
+                        "Unexpected exception in adding RRset");
         return (NULL);
     }
 }
