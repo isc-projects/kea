@@ -17,9 +17,9 @@ import isc.dns
 import isc.ddns.zone_config
 
 # Result codes for UpdateSession.handle()
-UPDATE_SUCCESS = 0     # update request granted and succeeded
-UPDATE_ERROR = 1       # some error happened with a corresponding response
-UPDATE_DROP = 2        # critical error happened, no response should be sent
+UPDATE_SUCCESS = 0
+UPDATE_ERROR = 1
+UPDATE_DROP = 2
 
 # Convenient aliases of update-specific section names
 SECTION_ZONE = isc.dns.Message.SECTION_QUESTION
@@ -54,8 +54,19 @@ class UpdateSession:
     def handle(self):
         '''Handle the update request according to RFC2136.
 
-        Return: the result code of the session, indicating the next action
-                to be taken.
+        This method returns a tuple of the following three elements that
+        indicate the result of the request.
+        - Result code of the request processing, which are:
+          UPDATE_SUCCESS Update request granted and succeeded.
+          UPDATE_ERROR Some error happened to be reported in the response.
+          UPDATE_DROP Error happened and no response should be sent.
+          Except the case of UPDATE_DROP, the UpdateSession object will have
+          created a response that is to be returned to the request client,
+          which can be retrieved by get_message().
+        - The name of the updated zone (isc.dns.Name object) in case of
+          UPDATE_SUCCESS; otherwise None.
+        - The RR class of the updated zone (isc.dns.RRClass object) in case
+          of UPDATE_SUCCESS; otherwise None.
 
         '''
         try:
@@ -65,10 +76,10 @@ class UpdateSession:
             # self.__check_update_acl()
             # self.__do_update()
             # self.__make_response(Rcode.NOERROR())
-            return UPDATE_SUCCESS
+            return UPDATE_SUCCESS, zname, zclass
         except ZoneError as e:
             self.__make_response(e.rcode)
-        return UPDATE_ERROR
+        return UPDATE_ERROR, None, None
 
     def __get_update_zone(self):
         '''Parse the zone section and find the zone to be updated.
