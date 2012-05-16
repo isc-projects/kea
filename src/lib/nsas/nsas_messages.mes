@@ -54,8 +54,8 @@ This message indicates an internal error in the NSAS.  Please raise a
 bug report.
 
 % NSAS_SEARCH_ZONE_NS searching NSAS for nameservers for zone %1
-A debug message output when a call is made to the NSAS (nameserver 
-address store - part of the resolver) to obtain the nameservers for 
+A debug message output when a call is made to the NSAS (nameserver
+address store - part of the resolver) to obtain the nameservers for
 the specified zone.
 
 % NSAS_UPDATE_RTT update RTT for %1: was %2 ms, is now %3 ms
@@ -72,5 +72,5 @@ A NSAS (nameserver address store - part of the resolver) made a query for
 a resource record of a particular type and class, but instead received
 an answer with a different given type and class.
 
-This message indicates an internal error in the NSAS.  Please raise a 
+This message indicates an internal error in the NSAS.  Please raise a
 bug report.

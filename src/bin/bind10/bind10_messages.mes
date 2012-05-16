@@ -20,10 +20,6 @@ The boss process is starting up and will now check if the message bus
 daemon is already running. If so, it will not be able to start, as it
 needs a dedicated message bus.
 
-% BIND10_INVALID_STATISTICS_DATA invalid specification of statistics data specified
-An error was encountered when the boss module specified
-statistics data which is invalid for the boss specification file.
-
 % BIND10_COMPONENT_FAILED component %1 (pid %2) failed: %3
 The process terminated, but the bind10 boss didn't expect it to, which means
 it must have failed.
@@ -85,6 +81,10 @@ the boss process will try to force them).
 % BIND10_CONFIGURATOR_TASK performing task %1 on %2
 A debug message. The configurator is about to perform one task of the plan it
 is currently executing on the named component.
+
+% BIND10_INVALID_STATISTICS_DATA invalid specification of statistics data specified
+An error was encountered when the boss module specified
+statistics data which is invalid for the boss specification file.
 
 % BIND10_INVALID_USER invalid user: %1
 The boss process was started with the -u option, to drop root privileges
@@ -290,4 +290,3 @@ the configuration manager to start up.  The total length of time Boss
 will wait for the configuration manager before reporting an error is
 set with the command line --wait switch, which has a default value of
 ten seconds.
-
