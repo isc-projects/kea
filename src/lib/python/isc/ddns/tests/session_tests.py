@@ -68,14 +68,14 @@ class SessionTest(unittest.TestCase):
         # Zone section is empty
         msg_data, msg = create_update_msg(zones=[])
         session = UpdateSession(msg, msg_data, None, None)
-        self.assertEqual(UPDATE_DONE, session.handle())
+        self.assertEqual(UPDATE_ERROR, session.handle())
         self.check_response(session.get_message(), Rcode.FORMERR())
 
         # Zone section contains multiple records
         msg_data, msg = create_update_msg(zones=[TEST_ZONE_RECORD,
                                                  TEST_ZONE_RECORD])
         session = UpdateSession(msg, msg_data, None, None)
-        self.assertEqual(UPDATE_DONE, session.handle())
+        self.assertEqual(UPDATE_ERROR, session.handle())
         self.check_response(session.get_message(), Rcode.FORMERR())
 
         # Zone section's type is not SOA
@@ -83,7 +83,7 @@ class SessionTest(unittest.TestCase):
                                                           TEST_RRCLASS,
                                                           RRType.A())])
         session = UpdateSession(msg, msg_data, None, None)
-        self.assertEqual(UPDATE_DONE, session.handle())
+        self.assertEqual(UPDATE_ERROR, session.handle())
         self.check_response(session.get_message(), Rcode.FORMERR())
 
     def test_update_secondary(self):
@@ -96,11 +96,12 @@ class SessionTest(unittest.TestCase):
                                                           RRType.SOA())])
         session = UpdateSession(msg, msg_data, None,
                                 ZoneConfig([(sec_zone, TEST_RRCLASS)]))
-        self.assertEqual(UPDATE_DONE, session.handle())
+        self.assertEqual(UPDATE_ERROR, session.handle())
         self.check_response(session.get_message(), Rcode.REFUSED())
 
     def test_handle(self):
-        self.assertEqual(UPDATE_DONE, self.__session.handle())
+        self.assertEqual(UPDATE_SUCCESS, self.__session.handle())
+        self.assertNotEqual(UPDATE_ERROR, self.__session.handle())
         self.assertNotEqual(UPDATE_DROP, self.__session.handle())
 
 if __name__ == "__main__":
