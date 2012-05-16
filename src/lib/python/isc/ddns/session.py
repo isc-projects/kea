@@ -94,6 +94,10 @@ class UpdateSession:
         zone_type, datasrc_client = self.__zone_config.find_zone(zname, zclass)
         if zone_type == isc.ddns.zone_config.ZONE_PRIMARY:
             return datasrc_client, zname, zclass
+        elif zone_type == isc.ddns.zone_config.ZONE_SECONDARY:
+            # unconditionally refused forwarding (we don't support it yet)
+            raise ZoneError('Update forwarding not supported',
+                            isc.dns.Rcode.REFUSED())
 
     def __make_response(self, rcode):
         '''Transform the internal message to the update response.

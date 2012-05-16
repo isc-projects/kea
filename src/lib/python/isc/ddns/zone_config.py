@@ -30,7 +30,14 @@ class ZoneConfig:
     until the details are fixed.
 
     '''
+    def __init__(self, secondaries):
+        self.__secondaries = {}
+        for (zname, zclass) in secondaries:
+            self.__secondaries[(zname, zclass)] = True
+
     def find_zone(self, zone_name, zone_class):
         '''Return the type and accessor client object for given zone.'''
         # Right now, the client is not used, so we simply return None.
+        if (zone_name, zone_class) in self.__secondaries:
+            return ZONE_SECONDARY, None
         return ZONE_PRIMARY, None
