@@ -1,3 +1,5 @@
+bind10-devel-20120517 released on May 17. 2012
+
 436.	[bug]		jelte
 	The --config-file option now works correctly with relative paths if
 	--data-path is not given.
