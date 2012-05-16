@@ -371,6 +371,8 @@ public:
     /// \exception NotImplemented Thrown if this method is not supported
     ///            by the datasource
     ///
+    /// \note This is a tentative API, and this method may likely to be
+    ///       removed in the near future.
     /// \return The number of zones known to this datasource
     virtual unsigned int getZoneCount() const {
         isc_throw(isc::NotImplemented,
