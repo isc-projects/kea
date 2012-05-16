@@ -20,7 +20,7 @@
 <refentry>
 
   <refentryinfo>
-    <date>March 1, 2012</date>
+    <date>April 12, 2012</date>
   </refentryinfo>
 
   <refmeta>
@@ -52,6 +52,7 @@
       <arg><option>-u <replaceable>user</replaceable></option></arg>
       <arg><option>-v</option></arg>
       <arg><option>-w <replaceable>wait_time</replaceable></option></arg>
+      <arg><option>--clear-config</option></arg>
       <arg><option>--cmdctl-port</option> <replaceable>port</replaceable></arg>
       <arg><option>--config-file</option> <replaceable>config-filename</replaceable></arg>
       <arg><option>--data-path</option> <replaceable>directory</replaceable></arg>
@@ -101,6 +102,25 @@
           relative to data path. In case it is absolute, value of data path is
           not considered.
           Defaults to <filename>b10-config.db</filename>.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+          <option>--clear-config</option>
+        </term>
+        <listitem>
+	  <para>
+	    This will create a backup of the existing configuration
+	    file, remove it and start
+	    <refentrytitle>b10-cfgmgr</refentrytitle><manvolnum>8</manvolnum>
+            with the default configuration.
+	    The name of the backup file can be found in the logs
+	    (<varname>CFGMGR_RENAMED_CONFIG_FILE</varname>).
+	    (It will append a number to the backup filename if a
+	    previous backup file exists.)
+
+          </para>
         </listitem>
       </varlistentry>
 
