@@ -24,6 +24,11 @@ SECTION_ZONE = isc.dns.Message.SECTION_QUESTION
 SECTION_PREREQUISITE = isc.dns.Message.SECTION_ANSWER
 SECTION_UPDATE = isc.dns.Message.SECTION_AUTHORITY
 
+class ZoneError(Exception):
+    def __init__(self, msg, rcode):
+        Exception(msg)
+        self.rcode = rcode
+
 class UpdateSession:
     '''Protocol handling for a single dynamic update request.
 
@@ -50,10 +55,35 @@ class UpdateSession:
                 to be taken.
 
         '''
-        # Interpret the zone section.  It must contain exactly one
-        # "question", and it must be of type SOA.
-        if self.__message.get_rr_count(SECTION_ZONE) == 0:
-            self.__message.make_response()
-            self.__message.set_rcode(isc.dns.Rcode.FORMERR())
-            return UPDATE_DONE
+        try:
+            zone_record = self.__get_update_zone()
+        except ZoneError as e:
+            self.__make_response(e.rcode)
         return UPDATE_DONE
+
+    def __get_update_zone(self):
+        '''Interpret the zone section and return it as a Question object.
+
+        It must contain exactly one question, and it must be of type SOA.
+
+        '''
+        if self.__message.get_rr_count(SECTION_ZONE) != 1:
+            raise ZoneError('Invalid number of records in zone section: ' +
+                            str(1), isc.dns.Rcode.FORMERR())
+        zone_record = self.__message.get_question()[0]
+        if zone_record.get_type() != isc.dns.RRType.SOA():
+            raise ZoneError('update zone section contains non-SOA',
+                            isc.dns.Rcode.FORMERR())
+        return zone_record
+
+    def __make_response(self, rcode):
+        '''Transform the internal message to the update response.
+
+        According RFC2136 Section 3.8, the zone section will be cleared
+        as well as other sections.  The response Rcode will be set to the
+        given value.
+
+        '''
+        self.__message.make_response()
+        self.__message.clear_section(SECTION_ZONE)
+        self.__message.set_rcode(rcode)
