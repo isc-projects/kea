@@ -134,10 +134,23 @@ TEST_F(CommandOptionsTest, Defaults) {
     checkDefaults();
 }
 
+TEST_F(CommandOptionsTest, UseFirst) {
+    process("perfdhcp -l ethx -1 -O 3");
+    EXPECT_TRUE(isUseFirst());
+}
+
 TEST_F(CommandOptionsTest, IpVersion) {
-    process("perfdhcp -6 -l ethx");
+    process("perfdhcp -6 -l ethx -c");
     EXPECT_EQ(6, getIpVersion());
     EXPECT_EQ("ethx", getLocalName());
+    EXPECT_TRUE(isRapidCommit());
+    EXPECT_FALSE(isBroadcast());
+    process("perfdhcp -4 -B -l ethx");
+    EXPECT_EQ(4, getIpVersion());
+    EXPECT_TRUE(isBroadcast());
+    EXPECT_FALSE(isRapidCommit());
+    EXPECT_NE(0, process("perfdhcp -6 -B -l ethx"));
+    EXPECT_NE(0, process("perfdhcp -c -l ethx"));
 }
 
 TEST_F(CommandOptionsTest, Rate) {
@@ -156,7 +169,7 @@ TEST_F(CommandOptionsTest, ReportDelay) {
 }
 
 TEST_F(CommandOptionsTest, RandomRange) {
-    process("perfdhcp -l ethx");
+    process("perfdhcp -R 200 -l ethx");
     EXPECT_EQ(200, getRandomRange());
 }
 
@@ -182,12 +195,73 @@ TEST_F(CommandOptionsTest, DropTime) {
 
 TEST_F(CommandOptionsTest, TimeOffset) {
     process("perfdhcp -l ethx -E 4");
-    ASSERT_EQ(5, getElpOffset());
-    ASSERT_NE(0, process("perfdhcp -l ethx -E -3"));
-    ASSERT_NE(0, process("perfdhcp -l ethx -E 3 -i"));
+    EXPECT_EQ(5, getElpOffset());
+    EXPECT_NE(0, process("perfdhcp -l ethx -E 3 -i"));
 }
 
 TEST_F(CommandOptionsTest, ExchangeMode) {
     process("perfdhcp -i -l ethx");
-    ASSERT_EQ(DO_SA, getExchangeMode());
+    EXPECT_EQ(DO_SA, getExchangeMode());
+    EXPECT_NE(0, process("perfdhcp -i -l ethx -X 3"));
+    EXPECT_NE(0, process("perfdhcp -i -l ethx -O 2"));
+    EXPECT_NE(0, process("perfdhcp -i -l ethx -E 3"));
+    EXPECT_NE(0, process("perfdhcp -i -l ethx -S 1"));
+    EXPECT_NE(0, process("perfdhcp -i -l ethx -I 2"));
 }
+
+TEST_F(CommandOptionsTest, Offsets) {
+    process("perfdhcp -E5 -4 -I 2 -S3 -O 30 -X7 -l ethx -X3");
+    EXPECT_EQ(2, getRipOffset());
+    EXPECT_EQ(5, getElpOffset());
+    EXPECT_EQ(3, getSidOffset());
+    ASSERT_EQ(1, getRndOffset().size());
+    EXPECT_EQ(30, getRndOffset()[0]);
+    ASSERT_EQ(2, getXidOffset().size());
+    EXPECT_EQ(7, getXidOffset()[0]);
+    EXPECT_EQ(3, getXidOffset()[1]);
+    EXPECT_NE(0, process("perfdhcp -6 -I 0 -l ethx"));
+    EXPECT_NE(0, process("perfdhcp -6 -I -4 -l ethx"));
+
+    // TODO - other negative cases
+}
+
+TEST_F(CommandOptionsTest, LocalPort) {
+    process("perfdhcp -l ethx -L 2000");
+    EXPECT_EQ(2000, getLocalPort());
+    EXPECT_NE(0, process("perfdhcp -l ethx -L 0"));
+}
+
+TEST_F(CommandOptionsTest, Preload) {
+    process("perfdhcp -1 -P 3 -l ethx");
+    EXPECT_EQ(3, getPreload());
+    EXPECT_NE(0, process("perfdhcp -P 0 -1 -l ethx"));
+    EXPECT_NE(0, process("perfdhcp -P -1 -l ethx"));
+}
+
+TEST_F(CommandOptionsTest, Seed) {
+    process("perfdhcp -6 -P 2 -s 23 -l ethx");
+    EXPECT_EQ(23, getSeed());
+    EXPECT_TRUE(isSeeded());
+}
+
+TEST_F(CommandOptionsTest, TemplateFiles) {
+    process("perfdhcp -T file1.x -l ethx");
+    ASSERT_EQ(1, getTemplateFiles().size());
+    EXPECT_EQ("file1.x", getTemplateFiles()[0]);
+    process("perfdhcp -T file1.x -s 12 -w start -T file2.x -4 -l ethx");
+    ASSERT_EQ(2, getTemplateFiles().size());
+    EXPECT_EQ("file1.x", getTemplateFiles()[0]);
+    EXPECT_EQ("file2.x", getTemplateFiles()[1]);
+    EXPECT_NE(0, process("perfdhcp -T file1.x -s 12 -w start -l ethx -T file2.x -4"));
+}
+
+TEST_F(CommandOptionsTest, Wrapped) {
+    process("perfdhcp -B -w start -i -l ethx");
+    EXPECT_EQ("start", getWrapped());
+}
+
+TEST_F(CommandOptionsTest, Diagnostics) {
+    process("perfdhcp -l ethx -i -x asTe");
+    EXPECT_EQ("asTe", getDiags());
+}
+
