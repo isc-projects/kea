@@ -1112,7 +1112,7 @@ TEST_F(AuthSrvTest, processNormalQuery_reuseRenderer2) {
 //
 namespace {
 
-/// A the possible methods to throw in, either in FakeInMemoryClient or
+/// A the possible methods to throw in, either in FakeClient or
 /// FakeZoneFinder
 enum ThrowWhen {
     THROW_NEVER,
@@ -1136,10 +1136,10 @@ checkThrow(ThrowWhen method, ThrowWhen throw_at, bool isc_exception) {
     }
 }
 
-/// \brief proxy class for the ZoneFinder returned by the InMemoryClient
-///        proxied by FakeInMemoryClient
+/// \brief proxy class for the ZoneFinder returned by the Client
+///        proxied by FakeClient
 ///
-/// See the documentation for FakeInMemoryClient for more information,
+/// See the documentation for FakeClient for more information,
 /// all methods simply check whether they should throw, and if not, call
 /// their proxied equivalent.
 class FakeZoneFinder : public isc::datasrc::ZoneFinder {
@@ -1212,11 +1212,11 @@ private:
     ConstRRsetPtr fake_rrset_;
 };
 
-/// \brief Proxy InMemoryClient that can throw exceptions at specified times
+/// \brief Proxy FakeClient that can throw exceptions at specified times
 ///
-/// It is based on the memory client since that one is easy to override
-/// (with setInMemoryClient) with the current design of AuthSrv.
-class FakeInMemoryClient : public isc::datasrc::InMemoryClient {
+/// Currently it is used as an 'InMemoryClient' using setInMemoryClient,
+/// but it is in effect a general datasource client.
+class FakeClient : public isc::datasrc::DataSourceClient {
 public:
     /// \brief Create a proxy memory client
     ///
@@ -1228,9 +1228,9 @@ public:
     ///                      throw std::exception
     /// \param fake_rrset If non NULL, it will be used as an answer to
     /// find() for that name and type.
-    FakeInMemoryClient(isc::datasrc::DataSourceClientContainerPtr real_client,
-                       ThrowWhen throw_when, bool isc_exception,
-                       ConstRRsetPtr fake_rrset = ConstRRsetPtr()) :
+    FakeClient(isc::datasrc::DataSourceClientContainerPtr real_client,
+               ThrowWhen throw_when, bool isc_exception,
+               ConstRRsetPtr fake_rrset = ConstRRsetPtr()) :
         real_client_ptr_(real_client),
         throw_when_(throw_when),
         isc_exception_(isc_exception),
@@ -1255,6 +1255,18 @@ public:
                                                            fake_rrset_))));
     }
 
+    isc::datasrc::ZoneUpdaterPtr
+    getUpdater(const isc::dns::Name&, bool, bool) const {
+        isc_throw(isc::NotImplemented, "Update attempt on in fake data source");
+    }
+    std::pair<isc::datasrc::ZoneJournalReader::Result,
+              isc::datasrc::ZoneJournalReaderPtr>
+    getJournalReader(const isc::dns::Name&, uint32_t,
+                                     uint32_t) const
+    {
+        isc_throw(isc::NotImplemented, "Journaling isn't supported for "
+                  "in memory data source");
+    }
 private:
     const isc::datasrc::DataSourceClientContainerPtr real_client_ptr_;
     ThrowWhen throw_when_;
@@ -1299,9 +1311,9 @@ TEST_F(AuthSrvTest, queryWithInMemoryClientProxy) {
     // Set real inmem client to proxy
     updateConfig(&server, CONFIG_INMEMORY_EXAMPLE, true);
 
-    isc::datasrc::InMemoryClient* fake_client(
-        new FakeInMemoryClient(server.getInMemoryClientContainer(rrclass),
-                               THROW_NEVER, false));
+    FakeClient* fake_client(
+        new FakeClient(server.getInMemoryClientContainer(rrclass),
+                       THROW_NEVER, false));
     EXPECT_TRUE(server.hasInMemoryClient());
 
     isc::datasrc::DataSourceClientContainerPtr fake_client_container(
@@ -1332,8 +1344,8 @@ setupThrow(AuthSrv* server, const char *config, ThrowWhen throw_when,
 
     // Set it to throw on findZone(), this should result in
     // SERVFAIL on any exception
-    isc::datasrc::InMemoryClient* fake_client(
-        new FakeInMemoryClient(
+    FakeClient* fake_client(
+        new FakeClient(
             server->getInMemoryClientContainer(isc::dns::RRClass::IN()),
             throw_when, isc_exception, rrset));
     isc::datasrc::DataSourceClientContainerPtr fake_client_container(
