@@ -17,8 +17,9 @@ import isc.dns
 import isc.ddns.zone_config
 
 # Result codes for UpdateSession.handle()
-UPDATE_DONE = 0        # handled completely, and the response is ready
-UPDATE_DROP = 1        # critical error happened, no response should be sent
+UPDATE_SUCCESS = 0     # update request granted and succeeded
+UPDATE_ERROR = 1       # some error happened with a corresponding response
+UPDATE_DROP = 2        # critical error happened, no response should be sent
 
 # Convenient aliases of update-specific section names
 SECTION_ZONE = isc.dns.Message.SECTION_QUESTION
@@ -64,9 +65,10 @@ class UpdateSession:
             # self.__check_update_acl()
             # self.__do_update()
             # self.__make_response(Rcode.NOERROR())
+            return UPDATE_SUCCESS
         except ZoneError as e:
             self.__make_response(e.rcode)
-        return UPDATE_DONE
+        return UPDATE_ERROR
 
     def __get_update_zone(self):
         '''Parse the zone section and find the zone to be updated.
