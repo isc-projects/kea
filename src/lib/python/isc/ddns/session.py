@@ -14,6 +14,7 @@
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 import isc.dns
+import isc.ddns.zone_config
 
 # Result codes for UpdateSession.handle()
 UPDATE_DONE = 0        # handled completely, and the response is ready
@@ -35,8 +36,9 @@ class UpdateSession:
     TBD
 
     '''
-    def __init__(self, req_message, req_data, client_addr, datasrc_client):
+    def __init__(self, req_message, req_data, client_addr, zone_config):
         self.__message = req_message
+        self.__zone_config = zone_config
 
     def get_message(self):
         '''Return the update message.
@@ -56,25 +58,42 @@ class UpdateSession:
 
         '''
         try:
-            zone_record = self.__get_update_zone()
+            datasrc_client, zname, zclass = self.__get_update_zone()
+            # conceptual code that would follow
+            # self.__check_prerequisites()
+            # self.__check_update_acl()
+            # self.__do_update()
+            # self.__make_response(Rcode.NOERROR())
         except ZoneError as e:
             self.__make_response(e.rcode)
         return UPDATE_DONE
 
     def __get_update_zone(self):
-        '''Interpret the zone section and return it as a Question object.
+        '''Parse the zone section and find the zone to be updated.
 
-        It must contain exactly one question, and it must be of type SOA.
+        If the zone section is valid and the specified zone is found in
+        the configuration, it returns a tuple of:
+        - A matching data source that contains the specified zone
+        - The zone name as a Name object
+        - The zone class as an RRClass object
 
         '''
+        # Validation: the zone section must contain exactly one question,
+        # and it must be of type SOA.
         if self.__message.get_rr_count(SECTION_ZONE) != 1:
             raise ZoneError('Invalid number of records in zone section: ' +
                             str(1), isc.dns.Rcode.FORMERR())
-        zone_record = self.__message.get_question()[0]
-        if zone_record.get_type() != isc.dns.RRType.SOA():
+        zrecord = self.__message.get_question()[0]
+        if zrecord.get_type() != isc.dns.RRType.SOA():
             raise ZoneError('update zone section contains non-SOA',
                             isc.dns.Rcode.FORMERR())
-        return zone_record
+
+        # See if we're serving a primary zone specified in the zone section.
+        zname = zrecord.get_name()
+        zclass = zrecord.get_class()
+        zone_type, datasrc_client = self.__zone_config.find_zone(zname, zclass)
+        if zone_type == isc.ddns.zone_config.ZONE_PRIMARY:
+            return datasrc_client, zname, zclass
 
     def __make_response(self, rcode):
         '''Transform the internal message to the update response.
