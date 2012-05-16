@@ -14,9 +14,62 @@
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 import isc.log
+import unittest
+from isc.dns import *
+from isc.ddns.session import *
+
+# Some common test parameters
+TEST_ZONE = Name('example.com')
+UPDATE_RRTYPE = RRType.SOA()
+TEST_RRCLASS = RRClass.IN()
+
+def create_update_msg(zone_name=TEST_ZONE):
+    msg = Message(Message.RENDER)
+    msg.set_qid(5353)           # arbitrary chosen
+    msg.set_opcode(Opcode.UPDATE())
+    msg.set_rcode(Rcode.NOERROR())
+    if zone_name is not None:
+        msg.add_question(Question(zone_name, TEST_RRCLASS, UPDATE_RRTYPE))
+
+    renderer = MessageRenderer()
+    msg.to_wire(renderer)
+
+    # re-read the created data in the parse mode
+    msg.clear(Message.PARSE)
+    msg.from_wire(renderer.get_data())
+
+    return renderer.get_data(), msg
 
 class SessionTest(unittest.TestCase):
-    pass
+    '''Session tests'''
+    def setUp(self):
+        self.__client_addr = ('192.0.2.1', 53)
+        self.__update_msgdata, self.__update_msg = create_update_msg(TEST_ZONE)
+        self.__session = UpdateSession(self.__update_msg,
+                                       self.__update_msgdata,
+                                       self.__client_addr, None)
+
+    def check_response(self, msg, expected_rcode):
+        '''Perform common checks on update resposne message.'''
+        self.assertTrue(msg.get_header_flag(Message.HEADERFLAG_QR))
+        self.assertEqual(Opcode.UPDATE().to_text(), msg.get_opcode().to_text())
+        self.assertEqual(expected_rcode.to_text(), msg.get_rcode().to_text())
+        # All sections should be cleared
+        self.assertEqual(0, msg.get_rr_count(SECTION_ZONE))
+        self.assertEqual(0, msg.get_rr_count(SECTION_PREREQUISITE))
+        self.assertEqual(0, msg.get_rr_count(SECTION_UPDATE))
+        self.assertEqual(0, msg.get_rr_count(Message.SECTION_ADDITIONAL))
+
+    def test_broken_request(self):
+        # Zone section is empty
+        msg_data, msg = create_update_msg(zone_name=None)
+        session = UpdateSession(msg, msg_data, None, None)
+        self.assertEqual(UPDATE_DONE, session.handle())
+        self.check_response(session.get_message(), Rcode.FORMERR())
+
+    def test_handle(self):
+        self.assertEqual(UPDATE_DONE, self.__session.handle())
+        self.assertNotEqual(UPDATE_DROP, self.__session.handle())
 
 if __name__ == "__main__":
     isc.log.init("bind10")
