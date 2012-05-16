@@ -68,14 +68,17 @@ class SessionTest(unittest.TestCase):
         # Zone section is empty
         msg_data, msg = create_update_msg(zones=[])
         session = UpdateSession(msg, msg_data, None, None)
-        self.assertEqual(UPDATE_ERROR, session.handle())
+        result, zname, zclass = session.handle()
+        self.assertEqual(UPDATE_ERROR, result)
+        self.assertEqual(None, zname)
+        self.assertEqual(None, zclass)
         self.check_response(session.get_message(), Rcode.FORMERR())
 
         # Zone section contains multiple records
         msg_data, msg = create_update_msg(zones=[TEST_ZONE_RECORD,
                                                  TEST_ZONE_RECORD])
         session = UpdateSession(msg, msg_data, None, None)
-        self.assertEqual(UPDATE_ERROR, session.handle())
+        self.assertEqual(UPDATE_ERROR, session.handle()[0])
         self.check_response(session.get_message(), Rcode.FORMERR())
 
         # Zone section's type is not SOA
@@ -83,7 +86,7 @@ class SessionTest(unittest.TestCase):
                                                           TEST_RRCLASS,
                                                           RRType.A())])
         session = UpdateSession(msg, msg_data, None, None)
-        self.assertEqual(UPDATE_ERROR, session.handle())
+        self.assertEqual(UPDATE_ERROR, session.handle()[0])
         self.check_response(session.get_message(), Rcode.FORMERR())
 
     def test_update_secondary(self):
@@ -96,13 +99,16 @@ class SessionTest(unittest.TestCase):
                                                           RRType.SOA())])
         session = UpdateSession(msg, msg_data, None,
                                 ZoneConfig([(sec_zone, TEST_RRCLASS)]))
-        self.assertEqual(UPDATE_ERROR, session.handle())
+        self.assertEqual(UPDATE_ERROR, session.handle()[0])
         self.check_response(session.get_message(), Rcode.REFUSED())
 
     def test_handle(self):
-        self.assertEqual(UPDATE_SUCCESS, self.__session.handle())
-        self.assertNotEqual(UPDATE_ERROR, self.__session.handle())
-        self.assertNotEqual(UPDATE_DROP, self.__session.handle())
+        result, zname, zclass = self.__session.handle()
+        self.assertEqual(UPDATE_SUCCESS, result)
+        self.assertNotEqual(UPDATE_ERROR, result)
+        self.assertNotEqual(UPDATE_DROP, result)
+        self.assertEqual(TEST_ZONE_NAME, zname)
+        self.assertEqual(TEST_RRCLASS, zclass)
 
 if __name__ == "__main__":
     isc.log.init("bind10")
