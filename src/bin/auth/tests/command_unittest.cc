@@ -23,6 +23,7 @@
 #include <dns/name.h>
 #include <dns/rrclass.h>
 #include <dns/rrtype.h>
+#include <dns/rrttl.h>
 
 #include <cc/data.h>
 
@@ -293,40 +294,50 @@ TEST_F(AuthCommandTest,
     module_session.setLocalConfig(map);
     server_.setConfigSession(&module_session);
 
-    // The loadzone command needs the zone to be already loaded, because
-    // it is used for reloading only
-    isc::datasrc::DataSourceClientContainerPtr dsrc(
-        new isc::datasrc::DataSourceClientContainer("memory",
-            Element::fromJSON("{\"type\": \"memory\"}")));
-    // The 'public' factory API does not allow for direct internal calls such
-    // as addZone, so purely for this test we do a quick cast
-    static_cast<InMemoryClient&>(dsrc->getInstance()).addZone(
-        ZoneFinderPtr(new InMemoryZoneFinder(RRClass::IN(),
-                                             Name("example.org"))));
-    server_.setInMemoryClient(RRClass::IN(), dsrc);
+    server_.updateConfig(map);
+
+    // Check that the A record at www.example.org does not exist
+    ASSERT_TRUE(server_.hasInMemoryClient());
+    EXPECT_EQ(ZoneFinder::NXDOMAIN, server_.getInMemoryClient(RRClass::IN())->
+              findZone(Name("example.org")).zone_finder->
+              find(Name("www.example.org"), RRType::A())->code);
+
+    // Add the record to the underlying sqlite database, by loading
+    // it as a separate datasource, and updating it
+    ConstElementPtr sql_cfg = Element::fromJSON("{ \"type\": \"sqlite3\","
+                                                "\"database_file\": \""
+                                                + test_db + "\"}");
+    DataSourceClientContainer sql_ds("sqlite3", sql_cfg);
+    ZoneUpdaterPtr sql_updater =
+        sql_ds.getInstance().getUpdater(Name("example.org"), false);
+    RRsetPtr rrset(new RRset(Name("www.example.org."), RRClass::IN(),
+                             RRType::A(), RRTTL(60)));
+    rrset->addRdata(rdata::createRdata(rrset->getType(),
+                                       rrset->getClass(),
+                                       "192.0.2.1"));
+    sql_updater->addRRset(*rrset);
+    sql_updater->commit();
+
+    // This new record is in the database now, but should not be in the
+    // memory-datasource yet, so check again
+    EXPECT_EQ(ZoneFinder::NXDOMAIN, server_.getInMemoryClient(RRClass::IN())->
+              findZone(Name("example.org")).zone_finder->
+              find(Name("www.example.org"), RRType::A())->code);
 
     // Now send the command to reload it
     result_ = execAuthServerCommand(server_, "loadzone",
         Element::fromJSON("{\"origin\": \"example.org\"}"));
     checkAnswer(0);
 
-    // Get the zone and look if there are data in it (the original one was
-    // empty)
-    ASSERT_TRUE(server_.hasInMemoryClient());
+    // And now it should be present too.
     EXPECT_EQ(ZoneFinder::SUCCESS, server_.getInMemoryClient(RRClass::IN())->
               findZone(Name("example.org")).zone_finder->
-              find(Name("example.org"), RRType::SOA())->code);
+              find(Name("www.example.org"), RRType::A())->code);
 
-    // Some error cases. First, the zone has no configuration.
-    // The 'public' factory API does not allow for direct internal calls such
-    // as addZone, so purely for this test we do a quick cast
-    static_cast<InMemoryClient&>(dsrc->getInstance()).addZone(
-        ZoneFinderPtr(new InMemoryZoneFinder(RRClass::IN(),
-                                             Name("example.com"))));
+    // Some error cases. First, the zone has no configuration. (note .com here)
     result_ = execAuthServerCommand(server_, "loadzone",
         Element::fromJSON("{\"origin\": \"example.com\"}"));
     checkAnswer(1);
-
     // The previous zone is not hurt in any way
     EXPECT_EQ(ZoneFinder::SUCCESS, server_.getInMemoryClient(RRClass::IN())->
               findZone(Name("example.org")).zone_finder->
