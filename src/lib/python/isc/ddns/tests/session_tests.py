@@ -49,7 +49,9 @@ class SessionTest(unittest.TestCase):
         self.__update_msgdata, self.__update_msg = create_update_msg()
         self.__session = UpdateSession(self.__update_msg,
                                        self.__update_msgdata,
-                                       self.__client_addr, ZoneConfig())
+                                       self.__client_addr,
+                                       ZoneConfig([(Name("example.org"),
+                                                    TEST_RRCLASS)]))
 
     def check_response(self, msg, expected_rcode):
         '''Perform common checks on update resposne message.'''
@@ -83,6 +85,19 @@ class SessionTest(unittest.TestCase):
         session = UpdateSession(msg, msg_data, None, None)
         self.assertEqual(UPDATE_DONE, session.handle())
         self.check_response(session.get_message(), Rcode.FORMERR())
+
+    def test_update_secondary(self):
+        # specified zone is configured as a secondary.  Since this
+        # implementation doesn't support update forwarding, the result
+        # should be REFUSED.
+        sec_zone = Name("example.org")
+        msg_data, msg = create_update_msg(zones=[Question(sec_zone,
+                                                          TEST_RRCLASS,
+                                                          RRType.SOA())])
+        session = UpdateSession(msg, msg_data, None,
+                                ZoneConfig([(sec_zone, TEST_RRCLASS)]))
+        self.assertEqual(UPDATE_DONE, session.handle())
+        self.check_response(session.get_message(), Rcode.REFUSED())
 
     def test_handle(self):
         self.assertEqual(UPDATE_DONE, self.__session.handle())
