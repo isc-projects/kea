@@ -1,5 +1,26 @@
 bind10-devel-20120517 released on May 17. 2012
 
+439.	[func]		jinmei
+	The in-memory data source can now load zones from the
+	sqlite3 data source, so that zones stored in the database
+	(and updated for example by xfrin) can be served from memory.
+	(Trac #1789,#1790,#1792,#1793,#1911,
+	git 93f11d2a96ce4dba9308889bdb9be6be4a765b27)
+
+438.	[bug]		kambe
+	b10-stats-httpd now sends the system a notification that
+	it is shutting down if it encounters a fatal error during
+	startup.
+	(Trac #1852, git a475ef271d4606f791e5ed88d9b8eb8ed8c90ce6)
+
+437.	[build]		jinmei
+	Building BIND 10 may fail on MacOS if Python has been
+	installed via Homebrew unless --without-werror is specified.
+	The configure script now includes a URL that explains this
+	issue when it detects failure that is possibly because of
+	this problem.
+	(Trac #1907, git 0d03b06138e080cc0391fb912a5a5e75f0f97cec)
+
 436.	[bug]		jelte
 	The --config-file option now works correctly with relative paths if
 	--data-path is not given.
@@ -53,7 +74,7 @@ bind10-devel-20120517 released on May 17. 2012
 	now manipulates them in the separate table for the NSEC3 namespace.
 	As a result b10-xfrin now correctly updates NSEC3-signed zones by
 	inbound zone transfers.
-	(Trac #1891, git 672f129700dae33b701bb02069cf276238d66be3)
+	(Trac #1781,#1788,#1891, git 672f129700dae33b701bb02069cf276238d66be3)
 
 426.	[bug]		vorner
 	The NSEC3 records are now included when transferring a
