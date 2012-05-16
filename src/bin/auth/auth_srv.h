@@ -257,9 +257,9 @@ public:
     /// Returns the DataSourceClientContainer of the in-memory datasource
     ///
     /// \exception InvalidParameter if the given class does not match
-    ///            the one in the memory data source
-    /// \exception InvalidOperation if the memory datasource has not been set
-    ///            (callers can check with \c hasMemoryDataSource())
+    ///            the one in the memory data source, or if the memory
+    ///            datasource has not been set (callers can check with
+    ///            \c hasMemoryDataSource())
     ///
     /// \param rrclass The RR class of the requested in-memory data source.
     /// \return A shared pointer to the in-memory data source, if configured;
