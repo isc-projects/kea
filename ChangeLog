@@ -6,7 +6,7 @@ bind10-devel-20120517 released on May 17. 2012
 	or the name is invalid in the b10-auth configuration.
 	(Trac #1627, git 1a4d0ae65b2c1012611f4c15c5e7a29d65339104)
 
-439.	[func]		jinmei
+439.	[func]		team
 	The in-memory data source can now load zones from the
 	sqlite3 data source, so that zones stored in the database
 	(and updated for example by xfrin) can be served from memory.
