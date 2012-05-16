@@ -17,6 +17,7 @@ import isc.log
 import unittest
 from isc.dns import *
 from isc.ddns.session import *
+from isc.ddns.zone_config import *
 
 # Some common test parameters
 TEST_ZONE_NAME = Name('example.com')
@@ -48,7 +49,7 @@ class SessionTest(unittest.TestCase):
         self.__update_msgdata, self.__update_msg = create_update_msg()
         self.__session = UpdateSession(self.__update_msg,
                                        self.__update_msgdata,
-                                       self.__client_addr, None)
+                                       self.__client_addr, ZoneConfig())
 
     def check_response(self, msg, expected_rcode):
         '''Perform common checks on update resposne message.'''
