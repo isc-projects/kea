@@ -91,6 +91,9 @@ protected:
     }
 
     ~AuthSrvTest() {
+        // Clear the message now; depending on the RTTI implementation,
+        // type information may be lost if the message is cleared
+        // automatically later, so as a precaution we do it now.
         parse_message->clear(Message::PARSE);
     }
 
