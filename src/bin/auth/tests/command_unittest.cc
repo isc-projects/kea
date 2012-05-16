@@ -300,7 +300,7 @@ TEST_F(AuthCommandTest,
             Element::fromJSON("{\"type\": \"memory\"}")));
     // The 'public' factory API does not allow for direct internal calls such
     // as addZone, so purely for this test we do a quick cast
-    static_cast<InMemoryClient*>(&dsrc->getInstance())->addZone(
+    static_cast<InMemoryClient&>(dsrc->getInstance()).addZone(
         ZoneFinderPtr(new InMemoryZoneFinder(RRClass::IN(),
                                              Name("example.org"))));
     server_.setInMemoryClient(RRClass::IN(), dsrc);
@@ -320,7 +320,7 @@ TEST_F(AuthCommandTest,
     // Some error cases. First, the zone has no configuration.
     // The 'public' factory API does not allow for direct internal calls such
     // as addZone, so purely for this test we do a quick cast
-    static_cast<InMemoryClient*>(&dsrc->getInstance())->addZone(
+    static_cast<InMemoryClient&>(dsrc->getInstance()).addZone(
         ZoneFinderPtr(new InMemoryZoneFinder(RRClass::IN(),
                                              Name("example.com"))));
     result_ = execAuthServerCommand(server_, "loadzone",
