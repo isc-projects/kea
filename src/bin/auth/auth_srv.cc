@@ -410,8 +410,7 @@ AuthSrv::getInMemoryClient(const RRClass& rrclass) {
 
 bool
 AuthSrv::hasInMemoryClient() const {
-    return (impl_->memory_client_container_ !=
-            isc::datasrc::DataSourceClientContainerPtr());
+    return (impl_->memory_client_container_);
 }
 
 void
