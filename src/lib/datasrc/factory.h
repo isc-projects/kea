@@ -17,7 +17,6 @@
 
 #include <datasrc/data_source.h>
 #include <datasrc/client.h>
-#include <exceptions/exceptions.h>
 
 #include <cc/data.h>
 
@@ -135,6 +134,13 @@ private:
 ///
 /// extern "C" void destroyInstance(isc::data::DataSourceClient* instance);
 /// \endcode
+///
+/// \note This class is relatively recent, and its design is not yet fully
+/// formed. We may want to split this into an abstract base container
+/// class, and a derived 'dyload' class, and perhaps then add non-dynamic
+/// derived classes as well. Currently, the class is actually derived in some
+/// of the tests, which is rather unclean (as this class as written is really
+/// intended to be used directly).
 class DataSourceClientContainer : boost::noncopyable {
 public:
     /// \brief Constructor
