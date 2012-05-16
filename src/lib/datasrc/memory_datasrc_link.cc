@@ -33,6 +33,8 @@ using namespace isc::data;
 namespace isc {
 namespace datasrc {
 
+/// This exception is raised if there is an error in the configuration
+/// that has been passed; missing information, duplicate values, etc.
 class InMemoryConfigError : public isc::Exception {
 public:
     InMemoryConfigError(const char* file, size_t line, const char* what) :
@@ -138,11 +140,10 @@ checkConfig(ConstElementPtr config, ElementPtr errors) {
         }
         if (!config->contains("zones")) {
             // Assume empty list of zones
-            //addError(errors, "No 'zones' element in memory backend config");
-            //result = false;
         } else if (!config->get("zones") ||
                    config->get("zones")->getType() != Element::list) {
-            addError(errors, "'zones' element in memory backend config is not a list");
+            addError(errors,
+                     "'zones' element in memory backend config is not a list");
             result = false;
         } else {
             BOOST_FOREACH(ConstElementPtr zone_config,
@@ -161,9 +162,15 @@ checkConfig(ConstElementPtr config, ElementPtr errors) {
 // client must be freshly allocated, and config_value should have been
 // checked by the caller
 void
-applyConfig(isc::datasrc::InMemoryClient* client,
+applyConfig(isc::datasrc::InMemoryClient& client,
             isc::data::ConstElementPtr config_value)
 {
+    // XXX: We have lost the context to get to the default values here,
+    // as a temporary workaround we hardcode the IN class here.
+    isc::dns::RRClass rrclass = RRClass::IN();
+    if (config_value->contains("class")) {
+        rrclass = RRClass(config_value->get("class")->stringValue());
+    }
     ConstElementPtr zones_config = config_value->get("zones");
     if (!zones_config) {
         // XXX: Like the RR class, we cannot retrieve the default value here,
@@ -171,10 +178,6 @@ applyConfig(isc::datasrc::InMemoryClient* client,
         return;
     }
 
-    isc::dns::RRClass rrclass = RRClass::IN();
-    if (config_value->contains("class")) {
-        rrclass = RRClass(config_value->get("class")->stringValue());
-    }
 
     BOOST_FOREACH(ConstElementPtr zone_config, zones_config->listValue()) {
         ConstElementPtr origin = zone_config->get("origin");
@@ -220,7 +223,7 @@ applyConfig(isc::datasrc::InMemoryClient* client,
         }
 
         boost::shared_ptr<InMemoryZoneFinder> zone_finder(imzf);
-        const result::Result result = client->addZone(zone_finder);
+        const result::Result result = client.addZone(zone_finder);
         if (result == result::EXIST) {
             isc_throw(InMemoryConfigError, "zone "<< origin->str()
                       << " already exists");
@@ -250,21 +253,17 @@ createInstance(isc::data::ConstElementPtr config, std::string& error) {
         error = "Configuration error: " + errors->str();
         return (NULL);
     }
-    isc::datasrc::InMemoryClient* client = NULL;
     try {
-        client = new isc::datasrc::InMemoryClient();
-        applyConfig(client, config);
-        return (client);
+        std::auto_ptr<InMemoryClient> client(new isc::datasrc::InMemoryClient());
+        applyConfig(*client, config);
+        return (client.release());
     } catch (const isc::Exception& isce) {
-        delete client;
         error = isce.what();
         return (NULL);
     } catch (const std::exception& exc) {
-        delete client;
         error = std::string("Error creating memory datasource: ") + exc.what();
         return (NULL);
     } catch (...) {
-        delete client;
         error = std::string("Error creating memory datasource, "
                             "unknown exception");
         return (NULL);
