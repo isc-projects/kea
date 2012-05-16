@@ -229,6 +229,9 @@ private:
                       " is not found in data source");
         }
 
+        // It would appear that dynamic_cast does not work on all systems;
+        // it seems to confuse the RTTI system, resulting in NULL return
+        // values. So we use the more dangerous static_pointer_cast here.
         old_zone_finder_ = boost::static_pointer_cast<InMemoryZoneFinder>(
             result.zone_finder);
 
