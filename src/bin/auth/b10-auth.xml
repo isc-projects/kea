@@ -20,7 +20,7 @@
 <refentry>
 
   <refentryinfo>
-    <date>March 28, 2012</date>
+    <date>May 16, 2012</date>
   </refentryinfo>
 
   <refmeta>
@@ -125,14 +125,21 @@
       (it defaults to <quote>IN</quote>);
       and
       <varname>zones</varname> to define the
-      <varname>file</varname> path name and the
-      <varname>origin</varname> (default domain).
-
-      By default, this is empty.
+      <varname>file</varname> path name,
+      <varname>origin</varname> (default domain), and optional
+      <varname>filetype</varname>.
+      By default, <varname>zones</varname> is empty.
+      For the in-memory data source (i.e., the <varname>type</varname>
+      is <quote>memory</quote>), the optional <varname>filetype</varname>
+      configuration item for <varname>zones</varname> can be
+      specified so the in-memory zone data can be built from another
+      data source that is based on a database backend (in practice
+      with current implementation, it would be an SQLite3 database
+      file for the SQLite3 data source).
+      See the <citetitle>BIND 10 Guide</citetitle> for configuration
+      details.
 
       <note><simpara>
-        In this development version, currently this is only used for the
-        memory data source.
         Only the IN class is supported at this time.
         By default, the memory data source is disabled.
         Also, currently the zone file must be canonical such as
