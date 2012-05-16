@@ -17,6 +17,7 @@
 #include <vector>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include <gtest/gtest.h>
 
@@ -1280,25 +1281,25 @@ public:
     ///
     /// The initializer creates a fresh instance of a memory datasource,
     /// which is ignored for the rest (but we do not allow 'null' containers
-    /// atm, and this is only needed in these tests)
+    /// atm, and this is only needed in these tests, this may be changed
+    /// if we generalize the container class a bit more)
     ///
-    /// The client given will be deleted upon destruction of this container
-    FakeContainer(isc::datasrc::DataSourceClient* client) :
+    /// It will also create a FakeClient, with the given arguments, which
+    /// is actually used when the instance is requested.
+    FakeContainer(isc::datasrc::DataSourceClientContainerPtr real_client,
+                  ThrowWhen throw_when, bool isc_exception,
+                  ConstRRsetPtr fake_rrset = ConstRRsetPtr()) :
         DataSourceClientContainer("memory",
                                   Element::fromJSON("{\"type\": \"memory\"}")),
-        client_(client)
+        client_(new FakeClient(real_client, throw_when, isc_exception, fake_rrset))
     {}
-
-    ~FakeContainer() {
-        delete client_;
-    }
 
     isc::datasrc::DataSourceClient& getInstance() {
         return (*client_);
     }
 
 private:
-    isc::datasrc::DataSourceClient* const client_;
+    const boost::scoped_ptr<isc::datasrc::DataSourceClient> client_;
 };
 
 } // end anonymous namespace for throwing proxy classes
@@ -1310,14 +1311,11 @@ private:
 TEST_F(AuthSrvTest, queryWithInMemoryClientProxy) {
     // Set real inmem client to proxy
     updateConfig(&server, CONFIG_INMEMORY_EXAMPLE, true);
-
-    FakeClient* fake_client(
-        new FakeClient(server.getInMemoryClientContainer(rrclass),
-                       THROW_NEVER, false));
     EXPECT_TRUE(server.hasInMemoryClient());
 
     isc::datasrc::DataSourceClientContainerPtr fake_client_container(
-        new FakeContainer(fake_client));
+        new FakeContainer(server.getInMemoryClientContainer(rrclass),
+                          THROW_NEVER, false));
     server.setInMemoryClient(rrclass, fake_client_container);
 
     createDataFromFile("nsec3query_nodnssec_fromWire.wire");
@@ -1344,12 +1342,10 @@ setupThrow(AuthSrv* server, const char *config, ThrowWhen throw_when,
 
     // Set it to throw on findZone(), this should result in
     // SERVFAIL on any exception
-    FakeClient* fake_client(
-        new FakeClient(
+    isc::datasrc::DataSourceClientContainerPtr fake_client_container(
+        new FakeContainer(
             server->getInMemoryClientContainer(isc::dns::RRClass::IN()),
             throw_when, isc_exception, rrset));
-    isc::datasrc::DataSourceClientContainerPtr fake_client_container(
-        new FakeContainer(fake_client));
 
     ASSERT_TRUE(server->hasInMemoryClient());
     server->setInMemoryClient(isc::dns::RRClass::IN(), fake_client_container);
