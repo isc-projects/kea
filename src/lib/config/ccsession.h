@@ -15,12 +15,15 @@
 #ifndef __CCSESSION_H
 #define __CCSESSION_H 1
 
-#include <string>
-
 #include <config/config_data.h>
 #include <config/module_spec.h>
+
 #include <cc/session.h>
 #include <cc/data.h>
+
+#include <string>
+#include <list>
+#include <boost/function.hpp>
 
 namespace isc {
 namespace config {
@@ -358,6 +361,20 @@ public:
         return (session_.group_recvmsg(envelope, msg, nonblock, seq));
     };
 
+    class AsyncRecvRequest;
+    typedef std::list<boost::shared_ptr<AsyncRecvRequest> > AsyncRecvRequests;
+    typedef AsyncRecvRequests::const_iterator AsyncRecvRequestID;
+    typedef boost::function3<void, const isc::data::ConstElementPtr&,
+                             const isc::data::ConstElementPtr&,
+                             const AsyncRecvRequestID&>
+        AsyncRecvCallback;
+    AsyncRecvRequestID groupRecvMsgAsync(const AsyncRecvCallback& callback,
+                                         bool is_reply = true, int seq = -1,
+                                         const std::string& recipient =
+                                         std::string());
+
+    void cancelAsyncRecv(const AsyncRecvRequestID& id);
+
 private:
     ModuleSpec readModuleSpecification(const std::string& filename);
     void startCheck();
@@ -367,6 +384,7 @@ private:
     std::string module_name_;
     isc::cc::AbstractSession& session_;
     ModuleSpec module_specification_;
+    AsyncRecvRequests async_recv_requests_;
     isc::data::ConstElementPtr handleConfigUpdate(
         isc::data::ConstElementPtr new_config);
 
