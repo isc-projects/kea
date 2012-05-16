@@ -152,6 +152,27 @@ the parsing of the body of the message failed due to some protocol error
 (although the parsing of the header succeeded).  The message parameters
 give a textual description of the problem and the RCODE returned.
 
+% RESOLVER_QUERY_ACCEPTED query accepted: '%1/%2/%3' from %4
+This debug message is produced by the resolver when an incoming query
+is accepted in terms of the query ACL.  The log message shows the query
+in the form of <query name>/<query type>/<query class>, and the client
+that sends the query in the form of <Source IP address>#<source port>.
+
+% RESOLVER_QUERY_DROPPED query dropped: '%1/%2/%3' from %4
+This is an informational message that indicates an incoming query has
+been dropped by the resolver because of the query ACL.  Unlike the
+RESOLVER_QUERY_REJECTED case, the server does not return any response.
+The log message shows the query in the form of <query name>/<query
+type>/<query class>, and the client that sends the query in the form of
+<Source IP address>#<source port>.
+
+% RESOLVER_QUERY_REJECTED query rejected: '%1/%2/%3' from %4
+This is an informational message that indicates an incoming query has
+been rejected by the resolver because of the query ACL.  This results
+in a response with an RCODE of REFUSED. The log message shows the query
+in the form of <query name>/<query type>/<query class>, and the client
+that sends the query in the form of <Source IP address>#<source port>.
+
 % RESOLVER_QUERY_SETUP query setup
 This is a debug message noting that the resolver is creating a
 RecursiveQuery object.
@@ -197,6 +218,10 @@ there comes a time - the lookup timeout - when even the resolver gives up.
 At this point it will wait for pending upstream queries to complete or
 timeout and drop the query.
 
+% RESOLVER_SET_QUERY_ACL query ACL is configured
+This debug message is generated when a new query ACL is configured for
+the resolver.
+
 % RESOLVER_SET_ROOT_ADDRESS setting root address %1(%2)
 This message gives the address of one of the root servers used by the
 resolver.  It is output during startup and may appear multiple times,
@@ -204,6 +229,10 @@ once for each root server address.
 
 % RESOLVER_SHUTDOWN resolver shutdown complete
 This informational message is output when the resolver has shut down.
+
+% RESOLVER_SHUTDOWN_RECEIVED received command to shut down
+A debug message noting that the server was asked to terminate and is
+complying to the request.
 
 % RESOLVER_STARTED resolver started
 This informational message is output by the resolver when all initialization
@@ -221,32 +250,3 @@ has been ignored.
 This is debug message output when the resolver received a message with an
 unsupported opcode (it can only process QUERY opcodes).  It will return
 a message to the sender with the RCODE set to NOTIMP.
-
-% RESOLVER_SET_QUERY_ACL query ACL is configured
-This debug message is generated when a new query ACL is configured for
-the resolver.
-
-% RESOLVER_QUERY_ACCEPTED query accepted: '%1/%2/%3' from %4
-This debug message is produced by the resolver when an incoming query
-is accepted in terms of the query ACL.  The log message shows the query
-in the form of <query name>/<query type>/<query class>, and the client
-that sends the query in the form of <Source IP address>#<source port>.
-
-% RESOLVER_QUERY_REJECTED query rejected: '%1/%2/%3' from %4
-This is an informational message that indicates an incoming query has
-been rejected by the resolver because of the query ACL.  This results
-in a response with an RCODE of REFUSED. The log message shows the query
-in the form of <query name>/<query type>/<query class>, and the client
-that sends the query in the form of <Source IP address>#<source port>.
-
-% RESOLVER_QUERY_DROPPED query dropped: '%1/%2/%3' from %4
-This is an informational message that indicates an incoming query has
-been dropped by the resolver because of the query ACL.  Unlike the
-RESOLVER_QUERY_REJECTED case, the server does not return any response.
-The log message shows the query in the form of <query name>/<query
-type>/<query class>, and the client that sends the query in the form of
-<Source IP address>#<source port>.
-
-% RESOLVER_SHUTDOWN_RECEIVED received command to shut down
-A debug message noting that the server was asked to terminate and is
-complying to the request.
