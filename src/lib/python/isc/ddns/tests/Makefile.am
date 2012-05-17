@@ -1,6 +1,7 @@
 PYCOVERAGE_RUN = @PYCOVERAGE_RUN@
 PYTESTS = session_tests.py
 EXTRA_DIST = $(PYTESTS)
+CLEANFILES = $(builddir)/rwtest.sqlite3.copied
 
 # If necessary, explicitly specify paths to dynamic libraries
 # required by loadable python modules.
@@ -19,6 +20,8 @@ endif
 	for pytest in $(PYTESTS) ; do \
 	echo Running test: $$pytest ; \
 	$(LIBRARY_PATH_PLACEHOLDER) \
+	TESTDATA_PATH=$(abs_top_srcdir)/src/lib/testutils/testdata \
+	TESTDATA_WRITE_PATH=$(builddir) \
 	PYTHONPATH=$(COMMON_PYTHON_PATH):$(abs_top_builddir)/src/lib/dns/python/.libs \
 	$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
 	done
