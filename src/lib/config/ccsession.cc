@@ -818,11 +818,13 @@ ModuleCCSession::checkAsyncRecv(const ConstElementPtr& envelope,
                     requests_.erase(request_);
                 }
             private:
-                AsyncRecvRequests requests_;
-                AsyncRecvRequestID request_;
-            } deleter(async_recv_requests_, request);
+                AsyncRecvRequests& requests_;
+                AsyncRecvRequestID& request_;
+            };
+            RequestDeleter deleter(async_recv_requests_, request);
             // Call the callback
             request->callback(envelope, msg, request);
+            return (true);
         }
     }
     return (false);

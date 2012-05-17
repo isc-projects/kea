@@ -727,6 +727,10 @@ protected:
         // session.
         session.subscribe("test group");
         session.subscribe("<ignored>");
+        // Get rid of all unrelated stray messages
+        while (session.getMsgQueue()->size() > 0) {
+            session.getMsgQueue()->remove(0);
+        }
     }
     /// \brief Convenience function to queue a request to get a command
     ///     message.
@@ -779,7 +783,7 @@ private:
 // Test we can receive a command, without anything fancy yet
 TEST_F(AsyncReceiveCCSessionTest, simpleCommand) {
     // Push the message inside
-    ConstElementPtr msg(el("{}"));
+    ConstElementPtr msg(el("{\"command\": [\"bla\"]}"));
     session.addMessage(msg, "test group", "<unused>");
     EXPECT_TRUE(mccs_.hasQueuedMsgs());
     // Register the callback
@@ -805,7 +809,7 @@ TEST_F(AsyncReceiveCCSessionTest, simpleCommand) {
 // Very similar to simpleCommand, but with a response message
 TEST_F(AsyncReceiveCCSessionTest, simpleResponse) {
     // Push the message inside
-    ConstElementPtr msg(el("{}"));
+    ConstElementPtr msg(el("{\"result\": [0]}"));
     session.addMessage(msg, "<ignored>", "<unused>", 1);
     EXPECT_TRUE(mccs_.hasQueuedMsgs());
     // Register the callback
