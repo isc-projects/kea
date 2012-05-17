@@ -372,7 +372,7 @@ public:
     typedef std::list<boost::shared_ptr<AsyncRecvRequest> > AsyncRecvRequests;
 
     /// \brief Identifier of single request for asynchronous read.
-    typedef AsyncRecvRequests::const_iterator AsyncRecvRequestID;
+    typedef AsyncRecvRequests::iterator AsyncRecvRequestID;
 
     /// \brief Callback which is called when an asynchronous receive finishes.
     ///
@@ -475,6 +475,20 @@ private:
     ModuleSpec readModuleSpecification(const std::string& filename);
     void startCheck();
     void sendStopping();
+    /// \brief Check if the message is wanted by asynchronous read
+    ///
+    /// It checks if any of the previously queued requests match
+    /// the message. If so, the callback is dispatched and removed.
+    ///
+    /// \param envelope The envelope of the message.
+    /// \param msg The actual message data.
+    /// \return True if the message was used for a callback, false
+    ///     otherwise.
+    bool checkAsyncRecv(const data::ConstElementPtr& envelope,
+                        const data::ConstElementPtr& msg);
+    /// \brief Checks if a message with this envelope matches the request
+    bool requestMatch(const AsyncRecvRequest& request,
+                      const data::ConstElementPtr& envelope) const;
 
     bool started_;
     std::string module_name_;
