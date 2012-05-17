@@ -39,18 +39,26 @@ isc.log.init("b10-ddns")
 logger = isc.log.Logger("ddns")
 TRACE_BASIC = logger.DBGLVL_TRACE_BASIC
 
-DATA_PATH = bind10_config.DATA_PATH
-SOCKET_FILE = DATA_PATH + '/ddns_socket'
+# If B10_FROM_SOURCE is set in the environment, we use data files
+# from a directory relative to that, otherwise we use the ones
+# installed on the system
 if "B10_FROM_SOURCE" in os.environ:
-    DATA_PATH = os.environ['B10_FROM_SOURCE'] + "/src/bin/ddns"
+    SPECFILE_LOCATION = os.environ["B10_FROM_SOURCE"] + os.sep + \
+        "src" + os.sep + "bin" + os.sep + "ddns" + os.sep + "ddns.spec"
+else:
+    PREFIX = "@prefix@"
+    DATAROOTDIR = "@datarootdir@"
+    SPECFILE_LOCATION = "@datadir@" + os.sep + "@PACKAGE@" + os.sep + "ddns.spec"
+    SPECFILE_LOCATION = SPECFILE_LOCATION.replace("${datarootdir}", DATAROOTDIR)\
+        .replace("${prefix}", PREFIX)
+
+SOCKET_FILE = bind10_config.DATA_PATH + '/ddns_socket'
 if "B10_FROM_BUILD" in os.environ:
     if "B10_FROM_SOURCE_LOCALSTATEDIR" in os.environ:
         SOCKET_FILE = os.environ["B10_FROM_SOURCE_LOCALSTATEDIR"] + \
             "/ddns_socket"
     else:
         SOCKET_FILE = os.environ["B10_FROM_BUILD"] + "/ddns_socket"
-SPECFILE_LOCATION = DATA_PATH + "/ddns.spec"
-
 
 isc.util.process.rename()
 
