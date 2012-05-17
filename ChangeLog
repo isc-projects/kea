@@ -13,7 +13,7 @@ bind10-devel-20120517 released on May 17. 2012
 	(Trac #1789,#1790,#1792,#1793,#1911,
 	git 93f11d2a96ce4dba9308889bdb9be6be4a765b27)
 
-438.	[bug]		kambe
+438.	[bug]		naokikambe
 	b10-stats-httpd now sends the system a notification that
 	it is shutting down if it encounters a fatal error during
 	startup.
