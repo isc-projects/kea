@@ -76,6 +76,17 @@ class SessionTest(unittest.TestCase):
         self.assertEqual(0, msg.get_rr_count(SECTION_UPDATE))
         self.assertEqual(0, msg.get_rr_count(Message.SECTION_ADDITIONAL))
 
+    def test_handle(self):
+        '''Basic update case'''
+        result, zname, zclass = self.__session.handle()
+        self.assertEqual(UPDATE_SUCCESS, result)
+        self.assertEqual(TEST_ZONE_NAME, zname)
+        self.assertEqual(TEST_RRCLASS, zclass)
+
+        # Just checking these are different from the success code.
+        self.assertNotEqual(UPDATE_ERROR, result)
+        self.assertNotEqual(UPDATE_DROP, result)
+
     def test_broken_request(self):
         # Zone section is empty
         msg_data, msg = create_update_msg(zones=[])
@@ -115,15 +126,26 @@ class SessionTest(unittest.TestCase):
         self.assertEqual(UPDATE_ERROR, session.handle()[0])
         self.check_response(session.get_message(), Rcode.REFUSED())
 
-    def test_handle(self):
-        result, zname, zclass = self.__session.handle()
-        self.assertEqual(UPDATE_SUCCESS, result)
-        self.assertEqual(TEST_ZONE_NAME, zname)
-        self.assertEqual(TEST_RRCLASS, zclass)
+    def check_notauth(self, zname, zclass=TEST_RRCLASS):
+        '''Common test sequence for the 'notauth' test'''
+        msg_data, msg = create_update_msg(zones=[Question(zname, zclass,
+                                                          RRType.SOA())])
+        session = UpdateSession(msg, msg_data, TEST_CLIENT4,
+                                ZoneConfig([(TEST_ZONE_NAME, TEST_RRCLASS)],
+                                           TEST_RRCLASS,
+                                           self.__datasrc_client))
+        self.assertEqual(UPDATE_ERROR, session.handle()[0])
+        self.check_response(session.get_message(), Rcode.NOTAUTH())
 
-        # Just checking these are different from the success code.
-        self.assertNotEqual(UPDATE_ERROR, result)
-        self.assertNotEqual(UPDATE_DROP, result)
+    def test_update_notauth(self):
+        '''Update attempt for non authoritative zones'''
+        # zone name doesn't match
+        self.check_notauth(Name('example.com'))
+        # zone name is a subdomain of the actual authoritative zone
+        # (match must be exact)
+        self.check_notauth(Name('sub.example.org'))
+        # zone class doesn't match
+        self.check_notauth(Name('example.org'), RRClass.CH())
 
 if __name__ == "__main__":
     isc.log.init("bind10")

@@ -121,6 +121,9 @@ class UpdateSession:
             # unconditionally refused forwarding (we don't support it yet)
             raise UpdateError('Update forwarding not supported',
                               zname, zclass, Rcode.REFUSED())
+        # zone wasn't found
+        raise UpdateError('not authoritative for update zone',
+                          zname, zclass, Rcode.NOTAUTH())
 
     def __make_response(self, rcode):
         '''Transform the internal message to the update response.

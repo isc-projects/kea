@@ -56,8 +56,9 @@ class ZoneConfig:
     def find_zone(self, zone_name, zone_class):
         '''Return the type and accessor client object for given zone.'''
         if self.__datasrc_class == zone_class and \
-            self.__datasrc_client.find_zone(zone_name)[0] == \
-            DataSourceClient.SUCCESS:
+                self.__datasrc_client.find_zone(zone_name)[0] == \
+                DataSourceClient.SUCCESS:
             if (zone_name, zone_class) in self.__secondaries:
-                return ZONE_SECONDARY, self.__datasrc_client
+                return ZONE_SECONDARY, None
             return ZONE_PRIMARY, self.__datasrc_client
+        return ZONE_NOTFOUND, None
