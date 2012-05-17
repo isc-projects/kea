@@ -948,6 +948,44 @@ TEST_F(AsyncReceiveCCSessionTest, outOfOrder) {
     nothingCalled();
 }
 
+// We first add, then remove the callback again and check that nothing is
+// matched.
+TEST_F(AsyncReceiveCCSessionTest, cancel) {
+    // Add the callback
+    ModuleCCSession::AsyncRecvRequestID request(registerReply(1));
+    // Add corresponding message
+    session.addMessage(msg_, "<ignored>", "<unused>", 1);
+    EXPECT_TRUE(mccs_.hasQueuedMsgs());
+    // And now, remove the callback again
+    mccs_.cancelAsyncRecv(request);
+    // And see that Nothing Happens(TM)
+    mccs_.checkCommand();
+    EXPECT_FALSE(mccs_.hasQueuedMsgs());
+    nothingCalled();
+}
+
+// We add multiple requests and cancel only one of them to see the rest
+// is unaffected.
+TEST_F(AsyncReceiveCCSessionTest, cancelSome) {
+    // Register few callbacks
+    registerReply(1);
+    ModuleCCSession::AsyncRecvRequestID request(registerCommand(""));
+    registerCommand("test group");
+    // Put some messages there
+    session.addMessage(msg_, "test group", "<unused>");
+    session.addMessage(msg_, "<ignored>", "<unused>", 1);
+    // Cancel the second callback. Therefore the first message will be matched
+    // by the third callback, not by the second.
+    mccs_.cancelAsyncRecv(request);
+    // Now, process the messages
+    mccs_.checkCommand();
+    mccs_.checkCommand();
+    // And see how they matched
+    called(2);
+    called(0);
+    nothingCalled();
+}
+
 void doRelatedLoggersTest(const char* input, const char* expected) {
     ConstElementPtr all_conf = isc::data::Element::fromJSON(input);
     ConstElementPtr expected_conf = isc::data::Element::fromJSON(expected);
