@@ -1,6 +1,6 @@
 SUBDIRS = . tests
 
-python_PYTHON = __init__.py session.py
+python_PYTHON = __init__.py session.py logger.py zone_config.py
 BUILT_SOURCES = $(PYTHON_LOGMSGPKG_DIR)/work/libddns_messages.py
 nodist_pylogmessage_PYTHON = $(PYTHON_LOGMSGPKG_DIR)/work/libddns_messages.py
 pylogmessagedir = $(pyexecdir)/isc/log_messages/
