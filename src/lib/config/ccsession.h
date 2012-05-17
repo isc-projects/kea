@@ -369,7 +369,7 @@ public:
     class AsyncRecvRequest;
 
     /// \brief List of all requests for asynchronous reads.
-    typedef std::list<boost::shared_ptr<AsyncRecvRequest> > AsyncRecvRequests;
+    typedef std::list<AsyncRecvRequest> AsyncRecvRequests;
 
     /// \brief Identifier of single request for asynchronous read.
     typedef AsyncRecvRequests::iterator AsyncRecvRequestID;
