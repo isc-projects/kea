@@ -726,6 +726,7 @@ protected:
         // This is just to make sure the messages get through the fake
         // session.
         session.subscribe("test group");
+        session.subscribe("other group");
         session.subscribe("<ignored>");
         // Get rid of all unrelated stray messages
         while (session.getMsgQueue()->size() > 0) {
@@ -764,6 +765,77 @@ protected:
     ModuleCCSession mccs_;
     /// \brief The value of message on the last called callback.
     ConstElementPtr last_msg_;
+    // Shared part of the simpleCommand and similar tests.
+    void commandTest(const string& group) {
+        // Push the message inside
+        ConstElementPtr msg(el("{\"command\": [\"bla\"]}"));
+        session.addMessage(msg, "test group", "<unused>");
+        EXPECT_TRUE(mccs_.hasQueuedMsgs());
+        // Register the callback
+        registerCommand(group);
+        // But the callback should not be called yet
+        // (even if the message is there).
+        nothingCalled();
+        // But when we call the checkCommand(), it should be called.
+        mccs_.checkCommand();
+        called(0);
+        EXPECT_EQ(msg, last_msg_);
+        // But only once
+        nothingCalled();
+        // And the message should be eaten
+        EXPECT_FALSE(mccs_.hasQueuedMsgs());
+        // The callback should have been eaten as well, inserting another
+        // message will not invoke it again
+        session.addMessage(msg, "test group", "<unused>");
+        mccs_.checkCommand();
+        nothingCalled();
+    }
+    /// \brief Shared part of the simpleResponse and wildcardResponse tests.
+    void responseTest(int seq) {
+        // Push the message inside
+        ConstElementPtr msg(el("{\"result\": [0]}"));
+        session.addMessage(msg, "<ignored>", "<unused>", 1);
+        EXPECT_TRUE(mccs_.hasQueuedMsgs());
+        // Register the callback
+        registerReply(seq);
+        // But the callback should not be called yet
+        // (even if the message is there).
+        nothingCalled();
+        // But when we call the checkCommand(), it should be called.
+        mccs_.checkCommand();
+        called(0);
+        EXPECT_EQ(msg, last_msg_);
+        // But only once
+        nothingCalled();
+        // And the message should be eaten
+        EXPECT_FALSE(mccs_.hasQueuedMsgs());
+        // The callback should have been eaten as well, inserting another
+        // message will not invoke it again
+        session.addMessage(msg, "test group", "<unused>");
+        mccs_.checkCommand();
+        nothingCalled();
+    }
+    /// \brief Shared part of the noMatch* tests
+    void noMatchTest(int seq, int wanted_seq, bool is_reply) {
+        // Push the message inside
+        ConstElementPtr msg(el("{\"command\": [\"command name\"]}"));
+        session.addMessage(msg, "other group", "<unused>", seq);
+        EXPECT_TRUE(mccs_.hasQueuedMsgs());
+        // Register the callback
+        if (is_reply) {
+            registerReply(wanted_seq);
+        } else {
+            registerCommand("test group");
+        }
+        // But the callback should not be called yet
+        // (even if the message is there).
+        nothingCalled();
+        // And even not now, because it does not match.
+        mccs_.checkCommand();
+        nothingCalled();
+        // And the message should be eaten by the checkCommand
+        EXPECT_FALSE(mccs_.hasQueuedMsgs());
+    }
 private:
     /// \brief The next flag to be handed out
     int next_flag_;
@@ -782,54 +854,43 @@ private:
 
 // Test we can receive a command, without anything fancy yet
 TEST_F(AsyncReceiveCCSessionTest, simpleCommand) {
-    // Push the message inside
-    ConstElementPtr msg(el("{\"command\": [\"bla\"]}"));
-    session.addMessage(msg, "test group", "<unused>");
-    EXPECT_TRUE(mccs_.hasQueuedMsgs());
-    // Register the callback
-    registerCommand("test group");
-    // But the callback should not be called yet
-    // (even if the message is there).
-    nothingCalled();
-    // But when we call the checkCommand(), it should be called.
-    mccs_.checkCommand();
-    called(0);
-    EXPECT_EQ(msg, last_msg_);
-    // But only once
-    nothingCalled();
-    // And the message should be eaten
-    EXPECT_FALSE(mccs_.hasQueuedMsgs());
-    // The callback should have been eaten as well, inserting another
-    // message will not invoke it again
-    session.addMessage(msg, "test group", "<unused>");
-    mccs_.checkCommand();
-    nothingCalled();
+    commandTest("test group");
+}
+
+// Test we can receive a "wildcard" command - without specifying the
+// group to subscribe to. Very similar to simpleCommand test.
+TEST_F(AsyncReceiveCCSessionTest, wildcardCommand) {
+    commandTest("");
 }
 
 // Very similar to simpleCommand, but with a response message
 TEST_F(AsyncReceiveCCSessionTest, simpleResponse) {
-    // Push the message inside
-    ConstElementPtr msg(el("{\"result\": [0]}"));
-    session.addMessage(msg, "<ignored>", "<unused>", 1);
-    EXPECT_TRUE(mccs_.hasQueuedMsgs());
-    // Register the callback
-    registerReply(1);
-    // But the callback should not be called yet
-    // (even if the message is there).
-    nothingCalled();
-    // But when we call the checkCommand(), it should be called.
-    mccs_.checkCommand();
-    called(0);
-    EXPECT_EQ(msg, last_msg_);
-    // But only once
-    nothingCalled();
-    // And the message should be eaten
-    EXPECT_FALSE(mccs_.hasQueuedMsgs());
-    // The callback should have been eaten as well, inserting another
-    // message will not invoke it again
-    session.addMessage(msg, "test group", "<unused>");
-    mccs_.checkCommand();
-    nothingCalled();
+    responseTest(1);
+}
+
+// Matching a response message with wildcard
+TEST_F(AsyncReceiveCCSessionTest, wildcardResponse) {
+    responseTest(-1);
+}
+
+// Check that a wrong command message is not matched
+TEST_F(AsyncReceiveCCSessionTest, noMatchCommand) {
+    noMatchTest(-1, -1, false);
+}
+
+// Check that a wrong response message is not matched
+TEST_F(AsyncReceiveCCSessionTest, noMatchResponse) {
+    noMatchTest(2, 3, true);
+}
+
+// Check that a command will not match on a reply check and vice versa
+TEST_F(AsyncReceiveCCSessionTest, noMatchResponseAgainstCommand) {
+    // Send a command and check it is not matched as a response
+    noMatchTest(-1, -1, true);
+}
+
+TEST_F(AsyncReceiveCCSessionTest, noMatchCommandAgainstResponse) {
+    noMatchTest(2, -1, false);
 }
 
 void doRelatedLoggersTest(const char* input, const char* expected) {
