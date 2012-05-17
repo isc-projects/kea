@@ -207,7 +207,7 @@ FakeSession::reply(ConstElementPtr envelope, ConstElementPtr newmsg) {
 
 bool
 FakeSession::hasQueuedMsgs() const {
-    return (messages_ && messages_->size() > 0);
+    return (msg_queue_ && msg_queue_->size() > 0);
 }
 
 ConstElementPtr
