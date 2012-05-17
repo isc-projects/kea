@@ -420,10 +420,11 @@ public:
     /// In case the is_reply is false, the function looks for command messages.
     /// The seq parameter is ignored, but the recipient one is considered. If
     /// it is an empty string, any command is taken. If it is non-empty, only
-    /// commands addressed to the recipient channel are taken. This can be used
-    /// to receive foreign commands or notifications. In such case, it might
-    /// be desirable to call the groupRecvMsgAsync again from within the
-    /// callback, to receive any future commands or events of the same type.
+    /// commands addressed to the recipient channel (eg. group - instance is
+    /// ignored for now)are taken. This can be used to receive foreign commands
+    /// or notifications. In such case, it might be desirable to call the
+    /// groupRecvMsgAsync again from within the callback, to receive any future
+    /// commands or events of the same type.
     ///
     /// The interaction with other receiving functions is slightly complicated.
     /// The groupRecvMsg call takes precedence. If the message matches its
@@ -448,6 +449,7 @@ public:
     ///     command is good one.
     /// \return An identifier of the request. This will be passed to the
     ///     callback or can be used to cancel the request by cancelAsyncRecv.
+    /// \todo Decide what to do with instance and what was it meant for anyway.
     AsyncRecvRequestID groupRecvMsgAsync(const AsyncRecvCallback& callback,
                                          bool is_reply = true, int seq = -1,
                                          const std::string& recipient =
