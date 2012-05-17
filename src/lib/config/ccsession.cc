@@ -771,10 +771,17 @@ ModuleCCSession::sendStopping() {
 
 class ModuleCCSession::AsyncRecvRequest {
 public: // Everything is public here, as the definition is hidden anyway
-    AsyncRecvCallback callback;
-    string recipient;
-    int seq;
-    bool is_reply;
+    AsyncRecvRequest(const AsyncRecvCallback& cb, const string& rcp, int sq,
+                     bool reply) :
+        callback(cb),
+        recipient(rcp),
+        seq(sq),
+        is_reply(reply)
+    {}
+    const AsyncRecvCallback callback;
+    const string recipient;
+    const int seq;
+    const bool is_reply;
 };
 
 ModuleCCSession::AsyncRecvRequestID
@@ -782,13 +789,11 @@ ModuleCCSession::groupRecvMsgAsync(const AsyncRecvCallback& callback,
                                    bool is_reply, int seq,
                                    const string& recipient) {
     // This just stores the request, the handling is done in checkCommand()
-    AsyncRecvRequest request;
-    request.callback = callback;
-    request.recipient = recipient;
-    request.seq = seq;
-    request.is_reply = is_reply;
+
     // push_back would be simpler, but it does not return the iterator we need
-    return (async_recv_requests_.insert(async_recv_requests_.end(), request));
+    return (async_recv_requests_.insert(async_recv_requests_.end(),
+                                        AsyncRecvRequest(callback, recipient,
+                                                         seq, is_reply)));
 }
 
 bool
