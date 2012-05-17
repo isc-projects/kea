@@ -854,5 +854,10 @@ ModuleCCSession::requestMatch(const AsyncRecvRequest& request,
     return (false);
 }
 
+void
+ModuleCCSession::cancelAsyncRecv(const AsyncRecvRequestID& id) {
+    async_recv_requests_.erase(id);
+}
+
 }
 }
