@@ -15,5 +15,11 @@
 # No namespace declaration - these constants go in the global namespace
 # of the libddns_messages python module.
 
-% LIBDDNS_UPDATE_ERROR client %1 for zone %2: %3
+% LIBDDNS_UPDATE_ERROR update client %1 for zone %2: %3
+TBD
+
+% LIBDDNS_UPDATE_FORWARD_FAIL update client %1 for zone %2: update forwarding not supported
+TBD
+
+% LIBDDNS_UPDATE_NOTAUTH update client %1 for zone %2: not authoritative for update zone
 TBD

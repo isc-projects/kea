@@ -29,12 +29,31 @@ SECTION_ZONE = Message.SECTION_QUESTION
 SECTION_PREREQUISITE = Message.SECTION_ANSWER
 SECTION_UPDATE = Message.SECTION_AUTHORITY
 
+# Shortcut
+DBGLVL_TRACE_BASIC = logger.DBGLVL_TRACE_BASIC
+
 class UpdateError(Exception):
-    def __init__(self, msg, zname, zclass, rcode):
+    '''Exception for general error in update request handling.
+
+    This exception is intended to be used internally within this module.
+    When UpdateSession.handle() encounters an error in handling an update
+    request it can raise this exception to terminate the handling.
+
+    This class is constructed with some information that may be useful for
+    subsequent possible logging:
+    - msg (string) A string explaining the error.
+    - zname (isc.dns.Name) The zone name.  Can be None when not identified.
+    - zclass (isc.dns.RRClass) The zone class.  Like zname, can be None.
+    - rcode (isc.dns.RCode) The RCODE to be set in the response message.
+    - nolog (bool) If True, it indicates there's no more need for logging.
+
+    '''
+    def __init__(self, msg, zname, zclass, rcode, nolog=False):
         Exception.__init__(self, msg)
         self.zname = zname
         self.zclass = zclass
         self.rcode = rcode
+        self.nolog = nolog
 
 class UpdateSession:
     '''Protocol handling for a single dynamic update request.
@@ -84,9 +103,10 @@ class UpdateSession:
             # self.__make_response(Rcode.NOERROR())
             return UPDATE_SUCCESS, zname, zclass
         except UpdateError as e:
-            logger.debug(logger.DBGLVL_TRACE_BASIC, LIBDDNS_UPDATE_ERROR,
-                         ClientFormatter(self.__client_addr),
-                         ZoneFormatter(e.zname, e.zclass), e)
+            if not e.nolog:
+                logger.debug(logger.DBGLVL_TRACE_BASIC, LIBDDNS_UPDATE_ERROR,
+                             ClientFormatter(self.__client_addr),
+                             ZoneFormatter(e.zname, e.zclass), e)
             self.__make_response(e.rcode)
         return UPDATE_ERROR, None, None
 
@@ -120,11 +140,15 @@ class UpdateSession:
         elif zone_type == isc.ddns.zone_config.ZONE_SECONDARY:
             # We are a secondary server; since we don't yet support update
             # forwarding, we return 'not implemented'.
-            raise UpdateError('Update forwarding not supported',
-                              zname, zclass, Rcode.NOTIMP())
+            logger.debug(DBGLVL_TRACE_BASIC, LIBDDNS_UPDATE_FORWARD_FAIL,
+                         ClientFormatter(self.__client_addr),
+                         ZoneFormatter(zname, zclass))
+            raise UpdateError('forward', zname, zclass, Rcode.NOTIMP(), True)
         # zone wasn't found
-        raise UpdateError('not authoritative for update zone',
-                          zname, zclass, Rcode.NOTAUTH())
+        logger.debug(DBGLVL_TRACE_BASIC, LIBDDNS_UPDATE_NOTAUTH,
+                     ClientFormatter(self.__client_addr),
+                     ZoneFormatter(zname, zclass))
+        raise UpdateError('notauth', zname, zclass, Rcode.NOTAUTH(), True)
 
     def __make_response(self, rcode):
         '''Transform the internal message to the update response.
