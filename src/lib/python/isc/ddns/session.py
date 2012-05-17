@@ -58,10 +58,28 @@ class UpdateError(Exception):
 class UpdateSession:
     '''Protocol handling for a single dynamic update request.
 
-    TBD
+    This class is instantiated with a request message and some other
+    information that will be used for handling the request.  Its main
+    method, handle(), will process the request, and normally build
+    a response message according to the result.  The application of this
+    class can use the message to send a response to the client.
 
     '''
     def __init__(self, req_message, req_data, client_addr, zone_config):
+        '''Constructor.
+
+        Parameters:
+        - req_message (isc.dns.Message) The request message.  This must be
+          in the PARSE mode.
+        - req_data (binary) Wire format data of the request message.
+          It will be used for TSIG verification if necessary.
+        - client_addr (socket address) The address/port of the update client
+          in the form of Python socket address object.  This is mainly for
+          logging and access control.
+        - zone_config (ZoneConfig) A tentative container that encapsulates
+          the server's zone configuration.  See zone_config.py.
+
+        '''
         self.__message = req_message
         self.__client_addr = client_addr
         self.__zone_config = zone_config
