@@ -451,7 +451,7 @@ public:
     ///     callback or can be used to cancel the request by cancelAsyncRecv.
     /// \todo Decide what to do with instance and what was it meant for anyway.
     AsyncRecvRequestID groupRecvMsgAsync(const AsyncRecvCallback& callback,
-                                         bool is_reply = true, int seq = -1,
+                                         bool is_reply, int seq = -1,
                                          const std::string& recipient =
                                          std::string());
 
