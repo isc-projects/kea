@@ -178,7 +178,6 @@ applyConfig(isc::datasrc::InMemoryClient& client,
         return;
     }
 
-
     BOOST_FOREACH(ConstElementPtr zone_config, zones_config->listValue()) {
         ConstElementPtr origin = zone_config->get("origin");
         const std::string origin_txt = origin ? origin->stringValue() : "";

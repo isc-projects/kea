@@ -1261,15 +1261,14 @@ public:
 
     isc::datasrc::ZoneUpdaterPtr
     getUpdater(const isc::dns::Name&, bool, bool) const {
-        isc_throw(isc::NotImplemented, "Update attempt on in fake data source");
+        isc_throw(isc::NotImplemented,
+                  "Update attempt on in fake data source");
     }
     std::pair<isc::datasrc::ZoneJournalReader::Result,
               isc::datasrc::ZoneJournalReaderPtr>
-    getJournalReader(const isc::dns::Name&, uint32_t,
-                                     uint32_t) const
-    {
+    getJournalReader(const isc::dns::Name&, uint32_t, uint32_t) const {
         isc_throw(isc::NotImplemented, "Journaling isn't supported for "
-                  "in memory data source");
+                  "fake data source");
     }
 private:
     const isc::datasrc::DataSourceClientContainerPtr real_client_ptr_;
@@ -1294,7 +1293,8 @@ public:
                   ConstRRsetPtr fake_rrset = ConstRRsetPtr()) :
         DataSourceClientContainer("memory",
                                   Element::fromJSON("{\"type\": \"memory\"}")),
-        client_(new FakeClient(real_client, throw_when, isc_exception, fake_rrset))
+        client_(new FakeClient(real_client, throw_when, isc_exception,
+                               fake_rrset))
     {}
 
     isc::datasrc::DataSourceClient& getInstance() {
