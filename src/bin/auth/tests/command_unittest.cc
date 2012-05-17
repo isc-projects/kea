@@ -326,7 +326,8 @@ TEST_F(AuthCommandTest,
 
     // Now send the command to reload it
     result_ = execAuthServerCommand(server_, "loadzone",
-        Element::fromJSON("{\"origin\": \"example.org\"}"));
+                                    Element::fromJSON(
+                                        "{\"origin\": \"example.org\"}"));
     checkAnswer(0);
 
     // And now it should be present too.
@@ -345,7 +346,8 @@ TEST_F(AuthCommandTest,
 
     module_session.setLocalConfig(Element::fromJSON("{\"datasources\": []}"));
     result_ = execAuthServerCommand(server_, "loadzone",
-        Element::fromJSON("{\"origin\": \"example.org\"}"));
+                                    Element::fromJSON(
+                                        "{\"origin\": \"example.org\"}"));
     checkAnswer(1);
 
     // The previous zone is not hurt in any way
