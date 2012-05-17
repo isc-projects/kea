@@ -118,9 +118,10 @@ class UpdateSession:
         if zone_type == isc.ddns.zone_config.ZONE_PRIMARY:
             return datasrc_client, zname, zclass
         elif zone_type == isc.ddns.zone_config.ZONE_SECONDARY:
-            # unconditionally refused forwarding (we don't support it yet)
+            # We are a secondary server; since we don't yet support update
+            # forwarding, we return 'not implemented'.
             raise UpdateError('Update forwarding not supported',
-                              zname, zclass, Rcode.REFUSED())
+                              zname, zclass, Rcode.NOTIMP())
         # zone wasn't found
         raise UpdateError('not authoritative for update zone',
                           zname, zclass, Rcode.NOTAUTH())

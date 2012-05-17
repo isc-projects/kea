@@ -115,7 +115,7 @@ class SessionTest(unittest.TestCase):
     def test_update_secondary(self):
         # specified zone is configured as a secondary.  Since this
         # implementation doesn't support update forwarding, the result
-        # should be REFUSED.
+        # should be NOTIMP.
         msg_data, msg = create_update_msg(zones=[Question(TEST_ZONE_NAME,
                                                           TEST_RRCLASS,
                                                           RRType.SOA())])
@@ -124,7 +124,7 @@ class SessionTest(unittest.TestCase):
                                            TEST_RRCLASS,
                                            self.__datasrc_client))
         self.assertEqual(UPDATE_ERROR, session.handle()[0])
-        self.check_response(session.get_message(), Rcode.REFUSED())
+        self.check_response(session.get_message(), Rcode.NOTIMP())
 
     def check_notauth(self, zname, zclass=TEST_RRCLASS):
         '''Common test sequence for the 'notauth' test'''
