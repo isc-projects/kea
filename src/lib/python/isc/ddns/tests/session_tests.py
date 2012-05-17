@@ -13,14 +13,23 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+import os
+import shutil
 import isc.log
 import unittest
 from isc.dns import *
+from isc.datasrc import DataSourceClient
 from isc.ddns.session import *
 from isc.ddns.zone_config import *
 
 # Some common test parameters
-TEST_ZONE_NAME = Name('example.com')
+TESTDATA_PATH = os.environ['TESTDATA_PATH'] + os.sep
+READ_ZONE_DB_FILE = TESTDATA_PATH + "rwtest.sqlite3" # original, to be copied
+TESTDATA_WRITE_PATH = os.environ['TESTDATA_WRITE_PATH'] + os.sep
+WRITE_ZONE_DB_FILE = TESTDATA_WRITE_PATH + "rwtest.sqlite3.copied"
+WRITE_ZONE_DB_CONFIG = "{ \"database_file\": \"" + WRITE_ZONE_DB_FILE + "\"}"
+
+TEST_ZONE_NAME = Name('example.org')
 UPDATE_RRTYPE = RRType.SOA()
 TEST_RRCLASS = RRClass.IN()
 TEST_ZONE_RECORD = Question(TEST_ZONE_NAME, TEST_RRCLASS, UPDATE_RRTYPE)
@@ -47,11 +56,14 @@ def create_update_msg(zones=[TEST_ZONE_RECORD]):
 class SessionTest(unittest.TestCase):
     '''Session tests'''
     def setUp(self):
+        shutil.copyfile(READ_ZONE_DB_FILE, WRITE_ZONE_DB_FILE)
+        self.__datasrc_client = DataSourceClient("sqlite3",
+                                                 WRITE_ZONE_DB_CONFIG)
         self.__update_msgdata, self.__update_msg = create_update_msg()
         self.__session = UpdateSession(self.__update_msg,
                                        self.__update_msgdata, TEST_CLIENT4,
-                                       ZoneConfig([(Name("example.org"),
-                                                    TEST_RRCLASS)]))
+                                       ZoneConfig([], TEST_RRCLASS,
+                                                  self.__datasrc_client))
 
     def check_response(self, msg, expected_rcode):
         '''Perform common checks on update resposne message.'''
@@ -93,22 +105,25 @@ class SessionTest(unittest.TestCase):
         # specified zone is configured as a secondary.  Since this
         # implementation doesn't support update forwarding, the result
         # should be REFUSED.
-        sec_zone = Name("example.org")
-        msg_data, msg = create_update_msg(zones=[Question(sec_zone,
+        msg_data, msg = create_update_msg(zones=[Question(TEST_ZONE_NAME,
                                                           TEST_RRCLASS,
                                                           RRType.SOA())])
         session = UpdateSession(msg, msg_data, TEST_CLIENT4,
-                                ZoneConfig([(sec_zone, TEST_RRCLASS)]))
+                                ZoneConfig([(TEST_ZONE_NAME, TEST_RRCLASS)],
+                                           TEST_RRCLASS,
+                                           self.__datasrc_client))
         self.assertEqual(UPDATE_ERROR, session.handle()[0])
         self.check_response(session.get_message(), Rcode.REFUSED())
 
     def test_handle(self):
         result, zname, zclass = self.__session.handle()
         self.assertEqual(UPDATE_SUCCESS, result)
-        self.assertNotEqual(UPDATE_ERROR, result)
-        self.assertNotEqual(UPDATE_DROP, result)
         self.assertEqual(TEST_ZONE_NAME, zname)
         self.assertEqual(TEST_RRCLASS, zclass)
+
+        # Just checking these are different from the success code.
+        self.assertNotEqual(UPDATE_ERROR, result)
+        self.assertNotEqual(UPDATE_DROP, result)
 
 if __name__ == "__main__":
     isc.log.init("bind10")

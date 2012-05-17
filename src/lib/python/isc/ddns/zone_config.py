@@ -13,6 +13,9 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+import isc.dns
+from isc.datasrc import DataSourceClient
+
 # Constants representing zone types
 ZONE_NOTFOUND = -1              # Zone isn't found in find_zone()
 ZONE_PRIMARY = 0                # Primary zone
@@ -30,14 +33,31 @@ class ZoneConfig:
     until the details are fixed.
 
     '''
-    def __init__(self, secondaries):
+    def __init__(self, secondaries, datasrc_class, datasrc_client):
+        '''Constructor.
+
+        Parameters:
+        - secondaries: a list of 2-element tuple.  Each element is a pair
+          of isc.dns.Name and isc.dns.RRClass, and identifies a single
+          secondary zone.
+        - datasrc_class: isc.dns.RRClass object.  Specifies the RR class
+          of datasrc_client.
+        - datasrc_client: isc.dns.DataSourceClient object.  A data source
+          class for the RR class of datasrc_class.  It's expected to contain
+          a zone that is eventually updated in the ddns package.
+
+        '''
         self.__secondaries = {}
         for (zname, zclass) in secondaries:
             self.__secondaries[(zname, zclass)] = True
+        self.__datasrc_class = datasrc_class
+        self.__datasrc_client = datasrc_client
 
     def find_zone(self, zone_name, zone_class):
         '''Return the type and accessor client object for given zone.'''
-        # Right now, the client is not used, so we simply return None.
-        if (zone_name, zone_class) in self.__secondaries:
-            return ZONE_SECONDARY, None
-        return ZONE_PRIMARY, None
+        if self.__datasrc_class == zone_class and \
+            self.__datasrc_client.find_zone(zone_name)[0] == \
+            DataSourceClient.SUCCESS:
+            if (zone_name, zone_class) in self.__secondaries:
+                return ZONE_SECONDARY, self.__datasrc_client
+            return ZONE_PRIMARY, self.__datasrc_client
