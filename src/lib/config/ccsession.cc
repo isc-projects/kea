@@ -764,5 +764,27 @@ ModuleCCSession::sendStopping() {
     session_.group_sendmsg(cmd, "ConfigManager");
 }
 
+class ModuleCCSession::AsyncRecvRequest {
+public: // Everything is public here, as the definition is hidden anyway
+    AsyncRecvCallback callback;
+    string recipient;
+    int seq;
+    bool is_reply;
+};
+
+ModuleCCSession::AsyncRecvRequestID
+ModuleCCSession::groupRecvMsgAsync(const AsyncRecvCallback& callback,
+                                   bool is_reply, int seq,
+                                   const string& recipient) {
+    // This just stores the request, the handling is done in checkCommand()
+    boost::shared_ptr<AsyncRecvRequest> request(new AsyncRecvRequest);
+    request->callback = callback;
+    request->recipient = recipient;
+    request->seq = seq;
+    request->is_reply = is_reply;
+    // push_back would be simpler, but it does not return the iterator we need
+    return (async_recv_requests_.insert(async_recv_requests_.end(), request));
+}
+
 }
 }
