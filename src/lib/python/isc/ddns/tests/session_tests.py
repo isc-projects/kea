@@ -24,6 +24,8 @@ TEST_ZONE_NAME = Name('example.com')
 UPDATE_RRTYPE = RRType.SOA()
 TEST_RRCLASS = RRClass.IN()
 TEST_ZONE_RECORD = Question(TEST_ZONE_NAME, TEST_RRCLASS, UPDATE_RRTYPE)
+TEST_CLIENT6 = ('2001:db8::1', 53, 0, 0)
+TEST_CLIENT4 = ('192.0.2.1', 53)
 
 def create_update_msg(zones=[TEST_ZONE_RECORD]):
     msg = Message(Message.RENDER)
@@ -45,11 +47,9 @@ def create_update_msg(zones=[TEST_ZONE_RECORD]):
 class SessionTest(unittest.TestCase):
     '''Session tests'''
     def setUp(self):
-        self.__client_addr = ('192.0.2.1', 53)
         self.__update_msgdata, self.__update_msg = create_update_msg()
         self.__session = UpdateSession(self.__update_msg,
-                                       self.__update_msgdata,
-                                       self.__client_addr,
+                                       self.__update_msgdata, TEST_CLIENT4,
                                        ZoneConfig([(Name("example.org"),
                                                     TEST_RRCLASS)]))
 
@@ -67,7 +67,7 @@ class SessionTest(unittest.TestCase):
     def test_broken_request(self):
         # Zone section is empty
         msg_data, msg = create_update_msg(zones=[])
-        session = UpdateSession(msg, msg_data, None, None)
+        session = UpdateSession(msg, msg_data, TEST_CLIENT6, None)
         result, zname, zclass = session.handle()
         self.assertEqual(UPDATE_ERROR, result)
         self.assertEqual(None, zname)
@@ -77,7 +77,7 @@ class SessionTest(unittest.TestCase):
         # Zone section contains multiple records
         msg_data, msg = create_update_msg(zones=[TEST_ZONE_RECORD,
                                                  TEST_ZONE_RECORD])
-        session = UpdateSession(msg, msg_data, None, None)
+        session = UpdateSession(msg, msg_data, TEST_CLIENT4, None)
         self.assertEqual(UPDATE_ERROR, session.handle()[0])
         self.check_response(session.get_message(), Rcode.FORMERR())
 
@@ -85,7 +85,7 @@ class SessionTest(unittest.TestCase):
         msg_data, msg = create_update_msg(zones=[Question(TEST_ZONE_NAME,
                                                           TEST_RRCLASS,
                                                           RRType.A())])
-        session = UpdateSession(msg, msg_data, None, None)
+        session = UpdateSession(msg, msg_data, TEST_CLIENT4, None)
         self.assertEqual(UPDATE_ERROR, session.handle()[0])
         self.check_response(session.get_message(), Rcode.FORMERR())
 
@@ -97,7 +97,7 @@ class SessionTest(unittest.TestCase):
         msg_data, msg = create_update_msg(zones=[Question(sec_zone,
                                                           TEST_RRCLASS,
                                                           RRType.SOA())])
-        session = UpdateSession(msg, msg_data, None,
+        session = UpdateSession(msg, msg_data, TEST_CLIENT4,
                                 ZoneConfig([(sec_zone, TEST_RRCLASS)]))
         self.assertEqual(UPDATE_ERROR, session.handle()[0])
         self.check_response(session.get_message(), Rcode.REFUSED())
