@@ -29,3 +29,4 @@ EXTRA_DIST  = README
 libdhcp___la_CXXFLAGS = $(AM_CXXFLAGS)
 libdhcp___la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
 libdhcp___la_LIBADD   = $(top_builddir)/src/lib/util/libutil.la
+libdhcp___la_LDFLAGS = -no-undefined -version-info 1:0:0
