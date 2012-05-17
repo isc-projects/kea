@@ -749,7 +749,7 @@ protected:
     {
         return (mccs_.groupRecvMsgAsync(
             bind(&AsyncReceiveCCSessionTest::callback, this, next_flag_ ++, _1,
-                 _2, _3), false, seq));
+                 _2, _3), true, seq));
     }
     /// \brief Check the next called callback was with this flag
     void called(int flag) {
