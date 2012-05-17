@@ -709,13 +709,11 @@ TEST_F(CCSessionTest, doubleStartWithAddRemoteConfig) {
                  FakeSession::DoubleRead);
 }
 
-namespace {
 void doRelatedLoggersTest(const char* input, const char* expected) {
     ConstElementPtr all_conf = isc::data::Element::fromJSON(input);
     ConstElementPtr expected_conf = isc::data::Element::fromJSON(expected);
     EXPECT_EQ(*expected_conf, *isc::config::getRelatedLoggers(all_conf));
 }
-} // end anonymous namespace
 
 TEST(LogConfigTest, relatedLoggersTest) {
     // make sure logger configs for 'other' programs are ignored,
