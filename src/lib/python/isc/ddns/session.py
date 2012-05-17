@@ -79,6 +79,8 @@ class UpdateSession:
         - zone_config (ZoneConfig) A tentative container that encapsulates
           the server's zone configuration.  See zone_config.py.
 
+        (It'll soon need to be passed ACL in some way, too)
+
         '''
         self.__message = req_message
         self.__client_addr = client_addr
