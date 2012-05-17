@@ -782,11 +782,11 @@ ModuleCCSession::groupRecvMsgAsync(const AsyncRecvCallback& callback,
                                    bool is_reply, int seq,
                                    const string& recipient) {
     // This just stores the request, the handling is done in checkCommand()
-    boost::shared_ptr<AsyncRecvRequest> request(new AsyncRecvRequest);
-    request->callback = callback;
-    request->recipient = recipient;
-    request->seq = seq;
-    request->is_reply = is_reply;
+    AsyncRecvRequest request;
+    request.callback = callback;
+    request.recipient = recipient;
+    request.seq = seq;
+    request.is_reply = is_reply;
     // push_back would be simpler, but it does not return the iterator we need
     return (async_recv_requests_.insert(async_recv_requests_.end(), request));
 }
@@ -798,7 +798,7 @@ ModuleCCSession::checkAsyncRecv(const ConstElementPtr& envelope,
     for (AsyncRecvRequestID request(async_recv_requests_.begin());
          request != async_recv_requests_.end(); ++ request) {
         // Just go through all the requests and look for a matching one
-        if (requestMatch(**request, envelope)) {
+        if (requestMatch(*request, envelope)) {
             // We want the request to be still alive at the time we
             // call the callback. But we need to remove it on an exception
             // too, so we use the class. If just C++ had the finally keyword.
@@ -817,7 +817,7 @@ ModuleCCSession::checkAsyncRecv(const ConstElementPtr& envelope,
                 AsyncRecvRequestID request_;
             } deleter(async_recv_requests_, request);
             // Call the callback
-            (*request)->callback(envelope, msg, request);
+            request->callback(envelope, msg, request);
         }
     }
     return (false);
