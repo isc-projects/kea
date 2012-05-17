@@ -722,7 +722,12 @@ protected:
     AsyncReceiveCCSessionTest() :
         mccs_(ccspecfile("spec29.spec"), session, NULL, NULL, false, false),
         next_flag_(0)
-    {}
+    {
+        // This is just to make sure the messages get through the fake
+        // session.
+        session.subscribe("test group");
+        session.subscribe("<ignored>");
+    }
     /// \brief Convenience function to queue a request to get a command
     ///     message.
     ModuleCCSession::AsyncRecvRequestID
