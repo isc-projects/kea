@@ -248,8 +248,7 @@ private:
 } // end of unnamed namespace
 
 AuthConfigParser*
-createAuthConfigParser(AuthSrv& server, const std::string& config_id)
-{
+createAuthConfigParser(AuthSrv& server, const std::string& config_id) {
     // For the initial implementation we use a naive if-else blocks for
     // simplicity.  In future we'll probably generalize it using map-like
     // data structure, and may even provide external register interface so
