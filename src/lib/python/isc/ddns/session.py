@@ -13,8 +13,11 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-import isc.dns
+from isc.dns import *
 import isc.ddns.zone_config
+from isc.log import *
+from isc.ddns.logger import logger, ClientFormatter, ZoneFormatter
+from isc.log_messages.libddns_messages import *
 
 # Result codes for UpdateSession.handle()
 UPDATE_SUCCESS = 0
@@ -22,13 +25,15 @@ UPDATE_ERROR = 1
 UPDATE_DROP = 2
 
 # Convenient aliases of update-specific section names
-SECTION_ZONE = isc.dns.Message.SECTION_QUESTION
-SECTION_PREREQUISITE = isc.dns.Message.SECTION_ANSWER
-SECTION_UPDATE = isc.dns.Message.SECTION_AUTHORITY
+SECTION_ZONE = Message.SECTION_QUESTION
+SECTION_PREREQUISITE = Message.SECTION_ANSWER
+SECTION_UPDATE = Message.SECTION_AUTHORITY
 
-class ZoneError(Exception):
-    def __init__(self, msg, rcode):
-        Exception(msg)
+class UpdateError(Exception):
+    def __init__(self, msg, zname, zclass, rcode):
+        Exception.__init__(self, msg)
+        self.zname = zname
+        self.zclass = zclass
         self.rcode = rcode
 
 class UpdateSession:
@@ -39,6 +44,7 @@ class UpdateSession:
     '''
     def __init__(self, req_message, req_data, client_addr, zone_config):
         self.__message = req_message
+        self.__client_addr = client_addr
         self.__zone_config = zone_config
 
     def get_message(self):
@@ -77,7 +83,10 @@ class UpdateSession:
             # self.__do_update()
             # self.__make_response(Rcode.NOERROR())
             return UPDATE_SUCCESS, zname, zclass
-        except ZoneError as e:
+        except UpdateError as e:
+            logger.debug(logger.DBGLVL_TRACE_BASIC, LIBDDNS_UPDATE_ERROR,
+                         ClientFormatter(self.__client_addr),
+                         ZoneFormatter(e.zname, e.zclass), e)
             self.__make_response(e.rcode)
         return UPDATE_ERROR, None, None
 
@@ -93,13 +102,14 @@ class UpdateSession:
         '''
         # Validation: the zone section must contain exactly one question,
         # and it must be of type SOA.
-        if self.__message.get_rr_count(SECTION_ZONE) != 1:
-            raise ZoneError('Invalid number of records in zone section: ' +
-                            str(1), isc.dns.Rcode.FORMERR())
+        n_zones = self.__message.get_rr_count(SECTION_ZONE)
+        if n_zones != 1:
+            raise UpdateError('Invalid number of records in zone section: ' +
+                              str(n_zones), None, None, Rcode.FORMERR())
         zrecord = self.__message.get_question()[0]
-        if zrecord.get_type() != isc.dns.RRType.SOA():
-            raise ZoneError('update zone section contains non-SOA',
-                            isc.dns.Rcode.FORMERR())
+        if zrecord.get_type() != RRType.SOA():
+            raise UpdateError('update zone section contains non-SOA',
+                              None, None, Rcode.FORMERR())
 
         # See if we're serving a primary zone specified in the zone section.
         zname = zrecord.get_name()
@@ -109,8 +119,8 @@ class UpdateSession:
             return datasrc_client, zname, zclass
         elif zone_type == isc.ddns.zone_config.ZONE_SECONDARY:
             # unconditionally refused forwarding (we don't support it yet)
-            raise ZoneError('Update forwarding not supported',
-                            isc.dns.Rcode.REFUSED())
+            raise UpdateError('Update forwarding not supported',
+                              zname, zclass, Rcode.REFUSED())
 
     def __make_response(self, rcode):
         '''Transform the internal message to the update response.
