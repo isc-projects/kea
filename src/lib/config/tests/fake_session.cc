@@ -139,6 +139,9 @@ FakeSession::recvmsg(ConstElementPtr& env, ConstElementPtr& msg, bool nonblock,
                 ElementPtr new_env = Element::createMap();
                 new_env->set("group", c_m->get(0));
                 new_env->set("to", c_m->get(1));
+                if (c_m->get(3)->intValue() != -1) {
+                    new_env->set("reply", c_m->get(3));
+                }
                 env = new_env;
                 msg = c_m->get(2);
                 to_remove = c_m;
