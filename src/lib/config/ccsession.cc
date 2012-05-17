@@ -601,6 +601,11 @@ ModuleCCSession::checkCommand() {
     ConstElementPtr cmd, routing, data;
     if (session_.group_recvmsg(routing, data, true)) {
 
+        // In case the message is wanted asynchronously, it gets used.
+        if (checkAsyncRecv(routing, data)) {
+            return (0);
+        }
+
         /* ignore result messages (in case we're out of sync, to prevent
          * pingpongs */
         if (data->getType() != Element::map || data->contains("result")) {
@@ -784,6 +789,62 @@ ModuleCCSession::groupRecvMsgAsync(const AsyncRecvCallback& callback,
     request->is_reply = is_reply;
     // push_back would be simpler, but it does not return the iterator we need
     return (async_recv_requests_.insert(async_recv_requests_.end(), request));
+}
+
+bool
+ModuleCCSession::checkAsyncRecv(const ConstElementPtr& envelope,
+                                const ConstElementPtr& msg)
+{
+    for (AsyncRecvRequestID request(async_recv_requests_.begin());
+         request != async_recv_requests_.end(); ++ request) {
+        // Just go through all the requests and look for a matching one
+        if (requestMatch(**request, envelope)) {
+            // We want the request to be still alive at the time we
+            // call the callback. But we need to remove it on an exception
+            // too, so we use the class. If just C++ had the finally keyword.
+            class RequestDeleter {
+            public:
+                RequestDeleter(AsyncRecvRequests& requests,
+                               AsyncRecvRequestID& request) :
+                    requests_(requests),
+                    request_(request)
+                { }
+                ~ RequestDeleter() {
+                    requests_.erase(request_);
+                }
+            private:
+                AsyncRecvRequests requests_;
+                AsyncRecvRequestID request_;
+            } deleter(async_recv_requests_, request);
+            // Call the callback
+            (*request)->callback(envelope, msg, request);
+        }
+    }
+    return (false);
+}
+
+bool
+ModuleCCSession::requestMatch(const AsyncRecvRequest& request,
+                              const ConstElementPtr& envelope) const
+{
+    if (request.is_reply != envelope->contains("reply")) {
+        // Wrong type of message
+        return (false);
+    }
+    if (request.is_reply &&
+        (request.seq == -1 ||
+         request.seq == envelope->get("reply")->intValue())) {
+        // This is the correct reply
+        return (true);
+    }
+    if (!request.is_reply &&
+        (request.recipient == "" ||
+         request.recipient == envelope->get("group")->stringValue())) {
+        // This is the correct command
+        return (true);
+    }
+    // If nothing from the above, we don't want it
+    return (false);
 }
 
 }
