@@ -228,12 +228,13 @@ FakeSession::getFirstMessage(std::string& group, std::string& to) const {
 
 void
 FakeSession::addMessage(ConstElementPtr msg, const std::string& group,
-                        const std::string& to)
+                        const std::string& to, int seq)
 {
     ElementPtr m_el = Element::createList();
     m_el->add(Element::create(group));
     m_el->add(Element::create(to));
     m_el->add(msg);
+    m_el->add(Element::create(seq));
     if (!msg_queue_) {
         msg_queue_ = Element::createList();
     }
