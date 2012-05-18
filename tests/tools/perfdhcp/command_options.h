@@ -52,8 +52,8 @@ public:
     /// \param argc Argument count passed to main().
     /// \param argv Argument value array passed to main().
     /// \param force_reset Force  reset of state variables
-    /// return non-zero value if parse failed
-    int parse(int argc, char** argv, bool force_reset = false);
+    /// \throw BadValue if fails to parse
+    void parse(int argc, char** const argv, bool force_reset = false);
 
     /// \brief Returns IP version
     ///
@@ -198,7 +198,7 @@ public:
     /// \brief Returns template offset for requested IP
     ///
     /// \return template offset for requested IP
-    int getRipOffset() const { return elp_offset_; }
+    int getRipOffset() const { return rip_offset_; }
 
     /// \brief Returns diagnostic selectors
     ///
@@ -221,6 +221,46 @@ public:
     void usage(void);
 
 private:
+
+    /// \brief Initializes class members based command line
+    ///
+    /// Reads each command line parameter and sets class member values
+    ///
+    /// \param argc Argument count passed to main().
+    /// \param argv Argument value array passed to main().
+    /// \throw InvalidParameter if bad command line option values
+    void initialize(int argc, char** const argv);
+
+    /// \brief Validates initialized options
+    ///
+    /// \throw InvalidPrameter if validation fails
+    void validate() const;
+
+    /// \brief Checks given condition
+    ///
+    /// \param condition Condition to be checked
+    /// \param errmsg Error message in exception
+    /// \throw InvalidParameter if check fails
+    inline void check(bool condition, const std::string errmsg) const;
+
+    /// \brief Decodes base provided with -b
+    ///
+    /// \param base Base in string format
+    /// \throw InvalidParameter if base is invalid
+    void decodeBase(const std::string& base);
+
+    /// \brief Decodes base MAC address provided with -b
+    ///
+    /// \param base MAC address in string format
+    /// \throw InvalidParameter if base is invalid
+    void decodeMac(const std::string& base);
+
+    /// \brief Decodes base DUID provided with -b
+    ///
+    /// \param base DUID in string format
+    /// \throw InvalidParameter if base is invalid
+    void decodeDuid(const std::string& base);
+
     uint8_t ipversion_;                      ///< IP version
     ExchangeMode exchange_mode_  ;           ///< Packet exchange mode (e.g. DORR/SARR)
     int rate_;                               ///< rate in exchange per second
