@@ -33,7 +33,7 @@
 #include <log/logger_support.h>
 #include <xfr/xfrout_client.h>
 
-#include <testutils/mockups.h>
+#include <util/unittests/mock_socketsession.h>
 
 #include <auth/auth_srv.h>
 #include <auth/auth_config.h>
@@ -49,11 +49,11 @@ using namespace isc::auth;
 using namespace isc::dns;
 using namespace isc::log;
 using namespace isc::util;
+using namespace isc::util::unittests;
 using namespace isc::xfr;
 using namespace isc::bench;
 using namespace isc::asiodns;
 using namespace isc::asiolink;
-using namespace isc::testutils;
 
 namespace {
 // Commonly used constant:
