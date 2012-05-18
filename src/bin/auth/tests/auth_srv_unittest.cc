@@ -138,6 +138,22 @@ protected:
                     opcode.getCode(), QR_FLAG, 1, 0, 0, 0);
     }
 
+    // Convenient shortcut of creating a simple request and having the
+    // server process it.
+    void createAndSendRequest(RRType req_type, Opcode opcode = Opcode::QUERY(),
+                              const Name& req_name = Name("example.com"),
+                              RRClass req_class = RRClass::IN(),
+                              int protocol = IPPROTO_UDP)
+    {
+        UnitTestUtil::createRequestMessage(request_message, opcode,
+                                           default_qid, req_name,
+                                           req_class, req_type);
+        createRequestPacket(request_message, protocol);
+        parse_message->clear(Message::PARSE);
+        server.processMessage(*io_message, *parse_message, *response_obuffer,
+                              &dnsserv);
+    }
+
     MockDNSService dnss_;
     MockSession statistics_session;
     MockXfroutClient xfrout;
@@ -1398,15 +1414,28 @@ TEST_F(AuthSrvTest, DDNSForward) {
     // confirm the forwarder connection will be established exactly once,
     // and kept established.
     for (size_t i = 0; i < 2; ++i) {
-        UnitTestUtil::createRequestMessage(request_message, Opcode::UPDATE(),
-                                           default_qid, Name("example.com"),
-                                           RRClass::IN(), RRType::SOA());
-        createRequestPacket(request_message, IPPROTO_UDP);
-        server.processMessage(*io_message, *parse_message, *response_obuffer,
-                              &dnsserv);
+        createAndSendRequest(RRType::SOA(), Opcode::UPDATE());
         EXPECT_FALSE(dnsserv.hasAnswer());
         EXPECT_TRUE(ddns_forwarder.isConnected());
     }
+}
+
+TEST_F(AuthSrvTest, DDNSForwardConnectFail) {
+    // make connect attempt fail.  It should result in SERVFAIL.  Note that
+    // the question (zone) section should be cleared for opcode of update.
+    ddns_forwarder.disableConnect();
+    createAndSendRequest(RRType::SOA(), Opcode::UPDATE());
+    EXPECT_TRUE(dnsserv.hasAnswer());
+    headerCheck(*parse_message, default_qid, Rcode::SERVFAIL(),
+                Opcode::UPDATE().getCode(), QR_FLAG, 0, 0, 0, 0);
+    EXPECT_FALSE(ddns_forwarder.isConnected());
+
+    // Now make connect okay again.  Despite the previous failure the new
+    // connection should now be established.
+    ddns_forwarder.enableConnect();
+    createAndSendRequest(RRType::SOA(), Opcode::UPDATE());
+    EXPECT_FALSE(dnsserv.hasAnswer());
+    EXPECT_TRUE(ddns_forwarder.isConnected());
 }
 
 TEST_F(AuthSrvTest, DDNSForwardClose) {
