@@ -142,19 +142,19 @@ CommandOptions::initialize(int argc, char** const argv) {
         break;
 
     case 'r':
-        rate_ = atoi(optarg);
+        rate_ = boost::lexical_cast<int>(optarg);
         check(rate_ <= 0, "rate_ must be a positive integer");
         break;
 
     case 't':
-        report_delay_ = atoi(optarg);
+        report_delay_ = boost::lexical_cast<int>(optarg);
         check(report_delay_ <= 0, "report_delay_ must be a positive integer");
         break;
 
     case 'R':
-        r = atoll(optarg);
+        r = boost::lexical_cast<long long>(optarg);
         check(r < 0, "random_range_ must not be a negative integer");
-        random_range_ = (uint32_t) r;
+        random_range_ = static_cast<uint32_t>(r);
         if ((random_range_ != 0) && (random_range_ != UINT32_MAX)) {
             uint32_t s = random_range_ + 1;
             uint64_t b = UINT32_MAX + 1, m;
@@ -174,7 +174,7 @@ CommandOptions::initialize(int argc, char** const argv) {
         break;
 
     case 'n':
-        nr = atoi(optarg);
+        nr = boost::lexical_cast<int>(optarg);
         check(nr <= 0, "num-request must be a positive integer");
         if (num_request_.size() >= 2) {
             isc_throw(isc::InvalidParameter,
@@ -184,12 +184,12 @@ CommandOptions::initialize(int argc, char** const argv) {
         break;
 
     case 'p':
-        period_ = atoi(optarg);
+        period_ = boost::lexical_cast<int>(optarg);
         check(period_ <= 0, "test-period must be a positive integer");
         break;
 
     case 'd':
-        lost_time_[lost_time_set_] = atof(optarg);
+        lost_time_[lost_time_set_] = boost::lexical_cast<double>(optarg);
         check(lost_time_[lost_time_set_] <= 0., "drop-time must be a positive number");
         lost_time_set_ = 1;
         break;
@@ -198,13 +198,13 @@ CommandOptions::initialize(int argc, char** const argv) {
         pc = strchr(optarg, '%');
         if (pc != NULL) {
             *pc = '\0';
-            dp = atof(optarg);
-            max_pdrop_[max_drop_set_] = atof(optarg);
+            dp = boost::lexical_cast<double>(optarg);
+            max_pdrop_[max_drop_set_] = boost::lexical_cast<double>(optarg);
             check((dp <= 0) || (dp >= 100), "invalid drop-time percentage");
             max_pdrop_.push_back(dp);
             break;
         }
-        di = atoi(optarg);
+        di = boost::lexical_cast<int>(optarg);
         check(di <= 0, "max-drop must be a positive integer");
         max_drop_.push_back(di);
         break;
@@ -214,24 +214,24 @@ CommandOptions::initialize(int argc, char** const argv) {
         break;
 
     case 'P':
-        preload_ = atoi(optarg);
+        preload_ = boost::lexical_cast<int>(optarg);
         check(preload_ < 0, "preload must not be a negative integer");
         break;
 
     case 'a':
-        aggressivity_ = atoi(optarg);
+        aggressivity_ = boost::lexical_cast<int>(optarg);
         check(aggressivity_ <= 0, "aggressivity must be a positive integer");
         break;
 
     case 'L':
-        local_port_ = atoi(optarg);
+        local_port_ = boost::lexical_cast<int>(optarg);
         check(local_port_ < 0, "local-port must not be a negative integer");
         check(local_port_ > (int) UINT16_MAX, "local-port must be lower than UINT16_MAX");
         break;
 
     case 's':
         seeded_ = true;
-        seed_ = (unsigned int) atol(optarg);
+        seed_ = boost::lexical_cast<unsigned int>(optarg);
         break;
 
     case 'i':
@@ -264,7 +264,7 @@ CommandOptions::initialize(int argc, char** const argv) {
         break;
 
     case 'X':
-        of = atoi(optarg);
+        of = boost::lexical_cast<int>(optarg);
         check(of <= 0, "xid-offset must be a positive integer");
         if (xid_offset_.size() >= 2) {
             xid_offset_.resize(0);
@@ -273,7 +273,7 @@ CommandOptions::initialize(int argc, char** const argv) {
         break;
 
     case 'O':
-        of = atoi(optarg);
+        of = boost::lexical_cast<int>(optarg);
         check(of < 3, "random-offset must be greater than 3");
         if (rnd_offset_.size() >= 2) {
             rnd_offset_.resize(0);
@@ -282,17 +282,17 @@ CommandOptions::initialize(int argc, char** const argv) {
         break;
 
     case 'E':
-        elp_offset_ = atoi(optarg);
+        elp_offset_ = boost::lexical_cast<int>(optarg);
         check(elp_offset_ < 0, "time-offset must not be a negative integer");
         break;
 
     case 'S':
-        sid_offset_ = atoi(optarg);
+        sid_offset_ = boost::lexical_cast<int>(optarg);
         check(sid_offset_ <= 0, "srvid-offset must be a positive integer");
         break;
 
     case 'I':
-        rip_offset_ = atoi(optarg);
+        rip_offset_ = boost::lexical_cast<int>(optarg);
         check(rip_offset_ <= 0, "ip-offset must be a positive integer");
         break;
 
