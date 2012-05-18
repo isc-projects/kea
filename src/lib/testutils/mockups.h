@@ -223,7 +223,9 @@ public:
         }
         is_connected_ = true;
     }
-    virtual void close() {}
+    virtual void close() {
+        is_connected_ = false;
+    }
 #if 0
     virtual void push(int sock, int family, int type, int protocol,
                       const struct sockaddr& local_end,

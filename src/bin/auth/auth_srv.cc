@@ -117,7 +117,11 @@ public:
     SocketSessionForwarderHolder(BaseSocketSessionForwarder& forwarder) :
         forwarder_(forwarder), connected_(false)
     {}
-    ~SocketSessionForwarderHolder() {}
+    ~SocketSessionForwarderHolder() {
+        if (connected_) {
+            forwarder_.close();
+        }
+    }
 
     void connect() {
         if (!connected_) {
