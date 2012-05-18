@@ -47,8 +47,7 @@ namespace {
 /// identifier.
 class DatasourcesConfig : public AuthConfigParser {
 public:
-    DatasourcesConfig(AuthSrv& server) : server_(server),
-                                         rrclass_(0) // dummy initial value
+    DatasourcesConfig(AuthSrv& server) : server_(server)
     {}
     virtual void build(ConstElementPtr config_value);
     virtual void commit();
@@ -56,13 +55,7 @@ private:
     AuthSrv& server_;
     vector<boost::shared_ptr<AuthConfigParser> > datasources_;
     set<string> configured_sources_;
-    // Workaround until we have complete datasource-agnostic
-    // setup; the in-memory datasource client must be specifically
-    // set, so we need to keep track of it, and set it specifically
-    // upon commit()
-    isc::datasrc::DataSourceClientContainerPtr memory_client_;
-    // Also need to keep track of its class for now
-    isc::dns::RRClass rrclass_;
+    vector<pair<RRClass, DataSourceClientContainerPtr> > clients_;
 };
 
 /// A derived \c AuthConfigParser for the version value
@@ -91,64 +84,60 @@ DatasourcesConfig::build(ConstElementPtr config_value) {
                       datasrc_type->stringValue() << "' already configured");
         }
 
-        // Special handling of in-memory, pending datasource-agnostic config
-        // changes, see comment at memory_client_ member.
-        if (datasrc_type->stringValue() == std::string("memory")) {
-            // Apart from that it's not really easy to get at the default
-            // class value for the class here, it should probably really
-            // be a property of the instantiated data source. For now
-            // use hardcoded default IN.
-            ConstElementPtr rrclass_elem = datasrc_elem->get("class");
-            if (datasrc_elem->contains("class")) {
-                rrclass_ = RRClass(datasrc_elem->get("class")->stringValue());
-            } else{
-                rrclass_ = RRClass::IN();
-            }
+        // Apart from that it's not really easy to get at the default
+        // class value for the class here, it should probably really
+        // be a property of the instantiated data source. For now
+        // use hardcoded default IN.
+        const RRClass rrclass =
+            datasrc_elem->contains("class") ?
+            RRClass(datasrc_elem->get("class")->stringValue()) : RRClass::IN();
 
-            // We'd eventually optimize building zones (in case of reloading) by
-            // selectively loading fresh zones.  Right now we simply check the
-            // RR class is supported by the server implementation, by calling
-            // the get (it should throw on the wrong class).
-            (void)server_.getInMemoryClientContainer(rrclass_);
-
-            memory_client_ = isc::datasrc::DataSourceClientContainerPtr(
-                new isc::datasrc::DataSourceClientContainer("memory",
-                                                            datasrc_elem));
-        } else {
-            boost::shared_ptr<AuthConfigParser> datasrc_config =
-                boost::shared_ptr<AuthConfigParser>(
-                    createAuthConfigParser(server_, string("datasources/") +
-                                           datasrc_type->stringValue()));
-            datasrc_config->build(datasrc_elem);
-            datasources_.push_back(datasrc_config);
-
+        // Right now, we only support the in-memory data source for the
+        // RR class of IN.  We reject other cases explicitly by hardcoded
+        // checks.  This will soon be generalized, at which point these
+        // checks will also have to be cleaned up.
+        if (rrclass != RRClass::IN()) {
+            isc_throw(isc::InvalidParameter, "Unsupported data source class: "
+                      << rrclass);
         }
+        if (datasrc_type->stringValue() != "memory") {
+            isc_throw(AuthConfigError, "Unsupported data source type: "
+                      << datasrc_type->stringValue());
+        }
+
+        // Create a new client for the specified data source and store it
+        // in the local vector.  For now, we always build a new client
+        // from the scratch, and replace any existing ones with the new ones.
+        // We might eventually want to optimize building zones (in case of
+        // reloading) by selectively loading fresh zones for data source
+        // where zone loading is expensive (such as in-memory).
+        clients_.push_back(
+            pair<RRClass, DataSourceClientContainerPtr>(
+                rrclass,
+                DataSourceClientContainerPtr(new DataSourceClientContainer(
+                                                 datasrc_type->stringValue(),
+                                                 datasrc_elem))));
+
         configured_sources_.insert(datasrc_type->stringValue());
     }
 }
 
 void
 DatasourcesConfig::commit() {
-    // XXX a short term workaround: clear all data sources and then reset
-    // to new ones so that we can remove data sources that don't exist in
-    // the new configuration and have been used in the server.
-    // This could be inefficient and requires knowledge about
-    // server implementation details, and isn't scalable wrt the number of
-    // data source types, and should eventually be improved.
-    // Currently memory data source for class IN is the only possibility.
-
-    // Temporary workaround, see memory_client_ member description.
-    if (memory_client_) {
-        server_.setInMemoryClient(rrclass_, memory_client_);
-    } else {
+    // As noted in build(), the current implementation only supports the
+    // in-memory data source for class IN, and build() should have ensured
+    // it.  So, depending on the vector is empty or not, we either clear
+    // or install an in-memory data source for the server.
+    //
+    // When we generalize it, we'll somehow install all data source clients
+    // built in the vector, clearing deleted ones from the server.
+    if (clients_.empty()) {
         server_.setInMemoryClient(RRClass::IN(),
-                                  isc::datasrc::DataSourceClientContainerPtr());
+                                  DataSourceClientContainerPtr());
+    } else {
+        server_.setInMemoryClient(clients_.front().first,
+                                  clients_.front().second);
     }
-    BOOST_FOREACH(boost::shared_ptr<AuthConfigParser> datasrc_config,
-                  datasources_) {
-        datasrc_config->commit();
-    }
-
 }
 
 /// A derived \c AuthConfigParser class for the "statistics-internal"
