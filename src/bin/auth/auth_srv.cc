@@ -758,7 +758,7 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
 
 bool
 AuthSrvImpl::processUpdate(const IOMessage& /*io_message*/,
-                           Message& /*message*/, 
+                           Message& /*message*/,
                            OutputBuffer& /*buffer*/,
                            std::auto_ptr<TSIGContext> /*tsig_context*/)
 {

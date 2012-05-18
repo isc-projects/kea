@@ -247,8 +247,8 @@ TEST_F(AuthSrvTest, iqueryViaDNSServer) {
 // Unsupported requests.  Should result in NOTIMP.
 TEST_F(AuthSrvTest, unsupportedRequest) {
     unsupportedRequest();
-    // unsupportedRequest tries 14 different opcodes
-    checkAllRcodeCountersZeroExcept(Rcode::NOTIMP(), 14);
+    // unsupportedRequest tries 13 different opcodes
+    checkAllRcodeCountersZeroExcept(Rcode::NOTIMP(), 13);
 }
 
 // Multiple questions.  Should result in FORMERR.
