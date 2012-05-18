@@ -218,6 +218,9 @@ public:
             isc_throw(isc::util::io::SocketSessionError, "socket session "
                       "forwarding connection disabled for test");
         }
+        if (is_connected_) {
+            isc_throw(isc::util::io::SocketSessionError, "duplicate connect");
+        }
         is_connected_ = true;
     }
     virtual void close() {}

@@ -110,6 +110,27 @@ public:
 private:
     MessageRenderer& renderer_;
 };
+
+/// TBD document it.
+class SocketSessionForwarderHolder {
+public:
+    SocketSessionForwarderHolder(BaseSocketSessionForwarder& forwarder) :
+        forwarder_(forwarder), connected_(false)
+    {}
+    ~SocketSessionForwarderHolder() {}
+
+    void connect() {
+        if (!connected_) {
+            forwarder_.connectToReceiver();
+            connected_ = true;
+        }
+    }
+
+    BaseSocketSessionForwarder& forwarder_;
+
+private:
+    bool connected_;
+};
 }
 
 class AuthSrvImpl {
@@ -196,7 +217,7 @@ private:
     bool xfrout_connected_;
     AbstractXfroutClient& xfrout_client_;
 
-    BaseSocketSessionForwarder& ddns_forwarder_;
+    SocketSessionForwarderHolder ddns_forwarder_;
 
     /// Increment query counter
     void incCounter(const int protocol);
@@ -763,7 +784,8 @@ AuthSrvImpl::processUpdate(const IOMessage& /*io_message*/,
                            std::auto_ptr<TSIGContext> /*tsig_context*/)
 {
     // hardcode for initial test
-    ddns_forwarder_.connectToReceiver();
+    ddns_forwarder_.connect();
+
     return (false);
 }
 

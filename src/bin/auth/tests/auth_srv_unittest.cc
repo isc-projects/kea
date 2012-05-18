@@ -1392,14 +1392,19 @@ TEST_F(AuthSrvTest, queryWithThrowingInToWire) {
 TEST_F(AuthSrvTest, DDNSForward) {
     EXPECT_FALSE(ddns_forwarder.isConnected());
 
-    UnitTestUtil::createRequestMessage(request_message, Opcode::UPDATE(),
-                                       default_qid, Name("example.com"),
-                                       RRClass::IN(), RRType::SOA());
-    createRequestPacket(request_message, IPPROTO_UDP);
-    server.processMessage(*io_message, *parse_message, *response_obuffer,
-                          &dnsserv);
-    EXPECT_FALSE(dnsserv.hasAnswer());
-    EXPECT_TRUE(ddns_forwarder.isConnected());
+    // Repeat sending an update request two times.  By doing that we'll
+    // confirm the forwarder connection will be established exactly once,
+    // and kept established.
+    for (size_t i = 0; i < 2; ++i) {
+        UnitTestUtil::createRequestMessage(request_message, Opcode::UPDATE(),
+                                           default_qid, Name("example.com"),
+                                           RRClass::IN(), RRType::SOA());
+        createRequestPacket(request_message, IPPROTO_UDP);
+        server.processMessage(*io_message, *parse_message, *response_obuffer,
+                              &dnsserv);
+        EXPECT_FALSE(dnsserv.hasAnswer());
+        EXPECT_TRUE(ddns_forwarder.isConnected());
+    }
 }
 
 }
