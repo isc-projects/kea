@@ -801,7 +801,7 @@ ModuleCCSession::checkAsyncRecv(const ConstElementPtr& envelope,
                                 const ConstElementPtr& msg)
 {
     for (AsyncRecvRequestID request(async_recv_requests_.begin());
-         request != async_recv_requests_.end(); ++ request) {
+         request != async_recv_requests_.end(); ++request) {
         // Just go through all the requests and look for a matching one
         if (requestMatch(*request, envelope)) {
             // We want the request to be still alive at the time we
@@ -814,7 +814,7 @@ ModuleCCSession::checkAsyncRecv(const ConstElementPtr& envelope,
                     requests_(requests),
                     request_(request)
                 { }
-                ~ RequestDeleter() {
+                ~RequestDeleter() {
                     requests_.erase(request_);
                 }
             private:
