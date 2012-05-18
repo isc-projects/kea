@@ -18,6 +18,8 @@
 #include <string>
 #include <vector>
 
+#include <boost/noncopyable.hpp>
+
 namespace isc {
 namespace perfdhcp {
 
@@ -26,19 +28,18 @@ namespace perfdhcp {
 /// This class is responsible for parsing the command-line and storing the
 /// specified options.
 ///
-class CommandOptions {
+class CommandOptions : public boost::noncopyable {
 public:
     enum ExchangeMode {
         DO_SA,
         DORR_SARR
     };
 
-    /// \brief Default Constructor
+    /// CommandOptions is a singleton class. This method returns reference
+    /// to its sole instance.
     ///
-    /// Set values to defaults.
-    CommandOptions() {
-        reset();
-    }
+    /// \return the only existing instance of command options
+    static CommandOptions& instance();
 
     /// \brief Reset to defaults
     ///
@@ -220,7 +221,19 @@ public:
     /// Prints perfdhcp usage
     void usage(void);
 
+protected:
+
+    /// \brief Default Constructor
+    ///
+    /// Protected constructor as this is a singleton class. 
+    /// Use CommandOptions::instance() to get instance of it.
+    CommandOptions() {
+        reset();
+    }
+
 private:
+    /// \brief Create instance of the singleton class
+    static void instanceCreate();
 
     /// \brief Initializes class members based command line
     ///
@@ -261,6 +274,8 @@ private:
     /// \throw InvalidParameter if base is invalid
     void decodeDuid(const std::string& base);
 
+    static CommandOptions * instance_;       ///< A pointer to sole instance of this class
+
     uint8_t ipversion_;                      ///< IP version
     ExchangeMode exchange_mode_  ;           ///< Packet exchange mode (e.g. DORR/SARR)
     int rate_;                               ///< rate in exchange per second
@@ -296,8 +311,6 @@ private:
     std::string diags_;                      ///< diagnostic selectors
     std::string wrapped_;                    ///< wrapped command
     std::string server_name_;                ///< server
-
-
 };
 
 } // namespace perfdhcp

@@ -35,6 +35,28 @@ using namespace isc;
 namespace isc {
 namespace perfdhcp {
 
+/// IfaceMgr is a singleton implementation
+CommandOptions* CommandOptions::instance_ = 0;
+
+void
+CommandOptions::instanceCreate() {
+    if (instance_) {
+        // no need to do anything. Instance is already created.
+        // Who called it again anyway? Uh oh. Had to be us, as
+        // this is private method.
+        return;
+    }
+    instance_ = new CommandOptions();
+}
+
+CommandOptions&
+CommandOptions::instance() {
+    if (instance_ == 0) {
+        instanceCreate();
+    }
+    return (*instance_);
+}
+
 // Reset stored values to the defaults.
 void
 CommandOptions::reset() {
@@ -288,17 +310,34 @@ CommandOptions::initialize(int argc, char** const argv) {
     }
     }
 
-	if (ipversion_ == 0)
-		ipversion_ = 4;
-	if (template_file_.size() > 1) {
-		if (xid_offset_.size() == 1)
+    if (ipversion_ == 0)
+        ipversion_ = 4;
+    if (template_file_.size() > 1) {
+        if (xid_offset_.size() == 1)
             xid_offset_.push_back(xid_offset_[0]);
-		if (rnd_offset_.size() == 1)
-			rnd_offset_.push_back(rnd_offset_[0]);
-	}
+        if (rnd_offset_.size() == 1)
+            rnd_offset_.push_back(rnd_offset_[0]);
+    }
 
-    // TODO HADNLE SERVER ARG
+    /* get server argument */
+    check(optind < argc -1, "extra arguments?");
+    if (optind == argc - 1) {
+        server_name_ = argv[optind];
+        /* decode special cases */
+        if ((ipversion_ == 4) &&
+            (server_name_.compare("all") == 0)) {
+            broadcast_ = 1;
+            server_name_ = "255.255.255.255";
+        } else if ((ipversion_ == 6) &&
+                   (server_name_.compare("all") == 0)) {
+            server_name_ = "FF02::1:2";
+        } else if ((ipversion_ == 6) &&
+                   (server_name_.compare("servers") == 0)) {
+            server_name_ = "FF05::1:3";
+        }
+    }
 
+    // TODO USE NON EXISTING IFACE MANAGER TO HANDLE -l option
 }
 
 void
@@ -414,7 +453,7 @@ CommandOptions::check(bool condition, const std::string errmsg) const {
 void
 CommandOptions::usage(void)
 {
-	fprintf(stderr, "%s",
+	fprintf(stdout, "%s",
 "perfdhcp [-hv] [-4|-6] [-r<rate>] [-t<report>] [-R<range>] [-b<base>]\n"
 "    [-n<num-request>] [-p<test-period>] [-d<drop-time>] [-D<max-drop>]\n"
 "    [-l<local-addr|interface>] [-P<preload>] [-a<aggressivity>]\n"
