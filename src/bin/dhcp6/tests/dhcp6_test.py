@@ -26,8 +26,14 @@ import isc
 
 class TestDhcpv6Daemon(unittest.TestCase):
     def setUp(self):
-        # redirect stdout to a pipe so we can check that our
-        # process spawning is doing the right thing with stdout
+
+        # Let's print this out before we redirect out stdout.
+        print("Please ignore any socket errors. Purpose of this test is to")
+        print("verify that DHCPv6 process could be started, not that socket")
+        print("could be bound. Binding fails when run as non-root user.")
+
+        # Redirect stdout to a pipe so we can check that our
+        # process spawning is doing the right thing with stdout.
         self.old_stdout = os.dup(sys.stdout.fileno())
         self.pipes = os.pipe()
         os.dup2(self.pipes[1], sys.stdout.fileno())
@@ -36,9 +42,6 @@ class TestDhcpv6Daemon(unittest.TestCase):
         # to the main program ASAP in each test... this prevents
         # hangs reading from the child process (as the pipe is only
         # open in the child), and also insures nice pretty output
-        print("Please ignore any socket errors. Purpose of this test is to")
-        print("verify that DHCPv6 process could be started, not that socket")
-        print("could be bound. Binding fails when run as non-root user.")
 
     def tearDown(self):
         # clean up our stdout munging
