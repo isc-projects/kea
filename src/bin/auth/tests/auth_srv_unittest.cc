@@ -1144,7 +1144,7 @@ TEST_F(AuthSrvTest, processNormalQuery_reuseRenderer2) {
 //
 namespace {
 
-/// A the possible methods to throw in, either in FakeClient or
+/// The possible methods to throw in, either in FakeClient or
 /// FakeZoneFinder
 enum ThrowWhen {
     THROW_NEVER,
