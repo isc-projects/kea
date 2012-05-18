@@ -244,6 +244,7 @@ public:
     }
     bool isConnected() const { return (is_connected_); }
     void disableConnect() { connect_ok_ = false; }
+    void enableConnect() { connect_ok_ = true; }
     void disableClose() { close_ok_ = false; }
     void enableClose() { close_ok_ = true; }
     void disablePush() { push_ok_ = false; }
