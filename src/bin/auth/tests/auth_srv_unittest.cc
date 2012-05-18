@@ -838,7 +838,14 @@ TEST_F(AuthSrvTest, updateConfigFail) {
                 QR_FLAG | AA_FLAG, 1, 1, 1, 0);
 }
 
-TEST_F(AuthSrvTest, updateWithInMemoryClient) {
+TEST_F(AuthSrvTest,
+#ifdef USE_STATIC_LINK
+       DISABLED_updateWithInMemoryClient
+#else
+       updateWithInMemoryClient
+#endif
+    )
+{
     // Test configuring memory data source.  Detailed test cases are covered
     // in the configuration tests.  We only check the AuthSrv interface here.
 
@@ -859,7 +866,14 @@ TEST_F(AuthSrvTest, updateWithInMemoryClient) {
                 opcode.getCode(), QR_FLAG, 1, 0, 0, 0);
 }
 
-TEST_F(AuthSrvTest, queryWithInMemoryClientNoDNSSEC) {
+TEST_F(AuthSrvTest,
+#ifdef USE_STATIC_LINK
+       DISABLED_queryWithInMemoryClientNoDNSSEC
+#else
+       queryWithInMemoryClientNoDNSSEC
+#endif
+    )
+{
     // In this example, we do simple check that query is handled from the
     // query handler class, and confirm it returns no error and a non empty
     // answer section.  Detailed examination on the response content
@@ -877,7 +891,14 @@ TEST_F(AuthSrvTest, queryWithInMemoryClientNoDNSSEC) {
                 opcode.getCode(), QR_FLAG | AA_FLAG, 1, 1, 2, 1);
 }
 
-TEST_F(AuthSrvTest, queryWithInMemoryClientDNSSEC) {
+TEST_F(AuthSrvTest,
+#ifdef USE_STATIC_LINK
+       DISABLED_queryWithInMemoryClientDNSSEC
+#else
+       queryWithInMemoryClientDNSSEC
+#endif
+    )
+{
     // Similar to the previous test, but the query has the DO bit on.
     // The response should contain RRSIGs, and should have more RRs than
     // the previous case.
@@ -894,7 +915,14 @@ TEST_F(AuthSrvTest, queryWithInMemoryClientDNSSEC) {
                 opcode.getCode(), QR_FLAG | AA_FLAG, 1, 2, 3, 3);
 }
 
-TEST_F(AuthSrvTest, chQueryWithInMemoryClient) {
+TEST_F(AuthSrvTest,
+#ifdef USE_STATIC_LINK
+       DISABLED_chQueryWithInMemoryClient
+#else
+       chQueryWithInMemoryClient
+#endif
+    )
+{
     // Configure memory data source for class IN
     updateConfig(&server, "{\"datasources\": "
                  "[{\"class\": \"IN\", \"type\": \"memory\"}]}", true);
@@ -1311,7 +1339,14 @@ private:
 //
 // Set the proxies to never throw, this should have the same result as
 // queryWithInMemoryClientNoDNSSEC, and serves to test the two proxy classes
-TEST_F(AuthSrvTest, queryWithInMemoryClientProxy) {
+TEST_F(AuthSrvTest,
+#ifdef USE_STATIC_LINK
+       DISABLED_queryWithInMemoryClientProxy
+#else
+       queryWithInMemoryClientProxy
+#endif
+    )
+{
     // Set real inmem client to proxy
     updateConfig(&server, CONFIG_INMEMORY_EXAMPLE, true);
     EXPECT_TRUE(server.hasInMemoryClient());
@@ -1354,7 +1389,14 @@ setupThrow(AuthSrv* server, const char *config, ThrowWhen throw_when,
     server->setInMemoryClient(isc::dns::RRClass::IN(), fake_client_container);
 }
 
-TEST_F(AuthSrvTest, queryWithThrowingProxyServfails) {
+TEST_F(AuthSrvTest,
+#ifdef USE_STATIC_LINK
+       DISABLED_queryWithThrowingProxyServfails
+#else
+       queryWithThrowingProxyServfails
+#endif
+    )
+{
     // Test the common cases, all of which should simply return SERVFAIL
     // Use THROW_NEVER as end marker
     ThrowWhen throws[] = { THROW_AT_FIND_ZONE,
@@ -1378,7 +1420,14 @@ TEST_F(AuthSrvTest, queryWithThrowingProxyServfails) {
 
 // Throw isc::Exception in getClass(). (Currently?) getClass is not called
 // in the processMessage path, so this should result in a normal answer
-TEST_F(AuthSrvTest, queryWithInMemoryClientProxyGetClass) {
+TEST_F(AuthSrvTest,
+#ifdef USE_STATIC_LINK
+       DISABLED_queryWithInMemoryClientProxyGetClass
+#else
+       queryWithInMemoryClientProxyGetClass
+#endif
+    )
+{
     createDataFromFile("nsec3query_nodnssec_fromWire.wire");
     setupThrow(&server, CONFIG_INMEMORY_EXAMPLE, THROW_AT_GET_CLASS, true);
 
@@ -1391,7 +1440,14 @@ TEST_F(AuthSrvTest, queryWithInMemoryClientProxyGetClass) {
                 opcode.getCode(), QR_FLAG | AA_FLAG, 1, 1, 2, 1);
 }
 
-TEST_F(AuthSrvTest, queryWithThrowingInToWire) {
+TEST_F(AuthSrvTest,
+#ifdef USE_STATIC_LINK
+       DISABLED_queryWithThrowingInToWire
+#else
+       queryWithThrowingInToWire
+#endif
+    )
+{
     // Set up a faked data source.  It will return an empty RRset for the
     // query.
     ConstRRsetPtr empty_rrset(new RRset(Name("foo.example"),
