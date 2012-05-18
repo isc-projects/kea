@@ -411,17 +411,17 @@ public:
     /// are queued messages, the callback would be called once checkCommand()
     /// is invoked (possibly from start() or the constructor).
     ///
-    /// The matching is following. If is_reply is true, only replies are
+    /// The matching is as follows. If is_reply is true, only replies are
     /// considered. In that case, if seq is -1, any reply is accepted. If
     /// it is something else than -1, only the reply with matching seq is
-    /// taken. This may be used to receiving replies to commands
+    /// taken. This may be used to receive replies to commands
     /// asynchronously.
     ///
     /// In case the is_reply is false, the function looks for command messages.
     /// The seq parameter is ignored, but the recipient one is considered. If
     /// it is an empty string, any command is taken. If it is non-empty, only
     /// commands addressed to the recipient channel (eg. group - instance is
-    /// ignored for now)are taken. This can be used to receive foreign commands
+    /// ignored for now) are taken. This can be used to receive foreign commands
     /// or notifications. In such case, it might be desirable to call the
     /// groupRecvMsgAsync again from within the callback, to receive any future
     /// commands or events of the same type.

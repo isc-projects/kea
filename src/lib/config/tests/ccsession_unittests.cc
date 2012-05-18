@@ -713,7 +713,7 @@ TEST_F(CCSessionTest, doubleStartWithAddRemoteConfig) {
 
 /// \brief Test fixture for asynchronous receiving of messages.
 ///
-/// This is extension to the CCSessionTest. It would be possible to add
+/// This is an extension to the CCSessionTest. It would be possible to add
 /// the functionality to the CCSessionTest, but it is going to be used
 /// only by few tests and is non-trivial, so it is placed to a separate
 /// sub-class.
@@ -762,7 +762,7 @@ protected:
     void nothingCalled() {
         EXPECT_TRUE(called_.empty());
     }
-    /// \brief The testet session.
+    /// \brief The tested session.
     ModuleCCSession mccs_;
     /// \brief The value of message on the last called callback.
     ConstElementPtr last_msg_;
