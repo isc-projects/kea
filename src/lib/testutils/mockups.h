@@ -203,59 +203,6 @@ private:
     bool disconnect_ok_;
 };
 
-// Mock socket session forwarder
-class MockSocketSessionForwarder :
-    public isc::util::io::BaseSocketSessionForwarder
-{
-public:
-    MockSocketSessionForwarder() :
-        is_connected_(false), connect_ok_(true), push_ok_(true),
-        close_ok_(true)
-    {}
-
-    virtual void connectToReceiver() {
-        if (!connect_ok_) {
-            isc_throw(isc::util::io::SocketSessionError, "socket session "
-                      "forwarding connection disabled for test");
-        }
-        if (is_connected_) {
-            isc_throw(isc::util::io::SocketSessionError, "duplicate connect");
-        }
-        is_connected_ = true;
-    }
-    virtual void close() {
-        is_connected_ = false;
-    }
-#if 0
-    virtual void push(int sock, int family, int type, int protocol,
-                      const struct sockaddr& local_end,
-                      const struct sockaddr& remote_end,
-                      const void* data, size_t data_len)
-#endif
-    virtual void push(int, int, int, int,
-                      const struct sockaddr&,
-                      const struct sockaddr&,
-                      const void*, size_t)
-    {
-        if (!push_ok_) {
-            isc_throw(isc::util::io::SocketSessionError,
-                       "socket session forwarding is disabled for test");
-        }
-    }
-    bool isConnected() const { return (is_connected_); }
-    void disableConnect() { connect_ok_ = false; }
-    void enableConnect() { connect_ok_ = true; }
-    void disableClose() { close_ok_ = false; }
-    void enableClose() { close_ok_ = true; }
-    void disablePush() { push_ok_ = false; }
-
-private:
-    bool is_connected_;
-    bool connect_ok_;
-    bool push_ok_;
-    bool close_ok_;
-};
-
 } // end of testutils
 } // end of isc
 #endif  // __ISC_TESTUTILS_MOCKUPS_H

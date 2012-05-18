@@ -32,6 +32,7 @@
 
 #include <asiolink/asiolink.h>
 
+#include <util/unittests/mock_socketsession.h>
 #include <testutils/mockups.h>
 
 #include <cassert>
@@ -51,6 +52,7 @@ using namespace isc::dns;
 using namespace isc::data;
 using namespace isc::datasrc;
 using namespace isc::config;
+using namespace isc::util::unittests;
 using namespace isc::testutils;
 using namespace isc::auth::unittest;
 
