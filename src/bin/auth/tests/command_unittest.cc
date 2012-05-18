@@ -234,7 +234,14 @@ newZoneChecks(AuthSrv& server) {
               find(Name("ns.test2.example"), RRType::AAAA())->code);
 }
 
-TEST_F(AuthCommandTest, loadZone) {
+TEST_F(AuthCommandTest,
+#ifdef USE_STATIC_LINK
+       DISABLED_loadZone
+#else
+       loadZone
+#endif
+    )
+{
     configureZones(server_);
 
     ASSERT_EQ(0, system(INSTALL_PROG " " TEST_DATA_DIR
@@ -394,7 +401,14 @@ TEST_F(AuthCommandTest,
               find(Name("example.org"), RRType::SOA())->code);
 }
 
-TEST_F(AuthCommandTest, loadBrokenZone) {
+TEST_F(AuthCommandTest,
+#ifdef USE_STATIC_LINK
+       DISABLED_loadBrokenZone
+#else
+       loadBrokenZone
+#endif
+    )
+{
     configureZones(server_);
 
     ASSERT_EQ(0, system(INSTALL_PROG " " TEST_DATA_DIR
@@ -407,7 +421,14 @@ TEST_F(AuthCommandTest, loadBrokenZone) {
     zoneChecks(server_);     // zone shouldn't be replaced
 }
 
-TEST_F(AuthCommandTest, loadUnreadableZone) {
+TEST_F(AuthCommandTest,
+#ifdef USE_STATIC_LINK
+       DISABLED_loadUnreadableZone
+#else
+       loadUnreadableZone
+#endif
+    )
+{
     configureZones(server_);
 
     // install the zone file as unreadable
@@ -440,7 +461,14 @@ TEST_F(AuthCommandTest, loadSqlite3DataSrc) {
     checkAnswer(0);
 }
 
-TEST_F(AuthCommandTest, loadZoneInvalidParams) {
+TEST_F(AuthCommandTest,
+#ifdef USE_STATIC_LINK
+       DISABLED_loadZoneInvalidParams
+#else
+       loadZoneInvalidParams
+#endif
+    )
+{
     configureZones(server_);
 
     // null arg
