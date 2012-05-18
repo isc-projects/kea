@@ -42,16 +42,15 @@ protected:
     ///
     /// \param s Command line to parse
     /// \return non-zero if parsing failed
-    int process(const std::string& s) {
+    void process(const std::string& s) {
         int argc = 0;
         char** argv = tokenizeString(s, &argc);
-        int r = parse(argc, argv, true);
+        parse(argc, argv, true);
         for(int i = 0; i < argc; ++i) {
             free(argv[i]);
             argv[i] = NULL;
         }
         free(argv);
-        return (r);
     }
 
     /// \brief Check initialized values
@@ -135,12 +134,12 @@ TEST_F(CommandOptionsTest, Defaults) {
 }
 
 TEST_F(CommandOptionsTest, UseFirst) {
-    process("perfdhcp -l ethx -1 -O 3");
+    process("perfdhcp -l ethx -1 -B");
     EXPECT_TRUE(isUseFirst());
 }
 
 TEST_F(CommandOptionsTest, IpVersion) {
-    process("perfdhcp -6 -l ethx -c");
+    process("perfdhcp -6 -l ethx -c -i");
     EXPECT_EQ(6, getIpVersion());
     EXPECT_EQ("ethx", getLocalName());
     EXPECT_TRUE(isRapidCommit());
@@ -149,18 +148,18 @@ TEST_F(CommandOptionsTest, IpVersion) {
     EXPECT_EQ(4, getIpVersion());
     EXPECT_TRUE(isBroadcast());
     EXPECT_FALSE(isRapidCommit());
-    EXPECT_NE(0, process("perfdhcp -6 -B -l ethx"));
-    EXPECT_NE(0, process("perfdhcp -c -l ethx"));
+    EXPECT_THROW(process("perfdhcp -6 -B -l ethx"), isc::InvalidParameter);
+    EXPECT_THROW(process("perfdhcp -c -l ethx"), isc::InvalidParameter);
 }
 
 TEST_F(CommandOptionsTest, Rate) {
     process("perfdhcp -4 -r 10 -l ethx");
     EXPECT_EQ(10, getRate());
-    EXPECT_NE(0, process("perfdhcp -4 -r 0 -l ethx"));
-    EXPECT_NE(0, process("perfdhcp -6 -t 5 -l ethx"));
-    EXPECT_NE(0, process("perfdhcp -4 -n 150 -l ethx"));
-    EXPECT_NE(0, process("perfdhcp -6 -p 120 -l ethx"));
-    EXPECT_NE(0, process("perfdhcp -4 -D 1400 -l ethx"));
+    EXPECT_THROW(process("perfdhcp -4 -r 0 -l ethx"), isc::InvalidParameter);
+    EXPECT_THROW(process("perfdhcp -6 -t 5 -l ethx"), isc::InvalidParameter);
+    EXPECT_THROW(process("perfdhcp -4 -n 150 -l ethx"), isc::InvalidParameter);
+    EXPECT_THROW(process("perfdhcp -6 -p 120 -l ethx"), isc::InvalidParameter);
+    EXPECT_THROW(process("perfdhcp -4 -D 1400 -l ethx"), isc::InvalidParameter);
 }
 
 TEST_F(CommandOptionsTest, ReportDelay) {
@@ -174,11 +173,13 @@ TEST_F(CommandOptionsTest, RandomRange) {
 }
 
 TEST_F(CommandOptionsTest, Base) {
-    process("perfdhcp -6 -b MAC=10:20:30:40:50:60 -l ethx");
+    process("perfdhcp -6 -b MAC=10::20::30::40::50::60 -l ethx -b duiD=1AB7F5670901FF");
     uint8_t mac[6] = {0x10, 0x20, 0x30, 0x40, 0x50, 0x60 };
-    std::vector<uint8_t> v(mac, mac+6);
-    EXPECT_EQ(v, getMacPrefix());
-    // TODO - test for DUID
+    uint8_t duid[7] = { 0x1A, 0xB7, 0xF5, 0x67, 0x09, 0x01, 0xFF };
+    std::vector<uint8_t> v1(mac, mac + 6);
+    std::vector<uint8_t> v2(duid, duid + 7);
+    EXPECT_EQ(v1, getMacPrefix());
+    EXPECT_EQ(v2, getDuidPrefix());
 }
 
 TEST_F(CommandOptionsTest, DropTime) {
@@ -194,33 +195,34 @@ TEST_F(CommandOptionsTest, DropTime) {
 }
 
 TEST_F(CommandOptionsTest, TimeOffset) {
-    process("perfdhcp -l ethx -E 4");
-    EXPECT_EQ(5, getElpOffset());
-    EXPECT_NE(0, process("perfdhcp -l ethx -E 3 -i"));
+    process("perfdhcp -l ethx -T file1.x -T file2.x -E 4");
+    EXPECT_EQ(4, getElpOffset());
+    EXPECT_THROW(process("perfdhcp -l ethx -E 3 -i"), isc::InvalidParameter);
 }
 
 TEST_F(CommandOptionsTest, ExchangeMode) {
-    process("perfdhcp -i -l ethx");
-    EXPECT_EQ(DO_SA, getExchangeMode());
-    EXPECT_NE(0, process("perfdhcp -i -l ethx -X 3"));
-    EXPECT_NE(0, process("perfdhcp -i -l ethx -O 2"));
-    EXPECT_NE(0, process("perfdhcp -i -l ethx -E 3"));
-    EXPECT_NE(0, process("perfdhcp -i -l ethx -S 1"));
-    EXPECT_NE(0, process("perfdhcp -i -l ethx -I 2"));
+    process("perfdhcp -l ethx -i");
+    EXPECT_EQ(CommandOptions::DO_SA, getExchangeMode());
+    EXPECT_THROW(process("perfdhcp -i -l ethx -X 3"), isc::InvalidParameter);
+    EXPECT_THROW(process("perfdhcp -i -l ethx -O 2"), isc::InvalidParameter);
+    EXPECT_THROW(process("perfdhcp -i -l ethx -E 3"), isc::InvalidParameter);
+    EXPECT_THROW(process("perfdhcp -i -l ethx -S 1"), isc::InvalidParameter);
+    EXPECT_THROW(process("perfdhcp -i -l ethx -I 2"), isc::InvalidParameter);
 }
 
 TEST_F(CommandOptionsTest, Offsets) {
-    process("perfdhcp -E5 -4 -I 2 -S3 -O 30 -X7 -l ethx -X3");
+    process("perfdhcp -E5 -4 -I 2 -S3 -O 30 -X7 -l ethx -X3 -T file1.x -T file2.x");
     EXPECT_EQ(2, getRipOffset());
     EXPECT_EQ(5, getElpOffset());
     EXPECT_EQ(3, getSidOffset());
-    ASSERT_EQ(1, getRndOffset().size());
+    ASSERT_EQ(2, getRndOffset().size());
     EXPECT_EQ(30, getRndOffset()[0]);
+    EXPECT_EQ(30, getRndOffset()[1]);
     ASSERT_EQ(2, getXidOffset().size());
     EXPECT_EQ(7, getXidOffset()[0]);
     EXPECT_EQ(3, getXidOffset()[1]);
-    EXPECT_NE(0, process("perfdhcp -6 -I 0 -l ethx"));
-    EXPECT_NE(0, process("perfdhcp -6 -I -4 -l ethx"));
+    EXPECT_THROW(process("perfdhcp -6 -I 0 -l ethx"), isc::InvalidParameter);
+    EXPECT_THROW(process("perfdhcp -6 -I -4 -l ethx"), isc::InvalidParameter);
 
     // TODO - other negative cases
 }
@@ -228,14 +230,12 @@ TEST_F(CommandOptionsTest, Offsets) {
 TEST_F(CommandOptionsTest, LocalPort) {
     process("perfdhcp -l ethx -L 2000");
     EXPECT_EQ(2000, getLocalPort());
-    EXPECT_NE(0, process("perfdhcp -l ethx -L 0"));
 }
 
 TEST_F(CommandOptionsTest, Preload) {
     process("perfdhcp -1 -P 3 -l ethx");
     EXPECT_EQ(3, getPreload());
-    EXPECT_NE(0, process("perfdhcp -P 0 -1 -l ethx"));
-    EXPECT_NE(0, process("perfdhcp -P -1 -l ethx"));
+    EXPECT_THROW(process("perfdhcp -P -1 -l ethx"), isc::InvalidParameter);
 }
 
 TEST_F(CommandOptionsTest, Seed) {
@@ -252,7 +252,6 @@ TEST_F(CommandOptionsTest, TemplateFiles) {
     ASSERT_EQ(2, getTemplateFiles().size());
     EXPECT_EQ("file1.x", getTemplateFiles()[0]);
     EXPECT_EQ("file2.x", getTemplateFiles()[1]);
-    EXPECT_NE(0, process("perfdhcp -T file1.x -s 12 -w start -l ethx -T file2.x -4"));
 }
 
 TEST_F(CommandOptionsTest, Wrapped) {

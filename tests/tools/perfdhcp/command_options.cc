@@ -12,9 +12,20 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <inttypes.h>
+#define __STDC_LIMIT_MACROS
+
 #include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <string.h>
 #include <unistd.h>
+
+#include <boost/algorithm/string.hpp>
+#include <boost/tokenizer.hpp>
+#include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
+
+#include "exceptions/exceptions.h"
 
 #include "command_options.h"
 
@@ -30,23 +41,21 @@ CommandOptions::reset() {
     uint8_t mac[6] = { 0x0, 0xC, 0x1, 0x2, 0x3, 0x4 };
     double lt[2] = { 1., 1. };
 
-    ipversion_ = 4;
+    ipversion_ = 0;
     exchange_mode_ = DORR_SARR;
     rate_ = 0;
     report_delay_ = 0;
     random_range_ = 0;
     max_random_ = 0;
-    mac_prefix_.assign(mac, mac+6);
+    mac_prefix_.assign(mac, mac + 6);
     base_.resize(0);
     num_request_.resize(0);
     period_ = 0;
     lost_time_set_ = 0;
-    lost_time_.assign(lt, lt+2);
+    lost_time_.assign(lt, lt + 2);
     max_drop_set_ = 0;
-    max_drop_.push_back(0);
-    max_drop_.push_back(0);
-    max_pdrop_.push_back(0.);
-    max_pdrop_.push_back(0.);
+    max_drop_.resize(0);
+    max_pdrop_.resize(0);
     localname_.resize(0);
     is_interface_ = false;
     preload_ = 0;
@@ -58,8 +67,8 @@ CommandOptions::reset() {
     rapid_commit_ = false;
     use_first_ = false;
     template_file_.resize(0);
-    xid_offset_.resize(0);
     rnd_offset_.resize(0);
+    xid_offset_.resize(0);
     elp_offset_ = -1;
     sid_offset_ = -1;
     rip_offset_ = -1;
@@ -68,24 +77,338 @@ CommandOptions::reset() {
     server_name_.resize(0);
 }
 
-int
-CommandOptions::parse(int argc, char** argv, bool force_reset /*=false */) {
-    int ch;
+void
+CommandOptions::parse(int argc, char** const argv, bool force_reset /*=false */) {
     if (force_reset) {
         reset();
     }
-    // Reset internal variable used by getopt to index elements
+    // Reset internal variables used by getopt
+    // to eliminate underfined behavior when
+    // parsing different command lines multiple times
     optind = 1;
-    while((ch = getopt(argc, argv, "hv46r:t:R:b:n:p:d:D:l:P:a:L:s:iBc1T:X:O:E:S:I:x:w:")) != -1) {
-        switch (ch) {
-        case 'h':
-            usage();
+    opterr = 0;
+
+    initialize(argc, argv);
+    validate();
+}
+
+void
+CommandOptions::initialize(int argc, char** const argv) {
+    char opt;
+    char* pc;
+    int nr, of;
+    int di = 0;
+    float dp = 0;
+    long long r;
+
+    while((opt = getopt(argc, argv, "hv46r:t:R:b:n:p:d:D:l:P:a:L:s:iBc1T:X:O:E:S:I:x:w:")) != -1) {
+    switch (opt) {
+    case 'h':
+        usage();
+
+    case 'v':
+        //        version();
+        ;
+    case '4':
+        check(ipversion_ == 6, "IP version already set to 6");
+        ipversion_ = 4;
+        break;
+
+    case '6':
+        check(ipversion_ == 4, "IP version already set to 4");
+        ipversion_ = 6;
+        break;
+
+    case 'r':
+        rate_ = atoi(optarg);
+        check(rate_ <= 0, "rate_ must be a positive integer");
+        break;
+
+    case 't':
+        report_delay_ = atoi(optarg);
+        check(report_delay_ <= 0, "report_delay_ must be a positive integer");
+        break;
+
+    case 'R':
+        r = atoll(optarg);
+        check(r < 0, "random_range_ must not be a negative integer");
+        random_range_ = (uint32_t) r;
+        if ((random_range_ != 0) && (random_range_ != UINT32_MAX)) {
+            uint32_t s = random_range_ + 1;
+            uint64_t b = UINT32_MAX + 1, m;
+
+            m = (b / s) * s;
+            if (m == b)
+                max_random_ = 0;
+            else
+                max_random_ = (uint32_t) m;
+        }
+        break;
+
+    case 'b':
+        check(base_.size() > 3, "too many bases");
+        base_.push_back(optarg);
+        decodeBase(base_.back());
+        break;
+
+    case 'n':
+        nr = atoi(optarg);
+        check(nr <= 0, "num-request must be a positive integer");
+        if (num_request_.size() >= 2) {
+            isc_throw(isc::InvalidParameter,
+                "too many num-request values");
+        }
+        num_request_.push_back(nr);
+        break;
+
+    case 'p':
+        period_ = atoi(optarg);
+        check(period_ <= 0, "test-period must be a positive integer");
+        break;
+
+    case 'd':
+        lost_time_[lost_time_set_] = atof(optarg);
+        check(lost_time_[lost_time_set_] <= 0., "drop-time must be a positive number");
+        lost_time_set_ = 1;
+        break;
+
+    case 'D':
+        pc = strchr(optarg, '%');
+        if (pc != NULL) {
+            *pc = '\0';
+            dp = atof(optarg);
+            max_pdrop_[max_drop_set_] = atof(optarg);
+            check((dp <= 0) || (dp >= 100), "invalid drop-time percentage");
+            max_pdrop_.push_back(dp);
+            break;
+        }
+        di = atoi(optarg);
+        check(di <= 0, "max-drop must be a positive integer");
+        max_drop_.push_back(di);
+        break;
+
+    case 'l':
+        localname_ = optarg;
+        break;
+
+    case 'P':
+        preload_ = atoi(optarg);
+        check(preload_ < 0, "preload must not be a negative integer");
+        break;
+
+    case 'a':
+        aggressivity_ = atoi(optarg);
+        check(aggressivity_ <= 0, "aggressivity must be a positive integer");
+        break;
+
+    case 'L':
+        local_port_ = atoi(optarg);
+        check(local_port_ < 0, "local-port must not be a negative integer");
+        check(local_port_ > (int) UINT16_MAX, "local-port must be lower than UINT16_MAX");
+        break;
+
+    case 's':
+        seeded_ = true;
+        seed_ = (unsigned int) atol(optarg);
+        break;
+
+    case 'i':
+        exchange_mode_ = DO_SA;
+        break;
+
+    case 'B':
+        broadcast_ = 1;
+        break;
+
+    case 'c':
+        rapid_commit_ = 1;
+        break;
+
+    case '1':
+        use_first_ = 1;
+        break;
+
+    case 'T':
+        switch (template_file_.size()) {
+        case 0:
+        case 1:
+            template_file_.push_back(std::string(optarg));
             break;
         default:
-            ;
+            isc_throw(isc::InvalidParameter,
+                    "template-files are already set");
+
         }
+        break;
+
+    case 'X':
+        of = atoi(optarg);
+        check(of <= 0, "xid-offset must be a positive integer");
+        if (xid_offset_.size() >= 2) {
+            xid_offset_.resize(0);
+        }
+        xid_offset_.push_back(of);
+        break;
+
+    case 'O':
+        of = atoi(optarg);
+        check(of < 3, "random-offset must be greater than 3");
+        if (rnd_offset_.size() >= 2) {
+            rnd_offset_.resize(0);
+        }
+        rnd_offset_.push_back(of);
+        break;
+
+    case 'E':
+        elp_offset_ = atoi(optarg);
+        check(elp_offset_ < 0, "time-offset must not be a negative integer");
+        break;
+
+    case 'S':
+        sid_offset_ = atoi(optarg);
+        check(sid_offset_ <= 0, "srvid-offset must be a positive integer");
+        break;
+
+    case 'I':
+        rip_offset_ = atoi(optarg);
+        check(rip_offset_ <= 0, "ip-offset must be a positive integer");
+        break;
+
+    case 'x':
+        diags_.assign(optarg);
+        break;
+
+    case 'w':
+        wrapped_.assign(optarg);
+        break;
+
+    default:
+        isc_throw(isc::InvalidParameter,
+                  "unknown command line option");
     }
-    return(0);
+    }
+
+	if (ipversion_ == 0)
+		ipversion_ = 4;
+	if (template_file_.size() > 1) {
+		if (xid_offset_.size() == 1)
+            xid_offset_.push_back(xid_offset_[0]);
+		if (rnd_offset_.size() == 1)
+			rnd_offset_.push_back(rnd_offset_[0]);
+	}
+
+    // TODO HADNLE SERVER ARG
+
+}
+
+void
+CommandOptions::decodeBase(const std::string& base) {
+    std::string b(base);
+    boost::algorithm::to_lower(b);
+    if ((b.substr(0, 4) == "mac=") || (b.substr(0, 6) == "ether=")) {
+        decodeMac(b);
+    } else if (b.substr(0, 5) == "duid=") {
+        decodeDuid(b);
+    }
+}
+
+void
+CommandOptions::decodeMac(const std::string& base) {
+    typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+
+    size_t found = base.find('=');
+    check(found == std::string::npos, "expected -b<base> format for MAC address is -b MAC=00::0C::01::02::03::04");
+    boost::char_separator<char> sep(":-");
+    tokenizer tokens(base.substr(found + 1), sep);
+    std::vector<std::string> stokens(tokens.begin(), tokens.end());
+    check(stokens.size() != 6, "expected -b<base> format for MAC address is -b MAC=00::0C::01::02::03::04");
+    mac_prefix_.resize(0);
+    BOOST_FOREACH(std::string t, stokens) {
+        std::istringstream ss(t);
+        unsigned int ui = 0;
+        ss >> std::hex >> ui >> std::dec;
+        check(ss.fail() || (ui > 0xFF),
+              "expected -b<base> format for MAC address is -b MAC=00::0C::01::02::03::04");
+        mac_prefix_.push_back(static_cast<uint8_t>(ui));
+    }
+}
+
+void
+CommandOptions::decodeDuid(const std::string& base) {
+    size_t found = base.find('=');
+    check(found == std::string::npos, "expected -b<base> format for DUID is -b DUID=<duid>");
+    std::string b = base.substr(found + 1);
+    check(b.length() & 1, "odd number of hexadecimal digits in duid");
+    check(b.length() > 128, "duid too large");
+    check(b.length() == 0, "no duid specified");
+
+    for (int i = 0; i < b.length(); i += 2) {
+        unsigned int ui = 0;
+        std::istringstream ss(b.substr(i, 2));
+        check(!(ss >> std::hex >> ui >> std::dec) || (ui > 0xFF),
+              "illegal characters " + b + " in duid");
+        duid_prefix_.push_back(static_cast<uint8_t>(ui));
+    }
+}
+
+void
+CommandOptions::validate() const {
+    check((getIpVersion() != 4) && (isBroadcast() != 0),
+          "-B is not compatible with IPv6 (-6)");
+    check((getIpVersion() != 6) && (isRapidCommit() != 0),
+          "-6 (IPv6) must be set to use -c");
+    check((getExchangeMode() == DO_SA) && (getNumRequests().size() > 1),
+          "second -n<num-request> is not compatible with -i");
+    check((getExchangeMode() == DO_SA) && (getLostTime()[1] != 1.),
+          "second -d<drop-time> is not compatible with -i");
+    check((getExchangeMode() == DO_SA) &&
+          ((getMaxDrop().size() > 1) || (getMaxDropPercentage().size() > 1)),
+          "second -D<max-drop> is not compatible with -i\n");
+    check((getExchangeMode() == DO_SA) && (isUseFirst()),
+          "-1 is not compatible with -i\n");
+    check((getExchangeMode() == DO_SA) && (getTemplateFiles().size() > 1),
+          "second -T<template-file> is not compatible with -i\n");
+    check((getExchangeMode() == DO_SA) && (getXidOffset().size() > 1),
+          "second -X<xid-offset> is not compatible with -i\n");
+    check((getExchangeMode() == DO_SA) && (getRndOffset().size() > 1),
+          "second -O<random-offset is not compatible with -i\n");
+    check((getExchangeMode() == DO_SA) && (getElpOffset() >= 0),
+          "-E<time-offset> is not compatible with -i\n");
+    check((getExchangeMode() == DO_SA) && (getSidOffset() >= 0),
+          "-S<srvid-offset> is not compatible with -i\n");
+    check((getExchangeMode() == DO_SA) && (getRipOffset() >= 0),
+          "-I<ip-offset> is not compatible with -i\n");
+	check((getExchangeMode() != DO_SA) && (isRapidCommit() != 0),
+          "-i must be set to use -c\n");
+	check((getRate() == 0) && (getReportDelay() != 0),
+          "-r<rate> must be set to use -t<report>\n");
+	check((getRate() == 0) && (getNumRequests().size() > 0),
+          "-r<getRate()> must be set to use -n<num-request>\n");
+	check((getRate() == 0) && (getPeriod() != 0),
+          "-r<rate> must be set to use -p<test-period>\n");
+	check((getRate() == 0) &&
+          ((getMaxDrop().size() > 0) || getMaxDropPercentage().size() > 0),
+          "-r<rate> must be set to use -D<max-drop>\n");
+	check((getTemplateFiles().size() < getXidOffset().size()),
+          "-T<template-file> must be set to use -X<xid-offset>\n");
+	check((getTemplateFiles().size() < getRndOffset().size()),
+          "-T<template-file> must be set to use -O<random-offset>\n");
+	check((getTemplateFiles().size() < 2) && (getElpOffset() >= 0),
+          "second/request -T<template-file> must be set to use -E<time-offset>\n");
+	check((getTemplateFiles().size() < 2) && (getSidOffset() >= 0),
+          "second/request -T<template-file> must be set to "
+          "use -S<srvid-offset>\n");
+	check((getTemplateFiles().size() < 2) && (getRipOffset() >= 0),
+			"second/request -T<template-file> must be set to "
+			"use -I<ip-offset>\n");
+
+}
+
+void
+CommandOptions::check(bool condition, const std::string errmsg) const {
+    if (condition) {
+        isc_throw(isc::InvalidParameter, errmsg);
+    }
 }
 
 void
