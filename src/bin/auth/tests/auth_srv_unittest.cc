@@ -34,6 +34,7 @@
 #include <auth/common.h>
 #include <auth/statistics.h>
 
+#include <util/unittests/mock_socketsession.h>
 #include <dns/tests/unittest_util.h>
 #include <testutils/dnsmessage_test.h>
 #include <testutils/srv_test.h>
@@ -41,15 +42,21 @@
 #include <testutils/portconfig.h>
 #include <testutils/socket_request.h>
 
+#include <boost/lexical_cast.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
 
 #include <vector>
 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+
 using namespace std;
 using namespace isc::cc;
 using namespace isc::dns;
 using namespace isc::util;
+using namespace isc::util::unittests;
 using namespace isc::dns::rdata;
 using namespace isc::data;
 using namespace isc::xfr;
@@ -1407,6 +1414,27 @@ TEST_F(AuthSrvTest, queryWithThrowingInToWire) {
 //
 // DDNS related tests
 //
+
+// Helper subroutine to check if the given socket address has the expected
+// address and port.  It depends on specific output of getnameinfo() (while
+// there can be multiple textual representation of the same address) but
+// in practice it should be reliable.
+void
+checkAddrPort(const struct sockaddr& actual_sa,
+              const string& expected_addr, const string& expected_port)
+{
+    char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
+    const int error = getnameinfo(&actual_sa, actual_sa.sa_len, hbuf,
+                                  sizeof(hbuf), sbuf, sizeof(sbuf),
+                                  NI_NUMERICHOST | NI_NUMERICSERV);
+    if (error != 0) {
+        isc_throw(isc::Unexpected, "getnameinfo failed: " <<
+                  gai_strerror(error));
+    }
+    EXPECT_EQ(expected_addr, hbuf);
+    EXPECT_EQ(expected_port, sbuf);
+}
+
 TEST_F(AuthSrvTest, DDNSForward) {
     EXPECT_FALSE(ddns_forwarder.isConnected());
 
@@ -1414,9 +1442,23 @@ TEST_F(AuthSrvTest, DDNSForward) {
     // confirm the forwarder connection will be established exactly once,
     // and kept established.
     for (size_t i = 0; i < 2; ++i) {
-        createAndSendRequest(RRType::SOA(), Opcode::UPDATE());
+        // Use different names for each iteration
+        const Name zone_name = Name(i == 0 ? "example.com" : "example.org");
+        createAndSendRequest(RRType::SOA(), Opcode::UPDATE(), zone_name);
         EXPECT_FALSE(dnsserv.hasAnswer());
         EXPECT_TRUE(ddns_forwarder.isConnected());
+
+        // Examine the pushed data
+        EXPECT_EQ(AF_INET, ddns_forwarder.getPushedFamily());
+        EXPECT_EQ(SOCK_DGRAM, ddns_forwarder.getPushedType());
+        EXPECT_EQ(IPPROTO_UDP, ddns_forwarder.getPushedProtocol());
+        checkAddrPort(ddns_forwarder.getPushedRemoteend(),
+                      DEFAULT_REMOTE_ADDRESS, "53210");
+        EXPECT_EQ(io_message->getDataSize(),
+                  ddns_forwarder.getPushedData().size());
+        EXPECT_EQ(0, memcmp(io_message->getData(),
+                            &ddns_forwarder.getPushedData()[0],
+                            ddns_forwarder.getPushedData().size()));
     }
 }
 

@@ -782,13 +782,24 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
 }
 
 bool
-AuthSrvImpl::processUpdate(const IOMessage& /*io_message*/,
+AuthSrvImpl::processUpdate(const IOMessage& io_message,
                            Message& /*message*/,
                            OutputBuffer& /*buffer*/,
                            std::auto_ptr<TSIGContext> /*tsig_context*/)
 {
     // hardcode for initial test
     ddns_forwarder_.connect();
+
+    const IOEndpoint& remote_ep = io_message.getRemoteEndpoint();
+    const int protocol = remote_ep.getProtocol();
+    const int sock_type = (protocol == IPPROTO_UDP) ? SOCK_DGRAM : SOCK_STREAM;
+    ddns_forwarder_.forwarder_.push(io_message.getSocket().getNative(),
+                                    remote_ep.getFamily(), sock_type, protocol,
+                                    // XXX: no I/F to get local
+                                    remote_ep.getSockAddr(),
+                                    remote_ep.getSockAddr(),
+                                    io_message.getData(),
+                                    io_message.getDataSize());
 
     return (false);
 }
