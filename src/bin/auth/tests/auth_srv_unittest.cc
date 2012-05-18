@@ -14,10 +14,6 @@
 
 #include <config.h>
 
-#include <vector>
-
-#include <boost/shared_ptr.hpp>
-
 #include <gtest/gtest.h>
 
 #include <dns/message.h>
@@ -45,6 +41,11 @@
 #include <testutils/portconfig.h>
 #include <testutils/socket_request.h>
 
+#include <boost/shared_ptr.hpp>
+#include <boost/scoped_ptr.hpp>
+
+#include <vector>
+
 using namespace std;
 using namespace isc::cc;
 using namespace isc::dns;
@@ -57,6 +58,7 @@ using namespace isc::asiolink;
 using namespace isc::testutils;
 using namespace isc::server_common::portconfig;
 using isc::UnitTestUtil;
+using boost::scoped_ptr;
 
 namespace {
 const char* const CONFIG_TESTDB =
@@ -1405,6 +1407,22 @@ TEST_F(AuthSrvTest, DDNSForward) {
         EXPECT_FALSE(dnsserv.hasAnswer());
         EXPECT_TRUE(ddns_forwarder.isConnected());
     }
+}
+
+TEST_F(AuthSrvTest, DDNSForwardClose) {
+    scoped_ptr<AuthSrv> tmp_server(new AuthSrv(true, xfrout, ddns_forwarder));
+    UnitTestUtil::createRequestMessage(request_message, Opcode::UPDATE(),
+                                       default_qid, Name("example.com"),
+                                       RRClass::IN(), RRType::SOA());
+    createRequestPacket(request_message, IPPROTO_UDP);
+    tmp_server->processMessage(*io_message, *parse_message, *response_obuffer,
+                               &dnsserv);
+    EXPECT_FALSE(dnsserv.hasAnswer());
+    EXPECT_TRUE(ddns_forwarder.isConnected());
+
+    // Destroy the server.  The forwarder should close the connection.
+    tmp_server.reset();
+    EXPECT_FALSE(ddns_forwarder.isConnected());
 }
 
 }
