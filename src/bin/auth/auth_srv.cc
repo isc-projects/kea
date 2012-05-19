@@ -130,6 +130,13 @@ public:
         }
     }
 
+    void close() {
+        if (connected_) {
+            forwarder_.close();
+            connected_ = false;
+        }
+    }
+
     // Push a socket session corresponding to given IOMessage.
     //
     // NOTE: Right now, there's no API to retrieve the local address from
@@ -816,8 +823,13 @@ AuthSrvImpl::processUpdate(const IOMessage& io_message,
                            OutputBuffer& /*buffer*/,
                            std::auto_ptr<TSIGContext> /*tsig_context*/)
 {
-    ddns_forwarder_.connect();
-    ddns_forwarder_.push(io_message);
+    try {
+        ddns_forwarder_.connect();
+        ddns_forwarder_.push(io_message);
+    } catch (const SocketSessionError& ex) {
+        ddns_forwarder_.close();
+        throw;
+    }
 
     return (false);
 }
