@@ -31,7 +31,11 @@ namespace isc {
 namespace util {
 namespace unittests {
 
-// Mock socket session forwarder
+/// \brief Mock socket session forwarder.
+///
+/// It emulates the behavior of SocketSessionForwarder without involving
+/// network communication, and allowing the tester to customize the behavior
+/// and to examine forwarded data afterwards.
 class MockSocketSessionForwarder :
     public isc::util::io::BaseSocketSessionForwarder
 {
@@ -101,7 +105,6 @@ public:
     void disableConnect() { connect_ok_ = false; }
     void enableConnect() { connect_ok_ = true; }
     void disableClose() { close_ok_ = false; }
-    void enableClose() { close_ok_ = true; }
     void disablePush() { push_ok_ = false; }
     void enablePush() { push_ok_ = true; }
 
