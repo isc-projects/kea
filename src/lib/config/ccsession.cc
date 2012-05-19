@@ -845,7 +845,7 @@ ModuleCCSession::requestMatch(const AsyncRecvRequest& request,
         return (true);
     }
     if (!request.is_reply &&
-        (request.recipient == "" ||
+        (request.recipient.empty() ||
          request.recipient == envelope->get("group")->stringValue())) {
         // This is the correct command
         return (true);
