@@ -19,8 +19,6 @@
 
 #include <exceptions/exceptions.h>
 
-#include <util/io/socketsession.h>
-
 #include <cc/data.h>
 #include <cc/session.h>
 
@@ -30,8 +28,6 @@
 
 #include <utility>
 #include <vector>
-
-#include <sys/socket.h>
 
 namespace isc {
 namespace testutils {

@@ -112,7 +112,20 @@ private:
     MessageRenderer& renderer_;
 };
 
-/// TBD document it.
+// A helper container of socket session forwarder.
+//
+// This class provides a simple wrapper interface to SocketSessionForwarder
+// so that the caller doesn't have to worry about exception handling or
+// parameter building.
+//
+// It internally maintains whether the underlying forwarder establishes a
+// connection to the receiver.  Its connect() wrapper tries connection
+// setup only when necessary, so the caller can just always call connect().
+// It also closes the connection on destruction, when necessary, automatically.
+//
+// Its push() wrapper takes the session data to be forwarded in the form of
+// IOMessage object, and converts it to the parameters that the underlying
+// SocketSessionForwarder expects.
 class SocketSessionForwarderHolder {
 public:
     SocketSessionForwarderHolder(BaseSocketSessionForwarder& forwarder) :
@@ -211,9 +224,7 @@ public:
     bool processNotify(const IOMessage& io_message, Message& message,
                        OutputBuffer& buffer,
                        auto_ptr<TSIGContext> tsig_context);
-    bool processUpdate(const IOMessage& io_message, Message& message,
-                       OutputBuffer& buffer,
-                       auto_ptr<TSIGContext> tsig_context);
+    bool processUpdate(const IOMessage& io_message);
 
     IOService io_service_;
 
@@ -275,6 +286,7 @@ private:
     bool xfrout_connected_;
     AbstractXfroutClient& xfrout_client_;
 
+    // Socket session forwarder for dynamic update requests
     SocketSessionForwarderHolder ddns_forwarder_;
 
     /// Increment query counter
@@ -617,8 +629,7 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
             send_answer = impl_->processNotify(io_message, message, buffer,
                                                tsig_context);
         } else if (opcode == Opcode::UPDATE()) {
-            send_answer = impl_->processUpdate(io_message, message, buffer,
-                                               tsig_context);
+            send_answer = impl_->processUpdate(io_message);
         } else if (opcode != Opcode::QUERY()) {
             LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_UNSUPPORTED_OPCODE)
                       .arg(message.getOpcode().toText());
@@ -836,11 +847,7 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
 }
 
 bool
-AuthSrvImpl::processUpdate(const IOMessage& io_message,
-                           Message& /*message*/,
-                           OutputBuffer& /*buffer*/,
-                           std::auto_ptr<TSIGContext> /*tsig_context*/)
-{
+AuthSrvImpl::processUpdate(const IOMessage& io_message) {
     try {
         ddns_forwarder_.connect();
         ddns_forwarder_.push(io_message);
