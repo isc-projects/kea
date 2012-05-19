@@ -25,6 +25,7 @@
 #include <vector>
 
 #include <sys/socket.h>
+#include <stdint.h>
 
 namespace isc {
 namespace util {
@@ -53,6 +54,11 @@ public:
     virtual void close() {
         is_connected_ = false;
     }
+
+    // Pushing a socket session.  It copies the given session data
+    // so that the test code can check the values later via the getter
+    // methods.  Complete deep copy will be created, so the caller doesn't
+    // have to keep the parameters valid after the call to this method.
     virtual void push(int sock, int family, int type, int protocol,
                       const struct sockaddr& local_end,
                       const struct sockaddr& remote_end,
@@ -68,7 +74,6 @@ public:
         pushed_family_ = family;
         pushed_type_ = type;
         pushed_protocol_ = protocol;
-        assert(remote_end.sa_family == AF_INET);
         assert(io::internal::getSALength(local_end) <=
                sizeof(pushed_local_end_ss_));
         std::memcpy(&pushed_local_end_ss_, &local_end,
@@ -80,7 +85,12 @@ public:
         pushed_data_.resize(data_len);
         std::memcpy(&pushed_data_[0], data, data_len);
     }
+
+    // Allow the test code to check if the connection is established.
     bool isConnected() const { return (is_connected_); }
+
+    // Allow the test code to customize the forwarder behavior wrt whether
+    // a specific operation should succeed or fail.
     void disableConnect() { connect_ok_ = false; }
     void enableConnect() { connect_ok_ = true; }
     void disableClose() { close_ok_ = false; }
@@ -100,7 +110,9 @@ public:
     const struct sockaddr& getPushedRemoteend() const {
         return (*io::internal::convertSockAddr(&pushed_remote_end_ss_));
     }
-    const std::vector<uint8_t> getPushedData() const { return (pushed_data_); }
+    const std::vector<uint8_t>& getPushedData() const {
+        return (pushed_data_);
+    }
 
 private:
     bool is_connected_;
