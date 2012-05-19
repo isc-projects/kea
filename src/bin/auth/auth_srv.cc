@@ -130,10 +130,39 @@ public:
         }
     }
 
-    BaseSocketSessionForwarder& forwarder_;
+    // Push a socket session corresponding to given IOMessage.
+    //
+    // NOTE: Right now, there's no API to retrieve the local address from
+    // the IOMessage.  Until it's added, we pass the remote address as
+    // local.
+    //
+    // If the underlying forwarder throws on push(), the exception will be
+    // propagated to the caller.
+    void push(const IOMessage& io_message) {
+        const IOEndpoint& remote_ep = io_message.getRemoteEndpoint();
+        const int protocol = remote_ep.getProtocol();
+        const int sock_type = getSocketType(protocol);
+        forwarder_.push(io_message.getSocket().getNative(),
+                        remote_ep.getFamily(), sock_type, protocol,
+                        remote_ep.getSockAddr(), remote_ep.getSockAddr(),
+                        io_message.getData(), io_message.getDataSize());
+    }
 
 private:
+    BaseSocketSessionForwarder& forwarder_;
     bool connected_;
+
+    static int getSocketType(int protocol) {
+        switch (protocol) {
+        case IPPROTO_UDP:
+            return (SOCK_DGRAM);
+        case IPPROTO_TCP:
+            return (SOCK_STREAM);
+        default:
+            isc_throw(isc::InvalidParameter,
+                      "Unexpected socket address family: " << protocol);
+        }
+    }
 };
 }
 
@@ -787,19 +816,8 @@ AuthSrvImpl::processUpdate(const IOMessage& io_message,
                            OutputBuffer& /*buffer*/,
                            std::auto_ptr<TSIGContext> /*tsig_context*/)
 {
-    // hardcode for initial test
     ddns_forwarder_.connect();
-
-    const IOEndpoint& remote_ep = io_message.getRemoteEndpoint();
-    const int protocol = remote_ep.getProtocol();
-    const int sock_type = (protocol == IPPROTO_UDP) ? SOCK_DGRAM : SOCK_STREAM;
-    ddns_forwarder_.forwarder_.push(io_message.getSocket().getNative(),
-                                    remote_ep.getFamily(), sock_type, protocol,
-                                    // XXX: no I/F to get local
-                                    remote_ep.getSockAddr(),
-                                    remote_ep.getSockAddr(),
-                                    io_message.getData(),
-                                    io_message.getDataSize());
+    ddns_forwarder_.push(io_message);
 
     return (false);
 }
