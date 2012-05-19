@@ -132,7 +132,7 @@ main(int argc, char* argv[]) {
     bool statistics_session_established = false; // XXX (see Trac #287)
     ModuleCCSession* config_session = NULL;
     XfroutClient xfrout_client(getXfroutSocketPath());
-    SocketSessionForwarder ddns_forwarder("dummy");
+    SocketSessionForwarder ddns_forwarder(getDDNSSocketPath());
     try {
         string specfile;
         if (getenv("B10_FROM_BUILD")) {
