@@ -13,4 +13,5 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #define AUTH_SPECFILE_LOCATION "@prefix@/share/@PACKAGE@/auth.spec"
-#define UNIX_SOCKET_FILE "@@LOCALSTATEDIR@@/@PACKAGE@/auth_xfrout_conn"
+#define UNIX_XFROUT_SOCKET_FILE "@@LOCALSTATEDIR@@/@PACKAGE@/auth_xfrout_conn"
+#define UNIX_DDNS_SOCKET_FILE "@@LOCALSTATEDIR@@/@PACKAGE@/ddns_socket"
