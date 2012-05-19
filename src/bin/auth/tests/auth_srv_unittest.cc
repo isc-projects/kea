@@ -1499,6 +1499,29 @@ TEST_F(AuthSrvTest, DDNSForwardConnectFail) {
     EXPECT_TRUE(ddns_forwarder.isConnected());
 }
 
+TEST_F(AuthSrvTest, DDNSForwardPushFail) {
+    // Make first request succeed, which will establish the connection.
+    EXPECT_FALSE(ddns_forwarder.isConnected());
+    createAndSendRequest(RRType::SOA(), Opcode::UPDATE());
+    EXPECT_TRUE(ddns_forwarder.isConnected());
+
+    // make connect attempt fail.  It should result in SERVFAIL.  The
+    // connection should be closed.
+    ddns_forwarder.disablePush();
+    createAndSendRequest(RRType::SOA(), Opcode::UPDATE());
+    EXPECT_TRUE(dnsserv.hasAnswer());
+    headerCheck(*parse_message, default_qid, Rcode::SERVFAIL(),
+                Opcode::UPDATE().getCode(), QR_FLAG, 0, 0, 0, 0);
+    EXPECT_FALSE(ddns_forwarder.isConnected());
+
+    // Allow push again.  Connection will be reopened, and the request will
+    // be forwarded successfully.
+    ddns_forwarder.enablePush();
+    createAndSendRequest(RRType::SOA(), Opcode::UPDATE());
+    EXPECT_FALSE(dnsserv.hasAnswer());
+    EXPECT_TRUE(ddns_forwarder.isConnected());
+}
+
 TEST_F(AuthSrvTest, DDNSForwardClose) {
     scoped_ptr<AuthSrv> tmp_server(new AuthSrv(true, xfrout, ddns_forwarder));
     UnitTestUtil::createRequestMessage(request_message, Opcode::UPDATE(),
