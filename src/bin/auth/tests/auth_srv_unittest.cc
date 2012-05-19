@@ -1506,9 +1506,10 @@ TEST_F(AuthSrvTest, DDNSForwardPushFail) {
     EXPECT_TRUE(ddns_forwarder.isConnected());
 
     // make connect attempt fail.  It should result in SERVFAIL.  The
-    // connection should be closed.
+    // connection should be closed.  Use IPv6 address for varying log output.
     ddns_forwarder.disablePush();
-    createAndSendRequest(RRType::SOA(), Opcode::UPDATE());
+    createAndSendRequest(RRType::SOA(), Opcode::UPDATE(), Name("example.com"),
+                         RRClass::IN(), IPPROTO_UDP, "2001:db8::2");
     EXPECT_TRUE(dnsserv.hasAnswer());
     headerCheck(*parse_message, default_qid, Rcode::SERVFAIL(),
                 Opcode::UPDATE().getCode(), QR_FLAG, 0, 0, 0, 0);

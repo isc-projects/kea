@@ -14,17 +14,6 @@
 
 #include <config.h>
 
-#include <sys/types.h>
-#include <netinet/in.h>
-
-#include <algorithm>
-#include <cassert>
-#include <iostream>
-#include <vector>
-#include <memory>
-
-#include <boost/bind.hpp>
-
 #include <util/io/socketsession.h>
 
 #include <asiolink/asiolink.h>
@@ -65,6 +54,18 @@
 #include <auth/query.h>
 #include <auth/statistics.h>
 #include <auth/auth_log.h>
+
+#include <boost/bind.hpp>
+#include <boost/lexical_cast.hpp>
+
+#include <algorithm>
+#include <cassert>
+#include <iostream>
+#include <vector>
+#include <memory>
+
+#include <sys/types.h>
+#include <netinet/in.h>
 
 using namespace std;
 
@@ -171,6 +172,23 @@ private:
         }
     }
 };
+
+// A helper function to log an address/port in the form of IOEndpoint
+// in our preferred format: [<ipv6_addr>]:port or <ipv4_addr>:port
+string
+formatEndpoint(const IOEndpoint& ep) {
+    string addr_port;
+    if (ep.getFamily() == AF_INET6) {
+        addr_port = "[" + ep.getAddress().toText() + "]";
+    } else if (ep.getFamily() == AF_INET) {
+        addr_port = ep.getAddress().toText();
+    } else {
+        addr_port = "(unknown address)";
+    }
+    addr_port += ":" + boost::lexical_cast<string>(ep.getPort());
+
+    return (addr_port);
+}
 }
 
 class AuthSrvImpl {
@@ -827,10 +845,17 @@ AuthSrvImpl::processUpdate(const IOMessage& io_message,
         ddns_forwarder_.connect();
         ddns_forwarder_.push(io_message);
     } catch (const SocketSessionError& ex) {
+        // If either connect or push fails, the forwarder object should throw
+        // an exception.  We log the event, and propagate the exception to
+        // the caller, which will result in SERVFAIL.
+        LOG_ERROR(auth_logger, AUTH_UPDATE_FORWARD_ERROR).
+            arg(formatEndpoint(io_message.getRemoteEndpoint())).
+            arg(ex.what());
         ddns_forwarder_.close();
         throw;
     }
 
+    // On successful push, the request shouldn't be responded from b10-auth.
     return (false);
 }
 
