@@ -111,6 +111,11 @@ public:
     // Read-only accessors to recorded parameters to the previous successful
     // call to push().  Return values are undefined if there has been no
     // successful call to push().
+    // Note that we use convertSockAddr() to convert sockaddr_storage to
+    // sockaddr.  It should be safe since we use the storage in its literal
+    // sense; it was originally filled with the binary image of another
+    // sockaddr structure, and we are going to return the image opaquely
+    // as a sockaddr structure without touching the data.
     int getPushedSock() const { return (pushed_sock_); }
     int getPushedFamily() const { return (pushed_family_); }
     int getPushedType() const { return (pushed_type_); }
