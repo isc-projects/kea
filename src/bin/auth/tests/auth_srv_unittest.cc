@@ -150,12 +150,16 @@ protected:
     void createAndSendRequest(RRType req_type, Opcode opcode = Opcode::QUERY(),
                               const Name& req_name = Name("example.com"),
                               RRClass req_class = RRClass::IN(),
-                              int protocol = IPPROTO_UDP)
+                              int protocol = IPPROTO_UDP,
+                              const char* const remote_address =
+                              DEFAULT_REMOTE_ADDRESS,
+                              uint16_t remote_port = DEFAULT_REMOTE_PORT)
     {
         UnitTestUtil::createRequestMessage(request_message, opcode,
                                            default_qid, req_name,
                                            req_class, req_type);
-        createRequestPacket(request_message, protocol);
+        createRequestPacket(request_message, protocol, NULL,
+                            remote_address, remote_port);
         parse_message->clear(Message::PARSE);
         server.processMessage(*io_message, *parse_message, *response_obuffer,
                               &dnsserv);
@@ -1421,7 +1425,7 @@ TEST_F(AuthSrvTest, queryWithThrowingInToWire) {
 // in practice it should be reliable.
 void
 checkAddrPort(const struct sockaddr& actual_sa,
-              const string& expected_addr, const string& expected_port)
+              const string& expected_addr, uint16_t expected_port)
 {
     char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
     const int error = getnameinfo(&actual_sa, actual_sa.sa_len, hbuf,
@@ -1432,28 +1436,43 @@ checkAddrPort(const struct sockaddr& actual_sa,
                   gai_strerror(error));
     }
     EXPECT_EQ(expected_addr, hbuf);
-    EXPECT_EQ(expected_port, sbuf);
+    EXPECT_EQ(boost::lexical_cast<string>(expected_port), sbuf);
 }
 
 TEST_F(AuthSrvTest, DDNSForward) {
     EXPECT_FALSE(ddns_forwarder.isConnected());
 
-    // Repeat sending an update request two times.  By doing that we'll
-    // confirm the forwarder connection will be established exactly once,
-    // and kept established.
-    for (size_t i = 0; i < 2; ++i) {
-        // Use different names for each iteration
-        const Name zone_name = Name(i == 0 ? "example.com" : "example.org");
-        createAndSendRequest(RRType::SOA(), Opcode::UPDATE(), zone_name);
+    // Repeat sending an update request 4 times, differing some network
+    // parameters: UDP/IPv4, TCP/IPv4, UDP/IPv6, TCP/IPv6, in this order.
+    // By doing that we can also confirm the forwarder connection will be
+    // established exactly once, and kept established.
+    for (size_t i = 0; i < 4; ++i) {
+        // Use different names for some different cases
+        const Name zone_name = Name(i < 2 ? "example.com" : "example.org");
+        const socklen_t family = (i < 2) ? AF_INET : AF_INET6;
+        const char* const remote_addr =
+            (family == AF_INET) ? "192.0.2.1" : "2001:db8::1";
+        const uint16_t remote_port =
+            (family == AF_INET) ? 53214 : 53216;
+        const int protocol = ((i % 2) == 0) ? IPPROTO_UDP : IPPROTO_TCP;
+
+        createAndSendRequest(RRType::SOA(), Opcode::UPDATE(), zone_name,
+                             RRClass::IN(), protocol, remote_addr,
+                             remote_port);
         EXPECT_FALSE(dnsserv.hasAnswer());
         EXPECT_TRUE(ddns_forwarder.isConnected());
 
-        // Examine the pushed data
-        EXPECT_EQ(AF_INET, ddns_forwarder.getPushedFamily());
-        EXPECT_EQ(SOCK_DGRAM, ddns_forwarder.getPushedType());
-        EXPECT_EQ(IPPROTO_UDP, ddns_forwarder.getPushedProtocol());
+        // Examine the pushed data (note: currently "local end" has a dummy
+        // value equal to remote)
+        EXPECT_EQ(family, ddns_forwarder.getPushedFamily());
+        const int expected_type =
+            (protocol == IPPROTO_UDP) ? SOCK_DGRAM : SOCK_STREAM;
+        EXPECT_EQ(expected_type, ddns_forwarder.getPushedType());
+        EXPECT_EQ(protocol, ddns_forwarder.getPushedProtocol());
         checkAddrPort(ddns_forwarder.getPushedRemoteend(),
-                      DEFAULT_REMOTE_ADDRESS, "53210");
+                      remote_addr, remote_port);
+        checkAddrPort(ddns_forwarder.getPushedLocalend(),
+                      remote_addr, remote_port);
         EXPECT_EQ(io_message->getDataSize(),
                   ddns_forwarder.getPushedData().size());
         EXPECT_EQ(0, memcmp(io_message->getData(),
