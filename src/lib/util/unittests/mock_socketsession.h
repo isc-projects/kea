@@ -52,6 +52,9 @@ public:
         is_connected_ = true;
     }
     virtual void close() {
+        if (!is_connected_) {
+            isc_throw(isc::util::io::SocketSessionError, "duplicate close");
+        }
         is_connected_ = false;
     }
 
@@ -67,6 +70,10 @@ public:
         if (!push_ok_) {
             isc_throw(isc::util::io::SocketSessionError,
                        "socket session forwarding is disabled for test");
+        }
+        if (!is_connected_) {
+            isc_throw(isc::util::io::SocketSessionError,
+                       "socket session is being pushed before connected");
         }
 
         // Copy parameters for later checks
@@ -96,6 +103,7 @@ public:
     void disableClose() { close_ok_ = false; }
     void enableClose() { close_ok_ = true; }
     void disablePush() { push_ok_ = false; }
+    void enablePush() { push_ok_ = true; }
 
     // Read-only accessors to recorded parameters to the previous successful
     // call to push().  Return values are undefined if there has been no
