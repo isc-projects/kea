@@ -242,8 +242,12 @@ class UpdateSession:
             return True
         return False
 
-    def __check_prerequisite_name_not_in_use(self):
-        pass
+    def __check_prerequisite_name_not_in_use(self, datasrc_client, rrset):
+        '''Check whether the name of the given RRset is not in use (i.e. does
+           not exist at all, or is an empty nonterminal.
+           RFC2136 Section 2.4.5
+        '''
+        return not self.__check_prerequisite_name_in_use(datasrc_client, rrset)
 
     def __check_prerequisites(self, datasrc_client):
         pass
