@@ -39,6 +39,27 @@ public:
 };
 
 
+/// \brief Mismatched Placeholders
+///
+/// This exception is used when the number of placeholders do not match
+/// the number of arguments passed to the formatter.
+
+class MismatchedPlaceholders : public isc::Exception {
+public:
+    MismatchedPlaceholders(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what)
+    {}
+};
+
+
+///
+/// \brief Internal excess placeholder checker
+///
+/// This is used internally by the Formatter to check for excess
+/// placeholders (and fewer arguments).
+void
+checkExcessPlaceholders(std::string* message, unsigned int placeholder);
+
 ///
 /// \brief The internal replacement routine
 ///
@@ -142,6 +163,7 @@ public:
     /// This is the place where output happens if the formatter is active.
     ~ Formatter() {
         if (logger_) {
+            checkExcessPlaceholders(message_, ++nextPlaceholder_);
             logger_->output(severity_, *message_);
             delete message_;
         }

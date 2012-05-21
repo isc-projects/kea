@@ -15,7 +15,13 @@
  */
 
 #include <exceptions/exceptions.h>
+#include <dns/rrset.h>
 #include <datasrc/zone.h>
+
+#include <boost/noncopyable.hpp>
+
+#include <functional>
+#include <vector>
 
 namespace isc {
 namespace dns {
@@ -61,8 +67,14 @@ namespace auth {
 /// likely to misuse one of the classes instead of the other
 /// accidentally, and since it's considered a temporary development state,
 /// we keep this name at the moment.
-class Query {
+class Query : boost::noncopyable {
 private:
+    /// \brief Initial reserved size for the vectors in Query
+    ///
+    /// The value is larger than we expect the vectors to even become, and
+    /// has been chosen arbitrarily. The reason to set them quite high is
+    /// to prevent reallocation on addition.
+    static const size_t RESERVE_RRSETS = 64;
 
     /// \brief Adds a SOA.
     ///
@@ -96,18 +108,26 @@ private:
     ///               data
     /// \param db_result The ZoneFinder::FindResult returned by find()
     void addNXRRsetProof(isc::datasrc::ZoneFinder& finder,
-        const isc::datasrc::ZoneFinder::FindResult& db_result);
+                         const isc::datasrc::ZoneFinder::Context& db_context);
 
     /// Add NSEC RRs that prove an NXDOMAIN result.
     ///
     /// This corresponds to Section 3.1.3.2 of RFC 4035.
-    void addNXDOMAINProof(isc::datasrc::ZoneFinder& finder,
-                          isc::dns::ConstRRsetPtr nsec);
+    void addNXDOMAINProofByNSEC(isc::datasrc::ZoneFinder& finder,
+                                isc::dns::ConstRRsetPtr nsec);
 
-    /// Add NSEC RRs that prove a wildcard answer is the best one.
+    /// Add NSEC3 RRs that prove an NXDOMAIN result.
     ///
-    /// This corresponds to Section 3.1.3.3 of RFC 4035.
-    void addWildcardProof(isc::datasrc::ZoneFinder& finder);
+    /// This corresponds to Section 7.2.2 of RFC 5155.
+    void addNXDOMAINProofByNSEC3(isc::datasrc::ZoneFinder& finder);
+
+    /// Add NSEC or NSEC3 RRs that prove a wildcard answer is the best one.
+    ///
+    /// This corresponds to Section 3.1.3.3 of RFC 4035 and Section 7.2.6
+    /// of RFC5155.
+    void addWildcardProof(
+        isc::datasrc::ZoneFinder& finder,
+        const isc::datasrc::ZoneFinder::Context& db_context);
 
     /// \brief Adds one NSEC RR proved no matched QNAME,one NSEC RR proved no
     /// matched <QNAME,QTYPE> through wildcard extension.
@@ -120,44 +140,6 @@ private:
     /// <QNAME,QTTYPE>.
     void addWildcardNXRRSETProof(isc::datasrc::ZoneFinder& finder,
                                  isc::dns::ConstRRsetPtr nsec);
-    
-    /// \brief Look up additional data (i.e., address records for the names
-    /// included in NS or MX records) and add them to the additional section.
-    ///
-    /// Note: Any additional data which has already been provided in the
-    /// answer section (i.e., if the original query happend to be for the
-    /// address of the DNS server), it should be omitted from the additional.
-    ///
-    /// This method may throw a exception because its underlying methods may
-    /// throw exceptions.
-    ///
-    /// \param zone The ZoneFinder through which the additional data for the
-    /// query is to be found.
-    /// \param rrset The RRset (i.e., NS or MX rrset) which require additional
-    /// processing.
-    void addAdditional(isc::datasrc::ZoneFinder& zone,
-                       const isc::dns::AbstractRRset& rrset);
-
-    /// \brief Find address records for a specified name.
-    ///
-    /// Search the specified zone for AAAA/A RRs of each of the NS/MX RDATA
-    /// (domain name), and insert the found ones into the additional section
-    /// if address records are available. By default the search will stop
-    /// once it encounters a zone cut.
-    ///
-    /// Note: we need to perform the search in the "GLUE OK" mode for NS RDATA,
-    /// which means that we should include A/AAAA RRs under a zone cut.
-    /// The glue records must exactly match the name in the NS RDATA, without
-    /// CNAME or wildcard processing.
-    ///
-    /// \param zone The \c ZoneFinder through which the address records is to
-    /// be found.
-    /// \param qname The name in rrset RDATA.
-    /// \param options The search options.
-    void addAdditionalAddrs(isc::datasrc::ZoneFinder& zone,
-                            const isc::dns::Name& qname,
-                            const isc::datasrc::ZoneFinder::FindOptions options
-                            = isc::datasrc::ZoneFinder::FIND_DEFAULT);
 
     /// \brief Look up a zone's NS RRset and their address records for an
     /// authoritative answer, and add them to the additional section.
@@ -177,7 +159,8 @@ private:
     ///
     /// \param finder The \c ZoneFinder through which the NS and additional
     /// data for the query are to be found.
-    void addAuthAdditional(isc::datasrc::ZoneFinder& finder);
+    void addAuthAdditional(isc::datasrc::ZoneFinder& finder,
+                           std::vector<isc::dns::ConstRRsetPtr>& additionals);
 
     /// \brief Process a DS query possible at the child side of zone cut.
     ///
@@ -196,10 +179,66 @@ private:
     /// within this method.
     bool processDSAtChild();
 
-public:
-    /// Constructor from query parameters.
+    /// \brief Add NSEC3 to the response for a closest encloser proof for a
+    /// given name.
     ///
-    /// This constructor never throws an exception.
+    /// This method calls \c findNSEC3() of the given zone finder for the
+    /// given name in the recursive mode, and adds the returned NSEC3(s) to
+    /// the authority section of the response message associated with the
+    /// \c Query object.
+    ///
+    /// It returns the number of labels of the closest encloser (returned via
+    /// the \c findNSEC3() call) in case the caller needs to use that value
+    /// for subsequent processing, i.e, constructing the best possible wildcard
+    /// name that (would) match the query name.
+    ///
+    /// Unless \c exact_ok is true, \c name is expected to be non existent,
+    /// in which case findNSEC3() in the recursive mode must return both
+    /// closest and next proofs.  If the latter is NULL, it means a run time
+    /// collision (or the zone is broken in other way), and this method throws
+    /// a BadNSEC3 exception.
+    ///
+    /// If \c exact_ok is true, this method takes into account the case
+    /// where the name exists and may or may not be at a zone cut to an
+    /// optout zone.  In this case, depending on whether the zone is optout
+    /// or not, findNSEC3() may return non-NULL or NULL next_proof
+    /// (respectively).  This method adds the next proof if and only if
+    /// findNSEC3() returns non NULL value for it.  The Opt-Out flag
+    /// must be set or cleared accordingly, but this method doesn't check that
+    /// in this level (as long as the zone is signed validly and findNSEC3()
+    /// for the data source is implemented as documented, the condition
+    /// should be met; otherwise we'd let the validator detect the error).
+    ///
+    /// By default this method always adds the closest proof.
+    /// If \c add_closest is false, it only adds the next proof to the message.
+    /// This correspond to the case of "wildcard answer responses" as described
+    /// in Section 7.2.6 of RFC5155.
+    uint8_t addClosestEncloserProof(isc::datasrc::ZoneFinder& finder,
+                                    const isc::dns::Name& name, bool exact_ok,
+                                    bool add_closest = true);
+
+    /// \brief Add matching or covering NSEC3 to the response for a give name.
+    ///
+    /// This method calls \c findNSEC3() of the given zone finder for the
+    /// given name in the non recursive mode, and adds the returned NSEC3 to
+    /// the authority section of the response message associated with the
+    /// \c Query object.
+    ///
+    /// Depending on the caller's context, the returned NSEC3 is one and
+    /// only one of matching or covering NSEC3.  If \c match is true the
+    /// returned NSEC3 must be a matching one; otherwise it must be a covering
+    /// one.  If this assumption isn't met this method throws a BadNSEC3
+    /// exception (if it must be a matching NSEC3 but is not, it means a broken
+    /// zone, maybe with incorrect optout NSEC3s; if it must be a covering
+    /// NSEC3 but is not, it means a run time collision; or the \c findNSEC3()
+    /// implementation is broken for both cases.)
+    void addNSEC3ForName(isc::datasrc::ZoneFinder& finder,
+                         const isc::dns::Name& name, bool match);
+
+    /// Set up the Query object for a new query lookup
+    ///
+    /// This is the first step of the process() method, and initializes
+    /// the member data
     ///
     /// \param datasrc_client The datasource wherein the answer to the query is
     /// to be found.
@@ -208,14 +247,49 @@ public:
     /// \param response The response message to store the answer to the query.
     /// \param dnssec If the answer should include signatures and NSEC/NSEC3 if
     ///     possible.
-    Query(const isc::datasrc::DataSourceClient& datasrc_client,
-          const isc::dns::Name& qname, const isc::dns::RRType& qtype,
-          isc::dns::Message& response, bool dnssec = false) :
-        datasrc_client_(datasrc_client), qname_(qname), qtype_(qtype),
-        response_(response), dnssec_(dnssec),
-        dnssec_opt_(dnssec ?  isc::datasrc::ZoneFinder::FIND_DNSSEC :
-                    isc::datasrc::ZoneFinder::FIND_DEFAULT)
-    {}
+    void initialize(datasrc::DataSourceClient& datasrc_client,
+                    const isc::dns::Name& qname, const isc::dns::RRType& qtype,
+                    isc::dns::Message& response, bool dnssec = false);
+
+    /// \brief Resets any partly built response data, and internal pointers
+    ///
+    /// Called by the QueryCleaner object upon its destruction
+    void reset();
+
+    /// \brief Internal class used for cleanup of Query members
+    ///
+    /// The process() call creates an object of this class, which
+    /// upon its destruction, calls Query::reset(), so that outside
+    /// of single calls to process(), the query state is always clean.
+    class QueryCleaner {
+    public:
+        QueryCleaner(isc::auth::Query& query) : query_(query) {}
+        ~QueryCleaner() { query_.reset(); }
+    private:
+        isc::auth::Query& query_;
+    };
+
+protected:
+    // Following methods declared protected so they can be accessed
+    // by unit tests.
+
+    void createResponse();
+
+public:
+    /// Default constructor.
+    ///
+    /// Query parameters will be set by the call to process()
+    ///
+    Query() :
+        datasrc_client_(NULL), qname_(NULL), qtype_(NULL),
+        dnssec_(false), dnssec_opt_(isc::datasrc::ZoneFinder::FIND_DEFAULT),
+        response_(NULL)
+    {
+        answers_.reserve(RESERVE_RRSETS);
+        authorities_.reserve(RESERVE_RRSETS);
+        additionals_.reserve(RESERVE_RRSETS);
+    }
+
 
     /// Process the query.
     ///
@@ -243,7 +317,17 @@ public:
     /// This might throw BadZone or any of its specific subclasses, but that
     /// shouldn't happen in real-life (as BadZone means wrong data, it should
     /// have been rejected upon loading).
-    void process();
+    ///
+    /// \param datasrc_client The datasource wherein the answer to the query is
+    /// to be found.
+    /// \param qname The query name
+    /// \param qtype The RR type of the query
+    /// \param response The response message to store the answer to the query.
+    /// \param dnssec If the answer should include signatures and NSEC/NSEC3 if
+    ///     possible.
+    void process(datasrc::DataSourceClient& datasrc_client,
+                 const isc::dns::Name& qname, const isc::dns::RRType& qtype,
+                 isc::dns::Message& response, bool dnssec = false);
 
     /// \short Bad zone data encountered.
     ///
@@ -311,13 +395,105 @@ public:
         {}
     };
 
+    /// \brief Response Creator Class
+    ///
+    /// This is a helper class of Query, and is expected to be used during the
+    /// construction of the response message. This class performs the
+    /// duplicate RRset detection check.  It keeps a list of RRsets added
+    /// to the message and does not add an RRset if it is the same as one
+    /// already added.
+    ///
+    /// This class is essentially private to Query, but is visible to public
+    /// for testing purposes.  It's not expected to be used from a normal
+    /// application.
+    class ResponseCreator {
+    public:
+        /// \brief Constructor
+        ///
+        /// Reserves space for the list of RRsets.  Although the
+        /// ResponseCreator will be used to create a message from the
+        /// contents of the Query object's answers_, authorities_ and
+        /// additionals_ elements, and each of these are sized to
+        /// RESERVE_RRSETS, it is _extremely_ unlikely that all three will be
+        /// filled to capacity.  So we reserve more elements than in each of
+        /// these components, but not three times the amount.
+        ///
+        /// As with the answers_, authorities_ and additionals_ elements, the
+        /// reservation is made in the constructor to avoid dynamic allocation
+        /// of memory.  The ResponseCreator is a member variable of the Query
+        /// object so is constructed once and lasts as long as that object.
+        /// Internal state is cleared through the clear() method.
+        ResponseCreator() {
+            added_.reserve(2 * RESERVE_RRSETS);
+        }
+
+        /// \brief Reset internal state
+        void clear() {
+            added_.clear();
+        }
+
+        /// \brief Complete the response message with filling in the
+        /// response sections.
+        ///
+        /// This is the final step of the Query::process() method, and within
+        /// that method, it should be called before it returns (if any
+        /// response data is to be added)
+        ///
+        /// This will take a message to build and each RRsets for the answer,
+        /// authority, and additional sections, and add them to their
+        /// corresponding sections in the given message.  The RRsets are
+        /// filtered such that a particular RRset appears only once in the
+        /// message.
+        ///
+        /// If \c dnssec is true, it tells the message to include any RRSIGs
+        /// attached to the RRsets.
+        void create(
+            isc::dns::Message& message,
+            const std::vector<isc::dns::ConstRRsetPtr>& answers_,
+            const std::vector<isc::dns::ConstRRsetPtr>& authorities_,
+            const std::vector<isc::dns::ConstRRsetPtr>& additionals_,
+            const bool dnssec);
+
+    private:
+        // \brief RRset comparison functor.
+        struct IsSameKind : public std::binary_function<
+                            const isc::dns::AbstractRRset*,
+                            const isc::dns::AbstractRRset*,
+                            bool> {
+            bool operator()(const isc::dns::AbstractRRset* r1,
+                            const isc::dns::AbstractRRset* r2) const {
+                return (r1->isSameKind(*r2));
+            }
+        };
+
+        /// Insertion operation
+        ///
+        /// \param message Message to which the RRset is to be added
+        /// \param section Section of the message in which the RRset is put
+        /// \param rrset Pointer to RRset to be added to the message
+        /// \param dnssec Whether RRSIG records should be added as well
+        void addRRset(isc::dns::Message& message,
+                      const isc::dns::Message::Section section,
+                      const isc::dns::ConstRRsetPtr& rrset, const bool dnssec);
+
+
+    private:
+        /// List of RRsets already added to the message
+        std::vector<const isc::dns::AbstractRRset*> added_;
+    };
+
 private:
-    const isc::datasrc::DataSourceClient& datasrc_client_;
-    const isc::dns::Name& qname_;
-    const isc::dns::RRType& qtype_;
-    isc::dns::Message& response_;
-    const bool dnssec_;
-    const isc::datasrc::ZoneFinder::FindOptions dnssec_opt_;
+    const isc::datasrc::DataSourceClient* datasrc_client_;
+    const isc::dns::Name* qname_;
+    const isc::dns::RRType* qtype_;
+    bool dnssec_;
+    isc::datasrc::ZoneFinder::FindOptions dnssec_opt_;
+    ResponseCreator response_creator_;
+
+    isc::dns::Message* response_;
+    std::vector<isc::dns::ConstRRsetPtr> answers_;
+    std::vector<isc::dns::ConstRRsetPtr> authorities_;
+    std::vector<isc::dns::ConstRRsetPtr> additionals_;
 };
 
 }

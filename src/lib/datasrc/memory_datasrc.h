@@ -65,23 +65,21 @@ public:
     /// \brief Returns the class of the zone.
     virtual isc::dns::RRClass getClass() const;
 
-    /// \brief Looks up an RRset in the zone.
-    ///
-    /// See documentation in \c Zone.
-    ///
-    /// It returns NULL pointer in case of NXDOMAIN and NXRRSET.
-    virtual FindResult find(const isc::dns::Name& name,
-                            const isc::dns::RRType& type,
-                            const FindOptions options = FIND_DEFAULT);
+    /// \brief Find an RRset in the datasource
+    virtual ZoneFinderContextPtr find(const isc::dns::Name& name,
+                                      const isc::dns::RRType& type,
+                                      const FindOptions options =
+                                      FIND_DEFAULT);
 
     /// \brief Version of find that returns all types at once
     ///
     /// It acts the same as find, just that when the correct node is found,
     /// all the RRsets are filled into the target parameter instead of being
     /// returned by the result.
-    virtual FindResult findAll(const isc::dns::Name& name,
-                               std::vector<isc::dns::ConstRRsetPtr>& target,
-                               const FindOptions options = FIND_DEFAULT);
+    virtual ZoneFinderContextPtr findAll(
+        const isc::dns::Name& name,
+        std::vector<isc::dns::ConstRRsetPtr>& target,
+        const FindOptions options = FIND_DEFAULT);
 
     /// Look for NSEC3 for proving (non)existence of given name.
     ///
@@ -122,16 +120,6 @@ public:
     /// \return SUCCESS or EXIST (if an rrset for given name and type already
     ///    exists).
     result::Result add(const isc::dns::ConstRRsetPtr& rrset);
-
-    /// \brief RRSet out of zone exception.
-    ///
-    /// This is thrown if addition of an RRset that doesn't belong under the
-    /// zone's origin is requested.
-    struct OutOfZone : public InvalidParameter {
-        OutOfZone(const char* file, size_t line, const char* what) :
-            InvalidParameter(file, line, what)
-        { }
-    };
 
     /// \brief RRset is NULL exception.
     ///
@@ -196,6 +184,26 @@ public:
     ///     configuration reloading is written.
     void load(const std::string& filename);
 
+    /// \brief Load zone from another data source.
+    ///
+    /// This is similar to the other version, but zone's RRsets are provided
+    /// by an iterator of another data source.  On successful load, the
+    /// internal filename will be cleared.
+    ///
+    /// This implementation assumes the iterator produces combined RRsets,
+    /// that is, there should exactly one RRset for the same owner name and
+    /// RR type.  This means the caller is expected to create the iterator
+    /// with \c separate_rrs being \c false.  This implementation also assumes
+    /// RRsets of different names are not mixed; so if the iterator produces
+    /// an RRset of a different name than that of the previous RRset, that
+    /// previous name must never appear in the subsequent sequence of RRsets.
+    /// Note that the iterator API does not ensure this.  If the underlying
+    /// implementation does not follow it, load() will fail.  Note, however,
+    /// that this whole interface is tentative.  in-memory zone loading will
+    /// have to be revisited fundamentally, and at that point this restriction
+    /// probably won't matter.
+    void load(ZoneIterator& iterator);
+
     /// Exchanges the content of \c this zone finder with that of the given
     /// \c zone_finder.
     ///
@@ -216,6 +224,12 @@ private:
     // extracts the pointer to data and puts it into the iterator.
     // The access is read only.
     friend class InMemoryClient;
+
+    /// \brief In-memory version of finder context.
+    ///
+    /// The implementation (and any specialized interface) is completely local
+    /// to the InMemoryZoneFinder class, so it's defined as private
+    class Context;
 };
 
 /// \brief A data source client that holds all necessary data in memory.
@@ -268,7 +282,7 @@ public:
     /// This method never throws an exception.
     ///
     /// \return The number of zones stored in the client.
-    unsigned int getZoneCount() const;
+    virtual unsigned int getZoneCount() const;
 
     /// Add a zone (in the form of \c ZoneFinder) to the \c InMemoryClient.
     ///

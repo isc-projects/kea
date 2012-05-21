@@ -6,7 +6,7 @@ these tests are specific for BIND10, but we are keeping in mind that RFC-related
 tests could be separated, so that we can test other systems as well.
 
 Prerequisites:
-- Installed version of BIND 10 (but see below how to run it from source tree)
+- BIND 10 must be compiled or installed
 - dig
 - lettuce (http://lettuce.it)
 
@@ -26,27 +26,23 @@ Port 47805 is used for cmdctl, and must also be available.
 (note, we will need to extend this to a range, or if possible, we will need to
 do some on-the-fly available port finding)
 
-The bind10 main program, bindctl, and dig must all be in the default search 
-path of your environment, and BIND 10 must not be running if you use the 
-installed version when you run the tests.
+You can run the lettuce tests with the provided run_lettuce.sh script.
 
-If you want to test an installed version of bind 10, just run 'lettuce' in
-this directory.
+By default it will use the build tree, but you can use an installed version
+of bind10 by passing -I as the first argument of run_lettuce.sh
 
-We have provided a script that sets up the shell environment to run the tests
-with the build tree version of bind. If your shell uses export to set
-environment variables, you can source the script setup_intree_bind10.sh, then
-run lettuce.
+The tool 'dig' must be in the default search path of your environment. If
+you specified -I, so must the main bind10 program, as well as bindctl.
 
 Due to the default way lettuce prints its output, it is advisable to run it
 in a terminal that is wide than the default. If you see a lot of lines twice
 in different colors, the terminal is not wide enough.
 
 If you just want to run one specific feature test, use
-lettuce features/<feature file>
+run_lettuce.sh [-I] features/<feature file>
 
 To run a specific scenario from a feature, use
-lettuce features/<feature file> -s <scenario number>
+run_lettuce.sh [-I] features/<feature file> -s <scenario number>
 
 We have set up the tests to assume that lettuce is run from this directory,
 so even if you specify a specific feature file, you should do it from this

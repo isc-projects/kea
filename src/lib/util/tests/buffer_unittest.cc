@@ -12,11 +12,15 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <gtest/gtest.h>
+
 #include <exceptions/exceptions.h>
 
-#include <util/buffer.h>
+#ifdef EXPECT_DEATH
+#include <util/unittests/resource.h>
+#endif /* EXPECT_DEATH */
 
-#include <gtest/gtest.h>
+#include <util/buffer.h>
 
 using namespace isc;
 
@@ -182,7 +186,19 @@ TEST_F(BufferTest, outputBufferReadat) {
     for (int i = 0; i < sizeof(testdata); i ++) {
         EXPECT_EQ(testdata[i], obuffer[i]);
     }
-    EXPECT_THROW(obuffer[sizeof(testdata)], isc::util::InvalidBufferPosition);
+#ifdef EXPECT_DEATH
+    // We use assert now, so we check it dies
+    EXPECT_DEATH({
+        isc::util::unittests::dontCreateCoreDumps();
+
+        try {
+            obuffer[sizeof(testdata)];
+        } catch (...) {
+            // Prevent exceptions killing the application, we need
+            // to make sure it dies the real hard way
+        }
+        }, "");
+#endif
 }
 
 TEST_F(BufferTest, outputBufferClear) {
@@ -239,7 +255,7 @@ TEST_F(BufferTest, outputBufferZeroSize) {
     });
 }
 
-TEST_F(BufferTest, readVectorAll) {
+TEST_F(BufferTest, inputBufferReadVectorAll) {
     std::vector<uint8_t> vec;
 
     // check that vector can read the whole buffer
@@ -255,7 +271,7 @@ TEST_F(BufferTest, readVectorAll) {
     );
 }
 
-TEST_F(BufferTest, readVectorChunks) {
+TEST_F(BufferTest, inputBufferReadVectorChunks) {
     std::vector<uint8_t> vec;
 
     // check that vector can read the whole buffer

@@ -1,3 +1,7 @@
+ACLOCAL_AMFLAGS = -I m4macros ${ACLOCAL_FLAGS}
+# ^^^^^^^^ This has to be the first line and cannot come later in this
+# Makefile.am due to some bork in some versions of autotools.
+
 SUBDIRS = compatcheck doc src tests
 USE_LCOV=@USE_LCOV@
 LCOV=@LCOV@
@@ -79,7 +83,7 @@ report-coverage: report-cpp-coverage report-python-coverage
 
 # for static C++ check using cppcheck (when available)
 cppcheck:
-	cppcheck --enable=all --suppressions src/cppcheck-suppress.lst \
+	cppcheck --enable=all --suppressions src/cppcheck-suppress.lst --inline-suppr \
 		--quiet --error-exitcode=1 \
 		--template '{file}:{line}: check_fail: {message} ({severity},{id})' \
 		src
@@ -402,3 +406,6 @@ EXTRA_DIST += ext/asio/asio/system_error.hpp
 EXTRA_DIST += ext/asio/asio/deadline_timer.hpp
 EXTRA_DIST += ext/asio/asio/stream_socket_service.hpp
 EXTRA_DIST += ext/coroutine/coroutine.h
+
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = dns++.pc

@@ -12,18 +12,15 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <stdlib.h>
-
-#include <boost/shared_ptr.hpp>
-#include <boost/lexical_cast.hpp>
-
-#include <gtest/gtest.h>
+#include "faked_nsec3.h"
 
 #include <exceptions/exceptions.h>
 
+#include <dns/masterload.h>
 #include <dns/name.h>
 #include <dns/rrttl.h>
 #include <dns/rrset.h>
+#include <dns/nsec3hash.h>
 #include <exceptions/exceptions.h>
 
 #include <datasrc/database.h>
@@ -34,6 +31,13 @@
 
 #include <testutils/dnsmessage_test.h>
 
+#include <gtest/gtest.h>
+
+#include <boost/bind.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/lexical_cast.hpp>
+
+#include <cstdlib>
 #include <map>
 #include <vector>
 
@@ -44,6 +48,8 @@ using namespace std;
 using boost::dynamic_pointer_cast;
 using boost::lexical_cast;
 using namespace isc::dns;
+using namespace isc::testutils;
+using namespace isc::datasrc::test;
 
 namespace {
 
@@ -167,7 +173,10 @@ const char* const TEST_RECORDS[][5] = {
      "1234 3600 1800 2419200 7200" },
     {"example.org.", "NS", "3600", "", "ns.example.com."},
     {"example.org.", "A", "3600", "", "192.0.2.1"},
-    {"example.org.", "NSEC", "3600", "", "acnamesig1.example.org. NS A NSEC RRSIG"},
+    // Note that the RDATA text is "normalized", i.e., identical to what
+    // Rdata::toText() would produce.  some tests rely on that behavior.
+    {"example.org.", "NSEC", "3600", "",
+     "acnamesig1.example.org. A NS RRSIG NSEC"},
     {"example.org.", "RRSIG", "3600", "", "SOA 5 3 3600 20000101000000 "
               "20000201000000 12345 example.org. FAKEFAKEFAKE"},
     {"example.org.", "RRSIG", "3600", "", "NSEC 5 3 3600 20000101000000 "
@@ -203,6 +212,28 @@ const char* const TEST_RECORDS[][5] = {
     {"invalidrdata2.example.org.", "RRSIG", "3600", "", "Nonsense"},
 
     {NULL, NULL, NULL, NULL, NULL},
+};
+
+// NSEC3PARAM at the zone origin and its RRSIG.  These will be added
+// separately for some NSEC3 related tests.
+const char* TEST_NSEC3PARAM_RECORDS[][5] = {
+    {"example.org.", "NSEC3PARAM", "3600", "", "1 0 12 aabbccdd"},
+    {"example.org.", "RRSIG", "3600", "", "NSEC3PARAM 5 3 3600 20000101000000 "
+     "20000201000000 12345 example.org. FAKEFAKEFAKE"},
+    {NULL, NULL, NULL, NULL, NULL}
+};
+
+// FIXME: Taken from a different test. Fill with proper data when creating a test.
+const char* TEST_NSEC3_RECORDS[][5] = {
+    {apex_hash, "NSEC3", "300", "", "1 1 12 AABBCCDD 2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A RRSIG"},
+    {apex_hash, "RRSIG", "300", "", "NSEC3 5 4 7200 20100410172647 20100311172647 63192 example.org. gNIVj4T8t51fEU6kOPpvK7HOGBFZGbalN5ZK mInyrww6UWZsUNdw07ge6/U6HfG+/s61RZ/L is2M6yUWHyXbNbj/QqwqgadG5dhxTArfuR02 xP600x0fWX8LXzW4yLMdKVxGbzYT+vvGz71o 8gHSY5vYTtothcZQa4BMKhmGQEk="},
+    {ns1_hash, "NSEC3", "300", "", "1 1 12 AABBCCDD 2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A RRSIG"},
+    {ns1_hash, "RRSIG", "300", "", "NSEC3 5 4 7200 20100410172647 20100311172647 63192 example.org. gNIVj4T8t51fEU6kOPpvK7HOGBFZGbalN5ZK mInyrww6UWZsUNdw07ge6/U6HfG+/s61RZ/L is2M6yUWHyXbNbj/QqwqgadG5dhxTArfuR02 xP600x0fWX8LXzW4yLMdKVxGbzYT+vvGz71o 8gHSY5vYTtothcZQa4BMKhmGQEk="},
+    {w_hash, "NSEC3", "300", "", "1 1 12 AABBCCDD 2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A RRSIG"},
+    {w_hash, "RRSIG", "300", "", "NSEC3 5 4 7200 20100410172647 20100311172647 63192 example.org. gNIVj4T8t51fEU6kOPpvK7HOGBFZGbalN5ZK mInyrww6UWZsUNdw07ge6/U6HfG+/s61RZ/L is2M6yUWHyXbNbj/QqwqgadG5dhxTArfuR02 xP600x0fWX8LXzW4yLMdKVxGbzYT+vvGz71o 8gHSY5vYTtothcZQa4BMKhmGQEk="},
+    {zzz_hash, "NSEC3", "300", "", "1 1 12 AABBCCDD 2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A RRSIG"},
+    {zzz_hash, "RRSIG", "300", "", "NSEC3 5 4 7200 20100410172647 20100311172647 63192 example.org. gNIVj4T8t51fEU6kOPpvK7HOGBFZGbalN5ZK mInyrww6UWZsUNdw07ge6/U6HfG+/s61RZ/L is2M6yUWHyXbNbj/QqwqgadG5dhxTArfuR02 xP600x0fWX8LXzW4yLMdKVxGbzYT+vvGz71o 8gHSY5vYTtothcZQa4BMKhmGQEk="},
+    {NULL, NULL, NULL, NULL, NULL}
 };
 
 /*
@@ -241,7 +272,10 @@ public:
     virtual void commit() {}
     virtual void rollback() {}
     virtual void addRecordToZone(const string (&)[ADD_COLUMN_COUNT]) {}
+    virtual void addNSEC3RecordToZone(const string (&)[ADD_NSEC3_COLUMN_COUNT])
+    {}
     virtual void deleteRecordInZone(const string (&)[DEL_PARAM_COUNT]) {}
+    virtual void deleteNSEC3RecordInZone(const string (&)[DEL_PARAM_COUNT]) {}
     virtual void addRecordDiff(int, uint32_t, DiffOperation,
                                const std::string (&)[DIFF_PARAM_COUNT]) {}
 
@@ -251,9 +285,14 @@ public:
 
     virtual IteratorContextPtr getRecords(const std::string&, int, bool)
         const
-        {
+    {
         isc_throw(isc::NotImplemented,
                   "This database datasource can't be iterated");
+    }
+
+    virtual IteratorContextPtr getNSEC3Records(const std::string&, int) const {
+        isc_throw(isc::NotImplemented, "This test database datasource won't "
+                  "give you any NSEC3. Ever. Ask someone else.");
     }
 
     virtual IteratorContextPtr getAllRecords(int) const {
@@ -269,6 +308,11 @@ public:
     virtual std::string findPreviousName(int, const std::string&) const {
         isc_throw(isc::NotImplemented,
                   "This data source doesn't support DNSSEC");
+    }
+
+    virtual std::string findPreviousNSEC3Hash(int, const std::string&) const {
+        isc_throw(isc::NotImplemented,
+                  "This test database knows nothing about NSEC3 nor order");
     }
 private:
     const std::string database_name_;
@@ -344,6 +388,8 @@ public:
     MockAccessor() : rollbacked_(false), did_transaction_(false) {
         readonly_records_ = &readonly_records_master_;
         update_records_ = &update_records_master_;
+        nsec3_namespace_ = &nsec3_namespace_master_;
+        update_nsec3_namespace_ = &update_nsec3_namespace_master_;
         empty_records_ = &empty_records_master_;
         journal_entries_ = &journal_entries_master_;
         fillData();
@@ -353,6 +399,9 @@ public:
         boost::shared_ptr<MockAccessor> cloned_accessor(new MockAccessor());
         cloned_accessor->readonly_records_ = &readonly_records_master_;
         cloned_accessor->update_records_ = &update_records_master_;
+        cloned_accessor->nsec3_namespace_ = &nsec3_namespace_master_;
+        cloned_accessor->update_nsec3_namespace_ =
+            &update_nsec3_namespace_master_;
         cloned_accessor->empty_records_ = &empty_records_master_;
         cloned_accessor->journal_entries_ = &journal_entries_master_;
         latest_clone_ = cloned_accessor;
@@ -378,6 +427,28 @@ public:
     }
 
 private:
+    class DomainIterator : public IteratorContext {
+    public:
+        DomainIterator(const std::vector<std::vector<std::string> >& domain) :
+            domain_(domain),
+            position_(domain_.begin())
+        {}
+        virtual bool getNext(std::string (&columns)[COLUMN_COUNT]) {
+            if (position_ == domain_.end()) {
+                return (false);
+            } else {
+                for (size_t i(0); i < COLUMN_COUNT; ++ i) {
+                    columns[i] = (*position_)[i];
+                }
+                ++ position_;
+                return (true);
+            }
+        }
+    private:
+        const std::vector<std::vector<std::string> > domain_;
+        std::vector<std::vector<std::string> >::const_iterator position_;
+    };
+
     class MockNameIteratorContext : public IteratorContext {
     public:
         MockNameIteratorContext(const MockAccessor& mock_accessor, int zone_id,
@@ -462,62 +533,46 @@ private:
             }
 
             // Return faked data for tests
-            switch (step ++) {
-                case 0:
-                    data[DatabaseAccessor::NAME_COLUMN] = "example.org";
-                    data[DatabaseAccessor::TYPE_COLUMN] = "A";
-                    data[DatabaseAccessor::TTL_COLUMN] = "3600";
-                    data[DatabaseAccessor::RDATA_COLUMN] = "192.0.2.1";
-                    return (true);
-                case 1:
-                    data[DatabaseAccessor::NAME_COLUMN] = "example.org";
-                    data[DatabaseAccessor::TYPE_COLUMN] = "SOA";
-                    data[DatabaseAccessor::TTL_COLUMN] = "3600";
-                    data[DatabaseAccessor::RDATA_COLUMN] = "ns1.example.org. admin.example.org. "
-                        "1234 3600 1800 2419200 7200";
-                    return (true);
-                case 2:
-                    data[DatabaseAccessor::NAME_COLUMN] = "x.example.org";
-                    data[DatabaseAccessor::TYPE_COLUMN] = "A";
-                    data[DatabaseAccessor::TTL_COLUMN] = "300";
-                    data[DatabaseAccessor::RDATA_COLUMN] = "192.0.2.1";
-                    return (true);
-                case 3:
-                    data[DatabaseAccessor::NAME_COLUMN] = "x.example.org";
-                    data[DatabaseAccessor::TYPE_COLUMN] = "A";
-                    data[DatabaseAccessor::TTL_COLUMN] = "300";
-                    data[DatabaseAccessor::RDATA_COLUMN] = "192.0.2.2";
-                    return (true);
-                case 4:
-                    data[DatabaseAccessor::NAME_COLUMN] = "x.example.org";
-                    data[DatabaseAccessor::TYPE_COLUMN] = "AAAA";
-                    data[DatabaseAccessor::TTL_COLUMN] = "300";
-                    data[DatabaseAccessor::RDATA_COLUMN] = "2001:db8::1";
-                    return (true);
-                case 5:
-                    data[DatabaseAccessor::NAME_COLUMN] = "x.example.org";
-                    data[DatabaseAccessor::TYPE_COLUMN] = "AAAA";
-                    data[DatabaseAccessor::TTL_COLUMN] = "300";
-                    data[DatabaseAccessor::RDATA_COLUMN] = "2001:db8::2";
-                    return (true);
-                case 6:
-                    data[DatabaseAccessor::NAME_COLUMN] = "ttldiff.example.org";
-                    data[DatabaseAccessor::TYPE_COLUMN] = "A";
-                    data[DatabaseAccessor::TTL_COLUMN] = "300";
-                    data[DatabaseAccessor::RDATA_COLUMN] = "192.0.2.1";
-                    return (true);
-                case 7:
-                    data[DatabaseAccessor::NAME_COLUMN] = "ttldiff.example.org";
-                    data[DatabaseAccessor::TYPE_COLUMN] = "A";
-                    data[DatabaseAccessor::TTL_COLUMN] = "600";
-                    data[DatabaseAccessor::RDATA_COLUMN] = "192.0.2.2";
-                    return (true);
-                default:
-                    ADD_FAILURE() <<
-                        "Request past the end of iterator context";
-                case 8:
-                    return (false);
+            // This is the sequence of zone data in the order of appearance
+            // in the returned sequence from this iterator.
+            typedef const char* ColumnText[4];
+            const ColumnText zone_data[] = {
+                // A couple of basic RRs at the zone origin.
+                {"example.org", "A", "3600", "192.0.2.1"},
+                {"example.org", "SOA", "3600", "ns1.example.org. "
+                 "admin.example.org. 1234 3600 1800 2419200 7200"},
+                // RRsets sharing the same owner name with multiple RRs.
+                {"x.example.org", "A", "300", "192.0.2.1"},
+                {"x.example.org", "A", "300", "192.0.2.2"},
+                {"x.example.org", "AAAA", "300", "2001:db8::1"},
+                {"x.example.org", "AAAA", "300", "2001:db8::2"},
+                // RRSIGs.  Covered types are different and these two should
+                // be distinguished.
+                {"x.example.org", "RRSIG", "300",
+                 "A 5 3 3600 20000101000000 20000201000000 12345 "
+                 "example.org. FAKEFAKEFAKE"},
+                {"x.example.org", "RRSIG", "300",
+                 "AAAA 5 3 3600 20000101000000 20000201000000 12345 "
+                 "example.org. FAKEFAKEFAKEFAKE"},
+                // Mixture of different TTLs.  Covering both cases of small
+                // then large and large then small.  In either case the smaller
+                // TTL should win.
+                {"ttldiff.example.org", "A", "300", "192.0.2.1"},
+                {"ttldiff.example.org", "A", "600", "192.0.2.2"},
+                {"ttldiff2.example.org", "AAAA", "600", "2001:db8::1"},
+                {"ttldiff2.example.org", "AAAA", "300", "2001:db8::2"}};
+            const size_t num_rrs = sizeof(zone_data) / sizeof(zone_data[0]);
+            if (step > num_rrs) {
+                ADD_FAILURE() << "Request past the end of iterator context";
+            } else if (step < num_rrs) {
+                data[DatabaseAccessor::NAME_COLUMN] = zone_data[step][0];
+                data[DatabaseAccessor::TYPE_COLUMN] = zone_data[step][1];
+                data[DatabaseAccessor::TTL_COLUMN] = zone_data[step][2];
+                data[DatabaseAccessor::RDATA_COLUMN] = zone_data[step][3];
+                ++step;
+                return (true);
             }
+            return (false);
         }
     };
     class EmptyIteratorContext : public IteratorContext {
@@ -610,6 +665,17 @@ public:
         }
     }
 
+    virtual IteratorContextPtr getNSEC3Records(const std::string& hash,
+                                               int) const
+    {
+        Domains::const_iterator it(nsec3_namespace_->find(hash));
+        if (it == nsec3_namespace_->end()) {
+            return (IteratorContextPtr(new EmptyIteratorContext()));
+        } else {
+            return (IteratorContextPtr(new DomainIterator(it->second)));
+        }
+    }
+
     virtual pair<bool, int> startUpdateZone(const std::string& zone_name,
                                             bool replace)
     {
@@ -623,8 +689,10 @@ public:
         // original.
         if (replace) {
             update_records_->clear();
+            update_nsec3_namespace_->clear();
         } else {
             *update_records_ = *readonly_records_;
+            *update_nsec3_namespace_ = nsec3_namespace_master_;
         }
 
         if (zone_name == "bad.example.org.") {
@@ -637,7 +705,9 @@ public:
     }
     virtual void commit() {
         *readonly_records_ = *update_records_;
+        *nsec3_namespace_ = *update_nsec3_namespace_;
     }
+
     virtual void rollback() {
         // Special hook: if something with a name of "throw.example.org"
         // has been added, trigger an imaginary unexpected event with an
@@ -648,27 +718,54 @@ public:
 
         rollbacked_ = true;
     }
-    virtual void addRecordToZone(const string (&columns)[ADD_COLUMN_COUNT]) {
+
+private:
+    // Common subroutine for addRecordToZone and addNSEC3RecordToZone.
+    void addRecord(Domains& domains,
+                   const string (&columns)[ADD_COLUMN_COUNT])
+    {
         // Copy the current value to cur_name.  If it doesn't exist,
         // operator[] will create a new one.
-        cur_name_ = (*update_records_)[columns[DatabaseAccessor::ADD_NAME]];
+        cur_name_ = domains[columns[ADD_NAME]];
 
         vector<string> record_columns;
-        record_columns.push_back(columns[DatabaseAccessor::ADD_TYPE]);
-        record_columns.push_back(columns[DatabaseAccessor::ADD_TTL]);
-        record_columns.push_back(columns[DatabaseAccessor::ADD_SIGTYPE]);
-        record_columns.push_back(columns[DatabaseAccessor::ADD_RDATA]);
-        record_columns.push_back(columns[DatabaseAccessor::ADD_NAME]);
+        record_columns.push_back(columns[ADD_TYPE]);
+        record_columns.push_back(columns[ADD_TTL]);
+        record_columns.push_back(columns[ADD_SIGTYPE]);
+        record_columns.push_back(columns[ADD_RDATA]);
+        record_columns.push_back(columns[ADD_NAME]);
 
         // copy back the added entry
         cur_name_.push_back(record_columns);
-        (*update_records_)[columns[DatabaseAccessor::ADD_NAME]] = cur_name_;
+        domains[columns[DatabaseAccessor::ADD_NAME]] = cur_name_;
 
         // remember this one so that test cases can check it.
         copy(columns, columns + DatabaseAccessor::ADD_COLUMN_COUNT,
              columns_lastadded_);
     }
 
+public:
+    virtual void addRecordToZone(const string (&columns)[ADD_COLUMN_COUNT]) {
+        addRecord(*update_records_, columns);
+    }
+
+    virtual void addNSEC3RecordToZone(
+        const string (&columns)[ADD_NSEC3_COLUMN_COUNT])
+    {
+        // Convert the NSEC3 parameters in the normal (non NSEC3) style so
+        // we can share the merge code, and then update using addRecord().
+        string normal_columns[ADD_COLUMN_COUNT];
+
+        normal_columns[ADD_TYPE] = columns[ADD_NSEC3_TYPE];
+        normal_columns[ADD_TTL] = columns[ADD_NSEC3_TTL];
+        normal_columns[ADD_SIGTYPE] = "";
+        normal_columns[ADD_RDATA] = columns[ADD_NSEC3_RDATA];
+        normal_columns[ADD_NAME] = columns[ADD_NSEC3_HASH];
+
+        addRecord(*update_nsec3_namespace_, normal_columns);
+    }
+
+private:
     // Helper predicate class used in deleteRecordInZone().
     struct deleteMatch {
         deleteMatch(const string& type, const string& rdata) :
@@ -681,17 +778,31 @@ public:
         const string& rdata_;
     };
 
-    virtual void deleteRecordInZone(const string (&params)[DEL_PARAM_COUNT]) {
+    // Common subroutine for deleteRecordinZone and deleteNSEC3RecordInZone.
+    void deleteRecord(Domains& domains,
+                      const string (&params)[DEL_PARAM_COUNT])
+    {
         vector<vector<string> >& records =
-            (*update_records_)[params[DatabaseAccessor::DEL_NAME]];
+            domains[params[DatabaseAccessor::DEL_NAME]];
         records.erase(remove_if(records.begin(), records.end(),
                                 deleteMatch(
                                     params[DatabaseAccessor::DEL_TYPE],
                                     params[DatabaseAccessor::DEL_RDATA])),
                       records.end());
         if (records.empty()) {
-            (*update_records_).erase(params[DatabaseAccessor::DEL_NAME]);
+            domains.erase(params[DatabaseAccessor::DEL_NAME]);
         }
+    }
+
+public:
+    virtual void deleteRecordInZone(const string (&params)[DEL_PARAM_COUNT]) {
+        deleteRecord(*update_records_, params);
+    }
+
+    virtual void deleteNSEC3RecordInZone(
+        const string (&params)[DEL_PARAM_COUNT])
+    {
+        deleteRecord(*update_nsec3_namespace_, params);
     }
 
     //
@@ -746,6 +857,21 @@ public:
         } else {
             isc_throw(isc::Unexpected, "Unknown zone ID");
         }
+    }
+    virtual std::string findPreviousNSEC3Hash(int,
+                                              const std::string& hash) const
+    {
+        // TODO: Provide some broken data, but it is not known yet how broken
+        // they'll have to be.
+        Domains::const_iterator it(nsec3_namespace_->lower_bound(hash));
+        // We got just after the one we want
+        if (it == nsec3_namespace_->begin()) {
+            // Hmm, we got something really small. So we wrap around.
+            // This is one after the last, so after decreasing it we'll get
+            // the biggest.
+            it = nsec3_namespace_->end();
+        }
+        return ((--it)->first);
     }
     virtual void addRecordDiff(int id, uint32_t serial,
                                DiffOperation operation,
@@ -827,6 +953,10 @@ private:
     Domains* readonly_records_;
     Domains update_records_master_;
     Domains* update_records_;
+    Domains nsec3_namespace_master_;
+    Domains* nsec3_namespace_;
+    Domains update_nsec3_namespace_master_;
+    Domains* update_nsec3_namespace_;
     const Domains empty_records_master_;
     const Domains* empty_records_;
 
@@ -890,6 +1020,20 @@ private:
         cur_name_.clear();
     }
 
+    // Works in a similar way to addCurName, but it is added to
+    // the NSEC3 namespace. You don't provide the full name, only
+    // the hash part.
+    void addCurHash(const std::string& hash) {
+        ASSERT_EQ(0, nsec3_namespace_->count(hash));
+        // Append the name to all of them
+        for (std::vector<std::vector<std::string> >::iterator
+             i = cur_name_.begin(); i != cur_name_.end(); ++ i) {
+            i->push_back(hash);
+        }
+        (*nsec3_namespace_)[hash] = cur_name_;
+        cur_name_.clear();
+    }
+
     // Fills the database with zone data.
     // This method constructs a number of resource records (with addRecord),
     // which will all be added for one domain name to the fake database
@@ -912,6 +1056,33 @@ private:
                       TEST_RECORDS[i][3], TEST_RECORDS[i][4]);
         }
         addCurName(prev_name);
+        prev_name = NULL;
+        for (int i = 0; TEST_NSEC3_RECORDS[i][0] != NULL; ++i) {
+            if (prev_name != NULL &&
+                strcmp(prev_name, TEST_NSEC3_RECORDS[i][0]) != 0) {
+                addCurHash(prev_name);
+            }
+            prev_name = TEST_NSEC3_RECORDS[i][0];
+            addRecord(TEST_NSEC3_RECORDS[i][1], TEST_NSEC3_RECORDS[i][2],
+                      TEST_NSEC3_RECORDS[i][3], TEST_NSEC3_RECORDS[i][4]);
+        }
+        addCurHash(prev_name);
+    }
+
+public:
+    // This adds the NSEC3PARAM into the apex, so we can perform some NSEC3
+    // tests. Note that the NSEC3 namespace is available in other tests, but
+    // it should not be accessed at that time.
+    void enableNSEC3() {
+        for (int i = 0; TEST_NSEC3PARAM_RECORDS[i][0] != NULL; ++i) {
+            vector<string> param;
+            param.push_back(TEST_NSEC3PARAM_RECORDS[i][1]); // RRtype
+            param.push_back(TEST_NSEC3PARAM_RECORDS[i][2]); // TTL
+            param.push_back("");                            // sigtype, unused
+            param.push_back(TEST_NSEC3PARAM_RECORDS[i][4]); // RDATA
+            param.push_back(TEST_NSEC3PARAM_RECORDS[i][0]); // owner name
+            (*readonly_records_)[param.back()].push_back(param);
+        }
     }
 };
 
@@ -966,6 +1137,11 @@ public:
                                                "FAKEFAKEFAKE"));
     }
 
+    ~ DatabaseClientTest() {
+        // Make sure we return the default creator no matter if we set it or not
+        setNSEC3HashCreator(NULL);
+    }
+
     /*
      * We initialize the client from a function, so we can call it multiple
      * times per test.
@@ -979,7 +1155,7 @@ public:
         // probably move this to some specialized templated method specific
         // to SQLite3 (or for even a longer term we should add an API to
         // purge the diffs table).
-        const char* const install_cmd = INSTALL_PROG " " TEST_DATA_DIR
+        const char* const install_cmd = INSTALL_PROG " -c " TEST_DATA_COMMONDIR
             "/rwtest.sqlite3 " TEST_DATA_BUILDDIR
             "/rwtest.sqlite3.copied";
         if (system(install_cmd) != 0) {
@@ -1087,7 +1263,7 @@ public:
                     rdata::createRdata(expected_rrset->getType(),
                                        expected_rrset->getClass(),
                                        (*it).data_[Accessor::DIFF_RDATA]));
-                isc::testutils::rrsetCheck(expected_rrset, rrset);
+                rrsetCheck(expected_rrset, rrset);
             }
             // We should have examined all entries of both expected and
             // actual data.
@@ -1126,6 +1302,9 @@ public:
     const std::vector<std::string> empty_rdatas_; // for NXRRSET/NXDOMAIN
     std::vector<std::string> expected_rdatas_;
     std::vector<std::string> expected_sig_rdatas_;
+
+    // A creator for use in several NSEC3 related tests.
+    TestNSEC3HashCreator test_nsec3_hash_creator_;
 };
 
 class TestSQLite3Accessor : public SQLite3Accessor {
@@ -1145,6 +1324,36 @@ public:
 
             addRecordToZone(columns);
         }
+        // We don't add NSEC3s until we are explicitly told we need them
+        // in enableNSEC3(); these would break some non NSEC3 tests.
+        commit();
+    }
+
+    void enableNSEC3() {
+        startUpdateZone("example.org.", false);
+
+        // Add NSECPARAM at the zone origin
+        for (int i = 0; TEST_NSEC3PARAM_RECORDS[i][0] != NULL; ++i) {
+            const string param_columns[ADD_COLUMN_COUNT] = {
+                TEST_NSEC3PARAM_RECORDS[i][0], // name
+                Name(param_columns[ADD_NAME]).reverse().toText(), // revname
+                TEST_NSEC3PARAM_RECORDS[i][2],   // TTL
+                TEST_NSEC3PARAM_RECORDS[i][1],   // RR type
+                TEST_NSEC3PARAM_RECORDS[i][3],   // sigtype
+                TEST_NSEC3PARAM_RECORDS[i][4] }; // RDATA
+            addRecordToZone(param_columns);
+        }
+
+        // Add NSEC3s
+        for (int i = 0; TEST_NSEC3_RECORDS[i][0] != NULL; ++i) {
+            const string nsec3_columns[ADD_NSEC3_COLUMN_COUNT] = {
+                Name(TEST_NSEC3_RECORDS[i][0]).split(0, 1).toText(true),
+                TEST_NSEC3_RECORDS[i][2], // TTL
+                TEST_NSEC3_RECORDS[i][1], // RR type
+                TEST_NSEC3_RECORDS[i][4] }; // RDATA
+            addNSEC3RecordToZone(nsec3_columns);
+        }
+
         commit();
     }
 };
@@ -1253,10 +1462,10 @@ checkRRset(isc::dns::ConstRRsetPtr rrset,
             isc::dns::rdata::createRdata(rrtype, rrclass,
                                          rdatas[i]));
     }
-    isc::testutils::rrsetCheck(expected_rrset, rrset);
+    rrsetCheck(expected_rrset, rrset);
 }
 
-// Iterate through a zone
+// Iterate through a zone, common case
 TYPED_TEST(DatabaseClientTest, iterator) {
     ZoneIteratorPtr it(this->client_->getIterator(Name("example.org")));
     ConstRRsetPtr rrset(it->getNextRRset());
@@ -1264,47 +1473,100 @@ TYPED_TEST(DatabaseClientTest, iterator) {
 
     // The first name should be the zone origin.
     EXPECT_EQ(this->zname_, rrset->getName());
+}
 
-    // The rest of the checks work only for the mock accessor.
-    if (!this->is_mock_) {
-        return;
+// Supplemental structure used in the couple of tests below.  It represents
+// parameters of an expected RRset containing up to two RDATAs.  If it contains
+// only one RDATA, rdata2 is NULL.
+struct ExpectedRRset {
+    const char* const name;
+    const RRType rrtype;
+    const RRTTL rrttl;
+    const char* const rdata1;
+    const char* const rdata2;
+};
+
+// Common checker for the iterator tests below.  It extracts RRsets from the
+// give iterator and compare them to the expected sequence.
+void
+checkIteratorSequence(ZoneIterator& it, ExpectedRRset expected_sequence[],
+                      size_t num_rrsets)
+{
+    vector<string> expected_rdatas;
+    for (size_t i = 0; i < num_rrsets; ++i) {
+        const ConstRRsetPtr rrset = it.getNextRRset();
+        ASSERT_TRUE(rrset);
+
+        expected_rdatas.clear();
+        expected_rdatas.push_back(expected_sequence[i].rdata1);
+        if (expected_sequence[i].rdata2 != NULL) {
+            expected_rdatas.push_back(expected_sequence[i].rdata2);
+        }
+        checkRRset(rrset, Name(expected_sequence[i].name), RRClass::IN(),
+                   expected_sequence[i].rrtype, expected_sequence[i].rrttl,
+                   expected_rdatas);
     }
+    EXPECT_FALSE(it.getNextRRset());
+}
 
-    this->expected_rdatas_.clear();
-    this->expected_rdatas_.push_back("192.0.2.1");
-    checkRRset(rrset, Name("example.org"), this->qclass_, RRType::A(),
-               this->rrttl_, this->expected_rdatas_);
+TEST_F(MockDatabaseClientTest, iterator) {
+    // This version of test creates an iterator that combines same types of
+    // RRs into single RRsets.
+    ExpectedRRset expected_sequence[] = {
+        {"example.org", RRType::A(), rrttl_, "192.0.2.1", NULL},
+        {"example.org", RRType::SOA(), rrttl_,
+         "ns1.example.org. admin.example.org. 1234 3600 1800 2419200 7200",
+         NULL},
+        {"x.example.org", RRType::A(), RRTTL(300), "192.0.2.1", "192.0.2.2"},
+        {"x.example.org", RRType::AAAA(), RRTTL(300),
+         "2001:db8::1", "2001:db8::2"},
+        {"x.example.org", RRType::RRSIG(), RRTTL(300),
+         "A 5 3 3600 20000101000000 20000201000000 12345 example.org. "
+         "FAKEFAKEFAKE", NULL},
+        {"x.example.org", RRType::RRSIG(), RRTTL(300),
+         "AAAA 5 3 3600 20000101000000 20000201000000 12345 example.org. "
+         "FAKEFAKEFAKEFAKE", NULL},
+        {"ttldiff.example.org", RRType::A(), RRTTL(300),
+         "192.0.2.1", "192.0.2.2"},
+        {"ttldiff2.example.org", RRType::AAAA(), RRTTL(300),
+         "2001:db8::1", "2001:db8::2"}
+    };
+    checkIteratorSequence(*client_->getIterator(Name("example.org")),
+                          expected_sequence,
+                          sizeof(expected_sequence) /
+                          sizeof(expected_sequence[0]));
+}
 
-    rrset = it->getNextRRset();
-    this->expected_rdatas_.clear();
-    this->expected_rdatas_.push_back("ns1.example.org. admin.example.org. "
-                                     "1234 3600 1800 2419200 7200");
-    checkRRset(rrset, Name("example.org"), this->qclass_, RRType::SOA(),
-               this->rrttl_, this->expected_rdatas_);
-
-    rrset = it->getNextRRset();
-    this->expected_rdatas_.clear();
-    this->expected_rdatas_.push_back("192.0.2.1");
-    this->expected_rdatas_.push_back("192.0.2.2");
-    checkRRset(rrset, Name("x.example.org"), this->qclass_, RRType::A(),
-               RRTTL(300), this->expected_rdatas_);
-
-    rrset = it->getNextRRset();
-    this->expected_rdatas_.clear();
-    this->expected_rdatas_.push_back("2001:db8::1");
-    this->expected_rdatas_.push_back("2001:db8::2");
-    checkRRset(rrset, Name("x.example.org"), this->qclass_, RRType::AAAA(),
-               RRTTL(300), this->expected_rdatas_);
-
-    rrset = it->getNextRRset();
-    ASSERT_NE(ConstRRsetPtr(), rrset);
-    this->expected_rdatas_.clear();
-    this->expected_rdatas_.push_back("192.0.2.1");
-    this->expected_rdatas_.push_back("192.0.2.2");
-    checkRRset(rrset, Name("ttldiff.example.org"), this->qclass_, RRType::A(),
-               RRTTL(300), this->expected_rdatas_);
-
-    EXPECT_EQ(ConstRRsetPtr(), it->getNextRRset());
+TEST_F(MockDatabaseClientTest, iteratorSeparateRRs) {
+    // This version of test creates an iterator that separates all RRs as
+    // individual RRsets.  In particular, it preserves the TTLs of an RRset
+    // even if they are different.
+    ExpectedRRset expected_sequence[] = {
+        {"example.org", RRType::A(), rrttl_, "192.0.2.1", NULL},
+        {"example.org", RRType::SOA(), rrttl_,
+         "ns1.example.org. admin.example.org. 1234 3600 1800 2419200 7200",
+         NULL},
+        {"x.example.org", RRType::A(), RRTTL(300), "192.0.2.1", NULL},
+        {"x.example.org", RRType::A(), RRTTL(300), "192.0.2.2", NULL},
+        {"x.example.org", RRType::AAAA(), RRTTL(300), "2001:db8::1", NULL},
+        {"x.example.org", RRType::AAAA(), RRTTL(300), "2001:db8::2", NULL},
+        {"x.example.org", RRType::RRSIG(), RRTTL(300),
+         "A 5 3 3600 20000101000000 20000201000000 12345 example.org. "
+         "FAKEFAKEFAKE", NULL},
+        {"x.example.org", RRType::RRSIG(), RRTTL(300),
+         "AAAA 5 3 3600 20000101000000 20000201000000 12345 example.org. "
+         "FAKEFAKEFAKEFAKE", NULL},
+        {"ttldiff.example.org", RRType::A(), RRTTL(300), "192.0.2.1", NULL},
+        {"ttldiff.example.org", RRType::A(), RRTTL(600), "192.0.2.2", NULL},
+        {"ttldiff2.example.org", RRType::AAAA(), RRTTL(600), "2001:db8::1",
+         NULL},
+        {"ttldiff2.example.org", RRType::AAAA(), RRTTL(300), "2001:db8::2",
+         NULL}
+    };
+    checkIteratorSequence(*client_->getIterator(Name("example.org"), true),
+                          expected_sequence,
+                          sizeof(expected_sequence) /
+                          sizeof(expected_sequence[0]));
 }
 
 // This has inconsistent TTL in the set (the rest, like nonsense in
@@ -1336,7 +1598,7 @@ TYPED_TEST(DatabaseClientTest, getSOAFromIterator) {
     }
     ASSERT_TRUE(rrset);
     // It should be identical to the result of getSOA().
-    isc::testutils::rrsetCheck(it->getSOA(), rrset);
+    rrsetCheck(it->getSOA(), rrset);
 }
 
 TYPED_TEST(DatabaseClientTest, noSOAFromIterator) {
@@ -1364,7 +1626,7 @@ TYPED_TEST(DatabaseClientTest, iterateThenUpdate) {
 
         // Confirm at least it doesn't contain any SOA
         EXPECT_EQ(ZoneFinder::NXDOMAIN,
-                  this->getFinder()->find(this->zname_, RRType::SOA()).code);
+                  this->getFinder()->find(this->zname_, RRType::SOA())->code);
     } catch (const DataSourceError&) {}
 
     ConstRRsetPtr rrset;
@@ -1374,7 +1636,7 @@ TYPED_TEST(DatabaseClientTest, iterateThenUpdate) {
     }
     ASSERT_TRUE(rrset);
     // It should be identical to the result of getSOA().
-    isc::testutils::rrsetCheck(it->getSOA(), rrset);
+    rrsetCheck(it->getSOA(), rrset);
 }
 
 TYPED_TEST(DatabaseClientTest, updateThenIterateThenUpdate) {
@@ -1422,31 +1684,33 @@ doFindTest(ZoneFinder& finder,
            const ZoneFinder::FindOptions options = ZoneFinder::FIND_DEFAULT)
 {
     SCOPED_TRACE("doFindTest " + name.toText() + " " + type.toText());
-    const ZoneFinder::FindResult result = finder.find(name, type, options);
-    ASSERT_EQ(expected_result, result.code) << name << " " << type;
+    ConstZoneFinderContextPtr result = finder.find(name, type, options);
+    ASSERT_EQ(expected_result, result->code) << name << " " << type;
     EXPECT_EQ((expected_flags & ZoneFinder::RESULT_WILDCARD) != 0,
-              result.isWildcard());
+              result->isWildcard());
     EXPECT_EQ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED) != 0,
-              result.isNSECSigned());
+              result->isNSECSigned());
     EXPECT_EQ((expected_flags & ZoneFinder::RESULT_NSEC3_SIGNED) != 0,
-              result.isNSEC3Signed());
-    if (!expected_rdatas.empty() && result.rrset) {
-        checkRRset(result.rrset, expected_name != Name(".") ? expected_name :
+              result->isNSEC3Signed());
+    if (!expected_rdatas.empty() && result->rrset) {
+        checkRRset(result->rrset, expected_name != Name(".") ? expected_name :
                    name, finder.getClass(), expected_type, expected_ttl,
                    expected_rdatas);
 
-        if (!expected_sig_rdatas.empty() && result.rrset->getRRsig()) {
-            checkRRset(result.rrset->getRRsig(), expected_name != Name(".") ?
+        if (!expected_sig_rdatas.empty() && result->rrset->getRRsig()) {
+            checkRRset(result->rrset->getRRsig(), expected_name != Name(".") ?
                        expected_name : name, finder.getClass(),
                        isc::dns::RRType::RRSIG(), expected_ttl,
                        expected_sig_rdatas);
         } else if (expected_sig_rdatas.empty()) {
-            EXPECT_EQ(isc::dns::RRsetPtr(), result.rrset->getRRsig());
+            EXPECT_EQ(isc::dns::RRsetPtr(), result->rrset->getRRsig()) <<
+                "Unexpected RRSIG: " << result->rrset->getRRsig()->toText();
         } else {
             ADD_FAILURE() << "Missing RRSIG";
         }
     } else if (expected_rdatas.empty()) {
-        EXPECT_EQ(isc::dns::RRsetPtr(), result.rrset);
+        EXPECT_EQ(isc::dns::RRsetPtr(), result->rrset) <<
+            "Unexpected RRset: " << result->rrset->toText();
     } else {
         ADD_FAILURE() << "Missing result";
     }
@@ -1460,15 +1724,26 @@ doFindAllTestResult(ZoneFinder& finder, const isc::dns::Name& name,
                     const isc::dns::Name& expected_name =
                     isc::dns::Name::ROOT_NAME(),
                     const ZoneFinder::FindOptions options =
-                    ZoneFinder::FIND_DEFAULT)
+                    ZoneFinder::FIND_DEFAULT,
+                    ZoneFinder::FindResultFlags expected_flags =
+                                          ZoneFinder::RESULT_DEFAULT)
 {
     SCOPED_TRACE("All test for " + name.toText());
     std::vector<ConstRRsetPtr> target;
-    ZoneFinder::FindResult result(finder.findAll(name, target, options));
+    ConstZoneFinderContextPtr result(finder.findAll(name, target, options));
     EXPECT_TRUE(target.empty());
-    EXPECT_EQ(expected_result, result.code);
-    EXPECT_EQ(expected_type, result.rrset->getType());
-    RdataIteratorPtr it(result.rrset->getRdataIterator());
+    EXPECT_EQ(expected_result, result->code);
+    EXPECT_EQ(expected_type, result->rrset->getType());
+    if (expected_flags != ZoneFinder::RESULT_DEFAULT){
+        EXPECT_EQ((expected_flags & ZoneFinder::RESULT_WILDCARD) != 0,
+                  result->isWildcard());
+        EXPECT_EQ((expected_flags & ZoneFinder::RESULT_NSEC_SIGNED) != 0,
+                  result->isNSECSigned());
+        EXPECT_EQ((expected_flags & ZoneFinder::RESULT_NSEC3_SIGNED) != 0,
+                  result->isNSEC3Signed());
+
+    }
+    RdataIteratorPtr it(result->rrset->getRdataIterator());
     std::vector<std::string> rdata;
     while (!it->isLast()) {
         rdata.push_back(it->getCurrent().toText());
@@ -1482,7 +1757,7 @@ doFindAllTestResult(ZoneFinder& finder, const isc::dns::Name& name,
     }
     EXPECT_TRUE(expected_rdata == rdata);
     EXPECT_EQ(expected_name == isc::dns::Name::ROOT_NAME() ? name :
-              expected_name, result.rrset->getName());
+              expected_name, result->rrset->getName());
 }
 
 // When asking for an RRset where RRs somehow have different TTLs, it should 
@@ -1779,38 +2054,30 @@ TYPED_TEST(DatabaseClientTest, find) {
 }
 
 TYPED_TEST(DatabaseClientTest, findOutOfZone) {
-    // If the query name is out-of-zone it should result in NXDOMAIN
+    // If the query name is out-of-zone it should result in an exception
     boost::shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
     vector<ConstRRsetPtr> target;
 
     // Superdomain
-    doFindTest(*finder, Name("org"), this->qtype_, this->qtype_,
-               this->rrttl_, ZoneFinder::NXDOMAIN,
-               this->empty_rdatas_, this->empty_rdatas_);
-    EXPECT_EQ(ZoneFinder::NXDOMAIN, finder->findAll(Name("org"), target).code);
+    EXPECT_THROW(finder->find(Name("org"), this->qtype_), OutOfZone);
+    EXPECT_THROW(finder->findAll(Name("org"), target), OutOfZone);
+
     // sharing a common ancestor
-    doFindTest(*finder, Name("noexample.org"), this->qtype_, this->qtype_,
-               this->rrttl_, ZoneFinder::NXDOMAIN,
-               this->empty_rdatas_, this->empty_rdatas_);
-    EXPECT_EQ(ZoneFinder::NXDOMAIN, finder->findAll(Name("noexample.org"),
-                                                    target).code);
+    EXPECT_THROW(finder->find(Name("noexample.org"), this->qtype_), OutOfZone);
+    EXPECT_THROW(finder->findAll(Name("noexample.org"), target), OutOfZone);
+
     // totally unrelated domain, smaller number of labels
-    doFindTest(*finder, Name("com"), this->qtype_, this->qtype_,
-               this->rrttl_, ZoneFinder::NXDOMAIN,
-               this->empty_rdatas_, this->empty_rdatas_);
-    EXPECT_EQ(ZoneFinder::NXDOMAIN, finder->findAll(Name("com"), target).code);
+    EXPECT_THROW(finder->find(Name("com"), this->qtype_), OutOfZone);
+    EXPECT_THROW(finder->findAll(Name("com"), target), OutOfZone);
+
     // totally unrelated domain, same number of labels
-    doFindTest(*finder, Name("example.com"), this->qtype_, this->qtype_,
-               this->rrttl_, ZoneFinder::NXDOMAIN,
-               this->empty_rdatas_, this->empty_rdatas_);
-    EXPECT_EQ(ZoneFinder::NXDOMAIN, finder->findAll(Name("example.com"),
-                                                    target).code);
+    EXPECT_THROW(finder->find(Name("example.com"), this->qtype_), OutOfZone);
+    EXPECT_THROW(finder->findAll(Name("example.com"), target), OutOfZone);
+
     // totally unrelated domain, larger number of labels
-    doFindTest(*finder, Name("more.example.com"), this->qtype_, this->qtype_,
-               this->rrttl_, ZoneFinder::NXDOMAIN,
-               this->empty_rdatas_, this->empty_rdatas_);
-    EXPECT_EQ(ZoneFinder::NXDOMAIN, finder->findAll(Name("more.example.com"),
-                                                    target).code);
+    EXPECT_THROW(finder->find(Name("more.example.com"), this->qtype_),
+                 OutOfZone);
+    EXPECT_THROW(finder->findAll(Name("more.example.com"), target), OutOfZone);
 }
 
 TYPED_TEST(DatabaseClientTest, findDelegation) {
@@ -2281,10 +2548,169 @@ TYPED_TEST(DatabaseClientTest, wildcardNXRRSET_NSEC) {
                Name("*.wild.example.org"), ZoneFinder::FIND_DNSSEC);
 }
 
+// Subroutine for dnssecFlagCheck defined below.  It performs some simple
+// checks regarding DNSSEC related result flags for findAll().
+void
+dnssecFlagCheckForAny(ZoneFinder& finder, const Name& name,
+                      ZoneFinder::FindResultFlags sec_flag)
+{
+    std::vector<ConstRRsetPtr> target; // just for placeholder
+    ConstZoneFinderContextPtr all_result =
+        finder.findAll(name, target, ZoneFinder::FIND_DNSSEC);
+    EXPECT_EQ((sec_flag & ZoneFinder::RESULT_NSEC_SIGNED) != 0,
+              all_result->isNSECSigned());
+    EXPECT_EQ((sec_flag & ZoneFinder::RESULT_NSEC3_SIGNED) != 0,
+              all_result->isNSEC3Signed());
+}
+
+// Common tests about DNSSEC related result flags.  Shared for the NSEC
+// and NSEC3 cases.
+void
+dnssecFlagCheck(ZoneFinder& finder, ZoneFinder::FindResultFlags sec_flag) {
+    std::vector<std::string> expected_rdatas;
+    std::vector<std::string> expected_sig_rdatas;
+
+    // Check NXDOMAIN case in NSEC signed zone, and RESULT_NSEC_SIGNED flag
+    // should be returned to upper layer caller.
+    if ((sec_flag & ZoneFinder::RESULT_NSEC_SIGNED) != 0) {
+        expected_rdatas.push_back("www2.example.org. A AAAA NSEC RRSIG");
+        expected_sig_rdatas.push_back("NSEC 5 3 3600 20000101000000 "
+                                      "20000201000000 12345 example.org. "
+                                      "FAKEFAKEFAKE");
+    }
+    doFindTest(finder, Name("www1.example.org"), RRType::A(), RRType::NSEC(),
+               RRTTL(3600), ZoneFinder::NXDOMAIN, expected_rdatas,
+               expected_sig_rdatas, sec_flag, Name("www.example.org."),
+               ZoneFinder::FIND_DNSSEC);
+    dnssecFlagCheckForAny(finder, Name("www1.example.org"), sec_flag);
+
+    // Check NXRRSET case in NSEC signed zone, and RESULT_NSEC_SIGNED flag
+    // should be return.
+    // No "findAll" test case for this because NXRRSET shouldn't happen for it.
+    expected_rdatas.clear();
+    expected_sig_rdatas.clear();
+    if ((sec_flag & ZoneFinder::RESULT_NSEC_SIGNED) != 0) {
+        expected_rdatas.push_back("www2.example.org. A AAAA NSEC RRSIG");
+        expected_sig_rdatas.push_back("NSEC 5 3 3600 20000101000000 "
+                                      "20000201000000 12345 example.org. "
+                                      "FAKEFAKEFAKE");
+    }
+    doFindTest(finder, Name("www.example.org."), RRType::TXT(), RRType::NSEC(),
+               RRTTL(3600), ZoneFinder::NXRRSET, expected_rdatas,
+               expected_sig_rdatas, sec_flag, Name::ROOT_NAME(),
+               ZoneFinder::FIND_DNSSEC);
+
+    // Empty name, should result in NXRRSET (in this test setup the NSEC
+    // doesn't have RRSIG).
+    expected_rdatas.clear();
+    expected_sig_rdatas.clear();
+    if ((sec_flag & ZoneFinder::RESULT_NSEC_SIGNED) != 0) {
+        expected_rdatas.push_back("empty.nonterminal.example.org. NSEC");
+    }
+    doFindTest(finder, Name("nonterminal.example.org."), RRType::A(),
+               RRType::NSEC(), RRTTL(3600), ZoneFinder::NXRRSET,
+               expected_rdatas,expected_sig_rdatas, sec_flag,
+               Name("l.example.org."), ZoneFinder::FIND_DNSSEC);
+    dnssecFlagCheckForAny(finder, Name("nonterminal.example.org"), sec_flag);
+
+    // Wildcard match
+    expected_rdatas.clear();
+    expected_sig_rdatas.clear();
+    expected_rdatas.push_back("192.0.2.5");
+    expected_sig_rdatas.push_back("A 5 3 3600 20000101000000 "
+                                  "20000201000000 12345 example.org. "
+                                  "FAKEFAKEFAKE");
+    doFindTest(finder, Name("b.a.wild.example.org"), RRType::A(),
+               RRType::A(), RRTTL(3600), ZoneFinder::SUCCESS, expected_rdatas,
+               expected_sig_rdatas, (ZoneFinder::RESULT_WILDCARD | sec_flag),
+               Name("b.a.wild.example.org"), ZoneFinder::FIND_DNSSEC);
+    dnssecFlagCheckForAny(finder, Name("b.a.wild.example.org"), sec_flag);
+
+    // Wildcard + NXRRSET (no "findAll" test for this case)
+    expected_rdatas.clear();
+    expected_sig_rdatas.clear();
+    if ((sec_flag & ZoneFinder::RESULT_NSEC_SIGNED) != 0) {
+        expected_rdatas.push_back("cancel.here.wild.example.org. "
+                                  "A NSEC RRSIG");
+        expected_sig_rdatas.push_back("NSEC 5 3 3600 20000101000000 "
+                                      "20000201000000 12345 example.org. "
+                                      "FAKEFAKEFAKE");
+    }
+    doFindTest(finder, Name("b.a.wild.example.org"),
+               RRType::TXT(), RRType::NSEC(), RRTTL(3600), ZoneFinder::NXRRSET,
+               expected_rdatas, expected_sig_rdatas,
+               (ZoneFinder::RESULT_WILDCARD | sec_flag),
+               Name("*.wild.example.org"), ZoneFinder::FIND_DNSSEC);
+
+    // Empty wildcard (this NSEC doesn't have RRSIG in our test data)
+    expected_rdatas.clear();
+    expected_sig_rdatas.clear();
+    if ((sec_flag & ZoneFinder::RESULT_NSEC_SIGNED) != 0) {
+        expected_rdatas.push_back("wild.*.foo.*.bar.example.org. NSEC");
+    }
+    doFindTest(finder, Name("foo.wild.bar.example.org"),
+               RRType::TXT(), RRType::NSEC(), RRTTL(3600), ZoneFinder::NXRRSET,
+               expected_rdatas, expected_sig_rdatas,
+               (ZoneFinder::RESULT_WILDCARD | sec_flag),
+               Name("bao.example.org"), ZoneFinder::FIND_DNSSEC);
+    dnssecFlagCheckForAny(finder, Name("foo.wild.bar.example.org"), sec_flag);
+}
+
+TYPED_TEST(DatabaseClientTest, dnssecResultFlags) {
+    // ZoneFinder::find() for negative cases and wildcard cases should check
+    // whether the zone is signed with NSEC or NSEC3.
+
+    // In the default test setup, the zone should be considered NSEC-signed
+    // (the apex node has an NSEC RR).
+    {
+        SCOPED_TRACE("NSEC only");
+        dnssecFlagCheck(*this->getFinder(), ZoneFinder::RESULT_NSEC_SIGNED);
+    }
+
+    // Then add an NSEC3PARAM RRset at the apex (it may look weird if the
+    // zone only has NSEC3PARM RRset (but no NSEC3s), but it is okay for the
+    // purpose of this test).  The zone should now be considered NSEC3-signed.
+    // Note that the apex NSEC still exists; NSEC3 should override NSEC.
+    this->updater_ = this->client_->getUpdater(this->zname_, false);
+    this->rrset_.reset(new RRset(this->zname_, this->qclass_,
+                                 RRType::NSEC3PARAM(), this->rrttl_));
+    this->rrset_->addRdata(rdata::createRdata(this->rrset_->getType(),
+                                              this->rrset_->getClass(),
+                                              "1 0 12 aabbccdd"));
+    this->updater_->addRRset(*this->rrset_);
+    {
+        SCOPED_TRACE("NSEC and NSEC3");
+        dnssecFlagCheck(this->updater_->getFinder(),
+                        ZoneFinder::RESULT_NSEC3_SIGNED);
+    }
+
+    // Next, delete the apex NSEC.  Since NSEC3PARAM remains, the zone should
+    // still be considered NSEC3-signed.
+    RRsetPtr nsec_rrset(new RRset(this->zname_, this->qclass_, RRType::NSEC(),
+                                  this->rrttl_));
+    nsec_rrset->addRdata(rdata::createRdata(RRType::NSEC(), this->qclass_,
+                                            "acnamesig1.example.org. NS A "
+                                            "NSEC RRSIG"));
+    this->updater_->deleteRRset(*nsec_rrset);
+    {
+        SCOPED_TRACE("NSEC3 only");
+        dnssecFlagCheck(this->updater_->getFinder(),
+                        ZoneFinder::RESULT_NSEC3_SIGNED);
+    }
+
+    // Finally, delete the NSEC3PARAM we just added above.  The zone should
+    // then be considered unsigned.
+    this->updater_->deleteRRset(*this->rrset_);
+    {
+        SCOPED_TRACE("unsigned");
+        dnssecFlagCheck(this->updater_->getFinder(),
+                        ZoneFinder::RESULT_DEFAULT);
+    }
+}
+
 TYPED_TEST(DatabaseClientTest, NXDOMAIN_NSEC) {
     // The domain doesn't exist, so we must get the right NSEC
     boost::shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
-
     this->expected_rdatas_.push_back("www2.example.org. A AAAA NSEC RRSIG");
     this->expected_sig_rdatas_.push_back("NSEC 5 3 3600 20000101000000 "
                                          "20000201000000 12345 example.org. "
@@ -2311,14 +2737,13 @@ TYPED_TEST(DatabaseClientTest, NXDOMAIN_NSEC) {
     if (!this->is_mock_) {
         return; // We don't make the real DB to throw
     }
-    EXPECT_NO_THROW(doFindTest(*finder,
-                               isc::dns::Name("notimplnsec.example.org."),
-                               isc::dns::RRType::TXT(),
-                               isc::dns::RRType::NSEC(), this->rrttl_,
-                               ZoneFinder::NXDOMAIN, this->empty_rdatas_,
-                               this->empty_rdatas_,
-                               ZoneFinder::RESULT_DEFAULT,
-                               Name::ROOT_NAME(), ZoneFinder::FIND_DNSSEC));
+    // In this case the accessor doesn't support findPreviousName(), but the
+    // zone apex has NSEC, and the zone itself is considered NSEC-signed.
+    doFindTest(*finder, Name("notimplnsec.example.org."),
+               RRType::TXT(), RRType::NSEC(), this->rrttl_,
+               ZoneFinder::NXDOMAIN, this->empty_rdatas_,
+               this->empty_rdatas_, ZoneFinder::RESULT_NSEC_SIGNED,
+               Name::ROOT_NAME(), ZoneFinder::FIND_DNSSEC);
 }
 
 TYPED_TEST(DatabaseClientTest, emptyNonterminalNSEC) {
@@ -2338,14 +2763,12 @@ TYPED_TEST(DatabaseClientTest, emptyNonterminalNSEC) {
     if (!this->is_mock_) {
         return; // We don't make the real DB to throw
     }
-    EXPECT_NO_THROW(doFindTest(*finder,
-                               isc::dns::Name("here.wild.example.org."),
-                               isc::dns::RRType::TXT(),
-                               isc::dns::RRType::NSEC(),
-                               this->rrttl_, ZoneFinder::NXRRSET,
-                               this->empty_rdatas_, this->empty_rdatas_,
-                               ZoneFinder::RESULT_DEFAULT,
-                               Name::ROOT_NAME(), ZoneFinder::FIND_DNSSEC));
+    // See the corresponding case of NXDOMAIN_NSEC.
+    doFindTest(*finder, Name("here.wild.example.org."),
+               RRType::TXT(), RRType::NSEC(), this->rrttl_,
+               ZoneFinder::NXRRSET, this->empty_rdatas_,
+               this->empty_rdatas_, ZoneFinder::RESULT_NSEC_SIGNED,
+               Name::ROOT_NAME(), ZoneFinder::FIND_DNSSEC);
 }
 
 TYPED_TEST(DatabaseClientTest, anyFromFind) {
@@ -2363,11 +2786,11 @@ TYPED_TEST(DatabaseClientTest, getAll) {
     std::vector<ConstRRsetPtr> target;
     EXPECT_EQ(ZoneFinder::NXDOMAIN,
               finder->findAll(isc::dns::Name("nothere.example.org."),
-                              target).code);
+                              target)->code);
     EXPECT_TRUE(target.empty());
     EXPECT_EQ(ZoneFinder::NXRRSET,
               finder->findAll(isc::dns::Name("here.wild.example.org."),
-                              target).code);
+                              target)->code);
     this->expected_rdatas_.push_back("ns.delegation.example.org.");
     this->expected_rdatas_.push_back("ns.example.com.");
     doFindAllTestResult(*finder, isc::dns::Name("xx.delegation.example.org."),
@@ -2388,7 +2811,7 @@ TYPED_TEST(DatabaseClientTest, getAll) {
     // It should get the data on success
     EXPECT_EQ(ZoneFinder::SUCCESS,
               finder->findAll(isc::dns::Name("www2.example.org."),
-                              target).code);
+                              target)->code);
     ASSERT_EQ(2, target.size());
     size_t a_idx(target[1]->getType() == RRType::A());
     EXPECT_EQ(RRType::A(), target[a_idx]->getType());
@@ -2412,13 +2835,13 @@ TYPED_TEST(DatabaseClientTest, getAll) {
 
     // And on wildcard. Check the signatures as well.
     target.clear();
-    const ZoneFinder::FindResult result =
+    ConstZoneFinderContextPtr result =
         finder->findAll(Name("a.wild.example.org"), target,
                         ZoneFinder::FIND_DNSSEC);
-    EXPECT_EQ(ZoneFinder::SUCCESS, result.code);
-    EXPECT_TRUE(result.isWildcard());
-    EXPECT_TRUE(result.isNSECSigned());
-    EXPECT_FALSE(result.isNSEC3Signed());
+    EXPECT_EQ(ZoneFinder::SUCCESS, result->code);
+    EXPECT_TRUE(result->isWildcard());
+    EXPECT_TRUE(result->isNSECSigned());
+    EXPECT_FALSE(result->isNSEC3Signed());
     ASSERT_EQ(2, target.size());
     a_idx = target[1]->getType() == RRType::A();
     EXPECT_EQ(RRType::A(), target[a_idx]->getType());
@@ -2496,22 +2919,22 @@ TYPED_TEST(DatabaseClientTest, flushZone) {
 
     // Before update, the name exists.
     EXPECT_EQ(ZoneFinder::SUCCESS, finder->find(this->qname_,
-                                                this->qtype_).code);
+                                                this->qtype_)->code);
 
     // start update in the replace mode.  the normal finder should still
     // be able to see the record, but the updater's finder shouldn't.
     this->updater_ = this->client_->getUpdater(this->zname_, true);
     this->setUpdateAccessor();
     EXPECT_EQ(ZoneFinder::SUCCESS,
-              finder->find(this->qname_, this->qtype_).code);
+              finder->find(this->qname_, this->qtype_)->code);
     EXPECT_EQ(ZoneFinder::NXDOMAIN,
               this->updater_->getFinder().find(this->qname_,
-                                               this->qtype_).code);
+                                               this->qtype_)->code);
 
     // commit the update.  now the normal finder shouldn't see it.
     this->updater_->commit();
     EXPECT_EQ(ZoneFinder::NXDOMAIN, finder->find(this->qname_,
-                                                 this->qtype_).code);
+                                                 this->qtype_)->code);
 
     // Check rollback wasn't accidentally performed.
     EXPECT_FALSE(this->isRollbacked());
@@ -2522,13 +2945,13 @@ TYPED_TEST(DatabaseClientTest, updateCancel) {
 
     ZoneFinderPtr finder = this->client_->findZone(this->zname_).zone_finder;
     EXPECT_EQ(ZoneFinder::SUCCESS, finder->find(this->qname_,
-                                                this->qtype_).code);
+                                                this->qtype_)->code);
 
     this->updater_ = this->client_->getUpdater(this->zname_, true);
     this->setUpdateAccessor();
     EXPECT_EQ(ZoneFinder::NXDOMAIN,
               this->updater_->getFinder().find(this->qname_,
-                                               this->qtype_).code);
+                                               this->qtype_)->code);
     // DB should not have been rolled back yet.
     EXPECT_FALSE(this->isRollbacked());
     this->updater_.reset();            // destruct without commit
@@ -2538,7 +2961,7 @@ TYPED_TEST(DatabaseClientTest, updateCancel) {
     // isRollbacked())
     EXPECT_TRUE(this->isRollbacked(true));
     EXPECT_EQ(ZoneFinder::SUCCESS, finder->find(this->qname_,
-                                                this->qtype_).code);
+                                                this->qtype_)->code);
 }
 
 TYPED_TEST(DatabaseClientTest, exceptionFromRollback) {
@@ -2607,6 +3030,96 @@ TYPED_TEST(DatabaseClientTest, addRRsetToNewZone) {
         "www.example.org.", "org.example.www.", "3600", "A", "", "192.0.2.2"
     };
     this->checkLastAdded(rrset_added);
+}
+
+//
+// Below we define a set of NSEC3 update tests.
+//
+// Commonly used data for NSEC3 update tests below.
+const char* const nsec3_hash = "1BB7SO0452U1QHL98UISNDD9218GELR5";
+const char* const nsec3_rdata = "1 1 12 AABBCCDD "
+    "2T7B4G4VSA5SMI47K61MV5BV1A22BOJR NS SOA RRSIG NSEC3PARAM";
+const char* const nsec3_rdata2 = "1 1 12 AABBCCDD "
+    "2T7B4G4VSA5SMI47K61MV5BV1A22BOJR NS SOA RRSIG"; // differ in bitmaps
+const char* const nsec3_sig_rdata = "NSEC3 5 3 3600 20000101000000 "
+    "20000201000000 12345 example.org. FAKEFAKEFAKE";
+const char* const nsec3_sig_rdata2 = "NSEC3 5 3 3600 20000101000000 "
+    "20000201000000 12345 example.org. FAKEFAKE"; // differ in the signature
+
+// Commonly used subroutine that checks if we can get the expected record.
+// According to the API, implementations can skip filling in columns other
+// than those explicitly checked below, so we don't check them.
+void
+nsec3Check(const vector<ConstRRsetPtr>& expected_rrsets,
+           const Name& zone_name, const string& expected_hash,
+           DatabaseAccessor& accessor)
+{
+    const int zone_id = accessor.getZone(zone_name.toText()).second;
+    DatabaseAccessor::IteratorContextPtr itctx =
+        accessor.getNSEC3Records(expected_hash, zone_id);
+    ASSERT_TRUE(itctx);
+
+    // Build a list of matched RRsets and compare the both expected and built
+    // ones as sets.
+    string columns[DatabaseAccessor::COLUMN_COUNT];
+    vector<ConstRRsetPtr> actual_rrsets;
+    while (itctx->getNext(columns)) {
+        actual_rrsets.push_back(
+            textToRRset(expected_hash + "." + zone_name.toText() + " " +
+                        columns[DatabaseAccessor::TTL_COLUMN] + " IN " +
+                        columns[DatabaseAccessor::TYPE_COLUMN] + " " +
+                        columns[DatabaseAccessor::RDATA_COLUMN]));
+    }
+    rrsetsCheck(expected_rrsets.begin(), expected_rrsets.end(),
+                actual_rrsets.begin(), actual_rrsets.end());
+}
+
+TYPED_TEST(DatabaseClientTest, addDeleteNSEC3InZone) {
+    // Add one NSEC3 RR to the zone, delete it, and add another one.
+    this->updater_ = this->client_->getUpdater(this->zname_, true);
+    const ConstRRsetPtr nsec3_rrset =
+        textToRRset(string(nsec3_hash) + ".example.org. 3600 IN NSEC3 " +
+                    string(nsec3_rdata));
+    const ConstRRsetPtr nsec3_rrset2 =
+        textToRRset(string(nsec3_hash) + ".example.org. 3600 IN NSEC3 " +
+                    string(nsec3_rdata2));
+    this->updater_->addRRset(*nsec3_rrset);
+    this->updater_->deleteRRset(*nsec3_rrset);
+    this->updater_->addRRset(*nsec3_rrset2);
+    this->updater_->commit();
+
+    // Check if we can get the expected record.
+    vector<ConstRRsetPtr> expected_rrsets;
+    expected_rrsets.push_back(nsec3_rrset2);
+    nsec3Check(expected_rrsets, this->zname_, nsec3_hash,
+               *this->current_accessor_);
+}
+
+TYPED_TEST(DatabaseClientTest, addDeleteNSEC3AndRRSIGToZone) {
+    // Add one NSEC3 RR and its RRSIG to the zone, delete the RRSIG and add
+    // a new one.
+    this->updater_ = this->client_->getUpdater(this->zname_, true);
+    const ConstRRsetPtr nsec3_rrset =
+        textToRRset(string(nsec3_hash) + ".example.org. 3600 IN NSEC3 " +
+                    string(nsec3_rdata));
+    const ConstRRsetPtr nsec3_sig_rrset =
+        textToRRset(string(nsec3_hash) + ".example.org. 3600 IN RRSIG " +
+                    string(nsec3_sig_rdata));
+    const ConstRRsetPtr nsec3_sig_rrset2 =
+        textToRRset(string(nsec3_hash) + ".example.org. 3600 IN RRSIG " +
+                    string(nsec3_sig_rdata2));
+    this->updater_->addRRset(*nsec3_rrset);
+    this->updater_->addRRset(*nsec3_sig_rrset);
+    this->updater_->deleteRRset(*nsec3_sig_rrset);
+    this->updater_->addRRset(*nsec3_sig_rrset2);
+    this->updater_->commit();
+
+    // Check if we can get the expected record.
+    vector<ConstRRsetPtr> expected_rrsets;
+    expected_rrsets.push_back(nsec3_rrset);
+    expected_rrsets.push_back(nsec3_sig_rrset2);
+    nsec3Check(expected_rrsets, this->zname_, nsec3_hash,
+               *this->current_accessor_);
 }
 
 TYPED_TEST(DatabaseClientTest, addRRsetToCurrentZone) {
@@ -2738,14 +3251,13 @@ TYPED_TEST(DatabaseClientTest, addDeviantRR) {
     this->expected_rdatas_.clear();
     this->expected_rdatas_.push_back("192.0.2.100");
     {
-        // Note: find() rejects out-of-zone query name with NXDOMAIN
+        // Note: find() rejects out-of-zone query name with an exception
         // regardless of whether adding the RR succeeded, so this check
         // actually doesn't confirm it.
         SCOPED_TRACE("add out-of-zone RR");
-        doFindTest(this->updater_->getFinder(), Name("example.com"),
-                   this->qtype_, this->qtype_, this->rrttl_,
-                   ZoneFinder::NXDOMAIN, this->empty_rdatas_,
-                   this->empty_rdatas_);
+        EXPECT_THROW(this->updater_->getFinder().find(Name("example.com"),
+                                                      this->qtype_),
+                     OutOfZone);
     }
 }
 
@@ -3156,6 +3668,49 @@ TYPED_TEST(DatabaseClientTest, journal) {
     this->checkJournal(expected);
 }
 
+TYPED_TEST(DatabaseClientTest, journalForNSEC3) {
+    // Similar to the previous test, but adding/deleting NSEC3 RRs, just to
+    // confirm that NSEC3 is not special for managing diffs.
+    const ConstRRsetPtr nsec3_rrset =
+        textToRRset(string(nsec3_hash) + ".example.org. 3600 IN NSEC3 " +
+                    string(nsec3_rdata));
+
+    this->updater_ = this->client_->getUpdater(this->zname_, false, true);
+    this->updater_->deleteRRset(*this->soa_);
+    this->updater_->deleteRRset(*nsec3_rrset);
+
+    this->soa_.reset(new RRset(this->zname_, this->qclass_, RRType::SOA(),
+                               this->rrttl_));
+    this->soa_->addRdata(rdata::createRdata(this->soa_->getType(),
+                                            this->soa_->getClass(),
+                                            "ns1.example.org. "
+                                            "admin.example.org. "
+                                            "1235 3600 1800 2419200 7200"));
+    this->updater_->addRRset(*this->soa_);
+    this->updater_->addRRset(*nsec3_rrset);
+    this->updater_->commit();
+    std::vector<JournalEntry> expected;
+    expected.push_back(JournalEntry(WRITABLE_ZONE_ID, 1234,
+                                    DatabaseAccessor::DIFF_DELETE,
+                                    "example.org.", "SOA", "3600",
+                                    "ns1.example.org. admin.example.org. "
+                                    "1234 3600 1800 2419200 7200"));
+    expected.push_back(JournalEntry(WRITABLE_ZONE_ID, 1234,
+                                    DatabaseAccessor::DIFF_DELETE,
+                                    string(nsec3_hash) + ".example.org.",
+                                    "NSEC3", "3600", nsec3_rdata));
+    expected.push_back(JournalEntry(WRITABLE_ZONE_ID, 1235,
+                                    DatabaseAccessor::DIFF_ADD,
+                                    "example.org.", "SOA", "3600",
+                                    "ns1.example.org. admin.example.org. "
+                                    "1235 3600 1800 2419200 7200"));
+    expected.push_back(JournalEntry(WRITABLE_ZONE_ID, 1235,
+                                    DatabaseAccessor::DIFF_ADD,
+                                    string(nsec3_hash) + ".example.org.",
+                                    "NSEC3", "3600", nsec3_rdata));
+    this->checkJournal(expected);
+}
+
 /*
  * Push multiple delete-add sequences. Checks it is allowed and all is
  * saved.
@@ -3337,10 +3892,10 @@ TYPED_TEST(DatabaseClientTest, journalReader) {
     ASSERT_TRUE(jnl_reader);
     ConstRRsetPtr rrset = jnl_reader->getNextDiff();
     ASSERT_TRUE(rrset);
-    isc::testutils::rrsetCheck(this->soa_, rrset);
+    rrsetCheck(this->soa_, rrset);
     rrset = jnl_reader->getNextDiff();
     ASSERT_TRUE(rrset);
-    isc::testutils::rrsetCheck(soa_end, rrset);
+    rrsetCheck(soa_end, rrset);
     rrset = jnl_reader->getNextDiff();
     ASSERT_FALSE(rrset);
 
@@ -3384,7 +3939,7 @@ TYPED_TEST(DatabaseClientTest, readLargeJournal) {
     ConstRRsetPtr actual;
     int i = 0;
     while ((actual = jnl_reader->getNextDiff()) != NULL) {
-        isc::testutils::rrsetCheck(expected.at(i++), actual);
+        rrsetCheck(expected.at(i++), actual);
     }
     EXPECT_EQ(expected.size(), i); // we should have eaten all expected data
 }
@@ -3447,6 +4002,27 @@ TEST_F(MockDatabaseClientTest, journalWithBadData) {
                  second->getNextDiff(), DataSourceError);
     EXPECT_THROW(this->client_->getJournalReader(this->zname_, 7, 8).
                  second->getNextDiff(), DataSourceError);
+}
+
+/// Let us test a little bit of NSEC3.
+TYPED_TEST(DatabaseClientTest, findNSEC3) {
+    // Set up the faked hash calculator.
+    setNSEC3HashCreator(&this->test_nsec3_hash_creator_);
+
+    const DataSourceClient::FindResult
+        zone(this->client_->findZone(Name("example.org")));
+    ASSERT_EQ(result::SUCCESS, zone.code);
+    boost::shared_ptr<DatabaseClient::Finder> finder(
+        dynamic_pointer_cast<DatabaseClient::Finder>(zone.zone_finder));
+
+    // It'll complain if there is no NSEC3PARAM yet
+    EXPECT_THROW(finder->findNSEC3(Name("example.org"), false),
+                 DataSourceError);
+    // And enable NSEC3 in the zone.
+    this->current_accessor_->enableNSEC3();
+
+    // The rest is in the function, it is shared with in-memory tests
+    performNSEC3Test(*finder);
 }
 
 }

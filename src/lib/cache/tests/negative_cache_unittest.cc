@@ -52,14 +52,17 @@ TEST_F(NegativeCacheTest, testNXDOMAIN){
     msg_nxdomain.makeResponse();
 
     Name non_exist_qname("nonexist.example.com.");
-    EXPECT_TRUE(cache->lookup(non_exist_qname, RRType::A(), RRClass::IN(), msg_nxdomain));
+    EXPECT_TRUE(cache->lookup(non_exist_qname, RRType::A(), RRClass::IN(),
+                msg_nxdomain));
 
     RRsetIterator iter = msg_nxdomain.beginSection(Message::SECTION_AUTHORITY);
     RRsetPtr rrset_ptr = *iter;
 
     // The TTL should equal to the TTL of SOA record
     const RRTTL& nxdomain_ttl1 = rrset_ptr->getTTL();
-    EXPECT_EQ(nxdomain_ttl1.getValue(), 86400);
+    // May have already crossed seconds boundary
+    EXPECT_GE(nxdomain_ttl1.getValue(), 86399);
+    EXPECT_LE(nxdomain_ttl1.getValue(), 86400);
 
     // SOA response for example.com
     Message msg_example_com_soa(Message::PARSE);
@@ -68,16 +71,22 @@ TEST_F(NegativeCacheTest, testNXDOMAIN){
 
     msg_example_com_soa.makeResponse();
     Name soa_qname("example.com.");
-    EXPECT_TRUE(cache->lookup(soa_qname, RRType::SOA(), RRClass::IN(), msg_example_com_soa));
+    EXPECT_TRUE(cache->lookup(soa_qname, RRType::SOA(), RRClass::IN(),
+                msg_example_com_soa));
 
     iter = msg_example_com_soa.beginSection(Message::SECTION_ANSWER);
     rrset_ptr = *iter;
 
     // The TTL should equal to the TTL of SOA record in answer section
     const RRTTL& soa_ttl = rrset_ptr->getTTL();
-    EXPECT_EQ(soa_ttl.getValue(), 172800);
+    // May have already crossed seconds boundary
+    EXPECT_GE(soa_ttl.getValue(), 172799);
+    EXPECT_LE(soa_ttl.getValue(), 172800);
 
-    sleep(1);
+    // Sleep for 2 seconds. 2 seconds to make sure the final range check
+    // does not overlap with the original ones (in which case this test
+    // would erroneously pass if the ttl value is not changed)
+    sleep(2);
 
     // Query nonexist.example.com again
     Message msg_nxdomain2(Message::PARSE);
@@ -90,7 +99,8 @@ TEST_F(NegativeCacheTest, testNXDOMAIN){
 
     // The TTL should equal to the TTL of negative response SOA record
     const RRTTL& nxdomain_ttl2 = rrset_ptr->getTTL();
-    EXPECT_TRUE(86398 <= nxdomain_ttl2.getValue() && nxdomain_ttl2.getValue() <= 86399);
+    EXPECT_GE(nxdomain_ttl2.getValue(), 86397);
+    EXPECT_LE(nxdomain_ttl2.getValue(), 86398);
     // No RRset in ANSWER section
     EXPECT_TRUE(msg_nxdomain2.getRRCount(Message::SECTION_ANSWER) == 0);
     // Check that only one SOA record exist in AUTHORITY section
@@ -103,13 +113,15 @@ TEST_F(NegativeCacheTest, testNXDOMAIN){
     Message msg_example_com_soa2(Message::PARSE);
     messageFromFile(msg_example_com_soa2, "message_example_com_soa.wire");
     msg_example_com_soa2.makeResponse();
-    EXPECT_TRUE(cache->lookup(soa_qname, RRType::SOA(), RRClass::IN(), msg_example_com_soa2));
+    EXPECT_TRUE(cache->lookup(soa_qname, RRType::SOA(), RRClass::IN(),
+                              msg_example_com_soa2));
 
     iter = msg_example_com_soa2.beginSection(Message::SECTION_ANSWER);
     rrset_ptr = *iter;
     const RRTTL& soa_ttl2 = rrset_ptr->getTTL();
     // The TTL should equal to the TTL of SOA record in answer section
-    EXPECT_TRUE(172798 <= soa_ttl2.getValue() && soa_ttl2.getValue() <= 172799);
+    EXPECT_GE(soa_ttl2.getValue(), 172797);
+    EXPECT_LE(soa_ttl2.getValue(), 172798);
 }
 
 TEST_F(NegativeCacheTest, testNXDOMAINWithoutSOA){
@@ -166,15 +178,16 @@ TEST_F(NegativeCacheTest, testNoerrorNodata){
     msg_nodata.makeResponse();
 
     Name example_dot_com("example.com.");
-    EXPECT_TRUE(cache->lookup(example_dot_com, RRType::MX(), RRClass::IN(), msg_nodata));
+    EXPECT_TRUE(cache->lookup(example_dot_com, RRType::MX(), RRClass::IN(),
+                msg_nodata));
 
     RRsetIterator iter = msg_nodata.beginSection(Message::SECTION_AUTHORITY);
     RRsetPtr rrset_ptr = *iter;
 
     // The TTL should equal to the TTL of SOA record
     const RRTTL& nodata_ttl1 = rrset_ptr->getTTL();
-    EXPECT_EQ(nodata_ttl1.getValue(), 86400);
-
+    EXPECT_GE(nodata_ttl1.getValue(), 86399);
+    EXPECT_LE(nodata_ttl1.getValue(), 86400);
 
     // Normal SOA response for example.com
     Message msg_example_com_soa(Message::PARSE);
@@ -183,21 +196,26 @@ TEST_F(NegativeCacheTest, testNoerrorNodata){
 
     msg_example_com_soa.makeResponse();
     Name soa_qname("example.com.");
-    EXPECT_TRUE(cache->lookup(soa_qname, RRType::SOA(), RRClass::IN(), msg_example_com_soa));
+    EXPECT_TRUE(cache->lookup(soa_qname, RRType::SOA(), RRClass::IN(),
+                msg_example_com_soa));
 
     iter = msg_example_com_soa.beginSection(Message::SECTION_ANSWER);
     rrset_ptr = *iter;
 
     // The TTL should equal to the TTL of SOA record in answer section
     const RRTTL& soa_ttl = rrset_ptr->getTTL();
-    EXPECT_EQ(soa_ttl.getValue(), 172800);
+    EXPECT_GE(soa_ttl.getValue(), 172799);
+    EXPECT_LE(soa_ttl.getValue(), 172800);
 
     // Query MX record of example.com again
     Message msg_nodata2(Message::PARSE);
     messageFromFile(msg_nodata2, "message_nodata_with_soa.wire");
     msg_nodata2.makeResponse();
 
-    sleep(1);
+    // Sleep for 2 seconds. 2 seconds to make sure the final range check
+    // does not overlap with the original ones (in which case this test
+    // would erroneously pass if the ttl value is not changed)
+    sleep(2);
 
     EXPECT_TRUE(cache->lookup(example_dot_com, RRType::MX(), RRClass::IN(), msg_nodata2));
 
@@ -209,9 +227,11 @@ TEST_F(NegativeCacheTest, testNoerrorNodata){
     iter = msg_nodata2.beginSection(Message::SECTION_AUTHORITY);
     rrset_ptr = *iter;
 
-    // The TTL should equal to the TTL of negative response SOA record and counted down
+    // The TTL should equal to the TTL of negative response SOA record
+    // and counted down
     const RRTTL& nodata_ttl2 = rrset_ptr->getTTL();
-    EXPECT_TRUE(86398 <= nodata_ttl2.getValue() && nodata_ttl2.getValue() <= 86399);
+    EXPECT_GE(nodata_ttl2.getValue(), 86397);
+    EXPECT_LE(nodata_ttl2.getValue(), 86398);
 }
 
 TEST_F(NegativeCacheTest, testReferralResponse){

@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <stdexcept>
-
 #include <util/buffer.h>
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
@@ -24,9 +22,12 @@
 #include <dns/rrttl.h>
 #include <dns/rrset.h>
 
+#include <dns/tests/unittest_util.h>
+
 #include <gtest/gtest.h>
 
-#include <dns/tests/unittest_util.h>
+#include <stdexcept>
+#include <sstream>
 
 using isc::UnitTestUtil;
 
@@ -38,7 +39,7 @@ using namespace isc::dns::rdata;
 namespace {
 class RRsetTest : public ::testing::Test {
 protected:
-    RRsetTest() : buffer(0), renderer(buffer),
+    RRsetTest() : buffer(0),
                   test_name("test.example.com"),
                   test_domain("example.com"),
                   test_nsname("ns.example.com"),
@@ -110,6 +111,20 @@ TEST_F(RRsetTest, setTTL) {
 TEST_F(RRsetTest, setName) {
     rrset_a.setName(test_nsname);
     EXPECT_EQ(test_nsname, rrset_a.getName());
+}
+
+TEST_F(RRsetTest, isSameKind) {
+    RRset rrset_w(test_name, RRClass::IN(), RRType::A(), RRTTL(3600));
+    RRset rrset_x(test_name, RRClass::IN(), RRType::A(), RRTTL(3600));
+    RRset rrset_y(test_name, RRClass::IN(), RRType::NS(), RRTTL(3600));
+    RRset rrset_z(test_name, RRClass::CH(), RRType::A(), RRTTL(3600));
+    RRset rrset_p(test_nsname, RRClass::IN(), RRType::A(), RRTTL(3600));
+
+    EXPECT_TRUE(rrset_w.isSameKind(rrset_w));
+    EXPECT_TRUE(rrset_w.isSameKind(rrset_x));
+    EXPECT_FALSE(rrset_w.isSameKind(rrset_y));
+    EXPECT_FALSE(rrset_w.isSameKind(rrset_z));
+    EXPECT_FALSE(rrset_w.isSameKind(rrset_p));
 }
 
 void
@@ -201,8 +216,8 @@ TEST_F(RRsetTest, toWireRenderer) {
     rrset_ns.toWire(renderer);
 
     UnitTestUtil::readWireData("rrset_toWire2", wiredata);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, buffer.getData(),
-                        buffer.getLength(), &wiredata[0], wiredata.size());
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
+                        renderer.getLength(), &wiredata[0], wiredata.size());
 
     // toWire() cannot be performed for an empty RRset.
     renderer.clear();
