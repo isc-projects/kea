@@ -176,10 +176,23 @@ TEST_F(CommandOptionsTest, Base) {
     process("perfdhcp -6 -b MAC=10::20::30::40::50::60 -l ethx -b duiD=1AB7F5670901FF");
     uint8_t mac[6] = {0x10, 0x20, 0x30, 0x40, 0x50, 0x60 };
     uint8_t duid[7] = { 0x1A, 0xB7, 0xF5, 0x67, 0x09, 0x01, 0xFF };
-    std::vector<uint8_t> v1(mac, mac + 6);
-    std::vector<uint8_t> v2(duid, duid + 7);
-    EXPECT_EQ(v1, getMacPrefix());
-    EXPECT_EQ(v2, getDuidPrefix());
+
+    // We will be iterating through vector's elements
+    // because attempt to compare vectors directly  with
+    // EXPECT_EQ fails on FreeBSD
+
+    // Test Mac
+    std::vector<uint8_t> v1 = getMacPrefix();
+    ASSERT_EQ(6, v1.size());
+    for (int i = 0; i < v1.size(); i++) {
+        EXPECT_EQ(mac[i], v1[i]);
+    }
+    // Test DUID
+    std::vector<uint8_t> v2 = getDuidPrefix();
+    ASSERT_EQ(sizeof(duid) / sizeof(uint8_t), v2.size());
+    for (int i = 0; i < v1.size(); i++) {
+        EXPECT_EQ(duid[i], v2[i]);
+    }
 }
 
 TEST_F(CommandOptionsTest, DropTime) {
