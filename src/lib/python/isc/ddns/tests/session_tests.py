@@ -68,6 +68,7 @@ class SessionTest(unittest.TestCase):
     def check_response(self, msg, expected_rcode):
         '''Perform common checks on update resposne message.'''
         self.assertTrue(msg.get_header_flag(Message.HEADERFLAG_QR))
+        # note: we convert opcode to text it'd be more helpful on failure.
         self.assertEqual(Opcode.UPDATE().to_text(), msg.get_opcode().to_text())
         self.assertEqual(expected_rcode.to_text(), msg.get_rcode().to_text())
         # All sections should be cleared
