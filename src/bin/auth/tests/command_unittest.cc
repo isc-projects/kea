@@ -258,8 +258,6 @@ TEST_F(AuthCommandTest,
     newZoneChecks(server_);
 }
 
-// This test uses dynamic load of a data source module, and won't work when
-// statically linked.
 TEST_F(AuthCommandTest,
 #ifdef USE_STATIC_LINK
        DISABLED_loadZoneSQLite3
