@@ -68,6 +68,12 @@ class UpdateSession:
     def __init__(self, req_message, req_data, client_addr, zone_config):
         '''Constructor.
 
+        Note: req_data is not really used as of #1512 but is listed since
+        it's quite likely we need it in a subsequent task soon.  We'll
+        also need to get other parameters such as ACLs, for which, it's less
+        clear in which form we want to get the information, so it's left
+        open for now.
+
         Parameters:
         - req_message (isc.dns.Message) The request message.  This must be
           in the PARSE mode.
