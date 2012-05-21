@@ -23,6 +23,7 @@
 #include <dns/name.h>
 #include <dns/rrclass.h>
 #include <dns/rrtype.h>
+#include <dns/rrttl.h>
 
 #include <cc/data.h>
 
@@ -68,7 +69,7 @@ protected:
     }
     void checkAnswer(const int expected_code) {
         parseAnswer(rcode_, result_);
-        EXPECT_EQ(expected_code, rcode_);
+        EXPECT_EQ(expected_code, rcode_) << result_->str();
     }
     MockSession statistics_session_;
     MockXfroutClient xfrout_;
@@ -233,7 +234,14 @@ newZoneChecks(AuthSrv& server) {
               find(Name("ns.test2.example"), RRType::AAAA())->code);
 }
 
-TEST_F(AuthCommandTest, loadZone) {
+TEST_F(AuthCommandTest,
+#ifdef USE_STATIC_LINK
+       DISABLED_loadZone
+#else
+       loadZone
+#endif
+    )
+{
     configureZones(server_);
 
     ASSERT_EQ(0, system(INSTALL_PROG " -c " TEST_DATA_DIR
@@ -250,8 +258,6 @@ TEST_F(AuthCommandTest, loadZone) {
     newZoneChecks(server_);
 }
 
-// This test uses dynamic load of a data source module, and won't work when
-// statically linked.
 TEST_F(AuthCommandTest,
 #ifdef USE_STATIC_LINK
        DISABLED_loadZoneSQLite3
@@ -289,36 +295,57 @@ TEST_F(AuthCommandTest,
                               "      }"
                               "    ]"
                               "  }"
-                              "]}"));
+                              "],"
+                              " \"database_file\": \"" + test_db + "\""
+                              "}"));
     module_session.setLocalConfig(map);
     server_.setConfigSession(&module_session);
 
-    // The loadzone command needs the zone to be already loaded, because
-    // it is used for reloading only
-    AuthSrv::InMemoryClientPtr dsrc(new InMemoryClient());
-    dsrc->addZone(ZoneFinderPtr(new InMemoryZoneFinder(RRClass::IN(),
-                                                       Name("example.org"))));
-    server_.setInMemoryClient(RRClass::IN(), dsrc);
+    server_.updateConfig(map);
+
+    // Check that the A record at www.example.org does not exist
+    ASSERT_TRUE(server_.hasInMemoryClient());
+    EXPECT_EQ(ZoneFinder::NXDOMAIN, server_.getInMemoryClient(RRClass::IN())->
+              findZone(Name("example.org")).zone_finder->
+              find(Name("www.example.org"), RRType::A())->code);
+
+    // Add the record to the underlying sqlite database, by loading
+    // it as a separate datasource, and updating it
+    ConstElementPtr sql_cfg = Element::fromJSON("{ \"type\": \"sqlite3\","
+                                                "\"database_file\": \""
+                                                + test_db + "\"}");
+    DataSourceClientContainer sql_ds("sqlite3", sql_cfg);
+    ZoneUpdaterPtr sql_updater =
+        sql_ds.getInstance().getUpdater(Name("example.org"), false);
+    RRsetPtr rrset(new RRset(Name("www.example.org."), RRClass::IN(),
+                             RRType::A(), RRTTL(60)));
+    rrset->addRdata(rdata::createRdata(rrset->getType(),
+                                       rrset->getClass(),
+                                       "192.0.2.1"));
+    sql_updater->addRRset(*rrset);
+    sql_updater->commit();
+
+    // This new record is in the database now, but should not be in the
+    // memory-datasource yet, so check again
+    EXPECT_EQ(ZoneFinder::NXDOMAIN, server_.getInMemoryClient(RRClass::IN())->
+              findZone(Name("example.org")).zone_finder->
+              find(Name("www.example.org"), RRType::A())->code);
 
     // Now send the command to reload it
     result_ = execAuthServerCommand(server_, "loadzone",
-        Element::fromJSON("{\"origin\": \"example.org\"}"));
+                                    Element::fromJSON(
+                                        "{\"origin\": \"example.org\"}"));
     checkAnswer(0);
 
-    // Get the zone and look if there are data in it (the original one was
-    // empty)
-    ASSERT_TRUE(server_.getInMemoryClient(RRClass::IN()));
+    // And now it should be present too.
     EXPECT_EQ(ZoneFinder::SUCCESS, server_.getInMemoryClient(RRClass::IN())->
               findZone(Name("example.org")).zone_finder->
-              find(Name("example.org"), RRType::SOA())->code);
+              find(Name("www.example.org"), RRType::A())->code);
 
-    // Some error cases. First, the zone has no configuration.
-    dsrc->addZone(ZoneFinderPtr(new InMemoryZoneFinder(RRClass::IN(),
-                                                       Name("example.com"))));
+    // Some error cases. First, the zone has no configuration. (note .com here)
     result_ = execAuthServerCommand(server_, "loadzone",
         Element::fromJSON("{\"origin\": \"example.com\"}"));
     checkAnswer(1);
-
     // The previous zone is not hurt in any way
     EXPECT_EQ(ZoneFinder::SUCCESS, server_.getInMemoryClient(RRClass::IN())->
               findZone(Name("example.org")).zone_finder->
@@ -326,7 +353,8 @@ TEST_F(AuthCommandTest,
 
     module_session.setLocalConfig(Element::fromJSON("{\"datasources\": []}"));
     result_ = execAuthServerCommand(server_, "loadzone",
-        Element::fromJSON("{\"origin\": \"example.org\"}"));
+                                    Element::fromJSON(
+                                        "{\"origin\": \"example.org\"}"));
     checkAnswer(1);
 
     // The previous zone is not hurt in any way
@@ -373,7 +401,14 @@ TEST_F(AuthCommandTest,
               find(Name("example.org"), RRType::SOA())->code);
 }
 
-TEST_F(AuthCommandTest, loadBrokenZone) {
+TEST_F(AuthCommandTest,
+#ifdef USE_STATIC_LINK
+       DISABLED_loadBrokenZone
+#else
+       loadBrokenZone
+#endif
+    )
+{
     configureZones(server_);
 
     ASSERT_EQ(0, system(INSTALL_PROG " -c " TEST_DATA_DIR
@@ -386,7 +421,14 @@ TEST_F(AuthCommandTest, loadBrokenZone) {
     zoneChecks(server_);     // zone shouldn't be replaced
 }
 
-TEST_F(AuthCommandTest, loadUnreadableZone) {
+TEST_F(AuthCommandTest,
+#ifdef USE_STATIC_LINK
+       DISABLED_loadUnreadableZone
+#else
+       loadUnreadableZone
+#endif
+    )
+{
     configureZones(server_);
 
     // install the zone file as unreadable
@@ -419,7 +461,14 @@ TEST_F(AuthCommandTest, loadSqlite3DataSrc) {
     checkAnswer(0);
 }
 
-TEST_F(AuthCommandTest, loadZoneInvalidParams) {
+TEST_F(AuthCommandTest,
+#ifdef USE_STATIC_LINK
+       DISABLED_loadZoneInvalidParams
+#else
+       loadZoneInvalidParams
+#endif
+    )
+{
     configureZones(server_);
 
     // null arg

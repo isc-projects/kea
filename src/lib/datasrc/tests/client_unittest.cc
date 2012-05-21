@@ -56,4 +56,8 @@ TEST_F(ClientTest, defaultIterator) {
     EXPECT_THROW(client_.getIterator(Name(".")), isc::NotImplemented);
 }
 
+TEST_F(ClientTest, defaultGetZoneCount) {
+    EXPECT_THROW(client_.getZoneCount(), isc::NotImplemented);
+}
+
 }
