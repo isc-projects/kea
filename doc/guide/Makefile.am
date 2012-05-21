@@ -1,3 +1,6 @@
+# This is not a "man" manual, but reuse this for now for docbook.
+if ENABLE_MAN
+
 # generated documentation
 DOCS = bind10-messages.html bind10-guide.html bind10-guide.txt
 
@@ -7,9 +10,6 @@ doc_DATA = $(DOCS) bind10-guide.css
 # TODO: okay to include the generated bind10-messages.xml in dist tarfile too?
 EXTRA_DIST = bind10-guide.xml bind10-messages.xml $(doc_DATA)
 CLEANFILES = $(DOCS) bind10-messages.xml
-
-# This is not a "man" manual, but reuse this for now for docbook.
-if ENABLE_MAN
 
 bind10-guide.html: bind10-guide.xml
 	xsltproc --novalid --xinclude --nonet \
