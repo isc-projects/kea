@@ -25,15 +25,15 @@ class, and description of the error are logged.
 
 % LIBDDNS_UPDATE_FORWARD_FAIL update client %1 for zone %2: update forwarding not supported
 Debug message.  An update request is sent to a secondary server.  This
-is not necessarily mean invalid, but this implementation does not yet
+is not necessarily invalid, but this implementation does not yet
 support update forwarding as specified in Section 6 of RFC2136 and it
 will simply return a response with an RCODE of NOTIMP to the client.
 The client's address and the zone name/class are logged.
 
 % LIBDDNS_UPDATE_NOTAUTH update client %1 for zone %2: not authoritative for update zone
 Debug message.  An update request for a zone for which the receiving
-server has authority.  In theory this is not an unexpected event, but
-there are client implementations that could send update requests
+server doesn't have authority.  In theory this is an unexpected event,
+but there are client implementations that could send update requests
 carelessly, so it may not necessarily be so uncommon in practice.  If
 possible, you may want to check the implementation or configuration of
 those clients to suppress the requests.  As specified in Section 3.1
