@@ -12,8 +12,13 @@ if USE_STATIC_LINK
 AM_LDFLAGS += -static
 endif
 
+# We have to suppress errors because we are compiling C code with CXX
+# We have to do this to link with new C++ pieces of code
+perfdhcp_CXXFLAGS = $(AM_CXXFLAGS)
+perfdhcp_CXXFLAGS += -Wno-error -Wno-writestrings
+
 pkglibexec_PROGRAMS  = perfdhcp
-perfdhcp_SOURCES  = perfdhcp.c
+perfdhcp_SOURCES  = perfdhcp.cc
 perfdhcp_SOURCES += command_options.cc command_options.h
 
 perfdhcp_LDADD = $(top_builddir)/src/lib/exceptions/libexceptions.la
