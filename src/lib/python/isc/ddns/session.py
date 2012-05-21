@@ -123,7 +123,7 @@ class UpdateSession:
         try:
             datasrc_client, zname, zclass = self.__get_update_zone()
             # conceptual code that would follow
-            self.__check_prerequisites()
+            self.__check_prerequisites(datasrc_client)
             # self.__check_update_acl()
             # self.__do_update()
             # self.__make_response(Rcode.NOERROR())
@@ -188,10 +188,17 @@ class UpdateSession:
         self.__message.clear_section(SECTION_ZONE)
         self.__message.set_rcode(rcode)
 
-    def __check_prerequisite_rrset_exists(self):
-        pass
+    def __check_prerequisite_rrset_exists(self, datasrc_client, rrset):
+        '''Check whether an rrset with the given name and type exists. Class,
+           TTL, and Rdata (if any) of the given RRset are ignored.
+           RFC2136 Section 2.4.1.
+        '''
+        _, finder = datasrc_client.find_zone(rrset.get_name())
+        result, _, _ = finder.find(rrset.get_name(), rrset.get_type(),
+                                   finder.NO_WILDCARD | finder.FIND_GLUE_OK)
+        return result == finder.SUCCESS
 
-    def __check_prerequisite_rrset_exists(self, foo):
+    def __check_prerequisite_rrset_exists_value(self, rrset):
         pass
 
     def __check_prerequisite_rrset_does_not_exist(self):
@@ -203,5 +210,5 @@ class UpdateSession:
     def __check_prerequisite_name_not_in_use(self):
         pass
 
-    def __check_prerequisites(self):
+    def __check_prerequisites(self, datasrc_client):
         pass
