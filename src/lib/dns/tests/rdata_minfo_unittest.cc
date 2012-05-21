@@ -142,15 +142,15 @@ TEST_F(Rdata_MINFO_Test, toWireRenderer) {
     vector<unsigned char> data;
     UnitTestUtil::readWireData("rdata_minfo_toWire1.wire", data);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        static_cast<const uint8_t *>(obuffer.getData()),
-                        obuffer.getLength(), &data[0], data.size());
+                        static_cast<const uint8_t *>(renderer.getData()),
+                        renderer.getLength(), &data[0], data.size());
     renderer.clear();
     rdata_minfo2.toWire(renderer);
     vector<unsigned char> data2;
     UnitTestUtil::readWireData("rdata_minfo_toWire2.wire", data2);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        static_cast<const uint8_t *>(obuffer.getData()),
-                        obuffer.getLength(), &data2[0], data2.size());
+                        static_cast<const uint8_t *>(renderer.getData()),
+                        renderer.getLength(), &data2[0], data2.size());
 }
 
 TEST_F(Rdata_MINFO_Test, toText) {

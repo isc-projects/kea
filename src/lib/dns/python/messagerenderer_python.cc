@@ -36,7 +36,6 @@ namespace {
 class s_MessageRenderer : public PyObject {
 public:
     s_MessageRenderer();
-    isc::util::OutputBuffer* outputbuffer;
     MessageRenderer* cppobj;
 };
 
@@ -78,17 +77,14 @@ PyMethodDef MessageRenderer_methods[] = {
 
 int
 MessageRenderer_init(s_MessageRenderer* self) {
-    self->outputbuffer = new OutputBuffer(4096);
-    self->cppobj = new MessageRenderer(*self->outputbuffer);
+    self->cppobj = new MessageRenderer;
     return (0);
 }
 
 void
 MessageRenderer_destroy(s_MessageRenderer* self) {
     delete self->cppobj;
-    delete self->outputbuffer;
     self->cppobj = NULL;
-    self->outputbuffer = NULL;
     Py_TYPE(self)->tp_free(self);
 }
 

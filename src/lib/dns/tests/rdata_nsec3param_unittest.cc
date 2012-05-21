@@ -41,14 +41,14 @@ using namespace isc::dns::rdata;
 namespace {
 class Rdata_NSEC3PARAM_Test : public RdataTest {
 public:
-    Rdata_NSEC3PARAM_Test() : nsec3param_txt("1 0 1 D399EAAB") {}
+    Rdata_NSEC3PARAM_Test() : nsec3param_txt("1 1 1 D399EAAB") {}
     const string nsec3param_txt;
 };
 
 TEST_F(Rdata_NSEC3PARAM_Test, fromText) {
     // With a salt
     EXPECT_EQ(1, generic::NSEC3PARAM(nsec3param_txt).getHashalg());
-    EXPECT_EQ(0, generic::NSEC3PARAM(nsec3param_txt).getFlags());
+    EXPECT_EQ(1, generic::NSEC3PARAM(nsec3param_txt).getFlags());
     // (salt is checked in the toText test)
 
     // With an empty salt
@@ -61,16 +61,9 @@ TEST_F(Rdata_NSEC3PARAM_Test, toText) {
 }
 
 TEST_F(Rdata_NSEC3PARAM_Test, badText) {
-    EXPECT_THROW(generic::NSEC3PARAM("1 1 1 SPORK"), BadValue); // bad hex
-    EXPECT_THROW(generic::NSEC3PARAM("100000 1 1 ADDAFEE"), InvalidRdataText);
-    EXPECT_THROW(generic::NSEC3PARAM("1 100000 1 ADDAFEE"), InvalidRdataText);
-    EXPECT_THROW(generic::NSEC3PARAM("1 1 100000 ADDAFEE"), InvalidRdataText);
-    EXPECT_THROW(generic::NSEC3PARAM("1"), InvalidRdataText);
-}
-
-TEST_F(Rdata_NSEC3PARAM_Test, DISABLED_badText) {
-    // this currently fails
-    EXPECT_THROW(generic::NSEC3PARAM("1 0 1D399EAAB"), InvalidRdataText);
+    // garbage space at the end
+    EXPECT_THROW(generic::NSEC3PARAM("1 1 1 D399EAAB "),
+                 InvalidRdataText);
 }
 
 TEST_F(Rdata_NSEC3PARAM_Test, createFromWire) {
@@ -78,6 +71,19 @@ TEST_F(Rdata_NSEC3PARAM_Test, createFromWire) {
     EXPECT_EQ(0, rdata_nsec3param.compare(
                   *rdataFactoryFromFile(RRType::NSEC3PARAM(), RRClass::IN(),
                                        "rdata_nsec3param_fromWire1")));
+
+    // Short buffer cases.  The data is valid NSEC3PARAM RDATA, but the buffer
+    // is trimmed at the end.  All cases should result in an exception from
+    // the buffer class.
+    vector<uint8_t> data;
+    UnitTestUtil::readWireData("rdata_nsec3param_fromWire1", data);
+    const uint16_t rdlen = (data.at(0) << 8) + data.at(1);
+    for (int i = 0; i < rdlen; ++i) {
+        // intentionally construct a short buffer
+        InputBuffer b(&data[0] + 2, i);
+        EXPECT_THROW(createRdata(RRType::NSEC3PARAM(), RRClass::IN(), b, 9),
+                     InvalidBufferPosition);
+    }
 }
 
 TEST_F(Rdata_NSEC3PARAM_Test, toWireRenderer) {
@@ -88,8 +94,8 @@ TEST_F(Rdata_NSEC3PARAM_Test, toWireRenderer) {
     vector<unsigned char> data;
     UnitTestUtil::readWireData("rdata_nsec3param_fromWire1", data);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        static_cast<const uint8_t *>(obuffer.getData()) + 2,
-                        obuffer.getLength() - 2, &data[2], data.size() - 2);
+                        static_cast<const uint8_t *>(renderer.getData()) + 2,
+                        renderer.getLength() - 2, &data[2], data.size() - 2);
 }
 
 TEST_F(Rdata_NSEC3PARAM_Test, toWireBuffer) {
@@ -101,6 +107,18 @@ TEST_F(Rdata_NSEC3PARAM_Test, assign) {
     generic::NSEC3PARAM rdata_nsec3param(nsec3param_txt);
     generic::NSEC3PARAM other_nsec3param = rdata_nsec3param;
     EXPECT_EQ(0, rdata_nsec3param.compare(other_nsec3param));
+}
+
+TEST_F(Rdata_NSEC3PARAM_Test, compare) {
+    // trivial case: self equivalence
+    EXPECT_EQ(0, generic::NSEC3PARAM(nsec3param_txt).
+              compare(generic::NSEC3PARAM(nsec3param_txt)));
+    EXPECT_EQ(0, generic::NSEC3PARAM("1 1 1 -").
+              compare(generic::NSEC3PARAM("1 1 1 -")));
+
+    // comparison attempt between incompatible RR types should be rejected
+    EXPECT_THROW(generic::NSEC3PARAM(nsec3param_txt).compare(*rdata_nomatch),
+                 bad_cast);
 }
 
 }

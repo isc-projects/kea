@@ -24,12 +24,13 @@ import bind10_config
 from isc.testutils.parse_args import OptsError, TestOptParser
 
 class MyConfigManager:
-    def __init__(self, path, filename):
+    def __init__(self, path, filename, session=None, rename_config_file=False):
         self._path = path
         self.read_config_called = False
         self.notify_boss_called = False
         self.run_called = False
         self.write_config_called = False
+        self.rename_config_called = False
         self.running = True
         self.virtual_modules = []
 
@@ -44,6 +45,9 @@ class MyConfigManager:
 
     def write_config(self):
         self.write_config_called = True
+
+    def rename_config_file(self, ofile, nfile):
+        self.rename_config_called = True
 
     def set_virtual_module(self, spec, function):
         self.virtual_modules.append((spec, function))
@@ -90,6 +94,7 @@ class TestConfigManagerStartup(unittest.TestCase):
         self.assertTrue(self.loaded_plugins)
         # if there are no changes, config is not written
         self.assertFalse(b.cm.write_config_called)
+        self.assertFalse(b.cm.rename_config_called)
 
         self.assertTrue(b.cm.running)
         b.signal_handler(None, None)
@@ -136,8 +141,8 @@ class TestParseArgs(unittest.TestCase):
         # Pass it empty array, not our arguments
         b = __import__("b10-cfgmgr")
         parsed = b.parse_options([], TestOptParser)
-        self.assertEqual(b.DATA_PATH, parsed.data_path)
-        self.assertEqual(b.DEFAULT_CONFIG_FILE, parsed.config_file)
+        self.assertEqual(None, parsed.data_path)
+        self.assertEqual(None, parsed.config_file)
 
     def test_wrong_args(self):
         """
@@ -163,10 +168,10 @@ class TestParseArgs(unittest.TestCase):
         b = __import__("b10-cfgmgr")
         parsed = b.parse_options(['--data-path=/path'], TestOptParser)
         self.assertEqual('/path', parsed.data_path)
-        self.assertEqual(b.DEFAULT_CONFIG_FILE, parsed.config_file)
+        self.assertEqual(None, parsed.config_file)
         parsed = b.parse_options(['-p', '/path'], TestOptParser)
         self.assertEqual('/path', parsed.data_path)
-        self.assertEqual(b.DEFAULT_CONFIG_FILE, parsed.config_file)
+        self.assertEqual(None, parsed.config_file)
         self.assertRaises(OptsError, b.parse_options, ['-p'], TestOptParser)
         self.assertRaises(OptsError, b.parse_options, ['--data-path'],
                           TestOptParser)
@@ -178,14 +183,33 @@ class TestParseArgs(unittest.TestCase):
         b = __import__("b10-cfgmgr")
         parsed = b.parse_options(['--config-filename=filename'],
                                  TestOptParser)
-        self.assertEqual(b.DATA_PATH, parsed.data_path)
+        self.assertEqual(None, parsed.data_path)
         self.assertEqual("filename", parsed.config_file)
         parsed = b.parse_options(['-c', 'filename'], TestOptParser)
-        self.assertEqual(b.DATA_PATH, parsed.data_path)
+        self.assertEqual(None, parsed.data_path)
         self.assertEqual("filename", parsed.config_file)
         self.assertRaises(OptsError, b.parse_options, ['-c'], TestOptParser)
         self.assertRaises(OptsError, b.parse_options, ['--config-filename'],
                           TestOptParser)
+
+    def test_determine_path_and_file(self):
+        b = __import__("b10-cfgmgr")
+        self.assertEqual((b.DATA_PATH, b.DEFAULT_CONFIG_FILE),
+                         b.determine_path_and_file(None, None))
+        self.assertEqual(("/foo", b.DEFAULT_CONFIG_FILE),
+                         b.determine_path_and_file("/foo", None))
+        self.assertEqual((os.getcwd(), "file.config"),
+                         b.determine_path_and_file(None, "file.config"))
+        self.assertEqual(("/foo", "bar"),
+                         b.determine_path_and_file("/foo", "bar"))
+
+    def test_clear_config(self):
+        b = __import__("b10-cfgmgr")
+        parsed = b.parse_options([], TestOptParser)
+        self.assertFalse(parsed.clear_config)
+        parsed = b.parse_options(['--clear-config'], TestOptParser)
+        self.assertTrue(parsed.clear_config)
+        
 
 if __name__ == '__main__':
     unittest.main()

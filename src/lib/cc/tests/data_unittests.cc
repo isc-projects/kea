@@ -20,6 +20,7 @@
 
 using namespace isc::data;
 
+#include <sstream>
 #include <iostream>
 using std::oct;
 #include <iomanip>
@@ -90,7 +91,7 @@ TEST(Element, from_and_to_json) {
     sv.push_back("-1");
     sv.push_back("-1.234");
     sv.push_back("-123.456");
-    
+
     BOOST_FOREACH(const std::string& s, sv) {
         // test << operator, which uses Element::str()
         std::ostringstream stream;
@@ -122,8 +123,16 @@ TEST(Element, from_and_to_json) {
     sv.push_back("{ \"a\": None}");
     sv.push_back("");
     sv.push_back("nul");
+    sv.push_back("hello\"foobar\"");
+    sv.push_back("\"foobar\"hello");
+    sv.push_back("[]hello");
+    sv.push_back("{}hello");
+    // String not delimited correctly
+    sv.push_back("\"hello");
+    sv.push_back("hello\"");
+
+
     BOOST_FOREACH(std::string s, sv) {
-        
         EXPECT_THROW(el = Element::fromJSON(s), isc::data::JSONError);
     }
 
@@ -150,6 +159,9 @@ TEST(Element, from_and_to_json) {
     EXPECT_EQ("false", Element::fromJSON("FALSE")->str());
     EXPECT_EQ("true", Element::fromJSON("True")->str());
     EXPECT_EQ("true", Element::fromJSON("TRUE")->str());
+    EXPECT_EQ("\"\"", Element::fromJSON("  \n \t \r \f \b \"\" \n \f \t \r \b")->str());
+    EXPECT_EQ("{  }", Element::fromJSON("{  \n  \r \t  \b \f }")->str());
+    EXPECT_EQ("[  ]", Element::fromJSON("[  \n  \r \f \t  \b  ]")->str());
 
     // number overflows
     EXPECT_THROW(Element::fromJSON("12345678901234567890")->str(), JSONError);
@@ -297,6 +309,43 @@ TEST(Element, create_and_value_throws) {
     EXPECT_FALSE(el->getValue(v));
     EXPECT_TRUE(el->getValue(m));
 
+}
+
+// Helper for escape check; it puts the given string in a StringElement,
+// then checks for the following conditions:
+// stringValue() must be same as input
+// toJSON() output must be escaped
+// fromJSON() on the previous output must result in original input
+void
+escapeHelper(const std::string& input, const std::string& expected) {
+    StringElement str_element = StringElement(input);
+    EXPECT_EQ(input, str_element.stringValue());
+    std::stringstream os;
+    str_element.toJSON(os);
+    EXPECT_EQ(expected, os.str());
+    ElementPtr str_element2 = Element::fromJSON(os.str());
+    EXPECT_EQ(str_element.stringValue(), str_element2->stringValue());
+}
+
+TEST(Element, escape) {
+    // Test whether quotes are escaped correctly when creating direct
+    // String elements.
+    escapeHelper("foo\"bar", "\"foo\\\"bar\"");
+    escapeHelper("foo\\bar", "\"foo\\\\bar\"");
+    escapeHelper("foo\bbar", "\"foo\\bbar\"");
+    escapeHelper("foo\fbar", "\"foo\\fbar\"");
+    escapeHelper("foo\nbar", "\"foo\\nbar\"");
+    escapeHelper("foo\rbar", "\"foo\\rbar\"");
+    escapeHelper("foo\tbar", "\"foo\\tbar\"");
+    // Bad escapes
+    EXPECT_THROW(Element::fromJSON("\\a"), JSONError);
+    EXPECT_THROW(Element::fromJSON("\\"), JSONError);
+    // Can't have escaped quotes outside strings
+    EXPECT_THROW(Element::fromJSON("\\\"\\\""), JSONError);
+    // Inside strings is OK
+    EXPECT_NO_THROW(Element::fromJSON("\"\\\"\\\"\""));
+    // A whitespace test
+    EXPECT_NO_THROW(Element::fromJSON("\"  \n  \r \t \f  \n \n    \t\""));
 }
 
 TEST(Element, ListElement) {

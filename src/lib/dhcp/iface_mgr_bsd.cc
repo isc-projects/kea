@@ -25,14 +25,31 @@ using namespace isc::asiolink;
 using namespace isc::dhcp;
 
 namespace isc {
+namespace dhcp {
 
 void
 IfaceMgr::detectIfaces() {
-    // TODO do the actual detection on BSDs. Currently just calling
-    // stub implementation.
+    /// @todo do the actual detection on BSDs. Currently just calling
+    /// stub implementation.
     stubDetectIfaces();
 }
 
+void IfaceMgr::os_send4(struct msghdr& /*m*/,
+                        boost::scoped_array<char>& /*control_buf*/,
+                        size_t /*control_buf_len*/,
+                        const Pkt4Ptr& /*pkt*/) {
+  // @todo: Are there any specific actions required before sending IPv4 packet
+  // on BSDs? See iface_mgr_linux.cc for working Linux implementation.
 }
+
+bool IfaceMgr::os_receive4(struct msghdr& /*m*/, Pkt4Ptr& /*pkt*/) {
+  // @todo: Are there any specific actions required before receiving IPv4 packet
+  // on BSDs? See iface_mgr_linux.cc for working Linux implementation.
+
+  return (true); // pretend that we have everything set up for reception.
+}
+
+} // end of isc::dhcp namespace
+} // end of dhcp namespace
 
 #endif

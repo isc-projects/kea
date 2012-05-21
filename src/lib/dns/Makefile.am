@@ -23,6 +23,8 @@ EXTRA_DIST += rdata/generic/cname_5.cc
 EXTRA_DIST += rdata/generic/cname_5.h
 EXTRA_DIST += rdata/generic/detail/nsec_bitmap.cc
 EXTRA_DIST += rdata/generic/detail/nsec_bitmap.h
+EXTRA_DIST += rdata/generic/detail/nsec3param_common.cc
+EXTRA_DIST += rdata/generic/detail/nsec3param_common.h
 EXTRA_DIST += rdata/generic/detail/txt_like.h
 EXTRA_DIST += rdata/generic/detail/ds_like.h
 EXTRA_DIST += rdata/generic/dlv_32769.cc
@@ -59,6 +61,8 @@ EXTRA_DIST += rdata/generic/soa_6.cc
 EXTRA_DIST += rdata/generic/soa_6.h
 EXTRA_DIST += rdata/generic/spf_99.cc
 EXTRA_DIST += rdata/generic/spf_99.h
+EXTRA_DIST += rdata/generic/sshfp_44.cc
+EXTRA_DIST += rdata/generic/sshfp_44.h
 EXTRA_DIST += rdata/generic/txt_16.cc
 EXTRA_DIST += rdata/generic/txt_16.h
 EXTRA_DIST += rdata/generic/minfo_14.cc
@@ -84,15 +88,17 @@ BUILT_SOURCES += rdataclass.h rdataclass.cc
 
 lib_LTLIBRARIES = libdns++.la
 
-libdns___la_LDFLAGS = -no-undefined -version-info 1:0:1
+libdns___la_LDFLAGS = -no-undefined -version-info 2:0:0
 
 libdns___la_SOURCES =
 libdns___la_SOURCES += edns.h edns.cc
 libdns___la_SOURCES += exceptions.h exceptions.cc
+libdns___la_SOURCES += labelsequence.h labelsequence.cc
 libdns___la_SOURCES += masterload.h masterload.cc
 libdns___la_SOURCES += message.h message.cc
 libdns___la_SOURCES += messagerenderer.h messagerenderer.cc
 libdns___la_SOURCES += name.h name.cc
+libdns___la_SOURCES += name_internal.h
 libdns___la_SOURCES += nsec3hash.h nsec3hash.cc
 libdns___la_SOURCES += opcode.h opcode.cc
 libdns___la_SOURCES += rcode.h rcode.cc
@@ -113,6 +119,8 @@ libdns___la_SOURCES += tsigrecord.h tsigrecord.cc
 libdns___la_SOURCES += character_string.h character_string.cc
 libdns___la_SOURCES += rdata/generic/detail/nsec_bitmap.h
 libdns___la_SOURCES += rdata/generic/detail/nsec_bitmap.cc
+libdns___la_SOURCES += rdata/generic/detail/nsec3param_common.cc
+libdns___la_SOURCES += rdata/generic/detail/nsec3param_common.h
 libdns___la_SOURCES += rdata/generic/detail/txt_like.h
 libdns___la_SOURCES += rdata/generic/detail/ds_like.h
 
@@ -132,10 +140,11 @@ rrparamregistry.cc: rrparamregistry-placeholder.cc
 rrclass.h rrtype.h rrparamregistry.cc rdataclass.h rdataclass.cc: Makefile
 	./gen-rdatacode.py
 
-libdns___includedir = $(includedir)/dns
+libdns___includedir = $(includedir)/$(PACKAGE_NAME)/dns
 libdns___include_HEADERS = \
 	edns.h \
 	exceptions.h \
+	labelsequence.h \
 	message.h \
 	messagerenderer.h \
 	name.h \
@@ -148,7 +157,7 @@ libdns___include_HEADERS = \
 	rrttl.h \
 	tsigkey.h
 # Purposely not installing these headers:
-# util/*.h: used only internally, and not actually DNS specific
+# name_internal.h: used only internally, and not actually DNS specific
 # rdata/*/detail/*.h: these are internal use only
 # rrclass-placeholder.h
 # rrtype-placeholder.h

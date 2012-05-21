@@ -23,6 +23,7 @@ libdhcp___unittests_SOURCES += libdhcp++_unittest.cc
 libdhcp___unittests_SOURCES += ../iface_mgr.cc ../iface_mgr.h iface_mgr_unittest.cc
 libdhcp___unittests_SOURCES += ../iface_mgr_linux.cc
 libdhcp___unittests_SOURCES += ../iface_mgr_bsd.cc
+libdhcp___unittests_SOURCES += ../iface_mgr_sun.cc
 libdhcp___unittests_SOURCES += ../option6_iaaddr.h ../option6_iaaddr.cc option6_iaaddr_unittest.cc
 libdhcp___unittests_SOURCES += ../option6_ia.h ../option6_ia.cc option6_ia_unittest.cc
 libdhcp___unittests_SOURCES += ../option6_addrlst.h ../option6_addrlst.cc option6_addrlst_unittest.cc
