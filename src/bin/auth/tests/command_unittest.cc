@@ -297,7 +297,9 @@ TEST_F(AuthCommandTest,
                               "      }"
                               "    ]"
                               "  }"
-                              "]}"));
+                              "],"
+                              " \"database_file\": \"" + test_db + "\""
+                              "}"));
     module_session.setLocalConfig(map);
     server_.setConfigSession(&module_session);
 
