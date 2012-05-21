@@ -134,7 +134,7 @@ class UpdateSession:
                              ClientFormatter(self.__client_addr),
                              ZoneFormatter(e.zname, e.zclass), e)
             self.__make_response(e.rcode)
-        return UPDATE_ERROR, None, None
+            return UPDATE_ERROR, None, None
 
     def __get_update_zone(self):
         '''Parse the zone section and find the zone to be updated.
