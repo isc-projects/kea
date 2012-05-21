@@ -53,7 +53,7 @@ public:
     /// \param argc Argument count passed to main().
     /// \param argv Argument value array passed to main().
     /// \param force_reset Force  reset of state variables
-    /// \throw BadValue if fails to parse
+    /// \throws isc::InvalidParameter if parsing fails
     void parse(int argc, char** const argv, bool force_reset = false);
 
     /// \brief Returns IP version
@@ -219,13 +219,18 @@ public:
     /// \brief Print usage
     ///
     /// Prints perfdhcp usage
-    void usage(void);
+    void usage() const;
+
+    /// \brief Print program version
+    ///
+    /// Prints perfdhcp version
+    void version() const;
 
 protected:
 
     /// \brief Default Constructor
     ///
-    /// Protected constructor as this is a singleton class. 
+    /// Protected constructor as this is a singleton class.
     /// Use CommandOptions::instance() to get instance of it.
     CommandOptions() {
         reset();
@@ -241,37 +246,37 @@ private:
     ///
     /// \param argc Argument count passed to main().
     /// \param argv Argument value array passed to main().
-    /// \throw InvalidParameter if bad command line option values
+    /// \throws isc::InvalidParameter if command line options initialization fails
     void initialize(int argc, char** const argv);
 
     /// \brief Validates initialized options
     ///
-    /// \throw InvalidPrameter if validation fails
+    /// \throws isc::InvalidPrameter if command line validation fails
     void validate() const;
 
     /// \brief Checks given condition
     ///
     /// \param condition Condition to be checked
     /// \param errmsg Error message in exception
-    /// \throw InvalidParameter if check fails
-    inline void check(bool condition, const std::string errmsg) const;
+    /// \throws isc::InvalidParameter if check fails
+    inline void check(bool condition, const std::string& errmsg) const;
 
     /// \brief Decodes base provided with -b
     ///
     /// \param base Base in string format
-    /// \throw InvalidParameter if base is invalid
+    /// \throws isc::InvalidParameter if base is invalid
     void decodeBase(const std::string& base);
 
     /// \brief Decodes base MAC address provided with -b
     ///
     /// \param base MAC address in string format
-    /// \throw InvalidParameter if base is invalid
+    /// \throws isc::InvalidParameter if base is invalid
     void decodeMac(const std::string& base);
 
     /// \brief Decodes base DUID provided with -b
     ///
     /// \param base DUID in string format
-    /// \throw InvalidParameter if base is invalid
+    /// \throws isc::InvalidParameter if base is invalid
     void decodeDuid(const std::string& base);
 
     static CommandOptions * instance_;       ///< A pointer to sole instance of this class

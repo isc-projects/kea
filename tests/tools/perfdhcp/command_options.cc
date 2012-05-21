@@ -17,7 +17,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <string.h>
 #include <unistd.h>
 
 #include <boost/algorithm/string.hpp>
@@ -35,7 +34,7 @@ using namespace isc;
 namespace isc {
 namespace perfdhcp {
 
-/// IfaceMgr is a singleton implementation
+/// CommandOptions is a singleton implementation
 CommandOptions* CommandOptions::instance_ = 0;
 
 void
@@ -57,12 +56,13 @@ CommandOptions::instance() {
     return (*instance_);
 }
 
-// Reset stored values to the defaults.
 void
 CommandOptions::reset() {
     uint8_t mac[6] = { 0x0, 0xC, 0x1, 0x2, 0x3, 0x4 };
     double lt[2] = { 1., 1. };
 
+    // We don't use constructor initialization list because we
+    // will need to reset all members many times to perform unit tests
     ipversion_ = 0;
     exchange_mode_ = DORR_SARR;
     rate_ = 0;
@@ -105,7 +105,7 @@ CommandOptions::parse(int argc, char** const argv, bool force_reset /*=false */)
         reset();
     }
     // Reset internal variables used by getopt
-    // to eliminate underfined behavior when
+    // to eliminate undefined behavior when
     // parsing different command lines multiple times
     optind = 1;
     opterr = 0;
@@ -116,21 +116,25 @@ CommandOptions::parse(int argc, char** const argv, bool force_reset /*=false */)
 
 void
 CommandOptions::initialize(int argc, char** const argv) {
-    char opt;
-    char* pc;
-    int nr, of;
+    char opt = 0;
+    char* pc = NULL;
+    int nr = 0, of = 0;
     int di = 0;
     float dp = 0;
-    long long r;
+    long long r = 0;
 
+    // in this section we collect argument values from command line
+    // they will be tuned and validated elsewhere
     while((opt = getopt(argc, argv, "hv46r:t:R:b:n:p:d:D:l:P:a:L:s:iBc1T:X:O:E:S:I:x:w:")) != -1) {
     switch (opt) {
     case 'h':
         usage();
+        break;
 
     case 'v':
-        //        version();
-        ;
+        version();
+        break;
+
     case '4':
         check(ipversion_ == 6, "IP version already set to 6");
         ipversion_ = 4;
@@ -155,15 +159,15 @@ CommandOptions::initialize(int argc, char** const argv) {
         r = boost::lexical_cast<long long>(optarg);
         check(r < 0, "random_range_ must not be a negative integer");
         random_range_ = static_cast<uint32_t>(r);
-        if ((random_range_ != 0) && (random_range_ != UINT32_MAX)) {
+        if ((random_range_ != 0) && (random_range_ != std::numeric_limits<uint32_t>::max())) {
             uint32_t s = random_range_ + 1;
-            uint64_t b = UINT32_MAX + 1, m;
+            uint64_t b = std::numeric_limits<uint32_t>::max() + 1, m;
 
             m = (b / s) * s;
             if (m == b)
                 max_random_ = 0;
             else
-                max_random_ = (uint32_t) m;
+                max_random_ = static_cast<uint32_t> (m);
         }
         break;
 
@@ -226,7 +230,9 @@ CommandOptions::initialize(int argc, char** const argv) {
     case 'L':
         local_port_ = boost::lexical_cast<int>(optarg);
         check(local_port_ < 0, "local-port must not be a negative integer");
-        check(local_port_ > (int) UINT16_MAX, "local-port must be lower than UINT16_MAX");
+        check(local_port_ > static_cast<int>( std::numeric_limits<uint16_t>::max()),
+              "local-port must be lower than " +
+              boost::lexical_cast<std::string>(std::numeric_limits<uint16_t>::max()));
         break;
 
     case 's':
@@ -310,8 +316,12 @@ CommandOptions::initialize(int argc, char** const argv) {
     }
     }
 
+    // Tune ip version as it still might be zero
+    // if not specified in command line was used
     if (ipversion_ == 0)
         ipversion_ = 4;
+
+    // Tune up template file lists
     if (template_file_.size() > 1) {
         if (xid_offset_.size() == 1)
             xid_offset_.push_back(xid_offset_[0]);
@@ -319,11 +329,11 @@ CommandOptions::initialize(int argc, char** const argv) {
             rnd_offset_.push_back(rnd_offset_[0]);
     }
 
-    /* get server argument */
+    // Get server argument
     check(optind < argc -1, "extra arguments?");
     if (optind == argc - 1) {
         server_name_ = argv[optind];
-        /* decode special cases */
+        // Decode special cases
         if ((ipversion_ == 4) &&
             (server_name_.compare("all") == 0)) {
             broadcast_ = 1;
@@ -337,13 +347,15 @@ CommandOptions::initialize(int argc, char** const argv) {
         }
     }
 
-    // TODO USE NON EXISTING IFACE MANAGER TO HANDLE -l option
+    // TODO handle -l option with IfaceManager when it is created
 }
 
 void
 CommandOptions::decodeBase(const std::string& base) {
     std::string b(base);
     boost::algorithm::to_lower(b);
+
+    // Currently we only support MAC and DUID
     if ((b.substr(0, 4) == "mac=") || (b.substr(0, 6) == "ether=")) {
         decodeMac(b);
     } else if (b.substr(0, 5) == "duid=") {
@@ -355,8 +367,11 @@ void
 CommandOptions::decodeMac(const std::string& base) {
     typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
 
+    // Strip string from mac=
     size_t found = base.find('=');
     check(found == std::string::npos, "expected -b<base> format for MAC address is -b MAC=00::0C::01::02::03::04");
+
+    // Tokenize remaining part of the argument to get pieces of MAC address
     boost::char_separator<char> sep(":-");
     tokenizer tokens(base.substr(found + 1), sep);
     std::vector<std::string> stokens(tokens.begin(), tokens.end());
@@ -374,13 +389,17 @@ CommandOptions::decodeMac(const std::string& base) {
 
 void
 CommandOptions::decodeDuid(const std::string& base) {
+    // Strip argument from duid=
     size_t found = base.find('=');
     check(found == std::string::npos, "expected -b<base> format for DUID is -b DUID=<duid>");
     std::string b = base.substr(found + 1);
+
+    // DUID must have even number of digits and must not be longer than 64 bytes
     check(b.length() & 1, "odd number of hexadecimal digits in duid");
     check(b.length() > 128, "duid too large");
     check(b.length() == 0, "no duid specified");
 
+    // Turn pairs of hex digits into vector of bytes
     for (int i = 0; i < b.length(); i += 2) {
         unsigned int ui = 0;
         std::istringstream ss(b.substr(i, 2));
@@ -444,15 +463,16 @@ CommandOptions::validate() const {
 }
 
 void
-CommandOptions::check(bool condition, const std::string errmsg) const {
+CommandOptions::check(bool condition, const std::string& errmsg) const {
+    // The same could have been done with macro or just if statement but
+    // we prefer functions to macros here
     if (condition) {
         isc_throw(isc::InvalidParameter, errmsg);
     }
 }
 
 void
-CommandOptions::usage(void)
-{
+CommandOptions::usage() const {
 	fprintf(stdout, "%s",
 "perfdhcp [-hv] [-4|-6] [-r<rate>] [-t<report>] [-R<range>] [-b<base>]\n"
 "    [-n<num-request>] [-p<test-period>] [-d<drop-time>] [-D<max-drop>]\n"
@@ -575,6 +595,12 @@ CommandOptions::usage(void)
 "3 if there are no general failures in operation, but one or more\n"
 "  exchanges are not successfully completed.\n");
 }
+
+void
+CommandOptions::version() const {
+	fprintf(stdout, "version 0.01\n");
+}
+
 
 } // namespace perfdhcp
 } // namespace isc
