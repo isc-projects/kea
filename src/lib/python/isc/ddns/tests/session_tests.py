@@ -188,6 +188,15 @@ class SessionTest(unittest.TestCase):
                  _UpdateSession__check_prerequisite_name_in_use(client,
                                                                 rrset))
 
+    def __check_prerequisite_name_not_in_use(self, expected, client, rrset):
+        '''Similar to __check_prerequisite_exists(), but for checking
+           the result of __check_prerequisite_name_in_use().
+        '''
+        self.assertEqual(expected,
+            self.__session.
+                 _UpdateSession__check_prerequisite_name_not_in_use(client,
+                                                                    rrset))
+
     def test_check_prerequisite_exists(self):
         # Basic existence checks
         # www.example.org should have an A, but not an MX
@@ -424,7 +433,40 @@ class SessionTest(unittest.TestCase):
         self.__check_prerequisite_name_in_use(True, self.__datasrc_client, rrset)
 
     def test_check_prerequisite_name_not_in_use(self):
-        pass
+        rrset = isc.dns.RRset(isc.dns.Name("example.org"),
+                              isc.dns.RRClass.NONE(), isc.dns.RRType.ANY(),
+                              isc.dns.RRTTL(0))
+        self.__check_prerequisite_name_not_in_use(False, self.__datasrc_client, rrset)
+
+        rrset = isc.dns.RRset(isc.dns.Name("www.example.org"),
+                              isc.dns.RRClass.NONE(), isc.dns.RRType.ANY(),
+                              isc.dns.RRTTL(0))
+        self.__check_prerequisite_name_not_in_use(False, self.__datasrc_client, rrset)
+
+        rrset = isc.dns.RRset(isc.dns.Name("doesnotexist.example.org"),
+                              isc.dns.RRClass.NONE(), isc.dns.RRType.ANY(),
+                              isc.dns.RRTTL(0))
+        self.__check_prerequisite_name_not_in_use(True, self.__datasrc_client, rrset)
+
+        rrset = isc.dns.RRset(isc.dns.Name("belowdelegation.sub.example.org"),
+                              isc.dns.RRClass.NONE(), isc.dns.RRType.ANY(),
+                              isc.dns.RRTTL(0))
+        self.__check_prerequisite_name_not_in_use(True, self.__datasrc_client, rrset)
+
+        rrset = isc.dns.RRset(isc.dns.Name("foo.wildcard.example.org"),
+                              isc.dns.RRClass.NONE(), isc.dns.RRType.ANY(),
+                              isc.dns.RRTTL(0))
+        self.__check_prerequisite_name_not_in_use(True, self.__datasrc_client, rrset)
+
+        # empty nonterminal should not match
+        rrset = isc.dns.RRset(isc.dns.Name("nonterminal.example.org"),
+                              isc.dns.RRClass.NONE(), isc.dns.RRType.ANY(),
+                              isc.dns.RRTTL(0))
+        self.__check_prerequisite_name_not_in_use(True, self.__datasrc_client, rrset)
+        rrset = isc.dns.RRset(isc.dns.Name("empty.nonterminal.example.org"),
+                              isc.dns.RRClass.NONE(), isc.dns.RRType.ANY(),
+                              isc.dns.RRTTL(0))
+        self.__check_prerequisite_name_not_in_use(False, self.__datasrc_client, rrset)
 
     def test_check_prerequisites(self):
         pass
