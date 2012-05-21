@@ -123,7 +123,7 @@ class UpdateSession:
         try:
             datasrc_client, zname, zclass = self.__get_update_zone()
             # conceptual code that would follow
-            # self.__check_prerequisites()
+            self.__check_prerequisites()
             # self.__check_update_acl()
             # self.__do_update()
             # self.__make_response(Rcode.NOERROR())
@@ -187,3 +187,21 @@ class UpdateSession:
         self.__message.make_response()
         self.__message.clear_section(SECTION_ZONE)
         self.__message.set_rcode(rcode)
+
+    def __check_prerequisite_rrset_exists(self):
+        pass
+
+    def __check_prerequisite_rrset_exists(self, foo):
+        pass
+
+    def __check_prerequisite_rrset_does_not_exist(self):
+        pass
+
+    def __check_prerequisite_name_in_use(self):
+        pass
+
+    def __check_prerequisite_name_not_in_use(self):
+        pass
+
+    def __check_prerequisites(self):
+        pass
