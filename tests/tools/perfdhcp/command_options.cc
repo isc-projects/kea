@@ -20,7 +20,6 @@
 #include <unistd.h>
 
 #include <boost/algorithm/string.hpp>
-#include <boost/tokenizer.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 
@@ -365,26 +364,25 @@ CommandOptions::decodeBase(const std::string& base) {
 
 void
 CommandOptions::decodeMac(const std::string& base) {
-    typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
-
     // Strip string from mac=
     size_t found = base.find('=');
     check(found == std::string::npos, "expected -b<base> format for MAC address is -b MAC=00::0C::01::02::03::04");
 
-    // Tokenize remaining part of the argument to get pieces of MAC address
-    boost::char_separator<char> sep(":-");
-    tokenizer tokens(base.substr(found + 1), sep);
-    std::vector<std::string> stokens(tokens.begin(), tokens.end());
-    check(stokens.size() != 6, "expected -b<base> format for MAC address is -b MAC=00::0C::01::02::03::04");
+    // Decode MAC address to vector of uint8_t
+    std::istringstream s1(base.substr(found+1));
+    std::string token;
     mac_prefix_.resize(0);
-    BOOST_FOREACH(std::string t, stokens) {
-        std::istringstream ss(t);
+    while (std::getline(s1, token, ':')) {
         unsigned int ui = 0;
-        ss >> std::hex >> ui >> std::dec;
-        check(ss.fail() || (ui > 0xFF),
-              "expected -b<base> format for MAC address is -b MAC=00::0C::01::02::03::04");
-        mac_prefix_.push_back(static_cast<uint8_t>(ui));
+        std::istringstream s2(token);
+        if (token.length() > 0) {
+            s2 >> std::hex >> ui >> std::dec;
+            check(s2.fail() || (ui > 0xFF),
+                  "expected -b<base> format for MAC address is -b MAC=00::0C::01::02::03::04");
+            mac_prefix_.push_back(ui);
+        }
     }
+    check(mac_prefix_.size() != 6, "expected -b<base> format for MAC address is -b MAC=00::0C::01::02::03::04");
 }
 
 void
