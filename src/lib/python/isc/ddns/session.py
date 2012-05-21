@@ -198,11 +198,35 @@ class UpdateSession:
                                    finder.NO_WILDCARD | finder.FIND_GLUE_OK)
         return result == finder.SUCCESS
 
-    def __check_prerequisite_rrset_exists_value(self, rrset):
-        pass
+    def __check_prerequisite_rrset_exists_value(self, datasrc_client, rrset):
+        '''Check whether an rrset that matches name, type, and rdata(s) of the
+           given rrset exists.
+           RFC2136 Section 2.4.2
+        '''
+        _, finder = datasrc_client.find_zone(rrset.get_name())
+        result, found_rrset, _ = finder.find(rrset.get_name(), rrset.get_type(),
+                                             finder.NO_WILDCARD | finder.FIND_GLUE_OK)
+        if result == finder.SUCCESS and\
+           rrset.get_name() == found_rrset.get_name() and\
+           rrset.get_type() == found_rrset.get_type():
+            # We need to match all actual RRs, unfortunately there is no
+            # direct order-independent comparison for rrsets, so this
+            # a slightly inefficient way to handle that.
+            found_rdata = found_rrset.get_rdata()
+            for rdata in rrset.get_rdata():
+                if rdata in found_rdata:
+                    found_rdata.remove(rdata)
+                else:
+                    return False
+            return len(found_rdata) == 0
+        return False
 
-    def __check_prerequisite_rrset_does_not_exist(self):
-        pass
+    def __check_prerequisite_rrset_does_not_exist(self, datasrc_client, rrset):
+        '''Check whether no rrsets with the same name and type as the given
+           rrset exist.
+           RFC2136 Section 2.4.3.
+        '''
+        return not self.__check_prerequisite_rrset_exists(datasrc_client, rrset)
 
     def __check_prerequisite_name_in_use(self):
         pass
