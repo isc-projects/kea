@@ -228,8 +228,19 @@ class UpdateSession:
         '''
         return not self.__check_prerequisite_rrset_exists(datasrc_client, rrset)
 
-    def __check_prerequisite_name_in_use(self):
-        pass
+    def __check_prerequisite_name_in_use(self, datasrc_client, rrset):
+        '''Check whether the name of the given RRset is in use (i.e. has
+           1 or more RRs).
+           RFC2136 Section 2.4.4
+        '''
+        _, finder = datasrc_client.find_zone(rrset.get_name())
+        result, rrsets, flags = finder.find_all(rrset.get_name(),
+                                                finder.NO_WILDCARD |
+                                                finder.FIND_GLUE_OK)
+        if result == finder.SUCCESS and\
+           (flags & finder.RESULT_WILDCARD == 0):
+            return True
+        return False
 
     def __check_prerequisite_name_not_in_use(self):
         pass
