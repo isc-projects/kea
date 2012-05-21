@@ -100,7 +100,8 @@ my_command_handler(const string& command, ConstElementPtr args) {
                     return (answer);
                 }
             }
-            LOG_DEBUG(resolver_logger, RESOLVER_DBG_INIT, RESOLVER_SHUTDOWN);
+            LOG_DEBUG(resolver_logger, RESOLVER_DBG_INIT,
+                      RESOLVER_SHUTDOWN_RECEIVED);
             io_service.stop();
         }
 

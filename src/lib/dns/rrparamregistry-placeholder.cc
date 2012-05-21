@@ -401,7 +401,7 @@ textToCode(const string& code_str, MS& stringmap) {
             return (code);
         }
     }
-    isc_throw(ET, "Unrecognized RR parameter string");
+    isc_throw(ET, "Unrecognized RR parameter string: " + code_str);
 }
 
 template <typename PT, typename MC>

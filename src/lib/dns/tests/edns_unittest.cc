@@ -43,9 +43,7 @@ const uint8_t EDNS::SUPPORTED_VERSION;
 namespace {
 class EDNSTest : public ::testing::Test {
 protected:
-    EDNSTest() : rrtype(RRType::OPT()), buffer(NULL, 0), obuffer(0),
-                 renderer(obuffer), rcode(0)
-    {
+    EDNSTest() : rrtype(RRType::OPT()), buffer(NULL, 0), obuffer(0), rcode(0) {
         opt_rdata = ConstRdataPtr(new generic::OPT());
         edns_base.setUDPSize(4096);
     }

@@ -20,7 +20,7 @@
 <refentry>
 
   <refentryinfo>
-    <date>March 8, 2010</date>
+    <date>March 26, 2012</date>
   </refentryinfo>
 
   <refmeta>
@@ -46,7 +46,7 @@
       <command>b10-loadzone</command>
       <arg><option>-d <replaceable class="parameter">database</replaceable></option></arg>
       <arg><option>-o <replaceable class="parameter">origin</replaceable></option></arg>
-      <arg chose="req">filename</arg>
+      <arg choice="req">filename</arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 

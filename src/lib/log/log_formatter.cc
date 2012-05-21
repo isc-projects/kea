@@ -12,7 +12,10 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include "config.h"
 #include <log/log_formatter.h>
+
+#include <cassert>
 
 using namespace std;
 using namespace boost;
@@ -24,17 +27,42 @@ void
 replacePlaceholder(string* message, const string& arg,
                    const unsigned placeholder)
 {
-    string mark("%" + lexical_cast<string>(placeholder));
+    const string mark("%" + lexical_cast<string>(placeholder));
     size_t pos(message->find(mark));
     if (pos != string::npos) {
         do {
             message->replace(pos, mark.size(), arg);
             pos = message->find(mark, pos + arg.size());
         } while (pos != string::npos);
-    } else {
+    }
+#ifdef ENABLE_LOGGER_CHECKS
+    else {
+        // We're missing the placeholder, so throw an exception
+        isc_throw(MismatchedPlaceholders,
+		  "Missing logger placeholder in message: " << *message);
+    }
+#else
+    else {
         // We're missing the placeholder, so add some complain
-        message->append(" @@Missing placeholder " + mark + " for '" + arg +
-                        "'@@");
+        message->append(" @@Missing placeholder " + mark + " for '" + arg + "'@@");
+    }
+#endif /* ENABLE_LOGGER_CHECKS */
+}
+
+void
+checkExcessPlaceholders(string* message, unsigned int placeholder) {
+    const string mark("%" + lexical_cast<string>(placeholder));
+    const size_t pos(message->find(mark));
+    if (pos != string::npos) {
+        // Excess placeholders were found.  If we enable the harsh check,
+        // abort it.  Note: ideally we'd like to throw MismatchedPlaceholders,
+        // but we can't at least for now because this function is called from
+        // the Formatter's destructor.
+#ifdef ENABLE_LOGGER_CHECKS
+        assert("Excess logger placeholders still exist in message" == NULL);
+#else
+        message->append(" @@Excess logger placeholders still exist@@");
+#endif /* ENABLE_LOGGER_CHECKS */
     }
 }
 

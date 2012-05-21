@@ -76,6 +76,27 @@ example_soa_question = Question(TEST_ZONE_NAME, TEST_RRCLASS, RRType.SOA())
 default_questions = [example_axfr_question]
 default_answers = [soa_rrset]
 
+def get_fake_time_time():
+    '''Returns a temporary replacement function for time.time(), which
+       always returns 0.1 more than the previous call. This is to make
+       sure these tests do not fail on systems where the time.time()
+       function has a high minimal accuracy.
+       This fake time.time() is usually set in place of the real one
+       where we need testing of get_running_time(). It is done is
+       as low a scope as possible, so as not to mess up unit test
+       framework time related tests. It must be set before
+       XfrinTransferState (or any class that initializes that) is
+       initialized.
+       And every time it is set up, in must be reset later (again, so
+       as not to mess up the framework's concept of time).
+    '''
+    fake_time = 0.0
+    def fake_time_time():
+        nonlocal fake_time
+        fake_time += 0.1
+        return fake_time
+    return fake_time_time
+
 def check_diffs(assert_fn, expected, actual):
     '''A helper function checking the differences made in the XFR session.
 
@@ -117,6 +138,9 @@ class MockCC(MockModuleCCSession):
             return TEST_RRCLASS_STR
         if identifier == "zones/use_ixfr":
             return False
+
+    def remove_remote_config(self, module_name):
+        pass
 
 class MockDataSourceClient():
     '''A simple mock data source client.
@@ -561,7 +585,7 @@ class TestXfrinIXFREnd(TestXfrinState):
     def test_finish_message(self):
         self.assertFalse(self.state.finish_message(self.conn))
 
-class TestXfrinIXFREnd(TestXfrinState):
+class TestXfrinIXFREndUpToDate(TestXfrinState):
     def setUp(self):
         super().setUp()
         self.state = XfrinIXFRUptodate()
@@ -759,8 +783,14 @@ class TestXfrinConnection(unittest.TestCase):
 
 class TestAXFR(TestXfrinConnection):
     def setUp(self):
+        # replace time.time with a steadily increasing fake one
+        self.orig_time_time = time.time
+        time.time = get_fake_time_time()
         super().setUp()
         XfrinInitialSOA().set_xfrstate(self.conn, XfrinInitialSOA())
+
+    def tearDown(self):
+        time.time = self.orig_time_time
 
     def __create_mock_tsig(self, key, error):
         # This helper function creates a MockTSIGContext for a given key
@@ -1318,6 +1348,14 @@ class TestAXFR(TestXfrinConnection):
         self.assertEqual(self.conn.do_xfrin(False), XFRIN_OK)
         self.assertFalse(self.conn._datasrc_client._journaling_enabled)
 
+        self.assertEqual(2, self.conn._transfer_stats.message_count)
+        self.assertEqual(2, self.conn._transfer_stats.axfr_rr_count)
+        self.assertEqual(0, self.conn._transfer_stats.ixfr_changeset_count)
+        self.assertEqual(0, self.conn._transfer_stats.ixfr_deletion_count)
+        self.assertEqual(0, self.conn._transfer_stats.ixfr_addition_count)
+        self.assertEqual(177, self.conn._transfer_stats.byte_count)
+        self.assertGreater(self.conn._transfer_stats.get_running_time(), 0)
+
     def test_do_xfrin_with_tsig(self):
         # use TSIG with a mock context.  we fake all verify results to
         # emulate successful verification.
@@ -1461,12 +1499,19 @@ class TestAXFR(TestXfrinConnection):
 
 class TestIXFRResponse(TestXfrinConnection):
     def setUp(self):
+        # replace time.time with a steadily increasing fake one
+        self.orig_time_time = time.time
+        time.time = get_fake_time_time()
+
         super().setUp()
         self.conn._query_id = self.conn.qid = 1035
         self.conn._request_serial = isc.dns.Serial(1230)
         self.conn._request_type = RRType.IXFR()
         self.conn._datasrc_client = MockDataSourceClient()
         XfrinInitialSOA().set_xfrstate(self.conn, XfrinInitialSOA())
+
+    def tearDown(self):
+        time.time = self.orig_time_time
 
     def test_ixfr_response(self):
         '''A simplest form of IXFR response.
@@ -1662,7 +1707,13 @@ class TestIXFRSession(TestXfrinConnection):
     the general logic flow.
     '''
     def setUp(self):
+        # replace time.time with a steadily increasing fake one
+        self.orig_time_time = time.time
+        time.time = get_fake_time_time()
         super().setUp()
+
+    def tearDown(self):
+        time.time = self.orig_time_time
 
     def test_do_xfrin(self):
         def create_ixfr_response():
@@ -1686,6 +1737,14 @@ class TestIXFRSession(TestXfrinConnection):
         self.assertEqual(1, qmsg.get_rr_count(Message.SECTION_QUESTION))
         self.assertEqual(TEST_ZONE_NAME, qmsg.get_question()[0].get_name())
         self.assertEqual(RRType.IXFR(), qmsg.get_question()[0].get_type())
+
+        self.assertEqual(1, self.conn._transfer_stats.message_count)
+        self.assertEqual(0, self.conn._transfer_stats.axfr_rr_count)
+        self.assertEqual(1, self.conn._transfer_stats.ixfr_changeset_count)
+        self.assertEqual(1, self.conn._transfer_stats.ixfr_deletion_count)
+        self.assertEqual(1, self.conn._transfer_stats.ixfr_addition_count)
+        self.assertEqual(188, self.conn._transfer_stats.byte_count)
+        self.assertGreater(self.conn._transfer_stats.get_running_time(), 0)
 
     def test_do_xfrin_fail(self):
         '''IXFR fails due to a protocol error.
@@ -1719,6 +1778,14 @@ class TestIXFRSession(TestXfrinConnection):
         self.conn.response_generator = create_response
         self.assertEqual(XFRIN_OK, self.conn.do_xfrin(False, RRType.IXFR()))
 
+        self.assertEqual(1, self.conn._transfer_stats.message_count)
+        self.assertEqual(0, self.conn._transfer_stats.axfr_rr_count)
+        self.assertEqual(0, self.conn._transfer_stats.ixfr_changeset_count)
+        self.assertEqual(0, self.conn._transfer_stats.ixfr_deletion_count)
+        self.assertEqual(0, self.conn._transfer_stats.ixfr_addition_count)
+        self.assertEqual(80, self.conn._transfer_stats.byte_count)
+        self.assertGreater(self.conn._transfer_stats.get_running_time(), 0)
+
 class TestXFRSessionWithSQLite3(TestXfrinConnection):
     '''Tests for XFR sessions using an SQLite3 DB.
 
@@ -1734,6 +1801,9 @@ class TestXFRSessionWithSQLite3(TestXfrinConnection):
         self.empty_sqlite3db_obj = TESTDATA_OBJDIR + '/empty.sqlite3'
         self.sqlite3db_cfg = "{ \"database_file\": \"" +\
                              self.sqlite3db_obj + "\"}"
+        # replace time.time with a steadily increasing fake one
+        self.orig_time_time = time.time
+        time.time = get_fake_time_time()
         super().setUp()
         if os.path.exists(self.sqlite3db_obj):
             os.unlink(self.sqlite3db_obj)
@@ -1748,6 +1818,7 @@ class TestXFRSessionWithSQLite3(TestXfrinConnection):
             os.unlink(self.sqlite3db_obj)
         if os.path.exists(self.empty_sqlite3db_obj):
             os.unlink(self.empty_sqlite3db_obj)
+        time.time = self.orig_time_time
 
     def get_zone_serial(self):
         result, finder = self.conn._datasrc_client.find_zone(TEST_ZONE_NAME)
@@ -2506,6 +2577,134 @@ class TestXfrin(unittest.TestCase):
         self.common_ixfr_setup('refresh', False)
         self.assertEqual(RRType.AXFR(), self.xfr.xfrin_started_request_type)
 
+class TestXfrinMemoryZones(unittest.TestCase):
+    def setUp(self):
+        self.xfr = MockXfrin()
+        # Configuration snippet containing 2 memory datasources,
+        # one for IN and one for CH. Both contain a zone 'example.com'
+        # the IN ds also contains a zone example2.com, and a zone example3.com,
+        # which is of file type 'text' (and hence, should be ignored)
+        self.config = { 'datasources': [
+                          { 'type': 'memory',
+                            'class': 'IN',
+                            'zones': [
+                              { 'origin': 'example.com',
+                                'filetype': 'sqlite3' },
+                              { 'origin': 'EXAMPLE2.com.',
+                                'filetype': 'sqlite3' },
+                              { 'origin': 'example3.com',
+                                'filetype': 'text' }
+                            ]
+                          },
+                          { 'type': 'memory',
+                            'class': 'ch',
+                            'zones': [
+                              { 'origin': 'example.com',
+                                'filetype': 'sqlite3' }
+                            ]
+                          }
+                      ] }
+
+    def test_updates(self):
+        self.assertFalse(self.xfr._is_memory_zone("example.com", "IN"))
+        self.assertFalse(self.xfr._is_memory_zone("example2.com", "IN"))
+        self.assertFalse(self.xfr._is_memory_zone("example3.com", "IN"))
+        self.assertFalse(self.xfr._is_memory_zone("example.com", "CH"))
+
+        # add them all
+        self.xfr._set_memory_zones(self.config, None)
+        self.assertTrue(self.xfr._is_memory_zone("example.com", "IN"))
+        self.assertTrue(self.xfr._is_memory_zone("example2.com", "IN"))
+        self.assertFalse(self.xfr._is_memory_zone("example3.com", "IN"))
+        self.assertTrue(self.xfr._is_memory_zone("example.com", "CH"))
+
+        # Remove the CH data source from the self.config snippet, and update
+        del self.config['datasources'][1]
+        self.xfr._set_memory_zones(self.config, None)
+        self.assertTrue(self.xfr._is_memory_zone("example.com", "IN"))
+        self.assertTrue(self.xfr._is_memory_zone("example2.com", "IN"))
+        self.assertFalse(self.xfr._is_memory_zone("example3.com", "IN"))
+        self.assertFalse(self.xfr._is_memory_zone("example.com", "CH"))
+
+        # Remove example2.com from the datasource, and update
+        del self.config['datasources'][0]['zones'][1]
+        self.xfr._set_memory_zones(self.config, None)
+        self.assertTrue(self.xfr._is_memory_zone("example.com", "IN"))
+        self.assertFalse(self.xfr._is_memory_zone("example2.com", "IN"))
+        self.assertFalse(self.xfr._is_memory_zone("example3.com", "IN"))
+        self.assertFalse(self.xfr._is_memory_zone("example.com", "CH"))
+
+        # If 'datasources' is not in the self.config update list (i.e. its
+        # self.config has not changed), no difference should be found
+        self.xfr._set_memory_zones({}, None)
+        self.assertTrue(self.xfr._is_memory_zone("example.com", "IN"))
+        self.assertFalse(self.xfr._is_memory_zone("example2.com", "IN"))
+        self.assertFalse(self.xfr._is_memory_zone("example3.com", "IN"))
+        self.assertFalse(self.xfr._is_memory_zone("example.com", "CH"))
+
+        # If datasources list becomes empty, everything should be removed
+        self.config['datasources'][0]['zones'] = []
+        self.xfr._set_memory_zones(self.config, None)
+        self.assertFalse(self.xfr._is_memory_zone("example.com", "IN"))
+        self.assertFalse(self.xfr._is_memory_zone("example2.com", "IN"))
+        self.assertFalse(self.xfr._is_memory_zone("example3.com", "IN"))
+        self.assertFalse(self.xfr._is_memory_zone("example.com", "CH"))
+
+    def test_normalization(self):
+        self.xfr._set_memory_zones(self.config, None)
+        # make sure it is case insensitive, root-dot-insensitive,
+        # and supports CLASSXXX notation
+        self.assertTrue(self.xfr._is_memory_zone("EXAMPLE.com", "IN"))
+        self.assertTrue(self.xfr._is_memory_zone("example.com", "in"))
+        self.assertTrue(self.xfr._is_memory_zone("example2.com.", "IN"))
+        self.assertTrue(self.xfr._is_memory_zone("example.com", "CLASS3"))
+
+    def test_bad_name(self):
+        # First set it to some config
+        self.xfr._set_memory_zones(self.config, None)
+
+        # Error checking; bad owner name should result in no changes
+        self.config['datasources'][1]['zones'][0]['origin'] = ".."
+        self.xfr._set_memory_zones(self.config, None)
+        self.assertTrue(self.xfr._is_memory_zone("example.com", "IN"))
+        self.assertTrue(self.xfr._is_memory_zone("example2.com", "IN"))
+        self.assertFalse(self.xfr._is_memory_zone("example3.com", "IN"))
+        self.assertTrue(self.xfr._is_memory_zone("example.com", "CH"))
+
+    def test_bad_class(self):
+        # First set it to some config
+        self.xfr._set_memory_zones(self.config, None)
+
+        # Error checking; bad owner name should result in no changes
+        self.config['datasources'][1]['class'] = "Foo"
+        self.xfr._set_memory_zones(self.config, None)
+        self.assertTrue(self.xfr._is_memory_zone("example.com", "IN"))
+        self.assertTrue(self.xfr._is_memory_zone("example2.com", "IN"))
+        self.assertFalse(self.xfr._is_memory_zone("example3.com", "IN"))
+        self.assertTrue(self.xfr._is_memory_zone("example.com", "CH"))
+
+    def test_no_filetype(self):
+        # omitting the filetype should leave that zone out, but not
+        # the rest
+        del self.config['datasources'][1]['zones'][0]['filetype']
+        self.xfr._set_memory_zones(self.config, None)
+        self.assertTrue(self.xfr._is_memory_zone("example.com", "IN"))
+        self.assertTrue(self.xfr._is_memory_zone("example2.com", "IN"))
+        self.assertFalse(self.xfr._is_memory_zone("example3.com", "IN"))
+        self.assertFalse(self.xfr._is_memory_zone("example.com", "CH"))
+
+    def test_class_filetype(self):
+        # omitting the class should have it default to what is in the
+        # specfile for Auth.
+        AuthConfigData = isc.config.config_data.ConfigData(
+            isc.config.module_spec_from_file(xfrin.AUTH_SPECFILE_LOCATION))
+        del self.config['datasources'][0]['class']
+        self.xfr._set_memory_zones(self.config, AuthConfigData)
+        self.assertTrue(self.xfr._is_memory_zone("example.com", "IN"))
+        self.assertTrue(self.xfr._is_memory_zone("example2.com", "IN"))
+        self.assertFalse(self.xfr._is_memory_zone("example3.com", "IN"))
+        self.assertTrue(self.xfr._is_memory_zone("example.com", "CH"))
+
 def raise_interrupt():
     raise KeyboardInterrupt()
 
@@ -2537,6 +2736,44 @@ class TestMain(unittest.TestCase):
         MockXfrin.check_command_hook = raise_exception
         main(MockXfrin, False)
 
+class TestXfrinProcessMockCC:
+    def __init__(self):
+        self.get_called = False
+        self.get_called_correctly = False
+        self.config = []
+
+    def get_remote_config_value(self, module, identifier):
+        self.get_called = True
+        if module == 'Auth' and identifier == 'datasources':
+            self.get_called_correctly = True
+            return (self.config, False)
+        else:
+            return (None, True)
+
+class TestXfrinProcessMockCCSession:
+    def __init__(self):
+        self.send_called = False
+        self.send_called_correctly = False
+        self.recv_called = False
+        self.recv_called_correctly = False
+
+    def group_sendmsg(self, msg, module):
+        self.send_called = True
+        if module == 'Auth' and msg['command'][0] == 'loadzone':
+            self.send_called_correctly = True
+            seq = "random-e068c2de26d760f20cf10afc4b87ef0f"
+        else:
+            seq = None
+
+        return seq
+
+    def group_recvmsg(self, message, seq):
+        self.recv_called = True
+        if message == False and seq == "random-e068c2de26d760f20cf10afc4b87ef0f":
+            self.recv_called_correctly = True
+        # return values are ignored
+        return (None, None)
+
 class TestXfrinProcess(unittest.TestCase):
     """
     Some tests for the xfrin_process function. This replaces the
@@ -2552,6 +2789,8 @@ class TestXfrinProcess(unittest.TestCase):
 
         Also sets up several internal variables to watch what happens.
         """
+        self._module_cc = TestXfrinProcessMockCC()
+        self._send_cc_session = TestXfrinProcessMockCCSession()
         # This will hold a "log" of what transfers were attempted.
         self.__transfers = []
         # This will "log" if failures or successes happened.
@@ -2596,6 +2835,9 @@ class TestXfrinProcess(unittest.TestCase):
         Part of pretending to be the server as well. This just logs the
         success/failure of the previous operation.
         """
+        if ret == XFRIN_OK:
+            xfrin._do_auth_loadzone(self, zone_name, rrclass)
+
         self.__published.append(ret)
 
     def close(self):
@@ -2626,12 +2868,22 @@ class TestXfrinProcess(unittest.TestCase):
         # Create a connection for each attempt
         self.assertEqual(len(transfers), self.__created_connections)
         self.assertEqual([published], self.__published)
+        if published == XFRIN_OK:
+            self.assertTrue(self._module_cc.get_called)
+            self.assertTrue(self._module_cc.get_called_correctly)
+        else:
+            self.assertFalse(self._module_cc.get_called)
+            self.assertFalse(self._module_cc.get_called_correctly)
 
     def test_ixfr_ok(self):
         """
         Everything OK the first time, over IXFR.
         """
         self.__do_test([XFRIN_OK], [RRType.IXFR()], RRType.IXFR())
+        self.assertFalse(self._send_cc_session.send_called)
+        self.assertFalse(self._send_cc_session.send_called_correctly)
+        self.assertFalse(self._send_cc_session.recv_called)
+        self.assertFalse(self._send_cc_session.recv_called_correctly)
 
     def test_axfr_ok(self):
         """
@@ -2662,6 +2914,138 @@ class TestXfrinProcess(unittest.TestCase):
         """
         self.__do_test([XFRIN_FAIL, XFRIN_FAIL],
                        [RRType.IXFR(), RRType.AXFR()], RRType.IXFR())
+
+    def test_inmem_ok(self):
+        """
+        Inmem configuration where all the configuration is just right
+        for loadzone to be sent to b10-auth (origin is the name received
+        by xfrin, filetype is sqlite3, type is memory and class is the
+        one received by xfrin).
+        """
+        self._module_cc.config = [{'zones': [{'origin': 'example.org', 'filetype': 'sqlite3',
+                                              'file': 'data/inmem-xfrin.sqlite3'}],
+                                   'type': 'memory', 'class': 'IN'}]
+        self.__do_test([XFRIN_OK], [RRType.IXFR()], RRType.IXFR())
+        self.assertTrue(self._send_cc_session.send_called)
+        self.assertTrue(self._send_cc_session.send_called_correctly)
+        self.assertTrue(self._send_cc_session.recv_called)
+        self.assertTrue(self._send_cc_session.recv_called_correctly)
+
+    def test_inmem_datasource_type_not_memory(self):
+        """
+        Inmem configuration where the datasource type is not memory. In
+        this case, loadzone should not be sent to b10-auth.
+        """
+        self._module_cc.config = [{'zones': [{'origin': 'example.org', 'filetype': 'sqlite3',
+                                              'file': 'data/inmem-xfrin.sqlite3'}],
+                                   'type': 'punched-card', 'class': 'IN'}]
+        self.__do_test([XFRIN_OK], [RRType.IXFR()], RRType.IXFR())
+        self.assertFalse(self._send_cc_session.send_called)
+        self.assertFalse(self._send_cc_session.send_called_correctly)
+        self.assertFalse(self._send_cc_session.recv_called)
+        self.assertFalse(self._send_cc_session.recv_called_correctly)
+
+    def test_inmem_datasource_type_is_missing(self):
+        """
+        Inmem configuration where the datasource type is missing. In
+        this case, loadzone should not be sent to b10-auth.
+        """
+        self._module_cc.config = [{'zones': [{'origin': 'example.org', 'filetype': 'sqlite3',
+                                              'file': 'data/inmem-xfrin.sqlite3'}],
+                                   'class': 'IN'}]
+        self.__do_test([XFRIN_OK], [RRType.IXFR()], RRType.IXFR())
+        self.assertFalse(self._send_cc_session.send_called)
+        self.assertFalse(self._send_cc_session.send_called_correctly)
+        self.assertFalse(self._send_cc_session.recv_called)
+        self.assertFalse(self._send_cc_session.recv_called_correctly)
+
+    def test_inmem_backend_type_not_sqlite3(self):
+        """
+        Inmem configuration where the datasource backing file is not of
+        type sqlite3. In this case, loadzone should not be sent to
+        b10-auth.
+        """
+        self._module_cc.config = [{'zones': [{'origin': 'example.org', 'filetype': 'postgresql',
+                                              'file': 'data/inmem-xfrin.db'}],
+                                   'type': 'memory', 'class': 'IN'}]
+        self.__do_test([XFRIN_OK], [RRType.IXFR()], RRType.IXFR())
+        self.assertFalse(self._send_cc_session.send_called)
+        self.assertFalse(self._send_cc_session.send_called_correctly)
+        self.assertFalse(self._send_cc_session.recv_called)
+        self.assertFalse(self._send_cc_session.recv_called_correctly)
+
+    def test_inmem_backend_type_is_missing(self):
+        """
+        Inmem configuration where the datasource backing file type is
+        not set. In this case, loadzone should not be sent to b10-auth.
+        """
+        self._module_cc.config = [{'zones': [{'origin': 'example.org',
+                                              'file': 'data/inmem-xfrin'}],
+                                   'type': 'memory', 'class': 'IN'}]
+        self.__do_test([XFRIN_OK], [RRType.IXFR()], RRType.IXFR())
+        self.assertFalse(self._send_cc_session.send_called)
+        self.assertFalse(self._send_cc_session.send_called_correctly)
+        self.assertFalse(self._send_cc_session.recv_called)
+        self.assertFalse(self._send_cc_session.recv_called_correctly)
+
+    def test_inmem_class_is_different(self):
+        """
+        Inmem configuration where the datasource class does not match
+        the received class. In this case, loadzone should not be sent to
+        b10-auth.
+        """
+        self._module_cc.config = [{'zones': [{'origin': 'example.org', 'filetype': 'sqlite3',
+                                              'file': 'data/inmem-xfrin.sqlite3'}],
+                                   'type': 'memory', 'class': 'XX'}]
+        self.__do_test([XFRIN_OK], [RRType.IXFR()], RRType.IXFR())
+        self.assertFalse(self._send_cc_session.send_called)
+        self.assertFalse(self._send_cc_session.send_called_correctly)
+        self.assertFalse(self._send_cc_session.recv_called)
+        self.assertFalse(self._send_cc_session.recv_called_correctly)
+
+    def test_inmem_class_is_missing(self):
+        """
+        Inmem configuration where the datasource class is missing. In
+        this case, we assume the IN class and loadzone may be sent to
+        b10-auth if everything else matches.
+        """
+        self._module_cc.config = [{'zones': [{'origin': 'example.org', 'filetype': 'sqlite3',
+                                              'file': 'data/inmem-xfrin.sqlite3'}],
+                                   'type': 'memory'}]
+        self.__do_test([XFRIN_OK], [RRType.IXFR()], RRType.IXFR())
+        self.assertTrue(self._send_cc_session.send_called)
+        self.assertTrue(self._send_cc_session.send_called_correctly)
+        self.assertTrue(self._send_cc_session.recv_called)
+        self.assertTrue(self._send_cc_session.recv_called_correctly)
+
+    def test_inmem_name_doesnt_match(self):
+        """
+        Inmem configuration where the origin does not match the received
+        name. In this case, loadzone should not be sent to b10-auth.
+        """
+        self._module_cc.config = [{'zones': [{'origin': 'isc.org', 'filetype': 'sqlite3',
+                                              'file': 'data/inmem-xfrin.sqlite3'}],
+                                   'type': 'memory', 'class': 'IN'}]
+        self.__do_test([XFRIN_OK], [RRType.IXFR()], RRType.IXFR())
+        self.assertFalse(self._send_cc_session.send_called)
+        self.assertFalse(self._send_cc_session.send_called_correctly)
+        self.assertFalse(self._send_cc_session.recv_called)
+        self.assertFalse(self._send_cc_session.recv_called_correctly)
+
+    def test_inmem_name_is_missing(self):
+        """
+        Inmem configuration where the origin is missing. In this case,
+        loadzone should not be sent to b10-auth.
+        """
+        self._module_cc.config = [{'zones': [{'filetype': 'sqlite3',
+                                              'file': 'data/inmem-xfrin.sqlite3'}],
+                                   'type': 'memory', 'class': 'IN'}]
+        self.__do_test([XFRIN_OK], [RRType.IXFR()], RRType.IXFR())
+        self.assertFalse(self._send_cc_session.send_called)
+        self.assertFalse(self._send_cc_session.send_called_correctly)
+        self.assertFalse(self._send_cc_session.recv_called)
+        self.assertFalse(self._send_cc_session.recv_called_correctly)
+
 class TestFormatting(unittest.TestCase):
     # If the formatting functions are moved to a more general library
     # (ticket #1379), these tests should be moved with them.
@@ -2714,6 +3098,68 @@ class TestFormatting(unittest.TestCase):
                                      (socket.AF_INET, "asdf"))
         self.assertRaises(TypeError, format_addrinfo,
                                      (socket.AF_INET, "asdf", ()))
+
+class TestXfrinTransferStats(unittest.TestCase):
+    def setUp(self):
+        # replace time.time with a steadily increasing fake one
+        self.orig_time_time = time.time
+        time.time = get_fake_time_time()
+        self.stats = XfrinTransferStats()
+
+    def tearDown(self):
+        time.time = self.orig_time_time
+
+    def zero_check(self):
+        # Checks whether all counters are zero
+        self.assertEqual(0, self.stats.message_count)
+        self.assertEqual(0, self.stats.axfr_rr_count)
+        self.assertEqual(0, self.stats.byte_count)
+        self.assertEqual(0, self.stats.ixfr_changeset_count)
+        self.assertEqual(0, self.stats.ixfr_deletion_count)
+        self.assertEqual(0, self.stats.ixfr_addition_count)
+
+    def test_init(self):
+        self.zero_check()
+        self.assertIsNone(self.stats._end_time)
+
+    def test_get_running_time(self):
+        self.assertIsNone(self.stats._end_time)
+        runtime = self.stats.get_running_time()
+        self.assertIsNotNone(self.stats._end_time)
+        self.assertGreater(runtime, 0)
+        # make sure a second get does not change anything
+        runtime2 = self.stats.get_running_time()
+        self.assertEqual(runtime, runtime2)
+        # And that no counters have been modified
+        self.zero_check()
+
+    def test_bytes_per_second(self):
+        zbps = self.stats.get_bytes_per_second()
+        self.assertEqual(0, zbps)
+
+        self.stats._start_time = 1
+        self.stats._end_time = 2
+        self.stats.byte_count += 4
+        zbps = self.stats.get_bytes_per_second()
+        self.assertEqual(4, zbps)
+
+        self.stats._start_time = float(1)
+        self.stats._end_time = float(11)
+        self.assertEqual(10, self.stats.get_running_time())
+        self.stats.byte_count = 1234
+        zbps = self.stats.get_bytes_per_second()
+        self.assertEqual(123.4, zbps)
+
+        # if for some reason the runtime is 0, depending
+        # on whether bytes have actually been seen, bps is either
+        # 0 or 'infinite'
+        self.stats._end_time = self.stats._start_time
+        zbps = self.stats.get_bytes_per_second()
+        self.assertEqual(float("inf"), zbps)
+
+        self.stats.byte_count = 0
+        zbps = self.stats.get_bytes_per_second()
+        self.assertEqual(0, zbps)
 
 if __name__== "__main__":
     try:

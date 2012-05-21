@@ -23,11 +23,13 @@
 #include <util/buffer.h>
 #include <dns/exceptions.h>
 #include <dns/name.h>
+#include <dns/name_internal.h>
 #include <dns/messagerenderer.h>
 
 using namespace std;
 using namespace isc::util;
 using isc::dns::NameComparisonResult;
+using namespace isc::dns::name::internal;
 
 namespace isc {
 namespace dns {
@@ -46,12 +48,12 @@ namespace {
 /// we chose the naive but simple hardcoding approach.
 ///
 /// These definitions are derived from BIND 9's libdns module.
-/// Note: it was not clear why the maptolower array was needed rather than
-/// using the standard tolower() function.  It was perhaps due performance
-/// concern, but we were not sure.  Even if it was performance reasons, we
-/// should carefully assess the effect via benchmarking to avoid the pitfall of 
-/// premature optimization.  We should revisit this point later.
-static const char digitvalue[256] = {
+/// Note: we could use the standard tolower() function instead of the
+/// maptolower array, but a benchmark indicated that the private array could
+/// improve the performance of message rendering (which internally uses the
+/// array heavily) about 27%.  Since we want to achieve very good performance
+/// for message rendering in some cases, we'll keep using it.
+const char digitvalue[256] = {
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, // 16
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, // 32
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, // 48
@@ -69,8 +71,11 @@ static const char digitvalue[256] = {
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, // 256
 };
+}
 
-static const unsigned char maptolower[] = {
+namespace name {
+namespace internal {
+const unsigned char maptolower[] = {
     0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
     0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
     0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
@@ -104,7 +109,8 @@ static const unsigned char maptolower[] = {
     0xf0, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7,
     0xf8, 0xf9, 0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xff
 };
-}
+} // end of internal
+} // end of name
 
 namespace {
 ///
@@ -163,7 +169,8 @@ Name::Name(const std::string &namestring, bool downcase) {
             //
             if (c == '.') {
                 if (s != send) {
-                    isc_throw(EmptyLabel, "non terminating empty label");
+                    isc_throw(EmptyLabel,
+                              "non terminating empty label in " << namestring);
                 }
                 is_root = true;
             } else if (c == '@' && s == send) {
@@ -191,7 +198,8 @@ Name::Name(const std::string &namestring, bool downcase) {
         case ft_ordinary:
             if (c == '.') {
                 if (count == 0) {
-                    isc_throw(EmptyLabel, "duplicate period");
+                    isc_throw(EmptyLabel,
+                              "duplicate period in " << namestring);
                 }
                 ndata.at(offsets.back()) = count;
                 offsets.push_back(ndata.size());
@@ -204,7 +212,8 @@ Name::Name(const std::string &namestring, bool downcase) {
                 state = ft_escape;
             } else {
                 if (++count > MAX_LABELLEN) {
-                    isc_throw(TooLongLabel, "label is too long");
+                    isc_throw(TooLongLabel,
+                              "label is too long in " << namestring);
                 }
                 ndata.push_back(downcase ? maptolower[c] : c);
             }
@@ -213,14 +222,16 @@ Name::Name(const std::string &namestring, bool downcase) {
             if (c == '[') {
                 // This looks like a bitstring label, which was deprecated.
                 // Intentionally drop it.
-                isc_throw(BadLabelType, "invalid label type");
+                isc_throw(BadLabelType,
+                          "invalid label type in " << namestring);
             }
             state = ft_escape;
             // FALLTHROUGH
         case ft_escape:
             if (!isdigit(c & 0xff)) {
                 if (++count > MAX_LABELLEN) {
-                    isc_throw(TooLongLabel, "label is too long");
+                    isc_throw(TooLongLabel,
+                              "label is too long in " << namestring);
                 }
                 ndata.push_back(downcase ? maptolower[c] : c);
                 state = ft_ordinary;
@@ -232,17 +243,22 @@ Name::Name(const std::string &namestring, bool downcase) {
             // FALLTHROUGH
         case ft_escdecimal:
             if (!isdigit(c & 0xff)) {
-                isc_throw(BadEscape, "mixture of escaped digit and non-digit");
+                isc_throw(BadEscape,
+                          "mixture of escaped digit and non-digit in "
+                          << namestring);
             }
             value *= 10;
             value += digitvalue[c];
             digits++;
             if (digits == 3) {
                 if (value > 255) {
-                    isc_throw(BadEscape, "escaped decimal is too large");
+                    isc_throw(BadEscape,
+                              "escaped decimal is too large in "
+                              << namestring);
                 }
                 if (++count > MAX_LABELLEN) {
-                    isc_throw(TooLongLabel, "label is too long");
+                    isc_throw(TooLongLabel,
+                              "label is too long in " << namestring);
                 }
                 ndata.push_back(downcase ? maptolower[value] : value);
                 state = ft_ordinary;
@@ -256,11 +272,14 @@ Name::Name(const std::string &namestring, bool downcase) {
 
     if (!done) {                // no trailing '.' was found.
         if (ndata.size() == Name::MAX_WIRE) {
-            isc_throw(TooLongName, "name is too long for termination");
+            isc_throw(TooLongName,
+                      "name is too long for termination in " << namestring);
         }
         assert(s == send);
         if (state != ft_ordinary && state != ft_at) {
-            isc_throw(IncompleteName, "incomplete textual name");
+            isc_throw(IncompleteName,
+                      "incomplete textual name in " <<
+                      (namestring.empty() ? "<empty>" : namestring));
         }
         if (state == ft_ordinary) {
             assert(count != 0);

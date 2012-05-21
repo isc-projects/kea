@@ -36,6 +36,9 @@ class TestDhcpv6Daemon(unittest.TestCase):
         # to the main program ASAP in each test... this prevents
         # hangs reading from the child process (as the pipe is only
         # open in the child), and also insures nice pretty output
+        print("Please ignore any socket errors. Purpose of this test is to")
+        print("verify that DHCPv6 process could be started, not that socket")
+        print("could be bound. Binding fails when run as non-root user.")
 
     def tearDown(self):
         # clean up our stdout munging

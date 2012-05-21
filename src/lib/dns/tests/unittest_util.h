@@ -93,6 +93,22 @@ public:
                          const isc::dns::Name& name,
                          const isc::dns::RRClass& rrclass,
                          const isc::dns::RRType& rrtype);
+
+    ///
+    /// Populate a DNSSEC request message
+    ///
+    /// Create a request message in 'request_message' using the
+    /// opcode 'opcode' and the name/class/type query tuple specified in
+    /// 'name', 'rrclass' and 'rrtype.
+    /// EDNS will be added with DO=1 and bufsize 4096
+    static void
+    createDNSSECRequestMessage(isc::dns::Message& request_message,
+                               const isc::dns::Opcode& opcode,
+                               const uint16_t qid,
+                               const isc::dns::Name& name,
+                               const isc::dns::RRClass& rrclass,
+                               const isc::dns::RRType& rrtype);
+
 };
 }
 #endif // __UNITTEST_UTIL_H

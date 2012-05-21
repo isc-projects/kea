@@ -3,6 +3,7 @@ AM_CPPFLAGS += -I$(top_builddir)/src/bin # for generated spec_config.h header
 AM_CPPFLAGS += -I$(top_builddir)/src/lib/dns -I$(top_srcdir)/src/bin
 AM_CPPFLAGS += -I$(top_builddir)/src/lib/cc
 AM_CPPFLAGS += $(BOOST_INCLUDES)
+AM_CPPFLAGS += -DAUTH_OBJ_DIR=\"$(abs_top_builddir)/src/bin/auth\"
 AM_CPPFLAGS += -DTEST_DATA_DIR=\"$(abs_top_srcdir)/src/lib/testutils/testdata\"
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/lib/testutils/testdata\"
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
@@ -11,14 +12,18 @@ AM_CXXFLAGS = $(B10_CXXFLAGS)
 
 if USE_STATIC_LINK
 AM_LDFLAGS = -static
+# Some test cases cannot work with static link.  To selectively disable such
+# tests we signal it via a definition.
+AM_CPPFLAGS += -DUSE_STATIC_LINK=1
 endif
 
 CLEANFILES = *.gcno *.gcda
 
+# Do not define global tests, use check-local so
+# environment can be set (needed for dynamic loading)
 TESTS =
 if HAVE_GTEST
 
-TESTS += run_unittests
 run_unittests_SOURCES = $(top_srcdir)/src/lib/dns/tests/unittest_util.h
 run_unittests_SOURCES += $(top_srcdir)/src/lib/dns/tests/unittest_util.cc
 run_unittests_SOURCES += ../auth_srv.h ../auth_srv.cc
@@ -28,8 +33,10 @@ run_unittests_SOURCES += ../auth_config.h ../auth_config.cc
 run_unittests_SOURCES += ../command.h ../command.cc
 run_unittests_SOURCES += ../common.h ../common.cc
 run_unittests_SOURCES += ../statistics.h ../statistics.cc
+run_unittests_SOURCES += datasrc_util.h datasrc_util.cc
 run_unittests_SOURCES += auth_srv_unittest.cc
 run_unittests_SOURCES += config_unittest.cc
+run_unittests_SOURCES += config_syntax_unittest.cc
 run_unittests_SOURCES += command_unittest.cc
 run_unittests_SOURCES += common_unittest.cc
 run_unittests_SOURCES += query_unittest.cc
@@ -37,9 +44,9 @@ run_unittests_SOURCES += statistics_unittest.cc
 run_unittests_SOURCES += run_unittests.cc
 # This is a temporary workaround for #1206, where the InMemoryClient has been
 # moved to an ldopened library. We could add that library to LDADD, but that
-# is nonportable. When #1207 is done this becomes moot anyway, and the
-# specific workaround is not needed anymore, so we can then remove this
-# line again.
+# is nonportable. This should've been moot after #1207, but there is still
+# one dependency; the in-memory-specific zone loader call is still in
+# auth.
 run_unittests_SOURCES += ${top_srcdir}/src/lib/datasrc/memory_datasrc.cc
 
 
@@ -64,6 +71,10 @@ run_unittests_LDADD += $(top_builddir)/src/lib/server_common/libserver_common.la
 run_unittests_LDADD += $(top_builddir)/src/lib/nsas/libnsas.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 run_unittests_LDADD += $(top_builddir)/src/lib/statistics/libstatistics.la
-endif
 
-noinst_PROGRAMS = $(TESTS)
+check-local:
+	B10_FROM_BUILD=${abs_top_builddir} ./run_unittests
+
+noinst_PROGRAMS = run_unittests
+
+endif

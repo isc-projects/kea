@@ -114,38 +114,48 @@ class TestNotifyOut(unittest.TestCase):
         notify_out._MAX_NOTIFY_NUM = 2
 
         self._notify._nonblock_event.clear()
-        self._notify.send_notify('example.net')
+        self.assertTrue(self._notify.send_notify('example.net'))
         self.assertTrue(self._notify._nonblock_event.isSet())
         self.assertEqual(self._notify.notify_num, 1)
         self.assertEqual(self._notify._notifying_zones[0], ('example.net.', 'IN'))
 
-        self._notify.send_notify('example.com')
+        self.assertTrue(self._notify.send_notify('example.com'))
         self.assertEqual(self._notify.notify_num, 2)
         self.assertEqual(self._notify._notifying_zones[1], ('example.com.', 'IN'))
 
         # notify_num is equal to MAX_NOTIFY_NUM, append it to waiting_zones list.
         self._notify._nonblock_event.clear()
-        self._notify.send_notify('example.com', 'CH')
+        self.assertTrue(self._notify.send_notify('example.com', 'CH'))
         # add waiting zones won't set nonblock_event.
         self.assertFalse(self._notify._nonblock_event.isSet())
         self.assertEqual(self._notify.notify_num, 2)
         self.assertEqual(1, len(self._notify._waiting_zones))
 
         # zone_id is already in notifying_zones list, append it to waiting_zones list.
-        self._notify.send_notify('example.net')
+        self.assertTrue(self._notify.send_notify('example.net'))
         self.assertEqual(2, len(self._notify._waiting_zones))
         self.assertEqual(self._notify._waiting_zones[1], ('example.net.', 'IN'))
 
         # zone_id is already in waiting_zones list, skip it.
-        self._notify.send_notify('example.net')
+        self.assertTrue(self._notify.send_notify('example.net'))
         self.assertEqual(2, len(self._notify._waiting_zones))
 
         # has no slave masters, skip it.
-        self._notify.send_notify('example.org.', 'CH')
+        self.assertTrue(self._notify.send_notify('example.org.', 'CH'))
         self.assertEqual(self._notify.notify_num, 2)
         self.assertEqual(2, len(self._notify._waiting_zones))
 
-        self._notify.send_notify('example.org.')
+        self.assertTrue(self._notify.send_notify('example.org.'))
+        self.assertEqual(self._notify.notify_num, 2)
+        self.assertEqual(2, len(self._notify._waiting_zones))
+
+        # zone does not exist, should return False, and no change in other
+        # values
+        self.assertFalse(self._notify.send_notify('does.not.exist.'))
+        self.assertEqual(self._notify.notify_num, 2)
+        self.assertEqual(2, len(self._notify._waiting_zones))
+
+        self.assertFalse(self._notify.send_notify('example.net.', 'CH'))
         self.assertEqual(self._notify.notify_num, 2)
         self.assertEqual(2, len(self._notify._waiting_zones))
 
@@ -185,6 +195,11 @@ class TestNotifyOut(unittest.TestCase):
         # Now make one socket be readable
         self._notify._notify_infos[('example.net.', 'IN')].notify_timeout = time.time() + 10
         self._notify._notify_infos[('example.com.', 'IN')].notify_timeout = time.time() + 10
+
+        if self._notify._read_sock is not None:
+            self._notify._read_sock.close()
+        if self._notify._write_sock is not None:
+            self._notify._write_sock.close()
         self._notify._read_sock, self._notify._write_sock = socket.socketpair()
         self._notify._write_sock.send(SOCK_DATA)
         replied_zones, timeout_zones = self._notify._wait_for_notify_reply()

@@ -12,6 +12,7 @@ libutil_la_SOURCES += locks.h lru_list.h
 libutil_la_SOURCES += strutil.h strutil.cc
 libutil_la_SOURCES += buffer.h io_utilities.h
 libutil_la_SOURCES += time_utilities.h time_utilities.cc
+libutil_la_SOURCES += range_utilities.h
 libutil_la_SOURCES += hash/sha1.h hash/sha1.cc
 libutil_la_SOURCES += encode/base16_from_binary.h
 libutil_la_SOURCES += encode/base32hex.h encode/base64.h
