@@ -144,6 +144,7 @@ createExpectedRequest(const std::string& address,
     packet->add(Element::create("Boss"));
     packet->add(Element::create("*"));
     packet->add(createCommand("get_socket", command_args));
+    packet->add(Element::create(-1));
 
     return (packet);
 }
@@ -284,6 +285,7 @@ createExpectedRelease(const std::string& token) {
     packet->add(Element::create("Boss"));
     packet->add(Element::create("*"));
     packet->add(createCommand("drop_socket", command_args));
+    packet->add(Element::create(-1));
 
     return (packet);
 }
