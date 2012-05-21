@@ -37,7 +37,7 @@ class ZoneConfig:
         '''Constructor.
 
         Parameters:
-        - secondaries: a list of 2-element tuple.  Each element is a pair
+        - secondaries: a list of 2-element tuples.  Each element is a pair
           of isc.dns.Name and isc.dns.RRClass, and identifies a single
           secondary zone.
         - datasrc_class: isc.dns.RRClass object.  Specifies the RR class
