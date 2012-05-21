@@ -15,12 +15,15 @@
 #ifndef __CCSESSION_H
 #define __CCSESSION_H 1
 
-#include <string>
-
 #include <config/config_data.h>
 #include <config/module_spec.h>
+
 #include <cc/session.h>
 #include <cc/data.h>
+
+#include <string>
+#include <list>
+#include <boost/function.hpp>
 
 namespace isc {
 namespace config {
@@ -358,15 +361,140 @@ public:
         return (session_.group_recvmsg(envelope, msg, nonblock, seq));
     };
 
+    /// \brief Forward declaration of internal data structure.
+    ///
+    /// This holds information about one asynchronous request to receive
+    /// a message. It is declared as public to allow declaring other derived
+    /// types, but without showing the internal representation.
+    class AsyncRecvRequest;
+
+    /// \brief List of all requests for asynchronous reads.
+    typedef std::list<AsyncRecvRequest> AsyncRecvRequests;
+
+    /// \brief Identifier of single request for asynchronous read.
+    typedef AsyncRecvRequests::iterator AsyncRecvRequestID;
+
+    /// \brief Callback which is called when an asynchronous receive finishes.
+    ///
+    /// This is the callback used by groupRecvMsgAsync() function. It is called
+    /// when a matching message arrives. It receives following parameters when
+    /// called:
+    /// - The envelope of the message
+    /// - The message itself
+    /// - The ID of the request, as returned by corresponding groupRecvMsgAsync
+    ///   call.
+    ///
+    /// It is possible to throw exceptions from the callback, but they will not
+    /// be caught and they will get propagated out through the checkCommand()
+    /// call. This, if not handled on higher level, will likely terminate the
+    /// application. However, the ModuleCCSession internals will be in
+    /// well-defined state after the call (both the callback and the message
+    /// will be removed from the queues as already called).
+    typedef boost::function3<void, const isc::data::ConstElementPtr&,
+                             const isc::data::ConstElementPtr&,
+                             const AsyncRecvRequestID&>
+        AsyncRecvCallback;
+
+    /// \brief Receive a message from the CC session asynchronously.
+    ///
+    /// This registers a callback which is called when a matching message
+    /// is received. This message returns immediately.
+    ///
+    /// Once a matching message arrives, the callback is called with the
+    /// envelope of the message, the message itself and the result of this
+    /// function call (which might be useful for identifying which of many
+    /// events the recipient is waiting for this is). This makes the callback
+    /// used and is not called again even if a message that would match
+    /// arrives later (this is a single-shot callback).
+    ///
+    /// The callback is never called from within this function. Even if there
+    /// are queued messages, the callback would be called once checkCommand()
+    /// is invoked (possibly from start() or the constructor).
+    ///
+    /// The matching is as follows. If is_reply is true, only replies are
+    /// considered. In that case, if seq is -1, any reply is accepted. If
+    /// it is something else than -1, only the reply with matching seq is
+    /// taken. This may be used to receive replies to commands
+    /// asynchronously.
+    ///
+    /// In case the is_reply is false, the function looks for command messages.
+    /// The seq parameter is ignored, but the recipient one is considered. If
+    /// it is an empty string, any command is taken. If it is non-empty, only
+    /// commands addressed to the recipient channel (eg. group - instance is
+    /// ignored for now) are taken. This can be used to receive foreign commands
+    /// or notifications. In such case, it might be desirable to call the
+    /// groupRecvMsgAsync again from within the callback, to receive any future
+    /// commands or events of the same type.
+    ///
+    /// The interaction with other receiving functions is slightly complicated.
+    /// The groupRecvMsg call takes precedence. If the message matches its
+    /// parameters, it steals the message and no callback matching it as well
+    /// is called. Then, all the queued asynchronous receives are considered,
+    /// with the oldest active ones taking precedence (they work as FIFO).
+    /// If none of them matches, generic command and config handling takes
+    /// place. If it is not handled by that, the message is dropped. However,
+    /// it is better if there's just one place that wants to receive each given
+    /// message.
+    ///
+    /// \exception std::bad_alloc if there isn't enough memory to store the
+    ///     callback.
+    /// \param callback is the function to be called when a matching message
+    ///     arrives.
+    /// \param is_reply specifies if the desired message should be a reply or
+    ///     a command.
+    /// \param seq specifies the reply sequence number in case a reply is
+    ///     desired. The default -1 means any reply is OK.
+    /// \param recipient is the CC channel to which the command should be
+    ///     addressed to match (in case is_reply is false). Empty means any
+    ///     command is good one.
+    /// \return An identifier of the request. This will be passed to the
+    ///     callback or can be used to cancel the request by cancelAsyncRecv.
+    /// \todo Decide what to do with instance and what was it meant for anyway.
+    AsyncRecvRequestID groupRecvMsgAsync(const AsyncRecvCallback& callback,
+                                         bool is_reply, int seq = -1,
+                                         const std::string& recipient =
+                                         std::string());
+
+    /// \brief Removes yet unused request for asynchronous receive.
+    ///
+    /// This function cancels a request previously queued by
+    /// groupRecvMsgAsync(). You may use it only before the callback was
+    /// already triggered. If you call it with an ID of callback that
+    /// already happened or was already canceled, the behaviour is undefined
+    /// (but something like a crash is very likely, as the function removes
+    /// an item from a list and this would be removing it from a list that
+    /// does not contain the item).
+    ///
+    /// It is important to cancel requests that are no longer going to happen
+    /// for some reason, as the request would occupy memory forever.
+    ///
+    /// \param id The id of request as returned by groupRecvMsgAsync.
+    void cancelAsyncRecv(const AsyncRecvRequestID& id);
+
 private:
     ModuleSpec readModuleSpecification(const std::string& filename);
     void startCheck();
     void sendStopping();
+    /// \brief Check if the message is wanted by asynchronous read
+    ///
+    /// It checks if any of the previously queued requests match
+    /// the message. If so, the callback is dispatched and removed.
+    ///
+    /// \param envelope The envelope of the message.
+    /// \param msg The actual message data.
+    /// \return True if the message was used for a callback, false
+    ///     otherwise.
+    bool checkAsyncRecv(const data::ConstElementPtr& envelope,
+                        const data::ConstElementPtr& msg);
+    /// \brief Checks if a message with this envelope matches the request
+    bool requestMatch(const AsyncRecvRequest& request,
+                      const data::ConstElementPtr& envelope) const;
 
     bool started_;
     std::string module_name_;
     isc::cc::AbstractSession& session_;
     ModuleSpec module_specification_;
+    AsyncRecvRequests async_recv_requests_;
     isc::data::ConstElementPtr handleConfigUpdate(
         isc::data::ConstElementPtr new_config);
 
