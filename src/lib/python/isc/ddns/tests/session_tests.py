@@ -148,6 +148,24 @@ class SessionTest(unittest.TestCase):
         # zone class doesn't match
         self.check_notauth(Name('example.org'), RRClass.CH())
 
+    def test_check_prerequisite_exists(self):
+        pass
+
+    def test_check_prerequisite_exists_value(self):
+        pass
+
+    def test_check_prerequisite_does_not_exist(self):
+        pass
+
+    def test_check_prerequisite_name_in_use(self):
+        pass
+
+    def test_check_prerequisite_name_not_in_use(self):
+        pass
+
+    def test_check_prerequisites(self):
+        pass
+
 if __name__ == "__main__":
     isc.log.init("bind10")
     isc.log.resetUnitTestRootLogger()
