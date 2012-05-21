@@ -69,13 +69,20 @@ private:
     isc::testutils::TestSocketRequestor sock_requestor_;
 };
 
-TEST_F(AuthConfigTest, datasourceConfig) {
+TEST_F(AuthConfigTest,
+#ifdef USE_STATIC_LINK
+       DISABLED_datasourceConfig
+#else
+       datasourceConfig
+#endif
+    )
+{
     // By default, we don't have any in-memory data source.
-    EXPECT_EQ(AuthSrv::InMemoryClientPtr(), server.getInMemoryClient(rrclass));
+    EXPECT_FALSE(server.hasInMemoryClient());
     configureAuthServer(server, Element::fromJSON(
                             "{\"datasources\": [{\"type\": \"memory\"}]}"));
     // after successful configuration, we should have one (with empty zoneset).
-    ASSERT_NE(AuthSrv::InMemoryClientPtr(), server.getInMemoryClient(rrclass));
+    EXPECT_TRUE(server.hasInMemoryClient());
     EXPECT_EQ(0, server.getInMemoryClient(rrclass)->getZoneCount());
 }
 
@@ -96,7 +103,7 @@ TEST_F(AuthConfigTest, versionConfig) {
 }
 
 TEST_F(AuthConfigTest, exceptionGuarantee) {
-    EXPECT_EQ(AuthSrv::InMemoryClientPtr(), server.getInMemoryClient(rrclass));
+    EXPECT_FALSE(server.hasInMemoryClient());
     // This configuration contains an invalid item, which will trigger
     // an exception.
     EXPECT_THROW(configureAuthServer(
@@ -106,7 +113,7 @@ TEST_F(AuthConfigTest, exceptionGuarantee) {
                          " \"no_such_config_var\": 1}")),
                  AuthConfigError);
     // The server state shouldn't change
-    EXPECT_EQ(AuthSrv::InMemoryClientPtr(), server.getInMemoryClient(rrclass));
+    EXPECT_FALSE(server.hasInMemoryClient());
 }
 
 TEST_F(AuthConfigTest, exceptionConversion) {
@@ -176,25 +183,46 @@ protected:
 TEST_F(MemoryDatasrcConfigTest, addZeroDataSrc) {
     parser->build(Element::fromJSON("[]"));
     parser->commit();
-    EXPECT_EQ(AuthSrv::InMemoryClientPtr(), server.getInMemoryClient(rrclass));
+    EXPECT_FALSE(server.hasInMemoryClient());
 }
 
-TEST_F(MemoryDatasrcConfigTest, addEmpty) {
+TEST_F(MemoryDatasrcConfigTest,
+#ifdef USE_STATIC_LINK
+       DISABLED_addEmpty
+#else
+       addEmpty
+#endif
+    )
+{
     // By default, we don't have any in-memory data source.
-    EXPECT_EQ(AuthSrv::InMemoryClientPtr(), server.getInMemoryClient(rrclass));
+    EXPECT_FALSE(server.hasInMemoryClient());
     parser->build(Element::fromJSON("[{\"type\": \"memory\"}]"));
     parser->commit();
     EXPECT_EQ(0, server.getInMemoryClient(rrclass)->getZoneCount());
 }
 
-TEST_F(MemoryDatasrcConfigTest, addZeroZone) {
+TEST_F(MemoryDatasrcConfigTest,
+#ifdef USE_STATIC_LINK
+       DISABLED_addZeroZone
+#else
+       addZeroZone
+#endif
+    )
+{
     parser->build(Element::fromJSON("[{\"type\": \"memory\","
                                     "  \"zones\": []}]"));
     parser->commit();
     EXPECT_EQ(0, server.getInMemoryClient(rrclass)->getZoneCount());
 }
 
-TEST_F(MemoryDatasrcConfigTest, addOneZone) {
+TEST_F(MemoryDatasrcConfigTest,
+#ifdef USE_STATIC_LINK
+       DISABLED_addOneZone
+#else
+       addOneZone
+#endif
+    )
+{
     EXPECT_NO_THROW(parser->build(Element::fromJSON(
                       "[{\"type\": \"memory\","
                       "  \"zones\": [{\"origin\": \"example.com\","
@@ -245,7 +273,14 @@ TEST_F(MemoryDatasrcConfigTest,
                  DataSourceError);
 }
 
-TEST_F(MemoryDatasrcConfigTest, addOneWithFiletypeText) {
+TEST_F(MemoryDatasrcConfigTest,
+#ifdef USE_STATIC_LINK
+       DISABLED_addOneWithFiletypeText
+#else
+       addOneWithFiletypeText
+#endif
+    )
+{
     // Explicitly specifying "text" is okay.
     parser->build(Element::fromJSON(
                       "[{\"type\": \"memory\","
@@ -257,7 +292,14 @@ TEST_F(MemoryDatasrcConfigTest, addOneWithFiletypeText) {
     EXPECT_EQ(1, server.getInMemoryClient(rrclass)->getZoneCount());
 }
 
-TEST_F(MemoryDatasrcConfigTest, addMultiZones) {
+TEST_F(MemoryDatasrcConfigTest,
+#ifdef USE_STATIC_LINK
+       DISABLED_addMultiZones
+#else
+       addMultiZones
+#endif
+    )
+{
     EXPECT_NO_THROW(parser->build(Element::fromJSON(
                       "[{\"type\": \"memory\","
                       "  \"zones\": [{\"origin\": \"example.com\","
@@ -273,7 +315,14 @@ TEST_F(MemoryDatasrcConfigTest, addMultiZones) {
     EXPECT_EQ(3, server.getInMemoryClient(rrclass)->getZoneCount());
 }
 
-TEST_F(MemoryDatasrcConfigTest, replace) {
+TEST_F(MemoryDatasrcConfigTest,
+#ifdef USE_STATIC_LINK
+       DISABLED_replace
+#else
+       replace
+#endif
+    )
+{
     EXPECT_NO_THROW(parser->build(Element::fromJSON(
                       "[{\"type\": \"memory\","
                       "  \"zones\": [{\"origin\": \"example.com\","
@@ -304,7 +353,14 @@ TEST_F(MemoryDatasrcConfigTest, replace) {
                   Name("example.com")).code);
 }
 
-TEST_F(MemoryDatasrcConfigTest, exception) {
+TEST_F(MemoryDatasrcConfigTest,
+#ifdef USE_STATIC_LINK
+       DISABLED_exception
+#else
+       exception
+#endif
+    )
+{
     // Load a zone
     EXPECT_NO_THROW(parser->build(Element::fromJSON(
                       "[{\"type\": \"memory\","
@@ -328,7 +384,8 @@ TEST_F(MemoryDatasrcConfigTest, exception) {
                       "/example.org.zone\"},"
                       "              {\"origin\": \"example.net\","
                       "               \"file\": \"" TEST_DATA_DIR
-                      "/nonexistent.zone\"}]}]")), isc::dns::MasterLoadError);
+                      "/nonexistent.zone\"}]}]")),
+                 isc::datasrc::DataSourceError);
     // As that one throwed exception, it is not expected from us to
     // commit it
 
@@ -339,7 +396,14 @@ TEST_F(MemoryDatasrcConfigTest, exception) {
                   Name("example.com")).code);
 }
 
-TEST_F(MemoryDatasrcConfigTest, remove) {
+TEST_F(MemoryDatasrcConfigTest,
+#ifdef USE_STATIC_LINK
+       DISABLED_remove
+#else
+       remove
+#endif
+    )
+{
     EXPECT_NO_THROW(parser->build(Element::fromJSON(
                       "[{\"type\": \"memory\","
                       "  \"zones\": [{\"origin\": \"example.com\","
@@ -352,7 +416,7 @@ TEST_F(MemoryDatasrcConfigTest, remove) {
     parser = createAuthConfigParser(server, "datasources"); 
     EXPECT_NO_THROW(parser->build(Element::fromJSON("[]")));
     EXPECT_NO_THROW(parser->commit());
-    EXPECT_EQ(AuthSrv::InMemoryClientPtr(), server.getInMemoryClient(rrclass));
+    EXPECT_FALSE(server.hasInMemoryClient());
 }
 
 TEST_F(MemoryDatasrcConfigTest, addDuplicateZones) {
@@ -365,7 +429,7 @@ TEST_F(MemoryDatasrcConfigTest, addDuplicateZones) {
                          "              {\"origin\": \"example.com\","
                          "               \"file\": \"" TEST_DATA_DIR
                          "/example.com.zone\"}]}]")),
-                 AuthConfigError);
+                 DataSourceError);
 }
 
 TEST_F(MemoryDatasrcConfigTest, addBadZone) {
@@ -374,35 +438,35 @@ TEST_F(MemoryDatasrcConfigTest, addBadZone) {
                      Element::fromJSON(
                          "[{\"type\": \"memory\","
                          "  \"zones\": [{}]}]")),
-                 AuthConfigError);
+                 DataSourceError);
 
     // origin is missing
     EXPECT_THROW(parser->build(
                      Element::fromJSON(
                          "[{\"type\": \"memory\","
                          "  \"zones\": [{\"file\": \"example.zone\"}]}]")),
-                 AuthConfigError);
+                 DataSourceError);
 
     // file is missing
     EXPECT_THROW(parser->build(
                      Element::fromJSON(
                          "[{\"type\": \"memory\","
                          "  \"zones\": [{\"origin\": \"example.com\"}]}]")),
-                 AuthConfigError);
+                 DataSourceError);
 
     // missing zone file
     EXPECT_THROW(parser->build(
                      Element::fromJSON(
                          "[{\"type\": \"memory\","
                          "  \"zones\": [{\"origin\": \"example.com\"}]}]")),
-                 AuthConfigError);
+                 DataSourceError);
 
     // bogus origin name
     EXPECT_THROW(parser->build(Element::fromJSON(
                       "[{\"type\": \"memory\","
                       "  \"zones\": [{\"origin\": \"example..com\","
                       "               \"file\": \"example.zone\"}]}]")),
-                 AuthConfigError);
+                 DataSourceError);
 
     // bogus RR class name
     EXPECT_THROW(parser->build(
@@ -423,7 +487,14 @@ TEST_F(MemoryDatasrcConfigTest, addBadZone) {
                  isc::InvalidParameter);
 }
 
-TEST_F(MemoryDatasrcConfigTest, badDatasrcType) {
+TEST_F(MemoryDatasrcConfigTest,
+#ifdef USE_STATIC_LINK
+       DISABLED_badDatasrcType
+#else
+       badDatasrcType
+#endif
+    )
+{
     EXPECT_THROW(parser->build(Element::fromJSON("[{\"type\": \"badsrc\"}]")),
                  AuthConfigError);
     EXPECT_THROW(parser->build(Element::fromJSON("[{\"notype\": \"memory\"}]")),

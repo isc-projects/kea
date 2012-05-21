@@ -188,8 +188,8 @@ TEST(FactoryTest, memoryClient) {
                  DataSourceError);
 
     config->set("type", Element::create("memory"));
-    ASSERT_THROW(DataSourceClientContainer("memory", config),
-                 DataSourceError);
+    // no config at all should result in a default empty memory client
+    ASSERT_NO_THROW(DataSourceClientContainer("memory", config));
 
     config->set("class", ElementPtr());
     ASSERT_THROW(DataSourceClientContainer("memory", config),
@@ -204,8 +204,7 @@ TEST(FactoryTest, memoryClient) {
                  DataSourceError);
 
     config->set("class", Element::create("IN"));
-    ASSERT_THROW(DataSourceClientContainer("memory", config),
-                 DataSourceError);
+    ASSERT_NO_THROW(DataSourceClientContainer("memory", config));
 
     config->set("zones", ElementPtr());
     ASSERT_THROW(DataSourceClientContainer("memory", config),
