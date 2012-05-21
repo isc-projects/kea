@@ -47,9 +47,9 @@ class ZoneConfig:
           a zone that is eventually updated in the ddns package.
 
         '''
-        self.__secondaries = {}
+        self.__secondaries = set()
         for (zname, zclass) in secondaries:
-            self.__secondaries[(zname, zclass)] = True
+            self.__secondaries.add((zname, zclass))
         self.__datasrc_class = datasrc_class
         self.__datasrc_client = datasrc_client
 
