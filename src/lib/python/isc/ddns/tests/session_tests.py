@@ -504,7 +504,7 @@ class SessionTest(unittest.TestCase):
                                                  isc.dns.RRClass.NONE(),
                                                  isc.dns.RRType.SOA(),
                                                  isc.dns.RRTTL(0))
-        rrset_does_not_exist_no = isc.dns.RRset(isc.dns.Name("foo.example.org"),
+        rrset_does_not_exist_no = isc.dns.RRset(isc.dns.Name("example.org"),
                                                 isc.dns.RRClass.NONE(),
                                                 isc.dns.RRType.SOA(),
                                                 isc.dns.RRTTL(0))
@@ -519,9 +519,35 @@ class SessionTest(unittest.TestCase):
                                        isc.dns.RRTTL(0))
 
         name_not_in_use_yes = isc.dns.RRset(isc.dns.Name("foo.example.org"),
-                                            isc.dns.RRClass.ANY(),
+                                            isc.dns.RRClass.NONE(),
                                             isc.dns.RRType.ANY(),
                                             isc.dns.RRTTL(0))
+        name_not_in_use_no = isc.dns.RRset(isc.dns.Name("www.example.org"),
+                                           isc.dns.RRClass.NONE(),
+                                           isc.dns.RRType.ANY(),
+                                           isc.dns.RRTTL(0))
+
+        rrset_exists_value_1 = isc.dns.RRset(isc.dns.Name("example.org"),
+                                             isc.dns.RRClass.IN(),
+                                             isc.dns.RRType.NS(),
+                                             isc.dns.RRTTL(0))
+        rrset_exists_value_1.add_rdata(isc.dns.Rdata(isc.dns.RRType.NS(),
+                                                     isc.dns.RRClass.IN(),
+                                                     "ns1.example.org"))
+        rrset_exists_value_2 = isc.dns.RRset(isc.dns.Name("example.org"),
+                                             isc.dns.RRClass.IN(),
+                                             isc.dns.RRType.NS(),
+                                             isc.dns.RRTTL(0))
+        rrset_exists_value_2.add_rdata(isc.dns.Rdata(isc.dns.RRType.NS(),
+                                                     isc.dns.RRClass.IN(),
+                                                     "ns2.example.org"))
+        rrset_exists_value_3 = isc.dns.RRset(isc.dns.Name("example.org"),
+                                             isc.dns.RRClass.IN(),
+                                             isc.dns.RRType.NS(),
+                                             isc.dns.RRTTL(0))
+        rrset_exists_value_3.add_rdata(isc.dns.Rdata(isc.dns.RRType.NS(),
+                                                     isc.dns.RRClass.IN(),
+                                                     "ns3.example.org"))
 
         # Create an UPDATE with all 5 'yes' prereqs
         data, update = create_update_msg([TEST_ZONE_RECORD],
@@ -530,10 +556,57 @@ class SessionTest(unittest.TestCase):
                                           rrset_does_not_exist_yes,
                                           name_in_use_yes,
                                           name_not_in_use_yes,
-                                          rrset_exists_value_yes
+                                          rrset_exists_value_yes,
                                          ])
-        print("[XX]")
-        print(update.to_text())
+        # check 'no' result codes
+        self.check_prerequisite_result(Rcode.NXRRSET(), [ rrset_exists_no ])
+        self.check_prerequisite_result(Rcode.NXRRSET(), [ rrset_exists_value_no ])
+        self.check_prerequisite_result(Rcode.YXRRSET(), [ rrset_does_not_exist_no ])
+        self.check_prerequisite_result(Rcode.NXDOMAIN(), [ name_in_use_no ])
+        self.check_prerequisite_result(Rcode.YXDOMAIN(), [ name_not_in_use_no ])
+
+        # the 'yes' codes should result in ok
+        self.check_prerequisite_result(Rcode.NOERROR(),
+                                       [ rrset_exists_yes,
+                                         rrset_exists_value_yes,
+                                         rrset_does_not_exist_yes,
+                                         name_in_use_yes,
+                                         name_not_in_use_yes,
+                                         rrset_exists_value_1,
+                                         rrset_exists_value_2,
+                                         rrset_exists_value_3])
+
+        # try out some permutations, note that one rrset is split up,
+        # and the order of the RRs should not matter
+        self.check_prerequisite_result(Rcode.NOERROR(),
+                                       [ rrset_exists_value_3,
+                                         rrset_exists_yes,
+                                         rrset_exists_value_2,
+                                         name_in_use_yes,
+                                         rrset_exists_value_1
+                                         ])
+
+        # Should fail on the first error
+        self.check_prerequisite_result(Rcode.NXDOMAIN(),
+                                       [ rrset_exists_value_3,
+                                         rrset_exists_yes,
+                                         rrset_exists_value_2,
+                                         name_in_use_yes,
+                                         name_in_use_no,
+                                         rrset_exists_value_1
+                                         ])
+
+    def check_prerequisite_result(self, expected, prerequisites):
+        '''Helper method for checking the result of a prerequisite check;
+           creates an update session, and fills it with the list of rrsets
+           from 'prerequisites'. Then checks if __check_prerequisites()
+           returns the Rcode specified in 'expected'.'''
+        msg_data, msg = create_update_msg([TEST_ZONE_RECORD],
+                                          prerequisites)
+        session = UpdateSession(msg, msg_data, TEST_CLIENT4, None)
+        # compare the to_text output (nicer error messages)
+        self.assertEqual(expected.to_text(),
+            session._UpdateSession__check_prerequisites(self.__datasrc_client, TEST_ZONE_NAME, TEST_RRCLASS).to_text())
 
 if __name__ == "__main__":
     isc.log.init("bind10")
