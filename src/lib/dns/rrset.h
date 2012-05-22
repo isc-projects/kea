@@ -267,8 +267,6 @@ public:
     /// the resulting string with a trailing newline character.
     /// (following the BIND9 convention)
     ///
-    /// The RRset must contain some RDATA; otherwise, an exception of class
-    /// \c EmptyRRset will be thrown.
     /// If resource allocation fails, a corresponding standard exception
     /// will be thrown.
     /// The default implementation may throw other exceptions if the
@@ -299,8 +297,6 @@ public:
     ///
     /// If resource allocation fails, a corresponding standard exception
     /// will be thrown.
-    /// The RRset must contain some RDATA; otherwise, an exception of class
-    /// \c EmptyRRset will be thrown.
     /// The default implementation may throw other exceptions if the
     /// \c toWire() method of the RDATA objects throws.
     /// If a derived class of \c AbstractRRset overrides the default
@@ -559,6 +555,11 @@ public:
     ///
     /// This method should never throw an exception.
     virtual void next() = 0;
+
+    /// \brief Check if 'current' is empty (in which case getCurrent() would
+    ///        fail
+    /// \return True if the current Rdata field is NULL, false if not
+    virtual bool currentEmpty() const = 0;
 
     /// \brief Return the current \c Rdata corresponding to the rdata cursor.
     ///

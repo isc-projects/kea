@@ -250,4 +250,21 @@ class UpdateSession:
         return not self.__check_prerequisite_name_in_use(datasrc_client, rrset)
 
     def __check_prerequisites(self, datasrc_client):
+        '''Check the prerequisites section of the UPDATE Message.
+           RFC2136 Section 2.4'''
+        for rrset in self.__message.get_section(SECTION_PREREQUISITE):
+            # called atm, but not 'handled' yet
+            if rrset.getClass() == RRClass.ANY():
+                # Check for each RR in the 'set' XXX
+                self.__check_prerequisite_exists(rrset)
+            elif rrset.getClass() == datasrc_client.getClass():
+                self.__check_prerequisite_exists_value(datasrc_client, rrset)
+            elif rrset.getClass() == RRClass.NONE():
+                self.__check_prerequisite_does_not_exist(datasrc_client, rrset)
+            elif rrset.getClass() == RRClass.ANY() and rrset.getType() == RRType.ANY():
+                self.__check_prerequisite_name_exists(datasrc_client, rrset)
+            elif rrset.getClass() == RRClass.NONE() and rrset.getType() == RRType.ANY():
+                self.__check_prerequisite_name_does_not_exist(datasrc_client, rrset)
+            else:
+                print("[XX] ERROR! unknown prerequisite")
         pass
