@@ -2220,9 +2220,10 @@ reporting(void)
 void
 reapchild(int sig)
 {
+    // Do something with variables to avoid unused-variable warning
 	int status;
-	int s = sig;
-    s = 1;
+	status = sig;
+    status = 0;
 	while (wait3(&status, WNOHANG, NULL) > 0)
 		/* continue */;
 }
