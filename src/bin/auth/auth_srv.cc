@@ -17,6 +17,7 @@
 #include <util/io/socketsession.h>
 
 #include <asiolink/asiolink.h>
+#include <asiolink/io_endpoint.h>
 
 #include <config/ccsession.h>
 
@@ -112,8 +113,6 @@ private:
     MessageRenderer& renderer_;
 };
 
-string formatEndpoint(const IOEndpoint& ep); // forward declaration to keep the diff minimum.
-
 // A helper container of socket session forwarder.
 //
 // This class provides a simple wrapper interface to SocketSessionForwarder
@@ -177,8 +176,7 @@ public:
                             io_message.getData(), io_message.getDataSize());
         } catch (const SocketSessionError& ex) {
             LOG_ERROR(auth_logger, AUTH_MESSAGE_FORWARD_ERROR).
-                arg(message_name_).arg(formatEndpoint(remote_ep)).
-                arg(ex.what());
+                arg(message_name_).arg(remote_ep).arg(ex.what());
             close();
             throw;
         }
@@ -215,23 +213,6 @@ private:
         }
     }
 };
-
-// A helper function to log an address/port in the form of IOEndpoint
-// in our preferred format: [<ipv6_addr>]:port or <ipv4_addr>:port
-string
-formatEndpoint(const IOEndpoint& ep) {
-    string addr_port;
-    if (ep.getFamily() == AF_INET6) {
-        addr_port = "[" + ep.getAddress().toText() + "]";
-    } else if (ep.getFamily() == AF_INET) {
-        addr_port = ep.getAddress().toText();
-    } else {
-        addr_port = "(unknown address)";
-    }
-    addr_port += ":" + boost::lexical_cast<string>(ep.getPort());
-
-    return (addr_port);
-}
 }
 
 class AuthSrvImpl {
