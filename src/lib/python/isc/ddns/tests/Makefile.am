@@ -1,5 +1,5 @@
 PYCOVERAGE_RUN = @PYCOVERAGE_RUN@
-PYTESTS = session_tests.py
+PYTESTS = session_tests.py zone_config_tests.py
 EXTRA_DIST = $(PYTESTS)
 CLEANFILES = $(builddir)/rwtest.sqlite3.copied
 
