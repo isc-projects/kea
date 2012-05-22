@@ -16,7 +16,7 @@ endif
 # We have to do this to link with new C++ pieces of code
 perfdhcp_CXXFLAGS = $(AM_CXXFLAGS)
 if USE_CLANGPP
-perfdhcp_CXXFLAGS += -Wno-deprecated-writable-strings
+perfdhcp_CXXFLAGS += -Wno-error
 else
 if USE_GXX
 perfdhcp_CXXFLAGS += -Wno-write-strings
