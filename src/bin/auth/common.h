@@ -46,8 +46,10 @@ std::string getXfroutSocketPath();
 ///
 /// The logic should be the same as in b10-ddns, so they find each other.
 ///
-/// Note: eventually this should be retrieved from the ddns configuration,
-/// at which point this function should be deprecated.
+/// Note: eventually we should find a better way so that we don't have to
+/// repeat the same magic value (and how to tweak it with some magic
+/// environment variable) twice, at which point this function may be able
+/// to be deprecated.
 std::string getDDNSSocketPath();
 
 /// \brief The name used when identifieng the process
