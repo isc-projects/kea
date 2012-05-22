@@ -223,8 +223,19 @@ class NameTest(unittest.TestCase):
         self.assertEqual(hash(Name('example.com')), hash(Name('example.com')))
         # Hash is case insensitive.
         self.assertEqual(hash(Name('example.com')), hash(Name('EXAMPLE.COM')))
-        # We cannot reliably test the case for different hash values, but
-        # we can at least confirm inequality is case insensitive.
+
+        # These pairs happen to be known to have different hashes.
+        # It may be naive to assume the hash value is always the same (we use
+        # an external library and it depends on its internal details).  If
+        # it turns out that this assumption isn't always held, we should
+        # disable this test.
+        self.assertNotEqual(hash(Name('example.com')),
+                            hash(Name('example.org')))
+
+        # Check insensitiveness for the case of inequality.
+        # Based on the assumption above, this 'if' should be true and
+        # we'll always test the case inside it.  We'll still keep the if in
+        # case we end up disabling the above test.
         if hash(Name('example.com')) != hash(Name('example.org')):
             self.assertNotEqual(hash(Name('example.com')),
                                 hash(Name('EXAMPLE.ORG')))
