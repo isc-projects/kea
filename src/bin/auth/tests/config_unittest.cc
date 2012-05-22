@@ -32,6 +32,7 @@
 
 #include "datasrc_util.h"
 
+#include <util/unittests/mock_socketsession.h>
 #include <testutils/mockups.h>
 #include <testutils/portconfig.h>
 #include <testutils/socket_request.h>
@@ -44,6 +45,7 @@ using namespace isc::data;
 using namespace isc::datasrc;
 using namespace isc::asiodns;
 using namespace isc::auth::unittest;
+using namespace isc::util::unittests;
 using namespace isc::testutils;
 
 namespace {
@@ -52,7 +54,7 @@ protected:
     AuthConfigTest() :
         dnss_(),
         rrclass(RRClass::IN()),
-        server(true, xfrout),
+        server(true, xfrout, ddns_forwarder),
         // The empty string is expected value of the parameter of
         // requestSocket, not the app_name (there's no fallback, it checks
         // the empty string is passed).
@@ -63,6 +65,7 @@ protected:
     MockDNSService dnss_;
     const RRClass rrclass;
     MockXfroutClient xfrout;
+    MockSocketSessionForwarder ddns_forwarder;
     AuthSrv server;
     isc::server_common::portconfig::AddressList address_store_;
 private:
