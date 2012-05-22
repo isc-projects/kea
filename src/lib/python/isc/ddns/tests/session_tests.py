@@ -470,19 +470,32 @@ class SessionTest(unittest.TestCase):
                               isc.dns.RRTTL(0))
         self.__check_prerequisite_name_not_in_use(False, self.__datasrc_client, rrset)
 
+    def check_prerequisite_result(self, expected, prerequisites):
+        '''Helper method for checking the result of a prerequisite check;
+           creates an update session, and fills it with the list of rrsets
+           from 'prerequisites'. Then checks if __check_prerequisites()
+           returns the Rcode specified in 'expected'.'''
+        msg_data, msg = create_update_msg([TEST_ZONE_RECORD],
+                                          prerequisites)
+        session = UpdateSession(msg, msg_data, TEST_CLIENT4, None)
+        # compare the to_text output of the rcodes (nicer error messages)
+        self.assertEqual(expected.to_text(),
+            session._UpdateSession__check_prerequisites(self.__datasrc_client,
+                                                        TEST_ZONE_NAME,
+                                                        TEST_RRCLASS).to_text())
+
     def test_check_prerequisites(self):
         # This test checks if the actual prerequisite-type-specific
-        # methods are called. Whether those succeed or not is tested above (or is it)
+        # methods are called.
+        # It does test all types of prerequisites, but it does not test
+        # every possible result for those types (those are tested above,
+        # in the specific prerequisite type tests)
         
         # Let's first define a number of prereq's that should succeed
         rrset_exists_yes = isc.dns.RRset(isc.dns.Name("example.org"),
                                          isc.dns.RRClass.ANY(),
                                          isc.dns.RRType.SOA(),
                                          isc.dns.RRTTL(0))
-        rrset_exists_no = isc.dns.RRset(isc.dns.Name("foo.example.org"),
-                                        isc.dns.RRClass.ANY(),
-                                        isc.dns.RRType.SOA(),
-                                        isc.dns.RRTTL(0))
 
         rrset_exists_value_yes = isc.dns.RRset(isc.dns.Name("www.example.org"),
                                                isc.dns.RRClass.IN(),
@@ -492,40 +505,20 @@ class SessionTest(unittest.TestCase):
                                                        isc.dns.RRClass.IN(),
                                                        "192.0.2.1"))
 
-        rrset_exists_value_no = isc.dns.RRset(isc.dns.Name("www.example.org"),
-                                              isc.dns.RRClass.IN(),
-                                              isc.dns.RRType.A(),
-                                              isc.dns.RRTTL(0))
-        rrset_exists_value_no.add_rdata(isc.dns.Rdata(isc.dns.RRType.A(),
-                                                      isc.dns.RRClass.IN(),
-                                                      "192.0.2.2"))
-
         rrset_does_not_exist_yes = isc.dns.RRset(isc.dns.Name("foo.example.org"),
                                                  isc.dns.RRClass.NONE(),
                                                  isc.dns.RRType.SOA(),
                                                  isc.dns.RRTTL(0))
-        rrset_does_not_exist_no = isc.dns.RRset(isc.dns.Name("example.org"),
-                                                isc.dns.RRClass.NONE(),
-                                                isc.dns.RRType.SOA(),
-                                                isc.dns.RRTTL(0))
 
         name_in_use_yes = isc.dns.RRset(isc.dns.Name("www.example.org"),
                                         isc.dns.RRClass.ANY(),
                                         isc.dns.RRType.ANY(),
                                         isc.dns.RRTTL(0))
-        name_in_use_no = isc.dns.RRset(isc.dns.Name("foo.example.org"),
-                                       isc.dns.RRClass.ANY(),
-                                       isc.dns.RRType.ANY(),
-                                       isc.dns.RRTTL(0))
 
         name_not_in_use_yes = isc.dns.RRset(isc.dns.Name("foo.example.org"),
                                             isc.dns.RRClass.NONE(),
                                             isc.dns.RRType.ANY(),
                                             isc.dns.RRTTL(0))
-        name_not_in_use_no = isc.dns.RRset(isc.dns.Name("www.example.org"),
-                                           isc.dns.RRClass.NONE(),
-                                           isc.dns.RRType.ANY(),
-                                           isc.dns.RRTTL(0))
 
         rrset_exists_value_1 = isc.dns.RRset(isc.dns.Name("example.org"),
                                              isc.dns.RRClass.IN(),
@@ -548,6 +541,36 @@ class SessionTest(unittest.TestCase):
         rrset_exists_value_3.add_rdata(isc.dns.Rdata(isc.dns.RRType.NS(),
                                                      isc.dns.RRClass.IN(),
                                                      "ns3.example.org"))
+
+        # and a number that should not
+        rrset_exists_no = isc.dns.RRset(isc.dns.Name("foo.example.org"),
+                                        isc.dns.RRClass.ANY(),
+                                        isc.dns.RRType.SOA(),
+                                        isc.dns.RRTTL(0))
+
+
+        rrset_exists_value_no = isc.dns.RRset(isc.dns.Name("www.example.org"),
+                                              isc.dns.RRClass.IN(),
+                                              isc.dns.RRType.A(),
+                                              isc.dns.RRTTL(0))
+        rrset_exists_value_no.add_rdata(isc.dns.Rdata(isc.dns.RRType.A(),
+                                                      isc.dns.RRClass.IN(),
+                                                      "192.0.2.2"))
+
+        rrset_does_not_exist_no = isc.dns.RRset(isc.dns.Name("example.org"),
+                                                isc.dns.RRClass.NONE(),
+                                                isc.dns.RRType.SOA(),
+                                                isc.dns.RRTTL(0))
+
+        name_in_use_no = isc.dns.RRset(isc.dns.Name("foo.example.org"),
+                                       isc.dns.RRClass.ANY(),
+                                       isc.dns.RRType.ANY(),
+                                       isc.dns.RRTTL(0))
+
+        name_not_in_use_no = isc.dns.RRset(isc.dns.Name("www.example.org"),
+                                           isc.dns.RRClass.NONE(),
+                                           isc.dns.RRType.ANY(),
+                                           isc.dns.RRTTL(0))
 
         # Create an UPDATE with all 5 'yes' prereqs
         data, update = create_update_msg([TEST_ZONE_RECORD],
@@ -576,37 +599,81 @@ class SessionTest(unittest.TestCase):
                                          rrset_exists_value_2,
                                          rrset_exists_value_3])
 
-        # try out some permutations, note that one rrset is split up,
+        # try out a permutation, note that one rrset is split up,
         # and the order of the RRs should not matter
         self.check_prerequisite_result(Rcode.NOERROR(),
                                        [ rrset_exists_value_3,
                                          rrset_exists_yes,
                                          rrset_exists_value_2,
                                          name_in_use_yes,
-                                         rrset_exists_value_1
-                                         ])
+                                         rrset_exists_value_1])
 
-        # Should fail on the first error
+        # Should fail on the first error, even if most of the
+        # prerequisites are ok
         self.check_prerequisite_result(Rcode.NXDOMAIN(),
                                        [ rrset_exists_value_3,
                                          rrset_exists_yes,
                                          rrset_exists_value_2,
                                          name_in_use_yes,
                                          name_in_use_no,
-                                         rrset_exists_value_1
-                                         ])
+                                         rrset_exists_value_1])
 
-    def check_prerequisite_result(self, expected, prerequisites):
-        '''Helper method for checking the result of a prerequisite check;
-           creates an update session, and fills it with the list of rrsets
-           from 'prerequisites'. Then checks if __check_prerequisites()
-           returns the Rcode specified in 'expected'.'''
-        msg_data, msg = create_update_msg([TEST_ZONE_RECORD],
-                                          prerequisites)
-        session = UpdateSession(msg, msg_data, TEST_CLIENT4, None)
-        # compare the to_text output (nicer error messages)
-        self.assertEqual(expected.to_text(),
-            session._UpdateSession__check_prerequisites(self.__datasrc_client, TEST_ZONE_NAME, TEST_RRCLASS).to_text())
+    def test_prerequisites_formerr(self):
+        # test for form errors in the prerequisite section
+
+        # Class ANY, non-zero TTL
+        rrset = isc.dns.RRset(isc.dns.Name("example.org"),
+                              isc.dns.RRClass.ANY(),
+                              isc.dns.RRType.SOA(),
+                              isc.dns.RRTTL(1))
+        self.check_prerequisite_result(Rcode.FORMERR(), [ rrset ])
+
+        # Class ANY, but with rdata
+        rrset = isc.dns.RRset(isc.dns.Name("example.org"),
+                              isc.dns.RRClass.ANY(),
+                              isc.dns.RRType.A(),
+                              isc.dns.RRTTL(0))
+        rrset.add_rdata(isc.dns.Rdata(isc.dns.RRType.A(),
+                                      isc.dns.RRClass.ANY(),
+                                      "\# 04 00 00 00 00"))
+        self.check_prerequisite_result(Rcode.FORMERR(), [ rrset ])
+
+        # Class NONE, non-zero TTL
+        rrset = isc.dns.RRset(isc.dns.Name("example.org"),
+                              isc.dns.RRClass.NONE(),
+                              isc.dns.RRType.SOA(),
+                              isc.dns.RRTTL(1))
+        self.check_prerequisite_result(Rcode.FORMERR(), [ rrset ])
+
+        # Class NONE, but with rdata
+        rrset = isc.dns.RRset(isc.dns.Name("example.org"),
+                              isc.dns.RRClass.NONE(),
+                              isc.dns.RRType.A(),
+                              isc.dns.RRTTL(0))
+        rrset.add_rdata(isc.dns.Rdata(isc.dns.RRType.A(),
+                                      isc.dns.RRClass.NONE(),
+                                      "\# 04 00 00 00 00"))
+        self.check_prerequisite_result(Rcode.FORMERR(), [ rrset ])
+
+        # Matching class and type, but non-zero TTL
+        rrset = isc.dns.RRset(isc.dns.Name("www.example.org"),
+                              isc.dns.RRClass.IN(),
+                              isc.dns.RRType.A(),
+                              isc.dns.RRTTL(1))
+        rrset.add_rdata(isc.dns.Rdata(isc.dns.RRType.A(),
+                                      isc.dns.RRClass.IN(),
+                                      "192.0.2.1"))
+        self.check_prerequisite_result(Rcode.FORMERR(), [ rrset ])
+
+        # Completely different class
+        rrset = isc.dns.RRset(isc.dns.Name("example.org"),
+                              isc.dns.RRClass.CH(),
+                              isc.dns.RRType.TXT(),
+                              isc.dns.RRTTL(0))
+        rrset.add_rdata(isc.dns.Rdata(isc.dns.RRType.TXT(),
+                                      isc.dns.RRClass.CH(),
+                                      "foo"))
+        self.check_prerequisite_result(Rcode.FORMERR(), [ rrset ])
 
 if __name__ == "__main__":
     isc.log.init("bind10")

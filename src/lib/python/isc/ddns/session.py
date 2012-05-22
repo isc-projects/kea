@@ -263,7 +263,8 @@ class UpdateSession:
 
             # Algorithm taken from RFC2136 Section 3.2
             if rrset.get_class() == RRClass.ANY():
-                if rrset.get_ttl() != 0 or rrset.get_rdata_count() != 0:
+                if rrset.get_ttl().get_value() != 0 or\
+                   rrset.get_rdata_count() != 0:
                     return Rcode.FORMERR()
                 elif rrset.get_type() == RRType.ANY():
                     if not self.__check_prerequisite_name_in_use(datasrc_client, rrset):
@@ -272,7 +273,8 @@ class UpdateSession:
                     if not self.__check_prerequisite_rrset_exists(datasrc_client, rrset):
                         return Rcode.NXRRSET()
             elif rrset.get_class() == RRClass.NONE():
-                if rrset.get_ttl() != 0 or rrset.get_rdata_count() != 0:
+                if rrset.get_ttl().get_value() != 0 or\
+                   rrset.get_rdata_count() != 0:
                     return Rcode.FORMERR()
                 elif rrset.get_type() == RRType.ANY():
                     if not self.__check_prerequisite_name_not_in_use(datasrc_client, rrset):
@@ -281,12 +283,12 @@ class UpdateSession:
                     if not self.__check_prerequisite_rrset_does_not_exist(datasrc_client, rrset):
                         return Rcode.YXRRSET()
             elif rrset.get_class() == zclass:
-                if rrset.get_ttl() != 0:
-                    return Rcode.FORMERR
+                if rrset.get_ttl().get_value() != 0:
+                    return Rcode.FORMERR()
                 else:
                     if not self.__check_prerequisite_rrset_exists_value(datasrc_client, rrset):
                         return Rcode.NXRRSET()
             else:
-                return Rcode.FORMERR
+                return Rcode.FORMERR()
 
         return Rcode.NOERROR()
