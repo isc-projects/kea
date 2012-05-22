@@ -16,6 +16,8 @@
 
 #include <gtest/gtest.h>
 
+#include <util/io/sockaddr_util.h>
+
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
@@ -56,6 +58,7 @@ using namespace std;
 using namespace isc::cc;
 using namespace isc::dns;
 using namespace isc::util;
+using namespace isc::util::io::internal;
 using namespace isc::util::unittests;
 using namespace isc::dns::rdata;
 using namespace isc::data;
@@ -1428,7 +1431,7 @@ checkAddrPort(const struct sockaddr& actual_sa,
               const string& expected_addr, uint16_t expected_port)
 {
     char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
-    const int error = getnameinfo(&actual_sa, actual_sa.sa_len, hbuf,
+    const int error = getnameinfo(&actual_sa, getSALength(actual_sa), hbuf,
                                   sizeof(hbuf), sbuf, sizeof(sbuf),
                                   NI_NUMERICHOST | NI_NUMERICSERV);
     if (error != 0) {
