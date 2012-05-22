@@ -14,12 +14,7 @@
 
 #include <config.h>
 
-#include <vector>
-
-#include <boost/shared_ptr.hpp>
-#include <boost/scoped_ptr.hpp>
-
-#include <gtest/gtest.h>
+#include <util/io/sockaddr_util.h>
 
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
@@ -39,6 +34,7 @@
 #include <auth/common.h>
 #include <auth/statistics.h>
 
+#include <util/unittests/mock_socketsession.h>
 #include <dns/tests/unittest_util.h>
 #include <testutils/dnsmessage_test.h>
 #include <testutils/srv_test.h>
@@ -46,10 +42,24 @@
 #include <testutils/portconfig.h>
 #include <testutils/socket_request.h>
 
+#include <gtest/gtest.h>
+
+#include <boost/lexical_cast.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/scoped_ptr.hpp>
+
+#include <vector>
+
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+
 using namespace std;
 using namespace isc::cc;
 using namespace isc::dns;
 using namespace isc::util;
+using namespace isc::util::io::internal;
+using namespace isc::util::unittests;
 using namespace isc::dns::rdata;
 using namespace isc::data;
 using namespace isc::xfr;
@@ -58,6 +68,7 @@ using namespace isc::asiolink;
 using namespace isc::testutils;
 using namespace isc::server_common::portconfig;
 using isc::UnitTestUtil;
+using boost::scoped_ptr;
 
 namespace {
 const char* const CONFIG_TESTDB =
@@ -78,7 +89,7 @@ class AuthSrvTest : public SrvTestBase {
 protected:
     AuthSrvTest() :
         dnss_(),
-        server(true, xfrout),
+        server(true, xfrout, ddns_forwarder),
         rrclass(RRClass::IN()),
         // The empty string is expected value of the parameter of
         // requestSocket, not the app_name (there's no fallback, it checks
@@ -144,9 +155,30 @@ protected:
                     opcode.getCode(), QR_FLAG, 1, 0, 0, 0);
     }
 
+    // Convenient shortcut of creating a simple request and having the
+    // server process it.
+    void createAndSendRequest(RRType req_type, Opcode opcode = Opcode::QUERY(),
+                              const Name& req_name = Name("example.com"),
+                              RRClass req_class = RRClass::IN(),
+                              int protocol = IPPROTO_UDP,
+                              const char* const remote_address =
+                              DEFAULT_REMOTE_ADDRESS,
+                              uint16_t remote_port = DEFAULT_REMOTE_PORT)
+    {
+        UnitTestUtil::createRequestMessage(request_message, opcode,
+                                           default_qid, req_name,
+                                           req_class, req_type);
+        createRequestPacket(request_message, protocol, NULL,
+                            remote_address, remote_port);
+        parse_message->clear(Message::PARSE);
+        server.processMessage(*io_message, *parse_message, *response_obuffer,
+                              &dnsserv);
+    }
+
     MockDNSService dnss_;
     MockSession statistics_session;
     MockXfroutClient xfrout;
+    MockSocketSessionForwarder ddns_forwarder;
     AuthSrv server;
     const RRClass rrclass;
     vector<uint8_t> response_data;
@@ -254,8 +286,8 @@ TEST_F(AuthSrvTest, iqueryViaDNSServer) {
 // Unsupported requests.  Should result in NOTIMP.
 TEST_F(AuthSrvTest, unsupportedRequest) {
     unsupportedRequest();
-    // unsupportedRequest tries 14 different opcodes
-    checkAllRcodeCountersZeroExcept(Rcode::NOTIMP(), 14);
+    // unsupportedRequest tries 13 different opcodes
+    checkAllRcodeCountersZeroExcept(Rcode::NOTIMP(), 13);
 }
 
 // Multiple questions.  Should result in FORMERR.
@@ -1486,6 +1518,130 @@ TEST_F(AuthSrvTest,
     parse_message->fromWire(ibuffer);
     headerCheck(*parse_message, default_qid, Rcode::SERVFAIL(),
                 opcode.getCode(), QR_FLAG, 1, 0, 0, 0);
+}
+
+//
+// DDNS related tests
+//
+
+// Helper subroutine to check if the given socket address has the expected
+// address and port.  It depends on specific output of getnameinfo() (while
+// there can be multiple textual representation of the same address) but
+// in practice it should be reliable.
+void
+checkAddrPort(const struct sockaddr& actual_sa,
+              const string& expected_addr, uint16_t expected_port)
+{
+    char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
+    const int error = getnameinfo(&actual_sa, getSALength(actual_sa), hbuf,
+                                  sizeof(hbuf), sbuf, sizeof(sbuf),
+                                  NI_NUMERICHOST | NI_NUMERICSERV);
+    if (error != 0) {
+        isc_throw(isc::Unexpected, "getnameinfo failed: " <<
+                  gai_strerror(error));
+    }
+    EXPECT_EQ(expected_addr, hbuf);
+    EXPECT_EQ(boost::lexical_cast<string>(expected_port), sbuf);
+}
+
+TEST_F(AuthSrvTest, DDNSForward) {
+    EXPECT_FALSE(ddns_forwarder.isConnected());
+
+    // Repeat sending an update request 4 times, differing some network
+    // parameters: UDP/IPv4, TCP/IPv4, UDP/IPv6, TCP/IPv6, in this order.
+    // By doing that we can also confirm the forwarder connection will be
+    // established exactly once, and kept established.
+    for (size_t i = 0; i < 4; ++i) {
+        // Use different names for some different cases
+        const Name zone_name = Name(i < 2 ? "example.com" : "example.org");
+        const socklen_t family = (i < 2) ? AF_INET : AF_INET6;
+        const char* const remote_addr =
+            (family == AF_INET) ? "192.0.2.1" : "2001:db8::1";
+        const uint16_t remote_port =
+            (family == AF_INET) ? 53214 : 53216;
+        const int protocol = ((i % 2) == 0) ? IPPROTO_UDP : IPPROTO_TCP;
+
+        createAndSendRequest(RRType::SOA(), Opcode::UPDATE(), zone_name,
+                             RRClass::IN(), protocol, remote_addr,
+                             remote_port);
+        EXPECT_FALSE(dnsserv.hasAnswer());
+        EXPECT_TRUE(ddns_forwarder.isConnected());
+
+        // Examine the pushed data (note: currently "local end" has a dummy
+        // value equal to remote)
+        EXPECT_EQ(family, ddns_forwarder.getPushedFamily());
+        const int expected_type =
+            (protocol == IPPROTO_UDP) ? SOCK_DGRAM : SOCK_STREAM;
+        EXPECT_EQ(expected_type, ddns_forwarder.getPushedType());
+        EXPECT_EQ(protocol, ddns_forwarder.getPushedProtocol());
+        checkAddrPort(ddns_forwarder.getPushedRemoteend(),
+                      remote_addr, remote_port);
+        checkAddrPort(ddns_forwarder.getPushedLocalend(),
+                      remote_addr, remote_port);
+        EXPECT_EQ(io_message->getDataSize(),
+                  ddns_forwarder.getPushedData().size());
+        EXPECT_EQ(0, memcmp(io_message->getData(),
+                            &ddns_forwarder.getPushedData()[0],
+                            ddns_forwarder.getPushedData().size()));
+    }
+}
+
+TEST_F(AuthSrvTest, DDNSForwardConnectFail) {
+    // make connect attempt fail.  It should result in SERVFAIL.  Note that
+    // the question (zone) section should be cleared for opcode of update.
+    ddns_forwarder.disableConnect();
+    createAndSendRequest(RRType::SOA(), Opcode::UPDATE());
+    EXPECT_TRUE(dnsserv.hasAnswer());
+    headerCheck(*parse_message, default_qid, Rcode::SERVFAIL(),
+                Opcode::UPDATE().getCode(), QR_FLAG, 0, 0, 0, 0);
+    EXPECT_FALSE(ddns_forwarder.isConnected());
+
+    // Now make connect okay again.  Despite the previous failure the new
+    // connection should now be established.
+    ddns_forwarder.enableConnect();
+    createAndSendRequest(RRType::SOA(), Opcode::UPDATE());
+    EXPECT_FALSE(dnsserv.hasAnswer());
+    EXPECT_TRUE(ddns_forwarder.isConnected());
+}
+
+TEST_F(AuthSrvTest, DDNSForwardPushFail) {
+    // Make first request succeed, which will establish the connection.
+    EXPECT_FALSE(ddns_forwarder.isConnected());
+    createAndSendRequest(RRType::SOA(), Opcode::UPDATE());
+    EXPECT_TRUE(ddns_forwarder.isConnected());
+
+    // make connect attempt fail.  It should result in SERVFAIL.  The
+    // connection should be closed.  Use IPv6 address for varying log output.
+    ddns_forwarder.disablePush();
+    createAndSendRequest(RRType::SOA(), Opcode::UPDATE(), Name("example.com"),
+                         RRClass::IN(), IPPROTO_UDP, "2001:db8::2");
+    EXPECT_TRUE(dnsserv.hasAnswer());
+    headerCheck(*parse_message, default_qid, Rcode::SERVFAIL(),
+                Opcode::UPDATE().getCode(), QR_FLAG, 0, 0, 0, 0);
+    EXPECT_FALSE(ddns_forwarder.isConnected());
+
+    // Allow push again.  Connection will be reopened, and the request will
+    // be forwarded successfully.
+    ddns_forwarder.enablePush();
+    createAndSendRequest(RRType::SOA(), Opcode::UPDATE());
+    EXPECT_FALSE(dnsserv.hasAnswer());
+    EXPECT_TRUE(ddns_forwarder.isConnected());
+}
+
+TEST_F(AuthSrvTest, DDNSForwardClose) {
+    scoped_ptr<AuthSrv> tmp_server(new AuthSrv(true, xfrout, ddns_forwarder));
+    UnitTestUtil::createRequestMessage(request_message, Opcode::UPDATE(),
+                                       default_qid, Name("example.com"),
+                                       RRClass::IN(), RRType::SOA());
+    createRequestPacket(request_message, IPPROTO_UDP);
+    tmp_server->processMessage(*io_message, *parse_message, *response_obuffer,
+                               &dnsserv);
+    EXPECT_FALSE(dnsserv.hasAnswer());
+    EXPECT_TRUE(ddns_forwarder.isConnected());
+
+    // Destroy the server.  The forwarder should close the connection.
+    tmp_server.reset();
+    EXPECT_FALSE(ddns_forwarder.isConnected());
 }
 
 }
