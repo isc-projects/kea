@@ -13,17 +13,21 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
+
+#include <asiolink/io_endpoint.h>
+#include <asiolink/io_error.h>
+
 #include <gtest/gtest.h>
+
+#include <boost/shared_ptr.hpp>
+
+#include <sstream>
+#include <string>
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
 #include <string.h>
-
-#include <boost/shared_ptr.hpp>
-
-#include <asiolink/io_endpoint.h>
-#include <asiolink/io_error.h>
 
 using namespace isc::asiolink;
 
@@ -240,4 +244,48 @@ TEST(IOEndpointTest, getSockAddr) {
     sockAddrMatch(ep->getSockAddr(), "2001:db8::5300", "35");
 }
 
+// A faked IOEndpoint for an uncommon address family.  It wouldn't be possible
+// to create via the normal factory, so we define a special derived class
+// for it.
+class TestIOEndpoint : public IOEndpoint {
+    virtual IOAddress getAddress() const {
+        return IOAddress("2001:db8::bad:add");
+    }
+    virtual uint16_t getPort() const { return (42); }
+    virtual short getProtocol() const { return (IPPROTO_UDP); }
+    virtual short getFamily() const { return (AF_UNSPEC); }
+    virtual const struct sockaddr& getSockAddr() const {
+        static struct sockaddr sa_placeholder;
+        return (sa_placeholder);
+    }
+};
+
+void
+checkEndpointText(const std::string& expected, const IOEndpoint& ep) {
+    std::ostringstream oss;
+    oss << ep;
+    EXPECT_EQ(expected, oss.str());
+}
+
+// test operator<<.  We simply confirm it appends the result of toText().
+TEST(IOEndpointTest, LeftShiftOperator) {
+    // UDP/IPv4
+    ConstIOEndpointPtr ep(IOEndpoint::create(IPPROTO_UDP,
+                                             IOAddress("192.0.2.1"), 53210));
+    checkEndpointText("192.0.2.1:53210", *ep);
+
+    // UDP/IPv6
+    ep.reset(IOEndpoint::create(IPPROTO_UDP, IOAddress("2001:db8::53"), 53));
+    checkEndpointText("[2001:db8::53]:53", *ep);
+
+    // Same for TCP: shouldn't be different
+    ep.reset(IOEndpoint::create(IPPROTO_TCP, IOAddress("192.0.2.1"), 53210));
+    checkEndpointText("192.0.2.1:53210", *ep);
+    ep.reset(IOEndpoint::create(IPPROTO_TCP, IOAddress("2001:db8::53"), 53));
+    checkEndpointText("[2001:db8::53]:53", *ep);
+
+    // Uncommon address family.  The actual behavior doesn't matter much
+    // in practice, but we check such input doesn't make it crash.
+    checkEndpointText("2001:db8::bad:add:42", TestIOEndpoint());
+}
 }

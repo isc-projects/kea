@@ -18,15 +18,18 @@
 // IMPORTANT NOTE: only very few ASIO headers files can be included in
 // this file.  In particular, asio.hpp should never be included here.
 // See the description of the namespace below.
-#include <unistd.h>             // for some network system calls
-
-#include <sys/socket.h>         // for sockaddr
 
 #include <functional>
 #include <string>
 
 #include <exceptions/exceptions.h>
 #include <asiolink/io_address.h>
+
+# include <ostream>
+
+#include <unistd.h>             // for some network system calls
+
+#include <sys/socket.h>         // for sockaddr
 
 namespace isc {
 namespace asiolink {
@@ -158,6 +161,27 @@ public:
                                     const unsigned short port);
 };
 
+/// \brief Insert the \c IOEndpoint as a string into stream.
+///
+/// This method converts \c endpoint into a string and inserts it into the
+/// output stream \c os.
+///
+/// This method converts the address and port of the endpoint in the textual
+/// format that other BIND 10 modules would use in logging, i.e.,
+/// - For IPv6 address: [<address>]:port (e.g., [2001:db8::5300]:53)
+/// - For IPv4 address: <address>:port (e.g., 192.0.2.53:5300)
+///
+/// If it's neither IPv6 nor IPv4, it converts the endpoint into text in the
+/// same format as that for IPv4, although in practice such a case is not
+/// really expected.
+///
+/// \param os A \c std::ostream object on which the insertion operation is
+/// performed.
+/// \param endpoint A reference to an \c IOEndpoint object output by the
+/// operation.
+/// \return A reference to the same \c std::ostream object referenced by
+/// parameter \c os after the insertion operation.
+std::ostream& operator<<(std::ostream& os, const IOEndpoint& endpoint);
 } // namespace asiolink
 } // namespace isc
 #endif // __IO_ENDPOINT_H
