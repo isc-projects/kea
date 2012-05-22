@@ -36,13 +36,15 @@ TEST_ZONE_RECORD = Question(TEST_ZONE_NAME, TEST_RRCLASS, UPDATE_RRTYPE)
 TEST_CLIENT6 = ('2001:db8::1', 53, 0, 0)
 TEST_CLIENT4 = ('192.0.2.1', 53)
 
-def create_update_msg(zones=[TEST_ZONE_RECORD]):
+def create_update_msg(zones=[TEST_ZONE_RECORD], prerequisites=[]):
     msg = Message(Message.RENDER)
     msg.set_qid(5353)           # arbitrary chosen
     msg.set_opcode(Opcode.UPDATE())
     msg.set_rcode(Rcode.NOERROR())
     for z in zones:
         msg.add_question(z)
+    for p in prerequisites:
+        msg.add_rrset(SECTION_PREREQUISITE, p)
 
     renderer = MessageRenderer()
     msg.to_wire(renderer)
@@ -469,7 +471,69 @@ class SessionTest(unittest.TestCase):
         self.__check_prerequisite_name_not_in_use(False, self.__datasrc_client, rrset)
 
     def test_check_prerequisites(self):
-        pass
+        # This test checks if the actual prerequisite-type-specific
+        # methods are called. Whether those succeed or not is tested above (or is it)
+        
+        # Let's first define a number of prereq's that should succeed
+        rrset_exists_yes = isc.dns.RRset(isc.dns.Name("example.org"),
+                                         isc.dns.RRClass.ANY(),
+                                         isc.dns.RRType.SOA(),
+                                         isc.dns.RRTTL(0))
+        rrset_exists_no = isc.dns.RRset(isc.dns.Name("foo.example.org"),
+                                        isc.dns.RRClass.ANY(),
+                                        isc.dns.RRType.SOA(),
+                                        isc.dns.RRTTL(0))
+
+        rrset_exists_value_yes = isc.dns.RRset(isc.dns.Name("www.example.org"),
+                                               isc.dns.RRClass.IN(),
+                                               isc.dns.RRType.A(),
+                                               isc.dns.RRTTL(0))
+        rrset_exists_value_yes.add_rdata(isc.dns.Rdata(isc.dns.RRType.A(),
+                                                       isc.dns.RRClass.IN(),
+                                                       "192.0.2.1"))
+
+        rrset_exists_value_no = isc.dns.RRset(isc.dns.Name("www.example.org"),
+                                              isc.dns.RRClass.IN(),
+                                              isc.dns.RRType.A(),
+                                              isc.dns.RRTTL(0))
+        rrset_exists_value_no.add_rdata(isc.dns.Rdata(isc.dns.RRType.A(),
+                                                      isc.dns.RRClass.IN(),
+                                                      "192.0.2.2"))
+
+        rrset_does_not_exist_yes = isc.dns.RRset(isc.dns.Name("foo.example.org"),
+                                                 isc.dns.RRClass.NONE(),
+                                                 isc.dns.RRType.SOA(),
+                                                 isc.dns.RRTTL(0))
+        rrset_does_not_exist_no = isc.dns.RRset(isc.dns.Name("foo.example.org"),
+                                                isc.dns.RRClass.NONE(),
+                                                isc.dns.RRType.SOA(),
+                                                isc.dns.RRTTL(0))
+
+        name_in_use_yes = isc.dns.RRset(isc.dns.Name("www.example.org"),
+                                        isc.dns.RRClass.ANY(),
+                                        isc.dns.RRType.ANY(),
+                                        isc.dns.RRTTL(0))
+        name_in_use_no = isc.dns.RRset(isc.dns.Name("foo.example.org"),
+                                       isc.dns.RRClass.ANY(),
+                                       isc.dns.RRType.ANY(),
+                                       isc.dns.RRTTL(0))
+
+        name_not_in_use_yes = isc.dns.RRset(isc.dns.Name("foo.example.org"),
+                                            isc.dns.RRClass.ANY(),
+                                            isc.dns.RRType.ANY(),
+                                            isc.dns.RRTTL(0))
+
+        # Create an UPDATE with all 5 'yes' prereqs
+        data, update = create_update_msg([TEST_ZONE_RECORD],
+                                         [
+                                          rrset_exists_yes,
+                                          rrset_does_not_exist_yes,
+                                          name_in_use_yes,
+                                          name_not_in_use_yes,
+                                          rrset_exists_value_yes
+                                         ])
+        print("[XX]")
+        print(update.to_text())
 
 if __name__ == "__main__":
     isc.log.init("bind10")
