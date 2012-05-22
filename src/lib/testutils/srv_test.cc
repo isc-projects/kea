@@ -100,7 +100,7 @@ void
 SrvTestBase::unsupportedRequest() {
     for (unsigned int i = 0; i < 16; ++i) {
         // set Opcode to 'i', which iterators over all possible codes except
-        // the standard query and notify 
+        // the standard opcodes we support.
         if (i == isc::dns::Opcode::QUERY().getCode() ||
             i == isc::dns::Opcode::NOTIFY().getCode() ||
             i == isc::dns::Opcode::UPDATE().getCode()) {
