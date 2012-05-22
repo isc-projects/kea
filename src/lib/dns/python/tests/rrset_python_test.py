@@ -96,7 +96,11 @@ class TestModuleSpec(unittest.TestCase):
         self.rrset_a.to_wire(buffer)
         self.assertEqual(exp_buffer, buffer)
 
-        self.assertRaises(EmptyRRset, self.rrset_a_empty.to_wire, buffer);
+        exp_buffer = bytearray(b'\x04test\x07example\x03com\x00\x00\x01\x00\x01\x00\x00\x0e\x10\x00\x00')
+        buffer = bytearray()
+        self.rrset_a_empty.to_wire(buffer)
+        self.assertEqual(exp_buffer, buffer)
+
         self.assertRaises(TypeError, self.rrset_a.to_wire, 1)
 
     def test_to_wire_renderer(self):

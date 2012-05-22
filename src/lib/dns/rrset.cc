@@ -65,7 +65,14 @@ rrsetToWire(const AbstractRRset& rrset, T& output, const size_t limit) {
     RdataIteratorPtr it = rrset.getRdataIterator();
 
     if (it->isLast()) {
-        isc_throw(EmptyRRset, "ToWire() is attempted for an empty RRset");
+        // For an empty RRset, write the name, type, class and TTL once,
+        // followed by empty rdata.
+        rrset.getName().toWire(output);
+        rrset.getType().toWire(output);
+        rrset.getClass().toWire(output);
+        rrset.getTTL().toWire(output);
+        output.writeUint16(0);
+        return (n);
     }
 
     // sort the set of Rdata based on rrset-order and sortlist, and possible
