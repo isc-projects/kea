@@ -251,28 +251,22 @@ RRset_toWire(PyObject* self_p, PyObject* args) {
     PyObject* mr;
     const s_RRset* self(static_cast<const s_RRset*>(self_p));
 
-    try {
-        if (PyArg_ParseTuple(args, "O", &bytes) && PySequence_Check(bytes)) {
-            PyObject* bytes_o = bytes;
+    if (PyArg_ParseTuple(args, "O", &bytes) && PySequence_Check(bytes)) {
+        PyObject* bytes_o = bytes;
 
-            OutputBuffer buffer(4096);
-            self->cppobj->toWire(buffer);
-            PyObject* n = PyBytes_FromStringAndSize(static_cast<const char*>(buffer.getData()), buffer.getLength());
-            PyObject* result = PySequence_InPlaceConcat(bytes_o, n);
-            // We need to release the object we temporarily created here
-            // to prevent memory leak
-            Py_DECREF(n);
-            return (result);
-        } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, &mr)) {
-            self->cppobj->toWire(PyMessageRenderer_ToMessageRenderer(mr));
-            // If we return NULL it is seen as an error, so use this for
-            // None returns
-            Py_RETURN_NONE;
-        }
-    } catch (const EmptyRRset& ers) {
-        PyErr_Clear();
-        PyErr_SetString(po_EmptyRRset, ers.what());
-        return (NULL);
+        OutputBuffer buffer(4096);
+        self->cppobj->toWire(buffer);
+        PyObject* n = PyBytes_FromStringAndSize(static_cast<const char*>(buffer.getData()), buffer.getLength());
+        PyObject* result = PySequence_InPlaceConcat(bytes_o, n);
+        // We need to release the object we temporarily created here
+        // to prevent memory leak
+        Py_DECREF(n);
+        return (result);
+    } else if (PyArg_ParseTuple(args, "O!", &messagerenderer_type, &mr)) {
+        self->cppobj->toWire(PyMessageRenderer_ToMessageRenderer(mr));
+        // If we return NULL it is seen as an error, so use this for
+        // None returns
+        Py_RETURN_NONE;
     }
     PyErr_Clear();
     PyErr_SetString(PyExc_TypeError,

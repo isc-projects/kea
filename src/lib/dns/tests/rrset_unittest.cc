@@ -197,6 +197,7 @@ TEST_F(RRsetTest, toText) {
     EXPECT_THROW(rrset_a_empty.toText(), EmptyRRset);
 }
 
+#include <iostream>
 TEST_F(RRsetTest, toWireBuffer) {
     rrset_a.toWire(buffer);
 
@@ -206,7 +207,11 @@ TEST_F(RRsetTest, toWireBuffer) {
 
     // toWire() cannot be performed for an empty RRset.
     buffer.clear();
-    EXPECT_THROW(rrset_a_empty.toWire(buffer), EmptyRRset);
+    rrset_a_empty.toWire(buffer);
+    wiredata.clear();
+    UnitTestUtil::readWireData("rrset_toWire3", wiredata);
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, buffer.getData(),
+                        buffer.getLength(), &wiredata[0], wiredata.size());
 }
 
 TEST_F(RRsetTest, toWireRenderer) {
@@ -219,9 +224,13 @@ TEST_F(RRsetTest, toWireRenderer) {
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
                         renderer.getLength(), &wiredata[0], wiredata.size());
 
-    // toWire() cannot be performed for an empty RRset.
-    renderer.clear();
-    EXPECT_THROW(rrset_a_empty.toWire(renderer), EmptyRRset);
+    // toWire() can also be performed for an empty RRset.
+    buffer.clear();
+    rrset_a_empty.toWire(buffer);
+    wiredata.clear();
+    UnitTestUtil::readWireData("rrset_toWire3", wiredata);
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, buffer.getData(),
+                        buffer.getLength(), &wiredata[0], wiredata.size());
 }
 
 // test operator<<.  We simply confirm it appends the result of toText().
