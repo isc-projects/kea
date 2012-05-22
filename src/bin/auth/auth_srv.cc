@@ -112,30 +112,82 @@ private:
     MessageRenderer& renderer_;
 };
 
+string formatEndpoint(const IOEndpoint& ep); // forward declaration to keep the diff minimum.
+
 // A helper container of socket session forwarder.
 //
 // This class provides a simple wrapper interface to SocketSessionForwarder
-// so that the caller doesn't have to worry about exception handling or
-// parameter building.
+// so that the caller doesn't have to worry about connection management,
+// exception handling or parameter building.
 //
 // It internally maintains whether the underlying forwarder establishes a
-// connection to the receiver.  Its connect() wrapper tries connection
-// setup only when necessary, so the caller can just always call connect().
-// It also closes the connection on destruction, when necessary, automatically.
-//
-// Its push() wrapper takes the session data to be forwarded in the form of
-// IOMessage object, and converts it to the parameters that the underlying
-// SocketSessionForwarder expects.
+// connection to the receiver.  On a forwarding request, if the connection
+// hasn't been established yet, it automatically opens a new one, then
+// pushes the session over it.  It also closes the connection on destruction,
+// or a non-recoverable error happens, automatically.  So the only thing
+// the application has to do is to create this object and push any session
+// to be forwarded.
 class SocketSessionForwarderHolder {
 public:
-    SocketSessionForwarderHolder(BaseSocketSessionForwarder& forwarder) :
-        forwarder_(forwarder), connected_(false)
+    /// \brief The constructor.
+    ///
+    /// \param message_name Any string that can identify the type of messages
+    /// to be forwarded via this session.  It will be only used as part of
+    /// log message, so it can be anything, but in practice something like
+    /// "update" or "xfr" is expected.
+    /// \param forwarder The underlying socket session forwarder.
+    SocketSessionForwarderHolder(const string& message_name,
+                                 BaseSocketSessionForwarder& forwarder) :
+        message_name_(message_name), forwarder_(forwarder), connected_(false)
     {}
+
     ~SocketSessionForwarderHolder() {
         if (connected_) {
             forwarder_.close();
         }
     }
+
+    /// \brief Push a socket session corresponding to given IOMessage.
+    ///
+    /// If the connection with the receiver process hasn't been established,
+    /// it automatically establishes one, then push the session over it.
+    ///
+    /// If either connect or push fails, the underlying forwarder object should
+    /// throw an exception.  This method logs the event, and propagates the
+    /// exception to the caller, which will eventually result in SERVFAIL.
+    /// The connection, if established, is automatically closed, so the next
+    /// forward request will trigger reopening a new connection.
+    ///
+    /// \note: Right now, there's no API to retrieve the local address from
+    /// the IOMessage.  Until it's added, we pass the remote address as
+    /// local.
+    ///
+    /// \param io_message The request message to be forwarded as a socket
+    /// session.  It will be converted to the parameters that the underlying
+    /// SocketSessionForwarder expects.
+    void push(const IOMessage& io_message) {
+        const IOEndpoint& remote_ep = io_message.getRemoteEndpoint();
+        const int protocol = remote_ep.getProtocol();
+        const int sock_type = getSocketType(protocol);
+        try {
+            connect();
+            forwarder_.push(io_message.getSocket().getNative(),
+                            remote_ep.getFamily(), sock_type, protocol,
+                            remote_ep.getSockAddr(), remote_ep.getSockAddr(),
+                            io_message.getData(), io_message.getDataSize());
+        } catch (const SocketSessionError& ex) {
+            LOG_ERROR(auth_logger, AUTH_MESSAGE_FORWARD_ERROR).
+                arg(message_name_).arg(formatEndpoint(remote_ep)).
+                arg(ex.what());
+            close();
+            throw;
+        }
+    }
+
+private:
+    const string message_name_;
+    BaseSocketSessionForwarder& forwarder_;
+    bool connected_;
 
     void connect() {
         if (!connected_) {
@@ -150,28 +202,6 @@ public:
             connected_ = false;
         }
     }
-
-    // Push a socket session corresponding to given IOMessage.
-    //
-    // NOTE: Right now, there's no API to retrieve the local address from
-    // the IOMessage.  Until it's added, we pass the remote address as
-    // local.
-    //
-    // If the underlying forwarder throws on push(), the exception will be
-    // propagated to the caller.
-    void push(const IOMessage& io_message) {
-        const IOEndpoint& remote_ep = io_message.getRemoteEndpoint();
-        const int protocol = remote_ep.getProtocol();
-        const int sock_type = getSocketType(protocol);
-        forwarder_.push(io_message.getSocket().getNative(),
-                        remote_ep.getFamily(), sock_type, protocol,
-                        remote_ep.getSockAddr(), remote_ep.getSockAddr(),
-                        io_message.getData(), io_message.getDataSize());
-    }
-
-private:
-    BaseSocketSessionForwarder& forwarder_;
-    bool connected_;
 
     static int getSocketType(int protocol) {
         switch (protocol) {
@@ -309,7 +339,7 @@ AuthSrvImpl::AuthSrvImpl(const bool use_cache,
     keyring_(NULL),
     xfrout_connected_(false),
     xfrout_client_(xfrout_client),
-    ddns_forwarder_(ddns_forwarder)
+    ddns_forwarder_("update", ddns_forwarder)
 {
     // cur_datasrc_ is automatically initialized by the default constructor,
     // effectively being an empty (sqlite) data source.  once ccsession is up
@@ -848,21 +878,10 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
 
 bool
 AuthSrvImpl::processUpdate(const IOMessage& io_message) {
-    try {
-        ddns_forwarder_.connect();
-        ddns_forwarder_.push(io_message);
-    } catch (const SocketSessionError& ex) {
-        // If either connect or push fails, the forwarder object should throw
-        // an exception.  We log the event, and propagate the exception to
-        // the caller, which will result in SERVFAIL.
-        LOG_ERROR(auth_logger, AUTH_UPDATE_FORWARD_ERROR).
-            arg(formatEndpoint(io_message.getRemoteEndpoint())).
-            arg(ex.what());
-        ddns_forwarder_.close();
-        throw;
-    }
-
-    // On successful push, the request shouldn't be responded from b10-auth.
+    // Push the update request to a separate process via the forwarder.
+    // On successful push, the request shouldn't be responded from b10-auth,
+    // so we return false.
+    ddns_forwarder_.push(io_message);
     return (false);
 }
 

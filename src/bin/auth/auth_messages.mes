@@ -255,16 +255,18 @@ processed by the authoritative server has been found to contain an
 unsupported opcode. (The opcode is included in the message.) The server
 will return an error code of NOTIMPL to the sender.
 
-% AUTH_UPDATE_FORWARD_ERROR failed to forward update request from %1: %2
-The authoritative server receives a dynamic update request, tried to
-forward it to a separate process (which is usually b10-ddns) to handle it,
-but it failed.  It could be configuration mismatch between b10-auth and
-b10-ddns, or it may because update requests are coming too fast and b10-ddns
-cannot keep up with the rate, or some system level failure.  In either case
-this means the BIND 10 system is not working as expected, so the administrator
-should look into the cause and address the issue.  The log message
-includes the client's address (and port), and the error message sent
-from the lower layer that detects the failure.
+% AUTH_MESSAGE_FORWARD_ERROR failed to forward %1 request from %2: %3
+The authoritative server tried to forward some type DNS request
+message to a separate process (e.g., forwarding dynamic update
+requests to b10-ddns) to handle it, but it failed.  It could be
+configuration mismatch between b10-auth and the forwarded program, or
+it may because the requests are coming too fast and the forwarded
+program cannot keep up with the rate, or some system level failure.
+In either case this means the BIND 10 system is not working as
+expected, so the administrator should look into the cause and address
+the issue.  The log message includes the client's address (and port),
+and the error message sent from the lower layer that detects the
+failure.
 
 % AUTH_XFRIN_CHANNEL_CREATED XFRIN session channel created
 This is a debug message indicating that the authoritative server has
