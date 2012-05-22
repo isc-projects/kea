@@ -42,7 +42,9 @@ main(const int argc, char* const argv[])
 #define __STDC_LIMIT_MACROS
 
 #ifdef __linux__
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
 #endif
 
 #include <sys/types.h>
@@ -1959,7 +1961,7 @@ decodebase(void)
 	fprintf(stderr, "not yet supported base '%s'\n", b0);
 	exit(2);
 }
-			   
+
 /*
  * get the server socket address from the command line:
  *  - flags: inherited from main, 0 or AI_NUMERICHOST (for literals)
@@ -2219,8 +2221,8 @@ void
 reapchild(int sig)
 {
 	int status;
-
-	sig = sig;
+	int s = sig;
+    s = 1;
 	while (wait3(&status, WNOHANG, NULL) > 0)
 		/* continue */;
 }
@@ -2232,8 +2234,10 @@ reapchild(int sig)
 void
 interrupt(int sig)
 {
-	sig = sig;
-	interrupted = 1;
+    // Do something to avoid unused-variable warning
+	int s = sig;
+    s = 1;
+	interrupted = s;
 }
 
 /*

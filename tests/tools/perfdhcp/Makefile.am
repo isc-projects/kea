@@ -12,10 +12,16 @@ if USE_STATIC_LINK
 AM_LDFLAGS += -static
 endif
 
-# We have to suppress errors because we are compiling C code with CXX
+# We have to suppress warnings because we are compiling C code with CXX
 # We have to do this to link with new C++ pieces of code
 perfdhcp_CXXFLAGS = $(AM_CXXFLAGS)
-perfdhcp_CXXFLAGS += -Wno-error -Wno-writestrings
+if USE_CLANGPP
+perfdhcp_CXXFLAGS += -Wno-deprecated-writable-strings
+else
+if USE_GXX
+perfdhcp_CXXFLAGS += -Wno-write-strings
+endif
+endif
 
 pkglibexec_PROGRAMS  = perfdhcp
 perfdhcp_SOURCES  = perfdhcp.cc
