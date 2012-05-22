@@ -123,7 +123,9 @@ class UpdateSession:
         try:
             datasrc_client, zname, zclass = self.__get_update_zone()
             # conceptual code that would follow
-            self.__check_prerequisites(datasrc_client)
+            prereq_result = self.__check_prerequisites(datasrc_client, zname, zclass)
+            if prereq_result != UPDATE_SUCCESS:
+                return prereq_result, zname, zclass
             # self.__check_update_acl()
             # self.__do_update()
             # self.__make_response(Rcode.NOERROR())
@@ -249,22 +251,42 @@ class UpdateSession:
         '''
         return not self.__check_prerequisite_name_in_use(datasrc_client, rrset)
 
-    def __check_prerequisites(self, datasrc_client):
+    def __check_prerequisites(self, datasrc_client, zname, zclass):
         '''Check the prerequisites section of the UPDATE Message.
            RFC2136 Section 2.4'''
         for rrset in self.__message.get_section(SECTION_PREREQUISITE):
-            # called atm, but not 'handled' yet
-            if rrset.getClass() == RRClass.ANY():
-                # Check for each RR in the 'set' XXX
-                self.__check_prerequisite_exists(rrset)
-            elif rrset.getClass() == datasrc_client.getClass():
-                self.__check_prerequisite_exists_value(datasrc_client, rrset)
-            elif rrset.getClass() == RRClass.NONE():
-                self.__check_prerequisite_does_not_exist(datasrc_client, rrset)
-            elif rrset.getClass() == RRClass.ANY() and rrset.getType() == RRType.ANY():
-                self.__check_prerequisite_name_exists(datasrc_client, rrset)
-            elif rrset.getClass() == RRClass.NONE() and rrset.getType() == RRType.ANY():
-                self.__check_prerequisite_name_does_not_exist(datasrc_client, rrset)
+            # First check if the name is in the zone
+            relation = rrset.get_name().compare(zname).get_relation()
+            if relation != NameComparisonResult.SUBDOMAIN and\
+               relation != NameComparisonResult.EQUAL:
+                return NOTZONE
+
+            # Algorithm taken from RFC2136 Section 3.2
+            if rrset.get_class() == RRClass.ANY():
+                if rrset.get_ttl() != 0 or rrset.get_rdata_count() != 0:
+                    return Rcode.FORMERR()
+                elif rrset.get_type() == RRType.ANY():
+                    if not self.__check_prerequisite_name_in_use(datasrc_client, rrset):
+                        return Rcode.NXDOMAIN()
+                else:
+                    if not self.__check_prerequisite_rrset_exists(datasrc_client, rrset):
+                        return Rcode.NXRRSET()
+            elif rrset.get_class() == RRClass.NONE():
+                if rrset.get_ttl() != 0 or rrset.get_rdata_count() != 0:
+                    return Rcode.FORMERR()
+                elif rrset.get_type() == RRType.ANY():
+                    if not self.__check_prerequisite_name_not_in_use(datasrc_client, rrset):
+                        return Rcode.YXDOMAIN()
+                else:
+                    if not self.__check_prerequisite_rrset_does_not_exist(datasrc_client, rrset):
+                        return Rcode.YXRRSET()
+            elif rrset.get_class() == zclass:
+                if rrset.get_ttl() != 0:
+                    return Rcode.FORMERR
+                else:
+                    if not self.__check_prerequisite_rrset_exists_value(datasrc_client, rrset):
+                        return Rcode.NXRRSET()
             else:
-                print("[XX] ERROR! unknown prerequisite")
-        pass
+                return Rcode.FORMERR
+
+        return Rcode.NOERROR()
