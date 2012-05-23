@@ -15,6 +15,80 @@
 # No namespace declaration - these constants go in the global namespace
 # of the libddns_messages python module.
 
+% LIBDDNS_PREREQ_FORMERR update client %1 for zone %2: Format error in prerequisite (%3). Non-zero TTL.
+The prerequisite with the given name, class and type is not well-formed.
+The specific prerequisite is shown. In this case, it has a non-zero TTL value.
+A FORMERR error response is sent to the client.
+
+% LIBDDNS_PREREQ_FORMERR_ANY update client %1 for zone %2: Format error in prerequisite (%3). Non-zero TTL or rdata found.
+The prerequisite with the given name, class and type is not well-formed.
+The specific prerequisite is shown. In this case, it either has a non-zero
+TTL value, or has rdata fields. A FORMERR error response is sent to the client.
+
+% LIBDDNS_PREREQ_FORMERR_CLASS update client %1 for zone %2: Format error in prerequisite (%3). Bad class.
+The prerequisite with the given name, class and type is not well-formed.
+The specific prerequisite is shown. In this case, the class of the
+prerequisite should either match the class of the zone in the Zone Section,
+or it should be ANY or NONE, and it is not. A FORMERR error response is sent
+to the client.
+
+% LIBDDNS_PREREQ_FORMERR_NONE update client %1 for zone %2: Format error in prerequisite (%3). Non-zero TTL or rdata found.
+The prerequisite with the given name, class and type is not well-formed.
+The specific prerequisite is shown. In this case, it either has a non-zero
+TTL value, or has rdata fields. A FORMERR error response is sent to the client.
+
+% LIBDDNS_PREREQ_NAME_IN_USE_FAILED update client %1 for zone %2: 'Name is in use' prerequisite not satisfied (%3), rcode: %4
+A DNS UPDATE prerequisite was not satisfied. The specific prerequisite that
+was not satisfied is shown. The client is sent an error response with the
+given rcode.
+In this case, the specific prerequisite is 'Name is in use'. From RFC2136:
+Name is in use.  At least one RR with a specified NAME (in
+the zone and class specified by the Zone Section) must exist.
+Note that this prerequisite is NOT satisfied by empty
+nonterminals.
+
+% LIBDDNS_PREREQ_NAME_NOT_IN_USE_FAILED update client %1 for zone %2: 'Name is not in use' (%3) prerequisite not satisfied, rcode: %4
+A DNS UPDATE prerequisite was not satisfied. The specific prerequisite that
+was not satisfied is shown. The client is sent an error response with the
+given rcode.
+In this case, the specific prerequisite is ''. From RFC2136:
+Name is not in use.  No RR of any type is owned by a
+specified NAME.  Note that this prerequisite IS satisfied by
+empty nonterminals.
+
+% LIBDDNS_PREREQ_NOTZONE update client %1 for zone %2: prerequisite not in zone (%3)
+A DNS UPDATE prerequisite has a name that does not appear to be inside
+the zone specified in the Zone section of the UPDATE message.
+The specific prerequisite is shown. A NOTZONE error response is sent to
+the client.
+
+% LIBDDNS_PREREQ_RRSET_DOES_NOT_EXIST_FAILED update client %1 for zone %2: 'RRset does not exist' (%3) prerequisite not satisfied, rcode: %4
+A DNS UPDATE prerequisite was not satisfied. The specific prerequisite that
+was not satisfied is shown. The client is sent an error response with the
+given rcode.
+In this case, the specific prerequisite is ''. From RFC2136:
+RRset does not exist.  No RRs with a specified NAME and TYPE
+(in the zone and class denoted by the Zone Section) can exist.
+
+% LIBDDNS_PREREQ_RRSET_EXISTS_FAILED update client %1 for zone %2: 'RRset exists (value independent)' (%3) prerequisite not satisfied, rcode: %4
+A DNS UPDATE prerequisite was not satisfied. The specific prerequisite that
+was not satisfied is shown. The client is sent an error response with the
+given rcode.
+In this case, the specific prerequisite is ''. From RFC2136:
+RRset exists (value dependent).  A set of RRs with a
+specified NAME and TYPE exists and has the same members
+with the same RDATAs as the RRset specified here in this
+Section.
+
+% LIBDDNS_PREREQ_RRSET_EXISTS_VAL_FAILED update client %1 for zone %2: 'RRset exists (value dependent)' (%3) prerequisite not satisfied, rcode: %4
+A DNS UPDATE prerequisite was not satisfied. The specific prerequisite that
+was not satisfied is shown. The client is sent an error response with the
+given rcode.
+In this case, the specific prerequisite is ''. From RFC2136:
+RRset exists (value independent).  At least one RR with a
+specified NAME and TYPE (in the zone and class specified by
+the Zone Section) must exist.
+
 % LIBDDNS_UPDATE_ERROR update client %1 for zone %2: %3
 Debug message.  An error is found in processing a dynamic update
 request.  This log message is used for general errors that are not
@@ -46,4 +120,3 @@ that one of the prerequisites was not satisfied. The result code
 should give more information on what prerequisite type failed.
 If the result code is FORMERR, the prerequisite section was not well-formed.
 An error response with the given result code is sent back to the client.
-
