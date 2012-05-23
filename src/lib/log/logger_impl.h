@@ -32,6 +32,8 @@
 #include <log/logger_level_impl.h>
 #include <log/message_types.h>
 
+#include <util/interprocess_sync_file.h>
+
 namespace isc {
 namespace log {
 
@@ -178,8 +180,9 @@ public:
     }
 
 private:
-    std::string         name_;              ///< Full name of this logger
-    log4cplus::Logger   logger_;            ///< Underlying log4cplus logger
+    std::string                  name_;              ///< Full name of this logger
+    log4cplus::Logger            logger_;            ///< Underlying log4cplus logger
+    isc::util::InterprocessSync* sync_;
 };
 
 } // namespace log
