@@ -160,7 +160,7 @@ class SessionTest(unittest.TestCase):
            test code cleaner).
         '''
         self.assertEqual(expected,
-            self.__session._UpdateSession__check_prerequisite_rrset_exists(
+            self.__session._UpdateSession__prereq_rrset_exists(
                             client, rrset))
 
     def __check_prerequisite_exists_value(self, expected, client, rrset):
@@ -169,8 +169,7 @@ class SessionTest(unittest.TestCase):
         '''
         self.assertEqual(expected,
             self.__session.
-                 _UpdateSession__check_prerequisite_rrset_exists_value(client,
-                                                                       rrset))
+                 _UpdateSession__prereq_rrset_exists_value(client, rrset))
 
     def __check_prerequisite_does_not_exist(self, expected, client, rrset):
         '''Similar to __check_prerequisite_exists(), but for checking
@@ -178,8 +177,7 @@ class SessionTest(unittest.TestCase):
         '''
         self.assertEqual(expected,
             self.__session.
-                _UpdateSession__check_prerequisite_rrset_does_not_exist(client,
-                                                                        rrset))
+                _UpdateSession__prereq_rrset_does_not_exist(client, rrset))
 
     def __check_prerequisite_name_in_use(self, expected, client, rrset):
         '''Similar to __check_prerequisite_exists(), but for checking
@@ -187,8 +185,7 @@ class SessionTest(unittest.TestCase):
         '''
         self.assertEqual(expected,
             self.__session.
-                 _UpdateSession__check_prerequisite_name_in_use(client,
-                                                                rrset))
+                 _UpdateSession__prereq_name_in_use(client, rrset))
 
     def __check_prerequisite_name_not_in_use(self, expected, client, rrset):
         '''Similar to __check_prerequisite_exists(), but for checking
@@ -196,8 +193,7 @@ class SessionTest(unittest.TestCase):
         '''
         self.assertEqual(expected,
             self.__session.
-                 _UpdateSession__check_prerequisite_name_not_in_use(client,
-                                                                    rrset))
+                 _UpdateSession__prereq_name_not_in_use(client, rrset))
 
     def test_check_prerequisite_exists(self):
         # Basic existence checks
