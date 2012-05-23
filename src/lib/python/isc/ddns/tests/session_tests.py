@@ -522,7 +522,7 @@ class SessionTest(unittest.TestCase):
         session = UpdateSession(msg, msg_data, TEST_CLIENT4, zconfig)
         # compare the to_text output of the rcodes (nicer error messages)
         # This call itself should also be done by handle(),
-        # but just for better failures, it is first called on itw own
+        # but just for better failures, it is first called on its own
         self.assertEqual(expected.to_text(),
             session._UpdateSession__check_prerequisites(self.__datasrc_client,
                                                         TEST_ZONE_NAME,
@@ -543,7 +543,7 @@ class SessionTest(unittest.TestCase):
         # It does test all types of prerequisites, but it does not test
         # every possible result for those types (those are tested above,
         # in the specific prerequisite type tests)
-        
+
         # Let's first define a number of prereq's that should succeed
         rrset_exists_yes = isc.dns.RRset(isc.dns.Name("example.org"),
                                          isc.dns.RRClass.ANY(),
