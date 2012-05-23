@@ -26,6 +26,9 @@ import isc
 
 class TestDhcpv4Daemon(unittest.TestCase):
     def setUp(self):
+
+        # don't redirect stdout/stderr here as we want to print out things
+        # during the test
         pass
 
     def tearDown(self):
@@ -33,8 +36,9 @@ class TestDhcpv4Daemon(unittest.TestCase):
 
     def runDhcp4(self, params):
         """
-        This method runs dhcp4 and returns a touple: (returncode and stdout)
+        This method runs dhcp4 and returns a touple: (returncode, stdout, stderr)
         """
+        ## @todo: Convert this into generic method and reuse it in dhcp6
 
         print("Running command: %s" % (" ".join(params)))
 
@@ -63,26 +67,38 @@ class TestDhcpv4Daemon(unittest.TestCase):
         self.assertNotEqual(pi.process, None)
         self.assertTrue(type(pi.pid) is int)
 
+        # There's potential problem if b10-dhcp4 prints out more
+        # than 4k of text
         output = os.read(self.stdout_pipes[0], 4096)
         error = os.read(self.stderr_pipes[0], 4096)
+
+        if (output is None):
+            output = ""
+        if (error is None):
+            error = ""
 
         try:
             if (not pi.process.poll()):
                 # let's be nice at first...
                 pi.process.send_signal(signal.SIGTERM)
+
+                # give the process time to die out gracefully
                 time.sleep(1)
                 if (pi.process.returncode == None):
-                    # if the suspect does not cooperate, use bigger hammer
+                    # If the suspect does not cooperate, use a bigger hammer.
                     os.kill(pi.pid, signal.SIGKILL)
         except OSError:
             print("Ignoring failed kill attempt. Process is dead already.")
 
-        # clean up our stdout munging
+        # Clean up our stdout/stderr munging.
         os.dup2(self.stdout_old, sys.stdout.fileno())
         os.close(self.stdout_pipes[0])
 
         os.dup2(self.stderr_old, sys.stderr.fileno())
         os.close(self.stderr_pipes[0])
+
+        print ("Process finished, return code=%d, stdout=%d bytes, stderr=%d bytes"
+               % (pi.process.returncode, len(output), len(error)) )
 
         return (pi.process.returncode, output, error)
 
@@ -91,12 +107,12 @@ class TestDhcpv4Daemon(unittest.TestCase):
         print("      not that is can bind sockets correctly. Please ignore binding errors.")
 
         (returncode, output, error) = self.runDhcp4(["../b10-dhcp4", "-v"])
-        # print("Return code=%d \nstdout=[%s]\nstderr=[%s]" % (returncode, output, error) )
 
         self.assertEqual( str(output).count("[b10-dhcp4] Initiating DHCPv4 server operation."), 1)
 
     def test_portnumber_0(self):
         print("Check that specifying port number 0 is not allowed.")
+
         (returncode, output, error) = self.runDhcp4(['../b10-dhcp4', '-p', '0'])
 
         # When invalid port number is specified, return code must not be success
@@ -105,7 +121,29 @@ class TestDhcpv4Daemon(unittest.TestCase):
         # Check that there is an error message about invalid port number printed on stderr
         self.assertEqual( str(error).count("Failed to parse port number"), 1)
 
+    def test_portnumber_missing(self):
+        print("Check that -p option requires a parameter.")
 
+        (returncode, output, error) = self.runDhcp4(['../b10-dhcp4', '-p'])
+
+        # When invalid port number is specified, return code must not be success
+        self.assertTrue(returncode != 0)
+
+        # Check that there is an error message about invalid port number printed on stderr
+        self.assertEqual( str(error).count("option requires an argument"), 1)
+
+    def test_portnumber_nonroot(self):
+        print("Check that specifying unprivilidged port number will work.")
+
+        (returncode, output, error) = self.runDhcp4(['../b10-dhcp4', '-p', '10057'])
+
+        # When invalid port number is specified, return code must not be success
+        # TODO: Temporarily commented out as socket binding on systems that do not have
+        #       interface detection implemented currently fails.
+        # self.assertTrue(returncode == 0)
+
+        # Check that there is an error message about invalid port number printed on stderr
+        self.assertEqual( str(output).count("opening sockets on port 10057"), 1)
 
 if __name__ == '__main__':
     unittest.main()
