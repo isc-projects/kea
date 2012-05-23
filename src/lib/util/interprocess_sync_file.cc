@@ -27,8 +27,8 @@ namespace isc {
 namespace util {
 
 InterprocessSyncFile::InterprocessSyncFile(const std::string component_name) :
-    InterprocessSync(component_name) {
-
+    InterprocessSync(component_name)
+{
     std::string lockfile_path = LOCKFILE_DIR;
 
     const char* const env = getenv("B10_FROM_SOURCE");
@@ -45,13 +45,14 @@ InterprocessSyncFile::InterprocessSyncFile(const std::string component_name) :
 
     // Open the lockfile in the constructor so it doesn't do the access
     // checks every time a message is logged.
-    mode_t mode = umask(0111);
+    const mode_t mode = umask(0111);
     fd_ = open(lockfile_path.c_str(), O_CREAT | O_RDWR, 0660);
     umask(mode);
 
     if (fd_ == -1) {
         isc_throw(InterprocessSyncFileError,
-                  "Unable to use interprocess sync lockfile: " + lockfile_path);
+                  "Unable to use interprocess sync lockfile: " +
+                  lockfile_path);
     }
 }
 
@@ -65,14 +66,15 @@ InterprocessSyncFile::~InterprocessSyncFile() {
 
 InterprocessSyncLocker*
 InterprocessSyncFile::getLocker() {
-    InterprocessSyncLocker *locker = new InterprocessSyncFileLocker(this);
-    return locker;
+    InterprocessSyncLocker* locker = new InterprocessSyncFileLocker(this);
+    return (locker);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
 
-InterprocessSyncFileLocker::InterprocessSyncFileLocker(InterprocessSync* sync) :
-    InterprocessSyncLocker(sync) {
+InterprocessSyncFileLocker::InterprocessSyncFileLocker(InterprocessSync* sync)
+    : InterprocessSyncLocker(sync)
+{
 }
 
 InterprocessSyncFileLocker::~InterprocessSyncFileLocker() {
@@ -85,12 +87,11 @@ InterprocessSyncFileLocker::lock() {
         return (true);
     }
 
-    InterprocessSyncFile *sync = dynamic_cast<InterprocessSyncFile*>(sync_);
-    int fd = sync->getFd();
+    InterprocessSyncFile* sync = dynamic_cast<InterprocessSyncFile*>(sync_);
+    const int fd = sync->getFd();
 
     if (fd != -1) {
         struct flock lock;
-        int status;
 
         // Acquire the exclusive lock
         memset(&lock, 0, sizeof lock);
@@ -99,7 +100,7 @@ InterprocessSyncFileLocker::lock() {
         lock.l_start = 0;
         lock.l_len = 1;
 
-        status = fcntl(fd, F_SETLKW, &lock);
+        const int status = fcntl(fd, F_SETLKW, &lock);
         if (status == 0) {
             is_locked_ = true;
             return (true);
@@ -115,12 +116,11 @@ InterprocessSyncFileLocker::tryLock() {
         return (true);
     }
 
-    InterprocessSyncFile *sync = dynamic_cast<InterprocessSyncFile*>(sync_);
-    int fd = sync->getFd();
+    InterprocessSyncFile* sync = dynamic_cast<InterprocessSyncFile*>(sync_);
+    const int fd = sync->getFd();
 
     if (fd != -1) {
         struct flock lock;
-        int status;
 
         // Acquire the exclusive lock
         memset(&lock, 0, sizeof lock);
@@ -129,7 +129,7 @@ InterprocessSyncFileLocker::tryLock() {
         lock.l_start = 0;
         lock.l_len = 1;
 
-        status = fcntl(fd, F_SETLK, &lock);
+        const int status = fcntl(fd, F_SETLK, &lock);
         if (status == 0) {
             is_locked_ = true;
             return (true);
@@ -146,11 +146,10 @@ InterprocessSyncFileLocker::unlock() {
     }
 
     InterprocessSyncFile *sync = dynamic_cast<InterprocessSyncFile*>(sync_);
-    int fd = sync->getFd();
+    const int fd = sync->getFd();
 
     if (fd != -1) {
         struct flock lock;
-        int status;
 
         // Release the exclusive lock
         memset(&lock, 0, sizeof lock);
@@ -159,7 +158,7 @@ InterprocessSyncFileLocker::unlock() {
         lock.l_start = 0;
         lock.l_len = 1;
 
-        status = fcntl(fd, F_SETLKW, &lock);
+        const int status = fcntl(fd, F_SETLKW, &lock);
         if (status == 0) {
             is_locked_ = false;
             return (true);

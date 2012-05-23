@@ -27,7 +27,8 @@ namespace util {
 ///
 class InterprocessSyncFileError : public Exception {
 public:
-    InterprocessSyncFileError(const char* file, size_t line, const char* what) :
+    InterprocessSyncFileError(const char* file, size_t line,
+                              const char* what) :
         isc::Exception(file, line, what) {}
 };
 
@@ -41,8 +42,8 @@ public:
 
     InterprocessSyncLocker* getLocker();
 
-    int getFd() {
-        return fd_;
+    int getFd() const {
+        return (fd_);
     }
 
 private:

@@ -26,8 +26,8 @@ protected:
 };
 
 TEST_F(InterprocessSyncFileTest, TestLock) {
-  InterprocessSync *sync = new InterprocessSyncFile("test");
-  InterprocessSyncLocker *locker = sync->getLocker();
+  InterprocessSync* sync = new InterprocessSyncFile("test");
+  InterprocessSyncLocker* locker = sync->getLocker();
 
   EXPECT_TRUE(locker->lock());
 
@@ -49,8 +49,8 @@ TEST_F(InterprocessSyncFileTest, TestLock) {
       // Child writes to pipe
       close(fds[0]);
 
-      InterprocessSync *sync2 = new InterprocessSyncFile("test");
-      InterprocessSyncLocker *locker2 = sync2->getLocker();
+      InterprocessSync* sync2 = new InterprocessSyncFile("test");
+      InterprocessSyncLocker* locker2 = sync2->getLocker();
 
       if (!locker2->tryLock()) {
           locked = 1;
@@ -59,7 +59,7 @@ TEST_F(InterprocessSyncFileTest, TestLock) {
       delete locker2;
       delete sync2;
 
-      write(fds[1], &locked, sizeof locked);
+      write(fds[1], &locked, sizeof(locked));
       close(fds[1]);
       exit(0);
   } else {
@@ -68,7 +68,7 @@ TEST_F(InterprocessSyncFileTest, TestLock) {
       close(fds[1]);
 
       // Read status and set flag
-      read(fds[0], &locked, sizeof locked);
+      read(fds[0], &locked, sizeof(locked));
       if (locked == 1) {
         was_locked = true;
       } else {
@@ -86,13 +86,13 @@ TEST_F(InterprocessSyncFileTest, TestLock) {
 }
 
 TEST_F(InterprocessSyncFileTest, TestMultipleFilesDirect) {
-  InterprocessSync *sync = new InterprocessSyncFile("test1");
-  InterprocessSyncLocker *locker = sync->getLocker();
+  InterprocessSync* sync = new InterprocessSyncFile("test1");
+  InterprocessSyncLocker* locker = sync->getLocker();
 
   EXPECT_TRUE(locker->lock());
 
-  InterprocessSync *sync2 = new InterprocessSyncFile("test2");
-  InterprocessSyncLocker *locker2 = sync2->getLocker();
+  InterprocessSync* sync2 = new InterprocessSyncFile("test2");
+  InterprocessSyncLocker* locker2 = sync2->getLocker();
   EXPECT_TRUE(locker2->lock());
   EXPECT_TRUE(locker2->unlock());
   delete sync2;
@@ -105,8 +105,8 @@ TEST_F(InterprocessSyncFileTest, TestMultipleFilesDirect) {
 }
 
 TEST_F(InterprocessSyncFileTest, TestMultipleFilesForked) {
-  InterprocessSync *sync = new InterprocessSyncFile("test");
-  InterprocessSyncLocker *locker = sync->getLocker();
+  InterprocessSync* sync = new InterprocessSyncFile("test");
+  InterprocessSyncLocker* locker = sync->getLocker();
 
   EXPECT_TRUE(locker->lock());
 
@@ -121,8 +121,8 @@ TEST_F(InterprocessSyncFileTest, TestMultipleFilesForked) {
       // Child writes to pipe
       close(fds[0]);
 
-      InterprocessSync *sync2 = new InterprocessSyncFile("test2");
-      InterprocessSyncLocker *locker2 = sync2->getLocker();
+      InterprocessSync* sync2 = new InterprocessSyncFile("test2");
+      InterprocessSyncLocker* locker2 = sync2->getLocker();
 
       if (locker2->tryLock()) {
           locked = 0;
@@ -131,7 +131,7 @@ TEST_F(InterprocessSyncFileTest, TestMultipleFilesForked) {
       delete locker2;
       delete sync2;
 
-      write(fds[1], &locked, sizeof locked);
+      write(fds[1], &locked, sizeof(locked));
       close(fds[1]);
       exit(0);
   } else {
@@ -140,7 +140,7 @@ TEST_F(InterprocessSyncFileTest, TestMultipleFilesForked) {
       close(fds[1]);
 
       // Read status and set flag
-      read(fds[0], &locked, sizeof locked);
+      read(fds[0], &locked, sizeof(locked));
       if (locked == 0) {
         was_not_locked = true;
       } else {
