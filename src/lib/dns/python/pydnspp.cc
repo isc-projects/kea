@@ -230,7 +230,7 @@ initModulePart_Name(PyObject* mod) {
                      Py_BuildValue("I", NameComparisonResult::EQUAL));
     addClassVariable(name_comparison_result_type, "COMMONANCESTOR",
                      Py_BuildValue("I", NameComparisonResult::COMMONANCESTOR));
-    
+
     PyModule_AddObject(mod, "NameComparisonResult",
         reinterpret_cast<PyObject*>(&name_comparison_result_type));
 
