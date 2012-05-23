@@ -561,6 +561,10 @@ Message::removeRRset(const Section section, RRsetIterator& iterator) {
 
 void
 Message::clearSection(const Section section) {
+    if (impl_->mode_ != Message::RENDER) {
+        isc_throw(InvalidMessageOperation,
+                  "clearSection performed in non-render mode");
+    }
     if (section >= MessageImpl::NUM_SECTIONS) {
         isc_throw(OutOfRange, "Invalid message section: " << section);
     }
