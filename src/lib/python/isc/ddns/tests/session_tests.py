@@ -217,6 +217,12 @@ class SessionTest(unittest.TestCase):
                               isc.dns.RRTTL(0))
         self.__check_prerequisite_exists(False, self.__datasrc_client, rrset)
 
+        # Also check the case where the name does not even exist
+        rrset = isc.dns.RRset(isc.dns.Name("doesnotexist.example.org"),
+                              isc.dns.RRClass.IN(), isc.dns.RRType.A(),
+                              isc.dns.RRTTL(0))
+        self.__check_prerequisite_exists(False, self.__datasrc_client, rrset)
+
         # Wildcard expansion should not be applied, but literal matches
         # should work
         rrset = isc.dns.RRset(isc.dns.Name("foo.wildcard.example.org"),
