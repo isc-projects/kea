@@ -197,6 +197,7 @@ class UpdateSession:
         '''Check whether an rrset with the given name and type exists. Class,
            TTL, and Rdata (if any) of the given RRset are ignored.
            RFC2136 Section 2.4.1.
+           Returns True if the prerequisite is satisfied, False otherwise.
         '''
         _, finder = datasrc_client.find_zone(rrset.get_name())
         result, _, _ = finder.find(rrset.get_name(), rrset.get_type(),
@@ -207,6 +208,7 @@ class UpdateSession:
         '''Check whether an rrset that matches name, type, and rdata(s) of the
            given rrset exists.
            RFC2136 Section 2.4.2
+           Returns True if the prerequisite is satisfied, False otherwise.
         '''
         _, finder = datasrc_client.find_zone(rrset.get_name())
         result, found_rrset, _ = finder.find(rrset.get_name(), rrset.get_type(),
@@ -231,6 +233,7 @@ class UpdateSession:
         '''Check whether no rrsets with the same name and type as the given
            rrset exist.
            RFC2136 Section 2.4.3.
+           Returns True if the prerequisite is satisfied, False otherwise.
         '''
         return not self.__prereq_rrset_exists(datasrc_client, rrset)
 
@@ -238,6 +241,7 @@ class UpdateSession:
         '''Check whether the name of the given RRset is in use (i.e. has
            1 or more RRs).
            RFC2136 Section 2.4.4
+           Returns True if the prerequisite is satisfied, False otherwise.
         '''
         _, finder = datasrc_client.find_zone(rrset.get_name())
         result, rrsets, flags = finder.find_all(rrset.get_name(),
@@ -252,12 +256,16 @@ class UpdateSession:
         '''Check whether the name of the given RRset is not in use (i.e. does
            not exist at all, or is an empty nonterminal.
            RFC2136 Section 2.4.5.
+           Returns True if the prerequisite is satisfied, False otherwise.
         '''
         return not self.__prereq_name_in_use(datasrc_client, rrset)
 
     def __check_prerequisites(self, datasrc_client, zname, zclass):
         '''Check the prerequisites section of the UPDATE Message.
-           RFC2136 Section 2.4'''
+           RFC2136 Section 2.4.
+           Returns a dns Rcode signaling either no error (Rcode.NOERROR())
+           or that one of the prerequisites failed (any other Rcode).
+        '''
         for rrset in self.__message.get_section(SECTION_PREREQUISITE):
             # First check if the name is in the zone
             relation = rrset.get_name().compare(zname).get_relation()

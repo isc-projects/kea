@@ -260,7 +260,6 @@ public:
     ~BasicRdataIterator() {}
     virtual void first() { it_ = datavector_->begin(); }
     virtual void next() { ++it_; }
-    virtual bool currentEmpty() const { return (!(*it_)); }
     virtual const rdata::Rdata& getCurrent() const { return (**it_); }
     virtual bool isLast() const { return (it_ == datavector_->end()); }
 private:
