@@ -31,37 +31,26 @@ using namespace isc;
 namespace isc {
 namespace perfdhcp {
 
-/// CommandOptions is a singleton implementation
-CommandOptions* CommandOptions::instance_ = 0;
-
-void
-CommandOptions::instanceCreate() {
-    if (instance_) {
-        // no need to do anything. Instance is already created.
-        // Who called it again anyway? Uh oh. Had to be us, as
-        // this is private method.
-        return;
-    }
-    instance_ = new CommandOptions();
-}
-
 CommandOptions&
 CommandOptions::instance() {
-    if (instance_ == 0) {
-        instanceCreate();
-    }
-    return (*instance_);
+    static CommandOptions options;
+    return (options);
 }
 
 void
 CommandOptions::reset() {
+    // default mac address used in DHCP messages
+    // if -b mac=<mac-address> was not specified
     uint8_t mac[6] = { 0x0, 0xC, 0x1, 0x2, 0x3, 0x4 };
-    double lt[2] = { 1., 1. };
+
+    // default packet drop time if -D<drop-time> parameter
+    // was not specified
+    double dt[2] = { 1., 1. };
 
     // We don't use constructor initialization list because we
     // will need to reset all members many times to perform unit tests
     ipversion_ = 0;
-    exchange_mode_ = DORR_SARR;
+    exchange_mode_ = DORA_SARR;
     rate_ = 0;
     report_delay_ = 0;
     random_range_ = 0;
@@ -70,12 +59,12 @@ CommandOptions::reset() {
     base_.resize(0);
     num_request_.resize(0);
     period_ = 0;
-    lost_time_set_ = 0;
-    lost_time_.assign(lt, lt + 2);
+    drop_time_set_ = 0;
+    drop_time_.assign(dt, dt + 2);
     max_drop_set_ = 0;
-    max_drop_.resize(0);
-    max_pdrop_.resize(0);
-    localname_.resize(0);
+    max_drop_.clear();
+    max_pdrop_.clear();
+    localname_.clear();
     is_interface_ = false;
     preload_ = 0;
     aggressivity_ = 1;
@@ -85,245 +74,234 @@ CommandOptions::reset() {
     broadcast_ = false;
     rapid_commit_ = false;
     use_first_ = false;
-    template_file_.resize(0);
-    rnd_offset_.resize(0);
-    xid_offset_.resize(0);
+    template_file_.clear();
+    rnd_offset_.clear();
+    xid_offset_.clear();
     elp_offset_ = -1;
     sid_offset_ = -1;
     rip_offset_ = -1;
-    diags_.resize(0);
-    wrapped_.resize(0);
-    server_name_.resize(0);
+    diags_.clear();
+    wrapped_.clear();
+    server_name_.clear();
 }
 
 void
-CommandOptions::parse(int argc, char** const argv, bool force_reset /*=false */) {
-    if (force_reset) {
-        reset();
-    }
+CommandOptions::parse(int argc, char** const argv) {
     // Reset internal variables used by getopt
     // to eliminate undefined behavior when
     // parsing different command lines multiple times
     optind = 1;
     opterr = 0;
-
     initialize(argc, argv);
     validate();
 }
 
 void
-CommandOptions::initialize(int argc, char** const argv) {
-    char opt = 0;
-    char* pc = NULL;
-    int nr = 0, of = 0;
-    int di = 0;
-    float dp = 0;
-    long long r = 0;
+CommandOptions::initialize(int argc, char** argv) {
+    char opt = 0;               // subsequent options returned by getopt()
+    std::string dropArg;        // value of -D<value>argument
+    size_t percentLoc = 0;      // location of % sign in -D<value>
+    double dropPercent = 0;     // % value (1..100) in -D<%value>
+    int numDrops = 0;           // max number of drops specified in -D<value>
+    int numReq = 0;             // max number of dropped requests in -n<max-drops>
+    int offsetArg = 0;          // temp variable holiding offset arguments
+    std::string sarg;           // temp variable for string args
 
     // in this section we collect argument values from command line
     // they will be tuned and validated elsewhere
     while((opt = getopt(argc, argv, "hv46r:t:R:b:n:p:d:D:l:P:a:L:s:iBc1T:X:O:E:S:I:x:w:")) != -1) {
-    switch (opt) {
-    case 'h':
-        usage();
-        break;
+        switch (opt) {
+        case 'h':
+            usage();
+            return;
 
-    case 'v':
-        version();
-        break;
+        case 'v':
+            version();
+            return;
 
-    case '4':
-        check(ipversion_ == 6, "IP version already set to 6");
-        ipversion_ = 4;
-        break;
-
-    case '6':
-        check(ipversion_ == 4, "IP version already set to 4");
-        ipversion_ = 6;
-        break;
-
-    case 'r':
-        rate_ = boost::lexical_cast<int>(optarg);
-        check(rate_ <= 0, "rate_ must be a positive integer");
-        break;
-
-    case 't':
-        report_delay_ = boost::lexical_cast<int>(optarg);
-        check(report_delay_ <= 0, "report_delay_ must be a positive integer");
-        break;
-
-    case 'R':
-        r = boost::lexical_cast<long long>(optarg);
-        check(r < 0, "random_range_ must not be a negative integer");
-        random_range_ = static_cast<uint32_t>(r);
-        if ((random_range_ != 0) && (random_range_ != std::numeric_limits<uint32_t>::max())) {
-            uint32_t s = random_range_ + 1;
-            uint64_t b = std::numeric_limits<uint32_t>::max() + 1, m;
-
-            m = (b / s) * s;
-            if (m == b)
-                max_random_ = 0;
-            else
-                max_random_ = static_cast<uint32_t> (m);
-        }
-        break;
-
-    case 'b':
-        check(base_.size() > 3, "too many bases");
-        base_.push_back(optarg);
-        decodeBase(base_.back());
-        break;
-
-    case 'n':
-        nr = boost::lexical_cast<int>(optarg);
-        check(nr <= 0, "num-request must be a positive integer");
-        if (num_request_.size() >= 2) {
-            isc_throw(isc::InvalidParameter,
-                "too many num-request values");
-        }
-        num_request_.push_back(nr);
-        break;
-
-    case 'p':
-        period_ = boost::lexical_cast<int>(optarg);
-        check(period_ <= 0, "test-period must be a positive integer");
-        break;
-
-    case 'd':
-        lost_time_[lost_time_set_] = boost::lexical_cast<double>(optarg);
-        check(lost_time_[lost_time_set_] <= 0., "drop-time must be a positive number");
-        lost_time_set_ = 1;
-        break;
-
-    case 'D':
-        pc = strchr(optarg, '%');
-        if (pc != NULL) {
-            *pc = '\0';
-            dp = boost::lexical_cast<double>(optarg);
-            max_pdrop_[max_drop_set_] = boost::lexical_cast<double>(optarg);
-            check((dp <= 0) || (dp >= 100), "invalid drop-time percentage");
-            max_pdrop_.push_back(dp);
+        case '4':
+            check(ipversion_ == 6, "IP version already set to 6");
+            ipversion_ = 4;
             break;
-        }
-        di = boost::lexical_cast<int>(optarg);
-        check(di <= 0, "max-drop must be a positive integer");
-        max_drop_.push_back(di);
-        break;
 
-    case 'l':
-        localname_ = optarg;
-        break;
-
-    case 'P':
-        preload_ = boost::lexical_cast<int>(optarg);
-        check(preload_ < 0, "preload must not be a negative integer");
-        break;
-
-    case 'a':
-        aggressivity_ = boost::lexical_cast<int>(optarg);
-        check(aggressivity_ <= 0, "aggressivity must be a positive integer");
-        break;
-
-    case 'L':
-        local_port_ = boost::lexical_cast<int>(optarg);
-        check(local_port_ < 0, "local-port must not be a negative integer");
-        check(local_port_ > static_cast<int>( std::numeric_limits<uint16_t>::max()),
-              "local-port must be lower than " +
-              boost::lexical_cast<std::string>(std::numeric_limits<uint16_t>::max()));
-        break;
-
-    case 's':
-        seeded_ = true;
-        seed_ = boost::lexical_cast<unsigned int>(optarg);
-        break;
-
-    case 'i':
-        exchange_mode_ = DO_SA;
-        break;
-
-    case 'B':
-        broadcast_ = 1;
-        break;
-
-    case 'c':
-        rapid_commit_ = 1;
-        break;
-
-    case '1':
-        use_first_ = 1;
-        break;
-
-    case 'T':
-        switch (template_file_.size()) {
-        case 0:
-        case 1:
-            template_file_.push_back(std::string(optarg));
+        case '6':
+            check(ipversion_ == 4, "IP version already set to 4");
+            ipversion_ = 6;
             break;
+
+        case 'r':
+            rate_ = positiveInteger("rate_ must be a positive integer");
+            break;
+
+        case 't':
+            report_delay_ = positiveInteger("report_delay_ must be a positive integer");
+            break;
+
+        case 'R':
+            initRandomRange(optarg);
+            break;
+
+        case 'b':
+            check(base_.size() > 3, "too many bases");
+            base_.push_back(optarg);
+            decodeBase(base_.back());
+            break;
+
+        case 'n':
+            numReq = positiveInteger("num-request must be a positive integer");
+            if (num_request_.size() >= 2) {
+                isc_throw(isc::InvalidParameter,
+                          "too many num-request values");
+            }
+            num_request_.push_back(numReq);
+            break;
+
+        case 'p':
+            period_ = positiveInteger("test-period must be a positive integer");
+            break;
+
+        case 'd':
+            try {
+                drop_time_[drop_time_set_] = boost::lexical_cast<double>(optarg);
+            } catch (boost::bad_lexical_cast&) {
+                isc_throw(isc::InvalidParameter,
+                          "value of drop time: -d<value> must be positive number");
+            }
+            check(drop_time_[drop_time_set_] <= 0., "drop-time must be a positive number");
+            drop_time_set_ = 1;
+            break;
+
+        case 'D':
+            dropArg = std::string(optarg);
+            percentLoc = dropArg.find('%');
+            if ((percentLoc) != std::string::npos) {
+                dropPercent = boost::lexical_cast<double>(dropArg.substr(percentLoc + 1));
+                check((dropPercent <= 0) || (dropPercent >= 100),
+                  "value of drop percentage: -D<%value> must be 0..100");
+                max_pdrop_.push_back(dropPercent);
+                break;
+            }
+            numDrops = positiveInteger("value of max drops number: -d<value> must be a positive integer");
+            max_drop_.push_back(numDrops);
+            break;
+
+        case 'l':
+            localname_ = std::string(optarg);
+            break;
+
+        case 'P':
+            preload_ = nonNegativeInteger("number of preload packets: -P<value> must not be "
+                                          "a negative integer");
+            break;
+
+        case 'a':
+            aggressivity_ = positiveInteger("value of aggressivity: -a<value> must be a positive integer");
+            break;
+
+        case 'L':
+             local_port_ = nonNegativeInteger("value of local port: -L<value> must not be a negative integer");
+             check(local_port_ > static_cast<int>( std::numeric_limits<uint16_t>::max()),
+                  "local-port must be lower than " +
+                  boost::lexical_cast<std::string>(std::numeric_limits<uint16_t>::max()));
+            break;
+
+        case 's':
+            seed_ = static_cast<unsigned int>
+                (nonNegativeInteger("value of -s <seed> must be non-negative integer"));
+            seeded_ = seed_ > 0 ? true : false;
+            break;
+
+        case 'i':
+            exchange_mode_ = DO_SA;
+            break;
+
+        case 'B':
+            broadcast_ = true;
+            break;
+
+        case 'c':
+            rapid_commit_ = true;
+            break;
+
+        case '1':
+            use_first_ = true;
+            break;
+
+        case 'T':
+            switch (template_file_.size()) {
+            case 0:
+            case 1:
+                sarg = nonEmptyString("template file name not specified, expected -T<filename>");
+                template_file_.push_back(sarg);
+                break;
+            default:
+                isc_throw(isc::InvalidParameter,
+                          "template-files are already set");
+            }
+            break;
+
+        case 'X':
+            offsetArg = positiveInteger("value of transaction id: -X<value> must be a positive integer");
+            if (xid_offset_.size() >= 2) {
+                xid_offset_.clear();
+            }
+            xid_offset_.push_back(offsetArg);
+            break;
+
+        case 'O':
+            try {
+                offsetArg = boost::lexical_cast<int>(optarg);
+            } catch (boost::bad_lexical_cast&) {
+                isc_throw(isc::InvalidParameter, "value of random random-offset: -O<value> "
+                          "must be greater than 3");
+            }
+            check(offsetArg < 3, "value of random random-offset: -O<value> must be greater than 3 ");
+            if (rnd_offset_.size() >= 2) {
+                rnd_offset_.clear();
+            }
+            rnd_offset_.push_back(offsetArg);
+            break;
+
+        case 'E':
+            elp_offset_ = nonNegativeInteger("value of time-offset: -E<value> must not be a negative integer");
+            break;
+
+        case 'S':
+            sid_offset_ = positiveInteger("value of server id offset: -S<value> must be a positive integer");
+            break;
+
+        case 'I':
+            rip_offset_ = positiveInteger("value of ip addr offset: -I<value> must be a positive integer");
+            break;
+
+        case 'x':
+            diags_ = nonEmptyString("value of diagnostics selectors: -x<value> must be specified");
+            break;
+
+        case 'w':
+            wrapped_ = nonEmptyString("command for wrapped mode: -w<command> must be specified");
+            break;
+
         default:
             isc_throw(isc::InvalidParameter,
-                    "template-files are already set");
-
+                      "unknown command line option");
         }
-        break;
-
-    case 'X':
-        of = boost::lexical_cast<int>(optarg);
-        check(of <= 0, "xid-offset must be a positive integer");
-        if (xid_offset_.size() >= 2) {
-            xid_offset_.resize(0);
-        }
-        xid_offset_.push_back(of);
-        break;
-
-    case 'O':
-        of = boost::lexical_cast<int>(optarg);
-        check(of < 3, "random-offset must be greater than 3");
-        if (rnd_offset_.size() >= 2) {
-            rnd_offset_.resize(0);
-        }
-        rnd_offset_.push_back(of);
-        break;
-
-    case 'E':
-        elp_offset_ = boost::lexical_cast<int>(optarg);
-        check(elp_offset_ < 0, "time-offset must not be a negative integer");
-        break;
-
-    case 'S':
-        sid_offset_ = boost::lexical_cast<int>(optarg);
-        check(sid_offset_ <= 0, "srvid-offset must be a positive integer");
-        break;
-
-    case 'I':
-        rip_offset_ = boost::lexical_cast<int>(optarg);
-        check(rip_offset_ <= 0, "ip-offset must be a positive integer");
-        break;
-
-    case 'x':
-        diags_.assign(optarg);
-        break;
-
-    case 'w':
-        wrapped_.assign(optarg);
-        break;
-
-    default:
-        isc_throw(isc::InvalidParameter,
-                  "unknown command line option");
-    }
     }
 
     // Tune ip version as it still might be zero
     // if not specified in command line was used
-    if (ipversion_ == 0)
+    if (ipversion_ == 0) {
         ipversion_ = 4;
+    }
 
     // Tune up template file lists
     if (template_file_.size() > 1) {
-        if (xid_offset_.size() == 1)
+        if (xid_offset_.size() == 1) {
             xid_offset_.push_back(xid_offset_[0]);
-        if (rnd_offset_.size() == 1)
+        }
+        if (rnd_offset_.size() == 1) {
             rnd_offset_.push_back(rnd_offset_[0]);
+        }
     }
 
     // Get server argument
@@ -331,15 +309,12 @@ CommandOptions::initialize(int argc, char** const argv) {
     if (optind == argc - 1) {
         server_name_ = argv[optind];
         // Decode special cases
-        if ((ipversion_ == 4) &&
-            (server_name_.compare("all") == 0)) {
+        if ((ipversion_ == 4) && (server_name_.compare("all") == 0)) {
             broadcast_ = 1;
             server_name_ = "255.255.255.255";
-        } else if ((ipversion_ == 6) &&
-                   (server_name_.compare("all") == 0)) {
+        } else if ((ipversion_ == 6) && (server_name_.compare("all") == 0)) {
             server_name_ = "FF02::1:2";
-        } else if ((ipversion_ == 6) &&
-                   (server_name_.compare("servers") == 0)) {
+        } else if ((ipversion_ == 6) && (server_name_.compare("servers") == 0)) {
             server_name_ = "FF05::1:3";
         }
     }
@@ -348,15 +323,53 @@ CommandOptions::initialize(int argc, char** const argv) {
 }
 
 void
+CommandOptions::initRandomRange(const std::string& opt) {
+    const std::string errmsg = "value of -R <value> must be non-negative integer";
+    long long randomRange = 0;
+    try {
+        randomRange = boost::lexical_cast<long long>(opt);
+    } catch (boost::bad_lexical_cast&) {
+        isc_throw(isc::InvalidParameter, errmsg.c_str());
+    }
+    check(randomRange < 0, errmsg.c_str());
+    try {
+        random_range_ = boost::lexical_cast<uint32_t>(randomRange);
+    } catch (boost::bad_lexical_cast&) {
+        isc_throw(isc::InvalidParameter, errmsg);
+    }
+
+    if ((random_range_ != 0) && (random_range_ != std::numeric_limits<uint32_t>::max())) {
+        // randomization range is restricted by number of clients
+        uint32_t maxTargetRand    = random_range_ + 1;
+        // randomization with random() function is within uint32_t range
+        uint64_t maxRandom        = std::numeric_limits<uint32_t>::max() + 1;
+        // restrict max randomized value to
+        // multiple of number of clients
+        uint64_t restrictedRandom = (maxRandom / maxTargetRand) * maxTargetRand;
+        if (restrictedRandom == maxRandom) {
+            // no need to restrict max random value
+            // uint32_t range is already multiple
+            // of number of clients range
+            max_random_ = 0;
+        } else {
+            max_random_ = static_cast<uint32_t> (restrictedRandom);
+        }
+    }
+}
+
+void
 CommandOptions::decodeBase(const std::string& base) {
     std::string b(base);
     boost::algorithm::to_lower(b);
 
-    // Currently we only support MAC and DUID
+    // Currently we only support mac and duid
     if ((b.substr(0, 4) == "mac=") || (b.substr(0, 6) == "ether=")) {
         decodeMac(b);
     } else if (b.substr(0, 5) == "duid=") {
         decodeDuid(b);
+    } else {
+        isc_throw(isc::InvalidParameter,
+                  "base value not provided as -b<value>, expected -b mac=<mac> or -b duid=<duid>");
     }
 }
 
@@ -364,33 +377,38 @@ void
 CommandOptions::decodeMac(const std::string& base) {
     // Strip string from mac=
     size_t found = base.find('=');
-    check(found == std::string::npos, "expected -b<base> format for MAC address is -b MAC=00::0C::01::02::03::04");
+    static const char* errmsg = "expected -b<base> format for mac address is -b mac=00::0C::01::02::03::04";
+    check(found == std::string::npos, errmsg);
 
-    // Decode MAC address to vector of uint8_t
-    std::istringstream s1(base.substr(found+1));
+    // Decode mac address to vector of uint8_t
+    std::istringstream s1(base.substr(found + 1));
     std::string token;
-    mac_prefix_.resize(0);
+    mac_prefix_.clear();
     while (std::getline(s1, token, ':')) {
         unsigned int ui = 0;
         std::istringstream s2(token);
         if (token.length() > 0) {
-            s2 >> std::hex >> ui >> std::dec;
-            check(s2.fail() || (ui > 0xFF),
-                  "expected -b<base> format for MAC address is -b MAC=00::0C::01::02::03::04");
+            try {
+                ui = convertHexString(token);
+            } catch (isc::InvalidParameter&) {
+                isc_throw(isc::InvalidParameter,
+                          "invalid characters in MAC provided");
+
+            }
             mac_prefix_.push_back(ui);
         }
     }
-    check(mac_prefix_.size() != 6, "expected -b<base> format for MAC address is -b MAC=00::0C::01::02::03::04");
+    check(mac_prefix_.size() != 6, errmsg);
 }
 
 void
 CommandOptions::decodeDuid(const std::string& base) {
     // Strip argument from duid=
     size_t found = base.find('=');
-    check(found == std::string::npos, "expected -b<base> format for DUID is -b DUID=<duid>");
+    check(found == std::string::npos, "expected -b<base> format for duid is -b duid=<duid>");
     std::string b = base.substr(found + 1);
 
-    // DUID must have even number of digits and must not be longer than 64 bytes
+    // duid must have even number of digits and must not be longer than 64 bytes
     check(b.length() & 1, "odd number of hexadecimal digits in duid");
     check(b.length() > 128, "duid too large");
     check(b.length() == 0, "no duid specified");
@@ -398,11 +416,32 @@ CommandOptions::decodeDuid(const std::string& base) {
     // Turn pairs of hex digits into vector of bytes
     for (int i = 0; i < b.length(); i += 2) {
         unsigned int ui = 0;
-        std::istringstream ss(b.substr(i, 2));
-        check(!(ss >> std::hex >> ui >> std::dec) || (ui > 0xFF),
-              "illegal characters " + b + " in duid");
+        try {
+            ui = convertHexString(b.substr(i, 2));
+        } catch (isc::InvalidParameter&) {
+            isc_throw(isc::InvalidParameter,
+                      "invalid characters in DUID provided, exepected hex digits");
+        }
         duid_prefix_.push_back(static_cast<uint8_t>(ui));
     }
+}
+
+uint8_t
+CommandOptions::convertHexString(const std::string& s) {
+    unsigned int ui = 0;
+    for (int i = 0; i < s.length(); ++i) {
+        if (!std::isxdigit(s[i])) {
+            isc_throw(isc::InvalidParameter,
+                      "The following digit: " << s[i] << " in "
+                      << s << "is not hexadecimal");
+        }
+    }
+    std::istringstream ss(s);
+    ss >> std::hex >> ui >> std::dec;
+    if (ui > 0xFF) {
+        isc_throw(isc::InvalidParameter, "Can't convert more than two hex digits to byte");
+    }
+    return ui;
 }
 
 void
@@ -413,7 +452,7 @@ CommandOptions::validate() const {
           "-6 (IPv6) must be set to use -c");
     check((getExchangeMode() == DO_SA) && (getNumRequests().size() > 1),
           "second -n<num-request> is not compatible with -i");
-    check((getExchangeMode() == DO_SA) && (getLostTime()[1] != 1.),
+    check((getExchangeMode() == DO_SA) && (getDropTime()[1] != 1.),
           "second -d<drop-time> is not compatible with -i");
     check((getExchangeMode() == DO_SA) &&
           ((getMaxDrop().size() > 1) || (getMaxDropPercentage().size() > 1)),
@@ -422,15 +461,15 @@ CommandOptions::validate() const {
           "-1 is not compatible with -i\n");
     check((getExchangeMode() == DO_SA) && (getTemplateFiles().size() > 1),
           "second -T<template-file> is not compatible with -i\n");
-    check((getExchangeMode() == DO_SA) && (getXidOffset().size() > 1),
+    check((getExchangeMode() == DO_SA) && (getTransactionIdOffset().size() > 1),
           "second -X<xid-offset> is not compatible with -i\n");
-    check((getExchangeMode() == DO_SA) && (getRndOffset().size() > 1),
+    check((getExchangeMode() == DO_SA) && (getRandomOffset().size() > 1),
           "second -O<random-offset is not compatible with -i\n");
-    check((getExchangeMode() == DO_SA) && (getElpOffset() >= 0),
+    check((getExchangeMode() == DO_SA) && (getElapsedTimeOffset() >= 0),
           "-E<time-offset> is not compatible with -i\n");
-    check((getExchangeMode() == DO_SA) && (getSidOffset() >= 0),
+    check((getExchangeMode() == DO_SA) && (getServerIdOffset() >= 0),
           "-S<srvid-offset> is not compatible with -i\n");
-    check((getExchangeMode() == DO_SA) && (getRipOffset() >= 0),
+    check((getExchangeMode() == DO_SA) && (getRequestedIpOffset() >= 0),
           "-I<ip-offset> is not compatible with -i\n");
 	check((getExchangeMode() != DO_SA) && (isRapidCommit() != 0),
           "-i must be set to use -c\n");
@@ -443,16 +482,16 @@ CommandOptions::validate() const {
 	check((getRate() == 0) &&
           ((getMaxDrop().size() > 0) || getMaxDropPercentage().size() > 0),
           "-r<rate> must be set to use -D<max-drop>\n");
-	check((getTemplateFiles().size() < getXidOffset().size()),
+	check((getTemplateFiles().size() < getTransactionIdOffset().size()),
           "-T<template-file> must be set to use -X<xid-offset>\n");
-	check((getTemplateFiles().size() < getRndOffset().size()),
+	check((getTemplateFiles().size() < getRandomOffset().size()),
           "-T<template-file> must be set to use -O<random-offset>\n");
-	check((getTemplateFiles().size() < 2) && (getElpOffset() >= 0),
+	check((getTemplateFiles().size() < 2) && (getElapsedTimeOffset() >= 0),
           "second/request -T<template-file> must be set to use -E<time-offset>\n");
-	check((getTemplateFiles().size() < 2) && (getSidOffset() >= 0),
+	check((getTemplateFiles().size() < 2) && (getServerIdOffset() >= 0),
           "second/request -T<template-file> must be set to "
           "use -S<srvid-offset>\n");
-	check((getTemplateFiles().size() < 2) && (getRipOffset() >= 0),
+	check((getTemplateFiles().size() < 2) && (getRequestedIpOffset() >= 0),
 			"second/request -T<template-file> must be set to "
 			"use -I<ip-offset>\n");
 
@@ -467,6 +506,37 @@ CommandOptions::check(bool condition, const std::string& errmsg) const {
     }
 }
 
+int
+CommandOptions::positiveInteger(const std::string& errmsg) {
+    try {
+        int value = boost::lexical_cast<int>(optarg);
+        check(value <= 0, errmsg);
+        return (value);
+    } catch (boost::bad_lexical_cast&) {
+        isc_throw(InvalidParameter, errmsg);
+    }
+}
+
+int
+CommandOptions::nonNegativeInteger(const std::string& errmsg) {
+    try {
+        int value = boost::lexical_cast<int>(optarg);
+        check(value < 0, errmsg);
+        return (value);
+    } catch (boost::bad_lexical_cast&) {
+        isc_throw(InvalidParameter, errmsg);
+    }
+}
+
+std::string
+CommandOptions::nonEmptyString(const std::string& errmsg) {
+    std::string sarg = optarg;
+    if (sarg.length() == 0) {
+        isc_throw(isc::InvalidParameter, errmsg);
+    }
+    return sarg;
+}
+
 void
 CommandOptions::usage() const {
 	fprintf(stdout, "%s",
@@ -477,7 +547,7 @@ CommandOptions::usage() const {
 "    [-T<template-file>] [-X<xid-offset>] [-O<random-offset]\n"
 "    [-E<time-offset>] [-S<srvid-offset>] [-I<ip-offset>]\n"
 "    [-x<diagnostic-selector>] [-w<wrapped>] [server]\n"
-"\f\n"
+"\n"
 "The [server] argument is the name/address of the DHCP server to\n"
 "contact.  For DHCPv4 operation, exchanges are initiated by\n"
 "transmitting a DHCP DISCOVER to this address.\n"
@@ -501,10 +571,10 @@ CommandOptions::usage() const {
 "-6: DHCPv6 operation. This is incompatible with the -4 option.\n"
 "-a<aggressivity>: When the target sending rate is not yet reached,\n"
 "    control how many exchanges are initiated before the next pause.\n"
-"-b<base>: The base MAC, DUID, IP, etc, used to simulate different\n"
+"-b<base>: The base mac, duid, IP, etc, used to simulate different\n"
 "    clients.  This can be specified multiple times, each instance is\n"
 "    in the <type>=<value> form, for instance:\n"
-"    (and default) MAC=00:0c:01:02:03:04.\n"
+"    (and default) mac=00:0c:01:02:03:04.\n"
 "-d<drop-time>: Specify the time after which a request is treated as\n"
 "    having been lost.  The value is given in seconds and may contain a\n"
 "    fractional component.  The default is 1 second.\n"
