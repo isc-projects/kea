@@ -4,6 +4,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/util -I$(top_builddir)/src/lib/util
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/exceptions -I$(top_builddir)/src/lib/exceptions
 AM_CPPFLAGS += $(BOOST_INCLUDES)
+AM_CPPFLAGS += -DLOCKFILE_DIR=\"${localstatedir}/${PACKAGE_NAME}\"
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
 lib_LTLIBRARIES = libutil.la
@@ -12,6 +13,7 @@ libutil_la_SOURCES += locks.h lru_list.h
 libutil_la_SOURCES += strutil.h strutil.cc
 libutil_la_SOURCES += buffer.h io_utilities.h
 libutil_la_SOURCES += time_utilities.h time_utilities.cc
+libutil_la_SOURCES += interprocess_sync.h interprocess_sync_file.h interprocess_sync_file.cc
 libutil_la_SOURCES += range_utilities.h
 libutil_la_SOURCES += hash/sha1.h hash/sha1.cc
 libutil_la_SOURCES += encode/base16_from_binary.h
