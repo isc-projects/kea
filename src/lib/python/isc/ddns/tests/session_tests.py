@@ -477,12 +477,24 @@ class SessionTest(unittest.TestCase):
            returns the Rcode specified in 'expected'.'''
         msg_data, msg = create_update_msg([TEST_ZONE_RECORD],
                                           prerequisites)
-        session = UpdateSession(msg, msg_data, TEST_CLIENT4, None)
+        zconfig = ZoneConfig([], TEST_RRCLASS, self.__datasrc_client)
+        session = UpdateSession(msg, msg_data, TEST_CLIENT4, zconfig)
         # compare the to_text output of the rcodes (nicer error messages)
+        # This call itself should also be done by handle(),
+        # but just for better failures, it is first called on itw own
         self.assertEqual(expected.to_text(),
             session._UpdateSession__check_prerequisites(self.__datasrc_client,
                                                         TEST_ZONE_NAME,
                                                         TEST_RRCLASS).to_text())
+        # Now see if handle finds the same result
+        (result, _, _) = session.handle()
+        self.assertEqual(expected,
+                         session._UpdateSession__message.get_rcode())
+        # And that the result looks right
+        if expected == Rcode.NOERROR():
+            self.assertEqual(UPDATE_SUCCESS, result)
+        else:
+            self.assertEqual(UPDATE_ERROR, result)
 
     def test_check_prerequisites(self):
         # This test checks if the actual prerequisite-type-specific

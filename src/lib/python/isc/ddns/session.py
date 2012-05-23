@@ -123,9 +123,14 @@ class UpdateSession:
         try:
             datasrc_client, zname, zclass = self.__get_update_zone()
             # conceptual code that would follow
-            prereq_result = self.__check_prerequisites(datasrc_client, zname, zclass)
-            if prereq_result != UPDATE_SUCCESS:
-                return prereq_result, zname, zclass
+            prereq_result = self.__check_prerequisites(datasrc_client,
+                                                       zname, zclass)
+            if prereq_result != Rcode.NOERROR():
+                logger.info(LIBDDNS_UPDATE_PREREQUISITE_FAILED,
+                            ClientFormatter(self.__client_addr),
+                            zname, prereq_result)
+                self.__make_response(prereq_result)
+                return UPDATE_ERROR, zname, zclass
             # self.__check_update_acl()
             # self.__do_update()
             # self.__make_response(Rcode.NOERROR())
@@ -247,7 +252,7 @@ class UpdateSession:
     def __check_prerequisite_name_not_in_use(self, datasrc_client, rrset):
         '''Check whether the name of the given RRset is not in use (i.e. does
            not exist at all, or is an empty nonterminal.
-           RFC2136 Section 2.4.5
+           RFC2136 Section 2.4.5.
         '''
         return not self.__check_prerequisite_name_in_use(datasrc_client, rrset)
 
