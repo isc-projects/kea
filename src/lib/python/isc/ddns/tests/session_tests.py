@@ -340,6 +340,16 @@ class SessionTest(unittest.TestCase):
         self.__check_prerequisite_exists_value(False, self.__datasrc_client,
                                                rrset)
 
+        # and test one where the name does not even exist
+        rrset = isc.dns.RRset(isc.dns.Name("doesnotexist.example.org"),
+                              isc.dns.RRClass.IN(), isc.dns.RRType.A(),
+                              isc.dns.RRTTL(0))
+        rrset.add_rdata(isc.dns.Rdata(isc.dns.RRType.A(),
+                                      isc.dns.RRClass.IN(),
+                                      "192.0.2.1"))
+        self.__check_prerequisite_exists_value(False, self.__datasrc_client,
+                                               rrset)
+
     def test_check_prerequisite_does_not_exist(self):
         # This is essentially the same as test_check_prerequisite_exists(),
         # but with the opposite resulting values
