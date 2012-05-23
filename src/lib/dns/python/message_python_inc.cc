@@ -38,4 +38,21 @@ Parameters:\n\
   options    Parse options\n\
 \n\
 ";
+
+const char* const Message_clearSection_doc = "\
+clear_section(section) -> void\n\
+\n\
+Remove all RRSets from the given Section.\n\
+\n\
+This method is only allowed in the RENDER mode, and the given section\n\
+must be valid.\n\
+\n\
+Exceptions:\n\
+  InvalidMessageOperation Message is not in the RENDER mode\n\
+  OverflowError The specified section is not valid\n\
+\n\
+Parameters:\n\
+  section    Section to remove all rrsets from\n\
+\n\
+";
 } // unnamed namespace

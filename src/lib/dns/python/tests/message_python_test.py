@@ -289,6 +289,26 @@ class MessageTest(unittest.TestCase):
         self.assertRaises(TypeError, self.r.clear, "wrong")
         self.assertRaises(TypeError, self.r.clear, 3)
 
+    def test_clear_question_section(self):
+        self.r.add_question(Question(Name("www.example.com"), RRClass.IN(),
+                                     RRType.A()))
+        self.assertEqual(1, self.r.get_rr_count(Message.SECTION_QUESTION))
+        self.r.clear_section(Message.SECTION_QUESTION)
+        self.assertEqual(0, self.r.get_rr_count(Message.SECTION_QUESTION))
+
+    def test_clear_section(self):
+        for section in [Message.SECTION_ANSWER, Message.SECTION_AUTHORITY,
+                        Message.SECTION_ADDITIONAL]:
+            self.r.add_rrset(section, self.rrset_a)
+            self.assertEqual(2, self.r.get_rr_count(section))
+            self.r.clear_section(section)
+            self.assertEqual(0, self.r.get_rr_count(section))
+
+        self.assertRaises(InvalidMessageOperation, self.p.clear_section,
+                          Message.SECTION_ANSWER)
+        self.assertRaises(OverflowError, self.r.clear_section,
+                          self.bogus_section)
+
     def test_to_wire(self):
         self.assertRaises(TypeError, self.r.to_wire, 1)
         self.assertRaises(InvalidMessageOperation,
