@@ -51,7 +51,7 @@ AbstractRRset::toText() const {
             getClass() != RRClass::NONE()) {
             isc_throw(EmptyRRset, "toText() is attempted for an empty RRset");
         }
-        
+
         s += getName().toText() + " " + getTTL().toText() + " " +
              getClass().toText() + " " + getType().toText() + "\n";
         return (s);

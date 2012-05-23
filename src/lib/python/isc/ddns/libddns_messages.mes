@@ -51,7 +51,8 @@ nonterminals.
 A DNS UPDATE prerequisite was not satisfied. The specific prerequisite that
 was not satisfied is shown. The client is sent an error response with the
 given rcode.
-In this case, the specific prerequisite is ''. From RFC2136:
+In this case, the specific prerequisite is 'Name is not in use'.
+From RFC2136:
 Name is not in use.  No RR of any type is owned by a
 specified NAME.  Note that this prerequisite IS satisfied by
 empty nonterminals.
@@ -66,7 +67,8 @@ the client.
 A DNS UPDATE prerequisite was not satisfied. The specific prerequisite that
 was not satisfied is shown. The client is sent an error response with the
 given rcode.
-In this case, the specific prerequisite is ''. From RFC2136:
+In this case, the specific prerequisite is 'RRset does not exist'.
+From RFC2136:
 RRset does not exist.  No RRs with a specified NAME and TYPE
 (in the zone and class denoted by the Zone Section) can exist.
 
@@ -74,7 +76,8 @@ RRset does not exist.  No RRs with a specified NAME and TYPE
 A DNS UPDATE prerequisite was not satisfied. The specific prerequisite that
 was not satisfied is shown. The client is sent an error response with the
 given rcode.
-In this case, the specific prerequisite is ''. From RFC2136:
+In this case, the specific prerequisite is 'RRset exists (value independent)'.
+From RFC2136:
 RRset exists (value dependent).  A set of RRs with a
 specified NAME and TYPE exists and has the same members
 with the same RDATAs as the RRset specified here in this
@@ -84,7 +87,8 @@ Section.
 A DNS UPDATE prerequisite was not satisfied. The specific prerequisite that
 was not satisfied is shown. The client is sent an error response with the
 given rcode.
-In this case, the specific prerequisite is ''. From RFC2136:
+In this case, the specific prerequisite is 'RRset exists (value dependent)'.
+From RFC2136:
 RRset exists (value independent).  At least one RR with a
 specified NAME and TYPE (in the zone and class specified by
 the Zone Section) must exist.
