@@ -12,6 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <stdlib.h>
 #include <gtest/gtest.h>
 #include <util/unittests/run_all.h>
 
@@ -20,5 +21,6 @@
 int
 main(int argc, char* argv[]) {
     ::testing::InitGoogleTest(&argc, argv);
+    setenv("B10_FROM_SOURCE", TOP_SRCDIR, 1);
     return (isc::util::unittests::run_all());
 }

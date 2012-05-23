@@ -16,6 +16,8 @@
 # Checks that the logger will limit the output of messages less severe than
 # the severity/debug setting.
 
+export B10_FROM_SOURCE=@abs_top_srcdir@
+
 testname="Severity test"
 echo $testname
 
