@@ -286,6 +286,9 @@ TEST(IOEndpointTest, LeftShiftOperator) {
 
     // Uncommon address family.  The actual behavior doesn't matter much
     // in practice, but we check such input doesn't make it crash.
-    checkEndpointText("2001:db8::bad:add:42", TestIOEndpoint());
+    // We explicitly instantiate the test EP because otherwise some compilers
+    // would be confused and complain.
+    TestIOEndpoint test_ep;
+    checkEndpointText("2001:db8::bad:add:42", test_ep);
 }
 }
