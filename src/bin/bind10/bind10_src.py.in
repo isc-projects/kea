@@ -64,6 +64,7 @@ import posix
 import copy
 
 from bind10_config import LIBEXECPATH
+import bind10_config
 import isc.cc
 import isc.util.process
 import isc.net.parse
@@ -1122,6 +1123,24 @@ def unlink_pid_file(pid_file):
         if error.errno is not errno.ENOENT:
             raise
 
+def remove_lock_files():
+    """
+    Remove various lock files which were created by code such as in the
+    logger. This function should be called after BIND 10 shutdown.
+    """
+
+    lockfiles = ["logger_lockfile"]
+
+    lpath = bind10_config.DATA_PATH
+    if "B10_FROM_BUILD" in os.environ:
+        lpath = os.environ["B10_FROM_BUILD"]
+    if "B10_FROM_SOURCE_LOCALSTATEDIR" in os.environ:
+        lpath = os.environ["B10_FROM_SOURCE_LOCALSTATEDIR"]
+
+    for f in lockfiles:
+        os.unlink(lpath + '/' + f)
+
+    return
 
 def main():
     global options
@@ -1201,6 +1220,7 @@ def main():
     finally:
         # Clean up the filesystem
         unlink_pid_file(options.pid_file)
+        remove_lock_files()
         if boss_of_bind is not None:
             boss_of_bind.remove_socket_srv()
     sys.exit(boss_of_bind.exitcode)
