@@ -37,6 +37,13 @@ class ClientFormatter:
     message is suppressed because of its log level (which is often the case
     for debug messages).
 
+    Note: this optimization comes with the cost of instantiating the
+    formatter object itself.  It's not really clear which overhead is
+    heavier, and we may conclude it's actually better to just generate
+    the strings unconditionally.  Alternatively, we can make the stored
+    address of this object replaceable so that this object can be reused.
+    Right now this is an open issue.
+
     """
     def __init__(self, addr):
         self.__addr = addr
@@ -65,6 +72,9 @@ class ZoneFormatter:
     requested, so the conversion doesn't happen if the corresponding log
     message is suppressed because of its log level (which is often the case
     for debug messages).
+
+    See the note for the ClientFormatter class about overhead tradeoff.
+    This class shares the same discussion.
 
     """
     def __init__(self, zname, zclass):
