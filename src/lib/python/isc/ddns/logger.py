@@ -75,3 +75,25 @@ class ZoneFormatter:
         if self.__zname is None:
             return '(zone unknown/not determined)'
         return self.__zname.to_text(True) + '/' + self.__zclass.to_text()
+
+class RRsetFormatter:
+    """A utility class to convert rrsets to a short descriptive string.
+
+    This class is constructed with an rrset (isc.dns.RRset object).
+    Its text conversion method (__str__) converts it into a string
+    with only the name, class and type of the rrset.
+    This is used in logging so that the RRset can be identified, without
+    being completely printed, which would result in an unnecessary
+    multi-line message.
+
+    This class is designed to delay the conversion until it's explicitly
+    requested, so the conversion doesn't happen if the corresponding log
+    message is suppressed because of its log level.
+    """
+    def __init__(self, rrset):
+        self.__rrset = rrset
+
+    def __str__(self):
+        return self.__rrset.get_name().to_text() + " " +\
+               self.__rrset.get_class().to_text() + " " +\
+               self.__rrset.get_type().to_text()
