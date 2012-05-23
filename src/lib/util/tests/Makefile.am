@@ -7,6 +7,7 @@ AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_builddir)\"
 # used to bind a UNIX domain socket so we can minimize the risk of exceeding
 # the limit of file name path size.
 AM_CPPFLAGS += -DTEST_DATA_TOPBUILDDIR=\"$(abs_top_builddir)\"
+AM_CPPFLAGS += -DTOP_SRCDIR=\"${abs_top_srcdir}\"
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
 if USE_STATIC_LINK
@@ -28,6 +29,7 @@ run_unittests_SOURCES += filename_unittest.cc
 run_unittests_SOURCES += hex_unittest.cc
 run_unittests_SOURCES += io_utilities_unittest.cc
 run_unittests_SOURCES += lru_list_unittest.cc
+run_unittests_SOURCES += interprocess_sync_file_unittest.cc
 run_unittests_SOURCES += qid_gen_unittest.cc
 run_unittests_SOURCES += random_number_generator_unittest.cc
 run_unittests_SOURCES += sha1_unittest.cc
