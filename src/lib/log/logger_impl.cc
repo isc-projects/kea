@@ -15,6 +15,7 @@
 #include <iostream>
 #include <iomanip>
 #include <algorithm>
+#include <memory>
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -38,6 +39,7 @@
 // namespace: instead, all log4cplus types are explicitly qualified.
 
 using namespace std;
+using namespace isc::util;
 
 namespace isc {
 namespace log {
@@ -50,11 +52,13 @@ namespace log {
 LoggerImpl::LoggerImpl(const string& name) : name_(expandLoggerName(name)),
     logger_(log4cplus::Logger::getInstance(name_))
 {
+    sync_ = new InterprocessSyncFile("logger");
 }
 
 // Destructor. (Here because of virtual declaration.)
 
 LoggerImpl::~LoggerImpl() {
+    delete sync_;
 }
 
 // Set the severity for logging.
@@ -104,6 +108,15 @@ LoggerImpl::lookupMessage(const MessageID& ident) {
 
 void
 LoggerImpl::outputRaw(const Severity& severity, const string& message) {
+    // Use a lock file for mutual exclusion from other processes to
+    // avoid log messages getting interspersed
+
+    auto_ptr<InterprocessSyncLocker> locker(sync_->getLocker());
+
+    if (!locker->lock()) {
+        LOG4CPLUS_ERROR(logger_, "Unable to lock logger lockfile");
+    }
+
     switch (severity) {
         case DEBUG:
             LOG4CPLUS_DEBUG(logger_, message);
@@ -123,6 +136,10 @@ LoggerImpl::outputRaw(const Severity& severity, const string& message) {
 
         case FATAL:
             LOG4CPLUS_FATAL(logger_, message);
+    }
+
+    if (!locker->unlock()) {
+        LOG4CPLUS_ERROR(logger_, "Unable to unlock logger lockfile");
     }
 }
 
