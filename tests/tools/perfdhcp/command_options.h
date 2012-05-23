@@ -30,9 +30,10 @@ namespace perfdhcp {
 ///
 class CommandOptions : public boost::noncopyable {
 public:
+    /// 2-way (cmd line param -i) or 4-way exchanges
     enum ExchangeMode {
         DO_SA,
-        DORR_SARR
+        DORA_SARR
     };
 
     /// CommandOptions is a singleton class. This method returns reference
@@ -54,7 +55,7 @@ public:
     /// \param argv Argument value array passed to main().
     /// \param force_reset Force  reset of state variables
     /// \throws isc::InvalidParameter if parsing fails
-    void parse(int argc, char** const argv, bool force_reset = false);
+    void parse(int argc, char** const argv);
 
     /// \brief Returns IP version
     ///
@@ -109,7 +110,7 @@ public:
     /// \brief Returns lost time
     ///
     /// \return return time before request is lost
-    std::vector<double> getLostTime() const { return lost_time_; }
+    std::vector<double> getDropTime() const { return drop_time_; }
 
     /// \brief Returns max drops number
     ///
@@ -179,27 +180,27 @@ public:
     /// brief Returns template offsets for xid
     ///
     /// \return template offsets for xid
-    std::vector<int> getXidOffset() const { return xid_offset_; }
+    std::vector<int> getTransactionIdOffset() const { return xid_offset_; }
 
     /// \brief Returns template offsets for rnd
     ///
     /// \return template offsets for rnd
-    std::vector<int> getRndOffset() const { return rnd_offset_; }
+    std::vector<int> getRandomOffset() const { return rnd_offset_; }
 
     /// \brief Returns template offset for elapsed time
     ///
     /// \return template offset for elapsed time
-    int getElpOffset() const { return elp_offset_; }
+    int getElapsedTimeOffset() const { return elp_offset_; }
 
     /// \brief Returns template offset for server-ID
     ///
     /// \return template offset for server-ID
-    int getSidOffset() const { return sid_offset_; }
+    int getServerIdOffset() const { return sid_offset_; }
 
     /// \brief Returns template offset for requested IP
     ///
     /// \return template offset for requested IP
-    int getRipOffset() const { return rip_offset_; }
+    int getRequestedIpOffset() const { return rip_offset_; }
 
     /// \brief Returns diagnostic selectors
     ///
@@ -226,7 +227,7 @@ public:
     /// Prints perfdhcp version
     void version() const;
 
-protected:
+private:
 
     /// \brief Default Constructor
     ///
@@ -237,9 +238,6 @@ protected:
     }
 
 private:
-    /// \brief Create instance of the singleton class
-    static void instanceCreate();
-
     /// \brief Initializes class members based command line
     ///
     /// Reads each command line parameter and sets class member values
@@ -247,53 +245,102 @@ private:
     /// \param argc Argument count passed to main().
     /// \param argv Argument value array passed to main().
     /// \throws isc::InvalidParameter if command line options initialization fails
-    void initialize(int argc, char** const argv);
+    void initialize(int argc, char** argv);
 
     /// \brief Validates initialized options
     ///
-    /// \throws isc::InvalidPrameter if command line validation fails
+    /// \throws isc::InvalidParameter if command line validation fails
     void validate() const;
 
-    /// \brief Checks given condition
+    /// \brief Throws !InvalidParameter exception if condition is true
+    ///
+    /// Convenience function that throws an !InvalidParameter exception if
+    /// the condition argument is true
     ///
     /// \param condition Condition to be checked
     /// \param errmsg Error message in exception
-    /// \throws isc::InvalidParameter if check fails
+    /// \throws isc::InvalidParameter if condition argument true
     inline void check(bool condition, const std::string& errmsg) const;
 
-    /// \brief Decodes base provided with -b
+    /// \brief Casts command line arg to positive int
+    ///
+    /// \param errmsg Error message if lexical cast fails
+    /// \throw InvalidParameter if lexical cast fails
+    int positiveInteger(const std::string& errmsg);
+
+    /// \brief Casts command line arg to non-negative int
+    ///
+    /// \param errmsg Error message if lexical cast fails
+    /// \throw InvalidParameter if lexical cast fails
+    int nonNegativeInteger(const std::string& errmsg);
+
+    /// \brief Returns command line string if it is non-empty
+    ///
+    /// \param errmsg Error message if string is empty
+    /// \throw InvalidParameter if string is empty
+    std::string nonEmptyString(const std::string& errmsg);
+
+    /// \brief Calculates max_random_ and random_range_
+    ///
+    /// \param opt Value of -R option
+    /// \throw InvalidParameter if -R<value> is wrong
+    void initRandomRange(const std::string& opt);
+
+    /// \brief Decodes base provided with -b<base>
+    ///
+    /// Function decodes parameters given with -b<base>
+    /// parameter. Currently it supports the following command line options e.g.:
+    /// -b mac=00:01:02:03:04:05
+    /// -b duid=0F1234 (duid can be up to 128 hex digits)
+    //  Function will decode 00:01:02:03:04:05 and/or
+    /// 0F1234 repsectively and initialize mac_prefix_
+    /// and/or duid_prefix_ members
     ///
     /// \param base Base in string format
     /// \throws isc::InvalidParameter if base is invalid
     void decodeBase(const std::string& base);
 
-    /// \brief Decodes base MAC address provided with -b
+    /// \brief Decodes base MAC address provided with -b<base>
     ///
-    /// \param base MAC address in string format
-    /// \throws isc::InvalidParameter if base is invalid
+    /// Function decodes parameter given as -b mac=00:01:02:03:04:05
+    /// Function will decode 00:01:02:03:04:05 initialize mac_prefix_
+    /// class member.
+    /// Provided MAC address is for example only
+    ///
+    /// \param base Base string given as -b mac=00:01:02:03:04:05
+    /// \throws isc::InvalidParameter if mac address is invalid
     void decodeMac(const std::string& base);
 
-    /// \brief Decodes base DUID provided with -b
+    /// \brief Decodes base DUID provided with -b<base>
     ///
-    /// \param base DUID in string format
-    /// \throws isc::InvalidParameter if base is invalid
+    /// Function decodes parameter given as -b duid=0F1234
+    /// Function will decode 0F1234 and initialize duid_prefix_
+    /// class member.
+    /// Provided DUID is for example only.
+    ///
+    /// \param base Base string given as -b mac=00:01:02:03:04:05
+    /// \throws isc::InvalidParameter if DUID is invalid
     void decodeDuid(const std::string& base);
 
-    static CommandOptions * instance_;       ///< A pointer to sole instance of this class
+    /// \brief converts two digit hex string to byte
+    ///
+    /// \param s hex string e.g. AF
+    /// \throw isc::InvalidParameter if string does not represent hex byte
+    uint8_t convertHexString(const std::string& s);
 
     uint8_t ipversion_;                      ///< IP version
     ExchangeMode exchange_mode_  ;           ///< Packet exchange mode (e.g. DORR/SARR)
     int rate_;                               ///< rate in exchange per second
     int report_delay_;                       ///< delay between two reports
-    uint32_t random_range_;                  ///< randomization range
+    uint32_t random_range_;                  ///< number of simulated clients
     uint32_t max_random_;                    ///< maximum random value
     std::vector<uint8_t> mac_prefix_;        ///< MAC addr prefix
     std::vector<uint8_t> duid_prefix_;       ///< DUID prefix
     std::vector<std::string> base_;          ///< base values for xid
     std::vector<int> num_request_;           ///< number of exchanges
     int period_;                             ///< test period
-    int lost_time_set_;                      ///< losttime[0] was set
-    std::vector<double> lost_time_;          ///< time before a request is lost
+    int drop_time_set_;                      ///< losttime[0] was set
+    std::vector<double> drop_time_;          ///< time before a request is lost
     int max_drop_set_;                       ///< max{p}drop[0] was set
     std::vector<int> max_drop_;              ///< maximum number of lost requests
     std::vector<double> max_pdrop_;          ///< maximum percentage
