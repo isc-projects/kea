@@ -245,7 +245,7 @@ class SessionTest(unittest.TestCase):
 
     def test_check_prerequisite_exists_value(self):
         method = self.__session._UpdateSession__prereq_rrset_exists_value
-        
+
         rrset = isc.dns.RRset(isc.dns.Name("www.example.org"),
                               isc.dns.RRClass.IN(), isc.dns.RRType.A(),
                               isc.dns.RRTTL(0))
