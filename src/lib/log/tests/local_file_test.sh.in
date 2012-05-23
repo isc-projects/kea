@@ -16,6 +16,8 @@
 # Checks that a local message file can override the definitions in the message
 # dictionary.
 
+export B10_FROM_SOURCE=@abs_top_srcdir@
+
 testname="Local message file test"
 echo $testname
 
