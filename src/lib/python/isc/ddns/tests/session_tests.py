@@ -150,195 +150,158 @@ class SessionTest(unittest.TestCase):
         # zone class doesn't match
         self.check_notauth(Name('example.org'), RRClass.CH())
 
-    def __check_prerequisite_exists(self, expected, client, rrset):
-        '''helper method for test_check_prerequisite_exists. This function
-           does nothing but call __check_prerequisite_exists, and checks
-           the result value.
-           expected is either True or False.
-           (since the check_prerequisite is a 'private' method, and calling
-           it is a bit ugly, this helper method helps keeping the actual
-           test code cleaner).
-        '''
-        self.assertEqual(expected,
-            self.__session._UpdateSession__prereq_rrset_exists(
-                            client, rrset))
+    def __prereq_helper(self, method, expected, rrset):
+        '''Calls the given method with self.__datasrc_client
+           and the given rrset, and compares the return value.
+           Function does not do much but makes the code look nicer'''
+        self.assertEqual(expected, method(self.__datasrc_client, rrset))
 
-    def __check_prerequisite_exists_value(self, expected, client, rrset):
-        '''Similar to __check_prerequisite_exists(), but for checking
-           the result of __check_prerequisite_rrset_exists_value().
+    def __check_prerequisite_exists_combined(self, method, expected):
+        '''shared code for the checks for the very similar (but reversed
+           in behaviour) methods __prereq_rrset_exists and
+           __prereq_rrset_does_not_exist.
         '''
-        self.assertEqual(expected,
-            self.__session.
-                 _UpdateSession__prereq_rrset_exists_value(client, rrset))
 
-    def __check_prerequisite_does_not_exist(self, expected, client, rrset):
-        '''Similar to __check_prerequisite_exists(), but for checking
-           the result of __check_prerequisite_rrset_does_not_exist().
-        '''
-        self.assertEqual(expected,
-            self.__session.
-                _UpdateSession__prereq_rrset_does_not_exist(client, rrset))
-
-    def __check_prerequisite_name_in_use(self, expected, client, rrset):
-        '''Similar to __check_prerequisite_exists(), but for checking
-           the result of __check_prerequisite_name_in_use().
-        '''
-        self.assertEqual(expected,
-            self.__session.
-                 _UpdateSession__prereq_name_in_use(client, rrset))
-
-    def __check_prerequisite_name_not_in_use(self, expected, client, rrset):
-        '''Similar to __check_prerequisite_exists(), but for checking
-           the result of __check_prerequisite_name_in_use().
-        '''
-        self.assertEqual(expected,
-            self.__session.
-                 _UpdateSession__prereq_name_not_in_use(client, rrset))
-
-    def test_check_prerequisite_exists(self):
         # Basic existence checks
         # www.example.org should have an A, but not an MX
         rrset = isc.dns.RRset(isc.dns.Name("www.example.org"),
                               isc.dns.RRClass.IN(), isc.dns.RRType.A(),
                               isc.dns.RRTTL(0))
-        self.__check_prerequisite_exists(True, self.__datasrc_client, rrset)
+        self.__prereq_helper(method, expected, rrset)
         rrset = isc.dns.RRset(isc.dns.Name("www.example.org"),
                               isc.dns.RRClass.IN(), isc.dns.RRType.MX(),
                               isc.dns.RRTTL(0))
-        self.__check_prerequisite_exists(False, self.__datasrc_client, rrset)
+        self.__prereq_helper(method, not expected, rrset)
 
         # example.org should have an MX, but not an A
         rrset = isc.dns.RRset(isc.dns.Name("example.org"),
                               isc.dns.RRClass.IN(), isc.dns.RRType.MX(),
                               isc.dns.RRTTL(0))
-        self.__check_prerequisite_exists(True, self.__datasrc_client, rrset)
+        self.__prereq_helper(method, expected, rrset)
         rrset = isc.dns.RRset(isc.dns.Name("example.org"),
                               isc.dns.RRClass.IN(), isc.dns.RRType.A(),
                               isc.dns.RRTTL(0))
-        self.__check_prerequisite_exists(False, self.__datasrc_client, rrset)
+        self.__prereq_helper(method, not expected, rrset)
 
         # Also check the case where the name does not even exist
         rrset = isc.dns.RRset(isc.dns.Name("doesnotexist.example.org"),
                               isc.dns.RRClass.IN(), isc.dns.RRType.A(),
                               isc.dns.RRTTL(0))
-        self.__check_prerequisite_exists(False, self.__datasrc_client, rrset)
+        self.__prereq_helper(method, not expected, rrset)
 
         # Wildcard expansion should not be applied, but literal matches
         # should work
         rrset = isc.dns.RRset(isc.dns.Name("foo.wildcard.example.org"),
                               isc.dns.RRClass.IN(), isc.dns.RRType.A(),
                               isc.dns.RRTTL(0))
-        self.__check_prerequisite_exists(False, self.__datasrc_client, rrset)
+        self.__prereq_helper(method, not expected, rrset)
 
         rrset = isc.dns.RRset(isc.dns.Name("*.wildcard.example.org"),
                               isc.dns.RRClass.IN(), isc.dns.RRType.A(),
                               isc.dns.RRTTL(0))
-        self.__check_prerequisite_exists(True, self.__datasrc_client, rrset)
+        self.__prereq_helper(method, expected, rrset)
 
         # Likewise, CNAME directly should match, but what it points to should
         # not
         rrset = isc.dns.RRset(isc.dns.Name("cname.example.org"),
                               isc.dns.RRClass.IN(), isc.dns.RRType.A(),
                               isc.dns.RRTTL(0))
-        self.__check_prerequisite_exists(False, self.__datasrc_client, rrset)
+        self.__prereq_helper(method, not expected, rrset)
 
         rrset = isc.dns.RRset(isc.dns.Name("cname.example.org"),
                               isc.dns.RRClass.IN(), isc.dns.RRType.CNAME(),
                               isc.dns.RRTTL(0))
-        self.__check_prerequisite_exists(True, self.__datasrc_client, rrset)
+        self.__prereq_helper(method, expected, rrset)
 
         # And also make sure a delegation (itself) is not treated as existing
         # data
         rrset = isc.dns.RRset(isc.dns.Name("foo.sub.example.org"),
                               isc.dns.RRClass.IN(), isc.dns.RRType.A(),
                               isc.dns.RRTTL(0))
-        self.__check_prerequisite_exists(False, self.__datasrc_client, rrset)
+        self.__prereq_helper(method, not expected, rrset)
         # But the delegation data itself should match
         rrset = isc.dns.RRset(isc.dns.Name("sub.example.org"),
                               isc.dns.RRClass.IN(), isc.dns.RRType.NS(),
                               isc.dns.RRTTL(0))
-        self.__check_prerequisite_exists(True, self.__datasrc_client, rrset)
+        self.__prereq_helper(method, expected, rrset)
         # As should glue
         rrset = isc.dns.RRset(isc.dns.Name("ns.sub.example.org"),
                               isc.dns.RRClass.IN(), isc.dns.RRType.A(),
                               isc.dns.RRTTL(0))
-        self.__check_prerequisite_exists(True, self.__datasrc_client, rrset)
+        self.__prereq_helper(method, expected, rrset)
+
+    def test_check_prerequisite_exists(self):
+        method = self.__session._UpdateSession__prereq_rrset_exists
+        self.__check_prerequisite_exists_combined(method, True)
+
+    def test_check_prerequisite_does_not_exist(self):
+        method = self.__session._UpdateSession__prereq_rrset_does_not_exist
+        self.__check_prerequisite_exists_combined(method, False)
 
     def test_check_prerequisite_exists_value(self):
+        method = self.__session._UpdateSession__prereq_rrset_exists_value
+        
         rrset = isc.dns.RRset(isc.dns.Name("www.example.org"),
                               isc.dns.RRClass.IN(), isc.dns.RRType.A(),
                               isc.dns.RRTTL(0))
         # empty one should not match
-        self.__check_prerequisite_exists_value(False, self.__datasrc_client,
-                                               rrset)
+        self.__prereq_helper(method, False, rrset)
 
         # When the rdata is added, it should match
         rrset.add_rdata(isc.dns.Rdata(isc.dns.RRType.A(),
                                       isc.dns.RRClass.IN(),
                                       "192.0.2.1"))
-        self.__check_prerequisite_exists_value(True, self.__datasrc_client,
-                                               rrset)
+        self.__prereq_helper(method, True, rrset)
 
         # But adding more should not
         rrset.add_rdata(isc.dns.Rdata(isc.dns.RRType.A(),
                                       isc.dns.RRClass.IN(),
                                       "192.0.2.2"))
-        self.__check_prerequisite_exists_value(False, self.__datasrc_client,
-                                               rrset)
+        self.__prereq_helper(method, False, rrset)
 
         # Also test one with more than one RR
         rrset = isc.dns.RRset(isc.dns.Name("example.org"),
                               isc.dns.RRClass.IN(), isc.dns.RRType.NS(),
                               isc.dns.RRTTL(0))
-        self.__check_prerequisite_exists_value(False, self.__datasrc_client,
-                                               rrset)
+        self.__prereq_helper(method, False, rrset)
         rrset.add_rdata(isc.dns.Rdata(isc.dns.RRType.NS(),
                                       isc.dns.RRClass.IN(),
                                       "ns1.example.org."))
-        self.__check_prerequisite_exists_value(False, self.__datasrc_client,
-                                               rrset)
+        self.__prereq_helper(method, False, rrset)
         rrset.add_rdata(isc.dns.Rdata(isc.dns.RRType.NS(),
                                       isc.dns.RRClass.IN(),
                                       "ns2.example.org."))
-        self.__check_prerequisite_exists_value(False, self.__datasrc_client,
-                                               rrset)
+        self.__prereq_helper(method, False, rrset)
         rrset.add_rdata(isc.dns.Rdata(isc.dns.RRType.NS(),
                                       isc.dns.RRClass.IN(),
                                       "ns3.example.org."))
-        self.__check_prerequisite_exists_value(True, self.__datasrc_client,
-                                               rrset)
+        self.__prereq_helper(method, True, rrset)
         rrset.add_rdata(isc.dns.Rdata(isc.dns.RRType.NS(),
                                       isc.dns.RRClass.IN(),
                                       "ns4.example.org."))
-        self.__check_prerequisite_exists_value(False, self.__datasrc_client,
-                                               rrset)
+        self.__prereq_helper(method, False, rrset)
 
         # Repeat that, but try a different order of Rdata addition
         rrset = isc.dns.RRset(isc.dns.Name("example.org"),
                               isc.dns.RRClass.IN(), isc.dns.RRType.NS(),
                               isc.dns.RRTTL(0))
-        self.__check_prerequisite_exists_value(False, self.__datasrc_client,
-                                               rrset)
+        self.__prereq_helper(method, False, rrset)
         rrset.add_rdata(isc.dns.Rdata(isc.dns.RRType.NS(),
                                       isc.dns.RRClass.IN(),
                                       "ns3.example.org."))
-        self.__check_prerequisite_exists_value(False, self.__datasrc_client,
-                                               rrset)
+        self.__prereq_helper(method, False, rrset)
         rrset.add_rdata(isc.dns.Rdata(isc.dns.RRType.NS(),
                                       isc.dns.RRClass.IN(),
                                       "ns2.example.org."))
-        self.__check_prerequisite_exists_value(False, self.__datasrc_client,
-                                               rrset)
+        self.__prereq_helper(method, False, rrset)
         rrset.add_rdata(isc.dns.Rdata(isc.dns.RRType.NS(),
                                       isc.dns.RRClass.IN(),
                                       "ns1.example.org."))
-        self.__check_prerequisite_exists_value(True, self.__datasrc_client,
-                                               rrset)
+        self.__prereq_helper(method, True, rrset)
         rrset.add_rdata(isc.dns.Rdata(isc.dns.RRType.NS(),
                                       isc.dns.RRClass.IN(),
                                       "ns4.example.org."))
-        self.__check_prerequisite_exists_value(False, self.__datasrc_client,
-                                               rrset)
+        self.__prereq_helper(method, False, rrset)
 
         # and test one where the name does not even exist
         rrset = isc.dns.RRset(isc.dns.Name("doesnotexist.example.org"),
@@ -347,169 +310,55 @@ class SessionTest(unittest.TestCase):
         rrset.add_rdata(isc.dns.Rdata(isc.dns.RRType.A(),
                                       isc.dns.RRClass.IN(),
                                       "192.0.2.1"))
-        self.__check_prerequisite_exists_value(False, self.__datasrc_client,
-                                               rrset)
+        self.__prereq_helper(method, False, rrset)
 
-    def test_check_prerequisite_does_not_exist(self):
-        # This is essentially the same as test_check_prerequisite_exists(),
-        # but with the opposite resulting values
-        # www.example.org should have an A, but not an MX
-        rrset = isc.dns.RRset(isc.dns.Name("www.example.org"),
-                              isc.dns.RRClass.IN(), isc.dns.RRType.A(),
-                              isc.dns.RRTTL(0))
-        self.__check_prerequisite_does_not_exist(False, self.__datasrc_client,
-                                                 rrset)
-        rrset = isc.dns.RRset(isc.dns.Name("www.example.org"),
-                              isc.dns.RRClass.IN(), isc.dns.RRType.MX(),
-                              isc.dns.RRTTL(0))
-        self.__check_prerequisite_does_not_exist(True, self.__datasrc_client,
-                                                 rrset)
-
-        # example.org should have an MX, but not an A
+    def __check_prerequisite_name_in_use_combined(self, method, expected):
+        '''shared code for the checks for the very similar (but reversed
+           in behaviour) methods __prereq_name_in_use and
+           __prereq_name_not_in_use
+        '''
         rrset = isc.dns.RRset(isc.dns.Name("example.org"),
-                              isc.dns.RRClass.IN(), isc.dns.RRType.MX(),
+                              isc.dns.RRClass.NONE(), isc.dns.RRType.ANY(),
                               isc.dns.RRTTL(0))
-        self.__check_prerequisite_does_not_exist(False, self.__datasrc_client,
-                                                 rrset)
-        rrset = isc.dns.RRset(isc.dns.Name("example.org"),
-                              isc.dns.RRClass.IN(), isc.dns.RRType.A(),
-                              isc.dns.RRTTL(0))
-        self.__check_prerequisite_does_not_exist(True, self.__datasrc_client,
-                                                 rrset)
+        self.__prereq_helper(method, expected, rrset)
 
-        # Wildcard expansion should not be applied, but literal matches
-        # should work
+        rrset = isc.dns.RRset(isc.dns.Name("www.example.org"),
+                              isc.dns.RRClass.NONE(), isc.dns.RRType.ANY(),
+                              isc.dns.RRTTL(0))
+        self.__prereq_helper(method, expected, rrset)
+
+        rrset = isc.dns.RRset(isc.dns.Name("doesnotexist.example.org"),
+                              isc.dns.RRClass.NONE(), isc.dns.RRType.ANY(),
+                              isc.dns.RRTTL(0))
+        self.__prereq_helper(method, not expected, rrset)
+
+        rrset = isc.dns.RRset(isc.dns.Name("belowdelegation.sub.example.org"),
+                              isc.dns.RRClass.NONE(), isc.dns.RRType.ANY(),
+                              isc.dns.RRTTL(0))
+        self.__prereq_helper(method, not expected, rrset)
+
         rrset = isc.dns.RRset(isc.dns.Name("foo.wildcard.example.org"),
-                              isc.dns.RRClass.IN(), isc.dns.RRType.A(),
+                              isc.dns.RRClass.NONE(), isc.dns.RRType.ANY(),
                               isc.dns.RRTTL(0))
-        self.__check_prerequisite_does_not_exist(True, self.__datasrc_client,
-                                                 rrset)
+        self.__prereq_helper(method, not expected, rrset)
 
-        rrset = isc.dns.RRset(isc.dns.Name("*.wildcard.example.org"),
-                              isc.dns.RRClass.IN(), isc.dns.RRType.A(),
+        # empty nonterminal should not match
+        rrset = isc.dns.RRset(isc.dns.Name("nonterminal.example.org"),
+                              isc.dns.RRClass.NONE(), isc.dns.RRType.ANY(),
                               isc.dns.RRTTL(0))
-        self.__check_prerequisite_does_not_exist(False, self.__datasrc_client,
-                                                 rrset)
-
-        # Likewise, CNAME directly should match, but what it points to should
-        # not
-        rrset = isc.dns.RRset(isc.dns.Name("cname.example.org"),
-                              isc.dns.RRClass.IN(), isc.dns.RRType.A(),
+        self.__prereq_helper(method, not expected, rrset)
+        rrset = isc.dns.RRset(isc.dns.Name("empty.nonterminal.example.org"),
+                              isc.dns.RRClass.NONE(), isc.dns.RRType.ANY(),
                               isc.dns.RRTTL(0))
-        self.__check_prerequisite_does_not_exist(True, self.__datasrc_client,
-                                                 rrset)
-
-        rrset = isc.dns.RRset(isc.dns.Name("cname.example.org"),
-                              isc.dns.RRClass.IN(), isc.dns.RRType.CNAME(),
-                              isc.dns.RRTTL(0))
-        self.__check_prerequisite_does_not_exist(False, self.__datasrc_client,
-                                                 rrset)
-
-        # And also make sure a delegation (itself) is not treated as existing
-        # data
-        rrset = isc.dns.RRset(isc.dns.Name("foo.sub.example.org"),
-                              isc.dns.RRClass.IN(), isc.dns.RRType.A(),
-                              isc.dns.RRTTL(0))
-        self.__check_prerequisite_does_not_exist(True, self.__datasrc_client,
-                                                 rrset)
-        # But the delegation data itself should match
-        rrset = isc.dns.RRset(isc.dns.Name("sub.example.org"),
-                              isc.dns.RRClass.IN(), isc.dns.RRType.NS(),
-                              isc.dns.RRTTL(0))
-        self.__check_prerequisite_does_not_exist(False, self.__datasrc_client,
-                                                 rrset)
-        # As should glue
-        rrset = isc.dns.RRset(isc.dns.Name("ns.sub.example.org"),
-                              isc.dns.RRClass.IN(), isc.dns.RRType.A(),
-                              isc.dns.RRTTL(0))
-        self.__check_prerequisite_does_not_exist(False, self.__datasrc_client,
-                                                 rrset)
+        self.__prereq_helper(method, expected, rrset)
 
     def test_check_prerequisite_name_in_use(self):
-        rrset = isc.dns.RRset(isc.dns.Name("example.org"),
-                              isc.dns.RRClass.ANY(), isc.dns.RRType.ANY(),
-                              isc.dns.RRTTL(0))
-        self.__check_prerequisite_name_in_use(True, self.__datasrc_client,
-                                              rrset)
-
-        rrset = isc.dns.RRset(isc.dns.Name("www.example.org"),
-                              isc.dns.RRClass.ANY(), isc.dns.RRType.ANY(),
-                              isc.dns.RRTTL(0))
-        self.__check_prerequisite_name_in_use(True, self.__datasrc_client,
-                                              rrset)
-
-        rrset = isc.dns.RRset(isc.dns.Name("doesnotexist.example.org"),
-                              isc.dns.RRClass.ANY(), isc.dns.RRType.ANY(),
-                              isc.dns.RRTTL(0))
-        self.__check_prerequisite_name_in_use(False, self.__datasrc_client,
-                                              rrset)
-
-        rrset = isc.dns.RRset(isc.dns.Name("belowdelegation.sub.example.org"),
-                              isc.dns.RRClass.ANY(), isc.dns.RRType.ANY(),
-                              isc.dns.RRTTL(0))
-        self.__check_prerequisite_name_in_use(False, self.__datasrc_client,
-                                              rrset)
-
-        rrset = isc.dns.RRset(isc.dns.Name("foo.wildcard.example.org"),
-                              isc.dns.RRClass.ANY(), isc.dns.RRType.ANY(),
-                              isc.dns.RRTTL(0))
-        self.__check_prerequisite_name_in_use(False, self.__datasrc_client,
-                                              rrset)
-
-        # empty nonterminal should not match
-        rrset = isc.dns.RRset(isc.dns.Name("nonterminal.example.org"),
-                              isc.dns.RRClass.ANY(), isc.dns.RRType.ANY(),
-                              isc.dns.RRTTL(0))
-        self.__check_prerequisite_name_in_use(False, self.__datasrc_client,
-                                              rrset)
-        rrset = isc.dns.RRset(isc.dns.Name("empty.nonterminal.example.org"),
-                              isc.dns.RRClass.ANY(), isc.dns.RRType.ANY(),
-                              isc.dns.RRTTL(0))
-        self.__check_prerequisite_name_in_use(True, self.__datasrc_client,
-                                              rrset)
+        method = self.__session._UpdateSession__prereq_name_in_use
+        self.__check_prerequisite_name_in_use_combined(method, True)
 
     def test_check_prerequisite_name_not_in_use(self):
-        rrset = isc.dns.RRset(isc.dns.Name("example.org"),
-                              isc.dns.RRClass.NONE(), isc.dns.RRType.ANY(),
-                              isc.dns.RRTTL(0))
-        self.__check_prerequisite_name_not_in_use(False, self.__datasrc_client,
-                                                  rrset)
-
-        rrset = isc.dns.RRset(isc.dns.Name("www.example.org"),
-                              isc.dns.RRClass.NONE(), isc.dns.RRType.ANY(),
-                              isc.dns.RRTTL(0))
-        self.__check_prerequisite_name_not_in_use(False, self.__datasrc_client,
-                                                  rrset)
-
-        rrset = isc.dns.RRset(isc.dns.Name("doesnotexist.example.org"),
-                              isc.dns.RRClass.NONE(), isc.dns.RRType.ANY(),
-                              isc.dns.RRTTL(0))
-        self.__check_prerequisite_name_not_in_use(True, self.__datasrc_client,
-                                                  rrset)
-
-        rrset = isc.dns.RRset(isc.dns.Name("belowdelegation.sub.example.org"),
-                              isc.dns.RRClass.NONE(), isc.dns.RRType.ANY(),
-                              isc.dns.RRTTL(0))
-        self.__check_prerequisite_name_not_in_use(True, self.__datasrc_client,
-                                                  rrset)
-
-        rrset = isc.dns.RRset(isc.dns.Name("foo.wildcard.example.org"),
-                              isc.dns.RRClass.NONE(), isc.dns.RRType.ANY(),
-                              isc.dns.RRTTL(0))
-        self.__check_prerequisite_name_not_in_use(True, self.__datasrc_client,
-                                                  rrset)
-
-        # empty nonterminal should not match
-        rrset = isc.dns.RRset(isc.dns.Name("nonterminal.example.org"),
-                              isc.dns.RRClass.NONE(), isc.dns.RRType.ANY(),
-                              isc.dns.RRTTL(0))
-        self.__check_prerequisite_name_not_in_use(True, self.__datasrc_client,
-                                                  rrset)
-        rrset = isc.dns.RRset(isc.dns.Name("empty.nonterminal.example.org"),
-                              isc.dns.RRClass.NONE(), isc.dns.RRType.ANY(),
-                              isc.dns.RRTTL(0))
-        self.__check_prerequisite_name_not_in_use(False, self.__datasrc_client,
-                                                  rrset)
+        method = self.__session._UpdateSession__prereq_name_not_in_use
+        self.__check_prerequisite_name_in_use_combined(method, False)
 
     def check_prerequisite_result(self, expected, prerequisites):
         '''Helper method for checking the result of a prerequisite check;
