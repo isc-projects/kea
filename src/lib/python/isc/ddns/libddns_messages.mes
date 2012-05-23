@@ -39,3 +39,11 @@ possible, you may want to check the implementation or configuration of
 those clients to suppress the requests.  As specified in Section 3.1
 of RFC2136, the receiving server will return a response with an RCODE
 of NOTAUTH.
+
+% LIBDDNS_UPDATE_PREREQUISITE_FAILED prerequisite failed in update update client %1 for zone %2: result code %3
+The handling of the prerequisite section (RFC2136 Section 3.2) found
+that one of the prerequisites was not satisfied. The result code
+should give more information on what prerequisite type failed.
+If the result code is FORMERR, the prerequisite section was not well-formed.
+An error response with the given result code is sent back to the client.
+
