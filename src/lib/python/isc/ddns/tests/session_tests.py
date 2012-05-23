@@ -156,87 +156,92 @@ class SessionTest(unittest.TestCase):
            Function does not do much but makes the code look nicer'''
         self.assertEqual(expected, method(self.__datasrc_client, rrset))
 
-    def __check_prerequisite_exists_combined(self, method, expected):
+    def __check_prerequisite_exists_combined(self, method, rrclass, expected):
         '''shared code for the checks for the very similar (but reversed
            in behaviour) methods __prereq_rrset_exists and
            __prereq_rrset_does_not_exist.
+           For rrset_exists, rrclass should be ANY, for rrset_does_not_exist,
+           it should be NONE.
         '''
-
         # Basic existence checks
         # www.example.org should have an A, but not an MX
         rrset = isc.dns.RRset(isc.dns.Name("www.example.org"),
-                              isc.dns.RRClass.IN(), isc.dns.RRType.A(),
+                              rrclass, isc.dns.RRType.A(),
                               isc.dns.RRTTL(0))
         self.__prereq_helper(method, expected, rrset)
         rrset = isc.dns.RRset(isc.dns.Name("www.example.org"),
-                              isc.dns.RRClass.IN(), isc.dns.RRType.MX(),
+                              rrclass, isc.dns.RRType.MX(),
                               isc.dns.RRTTL(0))
         self.__prereq_helper(method, not expected, rrset)
 
         # example.org should have an MX, but not an A
         rrset = isc.dns.RRset(isc.dns.Name("example.org"),
-                              isc.dns.RRClass.IN(), isc.dns.RRType.MX(),
+                              rrclass, isc.dns.RRType.MX(),
                               isc.dns.RRTTL(0))
         self.__prereq_helper(method, expected, rrset)
         rrset = isc.dns.RRset(isc.dns.Name("example.org"),
-                              isc.dns.RRClass.IN(), isc.dns.RRType.A(),
+                              rrclass, isc.dns.RRType.A(),
                               isc.dns.RRTTL(0))
         self.__prereq_helper(method, not expected, rrset)
 
         # Also check the case where the name does not even exist
         rrset = isc.dns.RRset(isc.dns.Name("doesnotexist.example.org"),
-                              isc.dns.RRClass.IN(), isc.dns.RRType.A(),
+                              rrclass, isc.dns.RRType.A(),
                               isc.dns.RRTTL(0))
         self.__prereq_helper(method, not expected, rrset)
 
         # Wildcard expansion should not be applied, but literal matches
         # should work
         rrset = isc.dns.RRset(isc.dns.Name("foo.wildcard.example.org"),
-                              isc.dns.RRClass.IN(), isc.dns.RRType.A(),
+                              rrclass, isc.dns.RRType.A(),
                               isc.dns.RRTTL(0))
         self.__prereq_helper(method, not expected, rrset)
 
         rrset = isc.dns.RRset(isc.dns.Name("*.wildcard.example.org"),
-                              isc.dns.RRClass.IN(), isc.dns.RRType.A(),
+                              rrclass, isc.dns.RRType.A(),
                               isc.dns.RRTTL(0))
         self.__prereq_helper(method, expected, rrset)
 
         # Likewise, CNAME directly should match, but what it points to should
         # not
         rrset = isc.dns.RRset(isc.dns.Name("cname.example.org"),
-                              isc.dns.RRClass.IN(), isc.dns.RRType.A(),
+                              rrclass, isc.dns.RRType.A(),
                               isc.dns.RRTTL(0))
         self.__prereq_helper(method, not expected, rrset)
 
         rrset = isc.dns.RRset(isc.dns.Name("cname.example.org"),
-                              isc.dns.RRClass.IN(), isc.dns.RRType.CNAME(),
+                              rrclass, isc.dns.RRType.CNAME(),
                               isc.dns.RRTTL(0))
         self.__prereq_helper(method, expected, rrset)
 
         # And also make sure a delegation (itself) is not treated as existing
         # data
         rrset = isc.dns.RRset(isc.dns.Name("foo.sub.example.org"),
-                              isc.dns.RRClass.IN(), isc.dns.RRType.A(),
+                              rrclass, isc.dns.RRType.A(),
                               isc.dns.RRTTL(0))
         self.__prereq_helper(method, not expected, rrset)
         # But the delegation data itself should match
         rrset = isc.dns.RRset(isc.dns.Name("sub.example.org"),
-                              isc.dns.RRClass.IN(), isc.dns.RRType.NS(),
+                              rrclass, isc.dns.RRType.NS(),
                               isc.dns.RRTTL(0))
         self.__prereq_helper(method, expected, rrset)
         # As should glue
         rrset = isc.dns.RRset(isc.dns.Name("ns.sub.example.org"),
-                              isc.dns.RRClass.IN(), isc.dns.RRType.A(),
+                              rrclass, isc.dns.RRType.A(),
                               isc.dns.RRTTL(0))
         self.__prereq_helper(method, expected, rrset)
 
     def test_check_prerequisite_exists(self):
         method = self.__session._UpdateSession__prereq_rrset_exists
-        self.__check_prerequisite_exists_combined(method, True)
+        self.__check_prerequisite_exists_combined(method,
+                                                  isc.dns.RRClass.ANY(),
+                                                  True)
 
     def test_check_prerequisite_does_not_exist(self):
         method = self.__session._UpdateSession__prereq_rrset_does_not_exist
-        self.__check_prerequisite_exists_combined(method, False)
+        self.__check_prerequisite_exists_combined(method,
+                                                  isc.dns.RRClass.NONE(),
+                                                  False)
 
     def test_check_prerequisite_exists_value(self):
         method = self.__session._UpdateSession__prereq_rrset_exists_value
@@ -312,53 +317,58 @@ class SessionTest(unittest.TestCase):
                                       "192.0.2.1"))
         self.__prereq_helper(method, False, rrset)
 
-    def __check_prerequisite_name_in_use_combined(self, method, expected):
+    def __check_prerequisite_name_in_use_combined(self, method, rrclass,
+                                                  expected):
         '''shared code for the checks for the very similar (but reversed
            in behaviour) methods __prereq_name_in_use and
            __prereq_name_not_in_use
         '''
         rrset = isc.dns.RRset(isc.dns.Name("example.org"),
-                              isc.dns.RRClass.NONE(), isc.dns.RRType.ANY(),
+                              rrclass, isc.dns.RRType.ANY(),
                               isc.dns.RRTTL(0))
         self.__prereq_helper(method, expected, rrset)
 
         rrset = isc.dns.RRset(isc.dns.Name("www.example.org"),
-                              isc.dns.RRClass.NONE(), isc.dns.RRType.ANY(),
+                              rrclass, isc.dns.RRType.ANY(),
                               isc.dns.RRTTL(0))
         self.__prereq_helper(method, expected, rrset)
 
         rrset = isc.dns.RRset(isc.dns.Name("doesnotexist.example.org"),
-                              isc.dns.RRClass.NONE(), isc.dns.RRType.ANY(),
+                              rrclass, isc.dns.RRType.ANY(),
                               isc.dns.RRTTL(0))
         self.__prereq_helper(method, not expected, rrset)
 
         rrset = isc.dns.RRset(isc.dns.Name("belowdelegation.sub.example.org"),
-                              isc.dns.RRClass.NONE(), isc.dns.RRType.ANY(),
+                              rrclass, isc.dns.RRType.ANY(),
                               isc.dns.RRTTL(0))
         self.__prereq_helper(method, not expected, rrset)
 
         rrset = isc.dns.RRset(isc.dns.Name("foo.wildcard.example.org"),
-                              isc.dns.RRClass.NONE(), isc.dns.RRType.ANY(),
+                              rrclass, isc.dns.RRType.ANY(),
                               isc.dns.RRTTL(0))
         self.__prereq_helper(method, not expected, rrset)
 
         # empty nonterminal should not match
         rrset = isc.dns.RRset(isc.dns.Name("nonterminal.example.org"),
-                              isc.dns.RRClass.NONE(), isc.dns.RRType.ANY(),
+                              rrclass, isc.dns.RRType.ANY(),
                               isc.dns.RRTTL(0))
         self.__prereq_helper(method, not expected, rrset)
         rrset = isc.dns.RRset(isc.dns.Name("empty.nonterminal.example.org"),
-                              isc.dns.RRClass.NONE(), isc.dns.RRType.ANY(),
+                              rrclass, isc.dns.RRType.ANY(),
                               isc.dns.RRTTL(0))
         self.__prereq_helper(method, expected, rrset)
 
     def test_check_prerequisite_name_in_use(self):
         method = self.__session._UpdateSession__prereq_name_in_use
-        self.__check_prerequisite_name_in_use_combined(method, True)
+        self.__check_prerequisite_name_in_use_combined(method,
+                                                       isc.dns.RRClass.ANY(),
+                                                       True)
 
     def test_check_prerequisite_name_not_in_use(self):
         method = self.__session._UpdateSession__prereq_name_not_in_use
-        self.__check_prerequisite_name_in_use_combined(method, False)
+        self.__check_prerequisite_name_in_use_combined(method,
+                                                       isc.dns.RRClass.NONE(),
+                                                       False)
 
     def check_prerequisite_result(self, expected, prerequisites):
         '''Helper method for checking the result of a prerequisite check;
