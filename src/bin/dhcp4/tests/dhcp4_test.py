@@ -26,48 +26,86 @@ import isc
 
 class TestDhcpv4Daemon(unittest.TestCase):
     def setUp(self):
-        print("Note: Purpose of some of the tests is to check if DHCPv4 server can be started,")
-        print("      not that is can bind sockets correctly. Please ignore binding errors.")
+        pass
+
+    def tearDown(self):
+        pass
+
+    def runDhcp4(self, params):
+        """
+        This method runs dhcp4 and returns a touple: (returncode and stdout)
+        """
+
+        print("Running command: %s" % (" ".join(params)))
+
         # redirect stdout to a pipe so we can check that our
         # process spawning is doing the right thing with stdout
-        self.old_stdout = os.dup(sys.stdout.fileno())
-        self.pipes = os.pipe()
-        os.dup2(self.pipes[1], sys.stdout.fileno())
-        os.close(self.pipes[1])
+        self.stdout_old = os.dup(sys.stdout.fileno())
+        self.stdout_pipes = os.pipe()
+        os.dup2(self.stdout_pipes[1], sys.stdout.fileno())
+        os.close(self.stdout_pipes[1])
+
+        # do the same trick for stderr:
+        self.stderr_old = os.dup(sys.stderr.fileno())
+        self.stderr_pipes = os.pipe()
+        os.dup2(self.stderr_pipes[1], sys.stderr.fileno())
+        os.close(self.stderr_pipes[1])
+
         # note that we use dup2() to restore the original stdout
         # to the main program ASAP in each test... this prevents
         # hangs reading from the child process (as the pipe is only
         # open in the child), and also insures nice pretty output
 
-    def tearDown(self):
-        # clean up our stdout munging
-        os.dup2(self.old_stdout, sys.stdout.fileno())
-        os.close(self.pipes[0])
-
-    def test_alive(self):
-        """
-        Simple test. Checks that b10-dhcp4 can be started and prints out info 
-        about starting DHCPv4 operation.
-        """
-        pi = ProcessInfo('Test Process', [ '../b10-dhcp4' , '-v' ])
+        pi = ProcessInfo('Test Process', params)
         pi.spawn()
         time.sleep(1)
-        os.dup2(self.old_stdout, sys.stdout.fileno())
+        os.dup2(self.stdout_old, sys.stdout.fileno())
         self.assertNotEqual(pi.process, None)
         self.assertTrue(type(pi.pid) is int)
-        output = os.read(self.pipes[0], 4096)
-        self.assertEqual( str(output).count("[b10-dhcp4] Initiating DHCPv4 server operation."), 1)
 
-        # kill this process
-        # XXX: b10-dhcp6 is too dumb to understand 'shutdown' command for now,
-        #      so let's just kill the bastard
+        output = os.read(self.stdout_pipes[0], 4096)
+        error = os.read(self.stderr_pipes[0], 4096)
 
-        # TODO: Ignore errors for now. This test will be more thorough once ticket #1503
-        # (passing port number to b10-dhcp6 daemon) is implemented.
         try:
-            os.kill(pi.pid, signal.SIGTERM)
+            if (not pi.process.poll()):
+                # let's be nice at first...
+                pi.process.send_signal(signal.SIGTERM)
+                time.sleep(1)
+                if (pi.process.returncode == None):
+                    # if the suspect does not cooperate, use bigger hammer
+                    os.kill(pi.pid, signal.SIGKILL)
         except OSError:
             print("Ignoring failed kill attempt. Process is dead already.")
+
+        # clean up our stdout munging
+        os.dup2(self.stdout_old, sys.stdout.fileno())
+        os.close(self.stdout_pipes[0])
+
+        os.dup2(self.stderr_old, sys.stderr.fileno())
+        os.close(self.stderr_pipes[0])
+
+        return (pi.process.returncode, output, error)
+
+    def test_alive(self):
+        print("Note: Purpose of some of the tests is to check if DHCPv4 server can be started,")
+        print("      not that is can bind sockets correctly. Please ignore binding errors.")
+
+        (returncode, output, error) = self.runDhcp4(["../b10-dhcp4", "-v"])
+        # print("Return code=%d \nstdout=[%s]\nstderr=[%s]" % (returncode, output, error) )
+
+        self.assertEqual( str(output).count("[b10-dhcp4] Initiating DHCPv4 server operation."), 1)
+
+    def test_portnumber_0(self):
+        print("Check that specifying port number 0 is not allowed.")
+        (returncode, output, error) = self.runDhcp4(['../b10-dhcp4', '-p', '0'])
+
+        # When invalid port number is specified, return code must not be success
+        self.assertTrue(returncode != 0)
+
+        # Check that there is an error message about invalid port number printed on stderr
+        self.assertEqual( str(error).count("Failed to parse port number"), 1)
+
+
 
 if __name__ == '__main__':
     unittest.main()
