@@ -16,6 +16,8 @@
 # Checks that the initLogger() call uses for unit tests respects the setting of
 # the environment variables.
 
+export B10_FROM_SOURCE=@abs_top_srcdir@
+
 testname="initLogger test"
 echo $testname
 
