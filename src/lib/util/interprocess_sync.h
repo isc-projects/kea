@@ -27,7 +27,9 @@ public:
     /// \brief Constructor
     ///
     /// Creates a interprocess synchronization object
-    InterprocessSync(const std::string component_name) : component_name_(component_name) {}
+    InterprocessSync(const std::string component_name) :
+        component_name_(component_name)
+    {}
 
     /// \brief Destructor
     virtual ~InterprocessSync() {}
@@ -49,8 +51,10 @@ public:
     virtual ~InterprocessSyncLocker() {}
 
 protected:
-    InterprocessSyncLocker(InterprocessSync* sync) : sync_(sync), is_locked_(false) {}
-    InterprocessSync *sync_;
+    InterprocessSyncLocker(InterprocessSync* sync) :
+        sync_(sync), is_locked_(false)
+    {}
+    InterprocessSync* sync_;
     bool is_locked_;
 };
 
