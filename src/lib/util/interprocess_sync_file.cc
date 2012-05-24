@@ -65,27 +65,31 @@ InterprocessSyncFile::~InterprocessSyncFile() {
     // The lockfile will continue to exist, and we must not delete it.
 }
 
+static bool
+do_lock(int fd, int cmd, short l_type)
+{
+    struct flock lock;
+
+    memset(&lock, 0, sizeof (lock));
+    lock.l_type = l_type;
+    lock.l_whence = SEEK_SET;
+    lock.l_start = 0;
+    lock.l_len = 1;
+
+    const int status = fcntl(fd, cmd, &lock);
+
+    return ((status == 0) ? true : false);
+}
+
 bool
 InterprocessSyncFile::lock() {
     if (is_locked_) {
         return (true);
     }
 
-    if (fd_ != -1) {
-        struct flock lock;
-
-        // Acquire the exclusive lock
-        memset(&lock, 0, sizeof (lock));
-        lock.l_type = F_WRLCK;
-        lock.l_whence = SEEK_SET;
-        lock.l_start = 0;
-        lock.l_len = 1;
-
-        const int status = fcntl(fd_, F_SETLKW, &lock);
-        if (status == 0) {
-            is_locked_ = true;
-            return (true);
-        }
+    if ((fd_ != -1) && do_lock(fd_, F_SETLKW, F_WRLCK)) {
+        is_locked_ = true;
+        return (true);
     }
 
     return (false);
@@ -97,21 +101,9 @@ InterprocessSyncFile::tryLock() {
         return (true);
     }
 
-    if (fd_ != -1) {
-        struct flock lock;
-
-        // Acquire the exclusive lock
-        memset(&lock, 0, sizeof (lock));
-        lock.l_type = F_WRLCK;
-        lock.l_whence = SEEK_SET;
-        lock.l_start = 0;
-        lock.l_len = 1;
-
-        const int status = fcntl(fd_, F_SETLK, &lock);
-        if (status == 0) {
-            is_locked_ = true;
-            return (true);
-        }
+    if ((fd_ != -1) && do_lock(fd_, F_SETLK, F_WRLCK)) {
+        is_locked_ = true;
+        return (true);
     }
 
     return (false);
@@ -123,21 +115,9 @@ InterprocessSyncFile::unlock() {
         return (true);
     }
 
-    if (fd_ != -1) {
-        struct flock lock;
-
-        // Release the exclusive lock
-        memset(&lock, 0, sizeof (lock));
-        lock.l_type = F_UNLCK;
-        lock.l_whence = SEEK_SET;
-        lock.l_start = 0;
-        lock.l_len = 1;
-
-        const int status = fcntl(fd_, F_SETLKW, &lock);
-        if (status == 0) {
-            is_locked_ = false;
-            return (true);
-        }
+    if ((fd_ != -1) && do_lock(fd_, F_SETLKW, F_UNLCK)) {
+        is_locked_ = false;
+        return (true);
     }
 
     return (false);
