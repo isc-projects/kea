@@ -26,48 +26,49 @@
 namespace isc {
 namespace util {
 
-InterprocessSyncFile::InterprocessSyncFile(const std::string component_name) :
-    InterprocessSync(component_name)
-{
-    std::string lockfile_path = LOCKFILE_DIR;
-
-    const char* const env = getenv("B10_FROM_SOURCE");
-    if (env != NULL) {
-        lockfile_path = env;
-    }
-
-    const char* const env2 = getenv("B10_FROM_SOURCE_LOCALSTATEDIR");
-    if (env2 != NULL) {
-        lockfile_path = env2;
-    }
-
-    lockfile_path += "/" + component_name_ + "_lockfile";
-
-    // Open the lockfile in the constructor so it doesn't do the access
-    // checks every time a message is logged.
-    const mode_t mode = umask(0111);
-    fd_ = open(lockfile_path.c_str(), O_CREAT | O_RDWR, 0660);
-    umask(mode);
-
-    if (fd_ == -1) {
-        isc_throw(InterprocessSyncFileError,
-                  "Unable to use interprocess sync lockfile: " +
-                  lockfile_path);
-    }
-}
-
 InterprocessSyncFile::~InterprocessSyncFile() {
     if (fd_ != -1) {
         // This will also release any applied locks.
         close(fd_);
+        // The lockfile will continue to exist, and we must not delete
+        // it.
     }
-
-    // The lockfile will continue to exist, and we must not delete it.
 }
 
-static bool
-do_lock(int fd, int cmd, short l_type)
+bool
+InterprocessSyncFile::do_lock(int cmd, short l_type)
 {
+    // Open lock file only when necessary (i.e., here). This is so that
+    // if a default InterprocessSync object is replaced with another
+    // implementation, it doesn't attempt any opens.
+    if (fd_ == -1) {
+        std::string lockfile_path = LOCKFILE_DIR;
+
+        const char* const env = getenv("B10_FROM_SOURCE");
+        if (env != NULL) {
+            lockfile_path = env;
+        }
+
+        const char* const env2 = getenv("B10_FROM_SOURCE_LOCALSTATEDIR");
+        if (env2 != NULL) {
+            lockfile_path = env2;
+        }
+
+        lockfile_path += "/" + component_name_ + "_lockfile";
+
+        // Open the lockfile in the constructor so it doesn't do the access
+        // checks every time a message is logged.
+        const mode_t mode = umask(0111);
+        fd_ = open(lockfile_path.c_str(), O_CREAT | O_RDWR, 0660);
+        umask(mode);
+
+        if (fd_ == -1) {
+            isc_throw(InterprocessSyncFileError,
+                      "Unable to use interprocess sync lockfile: " +
+                      lockfile_path);
+        }
+    }
+
     struct flock lock;
 
     memset(&lock, 0, sizeof (lock));
@@ -76,9 +77,7 @@ do_lock(int fd, int cmd, short l_type)
     lock.l_start = 0;
     lock.l_len = 1;
 
-    const int status = fcntl(fd, cmd, &lock);
-
-    return (status == 0);
+    return (fcntl(fd_, cmd, &lock) == 0);
 }
 
 bool
@@ -87,7 +86,7 @@ InterprocessSyncFile::lock() {
         return (true);
     }
 
-    if (do_lock(fd_, F_SETLKW, F_WRLCK)) {
+    if (do_lock(F_SETLKW, F_WRLCK)) {
         is_locked_ = true;
         return (true);
     }
@@ -101,7 +100,7 @@ InterprocessSyncFile::tryLock() {
         return (true);
     }
 
-    if (do_lock(fd_, F_SETLK, F_WRLCK)) {
+    if (do_lock(F_SETLK, F_WRLCK)) {
         is_locked_ = true;
         return (true);
     }
@@ -115,7 +114,7 @@ InterprocessSyncFile::unlock() {
         return (true);
     }
 
-    if (do_lock(fd_, F_SETLKW, F_UNLCK)) {
+    if (do_lock(F_SETLKW, F_UNLCK)) {
         is_locked_ = false;
         return (true);
     }
