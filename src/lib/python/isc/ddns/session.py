@@ -19,6 +19,7 @@ from isc.log import *
 from isc.ddns.logger import logger, ClientFormatter, ZoneFormatter,\
                             RRsetFormatter
 from isc.log_messages.libddns_messages import *
+import copy
 
 # Result codes for UpdateSession.handle()
 UPDATE_SUCCESS = 0
@@ -220,7 +221,10 @@ class UpdateSession:
             # We need to match all actual RRs, unfortunately there is no
             # direct order-independent comparison for rrsets, so this
             # a slightly inefficient way to handle that.
-            found_rdata = found_rrset.get_rdata()
+
+            # shallow copy of the rdata list, so we are sure that this
+            # loop does not mess with actual data.
+            found_rdata = copy.copy(found_rrset.get_rdata())
             for rdata in rrset.get_rdata():
                 if rdata in found_rdata:
                     found_rdata.remove(rdata)
