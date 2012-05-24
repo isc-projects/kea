@@ -87,7 +87,7 @@ InterprocessSyncFile::lock() {
         return (true);
     }
 
-    if ((fd_ != -1) && do_lock(fd_, F_SETLKW, F_WRLCK)) {
+    if (do_lock(fd_, F_SETLKW, F_WRLCK)) {
         is_locked_ = true;
         return (true);
     }
@@ -101,7 +101,7 @@ InterprocessSyncFile::tryLock() {
         return (true);
     }
 
-    if ((fd_ != -1) && do_lock(fd_, F_SETLK, F_WRLCK)) {
+    if (do_lock(fd_, F_SETLK, F_WRLCK)) {
         is_locked_ = true;
         return (true);
     }
@@ -115,7 +115,7 @@ InterprocessSyncFile::unlock() {
         return (true);
     }
 
-    if ((fd_ != -1) && do_lock(fd_, F_SETLKW, F_UNLCK)) {
+    if (do_lock(fd_, F_SETLKW, F_UNLCK)) {
         is_locked_ = false;
         return (true);
     }
