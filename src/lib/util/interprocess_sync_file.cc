@@ -58,49 +58,30 @@ InterprocessSyncFile::InterprocessSyncFile(const std::string component_name) :
 
 InterprocessSyncFile::~InterprocessSyncFile() {
     if (fd_ != -1) {
+        // This will also release any applied locks.
         close(fd_);
     }
 
     // The lockfile will continue to exist, and we must not delete it.
 }
 
-InterprocessSyncLocker*
-InterprocessSyncFile::getLocker() {
-    InterprocessSyncLocker* locker = new InterprocessSyncFileLocker(this);
-    return (locker);
-}
-
-///////////////////////////////////////////////////////////////////////////////////
-
-InterprocessSyncFileLocker::InterprocessSyncFileLocker(InterprocessSync* sync)
-    : InterprocessSyncLocker(sync)
-{
-}
-
-InterprocessSyncFileLocker::~InterprocessSyncFileLocker() {
-    unlock();
-}
-
 bool
-InterprocessSyncFileLocker::lock() {
+InterprocessSyncFile::lock() {
     if (is_locked_) {
         return (true);
     }
 
-    InterprocessSyncFile* sync = dynamic_cast<InterprocessSyncFile*>(sync_);
-    const int fd = sync->getFd();
-
-    if (fd != -1) {
+    if (fd_ != -1) {
         struct flock lock;
 
         // Acquire the exclusive lock
-        memset(&lock, 0, sizeof lock);
+        memset(&lock, 0, sizeof (lock));
         lock.l_type = F_WRLCK;
         lock.l_whence = SEEK_SET;
         lock.l_start = 0;
         lock.l_len = 1;
 
-        const int status = fcntl(fd, F_SETLKW, &lock);
+        const int status = fcntl(fd_, F_SETLKW, &lock);
         if (status == 0) {
             is_locked_ = true;
             return (true);
@@ -111,25 +92,22 @@ InterprocessSyncFileLocker::lock() {
 }
 
 bool
-InterprocessSyncFileLocker::tryLock() {
+InterprocessSyncFile::tryLock() {
     if (is_locked_) {
         return (true);
     }
 
-    InterprocessSyncFile* sync = dynamic_cast<InterprocessSyncFile*>(sync_);
-    const int fd = sync->getFd();
-
-    if (fd != -1) {
+    if (fd_ != -1) {
         struct flock lock;
 
         // Acquire the exclusive lock
-        memset(&lock, 0, sizeof lock);
+        memset(&lock, 0, sizeof (lock));
         lock.l_type = F_WRLCK;
         lock.l_whence = SEEK_SET;
         lock.l_start = 0;
         lock.l_len = 1;
 
-        const int status = fcntl(fd, F_SETLK, &lock);
+        const int status = fcntl(fd_, F_SETLK, &lock);
         if (status == 0) {
             is_locked_ = true;
             return (true);
@@ -140,25 +118,22 @@ InterprocessSyncFileLocker::tryLock() {
 }
 
 bool
-InterprocessSyncFileLocker::unlock() {
+InterprocessSyncFile::unlock() {
     if (!is_locked_) {
         return (true);
     }
 
-    InterprocessSyncFile *sync = dynamic_cast<InterprocessSyncFile*>(sync_);
-    const int fd = sync->getFd();
-
-    if (fd != -1) {
+    if (fd_ != -1) {
         struct flock lock;
 
         // Release the exclusive lock
-        memset(&lock, 0, sizeof lock);
+        memset(&lock, 0, sizeof (lock));
         lock.l_type = F_UNLCK;
         lock.l_whence = SEEK_SET;
         lock.l_start = 0;
         lock.l_len = 1;
 
-        const int status = fcntl(fd, F_SETLKW, &lock);
+        const int status = fcntl(fd_, F_SETLKW, &lock);
         if (status == 0) {
             is_locked_ = false;
             return (true);
