@@ -33,6 +33,7 @@
 #include <log/message_types.h>
 
 #include <util/strutil.h>
+#include <util/interprocess_sync_file.h>
 
 // Note: as log4cplus and the BIND 10 logger have many concepts in common, and
 // thus many similar names, to disambiguate types we don't "use" the log4cplus
@@ -73,6 +74,14 @@ isc::log::Severity
 LoggerImpl::getSeverity() {
     Level level = LoggerLevelImpl::convertToBindLevel(logger_.getLogLevel());
     return level.severity;
+}
+
+// Replace the interprocess synchronization object
+
+void
+LoggerImpl::setInterprocessSync(isc::util::InterprocessSync* sync) {
+    delete sync_;
+    sync_ = sync;
 }
 
 // Return current debug level (only valid if current severity level is DEBUG).

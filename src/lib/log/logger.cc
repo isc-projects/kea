@@ -73,6 +73,13 @@ Logger::getEffectiveSeverity() {
     return (getLoggerPtr()->getEffectiveSeverity());
 }
 
+// Replace the interprocess synchronization object
+
+void
+Logger::setInterprocessSync(isc::util::InterprocessSync* sync) {
+    getLoggerPtr()->setInterprocessSync(sync);
+}
+
 // Debug level (only relevant if messages of severity DEBUG are being logged).
 
 int
