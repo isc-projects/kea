@@ -23,6 +23,9 @@
 #include <log/logger_manager.h>
 #include <log/logger_name.h>
 #include <log/log_messages.h>
+#include "log/tests/log_test_messages.h"
+
+#include <util/interprocess_sync_file.h>
 
 using namespace isc;
 using namespace isc::log;
@@ -378,4 +381,59 @@ TEST_F(LoggerTest, LoggerNameLength) {
         Logger l3(ok3.c_str());
     }, ".*");
 #endif
+}
+
+class MockSync : public isc::util::InterprocessSync {
+public:
+    /// \brief Constructor
+    MockSync(const std::string component_name) :
+        InterprocessSync(component_name), was_locked_(false), was_unlocked_(false)
+    {}
+
+    bool wasLocked() const {
+        return was_locked_;
+    }
+
+    bool wasUnlocked() const {
+        return was_unlocked_;
+    }
+
+protected:
+    bool lock() {
+        was_locked_ = true;
+        return true;
+    }
+
+    bool tryLock() {
+        return true;
+    }
+
+    bool unlock() {
+        was_unlocked_ = true;
+        return true;
+    }
+
+private:
+    bool was_locked_;
+    bool was_unlocked_;
+};
+
+// Checks that the logger logs exclusively and other BIND 10 components
+// are locked out.
+
+TEST_F(LoggerTest, Lock) {
+    // Create a logger
+    Logger logger("alpha");
+
+    // Setup our own mock sync object so that we can intercept the lock
+    // call and check if a lock has been taken.
+    MockSync *sync = new MockSync("logger");
+    logger.setInterprocessSync(sync);
+
+    // Log a message and put things into play.
+    logger.setSeverity(isc::log::INFO, 100);
+    logger.info(LOG_LOCK_TEST_MESSAGE);
+
+    EXPECT_TRUE(sync->wasLocked());
+    EXPECT_TRUE(sync->wasUnlocked());
 }

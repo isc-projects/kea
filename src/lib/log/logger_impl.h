@@ -32,7 +32,7 @@
 #include <log/logger_level_impl.h>
 #include <log/message_types.h>
 
-#include <util/interprocess_sync_file.h>
+#include <util/interprocess_sync.h>
 
 namespace isc {
 namespace log {
@@ -109,6 +109,12 @@ public:
     /// is the severity of the parent.
     virtual Severity getEffectiveSeverity();
 
+
+    /// \brief Replace the interprocess synchronization object
+    ///
+    /// \param sync The logger uses this synchronization object for
+    /// synchronizing output of log messages.
+    void setInterprocessSync(isc::util::InterprocessSync* sync);
 
     /// \brief Return debug level
     ///

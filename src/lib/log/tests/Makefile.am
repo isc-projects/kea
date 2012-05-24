@@ -13,6 +13,8 @@ endif
 
 CLEANFILES = *.gcno *.gcda
 
+EXTRA_DIST = log_test_messages.mes
+
 noinst_PROGRAMS = logger_example
 logger_example_SOURCES = logger_example.cc
 logger_example_CPPFLAGS = $(AM_CPPFLAGS)
@@ -59,6 +61,7 @@ run_unittests_SOURCES += logger_manager_unittest.cc
 run_unittests_SOURCES += logger_name_unittest.cc
 run_unittests_SOURCES += logger_support_unittest.cc
 run_unittests_SOURCES += logger_unittest.cc
+run_unittests_SOURCES += log_test_messages.cc log_test_messages.h
 run_unittests_SOURCES += logger_specification_unittest.cc
 run_unittests_SOURCES += message_dictionary_unittest.cc
 run_unittests_SOURCES += message_reader_unittest.cc
