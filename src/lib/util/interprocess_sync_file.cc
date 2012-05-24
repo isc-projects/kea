@@ -78,7 +78,7 @@ do_lock(int fd, int cmd, short l_type)
 
     const int status = fcntl(fd, cmd, &lock);
 
-    return ((status == 0) ? true : false);
+    return (status == 0);
 }
 
 bool
