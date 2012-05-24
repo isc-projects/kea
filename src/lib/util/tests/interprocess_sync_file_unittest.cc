@@ -40,8 +40,6 @@ TEST_F(InterprocessSyncFileTest, TestLock) {
   // done from the same process for the granted range. The lock
   // attempt must fail to pass our check.
 
-  bool was_locked(false);
-
   pipe(fds);
 
   if (fork() == 0) {
@@ -64,18 +62,13 @@ TEST_F(InterprocessSyncFileTest, TestLock) {
       // Parent reads from pipe
       close(fds[1]);
 
-      // Read status and set flag
+      // Read status
       read(fds[0], &locked, sizeof(locked));
-      if (locked == 1) {
-        was_locked = true;
-      } else {
-        was_locked = false;
-      }
-
       close(fds[0]);
+
+      EXPECT_EQ(1, locked);
   }
 
-  EXPECT_TRUE(was_locked);
   EXPECT_TRUE(locker.unlock());
 }
 
@@ -101,8 +94,6 @@ TEST_F(InterprocessSyncFileTest, TestMultipleFilesForked) {
 
   int fds[2];
 
-  bool was_not_locked(true);
-
   pipe(fds);
 
   if (fork() == 0) {
@@ -125,18 +116,13 @@ TEST_F(InterprocessSyncFileTest, TestMultipleFilesForked) {
       // Parent reads from pipe
       close(fds[1]);
 
-      // Read status and set flag
+      // Read status
       read(fds[0], &locked, sizeof(locked));
-      if (locked == 0) {
-        was_not_locked = true;
-      } else {
-        was_not_locked = false;
-      }
-
       close(fds[0]);
+
+      EXPECT_EQ(0, locked);
   }
 
-  EXPECT_TRUE(was_not_locked);
   EXPECT_TRUE(locker.unlock());
 }
 
