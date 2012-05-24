@@ -39,3 +39,6 @@ possible, you may want to check the implementation or configuration of
 those clients to suppress the requests.  As specified in Section 3.1
 of RFC2136, the receiving server will return a response with an RCODE
 of NOTAUTH.
+
+% LIBDDNS_UPDATE_REFUSED update client %1 for zone %2 denied
+TBD
