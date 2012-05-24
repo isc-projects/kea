@@ -20,12 +20,7 @@ using namespace std;
 namespace isc {
 namespace util {
 
-class InterprocessSyncFileTest : public ::testing::Test {
-protected:
-    InterprocessSyncFileTest() {}
-};
-
-TEST_F(InterprocessSyncFileTest, TestLock) {
+TEST(InterprocessSyncFileTest, TestLock) {
   InterprocessSyncFile sync("test");
   InterprocessSyncLocker locker(sync);
 
@@ -72,7 +67,7 @@ TEST_F(InterprocessSyncFileTest, TestLock) {
   EXPECT_TRUE(locker.unlock());
 }
 
-TEST_F(InterprocessSyncFileTest, TestMultipleFilesDirect) {
+TEST(InterprocessSyncFileTest, TestMultipleFilesDirect) {
   InterprocessSyncFile sync("test1");
   InterprocessSyncLocker locker(sync);
 
@@ -86,7 +81,7 @@ TEST_F(InterprocessSyncFileTest, TestMultipleFilesDirect) {
   EXPECT_TRUE(locker.unlock());
 }
 
-TEST_F(InterprocessSyncFileTest, TestMultipleFilesForked) {
+TEST(InterprocessSyncFileTest, TestMultipleFilesForked) {
   InterprocessSyncFile sync("test");
   InterprocessSyncLocker locker(sync);
 
