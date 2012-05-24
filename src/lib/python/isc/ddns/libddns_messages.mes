@@ -42,3 +42,6 @@ of NOTAUTH.
 
 % LIBDDNS_UPDATE_REFUSED update client %1 for zone %2 denied
 TBD
+
+% LIBDDNS_UPDATE_DROPPED update client %1 for zone %2 dropped
+TBD

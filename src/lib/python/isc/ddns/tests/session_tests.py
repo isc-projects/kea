@@ -170,10 +170,19 @@ class SessionACLTest(SesseionTestBase):
                                 TEST_CLIENT4, ZoneConfig([], TEST_RRCLASS,
                                                          self._datasrc_client))
         # then the request should be rejected.
-        result, zname, zclass = session.handle()
-        self.assertEqual(UPDATE_ERROR, result)
-        self.assertEqual(None, zname)
-        self.assertEqual(None, zclass)
+        self.assertEqual((UPDATE_ERROR, None, None), session.handle())
+
+        # recreate the request message, and test with an ACL that would result
+        # in 'DROP'.  get_message() should return None.
+        msgdata, msg = create_update_msg()
+        acl_map = {(TEST_ZONE_NAME, TEST_RRCLASS):
+                       REQUEST_LOADER.load([{"action": "DROP", "from":
+                                                 TEST_CLIENT4[0]}])}
+        session = UpdateSession(msg, msgdata, TEST_CLIENT4,
+                                ZoneConfig([], TEST_RRCLASS,
+                                           self._datasrc_client, acl_map))
+        self.assertEqual((UPDATE_DROP, None, None), session.handle())
+        self.assertEqual(None, session.get_message())
 
 if __name__ == "__main__":
     isc.log.init("bind10")
