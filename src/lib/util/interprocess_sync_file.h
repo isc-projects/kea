@@ -35,7 +35,9 @@ public:
 class InterprocessSyncFile : public InterprocessSync {
 public:
     /// \brief Constructor
-    InterprocessSyncFile(const std::string component_name);
+    InterprocessSyncFile(const std::string component_name) :
+        InterprocessSync(component_name), fd_(-1)
+    {}
 
     /// \brief Destructor
     ~InterprocessSyncFile();
@@ -46,6 +48,8 @@ protected:
     bool unlock();
 
 private:
+    bool do_lock(int cmd, short l_type);
+
     int fd_;
 };
 
