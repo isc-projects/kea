@@ -79,9 +79,12 @@ in the answer as a result.
 Debug information. A search in an database data source for NSEC3 that
 matches or covers the given name is being started.
 
-% DATASRC_DATABASE_FINDNSEC3_COVER found a covering NSEC3 for %1: %2
+% DATASRC_DATABASE_FINDNSEC3_COVER found a covering NSEC3 for %1 at label count %2: %3
 Debug information. An NSEC3 that covers the given name is found and
-being returned.  The found NSEC3 RRset is also displayed.
+being returned.  The found NSEC3 RRset is also displayed. When the shown label
+count is smaller than that of the given name, the matching NSEC3 is for a
+superdomain of the given name (see DATASRC_DATABSE_FINDNSEC3_TRYHASH).  The
+found NSEC3 RRset is also displayed.
 
 % DATASRC_DATABASE_FINDNSEC3_MATCH found a matching NSEC3 for %1 at label count %2: %3
 Debug information. An NSEC3 that matches (a possibly superdomain of)
