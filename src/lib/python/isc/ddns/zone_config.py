@@ -13,6 +13,7 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+from isc.acl.dns import REQUEST_LOADER
 import isc.dns
 from isc.datasrc import DataSourceClient
 
@@ -52,6 +53,8 @@ class ZoneConfig:
             self.__secondaries.add((zname, zclass))
         self.__datasrc_class = datasrc_class
         self.__datasrc_client = datasrc_client
+        self.__default_acl = REQUEST_LOADER.load([{"action": "REJECT"}])
+        self.__acl_map = {}
 
     def find_zone(self, zone_name, zone_class):
         '''Return the type and accessor client object for given zone.'''
@@ -62,3 +65,12 @@ class ZoneConfig:
                 return ZONE_SECONDARY, None
             return ZONE_PRIMARY, self.__datasrc_client
         return ZONE_NOTFOUND, None
+
+    def get_update_acl(self, zone_name, zone_class):
+        acl = self.__acl_map.get((zone_name, zone_class))
+        if acl is not None:
+            return acl
+        return self.__default_acl
+
+    def set_update_acl_map(self, new_map):
+        self.__acl_map = new_map
