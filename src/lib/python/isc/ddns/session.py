@@ -18,6 +18,7 @@ import isc.ddns.zone_config
 from isc.log import *
 from isc.ddns.logger import logger, ClientFormatter, ZoneFormatter
 from isc.log_messages.libddns_messages import *
+from isc.acl.acl import ACCEPT, REJECT, DROP
 
 # Result codes for UpdateSession.handle()
 UPDATE_SUCCESS = 0
@@ -124,7 +125,7 @@ class UpdateSession:
             datasrc_client, zname, zclass = self.__get_update_zone()
             # conceptual code that would follow
             # self.__check_prerequisites()
-            # self.__check_update_acl()
+            self.__check_update_acl(zname, zclass)
             # self.__do_update()
             # self.__make_response(Rcode.NOERROR())
             return UPDATE_SUCCESS, zname, zclass
@@ -175,6 +176,17 @@ class UpdateSession:
                      ClientFormatter(self.__client_addr),
                      ZoneFormatter(zname, zclass))
         raise UpdateError('notauth', zname, zclass, Rcode.NOTAUTH(), True)
+
+    def __check_update_acl(self, zname, zclass):
+        '''TBD'''
+        acl = self.__zone_config.get_update_acl(zname, zclass)
+        action = acl.execute(isc.acl.dns.RequestContext(
+                (self.__client_addr[0], self.__client_addr[1])))
+        if action == REJECT:
+            logger.info(LIBDDNS_UPDATE_REFUSED,
+                        ClientFormatter(self.__client_addr),
+                        ZoneFormatter(zname, zclass))
+            raise UpdateError('rejected', zname, zclass, Rcode.REFUSED(), True)
 
     def __make_response(self, rcode):
         '''Transform the internal message to the update response.

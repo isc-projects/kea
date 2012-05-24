@@ -34,7 +34,7 @@ class ZoneConfig:
     until the details are fixed.
 
     '''
-    def __init__(self, secondaries, datasrc_class, datasrc_client):
+    def __init__(self, secondaries, datasrc_class, datasrc_client, acl_map={}):
         '''Constructor.
 
         Parameters:
@@ -46,6 +46,11 @@ class ZoneConfig:
         - datasrc_client: isc.dns.DataSourceClient object.  A data source
           class for the RR class of datasrc_class.  It's expected to contain
           a zone that is eventually updated in the ddns package.
+        - acl_map: a dictionary that maps a tuple of
+          (isc.dns.Name, isc.dns.RRClass) to an isc.dns.dns.RequestACL
+          object.  It defines an ACL to be applied to the zone defined
+          by the tuple.  If unspecified, or the map is empty, the default
+          ACL will be applied to all zones, which is to reject any requests.
 
         '''
         self.__secondaries = set()
@@ -54,7 +59,7 @@ class ZoneConfig:
         self.__datasrc_class = datasrc_class
         self.__datasrc_client = datasrc_client
         self.__default_acl = REQUEST_LOADER.load([{"action": "REJECT"}])
-        self.__acl_map = {}
+        self.__acl_map = acl_map
 
     def find_zone(self, zone_name, zone_class):
         '''Return the type and accessor client object for given zone.'''
