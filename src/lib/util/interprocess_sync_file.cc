@@ -36,8 +36,7 @@ InterprocessSyncFile::~InterprocessSyncFile() {
 }
 
 bool
-InterprocessSyncFile::do_lock(int cmd, short l_type)
-{
+InterprocessSyncFile::do_lock(int cmd, short l_type) {
     // Open lock file only when necessary (i.e., here). This is so that
     // if a default InterprocessSync object is replaced with another
     // implementation, it doesn't attempt any opens.

@@ -65,7 +65,7 @@ TEST(InterprocessSyncFileTest, TestLock) {
       tv.tv_sec = 5;
       tv.tv_usec = 0;
 
-      int nfds = select(fds[0] + 1, &rfds, NULL, NULL, &tv);
+      const int nfds = select(fds[0] + 1, &rfds, NULL, NULL, &tv);
       EXPECT_EQ(1, nfds);
 
       if (nfds == 1) {
@@ -133,7 +133,7 @@ TEST(InterprocessSyncFileTest, TestMultipleFilesForked) {
       tv.tv_sec = 5;
       tv.tv_usec = 0;
 
-      int nfds = select(fds[0] + 1, &rfds, NULL, NULL, &tv);
+      const int nfds = select(fds[0] + 1, &rfds, NULL, NULL, &tv);
       EXPECT_EQ(1, nfds);
 
       if (nfds == 1) {

@@ -386,31 +386,32 @@ TEST_F(LoggerTest, LoggerNameLength) {
 class MockSync : public isc::util::InterprocessSync {
 public:
     /// \brief Constructor
-    MockSync(const std::string component_name) :
-        InterprocessSync(component_name), was_locked_(false), was_unlocked_(false)
+    MockSync(const std::string& component_name) :
+        InterprocessSync(component_name), was_locked_(false),
+        was_unlocked_(false)
     {}
 
     bool wasLocked() const {
-        return was_locked_;
+        return (was_locked_);
     }
 
     bool wasUnlocked() const {
-        return was_unlocked_;
+        return (was_unlocked_);
     }
 
 protected:
     bool lock() {
         was_locked_ = true;
-        return true;
+        return (true);
     }
 
     bool tryLock() {
-        return true;
+        return (true);
     }
 
     bool unlock() {
         was_unlocked_ = true;
-        return true;
+        return (true);
     }
 
 private:
@@ -427,7 +428,7 @@ TEST_F(LoggerTest, Lock) {
 
     // Setup our own mock sync object so that we can intercept the lock
     // call and check if a lock has been taken.
-    MockSync *sync = new MockSync("logger");
+    MockSync* sync = new MockSync("logger");
     logger.setInterprocessSync(sync);
 
     // Log a message and put things into play.
