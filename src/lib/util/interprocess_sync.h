@@ -28,7 +28,7 @@ public:
     /// \brief Constructor
     ///
     /// Creates a interprocess synchronization object
-    InterprocessSync(const std::string component_name) :
+    InterprocessSync(const std::string& component_name) :
         component_name_(component_name), is_locked_(false)
     {}
 
@@ -40,7 +40,7 @@ protected:
     virtual bool tryLock() = 0;
     virtual bool unlock() = 0;
 
-    std::string component_name_;
+    const std::string component_name_;
     bool is_locked_;
 };
 
@@ -56,15 +56,15 @@ public:
     }
 
     bool lock() {
-        return sync_.lock();
+        return (sync_.lock());
     }
 
     bool tryLock() {
-        return sync_.tryLock();
+        return (sync_.tryLock());
     }
 
     bool unlock() {
-        return sync_.unlock();
+        return (sync_.unlock());
     }
 
 protected:
