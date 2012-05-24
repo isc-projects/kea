@@ -23,39 +23,52 @@ namespace util {
 class InterprocessSyncLocker;
 
 class InterprocessSync {
+friend class InterprocessSyncLocker;
 public:
     /// \brief Constructor
     ///
     /// Creates a interprocess synchronization object
     InterprocessSync(const std::string component_name) :
-        component_name_(component_name)
+        component_name_(component_name), is_locked_(false)
     {}
 
     /// \brief Destructor
     virtual ~InterprocessSync() {}
 
-    virtual InterprocessSyncLocker* getLocker() = 0;
-
 protected:
-    std::string component_name_;
-};
-
-class InterprocessSyncLocker {
-friend class InterprocessSync;
-public:
     virtual bool lock() = 0;
     virtual bool tryLock() = 0;
     virtual bool unlock() = 0;
 
+    std::string component_name_;
+    bool is_locked_;
+};
+
+class InterprocessSyncLocker {
+public:
+    InterprocessSyncLocker(InterprocessSync& sync) :
+        sync_(sync)
+    {}
+
     /// \brief Destructor
-    virtual ~InterprocessSyncLocker() {}
+    ~InterprocessSyncLocker() {
+        unlock();
+    }
+
+    bool lock() {
+        return sync_.lock();
+    }
+
+    bool tryLock() {
+        return sync_.tryLock();
+    }
+
+    bool unlock() {
+        return sync_.unlock();
+    }
 
 protected:
-    InterprocessSyncLocker(InterprocessSync* sync) :
-        sync_(sync), is_locked_(false)
-    {}
-    InterprocessSync* sync_;
-    bool is_locked_;
+    InterprocessSync& sync_;
 };
 
 } // namespace util
