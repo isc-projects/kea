@@ -111,9 +111,9 @@ LoggerImpl::outputRaw(const Severity& severity, const string& message) {
     // Use a lock file for mutual exclusion from other processes to
     // avoid log messages getting interspersed
 
-    auto_ptr<InterprocessSyncLocker> locker(sync_->getLocker());
+    InterprocessSyncLocker locker(*sync_);
 
-    if (!locker->lock()) {
+    if (!locker.lock()) {
         LOG4CPLUS_ERROR(logger_, "Unable to lock logger lockfile");
     }
 
@@ -138,7 +138,7 @@ LoggerImpl::outputRaw(const Severity& severity, const string& message) {
             LOG4CPLUS_FATAL(logger_, message);
     }
 
-    if (!locker->unlock()) {
+    if (!locker.unlock()) {
         LOG4CPLUS_ERROR(logger_, "Unable to unlock logger lockfile");
     }
 }

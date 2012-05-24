@@ -40,28 +40,13 @@ public:
     /// \brief Destructor
     ~InterprocessSyncFile();
 
-    InterprocessSyncLocker* getLocker();
-
-    int getFd() const {
-        return (fd_);
-    }
-
-private:
-    int fd_;
-};
-
-class InterprocessSyncFileLocker : public InterprocessSyncLocker {
-friend class InterprocessSyncFile;
-public:
-    /// \brief Destructor
-    ~InterprocessSyncFileLocker();
-
+protected:
     bool lock();
     bool tryLock();
     bool unlock();
 
-protected:
-    InterprocessSyncFileLocker(InterprocessSync* sync);
+private:
+    int fd_;
 };
 
 } // namespace util
