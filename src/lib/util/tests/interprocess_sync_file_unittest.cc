@@ -57,8 +57,22 @@ TEST(InterprocessSyncFileTest, TestLock) {
       // Parent reads from pipe
       close(fds[1]);
 
-      // Read status
-      read(fds[0], &locked, sizeof(locked));
+      fd_set rfds;
+      FD_ZERO(&rfds);
+      FD_SET(fds[0], &rfds);
+
+      struct timeval tv;
+      tv.tv_sec = 5;
+      tv.tv_usec = 0;
+
+      int nfds = select(fds[0] + 1, &rfds, NULL, NULL, &tv);
+      EXPECT_EQ(1, nfds);
+
+      if (nfds == 1) {
+          // Read status
+          read(fds[0], &locked, sizeof(locked));
+      }
+
       close(fds[0]);
 
       EXPECT_EQ(1, locked);
@@ -111,8 +125,22 @@ TEST(InterprocessSyncFileTest, TestMultipleFilesForked) {
       // Parent reads from pipe
       close(fds[1]);
 
-      // Read status
-      read(fds[0], &locked, sizeof(locked));
+      fd_set rfds;
+      FD_ZERO(&rfds);
+      FD_SET(fds[0], &rfds);
+
+      struct timeval tv;
+      tv.tv_sec = 5;
+      tv.tv_usec = 0;
+
+      int nfds = select(fds[0] + 1, &rfds, NULL, NULL, &tv);
+      EXPECT_EQ(1, nfds);
+
+      if (nfds == 1) {
+          // Read status
+          read(fds[0], &locked, sizeof(locked));
+      }
+
       close(fds[0]);
 
       EXPECT_EQ(0, locked);
