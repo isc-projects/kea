@@ -45,7 +45,8 @@ class UpdateError(Exception):
     - msg (string) A string explaining the error.
     - zname (isc.dns.Name) The zone name.  Can be None when not identified.
     - zclass (isc.dns.RRClass) The zone class.  Like zname, can be None.
-    - rcode (isc.dns.RCode) The RCODE to be set in the response message.
+    - rcode (isc.dns.RCode or None) The RCODE to be set in the response
+      message; this can be None if the response is not expected to be sent.
     - nolog (bool) If True, it indicates there's no more need for logging.
 
     '''
@@ -97,8 +98,10 @@ class UpdateSession:
         '''Return the update message.
 
         After handle() is called, it's generally transformed to the response
-        to be returned to the client; otherwise it would be identical to
-        the request message passed on construction.
+        to be returned to the client.  If the request has been dropped,
+        this method returns None.  If this method is called before handle()
+        the return value would be identical to the request message passed on
+        construction, although it's of no practical use.
 
         '''
         return self.__message
@@ -114,7 +117,8 @@ class UpdateSession:
           UPDATE_DROP Error happened and no response should be sent.
           Except the case of UPDATE_DROP, the UpdateSession object will have
           created a response that is to be returned to the request client,
-          which can be retrieved by get_message().
+          which can be retrieved by get_message().  If it's UPDATE_DROP,
+          subsequent call to get_message() returns None.
         - The name of the updated zone (isc.dns.Name object) in case of
           UPDATE_SUCCESS; otherwise None.
         - The RR class of the updated zone (isc.dns.RRClass object) in case
@@ -134,8 +138,13 @@ class UpdateSession:
                 logger.debug(logger.DBGLVL_TRACE_BASIC, LIBDDNS_UPDATE_ERROR,
                              ClientFormatter(self.__client_addr),
                              ZoneFormatter(e.zname, e.zclass), e)
-            self.__make_response(e.rcode)
-            return UPDATE_ERROR, None, None
+            # If RCODE is specified, create a corresponding resonse and return
+            # ERROR; otherwise clear the message and return DROP.
+            if e.rcode is not None:
+                self.__make_response(e.rcode)
+                return UPDATE_ERROR, None, None
+            self.__message = None
+            return UPDATE_DROP, None, None
 
     def __get_update_zone(self):
         '''Parse the zone section and find the zone to be updated.
@@ -187,6 +196,11 @@ class UpdateSession:
                         ClientFormatter(self.__client_addr),
                         ZoneFormatter(zname, zclass))
             raise UpdateError('rejected', zname, zclass, Rcode.REFUSED(), True)
+        if action == DROP:
+            logger.info(LIBDDNS_UPDATE_DROPPED,
+                        ClientFormatter(self.__client_addr),
+                        ZoneFormatter(zname, zclass))
+            raise UpdateError('rejected', zname, zclass, None, True)
 
     def __make_response(self, rcode):
         '''Transform the internal message to the update response.
