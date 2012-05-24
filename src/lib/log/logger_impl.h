@@ -186,8 +186,8 @@ public:
     }
 
 private:
-    std::string                  name_;              ///< Full name of this logger
-    log4cplus::Logger            logger_;            ///< Underlying log4cplus logger
+    std::string                  name_;   ///< Full name of this logger
+    log4cplus::Logger            logger_; ///< Underlying log4cplus logger
     isc::util::InterprocessSync* sync_;
 };
 

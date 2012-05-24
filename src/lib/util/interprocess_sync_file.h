@@ -35,7 +35,7 @@ public:
 class InterprocessSyncFile : public InterprocessSync {
 public:
     /// \brief Constructor
-    InterprocessSyncFile(const std::string component_name) :
+    InterprocessSyncFile(const std::string& component_name) :
         InterprocessSync(component_name), fd_(-1)
     {}
 
