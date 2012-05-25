@@ -67,30 +67,24 @@ class UpdateSession:
     class can use the message to send a response to the client.
 
     '''
-    def __init__(self, req_message, req_data, client_addr, zone_config):
+    def __init__(self, req_message, client_addr, zone_config):
         '''Constructor.
-
-        Note: req_data is not really used as of #1512 but is listed since
-        it's quite likely we need it in a subsequent task soon.  We'll
-        also need to get other parameters such as ACLs, for which, it's less
-        clear in which form we want to get the information, so it's left
-        open for now.
 
         Parameters:
         - req_message (isc.dns.Message) The request message.  This must be
-          in the PARSE mode.
-        - req_data (binary) Wire format data of the request message.
-          It will be used for TSIG verification if necessary.
+          in the PARSE mode, its Opcode must be UPDATE, and must have been
+          TSIG validatd if it's TSIG signed.
         - client_addr (socket address) The address/port of the update client
           in the form of Python socket address object.  This is mainly for
           logging and access control.
         - zone_config (ZoneConfig) A tentative container that encapsulates
           the server's zone configuration.  See zone_config.py.
-
-        (It'll soon need to be passed ACL in some way, too)
+        - req_data (binary) Wire format data of the request message.
+          It will be used for TSIG verification if necessary.
 
         '''
         self.__message = req_message
+        self.__tsig = req_message.get_tsig_record()
         self.__client_addr = client_addr
         self.__zone_config = zone_config
 
@@ -136,7 +130,7 @@ class UpdateSession:
         except UpdateError as e:
             if not e.nolog:
                 logger.debug(logger.DBGLVL_TRACE_BASIC, LIBDDNS_UPDATE_ERROR,
-                             ClientFormatter(self.__client_addr),
+                             ClientFormatter(self.__client_addr, self.__tsig),
                              ZoneFormatter(e.zname, e.zclass), e)
             # If RCODE is specified, create a corresponding resonse and return
             # ERROR; otherwise clear the message and return DROP.
@@ -177,30 +171,33 @@ class UpdateSession:
             # We are a secondary server; since we don't yet support update
             # forwarding, we return 'not implemented'.
             logger.debug(DBGLVL_TRACE_BASIC, LIBDDNS_UPDATE_FORWARD_FAIL,
-                         ClientFormatter(self.__client_addr),
+                         ClientFormatter(self.__client_addr, self.__tsig),
                          ZoneFormatter(zname, zclass))
             raise UpdateError('forward', zname, zclass, Rcode.NOTIMP(), True)
         # zone wasn't found
         logger.debug(DBGLVL_TRACE_BASIC, LIBDDNS_UPDATE_NOTAUTH,
-                     ClientFormatter(self.__client_addr),
+                     ClientFormatter(self.__client_addr, self.__tsig),
                      ZoneFormatter(zname, zclass))
         raise UpdateError('notauth', zname, zclass, Rcode.NOTAUTH(), True)
 
     def __check_update_acl(self, zname, zclass):
-        '''TBD'''
+        '''Apply update ACL for the zone to be updated.'''
         acl = self.__zone_config.get_update_acl(zname, zclass)
         action = acl.execute(isc.acl.dns.RequestContext(
-                (self.__client_addr[0], self.__client_addr[1])))
+                (self.__client_addr[0], self.__client_addr[1]), self.__tsig))
         if action == REJECT:
             logger.info(LIBDDNS_UPDATE_REFUSED,
-                        ClientFormatter(self.__client_addr),
+                        ClientFormatter(self.__client_addr, self.__tsig),
                         ZoneFormatter(zname, zclass))
             raise UpdateError('rejected', zname, zclass, Rcode.REFUSED(), True)
         if action == DROP:
             logger.info(LIBDDNS_UPDATE_DROPPED,
-                        ClientFormatter(self.__client_addr),
+                        ClientFormatter(self.__client_addr, self.__tsig),
                         ZoneFormatter(zname, zclass))
-            raise UpdateError('rejected', zname, zclass, None, True)
+            raise UpdateError('dropped', zname, zclass, None, True)
+        logger.debug(logger.DBGLVL_TRACE_BASIC, LIBDDNS_UPDATE_APPROVED,
+                     ClientFormatter(self.__client_addr, self.__tsig),
+                     ZoneFormatter(zname, zclass))
 
     def __make_response(self, rcode):
         '''Transform the internal message to the update response.
