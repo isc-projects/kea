@@ -351,7 +351,6 @@ class Diff:
         Raises a ValueError if the buffer is in single_update_mode.
         """
         if self.__single_update_mode:
-            # This operation is only valid if the multi-update mode
             raise ValueError("Compound buffer requested in single-update mode")
         else:
             return self.__buffer
@@ -369,7 +368,6 @@ class Diff:
         Raises a ValueError if the buffer is not in single_update_mode.
         """
         if not self.__single_update_mode:
-            # This operation is only valid if the multi-update mode
-            raise ValueError("Compound buffer requested in single-update mode")
+            raise ValueError("Separate buffers requested in single-update mode")
         else:
             return (self.__deletions, self.__additions)
