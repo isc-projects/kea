@@ -49,10 +49,11 @@ namespace log {
 // one compiler requires that all member variables be constructed before the
 // constructor is run, but log4cplus::Logger (the type of logger_) has no
 // default constructor.
-LoggerImpl::LoggerImpl(const string& name) : name_(expandLoggerName(name)),
-    logger_(log4cplus::Logger::getInstance(name_))
+LoggerImpl::LoggerImpl(const string& name) :
+    name_(expandLoggerName(name)),
+    logger_(log4cplus::Logger::getInstance(name_)),
+    sync_(new InterprocessSyncFile("logger"))
 {
-    sync_ = new InterprocessSyncFile("logger");
 }
 
 // Destructor. (Here because of virtual declaration.)
