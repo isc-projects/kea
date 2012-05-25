@@ -20,6 +20,7 @@ import sys; sys.path.append ('@@PYTHONPATH@@')
 import isc
 import bind10_config
 from isc.dns import *
+import isc.ddns.session
 from isc.config.ccsession import *
 from isc.cc import SessionError, SessionTimeout
 import isc.util.process
@@ -120,6 +121,20 @@ class DDNSServer:
         self._listen_socket.bind(SOCKET_FILE)
         self._listen_socket.listen(16)
 
+        # DDNS Protocol handling class.  Parameterized for convenience of
+        # tests.  Essentially private (and constant), but for tests'
+        # convenience defined as "protected".
+        self._UpdateSessionClass = isc.ddns.session.UpdateSession
+
+    class SessionError(Exception):
+        '''Exception for internal errors in an update session.
+
+        This exception is expected to be caught within the server class,
+        only used for controling the code flow.
+
+        '''
+        pass
+
     def config_handler(self, new_config):
         '''Update config data.'''
         # TODO: Handle exceptions and turn them to an error response
@@ -180,7 +195,7 @@ class DDNSServer:
             # continue with the rest
             logger.error(DDNS_ACCEPT_FAILURE, e)
 
-    def handle_request(self, request):
+    def handle_request(self, req_session):
         """
         This is the place where the actual DDNS processing is done. Other
         methods are either subroutines of this method or methods doing the
@@ -190,12 +205,38 @@ class DDNSServer:
         It is called with the request being session as received from
         SocketSessionReceiver, i.e. tuple
         (socket, local_address, remote_address, data).
+
         """
-        # TODO: Implement the magic
+        # give tuple elements intuitive names
+        (sock, local_addr, remote_addr, req_data) = req_session
+
+        # The session sender (b10-auth) should have made sure that this is
+        # a validly formed DNS message of OPCODE being UPDATE, and if it's
+        # TSIG signed, its key is known to the system and the signature is
+        # valid.  Messages that don't meet these should have been resopnded
+        # or dropped by the sender, so if such error is detected we treat it
+        # as an internal error and don't bother to respond.
+        try:
+            msg = Message(Message.PARSE)
+            msg.from_wire(req_data)
+            if msg.get_opcode() != Opcode.UPDATE():
+                raise SessionError('Update request has unexpected opcode: ' +
+                                   str(msg.get_opcode()))
+            # TODO: TSIG check
+        except Exception as ex:
+            return False
 
         # TODO: Don't propagate most of the exceptions (like datasrc errors),
         # just drop the packet.
-        pass
+
+        update_session = self._UpdateSessionClass(msg, remote_addr, None)
+        result, zname, zclass = update_session.handle()
+        msg = update_session.get_message()
+        renderer = MessageRenderer()
+        msg.to_wire(renderer)
+        sock.sendto(renderer.get_data(), remote_addr)
+
+        return True
 
     def handle_session(self, fileno):
         """
