@@ -23,6 +23,7 @@ import socket
 from isc.net.addr import IPAddr
 import time
 import isc
+import fcntl
 
 class TestDhcpv4Daemon(unittest.TestCase):
     def setUp(self):
@@ -34,7 +35,7 @@ class TestDhcpv4Daemon(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def runDhcp4(self, params):
+    def runDhcp4(self, params, wait=1):
         """
         This method runs dhcp4 and returns a touple: (returncode, stdout, stderr)
         """
@@ -62,33 +63,54 @@ class TestDhcpv4Daemon(unittest.TestCase):
 
         pi = ProcessInfo('Test Process', params)
         pi.spawn()
-        time.sleep(1)
+        time.sleep(wait)
         os.dup2(self.stdout_old, sys.stdout.fileno())
+        os.dup2(self.stderr_old, sys.stderr.fileno())
         self.assertNotEqual(pi.process, None)
         self.assertTrue(type(pi.pid) is int)
 
+        # Set non-blocking read on pipes. Process may not print anything
+        # on specific output and the we would hang without this.
+        fd = self.stdout_pipes[0]
+        fl = fcntl.fcntl(fd, fcntl.F_GETFL)
+        fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
+
+        fd = self.stderr_pipes[0]
+        fl = fcntl.fcntl(fd, fcntl.F_GETFL)
+        fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
+
         # There's potential problem if b10-dhcp4 prints out more
         # than 4k of text
-        output = os.read(self.stdout_pipes[0], 4096)
-        error = os.read(self.stderr_pipes[0], 4096)
+        try:
+            output = os.read(self.stdout_pipes[0], 4096)
+        except OSError:
+            print("No data available from stdout")
+            output = ""
 
+        # read can return None. Make sure we have a string
         if (output is None):
             output = ""
+
+        try:
+            error = os.read(self.stderr_pipes[0], 4096)
+        except OSError:
+            print("No data available on stderr")
+            error = ""
+
+        # read can return None. Make sure we have a string
         if (error is None):
             error = ""
+
 
         try:
             if (not pi.process.poll()):
                 # let's be nice at first...
-                pi.process.send_signal(signal.SIGTERM)
-
-                # give the process time to die out gracefully
-                time.sleep(1)
-                if (pi.process.returncode == None):
-                    # If the suspect does not cooperate, use a bigger hammer.
-                    os.kill(pi.pid, signal.SIGKILL)
+                pi.process.terminate()
         except OSError:
             print("Ignoring failed kill attempt. Process is dead already.")
+
+        # call this to get returncode, process should be dead by now
+        rc = pi.process.wait()
 
         # Clean up our stdout/stderr munging.
         os.dup2(self.stdout_old, sys.stdout.fileno())
@@ -98,9 +120,9 @@ class TestDhcpv4Daemon(unittest.TestCase):
         os.close(self.stderr_pipes[0])
 
         print ("Process finished, return code=%d, stdout=%d bytes, stderr=%d bytes"
-               % (pi.process.returncode, len(output), len(error)) )
+               % (rc, len(output), len(error)) )
 
-        return (pi.process.returncode, output, error)
+        return (rc, output, error)
 
     def test_alive(self):
         print("Note: Purpose of some of the tests is to check if DHCPv4 server can be started,")
