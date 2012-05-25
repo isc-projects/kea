@@ -94,8 +94,8 @@ class Diff:
         restrictions, this class does not do any checking of data; it is
         the caller's responsibility to keep the data 'sane', and this class
         does not presume to have any knowledge of DNS zone content sanity.
-        For instance, while it enforces the SOA to be deleted first, and added
-        first, it does no checks on the SERIAL value.
+        For instance, though it enforces the SOA to be deleted first, and
+        added first, it does no checks on the SERIAL value.
 
         You can also expect isc.datasrc.Error or isc.datasrc.NotImplemented
         exceptions.
@@ -208,7 +208,6 @@ class Diff:
         it does not, ValueError is raised.
         """
         self.__data_common(rr, 'delete')
-
 
     def compact(self):
         """
