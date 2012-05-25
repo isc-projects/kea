@@ -83,7 +83,7 @@ def test_findall_common(self, tested):
 
     # A success. It should return the list now.
     # This also tests we can ommit the options parameter
-    result, rrsets = tested.find_all(isc.dns.Name("mix.example.com."))
+    result, rrsets, _ = tested.find_all(isc.dns.Name("mix.example.com."))
     self.assertEqual(ZoneFinder.SUCCESS, result)
     self.assertEqual(2, len(rrsets))
     rrsets.sort(key=lambda rrset: rrset.get_type().to_text())

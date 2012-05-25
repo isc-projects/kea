@@ -147,7 +147,8 @@ PyObject* ZoneFinder_helper_all(ZoneFinder* finder, PyObject* args) {
                 // increases the refcount and the container decreases it
                 // later. This way, it feels safer in case the build function
                 // would fail.
-                return (Py_BuildValue("IO", r, list_container.get()));
+                return (Py_BuildValue("IOI", r, list_container.get(),
+                                      result_flags));
             } else {
                 if (rrsp) {
                     // Use N instead of O so the refcount isn't increased twice

@@ -16,8 +16,10 @@
 from isc.dns import *
 import isc.ddns.zone_config
 from isc.log import *
-from isc.ddns.logger import logger, ClientFormatter, ZoneFormatter
+from isc.ddns.logger import logger, ClientFormatter, ZoneFormatter,\
+                            RRsetFormatter
 from isc.log_messages.libddns_messages import *
+import copy
 
 # Result codes for UpdateSession.handle()
 UPDATE_SUCCESS = 0
@@ -123,7 +125,11 @@ class UpdateSession:
         try:
             datasrc_client, zname, zclass = self.__get_update_zone()
             # conceptual code that would follow
-            # self.__check_prerequisites()
+            prereq_result = self.__check_prerequisites(datasrc_client,
+                                                       zname, zclass)
+            if prereq_result != Rcode.NOERROR():
+                self.__make_response(prereq_result)
+                return UPDATE_ERROR, zname, zclass
             # self.__check_update_acl()
             # self.__do_update()
             # self.__make_response(Rcode.NOERROR())
@@ -187,3 +193,180 @@ class UpdateSession:
         self.__message.make_response()
         self.__message.clear_section(SECTION_ZONE)
         self.__message.set_rcode(rcode)
+
+    def __prereq_rrset_exists(self, datasrc_client, rrset):
+        '''Check whether an rrset with the given name and type exists. Class,
+           TTL, and Rdata (if any) of the given RRset are ignored.
+           RFC2136 Section 2.4.1.
+           Returns True if the prerequisite is satisfied, False otherwise.
+
+           Note: the only thing used in the call to find() here is the
+           result status. The actual data is immediately dropped. As
+           a future optimization, we may want to add a find() option to
+           only return what the result code would be (and not read/copy
+           any actual data).
+        '''
+        _, finder = datasrc_client.find_zone(rrset.get_name())
+        result, _, _ = finder.find(rrset.get_name(), rrset.get_type(),
+                                   finder.NO_WILDCARD | finder.FIND_GLUE_OK)
+        return result == finder.SUCCESS
+
+    def __prereq_rrset_exists_value(self, datasrc_client, rrset):
+        '''Check whether an rrset that matches name, type, and rdata(s) of the
+           given rrset exists.
+           RFC2136 Section 2.4.2
+           Returns True if the prerequisite is satisfied, False otherwise.
+        '''
+        _, finder = datasrc_client.find_zone(rrset.get_name())
+        result, found_rrset, _ = finder.find(rrset.get_name(), rrset.get_type(),
+                                             finder.NO_WILDCARD |
+                                             finder.FIND_GLUE_OK)
+        if result == finder.SUCCESS and\
+           rrset.get_name() == found_rrset.get_name() and\
+           rrset.get_type() == found_rrset.get_type():
+            # We need to match all actual RRs, unfortunately there is no
+            # direct order-independent comparison for rrsets, so this
+            # a slightly inefficient way to handle that.
+
+            # shallow copy of the rdata list, so we are sure that this
+            # loop does not mess with actual data.
+            found_rdata = copy.copy(found_rrset.get_rdata())
+            for rdata in rrset.get_rdata():
+                if rdata in found_rdata:
+                    found_rdata.remove(rdata)
+                else:
+                    return False
+            return len(found_rdata) == 0
+        return False
+
+    def __prereq_rrset_does_not_exist(self, datasrc_client, rrset):
+        '''Check whether no rrsets with the same name and type as the given
+           rrset exist.
+           RFC2136 Section 2.4.3.
+           Returns True if the prerequisite is satisfied, False otherwise.
+        '''
+        return not self.__prereq_rrset_exists(datasrc_client, rrset)
+
+    def __prereq_name_in_use(self, datasrc_client, rrset):
+        '''Check whether the name of the given RRset is in use (i.e. has
+           1 or more RRs).
+           RFC2136 Section 2.4.4
+           Returns True if the prerequisite is satisfied, False otherwise.
+
+           Note: the only thing used in the call to find_all() here is
+           the result status. The actual data is immediately dropped. As
+           a future optimization, we may want to add a find_all() option
+           to only return what the result code would be (and not read/copy
+           any actual data).
+        '''
+        _, finder = datasrc_client.find_zone(rrset.get_name())
+        result, rrsets, flags = finder.find_all(rrset.get_name(),
+                                                finder.NO_WILDCARD |
+                                                finder.FIND_GLUE_OK)
+        if result == finder.SUCCESS and\
+           (flags & finder.RESULT_WILDCARD == 0):
+            return True
+        return False
+
+    def __prereq_name_not_in_use(self, datasrc_client, rrset):
+        '''Check whether the name of the given RRset is not in use (i.e. does
+           not exist at all, or is an empty nonterminal.
+           RFC2136 Section 2.4.5.
+           Returns True if the prerequisite is satisfied, False otherwise.
+        '''
+        return not self.__prereq_name_in_use(datasrc_client, rrset)
+
+    def __check_prerequisites(self, datasrc_client, zname, zclass):
+        '''Check the prerequisites section of the UPDATE Message.
+           RFC2136 Section 2.4.
+           Returns a dns Rcode signaling either no error (Rcode.NOERROR())
+           or that one of the prerequisites failed (any other Rcode).
+        '''
+        for rrset in self.__message.get_section(SECTION_PREREQUISITE):
+            # First check if the name is in the zone
+            relation = rrset.get_name().compare(zname).get_relation()
+            if relation != NameComparisonResult.SUBDOMAIN and\
+               relation != NameComparisonResult.EQUAL:
+                logger.info(LIBDDNS_PREREQ_NOTZONE,
+                            ClientFormatter(self.__client_addr),
+                            ZoneFormatter(zname, zclass),
+                            RRsetFormatter(rrset))
+                return Rcode.NOTZONE()
+
+            # Algorithm taken from RFC2136 Section 3.2
+            if rrset.get_class() == RRClass.ANY():
+                if rrset.get_ttl().get_value() != 0 or\
+                   rrset.get_rdata_count() != 0:
+                    logger.info(LIBDDNS_PREREQ_FORMERR_ANY,
+                                ClientFormatter(self.__client_addr),
+                                ZoneFormatter(zname, zclass),
+                                RRsetFormatter(rrset))
+                    return Rcode.FORMERR()
+                elif rrset.get_type() == RRType.ANY():
+                    if not self.__prereq_name_in_use(datasrc_client,
+                                                     rrset):
+                        rcode = Rcode.NXDOMAIN()
+                        logger.info(LIBDDNS_PREREQ_NAME_IN_USE_FAILED,
+                                    ClientFormatter(self.__client_addr),
+                                    ZoneFormatter(zname, zclass),
+                                    RRsetFormatter(rrset), rcode)
+                        return rcode
+                else:
+                    if not self.__prereq_rrset_exists(datasrc_client, rrset):
+                        rcode = Rcode.NXRRSET()
+                        logger.info(LIBDDNS_PREREQ_RRSET_EXISTS_FAILED,
+                                    ClientFormatter(self.__client_addr),
+                                    ZoneFormatter(zname, zclass),
+                                    RRsetFormatter(rrset), rcode)
+                        return rcode
+            elif rrset.get_class() == RRClass.NONE():
+                if rrset.get_ttl().get_value() != 0 or\
+                   rrset.get_rdata_count() != 0:
+                    logger.info(LIBDDNS_PREREQ_FORMERR_NONE,
+                                ClientFormatter(self.__client_addr),
+                                ZoneFormatter(zname, zclass),
+                                RRsetFormatter(rrset))
+                    return Rcode.FORMERR()
+                elif rrset.get_type() == RRType.ANY():
+                    if not self.__prereq_name_not_in_use(datasrc_client,
+                                                         rrset):
+                        rcode = Rcode.YXDOMAIN()
+                        logger.info(LIBDDNS_PREREQ_NAME_NOT_IN_USE_FAILED,
+                                    ClientFormatter(self.__client_addr),
+                                    ZoneFormatter(zname, zclass),
+                                    RRsetFormatter(rrset), rcode)
+                        return rcode
+                else:
+                    if not self.__prereq_rrset_does_not_exist(datasrc_client,
+                                                              rrset):
+                        rcode = Rcode.YXRRSET()
+                        logger.info(LIBDDNS_PREREQ_RRSET_DOES_NOT_EXIST_FAILED,
+                                    ClientFormatter(self.__client_addr),
+                                    ZoneFormatter(zname, zclass),
+                                    RRsetFormatter(rrset), rcode)
+                        return rcode
+            elif rrset.get_class() == zclass:
+                if rrset.get_ttl().get_value() != 0:
+                    logger.info(LIBDDNS_PREREQ_FORMERR,
+                                ClientFormatter(self.__client_addr),
+                                ZoneFormatter(zname, zclass),
+                                RRsetFormatter(rrset))
+                    return Rcode.FORMERR()
+                else:
+                    if not self.__prereq_rrset_exists_value(datasrc_client,
+                                                            rrset):
+                        rcode = Rcode.NXRRSET()
+                        logger.info(LIBDDNS_PREREQ_RRSET_EXISTS_VAL_FAILED,
+                                    ClientFormatter(self.__client_addr),
+                                    ZoneFormatter(zname, zclass),
+                                    RRsetFormatter(rrset), rcode)
+                        return rcode
+            else:
+                logger.info(LIBDDNS_PREREQ_FORMERR_CLASS,
+                            ClientFormatter(self.__client_addr),
+                            ZoneFormatter(zname, zclass),
+                            RRsetFormatter(rrset))
+                return Rcode.FORMERR()
+
+        # All prerequisites are satisfied
+        return Rcode.NOERROR()
