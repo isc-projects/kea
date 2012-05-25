@@ -199,6 +199,12 @@ class UpdateSession:
            TTL, and Rdata (if any) of the given RRset are ignored.
            RFC2136 Section 2.4.1.
            Returns True if the prerequisite is satisfied, False otherwise.
+
+           Note: the only thing used in the call to find() here is the
+           result status. The actual data is immediately dropped. As
+           a future optimization, we may want to add a find() option to
+           only return what the result code would be (and not read/copy
+           any actual data).
         '''
         _, finder = datasrc_client.find_zone(rrset.get_name())
         result, _, _ = finder.find(rrset.get_name(), rrset.get_type(),
@@ -246,6 +252,12 @@ class UpdateSession:
            1 or more RRs).
            RFC2136 Section 2.4.4
            Returns True if the prerequisite is satisfied, False otherwise.
+
+           Note: the only thing used in the call to find_all() here is
+           the result status. The actual data is immediately dropped. As
+           a future optimization, we may want to add a find_all() option
+           to only return what the result code would be (and not read/copy
+           any actual data).
         '''
         _, finder = datasrc_client.find_zone(rrset.get_name())
         result, rrsets, flags = finder.find_all(rrset.get_name(),
