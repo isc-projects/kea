@@ -1,3 +1,9 @@
+4XX.	[func]		tomek
+	b10-dhcp4, b10-dhcp6: Both DHCP servers now accept -p parameter
+	that can be used to specify listening port number. This capability
+	is useful only for testing purposes.
+	(Trac #1503, git TBD)
+
 bind10-devel-20120517 released on May 17. 2012
 
 440.	[func]		muks
