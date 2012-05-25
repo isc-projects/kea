@@ -104,7 +104,7 @@ CommandOptions::initialize(int argc, char** argv) {
     char opt = 0;               // Subsequent options returned by getopt()
     std::string drop_arg;       // Value of -D<value>argument
     size_t percent_loc = 0;     // Location of % sign in -D<value>
-    double drop_percent = 0;    // % value (1..100) in -D<%value>
+    double drop_percent = 0;    // % value (1..100) in -D<value%>
     int num_drops = 0;          // Max number of drops specified in -D<value>
     int num_req = 0;            // Max number of dropped requests in -n<max-drops>
     int offset_arg = 0;         // Temporary variable holding offset arguments
@@ -173,10 +173,10 @@ CommandOptions::initialize(int argc, char** argv) {
                     drop_percent = boost::lexical_cast<double>(drop_arg.substr(0, percent_loc));
                 } catch (boost::bad_lexical_cast&) {
                     isc_throw(isc::InvalidParameter,
-                              "value of drop percentage: -D<%value> must be 0..100");
+                              "value of drop percentage: -D<value%> must be 0..100");
                 }
                 check((drop_percent <= 0) || (drop_percent >= 100),
-                  "value of drop percentage: -D<%value> must be 0..100");
+                  "value of drop percentage: -D<value%> must be 0..100");
                 max_pdrop_.push_back(drop_percent);
             } else {
                 num_drops = positiveInteger("value of max drops number: -d<value> must be a positive integer");
