@@ -15,6 +15,16 @@
 # No namespace declaration - these constants go in the global namespace
 # of the libddns_messages python module.
 
+% LIBDDNS_UPDATE_APPROVED update client %1 for zone %2 approved
+Debug message.  An update request was approved in terms of the zone's
+update ACL.
+
+% LIBDDNS_UPDATE_DROPPED update client %1 for zone %2 dropped
+Informational message.  An update request was denied because it was
+rejected by the zone's update ACL.  When this library is used by
+b10-ddns, the server will then completely ignore the request; no
+response will be sent.
+
 % LIBDDNS_UPDATE_ERROR update client %1 for zone %2: %3
 Debug message.  An error is found in processing a dynamic update
 request.  This log message is used for general errors that are not
@@ -45,13 +55,3 @@ Informational message.  An update request was denied because it was
 rejected by the zone's update ACL.  When this library is used by
 b10-ddns, the server will respond to the request with an RCODE of
 REFUSED as described in Section 3.3 of RFC2136.
-
-% LIBDDNS_UPDATE_DROPPED update client %1 for zone %2 dropped
-Informational message.  An update request was denied because it was
-rejected by the zone's update ACL.  When this library is used by
-b10-ddns, the server will then completely ignore the request; no
-response will be sent.
-
-% LIBDDNS_UPDATE_APPROVED update client %1 for zone %2 approved
-Debug message.  An update request was approved in terms of the zone's
-update ACL.
