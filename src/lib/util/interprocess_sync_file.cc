@@ -43,12 +43,12 @@ InterprocessSyncFile::do_lock(int cmd, short l_type) {
     if (fd_ == -1) {
         std::string lockfile_path = LOCKFILE_DIR;
 
-        const char* const env = getenv("B10_FROM_SOURCE");
+        const char* const env = getenv("B10_FROM_BUILD");
         if (env != NULL) {
             lockfile_path = env;
         }
 
-        const char* const env2 = getenv("B10_FROM_SOURCE_LOCALSTATEDIR");
+        const char* const env2 = getenv("B10_FROM_BUILD_LOCALSTATEDIR");
         if (env2 != NULL) {
             lockfile_path = env2;
         }
