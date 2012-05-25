@@ -473,6 +473,14 @@ class UpdateSession:
                 return Rcode.FORMERR()
         return Rcode.NOERROR()
 
+    def __do_update_add_single_rr(self, diff, rr, existing_rrset):
+        # helper for __do_update_add_rrs_to_rrset, only add the
+        # rr if it is not present yet
+        # (note that rr here is already a single-rr rrset)
+        rr_rdata = rr.get_rdata()[0]
+        if not rr_rdata in existing_rrset.get_rdata():
+            diff.add_data(rr)
+
     def __do_update_add_rrs_to_rrset(self, datasrc_client, diff, rrset):
         # For a number of cases, we may need to remove data in the zone
         # (note; SOA is handled separately by __do_update, so that one
@@ -500,7 +508,7 @@ class UpdateSession:
             # are special Update equality rules such as for WKS, and
             # we do have support for the type, this is where the check
             # (and potential delete) would go.
-        rrset_as_rrs(rrset, diff.add_data, rrset)
+        rrset_as_rrs(rrset, self.__do_update_add_single_rr, diff, rrset, orig_rrset)
 
     def __do_update_delete_rrset(self, datasrc_client, zname, diff, rrset):
         _, finder = datasrc_client.find_zone(rrset.get_name())
