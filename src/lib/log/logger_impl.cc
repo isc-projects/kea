@@ -116,8 +116,8 @@ LoggerImpl::lookupMessage(const MessageID& ident) {
 
 void
 LoggerImpl::outputRaw(const Severity& severity, const string& message) {
-    // Use a lock file for mutual exclusion from other processes to
-    // avoid log messages getting interspersed
+    // Use an interprocess sync locker for mutual exclusion from other
+    // processes to avoid log messages getting interspersed.
 
     InterprocessSyncLocker locker(*sync_);
 
