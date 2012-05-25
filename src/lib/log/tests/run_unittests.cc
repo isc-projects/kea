@@ -21,7 +21,6 @@
 int
 main(int argc, char* argv[]) {
     ::testing::InitGoogleTest(&argc, argv);
-    setenv("B10_FROM_SOURCE", TOP_BUILDDIR, 1);
     isc::log::initLogger();
     return (isc::util::unittests::run_all());
 }
