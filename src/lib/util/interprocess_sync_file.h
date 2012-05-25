@@ -21,10 +21,10 @@
 namespace isc {
 namespace util {
 
+/// \brief InterprocessSyncFileError
 ///
-/// \brief Exception that is thrown if it's not possible to open the
+/// Exception that is thrown if it's not possible to open the
 /// lock file.
-///
 class InterprocessSyncFileError : public Exception {
 public:
     InterprocessSyncFileError(const char* file, size_t line,
@@ -32,19 +32,42 @@ public:
         isc::Exception(file, line, what) {}
 };
 
+/// \brief File-based Interprocess Sync Class
+///
+/// This class specifies a concrete implementation for a file-based
+/// interprocess synchronization mechanism. Please see the
+/// InterprocessSync class documentation for usage.
+///
+/// Lock files are created typically in the local state directory
+/// (var). They are typically named like "<task_name>_lockfile".
+/// This implementation opens lock files lazily (only when
+/// necessary). It also leaves the lock files lying around as multiple
+/// processes may have locks on them.
 class InterprocessSyncFile : public InterprocessSync {
 public:
     /// \brief Constructor
-    InterprocessSyncFile(const std::string& component_name) :
-        InterprocessSync(component_name), fd_(-1)
+    ///
+    /// Creates a file-based interprocess synchronization object
+    ///
+    /// \param name Name of the synchronization task. This has to be
+    /// identical among the various processes that need to be
+    /// synchronized for the same task.
+    InterprocessSyncFile(const std::string& task_name) :
+        InterprocessSync(task_name), fd_(-1)
     {}
 
     /// \brief Destructor
     virtual ~InterprocessSyncFile();
 
 protected:
+    /// \brief Acquire the lock (blocks if something else has acquired a
+    /// lock on the same task name)
     bool lock();
+
+    /// \brief Try to acquire a lock (doesn't block)
     bool tryLock();
+
+    /// \brief Release the lock
     bool unlock();
 
 private:
