@@ -89,6 +89,9 @@ class RRsetFormatter:
     This class is designed to delay the conversion until it's explicitly
     requested, so the conversion doesn't happen if the corresponding log
     message is suppressed because of its log level.
+
+    See the note for the ClientFormatter class about overhead tradeoff.
+    This class shares the same discussion.
     """
     def __init__(self, rrset):
         self.__rrset = rrset
