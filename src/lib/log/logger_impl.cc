@@ -76,14 +76,6 @@ LoggerImpl::getSeverity() {
     return level.severity;
 }
 
-// Replace the interprocess synchronization object
-
-void
-LoggerImpl::setInterprocessSync(isc::util::InterprocessSync* sync) {
-    delete sync_;
-    sync_ = sync;
-}
-
 // Return current debug level (only valid if current severity level is DEBUG).
 int
 LoggerImpl::getDebugLevel() {
@@ -113,6 +105,14 @@ string*
 LoggerImpl::lookupMessage(const MessageID& ident) {
     return (new string(string(ident) + " " +
                        MessageDictionary::globalDictionary().getText(ident)));
+}
+
+// Replace the interprocess synchronization object
+
+void
+LoggerImpl::setInterprocessSync(isc::util::InterprocessSync* sync) {
+    delete sync_;
+    sync_ = sync;
 }
 
 void

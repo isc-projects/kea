@@ -110,12 +110,6 @@ public:
     virtual Severity getEffectiveSeverity();
 
 
-    /// \brief Replace the interprocess synchronization object
-    ///
-    /// \param sync The logger uses this synchronization object for
-    /// synchronizing output of log messages.
-    void setInterprocessSync(isc::util::InterprocessSync* sync);
-
     /// \brief Return debug level
     ///
     /// \return Current setting of debug level.  This will be zero if the
@@ -174,6 +168,12 @@ public:
     ///
     /// This gets you the unformatted text of message for given ID.
     std::string* lookupMessage(const MessageID& id);
+
+    /// \brief Replace the interprocess synchronization object
+    ///
+    /// \param sync The logger uses this synchronization object for
+    /// synchronizing output of log messages.
+    void setInterprocessSync(isc::util::InterprocessSync* sync);
 
     /// \brief Equality
     ///
