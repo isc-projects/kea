@@ -20,6 +20,35 @@ using namespace std;
 namespace isc {
 namespace util {
 
+static unsigned char
+parent_read_locked_state (int fd) {
+  unsigned char locked = 0xff;
+
+  fd_set rfds;
+  FD_ZERO(&rfds);
+  FD_SET(fd, &rfds);
+
+  // We use select() here to wait for new data on the input end of
+  // the pipe. We wait for 5 seconds (an arbitrary value) for input
+  // data, and continue if no data is available. This is done so
+  // that read() is not blocked due to some issue in the child
+  // process (and the tests continue running).
+
+  struct timeval tv;
+  tv.tv_sec = 5;
+  tv.tv_usec = 0;
+
+  const int nfds = select(fd + 1, &rfds, NULL, NULL, &tv);
+  EXPECT_EQ(1, nfds);
+
+  if (nfds == 1) {
+      // Read status
+      read(fd, &locked, sizeof(locked));
+  }
+
+  return locked;
+}
+
 TEST(InterprocessSyncFileTest, TestLock) {
   InterprocessSyncFile sync("test");
   InterprocessSyncLocker locker(sync);
@@ -53,25 +82,10 @@ TEST(InterprocessSyncFileTest, TestLock) {
       close(fds[1]);
       exit(0);
   } else {
-      unsigned char locked = 0;
       // Parent reads from pipe
       close(fds[1]);
 
-      fd_set rfds;
-      FD_ZERO(&rfds);
-      FD_SET(fds[0], &rfds);
-
-      struct timeval tv;
-      tv.tv_sec = 5;
-      tv.tv_usec = 0;
-
-      const int nfds = select(fds[0] + 1, &rfds, NULL, NULL, &tv);
-      EXPECT_EQ(1, nfds);
-
-      if (nfds == 1) {
-          // Read status
-          read(fds[0], &locked, sizeof(locked));
-      }
+      const unsigned char locked = parent_read_locked_state(fds[0]);
 
       close(fds[0]);
 
@@ -121,25 +135,10 @@ TEST(InterprocessSyncFileTest, TestMultipleFilesForked) {
       close(fds[1]);
       exit(0);
   } else {
-      unsigned char locked = 0xff;
       // Parent reads from pipe
       close(fds[1]);
 
-      fd_set rfds;
-      FD_ZERO(&rfds);
-      FD_SET(fds[0], &rfds);
-
-      struct timeval tv;
-      tv.tv_sec = 5;
-      tv.tv_usec = 0;
-
-      const int nfds = select(fds[0] + 1, &rfds, NULL, NULL, &tv);
-      EXPECT_EQ(1, nfds);
-
-      if (nfds == 1) {
-          // Read status
-          read(fds[0], &locked, sizeof(locked));
-      }
+      const unsigned char locked = parent_read_locked_state(fds[0]);
 
       close(fds[0]);
 
