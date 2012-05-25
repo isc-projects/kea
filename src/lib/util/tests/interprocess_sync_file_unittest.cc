@@ -20,8 +20,9 @@ using namespace std;
 namespace isc {
 namespace util {
 
-static unsigned char
-parent_read_locked_state (int fd) {
+namespace {
+unsigned char
+parentReadLockedState (int fd) {
   unsigned char locked = 0xff;
 
   fd_set rfds;
@@ -46,7 +47,7 @@ parent_read_locked_state (int fd) {
       read(fd, &locked, sizeof(locked));
   }
 
-  return locked;
+  return (locked);
 }
 
 TEST(InterprocessSyncFileTest, TestLock) {
@@ -85,7 +86,7 @@ TEST(InterprocessSyncFileTest, TestLock) {
       // Parent reads from pipe
       close(fds[1]);
 
-      const unsigned char locked = parent_read_locked_state(fds[0]);
+      const unsigned char locked = parentReadLockedState(fds[0]);
 
       close(fds[0]);
 
@@ -138,7 +139,7 @@ TEST(InterprocessSyncFileTest, TestMultipleFilesForked) {
       // Parent reads from pipe
       close(fds[1]);
 
-      const unsigned char locked = parent_read_locked_state(fds[0]);
+      const unsigned char locked = parentReadLockedState(fds[0]);
 
       close(fds[0]);
 
@@ -146,6 +147,7 @@ TEST(InterprocessSyncFileTest, TestMultipleFilesForked) {
   }
 
   EXPECT_TRUE(locker.unlock());
+}
 }
 
 } // namespace util
