@@ -17,6 +17,7 @@
 
 import unittest
 import isc
+from isc.ddns.session import *
 import ddns
 import isc.config
 import select
@@ -24,6 +25,16 @@ import errno
 import isc.util.cio.socketsession
 import socket
 import os.path
+from isc.dns import *
+
+# Some common test parameters
+TEST_ZONE_NAME = Name('example.org')
+UPDATE_RRTYPE = RRType.SOA()
+TEST_QID = 5353                 # arbitrary chosen
+TEST_RRCLASS = RRClass.IN()
+TEST_SERVER6 = ('2001:db8::53', 53, 0, 0)
+TEST_CLIENT6 = ('2001:db8::1', 53000, 0, 0)
+TEST_ZONE_RECORD = Question(TEST_ZONE_NAME, TEST_RRCLASS, UPDATE_RRTYPE)
 
 class FakeSocket:
     """
@@ -31,12 +42,17 @@ class FakeSocket:
     """
     def __init__(self, fileno):
         self.__fileno = fileno
+        self._sent_data = None
+        self._sent_addr = None
     def fileno(self):
         return self.__fileno
     def getpeername(self):
         return "fake_unix_socket"
     def accept(self):
         return FakeSocket(self.__fileno + 1)
+    def sendto(self, data, addr):
+        self._sent_data = data
+        self._sent_addr = addr
 
 class FakeSessionReceiver:
     """
@@ -50,6 +66,19 @@ class FakeSessionReceiver:
         inspect the socket passed to the constructor.
         """
         return self._socket
+
+class FakeUpdateSession:
+    def __init__(self, msg, client_addr, zone_config):
+        self.__msg = msg
+
+    def handle(self):
+        return UPDATE_SUCCESS, TEST_ZONE_NAME, TEST_RRCLASS
+
+    def get_message(self):
+        self.__msg.make_response()
+        self.__msg.clear_section(SECTION_ZONE)
+        self.__msg.set_rcode(Rcode.NOERROR())
+        return self.__msg
 
 class MyCCSession(isc.config.ConfigData):
     '''Fake session with minimal interface compliance'''
@@ -360,6 +389,69 @@ class TestDDNSServer(unittest.TestCase):
         self.__select_exception = select.error(errno.EBADF)
         self.__select_expected = ([1, 2], [], [], None)
         self.assertRaises(select.error, self.ddns_server.run)
+
+def create_msg(opcode=Opcode.UPDATE(), zones=[TEST_ZONE_RECORD], tsig_key=None):
+    msg = Message(Message.RENDER)
+    msg.set_qid(TEST_QID)
+    msg.set_opcode(opcode)
+    msg.set_rcode(Rcode.NOERROR())
+    for z in zones:
+        msg.add_question(z)
+
+    renderer = MessageRenderer()
+    if tsig_key is not None:
+        msg.to_wire(renderer, TSIGContext(tsig_key))
+    else:
+        msg.to_wire(renderer)
+
+    # re-read the created data in the parse mode
+    msg.clear(Message.PARSE)
+    msg.from_wire(renderer.get_data())
+
+    return renderer.get_data()
+
+
+class TestDDNSession(unittest.TestCase):
+    def setUp(self):
+        cc_session = MyCCSession()
+        self.assertFalse(cc_session._started)
+        self.server = ddns.DDNSServer(cc_session)
+        self.server._UpdateSessionClass = FakeUpdateSession
+        self.__sock = FakeSocket(-1)
+
+    def check_update_response(self, resp_wire, expected_rcode=Rcode.NOERROR()):
+        '''Check if given wire data are valid form of update response.
+
+        In this implementation, zone/prerequisite/update sections should be
+        empty in responses.
+
+        '''
+        msg = Message(Message.PARSE)
+        msg.from_wire(resp_wire)
+        self.assertEqual(Opcode.UPDATE(), msg.get_opcode())
+        self.assertEqual(expected_rcode, msg.get_rcode())
+        self.assertEqual(TEST_QID, msg.get_qid())
+        for section in [SECTION_ZONE, SECTION_PREREQUISITE, SECTION_UPDATE]:
+            self.assertEqual(0, msg.get_rr_count(section))
+
+    def test_handle_request(self):
+        self.assertTrue(self.server.handle_request((self.__sock,
+                                                    TEST_SERVER6, TEST_CLIENT6,
+                                                    create_msg())))
+        self.assertEqual(TEST_CLIENT6, self.__sock._sent_addr)
+        self.check_update_response(self.__sock._sent_data)
+
+    def test_broken_request(self):
+        # Message data too short
+        s = self.__sock
+        self.assertFalse(self.server.handle_request((self.__sock, None,
+                                                     None, b'x' * 11)))
+        self.assertEqual((None, None), (s._sent_data, s._sent_addr))
+
+        # Opcode is not UPDATE
+        self.assertFalse(self.server.handle_request(
+                (self.__sock, None, None, create_msg(opcode=Opcode.QUERY()))))
+        self.assertEqual((None, None), (s._sent_data, s._sent_addr))
 
 class TestMain(unittest.TestCase):
     def setUp(self):
