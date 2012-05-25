@@ -20,30 +20,64 @@
 namespace isc {
 namespace util {
 
-class InterprocessSyncLocker;
+class InterprocessSyncLocker; // forward declaration
 
+/// \brief Interprocess Sync Class
+///
+/// This class specifies an interface for mutual exclusion among
+/// co-operating processes. This is an abstract class and a real
+/// implementation such as InterprocessSyncFile should be used
+/// in code. Usage is as follows:
+///
+/// 1. Client instantiates a sync object of an implementation (such as
+/// InterprocessSyncFile).
+/// 2. Client then creates an automatic (stack) object of
+/// InterprocessSyncLocker around the sync object. Such an object
+/// destroys itself and releases any acquired lock when it goes out of extent.
+/// 3. Client calls lock() method on the InterprocessSyncLocker.
+/// 4. Client performs task that needs mutual exclusion.
+/// 5. Client frees lock with unlock(), or simply returns from the basic
+/// block which forms the scope for the InterprocessSyncLocker.
 class InterprocessSync {
-friend class InterprocessSyncLocker;
+  // InterprocessSyncLocker is the only code outside this class that
+  // should be allowed to call the lock(), tryLock() and unlock()
+  // methods.
+  friend class InterprocessSyncLocker;
+
 public:
     /// \brief Constructor
     ///
     /// Creates a interprocess synchronization object
-    InterprocessSync(const std::string& component_name) :
-        component_name_(component_name), is_locked_(false)
+    ///
+    /// \param name Name of the synchronization task. This has to be
+    /// identical among the various processes that need to be
+    /// synchronized for the same task.
+    InterprocessSync(const std::string& task_name) :
+        task_name_(task_name), is_locked_(false)
     {}
 
     /// \brief Destructor
     virtual ~InterprocessSync() {}
 
 protected:
+    /// \brief Acquire the lock (blocks if something else has acquired a
+    /// lock on the same task name)
     virtual bool lock() = 0;
+    /// \brief Try to acquire a lock (doesn't block)
     virtual bool tryLock() = 0;
+    /// \brief Release the lock
     virtual bool unlock() = 0;
 
-    const std::string component_name_;
-    bool is_locked_;
+    const std::string task_name_; ///< The task name
+    bool is_locked_;              ///< Is the lock taken?
 };
 
+/// \brief Interprocess Sync Locker Class
+///
+/// This class is used for making automatic stack objects to manage
+/// locks that are released automatically when the block is exited
+/// (RAII). It is meant to be used along with InterprocessSync objects. See
+/// the description of InterprocessSync.
 class InterprocessSyncLocker {
 public:
     InterprocessSyncLocker(InterprocessSync& sync) :
@@ -55,20 +89,24 @@ public:
         unlock();
     }
 
+    /// \brief Acquire the lock (blocks if something else has acquired a
+    /// lock on the same task name)
     bool lock() {
         return (sync_.lock());
     }
 
+    /// \brief Try to acquire a lock (doesn't block)
     bool tryLock() {
         return (sync_.tryLock());
     }
 
+    /// \brief Release the lock
     bool unlock() {
         return (sync_.unlock());
     }
 
 protected:
-    InterprocessSync& sync_;
+    InterprocessSync& sync_; ///< Ref to underlying sync object
 };
 
 } // namespace util
