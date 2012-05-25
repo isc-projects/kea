@@ -113,8 +113,9 @@ void
 LoggerImpl::setInterprocessSync(isc::util::InterprocessSync* sync) {
     // If we are passed NULL, change nothing. The old sync_ object will
     // continue to be used.
-    if (sync == NULL)
+    if (sync == NULL) {
         return;
+    }
 
     delete sync_;
     sync_ = sync;
