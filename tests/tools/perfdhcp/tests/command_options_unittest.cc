@@ -26,6 +26,9 @@ using namespace isc;
 using namespace isc::perfdhcp;
 
 /// \brief Test Fixture Class
+///
+/// This test fixture class is used to perform
+/// unit tests on perfdhcp CommandOptions class.
 class CommandOptionsTest : public virtual ::testing::Test
 {
 public:
@@ -33,18 +36,18 @@ public:
     CommandOptionsTest() { }
 
 protected:
-
     /// \brief Parse command line and cleanup
     ///
-    /// Tokenizes command line to array of C-strings,
-    /// parses arguments and de-allocates C-strings
+    /// The method tokenizes command line to array of C-strings,
+    /// parses arguments using CommandOptions class to set
+    /// its data members and de-allocates array of C-strings.
     ///
-    /// \param s Command line to parse
-    /// \return non-zero if parsing failed
-    void process(const std::string& s) {
+    /// \param cmdline Command line to parse
+    /// \throws std::bad allocation if tokenization failed
+    void process(const std::string& cmdline) {
         CommandOptions& opt = CommandOptions::instance();
         int argc = 0;
-        char** argv = tokenizeString(s, &argc);
+        char** argv = tokenizeString(cmdline, &argc);
         opt.reset();
         opt.parse(argc, argv);
         for(int i = 0; i < argc; ++i) {
@@ -54,7 +57,7 @@ protected:
         free(argv);
     }
 
-    /// \brief Check initialized values
+    /// \brief Check default initialized values
     ///
     /// Check if initialized values are correct
     void checkDefaults() {
@@ -64,7 +67,7 @@ protected:
         EXPECT_EQ(CommandOptions::DORA_SARR, opt.getExchangeMode());
         EXPECT_EQ(0, opt.getRate());
         EXPECT_EQ(0, opt.getReportDelay());
-        EXPECT_EQ(0, opt.getRandomRange());
+        EXPECT_EQ(0, opt.getClientsNum());
 
         // default mac
         uint8_t mac[6] = { 0x00, 0x0C, 0x01, 0x02, 0x03, 0x04 };
@@ -109,28 +112,33 @@ protected:
     /// \param s String to split (tokenize)
     /// \param num Number of tokens returned
     /// \return array of C-strings (tokens)
-    char** tokenizeString(const std::string& s, int* num) const {
+    char** tokenizeString(const std::string& text_to_split, int* num) const {
         char** results = NULL;
-        std::stringstream ss(s);
-        std::istream_iterator<std::string> sit(ss);
-        std::istream_iterator<std::string> send;
-        std::vector<std::string> tokens(sit, send);
+        // Tokenization with std streams
+        std::stringstream text_stream(text_to_split);
+        // Iterators to be used for tokenization
+        std::istream_iterator<std::string> text_iterator(text_stream);
+        std::istream_iterator<std::string> text_end;
+        // Tokenize string (space is a separator) using begin and end iteratos
+        std::vector<std::string> tokens(text_iterator, text_end);
 
         if (tokens.size() > 0) {
+            // Allocate array of C-strings where we will store tokens
             results = static_cast<char**>(malloc(tokens.size() * sizeof(char*)));
             if (results == NULL) {
                 throw std::bad_alloc();
             }
+            // Store tokens in C-strings array
             for (int i = 0; i < tokens.size(); ++i) {
                 char* cs = static_cast<char*>(malloc(tokens[i].length() + 1));
                 strcpy(cs, tokens[i].c_str());
                 results[i] = cs;
             }
+            // Return number of tokens to calling function
             if (num != NULL) {
                 *num = tokens.size();
             }
         }
-
         return results;
     }
 
@@ -159,7 +167,11 @@ TEST_F(CommandOptionsTest, IpVersion) {
     EXPECT_FALSE(opt.isRapidCommit());
 
     // Negative test cases
+    // -4 and -6 must not coexist
+    EXPECT_THROW(process("perfdhcp -4 -6 -l ethx"), isc::InvalidParameter);
+    // -6 and -B must not coexist
     EXPECT_THROW(process("perfdhcp -6 -B -l ethx"), isc::InvalidParameter);
+    // -c and -4 (default) must not coexist
     EXPECT_THROW(process("perfdhcp -c -l ethx"), isc::InvalidParameter);
 }
 
@@ -169,7 +181,9 @@ TEST_F(CommandOptionsTest, Rate) {
     EXPECT_EQ(10, opt.getRate());
 
     // Negative test cases
+    // Rate must not be 0
     EXPECT_THROW(process("perfdhcp -4 -r 0 -l ethx"), isc::InvalidParameter);
+    // -r must be specified to use -n, -p and -D
     EXPECT_THROW(process("perfdhcp -6 -t 5 -l ethx"), isc::InvalidParameter);
     EXPECT_THROW(process("perfdhcp -4 -n 150 -l ethx"), isc::InvalidParameter);
     EXPECT_THROW(process("perfdhcp -6 -p 120 -l ethx"), isc::InvalidParameter);
@@ -182,19 +196,21 @@ TEST_F(CommandOptionsTest, ReportDelay) {
     EXPECT_EQ(17, opt.getReportDelay());
 
     // Negative test cases
-    EXPECT_THROW(process("perfdhcp -r -3 -t 17 -l ethx"), isc::InvalidParameter);
-    EXPECT_THROW(process("perfdhcp -r 0 -t 17 -l ethx"), isc::InvalidParameter);
-    EXPECT_THROW(process("perfdhcp -r s -t 17 -l ethx"), isc::InvalidParameter);
+    // -t must be positive integer
+    EXPECT_THROW(process("perfdhcp -r 10 -t -8 -l ethx"), isc::InvalidParameter);
+    EXPECT_THROW(process("perfdhcp -r 10 -t 0 -l ethx"), isc::InvalidParameter);
+    EXPECT_THROW(process("perfdhcp -r 10 -t s -l ethx"), isc::InvalidParameter);
 }
 
-TEST_F(CommandOptionsTest, RandomRange) {
+TEST_F(CommandOptionsTest, ClientsNum) {
     CommandOptions& opt = CommandOptions::instance();
     process("perfdhcp -R 200 -l ethx");
-    EXPECT_EQ(200, opt.getRandomRange());
+    EXPECT_EQ(200, opt.getClientsNum());
     process("perfdhcp -R 0 -l ethx");
-    EXPECT_EQ(0, opt.getRandomRange());
+    EXPECT_EQ(0, opt.getClientsNum());
 
     // Negative test cases
+    // Number of clients must be non-negative integer
     EXPECT_THROW(process("perfdhcp -R -5 -l ethx"), isc::InvalidParameter);
     EXPECT_THROW(process("perfdhcp -R gs -l ethx"), isc::InvalidParameter);
 }
@@ -209,16 +225,20 @@ TEST_F(CommandOptionsTest, Base) {
     std::vector<uint8_t> v1 = opt.getMacPrefix();
     ASSERT_EQ(6, v1.size());
     EXPECT_TRUE(std::equal(v1.begin(), v1.end(), mac));
+    // "3x" is invalid value in MAC address
     EXPECT_THROW(process("perfdhcp -b mac=10::2::3x::4::5::6 -l ethx"), isc::InvalidParameter);
 
     // Test DUID
     std::vector<uint8_t> v2 = opt.getDuidPrefix();
     ASSERT_EQ(sizeof(duid) / sizeof(uint8_t), v2.size());
     EXPECT_TRUE(std::equal(v2.begin(), v2.end(), duid));
+    // "t" is invalid digit in DUID
     EXPECT_THROW(process("perfdhcp -6 -l ethx -b duiD=1AB7Ft670901FF"), isc::InvalidParameter);
 
     // Some more negative test cases
+    // Base is not specified
     EXPECT_THROW(process("perfdhcp -b -l ethx"), isc::InvalidParameter);
+    // Typo: should be mac= instead of mc=
     EXPECT_THROW(process("perfdhcp -l ethx -b mc=00:01:02:03::04:05"), isc::InvalidParameter);
 }
 
@@ -235,6 +255,7 @@ TEST_F(CommandOptionsTest, DropTime) {
     EXPECT_DOUBLE_EQ(4.7, opt.getDropTime()[1]);
 
     // Negative test cases
+    // Drop time must not be negative
     EXPECT_THROW(process("perfdhcp -l ethx -d -2 -d 4.7"), isc::InvalidParameter);
     EXPECT_THROW(process("perfdhcp -l ethx -d -9.1 -d 0"), isc::InvalidParameter);
 }
@@ -245,9 +266,12 @@ TEST_F(CommandOptionsTest, TimeOffset) {
     EXPECT_EQ(4, opt.getElapsedTimeOffset());
 
     // Negative test cases
+    // Argument -E must be used with -T
     EXPECT_THROW(process("perfdhcp -l ethx -E 3 -i"), isc::InvalidParameter);
-    EXPECT_THROW(process("perfdhcp -l ethx -E -i"), isc::InvalidParameter);
-    EXPECT_THROW(process("perfdhcp -l ethx -E -3"), isc::InvalidParameter);
+    // Value in -E not specified
+    EXPECT_THROW(process("perfdhcp -l ethx -T file.x -E -i"), isc::InvalidParameter);
+    // Value for -E must not be negative
+    EXPECT_THROW(process("perfdhcp -l ethx -E -3 -T file.x"), isc::InvalidParameter);
 }
 
 TEST_F(CommandOptionsTest, ExchangeMode) {
@@ -256,11 +280,13 @@ TEST_F(CommandOptionsTest, ExchangeMode) {
     EXPECT_EQ(CommandOptions::DO_SA, opt.getExchangeMode());
 
     // Negative test cases
+    // No template file specified
     EXPECT_THROW(process("perfdhcp -i -l ethx -X 3"), isc::InvalidParameter);
-    EXPECT_THROW(process("perfdhcp -i -l ethx -O 2"), isc::InvalidParameter);
-    EXPECT_THROW(process("perfdhcp -i -l ethx -E 3"), isc::InvalidParameter);
-    EXPECT_THROW(process("perfdhcp -i -l ethx -S 1"), isc::InvalidParameter);
-    EXPECT_THROW(process("perfdhcp -i -l ethx -I 2"), isc::InvalidParameter);
+    // Offsets can't be used in simple exchanges (-i)
+    EXPECT_THROW(process("perfdhcp -i -l ethx -O 2 -T file.x"), isc::InvalidParameter);
+    EXPECT_THROW(process("perfdhcp -i -l ethx -E 3 -T file.x"), isc::InvalidParameter);
+    EXPECT_THROW(process("perfdhcp -i -l ethx -S 1 -T file.x"), isc::InvalidParameter);
+    EXPECT_THROW(process("perfdhcp -i -l ethx -I 2 -T file.x"), isc::InvalidParameter);
 }
 
 TEST_F(CommandOptionsTest, Offsets) {
@@ -277,6 +303,7 @@ TEST_F(CommandOptionsTest, Offsets) {
     EXPECT_EQ(3, opt.getTransactionIdOffset()[1]);
 
     // Negative test cases
+    // IP offset/IA_NA offset must be positive
     EXPECT_THROW(process("perfdhcp -6 -I 0 -l ethx"), isc::InvalidParameter);
     EXPECT_THROW(process("perfdhcp -6 -I -4 -l ethx"), isc::InvalidParameter);
 
@@ -289,8 +316,10 @@ TEST_F(CommandOptionsTest, LocalPort) {
     EXPECT_EQ(2000, opt.getLocalPort());
 
     // Negative test cases
+    // Local port must be between 0..65535
     EXPECT_THROW(process("perfdhcp -l ethx -L -2"), isc::InvalidParameter);
     EXPECT_THROW(process("perfdhcp -l ethx -L"), isc::InvalidParameter);
+    EXPECT_THROW(process("perfdhcp -l ethx -L 65540"), isc::InvalidParameter);
 }
 
 TEST_F(CommandOptionsTest, Preload) {
@@ -299,7 +328,9 @@ TEST_F(CommandOptionsTest, Preload) {
     EXPECT_EQ(3, opt.getPreload());
 
     // Negative test cases
+    // Number of preload packages must not be negative integer
     EXPECT_THROW(process("perfdhcp -P -1 -l ethx"), isc::InvalidParameter);
+    EXPECT_THROW(process("perfdhcp -P -3 -l ethx"), isc::InvalidParameter);
 }
 
 TEST_F(CommandOptionsTest, Seed) {
@@ -313,6 +344,7 @@ TEST_F(CommandOptionsTest, Seed) {
     EXPECT_FALSE(opt.isSeeded());
 
     // Negtaive test cases
+    // Seed must be non-negative integer
     EXPECT_THROW(process("perfdhcp -6 -P 2 -s -5 -l ethx"), isc::InvalidParameter);
     EXPECT_THROW(process("perfdhcp -6 -P 2 -s -l ethx"), isc::InvalidParameter);
 }
@@ -329,7 +361,10 @@ TEST_F(CommandOptionsTest, TemplateFiles) {
     EXPECT_EQ("file2.x", opt.getTemplateFiles()[1]);
 
     // Negative test cases
+    // No template file specified
     EXPECT_THROW(process("perfdhcp -s 12 -l ethx -T"), isc::InvalidParameter);
+    // Too many template files specified
+    EXPECT_THROW(process("perfdhcp -s 12 -l ethx -T file.x -T file.x -T file.x"), isc::InvalidParameter);
 }
 
 TEST_F(CommandOptionsTest, Wrapped) {
@@ -338,6 +373,7 @@ TEST_F(CommandOptionsTest, Wrapped) {
     EXPECT_EQ("start", opt.getWrapped());
 
     // Negative test cases
+    // Missing command after -w, expected start/stop
     EXPECT_THROW(process("perfdhcp -B -i -l ethx -w"), isc::InvalidParameter);
 }
 
@@ -345,5 +381,74 @@ TEST_F(CommandOptionsTest, Diagnostics) {
     CommandOptions& opt = CommandOptions::instance();
     process("perfdhcp -l ethx -i -x asTe");
     EXPECT_EQ("asTe", opt.getDiags());
+
+    // Negative test cases
+    // No diagnostics string specified
+    EXPECT_THROW(process("perfdhcp -l ethx -i -x"), isc::InvalidParameter);
 }
 
+TEST_F(CommandOptionsTest, Aggressivity) {
+    CommandOptions& opt = CommandOptions::instance();
+    process("perfdhcp -a 10 -l 192.168.0.1");
+    EXPECT_EQ(10, opt.getAggressivity());
+
+    // Negative test cases
+    // Aggressivity must be non negative integer
+    EXPECT_THROW(process("perfdhcp -l ethx -a 0"), isc::InvalidParameter);
+    EXPECT_THROW(process("perfdhcp -l ethx -a"), isc::InvalidParameter);
+    EXPECT_THROW(process("perfdhcp -a -2 -l ethx -a 3"), isc::InvalidParameter);
+}
+
+TEST_F(CommandOptionsTest, MaxDrop) {
+    CommandOptions& opt = CommandOptions::instance();
+    process("perfdhcp -D 25 -l ethx -r 10");
+    EXPECT_EQ(25, opt.getMaxDrop()[0]);
+    process("perfdhcp -D 25 -l ethx -D 15 -r 10");
+    EXPECT_EQ(25, opt.getMaxDrop()[0]);
+    EXPECT_EQ(15, opt.getMaxDrop()[1]);
+
+    process("perfdhcp -D 15% -l ethx -r 10");
+    EXPECT_EQ(15, opt.getMaxDropPercentage()[0]);
+    process("perfdhcp -D 15% -D25% -l ethx -r 10");
+    EXPECT_EQ(15, opt.getMaxDropPercentage()[0]);
+    EXPECT_EQ(25, opt.getMaxDropPercentage()[1]);
+    process("perfdhcp -D 1% -D 99% -l ethx -r 10");
+    EXPECT_EQ(1, opt.getMaxDropPercentage()[0]);
+    EXPECT_EQ(99, opt.getMaxDropPercentage()[1]);
+
+    // Negative test cases
+    // Too many -D<value> options
+    EXPECT_THROW(process("perfdhcp -D 0% -D 1 -l ethx -r20 -D 3"), isc::InvalidParameter);
+    // Too many -D<value%> options
+    EXPECT_THROW(process("perfdhcp -D 99% -D 13% -l ethx -r20 -D 10%"), isc::InvalidParameter);
+    // Percentage is out of bounds
+    EXPECT_THROW(process("perfdhcp -D101% -D 13% -l ethx -r20"), isc::InvalidParameter);
+    EXPECT_THROW(process("perfdhcp -D0% -D 13% -l ethx -r20"), isc::InvalidParameter);
+}
+
+TEST_F(CommandOptionsTest, NumRequest) {
+    CommandOptions& opt = CommandOptions::instance();
+    process("perfdhcp -n 1000 -r 10 -l ethx");
+    EXPECT_EQ(1000, opt.getNumRequests()[0]);
+    process("perfdhcp -n 5 -r 10 -n 500 -l ethx");
+    EXPECT_EQ(5, opt.getNumRequests()[0]);
+    EXPECT_EQ(500, opt.getNumRequests()[1]);
+
+    // Negative test cases
+    // Too many -n<value> parameters, expected maximum 2
+    EXPECT_THROW(process("perfdhcp -n 1 -n 2 -l ethx -n3 -r 20"), isc::InvalidParameter);
+    // Num request must be positive integer
+    EXPECT_THROW(process("perfdhcp -n 1 -n -22 -l ethx -r 10"), isc::InvalidParameter);
+    EXPECT_THROW(process("perfdhcp -n 0 -l ethx -r 10"), isc::InvalidParameter);
+}
+
+TEST_F(CommandOptionsTest, Period) {
+    CommandOptions& opt = CommandOptions::instance();
+    process("perfdhcp -p 120 -l ethx -r 100");
+    EXPECT_EQ(120, opt.getPeriod());
+
+    // Negative test cases
+    // Test period must be positive integer
+    EXPECT_THROW(process("perfdhcp -p 0 -l ethx -r 50"), isc::InvalidParameter);
+    EXPECT_THROW(process("perfdhcp -p -3 -l ethx -r 50"), isc::InvalidParameter);
+}
