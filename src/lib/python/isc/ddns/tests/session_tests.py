@@ -995,13 +995,27 @@ class SessionTest(unittest.TestCase):
                                isc.dns.RRType.A(),
                                extended_a_rrset)
 
-        # Now delete those two again
+        # Adding the same RRsets should not make a difference.
+        self.check_full_handle_result(Rcode.NOERROR(), [ self.rrset_update_a ])
+
+        self.check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
+                               isc.dns.Name("www.example.org"),
+                               isc.dns.RRType.A(),
+                               extended_a_rrset)
+
+        # Now delete those two, and we should end up with the original RRset
         self.check_full_handle_result(Rcode.NOERROR(), [ self.rrset_update_del_rrset_part ])
         self.check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
                                isc.dns.Name("www.example.org"),
                                isc.dns.RRType.A(),
                                orig_a_rrset)
 
+        # 'Deleting' them again should make no difference
+        self.check_full_handle_result(Rcode.NOERROR(), [ self.rrset_update_del_rrset_part ])
+        self.check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
+                               isc.dns.Name("www.example.org"),
+                               isc.dns.RRType.A(),
+                               orig_a_rrset)
 
         # Check that if we update the SOA, it is updated to our value
         self.check_full_handle_result(Rcode.NOERROR(), [ self.rrset_update_soa2 ])
@@ -1013,7 +1027,18 @@ class SessionTest(unittest.TestCase):
     def test_update_delete_name(self):
         self.initialize_update_rrsets()
 
-        # And delete the entire name
+        # First check it is there
+        self.check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
+                               isc.dns.Name("www.example.org"),
+                               isc.dns.RRType.A())
+
+        # Delete the entire name
+        self.check_full_handle_result(Rcode.NOERROR(), [ self.rrset_update_del_name ])
+        self.check_inzone_data(isc.datasrc.ZoneFinder.NXDOMAIN,
+                               isc.dns.Name("www.example.org"),
+                               isc.dns.RRType.A())
+
+        # Should still be gone after pointless second delete
         self.check_full_handle_result(Rcode.NOERROR(), [ self.rrset_update_del_name ])
         self.check_inzone_data(isc.datasrc.ZoneFinder.NXDOMAIN,
                                isc.dns.Name("www.example.org"),
@@ -1048,6 +1073,7 @@ class SessionTest(unittest.TestCase):
                                               orig_ns_rrset.get_class(),
                                               "ns3.example.org."))
 
+        # When we are done, we should have a reduced NS rrset
         short_ns_rrset = isc.dns.RRset(isc.dns.Name("example.org"),
                                        TEST_RRCLASS,
                                        isc.dns.RRType.NS(),
@@ -1061,6 +1087,11 @@ class SessionTest(unittest.TestCase):
                                isc.dns.Name("example.org"),
                                isc.dns.RRType.NS(),
                                orig_ns_rrset)
+        # We will delete the MX record later in this test, so let's make
+        # sure that it exists (we do not care about its value)
+        self.check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
+                               isc.dns.Name("example.org"),
+                               isc.dns.RRType.MX())
 
         # Check that we cannot delete the SOA record by direction deletion
         #self.check_full_handle_result(Rcode.NOERROR(), [ self.rrset_update_soa_del ])
@@ -1069,8 +1100,9 @@ class SessionTest(unittest.TestCase):
                                isc.dns.RRType.SOA(),
                                orig_soa_rrset)
 
-        # And that soa and NS at apex are not deleted if you delete the apex by name
-        #self.check_full_handle_result(Rcode.NOERROR(), [ self.rrset_update_del_name_apex ])
+        # If we delete everything at the apex, the SOA and NS rrsets should be
+        # untouched
+        self.check_full_handle_result(Rcode.NOERROR(), [ self.rrset_update_del_name_apex ])
         self.check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
                                isc.dns.Name("example.org"),
                                isc.dns.RRType.SOA(),
@@ -1079,8 +1111,12 @@ class SessionTest(unittest.TestCase):
                                isc.dns.Name("example.org"),
                                isc.dns.RRType.NS(),
                                orig_ns_rrset)
+        # but the MX should be gone
+        self.check_inzone_data(isc.datasrc.ZoneFinder.NXRRSET,
+                               isc.dns.Name("example.org"),
+                               isc.dns.RRType.MX())
 
-        # And if we delete the NS at the apex specifically, it should still
+        # If we delete the NS at the apex specifically, it should still
         # keep one record
         self.check_full_handle_result(Rcode.NOERROR(), [ self.rrset_update_del_rrset_ns ])
         self.check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
