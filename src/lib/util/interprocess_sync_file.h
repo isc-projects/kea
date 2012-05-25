@@ -40,7 +40,7 @@ public:
     {}
 
     /// \brief Destructor
-    ~InterprocessSyncFile();
+    virtual ~InterprocessSyncFile();
 
 protected:
     bool lock();
