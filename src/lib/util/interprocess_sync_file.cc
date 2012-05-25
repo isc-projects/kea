@@ -53,7 +53,7 @@ InterprocessSyncFile::do_lock(int cmd, short l_type) {
             lockfile_path = env2;
         }
 
-        lockfile_path += "/" + component_name_ + "_lockfile";
+        lockfile_path += "/" + task_name_ + "_lockfile";
 
         // Open the lockfile in the constructor so it doesn't do the access
         // checks every time a message is logged.
