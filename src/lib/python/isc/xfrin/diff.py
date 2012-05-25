@@ -87,6 +87,16 @@ class Diff:
         respectively. Once apply() or commit() has been called, this
         requirement is renewed (since the diff object is essentialy reset).
 
+        In this single_update_mode, upon commit, the deletions are performed
+        first, and then the additions. With the previously mentioned
+        restrictions, this means that the actual update looks like a single
+        IXFR changeset (which can then be journaled). Apart from those
+        restrictions, this class does not do any checking of data; it is
+        the caller's responsibility to keep the data 'sane', and this class
+        does not presume to have any knowledge of DNS zone content sanity.
+        For instance, while it enforces the SOA to be deleted first, and added
+        first, it does no checks on the SERIAL value.
+
         You can also expect isc.datasrc.Error or isc.datasrc.NotImplemented
         exceptions.
         """
