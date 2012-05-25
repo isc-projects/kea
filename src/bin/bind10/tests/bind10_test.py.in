@@ -1463,6 +1463,43 @@ class SocketSrvTest(unittest.TestCase):
         self.assertEqual({}, self.__boss._unix_sockets)
         self.assertTrue(sock.closed)
 
+class TestFunctions(unittest.TestCase):
+    def test_remove_lock_files(self):
+        if not os.path.isdir(os.environ["LOCKFILE_TESTPATH"]):
+            os.mkdir(os.environ["LOCKFILE_TESTPATH"])
+
+        if "B10_FROM_BUILD" in os.environ:
+            oldenv = os.environ["B10_FROM_BUILD"]
+        else:
+            oldenv = None
+
+        os.environ["B10_FROM_BUILD"] = os.environ["LOCKFILE_TESTPATH"]
+
+        # create lockfiles for the testcase
+        lockfiles = ["logger_lockfile"]
+        for f in lockfiles:
+            fname = os.environ["B10_FROM_BUILD"] + '/' + f
+            if not os.path.isfile(fname):
+                open(fname, "w").close()
+
+        # first call should clear up all the lockfiles
+        bind10_src.remove_lock_files()
+
+        # check if the lockfiles exist
+        for f in lockfiles:
+            fname = os.environ["B10_FROM_BUILD"] + '/' + f
+            self.assertFalse(os.path.isfile(fname))
+
+        # second call should not assert anyway
+        bind10_src.remove_lock_files()
+
+        os.rmdir(os.environ["LOCKFILE_TESTPATH"])
+
+        if oldenv is not None:
+            os.environ["B10_FROM_BUILD"] = oldenv
+        else:
+            os.environ.pop("B10_FROM_BUILD")
+
 if __name__ == '__main__':
     # store os.environ for test_unchanged_environment
     original_os_environ = copy.deepcopy(os.environ)
