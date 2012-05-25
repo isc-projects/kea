@@ -72,10 +72,30 @@ class ZoneConfig:
         return ZONE_NOTFOUND, None
 
     def get_update_acl(self, zone_name, zone_class):
+        '''Return the update ACL for the given zone.
+
+        This method searches the internally stored ACL map to see if
+        there's an ACL to be applied to the given zone.  If found, that
+        ACL will be returned; otherwise the default ACL (see the constructor
+        description) will be returned.
+
+        Parameters:
+        zone_name (isc.dns.Name): The zone name.
+        zone_class (isc.dns.RRClass): The zone class.
+        '''
         acl = self.__acl_map.get((zone_name, zone_class))
         if acl is not None:
             return acl
         return self.__default_acl
 
     def set_update_acl_map(self, new_map):
+        '''Set a new ACL map.
+
+        This replaces any stored ACL map, either at construction or
+        by a previous call to this method, with the given new one.
+
+        Parameter:
+        new_map: same as the acl_map parameter of the constructor.
+
+        '''
         self.__acl_map = new_map
