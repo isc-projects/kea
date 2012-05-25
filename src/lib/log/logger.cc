@@ -73,13 +73,6 @@ Logger::getEffectiveSeverity() {
     return (getLoggerPtr()->getEffectiveSeverity());
 }
 
-// Replace the interprocess synchronization object
-
-void
-Logger::setInterprocessSync(isc::util::InterprocessSync* sync) {
-    getLoggerPtr()->setInterprocessSync(sync);
-}
-
 // Debug level (only relevant if messages of severity DEBUG are being logged).
 
 int
@@ -184,6 +177,13 @@ Logger::fatal(const isc::log::MessageID& ident) {
     } else {
         return (Formatter());
     }
+}
+
+// Replace the interprocess synchronization object
+
+void
+Logger::setInterprocessSync(isc::util::InterprocessSync* sync) {
+    getLoggerPtr()->setInterprocessSync(sync);
 }
 
 // Comparison (testing only)

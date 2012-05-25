@@ -179,12 +179,6 @@ public:
     /// is the severity of the parent.
     virtual isc::log::Severity getEffectiveSeverity();
 
-    /// \brief Replace the interprocess synchronization object
-    ///
-    /// \param sync The logger uses this synchronization object for
-    /// synchronizing output of log messages.
-    void setInterprocessSync(isc::util::InterprocessSync* sync);
-
     /// \brief Return DEBUG Level
     ///
     /// \return Current setting of debug level.  This is returned regardless of
@@ -243,6 +237,12 @@ public:
     ///
     /// \param ident Message identification.
     Formatter fatal(const MessageID& ident);
+
+    /// \brief Replace the interprocess synchronization object
+    ///
+    /// \param sync The logger uses this synchronization object for
+    /// synchronizing output of log messages.
+    void setInterprocessSync(isc::util::InterprocessSync* sync);
 
     /// \brief Equality
     ///
