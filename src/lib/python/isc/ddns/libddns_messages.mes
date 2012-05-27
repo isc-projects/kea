@@ -58,7 +58,7 @@ specified NAME.  Note that this prerequisite IS satisfied by
 empty nonterminals.
 
 % LIBDDNS_PREREQ_NOTZONE update client %1 for zone %2: prerequisite not in zone (%3)
-A DNS UPDATE prerequisite has a name that does not appear to be inside
+A DDNS UPDATE prerequisite has a name that does not appear to be inside
 the zone specified in the Zone section of the UPDATE message.
 The specific prerequisite is shown. A NOTZONE error response is sent to
 the client.
@@ -93,6 +93,54 @@ RRset exists (value independent).  At least one RR with a
 specified NAME and TYPE (in the zone and class specified by
 the Zone Section) must exist.
 
+% LIBDDNS_UPDATE_ADD_BAD_TYPE update client %1 for zone %2: update addition RR bad type: %3
+The Update section of a DDNS update message contains a statement
+that tries to add a record of an invalid type. Most likely the
+record has an RRType that is considered a 'meta' type, which
+cannot be zone content data. The specific record is shown.
+A FORMERR response is sent back to the client.
+
+% LIBDDNS_UPDATE_BAD_CLASS update client %1 for zone %2: bad class in update RR: %3
+The Update section of a DDNS update message contains an RRset with
+a bad class. The class of the update RRset must be either the same
+as the class in the Zone Section, ANY, or NONE.
+A FORMERR response is sent back to the client.
+
+% LIBDDNS_UPDATE_DATASRC_ERROR error in datasource during DDNS update: %1
+An error occured while committing the DDNS update changes to the
+datasource. The specific error is printed. A SERVFAIL response is sent
+back to the client. In theory, if the datasource is implemented
+correctly, no changes should have been made to the zone contents.
+
+% LIBDDNS_UPDATE_DELETE_BAD_TYPE update client %1 for zone %2: update deletion RR bad type: %3
+The Update section of a DDNS update message contains a statement
+that tries to delete an rrset of an invalid type. Most likely the
+record has an RRType that is considered a 'meta' type, which
+cannot be zone content data. The specific record is shown.
+A FORMERR response is sent back to the client.
+
+% LIBDDNS_UPDATE_DELETE_NONZERO_TTL update client %1 for zone %2: update deletion RR has non-zero TTL: %3
+The Update section of a DDNS update message contains a 'delete rrset'
+statement with a non-zero TTL. This is not allowed by the protocol.
+A FORMERR response is sent back to the client.
+
+% LIBDDNS_UPDATE_DELETE_RRSET_NOT_EMPTY update client %1 for zone %2: update deletion RR contains data %3
+The Update section of a DDNS update message contains a 'delete rrset'
+statement with a non-empty Rrset. This is not allowed by the protocol.
+A FORMERR response is sent back to the client.
+
+% LIBDDNS_UPDATE_DELETE_RR_BAD_TYPE update client %1 for zone %2: update deletion RR bad type: %3
+The Update section of a DDNS update message contains a statement
+that tries to delete one or more rrs of an invalid type. Most
+likely the records have an RRType that is considered a 'meta'
+type, which cannot be zone content data. The specific record is
+shown. A FORMERR response is sent back to the client.
+
+% LIBDDNS_UPDATE_DELETE_RR_NONZERO_TTL update client %1 for zone %2: update deletion RR has non-zero TTL: %3
+The Update section of a DDNS update message contains a 'delete rrs'
+statement with a non-zero TTL. This is not allowed by the protocol.
+A FORMERR response is sent back to the client.
+
 % LIBDDNS_UPDATE_ERROR update client %1 for zone %2: %3
 Debug message.  An error is found in processing a dynamic update
 request.  This log message is used for general errors that are not
@@ -118,30 +166,15 @@ those clients to suppress the requests.  As specified in Section 3.1
 of RFC2136, the receiving server will return a response with an RCODE
 of NOTAUTH.
 
+% LIBDDNS_UPDATE_NOTZONE update client %1 for zone %2: update RR out of zone %3
+A DDNS UPDATE record has a name that does not appear to be inside
+the zone specified in the Zone section of the UPDATE message.
+The specific update record is shown. A NOTZONE error response is
+sent to the client.
+
 % LIBDDNS_UPDATE_PREREQUISITE_FAILED prerequisite failed in update update client %1 for zone %2: result code %3
 The handling of the prerequisite section (RFC2136 Section 3.2) found
 that one of the prerequisites was not satisfied. The result code
 should give more information on what prerequisite type failed.
 If the result code is FORMERR, the prerequisite section was not well-formed.
 An error response with the given result code is sent back to the client.
-
-% LIBDDNS_UPDATE_DATASRC_ERROR error in datasource during DDNS update: %1
-
-% LIBDDNS_UPDATE_NOTZONE update client %1 for zone %2: update RR out of zone %3
-
-% LIBDDNS_UPDATE_ADD_BAD_TYPE update client %1 for zone %2: update addition RR bad type: %3
-
-% LIBDDNS_UPDATE_DELETE_BAD_TYPE update client %1 for zone %2: update deletion RR bad type: %3
-
-% LIBDDNS_UPDATE_DELETE_RR_BAD_TYPE update client %1 for zone %2: update deletion RR bad type: %3
-
-% LIBDDNS_UPDATE_DELETE_NONZERO_TTL update client %1 for zone %2: update deletion RR has non-zero TTL: %3
-
-% LIBDDNS_UPDATE_DELETE_RR_NONZERO_TTL update client %1 for zone %2: update deletion RR has non-zero TTL: %3
-
-% LIBDDNS_UPDATE_DELETE_RRSET_NOT_EMPTY update client %1 for zone %2: update deletion RR contains data %3
-
-% LIBDDNS_UPDATE_BAD_CLASS update client %1 for zone %2: bad class in update RR: %3
-
-
-
