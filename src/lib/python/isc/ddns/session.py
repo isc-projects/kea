@@ -337,7 +337,8 @@ class UpdateSession:
         return not self.__prereq_name_in_use(datasrc_client, rrset)
 
     def __check_in_zone(self, rrset, zname):
-        '''Returns true if the RRset is in the zone'''
+        '''Returns true if the name of the given rrset is equal to
+           or a subdomain of the given zname.'''
         relation = rrset.get_name().compare(zname).get_relation()
         return relation == NameComparisonResult.SUBDOMAIN or\
                relation == NameComparisonResult.EQUAL
@@ -436,6 +437,8 @@ class UpdateSession:
         return Rcode.NOERROR()
 
     def __set_soa_rrset(self, rrset):
+        '''Sets the given rrset to the member __added_soa (which
+           is used by __do_update for updating the SOA record'''
         self.__added_soa = rrset
 
     def __do_prescan(self, datasrc_client, zname, zclass):
@@ -509,9 +512,10 @@ class UpdateSession:
         return Rcode.NOERROR()
 
     def __do_update_add_single_rr(self, diff, rr, existing_rrset):
-        # helper for __do_update_add_rrs_to_rrset, only add the
-        # rr if it is not present yet
-        # (note that rr here is already a single-rr rrset)
+        '''Helper for __do_update_add_rrs_to_rrset: only add the
+           rr if it is not present yet
+           (note that rr here should already be a single-rr rrset)
+        '''
         if existing_rrset is None:
             diff.add_data(rr)
         else:
@@ -520,6 +524,19 @@ class UpdateSession:
                 diff.add_data(rr)
 
     def __do_update_add_rrs_to_rrset(self, datasrc_client, diff, rrset):
+        '''Add the rrs from the given rrset to the diff.
+           There is handling for a number of special cases mentioned
+           in RFC2136;
+           - If the addition is a CNAME, but existing data at its
+             name is not, the addition is ignored, and vice versa.
+           - If it is a CNAME, and existing data is too, it is
+             replaced (existing data is deleted)
+           An additional restriction is that SOA data is ignored as
+           well (it is handled separately by the __do_update method).
+           
+           Note that in the (near) future, this method may have
+           addition special-cases processing.
+        '''
         # For a number of cases, we may need to remove data in the zone
         # (note; SOA is handled separately by __do_update, so that one
         # is not explicitely ignored here)
@@ -556,6 +573,12 @@ class UpdateSession:
         foreach_rr_in_rrset(rrset, self.__do_update_add_single_rr, diff, rrset, orig_rrset)
 
     def __do_update_delete_rrset(self, datasrc_client, zname, diff, rrset):
+        '''Deletes the rrset with the name and type of the given
+           rrset from the zone data (by putting all existing data
+           in the given diff as delete statements).
+           Special cases: if the delete statement is for the
+           zone's apex, and the type is either SOA or NS, it
+           is ignored.'''
         _, finder = datasrc_client.find_zone(rrset.get_name())
         result, to_delete, _ = finder.find(rrset.get_name(),
                                            rrset.get_type(),
@@ -569,6 +592,11 @@ class UpdateSession:
         foreach_rr_in_rrset(to_delete, diff.delete_data, to_delete)
 
     def __ns_deleter_helper(self, datasrc_client, zname, diff, rrset):
+        '''Special case helper for deleting NS resource records
+           at the zone apex. In that scenario, the last NS record
+           may never be removed (and any action that would do so
+           should be ignored).
+        '''
         _, finder = datasrc_client.find_zone(rrset.get_name())
         result, orig_rrset, _ = finder.find(rrset.get_name(),
                                             rrset.get_type(),
@@ -597,6 +625,12 @@ class UpdateSession:
                 diff.delete_data(to_delete)
 
     def __do_update_delete_name(self, datasrc_client, zname, diff, rrset):
+        '''Delete all data at the name of the given rrset,
+           by adding all data found by find_all as delete statements
+           to the given diff.
+           Special case: if the name is the zone's apex, SOA and
+           NS records are kept.
+        '''
         _, finder = datasrc_client.find_zone(rrset.get_name())
         result, rrsets, flags = finder.find_all(rrset.get_name(),
                                                 finder.NO_WILDCARD |
@@ -613,6 +647,12 @@ class UpdateSession:
                     foreach_rr_in_rrset(to_delete, diff.delete_data, to_delete)
 
     def __do_update_delete_rrs_from_rrset(self, datasrc_client, zname, zclass, diff, rrset):
+        '''Deletes all resource records in the given rrset from the
+           zone. Resource records that do not exist are ignored.
+           If the rrset if of type SOA, it is ignored.
+           Uses the __ns_deleter_helper if the rrset's name is the
+           zone's apex, and the type is NS.
+        '''
         # Delete all rrs in the rrset, except if name=zname and type=soa, or
         # type = ns and there is only one left (...)
 
@@ -632,6 +672,11 @@ class UpdateSession:
         foreach_rr_in_rrset(to_delete, diff.delete_data, to_delete)
 
     def __update_soa(self, datasrc_client, zname, zclass, diff):
+        '''Checks the member value __added_soa, and depending on
+           whether it has been set and what its value is, creates
+           a new SOA if necessary.
+           Then removes the original SOA and adds the new one,
+           by adding the needed operations to the given diff.'''
         # Get the existing SOA
         # if a new soa was specified, add that one, otherwise, do the
         # serial magic and add the newly created one
@@ -653,6 +698,11 @@ class UpdateSession:
         diff.add_data(new_soa)
 
     def __do_update(self, datasrc_client, zname, zclass):
+        '''Scan, check, and execute the Update section in the
+           DDNS Update message.
+           Returns an Rcode to signal the result (NOERROR upon success,
+           any error result otherwise).
+        '''
         # prescan
         prescan_result = self.__do_prescan(datasrc_client, zname, zclass)
         if prescan_result != Rcode.NOERROR():
