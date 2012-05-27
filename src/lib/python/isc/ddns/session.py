@@ -82,6 +82,7 @@ def rrset_as_rrs(rrset, method, *kwargs):
        by this function.
     '''
     #result = None
+    # todo: check for empty?
     for rdata in rrset.get_rdata():
         tmp_rrset = isc.dns.RRset(rrset.get_name(),
                                   rrset.get_class(),
@@ -444,6 +445,10 @@ class UpdateSession:
         '''
         for rrset in self.__message.get_section(SECTION_UPDATE):
             if not self.__check_in_zone(rrset, zname):
+                logger.info(LIBDDNS_UPDATE_NOTZONE,
+                            ClientFormatter(self.__client_addr),
+                            ZoneFormatter(zname, zclass),
+                            RRsetFormatter(rrset))
                 return Rcode.NOTZONE()
             if rrset.get_class() == zclass:
                 # In fact, all metatypes are in a specific range,
@@ -451,6 +456,10 @@ class UpdateSession:
                 # (some value check is needed anyway, since we do
                 # not have defined RRtypes for MAILA and MAILB)
                 if rrset.get_type().get_code() >=  249:
+                    logger.info(LIBDDNS_UPDATE_ADD_BAD_TYPE,
+                                ClientFormatter(self.__client_addr),
+                                ZoneFormatter(zname, zclass),
+                                RRsetFormatter(rrset))
                     return Rcode.FORMERR()
                 if rrset.get_type() == RRType.SOA():
                     # In case there's multiple soa records in the update
@@ -458,18 +467,42 @@ class UpdateSession:
                     rrset_as_rrs(rrset, self.__set_soa_rrset, rrset)
             elif rrset.get_class() == RRClass.ANY():
                 if rrset.get_ttl().get_value() != 0:
+                    logger.info(LIBDDNS_UPDATE_DELETE_NONZERO_TTL,
+                                ClientFormatter(self.__client_addr),
+                                ZoneFormatter(zname, zclass),
+                                RRsetFormatter(rrset))
                     return Rcode.FORMERR()
                 if rrset.get_rdata_count() > 0:
+                    logger.info(LIBDDNS_UPDATE_DELETE_RRSET_NOT_EMPTY,
+                                ClientFormatter(self.__client_addr),
+                                ZoneFormatter(zname, zclass),
+                                RRsetFormatter(rrset))
                     return Rcode.FORMERR()
                 if rrset.get_type().get_code() >= 249 and\
                    rrset.get_type().get_code() <= 254:
+                    logger.info(LIBDDNS_UPDATE_DELETE_BAD_TYPE,
+                                ClientFormatter(self.__client_addr),
+                                ZoneFormatter(zname, zclass),
+                                RRsetFormatter(rrset))
                     return Rcode.FORMERR()
             elif rrset.get_class() == RRClass.NONE():
                 if rrset.get_ttl().get_value() != 0:
+                    logger.info(LIBDDNS_UPDATE_DELETE_RR_NONZERO_TTL,
+                                ClientFormatter(self.__client_addr),
+                                ZoneFormatter(zname, zclass),
+                                RRsetFormatter(rrset))
                     return Rcode.FORMERR()
                 if rrset.get_type().get_code() >= 249:
+                    logger.info(LIBDDNS_UPDATE_DELETE_RR_BAD_TYPE,
+                                ClientFormatter(self.__client_addr),
+                                ZoneFormatter(zname, zclass),
+                                RRsetFormatter(rrset))
                     return Rcode.FORMERR()
             else:
+                logger.info(LIBDDNS_UPDATE_BAD_CLASS,
+                            ClientFormatter(self.__client_addr),
+                            ZoneFormatter(zname, zclass),
+                            RRsetFormatter(rrset))
                 return Rcode.FORMERR()
         return Rcode.NOERROR()
 
@@ -531,7 +564,7 @@ class UpdateSession:
                                             finder.FIND_GLUE_OK)
         # Even a real rrset comparison wouldn't help here...
         # The goal is to make sure that after deletion of the
-        # given rrset, at least 1 NS record is left.
+        # given rrset, at least 1 NS record is left (at the apex).
         # So we make a (shallow) copy of the existing rrset,
         # and for each rdata in the to_delete set, we check if it wouldn't
         # delete the last one. If it would, that specific one is ignored.
@@ -567,7 +600,7 @@ class UpdateSession:
                 else:
                     rrset_as_rrs(to_delete, diff.delete_data, to_delete)
 
-    def __do_update_delete_rr_from_rrset(self, datasrc_client, zname, zclass, diff, rrset):
+    def __do_update_delete_rrs_from_rrset(self, datasrc_client, zname, zclass, diff, rrset):
         # Delete all rrs in the rrset, except if name=zname and type=soa, or
         # type = ns and there is only one left (...)
 
@@ -642,10 +675,11 @@ class UpdateSession:
                 else:
                     self.__do_update_delete_rrset(datasrc_client, zname, diff, rrset)
             elif rrset.get_class() == RRClass.NONE():
-                self.__do_update_delete_rr_from_rrset(datasrc_client, zname, zclass, diff, rrset)
+                self.__do_update_delete_rrs_from_rrset(datasrc_client, zname, zclass, diff, rrset)
 
         #try:
         diff.commit()
         return Rcode.NOERROR()
-        #except isc.datasrc.Error:
+        #except isc.datasrc.Error as dse:
+        #    logger.info(LIBDDNS_UPDATE_DATASRC_ERROR, dse)
         #    return Rcode.SERVFAIL()

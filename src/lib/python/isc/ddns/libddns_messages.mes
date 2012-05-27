@@ -124,3 +124,24 @@ that one of the prerequisites was not satisfied. The result code
 should give more information on what prerequisite type failed.
 If the result code is FORMERR, the prerequisite section was not well-formed.
 An error response with the given result code is sent back to the client.
+
+% LIBDDNS_UPDATE_DATASRC_ERROR error in datasource during DDNS update: %1
+
+% LIBDDNS_UPDATE_NOTZONE update client %1 for zone %2: update RR out of zone %3
+
+% LIBDDNS_UPDATE_ADD_BAD_TYPE update client %1 for zone %2: update addition RR bad type: %3
+
+% LIBDDNS_UPDATE_DELETE_BAD_TYPE update client %1 for zone %2: update deletion RR bad type: %3
+
+% LIBDDNS_UPDATE_DELETE_RR_BAD_TYPE update client %1 for zone %2: update deletion RR bad type: %3
+
+% LIBDDNS_UPDATE_DELETE_NONZERO_TTL update client %1 for zone %2: update deletion RR has non-zero TTL: %3
+
+% LIBDDNS_UPDATE_DELETE_RR_NONZERO_TTL update client %1 for zone %2: update deletion RR has non-zero TTL: %3
+
+% LIBDDNS_UPDATE_DELETE_RRSET_NOT_EMPTY update client %1 for zone %2: update deletion RR contains data %3
+
+% LIBDDNS_UPDATE_BAD_CLASS update client %1 for zone %2: bad class in update RR: %3
+
+
+
