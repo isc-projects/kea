@@ -194,6 +194,43 @@ class SessionTest(unittest.TestCase):
                           "www.example.org. 3600 IN A 192.0.2.3\n",
                          ], l)
 
+    def test_convert_rrset_class(self):
+        # Converting an RRSET to a different class should work
+        # if the rdata types can be converted
+        rrset = isc.dns.RRset(isc.dns.Name("www.example.org"),
+                                           isc.dns.RRClass.NONE(),
+                                           isc.dns.RRType.A(),
+                                           isc.dns.RRTTL(3600))
+        rrset.add_rdata(isc.dns.Rdata(rrset.get_type(),
+                                      rrset.get_class(),
+                                      "\# 04 c0 00 02 01"))
+        rrset.add_rdata(isc.dns.Rdata(rrset.get_type(),
+                                      rrset.get_class(),
+                                      "\# 04 c0 00 02 02"))
+        
+        rrset2 = convert_rrset_class(rrset, isc.dns.RRClass.IN())
+        self.assertEqual("www.example.org. 3600 IN A 192.0.2.1\n" +
+                         "www.example.org. 3600 IN A 192.0.2.2\n",
+                         str(rrset2))
+
+        rrset3 = convert_rrset_class(rrset2, isc.dns.RRClass.NONE())
+        self.assertEqual("www.example.org. 3600 CLASS254 A \\# 4 " +
+                         "c0000201\nwww.example.org. 3600 CLASS254 " +
+                         "A \\# 4 c0000202\n",
+                         str(rrset3))
+
+        # depending on what type of bad data is given, a number
+        # of different exceptions could be raised (TODO: i recall
+        # there was a ticket about making a better hierarchy for
+        # dns/parsing related exceptions)
+        self.assertRaises(InvalidRdataLength, convert_rrset_class,
+                          rrset, isc.dns.RRClass.CH())
+        rrset.add_rdata(isc.dns.Rdata(rrset.get_type(),
+                                      rrset.get_class(),
+                                      "\# 02 c0 00"))
+        self.assertRaises(DNSMessageFORMERR, convert_rrset_class,
+                          rrset, isc.dns.RRClass.IN())
+
     def __prereq_helper(self, method, expected, rrset):
         '''Calls the given method with self.__datasrc_client
            and the given rrset, and compares the return value.
@@ -790,10 +827,10 @@ class SessionTest(unittest.TestCase):
                                                     isc.dns.RRClass.NONE(),
                                                     isc.dns.RRType.A(),
                                                     isc.dns.RRTTL(0))
-        rrset_update_del_rrset_part.add_rdata(isc.dns.Rdata(rrset_update_a.get_type(),
+        rrset_update_del_rrset_part.add_rdata(isc.dns.Rdata(rrset_update_del_rrset_part.get_type(),
                                                rrset_update_del_rrset_part.get_class(),
                                                "\# 04 c0 00 02 02"))
-        rrset_update_del_rrset_part.add_rdata(isc.dns.Rdata(rrset_update_a.get_type(),
+        rrset_update_del_rrset_part.add_rdata(isc.dns.Rdata(rrset_update_del_rrset_part.get_type(),
                                                rrset_update_del_rrset_part.get_class(),
                                                "\# 04 c0 00 02 03"))
         self.rrset_update_del_rrset_part = rrset_update_del_rrset_part

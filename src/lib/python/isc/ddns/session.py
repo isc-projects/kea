@@ -98,11 +98,13 @@ def foreach_rr_in_rrset(rrset, method, *kwargs):
 def convert_rrset_class(rrset, rrclass):
     '''Returns a (new) rrset with the data from the given rrset,
        but of the given class. Useful to convert from NONE and ANY to
-       a real class'''
-    # QUERY, do we want to do this as a special case of the foreach_rr_in_rrset?
-    # or would that make it too complicated?
-    new_rrset = isc.dns.RRset(rrset.get_name(), rrclass, rrset.get_type(),
-                              rrset.get_ttl())
+       a real class.
+       Note that the caller should be careful what to convert;
+       and DNS error that could happen during wire-format reading
+       could technically occur here, and is not caught by this helper.
+    '''
+    new_rrset = isc.dns.RRset(rrset.get_name(), rrclass,
+                              rrset.get_type(), rrset.get_ttl())
     for rdata in rrset.get_rdata():
         # Rdata class is nof modifiable, and must match rrset's
         # class, so we need to to some ugly conversion here.
