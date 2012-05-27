@@ -510,9 +510,12 @@ class UpdateSession:
         # helper for __do_update_add_rrs_to_rrset, only add the
         # rr if it is not present yet
         # (note that rr here is already a single-rr rrset)
-        rr_rdata = rr.get_rdata()[0]
-        if not rr_rdata in existing_rrset.get_rdata():
+        if existing_rrset is None:
             diff.add_data(rr)
+        else:
+            rr_rdata = rr.get_rdata()[0]
+            if not rr_rdata in existing_rrset.get_rdata():
+                diff.add_data(rr)
 
     def __do_update_add_rrs_to_rrset(self, datasrc_client, diff, rrset):
         # For a number of cases, we may need to remove data in the zone
@@ -536,18 +539,18 @@ class UpdateSession:
         elif result == finder.SUCCESS:
             # if update is cname, and zone rr is not, ignore
             if rrset.get_type() == RRType.CNAME():
-                if orig_rrset.get_type() != RRType.CNAME():
-                    # Ignore CNAME update for non-CNAME data
-                    return
-                else:
-                    # Remove original CNAME record (the new one
-                    # is added below)
-                    diff.delete_data(orig_rrset)
+                # Remove original CNAME record (the new one
+                # is added below)
+                diff.delete_data(orig_rrset)
             # We do not have WKS support at this time, but if there
             # are special Update equality rules such as for WKS, and
             # we do have support for the type, this is where the check
             # (and potential delete) would go.
-        print("[XX] UPDATE RRSET: " + str(rrset))
+        elif result == finder.NXRRSET:
+            # There is data present, but not for this type.
+            # If this type is CNAME, ignore the update
+            if rrset.get_type() == RRType.CNAME():
+                return
         foreach_rr_in_rrset(rrset, self.__do_update_add_single_rr, diff, rrset, orig_rrset)
 
     def __do_update_delete_rrset(self, datasrc_client, zname, diff, rrset):
