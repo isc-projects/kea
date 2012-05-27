@@ -156,7 +156,7 @@ class SessionTest(unittest.TestCase):
     def foreach_rr_in_rrset_helper(self, rr, l):
         l.append(rr.to_text())
 
-    def test_foreach_rr_in_rrsetet(self):
+    def test_foreach_rr_in_rrset(self):
         rrset = isc.dns.RRset(isc.dns.Name("www.example.org"),
                                        TEST_RRCLASS,
                                        isc.dns.RRType.A(),
@@ -707,6 +707,15 @@ class SessionTest(unittest.TestCase):
     def initialize_update_rrsets(self):
         '''Prepare a number of RRsets to be used in several update tests
            The rrsets are stored in self'''
+        orig_a_rrset = isc.dns.RRset(isc.dns.Name("www.example.org"),
+                                     TEST_RRCLASS,
+                                     isc.dns.RRType.A(),
+                                     isc.dns.RRTTL(3600))
+        orig_a_rrset.add_rdata(isc.dns.Rdata(orig_a_rrset.get_type(),
+                                             orig_a_rrset.get_class(),
+                                            "192.0.2.1"))
+        self.orig_a_rrset = orig_a_rrset
+
         rrset_update_a = isc.dns.RRset(isc.dns.Name("www.example.org"),
                                             TEST_RRCLASS,
                                             isc.dns.RRType.A(),
@@ -958,13 +967,7 @@ class SessionTest(unittest.TestCase):
         self.initialize_update_rrsets()
 
         # initially, the www should only contain one rr
-        orig_a_rrset = isc.dns.RRset(isc.dns.Name("www.example.org"),
-                                     TEST_RRCLASS,
-                                     isc.dns.RRType.A(),
-                                     isc.dns.RRTTL(3600))
-        orig_a_rrset.add_rdata(isc.dns.Rdata(orig_a_rrset.get_type(),
-                                             orig_a_rrset.get_class(),
-                                            "192.0.2.1"))
+        # (set to self.orig_a_rrset)
 
         # during this test, we will extend it at some point
         extended_a_rrset = isc.dns.RRset(isc.dns.Name("www.example.org"),
@@ -985,7 +988,7 @@ class SessionTest(unittest.TestCase):
         self.check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
                                isc.dns.Name("www.example.org"),
                                isc.dns.RRType.A(),
-                               orig_a_rrset)
+                               self.orig_a_rrset)
 
         # Add two rrs
         self.check_full_handle_result(Rcode.NOERROR(), [ self.rrset_update_a ])
@@ -1008,14 +1011,14 @@ class SessionTest(unittest.TestCase):
         self.check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
                                isc.dns.Name("www.example.org"),
                                isc.dns.RRType.A(),
-                               orig_a_rrset)
+                               self.orig_a_rrset)
 
         # 'Deleting' them again should make no difference
         self.check_full_handle_result(Rcode.NOERROR(), [ self.rrset_update_del_rrset_part ])
         self.check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
                                isc.dns.Name("www.example.org"),
                                isc.dns.RRType.A(),
-                               orig_a_rrset)
+                               self.orig_a_rrset)
 
         # Check that if we update the SOA, it is updated to our value
         self.check_full_handle_result(Rcode.NOERROR(), [ self.rrset_update_soa2 ])
@@ -1124,10 +1127,10 @@ class SessionTest(unittest.TestCase):
                                isc.dns.RRType.NS(),
                                short_ns_rrset)
 
-    def test_update_apex_special_cases(self):
+    def test_update_cname_special_cases(self):
         self.initialize_update_rrsets()
 
-        # The original cname, for checking
+        # Sanity check
         orig_cname_rrset = isc.dns.RRset(isc.dns.Name("cname.example.org"),
                               TEST_RRCLASS,
                               isc.dns.RRType.CNAME(),
@@ -1135,16 +1138,6 @@ class SessionTest(unittest.TestCase):
         orig_cname_rrset.add_rdata(isc.dns.Rdata(orig_cname_rrset.get_type(),
                                       orig_cname_rrset.get_class(),
                                       "www.example.org."))
-        # The CNAME we will change it to
-        new_cname_rrset = isc.dns.RRset(isc.dns.Name("cname.example.org"),
-                              TEST_RRCLASS,
-                              isc.dns.RRType.CNAME(),
-                              isc.dns.RRTTL(3600))
-        new_cname_rrset.add_rdata(isc.dns.Rdata(new_cname_rrset.get_type(),
-                                      new_cname_rrset.get_class(),
-                                      "mail.example.org."))
-
-        # Sanity check
         self.check_inzone_data(isc.datasrc.ZoneFinder.CNAME,
                                isc.dns.Name("cname.example.org"),
                                isc.dns.RRType.A(),
@@ -1166,15 +1159,38 @@ class SessionTest(unittest.TestCase):
                                orig_cname_rrset)
 
         # But updating the cname itself should work
+        new_cname_rrset = isc.dns.RRset(isc.dns.Name("cname.example.org"),
+                              TEST_RRCLASS,
+                              isc.dns.RRType.CNAME(),
+                              isc.dns.RRTTL(3600))
+        new_cname_rrset.add_rdata(isc.dns.Rdata(new_cname_rrset.get_type(),
+                                      new_cname_rrset.get_class(),
+                                      "mail.example.org."))
         self.check_full_handle_result(Rcode.NOERROR(), [ new_cname_rrset ])
         self.check_inzone_data(isc.datasrc.ZoneFinder.CNAME,
                                isc.dns.Name("cname.example.org"),
                                isc.dns.RRType.A(),
                                new_cname_rrset)
         
+        self.initialize_update_rrsets()
         # Likewise, adding a cname where other data is
         # present should do nothing either
-
+        self.check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
+                               isc.dns.Name("www.example.org"),
+                               isc.dns.RRType.A(),
+                               self.orig_a_rrset)
+        new_cname_rrset = isc.dns.RRset(isc.dns.Name("www.example.org"),
+                              TEST_RRCLASS,
+                              isc.dns.RRType.CNAME(),
+                              isc.dns.RRTTL(3600))
+        new_cname_rrset.add_rdata(isc.dns.Rdata(new_cname_rrset.get_type(),
+                                      new_cname_rrset.get_class(),
+                                      "mail.example.org."))
+        self.check_full_handle_result(Rcode.NOERROR(), [ new_cname_rrset ])
+        self.check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
+                               isc.dns.Name("www.example.org"),
+                               isc.dns.RRType.A(),
+                               self.orig_a_rrset)
 
 if __name__ == "__main__":
     isc.log.init("bind10")
