@@ -16,8 +16,6 @@
 # The logger supports the idea of a "console" logger than logs to either stdout
 # or stderr.  This test checks that both these options work.
 
-export B10_LOCKFILE_DIR_FROM_BUILD=@abs_top_builddir@
-
 testname="Console output test"
 echo $testname
 
