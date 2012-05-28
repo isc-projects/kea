@@ -383,6 +383,13 @@ TEST_F(LoggerTest, LoggerNameLength) {
 #endif
 }
 
+TEST_F(LoggerTest, setInterprocessSync) {
+    // Create a logger
+    Logger logger("alpha");
+
+    EXPECT_THROW(logger.setInterprocessSync(NULL), BadInterprocessSync);
+}
+
 class MockSync : public isc::util::InterprocessSync {
 public:
     /// \brief Constructor

@@ -171,15 +171,13 @@ public:
 
     /// \brief Replace the interprocess synchronization object
     ///
-    /// This method is exception-free. If this method is called with
-    /// NULL as the argument, it does nothing and the old sync object is
-    /// used as before.
+    /// If this method is called with NULL as the argument, it throws a
+    /// BadInterprocessSync exception.
     ///
     /// \param sync The logger uses this synchronization object for
-    /// synchronizing output of log messages. If NULL is passed, the old
-    /// synchronization object is used as before. When a non-NULL sync
-    /// object is passed, it should be deletable and the ownership is
-    /// transferred to the logger implementation.
+    /// synchronizing output of log messages. It should be deletable and
+    /// the ownership is transferred to the logger implementation.
+    /// If NULL is passed, a BadInterprocessSync exception is thrown.
     void setInterprocessSync(isc::util::InterprocessSync* sync);
 
     /// \brief Equality
