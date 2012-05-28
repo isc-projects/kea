@@ -1467,9 +1467,11 @@ class TestFunctions(unittest.TestCase):
     def setUp(self):
         if not os.path.isdir(os.environ["LOCKFILE_TESTPATH"]):
             os.mkdir(os.environ["LOCKFILE_TESTPATH"])
+        self.assertTrue(os.path.isdir(os.environ["LOCKFILE_TESTPATH"]))
 
     def tearDown(self):
         os.rmdir(os.environ["LOCKFILE_TESTPATH"])
+        self.assertFalse(os.path.isdir(os.environ["LOCKFILE_TESTPATH"]))
 
     def test_remove_lock_files(self):
         if "B10_FROM_BUILD" in os.environ:
