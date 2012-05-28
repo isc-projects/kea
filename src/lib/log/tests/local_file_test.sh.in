@@ -16,8 +16,6 @@
 # Checks that a local message file can override the definitions in the message
 # dictionary.
 
-export B10_LOCKFILE_DIR_FROM_BUILD=@abs_top_builddir@
-
 testname="Local message file test"
 echo $testname
 
