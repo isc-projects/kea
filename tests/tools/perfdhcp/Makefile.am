@@ -26,5 +26,8 @@ endif
 pkglibexec_PROGRAMS  = perfdhcp
 perfdhcp_SOURCES  = perfdhcp.cc
 perfdhcp_SOURCES += command_options.cc command_options.h
+perfdhcp_SOURCES += perf_pkt6.cc perf_pkt6.h
 
 perfdhcp_LDADD = $(top_builddir)/src/lib/exceptions/libexceptions.la
+perfdhcp_LDADD += $(top_builddir)/src/lib/dhcp/libdhcp++.la
+perfdhcp_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
