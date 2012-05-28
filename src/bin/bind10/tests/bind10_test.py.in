@@ -1487,6 +1487,7 @@ class TestFunctions(unittest.TestCase):
             fname = os.environ["B10_FROM_BUILD"] + '/' + f
             if not os.path.isfile(fname):
                 open(fname, "w").close()
+            self.assertTrue(os.path.isfile(fname))
 
         # first call should clear up all the lockfiles
         bind10_src.remove_lock_files()
