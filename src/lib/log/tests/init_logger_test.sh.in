@@ -16,7 +16,7 @@
 # Checks that the initLogger() call uses for unit tests respects the setting of
 # the environment variables.
 
-export B10_FROM_BUILD=@abs_top_builddir@
+export B10_LOCKFILE_DIR_FROM_BUILD=@abs_top_builddir@
 
 testname="initLogger test"
 echo $testname

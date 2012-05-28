@@ -21,6 +21,5 @@
 int
 main(int argc, char* argv[]) {
     ::testing::InitGoogleTest(&argc, argv);
-    setenv("B10_FROM_BUILD", TOP_BUILDDIR, 1);
     return (isc::util::unittests::run_all());
 }
