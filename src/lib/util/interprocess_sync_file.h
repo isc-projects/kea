@@ -38,6 +38,9 @@ public:
 /// interprocess synchronization mechanism. Please see the
 /// InterprocessSync class documentation for usage.
 ///
+/// An InterprocessSyncFileError exception may be thrown if there is an
+/// issue opening the lock file.
+///
 /// Lock files are created typically in the local state directory
 /// (var). They are typically named like "<task_name>_lockfile".
 /// This implementation opens lock files lazily (only when
