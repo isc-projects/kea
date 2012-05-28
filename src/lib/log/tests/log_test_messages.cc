@@ -1,4 +1,4 @@
-// File created from log_test_messages.mes on Thu May 24 12:52:20 2012
+// File created from ../../../../src/lib/log/tests/log_test_messages.mes on Mon May 28 11:38:27 2012
 
 #include <cstddef>
 #include <log/message_types.h>
