@@ -151,7 +151,7 @@ LoggerManager::readLocalMessageFile(const char* file) {
     MessageReader reader(&dictionary);
 
     // Turn off use of any lock files
-    logger.setInterprocessSync(new isc::util::InterprocessSyncNull("log"));
+    logger.setInterprocessSync(new isc::util::InterprocessSyncNull("logger"));
 
     try {
 
