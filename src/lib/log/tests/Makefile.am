@@ -14,6 +14,9 @@ endif
 CLEANFILES = *.gcno *.gcda
 
 EXTRA_DIST = log_test_messages.mes
+BUILT_SOURCES = log_test_messages.h log_test_messages.cc
+log_test_messages.h log_test_messages.cc: log_test_messages.mes
+	$(AM_V_GEN) $(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/log/tests/log_test_messages.mes
 
 noinst_PROGRAMS = logger_example
 logger_example_SOURCES = logger_example.cc

@@ -1,4 +1,4 @@
-// File created from log_test_messages.mes on Thu May 24 12:52:20 2012
+// File created from ../../../../src/lib/log/tests/log_test_messages.mes on Mon May 28 11:38:27 2012
 
 #ifndef __LOG_TEST_MESSAGES_H
 #define __LOG_TEST_MESSAGES_H
