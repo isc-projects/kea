@@ -111,10 +111,8 @@ LoggerImpl::lookupMessage(const MessageID& ident) {
 
 void
 LoggerImpl::setInterprocessSync(isc::util::InterprocessSync* sync) {
-    // If we are passed NULL, change nothing. The old sync_ object will
-    // continue to be used.
     if (sync == NULL) {
-        return;
+        isc_throw(BadInterprocessSync, "NULL was passed to setInterprocessSync()");
     }
 
     delete sync_;
