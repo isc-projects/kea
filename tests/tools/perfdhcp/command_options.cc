@@ -54,7 +54,6 @@ CommandOptions::reset() {
     rate_ = 0;
     report_delay_ = 0;
     clients_num_ = 0;
-    clients_num_ = 0;
     mac_prefix_.assign(mac, mac + 6);
     base_.resize(0);
     num_request_.resize(0);
