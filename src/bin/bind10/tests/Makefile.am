@@ -23,7 +23,6 @@ endif
 	chmod +x $(abs_builddir)/$$pytest ; \
 	$(LIBRARY_PATH_PLACEHOLDER) \
 	PYTHONPATH=$(COMMON_PYTHON_PATH):$(abs_top_srcdir)/src/bin:$(abs_top_builddir)/src/bin/bind10:$(abs_top_builddir)/src/lib/util/io/.libs \
-	LOCKFILE_TESTPATH=$(abs_top_builddir)/src/bin/bind10/tests/lockfile_test \
 	BIND10_MSGQ_SOCKET_FILE=$(abs_top_builddir)/msgq_socket \
 		$(PYCOVERAGE_RUN) $(abs_builddir)/$$pytest || exit ; \
 	done
