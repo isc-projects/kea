@@ -62,18 +62,24 @@ public:
 protected:
     /// \brief Acquire the lock (blocks if something else has acquired a
     /// lock on the same task name)
+    ///
+    /// \return Returns true if the lock was acquired, false otherwise.
     bool lock();
 
     /// \brief Try to acquire a lock (doesn't block)
+    ///
+    /// \return Returns true if the lock was acquired, false otherwise.
     bool tryLock();
 
     /// \brief Release the lock
+    ///
+    /// \return Returns true if the lock was released, false otherwise.
     bool unlock();
 
 private:
     bool do_lock(int cmd, short l_type);
 
-    int fd_;
+    int fd_; ///< The descriptor for the open file
 };
 
 } // namespace util
