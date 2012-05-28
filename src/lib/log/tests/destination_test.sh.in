@@ -15,7 +15,7 @@
 
 # Checks that the logger will route messages to the chosen destination.
 
-export B10_FROM_BUILD=@abs_top_builddir@
+export B10_LOCKFILE_DIR_FROM_BUILD=@abs_top_builddir@
 
 testname="Destination test"
 echo $testname

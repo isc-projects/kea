@@ -1136,6 +1136,8 @@ def remove_lock_files():
         lpath = os.environ["B10_FROM_BUILD"]
     if "B10_FROM_SOURCE_LOCALSTATEDIR" in os.environ:
         lpath = os.environ["B10_FROM_SOURCE_LOCALSTATEDIR"]
+    if "B10_LOCKFILE_DIR_FROM_BUILD" in os.environ:
+        lpath = os.environ["B10_LOCKFILE_DIR_FROM_BUILD"]
 
     for f in lockfiles:
         fname = lpath + '/' + f
