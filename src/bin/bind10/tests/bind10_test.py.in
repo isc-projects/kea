@@ -1465,13 +1465,14 @@ class SocketSrvTest(unittest.TestCase):
 
 class TestFunctions(unittest.TestCase):
     def setUp(self):
-        if not os.path.isdir(os.environ["LOCKFILE_TESTPATH"]):
-            os.mkdir(os.environ["LOCKFILE_TESTPATH"])
-        self.assertTrue(os.path.isdir(os.environ["LOCKFILE_TESTPATH"]))
+        self.lockfile_testpath = "@abs_top_builddir@/src/bin/bind10/tests/lockfile_test"
+        if not os.path.isdir(self.lockfile_testpath):
+            os.mkdir(self.lockfile_testpath)
+        self.assertTrue(os.path.isdir(self.lockfile_testpath))
 
     def tearDown(self):
-        os.rmdir(os.environ["LOCKFILE_TESTPATH"])
-        self.assertFalse(os.path.isdir(os.environ["LOCKFILE_TESTPATH"]))
+        os.rmdir(self.lockfile_testpath)
+        self.assertFalse(os.path.isdir(self.lockfile_testpath))
 
     def test_remove_lock_files(self):
         if "B10_FROM_BUILD" in os.environ:
@@ -1479,7 +1480,7 @@ class TestFunctions(unittest.TestCase):
         else:
             oldenv = None
 
-        os.environ["B10_FROM_BUILD"] = os.environ["LOCKFILE_TESTPATH"]
+        os.environ["B10_FROM_BUILD"] = self.lockfile_testpath
 
         # create lockfiles for the testcase
         lockfiles = ["logger_lockfile"]
