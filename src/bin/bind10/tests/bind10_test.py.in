@@ -1464,10 +1464,14 @@ class SocketSrvTest(unittest.TestCase):
         self.assertTrue(sock.closed)
 
 class TestFunctions(unittest.TestCase):
-    def test_remove_lock_files(self):
+    def setUp(self):
         if not os.path.isdir(os.environ["LOCKFILE_TESTPATH"]):
             os.mkdir(os.environ["LOCKFILE_TESTPATH"])
 
+    def tearDown(self):
+        os.rmdir(os.environ["LOCKFILE_TESTPATH"])
+
+    def test_remove_lock_files(self):
         if "B10_FROM_BUILD" in os.environ:
             oldenv = os.environ["B10_FROM_BUILD"]
         else:
@@ -1492,8 +1496,6 @@ class TestFunctions(unittest.TestCase):
 
         # second call should not assert anyway
         bind10_src.remove_lock_files()
-
-        os.rmdir(os.environ["LOCKFILE_TESTPATH"])
 
         if oldenv is not None:
             os.environ["B10_FROM_BUILD"] = oldenv
