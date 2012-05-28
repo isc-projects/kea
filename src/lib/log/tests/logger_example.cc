@@ -283,11 +283,11 @@ int main(int argc, char** argv) {
 
     // Log a few messages to different loggers.
     isc::log::Logger logger_ex(ROOT_NAME);
-    logger_ex.setInterprocessSync(new isc::util::InterprocessSyncNull(ROOT_NAME));
+    logger_ex.setInterprocessSync(new isc::util::InterprocessSyncNull("logger"));
     isc::log::Logger logger_alpha("alpha");
-    logger_alpha.setInterprocessSync(new isc::util::InterprocessSyncNull("alpha"));
+    logger_alpha.setInterprocessSync(new isc::util::InterprocessSyncNull("logger"));
     isc::log::Logger logger_beta("beta");
-    logger_beta.setInterprocessSync(new isc::util::InterprocessSyncNull("beta"));
+    logger_beta.setInterprocessSync(new isc::util::InterprocessSyncNull("logger"));
 
     LOG_FATAL(logger_ex, LOG_WRITE_ERROR).arg("test1").arg("42");
     LOG_ERROR(logger_ex, LOG_READING_LOCAL_FILE).arg("dummy/file");
