@@ -35,6 +35,16 @@ init_logger_test_LDADD += $(top_builddir)/src/lib/util/libutil.la
 init_logger_test_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 init_logger_test_LDADD += $(AM_LDADD) $(LOG4CPLUS_LIBS)
 
+noinst_PROGRAMS += logger_lock_test
+logger_lock_test_SOURCES = logger_lock_test.cc
+logger_lock_test_SOURCES += log_test_messages.cc log_test_messages.h
+logger_lock_test_CPPFLAGS = $(AM_CPPFLAGS)
+logger_lock_test_LDFLAGS = $(AM_LDFLAGS)
+logger_lock_test_LDADD  = $(top_builddir)/src/lib/log/liblog.la
+logger_lock_test_LDADD += $(top_builddir)/src/lib/util/libutil.la
+logger_lock_test_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
+logger_lock_test_LDADD += $(AM_LDADD) $(LOG4CPLUS_LIBS)
+
 if HAVE_GTEST
 TESTS =
 
@@ -110,4 +120,5 @@ check-local:
 	$(SHELL) $(abs_builddir)/destination_test.sh
 	$(SHELL) $(abs_builddir)/init_logger_test.sh
 	$(SHELL) $(abs_builddir)/local_file_test.sh
+	$(SHELL) $(abs_builddir)/logger_lock_test.sh
 	$(SHELL) $(abs_builddir)/severity_test.sh
