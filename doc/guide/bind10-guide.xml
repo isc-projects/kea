@@ -1354,20 +1354,20 @@ This may be a temporary setting until then.
       on the IPv6 (::) and IPv4 (0.0.0.0) wildcard addresses.
       <note>
         <simpara>
-          The default configuration is not appropriate for a multi-homed host.
+          The default configuration is currently not appropriate for a multi-homed host.
           In case you have multiple public IP addresses, it is possible the
           query UDP packet comes through one interface and the answer goes out
-          through another. This will probably be dropped by the client, as it
+          through another. The answer will probably be dropped by the client, as it
           has a different source address than the one it sent the query to. The
-          client would fall back on TCP after several attempts, which works
-          well in this situation, but it is clearly not ideal.
+          client would fallback on TCP after several attempts, which works
+          well in this situation, but is clearly not ideal.
         </simpara>
         <simpara>
-          There are plans to solve the problem in a way the server will handle
-          it itself. But until it is actually implemented, it is recommended to
+          There are plans to solve the problem such that the server handles
+          it by itself. But until it is actually implemented, it is recommended to
           alter the configuration &mdash; remove the wildcard addresses and list all
           addresses explicitly. Then the server will answer on the same
-          interface as the request came, preserving the correct address.
+          interface the request came on, preserving the correct address.
         </simpara>
       </note>
               </simpara>
