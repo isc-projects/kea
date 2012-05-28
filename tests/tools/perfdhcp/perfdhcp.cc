@@ -31,6 +31,14 @@
 int
 main(const int argc, char* const argv[])
 {
+    // We need to manipulate argc and argv to avoid
+    // unused-variable warnings.
+    // This is temporary solution.
+    int ac = argc;
+    char* av = argv[0];
+    if (ac >= 0 && av != 0) {
+        ac = 1;
+    }
     fprintf(stderr, "perfdhcp is not supported on this version of the operating system\n");
     return (1);
 }
