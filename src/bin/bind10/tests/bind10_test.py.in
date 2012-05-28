@@ -684,7 +684,13 @@ class TestStartStopProcessesBob(unittest.TestCase):
     """
     def check_environment_unchanged(self):
         # Check whether the environment has not been changed
-        self.assertEqual(original_os_environ, os.environ)
+        cur_os_environ = copy.deepcopy(os.environ)
+        if "B10_LOCKFILE_DIR_FROM_BUILD" in original_os_environ:
+            original_os_environ.pop("B10_LOCKFILE_DIR_FROM_BUILD")
+        if "B10_LOCKFILE_DIR_FROM_BUILD" in cur_os_environ:
+            cur_os_environ.pop("B10_LOCKFILE_DIR_FROM_BUILD")
+
+        self.assertEqual(original_os_environ, cur_os_environ)
 
     def check_started(self, bob, core, auth, resolver):
         """
@@ -1466,28 +1472,24 @@ class SocketSrvTest(unittest.TestCase):
 class TestFunctions(unittest.TestCase):
     def setUp(self):
         self.lockfile_testpath = "@abs_top_builddir@/src/bin/bind10/tests/lockfile_test"
-        if not os.path.isdir(self.lockfile_testpath):
-            os.mkdir(self.lockfile_testpath)
+        self.assertFalse(os.path.exists(self.lockfile_testpath))
+        os.mkdir(self.lockfile_testpath)
         self.assertTrue(os.path.isdir(self.lockfile_testpath))
 
     def tearDown(self):
         os.rmdir(self.lockfile_testpath)
         self.assertFalse(os.path.isdir(self.lockfile_testpath))
+        os.environ["B10_LOCKFILE_DIR_FROM_BUILD"] = "@abs_top_builddir@"
 
     def test_remove_lock_files(self):
-        if "B10_FROM_BUILD" in os.environ:
-            oldenv = os.environ["B10_FROM_BUILD"]
-        else:
-            oldenv = None
-
-        os.environ["B10_FROM_BUILD"] = self.lockfile_testpath
+        os.environ["B10_LOCKFILE_DIR_FROM_BUILD"] = self.lockfile_testpath
 
         # create lockfiles for the testcase
         lockfiles = ["logger_lockfile"]
         for f in lockfiles:
-            fname = os.environ["B10_FROM_BUILD"] + '/' + f
-            if not os.path.isfile(fname):
-                open(fname, "w").close()
+            fname = os.environ["B10_LOCKFILE_DIR_FROM_BUILD"] + '/' + f
+            self.assertFalse(os.path.exists(fname))
+            open(fname, "w").close()
             self.assertTrue(os.path.isfile(fname))
 
         # first call should clear up all the lockfiles
@@ -1495,16 +1497,11 @@ class TestFunctions(unittest.TestCase):
 
         # check if the lockfiles exist
         for f in lockfiles:
-            fname = os.environ["B10_FROM_BUILD"] + '/' + f
+            fname = os.environ["B10_LOCKFILE_DIR_FROM_BUILD"] + '/' + f
             self.assertFalse(os.path.isfile(fname))
 
         # second call should not assert anyway
         bind10_src.remove_lock_files()
-
-        if oldenv is not None:
-            os.environ["B10_FROM_BUILD"] = oldenv
-        else:
-            os.environ.pop("B10_FROM_BUILD")
 
 if __name__ == '__main__':
     # store os.environ for test_unchanged_environment

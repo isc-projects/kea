@@ -53,6 +53,11 @@ InterprocessSyncFile::do_lock(int cmd, short l_type) {
             lockfile_path = env2;
         }
 
+        const char* const env3 = getenv("B10_LOCKFILE_DIR_FROM_BUILD");
+        if (env3 != NULL) {
+            lockfile_path = env3;
+        }
+
         lockfile_path += "/" + task_name_ + "_lockfile";
 
         // Open the lockfile in the constructor so it doesn't do the access

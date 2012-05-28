@@ -16,7 +16,7 @@
 # Checks that the logger will limit the output of messages less severe than
 # the severity/debug setting.
 
-export B10_FROM_BUILD=@abs_top_builddir@
+export B10_LOCKFILE_DIR_FROM_BUILD=@abs_top_builddir@
 
 testname="Severity test"
 echo $testname
