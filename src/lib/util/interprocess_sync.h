@@ -62,10 +62,18 @@ public:
 protected:
     /// \brief Acquire the lock (blocks if something else has acquired a
     /// lock on the same task name)
+    ///
+    /// \return Returns true if the lock was acquired, false otherwise.
     virtual bool lock() = 0;
+
     /// \brief Try to acquire a lock (doesn't block)
+    ///
+    /// \return Returns true if the lock was acquired, false otherwise.
     virtual bool tryLock() = 0;
+
     /// \brief Release the lock
+    ///
+    /// \return Returns true if the lock was released, false otherwise.
     virtual bool unlock() = 0;
 
     const std::string task_name_; ///< The task name
@@ -80,6 +88,12 @@ protected:
 /// the description of InterprocessSync.
 class InterprocessSyncLocker {
 public:
+    /// \brief Constructor
+    ///
+    /// Creates a lock manager around a interprocess synchronization object
+    ///
+    /// \param sync The sync object which has to be locked/unlocked by
+    /// this locker object.
     InterprocessSyncLocker(InterprocessSync& sync) :
         sync_(sync)
     {}
@@ -91,16 +105,22 @@ public:
 
     /// \brief Acquire the lock (blocks if something else has acquired a
     /// lock on the same task name)
+    ///
+    /// \return Returns true if the lock was acquired, false otherwise.
     bool lock() {
         return (sync_.lock());
     }
 
     /// \brief Try to acquire a lock (doesn't block)
+    ///
+    /// \return Returns true if the lock was acquired, false otherwise.
     bool tryLock() {
         return (sync_.tryLock());
     }
 
     /// \brief Release the lock
+    ///
+    /// \return Returns true if the lock was released, false otherwise.
     bool unlock() {
         return (sync_.unlock());
     }
