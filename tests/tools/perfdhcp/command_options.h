@@ -293,9 +293,11 @@ private:
     /// \throw InvalidParameter if string is empty
     std::string nonEmptyString(const std::string& errmsg) const;
 
-    /// \brief Calculates max_random_ and random_range_
+    /// \brief Set number of clients
     ///
-    /// \param opt Value of -R option
+    /// Interprets the getopt() "opt" global variable as the number of clients
+    /// (a non-negative number).  This value is specified by the "-R" switch.
+    ///
     /// \throw InvalidParameter if -R<value> is wrong
     void initClientsNum();
 
