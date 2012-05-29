@@ -123,7 +123,11 @@ class DDNSServer:
         self._listen_socket.bind(SOCKET_FILE)
         self._listen_socket.listen(16)
 
-        # The following attributes are essentially private and constant,
+        # Create reusable resources
+        self.__request_msg = Message(Message.PARSE)
+        self.__response_renderer = MessageRenderer()
+
+        # The following attribute(s) are essentially private and constant,
         # but defined as "protected" so that test code can customize them.
         # They should not be overridden for any other purposes.
         #
@@ -244,12 +248,12 @@ class DDNSServer:
         # or dropped by the sender, so if such error is detected we treat it
         # as an internal error and don't bother to respond.
         try:
-            msg = Message(Message.PARSE)
-            msg.from_wire(req_data)
-            if msg.get_opcode() != Opcode.UPDATE():
+            self.__request_msg.clear(Message.PARSE)
+            self.__request_msg.from_wire(req_data)
+            if self.__request_msg.get_opcode() != Opcode.UPDATE():
                 raise SessionError('Update request has unexpected opcode: ' +
-                                   str(msg.get_opcode()))
-            tsig_ctx = self.__check_request_tsig(msg, req_data)
+                                   str(self.__request_msg.get_opcode()))
+            tsig_ctx = self.__check_request_tsig(self.__request_msg, req_data)
         except Exception as ex:
             logger.error(DDNS_REQUEST_PARSE_FAIL, ex)
             return False
@@ -258,7 +262,8 @@ class DDNSServer:
         # just drop the packet.
 
         # Let an update session object handle the request.
-        update_session = self._UpdateSessionClass(msg, remote_addr, None)
+        update_session = self._UpdateSessionClass(self.__request_msg,
+                                                  remote_addr, None)
         result, zname, zclass = update_session.handle()
 
         # If the request should be dropped, we're done; otherwise, send the
@@ -266,12 +271,12 @@ class DDNSServer:
         if result == isc.ddns.session.UPDATE_DROP:
             return False
         msg = update_session.get_message()
-        renderer = MessageRenderer()
+        self.__response_renderer.clear()
         if tsig_ctx is not None:
-            msg.to_wire(renderer, tsig_ctx)
+            msg.to_wire(self.__response_renderer, tsig_ctx)
         else:
-            msg.to_wire(renderer)
-        sock.sendto(renderer.get_data(), remote_addr)
+            msg.to_wire(self.__response_renderer)
+        sock.sendto(self.__response_renderer.get_data(), remote_addr)
 
         return True
 
