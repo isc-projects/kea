@@ -181,7 +181,7 @@ class UpdateSession:
 
         '''
         try:
-            datasrc_client, zname, zclass = self.__get_update_zone()
+            self.__get_update_zone()
             # conceptual code that would follow
             prereq_result = self.__check_prerequisites()
             if prereq_result != Rcode.NOERROR():
@@ -206,14 +206,13 @@ class UpdateSession:
         '''Parse the zone section and find the zone to be updated.
 
         If the zone section is valid and the specified zone is found in
-        the configuration, it returns a tuple of:
-        - A matching data source that contains the specified zone
-        - The zone name as a Name object
-        - The zone class as an RRClass object
-
-        If this method does not raise, these values will also be set to
-        the session member variables self.__zname, self.__zclass, and
-        self.__datasrc_client.
+        the configuration, sets private member variables for this session:
+        __datasrc_client: A matching data source that contains the specified
+                          zone
+        __zname: The zone name as a Name object
+        __zclass: The zone class as an RRClass object
+        __finder: A ZoneFinder for this zone
+        If this method raises an exception, these members are not set
         '''
         # Validation: the zone section must contain exactly one question,
         # and it must be of type SOA.
@@ -235,7 +234,7 @@ class UpdateSession:
             self.__zclass = zclass
             self.__datasrc_client = datasrc_client
             _, self.__finder = datasrc_client.find_zone(zname)
-            return datasrc_client, zname, zclass
+            return
         elif zone_type == isc.ddns.zone_config.ZONE_SECONDARY:
             # We are a secondary server; since we don't yet support update
             # forwarding, we return 'not implemented'.
