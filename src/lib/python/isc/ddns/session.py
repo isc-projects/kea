@@ -534,7 +534,7 @@ class UpdateSession:
              replaced (existing data is deleted)
            An additional restriction is that SOA data is ignored as
            well (it is handled separately by the __do_update method).
-           
+
            Note that in the (near) future, this method may have
            addition special-cases processing.
         '''

@@ -222,7 +222,7 @@ class SessionTest(unittest.TestCase):
         # if the rdata types can be converted
         rrset = create_rrset("www.example.org", RRClass.NONE(), RRType.A(),
                              3600, [ b'\xc0\x00\x02\x01', b'\xc0\x00\x02\x02'])
-        
+
         rrset2 = convert_rrset_class(rrset, RRClass.IN())
         self.assertEqual("www.example.org. 3600 IN A 192.0.2.1\n" +
                          "www.example.org. 3600 IN A 192.0.2.2\n",
