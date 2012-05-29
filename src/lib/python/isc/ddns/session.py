@@ -548,13 +548,10 @@ class UpdateSession:
                                             finder.NO_WILDCARD |
                                             finder.FIND_GLUE_OK)
         if result == finder.CNAME:
-            if rrset.get_type() != RRType.CNAME():
-                # Ignore non-cname rrs that try to update
-                # CNAME records
-                return
-            else:
-                # remove the original CNAME
-                diff.delete_data(orig_rrset)
+            # Ignore non-cname rrs that try to update CNAME records
+            # (if rrset itself is a CNAME, the finder result would be
+            # SUCCESS, see next case)
+            return
         elif result == finder.SUCCESS:
             # if update is cname, and zone rr is not, ignore
             if rrset.get_type() == RRType.CNAME():
