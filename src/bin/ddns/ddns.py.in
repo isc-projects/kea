@@ -114,6 +114,7 @@ class DDNSServer:
 
         self._config_data = self._cc.get_full_config()
         self._cc.start()
+        isc.server_common.tsig_keyring.init_keyring(self._cc)
         self._shutdown = False
         # List of the session receivers where we get the requests
         self._socksession_receivers = {}
@@ -128,8 +129,6 @@ class DDNSServer:
         #
         # DDNS Protocol handling class.
         self._UpdateSessionClass = isc.ddns.session.UpdateSession
-        # A callabale that returns effective TSIG key ring.
-        self._get_tsig_keyring = isc.server_common.tsig_keyring.get_keyring
 
     class SessionError(Exception):
         '''Exception for internal errors in an update session.
@@ -216,7 +215,7 @@ class DDNSServer:
             return None
         tsig_ctx = TSIGContext(tsig_record.get_name(),
                                tsig_record.get_rdata().get_algorithm(),
-                               self._get_tsig_keyring())
+                               isc.server_common.tsig_keyring.get_keyring())
         tsig_error = tsig_ctx.verify(tsig_record, req_data)
         if tsig_error != TSIGError.NOERROR:
             raise SessionError("Failed to verify request's TSIG: " +
