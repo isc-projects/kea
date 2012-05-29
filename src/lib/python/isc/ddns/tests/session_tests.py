@@ -100,6 +100,7 @@ class SessionTest(unittest.TestCase):
                                        self.__update_msgdata, TEST_CLIENT4,
                                        ZoneConfig([], TEST_RRCLASS,
                                                   self.__datasrc_client))
+        self.__session._UpdateSession__get_update_zone()
 
     def check_response(self, msg, expected_rcode):
         '''Perform common checks on update resposne message.'''
@@ -247,7 +248,7 @@ class SessionTest(unittest.TestCase):
         '''Calls the given method with self.__datasrc_client
            and the given rrset, and compares the return value.
            Function does not do much but makes the code look nicer'''
-        self.assertEqual(expected, method(self.__datasrc_client, rrset))
+        self.assertEqual(expected, method(rrset))
 
     def __check_prerequisite_exists_combined(self, method, rrclass, expected):
         '''shared code for the checks for the very similar (but reversed
@@ -409,13 +410,12 @@ class SessionTest(unittest.TestCase):
                                           prerequisites)
         zconfig = ZoneConfig([], TEST_RRCLASS, self.__datasrc_client)
         session = UpdateSession(msg, msg_data, TEST_CLIENT4, zconfig)
+        session._UpdateSession__get_update_zone()
         # compare the to_text output of the rcodes (nicer error messages)
         # This call itself should also be done by handle(),
         # but just for better failures, it is first called on its own
         self.assertEqual(expected.to_text(),
-            session._UpdateSession__check_prerequisites(self.__datasrc_client,
-                                                        TEST_ZONE_NAME,
-                                                        TEST_RRCLASS).to_text())
+            session._UpdateSession__check_prerequisites().to_text())
         # Now see if handle finds the same result
         (result, _, _) = session.handle()
         self.assertEqual(expected,
@@ -436,13 +436,12 @@ class SessionTest(unittest.TestCase):
                                           [], updates)
         zconfig = ZoneConfig([], TEST_RRCLASS, self.__datasrc_client)
         session = UpdateSession(msg, msg_data, TEST_CLIENT4, zconfig)
+        session._UpdateSession__get_update_zone()
         # compare the to_text output of the rcodes (nicer error messages)
         # This call itself should also be done by handle(),
         # but just for better failures, it is first called on its own
         self.assertEqual(expected.to_text(),
-            session._UpdateSession__do_prescan(self.__datasrc_client,
-                                               TEST_ZONE_NAME,
-                                               TEST_RRCLASS).to_text())
+            session._UpdateSession__do_prescan().to_text())
         # If there is an expected soa, check it
         self.assertEqual(str(expected_soa),
                          str(session._UpdateSession__added_soa))
@@ -621,7 +620,7 @@ class SessionTest(unittest.TestCase):
         '''Calls the given method with self.__datasrc_client
            and the given rrset, and compares the return value.
            Function does not do much but makes the code look nicer'''
-        self.assertEqual(expected, method(self.__datasrc_client, rrset))
+        self.assertEqual(expected, method(rrset))
 
     def initialize_update_rrsets(self):
         '''Prepare a number of RRsets to be used in several update tests
