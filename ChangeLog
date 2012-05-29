@@ -1,7 +1,7 @@
-4XX.	[func]		tomek
+441.	[func]		tomek
 	libdhcp++: Stub interface detection (support for interfaces.txt
 	file) was removed.
-	(Trac #1281, git TBD)
+	(Trac #1281, git 900fc8b420789a8c636bcf20fdaffc60bc1041e0)
 
 bind10-devel-20120517 released on May 17. 2012
 
