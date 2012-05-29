@@ -441,7 +441,6 @@ size_t reqaddr_request6;
 int clock_gettime(int, struct timespec *tp) {
     struct timeval tv;
     gettimeofday(&tv, NULL);
-    unused_id = 0;
     tp->tv_sec = tv.tv_sec;
     tp->tv_nsec = tv.tv_usec*1000;
 
