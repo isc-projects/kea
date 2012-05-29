@@ -172,9 +172,17 @@ the zone specified in the Zone section of the UPDATE message.
 The specific update record is shown. A NOTZONE error response is
 sent to the client.
 
-% LIBDDNS_UPDATE_PREREQUISITE_FAILED prerequisite failed in update update client %1 for zone %2: result code %3
+% LIBDDNS_UPDATE_PREREQUISITE_FAILED prerequisite failed in update client %1 for zone %2: result code %3
 The handling of the prerequisite section (RFC2136 Section 3.2) found
 that one of the prerequisites was not satisfied. The result code
 should give more information on what prerequisite type failed.
 If the result code is FORMERR, the prerequisite section was not well-formed.
 An error response with the given result code is sent back to the client.
+
+% LIBDDNS_UPDATE_UNCAUGHT_EXCEPTION update client %1 for zone %2: uncaught exception while processing update section: %1
+An uncaught exception was encountered while processing the Update
+section of a DDNS message. The specific exception is shown in the log message.
+To make sure DDNS service is not interrupted, this problem is caught instead
+of reraised; The update is aborted, and a SERVFAIL is sent back to the client.
+This is most probably a bug in the DDNS code, but *could* be caused by
+the data source.
