@@ -82,8 +82,7 @@ def foreach_rr_in_rrset(rrset, method, *kwargs):
        the second as the 'real' argument to my_print (which is replaced
        by this function.
     '''
-    #result = None
-    # todo: check for empty?
+    result = None
     for rdata in rrset.get_rdata():
         tmp_rrset = isc.dns.RRset(rrset.get_name(),
                                   rrset.get_class(),
@@ -702,40 +701,43 @@ class UpdateSession:
             return prescan_result
 
         # update
-        # TODO: catchall? any error should result in abort and servfail...
-        # Don't like catchalls much, though
+        try:
+            # create an ixfr-out-friendly diff structure to work on
+            diff = isc.xfrin.diff.Diff(self.__datasrc_client, self.__zname,
+                                       journaling=True, single_update_mode=True)
 
-        # create an ixfr-out-friendly diff structure to work on
-        diff = isc.xfrin.diff.Diff(self.__datasrc_client, self.__zname,
-                                   journaling=True, single_update_mode=True)
+            # Do special handling for SOA first
+            self.__update_soa(diff)
 
-        # Do special handling for SOA first
-        self.__update_soa(diff)
+            # Algorithm from RFC2136 Section 3.4
+            # Note that this works on full rrsets, not individual RRs.
+            # Some checks might be easier with individual RRs, but only if we
+            # would use the ZoneUpdater directly (so we can query the
+            # 'zone-as-it-would-be-so-far'. However, due to the current use
+            # of the Diff class, this is not the case, and therefore it
+            # is easier to work with full rrsets for the most parts
+            # (less lookups needed; conversion to individual rrs is
+            # the same offort whether it is done here or in the several
+            # do_update statements)
+            for rrset in self.__message.get_section(SECTION_UPDATE):
+                if rrset.get_class() == self.__zclass:
+                    self.__do_update_add_rrs_to_rrset(diff, rrset)
+                elif rrset.get_class() == RRClass.ANY():
+                    if rrset.get_type() == RRType.ANY():
+                        self.__do_update_delete_name(diff, rrset)
+                    else:
+                        self.__do_update_delete_rrset(diff, rrset)
+                elif rrset.get_class() == RRClass.NONE():
+                    self.__do_update_delete_rrs_from_rrset(diff, rrset)
 
-        # Algorithm from RFC2136 Section 3.4
-        # Note that this works on full rrsets, not individual RRs.
-        # Some checks might be easier with individual RRs, but only if we
-        # would use the ZoneUpdater directly (so we can query the
-        # 'zone-as-it-would-be-so-far'. However, due to the current use
-        # of the Diff class, this is not the case, and therefore it
-        # is easier to work with full rrsets for the most parts
-        # (less lookups needed; conversion to individual rrs is
-        # the same offort whether it is done here or in the several
-        # do_update statements)
-        for rrset in self.__message.get_section(SECTION_UPDATE):
-            if rrset.get_class() == self.__zclass:
-                self.__do_update_add_rrs_to_rrset(diff, rrset)
-            elif rrset.get_class() == RRClass.ANY():
-                if rrset.get_type() == RRType.ANY():
-                    self.__do_update_delete_name(diff, rrset)
-                else:
-                    self.__do_update_delete_rrset(diff, rrset)
-            elif rrset.get_class() == RRClass.NONE():
-                self.__do_update_delete_rrs_from_rrset(diff, rrset)
-
-        #try:
-        diff.commit()
-        return Rcode.NOERROR()
-        #except isc.datasrc.Error as dse:
-        #    logger.info(LIBDDNS_UPDATE_DATASRC_ERROR, dse)
-        #    return Rcode.SERVFAIL()
+            diff.commit()
+            return Rcode.NOERROR()
+        except isc.datasrc.Error as dse:
+            logger.info(LIBDDNS_UPDATE_DATASRC_ERROR, dse)
+            return Rcode.SERVFAIL()
+        except Exception as uce:
+            logger.error(LIBDDNS_UPDATE_UNCAUGHT_EXCEPTION,
+                         ClientFormatter(self.__client_addr),
+                         ZoneFormatter(self.__zname, self.__zclass),
+                         uce)
+            return Rcode.SERVFAIL()
