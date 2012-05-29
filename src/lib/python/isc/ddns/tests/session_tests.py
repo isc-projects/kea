@@ -426,7 +426,6 @@ class SessionTest(unittest.TestCase):
         else:
             self.assertEqual(UPDATE_ERROR, result)
 
-    # TODO: remove dupe with above one
     def check_prescan_result(self, expected, updates, expected_soa = None):
         '''Helper method for checking the result of a prerequisite check;
            creates an update session, and fills it with the list of rrsets
@@ -446,18 +445,6 @@ class SessionTest(unittest.TestCase):
         self.assertEqual(str(expected_soa),
                          str(session._UpdateSession__added_soa))
 
-        # REMOVED, don't mess with actual data during prescan tests
-        # Now see if handle finds the same result
-        #(result, _, _) = session.handle()
-        #self.assertEqual(expected,
-        #                 session._UpdateSession__message.get_rcode())
-        ## And that the result looks right
-        #if expected == Rcode.NOERROR():
-        #    self.assertEqual(UPDATE_SUCCESS, result)
-        #else:
-        #    self.assertEqual(UPDATE_ERROR, result)
-
-    # TODO XXX: remove dupe with above
     def check_full_handle_result(self, expected, updates):
         '''Helper method for checking the result of a full handle;
            creates an update session, and fills it with the list of rrsets
@@ -742,7 +729,6 @@ class SessionTest(unittest.TestCase):
         # Two soas. Should we reject or simply use the last?
         # (RFC is not really explicit on this, but between the lines I read
         # use the last)
-        # TODO this fails ;)
         self.check_prescan_result(Rcode.NOERROR(),
                                   [ self.rrset_update_soa,
                                     self.rrset_update_soa2 ],
@@ -1098,6 +1084,13 @@ class SessionTest(unittest.TestCase):
         rrset = create_rrset("example.org.", RRClass.CH(), RRType.TXT(), 0,
                              [ "foo" ])
         self.check_full_handle_result(Rcode.FORMERR(), [ rrset ])
+
+    def test_uncaught_exception(self):
+        def my_exc():
+            raise Exception("foo")
+        self.__session._UpdateSession__update_soa = my_exc
+        self.assertEqual(Rcode.SERVFAIL().to_text(),
+                         self.__session._UpdateSession__do_update().to_text())
 
 if __name__ == "__main__":
     isc.log.init("bind10")
