@@ -62,8 +62,8 @@ usage() {
 int
 main(int argc, char* argv[]) {
     int ch;
-    int port_number = DHCP4_SERVER_PORT; // the default. any other values are
-                                         // useful for testing only
+    int port_number = DHCP4_SERVER_PORT; // The default. any other values are
+                                         // useful for testing only.
 
     while ((ch = getopt(argc, argv, "vp:")) != -1) {
         switch (ch) {
