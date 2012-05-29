@@ -83,7 +83,7 @@ class Diff:
         If so, the additions and deletions are kept separately, and applied
         in one go upon commit() or apply(). In this mode, additions and
         deletions can be done in any order. The first addition and the
-        first addition still have to be the new and old SOA records,
+        first deletion still have to be the new and old SOA records,
         respectively. Once apply() or commit() has been called, this
         requirement is renewed (since the diff object is essentialy reset).
 
@@ -129,6 +129,31 @@ class Diff:
             raise ValueError("The diff is already commited or it has raised " +
                              "an exception, you come late")
 
+    def __append_with_soa_check(self, buf, operation, rr):
+        """
+        Helper method for __data_common().
+        Add the given rr to the given buffer, but with a SOA check;
+        - if the buffer is empty, the RRType of the rr must be SOA
+        - if the buffer is not empty, the RRType must not be SOA
+        Raises a ValueError if these rules are not satisified.
+        If they are, the RR is appended to the buffer.
+        Arguments:
+        buf: buffer to add to
+        operation: operation to perform (either 'add' or 'delete')
+        rr: RRset to add to the buffer
+        """
+        # first add or delete must be of type SOA
+        if len(buf) == 0 and\
+           rr.get_type() != isc.dns.RRType.SOA():
+            raise ValueError("First " + operation +
+                             " in single update mode must be of type SOA")
+        # And later adds or deletes may not
+        elif len(buf) != 0 and\
+           rr.get_type() == isc.dns.RRType.SOA():
+            raise ValueError("Multiple SOA records in single " +
+                             "update mode " + operation)
+        buf.append((operation, rr))
+
     def __data_common(self, rr, operation):
         """
         Schedules an operation with rr.
@@ -154,28 +179,9 @@ class Diff:
                              str(self.__updater.get_class()))
         if self.__single_update_mode:
             if operation == 'add':
-                # First addition must be SOA
-                if len(self.__additions) == 0 and\
-                   rr.get_type() != isc.dns.RRType.SOA():
-                    raise ValueError("First addition in single update mode " +
-                                     "must be of type SOA")
-                # And later additions may not
-                elif len(self.__additions) != 0 and\
-                   rr.get_type() == isc.dns.RRType.SOA():
-                    raise ValueError("Multiple SOA records in single " +
-                                     "update mode addition")
-                self.__additions.append((operation, rr))
+                self.__append_with_soa_check(self.__additions, operation, rr)
             elif operation == 'delete':
-                if len(self.__deletions) == 0 and\
-                   rr.get_type() != isc.dns.RRType.SOA():
-                    raise ValueError("First deletion in single update mode " +
-                                     "must be of type SOA")
-                # And later deletions may not
-                elif len(self.__deletions) != 0 and\
-                   rr.get_type() == isc.dns.RRType.SOA():
-                    raise ValueError("Multiple SOA records in single " +
-                                     "update mode deletion")
-                self.__deletions.append((operation, rr))
+                self.__append_with_soa_check(self.__deletions, operation, rr)
         else:
             self.__buffer.append((operation, rr))
             if len(self.__buffer) >= DIFF_APPLY_TRESHOLD:
@@ -358,11 +364,11 @@ class Diff:
         """
         Returns the current buffers of changes not yet passed into the data
         source. It is a tuple of the current deletions and additions, which
-        each are in a form like [('add', rrset), ('delete', rrset),
-        ('delete', rrset), ...].
+        each are in a form like [('delete', rrset), ('delete', rrset), ...],
+        and [('add', rrset), ('add', rrset), ..].
 
         Probably useful only for testing and introspection purposes. Don't
-        modify the list.
+        modify the lists.
 
         Raises a ValueError if the buffer is not in single_update_mode.
         """
