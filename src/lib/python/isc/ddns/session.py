@@ -186,14 +186,14 @@ class UpdateSession:
             prereq_result = self.__check_prerequisites()
             if prereq_result != Rcode.NOERROR():
                 self.__make_response(prereq_result)
-                return UPDATE_ERROR, self.zname, self.zclass
+                return UPDATE_ERROR, self.__zname, self.__zclass
             # self.__check_update_acl()
             update_result = self.__do_update()
             if update_result != Rcode.NOERROR():
                 self.__make_response(update_result)
-                return UPDATE_ERROR, self.zname, self.zclass
+                return UPDATE_ERROR, self.__zname, self.__zclass
             self.__make_response(Rcode.NOERROR())
-            return UPDATE_SUCCESS, self.zname, self.zclass
+            return UPDATE_SUCCESS, self.__zname, self.__zclass
         except UpdateError as e:
             if not e.nolog:
                 logger.debug(logger.DBGLVL_TRACE_BASIC, LIBDDNS_UPDATE_ERROR,
@@ -212,8 +212,8 @@ class UpdateSession:
         - The zone class as an RRClass object
 
         If this method does not raise, these values will also be set to
-        the session member variables self.zname, self.zclass, and
-        self.datasrc_client.
+        the session member variables self.__zname, self.__zclass, and
+        self.__datasrc_client.
         '''
         # Validation: the zone section must contain exactly one question,
         # and it must be of type SOA.
@@ -231,10 +231,10 @@ class UpdateSession:
         zclass = zrecord.get_class()
         zone_type, datasrc_client = self.__zone_config.find_zone(zname, zclass)
         if zone_type == isc.ddns.zone_config.ZONE_PRIMARY:
-            self.zname = zname
-            self.zclass = zclass
-            self.datasrc_client = datasrc_client
-            _, self.finder = datasrc_client.find_zone(zname)
+            self.__zname = zname
+            self.__zclass = zclass
+            self.__datasrc_client = datasrc_client
+            _, self.__finder = datasrc_client.find_zone(zname)
             return datasrc_client, zname, zclass
         elif zone_type == isc.ddns.zone_config.ZONE_SECONDARY:
             # We are a secondary server; since we don't yet support update
@@ -273,9 +273,9 @@ class UpdateSession:
            only return what the result code would be (and not read/copy
            any actual data).
         '''
-        result, _, _ = self.finder.find(rrset.get_name(), rrset.get_type(),
-                                        ZoneFinder.NO_WILDCARD |
-                                        ZoneFinder.FIND_GLUE_OK)
+        result, _, _ = self.__finder.find(rrset.get_name(), rrset.get_type(),
+                                          ZoneFinder.NO_WILDCARD |
+                                          ZoneFinder.FIND_GLUE_OK)
         return result == ZoneFinder.SUCCESS
 
     def __prereq_rrset_exists_value(self, rrset):
@@ -284,10 +284,10 @@ class UpdateSession:
            RFC2136 Section 2.4.2
            Returns True if the prerequisite is satisfied, False otherwise.
         '''
-        result, found_rrset, _ = self.finder.find(rrset.get_name(),
-                                                  rrset.get_type(),
-                                                  ZoneFinder.NO_WILDCARD |
-                                                  ZoneFinder.FIND_GLUE_OK)
+        result, found_rrset, _ = self.__finder.find(rrset.get_name(),
+                                                    rrset.get_type(),
+                                                    ZoneFinder.NO_WILDCARD |
+                                                    ZoneFinder.FIND_GLUE_OK)
         if result == ZoneFinder.SUCCESS and\
            rrset.get_name() == found_rrset.get_name() and\
            rrset.get_type() == found_rrset.get_type():
@@ -326,9 +326,9 @@ class UpdateSession:
            to only return what the result code would be (and not read/copy
            any actual data).
         '''
-        result, rrsets, flags = self.finder.find_all(rrset.get_name(),
-                                                     ZoneFinder.NO_WILDCARD |
-                                                     ZoneFinder.FIND_GLUE_OK)
+        result, rrsets, flags = self.__finder.find_all(rrset.get_name(),
+                                                       ZoneFinder.NO_WILDCARD |
+                                                       ZoneFinder.FIND_GLUE_OK)
         if result == ZoneFinder.SUCCESS and\
            (flags & ZoneFinder.RESULT_WILDCARD == 0):
             return True
@@ -345,7 +345,7 @@ class UpdateSession:
     def __check_in_zone(self, rrset):
         '''Returns true if the name of the given rrset is equal to
            or a subdomain of the zname from the Zone Section.'''
-        relation = rrset.get_name().compare(self.zname).get_relation()
+        relation = rrset.get_name().compare(self.__zname).get_relation()
         return relation == NameComparisonResult.SUBDOMAIN or\
                relation == NameComparisonResult.EQUAL
 
@@ -360,7 +360,7 @@ class UpdateSession:
             if not self.__check_in_zone(rrset):
                 logger.info(LIBDDNS_PREREQ_NOTZONE,
                             ClientFormatter(self.__client_addr),
-                            ZoneFormatter(self.zname, self.zclass),
+                            ZoneFormatter(self.__zname, self.__zclass),
                             RRsetFormatter(rrset))
                 return Rcode.NOTZONE()
 
@@ -370,7 +370,7 @@ class UpdateSession:
                    rrset.get_rdata_count() != 0:
                     logger.info(LIBDDNS_PREREQ_FORMERR_ANY,
                                 ClientFormatter(self.__client_addr),
-                                ZoneFormatter(self.zname, self.zclass),
+                                ZoneFormatter(self.__zname, self.__zclass),
                                 RRsetFormatter(rrset))
                     return Rcode.FORMERR()
                 elif rrset.get_type() == RRType.ANY():
@@ -378,7 +378,7 @@ class UpdateSession:
                         rcode = Rcode.NXDOMAIN()
                         logger.info(LIBDDNS_PREREQ_NAME_IN_USE_FAILED,
                                     ClientFormatter(self.__client_addr),
-                                    ZoneFormatter(self.zname, self.zclass),
+                                    ZoneFormatter(self.__zname, self.__zclass),
                                     RRsetFormatter(rrset), rcode)
                         return rcode
                 else:
@@ -386,7 +386,7 @@ class UpdateSession:
                         rcode = Rcode.NXRRSET()
                         logger.info(LIBDDNS_PREREQ_RRSET_EXISTS_FAILED,
                                     ClientFormatter(self.__client_addr),
-                                    ZoneFormatter(self.zname, self.zclass),
+                                    ZoneFormatter(self.__zname, self.__zclass),
                                     RRsetFormatter(rrset), rcode)
                         return rcode
             elif rrset.get_class() == RRClass.NONE():
@@ -394,7 +394,7 @@ class UpdateSession:
                    rrset.get_rdata_count() != 0:
                     logger.info(LIBDDNS_PREREQ_FORMERR_NONE,
                                 ClientFormatter(self.__client_addr),
-                                ZoneFormatter(self.zname, self.zclass),
+                                ZoneFormatter(self.__zname, self.__zclass),
                                 RRsetFormatter(rrset))
                     return Rcode.FORMERR()
                 elif rrset.get_type() == RRType.ANY():
@@ -402,7 +402,7 @@ class UpdateSession:
                         rcode = Rcode.YXDOMAIN()
                         logger.info(LIBDDNS_PREREQ_NAME_NOT_IN_USE_FAILED,
                                     ClientFormatter(self.__client_addr),
-                                    ZoneFormatter(self.zname, self.zclass),
+                                    ZoneFormatter(self.__zname, self.__zclass),
                                     RRsetFormatter(rrset), rcode)
                         return rcode
                 else:
@@ -410,14 +410,14 @@ class UpdateSession:
                         rcode = Rcode.YXRRSET()
                         logger.info(LIBDDNS_PREREQ_RRSET_DOES_NOT_EXIST_FAILED,
                                     ClientFormatter(self.__client_addr),
-                                    ZoneFormatter(self.zname, self.zclass),
+                                    ZoneFormatter(self.__zname, self.__zclass),
                                     RRsetFormatter(rrset), rcode)
                         return rcode
-            elif rrset.get_class() == self.zclass:
+            elif rrset.get_class() == self.__zclass:
                 if rrset.get_ttl().get_value() != 0:
                     logger.info(LIBDDNS_PREREQ_FORMERR,
                                 ClientFormatter(self.__client_addr),
-                                ZoneFormatter(self.zname, self.zclass),
+                                ZoneFormatter(self.__zname, self.__zclass),
                                 RRsetFormatter(rrset))
                     return Rcode.FORMERR()
                 else:
@@ -425,13 +425,13 @@ class UpdateSession:
                         rcode = Rcode.NXRRSET()
                         logger.info(LIBDDNS_PREREQ_RRSET_EXISTS_VAL_FAILED,
                                     ClientFormatter(self.__client_addr),
-                                    ZoneFormatter(self.zname, self.zclass),
+                                    ZoneFormatter(self.__zname, self.__zclass),
                                     RRsetFormatter(rrset), rcode)
                         return rcode
             else:
                 logger.info(LIBDDNS_PREREQ_FORMERR_CLASS,
                             ClientFormatter(self.__client_addr),
-                            ZoneFormatter(self.zname, self.zclass),
+                            ZoneFormatter(self.__zname, self.__zclass),
                             RRsetFormatter(rrset))
                 return Rcode.FORMERR()
 
@@ -454,10 +454,10 @@ class UpdateSession:
             if not self.__check_in_zone(rrset):
                 logger.info(LIBDDNS_UPDATE_NOTZONE,
                             ClientFormatter(self.__client_addr),
-                            ZoneFormatter(self.zname, self.zclass),
+                            ZoneFormatter(self.__zname, self.__zclass),
                             RRsetFormatter(rrset))
                 return Rcode.NOTZONE()
-            if rrset.get_class() == self.zclass:
+            if rrset.get_class() == self.__zclass:
                 # In fact, all metatypes are in a specific range,
                 # so one check can test TKEY to ANY
                 # (some value check is needed anyway, since we do
@@ -465,7 +465,7 @@ class UpdateSession:
                 if rrset.get_type().get_code() >=  249:
                     logger.info(LIBDDNS_UPDATE_ADD_BAD_TYPE,
                                 ClientFormatter(self.__client_addr),
-                                ZoneFormatter(self.zname, self.zclass),
+                                ZoneFormatter(self.__zname, self.__zclass),
                                 RRsetFormatter(rrset))
                     return Rcode.FORMERR()
                 if rrset.get_type() == RRType.SOA():
@@ -476,39 +476,39 @@ class UpdateSession:
                 if rrset.get_ttl().get_value() != 0:
                     logger.info(LIBDDNS_UPDATE_DELETE_NONZERO_TTL,
                                 ClientFormatter(self.__client_addr),
-                                ZoneFormatter(self.zname, self.zclass),
+                                ZoneFormatter(self.__zname, self.__zclass),
                                 RRsetFormatter(rrset))
                     return Rcode.FORMERR()
                 if rrset.get_rdata_count() > 0:
                     logger.info(LIBDDNS_UPDATE_DELETE_RRSET_NOT_EMPTY,
                                 ClientFormatter(self.__client_addr),
-                                ZoneFormatter(self.zname, self.zclass),
+                                ZoneFormatter(self.__zname, self.__zclass),
                                 RRsetFormatter(rrset))
                     return Rcode.FORMERR()
                 if rrset.get_type().get_code() >= 249 and\
                    rrset.get_type().get_code() <= 254:
                     logger.info(LIBDDNS_UPDATE_DELETE_BAD_TYPE,
                                 ClientFormatter(self.__client_addr),
-                                ZoneFormatter(self.zname, self.zclass),
+                                ZoneFormatter(self.__zname, self.__zclass),
                                 RRsetFormatter(rrset))
                     return Rcode.FORMERR()
             elif rrset.get_class() == RRClass.NONE():
                 if rrset.get_ttl().get_value() != 0:
                     logger.info(LIBDDNS_UPDATE_DELETE_RR_NONZERO_TTL,
                                 ClientFormatter(self.__client_addr),
-                                ZoneFormatter(self.zname, self.zclass),
+                                ZoneFormatter(self.__zname, self.__zclass),
                                 RRsetFormatter(rrset))
                     return Rcode.FORMERR()
                 if rrset.get_type().get_code() >= 249:
                     logger.info(LIBDDNS_UPDATE_DELETE_RR_BAD_TYPE,
                                 ClientFormatter(self.__client_addr),
-                                ZoneFormatter(self.zname, self.zclass),
+                                ZoneFormatter(self.__zname, self.__zclass),
                                 RRsetFormatter(rrset))
                     return Rcode.FORMERR()
             else:
                 logger.info(LIBDDNS_UPDATE_BAD_CLASS,
                             ClientFormatter(self.__client_addr),
-                            ZoneFormatter(self.zname, self.zclass),
+                            ZoneFormatter(self.__zname, self.__zclass),
                             RRsetFormatter(rrset))
                 return Rcode.FORMERR()
         return Rcode.NOERROR()
@@ -544,11 +544,11 @@ class UpdateSession:
         # is not explicitely ignored here)
         if rrset.get_type() == RRType.SOA():
             return
-        result, orig_rrset, _ = self.finder.find(rrset.get_name(),
-                                                 rrset.get_type(),
-                                                 ZoneFinder.NO_WILDCARD |
-                                                 ZoneFinder.FIND_GLUE_OK)
-        if result == self.finder.CNAME:
+        result, orig_rrset, _ = self.__finder.find(rrset.get_name(),
+                                                   rrset.get_type(),
+                                                   ZoneFinder.NO_WILDCARD |
+                                                   ZoneFinder.FIND_GLUE_OK)
+        if result == self.__finder.CNAME:
             # Ignore non-cname rrs that try to update CNAME records
             # (if rrset itself is a CNAME, the finder result would be
             # SUCCESS, see next case)
@@ -577,11 +577,11 @@ class UpdateSession:
            Special cases: if the delete statement is for the
            zone's apex, and the type is either SOA or NS, it
            is ignored.'''
-        result, to_delete, _ = self.finder.find(rrset.get_name(),
-                                                rrset.get_type(),
-                                                ZoneFinder.NO_WILDCARD |
-                                                ZoneFinder.FIND_GLUE_OK)
-        if to_delete.get_name() == self.zname and\
+        result, to_delete, _ = self.__finder.find(rrset.get_name(),
+                                                  rrset.get_type(),
+                                                  ZoneFinder.NO_WILDCARD |
+                                                  ZoneFinder.FIND_GLUE_OK)
+        if to_delete.get_name() == self.__zname and\
            (to_delete.get_type() == RRType.SOA() or\
             to_delete.get_type() == RRType.NS()):
             # ignore
@@ -594,10 +594,10 @@ class UpdateSession:
            may never be removed (and any action that would do so
            should be ignored).
         '''
-        result, orig_rrset, _ = self.finder.find(rrset.get_name(),
-                                                 rrset.get_type(),
-                                                 ZoneFinder.NO_WILDCARD |
-                                                 ZoneFinder.FIND_GLUE_OK)
+        result, orig_rrset, _ = self.__finder.find(rrset.get_name(),
+                                                   rrset.get_type(),
+                                                   ZoneFinder.NO_WILDCARD |
+                                                   ZoneFinder.FIND_GLUE_OK)
         # Even a real rrset comparison wouldn't help here...
         # The goal is to make sure that after deletion of the
         # given rrset, at least 1 NS record is left (at the apex).
@@ -627,14 +627,14 @@ class UpdateSession:
            Special case: if the name is the zone's apex, SOA and
            NS records are kept.
         '''
-        result, rrsets, flags = self.finder.find_all(rrset.get_name(),
-                                                     ZoneFinder.NO_WILDCARD |
-                                                     ZoneFinder.FIND_GLUE_OK)
+        result, rrsets, flags = self.__finder.find_all(rrset.get_name(),
+                                                       ZoneFinder.NO_WILDCARD |
+                                                       ZoneFinder.FIND_GLUE_OK)
         if result == ZoneFinder.SUCCESS and\
            (flags & ZoneFinder.RESULT_WILDCARD == 0):
             for to_delete in rrsets:
-                # if name == self.zname and type is soa or ns, don't delete!
-                if to_delete.get_name() == self.zname and\
+                # if name == self.__zname and type is soa or ns, don't delete!
+                if to_delete.get_name() == self.__zname and\
                    (to_delete.get_type() == RRType.SOA() or
                     to_delete.get_type() == RRType.NS()):
                     continue
@@ -648,14 +648,14 @@ class UpdateSession:
            Uses the __ns_deleter_helper if the rrset's name is the
            zone's apex, and the type is NS.
         '''
-        # Delete all rrs in the rrset, except if name=self.zname and type=soa, or
+        # Delete all rrs in the rrset, except if name=self.__zname and type=soa, or
         # type = ns and there is only one left (...)
 
         # The delete does not want class NONE, we would not have gotten here
         # if it wasn't, but now is a good time to change it to the zclass.
-        to_delete = convert_rrset_class(rrset, self.zclass)
+        to_delete = convert_rrset_class(rrset, self.__zclass)
 
-        if rrset.get_name() == self.zname:
+        if rrset.get_name() == self.__zname:
             if rrset.get_type() == RRType.SOA():
                 # ignore
                 return
@@ -677,9 +677,9 @@ class UpdateSession:
         # serial magic and add the newly created one
 
         # get it from DS and to increment and stuff
-        result, old_soa, _ = self.finder.find(self.zname, RRType.SOA(),
-                                              ZoneFinder.NO_WILDCARD |
-                                              ZoneFinder.FIND_GLUE_OK)
+        result, old_soa, _ = self.__finder.find(self.__zname, RRType.SOA(),
+                                                ZoneFinder.NO_WILDCARD |
+                                                ZoneFinder.FIND_GLUE_OK)
 
         if self.__added_soa is not None:
             new_soa = self.__added_soa
@@ -707,7 +707,8 @@ class UpdateSession:
         # Don't like catchalls much, though
 
         # create an ixfr-out-friendly diff structure to work on
-        diff = isc.xfrin.diff.Diff(self.datasrc_client, self.zname, journaling=True, single_update_mode=True)
+        diff = isc.xfrin.diff.Diff(self.__datasrc_client, self.__zname,
+                                   journaling=True, single_update_mode=True)
 
         # Do special handling for SOA first
         self.__update_soa(diff)
@@ -723,7 +724,7 @@ class UpdateSession:
         # the same offort whether it is done here or in the several
         # do_update statements)
         for rrset in self.__message.get_section(SECTION_UPDATE):
-            if rrset.get_class() == self.zclass:
+            if rrset.get_class() == self.__zclass:
                 self.__do_update_add_rrs_to_rrset(diff, rrset)
             elif rrset.get_class() == RRClass.ANY():
                 if rrset.get_type() == RRType.ANY():
