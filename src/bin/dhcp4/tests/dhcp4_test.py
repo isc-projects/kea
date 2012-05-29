@@ -1,4 +1,4 @@
-# Copyright (C) 2011 Internet Systems Consortium.
+# Copyright (C) 2012 Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -27,7 +27,6 @@ import fcntl
 
 class TestDhcpv4Daemon(unittest.TestCase):
     def setUp(self):
-
         # don't redirect stdout/stderr here as we want to print out things
         # during the test
         pass
@@ -155,7 +154,7 @@ class TestDhcpv4Daemon(unittest.TestCase):
         self.assertEqual( str(error).count("option requires an argument"), 1)
 
     def test_portnumber_nonroot(self):
-        print("Check that specifying unprivilidged port number will work.")
+        print("Check that specifying unprivileged port number will work.")
 
         (returncode, output, error) = self.runDhcp4(['../b10-dhcp4', '-p', '10057'])
 
