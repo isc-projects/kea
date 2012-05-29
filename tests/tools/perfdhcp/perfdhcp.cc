@@ -29,16 +29,8 @@
 #include <stdio.h>
 
 int
-main(const int argc, char* const argv[])
+main(const int, char* const*)
 {
-    // We need to manipulate argc and argv to avoid
-    // unused-variable warnings.
-    // This is temporary solution.
-    int ac = argc;
-    char* av = argv[0];
-    if (ac >= 0 && av != 0) {
-        ac = 1;
-    }
     fprintf(stderr, "perfdhcp is not supported on this version of the operating system\n");
     return (1);
 }
@@ -446,14 +438,12 @@ size_t reqaddr_request6;
 /// @param tp timespec structure
 ///
 /// @return always zero (kept for compatibility reasons)
-int clock_gettime(int clockid, struct timespec *tp) {
-
+int clock_gettime(int, struct timespec *tp) {
     struct timeval tv;
-    int unused_id = clockid;
     gettimeofday(&tv, NULL);
     unused_id = 0;
     tp->tv_sec = tv.tv_sec;
-    tp->tv_nsec = tv.tv_usec*1000 + unused_id;
+    tp->tv_nsec = tv.tv_usec*1000;
 
     return (0);
 }
