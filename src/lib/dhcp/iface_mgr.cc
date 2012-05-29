@@ -18,6 +18,7 @@
 #include <string.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <net/if.h>
 
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
@@ -168,39 +169,48 @@ IfaceMgr::~IfaceMgr() {
 }
 
 void IfaceMgr::stubDetectIfaces() {
-    string ifaceName, linkLocal;
+    string ifaceName;
+    const string v4addr("127.0.0.1"), v6addr("::1");
 
     // This is a stub implementation for interface detection. Actual detection
-    // is faked by reading a text file. It will eventually be removed once
-    // we have actual implementations for all supported systems.
+    // is faked by detecting loopback interface (lo or lo0). It will eventually
+    // be removed once we have actual implementations for all supported systems.
 
-    cout << "Interface detection is not implemented yet. "
-         << "Reading interfaces.txt file instead." << endl;
-    cout << "Please use format: interface-name link-local-address" << endl;
+    cout << "Interface detection is not implemented on this Operating System yet. "
+         << endl;
 
     try {
-        ifstream interfaces("interfaces.txt");
-
-        if (!interfaces.good()) {
-            cout << "interfaces.txt file is not available. Stub interface detection skipped." << endl;
-            return;
+        if (if_nametoindex("lo") > 0) {
+            ifaceName = "lo";
+            // this is Linux-like OS
+        } else if (if_nametoindex("lo0") > 0) {
+            ifaceName = "lo0";
+            // this is BSD-like OS
+        } else {
+            // we give up. What OS is this, anyway? Solaris? Hurd?
+            isc_throw(NotImplemented,
+                      "Interface detection on this OS is not supported.");
         }
-        interfaces >> ifaceName;
-        interfaces >> linkLocal;
-
-        cout << "Detected interface " << ifaceName << "/" << linkLocal << endl;
 
         Iface iface(ifaceName, if_nametoindex(ifaceName.c_str()));
         iface.flag_up_ = true;
         iface.flag_running_ = true;
+
+        // note that we claim that this is not a loopback. iface_mgr tries to open a
+        // socket on all interaces that are up, running and not loopback. As this is
+        // the only interface we were able to detect, let's pretend this is a normal
+        // interface.
         iface.flag_loopback_ = false;
         iface.flag_multicast_ = true;
         iface.flag_broadcast_ = true;
         iface.setHWType(HWTYPE_ETHERNET);
-        IOAddress addr(linkLocal);
-        iface.addAddress(addr);
+
+        iface.addAddress(IOAddress(v4addr));
+        iface.addAddress(IOAddress(v6addr));
         addInterface(iface);
-        interfaces.close();
+
+        cout << "Detected interface " << ifaceName << "/" << v4addr << "/"
+             << v6addr << endl;
     } catch (const std::exception& ex) {
         // TODO: deallocate whatever memory we used
         // not that important, since this function is going to be
