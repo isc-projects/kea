@@ -88,3 +88,14 @@ process will now shut down.
 The b10-ddns process encountered an uncaught exception and will now shut
 down. This is indicative of a programming error and should not happen under
 normal circumstances. The exception type and message are printed.
+
+% DDNS_REQUEST_PARSE_FAIL failed to parse update request: %1
+b10-ddns received an update request via b10-auth, but the received
+data failed to pass minimum validation: it was either totally broken
+as an any valid DNS message (there can be many reasons for that), or
+the opcode is not update, or TSIG is included in the request but it
+fails to validate.  Since b10-auth should have performed this level of
+checks, such an error shouldn't be detected at this stage and should
+rather be considered an internal bug.  This event is therefore logged
+at the error level, and the request is simply dropped.  Additional
+information of the error is also logged.
