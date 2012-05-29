@@ -19,6 +19,7 @@ from isc.log import *
 from isc.ddns.logger import logger, ClientFormatter, ZoneFormatter,\
                             RRsetFormatter
 from isc.log_messages.libddns_messages import *
+from isc.datasrc import ZoneFinder
 import isc.xfrin.diff
 import copy
 
@@ -233,6 +234,7 @@ class UpdateSession:
             self.zname = zname
             self.zclass = zclass
             self.datasrc_client = datasrc_client
+            _, self.finder = datasrc_client.find_zone(zname)
             return datasrc_client, zname, zclass
         elif zone_type == isc.ddns.zone_config.ZONE_SECONDARY:
             # We are a secondary server; since we don't yet support update
@@ -271,10 +273,10 @@ class UpdateSession:
            only return what the result code would be (and not read/copy
            any actual data).
         '''
-        _, finder = self.datasrc_client.find_zone(rrset.get_name())
-        result, _, _ = finder.find(rrset.get_name(), rrset.get_type(),
-                                   finder.NO_WILDCARD | finder.FIND_GLUE_OK)
-        return result == finder.SUCCESS
+        result, _, _ = self.finder.find(rrset.get_name(), rrset.get_type(),
+                                        ZoneFinder.NO_WILDCARD |
+                                        ZoneFinder.FIND_GLUE_OK)
+        return result == ZoneFinder.SUCCESS
 
     def __prereq_rrset_exists_value(self, rrset):
         '''Check whether an rrset that matches name, type, and rdata(s) of the
@@ -282,11 +284,11 @@ class UpdateSession:
            RFC2136 Section 2.4.2
            Returns True if the prerequisite is satisfied, False otherwise.
         '''
-        _, finder = self.datasrc_client.find_zone(rrset.get_name())
-        result, found_rrset, _ = finder.find(rrset.get_name(), rrset.get_type(),
-                                             finder.NO_WILDCARD |
-                                             finder.FIND_GLUE_OK)
-        if result == finder.SUCCESS and\
+        result, found_rrset, _ = self.finder.find(rrset.get_name(),
+                                                  rrset.get_type(),
+                                                  ZoneFinder.NO_WILDCARD |
+                                                  ZoneFinder.FIND_GLUE_OK)
+        if result == ZoneFinder.SUCCESS and\
            rrset.get_name() == found_rrset.get_name() and\
            rrset.get_type() == found_rrset.get_type():
             # We need to match all actual RRs, unfortunately there is no
@@ -324,12 +326,11 @@ class UpdateSession:
            to only return what the result code would be (and not read/copy
            any actual data).
         '''
-        _, finder = self.datasrc_client.find_zone(rrset.get_name())
-        result, rrsets, flags = finder.find_all(rrset.get_name(),
-                                                finder.NO_WILDCARD |
-                                                finder.FIND_GLUE_OK)
-        if result == finder.SUCCESS and\
-           (flags & finder.RESULT_WILDCARD == 0):
+        result, rrsets, flags = self.finder.find_all(rrset.get_name(),
+                                                     ZoneFinder.NO_WILDCARD |
+                                                     ZoneFinder.FIND_GLUE_OK)
+        if result == ZoneFinder.SUCCESS and\
+           (flags & ZoneFinder.RESULT_WILDCARD == 0):
             return True
         return False
 
@@ -543,17 +544,16 @@ class UpdateSession:
         # is not explicitely ignored here)
         if rrset.get_type() == RRType.SOA():
             return
-        _, finder = self.datasrc_client.find_zone(rrset.get_name())
-        result, orig_rrset, _ = finder.find(rrset.get_name(),
-                                            rrset.get_type(),
-                                            finder.NO_WILDCARD |
-                                            finder.FIND_GLUE_OK)
-        if result == finder.CNAME:
+        result, orig_rrset, _ = self.finder.find(rrset.get_name(),
+                                                 rrset.get_type(),
+                                                 ZoneFinder.NO_WILDCARD |
+                                                 ZoneFinder.FIND_GLUE_OK)
+        if result == self.finder.CNAME:
             # Ignore non-cname rrs that try to update CNAME records
             # (if rrset itself is a CNAME, the finder result would be
             # SUCCESS, see next case)
             return
-        elif result == finder.SUCCESS:
+        elif result == ZoneFinder.SUCCESS:
             # if update is cname, and zone rr is not, ignore
             if rrset.get_type() == RRType.CNAME():
                 # Remove original CNAME record (the new one
@@ -563,7 +563,7 @@ class UpdateSession:
             # are special Update equality rules such as for WKS, and
             # we do have support for the type, this is where the check
             # (and potential delete) would go.
-        elif result == finder.NXRRSET:
+        elif result == ZoneFinder.NXRRSET:
             # There is data present, but not for this type.
             # If this type is CNAME, ignore the update
             if rrset.get_type() == RRType.CNAME():
@@ -577,11 +577,10 @@ class UpdateSession:
            Special cases: if the delete statement is for the
            zone's apex, and the type is either SOA or NS, it
            is ignored.'''
-        _, finder = self.datasrc_client.find_zone(rrset.get_name())
-        result, to_delete, _ = finder.find(rrset.get_name(),
-                                           rrset.get_type(),
-                                           finder.NO_WILDCARD |
-                                           finder.FIND_GLUE_OK)
+        result, to_delete, _ = self.finder.find(rrset.get_name(),
+                                                rrset.get_type(),
+                                                ZoneFinder.NO_WILDCARD |
+                                                ZoneFinder.FIND_GLUE_OK)
         if to_delete.get_name() == self.zname and\
            (to_delete.get_type() == RRType.SOA() or\
             to_delete.get_type() == RRType.NS()):
@@ -595,11 +594,10 @@ class UpdateSession:
            may never be removed (and any action that would do so
            should be ignored).
         '''
-        _, finder = self.datasrc_client.find_zone(rrset.get_name())
-        result, orig_rrset, _ = finder.find(rrset.get_name(),
-                                            rrset.get_type(),
-                                            finder.NO_WILDCARD |
-                                            finder.FIND_GLUE_OK)
+        result, orig_rrset, _ = self.finder.find(rrset.get_name(),
+                                                 rrset.get_type(),
+                                                 ZoneFinder.NO_WILDCARD |
+                                                 ZoneFinder.FIND_GLUE_OK)
         # Even a real rrset comparison wouldn't help here...
         # The goal is to make sure that after deletion of the
         # given rrset, at least 1 NS record is left (at the apex).
@@ -629,12 +627,11 @@ class UpdateSession:
            Special case: if the name is the zone's apex, SOA and
            NS records are kept.
         '''
-        _, finder = self.datasrc_client.find_zone(rrset.get_name())
-        result, rrsets, flags = finder.find_all(rrset.get_name(),
-                                                finder.NO_WILDCARD |
-                                                finder.FIND_GLUE_OK)
-        if result == finder.SUCCESS and\
-           (flags & finder.RESULT_WILDCARD == 0):
+        result, rrsets, flags = self.finder.find_all(rrset.get_name(),
+                                                     ZoneFinder.NO_WILDCARD |
+                                                     ZoneFinder.FIND_GLUE_OK)
+        if result == ZoneFinder.SUCCESS and\
+           (flags & ZoneFinder.RESULT_WILDCARD == 0):
             for to_delete in rrsets:
                 # if name == self.zname and type is soa or ns, don't delete!
                 if to_delete.get_name() == self.zname and\
@@ -680,10 +677,9 @@ class UpdateSession:
         # serial magic and add the newly created one
 
         # get it from DS and to increment and stuff
-        _, finder = self.datasrc_client.find_zone(self.zname)
-        result, old_soa, _ = finder.find(self.zname, RRType.SOA(),
-                                         finder.NO_WILDCARD |
-                                         finder.FIND_GLUE_OK)
+        result, old_soa, _ = self.finder.find(self.zname, RRType.SOA(),
+                                              ZoneFinder.NO_WILDCARD |
+                                              ZoneFinder.FIND_GLUE_OK)
 
         if self.__added_soa is not None:
             new_soa = self.__added_soa
