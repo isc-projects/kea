@@ -15,19 +15,21 @@
 
 '''Tests for the DDNS module'''
 
-import unittest
-import isc
 from isc.ddns.session import *
-import ddns
-import isc.config
-import select
-import errno
-import isc.util.cio.socketsession
-import socket
-import os.path
 from isc.dns import *
+import isc.util.cio.socketsession
+from isc.datasrc import DataSourceClient
+import ddns
+import errno
+import os
+import select
+import shutil
+import socket
+import unittest
 
 # Some common test parameters
+TESTDATA_PATH = os.environ['TESTDATA_PATH'] + os.sep
+READ_ZONE_DB_FILE = TESTDATA_PATH + "rwtest.sqlite3" # original, to be copied
 TEST_ZONE_NAME = Name('example.org')
 UPDATE_RRTYPE = RRType.SOA()
 TEST_QID = 5353                 # arbitrary chosen
@@ -132,13 +134,15 @@ class FakeKeyringModule:
         return TEST_TSIG_KEYRING
 
 class MyCCSession(isc.config.ConfigData):
-    '''Fake session with minimal interface compliance'''
+    '''Fake session with minimal interface compliance.'''
     def __init__(self):
         module_spec = isc.config.module_spec_from_file(
             ddns.SPECFILE_LOCATION)
         isc.config.ConfigData.__init__(self, module_spec)
         self._started = False
         self._stopped = False
+        # Used as the return value of get_remote_config_value.  Customizable.
+        self.auth_db_file = READ_ZONE_DB_FILE
 
     def start(self):
         '''Called by DDNSServer initialization, but not used in tests'''
@@ -153,6 +157,13 @@ class MyCCSession(isc.config.ConfigData):
         Used to get the file number for select.
         """
         return FakeSocket(1)
+
+    def add_remote_config(self, spec_file_name):
+        pass
+
+    def get_remote_config_value(self, module_name, item):
+        if module_name == "Auth" and item == "database_file":
+            return self.auth_db_file, False
 
 class MyDDNSServer():
     '''Fake DDNS server used to test the main() function'''
@@ -615,6 +626,37 @@ class TestMain(unittest.TestCase):
         self._server.set_exception(BaseException("error"))
         self.assertRaises(BaseException, ddns.main, self._server)
         self.assertTrue(self._server.exception_raised)
+
+class TestConfig(unittest.TestCase):
+    def setUp(self):
+        self.__ccsession = MyCCSession()
+
+    def test_file_path(self):
+        # Check some common paths
+        self.assertEqual(os.environ["B10_FROM_BUILD"] + "/ddns_socket",
+                         ddns.SOCKET_FILE)
+        self.assertEqual(os.environ["B10_FROM_SOURCE"] +
+                         "/src/bin/ddns/ddns.spec", ddns.SPECFILE_LOCATION)
+        self.assertEqual(os.environ["B10_FROM_BUILD"] +
+                         "/src/bin/auth/auth.spec",
+                         ddns.AUTH_SPECFILE_LOCATION)
+
+    def test_get_datasrc_client(self):
+        # The test sqlite DB should contain the example.org zone.
+        rrclass, datasrc_client = ddns.get_datasrc_client(self.__ccsession)
+        self.assertEqual(RRClass.IN(), rrclass)
+        self.assertEqual(DataSourceClient.SUCCESS,
+                         datasrc_client.find_zone(Name('example.org'))[0])
+
+    def test_get_datasrc_client_fail(self):
+        # DB file is in a non existent directory, and creatng the client
+        # will fail.  get_datasrc_client will return a dummy client, which
+        # will subsequently make find_zone() fail.
+        self.__ccsession.auth_db_file = './notexistentdir/somedb.sqlite3'
+        rrclass, datasrc_client = ddns.get_datasrc_client(self.__ccsession)
+        self.assertEqual(RRClass.IN(), rrclass)
+        self.assertRaises(isc.datasrc.Error,
+                          datasrc_client.find_zone, Name('example.org'))
 
 if __name__== "__main__":
     isc.log.resetUnitTestRootLogger()
