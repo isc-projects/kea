@@ -30,17 +30,17 @@ public:
     {}
 
 protected:
-    bool lock() {
+    virtual bool lock() {
         cout << "FIELD1 FIELD2 LOGGER_LOCK_TEST: LOCK\n";
         return (true);
     }
 
-    bool tryLock() {
+    virtual bool tryLock() {
         cout << "FIELD1 FIELD2 LOGGER_LOCK_TEST: TRYLOCK\n";
         return (true);
     }
 
-    bool unlock() {
+    virtual bool unlock() {
         cout << "FIELD1 FIELD2 LOGGER_LOCK_TEST: UNLOCK\n";
         return (true);
     }
