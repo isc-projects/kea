@@ -315,6 +315,13 @@ class DDNSServer:
         SocketSessionReceiver, i.e. tuple
         (socket, local_address, remote_address, data).
 
+        In general, this method doesn't propagate exceptions outside the
+        method.  Most of protocol or system errors will result in an error
+        response to the update client or dropping the update request.
+        The update session class should also ensure this.  Critical exceptions
+        such as memory allocation failure will be propagated, however, and
+        will subsequently terminate the server process.
+
         """
         # give tuple elements intuitive names
         (sock, local_addr, remote_addr, req_data) = req_session
@@ -335,9 +342,6 @@ class DDNSServer:
         except Exception as ex:
             logger.error(DDNS_REQUEST_PARSE_FAIL, ex)
             return False
-
-        # TODO: Don't propagate most of the exceptions (like datasrc errors),
-        # just drop the packet.
 
         # Let an update session object handle the request.  Note: things around
         # ZoneConfig will soon be substantially revised.  For now we don't
