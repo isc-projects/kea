@@ -21,11 +21,13 @@ import isc
 import bind10_config
 from isc.dns import *
 import isc.ddns.session
+from isc.ddns.zone_config import ZoneConfig
 from isc.config.ccsession import *
 from isc.cc import SessionError, SessionTimeout
 import isc.util.process
 import isc.util.cio.socketsession
 import isc.server_common.tsig_keyring
+from isc.datasrc import DataSourceClient
 import select
 import errno
 
@@ -41,26 +43,37 @@ isc.log.init("b10-ddns")
 logger = isc.log.Logger("ddns")
 TRACE_BASIC = logger.DBGLVL_TRACE_BASIC
 
+# Well known path settings.  We need to define
+# SPECFILE_LOCATION: ddns configuration spec file
+# SOCKET_FILE: Unix domain socket file to communicate with b10-auth
+# AUTH_SPECFILE_LOCATION: b10-auth configuration spec file (tentatively
+#  necessarily for sqlite3-only-and-older-datasrc-API stuff).  This should be
+#  gone once we migrate to the new API and start using generalized config.
+#
 # If B10_FROM_SOURCE is set in the environment, we use data files
 # from a directory relative to that, otherwise we use the ones
 # installed on the system
 if "B10_FROM_SOURCE" in os.environ:
-    SPECFILE_LOCATION = os.environ["B10_FROM_SOURCE"] + os.sep + \
-        "src" + os.sep + "bin" + os.sep + "ddns" + os.sep + "ddns.spec"
+    SPECFILE_PATH = os.environ["B10_FROM_SOURCE"] + "/src/bin/ddns"
 else:
     PREFIX = "@prefix@"
     DATAROOTDIR = "@datarootdir@"
-    SPECFILE_LOCATION = "@datadir@" + os.sep + "@PACKAGE@" + os.sep + "ddns.spec"
-    SPECFILE_LOCATION = SPECFILE_LOCATION.replace("${datarootdir}", DATAROOTDIR)\
-        .replace("${prefix}", PREFIX)
+    SPECFILE_PATH = "@datadir@/@PACKAGE@".replace("${datarootdir}", DATAROOTDIR)
+    SPECFILE_PATH = SPECFILE_PATH.replace("${prefix}", PREFIX)
 
-SOCKET_FILE = bind10_config.DATA_PATH + '/ddns_socket'
 if "B10_FROM_BUILD" in os.environ:
+    AUTH_SPECFILE_PATH = os.environ["B10_FROM_BUILD"] + "/src/bin/auth"
     if "B10_FROM_SOURCE_LOCALSTATEDIR" in os.environ:
-        SOCKET_FILE = os.environ["B10_FROM_SOURCE_LOCALSTATEDIR"] + \
-            "/ddns_socket"
+        SOCKET_FILE_PATH = os.environ["B10_FROM_SOURCE_LOCALSTATEDIR"]
     else:
-        SOCKET_FILE = os.environ["B10_FROM_BUILD"] + "/ddns_socket"
+        SOCKET_FILE_PATH = os.environ["B10_FROM_BUILD"]
+else:
+    SOCKET_FILE_PATH = bind10_config.DATA_PATH
+    AUTH_SPECFILE_PATH = SPECFILE_PATH
+
+SPECFILE_LOCATION = SPECFILE_PATH + "/ddns.spec"
+SOCKET_FILE = SOCKET_FILE_PATH + '/ddns_socket'
+AUTH_SPECFILE_LOCATION = AUTH_SPECFILE_PATH + '/auth.spec'
 
 isc.util.process.rename()
 
@@ -95,6 +108,43 @@ def clear_socket():
     if os.path.exists(SOCKET_FILE):
         os.remove(SOCKET_FILE)
 
+def get_datasrc_client(cc_session):
+    '''Return data source client for update requests.
+
+    This is supposed to have a very short lifetime and should soon be replaced
+    with generic data source configuration framework.  Based on that
+    observation we simply hardcode everything except the SQLite3 database file,
+    which will be retrieved from the auth server configuration (this behavior
+    will also be deprecated).  When something goes wrong with it this function
+    still returns a dummy client so that the caller doesn't have to bother
+    to handle the error (which would also have to be replaced anyway).
+    The caller will subsequently call its find_zone method via an update
+    session object, which will result in an exception, and then result in
+    a SERVFAIL response.
+
+    Once we are ready for introducing the general framework, the whole
+    function will simply be removed.
+
+    '''
+    try:
+        HARDCODED_DATASRC_CLASS = RRClass.IN()
+        file, is_default = cc_session.get_remote_config_value("Auth",
+                                                              "database_file")
+        # See xfrout.py:get_db_file() for this trick:
+        if is_default and "B10_FROM_BUILD" in os.environ:
+            file = os.environ["B10_FROM_BUILD"] + "/bind10_zones.sqlite3"
+
+        datasrc_config = '{ "database_file": "' + file + '"}'
+        return HARDCODED_DATASRC_CLASS, DataSourceClient('sqlite3',
+                                                         datasrc_config)
+    except isc.datasrc.Error as ex:
+        class DummyDataSourceClient:
+            def __init__(self, ex):
+                self.__ex = ex
+            def find_zone(self, zone_name):
+                raise isc.datasrc.Error(self.__ex)
+        return HARDCODED_DATASRC_CLASS, DummyDataSourceClient(ex)
+
 class DDNSServer:
     def __init__(self, cc_session=None):
         '''
@@ -114,7 +164,10 @@ class DDNSServer:
 
         self._config_data = self._cc.get_full_config()
         self._cc.start()
+
+        self._cc.add_remote_config(AUTH_SPECFILE_LOCATION)
         isc.server_common.tsig_keyring.init_keyring(self._cc)
+
         self._shutdown = False
         # List of the session receivers where we get the requests
         self._socksession_receivers = {}
@@ -261,9 +314,13 @@ class DDNSServer:
         # TODO: Don't propagate most of the exceptions (like datasrc errors),
         # just drop the packet.
 
-        # Let an update session object handle the request.
+        # Let an update session object handle the request.  Note: things around
+        # ZoneConfig will soon be substantially revised.  For now we don't
+        # bother to generalize it.
+        datasrc_class, datasrc_client = get_datasrc_client(self._cc)
+        zone_cfg = ZoneConfig([], datasrc_class, datasrc_client, {})
         update_session = self._UpdateSessionClass(self.__request_msg,
-                                                  remote_addr, None)
+                                                  remote_addr, zone_cfg)
         result, zname, zclass = update_session.handle()
 
         # If the request should be dropped, we're done; otherwise, send the
