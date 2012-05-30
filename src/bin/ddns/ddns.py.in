@@ -323,6 +323,10 @@ class DDNSServer:
         such as memory allocation failure will be propagated, however, and
         will subsequently terminate the server process.
 
+        Return: True if a response to the request is successfully sent;
+        False otherwise.  The return value wouldn't be useful for the server
+        itself; it's provided mainly for testing purposes.
+
         """
         # give tuple elements intuitive names
         (sock, local_addr, remote_addr, req_data) = req_session
