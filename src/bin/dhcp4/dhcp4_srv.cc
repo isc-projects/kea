@@ -52,15 +52,23 @@ Dhcpv4Srv::Dhcpv4Srv(uint16_t port) {
 }
 
 Dhcpv4Srv::~Dhcpv4Srv() {
-    cout << "DHCPv4 server shutdown." << endl;
+    cout << "b10-dhcp4: DHCPv4 server terminating." << endl;
     IfaceMgr::instance().closeSockets();
+}
+
+void Dhcpv4Srv::shutdown() {
+    cout << "b10-dhcp4: DHCPv4 server shutdown." << endl;
+    shutdown_ = true;
 }
 
 bool
 Dhcpv4Srv::run() {
     while (!shutdown_) {
+        /// @todo: calculate actual timeout once we have lease database
+        int timeout = 1000;
+
         // client's message and server's response
-        Pkt4Ptr query = IfaceMgr::instance().receive4();
+        Pkt4Ptr query = IfaceMgr::instance().receive4(timeout);
         Pkt4Ptr rsp;
 
         if (query) {

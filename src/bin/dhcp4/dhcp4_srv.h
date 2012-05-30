@@ -60,6 +60,9 @@ class Dhcpv4Srv : public boost::noncopyable {
     ///         critical error.
     bool run();
 
+    /// @brief instructs server to shut down.
+    void shutdown();
+
 protected:
     /// @brief Processes incoming DISCOVER and returns response.
     ///
