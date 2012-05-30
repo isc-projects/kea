@@ -23,6 +23,7 @@ import bind10_config
 from isc.dns import *
 import isc.ddns.session
 from isc.ddns.zone_config import ZoneConfig
+from isc.ddns.logger import ClientFormatter
 from isc.config.ccsession import *
 from isc.cc import SessionError, SessionTimeout
 import isc.util.process
@@ -363,7 +364,12 @@ class DDNSServer:
             msg.to_wire(self.__response_renderer, tsig_ctx)
         else:
             msg.to_wire(self.__response_renderer)
-        sock.sendto(self.__response_renderer.get_data(), remote_addr)
+        try:
+            sock.sendto(self.__response_renderer.get_data(), remote_addr)
+        except socket.error as ex:
+            logger.error(DDNS_RESPONSE_SOCKET_ERROR,
+                         ClientFormatter(remote_addr), ex)
+            return False
 
         return True
 

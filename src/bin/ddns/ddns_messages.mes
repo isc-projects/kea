@@ -99,3 +99,8 @@ checks, such an error shouldn't be detected at this stage and should
 rather be considered an internal bug.  This event is therefore logged
 at the error level, and the request is simply dropped.  Additional
 information of the error is also logged.
+
+% DDNS_RESPONSE_SOCKET_ERROR failed to send update response to %1: %2
+Network I/O error happens in sending an update request.  The
+client's address that caused the error and error details are also
+logged.
