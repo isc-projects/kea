@@ -428,7 +428,7 @@ TEST_F(IfaceMgrTest, sendReceive4) {
 
     EXPECT_EQ(true, ifacemgr->send(sendPkt));
 
-    rcvPkt = ifacemgr->receive4();
+    rcvPkt = ifacemgr->receive4(10);
 
     ASSERT_TRUE(rcvPkt); // received our own packet
 

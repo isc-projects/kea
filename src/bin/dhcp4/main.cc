@@ -37,6 +37,7 @@
 
 #include <dhcp4/spec_config.h>
 #include <dhcp4/dhcp4_srv.h>
+#include <dhcp/iface_mgr.h>
 
 #include <asiolink/asiolink.h>
 #include <log/logger_support.h>
@@ -65,7 +66,12 @@ usage() {
 }
 } // end of anonymous namespace
 
+// Global objects are ugly, but that is the most convenient way of
+// having it accessible from handlers.
 IOService io_service;
+
+// The same applies to global pointers. Ugly, but useful.
+Dhcpv4Srv* server = NULL;
 
 ConstElementPtr
 dhcp4_config_handler(ConstElementPtr new_config) {
@@ -80,6 +86,9 @@ dhcp4_command_handler(const string& command, ConstElementPtr args) {
     cout << "b10-dhcp4: Received new command: [" << command << "], args="
          << args->str() << endl;
     if (command == "shutdown") {
+        if (server) {
+            server->shutdown();
+        }
         io_service.stop();
         ConstElementPtr answer = isc::config::createAnswer(0,
                                  "Shutting down.");
@@ -92,6 +101,9 @@ dhcp4_command_handler(const string& command, ConstElementPtr args) {
     return (answer);
 }
 
+void session_reader(void) {
+    io_service.run_one();
+}
 
 void establish_session() {
 
@@ -113,14 +125,18 @@ void establish_session() {
     config_session = new ModuleCCSession(specfile, *cc_session,
                                          dhcp4_config_handler,
                                          dhcp4_command_handler, false);
-    cout << "b10-dhcp4: hasQueuedMsgs()=" << config_session->hasQueuedMsgs() << endl;
 
     config_session->start();
-    cout << "b10-dhcp4: After session start." << endl;
 
-    cout << "b10-dhcp4: About to call io_service.run()" << endl;
-    io_service.run();
-    cout << "b10-dhcp4: Returned from io_service.run()" << endl;
+    int ctrl_socket = cc_session->getSocketDesc();
+    cout << "b10-dhcp4: Control session started, socket="
+         << ctrl_socket << endl;
+
+    IfaceMgr::instance().set_session_socket(ctrl_socket, session_reader);
+
+    // cout << "b10-dhcp4: About to call io_service.run()" << endl;
+    // io_service.run();
+    // cout << "b10-dhcp4: Returned from io_service.run()" << endl;
 }
 
 int
@@ -159,9 +175,11 @@ main(int argc, char* argv[]) {
 
         cout << "[b10-dhcp4] Initiating DHCPv4 server operation." << endl;
 
-        Dhcpv4Srv* srv = new Dhcpv4Srv();
+        server = new Dhcpv4Srv();
 
-        srv->run();
+        server->run();
+
+        delete server;
 
     } catch (const std::exception& ex) {
         cerr << "[b10-dhcp4] Server failed: " << ex.what() << endl;
