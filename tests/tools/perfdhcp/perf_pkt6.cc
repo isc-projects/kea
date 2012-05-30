@@ -12,6 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <iostream>
 #include <exceptions/exceptions.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/dhcp6.h>
@@ -24,39 +25,6 @@ using namespace isc;
 namespace isc {
 namespace perfdhcp {
 
-
-PerfPkt6::PositionedOption::PositionedOption(dhcp::Option::Universe u,
-                                             uint16_t type,
-                                             const dhcp::OptionBuffer& data) :
-    dhcp::Option(u, type, data),
-    position_(0) {
-}
-
-PerfPkt6::PositionedOption::PositionedOption(dhcp::Option::Universe u,
-                                             uint16_t type,
-                                             const dhcp::OptionBuffer& data,
-                                             const size_t position) :
-    dhcp::Option(u, type, data),
-    position_(position) {
-}
-
-PerfPkt6::PositionedOption::PositionedOption(dhcp::Option::Universe u,
-                                             uint16_t type,
-                                             dhcp::OptionBufferConstIter first,
-                                             dhcp::OptionBufferConstIter last) :
-    dhcp::Option(u, type, first, last),
-    position_(0) {
-}
-
-PerfPkt6::PositionedOption::PositionedOption(dhcp::Option::Universe u,
-                                             uint16_t type,
-                                             dhcp::OptionBufferConstIter first,
-                                             dhcp::OptionBufferConstIter last,
-                                             const size_t position) :
-    dhcp::Option(u, type, first, last),
-    position_(position) {
-}
-
 PerfPkt6::PerfPkt6(const uint8_t* buf, uint32_t len, size_t transid_offset) :
     Pkt6(buf, len, dhcp::Pkt6::UDP),
     transid_offset_(transid_offset) {
@@ -65,32 +33,8 @@ PerfPkt6::PerfPkt6(const uint8_t* buf, uint32_t len, size_t transid_offset) :
     memset(static_cast<void*>(&time_stamp_), 0, sizeof(time_stamp_));
 }
 
-void
-PerfPkt6::stampedPack() {
-    // This function simply wraps pack() function from parent class
-    // and then updates timestamp.
-    if (!pack()) {
-        isc_throw(isc::Unexpected, "Failed to prepare packet to send");
-    }
-    // Update pack time for RTT calculations.
-    updateTimestamp();
-}
-
-void
-PerfPkt6::stampedUnpack() {
-    // Update timestamp of the packet for RTT calculations.
-    // We do this before unpacking the packet so as unpack
-    // time will not affect the timestamp.
-    updateTimestamp();
-
-    // Unpack the incoming packet.
-    if (!unpack()) {
-        isc_throw(isc::Unexpected, "Failed to unpack incoming packet");
-    }
-}
-
-void
-PerfPkt6::stampedRawPack() {
+bool
+PerfPkt6::rawPack() {
     try {
         // Always override the packet if function is called.
         bufferOut_.clear();
@@ -99,19 +43,16 @@ PerfPkt6::stampedRawPack() {
         // We already have packet template stored in out buffer
         // but still some options have to be updated if client
         // specified them along with their offsets in the buffer.
-        updateOptions();
-    } catch (Exception& e) {
-        isc_throw(isc::Unexpected, "Failed to build packet from buffer");
+        rawPackOptions();
+    } catch (isc::Unexpected& e) {
+        cout << "Failed to build packet: " << e.what() << endl;
+        return (false);
     }
-    // Update packet timestamp for RTT calculations - do not include pack time.
-    updateTimestamp();
+    return (true);
 }
 
-void
-PerfPkt6::stampedRawUnpack() {
-    // Update packet timestamp for RTT calculations but do not include unpack time.
-    updateTimestamp();
-
+bool
+PerfPkt6::rawUnpack() {
     // Read transaction id from the packet at the given offset.
     transid_ = ( (data_[transid_offset_]) << 16 ) +
         ((data_[transid_offset_ + 1]) << 8) + (data_[transid_offset_ + 2]);
@@ -119,22 +60,26 @@ PerfPkt6::stampedRawUnpack() {
 
     // Get message type - assume it is first octet in the packet.
     msg_type_ = data_[0];
-
-    rawUnpackOptions();
+    try {
+        rawUnpackOptions();
+    } catch (isc::Unexpected& e) {
+        cout << "Packet parsing failed: " << e.what() << endl;
+        return (false);
+    }
+    return (true);
 }
 
 
 void
-PerfPkt6::updateOptions() {
+PerfPkt6::rawPackOptions() {
     try {
         // If there are any options on the list we will use provided options offsets
         // to override them in the output buffer with new contents.
         for (dhcp::Option::OptionCollection::const_iterator it = options_.begin();
              it != options_.end(); ++it) {
             // Get options with their position (offset).
-            boost::shared_ptr<PositionedOption> option = boost::dynamic_pointer_cast<PositionedOption>(it->second);
-            uint32_t position = option->getOptionPosition();
-            // If position is specified w need to seek to it.
+            boost::shared_ptr<LocalizedOption> option = boost::dynamic_pointer_cast<LocalizedOption>(it->second);
+            uint32_t position = option->getOffset();
             if (position > 0) {
                 bufferOut_.clear();
                 bufferOut_.skip(position);
@@ -142,6 +87,9 @@ PerfPkt6::updateOptions() {
             // Replace existing option with new value.
             option->pack(bufferOut_);
         }
+        // Seek to the end of the end of the buffer
+        bufferOut_.clear();
+        bufferOut_.skip(data_.size());
     }
     catch (const Exception&) {
         isc_throw(isc::Unexpected, "Failed to build packet (Option build failed");
@@ -153,8 +101,8 @@ PerfPkt6::rawUnpackOptions() {
     for (dhcp::Option::OptionCollection::const_iterator it = options_.begin();
          it != options_.end(); ++it) {
 
-        PositionedOptionPtr option = boost::dynamic_pointer_cast<PositionedOption>(it->second);
-        size_t opt_pos = option->getOptionPosition();
+        LocalizedOptionPtr option = boost::dynamic_pointer_cast<LocalizedOption>(it->second);
+        size_t opt_pos = option->getOffset();
 
         if (opt_pos == 0) {
             isc_throw(isc::BadValue, "Failed to unpack packet from raw buffer "
