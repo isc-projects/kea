@@ -16,6 +16,7 @@
 #define PKT6_H
 
 #include <iostream>
+#include <time.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/shared_array.hpp>
 #include "asiolink/io_address.h"
@@ -220,6 +221,14 @@ public:
     /// @return interface name
     std::string getIface() const { return iface_; };
 
+    /// @brief Returns packet timestamp.
+    ///
+    /// Returns packet timestamp value updated when
+    /// packet is received or send.
+    ///
+    /// @return packet timestamp.
+    timespec getTimestamp() const { return timestamp_; }
+
     /// @brief Sets interface name.
     ///
     /// Sets interface name over which packet was received or is
@@ -232,6 +241,14 @@ public:
 
     /// collection of options present in this message
     isc::dhcp::Option::OptionCollection options_;
+
+    /// @brief Update packet timestamp.
+    ///
+    /// Updates packet timestamp. This method is invoked
+    /// by interface manager just before sending or
+    /// just after receiving it.
+    /// @throw isc::Unexpected if timestamp update failed
+    void updateTimestamp();
 
 protected:
     /// Builds on wire packet for TCP transmission.
@@ -305,6 +322,9 @@ protected:
 
     /// output buffer (used during message transmission)
     isc::util::OutputBuffer bufferOut_;
+
+    /// packet timestamp
+    timespec timestamp_;
 }; // Pkt6 class
 
 typedef boost::shared_ptr<Pkt6> Pkt6Ptr;

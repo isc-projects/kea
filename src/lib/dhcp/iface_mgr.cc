@@ -597,6 +597,8 @@ IfaceMgr::send(const Pkt6Ptr& pkt) {
     pktinfo->ipi6_ifindex = pkt->getIndex();
     m.msg_controllen = cmsg->cmsg_len;
 
+    pkt->updateTimestamp();
+
     result = sendmsg(getSocket(*pkt), &m, 0);
     if (result < 0) {
         isc_throw(Unexpected, "Pkt6 send failed: sendmsg() returned " << result);
@@ -655,6 +657,8 @@ IfaceMgr::send(const Pkt4Ptr& pkt)
          << pkt->getRemoteAddr().toText() << ":" << pkt->getRemotePort()
          << " over socket " << getSocket(*pkt) << " on interface "
          << getIface(pkt->getIface())->getFullName() << endl;
+
+    pkt->updateTimestamp();
 
     int result = sendmsg(getSocket(*pkt), &m, 0);
     if (result < 0) {
@@ -745,6 +749,8 @@ IfaceMgr::receive4() {
 
     // We have all data let's create Pkt4 object.
     Pkt4Ptr pkt = Pkt4Ptr(new Pkt4(buf, result));
+
+    pkt->updateTimestamp();
 
     unsigned int ifindex = iface->getIndex();
 
@@ -889,6 +895,8 @@ Pkt6Ptr IfaceMgr::receive6() {
         cout << "Failed to create new packet." << endl;
         return (Pkt6Ptr()); // NULL
     }
+
+    pkt->updateTimestamp();
 
     pkt->setLocalAddr(IOAddress::from_bytes(AF_INET6,
                       reinterpret_cast<const uint8_t*>(&to_addr)));

@@ -204,4 +204,13 @@ TEST_F(Pkt6Test, addGetDelOptions) {
     delete parent;
 }
 
+TEST_F(Pkt6Test, Timestamp) {
+    Pkt6* pkt = new Pkt6(DHCPV6_SOLICIT, 0x020304);
+    ASSERT_NO_THROW(pkt->updateTimestamp());
+    timespec ts_packet = pkt->getTimestamp();
+    timespec ts_now;
+    ASSERT_FALSE(clock_gettime(CLOCK_REALTIME, &ts_now) < 0);
+    EXPECT_TRUE(ts_packet.tv_sec >= ts_now.tv_sec);
+}
+
 }
