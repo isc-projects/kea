@@ -39,6 +39,9 @@ public:
     /// type that defines list of addresses
     typedef std::vector<isc::asiolink::IOAddress> AddressCollection;
 
+    /// defines callback used when commands are received over control session
+    typedef void (*SessionCallback) (void);
+
     /// maximum MAC address length (Infiniband uses 20 bytes)
     static const unsigned int MAX_MAC_LEN = 20;
 
@@ -351,12 +354,10 @@ public:
     /// If reception is successful and all information about its sender
     /// are obtained, Pkt4 object is created and returned.
     ///
-    /// TODO Start using select() and add timeout to be able
-    /// to not wait infinitely, but rather do something useful
-    /// (e.g. remove expired leases)
+    /// @param timeout specifies timeout (in seconds)
     ///
     /// @return Pkt4 object representing received packet (or NULL)
-    Pkt4Ptr receive4();
+    Pkt4Ptr receive4(unsigned int timeout);
 
     /// Opens UDP/IP socket and binds it to address, interface and port.
     ///
@@ -400,6 +401,18 @@ public:
     ///
     /// @return number of detected interfaces
     uint16_t countIfaces() { return ifaces_.size(); }
+
+    /// @brief Sets session socket and a callback
+    ///
+    /// Specifies session socket and a callback that will be called
+    /// when data will be received over that socket.
+    ///
+    /// @param socketfd socket descriptor
+    /// @param callback callback function
+    void set_session_socket(int socketfd, SessionCallback callback) {
+        session_socket_ = socketfd;
+        session_callback_ = callback;
+    }
 
     // don't use private, we need derived classes in tests
 protected:
@@ -487,7 +500,6 @@ protected:
     /// control-buffer, used in transmission and reception
     boost::scoped_array<char> control_buf_;
 
-
     /// @brief A wrapper for OS-specific operations before sending IPv4 packet
     ///
     /// @param m message header (will be later used for sendmsg() call)
@@ -505,6 +517,11 @@ protected:
     /// @return true if successful, false otherwise
     bool os_receive4(struct msghdr& m, Pkt4Ptr& pkt);
 
+    /// socket descriptor of the session socket
+    int session_socket_;
+
+    /// a callback that will be called when data arrives over session_socket_
+    SessionCallback session_callback_;
 private:
 
     /// @brief Creates a single instance of this class (a singleton implementation)
