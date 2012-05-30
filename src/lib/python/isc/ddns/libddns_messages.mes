@@ -50,7 +50,7 @@ configuration of those clients to suppress the requests.  As specified
 in Section 3.1 of RFC2136, the receiving server will return a response
 with an RCODE of NOTAUTH.
 
-% LIBDDNS_UPDATE_REFUSED update client %1 for zone %2 denied
+% LIBDDNS_UPDATE_DENIED update client %1 for zone %2 denied
 Informational message.  An update request was denied because it was
 rejected by the zone's update ACL.  When this library is used by
 b10-ddns, the server will respond to the request with an RCODE of
