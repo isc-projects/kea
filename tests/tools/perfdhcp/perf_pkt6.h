@@ -16,7 +16,7 @@
 #define __PERF_PKT6_H
 
 #include <time.h>
-
+#include <boost/shared_ptr.hpp>
 #include <dhcp/pkt6.h>
 
 namespace isc {
@@ -55,28 +55,6 @@ namespace perfdhcp {
 class PerfPkt6 : public dhcp::Pkt6 {
 public:
 
-    /// \brief Class represents position of DHCP option in a packet
-    class OptionPosition {
-    public:
-        /// \brief Class constructor
-        ///
-        /// Applies default value of option position
-        explicit OptionPosition() : position_(0) { };
-
-        /// \brief Class constructor
-        ///
-        /// \param position position of option in DHCP packet
-        explicit OptionPosition(size_t position) : position_(position)  { };
-
-        /// \brief Returns position of DHCP option in a packet
-        ///
-        /// \return position of DHCP option in packet
-        size_t get() const { return position_; }
-    private:
-        size_t position_;    ///< position of option in a packet
-                               ///< Zero is default position
-    };
-
     /// \brief DHCPv6 option at specific offset
     ///
     /// This class represents DHCPv6 option at specified
@@ -84,6 +62,16 @@ public:
     ///
     class PositionedOption : public dhcp::Option {
     public:
+
+        /// \brief Constructor, sets default (0) option position
+        ///
+        ///
+        /// \param u specifies universe (V4 or V6)
+        /// \param type option type (0-255 for V4 and 0-65535 for V6)
+        /// \param data content of the option
+        PositionedOption(dhcp::Option::Universe u, uint16_t type, const dhcp::OptionBuffer& data);
+
+
         /// \brief Constructor, used to create positioned option from buffer
         ///
         ///
@@ -92,7 +80,21 @@ public:
         /// \param data content of the option
         /// \param position absolute position of option in a packet (zero is default)
         PositionedOption(dhcp::Option::Universe u, uint16_t type, const dhcp::OptionBuffer& data,
-                         const OptionPosition& position);
+                         const size_t position);
+
+        /// \brief Constructor, sets default (0) option position
+        ///
+        /// This contructor is similar to the previous one, but it does not take
+        /// the whole vector<uint8_t>, but rather subset of it.
+        ///
+        /// \param u specifies universe (V4 or V6)
+        /// \param type option type (0-255 for V4 and 0-65535 for V6)
+        /// \param first iterator to the first element that should be copied
+        /// \param last iterator to the next element after the last one
+        ///        to be copied.
+        /// \param position absolute position of option in a packet (zero is default)
+        PositionedOption(dhcp::Option::Universe u, uint16_t type, dhcp::OptionBufferConstIter first,
+                         dhcp::OptionBufferConstIter last);
 
         /// \brief Constructor, used to create positioned option from buffer iterators
         ///
@@ -106,18 +108,20 @@ public:
         ///        to be copied.
         /// \param position absolute position of option in a packet (zero is default)
         PositionedOption(dhcp::Option::Universe u, uint16_t type, dhcp::OptionBufferConstIter first,
-                         dhcp::OptionBufferConstIter last, const OptionPosition& position);
+                         dhcp::OptionBufferConstIter last, const size_t position);
 
 
         /// \brief Returns absolute position (offset) of an option in a
         /// DHCPv6 packet.
         ///
         /// \return absolute position (offset) of an option in a packet
-        size_t getOptionPosition() const { return position_.get(); };
+        size_t getOptionPosition() const { return position_; };
 
     private:
-        OptionPosition position_;   ///< Absolute position of DHCPv6 option in a packet
+        size_t position_;   ///< Absolute position of DHCPv6 option in a packet
     };
+
+    typedef boost::shared_ptr<PositionedOption> PositionedOptionPtr;
 
     /// Constructor, used in message transmission
     ///
@@ -143,7 +147,17 @@ public:
     /// \param xid_off transaction id offset in a packet
     PerfPkt6(const uint8_t* buf,
              uint32_t len,
-             const OptionPosition& transid_offset);
+             size_t transid_offset_);
+
+    /// \brief Returns transaction id offset in packet buffer
+    ///
+    /// return transaction id offset in packet buffer
+    size_t getTransIdOffset() const { return transid_offset_; };
+
+    /// \brief Returns current packet timestamp
+    ///
+    /// \return current packet timestamp
+    timespec getTimestamp() const { return time_stamp_; }
 
     /// \brief Prepare on-wire packet format and record timestamp
     ///
@@ -208,13 +222,15 @@ private:
     /// throw isc::Unexpected if options update fails
     void updateOptions();
 
+    void rawUnpackOptions();
+
     /// \brief Update packet timestamp with current time
     ///
     /// \throw isc::Unexpected if timestamp update failed
     void updateTimestamp();
 
-    OptionPosition transid_offset_;  ///< transaction id offset
-    timespec time_stamp_;            ///< time stamp of last pack or unpack
+    size_t transid_offset_;      ///< transaction id offset
+    timespec time_stamp_;        ///< time stamp of last pack or unpack
 
 };
 

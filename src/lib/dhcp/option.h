@@ -244,6 +244,15 @@ public:
     /// @param value value to be set
     void setUint32(uint32_t value);
 
+    /// @brief Sets content of this option from buffer.
+    ///
+    /// Option will be resized to length of buffer.
+    ///
+    /// @param first iterator pointing begining of buffer to copy.
+    /// @param last iterator pointing to end of buffer to copy.
+    void setData(OptionBufferConstIter first,
+                 OptionBufferConstIter last);
+
     /// just to force that every option has virtual dtor
     virtual ~Option();
 
