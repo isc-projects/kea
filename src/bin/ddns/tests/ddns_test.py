@@ -58,6 +58,7 @@ class FakeSocket:
     A fake socket. It only provides a file number, peer name and accept method.
     """
     def __init__(self, fileno):
+        self.proto = socket.IPPROTO_UDP
         self.__fileno = fileno
         self._sent_data = None
         self._sent_addr = None
@@ -674,6 +675,15 @@ class TestDDNSession(unittest.TestCase):
                                                      create_msg())))
         # this check ensures sendto() was really attempted.
         self.check_update_response(self.__sock._sent_data, Rcode.NOERROR())
+
+    def test_tcp_request(self):
+        # Right now TCP request is not supported.
+        s = self.__sock
+        s.proto = socket.IPPROTO_TCP
+        self.assertFalse(self.server.handle_request((s, TEST_SERVER6,
+                                                     TEST_SERVER4,
+                                                     create_msg())))
+        self.assertEqual((None, None), (s._sent_data, s._sent_addr))
 
     def test_session_with_config(self):
         '''Check a session with more relistic config setups

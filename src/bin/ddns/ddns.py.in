@@ -334,6 +334,8 @@ class DDNSServer:
         # or dropped by the sender, so if such error is detected we treat it
         # as an internal error and don't bother to respond.
         try:
+            if sock.proto == socket.IPPROTO_TCP:
+                raise SessionError('TCP requests are not yet supported')
             self.__request_msg.clear(Message.PARSE)
             self.__request_msg.from_wire(req_data)
             if self.__request_msg.get_opcode() != Opcode.UPDATE():
