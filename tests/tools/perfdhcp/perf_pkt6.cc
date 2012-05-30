@@ -87,9 +87,8 @@ PerfPkt6::rawPackOptions() {
             // Replace existing option with new value.
             option->pack(bufferOut_);
         }
-        // Seek to the end of the end of the buffer
-        bufferOut_.clear();
-        bufferOut_.skip(data_.size());
+        // Seek to the end of the buffer to make sure size is correct.
+        bufferOut_.skip(data_.size() - bufferOut_.getLength());
     }
     catch (const Exception&) {
         isc_throw(isc::Unexpected, "Failed to build packet (Option build failed");
@@ -113,7 +112,11 @@ PerfPkt6::rawUnpackOptions() {
         }
 
         size_t offset = opt_pos;
-        //        uint16_t opt_type = data_[offset] * 256 + data_[offset + 1];
+        uint16_t opt_type = data_[offset] * 256 + data_[offset + 1];
+        if (opt_type != option->getType()) {
+            isc_throw(isc::BadValue,
+                      "Failed to unpack option from raw buffer (Option type mismatch)");
+        }
         offset += 2;
         uint16_t opt_len = data_[offset] * 256 + data_[offset + 1];
         offset += 2;

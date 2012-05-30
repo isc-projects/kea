@@ -47,10 +47,6 @@ namespace perfdhcp {
 /// that options must be of the
 /// \ref isc::perfdhcp::LocalizedOption type.
 ///
-/// This class also records timestamps of last pack/unpack
-/// operation on the packet. This is to track DHCP server
-/// performance based on packet's send/receive duration.
-///
 /// \note: if you don't use template files simply use constructors
 /// inherited from parent class and isc::dhcp::Option type instead
 ///
@@ -100,11 +96,10 @@ public:
     /// The method copies user buffer to output buffer and
     /// extracts transaction id from it based on transaction id
     /// offset provided in constructor.
-    /// Eventually, this method updates packet timestamp.
     ///
     /// \note: Use this method to prepare on-wire DHCPv6 message
     /// when you use template packets that require replacement
-    /// of selected options contents before sending.
+    /// of selected options' contents before sending.
     ///
     /// \retrun false, id pack operation failed.
     bool rawPack();
@@ -130,16 +125,32 @@ private:
 
     /// \brief Updates options in the output buffer
     ///
-    /// This method updates options in the output buffer
-    /// with the ones provided with
-    /// \ref isc::dhcp::Pkt6::addOption. It is expected
-    /// that these options will be of the
-    /// \ref isc::perfdhcp::LocalizedOption type
-    /// with their position (offset) specified.
+    /// The method uses options collection added to object
+    /// of this class with \ref dhcp::Pkt6::addOption to
+    /// on-wire data. Option objects has to be of
+    /// \ref perfdhcp::LocalizedOption type and should
+    /// have non-zero values of offsets specified.
+    /// This method will use these offsets to seek to
+    /// given position in output buffer and update option
+    /// on-wire data with contents of option's buffer.
     ///
     /// \throw isc::Unexpected if options update failed.
     void rawPackOptions();
 
+    /// \brief Reads contents of specified options from buffer
+    ///
+    /// The method reads options data from the copy of the buffer
+    /// provided in constructor and stores data in options
+    /// objects that belong to options collection.
+    /// Client class that constructs this object has to create
+    /// options collection prior to calling \ref rawUnpack
+    /// method that in turn calls this method.
+    /// If option is not added to options collection, it will
+    /// not be added by this method. This method will rather
+    /// skip update of such an option even if it is present
+    /// in packet's buffer.
+    ///
+    /// \throw isc::Unexpected if options unpack failed.
     void rawUnpackOptions();
 
     size_t transid_offset_;      ///< transaction id offset
