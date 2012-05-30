@@ -145,6 +145,11 @@ class UpdateSession:
                 return UPDATE_ERROR, None, None
             self.__message = None
             return UPDATE_DROP, None, None
+        except isc.datasrc.Error as e:
+            logger.error(LIBDDNS_DATASRC_ERROR,
+                         ClientFormatter(self.__client_addr, self.__tsig), e)
+            self.__make_response(Rcode.SERVFAIL())
+            return UPDATE_ERROR, None, None
 
     def __get_update_zone(self):
         '''Parse the zone section and find the zone to be updated.
