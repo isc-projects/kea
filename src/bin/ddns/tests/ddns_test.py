@@ -660,6 +660,28 @@ class TestDDNSession(unittest.TestCase):
         self.check_session(result=UPDATE_DROP, ipv6=False,
                            tsig_key=BAD_TSIG_KEY)
 
+    def test_session_with_config(self):
+        '''Check a session with more relistic config setups
+
+        We don't have to explore various cases in detail in this test.
+        We're just checking if the expected configured objects are passed
+        to the session object.
+
+        '''
+
+        # reset the session class to the real one
+        self.server._UpdateSessionClass = isc.ddns.session.UpdateSession
+
+        # install all-drop ACL
+        new_config = { 'zones': [ { 'origin': TEST_ZONE_NAME_STR,
+                                    'class': TEST_RRCLASS_STR,
+                                    'update_acl': [{'action': 'DROP'}] } ] }
+        answer = self.server.config_handler(new_config)
+        self.assertEqual((0, None), isc.config.parse_answer(answer))
+
+        # check the result
+        self.check_session(UPDATE_DROP)
+
 class TestMain(unittest.TestCase):
     def setUp(self):
         self._server = MyDDNSServer()
