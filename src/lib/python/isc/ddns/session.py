@@ -186,7 +186,7 @@ class UpdateSession:
         action = acl.execute(isc.acl.dns.RequestContext(
                 (self.__client_addr[0], self.__client_addr[1]), self.__tsig))
         if action == REJECT:
-            logger.info(LIBDDNS_UPDATE_REFUSED,
+            logger.info(LIBDDNS_UPDATE_DENIED,
                         ClientFormatter(self.__client_addr, self.__tsig),
                         ZoneFormatter(zname, zclass))
             raise UpdateError('rejected', zname, zclass, Rcode.REFUSED(), True)
