@@ -81,6 +81,14 @@ TEST_F(FormatterTest, stringArg) {
     }
 }
 
+// Test the .deactivate() method
+TEST_F(FormatterTest, deactivate) {
+    Formatter(isc::log::INFO, s("Text of message"), this).deactivate();
+    // If there was no .deactivate, it should have output it.
+    // But not now.
+    ASSERT_EQ(0, outputs.size());
+}
+
 // Can convert to string
 TEST_F(FormatterTest, intArg) {
     Formatter(isc::log::INFO, s("The answer is %1"), this).arg(42);
@@ -117,15 +125,12 @@ TEST_F(FormatterTest, mismatchedPlaceholders) {
             arg("only one");
     }, ".*");
 
-    // Mixed case of above two: the exception will be thrown due to the missing
-    // placeholder, but before even it's caught the program will be aborted
-    // due to the unused placeholder as a result of the exception.
-    EXPECT_DEATH({
-        isc::util::unittests::dontCreateCoreDumps();
-        Formatter(isc::log::INFO, s("Missing the first %2"), this).
-            arg("missing").arg("argument");
-    }, ".*");
 #endif /* EXPECT_DEATH */
+    // Mixed case of above two: the exception will be thrown due to the missing
+    // placeholder. The other check is disabled due to that.
+    EXPECT_THROW(Formatter(isc::log::INFO, s("Missing the first %2"), this).
+                 arg("missing").arg("argument"),
+                 isc::log::MismatchedPlaceholders);
 }
 
 #else

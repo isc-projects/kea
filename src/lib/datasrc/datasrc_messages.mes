@@ -79,9 +79,12 @@ in the answer as a result.
 Debug information. A search in an database data source for NSEC3 that
 matches or covers the given name is being started.
 
-% DATASRC_DATABASE_FINDNSEC3_COVER found a covering NSEC3 for %1: %2
+% DATASRC_DATABASE_FINDNSEC3_COVER found a covering NSEC3 for %1 at label count %2: %3
 Debug information. An NSEC3 that covers the given name is found and
-being returned.  The found NSEC3 RRset is also displayed.
+being returned.  The found NSEC3 RRset is also displayed. When the shown label
+count is smaller than that of the given name, the matching NSEC3 is for a
+superdomain of the given name (see DATASRC_DATABSE_FINDNSEC3_TRYHASH).  The
+found NSEC3 RRset is also displayed.
 
 % DATASRC_DATABASE_FINDNSEC3_MATCH found a matching NSEC3 for %1 at label count %2: %3
 Debug information. An NSEC3 that matches (a possibly superdomain of)
@@ -157,7 +160,7 @@ A search in the database for RRs for the specified name, type and class has
 located RRs that match the name and class but not the type.  DNSSEC information
 has been requested and returned.
 
-% DATASRC_DATABASE_FOUND_RRSET search in datasource %1 resulted in RRset %5
+% DATASRC_DATABASE_FOUND_RRSET search in datasource %1 resulted in RRset %2
 The data returned by the database backend contained data for the given domain
 name, and it either matches the type or has a relevant type. The RRset that is
 returned is printed.
@@ -276,7 +279,7 @@ nonterminal (e.g. there's nothing at *.example.com but something like
 subdomain.*.example.org, do exist: so *.example.org exists in the
 namespace but has no RRs assopciated with it). This will produce NXRRSET.
 
-% DATASRC_DATABASE_WILDCARD_MATCH search in datasource %1 resulted in wildcard match at %5 with RRset %6
+% DATASRC_DATABASE_WILDCARD_MATCH search in datasource %1 resulted in wildcard match at %2 with RRset %3
 The database doesn't contain directly matching name.  When searching
 for a wildcard match, a wildcard record matching the name and type of
 the query was found. The data at this point is returned.
