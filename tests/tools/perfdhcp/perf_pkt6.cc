@@ -12,8 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <boost/shared_ptr.hpp>
-
+#include <exceptions/exceptions.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/dhcp6.h>
 
@@ -28,8 +27,15 @@ namespace perfdhcp {
 
 PerfPkt6::PositionedOption::PositionedOption(dhcp::Option::Universe u,
                                              uint16_t type,
+                                             const dhcp::OptionBuffer& data) :
+    dhcp::Option(u, type, data),
+    position_(0) {
+}
+
+PerfPkt6::PositionedOption::PositionedOption(dhcp::Option::Universe u,
+                                             uint16_t type,
                                              const dhcp::OptionBuffer& data,
-                                             const OptionPosition& position) :
+                                             const size_t position) :
     dhcp::Option(u, type, data),
     position_(position) {
 }
@@ -37,13 +43,21 @@ PerfPkt6::PositionedOption::PositionedOption(dhcp::Option::Universe u,
 PerfPkt6::PositionedOption::PositionedOption(dhcp::Option::Universe u,
                                              uint16_t type,
                                              dhcp::OptionBufferConstIter first,
+                                             dhcp::OptionBufferConstIter last) :
+    dhcp::Option(u, type, first, last),
+    position_(0) {
+}
+
+PerfPkt6::PositionedOption::PositionedOption(dhcp::Option::Universe u,
+                                             uint16_t type,
+                                             dhcp::OptionBufferConstIter first,
                                              dhcp::OptionBufferConstIter last,
-                                             const OptionPosition& position) :
+                                             const size_t position) :
     dhcp::Option(u, type, first, last),
     position_(position) {
 }
 
-PerfPkt6::PerfPkt6(const uint8_t* buf, uint32_t len, const OptionPosition& transid_offset) :
+PerfPkt6::PerfPkt6(const uint8_t* buf, uint32_t len, size_t transid_offset) :
     Pkt6(buf, len, dhcp::Pkt6::UDP),
     transid_offset_(transid_offset) {
 
@@ -98,16 +112,17 @@ PerfPkt6::stampedRawUnpack() {
     // Update packet timestamp for RTT calculations but do not include unpack time.
     updateTimestamp();
 
-    // Get transaction id offset.
-    int transid_offset = transid_offset_.get();
     // Read transaction id from the packet at the given offset.
-    transid_ = ( (data_[transid_offset]) << 16 ) +
-        ((data_[transid_offset + 1]) << 8) + (data_[transid_offset + 2]);
+    transid_ = ( (data_[transid_offset_]) << 16 ) +
+        ((data_[transid_offset_ + 1]) << 8) + (data_[transid_offset_ + 2]);
     transid_ = transid_ & 0xffffff;
 
     // Get message type - assume it is first octet in the packet.
     msg_type_ = data_[0];
+
+    rawUnpackOptions();
 }
+
 
 void
 PerfPkt6::updateOptions() {
@@ -130,6 +145,36 @@ PerfPkt6::updateOptions() {
     }
     catch (const Exception&) {
         isc_throw(isc::Unexpected, "Failed to build packet (Option build failed");
+    }
+}
+
+void
+PerfPkt6::rawUnpackOptions() {
+    for (dhcp::Option::OptionCollection::const_iterator it = options_.begin();
+         it != options_.end(); ++it) {
+
+        PositionedOptionPtr option = boost::dynamic_pointer_cast<PositionedOption>(it->second);
+        size_t opt_pos = option->getOptionPosition();
+
+        if (opt_pos == 0) {
+            isc_throw(isc::BadValue, "Failed to unpack packet from raw buffer "
+                      "(Option position not specified)");
+        } else if (opt_pos + 4 > data_.size()) {
+            isc_throw(isc::BadValue, "Failed to unpack options from from raw buffer "
+                      "(Option position out of bounds)");
+        }
+
+        size_t offset = opt_pos;
+        //        uint16_t opt_type = data_[offset] * 256 + data_[offset + 1];
+        offset += 2;
+        uint16_t opt_len = data_[offset] * 256 + data_[offset + 1];
+        offset += 2;
+
+        if (offset + opt_len > data_.size()) {
+            isc_throw(isc::BadValue,
+                      "Failed to unpack option from raw buffer (Option truncated)");
+        }
+        option->setData(data_.begin() + offset, data_.begin() + offset + opt_len);
     }
 }
 
