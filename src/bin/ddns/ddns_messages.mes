@@ -62,6 +62,22 @@ coming from a b10-auth process.
 The ddns process received a shutdown command from the command channel
 and will now shut down.
 
+% DDNS_REQUEST_PARSE_FAIL failed to parse update request: %1
+b10-ddns received an update request via b10-auth, but the received
+data failed to pass minimum validation: it was either totally broken
+as an any valid DNS message (there can be many reasons for that), or
+the opcode is not update, or TSIG is included in the request but it
+fails to validate.  Since b10-auth should have performed this level of
+checks, such an error shouldn't be detected at this stage and should
+rather be considered an internal bug.  This event is therefore logged
+at the error level, and the request is simply dropped.  Additional
+information of the error is also logged.
+
+% DDNS_RESPONSE_SOCKET_ERROR failed to send update response to %1: %2
+Network I/O error happens in sending an update request.  The
+client's address that caused the error and error details are also
+logged.
+
 % DDNS_RUNNING ddns server is running and listening for updates
 The ddns process has successfully started and is now ready to receive commands
 and updates.
@@ -88,19 +104,3 @@ process will now shut down.
 The b10-ddns process encountered an uncaught exception and will now shut
 down. This is indicative of a programming error and should not happen under
 normal circumstances. The exception type and message are printed.
-
-% DDNS_REQUEST_PARSE_FAIL failed to parse update request: %1
-b10-ddns received an update request via b10-auth, but the received
-data failed to pass minimum validation: it was either totally broken
-as an any valid DNS message (there can be many reasons for that), or
-the opcode is not update, or TSIG is included in the request but it
-fails to validate.  Since b10-auth should have performed this level of
-checks, such an error shouldn't be detected at this stage and should
-rather be considered an internal bug.  This event is therefore logged
-at the error level, and the request is simply dropped.  Additional
-information of the error is also logged.
-
-% DDNS_RESPONSE_SOCKET_ERROR failed to send update response to %1: %2
-Network I/O error happens in sending an update request.  The
-client's address that caused the error and error details are also
-logged.
