@@ -18,6 +18,7 @@
 
 import sys; sys.path.append ('@@PYTHONPATH@@')
 import isc
+from isc.acl.dns import REQUEST_LOADER
 import bind10_config
 from isc.dns import *
 import isc.ddns.session
@@ -162,9 +163,14 @@ class DDNSServer:
                                                   self.config_handler,
                                                   self.command_handler)
 
+        # Initialize configuration with defaults.  Right now 'zones' is the
+        # only configuration, so we simply directly set it here.
         self._config_data = self._cc.get_full_config()
+        self._zone_config = self.__update_zone_config(
+            self._cc.get_default_value('zones'))
         self._cc.start()
 
+        # Get necessary configurations from remote modules.
         self._cc.add_remote_config(AUTH_SPECFILE_LOCATION)
         isc.server_common.tsig_keyring.init_keyring(self._cc)
 
@@ -198,10 +204,29 @@ class DDNSServer:
 
     def config_handler(self, new_config):
         '''Update config data.'''
-        # TODO: Handle exceptions and turn them to an error response
-        # (once we have any configuration)
-        answer = create_answer(0)
-        return answer
+        try:
+            if 'zones' in new_config:
+                self._zone_config = \
+                    self.__update_zone_config(new_config['zones'])
+            return create_answer(0)
+        except Exception as ex:
+            # We catch any exception here.  That includes any syntax error
+            # against the configuration spec.  The config interface is too
+            # complicated and it's not clear how much validation is performed
+            # there, so, while assuming it's unlikely to happen, we act
+            # proactively.
+            return create_answer(1, "Failed to handle new configuration: " +
+                                 str(ex))
+
+    def __update_zone_config(self, new_zones_config):
+        '''Handle zones configuration update.'''
+        new_zones = {}
+        for zone_config in new_zones_config:
+            origin = Name(zone_config['origin'])
+            rrclass = RRClass(zone_config['class'])
+            update_acl = zone_config['update_acl']
+            new_zones[(origin, rrclass)] = REQUEST_LOADER.load(update_acl)
+        return new_zones
 
     def command_handler(self, cmd, args):
         '''
@@ -318,7 +343,8 @@ class DDNSServer:
         # ZoneConfig will soon be substantially revised.  For now we don't
         # bother to generalize it.
         datasrc_class, datasrc_client = get_datasrc_client(self._cc)
-        zone_cfg = ZoneConfig([], datasrc_class, datasrc_client, {})
+        zone_cfg = ZoneConfig([], datasrc_class, datasrc_client,
+                              self._zone_config)
         update_session = self._UpdateSessionClass(self.__request_msg,
                                                   remote_addr, zone_cfg)
         result, zname, zclass = update_session.handle()
