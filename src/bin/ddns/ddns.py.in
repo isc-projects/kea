@@ -216,6 +216,7 @@ class DDNSServer:
             # complicated and it's not clear how much validation is performed
             # there, so, while assuming it's unlikely to happen, we act
             # proactively.
+            logger.error(DDNS_CONFIG_HANDLER_ERROR, ex)
             return create_answer(1, "Failed to handle new configuration: " +
                                  str(ex))
 
