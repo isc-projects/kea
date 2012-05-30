@@ -13,6 +13,7 @@
 # NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+from isc.acl.dns import REQUEST_LOADER
 import isc.dns
 from isc.datasrc import DataSourceClient
 
@@ -33,7 +34,7 @@ class ZoneConfig:
     until the details are fixed.
 
     '''
-    def __init__(self, secondaries, datasrc_class, datasrc_client):
+    def __init__(self, secondaries, datasrc_class, datasrc_client, acl_map={}):
         '''Constructor.
 
         Parameters:
@@ -45,6 +46,11 @@ class ZoneConfig:
         - datasrc_client: isc.dns.DataSourceClient object.  A data source
           class for the RR class of datasrc_class.  It's expected to contain
           a zone that is eventually updated in the ddns package.
+        - acl_map: a dictionary that maps a tuple of
+          (isc.dns.Name, isc.dns.RRClass) to an isc.dns.dns.RequestACL
+          object.  It defines an ACL to be applied to the zone defined
+          by the tuple.  If unspecified, or the map is empty, the default
+          ACL will be applied to all zones, which is to reject any requests.
 
         '''
         self.__secondaries = set()
@@ -52,6 +58,8 @@ class ZoneConfig:
             self.__secondaries.add((zname, zclass))
         self.__datasrc_class = datasrc_class
         self.__datasrc_client = datasrc_client
+        self.__default_acl = REQUEST_LOADER.load([{"action": "REJECT"}])
+        self.__acl_map = acl_map
 
     def find_zone(self, zone_name, zone_class):
         '''Return the type and accessor client object for given zone.'''
@@ -62,3 +70,32 @@ class ZoneConfig:
                 return ZONE_SECONDARY, None
             return ZONE_PRIMARY, self.__datasrc_client
         return ZONE_NOTFOUND, None
+
+    def get_update_acl(self, zone_name, zone_class):
+        '''Return the update ACL for the given zone.
+
+        This method searches the internally stored ACL map to see if
+        there's an ACL to be applied to the given zone.  If found, that
+        ACL will be returned; otherwise the default ACL (see the constructor
+        description) will be returned.
+
+        Parameters:
+        zone_name (isc.dns.Name): The zone name.
+        zone_class (isc.dns.RRClass): The zone class.
+        '''
+        acl = self.__acl_map.get((zone_name, zone_class))
+        if acl is not None:
+            return acl
+        return self.__default_acl
+
+    def set_update_acl_map(self, new_map):
+        '''Set a new ACL map.
+
+        This replaces any stored ACL map, either at construction or
+        by a previous call to this method, with the given new one.
+
+        Parameter:
+        new_map: same as the acl_map parameter of the constructor.
+
+        '''
+        self.__acl_map = new_map
