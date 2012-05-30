@@ -20,10 +20,25 @@
 namespace isc {
 namespace perfdhcp {
 
-/// \brief DHCPv6 option at specific offset
+/// \brief DHCP option at specific offset
 ///
-/// This class represents DHCPv6 option at specified
-/// offset in DHCPv6 message.
+/// This class represents DHCP option at specified
+/// offset in DHCP message.
+/// Objects of this type are intended to be used when DHCP packets
+/// are created from templates (e.g. read from template file).
+/// Such packets have number of that have to be replaced before
+/// sending: e.g. DUID can be randomized. If option of this type
+/// is added to \ref PerfPkt6 options collection,
+/// \ref perfdhcp::PerfPkt6 will call \ref getOffset on this object
+/// to retrieve user-defined option position and replace contents of
+/// the output buffer at this offset before packet is sent to the server.
+/// (\see perfdhcp::PerfPkt6::rawPack).
+/// In order to read on-wire data from incoming packet client class
+/// has to specify options of \ref perfdhcp::LocalizedOption type
+/// with expected offsets of these options in a packet. The
+/// \ret perfdhcp::PerfPkt6 will use offsets to read fragments
+/// of packet and store them in options' buffers.
+/// (\see perfdhcp::PerfPkt6::rawUnpack).
 ///
 class LocalizedOption : public dhcp::Option {
 public:
@@ -32,7 +47,7 @@ public:
     /// \param u specifies universe (V4 or V6)
     /// \param type option type (0-255 for V4 and 0-65535 for V6)
     /// \param data content of the option
-    LocalizedOption(dhcp::Option::Universe u, uint16_t type, const dhcp::OptionBuffer& data) : 
+    LocalizedOption(dhcp::Option::Universe u, uint16_t type, const dhcp::OptionBuffer& data) :
         dhcp::Option(u, type, data),
         offset_(0) {
     }
@@ -77,21 +92,20 @@ public:
     /// \param first iterator to the first element that should be copied
     /// \param last iterator to the next element after the last one
     ///        to be copied.
-    /// \param offset location of option in a packet (zero is default)
+    /// \param offset offset of option in a packet (zero is default)
     LocalizedOption(dhcp::Option::Universe u, uint16_t type, dhcp::OptionBufferConstIter first,
                     dhcp::OptionBufferConstIter last, const size_t offset) :
         dhcp::Option(u, type, first, last),
         offset_(offset) {
     }
 
-    /// \brief Returns absolute position (offset) of an option in a
-    /// DHCPv6 packet.
+    /// \brief Returns offset of an option in a DHCP packet.
     ///
     /// \return option offset in a packet
     size_t getOffset() const { return offset_; };
-    
+
 private:
-    size_t offset_;   ///< Offset of DHCPv6 option in a packet
+    size_t offset_;   ///< Offset of DHCP option in a packet
 };
 
 
