@@ -111,7 +111,7 @@ TEST(InterprocessSyncFileTest, TestMultipleFilesDirect) {
 }
 
 TEST(InterprocessSyncFileTest, TestMultipleFilesForked) {
-  InterprocessSyncFile sync("test");
+  InterprocessSyncFile sync("test1");
   InterprocessSyncLocker locker(sync);
 
   EXPECT_TRUE(locker.lock());
