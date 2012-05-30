@@ -89,7 +89,6 @@ def foreach_rr_in_rrset(rrset, method, *kwargs):
                                   rrset.get_type(),
                                   rrset.get_ttl())
         tmp_rrset.add_rdata(rdata)
-        a = []
         # Replace the rrset in the original arguments by our rrset
         args = [arg if arg != rrset else tmp_rrset for arg in kwargs]
         result = method(*args)
