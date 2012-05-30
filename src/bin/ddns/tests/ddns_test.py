@@ -61,6 +61,9 @@ class FakeSocket:
         self.__fileno = fileno
         self._sent_data = None
         self._sent_addr = None
+        # customizable by tests; if set to True, sendto() will throw after
+        # recording the parameters.
+        self._raise_on_send = False
     def fileno(self):
         return self.__fileno
     def getpeername(self):
@@ -70,6 +73,8 @@ class FakeSocket:
     def sendto(self, data, addr):
         self._sent_data = data
         self._sent_addr = addr
+        if self._raise_on_send:
+            raise socket.error('test socket failure')
     def clear(self):
         '''Clear internal instrumental data.'''
         self._sent_data = None
@@ -659,6 +664,16 @@ class TestDDNSession(unittest.TestCase):
         # that no response should be given.
         self.check_session(result=UPDATE_DROP, ipv6=False,
                            tsig_key=BAD_TSIG_KEY)
+
+    def test_socket_error(self):
+        # Have the faked socket raise an exception on sendto()
+        self.__sock._raise_on_send = True
+        # handle_request indicates the failure
+        self.assertFalse(self.server.handle_request((self.__sock, TEST_SERVER6,
+                                                     TEST_SERVER4,
+                                                     create_msg())))
+        # this check ensures sendto() was really attempted.
+        self.check_update_response(self.__sock._sent_data, Rcode.NOERROR())
 
     def test_session_with_config(self):
         '''Check a session with more relistic config setups
