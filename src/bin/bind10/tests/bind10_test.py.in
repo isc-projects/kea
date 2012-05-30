@@ -1471,7 +1471,8 @@ class SocketSrvTest(unittest.TestCase):
 
 class TestFunctions(unittest.TestCase):
     def setUp(self):
-        self.lockfile_testpath = "@abs_top_builddir@/src/bin/bind10/tests/lockfile_test"
+        self.lockfile_testpath = \
+            "@abs_top_builddir@/src/bin/bind10/tests/lockfile_test"
         self.assertFalse(os.path.exists(self.lockfile_testpath))
         os.mkdir(self.lockfile_testpath)
         self.assertTrue(os.path.isdir(self.lockfile_testpath))
