@@ -104,6 +104,9 @@ RRset exists (value independent).  At least one RR with a
 specified NAME and TYPE (in the zone and class specified by
 the Zone Section) must exist.
 
+=======
+>>>>>>> 644c706... [1458] cleanup: reorder log message files
+
 % LIBDDNS_UPDATE_APPROVED update client %1 for zone %2 approved
 Debug message.  An update request was approved in terms of the zone's
 update ACL.
