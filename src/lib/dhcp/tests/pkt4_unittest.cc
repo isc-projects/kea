@@ -598,4 +598,16 @@ TEST(Pkt4Test, metaFields) {
     delete pkt;
 }
 
+TEST(Pkt4Test, Timestamp) {
+    Pkt4* pkt = new Pkt4(DHCPOFFER, 1234);
+    ASSERT_NO_THROW(pkt->updateTimestamp());
+    timespec ts_packet = pkt->getTimestamp();
+    timespec ts_now;
+    ASSERT_FALSE(clock_gettime(CLOCK_REALTIME, &ts_now) < 0);
+    EXPECT_TRUE(ts_packet.tv_sec >= ts_now.tv_sec);
+
+    delete pkt;
+}
+
+
 } // end of anonymous namespace

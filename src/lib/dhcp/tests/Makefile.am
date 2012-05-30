@@ -33,7 +33,7 @@ libdhcp___unittests_SOURCES += ../pkt6.h ../pkt6.cc pkt6_unittest.cc
 libdhcp___unittests_SOURCES += ../pkt4.h ../pkt4.cc pkt4_unittest.cc
 
 libdhcp___unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)
-libdhcp___unittests_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)
+libdhcp___unittests_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS) $(CLOCK_GETTIME_LDFLAGS)
 
 libdhcp___unittests_CXXFLAGS = $(AM_CXXFLAGS)
 
