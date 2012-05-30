@@ -19,6 +19,8 @@
 #include <boost/shared_ptr.hpp>
 #include <dhcp/pkt6.h>
 
+#include "localized_option.h"
+
 namespace isc {
 namespace perfdhcp {
 
@@ -43,7 +45,7 @@ namespace perfdhcp {
 /// in a template packet, we need to add these selected options
 /// to packet object using addOption() method. Please note
 /// that options must be of the
-/// \ref isc::perfdhcp::PerfPkt6::PositionedOption type.
+/// \ref isc::perfdhcp::LocalizedOption type.
 ///
 /// This class also records timestamps of last pack/unpack
 /// operation on the packet. This is to track DHCP server
@@ -54,74 +56,8 @@ namespace perfdhcp {
 ///
 class PerfPkt6 : public dhcp::Pkt6 {
 public:
-
-    /// \brief DHCPv6 option at specific offset
-    ///
-    /// This class represents DHCPv6 option at specified
-    /// offset in DHCPv6 message.
-    ///
-    class PositionedOption : public dhcp::Option {
-    public:
-
-        /// \brief Constructor, sets default (0) option position
-        ///
-        ///
-        /// \param u specifies universe (V4 or V6)
-        /// \param type option type (0-255 for V4 and 0-65535 for V6)
-        /// \param data content of the option
-        PositionedOption(dhcp::Option::Universe u, uint16_t type, const dhcp::OptionBuffer& data);
-
-
-        /// \brief Constructor, used to create positioned option from buffer
-        ///
-        ///
-        /// \param u specifies universe (V4 or V6)
-        /// \param type option type (0-255 for V4 and 0-65535 for V6)
-        /// \param data content of the option
-        /// \param position absolute position of option in a packet (zero is default)
-        PositionedOption(dhcp::Option::Universe u, uint16_t type, const dhcp::OptionBuffer& data,
-                         const size_t position);
-
-        /// \brief Constructor, sets default (0) option position
-        ///
-        /// This contructor is similar to the previous one, but it does not take
-        /// the whole vector<uint8_t>, but rather subset of it.
-        ///
-        /// \param u specifies universe (V4 or V6)
-        /// \param type option type (0-255 for V4 and 0-65535 for V6)
-        /// \param first iterator to the first element that should be copied
-        /// \param last iterator to the next element after the last one
-        ///        to be copied.
-        /// \param position absolute position of option in a packet (zero is default)
-        PositionedOption(dhcp::Option::Universe u, uint16_t type, dhcp::OptionBufferConstIter first,
-                         dhcp::OptionBufferConstIter last);
-
-        /// \brief Constructor, used to create positioned option from buffer iterators
-        ///
-        /// This contructor is similar to the previous one, but it does not take
-        /// the whole vector<uint8_t>, but rather subset of it.
-        ///
-        /// \param u specifies universe (V4 or V6)
-        /// \param type option type (0-255 for V4 and 0-65535 for V6)
-        /// \param first iterator to the first element that should be copied
-        /// \param last iterator to the next element after the last one
-        ///        to be copied.
-        /// \param position absolute position of option in a packet (zero is default)
-        PositionedOption(dhcp::Option::Universe u, uint16_t type, dhcp::OptionBufferConstIter first,
-                         dhcp::OptionBufferConstIter last, const size_t position);
-
-
-        /// \brief Returns absolute position (offset) of an option in a
-        /// DHCPv6 packet.
-        ///
-        /// \return absolute position (offset) of an option in a packet
-        size_t getOptionPosition() const { return position_; };
-
-    private:
-        size_t position_;   ///< Absolute position of DHCPv6 option in a packet
-    };
-
-    typedef boost::shared_ptr<PositionedOption> PositionedOptionPtr;
+    /// Localized option pointer type.
+    typedef boost::shared_ptr<LocalizedOption> LocalizedOptionPtr;
 
     /// Constructor, used in message transmission
     ///
@@ -130,7 +66,7 @@ public:
     /// options at custom offsets (e.g. if packet was read from
     /// template file) additional information about options'
     /// offsets has to be provided - see
-    /// \ref isc::perfdhcp::PositionedOption for details.
+    /// \ref isc::perfdhcp::LocalizedOption for details.
     ///
     /// Transaction id is not considered DHCP option so
     /// we pass it to constructor as extra argument. This is
@@ -159,29 +95,6 @@ public:
     /// \return current packet timestamp
     timespec getTimestamp() const { return time_stamp_; }
 
-    /// \brief Prepare on-wire packet format and record timestamp
-    ///
-    /// Prepares on-wire format of packet and all its options.
-    /// This method wraps dhcp::Pkt6::pack() function to
-    /// update packet timestamp.
-    ///
-    /// \note Use this function if you don't use template files
-    /// to construct DHCPv6 packets.
-    ///
-    /// \throw isc::Unexpected if pack and timestamp update failed
-    void stampedPack();
-
-    /// \brief Handles binary packet parsing and updates timestamp
-    ///
-    /// This method wraps dhcp::Pkt6::unpack() function to
-    /// update packet timestamp.
-    ///
-    /// \note Use this function if you don't use template files
-    /// and custom options offsets to construct DHCPv6 packets.
-    ///
-    /// \throw isc::Unexpected if function failed
-    void stampedUnpack();
-
     /// \brief Prepares on-wire format from raw buffer
     ///
     /// The method copies user buffer to output buffer and
@@ -193,8 +106,8 @@ public:
     /// when you use template packets that require replacement
     /// of selected options contents before sending.
     ///
-    /// \throw isc::Unexepected if function failed
-    void stampedRawPack();
+    /// \retrun false, id pack operation failed.
+    bool rawPack();
 
     /// \brief Handles limited binary packet parsing for packets with
     /// custom offsets of options and transaction id
@@ -202,11 +115,16 @@ public:
     /// Function handles reception of packets that have non-default values
     /// of options or transaction id offsets. Use
     /// \ref isc::dhcp::Pkt6::addOption to specify which options to parse.
-    /// Each option should be of the: isc::perfdhcp::PerfPkt6::PositionedOption
+    /// Each option should be of the: isc::perfdhcp::LocalizedOption
     /// type with offset value indicated.
     ///
-    /// \throw isc::Unexpected if function failed
-    void stampedRawUnpack();
+    /// \return false, if unpack operation failed.
+    bool rawUnpack();
+
+    /// \brief Update packet timestamp with current time
+    ///
+    /// \throw isc::Unexpected if timestamp update failed
+    void updateTimestamp();
 
 private:
 
@@ -216,18 +134,13 @@ private:
     /// with the ones provided with
     /// \ref isc::dhcp::Pkt6::addOption. It is expected
     /// that these options will be of the
-    /// \ref isc::perfdhcp::PerfPkt6::PositionedOption type
+    /// \ref isc::perfdhcp::LocalizedOption type
     /// with their position (offset) specified.
     ///
-    /// throw isc::Unexpected if options update fails
-    void updateOptions();
+    /// \throw isc::Unexpected if options update failed.
+    void rawPackOptions();
 
     void rawUnpackOptions();
-
-    /// \brief Update packet timestamp with current time
-    ///
-    /// \throw isc::Unexpected if timestamp update failed
-    void updateTimestamp();
 
     size_t transid_offset_;      ///< transaction id offset
     timespec time_stamp_;        ///< time stamp of last pack or unpack
