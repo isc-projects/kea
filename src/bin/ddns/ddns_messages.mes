@@ -38,6 +38,14 @@ configuration manager b10-cfgmgr is not running.
 The ddns process encountered an error when installing the configuration at
 startup time.  Details of the error are included in the log message.
 
+% DDNS_CONFIG_HANDLER_ERROR failed to update ddns configuration: %1
+An update to b10-ddns configuration was delivered but an error was
+found while applying them.  None of the delivered updates were applied
+to the running b10-ddns system, and the server will keep running with
+the existing configuration.  If this happened in the initial
+configuration setup, the server will be running with the default
+configurations.
+
 % DDNS_DROP_CONN dropping connection on file descriptor %1 because of error %2
 There was an error on a connection with the b10-auth server (or whatever
 connects to the ddns daemon). This might be OK, for example when the
@@ -104,11 +112,3 @@ process will now shut down.
 The b10-ddns process encountered an uncaught exception and will now shut
 down. This is indicative of a programming error and should not happen under
 normal circumstances. The exception type and message are printed.
-
-% DDNS_CONFIG_HANDLER_ERROR failed to update ddns configuration: %1
-An update to b10-ddns configuration was delivered but an error was
-found while applying them.  None of the delivered updates were applied
-to the running b10-ddns system, and the server will keep running with
-the existing configuration.  If this happened in the initial
-configuration setup, the server will be running with the default
-configurations.
