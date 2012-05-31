@@ -259,6 +259,9 @@ int
 SessionImpl::getSocketDesc() {
     /// @todo boost 1.42 uses native() method, but it is deprecated
     /// in 1.49 and native_handle() is recommended instead
+    if (!socket_.is_open()) {
+        isc_throw(InvalidOperation, "Can't return socket desciptor: no socket opened.");
+    }
     return socket_.native();
 }
 
