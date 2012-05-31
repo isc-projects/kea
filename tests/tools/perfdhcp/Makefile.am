@@ -25,6 +25,7 @@ endif
 
 pkglibexec_PROGRAMS  = perfdhcp
 perfdhcp_SOURCES  = perfdhcp.cc
+perfdhcp_SOURCES += localized_option.h
 perfdhcp_SOURCES += command_options.cc command_options.h
 perfdhcp_SOURCES += perf_pkt6.cc perf_pkt6.h
 
