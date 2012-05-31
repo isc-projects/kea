@@ -112,6 +112,45 @@ def convert_rrset_class(rrset, rrclass):
         new_rrset.add_rdata(isc.dns.Rdata(rrset.get_type(), rrclass, wire))
     return new_rrset
 
+class DDNSSOA:
+    '''Class to handle the SOA in the DNS update '''
+
+    def __get_serial_internal(self, origin_soa):
+        '''get serial number from soa'''
+        return Serial(int(origin_soa.get_rdata()[0].to_text().split()[2]))
+
+    def __write_soa_internal(self, origin_soa, soa_num):
+        '''write serial number to soa'''
+        new_soa = RRset(origin_soa.get_name(), origin_soa.get_class(),
+                        RRType.SOA(), origin_soa.get_ttl())
+        new_content = ""
+        index = 0
+        for i in origin_soa.get_rdata()[0].to_text().split():
+            if(index == 2):
+                # the second item is serial number
+                new_content = "%s %d"%(new_content, soa_num.get_value())
+            else:
+                new_content = "%s %s"%(new_content, i)
+            index += 1
+        new_soa.add_rdata(Rdata(origin_soa.get_type(), origin_soa.get_class(),
+                                new_content))
+        return new_soa
+
+    def soa_update_check(self, origin_soa, new_soa):
+        old_serial = self.__get_serial_internal(origin_soa)
+        new_serial = self.__get_serial_internal(new_soa)
+        if(new_serial >= old_serial):
+            return True
+        else:
+            return False
+
+    def update_soa(self, origin_soa, inc_number = 1):
+        soa_num = self.__get_serial_internal(origin_soa)
+        soa_num = soa_num + inc_number
+        if soa_num.get_value() == 0:
+            soa_num = soa_num + 1
+        return self.__write_soa_internal(origin_soa, soa_num)
+
 class UpdateSession:
     '''Protocol handling for a single dynamic update request.
 
@@ -677,13 +716,17 @@ class UpdateSession:
         result, old_soa, _ = self.__finder.find(self.__zname, RRType.SOA(),
                                                 ZoneFinder.NO_WILDCARD |
                                                 ZoneFinder.FIND_GLUE_OK)
-
+        serial_operation = DDNSSOA()
         if self.__added_soa is not None:
-            new_soa = self.__added_soa
             # serial check goes here
+            if serial_operation.soa_update_check(old_soa, self.__added_soa):
+                new_soa = self.__added_soa
+            else:
+                pass
         else:
             new_soa = old_soa
             # increment goes here
+            new_soa = serial_operation.update_soa(new_soa)
 
         diff.delete_data(old_soa)
         diff.add_data(new_soa)
