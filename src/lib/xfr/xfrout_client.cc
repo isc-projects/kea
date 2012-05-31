@@ -82,7 +82,12 @@ XfroutClient::sendXfroutRequestInfo(const int tcp_sock,
 
     // TODO: this shouldn't be blocking send, even though it's unlikely to
     // block.
-    // converting the 16-bit word to network byte order.
+    // Converting the 16-bit word to network byte order.
+
+    // Splitting msg_len below performs something called a 'narrowing
+    // conversion' (conversion of uint16_t to uint8_t). C++0x (and GCC
+    // 4.7) requires explicit casting when a narrowing conversion is
+    // performed. For reference, see 8.5.4/6 of n3225.
     const uint8_t lenbuf[2] = { static_cast<uint8_t>(msg_len >> 8),
                                 static_cast<uint8_t>(msg_len & 0xff) };
     if (send(impl_->socket_.native(), lenbuf, sizeof(lenbuf), 0) !=
