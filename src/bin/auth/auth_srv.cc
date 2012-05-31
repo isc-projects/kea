@@ -14,18 +14,10 @@
 
 #include <config.h>
 
-#include <sys/types.h>
-#include <netinet/in.h>
-
-#include <algorithm>
-#include <cassert>
-#include <iostream>
-#include <vector>
-#include <memory>
-
-#include <boost/bind.hpp>
+#include <util/io/socketsession.h>
 
 #include <asiolink/asiolink.h>
+#include <asiolink/io_endpoint.h>
 
 #include <config/ccsession.h>
 
@@ -64,6 +56,18 @@
 #include <auth/statistics.h>
 #include <auth/auth_log.h>
 
+#include <boost/bind.hpp>
+#include <boost/lexical_cast.hpp>
+
+#include <algorithm>
+#include <cassert>
+#include <iostream>
+#include <vector>
+#include <memory>
+
+#include <sys/types.h>
+#include <netinet/in.h>
+
 using namespace std;
 
 using namespace isc;
@@ -71,6 +75,7 @@ using namespace isc::cc;
 using namespace isc::datasrc;
 using namespace isc::dns;
 using namespace isc::util;
+using namespace isc::util::io;
 using namespace isc::auth;
 using namespace isc::dns::rdata;
 using namespace isc::data;
@@ -107,6 +112,107 @@ public:
 private:
     MessageRenderer& renderer_;
 };
+
+// A helper container of socket session forwarder.
+//
+// This class provides a simple wrapper interface to SocketSessionForwarder
+// so that the caller doesn't have to worry about connection management,
+// exception handling or parameter building.
+//
+// It internally maintains whether the underlying forwarder establishes a
+// connection to the receiver.  On a forwarding request, if the connection
+// hasn't been established yet, it automatically opens a new one, then
+// pushes the session over it.  It also closes the connection on destruction,
+// or a non-recoverable error happens, automatically.  So the only thing
+// the application has to do is to create this object and push any session
+// to be forwarded.
+class SocketSessionForwarderHolder {
+public:
+    /// \brief The constructor.
+    ///
+    /// \param message_name Any string that can identify the type of messages
+    /// to be forwarded via this session.  It will be only used as part of
+    /// log message, so it can be anything, but in practice something like
+    /// "update" or "xfr" is expected.
+    /// \param forwarder The underlying socket session forwarder.
+    SocketSessionForwarderHolder(const string& message_name,
+                                 BaseSocketSessionForwarder& forwarder) :
+        message_name_(message_name), forwarder_(forwarder), connected_(false)
+    {}
+
+    ~SocketSessionForwarderHolder() {
+        if (connected_) {
+            forwarder_.close();
+        }
+    }
+
+    /// \brief Push a socket session corresponding to given IOMessage.
+    ///
+    /// If the connection with the receiver process hasn't been established,
+    /// it automatically establishes one, then push the session over it.
+    ///
+    /// If either connect or push fails, the underlying forwarder object should
+    /// throw an exception.  This method logs the event, and propagates the
+    /// exception to the caller, which will eventually result in SERVFAIL.
+    /// The connection, if established, is automatically closed, so the next
+    /// forward request will trigger reopening a new connection.
+    ///
+    /// \note: Right now, there's no API to retrieve the local address from
+    /// the IOMessage.  Until it's added, we pass the remote address as
+    /// local.
+    ///
+    /// \param io_message The request message to be forwarded as a socket
+    /// session.  It will be converted to the parameters that the underlying
+    /// SocketSessionForwarder expects.
+    void push(const IOMessage& io_message) {
+        const IOEndpoint& remote_ep = io_message.getRemoteEndpoint();
+        const int protocol = remote_ep.getProtocol();
+        const int sock_type = getSocketType(protocol);
+        try {
+            connect();
+            forwarder_.push(io_message.getSocket().getNative(),
+                            remote_ep.getFamily(), sock_type, protocol,
+                            remote_ep.getSockAddr(), remote_ep.getSockAddr(),
+                            io_message.getData(), io_message.getDataSize());
+        } catch (const SocketSessionError& ex) {
+            LOG_ERROR(auth_logger, AUTH_MESSAGE_FORWARD_ERROR).
+                arg(message_name_).arg(remote_ep).arg(ex.what());
+            close();
+            throw;
+        }
+    }
+
+private:
+    const string message_name_;
+    BaseSocketSessionForwarder& forwarder_;
+    bool connected_;
+
+    void connect() {
+        if (!connected_) {
+            forwarder_.connectToReceiver();
+            connected_ = true;
+        }
+    }
+
+    void close() {
+        if (connected_) {
+            forwarder_.close();
+            connected_ = false;
+        }
+    }
+
+    static int getSocketType(int protocol) {
+        switch (protocol) {
+        case IPPROTO_UDP:
+            return (SOCK_DGRAM);
+        case IPPROTO_TCP:
+            return (SOCK_STREAM);
+        default:
+            isc_throw(isc::InvalidParameter,
+                      "Unexpected socket address family: " << protocol);
+        }
+    }
+};
 }
 
 class AuthSrvImpl {
@@ -115,7 +221,8 @@ private:
     AuthSrvImpl(const AuthSrvImpl& source);
     AuthSrvImpl& operator=(const AuthSrvImpl& source);
 public:
-    AuthSrvImpl(const bool use_cache, AbstractXfroutClient& xfrout_client);
+    AuthSrvImpl(const bool use_cache, AbstractXfroutClient& xfrout_client,
+                BaseSocketSessionForwarder& ddns_forwarder);
     ~AuthSrvImpl();
     isc::data::ConstElementPtr setDbFile(isc::data::ConstElementPtr config);
 
@@ -128,6 +235,7 @@ public:
     bool processNotify(const IOMessage& io_message, Message& message,
                        OutputBuffer& buffer,
                        auto_ptr<TSIGContext> tsig_context);
+    bool processUpdate(const IOMessage& io_message);
 
     IOService io_service_;
 
@@ -189,6 +297,9 @@ private:
     bool xfrout_connected_;
     AbstractXfroutClient& xfrout_client_;
 
+    // Socket session forwarder for dynamic update requests
+    SocketSessionForwarderHolder ddns_forwarder_;
+
     /// Increment query counter
     void incCounter(const int protocol);
 
@@ -199,7 +310,8 @@ private:
 };
 
 AuthSrvImpl::AuthSrvImpl(const bool use_cache,
-                         AbstractXfroutClient& xfrout_client) :
+                         AbstractXfroutClient& xfrout_client,
+                         BaseSocketSessionForwarder& ddns_forwarder) :
     config_session_(NULL),
     xfrin_session_(NULL),
     memory_client_class_(RRClass::IN()),
@@ -207,7 +319,8 @@ AuthSrvImpl::AuthSrvImpl(const bool use_cache,
     counters_(),
     keyring_(NULL),
     xfrout_connected_(false),
-    xfrout_client_(xfrout_client)
+    xfrout_client_(xfrout_client),
+    ddns_forwarder_("update", ddns_forwarder)
 {
     // cur_datasrc_ is automatically initialized by the default constructor,
     // effectively being an empty (sqlite) data source.  once ccsession is up
@@ -277,9 +390,10 @@ private:
     AuthSrv* server_;
 };
 
-AuthSrv::AuthSrv(const bool use_cache, AbstractXfroutClient& xfrout_client)
+AuthSrv::AuthSrv(const bool use_cache, AbstractXfroutClient& xfrout_client,
+                 BaseSocketSessionForwarder& ddns_forwarder)
 {
-    impl_ = new AuthSrvImpl(use_cache, xfrout_client);
+    impl_ = new AuthSrvImpl(use_cache, xfrout_client, ddns_forwarder);
     checkin_ = new ConfigChecker(this);
     dns_lookup_ = new MessageLookup(this);
     dns_answer_ = new MessageAnswer(this);
@@ -527,16 +641,19 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
         return;
     }
 
+    const Opcode opcode = message.getOpcode();
     bool send_answer = true;
     try {
         // update per opcode statistics counter.  This can only be reliable
         // after TSIG check succeeds.
         impl_->counters_.inc(message.getOpcode());
 
-        if (message.getOpcode() == Opcode::NOTIFY()) {
+        if (opcode == Opcode::NOTIFY()) {
             send_answer = impl_->processNotify(io_message, message, buffer,
                                                tsig_context);
-        } else if (message.getOpcode() != Opcode::QUERY()) {
+        } else if (opcode == Opcode::UPDATE()) {
+            send_answer = impl_->processUpdate(io_message);
+        } else if (opcode != Opcode::QUERY()) {
             LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_UNSUPPORTED_OPCODE)
                       .arg(message.getOpcode().toText());
             makeErrorMessage(impl_->renderer_, message, buffer,
@@ -546,7 +663,7 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
                              Rcode::FORMERR(), tsig_context);
         } else {
             ConstQuestionPtr question = *message.beginQuestion();
-            const RRType &qtype = question->getType();
+            const RRType& qtype = question->getType();
             if (qtype == RRType::AXFR()) {
                 send_answer = impl_->processXfrQuery(io_message, message,
                                                      buffer, tsig_context);
@@ -752,6 +869,15 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
         message.toWire(renderer_);
     }
     return (true);
+}
+
+bool
+AuthSrvImpl::processUpdate(const IOMessage& io_message) {
+    // Push the update request to a separate process via the forwarder.
+    // On successful push, the request shouldn't be responded from b10-auth,
+    // so we return false.
+    ddns_forwarder_.push(io_message);
+    return (false);
 }
 
 void

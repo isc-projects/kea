@@ -1,4 +1,8 @@
-SUBDIRS = .
+SUBDIRS = . tests
+
+AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
+AM_CPPFLAGS += -I$(top_srcdir)/src/lib/log -I$(top_builddir)/src/lib/log
+AM_CPPFLAGS += $(BOOST_INCLUDES)
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
@@ -7,6 +11,11 @@ AM_LDFLAGS += -lm
 if USE_STATIC_LINK
 AM_LDFLAGS += -static
 endif
+
+lib_LTLIBRARIES = libperfdhcp++.la
+libperfdhcp___la_SOURCES = command_options.cc command_options.h
+libperfdhcp___la_CXXFLAGS = $(AM_CXXFLAGS)
+libperfdhcp___la_LIBADD = $(top_builddir)/src/lib/exceptions/libexceptions.la
 
 pkglibexec_PROGRAMS  = perfdhcp
 perfdhcp_SOURCES  = perfdhcp.c

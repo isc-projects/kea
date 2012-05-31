@@ -15,11 +15,12 @@
 
 """
 This helps the XFR in process with accumulating parts of diff and applying
-it to the datasource.
+it to the datasource. It also has a 'single update mode' which is useful
+for DDNS.
 
 The name of the module is not yet fully decided. We might want to move it
-under isc.datasrc or somewhere else, because we might want to reuse it with
-future DDNS process. But until then, it lives here.
+under isc.datasrc or somewhere else, because we are reusing it with DDNS.
+But for now, it lives here.
 """
 
 import isc.dns
@@ -59,7 +60,8 @@ class Diff:
     the changes to underlying data source right away, but keeps them for
     a while.
     """
-    def __init__(self, ds_client, zone, replace=False, journaling=False):
+    def __init__(self, ds_client, zone, replace=False, journaling=False,
+                 single_update_mode=False):
         """
         Initializes the diff to a ready state. It checks the zone exists
         in the datasource and if not, NoSuchZone is raised. This also creates
@@ -76,6 +78,25 @@ class Diff:
         incoming updates but does not support journaling, the Diff object
         will still continue applying the diffs with disabling journaling.
 
+        If single_update_mode is true, the update is expected to only contain
+        1 set of changes (i.e. one set of additions, and one set of deletions).
+        If so, the additions and deletions are kept separately, and applied
+        in one go upon commit() or apply(). In this mode, additions and
+        deletions can be done in any order. The first addition and the
+        first deletion still have to be the new and old SOA records,
+        respectively. Once apply() or commit() has been called, this
+        requirement is renewed (since the diff object is essentialy reset).
+
+        In this single_update_mode, upon commit, the deletions are performed
+        first, and then the additions. With the previously mentioned
+        restrictions, this means that the actual update looks like a single
+        IXFR changeset (which can then be journaled). Apart from those
+        restrictions, this class does not do any checking of data; it is
+        the caller's responsibility to keep the data 'sane', and this class
+        does not presume to have any knowledge of DNS zone content sanity.
+        For instance, though it enforces the SOA to be deleted first, and
+        added first, it does no checks on the SERIAL value.
+
         You can also expect isc.datasrc.Error or isc.datasrc.NotImplemented
         exceptions.
         """
@@ -91,7 +112,12 @@ class Diff:
             raise NoSuchZone("Zone " + str(zone) +
                              " does not exist in the data source " +
                              str(ds_client))
-        self.__buffer = []
+        self.__single_update_mode = single_update_mode
+        if single_update_mode:
+            self.__additions = []
+            self.__deletions = []
+        else:
+            self.__buffer = []
 
     def __check_commited(self):
         """
@@ -103,12 +129,45 @@ class Diff:
             raise ValueError("The diff is already commited or it has raised " +
                              "an exception, you come late")
 
+    def __append_with_soa_check(self, buf, operation, rr):
+        """
+        Helper method for __data_common().
+        Add the given rr to the given buffer, but with a SOA check;
+        - if the buffer is empty, the RRType of the rr must be SOA
+        - if the buffer is not empty, the RRType must not be SOA
+        Raises a ValueError if these rules are not satisified.
+        If they are, the RR is appended to the buffer.
+        Arguments:
+        buf: buffer to add to
+        operation: operation to perform (either 'add' or 'delete')
+        rr: RRset to add to the buffer
+        """
+        # first add or delete must be of type SOA
+        if len(buf) == 0 and\
+           rr.get_type() != isc.dns.RRType.SOA():
+            raise ValueError("First " + operation +
+                             " in single update mode must be of type SOA")
+        # And later adds or deletes may not
+        elif len(buf) != 0 and\
+           rr.get_type() == isc.dns.RRType.SOA():
+            raise ValueError("Multiple SOA records in single " +
+                             "update mode " + operation)
+        buf.append((operation, rr))
+
     def __data_common(self, rr, operation):
         """
         Schedules an operation with rr.
 
         It does all the real work of add_data and delete_data, including
         all checks.
+
+        Raises a ValueError in several cases:
+        - if the rrset contains multiple rrs
+        - if the class of the rrset does not match that of the update
+        - in single_update_mode if the first rr is not of type SOA (both
+          for addition and deletion)
+        - in single_update_mode if any later rr is of type SOA (both for
+          addition and deletion)
         """
         self.__check_commited()
         if rr.get_rdata_count() != 1:
@@ -118,10 +177,17 @@ class Diff:
             raise ValueError("The rrset's class " + str(rr.get_class()) +
                              " does not match updater's " +
                              str(self.__updater.get_class()))
-        self.__buffer.append((operation, rr))
-        if len(self.__buffer) >= DIFF_APPLY_TRESHOLD:
-            # Time to auto-apply, so the data don't accumulate too much
-            self.apply()
+        if self.__single_update_mode:
+            if operation == 'add':
+                self.__append_with_soa_check(self.__additions, operation, rr)
+            elif operation == 'delete':
+                self.__append_with_soa_check(self.__deletions, operation, rr)
+        else:
+            self.__buffer.append((operation, rr))
+            if len(self.__buffer) >= DIFF_APPLY_TRESHOLD:
+                # Time to auto-apply, so the data don't accumulate too much
+                # This is not done for DDNS type data
+                self.apply()
 
     def add_data(self, rr):
         """
@@ -175,23 +241,34 @@ class Diff:
             sigdata2 = rrset2.get_rdata()[0].to_text().split()[0]
             return sigdata1 == sigdata2
 
-        buf = []
-        for (op, rrset) in self.__buffer:
-            old = buf[-1][1] if len(buf) > 0 else None
-            if old is None or op != buf[-1][0] or \
-                rrset.get_name() != old.get_name() or \
-                (not same_type(rrset, old)):
-                buf.append((op, isc.dns.RRset(rrset.get_name(),
-                                              rrset.get_class(),
-                                              rrset.get_type(),
-                                              rrset.get_ttl())))
-            if rrset.get_ttl() != buf[-1][1].get_ttl():
-                logger.warn(LIBXFRIN_DIFFERENT_TTL, rrset.get_ttl(),
-                            buf[-1][1].get_ttl(), rrset.get_name(),
-                            rrset.get_class(), rrset.get_type())
-            for rdatum in rrset.get_rdata():
-                buf[-1][1].add_rdata(rdatum)
-        self.__buffer = buf
+        def compact_buffer(buffer_to_compact):
+            '''Internal helper function for compacting buffers, compacts the
+               given buffer.
+               Returns the compacted buffer.
+            '''
+            buf = []
+            for (op, rrset) in buffer_to_compact:
+                old = buf[-1][1] if len(buf) > 0 else None
+                if old is None or op != buf[-1][0] or \
+                    rrset.get_name() != old.get_name() or \
+                    (not same_type(rrset, old)):
+                    buf.append((op, isc.dns.RRset(rrset.get_name(),
+                                                  rrset.get_class(),
+                                                  rrset.get_type(),
+                                                  rrset.get_ttl())))
+                if rrset.get_ttl() != buf[-1][1].get_ttl():
+                    logger.warn(LIBXFRIN_DIFFERENT_TTL, rrset.get_ttl(),
+                                buf[-1][1].get_ttl(), rrset.get_name(),
+                                rrset.get_class(), rrset.get_type())
+                for rdatum in rrset.get_rdata():
+                    buf[-1][1].add_rdata(rdatum)
+            return buf
+
+        if self.__single_update_mode:
+            self.__additions = compact_buffer(self.__additions)
+            self.__deletions = compact_buffer(self.__deletions)
+        else:
+            self.__buffer = compact_buffer(self.__buffer)
 
     def apply(self):
         """
@@ -209,25 +286,41 @@ class Diff:
         It also can raise isc.datasrc.Error. If that happens, you should stop
         using this object and abort the modification.
         """
-        self.__check_commited()
-        # First, compact the data
-        self.compact()
-        try:
-            # Then pass the data inside the data source
-            for (operation, rrset) in self.__buffer:
+        def apply_buffer(buf):
+            '''
+            Helper method to apply all operations in the given buffer
+            '''
+            for (operation, rrset) in buf:
                 if operation == 'add':
                     self.__updater.add_rrset(rrset)
                 elif operation == 'delete':
                     self.__updater.delete_rrset(rrset)
                 else:
                     raise ValueError('Unknown operation ' + operation)
+
+        self.__check_commited()
+        # First, compact the data
+        self.compact()
+        try:
+            # Then pass the data inside the data source
+            if self.__single_update_mode:
+                apply_buffer(self.__deletions)
+                apply_buffer(self.__additions)
+            else:
+                apply_buffer(self.__buffer)
+
             # As everything is already in, drop the buffer
         except:
             # If there's a problem, we can't continue.
             self.__updater = None
             raise
 
-        self.__buffer = []
+        # all went well, reset state of buffers
+        if self.__single_update_mode:
+            self.__additions = []
+            self.__deletions = []
+        else:
+            self.__buffer = []
 
     def commit(self):
         """
@@ -259,5 +352,27 @@ class Diff:
 
         Probably useful only for testing and introspection purposes. Don't
         modify the list.
+
+        Raises a ValueError if the buffer is in single_update_mode.
         """
-        return self.__buffer
+        if self.__single_update_mode:
+            raise ValueError("Compound buffer requested in single-update mode")
+        else:
+            return self.__buffer
+
+    def get_single_update_buffers(self):
+        """
+        Returns the current buffers of changes not yet passed into the data
+        source. It is a tuple of the current deletions and additions, which
+        each are in a form like [('delete', rrset), ('delete', rrset), ...],
+        and [('add', rrset), ('add', rrset), ..].
+
+        Probably useful only for testing and introspection purposes. Don't
+        modify the lists.
+
+        Raises a ValueError if the buffer is not in single_update_mode.
+        """
+        if not self.__single_update_mode:
+            raise ValueError("Separate buffers requested in single-update mode")
+        else:
+            return (self.__deletions, self.__additions)

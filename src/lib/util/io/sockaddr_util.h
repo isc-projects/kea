@@ -15,6 +15,7 @@
 #ifndef __SOCKADDR_UTIL_H_
 #define __SOCKADDR_UTIL_H_ 1
 
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 

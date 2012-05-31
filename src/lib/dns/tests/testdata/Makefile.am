@@ -146,6 +146,7 @@ EXTRA_DIST += rdata_txt_fromWire5.spec rdata_unknown_fromWire
 EXTRA_DIST += rrcode16_fromWire1 rrcode16_fromWire2
 EXTRA_DIST += rrcode32_fromWire1 rrcode32_fromWire2
 EXTRA_DIST += rrset_toWire1 rrset_toWire2
+EXTRA_DIST += rrset_toWire3 rrset_toWire4
 EXTRA_DIST += rdata_tsig_fromWire1.spec rdata_tsig_fromWire2.spec
 EXTRA_DIST += rdata_tsig_fromWire3.spec rdata_tsig_fromWire4.spec
 EXTRA_DIST += rdata_tsig_fromWire5.spec rdata_tsig_fromWire6.spec

@@ -1,0 +1,395 @@
+# Copyright (C) 2012  Internet Systems Consortium.
+#
+# Permission to use, copy, modify, and distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SYSTEMS CONSORTIUM
+# DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+# INTERNET SYSTEMS CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+# FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+# NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+# WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+from isc.dns import *
+import isc.ddns.zone_config
+from isc.log import *
+from isc.ddns.logger import logger, ClientFormatter, ZoneFormatter,\
+                            RRsetFormatter
+from isc.log_messages.libddns_messages import *
+from isc.acl.acl import ACCEPT, REJECT, DROP
+import copy
+
+# Result codes for UpdateSession.handle()
+UPDATE_SUCCESS = 0
+UPDATE_ERROR = 1
+UPDATE_DROP = 2
+
+# Convenient aliases of update-specific section names
+SECTION_ZONE = Message.SECTION_QUESTION
+SECTION_PREREQUISITE = Message.SECTION_ANSWER
+SECTION_UPDATE = Message.SECTION_AUTHORITY
+
+# Shortcut
+DBGLVL_TRACE_BASIC = logger.DBGLVL_TRACE_BASIC
+
+class UpdateError(Exception):
+    '''Exception for general error in update request handling.
+
+    This exception is intended to be used internally within this module.
+    When UpdateSession.handle() encounters an error in handling an update
+    request it can raise this exception to terminate the handling.
+
+    This class is constructed with some information that may be useful for
+    subsequent possible logging:
+    - msg (string) A string explaining the error.
+    - zname (isc.dns.Name) The zone name.  Can be None when not identified.
+    - zclass (isc.dns.RRClass) The zone class.  Like zname, can be None.
+    - rcode (isc.dns.RCode or None) The RCODE to be set in the response
+      message; this can be None if the response is not expected to be sent.
+    - nolog (bool) If True, it indicates there's no more need for logging.
+
+    '''
+    def __init__(self, msg, zname, zclass, rcode, nolog=False):
+        Exception.__init__(self, msg)
+        self.zname = zname
+        self.zclass = zclass
+        self.rcode = rcode
+        self.nolog = nolog
+
+class UpdateSession:
+    '''Protocol handling for a single dynamic update request.
+
+    This class is instantiated with a request message and some other
+    information that will be used for handling the request.  Its main
+    method, handle(), will process the request, and normally build
+    a response message according to the result.  The application of this
+    class can use the message to send a response to the client.
+
+    '''
+    def __init__(self, req_message, client_addr, zone_config):
+        '''Constructor.
+
+        Parameters:
+        - req_message (isc.dns.Message) The request message.  This must be
+          in the PARSE mode, its Opcode must be UPDATE, and must have been
+          TSIG validatd if it's TSIG signed.
+        - client_addr (socket address) The address/port of the update client
+          in the form of Python socket address object.  This is mainly for
+          logging and access control.
+        - zone_config (ZoneConfig) A tentative container that encapsulates
+          the server's zone configuration.  See zone_config.py.
+        - req_data (binary) Wire format data of the request message.
+          It will be used for TSIG verification if necessary.
+
+        '''
+        self.__message = req_message
+        self.__tsig = req_message.get_tsig_record()
+        self.__client_addr = client_addr
+        self.__zone_config = zone_config
+
+    def get_message(self):
+        '''Return the update message.
+
+        After handle() is called, it's generally transformed to the response
+        to be returned to the client.  If the request has been dropped,
+        this method returns None.  If this method is called before handle()
+        the return value would be identical to the request message passed on
+        construction, although it's of no practical use.
+
+        '''
+        return self.__message
+
+    def handle(self):
+        '''Handle the update request according to RFC2136.
+
+        This method returns a tuple of the following three elements that
+        indicate the result of the request.
+        - Result code of the request processing, which are:
+          UPDATE_SUCCESS Update request granted and succeeded.
+          UPDATE_ERROR Some error happened to be reported in the response.
+          UPDATE_DROP Error happened and no response should be sent.
+          Except the case of UPDATE_DROP, the UpdateSession object will have
+          created a response that is to be returned to the request client,
+          which can be retrieved by get_message().  If it's UPDATE_DROP,
+          subsequent call to get_message() returns None.
+        - The name of the updated zone (isc.dns.Name object) in case of
+          UPDATE_SUCCESS; otherwise None.
+        - The RR class of the updated zone (isc.dns.RRClass object) in case
+          of UPDATE_SUCCESS; otherwise None.
+
+        '''
+        try:
+            datasrc_client, zname, zclass = self.__get_update_zone()
+            # conceptual code that would follow
+            prereq_result = self.__check_prerequisites(datasrc_client,
+                                                       zname, zclass)
+            if prereq_result != Rcode.NOERROR():
+                self.__make_response(prereq_result)
+                return UPDATE_ERROR, zname, zclass
+            self.__check_update_acl(zname, zclass)
+            # self.__do_update()
+            # self.__make_response(Rcode.NOERROR())
+            return UPDATE_SUCCESS, zname, zclass
+        except UpdateError as e:
+            if not e.nolog:
+                logger.debug(logger.DBGLVL_TRACE_BASIC, LIBDDNS_UPDATE_ERROR,
+                             ClientFormatter(self.__client_addr, self.__tsig),
+                             ZoneFormatter(e.zname, e.zclass), e)
+            # If RCODE is specified, create a corresponding resonse and return
+            # ERROR; otherwise clear the message and return DROP.
+            if e.rcode is not None:
+                self.__make_response(e.rcode)
+                return UPDATE_ERROR, None, None
+            self.__message = None
+            return UPDATE_DROP, None, None
+
+    def __get_update_zone(self):
+        '''Parse the zone section and find the zone to be updated.
+
+        If the zone section is valid and the specified zone is found in
+        the configuration, it returns a tuple of:
+        - A matching data source that contains the specified zone
+        - The zone name as a Name object
+        - The zone class as an RRClass object
+
+        '''
+        # Validation: the zone section must contain exactly one question,
+        # and it must be of type SOA.
+        n_zones = self.__message.get_rr_count(SECTION_ZONE)
+        if n_zones != 1:
+            raise UpdateError('Invalid number of records in zone section: ' +
+                              str(n_zones), None, None, Rcode.FORMERR())
+        zrecord = self.__message.get_question()[0]
+        if zrecord.get_type() != RRType.SOA():
+            raise UpdateError('update zone section contains non-SOA',
+                              None, None, Rcode.FORMERR())
+
+        # See if we're serving a primary zone specified in the zone section.
+        zname = zrecord.get_name()
+        zclass = zrecord.get_class()
+        zone_type, datasrc_client = self.__zone_config.find_zone(zname, zclass)
+        if zone_type == isc.ddns.zone_config.ZONE_PRIMARY:
+            return datasrc_client, zname, zclass
+        elif zone_type == isc.ddns.zone_config.ZONE_SECONDARY:
+            # We are a secondary server; since we don't yet support update
+            # forwarding, we return 'not implemented'.
+            logger.debug(DBGLVL_TRACE_BASIC, LIBDDNS_UPDATE_FORWARD_FAIL,
+                         ClientFormatter(self.__client_addr, self.__tsig),
+                         ZoneFormatter(zname, zclass))
+            raise UpdateError('forward', zname, zclass, Rcode.NOTIMP(), True)
+        # zone wasn't found
+        logger.debug(DBGLVL_TRACE_BASIC, LIBDDNS_UPDATE_NOTAUTH,
+                     ClientFormatter(self.__client_addr, self.__tsig),
+                     ZoneFormatter(zname, zclass))
+        raise UpdateError('notauth', zname, zclass, Rcode.NOTAUTH(), True)
+
+    def __check_update_acl(self, zname, zclass):
+        '''Apply update ACL for the zone to be updated.'''
+        acl = self.__zone_config.get_update_acl(zname, zclass)
+        action = acl.execute(isc.acl.dns.RequestContext(
+                (self.__client_addr[0], self.__client_addr[1]), self.__tsig))
+        if action == REJECT:
+            logger.info(LIBDDNS_UPDATE_DENIED,
+                        ClientFormatter(self.__client_addr, self.__tsig),
+                        ZoneFormatter(zname, zclass))
+            raise UpdateError('rejected', zname, zclass, Rcode.REFUSED(), True)
+        if action == DROP:
+            logger.info(LIBDDNS_UPDATE_DROPPED,
+                        ClientFormatter(self.__client_addr, self.__tsig),
+                        ZoneFormatter(zname, zclass))
+            raise UpdateError('dropped', zname, zclass, None, True)
+        logger.debug(logger.DBGLVL_TRACE_BASIC, LIBDDNS_UPDATE_APPROVED,
+                     ClientFormatter(self.__client_addr, self.__tsig),
+                     ZoneFormatter(zname, zclass))
+
+    def __make_response(self, rcode):
+        '''Transform the internal message to the update response.
+
+        According RFC2136 Section 3.8, the zone section will be cleared
+        as well as other sections.  The response Rcode will be set to the
+        given value.
+
+        '''
+        self.__message.make_response()
+        self.__message.clear_section(SECTION_ZONE)
+        self.__message.set_rcode(rcode)
+
+    def __prereq_rrset_exists(self, datasrc_client, rrset):
+        '''Check whether an rrset with the given name and type exists. Class,
+           TTL, and Rdata (if any) of the given RRset are ignored.
+           RFC2136 Section 2.4.1.
+           Returns True if the prerequisite is satisfied, False otherwise.
+
+           Note: the only thing used in the call to find() here is the
+           result status. The actual data is immediately dropped. As
+           a future optimization, we may want to add a find() option to
+           only return what the result code would be (and not read/copy
+           any actual data).
+        '''
+        _, finder = datasrc_client.find_zone(rrset.get_name())
+        result, _, _ = finder.find(rrset.get_name(), rrset.get_type(),
+                                   finder.NO_WILDCARD | finder.FIND_GLUE_OK)
+        return result == finder.SUCCESS
+
+    def __prereq_rrset_exists_value(self, datasrc_client, rrset):
+        '''Check whether an rrset that matches name, type, and rdata(s) of the
+           given rrset exists.
+           RFC2136 Section 2.4.2
+           Returns True if the prerequisite is satisfied, False otherwise.
+        '''
+        _, finder = datasrc_client.find_zone(rrset.get_name())
+        result, found_rrset, _ = finder.find(rrset.get_name(), rrset.get_type(),
+                                             finder.NO_WILDCARD |
+                                             finder.FIND_GLUE_OK)
+        if result == finder.SUCCESS and\
+           rrset.get_name() == found_rrset.get_name() and\
+           rrset.get_type() == found_rrset.get_type():
+            # We need to match all actual RRs, unfortunately there is no
+            # direct order-independent comparison for rrsets, so this
+            # a slightly inefficient way to handle that.
+
+            # shallow copy of the rdata list, so we are sure that this
+            # loop does not mess with actual data.
+            found_rdata = copy.copy(found_rrset.get_rdata())
+            for rdata in rrset.get_rdata():
+                if rdata in found_rdata:
+                    found_rdata.remove(rdata)
+                else:
+                    return False
+            return len(found_rdata) == 0
+        return False
+
+    def __prereq_rrset_does_not_exist(self, datasrc_client, rrset):
+        '''Check whether no rrsets with the same name and type as the given
+           rrset exist.
+           RFC2136 Section 2.4.3.
+           Returns True if the prerequisite is satisfied, False otherwise.
+        '''
+        return not self.__prereq_rrset_exists(datasrc_client, rrset)
+
+    def __prereq_name_in_use(self, datasrc_client, rrset):
+        '''Check whether the name of the given RRset is in use (i.e. has
+           1 or more RRs).
+           RFC2136 Section 2.4.4
+           Returns True if the prerequisite is satisfied, False otherwise.
+
+           Note: the only thing used in the call to find_all() here is
+           the result status. The actual data is immediately dropped. As
+           a future optimization, we may want to add a find_all() option
+           to only return what the result code would be (and not read/copy
+           any actual data).
+        '''
+        _, finder = datasrc_client.find_zone(rrset.get_name())
+        result, rrsets, flags = finder.find_all(rrset.get_name(),
+                                                finder.NO_WILDCARD |
+                                                finder.FIND_GLUE_OK)
+        if result == finder.SUCCESS and\
+           (flags & finder.RESULT_WILDCARD == 0):
+            return True
+        return False
+
+    def __prereq_name_not_in_use(self, datasrc_client, rrset):
+        '''Check whether the name of the given RRset is not in use (i.e. does
+           not exist at all, or is an empty nonterminal.
+           RFC2136 Section 2.4.5.
+           Returns True if the prerequisite is satisfied, False otherwise.
+        '''
+        return not self.__prereq_name_in_use(datasrc_client, rrset)
+
+    def __check_prerequisites(self, datasrc_client, zname, zclass):
+        '''Check the prerequisites section of the UPDATE Message.
+           RFC2136 Section 2.4.
+           Returns a dns Rcode signaling either no error (Rcode.NOERROR())
+           or that one of the prerequisites failed (any other Rcode).
+        '''
+        for rrset in self.__message.get_section(SECTION_PREREQUISITE):
+            # First check if the name is in the zone
+            relation = rrset.get_name().compare(zname).get_relation()
+            if relation != NameComparisonResult.SUBDOMAIN and\
+               relation != NameComparisonResult.EQUAL:
+                logger.info(LIBDDNS_PREREQ_NOTZONE,
+                            ClientFormatter(self.__client_addr),
+                            ZoneFormatter(zname, zclass),
+                            RRsetFormatter(rrset))
+                return Rcode.NOTZONE()
+
+            # Algorithm taken from RFC2136 Section 3.2
+            if rrset.get_class() == RRClass.ANY():
+                if rrset.get_ttl().get_value() != 0 or\
+                   rrset.get_rdata_count() != 0:
+                    logger.info(LIBDDNS_PREREQ_FORMERR_ANY,
+                                ClientFormatter(self.__client_addr),
+                                ZoneFormatter(zname, zclass),
+                                RRsetFormatter(rrset))
+                    return Rcode.FORMERR()
+                elif rrset.get_type() == RRType.ANY():
+                    if not self.__prereq_name_in_use(datasrc_client,
+                                                     rrset):
+                        rcode = Rcode.NXDOMAIN()
+                        logger.info(LIBDDNS_PREREQ_NAME_IN_USE_FAILED,
+                                    ClientFormatter(self.__client_addr),
+                                    ZoneFormatter(zname, zclass),
+                                    RRsetFormatter(rrset), rcode)
+                        return rcode
+                else:
+                    if not self.__prereq_rrset_exists(datasrc_client, rrset):
+                        rcode = Rcode.NXRRSET()
+                        logger.info(LIBDDNS_PREREQ_RRSET_EXISTS_FAILED,
+                                    ClientFormatter(self.__client_addr),
+                                    ZoneFormatter(zname, zclass),
+                                    RRsetFormatter(rrset), rcode)
+                        return rcode
+            elif rrset.get_class() == RRClass.NONE():
+                if rrset.get_ttl().get_value() != 0 or\
+                   rrset.get_rdata_count() != 0:
+                    logger.info(LIBDDNS_PREREQ_FORMERR_NONE,
+                                ClientFormatter(self.__client_addr),
+                                ZoneFormatter(zname, zclass),
+                                RRsetFormatter(rrset))
+                    return Rcode.FORMERR()
+                elif rrset.get_type() == RRType.ANY():
+                    if not self.__prereq_name_not_in_use(datasrc_client,
+                                                         rrset):
+                        rcode = Rcode.YXDOMAIN()
+                        logger.info(LIBDDNS_PREREQ_NAME_NOT_IN_USE_FAILED,
+                                    ClientFormatter(self.__client_addr),
+                                    ZoneFormatter(zname, zclass),
+                                    RRsetFormatter(rrset), rcode)
+                        return rcode
+                else:
+                    if not self.__prereq_rrset_does_not_exist(datasrc_client,
+                                                              rrset):
+                        rcode = Rcode.YXRRSET()
+                        logger.info(LIBDDNS_PREREQ_RRSET_DOES_NOT_EXIST_FAILED,
+                                    ClientFormatter(self.__client_addr),
+                                    ZoneFormatter(zname, zclass),
+                                    RRsetFormatter(rrset), rcode)
+                        return rcode
+            elif rrset.get_class() == zclass:
+                if rrset.get_ttl().get_value() != 0:
+                    logger.info(LIBDDNS_PREREQ_FORMERR,
+                                ClientFormatter(self.__client_addr),
+                                ZoneFormatter(zname, zclass),
+                                RRsetFormatter(rrset))
+                    return Rcode.FORMERR()
+                else:
+                    if not self.__prereq_rrset_exists_value(datasrc_client,
+                                                            rrset):
+                        rcode = Rcode.NXRRSET()
+                        logger.info(LIBDDNS_PREREQ_RRSET_EXISTS_VAL_FAILED,
+                                    ClientFormatter(self.__client_addr),
+                                    ZoneFormatter(zname, zclass),
+                                    RRsetFormatter(rrset), rcode)
+                        return rcode
+            else:
+                logger.info(LIBDDNS_PREREQ_FORMERR_CLASS,
+                            ClientFormatter(self.__client_addr),
+                            ZoneFormatter(zname, zclass),
+                            RRsetFormatter(rrset))
+                return Rcode.FORMERR()
+
+        # All prerequisites are satisfied
+        return Rcode.NOERROR()

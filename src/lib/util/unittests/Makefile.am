@@ -11,6 +11,9 @@ libutil_unittests_la_SOURCES += run_all.h run_all.cc
 libutil_unittests_la_SOURCES += textdata.h
 endif
 
+# For now, this isn't needed for libutil_unittests
+EXTRA_DIST = mock_socketsession.h
+
 libutil_unittests_la_CPPFLAGS = $(AM_CPPFLAGS)
 if HAVE_GTEST
 libutil_unittests_la_CPPFLAGS += $(GTEST_INCLUDES)

@@ -1067,6 +1067,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/python/isc/testutils/Makefile
                  src/lib/python/isc/bind10/Makefile
                  src/lib/python/isc/bind10/tests/Makefile
+                 src/lib/python/isc/ddns/Makefile
+                 src/lib/python/isc/ddns/tests/Makefile
                  src/lib/python/isc/xfrin/Makefile
                  src/lib/python/isc/xfrin/tests/Makefile
                  src/lib/python/isc/server_common/Makefile
@@ -1120,6 +1122,7 @@ AC_CONFIG_FILES([Makefile
                  tests/tools/badpacket/Makefile
                  tests/tools/badpacket/tests/Makefile
                  tests/tools/perfdhcp/Makefile
+                 tests/tools/perfdhcp/tests/Makefile
                  dns++.pc
                ])
 AC_OUTPUT([doc/version.ent

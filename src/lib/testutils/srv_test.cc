@@ -34,6 +34,7 @@ using namespace isc::asiolink;
 namespace isc {
 namespace testutils {
 const char* const DEFAULT_REMOTE_ADDRESS = "192.0.2.1";
+const uint16_t DEFAULT_REMOTE_PORT = 53210;
 
 SrvTestBase::SrvTestBase() : request_message(Message::RENDER),
                              parse_message(new Message(Message::PARSE)),
@@ -62,7 +63,8 @@ SrvTestBase::createDataFromFile(const char* const datafile,
     delete endpoint;
 
     endpoint = IOEndpoint::create(protocol,
-                                  IOAddress(DEFAULT_REMOTE_ADDRESS), 53210);
+                                  IOAddress(DEFAULT_REMOTE_ADDRESS),
+                                  DEFAULT_REMOTE_PORT);
     UnitTestUtil::readWireData(datafile, data);
     io_sock = (protocol == IPPROTO_UDP) ? &IOSocket::getDummyUDPSocket() :
         &IOSocket::getDummyTCPSocket();
@@ -71,7 +73,9 @@ SrvTestBase::createDataFromFile(const char* const datafile,
 
 void
 SrvTestBase::createRequestPacket(Message& message,
-                                 const int protocol, TSIGContext* context)
+                                 const int protocol, TSIGContext* context,
+                                 const char* const remote_address,
+                                 uint16_t remote_port)
 {
     if (context == NULL) {
         message.toWire(request_renderer);
@@ -81,8 +85,8 @@ SrvTestBase::createRequestPacket(Message& message,
 
     delete io_message;
 
-    endpoint = IOEndpoint::create(protocol,
-                                  IOAddress(DEFAULT_REMOTE_ADDRESS), 53210);
+    endpoint = IOEndpoint::create(protocol, IOAddress(remote_address),
+                                  remote_port);
     io_sock = (protocol == IPPROTO_UDP) ? &IOSocket::getDummyUDPSocket() :
         &IOSocket::getDummyTCPSocket();
 
@@ -96,9 +100,10 @@ void
 SrvTestBase::unsupportedRequest() {
     for (unsigned int i = 0; i < 16; ++i) {
         // set Opcode to 'i', which iterators over all possible codes except
-        // the standard query and notify 
+        // the standard opcodes we support.
         if (i == isc::dns::Opcode::QUERY().getCode() ||
-            i == isc::dns::Opcode::NOTIFY().getCode()) {
+            i == isc::dns::Opcode::NOTIFY().getCode() ||
+            i == isc::dns::Opcode::UPDATE().getCode()) {
             continue;
         }
         createDataFromFile("simplequery_fromWire.wire");
