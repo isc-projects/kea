@@ -17,6 +17,7 @@ TESTS += run_unittests
 run_unittests_SOURCES  = run_unittests.cc
 run_unittests_SOURCES += command_options_unittest.cc
 run_unittests_SOURCES += perf_pkt6_unittest.cc
+run_unittests_SOURCES += localized_option_unittest.cc
 run_unittests_SOURCES += $(top_builddir)/tests/tools/perfdhcp/command_options.cc
 run_unittests_SOURCES += $(top_builddir)/tests/tools/perfdhcp/perf_pkt6.cc
 
