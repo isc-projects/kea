@@ -379,6 +379,8 @@ class TestMain(unittest.TestCase):
 
     def __clear_socket(self):
         self.__clear_called = True
+        # Get rid of the socket file too
+        self.__orig_clear()
 
     def check_exception(self, ex):
         '''Common test sequence to see if the given exception is caused.
