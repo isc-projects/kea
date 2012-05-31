@@ -27,11 +27,13 @@
 #include <log/logger_name.h>
 
 #include <boost/scoped_ptr.hpp>
+#include <boost/bind.hpp>
 
 using namespace isc::data;
 using namespace isc::config;
 using namespace isc::cc;
 using namespace std;
+using namespace boost;
 
 namespace {
 std::string
@@ -497,10 +499,10 @@ TEST_F(CCSessionTest, remoteConfig) {
         const size_t qsize(session.getMsgQueue()->size());
         EXPECT_TRUE(session.getMsgQueue()->get(qsize - 2)->equals(*el(
             "[ \"ConfigManager\", \"*\", { \"command\": ["
-            "\"get_module_spec\", { \"module_name\": \"Spec2\" } ] } ]")));
+            "\"get_module_spec\", { \"module_name\": \"Spec2\" } ] }, -1 ]")));
         EXPECT_TRUE(session.getMsgQueue()->get(qsize - 1)->equals(*el(
             "[ \"ConfigManager\", \"*\", { \"command\": [ \"get_config\","
-            "{ \"module_name\": \"Spec2\" } ] } ]")));
+            "{ \"module_name\": \"Spec2\" } ] }, -1 ]")));
         EXPECT_EQ("Spec2", module_name);
         // Since we returned an empty local config above, the default value
         // for "item1", which is 1, should be used.
@@ -709,13 +711,286 @@ TEST_F(CCSessionTest, doubleStartWithAddRemoteConfig) {
                  FakeSession::DoubleRead);
 }
 
-namespace {
+/// \brief Test fixture for asynchronous receiving of messages.
+///
+/// This is an extension to the CCSessionTest. It would be possible to add
+/// the functionality to the CCSessionTest, but it is going to be used
+/// only by few tests and is non-trivial, so it is placed to a separate
+/// sub-class.
+class AsyncReceiveCCSessionTest : public CCSessionTest {
+protected:
+    AsyncReceiveCCSessionTest() :
+        mccs_(ccspecfile("spec29.spec"), session, NULL, NULL, false, false),
+        msg_(el("{\"result\": [0]}")),
+        next_flag_(0)
+    {
+        // This is just to make sure the messages get through the fake
+        // session.
+        session.subscribe("test group");
+        session.subscribe("other group");
+        session.subscribe("<ignored>");
+        // Get rid of all unrelated stray messages
+        while (session.getMsgQueue()->size() > 0) {
+            session.getMsgQueue()->remove(0);
+        }
+    }
+    /// \brief Convenience function to queue a request to get a command
+    ///     message.
+    ModuleCCSession::AsyncRecvRequestID
+        registerCommand(const string& recipient)
+    {
+        return (mccs_.groupRecvMsgAsync(
+            bind(&AsyncReceiveCCSessionTest::callback, this, next_flag_ ++, _1,
+                 _2, _3), false, -1, recipient));
+    }
+    /// \brief Convenience function to queue a request to get a reply
+    ///     message.
+    ModuleCCSession::AsyncRecvRequestID
+        registerReply(int seq)
+    {
+        return (mccs_.groupRecvMsgAsync(
+            bind(&AsyncReceiveCCSessionTest::callback, this, next_flag_ ++, _1,
+                 _2, _3), true, seq));
+    }
+    /// \brief Check the next called callback was with this flag
+    void called(int flag) {
+        ASSERT_FALSE(called_.empty());
+        EXPECT_EQ(flag, *called_.begin());
+        called_.pop_front();
+    }
+    /// \brief Checks that no more callbacks were called.
+    void nothingCalled() {
+        EXPECT_TRUE(called_.empty());
+    }
+    /// \brief The tested session.
+    ModuleCCSession mccs_;
+    /// \brief The value of message on the last called callback.
+    ConstElementPtr last_msg_;
+    /// \brief A message that can be used
+    ConstElementPtr msg_;
+    // Shared part of the simpleCommand and similar tests.
+    void commandTest(const string& group) {
+        // Push the message inside
+        session.addMessage(msg_, "test group", "<unused>");
+        EXPECT_TRUE(mccs_.hasQueuedMsgs());
+        // Register the callback
+        registerCommand(group);
+        // But the callback should not be called yet
+        // (even if the message is there).
+        nothingCalled();
+        // But when we call the checkCommand(), it should be called.
+        mccs_.checkCommand();
+        called(0);
+        EXPECT_EQ(msg_, last_msg_);
+        // But only once
+        nothingCalled();
+        // And the message should be eaten
+        EXPECT_FALSE(mccs_.hasQueuedMsgs());
+        // The callback should have been eaten as well, inserting another
+        // message will not invoke it again
+        session.addMessage(msg_, "test group", "<unused>");
+        mccs_.checkCommand();
+        nothingCalled();
+    }
+    /// \brief Shared part of the simpleResponse and wildcardResponse tests.
+    void responseTest(int seq) {
+        // Push the message inside
+        session.addMessage(msg_, "<ignored>", "<unused>", 1);
+        EXPECT_TRUE(mccs_.hasQueuedMsgs());
+        // Register the callback
+        registerReply(seq);
+        // But the callback should not be called yet
+        // (even if the message is there).
+        nothingCalled();
+        // But when we call the checkCommand(), it should be called.
+        mccs_.checkCommand();
+        called(0);
+        EXPECT_EQ(msg_, last_msg_);
+        // But only once
+        nothingCalled();
+        // And the message should be eaten
+        EXPECT_FALSE(mccs_.hasQueuedMsgs());
+        // The callback should have been eaten as well, inserting another
+        // message will not invoke it again
+        session.addMessage(msg_, "test group", "<unused>");
+        mccs_.checkCommand();
+        nothingCalled();
+    }
+    /// \brief Shared part of the noMatch* tests
+    void noMatchTest(int seq, int wanted_seq, bool is_reply) {
+        // Push the message inside
+        session.addMessage(msg_, "other group", "<unused>", seq);
+        EXPECT_TRUE(mccs_.hasQueuedMsgs());
+        // Register the callback
+        if (is_reply) {
+            registerReply(wanted_seq);
+        } else {
+            registerCommand("test group");
+        }
+        // But the callback should not be called yet
+        // (even if the message is there).
+        nothingCalled();
+        // And even not now, because it does not match.
+        mccs_.checkCommand();
+        nothingCalled();
+        // And the message should be eaten by the checkCommand
+        EXPECT_FALSE(mccs_.hasQueuedMsgs());
+    }
+private:
+    /// \brief The next flag to be handed out
+    int next_flag_;
+    /// \brief Flags of callbacks already called (as FIFO)
+    list<int> called_;
+    /// \brief This is the callback registered to the tested groupRecvMsgAsync
+    ///     function.
+    void callback(int store_flag, const ConstElementPtr&,
+                  const ConstElementPtr& msg,
+                  const ModuleCCSession::AsyncRecvRequestID&)
+    {
+        called_.push_back(store_flag);
+        last_msg_ = msg;
+    }
+};
+
+// Test we can receive a command, without anything fancy yet
+TEST_F(AsyncReceiveCCSessionTest, simpleCommand) {
+    commandTest("test group");
+}
+
+// Test we can receive a "wildcard" command - without specifying the
+// group to subscribe to. Very similar to simpleCommand test.
+TEST_F(AsyncReceiveCCSessionTest, wildcardCommand) {
+    commandTest("");
+}
+
+// Very similar to simpleCommand, but with a response message
+TEST_F(AsyncReceiveCCSessionTest, simpleResponse) {
+    responseTest(1);
+}
+
+// Matching a response message with wildcard
+TEST_F(AsyncReceiveCCSessionTest, wildcardResponse) {
+    responseTest(-1);
+}
+
+// Check that a wrong command message is not matched
+TEST_F(AsyncReceiveCCSessionTest, noMatchCommand) {
+    noMatchTest(-1, -1, false);
+}
+
+// Check that a wrong response message is not matched
+TEST_F(AsyncReceiveCCSessionTest, noMatchResponse) {
+    noMatchTest(2, 3, true);
+}
+
+// Check that a command will not match on a reply check and vice versa
+TEST_F(AsyncReceiveCCSessionTest, noMatchResponseAgainstCommand) {
+    // Send a command and check it is not matched as a response
+    noMatchTest(-1, -1, true);
+}
+
+TEST_F(AsyncReceiveCCSessionTest, noMatchCommandAgainstResponse) {
+    noMatchTest(2, -1, false);
+}
+
+// We check for command several times before the message actually arrives.
+TEST_F(AsyncReceiveCCSessionTest, delayedCallback) {
+    // First, register the callback
+    registerReply(1);
+    // And see it is not called, because the message is not there yet
+    EXPECT_FALSE(mccs_.hasQueuedMsgs());
+    for (size_t i(0); i < 100; ++ i) {
+        mccs_.checkCommand();
+        EXPECT_FALSE(mccs_.hasQueuedMsgs());
+        nothingCalled();
+    }
+    // Now the message finally arrives
+    session.addMessage(msg_, "<ignored>", "<unused>", 1);
+    EXPECT_TRUE(mccs_.hasQueuedMsgs());
+    // And now, the callback is happily triggered.
+    mccs_.checkCommand();
+    called(0);
+    EXPECT_EQ(msg_, last_msg_);
+    // But only once
+    nothingCalled();
+}
+
+// See that if we put multiple messages inside, and request some callbacks,
+// the callbacks are called in the order of messages, not in the order they
+// were registered.
+TEST_F(AsyncReceiveCCSessionTest, outOfOrder) {
+    // First, put some messages there
+    session.addMessage(msg_, "<ignored>", "<unused>", 1);
+    session.addMessage(msg_, "test group", "<unused>");
+    session.addMessage(msg_, "other group", "<unused>");
+    session.addMessage(msg_, "<ignored>", "<unused>", 2);
+    session.addMessage(msg_, "<ignored>", "<unused>", 3);
+    session.addMessage(msg_, "<ignored>", "<unused>", 4);
+    // Now register some callbacks
+    registerReply(13); // Will not be called
+    registerCommand("other group"); // Matches 3rd message
+    registerReply(2); // Matches 4th message
+    registerCommand(""); // Matches the 2nd message
+    registerCommand("test group"); // Will not be called
+    registerReply(-1); // Matches the 1st message
+    registerReply(-1); // Matches the 5th message
+    // Process all messages there
+    while (mccs_.hasQueuedMsgs()) {
+        mccs_.checkCommand();
+    }
+    // These are the numbers of callbacks in the order of messages
+    called(5);
+    called(3);
+    called(1);
+    called(2);
+    called(6);
+    // The last message doesn't trigger anything, so nothing more is called
+    nothingCalled();
+}
+
+// We first add, then remove the callback again and check that nothing is
+// matched.
+TEST_F(AsyncReceiveCCSessionTest, cancel) {
+    // Add the callback
+    ModuleCCSession::AsyncRecvRequestID request(registerReply(1));
+    // Add corresponding message
+    session.addMessage(msg_, "<ignored>", "<unused>", 1);
+    EXPECT_TRUE(mccs_.hasQueuedMsgs());
+    // And now, remove the callback again
+    mccs_.cancelAsyncRecv(request);
+    // And see that Nothing Happens(TM)
+    mccs_.checkCommand();
+    EXPECT_FALSE(mccs_.hasQueuedMsgs());
+    nothingCalled();
+}
+
+// We add multiple requests and cancel only one of them to see the rest
+// is unaffected.
+TEST_F(AsyncReceiveCCSessionTest, cancelSome) {
+    // Register few callbacks
+    registerReply(1);
+    ModuleCCSession::AsyncRecvRequestID request(registerCommand(""));
+    registerCommand("test group");
+    // Put some messages there
+    session.addMessage(msg_, "test group", "<unused>");
+    session.addMessage(msg_, "<ignored>", "<unused>", 1);
+    // Cancel the second callback. Therefore the first message will be matched
+    // by the third callback, not by the second.
+    mccs_.cancelAsyncRecv(request);
+    // Now, process the messages
+    mccs_.checkCommand();
+    mccs_.checkCommand();
+    // And see how they matched
+    called(2);
+    called(0);
+    nothingCalled();
+}
+
 void doRelatedLoggersTest(const char* input, const char* expected) {
     ConstElementPtr all_conf = isc::data::Element::fromJSON(input);
     ConstElementPtr expected_conf = isc::data::Element::fromJSON(expected);
     EXPECT_EQ(*expected_conf, *isc::config::getRelatedLoggers(all_conf));
 }
-} // end anonymous namespace
 
 TEST(LogConfigTest, relatedLoggersTest) {
     // make sure logger configs for 'other' programs are ignored,
