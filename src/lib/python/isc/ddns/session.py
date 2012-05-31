@@ -59,40 +59,23 @@ class UpdateError(Exception):
         self.rcode = rcode
         self.nolog = nolog
 
-def foreach_rr_in_rrset(rrset, method, *kwargs):
-    '''Helper function. For DDNS, in a number of cases, we need to
-       treat the various RRs in a single RRset separately.
-       Our libdns++ has no concept of RRs, so in that case,
-       what we do is create a temporary 1-RR RRset for each Rdata
-       in the RRset object.
-       This method then calls the given method with the given args
-       for each of the temporary rrsets (the rrset in *wargs is
-       replaced by the temporary one)
-       Note: if this method is useful in more places, we may want
-       to move it out of ddns.
-       Example:
-       Say you have a method that prints a prexif string and an
-       rrset, def my_print(prefix, rrset)
-       Given an rrset my_rrset, you'd print the entire rrset
-       with my_print("foo", rrset)
-       And with this helper function, to print each rr invidually,
-       you'd call
-       foreach_rr_in_rrsetet(rrset, my_print, "foo", rrset)
-       Note the rrset is needed twice, the first to identify it,
-       the second as the 'real' argument to my_print (which is replaced
-       by this function.
+def foreach_rr(rrset):
     '''
-    result = None
+    Generator that creates a new RRset with one RR from
+    the given RRset upon each iteration, usable in calls that
+    need to loop over an RRset and perform an action with each
+    of the individual RRs in it.
+    Example:
+    for rr in foreach_rr(rrset):
+        print(str(rr))
+    '''
     for rdata in rrset.get_rdata():
-        tmp_rrset = isc.dns.RRset(rrset.get_name(),
-                                  rrset.get_class(),
-                                  rrset.get_type(),
-                                  rrset.get_ttl())
-        tmp_rrset.add_rdata(rdata)
-        # Replace the rrset in the original arguments by our rrset
-        args = [arg if arg != rrset else tmp_rrset for arg in kwargs]
-        result = method(*args)
-    return result
+        rr = isc.dns.RRset(rrset.get_name(),
+                           rrset.get_class(),
+                           rrset.get_type(),
+                           rrset.get_ttl())
+        rr.add_rdata(rdata)
+        yield rr
 
 def convert_rrset_class(rrset, rrclass):
     '''Returns a (new) rrset with the data from the given rrset,
@@ -228,10 +211,10 @@ class UpdateSession:
         zclass = zrecord.get_class()
         zone_type, datasrc_client = self.__zone_config.find_zone(zname, zclass)
         if zone_type == isc.ddns.zone_config.ZONE_PRIMARY:
+            _, self.__finder = datasrc_client.find_zone(zname)
             self.__zname = zname
             self.__zclass = zclass
             self.__datasrc_client = datasrc_client
-            _, self.__finder = datasrc_client.find_zone(zname)
             return
         elif zone_type == isc.ddns.zone_config.ZONE_SECONDARY:
             # We are a secondary server; since we don't yet support update
@@ -468,7 +451,8 @@ class UpdateSession:
                 if rrset.get_type() == RRType.SOA():
                     # In case there's multiple soa records in the update
                     # somehow, just take the last
-                    foreach_rr_in_rrset(rrset, self.__set_soa_rrset, rrset)
+                    for rr in foreach_rr(rrset):
+                        self.__set_soa_rrset(rr)
             elif rrset.get_class() == RRClass.ANY():
                 if rrset.get_ttl().get_value() != 0:
                     logger.info(LIBDDNS_UPDATE_DELETE_NONZERO_TTL,
@@ -538,7 +522,7 @@ class UpdateSession:
         '''
         # For a number of cases, we may need to remove data in the zone
         # (note; SOA is handled separately by __do_update, so that one
-        # is not explicitely ignored here)
+        # is explicitely ignored here)
         if rrset.get_type() == RRType.SOA():
             return
         result, orig_rrset, _ = self.__finder.find(rrset.get_name(),
@@ -565,7 +549,8 @@ class UpdateSession:
             # If this type is CNAME, ignore the update
             if rrset.get_type() == RRType.CNAME():
                 return
-        foreach_rr_in_rrset(rrset, self.__do_update_add_single_rr, diff, rrset, orig_rrset)
+        for rr in foreach_rr(rrset):
+            self.__do_update_add_single_rr(diff, rr, orig_rrset)
 
     def __do_update_delete_rrset(self, diff, rrset):
         '''Deletes the rrset with the name and type of the given
@@ -578,12 +563,14 @@ class UpdateSession:
                                                   rrset.get_type(),
                                                   ZoneFinder.NO_WILDCARD |
                                                   ZoneFinder.FIND_GLUE_OK)
-        if to_delete.get_name() == self.__zname and\
-           (to_delete.get_type() == RRType.SOA() or\
-            to_delete.get_type() == RRType.NS()):
-            # ignore
-            return
-        foreach_rr_in_rrset(to_delete, diff.delete_data, to_delete)
+        if result == ZoneFinder.SUCCESS:
+            if to_delete.get_name() == self.__zname and\
+               (to_delete.get_type() == RRType.SOA() or\
+                to_delete.get_type() == RRType.NS()):
+                # ignore
+                return
+            for rr in foreach_rr(to_delete):
+                diff.delete_data(rr)
 
     def __ns_deleter_helper(self, diff, rrset):
         '''Special case helper for deleting NS resource records
@@ -636,7 +623,8 @@ class UpdateSession:
                     to_delete.get_type() == RRType.NS()):
                     continue
                 else:
-                    foreach_rr_in_rrset(to_delete, diff.delete_data, to_delete)
+                    for rr in foreach_rr(to_delete):
+                        diff.delete_data(rr)
 
     def __do_update_delete_rrs_from_rrset(self, diff, rrset):
         '''Deletes all resource records in the given rrset from the
@@ -661,7 +649,8 @@ class UpdateSession:
                 # delegate to helper method
                 self.__ns_deleter_helper(diff, to_delete)
                 return
-        foreach_rr_in_rrset(to_delete, diff.delete_data, to_delete)
+        for rr in foreach_rr(to_delete):
+            diff.delete_data(rr)
 
     def __update_soa(self, diff):
         '''Checks the member value __added_soa, and depending on
@@ -716,7 +705,7 @@ class UpdateSession:
             # of the Diff class, this is not the case, and therefore it
             # is easier to work with full rrsets for the most parts
             # (less lookups needed; conversion to individual rrs is
-            # the same offort whether it is done here or in the several
+            # the same effort whether it is done here or in the several
             # do_update statements)
             for rrset in self.__message.get_section(SECTION_UPDATE):
                 if rrset.get_class() == self.__zclass:

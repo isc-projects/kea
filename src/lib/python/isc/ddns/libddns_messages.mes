@@ -109,8 +109,7 @@ A FORMERR response is sent back to the client.
 % LIBDDNS_UPDATE_DATASRC_ERROR error in datasource during DDNS update: %1
 An error occured while committing the DDNS update changes to the
 datasource. The specific error is printed. A SERVFAIL response is sent
-back to the client. In theory, if the datasource is implemented
-correctly, no changes should have been made to the zone contents.
+back to the client.
 
 % LIBDDNS_UPDATE_DELETE_BAD_TYPE update client %1 for zone %2: update deletion RR bad type: %3
 The Update section of a DDNS update message contains a statement
@@ -126,7 +125,7 @@ A FORMERR response is sent back to the client.
 
 % LIBDDNS_UPDATE_DELETE_RRSET_NOT_EMPTY update client %1 for zone %2: update deletion RR contains data %3
 The Update section of a DDNS update message contains a 'delete rrset'
-statement with a non-empty Rrset. This is not allowed by the protocol.
+statement with a non-empty RRset. This is not allowed by the protocol.
 A FORMERR response is sent back to the client.
 
 % LIBDDNS_UPDATE_DELETE_RR_BAD_TYPE update client %1 for zone %2: update deletion RR bad type: %3

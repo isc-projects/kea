@@ -58,6 +58,16 @@ def create_update_msg(zones=[TEST_ZONE_RECORD], prerequisites=[],
 
     return renderer.get_data(), msg
 
+def add_rdata(rrset, rdata):
+    '''
+    Helper function for easily adding Rdata fields to RRsets.
+    This function assumes the given rdata is of type string or bytes,
+    and corresponds to the given rrset
+    '''
+    rrset.add_rdata(isc.dns.Rdata(rrset.get_type(),
+                                  rrset.get_class(),
+                                  rdata))
+
 def create_rrset(name, rrclass, rrtype, ttl, rdatas = []):
     '''
     Helper method to easily create RRsets, auto-converts
@@ -78,16 +88,6 @@ def create_rrset(name, rrclass, rrtype, ttl, rdatas = []):
     for rdata in rdatas:
         add_rdata(rrset, rdata)
     return rrset
-
-def add_rdata(rrset, rdata):
-    '''
-    Helper function for easily adding Rdata fields to RRsets.
-    This function assumes the given rdata is of type string or bytes,
-    and corresponds to the given rrset
-    '''
-    rrset.add_rdata(isc.dns.Rdata(rrset.get_type(),
-                                  rrset.get_class(),
-                                  rdata))
 
 class SessionTest(unittest.TestCase):
     '''Session tests'''
@@ -185,33 +185,22 @@ class SessionTest(unittest.TestCase):
         # zone class doesn't match
         self.check_notauth(Name('example.org'), RRClass.CH())
 
-    def foreach_rr_in_rrset_helper(self, rr, l):
-        l.append(rr.to_text())
-
     def test_foreach_rr_in_rrset(self):
         rrset = create_rrset("www.example.org", TEST_RRCLASS,
                              RRType.A(), 3600, [ "192.0.2.1" ])
 
         l = []
-        foreach_rr_in_rrset(rrset, self.foreach_rr_in_rrset_helper, rrset, l)
+        for rr in foreach_rr(rrset):
+            l.append(str(rr))
         self.assertEqual(["www.example.org. 3600 IN A 192.0.2.1\n"], l)
 
         add_rdata(rrset, "192.0.2.2")
         add_rdata(rrset, "192.0.2.3")
 
-        # if the helper is called directly, the list should have
-        # one entry, with a multiline string
-        # but through the helper, there should be several 1-line entries
+        # but through the generator, there should be several 1-line entries
         l = []
-        self.foreach_rr_in_rrset_helper(rrset, l)
-        self.assertEqual(["www.example.org. 3600 IN A 192.0.2.1\n" +
-                          "www.example.org. 3600 IN A 192.0.2.2\n" +
-                          "www.example.org. 3600 IN A 192.0.2.3\n"
-                         ], l)
-
-        # but through the helper, there should be several 1-line entries
-        l = []
-        foreach_rr_in_rrset(rrset, self.foreach_rr_in_rrset_helper, rrset, l)
+        for rr in foreach_rr(rrset):
+            l.append(str(rr))
         self.assertEqual(["www.example.org. 3600 IN A 192.0.2.1\n",
                           "www.example.org. 3600 IN A 192.0.2.2\n",
                           "www.example.org. 3600 IN A 192.0.2.3\n",
@@ -609,7 +598,7 @@ class SessionTest(unittest.TestCase):
            Function does not do much but makes the code look nicer'''
         self.assertEqual(expected, method(rrset))
 
-    def initialize_update_rrsets(self):
+    def __initialize_update_rrsets(self):
         '''Prepare a number of RRsets to be used in several update tests
            The rrsets are stored in self'''
         orig_a_rrset = create_rrset("www.example.org", TEST_RRCLASS,
@@ -690,7 +679,7 @@ class SessionTest(unittest.TestCase):
         '''Test whether the prescan succeeds on data that is ok, and whether
            if notices the SOA if present'''
         # prepare a set of correct update statements
-        self.initialize_update_rrsets()
+        self.__initialize_update_rrsets()
 
         self.check_prescan_result(Rcode.NOERROR(), [ self.rrset_update_a ])
 
@@ -785,8 +774,8 @@ class SessionTest(unittest.TestCase):
                              [ b'\x00' ])
         self.check_prescan_result(Rcode.FORMERR(), [ rrset ])
 
-    def check_inzone_data(self, expected_result, name, rrtype,
-                          expected_rrset = None):
+    def __check_inzone_data(self, expected_result, name, rrtype,
+                            expected_rrset = None):
         '''Does a find on TEST_ZONE for the given rrset's name and type,
            then checks if the result matches the expected result.
            If so, and if expected_rrset is given, they are compared as
@@ -817,7 +806,7 @@ class SessionTest(unittest.TestCase):
         Tests a sequence of related add and delete updates. Some other
         cases are tested by later tests.
         '''
-        self.initialize_update_rrsets()
+        self.__initialize_update_rrsets()
 
         # initially, the www should only contain one rr
         # (set to self.orig_a_rrset)
@@ -830,115 +819,191 @@ class SessionTest(unittest.TestCase):
                                           "192.0.2.3" ])
 
         # Sanity check, make sure original data is really there before updates
-        self.check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
-                               isc.dns.Name("www.example.org"),
-                               RRType.A(),
-                               self.orig_a_rrset)
+        self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
+                                 isc.dns.Name("www.example.org"),
+                                 RRType.A(),
+                                 self.orig_a_rrset)
 
         # Add two rrs
         self.check_full_handle_result(Rcode.NOERROR(), [ self.rrset_update_a ])
 
-        self.check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
-                               isc.dns.Name("www.example.org"),
-                               RRType.A(),
-                               extended_a_rrset)
+        self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
+                                 isc.dns.Name("www.example.org"),
+                                 RRType.A(),
+                                 extended_a_rrset)
 
         # Adding the same RRsets should not make a difference.
         self.check_full_handle_result(Rcode.NOERROR(), [ self.rrset_update_a ])
 
-        self.check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
-                               isc.dns.Name("www.example.org"),
-                               RRType.A(),
-                               extended_a_rrset)
+        self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
+                                 isc.dns.Name("www.example.org"),
+                                 RRType.A(),
+                                 extended_a_rrset)
 
         # Now delete those two, and we should end up with the original RRset
         self.check_full_handle_result(Rcode.NOERROR(),
                                       [ self.rrset_update_del_rrset_part ])
-        self.check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
-                               isc.dns.Name("www.example.org"),
-                               RRType.A(),
-                               self.orig_a_rrset)
+        self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
+                                 isc.dns.Name("www.example.org"),
+                                 RRType.A(),
+                                 self.orig_a_rrset)
 
         # 'Deleting' them again should make no difference
         self.check_full_handle_result(Rcode.NOERROR(),
                                       [ self.rrset_update_del_rrset_part ])
-        self.check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
-                               isc.dns.Name("www.example.org"),
-                               RRType.A(),
-                               self.orig_a_rrset)
+        self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
+                                 isc.dns.Name("www.example.org"),
+                                 RRType.A(),
+                                 self.orig_a_rrset)
 
         # But deleting the entire rrset, independent of its contents, should
         # work
         self.check_full_handle_result(Rcode.NOERROR(),
                                       [ self.rrset_update_del_rrset ])
-        self.check_inzone_data(isc.datasrc.ZoneFinder.NXDOMAIN,
-                               isc.dns.Name("www.example.org"),
-                               RRType.A())
+        self.__check_inzone_data(isc.datasrc.ZoneFinder.NXDOMAIN,
+                                 isc.dns.Name("www.example.org"),
+                                 RRType.A())
 
         # Check that if we update the SOA, it is updated to our value
         self.check_full_handle_result(Rcode.NOERROR(),
                                       [ self.rrset_update_soa2 ])
-        self.check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
-                               isc.dns.Name("example.org"),
-                               RRType.SOA(),
-                               self.rrset_update_soa2)
+        self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
+                                 isc.dns.Name("example.org"),
+                                 RRType.SOA(),
+                                 self.rrset_update_soa2)
+
+    def test_glue_deletions(self):
+        self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
+                                 isc.dns.Name("sub.example.org."),
+                                 RRType.NS())
+        self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
+                                 isc.dns.Name("ns.sub.example.org."),
+                                 RRType.A())
+
+        # See that we can delete glue
+        rrset_delete_glue = create_rrset("ns.sub.example.org.",
+                                         RRClass.ANY(),
+                                         RRType.A(),
+                                         0)
+        self.check_full_handle_result(Rcode.NOERROR(),
+                                      [ rrset_delete_glue ])
+        self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
+                                 isc.dns.Name("sub.example.org."),
+                                 RRType.NS())
+        self.__check_inzone_data(isc.datasrc.ZoneFinder.NXDOMAIN,
+                                 isc.dns.Name("ns.sub.example.org."),
+                                 RRType.A())
+
+        # Check that we don't accidentally delete a delegation if we
+        # try to delete non-existent glue
+        rrset_delete_nonexistent_glue = create_rrset("foo.sub.example.org.",
+                                                     RRClass.ANY(),
+                                                     RRType.A(),
+                                                     0)
+        self.check_full_handle_result(Rcode.NOERROR(),
+                                      [ rrset_delete_nonexistent_glue ])
+        self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
+                                 isc.dns.Name("sub.example.org."),
+                                 RRType.NS())
 
     def test_update_add_new_data(self):
         '''
         This tests adds data where none is present
         '''
         # Add data at a completely new name
-        self.check_inzone_data(isc.datasrc.ZoneFinder.NXDOMAIN,
-                               isc.dns.Name("new.example.org"),
-                               RRType.A())
+        self.__check_inzone_data(isc.datasrc.ZoneFinder.NXDOMAIN,
+                                 isc.dns.Name("new.example.org"),
+                                 RRType.A())
         rrset = create_rrset("new.example.org", TEST_RRCLASS, RRType.A(),
                              3600, [ "192.0.2.1", "192.0.2.2" ])
         self.check_full_handle_result(Rcode.NOERROR(), [ rrset ])
-        self.check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
-                               isc.dns.Name("new.example.org"),
-                               RRType.A(),
-                               rrset)
+        self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
+                                 isc.dns.Name("new.example.org"),
+                                 RRType.A(),
+                                 rrset)
 
         # Also try a name where data is present, but none of this
         # specific type
-        self.check_inzone_data(isc.datasrc.ZoneFinder.NXRRSET,
-                               isc.dns.Name("new.example.org"),
-                               RRType.TXT())
+        self.__check_inzone_data(isc.datasrc.ZoneFinder.NXRRSET,
+                                 isc.dns.Name("new.example.org"),
+                                 RRType.TXT())
         rrset = create_rrset("new.example.org", TEST_RRCLASS, RRType.TXT(),
                              3600, [ "foo" ])
         self.check_full_handle_result(Rcode.NOERROR(), [ rrset ])
-        self.check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
-                               isc.dns.Name("new.example.org"),
-                               RRType.TXT(),
-                               rrset)
+        self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
+                                 isc.dns.Name("new.example.org"),
+                                 RRType.TXT(),
+                                 rrset)
+
+    def test_update_add_new_data_interspersed(self):
+        '''
+        This tests adds data where none is present, similar to
+        test_update_add_new_data, but this time the second RRset
+        is put into the record between the two RRs of the first
+        RRset.
+        '''
+        # Add data at a completely new name
+        self.__check_inzone_data(isc.datasrc.ZoneFinder.NXDOMAIN,
+                                 isc.dns.Name("new_a.example.org"),
+                                 RRType.A())
+        self.__check_inzone_data(isc.datasrc.ZoneFinder.NXDOMAIN,
+                                 isc.dns.Name("new_txt.example.org"),
+                                 RRType.TXT())
+
+        rrset1 = create_rrset("new_a.example.org", TEST_RRCLASS, RRType.A(),
+                              3600, [ "192.0.2.1" ])
+
+        rrset2 = create_rrset("new_txt.example.org", TEST_RRCLASS, RRType.TXT(),
+                              3600, [ "foo" ])
+
+        rrset3 = create_rrset("new_a.example.org", TEST_RRCLASS, RRType.A(),
+                              3600, [ "192.0.2.2" ])
+
+        self.check_full_handle_result(Rcode.NOERROR(),
+                                      [ rrset1, rrset2, rrset3 ])
+
+        # The update should have merged rrset1 and rrset3
+        rrset_merged = create_rrset("new_a.example.org", TEST_RRCLASS,
+                                    RRType.A(), 3600,
+                                    [ "192.0.2.1", "192.0.2.2" ])
+
+        self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
+                                 isc.dns.Name("new_a.example.org"),
+                                 RRType.A(),
+                                 rrset_merged)
+
+        self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
+                                 isc.dns.Name("new_txt.example.org"),
+                                 RRType.TXT(),
+                                 rrset2)
 
     def test_update_delete_name(self):
-        self.initialize_update_rrsets()
+        self.__initialize_update_rrsets()
 
         # First check it is there
-        self.check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
-                               isc.dns.Name("www.example.org"),
-                               RRType.A())
+        self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
+                                 isc.dns.Name("www.example.org"),
+                                 RRType.A())
 
         # Delete the entire name
         self.check_full_handle_result(Rcode.NOERROR(),
                                       [ self.rrset_update_del_name ])
-        self.check_inzone_data(isc.datasrc.ZoneFinder.NXDOMAIN,
-                               isc.dns.Name("www.example.org"),
-                               RRType.A())
+        self.__check_inzone_data(isc.datasrc.ZoneFinder.NXDOMAIN,
+                                 isc.dns.Name("www.example.org"),
+                                 RRType.A())
 
         # Should still be gone after pointless second delete
         self.check_full_handle_result(Rcode.NOERROR(),
                                       [ self.rrset_update_del_name ])
-        self.check_inzone_data(isc.datasrc.ZoneFinder.NXDOMAIN,
-                               isc.dns.Name("www.example.org"),
-                               RRType.A())
+        self.__check_inzone_data(isc.datasrc.ZoneFinder.NXDOMAIN,
+                                 isc.dns.Name("www.example.org"),
+                                 RRType.A())
 
     def test_update_apex_special_cases(self):
         '''
         Tests a few special cases when deleting data from the apex
         '''
-        self.initialize_update_rrsets()
+        self.__initialize_update_rrsets()
 
         # the original SOA
         orig_soa_rrset = create_rrset("example.org", TEST_RRCLASS,
@@ -960,60 +1025,60 @@ class SessionTest(unittest.TestCase):
                                       [ "ns3.example.org." ])
 
         # Sanity check, make sure original data is really there before updates
-        self.check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
-                               isc.dns.Name("example.org"),
-                               RRType.NS(),
-                               orig_ns_rrset)
+        self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
+                                 isc.dns.Name("example.org"),
+                                 RRType.NS(),
+                                 orig_ns_rrset)
         # We will delete the MX record later in this test, so let's make
         # sure that it exists (we do not care about its value)
-        self.check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
-                               isc.dns.Name("example.org"),
-                               RRType.MX())
+        self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
+                                 isc.dns.Name("example.org"),
+                                 RRType.MX())
 
         # Check that we cannot delete the SOA record by direction deletion
         # both by name+type and by full rrset
         self.check_full_handle_result(Rcode.NOERROR(),
                                       [ self.rrset_update_del_soa_apex,
                                         self.rrset_update_soa_del ])
-        self.check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
-                               isc.dns.Name("example.org"),
-                               RRType.SOA(),
-                               orig_soa_rrset)
+        self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
+                                 isc.dns.Name("example.org"),
+                                 RRType.SOA(),
+                                 orig_soa_rrset)
 
         # If we delete everything at the apex, the SOA and NS rrsets should be
         # untouched
         self.check_full_handle_result(Rcode.NOERROR(),
                                       [ self.rrset_update_del_name_apex ])
-        self.check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
-                               isc.dns.Name("example.org"),
-                               RRType.SOA(),
-                               orig_soa_rrset)
-        self.check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
-                               isc.dns.Name("example.org"),
-                               RRType.NS(),
-                               orig_ns_rrset)
+        self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
+                                 isc.dns.Name("example.org"),
+                                 RRType.SOA(),
+                                 orig_soa_rrset)
+        self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
+                                 isc.dns.Name("example.org"),
+                                 RRType.NS(),
+                                 orig_ns_rrset)
         # but the MX should be gone
-        self.check_inzone_data(isc.datasrc.ZoneFinder.NXRRSET,
-                               isc.dns.Name("example.org"),
-                               RRType.MX())
+        self.__check_inzone_data(isc.datasrc.ZoneFinder.NXRRSET,
+                                 isc.dns.Name("example.org"),
+                                 RRType.MX())
 
         # Deleting the NS rrset by name and type only, it should also be left
         # untouched
         self.check_full_handle_result(Rcode.NOERROR(),
                                       [ self.rrset_update_del_ns_apex ])
-        self.check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
-                               isc.dns.Name("example.org"),
-                               RRType.NS(),
-                               orig_ns_rrset)
+        self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
+                                 isc.dns.Name("example.org"),
+                                 RRType.NS(),
+                                 orig_ns_rrset)
 
         # If we delete the NS at the apex specifically, it should still
         # keep one record
         self.check_full_handle_result(Rcode.NOERROR(),
                                       [ self.rrset_update_del_rrset_ns ])
-        self.check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
-                               isc.dns.Name("example.org"),
-                               RRType.NS(),
-                               short_ns_rrset)
+        self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
+                                 isc.dns.Name("example.org"),
+                                 RRType.NS(),
+                                 short_ns_rrset)
 
     def test_update_delete_normal_rrset_at_apex(self):
         '''
@@ -1021,64 +1086,64 @@ class SessionTest(unittest.TestCase):
         '''
 
         # MX should simply be deleted
-        self.initialize_update_rrsets()
-        self.check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
-                               isc.dns.Name("example.org"),
-                               RRType.MX())
+        self.__initialize_update_rrsets()
+        self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
+                                 isc.dns.Name("example.org"),
+                                 RRType.MX())
         self.check_full_handle_result(Rcode.NOERROR(),
                                       [ self.rrset_update_del_rrset_mx ])
-        self.check_inzone_data(isc.datasrc.ZoneFinder.NXRRSET,
-                               isc.dns.Name("example.org"),
-                               RRType.MX())
+        self.__check_inzone_data(isc.datasrc.ZoneFinder.NXRRSET,
+                                 isc.dns.Name("example.org"),
+                                 RRType.MX())
 
     def test_update_cname_special_cases(self):
-        self.initialize_update_rrsets()
+        self.__initialize_update_rrsets()
 
         # Sanity check
         orig_cname_rrset = create_rrset("cname.example.org", TEST_RRCLASS,
                                         RRType.CNAME(), 3600,
                                         [ "www.example.org." ])
-        self.check_inzone_data(isc.datasrc.ZoneFinder.CNAME,
-                               isc.dns.Name("cname.example.org"),
-                               RRType.A(),
-                               orig_cname_rrset)
+        self.__check_inzone_data(isc.datasrc.ZoneFinder.CNAME,
+                                 isc.dns.Name("cname.example.org"),
+                                 RRType.A(),
+                                 orig_cname_rrset)
 
         # If we try to add data where a cname is preset
         rrset = create_rrset("cname.example.org", TEST_RRCLASS, RRType.A(),
                              3600, [ "192.0.2.1" ])
 
         self.check_full_handle_result(Rcode.NOERROR(), [ rrset ])
-        self.check_inzone_data(isc.datasrc.ZoneFinder.CNAME,
-                               isc.dns.Name("cname.example.org"),
-                               RRType.A(),
-                               orig_cname_rrset)
+        self.__check_inzone_data(isc.datasrc.ZoneFinder.CNAME,
+                                 isc.dns.Name("cname.example.org"),
+                                 RRType.A(),
+                                 orig_cname_rrset)
 
         # But updating the cname itself should work
         new_cname_rrset = create_rrset("cname.example.org", TEST_RRCLASS,
                                        RRType.CNAME(), 3600,
                                        [ "mail.example.org." ])
         self.check_full_handle_result(Rcode.NOERROR(), [ new_cname_rrset ])
-        self.check_inzone_data(isc.datasrc.ZoneFinder.CNAME,
-                               isc.dns.Name("cname.example.org"),
-                               RRType.A(),
-                               new_cname_rrset)
+        self.__check_inzone_data(isc.datasrc.ZoneFinder.CNAME,
+                                 isc.dns.Name("cname.example.org"),
+                                 RRType.A(),
+                                 new_cname_rrset)
 
-        self.initialize_update_rrsets()
+        self.__initialize_update_rrsets()
 
         # Likewise, adding a cname where other data is
         # present should do nothing either
-        self.check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
-                               isc.dns.Name("www.example.org"),
-                               RRType.A(),
-                               self.orig_a_rrset)
+        self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
+                                 isc.dns.Name("www.example.org"),
+                                 RRType.A(),
+                                 self.orig_a_rrset)
         new_cname_rrset = create_rrset("www.example.org", TEST_RRCLASS,
                                        RRType.CNAME(), 3600,
                                        [ "mail.example.org." ])
         self.check_full_handle_result(Rcode.NOERROR(), [ new_cname_rrset ])
-        self.check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
-                               isc.dns.Name("www.example.org"),
-                               RRType.A(),
-                               self.orig_a_rrset)
+        self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
+                                 isc.dns.Name("www.example.org"),
+                                 RRType.A(),
+                                 self.orig_a_rrset)
 
     def test_update_bad_class(self):
         rrset = create_rrset("example.org.", RRClass.CH(), RRType.TXT(), 0,
