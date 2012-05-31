@@ -40,7 +40,7 @@ const uint32_t HARDCODED_VALID_LIFETIME = 7200; // in seconds
 const std::string HARDCODED_DNS_SERVER = "2001:db8:1::1";
 
 Dhcpv6Srv::Dhcpv6Srv(uint16_t port) {
-    cout << "Initialization" << endl;
+    cout << "Initialization: opening sockets on port " << port << endl;
 
     // first call to instance() will create IfaceMgr (it's a singleton)
     // it may throw something if things go wrong
