@@ -1352,6 +1352,24 @@ This may be a temporary setting until then.
       and <varname>port</varname> number.
       By default, <command>b10-auth</command> listens on port 53
       on the IPv6 (::) and IPv4 (0.0.0.0) wildcard addresses.
+      <note>
+        <simpara>
+          The default configuration is currently not appropriate for a multi-homed host.
+          In case you have multiple public IP addresses, it is possible the
+          query UDP packet comes through one interface and the answer goes out
+          through another. The answer will probably be dropped by the client, as it
+          has a different source address than the one it sent the query to. The
+          client would fallback on TCP after several attempts, which works
+          well in this situation, but is clearly not ideal.
+        </simpara>
+        <simpara>
+          There are plans to solve the problem such that the server handles
+          it by itself. But until it is actually implemented, it is recommended to
+          alter the configuration &mdash; remove the wildcard addresses and list all
+          addresses explicitly. Then the server will answer on the same
+          interface the request came on, preserving the correct address.
+        </simpara>
+      </note>
               </simpara>
             </listitem>
           </varlistentry>

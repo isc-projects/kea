@@ -35,6 +35,7 @@ class IOEndpoint;
 namespace isc {
 namespace testutils {
 extern const char* const DEFAULT_REMOTE_ADDRESS;
+extern const uint16_t DEFAULT_REMOTE_PORT;
 
 // These are flags to indicate whether the corresponding flag bit of the
 // DNS header is to be set in the test cases.  (The flag values
@@ -88,7 +89,9 @@ protected:
     /// The existing content of \c io_message, if any, will be deleted.
     void createRequestPacket(isc::dns::Message& message,
                              const int protocol = IPPROTO_UDP,
-                             isc::dns::TSIGContext* context = NULL);
+                             isc::dns::TSIGContext* context = NULL,
+                             const char* const address = DEFAULT_REMOTE_ADDRESS,
+                             uint16_t port = DEFAULT_REMOTE_PORT);
 
     MockSession notify_session;
     MockServer dnsserv;

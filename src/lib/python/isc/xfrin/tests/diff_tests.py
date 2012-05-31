@@ -478,13 +478,115 @@ class DiffTest(unittest.TestCase):
         diff.compact()
         self.assertEqual(2, len(diff.get_buffer()))
 
-    def test_relpace(self):
-        """
+    def test_replace(self):
+        '''
         Test that when we want to replace the whole zone, it is propagated.
-        """
+        '''
         self.__should_replace = True
         diff = Diff(self, "example.org.", True)
         self.assertTrue(self.__updater_requested)
+
+    def test_get_buffer(self):
+        '''
+        Test that the getters raise when used in the wrong mode
+        '''
+        diff_multi = Diff(self, Name('example.org.'), single_update_mode=False)
+        self.assertRaises(ValueError, diff_multi.get_single_update_buffers)
+        self.assertEqual([], diff_multi.get_buffer())
+
+        diff_single = Diff(self, Name('example.org.'), single_update_mode=True)
+        self.assertRaises(ValueError, diff_single.get_buffer)
+        self.assertEqual(([], []), diff_single.get_single_update_buffers())
+
+    def test_single_update_mode(self):
+        '''
+        Test single-update mode. In this mode, updates and deletes can
+        be done in any order, but there may only be one changeset.
+        For both updates and deletes, exactly one SOA rr must be given,
+        and it must be the first change.
+        '''
+
+        # First create some RRsets to play with
+        soa = RRset(Name('example.org.'), self.__rrclass, RRType.SOA(),
+                    RRTTL(3600))
+        soa.add_rdata(Rdata(soa.get_type(), soa.get_class(),
+                      "ns.example.org. foo.example.org. 1234 28800 "+
+                      "7200 604800 3600"))
+
+        a = RRset(Name('www.example.org.'), self.__rrclass, RRType.A(),
+                      RRTTL(3600))
+        a.add_rdata(Rdata(a.get_type(), a.get_class(),
+                        "192.0.2.1"))
+
+        a2 = RRset(Name('www.example.org.'), self.__rrclass, RRType.A(),
+                      RRTTL(3600))
+        a2.add_rdata(Rdata(a2.get_type(), a2.get_class(),
+                        "192.0.2.2"))
+
+        # full rrset for A (to check compact())
+        a_1_2 = RRset(Name('www.example.org.'), self.__rrclass, RRType.A(),
+                      RRTTL(3600))
+        a_1_2.add_rdata(Rdata(a_1_2.get_type(), a_1_2.get_class(),
+                        "192.0.2.1"))
+        a_1_2.add_rdata(Rdata(a_1_2.get_type(), a_1_2.get_class(),
+                        "192.0.2.2"))
+
+        diff = Diff(self, Name('example.org.'), single_update_mode=True)
+
+        # adding a first should fail
+        self.assertRaises(ValueError, diff.add_data, a)
+        # But soa should work
+        diff.add_data(soa)
+        # And then A should as well
+        diff.add_data(a)
+        diff.add_data(a2)
+        # But another SOA should fail again
+        self.assertRaises(ValueError, diff.add_data, soa)
+
+        # Same for delete
+        self.assertRaises(ValueError, diff.delete_data, a)
+        diff.delete_data(soa)
+        diff.delete_data(a)
+        diff.delete_data(a2)
+        self.assertRaises(ValueError, diff.delete_data, soa)
+
+        # Not compacted yet, so the buffers should be as we
+        # filled them
+        (delbuf, addbuf) = diff.get_single_update_buffers()
+        self.assertEqual([('delete', soa), ('delete', a), ('delete', a2)], delbuf)
+        self.assertEqual([('add', soa), ('add', a), ('add', a2)], addbuf)
+
+        # Compact should compact the A records in both buffers
+        diff.compact()
+        (delbuf, addbuf) = diff.get_single_update_buffers()
+        # need rrset equality again :/
+        self.assertEqual(2, len(delbuf))
+        self.assertEqual(2, len(delbuf[0]))
+        self.assertEqual('delete', delbuf[0][0])
+        self.assertEqual(soa.to_text(), delbuf[0][1].to_text())
+        self.assertEqual(2, len(delbuf[1]))
+        self.assertEqual('delete', delbuf[1][0])
+        self.assertEqual(a_1_2.to_text(), delbuf[1][1].to_text())
+
+        self.assertEqual(2, len(addbuf))
+        self.assertEqual(2, len(addbuf[0]))
+        self.assertEqual('add', addbuf[0][0])
+        self.assertEqual(soa.to_text(), addbuf[0][1].to_text())
+        self.assertEqual(2, len(addbuf[1]))
+        self.assertEqual('add', addbuf[1][0])
+        self.assertEqual(a_1_2.to_text(), addbuf[1][1].to_text())
+
+        # Apply should reset the buffers
+        diff.apply()
+        (delbuf, addbuf) = diff.get_single_update_buffers()
+        self.assertEqual([], delbuf)
+        self.assertEqual([], addbuf)
+
+        # Now the change has been applied, and the buffers are cleared,
+        # Adding non-SOA records should fail again.
+        self.assertRaises(ValueError, diff.add_data, a)
+        self.assertRaises(ValueError, diff.delete_data, a)
+
 
 if __name__ == "__main__":
     isc.log.init("bind10")
