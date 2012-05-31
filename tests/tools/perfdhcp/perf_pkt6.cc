@@ -75,7 +75,7 @@ PerfPkt6::rawPack() {
         // but still some options have to be updated if client
         // specified them along with their offsets in the buffer.
         rawPackOptions();
-    } catch (isc::BadValue& e) {
+    } catch (const isc::BadValue& e) {
         cout << "Building packet failed: " << e.what() << endl;
         return (false);
     }
@@ -102,7 +102,7 @@ PerfPkt6::rawUnpack() {
     msg_type_ = data_[0];
     try {
         rawUnpackOptions();
-    } catch (isc::BadValue& e) {
+    } catch (const isc::BadValue& e) {
         cout << "Packet parsing failed: " << e.what() << endl;
         return (false);
     }
