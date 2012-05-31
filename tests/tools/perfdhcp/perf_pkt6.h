@@ -52,10 +52,63 @@ namespace perfdhcp {
 ///
 class PerfPkt6 : public dhcp::Pkt6 {
 public:
+
+    /// \brief Represents offset value.
+    ///
+    /// This class represent offsets for DHCP message fields
+    /// like transaction id. Constructors of PerfPkt6 take
+    /// number of arguments of integer type so it is easy to
+    /// mess up arguments of constructors and for example
+    /// swap transaction id with its offset.
+    /// Use of this class implies that client class has to
+    /// explicitely use constructor of this class to pass
+    /// offset value. This should prevent mistakes and save some
+    /// time on debugging.
+    class Offset {
+    public:
+        /// \brief Default constructor
+        explicit Offset() :
+            offset_(1) { };
+
+        /// \brief Constructor
+        ///
+        /// \param offset offset value
+        explicit Offset(size_t offset) :
+            offset_(offset) { };
+
+        /// \brief Returns offset value.
+        ///
+        /// \return offset value.
+        size_t get() const { return offset_; };
+    private:
+        size_t offset_;    ///< offset value
+    };
+
     /// Localized option pointer type.
     typedef boost::shared_ptr<LocalizedOption> LocalizedOptionPtr;
 
-    /// Constructor, used in message transmission
+    /// \brief Constructor, used for outgoing DHCP messages.
+    ///
+    /// Creates new DHCPv6 message using provided buffer.
+    /// Transaction id and its offset are specified through this
+    /// constructor so as they are stored in outgoing message
+    /// when client class calls \ref PerfPkt6::rawPack.
+    ///
+    /// \note This constructor should be used only for outgoing
+    /// messages that are created from raw buffer (e.g. read from
+    /// template files).
+    ///
+    /// \param buf buffer holiding contents of the message (this can
+    /// be directly read from template file).
+    /// \param len length of the data in the buffer.
+    /// \param transid transaction id to be stored in outgoing message.
+    /// \param transid_offset transaction id offset in outgoing message.
+    PerfPkt6(const uint8_t* buf,
+             uint32_t len,
+             uint32_t transid,
+             const Offset& transid_offset);
+
+    /// Constructor, used for incoming DHCP messages.
     ///
     /// Creates new DHCPv6 message using provided buffer. New object
     /// will keep copy of contents of provided buffer. If buffer contains
@@ -64,32 +117,27 @@ public:
     /// offsets has to be provided - see
     /// \ref isc::perfdhcp::LocalizedOption for details.
     ///
-    /// Transaction id is not considered DHCP option so
-    /// we pass it to constructor as extra argument. This is
-    /// required if transaction id offset differs from the
-    /// default one for DHCPv6 messages (ocets 2-4).
+    /// Transaction id offset point to location of raw data where
+    /// transaction id field is stored. The transaction id will
+    /// be read from this location when PerfPkt6::rawUnpack is
+    /// called. The transid_ class member will be updated accordingly.
     ///
     /// \note use this constructor only in case you want to create
-    /// DHCPv6 message (incoming or outgoing) from the raw buffer
+    /// incoming DHCPv6 object from the raw buffer
     /// and you know options offsets. Options offsets are
     /// specified from perfdhcp command line by the user.
     ///
-    /// \param buf pointer to a buffer of received packet content
-    /// \param len size of buffer of packet content
-    /// \param xid_off transaction id offset in a packet
+    /// \param buf pointer to a buffer of received packet content.
+    /// \param len size of buffer of packet content.
+    /// \param transid_offset transaction id offset in a message.
     PerfPkt6(const uint8_t* buf,
              uint32_t len,
-             size_t transid_offset_);
+             const Offset& transid_offset);
 
     /// \brief Returns transaction id offset in packet buffer
     ///
     /// return transaction id offset in packet buffer
     size_t getTransIdOffset() const { return transid_offset_; };
-
-    /// \brief Returns current packet timestamp
-    ///
-    /// \return current packet timestamp
-    timespec getTimestamp() const { return time_stamp_; }
 
     /// \brief Prepares on-wire format from raw buffer
     ///
@@ -154,7 +202,6 @@ private:
     void rawUnpackOptions();
 
     size_t transid_offset_;      ///< transaction id offset
-    timespec time_stamp_;        ///< time stamp of last pack or unpack
 
 };
 

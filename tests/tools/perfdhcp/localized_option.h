@@ -22,13 +22,13 @@ namespace perfdhcp {
 
 /// \brief DHCP option at specific offset
 ///
-/// This class represents DHCP option at specified
+/// This class represents DHCP option with data placed at specified
 /// offset in DHCP message.
 /// Objects of this type are intended to be used when DHCP packets
 /// are created from templates (e.g. read from template file).
-/// Such packets have number of that have to be replaced before
-/// sending: e.g. DUID can be randomized. If option of this type
-/// is added to \ref PerfPkt6 options collection,
+/// Such packets have number of options with contents that have to be
+/// replaced before sending: e.g. DUID can be randomized.
+/// If option of this type is added to \ref PerfPkt6 options collection,
 /// \ref perfdhcp::PerfPkt6 will call \ref getOffset on this object
 /// to retrieve user-defined option position and replace contents of
 /// the output buffer at this offset before packet is sent to the server.
@@ -47,7 +47,9 @@ public:
     /// \param u specifies universe (V4 or V6)
     /// \param type option type (0-255 for V4 and 0-65535 for V6)
     /// \param data content of the option
-    LocalizedOption(dhcp::Option::Universe u, uint16_t type, const dhcp::OptionBuffer& data) :
+    LocalizedOption(dhcp::Option::Universe u,
+                    uint16_t type,
+                    const dhcp::OptionBuffer& data) :
         dhcp::Option(u, type, data),
         offset_(0) {
     }
@@ -59,7 +61,9 @@ public:
     /// \param type option type (0-255 for V4 and 0-65535 for V6)
     /// \param data content of the option
     /// \param offset location of option in a packet (zero is default)
-    LocalizedOption(dhcp::Option::Universe u, uint16_t type, const dhcp::OptionBuffer& data,
+    LocalizedOption(dhcp::Option::Universe u,
+                    uint16_t type,
+                    const dhcp::OptionBuffer& data,
                     const size_t offset) :
         dhcp::Option(u, type, data),
         offset_(offset) {
@@ -75,14 +79,16 @@ public:
     /// \param first iterator to the first element that should be copied
     /// \param last iterator to the next element after the last one
     ///        to be copied.
-    LocalizedOption(dhcp::Option::Universe u, uint16_t type, dhcp::OptionBufferConstIter first,
+    LocalizedOption(dhcp::Option::Universe u,
+                    uint16_t type,
+                    dhcp::OptionBufferConstIter first,
                     dhcp::OptionBufferConstIter last) :
         dhcp::Option(u, type, first, last),
         offset_(0) {
     }
 
 
-    /// \brief Constructor, used to create positioned option from buffer iterators
+    /// \brief Constructor, used to create option from buffer iterators
     ///
     /// This contructor is similar to the previous one, but it does not take
     /// the whole vector<uint8_t>, but rather subset of it.
@@ -93,7 +99,9 @@ public:
     /// \param last iterator to the next element after the last one
     ///        to be copied.
     /// \param offset offset of option in a packet (zero is default)
-    LocalizedOption(dhcp::Option::Universe u, uint16_t type, dhcp::OptionBufferConstIter first,
+    LocalizedOption(dhcp::Option::Universe u,
+                    uint16_t type,
+                    dhcp::OptionBufferConstIter first,
                     dhcp::OptionBufferConstIter last, const size_t offset) :
         dhcp::Option(u, type, first, last),
         offset_(offset) {
