@@ -89,6 +89,66 @@ def add_rdata(rrset, rdata):
                                   rrset.get_class(),
                                   rdata))
 
+class TestDDNSSOA(unittest.TestCase):
+    '''unittest for the DDNSSOA'''
+    def test_update_soa(self):
+        '''unittest for update_soa function'''
+        soa_update = DDNSSOA()
+        soa_rr = create_rrset("example.org", TEST_RRCLASS,
+                              RRType.SOA(), 3600, ["ns1.example.org. " +
+                              "admin.example.org. " +
+                              "1233 3600 1800 2419200 7200"])
+        expected_soa_rr = create_rrset("example.org", TEST_RRCLASS,
+                                       RRType.SOA(), 3600, ["ns1.example.org. "
+                                       + "admin.example.org. " +
+                                       "1234 3600 1800 2419200 7200"])
+        self.assertEqual(soa_update.update_soa(soa_rr).get_rdata()[0].to_text(),
+                         expected_soa_rr.get_rdata()[0].to_text())
+        max_serial = 2 ** 32 - 1
+        soa_rdata = "%d %s"%(max_serial,"3600 1800 2419200 7200")
+        soa_rr = create_rrset("example.org", TEST_RRCLASS, RRType.SOA(), 3600,
+                              ["ns1.example.org. " + "admin.example.org. " +
+                              soa_rdata])
+        expected_soa_rr = create_rrset("example.org", TEST_RRCLASS,
+                                       RRType.SOA(), 3600, ["ns1.example.org. "
+                                       + "admin.example.org. " +
+                                       "1 3600 1800 2419200 7200"])
+        self.assertEqual(soa_update.update_soa(soa_rr).get_rdata()[0].to_text(),
+                         expected_soa_rr.get_rdata()[0].to_text())
+
+    def test_soa_update_check(self):
+        '''unittest for soa_update_check function'''
+        small_soa_rr = create_rrset("example.org", TEST_RRCLASS, RRType.SOA(),
+                                    3600, ["ns1.example.org. " +
+                                    "admin.example.org. " +
+                                    "1233 3600 1800 2419200 7200"])
+        large_soa_rr = create_rrset("example.org", TEST_RRCLASS, RRType.SOA(),
+                                    3600, ["ns1.example.org. " +
+                                    "admin.example.org. " +
+                                    "1234 3600 1800 2419200 7200"])
+        soa_update = DDNSSOA()
+        # The case of (i1 < i2 and i2 - i1 < 2^(SERIAL_BITS - 1)) in rfc 1982
+        self.assertTrue(soa_update.soa_update_check(small_soa_rr,
+                                                    large_soa_rr))
+        self.assertFalse(soa_update.soa_update_check(large_soa_rr,
+                                                     small_soa_rr))
+        small_serial = 1235 + 2 ** 31
+        soa_rdata = "%d %s"%(small_serial,"3600 1800 2419200 7200")
+        small_soa_rr = create_rrset("example.org", TEST_RRCLASS, RRType.SOA(),
+                                    3600, ["ns1.example.org. " +
+                                           "admin.example.org. " +
+                                           soa_rdata])
+        large_soa_rr = create_rrset("example.org", TEST_RRCLASS, RRType.SOA(),
+                                    3600, ["ns1.example.org. " +
+                                    "admin.example.org. " +
+                                    "1234 3600 1800 2419200 7200"])
+        # The case of (i1 > i2 and i1 - i2 > 2^(SERIAL_BITS - 1)) in rfc 1982
+        self.assertTrue(soa_update.soa_update_check(small_soa_rr,
+                                                    large_soa_rr))
+        self.assertFalse(soa_update.soa_update_check(large_soa_rr,
+                                                     small_soa_rr))
+
+
 class SessionTest(unittest.TestCase):
     '''Session tests'''
     def setUp(self):
@@ -946,6 +1006,15 @@ class SessionTest(unittest.TestCase):
                                       [ "ns1.example.org. " +
                                         "admin.example.org. " +
                                         "1234 3600 1800 2419200 7200" ])
+        # At some point, the SOA SERIAL will be auto-incremented
+        incremented_soa_rrset_01 = create_rrset("example.org", TEST_RRCLASS,
+                RRType.SOA(), 3600, ["ns1.example.org. " +
+                                     "admin.example.org. " +
+                                     "1235 3600 1800 2419200 7200" ])
+        incremented_soa_rrset_02 = create_rrset("example.org", TEST_RRCLASS,
+                RRType.SOA(), 3600, ["ns1.example.org. " +
+                                     "admin.example.org. " +
+                                     "1236 3600 1800 2419200 7200" ])
 
         # We will delete some of the NS records
         orig_ns_rrset = create_rrset("example.org", TEST_RRCLASS,
@@ -978,16 +1047,16 @@ class SessionTest(unittest.TestCase):
         self.check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
                                isc.dns.Name("example.org"),
                                RRType.SOA(),
-                               orig_soa_rrset)
+                               incremented_soa_rrset_01)
 
         # If we delete everything at the apex, the SOA and NS rrsets should be
-        # untouched
+        # untouched (but serial will be incremented)
         self.check_full_handle_result(Rcode.NOERROR(),
                                       [ self.rrset_update_del_name_apex ])
         self.check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
                                isc.dns.Name("example.org"),
                                RRType.SOA(),
-                               orig_soa_rrset)
+                               incremented_soa_rrset_02)
         self.check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
                                isc.dns.Name("example.org"),
                                RRType.NS(),
