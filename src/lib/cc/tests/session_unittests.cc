@@ -34,6 +34,9 @@ TEST(AsioSession, establish) {
     asio::io_service io_service_;
     Session sess(io_service_);
 
+    // can't return socket desciptor before session is established
+    EXPECT_THROW(sess.getSocketDesc(), isc::InvalidOperation);
+
     EXPECT_THROW(
         sess.establish("/aaaaaaaaaa/aaaaaaaaaa/aaaaaaaaaa/aaaaaaaaaa/"
                        "/aaaaaaaaaa/aaaaaaaaaa/aaaaaaaaaa/aaaaaaaaaa/"
@@ -235,4 +238,14 @@ TEST_F(SessionTest, run_with_handler_timeout) {
     ASSERT_THROW(my_io_service.run(), SessionTimeout);
 }
 
+TEST_F(SessionTest, get_socket_descr) {
+    tds->setSendLname();
+    sess.establish(BIND10_TEST_SOCKET_FILE);
 
+    int socket = 0;
+    // session is established, so getSocketDesc() should work
+    EXPECT_NO_THROW(socket = sess.getSocketDesc());
+
+    // expect actual socket handle to be returned, not 0
+    EXPECT_TRUE(0 < socket);
+}
