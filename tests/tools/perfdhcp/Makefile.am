@@ -19,5 +19,3 @@ libperfdhcp___la_LIBADD = $(top_builddir)/src/lib/exceptions/libexceptions.la
 
 pkglibexec_PROGRAMS  = perfdhcp
 perfdhcp_SOURCES  = perfdhcp.c
-
-
