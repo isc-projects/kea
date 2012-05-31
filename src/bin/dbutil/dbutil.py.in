@@ -196,7 +196,7 @@ UPGRADES = [
     }
 
 # To extend this, leave the above statements in place and add another
-# dictionary to the list.  The "from" version should be (2, 0), the "to" 
+# dictionary to the list.  The "from" version should be (2, 0), the "to"
 # version whatever the version the update is to, and the SQL statements are
 # the statements required to perform the upgrade.  This way, the upgrade
 # program will be able to upgrade both a V1.0 and a V2.0 database.
