@@ -4,7 +4,6 @@ if ENABLE_MAN
 # generated documentation
 DOCS = bind10-messages.html bind10-guide.html bind10-guide.txt
 
-docdir = $(pkgdatadir)/doc/$(PACKAGE)
 doc_DATA = $(DOCS) bind10-guide.css
 
 # TODO: okay to include the generated bind10-messages.xml in dist tarfile too?
