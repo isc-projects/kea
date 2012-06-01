@@ -967,7 +967,28 @@ AC_PATH_PROGS(AWK, gawk awk)
 AC_SUBST(AWK)
 
 AC_ARG_ENABLE(man, [AC_HELP_STRING([--enable-man],
-  [regenerate man pages [default=no]])], enable_man=$enableval, enable_man=no)
+  [regenerate man pages using Docbook [default=no]])],
+  enable_man=$enableval, enable_man=no)
+
+# Check for xsltproc
+if test "x$enable_man" != xno ; then
+  AC_PATH_PROG([XSLTPROC], [xsltproc])
+  if test -z "$XSLTPROC"; then
+    AC_MSG_ERROR("xsltproc not found; it is required for --enable-man")
+  else
+    AC_MSG_CHECKING([if $XSLTPROC works])
+    # run xsltproc to see if works
+    $XSLTPROC --novalid --xinclude --nonet http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl
+    if test $? -ne 0 ; then
+      AC_MSG_ERROR("Error with $XSLTPROC using release/xsl/current/manpages/docbook.xsl")
+    fi
+    $XSLTPROC --novalid --xinclude --nonet http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl
+    if test $? -ne 0 ; then
+      AC_MSG_ERROR("Error with $XSLTPROC using release/xsl/current/html/docbook.xsl")
+    fi
+  fi
+fi
+
 
 AM_CONDITIONAL(ENABLE_MAN, test x$enable_man != xno)
 
