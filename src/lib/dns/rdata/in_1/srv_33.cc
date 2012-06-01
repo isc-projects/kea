@@ -52,8 +52,8 @@ struct SRVImpl {
 /// \code <Priority> <Weight> <Port> <Target>
 /// \endcode
 /// where
-/// - &lt;Priority&gt;, &lt;Weight&gt;, and &lt;Port&gt; are an unsigned 16-bit decimal
-///   integer.
+/// - &lt;Priority&gt;, &lt;Weight&gt;, and &lt;Port&gt; are an unsigned
+///   16-bit decimal integer.
 /// - &lt;Target&gt; is a valid textual representation of domain name.
 ///
 /// An example of valid string is:
@@ -61,8 +61,8 @@ struct SRVImpl {
 ///
 /// <b>Exceptions</b>
 ///
-/// If &lt;Target&gt; is not a valid domain name, a corresponding exception from
-/// the \c Name class will be thrown;
+/// If &lt;Target&gt; is not a valid domain name, a corresponding exception
+/// from the \c Name class will be thrown;
 /// if %any of the other bullet points above is not met, an exception of
 /// class \c InvalidRdataText will be thrown.
 /// This constructor internally involves resource allocation, and if it fails
