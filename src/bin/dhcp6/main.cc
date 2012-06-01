@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2012  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -53,19 +53,30 @@ usage() {
     cerr << "Usage:  b10-dhcp6 [-v]"
          << endl;
     cerr << "\t-v: verbose output" << endl;
-    exit(1);
+    cerr << "\t-p number: specify non-standard port number 1-65535 (useful for testing only)" << endl;
+    exit(EXIT_FAILURE);
 }
 } // end of anonymous namespace
 
 int
 main(int argc, char* argv[]) {
     int ch;
+    int port_number = DHCP6_SERVER_PORT; // The default. Any other values are
+                                         // useful for testing only.
 
-    while ((ch = getopt(argc, argv, ":v")) != -1) {
+    while ((ch = getopt(argc, argv, "vp:")) != -1) {
         switch (ch) {
         case 'v':
             verbose_mode = true;
             isc::log::denabled = true;
+            break;
+        case 'p':
+            port_number = strtol(optarg, NULL, 10);
+            if (port_number == 0) {
+                cerr << "Failed to parse port number: [" << optarg
+                     << "], 1-65535 allowed." << endl;
+                usage();
+            }
             break;
         case ':':
         default:
@@ -79,7 +90,7 @@ main(int argc, char* argv[]) {
         usage();
     }
 
-    int ret = 0;
+    int ret = EXIT_SUCCESS;
 
     // TODO remainder of auth to dhcp6 code copy. We need to enable this in
     //      dhcp6 eventually
@@ -99,13 +110,13 @@ main(int argc, char* argv[]) {
 
         cout << "[b10-dhcp6] Initiating DHCPv6 operation." << endl;
 
-        Dhcpv6Srv* srv = new Dhcpv6Srv();
+        Dhcpv6Srv* srv = new Dhcpv6Srv(port_number);
 
         srv->run();
 
     } catch (const std::exception& ex) {
         cerr << "[b10-dhcp6] Server failed: " << ex.what() << endl;
-        ret = 1;
+        ret = EXIT_FAILURE;
     }
 
     return (ret);

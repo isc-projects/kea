@@ -81,7 +81,7 @@ struct AdditionalNodeInfo;
 /// can refer to its definition, and only for that purpose.  Otherwise this is
 /// essentially a private class of the in-memory data source implementation,
 /// and an application shouldn't directly refer to this class.
-/// 
+///
 // Note: non-Doxygen-documented methods are documented in the base class.
 
 class RBNodeRRset : public isc::dns::AbstractRRset {
