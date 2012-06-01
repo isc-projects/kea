@@ -1067,11 +1067,6 @@ class SessionTest(unittest.TestCase):
                                         "ns2.example.org.",
                                         "ns3.example.org." ])
 
-        # When we are done, we should have a reduced NS rrset
-        short_ns_rrset = create_rrset("example.org", TEST_RRCLASS,
-                                      RRType.NS(), 3600,
-                                      [ "ns3.example.org." ])
-
         # Sanity check, make sure original data is really there before updates
         self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
                                  isc.dns.Name("example.org"),
