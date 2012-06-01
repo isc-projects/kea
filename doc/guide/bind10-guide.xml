@@ -2047,7 +2047,7 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
        <para>
          To shutdown running <command>b10-dhcp4</command>, please use the
          following command:
-         <screen>&gt; <userinput>dhcp4 shutdown</userinput></screen>
+         <screen>&gt; <userinput>Dhcp4 shutdown</userinput></screen>
          or
          <screen>&gt; <userinput>config remove Boss/components b10-dhcp4</userinput>
 &gt; <userinput>config commit</userinput></screen></para>
@@ -2154,13 +2154,7 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
           <listitem>
             <simpara>Upon start, the server will open sockets on all
             interfaces that are not loopback, are up and running and
-            have IPv4 address.  Support for multiple interfaces is not
-            coded in reception routines yet, so if you are running
-            this code on a machine that has many interfaces and
-            <command>b10-dhcp4</command> happens to listen on wrong
-            interface, the easiest way to work around this problem is
-            to turn down other interfaces. This limitation will be
-            fixed shortly.</simpara>
+            have IPv4 address.</simpara>
           </listitem>
           <listitem>
             <simpara>PRL (Parameter Request List, a list of options
@@ -2418,22 +2412,10 @@ const std::string HARDCODED_DNS_SERVER = "2001:db8:1::1";</screen>
       currently only supported on Linux systems.</para>
 
       <para>For non-Linux systems, there is currently stub
-      implementation provided. As DHCP servers need to know available
-      addresses, there is a simple mechanism implemented to provide
-      that information. User is expected to create interfaces.txt
-      file. Format of this file is simple. It contains list of
-      interfaces along with available address on each interface. This
-      mechanism is temporary and is going to be removed as soon as
-      interface detection becomes available on non-Linux
-      systems. Here is an example of the interfaces.txt file:
-      <screen>
-# For DHCPv6, please specify link-local address (starts with fe80::)
-# If in doubt, check output of 'ifconfig -a' command.
-eth0 fe80::21e:8cff:fe9b:7349
-
-# For DHCPv4, please use following format:
-#eth0 192.0.2.5</screen>
-      </para>
+      implementation provided. Interface manager detects loopback
+      interfaces only as their name (lo or lo0) can be easily predicted.
+      Please contact BIND10 development team if you are interested
+      in running DHCP components on systems other than Linux.</para>
     </section>
 
     <section id="packet-handling">
