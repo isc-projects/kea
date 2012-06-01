@@ -101,7 +101,7 @@ public:
     /// \note No actual memory is changed, this operation merely updates the
     /// internal pointers based on the offsets in the Name object.
     ///
-    /// \exeption OutOfRange if i is greater than or equal to the number
+    /// \exception OutOfRange if i is greater than or equal to the number
     ///           of labels currently pointed to by this LabelSequence
     ///
     /// \param i The number of labels to remove.
@@ -112,7 +112,7 @@ public:
     /// \note No actual memory is changed, this operation merely updates the
     /// internal pointers based on the offsets in the Name object.
     ///
-    /// \exeption OutOfRange if i is greater than or equal to the number
+    /// \exception OutOfRange if i is greater than or equal to the number
     ///           of labels currently pointed to by this LabelSequence
     ///
     /// \param i The number of labels to remove.

@@ -58,14 +58,14 @@ static const char* VERSION = "1.0-0";
 /// \b Invocation<BR>
 /// The program is invoked with the command:
 ///
-/// <tt>message [-v | -h | -p | -d <dir> | <message-file>]</tt>
+/// <tt>message [-v | -h | -p | -d &lt;dir&gt; | <message-file>]</tt>
 ///
 /// It reads the message file and writes out two files of the same
 /// name in the current working directory (unless -d is used) but
 /// with extensions of .h and .cc, or .py if -p is used.
 ///
 /// -v causes it to print the version number and exit. -h prints a help
-/// message (and exits). -p sets the output to python. -d <dir> will make
+/// message (and exits). -p sets the output to python. -d &lt;dir&gt; will make
 /// it write the output file(s) to dir instead of current working
 /// directory
 
@@ -120,8 +120,8 @@ currentTime() {
 /// \brief Create Header Sentinel
 ///
 /// Given the name of a file, create an #ifdef sentinel name.  The name is
-/// __<name>_<ext>, where <name> is the name of the file, and <ext> is the
-/// extension less the leading period.  The sentinel will be upper-case.
+/// __<name>_<ext>, where &lt;name&gt; is the name of the file, and &lt;ext&gt;
+/// is the extension less the leading period.  The sentinel will be upper-case.
 ///
 /// \param file Filename object representing the file.
 ///

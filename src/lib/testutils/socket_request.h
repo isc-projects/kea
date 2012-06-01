@@ -55,7 +55,7 @@ public:
     /// \param expect_port The port which is expected to be requested. If
     ///     the application requests a different port, it is considered
     ///     a failure.
-    /// \param expeted_app The share name for which all the requests should
+    /// \param expected_app The share name for which all the requests should
     ///     be made. This is not the usual app_name - the requestSocket does
     ///     not fall back to this value if its share_name is left empty, if
     ///     you want to check the code relies on the requestor to use the

@@ -41,7 +41,7 @@ SOA::SOA(InputBuffer& buffer, size_t) :
     buffer.readData(numdata_, sizeof(numdata_));
 }
 
-SOA::SOA(const string& soastr) :
+SOA::SOA(const std::string& soastr) :
     mname_("."), rname_(".")    // quick hack workaround
 {
     istringstream iss(soastr);
