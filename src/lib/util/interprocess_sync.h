@@ -38,6 +38,10 @@ class InterprocessSyncLocker; // forward declaration
 /// 4. Client performs task that needs mutual exclusion.
 /// 5. Client frees lock with unlock(), or simply returns from the basic
 /// block which forms the scope for the InterprocessSyncLocker.
+///
+/// NOTE: All implementations of InterprocessSync should keep the
+/// is_locked_ member variable updated whenever their
+/// lock()/tryLock()/unlock() implementations are called.
 class InterprocessSync {
   // InterprocessSyncLocker is the only code outside this class that
   // should be allowed to call the lock(), tryLock() and unlock()
@@ -100,7 +104,8 @@ public:
 
     /// \brief Destructor
     ~InterprocessSyncLocker() {
-        unlock();
+        if (isLocked())
+            unlock();
     }
 
     /// \brief Acquire the lock (blocks if something else has acquired a
@@ -113,9 +118,18 @@ public:
 
     /// \brief Try to acquire a lock (doesn't block)
     ///
-    /// \return Returns true if the lock was acquired, false otherwise.
+    /// \return Returns true if a new lock could be acquired, false
+    ///         otherwise.
     bool tryLock() {
         return (sync_.tryLock());
+    }
+
+    /// \brief Check if the lock is taken
+    ///
+    /// \return Returns true if a lock is currently acquired, false
+    ///         otherwise.
+    bool isLocked() {
+        return (sync_.is_locked_);
     }
 
     /// \brief Release the lock

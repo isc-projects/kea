@@ -22,16 +22,19 @@ InterprocessSyncNull::~InterprocessSyncNull() {
 
 bool
 InterprocessSyncNull::lock() {
+    is_locked_ = true;
     return (true);
 }
 
 bool
 InterprocessSyncNull::tryLock() {
+    is_locked_ = true;
     return (true);
 }
 
 bool
 InterprocessSyncNull::unlock() {
+    is_locked_ = false;
     return (true);
 }
 

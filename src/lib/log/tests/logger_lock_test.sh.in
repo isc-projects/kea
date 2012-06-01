@@ -34,7 +34,6 @@ cat > $tempfile << .
 LOGGER_LOCK_TEST: LOCK
 INFO  [bind10.log] LOG_LOCK_TEST_MESSAGE this is a test message.
 LOGGER_LOCK_TEST: UNLOCK
-LOGGER_LOCK_TEST: UNLOCK
 .
 rm -f $destfile
 B10_LOGGER_SEVERITY=INFO B10_LOGGER_DESTINATION=stdout ./logger_lock_test > $destfile

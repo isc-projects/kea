@@ -55,7 +55,9 @@ TEST(InterprocessSyncFileTest, TestLock) {
   InterprocessSyncFile sync("test");
   InterprocessSyncLocker locker(sync);
 
+  EXPECT_FALSE(locker.isLocked());
   EXPECT_TRUE(locker.lock());
+  EXPECT_TRUE(locker.isLocked());
 
   int fds[2];
 
@@ -77,7 +79,10 @@ TEST(InterprocessSyncFileTest, TestLock) {
       InterprocessSyncLocker locker2(sync2);
 
       if (!locker2.tryLock()) {
+          EXPECT_FALSE(locker2.isLocked());
           locked = 1;
+      } else {
+          EXPECT_TRUE(locker2.isLocked());
       }
 
       write(fds[1], &locked, sizeof(locked));
@@ -95,6 +100,7 @@ TEST(InterprocessSyncFileTest, TestLock) {
   }
 
   EXPECT_TRUE(locker.unlock());
+  EXPECT_FALSE(locker.isLocked());
 
   EXPECT_EQ (0, unlink(TEST_DATA_TOPBUILDDIR "/test_lockfile"));
 }
