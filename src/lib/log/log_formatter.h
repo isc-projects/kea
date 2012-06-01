@@ -197,7 +197,9 @@ public:
             try {
                 return (arg(boost::lexical_cast<std::string>(value)));
             } catch (const boost::bad_lexical_cast& ex) {
-
+                // The formatting of the log message got wrong, we don't want
+                // to output it.
+                deactivate();
                 // A bad_lexical_cast during a conversion to a string is
                 // *extremely* unlikely to fail.  However, there is nothing
                 // in the documentation that rules it out, so we need to handle
@@ -229,9 +231,34 @@ public:
             // occurrences of "%2" with 42. (Conversely, the sequence
             // .arg(42).arg("%1") would return "42 %1" - there are no recursive
             // replacements).
-            replacePlaceholder(message_, arg, ++nextPlaceholder_ );
+            try {
+                replacePlaceholder(message_, arg, ++nextPlaceholder_ );
+            }
+            catch (...) {
+                // Something went wrong here, the log message is broken, so
+                // we don't want to output it, nor we want to check all the
+                // placeholders were used (because they won't be).
+                deactivate();
+                throw;
+            }
         }
         return (*this);
+    }
+
+    /// \brief Turn off the output of this logger.
+    ///
+    /// If the logger would output anything at the end, now it won't.
+    /// Also, this turns off the strict checking of placeholders, if
+    /// it is compiled in.
+    ///
+    /// The expected use is when there was an exception processing
+    /// the arguments for the message.
+    void deactivate() {
+        if (logger_) {
+            delete message_;
+            message_ = NULL;
+            logger_ = NULL;
+        }
     }
 };
 
