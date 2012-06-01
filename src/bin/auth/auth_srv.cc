@@ -390,8 +390,8 @@ private:
     AuthSrv* server_;
 };
 
-AuthSrv::AuthSrv(const bool use_cache, AbstractXfroutClient& xfrout_client,
-                 BaseSocketSessionForwarder& ddns_forwarder)
+AuthSrv::AuthSrv(const bool use_cache, isc::xfr::AbstractXfroutClient& xfrout_client,
+                 isc::util::io::BaseSocketSessionForwarder& ddns_forwarder)
 {
     impl_ = new AuthSrvImpl(use_cache, xfrout_client, ddns_forwarder);
     checkin_ = new ConfigChecker(this);

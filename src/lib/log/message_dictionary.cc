@@ -29,7 +29,7 @@ MessageDictionary::~MessageDictionary() {
 // Add message and note if ID already exists
 
 bool
-MessageDictionary::add(const string& ident, const string& text) {
+MessageDictionary::add(const std::string& ident, const std::string& text) {
     Dictionary::iterator i = dictionary_.find(ident);
     bool not_found = (i == dictionary_.end());
     if (not_found) {
@@ -44,7 +44,7 @@ MessageDictionary::add(const string& ident, const string& text) {
 // Add message and note if ID does not already exist
 
 bool
-MessageDictionary::replace(const string& ident, const string& text) {
+MessageDictionary::replace(const std::string& ident, const std::string& text) {
     Dictionary::iterator i = dictionary_.find(ident);
     bool found = (i != dictionary_.end());
     if (found) {
@@ -87,7 +87,7 @@ MessageDictionary::load(const char* messages[]) {
 // output.
 
 const string&
-MessageDictionary::getText(const string& ident) const {
+MessageDictionary::getText(const std::string& ident) const {
     static const string empty("");
     Dictionary::const_iterator i = dictionary_.find(ident);
     if (i == dictionary_.end()) {
