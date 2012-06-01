@@ -12,19 +12,12 @@ if USE_STATIC_LINK
 AM_LDFLAGS += -static
 endif
 
-# We have to suppress warnings because we are compiling C code with CXX
-# We have to do this to link with new C++ pieces of code
-perfdhcp_CXXFLAGS = $(AM_CXXFLAGS)
-if USE_CLANGPP
-perfdhcp_CXXFLAGS += -Wno-error
-else
-if USE_GXX
-perfdhcp_CXXFLAGS += -Wno-write-strings
-endif
-endif
+lib_LTLIBRARIES = libperfdhcp++.la
+libperfdhcp___la_SOURCES = command_options.cc command_options.h
+libperfdhcp___la_CXXFLAGS = $(AM_CXXFLAGS)
+libperfdhcp___la_LIBADD = $(top_builddir)/src/lib/exceptions/libexceptions.la
 
 pkglibexec_PROGRAMS  = perfdhcp
-perfdhcp_SOURCES  = perfdhcp.cc
-perfdhcp_SOURCES += command_options.cc command_options.h
+perfdhcp_SOURCES  = perfdhcp.c
 
-perfdhcp_LDADD = $(top_builddir)/src/lib/exceptions/libexceptions.la
+

@@ -1,4 +1,4 @@
-# Copyright (C) 2011,2012 Internet Systems Consortium.
+# Copyright (C) 2012 Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -25,7 +25,7 @@ import time
 import isc
 import fcntl
 
-class TestDhcpv6Daemon(unittest.TestCase):
+class TestDhcpv4Daemon(unittest.TestCase):
     def setUp(self):
         # don't redirect stdout/stderr here as we want to print out things
         # during the test
@@ -34,11 +34,11 @@ class TestDhcpv6Daemon(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def runCommand(self, params, wait=1):
+    def runDhcp4(self, params, wait=1):
         """
-        This method runs a command and returns a touple: (returncode, stdout, stderr)
+        This method runs dhcp4 and returns a touple: (returncode, stdout, stderr)
         """
-        ## @todo: Convert this into generic method and reuse it in dhcp4 and dhcp6
+        ## @todo: Convert this into generic method and reuse it in dhcp6
 
         print("Running command: %s" % (" ".join(params)))
 
@@ -100,6 +100,7 @@ class TestDhcpv6Daemon(unittest.TestCase):
         if (error is None):
             error = ""
 
+
         try:
             if (not pi.process.poll()):
                 # let's be nice at first...
@@ -123,20 +124,17 @@ class TestDhcpv6Daemon(unittest.TestCase):
         return (rc, output, error)
 
     def test_alive(self):
-        """
-        Simple test. Checks that b10-dhcp6 can be started and prints out info 
-        about starting DHCPv6 operation.
-        """
-        print("Note: Purpose of some of the tests is to check if DHCPv6 server can be started,")
+        print("Note: Purpose of some of the tests is to check if DHCPv4 server can be started,")
         print("      not that is can bind sockets correctly. Please ignore binding errors.")
-        (returncode, output, error) = self.runCommand(["../b10-dhcp6", "-v"])
 
-        self.assertEqual( str(output).count("[b10-dhcp6] Initiating DHCPv6 operation."), 1)
+        (returncode, output, error) = self.runDhcp4(["../b10-dhcp4", "-v"])
+
+        self.assertEqual( str(output).count("[b10-dhcp4] Initiating DHCPv4 server operation."), 1)
 
     def test_portnumber_0(self):
         print("Check that specifying port number 0 is not allowed.")
 
-        (returncode, output, error) = self.runCommand(['../b10-dhcp6', '-p', '0'])
+        (returncode, output, error) = self.runDhcp4(['../b10-dhcp4', '-p', '0'])
 
         # When invalid port number is specified, return code must not be success
         self.assertTrue(returncode != 0)
@@ -147,7 +145,7 @@ class TestDhcpv6Daemon(unittest.TestCase):
     def test_portnumber_missing(self):
         print("Check that -p option requires a parameter.")
 
-        (returncode, output, error) = self.runCommand(['../b10-dhcp6', '-p'])
+        (returncode, output, error) = self.runDhcp4(['../b10-dhcp4', '-p'])
 
         # When invalid port number is specified, return code must not be success
         self.assertTrue(returncode != 0)
@@ -158,14 +156,14 @@ class TestDhcpv6Daemon(unittest.TestCase):
     def test_portnumber_nonroot(self):
         print("Check that specifying unprivileged port number will work.")
 
-        (returncode, output, error) = self.runCommand(['../b10-dhcp6', '-p', '10057'])
+        (returncode, output, error) = self.runDhcp4(['../b10-dhcp4', '-p', '10057'])
 
         # When invalid port number is specified, return code must not be success
         # TODO: Temporarily commented out as socket binding on systems that do not have
         #       interface detection implemented currently fails.
         # self.assertTrue(returncode == 0)
 
-        # Check that there is a message on stdout about opening proper port
+        # Check that there is an error message about invalid port number printed on stderr
         self.assertEqual( str(output).count("opening sockets on port 10057"), 1)
 
 if __name__ == '__main__':

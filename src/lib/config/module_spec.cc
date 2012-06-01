@@ -136,7 +136,7 @@ check_statistics_item_list(ConstElementPtr spec) {
             && item->contains("item_default")) {
             if(!check_format(item->get("item_default"),
                              item->get("item_format"))) {
-                isc_throw(ModuleSpecError, 
+                isc_throw(ModuleSpecError,
                     "item_default not valid type of item_format");
             }
         }
