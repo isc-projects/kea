@@ -94,7 +94,7 @@ def create_rrset(name, rrclass, rrtype, ttl, rdatas = []):
         add_rdata(rrset, rdata)
     return rrset
 
-class SesseionTestBase(unittest.TestCase):
+class SessionTestBase(unittest.TestCase):
     '''Base class for all sesion related tests.
 
     It just initializes common test parameters in its setUp() and defines
@@ -126,7 +126,7 @@ class SesseionTestBase(unittest.TestCase):
         self.assertEqual(0, msg.get_rr_count(SECTION_UPDATE))
         self.assertEqual(0, msg.get_rr_count(Message.SECTION_ADDITIONAL))
 
-class SessionTest(SesseionTestBase):
+class SessionTest(SessionTestBase):
     '''Basic session tests'''
 
     def test_handle(self):
@@ -1213,7 +1213,7 @@ class SessionTest(SesseionTestBase):
         self.assertEqual(Rcode.SERVFAIL().to_text(),
                          self._session._UpdateSession__do_update().to_text())
 
-class SessionACLTest(SesseionTestBase):
+class SessionACLTest(SessionTestBase):
     '''ACL related tests for update session.'''
     def test_update_acl_check(self):
         '''Test for various ACL checks.
