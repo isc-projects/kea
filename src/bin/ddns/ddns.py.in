@@ -128,15 +128,14 @@ def get_datasrc_client(cc_session):
     function will simply be removed.
 
     '''
+    HARDCODED_DATASRC_CLASS = RRClass.IN()
+    file, is_default = cc_session.get_remote_config_value("Auth",
+                                                          "database_file")
+    # See xfrout.py:get_db_file() for this trick:
+    if is_default and "B10_FROM_BUILD" in os.environ:
+        file = os.environ["B10_FROM_BUILD"] + "/bind10_zones.sqlite3"
+    datasrc_config = '{ "database_file": "' + file + '"}'
     try:
-        HARDCODED_DATASRC_CLASS = RRClass.IN()
-        file, is_default = cc_session.get_remote_config_value("Auth",
-                                                              "database_file")
-        # See xfrout.py:get_db_file() for this trick:
-        if is_default and "B10_FROM_BUILD" in os.environ:
-            file = os.environ["B10_FROM_BUILD"] + "/bind10_zones.sqlite3"
-
-        datasrc_config = '{ "database_file": "' + file + '"}'
         return HARDCODED_DATASRC_CLASS, DataSourceClient('sqlite3',
                                                          datasrc_config)
     except isc.datasrc.Error as ex:
