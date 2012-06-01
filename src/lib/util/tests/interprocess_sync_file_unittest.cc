@@ -96,7 +96,7 @@ TEST(InterprocessSyncFileTest, TestLock) {
 
   EXPECT_TRUE(locker.unlock());
 
-  EXPECT_EQ (0, unlink("" TEST_DATA_TOPBUILDDIR "/test_lockfile"));
+  EXPECT_EQ (0, unlink(TEST_DATA_TOPBUILDDIR "/test_lockfile"));
 }
 
 TEST(InterprocessSyncFileTest, TestMultipleFilesDirect) {
@@ -112,8 +112,8 @@ TEST(InterprocessSyncFileTest, TestMultipleFilesDirect) {
 
   EXPECT_TRUE(locker.unlock());
 
-  EXPECT_EQ (0, unlink("" TEST_DATA_TOPBUILDDIR "/test1_lockfile"));
-  EXPECT_EQ (0, unlink("" TEST_DATA_TOPBUILDDIR "/test2_lockfile"));
+  EXPECT_EQ (0, unlink(TEST_DATA_TOPBUILDDIR "/test1_lockfile"));
+  EXPECT_EQ (0, unlink(TEST_DATA_TOPBUILDDIR "/test2_lockfile"));
 }
 
 TEST(InterprocessSyncFileTest, TestMultipleFilesForked) {
@@ -154,8 +154,8 @@ TEST(InterprocessSyncFileTest, TestMultipleFilesForked) {
 
   EXPECT_TRUE(locker.unlock());
 
-  EXPECT_EQ (0, unlink("" TEST_DATA_TOPBUILDDIR "/test1_lockfile"));
-  EXPECT_EQ (0, unlink("" TEST_DATA_TOPBUILDDIR "/test2_lockfile"));
+  EXPECT_EQ (0, unlink(TEST_DATA_TOPBUILDDIR "/test1_lockfile"));
+  EXPECT_EQ (0, unlink(TEST_DATA_TOPBUILDDIR "/test2_lockfile"));
 }
 }
 
