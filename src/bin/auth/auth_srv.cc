@@ -390,7 +390,8 @@ private:
     AuthSrv* server_;
 };
 
-AuthSrv::AuthSrv(const bool use_cache, isc::xfr::AbstractXfroutClient& xfrout_client,
+AuthSrv::AuthSrv(const bool use_cache,
+                 isc::xfr::AbstractXfroutClient& xfrout_client,
                  isc::util::io::BaseSocketSessionForwarder& ddns_forwarder)
 {
     impl_ = new AuthSrvImpl(use_cache, xfrout_client, ddns_forwarder);
