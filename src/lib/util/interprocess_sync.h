@@ -128,7 +128,7 @@ public:
     ///
     /// \return Returns true if a lock is currently acquired, false
     ///         otherwise.
-    bool isLocked() {
+    bool isLocked() const {
         return (sync_.is_locked_);
     }
 
