@@ -621,7 +621,7 @@ class TestDDNSession(unittest.TestCase):
         client_addr = TEST_CLIENT6 if ipv6 else TEST_CLIENT4
         tsig = TSIGContext(tsig_key) if tsig_key is not None else None
         rcode = Rcode.NOERROR() if result == UPDATE_SUCCESS else Rcode.REFUSED()
-        has_response = False if result == UPDATE_DROP else True
+        has_response = (result != UPDATE_DROP)
 
         self.assertEqual(has_response,
                          self.server.handle_request((self.__sock,
