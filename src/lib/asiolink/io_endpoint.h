@@ -168,8 +168,8 @@ public:
 ///
 /// This method converts the address and port of the endpoint in the textual
 /// format that other BIND 10 modules would use in logging, i.e.,
-/// - For IPv6 address: [<address>]:port (e.g., [2001:db8::5300]:53)
-/// - For IPv4 address: <address>:port (e.g., 192.0.2.53:5300)
+/// - For IPv6 address: [&lt;address&gt;]:port (e.g., [2001:db8::5300]:53)
+/// - For IPv4 address: &lt;address&gt;:port (e.g., 192.0.2.53:5300)
 ///
 /// If it's neither IPv6 nor IPv4, it converts the endpoint into text in the
 /// same format as that for IPv4, although in practice such a case is not
