@@ -119,7 +119,7 @@ Generic::Generic(isc::util::InputBuffer& buffer, size_t rdata_len) {
     impl_ = new GenericImpl(data);
 }
 
-Generic::Generic(const string& rdata_string) {
+Generic::Generic(const std::string& rdata_string) {
     istringstream iss(rdata_string);
     string unknown_mark;
     iss >> unknown_mark;
