@@ -127,4 +127,3 @@ parseNSEC3ParamWire(const char* const rrtype_name,
 } // end of rdata
 } // end of dns
 } // end of isc
-

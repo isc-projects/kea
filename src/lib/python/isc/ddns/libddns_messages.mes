@@ -100,6 +100,10 @@ record has an RRType that is considered a 'meta' type, which
 cannot be zone content data. The specific record is shown.
 A FORMERR response is sent back to the client.
 
+% LIBDDNS_UPDATE_APPROVED update client %1 for zone %2 approved
+Debug message.  An update request was approved in terms of the zone's
+update ACL.
+
 % LIBDDNS_UPDATE_BAD_CLASS update client %1 for zone %2: bad class in update RR: %3
 The Update section of a DDNS update message contains an RRset with
 a bad class. The class of the update RRset must be either the same
@@ -140,6 +144,18 @@ The Update section of a DDNS update message contains a 'delete rrs'
 statement with a non-zero TTL. This is not allowed by the protocol.
 A FORMERR response is sent back to the client.
 
+% LIBDDNS_UPDATE_DENIED update client %1 for zone %2 denied
+Informational message.  An update request was denied because it was
+rejected by the zone's update ACL.  When this library is used by
+b10-ddns, the server will respond to the request with an RCODE of
+REFUSED as described in Section 3.3 of RFC2136.
+
+% LIBDDNS_UPDATE_DROPPED update client %1 for zone %2 dropped
+Informational message.  An update request was denied because it was
+rejected by the zone's update ACL.  When this library is used by
+b10-ddns, the server will then completely ignore the request; no
+response will be sent.
+
 % LIBDDNS_UPDATE_ERROR update client %1 for zone %2: %3
 Debug message.  An error is found in processing a dynamic update
 request.  This log message is used for general errors that are not
@@ -156,14 +172,14 @@ will simply return a response with an RCODE of NOTIMP to the client.
 The client's address and the zone name/class are logged.
 
 % LIBDDNS_UPDATE_NOTAUTH update client %1 for zone %2: not authoritative for update zone
-Debug message.  An update request for a zone for which the receiving
-server doesn't have authority.  In theory this is an unexpected event,
-but there are client implementations that could send update requests
-carelessly, so it may not necessarily be so uncommon in practice.  If
-possible, you may want to check the implementation or configuration of
-those clients to suppress the requests.  As specified in Section 3.1
-of RFC2136, the receiving server will return a response with an RCODE
-of NOTAUTH.
+Debug message.  An update request was received for a zone for which
+the receiving server doesn't have authority.  In theory this is an
+unexpected event, but there are client implementations that could send
+update requests carelessly, so it may not necessarily be so uncommon
+in practice.  If possible, you may want to check the implementation or
+configuration of those clients to suppress the requests.  As specified
+in Section 3.1 of RFC2136, the receiving server will return a response
+with an RCODE of NOTAUTH.
 
 % LIBDDNS_UPDATE_NOTZONE update client %1 for zone %2: update RR out of zone %3
 A DDNS UPDATE record has a name that does not appear to be inside
