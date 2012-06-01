@@ -61,7 +61,7 @@ struct SRVImpl {
 ///
 /// <b>Exceptions</b>
 ///
-/// If <Target> is not a valid domain name, a corresponding exception from
+/// If &lt;Target&gt; is not a valid domain name, a corresponding exception from
 /// the \c Name class will be thrown;
 /// if %any of the other bullet points above is not met, an exception of
 /// class \c InvalidRdataText will be thrown.
