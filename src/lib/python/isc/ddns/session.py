@@ -95,6 +95,34 @@ def convert_rrset_class(rrset, rrclass):
         new_rrset.add_rdata(isc.dns.Rdata(rrset.get_type(), rrclass, wire))
     return new_rrset
 
+def collect_rrsets(collection, rrset):
+    '''
+    Helper function to collect similar rrsets.
+    Collect all rrsets with the same name, class, and type
+    collection is the currently collected list of RRsets,
+    rrset is the RRset to add;
+    if an RRset with the same name, class and type as the
+    given rrset exists in the collection, its rdata fields
+    are added to that RRset. Otherwise, the rrset is added
+    to the given collection.
+    TTL is ignored.
+    This method does not check rdata contents for duplicate
+    values.
+
+    The collection and its rrsets are modified in-place,
+    this method does not return anything.
+    '''
+    found = False
+    for existing_rrset in collection:
+        if existing_rrset.get_name() == rrset.get_name() and\
+           existing_rrset.get_class() == rrset.get_class() and\
+           existing_rrset.get_type() == rrset.get_type():
+            for rdata in rrset.get_rdata():
+                existing_rrset.add_rdata(rdata)
+            found = True
+    if not found:
+        collection.append(rrset)
+
 class UpdateSession:
     '''Protocol handling for a single dynamic update request.
 
@@ -335,6 +363,10 @@ class UpdateSession:
            Returns a dns Rcode signaling either no error (Rcode.NOERROR())
            or that one of the prerequisites failed (any other Rcode).
         '''
+
+        # Temporary array to store exact-match RRsets
+        exact_match_rrsets = []
+
         for rrset in self.__message.get_section(SECTION_PREREQUISITE):
             # First check if the name is in the zone
             if not self.__check_in_zone(rrset):
@@ -401,19 +433,22 @@ class UpdateSession:
                                 RRsetFormatter(rrset))
                     return Rcode.FORMERR()
                 else:
-                    if not self.__prereq_rrset_exists_value(rrset):
-                        rcode = Rcode.NXRRSET()
-                        logger.info(LIBDDNS_PREREQ_RRSET_EXISTS_VAL_FAILED,
-                                    ClientFormatter(self.__client_addr),
-                                    ZoneFormatter(self.__zname, self.__zclass),
-                                    RRsetFormatter(rrset), rcode)
-                        return rcode
+                    collect_rrsets(exact_match_rrsets, rrset)
             else:
                 logger.info(LIBDDNS_PREREQ_FORMERR_CLASS,
                             ClientFormatter(self.__client_addr),
                             ZoneFormatter(self.__zname, self.__zclass),
                             RRsetFormatter(rrset))
                 return Rcode.FORMERR()
+
+        for collected_rrset in exact_match_rrsets:
+            if not self.__prereq_rrset_exists_value(collected_rrset):
+                rcode = Rcode.NXRRSET()
+                logger.info(LIBDDNS_PREREQ_RRSET_EXISTS_VAL_FAILED,
+                            ClientFormatter(self.__client_addr),
+                            ZoneFormatter(self.__zname, self.__zclass),
+                            RRsetFormatter(collected_rrset), rcode)
+                return rcode
 
         # All prerequisites are satisfied
         return Rcode.NOERROR()
@@ -578,6 +613,12 @@ class UpdateSession:
            may never be removed (and any action that would do so
            should be ignored).
         '''
+        # NOTE: This method is currently bad: it WILL delete all
+        # NS rrsets in a number of cases.
+        # We need an extension to our diff.py to handle this correctly
+        # (see ticket #2016)
+        # The related test is currently disabled. When this is fixed,
+        # enable that test again.
         result, orig_rrset, _ = self.__finder.find(rrset.get_name(),
                                                    rrset.get_type(),
                                                    ZoneFinder.NO_WILDCARD |
