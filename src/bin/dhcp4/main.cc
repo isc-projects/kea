@@ -66,18 +66,31 @@ usage() {
 }
 } // end of anonymous namespace
 
+/// @brief DHCPv4 context (provides access to essential objects)
+///
+/// This is a structure that provides access to essential objects
+/// used during DHCPv4 operation: Dhcpv4Srv object itself and
+/// also objects required for msgq session management.
+struct DHCPv4Context {
+    IOService io_service;
+    Session* cc_session;
+    ModuleCCSession* config_session;
+    Dhcpv4Srv* server;
+    DHCPv4Context(): cc_session(NULL), config_session(NULL), server(NULL) { };
+};
+
+DHCPv4Context dhcp4;
+
 // Global objects are ugly, but that is the most convenient way of
 // having it accessible from handlers.
-IOService io_service;
 
 // The same applies to global pointers. Ugly, but useful.
-Dhcpv4Srv* server = NULL;
 
 ConstElementPtr
 dhcp4_config_handler(ConstElementPtr new_config) {
     cout << "b10-dhcp4: Received new config:" << new_config->str() << endl;
     ConstElementPtr answer = isc::config::createAnswer(0,
-                             "Thanks for sending config.");
+                             "Thank you for sending config.");
     return (answer);
 }
 
@@ -86,10 +99,10 @@ dhcp4_command_handler(const string& command, ConstElementPtr args) {
     cout << "b10-dhcp4: Received new command: [" << command << "], args="
          << args->str() << endl;
     if (command == "shutdown") {
-        if (server) {
-            server->shutdown();
+        if (dhcp4.server) {
+            dhcp4.server->shutdown();
         }
-        io_service.stop();
+        dhcp4.io_service.stop();
         ConstElementPtr answer = isc::config::createAnswer(0,
                                  "Shutting down.");
         return (answer);
@@ -101,14 +114,18 @@ dhcp4_command_handler(const string& command, ConstElementPtr args) {
     return (answer);
 }
 
+/// @brief callback that will be called from iface_mgr when command/config arrives
 void session_reader(void) {
-    io_service.run_one();
+    // Process one asio event. If there are more events, iface_mgr will call
+    // this callback more than once.
+    dhcp4.io_service.run_one();
 }
 
+/// @brief Establishes msgq session.
+///
+/// Creates session that will be used to receive commands and updated
+/// configuration from boss (or indirectly from user via bindctl).
 void establish_session() {
-
-    Session* cc_session = NULL;
-    ModuleCCSession* config_session = NULL;
 
     string specfile;
     if (getenv("B10_FROM_BUILD")) {
@@ -120,23 +137,26 @@ void establish_session() {
 
     cout << "b10-dhcp4: my specfile is " << specfile << endl;
 
-    cc_session = new Session(io_service.get_io_service());
+    dhcp4.cc_session = new Session(dhcp4.io_service.get_io_service());
 
-    config_session = new ModuleCCSession(specfile, *cc_session,
-                                         dhcp4_config_handler,
-                                         dhcp4_command_handler, false);
+    dhcp4.config_session = new ModuleCCSession(specfile, *dhcp4.cc_session,
+                                               dhcp4_config_handler,
+                                               dhcp4_command_handler, false);
+    dhcp4.config_session->start();
 
-    config_session->start();
-
-    int ctrl_socket = cc_session->getSocketDesc();
+    int ctrl_socket = dhcp4.cc_session->getSocketDesc();
     cout << "b10-dhcp4: Control session started, socket="
          << ctrl_socket << endl;
 
     IfaceMgr::instance().set_session_socket(ctrl_socket, session_reader);
+}
 
-    // cout << "b10-dhcp4: About to call io_service.run()" << endl;
-    // io_service.run();
-    // cout << "b10-dhcp4: Returned from io_service.run()" << endl;
+void disconnect_session() {
+    dhcp4.cc_session->disconnect();
+    delete dhcp4.config_session;
+    dhcp4.config_session = NULL;
+    delete dhcp4.cc_session;
+    dhcp4.cc_session = NULL;
 }
 
 int
@@ -160,8 +180,7 @@ main(int argc, char* argv[]) {
                          (verbose_mode ? isc::log::DEBUG : isc::log::INFO),
                          isc::log::MAX_DEBUG_LEVEL, NULL);
 
-
-    cout << "My pid=" << getpid() << endl;
+    cout << "b10-dhcp4: My pid is " << getpid() << endl;
 
     if (argc - optind > 0) {
         usage();
@@ -174,12 +193,13 @@ main(int argc, char* argv[]) {
         establish_session();
 
         cout << "[b10-dhcp4] Initiating DHCPv4 server operation." << endl;
+        dhcp4.server = new Dhcpv4Srv();
+        dhcp4.server->run();
 
-        server = new Dhcpv4Srv();
+        disconnect_session();
 
-        server->run();
-
-        delete server;
+        delete dhcp4.server;
+        dhcp4.server = NULL;
 
     } catch (const std::exception& ex) {
         cerr << "[b10-dhcp4] Server failed: " << ex.what() << endl;
