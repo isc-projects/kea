@@ -15,7 +15,7 @@
 #ifndef __INTERPROCESS_SYNC_NULL_H__
 #define __INTERPROCESS_SYNC_NULL_H__
 
-#include "util/interprocess_sync.h"
+#include <util/interprocess_sync.h>
 
 namespace isc {
 namespace util {
