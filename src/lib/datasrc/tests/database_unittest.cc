@@ -162,6 +162,11 @@ const char* const TEST_RECORDS[][5] = {
     {"insecdelegation.example.org.", "NS", "3600", "", "ns.example.com."},
     {"insecdelegation.example.org.", "NSEC", "3600", "",
      "dummy.example.org. NS NSEC"},
+    // and a DS under the zone cut. Such an RR shouldn't exist in a sane zone,
+    // but it could by error or some malicious attempt.  It shouldn't confuse
+    // the implementation)
+    {"child.insecdelegation.example.org.", "DS", "3600", "", "DS 5 3 3600 "
+     "20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
 
     // Broken NS
     {"brokenns1.example.org.", "A", "3600", "", "192.0.2.1"},
@@ -2237,6 +2242,16 @@ TYPED_TEST(DatabaseClientTest, findDS) {
                RRType::DS(), RRType::NSEC(), this->rrttl_, ZoneFinder::NXRRSET,
                this->expected_rdatas_, this->expected_sig_rdatas_,
                ZoneFinder::RESULT_NSEC_SIGNED,
+               Name("insecdelegation.example.org."), ZoneFinder::FIND_DNSSEC);
+
+    // Some insane case: DS under a zone cut.  It's included in the DB, but
+    // shouldn't be visible via finder.
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back("ns.example.com");
+    doFindTest(*finder, Name("child.insecdelegation.example.org"),
+               RRType::DS(), RRType::NS(), this->rrttl_,
+               ZoneFinder::DELEGATION, this->expected_rdatas_,
+               this->empty_rdatas_, ZoneFinder::RESULT_DEFAULT,
                Name("insecdelegation.example.org."), ZoneFinder::FIND_DNSSEC);
 }
 
