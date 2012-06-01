@@ -54,7 +54,7 @@ def create_update_msg(zones=[TEST_ZONE_RECORD], prerequisites=[],
 
     # re-read the created data in the parse mode
     msg.clear(Message.PARSE)
-    msg.from_wire(renderer.get_data())
+    msg.from_wire(renderer.get_data(), Message.PRESERVE_ORDER)
 
     return renderer.get_data(), msg
 
@@ -232,6 +232,46 @@ class SessionTest(unittest.TestCase):
         add_rdata(rrset, b'\xc0\x00')
         self.assertRaises(DNSMessageFORMERR, convert_rrset_class,
                           rrset, RRClass.IN())
+
+    def test_collect_rrsets(self):
+        '''
+        Tests the 'rrset collector' method, which collects rrsets
+        with the same name and type
+        '''
+        collected = []
+
+        collect_rrsets(collected, create_rrset("a.example.org", RRClass.IN(),
+                                               RRType.A(), 0, [ "192.0.2.1" ]))
+        # Same name and class, different type
+        collect_rrsets(collected, create_rrset("a.example.org", RRClass.IN(),
+                                               RRType.TXT(), 0, [ "one" ]))
+        collect_rrsets(collected, create_rrset("a.example.org", RRClass.IN(),
+                                               RRType.A(), 0, [ "192.0.2.2" ]))
+        collect_rrsets(collected, create_rrset("a.example.org", RRClass.IN(),
+                                               RRType.TXT(), 0, [ "two" ]))
+        # Same class and type as an existing one, different name
+        collect_rrsets(collected, create_rrset("b.example.org", RRClass.IN(),
+                                               RRType.A(), 0, [ "192.0.2.3" ]))
+        # Same name and type as an existing one, different class
+        collect_rrsets(collected, create_rrset("a.example.org", RRClass.CH(),
+                                               RRType.TXT(), 0, [ "one" ]))
+        collect_rrsets(collected, create_rrset("b.example.org", RRClass.IN(),
+                                               RRType.A(), 0, [ "192.0.2.4" ]))
+        collect_rrsets(collected, create_rrset("a.example.org", RRClass.CH(),
+                                               RRType.TXT(), 0, [ "two" ]))
+
+        strings = [ rrset.to_text() for rrset in collected ]
+        # note + vs , in this list
+        expected = ['a.example.org. 0 IN A 192.0.2.1\n' +
+                    'a.example.org. 0 IN A 192.0.2.2\n',
+                    'a.example.org. 0 IN TXT "one"\n' +
+                    'a.example.org. 0 IN TXT "two"\n',
+                    'b.example.org. 0 IN A 192.0.2.3\n' +
+                    'b.example.org. 0 IN A 192.0.2.4\n',
+                    'a.example.org. 0 CH TXT "one"\n' +
+                    'a.example.org. 0 CH TXT "two"\n']
+
+        self.assertEqual(expected, strings)
 
     def __prereq_helper(self, method, expected, rrset):
         '''Calls the given method with self.__datasrc_client
@@ -505,15 +545,6 @@ class SessionTest(unittest.TestCase):
         name_not_in_use_no = create_rrset("www.example.org", RRClass.NONE(),
                                           RRType.ANY(), 0)
 
-        # Create an UPDATE with all 5 'yes' prereqs
-        data, update = create_update_msg([TEST_ZONE_RECORD],
-                                         [
-                                          rrset_exists_yes,
-                                          rrset_does_not_exist_yes,
-                                          name_in_use_yes,
-                                          name_not_in_use_yes,
-                                          rrset_exists_value_yes,
-                                         ])
         # check 'no' result codes
         self.check_prerequisite_result(Rcode.NXRRSET(),
                                        [ rrset_exists_no ])
@@ -527,6 +558,23 @@ class SessionTest(unittest.TestCase):
                                        [ name_not_in_use_no ])
 
         # the 'yes' codes should result in ok
+        # individually
+        self.check_prerequisite_result(Rcode.NOERROR(),
+                                       [ rrset_exists_yes ] )
+        self.check_prerequisite_result(Rcode.NOERROR(),
+                                       [ rrset_exists_value_yes ])
+        self.check_prerequisite_result(Rcode.NOERROR(),
+                                       [ rrset_does_not_exist_yes ])
+        self.check_prerequisite_result(Rcode.NOERROR(),
+                                       [ name_in_use_yes ])
+        self.check_prerequisite_result(Rcode.NOERROR(),
+                                       [ name_not_in_use_yes ])
+        self.check_prerequisite_result(Rcode.NOERROR(),
+                                       [ rrset_exists_value_1,
+                                         rrset_exists_value_2,
+                                         rrset_exists_value_3])
+
+        # and together
         self.check_prerequisite_result(Rcode.NOERROR(),
                                        [ rrset_exists_yes,
                                          rrset_exists_value_yes,
@@ -1071,8 +1119,14 @@ class SessionTest(unittest.TestCase):
                                  RRType.NS(),
                                  orig_ns_rrset)
 
+    def DISABLED_test_update_apex_special_case_ns_rrset(self):
         # If we delete the NS at the apex specifically, it should still
         # keep one record
+        self.__initialize_update_rrsets()
+        # When we are done, we should have a reduced NS rrset
+        short_ns_rrset = create_rrset("example.org", TEST_RRCLASS,
+                                      RRType.NS(), 3600,
+                                      [ "ns3.example.org." ])
         self.check_full_handle_result(Rcode.NOERROR(),
                                       [ self.rrset_update_del_rrset_ns ])
         self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
