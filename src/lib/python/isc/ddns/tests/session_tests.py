@@ -90,10 +90,10 @@ def add_rdata(rrset, rdata):
                                   rdata))
 
 class TestDDNSSOA(unittest.TestCase):
-    '''unittest for the DDNSSOA'''
+    '''unittest for the DDNS_SOA'''
     def test_update_soa(self):
         '''unittest for update_soa function'''
-        soa_update = DDNSSOA()
+        soa_update = DDNS_SOA()
         soa_rr = create_rrset("example.org", TEST_RRCLASS,
                               RRType.SOA(), 3600, ["ns1.example.org. " +
                               "admin.example.org. " +
@@ -126,7 +126,7 @@ class TestDDNSSOA(unittest.TestCase):
                                     3600, ["ns1.example.org. " +
                                     "admin.example.org. " +
                                     "1234 3600 1800 2419200 7200"])
-        soa_update = DDNSSOA()
+        soa_update = DDNS_SOA()
         # The case of (i1 < i2 and i2 - i1 < 2^(SERIAL_BITS - 1)) in rfc 1982
         self.assertTrue(soa_update.soa_update_check(small_soa_rr,
                                                     large_soa_rr))
