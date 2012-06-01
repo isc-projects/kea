@@ -2,8 +2,9 @@ PYCOVERAGE_RUN = @PYCOVERAGE_RUN@
 PYTESTS = dhcp6_test.py
 EXTRA_DIST = $(PYTESTS)
 
-# If necessary (rare cases), explicitly specify paths to dynamic libraries
-# required by loadable python modules.
+# Explicitly specify paths to dynamic libraries required by loadable python
+# modules. That is required on Mac OS systems. Otherwise we will get exception
+# about python not being able to load liblog library.
 LIBRARY_PATH_PLACEHOLDER =
 if SET_ENV_LIBRARY_PATH
 LIBRARY_PATH_PLACEHOLDER += $(ENV_LIBRARY_PATH)=$(abs_top_builddir)/src/lib/cryptolink/.libs:$(abs_top_builddir)/src/lib/dns/.libs:$(abs_top_builddir)/src/lib/dns/python/.libs:$(abs_top_builddir)/src/lib/cc/.libs:$(abs_top_builddir)/src/lib/config/.libs:$(abs_top_builddir)/src/lib/log/.libs:$(abs_top_builddir)/src/lib/util/.libs:$(abs_top_builddir)/src/lib/exceptions/.libs:$(abs_top_builddir)/src/lib/util/io/.libs:$(abs_top_builddir)/src/lib/datasrc/.libs:$$$(ENV_LIBRARY_PATH)
