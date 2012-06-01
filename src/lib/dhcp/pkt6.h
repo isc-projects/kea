@@ -19,6 +19,7 @@
 #include <time.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/shared_array.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include "asiolink/io_address.h"
 #include "dhcp/option.h"
 
@@ -227,7 +228,7 @@ public:
     /// packet is received or send.
     ///
     /// @return packet timestamp.
-    timespec getTimestamp() const { return timestamp_; }
+    const boost::posix_time::ptime& getTimestamp() const { return timestamp_; }
 
     /// @brief Sets interface name.
     ///
@@ -324,7 +325,7 @@ protected:
     isc::util::OutputBuffer bufferOut_;
 
     /// packet timestamp
-    timespec timestamp_;
+    boost::posix_time::ptime timestamp_;
 }; // Pkt6 class
 
 typedef boost::shared_ptr<Pkt6> Pkt6Ptr;

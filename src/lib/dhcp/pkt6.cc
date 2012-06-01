@@ -38,7 +38,6 @@ Pkt6::Pkt6(const uint8_t* buf, uint32_t buf_len, DHCPv6Proto proto /* = UDP */) 
     bufferOut_(0) {
     data_.resize(buf_len);
     memcpy(&data_[0], buf, buf_len);
-    memset(&timestamp_, 0, sizeof(timestamp_));
 }
 
 Pkt6::Pkt6(uint8_t msg_type, uint32_t transid, DHCPv6Proto proto /*= UDP*/) :
@@ -52,7 +51,6 @@ Pkt6::Pkt6(uint8_t msg_type, uint32_t transid, DHCPv6Proto proto /*= UDP*/) :
     local_port_(0),
     remote_port_(0),
     bufferOut_(0) {
-    memset(&timestamp_, 0, sizeof(timestamp_));
 }
 
 uint16_t Pkt6::len() {
@@ -206,9 +204,7 @@ void Pkt6::repack() {
 
 void
 Pkt6::updateTimestamp() {
-    if (clock_gettime(CLOCK_REALTIME, &timestamp_) < 0) {
-        isc_throw(isc::Unexpected, "Failed to get timestamp for packet");
-    }
+    timestamp_ = boost::posix_time::microsec_clock::universal_time();
 }
 
 
