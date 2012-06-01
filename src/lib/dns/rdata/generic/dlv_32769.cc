@@ -34,7 +34,7 @@ using namespace isc::dns::rdata::generic::detail;
 /// \brief Constructor from string.
 ///
 /// A copy of the implementation object is allocated and constructed.
-DLV::DLV(const string& ds_str) :
+DLV::DLV(const std::string& ds_str) :
     impl_(new DLVImpl(ds_str))
 {}
 
