@@ -17,6 +17,7 @@
 #include <fstream>
 #include <sstream>
 
+#include <unistd.h>
 #include <arpa/inet.h>
 #include <gtest/gtest.h>
 
@@ -151,8 +152,6 @@ TEST_F(IfaceMgrTest, dhcp6Sniffer) {
 
 TEST_F(IfaceMgrTest, basic) {
     // checks that IfaceManager can be instantiated
-    createLoInterfacesTxt();
-
     createLoInterfacesTxt();
 
     IfaceMgr & ifacemgr = IfaceMgr::instance();
@@ -947,5 +946,53 @@ TEST_F(IfaceMgrTest, DISABLED_detectIfaces_linux) {
     delete ifacemgr;
 }
 #endif
+
+volatile bool callback_ok;
+
+void my_callback(void) {
+    cout << "Callback triggered." << endl;
+    callback_ok = true;
+}
+
+TEST_F(IfaceMgrTest, controlSession) {
+    // tests if extra control socket and its callback can be passed and
+    // it is supported properly by receive4() method.
+
+    callback_ok = false;
+
+    NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
+
+    // create pipe and register it as extra socket
+    int pipefd[2];
+    EXPECT_TRUE(pipe(pipefd) == 0);
+    EXPECT_NO_THROW(ifacemgr->set_session_socket(pipefd[0], my_callback));
+
+    Pkt4Ptr pkt4;
+    pkt4 = ifacemgr->receive4(1);
+
+    // Our callback should not be called this time (there was no data)
+    EXPECT_FALSE(callback_ok);
+
+    // IfaceMgr should not process control socket data as incoming packets
+    EXPECT_FALSE(pkt4);
+
+    // Now, send some data over pipe (38 bytes)
+    EXPECT_EQ(38, write(pipefd[1], "Hi, this is a message sent over a pipe", 38));
+
+    // ... and repeat
+    pkt4 = ifacemgr->receive4(1);
+
+    // IfaceMgr should not process control socket data as incoming packets
+    EXPECT_FALSE(pkt4);
+
+    // There was some data, so this time callback should be called
+    EXPECT_TRUE(callback_ok);
+
+    delete ifacemgr;
+
+    // close both pipe ends
+    close(pipefd[1]);
+    close(pipefd[0]);
+}
 
 }
