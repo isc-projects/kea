@@ -16,6 +16,7 @@
 #include <iostream>
 #include <sstream>
 #include <arpa/inet.h>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <gtest/gtest.h>
 
 #include <asiolink/io_address.h>
@@ -206,11 +207,26 @@ TEST_F(Pkt6Test, addGetDelOptions) {
 
 TEST_F(Pkt6Test, Timestamp) {
     Pkt6* pkt = new Pkt6(DHCPV6_SOLICIT, 0x020304);
-    ASSERT_NO_THROW(pkt->updateTimestamp());
-    timespec ts_packet = pkt->getTimestamp();
-    timespec ts_now;
-    ASSERT_FALSE(clock_gettime(CLOCK_REALTIME, &ts_now) < 0);
-    EXPECT_TRUE(ts_packet.tv_sec >= ts_now.tv_sec);
+    // Update packet time.
+    pkt->updateTimestamp();
+
+    // Get updated packet time.
+    boost::posix_time::ptime ts_packet = pkt->getTimestamp();
+
+    // After timestamp is updated it should be date-time.
+    ASSERT_FALSE(ts_packet.is_not_a_date_time());
+
+    // Check current time.
+    boost::posix_time::ptime ts_now =
+        boost::posix_time::microsec_clock::universal_time();
+
+    // Calculate period between packet time and now.
+    boost::posix_time::time_period ts_period(ts_packet, ts_now);
+
+    // Duration should be positive or zero.
+    EXPECT_TRUE(ts_period.length().total_microseconds() >= 0);
+
+    delete pkt;
 }
 
 }

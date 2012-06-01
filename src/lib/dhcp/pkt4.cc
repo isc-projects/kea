@@ -53,7 +53,6 @@ Pkt4::Pkt4(uint8_t msg_type, uint32_t transid)
     memset(chaddr_, 0, MAX_CHADDR_LEN);
     memset(sname_, 0, MAX_SNAME_LEN);
     memset(file_, 0, MAX_FILE_LEN);
-    memset(&timestamp_, 0, sizeof(timestamp_));
 }
 
 Pkt4::Pkt4(const uint8_t* data, size_t len)
@@ -82,7 +81,6 @@ Pkt4::Pkt4(const uint8_t* data, size_t len)
 
     data_.resize(len);
     memcpy(&data_[0], data, len);
-    memset(&timestamp_, 0, sizeof(timestamp_));
 }
 
 size_t
@@ -309,9 +307,7 @@ Pkt4::getOption(uint8_t type) {
 
 void
 Pkt4::updateTimestamp() {
-    if (clock_gettime(CLOCK_REALTIME, &timestamp_) < 0) {
-        isc_throw(isc::Unexpected, "Failed to get timestamp for packet");
-    }
+    timestamp_ = boost::posix_time::microsec_clock::universal_time();
 }
 
 } // end of namespace isc::dhcp
