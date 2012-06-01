@@ -1,3 +1,9 @@
+4XX.	[func]*		tomek
+	b10-dhcp4: DHCPv4 server component is now integrated into
+	BIND10 framework. It can be started from BIND10 (using bindctl)
+	and can receive commands. The only supported command for now
+	is 'Dhcp4 shutdown'.
+
 434.	[func]		tomek
 	libdhcp++: Linux interface detection refactored. The code is
 	now cleaner. Tests better support certain versions of ifconfig.
