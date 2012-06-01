@@ -24,28 +24,43 @@ TEST(InterprocessSyncNullTest, TestNull) {
   InterprocessSyncNull sync("test1");
   InterprocessSyncLocker locker(sync);
 
-  // All of these must always return true
+  // Check if the is_locked_ flag is set correctly during lock().
+  EXPECT_FALSE(locker.isLocked());
+  EXPECT_TRUE(locker.lock());
+  EXPECT_TRUE(locker.isLocked());
 
+  // lock() must always return true (this is called 4 times, just an
+  // arbitrary number)
   EXPECT_TRUE(locker.lock());
   EXPECT_TRUE(locker.lock());
   EXPECT_TRUE(locker.lock());
   EXPECT_TRUE(locker.lock());
-  EXPECT_TRUE(locker.lock());
 
+  // Check if the is_locked_ flag is set correctly during unlock().
+  EXPECT_TRUE(locker.isLocked());
   EXPECT_TRUE(locker.unlock());
+  EXPECT_FALSE(locker.isLocked());
+
+  // unlock() must always return true (this is called 4 times, just an
+  // arbitrary number)
   EXPECT_TRUE(locker.unlock());
   EXPECT_TRUE(locker.unlock());
   EXPECT_TRUE(locker.unlock());
   EXPECT_TRUE(locker.unlock());
 
+  // Check if the is_locked_ flag is set correctly during tryLock().
+  EXPECT_FALSE(locker.isLocked());
   EXPECT_TRUE(locker.tryLock());
+  EXPECT_TRUE(locker.isLocked());
+
+  // tryLock() must always return true (this is called 4 times, just an
+  // arbitrary number)
   EXPECT_TRUE(locker.tryLock());
   EXPECT_TRUE(locker.tryLock());
   EXPECT_TRUE(locker.tryLock());
   EXPECT_TRUE(locker.tryLock());
 
-  // Random order
-
+  // Random order (should all return true)
   EXPECT_TRUE(locker.unlock());
   EXPECT_TRUE(locker.lock());
   EXPECT_TRUE(locker.tryLock());
