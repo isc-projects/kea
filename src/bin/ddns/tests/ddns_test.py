@@ -70,7 +70,7 @@ class FakeSocket:
     def getpeername(self):
         return "fake_unix_socket"
     def accept(self):
-        return FakeSocket(self.__fileno + 1)
+        return FakeSocket(self.__fileno + 1), '/dummy/path'
     def sendto(self, data, addr):
         self._sent_data = data
         self._sent_addr = addr

@@ -270,10 +270,10 @@ class DDNSServer:
         Accept another connection and create the session receiver.
         """
         try:
-            sock = self._listen_socket.accept()
+            (sock, remote_addr) = self._listen_socket.accept()
             fileno = sock.fileno()
             logger.debug(TRACE_BASIC, DDNS_NEW_CONN, fileno,
-                         sock.getpeername())
+                         remote_addr if remote_addr else '<anonymous address>')
             receiver = isc.util.cio.socketsession.SocketSessionReceiver(sock)
             self._socksession_receivers[fileno] = (sock, receiver)
         except (socket.error, isc.util.cio.socketsession.SocketSessionError) \
