@@ -46,13 +46,12 @@ protected:
     }
 };
 
-/// \brief Test InitLogger
+/// \brief Test logger lock sequence
 ///
-/// A program used in testing the logger that initializes logging using
-/// initLogger(), then outputs several messages at different severities and
-/// debug levels.  An external script sets the environment variables and checks
-/// that they have the desired effect.
-
+/// A program used in testing the logger. It verifies that (1) an
+/// interprocess sync lock is first acquired by the logger, (2) the
+/// message is logged by the logger, and (3) the lock is released in
+/// that sequence.
 int
 main(int, char**) {
     initLogger();
