@@ -684,6 +684,11 @@ class TestStartStopProcessesBob(unittest.TestCase):
     """
     def check_environment_unchanged(self):
         # Check whether the environment has not been changed
+
+        # First, we delete the B10_LOCKFILE_DIR_FROM_BUILD key from both
+        # environments' copies. This is because this key can be
+        # set/updated during initialization and we don't care if it
+        # changes. We only test the rest of the environment.
         cur_os_environ = copy.deepcopy(os.environ)
         if "B10_LOCKFILE_DIR_FROM_BUILD" in original_os_environ:
             original_os_environ.pop("B10_LOCKFILE_DIR_FROM_BUILD")
