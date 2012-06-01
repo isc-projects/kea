@@ -148,13 +148,14 @@ class DDNS_SOA:
             return False
 
     def update_soa(self, origin_soa, inc_number = 1):
-        ''' Update the soa number incrementally as RFC 2136.
+        ''' Update the soa number incrementally as RFC 2136. Please make sure
+        that the origin_soa exists and not null before invoke this function.
         Parameters:
             origin_soa, the soa resource record which will be updated.
             inc_number, the number which will be added into the serial number of
             origin_soa, the default value is one.
         Output:
-            the new origin soa whoes serial number has been updated.
+            The new origin soa whoes serial number has been updated.
         '''
         soa_num = self.__get_serial_internal(origin_soa)
         soa_num = soa_num + inc_number
