@@ -76,19 +76,22 @@ struct TSIG::TSIGImpl {
 /// where
 /// - &lt;Alg&gt; is a valid textual representation of domain name.
 /// - &lt;Time&gt; is an unsigned 48-bit decimal integer.
-/// - &lt;MACSize&gt;, &lt;OrigID&gt;, and &lt;OtherLen&gt; are an unsigned 16-bit decimal
+/// - &lt;MACSize&gt;, &lt;OrigID&gt;, and &lt;OtherLen&gt; are an unsigned
+///   16-bit decimal
 ///   integer.
-/// - &lt;Error&gt; is an unsigned 16-bit decimal integer or a valid mnemonic for
-///   the Error field specified in RFC2845.  Currently, "BADSIG", "BADKEY",
+/// - &lt;Error&gt; is an unsigned 16-bit decimal integer or a valid mnemonic
+///   for the Error field specified in RFC2845.  Currently, "BADSIG", "BADKEY",
 ///   and "BADTIME" are supported (case sensitive).  In future versions
 ///   other representations that are compatible with the DNS RCODE will be
 ///   supported.
-/// - &lt;MAC&gt; and &lt;OtherData&gt; is a BASE-64 encoded string that does not contain
-///   space characters.
-///   When &lt;MACSize&gt; and &lt;OtherLen&gt; is 0, &lt;MAC&gt; and &lt;OtherData&gt; must not
-///   appear in \c tsgi_str, respectively.
-/// - The decoded data of &lt;MAC&gt; is &lt;MACSize&gt; bytes of binary stream.
-/// - The decoded data of &lt;OtherData&gt; is &lt;OtherLen&gt; bytes of binary stream.
+/// - &lt;MAC&gt; and &lt;OtherData&gt; is a BASE-64 encoded string that does
+///   not contain space characters.
+///   When &lt;MACSize&gt; and &lt;OtherLen&gt; is 0, &lt;MAC&gt; and
+///   &lt;OtherData&gt; must not appear in \c tsig_str, respectively.
+/// - The decoded data of &lt;MAC&gt; is &lt;MACSize&gt; bytes of binary
+///   stream.
+/// - The decoded data of &lt;OtherData&gt; is &lt;OtherLen&gt; bytes of
+///   binary stream.
 ///
 /// An example of valid string is:
 /// \code "hmac-sha256. 853804800 300 3 AAAA 2845 0 0" \endcode
@@ -103,8 +106,8 @@ struct TSIG::TSIGImpl {
 ///
 /// If &lt;Alg&gt; is not a valid domain name, a corresponding exception from
 /// the \c Name class will be thrown;
-/// if &lt;MAC&gt; or &lt;OtherData&gt; is not validly encoded in BASE-64, an exception
-/// of class \c isc::BadValue will be thrown;
+/// if &lt;MAC&gt; or &lt;OtherData&gt; is not validly encoded in BASE-64, an
+/// exception of class \c isc::BadValue will be thrown;
 /// if %any of the other bullet points above is not met, an exception of
 /// class \c InvalidRdataText will be thrown.
 /// This constructor internally involves resource allocation, and if it fails
