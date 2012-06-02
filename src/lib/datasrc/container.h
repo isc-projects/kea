@@ -98,6 +98,28 @@ public:
     /// This searches the contained data sources for a one that best matches
     /// the zone name.
     ///
+    /// There are two expected usage scenarios. One is answering queries. In
+    /// this case, the zone finder is needed and the best matching superzone
+    /// of the searched name is needed. Therefore, the call would look like:
+    ///
+    ///   SearchResult result(container->search(queried_name));
+    ///   if (result.datasrc_) {
+    ///       createTheAnswer(result.finder_);
+    ///   } else {
+    ///       createNotAuthAnswer();
+    ///   }
+    ///
+    /// The other scenario is manipulating zone data (XfrOut, XfrIn, DDNS,
+    /// ...). In this case, the finder itself is not so important. However,
+    /// we need an exact match (if we want to manipulate zone data, we must
+    /// know exactly, which zone we are about to manipulate). Then the call
+    ///
+    ///   SearchResult result(container->search(zone_name, true, false));
+    ///   if (result.datasrc_) {
+    ///       ZoneUpdaterPtr updater(result.datasrc_->getUpdater(zone_name);
+    ///       ...
+    ///   }
+    ///
     /// \param zone The name of the zone to search.
     /// \param want_exact_match If it is true, it returns only exact matches.
     ///     If the best possible match is partial, a negative result is
