@@ -62,7 +62,7 @@ public:
             datasrc_(datasrc),
             finder_(finder),
             matched_labels_(matched_labels),
-            exact_match(exact_match)
+            exact_match_(exact_match)
         { }
         /// \brief Negative answer constructor.
         ///
