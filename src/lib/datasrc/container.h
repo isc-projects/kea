@@ -16,6 +16,8 @@
 #define DATASRC_CONTAINER_H
 
 #include <dns/name.h>
+#include <cc/data.h>
+#include <exceptions/exceptions.h>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/noncopyable.hpp>
@@ -144,8 +146,53 @@ public:
                                 bool want_finder = true) const = 0;
 };
 
-class ConfigurableContainer : public Container {
+/// \brief Shared pointer to the container.
+typedef boost::shared_ptr<Container> ContainerPtr;
+/// \brief Shared const pointer to the container.
+typedef boost::shared_ptr<const Container> ConstContainerPtr;
 
+/// \Concrete implementation of the Container, which is constructed based on
+///     configuration.
+///
+/// This is the implementation which is expected to be used in the servers.
+/// However, it is expected most of the code will use it as the Container,
+/// only the creation is expected to be direct.
+class ConfigurableContainer : public Container {
+public:
+    /// \brief Exception thrown when there's an error in configuration.
+    class ConfigurationError : public Exception {
+    public:
+        ConfigurationError(const char* file, size_t line, const char* what) :
+            Exception(file, line, what)
+        { }
+    };
+    /// \brief Constructor.
+    ///
+    /// This creates the container and fills it with data sources corresponding
+    /// to the configuration. The data sources are newly created or taken from
+    /// the container passed as old.
+    ///
+    /// \param configuration The JSON element describing the configuration to
+    ///     use.
+    /// \param allow_cache If it is true, the 'cache' option of the
+    ///     configuration is used and some zones are cached into an In-Memory
+    ///     data source according to it. If it is false, it is ignored and
+    ///     no In-Memory data sources are created.
+    /// \param old This can be set to a previous container. It will be used as
+    ///     a source of data sources that were already created in the previous
+    ///     configuration. The designed use is when there's an update to
+    ///     configuration, so not all things would have to be re-created from
+    ///     scratch. Note that the old data source must not be used any more.
+    /// \throw DataSourceError if there's a problem creating a data source.
+    /// \throw ConfigurationError if the configuration is invalid in some
+    ///     sense.
+    ConfigurableContainer(const data::ConstElementPtr& configuration,
+                          bool allow_cache,
+                          const ConstContainerPtr& old = ConstContainerPtr());
+    /// \brief Implementation of the Container::search.
+    virtual SearchResult search(const dns::Name& zone,
+                                bool want_exact_match = false,
+                                bool want_finder = true) const;
 };
 
 } // namespace datasrc
