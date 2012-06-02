@@ -30,6 +30,7 @@ libdatasrc_la_SOURCES += logger.h logger.cc
 libdatasrc_la_SOURCES += client.h iterator.h
 libdatasrc_la_SOURCES += database.h database.cc
 libdatasrc_la_SOURCES += factory.h factory.cc
+libdatasrc_la_SOURCES += container.h container.cc
 nodist_libdatasrc_la_SOURCES = datasrc_messages.h datasrc_messages.cc
 libdatasrc_la_LDFLAGS = -no-undefined -version-info 1:0:1
 
