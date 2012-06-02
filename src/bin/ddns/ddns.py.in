@@ -341,7 +341,8 @@ class DDNSServer:
             if sock.proto == socket.IPPROTO_TCP:
                 raise SessionError('TCP requests are not yet supported')
             self.__request_msg.clear(Message.PARSE)
-            self.__request_msg.from_wire(req_data)
+            # specify PRESERVE_ORDER as we need to handle each RR separately.
+            self.__request_msg.from_wire(req_data, Message.PRESERVE_ORDER)
             if self.__request_msg.get_opcode() != Opcode.UPDATE():
                 raise SessionError('Update request has unexpected opcode: ' +
                                    str(self.__request_msg.get_opcode()))

@@ -547,13 +547,16 @@ class TestDDNSServer(unittest.TestCase):
         self.__select_expected = ([1, 2], [], [], None)
         self.assertRaises(select.error, self.ddns_server.run)
 
-def create_msg(opcode=Opcode.UPDATE(), zones=[TEST_ZONE_RECORD], tsigctx=None):
+def create_msg(opcode=Opcode.UPDATE(), zones=[TEST_ZONE_RECORD], prereq=[],
+               tsigctx=None):
     msg = Message(Message.RENDER)
     msg.set_qid(TEST_QID)
     msg.set_opcode(opcode)
     msg.set_rcode(Rcode.NOERROR())
     for z in zones:
         msg.add_question(z)
+    for p in prereq:
+        msg.add_rrset(SECTION_PREREQUISITE, p)
 
     renderer = MessageRenderer()
     if tsigctx is not None:
@@ -584,6 +587,8 @@ class TestDDNSession(unittest.TestCase):
         isc.server_common.tsig_keyring = self.orig_tsig_keyring
 
     def __fake_session_creator(self, req_message, client_addr, zone_config):
+        # remember the passed message for possible inspection later.
+        self.__req_message = req_message
         return FakeUpdateSession(req_message, client_addr, zone_config,
                                  self.__faked_result)
 
@@ -684,6 +689,21 @@ class TestDDNSession(unittest.TestCase):
                                                      TEST_SERVER4,
                                                      create_msg())))
         self.assertEqual((None, None), (s._sent_data, s._sent_addr))
+
+    def test_request_message(self):
+        '''Test if the request message stores RRs separately.'''
+        # Specify 'drop' so the passed message won't be modified.
+        self.__faked_result = UPDATE_DROP
+        # Put the same RR twice in the prerequisite section.  We should see
+        # them as separate RRs.
+        dummy_record = RRset(TEST_ZONE_NAME, TEST_RRCLASS, RRType.NS(),
+                             RRTTL(0))
+        dummy_record.add_rdata(Rdata(RRType.NS(), TEST_RRCLASS, "ns.example"))
+        self.server.handle_request((self.__sock, TEST_SERVER6, TEST_CLIENT6,
+                                    create_msg(prereq=[dummy_record,
+                                                       dummy_record])))
+        num_rrsets = len(self.__req_message.get_section(SECTION_PREREQUISITE))
+        self.assertEqual(2, num_rrsets)
 
     def test_session_with_config(self):
         '''Check a session with more relistic config setups
