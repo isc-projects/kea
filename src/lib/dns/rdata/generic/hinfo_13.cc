@@ -37,7 +37,7 @@ using namespace isc::dns::characterstr;
 // BEGIN_RDATA_NAMESPACE
 
 
-HINFO::HINFO(const string& hinfo_str) {
+HINFO::HINFO(const std::string& hinfo_str) {
     string::const_iterator input_iterator = hinfo_str.begin();
     cpu_ = getNextCharacterString(hinfo_str, input_iterator);
 

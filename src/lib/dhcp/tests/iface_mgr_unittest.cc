@@ -35,7 +35,6 @@ const size_t buf_size = 32;
 char LOOPBACK[buf_size] = "lo";
 
 namespace {
-const char* const INTERFACE_FILE = TEST_DATA_BUILDDIR "/interfaces.txt";
 
 class NakedIfaceMgr: public IfaceMgr {
     // "naked" Interface Manager, exposes internal fields
@@ -47,18 +46,11 @@ public:
 // dummy class for now, but this will be expanded when needed
 class IfaceMgrTest : public ::testing::Test {
 public:
+    // these are empty for now, but let's keep them around
     IfaceMgrTest() {
     }
 
-    void createLoInterfacesTxt() {
-        unlink(INTERFACE_FILE);
-        fstream fakeifaces(INTERFACE_FILE, ios::out|ios::trunc);
-        fakeifaces << LOOPBACK << " ::1";
-        fakeifaces.close();
-    }
-
     ~IfaceMgrTest() {
-        unlink(INTERFACE_FILE);
     }
 };
 
@@ -151,9 +143,6 @@ TEST_F(IfaceMgrTest, dhcp6Sniffer) {
 
 TEST_F(IfaceMgrTest, basic) {
     // checks that IfaceManager can be instantiated
-    createLoInterfacesTxt();
-
-    createLoInterfacesTxt();
 
     IfaceMgr & ifacemgr = IfaceMgr::instance();
     ASSERT_TRUE(&ifacemgr != 0);
@@ -173,16 +162,17 @@ TEST_F(IfaceMgrTest, ifaceClass) {
 // is implemented.
 TEST_F(IfaceMgrTest, getIface) {
 
-    createLoInterfacesTxt();
-
     cout << "Interface checks. Please ignore socket binding errors." << endl;
     NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
 
     // interface name, ifindex
-    IfaceMgr::Iface iface1("lo1", 1);
-    IfaceMgr::Iface iface2("eth5", 2);
-    IfaceMgr::Iface iface3("en3", 5);
-    IfaceMgr::Iface iface4("e1000g0", 3);
+    IfaceMgr::Iface iface1("lo1", 100);
+    IfaceMgr::Iface iface2("eth9", 101);
+    IfaceMgr::Iface iface3("en3", 102);
+    IfaceMgr::Iface iface4("e1000g4", 103);
+    cout << "This test assumes that there are less than 100 network interfaces"
+         << " in the tested system and there are no lo1, eth9, en3, e1000g4"
+         << " or wifi15 interfaces present." << endl;
 
     // note: real interfaces may be detected as well
     ifacemgr->getIfacesLst().push_back(iface1);
@@ -200,64 +190,29 @@ TEST_F(IfaceMgrTest, getIface) {
 
 
     // check that interface can be retrieved by ifindex
-    IfaceMgr::Iface* tmp = ifacemgr->getIface(5);
-    // ASSERT_NE(NULL, tmp); is not supported. hmmmm.
+    IfaceMgr::Iface* tmp = ifacemgr->getIface(102);
     ASSERT_TRUE(tmp != NULL);
 
     EXPECT_EQ("en3", tmp->getName());
-    EXPECT_EQ(5, tmp->getIndex());
+    EXPECT_EQ(102, tmp->getIndex());
 
     // check that interface can be retrieved by name
     tmp = ifacemgr->getIface("lo1");
     ASSERT_TRUE(tmp != NULL);
 
     EXPECT_EQ("lo1", tmp->getName());
-    EXPECT_EQ(1, tmp->getIndex());
+    EXPECT_EQ(100, tmp->getIndex());
 
     // check that non-existing interfaces are not returned
-    EXPECT_EQ(static_cast<void*>(NULL), ifacemgr->getIface("wifi0") );
+    EXPECT_EQ(static_cast<void*>(NULL), ifacemgr->getIface("wifi15") );
 
     delete ifacemgr;
 
 }
-
-#if !defined(OS_LINUX)
-TEST_F(IfaceMgrTest, detectIfaces_stub) {
-
-    // test detects that interfaces can be detected
-    // there is no code for that now, but interfaces are
-    // read from file
-    fstream fakeifaces(INTERFACE_FILE, ios::out|ios::trunc);
-    fakeifaces << "eth0 fe80::1234";
-    fakeifaces.close();
-
-    // this is not usable on systems that don't have eth0
-    // interfaces. Nevertheless, this fake interface should
-    // be on list, but if_nametoindex() will fail.
-
-    NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
-
-    ASSERT_TRUE(ifacemgr->getIface("eth0") != NULL);
-
-    IfaceMgr::Iface* eth0 = ifacemgr->getIface("eth0");
-
-    // there should be one address
-    IfaceMgr::AddressCollection addrs = eth0->getAddresses();
-    ASSERT_EQ(1, addrs.size());
-
-    IOAddress addr = *addrs.begin();
-
-    EXPECT_STREQ("fe80::1234", addr.toText().c_str());
-
-    delete ifacemgr;
-}
-#endif
 
 TEST_F(IfaceMgrTest, sockets6) {
     // testing socket operation in a portable way is tricky
     // without interface detection implemented
-
-    createLoInterfacesTxt();
 
     NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
 
@@ -320,7 +275,6 @@ TEST_F(IfaceMgrTest, sendReceive6) {
 
     // testing socket operation in a portable way is tricky
     // without interface detection implemented
-    createLoInterfacesTxt();
 
     NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
 
@@ -378,7 +332,6 @@ TEST_F(IfaceMgrTest, sendReceive4) {
 
     // testing socket operation in a portable way is tricky
     // without interface detection implemented
-    createLoInterfacesTxt();
 
     NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
 
@@ -469,7 +422,6 @@ TEST_F(IfaceMgrTest, sendReceive4) {
 
 TEST_F(IfaceMgrTest, socket4) {
 
-    createLoInterfacesTxt();
     NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
 
     // Let's assume that every supported OS have lo interface.
@@ -585,7 +537,6 @@ TEST_F(IfaceMgrTest, socketInfo) {
     EXPECT_EQ(DHCP4_SERVER_PORT + 9, sock2.port_);
 
     // now let's test if IfaceMgr handles socket info properly
-    createLoInterfacesTxt();
     NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
     IfaceMgr::Iface* loopback = ifacemgr->getIface(LOOPBACK);
     ASSERT_TRUE(loopback);
