@@ -1,3 +1,14 @@
+443.    [func]*		muks
+	The logger now uses a lockfile named `logger_lockfile' that is
+	created in the local state directory to mutually separate
+	individual logging operations from various processes. This is
+	done so that log messages from different processes don't mix
+	together in the middle of lines. The `logger_lockfile` is created
+	with file permission mode 0660. BIND 10's local state directory
+	should be writable and perhaps have g+s mode bit so that the
+	`logger_lockfile` can be opened by a group of processes.
+	(Trac #1704, git ad8d445dd0ba208107eb239405166c5c2070bd8b)
+
 442.	[func]		tomek
 	b10-dhcp4, b10-dhcp6: Both DHCP servers now accept -p parameter
 	that can be used to specify listening port number. This capability
