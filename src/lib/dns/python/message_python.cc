@@ -209,11 +209,21 @@ Message_getHeaderFlag(s_Message* self, PyObject* args) {
         return (NULL);
     }
 
-    if (self->cppobj->getHeaderFlag(
+    try {
+        if (self->cppobj->getHeaderFlag(
             static_cast<Message::HeaderFlag>(messageflag))) {
-        Py_RETURN_TRUE;
-    } else {
-        Py_RETURN_FALSE;
+            Py_RETURN_TRUE;
+        } else {
+            Py_RETURN_FALSE;
+        }
+    } catch (const isc::InvalidParameter& ip) {
+        PyErr_Clear();
+        PyErr_SetString(po_InvalidParameter, ip.what());
+        return (NULL);
+    } catch (...) {
+        PyErr_SetString(po_IscException,
+                        "Unexpected exception in getHeaderFlag");
+        return (NULL);
     }
 }
 
@@ -245,6 +255,10 @@ Message_setHeaderFlag(s_Message* self, PyObject* args) {
         PyErr_Clear();
         PyErr_SetString(po_InvalidParameter, ip.what());
         return (NULL);
+    } catch (...) {
+        PyErr_SetString(po_IscException,
+                        "Unexpected exception in setHeaderFlag");
+        return (NULL);
     }
 }
 
@@ -274,6 +288,10 @@ Message_setQid(s_Message* self, PyObject* args) {
     } catch (const InvalidMessageOperation& imo) {
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
         return (NULL);
+    } catch (...) {
+        PyErr_SetString(po_IscException,
+                        "Unexpected exception in setQid");
+        return (NULL);
     }
 }
 
@@ -301,6 +319,10 @@ Message_setRcode(s_Message* self, PyObject* args) {
         Py_RETURN_NONE;
     } catch (const InvalidMessageOperation& imo) {
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
+        return (NULL);
+    } catch (...) {
+        PyErr_SetString(po_IscException,
+                        "Unexpected exception in setRcode");
         return (NULL);
     }
 }
@@ -336,6 +358,10 @@ Message_setOpcode(s_Message* self, PyObject* args) {
     } catch (const InvalidMessageOperation& imo) {
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
         return (NULL);
+    } catch (...) {
+        PyErr_SetString(po_IscException,
+                        "Unexpected exception in setOpcode");
+        return (NULL);
     }
 }
 
@@ -369,6 +395,10 @@ Message_setEDNS(s_Message* self, PyObject* args) {
         Py_RETURN_NONE;
     } catch (const InvalidMessageOperation& imo) {
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
+        return (NULL);
+    } catch (...) {
+        PyErr_SetString(po_IscException,
+                        "Unexpected exception in setEDNS");
         return (NULL);
     }
 }
@@ -411,6 +441,10 @@ Message_getRRCount(s_Message* self, PyObject* args) {
                                   static_cast<Message::Section>(section))));
     } catch (const isc::OutOfRange& ex) {
         PyErr_SetString(PyExc_OverflowError, ex.what());
+        return (NULL);
+    } catch (...) {
+        PyErr_SetString(po_IscException,
+                        "Unexpected exception in getRRCount");
         return (NULL);
     }
 }
@@ -513,9 +547,18 @@ Message_addQuestion(s_Message* self, PyObject* args) {
         return (NULL);
     }
 
-    self->cppobj->addQuestion(PyQuestion_ToQuestion(question));
-
-    Py_RETURN_NONE;
+    try {
+        self->cppobj->addQuestion(PyQuestion_ToQuestion(question));
+        Py_RETURN_NONE;
+    } catch (const InvalidMessageOperation& imo) {
+        PyErr_Clear();
+        PyErr_SetString(po_InvalidMessageOperation, imo.what());
+        return (NULL);
+    } catch (...) {
+        PyErr_SetString(po_IscException,
+                        "Unexpected exception in addQuestion");
+        return (NULL);
+    }
 }
 
 PyObject*
@@ -548,22 +591,27 @@ Message_addRRset(s_Message* self, PyObject* args) {
 PyObject*
 Message_clear(s_Message* self, PyObject* args) {
     int i;
-    if (PyArg_ParseTuple(args, "i", &i)) {
-        PyErr_Clear();
-        if (i == Message::PARSE) {
-            self->cppobj->clear(Message::PARSE);
-            Py_RETURN_NONE;
-        } else if (i == Message::RENDER) {
-            self->cppobj->clear(Message::RENDER);
-            Py_RETURN_NONE;
-        } else {
-            PyErr_SetString(PyExc_TypeError,
-                            "Message mode must be Message.PARSE or Message.RENDER");
-            return (NULL);
+
+    try {
+        if (PyArg_ParseTuple(args, "i", &i)) {
+            PyErr_Clear();
+            if (i == Message::PARSE) {
+                self->cppobj->clear(Message::PARSE);
+                Py_RETURN_NONE;
+            } else if (i == Message::RENDER) {
+                self->cppobj->clear(Message::RENDER);
+                Py_RETURN_NONE;
+            } else {
+                PyErr_SetString(PyExc_TypeError,
+                                "Message mode must be Message.PARSE or Message.RENDER");
+                return (NULL);
+            }
         }
-    } else {
-        return (NULL);
+    } catch (...) {
+        PyErr_SetString(po_IscException,
+                        "Unexpected exception when clearing message");
     }
+    return (NULL);
 }
 
 PyObject*
@@ -585,15 +633,24 @@ Message_clearSection(PyObject* pyself, PyObject* args) {
         return (NULL);
     } catch (...) {
         PyErr_SetString(po_IscException,
-                        "Unexpected exception in adding RRset");
+                        "Unexpected exception in clearSection");
         return (NULL);
     }
 }
 
 PyObject*
 Message_makeResponse(s_Message* self) {
-    self->cppobj->makeResponse();
-    Py_RETURN_NONE;
+    try {
+        self->cppobj->makeResponse();
+        Py_RETURN_NONE;
+    } catch (const InvalidMessageOperation& imo) {
+        PyErr_Clear();
+        PyErr_SetString(po_InvalidMessageOperation, imo.what());
+        return (NULL);
+    } catch (...) {
+        PyErr_SetString(po_IscException, "Unexpected exception in Message.makeResponse");
+        return (NULL);
+    }
 }
 
 PyObject*
