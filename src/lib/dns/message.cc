@@ -130,6 +130,11 @@ public:
                const RRClass& rrclass, const RRType& rrtype,
                const RRTTL& ttl, ConstRdataPtr rdata,
                Message::ParseOptions options);
+    // There are also times where an RR needs to be added that
+    // represents an empty RRset. There is no Rdata in that case
+    void addRR(Message::Section section, const Name& name,
+               const RRClass& rrclass, const RRType& rrtype,
+               const RRTTL& ttl, Message::ParseOptions options);
     void addEDNS(Message::Section section, const Name& name,
                  const RRClass& rrclass, const RRType& rrtype,
                  const RRTTL& ttl, const Rdata& rdata);
@@ -561,6 +566,10 @@ Message::removeRRset(const Section section, RRsetIterator& iterator) {
 
 void
 Message::clearSection(const Section section) {
+    if (impl_->mode_ != Message::RENDER) {
+        isc_throw(InvalidMessageOperation,
+                  "clearSection performed in non-render mode");
+    }
     if (section >= MessageImpl::NUM_SECTIONS) {
         isc_throw(OutOfRange, "Invalid message section: " << section);
     }
@@ -736,6 +745,17 @@ MessageImpl::parseSection(const Message::Section section,
         const RRClass rrclass(buffer.readUint16());
         const RRTTL ttl(buffer.readUint32());
         const size_t rdlen = buffer.readUint16();
+
+        // If class is ANY or NONE, rdlength may be zero, to signal
+        // an empty RRset.
+        // (the class check must be done to differentiate from RRTypes
+        // that can have zero length rdata
+        if ((rrclass == RRClass::ANY() || rrclass == RRClass::NONE()) &&
+            rdlen == 0) {
+            addRR(section, name, rrclass, rrtype, ttl, options);
+            ++added;
+            continue;
+        }
         ConstRdataPtr rdata = createRdata(rrtype, rrclass, buffer, rdlen);
 
         if (rrtype == RRType::OPT()) {
@@ -770,6 +790,24 @@ MessageImpl::addRR(Message::Section section, const Name& name,
     }
     RRsetPtr rrset(new RRset(name, rrclass, rrtype, ttl));
     rrset->addRdata(rdata);
+    rrsets_[section].push_back(rrset);
+}
+
+void
+MessageImpl::addRR(Message::Section section, const Name& name,
+                   const RRClass& rrclass, const RRType& rrtype,
+                   const RRTTL& ttl, Message::ParseOptions options)
+{
+    if ((options & Message::PRESERVE_ORDER) == 0) {
+        vector<RRsetPtr>::iterator it =
+            find_if(rrsets_[section].begin(), rrsets_[section].end(),
+                    MatchRR(name, rrtype, rrclass));
+        if (it != rrsets_[section].end()) {
+            (*it)->setTTL(min((*it)->getTTL(), ttl));
+            return;
+        }
+    }
+    RRsetPtr rrset(new RRset(name, rrclass, rrtype, ttl));
     rrsets_[section].push_back(rrset);
 }
 

@@ -167,7 +167,7 @@ class ConfigManagerData:
                 i += 1
             new_file_name = new_file_name + "." + str(i)
         if os.path.exists(old_file_name):
-            logger.info(CFGMGR_RENAMED_CONFIG_FILE, old_file_name, new_file_name)
+            logger.info(CFGMGR_BACKED_UP_CONFIG_FILE, old_file_name, new_file_name)
             os.rename(old_file_name, new_file_name)
 
     def __eq__(self, other):

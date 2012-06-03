@@ -54,9 +54,7 @@ nodist_run_unittests_SOURCES = ../auth_messages.h ../auth_messages.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
-run_unittests_LDADD = $(GTEST_LDADD)
-run_unittests_LDADD += $(SQLITE_LIBS)
-run_unittests_LDADD += $(top_builddir)/src/lib/testutils/libtestutils.la
+run_unittests_LDADD = $(top_builddir)/src/lib/testutils/libtestutils.la
 run_unittests_LDADD +=  $(top_builddir)/src/lib/datasrc/libdatasrc.la
 run_unittests_LDADD +=  $(top_builddir)/src/lib/dns/libdns++.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/libutil.la
@@ -71,6 +69,8 @@ run_unittests_LDADD += $(top_builddir)/src/lib/server_common/libserver_common.la
 run_unittests_LDADD += $(top_builddir)/src/lib/nsas/libnsas.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 run_unittests_LDADD += $(top_builddir)/src/lib/statistics/libstatistics.la
+run_unittests_LDADD += $(GTEST_LDADD)
+run_unittests_LDADD += $(SQLITE_LIBS)
 
 check-local:
 	B10_FROM_BUILD=${abs_top_builddir} ./run_unittests

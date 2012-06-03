@@ -839,8 +839,6 @@ DatabaseClient::Finder::findOnNameResult(const Name& name,
                                    flags));
     } else if (wti != found.second.end()) {
         bool any(type == RRType::ANY());
-        isc::log::MessageID lid(wild ? DATASRC_DATABASE_WILDCARD_MATCH :
-                                DATASRC_DATABASE_FOUND_RRSET);
         if (any) {
             // An ANY query, copy everything to the target instead of returning
             // directly.
@@ -851,15 +849,32 @@ DatabaseClient::Finder::findOnNameResult(const Name& name,
                     target->push_back(it->second);
                 }
             }
-            lid = wild ? DATASRC_DATABASE_WILDCARD_ANY :
-                DATASRC_DATABASE_FOUND_ANY;
+            if (wild) {
+                LOG_DEBUG(logger, DBG_TRACE_DETAILED,
+                          DATASRC_DATABASE_WILDCARD_ANY).
+                    arg(accessor_->getDBName()).arg(name);
+            } else {
+                LOG_DEBUG(logger, DBG_TRACE_DETAILED,
+                          DATASRC_DATABASE_FOUND_ANY).
+                    arg(accessor_->getDBName()).arg(name);
+            }
+        } else {
+            if (wild) {
+                LOG_DEBUG(logger, DBG_TRACE_DETAILED,
+                          DATASRC_DATABASE_WILDCARD_MATCH).
+                    arg(accessor_->getDBName()).arg(*wildname).
+                    arg(wti->second);
+            } else {
+                LOG_DEBUG(logger, DBG_TRACE_DETAILED,
+                          DATASRC_DATABASE_FOUND_RRSET).
+                    arg(accessor_->getDBName()).arg(wti->second);
+            }
         }
         // Found an RR matching the query, so return it.  (Note that this
         // includes the case where we were explicitly querying for a CNAME and
         // found it.  It also includes the case where we were querying for an
         // NS RRset and found it at the apex of the zone.)
-        return (logAndCreateResult(name, wildname, type, SUCCESS,
-                                   wti->second, lid, flags));
+        return (ResultContext(SUCCESS, wti->second, flags));
     }
 
     // If we get here, we have found something at the requested name but not

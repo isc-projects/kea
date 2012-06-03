@@ -30,6 +30,7 @@ class TestModuleSpec(unittest.TestCase):
         self.test_nsname = Name("ns.example.com")
         self.rrset_a = RRset(self.test_name, RRClass("IN"), RRType("A"), RRTTL(3600))
         self.rrset_a_empty = RRset(self.test_name, RRClass("IN"), RRType("A"), RRTTL(3600))
+        self.rrset_any_a_empty = RRset(self.test_name, RRClass("ANY"), RRType("A"), RRTTL(3600))
         self.rrset_ns = RRset(self.test_domain, RRClass("IN"), RRType("NS"), RRTTL(86400))
         self.rrset_ch_txt = RRset(self.test_domain, RRClass("CH"), RRType("TXT"), RRTTL(0))
         self.MAX_RDATA_COUNT = 100
@@ -90,6 +91,9 @@ class TestModuleSpec(unittest.TestCase):
 
         self.assertRaises(EmptyRRset, self.rrset_a_empty.to_text)
 
+        self.assertEqual("test.example.com. 3600 ANY A\n",
+                         self.rrset_any_a_empty.to_text())
+
     def test_to_wire_buffer(self):
         exp_buffer = bytearray(b'\x04test\x07example\x03com\x00\x00\x01\x00\x01\x00\x00\x0e\x10\x00\x04\xc0\x00\x02\x01\x04test\x07example\x03com\x00\x00\x01\x00\x01\x00\x00\x0e\x10\x00\x04\xc0\x00\x02\x02')
         buffer = bytearray()
@@ -98,6 +102,11 @@ class TestModuleSpec(unittest.TestCase):
 
         self.assertRaises(EmptyRRset, self.rrset_a_empty.to_wire, buffer);
         self.assertRaises(TypeError, self.rrset_a.to_wire, 1)
+
+        exp_buffer = bytearray(b'\x04test\x07example\x03com\x00\x00\x01\x00\xff\x00\x00\x0e\x10\x00\x00')
+        buffer = bytearray()
+        self.rrset_any_a_empty.to_wire(buffer)
+        self.assertEqual(exp_buffer, buffer)
 
     def test_to_wire_renderer(self):
         exp_buffer = bytearray(b'\x04test\x07example\x03com\x00\x00\x01\x00\x01\x00\x00\x0e\x10\x00\x04\xc0\x00\x02\x01\xc0\x00\x00\x01\x00\x01\x00\x00\x0e\x10\x00\x04\xc0\x00\x02\x02')
