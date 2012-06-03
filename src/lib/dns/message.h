@@ -513,6 +513,12 @@ public:
 
     /// \brief Remove all RRSets from the given Section
     ///
+    /// This method is only allowed in the \c RENDER mode, and the given
+    /// section must be valid.
+    ///
+    /// \throw InvalidMessageOperation Message is not in the \c RENDER mode
+    /// \throw OutOfRange The specified section is not valid
+    ///
     /// \param section Section to remove all rrsets from
     void clearSection(const Section section);
 

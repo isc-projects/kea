@@ -107,7 +107,7 @@
             <refentrytitle>b10-cfgmgr</refentrytitle><manvolnum>8</manvolnum>
             will use the default configurations.
             The name of the backup file can be found in the logs
-            (<varname>CFGMGR_RENAMED_CONFIG_FILE</varname>).
+            (<varname>CFGMGR_BACKED_UP_CONFIG_FILE</varname>).
             (It will append a number to the backup filename if a
             previous backup file exists.)
           </para>
