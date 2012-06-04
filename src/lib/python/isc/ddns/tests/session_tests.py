@@ -114,6 +114,12 @@ class SessionTestBase(unittest.TestCase):
                                                  self._acl_map))
         self._session._UpdateSession__get_update_zone()
 
+    def tearDown(self):
+        # With the Updater created in __get_update_zone, and tests
+        # doing all kinds of crazy stuff, one might get database locked
+        # errors if it doesn't clean up explicitely after each test
+        self._session = None
+
     def check_response(self, msg, expected_rcode):
         '''Perform common checks on update resposne message.'''
         self.assertTrue(msg.get_header_flag(Message.HEADERFLAG_QR))
@@ -281,12 +287,6 @@ class SessionTest(SessionTestBase):
                     'a.example.org. 0 CH TXT "two"\n']
 
         self.assertEqual(expected, strings)
-
-    def __prereq_helper(self, method, expected, rrset):
-        '''Calls the given method with self._datasrc_client
-           and the given rrset, and compares the return value.
-           Function does not do much but makes the code look nicer'''
-        self.assertEqual(expected, method(rrset))
 
     def __check_prerequisite_exists_combined(self, method, rrclass, expected):
         '''shared code for the checks for the very similar (but reversed
