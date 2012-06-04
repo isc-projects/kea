@@ -15,6 +15,17 @@
 # No namespace declaration - these constants go in the global namespace
 # of the libddns_messages python module.
 
+% LIBDDNS_DATASRC_ERROR update client %1 failed due to data source error: %2
+An update attempt failed due to some error in the corresponding data
+source.  This is generally an unexpected event, but can still happen
+for various reasons such as DB lock contention or a failure of the
+backend DB server.  The cause of the error is also logged.  It's
+advisable to check the message, and, if necessary, take an appropriate
+action (e.g., restarting the DB server if it dies).  If this message
+is logged the data source isn't modified due to the
+corresponding update request.  When used by the b10-ddns, the server
+will return a response with an RCODE of SERVFAIL.
+
 % LIBDDNS_PREREQ_FORMERR update client %1 for zone %2: Format error in prerequisite (%3). Non-zero TTL.
 The prerequisite with the given name, class and type is not well-formed.
 The specific prerequisite is shown. In this case, it has a non-zero TTL value.
