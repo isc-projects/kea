@@ -17,6 +17,8 @@ BUILT_SOURCES = log_test_messages.h log_test_messages.cc
 log_test_messages.h log_test_messages.cc: log_test_messages.mes
 	$(AM_V_GEN) $(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/log/tests/log_test_messages.mes
 
+CLEANFILES += log_test_messages.h log_test_messages.cc
+
 noinst_PROGRAMS = logger_example
 logger_example_SOURCES = logger_example.cc
 logger_example_CPPFLAGS = $(AM_CPPFLAGS)
@@ -37,7 +39,7 @@ init_logger_test_LDADD += $(AM_LDADD) $(LOG4CPLUS_LIBS)
 
 noinst_PROGRAMS += logger_lock_test
 logger_lock_test_SOURCES = logger_lock_test.cc
-logger_lock_test_SOURCES += log_test_messages.cc log_test_messages.h
+nodist_logger_lock_test_SOURCES = log_test_messages.cc log_test_messages.h
 logger_lock_test_CPPFLAGS = $(AM_CPPFLAGS)
 logger_lock_test_LDFLAGS = $(AM_LDFLAGS)
 logger_lock_test_LDADD  = $(top_builddir)/src/lib/log/liblog.la
@@ -73,11 +75,11 @@ run_unittests_SOURCES += logger_manager_unittest.cc
 run_unittests_SOURCES += logger_name_unittest.cc
 run_unittests_SOURCES += logger_support_unittest.cc
 run_unittests_SOURCES += logger_unittest.cc
-run_unittests_SOURCES += log_test_messages.cc log_test_messages.h
 run_unittests_SOURCES += logger_specification_unittest.cc
 run_unittests_SOURCES += message_dictionary_unittest.cc
 run_unittests_SOURCES += message_reader_unittest.cc
 run_unittests_SOURCES += output_option_unittest.cc
+nodist_run_unittests_SOURCES = log_test_messages.cc log_test_messages.h
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS)
 run_unittests_CXXFLAGS = $(AM_CXXFLAGS)
