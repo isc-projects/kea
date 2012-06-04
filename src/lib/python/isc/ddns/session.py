@@ -190,7 +190,6 @@ class UpdateSession:
         '''
         try:
             self.__get_update_zone()
-            # conceptual code that would follow
             prereq_result = self.__check_prerequisites()
             if prereq_result != Rcode.NOERROR():
                 self.__make_response(prereq_result)
