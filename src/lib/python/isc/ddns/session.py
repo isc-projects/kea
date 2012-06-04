@@ -247,7 +247,12 @@ class UpdateSession:
             self.__diff = isc.xfrin.diff.Diff(datasrc_client, zname,
                                               journaling=True,
                                               single_update_mode=True)
-            _, self.__finder = datasrc_client.find_zone(zname)
+            # Note that while it is really the ZoneUpdater that is set
+            # here, it is still called finder, as the only methods that
+            # are and should be used on this object are find() and find_all()
+            # (ZoneUpdater provides the ZoneFinder interface itself, no
+            # separate get_zone_finder())
+            self.__finder = self.__diff.get_updater()
             self.__zname = zname
             self.__zclass = zclass
             self.__datasrc_client = datasrc_client
@@ -591,7 +596,7 @@ class UpdateSession:
                                                    rrset.get_type(),
                                                    ZoneFinder.NO_WILDCARD |
                                                    ZoneFinder.FIND_GLUE_OK)
-        if result == self.__finder.CNAME:
+        if result == ZoneFinder.CNAME:
             # Ignore non-cname rrs that try to update CNAME records
             # (if rrset itself is a CNAME, the finder result would be
             # SUCCESS, see next case)
