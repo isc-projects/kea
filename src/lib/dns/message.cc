@@ -573,7 +573,11 @@ Message::clearSection(const Section section) {
     if (section >= MessageImpl::NUM_SECTIONS) {
         isc_throw(OutOfRange, "Invalid message section: " << section);
     }
-    impl_->rrsets_[section].clear();
+    if (section == Message::SECTION_QUESTION) {
+        impl_->questions_.clear();
+    } else {
+        impl_->rrsets_[section].clear();
+    }
     impl_->counts_[section] = 0;
 }
 

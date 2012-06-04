@@ -406,6 +406,8 @@ TEST_F(MessageTest, clearQuestionSection) {
 
     message_render.clearSection(Message::SECTION_QUESTION);
     EXPECT_EQ(0, message_render.getRRCount(Message::SECTION_QUESTION));
+    EXPECT_TRUE(message_render.beginQuestion() ==
+                message_render.endQuestion());
 }
 
 
