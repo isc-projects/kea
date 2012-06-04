@@ -28,6 +28,8 @@ perfdhcp_SOURCES  = perfdhcp.cc
 perfdhcp_SOURCES += localized_option.h
 perfdhcp_SOURCES += command_options.cc command_options.h
 perfdhcp_SOURCES += perf_pkt6.cc perf_pkt6.h
+perfdhcp_SOURCES += perf_pkt4.cc perf_pkt4.h
+perfdhcp_SOURCES += pkt_transform.cc pkt_transform.h
 
 perfdhcp_LDADD = $(top_builddir)/src/lib/exceptions/libexceptions.la
 perfdhcp_LDADD += $(top_builddir)/src/lib/dhcp/libdhcp++.la
