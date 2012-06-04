@@ -118,6 +118,11 @@ class MessageTest(unittest.TestCase):
         self.assertFalse(self.r.get_header_flag(Message.HEADERFLAG_AD))
         self.assertFalse(self.r.get_header_flag(Message.HEADERFLAG_CD))
 
+        # 0 passed as flag should raise
+        self.assertRaises(InvalidParameter, self.r.get_header_flag, 0)
+        # unused bit
+        self.assertRaises(InvalidParameter, self.r.get_header_flag, 0x80000000)
+
         self.r.set_header_flag(Message.HEADERFLAG_QR)
         self.assertTrue(self.r.get_header_flag(Message.HEADERFLAG_QR))
 
@@ -266,6 +271,15 @@ class MessageTest(unittest.TestCase):
         # they would leak.
         self.assertEqual(1, sys.getrefcount(self.r.get_question()))
         self.assertEqual(1, sys.getrefcount(self.r.get_question()[0]))
+
+        # Message.add_question() called in non-RENDER mode should assert
+        self.r.clear(Message.PARSE)
+        self.assertRaises(InvalidMessageOperation, self.r.add_question, q)
+
+    def test_make_response(self):
+        # Message.make_response() called in non-PARSE mode should assert
+        self.r.clear(Message.RENDER)
+        self.assertRaises(InvalidMessageOperation, self.r.make_response)
 
     def test_add_rrset(self):
         self.assertRaises(TypeError, self.r.add_rrset, "wrong")
