@@ -13,13 +13,17 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <datasrc/container.h>
+#include <datasrc/client.h>
 
 #include <gtest/gtest.h>
+
+#include <set>
 
 using namespace isc::datasrc;
 using namespace isc::data;
 using namespace isc::dns;
 using namespace boost;
+using namespace std;
 
 namespace {
 
@@ -31,6 +35,37 @@ public:
                     bool allow_cache) :
         ConfigurableContainer(configuration, allow_cache)
     { }
+    DataSources& dataSources() { return (data_sources_); }
+};
+
+// A test data source. It pretends it has some zones.
+class TestDS : public DataSourceClient {
+public:
+    TestDS(const char* zone_names[]) {
+        for (const char** zone(zone_names); *zone; ++ zone) {
+            zones.insert(Name(*zone));
+        }
+    }
+    virtual FindResult findZone(const Name& ) const {
+        isc_throw(isc::NotImplemented, "Not implemented");
+    }
+    // These methods are not used. They just need to be there to have
+    // complete vtable.
+    virtual ZoneUpdaterPtr getUpdater(const Name&, bool, bool) const {
+        isc_throw(isc::NotImplemented, "Not implemented");
+    }
+    virtual pair<ZoneJournalReader::Result, ZoneJournalReaderPtr>
+        getJournalReader(const Name&, uint32_t, uint32_t) const
+    {
+        isc_throw(isc::NotImplemented, "Not implemented");
+    }
+private:
+    set<Name> zones;
+};
+
+const char* ds1_zones[] = {
+    "example.org.",
+    "example.com."
 };
 
 class ContainerTest : public ::testing::Test {
@@ -38,9 +73,15 @@ public:
     ContainerTest() :
         // The empty list corresponds to a container with no elements inside
         container_(new TestedContainer(ConstElementPtr(new ListElement()),
-                                       true))
-    { }
+                                       true)),
+        ds1_(new TestDS(ds1_zones))
+    {
+        ds1_info_.data_src_ = ds1_;
+    }
     shared_ptr<TestedContainer> container_;
+    const Container::SearchResult negativeResult_;
+    shared_ptr<TestDS> ds1_;
+    ConfigurableContainer::DataSourceInfo ds1_info_;
 };
 
 // Test the container we create with empty configuration is, in fact, empty
@@ -52,16 +93,59 @@ TEST_F(ContainerTest, emptyContainer) {
 // a negative answer (nothing found) no matter if we want an exact or inexact
 // match.
 TEST_F(ContainerTest, emptySearch) {
-    Container::SearchResult negativeResult;
     // No matter what we try, we don't get an answer.
-    EXPECT_EQ(negativeResult, container_->search(Name("example.org"), false,
+    EXPECT_EQ(negativeResult_, container_->search(Name("example.org"), false,
                                                  false));
-    EXPECT_EQ(negativeResult, container_->search(Name("example.org"), false,
+    EXPECT_EQ(negativeResult_, container_->search(Name("example.org"), false,
                                                  true));
-    EXPECT_EQ(negativeResult, container_->search(Name("example.org"), true,
+    EXPECT_EQ(negativeResult_, container_->search(Name("example.org"), true,
                                                  false));
-    EXPECT_EQ(negativeResult, container_->search(Name("example.org"), true,
+    EXPECT_EQ(negativeResult_, container_->search(Name("example.org"), true,
                                                  true));
+}
+
+// Put a single data source inside the container and check it can find an
+// exact match if there's one.
+TEST_F(ContainerTest, singleDSExactMatch) {
+    container_->dataSources().push_back(ds1_info_);
+    // This zone is not there
+    EXPECT_EQ(negativeResult_, container_->search(Name("org."), true));
+    // But this one is, so check it.
+    const Container::SearchResult
+        result(container_->search(Name("example.org"), true));
+    EXPECT_EQ(ds1_, result.datasrc_);
+    ASSERT_NE(ZoneFinderPtr(), result.finder_);
+    EXPECT_EQ(Name("example.org"), result.finder_->getOrigin());
+    EXPECT_EQ(2, result.matched_labels_);
+    EXPECT_TRUE(result.exact_match_);
+    // When asking for a sub zone of a zone there, we get nothing
+    // (we want exact match, this would be partial one)
+    EXPECT_EQ(negativeResult_, container_->search(Name("sub.example.org."),
+                                                  true));
+}
+
+// When asking for a partial match, we get all that the exact one, but more.
+TEST_F(ContainerTest, singleDSBestMatch) {
+    container_->dataSources().push_back(ds1_info_);
+    // This zone is not there
+    EXPECT_EQ(negativeResult_, container_->search(Name("org.")));
+    // But this one is, so check it.
+    const Container::SearchResult
+        result(container_->search(Name("example.org")));
+    EXPECT_EQ(ds1_, result.datasrc_);
+    ASSERT_NE(ZoneFinderPtr(), result.finder_);
+    EXPECT_EQ(Name("example.org"), result.finder_->getOrigin());
+    EXPECT_EQ(2, result.matched_labels_);
+    EXPECT_TRUE(result.exact_match_);
+    // When asking for a sub zone of a zone there, we get nothing
+    // (we want exact match, this would be partial one)
+    const Container::SearchResult
+        partialResult(container_->search(Name("sub.example.org.")));
+    EXPECT_EQ(ds1_, partialResult.datasrc_);
+    ASSERT_NE(ZoneFinderPtr(), partialResult.finder_);
+    EXPECT_EQ(Name("example.org"), partialResult.finder_->getOrigin());
+    EXPECT_EQ(2, partialResult.matched_labels_);
+    EXPECT_FALSE(partialResult.exact_match_);
 }
 
 }
