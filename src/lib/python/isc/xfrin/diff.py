@@ -376,3 +376,13 @@ class Diff:
             raise ValueError("Separate buffers requested in single-update mode")
         else:
             return (self.__deletions, self.__additions)
+
+    def get_updater(self):
+        """
+        Returns the ZoneUpdater associated with this Diff instance.
+        While update statements can be used on this updater, its main
+        goal is to provide the ZoneFinder interface for searching through
+        the zone as it was on the moment the updater was created.
+        If the Diff has been committed, this will return None.
+        """
+        return self.__updater
