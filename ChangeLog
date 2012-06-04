@@ -1,3 +1,9 @@
+444.	[bug]		jinmei
+	libdatasrc: fixed ZoneFinder for database-based data sources so
+	that it handles type DS query correctly, i.e., treating it as
+	authoritative data even on a delegation point.
+	(Trac #1912, git 7130da883f823ce837c10cbf6e216a15e1996e5d)
+
 443.    [func]*		muks
 	The logger now uses a lockfile named `logger_lockfile' that is
 	created in the local state directory to mutually separate
