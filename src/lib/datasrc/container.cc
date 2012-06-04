@@ -13,3 +13,23 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include "container.h"
+
+using namespace isc::data;
+
+namespace isc {
+namespace datasrc {
+
+ConfigurableContainer::ConfigurableContainer(const ConstElementPtr&, bool,
+                                             const ConstContainerPtr&)
+{
+    // TODO: Implement
+}
+
+Container::SearchResult
+ConfigurableContainer::search(const dns::Name& , bool , bool ) const {
+    // TODO: Implement
+    isc_throw(NotImplemented, "A virtual unimplemented method, just to make it compile for now");
+}
+
+}
+}

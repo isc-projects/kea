@@ -19,6 +19,7 @@
 #include <cc/data.h>
 #include <exceptions/exceptions.h>
 
+#include <vector>
 #include <boost/shared_ptr.hpp>
 #include <boost/noncopyable.hpp>
 
@@ -74,6 +75,16 @@ public:
             matched_labels_(0),
             exact_match_(false)
         { }
+        /// \brief Comparison operator.
+        ///
+        /// It is needed for tests and it might be of some use elsewhere
+        /// too.
+        bool operator ==(const SearchResult& other) const {
+            return (datasrc_ == other.datasrc_ &&
+                    finder_ == other.finder_ &&
+                    matched_labels_ == other.matched_labels_ &&
+                    exact_match_ == other.exact_match_);
+        }
         /// \brief The found data source.
         ///
         /// The data source containing the best matching zone. If no such
@@ -193,6 +204,26 @@ public:
     virtual SearchResult search(const dns::Name& zone,
                                 bool want_exact_match = false,
                                 bool want_finder = true) const;
+
+    /// \brief This holds one data source and corresponding information.
+    ///
+    /// \todo The content yet to be defined.
+    struct DataSourceInfo {};
+    /// \brief The collection of data sources.
+    typedef std::vector<DataSourceInfo> DataSources;
+protected:
+    /// \brief The data sources held here.
+    ///
+    /// All our data sources are stored here. It is protected to let the
+    /// tests in.
+    DataSources data_sources_;
+public:
+    /// \brief Access to the data sources.
+    ///
+    /// It can be used to examine the loaded list of data sources directly.
+    /// It is not known if it is of any use other than testing, but it might
+    /// be, so it is just made public.
+    const DataSources& dataSources() const { return (data_sources_); }
 };
 
 } // namespace datasrc
