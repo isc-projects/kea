@@ -15,6 +15,8 @@
 #include <datasrc/container.h>
 #include <datasrc/client.h>
 
+#include <dns/rrclass.h>
+
 #include <gtest/gtest.h>
 
 #include <set>
@@ -41,13 +43,57 @@ public:
 // A test data source. It pretends it has some zones.
 class TestDS : public DataSourceClient {
 public:
+    class Finder : public ZoneFinder {
+    public:
+        Finder(const Name& origin) :
+            origin_(origin)
+        { }
+        Name getOrigin() const { return (origin_); }
+        // The rest is not to be called, so just have them
+        RRClass getClass() const {
+            isc_throw(isc::NotImplemented, "Not implemented");
+        }
+        shared_ptr<Context> find(const Name&, const RRType&,
+                                 const FindOptions)
+        {
+            isc_throw(isc::NotImplemented, "Not implemented");
+        }
+        shared_ptr<Context> findAll(const Name&,
+                                    vector<ConstRRsetPtr>&,
+                                    const FindOptions)
+        {
+            isc_throw(isc::NotImplemented, "Not implemented");
+        }
+        FindNSEC3Result findNSEC3(const Name&, bool) {
+            isc_throw(isc::NotImplemented, "Not implemented");
+        }
+        Name findPreviousName(const Name&) const {
+            isc_throw(isc::NotImplemented, "Not implemented");
+        }
+    private:
+        Name origin_;
+    };
     TestDS(const char* zone_names[]) {
         for (const char** zone(zone_names); *zone; ++ zone) {
             zones.insert(Name(*zone));
         }
     }
-    virtual FindResult findZone(const Name& ) const {
-        isc_throw(isc::NotImplemented, "Not implemented");
+    virtual FindResult findZone(const Name& name) const {
+        set<Name>::const_iterator it(zones.lower_bound(name));
+        if (it == zones.end()) {
+            return (FindResult(result::NOTFOUND, ZoneFinderPtr()));
+        } else {
+            NameComparisonResult compar(it->compare(name));
+            const ZoneFinderPtr finder(new Finder(*it));
+            switch (compar.getRelation()) {
+                case NameComparisonResult::EQUAL:
+                    return (FindResult(result::SUCCESS, finder));
+                case NameComparisonResult::SUPERDOMAIN:
+                    return (FindResult(result::PARTIALMATCH, finder));
+                default:
+                    return (FindResult(result::NOTFOUND, ZoneFinderPtr()));
+            }
+        }
     }
     // These methods are not used. They just need to be there to have
     // complete vtable.
