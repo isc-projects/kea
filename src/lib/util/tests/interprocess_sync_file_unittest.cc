@@ -45,7 +45,8 @@ parentReadLockedState (int fd) {
 
   if (nfds == 1) {
       // Read status
-      read(fd, &locked, sizeof(locked));
+      ssize_t bytes_read = read(fd, &locked, sizeof(locked));
+      EXPECT_EQ(sizeof(locked), bytes_read);
   }
 
   return (locked);
@@ -68,7 +69,7 @@ TEST(InterprocessSyncFileTest, TestLock) {
   // done from the same process for the granted range. The lock
   // attempt must fail to pass our check.
 
-  pipe(fds);
+  EXPECT_EQ(0, pipe(fds));
 
   if (fork() == 0) {
       unsigned char locked = 0;
@@ -85,7 +86,9 @@ TEST(InterprocessSyncFileTest, TestLock) {
           EXPECT_TRUE(locker2.isLocked());
       }
 
-      write(fds[1], &locked, sizeof(locked));
+      ssize_t bytes_written = write(fds[1], &locked, sizeof(locked));
+      EXPECT_EQ(sizeof(locked), bytes_written);
+
       close(fds[1]);
       exit(0);
   } else {
@@ -130,7 +133,7 @@ TEST(InterprocessSyncFileTest, TestMultipleFilesForked) {
 
   int fds[2];
 
-  pipe(fds);
+  EXPECT_EQ(0, pipe(fds));
 
   if (fork() == 0) {
       unsigned char locked = 0xff;
@@ -144,7 +147,9 @@ TEST(InterprocessSyncFileTest, TestMultipleFilesForked) {
           locked = 0;
       }
 
-      write(fds[1], &locked, sizeof(locked));
+      ssize_t bytes_written = write(fds[1], &locked, sizeof(locked));
+      EXPECT_EQ(sizeof(locked), bytes_written);
+
       close(fds[1]);
       exit(0);
   } else {
