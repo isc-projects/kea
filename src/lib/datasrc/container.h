@@ -208,7 +208,9 @@ public:
     /// \brief This holds one data source and corresponding information.
     ///
     /// \todo The content yet to be defined.
-    struct DataSourceInfo {};
+    struct DataSourceInfo {
+        DataSourceClientPtr data_src_;
+    };
     /// \brief The collection of data sources.
     typedef std::vector<DataSourceInfo> DataSources;
 protected:
