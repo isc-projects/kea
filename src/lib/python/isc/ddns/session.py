@@ -243,6 +243,10 @@ class UpdateSession:
         zclass = zrecord.get_class()
         zone_type, datasrc_client = self.__zone_config.find_zone(zname, zclass)
         if zone_type == isc.ddns.zone_config.ZONE_PRIMARY:
+            # create an ixfr-out-friendly diff structure to work on
+            self.__diff = isc.xfrin.diff.Diff(datasrc_client, zname,
+                                              journaling=True,
+                                              single_update_mode=True)
             _, self.__finder = datasrc_client.find_zone(zname)
             self.__zname = zname
             self.__zclass = zclass
@@ -552,20 +556,20 @@ class UpdateSession:
                 return Rcode.FORMERR()
         return Rcode.NOERROR()
 
-    def __do_update_add_single_rr(self, diff, rr, existing_rrset):
+    def __do_update_add_single_rr(self, rr, existing_rrset):
         '''Helper for __do_update_add_rrs_to_rrset: only add the
            rr if it is not present yet
            (note that rr here should already be a single-rr rrset)
         '''
         if existing_rrset is None:
-            diff.add_data(rr)
+            self.__diff.add_data(rr)
         else:
             rr_rdata = rr.get_rdata()[0]
             if not rr_rdata in existing_rrset.get_rdata():
-                diff.add_data(rr)
+                self.__diff.add_data(rr)
 
-    def __do_update_add_rrs_to_rrset(self, diff, rrset):
-        '''Add the rrs from the given rrset to the diff.
+    def __do_update_add_rrs_to_rrset(self, rrset):
+        '''Add the rrs from the given rrset to the internal diff.
            There is handling for a number of special cases mentioned
            in RFC2136;
            - If the addition is a CNAME, but existing data at its
@@ -597,7 +601,7 @@ class UpdateSession:
             if rrset.get_type() == RRType.CNAME():
                 # Remove original CNAME record (the new one
                 # is added below)
-                diff.delete_data(orig_rrset)
+                self.__diff.delete_data(orig_rrset)
             # We do not have WKS support at this time, but if there
             # are special Update equality rules such as for WKS, and
             # we do have support for the type, this is where the check
@@ -608,12 +612,12 @@ class UpdateSession:
             if rrset.get_type() == RRType.CNAME():
                 return
         for rr in foreach_rr(rrset):
-            self.__do_update_add_single_rr(diff, rr, orig_rrset)
+            self.__do_update_add_single_rr(rr, orig_rrset)
 
-    def __do_update_delete_rrset(self, diff, rrset):
+    def __do_update_delete_rrset(self, rrset):
         '''Deletes the rrset with the name and type of the given
            rrset from the zone data (by putting all existing data
-           in the given diff as delete statements).
+           in the internal diff as delete statements).
            Special cases: if the delete statement is for the
            zone's apex, and the type is either SOA or NS, it
            is ignored.'''
@@ -628,9 +632,9 @@ class UpdateSession:
                 # ignore
                 return
             for rr in foreach_rr(to_delete):
-                diff.delete_data(rr)
+                self.__diff.delete_data(rr)
 
-    def __ns_deleter_helper(self, diff, rrset):
+    def __ns_deleter_helper(self, rrset):
         '''Special case helper for deleting NS resource records
            at the zone apex. In that scenario, the last NS record
            may never be removed (and any action that would do so
@@ -666,12 +670,12 @@ class UpdateSession:
                                           rrset.get_ttl())
                 to_delete.add_rdata(rdata)
                 orig_rrset_rdata.remove(rdata)
-                diff.delete_data(to_delete)
+                self.__diff.delete_data(to_delete)
 
-    def __do_update_delete_name(self, diff, rrset):
+    def __do_update_delete_name(self, rrset):
         '''Delete all data at the name of the given rrset,
            by adding all data found by find_all as delete statements
-           to the given diff.
+           to the internal diff.
            Special case: if the name is the zone's apex, SOA and
            NS records are kept.
         '''
@@ -688,9 +692,9 @@ class UpdateSession:
                     continue
                 else:
                     for rr in foreach_rr(to_delete):
-                        diff.delete_data(rr)
+                        self.__diff.delete_data(rr)
 
-    def __do_update_delete_rrs_from_rrset(self, diff, rrset):
+    def __do_update_delete_rrs_from_rrset(self, rrset):
         '''Deletes all resource records in the given rrset from the
            zone. Resource records that do not exist are ignored.
            If the rrset if of type SOA, it is ignored.
@@ -711,17 +715,17 @@ class UpdateSession:
             elif rrset.get_type() == RRType.NS():
                 # hmm. okay. annoying. There must be at least one left,
                 # delegate to helper method
-                self.__ns_deleter_helper(diff, to_delete)
+                self.__ns_deleter_helper(to_delete)
                 return
         for rr in foreach_rr(to_delete):
-            diff.delete_data(rr)
+            self.__diff.delete_data(rr)
 
-    def __update_soa(self, diff):
+    def __update_soa(self):
         '''Checks the member value __added_soa, and depending on
            whether it has been set and what its value is, creates
            a new SOA if necessary.
            Then removes the original SOA and adds the new one,
-           by adding the needed operations to the given diff.'''
+           by adding the needed operations to the internal diff.'''
         # Get the existing SOA
         # if a new soa was specified, add that one, otherwise, do the
         # serial magic and add the newly created one
@@ -738,8 +742,8 @@ class UpdateSession:
             new_soa = old_soa
             # increment goes here
 
-        diff.delete_data(old_soa)
-        diff.add_data(new_soa)
+        self.__diff.delete_data(old_soa)
+        self.__diff.add_data(new_soa)
 
     def __do_update(self):
         '''Scan, check, and execute the Update section in the
@@ -754,12 +758,8 @@ class UpdateSession:
 
         # update
         try:
-            # create an ixfr-out-friendly diff structure to work on
-            diff = isc.xfrin.diff.Diff(self.__datasrc_client, self.__zname,
-                                       journaling=True, single_update_mode=True)
-
             # Do special handling for SOA first
-            self.__update_soa(diff)
+            self.__update_soa()
 
             # Algorithm from RFC2136 Section 3.4
             # Note that this works on full rrsets, not individual RRs.
@@ -773,16 +773,16 @@ class UpdateSession:
             # do_update statements)
             for rrset in self.__message.get_section(SECTION_UPDATE):
                 if rrset.get_class() == self.__zclass:
-                    self.__do_update_add_rrs_to_rrset(diff, rrset)
+                    self.__do_update_add_rrs_to_rrset(rrset)
                 elif rrset.get_class() == RRClass.ANY():
                     if rrset.get_type() == RRType.ANY():
-                        self.__do_update_delete_name(diff, rrset)
+                        self.__do_update_delete_name(rrset)
                     else:
-                        self.__do_update_delete_rrset(diff, rrset)
+                        self.__do_update_delete_rrset(rrset)
                 elif rrset.get_class() == RRClass.NONE():
-                    self.__do_update_delete_rrs_from_rrset(diff, rrset)
+                    self.__do_update_delete_rrs_from_rrset(rrset)
 
-            diff.commit()
+            self.__diff.commit()
             return Rcode.NOERROR()
         except isc.datasrc.Error as dse:
             logger.info(LIBDDNS_UPDATE_DATASRC_ERROR, dse)
