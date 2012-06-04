@@ -194,6 +194,21 @@ class SessionTest(SessionTestBase):
         # zone class doesn't match
         self.check_notauth(Name('example.org'), RRClass.CH())
 
+    def test_update_datasrc_error(self):
+        # if the data source client raises an exception, it should result in
+        # a SERVFAIL.
+        class BadDataSourceClient:
+            def find_zone(self, name):
+                raise isc.datasrc.Error('faked exception')
+        msg = create_update_msg(zones=[Question(TEST_ZONE_NAME, TEST_RRCLASS,
+                                                RRType.SOA())])
+        session = UpdateSession(msg, TEST_CLIENT4,
+                                ZoneConfig([(TEST_ZONE_NAME, TEST_RRCLASS)],
+                                           TEST_RRCLASS,
+                                           BadDataSourceClient()))
+        self.assertEqual(UPDATE_ERROR, session.handle()[0])
+        self.check_response(session.get_message(), Rcode.SERVFAIL())
+
     def test_foreach_rr_in_rrset(self):
         rrset = create_rrset("www.example.org", TEST_RRCLASS,
                              RRType.A(), 3600, [ "192.0.2.1" ])
