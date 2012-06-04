@@ -124,6 +124,19 @@ public:
     {
         ds1_info_.data_src_ = ds1_;
     }
+    // Check the positive result is as we expect it.
+    void positiveResult(const Container::SearchResult& result,
+                        const shared_ptr<TestDS>& dsrc,
+                        const Name& name, bool exact,
+                        const char* test)
+    {
+        SCOPED_TRACE(test);
+        EXPECT_EQ(dsrc, result.datasrc_);
+        ASSERT_NE(ZoneFinderPtr(), result.finder_);
+        EXPECT_EQ(name, result.finder_->getOrigin());
+        EXPECT_EQ(name.getLabelCount(), result.matched_labels_);
+        EXPECT_EQ(exact, result.exact_match_);
+    }
     shared_ptr<TestedContainer> container_;
     const Container::SearchResult negativeResult_;
     shared_ptr<TestDS> ds1_;
@@ -157,13 +170,8 @@ TEST_F(ContainerTest, singleDSExactMatch) {
     // This zone is not there
     EXPECT_EQ(negativeResult_, container_->search(Name("org."), true));
     // But this one is, so check it.
-    const Container::SearchResult
-        result(container_->search(Name("example.org"), true));
-    EXPECT_EQ(ds1_, result.datasrc_);
-    ASSERT_NE(ZoneFinderPtr(), result.finder_);
-    EXPECT_EQ(Name("example.org"), result.finder_->getOrigin());
-    EXPECT_EQ(2, result.matched_labels_);
-    EXPECT_TRUE(result.exact_match_);
+    positiveResult(container_->search(Name("example.org"), true),
+                   ds1_, Name("example.org"), true, "Exact match");
     // When asking for a sub zone of a zone there, we get nothing
     // (we want exact match, this would be partial one)
     EXPECT_EQ(negativeResult_, container_->search(Name("sub.example.org."),
@@ -176,22 +184,12 @@ TEST_F(ContainerTest, singleDSBestMatch) {
     // This zone is not there
     EXPECT_EQ(negativeResult_, container_->search(Name("org.")));
     // But this one is, so check it.
-    const Container::SearchResult
-        result(container_->search(Name("example.org")));
-    EXPECT_EQ(ds1_, result.datasrc_);
-    ASSERT_NE(ZoneFinderPtr(), result.finder_);
-    EXPECT_EQ(Name("example.org"), result.finder_->getOrigin());
-    EXPECT_EQ(2, result.matched_labels_);
-    EXPECT_TRUE(result.exact_match_);
+    positiveResult(container_->search(Name("example.org")),
+                   ds1_, Name("example.org"), true, "Exact match");
     // When asking for a sub zone of a zone there, we get nothing
     // (we want exact match, this would be partial one)
-    const Container::SearchResult
-        partialResult(container_->search(Name("sub.example.org.")));
-    EXPECT_EQ(ds1_, partialResult.datasrc_);
-    ASSERT_NE(ZoneFinderPtr(), partialResult.finder_);
-    EXPECT_EQ(Name("example.org"), partialResult.finder_->getOrigin());
-    EXPECT_EQ(2, partialResult.matched_labels_);
-    EXPECT_FALSE(partialResult.exact_match_);
+    positiveResult(container_->search(Name("sub.example.org.")),
+                   ds1_, Name("example.org"), false, "Subdomain match");
 }
 
 }
