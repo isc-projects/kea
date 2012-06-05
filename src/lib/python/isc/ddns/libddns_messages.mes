@@ -194,7 +194,7 @@ should give more information on what prerequisite type failed.
 If the result code is FORMERR, the prerequisite section was not well-formed.
 An error response with the given result code is sent back to the client.
 
-% LIBDDNS_UPDATE_UNCAUGHT_EXCEPTION update client %1 for zone %2: uncaught exception while processing update section: %1
+% LIBDDNS_UPDATE_UNCAUGHT_EXCEPTION update client %1 for zone %2: uncaught exception while processing update section: %3
 An uncaught exception was encountered while processing the Update
 section of a DDNS message. The specific exception is shown in the log message.
 To make sure DDNS service is not interrupted, this problem is caught instead
