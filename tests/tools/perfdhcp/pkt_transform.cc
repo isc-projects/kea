@@ -57,7 +57,7 @@ PktTransform::pack(const Option::Universe universe,
     out_buffer.skip(transid_offset);
 
     try {
-        if (universe == Option::V6) {
+        if (universe == Option::V4) {
             out_buffer.writeUint8(transid >> 24 & 0xFF);
         }
         out_buffer.writeUint8(transid >> 16 & 0xFF);
@@ -111,7 +111,7 @@ PktTransform::unpack(const Option::Universe universe,
     }
 
     try {
-        PktTransform::unpackOptions(universe, in_buffer, options);
+        PktTransform::unpackOptions(in_buffer, options);
     } catch (const isc::BadValue& e) {
         cout << "Packet parsing failed: " << e.what() << endl;
         return (false);
@@ -156,8 +156,7 @@ PktTransform::packOptions(const OptionBuffer& in_buffer,
 }
 
 void
-PktTransform::unpackOptions(const Option::Universe universe,
-                            const OptionBuffer& in_buffer,
+PktTransform::unpackOptions(const OptionBuffer& in_buffer,
                             const Option::OptionCollection& options) {
     for (Option::OptionCollection::const_iterator it = options.begin();
          it != options.end(); ++it) {
@@ -168,7 +167,7 @@ PktTransform::unpackOptions(const Option::Universe universe,
         if (opt_pos == 0) {
             isc_throw(isc::BadValue, "failed to unpack packet from raw buffer "
                       "(Option position not specified)");
-        } else if (opt_pos + 4 > in_buffer.size()) {
+        } else if (opt_pos + option->getHeaderLen() > in_buffer.size()) {
             isc_throw(isc::BadValue,
                       "failed to unpack options from from raw buffer "
                       "(Option position out of bounds)");
@@ -177,7 +176,7 @@ PktTransform::unpackOptions(const Option::Universe universe,
         size_t offset = opt_pos;
         size_t offset_step = 1;
         uint16_t opt_type = 0;
-        if (universe == Option::V6) {
+        if (option->getUniverse() == Option::V6) {
             offset_step = 2;
             // For DHCPv6 option type is in first two octets.
             opt_type = in_buffer[offset] * 256 + in_buffer[offset + 1];
@@ -195,14 +194,14 @@ PktTransform::unpackOptions(const Option::Universe universe,
         // Get option length which is supposed to be after option type.
         offset += offset_step;
         uint16_t opt_len = in_buffer[offset] * 256 + in_buffer[offset + 1];
-        if (universe == Option::V6) {
+        if (option->getUniverse() == Option::V6) {
             opt_len = in_buffer[offset] * 256 + in_buffer[offset + 1];
         } else {
             opt_len = in_buffer[offset];
         }
-        
+
         // Check if packet is not truncated.
-        if (offset + opt_len > in_buffer.size()) {
+        if (offset + option->getHeaderLen() + opt_len > in_buffer.size()) {
             isc_throw(isc::BadValue,
                       "failed to unpack option from raw buffer "
                       "(option truncated)");
