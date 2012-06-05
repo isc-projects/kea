@@ -28,7 +28,7 @@ namespace perfdhcp {
 /// data from packet buffer and write raw data to packet
 /// buffer. When reading data with unpack() method, the
 /// corresponding options objects are updated.
-/// When writting to the packet buffer with pack() nethod,
+/// When writing to the packet buffer with pack(),
 /// options objects carry input data to be written.
 /// This class is used both by \ref PerfPkt4 and
 /// \ref PerfPkt6 classes in case DHCP packets are created
@@ -37,29 +37,22 @@ namespace perfdhcp {
 /// server. Offset of specific options are provided from
 /// command line by perfdhcp tool user and passed in
 /// options collection.
-/// This class also provide mechanism to read some data
-/// from incoming packet buffer and update options
-/// in options collection with these data.
-/// It is assumed either in case of writting or reading
-/// that all options have to be added to options collection
-/// and their offset have to be specified in buffer
-/// (\see LocalizedOption).
 class PktTransform {
 public:
 
-    /// \brief Prepares on-wire format from raw buffer
+    /// \brief Prepares on-wire format from raw buffer.
     ///
     /// The method copies input buffer and options contents
     /// to output buffer. Input buffer must contain whole
     /// initial packet data. Parts of this data will be
     /// overriden by options data specified in options
-    /// collection. Such options must have their offsets in
-    /// a packet specified (\see LocalizedOption to find out how
-    /// to specify options offset).
+    /// collection. Such options must have their offsets within
+    /// a packet specified (see \ref LocalizedOption to find out
+    /// how to specify options offset).
     ///
     /// \note Specified options must fit into size of the
     /// initial packet data. Call to this function will fail
-    /// if option's offset + its size is out of bounds.
+    /// if option's offset + its size is beyond packet's size.
     ///
     /// \param universe universe used, V4 or V6
     /// \param in_buffer input buffer holiding intial packet
@@ -79,16 +72,13 @@ public:
                      const uint32_t transid,
                      util::OutputBuffer& out_buffer);
 
-    /// \brief Handles limited binary packet parsing for packets with
-    /// custom offsets of options and transaction id.
+    /// \brief Handles selective binary packet parsing.
     ///
-    /// Function handles parsing of packet that have non-default values
-    /// of options or transaction id offsets. Use
+    /// Function handles parsing of packets that have non-default
+    /// options or transaction id offsets. Client class has to use
     /// \ref isc::dhcp::Pkt6::addOption to specify which options to parse.
     /// Each option should be of the \ref isc::perfdhcp::LocalizedOption
-    /// type with offset value indicated.
-    /// Transaction id offset is specified as separate argument and
-    /// is used to read transaction id value from buffer.
+    /// type with offset value specified.
     ///
     /// \param universe universe used, V4 or V6
     /// \param in_buffer input buffer to be parsed
@@ -103,11 +93,11 @@ public:
                        uint32_t& transid);
 
 private:
-    /// \brief Replaces options contents of options in a buffer
+    /// \brief Replaces contents of options in a buffer.
     ///
-    /// The method uses localized options collection added to
-    /// replace parts of initial packet data (e.g. read from
-    /// template file).
+    /// The method uses localized options collection to
+    /// replace parts of packet data (e.g. data read
+    /// from template file).
     /// This private method is called from \ref PktTransform::pack
     ///
     /// \param in_buffer input buffer holding initial packet data.
@@ -118,12 +108,12 @@ private:
                             const dhcp::Option::OptionCollection& options,
                             util::OutputBuffer& out_buffer);
 
-    /// \brief Reads contents of specified options from buffer
+    /// \brief Reads contents of specified options from buffer.
     ///
     /// The method reads options data from the input buffer
-    /// and stores read data in options objects. Options
-    /// must have their offsets in a buffer specified
-    /// (\see LocalizedOption to find out how to specify
+    /// and stores it in options objects. Offsets of options
+    /// must be specified.
+    /// (see \ref LocalizedOption to find out how to specify
     /// option offset).
     /// This private method is called by \ref PktTransform::unpack.
     ///
