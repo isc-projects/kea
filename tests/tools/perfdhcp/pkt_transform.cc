@@ -72,7 +72,7 @@ PktTransform::pack(const Option::Universe universe,
         // We already have packet template stored in output buffer
         // but still some options have to be updated if client
         // specified them along with their offsets in the buffer.
-        PktTransform::packOptions(in_buffer, out_buffer, options);
+        PktTransform::packOptions(in_buffer, options, out_buffer);
     } catch (const isc::BadValue& e) {
         cout << "Building packet failed: " << e.what() << endl;
         return (false);
@@ -122,8 +122,8 @@ PktTransform::unpack(const Option::Universe universe,
 
 void
 PktTransform::packOptions(const OptionBuffer& in_buffer,
-                          util::OutputBuffer& out_buffer,
-                          const Option::OptionCollection& options) {
+                          const Option::OptionCollection& options,
+                          util::OutputBuffer& out_buffer) {
     try {
         // If there are any options on the list, we will use provided
         // options offsets to override them in the output buffer
