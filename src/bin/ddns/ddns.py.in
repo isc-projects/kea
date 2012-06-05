@@ -371,11 +371,32 @@ class DDNSServer:
             msg.to_wire(self.__response_renderer, tsig_ctx)
         else:
             msg.to_wire(self.__response_renderer)
+
+        return self.__send_response(sock, self.__response_renderer.get_data(),
+                                    remote_addr)
+
+    def __send_response(self, sock, data, dest):
+        '''Send DDNS response to the client.
+
+        Right now, this is a straightforward subroutine of handle_request(),
+        but is intended to be extended evetually so that it can handle more
+        comlicated operations for TCP (which requires asynchronous write).
+        Further, when we support multiple requests over a single TCP
+        connection, this method may even be shared by multiple methods.
+
+        Parameters:
+        sock: (python socket) the socket to which the response should be sent.
+        data: (binary) the response data
+        dest: (python socket address) the destion address to which the response
+          should be sent.
+
+        Return: True if the send operation succeds; otherwise False.
+
+        '''
         try:
-            sock.sendto(self.__response_renderer.get_data(), remote_addr)
+            sock.sendto(data, dest)
         except socket.error as ex:
-            logger.error(DDNS_RESPONSE_SOCKET_ERROR,
-                         ClientFormatter(remote_addr), ex)
+            logger.error(DDNS_RESPONSE_SOCKET_ERROR, ClientFormatter(dest), ex)
             return False
 
         return True
