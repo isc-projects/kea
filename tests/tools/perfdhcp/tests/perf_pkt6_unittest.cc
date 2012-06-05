@@ -77,8 +77,7 @@ public:
         data[93] = 6;       data[94] = 0;     data[95] = 2;     data[96] = 0;
         data[97] = 23;
 
-        PerfPkt6* pkt = new PerfPkt6(data, sizeof(data),
-                                     0x1, PerfPkt6::Offset());
+        PerfPkt6* pkt = new PerfPkt6(data, sizeof(data));
 
         return (pkt);
     }
@@ -97,8 +96,7 @@ public:
         data[9]  = 1;       data[10] = 0;     data[11] = 1;     data[12] = 21;
         data[13] = 158;     data[14] = 60;    data[15] = 22;    data[16] = 0;
 
-        PerfPkt6* pkt = new PerfPkt6(data, sizeof(data),
-                                     0x1, PerfPkt6::Offset());
+        PerfPkt6* pkt = new PerfPkt6(data, sizeof(data));
 
         return (pkt);
     }
@@ -110,28 +108,17 @@ TEST_F(PerfPkt6Test, Constructor) {
     // Data to be used to create packet.
     uint8_t data[] = { 0, 1, 2, 3, 4, 5 };
 
-    // Test constructors of Offset class.
-    PerfPkt6::Offset of1(0);
-    EXPECT_EQ(0, of1.get());
-
-    PerfPkt6::Offset of2;
-    EXPECT_EQ(1, of2.get());
-
-    PerfPkt6::Offset of3(10);
-    EXPECT_EQ(10, of3.get());
-
     // Test constructor to be used for incoming messages.
     // Use default (1) offset value and don't specify transaction id.
-    boost::scoped_ptr<PerfPkt6> pkt1(new PerfPkt6(data, sizeof(data),
-                                                  PerfPkt6::Offset()));
+    boost::scoped_ptr<PerfPkt6> pkt1(new PerfPkt6(data, sizeof(data)));
     EXPECT_EQ(6, pkt1->getData().size());
     EXPECT_EQ(0, memcmp(&pkt1->getData()[0], data, sizeof(data)));
     EXPECT_EQ(1, pkt1->getTransIdOffset());
 
     // Test constructor to be used for outgoing messages.
     // Use non-zero offset and specify transaction id.
-    boost::scoped_ptr<PerfPkt6> pkt2(new PerfPkt6(data, sizeof(data), 0x010203,
-                                                  PerfPkt6::Offset(10)));
+    boost::scoped_ptr<PerfPkt6> pkt2(new PerfPkt6(data, sizeof(data),
+                                                  10, 0x010203));
     EXPECT_EQ(6, pkt2->getData().size());
     EXPECT_EQ(0, memcmp(&pkt2->getData()[0], data, sizeof(data)));
     EXPECT_EQ(0x010203, pkt2->getTransid());
@@ -175,8 +162,7 @@ TEST_F(PerfPkt6Test, RawPackUnpack) {
     const uint8_t* pkt1_output_data = static_cast<const uint8_t*>
         (pkt1_output.getData());
     boost::scoped_ptr<PerfPkt6> pkt2(new PerfPkt6(pkt1_output_data,
-                                                  pkt1_output.getLength(),
-                                                  PerfPkt6::Offset()));
+                                                  pkt1_output.getLength()));
 
     // Create objects specifying options offset in a packet.
     // Offsets will inform pkt2 object where to read data from.
@@ -268,8 +254,8 @@ TEST_F(PerfPkt6Test, PackTransactionId) {
     // Create dummy packet that is simply filled with zeros.
     boost::scoped_ptr<PerfPkt6> pkt1(new PerfPkt6(data,
                                                   sizeof(data),
-                                                  0x010203,
-                                                  PerfPkt6::Offset(50)));
+                                                  50,
+                                                  0x010203));
 
     // Reference data are non zero so we can detect them in dummy packet.
     uint8_t ref_data[3] = { 1, 2, 3 };
@@ -290,8 +276,8 @@ TEST_F(PerfPkt6Test, PackTransactionId) {
     // Out of bounds transaction id offset.
     boost::scoped_ptr<PerfPkt6> pkt2(new PerfPkt6(data,
                                                   sizeof(data),
-                                                  0x010202,
-                                                  PerfPkt6::Offset(100)));
+                                                  100,
+                                                  0x010202));
     cout << "Testing out of bounds offset. "
         "This may produce spurious errors ..." << endl;
     EXPECT_FALSE(pkt2->rawPack());
@@ -308,7 +294,7 @@ TEST_F(PerfPkt6Test, UnpackTransactionId) {
     // Create packet and point out that transaction id is at offset 50.
     boost::scoped_ptr<PerfPkt6> pkt1(new PerfPkt6(data,
                                                   sizeof(data),
-                                                  PerfPkt6::Offset(50)));
+                                                  50));
 
     // Get transaction id out of buffer and store in class member.
     ASSERT_TRUE(pkt1->rawUnpack());
@@ -318,7 +304,7 @@ TEST_F(PerfPkt6Test, UnpackTransactionId) {
     // Out of bounds transaction id offset.
     boost::scoped_ptr<PerfPkt6> pkt2(new PerfPkt6(data,
                                                   sizeof(data),
-                                                  PerfPkt6::Offset(300)));
+                                                  300));
     cout << "Testing out of bounds offset. "
         "This may produce spurious errors ..." << endl;
     EXPECT_FALSE(pkt2->rawUnpack());
