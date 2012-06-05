@@ -136,11 +136,6 @@ public:
     /// \return false, if unpack operation failed.
     bool rawUnpack();
 
-    /// \brief Update packet timestamp with current time
-    ///
-    /// \throw isc::Unexpected if timestamp update failed
-    void updateTimestamp();
-
 private:
     size_t transid_offset_;      ///< transaction id offset
 
