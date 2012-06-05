@@ -64,7 +64,7 @@ public:
     /// \param transid transaction id value
     /// \param out_buffer output buffer holding "packed" data
     ///
-    /// \retrun false, if pack operation failed.
+    /// \return false, if pack operation failed.
     static bool pack(const dhcp::Option::Universe universe,
                      const dhcp::OptionBuffer& in_buffer,
                      const dhcp::Option::OptionCollection& options,

@@ -36,7 +36,7 @@ namespace perfdhcp {
 /// In order to read on-wire data from incoming packet client class
 /// has to specify options of \ref perfdhcp::LocalizedOption type
 /// with expected offsets of these options in a packet. The
-/// \ret perfdhcp::PerfPkt6 will use offsets to read fragments
+/// \ref perfdhcp::PerfPkt6 will use offsets to read fragments
 /// of packet and store them in options' buffers.
 /// (\see perfdhcp::PerfPkt6::rawUnpack).
 ///
