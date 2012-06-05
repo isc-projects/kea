@@ -48,6 +48,13 @@ class DiffTest(unittest.TestCase):
         self.__broken_called = False
         self.__warn_called = False
         self.__should_replace = False
+        self.__find_called = False
+        self.__find_name = None
+        self.__find_type = None
+        self.__find_options = None
+        self.__find_all_called = False
+        self.__find_all_name = None
+        self.__find_all_options = None
         # Some common values
         self.__rrclass = RRClass.IN()
         self.__type = RRType.A()
@@ -155,6 +162,23 @@ class DiffTest(unittest.TestCase):
             self.__journaling_enabled = False
 
         return self
+
+    def find(self, name, rrtype, options=None):
+        self.__find_called = True
+        self.__find_name = name
+        self.__find_type = rrtype
+        self.__find_options = options
+        # Doesn't really matter what is returned, as long
+        # as the test can check that it's passed along
+        return "find_return"
+
+    def find_all(self, name, options=None):
+        self.__find_all_called = True
+        self.__find_all_name = name
+        self.__find_all_options = options
+        # Doesn't really matter what is returned, as long
+        # as the test can check that it's passed along
+        return "find_all_return"
 
     def test_create(self):
         """
@@ -587,6 +611,68 @@ class DiffTest(unittest.TestCase):
         self.assertRaises(ValueError, diff.add_data, a)
         self.assertRaises(ValueError, diff.delete_data, a)
 
+    def test_find(self):
+        diff = Diff(self, Name('example.org.'))
+        name = Name('www.example.org.')
+        rrtype = RRType.A()
+
+        self.assertFalse(self.__find_called)
+        self.assertEqual(None, self.__find_name)
+        self.assertEqual(None, self.__find_type)
+        self.assertEqual(None, self.__find_options)
+
+        self.assertEqual("find_return", diff.find(name, rrtype))
+
+        self.assertTrue(self.__find_called)
+        self.assertEqual(name, self.__find_name)
+        self.assertEqual(rrtype, self.__find_type)
+        self.assertEqual(isc.datasrc.ZoneFinder.FIND_DEFAULT,
+                         self.__find_options)
+
+    def test_find_options(self):
+        diff = Diff(self, Name('example.org.'))
+        name = Name('foo.example.org.')
+        rrtype = RRType.TXT()
+        options = isc.datasrc.ZoneFinder.NO_WILDCARD |\
+                  isc.datasrc.ZoneFinder.FIND_GLUE_OK
+
+        self.assertEqual("find_return", diff.find(name, rrtype, options))
+
+        self.assertTrue(self.__find_called)
+        self.assertEqual(name, self.__find_name)
+        self.assertEqual(rrtype, self.__find_type)
+        self.assertEqual(options, self.__find_options)
+
+    def test_find_all(self):
+        diff = Diff(self, Name('example.org.'))
+        name = Name('www.example.org.')
+
+        self.assertFalse(self.__find_all_called)
+        self.assertEqual(None, self.__find_all_name)
+        self.assertEqual(None, self.__find_all_options)
+
+        self.assertEqual("find_all_return", diff.find_all(name))
+
+        self.assertTrue(self.__find_all_called)
+        self.assertEqual(name, self.__find_all_name)
+        self.assertEqual(isc.datasrc.ZoneFinder.FIND_DEFAULT,
+                         self.__find_all_options)
+
+    def test_find_all_options(self):
+        diff = Diff(self, Name('example.org.'))
+        name = Name('www.example.org.')
+        options = isc.datasrc.ZoneFinder.NO_WILDCARD |\
+                  isc.datasrc.ZoneFinder.FIND_GLUE_OK
+
+        self.assertFalse(self.__find_all_called)
+        self.assertEqual(None, self.__find_all_name)
+        self.assertEqual(None, self.__find_all_options)
+
+        self.assertEqual("find_all_return", diff.find_all(name, options))
+
+        self.assertTrue(self.__find_all_called)
+        self.assertEqual(name, self.__find_all_name)
+        self.assertEqual(options, self.__find_all_options)
 
 if __name__ == "__main__":
     isc.log.init("bind10")

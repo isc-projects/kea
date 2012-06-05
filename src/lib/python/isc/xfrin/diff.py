@@ -377,12 +377,24 @@ class Diff:
         else:
             return (self.__deletions, self.__additions)
 
-    def get_updater(self):
+    def find(self, name, rrtype, options=isc.datasrc.ZoneFinder.FIND_DEFAULT):
         """
-        Returns the ZoneUpdater associated with this Diff instance.
-        While update statements can be used on this updater, its main
-        goal is to provide the ZoneFinder interface for searching through
-        the zone as it was on the moment the updater was created.
-        If the Diff has been committed, this will return None.
+        Calls the find() method in the ZoneFinder associated with this
+        Diff's ZoneUpdater, i.e. the find() on the zone as it was on the
+        moment this Diff object got created.
+        See the ZoneFinder documentation for a full description.
+        Note that the result does not include changes made in this Diff
+        instance so far.
         """
-        return self.__updater
+        return self.__updater.find(name, rrtype, options)
+
+    def find_all(self, name, options=isc.datasrc.ZoneFinder.FIND_DEFAULT):
+        """
+        Calls the find() method in the ZoneFinder associated with this
+        Diff's ZoneUpdater, i.e. the find_all() on the zone as it was on the
+        moment this Diff object got created.
+        See the ZoneFinder documentation for a full description.
+        Note that the result does not include changes made in this Diff
+        instance so far.
+        """
+        return self.__updater.find_all(name, options)
