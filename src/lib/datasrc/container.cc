@@ -13,8 +13,13 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include "container.h"
+#include "client.h"
+
+#include <memory>
+#include <boost/foreach.hpp>
 
 using namespace isc::data;
+using namespace std;
 
 namespace isc {
 namespace datasrc {
@@ -26,9 +31,43 @@ ConfigurableContainer::ConfigurableContainer(const ConstElementPtr&, bool,
 }
 
 Container::SearchResult
-ConfigurableContainer::search(const dns::Name& , bool , bool ) const {
-    // TODO: Implement
-    isc_throw(NotImplemented, "A virtual unimplemented method, just to make it compile for now");
+ConfigurableContainer::search(const dns::Name& name, bool want_exact_match,
+                              bool ) const
+{
+    // Nothing yet.
+    auto_ptr<SearchResult> candidate(new SearchResult());
+    BOOST_FOREACH(const DataSourceInfo& info, data_sources_) {
+        DataSourceClient::FindResult result(info.data_src_->findZone(name));
+        switch (result.code) {
+            case result::SUCCESS: {
+                // If we found an exact match, we have no hope to getting
+                // a better one. Stop right here.
+                return (SearchResult(info.data_src_, result.zone_finder,
+                                     name.getLabelCount(), true));
+            }
+            case result::PARTIALMATCH: {
+                if (!want_exact_match) {
+                    // In case we have a partial match, check if it is better
+                    // than what we have. If so, replace it.
+                    uint8_t labels(
+                        result.zone_finder->getOrigin().getLabelCount());
+                    if (labels > candidate->matched_labels_) {
+                        // This one is strictly better. Replace it.
+                        candidate.reset(new SearchResult(info.data_src_,
+                                                         result.zone_finder,
+                                                         labels, false));
+                    }
+                }
+                break;
+            }
+            default: {
+                // Nothing found, nothing to do.
+                ;
+            }
+        }
+    }
+    // Return the partial match we have.
+    return (*candidate);
 }
 
 }
