@@ -247,12 +247,6 @@ class UpdateSession:
             self.__diff = isc.xfrin.diff.Diff(datasrc_client, zname,
                                               journaling=True,
                                               single_update_mode=True)
-            # Note that while it is really the ZoneUpdater that is set
-            # here, it is still called finder, as the only methods that
-            # are and should be used on this object are find() and find_all()
-            # (ZoneUpdater provides the ZoneFinder interface itself, no
-            # separate get_zone_finder())
-            self.__finder = self.__diff.get_updater()
             self.__zname = zname
             self.__zclass = zclass
             self.__datasrc_client = datasrc_client
@@ -313,9 +307,9 @@ class UpdateSession:
            only return what the result code would be (and not read/copy
            any actual data).
         '''
-        result, _, _ = self.__finder.find(rrset.get_name(), rrset.get_type(),
-                                          ZoneFinder.NO_WILDCARD |
-                                          ZoneFinder.FIND_GLUE_OK)
+        result, _, _ = self.__diff.find(rrset.get_name(), rrset.get_type(),
+                                        ZoneFinder.NO_WILDCARD |
+                                        ZoneFinder.FIND_GLUE_OK)
         return result == ZoneFinder.SUCCESS
 
     def __prereq_rrset_exists_value(self, rrset):
@@ -324,10 +318,10 @@ class UpdateSession:
            RFC2136 Section 2.4.2
            Returns True if the prerequisite is satisfied, False otherwise.
         '''
-        result, found_rrset, _ = self.__finder.find(rrset.get_name(),
-                                                    rrset.get_type(),
-                                                    ZoneFinder.NO_WILDCARD |
-                                                    ZoneFinder.FIND_GLUE_OK)
+        result, found_rrset, _ = self.__diff.find(rrset.get_name(),
+                                                  rrset.get_type(),
+                                                  ZoneFinder.NO_WILDCARD |
+                                                  ZoneFinder.FIND_GLUE_OK)
         if result == ZoneFinder.SUCCESS and\
            rrset.get_name() == found_rrset.get_name() and\
            rrset.get_type() == found_rrset.get_type():
@@ -366,9 +360,9 @@ class UpdateSession:
            to only return what the result code would be (and not read/copy
            any actual data).
         '''
-        result, rrsets, flags = self.__finder.find_all(rrset.get_name(),
-                                                       ZoneFinder.NO_WILDCARD |
-                                                       ZoneFinder.FIND_GLUE_OK)
+        result, rrsets, flags = self.__diff.find_all(rrset.get_name(),
+                                                     ZoneFinder.NO_WILDCARD |
+                                                     ZoneFinder.FIND_GLUE_OK)
         if result == ZoneFinder.SUCCESS and\
            (flags & ZoneFinder.RESULT_WILDCARD == 0):
             return True
@@ -592,10 +586,10 @@ class UpdateSession:
         # is explicitely ignored here)
         if rrset.get_type() == RRType.SOA():
             return
-        result, orig_rrset, _ = self.__finder.find(rrset.get_name(),
-                                                   rrset.get_type(),
-                                                   ZoneFinder.NO_WILDCARD |
-                                                   ZoneFinder.FIND_GLUE_OK)
+        result, orig_rrset, _ = self.__diff.find(rrset.get_name(),
+                                                 rrset.get_type(),
+                                                 ZoneFinder.NO_WILDCARD |
+                                                 ZoneFinder.FIND_GLUE_OK)
         if result == ZoneFinder.CNAME:
             # Ignore non-cname rrs that try to update CNAME records
             # (if rrset itself is a CNAME, the finder result would be
@@ -626,10 +620,10 @@ class UpdateSession:
            Special cases: if the delete statement is for the
            zone's apex, and the type is either SOA or NS, it
            is ignored.'''
-        result, to_delete, _ = self.__finder.find(rrset.get_name(),
-                                                  rrset.get_type(),
-                                                  ZoneFinder.NO_WILDCARD |
-                                                  ZoneFinder.FIND_GLUE_OK)
+        result, to_delete, _ = self.__diff.find(rrset.get_name(),
+                                                rrset.get_type(),
+                                                ZoneFinder.NO_WILDCARD |
+                                                ZoneFinder.FIND_GLUE_OK)
         if result == ZoneFinder.SUCCESS:
             if to_delete.get_name() == self.__zname and\
                (to_delete.get_type() == RRType.SOA() or\
@@ -651,10 +645,10 @@ class UpdateSession:
         # (see ticket #2016)
         # The related test is currently disabled. When this is fixed,
         # enable that test again.
-        result, orig_rrset, _ = self.__finder.find(rrset.get_name(),
-                                                   rrset.get_type(),
-                                                   ZoneFinder.NO_WILDCARD |
-                                                   ZoneFinder.FIND_GLUE_OK)
+        result, orig_rrset, _ = self.__diff.find(rrset.get_name(),
+                                                 rrset.get_type(),
+                                                 ZoneFinder.NO_WILDCARD |
+                                                 ZoneFinder.FIND_GLUE_OK)
         # Even a real rrset comparison wouldn't help here...
         # The goal is to make sure that after deletion of the
         # given rrset, at least 1 NS record is left (at the apex).
@@ -684,9 +678,9 @@ class UpdateSession:
            Special case: if the name is the zone's apex, SOA and
            NS records are kept.
         '''
-        result, rrsets, flags = self.__finder.find_all(rrset.get_name(),
-                                                       ZoneFinder.NO_WILDCARD |
-                                                       ZoneFinder.FIND_GLUE_OK)
+        result, rrsets, flags = self.__diff.find_all(rrset.get_name(),
+                                                     ZoneFinder.NO_WILDCARD |
+                                                     ZoneFinder.FIND_GLUE_OK)
         if result == ZoneFinder.SUCCESS and\
            (flags & ZoneFinder.RESULT_WILDCARD == 0):
             for to_delete in rrsets:
@@ -736,9 +730,9 @@ class UpdateSession:
         # serial magic and add the newly created one
 
         # get it from DS and to increment and stuff
-        result, old_soa, _ = self.__finder.find(self.__zname, RRType.SOA(),
-                                                ZoneFinder.NO_WILDCARD |
-                                                ZoneFinder.FIND_GLUE_OK)
+        result, old_soa, _ = self.__diff.find(self.__zname, RRType.SOA(),
+                                              ZoneFinder.NO_WILDCARD |
+                                              ZoneFinder.FIND_GLUE_OK)
 
         if self.__added_soa is not None:
             new_soa = self.__added_soa
