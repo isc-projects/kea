@@ -109,9 +109,25 @@ private:
     set<Name> zones;
 };
 
-const char* ds1_zones[] = {
-    "example.org.",
-    "example.com."
+const size_t ds_count = 4;
+
+const char* ds_zones[ds_count][3] = {
+    {
+        "example.org.",
+        "example.com.",
+        NULL
+    },
+    {
+        "sub.example.org.",
+        NULL, NULL
+    },
+    {
+        NULL, NULL, NULL
+    },
+    {
+        "sub.example.org.",
+        NULL, NULL
+    }
 };
 
 class ContainerTest : public ::testing::Test {
@@ -119,10 +135,15 @@ public:
     ContainerTest() :
         // The empty list corresponds to a container with no elements inside
         container_(new TestedContainer(ConstElementPtr(new ListElement()),
-                                       true)),
-        ds1_(new TestDS(ds1_zones))
+                                       true))
     {
-        ds1_info_.data_src_ = ds1_;
+        for (size_t i(0); i < ds_count; ++ i) {
+            shared_ptr<TestDS> ds(new TestDS(ds_zones[i]));
+            ConfigurableContainer::DataSourceInfo info;
+            info.data_src_ = ds;
+            ds_.push_back(ds);
+            ds_info_.push_back(info);
+        }
     }
     // Check the positive result is as we expect it.
     void positiveResult(const Container::SearchResult& result,
@@ -137,10 +158,40 @@ public:
         EXPECT_EQ(name.getLabelCount(), result.matched_labels_);
         EXPECT_EQ(exact, result.exact_match_);
     }
+    // Configure the container with multiple data sources, according to
+    // some configuration. It uses the index as parameter, to be able to
+    // loop through the configurations.
+    void multiConfiguration(size_t index) {
+        container_->dataSources().clear();
+        switch (index) {
+            case 2:
+                container_->dataSources().push_back(ds_info_[2]);
+                // The ds3 is empty. We just check that it doesn't confuse
+                // us. Fall through to the case 0.
+            case 0:
+                container_->dataSources().push_back(ds_info_[0]);
+                container_->dataSources().push_back(ds_info_[1]);
+                break;
+            case 1:
+                // The other order
+                container_->dataSources().push_back(ds_info_[1]);
+                container_->dataSources().push_back(ds_info_[0]);
+                break;
+            case 3:
+                container_->dataSources().push_back(ds_info_[1]);
+                container_->dataSources().push_back(ds_info_[0]);
+                // It is the same as 2, but we take from the first one.
+                // The first one to match is the correct one.
+                container_->dataSources().push_back(ds_info_[3]);
+                break;
+            default:
+                FAIL() << "Unknown configuration index " << index;
+        }
+    }
     shared_ptr<TestedContainer> container_;
     const Container::SearchResult negativeResult_;
-    shared_ptr<TestDS> ds1_;
-    ConfigurableContainer::DataSourceInfo ds1_info_;
+    vector<shared_ptr<TestDS> > ds_;
+    vector<ConfigurableContainer::DataSourceInfo> ds_info_;
 };
 
 // Test the container we create with empty configuration is, in fact, empty
@@ -166,12 +217,12 @@ TEST_F(ContainerTest, emptySearch) {
 // Put a single data source inside the container and check it can find an
 // exact match if there's one.
 TEST_F(ContainerTest, singleDSExactMatch) {
-    container_->dataSources().push_back(ds1_info_);
+    container_->dataSources().push_back(ds_info_[0]);
     // This zone is not there
     EXPECT_EQ(negativeResult_, container_->search(Name("org."), true));
     // But this one is, so check it.
     positiveResult(container_->search(Name("example.org"), true),
-                   ds1_, Name("example.org"), true, "Exact match");
+                   ds_[0], Name("example.org"), true, "Exact match");
     // When asking for a sub zone of a zone there, we get nothing
     // (we want exact match, this would be partial one)
     EXPECT_EQ(negativeResult_, container_->search(Name("sub.example.org."),
@@ -180,16 +231,65 @@ TEST_F(ContainerTest, singleDSExactMatch) {
 
 // When asking for a partial match, we get all that the exact one, but more.
 TEST_F(ContainerTest, singleDSBestMatch) {
-    container_->dataSources().push_back(ds1_info_);
+    container_->dataSources().push_back(ds_info_[0]);
     // This zone is not there
     EXPECT_EQ(negativeResult_, container_->search(Name("org.")));
     // But this one is, so check it.
     positiveResult(container_->search(Name("example.org")),
-                   ds1_, Name("example.org"), true, "Exact match");
+                   ds_[0], Name("example.org"), true, "Exact match");
     // When asking for a sub zone of a zone there, we get nothing
     // (we want exact match, this would be partial one)
     positiveResult(container_->search(Name("sub.example.org.")),
-                   ds1_, Name("example.org"), false, "Subdomain match");
+                   ds_[0], Name("example.org"), false, "Subdomain match");
+}
+
+const char* test_names[] = {
+    "Sub second",
+    "Sub first",
+    "With empty",
+    "With a duplicity"
+};
+
+TEST_F(ContainerTest, multiExactMatch) {
+    // Run through all the multi-configurations
+    for (size_t i(0); i < 4; ++ i) {
+        SCOPED_TRACE(test_names[i]);
+        multiConfiguration(i);
+        // Something that is nowhere there
+        EXPECT_EQ(negativeResult_, container_->search(Name("org."), true));
+        // This one is there exactly.
+        positiveResult(container_->search(Name("example.org"), true),
+                       ds_[0], Name("example.org"), true, "Exact match");
+        // This one too, but in a different data source.
+        positiveResult(container_->search(Name("sub.example.org."), true),
+                       ds_[1], Name("sub.example.org"), true,
+                       "Subdomain match");
+        // But this one is in neither data source.
+        EXPECT_EQ(negativeResult_, container_->search(Name("sub.example.com."),
+                                                      true));
+    }
+}
+
+TEST_F(ContainerTest, multiBestMatch) {
+    // Run through all the multi-configurations
+    for (size_t i(0); i < 4; ++ i) {
+        SCOPED_TRACE(test_names[i]);
+        multiConfiguration(i);
+        // Something that is nowhere there
+        EXPECT_EQ(negativeResult_, container_->search(Name("org.")));
+        // This one is there exactly.
+        positiveResult(container_->search(Name("example.org")),
+                       ds_[0], Name("example.org"), true, "Exact match");
+        // This one too, but in a different data source.
+        positiveResult(container_->search(Name("sub.example.org.")),
+                       ds_[1], Name("sub.example.org"), true,
+                       "Subdomain match");
+        // But this one is in neither data source. But it is a subdomain
+        // of one of the zones in the first data source.
+        positiveResult(container_->search(Name("sub.example.com.")),
+                       ds_[0], Name("example.com."), false,
+                       "Subdomain in com");
+    }
 }
 
 }
