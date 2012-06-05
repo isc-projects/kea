@@ -19,7 +19,9 @@ from isc.ddns.session import *
 from isc.dns import *
 from isc.acl.acl import ACCEPT
 import isc.util.cio.socketsession
+from isc.cc.session import SessionTimeout, SessionError, ProtocolError
 from isc.datasrc import DataSourceClient
+from isc.config.ccsession import create_answer
 import ddns
 import errno
 import os
@@ -147,6 +149,10 @@ class FakeKeyringModule:
 
 class MyCCSession(isc.config.ConfigData):
     '''Fake session with minimal interface compliance.'''
+
+    # faked CC sequence used in group_send/recvmsg
+    FAKE_SEQUENCE = 53
+
     def __init__(self):
         module_spec = isc.config.module_spec_from_file(
             ddns.SPECFILE_LOCATION)
@@ -155,6 +161,14 @@ class MyCCSession(isc.config.ConfigData):
         self._stopped = False
         # Used as the return value of get_remote_config_value.  Customizable.
         self.auth_db_file = READ_ZONE_DB_FILE
+        # faked cc channel, providing group_send/recvmsg itself.  The following
+        # attributes are for inspection/customization in tests.
+        self._session = self
+        self._sent_msg = []
+        self._recvmsg_called = 0
+        self._answer_code = 0   # code used in answer returned via recvmsg
+        self._sendmsg_exception = None # will be raised from sendmsg if !None
+        self._recvmsg_exception = None # will be raised from recvmsg if !None
 
     def start(self):
         '''Called by DDNSServer initialization, but not used in tests'''
@@ -176,6 +190,32 @@ class MyCCSession(isc.config.ConfigData):
     def get_remote_config_value(self, module_name, item):
         if module_name == "Auth" and item == "database_file":
             return self.auth_db_file, False
+
+    def group_sendmsg(self, msg, group):
+        # remember the passed parameter, and return dummy sequence
+        self._sent_msg.append((msg, group))
+        if self._sendmsg_exception is not None:
+            raise self._sendmsg_exception
+        return self.FAKE_SEQUENCE
+
+    def group_recvmsg(self, nonblock, seq):
+        self._recvmsg_called += 1
+        if seq != self.FAKE_SEQUENCE:
+            raise RuntimeError('unexpected CC sequence: ' + str(seq))
+        if self._recvmsg_exception is not None:
+            raise self._recvmsg_exception
+        if self._answer_code is 0:
+            return create_answer(0), None
+        else:
+            return create_answer(self._answer_code, "dummy error value"), None
+
+    def clear_msg(self):
+        '''Clear instrumental attributes related session messages.'''
+        self._sent_msg = []
+        self._recvmsg_called = 0
+        self._answer_code = 0
+        self._sendmsg_exception = None
+        self._recvmsg_exception = None
 
 class MyDDNSServer():
     '''Fake DDNS server used to test the main() function'''
@@ -573,11 +613,11 @@ def create_msg(opcode=Opcode.UPDATE(), zones=[TEST_ZONE_RECORD], prereq=[],
 
 class TestDDNSession(unittest.TestCase):
     def setUp(self):
-        cc_session = MyCCSession()
-        self.assertFalse(cc_session._started)
+        self.__cc_session = MyCCSession()
+        self.assertFalse(self.__cc_session._started)
         self.orig_tsig_keyring = isc.server_common.tsig_keyring
         isc.server_common.tsig_keyring = FakeKeyringModule()
-        self.server = ddns.DDNSServer(cc_session)
+        self.server = ddns.DDNSServer(self.__cc_session)
         self.server._UpdateSessionClass = self.__fake_session_creator
         self.__faked_result = UPDATE_SUCCESS # will be returned by fake session
         self.__sock = FakeSocket(-1)
@@ -704,6 +744,76 @@ class TestDDNSession(unittest.TestCase):
                                                        dummy_record])))
         num_rrsets = len(self.__req_message.get_section(SECTION_PREREQUISITE))
         self.assertEqual(2, num_rrsets)
+
+    def check_session_msg(self, result, expect_recv=1):
+        '''Check post update communication with other modules.'''
+        # iff the update succeeds, b10-ddns should tell interested other
+        # modules the information about the update zone in the form of
+        # {'command': ['notify', {'zone_name': <updated_zone_name>,
+        #                         'zone_class', <updated_zone_class>}]}
+        # and expect an answer by calling group_recvmsg().
+        #
+        # expect_recv indicates the expected number of calls to
+        # group_recvmsg(), which is normally 1, but can be 0 if send fails.
+        if result == UPDATE_SUCCESS:
+            self.assertEqual(1, len(self.__cc_session._sent_msg))
+            self.assertEqual(expect_recv, self.__cc_session._recvmsg_called)
+            sent_msg, sent_group = self.__cc_session._sent_msg[0]
+            sent_cmd = sent_msg['command']
+            self.assertEqual('Xfrout', sent_group)
+            self.assertEqual('notify', sent_cmd[0])
+            self.assertEqual(2, len(sent_cmd[1]))
+            self.assertEqual(TEST_ZONE_NAME.to_text(), sent_cmd[1]['zone_name'])
+            self.assertEqual(TEST_RRCLASS.to_text(), sent_cmd[1]['zone_class'])
+        else:
+            # for other result cases neither send nor recvmsg should be called.
+            self.assertEqual([], self.__cc_session._sent_msg)
+            self.assertEqual(0, self.__cc_session._recvmsg_called)
+
+    def test_session_msg(self):
+        '''Test post update communication with other modules.'''
+        # Normal cases, confirming communication takes place iff update
+        # succeeds
+        for r in [UPDATE_SUCCESS, UPDATE_ERROR, UPDATE_DROP]:
+            self.__cc_session.clear_msg()
+            self.check_session(result=r)
+            self.check_session_msg(r)
+
+        # Return an error from the remote module, which should be just ignored.
+        self.__cc_session.clear_msg()
+        self.__cc_session._answer_code = 1
+        self.check_session()
+        self.check_session_msg(UPDATE_SUCCESS)
+
+        # raise some exceptions from the faked session.  Expected ones are
+        # simply (logged and) ignored
+        self.__cc_session.clear_msg()
+        self.__cc_session._recvmsg_exception = SessionTimeout('dummy timeout')
+        self.check_session()
+        self.check_session_msg(UPDATE_SUCCESS)
+
+        self.__cc_session.clear_msg()
+        self.__cc_session._recvmsg_exception = SessionError('dummy error')
+        self.check_session()
+        self.check_session_msg(UPDATE_SUCCESS)
+
+        self.__cc_session.clear_msg()
+        self.__cc_session._recvmsg_exception = ProtocolError('dummy perror')
+        self.check_session()
+        self.check_session_msg(UPDATE_SUCCESS)
+
+        # Similar to the previous cases, but sendmsg() raises, so there should
+        # be no call to recvmsg().
+        self.__cc_session.clear_msg()
+        self.__cc_session._sendmsg_exception = SessionError('send error')
+        self.check_session()
+        self.check_session_msg(UPDATE_SUCCESS, expect_recv=0)
+
+        # Unexpected exception will be propagated (and will terminate the
+        # server)
+        self.__cc_session.clear_msg()
+        self.__cc_session._sendmsg_exception = RuntimeError('unexpected')
+        self.assertRaises(RuntimeError, self.check_session)
 
     def test_session_with_config(self):
         '''Check a session with more relistic config setups
