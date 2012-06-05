@@ -611,7 +611,7 @@ def create_msg(opcode=Opcode.UPDATE(), zones=[TEST_ZONE_RECORD], prereq=[],
     return renderer.get_data()
 
 
-class TestDDNSession(unittest.TestCase):
+class TestDDNSSession(unittest.TestCase):
     def setUp(self):
         self.__cc_session = MyCCSession()
         self.assertFalse(self.__cc_session._started)
