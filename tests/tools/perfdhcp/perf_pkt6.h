@@ -149,7 +149,7 @@ public:
     /// when you use template packets that require replacement
     /// of selected options' contents before sending.
     ///
-    /// \retrun false, id pack operation failed.
+    /// \return false, id pack operation failed.
     bool rawPack();
 
     /// \brief Handles limited binary packet parsing for packets with
