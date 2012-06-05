@@ -115,8 +115,8 @@ private:
     /// \param options options collection with actual data and offsets.
     /// \throw isc::Unexpected if options update failed.
     static void packOptions(const dhcp::OptionBuffer& in_buffer,
-                            util::OutputBuffer& out_buffer,
-                            const dhcp::Option::OptionCollection& options);
+                            const dhcp::Option::OptionCollection& options,
+                            util::OutputBuffer& out_buffer);
 
     /// \brief Reads contents of specified options from buffer
     ///
