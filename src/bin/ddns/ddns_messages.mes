@@ -112,3 +112,26 @@ process will now shut down.
 The b10-ddns process encountered an uncaught exception and will now shut
 down. This is indicative of a programming error and should not happen under
 normal circumstances. The exception type and message are printed.
+
+% DDNS_UPDATE_NOTIFY_FAIL failed to notify %1 of updates to %2: %3
+b10-ddns has made updates to a zone based on an update request and
+tried to notify an external module of the updates, but the
+notification fails.  Severity of this effect depends on the type of
+the module.  If it's b10-xfrout, this means DNS notify messages won't
+be sent to secondary servers of the zone.  It's suboptimal, but not
+necessarily critical as the secondary servers will try to check the
+zone's status periodically.  If it's b10-auth and the notification was
+needed to have it reload the corresponding zone, it's more serious
+because b10-auth won't be able to serve the new version of the zone
+unless some explicit recovery action is taken.  So the administrator
+needs to examine this message and takes an appropriate action.  In
+either case, this notification is generally expected to succeed; so
+the fact it fails itself means there's something wrong in the BIND 10
+system, and it would be advisable to check other log messages.
+
+% DDNS_UPDATE_NOTIFY notified %1 of updates to %2
+Debug message.  b10-ddns has made updates to a zone based on an update
+request and has successfully notified an external module of the updates.
+The notified module will use that information for updating its own
+state or any necessary protocol action such as zone reloading or sending
+notify messages to secondary servers.
