@@ -189,13 +189,13 @@ class UpdateSession:
 
         '''
         try:
-            self.__get_update_zone()
-            # conceptual code that would follow
+            self._get_update_zone()
+            self.__check_update_acl(self.__zname, self.__zclass)
+            self._create_diff()
             prereq_result = self.__check_prerequisites()
             if prereq_result != Rcode.NOERROR():
                 self.__make_response(prereq_result)
                 return UPDATE_ERROR, self.__zname, self.__zclass
-            self.__check_update_acl(self.__zname, self.__zclass)
             update_result = self.__do_update()
             if update_result != Rcode.NOERROR():
                 self.__make_response(update_result)
@@ -215,7 +215,7 @@ class UpdateSession:
             self.__message = None
             return UPDATE_DROP, None, None
 
-    def __get_update_zone(self):
+    def _get_update_zone(self):
         '''Parse the zone section and find the zone to be updated.
 
         If the zone section is valid and the specified zone is found in
@@ -224,7 +224,6 @@ class UpdateSession:
                           zone
         __zname: The zone name as a Name object
         __zclass: The zone class as an RRClass object
-        __finder: A ZoneFinder for this zone
         If this method raises an exception, these members are not set
         '''
         # Validation: the zone section must contain exactly one question,
@@ -243,13 +242,9 @@ class UpdateSession:
         zclass = zrecord.get_class()
         zone_type, datasrc_client = self.__zone_config.find_zone(zname, zclass)
         if zone_type == isc.ddns.zone_config.ZONE_PRIMARY:
-            # create an ixfr-out-friendly diff structure to work on
-            self.__diff = isc.xfrin.diff.Diff(datasrc_client, zname,
-                                              journaling=True,
-                                              single_update_mode=True)
+            self.__datasrc_client = datasrc_client
             self.__zname = zname
             self.__zclass = zclass
-            self.__datasrc_client = datasrc_client
             return
         elif zone_type == isc.ddns.zone_config.ZONE_SECONDARY:
             # We are a secondary server; since we don't yet support update
@@ -263,6 +258,22 @@ class UpdateSession:
                      ClientFormatter(self.__client_addr, self.__tsig),
                      ZoneFormatter(zname, zclass))
         raise UpdateError('notauth', zname, zclass, Rcode.NOTAUTH(), True)
+
+    def _create_diff(self):
+        '''
+        Initializes the internal data structure used for searching current
+        data and for adding and deleting data. This is supposed to be called
+        after ACL checks but before prerequisite checks (since the latter
+        needs the find calls provided by the Diff class).
+        Adds the private member:
+        __diff: A buffer of changes made against the zone by this update
+                This object also contains find() calls, see documentation
+                of the Diff class.
+        '''
+        self.__diff = isc.xfrin.diff.Diff(self.__datasrc_client,
+                                          self.__zname,
+                                          journaling=True,
+                                          single_update_mode=True)
 
     def __check_update_acl(self, zname, zclass):
         '''Apply update ACL for the zone to be updated.'''

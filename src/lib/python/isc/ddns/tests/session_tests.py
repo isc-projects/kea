@@ -112,10 +112,11 @@ class SessionTestBase(unittest.TestCase):
                                       ZoneConfig([], TEST_RRCLASS,
                                                  self._datasrc_client,
                                                  self._acl_map))
-        self._session._UpdateSession__get_update_zone()
+        self._session._get_update_zone()
+        self._session._create_diff()
 
     def tearDown(self):
-        # With the Updater created in __get_update_zone, and tests
+        # With the Updater created in _get_update_zone, and tests
         # doing all kinds of crazy stuff, one might get database locked
         # errors if it doesn't clean up explicitely after each test
         self._session = None
@@ -448,7 +449,8 @@ class SessionTest(SessionTestBase):
         zconfig = ZoneConfig([], TEST_RRCLASS, self._datasrc_client,
                              self._acl_map)
         session = UpdateSession(msg, TEST_CLIENT4, zconfig)
-        session._UpdateSession__get_update_zone()
+        session._get_update_zone()
+        session._create_diff()
         # compare the to_text output of the rcodes (nicer error messages)
         # This call itself should also be done by handle(),
         # but just for better failures, it is first called on its own
@@ -473,7 +475,8 @@ class SessionTest(SessionTestBase):
         zconfig = ZoneConfig([], TEST_RRCLASS, self._datasrc_client,
                              self._acl_map)
         session = UpdateSession(msg, TEST_CLIENT4, zconfig)
-        session._UpdateSession__get_update_zone()
+        session._get_update_zone()
+        session._create_diff()
         # compare the to_text output of the rcodes (nicer error messages)
         # This call itself should also be done by handle(),
         # but just for better failures, it is first called on its own
