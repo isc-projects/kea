@@ -79,20 +79,20 @@ public:
         }
     }
     virtual FindResult findZone(const Name& name) const {
-        set<Name>::const_iterator it(zones.lower_bound(name));
-        if (it == zones.end()) {
+        if (zones.empty()) {
             return (FindResult(result::NOTFOUND, ZoneFinderPtr()));
-        } else {
-            NameComparisonResult compar(it->compare(name));
-            const ZoneFinderPtr finder(new Finder(*it));
-            switch (compar.getRelation()) {
-                case NameComparisonResult::EQUAL:
-                    return (FindResult(result::SUCCESS, finder));
-                case NameComparisonResult::SUPERDOMAIN:
-                    return (FindResult(result::PARTIALMATCH, finder));
-                default:
-                    return (FindResult(result::NOTFOUND, ZoneFinderPtr()));
-            }
+        }
+        set<Name>::const_iterator it(zones.upper_bound(name));
+        -- it;
+        NameComparisonResult compar(it->compare(name));
+        const ZoneFinderPtr finder(new Finder(*it));
+        switch (compar.getRelation()) {
+            case NameComparisonResult::EQUAL:
+                return (FindResult(result::SUCCESS, finder));
+            case NameComparisonResult::SUPERDOMAIN:
+                return (FindResult(result::PARTIALMATCH, finder));
+            default:
+                return (FindResult(result::NOTFOUND, ZoneFinderPtr()));
         }
     }
     // These methods are not used. They just need to be there to have
@@ -193,6 +193,15 @@ public:
     vector<shared_ptr<TestDS> > ds_;
     vector<ConfigurableContainer::DataSourceInfo> ds_info_;
 };
+
+// Test the test itself
+TEST_F(ContainerTest, selfTest) {
+    EXPECT_EQ(result::SUCCESS, ds_[0]->findZone(Name("example.org")).code);
+    EXPECT_EQ(result::PARTIALMATCH,
+              ds_[0]->findZone(Name("sub.example.org")).code);
+    EXPECT_EQ(result::NOTFOUND, ds_[0]->findZone(Name("org")).code);
+    EXPECT_EQ(result::NOTFOUND, ds_[1]->findZone(Name("example.org")).code);
+}
 
 // Test the container we create with empty configuration is, in fact, empty
 TEST_F(ContainerTest, emptyContainer) {
