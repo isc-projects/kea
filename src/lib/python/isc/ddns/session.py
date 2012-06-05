@@ -224,7 +224,11 @@ class UpdateSession:
                           zone
         __zname: The zone name as a Name object
         __zclass: The zone class as an RRClass object
-        If this method raises an exception, these members are not set
+        If this method raises an exception, these members are not set.
+
+        Note: This method is protected for ease of use in tests, where
+        methods are tested that need the setup done here without calling
+        the full handle() method.
         '''
         # Validation: the zone section must contain exactly one question,
         # and it must be of type SOA.
@@ -269,6 +273,10 @@ class UpdateSession:
         __diff: A buffer of changes made against the zone by this update
                 This object also contains find() calls, see documentation
                 of the Diff class.
+
+        Note: This method is protected for ease of use in tests, where
+        methods are tested that need the setup done here without calling
+        the full handle() method.
         '''
         self.__diff = isc.xfrin.diff.Diff(self.__datasrc_client,
                                           self.__zname,
