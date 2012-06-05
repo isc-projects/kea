@@ -94,6 +94,97 @@ def create_rrset(name, rrclass, rrtype, ttl, rdatas = []):
         add_rdata(rrset, rdata)
     return rrset
 
+class SessionModuleTests(unittest.TestCase):
+    '''Tests for module-level functions in the session.py module'''
+
+    def test_foreach_rr_in_rrset(self):
+        rrset = create_rrset("www.example.org", TEST_RRCLASS,
+                             RRType.A(), 3600, [ "192.0.2.1" ])
+
+        l = []
+        for rr in foreach_rr(rrset):
+            l.append(str(rr))
+        self.assertEqual(["www.example.org. 3600 IN A 192.0.2.1\n"], l)
+
+        add_rdata(rrset, "192.0.2.2")
+        add_rdata(rrset, "192.0.2.3")
+
+        # but through the generator, there should be several 1-line entries
+        l = []
+        for rr in foreach_rr(rrset):
+            l.append(str(rr))
+        self.assertEqual(["www.example.org. 3600 IN A 192.0.2.1\n",
+                          "www.example.org. 3600 IN A 192.0.2.2\n",
+                          "www.example.org. 3600 IN A 192.0.2.3\n",
+                         ], l)
+
+    def test_convert_rrset_class(self):
+        # Converting an RRSET to a different class should work
+        # if the rdata types can be converted
+        rrset = create_rrset("www.example.org", RRClass.NONE(), RRType.A(),
+                             3600, [ b'\xc0\x00\x02\x01', b'\xc0\x00\x02\x02'])
+
+        rrset2 = convert_rrset_class(rrset, RRClass.IN())
+        self.assertEqual("www.example.org. 3600 IN A 192.0.2.1\n" +
+                         "www.example.org. 3600 IN A 192.0.2.2\n",
+                         str(rrset2))
+
+        rrset3 = convert_rrset_class(rrset2, RRClass.NONE())
+        self.assertEqual("www.example.org. 3600 CLASS254 A \\# 4 " +
+                         "c0000201\nwww.example.org. 3600 CLASS254 " +
+                         "A \\# 4 c0000202\n",
+                         str(rrset3))
+
+        # depending on what type of bad data is given, a number
+        # of different exceptions could be raised (TODO: i recall
+        # there was a ticket about making a better hierarchy for
+        # dns/parsing related exceptions)
+        self.assertRaises(InvalidRdataLength, convert_rrset_class,
+                          rrset, RRClass.CH())
+        add_rdata(rrset, b'\xc0\x00')
+        self.assertRaises(DNSMessageFORMERR, convert_rrset_class,
+                          rrset, RRClass.IN())
+
+    def test_collect_rrsets(self):
+        '''
+        Tests the 'rrset collector' method, which collects rrsets
+        with the same name and type
+        '''
+        collected = []
+
+        collect_rrsets(collected, create_rrset("a.example.org", RRClass.IN(),
+                                               RRType.A(), 0, [ "192.0.2.1" ]))
+        # Same name and class, different type
+        collect_rrsets(collected, create_rrset("a.example.org", RRClass.IN(),
+                                               RRType.TXT(), 0, [ "one" ]))
+        collect_rrsets(collected, create_rrset("a.example.org", RRClass.IN(),
+                                               RRType.A(), 0, [ "192.0.2.2" ]))
+        collect_rrsets(collected, create_rrset("a.example.org", RRClass.IN(),
+                                               RRType.TXT(), 0, [ "two" ]))
+        # Same class and type as an existing one, different name
+        collect_rrsets(collected, create_rrset("b.example.org", RRClass.IN(),
+                                               RRType.A(), 0, [ "192.0.2.3" ]))
+        # Same name and type as an existing one, different class
+        collect_rrsets(collected, create_rrset("a.example.org", RRClass.CH(),
+                                               RRType.TXT(), 0, [ "one" ]))
+        collect_rrsets(collected, create_rrset("b.example.org", RRClass.IN(),
+                                               RRType.A(), 0, [ "192.0.2.4" ]))
+        collect_rrsets(collected, create_rrset("a.example.org", RRClass.CH(),
+                                               RRType.TXT(), 0, [ "two" ]))
+
+        strings = [ rrset.to_text() for rrset in collected ]
+        # note + vs , in this list
+        expected = ['a.example.org. 0 IN A 192.0.2.1\n' +
+                    'a.example.org. 0 IN A 192.0.2.2\n',
+                    'a.example.org. 0 IN TXT "one"\n' +
+                    'a.example.org. 0 IN TXT "two"\n',
+                    'b.example.org. 0 IN A 192.0.2.3\n' +
+                    'b.example.org. 0 IN A 192.0.2.4\n',
+                    'a.example.org. 0 CH TXT "one"\n' +
+                    'a.example.org. 0 CH TXT "two"\n']
+
+        self.assertEqual(expected, strings)
+
 class SessionTestBase(unittest.TestCase):
     '''Base class for all sesion related tests.
 
@@ -200,94 +291,6 @@ class SessionTest(SessionTestBase):
         self.check_notauth(Name('sub.example.org'))
         # zone class doesn't match
         self.check_notauth(Name('example.org'), RRClass.CH())
-
-    def test_foreach_rr_in_rrset(self):
-        rrset = create_rrset("www.example.org", TEST_RRCLASS,
-                             RRType.A(), 3600, [ "192.0.2.1" ])
-
-        l = []
-        for rr in foreach_rr(rrset):
-            l.append(str(rr))
-        self.assertEqual(["www.example.org. 3600 IN A 192.0.2.1\n"], l)
-
-        add_rdata(rrset, "192.0.2.2")
-        add_rdata(rrset, "192.0.2.3")
-
-        # but through the generator, there should be several 1-line entries
-        l = []
-        for rr in foreach_rr(rrset):
-            l.append(str(rr))
-        self.assertEqual(["www.example.org. 3600 IN A 192.0.2.1\n",
-                          "www.example.org. 3600 IN A 192.0.2.2\n",
-                          "www.example.org. 3600 IN A 192.0.2.3\n",
-                         ], l)
-
-    def test_convert_rrset_class(self):
-        # Converting an RRSET to a different class should work
-        # if the rdata types can be converted
-        rrset = create_rrset("www.example.org", RRClass.NONE(), RRType.A(),
-                             3600, [ b'\xc0\x00\x02\x01', b'\xc0\x00\x02\x02'])
-
-        rrset2 = convert_rrset_class(rrset, RRClass.IN())
-        self.assertEqual("www.example.org. 3600 IN A 192.0.2.1\n" +
-                         "www.example.org. 3600 IN A 192.0.2.2\n",
-                         str(rrset2))
-
-        rrset3 = convert_rrset_class(rrset2, RRClass.NONE())
-        self.assertEqual("www.example.org. 3600 CLASS254 A \\# 4 " +
-                         "c0000201\nwww.example.org. 3600 CLASS254 " +
-                         "A \\# 4 c0000202\n",
-                         str(rrset3))
-
-        # depending on what type of bad data is given, a number
-        # of different exceptions could be raised (TODO: i recall
-        # there was a ticket about making a better hierarchy for
-        # dns/parsing related exceptions)
-        self.assertRaises(InvalidRdataLength, convert_rrset_class,
-                          rrset, RRClass.CH())
-        add_rdata(rrset, b'\xc0\x00')
-        self.assertRaises(DNSMessageFORMERR, convert_rrset_class,
-                          rrset, RRClass.IN())
-
-    def test_collect_rrsets(self):
-        '''
-        Tests the 'rrset collector' method, which collects rrsets
-        with the same name and type
-        '''
-        collected = []
-
-        collect_rrsets(collected, create_rrset("a.example.org", RRClass.IN(),
-                                               RRType.A(), 0, [ "192.0.2.1" ]))
-        # Same name and class, different type
-        collect_rrsets(collected, create_rrset("a.example.org", RRClass.IN(),
-                                               RRType.TXT(), 0, [ "one" ]))
-        collect_rrsets(collected, create_rrset("a.example.org", RRClass.IN(),
-                                               RRType.A(), 0, [ "192.0.2.2" ]))
-        collect_rrsets(collected, create_rrset("a.example.org", RRClass.IN(),
-                                               RRType.TXT(), 0, [ "two" ]))
-        # Same class and type as an existing one, different name
-        collect_rrsets(collected, create_rrset("b.example.org", RRClass.IN(),
-                                               RRType.A(), 0, [ "192.0.2.3" ]))
-        # Same name and type as an existing one, different class
-        collect_rrsets(collected, create_rrset("a.example.org", RRClass.CH(),
-                                               RRType.TXT(), 0, [ "one" ]))
-        collect_rrsets(collected, create_rrset("b.example.org", RRClass.IN(),
-                                               RRType.A(), 0, [ "192.0.2.4" ]))
-        collect_rrsets(collected, create_rrset("a.example.org", RRClass.CH(),
-                                               RRType.TXT(), 0, [ "two" ]))
-
-        strings = [ rrset.to_text() for rrset in collected ]
-        # note + vs , in this list
-        expected = ['a.example.org. 0 IN A 192.0.2.1\n' +
-                    'a.example.org. 0 IN A 192.0.2.2\n',
-                    'a.example.org. 0 IN TXT "one"\n' +
-                    'a.example.org. 0 IN TXT "two"\n',
-                    'b.example.org. 0 IN A 192.0.2.3\n' +
-                    'b.example.org. 0 IN A 192.0.2.4\n',
-                    'a.example.org. 0 CH TXT "one"\n' +
-                    'a.example.org. 0 CH TXT "two"\n']
-
-        self.assertEqual(expected, strings)
 
     def __check_prerequisite_exists_combined(self, method, rrclass, expected):
         '''shared code for the checks for the very similar (but reversed
