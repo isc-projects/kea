@@ -12,8 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <iostream>
-#include <exceptions/exceptions.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/dhcp6.h>
 
@@ -27,22 +25,30 @@ using namespace dhcp;
 namespace isc {
 namespace perfdhcp {
 
-    PerfPkt4::PerfPkt4(const uint8_t* buf, uint32_t len, size_t transid_offset, uint32_t transid) :
+PerfPkt4::PerfPkt4(const uint8_t* buf, size_t len) :
+    Pkt4(buf, len),
+    transid_offset_(1) {
+}
+
+PerfPkt4::PerfPkt4(const uint8_t* buf,
+                   size_t len,
+                   size_t transid_offset,
+                   uint32_t transid) :
     Pkt4(buf, len),
     transid_offset_(transid_offset) {
     transid_ = transid;
 }
 
-PerfPkt4::PerfPkt4(const uint8_t* buf, uint32_t len, size_t transid_offset) :
+PerfPkt4::PerfPkt4(const uint8_t* buf, size_t len, size_t transid_offset) :
     Pkt4(buf, len),
     transid_offset_(transid_offset) {
 }
 
 bool
 PerfPkt4::rawPack() {
-    return (PktTransform::pack(dhcp::Option::V4, 
-                               data_, 
-                               options_, 
+    return (PktTransform::pack(dhcp::Option::V4,
+                               data_,
+                               options_,
                                transid_offset_,
                                transid_,
                                bufferOut_));
@@ -50,9 +56,9 @@ PerfPkt4::rawPack() {
 
 bool
 PerfPkt4::rawUnpack() {
-    return (PktTransform::unpack(dhcp::Option::V4, 
-                                 data_, 
-                                 options_, 
+    return (PktTransform::unpack(dhcp::Option::V4,
+                                 data_,
+                                 options_,
                                  transid_offset_,
                                  transid_));
 }

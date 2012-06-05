@@ -56,6 +56,16 @@ public:
     /// Localized option pointer type.
     typedef boost::shared_ptr<LocalizedOption> LocalizedOptionPtr;
 
+    /// \brief Constructor, used for outgoing and incoming messages
+    ///
+    /// This constructor initializes transaction id and
+    /// transaction id offset of the packet with default
+    /// values.
+    ///
+    /// \param buf buffer holding contents of the message.
+    /// \param len length of the data in the buffer.
+    PerfPkt4(const uint8_t* buf, size_t len);
+
     /// \brief Constructor, used for outgoing DHCP messages.
     ///
     /// Creates new DHCPv4 message using provided buffer.
@@ -73,7 +83,7 @@ public:
     /// \param transid_offset transaction id offset in outgoing message.
     /// \param transid transaction id to be stored in outgoing message.
     PerfPkt4(const uint8_t* buf,
-             uint32_t len,
+             size_t len,
              size_t transid_offset,
              uint32_t transid);
 
@@ -100,7 +110,7 @@ public:
     /// \param len size of buffer of packet content.
     /// \param transid_offset transaction id offset in a message.
     PerfPkt4(const uint8_t* buf,
-             uint32_t len,
+             size_t len,
              size_t transid_offset);
 
     /// \brief Returns transaction id offset in packet buffer

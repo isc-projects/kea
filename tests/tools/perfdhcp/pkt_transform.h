@@ -15,7 +15,6 @@
 #ifndef __PKT_TRANSFORM_H
 #define __PKT_TRANSFORM_H
 
-#include <boost/shared_ptr.hpp>
 #include <dhcp/option.h>
 
 #include "localized_option.h"
@@ -27,20 +26,20 @@ namespace perfdhcp {
 ///
 /// This class provides static functions to read raw
 /// data from packet buffer and write raw data to packet
-/// buffer. When reading data with unpack() method, the 
-/// corresponding options objects are updated. 
-/// When writting to the packet buffer with pack() nethod, 
+/// buffer. When reading data with unpack() method, the
+/// corresponding options objects are updated.
+/// When writting to the packet buffer with pack() nethod,
 /// options objects carry input data to be written.
-/// This class is used both by \ref PerfPkt4 and 
+/// This class is used both by \ref PerfPkt4 and
 /// \ref PerfPkt6 classes in case DHCP packets are created
 /// from template files. In this case, some of the template
-/// packet's options are replaced before sending it to 
+/// packet's options are replaced before sending it to
 /// server. Offset of specific options are provided from
 /// command line by perfdhcp tool user and passed in
 /// options collection.
 /// This class also provide mechanism to read some data
-/// from incoming packet buffer and update options 
-/// in options collection with these data. 
+/// from incoming packet buffer and update options
+/// in options collection with these data.
 /// It is assumed either in case of writting or reading
 /// that all options have to be added to options collection
 /// and their offset have to be specified in buffer
@@ -54,11 +53,11 @@ public:
     /// to output buffer. Input buffer must contain whole
     /// initial packet data. Parts of this data will be
     /// overriden by options data specified in options
-    /// collection. Such options must have their offsets in 
+    /// collection. Such options must have their offsets in
     /// a packet specified (\see LocalizedOption to find out how
     /// to specify options offset).
     ///
-    /// \note Specified options must fit into size of the 
+    /// \note Specified options must fit into size of the
     /// initial packet data. Call to this function will fail
     /// if option's offset + its size is out of bounds.
     ///
@@ -71,7 +70,7 @@ public:
     /// offset
     /// \param transid transaction id value
     /// \param out_buffer output buffer holding "packed" data
-    /// 
+    ///
     /// \retrun false, if pack operation failed.
     static bool pack(const dhcp::Option::Universe universe,
                      const dhcp::OptionBuffer& in_buffer,
@@ -88,8 +87,8 @@ public:
     /// \ref isc::dhcp::Pkt6::addOption to specify which options to parse.
     /// Each option should be of the \ref isc::perfdhcp::LocalizedOption
     /// type with offset value indicated.
-    /// Transaction id offset is specified as separate argument and 
-    /// is used to read transaction id value from buffer. 
+    /// Transaction id offset is specified as separate argument and
+    /// is used to read transaction id value from buffer.
     ///
     /// \param universe universe used, V4 or V6
     /// \param in_buffer input buffer to be parsed
@@ -97,7 +96,7 @@ public:
     /// \param transid_offset offset of transaction id in input buffer
     /// \param transid transaction id value read from input buffer
     /// \return false, if unpack operation failed.
-    static bool unpack(const dhcp::Option::Universe universe, 
+    static bool unpack(const dhcp::Option::Universe universe,
                        const dhcp::OptionBuffer& in_buffer,
                        const dhcp::Option::OptionCollection& options,
                        const size_t transid_offset,
@@ -106,9 +105,9 @@ public:
 private:
     /// \brief Replaces options contents of options in a buffer
     ///
-    /// The method uses localized options collection added to 
-    /// replace parts of initial packet data (e.g. read from 
-    /// template file). 
+    /// The method uses localized options collection added to
+    /// replace parts of initial packet data (e.g. read from
+    /// template file).
     /// This private method is called from \ref PktTransform::pack
     ///
     /// \param in_buffer input buffer holding initial packet data.
@@ -123,24 +122,23 @@ private:
     ///
     /// The method reads options data from the input buffer
     /// and stores read data in options objects. Options
-    /// must have their offsets in a buffer specified 
+    /// must have their offsets in a buffer specified
     /// (\see LocalizedOption to find out how to specify
     /// option offset).
     /// This private method is called by \ref PktTransform::unpack.
     ///
-    /// \note This method iterates through all options in 
+    /// \note This method iterates through all options in
     /// options collection, checks offset of the option
     /// in input buffer and reads data from the buffer to
     /// update option's buffer. If provided options collection
     /// is empty, call to this function will have no effect.
-    /// 
+    ///
     /// \param universe universe used, V4 or V6
     /// \param in_buffer input buffer to be parsed.
-    /// \param options oprions collection with their offsets 
+    /// \param options oprions collection with their offsets
     /// in input buffer specified.
     /// \throw isc::Unexpected if options unpack failed.
-    static void unpackOptions(const dhcp::Option::Universe universe,
-                              const dhcp::OptionBuffer& in_buffer,
+    static void unpackOptions(const dhcp::OptionBuffer& in_buffer,
                               const dhcp::Option::OptionCollection& options);
 };
 
