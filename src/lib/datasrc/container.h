@@ -181,11 +181,14 @@ public:
             Exception(file, line, what)
         { }
     };
-    /// \brief Constructor.
+    /// \brief Sets the configuration.
     ///
-    /// This creates the container and fills it with data sources corresponding
-    /// to the configuration. The data sources are newly created or taken from
-    /// the container passed as old.
+    /// This fills the Container with data sources corresponding to the
+    /// configuration. The data sources are newly created or recycled from
+    /// previous configuration.
+    ///
+    /// If any error is detected, an exception is thrown and the current
+    /// configuration is preserved.
     ///
     /// \param configuration The JSON element describing the configuration to
     ///     use.
@@ -193,17 +196,11 @@ public:
     ///     configuration is used and some zones are cached into an In-Memory
     ///     data source according to it. If it is false, it is ignored and
     ///     no In-Memory data sources are created.
-    /// \param old This can be set to a previous container. It will be used as
-    ///     a source of data sources that were already created in the previous
-    ///     configuration. The designed use is when there's an update to
-    ///     configuration, so not all things would have to be re-created from
-    ///     scratch. Note that the old data source must not be used any more.
     /// \throw DataSourceError if there's a problem creating a data source.
     /// \throw ConfigurationError if the configuration is invalid in some
     ///     sense.
-    ConfigurableContainer(const data::ConstElementPtr& configuration,
-                          bool allow_cache,
-                          const ConstContainerPtr& old = ConstContainerPtr());
+    void configure(const data::ConstElementPtr& configuration,
+                   bool allow_cache);
     /// \brief Implementation of the Container::search.
     virtual SearchResult search(const dns::Name& zone,
                                 bool want_exact_match = false,

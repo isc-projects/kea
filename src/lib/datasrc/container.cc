@@ -25,10 +25,44 @@ using namespace std;
 namespace isc {
 namespace datasrc {
 
-ConfigurableContainer::ConfigurableContainer(const ConstElementPtr&, bool,
-                                             const ConstContainerPtr&)
-{
-    // TODO: Implement
+void
+ConfigurableContainer::configure(const ConstElementPtr& config, bool) {
+    // TODO: Implement the cache
+    // TODO: Implement recyclation from the old configuration.
+    size_t i(0); // Outside of the try to be able to access it in the catch
+    try {
+        vector<DataSourceInfo> new_data_sources;
+        for (; i < config->size(); ++i) {
+            // Extract the parameters
+            const ConstElementPtr dconf(config->get(i));
+            const ConstElementPtr typeElem(dconf->get("type"));
+            if (typeElem == ConstElementPtr()) {
+                isc_throw(ConfigurationError, "Missing the type option in "
+                          "data source no " << i);
+            }
+            const string type(typeElem->stringValue());
+            ConstElementPtr paramConf(dconf->get("params"));
+            if (paramConf == ConstElementPtr()) {
+                paramConf.reset(new NullElement());
+            }
+            // TODO: Special-case the master files type.
+            // Ask the factory to create the data source for us
+            const DataSourcePair ds(this->getDataSource(type, paramConf));
+            // And put it into the vector
+            DataSourceInfo info;
+            info.data_src_ = ds.first;
+            info.container_ = ds.second;
+            new_data_sources.push_back(info);
+        }
+        // If everything is OK up until now, we have the new configuration
+        // ready. So just put it there and let the old one die when we exit
+        // the scope.
+        data_sources_.swap(new_data_sources);
+    }
+    catch (const TypeError& te) {
+        isc_throw(ConfigurationError, "Malformed configuration at data source "
+                  "no. " << i << ": " << te.what());
+    }
 }
 
 Container::SearchResult

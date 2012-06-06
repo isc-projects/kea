@@ -113,10 +113,6 @@ private:
 // some methods to dig directly in the internals, for the tests.
 class TestedContainer : public ConfigurableContainer {
 public:
-    TestedContainer(const ConstElementPtr& configuration,
-                    bool allow_cache) :
-        ConfigurableContainer(configuration, allow_cache)
-    { }
     DataSources& dataSources() { return (data_sources_); }
     // Overwrite the containers method to get a data source with given type
     // and configuration. We mock the data source and don't create the
@@ -162,8 +158,13 @@ class ContainerTest : public ::testing::Test {
 public:
     ContainerTest() :
         // The empty list corresponds to a container with no elements inside
-        container_(new TestedContainer(ConstElementPtr(new ListElement()),
-                                       true))
+        container_(new TestedContainer()),
+        config_elem_(Element::fromJSON("["
+            "{"
+            "   \"type\": \"test_type\","
+            "   \"cache\": \"off\","
+            "   \"params\": {}"
+            "}]"))
     {
         for (size_t i(0); i < ds_count; ++ i) {
             shared_ptr<TestDS> ds(new TestDS(ds_zones[i]));
@@ -229,6 +230,7 @@ public:
     const Container::SearchResult negativeResult_;
     vector<shared_ptr<TestDS> > ds_;
     vector<ConfigurableContainer::DataSourceInfo> ds_info_;
+    const ConstElementPtr config_elem_;
 };
 
 // Test the test itself
@@ -341,7 +343,7 @@ TEST_F(ContainerTest, multiBestMatch) {
 // Check the configuration is empty when the list is empty
 TEST_F(ContainerTest, configureEmpty) {
     ConstElementPtr elem(new ListElement);
-    container_.reset(new TestedContainer(elem, true));
+    container_->configure(elem, true);
     EXPECT_TRUE(container_->dataSources().empty());
 }
 
@@ -359,7 +361,7 @@ TEST_F(ContainerTest, configureMulti) {
         "   \"params\": {}"
         "}]"
     ));
-    container_.reset(new TestedContainer(elem, true));
+    container_->configure(elem, true);
     EXPECT_EQ(2, container_->dataSources().size());
     checkDS(0, "type1", "{}");
     checkDS(1, "type2", "{}");
@@ -385,7 +387,7 @@ TEST_F(ContainerTest, configureParams) {
             "   \"cache\": \"off\","
             "   \"params\": ") + *param +
             "}]"));
-        container_.reset(new TestedContainer(elem, true));
+        container_->configure(elem, true);
         EXPECT_EQ(1, container_->dataSources().size());
         checkDS(0, "t", *param);
     }
@@ -412,11 +414,16 @@ TEST_F(ContainerTest, wrongConfig) {
         // TODO: Once cache is supported, add some invalid cache values
         NULL
     };
+    // Put something inside to see it survives the exception
+    container_->configure(config_elem_, true);
+    checkDS(0, "test_type", "{}");
     for (const char** config(configs); *config; ++config) {
         SCOPED_TRACE(*config);
         ConstElementPtr elem(Element::fromJSON(*config));
-        EXPECT_THROW(TestedContainer(elem, true),
+        EXPECT_THROW(container_->configure(elem, true),
                      ConfigurableContainer::ConfigurationError);
+        // Still untouched
+        checkDS(0, "test_type", "{}");
     }
 }
 
@@ -426,7 +433,7 @@ TEST_F(ContainerTest, defaults) {
         "{"
         "   \"type\": \"type1\""
         "}]"));
-    container_.reset(new TestedContainer(elem, true));
+    container_->configure(elem, true);
     EXPECT_EQ(1, container_->dataSources().size());
     checkDS(0, "type1", "null");
 }
@@ -437,7 +444,10 @@ TEST_F(ContainerTest, dataSrcError) {
         "{"
         "   \"type\": \"error\""
         "}]"));
-    EXPECT_THROW(TestedContainer(elem, true), DataSourceError);
+    container_->configure(config_elem_, true);
+    checkDS(0, "test_type", "{}");
+    EXPECT_THROW(container_->configure(elem, true), DataSourceError);
+    checkDS(0, "test_type", "{}");
 }
 
 }
