@@ -77,6 +77,32 @@ class DiffTest(unittest.TestCase):
         self.__rrset_multi.add_rdata(Rdata(self.__type, self.__rrclass,
                                            '192.0.2.2'))
 
+        # Also create a few other (valid) rrsets
+        # A SOA record
+        self.__rrset_soa = RRset(Name('example.org.'), self.__rrclass,
+                                 RRType.SOA(), RRTTL(3600))
+        self.__rrset_soa.add_rdata(Rdata(RRType.SOA(), self.__rrclass,
+                                         "ns1.example.org. " +
+                                         "admin.example.org. " +
+                                         "1233 3600 1800 2419200 7200"))
+        # A few single-rr rrsets that together would for a multi-rr rrset
+        self.__rrset3 = RRset(Name('c.example.org.'), self.__rrclass,
+                              RRType.TXT(), self.__ttl)
+        self.__rrset3.add_rdata(Rdata(RRType.TXT(), self.__rrclass, "one"))
+        self.__rrset4 = RRset(Name('c.example.org.'), self.__rrclass,
+                              RRType.TXT(), self.__ttl)
+        self.__rrset4.add_rdata(Rdata(RRType.TXT(), self.__rrclass, "two"))
+        self.__rrset5 = RRset(Name('c.example.org.'), self.__rrclass,
+                              RRType.TXT(), self.__ttl)
+        self.__rrset5.add_rdata(Rdata(RRType.TXT(), self.__rrclass, "three"))
+        self.__rrset6 = RRset(Name('d.example.org.'), self.__rrclass,
+                              RRType.A(), self.__ttl)
+        self.__rrset6.add_rdata(Rdata(RRType.A(), self.__rrclass, "192.0.2.1"))
+        self.__rrset7 = RRset(Name('d.example.org.'), self.__rrclass,
+                              RRType.A(), self.__ttl)
+        self.__rrset7.add_rdata(Rdata(RRType.A(), self.__rrclass, "192.0.2.2"))
+        
+
     def __mock_compact(self):
         """
         This can be put into the diff to hook into its compact method and see
@@ -533,55 +559,47 @@ class DiffTest(unittest.TestCase):
         and it must be the first change.
         '''
 
-        # First create some RRsets to play with
-        soa = RRset(Name('example.org.'), self.__rrclass, RRType.SOA(),
-                    RRTTL(3600))
-        soa.add_rdata(Rdata(soa.get_type(), soa.get_class(),
-                      "ns.example.org. foo.example.org. 1234 28800 "+
-                      "7200 604800 3600"))
-
-        a = RRset(Name('www.example.org.'), self.__rrclass, RRType.A(),
-                      RRTTL(3600))
-        a.add_rdata(Rdata(a.get_type(), a.get_class(),
-                        "192.0.2.1"))
-
-        a2 = RRset(Name('www.example.org.'), self.__rrclass, RRType.A(),
-                      RRTTL(3600))
-        a2.add_rdata(Rdata(a2.get_type(), a2.get_class(),
-                        "192.0.2.2"))
-
         # full rrset for A (to check compact())
-        a_1_2 = RRset(Name('www.example.org.'), self.__rrclass, RRType.A(),
-                      RRTTL(3600))
-        a_1_2.add_rdata(Rdata(a_1_2.get_type(), a_1_2.get_class(),
-                        "192.0.2.1"))
-        a_1_2.add_rdata(Rdata(a_1_2.get_type(), a_1_2.get_class(),
-                        "192.0.2.2"))
+        txt = RRset(Name('c.example.org.'), self.__rrclass, RRType.TXT(),
+                    RRTTL(3600))
+        txt.add_rdata(Rdata(txt.get_type(), txt.get_class(), "one"))
+        txt.add_rdata(Rdata(txt.get_type(), txt.get_class(), "two"))
+        txt.add_rdata(Rdata(txt.get_type(), txt.get_class(), "three"))
+        a = RRset(Name('d.example.org.'), self.__rrclass, RRType.A(),
+                  RRTTL(3600))
+        a.add_rdata(Rdata(a.get_type(), a.get_class(), "192.0.2.1"))
+        a.add_rdata(Rdata(a.get_type(), a.get_class(), "192.0.2.2"))
 
         diff = Diff(self, Name('example.org.'), single_update_mode=True)
 
         # adding a first should fail
         self.assertRaises(ValueError, diff.add_data, a)
         # But soa should work
-        diff.add_data(soa)
+        diff.add_data(self.__rrset_soa)
         # And then A should as well
-        diff.add_data(a)
-        diff.add_data(a2)
+        diff.add_data(self.__rrset3)
+        diff.add_data(self.__rrset4)
+        diff.add_data(self.__rrset5)
         # But another SOA should fail again
-        self.assertRaises(ValueError, diff.add_data, soa)
+        self.assertRaises(ValueError, diff.add_data, self.__rrset_soa)
 
         # Same for delete
-        self.assertRaises(ValueError, diff.delete_data, a)
-        diff.delete_data(soa)
-        diff.delete_data(a)
-        diff.delete_data(a2)
-        self.assertRaises(ValueError, diff.delete_data, soa)
+        self.assertRaises(ValueError, diff.delete_data, self.__rrset6)
+        diff.delete_data(self.__rrset_soa)
+        diff.delete_data(self.__rrset6)
+        diff.delete_data(self.__rrset7)
+        self.assertRaises(ValueError, diff.delete_data, self.__rrset_soa)
 
         # Not compacted yet, so the buffers should be as we
         # filled them
         (delbuf, addbuf) = diff.get_single_update_buffers()
-        self.assertEqual([('delete', soa), ('delete', a), ('delete', a2)], delbuf)
-        self.assertEqual([('add', soa), ('add', a), ('add', a2)], addbuf)
+        self.assertEqual([('delete', self.__rrset_soa),
+                          ('delete', self.__rrset6),
+                          ('delete', self.__rrset7)], delbuf)
+        self.assertEqual([('add', self.__rrset_soa),
+                          ('add', self.__rrset3),
+                          ('add', self.__rrset4),
+                          ('add', self.__rrset5)], addbuf)
 
         # Compact should compact the A records in both buffers
         diff.compact()
@@ -590,18 +608,18 @@ class DiffTest(unittest.TestCase):
         self.assertEqual(2, len(delbuf))
         self.assertEqual(2, len(delbuf[0]))
         self.assertEqual('delete', delbuf[0][0])
-        self.assertEqual(soa.to_text(), delbuf[0][1].to_text())
+        self.assertEqual(self.__rrset_soa.to_text(), delbuf[0][1].to_text())
         self.assertEqual(2, len(delbuf[1]))
         self.assertEqual('delete', delbuf[1][0])
-        self.assertEqual(a_1_2.to_text(), delbuf[1][1].to_text())
+        self.assertEqual(a.to_text(), delbuf[1][1].to_text())
 
         self.assertEqual(2, len(addbuf))
         self.assertEqual(2, len(addbuf[0]))
         self.assertEqual('add', addbuf[0][0])
-        self.assertEqual(soa.to_text(), addbuf[0][1].to_text())
+        self.assertEqual(self.__rrset_soa.to_text(), addbuf[0][1].to_text())
         self.assertEqual(2, len(addbuf[1]))
         self.assertEqual('add', addbuf[1][0])
-        self.assertEqual(a_1_2.to_text(), addbuf[1][1].to_text())
+        self.assertEqual(txt.to_text(), addbuf[1][1].to_text())
 
         # Apply should reset the buffers
         diff.apply()
@@ -613,6 +631,42 @@ class DiffTest(unittest.TestCase):
         # Adding non-SOA records should fail again.
         self.assertRaises(ValueError, diff.add_data, a)
         self.assertRaises(ValueError, diff.delete_data, a)
+
+    def test_add_delete_same(self):
+        '''
+        Test that if a record is added, then deleted, it is not added to
+        both buffers, but remove from the addition, and vice versa
+        '''
+        diff = Diff(self, Name('example.org.'), single_update_mode=True)
+        # Need SOA records first
+        diff.delete_data(self.__rrset_soa)
+        diff.add_data(self.__rrset_soa)
+
+        deletions, additions = diff.get_single_update_buffers()
+        self.assertEqual(1, len(deletions))
+        self.assertEqual(1, len(additions))
+
+
+        diff.add_data(self.__rrset1)
+        deletions, additions = diff.get_single_update_buffers()
+        self.assertEqual(1, len(deletions))
+        self.assertEqual(2, len(additions))
+
+        diff.delete_data(self.__rrset1)
+        deletions, additions = diff.get_single_update_buffers()
+        self.assertEqual(1, len(deletions))
+        self.assertEqual(1, len(additions))
+
+        diff.delete_data(self.__rrset2)
+        deletions, additions = diff.get_single_update_buffers()
+        self.assertEqual(2, len(deletions))
+        self.assertEqual(1, len(additions))
+
+        diff.add_data(self.__rrset2)
+        deletions, additions = diff.get_single_update_buffers()
+        self.assertEqual(1, len(deletions))
+        self.assertEqual(1, len(additions))
+
 
     def test_find(self):
         diff = Diff(self, Name('example.org.'))
@@ -674,6 +728,68 @@ class DiffTest(unittest.TestCase):
         self.assertTrue(self.__find_all_called)
         self.assertEqual(name, self.__find_all_name)
         self.assertEqual(options, self.__find_all_options)
+
+    def __common_remove_rr_from_buffer(self, diff, add_method, remove_method,
+                                       op_str, buf_nr):
+        add_method(self.__rrset_soa)
+        add_method(self.__rrset2)
+        add_method(self.__rrset3)
+        add_method(self.__rrset4)
+
+        # sanity check
+        buf = diff.get_single_update_buffers()[buf_nr]
+        expected = [ (op_str, str(rr)) for rr in [ self.__rrset_soa,
+                                                   self.__rrset2,
+                                                   self.__rrset3,
+                                                   self.__rrset4 ] ]
+        result = [ (op, str(rr)) for (op, rr) in buf ]
+        self.assertEqual(expected, result)
+
+        # remove one
+        self.assertTrue(remove_method(self.__rrset2))
+        buf = diff.get_single_update_buffers()[buf_nr]
+        expected = [ (op_str, str(rr)) for rr in [ self.__rrset_soa,
+                                                   self.__rrset3,
+                                                   self.__rrset4 ] ]
+        result = [ (op, str(rr)) for (op, rr) in buf ]
+        self.assertEqual(expected, result)
+
+        # SOA should not be removed
+        self.assertFalse(remove_method(self.__rrset_soa))
+        buf = diff.get_single_update_buffers()[buf_nr]
+        expected = [ (op_str, str(rr)) for rr in [ self.__rrset_soa,
+                                                   self.__rrset3,
+                                                   self.__rrset4 ] ]
+        result = [ (op, str(rr)) for (op, rr) in buf ]
+        self.assertEqual(expected, result)
+
+        # remove another
+        self.assertTrue(remove_method(self.__rrset4))
+        buf = diff.get_single_update_buffers()[buf_nr]
+        expected = [ (op_str, str(rr)) for rr in [ self.__rrset_soa,
+                                                   self.__rrset3 ] ]
+        result = [ (op, str(rr)) for (op, rr) in buf ]
+        self.assertEqual(expected, result)
+
+        # remove nonexistent should return False
+        self.assertFalse(remove_method(self.__rrset4))
+        buf = diff.get_single_update_buffers()[buf_nr]
+        expected = [ (op_str, str(rr)) for rr in [ self.__rrset_soa,
+                                                   self.__rrset3 ] ]
+        result = [ (op, str(rr)) for (op, rr) in buf ]
+        self.assertEqual(expected, result)
+
+    def test_remove_rr_from_additions(self):
+        diff = Diff(self, Name('example.org'), single_update_mode=True)
+        self.__common_remove_rr_from_buffer(diff, diff.add_data,
+                                               diff._remove_rr_from_additions,
+                                               'add', 1)
+
+    def test_remove_rr_from_deletions(self):
+        diff = Diff(self, Name('example.org'), single_update_mode=True)
+        self.__common_remove_rr_from_buffer(diff, diff.delete_data,
+                                            diff._remove_rr_from_deletions,
+                                            'delete', 0)
 
 if __name__ == "__main__":
     isc.log.init("bind10")
