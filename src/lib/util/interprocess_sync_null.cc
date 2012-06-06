@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,15 +12,31 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <stdlib.h>
-#include <gtest/gtest.h>
-#include <util/unittests/run_all.h>
+#include "interprocess_sync_null.h"
 
-#include <log/logger_support.h>
+namespace isc {
+namespace util {
 
-int
-main(int argc, char* argv[]) {
-    ::testing::InitGoogleTest(&argc, argv);
-    isc::log::initLogger();
-    return (isc::util::unittests::run_all());
+InterprocessSyncNull::~InterprocessSyncNull() {
 }
+
+bool
+InterprocessSyncNull::lock() {
+    is_locked_ = true;
+    return (true);
+}
+
+bool
+InterprocessSyncNull::tryLock() {
+    is_locked_ = true;
+    return (true);
+}
+
+bool
+InterprocessSyncNull::unlock() {
+    is_locked_ = false;
+    return (true);
+}
+
+} // namespace util
+} // namespace isc

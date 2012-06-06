@@ -34,7 +34,7 @@ using namespace isc::util;
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
 
-AAAA::AAAA(const string& addrstr) {
+AAAA::AAAA(const std::string& addrstr) {
     if (inet_pton(AF_INET6, addrstr.c_str(), &addr_) != 1) {
         isc_throw(InvalidRdataText,
                   "IN/AAAA RDATA construction from text failed: "
