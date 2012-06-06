@@ -28,7 +28,7 @@ using namespace isc::util;
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
 
-PTR::PTR(const string& type_str) :
+PTR::PTR(const std::string& type_str) :
     ptr_name_(type_str)
 {}
 

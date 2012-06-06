@@ -1187,6 +1187,7 @@ AC_OUTPUT([doc/version.ent
            src/lib/log/tests/destination_test.sh
            src/lib/log/tests/init_logger_test.sh
            src/lib/log/tests/local_file_test.sh
+           src/lib/log/tests/logger_lock_test.sh
            src/lib/log/tests/severity_test.sh
            src/lib/log/tests/tempdir.h
            src/lib/util/python/mkpywrapper.py
@@ -1235,6 +1236,7 @@ AC_OUTPUT([doc/version.ent
            chmod +x src/lib/log/tests/destination_test.sh
            chmod +x src/lib/log/tests/init_logger_test.sh
            chmod +x src/lib/log/tests/local_file_test.sh
+           chmod +x src/lib/log/tests/logger_lock_test.sh
            chmod +x src/lib/log/tests/severity_test.sh
            chmod +x src/lib/util/python/mkpywrapper.py
            chmod +x src/lib/util/python/gen_wiredata.py

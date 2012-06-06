@@ -32,6 +32,8 @@
 #include <log/logger_level_impl.h>
 #include <log/message_types.h>
 
+#include <util/interprocess_sync.h>
+
 namespace isc {
 namespace log {
 
@@ -167,6 +169,17 @@ public:
     /// This gets you the unformatted text of message for given ID.
     std::string* lookupMessage(const MessageID& id);
 
+    /// \brief Replace the interprocess synchronization object
+    ///
+    /// If this method is called with NULL as the argument, it throws a
+    /// BadInterprocessSync exception.
+    ///
+    /// \param sync The logger uses this synchronization object for
+    /// synchronizing output of log messages. It should be deletable and
+    /// the ownership is transferred to the logger implementation.
+    /// If NULL is passed, a BadInterprocessSync exception is thrown.
+    void setInterprocessSync(isc::util::InterprocessSync* sync);
+
     /// \brief Equality
     ///
     /// Check if two instances of this logger refer to the same stream.
@@ -178,8 +191,9 @@ public:
     }
 
 private:
-    std::string         name_;              ///< Full name of this logger
-    log4cplus::Logger   logger_;            ///< Underlying log4cplus logger
+    std::string                  name_;   ///< Full name of this logger
+    log4cplus::Logger            logger_; ///< Underlying log4cplus logger
+    isc::util::InterprocessSync* sync_;
 };
 
 } // namespace log
