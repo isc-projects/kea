@@ -24,6 +24,7 @@ But for now, it lives here.
 """
 
 import isc.dns
+from isc.datasrc import ZoneFinder
 import isc.log
 from isc.datasrc import ZoneFinder
 from isc.log_messages.libxfrin_messages import *
@@ -180,9 +181,13 @@ class Diff:
                              str(self.__updater.get_class()))
         if self.__single_update_mode:
             if operation == 'add':
-                self.__append_with_soa_check(self.__additions, operation, rr)
+                if not self._remove_rr_from_deletions(rr):
+                    self.__append_with_soa_check(self.__additions, operation,
+                                                 rr)
             elif operation == 'delete':
-                self.__append_with_soa_check(self.__deletions, operation, rr)
+                if not self._remove_rr_from_additions(rr):
+                    self.__append_with_soa_check(self.__deletions, operation,
+                                                 rr)
         else:
             self.__buffer.append((operation, rr))
             if len(self.__buffer) >= DIFF_APPLY_TRESHOLD:
@@ -407,3 +412,147 @@ class Diff:
         """
         self.__check_committed()
         return self.__updater.find_all(name, options)
+
+    def _remove_name_from_buffer(self, buf, name):
+        return [ op for op in buf if\
+                    op[1].get_name() != name or\
+                    op[1].get_type() == isc.dns.RRType.SOA() ]
+
+    def _remove_name_type_from_buffer(self, buf, name, rrtype):
+        if rrtype == isc.dns.RRType.SOA():
+            return buf
+        else:
+            return [ op for op in buf if\
+                        op[1].get_name() != name or\
+                        op[1].get_type() != rrtype ]
+
+    def __remove_rr_from_buffer(self, buf, rr):
+        '''Helper for common code in remove_rr_from_deletions() and
+           remove_rr_from_additions();
+           returns the result of the removal operation on the given buffer
+        '''
+        def same_rr(a, b):
+            # Consider two rr's the same if name, type, and rdata match
+            # Note that at this point it should have been checked that
+            # the rr in the buffer and the given rr have exactly one rdata
+            return a.get_name() == b.get_name() and\
+                   a.get_type() == b.get_type() and\
+                   a.get_rdata()[0] == b.get_rdata()[0]
+        if rr.get_type() == isc.dns.RRType.SOA():
+            return buf
+        else:
+            return [ op for op in buf if not same_rr(op[1], rr)]
+
+    def _remove_rr_from_deletions(self, rr):
+        '''
+        Removes the given rr from the currently buffered deletions;
+        returns True if anything is removed, False if the RR was not present.
+        This method is protected; it is not meant to be called from anywhere
+        but the add_data() method. It is not private for easier testing.
+        '''
+        orig_size = len(self.__deletions)
+        self.__deletions = self.__remove_rr_from_buffer(self.__deletions, rr)
+        return len(self.__deletions) != orig_size
+
+    def _remove_rr_from_additions(self, rr):
+        '''
+        Removes the given rr from the currently buffered additions;
+        returns True if anything is removed, False if the RR was not present.
+        This method is protected; it is not meant to be called from anywhere
+        but the delete_data() method. It is not private for easier testing.
+        '''
+        orig_size = len(self.__additions)
+        self.__additions = self.__remove_rr_from_buffer(self.__additions, rr)
+        return len(self.__additions) != orig_size
+
+    def _get_name_from_additions(self, name):
+        '''
+        Returns a list of all rrs in the additions queue that have the given
+        Name.
+        This method is protected; it is not meant to be called from anywhere
+        but the find_all_updated() method. It is not private for easier
+        testing.
+        '''
+        return [ rr for (_, rr) in self.__additions if rr.get_name() == name ]
+
+    def _get_name_from_deletions(self, name):
+        '''
+        Returns a list of all rrs in the deletions queue that have the given
+        Name
+        This method is protected; it is not meant to be called from anywhere
+        but the find_all_updated() method. It is not private for easier
+        testing.
+        '''
+        return [ rr for (_, rr) in self.__deletions if rr.get_name() == name ]
+
+    def _get_name_type_from_additions(self, name, rrtype):
+        '''
+        Returns a list of the rdatas of the rrs in the additions queue that
+        have the given name and type
+        This method is protected; it is not meant to be called from anywhere
+        but the find_updated() method. It is not private for easier testing.
+        '''
+        return [ rr.get_rdata()[0] for (_, rr) in self.__additions if rr.get_name() == name and rr.get_type() == rrtype ]
+
+    def _get_name_type_from_deletions(self, name, rrtype):
+        '''
+        Returns a list of the rdatas of the rrs in the deletions queue that
+        have the given name and type
+        This method is protected; it is not meant to be called from anywhere
+        but the find_updated() method. It is not private for easier testing.
+        '''
+        return [ rr.get_rdata()[0] for (_, rr) in self.__deletions if rr.get_name() == name and rr.get_type() == rrtype ]
+
+    def find_updated(self, name, rrtype):
+        '''
+        Returns the result of find(), but with current updates applied, i.e.
+        as if this diff has been committed. Only works for find results
+        SUCCESS, NXDOMAIN, and NXRRSET.
+        '''
+        result, rrset, flags = self.find(name, rrtype)
+
+        # Create a new rrset object;
+        # - add all rdatas from the found rrset, unless they are in __deletions
+        # - add all rdatas from additions
+        added_rrs = self._get_name_type_from_additions(name, rrtype)
+        deleted_rrs = self._get_name_type_from_deletions(name, rrtype)
+
+        if result == ZoneFinder.SUCCESS:
+            new_rrset = isc.dns.RRset(name, self.__updater.get_class(),
+                                      rrtype, rrset.get_ttl())
+            for rdata in rrset.get_rdata():
+                if rdata not in deleted_rrs:
+                    new_rrset.add_rdata(rdata)
+        elif (result == ZoneFinder.NXDOMAIN or result == ZoneFinder.NXRRSET)\
+             and len(added_rrs) > 0:
+            new_rrset = isc.dns.RRset(name, self.__updater.get_class(),
+                                      rrtype, added_rrs[0].get_ttl())
+            # There was no data in the zone, but there is data now
+            result = SUCCESS
+        else:
+            # Can't reliably handle other cases, just return the original
+            # data
+            return result, rrset, flags
+
+        for rdata in added_rrs:
+            new_rrset.add_rdata(rdata)
+
+        return result, new_rrset, flags
+
+    def find_all_updated(self, name):
+        result, rrsets, flags = self.find_all(name)
+        new_rrsets = []
+        added_rrs = self._get_name_from_additions(name)
+        if result == ZoneFinder.SUCCESS and\
+           (flags & ZoneFinder.RESULT_WILDCARD == 0):
+            deleted_rrs = self._get_name_from_deletions(name)
+            for rr in rrsets:
+                if rr not in deleted_rrs:
+                    new_rrsets.append(rr)
+        elif result == ZoneFinder.NXDOMAIN and\
+            len(added_rrs) > 0:
+            result = SUCCESS
+        for rr in added_rrs:
+            if rr.get_name() == name:
+                new_rrsets.append(rr)
+        return result, new_rrsets, flags
