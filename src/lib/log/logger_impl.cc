@@ -32,12 +32,14 @@
 #include <log/message_types.h>
 
 #include <util/strutil.h>
+#include <util/interprocess_sync_file.h>
 
 // Note: as log4cplus and the BIND 10 logger have many concepts in common, and
 // thus many similar names, to disambiguate types we don't "use" the log4cplus
 // namespace: instead, all log4cplus types are explicitly qualified.
 
 using namespace std;
+using namespace isc::util;
 
 namespace isc {
 namespace log {
@@ -47,14 +49,17 @@ namespace log {
 // one compiler requires that all member variables be constructed before the
 // constructor is run, but log4cplus::Logger (the type of logger_) has no
 // default constructor.
-LoggerImpl::LoggerImpl(const string& name) : name_(expandLoggerName(name)),
-    logger_(log4cplus::Logger::getInstance(name_))
+LoggerImpl::LoggerImpl(const string& name) :
+    name_(expandLoggerName(name)),
+    logger_(log4cplus::Logger::getInstance(name_)),
+    sync_(new InterprocessSyncFile("logger"))
 {
 }
 
 // Destructor. (Here because of virtual declaration.)
 
 LoggerImpl::~LoggerImpl() {
+    delete sync_;
 }
 
 // Set the severity for logging.
@@ -102,8 +107,30 @@ LoggerImpl::lookupMessage(const MessageID& ident) {
                        MessageDictionary::globalDictionary().getText(ident)));
 }
 
+// Replace the interprocess synchronization object
+
+void
+LoggerImpl::setInterprocessSync(isc::util::InterprocessSync* sync) {
+    if (sync == NULL) {
+        isc_throw(BadInterprocessSync,
+                  "NULL was passed to setInterprocessSync()");
+    }
+
+    delete sync_;
+    sync_ = sync;
+}
+
 void
 LoggerImpl::outputRaw(const Severity& severity, const string& message) {
+    // Use an interprocess sync locker for mutual exclusion from other
+    // processes to avoid log messages getting interspersed.
+
+    InterprocessSyncLocker locker(*sync_);
+
+    if (!locker.lock()) {
+        LOG4CPLUS_ERROR(logger_, "Unable to lock logger lockfile");
+    }
+
     switch (severity) {
         case DEBUG:
             LOG4CPLUS_DEBUG(logger_, message);
@@ -123,6 +150,10 @@ LoggerImpl::outputRaw(const Severity& severity, const string& message) {
 
         case FATAL:
             LOG4CPLUS_FATAL(logger_, message);
+    }
+
+    if (!locker.unlock()) {
+        LOG4CPLUS_ERROR(logger_, "Unable to unlock logger lockfile");
     }
 }
 

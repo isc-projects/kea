@@ -31,7 +31,7 @@ using isc::dns::RRType;
 namespace isc {
 namespace dns {
 
-RRType::RRType(const string& typestr) {
+RRType::RRType(const std::string& typestr) {
     typecode_ = RRParamRegistry::getRegistry().textToTypeCode(typestr);
 }
 

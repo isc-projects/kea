@@ -405,3 +405,5 @@ EXTRA_DIST += ext/coroutine/coroutine.h
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = dns++.pc
+
+CLEANFILES = $(abs_top_builddir)/logger_lockfile

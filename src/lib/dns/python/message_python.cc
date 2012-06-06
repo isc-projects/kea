@@ -209,12 +209,24 @@ Message_getHeaderFlag(s_Message* self, PyObject* args) {
         return (NULL);
     }
 
-    if (self->cppobj->getHeaderFlag(
+    try {
+        if (self->cppobj->getHeaderFlag(
             static_cast<Message::HeaderFlag>(messageflag))) {
-        Py_RETURN_TRUE;
-    } else {
-        Py_RETURN_FALSE;
+            Py_RETURN_TRUE;
+        } else {
+            Py_RETURN_FALSE;
+        }
+    } catch (const isc::InvalidParameter& ip) {
+        PyErr_Clear();
+        PyErr_SetString(po_InvalidParameter, ip.what());
+    } catch (const exception& ex) {
+        const string ex_what = "Error in Message.get_header_flag(): " + string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+    } catch (...) {
+        PyErr_SetString(po_IscException,
+                        "Unexpected exception in Message.get_header_flag()");
     }
+    return (NULL);
 }
 
 PyObject*
@@ -240,12 +252,17 @@ Message_setHeaderFlag(s_Message* self, PyObject* args) {
     } catch (const InvalidMessageOperation& imo) {
         PyErr_Clear();
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
-        return (NULL);
     } catch (const isc::InvalidParameter& ip) {
         PyErr_Clear();
         PyErr_SetString(po_InvalidParameter, ip.what());
-        return (NULL);
+    } catch (const exception& ex) {
+        const string ex_what = "Error in Message.set_header_flag(): " + string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+    } catch (...) {
+        PyErr_SetString(po_IscException,
+                        "Unexpected exception in Message.set_header_flag()");
     }
+    return (NULL);
 }
 
 PyObject*
@@ -273,8 +290,14 @@ Message_setQid(s_Message* self, PyObject* args) {
         Py_RETURN_NONE;
     } catch (const InvalidMessageOperation& imo) {
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
-        return (NULL);
+    } catch (const exception& ex) {
+        const string ex_what = "Error in Message.get_qid(): " + string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+    } catch (...) {
+        PyErr_SetString(po_IscException,
+                        "Unexpected exception in Message.set_qid()");
     }
+    return (NULL);
 }
 
 PyObject*
@@ -283,11 +306,14 @@ Message_getRcode(s_Message* self) {
         return (createRcodeObject(self->cppobj->getRcode()));
     } catch (const InvalidMessageOperation& imo) {
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
-        return (NULL);
+    } catch (const exception& ex) {
+        const string ex_what = "Error in Message.get_rcode(): " + string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
     } catch (...) {
-        PyErr_SetString(po_IscException, "Unexpected exception");
-        return (NULL);
+        PyErr_SetString(po_IscException,
+                        "Unexpected exception in Message.get_rcode()");
     }
+    return (NULL);
 }
 
 PyObject*
@@ -301,8 +327,14 @@ Message_setRcode(s_Message* self, PyObject* args) {
         Py_RETURN_NONE;
     } catch (const InvalidMessageOperation& imo) {
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
-        return (NULL);
+    } catch (const exception& ex) {
+        const string ex_what = "Error in Message.set_rcode(): " + string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+    } catch (...) {
+        PyErr_SetString(po_IscException,
+                        "Unexpected exception in Message.set_rcode()");
     }
+    return (NULL);
 }
 
 PyObject*
@@ -311,17 +343,14 @@ Message_getOpcode(s_Message* self) {
         return (createOpcodeObject(self->cppobj->getOpcode()));
     } catch (const InvalidMessageOperation& imo) {
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
-        return (NULL);
     } catch (const exception& ex) {
-        const string ex_what =
-            "Failed to get message opcode: " + string(ex.what());
+        const string ex_what = "Error in Message.get_opcode(): " + string(ex.what());
         PyErr_SetString(po_IscException, ex_what.c_str());
-        return (NULL);
     } catch (...) {
         PyErr_SetString(po_IscException,
-                        "Unexpected exception getting opcode from message");
-        return (NULL);
+                        "Unexpected exception in Message.get_opcode()");
     }
+    return (NULL);
 }
 
 PyObject*
@@ -335,8 +364,14 @@ Message_setOpcode(s_Message* self, PyObject* args) {
         Py_RETURN_NONE;
     } catch (const InvalidMessageOperation& imo) {
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
-        return (NULL);
+    } catch (const exception& ex) {
+        const string ex_what = "Error in Message.set_opcode(): " + string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+    } catch (...) {
+        PyErr_SetString(po_IscException,
+                        "Unexpected exception in Message.set_opcode()");
     }
+    return (NULL);
 }
 
 PyObject*
@@ -348,12 +383,11 @@ Message_getEDNS(s_Message* self) {
     try {
         return (createEDNSObject(*src));
     } catch (const exception& ex) {
-        const string ex_what =
-            "Failed to get EDNS from message: " + string(ex.what());
+        const string ex_what = "Error in Message.get_edns(): " + string(ex.what());
         PyErr_SetString(po_IscException, ex_what.c_str());
     } catch (...) {
         PyErr_SetString(PyExc_SystemError,
-                        "Unexpected failure getting EDNS from message");
+                        "Unexpected exception in Message.get_edns()");
     }
     return (NULL);
 }
@@ -369,8 +403,14 @@ Message_setEDNS(s_Message* self, PyObject* args) {
         Py_RETURN_NONE;
     } catch (const InvalidMessageOperation& imo) {
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
-        return (NULL);
+    } catch (const exception& ex) {
+        const string ex_what = "Error in Message.set_edns(): " + string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+    } catch (...) {
+        PyErr_SetString(po_IscException,
+                        "Unexpected exception in Message.set_edns()");
     }
+    return (NULL);
 }
 
 PyObject*
@@ -386,13 +426,11 @@ Message_getTSIGRecord(s_Message* self) {
     } catch (const InvalidMessageOperation& ex) {
         PyErr_SetString(po_InvalidMessageOperation, ex.what());
     } catch (const exception& ex) {
-        const string ex_what =
-            "Unexpected failure in getting TSIGRecord from message: " +
-            string(ex.what());
+        const string ex_what = "Error in Message.get_tsig_record(): " + string(ex.what());
         PyErr_SetString(po_IscException, ex_what.c_str());
     } catch (...) {
-        PyErr_SetString(PyExc_SystemError, "Unexpected failure in "
-                        "getting TSIGRecord from message");
+        PyErr_SetString(po_IscException,
+                        "Unexpected exception in Message.get_tsig_record()");
     }
     return (NULL);
 }
@@ -411,8 +449,14 @@ Message_getRRCount(s_Message* self, PyObject* args) {
                                   static_cast<Message::Section>(section))));
     } catch (const isc::OutOfRange& ex) {
         PyErr_SetString(PyExc_OverflowError, ex.what());
-        return (NULL);
+    } catch (const exception& ex) {
+        const string ex_what = "Error in Message.get_rr_count(): " + string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+    } catch (...) {
+        PyErr_SetString(po_IscException,
+                        "Unexpected exception in Message.get_rr_count()");
     }
+    return (NULL);
 }
 
 // This is a helper templated class commonly used for getQuestion and
@@ -453,13 +497,11 @@ Message_getQuestion(PyObject* po_self, PyObject*) {
     } catch (const InvalidMessageSection& ex) {
         PyErr_SetString(po_InvalidMessageSection, ex.what());
     } catch (const exception& ex) {
-        const string ex_what =
-            "Unexpected failure in Message.get_question: " +
-            string(ex.what());
+        const string ex_what = "Error in Message.get_question(): " + string(ex.what());
         PyErr_SetString(po_IscException, ex_what.c_str());
     } catch (...) {
-        PyErr_SetString(PyExc_SystemError,
-                        "Unexpected failure in Message.get_question");
+        PyErr_SetString(po_IscException,
+                        "Unexpected exception in Message.get_question()");
     }
     return (NULL);
 }
@@ -489,13 +531,11 @@ Message_getSection(PyObject* po_self, PyObject* args) {
     } catch (const InvalidMessageSection& ex) {
         PyErr_SetString(po_InvalidMessageSection, ex.what());
     } catch (const exception& ex) {
-        const string ex_what =
-            "Unexpected failure in Message.get_section: " +
-            string(ex.what());
+        const string ex_what = "Error in Message.get_section(): " + string(ex.what());
         PyErr_SetString(po_IscException, ex_what.c_str());
     } catch (...) {
-        PyErr_SetString(PyExc_SystemError,
-                        "Unexpected failure in Message.get_section");
+        PyErr_SetString(po_IscException,
+                        "Unexpected exception in Message.get_section()");
     }
     return (NULL);
 }
@@ -513,9 +553,20 @@ Message_addQuestion(s_Message* self, PyObject* args) {
         return (NULL);
     }
 
-    self->cppobj->addQuestion(PyQuestion_ToQuestion(question));
-
-    Py_RETURN_NONE;
+    try {
+        self->cppobj->addQuestion(PyQuestion_ToQuestion(question));
+        Py_RETURN_NONE;
+    } catch (const InvalidMessageOperation& imo) {
+        PyErr_Clear();
+        PyErr_SetString(po_InvalidMessageOperation, imo.what());
+    } catch (const exception& ex) {
+        const string ex_what = "Error in Message.add_question(): " + string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+    } catch (...) {
+        PyErr_SetString(po_IscException,
+                        "Unexpected exception in Message.add_question()");
+    }
+    return (NULL);
 }
 
 PyObject*
@@ -534,36 +585,45 @@ Message_addRRset(s_Message* self, PyObject* args) {
         Py_RETURN_NONE;
     } catch (const InvalidMessageOperation& imo) {
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
-        return (NULL);
     } catch (const isc::OutOfRange& ex) {
         PyErr_SetString(PyExc_OverflowError, ex.what());
-        return (NULL);
+    } catch (const exception& ex) {
+        const string ex_what = "Error in Message.add_rrset(): " + string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
     } catch (...) {
         PyErr_SetString(po_IscException,
-                        "Unexpected exception in adding RRset");
-        return (NULL);
+                        "Unexpected exception in Message.add_rrset()");
     }
+    return (NULL);
 }
 
 PyObject*
 Message_clear(s_Message* self, PyObject* args) {
     int i;
-    if (PyArg_ParseTuple(args, "i", &i)) {
-        PyErr_Clear();
-        if (i == Message::PARSE) {
-            self->cppobj->clear(Message::PARSE);
-            Py_RETURN_NONE;
-        } else if (i == Message::RENDER) {
-            self->cppobj->clear(Message::RENDER);
-            Py_RETURN_NONE;
-        } else {
-            PyErr_SetString(PyExc_TypeError,
-                            "Message mode must be Message.PARSE or Message.RENDER");
-            return (NULL);
+
+    try {
+        if (PyArg_ParseTuple(args, "i", &i)) {
+            PyErr_Clear();
+            if (i == Message::PARSE) {
+                self->cppobj->clear(Message::PARSE);
+                Py_RETURN_NONE;
+            } else if (i == Message::RENDER) {
+                self->cppobj->clear(Message::RENDER);
+                Py_RETURN_NONE;
+            } else {
+                PyErr_SetString(PyExc_TypeError,
+                                "Message mode must be Message.PARSE or Message.RENDER");
+                return (NULL);
+            }
         }
-    } else {
-        return (NULL);
+    } catch (const exception& ex) {
+        const string ex_what = "Error in Message.clear(): " + string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+    } catch (...) {
+        PyErr_SetString(po_IscException,
+                        "Unexpected exception in Message.clear()");
     }
+    return (NULL);
 }
 
 PyObject*
@@ -579,21 +639,34 @@ Message_clearSection(PyObject* pyself, PyObject* args) {
         Py_RETURN_NONE;
     } catch (const InvalidMessageOperation& imo) {
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
-        return (NULL);
     } catch (const isc::OutOfRange& ex) {
         PyErr_SetString(PyExc_OverflowError, ex.what());
-        return (NULL);
+    } catch (const exception& ex) {
+        const string ex_what = "Error in Message.clear_section(): " + string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
     } catch (...) {
         PyErr_SetString(po_IscException,
-                        "Unexpected exception in adding RRset");
-        return (NULL);
+                        "Unexpected exception in Message.clear_section()");
     }
+    return (NULL);
 }
 
 PyObject*
 Message_makeResponse(s_Message* self) {
-    self->cppobj->makeResponse();
-    Py_RETURN_NONE;
+    try {
+        self->cppobj->makeResponse();
+        Py_RETURN_NONE;
+    } catch (const InvalidMessageOperation& imo) {
+        PyErr_Clear();
+        PyErr_SetString(po_InvalidMessageOperation, imo.what());
+    } catch (const exception& ex) {
+        const string ex_what = "Error in Message.make_response(): " + string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+    } catch (...) {
+        PyErr_SetString(po_IscException,
+                        "Unexpected exception in Message.make_response()");
+    }
+    return (NULL);
 }
 
 PyObject*
@@ -604,11 +677,14 @@ Message_toText(s_Message* self) {
     } catch (const InvalidMessageOperation& imo) {
         PyErr_Clear();
         PyErr_SetString(po_InvalidMessageOperation, imo.what());
-        return (NULL);
+    } catch (const exception& ex) {
+        const string ex_what = "Error in Message.to_text(): " + string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
     } catch (...) {
-        PyErr_SetString(po_IscException, "Unexpected exception");
-        return (NULL);
+        PyErr_SetString(po_IscException,
+                        "Unexpected exception in Message.to_text()");
     }
+    return (NULL);
 }
 
 PyObject*
@@ -639,22 +715,18 @@ Message_toWire(s_Message* self, PyObject* args) {
         } catch (const InvalidMessageOperation& imo) {
             PyErr_Clear();
             PyErr_SetString(po_InvalidMessageOperation, imo.what());
-            return (NULL);
         } catch (const TSIGContextError& ex) {
             // toWire() with a TSIG context can fail due to this if the
             // python program has a bug.
             PyErr_SetString(po_TSIGContextError, ex.what());
-            return (NULL);
-        } catch (const std::exception& ex) {
-            // Other exceptions should be rare (most likely an implementation
-            // bug)
-            PyErr_SetString(po_TSIGContextError, ex.what());
-            return (NULL);
+        } catch (const exception& ex) {
+            const string ex_what = "Error in Message.to_wire(): " + string(ex.what());
+            PyErr_SetString(po_TSIGContextError, ex_what.c_str());
         } catch (...) {
-            PyErr_SetString(PyExc_RuntimeError,
-                            "Unexpected C++ exception in Message.to_wire");
-            return (NULL);
+            PyErr_SetString(po_IscException,
+                            "Unexpected exception in Message.to_wire()");
         }
+        return (NULL);
     }
     PyErr_Clear();
     PyErr_SetString(PyExc_TypeError,
@@ -682,29 +754,22 @@ Message_fromWire(PyObject* pyself, PyObject* args) {
             Py_RETURN_NONE;
         } catch (const InvalidMessageOperation& imo) {
             PyErr_SetString(po_InvalidMessageOperation, imo.what());
-            return (NULL);
         } catch (const DNSMessageFORMERR& dmfe) {
             PyErr_SetString(po_DNSMessageFORMERR, dmfe.what());
-            return (NULL);
         } catch (const DNSMessageBADVERS& dmfe) {
             PyErr_SetString(po_DNSMessageBADVERS, dmfe.what());
-            return (NULL);
         } catch (const MessageTooShort& mts) {
             PyErr_SetString(po_MessageTooShort, mts.what());
-            return (NULL);
         } catch (const InvalidBufferPosition& ex) {
             PyErr_SetString(po_DNSMessageFORMERR, ex.what());
-            return (NULL);
         } catch (const exception& ex) {
-            const string ex_what =
-                "Error in Message.from_wire: " + string(ex.what());
-            PyErr_SetString(PyExc_RuntimeError, ex_what.c_str());
-            return (NULL);
+            const string ex_what = "Error in Message.from_wire(): " + string(ex.what());
+            PyErr_SetString(po_IscException, ex_what.c_str());
         } catch (...) {
-            PyErr_SetString(PyExc_RuntimeError,
-                            "Unexpected exception in Message.from_wire");
-            return (NULL);
+            PyErr_SetString(po_IscException,
+                            "Unexpected exception in Message.from_wire()");
         }
+        return (NULL);
     }
 
     PyErr_SetString(PyExc_TypeError,
