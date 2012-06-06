@@ -15,7 +15,7 @@
 
 import isc.log
 import unittest
-import isc.datasrc
+from isc.datasrc import ZoneFinder
 from isc.dns import Name, RRset, RRClass, RRType, RRTTL, Rdata
 from isc.xfrin.diff import Diff, NoSuchZone
 
@@ -289,6 +289,9 @@ class DiffTest(unittest.TestCase):
         self.assertRaises(ValueError, diff.commit)
         self.assertRaises(ValueError, diff.add_data, self.__rrset2)
         self.assertRaises(ValueError, diff.delete_data, self.__rrset1)
+        self.assertRaises(ValueError, diff.find, Name('foo.example.org.'),
+                          RRType.A())
+        self.assertRaises(ValueError, diff.find_all, Name('foo.example.org.'))
         diff.apply = orig_apply
         self.assertRaises(ValueError, diff.apply)
         # This one does not state it should raise, so check it doesn't
@@ -626,15 +629,14 @@ class DiffTest(unittest.TestCase):
         self.assertTrue(self.__find_called)
         self.assertEqual(name, self.__find_name)
         self.assertEqual(rrtype, self.__find_type)
-        self.assertEqual(isc.datasrc.ZoneFinder.FIND_DEFAULT,
+        self.assertEqual(ZoneFinder.NO_WILDCARD | ZoneFinder.FIND_GLUE_OK,
                          self.__find_options)
 
     def test_find_options(self):
         diff = Diff(self, Name('example.org.'))
         name = Name('foo.example.org.')
         rrtype = RRType.TXT()
-        options = isc.datasrc.ZoneFinder.NO_WILDCARD |\
-                  isc.datasrc.ZoneFinder.FIND_GLUE_OK
+        options = ZoneFinder.NO_WILDCARD
 
         self.assertEqual("find_return", diff.find(name, rrtype, options))
 
@@ -655,14 +657,13 @@ class DiffTest(unittest.TestCase):
 
         self.assertTrue(self.__find_all_called)
         self.assertEqual(name, self.__find_all_name)
-        self.assertEqual(isc.datasrc.ZoneFinder.FIND_DEFAULT,
+        self.assertEqual(ZoneFinder.NO_WILDCARD | ZoneFinder.FIND_GLUE_OK,
                          self.__find_all_options)
 
     def test_find_all_options(self):
         diff = Diff(self, Name('example.org.'))
         name = Name('www.example.org.')
-        options = isc.datasrc.ZoneFinder.NO_WILDCARD |\
-                  isc.datasrc.ZoneFinder.FIND_GLUE_OK
+        options = isc.datasrc.ZoneFinder.NO_WILDCARD
 
         self.assertFalse(self.__find_all_called)
         self.assertEqual(None, self.__find_all_name)
