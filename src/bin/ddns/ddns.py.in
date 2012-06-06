@@ -305,8 +305,8 @@ class DDNSServer:
                                isc.server_common.tsig_keyring.get_keyring())
         tsig_error = tsig_ctx.verify(tsig_record, req_data)
         if tsig_error != TSIGError.NOERROR:
-            raise InternalError("Failed to verify request's TSIG: " +
-                                str(tsig_error))
+            raise self.InternalError("Failed to verify request's TSIG: " +
+                                     str(tsig_error))
         return tsig_ctx
 
     def handle_request(self, req_session):
@@ -343,13 +343,14 @@ class DDNSServer:
         # as an internal error and don't bother to respond.
         try:
             if sock.proto == socket.IPPROTO_TCP:
-                raise InternalError('TCP requests are not yet supported')
+                raise self.InternalError('TCP requests are not yet supported')
             self.__request_msg.clear(Message.PARSE)
             # specify PRESERVE_ORDER as we need to handle each RR separately.
             self.__request_msg.from_wire(req_data, Message.PRESERVE_ORDER)
             if self.__request_msg.get_opcode() != Opcode.UPDATE():
-                raise InternalError('Update request has unexpected opcode: ' +
-                                    str(self.__request_msg.get_opcode()))
+                raise self.InternalError('Update request has unexpected '
+                                         'opcode: ' +
+                                         str(self.__request_msg.get_opcode()))
             tsig_ctx = self.__check_request_tsig(self.__request_msg, req_data)
         except Exception as ex:
             logger.error(DDNS_REQUEST_PARSE_FAIL, ex)
