@@ -14,6 +14,7 @@
 
 #include <datasrc/container.h>
 #include <datasrc/client.h>
+#include <datasrc/data_source.h>
 
 #include <dns/rrclass.h>
 
@@ -123,6 +124,9 @@ public:
     virtual DataSourcePair getDataSource(const string& type,
                                          const ConstElementPtr& configuration)
     {
+        if (type == "error") {
+            isc_throw(DataSourceError, "The error data source type");
+        }
         shared_ptr<TestDS> ds(new TestDS(type, configuration));
         // Make sure it is deleted when the test container is deleted.
         to_delete_.push_back(ds);
@@ -422,8 +426,18 @@ TEST_F(ContainerTest, defaults) {
         "{"
         "   \"type\": \"type1\""
         "}]"));
+    container_.reset(new TestedContainer(elem, true));
     EXPECT_EQ(1, container_->dataSources().size());
     checkDS(0, "type1", "null");
+}
+
+// Make sure the data source error exception from the factory is propagated
+TEST_F(ContainerTest, dataSrcError) {
+    ConstElementPtr elem(Element::fromJSON("["
+        "{"
+        "   \"type\": \"error\""
+        "}]"));
+    EXPECT_THROW(TestedContainer(elem, true), DataSourceError);
 }
 
 }
