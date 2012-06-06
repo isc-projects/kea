@@ -438,6 +438,17 @@ TEST_F(ContainerTest, defaults) {
     checkDS(0, "type1", "null");
 }
 
+// Check we can call the configure multiple times, to change the configuration
+TEST_F(ContainerTest, reconfigure) {
+    ConstElementPtr empty(new ListElement);
+    container_->configure(config_elem_, true);
+    checkDS(0, "test_type", "{}");
+    container_->configure(empty, true);
+    EXPECT_TRUE(container_->dataSources().empty());
+    container_->configure(config_elem_, true);
+    checkDS(0, "test_type", "{}");
+}
+
 // Make sure the data source error exception from the factory is propagated
 TEST_F(ContainerTest, dataSrcError) {
     ConstElementPtr elem(Element::fromJSON("["
