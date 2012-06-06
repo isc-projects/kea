@@ -80,7 +80,7 @@ SSHFP::SSHFP(const std::string& sshfp_str)
     decodeHex(fingerprintbuf.str(), fingerprint_);
 }
 
-SSHFP::SSHFP(uint8_t algorithm, uint8_t fingerprint_type, const string& fingerprint)
+SSHFP::SSHFP(uint8_t algorithm, uint8_t fingerprint_type, const std::string& fingerprint)
 {
     if ((algorithm < 1) || (algorithm > 2)) {
       isc_throw(InvalidRdataText, "SSHFP algorithm number out of range");
