@@ -14,6 +14,7 @@
 
 #include "container.h"
 #include "client.h"
+#include "factory.h"
 
 #include <memory>
 #include <boost/foreach.hpp>
@@ -84,6 +85,18 @@ ConfigurableContainer::search(const dns::Name& name, bool want_exact_match,
     // Return the partial match we have. In case we didn't want a partial
     // match, this surely contains the original empty result.
     return (*candidate);
+}
+
+// NOTE: This function is not tested, it would be complicated. However, the
+// purpose of the function is to provide a very thin wrapper to be able to
+// replace the call to DataSourceClientContainer constructor in tests.
+ConfigurableContainer::DataSourcePair
+ConfigurableContainer::getDataSource(const string& type,
+                                     const ::ConstElementPtr& configuration)
+{
+    DataSourceClientContainerPtr
+        container(new DataSourceClientContainer(type, configuration));
+    return (DataSourcePair(&container->getInstance(), container));
 }
 
 }
