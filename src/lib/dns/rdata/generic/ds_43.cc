@@ -31,7 +31,7 @@ using namespace isc::dns::rdata::generic::detail;
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
 
-DS::DS(const string& ds_str) :
+DS::DS(const std::string& ds_str) :
     impl_(new DSImpl(ds_str))
 {}
 

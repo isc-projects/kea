@@ -41,6 +41,7 @@
 
 // Include a set of message definitions.
 #include <log/log_messages.h>
+#include "util/interprocess_sync_null.h"
 
 using namespace isc::log;
 using namespace std;
@@ -280,10 +281,17 @@ int main(int argc, char** argv) {
         LoggerManager::readLocalMessageFile(argv[optind]);
     }
 
-    // Log a few messages to different loggers.
+    // Log a few messages to different loggers. Here, we switch to using
+    // null interprocess sync objects for the loggers below as the
+    // logger example can be used as a standalone program (which may not
+    // have write access to a local state directory to create
+    // lockfiles).
     isc::log::Logger logger_ex(ROOT_NAME);
+    logger_ex.setInterprocessSync(new isc::util::InterprocessSyncNull("logger"));
     isc::log::Logger logger_alpha("alpha");
+    logger_alpha.setInterprocessSync(new isc::util::InterprocessSyncNull("logger"));
     isc::log::Logger logger_beta("beta");
+    logger_beta.setInterprocessSync(new isc::util::InterprocessSyncNull("logger"));
 
     LOG_FATAL(logger_ex, LOG_WRITE_ERROR).arg("test1").arg("42");
     LOG_ERROR(logger_ex, LOG_READING_LOCAL_FILE).arg("dummy/file");
