@@ -514,23 +514,26 @@ RecursiveQueryTest::RecursiveQueryTest() :
     callback_native_(-1), resolver_(new isc::util::unittests::TestResolver())
 {
     io_service_.reset(new IOService());
-    setDNSService(true, true);
     nsas_.reset(new isc::nsas::NameserverAddressStore(resolver_));
 }
 
 TEST_F(RecursiveQueryTest, v6UDPSend) {
+    setDNSService(true, true);
     doTest(AF_INET6, IPPROTO_UDP);
 }
 
 TEST_F(RecursiveQueryTest, v6TCPSend) {
+    setDNSService(true, true);
     doTest(AF_INET6, IPPROTO_TCP);
 }
 
 TEST_F(RecursiveQueryTest, v4UDPSend) {
+    setDNSService(true, true);
     doTest(AF_INET, IPPROTO_UDP);
 }
 
 TEST_F(RecursiveQueryTest, v4TCPSend) {
+    setDNSService(true, true);
     doTest(AF_INET, IPPROTO_TCP);
 }
 
