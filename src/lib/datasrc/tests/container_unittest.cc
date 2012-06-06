@@ -212,6 +212,15 @@ public:
                 FAIL() << "Unknown configuration index " << index;
         }
     }
+    void checkDS(size_t index, const string& type, const string& params) {
+        ASSERT_GT(container_->dataSources().size(), index);
+        TestDS* ds(dynamic_cast<TestDS*>(
+            container_->dataSources()[index].data_src_));
+        // Comparing with NULL does not work
+        ASSERT_TRUE(ds);
+        EXPECT_EQ(type, ds->type_);
+        EXPECT_TRUE(Element::fromJSON(params)->equals(*ds->configuration_));
+    }
     shared_ptr<TestedContainer> container_;
     const Container::SearchResult negativeResult_;
     vector<shared_ptr<TestDS> > ds_;
@@ -323,6 +332,98 @@ TEST_F(ContainerTest, multiBestMatch) {
                        ds_[0], Name("example.com."), false,
                        "Subdomain in com");
     }
+}
+
+// Check the configuration is empty when the list is empty
+TEST_F(ContainerTest, configureEmpty) {
+    ConstElementPtr elem(new ListElement);
+    container_.reset(new TestedContainer(elem, true));
+    EXPECT_TRUE(container_->dataSources().empty());
+}
+
+// Check we can get multiple data sources and they are in the right order.
+TEST_F(ContainerTest, configureMulti) {
+    ConstElementPtr elem(Element::fromJSON("["
+        "{"
+        "   \"type\": \"type1\","
+        "   \"cache\": \"off\","
+        "   \"params\": {}"
+        "},"
+        "{"
+        "   \"type\": \"type2\","
+        "   \"cache\": \"off\","
+        "   \"params\": {}"
+        "}]"
+    ));
+    container_.reset(new TestedContainer(elem, true));
+    EXPECT_EQ(2, container_->dataSources().size());
+    checkDS(0, "type1", "{}");
+    checkDS(1, "type2", "{}");
+}
+
+// Check we can pass whatever we want to the params
+TEST_F(ContainerTest, configureParams) {
+    const char* params[] = {
+        "true",
+        "false",
+        "null",
+        "\"hello\"",
+        "42",
+        "[]",
+        "{}",
+        NULL
+    };
+    for (const char** param(params); *param; ++param) {
+        SCOPED_TRACE(*param);
+        ConstElementPtr elem(Element::fromJSON(string("["
+            "{"
+            "   \"type\": \"t\","
+            "   \"cache\": \"off\","
+            "   \"params\": ") + *param +
+            "}]"));
+        container_.reset(new TestedContainer(elem, true));
+        EXPECT_EQ(1, container_->dataSources().size());
+        checkDS(0, "t", *param);
+    }
+}
+
+TEST_F(ContainerTest, wrongConfig) {
+    const char* configs[] = {
+        // A lot of stuff missing from there
+        "[{}]",
+        // Some bad types completely
+        "{}",
+        "true",
+        "42",
+        "null",
+        "[true]",
+        "[[]]",
+        "[42]",
+        // Bad type of type
+        "[{\"type\": 42}]",
+        "[{\"type\": true}]",
+        "[{\"type\": null}]",
+        "[{\"type\": []}]",
+        "[{\"type\": {}}]",
+        // TODO: Once cache is supported, add some invalid cache values
+        NULL
+    };
+    for (const char** config(configs); *config; ++config) {
+        SCOPED_TRACE(*config);
+        ConstElementPtr elem(Element::fromJSON(*config));
+        EXPECT_THROW(TestedContainer(elem, true),
+                     ConfigurableContainer::ConfigurationError);
+    }
+}
+
+// The param thing defaults to null. Cache is not used yet.
+TEST_F(ContainerTest, defaults) {
+    ConstElementPtr elem(Element::fromJSON("["
+        "{"
+        "   \"type\": \"type1\""
+        "}]"));
+    EXPECT_EQ(1, container_->dataSources().size());
+    checkDS(0, "type1", "null");
 }
 
 }
