@@ -29,17 +29,6 @@ using namespace std;
 
 namespace {
 
-// The test version is the same as the normal version. We, however, add
-// some methods to dig directly in the internals, for the tests.
-class TestedContainer : public ConfigurableContainer {
-public:
-    TestedContainer(const ConstElementPtr& configuration,
-                    bool allow_cache) :
-        ConfigurableContainer(configuration, allow_cache)
-    { }
-    DataSources& dataSources() { return (data_sources_); }
-};
-
 // A test data source. It pretends it has some zones.
 class TestDS : public DataSourceClient {
 public:
@@ -73,11 +62,18 @@ public:
     private:
         Name origin_;
     };
+    // Constructor from a list of zones.
     TestDS(const char* zone_names[]) {
         for (const char** zone(zone_names); *zone; ++ zone) {
             zones.insert(Name(*zone));
         }
     }
+    // Constructor from configuration. The list of zones will be empty, but
+    // it will keep the configuration inside for further inspection.
+    TestDS(const string& type, const ConstElementPtr& configuration) :
+        type_(type),
+        configuration_(configuration)
+    { }
     virtual FindResult findZone(const Name& name) const {
         if (zones.empty()) {
             return (FindResult(result::NOTFOUND, ZoneFinderPtr()));
@@ -105,10 +101,38 @@ public:
     {
         isc_throw(isc::NotImplemented, "Not implemented");
     }
+    const string type_;
+    const ConstElementPtr configuration_;
 private:
     set<Name> zones;
 };
 
+
+// The test version is the same as the normal version. We, however, add
+// some methods to dig directly in the internals, for the tests.
+class TestedContainer : public ConfigurableContainer {
+public:
+    TestedContainer(const ConstElementPtr& configuration,
+                    bool allow_cache) :
+        ConfigurableContainer(configuration, allow_cache)
+    { }
+    DataSources& dataSources() { return (data_sources_); }
+    // Overwrite the containers method to get a data source with given type
+    // and configuration. We mock the data source and don't create the
+    // container. This is just to avoid some complexity in the tests.
+    virtual DataSourcePair getDataSource(const string& type,
+                                         const ConstElementPtr& configuration)
+    {
+        shared_ptr<TestDS> ds(new TestDS(type, configuration));
+        // Make sure it is deleted when the test container is deleted.
+        to_delete_.push_back(ds);
+        return (DataSourcePair(ds.get(), DataSourceClientContainerPtr()));
+    }
+private:
+    // Hold list of data sources created internally, so they are preserved
+    // until the end of the test and then deleted.
+    vector<shared_ptr<TestDS> > to_delete_;
+};
 const size_t ds_count = 4;
 
 const char* ds_zones[ds_count][3] = {
@@ -140,7 +164,7 @@ public:
         for (size_t i(0); i < ds_count; ++ i) {
             shared_ptr<TestDS> ds(new TestDS(ds_zones[i]));
             ConfigurableContainer::DataSourceInfo info;
-            info.data_src_ = ds;
+            info.data_src_ = ds.get();
             ds_.push_back(ds);
             ds_info_.push_back(info);
         }
@@ -152,7 +176,7 @@ public:
                         const char* test)
     {
         SCOPED_TRACE(test);
-        EXPECT_EQ(dsrc, result.datasrc_);
+        EXPECT_EQ(dsrc.get(), result.datasrc_);
         ASSERT_NE(ZoneFinderPtr(), result.finder_);
         EXPECT_EQ(name, result.finder_->getOrigin());
         EXPECT_EQ(name.getLabelCount(), result.matched_labels_);
