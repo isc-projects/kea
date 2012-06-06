@@ -38,6 +38,9 @@ public:
 
     /// \brief Constructor
     ///
+    /// \param file Filename where the exception occurred.
+    /// \param line Line where exception occurred.
+    /// \param what Text description of the problem.
     /// \param id Message identification.
     /// \param lineno Line number on which error occurred (if > 0).
     MessageException(const char* file, size_t line, const char* what,
@@ -51,6 +54,9 @@ public:
 
     /// \brief Constructor
     ///
+    /// \param file Filename where the exception occurred.
+    /// \param line Line where exception occurred.
+    /// \param what Text description of the problem.
     /// \param id Message identification.
     /// \param arg1 First message argument.
     /// \param lineno Line number on which error occurred (if > 0).
@@ -66,6 +72,9 @@ public:
 
     /// \brief Constructor
     ///
+    /// \param file Filename where the exception occurred.
+    /// \param line Line where exception occurred.
+    /// \param what Text description of the problem.
     /// \param id Message identification.
     /// \param arg1 First message argument.
     /// \param arg2 Second message argument.

@@ -6,6 +6,10 @@
 /initializer_unittests_2
 /local_file_test.sh
 /logger_example
+/logger_lock_test
+/logger_lock_test.sh
+/log_test_messages.cc
+/log_test_messages.h
 /run_unittests
 /severity_test.sh
 /tempdir.h

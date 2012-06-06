@@ -309,6 +309,7 @@ class MessageTest(unittest.TestCase):
         self.assertEqual(1, self.r.get_rr_count(Message.SECTION_QUESTION))
         self.r.clear_section(Message.SECTION_QUESTION)
         self.assertEqual(0, self.r.get_rr_count(Message.SECTION_QUESTION))
+        self.assertEqual(0, len(self.r.get_question()))
 
     def test_clear_section(self):
         for section in [Message.SECTION_ANSWER, Message.SECTION_AUTHORITY,
