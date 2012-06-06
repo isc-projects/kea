@@ -30,6 +30,9 @@ class ZoneFinder;
 typedef boost::shared_ptr<ZoneFinder> ZoneFinderPtr;
 class DataSourceClient;
 typedef boost::shared_ptr<DataSourceClient> DataSourceClientPtr;
+class DataSourceClientContainer;
+typedef boost::shared_ptr<DataSourceClientContainer>
+    DataSourceClientContainerPtr;
 
 /// \brief The container of data sources.
 ///
@@ -59,7 +62,7 @@ public:
         ///
         /// It simply fills in the member variables according to the
         /// parameters. See the member descriptions for their meaning.
-        SearchResult(const DataSourceClientPtr& datasrc,
+        SearchResult(DataSourceClient* datasrc,
                      const ZoneFinderPtr& finder,
                      uint8_t matched_labels, bool exact_match) :
             datasrc_(datasrc),
@@ -72,6 +75,7 @@ public:
         /// This conscructs a result for negative answer. Both pointers are
         /// NULL, matched_labels_ is 0 and exact_match_ is false.
         SearchResult() :
+            datasrc_(NULL),
             matched_labels_(0),
             exact_match_(false)
         { }
@@ -89,7 +93,7 @@ public:
         ///
         /// The data source containing the best matching zone. If no such
         /// data source exists, this is NULL pointer.
-        const DataSourceClientPtr datasrc_;
+        DataSourceClient* const datasrc_;
         /// \brief The finder for the requested zone.
         ///
         /// This is the finder corresponding to the best matching zone.
@@ -209,7 +213,8 @@ public:
     ///
     /// \todo The content yet to be defined.
     struct DataSourceInfo {
-        DataSourceClientPtr data_src_;
+        DataSourceClient* data_src_;
+        DataSourceClientContainerPtr container_;
     };
     /// \brief The collection of data sources.
     typedef std::vector<DataSourceInfo> DataSources;
@@ -219,6 +224,29 @@ protected:
     /// All our data sources are stored here. It is protected to let the
     /// tests in.
     DataSources data_sources_;
+    /// \brief Convenience type alias.
+    ///
+    /// \see getDataSource
+    typedef std::pair<DataSourceClient*, DataSourceClientContainerPtr>
+        DataSourcePair;
+    /// \brief Create a data source of given type and configuration.
+    ///
+    /// This is a thin wrapper around the DataSourceClientContainer
+    /// constructor. The function is here to make it possible for tests
+    /// to replace the DataSourceClientContainer with something else.
+    /// Also, derived classes might want to create the data sources
+    /// in a different way.
+    ///
+    /// The parameters are the same as of the constructor.
+    /// \return Pair containing both the data source and the container.
+    ///     The container might be NULL in the derived class, it is
+    ///     only stored so the data source is properly destroyed when
+    ///     not needed. However, in such case, it is the caller's
+    ///     responsibility to ensure the data source is deleted when
+    ///     needed.
+    virtual DataSourcePair getDataSource(const std::string& type,
+                                         const data::ConstElementPtr&
+                                         configuration);
 public:
     /// \brief Access to the data sources.
     ///
