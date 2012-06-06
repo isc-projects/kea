@@ -636,8 +636,8 @@ class UpdateSession:
            Special cases: if the delete statement is for the
            zone's apex, and the type is either SOA or NS, it
            is ignored.'''
-        result, to_delete, _ = self.__diff.find(rrset.get_name(),
-                                                rrset.get_type())
+        result, to_delete, _ = self.__diff.find_updated(rrset.get_name(),
+                                                        rrset.get_type())
         if result == ZoneFinder.SUCCESS:
             if to_delete.get_name() == self.__zname and\
                (to_delete.get_type() == RRType.SOA() or\
@@ -659,8 +659,9 @@ class UpdateSession:
         # (see ticket #2016)
         # The related test is currently disabled. When this is fixed,
         # enable that test again.
-        result, orig_rrset, _ = self.__diff.find(rrset.get_name(),
-                                                 rrset.get_type())
+        result, orig_rrset, _ = self.__diff.find_updated(rrset.get_name(),
+                                                         rrset.get_type())
+
         # Even a real rrset comparison wouldn't help here...
         # The goal is to make sure that after deletion of the
         # given rrset, at least 1 NS record is left (at the apex).
@@ -690,7 +691,10 @@ class UpdateSession:
            Special case: if the name is the zone's apex, SOA and
            NS records are kept.
         '''
-        result, rrsets, flags = self.__diff.find_all(rrset.get_name())
+        # Remove any RRs for this name from the current list of additions
+        #self.__diff.remove_name_from_additions(rrset.get_name())
+
+        result, rrsets, flags = self.__diff.find_all_updated(rrset.get_name())
         if result == ZoneFinder.SUCCESS and\
            (flags & ZoneFinder.RESULT_WILDCARD == 0):
             for to_delete in rrsets:
@@ -792,6 +796,7 @@ class UpdateSession:
             self.__diff.commit()
             return Rcode.NOERROR()
         except isc.datasrc.Error as dse:
+            raise dse
             logger.info(LIBDDNS_UPDATE_DATASRC_ERROR, dse)
             return Rcode.SERVFAIL()
         except Exception as uce:
