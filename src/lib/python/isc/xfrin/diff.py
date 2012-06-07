@@ -413,19 +413,6 @@ class Diff:
         self.__check_committed()
         return self.__updater.find_all(name, options)
 
-    def _remove_name_from_buffer(self, buf, name):
-        return [ op for op in buf if\
-                    op[1].get_name() != name or\
-                    op[1].get_type() == isc.dns.RRType.SOA() ]
-
-    def _remove_name_type_from_buffer(self, buf, name, rrtype):
-        if rrtype == isc.dns.RRType.SOA():
-            return buf
-        else:
-            return [ op for op in buf if\
-                        op[1].get_name() != name or\
-                        op[1].get_type() != rrtype ]
-
     def __remove_rr_from_buffer(self, buf, rr):
         '''Helper for common code in remove_rr_from_deletions() and
            remove_rr_from_additions();
@@ -492,7 +479,8 @@ class Diff:
         This method is protected; it is not meant to be called from anywhere
         but the find_updated() method. It is not private for easier testing.
         '''
-        return [ rr.get_rdata()[0] for (_, rr) in self.__additions if rr.get_name() == name and rr.get_type() == rrtype ]
+        #return [ rr.get_rdata()[0] for (_, rr) in self.__additions if rr.get_name() == name and rr.get_type() == rrtype ]
+        return [ rr for (_, rr) in self.__additions if rr.get_name() == name and rr.get_type() == rrtype ]
 
     def _get_name_type_from_deletions(self, name, rrtype):
         '''
@@ -523,19 +511,28 @@ class Diff:
             for rdata in rrset.get_rdata():
                 if rdata not in deleted_rrs:
                     new_rrset.add_rdata(rdata)
+            # If all data has been deleted, and there is nothing to add
+            # we cannot really know whether it is NXDOMAIN or NXRRSET,
+            # NXRRSET seems safest (we could find out, but it would require
+            # another search on the name which is probably not worth the
+            # trouble
+            if new_rrset.get_rdata_count() == 0 and len(added_rrs) == 0:
+                result = ZoneFinder.NXRRSET
+                new_rrset = None
         elif (result == ZoneFinder.NXDOMAIN or result == ZoneFinder.NXRRSET)\
              and len(added_rrs) > 0:
             new_rrset = isc.dns.RRset(name, self.__updater.get_class(),
                                       rrtype, added_rrs[0].get_ttl())
             # There was no data in the zone, but there is data now
-            result = SUCCESS
+            result = ZoneFinder.SUCCESS
         else:
             # Can't reliably handle other cases, just return the original
             # data
             return result, rrset, flags
 
-        for rdata in added_rrs:
-            new_rrset.add_rdata(rdata)
+        for rr in added_rrs:
+            # Can only be 1-rr RRsets at this point
+            new_rrset.add_rdata(rr.get_rdata()[0])
 
         return result, new_rrset, flags
 
@@ -549,9 +546,15 @@ class Diff:
             for rr in rrsets:
                 if rr not in deleted_rrs:
                     new_rrsets.append(rr)
+            if len(new_rrsets) == 0 and len(added_rrs) == 0:
+                result = ZoneFinder.NXDOMAIN
         elif result == ZoneFinder.NXDOMAIN and\
             len(added_rrs) > 0:
-            result = SUCCESS
+            result = ZoneFinder.SUCCESS
+        else:
+            # Can't reliably handle other cases, just return the original
+            # data
+            return result, rrsets, flags
         for rr in added_rrs:
             if rr.get_name() == name:
                 new_rrsets.append(rr)
