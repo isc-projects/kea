@@ -791,6 +791,245 @@ class DiffTest(unittest.TestCase):
                                             diff._remove_rr_from_deletions,
                                             'delete', 0)
 
+    def __create_find(self, result, rrset, flags):
+        '''
+        Overwrites the local find() method with a method that returns
+        the tuple (result, rrset, flags)
+        '''
+        def new_find(name, rrtype, fflags):
+            return (result, rrset, flags)
+        self.find = new_find
+
+    def __create_find_all(self, result, rrsets, flags):
+        '''
+        Overwrites the local find() method with a method that returns
+        the tuple (result, rrsets, flags)
+        '''
+        def new_find_all(name, fflags):
+            return (result, rrsets, flags)
+        self.find_all = new_find_all
+
+    def test_find_updated_existing_data(self):
+        '''
+        Tests whether existent data is updated with the additions and
+        deletions from the Diff
+        '''
+        diff = Diff(self, Name('example.org'), single_update_mode=True)
+        diff.add_data(self.__rrset_soa)
+        diff.delete_data(self.__rrset_soa)
+
+        # override the actual find method
+        self.__create_find(ZoneFinder.SUCCESS, self.__rrset3, 0)
+
+        result, rrset, _ = diff.find_updated(self.__rrset3.get_name(),
+                                             self.__rrset3.get_type())
+        self.assertEqual(ZoneFinder.SUCCESS, result)
+        self.assertEqual(self.__rrset3.get_name(), rrset.get_name())
+        self.assertEqual(self.__rrset3.get_type(), rrset.get_type())
+        self.assertEqual(self.__rrset3.get_rdata(), rrset.get_rdata())
+
+        # Adding another should have it returned in the find_updated
+        diff.add_data(self.__rrset4)
+        result, rrset, _ = diff.find_updated(self.__rrset3.get_name(),
+                                             self.__rrset3.get_type())
+        self.assertEqual(ZoneFinder.SUCCESS, result)
+        self.assertEqual(self.__rrset3.get_name(), rrset.get_name())
+        self.assertEqual(self.__rrset3.get_type(), rrset.get_type())
+        self.assertEqual(self.__rrset3.get_rdata() + self.__rrset4.get_rdata(),
+                         rrset.get_rdata())
+
+        # Adding a different type should have no effect
+        diff.add_data(self.__rrset2)
+        result, rrset, _ = diff.find_updated(self.__rrset3.get_name(),
+                                             self.__rrset3.get_type())
+        self.assertEqual(ZoneFinder.SUCCESS, result)
+        self.assertEqual(self.__rrset3.get_name(), rrset.get_name())
+        self.assertEqual(self.__rrset3.get_type(), rrset.get_type())
+        self.assertEqual(self.__rrset3.get_rdata() + self.__rrset4.get_rdata(),
+                         rrset.get_rdata())
+
+        # Deleting 3 now should result in only 4 being updated
+        diff.delete_data(self.__rrset3)
+        result, rrset, _ = diff.find_updated(self.__rrset3.get_name(),
+                                             self.__rrset3.get_type())
+        self.assertEqual(ZoneFinder.SUCCESS, result)
+        self.assertEqual(self.__rrset3.get_name(), rrset.get_name())
+        self.assertEqual(self.__rrset3.get_type(), rrset.get_type())
+        self.assertEqual(self.__rrset4.get_rdata(), rrset.get_rdata())
+
+        # Deleting 4 now should result in empty rrset
+        diff.delete_data(self.__rrset4)
+        result, rrset, _ = diff.find_updated(self.__rrset3.get_name(),
+                                             self.__rrset3.get_type())
+        self.assertEqual(ZoneFinder.NXRRSET, result)
+        self.assertEqual(None, rrset)
+
+    def test_find_updated_nonexistent_data(self):
+        '''
+        Test whether added data for a query that would originally result
+        in NXDOMAIN works
+        '''
+        diff = Diff(self, Name('example.org'), single_update_mode=True)
+        diff.add_data(self.__rrset_soa)
+        diff.delete_data(self.__rrset_soa)
+
+        # override the actual find method
+        self.__create_find(ZoneFinder.NXDOMAIN, None, 0)
+
+        # Sanity check
+        result, rrset, _ = diff.find_updated(self.__rrset3.get_name(),
+                                             self.__rrset3.get_type())
+        self.assertEqual(ZoneFinder.NXDOMAIN, result)
+        self.assertEqual(None, rrset)
+
+        # Add data and see it is returned
+        diff.add_data(self.__rrset3)
+        result, rrset, _ = diff.find_updated(self.__rrset3.get_name(),
+                                             self.__rrset3.get_type())
+        self.assertEqual(ZoneFinder.SUCCESS, result)
+        self.assertEqual(self.__rrset3.get_name(), rrset.get_name())
+        self.assertEqual(self.__rrset3.get_type(), rrset.get_type())
+        self.assertEqual(self.__rrset3.get_rdata(), rrset.get_rdata())
+
+        # Add unrelated data, result should be the same
+        diff.add_data(self.__rrset2)
+        result, rrset, _ = diff.find_updated(self.__rrset3.get_name(),
+                                             self.__rrset3.get_type())
+        self.assertEqual(ZoneFinder.SUCCESS, result)
+        self.assertEqual(self.__rrset3.get_name(), rrset.get_name())
+        self.assertEqual(self.__rrset3.get_type(), rrset.get_type())
+        self.assertEqual(self.__rrset3.get_rdata(), rrset.get_rdata())
+
+        # Remove, result should now be NXDOMAIN again
+        diff.delete_data(self.__rrset3)
+        result, rrset, _ = diff.find_updated(self.__rrset3.get_name(),
+                                             self.__rrset3.get_type())
+        self.assertEqual(ZoneFinder.NXDOMAIN, result)
+        self.assertEqual(None, rrset)
+
+    def test_find_updated_other(self):
+        '''
+        Test that any other ZoneFinder.result code is directly
+        passed on.
+        '''
+        diff = Diff(self, Name('example.org'), single_update_mode=True)
+
+        # Add and delete some data to make sure it's not used
+        diff.add_data(self.__rrset_soa)
+        diff.add_data(self.__rrset3)
+        diff.delete_data(self.__rrset_soa)
+        diff.delete_data(self.__rrset2)
+
+        for rcode in [ ZoneFinder.DELEGATION,
+                       ZoneFinder.CNAME,
+                       ZoneFinder.DNAME ]:
+            # override the actual find method
+            self.__create_find(rcode, None, 0)
+            result, rrset, _ = diff.find_updated(self.__rrset3.get_name(),
+                                                 self.__rrset3.get_type())
+            self.assertEqual(rcode, result)
+            self.assertEqual(None, rrset)
+            result, rrset, _ = diff.find_updated(self.__rrset2.get_name(),
+                                                 self.__rrset2.get_type())
+            self.assertEqual(rcode, result)
+            self.assertEqual(None, rrset)
+
+    def test_find_all_existing_data(self):
+        diff = Diff(self, Name('example.org'), single_update_mode=True)
+        diff.add_data(self.__rrset_soa)
+        diff.delete_data(self.__rrset_soa)
+
+        # override the actual find method
+        self.__create_find_all(ZoneFinder.SUCCESS, [ self.__rrset3 ], 0)
+
+        # Sanity check
+        result, rrsets, _ = diff.find_all_updated(self.__rrset3.get_name())
+        self.assertEqual(ZoneFinder.SUCCESS, result)
+        self.assertEqual([self.__rrset3], rrsets)
+
+        # Add a second rr with different type at same name
+        add_rrset = RRset(self.__rrset3.get_name(), self.__rrclass,
+                          RRType.A(), self.__ttl)
+        add_rrset.add_rdata(Rdata(RRType.A(), self.__rrclass, "192.0.2.2"))
+        diff.add_data(add_rrset)
+
+        result, rrsets, _ = diff.find_all_updated(self.__rrset3.get_name())
+
+        self.assertEqual(ZoneFinder.SUCCESS, result)
+        self.assertEqual([self.__rrset3, add_rrset ], rrsets)
+
+        # Remove original one
+        diff.delete_data(self.__rrset3)
+        result, rrsets, _ = diff.find_all_updated(self.__rrset3.get_name())
+
+        self.assertEqual(ZoneFinder.SUCCESS, result)
+        self.assertEqual([ add_rrset ], rrsets)
+
+        # And remove new one, result should then become NXDOMAIN
+        diff.delete_data(add_rrset)
+        result, rrsets, _ = diff.find_all_updated(self.__rrset3.get_name())
+
+        self.assertEqual(ZoneFinder.NXDOMAIN, result)
+        self.assertEqual([ ], rrsets)
+
+    def test_find_all_nonexistent_data(self):
+        diff = Diff(self, Name('example.org'), single_update_mode=True)
+        diff.add_data(self.__rrset_soa)
+        diff.delete_data(self.__rrset_soa)
+        
+        self.__create_find_all(ZoneFinder.NXDOMAIN, [], 0)
+
+        # Sanity check
+        result, rrsets, _ = diff.find_all_updated(self.__rrset2.get_name())
+        self.assertEqual(ZoneFinder.NXDOMAIN, result)
+        self.assertEqual([], rrsets)
+
+        # Adding data should change the result
+        diff.add_data(self.__rrset2)
+        result, rrsets, _ = diff.find_all_updated(self.__rrset2.get_name())
+
+        self.assertEqual(ZoneFinder.SUCCESS, result)
+        self.assertEqual([ self.__rrset2 ], rrsets)
+
+        # Adding data at other name should not
+        diff.add_data(self.__rrset3)
+        result, rrsets, _ = diff.find_all_updated(self.__rrset2.get_name())
+
+        self.assertEqual(ZoneFinder.SUCCESS, result)
+        self.assertEqual([ self.__rrset2 ], rrsets)
+
+        # Deleting it should revert to original
+        diff.delete_data(self.__rrset2)
+        result, rrsets, _ = diff.find_all_updated(self.__rrset2.get_name())
+        self.assertEqual(ZoneFinder.NXDOMAIN, result)
+        self.assertEqual([], rrsets)
+
+    def test_find_all_other_results(self):
+        '''
+        Any result code other than SUCCESS and NXDOMAIN should cause
+        the results to be passed on directly
+        '''
+        diff = Diff(self, Name('example.org'), single_update_mode=True)
+
+        # Add and delete some data to make sure it's not used
+        diff.add_data(self.__rrset_soa)
+        diff.add_data(self.__rrset3)
+        diff.delete_data(self.__rrset_soa)
+        diff.delete_data(self.__rrset2)
+
+        for rcode in [ ZoneFinder.NXRRSET,
+                       ZoneFinder.DELEGATION,
+                       ZoneFinder.CNAME,
+                       ZoneFinder.DNAME ]:
+            # override the actual find method
+            self.__create_find_all(rcode, None, 0)
+            result, rrset, _ = diff.find_all_updated(self.__rrset3.get_name())
+            self.assertEqual(rcode, result)
+            self.assertEqual(None, rrset)
+            result, rrset, _ = diff.find_all_updated(self.__rrset2.get_name())
+            self.assertEqual(rcode, result)
+            self.assertEqual(None, rrset)
+
 if __name__ == "__main__":
     isc.log.init("bind10")
     isc.log.resetUnitTestRootLogger()
