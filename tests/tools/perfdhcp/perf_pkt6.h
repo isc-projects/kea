@@ -26,24 +26,24 @@ namespace perfdhcp {
 
 /// \brief PerfPkt6 (DHCPv6 packet)
 ///
-/// This class extends functionality of \ref isc::dhcp::Pkt6 by
-/// adding ability to specify options offset in DHCP message
-/// and override options' contents.
-/// This is in particular useful when we create packet object using
-/// template file (do not build it dynamically). Client class
-/// should read data from template file and pass data to this class
-/// as buffer.
-/// Contents of such packet can be later partially replaced: preciselly
-/// selected options and transaction id can be replaced.
-/// Transaction id and its offset in template file is passed via
-/// constructor.
-/// In order to replace contents of options client class has to
-/// create collection of \ref LocalizedOption by adding them using
+/// This class extends the functionality of \ref isc::dhcp::Pkt6 by
+/// adding the ability to specify an options offset in the DHCP message
+/// and so override the options' contents. This is particularly useful when we
+/// create a packet object using a template file (i.e. do not build it
+/// dynamically). The client class should read the data from the template file
+/// and pass it to this class as a buffer.
+///
+/// The contents of such packet can be later partially replaced: in particular,
+/// selected options and the transaction ID can be altered. (The transaction
+/// ID and its offset in the template file is passed via the constructor.)
+///
+/// In order to replace the contents of options, the client class has to
+/// create a collection of \ref LocalizedOption by adding them using
 /// \ref dhcp::Pkt6::addOption.
 ///
-/// \note: if you don't use template files simply use constructors
-/// inherited from parent class and isc::dhcp::Option type instead
-///
+/// \note If you don't use template files, simply use constructors
+/// inherited from parent class and the \ref isc::dhcp::Option type instead.
+
 class PerfPkt6 : public dhcp::Pkt6 {
 public:
 
@@ -52,8 +52,8 @@ public:
 
     /// \brief Constructor, used for outgoing and incoming messages
     ///
-    /// This constructor initializes transaction id and
-    /// transaction id offset of the packet with default
+    /// This constructor initializes the transaction ID and the
+    /// transaction ID offset of the packet with default
     /// values.
     ///
     /// \param buf buffer holding contents of the message.
@@ -62,9 +62,9 @@ public:
 
     /// \brief Constructor, used for outgoing DHCP messages.
     ///
-    /// Creates new DHCPv6 message using provided buffer.
-    /// Transaction id and its offset are specified via this
-    /// constructor. Transaction id is stored in outgoing message
+    /// Creates a new DHCPv6 message using the provided buffer.
+    /// The transaction ID and its offset are specified via this
+    /// constructor. The transaction ID is stored in outgoing message
     /// when client class calls \ref PerfPkt6::rawPack.
     ///
     /// \note This constructor should be used only for outgoing
@@ -82,21 +82,21 @@ public:
 
     /// Constructor, used for incoming DHCP messages.
     ///
-    /// Creates new DHCPv6 message using provided buffer.
-    /// Client class may indicate which options are to be read
-    /// from the buffer. Such options should be added to
-    /// options collection using dhcp::Pkt4::addOption. Such
+    /// Creates a new DHCPv6 message using the provided buffer. The
+    /// client class may indicate which options are to be read
+    /// from the buffer. Such options should be added to the
+    /// options collection using \ref dhcp::Pkt4::addOption. The
     /// options should be of \ref LocalizedOption class.
     ///
-    /// Transaction id offset points to location where
-    /// transaction id field is stored. The transaction id will
-    /// be read from this location when PerfPkt4::rawUnpack is
+    /// The transaction ID offset points to location where the
+    /// transaction ID field is stored. The transaction ID will
+    /// be read from this location when \ref PerfPkt4::rawUnpack is
     /// called. The transid_ class member will be updated accordingly.
     ///
-    /// \note use this constructor only in case you want to create
+    /// \note Use this constructor only in the case where you want to create
     /// incoming DHCPv4 object from the raw buffer
-    /// and you know options offsets. Options offsets are
-    /// specified from perfdhcp command line by the user.
+    /// and you know the options offsets. Options offsets are
+    /// specified on the perfdhcp command line by the user.
     ///
     /// \param buf pointer to a buffer of received packet content.
     /// \param len size of buffer of packet content.
@@ -107,33 +107,33 @@ public:
 
     /// \brief Returns transaction id offset in packet buffer
     ///
-    /// return transaction id offset in packet buffer
+    /// \return Transaction ID offset in the packet buffer.
     size_t getTransIdOffset() const { return transid_offset_; };
 
-    /// \brief Prepares on-wire format from raw buffer.
+    /// \brief Prepares on-wire format from raw buffer
     ///
-    /// The method copies buffer provided in constructor to
-    /// output buffer and replaces transaction id and selected
+    /// The method copies the buffer provided in constructor to the
+    /// output buffer and replaces the transaction ID and selected
     /// options with new data.
     ///
-    /// \note: Use this method to prepare on-wire DHCPv6 message
+    /// \note Use this method to prepare an on-wire DHCPv6 message
     /// when you use template packets that require replacement
     /// of selected options' contents before sending.
     ///
-    /// \return false, id pack operation failed.
+    /// \return false ID pack operation failed.
     bool rawPack();
 
     /// \brief Handles limited binary packet parsing for packets with
     /// custom offsets of options and transaction id
     ///
-    /// Function handles parsing of packets that have custom offsets
-    /// of options or transaction id. Use
+    /// This methoid handles the parsing of packets that have custom offsets
+    /// of options or transaction ID. Use
     /// \ref isc::dhcp::Pkt4::addOption to specify which options to parse.
-    /// Options should be of the: isc::perfdhcp::LocalizedOption
+    /// Options should be of the \ref isc::perfdhcp::LocalizedOption
     /// type with offset values provided. Each added option will
     /// be updated with actual data read from the binary packet buffer.
     ///
-    /// \return false, if unpack operation failed.
+    /// \return false if unpack operation failed.
     bool rawUnpack();
 
 private:
