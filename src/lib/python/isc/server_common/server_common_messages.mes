@@ -34,3 +34,12 @@ to be loaded from configuration.
 A debug message. The TSIG keyring is being (re)loaded from configuration.
 This happens at startup or when the configuration changes. The old keyring
 is removed and new one created with all the keys.
+
+% PYSERVER_COMMON_DNS_TCP_SEND_DONE completed sending TCP message to %1 (%2 bytes in total)
+TBD
+
+% PYSERVER_COMMON_DNS_TCP_SEND_PENDING sent part TCP message to %1 (up to %2 bytes)
+TBD
+
+% PYSERVER_COMMON_DNS_TCP_SEND_ERROR failed to send TCP message to %1 (%2 bytes sent): %3
+TBD
