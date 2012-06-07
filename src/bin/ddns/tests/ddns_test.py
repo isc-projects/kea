@@ -64,12 +64,16 @@ class FakeSocket:
         self.__fileno = fileno
         self._sent_data = None
         self._sent_addr = None
+        self._close_called = 0  # number of calls to close()
         # customizable by tests; if set to True, sendto() will throw after
         # recording the parameters.
         self._raise_on_send = False
     def fileno(self):
         return self.__fileno
     def getpeername(self):
+        if self.proto == socket.IPPROTO_UDP or \
+                self.proto == socket.IPPROTO_TCP:
+            return TEST_CLIENT4
         return "fake_unix_socket"
     def accept(self):
         return FakeSocket(self.__fileno + 1), '/dummy/path'
@@ -78,6 +82,17 @@ class FakeSocket:
         self._sent_addr = addr
         if self._raise_on_send:
             raise socket.error('test socket failure')
+    def send(self, data):
+        if self._sent_data is None:
+            self._sent_data = data
+        else:
+            self._sent_data += data
+        return len(data)
+    def setblocking(self, on):
+        # We only need a faked NO-OP implementation.
+        pass
+    def close(self):
+        self._close_called += 1
     def clear(self):
         '''Clear internal instrumental data.'''
         self._sent_data = None
@@ -633,7 +648,7 @@ class TestDDNSSession(unittest.TestCase):
                                  self.__faked_result)
 
     def check_update_response(self, resp_wire, expected_rcode=Rcode.NOERROR(),
-                              tsig_ctx=None):
+                              tsig_ctx=None, tcp=False):
         '''Check if given wire data are valid form of update response.
 
         In this implementation, zone/prerequisite/update sections should be
@@ -643,7 +658,15 @@ class TestDDNSSession(unittest.TestCase):
         be TSIG signed and the signature should be verifiable with the context
         that has signed the corresponding request.
 
+        if tcp is True, the wire data are expected to be prepended with
+        a 2-byte length field.
+
         '''
+        if tcp:
+            data_len = resp_wire[0] * 256 + resp_wire[1]
+            resp_wire = resp_wire[2:]
+            self.assertEqual(len(resp_wire), data_len)
+
         msg = Message(Message.PARSE)
         msg.from_wire(resp_wire)
         if tsig_ctx is not None:
@@ -716,19 +739,22 @@ class TestDDNSSession(unittest.TestCase):
         self.__sock._raise_on_send = True
         # handle_request indicates the failure
         self.assertFalse(self.server.handle_request((self.__sock, TEST_SERVER6,
-                                                     TEST_SERVER4,
+                                                     TEST_CLIENT6,
                                                      create_msg())))
         # this check ensures sendto() was really attempted.
         self.check_update_response(self.__sock._sent_data, Rcode.NOERROR())
 
     def test_tcp_request(self):
-        # Right now TCP request is not supported.
+        # A simple case using TCP: all resopnse data are sent out at once.
         s = self.__sock
         s.proto = socket.IPPROTO_TCP
-        self.assertFalse(self.server.handle_request((s, TEST_SERVER6,
-                                                     TEST_SERVER4,
-                                                     create_msg())))
-        self.assertEqual((None, None), (s._sent_data, s._sent_addr))
+        self.assertTrue(self.server.handle_request((s, TEST_SERVER6,
+                                                    TEST_CLIENT6,
+                                                    create_msg())))
+        self.check_update_response(s._sent_data, Rcode.NOERROR(), tcp=True)
+        # In the current implementation, the socket should be closed
+        # immedidately after a successful send.
+        self.assertEqual(1, s._close_called)
 
     def test_request_message(self):
         '''Test if the request message stores RRs separately.'''
