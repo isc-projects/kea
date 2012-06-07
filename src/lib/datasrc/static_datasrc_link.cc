@@ -16,16 +16,40 @@
 #include "memory_datasrc.h"
 
 #include <cc/data.h>
+#include <dns/rrclass.h>
+
+#include <memory>
+#include <exception>
 
 using namespace isc::data;
+using namespace isc::dns;
+using namespace boost;
 using namespace std;
 
 namespace isc {
 namespace datasrc {
 
 DataSourceClient*
-createInstance(ConstElementPtr, string& error) {
-    error = "Not yet implemented";
+createInstance(ConstElementPtr config, string& error) {
+    try {
+        // Create the data source
+        auto_ptr<InMemoryClient> client(new InMemoryClient());
+        // Hardcode the origin and class
+        shared_ptr<InMemoryZoneFinder>
+            finder(new InMemoryZoneFinder(RRClass::CH(), Name("BIND")));
+        // Fill it with data
+        const string path(config->stringValue());
+        finder->load(path);
+        // And put the zone inside
+        client->addZone(finder);
+        return (client.release());
+    }
+    catch (const std::exception& e) {
+        error = e.what();
+    }
+    catch (...) {
+        error = "Unknown exception";
+    }
     return (NULL);
 }
 
