@@ -105,7 +105,7 @@ PktTransform::unpack(const Option::Universe universe,
             & 0xFFFFFF;
     } else {
         transid = ((in_buffer[transid_offset] << 24) +
-                   (in_buffer[transid_offset +1 ] << 16) +
+                   (in_buffer[transid_offset + 1] << 16) +
                    (in_buffer[transid_offset + 2] << 8) +
                    (in_buffer[transid_offset + 3]));
     }
