@@ -12,8 +12,13 @@ pkglibdir = $(libexecdir)/@PACKAGE@/backends
 datasrc_config.h: datasrc_config.h.pre
 	$(SED) -e "s|@@PKGLIBDIR@@|$(pkglibdir)|" datasrc_config.h.pre >$@
 
+static.zone: static.zone.pre
+	$(SED) -e "s|@@VERSION_STRING@@|$(PACKAGE_STRING)|" $(srcdir)/static.zone.pre >$@
+	$(SED) -e 's/\(.*\)/AUTHORS.BIND.	0	CH	TXT	"\1"/' $(top_srcdir)/AUTHORS >>$@
+
 CLEANFILES = *.gcno *.gcda datasrc_messages.h datasrc_messages.cc
 CLEANFILES += datasrc_config.h
+CLEANFILES += static.zone
 
 lib_LTLIBRARIES = libdatasrc.la
 libdatasrc_la_SOURCES = data_source.h data_source.cc
@@ -65,4 +70,7 @@ BUILT_SOURCES = datasrc_config.h datasrc_messages.h datasrc_messages.cc
 datasrc_messages.h datasrc_messages.cc: Makefile datasrc_messages.mes
 	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/datasrc/datasrc_messages.mes
 
-EXTRA_DIST = datasrc_messages.mes
+EXTRA_DIST = datasrc_messages.mes static.zone.pre
+
+zonedir = $(pkgdatadir)
+zone_DATA = static.zone
