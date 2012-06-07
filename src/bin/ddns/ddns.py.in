@@ -30,6 +30,7 @@ import isc.util.process
 import isc.util.cio.socketsession
 from isc.notify.notify_out import ZONE_NEW_DATA_READY_CMD
 import isc.server_common.tsig_keyring
+from isc.server_common.dns_tcp import DNSTCPContext
 from isc.datasrc import DataSourceClient
 import select
 import errno
@@ -342,8 +343,6 @@ class DDNSServer:
         # or dropped by the sender, so if such error is detected we treat it
         # as an internal error and don't bother to respond.
         try:
-            if sock.proto == socket.IPPROTO_TCP:
-                raise self.InternalError('TCP requests are not yet supported')
             self.__request_msg.clear(Message.PARSE)
             # specify PRESERVE_ORDER as we need to handle each RR separately.
             self.__request_msg.from_wire(req_data, Message.PRESERVE_ORDER)
@@ -402,7 +401,12 @@ class DDNSServer:
 
         '''
         try:
-            sock.sendto(data, dest)
+            if sock.proto == socket.IPPROTO_UDP:
+                sock.sendto(data, dest)
+            else:
+                tcp_ctx = DNSTCPContext(sock)
+                tcp_ctx.send(data)
+                tcp_ctx.close()
         except socket.error as ex:
             logger.error(DDNS_RESPONSE_SOCKET_ERROR, ClientFormatter(dest), ex)
             return False
