@@ -35,16 +35,16 @@ typedef PerfPkt4::LocalizedOptionPtr LocalizedOptionPtr;
 
 namespace {
 
-// a dummy MAC address, padded with 0s
+// A dummy MAC address, padded with 0s
 const uint8_t dummyChaddr[16] = {0, 1, 2, 3, 4, 5, 0, 0,
                                  0, 0, 0, 0, 0, 0, 0, 0 };
 
-// let's use some creative test content here (128 chars + \0)
+// Let's use some creative test content here (128 chars + \0)
 const uint8_t dummyFile[] = "Lorem ipsum dolor sit amet, consectetur "
     "adipiscing elit. Proin mollis placerat metus, at "
     "lacinia orci ornare vitae. Mauris amet.";
 
-// yet another type of test content (64 chars + \0)
+// Yet another type of test content (64 chars + \0)
 const uint8_t dummySname[] = "Lorem ipsum dolor sit amet, consectetur "
     "adipiscing elit posuere.";
 
@@ -88,8 +88,7 @@ public:
 
         // If this is a first call to this function. Initialize
         // remaining data.
-        if (buf.size() == sizeof(hdr))
-        {
+        if (buf.size() == sizeof(hdr)) {
 
             // Append the large header fields.
             std::copy(dummyChaddr, dummyChaddr + Pkt4::MAX_CHADDR_LEN,
@@ -116,7 +115,7 @@ TEST_F(PerfPkt4Test, Constructor) {
     // Initialize some dummy payload.
     uint8_t data[250];
     for (int i = 0; i < 250; i++) {
-        data[i]=i;
+        data[i] = i;
     }
 
     // Test constructor to be used for incoming messages.
@@ -251,10 +250,10 @@ TEST_F(PerfPkt4Test, InvalidOptions) {
     // It will not match because option is shifted by on byte.
     ASSERT_FALSE(pkt1->rawUnpack());
 
-    // Crete another packet.
+    // Create another packet.
     boost::scoped_ptr<PerfPkt4> pkt2(new PerfPkt4(&buf[0], buf.size()));
 
-    // Create DHO_DHCP_MESSAGE_TYPE option that has wrong offset.
+    // Create DHO_DHCP_MESSAGE_TYPE option that has the wrong offset.
     // With this offset, option goes beyond packet size (268).
     LocalizedOptionPtr opt_msg_type(new LocalizedOption(Option::V4,
                                                         DHO_DHCP_MESSAGE_TYPE,
@@ -351,7 +350,7 @@ TEST_F(PerfPkt4Test, UnpackTransactionId) {
                                                   in_data.size(),
                                                   270));
 
-    cout << "Testing unpack of transaction id at invalid offset."
+    cout << "Testing unpack of transaction id at invalid offset. "
          << "This may produce spurious errors." << endl;
 
     // Unpack is supposed to fail because transaction id is at
