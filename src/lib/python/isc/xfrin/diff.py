@@ -379,7 +379,7 @@ class Diff:
             return (self.__deletions, self.__additions)
 
     def find(self, name, rrtype,
-             options=ZoneFinder.NO_WILDCARD | ZoneFinder.FIND_GLUE_OK):
+             options=(ZoneFinder.NO_WILDCARD | ZoneFinder.FIND_GLUE_OK)):
         """
         Calls the find() method in the ZoneFinder associated with this
         Diff's ZoneUpdater, i.e. the find() on the zone as it was on the
@@ -394,7 +394,7 @@ class Diff:
         return self.__updater.find(name, rrtype, options)
 
     def find_all(self, name,
-                 options=ZoneFinder.NO_WILDCARD | ZoneFinder.FIND_GLUE_OK):
+                 options=(ZoneFinder.NO_WILDCARD | ZoneFinder.FIND_GLUE_OK)):
         """
         Calls the find() method in the ZoneFinder associated with this
         Diff's ZoneUpdater, i.e. the find_all() on the zone as it was on the
