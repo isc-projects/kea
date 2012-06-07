@@ -729,16 +729,12 @@ class UpdateSession:
                                                 ZoneFinder.NO_WILDCARD |
                                                 ZoneFinder.FIND_GLUE_OK)
         serial_operation = DDNS_SOA()
-        if self.__added_soa is not None:
-            # serial check goes here
-            if serial_operation.soa_update_check(old_soa, self.__added_soa):
+        if self.__added_soa is not None and\
+        serial_operation.soa_update_check(old_soa, self.__added_soa):
                 new_soa = self.__added_soa
-            else:
-                pass
         else:
-            new_soa = old_soa
             # increment goes here
-            new_soa = serial_operation.update_soa(new_soa)
+            new_soa = serial_operation.update_soa(old_soa)
 
         diff.delete_data(old_soa)
         diff.add_data(new_soa)
