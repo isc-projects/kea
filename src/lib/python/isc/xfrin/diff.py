@@ -452,7 +452,7 @@ class Diff:
         self.__additions = self.__remove_rr_from_buffer(self.__additions, rr)
         return len(self.__additions) != orig_size
 
-    def _get_name_from_additions(self, name):
+    def __get_name_from_additions(self, name):
         '''
         Returns a list of all rrs in the additions queue that have the given
         Name.
@@ -462,7 +462,7 @@ class Diff:
         '''
         return [ rr for (_, rr) in self.__additions if rr.get_name() == name ]
 
-    def _get_name_from_deletions(self, name):
+    def __get_name_from_deletions(self, name):
         '''
         Returns a list of all rrs in the deletions queue that have the given
         Name
@@ -472,38 +472,44 @@ class Diff:
         '''
         return [ rr for (_, rr) in self.__deletions if rr.get_name() == name ]
 
-    def _get_name_type_from_additions(self, name, rrtype):
+    def __get_name_type_from_additions(self, name, rrtype):
         '''
         Returns a list of the rdatas of the rrs in the additions queue that
         have the given name and type
         This method is protected; it is not meant to be called from anywhere
         but the find_updated() method. It is not private for easier testing.
         '''
-        #return [ rr.get_rdata()[0] for (_, rr) in self.__additions if rr.get_name() == name and rr.get_type() == rrtype ]
-        return [ rr for (_, rr) in self.__additions if rr.get_name() == name and rr.get_type() == rrtype ]
+        return [ rr for (_, rr) in self.__additions\
+                    if rr.get_name() == name and rr.get_type() == rrtype ]
 
-    def _get_name_type_from_deletions(self, name, rrtype):
+    def __get_name_type_from_deletions(self, name, rrtype):
         '''
         Returns a list of the rdatas of the rrs in the deletions queue that
         have the given name and type
         This method is protected; it is not meant to be called from anywhere
         but the find_updated() method. It is not private for easier testing.
         '''
-        return [ rr.get_rdata()[0] for (_, rr) in self.__deletions if rr.get_name() == name and rr.get_type() == rrtype ]
+        return [ rr.get_rdata()[0] for (_, rr) in self.__deletions\
+                    if rr.get_name() == name and rr.get_type() == rrtype ]
 
     def find_updated(self, name, rrtype):
         '''
         Returns the result of find(), but with current updates applied, i.e.
-        as if this diff has been committed. Only works for find results
-        SUCCESS, NXDOMAIN, and NXRRSET.
+        as if this diff has been committed. Only performs additional
+        processing in the case find() returns SUCCESS, NXDOMAIN, or NXRRSET;
+        in all other cases, the results are returned directly.
+        Any RRs in the current deletions buffer are removed from the result,
+        and RRs in the current additions buffer are added to the result.
+        If the result was SUCCESS, but every RR in it is removed due to
+        deletions, and there is nothing in the additions, the rcode is changed
+        to NXRRSET.
+        If the result was NXDOMAIN or NXRRSET, and there are rrs in the
+        additions buffer, the result is changed to SUCCESS.
         '''
         result, rrset, flags = self.find(name, rrtype)
 
-        # Create a new rrset object;
-        # - add all rdatas from the found rrset, unless they are in __deletions
-        # - add all rdatas from additions
-        added_rrs = self._get_name_type_from_additions(name, rrtype)
-        deleted_rrs = self._get_name_type_from_deletions(name, rrtype)
+        added_rrs = self.__get_name_type_from_additions(name, rrtype)
+        deleted_rrs = self.__get_name_type_from_deletions(name, rrtype)
 
         if result == ZoneFinder.SUCCESS:
             new_rrset = isc.dns.RRset(name, self.__updater.get_class(),
@@ -537,12 +543,25 @@ class Diff:
         return result, new_rrset, flags
 
     def find_all_updated(self, name):
+        '''
+        Returns the result of find_all(), but with current updates applied,
+        i.e. as if this diff has been committed. Only performs additional
+        processing in the case find() returns SUCCESS or NXDOMAIN;
+        in all other cases, the results are returned directly.
+        Any RRs in the current deletions buffer are removed from the result,
+        and RRs in the current additions buffer are added to the result.
+        If the result was SUCCESS, but every RR in it is removed due to
+        deletions, and there is nothing in the additions, the rcode is changed
+        to NXDOMAIN.
+        If the result was NXDOMAIN, and there are rrs in the additions buffer,
+        the result is changed to SUCCESS.
+        '''
         result, rrsets, flags = self.find_all(name)
         new_rrsets = []
-        added_rrs = self._get_name_from_additions(name)
+        added_rrs = self.__get_name_from_additions(name)
         if result == ZoneFinder.SUCCESS and\
            (flags & ZoneFinder.RESULT_WILDCARD == 0):
-            deleted_rrs = self._get_name_from_deletions(name)
+            deleted_rrs = self.__get_name_from_deletions(name)
             for rr in rrsets:
                 if rr not in deleted_rrs:
                     new_rrsets.append(rr)
