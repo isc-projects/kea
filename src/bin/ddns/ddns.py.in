@@ -191,12 +191,14 @@ class DDNSServer:
         self.__request_msg = Message(Message.PARSE)
         self.__response_renderer = MessageRenderer()
 
-        # The following attribute(s) are essentially private and constant,
-        # but defined as "protected" so that test code can customize them.
-        # They should not be overridden for any other purposes.
+        # The following attribute(s) are essentially private, but defined as
+        # "protected" so that test code can customize/inspect them.
+        # They should not be overridden/referenced for any other purposes.
         #
         # DDNS Protocol handling class.
         self._UpdateSessionClass = isc.ddns.session.UpdateSession
+        # Outstanding TCP context: fileno=>context_obj
+        self._tcp_ctxs = {}
 
     class InternalError(Exception):
         '''Exception for internal errors in an update session.
@@ -405,8 +407,13 @@ class DDNSServer:
                 sock.sendto(data, dest)
             else:
                 tcp_ctx = DNSTCPContext(sock)
-                tcp_ctx.send(data)
-                tcp_ctx.close()
+                send_result = tcp_ctx.send(data)
+                if send_result == DNSTCPContext.SENDING:
+                    self._tcp_ctxs[sock.fileno] = tcp_ctx
+                elif send_result == DNSTCPContext.CLOSED:
+                    raise socket.error("socket error in TCP send")
+                else:
+                    tcp_ctx.close()
         except socket.error as ex:
             logger.error(DDNS_RESPONSE_SOCKET_ERROR, ClientFormatter(dest), ex)
             return False

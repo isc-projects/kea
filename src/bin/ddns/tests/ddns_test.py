@@ -22,6 +22,7 @@ import isc.util.cio.socketsession
 from isc.cc.session import SessionTimeout, SessionError, ProtocolError
 from isc.datasrc import DataSourceClient
 from isc.config.ccsession import create_answer
+from isc.server_common.dns_tcp import DNSTCPContext
 import ddns
 import errno
 import os
@@ -65,9 +66,11 @@ class FakeSocket:
         self._sent_data = None
         self._sent_addr = None
         self._close_called = 0  # number of calls to close()
+        self.__send_cc = 0      # waterline of the send buffer (can be reset)
         # customizable by tests; if set to True, sendto() will throw after
         # recording the parameters.
         self._raise_on_send = False
+        self._send_buflen = None # imaginary send buffer for partial send
     def fileno(self):
         return self.__fileno
     def getpeername(self):
@@ -83,11 +86,25 @@ class FakeSocket:
         if self._raise_on_send:
             raise socket.error('test socket failure')
     def send(self, data):
-        if self._sent_data is None:
-            self._sent_data = data
+        if self._raise_on_send:
+            raise socket.error(errno.EPIPE, 'faked connection disruption')
+        elif self._send_buflen is None:
+            available_space = len(data)
         else:
-            self._sent_data += data
-        return len(data)
+            available_space = self._send_buflen - self.__send_cc
+        if available_space == 0:
+            # if there's no space, (assuming it's nonblocking mode) raise
+            # EAGAIN.
+            raise socket.error(errno.EAGAIN,
+                               "Resource temporarily unavailable")
+        # determine the sendable part of the data, record it, update "buffer".
+        cc = min(available_space, len(data))
+        if self._sent_data is None:
+            self._sent_data = data[:cc]
+        else:
+            self._sent_data += data[:cc]
+        self.__send_cc += cc
+        return cc
     def setblocking(self, on):
         # We only need a faked NO-OP implementation.
         pass
@@ -97,6 +114,10 @@ class FakeSocket:
         '''Clear internal instrumental data.'''
         self._sent_data = None
         self._sent_addr = None
+    def make_send_ready(self):
+        # pretend that the accrued data has been cleared, making room in
+        # the send buffer.
+        self.__send_cc = 0
 
 class FakeSessionReceiver:
     """
@@ -754,6 +775,47 @@ class TestDDNSSession(unittest.TestCase):
         self.check_update_response(s._sent_data, Rcode.NOERROR(), tcp=True)
         # In the current implementation, the socket should be closed
         # immedidately after a successful send.
+        self.assertEqual(1, s._close_called)
+        # TCP context shouldn't be held in the server.
+        self.assertEqual(0, len(self.server._tcp_ctxs))
+
+    def test_tcp_request_incomplete(self):
+        # set the size of the socket "send buffer" to a small value, which
+        # should cause partial send.
+        s = self.__sock
+        s.proto = socket.IPPROTO_TCP
+        s._send_buflen = 7
+        # before this request there should be no outstanding TCP context.
+        self.assertEqual(0, len(self.server._tcp_ctxs))
+        self.assertTrue(self.server.handle_request((s, TEST_SERVER6,
+                                                    TEST_CLIENT6,
+                                                    create_msg())))
+        # Only the part of data that fit the send buffer should be transmitted.
+        self.assertEqual(s._send_buflen, len(s._sent_data))
+        # the socket is not yet closed.
+        self.assertEqual(0, s._close_called)
+        # and a new context is stored in the server.
+        self.assertEqual(1, len(self.server._tcp_ctxs))
+
+        # clear the "send buffer" of the fake socket, and continue the send
+        # by hand.  The next attempt should complete the send, and the combined
+        # data should be the expected response.
+        s.make_send_ready()
+        self.assertEqual(DNSTCPContext.SEND_DONE,
+                         self.server._tcp_ctxs[s.fileno].send_ready())
+        self.server._tcp_ctxs[s.fileno].close() # explicit close per convention
+        self.check_update_response(s._sent_data, Rcode.NOERROR(), tcp=True)
+
+    def test_tcp_request_error(self):
+        # initial send() on the TCP socket will fail.  The request handling
+        # will be considered failure.
+        s = self.__sock
+        s.proto = socket.IPPROTO_TCP
+        s._raise_on_send = True
+        self.assertFalse(self.server.handle_request((s, TEST_SERVER6,
+                                                     TEST_CLIENT6,
+                                                     create_msg())))
+        # the socket should have been closed.
         self.assertEqual(1, s._close_called)
 
     def test_request_message(self):
