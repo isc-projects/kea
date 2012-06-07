@@ -1313,6 +1313,36 @@ class SessionTest(SessionTestBase):
                                  isc.dns.Name("www.example.org"),
                                  RRType.A())
 
+    def test_update_delete_then_add_rrset(self):
+        # If we delete an entire rrset, then add something there again,
+        # the addition should be done
+        self.__initialize_update_rrsets()
+        self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
+                                 isc.dns.Name("www.example.org"),
+                                 RRType.A())
+        self.check_full_handle_result(Rcode.NOERROR(),
+                                      [ self.rrset_update_del_rrset,
+                                        self.rrset_update_a ])
+        self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
+                                 isc.dns.Name("www.example.org"),
+                                 RRType.A(),
+                                 self.rrset_update_a)
+
+    def test_update_delete_then_add_rrset(self):
+        # If we delete an entire name, then add something there again,
+        # the addition should be done
+        self.__initialize_update_rrsets()
+        self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
+                                 isc.dns.Name("www.example.org"),
+                                 RRType.A())
+        self.check_full_handle_result(Rcode.NOERROR(),
+                                      [ self.rrset_update_del_name,
+                                        self.rrset_update_a ])
+        self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
+                                 isc.dns.Name("www.example.org"),
+                                 RRType.A(),
+                                 self.rrset_update_a)
+
     def test_update_cname_special_cases(self):
         self.__initialize_update_rrsets()
 
