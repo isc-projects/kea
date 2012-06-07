@@ -33,7 +33,7 @@ libdatasrc_la_SOURCES += factory.h factory.cc
 nodist_libdatasrc_la_SOURCES = datasrc_messages.h datasrc_messages.cc
 libdatasrc_la_LDFLAGS = -no-undefined -version-info 1:0:1
 
-pkglib_LTLIBRARIES =  sqlite3_ds.la memory_ds.la
+pkglib_LTLIBRARIES =  sqlite3_ds.la memory_ds.la static_ds.la
 
 sqlite3_ds_la_SOURCES = sqlite3_accessor.h sqlite3_accessor.cc
 sqlite3_ds_la_SOURCES += sqlite3_accessor_link.cc
@@ -48,6 +48,12 @@ memory_ds_la_SOURCES += memory_datasrc_link.cc
 memory_ds_la_LDFLAGS = -module -avoid-version
 memory_ds_la_LIBADD = $(top_builddir)/src/lib/exceptions/libexceptions.la
 memory_ds_la_LIBADD += libdatasrc.la
+
+static_ds_la_SOURCES = memory_datasrc.h memory_datasrc.cc
+static_ds_la_SOURCES += static_datasrc_link.cc
+static_ds_la_LDFLAGS = -module -avoid-version
+static_ds_la_LIBADD = $(top_builddir)/src/lib/exceptions/libexceptions.la
+static_ds_la_LIBADD += libdatasrc.la
 
 libdatasrc_la_LIBADD = $(top_builddir)/src/lib/exceptions/libexceptions.la
 libdatasrc_la_LIBADD += $(top_builddir)/src/lib/dns/libdns++.la
