@@ -551,6 +551,17 @@ class DiffTest(unittest.TestCase):
         self.assertRaises(ValueError, diff_single.get_buffer)
         self.assertEqual(([], []), diff_single.get_single_update_buffers())
 
+    def test_finds_single(self):
+        '''
+        Test that find_updated() and find_all_updated() can only be used
+        in single-update-mode.
+        '''
+        diff_multi = Diff(self, Name('example.org.'), single_update_mode=False)
+        self.assertRaises(ValueError, diff_multi.find_updated,
+                          Name('example.org.'), RRType.A())
+        self.assertRaises(ValueError, diff_multi.find_all_updated,
+                          Name('example.org.'))
+
     def test_single_update_mode(self):
         '''
         Test single-update mode. In this mode, updates and deletes can

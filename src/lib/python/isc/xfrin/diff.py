@@ -506,6 +506,9 @@ class Diff:
         If the result was NXDOMAIN or NXRRSET, and there are rrs in the
         additions buffer, the result is changed to SUCCESS.
         '''
+        if not self.__single_update_mode:
+            raise ValueError("find_updated() can only be used in " +
+                             "single-update mode")
         result, rrset, flags = self.find(name, rrtype)
 
         added_rrs = self.__get_name_type_from_additions(name, rrtype)
@@ -556,6 +559,9 @@ class Diff:
         If the result was NXDOMAIN, and there are rrs in the additions buffer,
         the result is changed to SUCCESS.
         '''
+        if not self.__single_update_mode:
+            raise ValueError("find_all_updated can only be used in " +
+                             "single-update mode")
         result, rrsets, flags = self.find_all(name)
         new_rrsets = []
         added_rrs = self.__get_name_from_additions(name)
