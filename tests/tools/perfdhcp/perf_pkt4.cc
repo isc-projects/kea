@@ -25,11 +25,6 @@ using namespace dhcp;
 namespace isc {
 namespace perfdhcp {
 
-PerfPkt4::PerfPkt4(const uint8_t* buf, size_t len) :
-    Pkt4(buf, len),
-    transid_offset_(1) {
-}
-
 PerfPkt4::PerfPkt4(const uint8_t* buf,
                    size_t len,
                    size_t transid_offset,
@@ -37,11 +32,6 @@ PerfPkt4::PerfPkt4(const uint8_t* buf,
     Pkt4(buf, len),
     transid_offset_(transid_offset) {
     transid_ = transid;
-}
-
-PerfPkt4::PerfPkt4(const uint8_t* buf, size_t len, size_t transid_offset) :
-    Pkt4(buf, len),
-    transid_offset_(transid_offset) {
 }
 
 bool
