@@ -36,10 +36,24 @@ This happens at startup or when the configuration changes. The old keyring
 is removed and new one created with all the keys.
 
 % PYSERVER_COMMON_DNS_TCP_SEND_DONE completed sending TCP message to %1 (%2 bytes in total)
-TBD
+Debug message.  A complete DNS message has been successfully
+transmitted over a TCP connection, possibly after multiple send
+operations.  The destination address and the total size of the message
+(including the 2-byte length field) are shown in the log message.
 
 % PYSERVER_COMMON_DNS_TCP_SEND_PENDING sent part TCP message to %1 (up to %2 bytes)
-TBD
+Debug message.  A part of DNS message has been transmitted over a TCP
+connection, and it's suspended because further attempt would block.
+The destination address and the total size of the message that has
+been transmitted so far (including the 2-byte length field) are shown
+in the log message.
 
 % PYSERVER_COMMON_DNS_TCP_SEND_ERROR failed to send TCP message to %1 (%2 bytes sent): %3
-TBD
+A DNS message has been attempted to be sent out over a TCP connection,
+but it failed due to some network error.  Although it's not expected
+to happen too often, it can still happen for various reasons.  The
+administrator may want to examine the cause of the failure, which is
+included in the log message, to see if it requires some action to
+be taken at the server side.  When this message is logged, the
+corresponding  TCP connection was closed immediately after the error
+was detected.
