@@ -30,9 +30,10 @@ if HAVE_GTEST
 
 TESTS += dhcp4_unittests
 
-dhcp4_unittests_SOURCES = ../dhcp4_srv.h ../dhcp4_srv.cc
+dhcp4_unittests_SOURCES = ../dhcp4_srv.h ../dhcp4_srv.cc ../ctrl_dhcp4_srv.cc
 dhcp4_unittests_SOURCES += dhcp4_unittests.cc
 dhcp4_unittests_SOURCES += dhcp4_srv_unittest.cc
+dhcp4_unittests_SOURCES += ctrl_dhcp4_srv_unittest.cc
 
 dhcp4_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 dhcp4_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
@@ -42,6 +43,8 @@ dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libdhcp++.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/log/liblog.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/config/libcfgclient.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/cc/libcc.la
 endif
 
 noinst_PROGRAMS = $(TESTS)
