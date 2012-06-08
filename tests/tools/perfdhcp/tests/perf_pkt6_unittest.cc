@@ -113,7 +113,7 @@ TEST_F(PerfPkt6Test, Constructor) {
     boost::scoped_ptr<PerfPkt6> pkt1(new PerfPkt6(data, sizeof(data)));
     EXPECT_EQ(6, pkt1->getData().size());
     EXPECT_EQ(0, memcmp(&pkt1->getData()[0], data, sizeof(data)));
-    EXPECT_EQ(1, pkt1->getTransIdOffset());
+    EXPECT_EQ(1, pkt1->getTransidOffset());
 
     // Test constructor to be used for outgoing messages.
     // Use non-zero offset and specify transaction id.
@@ -122,7 +122,7 @@ TEST_F(PerfPkt6Test, Constructor) {
     EXPECT_EQ(6, pkt2->getData().size());
     EXPECT_EQ(0, memcmp(&pkt2->getData()[0], data, sizeof(data)));
     EXPECT_EQ(0x010203, pkt2->getTransid());
-    EXPECT_EQ(10, pkt2->getTransIdOffset());
+    EXPECT_EQ(10, pkt2->getTransidOffset());
 }
 
 TEST_F(PerfPkt6Test, RawPackUnpack) {

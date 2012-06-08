@@ -74,7 +74,7 @@ public:
     /// \brief Returns transaction id offset in packet buffer
     ///
     /// \return Transaction ID offset in packet buffer
-    size_t getTransIdOffset() const { return transid_offset_; };
+    size_t getTransidOffset() const { return transid_offset_; };
 
     /// \brief Prepares on-wire format from raw buffer.
     ///
