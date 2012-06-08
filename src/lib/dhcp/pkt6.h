@@ -131,6 +131,11 @@ public:
     /// @param type message type to be set
     void setType(uint8_t type) { msg_type_=type; };
 
+    /// @brief Sets transaction-id value
+    ///
+    /// @param transid transaction-id to be set.
+    void setTransid(uint32_t transid) { transid_ = transid; }
+
     /// Returns value of transaction-id field
     ///
     /// @return transaction-id
@@ -241,6 +246,13 @@ public:
     /// TODO Need to implement getOptions() as well
 
     /// collection of options present in this message
+    ///
+    /// @warning This protected member is accessed by derived
+    /// classes directly. One of such derived classes is
+    /// @ref perfdhcp::PerfPkt6. The impact on derived clasess'
+    /// behavior must be taken into consideration before making
+    /// changes to this member such as access scope restriction or
+    /// data format change etc.
     isc::dhcp::Option::OptionCollection options_;
 
     /// @brief Update packet timestamp.
@@ -296,6 +308,13 @@ protected:
     uint32_t transid_;
 
     /// unparsed data (in received packets)
+    ///
+    /// @warning This protected member is accessed by derived
+    /// classes directly. One of such derived classes is
+    /// @ref perfdhcp::PerfPkt6. The impact on derived clasess'
+    /// behavior must be taken into consideration before making
+    /// changes to this member such as access scope restriction or
+    /// data format change etc.
     OptionBuffer data_;
 
     /// name of the network interface the packet was received/to be sent over
@@ -322,6 +341,13 @@ protected:
     uint16_t remote_port_;
 
     /// output buffer (used during message transmission)
+    ///
+    /// @warning This protected member is accessed by derived
+    /// classes directly. One of such derived classes is
+    /// @ref perfdhcp::PerfPkt6. The impact on derived clasess'
+    /// behavior must be taken into consideration before making
+    /// changes to this member such as access scope restriction or
+    /// data format change etc.
     isc::util::OutputBuffer bufferOut_;
 
     /// packet timestamp

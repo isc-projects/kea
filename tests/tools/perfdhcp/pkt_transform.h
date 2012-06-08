@@ -57,7 +57,7 @@ public:
     /// \param in_buffer Input buffer holding intial packet
     /// data, this can be directly read from template file
     /// \param options Options collection with offsets
-    /// \param transid_Offset offset of transaction id in a packet,
+    /// \param transid_offset offset of transaction id in a packet,
     /// transaction ID will be written to output buffer at this
     /// offset
     /// \param transid Transaction ID value

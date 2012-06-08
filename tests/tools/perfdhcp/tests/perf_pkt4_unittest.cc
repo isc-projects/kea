@@ -121,18 +121,18 @@ TEST_F(PerfPkt4Test, Constructor) {
     // Test constructor to be used for incoming messages.
     // Use default (1) offset value and don't specify transaction id.
     boost::scoped_ptr<PerfPkt4> pkt1(new PerfPkt4(data, sizeof(data), 1));
-    EXPECT_EQ(1, pkt1->getTransIdOffset());
+    EXPECT_EQ(1, pkt1->getTransidOffset());
 
     // Test constructor to be used for outgoing messages.
     // Use non-zero offset and specify transaction id.
     boost::scoped_ptr<PerfPkt4> pkt2(new PerfPkt4(data, sizeof(data),
                                                   10, 0x010203));
     EXPECT_EQ(0x010203, pkt2->getTransid());
-    EXPECT_EQ(10, pkt2->getTransIdOffset());
+    EXPECT_EQ(10, pkt2->getTransidOffset());
 
     // Test default constructor. Transaction id offset is expected to be 1.
     boost::scoped_ptr<PerfPkt4> pkt3(new PerfPkt4(data, sizeof(data)));
-    EXPECT_EQ(1, pkt3->getTransIdOffset());
+    EXPECT_EQ(1, pkt3->getTransidOffset());
 }
 
 TEST_F(PerfPkt4Test, RawPack) {
