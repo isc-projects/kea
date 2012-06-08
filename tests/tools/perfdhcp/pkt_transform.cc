@@ -124,6 +124,9 @@ PktTransform::packOptions(const OptionBuffer& in_buffer,
             // Get options with their position (offset).
             boost::shared_ptr<LocalizedOption> option =
                 boost::dynamic_pointer_cast<LocalizedOption>(it->second);
+            if (option == NULL) {
+                isc_throw(isc::BadValue, "option is null");
+            }
             uint32_t offset = option->getOffset();
             if ((offset == 0) ||
                 (offset + option->len() > in_buffer.size())) {
@@ -160,6 +163,9 @@ PktTransform::unpackOptions(const OptionBuffer& in_buffer,
 
         boost::shared_ptr<LocalizedOption> option =
             boost::dynamic_pointer_cast<LocalizedOption>(it->second);
+        if (option == NULL) {
+            isc_throw(isc::BadValue, "option is null");
+        }
         size_t opt_pos = option->getOffset();
         if (opt_pos == 0) {
             isc_throw(isc::BadValue, "failed to unpack packet from raw buffer "
