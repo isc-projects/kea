@@ -901,7 +901,7 @@ class TestDDNSSession(unittest.TestCase):
         # data should be the expected response.
         s.make_send_ready()
         self.assertEqual(DNSTCPContext.SEND_DONE,
-                         self.server._tcp_ctxs[s.fileno][0].send_ready())
+                         self.server._tcp_ctxs[s.fileno()][0].send_ready())
         self.check_update_response(s._sent_data, Rcode.NOERROR(), tcp=True)
 
     def test_tcp_request_error(self):
@@ -915,6 +915,42 @@ class TestDDNSSession(unittest.TestCase):
                                                      create_msg())))
         # the socket should have been closed.
         self.assertEqual(1, s._close_called)
+
+    def test_tcp_request_quota(self):
+        '''Test'''
+        # Originally the TCP context map should be empty.
+        self.assertEqual(0, len(self.server._tcp_ctxs))
+
+        class FakeReceiver:
+            '''Faked SessionReceiver, just returning given param by pop()'''
+            def __init__(self, param):
+                self.__param = param
+            def pop(self):
+                return self.__param
+
+        def check_tcp_ok(fd, expect_grant):
+            '''Supplemental checker to see if TCP request is handled.'''
+            s = FakeSocket(fd, proto=socket.IPPROTO_TCP)
+            s._send_buflen = 7
+            self.server._socksession_receivers[s.fileno()] = \
+                (None, FakeReceiver((s, TEST_SERVER6, TEST_CLIENT6,
+                                     create_msg())))
+            self.assertEqual(expect_grant,
+                             self.server.handle_session(s.fileno()))
+            self.assertEqual(0 if expect_grant else 1, s._close_called)
+
+        # By default up to 10 TCP clients can coexist (use hardcode
+        # intentionally so we can test the default value itself)
+        for i in range(0, 10):
+            check_tcp_ok(i, True)
+        self.assertEqual(10, len(self.server._tcp_ctxs))
+
+        # Beyond that, it should be rejected (by reset)
+        check_tcp_ok(11, False)
+
+        # If we remove one context from the server, new client can go in again.
+        self.server._tcp_ctxs.pop(5)
+        check_tcp_ok(12, True)
 
     def test_request_message(self):
         '''Test if the request message stores RRs separately.'''

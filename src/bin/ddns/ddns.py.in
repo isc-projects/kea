@@ -152,6 +152,10 @@ def get_datasrc_client(cc_session):
         return HARDCODED_DATASRC_CLASS, DummyDataSourceClient(ex)
 
 class DDNSServer:
+    # The number of TCP clients that can be handled by the server at the same
+    # time (this should be configurable parameter).
+    TCP_CLIENTS = 10
+
     def __init__(self, cc_session=None):
         '''
         Initialize the DDNS Server.
@@ -409,7 +413,7 @@ class DDNSServer:
                 tcp_ctx = DNSTCPContext(sock)
                 send_result = tcp_ctx.send(data)
                 if send_result == DNSTCPContext.SENDING:
-                    self._tcp_ctxs[sock.fileno] = (tcp_ctx, dest)
+                    self._tcp_ctxs[sock.fileno()] = (tcp_ctx, dest)
                 elif send_result == DNSTCPContext.CLOSED:
                     raise socket.error("socket error in TCP send")
                 else:
@@ -457,19 +461,35 @@ class DDNSServer:
                          ZoneFormatter(zname, zclass), error_msg)
 
     def handle_session(self, fileno):
-        """
-        Handle incoming session on the socket with given fileno.
+        """Handle incoming session on the socket with given fileno.
+
+        Return True if a response (whether positive or negative) has been
+        sent; otherwise False.  The return value isn't expected to be used
+        for other purposes than testing.
+
         """
         logger.debug(TRACE_BASIC, DDNS_SESSION, fileno)
-        (socket, receiver) = self._socksession_receivers[fileno]
+        (session_socket, receiver) = self._socksession_receivers[fileno]
         try:
-            self.handle_request(receiver.pop())
+            req_session = receiver.pop()
+            (sock, remote_addr) = (req_session[0], req_session[2])
+
+            # If this is a TCP client, check the quota, and immediately reject
+            # it if we cannot accept more.
+            if sock.proto == socket.IPPROTO_TCP and \
+                    len(self._tcp_ctxs) >= self.TCP_CLIENTS:
+                logger.warn(DDNS_REQUEST_TCP_QUOTA,
+                            ClientFormatter(remote_addr), len(self._tcp_ctxs))
+                sock.close()
+                return False
+            return self.handle_request(req_session)
         except isc.util.cio.socketsession.SocketSessionError as se:
             # No matter why this failed, the connection is in unknown, possibly
             # broken state. So, we close the socket and remove the receiver.
             del self._socksession_receivers[fileno]
-            socket.close()
+            session_socket.close()
             logger.warn(DDNS_DROP_CONN, fileno, se)
+            return False
 
     def run(self):
         '''
