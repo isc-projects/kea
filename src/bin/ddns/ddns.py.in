@@ -490,8 +490,8 @@ class DDNSServer:
             try:
                 (reads, writes, exceptions) = \
                     select.select([cc_fileno, listen_fileno] +
-                                  list(self._socksession_receivers.keys()), [],
-                                  [])
+                                  list(self._socksession_receivers.keys()),
+                                  list(self._tcp_ctxs.keys()), [])
             except select.error as se:
                 # In case it is just interrupted, we continue like nothing
                 # happened
@@ -506,6 +506,12 @@ class DDNSServer:
                     self.accept()
                 else:
                     self.handle_session(fileno)
+            for fileno in writes:
+                tcp_ctx = self._tcp_ctxs[fileno]
+                result = tcp_ctx.send_ready()
+                if result != DNSTCPContext.SENDING:
+                    tcp_ctx.close()
+                    del self._tcp_ctxs[fileno]
         self.shutdown_cleanup()
         logger.info(DDNS_STOPPED)
 
