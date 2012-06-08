@@ -46,7 +46,7 @@ typedef boost::shared_ptr<DataSourceClientContainer>
 /// is the ConfigurableContainer.
 class Container : public boost::noncopyable {
 protected:
-    /// \brief Constructur.
+    /// \brief Constructor.
     ///
     /// It is protected to prevent accidental creation of the abstract base
     /// class.
@@ -70,6 +70,7 @@ public:
             matched_labels_(matched_labels),
             exact_match_(exact_match)
         { }
+
         /// \brief Negative answer constructor.
         ///
         /// This conscructs a result for negative answer. Both pointers are
@@ -79,6 +80,7 @@ public:
             matched_labels_(0),
             exact_match_(false)
         { }
+
         /// \brief Comparison operator.
         ///
         /// It is needed for tests and it might be of some use elsewhere
@@ -89,11 +91,13 @@ public:
                     matched_labels_ == other.matched_labels_ &&
                     exact_match_ == other.exact_match_);
         }
+
         /// \brief The found data source.
         ///
         /// The data source containing the best matching zone. If no such
         /// data source exists, this is NULL pointer.
         DataSourceClient* const datasrc_;
+
         /// \brief The finder for the requested zone.
         ///
         /// This is the finder corresponding to the best matching zone.
@@ -102,15 +106,18 @@ public:
         ///
         /// \see search
         const ZoneFinderPtr finder_;
+
         /// \brief Number of matching labels.
         ///
         /// The number of labels the result have in common with the queried
         /// name of zone.
         const uint8_t matched_labels_;
+
         /// \brief If the result is an exact match.
         const bool exact_match_;
     };
-    /// \brief Search for a zone thourgh the data sources.
+
+    /// \brief Search for a zone through the data sources.
     ///
     /// This searches the contained data sources for a one that best matches
     /// the zone name.
@@ -181,6 +188,7 @@ public:
             Exception(file, line, what)
         { }
     };
+
     /// \brief Sets the configuration.
     ///
     /// This fills the Container with data sources corresponding to the
@@ -201,6 +209,7 @@ public:
     ///     sense.
     void configure(const data::ConstElementPtr& configuration,
                    bool allow_cache);
+
     /// \brief Implementation of the Container::search.
     virtual SearchResult search(const dns::Name& zone,
                                 bool want_exact_match = false,
@@ -213,6 +222,7 @@ public:
         DataSourceClient* data_src_;
         DataSourceClientContainerPtr container_;
     };
+
     /// \brief The collection of data sources.
     typedef std::vector<DataSourceInfo> DataSources;
 protected:
@@ -221,11 +231,13 @@ protected:
     /// All our data sources are stored here. It is protected to let the
     /// tests in.
     DataSources data_sources_;
+
     /// \brief Convenience type alias.
     ///
     /// \see getDataSource
     typedef std::pair<DataSourceClient*, DataSourceClientContainerPtr>
         DataSourcePair;
+
     /// \brief Create a data source of given type and configuration.
     ///
     /// This is a thin wrapper around the DataSourceClientContainer

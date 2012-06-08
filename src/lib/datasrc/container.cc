@@ -58,8 +58,7 @@ ConfigurableContainer::configure(const ConstElementPtr& config, bool) {
         // ready. So just put it there and let the old one die when we exit
         // the scope.
         data_sources_.swap(new_data_sources);
-    }
-    catch (const TypeError& te) {
+    } catch (const TypeError& te) {
         isc_throw(ConfigurationError, "Malformed configuration at data source "
                   "no. " << i << ": " << te.what());
     }
@@ -67,7 +66,7 @@ ConfigurableContainer::configure(const ConstElementPtr& config, bool) {
 
 Container::SearchResult
 ConfigurableContainer::search(const dns::Name& name, bool want_exact_match,
-                              bool ) const
+                              bool) const
 {
     // Nothing found yet.
     // Pointer is used as the SearchResult can't be assigned.
@@ -80,7 +79,8 @@ ConfigurableContainer::search(const dns::Name& name, bool want_exact_match,
         // zones and zones expected to be in the real data source. If it is
         // the cached one, provide the cached one. If it is in the external
         // data source, use the datasource and don't provide the finder yet.
-        DataSourceClient::FindResult result(info.data_src_->findZone(name));
+        const DataSourceClient::FindResult result(
+            info.data_src_->findZone(name));
         switch (result.code) {
             case result::SUCCESS: {
                 // If we found an exact match, we have no hope to getting
@@ -95,7 +95,7 @@ ConfigurableContainer::search(const dns::Name& name, bool want_exact_match,
                 if (!want_exact_match) {
                     // In case we have a partial match, check if it is better
                     // than what we have. If so, replace it.
-                    uint8_t labels(
+                    const uint8_t labels(
                         result.zone_finder->getOrigin().getLabelCount());
                     if (labels > candidate->matched_labels_) {
                         // This one is strictly better. Replace it.
