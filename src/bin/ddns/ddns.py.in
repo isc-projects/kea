@@ -197,7 +197,7 @@ class DDNSServer:
         #
         # DDNS Protocol handling class.
         self._UpdateSessionClass = isc.ddns.session.UpdateSession
-        # Outstanding TCP context: fileno=>context_obj
+        # Outstanding TCP context: fileno=>(context_obj, dst)
         self._tcp_ctxs = {}
 
     class InternalError(Exception):
@@ -409,13 +409,13 @@ class DDNSServer:
                 tcp_ctx = DNSTCPContext(sock)
                 send_result = tcp_ctx.send(data)
                 if send_result == DNSTCPContext.SENDING:
-                    self._tcp_ctxs[sock.fileno] = tcp_ctx
+                    self._tcp_ctxs[sock.fileno] = (tcp_ctx, dest)
                 elif send_result == DNSTCPContext.CLOSED:
                     raise socket.error("socket error in TCP send")
                 else:
                     tcp_ctx.close()
         except socket.error as ex:
-            logger.error(DDNS_RESPONSE_SOCKET_ERROR, ClientFormatter(dest), ex)
+            logger.warn(DDNS_RESPONSE_SOCKET_ERROR, ClientFormatter(dest), ex)
             return False
 
         return True
@@ -507,10 +507,13 @@ class DDNSServer:
                 else:
                     self.handle_session(fileno)
             for fileno in writes:
-                tcp_ctx = self._tcp_ctxs[fileno]
-                result = tcp_ctx.send_ready()
+                ctx = self._tcp_ctxs[fileno]
+                result = ctx[0].send_ready()
                 if result != DNSTCPContext.SENDING:
-                    tcp_ctx.close()
+                    if result == DNSTCPContext.CLOSED:
+                        logger.warn(DDNS_RESPONSE_TCP_SOCKET_ERROR,
+                                    ClientFormatter(ctx[1]))
+                    ctx[0].close()
                     del self._tcp_ctxs[fileno]
         self.shutdown_cleanup()
         logger.info(DDNS_STOPPED)
