@@ -618,7 +618,6 @@ class SessionTest(SessionTestBase):
         else:
             self.assertEqual(UPDATE_ERROR, result)
 
-
     def test_check_prerequisites(self):
         # This test checks if the actual prerequisite-type-specific
         # methods are called.
@@ -794,7 +793,6 @@ class SessionTest(SessionTestBase):
                                               "1233 3600 1800 2419200 7200" ])
         self.rrset_update_soa_del = rrset_update_soa_del
 
-
         rrset_update_soa2 = create_rrset("example.org", TEST_RRCLASS,
                                          RRType.SOA(), 3600,
                                          [ "ns1.example.org. " +
@@ -914,7 +912,6 @@ class SessionTest(SessionTestBase):
         # out of zone data
         rrset = create_rrset("different.zone", RRClass.ANY(), RRType.TXT(), 0)
         self.check_prescan_result(Rcode.NOTZONE(), [ rrset ])
-
 
         # forbidden type, zone class
         rrset = create_rrset(TEST_ZONE_NAME, TEST_RRCLASS, RRType.ANY(), 0,

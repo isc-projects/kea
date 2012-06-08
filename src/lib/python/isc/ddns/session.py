@@ -790,7 +790,6 @@ class UpdateSession:
             self.__diff.commit()
             return Rcode.NOERROR()
         except isc.datasrc.Error as dse:
-            raise dse
             logger.info(LIBDDNS_UPDATE_DATASRC_ERROR, dse)
             return Rcode.SERVFAIL()
         except Exception as uce:
