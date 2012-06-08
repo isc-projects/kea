@@ -60,8 +60,8 @@ class FakeSocket:
     """
     A fake socket. It only provides a file number, peer name and accept method.
     """
-    def __init__(self, fileno):
-        self.proto = socket.IPPROTO_UDP
+    def __init__(self, fileno, proto=socket.IPPROTO_UDP):
+        self.proto = proto
         self.__fileno = fileno
         self._sent_data = None
         self._sent_addr = None
@@ -294,6 +294,11 @@ class TestDDNSServer(unittest.TestCase):
         self.__hook_called = False
         self.ddns_server._listen_socket = FakeSocket(2)
         ddns.select.select = self.__select
+
+        # common private attributes for TCP response tests
+        self.__tcp_sock = FakeSocket(10, socket.IPPROTO_TCP)
+        self.__tcp_ctx = DNSTCPContext(self.__tcp_sock)
+        self.__tcp_data = b'A' * 12 # dummy, just the same size as DNS header
 
     def tearDown(self):
         ddns.select.select = select.select
@@ -622,6 +627,99 @@ class TestDDNSServer(unittest.TestCase):
         self.__select_exception = select.error(errno.EBADF)
         self.__select_expected = ([1, 2], [], [], None)
         self.assertRaises(select.error, self.ddns_server.run)
+
+    def __send_select_tcp(self, buflen, raise_after_select=False):
+        '''Common subroutine for some TCP related tests below.'''
+        fileno = self.__tcp_sock.fileno()
+        self.ddns_server._tcp_ctxs = {fileno: self.__tcp_ctx}
+
+        # make an initial, incomplete send via the test context
+        self.__tcp_sock._send_buflen = buflen
+        self.assertEqual(DNSTCPContext.SENDING,
+                         self.__tcp_ctx.send(self.__tcp_data))
+        self.assertEqual(buflen, len(self.__tcp_sock._sent_data))
+        # clear the socket "send buffer"
+        self.__tcp_sock.make_send_ready()
+        # if requested, set up exception
+        self.__tcp_sock._raise_on_send = raise_after_select
+
+        # Run select
+        self.__select_expected = ([1, 2], [fileno], [], None)
+        self.__select_answer = ([], [fileno], [])
+        self.ddns_server.run()
+
+    def test_select_send_continued(self):
+        '''Test continuation of sending a TCP response.'''
+        # Common setup, with the bufsize that would make it complete after a
+        # single select call.
+        self.__send_select_tcp(7)
+
+        # Now the send should be completed.  socket should be closed,
+        # and the context should be removed from the server.
+        self.assertEqual(14, len(self.__tcp_sock._sent_data))
+        self.assertEqual(1, self.__tcp_sock._close_called)
+        self.assertEqual(0, len(self.ddns_server._tcp_ctxs))
+
+    def test_select_send_continued_twice(self):
+        '''Test continuation of sending a TCP response, still continuing.'''
+        # This is similar to the send_continued test, but the continued
+        # operation still won't complete the send.
+        self.__send_select_tcp(5)
+
+        # Only 10 bytes should have been transmitted, socket is still open,
+        # and the context is still in the server (that would require select
+        # watch it again).
+        self.assertEqual(10, len(self.__tcp_sock._sent_data))
+        self.assertEqual(0, self.__tcp_sock._close_called)
+        self.assertEqual(self.__tcp_ctx,
+                         self.ddns_server._tcp_ctxs[self.__tcp_sock.fileno()])
+
+    def test_select_send_continued_failed(self):
+        '''Test continuation of sending a TCP response, which fails.'''
+        # Let the socket raise an exception in the second call to send().
+        self.__send_select_tcp(5, raise_after_select=True)
+
+        # Only the data before select() have been transmitted, socket is
+        # closed due to the failure, and the context is removed from the
+        # server.
+        self.assertEqual(5, len(self.__tcp_sock._sent_data))
+        self.assertEqual(1, self.__tcp_sock._close_called)
+        self.assertEqual(0, len(self.ddns_server._tcp_ctxs))
+
+    def test_select_multi_tcp(self):
+        '''Test continuation of sending a TCP response, multiple sockets.'''
+        # Check if the implementation still works with multiple outstanding
+        # TCP contexts.  We use three (arbitray choice), of which two will be
+        # writable after select and complete the send.
+        tcp_socks = []
+        for i in range(0, 3):
+            # Use faked FD of 100, 101, 102 (again, arbitrary choice)
+            s = FakeSocket(100 + i, proto=socket.IPPROTO_TCP)
+            ctx = DNSTCPContext(s)
+            self.ddns_server._tcp_ctxs[s.fileno()] = ctx
+            s._send_buflen = 7  # make sure it requires two send's
+            self.assertEqual(DNSTCPContext.SENDING, ctx.send(self.__tcp_data))
+            s.make_send_ready()
+
+            tcp_socks.append(s)
+
+        self.__select_expected = ([1, 2], [100, 101, 102], [], None)
+        self.__select_answer = ([], [100, 102], [])
+        self.ddns_server.run()
+
+        for i in [0, 2]:
+            self.assertEqual(14, len(tcp_socks[i]._sent_data))
+            self.assertEqual(1, tcp_socks[i]._close_called)
+        self.assertEqual(1, len(self.ddns_server._tcp_ctxs))
+
+    def test_select_bad_writefd(self):
+        # There's no outstanding TCP context, but select somehow returns
+        # writable FD.  It should result in an uncaught exception, killing
+        # the server.  This is okay, because it shouldn't happen and should be
+        # an internal bug.
+        self.__select_expected = ([1, 2], [], [], None)
+        self.__select_answer = ([], [10], [])
+        self.assertRaises(KeyError, self.ddns_server.run)
 
 def create_msg(opcode=Opcode.UPDATE(), zones=[TEST_ZONE_RECORD], prereq=[],
                tsigctx=None):
