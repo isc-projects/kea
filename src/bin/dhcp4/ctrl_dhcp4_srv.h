@@ -19,6 +19,7 @@
 #include <asiolink/asiolink.h>
 #include <cc/session.h>
 #include <config/ccsession.h>
+#include <cc/data.h>
 
 namespace isc {
 namespace dhcp {
@@ -36,6 +37,11 @@ namespace dhcp {
 /// Dhcpv4Srv and other classes, see \ref dhcpv4Session.
 class ControlledDhcpv4Srv : public isc::dhcp::Dhcpv4Srv {
 public:
+
+    /// @brief Constructor
+    ///
+    /// @param port UDP port to be opened for DHCP traffic
+    /// @param verbose should server print out additional commands?
     ControlledDhcpv4Srv(uint16_t port = DHCP4_SERVER_PORT,
                         bool verbose = false);
 
@@ -59,8 +65,39 @@ public:
 
     ~ControlledDhcpv4Srv();
 
+    /// @brief Session callback, processes received commands.
+    ///
+    /// @param command_id text represenation of the command (e.g. "shutdown")
+    /// @param args optional parameters
+    ///
+    /// @return status of the command
+    static isc::data::ConstElementPtr
+    execDhcpv4ServerCommand(const std::string& command,
+                            isc::data::ConstElementPtr args);
+
+    /// @brief Static pointer to the sole instance of the DHCP server.
+    ///
+    /// This is required for config and command handlers to gain access to
+    /// the server
     static ControlledDhcpv4Srv* server_;
 protected:
+
+    /// @brief A callback for handling incoming configuration updates.
+    ///
+    /// @param new_config textual representation of the new configuration
+    ///
+    /// @return status of the config update
+    static isc::data::ConstElementPtr
+    dhcp4ConfigHandler(isc::data::ConstElementPtr new_config);
+
+    /// @brief A callback for handling incoming commands.
+    ///
+    /// @param command textual representation of the command
+    /// @param args parameters of the command
+    ///
+    /// @return status of the processed command
+    static isc::data::ConstElementPtr
+    dhcp4CommandHandler(const std::string& command, isc::data::ConstElementPtr args);
 
     /// @brief callback that will be called from iface_mgr when command/config arrives
     ///
@@ -76,7 +113,6 @@ protected:
 
     /// @brief Session that receives configuation and commands
     isc::config::ModuleCCSession* config_session_;
-
 };
 
 }; // namespace isc::dhcp
