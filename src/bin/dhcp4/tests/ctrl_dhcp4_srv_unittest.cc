@@ -22,11 +22,14 @@
 
 #include <dhcp/dhcp4.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
+#include <config/ccsession.h>
 
 using namespace std;
 using namespace isc;
 using namespace isc::dhcp;
 using namespace isc::asiolink;
+using namespace isc::data;
+using namespace isc::config;
 
 namespace {
 
@@ -45,12 +48,36 @@ public:
     };
 };
 
-TEST_F(CtrlDhcpv4SrvTest, basic) {
+TEST_F(CtrlDhcpv4SrvTest, commands) {
 
     ControlledDhcpv4Srv* srv = NULL;
     ASSERT_NO_THROW({
         srv = new ControlledDhcpv4Srv(DHCP4_SERVER_PORT + 10000);
     });
+
+    // use empty parameters list
+    ElementPtr params(new isc::data::MapElement());
+    int rcode = -1;
+
+    // case 1: send bogus command
+    ConstElementPtr result = ControlledDhcpv4Srv::execDhcpv4ServerCommand("blah", params);
+    ConstElementPtr comment = parseAnswer(rcode, result);
+    EXPECT_EQ(1, rcode); // expect failure (no such command as blah)
+
+    // case 1: send shutdown command without any parameters
+    result = ControlledDhcpv4Srv::execDhcpv4ServerCommand("shutdown", params);
+    comment = parseAnswer(rcode, result);
+    EXPECT_EQ(0, rcode); // expect success
+
+    const pid_t pid(getpid());
+    ConstElementPtr x(new isc::data::IntElement(pid));
+    params->set("pid", x);
+
+    // case 2: send shutdown command with 1 parameter: pid
+    result = ControlledDhcpv4Srv::execDhcpv4ServerCommand("shutdown", params);
+    comment = parseAnswer(rcode, result);
+    EXPECT_EQ(0, rcode); // expect success
+
 
     delete srv;
 }
