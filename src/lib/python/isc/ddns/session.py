@@ -132,7 +132,8 @@ class DDNS_SOA:
     def soa_update_check(self, origin_soa, new_soa):
         '''Check whether the new soa is valid. If the serial number is bigger
         than the old one, it is valid, then return True, otherwise, return
-        False.
+        False. Make sure the origin_soa and new_soa parameters are not none
+        before invoke soa_update_check.
         Parameters:
             origin_soa, old SOA resource record.
             new_soa, new SOA resource record.
@@ -149,7 +150,7 @@ class DDNS_SOA:
 
     def update_soa(self, origin_soa, inc_number = 1):
         ''' Update the soa number incrementally as RFC 2136. Please make sure
-        that the origin_soa exists and not null before invoke this function.
+        that the origin_soa exists and not none before invoke this function.
         Parameters:
             origin_soa, the soa resource record which will be updated.
             inc_number, the number which will be added into the serial number of
@@ -728,6 +729,11 @@ class UpdateSession:
         result, old_soa, _ = self.__finder.find(self.__zname, RRType.SOA(),
                                                 ZoneFinder.NO_WILDCARD |
                                                 ZoneFinder.FIND_GLUE_OK)
+        # We may implement recovering from missing SOA data at some point, but
+        # for now servfail on such a broken state
+        if result != ZoneFinder.SUCCESS:
+            raise UpdateError("Error finding SOA record in datasource.",
+                    self.__zname, self.__zclass, Rcode.SERVFAIL())
         serial_operation = DDNS_SOA()
         if self.__added_soa is not None and\
         serial_operation.soa_update_check(old_soa, self.__added_soa):
