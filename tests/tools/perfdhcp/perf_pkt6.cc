@@ -33,7 +33,7 @@ PerfPkt6::PerfPkt6(const uint8_t* buf,
                    uint32_t transid) :
     Pkt6(buf, len, Pkt6::UDP),
     transid_offset_(transid_offset) {
-    transid_ = transid;
+    setTransid(transid);
 }
 
 bool
@@ -41,18 +41,23 @@ PerfPkt6::rawPack() {
     return (PktTransform::pack(dhcp::Option::V6,
                                data_,
                                options_,
-                               transid_offset_,
-                               transid_,
+                               getTransidOffset(),
+                               getTransid(),
                                bufferOut_));
 }
 
 bool
 PerfPkt6::rawUnpack() {
-    return (PktTransform::unpack(dhcp::Option::V6,
-                                 data_,
-                                 options_,
-                                 transid_offset_,
-                                 transid_));
+    uint32_t transid = getTransid();
+    bool res =  PktTransform::unpack(dhcp::Option::V6,
+                                     data_,
+                                     options_,
+                                     getTransidOffset(),
+                                     transid);
+    if (res) {
+        setTransid(transid);
+    }
+    return (res);
 }
 
 } // namespace perfdhcp

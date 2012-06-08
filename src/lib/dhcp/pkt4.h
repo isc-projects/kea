@@ -204,6 +204,11 @@ public:
     void
     setGiaddr(const isc::asiolink::IOAddress& giaddr) { giaddr_ = giaddr; };
 
+    /// @brief Sets transaction-id value
+    ///
+    /// @param transid transaction-id to be set.
+    void setTransid(uint32_t transid) { transid_ = transid; }
+
     /// @brief Returns value of transaction-id field.
     ///
     /// @return transaction-id
@@ -488,12 +493,26 @@ protected:
     // end of real DHCPv4 fields
 
     /// output buffer (used during message transmission)
+    ///
+    /// @warning This protected member is accessed by derived
+    /// classes directly. One of such derived classes is
+    /// @ref perfdhcp::PerfPkt4. The impact on derived clasess'
+    /// behavior must be taken into consideration before making
+    /// changes to this member such as access scope restriction or
+    /// data format change etc.
     isc::util::OutputBuffer bufferOut_;
 
     /// that's the data of input buffer used in RX packet. Note that
     /// InputBuffer does not store the data itself, but just expects that
     /// data will be valid for the whole life of InputBuffer. Therefore we
     /// need to keep the data around.
+    ///
+    /// @warning This protected member is accessed by derived
+    /// classes directly. One of such derived classes is
+    /// @ref perfdhcp::PerfPkt4. The impact on derived clasess'
+    /// behavior must be taken into consideration before making
+    /// changes to this member such as access scope restriction or
+    /// data format change etc.
     std::vector<uint8_t> data_;
 
     /// message type (e.g. 1=DHCPDISCOVER)
@@ -502,6 +521,13 @@ protected:
     uint8_t msg_type_;
 
     /// collection of options present in this message
+    ///
+    /// @warnig This protected member is accessed by derived
+    /// classes directly. One of such derived classes is
+    /// @ref perfdhcp::PerfPkt4. The impact on derived clasess'
+    /// behavior must be taken into consideration before making
+    /// changes to this member such as access scope restriction or
+    /// data format change etc.
     isc::dhcp::Option::OptionCollection options_;
 
     /// packet timestamp
