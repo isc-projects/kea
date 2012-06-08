@@ -50,60 +50,26 @@ public:
     /// Localized option pointer type.
     typedef boost::shared_ptr<LocalizedOption> LocalizedOptionPtr;
 
-    /// \brief Constructor, used for outgoing and incoming messages
-    ///
-    /// This constructor initializes the transaction ID and the
-    /// transaction ID offset of the packet with default
-    /// values.
-    ///
-    /// \param buf buffer holding contents of the message.
-    /// \param len length of the data in the buffer.
-    PerfPkt6(const uint8_t* buf, size_t len);
-
-    /// \brief Constructor, used for outgoing DHCP messages.
+    /// \brief Constructor, used to create messages from packet
+    /// template files.
     ///
     /// Creates a new DHCPv6 message using the provided buffer.
     /// The transaction ID and its offset are specified via this
     /// constructor. The transaction ID is stored in outgoing message
-    /// when client class calls \ref PerfPkt6::rawPack.
-    ///
-    /// \note This constructor should be used only for outgoing
-    /// messages that are created from template files.
+    /// when client class calls \ref PerfPkt6::rawPack. Transaction id
+    /// offset value is used for incoming and outgoing messages to
+    /// identify transaction ID field's position in incoming and outgoing
+    /// messages.
     ///
     /// \param buf buffer holding contents of the message (this can
     /// be directly read from template file).
     /// \param len length of the data in the buffer.
-    /// \param transid_offset transaction id offset in outgoing message.
+    /// \param transid_offset transaction id offset in a message.
     /// \param transid transaction id to be stored in outgoing message.
     PerfPkt6(const uint8_t* buf,
              size_t len,
-             size_t transid_offset,
-             uint32_t transid);
-
-    /// Constructor, used for incoming DHCP messages.
-    ///
-    /// Creates a new DHCPv6 message using the provided buffer. The
-    /// client class may indicate which options are to be read
-    /// from the buffer. Such options should be added to the
-    /// options collection using \ref dhcp::Pkt4::addOption. The
-    /// options should be of \ref LocalizedOption class.
-    ///
-    /// The transaction ID offset points to location where the
-    /// transaction ID field is stored. The transaction ID will
-    /// be read from this location when \ref PerfPkt4::rawUnpack is
-    /// called. The transid_ class member will be updated accordingly.
-    ///
-    /// \note Use this constructor only in the case where you want to create
-    /// incoming DHCPv4 object from the raw buffer
-    /// and you know the options offsets. Options offsets are
-    /// specified on the perfdhcp command line by the user.
-    ///
-    /// \param buf pointer to a buffer of received packet content.
-    /// \param len size of buffer of packet content.
-    /// \param transid_offset transaction id offset in a message.
-    PerfPkt6(const uint8_t* buf,
-             size_t len,
-             size_t transid_offset);
+             size_t transid_offset = 1,
+             uint32_t transid = 0);
 
     /// \brief Returns transaction id offset in packet buffer
     ///
