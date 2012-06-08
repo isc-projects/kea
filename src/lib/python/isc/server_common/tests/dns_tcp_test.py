@@ -78,6 +78,11 @@ class BufferTest(unittest.TestCase):
         self.check_length_field(buf, 0)
         self.assertEqual(None, buf.get_data(2))
 
+    def test_get_total_len(self):
+        self.assertEqual(14, DNSTCPSendBuffer(b'x' * 12).get_total_len())
+        self.assertEqual(2, DNSTCPSendBuffer(b'').get_total_len())
+        self.assertEqual(65537, DNSTCPSendBuffer(b'X' * 65535).get_total_len())
+
 class FakeSocket:
     '''Emulating python socket w/o involving IO while allowing inspection.'''
     def __init__(self, proto=socket.IPPROTO_TCP):

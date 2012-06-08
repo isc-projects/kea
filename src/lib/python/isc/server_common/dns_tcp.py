@@ -74,6 +74,12 @@ class DNSTCPSendBuffer:
         self.__lenbuf = struct.pack('H', socket.htons(self.__data_size))
         self.__databuf = data
 
+    def get_total_len(self):
+        '''Return the total length of the buffer, including the length field.
+
+        '''
+        return self.__data_size + self.__len_size
+
     def get_data(self, pos):
         '''Return a portion of data from a specified position.
 
@@ -235,15 +241,16 @@ class DNSTCPContext:
             try:
                 cc = self.__sock.send(data)
             except socket.error as ex:
+                total_len = self.__send_buffer.get_total_len()
                 if ex.errno == errno.EAGAIN:
                     logger.debug(logger.DBGLVL_TRACE_DETAIL,
                                  PYSERVER_COMMON_DNS_TCP_SEND_PENDING,
                                  ClientFormatter(self.__remote_addr),
-                                 self.__send_marker)
+                                 self.__send_marker, total_len)
                     return self.SENDING
                 logger.warn(PYSERVER_COMMON_DNS_TCP_SEND_ERROR,
                             ClientFormatter(self.__remote_addr),
-                            self.__send_marker, ex)
+                            self.__send_marker, total_len, ex)
                 self.__sock.close()
                 self.__sock = None
                 return self.CLOSED
