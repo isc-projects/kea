@@ -75,10 +75,10 @@ public:
         };
 
         uint8_t v4Opts[] = {
-            12,  3, 0,   1,  2, // Host name option.
-            13,  3, 10, 11, 12, // Boot file size option
-            14,  3, 20, 21, 22, // Merit dump file
-            53, 1, 1,           // DHCP message type.
+            DHO_HOST_NAME, 3, 0,   1,  2,  // Host name option.
+            DHO_BOOT_SIZE, 3, 10, 11, 12,  // Boot file size option
+            DHO_MERIT_DUMP, 3, 20, 21, 22, // Merit dump file
+            DHO_DHCP_MESSAGE_TYPE, 1, 1,   // DHCP message type.
             128, 3, 30, 31, 32,
             254, 3, 40, 41, 42,
         };
@@ -114,21 +114,26 @@ public:
 TEST_F(PerfPkt4Test, Constructor) {
     // Initialize some dummy payload.
     uint8_t data[250];
-    for (int i = 0; i < 250; i++) {
+    for (int i = 0; i < 250; ++i) {
         data[i] = i;
     }
 
     // Test constructor to be used for incoming messages.
     // Use default (1) offset value and don't specify transaction id.
-    boost::scoped_ptr<PerfPkt4> pkt1(new PerfPkt4(data, sizeof(data), 1));
+    const size_t offset_transid[] = { 1, 10 };
+    boost::scoped_ptr<PerfPkt4> pkt1(new PerfPkt4(data,
+                                                  sizeof(data),
+                                                  offset_transid[0]));
     EXPECT_EQ(1, pkt1->getTransidOffset());
 
     // Test constructor to be used for outgoing messages.
     // Use non-zero offset and specify transaction id.
+    const uint32_t transid = 0x010203;
     boost::scoped_ptr<PerfPkt4> pkt2(new PerfPkt4(data, sizeof(data),
-                                                  10, 0x010203));
-    EXPECT_EQ(0x010203, pkt2->getTransid());
-    EXPECT_EQ(10, pkt2->getTransidOffset());
+                                                  offset_transid[1],
+                                                  transid));
+    EXPECT_EQ(transid, pkt2->getTransid());
+    EXPECT_EQ(offset_transid[1], pkt2->getTransidOffset());
 
     // Test default constructor. Transaction id offset is expected to be 1.
     boost::scoped_ptr<PerfPkt4> pkt3(new PerfPkt4(data, sizeof(data)));
@@ -141,21 +146,24 @@ TEST_F(PerfPkt4Test, RawPack) {
     boost::scoped_ptr<PerfPkt4> pkt(new PerfPkt4(&buf[0], buf.size()));
 
     // Initialize options data.
-    uint8_t buf_hostname[] = { 12, 3, 4, 5, 6 };
-    uint8_t buf_boot_filesize[] = { 13,  3, 1, 2, 3 };
-    OptionBuffer vec_hostname(buf_hostname + 2, buf_hostname + 5);
+    uint8_t buf_hostname[] = { DHO_HOST_NAME, 3, 4, 5, 6 };
+    uint8_t buf_boot_filesize[] = { DHO_BOOT_SIZE, 3, 1, 2, 3 };
+    OptionBuffer vec_hostname(buf_hostname + 2,
+                              buf_hostname + sizeof(buf_hostname));
     OptionBuffer vec_boot_filesize(buf_boot_filesize + 2,
-                                   buf_boot_filesize + 5);
+                                   buf_boot_filesize + sizeof(buf_hostname));
 
     // Create options objects.
+    const size_t offset_hostname = 240;
     LocalizedOptionPtr pkt_hostname(new LocalizedOption(Option::V4,
                                                         DHO_HOST_NAME,
                                                         vec_hostname,
-                                                        240));
+                                                        offset_hostname));
+    const size_t offset_boot_filesize = 245;
     LocalizedOptionPtr pkt_boot_filesize(new LocalizedOption(Option::V4,
                                                              DHO_BOOT_SIZE,
                                                              vec_boot_filesize,
-                                                             245));
+                                                             offset_boot_filesize));
 
     // Try to add options to packet.
     ASSERT_NO_THROW(pkt->addOption(pkt_boot_filesize));
@@ -173,8 +181,12 @@ TEST_F(PerfPkt4Test, RawPack) {
         static_cast<const uint8_t*>(pkt_output.getData());
 
     // Check if options we read from buffer is valid.
-    EXPECT_EQ(0, memcmp(buf_hostname, out_buf_data + 240, 5));
-    EXPECT_EQ(0, memcmp(buf_boot_filesize, out_buf_data + 245, 5));
+    EXPECT_EQ(0, memcmp(buf_hostname,
+                        out_buf_data + offset_hostname,
+                        sizeof(buf_hostname)));
+    EXPECT_EQ(0, memcmp(buf_boot_filesize,
+                        out_buf_data + offset_boot_filesize,
+                        sizeof(buf_boot_filesize)));
 }
 
 TEST_F(PerfPkt4Test, RawUnpack) {
@@ -183,15 +195,17 @@ TEST_F(PerfPkt4Test, RawUnpack) {
     boost::scoped_ptr<PerfPkt4> pkt(new PerfPkt4(&buf[0], buf.size()));
 
     // Create options (existing in the packet) and specify their offsets.
+    const size_t offset_merit = 250;
     LocalizedOptionPtr opt_merit(new LocalizedOption(Option::V4,
                                                      DHO_MERIT_DUMP,
                                                      OptionBuffer(),
-                                                     250));
+                                                     offset_merit));
 
+    const size_t  offset_msg_type = 255;
     LocalizedOptionPtr opt_msg_type(new LocalizedOption(Option::V4,
                                                         DHO_DHCP_MESSAGE_TYPE,
                                                         OptionBuffer(),
-                                                        255));
+                                                        offset_msg_type));
     // Addition should be successful
     ASSERT_NO_THROW(pkt->addOption(opt_merit));
     ASSERT_NO_THROW(pkt->addOption(opt_msg_type));
@@ -236,10 +250,11 @@ TEST_F(PerfPkt4Test, InvalidOptions) {
 
     // Create option with invalid offset.
     // This option is at offset 250 (not 251).
+    const size_t offset_merit = 251;
     LocalizedOptionPtr opt_merit(new LocalizedOption(Option::V4,
                                                      DHO_MERIT_DUMP,
                                                      OptionBuffer(),
-                                                     251));
+                                                     offset_merit));
     ASSERT_NO_THROW(pkt1->addOption(opt_merit));
 
     cout << "Testing unpack of invalid options. "
@@ -255,10 +270,11 @@ TEST_F(PerfPkt4Test, InvalidOptions) {
 
     // Create DHO_DHCP_MESSAGE_TYPE option that has the wrong offset.
     // With this offset, option goes beyond packet size (268).
+    const size_t offset_msg_type = 266;
     LocalizedOptionPtr opt_msg_type(new LocalizedOption(Option::V4,
                                                         DHO_DHCP_MESSAGE_TYPE,
                                                         OptionBuffer(1, 2),
-                                                        266));
+                                                        offset_msg_type));
     // Adding option is expected to be successful because no
     // offset validation takes place at this point.
     ASSERT_NO_THROW(pkt2->addOption(opt_msg_type));
@@ -276,10 +292,11 @@ TEST_F(PerfPkt4Test, TruncatedPacket) {
     // Option DHO_BOOT_SIZE is now truncated because whole packet
     // is truncated. This option ends at 249 while last index of
     // truncated packet is now 248.
+    const size_t offset_boot_filesize = 245;
     LocalizedOptionPtr opt_boot_filesize(new LocalizedOption(Option::V4,
                                                              DHO_BOOT_SIZE,
                                                              OptionBuffer(3, 1),
-                                                             245));
+                                                             offset_boot_filesize));
     ASSERT_NO_THROW(pkt->addOption(opt_boot_filesize));
 
     cout << "Testing pack and unpack of options in truncated "
@@ -294,9 +311,13 @@ TEST_F(PerfPkt4Test, TruncatedPacket) {
 TEST_F(PerfPkt4Test, PackTransactionId) {
     // Create dummy packet that consists of zeros.
     std::vector<uint8_t> buf(268, 0);
+
+    const size_t offset_transid[] = { 10, 265 };
+    const uint32_t transid = 0x0102;
     // Initialize transaction id 0x00000102 at offset 10.
     boost::scoped_ptr<PerfPkt4> pkt1(new PerfPkt4(&buf[0], buf.size(),
-                                                  10, 0x0102));
+                                                  offset_transid[0],
+                                                  transid));
 
     // Pack will inject transaction id at offset 10 into the
     // packet buffer.
@@ -313,7 +334,7 @@ TEST_F(PerfPkt4Test, PackTransactionId) {
 
     // Expect that reference transaction id matches what we have
     // read from buffer.
-    EXPECT_EQ(0, memcmp(ref_data, out_buf_data + 10, 4));
+    EXPECT_EQ(0, memcmp(ref_data, out_buf_data + offset_transid[0], 4));
 
     cout << "Testing pack with invalid transaction id offset. "
          << "This may produce spurious errors" << endl;
@@ -322,7 +343,8 @@ TEST_F(PerfPkt4Test, PackTransactionId) {
     // Packet length is 268, transaction id is 4 bytes long so last byte of
     // transaction id is out of bounds.
     boost::scoped_ptr<PerfPkt4> pkt2(new PerfPkt4(&buf[0], buf.size(),
-                                                  265, 0x0102));
+                                                  offset_transid[1],
+                                                  transid));
     EXPECT_FALSE(pkt2->rawPack());
 }
 
@@ -337,9 +359,10 @@ TEST_F(PerfPkt4Test, UnpackTransactionId) {
     }
 
     // Create packet from initialized buffer.
+    const size_t offset_transid[] = { 100, 270 };
     boost::scoped_ptr<PerfPkt4> pkt1(new PerfPkt4(&in_data[0],
                                                   in_data.size(),
-                                                  100));
+                                                  offset_transid[0]));
     ASSERT_TRUE(pkt1->rawUnpack());
 
     // Get unpacked transaction id and compare with reference.
@@ -348,7 +371,7 @@ TEST_F(PerfPkt4Test, UnpackTransactionId) {
     // Create packet with transaction id at invalid offset.
     boost::scoped_ptr<PerfPkt4> pkt2(new PerfPkt4(&in_data[0],
                                                   in_data.size(),
-                                                  270));
+                                                  offset_transid[1]));
 
     cout << "Testing unpack of transaction id at invalid offset. "
          << "This may produce spurious errors." << endl;
