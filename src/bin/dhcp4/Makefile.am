@@ -31,6 +31,7 @@ BUILT_SOURCES = spec_config.h
 pkglibexec_PROGRAMS = b10-dhcp4
 
 b10_dhcp4_SOURCES = main.cc dhcp4_srv.cc dhcp4_srv.h
+b10_dhcp4_SOURCES += ctrl_dhcp4_srv.cc ctrl_dhcp4_srv.h
 
 b10_dhcp4_LDADD = $(top_builddir)/src/lib/dhcp/libdhcp++.la
 b10_dhcp4_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
