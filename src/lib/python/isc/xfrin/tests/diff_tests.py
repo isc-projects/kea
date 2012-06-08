@@ -101,7 +101,6 @@ class DiffTest(unittest.TestCase):
         self.__rrset7 = RRset(Name('d.example.org.'), self.__rrclass,
                               RRType.A(), self.__ttl)
         self.__rrset7.add_rdata(Rdata(RRType.A(), self.__rrclass, "192.0.2.2"))
-        
 
     def __mock_compact(self):
         """
@@ -657,7 +656,6 @@ class DiffTest(unittest.TestCase):
         self.assertEqual(1, len(deletions))
         self.assertEqual(1, len(additions))
 
-
         diff.add_data(self.__rrset1)
         deletions, additions = diff.get_single_update_buffers()
         self.assertEqual(1, len(deletions))
@@ -677,7 +675,6 @@ class DiffTest(unittest.TestCase):
         deletions, additions = diff.get_single_update_buffers()
         self.assertEqual(1, len(deletions))
         self.assertEqual(1, len(additions))
-
 
     def test_find(self):
         diff = Diff(self, Name('example.org.'))
@@ -820,6 +817,46 @@ class DiffTest(unittest.TestCase):
             return (result, rrsets, flags)
         self.find_all = new_find_all
 
+    def __check_find_call(self, method, query_rrset, expected_rcode,
+                          expected_rdatas=None):
+        '''
+        Helper for find tests; calls the given method with the name and
+        type of the given rrset. Checks for the given rcode.
+        If expected_rdatas is not none, the result name, and type are
+        checked to match the given rrset ones, and the rdatas are checked
+        to be equal.
+        The given method must have the same arguments and return type
+        as find()
+        '''
+        result, rrset, _ = method(query_rrset.get_name(),
+                                  query_rrset.get_type())
+        self.assertEqual(expected_rcode, result)
+        if expected_rdatas is not None:
+            self.assertEqual(query_rrset.get_name(), rrset.get_name())
+            self.assertEqual(query_rrset.get_type(), rrset.get_type())
+            if expected_rdatas is not None:
+                self.assertEqual(expected_rdatas, rrset.get_rdata())
+        else:
+            self.assertEqual(None, rrset)
+
+    def __check_find_all_call(self, method, query_rrset, expected_rcode,
+                              expected_rrs=[]):
+        '''
+        Helper for find tests; calls the given method with the name and
+        type of the given rrset. Checks for the given rcode.
+        If expected_rdatas is not none, the result name, and type are
+        checked to match the given rrset ones, and the rdatas are checked
+        to be equal.
+        The given method must have the same arguments and return type
+        as find()
+        '''
+        result, rrsets, _ = method(query_rrset.get_name())
+        self.assertEqual(expected_rcode, result)
+        # We have no real equality function for rrsets, but since
+        # the rrsets in question are themselves returns, pointer equality
+        # works as well
+        self.assertEqual(expected_rrs, rrsets)
+
     def test_find_updated_existing_data(self):
         '''
         Tests whether existent data is updated with the additions and
@@ -832,48 +869,51 @@ class DiffTest(unittest.TestCase):
         # override the actual find method
         self.__create_find(ZoneFinder.SUCCESS, self.__rrset3, 0)
 
-        result, rrset, _ = diff.find_updated(self.__rrset3.get_name(),
-                                             self.__rrset3.get_type())
-        self.assertEqual(ZoneFinder.SUCCESS, result)
-        self.assertEqual(self.__rrset3.get_name(), rrset.get_name())
-        self.assertEqual(self.__rrset3.get_type(), rrset.get_type())
-        self.assertEqual(self.__rrset3.get_rdata(), rrset.get_rdata())
+        # sanity check
+        self.__check_find_call(diff.find_updated, self.__rrset3,
+                               ZoneFinder.SUCCESS, self.__rrset3.get_rdata())
+
+        # check that normal find also returns the original data
+        self.__check_find_call(diff.find, self.__rrset3,
+                               ZoneFinder.SUCCESS, self.__rrset3.get_rdata())
 
         # Adding another should have it returned in the find_updated
         diff.add_data(self.__rrset4)
-        result, rrset, _ = diff.find_updated(self.__rrset3.get_name(),
-                                             self.__rrset3.get_type())
-        self.assertEqual(ZoneFinder.SUCCESS, result)
-        self.assertEqual(self.__rrset3.get_name(), rrset.get_name())
-        self.assertEqual(self.__rrset3.get_type(), rrset.get_type())
-        self.assertEqual(self.__rrset3.get_rdata() + self.__rrset4.get_rdata(),
-                         rrset.get_rdata())
+        self.__check_find_call(diff.find_updated, self.__rrset3,
+                               ZoneFinder.SUCCESS, self.__rrset3.get_rdata() +
+                               self.__rrset4.get_rdata())
+
+        # check that normal find still returns the original data
+        self.__check_find_call(diff.find, self.__rrset3,
+                               ZoneFinder.SUCCESS, self.__rrset3.get_rdata())
 
         # Adding a different type should have no effect
         diff.add_data(self.__rrset2)
-        result, rrset, _ = diff.find_updated(self.__rrset3.get_name(),
-                                             self.__rrset3.get_type())
-        self.assertEqual(ZoneFinder.SUCCESS, result)
-        self.assertEqual(self.__rrset3.get_name(), rrset.get_name())
-        self.assertEqual(self.__rrset3.get_type(), rrset.get_type())
-        self.assertEqual(self.__rrset3.get_rdata() + self.__rrset4.get_rdata(),
-                         rrset.get_rdata())
+        self.__check_find_call(diff.find_updated, self.__rrset3,
+                               ZoneFinder.SUCCESS, self.__rrset3.get_rdata() +
+                               self.__rrset4.get_rdata())
+
+        # check that normal find still returns the original data
+        self.__check_find_call(diff.find, self.__rrset3,
+                               ZoneFinder.SUCCESS, self.__rrset3.get_rdata())
 
         # Deleting 3 now should result in only 4 being updated
         diff.delete_data(self.__rrset3)
-        result, rrset, _ = diff.find_updated(self.__rrset3.get_name(),
-                                             self.__rrset3.get_type())
-        self.assertEqual(ZoneFinder.SUCCESS, result)
-        self.assertEqual(self.__rrset3.get_name(), rrset.get_name())
-        self.assertEqual(self.__rrset3.get_type(), rrset.get_type())
-        self.assertEqual(self.__rrset4.get_rdata(), rrset.get_rdata())
+        self.__check_find_call(diff.find_updated, self.__rrset3,
+                               ZoneFinder.SUCCESS, self.__rrset4.get_rdata())
+
+        # check that normal find still returns the original data
+        self.__check_find_call(diff.find, self.__rrset3,
+                               ZoneFinder.SUCCESS, self.__rrset3.get_rdata())
 
         # Deleting 4 now should result in empty rrset
         diff.delete_data(self.__rrset4)
-        result, rrset, _ = diff.find_updated(self.__rrset3.get_name(),
-                                             self.__rrset3.get_type())
-        self.assertEqual(ZoneFinder.NXRRSET, result)
-        self.assertEqual(None, rrset)
+        self.__check_find_call(diff.find_updated, self.__rrset3,
+                               ZoneFinder.NXRRSET)
+
+        # check that normal find still returns the original data
+        self.__check_find_call(diff.find, self.__rrset3,
+                               ZoneFinder.SUCCESS, self.__rrset3.get_rdata())
 
     def test_find_updated_nonexistent_data(self):
         '''
@@ -888,35 +928,33 @@ class DiffTest(unittest.TestCase):
         self.__create_find(ZoneFinder.NXDOMAIN, None, 0)
 
         # Sanity check
-        result, rrset, _ = diff.find_updated(self.__rrset3.get_name(),
-                                             self.__rrset3.get_type())
-        self.assertEqual(ZoneFinder.NXDOMAIN, result)
-        self.assertEqual(None, rrset)
+        self.__check_find_call(diff.find_updated, self.__rrset3,
+                               ZoneFinder.NXDOMAIN)
+        self.__check_find_call(diff.find, self.__rrset3,
+                               ZoneFinder.NXDOMAIN)
 
         # Add data and see it is returned
         diff.add_data(self.__rrset3)
-        result, rrset, _ = diff.find_updated(self.__rrset3.get_name(),
-                                             self.__rrset3.get_type())
-        self.assertEqual(ZoneFinder.SUCCESS, result)
-        self.assertEqual(self.__rrset3.get_name(), rrset.get_name())
-        self.assertEqual(self.__rrset3.get_type(), rrset.get_type())
-        self.assertEqual(self.__rrset3.get_rdata(), rrset.get_rdata())
+        self.__check_find_call(diff.find_updated, self.__rrset3,
+                               ZoneFinder.SUCCESS, self.__rrset3.get_rdata())
+        self.__check_find_call(diff.find, self.__rrset3,
+                               ZoneFinder.NXDOMAIN)
 
         # Add unrelated data, result should be the same
         diff.add_data(self.__rrset2)
-        result, rrset, _ = diff.find_updated(self.__rrset3.get_name(),
-                                             self.__rrset3.get_type())
-        self.assertEqual(ZoneFinder.SUCCESS, result)
-        self.assertEqual(self.__rrset3.get_name(), rrset.get_name())
-        self.assertEqual(self.__rrset3.get_type(), rrset.get_type())
-        self.assertEqual(self.__rrset3.get_rdata(), rrset.get_rdata())
+        self.__check_find_call(diff.find_updated, self.__rrset3,
+                               ZoneFinder.SUCCESS, self.__rrset3.get_rdata())
+        self.__check_find_call(diff.find, self.__rrset3,
+                               ZoneFinder.NXDOMAIN)
 
         # Remove, result should now be NXDOMAIN again
         diff.delete_data(self.__rrset3)
         result, rrset, _ = diff.find_updated(self.__rrset3.get_name(),
                                              self.__rrset3.get_type())
-        self.assertEqual(ZoneFinder.NXDOMAIN, result)
-        self.assertEqual(None, rrset)
+        self.__check_find_call(diff.find_updated, self.__rrset3,
+                               ZoneFinder.NXDOMAIN)
+        self.__check_find_call(diff.find, self.__rrset3,
+                               ZoneFinder.NXDOMAIN)
 
     def test_find_updated_other(self):
         '''
@@ -936,14 +974,8 @@ class DiffTest(unittest.TestCase):
                        ZoneFinder.DNAME ]:
             # override the actual find method
             self.__create_find(rcode, None, 0)
-            result, rrset, _ = diff.find_updated(self.__rrset3.get_name(),
-                                                 self.__rrset3.get_type())
-            self.assertEqual(rcode, result)
-            self.assertEqual(None, rrset)
-            result, rrset, _ = diff.find_updated(self.__rrset2.get_name(),
-                                                 self.__rrset2.get_type())
-            self.assertEqual(rcode, result)
-            self.assertEqual(None, rrset)
+            self.__check_find_call(diff.find, self.__rrset3, rcode)
+            self.__check_find_call(diff.find_updated, self.__rrset3, rcode)
 
     def test_find_all_existing_data(self):
         diff = Diff(self, Name('example.org'), single_update_mode=True)
@@ -958,23 +990,29 @@ class DiffTest(unittest.TestCase):
         self.assertEqual(ZoneFinder.SUCCESS, result)
         self.assertEqual([self.__rrset3], rrsets)
 
+        self.__check_find_all_call(diff.find_all_updated, self.__rrset3,
+                                   ZoneFinder.SUCCESS, [self.__rrset3])
+        self.__check_find_all_call(diff.find_all, self.__rrset3,
+                                   ZoneFinder.SUCCESS, [self.__rrset3])
+
         # Add a second rr with different type at same name
         add_rrset = RRset(self.__rrset3.get_name(), self.__rrclass,
                           RRType.A(), self.__ttl)
         add_rrset.add_rdata(Rdata(RRType.A(), self.__rrclass, "192.0.2.2"))
         diff.add_data(add_rrset)
 
-        result, rrsets, _ = diff.find_all_updated(self.__rrset3.get_name())
-
-        self.assertEqual(ZoneFinder.SUCCESS, result)
-        self.assertEqual([self.__rrset3, add_rrset ], rrsets)
+        self.__check_find_all_call(diff.find_all_updated, self.__rrset3,
+                                   ZoneFinder.SUCCESS,
+                                   [self.__rrset3, add_rrset])
+        self.__check_find_all_call(diff.find_all, self.__rrset3,
+                                   ZoneFinder.SUCCESS, [self.__rrset3])
 
         # Remove original one
         diff.delete_data(self.__rrset3)
-        result, rrsets, _ = diff.find_all_updated(self.__rrset3.get_name())
-
-        self.assertEqual(ZoneFinder.SUCCESS, result)
-        self.assertEqual([ add_rrset ], rrsets)
+        self.__check_find_all_call(diff.find_all_updated, self.__rrset3,
+                                   ZoneFinder.SUCCESS, [add_rrset])
+        self.__check_find_all_call(diff.find_all, self.__rrset3,
+                                   ZoneFinder.SUCCESS, [self.__rrset3])
 
         # And remove new one, result should then become NXDOMAIN
         diff.delete_data(add_rrset)
@@ -982,38 +1020,44 @@ class DiffTest(unittest.TestCase):
 
         self.assertEqual(ZoneFinder.NXDOMAIN, result)
         self.assertEqual([ ], rrsets)
+        self.__check_find_all_call(diff.find_all_updated, self.__rrset3,
+                                   ZoneFinder.NXDOMAIN)
+        self.__check_find_all_call(diff.find_all, self.__rrset3,
+                                   ZoneFinder.SUCCESS, [self.__rrset3])
 
     def test_find_all_nonexistent_data(self):
         diff = Diff(self, Name('example.org'), single_update_mode=True)
         diff.add_data(self.__rrset_soa)
         diff.delete_data(self.__rrset_soa)
-        
+
         self.__create_find_all(ZoneFinder.NXDOMAIN, [], 0)
 
         # Sanity check
-        result, rrsets, _ = diff.find_all_updated(self.__rrset2.get_name())
-        self.assertEqual(ZoneFinder.NXDOMAIN, result)
-        self.assertEqual([], rrsets)
+        self.__check_find_all_call(diff.find_all_updated, self.__rrset2,
+                                   ZoneFinder.NXDOMAIN)
+        self.__check_find_all_call(diff.find_all, self.__rrset2,
+                                   ZoneFinder.NXDOMAIN)
 
         # Adding data should change the result
         diff.add_data(self.__rrset2)
-        result, rrsets, _ = diff.find_all_updated(self.__rrset2.get_name())
-
-        self.assertEqual(ZoneFinder.SUCCESS, result)
-        self.assertEqual([ self.__rrset2 ], rrsets)
+        self.__check_find_all_call(diff.find_all_updated, self.__rrset2,
+                                   ZoneFinder.SUCCESS, [ self.__rrset2 ])
+        self.__check_find_all_call(diff.find_all, self.__rrset2,
+                                   ZoneFinder.NXDOMAIN)
 
         # Adding data at other name should not
         diff.add_data(self.__rrset3)
-        result, rrsets, _ = diff.find_all_updated(self.__rrset2.get_name())
-
-        self.assertEqual(ZoneFinder.SUCCESS, result)
-        self.assertEqual([ self.__rrset2 ], rrsets)
+        self.__check_find_all_call(diff.find_all_updated, self.__rrset2,
+                                   ZoneFinder.SUCCESS, [ self.__rrset2 ])
+        self.__check_find_all_call(diff.find_all, self.__rrset2,
+                                   ZoneFinder.NXDOMAIN)
 
         # Deleting it should revert to original
         diff.delete_data(self.__rrset2)
-        result, rrsets, _ = diff.find_all_updated(self.__rrset2.get_name())
-        self.assertEqual(ZoneFinder.NXDOMAIN, result)
-        self.assertEqual([], rrsets)
+        self.__check_find_all_call(diff.find_all_updated, self.__rrset2,
+                                   ZoneFinder.NXDOMAIN)
+        self.__check_find_all_call(diff.find_all, self.__rrset2,
+                                   ZoneFinder.NXDOMAIN)
 
     def test_find_all_other_results(self):
         '''
@@ -1033,13 +1077,15 @@ class DiffTest(unittest.TestCase):
                        ZoneFinder.CNAME,
                        ZoneFinder.DNAME ]:
             # override the actual find method
-            self.__create_find_all(rcode, None, 0)
-            result, rrset, _ = diff.find_all_updated(self.__rrset3.get_name())
-            self.assertEqual(rcode, result)
-            self.assertEqual(None, rrset)
-            result, rrset, _ = diff.find_all_updated(self.__rrset2.get_name())
-            self.assertEqual(rcode, result)
-            self.assertEqual(None, rrset)
+            self.__create_find_all(rcode, [], 0)
+            self.__check_find_all_call(diff.find_all_updated, self.__rrset2,
+                                       rcode)
+            self.__check_find_all_call(diff.find_all_updated, self.__rrset3,
+                                       rcode)
+            self.__check_find_all_call(diff.find_all, self.__rrset2,
+                                       rcode)
+            self.__check_find_all_call(diff.find_all, self.__rrset3,
+                                       rcode)
 
 if __name__ == "__main__":
     isc.log.init("bind10")
