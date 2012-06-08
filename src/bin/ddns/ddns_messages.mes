@@ -149,3 +149,16 @@ place, it's more likely for the subsequent attempt to succeed.  In any
 case, there may not be able to do anything to fix it at the server
 side, but the administrator may want to check the general reachability
 with the client address.
+
+% DDNS_REQUEST_TCP_QUOTA reject TCP update client %1 (%2 running)
+b10-ddns received a new update request from a client over TCP, but
+the number of TCP clients being handled by the server already reached
+the configured quota, so the latest client was rejected by closing
+the connection.  The administrator may want to check the status of
+b10-ddns, and if this happens even if the server is not very busy,
+the quota may have to be increased.  Or, if it's more likely to be
+malicious or simply bogus clients that somehow keep the TCP connection
+open for a long period, maybe they should be rejected with an
+appropriate ACL configuration or some lower layer filtering.  The
+number of existing TCP clients are shown in the log, which should be
+identical to the current quota.
