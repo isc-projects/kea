@@ -82,7 +82,7 @@ event is therefore logged at the error level, and the request is
 simply dropped.  Additional information of the error is also logged.
 
 % DDNS_RESPONSE_SOCKET_ERROR failed to send update response to %1: %2
-Network I/O error happens in sending an update request.  The
+Network I/O error happens in sending an update response.  The
 client's address that caused the error and error details are also
 logged.
 
@@ -135,3 +135,17 @@ needs to examine this message and takes an appropriate action.  In
 either case, this notification is generally expected to succeed; so
 the fact it fails itself means there's something wrong in the BIND 10
 system, and it would be advisable to check other log messages.
+
+% DDNS_RESPONSE_TCP_SOCKET_ERROR failed to complete sending update response to %1 over TCP
+b10-ddns had tried to send an update response over TCP, and it hadn't
+been completed at that time, and a followup attempt to complete the
+send operation failed due to some network I/O error.  While a network
+error can happen any time, this event is quite unexpected for two
+reasons.  First, since the size of a response to an update request
+should be generally small, it's unlikely that the initial attempt
+didn't fail but wasn't completed.  Second, since the first attempt
+succeeded and the TCP connection had been established in the first
+place, it's more likely for the subsequent attempt to succeed.  In any
+case, there may not be able to do anything to fix it at the server
+side, but the administrator may want to check the general reachability
+with the client address.
