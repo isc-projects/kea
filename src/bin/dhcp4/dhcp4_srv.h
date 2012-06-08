@@ -32,6 +32,13 @@ namespace dhcp {
 /// that is going to be used as server-identifier, receives incoming
 /// packets, processes them, manages leases assignment and generates
 /// appropriate responses.
+///
+/// This class does not support any controlling mechanisms directly.
+/// See derived \ref ControlledDhcv4Srv class for support for
+/// command and configuration updates over msgq.
+///
+/// For detailed explanation or relations between main(), ControlledDhcpv4Srv,
+/// Dhcpv4Srv and other classes, see \ref dhcpv4Session.
 class Dhcpv4Srv : public boost::noncopyable {
 
     public:
@@ -60,7 +67,7 @@ class Dhcpv4Srv : public boost::noncopyable {
     ///         critical error.
     bool run();
 
-    /// @brief instructs server to shut down.
+    /// @brief Instructs the server to shut down.
     void shutdown();
 
 protected:
