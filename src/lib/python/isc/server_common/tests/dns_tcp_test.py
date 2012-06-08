@@ -41,7 +41,7 @@ class BufferTest(unittest.TestCase):
         # buffer.
         self.assertEqual(1, len(buf.get_data(1)))
         self.assertEqual(expected_len & 0x00ff, buf.get_data(1)[0])
-        
+
     def test_small_data(self):
         # The smallest size (in practice) of data: that of the header field.
         expected_data = b'x' * 12
