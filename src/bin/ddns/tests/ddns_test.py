@@ -631,7 +631,7 @@ class TestDDNSServer(unittest.TestCase):
     def __send_select_tcp(self, buflen, raise_after_select=False):
         '''Common subroutine for some TCP related tests below.'''
         fileno = self.__tcp_sock.fileno()
-        self.ddns_server._tcp_ctxs = {fileno: self.__tcp_ctx}
+        self.ddns_server._tcp_ctxs = {fileno: (self.__tcp_ctx, TEST_CLIENT6)}
 
         # make an initial, incomplete send via the test context
         self.__tcp_sock._send_buflen = buflen
@@ -671,8 +671,9 @@ class TestDDNSServer(unittest.TestCase):
         # watch it again).
         self.assertEqual(10, len(self.__tcp_sock._sent_data))
         self.assertEqual(0, self.__tcp_sock._close_called)
+        fileno = self.__tcp_sock.fileno()
         self.assertEqual(self.__tcp_ctx,
-                         self.ddns_server._tcp_ctxs[self.__tcp_sock.fileno()])
+                         self.ddns_server._tcp_ctxs[fileno][0])
 
     def test_select_send_continued_failed(self):
         '''Test continuation of sending a TCP response, which fails.'''
@@ -696,7 +697,7 @@ class TestDDNSServer(unittest.TestCase):
             # Use faked FD of 100, 101, 102 (again, arbitrary choice)
             s = FakeSocket(100 + i, proto=socket.IPPROTO_TCP)
             ctx = DNSTCPContext(s)
-            self.ddns_server._tcp_ctxs[s.fileno()] = ctx
+            self.ddns_server._tcp_ctxs[s.fileno()] = (ctx, TEST_CLIENT6)
             s._send_buflen = 7  # make sure it requires two send's
             self.assertEqual(DNSTCPContext.SENDING, ctx.send(self.__tcp_data))
             s.make_send_ready()
@@ -900,8 +901,7 @@ class TestDDNSSession(unittest.TestCase):
         # data should be the expected response.
         s.make_send_ready()
         self.assertEqual(DNSTCPContext.SEND_DONE,
-                         self.server._tcp_ctxs[s.fileno].send_ready())
-        self.server._tcp_ctxs[s.fileno].close() # explicit close per convention
+                         self.server._tcp_ctxs[s.fileno][0].send_ready())
         self.check_update_response(s._sent_data, Rcode.NOERROR(), tcp=True)
 
     def test_tcp_request_error(self):
