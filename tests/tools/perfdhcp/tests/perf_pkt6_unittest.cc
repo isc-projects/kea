@@ -111,15 +111,17 @@ TEST_F(PerfPkt6Test, Constructor) {
     // Test constructor to be used for incoming messages.
     // Use default (1) offset value and don't specify transaction id.
     boost::scoped_ptr<PerfPkt6> pkt1(new PerfPkt6(data, sizeof(data)));
-    EXPECT_EQ(6, pkt1->getData().size());
+    EXPECT_EQ(sizeof(data), pkt1->getData().size());
     EXPECT_EQ(0, memcmp(&pkt1->getData()[0], data, sizeof(data)));
     EXPECT_EQ(1, pkt1->getTransidOffset());
 
     // Test constructor to be used for outgoing messages.
     // Use non-zero offset and specify transaction id.
+    const size_t offset_transid = 10;
+    const uint32_t transid = 0x010203;
     boost::scoped_ptr<PerfPkt6> pkt2(new PerfPkt6(data, sizeof(data),
-                                                  10, 0x010203));
-    EXPECT_EQ(6, pkt2->getData().size());
+                                                  offset_transid, transid));
+    EXPECT_EQ(sizeof(data), pkt2->getData().size());
     EXPECT_EQ(0, memcmp(&pkt2->getData()[0], data, sizeof(data)));
     EXPECT_EQ(0x010203, pkt2->getTransid());
     EXPECT_EQ(10, pkt2->getTransidOffset());
@@ -131,19 +133,22 @@ TEST_F(PerfPkt6Test, RawPackUnpack) {
 
     // Create some input buffers to initialize options.
     uint8_t buf_elapsed_time[] = { 1, 1 };
-    uint8_t buf_duid[14] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 };
+    uint8_t buf_duid[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 };
 
     // Create options.
-    OptionBuffer vec_elapsed_time(buf_elapsed_time, buf_elapsed_time + 2);
-    OptionBuffer vec_duid(buf_duid, buf_duid + 14);
+    const size_t offset_elapsed_time = 86;
+    OptionBuffer vec_elapsed_time(buf_elapsed_time,
+                                  buf_elapsed_time + sizeof(buf_elapsed_time));
     LocalizedOptionPtr pkt1_elapsed_time(new LocalizedOption(Option::V6,
                                                              D6O_ELAPSED_TIME,
                                                              vec_elapsed_time,
-                                                             86));
+                                                             offset_elapsed_time));
+    const size_t offset_duid = 4;
+    OptionBuffer vec_duid(buf_duid, buf_duid + sizeof(buf_duid));
     LocalizedOptionPtr pkt1_duid(new LocalizedOption(Option::V6,
                                                      D6O_CLIENTID,
                                                      vec_duid,
-                                                     4));
+                                                     offset_duid));
 
     // Add option to packet and create on-wire format from added options.
     // Contents of options will override contents of packet buffer.
@@ -169,11 +174,11 @@ TEST_F(PerfPkt6Test, RawPackUnpack) {
     LocalizedOptionPtr pkt2_elapsed_time(new LocalizedOption(Option::V6,
                                                              D6O_ELAPSED_TIME,
                                                              vec_elapsed_time,
-                                                             86));
+                                                             offset_elapsed_time));
     LocalizedOptionPtr pkt2_duid(new LocalizedOption(Option::V6,
                                                      D6O_CLIENTID,
                                                      vec_duid,
-                                                     4));
+                                                     offset_duid));
     // Add options to packet to pass their offsets.
     pkt2->addOption(pkt2_elapsed_time);
     pkt2->addOption(pkt2_duid);
@@ -207,10 +212,11 @@ TEST_F(PerfPkt6Test, InvalidOptions) {
     OptionBuffer vec_server_id;
     vec_server_id.resize(10);
     // Testing invalid offset of the option (greater than packet size)
+    const size_t offset_serverid[] = { 150, 85 };
     LocalizedOptionPtr pkt1_serverid(new LocalizedOption(Option::V6,
                                                          D6O_SERVERID,
                                                          vec_server_id,
-                                                         150));
+                                                         offset_serverid[0]));
     pkt1->addOption(pkt1_serverid);
     // Pack has to fail due to invalid offset.
     EXPECT_FALSE(pkt1->rawPack());
@@ -222,7 +228,7 @@ TEST_F(PerfPkt6Test, InvalidOptions) {
     LocalizedOptionPtr pkt2_serverid(new LocalizedOption(Option::V6,
                                                          D6O_SERVERID,
                                                          vec_server_id,
-                                                         85));
+                                                         offset_serverid[1]));
     pkt2->addOption(pkt2_serverid);
     // Pack must fail due to invalid offset.
     EXPECT_FALSE(pkt2->rawPack());
@@ -237,10 +243,11 @@ TEST_F(PerfPkt6Test, TruncatedPacket) {
     boost::scoped_ptr<PerfPkt6> pkt1(captureTruncated());
     OptionBuffer vec_duid;
     vec_duid.resize(30);
+    const size_t offset_duid = 4;
     LocalizedOptionPtr pkt1_duid(new LocalizedOption(Option::V6,
                                                      D6O_CLIENTID,
                                                      vec_duid,
-                                                     4));
+                                                     offset_duid));
     pkt1->addOption(pkt1_duid);
     // Pack/unpack must fail because length of the option read from buffer
     // will extend over the actual packet length.
@@ -249,13 +256,17 @@ TEST_F(PerfPkt6Test, TruncatedPacket) {
 }
 
 TEST_F(PerfPkt6Test, PackTransactionId) {
-    uint8_t data[100] = { 0 };
+    uint8_t data[100];
+    memset(&data, 0, sizeof(data));
+
+    const size_t offset_transid[] = { 50, 100 };
+    const uint32_t transid = 0x010203;
 
     // Create dummy packet that is simply filled with zeros.
     boost::scoped_ptr<PerfPkt6> pkt1(new PerfPkt6(data,
                                                   sizeof(data),
-                                                  50,
-                                                  0x010203));
+                                                  offset_transid[0],
+                                                  transid));
 
     // Reference data are non zero so we can detect them in dummy packet.
     uint8_t ref_data[3] = { 1, 2, 3 };
@@ -271,13 +282,14 @@ TEST_F(PerfPkt6Test, PackTransactionId) {
         (out_buf.getData());
 
     // Validate transaction id.
-    EXPECT_EQ(0, memcmp(out_buf_data + 50, ref_data, 3));
+    EXPECT_EQ(0, memcmp(out_buf_data + offset_transid[0], ref_data, 3));
+
 
     // Out of bounds transaction id offset.
     boost::scoped_ptr<PerfPkt6> pkt2(new PerfPkt6(data,
                                                   sizeof(data),
-                                                  100,
-                                                  0x010202));
+                                                  offset_transid[1],
+                                                  transid));
     cout << "Testing out of bounds offset. "
         "This may produce spurious errors ..." << endl;
     EXPECT_FALSE(pkt2->rawPack());
@@ -292,9 +304,10 @@ TEST_F(PerfPkt6Test, UnpackTransactionId) {
         data[i] = i - 49;
     }
     // Create packet and point out that transaction id is at offset 50.
+    const size_t offset_transid[] = { 50, 300 };
     boost::scoped_ptr<PerfPkt6> pkt1(new PerfPkt6(data,
                                                   sizeof(data),
-                                                  50));
+                                                  offset_transid[0]));
 
     // Get transaction id out of buffer and store in class member.
     ASSERT_TRUE(pkt1->rawUnpack());
@@ -304,7 +317,7 @@ TEST_F(PerfPkt6Test, UnpackTransactionId) {
     // Out of bounds transaction id offset.
     boost::scoped_ptr<PerfPkt6> pkt2(new PerfPkt6(data,
                                                   sizeof(data),
-                                                  300));
+                                                  offset_transid[1]));
     cout << "Testing out of bounds offset. "
         "This may produce spurious errors ..." << endl;
     EXPECT_FALSE(pkt2->rawUnpack());
