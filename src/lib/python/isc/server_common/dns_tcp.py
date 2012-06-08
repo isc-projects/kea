@@ -225,7 +225,7 @@ class DNSTCPContext:
             if data is None:
                 # send complete; clear the internal buffer for next possible
                 # send.
-                logger.debug(logger.DBGLVL_TRACE_BASIC,
+                logger.debug(logger.DBGLVL_TRACE_DETAIL,
                              PYSERVER_COMMON_DNS_TCP_SEND_DONE,
                              ClientFormatter(self.__remote_addr),
                              self.__send_marker)
@@ -236,7 +236,7 @@ class DNSTCPContext:
                 cc = self.__sock.send(data)
             except socket.error as ex:
                 if ex.errno == errno.EAGAIN:
-                    logger.debug(logger.DBGLVL_TRACE_BASIC,
+                    logger.debug(logger.DBGLVL_TRACE_DETAIL,
                                  PYSERVER_COMMON_DNS_TCP_SEND_PENDING,
                                  ClientFormatter(self.__remote_addr),
                                  self.__send_marker)
