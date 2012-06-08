@@ -44,7 +44,7 @@ PktTransform::pack(const Option::Universe universe,
 
     uint8_t transid_len = (universe == Option::V6) ? 3 : 4;
 
-    if ((transid_offset + transid_len + 1 > in_buffer.size()) ||
+    if ((transid_offset + transid_len >= in_buffer.size()) ||
         (transid_offset == 0)) {
         cout << "Failed to build packet: provided transaction id offset: "
              << transid_offset <<  " is out of bounds (expected 1.."
@@ -52,22 +52,14 @@ PktTransform::pack(const Option::Universe universe,
         return (false);
     }
 
-    // Seek to the transaction id position in output buffer.
-    out_buffer.clear();
-    out_buffer.skip(transid_offset);
-
     try {
+        size_t offset_ptr = transid_offset;
         if (universe == Option::V4) {
-            out_buffer.writeUint8(transid >> 24 & 0xFF);
+            out_buffer.writeUint8At(transid >> 24 & 0xFF, offset_ptr++);
         }
-        out_buffer.writeUint8(transid >> 16 & 0xFF);
-        out_buffer.writeUint8(transid >> 8 & 0xFF);
-        out_buffer.writeUint8(transid & 0xFF);
-
-        // Buffer pointer is at the end of transaction id.
-        // We have to seek to the end of buffer so as data don't
-        // get truncated.
-        out_buffer.skip(in_buffer.size() - out_buffer.getLength());
+        out_buffer.writeUint8At(transid >> 16 & 0xFF, offset_ptr++);
+        out_buffer.writeUint8At(transid >> 8 & 0xFF, offset_ptr++);
+        out_buffer.writeUint8At(transid & 0xFF, offset_ptr++);
 
         // We already have packet template stored in output buffer
         // but still some options have to be updated if client
@@ -98,16 +90,15 @@ PktTransform::unpack(const Option::Universe universe,
         return (false);
     }
 
-    if (universe == Option::V6) {
-        transid = ((in_buffer[transid_offset] << 16) +
-                   (in_buffer[transid_offset + 1] << 8) +
-                   (in_buffer[transid_offset + 2]))
-            & 0xFFFFFF;
-    } else {
-        transid = ((in_buffer[transid_offset] << 24) +
-                   (in_buffer[transid_offset + 1] << 16) +
-                   (in_buffer[transid_offset + 2] << 8) +
-                   (in_buffer[transid_offset + 3]));
+    // Read transaction id from the buffer.
+    // For DHCPv6 we transaction id is 3 bytes long so the high byte
+    // of transid will be zero.
+    OptionBufferConstIter it = in_buffer.begin() + transid_offset;
+    transid = 0;
+    for (int i = 0; i < transid_len; ++i, ++it) {
+        // Read next byte and shift it left to its position in
+        // transid (shift by the number of bytes read so far.
+        transid += *it << (transid_len - i - 1) * 8;
     }
 
     try {
@@ -141,14 +132,20 @@ PktTransform::packOptions(const OptionBuffer& in_buffer,
                           << " is out of bounds (expected 1.."
                           << in_buffer.size() - option->len() << ")");
             }
-            out_buffer.clear();
-            out_buffer.skip(offset);
 
-            // Replace existing option with new value.
-            option->pack(out_buffer);
+            // Create temporary buffer to store option contents.
+            util::OutputBuffer buf(option->len());
+            // Pack option contents into temporary buffer.
+            option->pack(buf);
+            // OutputBuffer class has nice functions that write
+            // data at the specified position so we can use it to
+            // inject contents of temporary buffer to output buffer.
+            const uint8_t *buf_data =
+                static_cast<const uint8_t*>(buf.getData());
+            for (int i = 0; i < buf.getLength(); ++i) {
+                out_buffer.writeUint8At(buf_data[i], offset + i);
+            }
         }
-        // Seek to the end of the buffer to make sure its size is correct.
-        out_buffer.skip(in_buffer.size() - out_buffer.getLength());
     }
     catch (const Exception&) {
         isc_throw(isc::BadValue, "failed to pack options into buffer.");
