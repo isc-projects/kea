@@ -380,7 +380,7 @@ class DDNSServer:
         ret = self.__send_response(sock, self.__response_renderer.get_data(),
                                    remote_addr)
         if result == isc.ddns.session.UPDATE_SUCCESS:
-            self.__notify_update(zname, zclass)
+            self.__notify_xfrout(zname, zclass)
         return ret
 
     def __send_response(self, sock, data, dest):
@@ -409,8 +409,14 @@ class DDNSServer:
 
         return True
 
-    def __notify_update(self, zname, zclass):
-        '''Notify other modules of the update.
+    def __notify_xfrout(self, zname, zclass):
+        '''Notify xfrout of the update.'''
+        param = {'zone_name': zname.to_text(), 'zone_class': zclass.to_text()}
+        msg = create_command(ZONE_NEW_DATA_READY_CMD, param)
+        self.__notify_update(XFROUT_MODULE_NAME, msg, zname, zclass)
+
+    def __notify_update(self, modname, msg, zname, zclass):
+        '''Notify other module of the update.
 
         Note that we use blocking communication here.  While the internal
         communication bus is generally expected to be pretty responsive and
@@ -422,15 +428,12 @@ class DDNSServer:
 
         Note also that we directly refer to the "protected" member of
         ccsession (_cc._session) rather than creating a separate channel.
-        It's probably not the best practice, but hopefully we can introduce
+o        It's probably not the best practice, but hopefully we can introduce
         a cleaner way when we support asynchronous communication.
         At the moment we prefer the brevity with the use of internal channel
         of the cc session.
 
         '''
-        param = {'zone_name': zname.to_text(), 'zone_class': zclass.to_text()}
-        msg = create_command(ZONE_NEW_DATA_READY_CMD, param)
-        modname = XFROUT_MODULE_NAME
         try:
             seq = self._cc._session.group_sendmsg(msg, modname)
             answer, _ = self._cc._session.group_recvmsg(False, seq)
