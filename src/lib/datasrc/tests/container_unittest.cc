@@ -65,7 +65,7 @@ public:
     };
     // Constructor from a list of zones.
     TestDS(const char* zone_names[]) {
-        for (const char** zone(zone_names); *zone; ++ zone) {
+        for (const char** zone(zone_names); *zone != NULL; ++zone) {
             zones.insert(Name(*zone));
         }
     }
@@ -80,8 +80,8 @@ public:
             return (FindResult(result::NOTFOUND, ZoneFinderPtr()));
         }
         set<Name>::const_iterator it(zones.upper_bound(name));
-        -- it;
-        NameComparisonResult compar(it->compare(name));
+        --it;
+        const NameComparisonResult compar(it->compare(name));
         const ZoneFinderPtr finder(new Finder(*it));
         switch (compar.getRelation()) {
             case NameComparisonResult::EQUAL:
@@ -217,9 +217,10 @@ public:
                 FAIL() << "Unknown configuration index " << index;
         }
     }
-    void checkDS(size_t index, const string& type, const string& params) {
+    void checkDS(size_t index, const string& type, const string& params) const
+    {
         ASSERT_GT(container_->dataSources().size(), index);
-        TestDS* ds(dynamic_cast<TestDS*>(
+        const TestDS* ds(dynamic_cast<TestDS*>(
             container_->dataSources()[index].data_src_));
         // Comparing with NULL does not work
         ASSERT_TRUE(ds);
@@ -294,7 +295,7 @@ TEST_F(ContainerTest, singleDSBestMatch) {
                    ds_[0], Name("example.org"), false, "Subdomain match");
 }
 
-const char* test_names[] = {
+const char* const test_names[] = {
     "Sub second",
     "Sub first",
     "With empty",
@@ -303,7 +304,7 @@ const char* test_names[] = {
 
 TEST_F(ContainerTest, multiExactMatch) {
     // Run through all the multi-configurations
-    for (size_t i(0); i < 4; ++ i) {
+    for (size_t i(0); i < 4; ++i) {
         SCOPED_TRACE(test_names[i]);
         multiConfiguration(i);
         // Something that is nowhere there

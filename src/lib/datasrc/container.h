@@ -126,23 +126,23 @@ public:
     /// this case, the zone finder is needed and the best matching superzone
     /// of the searched name is needed. Therefore, the call would look like:
     ///
-    ///   SearchResult result(container->search(queried_name));
-    ///   if (result.datasrc_) {
-    ///       createTheAnswer(result.finder_);
-    ///   } else {
-    ///       createNotAuthAnswer();
-    ///   }
+    /// \code SearchResult result(container->search(queried_name));
+    /// if (result.datasrc_ != NULL) {
+    ///     createTheAnswer(result.finder_);
+    /// } else {
+    ///     createNotAuthAnswer();
+    /// } \endcode
     ///
     /// The other scenario is manipulating zone data (XfrOut, XfrIn, DDNS,
     /// ...). In this case, the finder itself is not so important. However,
     /// we need an exact match (if we want to manipulate zone data, we must
     /// know exactly, which zone we are about to manipulate). Then the call
     ///
-    ///   SearchResult result(container->search(zone_name, true, false));
-    ///   if (result.datasrc_) {
-    ///       ZoneUpdaterPtr updater(result.datasrc_->getUpdater(zone_name);
-    ///       ...
-    ///   }
+    /// \code SearchResult result(container->search(zone_name, true, false));
+    /// if (result.datasrc_ != NULL) {
+    ///     ZoneUpdaterPtr updater(result.datasrc_->getUpdater(zone_name);
+    ///     ...
+    /// } \endcode
     ///
     /// \param zone The name of the zone to search.
     /// \param want_exact_match If it is true, it returns only exact matches.
