@@ -437,7 +437,7 @@ class DDNSServer:
 
         Note also that we directly refer to the "protected" member of
         ccsession (_cc._session) rather than creating a separate channel.
-o        It's probably not the best practice, but hopefully we can introduce
+        It's probably not the best practice, but hopefully we can introduce
         a cleaner way when we support asynchronous communication.
         At the moment we prefer the brevity with the use of internal channel
         of the cc session.
