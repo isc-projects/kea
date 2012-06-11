@@ -19,11 +19,7 @@ from isc.dns import *
 import isc.log
 from isc.config.ccsession import create_command
 from isc.log_messages.server_common_messages import *
-
-# Import tsig_keyring just to share the logger.  Once #2003 is merged, this
-# should be replaced with the package level logger:
-# from isc.server_common.logger import logger
-from isc.server_common.tsig_keyring import logger
+from isc.server_common.logger import logger
 
 AUTH_MODULE_NAME = 'Auth'
 
