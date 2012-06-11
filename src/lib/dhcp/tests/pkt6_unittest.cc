@@ -206,7 +206,11 @@ TEST_F(Pkt6Test, addGetDelOptions) {
 }
 
 TEST_F(Pkt6Test, Timestamp) {
-    Pkt6* pkt = new Pkt6(DHCPV6_SOLICIT, 0x020304);
+    boost::scoped_ptr<Pkt6> pkt(new Pkt6(DHCPV6_SOLICIT, 0x020304));
+
+    // Just after construction timestamp is invalid
+    ASSERT_TRUE(pkt->getTimestamp().is_not_a_date_time());
+
     // Update packet time.
     pkt->updateTimestamp();
 
@@ -225,8 +229,6 @@ TEST_F(Pkt6Test, Timestamp) {
 
     // Duration should be positive or zero.
     EXPECT_TRUE(ts_period.length().total_microseconds() >= 0);
-
-    delete pkt;
 }
 
 }
