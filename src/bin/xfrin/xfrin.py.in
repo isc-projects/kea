@@ -33,6 +33,7 @@ import isc.util.process
 from isc.datasrc import DataSourceClient, ZoneFinder
 import isc.net.parse
 from isc.xfrin.diff import Diff
+from isc.server_common.auth_command import auth_loadzone_command
 from isc.log_messages.xfrin_messages import *
 
 isc.log.init("b10-xfrin")
@@ -1248,50 +1249,13 @@ class ZoneInfo:
                 (str(self.master_addr), self.master_port))
 
 def _do_auth_loadzone(server, zone_name, zone_class):
-    # On a successful zone transfer, if the zone is served by
-    # b10-auth in the in-memory data source using sqlite3 as a
-    # backend, send the "loadzone" command for the zone to auth.
-    datasources, is_default =\
-        server._module_cc.get_remote_config_value(AUTH_MODULE_NAME, "datasources")
-    if is_default:
-        return
-    for d in datasources:
-        if "type" not in d:
-            continue
-        try:
-            if "class" in d:
-                dclass = RRClass(d["class"])
-            else:
-                dclass = RRClass("IN")
-        except InvalidRRClass as err:
-            logger.info(XFRIN_AUTH_CONFIG_RRCLASS_ERROR, str(err))
-            continue
-
-        if d["type"].lower() == "memory" and dclass == zone_class:
-            for zone in d["zones"]:
-                if "filetype" not in zone:
-                    continue
-                if "origin" not in zone:
-                    continue
-                if "filetype" not in zone:
-                    continue
-                try:
-                    name = Name(zone["origin"])
-                except (EmptyLabel, TooLongLabel, BadLabelType, BadEscape, TooLongName, IncompleteName):
-                    logger.info(XFRIN_AUTH_CONFIG_NAME_PARSER_ERROR, str(err))
-                    continue
-
-                if zone["filetype"].lower() == "sqlite3" and name == zone_name:
-                    param = {"origin": zone_name.to_text(),
-                             "class": zone_class.to_text(),
-                             "datasrc": d["type"]}
-
-                    logger.debug(DBG_XFRIN_TRACE, XFRIN_AUTH_LOADZONE,
-                                 param["origin"], param["class"], param["datasrc"])
-
-                    msg = create_command("loadzone", param)
-                    seq = server._send_cc_session.group_sendmsg(msg, AUTH_MODULE_NAME)
-                    answer, env = server._send_cc_session.group_recvmsg(False, seq)
+    msg = auth_loadzone_command(server._module_cc, zone_name, zone_class)
+    if msg is not None:
+        param = msg['command'][1]
+        logger.debug(DBG_XFRIN_TRACE, XFRIN_AUTH_LOADZONE, param["origin"],
+                     param["class"], param["datasrc"])
+        seq = server._send_cc_session.group_sendmsg(msg, AUTH_MODULE_NAME)
+        answer, env = server._send_cc_session.group_recvmsg(False, seq)
 
 class Xfrin:
     def __init__(self):

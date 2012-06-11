@@ -31,6 +31,7 @@ import isc.util.cio.socketsession
 from isc.notify.notify_out import ZONE_NEW_DATA_READY_CMD
 import isc.server_common.tsig_keyring
 from isc.datasrc import DataSourceClient
+from isc.server_common.auth_command import auth_loadzone_command
 import select
 import errno
 
@@ -82,6 +83,7 @@ isc.util.process.rename()
 
 # Cooperating modules
 XFROUT_MODULE_NAME = 'Xfrout'
+AUTH_MODULE_NAME = 'Auth'
 
 class DDNSConfigError(Exception):
     '''An exception indicating an error in updating ddns configuration.
@@ -380,7 +382,8 @@ class DDNSServer:
         ret = self.__send_response(sock, self.__response_renderer.get_data(),
                                    remote_addr)
         if result == isc.ddns.session.UPDATE_SUCCESS:
-            self.__notify_update(zname, zclass)
+            self.__notify_auth(zname, zclass)
+            self.__notify_xfrout(zname, zclass)
         return ret
 
     def __send_response(self, sock, data, dest):
@@ -409,8 +412,20 @@ class DDNSServer:
 
         return True
 
-    def __notify_update(self, zname, zclass):
-        '''Notify other modules of the update.
+    def __notify_auth(self, zname, zclass):
+        '''Notify auth of the update, if necessary.'''
+        msg = auth_loadzone_command(self._cc, zname, zclass)
+        if msg is not None:
+            self.__notify_update(AUTH_MODULE_NAME, msg, zname, zclass)
+
+    def __notify_xfrout(self, zname, zclass):
+        '''Notify xfrout of the update.'''
+        param = {'zone_name': zname.to_text(), 'zone_class': zclass.to_text()}
+        msg = create_command(ZONE_NEW_DATA_READY_CMD, param)
+        self.__notify_update(XFROUT_MODULE_NAME, msg, zname, zclass)
+
+    def __notify_update(self, modname, msg, zname, zclass):
+        '''Notify other module of the update.
 
         Note that we use blocking communication here.  While the internal
         communication bus is generally expected to be pretty responsive and
@@ -428,9 +443,6 @@ class DDNSServer:
         of the cc session.
 
         '''
-        param = {'zone_name': zname.to_text(), 'zone_class': zclass.to_text()}
-        msg = create_command(ZONE_NEW_DATA_READY_CMD, param)
-        modname = XFROUT_MODULE_NAME
         try:
             seq = self._cc._session.group_sendmsg(msg, modname)
             answer, _ = self._cc._session.group_recvmsg(False, seq)

@@ -1,6 +1,6 @@
 SUBDIRS = tests
 
-python_PYTHON = __init__.py tsig_keyring.py
+python_PYTHON = __init__.py tsig_keyring.py auth_command.py
 
 pythondir = $(pyexecdir)/isc/server_common
 
