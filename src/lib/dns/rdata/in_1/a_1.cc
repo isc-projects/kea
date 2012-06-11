@@ -34,7 +34,7 @@ using namespace isc::util;
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
 
-A::A(const string& addrstr) {
+A::A(const std::string& addrstr) {
     // RFC1035 states textual representation of IN/A RDATA is
     // "four decimal numbers separated by dots without any embedded spaces".
     // This is exactly what inet_pton() accepts for AF_INET.  In particular,

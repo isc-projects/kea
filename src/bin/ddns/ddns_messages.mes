@@ -38,6 +38,14 @@ configuration manager b10-cfgmgr is not running.
 The ddns process encountered an error when installing the configuration at
 startup time.  Details of the error are included in the log message.
 
+% DDNS_CONFIG_HANDLER_ERROR failed to update ddns configuration: %1
+An update to b10-ddns configuration was delivered but an error was
+found while applying them.  None of the delivered updates were applied
+to the running b10-ddns system, and the server will keep running with
+the existing configuration.  If this happened in the initial
+configuration setup, the server will be running with the default
+configurations.
+
 % DDNS_DROP_CONN dropping connection on file descriptor %1 because of error %2
 There was an error on a connection with the b10-auth server (or whatever
 connects to the ddns daemon). This might be OK, for example when the
@@ -61,6 +69,22 @@ coming from a b10-auth process.
 % DDNS_RECEIVED_SHUTDOWN_COMMAND shutdown command received
 The ddns process received a shutdown command from the command channel
 and will now shut down.
+
+% DDNS_REQUEST_PARSE_FAIL failed to parse update request: %1
+b10-ddns received an update request via b10-auth, but the received
+data failed to pass minimum validation: it was either broken wire
+format data for a valid DNS message (e.g. it's shorter than the
+fixed-length header), or the opcode is not update, or TSIG is included
+in the request but it fails to validate.  Since b10-auth should have
+performed this level of checks, such an error shouldn't be detected at
+this stage and should rather be considered an internal bug.  This
+event is therefore logged at the error level, and the request is
+simply dropped.  Additional information of the error is also logged.
+
+% DDNS_RESPONSE_SOCKET_ERROR failed to send update response to %1: %2
+Network I/O error happens in sending an update request.  The
+client's address that caused the error and error details are also
+logged.
 
 % DDNS_RUNNING ddns server is running and listening for updates
 The ddns process has successfully started and is now ready to receive commands
@@ -88,3 +112,26 @@ process will now shut down.
 The b10-ddns process encountered an uncaught exception and will now shut
 down. This is indicative of a programming error and should not happen under
 normal circumstances. The exception type and message are printed.
+
+% DDNS_UPDATE_NOTIFY notified %1 of updates to %2
+Debug message.  b10-ddns has made updates to a zone based on an update
+request and has successfully notified an external module of the updates.
+The notified module will use that information for updating its own
+state or any necessary protocol action such as zone reloading or sending
+notify messages to secondary servers.
+
+% DDNS_UPDATE_NOTIFY_FAIL failed to notify %1 of updates to %2: %3
+b10-ddns has made updates to a zone based on an update request and
+tried to notify an external module of the updates, but the
+notification fails.  Severity of this effect depends on the type of
+the module.  If it's b10-xfrout, this means DNS notify messages won't
+be sent to secondary servers of the zone.  It's suboptimal, but not
+necessarily critical as the secondary servers will try to check the
+zone's status periodically.  If it's b10-auth and the notification was
+needed to have it reload the corresponding zone, it's more serious
+because b10-auth won't be able to serve the new version of the zone
+unless some explicit recovery action is taken.  So the administrator
+needs to examine this message and takes an appropriate action.  In
+either case, this notification is generally expected to succeed; so
+the fact it fails itself means there's something wrong in the BIND 10
+system, and it would be advisable to check other log messages.

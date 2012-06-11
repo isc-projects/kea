@@ -179,6 +179,13 @@ Logger::fatal(const isc::log::MessageID& ident) {
     }
 }
 
+// Replace the interprocess synchronization object
+
+void
+Logger::setInterprocessSync(isc::util::InterprocessSync* sync) {
+    getLoggerPtr()->setInterprocessSync(sync);
+}
+
 // Comparison (testing only)
 
 bool
