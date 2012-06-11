@@ -247,5 +247,5 @@ TEST_F(SessionTest, get_socket_descr) {
     EXPECT_NO_THROW(socket = sess.getSocketDesc());
 
     // expect actual socket handle to be returned, not 0
-    EXPECT_TRUE(0 < socket);
+    EXPECT_LT(0, socket);
 }
