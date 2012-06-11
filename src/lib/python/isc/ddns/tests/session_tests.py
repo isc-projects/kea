@@ -1273,23 +1273,23 @@ class SessionTest(SessionTestBase):
         self.check_full_handle_result(Rcode.NOERROR(),
                                       [ self.rrset_update_del_soa_apex,
                                         self.rrset_update_soa_del ])
-        self.check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
-                               isc.dns.Name("example.org"),
-                               RRType.SOA(),
-                               incremented_soa_rrset_01)
+        self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
+                                 isc.dns.Name("example.org"),
+                                 RRType.SOA(),
+                                 incremented_soa_rrset_01)
 
         # If we delete everything at the apex, the SOA and NS rrsets should be
         # untouched (but serial will be incremented)
         self.check_full_handle_result(Rcode.NOERROR(),
                                       [ self.rrset_update_del_name_apex ])
-        self.check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
-                               isc.dns.Name("example.org"),
-                               RRType.SOA(),
-                               incremented_soa_rrset_02)
-        self.check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
-                               isc.dns.Name("example.org"),
-                               RRType.NS(),
-                               orig_ns_rrset)
+        self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
+                                 isc.dns.Name("example.org"),
+                                 RRType.SOA(),
+                                 incremented_soa_rrset_02)
+        self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
+                                 isc.dns.Name("example.org"),
+                                 RRType.NS(),
+                                 orig_ns_rrset)
         # but the MX should be gone
         self.__check_inzone_data(isc.datasrc.ZoneFinder.NXRRSET,
                                  isc.dns.Name("example.org"),
