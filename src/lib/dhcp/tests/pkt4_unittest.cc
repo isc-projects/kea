@@ -599,7 +599,10 @@ TEST(Pkt4Test, metaFields) {
 }
 
 TEST(Pkt4Test, Timestamp) {
-    Pkt4* pkt = new Pkt4(DHCPOFFER, 1234);
+    scoped_ptr<Pkt4> pkt(new Pkt4(DHCPOFFER, 1234));
+
+    // Just after construction timestamp is invalid
+    ASSERT_TRUE(pkt->getTimestamp().is_not_a_date_time());
 
     // Update packet time.
     pkt->updateTimestamp();
@@ -619,8 +622,6 @@ TEST(Pkt4Test, Timestamp) {
 
     // Duration should be positive or zero.
     EXPECT_TRUE(ts_period.length().total_microseconds() >= 0);
-
-    delete pkt;
 }
 
 
