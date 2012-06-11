@@ -541,8 +541,14 @@ Logger_performOutput(Function function, PyObject* args, bool dbgLevel) {
         // into the formatter. It will print itself in the end.
         for (size_t i(start); i < number; ++ i) {
             PyObjectContainer param_container(PySequence_GetItem(args, i));
-            formatter = formatter.arg(objectToStr(param_container.get(),
-                                                  true));
+            try {
+                formatter = formatter.arg(objectToStr(param_container.get(),
+                                                      true));
+            }
+            catch (...) {
+                formatter.deactivate();
+                throw;
+            }
         }
         Py_RETURN_NONE;
     }

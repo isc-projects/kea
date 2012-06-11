@@ -28,6 +28,7 @@
 #include <log/message_initializer.h>
 #include <log/message_reader.h>
 #include <log/message_types.h>
+#include "util/interprocess_sync_null.h"
 
 using namespace std;
 
@@ -148,6 +149,13 @@ LoggerManager::readLocalMessageFile(const char* file) {
 
     MessageDictionary& dictionary = MessageDictionary::globalDictionary();
     MessageReader reader(&dictionary);
+
+    // Turn off use of any lock files. This is because this logger can
+    // be used by standalone programs which may not have write access to
+    // the local state directory (to create lock files). So we switch to
+    // using a null interprocess sync object here.
+    logger.setInterprocessSync(new isc::util::InterprocessSyncNull("logger"));
+
     try {
 
         logger.info(LOG_READING_LOCAL_FILE).arg(file);

@@ -18,12 +18,19 @@
 
 import sys; sys.path.append ('@@PYTHONPATH@@')
 import isc
+from isc.acl.dns import REQUEST_LOADER
 import bind10_config
 from isc.dns import *
+import isc.ddns.session
+from isc.ddns.zone_config import ZoneConfig
+from isc.ddns.logger import ClientFormatter, ZoneFormatter
 from isc.config.ccsession import *
-from isc.cc import SessionError, SessionTimeout
+from isc.cc import SessionError, SessionTimeout, ProtocolError
 import isc.util.process
 import isc.util.cio.socketsession
+from isc.notify.notify_out import ZONE_NEW_DATA_READY_CMD
+import isc.server_common.tsig_keyring
+from isc.datasrc import DataSourceClient
 import select
 import errno
 
@@ -39,28 +46,42 @@ isc.log.init("b10-ddns")
 logger = isc.log.Logger("ddns")
 TRACE_BASIC = logger.DBGLVL_TRACE_BASIC
 
+# Well known path settings.  We need to define
+# SPECFILE_LOCATION: ddns configuration spec file
+# SOCKET_FILE: Unix domain socket file to communicate with b10-auth
+# AUTH_SPECFILE_LOCATION: b10-auth configuration spec file (tentatively
+#  necessarily for sqlite3-only-and-older-datasrc-API stuff).  This should be
+#  gone once we migrate to the new API and start using generalized config.
+#
 # If B10_FROM_SOURCE is set in the environment, we use data files
 # from a directory relative to that, otherwise we use the ones
 # installed on the system
 if "B10_FROM_SOURCE" in os.environ:
-    SPECFILE_LOCATION = os.environ["B10_FROM_SOURCE"] + os.sep + \
-        "src" + os.sep + "bin" + os.sep + "ddns" + os.sep + "ddns.spec"
+    SPECFILE_PATH = os.environ["B10_FROM_SOURCE"] + "/src/bin/ddns"
 else:
     PREFIX = "@prefix@"
     DATAROOTDIR = "@datarootdir@"
-    SPECFILE_LOCATION = "@datadir@" + os.sep + "@PACKAGE@" + os.sep + "ddns.spec"
-    SPECFILE_LOCATION = SPECFILE_LOCATION.replace("${datarootdir}", DATAROOTDIR)\
-        .replace("${prefix}", PREFIX)
+    SPECFILE_PATH = "@datadir@/@PACKAGE@".replace("${datarootdir}", DATAROOTDIR)
+    SPECFILE_PATH = SPECFILE_PATH.replace("${prefix}", PREFIX)
 
-SOCKET_FILE = bind10_config.DATA_PATH + '/ddns_socket'
 if "B10_FROM_BUILD" in os.environ:
+    AUTH_SPECFILE_PATH = os.environ["B10_FROM_BUILD"] + "/src/bin/auth"
     if "B10_FROM_SOURCE_LOCALSTATEDIR" in os.environ:
-        SOCKET_FILE = os.environ["B10_FROM_SOURCE_LOCALSTATEDIR"] + \
-            "/ddns_socket"
+        SOCKET_FILE_PATH = os.environ["B10_FROM_SOURCE_LOCALSTATEDIR"]
     else:
-        SOCKET_FILE = os.environ["B10_FROM_BUILD"] + "/ddns_socket"
+        SOCKET_FILE_PATH = os.environ["B10_FROM_BUILD"]
+else:
+    SOCKET_FILE_PATH = bind10_config.DATA_PATH
+    AUTH_SPECFILE_PATH = SPECFILE_PATH
+
+SPECFILE_LOCATION = SPECFILE_PATH + "/ddns.spec"
+SOCKET_FILE = SOCKET_FILE_PATH + '/ddns_socket'
+AUTH_SPECFILE_LOCATION = AUTH_SPECFILE_PATH + '/auth.spec'
 
 isc.util.process.rename()
+
+# Cooperating modules
+XFROUT_MODULE_NAME = 'Xfrout'
 
 class DDNSConfigError(Exception):
     '''An exception indicating an error in updating ddns configuration.
@@ -93,6 +114,42 @@ def clear_socket():
     if os.path.exists(SOCKET_FILE):
         os.remove(SOCKET_FILE)
 
+def get_datasrc_client(cc_session):
+    '''Return data source client for update requests.
+
+    This is supposed to have a very short lifetime and should soon be replaced
+    with generic data source configuration framework.  Based on that
+    observation we simply hardcode everything except the SQLite3 database file,
+    which will be retrieved from the auth server configuration (this behavior
+    will also be deprecated).  When something goes wrong with it this function
+    still returns a dummy client so that the caller doesn't have to bother
+    to handle the error (which would also have to be replaced anyway).
+    The caller will subsequently call its find_zone method via an update
+    session object, which will result in an exception, and then result in
+    a SERVFAIL response.
+
+    Once we are ready for introducing the general framework, the whole
+    function will simply be removed.
+
+    '''
+    HARDCODED_DATASRC_CLASS = RRClass.IN()
+    file, is_default = cc_session.get_remote_config_value("Auth",
+                                                          "database_file")
+    # See xfrout.py:get_db_file() for this trick:
+    if is_default and "B10_FROM_BUILD" in os.environ:
+        file = os.environ["B10_FROM_BUILD"] + "/bind10_zones.sqlite3"
+    datasrc_config = '{ "database_file": "' + file + '"}'
+    try:
+        return HARDCODED_DATASRC_CLASS, DataSourceClient('sqlite3',
+                                                         datasrc_config)
+    except isc.datasrc.Error as ex:
+        class DummyDataSourceClient:
+            def __init__(self, ex):
+                self.__ex = ex
+            def find_zone(self, zone_name):
+                raise isc.datasrc.Error(self.__ex)
+        return HARDCODED_DATASRC_CLASS, DummyDataSourceClient(ex)
+
 class DDNSServer:
     def __init__(self, cc_session=None):
         '''
@@ -110,8 +167,17 @@ class DDNSServer:
                                                   self.config_handler,
                                                   self.command_handler)
 
+        # Initialize configuration with defaults.  Right now 'zones' is the
+        # only configuration, so we simply directly set it here.
         self._config_data = self._cc.get_full_config()
+        self._zone_config = self.__update_zone_config(
+            self._cc.get_default_value('zones'))
         self._cc.start()
+
+        # Get necessary configurations from remote modules.
+        self._cc.add_remote_config(AUTH_SPECFILE_LOCATION)
+        isc.server_common.tsig_keyring.init_keyring(self._cc)
+
         self._shutdown = False
         # List of the session receivers where we get the requests
         self._socksession_receivers = {}
@@ -120,12 +186,52 @@ class DDNSServer:
         self._listen_socket.bind(SOCKET_FILE)
         self._listen_socket.listen(16)
 
+        # Create reusable resources
+        self.__request_msg = Message(Message.PARSE)
+        self.__response_renderer = MessageRenderer()
+
+        # The following attribute(s) are essentially private and constant,
+        # but defined as "protected" so that test code can customize them.
+        # They should not be overridden for any other purposes.
+        #
+        # DDNS Protocol handling class.
+        self._UpdateSessionClass = isc.ddns.session.UpdateSession
+
+    class InternalError(Exception):
+        '''Exception for internal errors in an update session.
+
+        This exception is expected to be caught within the server class,
+        only used for controling the code flow.
+
+        '''
+        pass
+
     def config_handler(self, new_config):
         '''Update config data.'''
-        # TODO: Handle exceptions and turn them to an error response
-        # (once we have any configuration)
-        answer = create_answer(0)
-        return answer
+        try:
+            if 'zones' in new_config:
+                self._zone_config = \
+                    self.__update_zone_config(new_config['zones'])
+            return create_answer(0)
+        except Exception as ex:
+            # We catch any exception here.  That includes any syntax error
+            # against the configuration spec.  The config interface is too
+            # complicated and it's not clear how much validation is performed
+            # there, so, while assuming it's unlikely to happen, we act
+            # proactively.
+            logger.error(DDNS_CONFIG_HANDLER_ERROR, ex)
+            return create_answer(1, "Failed to handle new configuration: " +
+                                 str(ex))
+
+    def __update_zone_config(self, new_zones_config):
+        '''Handle zones configuration update.'''
+        new_zones = {}
+        for zone_config in new_zones_config:
+            origin = Name(zone_config['origin'])
+            rrclass = RRClass(zone_config['class'])
+            update_acl = zone_config['update_acl']
+            new_zones[(origin, rrclass)] = REQUEST_LOADER.load(update_acl)
+        return new_zones
 
     def command_handler(self, cmd, args):
         '''
@@ -168,10 +274,10 @@ class DDNSServer:
         Accept another connection and create the session receiver.
         """
         try:
-            sock = self._listen_socket.accept()
+            (sock, remote_addr) = self._listen_socket.accept()
             fileno = sock.fileno()
             logger.debug(TRACE_BASIC, DDNS_NEW_CONN, fileno,
-                         sock.getpeername())
+                         remote_addr if remote_addr else '<anonymous address>')
             receiver = isc.util.cio.socketsession.SocketSessionReceiver(sock)
             self._socksession_receivers[fileno] = (sock, receiver)
         except (socket.error, isc.util.cio.socketsession.SocketSessionError) \
@@ -180,7 +286,30 @@ class DDNSServer:
             # continue with the rest
             logger.error(DDNS_ACCEPT_FAILURE, e)
 
-    def handle_request(self, request):
+    def __check_request_tsig(self, msg, req_data):
+        '''TSIG checker for update requests.
+
+        This is a helper method for handle_request() below.  It examines
+        the given update request message to see if it contains a TSIG RR,
+        and verifies the signature if it does.  It returs the TSIG context
+        used for the verification, or None if the request doesn't contain
+        a TSIG.  If the verification fails it simply raises an exception
+        as handle_request() assumes it should succeed.
+
+        '''
+        tsig_record = msg.get_tsig_record()
+        if tsig_record is None:
+            return None
+        tsig_ctx = TSIGContext(tsig_record.get_name(),
+                               tsig_record.get_rdata().get_algorithm(),
+                               isc.server_common.tsig_keyring.get_keyring())
+        tsig_error = tsig_ctx.verify(tsig_record, req_data)
+        if tsig_error != TSIGError.NOERROR:
+            raise self.InternalError("Failed to verify request's TSIG: " +
+                                     str(tsig_error))
+        return tsig_ctx
+
+    def handle_request(self, req_session):
         """
         This is the place where the actual DDNS processing is done. Other
         methods are either subroutines of this method or methods doing the
@@ -190,12 +319,131 @@ class DDNSServer:
         It is called with the request being session as received from
         SocketSessionReceiver, i.e. tuple
         (socket, local_address, remote_address, data).
-        """
-        # TODO: Implement the magic
 
-        # TODO: Don't propagate most of the exceptions (like datasrc errors),
-        # just drop the packet.
-        pass
+        In general, this method doesn't propagate exceptions outside the
+        method.  Most of protocol or system errors will result in an error
+        response to the update client or dropping the update request.
+        The update session class should also ensure this.  Critical exceptions
+        such as memory allocation failure will be propagated, however, and
+        will subsequently terminate the server process.
+
+        Return: True if a response to the request is successfully sent;
+        False otherwise.  The return value wouldn't be useful for the server
+        itself; it's provided mainly for testing purposes.
+
+        """
+        # give tuple elements intuitive names
+        (sock, local_addr, remote_addr, req_data) = req_session
+
+        # The session sender (b10-auth) should have made sure that this is
+        # a validly formed DNS message of OPCODE being UPDATE, and if it's
+        # TSIG signed, its key is known to the system and the signature is
+        # valid.  Messages that don't meet these should have been resopnded
+        # or dropped by the sender, so if such error is detected we treat it
+        # as an internal error and don't bother to respond.
+        try:
+            if sock.proto == socket.IPPROTO_TCP:
+                raise self.InternalError('TCP requests are not yet supported')
+            self.__request_msg.clear(Message.PARSE)
+            # specify PRESERVE_ORDER as we need to handle each RR separately.
+            self.__request_msg.from_wire(req_data, Message.PRESERVE_ORDER)
+            if self.__request_msg.get_opcode() != Opcode.UPDATE():
+                raise self.InternalError('Update request has unexpected '
+                                         'opcode: ' +
+                                         str(self.__request_msg.get_opcode()))
+            tsig_ctx = self.__check_request_tsig(self.__request_msg, req_data)
+        except Exception as ex:
+            logger.error(DDNS_REQUEST_PARSE_FAIL, ex)
+            return False
+
+        # Let an update session object handle the request.  Note: things around
+        # ZoneConfig will soon be substantially revised.  For now we don't
+        # bother to generalize it.
+        datasrc_class, datasrc_client = get_datasrc_client(self._cc)
+        zone_cfg = ZoneConfig([], datasrc_class, datasrc_client,
+                              self._zone_config)
+        update_session = self._UpdateSessionClass(self.__request_msg,
+                                                  remote_addr, zone_cfg)
+        result, zname, zclass = update_session.handle()
+
+        # If the request should be dropped, we're done; otherwise, send the
+        # response generated by the session object.
+        if result == isc.ddns.session.UPDATE_DROP:
+            return False
+        msg = update_session.get_message()
+        self.__response_renderer.clear()
+        if tsig_ctx is not None:
+            msg.to_wire(self.__response_renderer, tsig_ctx)
+        else:
+            msg.to_wire(self.__response_renderer)
+
+        ret = self.__send_response(sock, self.__response_renderer.get_data(),
+                                   remote_addr)
+        if result == isc.ddns.session.UPDATE_SUCCESS:
+            self.__notify_update(zname, zclass)
+        return ret
+
+    def __send_response(self, sock, data, dest):
+        '''Send DDNS response to the client.
+
+        Right now, this is a straightforward subroutine of handle_request(),
+        but is intended to be extended evetually so that it can handle more
+        comlicated operations for TCP (which requires asynchronous write).
+        Further, when we support multiple requests over a single TCP
+        connection, this method may even be shared by multiple methods.
+
+        Parameters:
+        sock: (python socket) the socket to which the response should be sent.
+        data: (binary) the response data
+        dest: (python socket address) the destion address to which the response
+          should be sent.
+
+        Return: True if the send operation succeds; otherwise False.
+
+        '''
+        try:
+            sock.sendto(data, dest)
+        except socket.error as ex:
+            logger.error(DDNS_RESPONSE_SOCKET_ERROR, ClientFormatter(dest), ex)
+            return False
+
+        return True
+
+    def __notify_update(self, zname, zclass):
+        '''Notify other modules of the update.
+
+        Note that we use blocking communication here.  While the internal
+        communication bus is generally expected to be pretty responsive and
+        error free, notable delay can still occur, and in worse cases timeouts
+        or connection reset can happen.  In these cases, even if the trouble
+        is temporary, the update service will be suspended for a while.
+        For a longer term we'll need to switch to asynchronous communication,
+        but for now we rely on the blocking operation.
+
+        Note also that we directly refer to the "protected" member of
+        ccsession (_cc._session) rather than creating a separate channel.
+        It's probably not the best practice, but hopefully we can introduce
+        a cleaner way when we support asynchronous communication.
+        At the moment we prefer the brevity with the use of internal channel
+        of the cc session.
+
+        '''
+        param = {'zone_name': zname.to_text(), 'zone_class': zclass.to_text()}
+        msg = create_command(ZONE_NEW_DATA_READY_CMD, param)
+        modname = XFROUT_MODULE_NAME
+        try:
+            seq = self._cc._session.group_sendmsg(msg, modname)
+            answer, _ = self._cc._session.group_recvmsg(False, seq)
+            rcode, error_msg = parse_answer(answer)
+        except (SessionTimeout, SessionError, ProtocolError) as ex:
+            rcode = 1
+            error_msg = str(ex)
+        if rcode == 0:
+            logger.debug(TRACE_BASIC, DDNS_UPDATE_NOTIFY, modname,
+                         ZoneFormatter(zname, zclass))
+        else:
+            logger.error(DDNS_UPDATE_NOTIFY_FAIL, modname,
+                         ZoneFormatter(zname, zclass), error_msg)
 
     def handle_session(self, fileno):
         """

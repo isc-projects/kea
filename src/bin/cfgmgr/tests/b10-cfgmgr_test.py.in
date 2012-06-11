@@ -209,7 +209,6 @@ class TestParseArgs(unittest.TestCase):
         self.assertFalse(parsed.clear_config)
         parsed = b.parse_options(['--clear-config'], TestOptParser)
         self.assertTrue(parsed.clear_config)
-        
 
 if __name__ == '__main__':
     unittest.main()

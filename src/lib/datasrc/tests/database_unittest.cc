@@ -142,8 +142,10 @@ const char* const TEST_RECORDS[][5] = {
     {"delegation.example.org.", "NS", "3600", "", "ns.example.com."},
     {"delegation.example.org.", "NS", "3600", "",
      "ns.delegation.example.org."},
-    {"delegation.example.org.", "DS", "3600", "", "1 RSAMD5 2 abcd"},
+    {"delegation.example.org.", "DS", "3600", "", "1 1 2 abcd"},
     {"delegation.example.org.", "RRSIG", "3600", "", "NS 5 3 3600 "
+     "20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+    {"delegation.example.org.", "RRSIG", "3600", "", "DS 5 3 3600 "
      "20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
     {"ns.delegation.example.org.", "A", "3600", "", "192.0.2.1"},
     {"deep.below.delegation.example.org.", "A", "3600", "", "192.0.2.1"},
@@ -155,6 +157,16 @@ const char* const TEST_RECORDS[][5] = {
      "example.org. FAKEFAKEFAKE"},
 
     {"below.dname.example.org.", "A", "3600", "", "192.0.2.1"},
+
+    // Insecure delegation (i.e., no DS at the delegation point)
+    {"insecdelegation.example.org.", "NS", "3600", "", "ns.example.com."},
+    {"insecdelegation.example.org.", "NSEC", "3600", "",
+     "dummy.example.org. NS NSEC"},
+    // and a DS under the zone cut. Such an RR shouldn't exist in a sane zone,
+    // but it could by error or some malicious attempt.  It shouldn't confuse
+    // the implementation)
+    {"child.insecdelegation.example.org.", "DS", "3600", "", "DS 5 3 3600 "
+     "20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
 
     // Broken NS
     {"brokenns1.example.org.", "A", "3600", "", "192.0.2.1"},
@@ -2199,6 +2211,48 @@ TYPED_TEST(DatabaseClientTest, findDelegation) {
                               this->qtype_,
                               ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
+}
+
+TYPED_TEST(DatabaseClientTest, findDS) {
+    // Type DS query is an exception to the general delegation case; the NS
+    // should be ignored and it should be treated just like normal
+    // authoritative data.
+
+    boost::shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
+
+    // DS exists at the delegation point.  It should be returned with result
+    // code of SUCCESS.
+    this->expected_rdatas_.push_back("1 1 2 abcd"),
+    this->expected_sig_rdatas_.push_back("DS 5 3 3600 20000101000000 "
+                                         "20000201000000 12345 example.org. "
+                                         "FAKEFAKEFAKE");
+    doFindTest(*finder, Name("delegation.example.org."),
+               RRType::DS(), RRType::DS(), this->rrttl_, ZoneFinder::SUCCESS,
+               this->expected_rdatas_, this->expected_sig_rdatas_,
+               ZoneFinder::RESULT_DEFAULT);
+
+    // DS doesn't exist at the delegation point.  The result should be
+    // NXRRSET, and if DNSSEC is requested and the zone is NSEC-signed,
+    // the corresponding NSEC should be returned (normally with its RRSIG,
+    // but in this simplified test setup it's omitted in the test data).
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back("dummy.example.org. NS NSEC");
+    this->expected_sig_rdatas_.clear();
+    doFindTest(*finder, Name("insecdelegation.example.org."),
+               RRType::DS(), RRType::NSEC(), this->rrttl_, ZoneFinder::NXRRSET,
+               this->expected_rdatas_, this->expected_sig_rdatas_,
+               ZoneFinder::RESULT_NSEC_SIGNED,
+               Name("insecdelegation.example.org."), ZoneFinder::FIND_DNSSEC);
+
+    // Some insane case: DS under a zone cut.  It's included in the DB, but
+    // shouldn't be visible via finder.
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back("ns.example.com");
+    doFindTest(*finder, Name("child.insecdelegation.example.org"),
+               RRType::DS(), RRType::NS(), this->rrttl_,
+               ZoneFinder::DELEGATION, this->expected_rdatas_,
+               this->empty_rdatas_, ZoneFinder::RESULT_DEFAULT,
+               Name("insecdelegation.example.org."), ZoneFinder::FIND_DNSSEC);
 }
 
 TYPED_TEST(DatabaseClientTest, emptyDomain) {

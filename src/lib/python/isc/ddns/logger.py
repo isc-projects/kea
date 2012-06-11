@@ -28,9 +28,11 @@ class ClientFormatter:
 
     This class is constructed with a Python standard socket address tuple.
     If it's 2-element tuple, it's assumed to be an IPv4 socket address
-    and will be converted to the form of '<addr>:<port>'.
+    and will be converted to the form of '<addr>:<port>(/key=<tsig-key>)'.
     If it's 4-element tuple, it's assumed to be an IPv6 socket address.
-    and will be converted to the form of '[<addr>]:<por>'.
+    and will be converted to the form of '[<addr>]:<por>(/key=<tsig-key>)'.
+    The optional key=<tsig-key> will be added if a TSIG record is given
+    on construction.  tsig-key is the TSIG key name in that case.
 
     This class is designed to delay the conversion until it's explicitly
     requested, so the conversion doesn't happen if the corresponding log
@@ -45,15 +47,22 @@ class ClientFormatter:
     Right now this is an open issue.
 
     """
-    def __init__(self, addr):
+    def __init__(self, addr, tsig_record=None):
         self.__addr = addr
+        self.__tsig_record = tsig_record
 
-    def __str__(self):
+    def __format_addr(self):
         if len(self.__addr) == 2:
             return self.__addr[0] + ':' + str(self.__addr[1])
         elif len(self.__addr) == 4:
             return '[' + self.__addr[0] + ']:' + str(self.__addr[1])
         return None
+
+    def __str__(self):
+        format = self.__format_addr()
+        if format is not None and self.__tsig_record is not None:
+            format += '/key=' + self.__tsig_record.get_name().to_text(True)
+        return format
 
 class ZoneFormatter:
     """A utility class to convert zone name and class to string.

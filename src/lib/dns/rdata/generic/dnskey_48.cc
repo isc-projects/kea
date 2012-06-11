@@ -51,7 +51,7 @@ struct DNSKEYImpl {
     const vector<uint8_t> keydata_;
 };
 
-DNSKEY::DNSKEY(const string& dnskey_str) :
+DNSKEY::DNSKEY(const std::string& dnskey_str) :
     impl_(NULL)
 {
     istringstream iss(dnskey_str);
