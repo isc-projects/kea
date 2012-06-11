@@ -190,7 +190,7 @@ protected:
         if (cc != sizeof(test_data)) {
             isc_throw(IOError, "unexpected sendto result: " << cc);
         }
-        io_service_->run();
+        io_service_.run();
     }
 
     // Send a test TCP packet to a mock server
@@ -210,7 +210,7 @@ protected:
         if (cc != sizeof(test_data)) {
             isc_throw(IOError, "unexpected send result: " << cc);
         }
-        io_service_->run();
+        io_service_.run();
     }
 
     // Receive a UDP packet from a mock server; used for testing
@@ -233,10 +233,10 @@ protected:
         // The IO service queue should have a RecursiveQuery object scheduled
         // to run at this point.  This call will cause it to begin an
         // async send, then return.
-        io_service_->run_one();
+        io_service_.run_one();
 
         // ... and this one will block until the send has completed
-        io_service_->run_one();
+        io_service_.run_one();
 
         // Now we attempt to recv() whatever was sent.
         // XXX: there's no guarantee the receiving socket can immediately get
@@ -326,9 +326,8 @@ protected:
     // Set up empty DNS Service
     // Set up an IO Service queue without any addresses
     void setDNSService() {
-        io_service_.reset(new IOService());
         callback_.reset(new ASIOCallBack(this));
-        dns_service_.reset(new DNSService(*io_service_, callback_.get(), NULL,
+        dns_service_.reset(new DNSService(io_service_, callback_.get(), NULL,
                                           NULL));
     }
 
@@ -491,12 +490,12 @@ private:
             static_cast<const uint8_t*>(io_message.getData()),
             static_cast<const uint8_t*>(io_message.getData()) +
             io_message.getDataSize());
-        io_service_->stop();
+        io_service_.stop();
     }
 protected:
     // We use a pointer for io_service_, because for some tests we
     // need to recreate a new one within one onstance of this class
-    scoped_ptr<IOService> io_service_;
+    IOService io_service_;
     scoped_ptr<DNSService> dns_service_;
     scoped_ptr<isc::nsas::NameserverAddressStore> nsas_;
     isc::cache::ResolverCache cache_;
@@ -513,7 +512,6 @@ RecursiveQueryTest::RecursiveQueryTest() :
     dns_service_(NULL), callback_(NULL), callback_protocol_(0),
     callback_native_(-1), resolver_(new isc::util::unittests::TestResolver())
 {
-    io_service_.reset(new IOService());
     nsas_.reset(new isc::nsas::NameserverAddressStore(resolver_));
 }
 
@@ -646,7 +644,7 @@ TEST_F(RecursiveQueryTest, forwarderSend) {
     // to the same port as the actual server
     uint16_t port = boost::lexical_cast<uint16_t>(TEST_CLIENT_PORT);
 
-    MockServer server(*io_service_);
+    MockServer server(io_service_);
     RecursiveQuery rq(*dns_service_,
                       *nsas_, cache_,
                       singleAddress(TEST_IPV4_ADDR, port),
@@ -769,7 +767,7 @@ TEST_F(RecursiveQueryTest, forwardQueryTimeout) {
 
     // Prepare the server
     bool done(true);
-    MockServerStop server(*io_service_, &done);
+    MockServerStop server(io_service_, &done);
 
     // Do the answer
     const uint16_t port = boost::lexical_cast<uint16_t>(TEST_CLIENT_PORT);
@@ -787,7 +785,7 @@ TEST_F(RecursiveQueryTest, forwardQueryTimeout) {
     boost::shared_ptr<MockResolverCallback> callback(new MockResolverCallback(&server));
     query.forward(ConstMessagePtr(&query_message), answer, buffer, &server, callback);
     // Run the test
-    io_service_->run();
+    io_service_.run();
     EXPECT_EQ(callback->result, MockResolverCallback::FAILURE);
 }
 
@@ -803,7 +801,7 @@ TEST_F(RecursiveQueryTest, forwardClientTimeout) {
 
     // Prepare the server
     bool done1(true);
-    MockServerStop server(*io_service_, &done1);
+    MockServerStop server(io_service_, &done1);
 
     MessagePtr answer(new Message(Message::RENDER));
 
@@ -822,7 +820,7 @@ TEST_F(RecursiveQueryTest, forwardClientTimeout) {
     boost::shared_ptr<MockResolverCallback> callback(new MockResolverCallback(&server));
     query.forward(ConstMessagePtr(&query_message), answer, buffer, &server, callback);
     // Run the test
-    io_service_->run();
+    io_service_.run();
     EXPECT_EQ(callback->result, MockResolverCallback::FAILURE);
 }
 
@@ -837,7 +835,7 @@ TEST_F(RecursiveQueryTest, forwardLookupTimeout) {
 
     // Prepare the server
     bool done(true);
-    MockServerStop server(*io_service_, &done);
+    MockServerStop server(io_service_, &done);
 
     MessagePtr answer(new Message(Message::RENDER));
 
@@ -857,7 +855,7 @@ TEST_F(RecursiveQueryTest, forwardLookupTimeout) {
     boost::shared_ptr<MockResolverCallback> callback(new MockResolverCallback(&server));
     query.forward(ConstMessagePtr(&query_message), answer, buffer, &server, callback);
     // Run the test
-    io_service_->run();
+    io_service_.run();
     EXPECT_EQ(callback->result, MockResolverCallback::FAILURE);
 }
 
@@ -872,7 +870,7 @@ TEST_F(RecursiveQueryTest, lowtimeouts) {
 
     // Prepare the server
     bool done(true);
-    MockServerStop server(*io_service_, &done);
+    MockServerStop server(io_service_, &done);
 
     MessagePtr answer(new Message(Message::RENDER));
 
@@ -892,7 +890,7 @@ TEST_F(RecursiveQueryTest, lowtimeouts) {
     boost::shared_ptr<MockResolverCallback> callback(new MockResolverCallback(&server));
     query.forward(ConstMessagePtr(&query_message), answer, buffer, &server, callback);
     // Run the test
-    io_service_->run();
+    io_service_.run();
     EXPECT_EQ(callback->result, MockResolverCallback::FAILURE);
 }
 
@@ -906,7 +904,7 @@ TEST_F(RecursiveQueryTest, DISABLED_recursiveSendOk) {
     setDNSService(true, false);
     bool done;
     
-    MockServerStop server(*io_service_, &done);
+    MockServerStop server(io_service_, &done);
     vector<pair<string, uint16_t> > empty_vector;
     RecursiveQuery rq(*dns_service_, *nsas_, cache_, empty_vector,
                       empty_vector, 10000, 0);
@@ -915,7 +913,7 @@ TEST_F(RecursiveQueryTest, DISABLED_recursiveSendOk) {
     OutputBufferPtr buffer(new OutputBuffer(0));
     MessagePtr answer(new Message(Message::RENDER));
     rq.resolve(q, answer, buffer, &server);
-    io_service_->run();
+    io_service_.run();
 
     // Check that the answer we got matches the one we wanted
     EXPECT_EQ(Rcode::NOERROR(), answer->getRcode());
@@ -932,7 +930,7 @@ TEST_F(RecursiveQueryTest, DISABLED_recursiveSendNXDOMAIN) {
     setDNSService(true, false);
     bool done;
     
-    MockServerStop server(*io_service_, &done);
+    MockServerStop server(io_service_, &done);
     vector<pair<string, uint16_t> > empty_vector;
     RecursiveQuery rq(*dns_service_, *nsas_, cache_, empty_vector,
                       empty_vector, 10000, 0);
@@ -941,7 +939,7 @@ TEST_F(RecursiveQueryTest, DISABLED_recursiveSendNXDOMAIN) {
     OutputBufferPtr buffer(new OutputBuffer(0));
     MessagePtr answer(new Message(Message::RENDER));
     rq.resolve(q, answer, buffer, &server);
-    io_service_->run();
+    io_service_.run();
 
     // Check that the answer we got matches the one we wanted
     EXPECT_EQ(Rcode::NXDOMAIN(), answer->getRcode());
@@ -1015,7 +1013,7 @@ TEST_F(RecursiveQueryTest, CachedNS) {
     OutputBufferPtr buffer(new OutputBuffer(0));
     MessagePtr answer(new Message(Message::RENDER));
     // The server is here so we have something to pass there
-    MockServer server(*io_service_);
+    MockServer server(io_service_);
     rq.resolve(q, answer, buffer, &server);
     // We don't need to run the service in this test. We are interested only
     // in the place it starts resolving at
