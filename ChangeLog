@@ -1,3 +1,26 @@
+444.	[bug]		jinmei
+	libdatasrc: fixed ZoneFinder for database-based data sources so
+	that it handles type DS query correctly, i.e., treating it as
+	authoritative data even on a delegation point.
+	(Trac #1912, git 7130da883f823ce837c10cbf6e216a15e1996e5d)
+
+443.    [func]*		muks
+	The logger now uses a lockfile named `logger_lockfile' that is
+	created in the local state directory to mutually separate
+	individual logging operations from various processes. This is
+	done so that log messages from different processes don't mix
+	together in the middle of lines. The `logger_lockfile` is created
+	with file permission mode 0660. BIND 10's local state directory
+	should be writable and perhaps have g+s mode bit so that the
+	`logger_lockfile` can be opened by a group of processes.
+	(Trac #1704, git ad8d445dd0ba208107eb239405166c5c2070bd8b)
+
+442.	[func]		tomek
+	b10-dhcp4, b10-dhcp6: Both DHCP servers now accept -p parameter
+	that can be used to specify listening port number. This capability
+	is useful only for testing purposes.
+	(Trac #1503, git e60af9fa16a6094d2204f27c40a648fae313bdae)
+
 441.	[func]		tomek
 	libdhcp++: Stub interface detection (support for interfaces.txt
 	file) was removed.

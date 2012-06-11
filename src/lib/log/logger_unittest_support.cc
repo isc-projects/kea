@@ -160,6 +160,9 @@ void initLogger(isc::log::Severity severity, int dbglevel) {
     // Set the local message file
     const char* localfile = getenv("B10_LOGGER_LOCALMSG");
 
+    // Set a directory for creating lockfiles when running tests
+    setenv("B10_LOCKFILE_DIR_FROM_BUILD", TOP_BUILDDIR, 1);
+
     // Initialize logging
     initLogger(root, isc::log::DEBUG, isc::log::MAX_DEBUG_LEVEL, localfile);
 
