@@ -25,7 +25,7 @@ def check_length_field(assert_eq, len_data, expected_len):
     # Examine the "length field" part of the data.  It should be 2-byte field,
     # and (in our implementation) always given as a separate chunk of data.
     # The 16-bit length value of the actual data should be stored in the
-    # nextwork byte order.
+    # network byte order.
     len_high = (expected_len >> 8) & 0x00ff
     len_low = (expected_len & 0x00ff)
     assert_eq(2, len(len_data))
