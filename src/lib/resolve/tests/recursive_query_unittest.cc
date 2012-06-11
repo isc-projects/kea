@@ -175,6 +175,10 @@ protected:
         resolver_.reset();
     }
 
+    void SetUp() {
+        callback_.reset(new ASIOCallBack(this));
+    }
+
     // Send a test UDP packet to a mock server
     void sendUDP(const int family) {
         ScopedAddrInfo sai(resolveAddress(family, IPPROTO_UDP, false));
@@ -326,7 +330,6 @@ protected:
     // Set up empty DNS Service
     // Set up an IO Service queue without any addresses
     void setDNSService() {
-        callback_.reset(new ASIOCallBack(this));
         dns_service_.reset(new DNSService(io_service_, callback_.get(), NULL,
                                           NULL));
     }
