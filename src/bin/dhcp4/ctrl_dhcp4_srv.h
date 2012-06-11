@@ -45,13 +45,16 @@ public:
     ControlledDhcpv4Srv(uint16_t port = DHCP4_SERVER_PORT,
                         bool verbose = false);
 
+    /// @brief Destructor.
+    ~ControlledDhcpv4Srv();
+
     /// @brief Establishes msgq session.
     ///
     /// Creates session that will be used to receive commands and updated
     /// configuration from boss (or indirectly from user via bindctl).
     void establishSession();
 
-    /// @brief Terminates existing session.
+    /// @brief Terminates existing msgq session.
     ///
     /// This method terminates existing session with msgq. After calling
     /// it, not further messages over msgq (commands or configuration updates)
@@ -62,8 +65,6 @@ public:
 
     /// @brief Initiates shutdown procedure for the whole DHCPv4 server.
     void shutdown();
-
-    ~ControlledDhcpv4Srv();
 
     /// @brief Session callback, processes received commands.
     ///
@@ -84,6 +85,9 @@ protected:
 
     /// @brief A callback for handling incoming configuration updates.
     ///
+    /// As pointer to this method is used a callback in ASIO used in
+    /// ModuleCCSession, it has to be static.
+    ///
     /// @param new_config textual representation of the new configuration
     ///
     /// @return status of the config update
@@ -99,16 +103,16 @@ protected:
     static isc::data::ConstElementPtr
     dhcp4CommandHandler(const std::string& command, isc::data::ConstElementPtr args);
 
-    /// @brief callback that will be called from iface_mgr when command/config arrives
+    /// @brief Callback that will be called from iface_mgr when command/config arrives.
     ///
     /// This static callback method is called from IfaceMgr::receive4() method,
     /// when there is a new command or configuration sent over msgq.
     static void sessionReader(void);
 
-    /// @brief IOService object, used for all ASIO operations
+    /// @brief IOService object, used for all ASIO operations.
     isc::asiolink::IOService io_service_;
 
-    /// @brief Helper session object that represents raw connection to msgq
+    /// @brief Helper session object that represents raw connection to msgq.
     isc::cc::Session* cc_session_;
 
     /// @brief Session that receives configuation and commands
