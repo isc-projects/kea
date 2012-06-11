@@ -357,7 +357,7 @@ public:
     /// @param timeout specifies timeout (in seconds)
     ///
     /// @return Pkt4 object representing received packet (or NULL)
-    Pkt4Ptr receive4(unsigned int timeout);
+    Pkt4Ptr receive4(uint32_t timeout);
 
     /// Opens UDP/IP socket and binds it to address, interface and port.
     ///
@@ -413,6 +413,9 @@ public:
         session_socket_ = socketfd;
         session_callback_ = callback;
     }
+
+    /// A value of socket descriptor representing "not specified" state.
+    static const int InvalidSocket = -1;
 
     // don't use private, we need derived classes in tests
 protected:

@@ -13,32 +13,19 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
-
-//#include <sys/types.h>
-//#include <sys/socket.h>
-//#include <sys/select.h>
-//#include <netdb.h>
-//#include <netinet/in.h>
-//#include <stdlib.h>
-//#include <errno.h>
-
 #include <cassert>
 #include <iostream>
 
 #include <cc/session.h>
 #include <cc/data.h>
-
 #include <exceptions/exceptions.h>
 #include <cc/session.h>
 #include <config/ccsession.h>
-
 #include <util/buffer.h>
 #include <log/dummylog.h>
-
 #include <dhcp4/spec_config.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp/iface_mgr.h>
-
 #include <asiolink/asiolink.h>
 #include <log/logger_support.h>
 

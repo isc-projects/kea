@@ -123,7 +123,7 @@ bool IfaceMgr::Iface::delSocket(uint16_t sockfd) {
 IfaceMgr::IfaceMgr()
     :control_buf_len_(CMSG_SPACE(sizeof(struct in6_pktinfo))),
      control_buf_(new char[control_buf_len_]),
-     session_socket_(0), session_callback_(NULL)
+     session_socket_(InvalidSocket), session_callback_(NULL)
 {
 
     cout << "IfaceMgr initialization." << endl;
@@ -685,7 +685,7 @@ IfaceMgr::send(const Pkt4Ptr& pkt)
 
 
 boost::shared_ptr<Pkt4>
-IfaceMgr::receive4(unsigned int timeout) {
+IfaceMgr::receive4(uint32_t timeout) {
 
     const SocketInfo* candidate = 0;
     IfaceCollection::const_iterator iface;
@@ -696,27 +696,29 @@ IfaceMgr::receive4(unsigned int timeout) {
 
     stringstream names;
 
+    /// @todo: marginal performance optimization. We could create the set once
+    /// and then use its copy for select(). Please note that select() modifies
+    /// provided set to indicated which sockets have something to read.
     for (iface = ifaces_.begin(); iface != ifaces_.end(); ++iface) {
 
         for (SocketCollection::const_iterator s = iface->sockets_.begin();
              s != iface->sockets_.end(); ++s) {
 
-            // We don't want IPv6 addresses here.
-            if (s->addr_.getFamily() != AF_INET) {
-                continue;
+            // Only deal with IPv4 addresses.
+            if (s->addr_.getFamily() == AF_INET) {
+                names << s->sockfd_ << "(" << iface->getName() << ") ";
+
+                // Add this socket to listening set
+                FD_SET(s->sockfd_, &sockets);
+                if (maxfd < s->sockfd_) {
+                    maxfd = s->sockfd_;
+                }
             }
-
-            names << s->sockfd_ << "(" << iface->getName() << ") ";
-
-            // add this socket to listening set
-            FD_SET(s->sockfd_, &sockets);
-            if (maxfd < s->sockfd_)
-                maxfd = s->sockfd_;
         }
     }
 
     // if there is session socket registered...
-    if (session_socket_) {
+    if (session_socket_ != InvalidSocket) {
         // at it to the set as well
         FD_SET(session_socket_, &sockets);
         if (maxfd < session_socket_)
@@ -737,11 +739,8 @@ IfaceMgr::receive4(unsigned int timeout) {
     if (result == 0) {
         // nothing received and timeout has been reached
         return (Pkt4Ptr()); // NULL
-    }
-    if (result < 0) {
-        char buf[512];
-        strncpy(buf, strerror(errno), 512);
-        cout << "Socket read error: " << buf << endl;
+    } else if (result < 0) {
+        cout << "Socket read error: " << strerror(errno) << endl;
 
         /// @todo: perhaps throw here?
         return (Pkt4Ptr()); // NULL
@@ -749,7 +748,7 @@ IfaceMgr::receive4(unsigned int timeout) {
 
     // Let's find out which socket has the data
 
-    if (session_socket_ && (FD_ISSET(session_socket_, &sockets))) {
+    if ((session_socket_ != InvalidSocket) && (FD_ISSET(session_socket_, &sockets))) {
         // something received over session socket
         cout << "BIND10 command or config available over session socket." << endl;
 
