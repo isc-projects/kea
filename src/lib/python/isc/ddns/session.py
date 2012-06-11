@@ -792,9 +792,9 @@ class UpdateSession:
         # serial magic and add the newly created one
 
         # get it from DS and to increment and stuff
-        result, old_soa, _ = self.__finder.find(self.__zname, RRType.SOA(),
-                                                ZoneFinder.NO_WILDCARD |
-                                                ZoneFinder.FIND_GLUE_OK)
+        result, old_soa, _ = self.__diff.find(self.__zname, RRType.SOA(),
+                                              ZoneFinder.NO_WILDCARD |
+                                              ZoneFinder.FIND_GLUE_OK)
         # We may implement recovering from missing SOA data at some point, but
         # for now servfail on such a broken state
         if result != ZoneFinder.SUCCESS:
