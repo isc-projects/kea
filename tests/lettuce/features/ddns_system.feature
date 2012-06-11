@@ -24,12 +24,13 @@ Feature: DDNS System
         # Note: test spec says refused here, system returns SERVFAIL
         #The DDNS response should be REFUSED
         The DDNS response should be SERVFAIL
+        And the SOA serial for example.org should be 1234
 
         # Test 2
         When I send bind10 the following commands
         """
         config add Boss/components b10-ddns
-        config set Boss/components/b10-ddns/kind needed
+        config set Boss/components/b10-ddns/kind dispensable
         config commit
         """
         And wait for new bind10 stderr message DDNS_RUNNING
@@ -41,8 +42,8 @@ Feature: DDNS System
         """
         update add example.org 3600 IN SOA ns1.example.org. admin.example.org. 1236 3600 1800 2419200 7200
         """
-        # Note: test spec says refused here, system returns SERVFAIL
         The DDNS response should be REFUSED
+        And the SOA serial for example.org should be 1234
 
         # Test 4
         When I send bind10 the following commands
@@ -58,21 +59,44 @@ Feature: DDNS System
         """
         update add example.org 3600 IN SOA ns1.example.org. admin.example.org. 1237 3600 1800 2419200 7200
         """
-        # Note: test spec says refused here, system returns SERVFAIL
         The DDNS response should be SUCCESS
         And the SOA serial for example.org should be 1237
 
         # Test 6
+        # XXX right after update, this fails?!
+        #When I send bind10 the command DDNS shutdown
 
         # Test 7
+        #And wait for new bind10 stderr message DDNS_RUNNING
 
         # Test 8
+        When I send a DDNS Update for example.org with the following commands:
+        """
+        update add example.org 3600 IN SOA ns1.example.org. admin.example.org. 1238 3600 1800 2419200 7200
+        """
+        The DDNS response should be SUCCESS
+        And the SOA serial for example.org should be 1238
 
         # Test 9
 
         # Test 10
+        When I send bind10 the following commands
+        """
+        config remove Boss/components b10-ddns
+        config commit
+        """
+        # XXX same problem of nonresponsive ddns?
+        #And wait for new bind10 stderr message DDNS_STOPPED
+
+        #bind10 module DDNS should not be running
 
         # Test 11
+        When I send a DDNS Update for example.org with the following commands:
+        """
+        update add example.org 3600 IN SOA ns1.example.org. admin.example.org. 1239 3600 1800 2419200 7200
+        """
+        The DDNS response should be SERFVAIL
+        And the SOA serial for example.org should be 1238
 
 
 
