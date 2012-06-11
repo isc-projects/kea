@@ -20,10 +20,10 @@ tsig_keys module.
 
 import isc.dns
 import isc.log
+from isc.server_common.logger import logger
 from isc.log_messages.server_common_messages import *
 
 updater = None
-logger = isc.log.Logger("server_common")
 
 class Unexpected(Exception):
     """

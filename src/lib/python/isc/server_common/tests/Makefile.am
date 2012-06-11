@@ -1,5 +1,5 @@
 PYCOVERAGE_RUN = @PYCOVERAGE_RUN@
-PYTESTS = tsig_keyring_test.py
+PYTESTS = tsig_keyring_test.py dns_tcp_test.py
 EXTRA_DIST = $(PYTESTS)
 
 # If necessary (rare cases), explicitly specify paths to dynamic libraries
