@@ -49,10 +49,7 @@ ConfigurableContainer::configure(const Element& config, bool) {
             // Ask the factory to create the data source for us
             const DataSourcePair ds(this->getDataSource(type, paramConf));
             // And put it into the vector
-            DataSourceInfo info;
-            info.data_src_ = ds.first;
-            info.container_ = ds.second;
-            new_data_sources.push_back(info);
+            new_data_sources.push_back(DataSourceInfo(ds.first, ds.second));
         }
         // If everything is OK up until now, we have the new configuration
         // ready. So just put it there and let the old one die when we exit
