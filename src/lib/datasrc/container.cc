@@ -97,8 +97,8 @@ ConfigurableContainer::find(const dns::Name& name, bool want_exact_match,
                     if (labels > candidate->matched_labels_) {
                         // This one is strictly better. Replace it.
                         candidate.reset(new FindResult(info.data_src_,
-                                                         result.zone_finder,
-                                                         labels, false));
+                                                       result.zone_finder,
+                                                       labels, false));
                     }
                 }
                 break;
@@ -123,7 +123,7 @@ ConfigurableContainer::find(const dns::Name& name, bool want_exact_match,
 // replace the call to DataSourceClientContainer constructor in tests.
 ConfigurableContainer::DataSourcePair
 ConfigurableContainer::getDataSource(const string& type,
-                                     const ::ConstElementPtr& configuration)
+                                     const ConstElementPtr& configuration)
 {
     DataSourceClientContainerPtr
         container(new DataSourceClientContainer(type, configuration));
