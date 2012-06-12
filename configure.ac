@@ -1294,6 +1294,7 @@ Developer:
   Google Tests:  $gtest_path
   C++ Code Coverage: $USE_LCOV
   Python Code Coverage: $USE_PYCOVERAGE
+  Logger checks: $enable_logger_checks
   Generate Manuals:  $enable_man
 
 END
