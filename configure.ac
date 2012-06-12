@@ -1305,6 +1305,7 @@ Features:
 
 Developer:
   Google Tests:  $gtest_path
+  Valgrind: $enable_valgrind
   C++ Code Coverage: $USE_LCOV
   Python Code Coverage: $USE_PYCOVERAGE
   Generate Manuals:  $enable_man
