@@ -123,7 +123,7 @@ bool IfaceMgr::Iface::delSocket(uint16_t sockfd) {
 IfaceMgr::IfaceMgr()
     :control_buf_len_(CMSG_SPACE(sizeof(struct in6_pktinfo))),
      control_buf_(new char[control_buf_len_]),
-     session_socket_(InvalidSocket), session_callback_(NULL)
+     session_socket_(INVALID_SOCKET), session_callback_(NULL)
 {
 
     cout << "IfaceMgr initialization." << endl;
@@ -718,7 +718,7 @@ IfaceMgr::receive4(uint32_t timeout) {
     }
 
     // if there is session socket registered...
-    if (session_socket_ != InvalidSocket) {
+    if (session_socket_ != INVALID_SOCKET) {
         // at it to the set as well
         FD_SET(session_socket_, &sockets);
         if (maxfd < session_socket_)
@@ -747,8 +747,7 @@ IfaceMgr::receive4(uint32_t timeout) {
     }
 
     // Let's find out which socket has the data
-
-    if ((session_socket_ != InvalidSocket) && (FD_ISSET(session_socket_, &sockets))) {
+    if ((session_socket_ != INVALID_SOCKET) && (FD_ISSET(session_socket_, &sockets))) {
         // something received over session socket
         cout << "BIND10 command or config available over session socket." << endl;
 

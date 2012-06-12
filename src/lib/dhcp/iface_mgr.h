@@ -415,7 +415,7 @@ public:
     }
 
     /// A value of socket descriptor representing "not specified" state.
-    static const int InvalidSocket = -1;
+    static const int INVALID_SOCKET = -1;
 
     // don't use private, we need derived classes in tests
 protected:

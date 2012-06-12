@@ -41,9 +41,7 @@ public:
     /// @brief Constructor
     ///
     /// @param port UDP port to be opened for DHCP traffic
-    /// @param verbose should server print out additional commands?
-    ControlledDhcpv4Srv(uint16_t port = DHCP4_SERVER_PORT,
-                        bool verbose = false);
+    ControlledDhcpv4Srv(uint16_t port = DHCP4_SERVER_PORT);
 
     /// @brief Destructor.
     ~ControlledDhcpv4Srv();
@@ -52,12 +50,16 @@ public:
     ///
     /// Creates session that will be used to receive commands and updated
     /// configuration from boss (or indirectly from user via bindctl).
+    ///
+    /// Integrate the asynchronous I/O model of BIND 10 configuration
+    /// control with the "select" model of the DHCP server.  This is
+    /// fully explained in \ref dhcpv4Session.
     void establishSession();
 
     /// @brief Terminates existing msgq session.
     ///
     /// This method terminates existing session with msgq. After calling
-    /// it, not further messages over msgq (commands or configuration updates)
+    /// it, no further messages over msgq (commands or configuration updates)
     /// may be received.
     ///
     /// It is ok to call this method when session is disconnected already.
@@ -76,12 +78,12 @@ public:
     execDhcpv4ServerCommand(const std::string& command,
                             isc::data::ConstElementPtr args);
 
+protected:
     /// @brief Static pointer to the sole instance of the DHCP server.
     ///
     /// This is required for config and command handlers to gain access to
     /// the server
     static ControlledDhcpv4Srv* server_;
-protected:
 
     /// @brief A callback for handling incoming configuration updates.
     ///
