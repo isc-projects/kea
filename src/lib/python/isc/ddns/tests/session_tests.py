@@ -94,6 +94,97 @@ def create_rrset(name, rrclass, rrtype, ttl, rdatas = []):
         add_rdata(rrset, rdata)
     return rrset
 
+class SessionModuleTests(unittest.TestCase):
+    '''Tests for module-level functions in the session.py module'''
+
+    def test_foreach_rr_in_rrset(self):
+        rrset = create_rrset("www.example.org", TEST_RRCLASS,
+                             RRType.A(), 3600, [ "192.0.2.1" ])
+
+        l = []
+        for rr in foreach_rr(rrset):
+            l.append(str(rr))
+        self.assertEqual(["www.example.org. 3600 IN A 192.0.2.1\n"], l)
+
+        add_rdata(rrset, "192.0.2.2")
+        add_rdata(rrset, "192.0.2.3")
+
+        # but through the generator, there should be several 1-line entries
+        l = []
+        for rr in foreach_rr(rrset):
+            l.append(str(rr))
+        self.assertEqual(["www.example.org. 3600 IN A 192.0.2.1\n",
+                          "www.example.org. 3600 IN A 192.0.2.2\n",
+                          "www.example.org. 3600 IN A 192.0.2.3\n",
+                         ], l)
+
+    def test_convert_rrset_class(self):
+        # Converting an RRSET to a different class should work
+        # if the rdata types can be converted
+        rrset = create_rrset("www.example.org", RRClass.NONE(), RRType.A(),
+                             3600, [ b'\xc0\x00\x02\x01', b'\xc0\x00\x02\x02'])
+
+        rrset2 = convert_rrset_class(rrset, RRClass.IN())
+        self.assertEqual("www.example.org. 3600 IN A 192.0.2.1\n" +
+                         "www.example.org. 3600 IN A 192.0.2.2\n",
+                         str(rrset2))
+
+        rrset3 = convert_rrset_class(rrset2, RRClass.NONE())
+        self.assertEqual("www.example.org. 3600 CLASS254 A \\# 4 " +
+                         "c0000201\nwww.example.org. 3600 CLASS254 " +
+                         "A \\# 4 c0000202\n",
+                         str(rrset3))
+
+        # depending on what type of bad data is given, a number
+        # of different exceptions could be raised (TODO: i recall
+        # there was a ticket about making a better hierarchy for
+        # dns/parsing related exceptions)
+        self.assertRaises(InvalidRdataLength, convert_rrset_class,
+                          rrset, RRClass.CH())
+        add_rdata(rrset, b'\xc0\x00')
+        self.assertRaises(DNSMessageFORMERR, convert_rrset_class,
+                          rrset, RRClass.IN())
+
+    def test_collect_rrsets(self):
+        '''
+        Tests the 'rrset collector' method, which collects rrsets
+        with the same name and type
+        '''
+        collected = []
+
+        collect_rrsets(collected, create_rrset("a.example.org", RRClass.IN(),
+                                               RRType.A(), 0, [ "192.0.2.1" ]))
+        # Same name and class, different type
+        collect_rrsets(collected, create_rrset("a.example.org", RRClass.IN(),
+                                               RRType.TXT(), 0, [ "one" ]))
+        collect_rrsets(collected, create_rrset("a.example.org", RRClass.IN(),
+                                               RRType.A(), 0, [ "192.0.2.2" ]))
+        collect_rrsets(collected, create_rrset("a.example.org", RRClass.IN(),
+                                               RRType.TXT(), 0, [ "two" ]))
+        # Same class and type as an existing one, different name
+        collect_rrsets(collected, create_rrset("b.example.org", RRClass.IN(),
+                                               RRType.A(), 0, [ "192.0.2.3" ]))
+        # Same name and type as an existing one, different class
+        collect_rrsets(collected, create_rrset("a.example.org", RRClass.CH(),
+                                               RRType.TXT(), 0, [ "one" ]))
+        collect_rrsets(collected, create_rrset("b.example.org", RRClass.IN(),
+                                               RRType.A(), 0, [ "192.0.2.4" ]))
+        collect_rrsets(collected, create_rrset("a.example.org", RRClass.CH(),
+                                               RRType.TXT(), 0, [ "two" ]))
+
+        strings = [ rrset.to_text() for rrset in collected ]
+        # note + vs , in this list
+        expected = ['a.example.org. 0 IN A 192.0.2.1\n' +
+                    'a.example.org. 0 IN A 192.0.2.2\n',
+                    'a.example.org. 0 IN TXT "one"\n' +
+                    'a.example.org. 0 IN TXT "two"\n',
+                    'b.example.org. 0 IN A 192.0.2.3\n' +
+                    'b.example.org. 0 IN A 192.0.2.4\n',
+                    'a.example.org. 0 CH TXT "one"\n' +
+                    'a.example.org. 0 CH TXT "two"\n']
+
+        self.assertEqual(expected, strings)
+
 class SessionTestBase(unittest.TestCase):
     '''Base class for all sesion related tests.
 
@@ -112,7 +203,14 @@ class SessionTestBase(unittest.TestCase):
                                       ZoneConfig([], TEST_RRCLASS,
                                                  self._datasrc_client,
                                                  self._acl_map))
-        self._session._UpdateSession__get_update_zone()
+        self._session._get_update_zone()
+        self._session._create_diff()
+
+    def tearDown(self):
+        # With the Updater created in _get_update_zone, and tests
+        # doing all kinds of crazy stuff, one might get database locked
+        # errors if it doesn't clean up explicitely after each test
+        self._session = None
 
     def check_response(self, msg, expected_rcode):
         '''Perform common checks on update resposne message.'''
@@ -125,6 +223,65 @@ class SessionTestBase(unittest.TestCase):
         self.assertEqual(0, msg.get_rr_count(SECTION_PREREQUISITE))
         self.assertEqual(0, msg.get_rr_count(SECTION_UPDATE))
         self.assertEqual(0, msg.get_rr_count(Message.SECTION_ADDITIONAL))
+
+class TestDDNSSOA(unittest.TestCase):
+    '''unittest for the DDNS_SOA'''
+    def test_update_soa(self):
+        '''unittest for update_soa function'''
+        soa_update = DDNS_SOA()
+        soa_rr = create_rrset("example.org", TEST_RRCLASS,
+                              RRType.SOA(), 3600, ["ns1.example.org. " +
+                              "admin.example.org. " +
+                              "1233 3600 1800 2419200 7200"])
+        expected_soa_rr = create_rrset("example.org", TEST_RRCLASS,
+                                       RRType.SOA(), 3600, ["ns1.example.org. "
+                                       + "admin.example.org. " +
+                                       "1234 3600 1800 2419200 7200"])
+        self.assertEqual(soa_update.update_soa(soa_rr).get_rdata()[0].to_text(),
+                         expected_soa_rr.get_rdata()[0].to_text())
+        max_serial = 2 ** 32 - 1
+        soa_rdata = "%d %s"%(max_serial,"3600 1800 2419200 7200")
+        soa_rr = create_rrset("example.org", TEST_RRCLASS, RRType.SOA(), 3600,
+                              ["ns1.example.org. " + "admin.example.org. " +
+                              soa_rdata])
+        expected_soa_rr = create_rrset("example.org", TEST_RRCLASS,
+                                       RRType.SOA(), 3600, ["ns1.example.org. "
+                                       + "admin.example.org. " +
+                                       "1 3600 1800 2419200 7200"])
+        self.assertEqual(soa_update.update_soa(soa_rr).get_rdata()[0].to_text(),
+                         expected_soa_rr.get_rdata()[0].to_text())
+
+    def test_soa_update_check(self):
+        '''unittest for soa_update_check function'''
+        small_soa_rr = create_rrset("example.org", TEST_RRCLASS, RRType.SOA(),
+                                    3600, ["ns1.example.org. " +
+                                    "admin.example.org. " +
+                                    "1233 3600 1800 2419200 7200"])
+        large_soa_rr = create_rrset("example.org", TEST_RRCLASS, RRType.SOA(),
+                                    3600, ["ns1.example.org. " +
+                                    "admin.example.org. " +
+                                    "1234 3600 1800 2419200 7200"])
+        soa_update = DDNS_SOA()
+        # The case of (i1 < i2 and i2 - i1 < 2^(SERIAL_BITS - 1)) in rfc 1982
+        self.assertTrue(soa_update.soa_update_check(small_soa_rr,
+                                                    large_soa_rr))
+        self.assertFalse(soa_update.soa_update_check(large_soa_rr,
+                                                     small_soa_rr))
+        small_serial = 1235 + 2 ** 31
+        soa_rdata = "%d %s"%(small_serial,"3600 1800 2419200 7200")
+        small_soa_rr = create_rrset("example.org", TEST_RRCLASS, RRType.SOA(),
+                                    3600, ["ns1.example.org. " +
+                                           "admin.example.org. " +
+                                           soa_rdata])
+        large_soa_rr = create_rrset("example.org", TEST_RRCLASS, RRType.SOA(),
+                                    3600, ["ns1.example.org. " +
+                                    "admin.example.org. " +
+                                    "1234 3600 1800 2419200 7200"])
+        # The case of (i1 > i2 and i1 - i2 > 2^(SERIAL_BITS - 1)) in rfc 1982
+        self.assertTrue(soa_update.soa_update_check(small_soa_rr,
+                                                    large_soa_rr))
+        self.assertFalse(soa_update.soa_update_check(large_soa_rr,
+                                                     small_soa_rr))
 
 class SessionTest(SessionTestBase):
     '''Basic session tests'''
@@ -463,7 +620,8 @@ class SessionTest(SessionTestBase):
         zconfig = ZoneConfig([], TEST_RRCLASS, self._datasrc_client,
                              self._acl_map)
         session = UpdateSession(msg, TEST_CLIENT4, zconfig)
-        session._UpdateSession__get_update_zone()
+        session._get_update_zone()
+        session._create_diff()
         # compare the to_text output of the rcodes (nicer error messages)
         # This call itself should also be done by handle(),
         # but just for better failures, it is first called on its own
@@ -488,7 +646,8 @@ class SessionTest(SessionTestBase):
         zconfig = ZoneConfig([], TEST_RRCLASS, self._datasrc_client,
                              self._acl_map)
         session = UpdateSession(msg, TEST_CLIENT4, zconfig)
-        session._UpdateSession__get_update_zone()
+        session._get_update_zone()
+        session._create_diff()
         # compare the to_text output of the rcodes (nicer error messages)
         # This call itself should also be done by handle(),
         # but just for better failures, it is first called on its own
@@ -1081,6 +1240,15 @@ class SessionTest(SessionTestBase):
                                       [ "ns1.example.org. " +
                                         "admin.example.org. " +
                                         "1234 3600 1800 2419200 7200" ])
+        # At some point, the SOA SERIAL will be auto-incremented
+        incremented_soa_rrset_01 = create_rrset("example.org", TEST_RRCLASS,
+                RRType.SOA(), 3600, ["ns1.example.org. " +
+                                     "admin.example.org. " +
+                                     "1235 3600 1800 2419200 7200" ])
+        incremented_soa_rrset_02 = create_rrset("example.org", TEST_RRCLASS,
+                RRType.SOA(), 3600, ["ns1.example.org. " +
+                                     "admin.example.org. " +
+                                     "1236 3600 1800 2419200 7200" ])
 
         # We will delete some of the NS records
         orig_ns_rrset = create_rrset("example.org", TEST_RRCLASS,
@@ -1108,16 +1276,16 @@ class SessionTest(SessionTestBase):
         self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
                                  isc.dns.Name("example.org"),
                                  RRType.SOA(),
-                                 orig_soa_rrset)
+                                 incremented_soa_rrset_01)
 
         # If we delete everything at the apex, the SOA and NS rrsets should be
-        # untouched
+        # untouched (but serial will be incremented)
         self.check_full_handle_result(Rcode.NOERROR(),
                                       [ self.rrset_update_del_name_apex ])
         self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
                                  isc.dns.Name("example.org"),
                                  RRType.SOA(),
-                                 orig_soa_rrset)
+                                 incremented_soa_rrset_02)
         self.__check_inzone_data(isc.datasrc.ZoneFinder.SUCCESS,
                                  isc.dns.Name("example.org"),
                                  RRType.NS(),

@@ -1,12 +1,17 @@
-# We're going to abuse install-data-local for a pre-install check.
-# This is to be considered a short term hack and is expected to be removed
-# in a near future version.
+# We're going to abuse install-data-local for a pre-install check.  This may
+# not be the cleanest way to do this type of job, but that's the least ugly
+# one we've found.
+#
+# Note also that if any test needs to examine some file that has possibly
+# been installed before (e.g., older DB or configuration file), it should be
+# referenced with the prefix of DESTDIR.  Otherwise
+# 'make DESTDIR=/somewhere install' may not work.
 install-data-local:
-	if test -e $(localstatedir)/$(PACKAGE)/zone.sqlite3; then \
+	if test -e $(DESTDIR)$(localstatedir)/$(PACKAGE)/zone.sqlite3; then \
 		$(SHELL) $(top_builddir)/src/bin/dbutil/run_dbutil.sh --check \
-		$(localstatedir)/$(PACKAGE)/zone.sqlite3 || \
+		$(DESTDIR)$(localstatedir)/$(PACKAGE)/zone.sqlite3 || \
 		(echo "\nSQLite3 DB file schema version is old.  " \
 		"Please run: " \
 		"$(abs_top_builddir)/src/bin/dbutil/run_dbutil.sh --upgrade " \
-		"$(localstatedir)/$(PACKAGE)/zone.sqlite3";  exit 1) \
+		"$(DESTDIR)$(localstatedir)/$(PACKAGE)/zone.sqlite3"; exit 1) \
 	fi
