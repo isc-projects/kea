@@ -162,3 +162,27 @@ needs to examine this message and takes an appropriate action.  In
 either case, this notification is generally expected to succeed; so
 the fact it fails itself means there's something wrong in the BIND 10
 system, and it would be advisable to check other log messages.
+
+% DDNS_SECONDARY_ZONES_UPDATE_FAIL failed to update secondary zone list: %1
+An error message.  b10-ddns was notified of updates to a list of
+secondary zones from b10-zonemgr and tried to update its own internal
+copy of the list, but it failed.  This can happen only if the
+configuration contains an error, but such a configuration should have
+been rejected by b10-zonemgr first and shouldn't be delivered to
+b10-ddns, so this should basically be an internal bug.  It's advisable
+to submit a bug report if you ever see this message.  Also, while
+b10-ddns still keeps running with the previous configuration when this
+error happens, it's possible that the entire system is in an
+inconsistent state.  So it's probably better to restart bind10, or at
+least restart b10-ddns.
+
+% DDNS_RECEIVED_ZONEMGR_UPDATE received configuration updates from zonemgr
+b10-ddns is notified of updates to b10-zonemgr's configuration
+(including a report of the initial configuration).  It may possibly
+contain changes to the secondary zones, in which case b10-ddns will
+update its internal copy of that configuration.
+
+% DDNS_SECONDARY_ZONES_UPDATE updated secondary zone list (%1 zones are listed)
+b10-ddns has successfully updated the internal copy of secondary zones
+obtained from b10-zonemgr, based on a latest update to zonemgr's
+configuration.  The number of newly configured secondary zones is logged.

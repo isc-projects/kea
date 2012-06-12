@@ -79,6 +79,7 @@ else:
 SPECFILE_LOCATION = SPECFILE_PATH + "/ddns.spec"
 SOCKET_FILE = SOCKET_FILE_PATH + '/ddns_socket'
 AUTH_SPECFILE_LOCATION = AUTH_SPECFILE_PATH + '/auth.spec'
+ZONEMGR_MODULE_NAME = 'Zonemgr'
 
 isc.util.process.rename()
 
@@ -181,8 +182,13 @@ class DDNSServer:
             self._cc.get_default_value('zones'))
         self._cc.start()
 
+        # A list of secondary zones, retrieved from zonemgr configuration.
+        self._secondary_zones = None
+
         # Get necessary configurations from remote modules.
         self._cc.add_remote_config(AUTH_SPECFILE_LOCATION)
+        self._cc.add_remote_config_by_name(ZONEMGR_MODULE_NAME,
+                                           self.__zonemgr_config_handler)
         isc.server_common.tsig_keyring.init_keyring(self._cc)
 
         self._shutdown = False
@@ -255,6 +261,49 @@ class DDNSServer:
         else:
             answer = create_answer(1, "Unknown command: " + str(cmd))
         return answer
+
+    def __zonemgr_config_handler(self, new_config, module_config):
+        logger.info(DDNS_RECEIVED_ZONEMGR_UPDATE)
+
+        # If we've got the config before and the new config doesn't update
+        # the secondary zone list, there's nothing we should do with it.
+        # Note: there seems to be a bug either in bindctl or cfgmgr, and
+        # new_config can contain 'secondary_zones' even if it's not really
+        # updated.  We still perform the check so we can avoid redundant
+        # resetting when the bug is fixed.  The redundant reset itself is not
+        # good, but such configuration update should not happen so often and
+        # it should be acceptable in practice.
+        if self._secondary_zones is not None and \
+                not 'secondary_zones' in new_config:
+            return
+
+        # Get the latest secondary zones.  Use get_remote_config_value() so
+        # it can work for both the initial default case and updates.
+        sec_zones, _ = self._cc.get_remote_config_value(ZONEMGR_MODULE_NAME,
+                                                        'secondary_zones')
+        new_secondary_zones = []
+        try:
+            # Parse the new config and build a new list of secondary zones.
+            # Note that validation should have been done by zonemgr, so
+            # the following shouldn't fail in theory.  But the configuration
+            # interface is quite complicated and there may be a hole, so
+            # we'll perform minimal defense ourselves.
+            for zone_spec in sec_zones:
+                zname = Name(zone_spec['name'])
+                # class is optional per spec.  ideally this should be merged
+                # within the config module, but it's not really clear if we
+                # can assume that due to its complexity - so we don't rely on
+                # it.
+                if 'class' in zone_spec:
+                    zclass = RRClass(zone_spec['class'])
+                else:
+                    zclass = RRClass(module_config.get_default_value(
+                            'secondary_zones/class'))
+                new_secondary_zones.append((zname, zclass))
+            self._secondary_zones = new_secondary_zones
+            logger.info(DDNS_SECONDARY_ZONES_UPDATE, len(self._secondary_zones))
+        except Exception as ex:
+            logger.error(DDNS_SECONDARY_ZONES_UPDATE_FAIL, ex)
 
     def trigger_shutdown(self):
         '''Initiate a shutdown sequence.
@@ -367,8 +416,8 @@ class DDNSServer:
         # ZoneConfig will soon be substantially revised.  For now we don't
         # bother to generalize it.
         datasrc_class, datasrc_client = get_datasrc_client(self._cc)
-        zone_cfg = ZoneConfig([], datasrc_class, datasrc_client,
-                              self._zone_config)
+        zone_cfg = ZoneConfig(self._secondary_zones, datasrc_class,
+                              datasrc_client, self._zone_config)
         update_session = self._UpdateSessionClass(self.__request_msg,
                                                   remote_addr, zone_cfg)
         result, zname, zclass = update_session.handle()

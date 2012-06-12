@@ -21,6 +21,8 @@ from isc.acl.acl import ACCEPT
 import isc.util.cio.socketsession
 from isc.cc.session import SessionTimeout, SessionError, ProtocolError
 from isc.datasrc import DataSourceClient
+from isc.config import module_spec_from_file
+from isc.config.config_data import ConfigData
 from isc.config.ccsession import create_answer
 from isc.server_common.dns_tcp import DNSTCPContext
 import ddns
@@ -55,6 +57,11 @@ TEST_TSIG_KEYRING = TSIGKeyRing()
 TEST_TSIG_KEYRING.add(TEST_TSIG_KEY)
 # Another TSIG key not in the keyring, making verification fail
 BAD_TSIG_KEY = TSIGKey("example.com:SFuWd/q99SzF8Yzd1QbB9g==")
+
+# Incorporate it so we can use the real default values of zonemgr config
+# in the tests.
+ZONEMGR_MODULE_SPEC = module_spec_from_file(
+    os.environ["B10_FROM_BUILD"] + "/src/bin/zonemgr/zonemgr.spec")
 
 class FakeSocket:
     """
@@ -208,6 +215,10 @@ class MyCCSession(isc.config.ConfigData):
         self._sendmsg_exception = None # will be raised from sendmsg if !None
         self._recvmsg_exception = None # will be raised from recvmsg if !None
 
+        # Attributes to handle (faked) remote configurations
+        self.__callbacks = {}   # record callbacks for updates to remote confs
+        self._zonemgr_config = {} # faked zonemgr cfg, settable by tests
+
     def start(self):
         '''Called by DDNSServer initialization, but not used in tests'''
         self._started = True
@@ -222,8 +233,16 @@ class MyCCSession(isc.config.ConfigData):
         """
         return FakeSocket(1)
 
-    def add_remote_config(self, spec_file_name):
+    def add_remote_config(self, spec_file_name, update_callback=None):
         pass
+
+    def add_remote_config_by_name(self, module_name, update_callback=None):
+        if update_callback is not None:
+            self.__callbacks[module_name] = update_callback
+        if module_name is 'Zonemgr':
+            if module_name in self.__callbacks:
+                self.__callbacks[module_name](self._zonemgr_config,
+                                              ConfigData(ZONEMGR_MODULE_SPEC))
 
     def get_remote_config_value(self, module_name, item):
         if module_name == "Auth" and item == "database_file":
@@ -233,6 +252,14 @@ class MyCCSession(isc.config.ConfigData):
                 return [], True # default
             else:
                 return self.auth_datasources, False
+        if module_name == 'Zonemgr' and item == 'secondary_zones':
+            if item in self._zonemgr_config:
+                return self._zonemgr_config[item], False
+            else:
+                seczone_default = \
+                    ConfigData(ZONEMGR_MODULE_SPEC).get_default_value(
+                    'secondary_zones')
+                return seczone_default, True
 
     def group_sendmsg(self, msg, group):
         # remember the passed parameter, and return dummy sequence
@@ -421,6 +448,40 @@ class TestDDNSServer(unittest.TestCase):
         self.assertEqual((0, None), isc.config.parse_answer(answer))
         acl = self.ddns_server._zone_config[(TEST_ZONE_NAME, TEST_RRCLASS)]
         self.assertEqual(ACCEPT, acl.execute(TEST_ACL_CONTEXT))
+
+    def test_secondary_zones_config(self):
+        # By default it should be an empty list
+        self.assertEqual([], self.ddns_server._secondary_zones)
+
+        # emulating an update.  calling add_remote_config_by_name is a
+        # convenient faked way to invoke the callback.
+        self.__cc_session._zonemgr_config = {'secondary_zones': [
+                {'name': TEST_ZONE_NAME_STR, 'class': TEST_RRCLASS_STR}]}
+        self.__cc_session.add_remote_config_by_name('Zonemgr')
+
+        # The new set of secondary zones should be stored.
+        self.assertEqual([(TEST_ZONE_NAME, TEST_RRCLASS)],
+                         self.ddns_server._secondary_zones)
+
+        # Similar to the above, but the optional 'class' is missing.
+        self.__cc_session._zonemgr_config = {'secondary_zones': [
+                {'name': TEST_ZONE_NAME_STR}]}
+        self.__cc_session.add_remote_config_by_name('Zonemgr')
+        self.assertEqual([(TEST_ZONE_NAME, TEST_RRCLASS)],
+                         self.ddns_server._secondary_zones)
+
+        # Check the 2ndary zones aren't changed if the new config doesn't
+        # update it.
+        seczones_orig = self.ddns_server._secondary_zones
+        self.ddns_server._secondary_zones = 42 # dummy value, should be kept.
+        self.__cc_session._zonemgr_config = {}
+        self.__cc_session.add_remote_config_by_name('Zonemgr')
+        self.assertEqual(42, self.ddns_server._secondary_zones)
+        self.ddns_server._secondary_zones = seczones_orig
+
+        self.__cc_session._zonemgr_config = {'secondary_zones': [
+                {'name': 'badd..example', 'class': TEST_RRCLASS_STR}]}
+        self.__cc_session.add_remote_config_by_name('Zonemgr')
 
     def test_shutdown_command(self):
         '''Test whether the shutdown command works'''
