@@ -33,14 +33,14 @@ libdhcp___unittests_SOURCES += ../pkt6.h ../pkt6.cc pkt6_unittest.cc
 libdhcp___unittests_SOURCES += ../pkt4.h ../pkt4.cc pkt4_unittest.cc
 
 libdhcp___unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)
-libdhcp___unittests_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS) $(CLOCK_GETTIME_LDFLAGS)
+libdhcp___unittests_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)
 
 libdhcp___unittests_CXXFLAGS = $(AM_CXXFLAGS)
 
 if USE_CLANGPP
 # This is to workaround unused variables tcout and tcerr in
-# log4cplus's streams.h.
-libdhcp___unittests_CXXFLAGS += -Wno-unused-variable
+# log4cplus's streams.h and unused parameters from boost::posix_time.
+libdhcp___unittests_CXXFLAGS += -Wno-unused-variable -Wno-unused-parameter
 endif
 libdhcp___unittests_LDADD  = $(GTEST_LDADD)
 libdhcp___unittests_LDADD += $(top_builddir)/src/lib/log/liblog.la

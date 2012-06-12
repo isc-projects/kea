@@ -4,9 +4,8 @@ AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
-AM_LDFLAGS = $(CLOCK_GETTIME_LDFLAGS)
 if USE_STATIC_LINK
-AM_LDFLAGS += -static
+AM_LDFLAGS = -static
 endif
 
 CLEANFILES = *.gcno *.gcda
@@ -26,6 +25,10 @@ run_unittests_SOURCES += $(top_builddir)/tests/tools/perfdhcp/perf_pkt4.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)
+
+if USE_CLANGPP
+run_unittests_CXXFLAGS = -Wno-unused-parameter
+endif
 
 run_unittests_LDADD  = $(GTEST_LDADD)
 run_unittests_LDADD += $(top_builddir)/src/lib/util/libutil.la
