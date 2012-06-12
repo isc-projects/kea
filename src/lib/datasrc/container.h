@@ -179,6 +179,9 @@ typedef boost::shared_ptr<const Container> ConstContainerPtr;
 /// This is the implementation which is expected to be used in the servers.
 /// However, it is expected most of the code will use it as the Container,
 /// only the creation is expected to be direct.
+///
+/// While it is possible to inherit this class, it is not expected to be
+/// inherited except for tests.
 class ConfigurableContainer : public Container {
 public:
     /// \brief Exception thrown when there's an error in configuration.
@@ -229,7 +232,8 @@ protected:
     /// \brief The data sources held here.
     ///
     /// All our data sources are stored here. It is protected to let the
-    /// tests in.
+    /// tests in. You should consider it private if you ever want to
+    /// derive this class (which is not really recommended anyway).
     DataSources data_sources_;
 
     /// \brief Convenience type alias.
@@ -243,8 +247,9 @@ protected:
     /// This is a thin wrapper around the DataSourceClientContainer
     /// constructor. The function is here to make it possible for tests
     /// to replace the DataSourceClientContainer with something else.
-    /// Also, derived classes might want to create the data sources
-    /// in a different way.
+    /// Also, derived classes couldl want to create the data sources
+    /// in a different way, though inheriting this class is not
+    /// recommended.
     ///
     /// The parameters are the same as of the constructor.
     /// \return Pair containing both the data source and the container.
