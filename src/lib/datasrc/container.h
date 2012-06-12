@@ -55,19 +55,19 @@ protected:
     /// class.
     Container() {}
 public:
-    /// \brief Structure holding the (compound) result of search.
+    /// \brief Structure holding the (compound) result of find.
     ///
     /// As this is read-only structure, we don't bother to create accessors.
     /// Instead, all the member variables are defined as const and can be
     /// accessed directly.
-    struct SearchResult {
+    struct FindResult {
         /// \brief Constructor.
         ///
         /// It simply fills in the member variables according to the
         /// parameters. See the member descriptions for their meaning.
-        SearchResult(DataSourceClient* datasrc,
-                     const ZoneFinderPtr& finder,
-                     uint8_t matched_labels, bool exact_match) :
+        FindResult(DataSourceClient* datasrc,
+                   const ZoneFinderPtr& finder,
+                   uint8_t matched_labels, bool exact_match) :
             datasrc_(datasrc),
             finder_(finder),
             matched_labels_(matched_labels),
@@ -78,7 +78,7 @@ public:
         ///
         /// This conscructs a result for negative answer. Both pointers are
         /// NULL, matched_labels_ is 0 and exact_match_ is false.
-        SearchResult() :
+        FindResult() :
             datasrc_(NULL),
             matched_labels_(0),
             exact_match_(false)
@@ -88,7 +88,7 @@ public:
         ///
         /// It is needed for tests and it might be of some use elsewhere
         /// too.
-        bool operator ==(const SearchResult& other) const {
+        bool operator ==(const FindResult& other) const {
             return (datasrc_ == other.datasrc_ &&
                     finder_ == other.finder_ &&
                     matched_labels_ == other.matched_labels_ &&
@@ -105,9 +105,9 @@ public:
         ///
         /// This is the finder corresponding to the best matching zone.
         /// This may be NULL even in case the datasrc_ is something
-        /// else, depending on the search options.
+        /// else, depending on the find options.
         ///
-        /// \see search
+        /// \see find
         const ZoneFinderPtr finder_;
 
         /// \brief Number of matching labels.
@@ -129,7 +129,7 @@ public:
     /// this case, the zone finder is needed and the best matching superzone
     /// of the searched name is needed. Therefore, the call would look like:
     ///
-    ///   SearchResult result(container->search(queried_name));
+    ///   FindResult result(container->find(queried_name));
     ///   if (result.datasrc_) {
     ///       createTheAnswer(result.finder_);
     ///   } else {
@@ -141,20 +141,20 @@ public:
     /// we need an exact match (if we want to manipulate zone data, we must
     /// know exactly, which zone we are about to manipulate). Then the call
     ///
-    ///   SearchResult result(container->search(zone_name, true, false));
+    ///   FindResult result(container->find(zone_name, true, false));
     ///   if (result.datasrc_) {
     ///       ZoneUpdaterPtr updater(result.datasrc_->getUpdater(zone_name);
     ///       ...
     ///   }
     ///
-    /// \param zone The name of the zone to search.
+    /// \param zone The name of the zone to look for.
     /// \param want_exact_match If it is true, it returns only exact matches.
     ///     If the best possible match is partial, a negative result is
     ///     returned instead. It is possible the caller could check it and
     ///     act accordingly if the result would be partial match, but with this
-    ///     set to true, the search might be actually faster under some
+    ///     set to true, the find might be actually faster under some
     ///     circumstances.
-    /// \param want_finder If this is false, the finder_ member of SearchResult
+    /// \param want_finder If this is false, the finder_ member of FindResult
     ///     might be NULL even if the corresponding data source is found. This
     ///     is because of performance, in some cases the finder is a side
     ///     result of the searching algorithm (therefore asking for it again
@@ -164,11 +164,11 @@ public:
     ///     Other things are never the side effect of searching, therefore the
     ///     caller can get them explicitly (the updater, journal reader and
     ///     iterator).
-    /// \return A SearchResult describing the data source and zone with the
+    /// \return A FindResult describing the data source and zone with the
     ///     longest match against the zone parameter.
-    virtual SearchResult search(const dns::Name& zone,
-                                bool want_exact_match = false,
-                                bool want_finder = true) const = 0;
+    virtual FindResult find(const dns::Name& zone,
+                            bool want_exact_match = false,
+                            bool want_finder = true) const = 0;
 };
 
 /// \brief Shared pointer to the container.
@@ -215,10 +215,10 @@ public:
     ///     sense.
     void configure(const data::Element& configuration, bool allow_cache);
 
-    /// \brief Implementation of the Container::search.
-    virtual SearchResult search(const dns::Name& zone,
-                                bool want_exact_match = false,
-                                bool want_finder = true) const;
+    /// \brief Implementation of the Container::find.
+    virtual FindResult find(const dns::Name& zone,
+                              bool want_exact_match = false,
+                              bool want_finder = true) const;
 
     /// \brief This holds one data source and corresponding information.
     ///

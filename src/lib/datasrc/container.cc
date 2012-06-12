@@ -64,13 +64,13 @@ ConfigurableContainer::configure(const Element& config, bool) {
     }
 }
 
-Container::SearchResult
-ConfigurableContainer::search(const dns::Name& name, bool want_exact_match,
-                              bool) const
+Container::FindResult
+ConfigurableContainer::find(const dns::Name& name, bool want_exact_match,
+                            bool) const
 {
     // Nothing found yet.
-    // Pointer is used as the SearchResult can't be assigned.
-    auto_ptr<SearchResult> candidate(new SearchResult());
+    // Pointer is used as the FindResult can't be assigned.
+    auto_ptr<FindResult> candidate(new FindResult());
 
     BOOST_FOREACH(const DataSourceInfo& info, data_sources_) {
         // TODO: Once we have support for the caches, consider them too here
@@ -88,7 +88,7 @@ ConfigurableContainer::search(const dns::Name& name, bool want_exact_match,
 
                 // TODO: In case we have only the datasource and not the finder
                 // and the need_updater parameter is true, get the zone there.
-                return (SearchResult(info.data_src_, result.zone_finder,
+                return (FindResult(info.data_src_, result.zone_finder,
                                      name.getLabelCount(), true));
             }
             case result::PARTIALMATCH: {
@@ -99,7 +99,7 @@ ConfigurableContainer::search(const dns::Name& name, bool want_exact_match,
                         result.zone_finder->getOrigin().getLabelCount());
                     if (labels > candidate->matched_labels_) {
                         // This one is strictly better. Replace it.
-                        candidate.reset(new SearchResult(info.data_src_,
+                        candidate.reset(new FindResult(info.data_src_,
                                                          result.zone_finder,
                                                          labels, false));
                     }
