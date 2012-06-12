@@ -48,28 +48,39 @@ Feature: DDNS System
         And the SOA serial for example.org should be 1237
 
         # Test 6
-        # XXX right after update, this fails?!
         When I send bind10 the command DDNS shutdown
 
         # Test 7
         And wait for new bind10 stderr message DDNS_RUNNING
 
         # Test 8
+        # Known issue: after shutdown, first new attempt results in SERVFAIL
+        When I use DDNS to set the SOA serial to 1238
+        The DDNS response should be SERVFAIL
+        And the SOA serial for example.org should be 1237
+
         When I use DDNS to set the SOA serial to 1238
         The DDNS response should be SUCCESS
         And the SOA serial for example.org should be 1238
 
         # Test 9
         When I send bind10 the command Auth shutdown
+        And wait for new bind10 stderr message AUTH_SERVER_STARTED
 
         # Test 10
+        When I use DDNS to set the SOA serial to 1239
+        The DDNS response should be SUCCESS
+        And the SOA serial for example.org should be 1239
+
+        # Test 11
         When I configure BIND10 to stop running DDNS
         And wait for new bind10 stderr message DDNS_STOPPED
 
         bind10 module DDNS should not be running
 
-        # Test 11
-        When I use DDNS to set the SOA serial to 1239
+        # Test 12
+        When I use DDNS to set the SOA serial to 1240
         # should this be REFUSED again?
         The DDNS response should be SERVFAIL
-        And the SOA serial for example.org should be 1238
+        And the SOA serial for example.org should be 1239
+
