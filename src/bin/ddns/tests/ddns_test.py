@@ -23,7 +23,7 @@ from isc.cc.session import SessionTimeout, SessionError, ProtocolError
 from isc.datasrc import DataSourceClient
 from isc.config import module_spec_from_file
 from isc.config.config_data import ConfigData
-from isc.config.ccsession import create_answer
+from isc.config.ccsession import create_answer, ModuleCCSessionError
 from isc.server_common.dns_tcp import DNSTCPContext
 import ddns
 import errno
@@ -217,6 +217,8 @@ class MyCCSession(isc.config.ConfigData):
 
         # Attributes to handle (faked) remote configurations
         self.__callbacks = {}   # record callbacks for updates to remote confs
+        self._raise_mods = set()  # set of modules that triggers exception
+                                  # on add_remote.  settable by tests.
         self._auth_config = {}  # faked auth cfg, settable by tests
         self._zonemgr_config = {} # faked zonemgr cfg, settable by tests
 
@@ -235,6 +237,8 @@ class MyCCSession(isc.config.ConfigData):
         return FakeSocket(1)
 
     def add_remote_config_by_name(self, module_name, update_callback=None):
+        if module_name in self._raise_mods:
+            raise ModuleCCSessionError('Failure requesting remote config data')
         if update_callback is not None:
             self.__callbacks[module_name] = update_callback
         if module_name is 'Auth':
@@ -526,6 +530,17 @@ class TestDDNSServer(unittest.TestCase):
         self.__cc_session.add_remote_config_by_name('Zonemgr')
         self.assertEqual({(TEST_ZONE_NAME, TEST_RRCLASS)},
                          self.ddns_server._secondary_zones)
+
+    def test_remote_config_fail(self):
+        # If getting config of Auth or Zonemgr fails on construction of
+        # DDNServer, it should result in ModuleCCSessionError.
+        self.__cc_session._raise_mods.add('Auth')
+        self.assertRaises(ModuleCCSessionError, ddns.DDNSServer,
+                          self.__cc_session)
+
+        self.__cc_session._raise_mods = {'Zonemgr'}
+        self.assertRaises(ModuleCCSessionError, ddns.DDNSServer,
+                          self.__cc_session)
 
     def test_shutdown_command(self):
         '''Test whether the shutdown command works'''
