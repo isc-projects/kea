@@ -26,15 +26,15 @@ namespace isc {
 namespace datasrc {
 
 void
-ConfigurableContainer::configure(const ConstElementPtr& config, bool) {
+ConfigurableContainer::configure(const Element& config, bool) {
     // TODO: Implement the cache
     // TODO: Implement recyclation from the old configuration.
     size_t i(0); // Outside of the try to be able to access it in the catch
     try {
         vector<DataSourceInfo> new_data_sources;
-        for (; i < config->size(); ++i) {
+        for (; i < config.size(); ++i) {
             // Extract the parameters
-            const ConstElementPtr dconf(config->get(i));
+            const ConstElementPtr dconf(config.get(i));
             const ConstElementPtr typeElem(dconf->get("type"));
             if (typeElem == ConstElementPtr()) {
                 isc_throw(ConfigurationError, "Missing the type option in "
