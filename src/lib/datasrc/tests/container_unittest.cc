@@ -113,7 +113,7 @@ private:
 // some methods to dig directly in the internals, for the tests.
 class TestedContainer : public ConfigurableContainer {
 public:
-    DataSources& dataSources() { return (data_sources_); }
+    DataSources& getDataSources() { return (data_sources_); }
     // Overwrite the containers method to get a data source with given type
     // and configuration. We mock the data source and don't create the
     // container. This is just to avoid some complexity in the tests.
@@ -190,36 +190,36 @@ public:
     // some configuration. It uses the index as parameter, to be able to
     // loop through the configurations.
     void multiConfiguration(size_t index) {
-        container_->dataSources().clear();
+        container_->getDataSources().clear();
         switch (index) {
             case 2:
-                container_->dataSources().push_back(ds_info_[2]);
+                container_->getDataSources().push_back(ds_info_[2]);
                 // The ds3 is empty. We just check that it doesn't confuse
                 // us. Fall through to the case 0.
             case 0:
-                container_->dataSources().push_back(ds_info_[0]);
-                container_->dataSources().push_back(ds_info_[1]);
+                container_->getDataSources().push_back(ds_info_[0]);
+                container_->getDataSources().push_back(ds_info_[1]);
                 break;
             case 1:
                 // The other order
-                container_->dataSources().push_back(ds_info_[1]);
-                container_->dataSources().push_back(ds_info_[0]);
+                container_->getDataSources().push_back(ds_info_[1]);
+                container_->getDataSources().push_back(ds_info_[0]);
                 break;
             case 3:
-                container_->dataSources().push_back(ds_info_[1]);
-                container_->dataSources().push_back(ds_info_[0]);
+                container_->getDataSources().push_back(ds_info_[1]);
+                container_->getDataSources().push_back(ds_info_[0]);
                 // It is the same as 2, but we take from the first one.
                 // The first one to match is the correct one.
-                container_->dataSources().push_back(ds_info_[3]);
+                container_->getDataSources().push_back(ds_info_[3]);
                 break;
             default:
                 FAIL() << "Unknown configuration index " << index;
         }
     }
     void checkDS(size_t index, const string& type, const string& params) {
-        ASSERT_GT(container_->dataSources().size(), index);
+        ASSERT_GT(container_->getDataSources().size(), index);
         TestDS* ds(dynamic_cast<TestDS*>(
-            container_->dataSources()[index].data_src_));
+            container_->getDataSources()[index].data_src_));
         // Comparing with NULL does not work
         ASSERT_TRUE(ds);
         EXPECT_EQ(type, ds->type_);
@@ -243,7 +243,7 @@ TEST_F(ContainerTest, selfTest) {
 
 // Test the container we create with empty configuration is, in fact, empty
 TEST_F(ContainerTest, emptyContainer) {
-    EXPECT_TRUE(container_->dataSources().empty());
+    EXPECT_TRUE(container_->getDataSources().empty());
 }
 
 // Check the values returned by a find on an empty container. It should be
@@ -267,7 +267,7 @@ TEST_F(ContainerTest, emptySearch) {
 // Put a single data source inside the container and check it can find an
 // exact match if there's one.
 TEST_F(ContainerTest, singleDSExactMatch) {
-    container_->dataSources().push_back(ds_info_[0]);
+    container_->getDataSources().push_back(ds_info_[0]);
     // This zone is not there
     EXPECT_TRUE(negativeResult_ == container_->find(Name("org."), true));
     // But this one is, so check it.
@@ -281,7 +281,7 @@ TEST_F(ContainerTest, singleDSExactMatch) {
 
 // When asking for a partial match, we get all that the exact one, but more.
 TEST_F(ContainerTest, singleDSBestMatch) {
-    container_->dataSources().push_back(ds_info_[0]);
+    container_->getDataSources().push_back(ds_info_[0]);
     // This zone is not there
     EXPECT_TRUE(negativeResult_ == container_->find(Name("org.")));
     // But this one is, so check it.
@@ -346,7 +346,7 @@ TEST_F(ContainerTest, multiBestMatch) {
 TEST_F(ContainerTest, configureEmpty) {
     ConstElementPtr elem(new ListElement);
     container_->configure(*elem, true);
-    EXPECT_TRUE(container_->dataSources().empty());
+    EXPECT_TRUE(container_->getDataSources().empty());
 }
 
 // Check we can get multiple data sources and they are in the right order.
@@ -364,7 +364,7 @@ TEST_F(ContainerTest, configureMulti) {
         "}]"
     ));
     container_->configure(*elem, true);
-    EXPECT_EQ(2, container_->dataSources().size());
+    EXPECT_EQ(2, container_->getDataSources().size());
     checkDS(0, "type1", "{}");
     checkDS(1, "type2", "{}");
 }
@@ -390,7 +390,7 @@ TEST_F(ContainerTest, configureParams) {
             "   \"params\": ") + *param +
             "}]"));
         container_->configure(*elem, true);
-        EXPECT_EQ(1, container_->dataSources().size());
+        EXPECT_EQ(1, container_->getDataSources().size());
         checkDS(0, "t", *param);
     }
 }
@@ -436,7 +436,7 @@ TEST_F(ContainerTest, defaults) {
         "   \"type\": \"type1\""
         "}]"));
     container_->configure(*elem, true);
-    EXPECT_EQ(1, container_->dataSources().size());
+    EXPECT_EQ(1, container_->getDataSources().size());
     checkDS(0, "type1", "null");
 }
 
@@ -446,7 +446,7 @@ TEST_F(ContainerTest, reconfigure) {
     container_->configure(*config_elem_, true);
     checkDS(0, "test_type", "{}");
     container_->configure(*empty, true);
-    EXPECT_TRUE(container_->dataSources().empty());
+    EXPECT_TRUE(container_->getDataSources().empty());
     container_->configure(*config_elem_, true);
     checkDS(0, "test_type", "{}");
 }
