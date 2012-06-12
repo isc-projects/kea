@@ -305,6 +305,11 @@ Pkt4::getOption(uint8_t type) {
     return boost::shared_ptr<isc::dhcp::Option>(); // NULL
 }
 
+void
+Pkt4::updateTimestamp() {
+    timestamp_ = boost::posix_time::microsec_clock::universal_time();
+}
+
 } // end of namespace isc::dhcp
 
 } // end of namespace isc
