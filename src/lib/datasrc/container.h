@@ -285,7 +285,7 @@ public:
     /// It can be used to examine the loaded list of data sources directly.
     /// It is not known if it is of any use other than testing, but it might
     /// be, so it is just made public.
-    const DataSources& dataSources() const { return (data_sources_); }
+    const DataSources& getDataSources() const { return (data_sources_); }
 };
 
 } // namespace datasrc
