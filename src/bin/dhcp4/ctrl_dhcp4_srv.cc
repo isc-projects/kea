@@ -22,14 +22,10 @@
 #include <cc/session.h>
 #include <config/ccsession.h>
 #include <util/buffer.h>
-#include <log/dummylog.h>
 #include <dhcp4/spec_config.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp/iface_mgr.h>
 #include <asiolink/asiolink.h>
-#include <log/logger_support.h>
-
-const char* const DHCP4_NAME = "b10-dhcp4";
 
 using namespace std;
 using namespace isc::util;
@@ -60,6 +56,11 @@ ControlledDhcpv4Srv::dhcp4CommandHandler(const string& command, ConstElementPtr 
     if (command == "shutdown") {
         if (ControlledDhcpv4Srv::server_) {
             ControlledDhcpv4Srv::server_->shutdown();
+        } else {
+            cout << "Server not initialized yet or already shut down." << endl;
+            ConstElementPtr answer = isc::config::createAnswer(1,
+                                     "Shutdown failure.");
+            return (answer);
         }
         ConstElementPtr answer = isc::config::createAnswer(0,
                                  "Shutting down.");
@@ -118,16 +119,13 @@ void ControlledDhcpv4Srv::disconnectSession() {
         delete cc_session_;
         cc_session_ = NULL;
     }
+
+    // deregister session socket
+    IfaceMgr::instance().set_session_socket(IfaceMgr::INVALID_SOCKET, NULL);
 }
 
-ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t port /*= DHCP4_SERVER_PORT*/,
-                                             bool verbose /* false */)
+ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t port /*= DHCP4_SERVER_PORT*/)
     :Dhcpv4Srv(port), cc_session_(NULL), config_session_(NULL) {
-
-    // Initialize logging.  If verbose, we'll use maximum verbosity.
-    isc::log::initLogger(DHCP4_NAME,
-                         (verbose ? isc::log::DEBUG : isc::log::INFO),
-                         isc::log::MAX_DEBUG_LEVEL, NULL);
     server_ = this; // remember this instance for use in callback
 }
 
@@ -147,7 +145,7 @@ isc::data::ConstElementPtr
 ControlledDhcpv4Srv::execDhcpv4ServerCommand(const std::string& command_id,
                                              isc::data::ConstElementPtr args) {
     try {
-        return dhcp4CommandHandler(command_id, args);
+        return (dhcp4CommandHandler(command_id, args));
     } catch (const Exception& ex) {
         ConstElementPtr answer = isc::config::createAnswer(1, ex.what());
         return (answer);
