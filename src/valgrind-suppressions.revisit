@@ -4,3 +4,4843 @@
 #
 # In case you want to make sense of the following symbols, demangle them
 # with a command like: c++filt < valgrind-suppressions.revisit
+
+############################################################################
+#### beginning of suppressions for existing issues that we want to fix. ####
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_GLOBAL__sub_I_hex_unittest.cc
+   fun:__libc_csu_init
+   fun:(below main)
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_GLOBAL__sub_I_hex_unittest.cc
+   fun:__libc_csu_init
+   fun:(below main)
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_GLOBAL__sub_I_hex_unittest.cc
+   fun:__libc_csu_init
+   fun:(below main)
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs9_M_mutateEmmm
+   fun:_ZNSs15_M_replace_safeEmmPKcm
+   fun:_ZN7testing8internal13CaptureStreamEiPKcPPNS0_14CapturedStreamE
+   fun:_ZN7testing8internal15NoExecDeathTest10AssumeRoleEv
+   fun:_ZN12_GLOBAL__N_134BufferTest_outputBufferReadat_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Param
+   socketcall.sendmsg(msg.msg_control)
+   fun:__sendmsg_nocancel
+   fun:_ZN3isc4util2io7send_fdEii
+   fun:_ZN12_GLOBAL__N_121FDShare_transfer_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Param
+   write(buf)
+   fun:__write_nocancel
+   fun:_ZN3isc4util2io10write_dataEiPKvm
+   fun:_ZN3isc4util9unittests13provide_inputEPiPKvm
+   fun:_ZN12_GLOBAL__N_116FDTest_read_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:bcmp
+   fun:_ZN12_GLOBAL__N_116FDTest_read_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:bcmp
+   fun:_ZN12_GLOBAL__N_116FDTest_read_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:_ZN12_GLOBAL__N_116FDTest_read_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Param
+   write(buf)
+   fun:__write_nocancel
+   fun:_ZN3isc4util2io10write_dataEiPKvm
+   fun:_ZN12_GLOBAL__N_117FDTest_write_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:bcmp
+   fun:_ZN3isc4util9unittests12check_outputEPiPKvm
+   fun:_ZN12_GLOBAL__N_117FDTest_write_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:bcmp
+   fun:_ZN3isc4util9unittests12check_outputEPiPKvm
+   fun:_ZN12_GLOBAL__N_117FDTest_write_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc4util12_GLOBAL__N_138InterprocessSyncFileTest_TestLock_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc4util12_GLOBAL__N_138InterprocessSyncFileTest_TestLock_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc4util12_GLOBAL__N_153InterprocessSyncFileTest_TestMultipleFilesForked_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc4util12_GLOBAL__N_153InterprocessSyncFileTest_TestMultipleFilesForked_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Param
+   socketcall.sendmsg(msg.msg_control)
+   fun:__sendmsg_nocancel
+   fun:_ZN3isc4util2io7send_fdEii
+   fun:_ZN3isc4util2io22SocketSessionForwarder4pushEiiiiRK8sockaddrS5_PKvm
+   fun:_ZN12_GLOBAL__N_111ForwardTest15checkPushAndPopEiiiRKSt4pairIPK8sockaddrjES7_PKvmb
+   fun:_ZN12_GLOBAL__N_127ForwardTest_pushAndPop_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Param
+   socketcall.sendmsg(msg.msg_control)
+   fun:__sendmsg_nocancel
+   fun:_ZN3isc4util2io7send_fdEii
+   fun:_ZN3isc4util2io22SocketSessionForwarder4pushEiiiiRK8sockaddrS5_PKvm
+   fun:_ZN12_GLOBAL__N_111ForwardTest15checkPushAndPopEiiiRKSt4pairIPK8sockaddrjES7_PKvmb
+   fun:_ZN12_GLOBAL__N_127ForwardTest_pushAndPop_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Param
+   socketcall.sendmsg(msg.msg_control)
+   fun:__sendmsg_nocancel
+   fun:_ZN3isc4util2io7send_fdEii
+   fun:_ZN3isc4util2io22SocketSessionForwarder4pushEiiiiRK8sockaddrS5_PKvm
+   fun:_ZN12_GLOBAL__N_124ForwardTest_badPush_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Param
+   socketcall.sendmsg(msg.msg_control)
+   fun:__sendmsg_nocancel
+   fun:_ZN3isc4util2io7send_fdEii
+   fun:_ZN3isc4util2io22SocketSessionForwarder4pushEiiiiRK8sockaddrS5_PKvm
+   fun:_ZN12_GLOBAL__N_128ForwardTest_pushTooFast_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Param
+   socketcall.sendmsg(msg.msg_control)
+   fun:__sendmsg_nocancel
+   fun:_ZN3isc4util2io7send_fdEii
+   fun:_ZN12_GLOBAL__N_111ForwardTest17pushSessionHeaderEtmbi
+   fun:_ZN12_GLOBAL__N_123ForwardTest_badPop_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Param
+   socketcall.sendmsg(msg.msg_control)
+   fun:__sendmsg_nocancel
+   fun:_ZN3isc4util2io7send_fdEii
+   fun:_ZN12_GLOBAL__N_111ForwardTest17pushSessionHeaderEtmbi
+   fun:_ZN12_GLOBAL__N_123ForwardTest_badPop_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Param
+   socketcall.sendmsg(msg.msg_control)
+   fun:__sendmsg_nocancel
+   fun:_ZN3isc4util2io7send_fdEii
+   fun:_ZN12_GLOBAL__N_111ForwardTest17pushSessionHeaderEtmbi
+   fun:_ZN12_GLOBAL__N_123ForwardTest_badPop_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Param
+   socketcall.sendmsg(msg.msg_control)
+   fun:__sendmsg_nocancel
+   fun:_ZN3isc4util2io7send_fdEii
+   fun:_ZN12_GLOBAL__N_111ForwardTest17pushSessionHeaderEtmbi
+   fun:_ZN12_GLOBAL__N_123ForwardTest_badPop_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Param
+   socketcall.sendmsg(msg.msg_control)
+   fun:__sendmsg_nocancel
+   fun:_ZN3isc4util2io7send_fdEii
+   fun:_ZN12_GLOBAL__N_111ForwardTest17pushSessionHeaderEtmbi
+   fun:_ZN12_GLOBAL__N_111ForwardTest11pushSessionEiiijRK8sockaddrjS3_m.constprop.12
+   fun:_ZN12_GLOBAL__N_123ForwardTest_badPop_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Param
+   socketcall.sendmsg(msg.msg_control)
+   fun:__sendmsg_nocancel
+   fun:_ZN3isc4util2io7send_fdEii
+   fun:_ZN12_GLOBAL__N_111ForwardTest17pushSessionHeaderEtmbi
+   fun:_ZN12_GLOBAL__N_111ForwardTest11pushSessionEiiijRK8sockaddrjS3_m.constprop.12
+   fun:_ZN12_GLOBAL__N_123ForwardTest_badPop_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Param
+   socketcall.sendmsg(msg.msg_control)
+   fun:__sendmsg_nocancel
+   fun:_ZN3isc4util2io7send_fdEii
+   fun:_ZN12_GLOBAL__N_111ForwardTest17pushSessionHeaderEtmbi
+   fun:_ZN12_GLOBAL__N_123ForwardTest_badPop_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_GLOBAL__sub_I_timehelper.cxx
+   fun:call_init.part.0
+   fun:_dl_init
+   obj:/lib64/ld-2.14.90.so
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_GLOBAL__sub_I_timehelper.cxx
+   fun:call_init.part.0
+   fun:_dl_init
+   obj:/lib64/ld-2.14.90.so
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_GLOBAL__sub_I_logger_manager_unittest.cc
+   fun:__libc_csu_init
+   fun:(below main)
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_GLOBAL__sub_I_timehelper.cxx
+   fun:call_init.part.0
+   fun:_dl_init
+   obj:/lib64/ld-2.14.90.so
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_GLOBAL__sub_I_timehelper.cxx
+   fun:call_init.part.0
+   fun:_dl_init
+   obj:/lib64/ld-2.14.90.so
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_GLOBAL__sub_I_timehelper.cxx
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_GLOBAL__sub_I_timehelper.cxx
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus3spi10RootLoggerC1ERNS_9HierarchyEi
+   fun:_ZN9log4cplus9HierarchyC1Ev
+   fun:_ZN9log4cplus6Logger19getDefaultHierarchyEv
+   fun:_ZN9log4cplus6Logger7getRootEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_GLOBAL__sub_I_timehelper.cxx
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc3log10initLoggerENS0_8SeverityEi
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc3log10LoggerImplC1ERKSs
+   fun:_ZN3isc3log6Logger14initLoggerImplEv
+   fun:_ZN3isc3log6Logger13isWarnEnabledEv
+   fun:_ZN3isc3log13LoggerManager4initERKSsNS0_8SeverityEiPKc
+   fun:_ZN3isc3log10initLoggerENS0_8SeverityEi
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc3log10LoggerImplC1ERKSs
+   fun:_ZN3isc3log6Logger14initLoggerImplEv
+   fun:_ZN3isc3log6Logger13isWarnEnabledEv
+   fun:_ZN3isc3log15LoggerLevelImpl18logLevelFromStringERKSs
+   fun:_ZN35LoggerLevelImplTest_FromString_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc3log10LoggerImplC1ERKSs
+   fun:_ZN3isc3log6Logger14initLoggerImplEv
+   fun:_ZN3isc3log6Logger7getNameEv
+   fun:_ZN32LoggerTest_LoggerNameLength_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc3log10LoggerImplC1ERKSs
+   fun:_ZN3isc3log6Logger14initLoggerImplEv
+   fun:_ZN3isc3log6Logger7getNameEv
+   fun:_ZN32LoggerTest_LoggerNameLength_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs4_Rep8_M_cloneERKSaIcEm
+   fun:_ZNSs7reserveEm
+   fun:_ZNSs6appendERKSs
+   fun:_ZStplIcSt11char_traitsIcESaIcEESbIT_T0_T1_ERKS6_S8_
+   fun:_ZN3isc3log16expandLoggerNameERKSs
+   fun:_ZN3isc3log10LoggerImplC1ERKSs
+   fun:_ZN3isc3log6Logger14initLoggerImplEv
+   fun:_ZN3isc3log6Logger13isWarnEnabledEv
+   fun:_ZN3isc3log13LoggerManager4initERKSsNS0_8SeverityEiPKc
+   fun:_ZN3isc3log10initLoggerENS0_8SeverityEi
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs4_Rep8_M_cloneERKSaIcEm
+   fun:_ZNSs7reserveEm
+   fun:_ZNSs6appendERKSs
+   fun:_ZStplIcSt11char_traitsIcESaIcEESbIT_T0_T1_ERKS6_S8_
+   fun:_ZN3isc3log16expandLoggerNameERKSs
+   fun:_ZN3isc3log10LoggerImplC1ERKSs
+   fun:_ZN3isc3log6Logger14initLoggerImplEv
+   fun:_ZN3isc3log6Logger13isWarnEnabledEv
+   fun:_ZN3isc3log15LoggerLevelImpl18logLevelFromStringERKSs
+   fun:_ZN35LoggerLevelImplTest_FromString_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs4_Rep8_M_cloneERKSaIcEm
+   fun:_ZNSs7reserveEm
+   fun:_ZNSs6appendERKSs
+   fun:_ZStplIcSt11char_traitsIcESaIcEESbIT_T0_T1_ERKS6_S8_
+   fun:_ZN3isc3log16expandLoggerNameERKSs
+   fun:_ZN3isc3log10LoggerImplC1ERKSs
+   fun:_ZN3isc3log6Logger14initLoggerImplEv
+   fun:_ZN3isc3log6Logger14isDebugEnabledEi
+   fun:_ZN49LoggerSupportTest_LoggingInitializationCheck_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs4_Rep8_M_cloneERKSaIcEm
+   fun:_ZNSs7reserveEm
+   fun:_ZNSs6appendERKSs
+   fun:_ZStplIcSt11char_traitsIcESaIcEESbIT_T0_T1_ERKS6_S8_
+   fun:_ZN3isc3log16expandLoggerNameERKSs
+   fun:_ZN3isc3log10LoggerImplC1ERKSs
+   fun:_ZN3isc3log6Logger14initLoggerImplEv
+   fun:_ZN3isc3log6LoggereqERS1_
+   fun:_ZN25LoggerTest_GetLogger_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs4_Rep8_M_cloneERKSaIcEm
+   fun:_ZNSs7reserveEm
+   fun:_ZNSs6appendERKSs
+   fun:_ZStplIcSt11char_traitsIcESaIcEESbIT_T0_T1_ERKS6_S8_
+   fun:_ZN3isc3log16expandLoggerNameERKSs
+   fun:_ZN3isc3log10LoggerImplC1ERKSs
+   fun:_ZN3isc3log6Logger14initLoggerImplEv
+   fun:_ZN3isc3log6Logger7getNameEv
+   fun:_ZN20LoggerTest_Name_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs4_Rep8_M_cloneERKSaIcEm
+   fun:_ZNSs7reserveEm
+   fun:_ZNSs6appendERKSs
+   fun:_ZStplIcSt11char_traitsIcESaIcEESbIT_T0_T1_ERKS6_S8_
+   fun:_ZN3isc3log16expandLoggerNameERKSs
+   fun:_ZN3isc3log10LoggerImplC1ERKSs
+   fun:_ZN3isc3log6Logger14initLoggerImplEv
+   fun:_ZN3isc3log6Logger11setSeverityENS0_8SeverityEi
+   fun:_ZN44LoggerTest_EffectiveSeverityInheritance_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs4_Rep8_M_cloneERKSaIcEm
+   fun:_ZNSs7reserveEm
+   fun:_ZNSs6appendERKSs
+   fun:_ZStplIcSt11char_traitsIcESaIcEESbIT_T0_T1_ERKS6_S8_
+   fun:_ZN3isc3log16expandLoggerNameERKSs
+   fun:_ZN3isc3log10LoggerImplC1ERKSs
+   fun:_ZN3isc3log6Logger14initLoggerImplEv
+   fun:_ZN3isc3log6Logger11setSeverityENS0_8SeverityEi
+   fun:_ZN28LoggerTest_IsXxxEnabled_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs4_Rep8_M_cloneERKSaIcEm
+   fun:_ZNSs7reserveEm
+   fun:_ZNSs6appendERKSs
+   fun:_ZStplIcSt11char_traitsIcESaIcEESbIT_T0_T1_ERKS6_S8_
+   fun:_ZN3isc3log16expandLoggerNameERKSs
+   fun:_ZN3isc3log10LoggerImplC1ERKSs
+   fun:_ZN3isc3log6Logger14initLoggerImplEv
+   fun:_ZN3isc3log6Logger11setSeverityENS0_8SeverityEi
+   fun:_ZN35LoggerTest_IsDebugEnabledLevel_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPcEES0_T_S1_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1ERKSsmm
+   fun:_ZN9log4cplus7pattern13PatternParser13extractOptionEv
+   fun:_ZN9log4cplus7pattern13PatternParser17finalizeConverterEc
+   fun:_ZN9log4cplus7pattern13PatternParser5parseEv
+   fun:_ZN9log4cplus13PatternLayout4initERKSsj
+   fun:_ZN9log4cplus13PatternLayoutC1ERKSs
+   fun:_ZN3isc3log17LoggerManagerImpl24setConsoleAppenderLayoutERN9log4cplus7helpers15SharedObjectPtrINS2_8AppenderEEE
+   fun:_ZN3isc3log17LoggerManagerImpl21createConsoleAppenderERN9log4cplus6LoggerERKNS0_12OutputOptionE
+   fun:_ZN3isc3log17LoggerManagerImpl14initRootLoggerENS0_8SeverityEi
+   fun:_ZN35LoggerTest_IsDebugEnabledLevel_TestD0Ev
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc3log17MessageDictionary4loadEPPKc
+   fun:_ZN3isc3log18MessageInitializer14loadDictionaryEv
+   fun:_ZN3isc3log13LoggerManager4initERKSsNS0_8SeverityEiPKc
+   fun:_ZN3isc3log10initLoggerENS0_8SeverityEi
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs4_Rep8_M_cloneERKSaIcEm
+   fun:_ZNSs7reserveEm
+   fun:_ZNSs6appendERKSs
+   fun:_ZStplIcSt11char_traitsIcESaIcEESbIT_T0_T1_ERKS6_S8_
+   fun:_ZN3isc3log16expandLoggerNameERKSs
+   fun:_ZN3isc3log17LoggerManagerImpl20processSpecificationERKNS0_19LoggerSpecificationE
+   fun:_ZN33LoggerManagerTest_FileLogger_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs4_Rep8_M_cloneERKSaIcEm
+   fun:_ZNSs7reserveEm
+   fun:_ZNSs6appendERKSs
+   fun:_ZStplIcSt11char_traitsIcESaIcEESbIT_T0_T1_ERKS6_S8_
+   fun:_ZN3isc3log16expandLoggerNameERKSs
+   fun:_ZN3isc3log10LoggerImplC1ERKSs
+   fun:_ZN3isc3log6Logger14initLoggerImplEv
+   fun:_ZN3isc3log6Logger11getSeverityEv
+   fun:_ZN35LoggerTest_SeverityInheritance_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs4_Rep8_M_cloneERKSaIcEm
+   fun:_ZNSs7reserveEm
+   fun:_ZNSs6appendERKSs
+   fun:_ZStplIcSt11char_traitsIcESaIcEESbIT_T0_T1_ERKS6_S8_
+   fun:_ZN3isc3log16expandLoggerNameERKSs
+   fun:_ZN3isc3log10LoggerImplC1ERKSs
+   fun:_ZN3isc3log6Logger14initLoggerImplEv
+   fun:_ZN3isc3log6Logger11getSeverityEv
+   fun:_ZN44LoggerTest_EffectiveSeverityInheritance_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs4_Rep8_M_cloneERKSaIcEm
+   fun:_ZNSs7reserveEm
+   fun:_ZNSs6appendERKSs
+   fun:_ZStplIcSt11char_traitsIcESaIcEESbIT_T0_T1_ERKS6_S8_
+   fun:_ZN3isc3log16expandLoggerNameERKSs
+   fun:_ZN3isc3log10LoggerImplC1ERKSs
+   fun:_ZN3isc3log6Logger14initLoggerImplEv
+   fun:_ZN3isc3log6Logger14isDebugEnabledEi
+   fun:_ZN28LoggerTest_IsXxxEnabled_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs9_M_mutateEmmm
+   fun:_ZNSs15_M_replace_safeEmmPKcm
+   fun:_ZN7testing8internal13CaptureStreamEiPKcPPNS0_14CapturedStreamE
+   fun:_ZN7testing8internal15NoExecDeathTest10AssumeRoleEv
+   fun:_ZN32LoggerTest_LoggerNameLength_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructEmcRKSaIcE
+   fun:_ZNSsC1EmcRKSaIcE
+   fun:_ZN32LoggerTest_LoggerNameLength_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructEmcRKSaIcE
+   fun:_ZNSsC1EmcRKSaIcE
+   fun:_ZN32LoggerTest_LoggerNameLength_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructEmcRKSaIcE
+   fun:_ZNSsC1EmcRKSaIcE
+   fun:_ZN32LoggerTest_LoggerNameLength_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs4_Rep8_M_cloneERKSaIcEm
+   fun:_ZNSs7reserveEm
+   fun:_ZNSs6appendERKSs
+   fun:_ZStplIcSt11char_traitsIcESaIcEESbIT_T0_T1_ERKS6_S8_
+   fun:_ZN3isc3log16expandLoggerNameERKSs
+   fun:_ZN3isc3log10LoggerImplC1ERKSs
+   fun:_ZN3isc3log6Logger14initLoggerImplEv
+   fun:_ZN3isc3log6Logger7getNameEv
+   fun:_ZN32LoggerTest_LoggerNameLength_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc3log17LoggerManagerImpl24setConsoleAppenderLayoutERN9log4cplus7helpers15SharedObjectPtrINS2_8AppenderEEE
+   fun:_ZN3isc3log17LoggerManagerImpl21createConsoleAppenderERN9log4cplus6LoggerERKNS0_12OutputOptionE
+   fun:_ZN3isc3log17LoggerManagerImpl14initRootLoggerENS0_8SeverityEi
+   fun:_ZN35LoggerTest_IsDebugEnabledLevel_TestD0Ev
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs4_Rep8_M_cloneERKSaIcEm
+   fun:_ZNSs7reserveEm
+   fun:_ZNSs6appendERKSs
+   fun:_ZStplIcSt11char_traitsIcESaIcEESbIT_T0_T1_ERKS6_S8_
+   fun:_ZN3isc3log16expandLoggerNameERKSs
+   fun:_ZN3isc3log10LoggerImplC1ERKSs
+   fun:_ZN3isc3log6Logger14initLoggerImplEv
+   fun:_ZN3isc3log6Logger7getNameEv
+   fun:_ZN32LoggerTest_LoggerNameLength_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs4_Rep8_M_cloneERKSaIcEm
+   fun:_ZNSs7reserveEm
+   fun:_ZN9log4cplus7pattern13PatternParser5parseEv
+   fun:_ZN9log4cplus13PatternLayout4initERKSsj
+   fun:_ZN9log4cplus13PatternLayoutC1ERKSs
+   fun:_ZN3isc3log17LoggerManagerImpl24setConsoleAppenderLayoutERN9log4cplus7helpers15SharedObjectPtrINS2_8AppenderEEE
+   fun:_ZN3isc3log17LoggerManagerImpl21createConsoleAppenderERN9log4cplus6LoggerERKNS0_12OutputOptionE
+   fun:_ZN3isc3log17LoggerManagerImpl14initRootLoggerENS0_8SeverityEi
+   fun:_ZN35LoggerTest_IsDebugEnabledLevel_TestD0Ev
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc3log17MessageDictionary3addERKPKcRKSs
+   fun:_ZN3isc3log17MessageDictionary4loadEPPKc
+   fun:_ZN3isc3log18MessageInitializer14loadDictionaryEv
+   fun:_ZN3isc3log13LoggerManager4initERKSsNS0_8SeverityEiPKc
+   fun:_ZN3isc3log10initLoggerENS0_8SeverityEi
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc3log17MessageDictionary4loadEPPKc
+   fun:_ZN3isc3log18MessageInitializer14loadDictionaryEv
+   fun:_ZN3isc3log13LoggerManager4initERKSsNS0_8SeverityEiPKc
+   fun:_ZN3isc3log10initLoggerENS0_8SeverityEi
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_GLOBAL__sub_I_timehelper.cxx
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_GLOBAL__sub_I_timehelper.cxx
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_GLOBAL__sub_I_timehelper.cxx
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_GLOBAL__sub_I_timehelper.cxx
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_GLOBAL__sub_I_timehelper.cxx
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_GLOBAL__sub_I_timehelper.cxx
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus3spi10RootLoggerC1ERNS_9HierarchyEi
+   fun:_ZN9log4cplus9HierarchyC1Ev
+   fun:_ZN9log4cplus6Logger19getDefaultHierarchyEv
+   fun:_ZN9log4cplus6Logger7getRootEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_GLOBAL__sub_I_timehelper.cxx
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs9_M_mutateEmmm
+   fun:_ZNSs15_M_replace_safeEmmPKcm
+   fun:_ZN7testing8internal13CaptureStreamEiPKcPPNS0_14CapturedStreamE
+   fun:_ZN7testing8internal15NoExecDeathTest10AssumeRoleEv
+   fun:_ZN44MessageInitializerTest2_MessageLoadTest_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZNK3isc3acl3dns8internal19RequestCheckCreator5namesEv
+   fun:_ZN3isc3acl3dns16getRequestLoaderEv
+   fun:_ZN12_GLOBAL__N_128DNSACL_getRequestLoader_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc3acl3dns16getRequestLoaderEv
+   fun:_ZN12_GLOBAL__N_128DNSACL_getRequestLoader_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc3acl3dns16getRequestLoaderEv
+   fun:_ZN12_GLOBAL__N_128DNSACL_getRequestLoader_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc3acl3dns16getRequestLoaderEv
+   fun:_ZN12_GLOBAL__N_128DNSACL_getRequestLoader_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZNK3isc3acl3dns8internal19RequestCheckCreator5namesEv
+   fun:_ZN3isc3acl3dns16getRequestLoaderEv
+   fun:_ZN12_GLOBAL__N_128DNSACL_getRequestLoader_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr8
+   fun:_ZN5boost6detail17sp_counted_impl_pIN4asio21basic_socket_acceptorINS2_2ip3tcpENS2_23socket_acceptor_serviceIS5_EEEEE7disposeEv
+   fun:_ZN5boost6detail12shared_countD1Ev
+   fun:_ZN3isc7asiodns9TCPServerD1Ev
+   fun:_ZN3isc7asiodns9TCPServerD0Ev
+   fun:_ZN3isc7asiodns10DNSServiceD1Ev
+   fun:_ZN3isc7asiodns10DNSServiceD0Ev
+   fun:_ZN12_GLOBAL__N_141RecursiveQueryTest_v6UDPSendSpecific_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr1
+   fun:_ZN5boost6detail17sp_counted_impl_pIN4asio21basic_socket_acceptorINS2_2ip3tcpENS2_23socket_acceptor_serviceIS5_EEEEE7disposeEv
+   fun:_ZN5boost6detail12shared_countD1Ev
+   fun:_ZN3isc7asiodns9TCPServerD1Ev
+   fun:_ZN3isc7asiodns9TCPServerD0Ev
+   fun:_ZN3isc7asiodns10DNSServiceD1Ev
+   fun:_ZN3isc7asiodns10DNSServiceD0Ev
+   fun:_ZN12_GLOBAL__N_141RecursiveQueryTest_v6UDPSendSpecific_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr8
+   fun:_ZN5boost6detail17sp_counted_impl_pIN4asio21basic_datagram_socketINS2_2ip3udpENS2_23datagram_socket_serviceIS5_EEEEE7disposeEv
+   fun:_ZN5boost6detail12shared_countD1Ev
+   fun:_ZN5boost6detail17sp_counted_impl_pIN3isc7asiodns9UDPServer4DataEE7disposeEv
+   fun:_ZN5boost6detail12shared_countD1Ev
+   fun:_ZN3isc7asiodns9UDPServerD0Ev
+   fun:_ZN3isc7asiodns10DNSServiceD1Ev
+   fun:_ZN3isc7asiodns10DNSServiceD0Ev
+   fun:_ZN12_GLOBAL__N_141RecursiveQueryTest_v6UDPSendSpecific_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr1
+   fun:_ZN5boost6detail17sp_counted_impl_pIN4asio21basic_datagram_socketINS2_2ip3udpENS2_23datagram_socket_serviceIS5_EEEEE7disposeEv
+   fun:_ZN5boost6detail12shared_countD1Ev
+   fun:_ZN5boost6detail17sp_counted_impl_pIN3isc7asiodns9UDPServer4DataEE7disposeEv
+   fun:_ZN5boost6detail12shared_countD1Ev
+   fun:_ZN3isc7asiodns9UDPServerD0Ev
+   fun:_ZN3isc7asiodns10DNSServiceD1Ev
+   fun:_ZN3isc7asiodns10DNSServiceD0Ev
+   fun:_ZN12_GLOBAL__N_141RecursiveQueryTest_v6UDPSendSpecific_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_GLOBAL__sub_I__ZN3isc7asiodns15WWW_EXAMPLE_ORGE
+   fun:__libc_csu_init
+   fun:(below main)
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_GLOBAL__sub_I__ZN3isc7asiodns32RecursiveQueryTest3_Resolve_Test10test_info_E
+   fun:__libc_csu_init
+   fun:(below main)
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZN3isc7asiodns14RecursiveQuery7forwardEN5boost10shared_ptrIKNS_3dns7MessageEEENS3_IS5_EENS3_INS_4util12OutputBufferEEEPNS0_9DNSServerENS3_INS_7resolve17ResolverInterface8CallbackEEE
+   fun:_ZN12_GLOBAL__N_137RecursiveQueryTest_forwarderSend_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZN3isc7asiodns14RecursiveQuery7forwardEN5boost10shared_ptrIKNS_3dns7MessageEEENS3_IS5_EENS3_INS_4util12OutputBufferEEEPNS0_9DNSServerENS3_INS_7resolve17ResolverInterface8CallbackEEE
+   fun:_ZN12_GLOBAL__N_143RecursiveQueryTest_forwardQueryTimeout_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZN3isc7asiodns14RecursiveQuery7forwardEN5boost10shared_ptrIKNS_3dns7MessageEEENS3_IS5_EENS3_INS_4util12OutputBufferEEEPNS0_9DNSServerENS3_INS_7resolve17ResolverInterface8CallbackEEE
+   fun:_ZN12_GLOBAL__N_144RecursiveQueryTest_forwardClientTimeout_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZN3isc7asiodns14RecursiveQuery7forwardEN5boost10shared_ptrIKNS_3dns7MessageEEENS3_IS5_EENS3_INS_4util12OutputBufferEEEPNS0_9DNSServerENS3_INS_7resolve17ResolverInterface8CallbackEEE
+   fun:_ZN12_GLOBAL__N_144RecursiveQueryTest_forwardLookupTimeout_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZN3isc7asiodns14RecursiveQuery7forwardEN5boost10shared_ptrIKNS_3dns7MessageEEENS3_IS5_EENS3_INS_4util12OutputBufferEEEPNS0_9DNSServerENS3_INS_7resolve17ResolverInterface8CallbackEEE
+   fun:_ZN12_GLOBAL__N_135RecursiveQueryTest_lowtimeouts_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZN3isc7asiodns14RecursiveQuery7resolveERKNS_3dns8QuestionEN5boost10shared_ptrINS2_7MessageEEENS7_INS_4util12OutputBufferEEEPNS0_9DNSServerE
+   fun:_ZN12_GLOBAL__N_132RecursiveQueryTest_CachedNS_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZN3isc7asiodns14RecursiveQuery7resolveERKN5boost10shared_ptrINS_3dns8QuestionEEENS3_INS_7resolve17ResolverInterface8CallbackEEE
+   fun:_ZN3isc7asiodns32RecursiveQueryTest3_Resolve_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZN3isc7asiodns14RecursiveQuery7resolveERKN5boost10shared_ptrINS_3dns8QuestionEEENS3_INS_7resolve17ResolverInterface8CallbackEEE
+   fun:_ZN3isc7asiodns32RecursiveQueryTest2_Resolve_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   ...
+   fun:_ZN3isc7datasrc14Sqlite3DataSrc4openERKSs
+   fun:_ZN3isc7datasrc14Sqlite3DataSrc4initEN5boost10shared_ptrIKNS_4data7ElementEEE
+   fun:_ZN12_GLOBAL__N_139Sqlite3DataSourceTest_openBrokenDB_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   ...
+   fun:_ZN12_GLOBAL__N_129SQLite3Create_lockedtest_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   ...
+   fun:_ZN12_GLOBAL__N_129SQLite3Create_lockedtest_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   ...
+   fun:_ZN12_GLOBAL__N_129SQLite3Create_lockedtest_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   ...
+   fun:sqlite3_prepare_v2
+   fun:_ZN3isc7datasrc12_GLOBAL__N_125checkSchemaVersionElementEP7sqlite3PKc
+   fun:_ZN3isc7datasrc12_GLOBAL__N_118checkSchemaVersionEP7sqlite3
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   ...
+   fun:sqlite3_prepare_v2
+   fun:_ZN3isc7datasrc12_GLOBAL__N_128check_schema_version_elementEP7sqlite3PKc
+   fun:_ZN3isc7datasrc12_GLOBAL__N_120check_schema_versionEP7sqlite3
+   fun:_ZN3isc7datasrc14Sqlite3DataSrc4openERKSs
+   fun:_ZN3isc7datasrc14Sqlite3DataSrc4initEN5boost10shared_ptrIKNS_4data7ElementEEE
+   fun:_ZN12_GLOBAL__N_139Sqlite3DataSourceTest_openBrokenDB_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_GLOBAL__sub_I_timehelper.cxx
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_GLOBAL__sub_I_timehelper.cxx
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_GLOBAL__sub_I_timehelper.cxx
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_GLOBAL__sub_I_timehelper.cxx
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_GLOBAL__sub_I_timehelper.cxx
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_GLOBAL__sub_I_timehelper.cxx
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN12_GLOBAL__N_122InstallListenAddressesC1Ev
+   fun:_ZN7testing8internal15TestFactoryImplIN12_GLOBAL__N_149InstallListenAddressesDeathTest_inconsistent_TestEE10CreateTestEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus3spi10RootLoggerC1ERNS_9HierarchyEi
+   fun:_ZN9log4cplus9HierarchyC1Ev
+   fun:_ZN9log4cplus6Logger19getDefaultHierarchyEv
+   fun:_ZN9log4cplus6Logger7getRootEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_GLOBAL__sub_I_timehelper.cxx
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc3log10initLoggerENS0_8SeverityEi
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc3log10LoggerImplC1ERKSs
+   fun:_ZN3isc3log6Logger14initLoggerImplEv
+   fun:_ZN3isc3log6Logger14isDebugEnabledEi
+   fun:_ZN3isc13server_common10portconfig22installListenAddressesERKSt6vectorISt4pairISstESaIS4_EERS6_RNS_7asiodns14DNSServiceBaseENSB_10ServerFlagE
+   fun:_ZN12_GLOBAL__N_149InstallListenAddressesDeathTest_inconsistent_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc3log23resetUnitTestRootLoggerEv
+   fun:_ZN3isc3log10initLoggerENS0_8SeverityEi
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN12_GLOBAL__N_122InstallListenAddressesC1Ev
+   fun:_ZN7testing8internal15TestFactoryImplIN12_GLOBAL__N_149InstallListenAddressesDeathTest_inconsistent_TestEE10CreateTestEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN12_GLOBAL__N_122InstallListenAddressesC1Ev
+   fun:_ZN7testing8internal15TestFactoryImplIN12_GLOBAL__N_149InstallListenAddressesDeathTest_inconsistent_TestEE10CreateTestEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN12_GLOBAL__N_122InstallListenAddressesC1Ev
+   fun:_ZN7testing8internal15TestFactoryImplIN12_GLOBAL__N_149InstallListenAddressesDeathTest_inconsistent_TestEE10CreateTestEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN12_GLOBAL__N_149InstallListenAddressesDeathTest_inconsistent_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc9ExceptionC1EPKcmS2_
+   fun:_ZN3isc9testutils19TestSocketRequestor13requestSocketENS_13server_common15SocketRequestor8ProtocolERKSstNS3_9ShareModeES6_
+   fun:_ZN3isc13server_common10portconfig12_GLOBAL__N_112setAddressesERNS_7asiodns14DNSServiceBaseERKSt6vectorISt4pairISstESaIS8_EENS4_10ServerFlagE
+   fun:_ZN3isc13server_common10portconfig22installListenAddressesERKSt6vectorISt4pairISstESaIS4_EERS6_RNS_7asiodns14DNSServiceBaseENSB_10ServerFlagE
+   fun:_ZN12_GLOBAL__N_149InstallListenAddressesDeathTest_inconsistent_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPcEES0_T_S1_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1ERKSsmm
+   fun:_ZN9log4cplus7pattern13PatternParser13extractOptionEv
+   fun:_ZN9log4cplus7pattern13PatternParser17finalizeConverterEc
+   fun:_ZN9log4cplus7pattern13PatternParser5parseEv
+   fun:_ZN9log4cplus13PatternLayout4initERKSsj
+   fun:_ZN9log4cplus13PatternLayoutC1ERKSs
+   fun:_ZN3isc3log17LoggerManagerImpl24setConsoleAppenderLayoutERN9log4cplus7helpers15SharedObjectPtrINS2_8AppenderEEE
+   fun:_ZN3isc3log17LoggerManagerImpl18createFileAppenderERN9log4cplus6LoggerERKNS0_12OutputOptionE
+   fun:_ZN3isc3log17LoggerManagerImpl20processSpecificationERKNS0_19LoggerSpecificationE
+   fun:_ZN3isc3log23resetUnitTestRootLoggerEv
+   fun:_ZN3isc3log10initLoggerENS0_8SeverityEi
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs4_Rep8_M_cloneERKSaIcEm
+   fun:_ZNSs7reserveEm
+   fun:_ZNSs6appendERKSs
+   fun:_ZStplIcSt11char_traitsIcESaIcEESbIT_T0_T1_ERKS6_S8_
+   fun:_ZN3isc3log16expandLoggerNameERKSs
+   fun:_ZN3isc3log10LoggerImplC1ERKSs
+   fun:_ZN3isc3log6Logger14initLoggerImplEv
+   fun:_ZN3isc3log6Logger14isDebugEnabledEi
+   fun:_ZN3isc13server_common10portconfig22installListenAddressesERKSt6vectorISt4pairISstESaIS4_EERS6_RNS_7asiodns14DNSServiceBaseENSB_10ServerFlagE
+   fun:_ZN12_GLOBAL__N_149InstallListenAddressesDeathTest_inconsistent_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs9_M_mutateEmmm
+   fun:_ZNSs15_M_replace_safeEmmPKcm
+   fun:_ZN7testing8internal13CaptureStreamEiPKcPPNS0_14CapturedStreamE
+   fun:_ZN7testing8internal15NoExecDeathTest10AssumeRoleEv
+   fun:_ZN12_GLOBAL__N_149InstallListenAddressesDeathTest_inconsistent_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc3log17LoggerManagerImpl24setConsoleAppenderLayoutERN9log4cplus7helpers15SharedObjectPtrINS2_8AppenderEEE
+   fun:_ZN3isc3log17LoggerManagerImpl18createFileAppenderERN9log4cplus6LoggerERKNS0_12OutputOptionE
+   fun:_ZN3isc3log17LoggerManagerImpl20processSpecificationERKNS0_19LoggerSpecificationE
+   fun:_ZN3isc3log23resetUnitTestRootLoggerEv
+   fun:_ZN3isc3log10initLoggerENS0_8SeverityEi
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs4_Rep8_M_cloneERKSaIcEm
+   fun:_ZNSs7reserveEm
+   fun:_ZN9log4cplus7pattern13PatternParser5parseEv
+   fun:_ZN9log4cplus13PatternLayout4initERKSsj
+   fun:_ZN9log4cplus13PatternLayoutC1ERKSs
+   fun:_ZN3isc3log17LoggerManagerImpl24setConsoleAppenderLayoutERN9log4cplus7helpers15SharedObjectPtrINS2_8AppenderEEE
+   fun:_ZN3isc3log17LoggerManagerImpl18createFileAppenderERN9log4cplus6LoggerERKNS0_12OutputOptionE
+   fun:_ZN3isc3log17LoggerManagerImpl20processSpecificationERKNS0_19LoggerSpecificationE
+   fun:_ZN3isc3log23resetUnitTestRootLoggerEv
+   fun:_ZN3isc3log10initLoggerENS0_8SeverityEi
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:__cxa_allocate_exception
+   fun:_ZN3isc9testutils19TestSocketRequestor13requestSocketENS_13server_common15SocketRequestor8ProtocolERKSstNS3_9ShareModeES6_
+   fun:_ZN3isc13server_common10portconfig12_GLOBAL__N_112setAddressesERNS_7asiodns14DNSServiceBaseERKSt6vectorISt4pairISstESaIS8_EENS4_10ServerFlagE
+   fun:_ZN3isc13server_common10portconfig22installListenAddressesERKSt6vectorISt4pairISstESaIS4_EERS6_RNS_7asiodns14DNSServiceBaseENSB_10ServerFlagE
+   fun:_ZN12_GLOBAL__N_149InstallListenAddressesDeathTest_inconsistent_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc3log17MessageDictionary3addERKPKcRKSs
+   fun:_ZN3isc3log17MessageDictionary4loadEPPKc
+   fun:_ZN3isc3log18MessageInitializer14loadDictionaryEv
+   fun:_ZN3isc3log13LoggerManager4initERKSsNS0_8SeverityEiPKc
+   fun:_ZN3isc3log10initLoggerENS0_8SeverityEi
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc3log17MessageDictionary4loadEPPKc
+   fun:_ZN3isc3log18MessageInitializer14loadDictionaryEv
+   fun:_ZN3isc3log13LoggerManager4initERKSsNS0_8SeverityEiPKc
+   fun:_ZN3isc3log10initLoggerENS0_8SeverityEi
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_GLOBAL__sub_I_timehelper.cxx
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_GLOBAL__sub_I_timehelper.cxx
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_GLOBAL__sub_I_timehelper.cxx
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_GLOBAL__sub_I_timehelper.cxx
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_GLOBAL__sub_I_timehelper.cxx
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_GLOBAL__sub_I_timehelper.cxx
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN12_GLOBAL__N_122InstallListenAddressesC1Ev
+   fun:_ZN7testing8internal15TestFactoryImplIN12_GLOBAL__N_146InstallListenAddressesDeathTest_cantClose_TestEE10CreateTestEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus3spi10RootLoggerC1ERNS_9HierarchyEi
+   fun:_ZN9log4cplus9HierarchyC1Ev
+   fun:_ZN9log4cplus6Logger19getDefaultHierarchyEv
+   fun:_ZN9log4cplus6Logger7getRootEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_GLOBAL__sub_I_timehelper.cxx
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc3log10initLoggerENS0_8SeverityEi
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc3log10LoggerImplC1ERKSs
+   fun:_ZN3isc3log6Logger14initLoggerImplEv
+   fun:_ZN3isc3log6Logger14isDebugEnabledEi
+   fun:_ZN3isc13server_common10portconfig22installListenAddressesERKSt6vectorISt4pairISstESaIS4_EERS6_RNS_7asiodns14DNSServiceBaseENSB_10ServerFlagE
+   fun:_ZN3isc9testutils19TestSocketRequestorD1Ev
+   fun:_ZN12_GLOBAL__N_122InstallListenAddressesD1Ev
+   fun:_ZN12_GLOBAL__N_149InstallListenAddressesDeathTest_inconsistent_TestD0Ev
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc3log23resetUnitTestRootLoggerEv
+   fun:_ZN3isc3log10initLoggerENS0_8SeverityEi
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN12_GLOBAL__N_122InstallListenAddressesC1Ev
+   fun:_ZN7testing8internal15TestFactoryImplIN12_GLOBAL__N_146InstallListenAddressesDeathTest_cantClose_TestEE10CreateTestEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN12_GLOBAL__N_122InstallListenAddressesC1Ev
+   fun:_ZN7testing8internal15TestFactoryImplIN12_GLOBAL__N_146InstallListenAddressesDeathTest_cantClose_TestEE10CreateTestEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN12_GLOBAL__N_122InstallListenAddressesC1Ev
+   fun:_ZN7testing8internal15TestFactoryImplIN12_GLOBAL__N_146InstallListenAddressesDeathTest_cantClose_TestEE10CreateTestEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPcEES0_T_S1_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1ERKSsmm
+   fun:_ZN9log4cplus7pattern13PatternParser13extractOptionEv
+   fun:_ZN9log4cplus7pattern13PatternParser17finalizeConverterEc
+   fun:_ZN9log4cplus7pattern13PatternParser5parseEv
+   fun:_ZN9log4cplus13PatternLayout4initERKSsj
+   fun:_ZN9log4cplus13PatternLayoutC1ERKSs
+   fun:_ZN3isc3log17LoggerManagerImpl24setConsoleAppenderLayoutERN9log4cplus7helpers15SharedObjectPtrINS2_8AppenderEEE
+   fun:_ZN3isc3log17LoggerManagerImpl18createFileAppenderERN9log4cplus6LoggerERKNS0_12OutputOptionE
+   fun:_ZN3isc3log17LoggerManagerImpl20processSpecificationERKNS0_19LoggerSpecificationE
+   fun:_ZN3isc3log23resetUnitTestRootLoggerEv
+   fun:_ZN3isc3log10initLoggerENS0_8SeverityEi
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc9ExceptionC1EPKcmS2_
+   fun:_ZN3isc9testutils19TestSocketRequestor13releaseSocketERKSs
+   fun:_ZN3isc13server_common10portconfig12_GLOBAL__N_112setAddressesERNS_7asiodns14DNSServiceBaseERKSt6vectorISt4pairISstESaIS8_EENS4_10ServerFlagE
+   fun:_ZN3isc13server_common10portconfig22installListenAddressesERKSt6vectorISt4pairISstESaIS4_EERS6_RNS_7asiodns14DNSServiceBaseENSB_10ServerFlagE
+   fun:_ZN12_GLOBAL__N_146InstallListenAddressesDeathTest_cantClose_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs4_Rep8_M_cloneERKSaIcEm
+   fun:_ZNSs7reserveEm
+   fun:_ZNSs6appendERKSs
+   fun:_ZStplIcSt11char_traitsIcESaIcEESbIT_T0_T1_ERKS6_S8_
+   fun:_ZN3isc3log16expandLoggerNameERKSs
+   fun:_ZN3isc3log10LoggerImplC1ERKSs
+   fun:_ZN3isc3log6Logger14initLoggerImplEv
+   fun:_ZN3isc3log6Logger14isDebugEnabledEi
+   fun:_ZN3isc13server_common10portconfig22installListenAddressesERKSt6vectorISt4pairISstESaIS4_EERS6_RNS_7asiodns14DNSServiceBaseENSB_10ServerFlagE
+   fun:_ZN3isc9testutils19TestSocketRequestorD1Ev
+   fun:_ZN12_GLOBAL__N_122InstallListenAddressesD1Ev
+   fun:_ZN12_GLOBAL__N_149InstallListenAddressesDeathTest_inconsistent_TestD0Ev
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs9_M_mutateEmmm
+   fun:_ZNSs15_M_replace_safeEmmPKcm
+   fun:_ZN7testing8internal13CaptureStreamEiPKcPPNS0_14CapturedStreamE
+   fun:_ZN7testing8internal15NoExecDeathTest10AssumeRoleEv
+   fun:_ZN12_GLOBAL__N_146InstallListenAddressesDeathTest_cantClose_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN9log4cplus25initializeFactoryRegistryEv
+   fun:_ZN9log4cplus19initializeLog4cplusEv
+   fun:call_init.part.0
+   fun:_dl_init
+   ...
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc3log17LoggerManagerImpl24setConsoleAppenderLayoutERN9log4cplus7helpers15SharedObjectPtrINS2_8AppenderEEE
+   fun:_ZN3isc3log17LoggerManagerImpl18createFileAppenderERN9log4cplus6LoggerERKNS0_12OutputOptionE
+   fun:_ZN3isc3log17LoggerManagerImpl20processSpecificationERKNS0_19LoggerSpecificationE
+   fun:_ZN3isc3log23resetUnitTestRootLoggerEv
+   fun:_ZN3isc3log10initLoggerENS0_8SeverityEi
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs4_Rep8_M_cloneERKSaIcEm
+   fun:_ZNSs7reserveEm
+   fun:_ZNSs6appendERKSs
+   fun:_ZStplIcSt11char_traitsIcESaIcEESbIT_T0_T1_ERKS6_S8_
+   fun:_ZN3isc9testutils19TestSocketRequestor13requestSocketENS_13server_common15SocketRequestor8ProtocolERKSstNS3_9ShareModeES6_
+   fun:_ZN3isc13server_common10portconfig12_GLOBAL__N_112setAddressesERNS_7asiodns14DNSServiceBaseERKSt6vectorISt4pairISstESaIS8_EENS4_10ServerFlagE
+   fun:_ZN3isc13server_common10portconfig22installListenAddressesERKSt6vectorISt4pairISstESaIS4_EERS6_RNS_7asiodns14DNSServiceBaseENSB_10ServerFlagE
+   fun:_ZN12_GLOBAL__N_146InstallListenAddressesDeathTest_cantClose_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs4_Rep8_M_cloneERKSaIcEm
+   fun:_ZNSs7reserveEm
+   fun:_ZNSs6appendERKSs
+   fun:_ZStplIcSt11char_traitsIcESaIcEESbIT_T0_T1_ERKS6_S8_
+   fun:_ZN3isc9testutils19TestSocketRequestor13requestSocketENS_13server_common15SocketRequestor8ProtocolERKSstNS3_9ShareModeES6_
+   fun:_ZN3isc13server_common10portconfig12_GLOBAL__N_112setAddressesERNS_7asiodns14DNSServiceBaseERKSt6vectorISt4pairISstESaIS8_EENS4_10ServerFlagE
+   fun:_ZN3isc13server_common10portconfig22installListenAddressesERKSt6vectorISt4pairISstESaIS4_EERS6_RNS_7asiodns14DNSServiceBaseENSB_10ServerFlagE
+   fun:_ZN12_GLOBAL__N_146InstallListenAddressesDeathTest_cantClose_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs4_Rep8_M_cloneERKSaIcEm
+   fun:_ZNSs7reserveEm
+   fun:_ZN9log4cplus7pattern13PatternParser5parseEv
+   fun:_ZN9log4cplus13PatternLayout4initERKSsj
+   fun:_ZN9log4cplus13PatternLayoutC1ERKSs
+   fun:_ZN3isc3log17LoggerManagerImpl24setConsoleAppenderLayoutERN9log4cplus7helpers15SharedObjectPtrINS2_8AppenderEEE
+   fun:_ZN3isc3log17LoggerManagerImpl18createFileAppenderERN9log4cplus6LoggerERKNS0_12OutputOptionE
+   fun:_ZN3isc3log17LoggerManagerImpl20processSpecificationERKNS0_19LoggerSpecificationE
+   fun:_ZN3isc3log23resetUnitTestRootLoggerEv
+   fun:_ZN3isc3log10initLoggerENS0_8SeverityEi
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:__cxa_allocate_exception
+   fun:_ZN3isc9testutils19TestSocketRequestor13releaseSocketERKSs
+   fun:_ZN3isc13server_common10portconfig12_GLOBAL__N_112setAddressesERNS_7asiodns14DNSServiceBaseERKSt6vectorISt4pairISstESaIS8_EENS4_10ServerFlagE
+   fun:_ZN3isc13server_common10portconfig22installListenAddressesERKSt6vectorISt4pairISstESaIS4_EERS6_RNS_7asiodns14DNSServiceBaseENSB_10ServerFlagE
+   fun:_ZN12_GLOBAL__N_146InstallListenAddressesDeathTest_cantClose_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc3log17MessageDictionary3addERKPKcRKSs
+   fun:_ZN3isc3log17MessageDictionary4loadEPPKc
+   fun:_ZN3isc3log18MessageInitializer14loadDictionaryEv
+   fun:_ZN3isc3log13LoggerManager4initERKSsNS0_8SeverityEiPKc
+   fun:_ZN3isc3log10initLoggerENS0_8SeverityEi
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc3log17MessageDictionary4loadEPPKc
+   fun:_ZN3isc3log18MessageInitializer14loadDictionaryEv
+   fun:_ZN3isc3log13LoggerManager4initERKSsNS0_8SeverityEiPKc
+   fun:_ZN3isc3log10initLoggerENS0_8SeverityEi
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Param
+   socketcall.bind(my_addr.sun_path)
+   fun:bind
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Param
+   socketcall.sendmsg(msg.msg_control)
+   fun:__sendmsg_nocancel
+   fun:_ZN3isc4util2io7send_fdEii
+   fun:_ZN12_GLOBAL__N_110TestSocket5serveESt6vectorISt4pairISsiESaIS3_EE
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Param
+   socketcall.bind(my_addr.sun_path)
+   fun:bind
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Param
+   socketcall.sendmsg(msg.msg_control)
+   fun:__sendmsg_nocancel
+   fun:_ZN3isc4util2io7send_fdEii
+   fun:_ZN12_GLOBAL__N_110TestSocket5serveESt6vectorISt4pairISsiESaIS3_EE
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc13server_common12_GLOBAL__N_124SocketRequestorCCSession13requestSocketENS0_15SocketRequestor8ProtocolERKSstNS3_9ShareModeES6_
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc13server_common12_GLOBAL__N_124SocketRequestorCCSession13requestSocketENS0_15SocketRequestor8ProtocolERKSstNS3_9ShareModeES6_
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc13server_common12_GLOBAL__N_124SocketRequestorCCSession13requestSocketENS0_15SocketRequestor8ProtocolERKSstNS3_9ShareModeES6_
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc13server_common12_GLOBAL__N_124SocketRequestorCCSession13requestSocketENS0_15SocketRequestor8ProtocolERKSstNS3_9ShareModeES6_
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc13server_common12_GLOBAL__N_124SocketRequestorCCSession13requestSocketENS0_15SocketRequestor8ProtocolERKSstNS3_9ShareModeES6_
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc13server_common12_GLOBAL__N_124SocketRequestorCCSession13requestSocketENS0_15SocketRequestor8ProtocolERKSstNS3_9ShareModeES6_
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc13server_common12_GLOBAL__N_124SocketRequestorCCSession13requestSocketENS0_15SocketRequestor8ProtocolERKSstNS3_9ShareModeES6_
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc13server_common12_GLOBAL__N_124SocketRequestorCCSession13requestSocketENS0_15SocketRequestor8ProtocolERKSstNS3_9ShareModeES6_
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc13server_common12_GLOBAL__N_124SocketRequestorCCSession13requestSocketENS0_15SocketRequestor8ProtocolERKSstNS3_9ShareModeES6_
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc13server_common12_GLOBAL__N_124SocketRequestorCCSession13requestSocketENS0_15SocketRequestor8ProtocolERKSstNS3_9ShareModeES6_
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc13server_common12_GLOBAL__N_124SocketRequestorCCSession13requestSocketENS0_15SocketRequestor8ProtocolERKSstNS3_9ShareModeES6_
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc13server_common12_GLOBAL__N_124SocketRequestorCCSession13requestSocketENS0_15SocketRequestor8ProtocolERKSstNS3_9ShareModeES6_
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc13server_common12_GLOBAL__N_124SocketRequestorCCSession13requestSocketENS0_15SocketRequestor8ProtocolERKSstNS3_9ShareModeES6_
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc13server_common12_GLOBAL__N_124SocketRequestorCCSession13requestSocketENS0_15SocketRequestor8ProtocolERKSstNS3_9ShareModeES6_
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc13server_common12_GLOBAL__N_124SocketRequestorCCSession13requestSocketENS0_15SocketRequestor8ProtocolERKSstNS3_9ShareModeES6_
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN12_GLOBAL__N_119SocketRequestorTestC1Ev
+   fun:_ZN7testing8internal15TestFactoryImplIN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_TestEE10CreateTestEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc13server_common12_GLOBAL__N_124SocketRequestorCCSession13requestSocketENS0_15SocketRequestor8ProtocolERKSstNS3_9ShareModeES6_
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc6config13createCommandERKSsN5boost10shared_ptrIKNS_4data7ElementEEE
+   fun:_ZN3isc13server_common12_GLOBAL__N_124SocketRequestorCCSession13requestSocketENS0_15SocketRequestor8ProtocolERKSstNS3_9ShareModeES6_
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc13server_common12_GLOBAL__N_124SocketRequestorCCSession13requestSocketENS0_15SocketRequestor8ProtocolERKSstNS3_9ShareModeES6_
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc6config13createCommandERKSsN5boost10shared_ptrIKNS_4data7ElementEEE
+   fun:_ZN3isc13server_common12_GLOBAL__N_124SocketRequestorCCSession13requestSocketENS0_15SocketRequestor8ProtocolERKSstNS3_9ShareModeES6_
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc13server_common12_GLOBAL__N_124SocketRequestorCCSession13requestSocketENS0_15SocketRequestor8ProtocolERKSstNS3_9ShareModeES6_
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc6config13createCommandERKSsN5boost10shared_ptrIKNS_4data7ElementEEE
+   fun:_ZN3isc13server_common12_GLOBAL__N_124SocketRequestorCCSession13requestSocketENS0_15SocketRequestor8ProtocolERKSstNS3_9ShareModeES6_
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc13server_common12_GLOBAL__N_124SocketRequestorCCSession13requestSocketENS0_15SocketRequestor8ProtocolERKSstNS3_9ShareModeES6_
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc13server_common12_GLOBAL__N_124SocketRequestorCCSession13requestSocketENS0_15SocketRequestor8ProtocolERKSstNS3_9ShareModeES6_
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc13server_common12_GLOBAL__N_124SocketRequestorCCSession13requestSocketENS0_15SocketRequestor8ProtocolERKSstNS3_9ShareModeES6_
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc13server_common12_GLOBAL__N_124SocketRequestorCCSession13requestSocketENS0_15SocketRequestor8ProtocolERKSstNS3_9ShareModeES6_
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc13server_common12_GLOBAL__N_124SocketRequestorCCSession13requestSocketENS0_15SocketRequestor8ProtocolERKSstNS3_9ShareModeES6_
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc13server_common12_GLOBAL__N_124SocketRequestorCCSession13requestSocketENS0_15SocketRequestor8ProtocolERKSstNS3_9ShareModeES6_
+   fun:_ZN12_GLOBAL__N_150SocketRequestorTest_testSocketRequestMessages_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc13server_common12_GLOBAL__N_124SocketRequestorCCSession13requestSocketENS0_15SocketRequestor8ProtocolERKSstNS3_9ShareModeES6_
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc13server_common12_GLOBAL__N_124SocketRequestorCCSession13requestSocketENS0_15SocketRequestor8ProtocolERKSstNS3_9ShareModeES6_
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc13server_common12_GLOBAL__N_124SocketRequestorCCSession13requestSocketENS0_15SocketRequestor8ProtocolERKSstNS3_9ShareModeES6_
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc13server_common12_GLOBAL__N_124SocketRequestorCCSession13requestSocketENS0_15SocketRequestor8ProtocolERKSstNS3_9ShareModeES6_
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN12_GLOBAL__N_119SocketRequestorTestC1Ev
+   fun:_ZN7testing8internal15TestFactoryImplIN12_GLOBAL__N_142SocketRequestorTest_testSocketPassing_TestEE10CreateTestEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Free
+   fun:_ZdlPv
+   fun:_ZN3isc4dhcp8IfaceMgr12detectIfacesEv
+   fun:_ZN3isc4dhcp8IfaceMgrC1Ev
+   fun:_ZN3isc4dhcp8IfaceMgr14instanceCreateEv
+   fun:_ZN3isc4dhcp8IfaceMgr8instanceEv
+   fun:_ZN12_GLOBAL__N_123IfaceMgrTest_basic_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Free
+   fun:_ZdlPv
+   fun:_ZN3isc4dhcp8IfaceMgr12detectIfacesEv
+   fun:_ZN3isc4dhcp8IfaceMgrC1Ev
+   fun:_ZN3isc4dhcp8IfaceMgr14instanceCreateEv
+   fun:_ZN3isc4dhcp8IfaceMgr8instanceEv
+   fun:_ZN12_GLOBAL__N_123IfaceMgrTest_basic_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Free
+   fun:_ZdlPv
+   fun:_ZN3isc4dhcp8IfaceMgr12detectIfacesEv
+   fun:_ZN3isc4dhcp8IfaceMgrC1Ev
+   fun:_ZN12_GLOBAL__N_126IfaceMgrTest_getIface_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Free
+   fun:_ZdlPv
+   fun:_ZN3isc4dhcp8IfaceMgr12detectIfacesEv
+   fun:_ZN3isc4dhcp8IfaceMgrC1Ev
+   fun:_ZN12_GLOBAL__N_126IfaceMgrTest_getIface_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Free
+   fun:_ZdlPv
+   fun:_ZN3isc4dhcp8IfaceMgr12detectIfacesEv
+   fun:_ZN3isc4dhcp8IfaceMgrC1Ev
+   fun:_ZN12_GLOBAL__N_126IfaceMgrTest_sockets6_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Free
+   fun:_ZdlPv
+   fun:_ZN3isc4dhcp8IfaceMgr12detectIfacesEv
+   fun:_ZN3isc4dhcp8IfaceMgrC1Ev
+   fun:_ZN12_GLOBAL__N_126IfaceMgrTest_sockets6_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Free
+   fun:_ZdlPv
+   fun:_ZN3isc4dhcp8IfaceMgr12detectIfacesEv
+   fun:_ZN3isc4dhcp8IfaceMgrC1Ev
+   fun:_ZN12_GLOBAL__N_130IfaceMgrTest_sendReceive6_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Free
+   fun:_ZdlPv
+   fun:_ZN3isc4dhcp8IfaceMgr12detectIfacesEv
+   fun:_ZN3isc4dhcp8IfaceMgrC1Ev
+   fun:_ZN12_GLOBAL__N_130IfaceMgrTest_sendReceive6_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Free
+   fun:_ZdlPv
+   fun:_ZN3isc4dhcp8IfaceMgr12detectIfacesEv
+   fun:_ZN3isc4dhcp8IfaceMgrC1Ev
+   fun:_ZN12_GLOBAL__N_130IfaceMgrTest_sendReceive4_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Free
+   fun:_ZdlPv
+   fun:_ZN3isc4dhcp8IfaceMgr12detectIfacesEv
+   fun:_ZN3isc4dhcp8IfaceMgrC1Ev
+   fun:_ZN12_GLOBAL__N_130IfaceMgrTest_sendReceive4_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Free
+   fun:_ZdlPv
+   fun:_ZN3isc4dhcp8IfaceMgr12detectIfacesEv
+   fun:_ZN3isc4dhcp8IfaceMgrC1Ev
+   fun:_ZN12_GLOBAL__N_125IfaceMgrTest_socket4_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Free
+   fun:_ZdlPv
+   fun:_ZN3isc4dhcp8IfaceMgr12detectIfacesEv
+   fun:_ZN3isc4dhcp8IfaceMgrC1Ev
+   fun:_ZN12_GLOBAL__N_125IfaceMgrTest_socket4_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Free
+   fun:_ZdlPv
+   fun:_ZN3isc4dhcp8IfaceMgr12detectIfacesEv
+   fun:_ZN3isc4dhcp8IfaceMgrC1Ev
+   fun:_ZN12_GLOBAL__N_128IfaceMgrTest_socketInfo_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Free
+   fun:_ZdlPv
+   fun:_ZN3isc4dhcp8IfaceMgr12detectIfacesEv
+   fun:_ZN3isc4dhcp8IfaceMgrC1Ev
+   fun:_ZN12_GLOBAL__N_128IfaceMgrTest_socketInfo_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc4dhcp8IfaceMgr12detectIfacesEv
+   fun:_ZN3isc4dhcp8IfaceMgrC1Ev
+   fun:_ZN3isc4dhcp8IfaceMgr14instanceCreateEv
+   fun:_ZN3isc4dhcp8IfaceMgr8instanceEv
+   fun:_ZN12_GLOBAL__N_123IfaceMgrTest_basic_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZNK3isc3acl3dns8internal19RequestCheckCreator5namesEv
+   fun:_ZN3isc3acl3dns16getRequestLoaderEv
+   fun:_ZN8ResolverC1Ev
+   fun:_ZN7testing8internal15TestFactoryImplIN12_GLOBAL__N_136ResolverTest_unsupportedRequest_TestEE10CreateTestEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc3acl3dns16getRequestLoaderEv
+   fun:_ZN8ResolverC1Ev
+   fun:_ZN7testing8internal15TestFactoryImplIN12_GLOBAL__N_136ResolverTest_unsupportedRequest_TestEE10CreateTestEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc3acl3dns16getRequestLoaderEv
+   fun:_ZN8ResolverC1Ev
+   fun:_ZN7testing8internal15TestFactoryImplIN12_GLOBAL__N_136ResolverTest_unsupportedRequest_TestEE10CreateTestEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc3acl3dns16getRequestLoaderEv
+   fun:_ZN8ResolverC1Ev
+   fun:_ZN7testing8internal15TestFactoryImplIN12_GLOBAL__N_136ResolverTest_unsupportedRequest_TestEE10CreateTestEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZNK3isc3acl3dns8internal19RequestCheckCreator5namesEv
+   fun:_ZN3isc3acl3dns16getRequestLoaderEv
+   fun:_ZN8ResolverC1Ev
+   fun:_ZN7testing8internal15TestFactoryImplIN12_GLOBAL__N_136ResolverTest_unsupportedRequest_TestEE10CreateTestEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Free
+   fun:_ZdlPv
+   fun:_ZN3isc4dhcp8IfaceMgr12detectIfacesEv
+   fun:_ZN3isc4dhcp8IfaceMgrC1Ev
+   fun:_ZN3isc4dhcp8IfaceMgr14instanceCreateEv
+   fun:_ZN3isc4dhcp8IfaceMgr8instanceEv
+   fun:_ZN3isc4dhcp9Dhcpv4SrvC1Et
+   fun:_ZN12_GLOBAL__N_124Dhcpv4SrvTest_basic_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Free
+   fun:_ZdlPv
+   fun:_ZN3isc4dhcp8IfaceMgr12detectIfacesEv
+   fun:_ZN3isc4dhcp8IfaceMgrC1Ev
+   fun:_ZN3isc4dhcp8IfaceMgr14instanceCreateEv
+   fun:_ZN3isc4dhcp8IfaceMgr8instanceEv
+   fun:_ZN3isc4dhcp9Dhcpv4SrvC1Et
+   fun:_ZN12_GLOBAL__N_124Dhcpv4SrvTest_basic_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc4dhcp8IfaceMgr12detectIfacesEv
+   fun:_ZN3isc4dhcp8IfaceMgrC1Ev
+   fun:_ZN3isc4dhcp8IfaceMgr14instanceCreateEv
+   fun:_ZN3isc4dhcp8IfaceMgr8instanceEv
+   fun:_ZN3isc4dhcp9Dhcpv4SrvC1Et
+   fun:_ZN12_GLOBAL__N_124Dhcpv4SrvTest_basic_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Free
+   fun:_ZdlPv
+   fun:_ZN3isc4dhcp8IfaceMgr12detectIfacesEv
+   fun:_ZN3isc4dhcp8IfaceMgrC1Ev
+   fun:_ZN3isc4dhcp8IfaceMgr14instanceCreateEv
+   fun:_ZN3isc4dhcp8IfaceMgr8instanceEv
+   fun:_ZN3isc4dhcp9Dhcpv6SrvC1Et
+   fun:_ZN12_GLOBAL__N_124Dhcpv6SrvTest_basic_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Free
+   fun:_ZdlPv
+   fun:_ZN3isc4dhcp8IfaceMgr12detectIfacesEv
+   fun:_ZN3isc4dhcp8IfaceMgrC1Ev
+   fun:_ZN3isc4dhcp8IfaceMgr14instanceCreateEv
+   fun:_ZN3isc4dhcp8IfaceMgr8instanceEv
+   fun:_ZN3isc4dhcp9Dhcpv6SrvC1Et
+   fun:_ZN12_GLOBAL__N_124Dhcpv6SrvTest_basic_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+   fun:_ZNSs12_S_constructIPKcEEPcT_S3_RKSaIcESt20forward_iterator_tag
+   fun:_ZNSsC1EPKcRKSaIcE
+   fun:_ZN3isc4dhcp8IfaceMgr12detectIfacesEv
+   fun:_ZN3isc4dhcp8IfaceMgrC1Ev
+   fun:_ZN3isc4dhcp8IfaceMgr14instanceCreateEv
+   fun:_ZN3isc4dhcp8IfaceMgr8instanceEv
+   fun:_ZN3isc4dhcp9Dhcpv6SrvC1Et
+   fun:_ZN12_GLOBAL__N_124Dhcpv6SrvTest_basic_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr1
+   fun:_getopt_internal_r
+   fun:_getopt_internal
+   fun:getopt
+   fun:_ZN3isc8perfdhcp14CommandOptions10initializeEiPPc
+   fun:_ZN3isc8perfdhcp14CommandOptions5parseEiPPc
+   fun:_ZN33CommandOptionsTest_IpVersion_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN33CommandOptionsTest_IpVersion_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN18CommandOptionsTest7processERKSs.constprop.8
+   fun:_ZN28CommandOptionsTest_Base_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN33CommandOptionsTest_LocalPort_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN36CommandOptionsTest_Aggressivity_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN36CommandOptionsTest_Aggressivity_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN33CommandOptionsTest_IpVersion_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN33CommandOptionsTest_IpVersion_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN34CommandOptionsTest_ClientsNum_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN34CommandOptionsTest_ClientsNum_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN33CommandOptionsTest_LocalPort_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN31CommandOptionsTest_Preload_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN31CommandOptionsTest_Preload_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN35CommandOptionsTest_Diagnostics_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN33CommandOptionsTest_LocalPort_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN34CommandOptionsTest_TimeOffset_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN28CommandOptionsTest_Rate_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN28CommandOptionsTest_Rate_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN36CommandOptionsTest_ExchangeMode_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN18CommandOptionsTest7processERKSs.constprop.8
+   fun:_ZN31CommandOptionsTest_Offsets_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN18CommandOptionsTest7processERKSs.constprop.8
+   fun:_ZN31CommandOptionsTest_Offsets_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN18CommandOptionsTest7processERKSs.constprop.8
+   fun:_ZN37CommandOptionsTest_TemplateFiles_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN31CommandOptionsTest_Wrapped_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN28CommandOptionsTest_Rate_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN28CommandOptionsTest_Rate_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN28CommandOptionsTest_Rate_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN18CommandOptionsTest7processERKSs.constprop.8
+   fun:_ZN28CommandOptionsTest_Base_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN18CommandOptionsTest7processERKSs.constprop.8
+   fun:_ZN30CommandOptionsTest_Period_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN18CommandOptionsTest7processERKSs.constprop.8
+   fun:_ZN28CommandOptionsTest_Base_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN35CommandOptionsTest_ReportDelay_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN35CommandOptionsTest_ReportDelay_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN28CommandOptionsTest_Seed_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN36CommandOptionsTest_Aggressivity_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN18CommandOptionsTest7processERKSs.constprop.8
+   fun:_ZN34CommandOptionsTest_NumRequest_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN18CommandOptionsTest7processERKSs.constprop.8
+   fun:_ZN30CommandOptionsTest_Period_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN35CommandOptionsTest_ReportDelay_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN18CommandOptionsTest7processERKSs.constprop.8
+   fun:_ZN32CommandOptionsTest_DropTime_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN18CommandOptionsTest7processERKSs.constprop.8
+   fun:_ZN32CommandOptionsTest_DropTime_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN34CommandOptionsTest_TimeOffset_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN34CommandOptionsTest_TimeOffset_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN31CommandOptionsTest_MaxDrop_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN18CommandOptionsTest7processERKSs.constprop.8
+   fun:_ZN28CommandOptionsTest_Base_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN31CommandOptionsTest_MaxDrop_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN28CommandOptionsTest_Seed_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN36CommandOptionsTest_ExchangeMode_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN36CommandOptionsTest_ExchangeMode_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN36CommandOptionsTest_ExchangeMode_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN36CommandOptionsTest_ExchangeMode_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN18CommandOptionsTest7processERKSs.constprop.8
+   fun:_ZN34CommandOptionsTest_NumRequest_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN18CommandOptionsTest7processERKSs.constprop.8
+   fun:_ZN34CommandOptionsTest_NumRequest_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN31CommandOptionsTest_MaxDrop_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN31CommandOptionsTest_MaxDrop_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   fun:_ZNK18CommandOptionsTest14tokenizeStringERKSsPi
+   fun:_ZN18CommandOptionsTest7processERKSs.constprop.8
+   fun:_ZN37CommandOptionsTest_TemplateFiles_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:_ZN3isc4util9unittests12check_outputEPiPKvm
+   fun:_ZN12_GLOBAL__N_117FDTest_write_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZN3isc7asiodns12_GLOBAL__N_112RunningQueryC1ERNS_8asiolink9IOServiceERKNS_3dns8QuestionEN5boost10shared_ptrINS6_7MessageEEERSt4pairISstENSB_INS_4util12OutputBufferEEENSB_INS_7resolve17ResolverInterface8CallbackEEEiiijRNS_4nsas22NameserverAddressStoreERNS_5cache13ResolverCacheERNSB_INS0_11RttRecorderEEE
+   fun:_ZN3isc7asiodns14RecursiveQuery7resolveERKNS_3dns8QuestionEN5boost10shared_ptrINS2_7MessageEEENS7_INS_4util12OutputBufferEEEPNS0_9DNSServerE
+   fun:_ZN12_GLOBAL__N_132RecursiveQueryTest_CachedNS_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:_Znwm
+   fun:_ZN3isc4nsas22NameserverAddressStoreC1EN5boost10shared_ptrINS_7resolve17ResolverInterfaceEEEjj
+   fun:_ZN3isc7asiodns19RecursiveQueryTest2C2Ev
+   fun:_ZN7testing8internal15TestFactoryImplIN3isc7asiodns32RecursiveQueryTest2_Resolve_TestEE10CreateTestEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   ...
+   fun:sqlite3_prepare_v2
+   fun:_ZN3isc7datasrc12_GLOBAL__N_128check_schema_version_elementEP7sqlite3PKc
+   fun:_ZN3isc7datasrc12_GLOBAL__N_120check_schema_versionEP7sqlite3
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   fun:malloc
+   ...
+   fun:_ZN3isc7datasrc15SQLite3Accessor4openERKSs
+   fun:_ZN3isc7datasrc15SQLite3AccessorC1ERKSsS3_
+   fun:_ZN12_GLOBAL__N_125SQLite3Open_brokenDB_Test8TestBodyEv
+   fun:_ZN7testing4Test3RunEv
+   fun:_ZN7testing8internal12TestInfoImpl3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:main
+}
+
+#### end of suppressions for existing issues that we want to fix. ####
+######################################################################
