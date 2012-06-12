@@ -3,12 +3,7 @@ Feature: DDNS System
     'compliance' category; specific ACL checks, module checks, etc.
 
     Scenario: Module tests
-        # This test runs the original example configuration, which has
-        # a number of modules. It then removes all non-essential modules,
-        # and checks whether they do disappear from the list of running
-        # modules (note that it 'misuses' the help command for this,
-        # there is a Boss command 'show_processes' but it's output is
-        # currently less standardized than 'help')
+        # The given config has b10-ddns disabled
         Given I have bind10 running with configuration ddns/noddns.config
         And wait for bind10 stderr message BIND10_STARTED_CC
         And wait for bind10 stderr message AUTH_SERVER_STARTED
@@ -84,3 +79,35 @@ Feature: DDNS System
         The DDNS response should be SERVFAIL
         And the SOA serial for example.org should be 1239
 
+    Scenario: ACL
+        # The given config has b10-ddns disabled
+        Given I have bind10 running with configuration ddns/ddns.config
+        And wait for bind10 stderr message BIND10_STARTED_CC
+        And wait for bind10 stderr message AUTH_SERVER_STARTED
+        And wait for bind10 stderr message DDNS_RUNNING
+
+        # Sanity check
+        A query for new1.example.org should have rcode NXDOMAIN
+        A query for new2.example.org should have rcode NXDOMAIN
+        A query for new3.example.org should have rcode NXDOMAIN
+        The SOA serial for example.org should be 1234
+
+        # Test 1
+        When I use DDNS to add a record new1.example.org. 3600 IN A 192.0.2.1
+        The DDNS response should be SUCCESS
+        A query for new1.example.org should have rcode NOERROR
+        The SOA serial for example.org should be 1235
+
+        # Test 2
+        When I set DDNS ACL 0 for 127.0.0.1 to REJECT
+        Then use DDNS to add a record new2.example.org. 3600 IN A 192.0.2.2
+        The DDNS response should be REFUSED
+        A query for new2.example.org should have rcode NXDOMAIN
+        The SOA serial for example.org should be 1235
+
+        # Test 3
+        When I set DDNS ACL 0 for 127.0.0.1 to ACCEPT
+        Then use DDNS to add a record new3.example.org. 3600 IN A 192.0.2.3
+        The DDNS response should be SUCCESS
+        A query for new3.example.org should have rcode NOERROR
+        The SOA serial for example.org should be 1236
