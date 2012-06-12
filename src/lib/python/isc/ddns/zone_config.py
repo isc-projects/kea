@@ -38,7 +38,7 @@ class ZoneConfig:
         '''Constructor.
 
         Parameters:
-        - secondaries: a list of 2-element tuples.  Each element is a pair
+        - secondaries: a set of 2-element tuples.  Each element is a pair
           of isc.dns.Name and isc.dns.RRClass, and identifies a single
           secondary zone.
         - datasrc_class: isc.dns.RRClass object.  Specifies the RR class
@@ -53,9 +53,7 @@ class ZoneConfig:
           ACL will be applied to all zones, which is to reject any requests.
 
         '''
-        self.__secondaries = set()
-        for (zname, zclass) in secondaries:
-            self.__secondaries.add((zname, zclass))
+        self.__secondaries = secondaries
         self.__datasrc_class = datasrc_class
         self.__datasrc_client = datasrc_client
         self.__default_acl = REQUEST_LOADER.load([{"action": "REJECT"}])
