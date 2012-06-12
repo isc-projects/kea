@@ -81,6 +81,9 @@ public:
             return (FindResult(result::NOTFOUND, ZoneFinderPtr()));
         }
         set<Name>::const_iterator it(zones.upper_bound(name));
+        if (it == zones.begin()) {
+            return (FindResult(result::NOTFOUND, ZoneFinderPtr()));
+        }
         -- it;
         NameComparisonResult compar(it->compare(name));
         const ZoneFinderPtr finder(new Finder(*it));
@@ -242,6 +245,8 @@ TEST_F(ContainerTest, selfTest) {
               ds_[0]->findZone(Name("sub.example.org")).code);
     EXPECT_EQ(result::NOTFOUND, ds_[0]->findZone(Name("org")).code);
     EXPECT_EQ(result::NOTFOUND, ds_[1]->findZone(Name("example.org")).code);
+    EXPECT_EQ(result::NOTFOUND, ds_[0]->findZone(Name("aaa")).code);
+    EXPECT_EQ(result::NOTFOUND, ds_[0]->findZone(Name("zzz")).code);
 }
 
 // Test the container we create with empty configuration is, in fact, empty
