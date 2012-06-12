@@ -67,25 +67,22 @@ else:
     SPECFILE_PATH = SPECFILE_PATH.replace("${prefix}", PREFIX)
 
 if "B10_FROM_BUILD" in os.environ:
-    AUTH_SPECFILE_PATH = os.environ["B10_FROM_BUILD"] + "/src/bin/auth"
     if "B10_FROM_SOURCE_LOCALSTATEDIR" in os.environ:
         SOCKET_FILE_PATH = os.environ["B10_FROM_SOURCE_LOCALSTATEDIR"]
     else:
         SOCKET_FILE_PATH = os.environ["B10_FROM_BUILD"]
 else:
     SOCKET_FILE_PATH = bind10_config.DATA_PATH
-    AUTH_SPECFILE_PATH = SPECFILE_PATH
 
 SPECFILE_LOCATION = SPECFILE_PATH + "/ddns.spec"
 SOCKET_FILE = SOCKET_FILE_PATH + '/ddns_socket'
-AUTH_SPECFILE_LOCATION = AUTH_SPECFILE_PATH + '/auth.spec'
+
+# Cooperating or dependency modules
+AUTH_MODULE_NAME = 'Auth'
+XFROUT_MODULE_NAME = 'Xfrout'
 ZONEMGR_MODULE_NAME = 'Zonemgr'
 
 isc.util.process.rename()
-
-# Cooperating modules
-XFROUT_MODULE_NAME = 'Xfrout'
-AUTH_MODULE_NAME = 'Auth'
 
 class DDNSConfigError(Exception):
     '''An exception indicating an error in updating ddns configuration.
@@ -186,7 +183,7 @@ class DDNSServer:
         self._secondary_zones = None
 
         # Get necessary configurations from remote modules.
-        self._cc.add_remote_config(AUTH_SPECFILE_LOCATION)
+        self._cc.add_remote_config_by_name(AUTH_MODULE_NAME)
         self._cc.add_remote_config_by_name(ZONEMGR_MODULE_NAME,
                                            self.__zonemgr_config_handler)
         isc.server_common.tsig_keyring.init_keyring(self._cc)
