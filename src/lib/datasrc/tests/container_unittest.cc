@@ -175,7 +175,7 @@ public:
         }
     }
     // Check the positive result is as we expect it.
-    void positiveResult(const Container::SearchResult& result,
+    void positiveResult(const Container::FindResult& result,
                         const shared_ptr<TestDS>& dsrc,
                         const Name& name, bool exact,
                         const char* test)
@@ -227,7 +227,7 @@ public:
         EXPECT_TRUE(Element::fromJSON(params)->equals(*ds->configuration_));
     }
     shared_ptr<TestedContainer> container_;
-    const Container::SearchResult negativeResult_;
+    const Container::FindResult negativeResult_;
     vector<shared_ptr<TestDS> > ds_;
     vector<ConfigurableContainer::DataSourceInfo> ds_info_;
     const ConstElementPtr config_elem_;
@@ -247,7 +247,7 @@ TEST_F(ContainerTest, emptyContainer) {
     EXPECT_TRUE(container_->dataSources().empty());
 }
 
-// Check the values returned by a search on an empty container. It should be
+// Check the values returned by a find on an empty container. It should be
 // a negative answer (nothing found) no matter if we want an exact or inexact
 // match.
 TEST_F(ContainerTest, emptySearch) {
@@ -255,14 +255,14 @@ TEST_F(ContainerTest, emptySearch) {
 
     // Note: we don't have operator<< for the result class, so we cannot use
     // EXPECT_EQ.  Same for other similar cases.
-    EXPECT_TRUE(negativeResult_ == container_->search(Name("example.org"),
-                                                      false, false));
-    EXPECT_TRUE(negativeResult_ == container_->search(Name("example.org"),
-                                                      false, true));
-    EXPECT_TRUE(negativeResult_ == container_->search(Name("example.org"), true,
-                                                      false));
-    EXPECT_TRUE(negativeResult_ == container_->search(Name("example.org"), true,
-                                                      true));
+    EXPECT_TRUE(negativeResult_ == container_->find(Name("example.org"),
+                                                    false, false));
+    EXPECT_TRUE(negativeResult_ == container_->find(Name("example.org"),
+                                                    false, true));
+    EXPECT_TRUE(negativeResult_ == container_->find(Name("example.org"), true,
+                                                    false));
+    EXPECT_TRUE(negativeResult_ == container_->find(Name("example.org"), true,
+                                                    true));
 }
 
 // Put a single data source inside the container and check it can find an
@@ -270,27 +270,27 @@ TEST_F(ContainerTest, emptySearch) {
 TEST_F(ContainerTest, singleDSExactMatch) {
     container_->dataSources().push_back(ds_info_[0]);
     // This zone is not there
-    EXPECT_TRUE(negativeResult_ == container_->search(Name("org."), true));
+    EXPECT_TRUE(negativeResult_ == container_->find(Name("org."), true));
     // But this one is, so check it.
-    positiveResult(container_->search(Name("example.org"), true),
+    positiveResult(container_->find(Name("example.org"), true),
                    ds_[0], Name("example.org"), true, "Exact match");
     // When asking for a sub zone of a zone there, we get nothing
     // (we want exact match, this would be partial one)
-    EXPECT_TRUE(negativeResult_ == container_->search(Name("sub.example.org."),
-                                                      true));
+    EXPECT_TRUE(negativeResult_ == container_->find(Name("sub.example.org."),
+                                                    true));
 }
 
 // When asking for a partial match, we get all that the exact one, but more.
 TEST_F(ContainerTest, singleDSBestMatch) {
     container_->dataSources().push_back(ds_info_[0]);
     // This zone is not there
-    EXPECT_TRUE(negativeResult_ == container_->search(Name("org.")));
+    EXPECT_TRUE(negativeResult_ == container_->find(Name("org.")));
     // But this one is, so check it.
-    positiveResult(container_->search(Name("example.org")),
+    positiveResult(container_->find(Name("example.org")),
                    ds_[0], Name("example.org"), true, "Exact match");
     // When asking for a sub zone of a zone there, we get nothing
     // (we want exact match, this would be partial one)
-    positiveResult(container_->search(Name("sub.example.org.")),
+    positiveResult(container_->find(Name("sub.example.org.")),
                    ds_[0], Name("example.org"), false, "Subdomain match");
 }
 
@@ -307,17 +307,17 @@ TEST_F(ContainerTest, multiExactMatch) {
         SCOPED_TRACE(test_names[i]);
         multiConfiguration(i);
         // Something that is nowhere there
-        EXPECT_TRUE(negativeResult_ == container_->search(Name("org."), true));
+        EXPECT_TRUE(negativeResult_ == container_->find(Name("org."), true));
         // This one is there exactly.
-        positiveResult(container_->search(Name("example.org"), true),
+        positiveResult(container_->find(Name("example.org"), true),
                        ds_[0], Name("example.org"), true, "Exact match");
         // This one too, but in a different data source.
-        positiveResult(container_->search(Name("sub.example.org."), true),
+        positiveResult(container_->find(Name("sub.example.org."), true),
                        ds_[1], Name("sub.example.org"), true,
                        "Subdomain match");
         // But this one is in neither data source.
         EXPECT_TRUE(negativeResult_ ==
-                    container_->search(Name("sub.example.com."), true));
+                    container_->find(Name("sub.example.com."), true));
     }
 }
 
@@ -327,17 +327,17 @@ TEST_F(ContainerTest, multiBestMatch) {
         SCOPED_TRACE(test_names[i]);
         multiConfiguration(i);
         // Something that is nowhere there
-        EXPECT_TRUE(negativeResult_ == container_->search(Name("org.")));
+        EXPECT_TRUE(negativeResult_ == container_->find(Name("org.")));
         // This one is there exactly.
-        positiveResult(container_->search(Name("example.org")),
+        positiveResult(container_->find(Name("example.org")),
                        ds_[0], Name("example.org"), true, "Exact match");
         // This one too, but in a different data source.
-        positiveResult(container_->search(Name("sub.example.org.")),
+        positiveResult(container_->find(Name("sub.example.org.")),
                        ds_[1], Name("sub.example.org"), true,
                        "Subdomain match");
         // But this one is in neither data source. But it is a subdomain
         // of one of the zones in the first data source.
-        positiveResult(container_->search(Name("sub.example.com.")),
+        positiveResult(container_->find(Name("sub.example.com.")),
                        ds_[0], Name("example.com."), false,
                        "Subdomain in com");
     }
