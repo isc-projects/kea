@@ -115,7 +115,7 @@ PyObject* Name_reverse(s_Name* self);
 PyObject* Name_concatenate(s_Name* self, PyObject* args);
 PyObject* Name_downcase(s_Name* self);
 PyObject* Name_isWildCard(s_Name* self);
-long Name_hash(PyObject* py_self);
+Py_hash_t Name_hash(PyObject* py_self);
 
 PyMethodDef Name_methods[] = {
     { "at", reinterpret_cast<PyCFunction>(Name_at), METH_VARARGS,
@@ -520,7 +520,7 @@ Name_isWildCard(s_Name* self) {
     }
 }
 
-long
+Py_hash_t
 Name_hash(PyObject* pyself) {
     s_Name* const self = static_cast<s_Name*>(pyself);
     return (LabelSequence(*self->cppobj).getHash(false));

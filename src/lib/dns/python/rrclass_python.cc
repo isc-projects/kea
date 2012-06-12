@@ -52,7 +52,7 @@ PyObject* RRClass_str(PyObject* self);
 PyObject* RRClass_toWire(s_RRClass* self, PyObject* args);
 PyObject* RRClass_getCode(s_RRClass* self);
 PyObject* RRClass_richcmp(s_RRClass* self, s_RRClass* other, int op);
-long RRClass_hash(PyObject* pyself);
+Py_hash_t RRClass_hash(PyObject* pyself);
 
 // Static function for direct class creation
 PyObject* RRClass_IN(s_RRClass *self);
@@ -265,7 +265,7 @@ PyObject* RRClass_ANY(s_RRClass*) {
     return (RRClass_createStatic(RRClass::ANY()));
 }
 
-long
+Py_hash_t
 RRClass_hash(PyObject* pyself) {
     s_RRClass* const self = static_cast<s_RRClass*>(pyself);
     return (self->cppobj->getCode());

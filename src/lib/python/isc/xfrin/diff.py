@@ -25,6 +25,7 @@ But for now, it lives here.
 
 import isc.dns
 import isc.log
+from isc.datasrc import ZoneFinder
 from isc.log_messages.libxfrin_messages import *
 
 class NoSuchZone(Exception):
@@ -119,7 +120,7 @@ class Diff:
         else:
             self.__buffer = []
 
-    def __check_commited(self):
+    def __check_committed(self):
         """
         This checks if the diff is already commited or broken. If it is, it
         raises ValueError. This check is for methods that need to work only on
@@ -169,7 +170,7 @@ class Diff:
         - in single_update_mode if any later rr is of type SOA (both for
           addition and deletion)
         """
-        self.__check_commited()
+        self.__check_committed()
         if rr.get_rdata_count() != 1:
             raise ValueError('The rrset must contain exactly 1 Rdata, but ' +
                              'it holds ' + str(rr.get_rdata_count()))
@@ -298,7 +299,7 @@ class Diff:
                 else:
                     raise ValueError('Unknown operation ' + operation)
 
-        self.__check_commited()
+        self.__check_committed()
         # First, compact the data
         self.compact()
         try:
@@ -330,7 +331,7 @@ class Diff:
 
         This might raise isc.datasrc.Error.
         """
-        self.__check_commited()
+        self.__check_committed()
         # Push the data inside the data source
         self.apply()
         # Make sure they are visible.
@@ -376,3 +377,33 @@ class Diff:
             raise ValueError("Separate buffers requested in single-update mode")
         else:
             return (self.__deletions, self.__additions)
+
+    def find(self, name, rrtype,
+             options=(ZoneFinder.NO_WILDCARD | ZoneFinder.FIND_GLUE_OK)):
+        """
+        Calls the find() method in the ZoneFinder associated with this
+        Diff's ZoneUpdater, i.e. the find() on the zone as it was on the
+        moment this Diff object got created.
+        See the ZoneFinder documentation for a full description.
+        Note that the result does not include changes made in this Diff
+        instance so far.
+        Options default to NO_WILDCARD and FIND_GLUE_OK.
+        Raises a ValueError if the Diff has been committed already
+        """
+        self.__check_committed()
+        return self.__updater.find(name, rrtype, options)
+
+    def find_all(self, name,
+                 options=(ZoneFinder.NO_WILDCARD | ZoneFinder.FIND_GLUE_OK)):
+        """
+        Calls the find() method in the ZoneFinder associated with this
+        Diff's ZoneUpdater, i.e. the find_all() on the zone as it was on the
+        moment this Diff object got created.
+        See the ZoneFinder documentation for a full description.
+        Note that the result does not include changes made in this Diff
+        instance so far.
+        Options default to NO_WILDCARD and FIND_GLUE_OK.
+        Raises a ValueError if the Diff has been committed already
+        """
+        self.__check_committed()
+        return self.__updater.find_all(name, options)
