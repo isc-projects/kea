@@ -17,6 +17,9 @@ endif
 
 CLEANFILES = *.gcno *.gcda
 
+TESTS_ENVIRONMENT = \
+	libtool --mode=execute $(VALGRIND_COMMAND)
+
 TESTS =
 noinst_PROGRAMS =
 if HAVE_GTEST
