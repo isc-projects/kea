@@ -127,7 +127,7 @@ def set_serial_to(step, new_serial):
     which sets the SERIAL to the given value
     '''
     step.given('Prepare a DDNS update')
-    step.given('add to the DDNS update: update add example.org 3600 IN SOA ns1.example.org. admin.example.org. 1235 3600 1800 2419200 7200')
+    step.given('add to the DDNS update: update add example.org 3600 IN SOA ns1.example.org. admin.example.org. ' + new_serial + ' 3600 1800 2419200 7200')
     step.given('Run the DDNS update')
 
 @step('Configure BIND10 to run DDNS')
@@ -137,6 +137,7 @@ def configure_ddns_on(step):
         \"\"\"
         config add Boss/components b10-ddns
         config set Boss/components/b10-ddns/kind dispensable
+        config set Boss/components/b10-ddns/address DDNS
         config commit
         \"\"\"
     """)
