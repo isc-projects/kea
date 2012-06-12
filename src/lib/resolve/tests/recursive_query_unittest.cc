@@ -496,8 +496,6 @@ private:
         io_service_.stop();
     }
 protected:
-    // We use a pointer for io_service_, because for some tests we
-    // need to recreate a new one within one onstance of this class
     IOService io_service_;
     scoped_ptr<DNSService> dns_service_;
     scoped_ptr<isc::nsas::NameserverAddressStore> nsas_;
