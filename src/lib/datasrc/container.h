@@ -39,6 +39,9 @@ typedef boost::shared_ptr<DataSourceClientContainer>
 /// The purpose of this class is to hold several data sources and search
 /// through them to find one containing a zone best matching a request.
 ///
+/// All the data source clients should be for the same class. If you need
+/// to handle multiple classes, you need to create multiple separate containers.
+///
 /// This is an abstract base class. It is not expected we would use multiple
 /// implementation inside the servers (but it is not forbidden either), we
 /// have it to allow easy testing. It is possible to create a mock-up class
