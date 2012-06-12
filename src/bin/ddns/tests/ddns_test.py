@@ -451,7 +451,7 @@ class TestDDNSServer(unittest.TestCase):
 
     def test_secondary_zones_config(self):
         # By default it should be an empty list
-        self.assertEqual([], self.ddns_server._secondary_zones)
+        self.assertEqual(set(), self.ddns_server._secondary_zones)
 
         # emulating an update.  calling add_remote_config_by_name is a
         # convenient faked way to invoke the callback.
@@ -460,14 +460,22 @@ class TestDDNSServer(unittest.TestCase):
         self.__cc_session.add_remote_config_by_name('Zonemgr')
 
         # The new set of secondary zones should be stored.
-        self.assertEqual([(TEST_ZONE_NAME, TEST_RRCLASS)],
+        self.assertEqual({(TEST_ZONE_NAME, TEST_RRCLASS)},
                          self.ddns_server._secondary_zones)
 
         # Similar to the above, but the optional 'class' is missing.
         self.__cc_session._zonemgr_config = {'secondary_zones': [
                 {'name': TEST_ZONE_NAME_STR}]}
         self.__cc_session.add_remote_config_by_name('Zonemgr')
-        self.assertEqual([(TEST_ZONE_NAME, TEST_RRCLASS)],
+        self.assertEqual({(TEST_ZONE_NAME, TEST_RRCLASS)},
+                         self.ddns_server._secondary_zones)
+
+        # The given list has a duplicate.  The resulting set should unify them.
+        self.__cc_session._zonemgr_config = {'secondary_zones': [
+                {'name': TEST_ZONE_NAME_STR, 'class': TEST_RRCLASS_STR},
+                {'name': TEST_ZONE_NAME_STR, 'class': TEST_RRCLASS_STR}]}
+        self.__cc_session.add_remote_config_by_name('Zonemgr')
+        self.assertEqual({(TEST_ZONE_NAME, TEST_RRCLASS)},
                          self.ddns_server._secondary_zones)
 
         # Check the 2ndary zones aren't changed if the new config doesn't
@@ -479,9 +487,13 @@ class TestDDNSServer(unittest.TestCase):
         self.assertEqual(42, self.ddns_server._secondary_zones)
         self.ddns_server._secondary_zones = seczones_orig
 
+        # If the update config is broken, the existing set should be intact.
         self.__cc_session._zonemgr_config = {'secondary_zones': [
+                {'name': 'good.example', 'class': TEST_RRCLASS_STR},
                 {'name': 'badd..example', 'class': TEST_RRCLASS_STR}]}
         self.__cc_session.add_remote_config_by_name('Zonemgr')
+        self.assertEqual({(TEST_ZONE_NAME, TEST_RRCLASS)},
+                         self.ddns_server._secondary_zones)
 
     def test_shutdown_command(self):
         '''Test whether the shutdown command works'''

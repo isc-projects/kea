@@ -185,4 +185,5 @@ update its internal copy of that configuration.
 % DDNS_SECONDARY_ZONES_UPDATE updated secondary zone list (%1 zones are listed)
 b10-ddns has successfully updated the internal copy of secondary zones
 obtained from b10-zonemgr, based on a latest update to zonemgr's
-configuration.  The number of newly configured secondary zones is logged.
+configuration.  The number of newly configured (unique) secondary
+zones is logged.
