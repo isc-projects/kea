@@ -16,11 +16,14 @@
 #include <iostream>
 #include <exceptions/exceptions.h>
 #include <log/dummylog.h>
+#include <log/logger_support.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp/iface_mgr.h>
 
 using namespace std;
 using namespace isc::dhcp;
+
+
 
 /// This file contains entry point (main() function) for standard DHCPv4 server
 /// component for BIND10 framework. It parses command-line arguments and
@@ -32,6 +35,8 @@ using namespace isc::dhcp;
 /// Dhcpv4Srv and other classes, see \ref dhcpv4Session.
 
 namespace {
+
+const char* const DHCP4_NAME = "b10-dhcp4";
 
 void
 usage() {
@@ -47,17 +52,21 @@ main(int argc, char* argv[]) {
     int ch;
     bool verbose_mode = false; // should server be verbose?
 
-    while ((ch = getopt(argc, argv, ":v")) != -1) {
+    while ((ch = getopt(argc, argv, "v")) != -1) {
         switch (ch) {
         case 'v':
             verbose_mode = true;
             isc::log::denabled = true;
             break;
-        case ':':
         default:
             usage();
         }
     }
+
+    // Initialize logging.  If verbose, we'll use maximum verbosity.
+    isc::log::initLogger(DHCP4_NAME,
+                         (verbose_mode ? isc::log::DEBUG : isc::log::INFO),
+                         isc::log::MAX_DEBUG_LEVEL, NULL);
 
     cout << "b10-dhcp4: My pid is " << getpid() << endl;
 
@@ -66,13 +75,12 @@ main(int argc, char* argv[]) {
     }
 
     int ret = 0;
-    ControlledDhcpv4Srv* server = NULL;
 
     try {
 
         cout << "[b10-dhcp4] Initiating DHCPv4 server operation." << endl;
 
-        server = new ControlledDhcpv4Srv(DHCP4_SERVER_PORT, verbose_mode);
+        ControlledDhcpv4Srv* server = new ControlledDhcpv4Srv(DHCP4_SERVER_PORT);
         server->run();
         delete server;
 
