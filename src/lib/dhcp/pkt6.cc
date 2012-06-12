@@ -202,5 +202,11 @@ void Pkt6::repack() {
     bufferOut_.writeData(&data_[0], data_.size());
 }
 
+void
+Pkt6::updateTimestamp() {
+    timestamp_ = boost::posix_time::microsec_clock::universal_time();
+}
+
+
 } // end of isc::dhcp namespace
 } // end of isc namespace
