@@ -1,3 +1,6 @@
 # Place temporary suppressions that we want to revisit in the future
 # into this file. For permanent suppressions that we don't want to look
 # at again, use valgrind-suppressions.
+#
+# In case you want to make sense of the following symbols, demangle them
+# with a command like: c++filt < valgrind-suppressions.revisit
