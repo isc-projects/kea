@@ -138,9 +138,8 @@ private:
     // until the end of the test and then deleted.
     vector<shared_ptr<MockDataSourceClient> > to_delete_;
 };
-const size_t ds_count = 4;
 
-const char* ds_zones[ds_count][3] = {
+const char* ds_zones[][3] = {
     {
         "example.org.",
         "example.com.",
@@ -158,6 +157,8 @@ const char* ds_zones[ds_count][3] = {
         NULL, NULL
     }
 };
+
+const size_t ds_count = (sizeof (ds_zones) / sizeof (*ds_zones));
 
 class ContainerTest : public ::testing::Test {
 public:
@@ -200,7 +201,7 @@ public:
         switch (index) {
             case 2:
                 container_->getDataSources().push_back(ds_info_[2]);
-                // The ds3 is empty. We just check that it doesn't confuse
+                // The ds_[2] is empty. We just check that it doesn't confuse
                 // us. Fall through to the case 0.
             case 0:
                 container_->getDataSources().push_back(ds_info_[0]);
@@ -214,7 +215,7 @@ public:
             case 3:
                 container_->getDataSources().push_back(ds_info_[1]);
                 container_->getDataSources().push_back(ds_info_[0]);
-                // It is the same as 2, but we take from the first one.
+                // It is the same as ds_[1], but we take from the first one.
                 // The first one to match is the correct one.
                 container_->getDataSources().push_back(ds_info_[3]);
                 break;
@@ -227,7 +228,7 @@ public:
         MockDataSourceClient* ds(dynamic_cast<MockDataSourceClient*>(
             container_->getDataSources()[index].data_src_));
         // Comparing with NULL does not work
-        ASSERT_TRUE(ds);
+        ASSERT_NE(ds, static_cast<const MockDataSourceClient*>(NULL));
         EXPECT_EQ(type, ds->type_);
         EXPECT_TRUE(Element::fromJSON(params)->equals(*ds->configuration_));
     }
@@ -295,8 +296,8 @@ TEST_F(ContainerTest, singleDSBestMatch) {
     // But this one is, so check it.
     positiveResult(container_->find(Name("example.org")),
                    ds_[0], Name("example.org"), true, "Exact match");
-    // When asking for a sub zone of a zone there, we get nothing
-    // (we want exact match, this would be partial one)
+    // When asking for a sub zone of a zone there, we get the parent
+    // one.
     positiveResult(container_->find(Name("sub.example.org.")),
                    ds_[0], Name("example.org"), false, "Subdomain match");
 }
@@ -310,7 +311,7 @@ const char* test_names[] = {
 
 TEST_F(ContainerTest, multiExactMatch) {
     // Run through all the multi-configurations
-    for (size_t i(0); i < 4; ++ i) {
+    for (size_t i(0); i < sizeof(test_names) / sizeof(*test_names); ++ i) {
         SCOPED_TRACE(test_names[i]);
         multiConfiguration(i);
         // Something that is nowhere there
