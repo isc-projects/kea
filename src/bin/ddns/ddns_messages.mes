@@ -187,3 +187,14 @@ b10-ddns has successfully updated the internal copy of secondary zones
 obtained from b10-zonemgr, based on a latest update to zonemgr's
 configuration.  The number of newly configured (unique) secondary
 zones is logged.
+
+% DDNS_RECEIVED_AUTH_UPDATE received configuration updates from auth server
+b10-ddns is notified of updates to b10-auth configuration
+(including a report of the initial configuration) that b10-ddns might
+be interested in.
+
+% DDNS_AUTH_DBFILE_UPDATE updated auth DB file to %1
+b10-ddns was notified of updates to the SQLite3 DB file that b10-auth
+uses for the underlying data source and on which b10-ddns needs to
+make updates.  b10-ddns then updated its internal setup so further
+updates would be made on the new DB.

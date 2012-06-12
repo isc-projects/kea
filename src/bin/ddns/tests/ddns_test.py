@@ -217,6 +217,7 @@ class MyCCSession(isc.config.ConfigData):
 
         # Attributes to handle (faked) remote configurations
         self.__callbacks = {}   # record callbacks for updates to remote confs
+        self._auth_config = {}  # faked auth cfg, settable by tests
         self._zonemgr_config = {} # faked zonemgr cfg, settable by tests
 
     def start(self):
@@ -236,6 +237,11 @@ class MyCCSession(isc.config.ConfigData):
     def add_remote_config_by_name(self, module_name, update_callback=None):
         if update_callback is not None:
             self.__callbacks[module_name] = update_callback
+        if module_name is 'Auth':
+            if module_name in self.__callbacks:
+                # ddns implementation doesn't use the 2nd element, so just
+                # setting it to None
+                self.__callbacks[module_name](self._auth_config, None)
         if module_name is 'Zonemgr':
             if module_name in self.__callbacks:
                 self.__callbacks[module_name](self._zonemgr_config,
@@ -446,12 +452,41 @@ class TestDDNSServer(unittest.TestCase):
         acl = self.ddns_server._zone_config[(TEST_ZONE_NAME, TEST_RRCLASS)]
         self.assertEqual(ACCEPT, acl.execute(TEST_ACL_CONTEXT))
 
+    def test_datasrc_config(self):
+        # By default (in our faked config) it should be derived from the
+        # test data source
+        rrclass, datasrc_client = self.ddns_server._datasrc_info
+        self.assertEqual(RRClass.IN(), rrclass)
+        self.assertEqual(DataSourceClient.SUCCESS,
+                         datasrc_client.find_zone(Name('example.org'))[0])
+
+        # emulating an update.  calling add_remote_config_by_name is a
+        # convenient faked way to invoke the callback.  We set the db file
+        # to a bogus one; the current implementation will create an unusable
+        # data source client.
+        self.__cc_session.auth_db_file = './notexistentdir/somedb.sqlite3'
+        self.__cc_session._auth_config = \
+            {'database_file': './notexistentdir/somedb.sqlite3'}
+        self.__cc_session.add_remote_config_by_name('Auth')
+        rrclass, datasrc_client = self.ddns_server._datasrc_info
+        self.assertEqual(RRClass.IN(), rrclass)
+        self.assertRaises(isc.datasrc.Error,
+                          datasrc_client.find_zone, Name('example.org'))
+
+        # Check the current info isn't changed if the new config doesn't
+        # update it.
+        info_orig = self.ddns_server._datasrc_info
+        self.ddns_server._datasrc_info = 42 # dummy value, should be kept.
+        self.__cc_session._auth_config = {'other_config': 'value'}
+        self.__cc_session.add_remote_config_by_name('Auth')
+        self.assertEqual(42, self.ddns_server._datasrc_info)
+        self.ddns_server._datasrc_info = info_orig
+
     def test_secondary_zones_config(self):
         # By default it should be an empty list
         self.assertEqual(set(), self.ddns_server._secondary_zones)
 
-        # emulating an update.  calling add_remote_config_by_name is a
-        # convenient faked way to invoke the callback.
+        # emulating an update.
         self.__cc_session._zonemgr_config = {'secondary_zones': [
                 {'name': TEST_ZONE_NAME_STR, 'class': TEST_RRCLASS_STR}]}
         self.__cc_session.add_remote_config_by_name('Zonemgr')
@@ -1248,23 +1283,6 @@ class TestConfig(unittest.TestCase):
                          ddns.SOCKET_FILE)
         self.assertEqual(os.environ["B10_FROM_SOURCE"] +
                          "/src/bin/ddns/ddns.spec", ddns.SPECFILE_LOCATION)
-
-    def test_get_datasrc_client(self):
-        # The test sqlite DB should contain the example.org zone.
-        rrclass, datasrc_client = ddns.get_datasrc_client(self.__ccsession)
-        self.assertEqual(RRClass.IN(), rrclass)
-        self.assertEqual(DataSourceClient.SUCCESS,
-                         datasrc_client.find_zone(Name('example.org'))[0])
-
-    def test_get_datasrc_client_fail(self):
-        # DB file is in a non existent directory, and creatng the client
-        # will fail.  get_datasrc_client will return a dummy client, which
-        # will subsequently make find_zone() fail.
-        self.__ccsession.auth_db_file = './notexistentdir/somedb.sqlite3'
-        rrclass, datasrc_client = ddns.get_datasrc_client(self.__ccsession)
-        self.assertEqual(RRClass.IN(), rrclass)
-        self.assertRaises(isc.datasrc.Error,
-                          datasrc_client.find_zone, Name('example.org'))
 
 if __name__== "__main__":
     isc.log.resetUnitTestRootLogger()
