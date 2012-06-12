@@ -991,7 +991,7 @@ AC_ARG_ENABLE(valgrind, [AC_HELP_STRING([--enable-valgrind],
 AM_CONDITIONAL(ENABLE_VALGRIND, test "x$enable_valgrind" != "xno")
 
 if test "x$VALGRIND" != "xno" -a "x$enable_valgrind" != "xno"; then
-   VALGRIND_COMMAND="$VALGRIND --gen-suppressions=all --suppressions=\$(top_srcdir)/src/valgrind-suppressions --suppressions=\$(top_srcdir)/src/valgrind-suppressions.revisit --num-callers=24 --leak-check=full --track-fds=yes --fullpath-after="
+   VALGRIND_COMMAND="$VALGRIND -q --gen-suppressions=all --suppressions=\$(top_srcdir)/src/valgrind-suppressions --suppressions=\$(top_srcdir)/src/valgrind-suppressions.revisit --num-callers=24 --leak-check=full --track-fds=yes --fullpath-after="
 fi
 AC_SUBST(VALGRIND_COMMAND)
 
