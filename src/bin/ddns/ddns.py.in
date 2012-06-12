@@ -141,15 +141,15 @@ def get_datasrc_client(cc_session):
         file = os.environ["B10_FROM_BUILD"] + "/bind10_zones.sqlite3"
     datasrc_config = '{ "database_file": "' + file + '"}'
     try:
-        return HARDCODED_DATASRC_CLASS, DataSourceClient('sqlite3',
-                                                         datasrc_config)
+        return (HARDCODED_DATASRC_CLASS,
+                DataSourceClient('sqlite3', datasrc_config), file)
     except isc.datasrc.Error as ex:
         class DummyDataSourceClient:
             def __init__(self, ex):
                 self.__ex = ex
             def find_zone(self, zone_name):
                 raise isc.datasrc.Error(self.__ex)
-        return HARDCODED_DATASRC_CLASS, DummyDataSourceClient(ex)
+        return (HARDCODED_DATASRC_CLASS, DummyDataSourceClient(ex), file)
 
 class DDNSServer:
     # The number of TCP clients that can be handled by the server at the same
@@ -179,11 +179,16 @@ class DDNSServer:
             self._cc.get_default_value('zones'))
         self._cc.start()
 
+        # Datasource client used for handling update requests: when set,
+        # should a tuple of RRClass and DataSourceClient.  Constructed and
+        # maintained based on auth configuration.
+        self._datasrc_info = None
         # A set of secondary zones, retrieved from zonemgr configuration.
         self._secondary_zones = None
 
         # Get necessary configurations from remote modules.
-        self._cc.add_remote_config_by_name(AUTH_MODULE_NAME)
+        self._cc.add_remote_config_by_name(AUTH_MODULE_NAME,
+                                           self.__auth_config_handler)
         self._cc.add_remote_config_by_name(ZONEMGR_MODULE_NAME,
                                            self.__zonemgr_config_handler)
         isc.server_common.tsig_keyring.init_keyring(self._cc)
@@ -259,17 +264,30 @@ class DDNSServer:
             answer = create_answer(1, "Unknown command: " + str(cmd))
         return answer
 
+    def __auth_config_handler(self, new_config, module_config):
+        logger.info(DDNS_RECEIVED_AUTH_UPDATE)
+
+        # If we've got the config before and the new config doesn't update
+        # the DB file, there's nothing we should do with it.
+        # Note: there seems to be a bug either in bindctl or cfgmgr, and
+        # new_config can contain 'database_file' even if it's not really
+        # updated.  We still perform the check so we can avoid redundant
+        # resetting when the bug is fixed.  The redundant reset itself is not
+        # good, but such configuration update should not happen so often and
+        # it should be acceptable in practice.
+        if self._datasrc_info is not None and \
+                not 'database_file' in new_config:
+            return
+        rrclass, client, db_file = get_datasrc_client(self._cc)
+        self._datasrc_info = (rrclass, client)
+        logger.info(DDNS_AUTH_DBFILE_UPDATE, db_file)
+
     def __zonemgr_config_handler(self, new_config, module_config):
         logger.info(DDNS_RECEIVED_ZONEMGR_UPDATE)
 
         # If we've got the config before and the new config doesn't update
         # the secondary zone list, there's nothing we should do with it.
-        # Note: there seems to be a bug either in bindctl or cfgmgr, and
-        # new_config can contain 'secondary_zones' even if it's not really
-        # updated.  We still perform the check so we can avoid redundant
-        # resetting when the bug is fixed.  The redundant reset itself is not
-        # good, but such configuration update should not happen so often and
-        # it should be acceptable in practice.
+        # (Same note as that for auth's config applies)
         if self._secondary_zones is not None and \
                 not 'secondary_zones' in new_config:
             return
@@ -412,9 +430,8 @@ class DDNSServer:
         # Let an update session object handle the request.  Note: things around
         # ZoneConfig will soon be substantially revised.  For now we don't
         # bother to generalize it.
-        datasrc_class, datasrc_client = get_datasrc_client(self._cc)
-        zone_cfg = ZoneConfig(self._secondary_zones, datasrc_class,
-                              datasrc_client, self._zone_config)
+        zone_cfg = ZoneConfig(self._secondary_zones, self._datasrc_info[0],
+                              self._datasrc_info[1], self._zone_config)
         update_session = self._UpdateSessionClass(self.__request_msg,
                                                   remote_addr, zone_cfg)
         result, zname, zclass = update_session.handle()
