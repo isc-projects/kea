@@ -31,7 +31,7 @@ using namespace std;
 namespace {
 
 // A test data source. It pretends it has some zones.
-class TestDS : public DataSourceClient {
+class MockDataSourceClient : public DataSourceClient {
 public:
     class Finder : public ZoneFinder {
     public:
@@ -64,14 +64,15 @@ public:
         Name origin_;
     };
     // Constructor from a list of zones.
-    TestDS(const char* zone_names[]) {
+    MockDataSourceClient(const char* zone_names[]) {
         for (const char** zone(zone_names); *zone; ++ zone) {
             zones.insert(Name(*zone));
         }
     }
     // Constructor from configuration. The list of zones will be empty, but
     // it will keep the configuration inside for further inspection.
-    TestDS(const string& type, const ConstElementPtr& configuration) :
+    MockDataSourceClient(const string& type,
+                         const ConstElementPtr& configuration) :
         type_(type),
         configuration_(configuration)
     { }
@@ -123,7 +124,8 @@ public:
         if (type == "error") {
             isc_throw(DataSourceError, "The error data source type");
         }
-        shared_ptr<TestDS> ds(new TestDS(type, configuration));
+        shared_ptr<MockDataSourceClient>
+            ds(new MockDataSourceClient(type, configuration));
         // Make sure it is deleted when the test container is deleted.
         to_delete_.push_back(ds);
         return (DataSourcePair(ds.get(), DataSourceClientContainerPtr()));
@@ -131,7 +133,7 @@ public:
 private:
     // Hold list of data sources created internally, so they are preserved
     // until the end of the test and then deleted.
-    vector<shared_ptr<TestDS> > to_delete_;
+    vector<shared_ptr<MockDataSourceClient> > to_delete_;
 };
 const size_t ds_count = 4;
 
@@ -167,7 +169,8 @@ public:
             "}]"))
     {
         for (size_t i(0); i < ds_count; ++ i) {
-            shared_ptr<TestDS> ds(new TestDS(ds_zones[i]));
+            shared_ptr<MockDataSourceClient>
+                ds(new MockDataSourceClient(ds_zones[i]));
             ds_.push_back(ds);
             ds_info_.push_back(ConfigurableContainer::DataSourceInfo(ds.get(),
                 DataSourceClientContainerPtr()));
@@ -175,7 +178,7 @@ public:
     }
     // Check the positive result is as we expect it.
     void positiveResult(const Container::FindResult& result,
-                        const shared_ptr<TestDS>& dsrc,
+                        const shared_ptr<MockDataSourceClient>& dsrc,
                         const Name& name, bool exact,
                         const char* test)
     {
@@ -218,7 +221,7 @@ public:
     }
     void checkDS(size_t index, const string& type, const string& params) {
         ASSERT_GT(container_->getDataSources().size(), index);
-        TestDS* ds(dynamic_cast<TestDS*>(
+        MockDataSourceClient* ds(dynamic_cast<MockDataSourceClient*>(
             container_->getDataSources()[index].data_src_));
         // Comparing with NULL does not work
         ASSERT_TRUE(ds);
@@ -227,7 +230,7 @@ public:
     }
     shared_ptr<TestedContainer> container_;
     const Container::FindResult negativeResult_;
-    vector<shared_ptr<TestDS> > ds_;
+    vector<shared_ptr<MockDataSourceClient> > ds_;
     vector<ConfigurableContainer::DataSourceInfo> ds_info_;
     const ConstElementPtr config_elem_;
 };
