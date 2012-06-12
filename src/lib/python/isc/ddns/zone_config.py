@@ -22,6 +22,9 @@ ZONE_NOTFOUND = -1              # Zone isn't found in find_zone()
 ZONE_PRIMARY = 0                # Primary zone
 ZONE_SECONDARY = 1              # Secondary zone
 
+# The default ACL if unspecifed on construction of ZoneConfig.
+DEFAULT_ACL = REQUEST_LOADER.load([{"action": "REJECT"}])
+
 class ZoneConfig:
     '''A temporary helper class to encapsulate zone related configuration.
 
@@ -56,7 +59,7 @@ class ZoneConfig:
         self.__secondaries = secondaries
         self.__datasrc_class = datasrc_class
         self.__datasrc_client = datasrc_client
-        self.__default_acl = REQUEST_LOADER.load([{"action": "REJECT"}])
+        self.__default_acl = DEFAULT_ACL
         self.__acl_map = acl_map
 
     def find_zone(self, zone_name, zone_class):
