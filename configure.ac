@@ -982,6 +982,19 @@ AC_ARG_ENABLE(logger-checks, [AC_HELP_STRING([--enable-logger-checks],
 AM_CONDITIONAL(ENABLE_LOGGER_CHECKS, test x$enable_logger_checks != xno)
 AM_COND_IF([ENABLE_LOGGER_CHECKS], [AC_DEFINE([ENABLE_LOGGER_CHECKS], [1], [Check logger messages?])])
 
+# Check for valgrind
+AC_PATH_PROG(VALGRIND, valgrind, no)
+AM_CONDITIONAL(HAVE_VALGRIND, test "x$VALGRIND" != "xno")
+
+AC_ARG_ENABLE(valgrind, [AC_HELP_STRING([--enable-valgrind],
+  [run tests under Valgrind [default=no]])], enable_valgrind=$enableval, enable_valgrind=no)
+AM_CONDITIONAL(ENABLE_VALGRIND, test "x$enable_valgrind" != "xno")
+
+if test "x$VALGRIND" != "xno" -a "x$enable_valgrind" != "xno"; then
+   VALGRIND_COMMAND="$VALGRIND --gen-suppressions=all --suppressions=\$(top_srcdir)/src/valgrind-suppressions --suppressions=\$(top_srcdir)/src/valgrind-suppressions.revisit --leak-check=full --track-fds=yes --fullpath-after="
+fi
+AC_SUBST(VALGRIND_COMMAND)
+
 AC_CONFIG_FILES([Makefile
                  doc/Makefile
                  doc/guide/Makefile
