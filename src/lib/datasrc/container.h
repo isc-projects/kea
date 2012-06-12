@@ -228,6 +228,18 @@ public:
     ///
     /// \todo The content yet to be defined.
     struct DataSourceInfo {
+        /// \brief Default constructor.
+        ///
+        /// Don't use directly. It is here so the structure can live in
+        /// a vector.
+        DataSourceInfo() :
+            data_src_(NULL)
+        {}
+        DataSourceInfo(DataSourceClient* data_src,
+                       const DataSourceClientContainerPtr& container) :
+            data_src_(data_src),
+            container_(container)
+        { }
         DataSourceClient* data_src_;
         DataSourceClientContainerPtr container_;
     };
