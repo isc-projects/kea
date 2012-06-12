@@ -168,10 +168,9 @@ public:
     {
         for (size_t i(0); i < ds_count; ++ i) {
             shared_ptr<TestDS> ds(new TestDS(ds_zones[i]));
-            ConfigurableContainer::DataSourceInfo info;
-            info.data_src_ = ds.get();
             ds_.push_back(ds);
-            ds_info_.push_back(info);
+            ds_info_.push_back(ConfigurableContainer::DataSourceInfo(ds.get(),
+                DataSourceClientContainerPtr()));
         }
     }
     // Check the positive result is as we expect it.
