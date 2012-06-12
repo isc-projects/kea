@@ -120,16 +120,6 @@ def run_ddns_update(step):
     '''
     run_nsupdate(world.nsupdate_commands)
 
-@step('use DDNS to set the SOA SERIAL to ([0-9]+)')
-def set_serial_to(step, new_serial):
-    '''
-    Convenience compound step; prepare an update for example.org,
-    which sets the SERIAL to the given value
-    '''
-    step.given('Prepare a DDNS update')
-    step.given('add to the DDNS update: update add example.org 3600 IN SOA ns1.example.org. admin.example.org. ' + new_serial + ' 3600 1800 2419200 7200')
-    step.given('Run the DDNS update')
-
 @step('Configure BIND10 to run DDNS')
 def configure_ddns_on(step):
     step.behave_as("""
@@ -152,3 +142,31 @@ def configure_ddns_on(step):
         \"\"\"
     """)
 
+@step('use DDNS to set the SOA SERIAL to ([0-9]+)')
+def set_serial_to(step, new_serial):
+    '''
+    Convenience compound step; prepare an update for example.org,
+    which sets the SERIAL to the given value
+    '''
+    step.given('Prepare a DDNS update')
+    step.given('add to the DDNS update: update add example.org 3600 IN SOA ns1.example.org. admin.example.org. ' + new_serial + ' 3600 1800 2419200 7200')
+    step.given('Run the DDNS update')
+
+@step('use DDNS to add a record (.*)')
+def set_serial_to(step, new_record):
+    '''
+    Convenience compound step; prepare an update for example.org,
+    which adds one record, then runs the update.
+    '''
+    step.given('Prepare a DDNS update')
+    step.given('add to the DDNS update: update add ' + new_record)
+    step.given('Run the DDNS update')
+
+@step('set DDNS ACL ([0-9]+) for ([0-9.]+) to ([A-Z]+)')
+def set_ddns_acl_to(step, nr, address, action):
+    '''
+    Replaces the ACL at the given index for the given
+    address, to the given action
+    '''
+    step.given('set bind10 configuration DDNS/zones[' + nr + ']/update_acl to [{"action": "' + action + '", "from": "' + address + '"}]')
+    step.given('last bindctl output should not contain Error')
