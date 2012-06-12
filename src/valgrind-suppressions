@@ -1,0 +1,4 @@
+# Valgrind suppressions file. Place permanent suppressions that we never
+# want to reconsider again into this file. For temporary suppressions
+# that we want to revisit in the future, use
+# valgrind-suppressions.revisit.
