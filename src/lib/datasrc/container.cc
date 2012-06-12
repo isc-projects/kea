@@ -28,7 +28,7 @@ namespace datasrc {
 void
 ConfigurableContainer::configure(const Element& config, bool) {
     // TODO: Implement the cache
-    // TODO: Implement recyclation from the old configuration.
+    // TODO: Implement recycling from the old configuration.
     size_t i(0); // Outside of the try to be able to access it in the catch
     try {
         vector<DataSourceInfo> new_data_sources;
