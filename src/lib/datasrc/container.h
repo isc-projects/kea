@@ -213,8 +213,7 @@ public:
     /// \throw DataSourceError if there's a problem creating a data source.
     /// \throw ConfigurationError if the configuration is invalid in some
     ///     sense.
-    void configure(const data::ConstElementPtr& configuration,
-                   bool allow_cache);
+    void configure(const data::Element& configuration, bool allow_cache);
 
     /// \brief Implementation of the Container::search.
     virtual SearchResult search(const dns::Name& zone,
