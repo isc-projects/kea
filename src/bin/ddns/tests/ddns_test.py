@@ -233,9 +233,6 @@ class MyCCSession(isc.config.ConfigData):
         """
         return FakeSocket(1)
 
-    def add_remote_config(self, spec_file_name, update_callback=None):
-        pass
-
     def add_remote_config_by_name(self, module_name, update_callback=None):
         if update_callback is not None:
             self.__callbacks[module_name] = update_callback
@@ -1251,9 +1248,6 @@ class TestConfig(unittest.TestCase):
                          ddns.SOCKET_FILE)
         self.assertEqual(os.environ["B10_FROM_SOURCE"] +
                          "/src/bin/ddns/ddns.spec", ddns.SPECFILE_LOCATION)
-        self.assertEqual(os.environ["B10_FROM_BUILD"] +
-                         "/src/bin/auth/auth.spec",
-                         ddns.AUTH_SPECFILE_LOCATION)
 
     def test_get_datasrc_client(self):
         # The test sqlite DB should contain the example.org zone.
