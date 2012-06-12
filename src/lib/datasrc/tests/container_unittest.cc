@@ -407,21 +407,21 @@ TEST_F(ContainerTest, configureParams) {
 TEST_F(ContainerTest, wrongConfig) {
     const char* configs[] = {
         // A lot of stuff missing from there
-        "[{}]",
+        "[{\"type\": \"test_type\", \"params\": 13}, {}]",
         // Some bad types completely
         "{}",
         "true",
         "42",
         "null",
-        "[true]",
-        "[[]]",
-        "[42]",
+        "[{\"type\": \"test_type\", \"params\": 13}, true]",
+        "[{\"type\": \"test_type\", \"params\": 13}, []]",
+        "[{\"type\": \"test_type\", \"params\": 13}, 42]",
         // Bad type of type
-        "[{\"type\": 42}]",
-        "[{\"type\": true}]",
-        "[{\"type\": null}]",
-        "[{\"type\": []}]",
-        "[{\"type\": {}}]",
+        "[{\"type\": \"test_type\", \"params\": 13}, {\"type\": 42}]",
+        "[{\"type\": \"test_type\", \"params\": 13}, {\"type\": true}]",
+        "[{\"type\": \"test_type\", \"params\": 13}, {\"type\": null}]",
+        "[{\"type\": \"test_type\", \"params\": 13}, {\"type\": []}]",
+        "[{\"type\": \"test_type\", \"params\": 13}, {\"type\": {}}]",
         // TODO: Once cache is supported, add some invalid cache values
         NULL
     };
@@ -435,6 +435,7 @@ TEST_F(ContainerTest, wrongConfig) {
                      ConfigurableContainer::ConfigurationError);
         // Still untouched
         checkDS(0, "test_type", "{}");
+        EXPECT_EQ(1, container_->getDataSources().size());
     }
 }
 
