@@ -179,6 +179,11 @@ class DDNSServer:
             self._cc.get_default_value('zones'))
         self._cc.start()
 
+        # Internal attributes derived from other modules.  They will be
+        # initialized via dd_remote_xxx below and will be kept updated
+        # through their callbacks.  They are defined as 'protected' so tests
+        # can examine them; but they are essentially private to the class.
+        #
         # Datasource client used for handling update requests: when set,
         # should a tuple of RRClass and DataSourceClient.  Constructed and
         # maintained based on auth configuration.
@@ -187,10 +192,15 @@ class DDNSServer:
         self._secondary_zones = None
 
         # Get necessary configurations from remote modules.
-        self._cc.add_remote_config_by_name(AUTH_MODULE_NAME,
-                                           self.__auth_config_handler)
-        self._cc.add_remote_config_by_name(ZONEMGR_MODULE_NAME,
-                                           self.__zonemgr_config_handler)
+        try:
+            mods = [(AUTH_MODULE_NAME, self.__auth_config_handler),
+                    (ZONEMGR_MODULE_NAME, self.__zonemgr_config_handler)]
+            for mod in mods:
+                self._cc.add_remote_config_by_name(mod[0], mod[1])
+        except ModuleCCSessionError as ex:
+            logger.error(DDNS_GET_REMOTE_CONFIG_FAIL, mod[0], ex)
+            raise ex    # propagte it and die for now
+        # This should succeed as long as cfgmgr is up.
         isc.server_common.tsig_keyring.init_keyring(self._cc)
 
         self._shutdown = False

@@ -198,3 +198,22 @@ b10-ddns was notified of updates to the SQLite3 DB file that b10-auth
 uses for the underlying data source and on which b10-ddns needs to
 make updates.  b10-ddns then updated its internal setup so further
 updates would be made on the new DB.
+
+% DDNS_GET_REMOTE_CONFIG_FAIL failed to get %1 module configuration: %2
+b10-ddns tried to get configuration of some remote modules for its
+operation, but it failed.  The most likely cause of this is that the
+remote module has not fully started up and b10-ddns couldn't get the
+configuration in a timely fashion.  In the current implementation
+b10-ddns considers it a fatal error and terminates; however, as long
+as b10-ddns is configured as a "dispensable" component (which is the
+default), the parent bind10 process will restart it, and getting the
+remote configuration will eventually (and soon) succeed.  This is not
+the optimal behavior, but should be sufficient in practice.  If it
+really causes an operational trouble other than having a few of this
+log messages, please submit a bug report; there can be several ways to
+make it more sophisticated.  Another, less likely reason for having
+this error is because the remote modules are not actually configured
+to run.  If that's the case fixing the configuration should solve the
+problem - either by making sure the remote module will run or by not
+running b10-ddns (without these remote modules b10-ddns is not
+functional, so there's no point in running it in this case).
