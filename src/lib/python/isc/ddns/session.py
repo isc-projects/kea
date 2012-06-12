@@ -125,6 +125,58 @@ def collect_rrsets(collection, rrset):
     if not found:
         collection.append(rrset)
 
+class DDNS_SOA:
+    '''Class to handle the SOA in the DNS update '''
+
+    def __get_serial_internal(self, origin_soa):
+        '''Get serial number from soa'''
+        return Serial(int(origin_soa.get_rdata()[0].to_text().split()[2]))
+
+    def __write_soa_internal(self, origin_soa, soa_num):
+        '''Write back serial number to soa'''
+        new_soa = RRset(origin_soa.get_name(), origin_soa.get_class(),
+                        RRType.SOA(), origin_soa.get_ttl())
+        soa_rdata_parts = origin_soa.get_rdata()[0].to_text().split()
+        soa_rdata_parts[2] = str(soa_num.get_value())
+        new_soa.add_rdata(Rdata(origin_soa.get_type(), origin_soa.get_class(),
+                                " ".join(soa_rdata_parts)))
+        return new_soa
+
+    def soa_update_check(self, origin_soa, new_soa):
+        '''Check whether the new soa is valid. If the serial number is bigger
+        than the old one, it is valid, then return True, otherwise, return
+        False. Make sure the origin_soa and new_soa parameters are not none
+        before invoke soa_update_check.
+        Parameters:
+            origin_soa, old SOA resource record.
+            new_soa, new SOA resource record.
+        Output:
+            if the serial number of new soa is bigger than the old one, return
+            True, otherwise return False.
+        '''
+        old_serial = self.__get_serial_internal(origin_soa)
+        new_serial = self.__get_serial_internal(new_soa)
+        if(new_serial > old_serial):
+            return True
+        else:
+            return False
+
+    def update_soa(self, origin_soa, inc_number = 1):
+        ''' Update the soa number incrementally as RFC 2136. Please make sure
+        that the origin_soa exists and not none before invoke this function.
+        Parameters:
+            origin_soa, the soa resource record which will be updated.
+            inc_number, the number which will be added into the serial number of
+            origin_soa, the default value is one.
+        Output:
+            The new origin soa whoes serial number has been updated.
+        '''
+        soa_num = self.__get_serial_internal(origin_soa)
+        soa_num = soa_num + inc_number
+        if soa_num.get_value() == 0:
+            soa_num = soa_num + 1
+        return self.__write_soa_internal(origin_soa, soa_num)
+
 class UpdateSession:
     '''Protocol handling for a single dynamic update request.
 
@@ -189,7 +241,8 @@ class UpdateSession:
 
         '''
         try:
-            self.__get_update_zone()
+            self._get_update_zone()
+            self._create_diff()
             prereq_result = self.__check_prerequisites()
             if prereq_result != Rcode.NOERROR():
                 self.__make_response(prereq_result)
@@ -219,7 +272,7 @@ class UpdateSession:
             self.__make_response(Rcode.SERVFAIL())
             return UPDATE_ERROR, None, None
 
-    def __get_update_zone(self):
+    def _get_update_zone(self):
         '''Parse the zone section and find the zone to be updated.
 
         If the zone section is valid and the specified zone is found in
@@ -228,8 +281,11 @@ class UpdateSession:
                           zone
         __zname: The zone name as a Name object
         __zclass: The zone class as an RRClass object
-        __finder: A ZoneFinder for this zone
-        If this method raises an exception, these members are not set
+        If this method raises an exception, these members are not set.
+
+        Note: This method is protected for ease of use in tests, where
+        methods are tested that need the setup done here without calling
+        the full handle() method.
         '''
         # Validation: the zone section must contain exactly one question,
         # and it must be of type SOA.
@@ -247,10 +303,9 @@ class UpdateSession:
         zclass = zrecord.get_class()
         zone_type, datasrc_client = self.__zone_config.find_zone(zname, zclass)
         if zone_type == isc.ddns.zone_config.ZONE_PRIMARY:
-            _, self.__finder = datasrc_client.find_zone(zname)
+            self.__datasrc_client = datasrc_client
             self.__zname = zname
             self.__zclass = zclass
-            self.__datasrc_client = datasrc_client
             return
         elif zone_type == isc.ddns.zone_config.ZONE_SECONDARY:
             # We are a secondary server; since we don't yet support update
@@ -264,6 +319,26 @@ class UpdateSession:
                      ClientFormatter(self.__client_addr, self.__tsig),
                      ZoneFormatter(zname, zclass))
         raise UpdateError('notauth', zname, zclass, Rcode.NOTAUTH(), True)
+
+    def _create_diff(self):
+        '''
+        Initializes the internal data structure used for searching current
+        data and for adding and deleting data. This is supposed to be called
+        after ACL checks but before prerequisite checks (since the latter
+        needs the find calls provided by the Diff class).
+        Adds the private member:
+        __diff: A buffer of changes made against the zone by this update
+                This object also contains find() calls, see documentation
+                of the Diff class.
+
+        Note: This method is protected for ease of use in tests, where
+        methods are tested that need the setup done here without calling
+        the full handle() method.
+        '''
+        self.__diff = isc.xfrin.diff.Diff(self.__datasrc_client,
+                                          self.__zname,
+                                          journaling=True,
+                                          single_update_mode=True)
 
     def __check_update_acl(self, zname, zclass):
         '''Apply update ACL for the zone to be updated.'''
@@ -308,9 +383,7 @@ class UpdateSession:
            only return what the result code would be (and not read/copy
            any actual data).
         '''
-        result, _, _ = self.__finder.find(rrset.get_name(), rrset.get_type(),
-                                          ZoneFinder.NO_WILDCARD |
-                                          ZoneFinder.FIND_GLUE_OK)
+        result, _, _ = self.__diff.find(rrset.get_name(), rrset.get_type())
         return result == ZoneFinder.SUCCESS
 
     def __prereq_rrset_exists_value(self, rrset):
@@ -319,10 +392,8 @@ class UpdateSession:
            RFC2136 Section 2.4.2
            Returns True if the prerequisite is satisfied, False otherwise.
         '''
-        result, found_rrset, _ = self.__finder.find(rrset.get_name(),
-                                                    rrset.get_type(),
-                                                    ZoneFinder.NO_WILDCARD |
-                                                    ZoneFinder.FIND_GLUE_OK)
+        result, found_rrset, _ = self.__diff.find(rrset.get_name(),
+                                                  rrset.get_type())
         if result == ZoneFinder.SUCCESS and\
            rrset.get_name() == found_rrset.get_name() and\
            rrset.get_type() == found_rrset.get_type():
@@ -361,9 +432,7 @@ class UpdateSession:
            to only return what the result code would be (and not read/copy
            any actual data).
         '''
-        result, rrsets, flags = self.__finder.find_all(rrset.get_name(),
-                                                       ZoneFinder.NO_WILDCARD |
-                                                       ZoneFinder.FIND_GLUE_OK)
+        result, rrsets, flags = self.__diff.find_all(rrset.get_name())
         if result == ZoneFinder.SUCCESS and\
            (flags & ZoneFinder.RESULT_WILDCARD == 0):
             return True
@@ -556,20 +625,20 @@ class UpdateSession:
                 return Rcode.FORMERR()
         return Rcode.NOERROR()
 
-    def __do_update_add_single_rr(self, diff, rr, existing_rrset):
+    def __do_update_add_single_rr(self, rr, existing_rrset):
         '''Helper for __do_update_add_rrs_to_rrset: only add the
            rr if it is not present yet
            (note that rr here should already be a single-rr rrset)
         '''
         if existing_rrset is None:
-            diff.add_data(rr)
+            self.__diff.add_data(rr)
         else:
             rr_rdata = rr.get_rdata()[0]
             if not rr_rdata in existing_rrset.get_rdata():
-                diff.add_data(rr)
+                self.__diff.add_data(rr)
 
-    def __do_update_add_rrs_to_rrset(self, diff, rrset):
-        '''Add the rrs from the given rrset to the diff.
+    def __do_update_add_rrs_to_rrset(self, rrset):
+        '''Add the rrs from the given rrset to the internal diff.
            There is handling for a number of special cases mentioned
            in RFC2136;
            - If the addition is a CNAME, but existing data at its
@@ -587,11 +656,9 @@ class UpdateSession:
         # is explicitely ignored here)
         if rrset.get_type() == RRType.SOA():
             return
-        result, orig_rrset, _ = self.__finder.find(rrset.get_name(),
-                                                   rrset.get_type(),
-                                                   ZoneFinder.NO_WILDCARD |
-                                                   ZoneFinder.FIND_GLUE_OK)
-        if result == self.__finder.CNAME:
+        result, orig_rrset, _ = self.__diff.find(rrset.get_name(),
+                                                 rrset.get_type())
+        if result == ZoneFinder.CNAME:
             # Ignore non-cname rrs that try to update CNAME records
             # (if rrset itself is a CNAME, the finder result would be
             # SUCCESS, see next case)
@@ -601,7 +668,7 @@ class UpdateSession:
             if rrset.get_type() == RRType.CNAME():
                 # Remove original CNAME record (the new one
                 # is added below)
-                diff.delete_data(orig_rrset)
+                self.__diff.delete_data(orig_rrset)
             # We do not have WKS support at this time, but if there
             # are special Update equality rules such as for WKS, and
             # we do have support for the type, this is where the check
@@ -612,19 +679,17 @@ class UpdateSession:
             if rrset.get_type() == RRType.CNAME():
                 return
         for rr in foreach_rr(rrset):
-            self.__do_update_add_single_rr(diff, rr, orig_rrset)
+            self.__do_update_add_single_rr(rr, orig_rrset)
 
-    def __do_update_delete_rrset(self, diff, rrset):
+    def __do_update_delete_rrset(self, rrset):
         '''Deletes the rrset with the name and type of the given
            rrset from the zone data (by putting all existing data
-           in the given diff as delete statements).
+           in the internal diff as delete statements).
            Special cases: if the delete statement is for the
            zone's apex, and the type is either SOA or NS, it
            is ignored.'''
-        result, to_delete, _ = self.__finder.find(rrset.get_name(),
-                                                  rrset.get_type(),
-                                                  ZoneFinder.NO_WILDCARD |
-                                                  ZoneFinder.FIND_GLUE_OK)
+        result, to_delete, _ = self.__diff.find(rrset.get_name(),
+                                                rrset.get_type())
         if result == ZoneFinder.SUCCESS:
             if to_delete.get_name() == self.__zname and\
                (to_delete.get_type() == RRType.SOA() or\
@@ -632,9 +697,9 @@ class UpdateSession:
                 # ignore
                 return
             for rr in foreach_rr(to_delete):
-                diff.delete_data(rr)
+                self.__diff.delete_data(rr)
 
-    def __ns_deleter_helper(self, diff, rrset):
+    def __ns_deleter_helper(self, rrset):
         '''Special case helper for deleting NS resource records
            at the zone apex. In that scenario, the last NS record
            may never be removed (and any action that would do so
@@ -646,10 +711,8 @@ class UpdateSession:
         # (see ticket #2016)
         # The related test is currently disabled. When this is fixed,
         # enable that test again.
-        result, orig_rrset, _ = self.__finder.find(rrset.get_name(),
-                                                   rrset.get_type(),
-                                                   ZoneFinder.NO_WILDCARD |
-                                                   ZoneFinder.FIND_GLUE_OK)
+        result, orig_rrset, _ = self.__diff.find(rrset.get_name(),
+                                                 rrset.get_type())
         # Even a real rrset comparison wouldn't help here...
         # The goal is to make sure that after deletion of the
         # given rrset, at least 1 NS record is left (at the apex).
@@ -670,18 +733,16 @@ class UpdateSession:
                                           rrset.get_ttl())
                 to_delete.add_rdata(rdata)
                 orig_rrset_rdata.remove(rdata)
-                diff.delete_data(to_delete)
+                self.__diff.delete_data(to_delete)
 
-    def __do_update_delete_name(self, diff, rrset):
+    def __do_update_delete_name(self, rrset):
         '''Delete all data at the name of the given rrset,
            by adding all data found by find_all as delete statements
-           to the given diff.
+           to the internal diff.
            Special case: if the name is the zone's apex, SOA and
            NS records are kept.
         '''
-        result, rrsets, flags = self.__finder.find_all(rrset.get_name(),
-                                                       ZoneFinder.NO_WILDCARD |
-                                                       ZoneFinder.FIND_GLUE_OK)
+        result, rrsets, flags = self.__diff.find_all(rrset.get_name())
         if result == ZoneFinder.SUCCESS and\
            (flags & ZoneFinder.RESULT_WILDCARD == 0):
             for to_delete in rrsets:
@@ -692,9 +753,9 @@ class UpdateSession:
                     continue
                 else:
                     for rr in foreach_rr(to_delete):
-                        diff.delete_data(rr)
+                        self.__diff.delete_data(rr)
 
-    def __do_update_delete_rrs_from_rrset(self, diff, rrset):
+    def __do_update_delete_rrs_from_rrset(self, rrset):
         '''Deletes all resource records in the given rrset from the
            zone. Resource records that do not exist are ignored.
            If the rrset if of type SOA, it is ignored.
@@ -715,35 +776,40 @@ class UpdateSession:
             elif rrset.get_type() == RRType.NS():
                 # hmm. okay. annoying. There must be at least one left,
                 # delegate to helper method
-                self.__ns_deleter_helper(diff, to_delete)
+                self.__ns_deleter_helper(to_delete)
                 return
         for rr in foreach_rr(to_delete):
-            diff.delete_data(rr)
+            self.__diff.delete_data(rr)
 
-    def __update_soa(self, diff):
+    def __update_soa(self):
         '''Checks the member value __added_soa, and depending on
            whether it has been set and what its value is, creates
            a new SOA if necessary.
            Then removes the original SOA and adds the new one,
-           by adding the needed operations to the given diff.'''
+           by adding the needed operations to the internal diff.'''
         # Get the existing SOA
         # if a new soa was specified, add that one, otherwise, do the
         # serial magic and add the newly created one
 
         # get it from DS and to increment and stuff
-        result, old_soa, _ = self.__finder.find(self.__zname, RRType.SOA(),
-                                                ZoneFinder.NO_WILDCARD |
-                                                ZoneFinder.FIND_GLUE_OK)
-
-        if self.__added_soa is not None:
-            new_soa = self.__added_soa
-            # serial check goes here
+        result, old_soa, _ = self.__diff.find(self.__zname, RRType.SOA(),
+                                              ZoneFinder.NO_WILDCARD |
+                                              ZoneFinder.FIND_GLUE_OK)
+        # We may implement recovering from missing SOA data at some point, but
+        # for now servfail on such a broken state
+        if result != ZoneFinder.SUCCESS:
+            raise UpdateError("Error finding SOA record in datasource.",
+                    self.__zname, self.__zclass, Rcode.SERVFAIL())
+        serial_operation = DDNS_SOA()
+        if self.__added_soa is not None and\
+        serial_operation.soa_update_check(old_soa, self.__added_soa):
+                new_soa = self.__added_soa
         else:
-            new_soa = old_soa
             # increment goes here
+            new_soa = serial_operation.update_soa(old_soa)
 
-        diff.delete_data(old_soa)
-        diff.add_data(new_soa)
+        self.__diff.delete_data(old_soa)
+        self.__diff.add_data(new_soa)
 
     def __do_update(self):
         '''Scan, check, and execute the Update section in the
@@ -758,12 +824,8 @@ class UpdateSession:
 
         # update
         try:
-            # create an ixfr-out-friendly diff structure to work on
-            diff = isc.xfrin.diff.Diff(self.__datasrc_client, self.__zname,
-                                       journaling=True, single_update_mode=True)
-
             # Do special handling for SOA first
-            self.__update_soa(diff)
+            self.__update_soa()
 
             # Algorithm from RFC2136 Section 3.4
             # Note that this works on full rrsets, not individual RRs.
@@ -777,16 +839,16 @@ class UpdateSession:
             # do_update statements)
             for rrset in self.__message.get_section(SECTION_UPDATE):
                 if rrset.get_class() == self.__zclass:
-                    self.__do_update_add_rrs_to_rrset(diff, rrset)
+                    self.__do_update_add_rrs_to_rrset(rrset)
                 elif rrset.get_class() == RRClass.ANY():
                     if rrset.get_type() == RRType.ANY():
-                        self.__do_update_delete_name(diff, rrset)
+                        self.__do_update_delete_name(rrset)
                     else:
-                        self.__do_update_delete_rrset(diff, rrset)
+                        self.__do_update_delete_rrset(rrset)
                 elif rrset.get_class() == RRClass.NONE():
-                    self.__do_update_delete_rrs_from_rrset(diff, rrset)
+                    self.__do_update_delete_rrs_from_rrset(rrset)
 
-            diff.commit()
+            self.__diff.commit()
             return Rcode.NOERROR()
         except isc.datasrc.Error as dse:
             logger.info(LIBDDNS_UPDATE_DATASRC_ERROR, dse)

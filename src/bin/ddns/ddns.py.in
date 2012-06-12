@@ -23,13 +23,16 @@ import bind10_config
 from isc.dns import *
 import isc.ddns.session
 from isc.ddns.zone_config import ZoneConfig
-from isc.ddns.logger import ClientFormatter
+from isc.ddns.logger import ClientFormatter, ZoneFormatter
 from isc.config.ccsession import *
-from isc.cc import SessionError, SessionTimeout
+from isc.cc import SessionError, SessionTimeout, ProtocolError
 import isc.util.process
 import isc.util.cio.socketsession
+from isc.notify.notify_out import ZONE_NEW_DATA_READY_CMD
 import isc.server_common.tsig_keyring
+from isc.server_common.dns_tcp import DNSTCPContext
 from isc.datasrc import DataSourceClient
+from isc.server_common.auth_command import auth_loadzone_command
 import select
 import errno
 
@@ -78,6 +81,10 @@ SOCKET_FILE = SOCKET_FILE_PATH + '/ddns_socket'
 AUTH_SPECFILE_LOCATION = AUTH_SPECFILE_PATH + '/auth.spec'
 
 isc.util.process.rename()
+
+# Cooperating modules
+XFROUT_MODULE_NAME = 'Xfrout'
+AUTH_MODULE_NAME = 'Auth'
 
 class DDNSConfigError(Exception):
     '''An exception indicating an error in updating ddns configuration.
@@ -147,6 +154,10 @@ def get_datasrc_client(cc_session):
         return HARDCODED_DATASRC_CLASS, DummyDataSourceClient(ex)
 
 class DDNSServer:
+    # The number of TCP clients that can be handled by the server at the same
+    # time (this should be configurable parameter).
+    TCP_CLIENTS = 10
+
     def __init__(self, cc_session=None):
         '''
         Initialize the DDNS Server.
@@ -186,14 +197,16 @@ class DDNSServer:
         self.__request_msg = Message(Message.PARSE)
         self.__response_renderer = MessageRenderer()
 
-        # The following attribute(s) are essentially private and constant,
-        # but defined as "protected" so that test code can customize them.
-        # They should not be overridden for any other purposes.
+        # The following attribute(s) are essentially private, but defined as
+        # "protected" so that test code can customize/inspect them.
+        # They should not be overridden/referenced for any other purposes.
         #
         # DDNS Protocol handling class.
         self._UpdateSessionClass = isc.ddns.session.UpdateSession
+        # Outstanding TCP context: fileno=>(context_obj, dst)
+        self._tcp_ctxs = {}
 
-    class SessionError(Exception):
+    class InternalError(Exception):
         '''Exception for internal errors in an update session.
 
         This exception is expected to be caught within the server class,
@@ -301,8 +314,8 @@ class DDNSServer:
                                isc.server_common.tsig_keyring.get_keyring())
         tsig_error = tsig_ctx.verify(tsig_record, req_data)
         if tsig_error != TSIGError.NOERROR:
-            raise SessionError("Failed to verify request's TSIG: " +
-                               str(tsig_error))
+            raise self.InternalError("Failed to verify request's TSIG: " +
+                                     str(tsig_error))
         return tsig_ctx
 
     def handle_request(self, req_session):
@@ -338,14 +351,13 @@ class DDNSServer:
         # or dropped by the sender, so if such error is detected we treat it
         # as an internal error and don't bother to respond.
         try:
-            if sock.proto == socket.IPPROTO_TCP:
-                raise SessionError('TCP requests are not yet supported')
             self.__request_msg.clear(Message.PARSE)
             # specify PRESERVE_ORDER as we need to handle each RR separately.
             self.__request_msg.from_wire(req_data, Message.PRESERVE_ORDER)
             if self.__request_msg.get_opcode() != Opcode.UPDATE():
-                raise SessionError('Update request has unexpected opcode: ' +
-                                   str(self.__request_msg.get_opcode()))
+                raise self.InternalError('Update request has unexpected '
+                                         'opcode: ' +
+                                         str(self.__request_msg.get_opcode()))
             tsig_ctx = self.__check_request_tsig(self.__request_msg, req_data)
         except Exception as ex:
             logger.error(DDNS_REQUEST_PARSE_FAIL, ex)
@@ -371,29 +383,125 @@ class DDNSServer:
             msg.to_wire(self.__response_renderer, tsig_ctx)
         else:
             msg.to_wire(self.__response_renderer)
+
+        ret = self.__send_response(sock, self.__response_renderer.get_data(),
+                                   remote_addr)
+        if result == isc.ddns.session.UPDATE_SUCCESS:
+            self.__notify_auth(zname, zclass)
+            self.__notify_xfrout(zname, zclass)
+        return ret
+
+    def __send_response(self, sock, data, dest):
+        '''Send DDNS response to the client.
+
+        Right now, this is a straightforward subroutine of handle_request(),
+        but is intended to be extended evetually so that it can handle more
+        comlicated operations for TCP (which requires asynchronous write).
+        Further, when we support multiple requests over a single TCP
+        connection, this method may even be shared by multiple methods.
+
+        Parameters:
+        sock: (python socket) the socket to which the response should be sent.
+        data: (binary) the response data
+        dest: (python socket address) the destion address to which the response
+          should be sent.
+
+        Return: True if the send operation succeds; otherwise False.
+
+        '''
         try:
-            sock.sendto(self.__response_renderer.get_data(), remote_addr)
+            if sock.proto == socket.IPPROTO_UDP:
+                sock.sendto(data, dest)
+            else:
+                tcp_ctx = DNSTCPContext(sock)
+                send_result = tcp_ctx.send(data)
+                if send_result == DNSTCPContext.SENDING:
+                    self._tcp_ctxs[sock.fileno()] = (tcp_ctx, dest)
+                elif send_result == DNSTCPContext.CLOSED:
+                    raise socket.error("socket error in TCP send")
+                else:
+                    tcp_ctx.close()
         except socket.error as ex:
-            logger.error(DDNS_RESPONSE_SOCKET_ERROR,
-                         ClientFormatter(remote_addr), ex)
+            logger.warn(DDNS_RESPONSE_SOCKET_ERROR, ClientFormatter(dest), ex)
             return False
 
         return True
 
+    def __notify_auth(self, zname, zclass):
+        '''Notify auth of the update, if necessary.'''
+        msg = auth_loadzone_command(self._cc, zname, zclass)
+        if msg is not None:
+            self.__notify_update(AUTH_MODULE_NAME, msg, zname, zclass)
+
+    def __notify_xfrout(self, zname, zclass):
+        '''Notify xfrout of the update.'''
+        param = {'zone_name': zname.to_text(), 'zone_class': zclass.to_text()}
+        msg = create_command(ZONE_NEW_DATA_READY_CMD, param)
+        self.__notify_update(XFROUT_MODULE_NAME, msg, zname, zclass)
+
+    def __notify_update(self, modname, msg, zname, zclass):
+        '''Notify other module of the update.
+
+        Note that we use blocking communication here.  While the internal
+        communication bus is generally expected to be pretty responsive and
+        error free, notable delay can still occur, and in worse cases timeouts
+        or connection reset can happen.  In these cases, even if the trouble
+        is temporary, the update service will be suspended for a while.
+        For a longer term we'll need to switch to asynchronous communication,
+        but for now we rely on the blocking operation.
+
+        Note also that we directly refer to the "protected" member of
+        ccsession (_cc._session) rather than creating a separate channel.
+        It's probably not the best practice, but hopefully we can introduce
+        a cleaner way when we support asynchronous communication.
+        At the moment we prefer the brevity with the use of internal channel
+        of the cc session.
+
+        '''
+        try:
+            seq = self._cc._session.group_sendmsg(msg, modname)
+            answer, _ = self._cc._session.group_recvmsg(False, seq)
+            rcode, error_msg = parse_answer(answer)
+        except (SessionTimeout, SessionError, ProtocolError) as ex:
+            rcode = 1
+            error_msg = str(ex)
+        if rcode == 0:
+            logger.debug(TRACE_BASIC, DDNS_UPDATE_NOTIFY, modname,
+                         ZoneFormatter(zname, zclass))
+        else:
+            logger.error(DDNS_UPDATE_NOTIFY_FAIL, modname,
+                         ZoneFormatter(zname, zclass), error_msg)
+
     def handle_session(self, fileno):
-        """
-        Handle incoming session on the socket with given fileno.
+        """Handle incoming session on the socket with given fileno.
+
+        Return True if a response (whether positive or negative) has been
+        sent; otherwise False.  The return value isn't expected to be used
+        for other purposes than testing.
+
         """
         logger.debug(TRACE_BASIC, DDNS_SESSION, fileno)
-        (socket, receiver) = self._socksession_receivers[fileno]
+        (session_socket, receiver) = self._socksession_receivers[fileno]
         try:
-            self.handle_request(receiver.pop())
+            req_session = receiver.pop()
+            (sock, remote_addr) = (req_session[0], req_session[2])
+
+            # If this is a TCP client, check the quota, and immediately reject
+            # it if we cannot accept more.
+            if sock.proto == socket.IPPROTO_TCP and \
+                    len(self._tcp_ctxs) >= self.TCP_CLIENTS:
+                logger.warn(DDNS_REQUEST_TCP_QUOTA,
+                            ClientFormatter(remote_addr), len(self._tcp_ctxs))
+                sock.close()
+                return False
+            return self.handle_request(req_session)
         except isc.util.cio.socketsession.SocketSessionError as se:
             # No matter why this failed, the connection is in unknown, possibly
             # broken state. So, we close the socket and remove the receiver.
             del self._socksession_receivers[fileno]
-            socket.close()
+            session_socket.close()
             logger.warn(DDNS_DROP_CONN, fileno, se)
+            return False
 
     def run(self):
         '''
@@ -414,8 +522,8 @@ class DDNSServer:
             try:
                 (reads, writes, exceptions) = \
                     select.select([cc_fileno, listen_fileno] +
-                                  list(self._socksession_receivers.keys()), [],
-                                  [])
+                                  list(self._socksession_receivers.keys()),
+                                  list(self._tcp_ctxs.keys()), [])
             except select.error as se:
                 # In case it is just interrupted, we continue like nothing
                 # happened
@@ -430,6 +538,15 @@ class DDNSServer:
                     self.accept()
                 else:
                     self.handle_session(fileno)
+            for fileno in writes:
+                ctx = self._tcp_ctxs[fileno]
+                result = ctx[0].send_ready()
+                if result != DNSTCPContext.SENDING:
+                    if result == DNSTCPContext.CLOSED:
+                        logger.warn(DDNS_RESPONSE_TCP_SOCKET_ERROR,
+                                    ClientFormatter(ctx[1]))
+                    ctx[0].close()
+                    del self._tcp_ctxs[fileno]
         self.shutdown_cleanup()
         logger.info(DDNS_STOPPED)
 
