@@ -34,6 +34,10 @@ pkglibexec_PROGRAMS = b10-dhcp6
 
 b10_dhcp6_SOURCES = main.cc dhcp6_srv.cc dhcp6_srv.h
 
+if USE_CLANGPP
+b10_dhcp6_CXXFLAGS = -Wno-unused-parameter
+endif
+
 b10_dhcp6_LDADD = $(top_builddir)/src/lib/exceptions/libexceptions.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/log/liblog.la
