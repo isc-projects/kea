@@ -99,6 +99,10 @@ public:
         ///
         /// The data source containing the best matching zone. If no such
         /// data source exists, this is NULL pointer.
+        ///
+        /// Note that the pointer is valid only as long the Container which
+        /// returned is alive and was not reconfigured. The ownership is
+        /// preserved within the Container.
         DataSourceClient* const datasrc_;
 
         /// \brief The finder for the requested zone.
