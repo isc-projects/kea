@@ -346,7 +346,7 @@ TEST_F(ContainerTest, multiBestMatch) {
 // Check the configuration is empty when the list is empty
 TEST_F(ContainerTest, configureEmpty) {
     ConstElementPtr elem(new ListElement);
-    container_->configure(elem, true);
+    container_->configure(*elem, true);
     EXPECT_TRUE(container_->dataSources().empty());
 }
 
@@ -364,7 +364,7 @@ TEST_F(ContainerTest, configureMulti) {
         "   \"params\": {}"
         "}]"
     ));
-    container_->configure(elem, true);
+    container_->configure(*elem, true);
     EXPECT_EQ(2, container_->dataSources().size());
     checkDS(0, "type1", "{}");
     checkDS(1, "type2", "{}");
@@ -390,7 +390,7 @@ TEST_F(ContainerTest, configureParams) {
             "   \"cache\": \"off\","
             "   \"params\": ") + *param +
             "}]"));
-        container_->configure(elem, true);
+        container_->configure(*elem, true);
         EXPECT_EQ(1, container_->dataSources().size());
         checkDS(0, "t", *param);
     }
@@ -418,12 +418,12 @@ TEST_F(ContainerTest, wrongConfig) {
         NULL
     };
     // Put something inside to see it survives the exception
-    container_->configure(config_elem_, true);
+    container_->configure(*config_elem_, true);
     checkDS(0, "test_type", "{}");
     for (const char** config(configs); *config; ++config) {
         SCOPED_TRACE(*config);
         ConstElementPtr elem(Element::fromJSON(*config));
-        EXPECT_THROW(container_->configure(elem, true),
+        EXPECT_THROW(container_->configure(*elem, true),
                      ConfigurableContainer::ConfigurationError);
         // Still untouched
         checkDS(0, "test_type", "{}");
@@ -436,7 +436,7 @@ TEST_F(ContainerTest, defaults) {
         "{"
         "   \"type\": \"type1\""
         "}]"));
-    container_->configure(elem, true);
+    container_->configure(*elem, true);
     EXPECT_EQ(1, container_->dataSources().size());
     checkDS(0, "type1", "null");
 }
@@ -444,11 +444,11 @@ TEST_F(ContainerTest, defaults) {
 // Check we can call the configure multiple times, to change the configuration
 TEST_F(ContainerTest, reconfigure) {
     ConstElementPtr empty(new ListElement);
-    container_->configure(config_elem_, true);
+    container_->configure(*config_elem_, true);
     checkDS(0, "test_type", "{}");
-    container_->configure(empty, true);
+    container_->configure(*empty, true);
     EXPECT_TRUE(container_->dataSources().empty());
-    container_->configure(config_elem_, true);
+    container_->configure(*config_elem_, true);
     checkDS(0, "test_type", "{}");
 }
 
@@ -458,9 +458,9 @@ TEST_F(ContainerTest, dataSrcError) {
         "{"
         "   \"type\": \"error\""
         "}]"));
-    container_->configure(config_elem_, true);
+    container_->configure(*config_elem_, true);
     checkDS(0, "test_type", "{}");
-    EXPECT_THROW(container_->configure(elem, true), DataSourceError);
+    EXPECT_THROW(container_->configure(*elem, true), DataSourceError);
     checkDS(0, "test_type", "{}");
 }
 
