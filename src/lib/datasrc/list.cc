@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include "container.h"
+#include "list.h"
 #include "client.h"
 #include "factory.h"
 
@@ -26,7 +26,7 @@ namespace isc {
 namespace datasrc {
 
 void
-ConfigurableContainer::configure(const Element& config, bool) {
+ConfigurableClientList::configure(const Element& config, bool) {
     // TODO: Implement the cache
     // TODO: Implement recycling from the old configuration.
     size_t i(0); // Outside of the try to be able to access it in the catch
@@ -61,8 +61,8 @@ ConfigurableContainer::configure(const Element& config, bool) {
     }
 }
 
-Container::FindResult
-ConfigurableContainer::find(const dns::Name& name, bool want_exact_match,
+ClientList::FindResult
+ConfigurableClientList::find(const dns::Name& name, bool want_exact_match,
                             bool) const
 {
     // Nothing found yet.
@@ -121,9 +121,9 @@ ConfigurableContainer::find(const dns::Name& name, bool want_exact_match,
 // NOTE: This function is not tested, it would be complicated. However, the
 // purpose of the function is to provide a very thin wrapper to be able to
 // replace the call to DataSourceClientContainer constructor in tests.
-ConfigurableContainer::DataSourcePair
-ConfigurableContainer::getDataSource(const string& type,
-                                     const ConstElementPtr& configuration)
+ConfigurableClientList::DataSourcePair
+ConfigurableClientList::getDataSource(const string& type,
+                                      const ConstElementPtr& configuration)
 {
     DataSourceClientContainerPtr
         container(new DataSourceClientContainer(type, configuration));

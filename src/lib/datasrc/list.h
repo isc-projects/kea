@@ -34,26 +34,26 @@ class DataSourceClientContainer;
 typedef boost::shared_ptr<DataSourceClientContainer>
     DataSourceClientContainerPtr;
 
-/// \brief The container of data sources.
+/// \brief The list of data sources.
 ///
 /// The purpose of this class is to hold several data sources and search
 /// through them to find one containing a zone best matching a request.
 ///
 /// All the data source clients should be for the same class. If you need
-/// to handle multiple classes, you need to create multiple separate containers.
+/// to handle multiple classes, you need to create multiple separate lists.
 ///
 /// This is an abstract base class. It is not expected we would use multiple
 /// implementation inside the servers (but it is not forbidden either), we
 /// have it to allow easy testing. It is possible to create a mock-up class
 /// instead of creating a full-blown configuration. The real implementation
-/// is the ConfigurableContainer.
-class Container : public boost::noncopyable {
+/// is the ConfigurableClientList.
+class ClientList : public boost::noncopyable {
 protected:
     /// \brief Constructor.
     ///
     /// It is protected to prevent accidental creation of the abstract base
     /// class.
-    Container() {}
+    ClientList() {}
 public:
     /// \brief Structure holding the (compound) result of find.
     ///
@@ -100,9 +100,9 @@ public:
         /// The data source containing the best matching zone. If no such
         /// data source exists, this is NULL pointer.
         ///
-        /// Note that the pointer is valid only as long the Container which
+        /// Note that the pointer is valid only as long the ClientList which
         /// returned is alive and was not reconfigured. The ownership is
-        /// preserved within the Container.
+        /// preserved within the ClientList.
         DataSourceClient* const datasrc_;
 
         /// \brief The finder for the requested zone.
@@ -133,7 +133,7 @@ public:
     /// this case, the zone finder is needed and the best matching superzone
     /// of the searched name is needed. Therefore, the call would look like:
     ///
-    ///   FindResult result(container->find(queried_name));
+    ///   FindResult result(list->find(queried_name));
     ///   if (result.datasrc_) {
     ///       createTheAnswer(result.finder_);
     ///   } else {
@@ -145,7 +145,7 @@ public:
     /// we need an exact match (if we want to manipulate zone data, we must
     /// know exactly, which zone we are about to manipulate). Then the call
     ///
-    ///   FindResult result(container->find(zone_name, true, false));
+    ///   FindResult result(list->find(zone_name, true, false));
     ///   if (result.datasrc_) {
     ///       ZoneUpdaterPtr updater(result.datasrc_->getUpdater(zone_name);
     ///       ...
@@ -175,21 +175,21 @@ public:
                             bool want_finder = true) const = 0;
 };
 
-/// \brief Shared pointer to the container.
-typedef boost::shared_ptr<Container> ContainerPtr;
-/// \brief Shared const pointer to the container.
-typedef boost::shared_ptr<const Container> ConstContainerPtr;
+/// \brief Shared pointer to the list.
+typedef boost::shared_ptr<ClientList> ClientListPtr;
+/// \brief Shared const pointer to the list.
+typedef boost::shared_ptr<const ClientList> ConstClientListPtr;
 
-/// \Concrete implementation of the Container, which is constructed based on
+/// \Concrete implementation of the ClientList, which is constructed based on
 ///     configuration.
 ///
 /// This is the implementation which is expected to be used in the servers.
-/// However, it is expected most of the code will use it as the Container,
+/// However, it is expected most of the code will use it as the ClientList,
 /// only the creation is expected to be direct.
 ///
 /// While it is possible to inherit this class, it is not expected to be
 /// inherited except for tests.
-class ConfigurableContainer : public Container {
+class ConfigurableClientList : public ClientList {
 public:
     /// \brief Exception thrown when there's an error in configuration.
     class ConfigurationError : public Exception {
@@ -201,7 +201,7 @@ public:
 
     /// \brief Sets the configuration.
     ///
-    /// This fills the Container with data sources corresponding to the
+    /// This fills the ClientList with data sources corresponding to the
     /// configuration. The data sources are newly created or recycled from
     /// previous configuration.
     ///
@@ -219,7 +219,7 @@ public:
     ///     sense.
     void configure(const data::Element& configuration, bool allow_cache);
 
-    /// \brief Implementation of the Container::find.
+    /// \brief Implementation of the ClientList::find.
     virtual FindResult find(const dns::Name& zone,
                               bool want_exact_match = false,
                               bool want_finder = true) const;
