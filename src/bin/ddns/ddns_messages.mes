@@ -162,15 +162,21 @@ zones is logged.
 % DDNS_SECONDARY_ZONES_UPDATE_FAIL failed to update secondary zone list: %1
 An error message.  b10-ddns was notified of updates to a list of
 secondary zones from b10-zonemgr and tried to update its own internal
-copy of the list, but it failed.  This can happen only if the
-configuration contains an error, but such a configuration should have
-been rejected by b10-zonemgr first and shouldn't be delivered to
-b10-ddns, so this should basically be an internal bug.  It's advisable
-to submit a bug report if you ever see this message.  Also, while
-b10-ddns still keeps running with the previous configuration when this
-error happens, it's possible that the entire system is in an
-inconsistent state.  So it's probably better to restart bind10, or at
-least restart b10-ddns.
+copy of the list, but it failed.  This can happen if the configuration
+contains an error, and b10-zonemgr should also reject that update.
+Unfortunately, in the current implementation there is no way to ensure
+that both zonemgr and ddns have consistent information when an update
+contains an error; further, as of this writing zonemgr has a bug that
+it could partially update the list of secondary zones if part of the
+list has an error (see Trac ticket #2038).  b10-ddns still keeps
+running with the previous configuration, but it's strongly advisable
+to check log messages from zonemgr, and if it indicates there can be
+inconsistent state, it's better to restart the entire BIND 10 system
+(just restarting b10-ddns wouldn't be enough, because zonemgr can have
+partially updated configuration due to bug #2038).  The log message
+contains an error description, but it's intentionally kept simple as
+it's primarily a matter of zonemgr.  To know the details of the error,
+log messages of zonemgr should be consulted.
 
 % DDNS_SESSION session arrived on file descriptor %1
 A debug message, informing there's some activity on the given file descriptor.

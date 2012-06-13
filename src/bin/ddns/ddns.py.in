@@ -309,16 +309,17 @@ class DDNSServer:
         new_secondary_zones = set()
         try:
             # Parse the new config and build a new list of secondary zones.
-            # Note that validation should have been done by zonemgr, so
-            # the following shouldn't fail in theory.  But the configuration
-            # interface is quite complicated and there may be a hole, so
-            # we'll perform minimal defense ourselves.
+            # Unforutnately, in the current implementation, even an observer
+            # module needs to perform full validation.  This should be changed
+            # so that only post-validation (done by the main module) config is
+            # delevered to observer modules, but until it's supported we need
+            # to protect ourselves.
             for zone_spec in sec_zones:
                 zname = Name(zone_spec['name'])
-                # class is optional per spec.  ideally this should be merged
-                # within the config module, but it's not really clear if we
-                # can assume that due to its complexity - so we don't rely on
-                # it.
+                # class has the default value in case it's unspecified.
+                # ideally this should be merged within the config module, but
+                # the current implementation doesn't esnure that, so we need to
+                # subsitute it ourselves.
                 if 'class' in zone_spec:
                     zclass = RRClass(zone_spec['class'])
                 else:
