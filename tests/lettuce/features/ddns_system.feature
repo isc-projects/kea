@@ -80,7 +80,6 @@ Feature: DDNS System
         And the SOA serial for example.org should be 1239
 
     Scenario: ACL
-        # The given config has b10-ddns disabled
         Given I have bind10 running with configuration ddns/ddns.config
         And wait for bind10 stderr message BIND10_STARTED_CC
         And wait for bind10 stderr message AUTH_SERVER_STARTED
@@ -111,3 +110,27 @@ Feature: DDNS System
         The DDNS response should be SUCCESS
         A query for new3.example.org should have rcode NOERROR
         The SOA serial for example.org should be 1236
+
+    #Scenario: DDNS and Xfrout
+    ## Unfortunately, Xfrout can only notify to inzone slaves, and hence only
+    ## to port 53, which we do not want to use for Lettuce tests (for various
+    ## reasons). So for now this test is only an outline, the configs
+    ## themselves have not been set up yet
+    #    When I start bind10 with configuration ddns/primary.config as primary
+    #    And wait for primary stderr message AUTH_SERVER_STARTED
+    #    And wait for primary stderr message XFROUT_STARTED
+    #    And wait for primary stderr message DDNS_RUNNING
+
+    #    And I start bind10 with configuration example2.org.config with cmdctl port 47804 as secondary
+    #    And wait for secondary stderr message AUTH_SERVER_STARTED
+    #    And wait for secondary stderr message XFRIN_STARTED
+
+    #    # Sanity check
+    #    The SOA serial for example.org should be 1234
+    #    The SOA serial for example.org at 127.0.0.1:47807 should be 1234
+
+    #    When I use DDNS to set the SOA serial to 1235
+    #    The DDNS response should be SUCCESS
+
+    #    The SOA serial for example.org should be 1235
+    #    The SOA serial for example.org at 127.0.0.1:47807 should be 1235
