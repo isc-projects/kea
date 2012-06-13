@@ -24,6 +24,7 @@ from isc.datasrc import DataSourceClient
 from isc.config import module_spec_from_file
 from isc.config.config_data import ConfigData
 from isc.config.ccsession import create_answer, ModuleCCSessionError
+from isc.config.module_spec import ModuleSpecError
 from isc.server_common.dns_tcp import DNSTCPContext
 import ddns
 import errno
@@ -217,8 +218,8 @@ class MyCCSession(isc.config.ConfigData):
 
         # Attributes to handle (faked) remote configurations
         self.__callbacks = {}   # record callbacks for updates to remote confs
-        self._raise_mods = set()  # set of modules that triggers exception
-                                  # on add_remote.  settable by tests.
+        self._raise_mods = {}  # map of module to exceptions to be triggered
+                               # on add_remote.  settable by tests.
         self._auth_config = {}  # faked auth cfg, settable by tests
         self._zonemgr_config = {} # faked zonemgr cfg, settable by tests
 
@@ -237,8 +238,15 @@ class MyCCSession(isc.config.ConfigData):
         return FakeSocket(1)
 
     def add_remote_config_by_name(self, module_name, update_callback=None):
-        if module_name in self._raise_mods:
-            raise ModuleCCSessionError('Failure requesting remote config data')
+        # If a list of exceptions is given for the module, raise the front one,
+        # removing that exception from the list (so the list length controls
+        # how many (and which) exceptions should be raised on add_remote).
+        if module_name in self._raise_mods.keys() and \
+                len(self._raise_mods[module_name]) != 0:
+            ex = self._raise_mods[module_name][0]
+            self._raise_mods[module_name] = self._raise_mods[module_name][1:]
+            raise ex('Failure requesting remote config data')
+
         if update_callback is not None:
             self.__callbacks[module_name] = update_callback
         if module_name is 'Auth':
@@ -340,12 +348,15 @@ class TestDDNSServer(unittest.TestCase):
         self.__tcp_sock = FakeSocket(10, socket.IPPROTO_TCP)
         self.__tcp_ctx = DNSTCPContext(self.__tcp_sock)
         self.__tcp_data = b'A' * 12 # dummy, just the same size as DNS header
+        # some tests will override this, which will be restored in tearDown:
+        self.__orig_add_pause = ddns.add_pause
 
     def tearDown(self):
         ddns.select.select = select.select
         ddns.isc.util.cio.socketsession.SocketSessionReceiver = \
             isc.util.cio.socketsession.SocketSessionReceiver
         isc.server_common.tsig_keyring = self.orig_tsig_keyring
+        ddns.add_pause = self.__orig_add_pause
 
     def test_listen(self):
         '''
@@ -532,16 +543,35 @@ class TestDDNSServer(unittest.TestCase):
         self.assertEqual({(TEST_ZONE_NAME, TEST_RRCLASS)},
                          self.ddns_server._secondary_zones)
 
+    def __check_remote_config_fail(self, mod_name, num_ex, expected_ex):
+        '''Subroutine for remote_config_fail test.'''
+
+        # fake pause function for inspection and to avoid having timeouts
+        added_pause = []
+        ddns.add_pause = lambda sec: added_pause.append(sec)
+
+        # In our current implementation, there will be up to 3 tries of
+        # adding the module, each separated by a 1-sec pause.  If all attempts
+        # fail the exception will be propagated.
+        exceptions = [expected_ex for i in range(0, num_ex)]
+        self.__cc_session._raise_mods = {mod_name: exceptions}
+        if num_ex >= 3:
+            self.assertRaises(expected_ex, ddns.DDNSServer, self.__cc_session)
+        else:
+            ddns.DDNSServer(self.__cc_session)
+        self.assertEqual([1 for i in range(0, num_ex)], added_pause)
+
     def test_remote_config_fail(self):
         # If getting config of Auth or Zonemgr fails on construction of
-        # DDNServer, it should result in ModuleCCSessionError.
-        self.__cc_session._raise_mods.add('Auth')
-        self.assertRaises(ModuleCCSessionError, ddns.DDNSServer,
-                          self.__cc_session)
-
-        self.__cc_session._raise_mods = {'Zonemgr'}
-        self.assertRaises(ModuleCCSessionError, ddns.DDNSServer,
-                          self.__cc_session)
+        # DDNServer, it should result in an exception and a few times
+        # of retries.  We test all possible cases, changing the number of
+        # raised exceptions and the type of exceptions that can happen,
+        # which should also cover the fatal error case.
+        for i in range(0, 4):
+            self.__check_remote_config_fail('Auth', i, ModuleCCSessionError)
+            self.__check_remote_config_fail('Auth', i, ModuleSpecError)
+            self.__check_remote_config_fail('Zonemgr', i, ModuleCCSessionError)
+            self.__check_remote_config_fail('Zonemgr', i, ModuleSpecError)
 
     def test_shutdown_command(self):
         '''Test whether the shutdown command works'''
