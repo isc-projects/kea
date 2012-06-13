@@ -240,6 +240,52 @@ TEST_F(IfaceMgrTest, sockets6) {
     delete ifacemgr;
 }
 
+TEST_F(IfaceMgrTest, socketsFromIface) {
+    NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
+
+    // open v6 socket on loopback interface and bind to 10547 port
+    int socket1 = ifacemgr->openSocketFromIface(LOOPBACK, 10547, AF_INET6);
+    EXPECT_GT(socket1, 0);
+
+    // open v4 sicket on loopback interface and bind to 10548 port
+    int socket2 = ifacemgr->openSocketFromIface(LOOPBACK, 10547, AF_INET);
+    EXPECT_GT(socket2, 0);
+
+    close(socket1);
+    close(socket2);
+
+    delete ifacemgr;
+}
+
+
+TEST_F(IfaceMgrTest, socketsFromAddr) {
+    NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
+
+    // open v6 socket on loopback address and bind to 10547 port
+    int socket1 = ifacemgr->openSocketFromAddr("::1", 10547);
+    EXPECT_GT(socket1, 0);
+
+    // open v4 socket on loopback address and bind to 10548 port
+    int socket2 = ifacemgr->openSocketFromAddr("127.0.0.1", 10548);
+    EXPECT_GT(socket2, 0);
+
+    close(socket1);
+    close(socket2);
+
+    delete ifacemgr;
+}
+
+TEST_F(IfaceMgrTest, socketsFromRemoteAddr) {
+    NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
+
+    int socket1 = ifacemgr->openSocketFromRemoteAddr("::1", 10547, AF_INET6);
+    EXPECT_GT(socket1, 0);
+
+    close(socket1);
+
+    delete ifacemgr;
+}
+
 // TODO: disabled due to other naming on various systems
 // (lo in Linux, lo0 in BSD systems)
 TEST_F(IfaceMgrTest, DISABLED_sockets6Mcast) {
