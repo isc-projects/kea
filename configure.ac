@@ -988,10 +988,19 @@ AM_CONDITIONAL(HAVE_VALGRIND, test "x$VALGRIND" != "xno")
 
 AC_ARG_ENABLE(valgrind, [AC_HELP_STRING([--enable-valgrind],
   [run tests under Valgrind [default=no]])], enable_valgrind=$enableval, enable_valgrind=no)
-AM_CONDITIONAL(ENABLE_VALGRIND, test "x$enable_valgrind" != "xno")
+AC_ARG_ENABLE(valgrind-suppressions, [AC_HELP_STRING([--enable-valgrind-suppressions],
+  [enable Valgrind suppressions [default=no]])], enable_valgrind_suppressions=$enableval, enable_valgrind_suppressions=no)
+
+use_valgrind=no
+use_valgrind_suppressions=no
 
 if test "x$VALGRIND" != "xno" -a "x$enable_valgrind" != "xno"; then
-   VALGRIND_COMMAND="$VALGRIND -q --error-exitcode=1 --gen-suppressions=all --suppressions=\$(top_srcdir)/src/valgrind-suppressions --suppressions=\$(top_srcdir)/src/valgrind-suppressions.revisit --num-callers=48 --leak-check=full --fullpath-after="
+   if test "x$enable_valgrind_suppressions" != "xno"; then
+      VALGRIND_SUPPRESSIONS="--error-exitcode=1 --suppressions=\$(top_srcdir)/src/valgrind-suppressions --suppressions=\$(top_srcdir)/src/valgrind-suppressions.revisit"
+      use_valgrind_suppressions=yes
+   fi
+   VALGRIND_COMMAND="$VALGRIND -q --gen-suppressions=all $VALGRIND_SUPPRESSIONS --num-callers=48 --leak-check=full --fullpath-after="
+   use_valgrind=yes
 fi
 AC_SUBST(VALGRIND_COMMAND)
 
@@ -1305,7 +1314,8 @@ Features:
 
 Developer:
   Google Tests:  $gtest_path
-  Valgrind: $enable_valgrind
+  Valgrind: $use_valgrind
+  Valgrind Suppressions: $use_valgrind_suppressions
   C++ Code Coverage: $USE_LCOV
   Python Code Coverage: $USE_PYCOVERAGE
   Generate Manuals:  $enable_man
