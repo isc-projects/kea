@@ -23,6 +23,7 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/iface_mgr.h>
 #include <exceptions/exceptions.h>
+#include <asiolink/io_error.h>
 #include <util/io/pktinfo_utilities.h>
 
 using namespace std;
@@ -392,6 +393,78 @@ int IfaceMgr::openSocket(const std::string& ifname, const IOAddress& addr,
                   << addr.toText());
     }
 }
+
+int IfaceMgr::openSocketFromIface(const std::string& ifname, const uint16_t port, const uint8_t family) {
+    int sock = 0;
+    for (IfaceCollection::iterator iface=ifaces_.begin();
+         iface!=ifaces_.end();
+         ++iface) {
+
+        if ((iface->getFullName() != ifname) &&
+            (iface->getName() != ifname)) {
+            continue;
+        }
+
+        AddressCollection addrs = iface->getAddresses();
+
+        for (AddressCollection::iterator addr= addrs.begin();
+             addr != addrs.end();
+             ++addr) {
+
+            // skip IPv4 addresses
+            if (addr->getFamily() != family) {
+                continue;
+            }
+
+            sock = openSocket(iface->getName(), *addr, port);
+            if (sock<0) {
+                cout << "Failed to open unicast socket." << endl;
+            }
+            return (sock);
+        }
+    }
+    return (sock);
+}
+
+int IfaceMgr::openSocketFromAddr(const std::string& addr_name, const uint16_t port) {
+    int sock = 0;
+    for (IfaceCollection::iterator iface=ifaces_.begin();
+         iface!=ifaces_.end();
+         ++iface) {
+
+        AddressCollection addrs = iface->getAddresses();
+
+        for (AddressCollection::iterator addr = addrs.begin();
+             addr != addrs.end();
+             ++addr) {
+
+            try {
+                IOAddress searched_addr(addr_name);
+                if (addr->getAddress() != searched_addr.getAddress()) {
+                    continue;
+                }
+            } catch (const isc::asiolink::IOError& e) {
+                cout << "Failed to open socket from address: " << e.what() << endl;
+                return (sock);
+            }
+
+            sock = openSocket(iface->getName(), *addr, port);
+            if (sock<0) {
+                cout << "Failed to open unicast socket." << endl;
+            }
+            return (sock);
+        }
+    }
+    return (sock);
+    
+}
+
+    /*int IfaceMgr::openSocketFromRemoteAddr(const std::string& remote_addr_name,
+                                       const uint16_t port,
+                                       const uint8_t family) {
+    return 0;
+    }*/
+
 
 int IfaceMgr::openSocket4(Iface& iface, const IOAddress& addr, uint16_t port) {
 
