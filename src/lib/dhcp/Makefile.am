@@ -39,5 +39,7 @@ libdhcp___la_LIBADD  += $(top_builddir)/src/lib/util/libutil.la
 libdhcp___la_LDFLAGS  = -no-undefined -version-info 1:0:0
 
 if USE_CLANGPP
+# Disable unused parameter warning caused by some of the
+# Boost headers when compiling with clang.
 libdhcp___la_CXXFLAGS += -Wno-unused-parameter
 endif
