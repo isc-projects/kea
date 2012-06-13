@@ -27,6 +27,8 @@ libperfdhcp___la_SOURCES += pkt_transform.cc pkt_transform.h
 
 libperfdhcp___la_CXXFLAGS = $(AM_CXXFLAGS)
 if USE_CLANGPP
+# Disable unused parameter warning caused by some of the
+# Boost headers when compiling with clang.
 libperfdhcp___la_CXXFLAGS += -Wno-unused-parameter
 endif
 

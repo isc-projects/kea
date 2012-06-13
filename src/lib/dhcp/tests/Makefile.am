@@ -44,7 +44,8 @@ libdhcp___unittests_CXXFLAGS = $(AM_CXXFLAGS)
 
 if USE_CLANGPP
 # This is to workaround unused variables tcout and tcerr in
-# log4cplus's streams.h and unused parameters from boost::posix_time.
+# log4cplus's streams.h and unused parameters from some of the
+# Boost headers.
 libdhcp___unittests_CXXFLAGS += -Wno-unused-variable -Wno-unused-parameter
 endif
 libdhcp___unittests_LDADD  = $(GTEST_LDADD)

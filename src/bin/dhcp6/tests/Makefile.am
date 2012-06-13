@@ -44,6 +44,8 @@ dhcp6_unittests_SOURCES += dhcp6_unittests.cc
 dhcp6_unittests_SOURCES += dhcp6_srv_unittest.cc
 
 if USE_CLANGPP
+# Disable unused parameter warning caused by some of the
+# Boost headers when compiling with clang.
 dhcp6_unittests_CXXFLAGS = -Wno-unused-parameter
 endif
 
