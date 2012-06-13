@@ -182,9 +182,13 @@ Feature: Example feature
 
         A query for www.example.org to 127.0.0.1:47806 should have rcode NOERROR
         A query for www.example.org to [::1]:47807 should have rcode NOERROR
+        The SOA serial for example.org should be 1234
+        The SOA serial for example.org at 127.0.0.1:47806 should be 1234
+        The SOA serial for example.org at ::1:47807 should be 1234
 
         Then set bind10 configuration Auth/database_file to data/empty_db.sqlite3
         And wait for bind10_one stderr message DATASRC_SQLITE_OPEN
 
         A query for www.example.org to 127.0.0.1:47806 should have rcode REFUSED
         A query for www.example.org to [::1]:47807 should have rcode NOERROR
+
