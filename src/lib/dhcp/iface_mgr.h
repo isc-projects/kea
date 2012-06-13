@@ -375,6 +375,15 @@ public:
     int openSocket(const std::string& ifname,
                    const isc::asiolink::IOAddress& addr, const uint16_t port);
 
+    int openSocketFromIface(const std::string& ifname, const uint16_t port,
+                            const uint8_t family);
+
+    int openSocketFromAddr(const std::string& addr_name, const uint16_t port);
+
+    int openSocketFromRemoteAddr(const std::string& remote_addr_name,
+                                 const uint16_t port,
+                                 const uint8_t family);
+
     /// Opens IPv6 sockets on detected interfaces.
     ///
     /// Will throw exception if socket creation fails.
