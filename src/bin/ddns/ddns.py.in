@@ -199,7 +199,7 @@ class DDNSServer:
                 self._cc.add_remote_config_by_name(mod[0], mod[1])
         except ModuleCCSessionError as ex:
             logger.error(DDNS_GET_REMOTE_CONFIG_FAIL, mod[0], ex)
-            raise ex    # propagte it and die for now
+            raise ex    # propagate it and die for now
         # This should succeed as long as cfgmgr is up.
         isc.server_common.tsig_keyring.init_keyring(self._cc)
 
