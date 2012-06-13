@@ -25,6 +25,12 @@ There was a low-level error when we tried to accept an incoming connection
 connections we already have, but this connection is dropped. The reason
 is logged.
 
+% DDNS_AUTH_DBFILE_UPDATE updated auth DB file to %1
+b10-ddns was notified of updates to the SQLite3 DB file that b10-auth
+uses for the underlying data source and on which b10-ddns needs to
+make updates.  b10-ddns then updated its internal setup so further
+updates would be made on the new DB.
+
 % DDNS_CC_SESSION_ERROR error reading from cc channel: %1
 There was a problem reading from the command and control channel. The
 most likely cause is that the msgq process is not running.
@@ -53,6 +59,25 @@ authoritative server shuts down, the connection would get closed. It also
 can mean the system is busy and can't keep up or that the other side got
 confused and sent bad data.
 
+% DDNS_GET_REMOTE_CONFIG_FAIL failed to get %1 module configuration: %2
+b10-ddns tried to get configuration of some remote modules for its
+operation, but it failed.  The most likely cause of this is that the
+remote module has not fully started up and b10-ddns couldn't get the
+configuration in a timely fashion.  In the current implementation
+b10-ddns considers it a fatal error and terminates; however, as long
+as b10-ddns is configured as a "dispensable" component (which is the
+default), the parent bind10 process will restart it, and getting the
+remote configuration will eventually (and soon) succeed.  This is not
+the optimal behavior, but should be sufficient in practice.  If it
+really causes an operational trouble other than having a few of this
+log messages, please submit a bug report; there can be several ways to
+make it more sophisticated.  Another, less likely reason for having
+this error is because the remote modules are not actually configured
+to run.  If that's the case fixing the configuration should solve the
+problem - either by making sure the remote module will run or by not
+running b10-ddns (without these remote modules b10-ddns is not
+functional, so there's no point in running it in this case).
+
 % DDNS_MODULECC_SESSION_ERROR error encountered by configuration/command module: %1
 There was a problem in the lower level module handling configuration and
 control commands.  This could happen for various reasons, but the most likely
@@ -66,9 +91,20 @@ requests from it. The file descriptor number and the address where the request
 comes from is logged. The connection is over a unix domain socket and is likely
 coming from a b10-auth process.
 
+% DDNS_RECEIVED_AUTH_UPDATE received configuration updates from auth server
+b10-ddns is notified of updates to b10-auth configuration
+(including a report of the initial configuration) that b10-ddns might
+be interested in.
+
 % DDNS_RECEIVED_SHUTDOWN_COMMAND shutdown command received
 The ddns process received a shutdown command from the command channel
 and will now shut down.
+
+% DDNS_RECEIVED_ZONEMGR_UPDATE received configuration updates from zonemgr
+b10-ddns is notified of updates to b10-zonemgr's configuration
+(including a report of the initial configuration).  It may possibly
+contain changes to the secondary zones, in which case b10-ddns will
+update its internal copy of that configuration.
 
 % DDNS_REQUEST_PARSE_FAIL failed to parse update request: %1
 b10-ddns received an update request via b10-auth, but the received
@@ -117,6 +153,25 @@ with the client address.
 The ddns process has successfully started and is now ready to receive commands
 and updates.
 
+% DDNS_SECONDARY_ZONES_UPDATE updated secondary zone list (%1 zones are listed)
+b10-ddns has successfully updated the internal copy of secondary zones
+obtained from b10-zonemgr, based on a latest update to zonemgr's
+configuration.  The number of newly configured (unique) secondary
+zones is logged.
+
+% DDNS_SECONDARY_ZONES_UPDATE_FAIL failed to update secondary zone list: %1
+An error message.  b10-ddns was notified of updates to a list of
+secondary zones from b10-zonemgr and tried to update its own internal
+copy of the list, but it failed.  This can happen only if the
+configuration contains an error, but such a configuration should have
+been rejected by b10-zonemgr first and shouldn't be delivered to
+b10-ddns, so this should basically be an internal bug.  It's advisable
+to submit a bug report if you ever see this message.  Also, while
+b10-ddns still keeps running with the previous configuration when this
+error happens, it's possible that the entire system is in an
+inconsistent state.  So it's probably better to restart bind10, or at
+least restart b10-ddns.
+
 % DDNS_SESSION session arrived on file descriptor %1
 A debug message, informing there's some activity on the given file descriptor.
 It will be either a request or the file descriptor will be closed. See
@@ -162,58 +217,3 @@ needs to examine this message and takes an appropriate action.  In
 either case, this notification is generally expected to succeed; so
 the fact it fails itself means there's something wrong in the BIND 10
 system, and it would be advisable to check other log messages.
-
-% DDNS_SECONDARY_ZONES_UPDATE_FAIL failed to update secondary zone list: %1
-An error message.  b10-ddns was notified of updates to a list of
-secondary zones from b10-zonemgr and tried to update its own internal
-copy of the list, but it failed.  This can happen only if the
-configuration contains an error, but such a configuration should have
-been rejected by b10-zonemgr first and shouldn't be delivered to
-b10-ddns, so this should basically be an internal bug.  It's advisable
-to submit a bug report if you ever see this message.  Also, while
-b10-ddns still keeps running with the previous configuration when this
-error happens, it's possible that the entire system is in an
-inconsistent state.  So it's probably better to restart bind10, or at
-least restart b10-ddns.
-
-% DDNS_RECEIVED_ZONEMGR_UPDATE received configuration updates from zonemgr
-b10-ddns is notified of updates to b10-zonemgr's configuration
-(including a report of the initial configuration).  It may possibly
-contain changes to the secondary zones, in which case b10-ddns will
-update its internal copy of that configuration.
-
-% DDNS_SECONDARY_ZONES_UPDATE updated secondary zone list (%1 zones are listed)
-b10-ddns has successfully updated the internal copy of secondary zones
-obtained from b10-zonemgr, based on a latest update to zonemgr's
-configuration.  The number of newly configured (unique) secondary
-zones is logged.
-
-% DDNS_RECEIVED_AUTH_UPDATE received configuration updates from auth server
-b10-ddns is notified of updates to b10-auth configuration
-(including a report of the initial configuration) that b10-ddns might
-be interested in.
-
-% DDNS_AUTH_DBFILE_UPDATE updated auth DB file to %1
-b10-ddns was notified of updates to the SQLite3 DB file that b10-auth
-uses for the underlying data source and on which b10-ddns needs to
-make updates.  b10-ddns then updated its internal setup so further
-updates would be made on the new DB.
-
-% DDNS_GET_REMOTE_CONFIG_FAIL failed to get %1 module configuration: %2
-b10-ddns tried to get configuration of some remote modules for its
-operation, but it failed.  The most likely cause of this is that the
-remote module has not fully started up and b10-ddns couldn't get the
-configuration in a timely fashion.  In the current implementation
-b10-ddns considers it a fatal error and terminates; however, as long
-as b10-ddns is configured as a "dispensable" component (which is the
-default), the parent bind10 process will restart it, and getting the
-remote configuration will eventually (and soon) succeed.  This is not
-the optimal behavior, but should be sufficient in practice.  If it
-really causes an operational trouble other than having a few of this
-log messages, please submit a bug report; there can be several ways to
-make it more sophisticated.  Another, less likely reason for having
-this error is because the remote modules are not actually configured
-to run.  If that's the case fixing the configuration should solve the
-problem - either by making sure the remote module will run or by not
-running b10-ddns (without these remote modules b10-ddns is not
-functional, so there's no point in running it in this case).
