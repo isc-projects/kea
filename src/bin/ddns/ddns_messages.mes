@@ -59,24 +59,28 @@ authoritative server shuts down, the connection would get closed. It also
 can mean the system is busy and can't keep up or that the other side got
 confused and sent bad data.
 
-% DDNS_GET_REMOTE_CONFIG_FAIL failed to get %1 module configuration: %2
+% DDNS_GET_REMOTE_CONFIG_FAIL failed to get %1 module configuration %2 times: %3
 b10-ddns tried to get configuration of some remote modules for its
 operation, but it failed.  The most likely cause of this is that the
 remote module has not fully started up and b10-ddns couldn't get the
-configuration in a timely fashion.  In the current implementation
-b10-ddns considers it a fatal error and terminates; however, as long
-as b10-ddns is configured as a "dispensable" component (which is the
-default), the parent bind10 process will restart it, and getting the
-remote configuration will eventually (and soon) succeed.  This is not
-the optimal behavior, but should be sufficient in practice.  If it
-really causes an operational trouble other than having a few of this
-log messages, please submit a bug report; there can be several ways to
-make it more sophisticated.  Another, less likely reason for having
-this error is because the remote modules are not actually configured
-to run.  If that's the case fixing the configuration should solve the
-problem - either by making sure the remote module will run or by not
-running b10-ddns (without these remote modules b10-ddns is not
-functional, so there's no point in running it in this case).
+configuration in a timely fashion.  b10-ddns attempts to retry it a
+few times, imposing a short delay, hoping it eventually succeeds if
+it's just a timing issue.  The number of total failed attempts is also
+logged.  If it reaches an internal threshold b10-ddns considers it a
+fatal error and terminates.  Even in that case, if b10-ddns is
+configured as a "dispensable" component (which is the default), the
+parent bind10 process will restart it, and there will be another
+chance of getting the remote configuration successfully.  These are
+not the optimal behavior, but it's believed to be sufficient in
+practice (there would normally be no failure in the first place).  If
+it really causes an operational trouble other than having a few of
+these log messages, please submit a bug report; there can be several
+ways to make it more sophisticated.  Another, less likely reason for
+having this error is because the remote modules are not actually
+configured to run.  If that's the case fixing the configuration should
+solve the problem - either by making sure the remote module will run
+or by not running b10-ddns (without these remote modules b10-ddns is
+not functional, so there's no point in running it in this case).
 
 % DDNS_MODULECC_SESSION_ERROR error encountered by configuration/command module: %1
 There was a problem in the lower level module handling configuration and

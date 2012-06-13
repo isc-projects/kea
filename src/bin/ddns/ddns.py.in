@@ -25,6 +25,7 @@ import isc.ddns.session
 from isc.ddns.zone_config import ZoneConfig
 from isc.ddns.logger import ClientFormatter, ZoneFormatter
 from isc.config.ccsession import *
+from isc.config.module_spec import ModuleSpecError
 from isc.cc import SessionError, SessionTimeout, ProtocolError
 import isc.util.process
 import isc.util.cio.socketsession
@@ -34,6 +35,7 @@ from isc.server_common.dns_tcp import DNSTCPContext
 from isc.datasrc import DataSourceClient
 from isc.server_common.auth_command import auth_loadzone_command
 import select
+import time
 import errno
 
 from isc.log_messages.ddns_messages import *
@@ -151,6 +153,14 @@ def get_datasrc_client(cc_session):
                 raise isc.datasrc.Error(self.__ex)
         return (HARDCODED_DATASRC_CLASS, DummyDataSourceClient(ex), file)
 
+def add_pause(sec):
+    '''Pause a specified period for inter module synchronization.
+
+    This is a trivial wrraper of time.sleep, but defined as a separate function
+    so tests can customize it.
+    '''
+    time.sleep(sec)
+
 class DDNSServer:
     # The number of TCP clients that can be handled by the server at the same
     # time (this should be configurable parameter).
@@ -192,14 +202,9 @@ class DDNSServer:
         self._secondary_zones = None
 
         # Get necessary configurations from remote modules.
-        try:
-            mods = [(AUTH_MODULE_NAME, self.__auth_config_handler),
-                    (ZONEMGR_MODULE_NAME, self.__zonemgr_config_handler)]
-            for mod in mods:
-                self._cc.add_remote_config_by_name(mod[0], mod[1])
-        except ModuleCCSessionError as ex:
-            logger.error(DDNS_GET_REMOTE_CONFIG_FAIL, mod[0], ex)
-            raise ex    # propagate it and die for now
+        for mod in [(AUTH_MODULE_NAME, self.__auth_config_handler),
+                    (ZONEMGR_MODULE_NAME, self.__zonemgr_config_handler)]:
+            self.__add_remote_module(mod[0], mod[1])
         # This should succeed as long as cfgmgr is up.
         isc.server_common.tsig_keyring.init_keyring(self._cc)
 
@@ -273,6 +278,31 @@ class DDNSServer:
         else:
             answer = create_answer(1, "Unknown command: " + str(cmd))
         return answer
+
+    def __add_remote_module(self, mod_name, callback):
+        '''Register interest in other module's config with a callback.'''
+
+        # Due to startup timing, add_remote_config can fail.  We could make it
+        # more sophisticated, but for now we simply retry a few times, each
+        # separated by a short period (3 times and 1 sec, arbitrary chosen,
+        # and hardcoded for now).  In practice this should be more than
+        # sufficient, but if it turns out to be a bigger problem we can
+        # consider more elegant solutions.
+        for n_try in range(0, 3):
+            try:
+                # by_name() version can fail with ModuleSpecError in getting
+                # the module spec because cfgmgr returns a "successful" answer
+                # with empty data if it cannot find the specified module.
+                # This seems to be a deviant behavior (see Trac #2039), but
+                # we need to deal with it.
+                self._cc.add_remote_config_by_name(mod_name, callback)
+                return
+            except (ModuleSpecError, ModuleCCSessionError) as ex:
+                logger.warn(DDNS_GET_REMOTE_CONFIG_FAIL, mod_name, n_try + 1,
+                            ex)
+                last_ex = ex
+                add_pause(1)
+        raise last_ex
 
     def __auth_config_handler(self, new_config, module_config):
         logger.info(DDNS_RECEIVED_AUTH_UPDATE)
@@ -679,7 +709,7 @@ def main(ddns_server=None):
         logger.info(DDNS_STOPPED_BY_KEYBOARD)
     except SessionError as e:
         logger.error(DDNS_CC_SESSION_ERROR, str(e))
-    except ModuleCCSessionError as e:
+    except (ModuleSpecError, ModuleCCSessionError) as e:
         logger.error(DDNS_MODULECC_SESSION_ERROR, str(e))
     except DDNSConfigError as e:
         logger.error(DDNS_CONFIG_ERROR, str(e))
