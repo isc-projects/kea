@@ -35,6 +35,8 @@ pkglibexec_PROGRAMS = b10-dhcp6
 b10_dhcp6_SOURCES = main.cc dhcp6_srv.cc dhcp6_srv.h
 
 if USE_CLANGPP
+# Disable unused parameter warning caused by some of the
+# Boost headers when compiling with clang.
 b10_dhcp6_CXXFLAGS = -Wno-unused-parameter
 endif
 
