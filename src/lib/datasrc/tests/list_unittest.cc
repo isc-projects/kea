@@ -121,8 +121,9 @@ public:
     // Overwrite the list's method to get a data source with given type
     // and configuration. We mock the data source and don't create the
     // container. This is just to avoid some complexity in the tests.
-    virtual DataSourcePair getDataSource(const string& type,
-                                         const ConstElementPtr& configuration)
+    virtual DataSourcePair getDataSourceClient(const string& type,
+                                               const ConstElementPtr&
+                                               configuration)
     {
         if (type == "error") {
             isc_throw(DataSourceError, "The error data source type");
@@ -187,7 +188,7 @@ public:
                         const char* test)
     {
         SCOPED_TRACE(test);
-        EXPECT_EQ(dsrc.get(), result.datasrc_);
+        EXPECT_EQ(dsrc.get(), result.dsrc_client_);
         ASSERT_NE(ZoneFinderPtr(), result.finder_);
         EXPECT_EQ(name, result.finder_->getOrigin());
         EXPECT_EQ(name.getLabelCount(), result.matched_labels_);
@@ -226,7 +227,7 @@ public:
     void checkDS(size_t index, const string& type, const string& params) {
         ASSERT_GT(list_->getDataSources().size(), index);
         MockDataSourceClient* ds(dynamic_cast<MockDataSourceClient*>(
-            list_->getDataSources()[index].data_src_));
+            list_->getDataSources()[index].data_src_client_));
         // Comparing with NULL does not work
         ASSERT_NE(ds, static_cast<const MockDataSourceClient*>(NULL));
         EXPECT_EQ(type, ds->type_);

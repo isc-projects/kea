@@ -34,9 +34,9 @@ class DataSourceClientContainer;
 typedef boost::shared_ptr<DataSourceClientContainer>
     DataSourceClientContainerPtr;
 
-/// \brief The list of data sources.
+/// \brief The list of data source clients.
 ///
-/// The purpose of this class is to hold several data sources and search
+/// The purpose of this class is to hold several data source clients and search
 /// through them to find one containing a zone best matching a request.
 ///
 /// All the data source clients should be for the same class. If you need
@@ -65,10 +65,10 @@ public:
         ///
         /// It simply fills in the member variables according to the
         /// parameters. See the member descriptions for their meaning.
-        FindResult(DataSourceClient* datasrc,
+        FindResult(DataSourceClient* dsrc_client,
                    const ZoneFinderPtr& finder,
                    uint8_t matched_labels, bool exact_match) :
-            datasrc_(datasrc),
+            dsrc_client_(dsrc_client),
             finder_(finder),
             matched_labels_(matched_labels),
             exact_match_(exact_match)
@@ -79,7 +79,7 @@ public:
         /// This conscructs a result for negative answer. Both pointers are
         /// NULL, matched_labels_ is 0 and exact_match_ is false.
         FindResult() :
-            datasrc_(NULL),
+            dsrc_client_(NULL),
             matched_labels_(0),
             exact_match_(false)
         { }
@@ -89,21 +89,21 @@ public:
         /// It is needed for tests and it might be of some use elsewhere
         /// too.
         bool operator ==(const FindResult& other) const {
-            return (datasrc_ == other.datasrc_ &&
+        return (dsrc_client_ == other.dsrc_client_ &&
                     finder_ == other.finder_ &&
                     matched_labels_ == other.matched_labels_ &&
                     exact_match_ == other.exact_match_);
         }
 
-        /// \brief The found data source.
+        /// \brief The found data source client.
         ///
-        /// The data source containing the best matching zone. If no such
-        /// data source exists, this is NULL pointer.
+        /// The client of the data source containing the best matching zone.
+        /// If no such data source exists, this is NULL pointer.
         ///
         /// Note that the pointer is valid only as long the ClientList which
         /// returned is alive and was not reconfigured. The ownership is
         /// preserved within the ClientList.
-        DataSourceClient* const datasrc_;
+        DataSourceClient* const dsrc_client_;
 
         /// \brief The finder for the requested zone.
         ///
@@ -126,8 +126,8 @@ public:
 
     /// \brief Search for a zone through the data sources.
     ///
-    /// This searches the contained data sources for a one that best matches
-    /// the zone name.
+    /// This searches the contained data source clients for a one that best
+    /// matches the zone name.
     ///
     /// There are two expected usage scenarios. One is answering queries. In
     /// this case, the zone finder is needed and the best matching superzone
@@ -201,9 +201,9 @@ public:
 
     /// \brief Sets the configuration.
     ///
-    /// This fills the ClientList with data sources corresponding to the
-    /// configuration. The data sources are newly created or recycled from
-    /// previous configuration.
+    /// This fills the ClientList with data source clients corresponding to the
+    /// configuration. The data source clients are newly created or recycled
+    /// from previous configuration.
     ///
     /// If any error is detected, an exception is thrown and the current
     /// configuration is preserved.
@@ -214,7 +214,8 @@ public:
     ///     configuration is used and some zones are cached into an In-Memory
     ///     data source according to it. If it is false, it is ignored and
     ///     no In-Memory data sources are created.
-    /// \throw DataSourceError if there's a problem creating a data source.
+    /// \throw DataSourceError if there's a problem creating a data source
+    ///     client.
     /// \throw ConfigurationError if the configuration is invalid in some
     ///     sense.
     void configure(const data::Element& configuration, bool allow_cache);
@@ -224,7 +225,7 @@ public:
                               bool want_exact_match = false,
                               bool want_finder = true) const;
 
-    /// \brief This holds one data source and corresponding information.
+    /// \brief This holds one data source client and corresponding information.
     ///
     /// \todo The content yet to be defined.
     struct DataSourceInfo {
@@ -233,14 +234,14 @@ public:
         /// Don't use directly. It is here so the structure can live in
         /// a vector.
         DataSourceInfo() :
-            data_src_(NULL)
+            data_src_client_(NULL)
         {}
-        DataSourceInfo(DataSourceClient* data_src,
+        DataSourceInfo(DataSourceClient* data_src_client,
                        const DataSourceClientContainerPtr& container) :
-            data_src_(data_src),
+            data_src_client_(data_src_client),
             container_(container)
         { }
-        DataSourceClient* data_src_;
+        DataSourceClient* data_src_client_;
         DataSourceClientContainerPtr container_;
     };
 
@@ -260,31 +261,31 @@ protected:
     typedef std::pair<DataSourceClient*, DataSourceClientContainerPtr>
         DataSourcePair;
 
-    /// \brief Create a data source of given type and configuration.
+    /// \brief Create a data source client of given type and configuration.
     ///
     /// This is a thin wrapper around the DataSourceClientContainer
     /// constructor. The function is here to make it possible for tests
     /// to replace the DataSourceClientContainer with something else.
-    /// Also, derived classes couldl want to create the data sources
-    /// in a different way, though inheriting this class is not
-    /// recommended.
+    /// Also, derived classes could want to create the data source clients
+    /// in a different way, though inheriting this class is not recommended.
     ///
     /// The parameters are the same as of the constructor.
-    /// \return Pair containing both the data source and the container.
+    /// \return Pair containing both the data source client and the container.
     ///     The container might be NULL in the derived class, it is
-    ///     only stored so the data source is properly destroyed when
+    ///     only stored so the data source client is properly destroyed when
     ///     not needed. However, in such case, it is the caller's
-    ///     responsibility to ensure the data source is deleted when
+    ///     responsibility to ensure the data source client is deleted when
     ///     needed.
-    virtual DataSourcePair getDataSource(const std::string& type,
-                                         const data::ConstElementPtr&
-                                         configuration);
+    virtual DataSourcePair getDataSourceClient(const std::string& type,
+                                               const data::ConstElementPtr&
+                                               configuration);
 public:
-    /// \brief Access to the data sources.
+    /// \brief Access to the data source clients.
     ///
-    /// It can be used to examine the loaded list of data sources directly.
-    /// It is not known if it is of any use other than testing, but it might
-    /// be, so it is just made public.
+    /// It can be used to examine the loaded list of data sources clients
+    /// directly. It is not known if it is of any use other than testing, but
+    /// it might be, so it is just made public (there's no real reason to
+    /// hide it).
     const DataSources& getDataSources() const { return (data_sources_); }
 };
 
