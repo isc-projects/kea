@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <datasrc/container.h>
+#include <datasrc/list.h>
 #include <datasrc/client.h>
 #include <datasrc/data_source.h>
 
@@ -115,10 +115,10 @@ private:
 
 // The test version is the same as the normal version. We, however, add
 // some methods to dig directly in the internals, for the tests.
-class TestedContainer : public ConfigurableContainer {
+class TestedList : public ConfigurableClientList {
 public:
     DataSources& getDataSources() { return (data_sources_); }
-    // Overwrite the containers method to get a data source with given type
+    // Overwrite the list's method to get a data source with given type
     // and configuration. We mock the data source and don't create the
     // container. This is just to avoid some complexity in the tests.
     virtual DataSourcePair getDataSource(const string& type,
@@ -129,7 +129,7 @@ public:
         }
         shared_ptr<MockDataSourceClient>
             ds(new MockDataSourceClient(type, configuration));
-        // Make sure it is deleted when the test container is deleted.
+        // Make sure it is deleted when the test list is deleted.
         to_delete_.push_back(ds);
         return (DataSourcePair(ds.get(), DataSourceClientContainerPtr()));
     }
@@ -160,11 +160,11 @@ const char* ds_zones[][3] = {
 
 const size_t ds_count = (sizeof (ds_zones) / sizeof (*ds_zones));
 
-class ContainerTest : public ::testing::Test {
+class ListTest : public ::testing::Test {
 public:
-    ContainerTest() :
-        // The empty list corresponds to a container with no elements inside
-        container_(new TestedContainer()),
+    ListTest() :
+        // The empty list corresponds to a list with no elements inside
+        list_(new TestedList()),
         config_elem_(Element::fromJSON("["
             "{"
             "   \"type\": \"test_type\","
@@ -176,12 +176,12 @@ public:
             shared_ptr<MockDataSourceClient>
                 ds(new MockDataSourceClient(ds_zones[i]));
             ds_.push_back(ds);
-            ds_info_.push_back(ConfigurableContainer::DataSourceInfo(ds.get(),
+            ds_info_.push_back(ConfigurableClientList::DataSourceInfo(ds.get(),
                 DataSourceClientContainerPtr()));
         }
     }
     // Check the positive result is as we expect it.
-    void positiveResult(const Container::FindResult& result,
+    void positiveResult(const ClientList::FindResult& result,
                         const shared_ptr<MockDataSourceClient>& dsrc,
                         const Name& name, bool exact,
                         const char* test)
@@ -193,54 +193,54 @@ public:
         EXPECT_EQ(name.getLabelCount(), result.matched_labels_);
         EXPECT_EQ(exact, result.exact_match_);
     }
-    // Configure the container with multiple data sources, according to
+    // Configure the list with multiple data sources, according to
     // some configuration. It uses the index as parameter, to be able to
     // loop through the configurations.
     void multiConfiguration(size_t index) {
-        container_->getDataSources().clear();
+        list_->getDataSources().clear();
         switch (index) {
             case 2:
-                container_->getDataSources().push_back(ds_info_[2]);
+                list_->getDataSources().push_back(ds_info_[2]);
                 // The ds_[2] is empty. We just check that it doesn't confuse
                 // us. Fall through to the case 0.
             case 0:
-                container_->getDataSources().push_back(ds_info_[0]);
-                container_->getDataSources().push_back(ds_info_[1]);
+                list_->getDataSources().push_back(ds_info_[0]);
+                list_->getDataSources().push_back(ds_info_[1]);
                 break;
             case 1:
                 // The other order
-                container_->getDataSources().push_back(ds_info_[1]);
-                container_->getDataSources().push_back(ds_info_[0]);
+                list_->getDataSources().push_back(ds_info_[1]);
+                list_->getDataSources().push_back(ds_info_[0]);
                 break;
             case 3:
-                container_->getDataSources().push_back(ds_info_[1]);
-                container_->getDataSources().push_back(ds_info_[0]);
+                list_->getDataSources().push_back(ds_info_[1]);
+                list_->getDataSources().push_back(ds_info_[0]);
                 // It is the same as ds_[1], but we take from the first one.
                 // The first one to match is the correct one.
-                container_->getDataSources().push_back(ds_info_[3]);
+                list_->getDataSources().push_back(ds_info_[3]);
                 break;
             default:
                 FAIL() << "Unknown configuration index " << index;
         }
     }
     void checkDS(size_t index, const string& type, const string& params) {
-        ASSERT_GT(container_->getDataSources().size(), index);
+        ASSERT_GT(list_->getDataSources().size(), index);
         MockDataSourceClient* ds(dynamic_cast<MockDataSourceClient*>(
-            container_->getDataSources()[index].data_src_));
+            list_->getDataSources()[index].data_src_));
         // Comparing with NULL does not work
         ASSERT_NE(ds, static_cast<const MockDataSourceClient*>(NULL));
         EXPECT_EQ(type, ds->type_);
         EXPECT_TRUE(Element::fromJSON(params)->equals(*ds->configuration_));
     }
-    shared_ptr<TestedContainer> container_;
-    const Container::FindResult negativeResult_;
+    shared_ptr<TestedList> list_;
+    const ClientList::FindResult negativeResult_;
     vector<shared_ptr<MockDataSourceClient> > ds_;
-    vector<ConfigurableContainer::DataSourceInfo> ds_info_;
+    vector<ConfigurableClientList::DataSourceInfo> ds_info_;
     const ConstElementPtr config_elem_;
 };
 
 // Test the test itself
-TEST_F(ContainerTest, selfTest) {
+TEST_F(ListTest, selfTest) {
     EXPECT_EQ(result::SUCCESS, ds_[0]->findZone(Name("example.org")).code);
     EXPECT_EQ(result::PARTIALMATCH,
               ds_[0]->findZone(Name("sub.example.org")).code);
@@ -250,56 +250,56 @@ TEST_F(ContainerTest, selfTest) {
     EXPECT_EQ(result::NOTFOUND, ds_[0]->findZone(Name("zzz")).code);
 }
 
-// Test the container we create with empty configuration is, in fact, empty
-TEST_F(ContainerTest, emptyContainer) {
-    EXPECT_TRUE(container_->getDataSources().empty());
+// Test the list we create with empty configuration is, in fact, empty
+TEST_F(ListTest, emptyList) {
+    EXPECT_TRUE(list_->getDataSources().empty());
 }
 
-// Check the values returned by a find on an empty container. It should be
+// Check the values returned by a find on an empty list. It should be
 // a negative answer (nothing found) no matter if we want an exact or inexact
 // match.
-TEST_F(ContainerTest, emptySearch) {
+TEST_F(ListTest, emptySearch) {
     // No matter what we try, we don't get an answer.
 
     // Note: we don't have operator<< for the result class, so we cannot use
     // EXPECT_EQ.  Same for other similar cases.
-    EXPECT_TRUE(negativeResult_ == container_->find(Name("example.org"),
-                                                    false, false));
-    EXPECT_TRUE(negativeResult_ == container_->find(Name("example.org"),
-                                                    false, true));
-    EXPECT_TRUE(negativeResult_ == container_->find(Name("example.org"), true,
-                                                    false));
-    EXPECT_TRUE(negativeResult_ == container_->find(Name("example.org"), true,
-                                                    true));
+    EXPECT_TRUE(negativeResult_ == list_->find(Name("example.org"), false,
+                                               false));
+    EXPECT_TRUE(negativeResult_ == list_->find(Name("example.org"), false,
+                                               true));
+    EXPECT_TRUE(negativeResult_ == list_->find(Name("example.org"), true,
+                                               false));
+    EXPECT_TRUE(negativeResult_ == list_->find(Name("example.org"), true,
+                                               true));
 }
 
-// Put a single data source inside the container and check it can find an
+// Put a single data source inside the list and check it can find an
 // exact match if there's one.
-TEST_F(ContainerTest, singleDSExactMatch) {
-    container_->getDataSources().push_back(ds_info_[0]);
+TEST_F(ListTest, singleDSExactMatch) {
+    list_->getDataSources().push_back(ds_info_[0]);
     // This zone is not there
-    EXPECT_TRUE(negativeResult_ == container_->find(Name("org."), true));
+    EXPECT_TRUE(negativeResult_ == list_->find(Name("org."), true));
     // But this one is, so check it.
-    positiveResult(container_->find(Name("example.org"), true),
-                   ds_[0], Name("example.org"), true, "Exact match");
+    positiveResult(list_->find(Name("example.org"), true), ds_[0],
+                   Name("example.org"), true, "Exact match");
     // When asking for a sub zone of a zone there, we get nothing
     // (we want exact match, this would be partial one)
-    EXPECT_TRUE(negativeResult_ == container_->find(Name("sub.example.org."),
-                                                    true));
+    EXPECT_TRUE(negativeResult_ == list_->find(Name("sub.example.org."),
+                                               true));
 }
 
 // When asking for a partial match, we get all that the exact one, but more.
-TEST_F(ContainerTest, singleDSBestMatch) {
-    container_->getDataSources().push_back(ds_info_[0]);
+TEST_F(ListTest, singleDSBestMatch) {
+    list_->getDataSources().push_back(ds_info_[0]);
     // This zone is not there
-    EXPECT_TRUE(negativeResult_ == container_->find(Name("org.")));
+    EXPECT_TRUE(negativeResult_ == list_->find(Name("org.")));
     // But this one is, so check it.
-    positiveResult(container_->find(Name("example.org")),
-                   ds_[0], Name("example.org"), true, "Exact match");
+    positiveResult(list_->find(Name("example.org")), ds_[0],
+                   Name("example.org"), true, "Exact match");
     // When asking for a sub zone of a zone there, we get the parent
     // one.
-    positiveResult(container_->find(Name("sub.example.org.")),
-                   ds_[0], Name("example.org"), false, "Subdomain match");
+    positiveResult(list_->find(Name("sub.example.org.")), ds_[0],
+                   Name("example.org"), false, "Subdomain match");
 }
 
 const char* test_names[] = {
@@ -309,57 +309,54 @@ const char* test_names[] = {
     "With a duplicity"
 };
 
-TEST_F(ContainerTest, multiExactMatch) {
+TEST_F(ListTest, multiExactMatch) {
     // Run through all the multi-configurations
     for (size_t i(0); i < sizeof(test_names) / sizeof(*test_names); ++ i) {
         SCOPED_TRACE(test_names[i]);
         multiConfiguration(i);
         // Something that is nowhere there
-        EXPECT_TRUE(negativeResult_ == container_->find(Name("org."), true));
+        EXPECT_TRUE(negativeResult_ == list_->find(Name("org."), true));
         // This one is there exactly.
-        positiveResult(container_->find(Name("example.org"), true),
-                       ds_[0], Name("example.org"), true, "Exact match");
+        positiveResult(list_->find(Name("example.org"), true), ds_[0],
+                       Name("example.org"), true, "Exact match");
         // This one too, but in a different data source.
-        positiveResult(container_->find(Name("sub.example.org."), true),
-                       ds_[1], Name("sub.example.org"), true,
-                       "Subdomain match");
+        positiveResult(list_->find(Name("sub.example.org."), true), ds_[1],
+                       Name("sub.example.org"), true, "Subdomain match");
         // But this one is in neither data source.
         EXPECT_TRUE(negativeResult_ ==
-                    container_->find(Name("sub.example.com."), true));
+                    list_->find(Name("sub.example.com."), true));
     }
 }
 
-TEST_F(ContainerTest, multiBestMatch) {
+TEST_F(ListTest, multiBestMatch) {
     // Run through all the multi-configurations
     for (size_t i(0); i < 4; ++ i) {
         SCOPED_TRACE(test_names[i]);
         multiConfiguration(i);
         // Something that is nowhere there
-        EXPECT_TRUE(negativeResult_ == container_->find(Name("org.")));
+        EXPECT_TRUE(negativeResult_ == list_->find(Name("org.")));
         // This one is there exactly.
-        positiveResult(container_->find(Name("example.org")),
-                       ds_[0], Name("example.org"), true, "Exact match");
+        positiveResult(list_->find(Name("example.org")), ds_[0],
+                       Name("example.org"), true, "Exact match");
         // This one too, but in a different data source.
-        positiveResult(container_->find(Name("sub.example.org.")),
-                       ds_[1], Name("sub.example.org"), true,
-                       "Subdomain match");
+        positiveResult(list_->find(Name("sub.example.org.")), ds_[1],
+                       Name("sub.example.org"), true, "Subdomain match");
         // But this one is in neither data source. But it is a subdomain
         // of one of the zones in the first data source.
-        positiveResult(container_->find(Name("sub.example.com.")),
-                       ds_[0], Name("example.com."), false,
-                       "Subdomain in com");
+        positiveResult(list_->find(Name("sub.example.com.")), ds_[0],
+                       Name("example.com."), false, "Subdomain in com");
     }
 }
 
 // Check the configuration is empty when the list is empty
-TEST_F(ContainerTest, configureEmpty) {
+TEST_F(ListTest, configureEmpty) {
     ConstElementPtr elem(new ListElement);
-    container_->configure(*elem, true);
-    EXPECT_TRUE(container_->getDataSources().empty());
+    list_->configure(*elem, true);
+    EXPECT_TRUE(list_->getDataSources().empty());
 }
 
 // Check we can get multiple data sources and they are in the right order.
-TEST_F(ContainerTest, configureMulti) {
+TEST_F(ListTest, configureMulti) {
     ConstElementPtr elem(Element::fromJSON("["
         "{"
         "   \"type\": \"type1\","
@@ -372,14 +369,14 @@ TEST_F(ContainerTest, configureMulti) {
         "   \"params\": {}"
         "}]"
     ));
-    container_->configure(*elem, true);
-    EXPECT_EQ(2, container_->getDataSources().size());
+    list_->configure(*elem, true);
+    EXPECT_EQ(2, list_->getDataSources().size());
     checkDS(0, "type1", "{}");
     checkDS(1, "type2", "{}");
 }
 
 // Check we can pass whatever we want to the params
-TEST_F(ContainerTest, configureParams) {
+TEST_F(ListTest, configureParams) {
     const char* params[] = {
         "true",
         "false",
@@ -398,13 +395,13 @@ TEST_F(ContainerTest, configureParams) {
             "   \"cache\": \"off\","
             "   \"params\": ") + *param +
             "}]"));
-        container_->configure(*elem, true);
-        EXPECT_EQ(1, container_->getDataSources().size());
+        list_->configure(*elem, true);
+        EXPECT_EQ(1, list_->getDataSources().size());
         checkDS(0, "t", *param);
     }
 }
 
-TEST_F(ContainerTest, wrongConfig) {
+TEST_F(ListTest, wrongConfig) {
     const char* configs[] = {
         // A lot of stuff missing from there
         "[{\"type\": \"test_type\", \"params\": 13}, {}]",
@@ -426,50 +423,50 @@ TEST_F(ContainerTest, wrongConfig) {
         NULL
     };
     // Put something inside to see it survives the exception
-    container_->configure(*config_elem_, true);
+    list_->configure(*config_elem_, true);
     checkDS(0, "test_type", "{}");
     for (const char** config(configs); *config; ++config) {
         SCOPED_TRACE(*config);
         ConstElementPtr elem(Element::fromJSON(*config));
-        EXPECT_THROW(container_->configure(*elem, true),
-                     ConfigurableContainer::ConfigurationError);
+        EXPECT_THROW(list_->configure(*elem, true),
+                     ConfigurableClientList::ConfigurationError);
         // Still untouched
         checkDS(0, "test_type", "{}");
-        EXPECT_EQ(1, container_->getDataSources().size());
+        EXPECT_EQ(1, list_->getDataSources().size());
     }
 }
 
 // The param thing defaults to null. Cache is not used yet.
-TEST_F(ContainerTest, defaults) {
+TEST_F(ListTest, defaults) {
     ConstElementPtr elem(Element::fromJSON("["
         "{"
         "   \"type\": \"type1\""
         "}]"));
-    container_->configure(*elem, true);
-    EXPECT_EQ(1, container_->getDataSources().size());
+    list_->configure(*elem, true);
+    EXPECT_EQ(1, list_->getDataSources().size());
     checkDS(0, "type1", "null");
 }
 
 // Check we can call the configure multiple times, to change the configuration
-TEST_F(ContainerTest, reconfigure) {
+TEST_F(ListTest, reconfigure) {
     ConstElementPtr empty(new ListElement);
-    container_->configure(*config_elem_, true);
+    list_->configure(*config_elem_, true);
     checkDS(0, "test_type", "{}");
-    container_->configure(*empty, true);
-    EXPECT_TRUE(container_->getDataSources().empty());
-    container_->configure(*config_elem_, true);
+    list_->configure(*empty, true);
+    EXPECT_TRUE(list_->getDataSources().empty());
+    list_->configure(*config_elem_, true);
     checkDS(0, "test_type", "{}");
 }
 
 // Make sure the data source error exception from the factory is propagated
-TEST_F(ContainerTest, dataSrcError) {
+TEST_F(ListTest, dataSrcError) {
     ConstElementPtr elem(Element::fromJSON("["
         "{"
         "   \"type\": \"error\""
         "}]"));
-    container_->configure(*config_elem_, true);
+    list_->configure(*config_elem_, true);
     checkDS(0, "test_type", "{}");
-    EXPECT_THROW(container_->configure(*elem, true), DataSourceError);
+    EXPECT_THROW(list_->configure(*elem, true), DataSourceError);
     checkDS(0, "test_type", "{}");
 }
 
