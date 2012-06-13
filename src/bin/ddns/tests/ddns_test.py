@@ -499,7 +499,8 @@ class TestDDNSServer(unittest.TestCase):
         self.assertEqual({(TEST_ZONE_NAME, TEST_RRCLASS)},
                          self.ddns_server._secondary_zones)
 
-        # Similar to the above, but the optional 'class' is missing.
+        # Similar to the above, but 'class' is unspecified.  The default value
+        # should be used.
         self.__cc_session._zonemgr_config = {'secondary_zones': [
                 {'name': TEST_ZONE_NAME_STR}]}
         self.__cc_session.add_remote_config_by_name('Zonemgr')
