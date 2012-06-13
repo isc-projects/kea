@@ -47,7 +47,8 @@ ConfigurableClientList::configure(const Element& config, bool) {
             }
             // TODO: Special-case the master files type.
             // Ask the factory to create the data source for us
-            const DataSourcePair ds(this->getDataSource(type, paramConf));
+            const DataSourcePair ds(this->getDataSourceClient(type,
+                                                              paramConf));
             // And put it into the vector
             new_data_sources.push_back(DataSourceInfo(ds.first, ds.second));
         }
@@ -71,16 +72,16 @@ ConfigurableClientList::find(const dns::Name& name, bool want_exact_match,
     // assigned.
     struct MutableResult {
         MutableResult() :
-            datasrc(NULL),
+            datasrc_client(NULL),
             matched_labels(0)
         { }
-        DataSourceClient *datasrc;
+        DataSourceClient *datasrc_client;
         ZoneFinderPtr finder;
         uint8_t matched_labels;
         operator FindResult() {
             // Conversion to the right result. If we return this, there was
             // a partial match at best.
-            return FindResult(datasrc, finder, matched_labels, false);
+            return FindResult(datasrc_client, finder, matched_labels, false);
         }
     } candidate;
 
@@ -92,7 +93,7 @@ ConfigurableClientList::find(const dns::Name& name, bool want_exact_match,
         // the cached one, provide the cached one. If it is in the external
         // data source, use the datasource and don't provide the finder yet.
         const DataSourceClient::FindResult result(
-            info.data_src_->findZone(name));
+            info.data_src_client_->findZone(name));
         switch (result.code) {
             case result::SUCCESS: {
                 // If we found an exact match, we have no hope to getting
@@ -100,7 +101,7 @@ ConfigurableClientList::find(const dns::Name& name, bool want_exact_match,
 
                 // TODO: In case we have only the datasource and not the finder
                 // and the need_updater parameter is true, get the zone there.
-                return (FindResult(info.data_src_, result.zone_finder,
+                return (FindResult(info.data_src_client_, result.zone_finder,
                                    name.getLabelCount(), true));
             }
             case result::PARTIALMATCH: {
@@ -111,7 +112,7 @@ ConfigurableClientList::find(const dns::Name& name, bool want_exact_match,
                         result.zone_finder->getOrigin().getLabelCount());
                     if (labels > candidate.matched_labels) {
                         // This one is strictly better. Replace it.
-                        candidate.datasrc = info.data_src_;
+                    candidate.datasrc_client = info.data_src_client_;
                         candidate.finder = result.zone_finder;
                         candidate.matched_labels = labels;
                     }
@@ -137,8 +138,9 @@ ConfigurableClientList::find(const dns::Name& name, bool want_exact_match,
 // purpose of the function is to provide a very thin wrapper to be able to
 // replace the call to DataSourceClientContainer constructor in tests.
 ConfigurableClientList::DataSourcePair
-ConfigurableClientList::getDataSource(const string& type,
-                                      const ConstElementPtr& configuration)
+ConfigurableClientList::getDataSourceClient(const string& type,
+                                            const ConstElementPtr&
+                                            configuration)
 {
     DataSourceClientContainerPtr
         container(new DataSourceClientContainer(type, configuration));
