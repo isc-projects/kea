@@ -1,4 +1,4 @@
-# Copyright (C) 2011  Internet Systems Consortium.
+# Copyright (C) 2012  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -17,8 +17,7 @@ from lettuce import *
 import subprocess
 import re
 
-def run_nsupdate(commands, zone="example.org.", update_address="127.0.0.1",
-                 update_port="47806"):
+def run_nsupdate(commands):
     """Run nsupdate.
        Parameters:
        commands: a sequence of strings which will be sent.
@@ -26,16 +25,15 @@ def run_nsupdate(commands, zone="example.org.", update_address="127.0.0.1",
        update_port: port to send the update to
        zone: zone to update
 
-       Automatically adds the command to set server
-       Appends 'send' as a final command.
+       Appends 'send' and 'quit' as final commands.
 
        nsupdate's stdout and stderr streams are stored (as one multiline string
        in world.last_nsupdate_stdout/stderr.
-       Fails if the return code is not 0
 
+       The return code is stored in world.last_nsupdate_returncode
+       (it is not checked here, since a number of tests intentionally
+       result in a non-zero return code).
     """
-    #commands.insert(0, "server " + update_address + " " + update_port)
-    #commands.insert(0, "zone " + zone)
     commands.append('send')
     commands.append('quit')
     args = ['nsupdate' ]
@@ -47,25 +45,33 @@ def run_nsupdate(commands, zone="example.org.", update_address="127.0.0.1",
     world.last_nsupdate_returncode = nsupdate.returncode
     world.last_nsupdate_stdout = stdout
     world.last_nsupdate_stderr = stderr
-    #assert result == 0, "nsupdate exit code: " + str(result) +\
-    #                    "\nstdout:\n" + str(stdout) +\
-    #                    "stderr:\n" + str(stderr)
-
 
 @step('send a DDNS update for (\S+) with the following commands:')
 def send_multiple_commands(step, zone):
     """
     Run nsupdate, and send it the given multiline set of commands.
-    A quit command is always appended.
-    cmdctl_port ('with cmdctl port <portnr>', optional): cmdctl port to send
-                the command to. Defaults to 47805.
-    Fails if cmdctl does not exit with status code 0.
+    A send and quit command is always appended.
+
+    This is the most 'raw' wrapper around the nsupdate call; every
+    command except the final send needs to be specified. Intended
+    for those tests that have unique properties.
     """
     commands = step.multiline.split("\n")
     run_nsupdate(commands, zone)
 
 @step('DDNS response should be ([A-Z]+)')
 def check_ddns_response(step, response):
+    """
+    Checks the result of the last call to nsupdate.
+
+    If the given response argument is SUCCESS, it simply checks whether
+    the return code from nsupdate is 0 (there is no output in that case).
+    If not, it checks whether it is not 0, and if the given response string
+    matches a line 'update failed: <response>' in the stderr output of
+    nsupdate.
+
+    Prints exit code, stdout and stderr streams of nsupdate if it fails.
+    """
     # For success, nsupdate is silent, only check result code 0
     if response == "SUCCESS":
         assert 0 == world.last_nsupdate_returncode,\
@@ -77,7 +83,7 @@ def check_ddns_response(step, response):
         for line in world.last_nsupdate_stderr.split('\n'):
             if line == "update failed: " + response:
                 found = True
-        assert found and (2 == world.last_nsupdate_returncode),\
+        assert found and (0 != world.last_nsupdate_returncode),\
                "Response " + response + " not found in nsupdate output\n" +\
                "nsupdate exit code: " + str(world.last_nsupdate_returncode) +\
                "\nstdout:\n" + str(world.last_nsupdate_stdout) +\
@@ -87,11 +93,11 @@ def check_ddns_response(step, response):
 # Individual steps to create a DDNS update packet through nsupdate
 @step('Prepare a DDNS update(?: for (\S+))?(?: to (\S+)(?: port ([0-9]+)))?')
 def prepare_update(step, zone, server, port):
-    '''
+    """
     Prepares an nsupdate command that sets up an update to a server
     for a zone. The update is not sent yet, but the commands
-    are stored in world.nsupdate_commands
-    '''
+    are stored in world.nsupdate_commands.
+    """
     commands = []
     if server is not None:
         commands.append("server " + server)
@@ -107,21 +113,32 @@ def prepare_update(step, zone, server, port):
 
 @step('Add to the DDNS update: (.*)')
 def add_line_to_ddns_update(step, line):
+    """
+    Adds a single line to the prepared nsupdate. It is not sent yet.
+    The line must conform to nsupdate syntax.
+    """
     world.nsupdate_commands.append(line)
 
 @step('Add the following lines to the DDNS update:')
 def add_lines_to_ddns_update(step, line):
+    """
+    Adds multiple lines to the prepared nsupdate. It is not sent yet.
+    The lines must conform to nsupdate syntax.
+    """
     world.nsupdate_commands.extend(step.multiline.split('\n'))
 
-@step('Run the DDNS update')
+@step('Send the DDNS update')
 def run_ddns_update(step):
-    '''
-    Executes nsupdate as prepared by the previous steps
-    '''
+    """
+    Runs the prepared nsupdate, see run_nsupdate() for more information.
+    """
     run_nsupdate(world.nsupdate_commands)
 
 @step('Configure BIND10 to run DDNS')
 def configure_ddns_on(step):
+    """
+    Convenience compound step to enable the b10-ddns module.
+    """
     step.behave_as("""
     When I send bind10 the following commands
         \"\"\"
@@ -133,7 +150,10 @@ def configure_ddns_on(step):
     """)
 
 @step('Configure BIND10 to stop running DDNS')
-def configure_ddns_on(step):
+def configure_ddns_off(step):
+    """
+    Convenience compound step to disable the b10-ddns module.
+    """
     step.behave_as("""
     When I send bind10 the following commands
         \"\"\"
@@ -144,29 +164,33 @@ def configure_ddns_on(step):
 
 @step('use DDNS to set the SOA SERIAL to ([0-9]+)')
 def set_serial_to(step, new_serial):
-    '''
+    """
     Convenience compound step; prepare an update for example.org,
-    which sets the SERIAL to the given value
-    '''
+    which sets the SERIAL to the given value, and send it.
+    It makes no other changes, and has hardcoded values for the other
+    SOA rdata fields.
+    """
     step.given('Prepare a DDNS update')
     step.given('add to the DDNS update: update add example.org 3600 IN SOA ns1.example.org. admin.example.org. ' + new_serial + ' 3600 1800 2419200 7200')
-    step.given('Run the DDNS update')
+    step.given('Send the DDNS update')
 
 @step('use DDNS to add a record (.*)')
-def set_serial_to(step, new_record):
-    '''
+def add_record(step, new_record):
+    """
     Convenience compound step; prepare an update for example.org,
-    which adds one record, then runs the update.
-    '''
+    which adds one record, then send it.
+    Apart from the update addition, the update will not contain anything else.
+    """
     step.given('Prepare a DDNS update')
     step.given('add to the DDNS update: update add ' + new_record)
-    step.given('Run the DDNS update')
+    step.given('Send the DDNS update')
 
 @step('set DDNS ACL ([0-9]+) for ([0-9.]+) to ([A-Z]+)')
 def set_ddns_acl_to(step, nr, address, action):
-    '''
+    """
+    Convenience step to update a single ACL for DDNS.
     Replaces the ACL at the given index for the given
     address, to the given action
-    '''
+    """
     step.given('set bind10 configuration DDNS/zones[' + nr + ']/update_acl to [{"action": "' + action + '", "from": "' + address + '"}]')
     step.given('last bindctl output should not contain Error')
