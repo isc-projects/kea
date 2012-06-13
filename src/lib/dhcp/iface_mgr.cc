@@ -394,7 +394,9 @@ int IfaceMgr::openSocket(const std::string& ifname, const IOAddress& addr,
     }
 }
 
-int IfaceMgr::openSocketFromIface(const std::string& ifname, const uint16_t port, const uint8_t family) {
+int IfaceMgr::openSocketFromIface(const std::string& ifname,
+                                  const uint16_t port,
+                                  const uint8_t family) {
     int sock = 0;
     for (IfaceCollection::iterator iface=ifaces_.begin();
          iface!=ifaces_.end();
@@ -426,7 +428,8 @@ int IfaceMgr::openSocketFromIface(const std::string& ifname, const uint16_t port
     return (sock);
 }
 
-int IfaceMgr::openSocketFromAddr(const std::string& addr_name, const uint16_t port) {
+int IfaceMgr::openSocketFromAddr(const std::string& addr_name,
+                                 const uint16_t port) {
     int sock = 0;
     for (IfaceCollection::iterator iface=ifaces_.begin();
          iface!=ifaces_.end();
@@ -444,7 +447,8 @@ int IfaceMgr::openSocketFromAddr(const std::string& addr_name, const uint16_t po
                     continue;
                 }
             } catch (const isc::asiolink::IOError& e) {
-                cout << "Failed to open socket from address: " << e.what() << endl;
+                cout << "Failed to open socket from address: "
+                     << e.what() << endl;
                 return (sock);
             }
 
@@ -456,15 +460,19 @@ int IfaceMgr::openSocketFromAddr(const std::string& addr_name, const uint16_t po
         }
     }
     return (sock);
-    
+
 }
 
-    /*int IfaceMgr::openSocketFromRemoteAddr(const std::string& remote_addr_name,
+int IfaceMgr::openSocketFromRemoteAddr(const std::string&,
+                                       const uint16_t,
+                                       const uint8_t) {
+    /*
+int IfaceMgr::openSocketFromRemoteAddr(const std::string& remote_addr_name,
                                        const uint16_t port,
-                                       const uint8_t family) {
-    return 0;
-    }*/
+                                       const uint8_t family) {*/
 
+    return 0;
+}
 
 int IfaceMgr::openSocket4(Iface& iface, const IOAddress& addr, uint16_t port) {
 
