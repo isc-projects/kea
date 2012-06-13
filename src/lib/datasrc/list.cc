@@ -66,8 +66,23 @@ ConfigurableClientList::find(const dns::Name& name, bool want_exact_match,
                             bool) const
 {
     // Nothing found yet.
-    // Pointer is used as the FindResult can't be assigned.
-    auto_ptr<FindResult> candidate(new FindResult());
+    //
+    // We have this class as a temporary storage, as the FindResult can't be
+    // assigned.
+    struct MutableResult {
+        MutableResult() :
+            datasrc(NULL),
+            matched_labels(0)
+        { }
+        DataSourceClient *datasrc;
+        ZoneFinderPtr finder;
+        uint8_t matched_labels;
+        operator FindResult() {
+            // Conversion to the right result. If we return this, there was
+            // a partial match at best.
+            return FindResult(datasrc, finder, matched_labels, false);
+        }
+    } candidate;
 
     BOOST_FOREACH(const DataSourceInfo& info, data_sources_) {
         // TODO: Once we have support for the caches, consider them too here
@@ -86,7 +101,7 @@ ConfigurableClientList::find(const dns::Name& name, bool want_exact_match,
                 // TODO: In case we have only the datasource and not the finder
                 // and the need_updater parameter is true, get the zone there.
                 return (FindResult(info.data_src_, result.zone_finder,
-                                     name.getLabelCount(), true));
+                                   name.getLabelCount(), true));
             }
             case result::PARTIALMATCH: {
                 if (!want_exact_match) {
@@ -94,11 +109,11 @@ ConfigurableClientList::find(const dns::Name& name, bool want_exact_match,
                     // than what we have. If so, replace it.
                     const uint8_t labels(
                         result.zone_finder->getOrigin().getLabelCount());
-                    if (labels > candidate->matched_labels_) {
+                    if (labels > candidate.matched_labels) {
                         // This one is strictly better. Replace it.
-                        candidate.reset(new FindResult(info.data_src_,
-                                                       result.zone_finder,
-                                                       labels, false));
+                        candidate.datasrc = info.data_src_;
+                        candidate.finder = result.zone_finder;
+                        candidate.matched_labels = labels;
                     }
                 }
                 break;
@@ -115,7 +130,7 @@ ConfigurableClientList::find(const dns::Name& name, bool want_exact_match,
 
     // Return the partial match we have. In case we didn't want a partial
     // match, this surely contains the original empty result.
-    return (*candidate);
+    return (candidate);
 }
 
 // NOTE: This function is not tested, it would be complicated. However, the
