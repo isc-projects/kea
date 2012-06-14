@@ -237,11 +237,10 @@ class TestForwarder(unittest.TestCase):
         s = socket.socket(socket.AF_UNIX, SOCK_STREAM, 0)
         s.setblocking(False)
         s.connect(TEST_UNIX_FILE)
-        accept_sock = self.accept_forwarder()
-        receiver = SocketSessionReceiver(accept_sock)
-        s.close()
-        self.assertRaises(SocketSessionError, receiver.pop)
-        accept_sock.close()
+        with self.accept_forwarder() as accept_sock:
+            receiver = SocketSessionReceiver(accept_sock)
+            s.close()
+            self.assertRaises(SocketSessionError, receiver.pop)
 
 class TestReceiver(unittest.TestCase):
     # We only check a couple of failure cases on construction.  Valid cases
