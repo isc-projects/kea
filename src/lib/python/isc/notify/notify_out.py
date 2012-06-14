@@ -35,6 +35,8 @@ logger = isc.log.Logger("notify_out")
 from isc.dns import *
 
 ZONE_NEW_DATA_READY_CMD = 'zone_new_data_ready'
+ZONE_XFRIN_FAILED = 'zone_xfrin_failed'
+
 _MAX_NOTIFY_NUM = 30
 _MAX_NOTIFY_TRY_NUM = 5
 _EVENT_NONE = 0
