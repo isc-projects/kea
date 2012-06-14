@@ -305,7 +305,8 @@ class WrapTests(unittest.TestCase):
         send_fd(t1.fileno(), p1.fileno())
         p1.close()
 
-        with socket.fromfd(t2.read_fd(), socket.AF_UNIX, socket.SOCK_STREAM) as p1:
+        with socket.fromfd(t2.read_fd(), socket.AF_UNIX,
+                           socket.SOCK_STREAM) as p1:
             # Now, pass some data trough the socket
             p1.send(b'A')
             data = p2.recv(1)
