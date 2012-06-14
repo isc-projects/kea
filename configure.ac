@@ -996,10 +996,12 @@ use_valgrind_suppressions=no
 
 if test "x$VALGRIND" != "xno" -a "x$enable_valgrind" != "xno"; then
    if test "x$enable_valgrind_suppressions" != "xno"; then
-      VALGRIND_SUPPRESSIONS="--error-exitcode=1 --suppressions=\$(top_srcdir)/src/valgrind-suppressions --suppressions=\$(top_srcdir)/src/valgrind-suppressions.revisit"
+      VALGRIND_EXTRA="--error-exitcode=1 --suppressions=\$(top_srcdir)/src/valgrind-suppressions --suppressions=\$(top_srcdir)/src/valgrind-suppressions.revisit"
       use_valgrind_suppressions=yes
+   else
+      VALGRIND_EXTRA="--track-origins=yes"
    fi
-   VALGRIND_COMMAND="$VALGRIND -q --gen-suppressions=all $VALGRIND_SUPPRESSIONS --num-callers=48 --leak-check=full --fullpath-after="
+   VALGRIND_COMMAND="$VALGRIND -q --gen-suppressions=all $VALGRIND_EXTRA --num-callers=48 --leak-check=full --fullpath-after="
    use_valgrind=yes
 fi
 AC_SUBST(VALGRIND_COMMAND)
