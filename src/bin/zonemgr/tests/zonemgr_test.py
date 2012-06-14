@@ -99,8 +99,6 @@ class MyZonemgrRefresh(ZonemgrRefresh):
 
 class TestZonemgrRefresh(unittest.TestCase):
     def setUp(self):
-        self.stderr_backup = sys.stderr
-        sys.stderr = open(os.devnull, 'w')
         self.zone_refresh = MyZonemgrRefresh()
         self.cc_session = FakeCCSession()
 
@@ -601,10 +599,6 @@ class TestZonemgrRefresh(unittest.TestCase):
         self.assertRaises(ZonemgrException,
                           self.zone_refresh.update_config_data,
                           config, self.cc_session)
-
-    def tearDown(self):
-        sys.stderr.close()
-        sys.stderr = self.stderr_backup
 
 class MyZonemgr(Zonemgr):
 
