@@ -39,6 +39,7 @@ from optparse import OptionParser, OptionValueError
 from isc.config.ccsession import *
 import isc.util.process
 from isc.log_messages.zonemgr_messages import *
+from isc.notify import notify_out
 
 # Initialize logging for called modules.
 isc.log.init("b10-zonemgr")
@@ -79,7 +80,6 @@ AUTH_MODULE_NAME = 'Auth'
 
 # define command name
 ZONE_XFRIN_FAILED_COMMAND = 'zone_xfrin_failed'
-ZONE_XFRIN_SUCCESS_COMMAND = 'zone_new_data_ready'
 ZONE_REFRESH_COMMAND = 'refresh_from_zonemgr'
 ZONE_NOTIFY_COMMAND = 'notify'
 
@@ -621,7 +621,7 @@ class Zonemgr:
     def command_handler(self, command, args):
         """Handle command receivd from command channel.
         ZONE_NOTIFY_COMMAND is issued by Auth process;
-        ZONE_XFRIN_SUCCESS_COMMAND and ZONE_XFRIN_FAILED_COMMAND are issued by
+        ZONE_NEW_DATA_READY_CMD and ZONE_XFRIN_FAILED_COMMAND are issued by
         Xfrin process;
         shutdown is issued by a user or Boss process. """
         answer = create_answer(0)
@@ -635,7 +635,7 @@ class Zonemgr:
             # Send notification to zonemgr timer thread
             self._master_socket.send(b" ")# make self._slave_socket readble
 
-        elif command == ZONE_XFRIN_SUCCESS_COMMAND:
+        elif command == notify_out.ZONE_NEW_DATA_READY_CMD:
             """ Handle xfrin success command"""
             zone_name_class = self._parse_cmd_params(args, command)
             logger.debug(DBG_ZONEMGR_COMMAND, ZONEMGR_RECEIVE_XFRIN_SUCCESS, zone_name_class[0], zone_name_class[1])
