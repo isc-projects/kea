@@ -155,6 +155,10 @@ class SendNonblock(unittest.TestCase):
                 sender(msgq, write)
         except socket.error:
             pass
+
+        # Explicitly close temporary socket pair as the Python
+        # interpreter expects it.  It may not be 100% exception safe,
+        # but since this is only for tests we prefer brevity.
         read.close()
         write.close()
 
@@ -219,6 +223,10 @@ class SendNonblock(unittest.TestCase):
                 finally:
                     os.kill(queue_pid, signal.SIGTERM)
         self.terminate_check(run)
+
+        # Explicitly close temporary socket pair as the Python
+        # interpreter expects it.  It may not be 100% exception safe,
+        # but since this is only for tests we prefer brevity.
         queue.close()
         out.close()
 
