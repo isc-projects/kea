@@ -26,6 +26,7 @@ from isc.config.config_data import ConfigData
 from isc.config.ccsession import create_answer, ModuleCCSessionError
 from isc.config.module_spec import ModuleSpecError
 from isc.server_common.dns_tcp import DNSTCPContext
+from isc.notify import notify_out
 import ddns
 import errno
 import os
@@ -1163,7 +1164,7 @@ class TestDDNSSession(unittest.TestCase):
             sent_msg, sent_group = self.__cc_session._sent_msg[msg_cnt]
             sent_cmd = sent_msg['command']
             self.assertEqual('Xfrout', sent_group)
-            self.assertEqual('notify', sent_cmd[0])
+            self.assertEqual(notify_out.ZONE_NEW_DATA_READY_CMD, sent_cmd[0])
             self.assertEqual(2, len(sent_cmd[1]))
             self.assertEqual(TEST_ZONE_NAME.to_text(), sent_cmd[1]['zone_name'])
             self.assertEqual(TEST_RRCLASS.to_text(), sent_cmd[1]['zone_class'])
