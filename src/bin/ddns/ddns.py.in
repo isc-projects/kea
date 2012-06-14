@@ -154,6 +154,7 @@ class DDNSServer:
         this module is stopping.
         '''
         self._cc.send_stopping()
+        self._listen_socket.close()
 
     def accept(self):
         """
