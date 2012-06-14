@@ -159,7 +159,7 @@ const char* ds_zones[][3] = {
     }
 };
 
-const size_t ds_count = (sizeof (ds_zones) / sizeof (*ds_zones));
+const size_t ds_count = (sizeof(ds_zones) / sizeof(*ds_zones));
 
 class ListTest : public ::testing::Test {
 public:
