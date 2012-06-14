@@ -37,6 +37,8 @@ class FakeSocket:
         return "fake_unix_socket"
     def accept(self):
         return FakeSocket(self.__fileno + 1)
+    def close(self):
+        return
 
 class FakeSessionReceiver:
     """
@@ -111,6 +113,8 @@ class TestDDNSServer(unittest.TestCase):
         self.__select_answer = None
         self.__select_exception = None
         self.__hook_called = False
+        # Because we overwrite the _listen_socket, close any existing
+        # socket object.
         if self.ddns_server._listen_socket is not None:
             self.ddns_server._listen_socket.close()
         self.ddns_server._listen_socket = FakeSocket(2)
@@ -141,7 +145,7 @@ class TestDDNSServer(unittest.TestCase):
         self.assertIsNone(self.__hook_called)
         # Now make sure the clear_socket really works
         ddns.clear_socket()
-        ddnss._listen_socket.close()
+        ddnss.shutdown_cleanup()
         self.assertFalse(os.path.exists(ddns.SOCKET_FILE))
 
     def test_config_handler(self):
