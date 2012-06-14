@@ -73,11 +73,13 @@ ConfigurableClientList::find(const dns::Name& name, bool want_exact_match,
     struct MutableResult {
         MutableResult() :
             datasrc_client(NULL),
-            matched_labels(0)
+            matched_labels(0),
+            matched(false)
         { }
         DataSourceClient* datasrc_client;
         ZoneFinderPtr finder;
         uint8_t matched_labels;
+        bool matched;
         operator FindResult() const {
             // Conversion to the right result. If we return this, there was
             // a partial match at best.
@@ -108,13 +110,25 @@ ConfigurableClientList::find(const dns::Name& name, bool want_exact_match,
                 if (!want_exact_match) {
                     // In case we have a partial match, check if it is better
                     // than what we have. If so, replace it.
-                    const uint8_t labels(
-                        result.zone_finder->getOrigin().getLabelCount());
-                    if (labels > candidate.matched_labels) {
+                    //
+                    // We don't need the labels at the first partial match,
+                    // we have nothing to compare with. So we don't get it
+                    // (as a performance) and hope we will not need it at all.
+                    const uint8_t labels(candidate.matched ?
+                        result.zone_finder->getOrigin().getLabelCount() : 0);
+                    if (candidate.matched && candidate.matched_labels == 0) {
+                        // But if the hope turns out to be false, we need to
+                        // compute it for the first match anyway.
+                        candidate.matched_labels = candidate.finder->
+                            getOrigin().getLabelCount();
+                    }
+                    if (labels > candidate.matched_labels ||
+                        !candidate.matched) {
                         // This one is strictly better. Replace it.
                         candidate.datasrc_client = info.data_src_client_;
                         candidate.finder = result.zone_finder;
                         candidate.matched_labels = labels;
+                        candidate.matched = true;
                     }
                 }
                 break;
