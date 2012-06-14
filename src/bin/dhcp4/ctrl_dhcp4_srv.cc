@@ -102,10 +102,12 @@ void ControlledDhcpv4Srv::establishSession() {
                                           dhcp4CommandHandler, false);
     config_session_->start();
 
+    /// Integrate the asynchronous I/O model of BIND 10 configuration
+    /// control with the "select" model of the DHCP server.  This is
+    /// fully explained in \ref dhcpv4Session.
     int ctrl_socket = cc_session_->getSocketDesc();
     cout << "b10-dhcp4: Control session started, socket="
          << ctrl_socket << endl;
-
     IfaceMgr::instance().set_session_socket(ctrl_socket, sessionReader);
 }
 
