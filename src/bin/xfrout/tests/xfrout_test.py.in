@@ -1377,20 +1377,13 @@ class TestUnixSockServer(unittest.TestCase):
         self._remove_file(sock_file)
         self.assertFalse(self.unix._sock_file_in_use(sock_file))
         self._start_unix_sock_server(sock_file)
-
-        old_stdout = sys.stdout
-        with open(os.devnull, 'w') as f:
-            sys.stdout = f
-            self.assertTrue(self.unix._sock_file_in_use(sock_file))
-        sys.stdout = old_stdout
+        self.assertTrue(self.unix._sock_file_in_use(sock_file))
 
     def test_remove_unused_sock_file_in_use(self):
         sock_file = 'temp.sock.file'
         self._remove_file(sock_file)
         self.assertFalse(self.unix._sock_file_in_use(sock_file))
         self._start_unix_sock_server(sock_file)
-        old_stdout = sys.stdout
-        sys.stdout = open(os.devnull, 'w')
         try:
             self.unix._remove_unused_sock_file(sock_file)
         except SystemExit:
@@ -1398,8 +1391,6 @@ class TestUnixSockServer(unittest.TestCase):
         else:
             # This should never happen
             self.assertTrue(False)
-        sys.stdout.close()
-        sys.stdout = old_stdout
 
     def test_remove_unused_sock_file_dir(self):
         import tempfile
