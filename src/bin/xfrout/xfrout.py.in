@@ -741,12 +741,14 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
         # to care about the SOCK_STREAM parameter at all (which it really is,
         # except for testing)
         if socket.has_ipv6:
-            sock = socket.fromfd(sock_fd, socket.AF_INET6, socket.SOCK_STREAM)
+            socktype = socket.AF_INET6
         else:
             # To make it work even on hosts without IPv6 support
             # (Any idea how to simulate this in test?)
-            sock = socket.fromfd(sock_fd, socket.AF_INET, socket.SOCK_STREAM)
-        peer = sock.getpeername()
+            socktype = socket.AF_INET
+
+        with socket.fromfd(sock_fd, socktype, socket.SOCK_STREAM) as sock:
+            peer = sock.getpeername()
 
         # Identify the correct socket family.  Due to the above "trick",
         # we cannot simply use sock.family.
@@ -755,8 +757,6 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
             socket.inet_pton(socket.AF_INET6, peer[0])
         except socket.error:
             family = socket.AF_INET
-
-        sock.close()
 
         return (family, socket.SOCK_STREAM, peer)
 
