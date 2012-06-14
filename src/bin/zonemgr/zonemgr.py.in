@@ -423,6 +423,8 @@ class ZonemgrRefresh:
         self._thread.join()
         # Wipe out what we do not need
         self._thread = None
+        self._read_sock.close()
+        self._write_sock.close()
         self._read_sock = None
         self._write_sock = None
 
