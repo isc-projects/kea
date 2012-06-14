@@ -145,8 +145,10 @@ class TestDDNSServer(unittest.TestCase):
         self.assertIsNone(self.__hook_called)
         # Now make sure the clear_socket really works
         ddns.clear_socket()
-        ddnss.shutdown_cleanup()
         self.assertFalse(os.path.exists(ddns.SOCKET_FILE))
+        # Let ddns object complete any necessary cleanup (not part of the test,
+        # but for suppressing any warnings from the Python interpreter)
+        ddnss.shutdown_cleanup()
 
     def test_config_handler(self):
         # Config handler does not do anything yet, but should at least
