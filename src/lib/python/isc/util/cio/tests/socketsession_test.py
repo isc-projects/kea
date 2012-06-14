@@ -31,12 +31,15 @@ class TestForwarder(unittest.TestCase):
     '''
 
     def setUp(self):
+        self.listen_sock = None
         self.forwarder = SocketSessionForwarder(TEST_UNIX_FILE)
         if os.path.exists(TEST_UNIX_FILE):
             os.unlink(TEST_UNIX_FILE)
         self.large_text = b'a' * 65535
 
     def tearDown(self):
+        if self.listen_sock is not None:
+            self.listen_sock.close()
         if os.path.exists(TEST_UNIX_FILE):
             os.unlink(TEST_UNIX_FILE)
 
@@ -179,7 +182,6 @@ class TestForwarder(unittest.TestCase):
             server_sock.close()
             client_sock.close()
 
-        self.listen_sock.close()
         passed_sock.close()
         sock.close()
 
