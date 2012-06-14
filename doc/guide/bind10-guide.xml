@@ -87,9 +87,10 @@
     <section>
       <title>Supported Platforms</title>
       <para>
-  BIND 10 builds have been tested on Debian GNU/Linux 5 and unstable,
-  Ubuntu 9.10, NetBSD 5, Solaris 10, FreeBSD 7 and 8, CentOS
-  Linux 5.3, and MacOS 10.6.
+  BIND 10 builds have been tested on (in no particular order)
+  Debian GNU/Linux 5 and unstable, Ubuntu 9.10, NetBSD 5,
+  Solaris 10 and 11, FreeBSD 7 and 8, CentOS Linux 5.3,
+  MacOS 10.6 and 10.7, and OpenBSD 5.1.
 
   It has been tested on Sparc, i386, and amd64 hardware
   platforms.
