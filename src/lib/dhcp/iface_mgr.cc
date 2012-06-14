@@ -23,6 +23,9 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/iface_mgr.h>
 #include <exceptions/exceptions.h>
+#include <asio.hpp>
+#include <asiolink/udp_endpoint.h>
+#include <asio/error.hpp>
 #include <asiolink/io_error.h>
 #include <util/io/pktinfo_utilities.h>
 
@@ -279,7 +282,7 @@ bool IfaceMgr::openSockets6(const uint16_t port) {
 
         AddressCollection addrs = iface->getAddresses();
 
-        for (AddressCollection::iterator addr= addrs.begin();
+        for (AddressCollection::iterator addr = addrs.begin();
              addr != addrs.end();
              ++addr) {
 
@@ -413,7 +416,6 @@ int IfaceMgr::openSocketFromIface(const std::string& ifname,
              addr != addrs.end();
              ++addr) {
 
-            // skip IPv4 addresses
             if (addr->getFamily() != family) {
                 continue;
             }
@@ -428,9 +430,44 @@ int IfaceMgr::openSocketFromIface(const std::string& ifname,
     return (sock);
 }
 
-int IfaceMgr::openSocketFromAddr(const std::string& addr_name,
-                                 const uint16_t port) {
+int IfaceMgr::openSocketFromAddress(const IOAddress& addr,
+                                    const uint16_t port) {
     int sock = 0;
+    for (IfaceCollection::iterator iface=ifaces_.begin();
+         iface!=ifaces_.end();
+         ++iface) {
+
+        AddressCollection addrs = iface->getAddresses();
+
+        for (AddressCollection::iterator addr_it = addrs.begin();
+             addr_it != addrs.end();
+             ++addr_it) {
+
+            try {
+                if (addr_it->getAddress() != addr.getAddress()) {
+                    continue;
+                }
+            } catch (const isc::asiolink::IOError& e) {
+                cout << "Failed to open socket from address: "
+                     << e.what() << endl;
+                return (sock);
+            }
+
+            sock = openSocket(iface->getName(), *addr_it, port);
+            if (sock < 0) {
+                cout << "Failed to open unicast socket." << endl;
+            }
+            return (sock);
+        }
+    }
+    return (sock);
+}
+
+int IfaceMgr::openSocketFromRemoteAddress(const IOAddress& remote_addr,
+                                          const uint16_t port) {
+    int sock = 0;
+    IOAddress local_address(getLocalAddress(remote_addr, port).getAddress());
+
     for (IfaceCollection::iterator iface=ifaces_.begin();
          iface!=ifaces_.end();
          ++iface) {
@@ -441,37 +478,37 @@ int IfaceMgr::openSocketFromAddr(const std::string& addr_name,
              addr != addrs.end();
              ++addr) {
 
-            try {
-                IOAddress searched_addr(addr_name);
-                if (addr->getAddress() != searched_addr.getAddress()) {
-                    continue;
-                }
-            } catch (const isc::asiolink::IOError& e) {
-                cout << "Failed to open socket from address: "
-                     << e.what() << endl;
-                return (sock);
+            if (addr->getAddress() != local_address.getAddress()) {
+                continue;
             }
 
             sock = openSocket(iface->getName(), *addr, port);
-            if (sock<0) {
+            if (sock < 0) {
                 cout << "Failed to open unicast socket." << endl;
             }
             return (sock);
         }
     }
     return (sock);
-
 }
 
-int IfaceMgr::openSocketFromRemoteAddr(const std::string&,
-                                       const uint16_t,
-                                       const uint8_t) {
-    /*
-int IfaceMgr::openSocketFromRemoteAddr(const std::string& remote_addr_name,
-                                       const uint16_t port,
-                                       const uint8_t family) {*/
+isc::asiolink::IOAddress
+IfaceMgr::getLocalAddress(const IOAddress& remote_addr, const uint16_t port) {
+    boost::shared_ptr<const UDPEndpoint>
+        remote_endpoint(static_cast<const UDPEndpoint*>
+                        (UDPEndpoint::create(IPPROTO_UDP, remote_addr, port)));
+    asio::io_service io_service;
+    asio::ip::udp::socket sock(io_service);
+    asio::error_code err_code;
+    sock.connect(remote_endpoint->getASIOEndpoint(), err_code);
+    if (err_code) {
+        isc_throw(Unexpected,"Failed to connect to remote address.");
+    }
 
-    return 0;
+    asio::ip::udp::socket::endpoint_type local_endpoint =  sock.local_endpoint();
+    asio::ip::address local_address(local_endpoint.address());
+
+    return IOAddress(local_address);
 }
 
 int IfaceMgr::openSocket4(Iface& iface, const IOAddress& addr, uint16_t port) {
