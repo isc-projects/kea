@@ -177,6 +177,7 @@ class MsgQ:
             # (note this is a catch-all, but we reraise it)
             if os.path.exists(self.socket_file):
                 os.remove(self.socket_file)
+            self.listen_socket.close()
             raise e
 
         if self.poller:
