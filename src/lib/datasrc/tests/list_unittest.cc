@@ -191,7 +191,6 @@ public:
         EXPECT_EQ(dsrc.get(), result.dsrc_client_);
         ASSERT_NE(ZoneFinderPtr(), result.finder_);
         EXPECT_EQ(name, result.finder_->getOrigin());
-        EXPECT_EQ(name.getLabelCount(), result.matched_labels_);
         EXPECT_EQ(exact, result.exact_match_);
     }
     // Configure the list with multiple data sources, according to
