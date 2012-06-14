@@ -373,16 +373,51 @@ public:
     /// @return socket descriptor, if socket creation, binding and multicast
     /// group join were all successful.
     int openSocket(const std::string& ifname,
-                   const isc::asiolink::IOAddress& addr, const uint16_t port);
+                   const isc::asiolink::IOAddress& addr,
+                   const uint16_t port);
 
-    int openSocketFromIface(const std::string& ifname, const uint16_t port,
+    /// @brief Opens UDP/IP socket and binds it to interface specified.
+    ///
+    /// This method differs from \ref openSocket such that it allows
+    /// not to specify local address to which socket will be bound.
+    /// Instead, method searches through addresses on specified
+    /// interface and selects one that matches address family.
+    ///
+    /// @param ifname name of the interface
+    /// @param addr address to be bound
+    /// @param port UDP port
+    /// @return socket descriptor, if socket creation, binding and multicast
+    /// group join were all successful.
+    int openSocketFromIface(const std::string& ifname,
+                            const uint16_t port,
                             const uint8_t family);
 
-    int openSocketFromAddr(const std::string& addr_name, const uint16_t port);
+    /// @brief Opens UDP/IP socket and binds to address specified
+    ///
+    /// This methods differs from \ref openSocket such that it allows
+    /// not to specify interface to which socket will be bound.
+    ///
+    /// @param addr address to be bound
+    /// @param port UDP port
+    /// @return socket descriptor, if socket creation, binding and multicast
+    /// group join were all successful.
+    int openSocketFromAddress(const isc::asiolink::IOAddress& addr,
+                              const uint16_t port);
 
-    int openSocketFromRemoteAddr(const std::string& remote_addr_name,
-                                 const uint16_t port,
-                                 const uint8_t family);
+    /// @brief Opens UDP/IP socket to be used to connect to remote address
+    ///
+    /// This method identifies local address to be used to connect
+    /// to remote address specified as argument.
+    /// Once local address is idetified \ref openSocket is called
+    /// to open socket and bind it to interface, address and port.
+    ///
+    /// @param remote_addr remote address to connect to
+    /// @param port UDP port
+    /// @return socket descriptor, if socket creation, binding and multicast
+    /// group join were all successful.
+    int openSocketFromRemoteAddress(const isc::asiolink::IOAddress& remote_addr,
+                                    const uint16_t port);
+
 
     /// Opens IPv6 sockets on detected interfaces.
     ///
@@ -537,6 +572,22 @@ private:
     joinMulticast(int sock, const std::string& ifname,
                   const std::string& mcast);
 
+    /// @brief Identifies local network address to be used to
+    /// connect to remote address.
+    ///
+    /// This method identifies local network address that can be used
+    /// to connect to remote address specified.
+    /// This method creates socket and makes attempt to connect
+    /// to remote location via this socket. If connection
+    /// is established successfully, the local address to which
+    /// socket is bound is returned.
+    ///
+    /// @param remote_addr remote address to connect to
+    /// @param port port to be used
+    /// @return local address to be used to connect to remote address
+    isc::asiolink::IOAddress
+    getLocalAddress(const isc::asiolink::IOAddress& remote_addr,
+                    const uint16_t port);
 };
 
 }; // namespace isc::dhcp

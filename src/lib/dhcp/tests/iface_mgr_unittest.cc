@@ -258,15 +258,17 @@ TEST_F(IfaceMgrTest, socketsFromIface) {
 }
 
 
-TEST_F(IfaceMgrTest, socketsFromAddr) {
+TEST_F(IfaceMgrTest, socketsFromAddress) {
     NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
 
     // open v6 socket on loopback address and bind to 10547 port
-    int socket1 = ifacemgr->openSocketFromAddr("::1", 10547);
+    IOAddress loAddr6("::1");
+    int socket1 = ifacemgr->openSocketFromAddress(loAddr6, 10547);
     EXPECT_GT(socket1, 0);
 
-    // open v4 socket on loopback address and bind to 10548 port
-    int socket2 = ifacemgr->openSocketFromAddr("127.0.0.1", 10548);
+    // open v4 socket on loopip::udp::socketback address and bind to 10548 port
+    IOAddress loAddr("127.0.0.1");
+    int socket2 = ifacemgr->openSocketFromAddress(loAddr, 10548);
     EXPECT_GT(socket2, 0);
 
     close(socket1);
@@ -275,13 +277,23 @@ TEST_F(IfaceMgrTest, socketsFromAddr) {
     delete ifacemgr;
 }
 
-TEST_F(IfaceMgrTest, socketsFromRemoteAddr) {
+TEST_F(IfaceMgrTest, socketsFromRemoteAddress) {
     NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
 
-    int socket1 = ifacemgr->openSocketFromRemoteAddr("::1", 10547, AF_INET6);
+    // Open v6 socket to connect to remote address.
+    // Loopback address is the only one that we know
+    // so let's treat it as remote address.
+    IOAddress loAddr6("::1");
+    int socket1 = ifacemgr->openSocketFromRemoteAddress(loAddr6, 10547);
     EXPECT_GT(socket1, 0);
 
+    // Open v4 socket to connect to remote address.
+    IOAddress loAddr("127.0.0.1");
+    int socket2 = ifacemgr->openSocketFromRemoteAddress(loAddr, 10548);
+    EXPECT_GT(socket2, 0);
+
     close(socket1);
+    close(socket2);
 
     delete ifacemgr;
 }
