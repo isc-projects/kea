@@ -37,7 +37,7 @@ public:
     public:
         Finder(const Name& origin) :
             origin_(origin)
-        { }
+        {}
         Name getOrigin() const { return (origin_); }
         // The rest is not to be called, so just have them
         RRClass getClass() const {
@@ -75,7 +75,7 @@ public:
                          const ConstElementPtr& configuration) :
         type_(type),
         configuration_(configuration)
-    { }
+    {}
     virtual FindResult findZone(const Name& name) const {
         if (zones.empty()) {
             return (FindResult(result::NOTFOUND, ZoneFinderPtr()));

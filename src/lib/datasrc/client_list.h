@@ -70,7 +70,7 @@ public:
             dsrc_client_(dsrc_client),
             finder_(finder),
             exact_match_(exact_match)
-        { }
+        {}
 
         /// \brief Negative answer constructor.
         ///
@@ -79,7 +79,7 @@ public:
         FindResult() :
             dsrc_client_(NULL),
             exact_match_(false)
-        { }
+        {}
 
         /// \brief Comparison operator.
         ///
@@ -97,8 +97,8 @@ public:
         /// If no such data source exists, this is NULL pointer.
         ///
         /// Note that the pointer is valid only as long the ClientList which
-        /// returned is alive and was not reconfigured. The ownership is
-        /// preserved within the ClientList.
+        /// returned the pointer is alive and was not reconfigured. The
+        /// ownership is preserved within the ClientList.
         DataSourceClient* const dsrc_client_;
 
         /// \brief The finder for the requested zone.
@@ -188,7 +188,7 @@ public:
     public:
         ConfigurationError(const char* file, size_t line, const char* what) :
             Exception(file, line, what)
-        { }
+        {}
     };
 
     /// \brief Sets the configuration.
@@ -232,7 +232,7 @@ public:
                        const DataSourceClientContainerPtr& container) :
             data_src_client_(data_src_client),
             container_(container)
-        { }
+        {}
         DataSourceClient* data_src_client_;
         DataSourceClientContainerPtr container_;
     };
