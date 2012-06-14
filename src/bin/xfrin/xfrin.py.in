@@ -71,7 +71,6 @@ AUTH_MODULE_NAME = 'Auth'
 XFROUT_MODULE_NAME = 'Xfrout'
 ZONE_MANAGER_MODULE_NAME = 'Zonemgr'
 REFRESH_FROM_ZONEMGR = 'refresh_from_zonemgr'
-ZONE_XFRIN_FAILED = 'zone_xfrin_failed'
 
 # Constants for debug levels.
 DBG_XFRIN_TRACE = logger.DBGLVL_TRACE_BASIC
@@ -1580,7 +1579,7 @@ class Xfrin:
                 logger.error(XFRIN_MSGQ_SEND_ERROR, XFROUT_MODULE_NAME, ZONE_MANAGER_MODULE_NAME)
 
         else:
-            msg = create_command(ZONE_XFRIN_FAILED, param)
+            msg = create_command(notify_out.ZONE_XFRIN_FAILED, param)
             # catch the exception, in case msgq has been killed.
             try:
                 seq = self._send_cc_session.group_sendmsg(msg, ZONE_MANAGER_MODULE_NAME)
