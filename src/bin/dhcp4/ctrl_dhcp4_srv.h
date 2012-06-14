@@ -50,10 +50,6 @@ public:
     ///
     /// Creates session that will be used to receive commands and updated
     /// configuration from boss (or indirectly from user via bindctl).
-    ///
-    /// Integrate the asynchronous I/O model of BIND 10 configuration
-    /// control with the "select" model of the DHCP server.  This is
-    /// fully explained in \ref dhcpv4Session.
     void establishSession();
 
     /// @brief Terminates existing msgq session.
