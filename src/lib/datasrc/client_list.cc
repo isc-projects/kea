@@ -75,7 +75,7 @@ ConfigurableClientList::find(const dns::Name& name, bool want_exact_match,
             datasrc_client(NULL),
             matched_labels(0),
             matched(false)
-        { }
+        {}
         DataSourceClient* datasrc_client;
         ZoneFinderPtr finder;
         uint8_t matched_labels;
@@ -97,7 +97,7 @@ ConfigurableClientList::find(const dns::Name& name, bool want_exact_match,
         const DataSourceClient::FindResult result(
             info.data_src_client_->findZone(name));
         switch (result.code) {
-            case result::SUCCESS: {
+            case result::SUCCESS:
                 // If we found an exact match, we have no hope to getting
                 // a better one. Stop right here.
 
@@ -105,8 +105,7 @@ ConfigurableClientList::find(const dns::Name& name, bool want_exact_match,
                 // and the need_updater parameter is true, get the zone there.
                 return (FindResult(info.data_src_client_, result.zone_finder,
                                    true));
-            }
-            case result::PARTIALMATCH: {
+            case result::PARTIALMATCH:
                 if (!want_exact_match) {
                     // In case we have a partial match, check if it is better
                     // than what we have. If so, replace it.
@@ -132,11 +131,9 @@ ConfigurableClientList::find(const dns::Name& name, bool want_exact_match,
                     }
                 }
                 break;
-            }
-            default: {
+            default:
                 // Nothing found, nothing to do.
-                ;
-            }
+                break;
         }
     }
 
