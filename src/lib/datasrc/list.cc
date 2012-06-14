@@ -75,13 +75,13 @@ ConfigurableClientList::find(const dns::Name& name, bool want_exact_match,
             datasrc_client(NULL),
             matched_labels(0)
         { }
-        DataSourceClient *datasrc_client;
+        DataSourceClient* datasrc_client;
         ZoneFinderPtr finder;
         uint8_t matched_labels;
-        operator FindResult() {
+        operator FindResult() const {
             // Conversion to the right result. If we return this, there was
             // a partial match at best.
-            return FindResult(datasrc_client, finder, matched_labels, false);
+            return (FindResult(datasrc_client, finder, matched_labels, false));
         }
     } candidate;
 
@@ -112,7 +112,7 @@ ConfigurableClientList::find(const dns::Name& name, bool want_exact_match,
                         result.zone_finder->getOrigin().getLabelCount());
                     if (labels > candidate.matched_labels) {
                         // This one is strictly better. Replace it.
-                    candidate.datasrc_client = info.data_src_client_;
+                        candidate.datasrc_client = info.data_src_client_;
                         candidate.finder = result.zone_finder;
                         candidate.matched_labels = labels;
                     }
