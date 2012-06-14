@@ -798,13 +798,13 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
         '''Check whether the socket file 'sock_file' exists and
         is being used by one running xfrout process. If it is,
         return True, or else return False. '''
-        with socket.socket(socket.AF_UNIX) as sock:
-            try:
+        try:
+            with socket.socket(socket.AF_UNIX) as sock:
                 sock.connect(sock_file)
-            except socket.error as err:
-                return False
-            else:
-                return True
+        except socket.error as err:
+            return False
+        else:
+            return True
 
     def shutdown(self):
         self._write_sock.send(b"shutdown") #terminate the xfrout session thread
