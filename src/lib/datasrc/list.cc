@@ -81,7 +81,7 @@ ConfigurableClientList::find(const dns::Name& name, bool want_exact_match,
         operator FindResult() const {
             // Conversion to the right result. If we return this, there was
             // a partial match at best.
-            return (FindResult(datasrc_client, finder, matched_labels, false));
+            return (FindResult(datasrc_client, finder, false));
         }
     } candidate;
 
@@ -102,7 +102,7 @@ ConfigurableClientList::find(const dns::Name& name, bool want_exact_match,
                 // TODO: In case we have only the datasource and not the finder
                 // and the need_updater parameter is true, get the zone there.
                 return (FindResult(info.data_src_client_, result.zone_finder,
-                                   name.getLabelCount(), true));
+                                   true));
             }
             case result::PARTIALMATCH: {
                 if (!want_exact_match) {

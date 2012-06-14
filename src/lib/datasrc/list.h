@@ -65,22 +65,19 @@ public:
         ///
         /// It simply fills in the member variables according to the
         /// parameters. See the member descriptions for their meaning.
-        FindResult(DataSourceClient* dsrc_client,
-                   const ZoneFinderPtr& finder,
-                   uint8_t matched_labels, bool exact_match) :
+        FindResult(DataSourceClient* dsrc_client, const ZoneFinderPtr& finder,
+                   bool exact_match) :
             dsrc_client_(dsrc_client),
             finder_(finder),
-            matched_labels_(matched_labels),
             exact_match_(exact_match)
         { }
 
         /// \brief Negative answer constructor.
         ///
         /// This conscructs a result for negative answer. Both pointers are
-        /// NULL, matched_labels_ is 0 and exact_match_ is false.
+        /// NULL, and exact_match_ is false.
         FindResult() :
             dsrc_client_(NULL),
-            matched_labels_(0),
             exact_match_(false)
         { }
 
@@ -91,7 +88,6 @@ public:
         bool operator ==(const FindResult& other) const {
         return (dsrc_client_ == other.dsrc_client_ &&
                 finder_ == other.finder_ &&
-                matched_labels_ == other.matched_labels_ &&
                 exact_match_ == other.exact_match_);
         }
 
@@ -113,12 +109,6 @@ public:
         ///
         /// \see find
         const ZoneFinderPtr finder_;
-
-        /// \brief Number of matching labels.
-        ///
-        /// The number of labels the result have in common with the queried
-        /// name of zone.
-        const uint8_t matched_labels_;
 
         /// \brief If the result is an exact match.
         const bool exact_match_;
