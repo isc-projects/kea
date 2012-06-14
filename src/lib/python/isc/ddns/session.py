@@ -242,12 +242,12 @@ class UpdateSession:
         '''
         try:
             self._get_update_zone()
+            self.__check_update_acl(self.__zname, self.__zclass)
             self._create_diff()
             prereq_result = self.__check_prerequisites()
             if prereq_result != Rcode.NOERROR():
                 self.__make_response(prereq_result)
                 return UPDATE_ERROR, self.__zname, self.__zclass
-            self.__check_update_acl(self.__zname, self.__zclass)
             update_result = self.__do_update()
             if update_result != Rcode.NOERROR():
                 self.__make_response(update_result)
