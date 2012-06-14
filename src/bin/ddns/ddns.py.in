@@ -156,7 +156,7 @@ def get_datasrc_client(cc_session):
 def add_pause(sec):
     '''Pause a specified period for inter module synchronization.
 
-    This is a trivial wrraper of time.sleep, but defined as a separate function
+    This is a trivial wrapper of time.sleep, but defined as a separate function
     so tests can customize it.
     '''
     time.sleep(sec)
@@ -339,10 +339,10 @@ class DDNSServer:
         new_secondary_zones = set()
         try:
             # Parse the new config and build a new list of secondary zones.
-            # Unforutnately, in the current implementation, even an observer
+            # Unfortunately, in the current implementation, even an observer
             # module needs to perform full validation.  This should be changed
             # so that only post-validation (done by the main module) config is
-            # delevered to observer modules, but until it's supported we need
+            # delivered to observer modules, but until it's supported we need
             # to protect ourselves.
             for zone_spec in sec_zones:
                 zname = Name(zone_spec['name'])
