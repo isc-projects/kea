@@ -90,9 +90,9 @@ public:
         /// too.
         bool operator ==(const FindResult& other) const {
         return (dsrc_client_ == other.dsrc_client_ &&
-                    finder_ == other.finder_ &&
-                    matched_labels_ == other.matched_labels_ &&
-                    exact_match_ == other.exact_match_);
+                finder_ == other.finder_ &&
+                matched_labels_ == other.matched_labels_ &&
+                exact_match_ == other.exact_match_);
         }
 
         /// \brief The found data source client.
@@ -224,8 +224,8 @@ public:
 
     /// \brief Implementation of the ClientList::find.
     virtual FindResult find(const dns::Name& zone,
-                              bool want_exact_match = false,
-                              bool want_finder = true) const;
+                            bool want_exact_match = false,
+                            bool want_finder = true) const;
 
     /// \brief This holds one data source client and corresponding information.
     ///
