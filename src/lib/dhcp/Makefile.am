@@ -5,6 +5,12 @@ AM_CPPFLAGS += $(BOOST_INCLUDES)
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
+# Some versions of GCC warn about some versions of Boost regarding
+# missing initializer for members in its posix_time.
+# https://svn.boost.org/trac/boost/ticket/3477
+# But older GCC compilers don't have the flag.
+AM_CXXFLAGS += $(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
+
 CLEANFILES = *.gcno *.gcda
 
 lib_LTLIBRARIES = libdhcp++.la
@@ -31,3 +37,9 @@ libdhcp___la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
 libdhcp___la_LIBADD   = $(top_builddir)/src/lib/asiolink/libasiolink.la
 libdhcp___la_LIBADD  += $(top_builddir)/src/lib/util/libutil.la
 libdhcp___la_LDFLAGS  = -no-undefined -version-info 1:0:0
+
+if USE_CLANGPP
+# Disable unused parameter warning caused by some of the
+# Boost headers when compiling with clang.
+libdhcp___la_CXXFLAGS += -Wno-unused-parameter
+endif

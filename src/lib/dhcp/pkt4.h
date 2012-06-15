@@ -16,8 +16,10 @@
 #define PKT4_H
 
 #include <iostream>
+#include <time.h>
 #include <vector>
 #include <boost/shared_ptr.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include "asiolink/io_address.h"
 #include "util/buffer.h"
 #include "dhcp/option.h"
@@ -202,6 +204,11 @@ public:
     void
     setGiaddr(const isc::asiolink::IOAddress& giaddr) { giaddr_ = giaddr; };
 
+    /// @brief Sets transaction-id value
+    ///
+    /// @param transid transaction-id to be set.
+    void setTransid(uint32_t transid) { transid_ = transid; }
+
     /// @brief Returns value of transaction-id field.
     ///
     /// @return transaction-id
@@ -321,6 +328,14 @@ public:
     /// @return interface name
     std::string getIface() const { return iface_; };
 
+    /// @brief Returns packet timestamp.
+    ///
+    /// Returns packet timestamp value updated when
+    /// packet is received or send.
+    ///
+    /// @return packet timestamp.
+    const boost::posix_time::ptime& getTimestamp() const { return timestamp_; }
+
     /// @brief Sets interface name.
     ///
     /// Sets interface name over which packet was received or is
@@ -386,6 +401,14 @@ public:
     ///
     /// @return remote port
     uint16_t getRemotePort() { return (remote_port_); }
+
+    /// @brief Update packet timestamp.
+    ///
+    /// Updates packet timestamp. This method is invoked
+    /// by interface manager just before sending or
+    /// just after receiving it.
+    /// @throw isc::Unexpected if timestamp update failed
+    void updateTimestamp();
 
 protected:
 
@@ -470,12 +493,26 @@ protected:
     // end of real DHCPv4 fields
 
     /// output buffer (used during message transmission)
+    ///
+    /// @warning This protected member is accessed by derived
+    /// classes directly. One of such derived classes is
+    /// @ref perfdhcp::PerfPkt4. The impact on derived clasess'
+    /// behavior must be taken into consideration before making
+    /// changes to this member such as access scope restriction or
+    /// data format change etc.
     isc::util::OutputBuffer bufferOut_;
 
     /// that's the data of input buffer used in RX packet. Note that
     /// InputBuffer does not store the data itself, but just expects that
     /// data will be valid for the whole life of InputBuffer. Therefore we
     /// need to keep the data around.
+    ///
+    /// @warning This protected member is accessed by derived
+    /// classes directly. One of such derived classes is
+    /// @ref perfdhcp::PerfPkt4. The impact on derived clasess'
+    /// behavior must be taken into consideration before making
+    /// changes to this member such as access scope restriction or
+    /// data format change etc.
     std::vector<uint8_t> data_;
 
     /// message type (e.g. 1=DHCPDISCOVER)
@@ -484,7 +521,17 @@ protected:
     uint8_t msg_type_;
 
     /// collection of options present in this message
+    ///
+    /// @warnig This protected member is accessed by derived
+    /// classes directly. One of such derived classes is
+    /// @ref perfdhcp::PerfPkt4. The impact on derived clasess'
+    /// behavior must be taken into consideration before making
+    /// changes to this member such as access scope restriction or
+    /// data format change etc.
     isc::dhcp::Option::OptionCollection options_;
+
+    /// packet timestamp
+    boost::posix_time::ptime timestamp_;
 }; // Pkt4 class
 
 typedef boost::shared_ptr<Pkt4> Pkt4Ptr;

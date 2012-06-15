@@ -116,6 +116,7 @@ Rdata_init(PyObject* self_p, PyObject* args, PyObject*) {
             return (0);
         } else if (PyArg_ParseTuple(args, "O!O!y#", &rrtype_type, &rrtype,
                                     &rrclass_type, &rrclass, &data, &len)) {
+            PyErr_Clear();
             InputBuffer input_buffer(data, len);
             self->cppobj = createRdata(PyRRType_ToRRType(rrtype),
                                        PyRRClass_ToRRClass(rrclass),

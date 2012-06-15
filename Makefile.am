@@ -16,6 +16,8 @@ DISTCHECK_CONFIGURE_FLAGS = --disable-install-configurations
 # Use same --with-gtest flag if set
 DISTCHECK_CONFIGURE_FLAGS += $(DISTCHECK_GTEST_CONFIGURE_FLAG)
 
+dist_doc_DATA = AUTHORS COPYING ChangeLog README
+
 clean-cpp-coverage:
 	@if [ $(USE_LCOV) = yes ] ; then \
 		$(LCOV) --directory . --zerocounters; \
@@ -409,3 +411,5 @@ EXTRA_DIST += ext/coroutine/coroutine.h
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = dns++.pc
+
+CLEANFILES = $(abs_top_builddir)/logger_lockfile

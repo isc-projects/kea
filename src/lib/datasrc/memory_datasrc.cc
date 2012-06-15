@@ -1747,7 +1747,7 @@ generateRRsetFromIterator(ZoneIterator* iterator, LoadCallback callback) {
 }
 
 void
-InMemoryZoneFinder::load(const string& filename) {
+InMemoryZoneFinder::load(const std::string& filename) {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_LOAD).arg(getOrigin()).
         arg(filename);
 
