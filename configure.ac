@@ -986,6 +986,7 @@ if test "x$enable_man" != xno ; then
     if test $? -ne 0 ; then
       AC_MSG_ERROR("Error with $XSLTPROC using release/xsl/current/html/docbook.xsl")
     fi
+    AC_MSG_RESULT(yes)
   fi
 fi
 
