@@ -1960,43 +1960,43 @@ what is XfroutClient xfr_client??
     <section>
       <title>Enabling Dynamic Update</title>
       <para>
-	First off, it must be made sure that a few components on which
-	<command>b10-ddns</command> depends are configured to run,
-	which are <command>b10-auth</command>
-	and <command>b10-zonemgr</command>.
-	In addition, <command>b10-xfrout</command> should also be
-	configured to run; otherwise the notification after an update
-	(see above) will fail with a timeout, suspending the DDNS
-	service while <command>b10-ddns</command> waits for the response.
-	If BIND 10 is already configured to provide authoritative DNS
-	service they should normally be configured to run already.
+        First off, it must be made sure that a few components on which
+        <command>b10-ddns</command> depends are configured to run,
+        which are <command>b10-auth</command>
+        and <command>b10-zonemgr</command>.
+        In addition, <command>b10-xfrout</command> should also be
+        configured to run; otherwise the notification after an update
+        (see above) will fail with a timeout, suspending the DDNS
+        service while <command>b10-ddns</command> waits for the response.
+        If BIND 10 is already configured to provide authoritative DNS
+        service they should normally be configured to run already.
       </para>
 
       <para>
-	Second, for the obvious reason dynamic update requires that the
-	underlying data source storing the zone data be writable.
-	In the current implementation this means the zone must be stored
-	in an SQLite3-based data source.
-	Also, right now, the <command>b10-ddns</command> process
-	configures itself with the data source referring to the
-	<quote>database_file</quote> configuration parameter of
-	<command>b10-auth</command>.
-	So this information must be configured correctly before starting
-	<command>b10-ddns</command>.
+        Second, for the obvious reason dynamic update requires that the
+        underlying data source storing the zone data be writable.
+        In the current implementation this means the zone must be stored
+        in an SQLite3-based data source.
+        Also, right now, the <command>b10-ddns</command> process
+        configures itself with the data source referring to the
+        <quote>database_file</quote> configuration parameter of
+        <command>b10-auth</command>.
+        So this information must be configured correctly before starting
+        <command>b10-ddns</command>.
 
-	<note><simpara>
-	    The way to configure data sources is now being revised.
-	    Configuration on the data source for DDNS will be very
-	    likely to be changed in a backward incompatible manner in
-	    a near future version.
-	</simpara></note>
+        <note><simpara>
+            The way to configure data sources is now being revised.
+            Configuration on the data source for DDNS will be very
+            likely to be changed in a backward incompatible manner in
+            a near future version.
+        </simpara></note>
       </para>
 
       <para>
-	Next, to enable the DDNS service, <command>b10-ddns</command>
-	needs to be explicitly configured to run.
-	It can be done by using the <command>bindctl</command>
-	utility.  For example:
+        Next, to enable the DDNS service, <command>b10-ddns</command>
+        needs to be explicitly configured to run.
+        It can be done by using the <command>bindctl</command>
+        utility.  For example:
       <screen>
 &gt; <userinput>config add Boss/components b10-ddns</userinput>
 &gt; <userinput>config set Boss/components/b10-ddns/address DDNS</userinput>
@@ -2009,17 +2009,17 @@ what is XfroutClient xfr_client??
     <section>
       <title>Access Control</title>
       <para>
-	By default <command>b10-ddns</command> rejects any update
-	requests from any clients by returning a response with an RCODE
-	of REFUSED.
-	To allow updates to take effect, an access control rule
-	(called update ACL) with that policy must explicitly be
-	configured.
-	Update ACL must be configured per zone basis in the
-	<quote>zones</quote> configuration parameter of
-	<command>b10-ddns</command>.
-	This is a list of per-zone configuration regarding DDNS.
-	Each list element consists of the following parameters:
+        By default <command>b10-ddns</command> rejects any update
+        requests from any clients by returning a response with an RCODE
+        of REFUSED.
+        To allow updates to take effect, an access control rule
+        (called update ACL) with that policy must explicitly be
+        configured.
+        Update ACL must be configured per zone basis in the
+        <quote>zones</quote> configuration parameter of
+        <command>b10-ddns</command>.
+        This is a list of per-zone configuration regarding DDNS.
+        Each list element consists of the following parameters:
         <variablelist>
           <varlistentry>
             <term>origin</term>
@@ -2031,7 +2031,7 @@ what is XfroutClient xfr_client??
             <term>class</term>
             <listitem>
               <simpara>The RR class of the zone
-		(normally <quote>IN</quote>)</simpara>
+                (normally <quote>IN</quote>)</simpara>
             </listitem>
           </varlistentry>
           <varlistentry>
@@ -2040,132 +2040,132 @@ what is XfroutClient xfr_client??
               <simpara>List of access control rules (ACL) for the zone</simpara>
             </listitem>
           </varlistentry>
-	</variablelist>
-	The syntax of the ACL is the same as ACLs for other
-	components.
-	Specific examples are given below.
+        </variablelist>
+        The syntax of the ACL is the same as ACLs for other
+        components.
+        Specific examples are given below.
       </para>
 
       <para>
-	In general, an update ACL rule that allows an update request
-	should be configured with a TSIG key.
-	This is an example update ACL that allows updates to the zone
-	named <quote>example.org</quote> of RR class <quote>IN</quote>
-	from clients that send requests signed with a TSIG whose
-	key name is "key.example.org" (and refuses all others):
+        In general, an update ACL rule that allows an update request
+        should be configured with a TSIG key.
+        This is an example update ACL that allows updates to the zone
+        named <quote>example.org</quote> of RR class <quote>IN</quote>
+        from clients that send requests signed with a TSIG whose
+        key name is "key.example.org" (and refuses all others):
       <screen>
 &gt; <userinput>config add DDNS/zones</userinput>
 &gt; <userinput>config set DDNS/zones[0]/origin example.org</userinput>
 &gt; <userinput>config set DDNS/zones[0]/class IN</userinput>
 &gt; <userinput>config add DDNS/zones[0]/update_acl {"action": "ACCEPT", "key": "key.example.org"}</userinput>
 &gt; <userinput>config commit</userinput>
-	</screen>
+        </screen>
       (The <quote>class</quote> can be omitted).
       The TSIG key must be configured system wide
       (see <xref linkend="xfrout"/>.)
       </para>
 
       <para>
-	Multiple rules can be specified in the ACL, and an ACL rule
-	can consist of multiple constraints, such as a combination of
-	IP address and TSIG.
-	The following configuration sequence will add to the previous
-	ACL a rule that allows update requests sent from a client
-	using TSIG key name of "key.example" and has an IPv6 address of ::1.
+        Multiple rules can be specified in the ACL, and an ACL rule
+        can consist of multiple constraints, such as a combination of
+        IP address and TSIG.
+        The following configuration sequence will add to the previous
+        ACL a rule that allows update requests sent from a client
+        using TSIG key name of "key.example" and has an IPv6 address of ::1.
       <screen>
 &gt; <userinput>config add DDNS/zones[0]/update_acl {"action": "ACCEPT", "from": "::1", "key": "key.example"}</userinput>
 &gt; <userinput>config show DDNS/zones[0]/update_acl</userinput>
-DDNS/zones[0]/update_acl[0]	{"action": "ACCEPT", "key": "key.example.org"} any (modified)
-DDNS/zones[0]/update_acl[1]	{"action": "ACCEPT", "from": "::1", "key": "key.example"} any (modified)
+DDNS/zones[0]/update_acl[0]     {"action": "ACCEPT", "key": "key.example.org"} any (modified)
+DDNS/zones[0]/update_acl[1]     {"action": "ACCEPT", "from": "::1", "key": "key.example"} any (modified)
 &gt; <userinput>config commit</userinput>
 </screen>
       </para>
 
       <note><simpara>
-	  The <command>b10-ddns</command> process accepts an ACL
-	  rule that just allows updates from a specific IP address
-	  (i.e., without requiring TSIG), but this is highly
-	  discouraged (remember that requests can be made over UDP and
-	  spoofing the source address of a UDP packet is often pretty
-	  easy).
-	  Unless you know what you are doing and that you can accept
-	  its consequence, any update ACL rule that allows updates
-	  should have a TSIG key in its constraints.
+          The <command>b10-ddns</command> process accepts an ACL
+          rule that just allows updates from a specific IP address
+          (i.e., without requiring TSIG), but this is highly
+          discouraged (remember that requests can be made over UDP and
+          spoofing the source address of a UDP packet is often pretty
+          easy).
+          Unless you know what you are doing and that you can accept
+          its consequence, any update ACL rule that allows updates
+          should have a TSIG key in its constraints.
       </simpara></note>
 
       <para>
-	Currently update ACL can only control updates per zone basis;
-	it's not possible to specify access control with higher
-	granularity such as for particular domain names or specific
-	types of RRs.
+        Currently update ACL can only control updates per zone basis;
+        it's not possible to specify access control with higher
+        granularity such as for particular domain names or specific
+        types of RRs.
       </para>
 
       <note><simpara>
-	Contrary to what RFC 2136 (literally) specifies,
-	<command>b10-ddns</command> checks the update ACL before
-	checking the prerequisites of the update request.
-	This is a deliberate implementation decision.
-	This counter intuitive specification has been repeatedly
-	discussed among implementers and in the IETF, and it is now
-	widely agreed that it does not make sense to strictly follow
-	that part of RFC.
-	One known specific bad result of this is that it could leak
-	information about which name or record exists or does not
-	exist in the zone as a result of prerequisite checks even if a
-	zone is somehow configured to reject normal queries from
-	arbitrary clients.
-	There have been other troubles that could have been avoided if
-	the ACL could be checked before the prerequisite check.
+        Contrary to what RFC 2136 (literally) specifies,
+        <command>b10-ddns</command> checks the update ACL before
+        checking the prerequisites of the update request.
+        This is a deliberate implementation decision.
+        This counter intuitive specification has been repeatedly
+        discussed among implementers and in the IETF, and it is now
+        widely agreed that it does not make sense to strictly follow
+        that part of RFC.
+        One known specific bad result of this is that it could leak
+        information about which name or record exists or does not
+        exist in the zone as a result of prerequisite checks even if a
+        zone is somehow configured to reject normal queries from
+        arbitrary clients.
+        There have been other troubles that could have been avoided if
+        the ACL could be checked before the prerequisite check.
       </simpara></note>
     </section>
 
     <section>
       <title>Miscellaneous Operational Issues</title>
       <para>
-	Unlike BIND 9, BIND 10 currently does not support automatic
-	resigning of DNSSEC-signed zone when it's updated via DDNS.
-	It could be possible to resign the updated zone afterwards
-	or make sure the update request also updates related DNSSEC
-	records, but that will be pretty error-prone operation.
-	In general, it's not advisable to allow DDNS for a signed zone
-	at this moment.
+        Unlike BIND 9, BIND 10 currently does not support automatic
+        resigning of DNSSEC-signed zone when it's updated via DDNS.
+        It could be possible to resign the updated zone afterwards
+        or make sure the update request also updates related DNSSEC
+        records, but that will be pretty error-prone operation.
+        In general, it's not advisable to allow DDNS for a signed zone
+        at this moment.
       </para>
 
       <para>
-	Also unlike BIND 9, it's currently not possible
-	to <quote>freeze</quote> a zone temporarily in order to
-	suspend DDNS while you manually update the zone.
-	If you need to make manual updates to a dynamic zone,
-	you'll need to temporarily reject any updates to the zone via
-	the update ACLs.
+        Also unlike BIND 9, it's currently not possible
+        to <quote>freeze</quote> a zone temporarily in order to
+        suspend DDNS while you manually update the zone.
+        If you need to make manual updates to a dynamic zone,
+        you'll need to temporarily reject any updates to the zone via
+        the update ACLs.
       </para>
 
       <para>
-	Dynamic updates are only applicable to primary zones.
-	In order to avoid updating secondary zones via DDNS requests,
-	<command>b10-ddns</command> refers to the
-	<quote>secondary_zones</quote> configuration of
-	<command>b10-zonemgr</command>.  Zones listed in
-	<quote>secondary_zones</quote> will never be updated via DDNS
-	regardless of the update ACL configuration.
-	If you have a "conceptual" secondary zone whose content is a
-	copy of some external source but is not updated via the
-	standard zone transfers and therefore not listed in
-	<quote>secondary_zones</quote>, be careful not to allow DDNS
-	for the zone; it would be quite likely to lead to inconsistent
-	state between different servers.
-	Normally this should not be a problem because the default
-	update ACL rejects any update requests, but you may want to
-	take an extra care about the configuration if you have such
-	type of secondary zones.
+        Dynamic updates are only applicable to primary zones.
+        In order to avoid updating secondary zones via DDNS requests,
+        <command>b10-ddns</command> refers to the
+        <quote>secondary_zones</quote> configuration of
+        <command>b10-zonemgr</command>.  Zones listed in
+        <quote>secondary_zones</quote> will never be updated via DDNS
+        regardless of the update ACL configuration.
+        If you have a "conceptual" secondary zone whose content is a
+        copy of some external source but is not updated via the
+        standard zone transfers and therefore not listed in
+        <quote>secondary_zones</quote>, be careful not to allow DDNS
+        for the zone; it would be quite likely to lead to inconsistent
+        state between different servers.
+        Normally this should not be a problem because the default
+        update ACL rejects any update requests, but you may want to
+        take an extra care about the configuration if you have such
+        type of secondary zones.
       </para>
       <para>
-	The difference of two versions of a zone, before and after a
-	DDNS transaction, is automatically recorded in the underlying
-	data source, and can be retrieved in the form of outbound
-	IXFR.
-	This is done automaticallyl; it does not require specific
-	configuration to make this possible.
+        The difference of two versions of a zone, before and after a
+        DDNS transaction, is automatically recorded in the underlying
+        data source, and can be retrieved in the form of outbound
+        IXFR.
+        This is done automaticallyl; it does not require specific
+        configuration to make this possible.
       </para>
     </section>
   </chapter>
