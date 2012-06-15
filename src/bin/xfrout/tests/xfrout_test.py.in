@@ -1454,6 +1454,14 @@ class TestUnixSockServer(unittest.TestCase):
             # select should have been called exactly once.
             self.assertEqual(1, self.__select_count)
 
+        # Next, we test the case where recf_fd succeeds but receiving the
+        # request fails.
+        self.__select_count = 0
+        xfrout.recv_fd = lambda fileno: 1
+        self.unix._receive_query_message = lambda fd: None
+        self.unix._select_loop(self.__select_return_redable[0])
+        self.assertEqual(1, self.__select_count)
+
 class TestInitialization(unittest.TestCase):
     def setEnv(self, name, value):
         if value is None:
