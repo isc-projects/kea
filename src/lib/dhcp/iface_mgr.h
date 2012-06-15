@@ -384,8 +384,8 @@ public:
     /// interface and selects one that matches address family.
     ///
     /// @param ifname name of the interface
-    /// @param addr address to be bound
     /// @param port UDP port
+    /// @param family address family (AF_INET or AF_INET6)
     /// @return socket descriptor, if socket creation, binding and multicast
     /// group join were all successful.
     /// @throw isc::Unexpected if failed to create and bind socket.
