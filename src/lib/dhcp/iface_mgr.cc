@@ -401,6 +401,7 @@ int IfaceMgr::openSocketFromIface(const std::string& ifname,
                                   const uint16_t port,
                                   const uint8_t family) {
     int sock = 0;
+    // Search for specified interface among detected interfaces.
     for (IfaceCollection::iterator iface=ifaces_.begin();
          iface!=ifaces_.end();
          ++iface) {
@@ -410,19 +411,21 @@ int IfaceMgr::openSocketFromIface(const std::string& ifname,
             continue;
         }
 
+        // Interface is now detected. Search for address on interface
+        // that matches address family (v6 or v4).
         AddressCollection addrs = iface->getAddresses();
+        for (AddressCollection::iterator addr_it = addrs.begin();
+             addr_it != addrs.end();
+             ++addr_it) {
 
-        for (AddressCollection::iterator addr= addrs.begin();
-             addr != addrs.end();
-             ++addr) {
-
-            if (addr->getFamily() != family) {
+            if (addr_it->getFamily() != family) {
                 continue;
             }
 
-            sock = openSocket(iface->getName(), *addr, port);
-            if (sock<0) {
-                cout << "Failed to open unicast socket." << endl;
+            // We have interface and address so let's open socket.
+            sock = openSocket(iface->getName(), *addr_it, port);
+            if (sock < 0) {
+                isc_throw(Unexpected, "Failed to open socket.");
             }
             return (sock);
         }
@@ -433,6 +436,8 @@ int IfaceMgr::openSocketFromIface(const std::string& ifname,
 int IfaceMgr::openSocketFromAddress(const IOAddress& addr,
                                     const uint16_t port) {
     int sock = 0;
+    // Search through detected interfaces and addresses to match
+    // local address we got.
     for (IfaceCollection::iterator iface=ifaces_.begin();
          iface!=ifaces_.end();
          ++iface) {
@@ -443,19 +448,18 @@ int IfaceMgr::openSocketFromAddress(const IOAddress& addr,
              addr_it != addrs.end();
              ++addr_it) {
 
-            try {
-                if (addr_it->getAddress() != addr.getAddress()) {
-                    continue;
-                }
-            } catch (const isc::asiolink::IOError& e) {
-                cout << "Failed to open socket from address: "
-                     << e.what() << endl;
-                return (sock);
+            // Local address must match one of the addresses
+            // on detected interfaces. If it does, we have
+            // address and interface detected so we can open
+            // socket.
+            if (*addr_it != addr) {
+                continue;
             }
 
+            // Open socket using local interface, address and port.
             sock = openSocket(iface->getName(), *addr_it, port);
             if (sock < 0) {
-                cout << "Failed to open unicast socket." << endl;
+                isc_throw(Unexpected, "Failed to open unicast socket.");
             }
             return (sock);
         }
@@ -465,49 +469,38 @@ int IfaceMgr::openSocketFromAddress(const IOAddress& addr,
 
 int IfaceMgr::openSocketFromRemoteAddress(const IOAddress& remote_addr,
                                           const uint16_t port) {
-    int sock = 0;
+    // Get local address to be used to connect to remote location.
     IOAddress local_address(getLocalAddress(remote_addr, port).getAddress());
-
-    for (IfaceCollection::iterator iface=ifaces_.begin();
-         iface!=ifaces_.end();
-         ++iface) {
-
-        AddressCollection addrs = iface->getAddresses();
-
-        for (AddressCollection::iterator addr = addrs.begin();
-             addr != addrs.end();
-             ++addr) {
-
-            if (addr->getAddress() != local_address.getAddress()) {
-                continue;
-            }
-
-            sock = openSocket(iface->getName(), *addr, port);
-            if (sock < 0) {
-                cout << "Failed to open unicast socket." << endl;
-            }
-            return (sock);
-        }
-    }
-    return (sock);
+    return openSocketFromAddress(local_address, port);
 }
 
 isc::asiolink::IOAddress
 IfaceMgr::getLocalAddress(const IOAddress& remote_addr, const uint16_t port) {
+    // Create remote endpoint, we will be connecting to it.
     boost::shared_ptr<const UDPEndpoint>
         remote_endpoint(static_cast<const UDPEndpoint*>
                         (UDPEndpoint::create(IPPROTO_UDP, remote_addr, port)));
+    if (!remote_endpoint) {
+        isc_throw(Unexpected, "Unable to create remote endpoint");
+    }
+
+    // Create socket that will be used to connect to remote endpoint.
     asio::io_service io_service;
     asio::ip::udp::socket sock(io_service);
+
+    // Try to connect to remote endpoint and check if attempt is successful.
     asio::error_code err_code;
     sock.connect(remote_endpoint->getASIOEndpoint(), err_code);
     if (err_code) {
-        isc_throw(Unexpected,"Failed to connect to remote address.");
+        isc_throw(Unexpected,"Failed to connect to remote endpoint.");
     }
 
-    asio::ip::udp::socket::endpoint_type local_endpoint =  sock.local_endpoint();
+    // Once we are connected socket object holds local endpoint.
+    asio::ip::udp::socket::endpoint_type local_endpoint =
+        sock.local_endpoint();
     asio::ip::address local_address(local_endpoint.address());
 
+    // Return address of local endpoint.
     return IOAddress(local_address);
 }
 
