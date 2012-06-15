@@ -388,6 +388,7 @@ public:
     /// @param port UDP port
     /// @return socket descriptor, if socket creation, binding and multicast
     /// group join were all successful.
+    /// @throw isc::Unexpected if failed to create and bind socket.
     int openSocketFromIface(const std::string& ifname,
                             const uint16_t port,
                             const uint8_t family);
@@ -401,6 +402,7 @@ public:
     /// @param port UDP port
     /// @return socket descriptor, if socket creation, binding and multicast
     /// group join were all successful.
+    /// @throw isc::Unexpected if failed to create and bind socket
     int openSocketFromAddress(const isc::asiolink::IOAddress& addr,
                               const uint16_t port);
 
@@ -415,6 +417,7 @@ public:
     /// @param port UDP port
     /// @return socket descriptor, if socket creation, binding and multicast
     /// group join were all successful.
+    /// @throw isc::Unexpected if failed to create and bind socket
     int openSocketFromRemoteAddress(const isc::asiolink::IOAddress& remote_addr,
                                     const uint16_t port);
 
@@ -577,7 +580,7 @@ private:
     ///
     /// This method identifies local network address that can be used
     /// to connect to remote address specified.
-    /// This method creates socket and makes attempt to connect
+    /// It first creates socket and makes attempt to connect
     /// to remote location via this socket. If connection
     /// is established successfully, the local address to which
     /// socket is bound is returned.
@@ -585,6 +588,7 @@ private:
     /// @param remote_addr remote address to connect to
     /// @param port port to be used
     /// @return local address to be used to connect to remote address
+    /// @throw isc::Unexpected if unable to indentify local address
     isc::asiolink::IOAddress
     getLocalAddress(const isc::asiolink::IOAddress& remote_addr,
                     const uint16_t port);
