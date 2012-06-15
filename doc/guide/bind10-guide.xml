@@ -2057,9 +2057,10 @@ what is XfroutClient xfr_client??
 &gt; <userinput>config add DDNS/zones</userinput>
 &gt; <userinput>config set DDNS/zones[0]/origin example.org</userinput>
 &gt; <userinput>config set DDNS/zones[0]/class IN</userinput>
-&gt; <userinput>config set DDNS/zones[0]/update_acl [{"action": "ACCEPT", "key": "key.example.org"}]</userinput>
+&gt; <userinput>config add DDNS/zones[0]/update_acl {"action": "ACCEPT", "key": "key.example.org"}</userinput>
 &gt; <userinput>config commit</userinput>
 	</screen>
+      (The <quote>class</quote> can be omitted).
       The TSIG key must be configured system wide
       (see <xref linkend="xfrout"/>.)
       </para>
@@ -2068,15 +2069,16 @@ what is XfroutClient xfr_client??
 	Multiple rules can be specified in the ACL, and an ACL rule
 	can consist of multiple constraints, such as a combination of
 	IP address and TSIG.
-	The following ACL is to allow update requests that meet the
-	above condition, or requests sent from a client using TSIG key
-	name of "key.example" and has an IPv6 address of ::1.
+	The following configuration sequence will add to the previous
+	ACL a rule that allows update requests sent from a client
+	using TSIG key name of "key.example" and has an IPv6 address of ::1.
       <screen>
-&gt; <userinput>config set DDNS/zones[0]/update_acl [{"action": "ACCEPT", "key": "key.example.org"}, {"action": "ACCEPT", "from": "::1", "key": "key.example"}]</userinput>
+&gt; <userinput>config add DDNS/zones[0]/update_acl {"action": "ACCEPT", "from": "::1", "key": "key.example"}</userinput>
+&gt; <userinput>config show DDNS/zones[0]/update_acl</userinput>
+DDNS/zones[0]/update_acl[0]	{"action": "ACCEPT", "key": "key.example.org"} any (modified)
+DDNS/zones[0]/update_acl[1]	{"action": "ACCEPT", "from": "::1", "key": "key.example"} any (modified)
 &gt; <userinput>config commit</userinput>
 </screen>
-      (Right now, ACL cannot be updated incrementally; you need to
-      specify the entire new list of rules at once.)
       </para>
 
       <note><simpara>
