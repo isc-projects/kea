@@ -24,7 +24,9 @@ But for now, it lives here.
 """
 
 import isc.dns
+from isc.datasrc import ZoneFinder
 import isc.log
+from isc.datasrc import ZoneFinder
 from isc.log_messages.libxfrin_messages import *
 
 class NoSuchZone(Exception):
@@ -119,7 +121,7 @@ class Diff:
         else:
             self.__buffer = []
 
-    def __check_commited(self):
+    def __check_committed(self):
         """
         This checks if the diff is already commited or broken. If it is, it
         raises ValueError. This check is for methods that need to work only on
@@ -169,7 +171,7 @@ class Diff:
         - in single_update_mode if any later rr is of type SOA (both for
           addition and deletion)
         """
-        self.__check_commited()
+        self.__check_committed()
         if rr.get_rdata_count() != 1:
             raise ValueError('The rrset must contain exactly 1 Rdata, but ' +
                              'it holds ' + str(rr.get_rdata_count()))
@@ -179,9 +181,13 @@ class Diff:
                              str(self.__updater.get_class()))
         if self.__single_update_mode:
             if operation == 'add':
-                self.__append_with_soa_check(self.__additions, operation, rr)
+                if not self._remove_rr_from_deletions(rr):
+                    self.__append_with_soa_check(self.__additions, operation,
+                                                 rr)
             elif operation == 'delete':
-                self.__append_with_soa_check(self.__deletions, operation, rr)
+                if not self._remove_rr_from_additions(rr):
+                    self.__append_with_soa_check(self.__deletions, operation,
+                                                 rr)
         else:
             self.__buffer.append((operation, rr))
             if len(self.__buffer) >= DIFF_APPLY_TRESHOLD:
@@ -298,7 +304,7 @@ class Diff:
                 else:
                     raise ValueError('Unknown operation ' + operation)
 
-        self.__check_commited()
+        self.__check_committed()
         # First, compact the data
         self.compact()
         try:
@@ -330,7 +336,7 @@ class Diff:
 
         This might raise isc.datasrc.Error.
         """
-        self.__check_commited()
+        self.__check_committed()
         # Push the data inside the data source
         self.apply()
         # Make sure they are visible.
@@ -376,3 +382,205 @@ class Diff:
             raise ValueError("Separate buffers requested in single-update mode")
         else:
             return (self.__deletions, self.__additions)
+
+    def find(self, name, rrtype,
+             options=(ZoneFinder.NO_WILDCARD | ZoneFinder.FIND_GLUE_OK)):
+        """
+        Calls the find() method in the ZoneFinder associated with this
+        Diff's ZoneUpdater, i.e. the find() on the zone as it was on the
+        moment this Diff object got created.
+        See the ZoneFinder documentation for a full description.
+        Note that the result does not include changes made in this Diff
+        instance so far.
+        Options default to NO_WILDCARD and FIND_GLUE_OK.
+        Raises a ValueError if the Diff has been committed already
+        """
+        self.__check_committed()
+        return self.__updater.find(name, rrtype, options)
+
+    def find_all(self, name,
+                 options=(ZoneFinder.NO_WILDCARD | ZoneFinder.FIND_GLUE_OK)):
+        """
+        Calls the find() method in the ZoneFinder associated with this
+        Diff's ZoneUpdater, i.e. the find_all() on the zone as it was on the
+        moment this Diff object got created.
+        See the ZoneFinder documentation for a full description.
+        Note that the result does not include changes made in this Diff
+        instance so far.
+        Options default to NO_WILDCARD and FIND_GLUE_OK.
+        Raises a ValueError if the Diff has been committed already
+        """
+        self.__check_committed()
+        return self.__updater.find_all(name, options)
+
+    def __remove_rr_from_buffer(self, buf, rr):
+        '''Helper for common code in remove_rr_from_deletions() and
+           remove_rr_from_additions();
+           returns the result of the removal operation on the given buffer
+        '''
+        def same_rr(a, b):
+            # Consider two rr's the same if name, type, and rdata match
+            # Note that at this point it should have been checked that
+            # the rr in the buffer and the given rr have exactly one rdata
+            return a.get_name() == b.get_name() and\
+                   a.get_type() == b.get_type() and\
+                   a.get_rdata()[0] == b.get_rdata()[0]
+        if rr.get_type() == isc.dns.RRType.SOA():
+            return buf
+        else:
+            return [ op for op in buf if not same_rr(op[1], rr)]
+
+    def _remove_rr_from_deletions(self, rr):
+        '''
+        Removes the given rr from the currently buffered deletions;
+        returns True if anything is removed, False if the RR was not present.
+        This method is protected; it is not meant to be called from anywhere
+        but the add_data() method. It is not private for easier testing.
+        '''
+        orig_size = len(self.__deletions)
+        self.__deletions = self.__remove_rr_from_buffer(self.__deletions, rr)
+        return len(self.__deletions) != orig_size
+
+    def _remove_rr_from_additions(self, rr):
+        '''
+        Removes the given rr from the currently buffered additions;
+        returns True if anything is removed, False if the RR was not present.
+        This method is protected; it is not meant to be called from anywhere
+        but the delete_data() method. It is not private for easier testing.
+        '''
+        orig_size = len(self.__additions)
+        self.__additions = self.__remove_rr_from_buffer(self.__additions, rr)
+        return len(self.__additions) != orig_size
+
+    def __get_name_from_additions(self, name):
+        '''
+        Returns a list of all rrs in the additions queue that have the given
+        Name.
+        This method is protected; it is not meant to be called from anywhere
+        but the find_all_updated() method. It is not private for easier
+        testing.
+        '''
+        return [ rr for (_, rr) in self.__additions if rr.get_name() == name ]
+
+    def __get_name_from_deletions(self, name):
+        '''
+        Returns a list of all rrs in the deletions queue that have the given
+        Name
+        This method is protected; it is not meant to be called from anywhere
+        but the find_all_updated() method. It is not private for easier
+        testing.
+        '''
+        return [ rr for (_, rr) in self.__deletions if rr.get_name() == name ]
+
+    def __get_name_type_from_additions(self, name, rrtype):
+        '''
+        Returns a list of the rdatas of the rrs in the additions queue that
+        have the given name and type
+        This method is protected; it is not meant to be called from anywhere
+        but the find_updated() method. It is not private for easier testing.
+        '''
+        return [ rr for (_, rr) in self.__additions\
+                    if rr.get_name() == name and rr.get_type() == rrtype ]
+
+    def __get_name_type_from_deletions(self, name, rrtype):
+        '''
+        Returns a list of the rdatas of the rrs in the deletions queue that
+        have the given name and type
+        This method is protected; it is not meant to be called from anywhere
+        but the find_updated() method. It is not private for easier testing.
+        '''
+        return [ rr.get_rdata()[0] for (_, rr) in self.__deletions\
+                    if rr.get_name() == name and rr.get_type() == rrtype ]
+
+    def find_updated(self, name, rrtype):
+        '''
+        Returns the result of find(), but with current updates applied, i.e.
+        as if this diff has been committed. Only performs additional
+        processing in the case find() returns SUCCESS, NXDOMAIN, or NXRRSET;
+        in all other cases, the results are returned directly.
+        Any RRs in the current deletions buffer are removed from the result,
+        and RRs in the current additions buffer are added to the result.
+        If the result was SUCCESS, but every RR in it is removed due to
+        deletions, and there is nothing in the additions, the rcode is changed
+        to NXRRSET.
+        If the result was NXDOMAIN or NXRRSET, and there are rrs in the
+        additions buffer, the result is changed to SUCCESS.
+        '''
+        if not self.__single_update_mode:
+            raise ValueError("find_updated() can only be used in " +
+                             "single-update mode")
+        result, rrset, flags = self.find(name, rrtype)
+
+        added_rrs = self.__get_name_type_from_additions(name, rrtype)
+        deleted_rrs = self.__get_name_type_from_deletions(name, rrtype)
+
+        if result == ZoneFinder.SUCCESS:
+            new_rrset = isc.dns.RRset(name, self.__updater.get_class(),
+                                      rrtype, rrset.get_ttl())
+            for rdata in rrset.get_rdata():
+                if rdata not in deleted_rrs:
+                    new_rrset.add_rdata(rdata)
+            # If all data has been deleted, and there is nothing to add
+            # we cannot really know whether it is NXDOMAIN or NXRRSET,
+            # NXRRSET seems safest (we could find out, but it would require
+            # another search on the name which is probably not worth the
+            # trouble
+            if new_rrset.get_rdata_count() == 0 and len(added_rrs) == 0:
+                result = ZoneFinder.NXRRSET
+                new_rrset = None
+        elif (result == ZoneFinder.NXDOMAIN or result == ZoneFinder.NXRRSET)\
+             and len(added_rrs) > 0:
+            new_rrset = isc.dns.RRset(name, self.__updater.get_class(),
+                                      rrtype, added_rrs[0].get_ttl())
+            # There was no data in the zone, but there is data now
+            result = ZoneFinder.SUCCESS
+        else:
+            # Can't reliably handle other cases, just return the original
+            # data
+            return result, rrset, flags
+
+        for rr in added_rrs:
+            # Can only be 1-rr RRsets at this point
+            new_rrset.add_rdata(rr.get_rdata()[0])
+
+        return result, new_rrset, flags
+
+    def find_all_updated(self, name):
+        '''
+        Returns the result of find_all(), but with current updates applied,
+        i.e. as if this diff has been committed. Only performs additional
+        processing in the case find() returns SUCCESS or NXDOMAIN;
+        in all other cases, the results are returned directly.
+        Any RRs in the current deletions buffer are removed from the result,
+        and RRs in the current additions buffer are added to the result.
+        If the result was SUCCESS, but every RR in it is removed due to
+        deletions, and there is nothing in the additions, the rcode is changed
+        to NXDOMAIN.
+        If the result was NXDOMAIN, and there are rrs in the additions buffer,
+        the result is changed to SUCCESS.
+        '''
+        if not self.__single_update_mode:
+            raise ValueError("find_all_updated can only be used in " +
+                             "single-update mode")
+        result, rrsets, flags = self.find_all(name)
+        new_rrsets = []
+        added_rrs = self.__get_name_from_additions(name)
+        if result == ZoneFinder.SUCCESS and\
+           (flags & ZoneFinder.RESULT_WILDCARD == 0):
+            deleted_rrs = self.__get_name_from_deletions(name)
+            for rr in rrsets:
+                if rr not in deleted_rrs:
+                    new_rrsets.append(rr)
+            if len(new_rrsets) == 0 and len(added_rrs) == 0:
+                result = ZoneFinder.NXDOMAIN
+        elif result == ZoneFinder.NXDOMAIN and\
+            len(added_rrs) > 0:
+            result = ZoneFinder.SUCCESS
+        else:
+            # Can't reliably handle other cases, just return the original
+            # data
+            return result, rrsets, flags
+        for rr in added_rrs:
+            if rr.get_name() == name:
+                new_rrsets.append(rr)
+        return result, new_rrsets, flags

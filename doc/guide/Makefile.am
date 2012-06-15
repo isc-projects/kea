@@ -2,13 +2,15 @@
 if ENABLE_MAN
 
 # generated documentation
-DOCS = bind10-messages.html bind10-guide.html bind10-guide.txt
+HTMLDOCS = bind10-guide.html bind10-messages.html
+DOCS = bind10-guide.txt
 
-doc_DATA = $(DOCS) bind10-guide.css
+dist_doc_DATA = $(DOCS)
+dist_html_DATA = $(HTMLDOCS) bind10-guide.css
 
 # TODO: okay to include the generated bind10-messages.xml in dist tarfile too?
-EXTRA_DIST = bind10-guide.xml bind10-messages.xml $(doc_DATA)
-CLEANFILES = $(DOCS) bind10-messages.xml
+EXTRA_DIST = bind10-guide.xml bind10-messages.xml
+CLEANFILES = $(HTMLDOCS) $(DOCS) bind10-messages.xml
 
 bind10-guide.html: bind10-guide.xml
 	xsltproc --novalid --xinclude --nonet \

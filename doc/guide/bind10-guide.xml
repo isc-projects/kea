@@ -131,7 +131,9 @@
         and <command>b10-zonemgr</command> components require the
         libpython3 library and the Python _sqlite3.so module
         (which is included with Python).
-        The Python module needs to be built for the corresponding Python 3.
+        The <command>b10-stats-httpd</command> component uses the
+        Python pyexpat.so module.
+        The Python modules need to be built for the corresponding Python 3.
       </para>
 <!-- TODO: this will change ... -->
 

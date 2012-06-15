@@ -15,12 +15,6 @@
 # No namespace declaration - these constants go in the global namespace
 # of the xfrin messages python module.
 
-% XFRIN_AUTH_CONFIG_NAME_PARSER_ERROR Invalid name when parsing Auth configuration: %1
-There was an invalid name when parsing Auth configuration.
-
-% XFRIN_AUTH_CONFIG_RRCLASS_ERROR Invalid RRClass when parsing Auth configuration: %1
-There was an invalid RR class when parsing Auth configuration.
-
 % XFRIN_AUTH_LOADZONE sending Auth loadzone for origin=%1, class=%2, datasrc=%3
 There was a successful zone transfer, and the zone is served by b10-auth
 in the in-memory data source using sqlite3 as a backend. We send the

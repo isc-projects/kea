@@ -27,7 +27,7 @@ using namespace isc::util;
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
 
-A::A(const string&) {
+A::A(const std::string&) {
     // TBD
 }
 

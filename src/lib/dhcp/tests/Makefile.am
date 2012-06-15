@@ -7,6 +7,12 @@ AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
+# Some versions of GCC warn about some versions of Boost regarding
+# missing initializer for members in its posix_time.
+# https://svn.boost.org/trac/boost/ticket/3477
+# But older GCC compilers don't have the flag.
+AM_CXXFLAGS += $(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
+
 if USE_STATIC_LINK
 AM_LDFLAGS = -static
 endif
@@ -38,8 +44,9 @@ libdhcp___unittests_CXXFLAGS = $(AM_CXXFLAGS)
 
 if USE_CLANGPP
 # This is to workaround unused variables tcout and tcerr in
-# log4cplus's streams.h.
-libdhcp___unittests_CXXFLAGS += -Wno-unused-variable
+# log4cplus's streams.h and unused parameters from some of the
+# Boost headers.
+libdhcp___unittests_CXXFLAGS += -Wno-unused-variable -Wno-unused-parameter
 endif
 libdhcp___unittests_LDADD  = $(GTEST_LDADD)
 libdhcp___unittests_LDADD += $(top_builddir)/src/lib/log/liblog.la

@@ -450,7 +450,8 @@ DatabaseClient::Finder::findDelegationPoint(const isc::dns::Name& name,
     const size_t remove_labels = name.getLabelCount() - origin_label_count;
 
     // Go through all superdomains from the origin down searching for nodes
-    // that indicate a delegation (.e. NS or DNAME).
+    // that indicate a delegation (.e. NS or DNAME).  Note that we only check
+    // pure superdomains; delegation on an exact match will be detected later.
     for (int i = remove_labels; i > 0; --i) {
         const Name superdomain(name.split(i));
 
@@ -810,12 +811,14 @@ DatabaseClient::Finder::findOnNameResult(const Name& name,
     const FoundIterator cni(found.second.find(RRType::CNAME()));
     const FoundIterator wti(found.second.find(type));
 
-    if (!is_origin && (options & FIND_GLUE_OK) == 0 &&
+    if (!is_origin && (options & FIND_GLUE_OK) == 0 && type != RRType::DS() &&
         nsi != found.second.end()) {
         // A NS RRset was found at the domain we were searching for.  As it is
         // not at the origin of the zone, it is a delegation and indicates that
         // this zone is not authoritative for the data. Just return the
-        // delegation information.
+        // delegation information, except:
+        // - when we are looking for glue records (FIND_GLUE_OK), or
+        // - when the query type is DS (which cancels the delegation)
         return (logAndCreateResult(name, wildname, type, DELEGATION,
                                    nsi->second,
                                    wild ? DATASRC_DATABASE_WILDCARD_NS :
