@@ -55,6 +55,8 @@ protected:
     /// class.
     ClientList() {}
 public:
+    /// \brief Virtual destructor
+    virtual ~ClientList() {}
     /// \brief Structure holding the (compound) result of find.
     ///
     /// As this is read-only structure, we don't bother to create accessors.
