@@ -1964,6 +1964,10 @@ what is XfroutClient xfr_client??
 	<command>b10-ddns</command> depends are configured to run,
 	which are <command>b10-auth</command>
 	and <command>b10-zonemgr</command>.
+	In addition, <command>b10-xfrout</command> should also be
+	configured to run; otherwise the notification after an update
+	(see above) will fail with a timeout, suspending the DDNS
+	service while <command>b10-ddns</command> waits for the response.
 	If BIND 10 is already configured to provide authoritative DNS
 	service they should normally be configured to run already.
       </para>
@@ -2155,7 +2159,7 @@ what is XfroutClient xfr_client??
       </para>
       <para>
 	The difference of two versions of a zone, before and after a
-	DDNS transaction is automatically recorded in the underlying
+	DDNS transaction, is automatically recorded in the underlying
 	data source, and can be retrieved in the form of outbound IXFR.
 	There has to be no configuration to make this possible.
       </para>
