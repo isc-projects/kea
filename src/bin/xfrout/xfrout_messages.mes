@@ -115,11 +115,15 @@ In general, this should only occur for unexpected problems like
 memory allocation failures, as the query should already have been
 parsed by the b10-auth daemon, before it was passed here.
 
-% XFROUT_PROCESS_REQUEST_ERROR error processing transfer request: %2
-There was an error processing a transfer request. The error is included
-in the log message, but at this point no specific information other
-than that could be given. This points to incomplete exception handling
-in the code.
+% XFROUT_PROCESS_REQUEST_ERROR error processing transfer request: %1
+There was an error in receiving a transfer request from b10-auth.
+This is generally an unexpected event, but is possible when, for
+example, b10-auth terminates in the middle of forwarding the request.
+When this happens it's unlikely to be recoverable with the same
+communication session with b10-auth, so b10-xfrout drops it and
+waits for a new session.  In any case, this error indicates that
+there's something very wrong in the system, so it's advisable to check
+the over all status of the BIND 10 system.
 
 % XFROUT_QUERY_DROPPED %1 client %2: request to transfer %3 dropped
 The xfrout process silently dropped a request to transfer zone to

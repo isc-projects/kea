@@ -734,10 +734,15 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
             logger.warn(XFROUT_RECEIVE_FILE_DESCRIPTOR_ERROR)
             return False
 
-        # receive request msg
+        # receive request msg.  If it fails we simply terminate the thread;
+        # it might be possible to recover from this state, but it's more likely
+        # that auth and xfrout are in inconsistent states.  So it will make
+        # more sense to restart in a new session.
         request_data = self._receive_query_message(request)
-        if not request_data:
-            return True
+        if request_data is None:
+            # The specific exception type doesn't matter so we use session
+            # error.
+            raise XfroutSessionError('Failed to get complete xfr request')
 
         t = threading.Thread(target=self.finish_request,
                              args=(sock_fd, request_data))
