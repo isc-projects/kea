@@ -58,23 +58,32 @@
       Normally it is started by the
       <citerefentry><refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum></citerefentry>
       boss process.
-      When the <command>b10-auth</command> DNS server receives
-      a DDNS update, <command>b10-ddns</command> updates the zone
-      in the BIND 10 zone data store.
     </para>
 
-    <note><para>
-      Currently installed is a dummy component. It does not provide
-      any functionality. It is a skeleton implementation that
-      will be expanded later.
-<!-- TODO: #1458 -->
-    </para></note>
+    <para>
+      When the <command>b10-auth</command> authoritative DNS server
+      receives an UPDATE request, it internally forwards the request
+      to <command>b10-ddns</command>, which handles the rest of
+      request processing.
+      When the processing is completed <command>b10-ddns</command>
+      will send a response to the client with the processing result.
+      If the zone has been changed as a result, it will internally
+      notify <command>b10-auth</command> and
+      <command>b10-xfrout</command> so the new version of the zone will
+      be served, and other secondary servers will be notified via the
+      DNS notify protocol.
+    </para>
 
     <para>
       This daemon communicates with BIND 10 over a
       <citerefentry><refentrytitle>b10-msgq</refentrytitle><manvolnum>8</manvolnum></citerefentry>
       C-Channel connection.  If this connection is not established,
       <command>b10-ddns</command> will exit.
+      The <command>b10-ddns</command> daemon also depends on some other
+      BIND 10 components (either directly or indirectly):
+      <citerefentry><refentrytitle>b10-auth</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+      <citerefentry><refentrytitle>b10-xfrout</refentrytitle><manvolnum>8</manvolnum></citerefentry>, and
+      <citerefentry><refentrytitle>b10-zonemgr</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
     </para>
 
     <para>
@@ -92,13 +101,24 @@
 
       <varlistentry>
         <term>
+          <option>-h</option>,
+          <option>--help</option>
+        </term>
+        <listitem>
+          <para>
+            Print the command line arguments and exit.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term>
           <option>-v</option>,
           <option>--verbose</option>
         </term>
         <listitem>
           <para>
             This value is ignored at this moment, but is provided for
-            compatibility with the bind10 Boss process
+            compatibility with the bind10 Boss process.
           </para>
         </listitem>
       </varlistentry>
@@ -112,10 +132,18 @@
     </para>
     <para>
       <varname>zones</varname>
-      The zones option is a named set of zones that can be updated with
-      DDNS. Each entry has one element called update_acl, which is
-      a list of access control rules that define update permissions.
-      By default this is empty; DDNS must be explicitely enabled per zone.
+      The zones option is a list of configuration items for specific
+      zones that can be updated with DDNS. Each entry is a map that
+      can contain the following items:
+      <varname>origin</varname> is a textual domain name of the zone;
+      <varname>class</varname> (text) is the RR class of the zone;
+      <varname>update_acl</varname> is an ACL that controls
+      permission for updates.
+      See the BIND 10 Guide for configuration details.
+      Note that not listing a zone in this list does not directly
+      mean update requests for the zone are rejected, but the end
+      result is the same because the default ACL for updates is to
+      deny all requests.
     </para>
 
     <para>
@@ -143,6 +171,12 @@
       </citerefentry>,
       <citerefentry>
         <refentrytitle>b10-msgq</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>b10-xfrout</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>b10-zonemgr</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citerefentry>
         <refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum>
