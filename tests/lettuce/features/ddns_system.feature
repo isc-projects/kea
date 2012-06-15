@@ -20,7 +20,7 @@ Feature: DDNS System
 
         # Test 2
         When I configure bind10 to run DDNS
-        And wait for new bind10 stderr message DDNS_RUNNING
+        And wait for new bind10 stderr message DDNS_STARTED
         bind10 module DDNS should be running
 
         # Test 3
@@ -39,14 +39,18 @@ Feature: DDNS System
 
         # Test 5
         When I use DDNS to set the SOA serial to 1237
+        # also check if Auth server reloaded
+        And wait for new bind10 stderr message AUTH_LOAD_ZONE
         The DDNS response should be SUCCESS
         And the SOA serial for example.org should be 1237
 
         # Test 6
         When I send bind10 the command DDNS shutdown
+        And wait for new bind10 stderr message DDNS_STOPPED
 
         # Test 7
-        And wait for new bind10 stderr message DDNS_RUNNING
+        # BoB should restart it
+        And wait for new bind10 stderr message DDNS_STARTED
 
         # Test 8
         # Known issue: after shutdown, first new attempt results in SERVFAIL
@@ -55,15 +59,19 @@ Feature: DDNS System
         And the SOA serial for example.org should be 1237
 
         When I use DDNS to set the SOA serial to 1238
+        And wait for new bind10 stderr message AUTH_LOAD_ZONE
         The DDNS response should be SUCCESS
         And the SOA serial for example.org should be 1238
 
         # Test 9
         When I send bind10 the command Auth shutdown
+        And wait for new bind10 stderr message AUTH_SHUTDOWN
+        # BoB should restart it automatically
         And wait for new bind10 stderr message AUTH_SERVER_STARTED
 
         # Test 10
         When I use DDNS to set the SOA serial to 1239
+        And wait for new bind10 stderr message AUTH_LOAD_ZONE
         The DDNS response should be SUCCESS
         And the SOA serial for example.org should be 1239
 
@@ -83,7 +91,7 @@ Feature: DDNS System
         Given I have bind10 running with configuration ddns/ddns.config
         And wait for bind10 stderr message BIND10_STARTED_CC
         And wait for bind10 stderr message AUTH_SERVER_STARTED
-        And wait for bind10 stderr message DDNS_RUNNING
+        And wait for bind10 stderr message DDNS_STARTED
 
         # Sanity check
         A query for new1.example.org should have rcode NXDOMAIN
@@ -119,7 +127,7 @@ Feature: DDNS System
     #    When I start bind10 with configuration ddns/primary.config as primary
     #    And wait for primary stderr message AUTH_SERVER_STARTED
     #    And wait for primary stderr message XFROUT_STARTED
-    #    And wait for primary stderr message DDNS_RUNNING
+    #    And wait for primary stderr message DDNS_STARTED
 
     #    And I start bind10 with configuration example2.org.config with cmdctl port 47804 as secondary
     #    And wait for secondary stderr message AUTH_SERVER_STARTED
