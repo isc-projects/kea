@@ -508,7 +508,7 @@ class DDNSServer:
         Get and process all commands sent from cfgmgr or other modules.
         This loops waiting for events until self.shutdown() has been called.
         '''
-        logger.info(DDNS_RUNNING)
+        logger.info(DDNS_STARTED)
         cc_fileno = self._cc.get_socket().fileno()
         listen_fileno = self._listen_socket.fileno()
         while not self._shutdown:
