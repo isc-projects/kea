@@ -27,7 +27,7 @@ using namespace isc::util;
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
 
-OPT::OPT(const string&) {
+OPT::OPT(const std::string&) {
     isc_throw(InvalidRdataText, "OPT RR cannot be constructed from text");
 }
 

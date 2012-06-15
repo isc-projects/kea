@@ -49,7 +49,7 @@ struct NSECImpl {
     vector<uint8_t> typebits_;
 };
 
-NSEC::NSEC(const string& nsec_str) :
+NSEC::NSEC(const std::string& nsec_str) :
     impl_(NULL)
 {
     istringstream iss(nsec_str);

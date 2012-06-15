@@ -32,6 +32,12 @@ pkglibexec_PROGRAMS = b10-dhcp4
 
 b10_dhcp4_SOURCES = main.cc dhcp4_srv.cc dhcp4_srv.h
 
+if USE_CLANGPP
+# Disable unused parameter warning caused by some of the
+# Boost headers when compiling with clang.
+b10_dhcp4_CXXFLAGS = -Wno-unused-parameter
+endif
+
 b10_dhcp4_LDADD = $(top_builddir)/src/lib/dhcp/libdhcp++.la
 b10_dhcp4_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 b10_dhcp4_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la

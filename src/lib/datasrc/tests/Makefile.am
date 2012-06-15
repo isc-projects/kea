@@ -59,6 +59,7 @@ run_unittests_SOURCES += memory_datasrc_unittest.cc
 run_unittests_SOURCES += rbnode_rrset_unittest.cc
 run_unittests_SOURCES += zone_finder_context_unittest.cc
 run_unittests_SOURCES += faked_nsec3.h faked_nsec3.cc
+run_unittests_SOURCES += client_list_unittest.cc
 
 # We need the actual module implementation in the tests (they are not part
 # of libdatasrc)
@@ -113,3 +114,4 @@ EXTRA_DIST += testdata/test.sqlite3
 EXTRA_DIST += testdata/new_minor_schema.sqlite3
 EXTRA_DIST += testdata/newschema.sqlite3
 EXTRA_DIST += testdata/oldschema.sqlite3
+EXTRA_DIST += testdata/static.zone

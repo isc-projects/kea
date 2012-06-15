@@ -72,7 +72,7 @@ struct RRSIGImpl {
     const vector<uint8_t> signature_;
 };
 
-RRSIG::RRSIG(const string& rrsig_str) :
+RRSIG::RRSIG(const std::string& rrsig_str) :
     impl_(NULL)
 {
     istringstream iss(rrsig_str);
