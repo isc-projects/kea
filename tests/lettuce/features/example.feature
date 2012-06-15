@@ -191,4 +191,3 @@ Feature: Example feature
 
         A query for www.example.org to 127.0.0.1:47806 should have rcode REFUSED
         A query for www.example.org to [::1]:47807 should have rcode NOERROR
-
