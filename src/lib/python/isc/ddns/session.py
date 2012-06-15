@@ -243,8 +243,10 @@ class UpdateSession:
         try:
             self._get_update_zone()
             # Contrary to what RFC2136 specifies, we do ACL checks before
-            # prerequisites. Following the spec, information could leak,
-            # and we decided not to do so (as do other implementations)
+            # prerequisites. It's now generally considered to be a bad
+            # idea, and actually does harm such as information
+            # leak. It should make more sense to prevent any security issues
+            # by performing ACL check as early as possible.
             self.__check_update_acl(self.__zname, self.__zclass)
             self._create_diff()
             prereq_result = self.__check_prerequisites()
