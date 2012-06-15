@@ -134,34 +134,6 @@ def run_ddns_update(step):
     """
     run_nsupdate(world.nsupdate_commands)
 
-@step('Configure BIND10 to run DDNS')
-def configure_ddns_on(step):
-    """
-    Convenience compound step to enable the b10-ddns module.
-    """
-    step.behave_as("""
-    When I send bind10 the following commands
-        \"\"\"
-        config add Boss/components b10-ddns
-        config set Boss/components/b10-ddns/kind dispensable
-        config set Boss/components/b10-ddns/address DDNS
-        config commit
-        \"\"\"
-    """)
-
-@step('Configure BIND10 to stop running DDNS')
-def configure_ddns_off(step):
-    """
-    Convenience compound step to disable the b10-ddns module.
-    """
-    step.behave_as("""
-    When I send bind10 the following commands
-        \"\"\"
-        config remove Boss/components b10-ddns
-        config commit
-        \"\"\"
-    """)
-
 @step('use DDNS to set the SOA SERIAL to ([0-9]+)')
 def set_serial_to(step, new_serial):
     """
