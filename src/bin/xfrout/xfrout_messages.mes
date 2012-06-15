@@ -149,9 +149,16 @@ and will now shut down.
 
 % XFROUT_RECEIVE_FILE_DESCRIPTOR_ERROR error receiving the file descriptor for an XFR connection
 There was an error receiving the file descriptor for the transfer
-request. Normally, the request is received by b10-auth, and passed on
-to the xfrout daemon, so it can answer directly. However, there was a
-problem receiving this file descriptor. The request will be ignored.
+request from b10-auth.  There can be several reasons for this, but
+the most likely cause is that b10-auth terminates for some reason
+(maybe it's a bug of b10-auth, maybe it's an intentional restart by
+the administrator), so depending on how this happens it may or may not
+be a serious error.  But in any case this is not expected to happen
+frequently, and it's advisable to figure out how this happened if
+this message is logged.  Even if this error happens xfrout will reset
+its internal state and will keep receiving further requests.  So
+if it's just a temporary restart of b10-auth the administrator does
+not have to do anything.
 
 % XFROUT_REMOVE_OLD_UNIX_SOCKET_FILE_ERROR error removing unix socket file %1: %2
 The unix socket file xfrout needs for contact with the auth daemon

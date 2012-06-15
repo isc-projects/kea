@@ -708,7 +708,8 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
                 continue
 
             try:
-                self.process_request(request_sock)
+                if not self.process_request(request_sock):
+                    break
             except Exception as pre:
                 logger.error(XFROUT_PROCESS_REQUEST_ERROR, pre)
                 break
@@ -722,26 +723,28 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
 
     def process_request(self, request):
         """Receive socket fd and query message from auth, then
-        start a new thread to process the request."""
+        start a new thread to process the request.
+
+        Return: True if everything is okay; otherwise False, in which case
+        the calling thread will terminate.
+
+        """
         sock_fd = recv_fd(request.fileno())
         if sock_fd < 0:
-            # This may happen when one xfrout process try to connect to
-            # xfrout unix socket server, to check whether there is another
-            # xfrout running.
-            if sock_fd == FD_SYSTEM_ERROR:
-                logger.error(XFROUT_RECEIVE_FILE_DESCRIPTOR_ERROR)
-            return
+            logger.warn(XFROUT_RECEIVE_FILE_DESCRIPTOR_ERROR)
+            return False
 
         # receive request msg
         request_data = self._receive_query_message(request)
         if not request_data:
-            return
+            return True
 
         t = threading.Thread(target=self.finish_request,
                              args=(sock_fd, request_data))
         if self.daemon_threads:
             t.daemon = True
         t.start()
+        return True
 
     def _guess_remote(self, sock_fd):
         """Guess remote address and port of the socket.
