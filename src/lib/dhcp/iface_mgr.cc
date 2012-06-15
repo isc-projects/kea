@@ -18,14 +18,13 @@
 #include <string.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <asio.hpp>
 
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/iface_mgr.h>
 #include <exceptions/exceptions.h>
-#include <asio.hpp>
 #include <asiolink/udp_endpoint.h>
-#include <asio/error.hpp>
 #include <asiolink/io_error.h>
 #include <util/io/pktinfo_utilities.h>
 
