@@ -678,30 +678,39 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
         except socket.error:
             logger.error(XFROUT_FETCH_REQUEST_ERROR)
             return
+        self._select_loop(request)
+
+    def _select_loop(self, request_sock):
+        '''Main loop for a single session between xfrout and auth.
+
+        This is a dedicated subroutine of handle_request(), but is defined
+        as a separate "protected" method for the convenience of tests.
+        '''
 
         # Check self._shutdown_event to ensure the real shutdown comes.
         # Linux could trigger a spurious readable event on the _read_sock
         # due to a bug, so we need perform a double check.
         while not self._shutdown_event.is_set(): # Check if xfrout is shutdown
             try:
-                (rlist, wlist, xlist) = select.select([self._read_sock, request], [], [])
+                (rlist, wlist, xlist) = select.select([self._read_sock,
+                                                       request_sock], [], [])
             except select.error as e:
                 if e.args[0] == errno.EINTR:
                     (rlist, wlist, xlist) = ([], [], [])
                     continue
                 else:
-                    logger.error(XFROUT_SOCKET_SELECT_ERROR, str(e))
+                    logger.error(XFROUT_SOCKET_SELECT_ERROR, e)
                     break
 
-            # self.server._shutdown_event will be set by now, if it is not a false
-            # alarm
+            # self.server._shutdown_event will be set by now, if it is not a
+            # false alarm
             if self._read_sock in rlist:
                 continue
 
             try:
-                self.process_request(request)
+                self.process_request(request_sock)
             except Exception as pre:
-                logger.error(XFROUT_PROCESS_REQUEST_ERROR, str(pre))
+                logger.error(XFROUT_PROCESS_REQUEST_ERROR, pre)
                 break
 
     def _handle_request_noblock(self):
@@ -729,7 +738,7 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
             return
 
         t = threading.Thread(target=self.finish_request,
-                             args = (sock_fd, request_data))
+                             args=(sock_fd, request_data))
         if self.daemon_threads:
             t.daemon = True
         t.start()
