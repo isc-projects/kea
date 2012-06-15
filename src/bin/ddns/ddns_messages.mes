@@ -113,10 +113,6 @@ case, there may not be able to do anything to fix it at the server
 side, but the administrator may want to check the general reachability
 with the client address.
 
-% DDNS_RUNNING ddns server is running and listening for updates
-The ddns process has successfully started and is now ready to receive commands
-and updates.
-
 % DDNS_SESSION session arrived on file descriptor %1
 A debug message, informing there's some activity on the given file descriptor.
 It will be either a request or the file descriptor will be closed. See
@@ -126,6 +122,10 @@ following log messages to see what of it.
 The ddns process is shutting down. It will no longer listen for new commands
 or updates. Any command or update that is being addressed at this moment will
 be completed, after which the process will exit.
+
+% DDNS_STARTED ddns server is running and listening for updates
+The ddns process has successfully started and is now ready to receive commands
+and updates.
 
 % DDNS_STOPPED ddns server has stopped
 The ddns process has successfully stopped and is no longer listening for or
