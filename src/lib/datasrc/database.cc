@@ -203,7 +203,6 @@ DatabaseClient::Finder::getRRsets(const string& name, const WantedTypes& types,
     const Name construct_name_object(*construct_name);
 
     bool seen_cname(false);
-    bool seen_ds(false);
     bool seen_other(false);
 
     while (context->getNext(columns)) {
@@ -247,14 +246,12 @@ DatabaseClient::Finder::getRRsets(const string& name, const WantedTypes& types,
 
             if (cur_type == RRType::CNAME()) {
                 seen_cname = true;
-            } else if (cur_type == RRType::DS()) {
-                seen_ds = true;
             } else if (cur_type != RRType::RRSIG() &&
                        cur_type != RRType::NSEC3() &&
                        cur_type != RRType::NSEC()) {
                 // NSEC and RRSIG can coexist with anything, otherwise
                 // we've seen something that can't live together with potential
-                // CNAME or NS
+                // CNAME.
                 //
                 // NSEC3 lives in separate namespace from everything, therefore
                 // we just ignore it here for these checks as well.
@@ -274,7 +271,7 @@ DatabaseClient::Finder::getRRsets(const string& name, const WantedTypes& types,
                       RDATA_COLUMN]);
         }
     }
-    if (seen_cname && (seen_other || seen_ds)) {
+    if (seen_cname && seen_other) {
         isc_throw(DataSourceError, "CNAME shares domain " << name <<
                   " with something else");
     }
@@ -469,7 +466,7 @@ DatabaseClient::Finder::findDelegationPoint(const isc::dns::Name& name,
             last_known = superdomain.getLabelCount();
 
             if (glue_ok && !first_ns && not_origin &&
-                    nsi != found.second.end()) {
+                nsi != found.second.end()) {
                 // If we are searching for glue ("glue OK" mode), store the
                 // highest NS record that we find that is not the apex.  This
                 // is another optimisation for later, where we need the
