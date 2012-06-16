@@ -206,7 +206,6 @@ DatabaseClient::Finder::getRRsets(const string& name, const WantedTypes& types,
     bool seen_cname(false);
     bool seen_ds(false);
     bool seen_other(false);
-    bool seen_ns(false);
 
     while (context->getNext(columns)) {
         // The domain is not empty
@@ -249,8 +248,6 @@ DatabaseClient::Finder::getRRsets(const string& name, const WantedTypes& types,
 
             if (cur_type == RRType::CNAME()) {
                 seen_cname = true;
-            } else if (cur_type == RRType::NS()) {
-                seen_ns = true;
             } else if (cur_type == RRType::DS()) {
                 seen_ds = true;
             } else if (cur_type != RRType::RRSIG() &&
@@ -278,11 +275,11 @@ DatabaseClient::Finder::getRRsets(const string& name, const WantedTypes& types,
                       RDATA_COLUMN]);
         }
     }
-    if (seen_cname && (seen_other || seen_ns || seen_ds)) {
+    if (seen_cname && (seen_other || seen_ds)) {
         isc_throw(DataSourceError, "CNAME shares domain " << name <<
                   " with something else");
     }
-    if (check_ns && seen_ns && seen_other) {
+    if (check_ns && /*seen_ns*/ false && seen_other) {
         isc_throw(DataSourceError, "NS shares domain " << name <<
                   " with something else");
     }
