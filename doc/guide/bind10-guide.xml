@@ -2210,7 +2210,9 @@ DDNS/zones[0]/update_acl[1]     {"action": "ACCEPT", "from": "::1", "key": "key.
         <quote>secondary_zones</quote> configuration of
         <command>b10-zonemgr</command>.  Zones listed in
         <quote>secondary_zones</quote> will never be updated via DDNS
-        regardless of the update ACL configuration.
+        regardless of the update ACL configuration;
+	<command>b10-ddns</command> will return a response with an
+	RCODE of NOTAUTH as specified in RFC 2136.
         If you have a "conceptual" secondary zone whose content is a
         copy of some external source but is not updated via the
         standard zone transfers and therefore not listed in
