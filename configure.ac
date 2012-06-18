@@ -982,6 +982,15 @@ AC_ARG_ENABLE(logger-checks, [AC_HELP_STRING([--enable-logger-checks],
 AM_CONDITIONAL(ENABLE_LOGGER_CHECKS, test x$enable_logger_checks != xno)
 AM_COND_IF([ENABLE_LOGGER_CHECKS], [AC_DEFINE([ENABLE_LOGGER_CHECKS], [1], [Check logger messages?])])
 
+# Check for valgrind
+AC_PATH_PROG(VALGRIND, valgrind, no)
+AM_CONDITIONAL(HAVE_VALGRIND, test "x$VALGRIND" != "xno")
+
+found_valgrind="not found"
+if test "x$VALGRIND" != "xno"; then
+   found_valgrind="found"
+fi
+
 AC_CONFIG_FILES([Makefile
                  doc/Makefile
                  doc/guide/Makefile
@@ -1292,6 +1301,7 @@ Features:
 
 Developer:
   Google Tests:  $gtest_path
+  Valgrind: $found_valgrind
   C++ Code Coverage: $USE_LCOV
   Python Code Coverage: $USE_PYCOVERAGE
   Logger checks: $enable_logger_checks

@@ -18,6 +18,9 @@ AM_CXXFLAGS += $(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 
 CLEANFILES = *.gcno *.gcda
 
+TESTS_ENVIRONMENT = \
+	libtool --mode=execute $(VALGRIND_COMMAND)
+
 TESTS =
 if HAVE_GTEST
 TESTS += run_unittests

@@ -200,7 +200,7 @@ class SessionTestBase(unittest.TestCase):
         self._acl_map = {(TEST_ZONE_NAME, TEST_RRCLASS):
                              REQUEST_LOADER.load([{"action": "ACCEPT"}])}
         self._session = UpdateSession(self._update_msg, TEST_CLIENT4,
-                                      ZoneConfig([], TEST_RRCLASS,
+                                      ZoneConfig(set(), TEST_RRCLASS,
                                                  self._datasrc_client,
                                                  self._acl_map))
         self._session._get_update_zone()
@@ -327,7 +327,7 @@ class SessionTest(SessionTestBase):
         msg = create_update_msg(zones=[Question(TEST_ZONE_NAME, TEST_RRCLASS,
                                                 RRType.SOA())])
         session = UpdateSession(msg, TEST_CLIENT4,
-                                ZoneConfig([(TEST_ZONE_NAME, TEST_RRCLASS)],
+                                ZoneConfig({(TEST_ZONE_NAME, TEST_RRCLASS)},
                                            TEST_RRCLASS, self._datasrc_client))
         self.assertEqual(UPDATE_ERROR, session.handle()[0])
         self.check_response(session.get_message(), Rcode.NOTIMP())
@@ -336,7 +336,7 @@ class SessionTest(SessionTestBase):
         '''Common test sequence for the 'notauth' test'''
         msg = create_update_msg(zones=[Question(zname, zclass, RRType.SOA())])
         session = UpdateSession(msg, TEST_CLIENT4,
-                                ZoneConfig([(TEST_ZONE_NAME, TEST_RRCLASS)],
+                                ZoneConfig({(TEST_ZONE_NAME, TEST_RRCLASS)},
                                            TEST_RRCLASS, self._datasrc_client))
         self.assertEqual(UPDATE_ERROR, session.handle()[0])
         self.check_response(session.get_message(), Rcode.NOTAUTH())
@@ -360,7 +360,7 @@ class SessionTest(SessionTestBase):
         msg = create_update_msg(zones=[Question(TEST_ZONE_NAME, TEST_RRCLASS,
                                                 RRType.SOA())])
         session = UpdateSession(msg, TEST_CLIENT4,
-                                ZoneConfig([(TEST_ZONE_NAME, TEST_RRCLASS)],
+                                ZoneConfig({(TEST_ZONE_NAME, TEST_RRCLASS)},
                                            TEST_RRCLASS,
                                            BadDataSourceClient()))
         self.assertEqual(UPDATE_ERROR, session.handle()[0])
@@ -617,7 +617,7 @@ class SessionTest(SessionTestBase):
            from 'prerequisites'. Then checks if __check_prerequisites()
            returns the Rcode specified in 'expected'.'''
         msg = create_update_msg([TEST_ZONE_RECORD], prerequisites)
-        zconfig = ZoneConfig([], TEST_RRCLASS, self._datasrc_client,
+        zconfig = ZoneConfig(set(), TEST_RRCLASS, self._datasrc_client,
                              self._acl_map)
         session = UpdateSession(msg, TEST_CLIENT4, zconfig)
         session._get_update_zone()
@@ -643,7 +643,7 @@ class SessionTest(SessionTestBase):
            from 'updates'. Then checks if __do_prescan()
            returns the Rcode specified in 'expected'.'''
         msg = create_update_msg([TEST_ZONE_RECORD], [], updates)
-        zconfig = ZoneConfig([], TEST_RRCLASS, self._datasrc_client,
+        zconfig = ZoneConfig(set(), TEST_RRCLASS, self._datasrc_client,
                              self._acl_map)
         session = UpdateSession(msg, TEST_CLIENT4, zconfig)
         session._get_update_zone()
@@ -657,13 +657,13 @@ class SessionTest(SessionTestBase):
         self.assertEqual(str(expected_soa),
                          str(session._UpdateSession__added_soa))
 
-    def check_full_handle_result(self, expected, updates):
+    def check_full_handle_result(self, expected, updates, prerequisites=[]):
         '''Helper method for checking the result of a full handle;
            creates an update session, and fills it with the list of rrsets
            from 'updates'. Then checks if __handle()
            results in a response with rcode 'expected'.'''
-        msg = create_update_msg([TEST_ZONE_RECORD], [], updates)
-        zconfig = ZoneConfig([], TEST_RRCLASS, self._datasrc_client,
+        msg = create_update_msg([TEST_ZONE_RECORD], prerequisites, updates)
+        zconfig = ZoneConfig(set(), TEST_RRCLASS, self._datasrc_client,
                              self._acl_map)
         session = UpdateSession(msg, TEST_CLIENT4, zconfig)
 
@@ -901,6 +901,21 @@ class SessionTest(SessionTestBase):
                                 RRType.MX(), 0,
                                 [ b'\x00\x0a\x04mail\x07example\x03org\x00' ])
         self.rrset_update_del_rrset_mx = rrset_update_del_rrset_mx
+
+    def test_acl_before_prereq(self):
+        name_in_use_no = create_rrset("foo.example.org", RRClass.ANY(),
+                                      RRType.ANY(), 0)
+
+        # Test a prerequisite that would fail
+        self.check_full_handle_result(Rcode.NXDOMAIN(), [], [ name_in_use_no ])
+
+        # Change ACL so that it would be denied
+        self._acl_map = {(TEST_ZONE_NAME, TEST_RRCLASS):
+                             REQUEST_LOADER.load([{"action": "REJECT"}])}
+
+        # The prerequisite should now not be reached; it should fail on the
+        # ACL
+        self.check_full_handle_result(Rcode.REFUSED(), [], [ name_in_use_no ])
 
     def test_prescan(self):
         '''Test whether the prescan succeeds on data that is ok, and whether
@@ -1479,7 +1494,7 @@ class SessionACLTest(SessionTestBase):
         '''
         # create a separate session, with default (empty) ACL map.
         session = UpdateSession(self._update_msg,
-                                TEST_CLIENT4, ZoneConfig([], TEST_RRCLASS,
+                                TEST_CLIENT4, ZoneConfig(set(), TEST_RRCLASS,
                                                          self._datasrc_client))
         # then the request should be rejected.
         self.assertEqual((UPDATE_ERROR, None, None), session.handle())
@@ -1508,7 +1523,7 @@ class SessionACLTest(SessionTestBase):
         # If the message doesn't contain TSIG, it doesn't match the ACCEPT
         # ACL entry, and the request should be rejected.
         session = UpdateSession(self._update_msg,
-                                TEST_CLIENT4, ZoneConfig([], TEST_RRCLASS,
+                                TEST_CLIENT4, ZoneConfig(set(), TEST_RRCLASS,
                                                          self._datasrc_client,
                                                          acl_map))
         self.assertEqual((UPDATE_ERROR, None, None), session.handle())
@@ -1517,7 +1532,7 @@ class SessionACLTest(SessionTestBase):
         # If the message contains TSIG, it should match the ACCEPT
         # ACL entry, and the request should be granted.
         session = UpdateSession(create_update_msg(tsig_key=TEST_TSIG_KEY),
-                                TEST_CLIENT4, ZoneConfig([], TEST_RRCLASS,
+                                TEST_CLIENT4, ZoneConfig(set(), TEST_RRCLASS,
                                                          self._datasrc_client,
                                                          acl_map))
         self.assertEqual((UPDATE_SUCCESS, TEST_ZONE_NAME, TEST_RRCLASS),

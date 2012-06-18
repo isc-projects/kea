@@ -747,12 +747,14 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
         # to care about the SOCK_STREAM parameter at all (which it really is,
         # except for testing)
         if socket.has_ipv6:
-            sock = socket.fromfd(sock_fd, socket.AF_INET6, socket.SOCK_STREAM)
+            sock_domain = socket.AF_INET6
         else:
             # To make it work even on hosts without IPv6 support
             # (Any idea how to simulate this in test?)
-            sock = socket.fromfd(sock_fd, socket.AF_INET, socket.SOCK_STREAM)
-        peer = sock.getpeername()
+            sock_domain = socket.AF_INET
+
+        with socket.fromfd(sock_fd, sock_domain, socket.SOCK_STREAM) as sock:
+            peer = sock.getpeername()
 
         # Identify the correct socket family.  Due to the above "trick",
         # we cannot simply use sock.family.
@@ -761,6 +763,7 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
             socket.inet_pton(socket.AF_INET6, peer[0])
         except socket.error:
             family = socket.AF_INET
+
         return (family, socket.SOCK_STREAM, peer)
 
     def finish_request(self, sock_fd, request_data):
@@ -802,8 +805,8 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
         is being used by one running xfrout process. If it is,
         return True, or else return False. '''
         try:
-            sock = socket.socket(socket.AF_UNIX)
-            sock.connect(sock_file)
+            with socket.socket(socket.AF_UNIX) as sock:
+                sock.connect(sock_file)
         except socket.error as err:
             return False
         else:
