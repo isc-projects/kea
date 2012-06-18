@@ -2112,7 +2112,8 @@ what is XfroutClient xfr_client??
         The following configuration sequence will add a new rule to
         ACL created in the above example.  This additional rule
 	allows update requests sent from a client
-        using TSIG key name of "key.example" and has an IPv6 address of ::1.
+        using TSIG key name of "key.example" (different from the
+        key used in the previous example) and has an IPv6 address of ::1.
       <screen>
 &gt; <userinput>config add DDNS/zones[0]/update_acl {"action": "ACCEPT", "from": "::1", "key": "key.example"}</userinput>
 &gt; <userinput>config show DDNS/zones[0]/update_acl</userinput>
