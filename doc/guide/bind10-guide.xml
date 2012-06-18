@@ -1924,7 +1924,7 @@ what is XfroutClient xfr_client??
       BIND 10 supports the server side of the Dynamic DNS Update
       (DDNS) protocol as defined in RFC 2136.
       This service is provided by the <command>b10-ddns</command>
-      process, which is started by the <command>bind10</command>
+      component, which is started by the <command>bind10</command>
       process if configured so.
     </para>
 
@@ -1938,14 +1938,18 @@ what is XfroutClient xfr_client??
       value as specified in RFC 2136 (NOERROR for successful update,
       REFUSED if rejected due to ACL check, etc).
       If the zone has been changed as a result, it will internally
-      notify <command>b10-auth</command> and
-      <command>b10-xfrout</command> so the new version of the zone will
-      be served, and other secondary servers will be notified via the
-      DNS notify protocol.
+      notify <command>b10-xfrout</command> so that other secondary
+      servers will be notified via the DNS notify protocol.
+      In addition, if <command>b10-auth</command> serves the updated
+      zone from its in-memory cache (as described in
+      <xref linkend="in-memory-datasource-with-sqlite3-backend" />),
+      <command>b10-ddns</command> will also
+      notify <command>b10-auth</command> so that <command>b10-auth</command>
+      will re-cache the updated zone content.
     </para>
 
     <para>
-      The <command>b10-ddns</command> process supports requests over
+      The <command>b10-ddns</command> component supports requests over
       both UDP and TCP, and both IPv6 and IPv4; for TCP requests,
       however, it terminates the TCP connection immediately after
       each single request has been processed.  Clients cannot reuse the
@@ -1979,7 +1983,7 @@ what is XfroutClient xfr_client??
         underlying data source storing the zone data be writable.
         In the current implementation this means the zone must be stored
         in an SQLite3-based data source.
-        Also, right now, the <command>b10-ddns</command> process
+        Also, right now, the <command>b10-ddns</command> component
         configures itself with the data source referring to the
         <quote>database_file</quote> configuration parameter of
         <command>b10-auth</command>.
@@ -2084,7 +2088,7 @@ DDNS/zones[0]/update_acl[1]     {"action": "ACCEPT", "from": "::1", "key": "key.
       </para>
 
       <note><simpara>
-          The <command>b10-ddns</command> process accepts an ACL
+          The <command>b10-ddns</command> component accepts an ACL
           rule that just allows updates from a specific IP address
           (i.e., without requiring TSIG), but this is highly
           discouraged (remember that requests can be made over UDP and
