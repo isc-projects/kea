@@ -2052,7 +2052,7 @@ what is XfroutClient xfr_client??
         requests from any clients by returning a response with an RCODE
         of REFUSED.
         To allow updates to take effect, an access control rule
-        (called update ACL) with that policy must explicitly be
+        (called update ACL) with a policy allowing updates must explicitly be
         configured.
         Update ACL must be configured per zone basis in the
         <quote>zones</quote> configuration parameter of
