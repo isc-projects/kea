@@ -1,6 +1,7 @@
-EXTRA_DIST = bind10-guide.css
-EXTRA_DIST += bind10-guide.xml bind10-guide.html bind10-guide.txt
-EXTRA_DIST += bind10-messages.xml bind10-messages.html
+dist_doc_DATA = bind10-guide.txt
+dist_html_DATA = bind10-guide.css bind10-guide.html bind10-messages.html
+
+EXTRA_DIST = bind10-guide.xml bind10-messages.xml
 
 # This is not a "man" manual, but reuse this for now for docbook.
 if ENABLE_MAN

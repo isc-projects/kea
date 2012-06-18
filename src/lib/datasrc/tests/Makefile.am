@@ -17,6 +17,9 @@ endif
 
 CLEANFILES = *.gcno *.gcda
 
+TESTS_ENVIRONMENT = \
+	libtool --mode=execute $(VALGRIND_COMMAND)
+
 TESTS =
 noinst_PROGRAMS =
 if HAVE_GTEST
@@ -59,6 +62,7 @@ run_unittests_SOURCES += memory_datasrc_unittest.cc
 run_unittests_SOURCES += rbnode_rrset_unittest.cc
 run_unittests_SOURCES += zone_finder_context_unittest.cc
 run_unittests_SOURCES += faked_nsec3.h faked_nsec3.cc
+run_unittests_SOURCES += client_list_unittest.cc
 
 # We need the actual module implementation in the tests (they are not part
 # of libdatasrc)
