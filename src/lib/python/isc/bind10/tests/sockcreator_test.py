@@ -303,12 +303,16 @@ class WrapTests(unittest.TestCase):
 
         # Transfer the descriptor
         send_fd(t1.fileno(), p1.fileno())
-        p1 = socket.fromfd(t2.read_fd(), socket.AF_UNIX, socket.SOCK_STREAM)
+        p1.close()
 
-        # Now, pass some data trough the socket
-        p1.send(b'A')
-        data = p2.recv(1)
-        self.assertEqual(b'A', data)
+        with socket.fromfd(t2.read_fd(), socket.AF_UNIX,
+                           socket.SOCK_STREAM) as p1:
+            # Now, pass some data trough the socket
+            p1.send(b'A')
+            data = p2.recv(1)
+            self.assertEqual(b'A', data)
+
+        p2.close()
 
         # Test the wrapping didn't hurt the socket's usual methods
         t1.send(b'B')
@@ -317,6 +321,9 @@ class WrapTests(unittest.TestCase):
         t2.send(b'C')
         data = t1.recv(1)
         self.assertEqual(b'C', data)
+
+        t1.close()
+        t2.close()
 
 if __name__ == '__main__':
     isc.log.init("bind10") # FIXME Should this be needed?
