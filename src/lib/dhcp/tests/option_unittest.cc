@@ -485,7 +485,7 @@ TEST_F(OptionTest, setUintX) {
     uint8_t exp2[] = {125, 2, 12345/256, 12345%256};
     EXPECT_TRUE(0 == memcmp(exp2, outBuf_.getData(), 4));
 
-    // verity getUint32
+    // verify getUint32
     outBuf_.clear();
     opt4->setUint32(0x12345678);
     opt4->pack4(outBuf_);
@@ -494,5 +494,32 @@ TEST_F(OptionTest, setUintX) {
     EXPECT_EQ(6, outBuf_.getLength());
     uint8_t exp4[] = {125, 4, 0x12, 0x34, 0x56, 0x78};
     EXPECT_TRUE(0 == memcmp(exp4, outBuf_.getData(), 6));
+}
+
+TEST_F(OptionTest, setData) {
+    // verify data override with new buffer larger than
+    // initial option buffer size
+    OptionPtr opt1(new Option(Option::V4, 125,
+                              buf_.begin(), buf_.begin() + 10));
+    buf_.resize(20, 1);
+    opt1->setData(buf_.begin(), buf_.end());
+    opt1->pack4(outBuf_);
+    ASSERT_EQ(outBuf_.getLength() - opt1->getHeaderLen(), buf_.size());
+    const uint8_t* test_data = static_cast<const uint8_t*>(outBuf_.getData());
+    EXPECT_TRUE(0 == memcmp(&buf_[0], test_data + opt1->getHeaderLen(),
+                            buf_.size()));
+
+    // verify data override with new buffer shorter than
+    // initial option buffer size
+    OptionPtr opt2(new Option(Option::V4, 125,
+                              buf_.begin(), buf_.begin() + 10));
+    outBuf_.clear();
+    buf_.resize(5, 1);
+    opt2->setData(buf_.begin(), buf_.end());
+    opt2->pack4(outBuf_);
+    ASSERT_EQ(outBuf_.getLength() - opt1->getHeaderLen(), buf_.size());
+    test_data = static_cast<const uint8_t*>(outBuf_.getData());
+    EXPECT_TRUE(0 == memcmp(&buf_[0], test_data + opt1->getHeaderLen(),
+                            buf_.size()));
 }
 }

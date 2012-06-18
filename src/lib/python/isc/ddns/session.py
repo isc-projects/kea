@@ -242,12 +242,17 @@ class UpdateSession:
         '''
         try:
             self._get_update_zone()
+            # Contrary to what RFC2136 specifies, we do ACL checks before
+            # prerequisites. It's now generally considered to be a bad
+            # idea, and actually does harm such as information
+            # leak. It should make more sense to prevent any security issues
+            # by performing ACL check as early as possible.
+            self.__check_update_acl(self.__zname, self.__zclass)
             self._create_diff()
             prereq_result = self.__check_prerequisites()
             if prereq_result != Rcode.NOERROR():
                 self.__make_response(prereq_result)
                 return UPDATE_ERROR, self.__zname, self.__zclass
-            self.__check_update_acl(self.__zname, self.__zclass)
             update_result = self.__do_update()
             if update_result != Rcode.NOERROR():
                 self.__make_response(update_result)
@@ -688,8 +693,9 @@ class UpdateSession:
            Special cases: if the delete statement is for the
            zone's apex, and the type is either SOA or NS, it
            is ignored.'''
-        result, to_delete, _ = self.__diff.find(rrset.get_name(),
-                                                rrset.get_type())
+        # find the rrset with local updates
+        result, to_delete, _ = self.__diff.find_updated(rrset.get_name(),
+                                                        rrset.get_type())
         if result == ZoneFinder.SUCCESS:
             if to_delete.get_name() == self.__zname and\
                (to_delete.get_type() == RRType.SOA() or\
@@ -705,14 +711,10 @@ class UpdateSession:
            may never be removed (and any action that would do so
            should be ignored).
         '''
-        # NOTE: This method is currently bad: it WILL delete all
-        # NS rrsets in a number of cases.
-        # We need an extension to our diff.py to handle this correctly
-        # (see ticket #2016)
-        # The related test is currently disabled. When this is fixed,
-        # enable that test again.
-        result, orig_rrset, _ = self.__diff.find(rrset.get_name(),
-                                                 rrset.get_type())
+        # Find the current NS rrset, including local additions and deletions
+        result, orig_rrset, _ = self.__diff.find_updated(rrset.get_name(),
+                                                         rrset.get_type())
+
         # Even a real rrset comparison wouldn't help here...
         # The goal is to make sure that after deletion of the
         # given rrset, at least 1 NS record is left (at the apex).
@@ -742,7 +744,8 @@ class UpdateSession:
            Special case: if the name is the zone's apex, SOA and
            NS records are kept.
         '''
-        result, rrsets, flags = self.__diff.find_all(rrset.get_name())
+        # Find everything with the name, including local additions
+        result, rrsets, flags = self.__diff.find_all_updated(rrset.get_name())
         if result == ZoneFinder.SUCCESS and\
            (flags & ZoneFinder.RESULT_WILDCARD == 0):
             for to_delete in rrsets:

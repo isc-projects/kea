@@ -55,7 +55,7 @@ class ZoneConfigTest(unittest.TestCase):
     '''Some basic tests for the ZoneConfig class.'''
     def setUp(self):
         self.__datasrc_client = FakeDataSourceClient()
-        self.zconfig = ZoneConfig([(TEST_SECONDARY_ZONE_NAME, TEST_RRCLASS)],
+        self.zconfig = ZoneConfig({(TEST_SECONDARY_ZONE_NAME, TEST_RRCLASS)},
                                   TEST_RRCLASS, self.__datasrc_client)
 
     def test_find_zone(self):
@@ -87,34 +87,27 @@ class ZoneConfigTest(unittest.TestCase):
                                                  TEST_RRCLASS)))
         # zone class doesn't match (but zone name matches)
         self.__datasrc_client.set_find_result(DataSourceClient.SUCCESS)
-        zconfig = ZoneConfig([(TEST_SECONDARY_ZONE_NAME, TEST_RRCLASS)],
+        zconfig = ZoneConfig({(TEST_SECONDARY_ZONE_NAME, TEST_RRCLASS)},
                              RRClass.CH(), self.__datasrc_client)
         self.assertEqual((ZONE_NOTFOUND, None),
                          (zconfig.find_zone(TEST_ZONE_NAME, TEST_RRCLASS)))
         # similar to the previous case, but also in the secondary list
-        zconfig = ZoneConfig([(TEST_ZONE_NAME, TEST_RRCLASS)],
+        zconfig = ZoneConfig({(TEST_ZONE_NAME, TEST_RRCLASS)},
                              RRClass.CH(), self.__datasrc_client)
         self.assertEqual((ZONE_NOTFOUND, None),
                          (zconfig.find_zone(TEST_ZONE_NAME, TEST_RRCLASS)))
 
         # check some basic tests varying the secondary list.
         # empty secondary list doesn't cause any disruption.
-        zconfig = ZoneConfig([], TEST_RRCLASS, self.__datasrc_client)
+        zconfig = ZoneConfig(set(), TEST_RRCLASS, self.__datasrc_client)
         self.assertEqual((ZONE_PRIMARY, self.__datasrc_client),
                          self.zconfig.find_zone(TEST_ZONE_NAME, TEST_RRCLASS))
-        # adding some mulitle tuples, including subdomainof the test zone name,
-        # and the same zone name but a different class
-        zconfig = ZoneConfig([(TEST_SECONDARY_ZONE_NAME, TEST_RRCLASS),
+        # adding some mulitle tuples, including subdomain of the test zone
+        # name, and the same zone name but a different class
+        zconfig = ZoneConfig({(TEST_SECONDARY_ZONE_NAME, TEST_RRCLASS),
                               (Name('example'), TEST_RRCLASS),
                               (Name('sub.example.org'), TEST_RRCLASS),
-                              (TEST_ZONE_NAME, RRClass.CH())],
-                             TEST_RRCLASS, self.__datasrc_client)
-        self.assertEqual((ZONE_PRIMARY, self.__datasrc_client),
-                         self.zconfig.find_zone(TEST_ZONE_NAME, TEST_RRCLASS))
-        # secondary zone list has a duplicate entry, which is just
-        # (effecitivey) ignored
-        zconfig = ZoneConfig([(TEST_SECONDARY_ZONE_NAME, TEST_RRCLASS),
-                              (TEST_SECONDARY_ZONE_NAME, TEST_RRCLASS)],
+                              (TEST_ZONE_NAME, RRClass.CH())},
                              TEST_RRCLASS, self.__datasrc_client)
         self.assertEqual((ZONE_PRIMARY, self.__datasrc_client),
                          self.zconfig.find_zone(TEST_ZONE_NAME, TEST_RRCLASS))
@@ -122,7 +115,7 @@ class ZoneConfigTest(unittest.TestCase):
 class ACLConfigTest(unittest.TestCase):
     def setUp(self):
         self.__datasrc_client = FakeDataSourceClient()
-        self.__zconfig = ZoneConfig([(TEST_SECONDARY_ZONE_NAME, TEST_RRCLASS)],
+        self.__zconfig = ZoneConfig({(TEST_SECONDARY_ZONE_NAME, TEST_RRCLASS)},
                                     TEST_RRCLASS, self.__datasrc_client)
 
     def test_get_update_acl(self):

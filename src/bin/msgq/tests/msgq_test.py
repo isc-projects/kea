@@ -156,6 +156,12 @@ class SendNonblock(unittest.TestCase):
         except socket.error:
             pass
 
+        # Explicitly close temporary socket pair as the Python
+        # interpreter expects it.  It may not be 100% exception safe,
+        # but since this is only for tests we prefer brevity.
+        read.close()
+        write.close()
+
     def test_infinite_sendmsg(self):
         """
         Tries sending messages (and not reading them) until it either times
@@ -217,6 +223,12 @@ class SendNonblock(unittest.TestCase):
                 finally:
                     os.kill(queue_pid, signal.SIGTERM)
         self.terminate_check(run)
+
+        # Explicitly close temporary socket pair as the Python
+        # interpreter expects it.  It may not be 100% exception safe,
+        # but since this is only for tests we prefer brevity.
+        queue.close()
+        out.close()
 
     def test_small_sends(self):
         """

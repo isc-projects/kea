@@ -425,6 +425,12 @@ class FakeBindCmdInterpreter(bindcmd.BindCmdInterpreter):
 
 class TestBindCmdInterpreter(unittest.TestCase):
 
+    def setUp(self):
+        self.old_stdout = sys.stdout
+
+    def tearDown(self):
+        sys.stdout = self.old_stdout
+
     def _create_invalid_csv_file(self, csvfilename):
         import csv
         csvfile = open(csvfilename, 'w')
@@ -447,19 +453,17 @@ class TestBindCmdInterpreter(unittest.TestCase):
         self.assertEqual(new_csv_dir, custom_cmd.csv_file_dir)
 
     def test_get_saved_user_info(self):
-        old_stdout = sys.stdout
-        sys.stdout = open(os.devnull, 'w')
-        cmd = bindcmd.BindCmdInterpreter()
-        users = cmd._get_saved_user_info('/notexist', 'csv_file.csv')
-        self.assertEqual([], users)
+        with open(os.devnull, 'w') as f:
+            sys.stdout = f
+            cmd = bindcmd.BindCmdInterpreter()
+            users = cmd._get_saved_user_info('/notexist', 'csv_file.csv')
+            self.assertEqual([], users)
 
-        csvfilename = 'csv_file.csv'
-        self._create_invalid_csv_file(csvfilename)
-        users = cmd._get_saved_user_info('./', csvfilename)
-        self.assertEqual([], users)
-        os.remove(csvfilename)
-        sys.stdout = old_stdout
-
+            csvfilename = 'csv_file.csv'
+            self._create_invalid_csv_file(csvfilename)
+            users = cmd._get_saved_user_info('./', csvfilename)
+            self.assertEqual([], users)
+            os.remove(csvfilename)
 
 class TestCommandLineOptions(unittest.TestCase):
     def setUp(self):
