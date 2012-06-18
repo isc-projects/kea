@@ -19,8 +19,6 @@
 #include <cstring>
 #include <vector>
 
-#include <string.h>
-
 #include <stdint.h>
 
 #include <exceptions/exceptions.h>
@@ -198,7 +196,7 @@ public:
             throwError("read beyond end of buffer");
         }
 
-        memcpy(data, &data_[position_], len);
+        std::memcpy(data, &data_[position_], len);
         position_ += len;
     }
     //@}
@@ -208,8 +206,8 @@ public:
     /// If specified buffer is too short, it will be expanded
     /// using vector::resize() method.
     ///
-    /// @param Reference to a buffer (data will be stored there).
-    /// @param Size specified number of bytes to read in a vector.
+    /// @param data Reference to a buffer (data will be stored there).
+    /// @param len Size specified number of bytes to read in a vector.
     ///
     void readVector(std::vector<uint8_t>& data, size_t len) {
         if (position_ + len > len_) {
@@ -333,7 +331,7 @@ public:
         if (buffer_ == NULL && allocated_ != 0) {
             throw std::bad_alloc();
         }
-        memcpy(buffer_, other.buffer_, size_);
+        std::memcpy(buffer_, other.buffer_, size_);
     }
 
     /// \brief Destructor
@@ -352,7 +350,7 @@ public:
         buffer_ = newbuff;
         size_ = other.size_;
         allocated_ = other.allocated_;
-        memcpy(buffer_, other.buffer_, size_);
+        std::memcpy(buffer_, other.buffer_, size_);
         return (*this);
     }
 
@@ -493,7 +491,7 @@ public:
     void writeData(const void *data, size_t len)
     {
         ensureAllocated(size_ + len);
-        memcpy(buffer_ + size_, data, len);
+        std::memcpy(buffer_ + size_, data, len);
         size_ += len;
     }
     //@}

@@ -47,7 +47,7 @@ using namespace isc::util;
 ///           < n octets >    Digest (length depends on digest type)
 /// If the data is less than 3 octets (i.e. it cannot contain id type code and
 /// digest type code), an exception of class \c InvalidRdataLength is thrown.
-DHCID::DHCID(const string& dhcid_str) {
+DHCID::DHCID(const std::string& dhcid_str) {
     istringstream iss(dhcid_str);
     stringbuf digestbuf;
 

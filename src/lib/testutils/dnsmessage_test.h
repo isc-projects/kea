@@ -174,6 +174,29 @@ private:
 };
 }
 
+/// \brief A converter from a string to RRset.
+///
+/// This is a convenient shortcut for tests that need to create an RRset
+/// from textual representation with a single call to a function.
+///
+/// An RRset consisting of multiple RRs can be constructed, but only one
+/// RRset is allowed.  If the given string contains mixed types of RRs
+/// it throws an \c isc::Unexpected exception.
+///
+/// \param text_rrset A complete textual representation of an RRset.
+///  It must meets the assumption of the \c dns::masterLoad() function.
+/// \param rrclass The RR class of the RRset.  Note that \c text_rrset should
+/// contain the RR class, but it's needed for \c dns::masterLoad().
+/// \param origin The zone origin where the RR is expected to belong.  This
+/// parameter normally doesn't have to be specified, but for an SOA RR it
+/// must be set to its owner name, due to the internal check of
+/// \c dns::masterLoad().
+isc::dns::RRsetPtr textToRRset(const std::string& text_rrset,
+                               const isc::dns::RRClass& rrclass =
+                               isc::dns::RRClass::IN(),
+                               const isc::dns::Name& origin =
+                               isc::dns::Name::ROOT_NAME());
+
 /// Set of unit tests to check if two sets of RRsets are identical.
 ///
 /// This templated function takes two sets of sequences, each defined by

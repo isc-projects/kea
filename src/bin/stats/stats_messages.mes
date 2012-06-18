@@ -28,6 +28,12 @@ control bus. A likely problem is that the message bus daemon
 This debug message is printed when the stats module has received a
 configuration update from the configuration manager.
 
+% STATS_RECEIVED_SHOWSCHEMA_ALL_COMMAND received command to show all statistics schema
+The stats module received a command to show all statistics schemas of all modules.
+
+% STATS_RECEIVED_SHOWSCHEMA_NAME_COMMAND received command to show statistics schema for %1
+The stats module received a command to show the specified statistics schema of the specified module.
+
 % STATS_RECEIVED_SHOW_ALL_COMMAND received command to show all statistics
 The stats module received a command to show all statistics that it has
 collected.
@@ -51,6 +57,13 @@ will respond with an error and the command will be ignored.
 This debug message is printed when a request is sent to the boss module
 to send its data to the stats module.
 
+% STATS_STARTING starting
+The stats module will be now starting.
+
+% STATS_START_ERROR stats module error: %1
+An internal error occurred while starting the stats module. The stats
+module will be now shutting down.
+
 % STATS_STOPPED_BY_KEYBOARD keyboard interrupt, shutting down
 There was a keyboard interrupt signal to stop the stats module. The
 daemon will now shut down.
@@ -61,16 +74,3 @@ is unknown in the implementation. The most likely cause is an
 installation problem, where the specification file stats.spec is
 from a different version of BIND 10 than the stats module itself.
 Please check your installation.
-
-% STATS_STARTING starting
-The stats module will be now starting.
-
-% STATS_RECEIVED_SHOWSCHEMA_ALL_COMMAND received command to show all statistics schema
-The stats module received a command to show all statistics schemas of all modules.
-
-% STATS_RECEIVED_SHOWSCHEMA_NAME_COMMAND received command to show statistics schema for %1
-The stats module received a command to show the specified statistics schema of the specified module.
-
-% STATS_START_ERROR stats module error: %1
-An internal error occurred while starting the stats module. The stats
-module will be now shutting down.

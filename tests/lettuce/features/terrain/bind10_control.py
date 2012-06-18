@@ -14,9 +14,18 @@
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 from lettuce import *
+import time
 import subprocess
 import re
 import json
+
+@step('sleep for (\d+) seconds')
+def wait_seconds(step, seconds):
+    """Sleep for some seconds.
+       Parameters:
+       seconds number of seconds to sleep for.
+    """
+    time.sleep(float(seconds))
 
 @step('start bind10(?: with configuration (\S+))?' +\
       '(?: with cmdctl port (\d+))?' +\
@@ -100,18 +109,15 @@ def wait_for_xfrout(step, process_name):
 def have_bind10_running(step, config_file, cmdctl_port, process_name):
     """
     Compound convenience step for running bind10, which consists of
-    start_bind10 and wait_for_auth.
+    start_bind10.
     Currently only supports the 'with configuration' option.
     """
     start_step = 'start bind10 with configuration ' + config_file
-    wait_step = 'wait for bind10 auth to start'
     if cmdctl_port is not None:
         start_step += ' with cmdctl port ' + str(cmdctl_port)
     if process_name is not None:
         start_step += ' as ' + process_name
-        wait_step = 'wait for bind10 auth of ' + process_name + ' to start'
     step.given(start_step)
-    step.given(wait_step)
 
 # function to send lines to bindctl, and store the result
 def run_bindctl(commands, cmdctl_port=None):
@@ -142,8 +148,8 @@ def run_bindctl(commands, cmdctl_port=None):
                         "stderr:\n" + str(stderr)
 
 
-@step('last bindctl( stderr)? output should( not)? contain (\S+)')
-def check_bindctl_output(step, stderr, notv, string):
+@step('last bindctl( stderr)? output should( not)? contain (\S+)( exactly)?')
+def check_bindctl_output(step, stderr, notv, string, exactly):
     """Checks the stdout (or stderr) stream of the last run of bindctl,
        fails if the given string is not found in it (or fails if 'not' was
        set and it is found
@@ -151,14 +157,19 @@ def check_bindctl_output(step, stderr, notv, string):
        stderr ('stderr'): Check stderr instead of stdout output
        notv ('not'): reverse the check (fail if string is found)
        string ('contain <string>') string to look for
+       exactly ('exactly'): Make an exact match delimited by whitespace
     """
     if stderr is None:
         output = world.last_bindctl_stdout
     else:
         output = world.last_bindctl_stderr
     found = False
-    if string in output:
-        found = True
+    if exactly is None:
+        if string in output:
+            found = True
+    else:
+        if re.search(r'^\s+' + string + r'\s+', output, re.IGNORECASE | re.MULTILINE) is not None:
+            found = True
     if notv is None:
         assert found == True, "'" + string +\
                               "' was not found in bindctl output:\n" +\
@@ -322,4 +333,4 @@ def module_is_running(step, name, not_str):
     if not_str is None:
         not_str = ""
     step.given('send bind10 the command help')
-    step.given('last bindctl output should' + not_str + ' contain ' + name)
+    step.given('last bindctl output should' + not_str + ' contain ' + name + ' exactly')

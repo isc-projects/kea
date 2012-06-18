@@ -22,6 +22,7 @@ endif
 	echo Running test: $$pytest ; \
 	$(LIBRARY_PATH_PLACEHOLDER) \
 	PYTHONPATH=$(COMMON_PYTHON_PATH):$(abs_top_builddir)/src/lib/python/isc/config \
+	B10_LOCKFILE_DIR_FROM_BUILD=$(abs_top_builddir) \
 	B10_TEST_PLUGIN_DIR=$(abs_top_srcdir)/src/bin/cfgmgr/plugins \
 	CONFIG_TESTDATA_PATH=$(abs_top_srcdir)/src/lib/config/tests/testdata \
 	CONFIG_WR_TESTDATA_PATH=$(abs_top_builddir)/src/lib/config/tests/testdata \

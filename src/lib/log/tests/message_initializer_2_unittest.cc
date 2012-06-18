@@ -15,6 +15,8 @@
 #include <log/message_initializer.h>
 #include <gtest/gtest.h>
 
+#include <util/unittests/resource.h>
+
 using namespace isc::log;
 
 // Declare a set of messages to go into the global dictionary.
@@ -42,7 +44,9 @@ TEST(MessageInitializerTest2, MessageLoadTest) {
 #ifdef EXPECT_DEATH
     // Adding one more should take us over the limit.
     EXPECT_DEATH({
+        isc::util::unittests::dontCreateCoreDumps();
+
         MessageInitializer initializer2(values);
-        }, ".*");
+      }, ".*");
 #endif
 }

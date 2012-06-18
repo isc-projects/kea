@@ -14,11 +14,7 @@
 
 #include <config.h>
 
-#include <vector>
-
-#include <boost/shared_ptr.hpp>
-
-#include <gtest/gtest.h>
+#include <util/io/sockaddr_util.h>
 
 #include <dns/message.h>
 #include <dns/messagerenderer.h>
@@ -38,6 +34,7 @@
 #include <auth/common.h>
 #include <auth/statistics.h>
 
+#include <util/unittests/mock_socketsession.h>
 #include <dns/tests/unittest_util.h>
 #include <testutils/dnsmessage_test.h>
 #include <testutils/srv_test.h>
@@ -45,10 +42,24 @@
 #include <testutils/portconfig.h>
 #include <testutils/socket_request.h>
 
+#include <gtest/gtest.h>
+
+#include <boost/lexical_cast.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/scoped_ptr.hpp>
+
+#include <vector>
+
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+
 using namespace std;
 using namespace isc::cc;
 using namespace isc::dns;
 using namespace isc::util;
+using namespace isc::util::io::internal;
+using namespace isc::util::unittests;
 using namespace isc::dns::rdata;
 using namespace isc::data;
 using namespace isc::xfr;
@@ -57,6 +68,7 @@ using namespace isc::asiolink;
 using namespace isc::testutils;
 using namespace isc::server_common::portconfig;
 using isc::UnitTestUtil;
+using boost::scoped_ptr;
 
 namespace {
 const char* const CONFIG_TESTDB =
@@ -77,7 +89,7 @@ class AuthSrvTest : public SrvTestBase {
 protected:
     AuthSrvTest() :
         dnss_(),
-        server(true, xfrout),
+        server(true, xfrout, ddns_forwarder),
         rrclass(RRClass::IN()),
         // The empty string is expected value of the parameter of
         // requestSocket, not the app_name (there's no fallback, it checks
@@ -87,6 +99,13 @@ protected:
         server.setDNSService(dnss_);
         server.setXfrinSession(&notify_session);
         server.setStatisticsSession(&statistics_session);
+    }
+
+    ~AuthSrvTest() {
+        // Clear the message now; depending on the RTTI implementation,
+        // type information may be lost if the message is cleared
+        // automatically later, so as a precaution we do it now.
+        parse_message->clear(Message::PARSE);
     }
 
     virtual void processMessage() {
@@ -136,9 +155,30 @@ protected:
                     opcode.getCode(), QR_FLAG, 1, 0, 0, 0);
     }
 
+    // Convenient shortcut of creating a simple request and having the
+    // server process it.
+    void createAndSendRequest(RRType req_type, Opcode opcode = Opcode::QUERY(),
+                              const Name& req_name = Name("example.com"),
+                              RRClass req_class = RRClass::IN(),
+                              int protocol = IPPROTO_UDP,
+                              const char* const remote_address =
+                              DEFAULT_REMOTE_ADDRESS,
+                              uint16_t remote_port = DEFAULT_REMOTE_PORT)
+    {
+        UnitTestUtil::createRequestMessage(request_message, opcode,
+                                           default_qid, req_name,
+                                           req_class, req_type);
+        createRequestPacket(request_message, protocol, NULL,
+                            remote_address, remote_port);
+        parse_message->clear(Message::PARSE);
+        server.processMessage(*io_message, *parse_message, *response_obuffer,
+                              &dnsserv);
+    }
+
     MockDNSService dnss_;
     MockSession statistics_session;
     MockXfroutClient xfrout;
+    MockSocketSessionForwarder ddns_forwarder;
     AuthSrv server;
     const RRClass rrclass;
     vector<uint8_t> response_data;
@@ -246,8 +286,8 @@ TEST_F(AuthSrvTest, iqueryViaDNSServer) {
 // Unsupported requests.  Should result in NOTIMP.
 TEST_F(AuthSrvTest, unsupportedRequest) {
     unsupportedRequest();
-    // unsupportedRequest tries 14 different opcodes
-    checkAllRcodeCountersZeroExcept(Rcode::NOTIMP(), 14);
+    // unsupportedRequest tries 13 different opcodes
+    checkAllRcodeCountersZeroExcept(Rcode::NOTIMP(), 13);
 }
 
 // Multiple questions.  Should result in FORMERR.
@@ -830,16 +870,23 @@ TEST_F(AuthSrvTest, updateConfigFail) {
                 QR_FLAG | AA_FLAG, 1, 1, 1, 0);
 }
 
-TEST_F(AuthSrvTest, updateWithInMemoryClient) {
+TEST_F(AuthSrvTest,
+#ifdef USE_STATIC_LINK
+       DISABLED_updateWithInMemoryClient
+#else
+       updateWithInMemoryClient
+#endif
+    )
+{
     // Test configuring memory data source.  Detailed test cases are covered
     // in the configuration tests.  We only check the AuthSrv interface here.
 
     // By default memory data source isn't enabled
-    EXPECT_EQ(AuthSrv::InMemoryClientPtr(), server.getInMemoryClient(rrclass));
+    EXPECT_FALSE(server.hasInMemoryClient());
     updateConfig(&server,
                  "{\"datasources\": [{\"type\": \"memory\"}]}", true);
     // after successful configuration, we should have one (with empty zoneset).
-    ASSERT_NE(AuthSrv::InMemoryClientPtr(), server.getInMemoryClient(rrclass));
+    EXPECT_TRUE(server.hasInMemoryClient());
     EXPECT_EQ(0, server.getInMemoryClient(rrclass)->getZoneCount());
 
     // The memory data source is empty, should return REFUSED rcode.
@@ -851,13 +898,20 @@ TEST_F(AuthSrvTest, updateWithInMemoryClient) {
                 opcode.getCode(), QR_FLAG, 1, 0, 0, 0);
 }
 
-TEST_F(AuthSrvTest, queryWithInMemoryClientNoDNSSEC) {
+TEST_F(AuthSrvTest,
+#ifdef USE_STATIC_LINK
+       DISABLED_queryWithInMemoryClientNoDNSSEC
+#else
+       queryWithInMemoryClientNoDNSSEC
+#endif
+    )
+{
     // In this example, we do simple check that query is handled from the
     // query handler class, and confirm it returns no error and a non empty
     // answer section.  Detailed examination on the response content
     // for various types of queries are tested in the query tests.
     updateConfig(&server, CONFIG_INMEMORY_EXAMPLE, true);
-    ASSERT_NE(AuthSrv::InMemoryClientPtr(), server.getInMemoryClient(rrclass));
+    EXPECT_TRUE(server.hasInMemoryClient());
     EXPECT_EQ(1, server.getInMemoryClient(rrclass)->getZoneCount());
 
     createDataFromFile("nsec3query_nodnssec_fromWire.wire");
@@ -869,12 +923,19 @@ TEST_F(AuthSrvTest, queryWithInMemoryClientNoDNSSEC) {
                 opcode.getCode(), QR_FLAG | AA_FLAG, 1, 1, 2, 1);
 }
 
-TEST_F(AuthSrvTest, queryWithInMemoryClientDNSSEC) {
+TEST_F(AuthSrvTest,
+#ifdef USE_STATIC_LINK
+       DISABLED_queryWithInMemoryClientDNSSEC
+#else
+       queryWithInMemoryClientDNSSEC
+#endif
+    )
+{
     // Similar to the previous test, but the query has the DO bit on.
     // The response should contain RRSIGs, and should have more RRs than
     // the previous case.
     updateConfig(&server, CONFIG_INMEMORY_EXAMPLE, true);
-    ASSERT_NE(AuthSrv::InMemoryClientPtr(), server.getInMemoryClient(rrclass));
+    EXPECT_TRUE(server.hasInMemoryClient());
     EXPECT_EQ(1, server.getInMemoryClient(rrclass)->getZoneCount());
 
     createDataFromFile("nsec3query_fromWire.wire");
@@ -886,7 +947,14 @@ TEST_F(AuthSrvTest, queryWithInMemoryClientDNSSEC) {
                 opcode.getCode(), QR_FLAG | AA_FLAG, 1, 2, 3, 3);
 }
 
-TEST_F(AuthSrvTest, chQueryWithInMemoryClient) {
+TEST_F(AuthSrvTest,
+#ifdef USE_STATIC_LINK
+       DISABLED_chQueryWithInMemoryClient
+#else
+       chQueryWithInMemoryClient
+#endif
+    )
+{
     // Configure memory data source for class IN
     updateConfig(&server, "{\"datasources\": "
                  "[{\"class\": \"IN\", \"type\": \"memory\"}]}", true);
@@ -1108,7 +1176,7 @@ TEST_F(AuthSrvTest, processNormalQuery_reuseRenderer2) {
 //
 namespace {
 
-/// A the possible methods to throw in, either in FakeInMemoryClient or
+/// The possible methods to throw in, either in FakeClient or
 /// FakeZoneFinder
 enum ThrowWhen {
     THROW_NEVER,
@@ -1132,10 +1200,10 @@ checkThrow(ThrowWhen method, ThrowWhen throw_at, bool isc_exception) {
     }
 }
 
-/// \brief proxy class for the ZoneFinder returned by the InMemoryClient
-///        proxied by FakeInMemoryClient
+/// \brief proxy class for the ZoneFinder returned by the Client
+///        proxied by FakeClient
 ///
-/// See the documentation for FakeInMemoryClient for more information,
+/// See the documentation for FakeClient for more information,
 /// all methods simply check whether they should throw, and if not, call
 /// their proxied equivalent.
 class FakeZoneFinder : public isc::datasrc::ZoneFinder {
@@ -1208,15 +1276,15 @@ private:
     ConstRRsetPtr fake_rrset_;
 };
 
-/// \brief Proxy InMemoryClient that can throw exceptions at specified times
+/// \brief Proxy FakeClient that can throw exceptions at specified times
 ///
-/// It is based on the memory client since that one is easy to override
-/// (with setInMemoryClient) with the current design of AuthSrv.
-class FakeInMemoryClient : public isc::datasrc::InMemoryClient {
+/// Currently it is used as an 'InMemoryClient' using setInMemoryClient,
+/// but it is in effect a general datasource client.
+class FakeClient : public isc::datasrc::DataSourceClient {
 public:
     /// \brief Create a proxy memory client
     ///
-    /// \param real_client The real in-memory client to proxy
+    /// \param real_client The real (in-memory) client to proxy
     /// \param throw_when if set to any value other than never, that is
     ///        the method that will throw an exception (either in this
     ///        class or the related FakeZoneFinder)
@@ -1224,10 +1292,10 @@ public:
     ///                      throw std::exception
     /// \param fake_rrset If non NULL, it will be used as an answer to
     /// find() for that name and type.
-    FakeInMemoryClient(AuthSrv::InMemoryClientPtr real_client,
-                       ThrowWhen throw_when, bool isc_exception,
-                       ConstRRsetPtr fake_rrset = ConstRRsetPtr()) :
-        real_client_(real_client),
+    FakeClient(isc::datasrc::DataSourceClientContainerPtr real_client,
+               ThrowWhen throw_when, bool isc_exception,
+               ConstRRsetPtr fake_rrset = ConstRRsetPtr()) :
+        real_client_ptr_(real_client),
         throw_when_(throw_when),
         isc_exception_(isc_exception),
         fake_rrset_(fake_rrset)
@@ -1242,7 +1310,8 @@ public:
     virtual FindResult
     findZone(const isc::dns::Name& name) const {
         checkThrow(THROW_AT_FIND_ZONE, throw_when_, isc_exception_);
-        const FindResult result = real_client_->findZone(name);
+        const FindResult result =
+            real_client_ptr_->getInstance().findZone(name);
         return (FindResult(result.code, isc::datasrc::ZoneFinderPtr(
                                         new FakeZoneFinder(result.zone_finder,
                                                            throw_when_,
@@ -1250,11 +1319,50 @@ public:
                                                            fake_rrset_))));
     }
 
+    isc::datasrc::ZoneUpdaterPtr
+    getUpdater(const isc::dns::Name&, bool, bool) const {
+        isc_throw(isc::NotImplemented,
+                  "Update attempt on in fake data source");
+    }
+    std::pair<isc::datasrc::ZoneJournalReader::Result,
+              isc::datasrc::ZoneJournalReaderPtr>
+    getJournalReader(const isc::dns::Name&, uint32_t, uint32_t) const {
+        isc_throw(isc::NotImplemented, "Journaling isn't supported for "
+                  "fake data source");
+    }
 private:
-    AuthSrv::InMemoryClientPtr real_client_;
+    const isc::datasrc::DataSourceClientContainerPtr real_client_ptr_;
     ThrowWhen throw_when_;
     bool isc_exception_;
     ConstRRsetPtr fake_rrset_;
+};
+
+class FakeContainer : public isc::datasrc::DataSourceClientContainer {
+public:
+    /// \brief Creates a fake container for the given in-memory client
+    ///
+    /// The initializer creates a fresh instance of a memory datasource,
+    /// which is ignored for the rest (but we do not allow 'null' containers
+    /// atm, and this is only needed in these tests, this may be changed
+    /// if we generalize the container class a bit more)
+    ///
+    /// It will also create a FakeClient, with the given arguments, which
+    /// is actually used when the instance is requested.
+    FakeContainer(isc::datasrc::DataSourceClientContainerPtr real_client,
+                  ThrowWhen throw_when, bool isc_exception,
+                  ConstRRsetPtr fake_rrset = ConstRRsetPtr()) :
+        DataSourceClientContainer("memory",
+                                  Element::fromJSON("{\"type\": \"memory\"}")),
+        client_(new FakeClient(real_client, throw_when, isc_exception,
+                               fake_rrset))
+    {}
+
+    isc::datasrc::DataSourceClient& getInstance() {
+        return (*client_);
+    }
+
+private:
+    const boost::scoped_ptr<isc::datasrc::DataSourceClient> client_;
 };
 
 } // end anonymous namespace for throwing proxy classes
@@ -1263,15 +1371,22 @@ private:
 //
 // Set the proxies to never throw, this should have the same result as
 // queryWithInMemoryClientNoDNSSEC, and serves to test the two proxy classes
-TEST_F(AuthSrvTest, queryWithInMemoryClientProxy) {
+TEST_F(AuthSrvTest,
+#ifdef USE_STATIC_LINK
+       DISABLED_queryWithInMemoryClientProxy
+#else
+       queryWithInMemoryClientProxy
+#endif
+    )
+{
     // Set real inmem client to proxy
     updateConfig(&server, CONFIG_INMEMORY_EXAMPLE, true);
+    EXPECT_TRUE(server.hasInMemoryClient());
 
-    AuthSrv::InMemoryClientPtr fake_client(
-        new FakeInMemoryClient(server.getInMemoryClient(rrclass),
-                               THROW_NEVER, false));
-    ASSERT_NE(AuthSrv::InMemoryClientPtr(), server.getInMemoryClient(rrclass));
-    server.setInMemoryClient(rrclass, fake_client);
+    isc::datasrc::DataSourceClientContainerPtr fake_client_container(
+        new FakeContainer(server.getInMemoryClientContainer(rrclass),
+                          THROW_NEVER, false));
+    server.setInMemoryClient(rrclass, fake_client_container);
 
     createDataFromFile("nsec3query_nodnssec_fromWire.wire");
     server.processMessage(*io_message, *parse_message, *response_obuffer,
@@ -1297,17 +1412,23 @@ setupThrow(AuthSrv* server, const char *config, ThrowWhen throw_when,
 
     // Set it to throw on findZone(), this should result in
     // SERVFAIL on any exception
-    AuthSrv::InMemoryClientPtr fake_client(
-        new FakeInMemoryClient(
-            server->getInMemoryClient(isc::dns::RRClass::IN()),
+    isc::datasrc::DataSourceClientContainerPtr fake_client_container(
+        new FakeContainer(
+            server->getInMemoryClientContainer(isc::dns::RRClass::IN()),
             throw_when, isc_exception, rrset));
 
-    ASSERT_NE(AuthSrv::InMemoryClientPtr(),
-              server->getInMemoryClient(isc::dns::RRClass::IN()));
-    server->setInMemoryClient(isc::dns::RRClass::IN(), fake_client);
+    ASSERT_TRUE(server->hasInMemoryClient());
+    server->setInMemoryClient(isc::dns::RRClass::IN(), fake_client_container);
 }
 
-TEST_F(AuthSrvTest, queryWithThrowingProxyServfails) {
+TEST_F(AuthSrvTest,
+#ifdef USE_STATIC_LINK
+       DISABLED_queryWithThrowingProxyServfails
+#else
+       queryWithThrowingProxyServfails
+#endif
+    )
+{
     // Test the common cases, all of which should simply return SERVFAIL
     // Use THROW_NEVER as end marker
     ThrowWhen throws[] = { THROW_AT_FIND_ZONE,
@@ -1331,7 +1452,14 @@ TEST_F(AuthSrvTest, queryWithThrowingProxyServfails) {
 
 // Throw isc::Exception in getClass(). (Currently?) getClass is not called
 // in the processMessage path, so this should result in a normal answer
-TEST_F(AuthSrvTest, queryWithInMemoryClientProxyGetClass) {
+TEST_F(AuthSrvTest,
+#ifdef USE_STATIC_LINK
+       DISABLED_queryWithInMemoryClientProxyGetClass
+#else
+       queryWithInMemoryClientProxyGetClass
+#endif
+    )
+{
     createDataFromFile("nsec3query_nodnssec_fromWire.wire");
     setupThrow(&server, CONFIG_INMEMORY_EXAMPLE, THROW_AT_GET_CLASS, true);
 
@@ -1344,7 +1472,14 @@ TEST_F(AuthSrvTest, queryWithInMemoryClientProxyGetClass) {
                 opcode.getCode(), QR_FLAG | AA_FLAG, 1, 1, 2, 1);
 }
 
-TEST_F(AuthSrvTest, queryWithThrowingInToWire) {
+TEST_F(AuthSrvTest,
+#ifdef USE_STATIC_LINK
+       DISABLED_queryWithThrowingInToWire
+#else
+       queryWithThrowingInToWire
+#endif
+    )
+{
     // Set up a faked data source.  It will return an empty RRset for the
     // query.
     ConstRRsetPtr empty_rrset(new RRset(Name("foo.example"),
@@ -1383,6 +1518,130 @@ TEST_F(AuthSrvTest, queryWithThrowingInToWire) {
     parse_message->fromWire(ibuffer);
     headerCheck(*parse_message, default_qid, Rcode::SERVFAIL(),
                 opcode.getCode(), QR_FLAG, 1, 0, 0, 0);
+}
+
+//
+// DDNS related tests
+//
+
+// Helper subroutine to check if the given socket address has the expected
+// address and port.  It depends on specific output of getnameinfo() (while
+// there can be multiple textual representation of the same address) but
+// in practice it should be reliable.
+void
+checkAddrPort(const struct sockaddr& actual_sa,
+              const string& expected_addr, uint16_t expected_port)
+{
+    char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
+    const int error = getnameinfo(&actual_sa, getSALength(actual_sa), hbuf,
+                                  sizeof(hbuf), sbuf, sizeof(sbuf),
+                                  NI_NUMERICHOST | NI_NUMERICSERV);
+    if (error != 0) {
+        isc_throw(isc::Unexpected, "getnameinfo failed: " <<
+                  gai_strerror(error));
+    }
+    EXPECT_EQ(expected_addr, hbuf);
+    EXPECT_EQ(boost::lexical_cast<string>(expected_port), sbuf);
+}
+
+TEST_F(AuthSrvTest, DDNSForward) {
+    EXPECT_FALSE(ddns_forwarder.isConnected());
+
+    // Repeat sending an update request 4 times, differing some network
+    // parameters: UDP/IPv4, TCP/IPv4, UDP/IPv6, TCP/IPv6, in this order.
+    // By doing that we can also confirm the forwarder connection will be
+    // established exactly once, and kept established.
+    for (size_t i = 0; i < 4; ++i) {
+        // Use different names for some different cases
+        const Name zone_name = Name(i < 2 ? "example.com" : "example.org");
+        const socklen_t family = (i < 2) ? AF_INET : AF_INET6;
+        const char* const remote_addr =
+            (family == AF_INET) ? "192.0.2.1" : "2001:db8::1";
+        const uint16_t remote_port =
+            (family == AF_INET) ? 53214 : 53216;
+        const int protocol = ((i % 2) == 0) ? IPPROTO_UDP : IPPROTO_TCP;
+
+        createAndSendRequest(RRType::SOA(), Opcode::UPDATE(), zone_name,
+                             RRClass::IN(), protocol, remote_addr,
+                             remote_port);
+        EXPECT_FALSE(dnsserv.hasAnswer());
+        EXPECT_TRUE(ddns_forwarder.isConnected());
+
+        // Examine the pushed data (note: currently "local end" has a dummy
+        // value equal to remote)
+        EXPECT_EQ(family, ddns_forwarder.getPushedFamily());
+        const int expected_type =
+            (protocol == IPPROTO_UDP) ? SOCK_DGRAM : SOCK_STREAM;
+        EXPECT_EQ(expected_type, ddns_forwarder.getPushedType());
+        EXPECT_EQ(protocol, ddns_forwarder.getPushedProtocol());
+        checkAddrPort(ddns_forwarder.getPushedRemoteend(),
+                      remote_addr, remote_port);
+        checkAddrPort(ddns_forwarder.getPushedLocalend(),
+                      remote_addr, remote_port);
+        EXPECT_EQ(io_message->getDataSize(),
+                  ddns_forwarder.getPushedData().size());
+        EXPECT_EQ(0, memcmp(io_message->getData(),
+                            &ddns_forwarder.getPushedData()[0],
+                            ddns_forwarder.getPushedData().size()));
+    }
+}
+
+TEST_F(AuthSrvTest, DDNSForwardConnectFail) {
+    // make connect attempt fail.  It should result in SERVFAIL.  Note that
+    // the question (zone) section should be cleared for opcode of update.
+    ddns_forwarder.disableConnect();
+    createAndSendRequest(RRType::SOA(), Opcode::UPDATE());
+    EXPECT_TRUE(dnsserv.hasAnswer());
+    headerCheck(*parse_message, default_qid, Rcode::SERVFAIL(),
+                Opcode::UPDATE().getCode(), QR_FLAG, 0, 0, 0, 0);
+    EXPECT_FALSE(ddns_forwarder.isConnected());
+
+    // Now make connect okay again.  Despite the previous failure the new
+    // connection should now be established.
+    ddns_forwarder.enableConnect();
+    createAndSendRequest(RRType::SOA(), Opcode::UPDATE());
+    EXPECT_FALSE(dnsserv.hasAnswer());
+    EXPECT_TRUE(ddns_forwarder.isConnected());
+}
+
+TEST_F(AuthSrvTest, DDNSForwardPushFail) {
+    // Make first request succeed, which will establish the connection.
+    EXPECT_FALSE(ddns_forwarder.isConnected());
+    createAndSendRequest(RRType::SOA(), Opcode::UPDATE());
+    EXPECT_TRUE(ddns_forwarder.isConnected());
+
+    // make connect attempt fail.  It should result in SERVFAIL.  The
+    // connection should be closed.  Use IPv6 address for varying log output.
+    ddns_forwarder.disablePush();
+    createAndSendRequest(RRType::SOA(), Opcode::UPDATE(), Name("example.com"),
+                         RRClass::IN(), IPPROTO_UDP, "2001:db8::2");
+    EXPECT_TRUE(dnsserv.hasAnswer());
+    headerCheck(*parse_message, default_qid, Rcode::SERVFAIL(),
+                Opcode::UPDATE().getCode(), QR_FLAG, 0, 0, 0, 0);
+    EXPECT_FALSE(ddns_forwarder.isConnected());
+
+    // Allow push again.  Connection will be reopened, and the request will
+    // be forwarded successfully.
+    ddns_forwarder.enablePush();
+    createAndSendRequest(RRType::SOA(), Opcode::UPDATE());
+    EXPECT_FALSE(dnsserv.hasAnswer());
+    EXPECT_TRUE(ddns_forwarder.isConnected());
+}
+
+TEST_F(AuthSrvTest, DDNSForwardClose) {
+    scoped_ptr<AuthSrv> tmp_server(new AuthSrv(true, xfrout, ddns_forwarder));
+    UnitTestUtil::createRequestMessage(request_message, Opcode::UPDATE(),
+                                       default_qid, Name("example.com"),
+                                       RRClass::IN(), RRType::SOA());
+    createRequestPacket(request_message, IPPROTO_UDP);
+    tmp_server->processMessage(*io_message, *parse_message, *response_obuffer,
+                               &dnsserv);
+    EXPECT_FALSE(dnsserv.hasAnswer());
+    EXPECT_TRUE(ddns_forwarder.isConnected());
+
+    // Destroy the server.  The forwarder should close the connection.
+    tmp_server.reset();
+    EXPECT_FALSE(ddns_forwarder.isConnected());
 }
 
 }

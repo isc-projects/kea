@@ -89,11 +89,6 @@ This is probably a bug in the code, but it could be caused by other unusual
 conditions (like insufficient memory, deleted socket file used for
 communication).
 
-% SRVCOMM_UNKNOWN_EXCEPTION_ALLOC unknown exception when allocating a socket
-The situation is the same as in the SRVCOMM_EXCEPTION_ALLOC case, but further
-details about the error are unknown, because it was signaled by throwing
-something not being an exception. This is definitely a bug.
-
 % SRVCOMM_KEYS_DEINIT deinitializing TSIG keyring
 Debug message indicating that the server is deinitializing the TSIG keyring.
 
@@ -112,3 +107,8 @@ specification is outside the valid range of 0 to 65535.
 % SRVCOMM_SET_LISTEN setting addresses to listen to
 Debug message, noting that the server is about to start listening on a
 different set of IP addresses and ports than before.
+
+% SRVCOMM_UNKNOWN_EXCEPTION_ALLOC unknown exception when allocating a socket
+The situation is the same as in the SRVCOMM_EXCEPTION_ALLOC case, but further
+details about the error are unknown, because it was signaled by throwing
+something not being an exception. This is definitely a bug.

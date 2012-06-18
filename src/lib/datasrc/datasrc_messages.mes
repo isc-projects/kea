@@ -75,6 +75,38 @@ The datasource tried to provide an NSEC proof that the named domain does not
 exist, but the database backend doesn't support DNSSEC. No proof is included
 in the answer as a result.
 
+% DATASRC_DATABASE_FINDNSEC3 Looking for NSEC3 for %1 in %2 mode
+Debug information. A search in an database data source for NSEC3 that
+matches or covers the given name is being started.
+
+% DATASRC_DATABASE_FINDNSEC3_COVER found a covering NSEC3 for %1 at label count %2: %3
+Debug information. An NSEC3 that covers the given name is found and
+being returned.  The found NSEC3 RRset is also displayed. When the shown label
+count is smaller than that of the given name, the matching NSEC3 is for a
+superdomain of the given name (see DATASRC_DATABSE_FINDNSEC3_TRYHASH).  The
+found NSEC3 RRset is also displayed.
+
+% DATASRC_DATABASE_FINDNSEC3_MATCH found a matching NSEC3 for %1 at label count %2: %3
+Debug information. An NSEC3 that matches (a possibly superdomain of)
+the given name is found and being returned.  When the shown label
+count is smaller than that of the given name, the matching NSEC3 is
+for a superdomain of the given name (see DATASRC_DATABSE_FINDNSEC3_TRYHASH).
+The found NSEC3 RRset is also displayed.
+
+% DATASRC_DATABASE_FINDNSEC3_TRYHASH looking for NSEC3 for %1 at label count %2 (hash %3)
+Debug information. In an attempt of finding an NSEC3 for the give name,
+(a possibly superdomain of) the name is hashed and searched for in the
+NSEC3 name space.  When the shown label count is smaller than that of the
+shown name, the search tries the superdomain name that share the shown
+(higher) label count of the shown name (e.g., for
+www.example.com. with shown label count of 3, example.com. is being
+tried, as "." is 1 label long).
+
+% DATASRC_DATABASE_FINDNSEC3_TRYHASH_PREV looking for previous NSEC3 for %1 at label count %2 (hash %3)
+Debug information. An exact match on hash (see
+DATASRC_DATABASE_FINDNSEC3_TRYHASH) was unsuccessful. We get the previous hash
+to that one instead.
+
 % DATASRC_DATABASE_FIND_RECORDS looking in datasource %1 for record %2/%3/%4
 Debug information. The database data source is looking up records with the given
 name and type in the database.
@@ -128,7 +160,7 @@ A search in the database for RRs for the specified name, type and class has
 located RRs that match the name and class but not the type.  DNSSEC information
 has been requested and returned.
 
-% DATASRC_DATABASE_FOUND_RRSET search in datasource %1 resulted in RRset %5
+% DATASRC_DATABASE_FOUND_RRSET search in datasource %1 resulted in RRset %2
 The data returned by the database backend contained data for the given domain
 name, and it either matches the type or has a relevant type. The RRset that is
 returned is printed.
@@ -145,10 +177,12 @@ While iterating through the zone, the program extracted next RRset from it.
 The name and RRtype of the RRset is indicated in the message.
 
 % DATASRC_DATABASE_ITERATE_TTL_MISMATCH TTL values differ for RRs of %1/%2/%3, setting to %4
-While iterating through the zone, the time to live for RRs of the given RRset
-were found to be different. This isn't allowed on the wire and is considered
-an error, so we set it to the lowest value we found (but we don't modify the
-database). The data in database should be checked and fixed.
+While iterating through the zone, the time to live for RRs of the
+given RRset were found to be different. Since an RRset cannot have
+multiple TTLs, we set it to the lowest value we found (but we don't
+modify the database). This is what the client would do when such RRs
+were given in a DNS response according to RFC2181. The data in
+database should be checked and fixed.
 
 % DATASRC_DATABASE_JOURNALREADER_END %1/%2 on %3 from %4 to %5
 This is a debug message indicating that the program (successfully)
@@ -245,7 +279,7 @@ nonterminal (e.g. there's nothing at *.example.com but something like
 subdomain.*.example.org, do exist: so *.example.org exists in the
 namespace but has no RRs assopciated with it). This will produce NXRRSET.
 
-% DATASRC_DATABASE_WILDCARD_MATCH search in datasource %1 resulted in wildcard match at %5 with RRset %6
+% DATASRC_DATABASE_WILDCARD_MATCH search in datasource %1 resulted in wildcard match at %2 with RRset %3
 The database doesn't contain directly matching name.  When searching
 for a wildcard match, a wildcard record matching the name and type of
 the query was found. The data at this point is returned.
@@ -634,6 +668,17 @@ enough information for it.  The code is 1 for error, 2 for not implemented.
 % DATASRC_SQLITE_CLOSE closing SQLite database
 Debug information. The SQLite data source is closing the database file.
 
+% DATASRC_SQLITE_COMPATIBLE_VERSION database schema V%1.%2 not up to date (expecting V%3.%4) but is compatible
+The version of the SQLite3 database schema used to hold the zone data
+is not the latest one - the current version of BIND 10 was written
+with a later schema version in mind.  However, the database is
+compatible with the current version of BIND 10, and BIND 10 will run
+without any problems.
+
+Consult the release notes for your version of BIND 10.  Depending on
+the changes made to the database schema, it is possible that improved
+performance could result if the database were upgraded.
+
 % DATASRC_SQLITE_CONNCLOSE Closing sqlite database
 The database file is no longer needed and is being closed.
 
@@ -700,6 +745,14 @@ source.
 % DATASRC_SQLITE_FIND_NSEC3_NO_ZONE no such zone '%1'
 The SQLite data source was asked to provide a NSEC3 record for given zone.
 But it doesn't contain that zone.
+
+% DATASRC_SQLITE_INCOMPATIBLE_VERSION database schema V%1.%2 incompatible with version (V%3.%4) expected
+The version of the SQLite3 database schema used to hold the zone data
+is incompatible with the version expected by BIND 10.  As a result,
+BIND 10 is unable to run using the database file as the data source.
+
+The database should be updated using the means described in the BIND
+10 documentation.
 
 % DATASRC_SQLITE_NEWCONN SQLite3Database is being initialized
 A wrapper object to hold database connection is being initialized.

@@ -18,6 +18,8 @@
 
 #include <boost/functional/hash.hpp>
 
+#include <cstring>
+
 namespace isc {
 namespace dns {
 
@@ -52,7 +54,7 @@ LabelSequence::equals(const LabelSequence& other, bool case_sensitive) const {
         return (false);
     }
     if (case_sensitive) {
-        return (strncmp(data, other_data, len) == 0);
+        return (std::strncmp(data, other_data, len) == 0);
     }
 
     // As long as the data was originally validated as (part of) a name,

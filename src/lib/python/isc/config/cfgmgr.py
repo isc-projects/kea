@@ -81,6 +81,7 @@ class ConfigManagerData:
            and stop loading the system.
            """
         config = ConfigManagerData(data_path, file_name)
+        logger.info(CFGMGR_CONFIG_FILE, config.db_filename)
         file = None
         try:
             file = open(config.db_filename, 'r')
@@ -166,7 +167,7 @@ class ConfigManagerData:
                 i += 1
             new_file_name = new_file_name + "." + str(i)
         if os.path.exists(old_file_name):
-            logger.info(CFGMGR_RENAMED_CONFIG_FILE, old_file_name, new_file_name)
+            logger.info(CFGMGR_BACKED_UP_CONFIG_FILE, old_file_name, new_file_name)
             os.rename(old_file_name, new_file_name)
 
     def __eq__(self, other):
@@ -189,7 +190,7 @@ class ConfigManager:
         """Initialize the configuration manager. The data_path string
            is the path to the directory where the configuration is
            stored (in <data_path>/<database_filename> or in
-           <database_filename>, if it is absolute). The dabase_filename
+           <database_filename>, if it is absolute). The database_filename
            is the config file to load. Session is an optional
            cc-channel session. If this is not given, a new one is
            created. If clear_config is True, the configuration file is

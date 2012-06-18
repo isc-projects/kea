@@ -22,6 +22,8 @@ TESTDATA_OBJDIR = os.getenv("TESTDATAOBJDIR")
 TEST_UNIX_FILE = TESTDATA_OBJDIR + '/ssessiontest.unix'
 TEST_DATA = b'BIND10 test'
 TEST_PORT = 53535
+TEST_PORT2 = 53536
+TEST_PORT3 = 53537
 
 class TestForwarder(unittest.TestCase):
     '''In general, this is a straightforward port of the C++ counterpart.
@@ -185,8 +187,11 @@ class TestForwarder(unittest.TestCase):
             passed_sock.close()
 
     def test_push_and_pop(self):
-        # This is a straightforward port of C++ pushAndPop test.
+        # This is a straightforward port of C++ pushAndPop test.  See the
+        # C++ version why we use multiple ports for "local".
         local6 = ('::1', TEST_PORT, 0, 0)
+        local6_alt = ('::1', TEST_PORT2, 0, 0)
+        local6_alt2 = ('::1', TEST_PORT3, 0, 0)
         remote6 = ('2001:db8::1', 5300, 0, 0)
         self.check_push_and_pop(AF_INET6, SOCK_DGRAM, IPPROTO_UDP,
                                 local6, remote6, TEST_DATA, True)
@@ -194,6 +199,7 @@ class TestForwarder(unittest.TestCase):
                                 local6, remote6, TEST_DATA, False)
 
         local4 = ('127.0.0.1', TEST_PORT)
+        local4_alt = ('127.0.0.1', TEST_PORT2)
         remote4 = ('192.0.2.2', 5300)
         self.check_push_and_pop(AF_INET, SOCK_DGRAM, IPPROTO_UDP,
                                 local4, remote4, TEST_DATA, False)
@@ -201,11 +207,11 @@ class TestForwarder(unittest.TestCase):
                                 local4, remote4, TEST_DATA, False)
 
         self.check_push_and_pop(AF_INET6, SOCK_DGRAM, IPPROTO_UDP,
-                                local6, remote6, self.large_text, False)
+                                local6_alt, remote6, self.large_text, False)
         self.check_push_and_pop(AF_INET6, SOCK_STREAM, IPPROTO_TCP,
                                 local6, remote6, self.large_text, False)
         self.check_push_and_pop(AF_INET, SOCK_DGRAM, IPPROTO_UDP,
-                                local4, remote4, self.large_text, False)
+                                local4_alt, remote4, self.large_text, False)
         self.check_push_and_pop(AF_INET, SOCK_STREAM, IPPROTO_TCP,
                                 local4, remote4, self.large_text, False)
 
@@ -213,7 +219,7 @@ class TestForwarder(unittest.TestCase):
         # scope (zone) ID
         scope6 = ('fe80::1', TEST_PORT, 0, 1)
         self.check_push_and_pop(AF_INET6, SOCK_DGRAM, IPPROTO_UDP,
-                                local6, scope6, TEST_DATA, False)
+                                local6_alt2, scope6, TEST_DATA, False)
 
     def test_push_too_fast(self):
         # A straightforward port of C++ pushTooFast test.

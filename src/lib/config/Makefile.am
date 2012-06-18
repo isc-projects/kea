@@ -17,6 +17,11 @@ libcfgclient_la_SOURCES += module_spec.h module_spec.cc
 libcfgclient_la_SOURCES += ccsession.cc ccsession.h
 libcfgclient_la_SOURCES += config_log.h config_log.cc
 
+libcfgclient_la_LIBADD = $(top_builddir)/src/lib/cc/libcc.la
+libcfgclient_la_LIBADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
+
+libcfgclient_la_LDFLAGS = -no-undefined -version-info 1:0:1
+
 nodist_libcfgclient_la_SOURCES  = config_messages.h config_messages.cc
 
 # The message file should be in the distribution.

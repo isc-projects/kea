@@ -237,7 +237,7 @@ private:
     /// Return if callback is enabled at the node.
     //@}
 
-private:
+
     /// \brief Define rbnode color
     enum RBNodeColor {BLACK, RED};
     /// This is a factory class method of a special singleton null node.
@@ -263,6 +263,37 @@ private:
     /// This method never throws an exception.
     const RBNode<T>* successor() const;
 
+    /// \brief return the next node which is smaller than current node
+    /// in the same subtree
+    ///
+    /// The predecessor for this node is the next smaller node in terms of
+    /// the DNSSEC order relation within the same single subtree.
+    /// Note that it may NOT be the next smaller node in the entire RBTree;
+    /// RBTree is a tree in tree, and the real next node may reside in
+    /// an upper or lower subtree of the subtree where this node belongs.
+    /// For example, if the predecessor node has a sub domain, the real next
+    /// node is the largest node in the sub domain tree.
+    ///
+    /// If this node is the smallest node within the subtree, this method
+    /// returns \c NULL_NODE().
+    ///
+    /// This method never throws an exception.
+    const RBNode<T>* predecessor() const;
+
+    /// \brief private shared implementation of successor and predecessor
+    ///
+    /// As the two mentioned functions are merely mirror images of each other,
+    /// it makes little sense to keep both versions. So this is the body of the
+    /// functions and we call it with the correct pointers.
+    ///
+    /// Not to be called directly, not even by friends.
+    ///
+    /// The overhead of the member pointers should be optimised out, as this
+    /// will probably get completely inlined into predecessor and successor
+    /// methods.
+    const RBNode<T>* abstractSuccessor(RBNode<T>* RBNode<T>::*left,
+                                       RBNode<T>* RBNode<T>::*right) const;
+
     /// \name Data to maintain the rbtree structure.
     //@{
     RBNode<T>*  parent_;
@@ -283,7 +314,7 @@ private:
     /// \par Adding down pointer to \c RBNode has two purposes:
     /// \li Accelerate the search process, with sub domain tree, it splits the
     ///     big flat tree into several hierarchy trees.
-    /// \li It saves memory useage as it allows storing only relative names,
+    /// \li It saves memory usage as it allows storing only relative names,
     ///     avoiding storage of the same domain labels multiple times.
     RBNode<T>*  down_;
 
@@ -333,30 +364,48 @@ RBNode<T>::~RBNode() {
 
 template <typename T>
 const RBNode<T>*
-RBNode<T>::successor() const {
+RBNode<T>::abstractSuccessor(RBNode<T>* RBNode<T>::*left, RBNode<T>*
+                             RBNode<T>::*right) const
+{
+    // This function is written as a successor. It becomes predecessor if
+    // the left and right pointers are swapped. So in case of predecessor,
+    // the left pointer points to right and vice versa. Don't get confused
+    // by the idea, just imagine the pointers look into a mirror.
+
     const RBNode<T>* current = this;
     // If it has right node, the successor is the left-most node of the right
     // subtree.
-    if (right_ != NULL_NODE()) {
-        current = right_;
-        while (current->left_ != NULL_NODE()) {
-            current = current->left_;
+    if (current->*right != RBNode<T>::NULL_NODE()) {
+        current = current->*right;
+        while (current->*left != RBNode<T>::NULL_NODE()) {
+            current = current->*left;
         }
         return (current);
     }
-
 
     // Otherwise go up until we find the first left branch on our path to
     // root.  If found, the parent of the branch is the successor.
     // Otherwise, we return the null node
     const RBNode<T>* parent = current->parent_;
-    while (parent != NULL_NODE() && current == parent->right_) {
+    while (parent != RBNode<T>::NULL_NODE() && current == parent->*right) {
         current = parent;
         parent = parent->parent_;
     }
     return (parent);
 }
 
+template <typename T>
+const RBNode<T>*
+RBNode<T>::successor() const {
+    return (abstractSuccessor(&RBNode<T>::left_, &RBNode<T>::right_));
+}
+
+template <typename T>
+const RBNode<T>*
+RBNode<T>::predecessor() const {
+    // Swap the left and right pointers for the abstractSuccessor
+    return (abstractSuccessor(&RBNode<T>::right_, &RBNode<T>::left_));
+}
 
 /// \brief RBTreeNodeChain stores detailed information of \c RBTree::find()
 /// result.
@@ -364,8 +413,7 @@ RBNode<T>::successor() const {
 /// - The \c RBNode that was last compared with the search name, and
 ///   the comparison result at that point in the form of
 ///   \c isc::dns::NameComparisonResult.
-/// - A sequence of nodes that forms a path to the found node (which is
-///   not yet implemented).
+/// - A sequence of nodes that forms a path to the found node.
 ///
 /// The comparison result can be used to handle some rare cases such as
 /// empty node processing.
@@ -396,7 +444,7 @@ RBNode<T>::successor() const {
 template <typename T>
 class RBTreeNodeChain {
     /// RBTreeNodeChain is initialized by RBTree, only RBTree has
-    /// knowledge to manipuate it.
+    /// knowledge to manipulate it.
     friend class RBTree<T>;
 public:
     /// \name Constructors and Assignment Operator.
@@ -498,10 +546,10 @@ public:
 private:
     // the following private functions check invariants about the internal
     // state using assert() instead of exception.  The state of a chain
-    // can only be modified operations within this file, so if any of the
+    // can only be modified by operations within this file, so if any of the
     // assumptions fails it means an internal bug.
 
-    /// \brief return whther node chain has node in it.
+    /// \brief return whether node chain has node in it.
     ///
     /// \exception None
     bool isEmpty() const { return (node_count_ == 0); }
@@ -655,7 +703,7 @@ public:
     /// By default, nodes that don't have data (see RBNode::isEmpty) are
     /// ignored and the result can be NOTFOUND even if there's a node whose
     /// name matches.  If the \c RBTree is constructed with its
-    /// \c returnEmptyNode parameter being \c true, an empty node will also
+    /// \c returnEmptyNode parameter being \c true, empty nodes will also
     /// be match candidates.
     ///
     /// \note Even when \c returnEmptyNode is \c true, not all empty nodes
@@ -673,7 +721,7 @@ public:
     /// if it throws, the exception will be propagated to the caller.
     ///
     /// The \c name parameter says what should be found. The node parameter
-    /// is output only and in case of EXACTMATCH and PARTIALMATCH, it is set
+    /// is output-only, and in case of EXACTMATCH or PARTIALMATCH, it is set
     /// to a pointer to the found node.
     ///
     /// They return:
@@ -710,6 +758,30 @@ public:
         return (ret);
     }
 
+    /// \brief Simple find, with node_path tracking
+    ///
+    /// Acts as described in the \ref find section.
+    Result find(const isc::dns::Name& name, RBNode<T>** node,
+                RBTreeNodeChain<T>& node_path) const
+    {
+        return (find<void*>(name, node, node_path, NULL, NULL));
+    }
+
+    /// \brief Simple find returning immutable node, with node_path tracking
+    ///
+    /// Acts as described in the \ref find section, but returns immutable node
+    /// pointer.
+    Result find(const isc::dns::Name& name, const RBNode<T>** node,
+                RBTreeNodeChain<T>& node_path) const
+    {
+        RBNode<T> *target_node = NULL;
+        Result ret = (find<void*>(name, &target_node, node_path, NULL, NULL));
+        if (ret != NOTFOUND) {
+            *node = target_node;
+        }
+        return (ret);
+    }
+
     /// \brief Find with callback and node chain.
     /// \anchor callback
     ///
@@ -720,12 +792,15 @@ public:
     ///
     /// This version of \c find() calls the callback whenever traversing (on
     /// the way from root down the tree) a marked node on the way down through
-    /// the domain namespace (see \c RBNode::enableCallback and related
-    /// functions).
+    /// the domain namespace (see \c RBNode::FLAG_CALLBACK).
     ///
     /// If you return true from the callback, the search is stopped and a
     /// PARTIALMATCH is returned with the given node. Note that this node
     /// doesn't really need to be the one with longest possible match.
+    ///
+    /// The callback is not called for the node which matches exactly
+    /// (EXACTMATCH is returned). This is typically the last node in the
+    /// traversal during a successful search.
     ///
     /// This callback mechanism was designed with zone cut (delegation)
     /// processing in mind. The marked nodes would be the ones at delegation
@@ -741,38 +816,36 @@ public:
     /// which is an object of class \c RBTreeNodeChain.
     /// The passed parameter must be empty.
     ///
-    /// \note The rest of the description isn't yet implemented.  It will be
-    /// handled in Trac ticket #517.
-    ///
-    /// On success, the node sequence stoed in \c node_path will contain all
+    /// On success, the node sequence stored in \c node_path will contain all
     /// the ancestor nodes from the found node towards the root.
     /// For example, if we look for o.w.y.d.e.f in the example \ref diagram,
     /// \c node_path will contain w.y and d.e.f; the \c top() node of the
-    /// chain will be o, w.f and d.e.f will be stored below it.
+    /// chain will be o, w.y and d.e.f will be stored below it.
     ///
     /// This feature can be used to get the absolute name for a node;
     /// to do so, we need to travel upside from the node toward the root,
     /// concatenating all ancestor names.  With the current implementation
     /// it's not possible without a node chain, because there is a no pointer
     /// from the root of a subtree to the parent subtree (this may change
-    /// in a future version).  A node chain can also be used to find the next
-    /// node of a given node in the entire RBTree; the \c nextNode() method
-    /// takes a node chain as a parameter.
+    /// in a future version).  A node chain can also be used to find the
+    /// next and previous nodes of a given node in the entire RBTree;
+    /// the \c nextNode() and \c previousNode() methods take a node
+    /// chain as a parameter.
     ///
-    /// \exception isc::BadValue node_path is not empty (not yet implemented).
+    /// \exception isc::BadValue node_path is not empty.
     ///
     /// \param name Target to be found
     /// \param node On success (either \c EXACTMATCH or \c PARTIALMATCH)
     ///     it will store a pointer to the matching node
     /// \param node_path Other search details will be stored (see the
     ///        description)
-    /// \param callback If non \c NULL, a call back function to be called
-    ///     at marked nodes (see above).
+    /// \param callback If non- \c NULL, a call back function to be called
+    ///     at marked nodes (see the description).
     /// \param callback_arg A caller supplied argument to be passed to
     ///     \c callback.
     ///
-    /// \return As described above, but in case of callback returning true,
-    ///     it returns immediately with the current node.
+    /// \return As in the description, but in case of callback returning
+    ///     \c true, it returns immediately with the current node.
     template <typename CBARG>
     Result find(const isc::dns::Name& name,
                 RBNode<T>** node,
@@ -826,6 +899,30 @@ public:
     /// the largest, \c NULL will be returned.
     const RBNode<T>* nextNode(RBTreeNodeChain<T>& node_path) const;
 
+    /// \brief return the next smaller node in DNSSEC order from a node
+    ///     searched by RBTree::find().
+    ///
+    /// This acts similarly to \c nextNode(), but it walks in the other
+    /// direction. But unlike \c nextNode(), this can start even if the
+    /// node requested by \c find() was not found. In that case, it will
+    /// identify the node that is previous to the queried name.
+    ///
+    /// \note \c previousNode() will iterate over all the nodes in RBTree
+    /// including empty nodes. If empty node isn't desired, it's easy to add
+    /// logic to check return node and keep invoking \c previousNode() until the
+    /// non-empty node is retrieved.
+    ///
+    /// \exception isc::BadValue node_path is empty.
+    ///
+    /// \param node_path A node chain that stores all the nodes along the path
+    /// from root to node and the result of \c find(). This will get modified.
+    /// You should not use the node_path again except for repetitive calls
+    /// of this method.
+    ///
+    /// \return An \c RBNode that is next smaller than \c node; if \c node is
+    /// the smallest, \c NULL will be returned.
+    const RBNode<T>* previousNode(RBTreeNodeChain<T>& node_path) const;
+
     /// \brief Get the total number of nodes in the tree
     ///
     /// It includes nodes internally created as a result of adding a domain
@@ -848,8 +945,8 @@ public:
     //@{
     /// \brief Insert the domain name into the tree.
     ///
-    /// It either finds an already existing node of the given name or inserts
-    /// a new one, if none exists yet. In any case, the inserted_node parameter
+    /// It either finds an already existing node of the given name, or inserts
+    /// a new one if none exists yet. In any case, the \c inserted_node parameter
     /// is set to point to that node. You can fill data into it or modify it.
     /// So, if you don't know if a node exists or not and you need to modify
     /// it, just call insert and act by the result.
@@ -1059,15 +1156,7 @@ RBTree<T>::nextNode(RBTreeNodeChain<T>& node_path) const {
         return (left_most);
     }
 
-    // node_path go to up level
-    node_path.pop();
-    // otherwise found the successor node in current level
-    const RBNode<T>* successor = node->successor();
-    if (successor != NULLNODE) {
-        node_path.push(successor);
-        return (successor);
-    }
-
+    // try to find a successor.
     // if no successor found move to up level, the next successor
     // is the successor of up node in the up level tree, if
     // up node doesn't have successor we gonna keep moving to up
@@ -1084,6 +1173,143 @@ RBTree<T>::nextNode(RBTreeNodeChain<T>& node_path) const {
     return (NULL);
 }
 
+template <typename T>
+const RBNode<T>*
+RBTree<T>::previousNode(RBTreeNodeChain<T>& node_path) const {
+    if (getNodeCount() == 0) {
+        // Special case for empty trees. It would look every time like
+        // we didn't search, because the last compared is empty. This is
+        // a slight hack and not perfect, but this is better than throwing
+        // on empty tree. And we probably won't meet an empty tree in practice
+        // anyway.
+        return (NULL);
+    }
+    if (node_path.last_compared_ == NULL) {
+        isc_throw(isc::BadValue,
+                  "RBTree::previousNode() called before find()");
+    }
+
+    // If the relation isn't EQUAL, it means the find was called previously
+    // and didn't find the exact node. Therefore we need to locate the place
+    // to start iterating the chain of domains.
+    //
+    // The logic here is not too complex, we just need to take care to handle
+    // all the cases and decide where to go from there.
+    switch (node_path.last_comparison_.getRelation()) {
+        case dns::NameComparisonResult::COMMONANCESTOR:
+            // We compared with a leaf in the tree and wanted to go to one of
+            // the children. But the child was not there. It now depends on the
+            // direction in which we wanted to go.
+            if (node_path.last_comparison_.getOrder() < 0) {
+                // We wanted to go left. So the one we compared with is
+                // the one higher than we wanted. If we just put it into
+                // the node_path, then the following algorithm below will find
+                // the smaller one.
+                //
+                // This is exactly the same as with superdomain below.
+                // Therefore, we just fall through to the next case.
+            } else {
+                // We wanted to go right. That means we want to output the
+                // one which is the largest in the tree defined by the
+                // compared one (it is either the compared one, or some
+                // subdomain of it). There probably is not an easy trick
+                // for this, so we just find the correct place.
+                const RBNode<T>* current(node_path.last_compared_);
+                while (current != NULLNODE) {
+                    node_path.push(current);
+                    // Go a level down and as much right there as possible
+                    current = current->down_;
+                    while (current->right_ != NULLNODE) {
+                        // A small trick. The current may be NULLNODE, but
+                        // such node has the right_ pointer and it is equal
+                        // to NULLNODE.
+                        current = current->right_;
+                    }
+                }
+                // Now, the one on top of the path is the one we want. We
+                // return it now and leave it there, so we can search for
+                // previous of it the next time we'are called.
+                node_path.last_comparison_ =
+                    dns::NameComparisonResult(0, 0,
+                                              dns::NameComparisonResult::EQUAL);
+                return (node_path.top());
+            }
+            // No break; here - we want to fall through. See above.
+        case dns::NameComparisonResult::SUPERDOMAIN:
+            // This is the case there's a "compressed" node and we looked for
+            // only part of it. The node itself is larger than we wanted, but
+            // if we put it to the node_path and then go one step left from it,
+            // we get the correct result.
+            node_path.push(node_path.last_compared_);
+            // Correct the comparison result, so we won't trigger this case
+            // next time previousNode is called. We already located the correct
+            // place to start. The value is partly nonsense, but that doesn't
+            // matter any more.
+            node_path.last_comparison_ =
+                dns::NameComparisonResult(0, 0,
+                                          dns::NameComparisonResult::EQUAL);
+            break;
+        case dns::NameComparisonResult::SUBDOMAIN:
+            // A subdomain means we returned the one above the searched one
+            // already and it is on top of the stack. This is was smaller
+            // than the one already, but we want to return yet smaller one.
+            // So we act as if it was EQUAL.
+            break;
+        case dns::NameComparisonResult::EQUAL:
+            // The find gave us an exact match or the previousNode was called
+            // already, which located the exact node. The rest of the function
+            // goes one domain left and returns it for us.
+            break;
+    }
+
+    // So, the node_path now contains the path to a node we want previous for.
+    // We just need to go one step left.
+
+    if (node_path.isEmpty()) {
+        // We got past the first one. So, we're returning NULL from
+        // now on.
+        return (NULL);
+    }
+
+    const RBNode<T>* node(node_path.top());
+
+    // Try going left in this tree
+    node = node->predecessor();
+    if (node == NULLNODE) {
+        // We are the smallest ones in this tree. We go one level
+        // up. That one is the smaller one than us.
+
+        node_path.pop();
+        if (node_path.isEmpty()) {
+            // We're past the first one
+            return (NULL);
+        } else {
+            return (node_path.top());
+        }
+    }
+
+    // Exchange the node at the top of the path, as we move horizontaly
+    // through the domain tree
+    node_path.pop();
+    node_path.push(node);
+
+    // Try going as deep as possible, keeping on the right side of the trees
+    while (node->down_ != NULLNODE) {
+        // Move to the tree below
+        node = node->down_;
+        // And get as much to the right of the tree as possible
+        while (node->right_ != NULLNODE) {
+            node = node->right_;
+        }
+        // Now, we found the right-most node in the sub-tree, we need to
+        // include it in the path
+        node_path.push(node);
+    }
+
+    // Now, if the current node has no down_ pointer any more, it's the
+    // correct one.
+    return (node);
+}
 
 template <typename T>
 typename RBTree<T>::Result

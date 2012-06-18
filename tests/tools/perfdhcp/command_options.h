@@ -1,0 +1,412 @@
+// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+#ifndef __COMMAND_OPTIONS_H
+#define __COMMAND_OPTIONS_H
+
+#include <string>
+#include <vector>
+
+#include <boost/noncopyable.hpp>
+
+namespace isc {
+namespace perfdhcp {
+
+/// \brief Command Options
+///
+/// This class is responsible for parsing the command-line and storing the
+/// specified options.
+///
+class CommandOptions : public boost::noncopyable {
+public:
+    /// 2-way (cmd line param -i) or 4-way exchanges
+    enum ExchangeMode {
+        DO_SA,
+        DORA_SARR
+    };
+
+    /// CommandOptions is a singleton class. This method returns reference
+    /// to its sole instance.
+    ///
+    /// \return the only existing instance of command options
+    static CommandOptions& instance();
+
+    /// \brief Reset to defaults
+    ///
+    /// Reset data members to default values. This is specifically
+    /// useful when unit tests are performed using different
+    /// command line options.
+    void reset();
+
+    /// \brief Parse command line
+    ///
+    /// Parses the command line and stores the selected options
+    /// in class data members.
+    ///
+    /// \param argc Argument count passed to main().
+    /// \param argv Argument value array passed to main().
+    /// \throws isc::InvalidParameter if parse fails
+    void parse(int argc, char** const argv);
+
+    /// \brief Returns IP version
+    ///
+    /// \return IP version to be used
+    uint8_t getIpVersion() const { return ipversion_; }
+
+    /// \brief Returns packet exchange mode
+    ///
+    /// \return packet exchange mode
+    ExchangeMode getExchangeMode() const { return exchange_mode_; }
+
+    /// \brief Returns echange rate
+    ///
+    /// \return exchange rate per second
+    int getRate() const { return rate_; }
+
+    /// \brief Returns delay between two performance reports
+    ///
+    /// \return delay between two consecutive performance reports
+    int getReportDelay() const { return report_delay_; }
+
+    /// \brief Returns number of simulated clients
+    ///
+    /// \return number of simulated clients
+    uint32_t getClientsNum() const { return clients_num_; }
+
+    /// \brief Returns MAC address prefix
+    ///
+    /// \ return MAC address prefix to simulate different clients
+    std::vector<uint8_t> getMacPrefix() const { return mac_prefix_; }
+
+    /// \brief Returns DUID prefix
+    ///
+    /// \return DUID prefix to simulate different clients
+    std::vector<uint8_t> getDuidPrefix() const { return duid_prefix_; }
+
+    /// \brief Returns base values
+    ///
+    /// \return all base values specified
+    std::vector<std::string> getBase() const { return base_; }
+
+    /// \brief Returns maximum number of exchanges
+    ///
+    /// \return number of exchange requests before test is aborted
+    std::vector<int> getNumRequests() const { return num_request_; }
+
+    /// \brief Returns test period
+    ///
+    /// \return test period before it is aborted
+    int getPeriod() const { return period_; }
+
+    /// \brief Returns drop time
+    ///
+    /// The method returns maximum time elapsed from
+    /// sending the packet before it is assumed dropped.
+    ///
+    /// \return return time before request is assumed dropped
+    std::vector<double> getDropTime() const { return drop_time_; }
+
+    /// \brief Returns maximum drops number
+    ///
+    /// Returns maximum number of packet drops before
+    /// aborting a test.
+    ///
+    /// \return maximum number of dropped requests
+    std::vector<int> getMaxDrop() const { return max_drop_; }
+
+    /// \brief Returns maximal percentage of drops
+    ///
+    /// Returns maximal percentage of packet drops
+    /// before aborting a test.
+    ///
+    /// \return maximum percentage of lost requests
+    std::vector<double> getMaxDropPercentage() const { return max_pdrop_; }
+
+    /// \brief Returns local address or interface name
+    ///
+    /// \return local address or interface name
+    std::string getLocalName() const { return localname_; }
+
+    /// \brief Checks if interface name was used
+    ///
+    /// The method checks if interface name was used
+    /// rather than address.
+    ///
+    /// \return true if interface name was used
+    bool isInterface() const { return is_interface_; }
+
+    /// \brief Returns number of preload exchanges
+    ///
+    /// \return number of preload exchanges
+    int getPreload() const { return preload_; }
+
+    /// \brief Returns aggressivity value
+    ///
+    /// \return aggressivity value
+    int getAggressivity() const { return aggressivity_; }
+
+    /// \brief Returns local port number
+    ///
+    /// \return local port number
+    int getLocalPort() const { return local_port_; }
+
+    /// \brief Checks if seed provided
+    ///
+    /// \return true if seed was provided
+    bool isSeeded() const { return seeded_; }
+
+    /// \brief Returns radom seed
+    ///
+    /// \return random seed
+    uint32_t getSeed() const { return seed_; }
+
+    /// \brief Checks if broadcast address is to be used
+    ///
+    /// \return true if broadcast address is to be used
+    bool isBroadcast() const { return broadcast_; }
+
+    /// \brief Check if rapid commit option used
+    ///
+    /// \return true if rapid commit option is used
+    bool isRapidCommit() const { return rapid_commit_; }
+
+    /// \brief Check if server-ID to be taken from first package
+    ///
+    /// \return true if server-iD to be taken from first package
+    bool isUseFirst() const { return use_first_; }
+
+    /// \brief Returns template file names
+    ///
+    /// \return template file names
+    std::vector<std::string> getTemplateFiles() const { return template_file_; }
+
+    /// brief Returns template offsets for xid
+    ///
+    /// \return template offsets for xid
+    std::vector<int> getTransactionIdOffset() const { return xid_offset_; }
+
+    /// \brief Returns template offsets for rnd
+    ///
+    /// \return template offsets for rnd
+    std::vector<int> getRandomOffset() const { return rnd_offset_; }
+
+    /// \brief Returns template offset for elapsed time
+    ///
+    /// \return template offset for elapsed time
+    int getElapsedTimeOffset() const { return elp_offset_; }
+
+    /// \brief Returns template offset for server-ID
+    ///
+    /// \return template offset for server-ID
+    int getServerIdOffset() const { return sid_offset_; }
+
+    /// \brief Returns template offset for requested IP
+    ///
+    /// \return template offset for requested IP
+    int getRequestedIpOffset() const { return rip_offset_; }
+
+    /// \brief Returns diagnostic selectors
+    ///
+    /// \return diagnostics selector
+    std::string getDiags() const { return diags_; }
+
+    /// \brief Returns wrapped command
+    ///
+    /// \return wrapped command (start/stop)
+    std::string getWrapped() const { return wrapped_; }
+
+    /// \brief Returns server name
+    ///
+    /// \return server name
+    std::string getServerName() const { return server_name_; }
+
+    /// \brief Print usage
+    ///
+    /// Prints perfdhcp usage
+    void usage() const;
+
+    /// \brief Print program version
+    ///
+    /// Prints perfdhcp version
+    void version() const;
+
+private:
+
+    /// \brief Default Constructor
+    ///
+    /// Private constructor as this is a singleton class.
+    /// Use CommandOptions::instance() to get instance of it.
+    CommandOptions() {
+        reset();
+    }
+
+    /// \brief Initializes class members based command line
+    ///
+    /// Reads each command line parameter and sets class member values
+    ///
+    /// \param argc Argument count passed to main().
+    /// \param argv Argument value array passed to main().
+    /// \throws isc::InvalidParameter if command line options initialization fails
+    void initialize(int argc, char** argv);
+
+    /// \brief Validates initialized options
+    ///
+    /// \throws isc::InvalidParameter if command line validation fails
+    void validate() const;
+
+    /// \brief Throws !InvalidParameter exception if condition is true
+    ///
+    /// Convenience function that throws an InvalidParameter exception if
+    /// the condition argument is true
+    ///
+    /// \param condition Condition to be checked
+    /// \param errmsg Error message in exception
+    /// \throws isc::InvalidParameter if condition argument true
+    inline void check(bool condition, const std::string& errmsg) const;
+
+    /// \brief Casts command line argument to positive integer
+    ///
+    /// \param errmsg Error message if lexical cast fails
+    /// \throw InvalidParameter if lexical cast fails
+    int positiveInteger(const std::string& errmsg) const;
+
+    /// \brief Casts command line argument to non-negative integer
+    ///
+    /// \param errmsg Error message if lexical cast fails
+    /// \throw InvalidParameter if lexical cast fails
+    int nonNegativeInteger(const std::string& errmsg) const;
+
+    /// \brief Returns command line string if it is not empty
+    ///
+    /// \param errmsg Error message if string is empty
+    /// \throw InvalidParameter if string is empty
+    std::string nonEmptyString(const std::string& errmsg) const;
+
+    /// \brief Set number of clients
+    ///
+    /// Interprets the getopt() "opt" global variable as the number of clients
+    /// (a non-negative number).  This value is specified by the "-R" switch.
+    ///
+    /// \throw InvalidParameter if -R<value> is wrong
+    void initClientsNum();
+
+    /// \brief Decodes base provided with -b<base>
+    ///
+    /// Function decodes argument of -b switch, which
+    /// specifies a base value used to generate unique
+    /// mac or duid values in packets sent to system
+    /// under test.
+    /// The following forms of switch arguments are supported:
+    /// - -b mac=00:01:02:03:04:05
+    /// - -b duid=0F1234 (duid can be up to 128 hex digits)
+    //  Function will decode 00:01:02:03:04:05 and/or
+    /// 0F1234 respectively and initialize mac_prefix_
+    /// and/or duid_prefix_ members
+    ///
+    /// \param base Base in string format
+    /// \throws isc::InvalidParameter if base is invalid
+    void decodeBase(const std::string& base);
+
+    /// \brief Decodes base MAC address provided with -b<base>
+    ///
+    /// Function decodes parameter given as -b mac=00:01:02:03:04:05
+    /// The function will decode 00:01:02:03:04:05 initialize mac_prefix_
+    /// class member.
+    /// Provided MAC address is for example only
+    ///
+    /// \param base Base string given as -b mac=00:01:02:03:04:05
+    /// \throws isc::InvalidParameter if mac address is invalid
+    void decodeMac(const std::string& base);
+
+    /// \brief Decodes base DUID provided with -b<base>
+    ///
+    /// Function decodes parameter given as -b duid=0F1234
+    /// The function will decode 0F1234 and initialize duid_prefix_
+    /// class member.
+    /// Provided DUID is for example only.
+    ///
+    /// \param base Base string given as -b duid=0F1234
+    /// \throws isc::InvalidParameter if DUID is invalid
+    void decodeDuid(const std::string& base);
+
+    /// \brief Converts two-digit hexadecimal string to a byte
+    ///
+    /// \param hex_text Hexadecimal string e.g. AF
+    /// \throw isc::InvalidParameter if string does not represent hex byte
+    uint8_t convertHexString(const std::string& hex_text) const;
+
+    uint8_t ipversion_;                      ///< IP protocol version to be used, expected values are:
+                                             ///< 4 for IPv4 and 6 for IPv6, default value 0 means "not set"
+    ExchangeMode exchange_mode_;             ///< Packet exchange mode (e.g. DORA/SARR)
+    int rate_;                               ///< Rate in exchange per second
+    int report_delay_;                       ///< Delay between generation of two consecutive
+                                             ///< performance reports
+    uint32_t clients_num_;                   ///< Number of simulated clients (aka randomization range).
+    std::vector<uint8_t> mac_prefix_;        ///< MAC address prefix used to generate unique DUIDs
+                                             ///< for simulated clients.
+    std::vector<uint8_t> duid_prefix_;       ///< DUID prefix used to generate unique DUIDs for
+                                             ///< simulated clients
+    std::vector<std::string> base_;          ///< Collection of base values specified with -b<value>
+                                             ///< options. Supported "bases" are mac=<mac> and duid=<duid>
+    std::vector<int> num_request_;           ///< Number of 2 or 4-way exchanges to perform
+    int period_;                             ///< Test period in seconds
+    uint8_t drop_time_set_;                  ///< Indicates number of -d<value> parameters specified by user.
+                                             ///< If this value goes above 2, command line parsing fails.
+    std::vector<double> drop_time_;          ///< Time to elapse before request is lost. The fisrt value of
+                                             ///< two-element vector refers to DO/SA exchanges,
+                                             ///< second value refers to RA/RR. Default values are { 1, 1 }
+    std::vector<int> max_drop_;              ///< Maximum number of drops request before aborting test.
+                                             ///< First value of two-element vector specifies maximum
+                                             ///< number of drops for DO/SA exchange, second value
+                                             ///< specifies maximum number of drops for RA/RR.
+    std::vector<double> max_pdrop_;          ///< Maximal percentage of lost requests before aborting test.
+                                             ///< First value of two-element vector specifies percentage for
+                                             ///< DO/SA exchanges, second value for RA/RR.
+    std::string localname_;                  ///< Local address or interface specified with -l<value> option.
+    bool is_interface_;                      ///< Indicates that specified value with -l<value> is
+                                             ///< rather interface (not address)
+    int preload_;                            ///< Number of preload packets. Preload packets are used to
+                                             ///< initiate communication with server before doing performance
+                                             ///< measurements.
+    int aggressivity_;                       ///< Number of exchanges sent before next pause.
+    int local_port_;                         ///< Local port number (host endian)
+    bool seeded_;                            ///< Indicates that randomization seed was provided.
+    uint32_t seed_;                          ///< Randomization seed.
+    bool broadcast_;                         ///< Indicates that we use broadcast address.
+    bool rapid_commit_;                      ///< Indicates that we do rapid commit option.
+    bool use_first_;                         ///< Indicates that we take server id from first received packet.
+    std::vector<std::string> template_file_; ///< Packet template file names. These files store template packets
+                                             ///< that are used for initiating echanges. Template packets
+                                             ///< read from files are later tuned with variable data.
+    std::vector<int> xid_offset_;            ///< Offset of transaction id in template files. First vector
+                                             ///< element points to offset for DISCOVER/SOLICIT messages,
+                                             ///< second element points to trasaction id offset for
+                                             ///< REQUEST messages
+    std::vector<int> rnd_offset_;            ///< Random value offset in templates. Random value offset
+                                             ///< points to last octet of DUID. Up to 4 last octets of
+                                             ///< DUID are randomized to simulate differnt clients.
+    int elp_offset_;                         ///< Offset of elapsed time option in template packet.
+    int sid_offset_;                         ///< Offset of server id option in template packet.
+    int rip_offset_;                         ///< Offset of requested ip data in template packet/
+    std::string diags_;                      ///< String representing diagnostic selectors specified
+                                             ///< by user with -x<value>.
+    std::string wrapped_;                    ///< Wrapped command specified as -w<value>. Expected
+                                             ///< values are start and stop.
+    std::string server_name_;                ///< Server name specified as last argument of command line.
+};
+
+} // namespace perfdhcp
+} // namespace isc
+
+#endif // __COMMAND_OPTIONS_H

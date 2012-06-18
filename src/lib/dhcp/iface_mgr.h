@@ -42,6 +42,15 @@ public:
     /// maximum MAC address length (Infiniband uses 20 bytes)
     static const unsigned int MAX_MAC_LEN = 20;
 
+    /// @brief Packet reception buffer size
+    ///
+    /// RFC3315 states that server responses may be
+    /// fragmented if they are over MTU. There is no
+    /// text whether client's packets may be larger
+    /// than 1500. For now, we can assume that
+    /// we don't support packets larger than 1500.
+    static const uint32_t RCVBUFSIZE = 1500;
+
     /// Holds information about socket.
     struct SocketInfo {
         uint16_t sockfd_; /// socket descriptor
@@ -87,6 +96,23 @@ public:
         /// @return MAC address as a plain text (string)
         std::string getPlainMac() const;
 
+        /// @brief Sets MAC address of the interface.
+        ///
+        /// @param mac pointer to MAC address buffer
+        /// @param macLen length of mac address
+        void setMac(const uint8_t* mac, size_t macLen);
+
+        /// @brief Returns MAC length.
+        ///
+        /// @return length of MAC address
+        size_t getMacLen() const { return mac_len_; }
+
+        /// @brief Returns pointer to MAC address.
+        ///
+        /// Note: Returned pointer is only valid as long as the interface object
+        /// that returned it.
+        const uint8_t* getMac() const { return mac_; }
+
         /// @brief Sets flag_*_ fields based on bitmask value returned by OS
         ///
         /// Note: Implementation of this method is OS-dependent as bits have
@@ -104,6 +130,16 @@ public:
         ///
         /// @return interface name
         std::string getName() const { return name_; };
+
+        /// @brief Sets up hardware type of the interface.
+        ///
+        /// @param type hardware type
+        void setHWType(uint16_t type ) { hardware_type_ = type; }
+
+        /// @brief Returns hardware type of the interface.
+        ///
+        /// @return hardware type
+        uint16_t getHWType() const { return hardware_type_; }
 
         /// @brief Returns all interfaces available on an interface.
         ///
@@ -140,7 +176,7 @@ public:
 
         /// @brief Adds socket descriptor to an interface.
         ///
-        /// @param socket SocketInfo structure that describes socket.
+        /// @param sock SocketInfo structure that describes socket.
         void addSocket(const SocketInfo& sock)
             { sockets_.push_back(sock); }
 
@@ -149,7 +185,7 @@ public:
         /// Closes socket and removes corresponding SocketInfo structure
         /// from an interface.
         ///
-        /// @param socket descriptor to be closed/removed.
+        /// @param sockfd socket descriptor to be closed/removed.
         /// @return true if there was such socket, false otherwise
         bool delSocket(uint16_t sockfd);
 
@@ -167,12 +203,18 @@ public:
         /// list of assigned addresses
         AddressCollection addrs_;
 
-    public:
         /// link-layer address
         uint8_t mac_[MAX_MAC_LEN];
 
         /// length of link-layer address (usually 6)
-        int mac_len_;
+        size_t mac_len_;
+
+        /// hardware type
+        uint16_t hardware_type_;
+
+    public:
+        /// @todo: Make those fields protected once we start supporting more
+        /// than just Linux
 
         /// specifies if selected interface is loopback
         bool flag_loopback_;
@@ -193,9 +235,6 @@ public:
         /// interface flags (this value is as is returned by OS,
         /// it may mean different things on different OSes)
         uint32_t flags_;
-
-        /// hardware type
-        uint16_t hardware_type_;
     };
 
     // TODO performance improvement: we may change this into
@@ -229,6 +268,15 @@ public:
     ///
     Iface*
     getIface(const std::string& ifname);
+
+    /// @brief Returns container with all interfaces.
+    ///
+    /// This reference is only valid as long as IfaceMgr is valid. However,
+    /// since IfaceMgr is a singleton and is expected to be destroyed after
+    /// main() function completes, you should not worry much about this.
+    ///
+    /// @return container with all interfaces.
+    const IfaceCollection& getIfaces() { return ifaces_; }
 
     /// @brief Return most suitable socket for transmitting specified IPv6 packet.
     ///
@@ -271,7 +319,7 @@ public:
     /// @param pkt packet to be sent
     ///
     /// @return true if sending was successful
-    bool send(boost::shared_ptr<Pkt6>& pkt);
+    bool send(const Pkt6Ptr& pkt);
 
     /// @brief Sends an IPv4 packet.
     ///
@@ -282,7 +330,7 @@ public:
     /// @param pkt a packet to be sent
     ///
     /// @return true if sending was successful
-    bool send(boost::shared_ptr<Pkt4>& pkt);
+    bool send(const Pkt4Ptr& pkt);
 
     /// @brief Tries to receive IPv6 packet over open IPv6 sockets.
     ///
@@ -295,7 +343,7 @@ public:
     /// (e.g. remove expired leases)
     ///
     /// @return Pkt6 object representing received packet (or NULL)
-    boost::shared_ptr<Pkt6> receive6();
+    Pkt6Ptr receive6();
 
     /// @brief Tries to receive IPv4 packet over open IPv4 sockets.
     ///
@@ -308,7 +356,7 @@ public:
     /// (e.g. remove expired leases)
     ///
     /// @return Pkt4 object representing received packet (or NULL)
-    boost::shared_ptr<Pkt4> receive4();
+    Pkt4Ptr receive4();
 
     /// Opens UDP/IP socket and binds it to address, interface and port.
     ///
@@ -325,7 +373,7 @@ public:
     /// @return socket descriptor, if socket creation, binding and multicast
     /// group join were all successful.
     int openSocket(const std::string& ifname,
-                   const isc::asiolink::IOAddress& addr, int port);
+                   const isc::asiolink::IOAddress& addr, const uint16_t port);
 
     /// Opens IPv6 sockets on detected interfaces.
     ///
@@ -334,7 +382,7 @@ public:
     /// @param port specifies port number (usually DHCP6_SERVER_PORT)
     ///
     /// @return true if any sockets were open
-    bool openSockets6(uint16_t port = DHCP6_SERVER_PORT);
+    bool openSockets6(const uint16_t port = DHCP6_SERVER_PORT);
 
     /// @brief Closes all open sockets.
     /// Is used in destructor, but also from Dhcpv4_srv and Dhcpv6_srv classes.
@@ -346,7 +394,7 @@ public:
     /// @param port specifies port number (usually DHCP4_SERVER_PORT)
     ///
     /// @return true if any sockets were open
-    bool openSockets4(uint16_t port = DHCP4_SERVER_PORT);
+    bool openSockets4(const uint16_t port = DHCP4_SERVER_PORT);
 
     /// @brief returns number of detected interfaces
     ///
@@ -375,7 +423,7 @@ protected:
     /// @param port a port that created socket should be bound to
     ///
     /// @return socket descriptor
-    int openSocket4(Iface& iface, const isc::asiolink::IOAddress& addr, int port);
+    int openSocket4(Iface& iface, const isc::asiolink::IOAddress& addr, uint16_t port);
 
     /// @brief Opens IPv6 socket.
     ///
@@ -388,7 +436,7 @@ protected:
     /// @param port a port that created socket should be bound to
     ///
     /// @return socket descriptor
-    int openSocket6(Iface& iface, const isc::asiolink::IOAddress& addr, int port);
+    int openSocket6(Iface& iface, const isc::asiolink::IOAddress& addr, uint16_t port);
 
     /// @brief Adds an interface to list of known interfaces.
     ///
@@ -434,14 +482,32 @@ protected:
     // to people who try to use multicast as source address.
 
     /// length of the control_buf_ array
-    int control_buf_len_;
+    size_t control_buf_len_;
 
     /// control-buffer, used in transmission and reception
     boost::scoped_array<char> control_buf_;
 
+
+    /// @brief A wrapper for OS-specific operations before sending IPv4 packet
+    ///
+    /// @param m message header (will be later used for sendmsg() call)
+    /// @param control_buf buffer to be used during transmission
+    /// @param control_buf_len buffer length
+    /// @param pkt packet to be sent
+    void os_send4(struct msghdr& m, boost::scoped_array<char>& control_buf,
+                  size_t control_buf_len, const Pkt4Ptr& pkt);
+
+    /// @brief OS-specific operations during IPv4 packet reception
+    ///
+    /// @param m message header (was used during recvmsg() call)
+    /// @param pkt packet received (some fields will be set here)
+    ///
+    /// @return true if successful, false otherwise
+    bool os_receive4(struct msghdr& m, Pkt4Ptr& pkt);
+
 private:
 
-    /// creates a single instance of this class (a singleton implementation)
+    /// @brief Creates a single instance of this class (a singleton implementation)
     static void
     instanceCreate();
 

@@ -41,19 +41,6 @@ class UDPServer : public virtual DNSServer, public virtual coroutine {
 public:
     /// \brief Constructor
     /// \param io_service the asio::io_service to work with
-    /// \param addr the IP address to listen for queries on
-    /// \param port the port to listen for queries on
-    /// \param checkin the callbackprovider for non-DNS events
-    /// \param lookup the callbackprovider for DNS lookup events
-    /// \param answer the callbackprovider for DNS answer events
-    explicit UDPServer(asio::io_service& io_service,
-                       const asio::ip::address& addr, const uint16_t port,
-                       isc::asiolink::SimpleCallback* checkin = NULL,
-                       DNSLookup* lookup = NULL,
-                       DNSAnswer* answer = NULL);
-
-    /// \brief Constructor
-    /// \param io_service the asio::io_service to work with
     /// \param fd the file descriptor of opened UDP socket
     /// \param af address family, either AF_INET or AF_INET6
     /// \param checkin the callbackprovider for non-DNS events
