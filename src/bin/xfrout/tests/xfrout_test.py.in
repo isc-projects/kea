@@ -1196,26 +1196,28 @@ class TestUnixSockServer(unittest.TestCase):
         # We test with UDP, as it can be "connected" without other
         # endpoint.  Note that in the current implementation _guess_remote()
         # unconditionally returns SOCK_STREAM.
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.connect(('127.0.0.1', 12345))
-        self.assertEqual((socket.AF_INET, socket.SOCK_STREAM,
-                          ('127.0.0.1', 12345)),
-                         self.unix._guess_remote(sock.fileno()))
-        if socket.has_ipv6:
-            # Don't check IPv6 address on hosts not supporting them
-            sock = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
-            sock.connect(('::1', 12345))
-            self.assertEqual((socket.AF_INET6, socket.SOCK_STREAM,
-                              ('::1', 12345, 0, 0)),
-                             self.unix._guess_remote(sock.fileno()))
-            # Try when pretending there's no IPv6 support
-            # (No need to pretend when there's really no IPv6)
-            xfrout.socket.has_ipv6 = False
-            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
             sock.connect(('127.0.0.1', 12345))
             self.assertEqual((socket.AF_INET, socket.SOCK_STREAM,
                               ('127.0.0.1', 12345)),
                              self.unix._guess_remote(sock.fileno()))
+
+        if socket.has_ipv6:
+            # Don't check IPv6 address on hosts not supporting them
+            with socket.socket(socket.AF_INET6, socket.SOCK_DGRAM) as sock:
+                sock.connect(('::1', 12345))
+                self.assertEqual((socket.AF_INET6, socket.SOCK_STREAM,
+                                  ('::1', 12345, 0, 0)),
+                                 self.unix._guess_remote(sock.fileno()))
+
+            # Try when pretending there's no IPv6 support
+            # (No need to pretend when there's really no IPv6)
+            xfrout.socket.has_ipv6 = False
+            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+                sock.connect(('127.0.0.1', 12345))
+                self.assertEqual((socket.AF_INET, socket.SOCK_STREAM,
+                                  ('127.0.0.1', 12345)),
+                                 self.unix._guess_remote(sock.fileno()))
             # Return it back
             xfrout.socket.has_ipv6 = True
 
@@ -1375,19 +1377,13 @@ class TestUnixSockServer(unittest.TestCase):
         self._remove_file(sock_file)
         self.assertFalse(self.unix._sock_file_in_use(sock_file))
         self._start_unix_sock_server(sock_file)
-
-        old_stdout = sys.stdout
-        sys.stdout = open(os.devnull, 'w')
         self.assertTrue(self.unix._sock_file_in_use(sock_file))
-        sys.stdout = old_stdout
 
     def test_remove_unused_sock_file_in_use(self):
         sock_file = 'temp.sock.file'
         self._remove_file(sock_file)
         self.assertFalse(self.unix._sock_file_in_use(sock_file))
         self._start_unix_sock_server(sock_file)
-        old_stdout = sys.stdout
-        sys.stdout = open(os.devnull, 'w')
         try:
             self.unix._remove_unused_sock_file(sock_file)
         except SystemExit:
@@ -1395,8 +1391,6 @@ class TestUnixSockServer(unittest.TestCase):
         else:
             # This should never happen
             self.assertTrue(False)
-
-        sys.stdout = old_stdout
 
     def test_remove_unused_sock_file_dir(self):
         import tempfile
@@ -1411,6 +1405,7 @@ class TestUnixSockServer(unittest.TestCase):
             # This should never happen
             self.assertTrue(False)
 
+        sys.stdout.close()
         sys.stdout = old_stdout
         os.rmdir(dir_name)
 
