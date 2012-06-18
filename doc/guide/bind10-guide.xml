@@ -1953,7 +1953,12 @@ what is XfroutClient xfr_client??
       both UDP and TCP, and both IPv6 and IPv4; for TCP requests,
       however, it terminates the TCP connection immediately after
       each single request has been processed.  Clients cannot reuse the
-      same TCP connection for multiple requests.
+      same TCP connection for multiple requests (This is a current
+      implementation limitation of <command>b10-ddns</command>;
+      while RFC 2136 doesn't specify anything about such reuse of TCP
+      connection, there is no reason for disallowing it as RFC 1035
+      generally allows multiple requests sent over a single TCP
+      connection.  BIND 9 supports such reuse).
     </para>
 
     <para>
