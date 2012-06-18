@@ -30,6 +30,7 @@
 #include <server_common/keyring.h>
 
 #include <datasrc/memory_datasrc.h>
+#include <datasrc/client_list.h>
 #include <auth/auth_srv.h>
 #include <auth/common.h>
 #include <auth/statistics.h>
@@ -1642,6 +1643,27 @@ TEST_F(AuthSrvTest, DDNSForwardClose) {
     // Destroy the server.  The forwarder should close the connection.
     tmp_server.reset();
     EXPECT_FALSE(ddns_forwarder.isConnected());
+}
+
+// Check the client list accessors
+TEST_F(AuthSrvTest, clientList) {
+    // The server is created with a working client list. So calling the
+    // function will not crash.
+    server.getClientList();
+    // It is the correct type
+    EXPECT_NO_THROW(dynamic_cast<const isc::datasrc::ConfigurableClientList&>(
+        server.getClientList())) << "The client list has a wrong type";
+    // Now prepare a new client list and replace it
+    boost::shared_ptr<isc::datasrc::ConfigurableClientList>
+        list(new isc::datasrc::ConfigurableClientList());
+    server.setClientList(list);
+    // And it is kept there.
+    EXPECT_EQ(list.get(), &server.getClientList());
+    // But putting NULL there would not work and the original is preserved
+    EXPECT_THROW(server.setClientList(
+        boost::shared_ptr<isc::datasrc::ConfigurableClientList>()),
+                 isc::BadValue);
+    EXPECT_EQ(list.get(), &server.getClientList());
 }
 
 }
