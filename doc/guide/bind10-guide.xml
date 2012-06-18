@@ -2032,6 +2032,16 @@ what is XfroutClient xfr_client??
 &gt; <userinput>config set Boss/components/b10-ddns/kind dispensable</userinput>
 &gt; <userinput>config commit</userinput>
 </screen>
+      <note><simpara>
+	  In theory "kind" could be omitted because "dispensable" is its
+	  default.  But there's some peculiar behavior (which should
+	  be a bug and should be fixed eventually; see Trac ticket
+	  #2064) with bindctl and you'll still need to specify that explicitly.
+	  Likewise, "address" may look unnecessary because
+	  <command>b10-ddns</command> would start and work without
+	  specifying it.  But for it to shutdown gracefully this
+	  parameter should also be specified.
+      </simpara></note>
       </para>
     </section>
 
@@ -2088,7 +2098,7 @@ what is XfroutClient xfr_client??
 &gt; <userinput>config set DDNS/zones[0]/class IN</userinput>
 &gt; <userinput>config add DDNS/zones[0]/update_acl {"action": "ACCEPT", "key": "key.example.org"}</userinput>
 &gt; <userinput>config commit</userinput>
-        </screen>
+</screen>
       (The <quote>class</quote> can be omitted).
       The TSIG key must be configured system wide
       (see <xref linkend="xfrout"/>.)
