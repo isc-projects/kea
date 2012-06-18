@@ -1,5 +1,5 @@
 PYCOVERAGE_RUN = @PYCOVERAGE_RUN@
-PYTESTS = tsig_keys_test.py logging_test.py
+PYTESTS = tsig_keys_test.py logging_test.py datasrc_test.py
 
 EXTRA_DIST = $(PYTESTS)
 
