@@ -214,16 +214,31 @@ notify messages to secondary servers.
 
 % DDNS_UPDATE_NOTIFY_FAIL failed to notify %1 of updates to %2: %3
 b10-ddns has made updates to a zone based on an update request and
-tried to notify an external module of the updates, but the
-notification fails.  Severity of this effect depends on the type of
-the module.  If it's b10-xfrout, this means DNS notify messages won't
-be sent to secondary servers of the zone.  It's suboptimal, but not
-necessarily critical as the secondary servers will try to check the
-zone's status periodically.  If it's b10-auth and the notification was
-needed to have it reload the corresponding zone, it's more serious
-because b10-auth won't be able to serve the new version of the zone
-unless some explicit recovery action is taken.  So the administrator
-needs to examine this message and takes an appropriate action.  In
-either case, this notification is generally expected to succeed; so
-the fact it fails itself means there's something wrong in the BIND 10
-system, and it would be advisable to check other log messages.
+tried to notify an external component of the updates, but the
+notification fails.  One possible cause of this is that the external
+component is not really running and it times out in waiting for the
+response, although it will be less likely to happen in practice
+because these components will normally be configured to run when the
+server provides the authoritative DNS service; ddns is rather optional
+among them.  If this happens, however, it will suspend b10-ddns for a
+few seconds during which it cannot handle new requests (some may be
+delayed, some may be dropped, depending on the volume of the incoming
+requests).  This is obviously bad, and if this error happens due to
+this reason, the administrator should make sure the component in
+question should be configured to run.  For a longer term, b10-ddns
+should be more robust about this case such as by making this
+notification asynchronously and/or detecting the existence of the
+external components to avoid hopeless notification in the first place.
+Severity of this error for the receiving components depends on the
+type of the component.  If it's b10-xfrout, this means DNS notify
+messages won't be sent to secondary servers of the zone.  It's
+suboptimal, but not necessarily critical as the secondary servers will
+try to check the zone's status periodically.  If it's b10-auth and the
+notification was needed to have it reload the corresponding zone, it's
+more serious because b10-auth won't be able to serve the new version
+of the zone unless some explicit recovery action is taken.  So the
+administrator needs to examine this message and takes an appropriate
+action.  In either case, this notification is generally expected to
+succeed; so the fact it fails itself means there's something wrong in
+the BIND 10 system, and it would be advisable to check other log
+messages.
