@@ -986,25 +986,10 @@ AM_COND_IF([ENABLE_LOGGER_CHECKS], [AC_DEFINE([ENABLE_LOGGER_CHECKS], [1], [Chec
 AC_PATH_PROG(VALGRIND, valgrind, no)
 AM_CONDITIONAL(HAVE_VALGRIND, test "x$VALGRIND" != "xno")
 
-AC_ARG_ENABLE(valgrind, [AC_HELP_STRING([--enable-valgrind],
-  [run tests under Valgrind [default=no]])], enable_valgrind=$enableval, enable_valgrind=no)
-AC_ARG_ENABLE(valgrind-suppressions, [AC_HELP_STRING([--enable-valgrind-suppressions],
-  [enable Valgrind suppressions [default=no]])], enable_valgrind_suppressions=$enableval, enable_valgrind_suppressions=no)
-
-use_valgrind=no
-use_valgrind_suppressions=no
-
-if test "x$VALGRIND" != "xno" -a "x$enable_valgrind" != "xno"; then
-   if test "x$enable_valgrind_suppressions" != "xno"; then
-      VALGRIND_EXTRA="--error-exitcode=1 --suppressions=\$(top_srcdir)/src/valgrind-suppressions --suppressions=\$(top_srcdir)/src/valgrind-suppressions.revisit"
-      use_valgrind_suppressions=yes
-   else
-      VALGRIND_EXTRA="--track-origins=yes"
-   fi
-   VALGRIND_COMMAND="$VALGRIND -q --gen-suppressions=all $VALGRIND_EXTRA --num-callers=48 --leak-check=full --fullpath-after="
-   use_valgrind=yes
+found_valgrind="not found"
+if test "x$VALGRIND" != "xno"; then
+   found_valgrind="found"
 fi
-AC_SUBST(VALGRIND_COMMAND)
 
 AC_CONFIG_FILES([Makefile
                  doc/Makefile
@@ -1316,8 +1301,7 @@ Features:
 
 Developer:
   Google Tests:  $gtest_path
-  Valgrind: $use_valgrind
-  Valgrind Suppressions: $use_valgrind_suppressions
+  Valgrind: $found_valgrind
   C++ Code Coverage: $USE_LCOV
   Python Code Coverage: $USE_PYCOVERAGE
   Logger checks: $enable_logger_checks
