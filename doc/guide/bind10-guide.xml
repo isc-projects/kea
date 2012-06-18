@@ -2013,6 +2013,15 @@ what is XfroutClient xfr_client??
       </para>
 
       <para>
+	In general, if something goes wrong regarding the dependency
+	described above, <command>b10-ddns</command> will log the
+	related event at the warning or error level.
+	It's advisable to check the log message when you first enable
+	DDNS or if it doesn't work as you expect to see if there's any
+	warning or error log message.
+      </para>
+
+      <para>
         Next, to enable the DDNS service, <command>b10-ddns</command>
         needs to be explicitly configured to run.
         It can be done by using the <command>bindctl</command>
