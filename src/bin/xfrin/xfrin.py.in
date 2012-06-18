@@ -33,10 +33,16 @@ import isc.util.process
 from isc.datasrc import DataSourceClient, ZoneFinder
 import isc.net.parse
 from isc.xfrin.diff import Diff
+from isc.server_common.auth_command import auth_loadzone_command
 from isc.log_messages.xfrin_messages import *
 
 isc.log.init("b10-xfrin")
 logger = isc.log.Logger("xfrin")
+
+# Pending system-wide debug level definitions, the ones we
+# use here are hardcoded for now
+DBG_PROCESS = logger.DBGLVL_TRACE_BASIC
+DBG_COMMANDS = logger.DBGLVL_TRACE_DETAIL
 
 try:
     from pydnspp import *
@@ -61,6 +67,7 @@ else:
 SPECFILE_LOCATION = SPECFILE_PATH + "/xfrin.spec"
 AUTH_SPECFILE_LOCATION = AUTH_SPECFILE_PATH + "/auth.spec"
 
+AUTH_MODULE_NAME = 'Auth'
 XFROUT_MODULE_NAME = 'Xfrout'
 ZONE_MANAGER_MODULE_NAME = 'Zonemgr'
 REFRESH_FROM_ZONEMGR = 'refresh_from_zonemgr'
@@ -362,7 +369,6 @@ class XfrinFirstData(XfrinState):
                  conn.zone_str())
             # We are now going to add RRs to the new zone.  We need create
             # a Diff object.  It will be used throughtout the XFR session.
-            # DISABLE FOR DEBUG
             conn._diff = Diff(conn._datasrc_client, conn._zone_name, True)
             self.set_xfrstate(conn, XfrinAXFR())
         return False
@@ -1242,10 +1248,24 @@ class ZoneInfo:
         return (self.master_addr.family, socket.SOCK_STREAM,
                 (str(self.master_addr), self.master_port))
 
+def _do_auth_loadzone(server, zone_name, zone_class):
+    msg = auth_loadzone_command(server._module_cc, zone_name, zone_class)
+    if msg is not None:
+        param = msg['command'][1]
+        logger.debug(DBG_XFRIN_TRACE, XFRIN_AUTH_LOADZONE, param["origin"],
+                     param["class"], param["datasrc"])
+        seq = server._send_cc_session.group_sendmsg(msg, AUTH_MODULE_NAME)
+        answer, env = server._send_cc_session.group_recvmsg(False, seq)
+
 class Xfrin:
     def __init__(self):
         self._max_transfers_in = 10
         self._zones = {}
+        # This is a set of (zone/class) tuples (both as strings),
+        # representing the in-memory zones maintaned by Xfrin. It
+        # is used to trigger Auth/in-memory so that it reloads
+        # zones when they have been transfered in
+        self._memory_zones = set()
         self._cc_setup()
         self.recorder = XfrinRecorder()
         self._shutdown_event = threading.Event()
@@ -1264,6 +1284,8 @@ class Xfrin:
         self._module_cc.start()
         config_data = self._module_cc.get_full_config()
         self.config_handler(config_data)
+        self._module_cc.add_remote_config(AUTH_SPECFILE_LOCATION,
+                                          self._auth_config_handler)
 
     def _cc_check_command(self):
         '''This is a straightforward wrapper for cc.check_command,
@@ -1310,10 +1332,78 @@ class Xfrin:
 
         return create_answer(0)
 
+    def _auth_config_handler(self, new_config, config_data):
+        # Config handler for changes in Auth configuration
+        self._set_db_file()
+        self._set_memory_zones(new_config, config_data)
+
+    def _clear_memory_zones(self):
+        """Clears the memory_zones set; called before processing the
+           changed list of memory datasource zones that have file type
+           sqlite3"""
+        self._memory_zones.clear()
+
+    def _is_memory_zone(self, zone_name_str, zone_class_str):
+        """Returns true if the given zone/class combination is configured
+           in the in-memory datasource of the Auth process with file type
+           'sqlite3'.
+           Note: this method is not thread-safe. We are considering
+           changing the threaded model here, but if we do not, take
+           care in accessing and updating the memory zone set (or add
+           locks)
+        """
+        # Normalize them first, if either conversion fails, return false
+        # (they won't be in the set anyway)
+        try:
+            zone_name_str = Name(zone_name_str).to_text().lower()
+            zone_class_str = RRClass(zone_class_str).to_text()
+        except Exception:
+            return False
+        return (zone_name_str, zone_class_str) in self._memory_zones
+
+    def _set_memory_zones(self, new_config, config_data):
+        """Part of the _auth_config_handler function, keeps an internal set
+           of zones in the datasources config subset that have 'sqlite3' as
+           their file type.
+           Note: this method is not thread-safe. We are considering
+           changing the threaded model here, but if we do not, take
+           care in accessing and updating the memory zone set (or add
+           locks)
+        """
+        # walk through the data and collect the memory zones
+        # If this causes any exception, assume we were passed bad data
+        # and keep the original set
+        new_memory_zones = set()
+        try:
+            if "datasources" in new_config:
+                for datasource in new_config["datasources"]:
+                    if "class" in datasource:
+                        ds_class = RRClass(datasource["class"])
+                    else:
+                        # Get the default
+                        ds_class = RRClass(config_data.get_default_value(
+                                               "datasources/class"))
+                    if datasource["type"] == "memory":
+                        for zone in datasource["zones"]:
+                            if "filetype" in zone and \
+                               zone["filetype"] == "sqlite3":
+                                zone_name = Name(zone["origin"])
+                                zone_name_str = zone_name.to_text().lower()
+                                new_memory_zones.add((zone_name_str,
+                                                      ds_class.to_text()))
+                # Ok, we can use the data, update our list
+                self._memory_zones = new_memory_zones
+        except Exception:
+            # Something is wrong with the data. If this data even reached us,
+            # we cannot do more than assume the real module has logged and
+            # reported an error. Keep the old set.
+            return
+
     def shutdown(self):
         ''' shutdown the xfrin process. the thread which is doing xfrin should be
         terminated.
         '''
+        self._module_cc.remove_remote_config(AUTH_SPECFILE_LOCATION)
         self._module_cc.send_stopping()
         self._shutdown_event.set()
         main_thread = threading.currentThread()
@@ -1446,22 +1536,21 @@ class Xfrin:
         return (addr.family, socket.SOCK_STREAM, (str(addr), port))
 
     def _get_db_file(self):
-        #TODO, the db file path should be got in auth server's configuration
-        # if we need access to this configuration more often, we
-        # should add it on start, and not remove it here
-        # (or, if we have writable ds, we might not need this in
-        # the first place)
-        self._module_cc.add_remote_config(AUTH_SPECFILE_LOCATION)
-        db_file, is_default = self._module_cc.get_remote_config_value("Auth", "database_file")
-        if is_default and "B10_FROM_BUILD" in os.environ:
-            # this too should be unnecessary, but currently the
-            # 'from build' override isn't stored in the config
-            # (and we don't have writable datasources yet)
-            db_file = os.environ["B10_FROM_BUILD"] + os.sep + "bind10_zones.sqlite3"
-        self._module_cc.remove_remote_config(AUTH_SPECFILE_LOCATION)
-        return db_file
+        return self._db_file
 
-    def publish_xfrin_news(self, zone_name, zone_class,  xfr_result):
+    def _set_db_file(self):
+        db_file, is_default =\
+            self._module_cc.get_remote_config_value(AUTH_MODULE_NAME, "database_file")
+        if is_default and "B10_FROM_BUILD" in os.environ:
+            # override the local database setting if it is default and we
+            # are running from the source tree
+            # This should be hidden inside the data source library and/or
+            # done as a configuration, and this special case should be gone).
+            db_file = os.environ["B10_FROM_BUILD"] + os.sep +\
+                      "bind10_zones.sqlite3"
+        self._db_file = db_file
+
+    def publish_xfrin_news(self, zone_name, zone_class, xfr_result):
         '''Send command to xfrout/zone manager module.
         If xfrin has finished successfully for one zone, tell the good
         news(command: zone_new_data_ready) to zone manager and xfrout.
@@ -1470,6 +1559,7 @@ class Xfrin:
         param = {'zone_name': zone_name.to_text(),
                  'zone_class': zone_class.to_text()}
         if xfr_result == XFRIN_OK:
+            _do_auth_loadzone(self, zone_name, zone_class)
             msg = create_command(notify_out.ZONE_NEW_DATA_READY_CMD, param)
             # catch the exception, in case msgq has been killed.
             try:
@@ -1488,6 +1578,7 @@ class Xfrin:
                     pass        # for now we just ignore the failure
             except socket.error as err:
                 logger.error(XFRIN_MSGQ_SEND_ERROR, XFROUT_MODULE_NAME, ZONE_MANAGER_MODULE_NAME)
+
         else:
             msg = create_command(ZONE_XFRIN_FAILED, param)
             # catch the exception, in case msgq has been killed.
@@ -1502,6 +1593,7 @@ class Xfrin:
                 logger.error(XFRIN_MSGQ_SEND_ERROR_ZONE_MANAGER, ZONE_MANAGER_MODULE_NAME)
 
     def startup(self):
+        logger.debug(DBG_PROCESS, XFRIN_STARTED)
         while not self._shutdown_event.is_set():
             self._cc_check_command()
 

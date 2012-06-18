@@ -17,12 +17,9 @@
 
 #include <string>
 
-// For InMemoryClientPtr below.  This should be a temporary definition until
-// we reorganize the data source framework.
-#include <boost/shared_ptr.hpp>
-
 #include <cc/data.h>
 #include <config/ccsession.h>
+#include <datasrc/factory.h>
 #include <dns/message.h>
 #include <dns/opcode.h>
 #include <util/buffer.h>
@@ -40,6 +37,11 @@
 #include <auth/statistics.h>
 
 namespace isc {
+namespace util {
+namespace io {
+class BaseSocketSessionForwarder;
+}
+}
 namespace datasrc {
 class InMemoryClient;
 }
@@ -96,7 +98,8 @@ public:
     /// but can refer to a local mock object for testing (or other
     /// experimental) purposes.
     AuthSrv(const bool use_cache,
-            isc::xfr::AbstractXfroutClient& xfrout_client);
+            isc::xfr::AbstractXfroutClient& xfrout_client,
+            isc::util::io::BaseSocketSessionForwarder& ddns_forwarder);
     ~AuthSrv();
     //@}
 
@@ -235,19 +238,14 @@ public:
     ///
     void setXfrinSession(isc::cc::AbstractSession* xfrin_session);
 
-    /// A shared pointer type for \c InMemoryClient.
-    ///
-    /// This is defined inside the \c AuthSrv class as it's supposed to be
-    /// a short term interface until we integrate the in-memory and other
-    /// data source frameworks.
-    typedef boost::shared_ptr<isc::datasrc::InMemoryClient> InMemoryClientPtr;
-
-    /// An immutable shared pointer type for \c InMemoryClient.
-    typedef boost::shared_ptr<const isc::datasrc::InMemoryClient>
-    ConstInMemoryClientPtr;
-
     /// Returns the in-memory data source configured for the \c AuthSrv,
-    /// if any.
+    /// if any, as a pointer.
+    ///
+    /// This is mostly a convenience function around
+    /// \c getInMemoryClientContainer, which saves the caller the step
+    /// of having to call getInstance().
+    /// The pointer is of course only valid as long as the container
+    /// exists.
     ///
     /// The in-memory data source is configured per RR class.  However,
     /// the data source may not be available for all RR classes.
@@ -262,24 +260,48 @@ public:
     /// \param rrclass The RR class of the requested in-memory data source.
     /// \return A pointer to the in-memory data source, if configured;
     /// otherwise NULL.
-    InMemoryClientPtr getInMemoryClient(const isc::dns::RRClass& rrclass);
+    isc::datasrc::DataSourceClient* getInMemoryClient(
+        const isc::dns::RRClass& rrclass);
+
+    /// Returns the DataSourceClientContainer of the in-memory datasource
+    ///
+    /// \exception InvalidParameter if the given class does not match
+    ///            the one in the memory data source, or if the memory
+    ///            datasource has not been set (callers can check with
+    ///            \c hasMemoryDataSource())
+    ///
+    /// \param rrclass The RR class of the requested in-memory data source.
+    /// \return A shared pointer to the in-memory data source, if configured;
+    /// otherwise an empty shared pointer.
+    isc::datasrc::DataSourceClientContainerPtr getInMemoryClientContainer(
+        const isc::dns::RRClass& rrclass);
+
+    /// Checks if the in-memory data source has been set.
+    ///
+    /// Right now, only one datasource at a time is effectively supported.
+    /// This is a helper method to check whether it is the in-memory one.
+    /// This is mostly useful for current testing, and is expected to be
+    /// removed (or changed in behaviour) soon, when the general
+    /// multi-data-source framework is completed.
+    ///
+    /// \return True if the in-memory datasource has been set.
+    bool hasInMemoryClient() const;
 
     /// Sets or replaces the in-memory data source of the specified RR class.
     ///
-    /// As noted in \c getInMemoryClient(), some RR classes may not be
-    /// supported, in which case an exception of class \c InvalidParameter
-    /// will be thrown.
+    /// Some RR classes may not be supported, in which case an exception
+    /// of class \c InvalidParameter will be thrown.
     /// This method never throws an exception otherwise.
     ///
     /// If there is already an in memory data source configured, it will be
     /// replaced with the newly specified one.
-    /// \c memory_datasrc can be NULL, in which case it will (re)disable the
-    /// in-memory data source.
+    /// \c memory_client can be an empty shared pointer, in which case it
+    /// will (re)disable the in-memory data source.
     ///
     /// \param rrclass The RR class of the in-memory data source to be set.
-    /// \param memory_datasrc A (shared) pointer to \c InMemoryClient to be set.
+    /// \param memory_client A (shared) pointer to \c InMemoryClient to be set.
     void setInMemoryClient(const isc::dns::RRClass& rrclass,
-                           InMemoryClientPtr memory_client);
+        isc::datasrc::DataSourceClientContainerPtr memory_client);
 
     /// \brief Set the communication session with Statistics.
     ///

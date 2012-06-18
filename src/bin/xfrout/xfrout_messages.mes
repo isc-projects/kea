@@ -23,21 +23,14 @@ a valid TSIG key.
 There was a problem reading from the command and control channel. The
 most likely cause is that the msgq daemon is not running.
 
-% XFROUT_MODULECC_SESSION_ERROR error encountered by configuration/command module: %1
-There was a problem in the lower level module handling configuration and
-control commands.  This could happen for various reasons, but the most likely
-cause is that the configuration database contains a syntax error and xfrout
-failed to start at initialization.  A detailed error message from the module
-will also be displayed.
-
-% XFROUT_CONFIG_ERROR error found in configuration data: %1
-The xfrout process encountered an error when installing the configuration at
-startup time.  Details of the error are included in the log message.
-
 % XFROUT_CC_SESSION_TIMEOUT_ERROR timeout waiting for cc response
 There was a problem reading a response from another module over the
 command and control channel. The most likely cause is that the
 configuration manager b10-cfgmgr is not running.
+
+% XFROUT_CONFIG_ERROR error found in configuration data: %1
+The xfrout process encountered an error when installing the configuration at
+startup time.  Details of the error are included in the log message.
 
 % XFROUT_FETCH_REQUEST_ERROR socket error while fetching a request from the auth daemon
 There was a socket error while contacting the b10-auth daemon to
@@ -55,6 +48,52 @@ by xfrout could not be found. This suggests that either some libraries
 are missing on the system, or the PYTHONPATH variable is not correct.
 The specific place where this library needs to be depends on your
 system and your specific installation.
+
+% XFROUT_IXFR_MULTIPLE_SOA IXFR client %1: authority section has multiple SOAs
+An IXFR request was received with more than one SOA RRs in the authority
+section.  The xfrout daemon rejects the request with an RCODE of
+FORMERR.
+
+% XFROUT_IXFR_NO_JOURNAL_SUPPORT IXFR client %1, %2: journaling not supported in the data source, falling back to AXFR
+An IXFR request was received but the underlying data source did
+not support journaling.  The xfrout daemon fell back to AXFR-style
+IXFR.
+
+% XFROUT_IXFR_NO_SOA IXFR client %1: missing SOA
+An IXFR request was received with no SOA RR in the authority section.
+The xfrout daemon rejects the request with an RCODE of FORMERR.
+
+% XFROUT_IXFR_NO_VERSION IXFR client %1, %2: version (%3 to %4) not in journal, falling back to AXFR
+An IXFR request was received, but the requested range of differences
+were not found in the data source.  The xfrout daemon fell back to
+AXFR-style IXFR.
+
+% XFROUT_IXFR_NO_ZONE IXFR client %1, %2: zone not found with journal
+The requested zone in IXFR was not found in the data source
+even though the xfrout daemon sucessfully found the SOA RR of the zone
+in the data source.  This can happen if the administrator removed the
+zone from the data source within the small duration between these
+operations, but it's more likely to be a bug or broken data source.
+Unless you know why this message was logged, and especially if it
+happens often, it's advisable to check whether the data source is
+valid for this zone.  The xfrout daemon considers it a possible,
+though unlikely, event, and returns a response with an RCODE of
+NOTAUTH.
+
+% XFROUT_IXFR_UPTODATE IXFR client %1, %2: client version is new enough (theirs=%3, ours=%4)
+An IXFR request was received, but the client's SOA version is the same as
+or newer than that of the server.  The xfrout server responds to the
+request with the answer section being just one SOA of that version.
+Note: as of this wrting the 'newer version' cannot be identified due to
+the lack of support for the serial number arithmetic.  This will soon
+be implemented.
+
+% XFROUT_MODULECC_SESSION_ERROR error encountered by configuration/command module: %1
+There was a problem in the lower level module handling configuration and
+control commands.  This could happen for various reasons, but the most likely
+cause is that the configuration database contains a syntax error and xfrout
+failed to start at initialization.  A detailed error message from the module
+will also be displayed.
 
 % XFROUT_NEW_CONFIG Update xfrout configuration
 New configuration settings have been sent from the configuration
@@ -88,12 +127,6 @@ given host.  This is required by the ACLs.  The %2 represents the IP
 address and port of the peer requesting the transfer, and the %3
 represents the zone name and class.
 
-% XFROUT_QUERY_REJECTED %1 client %2: request to transfer %3 rejected
-The xfrout process rejected (by REFUSED rcode) a request to transfer zone to
-given host. This is because of ACLs.  The %2 represents the IP
-address and port of the peer requesting the transfer, and the %3
-represents the zone name and class.
-
 % XFROUT_QUERY_QUOTA_EXCCEEDED %1 client %2: request denied due to quota (%3)
 The xfr request was rejected because the server was already handling
 the maximum number of allowable transfers as specified in the transfers_out
@@ -104,20 +137,21 @@ this parameter; if the server is being too busy due to requests from
 unexpected clients you may want to restrict the legitimate clients
 with ACL.
 
-% XFROUT_RECEIVE_FILE_DESCRIPTOR_ERROR error receiving the file descriptor for an XFR connection
-There was an error receiving the file descriptor for the transfer
-request. Normally, the request is received by b10-auth, and passed on
-to the xfrout daemon, so it can answer directly. However, there was a
-problem receiving this file descriptor. The request will be ignored.
+% XFROUT_QUERY_REJECTED %1 client %2: request to transfer %3 rejected
+The xfrout process rejected (by REFUSED rcode) a request to transfer zone to
+given host. This is because of ACLs.  The %2 represents the IP
+address and port of the peer requesting the transfer, and the %3
+represents the zone name and class.
 
 % XFROUT_RECEIVED_SHUTDOWN_COMMAND shutdown command received
 The xfrout daemon received a shutdown command from the command channel
 and will now shut down.
 
-% XFROUT_REMOVE_UNIX_SOCKET_FILE_ERROR error clearing unix socket file %1: %2
-When shutting down, the xfrout daemon tried to clear the unix socket
-file used for communication with the auth daemon. It failed to remove
-the file. The reason for the failure is given in the error message.
+% XFROUT_RECEIVE_FILE_DESCRIPTOR_ERROR error receiving the file descriptor for an XFR connection
+There was an error receiving the file descriptor for the transfer
+request. Normally, the request is received by b10-auth, and passed on
+to the xfrout daemon, so it can answer directly. However, there was a
+problem receiving this file descriptor. The request will be ignored.
 
 % XFROUT_REMOVE_OLD_UNIX_SOCKET_FILE_ERROR error removing unix socket file %1: %2
 The unix socket file xfrout needs for contact with the auth daemon
@@ -126,12 +160,21 @@ removing it. It is likely that we do not have permission to remove
 this file. The specific error is show in the log message. The xfrout
 daemon will shut down.
 
+% XFROUT_REMOVE_UNIX_SOCKET_FILE_ERROR error clearing unix socket file %1: %2
+When shutting down, the xfrout daemon tried to clear the unix socket
+file used for communication with the auth daemon. It failed to remove
+the file. The reason for the failure is given in the error message.
+
 % XFROUT_SOCKET_SELECT_ERROR error while calling select() on request socket: %1
 There was an error while calling select() on the socket that informs
 the xfrout daemon that a new xfrout request has arrived. This should
 be a result of rare local error such as memory allocation failure and
 shouldn't happen under normal conditions. The error is included in the
 log message.
+
+% XFROUT_STARTED xfrout started
+This informational message is output by xfrout when all initialization
+has been completed and it is entering its main loop.
 
 % XFROUT_STOPPED_BY_KEYBOARD keyboard interrupt, shutting down
 There was a keyboard interrupt signal to stop the xfrout daemon. The
@@ -147,6 +190,13 @@ on, but the file is in use. The most likely cause is that another
 xfrout daemon process is still running. This xfrout daemon (the one
 printing this message) will not start.
 
+% XFROUT_XFR_TRANSFER_CHECK_ERROR %1 client %2: check for transfer of %3 failed: %4
+Pre-response check for an incomding XFR request failed unexpectedly.
+The most likely cause of this is that some low level error in the data
+source, but it may also be other general (more unlikely) errors such
+as memory shortage.  Some detail of the error is also included in the
+message.  The xfrout server tries to return a SERVFAIL response in this case.
+
 % XFROUT_XFR_TRANSFER_DONE %1 client %2: transfer of %3 complete
 The transfer of the given zone has been completed successfully, or was
 aborted due to a shutdown event.
@@ -156,13 +206,6 @@ An uncaught exception was encountered while sending the response to
 an AXFR query. The error message of the exception is included in the
 log message, but this error most likely points to incomplete exception
 handling in the code.
-
-% XFROUT_XFR_TRANSFER_CHECK_ERROR %1 client %2: check for transfer of %3 failed: %4
-Pre-response check for an incomding XFR request failed unexpectedly.
-The most likely cause of this is that some low level error in the data
-source, but it may also be other general (more unlikely) errors such
-as memory shortage.  Some detail of the error is also included in the
-message.  The xfrout server tries to return a SERVFAIL response in this case.
 
 % XFROUT_XFR_TRANSFER_FAILED %1 client %2: transfer of %3 failed, rcode: %4
 A transfer out for the given zone failed. An error response is sent
@@ -177,42 +220,3 @@ Xfrout/max_transfers_out, has been reached).
 
 % XFROUT_XFR_TRANSFER_STARTED %1 client %2: transfer of zone %3 has started
 A transfer out of the given zone has started.
-
-% XFROUT_IXFR_MULTIPLE_SOA IXFR client %1: authority section has multiple SOAs
-An IXFR request was received with more than one SOA RRs in the authority
-section.  The xfrout daemon rejects the request with an RCODE of
-FORMERR.
-
-% XFROUT_IXFR_NO_SOA IXFR client %1: missing SOA
-An IXFR request was received with no SOA RR in the authority section.
-The xfrout daemon rejects the request with an RCODE of FORMERR.
-
-% XFROUT_IXFR_NO_JOURNAL_SUPPORT IXFR client %1, %2: journaling not supported in the data source, falling back to AXFR
-An IXFR request was received but the underlying data source did
-not support journaling.  The xfrout daemon fell back to AXFR-style
-IXFR.
-
-% XFROUT_IXFR_UPTODATE IXFR client %1, %2: client version is new enough (theirs=%3, ours=%4)
-An IXFR request was received, but the client's SOA version is the same as
-or newer than that of the server.  The xfrout server responds to the
-request with the answer section being just one SOA of that version.
-Note: as of this wrting the 'newer version' cannot be identified due to
-the lack of support for the serial number arithmetic.  This will soon
-be implemented.
-
-% XFROUT_IXFR_NO_VERSION IXFR client %1, %2: version (%3 to %4) not in journal, falling back to AXFR
-An IXFR request was received, but the requested range of differences
-were not found in the data source.  The xfrout daemon fell back to
-AXFR-style IXFR.
-
-% XFROUT_IXFR_NO_ZONE IXFR client %1, %2: zone not found with journal
-The requested zone in IXFR was not found in the data source
-even though the xfrout daemon sucessfully found the SOA RR of the zone
-in the data source.  This can happen if the administrator removed the
-zone from the data source within the small duration between these
-operations, but it's more likely to be a bug or broken data source.
-Unless you know why this message was logged, and especially if it
-happens often, it's advisable to check whether the data source is
-valid for this zone.  The xfrout daemon considers it a possible,
-though unlikely, event, and returns a response with an RCODE of
-NOTAUTH.

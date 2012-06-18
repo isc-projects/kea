@@ -25,5 +25,6 @@ endif
 	$(LIBRARY_PATH_PLACEHOLDER) \
 	PYTHONPATH=$(COMMON_PYTHON_PATH):$(abs_top_builddir)/src/bin/ddns:$(abs_top_builddir)/src/lib/dns/python/.libs:$(abs_top_builddir)/src/lib/util/io/.libs \
 	TESTDATASRCDIR=$(abs_srcdir)/testdata/ \
+	TESTDATA_PATH=$(abs_top_srcdir)/src/lib/testutils/testdata \
 	$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
 	done

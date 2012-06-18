@@ -29,6 +29,7 @@
 #include <datasrc/data_source.h>
 #include <datasrc/factory.h>
 
+#include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/bind.hpp>
@@ -52,6 +53,9 @@ using namespace internal;
 
 namespace {
 // Some type aliases
+
+// A functor type used for loading.
+typedef boost::function<void(ConstRRsetPtr)> LoadCallback;
 
 // RRset specified for this implementation
 typedef boost::shared_ptr<internal::RBNodeRRset> RBNodeRRsetPtr;
@@ -116,7 +120,11 @@ typedef NSEC3Map::value_type NSEC3Pair;
 // Actual zone data: Essentially a set of zone's RRs.  This is defined as
 // a separate structure so that it'll be replaceable on reload.
 struct ZoneData {
-    ZoneData(const Name& origin) : domains_(true), origin_data_(NULL) {
+    ZoneData(const Name& origin) :
+        domains_(true),
+        origin_data_(NULL),
+        nsec_signed_(false)
+    {
         // We create the node for origin (it needs to exist anyway in future)
         domains_.insert(origin, &origin_data_);
         DomainPtr origin_domain(new Domain);
@@ -166,6 +174,7 @@ public:
         const scoped_ptr<NSEC3Hash> hash_; // hash parameter/calculator
     };
     scoped_ptr<NSEC3Data> nsec3_data_; // non NULL only when it's NSEC3 signed
+    bool nsec_signed_; // True if there's at least one NSEC record
 
     // This templated structure encapsulates the find result of findNode()
     // method (also templated) below.
@@ -203,10 +212,65 @@ public:
 
     // Identify the RBTree node that best matches the given name.
     // See implementation notes below.
+    //
+    // The caller should pass an empty node_path, and it will contain the
+    // search context (all ancestor nodes that the underlying RBTree search
+    // traverses, and how the search stops) for possible later use at the
+    // caller side.
     template <typename ResultType>
     ResultType findNode(const Name& name,
+                        RBTreeNodeChain<Domain>& node_path,
                         ZoneFinder::FindOptions options) const;
+
+    // A helper method for NSEC-signed zones.  It searches the zone for
+    // the "closest" NSEC corresponding to the search context stored in
+    // node_path (it should contain sufficient information to identify the
+    // previous name of the query name in the zone).  In some cases the
+    // immediate closest name may not have NSEC (when it's under a zone cut
+    // for glue records, or even when the zone is partly broken), so this
+    // method continues the search until it finds a name that has NSEC,
+    // and returns the one found first.  Due to the prerequisite (see below),
+    // it should always succeed.
+    //
+    // node_path must store valid search context (in practice, it's expected
+    // to be set by findNode()); otherwise the underlying RBTree implementation
+    // throws.
+    //
+    // If the zone is not considered NSEC-signed or DNSSEC records were not
+    // required in the original search context (specified in options), this
+    // method doesn't bother to find NSEC, and simply returns NULL.  So, by
+    // definition of "NSEC-signed", when it really tries to find an NSEC it
+    // should succeed; there should be one at least at the zone origin.
+    ConstRBNodeRRsetPtr
+    getClosestNSEC(RBTreeNodeChain<Domain>& node_path,
+                   ZoneFinder::FindOptions options) const;
 };
+
+ConstRBNodeRRsetPtr
+ZoneData::getClosestNSEC(RBTreeNodeChain<Domain>& node_path,
+                         ZoneFinder::FindOptions options) const
+{
+    if (!nsec_signed_ || (options & ZoneFinder::FIND_DNSSEC) == 0) {
+        return (ConstRBNodeRRsetPtr());
+    }
+
+    const DomainNode* prev_node;
+    while ((prev_node = domains_.previousNode(node_path)) != NULL) {
+        if (!prev_node->isEmpty()) {
+            const Domain::const_iterator found =
+                prev_node->getData()->find(RRType::NSEC());
+            if (found != prev_node->getData()->end()) {
+                return (found->second);
+            }
+        }
+    }
+    // This must be impossible and should be an internal bug.
+    // See the description at the method declaration.
+    assert(false);
+    // Even though there is an assert here, strict compilers
+    // will still need some return value.
+    return (ConstRBNodeRRsetPtr());
+}
 
 /// Maintain intermediate data specific to the search context used in
 /// \c find().
@@ -350,9 +414,10 @@ bool cutCallback(const DomainNode& node, FindState* state) {
 // the zone.
 template <typename ResultType>
 ResultType
-ZoneData::findNode(const Name& name, ZoneFinder::FindOptions options) const {
+ZoneData::findNode(const Name& name, RBTreeNodeChain<Domain>& node_path,
+                   ZoneFinder::FindOptions options) const
+{
     DomainNode* node = NULL;
-    RBTreeNodeChain<Domain> node_path;
     FindState state((options & ZoneFinder::FIND_GLUE_OK) != 0);
 
     const DomainTree::Result result =
@@ -378,9 +443,10 @@ ZoneData::findNode(const Name& name, ZoneFinder::FindOptions options) const {
             NameComparisonResult::SUPERDOMAIN) { // empty node, so NXRRSET
             LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_SUPER_STOP).arg(name);
             return (ResultType(ZoneFinder::NXRRSET, node,
-                               ConstRBNodeRRsetPtr()));
+                               getClosestNSEC(node_path, options)));
         }
-        if (node->getFlag(domain_flag::WILD)) { // maybe a wildcard
+        if (node->getFlag(domain_flag::WILD) && // maybe a wildcard, check only
+            (options & ZoneFinder::NO_WILDCARD) == 0) { // if not disabled.
             if (node_path.getLastComparisonResult().getRelation() ==
                 NameComparisonResult::COMMONANCESTOR &&
                 node_path.getLastComparisonResult().getCommonLabels() > 1) {
@@ -394,12 +460,17 @@ ZoneData::findNode(const Name& name, ZoneFinder::FindOptions options) const {
                 LOG_DEBUG(logger, DBG_TRACE_DATA,
                           DATASRC_MEM_WILDCARD_CANCEL).arg(name);
                 return (ResultType(ZoneFinder::NXDOMAIN, NULL,
-                                   ConstRBNodeRRsetPtr()));
+                                   getClosestNSEC(node_path, options)));
             }
             // Now the wildcard should be the best match.
             const Name wildcard(Name("*").concatenate(
                                     node_path.getAbsoluteName()));
-            DomainTree::Result result = domains_.find(wildcard, &node);
+
+            // Clear the node_path so that we don't keep incorrect (NSEC)
+            // context
+            node_path.clear();
+            DomainTree::Result result(domains_.find(wildcard, &node,
+                                                    node_path));
             // Otherwise, why would the domain_flag::WILD be there if
             // there was no wildcard under it?
             assert(result == DomainTree::EXACTMATCH);
@@ -409,7 +480,8 @@ ZoneData::findNode(const Name& name, ZoneFinder::FindOptions options) const {
         }
         // Nothing really matched.
         LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_NOT_FOUND).arg(name);
-        return (ResultType(ZoneFinder::NXDOMAIN, node, state.rrset_));
+        return (ResultType(ZoneFinder::NXDOMAIN, node,
+                           getClosestNSEC(node_path, options)));
     } else {
         // If the name is neither an exact or partial match, it is
         // out of bailiwick, which is considered an error.
@@ -760,6 +832,17 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
 
     // The actual zone data
     scoped_ptr<ZoneData> zone_data_;
+
+    // Common process for zone load.
+    // rrset_installer is a functor that takes another functor as an argument,
+    // and expected to call the latter for each RRset of the zone.  How the
+    // sequence of the RRsets is generated depends on the internal
+    // details  of the loader: either from a textual master file or from
+    // another data source.
+    // filename is the file name of the master file or empty if the zone is
+    // loaded from another data source.
+    void load(const string& filename,
+              boost::function<void(LoadCallback)> rrset_installer);
 
     // Add the necessary magic for any wildcard contained in 'name'
     // (including itself) to be found in the zone.
@@ -1147,6 +1230,10 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                     isc_throw(AddError, "NSEC3PARAM with inconsistent "
                               "parameters: " << rrset->toText());
                 }
+            } else if (rrset->getType() == RRType::NSEC()) {
+                // If it is NSEC signed zone, so we put a flag there
+                // (flag is enough)
+                zone_data.nsec_signed_ = true;
             }
             return (result::SUCCESS);
         } else {
@@ -1175,6 +1262,24 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         }
     }
 
+    // A helper function for the NXRRSET case in find().  If the zone is
+    // NSEC-signed and DNSSEC records are requested, try to find NSEC
+    // on the given node, and return it if found; return NULL for all other
+    // cases.
+    ConstRBNodeRRsetPtr getNSECForNXRRSET(FindOptions options,
+                                          const DomainNode& node) const
+    {
+        if (zone_data_->nsec_signed_ &&
+            (options & ZoneFinder::FIND_DNSSEC) != 0) {
+            const Domain::const_iterator found =
+                node.getData()->find(RRType::NSEC());
+            if (found != node.getData()->end()) {
+                return (found->second);
+            }
+        }
+        return (ConstRBNodeRRsetPtr());
+    }
+
     // Set up FindContext object as a return value of find(), taking into
     // account wildcard matches and DNSSEC information.  We set the NSEC/NSEC3
     // flag when applicable regardless of the find option; the caller would
@@ -1191,9 +1296,13 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         if (wild) {
             flags = flags | RESULT_WILDCARD;
         }
-        if ((code == NXRRSET || code == NXDOMAIN || wild) &&
-            zone_data_->nsec3_data_) {
-            flags = flags | RESULT_NSEC3_SIGNED;
+        if (code == NXRRSET || code == NXDOMAIN || wild) {
+            if (zone_data_->nsec3_data_) {
+                flags = flags | RESULT_NSEC3_SIGNED;
+            }
+            if (zone_data_->nsec_signed_) {
+                flags = flags | RESULT_NSEC_SIGNED;
+            }
         }
         return (RBNodeResultContext(code, rrset, flags, node));
     }
@@ -1208,8 +1317,10 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
 
         // Get the node.  All other cases than an exact match are handled
         // in findNode().  We simply construct a result structure and return.
+        RBTreeNodeChain<Domain> node_path; // findNode will fill in this
         const ZoneData::FindNodeResult node_result =
-            zone_data_->findNode<ZoneData::FindNodeResult>(name, options);
+            zone_data_->findNode<ZoneData::FindNodeResult>(name, node_path,
+                                                           options);
         if (node_result.code != SUCCESS) {
             return (createFindResult(node_result.code, node_result.rrset));
         }
@@ -1225,7 +1336,10 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         if (node->isEmpty()) {
             LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_DOMAIN_EMPTY).
                 arg(name);
-            return (createFindResult(NXRRSET, ConstRBNodeRRsetPtr(), rename));
+            return (createFindResult(NXRRSET,
+                                     zone_data_->getClosestNSEC(node_path,
+                                                                options),
+                                     rename));
         }
 
         Domain::const_iterator found;
@@ -1281,10 +1395,9 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                                           rename));
             }
         }
-        // No exact match or CNAME.  Return NXRRSET.
-        LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_NXRRSET).arg(type).
-            arg(name);
-        return (createFindResult(NXRRSET, ConstRBNodeRRsetPtr(), rename));
+        // No exact match or CNAME.  Get NSEC if necessary and return NXRRSET.
+        return (createFindResult(NXRRSET, getNSECForNXRRSET(options, *node),
+                                 rename));
     }
 };
 
@@ -1446,6 +1559,7 @@ addAdditional(RBNodeRRset* rrset, ZoneData* zone_data,
 {
     RdataIteratorPtr rdata_iterator = rrset->getRdataIterator();
     bool match_wild = false;    // will be true if wildcard match is found
+    RBTreeNodeChain<Domain> node_path;  // placeholder for findNode()
     for (; !rdata_iterator->isLast(); rdata_iterator->next()) {
         // For each domain name that requires additional section processing
         // in each RDATA, search the tree for the name and remember it if
@@ -1458,13 +1572,14 @@ addAdditional(RBNodeRRset* rrset, ZoneData* zone_data,
         // if the name is not in or below this zone, skip it
         const NameComparisonResult::NameRelation reln =
             name.compare(zone_data->origin_data_->getName()).getRelation();
-         if (reln != NameComparisonResult::SUBDOMAIN &&
-             reln != NameComparisonResult::EQUAL) {
+        if (reln != NameComparisonResult::SUBDOMAIN &&
+            reln != NameComparisonResult::EQUAL) {
             continue;
         }
+        node_path.clear();
         const ZoneData::FindMutableNodeResult result =
             zone_data->findNode<ZoneData::FindMutableNodeResult>(
-                name, ZoneFinder::FIND_GLUE_OK);
+                name, node_path, ZoneFinder::FIND_GLUE_OK);
         if (result.code != ZoneFinder::SUCCESS) {
             // We are not interested in anything but a successful match.
             continue;
@@ -1551,24 +1666,16 @@ addWildAdditional(RBNodeRRset* rrset, ZoneData* zone_data) {
 }
 
 void
-InMemoryZoneFinder::load(const string& filename) {
-    LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_LOAD).arg(getOrigin()).
-        arg(filename);
-    // Load it into temporary zone data.  As we build the zone, we record
-    // the (RBNode)RRsets that needs to be associated with additional
-    // information in 'need_additionals'.
+InMemoryZoneFinder::InMemoryZoneFinderImpl::load(
+    const string& filename,
+    boost::function<void(LoadCallback)> rrset_installer)
+{
     vector<RBNodeRRset*> need_additionals;
-    scoped_ptr<ZoneData> tmp(new ZoneData(getOrigin()));
+    scoped_ptr<ZoneData> tmp(new ZoneData(origin_));
 
-    masterLoad(filename.c_str(), getOrigin(), getClass(),
-               boost::bind(&InMemoryZoneFinderImpl::addFromLoad, impl_,
-                           _1, tmp.get(), &need_additionals));
+    rrset_installer(boost::bind(&InMemoryZoneFinderImpl::addFromLoad, this,
+                                _1, tmp.get(), &need_additionals));
 
-    // For each RRset in need_additionals, identify the corresponding
-    // RBnode for additional processing and associate it in the RRset.
-    // If some additional names in an RRset RDATA as additional need wildcard
-    // expansion, we'll remember them in a separate vector, and handle them
-    // with addWildAdditional.
     vector<RBNodeRRset*> wild_additionals;
     for_each(need_additionals.begin(), need_additionals.end(),
              boost::bind(addAdditional, _1, tmp.get(), &wild_additionals));
@@ -1584,14 +1691,75 @@ InMemoryZoneFinder::load(const string& filename) {
         if (tmp->origin_data_->getData()->find(RRType::NSEC3PARAM()) ==
             tmp->origin_data_->getData()->end()) {
             LOG_WARN(logger, DATASRC_MEM_NO_NSEC3PARAM).
-                arg(getOrigin()).arg(getClass());
+                arg(origin_).arg(zone_class_);
         }
     }
 
     // If it went well, put it inside
-    impl_->file_name_ = filename;
-    tmp.swap(impl_->zone_data_);
+    file_name_ = filename;
+    tmp.swap(zone_data_);
     // And let the old data die with tmp
+}
+
+namespace {
+// A wrapper for dns::masterLoad used by load() below.  Essentially it
+// converts the two callback types.  Note the mostly redundant wrapper of
+// boost::bind.  It converts function<void(ConstRRsetPtr)> to
+// function<void(RRsetPtr)> (masterLoad() expects the latter).  SunStudio
+// doesn't seem to do this conversion if we just pass 'callback'.
+void
+masterLoadWrapper(const char* const filename, const Name& origin,
+                  const RRClass& zone_class, LoadCallback callback)
+{
+    masterLoad(filename, origin, zone_class, boost::bind(callback, _1));
+}
+
+// The installer called from Impl::load() for the iterator version of load().
+void
+generateRRsetFromIterator(ZoneIterator* iterator, LoadCallback callback) {
+    ConstRRsetPtr rrset;
+    vector<ConstRRsetPtr> rrsigs; // placeholder for RRSIGs until "commitable".
+
+    // The current internal implementation assumes an RRSIG is always added
+    // after the RRset they cover.  So we store any RRSIGs in 'rrsigs' until
+    // it's safe to add them; based on our assumption if the owner name
+    // changes, all covered RRsets of the previous name should have been
+    // installed and any pending RRSIGs can be added at that point.  RRSIGs
+    // of the last name from the iterator must be added separately.
+    while ((rrset = iterator->getNextRRset()) != NULL) {
+        if (!rrsigs.empty() && rrset->getName() != rrsigs[0]->getName()) {
+            BOOST_FOREACH(ConstRRsetPtr sig_rrset, rrsigs) {
+                callback(sig_rrset);
+            }
+            rrsigs.clear();
+        }
+        if (rrset->getType() == RRType::RRSIG()) {
+            rrsigs.push_back(rrset);
+        } else {
+            callback(rrset);
+        }
+    }
+
+    BOOST_FOREACH(ConstRRsetPtr sig_rrset, rrsigs) {
+        callback(sig_rrset);
+    }
+}
+}
+
+void
+InMemoryZoneFinder::load(const std::string& filename) {
+    LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_LOAD).arg(getOrigin()).
+        arg(filename);
+
+    impl_->load(filename,
+                boost::bind(masterLoadWrapper, filename.c_str(), getOrigin(),
+                            getClass(), _1));
+}
+
+void
+InMemoryZoneFinder::load(ZoneIterator& iterator) {
+    impl_->load(string(),
+                boost::bind(generateRRsetFromIterator, &iterator, _1));
 }
 
 void
@@ -1681,8 +1849,7 @@ public:
     {
         // Find the first node (origin) and preserve the node chain for future
         // searches
-        DomainTree::Result result(tree_.find<void*>(origin, &node_, chain_,
-                                                    NULL, NULL));
+        DomainTree::Result result(tree_.find(origin, &node_, chain_));
         // It can't happen that the origin is not in there
         if (result != DomainTree::EXACTMATCH) {
             isc_throw(Unexpected,

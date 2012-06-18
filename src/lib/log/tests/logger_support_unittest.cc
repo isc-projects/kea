@@ -79,5 +79,5 @@ TEST_F(LoggerSupportTest, LoggingInitializationCheck) {
     // ... and check that they work when logging is initialized.
     setLoggingInitialized(true);
     EXPECT_NO_THROW(test_logger.isDebugEnabled());
-    EXPECT_NO_THROW(test_logger.info(LOG_INPUT_OPEN_FAIL));
+    EXPECT_NO_THROW(test_logger.info(LOG_INPUT_OPEN_FAIL).arg("foo").arg("bar"));
 }

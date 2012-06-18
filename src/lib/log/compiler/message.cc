@@ -25,6 +25,8 @@
 #include <time.h>
 #include <unistd.h>
 
+#include <exceptions/exceptions.h>
+
 #include <util/filename.h>
 #include <util/strutil.h>
 
@@ -56,14 +58,14 @@ static const char* VERSION = "1.0-0";
 /// \b Invocation<BR>
 /// The program is invoked with the command:
 ///
-/// <tt>message [-v | -h | -p | -d <dir> | <message-file>]</tt>
+/// <tt>message [-v | -h | -p | -d &lt;dir&gt; | <message-file>]</tt>
 ///
 /// It reads the message file and writes out two files of the same
 /// name in the current working directory (unless -d is used) but
 /// with extensions of .h and .cc, or .py if -p is used.
 ///
 /// -v causes it to print the version number and exit. -h prints a help
-/// message (and exits). -p sets the output to python. -d <dir> will make
+/// message (and exits). -p sets the output to python. -d &lt;dir&gt; will make
 /// it write the output file(s) to dir instead of current working
 /// directory
 
@@ -117,9 +119,9 @@ currentTime() {
 
 /// \brief Create Header Sentinel
 ///
-/// Given the name of a file, create an #ifdef sentinel name.  The name is
-/// __<name>_<ext>, where <name> is the name of the file, and <ext> is the
-/// extension less the leading period.  The sentinel will be upper-case.
+/// Given the name of a file, create an \#ifdef sentinel name.  The name is
+/// __<name>_<ext>, where &lt;name&gt; is the name of the file, and &lt;ext&gt;
+/// is the extension less the leading period.  The sentinel will be upper-case.
 ///
 /// \param file Filename object representing the file.
 ///
@@ -245,7 +247,7 @@ writeClosingNamespace(ostream& output, const vector<string>& ns) {
     }
 }
 
-/// \breif Write python file
+/// \brief Write python file
 ///
 /// Writes the python file containing the symbol definitions as module level
 /// constants. These are objects which register themself at creation time,
@@ -301,8 +303,8 @@ writePythonFile(const string& file, MessageDictionary& dictionary,
 ///
 /// \param file Name of the message file.  The header file is written to a
 /// file of the same name but with a .h suffix.
-/// \param ns Namespace in which the definitions are to be placed.  An empty
-/// string indicates no namespace.
+/// \param ns_components Namespace in which the definitions are to be placed.
+/// An empty string indicates no namespace.
 /// \param dictionary Dictionary holding the message definitions.
 /// \param output_directory if not null NULL, output files are written
 ///     to the given directory. If NULL, they are written to the current
@@ -325,8 +327,9 @@ writeHeaderFile(const string& file, const vector<string>& ns_components,
     ofstream hfile(header_file.fullName().c_str());
 
     if (hfile.fail()) {
-        throw MessageException(LOG_OPEN_OUTPUT_FAIL, header_file.fullName(),
-            strerror(errno));
+        isc_throw_4(MessageException, "Failed to open output file",
+                    LOG_OPEN_OUTPUT_FAIL, header_file.fullName(),
+                    strerror(errno), 0);
     }
 
     // Write the header preamble.  If there is an error, we'll pick it up
@@ -359,8 +362,9 @@ writeHeaderFile(const string& file, const vector<string>& ns_components,
 
     // Report errors (if any) and exit
     if (hfile.fail()) {
-        throw MessageException(LOG_WRITE_ERROR, header_file.fullName(),
-            strerror(errno));
+        isc_throw_4(MessageException, "Error writing to output file",
+                    LOG_WRITE_ERROR, header_file.fullName(), strerror(errno),
+                    0);
     }
 
     hfile.close();
@@ -404,8 +408,8 @@ replaceNonAlphaNum(char c) {
 ///
 /// \param file Name of the message file.  The header file is written to a
 /// file of the same name but with a .h suffix.
-/// \param ns Namespace in which the definitions are to be placed.  An empty
-/// string indicates no namespace.
+/// \param ns_components Namespace in which the definitions are to be placed.
+/// An empty string indicates no namespace.
 /// \param dictionary Dictionary holding the message definitions.
 /// \param output_directory if not null NULL, output files are written
 ///     to the given directory. If NULL, they are written to the current
@@ -425,8 +429,9 @@ writeProgramFile(const string& file, const vector<string>& ns_components,
     ofstream ccfile(program_file.fullName().c_str());
 
     if (ccfile.fail()) {
-        throw MessageException(LOG_OPEN_OUTPUT_FAIL, program_file.fullName(),
-            strerror(errno));
+        isc_throw_4(MessageException, "Error opening output file",
+                    LOG_OPEN_OUTPUT_FAIL, program_file.fullName(),
+                    strerror(errno), 0);
     }
 
     // Write the preamble.  If there is an error, we'll pick it up after
@@ -483,8 +488,9 @@ writeProgramFile(const string& file, const vector<string>& ns_components,
 
     // Report errors (if any) and exit
     if (ccfile.fail()) {
-        throw MessageException(LOG_WRITE_ERROR, program_file.fullName(),
-            strerror(errno));
+        isc_throw_4(MessageException, "Error writing to output file",
+                    LOG_WRITE_ERROR, program_file.fullName(), strerror(errno),
+                    0);
     }
 
     ccfile.close();

@@ -37,12 +37,6 @@ namespace asiodns {
 /// defined in coroutine.h. 
 class TCPServer : public virtual DNSServer, public virtual coroutine {
 public:
-    explicit TCPServer(asio::io_service& io_service,
-                       const asio::ip::address& addr, const uint16_t port, 
-                       const isc::asiolink::SimpleCallback* checkin = NULL,
-                       const DNSLookup* lookup = NULL,
-                       const DNSAnswer* answer = NULL);
-
     /// \brief Constructor
     /// \param io_service the asio::io_service to work with
     /// \param fd the file descriptor of opened TCP socket

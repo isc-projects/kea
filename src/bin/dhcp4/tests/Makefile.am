@@ -1,11 +1,24 @@
 PYCOVERAGE_RUN = @PYCOVERAGE_RUN@
 
-# If necessary (rare cases), explicitly specify paths to dynamic libraries
-# required by loadable python modules.
+PYTESTS = dhcp4_test.py
+EXTRA_DIST = $(PYTESTS)
+
+# Explicitly specify paths to dynamic libraries required by loadable python
+# modules. That is required on Mac OS systems. Otherwise we will get exception
+# about python not being able to load liblog library.
 LIBRARY_PATH_PLACEHOLDER =
 if SET_ENV_LIBRARY_PATH
 LIBRARY_PATH_PLACEHOLDER += $(ENV_LIBRARY_PATH)=$(abs_top_builddir)/src/lib/cryptolink/.libs:$(abs_top_builddir)/src/lib/dns/.libs:$(abs_top_builddir)/src/lib/dns/python/.libs:$(abs_top_builddir)/src/lib/cc/.libs:$(abs_top_builddir)/src/lib/config/.libs:$(abs_top_builddir)/src/lib/log/.libs:$(abs_top_builddir)/src/lib/util/.libs:$(abs_top_builddir)/src/lib/exceptions/.libs:$(abs_top_builddir)/src/lib/util/io/.libs:$(abs_top_builddir)/src/lib/datasrc/.libs:$$$(ENV_LIBRARY_PATH)
 endif
+
+# test using command-line arguments, so use check-local target instead of TESTS
+check-local:
+	for pytest in $(PYTESTS) ; do \
+	echo Running test: $$pytest ; \
+	PYTHONPATH=$(COMMON_PYTHON_PATH):$(abs_top_srcdir)/src/bin:$(abs_top_builddir)/src/bin/bind10:$(abs_top_builddir)/src/lib/util/io/.libs \
+	$(LIBRARY_PATH_PLACEHOLDER) \
+		$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
+	done
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_builddir)/src/bin # for generated spec_config.h header
@@ -33,6 +46,12 @@ TESTS += dhcp4_unittests
 dhcp4_unittests_SOURCES = ../dhcp4_srv.h ../dhcp4_srv.cc
 dhcp4_unittests_SOURCES += dhcp4_unittests.cc
 dhcp4_unittests_SOURCES += dhcp4_srv_unittest.cc
+
+if USE_CLANGPP
+# Disable unused parameter warning caused by some of the
+# Boost headers when compiling with clang.
+dhcp4_unittests_CXXFLAGS = -Wno-unused-parameter
+endif
 
 dhcp4_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 dhcp4_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)

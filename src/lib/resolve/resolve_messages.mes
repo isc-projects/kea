@@ -84,11 +84,11 @@ the specified name contained multiple RRsets in the answer and not all
 were of the same class.  This is a violation of the standard and so a
 SERVFAIL will be returned.
 
-% RESLIB_NO_NS_RRSET no NS RRSet in referral response received to query for <%1>
-A debug message, this indicates that a response was received for the specified
-query and was categorized as a referral.  However, the received message did
-not contain any NS RRsets.  This may indicate a programming error in the
-response classification code.
+% RESLIB_NOTSINGLE_RESPONSE response to query for <%1> was not a response
+A debug message, the response to the specified query from an upstream
+nameserver was a CNAME that had mutiple RRs in the RRset.  This is
+an invalid response according to the standards so a SERVFAIL will be
+returned to the system making the original query.
 
 % RESLIB_NOT_ONE_QNAME_RESPONSE not one question in response to query for <%1>
 A debug message, the response to the specified query from an upstream
@@ -102,15 +102,20 @@ nameserver (as identified by the ID of the response) did not have the QR
 bit set (thus indicating that the packet was a query, not a response).
 A SERVFAIL will be returned to the system making the original query.
 
-% RESLIB_NOTSINGLE_RESPONSE response to query for <%1> was not a response
-A debug message, the response to the specified query from an upstream
-nameserver was a CNAME that had mutiple RRs in the RRset.  This is
-an invalid response according to the standards so a SERVFAIL will be
-returned to the system making the original query.
+% RESLIB_NO_NS_RRSET no NS RRSet in referral response received to query for <%1>
+A debug message, this indicates that a response was received for the specified
+query and was categorized as a referral.  However, the received message did
+not contain any NS RRsets.  This may indicate a programming error in the
+response classification code.
 
 % RESLIB_NSAS_LOOKUP looking up nameserver for zone %1 in the NSAS
 A debug message, the RunningQuery object is querying the NSAS for the
 nameservers for the specified zone.
+
+% RESLIB_NXDOM_NXRR NXDOMAIN/NXRRSET received in response to query for <%1>
+A debug message recording that either a NXDOMAIN or an NXRRSET response has
+been received to an upstream query for the specified question.  Previous debug
+messages will have indicated the server to which the question was sent.
 
 % RESLIB_OPCODE_RESPONSE response to query for <%1> did not have query opcode
 A debug message, the response to the specified query from an upstream
@@ -118,11 +123,6 @@ nameserver was a response that did not have the opcode set to that of
 a query.  According to the standards, this is an invalid response to
 the query that was made, so a SERVFAIL will be returned to the system
 making the original query.
-
-% RESLIB_NXDOM_NXRR NXDOMAIN/NXRRSET received in response to query for <%1>
-A debug message recording that either a NXDOMAIN or an NXRRSET response has
-been received to an upstream query for the specified question.  Previous debug
-messages will have indicated the server to which the question was sent.
 
 % RESLIB_PROTOCOL protocol error in answer for %1:  %3
 A debug message indicating that a protocol error was received.  As there

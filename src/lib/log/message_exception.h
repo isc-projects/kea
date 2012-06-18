@@ -15,12 +15,14 @@
 #ifndef __MESSAGE_EXCEPTION_H
 #define __MESSAGE_EXCEPTION_H
 
+#include <exceptions/exceptions.h>
+#include <log/message_types.h>
+
 #include <stdexcept>
 #include <string>
 #include <vector>
 
 #include <boost/lexical_cast.hpp>
-#include <log/message_types.h>
 
 namespace isc {
 namespace log {
@@ -31,27 +33,36 @@ namespace log {
 /// code and its arguments to be encapsulated in an exception and thrown
 /// up the stack.
 
-class MessageException : public std::exception {
+class MessageException : public isc::Exception {
 public:
 
     /// \brief Constructor
     ///
+    /// \param file Filename where the exception occurred.
+    /// \param line Line where exception occurred.
+    /// \param what Text description of the problem.
     /// \param id Message identification.
     /// \param lineno Line number on which error occurred (if > 0).
-    MessageException(MessageID id, int lineno = 0) : id_(id)
+    MessageException(const char* file, size_t line, const char* what,
+                     MessageID id, int lineno)
+        : isc::Exception(file, line, what), id_(id), lineno_(lineno)
     {
-        if (lineno > 0) {
+        if (lineno_ > 0) {
             args_.push_back(boost::lexical_cast<std::string>(lineno));
         }
     }
 
     /// \brief Constructor
     ///
+    /// \param file Filename where the exception occurred.
+    /// \param line Line where exception occurred.
+    /// \param what Text description of the problem.
     /// \param id Message identification.
     /// \param arg1 First message argument.
     /// \param lineno Line number on which error occurred (if > 0).
-    MessageException(MessageID id, const std::string& arg1, int lineno = 0)
-        : id_(id)
+    MessageException(const char* file, size_t line, const char* what,
+                     MessageID id, const std::string& arg1, int lineno)
+        : isc::Exception(file, line, what), id_(id)
     {
         if (lineno > 0) {
             args_.push_back(boost::lexical_cast<std::string>(lineno));
@@ -61,12 +72,17 @@ public:
 
     /// \brief Constructor
     ///
+    /// \param file Filename where the exception occurred.
+    /// \param line Line where exception occurred.
+    /// \param what Text description of the problem.
     /// \param id Message identification.
     /// \param arg1 First message argument.
     /// \param arg2 Second message argument.
     /// \param lineno Line number on which error occurred (if > 0).
-    MessageException(MessageID id, const std::string& arg1,
-        const std::string& arg2, int lineno = 0) : id_(id)
+    MessageException(const char* file, size_t line, const char *what,
+                     MessageID id, const std::string& arg1,
+                     const std::string& arg2, int lineno)
+        : isc::Exception(file, line, what), id_(id)
     {
         if (lineno > 0) {
             args_.push_back(boost::lexical_cast<std::string>(lineno));
@@ -95,6 +111,7 @@ public:
 private:
     MessageID                   id_;        // Exception ID
     std::vector<std::string>    args_;      // Exception arguments
+    int lineno_;
 };
 
 } // namespace log

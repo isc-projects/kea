@@ -64,7 +64,7 @@ struct NSEC3Impl {
     const vector<uint8_t> typebits_;
 };
 
-NSEC3::NSEC3(const string& nsec3_str) :
+NSEC3::NSEC3(const std::string& nsec3_str) :
     impl_(NULL)
 {
     istringstream iss(nsec3_str);

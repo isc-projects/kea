@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2012 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -7,7 +7,7 @@
 // THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
 // REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
-// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ // INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
@@ -35,7 +35,6 @@ const size_t buf_size = 32;
 char LOOPBACK[buf_size] = "lo";
 
 namespace {
-const char* const INTERFACE_FILE = TEST_DATA_BUILDDIR "/interfaces.txt";
 
 class NakedIfaceMgr: public IfaceMgr {
     // "naked" Interface Manager, exposes internal fields
@@ -47,18 +46,11 @@ public:
 // dummy class for now, but this will be expanded when needed
 class IfaceMgrTest : public ::testing::Test {
 public:
+    // these are empty for now, but let's keep them around
     IfaceMgrTest() {
     }
 
-    void createLoInterfacesTxt() {
-        unlink(INTERFACE_FILE);
-        fstream fakeifaces(INTERFACE_FILE, ios::out|ios::trunc);
-        fakeifaces << LOOPBACK << " ::1";
-        fakeifaces.close();
-    }
-
     ~IfaceMgrTest() {
-        unlink(INTERFACE_FILE);
     }
 };
 
@@ -127,8 +119,8 @@ TEST_F(IfaceMgrTest, dhcp6Sniffer) {
         cout << "    pkt->ifindex_ = " << pkt->ifindex_ << ";" << endl;
         cout << "    pkt->iface_ = \"" << pkt->iface_ << "\";" << endl;
 
-        // TODO it is better to declare an array and then memcpy it to
-        // packet.
+        // TODO it is better to declare statically initialize the array
+        // and then memcpy it to packet.
         for (int i=0; i< pkt->data_len_; i++) {
             cout << "    pkt->data_[" << i << "]="
                  << (int)(unsigned char)pkt->data_[i] << "; ";
@@ -151,9 +143,6 @@ TEST_F(IfaceMgrTest, dhcp6Sniffer) {
 
 TEST_F(IfaceMgrTest, basic) {
     // checks that IfaceManager can be instantiated
-    createLoInterfacesTxt();
-
-    createLoInterfacesTxt();
 
     IfaceMgr & ifacemgr = IfaceMgr::instance();
     ASSERT_TRUE(&ifacemgr != 0);
@@ -173,16 +162,17 @@ TEST_F(IfaceMgrTest, ifaceClass) {
 // is implemented.
 TEST_F(IfaceMgrTest, getIface) {
 
-    createLoInterfacesTxt();
-
     cout << "Interface checks. Please ignore socket binding errors." << endl;
     NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
 
     // interface name, ifindex
-    IfaceMgr::Iface iface1("lo1", 1);
-    IfaceMgr::Iface iface2("eth5", 2);
-    IfaceMgr::Iface iface3("en3", 5);
-    IfaceMgr::Iface iface4("e1000g0", 3);
+    IfaceMgr::Iface iface1("lo1", 100);
+    IfaceMgr::Iface iface2("eth9", 101);
+    IfaceMgr::Iface iface3("en3", 102);
+    IfaceMgr::Iface iface4("e1000g4", 103);
+    cout << "This test assumes that there are less than 100 network interfaces"
+         << " in the tested system and there are no lo1, eth9, en3, e1000g4"
+         << " or wifi15 interfaces present." << endl;
 
     // note: real interfaces may be detected as well
     ifacemgr->getIfacesLst().push_back(iface1);
@@ -200,71 +190,36 @@ TEST_F(IfaceMgrTest, getIface) {
 
 
     // check that interface can be retrieved by ifindex
-    IfaceMgr::Iface* tmp = ifacemgr->getIface(5);
-    // ASSERT_NE(NULL, tmp); is not supported. hmmmm.
-    ASSERT_TRUE( tmp != NULL );
+    IfaceMgr::Iface* tmp = ifacemgr->getIface(102);
+    ASSERT_TRUE(tmp != NULL);
 
-    EXPECT_EQ( "en3", tmp->getName() );
-    EXPECT_EQ(5, tmp->getIndex());
+    EXPECT_EQ("en3", tmp->getName());
+    EXPECT_EQ(102, tmp->getIndex());
 
     // check that interface can be retrieved by name
     tmp = ifacemgr->getIface("lo1");
-    ASSERT_TRUE( tmp != NULL );
+    ASSERT_TRUE(tmp != NULL);
 
-    EXPECT_EQ( "lo1", tmp->getName() );
-    EXPECT_EQ(1, tmp->getIndex());
+    EXPECT_EQ("lo1", tmp->getName());
+    EXPECT_EQ(100, tmp->getIndex());
 
     // check that non-existing interfaces are not returned
-    EXPECT_EQ(static_cast<void*>(NULL), ifacemgr->getIface("wifi0") );
+    EXPECT_EQ(static_cast<void*>(NULL), ifacemgr->getIface("wifi15") );
 
     delete ifacemgr;
 
 }
-
-#if !defined(OS_LINUX)
-TEST_F(IfaceMgrTest, detectIfaces_stub) {
-
-    // test detects that interfaces can be detected
-    // there is no code for that now, but interfaces are
-    // read from file
-    fstream fakeifaces(INTERFACE_FILE, ios::out|ios::trunc);
-    fakeifaces << "eth0 fe80::1234";
-    fakeifaces.close();
-
-    // this is not usable on systems that don't have eth0
-    // interfaces. Nevertheless, this fake interface should
-    // be on list, but if_nametoindex() will fail.
-
-    NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
-
-    ASSERT_TRUE( ifacemgr->getIface("eth0") != NULL );
-
-    IfaceMgr::Iface* eth0 = ifacemgr->getIface("eth0");
-
-    // there should be one address
-    IfaceMgr::AddressCollection addrs = eth0->getAddresses();
-    ASSERT_EQ(1, addrs.size());
-
-    IOAddress addr = *addrs.begin();
-
-    EXPECT_STREQ( "fe80::1234", addr.toText().c_str() );
-
-    delete ifacemgr;
-}
-#endif
 
 TEST_F(IfaceMgrTest, sockets6) {
     // testing socket operation in a portable way is tricky
     // without interface detection implemented
 
-    createLoInterfacesTxt();
-
     NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
 
     IOAddress loAddr("::1");
 
-    Pkt6 pkt6(128);
-    pkt6.iface_ = LOOPBACK;
+    Pkt6 pkt6(DHCPV6_SOLICIT, 123);
+    pkt6.setIface(LOOPBACK);
 
     // bind multicast socket to port 10547
     int socket1 = ifacemgr->openSocket(LOOPBACK, loAddr, 10547);
@@ -320,7 +275,6 @@ TEST_F(IfaceMgrTest, sendReceive6) {
 
     // testing socket operation in a portable way is tricky
     // without interface detection implemented
-    createLoInterfacesTxt();
 
     NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
 
@@ -335,38 +289,41 @@ TEST_F(IfaceMgrTest, sendReceive6) {
     EXPECT_GT(socket1, 0);
     EXPECT_GT(socket2, 0);
 
-    boost::shared_ptr<Pkt6> sendPkt(new Pkt6(128) );
 
     // prepare dummy payload
-    for (int i=0;i<128; i++) {
-        sendPkt->data_[i] = i;
+    uint8_t data[128];
+    for (int i = 0; i < 128; i++) {
+        data[i] = i;
     }
+    Pkt6Ptr sendPkt = Pkt6Ptr(new Pkt6(data, 128));
 
-    sendPkt->remote_port_ = 10547;
-    sendPkt->remote_addr_ = IOAddress("::1");
-    sendPkt->ifindex_ = 1;
-    sendPkt->iface_ = LOOPBACK;
+    sendPkt->repack();
 
-    boost::shared_ptr<Pkt6> rcvPkt;
+    sendPkt->setRemotePort(10547);
+    sendPkt->setRemoteAddr(IOAddress("::1"));
+    sendPkt->setIndex(1);
+    sendPkt->setIface(LOOPBACK);
+
+    Pkt6Ptr rcvPkt;
 
     EXPECT_EQ(true, ifacemgr->send(sendPkt));
 
     rcvPkt = ifacemgr->receive6();
 
-    ASSERT_TRUE( rcvPkt ); // received our own packet
+    ASSERT_TRUE(rcvPkt); // received our own packet
 
     // let's check that we received what was sent
-    EXPECT_EQ(sendPkt->data_len_, rcvPkt->data_len_);
-    EXPECT_EQ(0, memcmp(&sendPkt->data_[0], &rcvPkt->data_[0],
-                        rcvPkt->data_len_) );
+    ASSERT_EQ(sendPkt->getData().size(), rcvPkt->getData().size());
+    EXPECT_EQ(0, memcmp(&sendPkt->getData()[0], &rcvPkt->getData()[0],
+                        rcvPkt->getData().size()));
 
-    EXPECT_EQ(sendPkt->remote_addr_.toText(), rcvPkt->remote_addr_.toText());
+    EXPECT_EQ(sendPkt->getRemoteAddr().toText(), rcvPkt->getRemoteAddr().toText());
 
     // since we opened 2 sockets on the same interface and none of them is multicast,
     // none is preferred over the other for sending data, so we really should not
     // assume the one or the other will always be choosen for sending data. Therefore
     // we should accept both values as source ports.
-    EXPECT_TRUE( (rcvPkt->remote_port_ == 10546) || (rcvPkt->remote_port_ == 10547) );
+    EXPECT_TRUE((rcvPkt->getRemotePort() == 10546) || (rcvPkt->getRemotePort() == 10547));
 
     delete ifacemgr;
 }
@@ -375,7 +332,6 @@ TEST_F(IfaceMgrTest, sendReceive4) {
 
     // testing socket operation in a portable way is tricky
     // without interface detection implemented
-    createLoInterfacesTxt();
 
     NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
 
@@ -427,7 +383,7 @@ TEST_F(IfaceMgrTest, sendReceive4) {
 
     rcvPkt = ifacemgr->receive4();
 
-    ASSERT_TRUE( rcvPkt ); // received our own packet
+    ASSERT_TRUE(rcvPkt); // received our own packet
 
     ASSERT_NO_THROW(
         rcvPkt->unpack();
@@ -466,7 +422,6 @@ TEST_F(IfaceMgrTest, sendReceive4) {
 
 TEST_F(IfaceMgrTest, socket4) {
 
-    createLoInterfacesTxt();
     NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
 
     // Let's assume that every supported OS have lo interface.
@@ -532,6 +487,39 @@ TEST_F(IfaceMgrTest, iface) {
     );
 }
 
+TEST_F(IfaceMgrTest, iface_methods) {
+    IfaceMgr::Iface iface("foo", 1234);
+
+    iface.setHWType(42);
+    EXPECT_EQ(42, iface.getHWType());
+
+    uint8_t mac[IfaceMgr::MAX_MAC_LEN+10];
+    for (int i = 0; i < IfaceMgr::MAX_MAC_LEN + 10; i++)
+        mac[i] = 255 - i;
+
+    EXPECT_EQ("foo", iface.getName());
+    EXPECT_EQ(1234, iface.getIndex());
+
+    // MAC is too long. Exception should be thrown and
+    // MAC length should not be set.
+    EXPECT_THROW(
+        iface.setMac(mac, IfaceMgr::MAX_MAC_LEN + 1),
+        OutOfRange
+    );
+
+    // MAC length should stay not set as excep
+    EXPECT_EQ(0, iface.getMacLen());
+
+    // Setting maximum length MAC should be ok.
+    iface.setMac(mac, IfaceMgr::MAX_MAC_LEN);
+
+    // For some reason constants cannot be used directly in EXPECT_EQ
+    // as this produces linking error.
+    size_t len = IfaceMgr::MAX_MAC_LEN;
+    EXPECT_EQ(len, iface.getMacLen());
+    EXPECT_EQ(0, memcmp(mac, iface.getMac(), iface.getMacLen()));
+}
+
 TEST_F(IfaceMgrTest, socketInfo) {
 
     // check that socketinfo for IPv4 socket is functional
@@ -549,14 +537,13 @@ TEST_F(IfaceMgrTest, socketInfo) {
     EXPECT_EQ(DHCP4_SERVER_PORT + 9, sock2.port_);
 
     // now let's test if IfaceMgr handles socket info properly
-    createLoInterfacesTxt();
     NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
     IfaceMgr::Iface* loopback = ifacemgr->getIface(LOOPBACK);
     ASSERT_TRUE(loopback);
     loopback->addSocket(sock1);
     loopback->addSocket(sock2);
 
-    Pkt6 pkt6(100);
+    Pkt6 pkt6(DHCPV6_REPLY, 123456);
 
     // pkt6 dos not have interface set yet
     EXPECT_THROW(
@@ -565,14 +552,14 @@ TEST_F(IfaceMgrTest, socketInfo) {
     );
 
     // try to send over non-existing interface
-    pkt6.iface_ = "nosuchinterface45";
+    pkt6.setIface("nosuchinterface45");
     EXPECT_THROW(
         ifacemgr->getSocket(pkt6),
         BadValue
     );
 
     // this will work
-    pkt6.iface_ = LOOPBACK;
+    pkt6.setIface(LOOPBACK);
     EXPECT_EQ(9, ifacemgr->getSocket(pkt6));
 
     bool deleted = false;
@@ -679,6 +666,8 @@ size_t parse_mac(const std::string& textMac, uint8_t* mac, size_t macLen) {
 /// of text that ifconfig prints and robustness to handle slight differences
 /// in ifconfig output.
 ///
+/// @todo: Consider using isc::util::str::tokens here.
+///
 /// @param textFile name of a text file that holds output of ifconfig -a
 /// @param ifaces empty list of interfaces to be filled
 void parse_ifconfig(const std::string& textFile, IfaceMgr::IfaceCollection& ifaces) {
@@ -708,6 +697,11 @@ void parse_ifconfig(const std::string& textFile, IfaceMgr::IfaceCollection& ifac
             if (offset == string::npos) {
                 isc_throw(BadValue, "Malformed output of ifconfig");
             }
+
+            // ifconfig in Gentoo prints out eth0: instead of eth0
+            if (line[offset - 1] == ':') {
+                offset--;
+            }
             string name = line.substr(0, offset);
 
             // sadly, ifconfig does not return ifindex
@@ -723,19 +717,41 @@ void parse_ifconfig(const std::string& textFile, IfaceMgr::IfaceCollection& ifac
                 mac = line.substr(offset, string::npos);
                 mac = mac.substr(0, mac.find_first_of(" "));
 
-                iface->mac_len_ = parse_mac(mac, iface->mac_, IfaceMgr::MAX_MAC_LEN);
+                uint8_t buf[IfaceMgr::MAX_MAC_LEN];
+                int mac_len = parse_mac(mac, buf, IfaceMgr::MAX_MAC_LEN);
+                iface->setMac(buf, mac_len);
             }
         }
 
         if (line.find("inet6") != string::npos) {
             // IPv6 address
-            string addr = line.substr(line.find("inet6")+12, string::npos);
+            string addr;
+            if (line.find("addr:", line.find("inet6")) != string::npos) {
+                // Ubuntu style format: inet6 addr: ::1/128 Scope:Host
+                addr = line.substr(line.find("addr:") + 6, string::npos);
+            } else {
+                // Gentoo style format: inet6 fe80::6ef0:49ff:fe96:ba17  prefixlen 64  scopeid 0x20<link>
+                addr = line.substr(line.find("inet6") + 6, string::npos);
+            }
+
+            // handle Ubuntu format: inet6 addr: fe80::f66d:4ff:fe96:58f2/64 Scope:Link
             addr = addr.substr(0, addr.find("/"));
+
+            // handle inet6 fe80::ca3a:35ff:fed4:8f1d  prefixlen 64  scopeid 0x20<link>
+            addr = addr.substr(0, addr.find(" "));
             IOAddress a(addr);
             iface->addAddress(a);
         } else if(line.find("inet") != string::npos) {
             // IPv4 address
-            string addr = line.substr(line.find("inet")+10, string::npos);
+            string addr;
+            if (line.find("addr:", line.find("inet")) != string::npos) {
+                // Ubuntu style format: inet addr:127.0.0.1  Mask:255.0.0.0
+                addr = line.substr(line.find("addr:") + 5, string::npos);
+            } else {
+                // Gentoo style format: inet 10.53.0.4  netmask 255.255.255.0
+                addr = line.substr(line.find("inet") + 5, string::npos);
+            }
+
             addr = addr.substr(0, addr.find_first_of(" "));
             IOAddress a(addr);
             iface->addAddress(a);
@@ -786,7 +802,7 @@ TEST_F(IfaceMgrTest, DISABLED_detectIfaces_linux) {
     // list of interfaces parsed from ifconfig
     IfaceMgr::IfaceCollection parsedIfaces;
 
-    EXPECT_NO_THROW(
+    ASSERT_NO_THROW(
         parse_ifconfig(textFile, parsedIfaces);
     );
     unlink(textFile.c_str());
@@ -845,8 +861,8 @@ TEST_F(IfaceMgrTest, DISABLED_detectIfaces_linux) {
             // skip MAC comparison for loopback as netlink returns MAC
             // 00:00:00:00:00:00 for lo
             if (!detected->flag_loopback_) {
-                ASSERT_EQ(detected->mac_len_, i->mac_len_);
-                EXPECT_EQ(0, memcmp(detected->mac_, i->mac_, i->mac_len_));
+                ASSERT_EQ(detected->getMacLen(), i->getMacLen());
+                EXPECT_EQ(0, memcmp(detected->getMac(), i->getMac(), i->getMacLen()));
             }
 
             EXPECT_EQ(detected->getAddresses().size(), i->getAddresses().size());

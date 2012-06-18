@@ -30,7 +30,7 @@ using namespace isc::util;
 namespace isc {
 namespace dns {
 
-RRClass::RRClass(const string& classstr) {
+RRClass::RRClass(const std::string& classstr) {
     classcode_ = RRParamRegistry::getRegistry().textToClassCode(classstr);
 }
 

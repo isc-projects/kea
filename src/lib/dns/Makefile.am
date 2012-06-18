@@ -88,7 +88,7 @@ BUILT_SOURCES += rdataclass.h rdataclass.cc
 
 lib_LTLIBRARIES = libdns++.la
 
-libdns___la_LDFLAGS = -no-undefined -version-info 1:0:1
+libdns___la_LDFLAGS = -no-undefined -version-info 2:0:0
 
 libdns___la_SOURCES =
 libdns___la_SOURCES += edns.h edns.cc
@@ -140,7 +140,7 @@ rrparamregistry.cc: rrparamregistry-placeholder.cc
 rrclass.h rrtype.h rrparamregistry.cc rdataclass.h rdataclass.cc: Makefile
 	./gen-rdatacode.py
 
-libdns___includedir = $(includedir)/dns
+libdns___includedir = $(includedir)/$(PACKAGE_NAME)/dns
 libdns___include_HEADERS = \
 	edns.h \
 	exceptions.h \

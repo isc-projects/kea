@@ -44,6 +44,11 @@ from isc.log_messages.zonemgr_messages import *
 isc.log.init("b10-zonemgr")
 logger = isc.log.Logger("zonemgr")
 
+# Pending system-wide debug level definitions, the ones we
+# use here are hardcoded for now
+DBG_PROCESS = logger.DBGLVL_TRACE_BASIC
+DBG_COMMANDS = logger.DBGLVL_TRACE_DETAIL
+
 # Constants for debug levels.
 DBG_START_SHUT = logger.DBGLVL_START_SHUT
 DBG_ZONEMGR_COMMAND = logger.DBGLVL_COMMAND
@@ -659,6 +664,7 @@ class Zonemgr:
         return answer
 
     def run(self):
+        logger.debug(DBG_PROCESS, ZONEMGR_STARTED)
         self.running = True
         try:
             while not self._shutdown_event.is_set():

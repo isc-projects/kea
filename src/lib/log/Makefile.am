@@ -2,6 +2,7 @@ SUBDIRS = . compiler tests
 
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
+AM_CPPFLAGS += -DTOP_BUILDDIR=\"${abs_top_builddir}\"
 
 CLEANFILES = *.gcno *.gcda
 
@@ -47,3 +48,4 @@ liblog_la_CXXFLAGS += -Wno-error
 endif
 liblog_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
 liblog_la_LIBADD   = $(LOG4CPLUS_LIBS) $(top_builddir)/src/lib/util/libutil.la
+liblog_la_LDFLAGS = -no-undefined -version-info 1:0:0

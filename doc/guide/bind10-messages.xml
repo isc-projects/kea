@@ -1399,7 +1399,7 @@ Debug message. The RRset is updating its data with this given RRset.
 </varlistentry>
 
 <varlistentry id="CC_ASYNC_READ_FAILED">
-<term>CC_ASYNC_READ_FAILED asynchronous read failed</term>
+<term>CC_ASYNC_READ_FAILED asynchronous read failed (error code = %1)</term>
 <listitem><para>
 This marks a low level error, we tried to read data from the message queue
 daemon asynchronously, but the ASIO library returned an error.
@@ -1604,6 +1604,14 @@ assumed to have failed, and will not be stored.
 <listitem><para>
 The configuration manager daemon was unable to connect to the messaging
 system. The most likely cause is that msgq is not running.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="CFGMGR_CONFIG_FILE">
+<term>CFGMGR_CONFIG_FILE Configuration manager starting with configuration file: %1</term>
+<listitem><para>
+The configuration manager is starting, reading and saving the configuration
+settings to the shown file.
 </para></listitem>
 </varlistentry>
 
@@ -2057,6 +2065,55 @@ in the answer as a result.
 </para></listitem>
 </varlistentry>
 
+<varlistentry id="DATASRC_DATABASE_FINDNSEC3">
+<term>DATASRC_DATABASE_FINDNSEC3 Looking for NSEC3 for %1 in %2 mode</term>
+<listitem><para>
+Debug information. A search in an database data source for NSEC3 that
+matches or covers the given name is being started.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="DATASRC_DATABASE_FINDNSEC3_COVER">
+<term>DATASRC_DATABASE_FINDNSEC3_COVER found a covering NSEC3 for %1: %2</term>
+<listitem><para>
+Debug information. An NSEC3 that covers the given name is found and
+being returned.  The found NSEC3 RRset is also displayed.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="DATASRC_DATABASE_FINDNSEC3_MATCH">
+<term>DATASRC_DATABASE_FINDNSEC3_MATCH found a matching NSEC3 for %1 at label count %2: %3</term>
+<listitem><para>
+Debug information. An NSEC3 that matches (a possibly superdomain of)
+the given name is found and being returned.  When the shown label
+count is smaller than that of the given name, the matching NSEC3 is
+for a superdomain of the given name (see DATASRC_DATABSE_FINDNSEC3_TRYHASH).
+The found NSEC3 RRset is also displayed.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="DATASRC_DATABASE_FINDNSEC3_TRYHASH">
+<term>DATASRC_DATABASE_FINDNSEC3_TRYHASH looking for NSEC3 for %1 at label count %2 (hash %3)</term>
+<listitem><para>
+Debug information. In an attempt of finding an NSEC3 for the give name,
+(a possibly superdomain of) the name is hashed and searched for in the
+NSEC3 name space.  When the shown label count is smaller than that of the
+shown name, the search tries the superdomain name that share the shown
+(higher) label count of the shown name (e.g., for
+www.example.com. with shown label count of 3, example.com. is being
+tried, as "." is 1 label long).
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="DATASRC_DATABASE_FINDNSEC3_TRYHASH_PREV">
+<term>DATASRC_DATABASE_FINDNSEC3_TRYHASH_PREV looking for previous NSEC3 for %1 at label count %2 (hash %3)</term>
+<listitem><para>
+Debug information. An exact match on hash (see
+DATASRC_DATABASE_FINDNSEC3_TRYHASH) was unsuccessful. We get the previous hash
+to that one instead.
+</para></listitem>
+</varlistentry>
+
 <varlistentry id="DATASRC_DATABASE_FIND_RECORDS">
 <term>DATASRC_DATABASE_FIND_RECORDS looking in datasource %1 for record %2/%3/%4</term>
 <listitem><para>
@@ -2189,10 +2246,12 @@ The name and RRtype of the RRset is indicated in the message.
 <varlistentry id="DATASRC_DATABASE_ITERATE_TTL_MISMATCH">
 <term>DATASRC_DATABASE_ITERATE_TTL_MISMATCH TTL values differ for RRs of %1/%2/%3, setting to %4</term>
 <listitem><para>
-While iterating through the zone, the time to live for RRs of the given RRset
-were found to be different. This isn't allowed on the wire and is considered
-an error, so we set it to the lowest value we found (but we don't modify the
-database). The data in database should be checked and fixed.
+While iterating through the zone, the time to live for RRs of the
+given RRset were found to be different. Since an RRset cannot have
+multiple TTLs, we set it to the lowest value we found (but we don't
+modify the database). This is what the client would do when such RRs
+were given in a DNS response according to RFC2181. The data in
+database should be checked and fixed.
 </para></listitem>
 </varlistentry>
 
@@ -3096,6 +3155,21 @@ Debug information. The SQLite data source is closing the database file.
 </para></listitem>
 </varlistentry>
 
+<varlistentry id="DATASRC_SQLITE_COMPATIBLE_VERSION">
+<term>DATASRC_SQLITE_COMPATIBLE_VERSION database schema V%1.%2 not up to date (expecting V%3.%4) but is compatible</term>
+<listitem><para>
+The version of the SQLite3 database schema used to hold the zone data
+is not the latest one - the current version of BIND 10 was written
+with a later schema version in mind.  However, the database is
+compatible with the current version of BIND 10, and BIND 10 will run
+without any problems.
+</para><para>
+Consult the release notes for your version of BIND 10.  Depending on
+the changes made to the database schema, it is possible that improved
+performance could result if the database were upgraded.
+</para></listitem>
+</varlistentry>
+
 <varlistentry id="DATASRC_SQLITE_CONNCLOSE">
 <term>DATASRC_SQLITE_CONNCLOSE Closing sqlite database</term>
 <listitem><para>
@@ -3232,6 +3306,18 @@ source.
 <listitem><para>
 The SQLite data source was asked to provide a NSEC3 record for given zone.
 But it doesn't contain that zone.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="DATASRC_SQLITE_INCOMPATIBLE_VERSION">
+<term>DATASRC_SQLITE_INCOMPATIBLE_VERSION database schema V%1.%2 incompatible with version (V%3.%4) expected</term>
+<listitem><para>
+The version of the SQLite3 database schema used to hold the zone data
+is incompatible with the version expected by BIND 10.  As a result,
+BIND 10 is unable to run using the database file as the data source.
+</para><para>
+The database should be updated using the means described in the BIND
+10 documentation.
 </para></listitem>
 </varlistentry>
 
@@ -5388,6 +5474,29 @@ Please check your installation.
 </para></listitem>
 </varlistentry>
 
+<varlistentry id="XFRIN_AUTH_CONFIG_NAME_PARSER_ERROR">
+<term>XFRIN_AUTH_CONFIG_NAME_PARSER_ERROR Invalid name when parsing Auth configuration: %1</term>
+<listitem><para>
+There was an invalid name when parsing Auth configuration.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="XFRIN_AUTH_CONFIG_RRCLASS_ERROR">
+<term>XFRIN_AUTH_CONFIG_RRCLASS_ERROR Invalid RRClass when parsing Auth configuration: %1</term>
+<listitem><para>
+There was an invalid RR class when parsing Auth configuration.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="XFRIN_AUTH_LOADZONE">
+<term>XFRIN_AUTH_LOADZONE sending Auth loadzone for origin=%1, class=%2, datasrc=%3</term>
+<listitem><para>
+There was a successful zone transfer, and the zone is served by b10-auth
+in the in-memory data source using sqlite3 as a backend. We send the
+"loadzone" command for the zone to b10-auth.
+</para></listitem>
+</varlistentry>
+
 <varlistentry id="XFRIN_AXFR_INCONSISTENT_SOA">
 <term>XFRIN_AXFR_INCONSISTENT_SOA AXFR SOAs are inconsistent for %1: %2 expected, %3 received</term>
 <listitem><para>
@@ -5542,6 +5651,14 @@ was killed.
 </para></listitem>
 </varlistentry>
 
+<varlistentry id="XFRIN_MSGQ_SEND_ERROR_AUTH">
+<term>XFRIN_MSGQ_SEND_ERROR_AUTH error while contacting %1</term>
+<listitem><para>
+There was a problem sending a message to b10-auth. This most likely
+means that the msgq daemon has quit or was killed.
+</para></listitem>
+</varlistentry>
+
 <varlistentry id="XFRIN_MSGQ_SEND_ERROR_ZONE_MANAGER">
 <term>XFRIN_MSGQ_SEND_ERROR_ZONE_MANAGER error while contacting %1</term>
 <listitem><para>
@@ -5570,10 +5687,11 @@ zone name in the configuration.
 </para></listitem>
 </varlistentry>
 
-<varlistentry id="XFRIN_STARTING">
-<term>XFRIN_STARTING starting resolver with command line '%1'</term>
+<varlistentry id="XFRIN_STARTED">
+<term>XFRIN_STARTED xfrin started</term>
 <listitem><para>
-An informational message, this is output when the resolver starts up.
+This informational message is output by xfrin when all initialization
+has been completed and it is entering its main loop.
 </para></listitem>
 </varlistentry>
 
@@ -6001,6 +6119,14 @@ log message.
 </para></listitem>
 </varlistentry>
 
+<varlistentry id="XFROUT_STARTED">
+<term>XFROUT_STARTED xfrout started</term>
+<listitem><para>
+This informational message is output by xfrout when all initialization
+has been completed and it is entering its main loop.
+</para></listitem>
+</varlistentry>
+
 <varlistentry id="XFROUT_STOPPED_BY_KEYBOARD">
 <term>XFROUT_STOPPED_BY_KEYBOARD keyboard interrupt, shutting down</term>
 <listitem><para>
@@ -6254,6 +6380,14 @@ problem is that the daemon is not running.
 <term>ZONEMGR_SHUTDOWN zone manager has shut down</term>
 <listitem><para>
 A debug message, output when the zone manager has shut down completely.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="ZONEMGR_STARTED">
+<term>ZONEMGR_STARTED zonemgr started</term>
+<listitem><para>
+This informational message is output by zonemgr when all initialization
+has been completed and it is entering its main loop.
 </para></listitem>
 </varlistentry>
 

@@ -1,3 +1,6 @@
+*.gcda
+*.gcno
+*.gcov
 *.la
 *.lo
 *.o
@@ -27,3 +30,8 @@ TAGS
 /missing
 /py-compile
 /stamp-h1
+
+/all.info
+/coverage-cpp-html
+/dns++.pc
+/report.info

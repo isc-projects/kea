@@ -93,7 +93,7 @@ pselect (int nfds, fd_set *readfds, fd_set *writefds,
 	return (select(nfds, readfds, writefds, exceptfds, &my_timeout));
 }
 
-#endif /* HAVE_PSELECT */
+#endif /* !HAVE_PSELECT */
 
 /* DHCPv4 defines (to be moved/shared) */
 
@@ -1234,6 +1234,13 @@ getsock6(void)
 	sock = socket(PF_INET6, SOCK_DGRAM, IPPROTO_UDP);
 	if (sock < 0) {
 		perror("socket");
+		exit(1);
+	}
+	ret = bind(sock,
+		   (struct sockaddr *) &localaddr,
+		   sizeof(struct sockaddr_in6));
+	if (ret < 0) {
+		perror("Failed to bind v6 socket to local-link address");
 		exit(1);
 	}
 	/* perform the multicast stuff when the destination is multicast */
