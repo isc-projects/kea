@@ -20,7 +20,7 @@
 <refentry>
 
   <refentryinfo>
-    <date>February 28, 2012</date>
+    <date>June 18, 2012</date>
   </refentryinfo>
 
   <refmeta>
@@ -191,6 +191,7 @@
     <para>
       The <command>b10-ddns</command> daemon was first implemented
       in December 2011 for the ISC BIND 10 project.
+      The first functional version was released in June 2012.
     </para>
   </refsect1>
 </refentry><!--
