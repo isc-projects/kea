@@ -44,6 +44,7 @@ class BaseSocketSessionForwarder;
 }
 namespace datasrc {
 class InMemoryClient;
+class ClientList;
 }
 namespace xfr {
 class AbstractXfroutClient;
@@ -417,6 +418,22 @@ public:
     /// object, it doesn't take ownership of it.
     void setTSIGKeyRing(const boost::shared_ptr<isc::dns::TSIGKeyRing>*
                         keyring);
+
+    /// \brief Replaces the current client list with a different one.
+    ///
+    /// Replaces the internally used client list with a new one.
+    //
+    /// \param list Shared pointer to the client list. Must not be NULL.
+    ///
+    /// \throw BadValue if it is NULL.
+    void setClientList(const boost::shared_ptr<isc::datasrc::ClientList>&
+                       list);
+
+    /// \brief Returns the currently used client list.
+    ///
+    /// Note that the server is constructed with an empty one, so this
+    /// is always valid, even before calling setClientList.
+    const isc::datasrc::ClientList& getClientList() const;
 
 private:
     AuthSrvImpl* impl_;
