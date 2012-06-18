@@ -66,7 +66,8 @@
       to <command>b10-ddns</command>, which handles the rest of
       request processing.
       When the processing is completed <command>b10-ddns</command>
-      will send a response to the client with the processing result.
+      will send a response to the client with the the RCODE set to the
+      value as specified in RFC 2136.
       If the zone has been changed as a result, it will internally
       notify <command>b10-auth</command> and
       <command>b10-xfrout</command> so the new version of the zone will
