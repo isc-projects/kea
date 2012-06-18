@@ -1966,6 +1966,13 @@ what is XfroutClient xfr_client??
       update forwarding for secondary zones.
       If it receives an update request for a secondary zone, it will
       immediately return a response with an RCODE of NOTIMP.
+      <note><simpara>
+	  For feature completeness update forwarding should be
+	  eventually supported.  But right now it's considered a lower
+	  priority task and there is no specific plan of implementing
+	  this feature.
+	  <!-- See Trac #2063 -->
+      </simpara></note>
     </para>
 
     <section>
@@ -1978,7 +1985,9 @@ what is XfroutClient xfr_client??
         In addition, <command>b10-xfrout</command> should also be
         configured to run; otherwise the notification after an update
         (see above) will fail with a timeout, suspending the DDNS
-        service while <command>b10-ddns</command> waits for the response.
+        service while <command>b10-ddns</command> waits for the
+        response (see the description of the DDNS_UPDATE_NOTIFY_FAIL
+        for further details).
         If BIND 10 is already configured to provide authoritative DNS
         service they should normally be configured to run already.
       </para>
