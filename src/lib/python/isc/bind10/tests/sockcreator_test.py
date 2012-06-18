@@ -304,15 +304,12 @@ class WrapTests(unittest.TestCase):
         # Transfer the descriptor
         send_fd(t1.fileno(), p1.fileno())
         p1.close()
+        p1 = socket.fromfd(t2.read_fd(), socket.AF_UNIX, socket.SOCK_STREAM)
 
-        with socket.fromfd(t2.read_fd(), socket.AF_UNIX,
-                           socket.SOCK_STREAM) as p1:
-            # Now, pass some data trough the socket
-            p1.send(b'A')
-            data = p2.recv(1)
-            self.assertEqual(b'A', data)
-
-        p2.close()
+        # Now, pass some data trough the socket
+        p1.send(b'A')
+        data = p2.recv(1)
+        self.assertEqual(b'A', data)
 
         # Test the wrapping didn't hurt the socket's usual methods
         t1.send(b'B')
@@ -322,6 +319,8 @@ class WrapTests(unittest.TestCase):
         data = t1.recv(1)
         self.assertEqual(b'C', data)
 
+        p1.close()
+        p2.close()
         t1.close()
         t2.close()
 
