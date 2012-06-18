@@ -753,8 +753,9 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
             # (Any idea how to simulate this in test?)
             sock_domain = socket.AF_INET
 
-        with socket.fromfd(sock_fd, sock_domain, socket.SOCK_STREAM) as sock:
-            peer = sock.getpeername()
+        sock = socket.fromfd(sock_fd, sock_domain, socket.SOCK_STREAM)
+        peer = sock.getpeername()
+        sock.close()
 
         # Identify the correct socket family.  Due to the above "trick",
         # we cannot simply use sock.family.
