@@ -319,6 +319,9 @@ class WrapTests(unittest.TestCase):
         data = t1.recv(1)
         self.assertEqual(b'C', data)
 
+        # Explicitly close temporary socket pair as the Python
+        # interpreter expects it.  It may not be 100% exception safe,
+        # but since this is only for tests we prefer brevity.
         p1.close()
         p2.close()
         t1.close()
