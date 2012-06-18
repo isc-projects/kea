@@ -32,7 +32,18 @@ cnt_value1=0
 cnt_value2=0
 cnt_value3=0
 
-echo "I:Checking b10-auth is working by default ($n)"
+echo "I:Checking b10-auth is disabled by default ($n)"
+$DIG +norec @10.53.0.1 -p 53210 ns.example.com. A > /dev/null && status=1
+if [ $status != 0 ]; then echo "I:failed"; fi
+n=`expr $n + 1`
+
+echo "I:Starting b10-auth and checking that it works ($n)"
+echo 'config add Boss/components b10-auth
+config set Boss/components/b10-auth { "special": "auth", "kind": "needed" }
+config commit
+quit
+' | $RUN_BINDCTL \
+	--csv-file-dir=$BINDCTL_CSV_DIR 2>&1 > /dev/null || status=1
 $DIG +norec @10.53.0.1 -p 53210 ns.example.com. A >dig.out.$n || status=1
 # perform a simple check on the output (digcomp would be too much for this)
 grep 192.0.2.1 dig.out.$n > /dev/null || status=1
@@ -46,9 +57,9 @@ sleep 2
 echo 'Stats show
 ' | $RUN_BINDCTL \
 	--csv-file-dir=$BINDCTL_CSV_DIR > bindctl.out.$n || status=1
-# the server should have received 1 UDP and 1 TCP queries (TCP query was
-# sent from the server startup script)
-cnt_value1=`expr $cnt_value1 + 1`
+# the server should have received 1 UDP and 0 TCP queries (the server
+# startup script no longer sends any TCP queries)
+cnt_value1=`expr $cnt_value1 + 0`
 cnt_value2=`expr $cnt_value2 + 1`
 cnt_value3=`expr $cnt_value1 + $cnt_value2`
 grep $cnt_name1".*\<"$cnt_value1"\>" bindctl.out.$n > /dev/null || status=1
@@ -64,7 +75,7 @@ quit
 ' | $RUN_BINDCTL \
 	--csv-file-dir=$BINDCTL_CSV_DIR 2>&1 > /dev/null || status=1
 # dig should exit with a failure code.
-$DIG +tcp +norec @10.53.0.1 -p 53210 ns.example.com. A && status=1
+$DIG +tcp +norec @10.53.0.1 -p 53210 ns.example.com. A > /dev/null && status=1
 if [ $status != 0 ]; then echo "I:failed"; fi
 n=`expr $n + 1`
 
@@ -76,6 +87,7 @@ quit
 ' | $RUN_BINDCTL \
 	--csv-file-dir=$BINDCTL_CSV_DIR 2>&1 > /dev/null || status=1
 $DIG +norec @10.53.0.1 -p 53210 ns.example.com. A >dig.out.$n || status=1
+# perform a simple check on the output (digcomp would be too much for this)
 grep 192.0.2.1 dig.out.$n > /dev/null || status=1
 if [ $status != 0 ]; then echo "I:failed"; fi
 n=`expr $n + 1`

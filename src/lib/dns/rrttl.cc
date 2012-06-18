@@ -28,7 +28,7 @@ using namespace isc::util;
 namespace isc {
 namespace dns {
 
-RRTTL::RRTTL(const string& ttlstr) {
+RRTTL::RRTTL(const std::string& ttlstr) {
     // Some systems (at least gcc-4.4) flow negative values over into
     // unsigned integer, where older systems failed to parse. We want
     // that failure here, so we extract into int64 and check the value

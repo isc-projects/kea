@@ -406,6 +406,8 @@ TEST_F(MessageTest, clearQuestionSection) {
 
     message_render.clearSection(Message::SECTION_QUESTION);
     EXPECT_EQ(0, message_render.getRRCount(Message::SECTION_QUESTION));
+    EXPECT_TRUE(message_render.beginQuestion() ==
+                message_render.endQuestion());
 }
 
 
@@ -466,6 +468,13 @@ TEST_F(MessageTest, clearAdditionalSection) {
     EXPECT_EQ(0, message_render.getRRCount(Message::SECTION_ADDITIONAL));
 }
 
+TEST_F(MessageTest, badClearSection) {
+    // attempt of clearing a message in the parse mode.
+    EXPECT_THROW(message_parse.clearSection(Message::SECTION_QUESTION),
+                 InvalidMessageOperation);
+    // attempt of clearing out-of-range section
+    EXPECT_THROW(message_render.clearSection(bogus_section), OutOfRange);
+}
 
 TEST_F(MessageTest, badBeginSection) {
     // valid cases are tested via other tests

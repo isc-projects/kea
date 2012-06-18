@@ -15,12 +15,13 @@
 #ifndef __SOCKADDR_UTIL_H_
 #define __SOCKADDR_UTIL_H_ 1
 
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 
 #include <cassert>
 
-// This definitions in this file are for the convenience of internal
+// These definitions in this file are for the convenience of internal
 // implementation and test code, and are not intended to be used publicly.
 // The namespace "internal" indicates the intent.
 

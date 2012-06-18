@@ -1,3 +1,166 @@
+445.	[bug]*		jinmei
+	The pre-install check for older SQLite3 DB now refers to the DB
+	file with the prefix of DESTDIR.  This ensures that 'make install'
+	with specific DESTDIR works regardless of the version of the DB
+	file installed in the default path.
+	(Trac #1982, git 380b3e8ec02ef45555c0113ee19329fe80539f71)
+
+444.	[bug]		jinmei
+	libdatasrc: fixed ZoneFinder for database-based data sources so
+	that it handles type DS query correctly, i.e., treating it as
+	authoritative data even on a delegation point.
+	(Trac #1912, git 7130da883f823ce837c10cbf6e216a15e1996e5d)
+
+443.    [func]*		muks
+	The logger now uses a lockfile named `logger_lockfile' that is
+	created in the local state directory to mutually separate
+	individual logging operations from various processes. This is
+	done so that log messages from different processes don't mix
+	together in the middle of lines. The `logger_lockfile` is created
+	with file permission mode 0660. BIND 10's local state directory
+	should be writable and perhaps have g+s mode bit so that the
+	`logger_lockfile` can be opened by a group of processes.
+	(Trac #1704, git ad8d445dd0ba208107eb239405166c5c2070bd8b)
+
+442.	[func]		tomek
+	b10-dhcp4, b10-dhcp6: Both DHCP servers now accept -p parameter
+	that can be used to specify listening port number. This capability
+	is useful only for testing purposes.
+	(Trac #1503, git e60af9fa16a6094d2204f27c40a648fae313bdae)
+
+441.	[func]		tomek
+	libdhcp++: Stub interface detection (support for interfaces.txt
+	file) was removed.
+	(Trac #1281, git 900fc8b420789a8c636bcf20fdaffc60bc1041e0)
+
+bind10-devel-20120517 released on May 17. 2012
+
+440.	[func]		muks
+	bindctl: improved some error messages so they will be more
+	helpful.  Those include the one when the zone name is unspecified
+	or the name is invalid in the b10-auth configuration.
+	(Trac #1627, git 1a4d0ae65b2c1012611f4c15c5e7a29d65339104)
+
+439.	[func]		team
+	The in-memory data source can now load zones from the
+	sqlite3 data source, so that zones stored in the database
+	(and updated for example by xfrin) can be served from memory.
+	(Trac #1789,#1790,#1792,#1793,#1911,
+	git 93f11d2a96ce4dba9308889bdb9be6be4a765b27)
+
+438.	[bug]		naokikambe
+	b10-stats-httpd now sends the system a notification that
+	it is shutting down if it encounters a fatal error during
+	startup.
+	(Trac #1852, git a475ef271d4606f791e5ed88d9b8eb8ed8c90ce6)
+
+437.	[build]		jinmei
+	Building BIND 10 may fail on MacOS if Python has been
+	installed via Homebrew unless --without-werror is specified.
+	The configure script now includes a URL that explains this
+	issue when it detects failure that is possibly because of
+	this problem.
+	(Trac #1907, git 0d03b06138e080cc0391fb912a5a5e75f0f97cec)
+
+436.	[bug]		jelte
+	The --config-file option now works correctly with relative paths if
+	--data-path is not given.
+	(Trac #1889, git ce7d1aef2ca88084e4dacef97132337dd3e50d6c)
+
+435.	[func]		team
+	The in-memory datasource now supports NSEC-signed zones.
+	(Trac #1802-#1810, git 2f9aa4a553a05aa1d9eac06f1140d78f0c99408b)
+
+434.	[func]		tomek
+	libdhcp++: Linux interface detection refactored. The code is
+	now cleaner. Tests better support certain versions of ifconfig.
+	(Trac #1528, git 221f5649496821d19a40863e53e72685524b9ab2)
+
+433.	[func]		tomek
+	libdhcp++: Option6 and Pkt6 now follow the same design as
+	options and packet for DHCPv4. General code refactoring after
+	end of 2011 year release.
+	(Trac #1540, git a40b6c665617125eeb8716b12d92d806f0342396)
+
+432.	[bug]*		muks
+	BIND 10 now installs its header files in a BIND 10 specific
+	sub-directory in the install prefix.
+	(Trac #1930, git fcf2f08db9ebc2198236bfa25cf73286821cba6b)
+
+431.	[func]*		muks
+	BIND 10 no longer starts b10-stats-httpd by default.
+	(Trac #1885, git 5c8bbd7ab648b6b7c48e366e7510dedca5386f6c)
+
+430.	[bug]		jelte
+	When displaying configuration data, bindctl no longer treats
+	optional list items as an error, but shows them as an empty list.
+	(Trac #1520, git 0f18039bc751a8f498c1f832196e2ecc7b997b2a)
+
+429.	[func]		jelte
+	Added an 'execute' component to bindctl, which executes either a set
+	of commands from a file or a built-in set of commands. Currently,
+	only 'init_authoritative_server' is provided as a built-in set, but
+	it is expected that more will be added later.
+	(Trac #1843, git 551657702a4197ef302c567b5c0eaf2fded3e121)
+
+428.	[bug]		marcin
+	perfdhcp: bind to local address to allow reception of
+	replies from IPv6 DHCP servers.
+	(Trac #1908, git 597e059afaa4a89e767f8f10d2a4d78223af3940)
+
+427.	[bug]		jinmei
+	libdatasrc, b10-xfrin: the zone updater for database-based data
+	sources now correctly distinguishes NSEC3-related RRs (NSEC3 and
+	NSEC3-covering RRSIG) from others, and the SQLite3 implementation
+	now manipulates them in the separate table for the NSEC3 namespace.
+	As a result b10-xfrin now correctly updates NSEC3-signed zones by
+	inbound zone transfers.
+	(Trac #1781,#1788,#1891, git 672f129700dae33b701bb02069cf276238d66be3)
+
+426.	[bug]		vorner
+	The NSEC3 records are now included when transferring a
+	signed zone out.
+	(Trac #1782, git 36efa7d10ecc4efd39d2ce4dfffa0cbdeffa74b0)
+
+425.	[func]*		muks
+	Don't autostart b10-auth, b10-xfrin, b10-xfrout and b10-zonemgr in
+	the default configuration.
+	(Trac #1818, git 31de885ba0409f54d9a1615eff5a4b03ed420393)
+
+424.	[bug]		jelte
+	Fixed a bug in bindctl where in some cases, configuration settings
+	in a named set could disappear, if a child element is modified.
+	(Trac #1491, git 00a36e752802df3cc683023d256687bf222e256a)
+
+423.	[bug]		jinmei
+	The database based zone iterator now correctly resets mixed TTLs
+	of the same RRset (when that happens) to the lowest one.  The
+	previous implementation could miss lower ones if it appears in a
+	later part of the RRset.
+	(part of Trac #1791, git f1f0bc00441057e7050241415ee0367a09c35032)
+
+422.	[bug]		jinmei
+	The database based zone iterator now separates RRSIGs of the same
+	name and type but for different covered types.
+	(part of Trac #1791, git b4466188150a50872bc3c426242bc7bba4c5f38d)
+
+421.	[build]		jinmei
+	Made sure BIND 10 can be built with clang++ 3.1.  (It failed on
+	MacOS 10.7 using Xcode 4.3, but it's more likely to be a matter of
+	clang version.)
+	(Trac #1773, git ceaa247d89ac7d97594572bc17f005144c5efb8d)
+
+420.	[bug]*		jinmei, stephen
+	Updated the DB schema used in the SQLite3 data source so it can
+	use SQL indices more effectively.  The previous schema had several
+	issues in this sense and could be very slow for some queries on a
+	very large zone (especially for negative answers).  This change
+	requires a major version up of the schema; use b10-dbutil to
+	upgrade existing database files.  Note: 'make install' will fail
+	unless old DB files installed in the standard location have been
+	upgraded.
+	(Trac #324, git 8644866497053f91ada4e99abe444d7876ed00ff)
+
 419.	[bug]		jelte
 	JSON handler has been improved; escaping now works correctly
 	(including quotes in strings), and it now rejects more types of
@@ -107,7 +270,7 @@ bind10-devel-20120329 released on March 29, 2012
 	providing result for random instance.
 	(Trac #1751, git 3285353a660e881ec2b645e1bc10d94e5020f357)
 
-403.	[build]*	jelte
+403.	[build]*		jelte
 	The configure option for botan (--with-botan=PATH) is replaced by
 	--with-botan-config=PATH, which takes a full path to a botan-config
 	script, instead of the botan 'install' directory. Also, if not

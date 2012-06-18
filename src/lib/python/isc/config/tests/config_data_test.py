@@ -186,6 +186,10 @@ class TestConfigData(unittest.TestCase):
         spec_part = find_spec_part(config_spec, "item6/value1")
         self.assertEqual({'item_name': 'value1', 'item_type': 'string', 'item_optional': True, 'item_default': 'default'}, spec_part)
 
+        # make sure the returned data is a copy
+        spec_part['item_default'] = 'foo'
+        self.assertNotEqual(spec_part, find_spec_part(config_spec, "item6/value1"))
+
     def test_find_spec_part_lists(self):
         # A few specific tests for list data
         module_spec = isc.config.module_spec_from_file(self.data_path +
@@ -420,7 +424,14 @@ class TestMultiConfigData(unittest.TestCase):
         self.mcd.set_value("Spec2/item1", 2)
         local_changes = self.mcd.get_local_changes()
         self.assertEqual({"Spec2": { "item1": 2}}, local_changes)
-        
+
+    def test_set_local_changes(self):
+        module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec2.spec")
+        self.mcd.set_specification(module_spec)
+        self.assertEqual({}, self.mcd.get_local_changes())
+        new_local_changes = {"Spec2": { "item1": 2}}
+        self.mcd.set_local_changes(new_local_changes)
+        self.assertEqual(new_local_changes, self.mcd.get_local_changes())
 
     def test_clear_local_changes(self):
         module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec2.spec")
@@ -585,8 +596,10 @@ class TestMultiConfigData(unittest.TestCase):
 
         module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec24.spec")
         self.mcd.set_specification(module_spec)
-        self.assertRaises(isc.cc.data.DataNotFoundError,
-                          self.mcd.get_value_maps, "/Spec24/item", 4)
+        # optional list item that is not set should return as empty list
+        maps = self.mcd.get_value_maps("/Spec24/item", 4)
+        self.assertEqual([{'default': False, 'type': 'list', 'name': 'Spec24/item', 'value': [], 'modified': False}], maps)
+
         self.mcd._set_current_config({ "Spec24": { "item": [] } })
         maps = self.mcd.get_value_maps("/Spec24/item")
         self.assertEqual([{'default': False, 'modified': False, 'name': 'Spec24/item', 'type': 'list', 'value': []}], maps)
@@ -720,6 +733,12 @@ class TestMultiConfigData(unittest.TestCase):
         config_items = self.mcd.get_config_item_list("Spec2", True)
         self.assertEqual(['Spec2/item1', 'Spec2/item2', 'Spec2/item3', 'Spec2/item4', 'Spec2/item5', 'Spec2/item6/value1', 'Spec2/item6/value2'], config_items)
 
+    def test_is_named_set(self):
+        module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec32.spec")
+        self.mcd.set_specification(module_spec)
+        spec_part = self.mcd.find_spec_part("Spec32/named_set_item")
+        self.assertTrue(spec_part_is_named_set(spec_part))
+
     def test_get_config_item_list_named_set(self):
         config_items = self.mcd.get_config_item_list()
         self.assertEqual([], config_items)
@@ -737,6 +756,20 @@ class TestMultiConfigData(unittest.TestCase):
                           'Spec32/named_set_item/aabb',
                           'Spec32/named_set_item/bbbb',
                          ], config_items)
+
+    def test_set_named_set_nonlocal(self):
+        # Test whether a default named set is copied to local if a subitem
+        # is changed, and that other items in the set do not get lost
+        module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + 'spec32.spec')
+        self.mcd.set_specification(module_spec)
+        value, status = self.mcd.get_value('Spec32/named_set_item')
+        self.assertEqual({'a': 1, 'b': 2}, value)
+        self.assertEqual(MultiConfigData.DEFAULT, status)
+
+        self.mcd.set_value('Spec32/named_set_item/b', 3)
+        value, status = self.mcd.get_value('Spec32/named_set_item')
+        self.assertEqual({'a': 1, 'b': 3}, value)
+        self.assertEqual(MultiConfigData.LOCAL, status)
 
 if __name__ == '__main__':
     unittest.main()

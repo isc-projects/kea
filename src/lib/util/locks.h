@@ -16,7 +16,7 @@
 /// It also contains code to use boost/threads locks:
 ///
 ///
-/// All locks are dummy classes that don't actually do anything. At this moment, 
+/// All locks are dummy classes that don't actually do anything. At this moment,
 /// only the very minimal set of methods that we actually use is defined.
 ///
 /// Note that we need to include <config.h> in our .cc files for that

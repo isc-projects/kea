@@ -182,12 +182,6 @@ struct UDPServer::Data {
 ///
 /// The constructor. It just creates new internal state object
 /// and lets it handle the initialization.
-UDPServer::UDPServer(io_service& io_service, const ip::address& addr,
-                     const uint16_t port, SimpleCallback* checkin,
-                     DNSLookup* lookup, DNSAnswer* answer) :
-    data_(new Data(io_service, addr, port, checkin, lookup, answer))
-{ }
-
 UDPServer::UDPServer(io_service& io_service, int fd, int af,
                      SimpleCallback* checkin, DNSLookup* lookup,
                      DNSAnswer* answer) :

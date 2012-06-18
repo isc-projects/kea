@@ -2,11 +2,12 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.59])
-AC_INIT(bind10-devel, 20120316, bind10-dev@isc.org)
+AC_INIT(bind10-devel, 20120405, bind10-dev@isc.org)
 AC_CONFIG_SRCDIR(README)
 AM_INIT_AUTOMAKE
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])dnl be backward compatible
 AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_MACRO_DIR([m4macros])
 
 # Checks for programs.
 AC_PROG_CXX
@@ -361,7 +362,7 @@ if test $werror_ok = 1; then
 		 PYTHON_CXXFLAGS="${PYTHON_CXXFLAGS} -Wno-unused-parameter"
 		 AC_SUBST(PYTHON_CXXFLAGS)
 		],
-		[AC_MSG_ERROR([Can't compile against Python.h])]
+		[AC_MSG_ERROR([Can't compile against Python.h.  If you're using MacOS X and have installed Python with Homebrew, see http://bind10.isc.org/wiki/SystemNotesMacOSX])]
                 )
                 ]
 	)
@@ -406,9 +407,9 @@ case $system in
       OS_TYPE="BSD"
       CPPFLAGS="$CPPFLAGS -DOS_BSD"
       ;;
-    Solaris)
+    SunOS)
       OS_TYPE="Solaris"
-      CPPFLAGS="$CPPFLAGS -DOS_SOLARIS"
+      CPPFLAGS="$CPPFLAGS -DOS_SUN"
       ;;
     *)
       OS_TYPE="Unknown"
@@ -924,29 +925,6 @@ CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/ext/coroutine"
 #
 # Disable threads: Currently we don't use them.
 CPPFLAGS="$CPPFLAGS -DASIO_DISABLE_THREADS=1"
-#
-# kqueue portability: ASIO uses kqueue by default if it's available (it's
-# generally available in BSD variants).  Unfortunately, some public
-# implementation of kqueue forces a conversion from a pointer to an integer,
-# which is prohibited in C++ unless reinterpret_cast, C++'s most evil beast
-# (and ASIO doesn't use it anyway) is used.  This will cause build error for
-# some of our C++ files including ASIO header files.  The following check
-# detects such cases and tells ASIO not to use kqueue if so.
-AC_CHECK_FUNC(kqueue, ac_cv_have_kqueue=yes, ac_cv_have_kqueue=no)
-if test "X$ac_cv_have_kqueue" = "Xyes"; then
-	AC_MSG_CHECKING([whether kqueue EV_SET compiles in C++])
-	AC_TRY_COMPILE([
-#include <sys/types.h>
-#include <sys/param.h>
-#include <sys/event.h>],
-[char* udata;
-struct kevent kevent;
-EV_SET(&kevent, 0, 0, 0, 0, 0, udata);],
-	[AC_MSG_RESULT(yes)],
-	[AC_MSG_RESULT([no, disable kqueue for ASIO])
-	 CPPFLAGS="$CPPFLAGS -DASIO_DISABLE_KQUEUE=1"
-	])
-fi
 
 # Check for functions that are not available on all platforms
 AC_CHECK_FUNCS([pselect])
@@ -998,6 +976,11 @@ AC_ARG_ENABLE(install-configurations,
   [do not install configuration])], install_configurations=$enableval, install_configurations=yes)
 
 AM_CONDITIONAL(INSTALL_CONFIGURATIONS, test x$install_configurations = xyes || test x$install_configurations = xtrue)
+
+AC_ARG_ENABLE(logger-checks, [AC_HELP_STRING([--enable-logger-checks],
+  [check logger messages [default=no]])], enable_logger_checks=$enableval, enable_logger_checks=no)
+AM_CONDITIONAL(ENABLE_LOGGER_CHECKS, test x$enable_logger_checks != xno)
+AM_COND_IF([ENABLE_LOGGER_CHECKS], [AC_DEFINE([ENABLE_LOGGER_CHECKS], [1], [Check logger messages?])])
 
 AC_CONFIG_FILES([Makefile
                  doc/Makefile
@@ -1084,6 +1067,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/python/isc/testutils/Makefile
                  src/lib/python/isc/bind10/Makefile
                  src/lib/python/isc/bind10/tests/Makefile
+                 src/lib/python/isc/ddns/Makefile
+                 src/lib/python/isc/ddns/tests/Makefile
                  src/lib/python/isc/xfrin/Makefile
                  src/lib/python/isc/xfrin/tests/Makefile
                  src/lib/python/isc/server_common/Makefile
@@ -1137,9 +1122,10 @@ AC_CONFIG_FILES([Makefile
                  tests/tools/badpacket/Makefile
                  tests/tools/badpacket/tests/Makefile
                  tests/tools/perfdhcp/Makefile
+                 tests/tools/perfdhcp/tests/Makefile
+                 dns++.pc
                ])
 AC_OUTPUT([doc/version.ent
-           compatcheck/sqlite3-difftbl-check.py
            src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/cfgmgr/tests/b10-cfgmgr_test.py
            src/bin/cmdctl/cmdctl.py
@@ -1201,6 +1187,7 @@ AC_OUTPUT([doc/version.ent
            src/lib/log/tests/destination_test.sh
            src/lib/log/tests/init_logger_test.sh
            src/lib/log/tests/local_file_test.sh
+           src/lib/log/tests/logger_lock_test.sh
            src/lib/log/tests/severity_test.sh
            src/lib/log/tests/tempdir.h
            src/lib/util/python/mkpywrapper.py
@@ -1225,7 +1212,6 @@ AC_OUTPUT([doc/version.ent
            tests/system/ixfr/in-3/setup.sh
            tests/system/ixfr/in-4/setup.sh
           ], [
-           chmod +x compatcheck/sqlite3-difftbl-check.py
            chmod +x src/bin/cmdctl/run_b10-cmdctl.sh
            chmod +x src/bin/xfrin/run_b10-xfrin.sh
            chmod +x src/bin/xfrout/run_b10-xfrout.sh
@@ -1250,6 +1236,7 @@ AC_OUTPUT([doc/version.ent
            chmod +x src/lib/log/tests/destination_test.sh
            chmod +x src/lib/log/tests/init_logger_test.sh
            chmod +x src/lib/log/tests/local_file_test.sh
+           chmod +x src/lib/log/tests/logger_lock_test.sh
            chmod +x src/lib/log/tests/severity_test.sh
            chmod +x src/lib/util/python/mkpywrapper.py
            chmod +x src/lib/util/python/gen_wiredata.py
@@ -1307,6 +1294,7 @@ Developer:
   Google Tests:  $gtest_path
   C++ Code Coverage: $USE_LCOV
   Python Code Coverage: $USE_PYCOVERAGE
+  Logger checks: $enable_logger_checks
   Generate Manuals:  $enable_man
 
 END

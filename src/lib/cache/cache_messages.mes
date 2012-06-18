@@ -66,13 +66,13 @@ is created.
 Debug message. The resolver cache is looking up the deepest known nameserver,
 so the resolution doesn't have to start from the root.
 
+% CACHE_RESOLVER_INIT initializing resolver cache for class %1
+Debug message. The resolver cache is being created for this given class.
+
 % CACHE_RESOLVER_INIT_INFO initializing resolver cache for class %1
 Debug message, the resolver cache is being created for this given class. The
 difference from CACHE_RESOLVER_INIT is only in different format of passed
 information, otherwise it does the same.
-
-% CACHE_RESOLVER_INIT initializing resolver cache for class %1
-Debug message. The resolver cache is being created for this given class.
 
 % CACHE_RESOLVER_LOCAL_MSG message for %1/%2 found in local zone data
 Debug message. The resolver cache found a complete message for the user query

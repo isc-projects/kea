@@ -31,9 +31,7 @@ common_sources = run_unittests.cc
 common_sources += $(top_srcdir)/src/lib/dns/tests/unittest_util.h
 common_sources += $(top_srcdir)/src/lib/dns/tests/unittest_util.cc
 
-common_ldadd  = $(GTEST_LDADD)
-common_ldadd += $(SQLITE_LIBS)
-common_ldadd += $(top_builddir)/src/lib/datasrc/libdatasrc.la
+common_ldadd = $(top_builddir)/src/lib/datasrc/libdatasrc.la
 common_ldadd += $(top_builddir)/src/lib/dns/libdns++.la
 common_ldadd += $(top_builddir)/src/lib/util/libutil.la
 common_ldadd += $(top_builddir)/src/lib/log/liblog.la
@@ -41,6 +39,7 @@ common_ldadd += $(top_builddir)/src/lib/exceptions/libexceptions.la
 common_ldadd += $(top_builddir)/src/lib/cc/libcc.la
 common_ldadd += $(top_builddir)/src/lib/testutils/libtestutils.la
 common_ldadd += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
+common_ldadd += $(GTEST_LDADD) $(SQLITE_LIBS)
 
 # The general tests
 run_unittests_SOURCES = $(common_sources)
@@ -48,6 +47,7 @@ run_unittests_SOURCES += datasrc_unittest.cc
 run_unittests_SOURCES += static_unittest.cc
 run_unittests_SOURCES += query_unittest.cc
 run_unittests_SOURCES += cache_unittest.cc
+run_unittests_SOURCES += test_client.h test_client.cc
 run_unittests_SOURCES += test_datasrc.h test_datasrc.cc
 run_unittests_SOURCES += rbtree_unittest.cc
 run_unittests_SOURCES += logger_unittest.cc
@@ -58,6 +58,8 @@ run_unittests_SOURCES += sqlite3_accessor_unittest.cc
 run_unittests_SOURCES += memory_datasrc_unittest.cc
 run_unittests_SOURCES += rbnode_rrset_unittest.cc
 run_unittests_SOURCES += zone_finder_context_unittest.cc
+run_unittests_SOURCES += faked_nsec3.h faked_nsec3.cc
+run_unittests_SOURCES += client_list_unittest.cc
 
 # We need the actual module implementation in the tests (they are not part
 # of libdatasrc)
@@ -105,9 +107,11 @@ EXTRA_DIST += testdata/mkbrokendb.c
 EXTRA_DIST += testdata/root.zone
 EXTRA_DIST += testdata/rrset_toWire1
 EXTRA_DIST += testdata/rrset_toWire2
-EXTRA_DIST += testdata/rwtest.sqlite3
 EXTRA_DIST += testdata/sql1.example.com.signed
 EXTRA_DIST += testdata/sql2.example.com.signed
 EXTRA_DIST += testdata/test-root.sqlite3
 EXTRA_DIST += testdata/test.sqlite3
-EXTRA_DIST += testdata/test.sqlite3.nodiffs
+EXTRA_DIST += testdata/new_minor_schema.sqlite3
+EXTRA_DIST += testdata/newschema.sqlite3
+EXTRA_DIST += testdata/oldschema.sqlite3
+EXTRA_DIST += testdata/static.zone

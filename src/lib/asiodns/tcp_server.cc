@@ -47,28 +47,6 @@ namespace asiodns {
 /// The following functions implement the \c TCPServer class.
 ///
 /// The constructor
-TCPServer::TCPServer(io_service& io_service,
-                     const ip::address& addr, const uint16_t port, 
-                     const SimpleCallback* checkin,
-                     const DNSLookup* lookup,
-                     const DNSAnswer* answer) :
-    io_(io_service), done_(false),
-    checkin_callback_(checkin), lookup_callback_(lookup),
-    answer_callback_(answer)
-{
-    tcp::endpoint endpoint(addr, port);
-    acceptor_.reset(new tcp::acceptor(io_service));
-    acceptor_->open(endpoint.protocol());
-    // Set v6-only (we use a separate instantiation for v4,
-    // otherwise asio will bind to both v4 and v6
-    if (addr.is_v6()) {
-        acceptor_->set_option(ip::v6_only(true));
-    }
-    acceptor_->set_option(tcp::acceptor::reuse_address(true));
-    acceptor_->bind(endpoint);
-    acceptor_->listen();
-}
-
 TCPServer::TCPServer(io_service& io_service, int fd, int af,
                      const SimpleCallback* checkin,
                      const DNSLookup* lookup,

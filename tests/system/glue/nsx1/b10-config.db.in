@@ -2,5 +2,15 @@
  "Auth": {
    "listen_on": [{"address": "10.53.0.1", "port": 53210}],
    "database_file": "@abs_builddir@/zone.sqlite3"
+ },
+ "Boss": {
+   "components": {
+     "b10-auth": {"kind": "needed", "special": "auth" },
+     "b10-xfrin": { "address": "Xfrin", "kind": "dispensable" },
+     "b10-xfrout": { "address": "Xfrout", "kind": "dispensable" },
+     "b10-zonemgr": { "address": "Zonemgr", "kind": "dispensable" },
+     "b10-stats": { "address": "Stats", "kind": "dispensable" },
+     "b10-cmdctl": { "special": "cmdctl", "kind": "needed" }
+   }
  }
 }

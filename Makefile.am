@@ -1,3 +1,7 @@
+ACLOCAL_AMFLAGS = -I m4macros ${ACLOCAL_FLAGS}
+# ^^^^^^^^ This has to be the first line and cannot come later in this
+# Makefile.am due to some bork in some versions of autotools.
+
 SUBDIRS = compatcheck doc src tests
 USE_LCOV=@USE_LCOV@
 LCOV=@LCOV@
@@ -11,6 +15,8 @@ DISTCHECK_CONFIGURE_FLAGS = --disable-install-configurations
 
 # Use same --with-gtest flag if set
 DISTCHECK_CONFIGURE_FLAGS += $(DISTCHECK_GTEST_CONFIGURE_FLAG)
+
+dist_doc_DATA = AUTHORS COPYING ChangeLog README
 
 clean-cpp-coverage:
 	@if [ $(USE_LCOV) = yes ] ; then \
@@ -398,3 +404,8 @@ EXTRA_DIST += ext/asio/asio/system_error.hpp
 EXTRA_DIST += ext/asio/asio/deadline_timer.hpp
 EXTRA_DIST += ext/asio/asio/stream_socket_service.hpp
 EXTRA_DIST += ext/coroutine/coroutine.h
+
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = dns++.pc
+
+CLEANFILES = $(abs_top_builddir)/logger_lockfile
