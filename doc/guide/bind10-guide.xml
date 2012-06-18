@@ -2070,7 +2070,8 @@ what is XfroutClient xfr_client??
             <term>class</term>
             <listitem>
               <simpara>The RR class of the zone
-                (normally <quote>IN</quote>)</simpara>
+                (normally <quote>IN</quote>, and in that case
+		can be omitted in configuration)</simpara>
             </listitem>
           </varlistentry>
           <varlistentry>
@@ -2096,10 +2097,10 @@ what is XfroutClient xfr_client??
 &gt; <userinput>config add DDNS/zones</userinput>
 &gt; <userinput>config set DDNS/zones[0]/origin example.org</userinput>
 &gt; <userinput>config set DDNS/zones[0]/class IN</userinput>
+(Note: "class" can be omitted)
 &gt; <userinput>config add DDNS/zones[0]/update_acl {"action": "ACCEPT", "key": "key.example.org"}</userinput>
 &gt; <userinput>config commit</userinput>
 </screen>
-      (The <quote>class</quote> can be omitted).
       The TSIG key must be configured system wide
       (see <xref linkend="xfrout"/>.)
       </para>
