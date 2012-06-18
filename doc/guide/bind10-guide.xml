@@ -2142,6 +2142,14 @@ DDNS/zones[0]/update_acl[1]     {"action": "ACCEPT", "from": "::1", "key": "key.
       </simpara></note>
 
       <para>
+	The ACL rules will be checked in the listed order, and the
+	first matching one will apply.
+	If none of the rules matches, the default rule will apply,
+	which is rejecting any requests in the case of
+	<command>b10-ddns</command>.
+      </para>
+
+      <para>
         Currently update ACL can only control updates per zone basis;
         it's not possible to specify access control with higher
         granularity such as for particular domain names or specific
