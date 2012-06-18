@@ -28,16 +28,17 @@ using namespace std;
 // global dictionary is loaded, the former should be marked as a duplicate
 // and the latter should be present.
 
-static const char* values[] = {
-    "LOG_DUPLICATE_NAMESPACE", "duplicate $NAMESPACE directive found",
+namespace {
+const char* values[] = {
+    // This message for DUPLICATE_NAMESPACE must be copied from
+    // ../log_messages.mes; otherwise logger check might fail.
+    "LOG_DUPLICATE_NAMESPACE", "line %1: duplicate $NAMESPACE directive found",
     "NEWSYM", "new symbol added",
     NULL
 };
 
 MessageInitializer init(values);
-
-
-
+}
 
 class MessageDictionaryTest : public ::testing::Test {
 protected:

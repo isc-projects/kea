@@ -21,7 +21,10 @@ from isc.acl.acl import ACCEPT
 import isc.util.cio.socketsession
 from isc.cc.session import SessionTimeout, SessionError, ProtocolError
 from isc.datasrc import DataSourceClient
-from isc.config.ccsession import create_answer
+from isc.config import module_spec_from_file
+from isc.config.config_data import ConfigData
+from isc.config.ccsession import create_answer, ModuleCCSessionError
+from isc.config.module_spec import ModuleSpecError
 from isc.server_common.dns_tcp import DNSTCPContext
 import ddns
 import errno
@@ -55,6 +58,11 @@ TEST_TSIG_KEYRING = TSIGKeyRing()
 TEST_TSIG_KEYRING.add(TEST_TSIG_KEY)
 # Another TSIG key not in the keyring, making verification fail
 BAD_TSIG_KEY = TSIGKey("example.com:SFuWd/q99SzF8Yzd1QbB9g==")
+
+# Incorporate it so we can use the real default values of zonemgr config
+# in the tests.
+ZONEMGR_MODULE_SPEC = module_spec_from_file(
+    os.environ["B10_FROM_BUILD"] + "/src/bin/zonemgr/zonemgr.spec")
 
 class FakeSocket:
     """
@@ -208,6 +216,13 @@ class MyCCSession(isc.config.ConfigData):
         self._sendmsg_exception = None # will be raised from sendmsg if !None
         self._recvmsg_exception = None # will be raised from recvmsg if !None
 
+        # Attributes to handle (faked) remote configurations
+        self.__callbacks = {}   # record callbacks for updates to remote confs
+        self._raise_mods = {}  # map of module to exceptions to be triggered
+                               # on add_remote.  settable by tests.
+        self._auth_config = {}  # faked auth cfg, settable by tests
+        self._zonemgr_config = {} # faked zonemgr cfg, settable by tests
+
     def start(self):
         '''Called by DDNSServer initialization, but not used in tests'''
         self._started = True
@@ -222,8 +237,27 @@ class MyCCSession(isc.config.ConfigData):
         """
         return FakeSocket(1)
 
-    def add_remote_config(self, spec_file_name):
-        pass
+    def add_remote_config_by_name(self, module_name, update_callback=None):
+        # If a list of exceptions is given for the module, raise the front one,
+        # removing that exception from the list (so the list length controls
+        # how many (and which) exceptions should be raised on add_remote).
+        if module_name in self._raise_mods.keys() and \
+                len(self._raise_mods[module_name]) != 0:
+            ex = self._raise_mods[module_name][0]
+            self._raise_mods[module_name] = self._raise_mods[module_name][1:]
+            raise ex('Failure requesting remote config data')
+
+        if update_callback is not None:
+            self.__callbacks[module_name] = update_callback
+        if module_name is 'Auth':
+            if module_name in self.__callbacks:
+                # ddns implementation doesn't use the 2nd element, so just
+                # setting it to None
+                self.__callbacks[module_name](self._auth_config, None)
+        if module_name is 'Zonemgr':
+            if module_name in self.__callbacks:
+                self.__callbacks[module_name](self._zonemgr_config,
+                                              ConfigData(ZONEMGR_MODULE_SPEC))
 
     def get_remote_config_value(self, module_name, item):
         if module_name == "Auth" and item == "database_file":
@@ -233,6 +267,14 @@ class MyCCSession(isc.config.ConfigData):
                 return [], True # default
             else:
                 return self.auth_datasources, False
+        if module_name == 'Zonemgr' and item == 'secondary_zones':
+            if item in self._zonemgr_config:
+                return self._zonemgr_config[item], False
+            else:
+                seczone_default = \
+                    ConfigData(ZONEMGR_MODULE_SPEC).get_default_value(
+                    'secondary_zones')
+                return seczone_default, True
 
     def group_sendmsg(self, msg, group):
         # remember the passed parameter, and return dummy sequence
@@ -299,6 +341,10 @@ class TestDDNSServer(unittest.TestCase):
         self.__select_answer = None
         self.__select_exception = None
         self.__hook_called = False
+        # Because we overwrite the _listen_socket, close any existing
+        # socket object.
+        if self.ddns_server._listen_socket is not None:
+            self.ddns_server._listen_socket.close()
         self.ddns_server._listen_socket = FakeSocket(2)
         ddns.select.select = self.__select
 
@@ -306,12 +352,15 @@ class TestDDNSServer(unittest.TestCase):
         self.__tcp_sock = FakeSocket(10, socket.IPPROTO_TCP)
         self.__tcp_ctx = DNSTCPContext(self.__tcp_sock)
         self.__tcp_data = b'A' * 12 # dummy, just the same size as DNS header
+        # some tests will override this, which will be restored in tearDown:
+        self.__orig_add_pause = ddns.add_pause
 
     def tearDown(self):
         ddns.select.select = select.select
         ddns.isc.util.cio.socketsession.SocketSessionReceiver = \
             isc.util.cio.socketsession.SocketSessionReceiver
         isc.server_common.tsig_keyring = self.orig_tsig_keyring
+        ddns.add_pause = self.__orig_add_pause
 
     def test_listen(self):
         '''
@@ -334,6 +383,9 @@ class TestDDNSServer(unittest.TestCase):
         # Now make sure the clear_socket really works
         ddns.clear_socket()
         self.assertFalse(os.path.exists(ddns.SOCKET_FILE))
+        # Let ddns object complete any necessary cleanup (not part of the test,
+        # but for suppressing any warnings from the Python interpreter)
+        ddnss.shutdown_cleanup()
 
     def test_initial_config(self):
         # right now, the only configuration is the zone configuration, whose
@@ -421,6 +473,112 @@ class TestDDNSServer(unittest.TestCase):
         self.assertEqual((0, None), isc.config.parse_answer(answer))
         acl = self.ddns_server._zone_config[(TEST_ZONE_NAME, TEST_RRCLASS)]
         self.assertEqual(ACCEPT, acl.execute(TEST_ACL_CONTEXT))
+
+    def test_datasrc_config(self):
+        # By default (in our faked config) it should be derived from the
+        # test data source
+        rrclass, datasrc_client = self.ddns_server._datasrc_info
+        self.assertEqual(RRClass.IN(), rrclass)
+        self.assertEqual(DataSourceClient.SUCCESS,
+                         datasrc_client.find_zone(Name('example.org'))[0])
+
+        # emulating an update.  calling add_remote_config_by_name is a
+        # convenient faked way to invoke the callback.  We set the db file
+        # to a bogus one; the current implementation will create an unusable
+        # data source client.
+        self.__cc_session.auth_db_file = './notexistentdir/somedb.sqlite3'
+        self.__cc_session._auth_config = \
+            {'database_file': './notexistentdir/somedb.sqlite3'}
+        self.__cc_session.add_remote_config_by_name('Auth')
+        rrclass, datasrc_client = self.ddns_server._datasrc_info
+        self.assertEqual(RRClass.IN(), rrclass)
+        self.assertRaises(isc.datasrc.Error,
+                          datasrc_client.find_zone, Name('example.org'))
+
+        # Check the current info isn't changed if the new config doesn't
+        # update it.
+        info_orig = self.ddns_server._datasrc_info
+        self.ddns_server._datasrc_info = 42 # dummy value, should be kept.
+        self.__cc_session._auth_config = {'other_config': 'value'}
+        self.__cc_session.add_remote_config_by_name('Auth')
+        self.assertEqual(42, self.ddns_server._datasrc_info)
+        self.ddns_server._datasrc_info = info_orig
+
+    def test_secondary_zones_config(self):
+        # By default it should be an empty list
+        self.assertEqual(set(), self.ddns_server._secondary_zones)
+
+        # emulating an update.
+        self.__cc_session._zonemgr_config = {'secondary_zones': [
+                {'name': TEST_ZONE_NAME_STR, 'class': TEST_RRCLASS_STR}]}
+        self.__cc_session.add_remote_config_by_name('Zonemgr')
+
+        # The new set of secondary zones should be stored.
+        self.assertEqual({(TEST_ZONE_NAME, TEST_RRCLASS)},
+                         self.ddns_server._secondary_zones)
+
+        # Similar to the above, but 'class' is unspecified.  The default value
+        # should be used.
+        self.__cc_session._zonemgr_config = {'secondary_zones': [
+                {'name': TEST_ZONE_NAME_STR}]}
+        self.__cc_session.add_remote_config_by_name('Zonemgr')
+        self.assertEqual({(TEST_ZONE_NAME, TEST_RRCLASS)},
+                         self.ddns_server._secondary_zones)
+
+        # The given list has a duplicate.  The resulting set should unify them.
+        self.__cc_session._zonemgr_config = {'secondary_zones': [
+                {'name': TEST_ZONE_NAME_STR, 'class': TEST_RRCLASS_STR},
+                {'name': TEST_ZONE_NAME_STR, 'class': TEST_RRCLASS_STR}]}
+        self.__cc_session.add_remote_config_by_name('Zonemgr')
+        self.assertEqual({(TEST_ZONE_NAME, TEST_RRCLASS)},
+                         self.ddns_server._secondary_zones)
+
+        # Check the 2ndary zones aren't changed if the new config doesn't
+        # update it.
+        seczones_orig = self.ddns_server._secondary_zones
+        self.ddns_server._secondary_zones = 42 # dummy value, should be kept.
+        self.__cc_session._zonemgr_config = {}
+        self.__cc_session.add_remote_config_by_name('Zonemgr')
+        self.assertEqual(42, self.ddns_server._secondary_zones)
+        self.ddns_server._secondary_zones = seczones_orig
+
+        # If the update config is broken, the existing set should be intact.
+        self.__cc_session._zonemgr_config = {'secondary_zones': [
+                {'name': 'good.example', 'class': TEST_RRCLASS_STR},
+                {'name': 'badd..example', 'class': TEST_RRCLASS_STR}]}
+        self.__cc_session.add_remote_config_by_name('Zonemgr')
+        self.assertEqual({(TEST_ZONE_NAME, TEST_RRCLASS)},
+                         self.ddns_server._secondary_zones)
+
+    def __check_remote_config_fail(self, mod_name, num_ex, expected_ex):
+        '''Subroutine for remote_config_fail test.'''
+
+        # fake pause function for inspection and to avoid having timeouts
+        added_pause = []
+        ddns.add_pause = lambda sec: added_pause.append(sec)
+
+        # In our current implementation, there will be up to 3 tries of
+        # adding the module, each separated by a 1-sec pause.  If all attempts
+        # fail the exception will be propagated.
+        exceptions = [expected_ex for i in range(0, num_ex)]
+        self.__cc_session._raise_mods = {mod_name: exceptions}
+        if num_ex >= 3:
+            self.assertRaises(expected_ex, ddns.DDNSServer, self.__cc_session)
+        else:
+            ddns.DDNSServer(self.__cc_session)
+        self.assertEqual([1 for i in range(0, num_ex)], added_pause)
+
+    def test_remote_config_fail(self):
+        # If getting config of Auth or Zonemgr fails on construction of
+        # DDNServer, it should result in an exception and a few times
+        # of retries.  We test all possible cases, changing the number of
+        # raised exceptions and the type of exceptions that can happen,
+        # which should also cover the fatal error case.
+        for i in range(0, 4):
+            self.__check_remote_config_fail('Auth', i, ModuleCCSessionError)
+            self.__check_remote_config_fail('Auth', i, ModuleSpecError)
+            self.__check_remote_config_fail('Zonemgr', i, ModuleCCSessionError)
+            self.__check_remote_config_fail('Zonemgr', i, ModuleSpecError)
 
     def test_shutdown_command(self):
         '''Test whether the shutdown command works'''
@@ -1178,26 +1336,6 @@ class TestConfig(unittest.TestCase):
                          ddns.SOCKET_FILE)
         self.assertEqual(os.environ["B10_FROM_SOURCE"] +
                          "/src/bin/ddns/ddns.spec", ddns.SPECFILE_LOCATION)
-        self.assertEqual(os.environ["B10_FROM_BUILD"] +
-                         "/src/bin/auth/auth.spec",
-                         ddns.AUTH_SPECFILE_LOCATION)
-
-    def test_get_datasrc_client(self):
-        # The test sqlite DB should contain the example.org zone.
-        rrclass, datasrc_client = ddns.get_datasrc_client(self.__ccsession)
-        self.assertEqual(RRClass.IN(), rrclass)
-        self.assertEqual(DataSourceClient.SUCCESS,
-                         datasrc_client.find_zone(Name('example.org'))[0])
-
-    def test_get_datasrc_client_fail(self):
-        # DB file is in a non existent directory, and creatng the client
-        # will fail.  get_datasrc_client will return a dummy client, which
-        # will subsequently make find_zone() fail.
-        self.__ccsession.auth_db_file = './notexistentdir/somedb.sqlite3'
-        rrclass, datasrc_client = ddns.get_datasrc_client(self.__ccsession)
-        self.assertEqual(RRClass.IN(), rrclass)
-        self.assertRaises(isc.datasrc.Error,
-                          datasrc_client.find_zone, Name('example.org'))
 
 if __name__== "__main__":
     isc.log.resetUnitTestRootLogger()

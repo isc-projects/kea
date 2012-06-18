@@ -84,6 +84,7 @@ class TestSecureHTTPRequestHandler(unittest.TestCase):
         self.handler.rfile = open("check.tmp", 'w+b')
 
     def tearDown(self):
+        sys.stdout.close()
         sys.stdout = self.old_stdout
         self.handler.rfile.close()
         os.remove('check.tmp')
@@ -306,6 +307,7 @@ class TestCommandControl(unittest.TestCase):
         self.cmdctl = MyCommandControl(None, True)
    
     def tearDown(self):
+        sys.stdout.close()
         sys.stdout = self.old_stdout
 
     def _check_config(self, cmdctl):
@@ -427,6 +429,9 @@ class TestSecureHTTPServer(unittest.TestCase):
                                          MyCommandControl, verbose=True)
 
     def tearDown(self):
+        # both sys.stdout and sys.stderr are the same, so closing one is
+        # sufficient
+        sys.stdout.close()
         sys.stdout = self.old_stdout
         sys.stderr = self.old_stderr
 

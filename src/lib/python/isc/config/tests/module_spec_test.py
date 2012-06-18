@@ -46,8 +46,8 @@ class TestModuleSpec(unittest.TestCase):
         self.spec1(dd)
 
     def test_open_file_obj(self):
-        file1 = open(self.spec_file("spec1.spec"))
-        dd = isc.config.module_spec_from_file(file1)
+        with open(self.spec_file("spec1.spec")) as file1:
+            dd = isc.config.module_spec_from_file(file1)
         self.spec1(dd)
 
     def test_open_bad_file_obj(self):
@@ -89,8 +89,8 @@ class TestModuleSpec(unittest.TestCase):
 
     def validate_data(self, specfile_name, datafile_name):
         dd = self.read_spec_file(specfile_name);
-        data_file = open(self.spec_file(datafile_name))
-        data_str = data_file.read()
+        with open(self.spec_file(datafile_name)) as data_file:
+            data_str = data_file.read()
         data = isc.cc.data.parse_value_str(data_str)
         return dd.validate_config(True, data)
         
@@ -109,8 +109,8 @@ class TestModuleSpec(unittest.TestCase):
 
     def validate_command_params(self, specfile_name, datafile_name, cmd_name):
         dd = self.read_spec_file(specfile_name);
-        data_file = open(self.spec_file(datafile_name))
-        data_str = data_file.read()
+        with open(self.spec_file(datafile_name)) as data_file:
+            data_str = data_file.read()
         params = isc.cc.data.parse_value_str(data_str)
         return dd.validate_command(cmd_name, params)
 
@@ -131,8 +131,8 @@ class TestModuleSpec(unittest.TestCase):
     def test_statistics_validation(self):
         def _validate_stat(specfile_name, datafile_name):
             dd = self.read_spec_file(specfile_name);
-            data_file = open(self.spec_file(datafile_name))
-            data_str = data_file.read()
+            with open(self.spec_file(datafile_name)) as data_file:
+                data_str = data_file.read()
             data = isc.cc.data.parse_value_str(data_str)
             return dd.validate_statistics(True, data, [])
         self.assertFalse(self.read_spec_file("spec1.spec").validate_statistics(True, None, None));

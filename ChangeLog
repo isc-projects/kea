@@ -1,3 +1,8 @@
+446.	[bug]		muks
+	A number of warnings reported by Python about unclosed file and
+	socket objects were fixed. Some related code was also made safer.
+	(Trac #1828, git 464682a2180c672f1ed12d8a56fd0a5ab3eb96ed)
+
 445.	[bug]*		jinmei
 	The pre-install check for older SQLite3 DB now refers to the DB
 	file with the prefix of DESTDIR.  This ensures that 'make install'

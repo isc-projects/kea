@@ -25,6 +25,7 @@ import isc.ddns.session
 from isc.ddns.zone_config import ZoneConfig
 from isc.ddns.logger import ClientFormatter, ZoneFormatter
 from isc.config.ccsession import *
+from isc.config.module_spec import ModuleSpecError
 from isc.cc import SessionError, SessionTimeout, ProtocolError
 import isc.util.process
 import isc.util.cio.socketsession
@@ -34,6 +35,7 @@ from isc.server_common.dns_tcp import DNSTCPContext
 from isc.datasrc import DataSourceClient
 from isc.server_common.auth_command import auth_loadzone_command
 import select
+import time
 import errno
 
 from isc.log_messages.ddns_messages import *
@@ -67,24 +69,22 @@ else:
     SPECFILE_PATH = SPECFILE_PATH.replace("${prefix}", PREFIX)
 
 if "B10_FROM_BUILD" in os.environ:
-    AUTH_SPECFILE_PATH = os.environ["B10_FROM_BUILD"] + "/src/bin/auth"
     if "B10_FROM_SOURCE_LOCALSTATEDIR" in os.environ:
         SOCKET_FILE_PATH = os.environ["B10_FROM_SOURCE_LOCALSTATEDIR"]
     else:
         SOCKET_FILE_PATH = os.environ["B10_FROM_BUILD"]
 else:
     SOCKET_FILE_PATH = bind10_config.DATA_PATH
-    AUTH_SPECFILE_PATH = SPECFILE_PATH
 
 SPECFILE_LOCATION = SPECFILE_PATH + "/ddns.spec"
 SOCKET_FILE = SOCKET_FILE_PATH + '/ddns_socket'
-AUTH_SPECFILE_LOCATION = AUTH_SPECFILE_PATH + '/auth.spec'
+
+# Cooperating or dependency modules
+AUTH_MODULE_NAME = 'Auth'
+XFROUT_MODULE_NAME = 'Xfrout'
+ZONEMGR_MODULE_NAME = 'Zonemgr'
 
 isc.util.process.rename()
-
-# Cooperating modules
-XFROUT_MODULE_NAME = 'Xfrout'
-AUTH_MODULE_NAME = 'Auth'
 
 class DDNSConfigError(Exception):
     '''An exception indicating an error in updating ddns configuration.
@@ -143,15 +143,23 @@ def get_datasrc_client(cc_session):
         file = os.environ["B10_FROM_BUILD"] + "/bind10_zones.sqlite3"
     datasrc_config = '{ "database_file": "' + file + '"}'
     try:
-        return HARDCODED_DATASRC_CLASS, DataSourceClient('sqlite3',
-                                                         datasrc_config)
+        return (HARDCODED_DATASRC_CLASS,
+                DataSourceClient('sqlite3', datasrc_config), file)
     except isc.datasrc.Error as ex:
         class DummyDataSourceClient:
             def __init__(self, ex):
                 self.__ex = ex
             def find_zone(self, zone_name):
                 raise isc.datasrc.Error(self.__ex)
-        return HARDCODED_DATASRC_CLASS, DummyDataSourceClient(ex)
+        return (HARDCODED_DATASRC_CLASS, DummyDataSourceClient(ex), file)
+
+def add_pause(sec):
+    '''Pause a specified period for inter module synchronization.
+
+    This is a trivial wrapper of time.sleep, but defined as a separate function
+    so tests can customize it.
+    '''
+    time.sleep(sec)
 
 class DDNSServer:
     # The number of TCP clients that can be handled by the server at the same
@@ -181,8 +189,23 @@ class DDNSServer:
             self._cc.get_default_value('zones'))
         self._cc.start()
 
+        # Internal attributes derived from other modules.  They will be
+        # initialized via dd_remote_xxx below and will be kept updated
+        # through their callbacks.  They are defined as 'protected' so tests
+        # can examine them; but they are essentially private to the class.
+        #
+        # Datasource client used for handling update requests: when set,
+        # should a tuple of RRClass and DataSourceClient.  Constructed and
+        # maintained based on auth configuration.
+        self._datasrc_info = None
+        # A set of secondary zones, retrieved from zonemgr configuration.
+        self._secondary_zones = None
+
         # Get necessary configurations from remote modules.
-        self._cc.add_remote_config(AUTH_SPECFILE_LOCATION)
+        for mod in [(AUTH_MODULE_NAME, self.__auth_config_handler),
+                    (ZONEMGR_MODULE_NAME, self.__zonemgr_config_handler)]:
+            self.__add_remote_module(mod[0], mod[1])
+        # This should succeed as long as cfgmgr is up.
         isc.server_common.tsig_keyring.init_keyring(self._cc)
 
         self._shutdown = False
@@ -256,6 +279,88 @@ class DDNSServer:
             answer = create_answer(1, "Unknown command: " + str(cmd))
         return answer
 
+    def __add_remote_module(self, mod_name, callback):
+        '''Register interest in other module's config with a callback.'''
+
+        # Due to startup timing, add_remote_config can fail.  We could make it
+        # more sophisticated, but for now we simply retry a few times, each
+        # separated by a short period (3 times and 1 sec, arbitrary chosen,
+        # and hardcoded for now).  In practice this should be more than
+        # sufficient, but if it turns out to be a bigger problem we can
+        # consider more elegant solutions.
+        for n_try in range(0, 3):
+            try:
+                # by_name() version can fail with ModuleSpecError in getting
+                # the module spec because cfgmgr returns a "successful" answer
+                # with empty data if it cannot find the specified module.
+                # This seems to be a deviant behavior (see Trac #2039), but
+                # we need to deal with it.
+                self._cc.add_remote_config_by_name(mod_name, callback)
+                return
+            except (ModuleSpecError, ModuleCCSessionError) as ex:
+                logger.warn(DDNS_GET_REMOTE_CONFIG_FAIL, mod_name, n_try + 1,
+                            ex)
+                last_ex = ex
+                add_pause(1)
+        raise last_ex
+
+    def __auth_config_handler(self, new_config, module_config):
+        logger.info(DDNS_RECEIVED_AUTH_UPDATE)
+
+        # If we've got the config before and the new config doesn't update
+        # the DB file, there's nothing we should do with it.
+        # Note: there seems to be a bug either in bindctl or cfgmgr, and
+        # new_config can contain 'database_file' even if it's not really
+        # updated.  We still perform the check so we can avoid redundant
+        # resetting when the bug is fixed.  The redundant reset itself is not
+        # good, but such configuration update should not happen so often and
+        # it should be acceptable in practice.
+        if self._datasrc_info is not None and \
+                not 'database_file' in new_config:
+            return
+        rrclass, client, db_file = get_datasrc_client(self._cc)
+        self._datasrc_info = (rrclass, client)
+        logger.info(DDNS_AUTH_DBFILE_UPDATE, db_file)
+
+    def __zonemgr_config_handler(self, new_config, module_config):
+        logger.info(DDNS_RECEIVED_ZONEMGR_UPDATE)
+
+        # If we've got the config before and the new config doesn't update
+        # the secondary zone list, there's nothing we should do with it.
+        # (Same note as that for auth's config applies)
+        if self._secondary_zones is not None and \
+                not 'secondary_zones' in new_config:
+            return
+
+        # Get the latest secondary zones.  Use get_remote_config_value() so
+        # it can work for both the initial default case and updates.
+        sec_zones, _ = self._cc.get_remote_config_value(ZONEMGR_MODULE_NAME,
+                                                        'secondary_zones')
+        new_secondary_zones = set()
+        try:
+            # Parse the new config and build a new list of secondary zones.
+            # Unfortunately, in the current implementation, even an observer
+            # module needs to perform full validation.  This should be changed
+            # so that only post-validation (done by the main module) config is
+            # delivered to observer modules, but until it's supported we need
+            # to protect ourselves.
+            for zone_spec in sec_zones:
+                zname = Name(zone_spec['name'])
+                # class has the default value in case it's unspecified.
+                # ideally this should be merged within the config module, but
+                # the current implementation doesn't esnure that, so we need to
+                # subsitute it ourselves.
+                if 'class' in zone_spec:
+                    zclass = RRClass(zone_spec['class'])
+                else:
+                    zclass = RRClass(module_config.get_default_value(
+                            'secondary_zones/class'))
+                new_secondary_zones.add((zname, zclass))
+            self._secondary_zones = new_secondary_zones
+            logger.info(DDNS_SECONDARY_ZONES_UPDATE, len(self._secondary_zones))
+        except Exception as ex:
+            logger.error(DDNS_SECONDARY_ZONES_UPDATE_FAIL, ex)
+
     def trigger_shutdown(self):
         '''Initiate a shutdown sequence.
 
@@ -273,10 +378,13 @@ class DDNSServer:
         Perform any cleanup that is necessary when shutting down the server.
         Do NOT call this to initialize shutdown, use trigger_shutdown().
 
-        Currently, it only causes the ModuleCCSession to send a message that
-        this module is stopping.
         '''
+        # tell the ModuleCCSession to send a message that this module is
+        # stopping.
         self._cc.send_stopping()
+        # make sure any open socket is explicitly closed, per Python
+        # convention.
+        self._listen_socket.close()
 
     def accept(self):
         """
@@ -366,9 +474,8 @@ class DDNSServer:
         # Let an update session object handle the request.  Note: things around
         # ZoneConfig will soon be substantially revised.  For now we don't
         # bother to generalize it.
-        datasrc_class, datasrc_client = get_datasrc_client(self._cc)
-        zone_cfg = ZoneConfig([], datasrc_class, datasrc_client,
-                              self._zone_config)
+        zone_cfg = ZoneConfig(self._secondary_zones, self._datasrc_info[0],
+                              self._datasrc_info[1], self._zone_config)
         update_session = self._UpdateSessionClass(self.__request_msg,
                                                   remote_addr, zone_cfg)
         result, zname, zclass = update_session.handle()
@@ -605,7 +712,7 @@ def main(ddns_server=None):
         logger.info(DDNS_STOPPED_BY_KEYBOARD)
     except SessionError as e:
         logger.error(DDNS_CC_SESSION_ERROR, str(e))
-    except ModuleCCSessionError as e:
+    except (ModuleSpecError, ModuleCCSessionError) as e:
         logger.error(DDNS_MODULECC_SESSION_ERROR, str(e))
     except DDNSConfigError as e:
         logger.error(DDNS_CONFIG_ERROR, str(e))
