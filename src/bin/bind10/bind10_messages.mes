@@ -162,8 +162,8 @@ The boss module is sending a SIGTERM signal to the given process.
 
 % BIND10_SETGID setting GID to %1
 The boss switches the process group ID to the given value.  This happens
-when BIND 10 starts with -u option, and the group ID should be of the group
-the specified user.
+when BIND 10 starts with the -u option, and the group ID will be set to
+that of the specified user.
 
 % BIND10_SETUID setting UID to %1
 The boss switches the user it runs as to the given UID.
