@@ -419,21 +419,31 @@ public:
     void setTSIGKeyRing(const boost::shared_ptr<isc::dns::TSIGKeyRing>*
                         keyring);
 
-    /// \brief Replaces the current client list with a different one.
+    /// \brief Sets the currently used list for data sources of given
+    ///     class.
     ///
-    /// Replaces the internally used client list with a new one.
-    //
-    /// \param list Shared pointer to the client list. Must not be NULL.
+    /// Replaces the internally used client list with a new one. Other
+    /// classes are not changed.
     ///
-    /// \throw BadValue if it is NULL.
-    void setClientList(const boost::shared_ptr<isc::datasrc::ClientList>&
+    /// \param rrclass The class to modify.
+    /// \param list Shared pointer to the client list. If it is NULL,
+    ///     the list is removed instead.
+    void setClientList(const isc::dns::RRClass& rrclass,
+                       const boost::shared_ptr<isc::datasrc::ClientList>&
                        list);
 
-    /// \brief Returns the currently used client list.
+    /// \brief Returns the currently used client list for the class.
     ///
-    /// Note that the server is constructed with an empty one, so this
-    /// is always valid, even before calling setClientList.
-    const isc::datasrc::ClientList& getClientList() const;
+    /// \param rrclass The class for which to get the list.
+    /// \return The list, or NULL if no list is set for the class.
+    boost::shared_ptr<const isc::datasrc::ClientList>
+        getClientList(const isc::dns::RRClass& rrclass) const;
+
+    /// \brief Returns a list of classes that have a client list.
+    ///
+    /// \return List of classes for which a non-NULL client list
+    ///     has been set by setClientList.
+    std::vector<isc::dns::RRClass> getClientListClasses() const;
 
 private:
     AuthSrvImpl* impl_;

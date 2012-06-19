@@ -46,7 +46,6 @@
 #include <datasrc/memory_datasrc.h>
 #include <datasrc/static_datasrc.h>
 #include <datasrc/sqlite3_datasrc.h>
-#include <datasrc/client_list.h>
 
 #include <xfr/xfrout_client.h>
 
@@ -268,7 +267,7 @@ public:
     const boost::shared_ptr<TSIGKeyRing>* keyring_;
 
     /// The client list
-    boost::shared_ptr<ClientList> client_list_;
+    map<RRClass, boost::shared_ptr<ClientList> > client_lists_;
 
     /// Bind the ModuleSpec object in config_session_ with
     /// isc:config::ModuleSpec::validateStatistics.
@@ -335,9 +334,6 @@ AuthSrvImpl::AuthSrvImpl(const bool use_cache,
 
     // enable or disable the cache
     cache_.setEnabled(use_cache);
-
-    // Create the (yet empty) data source list
-    client_list_.reset(new ConfigurableClientList());
 }
 
 AuthSrvImpl::~AuthSrvImpl() {
@@ -1033,14 +1029,33 @@ AuthSrv::setTSIGKeyRing(const boost::shared_ptr<TSIGKeyRing>* keyring) {
 }
 
 void
-AuthSrv::setClientList(const boost::shared_ptr<ClientList>& list) {
-    if (!list) {
-        isc_throw(BadValue, "The client list must not be NULL");
+AuthSrv::setClientList(const RRClass& rrclass,
+                       const boost::shared_ptr<ClientList>& list) {
+    if (list) {
+        impl_->client_lists_[rrclass] = list;
+    } else {
+        impl_->client_lists_.erase(rrclass);
     }
-    impl_->client_list_ = list;
 }
 
-const ClientList&
-AuthSrv::getClientList() const {
-    return (*impl_->client_list_);
+boost::shared_ptr<const ClientList>
+AuthSrv::getClientList(const RRClass& rrclass) const {
+    const map<RRClass, boost::shared_ptr<ClientList> >::const_iterator
+        it(impl_->client_lists_.find(rrclass));
+    if (it == impl_->client_lists_.end()) {
+        return (boost::shared_ptr<const ClientList>());
+    } else {
+        return (it->second);
+    }
+}
+
+vector<RRClass>
+AuthSrv::getClientListClasses() const {
+    vector<RRClass> result;
+    for (map<RRClass, boost::shared_ptr<ClientList> >::const_iterator
+         it(impl_->client_lists_.begin()); it != impl_->client_lists_.end();
+         ++ it) {
+        result.push_back(it->first);
+    }
+    return (result);
 }
