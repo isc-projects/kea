@@ -1986,8 +1986,9 @@ what is XfroutClient xfr_client??
         configured to run; otherwise the notification after an update
         (see above) will fail with a timeout, suspending the DDNS
         service while <command>b10-ddns</command> waits for the
-        response (see the description of the DDNS_UPDATE_NOTIFY_FAIL
-        for further details).
+        response (see the description of the <ulink
+        url="bind10-messages.html#DDNS_UPDATE_NOTIFY_FAIL">DDNS_UPDATE_NOTIFY_FAIL</ulink>
+        log message for further details).
         If BIND 10 is already configured to provide authoritative DNS
         service they should normally be configured to run already.
       </para>
