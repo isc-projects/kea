@@ -889,7 +889,7 @@ as a dependency earlier -->
         message bus. The special components already know their
         address, but the usual ones don't. The address is by
         convention the thing after <emphasis>b10-</emphasis>, with
-        the first letter capital (eg. <command>b10-stats</command>
+        the first letter capitalized (eg. <command>b10-stats</command>
         would have <quote>Stats</quote> as its address).
 <!-- TODO: this should be simplified so we don't even have to document it -->
       </para>
@@ -2060,7 +2060,7 @@ what is XfroutClient xfr_client??
         Update ACL must be configured per zone basis in the
         <quote>zones</quote> configuration parameter of
         <command>b10-ddns</command>.
-        This is a list of per-zone configuration regarding DDNS.
+        This is a list of per-zone configurations regarding DDNS.
         Each list element consists of the following parameters:
         <variablelist>
           <varlistentry>
