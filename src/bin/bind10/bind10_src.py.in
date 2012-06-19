@@ -1157,6 +1157,7 @@ def main():
 
     # Check user ID.
     setuid = None
+    setgid = None
     username = None
     if options.user:
         # Try getting information about the user, assuming UID passed.
