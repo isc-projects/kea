@@ -659,13 +659,13 @@ class ComponentTests(BossUtils, unittest.TestCase):
         component.stop()
         component.kill()
         component.kill(True)
-        self.gid = 42
+        self.gid = 4200
         self.uid = 42
         component = isc.bind10.special_component.SockCreator(None, self,
                                                              'needed', None)
         component.start()
         # This time, it get's called
-        self.assertEqual(42, self.__gid_set)
+        self.assertEqual(4200, self.__gid_set)
         self.assertEqual(42, self.__uid_set)
         isc.bind10.special_component.posix.setgid = orig_setgid
         isc.bind10.special_component.posix.setuid = orig_setuid
