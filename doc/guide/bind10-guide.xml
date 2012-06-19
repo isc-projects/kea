@@ -2111,7 +2111,7 @@ what is XfroutClient xfr_client??
         can consist of multiple constraints, such as a combination of
         IP address and TSIG.
         The following configuration sequence will add a new rule to
-        ACL created in the above example.  This additional rule
+        the ACL created in the above example.  This additional rule
 	allows update requests sent from a client
         using TSIG key name of "key.example" (different from the
         key used in the previous example) and has an IPv6 address of ::1.
