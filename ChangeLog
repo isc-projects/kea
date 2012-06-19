@@ -1,3 +1,9 @@
+447.	[bug]		jinmei
+	Fixed a bug in b10-xfrout where a helper thread could fall into
+	an infinite loop if b10-auth stops while the thread is waiting for
+	forwarded requests from b10-auth.
+	(Trac #988, git 95a03bbefb559615f3f6e529d408b749964d390a)
+
 446.	[bug]		muks
 	A number of warnings reported by Python about unclosed file and
 	socket objects were fixed. Some related code was also made safer.
