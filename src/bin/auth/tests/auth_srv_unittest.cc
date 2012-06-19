@@ -1647,23 +1647,34 @@ TEST_F(AuthSrvTest, DDNSForwardClose) {
 
 // Check the client list accessors
 TEST_F(AuthSrvTest, clientList) {
-    // The server is created with a working client list. So calling the
-    // function will not crash.
-    server.getClientList();
-    // It is the correct type
-    EXPECT_NO_THROW(dynamic_cast<const isc::datasrc::ConfigurableClientList&>(
-        server.getClientList())) << "The client list has a wrong type";
-    // Now prepare a new client list and replace it
-    boost::shared_ptr<isc::datasrc::ConfigurableClientList>
+    // The lists don't exist. Therefore, the list of RRClasses is empty.
+    // We also have no IN list.
+    EXPECT_TRUE(server.getClientListClasses().empty());
+    EXPECT_EQ(boost::shared_ptr<const isc::datasrc::ClientList>(),
+              server.getClientList(RRClass::IN()));
+    // Put something in.
+    const boost::shared_ptr<isc::datasrc::ConfigurableClientList>
         list(new isc::datasrc::ConfigurableClientList());
-    server.setClientList(list);
-    // And it is kept there.
-    EXPECT_EQ(list.get(), &server.getClientList());
-    // But putting NULL there would not work and the original is preserved
-    EXPECT_THROW(server.setClientList(
-        boost::shared_ptr<isc::datasrc::ConfigurableClientList>()),
-                 isc::BadValue);
-    EXPECT_EQ(list.get(), &server.getClientList());
+    const boost::shared_ptr<isc::datasrc::ConfigurableClientList>
+        list2(new isc::datasrc::ConfigurableClientList());
+    server.setClientList(RRClass::IN(), list);
+    server.setClientList(RRClass::CH(), list2);
+    // There are two things in the list and they are IN and CH
+    vector<RRClass> classes(server.getClientListClasses());
+    ASSERT_EQ(2, classes.size());
+    EXPECT_EQ(RRClass::IN(), classes[0]);
+    EXPECT_EQ(RRClass::CH(), classes[1]);
+    // And the lists can be retrieved.
+    EXPECT_EQ(list, server.getClientList(RRClass::IN()));
+    EXPECT_EQ(list2, server.getClientList(RRClass::CH()));
+    // Remove one of them
+    server.setClientList(RRClass::CH(),
+        boost::shared_ptr<isc::datasrc::ConfigurableClientList>());
+    // This really got deleted, including the class.
+    classes = server.getClientListClasses();
+    ASSERT_EQ(1, classes.size());
+    EXPECT_EQ(RRClass::IN(), classes[0]);
+    EXPECT_EQ(list, server.getClientList(RRClass::IN()));
 }
 
 }
