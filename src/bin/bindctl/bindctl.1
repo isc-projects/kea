@@ -2,12 +2,12 @@
 .\"     Title: bindctl
 .\"    Author: [see the "AUTHORS" section]
 .\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: December 23, 2010
+.\"      Date: June 20, 2012
 .\"    Manual: BIND10
 .\"    Source: BIND10
 .\"  Language: English
 .\"
-.TH "BINDCTL" "1" "December 23, 2010" "BIND10" "BIND10"
+.TH "BINDCTL" "1" "June 20, 2012" "BIND10" "BIND10"
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -35,7 +35,7 @@ via its interactive command interpreter\&.
 communicates over a HTTPS REST\-ful interface provided by
 \fBb10-cmdctl\fR(8)\&. The
 \fBb10-cfgmgr\fR(8)
-daemon stores the configurations and defines the commands\&.
+daemon stores the configurations\&.
 .SH "ARGUMENTS"
 .PP
 The arguments are as follows:
@@ -91,9 +91,9 @@ Display the version number and exit\&.
 .SH "AUTHENTICATION"
 .PP
 The tool will authenticate using a username and password\&. On the first successful login, it will save the details to a comma\-separated\-value (CSV) file which will be used for later uses of
-\fBbindctl\fR\&. The file name is
-default_user\&.csv
-located under the directory specified by the \-\-csv\-file\-dir option\&.
+\fBbindctl\fR\&. The file name is "default_user\&.csv" located under the directory specified by the
+\fB\-\-csv\-file\-dir\fR
+option\&.
 .SH "USAGE"
 .PP
 The
@@ -115,8 +115,7 @@ keyword to receive usage assistance for a module or a module\'s command\&.
 The
 \fBquit\fR
 command is used to exit
-\fBbindctl\fR
-(and doesn\'t stop the BIND 10 services)\&.
+\fBbindctl\fR\&. (It doesn\'t stop the BIND 10 services\&.)
 .PP
 The following module is available by default:
 \fBconfig\fR
