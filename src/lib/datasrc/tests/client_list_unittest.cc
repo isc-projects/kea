@@ -57,9 +57,6 @@ public:
         FindNSEC3Result findNSEC3(const Name&, bool) {
             isc_throw(isc::NotImplemented, "Not implemented");
         }
-        Name findPreviousName(const Name&) const {
-            isc_throw(isc::NotImplemented, "Not implemented");
-        }
     private:
         Name origin_;
     };
