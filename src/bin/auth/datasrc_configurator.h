@@ -82,6 +82,7 @@ public:
         }
         server_ = server;
         session_ = session;
+        session->addRemoteConfig("data_sources", reconfigureInternal, false);
     }
     /// \brief Deinitializes the class.
     ///
@@ -91,6 +92,9 @@ public:
     /// This can be called even if it is not initialized currently. You
     /// can initialize it again after this.
     static void deinit() {
+        if (session_ != NULL) {
+            session_->removeRemoteConfig("data_sources");
+        }
         session_ = NULL;
         server_ = NULL;
     }
@@ -104,7 +108,7 @@ public:
     /// \param config The configuration value to parse. It is in the form
     ///     as an update from the config manager.
     /// \throw InvalidOperation if it is called when not initialized.
-    static void reconfigure(const isc::data::ConstElementPtr& config) {
+    static void reconfigure(const isc::data::ConstElementPtr& ) {
 
     }
 };
