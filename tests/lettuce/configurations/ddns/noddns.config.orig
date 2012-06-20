@@ -1,0 +1,43 @@
+{
+    "version": 2,
+    "Logging": {
+        "loggers": [
+            {
+                "severity": "DEBUG",
+                "name": "*",
+                "debuglevel": 99
+            }
+        ]
+    },
+    "DDNS": {"zones": []},
+    "Auth": {
+        "database_file": "data/ddns/example.org.sqlite3",
+        "listen_on": [
+            {
+                "port": 47806,
+                "address": "127.0.0.1"
+            }
+        ],
+        "datasources": [
+            {
+                "type": "memory",
+                "class": "IN",
+                "zones": [
+                    {
+                        "origin": "example.org",
+                        "filetype": "sqlite3",
+                        "file": "data/ddns/example.org.sqlite3"
+                    }
+                ]
+            }
+        ]
+    },
+    "Boss": {
+        "components": {
+            "b10-xfrout": {"kind": "dispensable"},
+            "b10-auth": {"kind": "needed", "special": "auth"},
+            "b10-zonemgr": {"kind": "dispensable", "address": "ZoneMgr" },
+            "b10-cmdctl": {"kind": "needed", "special": "cmdctl"}
+        }
+    }
+}

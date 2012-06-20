@@ -169,8 +169,8 @@ class BoB:
     
     def __init__(self, msgq_socket_file=None, data_path=None,
                  config_filename=None, clear_config=False, nocache=False,
-                 verbose=False, nokill=False, setuid=None, username=None,
-                 cmdctl_port=None, wait_time=10):
+                 verbose=False, nokill=False, setuid=None, setgid=None,
+                 username=None, cmdctl_port=None, wait_time=10):
         """
             Initialize the Boss of BIND. This is a singleton (only one can run).
         
@@ -208,6 +208,7 @@ class BoB:
         self.components_to_restart = []
         self.runnable = False
         self.uid = setuid
+        self.gid = setgid
         self.username = username
         self.verbose = verbose
         self.nokill = nokill
@@ -1156,12 +1157,14 @@ def main():
 
     # Check user ID.
     setuid = None
+    setgid = None
     username = None
     if options.user:
         # Try getting information about the user, assuming UID passed.
         try:
             pw_ent = pwd.getpwuid(int(options.user))
             setuid = pw_ent.pw_uid
+            setgid = pw_ent.pw_gid
             username = pw_ent.pw_name
         except ValueError:
             pass
@@ -1175,6 +1178,7 @@ def main():
         try:
             pw_ent = pwd.getpwnam(options.user)
             setuid = pw_ent.pw_uid
+            setgid = pw_ent.pw_gid
             username = pw_ent.pw_name
         except KeyError:
             pass
@@ -1205,7 +1209,7 @@ def main():
         boss_of_bind = BoB(options.msgq_socket_file, options.data_path,
                            options.config_file, options.clear_config,
                            options.nocache, options.verbose, options.nokill,
-                           setuid, username, options.cmdctl_port,
+                           setuid, setgid, username, options.cmdctl_port,
                            options.wait_time)
         startup_result = boss_of_bind.startup()
         if startup_result:
