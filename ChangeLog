@@ -1,3 +1,5 @@
+bind10-devel-20120621 released on June 21. 2012
+
 448.	[func]		team
 	b10-ddns is now functional and handles dynamic update requests
 	per RFC 2136.  See BIND 10 guide for configuration and operation
