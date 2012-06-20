@@ -57,7 +57,18 @@ protected:
         // Make sure no matter what we did, it is cleaned up.
         Configurator::deinit();
     }
-    void init() {
+    void init(const ElementPtr& config = ElementPtr()) {
+        session.getMessages()->
+            add(createAnswer(0,
+                             moduleSpecFromFile(string(PLUGIN_DATA_PATH) +
+                                                "/datasrc.spec").
+                             getFullSpec()));
+        if (config) {
+            session.getMessages()->add(createAnswer(0, config));
+        } else {
+            session.getMessages()->
+                add(createAnswer(0, ElementPtr(new MapElement)));
+        }
         Configurator::init(mccs.get(), this);
     }
     void SetUp() {
@@ -72,15 +83,18 @@ protected:
 TEST_F(DatasrcConfiguratorTest, initialization) {
     // It can't be initialized again
     EXPECT_THROW(init(), InvalidOperation);
+    EXPECT_TRUE(session.haveSubscription("data_sources", "*"));
     // Deinitialize to make the tests reasonable
     Configurator::deinit();
-    // Make sure there are enough messages in it, etc.
-    initSession();
+    EXPECT_FALSE(session.haveSubscription("data_sources", "*"));
     // If one of them is NULL, it does not work
     EXPECT_THROW(Configurator::init(NULL, this), InvalidParameter);
+    EXPECT_FALSE(session.haveSubscription("data_sources", "*"));
     EXPECT_THROW(Configurator::init(mccs.get(), NULL), InvalidParameter);
+    EXPECT_FALSE(session.haveSubscription("data_sources", "*"));
     // But we can initialize it again now
     EXPECT_NO_THROW(init());
+    EXPECT_TRUE(session.haveSubscription("data_sources", "*"));
 }
 
 }
