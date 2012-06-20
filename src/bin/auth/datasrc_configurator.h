@@ -47,6 +47,8 @@ private:
     {
         reconfigure(config);
     }
+    static Server* server_;
+    static isc::config::ModuleCCSession* session_;
 public:
     /// \brief Initializes the class.
     ///
@@ -61,13 +63,25 @@ public:
     /// \param session The session to hook into and to access the configuration
     ///     through.
     /// \param server It is the server to configure.
-    /// \throw InvalidOperation if this is called when already initialized.
+    /// \throw isc::InvalidOperation if this is called when already initialized.
+    /// \throw isc::InvalidParameter if any of the parameters is NULL
     /// \throw isc::config::ModuleCCError if the remote configuration is not
     ///     available for some reason.
     static void init(isc::config::ModuleCCSession *session,
                      Server *server)
     {
-
+        if (session == NULL) {
+            isc_throw(isc::InvalidParameter, "The session must not be NULL");
+        }
+        if (server == NULL) {
+            isc_throw(isc::InvalidParameter, "The server must not be NULL");
+        }
+        if (server_ != NULL) {
+            isc_throw(isc::InvalidOperation,
+                      "The configurator is already initialized");
+        }
+        server_ = server;
+        session_ = session;
     }
     /// \brief Deinitializes the class.
     ///
@@ -77,12 +91,30 @@ public:
     /// This can be called even if it is not initialized currently. You
     /// can initialize it again after this.
     static void deinit() {
-
+        session_ = NULL;
+        server_ = NULL;
     }
+    /// \brief Reads new configuration and replaces the old one.
+    ///
+    /// It instructs the server to replace the lists with new ones as needed.
+    /// You don't need to call it directly (but you could, though the benefit
+    /// is unkown and it would be questionable at least). It is called
+    /// automatically on normal updates.
+    ///
+    /// \param config The configuration value to parse. It is in the form
+    ///     as an update from the config manager.
+    /// \throw InvalidOperation if it is called when not initialized.
     static void reconfigure(const isc::data::ConstElementPtr& config) {
 
     }
 };
+
+template<class Server, class List>
+isc::config::ModuleCCSession*
+DataSourceConfiguratorGeneric<Server, List>::session_(NULL);
+
+template<class Server, class List>
+Server* DataSourceConfiguratorGeneric<Server, List>::server_(NULL);
 
 /// \brief Concrete version of DataSourceConfiguratorGeneric for the
 ///     use in authoritative server.
