@@ -20,7 +20,7 @@
 <refentry>
 
   <refentryinfo>
-    <date>March 1, 2012</date>
+    <date>June 20, 2012</date>
   </refentryinfo>
 
   <refmeta>
@@ -52,22 +52,22 @@
   <refsect1>
     <title>DESCRIPTION</title>
     <para>
-      The <command>b10-stats</command> is a daemon forked by
-      <command>bind10</command>. Stats module collects statistics data
-      from each module and reports statistics information
-      via <command>bindctl</command>.  It communicates by using the
+      The <command>b10-stats</command> daemon collects statistics data
+      from each BIND 10 module. Its statistics information may be
+      reported via <command>bindctl</command> or
+      <command>b10-stats-httpd</command>.  It is started by
+      <command>bind10</command> and communicates by using the
       Command Channel by <command>b10-msgq</command> with other
-      modules
-      like <command>bind10</command>, <command>b10-auth</command> and
-      so on. It waits for coming data from other modules, then other
-      modules send data to stats module periodically. Other modules
-      send stats data to stats module independently from
-      implementation of stats module, so the frequency of sending data
-      may not be constant. Stats module collects data and aggregates
-      it. <command>b10-stats</command> invokes an internal command
-      for <command>bind10</command> after its initial starting because it's
-      sure to collect statistics data from <command>bind10</command>.
-<!-- TODO: reword that last sentence? -->
+      modules like <command>bind10</command>, <command>b10-auth</command>
+      and so on. It waits for coming data from other modules, then
+      other modules send data to stats module periodically. Other
+      modules send stats data to stats module independently from
+      implementation of stats module, so the frequency of sending
+      data may not be constant. The stats module collects data and
+      aggregates it. <command>b10-stats</command> invokes an internal
+      command for <command>bind10</command> after its initial
+      starting to make sure it collects statistics data from
+      <command>bind10</command>.
     </para>
   </refsect1>
 
@@ -79,8 +79,7 @@
         <term><option>-v</option>, <option>--verbose</option></term>
         <listitem>
 	  <para>
-          This <command>b10-stats</command> switches to verbose
-          mode. It sends verbose messages to STDOUT.
+          This enables maximum debug logging.
 	  </para>
         </listitem>
       </varlistentry>
