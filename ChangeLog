@@ -1,3 +1,20 @@
+448.	[func]		team
+	b10-ddns is now functional and handles dynamic update requests
+	per RFC 2136.  See BIND 10 guide for configuration and operation
+	details.
+	(Multiple Trac tickets)
+
+447.	[bug]		jinmei
+	Fixed a bug in b10-xfrout where a helper thread could fall into
+	an infinite loop if b10-auth stops while the thread is waiting for
+	forwarded requests from b10-auth.
+	(Trac #988 and #1833, git 95a03bbefb559615f3f6e529d408b749964d390a)
+
+446.	[bug]		muks
+	A number of warnings reported by Python about unclosed file and
+	socket objects were fixed. Some related code was also made safer.
+	(Trac #1828, git 464682a2180c672f1ed12d8a56fd0a5ab3eb96ed)
+
 445.	[bug]*		jinmei
 	The pre-install check for older SQLite3 DB now refers to the DB
 	file with the prefix of DESTDIR.  This ensures that 'make install'

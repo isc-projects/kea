@@ -342,6 +342,10 @@ class TestDDNSServer(unittest.TestCase):
         self.__select_answer = None
         self.__select_exception = None
         self.__hook_called = False
+        # Because we overwrite the _listen_socket, close any existing
+        # socket object.
+        if self.ddns_server._listen_socket is not None:
+            self.ddns_server._listen_socket.close()
         self.ddns_server._listen_socket = FakeSocket(2)
         ddns.select.select = self.__select
 
@@ -380,6 +384,9 @@ class TestDDNSServer(unittest.TestCase):
         # Now make sure the clear_socket really works
         ddns.clear_socket()
         self.assertFalse(os.path.exists(ddns.SOCKET_FILE))
+        # Let ddns object complete any necessary cleanup (not part of the test,
+        # but for suppressing any warnings from the Python interpreter)
+        ddnss.shutdown_cleanup()
 
     def test_initial_config(self):
         # right now, the only configuration is the zone configuration, whose

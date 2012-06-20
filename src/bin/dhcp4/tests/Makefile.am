@@ -38,6 +38,9 @@ if USE_STATIC_LINK
 AM_LDFLAGS = -static
 endif
 
+TESTS_ENVIRONMENT = \
+        libtool --mode=execute $(VALGRIND_COMMAND)
+
 TESTS =
 if HAVE_GTEST
 

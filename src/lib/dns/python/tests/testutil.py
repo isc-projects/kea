@@ -28,14 +28,14 @@ def read_wire_data(filename):
     data = bytes()
     for path in testdata_path.split(":"):
         try:
-            file = open(path + os.sep + filename, "r")
-            for line in file:
-                line = line.strip()
-                if line == "" or line.startswith("#"):
-                    pass
-                else:
-                    cur_data = bytes.fromhex(line)
-                    data += cur_data
+            with open(path + os.sep + filename, "r") as f:
+                for line in f:
+                    line = line.strip()
+                    if line == "" or line.startswith("#"):
+                        pass
+                    else:
+                        cur_data = bytes.fromhex(line)
+                        data += cur_data
 
             return data
         except IOError:

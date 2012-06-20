@@ -112,6 +112,7 @@ class TestZonemgrRefresh(unittest.TestCase):
     def tearDown(self):
         if os.path.exists(TEST_SQLITE3_DBFILE):
             os.unlink(TEST_SQLITE3_DBFILE)
+        sys.stderr.close()
         sys.stderr = self.stderr_backup
 
     def test_random_jitter(self):
