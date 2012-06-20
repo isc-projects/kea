@@ -743,8 +743,9 @@ public:
 
     /// \brief It returns the previous name in DNSSEC order.
     ///
-    /// This is used in DatabaseClient::findPreviousName and does more
-    /// or less the real work, except for working on strings.
+    /// Gets the previous name in the DNSSEC order. This can be used
+    /// to find the correct NSEC records for proving nonexistence
+    /// of domains.
     ///
     /// \param rname The name to ask for previous of, in reversed form.
     ///     We use the reversed form (see isc::dns::Name::reverse),
@@ -903,10 +904,6 @@ public:
             const isc::dns::Name& name,
             std::vector<isc::dns::ConstRRsetPtr>& target,
             const FindOptions options = FIND_DEFAULT);
-
-        /// \brief Implementation of ZoneFinder::findPreviousName method.
-        virtual isc::dns::Name findPreviousName(const isc::dns::Name& query)
-            const;
 
         /// Look for NSEC3 for proving (non)existence of given name.
         ///
@@ -1107,6 +1104,10 @@ public:
             bool is_nsec_;
             bool probed_;
         };
+
+        /// \brief A simple wrapper for identifying the previous name
+        /// of the given name in the underlying database.
+        isc::dns::Name findPreviousName(const isc::dns::Name& name) const;
 
         /// \brief Search result of \c findDelegationPoint().
         ///
