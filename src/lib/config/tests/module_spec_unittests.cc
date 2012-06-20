@@ -110,6 +110,7 @@ TEST(ModuleSpec, SpecfileItems) {
                    "item_default not of type map");
     moduleSpecError("spec15.spec",
                    "badname is not a valid type name");
+    EXPECT_NO_THROW(moduleSpecFromFile(specfile("spec40.spec")));
 }
 
 TEST(ModuleSpec, SpecfileConfigData) {
