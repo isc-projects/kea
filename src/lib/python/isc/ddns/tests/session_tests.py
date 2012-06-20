@@ -657,12 +657,12 @@ class SessionTest(SessionTestBase):
         self.assertEqual(str(expected_soa),
                          str(session._UpdateSession__added_soa))
 
-    def check_full_handle_result(self, expected, updates):
+    def check_full_handle_result(self, expected, updates, prerequisites=[]):
         '''Helper method for checking the result of a full handle;
            creates an update session, and fills it with the list of rrsets
            from 'updates'. Then checks if __handle()
            results in a response with rcode 'expected'.'''
-        msg = create_update_msg([TEST_ZONE_RECORD], [], updates)
+        msg = create_update_msg([TEST_ZONE_RECORD], prerequisites, updates)
         zconfig = ZoneConfig(set(), TEST_RRCLASS, self._datasrc_client,
                              self._acl_map)
         session = UpdateSession(msg, TEST_CLIENT4, zconfig)
@@ -901,6 +901,21 @@ class SessionTest(SessionTestBase):
                                 RRType.MX(), 0,
                                 [ b'\x00\x0a\x04mail\x07example\x03org\x00' ])
         self.rrset_update_del_rrset_mx = rrset_update_del_rrset_mx
+
+    def test_acl_before_prereq(self):
+        name_in_use_no = create_rrset("foo.example.org", RRClass.ANY(),
+                                      RRType.ANY(), 0)
+
+        # Test a prerequisite that would fail
+        self.check_full_handle_result(Rcode.NXDOMAIN(), [], [ name_in_use_no ])
+
+        # Change ACL so that it would be denied
+        self._acl_map = {(TEST_ZONE_NAME, TEST_RRCLASS):
+                             REQUEST_LOADER.load([{"action": "REJECT"}])}
+
+        # The prerequisite should now not be reached; it should fail on the
+        # ACL
+        self.check_full_handle_result(Rcode.REFUSED(), [], [ name_in_use_no ])
 
     def test_prescan(self):
         '''Test whether the prescan succeeds on data that is ok, and whether
