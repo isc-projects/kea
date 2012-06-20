@@ -1,5 +1,12 @@
 bind10-devel-20120621 released on June 21. 2012
 
+449.	[bug]		muks
+	b10-xfin: fixed a bug where xfrin sent the wrong notification
+	message to zonemgr on successful zone transfer. This also
+	solve other reported problems such as too frequent attempt
+	of zone refreshing (see Trac #1786 and #1834).
+	(Trac #2023, git b5fbf8a408a047a2552e89ef435a609f5df58d8c)
+
 448.	[func]		team
 	b10-ddns is now functional and handles dynamic update requests
 	per RFC 2136.  See BIND 10 guide for configuration and operation
