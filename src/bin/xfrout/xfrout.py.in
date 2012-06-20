@@ -1008,7 +1008,7 @@ class XfroutServer:
             self.shutdown()
             answer = create_answer(0)
 
-        elif cmd == notify_out.ZONE_NEW_DATA_READY_CMD:
+        elif cmd == "notify":
             zone_name = args.get('zone_name')
             zone_class = args.get('zone_class')
             if not zone_class:
