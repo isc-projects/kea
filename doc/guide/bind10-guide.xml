@@ -1973,7 +1973,7 @@ what is XfroutClient xfr_client??
 	  eventually supported.  But right now it's considered a lower
 	  priority task and there is no specific plan of implementing
 	  this feature.
-	  <!-- See Trac #2063 -->
+<!-- See Trac #2063 -->
       </simpara></note>
     </para>
 
@@ -2163,7 +2163,7 @@ DDNS/zones[0]/update_acl[1]     {"action": "ACCEPT", "from": "::1", "key": "key.
         it's not possible to specify access control with higher
         granularity such as for particular domain names or specific
         types of RRs.
-	<!-- See Trac ticket #2065 -->
+<!-- See Trac ticket #2065 -->
       </para>
 
       <note><simpara>
