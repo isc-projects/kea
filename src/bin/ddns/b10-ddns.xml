@@ -63,7 +63,7 @@
     <para>
       When the <command>b10-auth</command> authoritative DNS server
       receives an UPDATE request, it internally forwards the request
-      to <command>b10-ddns</command>, which handles the rest of
+      to <command>b10-ddns</command>, which handles the rest of the
       request processing.
       When the processing is completed <command>b10-ddns</command>
       will send a response to the client with the RCODE set to the
@@ -119,7 +119,7 @@
         <listitem>
           <para>
             This value is ignored at this moment, but is provided for
-            compatibility with the bind10 Boss process.
+            compatibility with the <command>bind10</command> Boss process.
           </para>
         </listitem>
       </varlistentry>
@@ -137,7 +137,7 @@
       zones that can be updated with DDNS. Each entry is a map that
       can contain the following items:
       <varname>origin</varname> is a textual domain name of the zone;
-      <varname>class</varname> (text) is the RR class of the zone;
+      <varname>class</varname> (text) is the RR class of the zone; and
       <varname>update_acl</varname> is an ACL that controls
       permission for updates.
       See the BIND 10 Guide for configuration details.
