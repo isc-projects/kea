@@ -18,7 +18,7 @@
 #include "auth_srv.h"
 
 #include <datasrc/client_list.h>
-#include <config/module_session.h>
+#include <config/ccsession.h>
 
 /// \brief A class to configure the authoritative server's data source lists
 ///
@@ -45,7 +45,7 @@ private:
                                     isc::data::ConstElementPtr config,
                                     const isc::config::ConfigData&)
     {
-        reconfigure(data);
+        reconfigure(config);
     }
 public:
     /// \brief Initializes the class.

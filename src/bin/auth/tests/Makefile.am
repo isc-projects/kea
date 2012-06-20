@@ -44,6 +44,7 @@ run_unittests_SOURCES += command_unittest.cc
 run_unittests_SOURCES += common_unittest.cc
 run_unittests_SOURCES += query_unittest.cc
 run_unittests_SOURCES += statistics_unittest.cc
+run_unittests_SOURCES += datasrc_configurator_unittest.cc
 run_unittests_SOURCES += run_unittests.cc
 # This is a temporary workaround for #1206, where the InMemoryClient has been
 # moved to an ldopened library. We could add that library to LDADD, but that
