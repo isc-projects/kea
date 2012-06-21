@@ -267,7 +267,7 @@ public:
     const boost::shared_ptr<TSIGKeyRing>* keyring_;
 
     /// The client list
-    map<RRClass, boost::shared_ptr<ClientList> > client_lists_;
+    map<RRClass, boost::shared_ptr<ConfigurableClientList> > client_lists_;
 
     /// Bind the ModuleSpec object in config_session_ with
     /// isc:config::ModuleSpec::validateStatistics.
@@ -1030,7 +1030,7 @@ AuthSrv::setTSIGKeyRing(const boost::shared_ptr<TSIGKeyRing>* keyring) {
 
 void
 AuthSrv::setClientList(const RRClass& rrclass,
-                       const boost::shared_ptr<ClientList>& list) {
+                       const boost::shared_ptr<ConfigurableClientList>& list) {
     if (list) {
         impl_->client_lists_[rrclass] = list;
     } else {
@@ -1038,12 +1038,12 @@ AuthSrv::setClientList(const RRClass& rrclass,
     }
 }
 
-boost::shared_ptr<ClientList>
+boost::shared_ptr<ConfigurableClientList>
 AuthSrv::getClientList(const RRClass& rrclass) {
-    const map<RRClass, boost::shared_ptr<ClientList> >::const_iterator
-        it(impl_->client_lists_.find(rrclass));
+    const map<RRClass, boost::shared_ptr<ConfigurableClientList> >::
+        const_iterator it(impl_->client_lists_.find(rrclass));
     if (it == impl_->client_lists_.end()) {
-        return (boost::shared_ptr<ClientList>());
+        return (boost::shared_ptr<ConfigurableClientList>());
     } else {
         return (it->second);
     }
@@ -1052,9 +1052,9 @@ AuthSrv::getClientList(const RRClass& rrclass) {
 vector<RRClass>
 AuthSrv::getClientListClasses() const {
     vector<RRClass> result;
-    for (map<RRClass, boost::shared_ptr<ClientList> >::const_iterator
-         it(impl_->client_lists_.begin()); it != impl_->client_lists_.end();
-         ++ it) {
+    for (map<RRClass, boost::shared_ptr<ConfigurableClientList> >::
+         const_iterator it(impl_->client_lists_.begin());
+         it != impl_->client_lists_.end(); ++it) {
         result.push_back(it->first);
     }
     return (result);
