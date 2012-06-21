@@ -55,6 +55,7 @@
 #include <auth/query.h>
 #include <auth/statistics.h>
 #include <auth/auth_log.h>
+#include <auth/list.h>
 
 #include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
@@ -722,8 +723,8 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, Message& message,
             memory_client_class_ == question->getClass()) {
             const RRType& qtype = question->getType();
             const Name& qname = question->getName();
-            query_.process(memory_client_container_->getInstance(),
-                           qname, qtype, message, dnssec_ok);
+            SingletonList list(memory_client_container_->getInstance());
+            query_.process(list, qname, qtype, message, dnssec_ok);
         } else {
             datasrc::Query query(message, cache_, dnssec_ok);
             data_sources_.doQuery(query);
