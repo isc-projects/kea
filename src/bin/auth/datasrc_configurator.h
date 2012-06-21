@@ -117,32 +117,63 @@ public:
             isc_throw(isc::InvalidOperation,
                       "Can't reconfigure while not inited");
         }
-        // Get the configuration and current state.
         typedef std::map<std::string, isc::data::ConstElementPtr> Map;
-        const Map& map(config->mapValue());
-        const std::vector<isc::dns::RRClass>
-            activeVector(server_->getClientListClasses());
-        std::set<isc::dns::RRClass> active(activeVector.begin(),
-                                           activeVector.end());
-        // Go through the configuration and change everything.
-        for (Map::const_iterator it(map.begin()); it != map.end(); ++it) {
-            isc::dns::RRClass rrclass(it->first);
-            active.erase(rrclass);
-            ListPtr list(server_->getClientList(rrclass));
-            bool need_set(false);
-            if (!list) {
-                list.reset(new List);
-                need_set = true;
+        typedef std::pair<isc::dns::RRClass, ListPtr> RollbackPair;
+        typedef std::pair<isc::dns::RRClass, isc::data::ConstElementPtr>
+            RollbackConfiguration;
+        // Some structures to be able to perform a rollback
+        std::vector<RollbackPair> rollback_sets;
+        std::vector<RollbackConfiguration> rollback_configurations;
+        try {
+            // Get the configuration and current state.
+            const Map& map(config->mapValue());
+            const std::vector<isc::dns::RRClass>
+                activeVector(server_->getClientListClasses());
+            std::set<isc::dns::RRClass> active(activeVector.begin(),
+                                               activeVector.end());
+            // Go through the configuration and change everything.
+            for (Map::const_iterator it(map.begin()); it != map.end(); ++it) {
+                isc::dns::RRClass rrclass(it->first);
+                active.erase(rrclass);
+                ListPtr list(server_->getClientList(rrclass));
+                bool need_set(false);
+                if (list) {
+                    rollback_configurations.
+                        push_back(RollbackConfiguration(rrclass,
+                            list->getConfiguration()));
+                } else {
+                    list.reset(new List);
+                    need_set = true;
+                    rollback_sets.push_back(RollbackPair(rrclass, ListPtr()));
+                }
+                list->configure(it->second, true);
+                if (need_set) {
+                    server_->setClientList(rrclass, list);
+                }
             }
-            list->configure(*it->second, true);
-            if (need_set) {
-                server_->setClientList(rrclass, list);
+            // Remove the ones that are not in the configuration.
+            for (std::set<isc::dns::RRClass>::iterator it(active.begin());
+                 it != active.end(); ++it) {
+                // There seems to be no way the setClientList could throw.
+                // But this is just to make sure in case it did to restore
+                // the original.
+                rollback_sets.push_back(
+                    RollbackPair(*it, server_->getClientList(*it)));
+                server_->setClientList(*it, ListPtr());
             }
-        }
-        // Remove the ones that are not in the configuration.
-        for (std::set<isc::dns::RRClass>::iterator it(active.begin());
-             it != active.end(); ++it) {
-            server_->setClientList(*it, ListPtr());
+        } catch (...) {
+            // Perform a rollback of the changes. The old configuration should
+            // work.
+            for (typename std::vector<RollbackPair>::const_iterator
+                 it(rollback_sets.begin()); it != rollback_sets.end(); ++it) {
+                server_->setClientList(it->first, it->second);
+            }
+            for (typename std::vector<RollbackConfiguration>::const_iterator
+                 it(rollback_configurations.begin());
+                 it != rollback_configurations.end(); ++it) {
+                server_->getClientList(it->first)->configure(it->second, true);
+            }
+            throw;
         }
     }
 };
