@@ -15,7 +15,7 @@ noinst_LTLIBRARIES = libfake_session.la
 libfake_session_la_SOURCES = fake_session.h fake_session.cc
 
 TESTS_ENVIRONMENT = \
-	libtool --mode=execute $(VALGRIND_COMMAND)
+	$(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
 
 TESTS =
 if HAVE_GTEST
