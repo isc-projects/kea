@@ -35,15 +35,23 @@ class DatasrcConfiguratorTest;
 
 class FakeList {
 public:
-    void configure(const Element& configuration, bool allow_cache) {
+    FakeList() :
+        configuration_(new ListElement)
+    {}
+    void configure(const ConstElementPtr& configuration, bool allow_cache) {
         EXPECT_TRUE(allow_cache);
-        conf_ = configuration.get(0)->get("type")->stringValue();
+        conf_ = configuration->get(0)->get("type")->stringValue();
+        configuration_ = configuration;
     }
     const string& getConf() const {
         return (conf_);
     }
+    ConstElementPtr getConfiguration() const {
+        return (configuration_);
+    }
 private:
     string conf_;
+    ConstElementPtr configuration_;
 };
 
 typedef shared_ptr<FakeList> ListPtr;
@@ -213,9 +221,66 @@ TEST_F(DatasrcConfiguratorTest, updateDelete) {
                        "*");
     log_ = "";
     mccs->checkCommand();
-    EXPECT_EQ("set IN \n", log_);
+    EXPECT_EQ("get IN\nset IN \n", log_);
     EXPECT_FALSE(lists_[RRClass::IN()]);
 }
 
+// Check that we can rollback an addition if something else fails
+TEST_F(DatasrcConfiguratorTest, rollbackAddition) {
+    doInInit();
+    // The configuration is wrong. However, the CH one will get done first.
+    const ElementPtr
+        config(Element::fromJSON("{\"IN\": [{\"type\": 13}], "
+                                 "\"CH\": [{\"type\": \"xxx\"}]}"));
+    session.addMessage(createCommand("config_update", config), "data_sources",
+                       "*");
+    log_ = "";
+    // It does not throw, as it is handled in the ModuleCCSession.
+    // Throwing from the reconfigure is checked in other tests.
+    EXPECT_NO_THROW(mccs->checkCommand());
+    // Anyway, the result should not contain CH now and the original IN should
+    // be there.
+    EXPECT_EQ("xxx", lists_[RRClass::IN()]->getConf());
+    EXPECT_FALSE(lists_[RRClass::CH()]);
+}
+
+// Check that we can rollback a deletion if something else fails
+TEST_F(DatasrcConfiguratorTest, rollbackDeletion) {
+    doInInit();
+    // Put the CH there
+    const ElementPtr
+        config1(Element::fromJSON("{\"IN\": [{\"type\": \"yyy\"}], "
+                                  "\"CH\": [{\"type\": \"xxx\"}]}"));
+    Configurator::reconfigure(config1);
+    const ElementPtr
+        config2(Element::fromJSON("{\"IN\": [{\"type\": 13}]}"));
+    // This would delete CH. However, the IN one fails.
+    // As the deletions happen after the additions/settings
+    // and there's no known way to cause an exception during the
+    // deletions, it is not a true rollback, but the result should
+    // be the same.
+    EXPECT_THROW(Configurator::reconfigure(config2), TypeError);
+    EXPECT_EQ("yyy", lists_[RRClass::IN()]->getConf());
+    EXPECT_EQ("xxx", lists_[RRClass::CH()]->getConf());
+}
+
+// Check that we can roll back configuration change if something
+// fails later on.
+TEST_F(DatasrcConfiguratorTest, rollbackConfiguration) {
+    doInInit();
+    // Put the CH there
+    const ElementPtr
+        config1(Element::fromJSON("{\"IN\": [{\"type\": \"yyy\"}], "
+                                  "\"CH\": [{\"type\": \"xxx\"}]}"));
+    Configurator::reconfigure(config1);
+    // Now, the CH happens first. But nevertheless, it should be
+    // restored to the previoeus version.
+    const ElementPtr
+        config2(Element::fromJSON("{\"IN\": [{\"type\": 13}], "
+                                  "\"CH\": [{\"type\": \"yyy\"}]}"));
+    EXPECT_THROW(Configurator::reconfigure(config2), TypeError);
+    EXPECT_EQ("yyy", lists_[RRClass::IN()]->getConf());
+    EXPECT_EQ("xxx", lists_[RRClass::CH()]->getConf());
+}
 
 }
