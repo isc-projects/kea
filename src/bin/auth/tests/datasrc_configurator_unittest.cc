@@ -61,7 +61,8 @@ public:
         return (lists_[rrclass]);
     }
     void setClientList(const RRClass& rrclass, const ListPtr& list) {
-        log_ += "set " + rrclass.toText() + " " + list->getConf() + "\n";
+        log_ += "set " + rrclass.toText() + " " +
+            (list ? list->getConf() : "") + "\n";
         lists_[rrclass] = list;
     }
 protected:
@@ -123,6 +124,9 @@ TEST_F(DatasrcConfiguratorTest, initialization) {
     // Deinitialize to make the tests reasonable
     Configurator::deinit();
     EXPECT_FALSE(session.haveSubscription("data_sources", "*"));
+    // We can't reconfigure now (not even manually)
+    EXPECT_THROW(Configurator::reconfigure(ElementPtr(new MapElement())),
+                 InvalidOperation);
     // If one of them is NULL, it does not work
     EXPECT_THROW(Configurator::init(NULL, this), InvalidParameter);
     EXPECT_FALSE(session.haveSubscription("data_sources", "*"));
@@ -169,5 +173,43 @@ TEST_F(DatasrcConfiguratorTest, multiple) {
     EXPECT_EQ("xxx", lists_[RRClass::CH()]->getConf());
     EXPECT_EQ(2, lists_.size());
 }
+
+// Check we can add another one later and the old one does not get
+// overwritten.
+TEST_F(DatasrcConfiguratorTest, updateAdd) {
+    // TODO: Make sure the communication protocol really works on
+    // the semi-diff principle here, not by sending everything.
+    // (actually, sending everything would work, as per above, two
+    // tests, but this test would be wrong).
+    doInInit();
+    const ElementPtr
+        config(Element::fromJSON("{\"CH\": [{\"type\": \"yyy\"}]}"));
+    session.addMessage(createCommand("config_update", config), "data_sources",
+                       "*");
+    log_ = "";
+    mccs->checkCommand();
+    // This one does not set
+    EXPECT_EQ("get CH\nset CH yyy\n", log_);
+    // But this should contain the yyy configuration
+    EXPECT_EQ("yyy", lists_[RRClass::CH()]->getConf());
+    EXPECT_EQ("xxx", lists_[RRClass::IN()]->getConf());
+    EXPECT_EQ(2, lists_.size());
+}
+
+// We delete a class list in this test.
+TEST_F(DatasrcConfiguratorTest, updateDelete) {
+    // TODO: Make sure the protocol sends the diff and a delete
+    // is done by a null element. Where is a documentation for this?
+    doInInit();
+    const ElementPtr
+        config(Element::fromJSON("{\"IN\": null}"));
+    session.addMessage(createCommand("config_update", config), "data_sources",
+                       "*");
+    log_ = "";
+    mccs->checkCommand();
+    // This one does not set
+    EXPECT_EQ("set IN \n", log_);
+}
+
 
 }
