@@ -436,8 +436,8 @@ public:
     ///
     /// \param rrclass The class for which to get the list.
     /// \return The list, or NULL if no list is set for the class.
-    boost::shared_ptr<const isc::datasrc::ClientList>
-        getClientList(const isc::dns::RRClass& rrclass) const;
+    boost::shared_ptr<isc::datasrc::ClientList>
+        getClientList(const isc::dns::RRClass& rrclass);
 
     /// \brief Returns a list of classes that have a client list.
     ///
