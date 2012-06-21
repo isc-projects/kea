@@ -185,6 +185,9 @@ typedef boost::shared_ptr<const ClientList> ConstClientListPtr;
 /// inherited except for tests.
 class ConfigurableClientList : public ClientList {
 public:
+    ConfigurableClientList() :
+        configuration_(new isc::data::ListElement)
+    {}
     /// \brief Exception thrown when there's an error in configuration.
     class ConfigurationError : public Exception {
     public:
@@ -212,7 +215,17 @@ public:
     ///     client.
     /// \throw ConfigurationError if the configuration is invalid in some
     ///     sense.
-    void configure(const data::Element& configuration, bool allow_cache);
+    /// \throw BadValue if configuration is NULL
+    void configure(const isc::data::ConstElementPtr& configuration,
+                   bool allow_cache);
+
+    /// \brief Returns the currently active configuration.
+    ///
+    /// In case configure was not called yet, it returns an empty
+    /// list, which corresponds to the default content.
+    const isc::data::ConstElementPtr& getConfiguration() const {
+        return (configuration_);
+    }
 
     /// \brief Implementation of the ClientList::find.
     virtual FindResult find(const dns::Name& zone,
@@ -273,6 +286,9 @@ protected:
     virtual DataSourcePair getDataSourceClient(const std::string& type,
                                                const data::ConstElementPtr&
                                                configuration);
+private:
+    /// \brief Currently active configuration.
+    isc::data::ConstElementPtr configuration_;
 public:
     /// \brief Access to the data source clients.
     ///
