@@ -94,7 +94,7 @@ main(int argc, char* argv[]) {
 
         cout << "[b10-dhcp4] Initiating DHCPv4 server operation." << endl;
 
-        ControlledDhcpv4Srv* server = new ControlledDhcpv4Srv(DHCP4_SERVER_PORT);
+        ControlledDhcpv4Srv* server = new ControlledDhcpv4Srv(port_number);
         server->run();
         delete server;
         server = NULL;
