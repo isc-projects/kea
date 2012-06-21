@@ -165,7 +165,7 @@ class NotifyOut:
         for zone_name, zone_class in sqlite3_ds.get_zones_info(self._db_file):
             zone_id = (zone_name, zone_class)
             if zone_id not in self._notify_infos:
-                return False
+                continue
             self._notify_infos[zone_id].notify_slaves.append((address, port))
 
     def send_notify(self, zone_name, zone_class='IN'):
