@@ -98,6 +98,16 @@ protected:
     void SetUp() {
         init();
     }
+    void doInInit() {
+        const ElementPtr
+            config(Element::fromJSON("{\"IN\": [{\"type\": \"xxx\"}]}"));
+        session.addMessage(createCommand("config_update", config), "data_sources",
+                           "*");
+        mccs->checkCommand();
+        // Check it called the correct things (check that there's no IN yet and
+        // set a new one.
+        EXPECT_EQ("get IN\nset IN xxx\n", log_);
+    }
     FakeSession session;
     auto_ptr<ModuleCCSession> mccs;
     const string specfile;
@@ -125,14 +135,39 @@ TEST_F(DatasrcConfiguratorTest, initialization) {
 
 // Push there a configuration with a single list.
 TEST_F(DatasrcConfiguratorTest, createList) {
+    doInInit();
+}
+
+TEST_F(DatasrcConfiguratorTest, modifyList) {
+    // First, initialize the list
+    doInInit();
+    // And now change the configuration of the list
     const ElementPtr
-        config(Element::fromJSON("{\"IN\": [{\"type\": \"xxx\"}]}"));
+        config(Element::fromJSON("{\"IN\": [{\"type\": \"yyy\"}]}"));
+    session.addMessage(createCommand("config_update", config), "data_sources",
+                       "*");
+    log_ = "";
+    mccs->checkCommand();
+    // This one does not set
+    EXPECT_EQ("get IN\n", log_);
+    // But this should contain the yyy configuration
+    EXPECT_EQ("yyy", lists_[RRClass::IN()]->getConf());
+}
+
+// Check we can have multiple lists at once
+TEST_F(DatasrcConfiguratorTest, multiple) {
+    const ElementPtr
+        config(Element::fromJSON("{\"IN\": [{\"type\": \"yyy\"}], "
+                                 "\"CH\": [{\"type\": \"xxx\"}]}"));
     session.addMessage(createCommand("config_update", config), "data_sources",
                        "*");
     mccs->checkCommand();
-    // Check it called the correct things (check that there's no IN yet and
-    // set a new one.
-    EXPECT_EQ("get IN\nset IN xxx\n", log_);
+    // This one does not set
+    EXPECT_EQ("get CH\nset CH xxx\nget IN\nset IN yyy\n", log_);
+    // We should have both there
+    EXPECT_EQ("yyy", lists_[RRClass::IN()]->getConf());
+    EXPECT_EQ("xxx", lists_[RRClass::CH()]->getConf());
+    EXPECT_EQ(2, lists_.size());
 }
 
 }
