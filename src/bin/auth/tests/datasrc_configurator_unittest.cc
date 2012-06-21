@@ -65,6 +65,14 @@ public:
             (list ? list->getConf() : "") + "\n";
         lists_[rrclass] = list;
     }
+    vector<RRClass> getClientListClasses() const {
+        vector<RRClass> result;
+        for (map<RRClass, ListPtr>::const_iterator it(lists_.begin());
+             it != lists_.end(); ++it) {
+            result.push_back(it->first);
+        }
+        return (result);
+    }
 protected:
     DatasrcConfiguratorTest() :
         session(ElementPtr(new ListElement), ElementPtr(new ListElement),
@@ -176,39 +184,37 @@ TEST_F(DatasrcConfiguratorTest, multiple) {
 
 // Check we can add another one later and the old one does not get
 // overwritten.
+//
+// It's almost like above, but we initialize first with single-list
+// config.
 TEST_F(DatasrcConfiguratorTest, updateAdd) {
-    // TODO: Make sure the communication protocol really works on
-    // the semi-diff principle here, not by sending everything.
-    // (actually, sending everything would work, as per above, two
-    // tests, but this test would be wrong).
     doInInit();
     const ElementPtr
-        config(Element::fromJSON("{\"CH\": [{\"type\": \"yyy\"}]}"));
+        config(Element::fromJSON("{\"IN\": [{\"type\": \"yyy\"}], "
+                                 "\"CH\": [{\"type\": \"xxx\"}]}"));
     session.addMessage(createCommand("config_update", config), "data_sources",
                        "*");
     log_ = "";
     mccs->checkCommand();
     // This one does not set
-    EXPECT_EQ("get CH\nset CH yyy\n", log_);
+    EXPECT_EQ("get CH\nset CH xxx\nget IN\n", log_);
     // But this should contain the yyy configuration
-    EXPECT_EQ("yyy", lists_[RRClass::CH()]->getConf());
-    EXPECT_EQ("xxx", lists_[RRClass::IN()]->getConf());
+    EXPECT_EQ("xxx", lists_[RRClass::CH()]->getConf());
+    EXPECT_EQ("yyy", lists_[RRClass::IN()]->getConf());
     EXPECT_EQ(2, lists_.size());
 }
 
 // We delete a class list in this test.
 TEST_F(DatasrcConfiguratorTest, updateDelete) {
-    // TODO: Make sure the protocol sends the diff and a delete
-    // is done by a null element. Where is a documentation for this?
     doInInit();
     const ElementPtr
-        config(Element::fromJSON("{\"IN\": null}"));
+        config(Element::fromJSON("{}"));
     session.addMessage(createCommand("config_update", config), "data_sources",
                        "*");
     log_ = "";
     mccs->checkCommand();
-    // This one does not set
     EXPECT_EQ("set IN \n", log_);
+    EXPECT_FALSE(lists_[RRClass::IN()]);
 }
 
 
