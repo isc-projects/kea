@@ -5,7 +5,7 @@ Feature: Example feature
     is intentionally uncommented.
     The later scenarios have comments to show what the test steps do and
     support
-    
+
     Scenario: A simple example
         Given I have bind10 running with configuration example.org.config
         And wait for bind10 stderr message BIND10_STARTED_CC
@@ -29,9 +29,9 @@ Feature: Example feature
         # Underwater, we take advantage of our intialization routines so
         # that we are sure this file does not exist, see
         # features/terrain/terrain.py
-        
-        # Standard check to test (non-)existence of a file
-        # This file is actually automatically
+
+        # Standard check to test (non-)existence of a file.
+        # This file is actually automatically created.
         The file data/test_nonexistent_db.sqlite3 should not exist
 
         # In the first scenario, we used 'given I have bind10 running', which
@@ -42,6 +42,9 @@ Feature: Example feature
         And wait for bind10 stderr message BIND10_STARTED_CC
         And wait for bind10 stderr message CMDCTL_STARTED
         And wait for bind10 stderr message AUTH_SERVER_STARTED
+
+        # Now we use the first step again to see if the file has been created
+        The file data/test_nonexistent_db.sqlite3 should exist
 
         bind10 module Auth should be running
         And bind10 module Resolver should not be running
@@ -56,16 +59,13 @@ Feature: Example feature
         # use in the start step (for bind 10, that is 'I start bind10 with')
         # See scenario 'Multiple instances' for more.
         Then stop process bind10
-        
-        # Now we use the first step again to see if the file has been created
-        The file data/test_nonexistent_db.sqlite3 should exist
 
     Scenario: example.org queries
         # This scenario performs a number of queries and inspects the results
         # Simple queries have already been show, but after we have sent a query,
         # we can also do more extensive checks on the result.
         # See querying.py for more information on these steps.
-        
+
         # note: lettuce can group similar checks by using tables, but we
         # intentionally do not make use of that here
 
@@ -182,6 +182,9 @@ Feature: Example feature
 
         A query for www.example.org to 127.0.0.1:47806 should have rcode NOERROR
         A query for www.example.org to [::1]:47807 should have rcode NOERROR
+        The SOA serial for example.org should be 1234
+        The SOA serial for example.org at 127.0.0.1:47806 should be 1234
+        The SOA serial for example.org at ::1:47807 should be 1234
 
         Then set bind10 configuration Auth/database_file to data/empty_db.sqlite3
         And wait for bind10_one stderr message DATASRC_SQLITE_OPEN

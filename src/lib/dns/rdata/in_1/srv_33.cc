@@ -52,22 +52,22 @@ struct SRVImpl {
 /// \code <Priority> <Weight> <Port> <Target>
 /// \endcode
 /// where
-/// - <Priority>, <Weight>, and <Port> are an unsigned 16-bit decimal
-///   integer.
-/// - <Target> is a valid textual representation of domain name.
+/// - &lt;Priority&gt;, &lt;Weight&gt;, and &lt;Port&gt; are an unsigned
+///   16-bit decimal integer.
+/// - &lt;Target&gt; is a valid textual representation of domain name.
 ///
 /// An example of valid string is:
 /// \code "1 5 1500 example.com." \endcode
 ///
 /// <b>Exceptions</b>
 ///
-/// If <Target> is not a valid domain name, a corresponding exception from
-/// the \c Name class will be thrown;
+/// If &lt;Target&gt; is not a valid domain name, a corresponding exception
+/// from the \c Name class will be thrown;
 /// if %any of the other bullet points above is not met, an exception of
 /// class \c InvalidRdataText will be thrown.
 /// This constructor internally involves resource allocation, and if it fails
 /// a corresponding standard exception will be thrown.
-SRV::SRV(const string& srv_str) :
+SRV::SRV(const std::string& srv_str) :
     impl_(NULL)
 {
     istringstream iss(srv_str);

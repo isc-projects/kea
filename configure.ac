@@ -362,7 +362,7 @@ if test $werror_ok = 1; then
 		 PYTHON_CXXFLAGS="${PYTHON_CXXFLAGS} -Wno-unused-parameter"
 		 AC_SUBST(PYTHON_CXXFLAGS)
 		],
-		[AC_MSG_ERROR([Can't compile against Python.h])]
+		[AC_MSG_ERROR([Can't compile against Python.h.  If you're using MacOS X and have installed Python with Homebrew, see http://bind10.isc.org/wiki/SystemNotesMacOSX])]
                 )
                 ]
 	)
@@ -407,9 +407,9 @@ case $system in
       OS_TYPE="BSD"
       CPPFLAGS="$CPPFLAGS -DOS_BSD"
       ;;
-    Solaris)
+    SunOS)
       OS_TYPE="Solaris"
-      CPPFLAGS="$CPPFLAGS -DOS_SOLARIS"
+      CPPFLAGS="$CPPFLAGS -DOS_SUN"
       ;;
     *)
       OS_TYPE="Unknown"
@@ -982,6 +982,15 @@ AC_ARG_ENABLE(logger-checks, [AC_HELP_STRING([--enable-logger-checks],
 AM_CONDITIONAL(ENABLE_LOGGER_CHECKS, test x$enable_logger_checks != xno)
 AM_COND_IF([ENABLE_LOGGER_CHECKS], [AC_DEFINE([ENABLE_LOGGER_CHECKS], [1], [Check logger messages?])])
 
+# Check for valgrind
+AC_PATH_PROG(VALGRIND, valgrind, no)
+AM_CONDITIONAL(HAVE_VALGRIND, test "x$VALGRIND" != "xno")
+
+found_valgrind="not found"
+if test "x$VALGRIND" != "xno"; then
+   found_valgrind="found"
+fi
+
 AC_CONFIG_FILES([Makefile
                  doc/Makefile
                  doc/guide/Makefile
@@ -1067,6 +1076,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/python/isc/testutils/Makefile
                  src/lib/python/isc/bind10/Makefile
                  src/lib/python/isc/bind10/tests/Makefile
+                 src/lib/python/isc/ddns/Makefile
+                 src/lib/python/isc/ddns/tests/Makefile
                  src/lib/python/isc/xfrin/Makefile
                  src/lib/python/isc/xfrin/tests/Makefile
                  src/lib/python/isc/server_common/Makefile
@@ -1120,6 +1131,7 @@ AC_CONFIG_FILES([Makefile
                  tests/tools/badpacket/Makefile
                  tests/tools/badpacket/tests/Makefile
                  tests/tools/perfdhcp/Makefile
+                 tests/tools/perfdhcp/tests/Makefile
                  dns++.pc
                ])
 AC_OUTPUT([doc/version.ent
@@ -1184,6 +1196,7 @@ AC_OUTPUT([doc/version.ent
            src/lib/log/tests/destination_test.sh
            src/lib/log/tests/init_logger_test.sh
            src/lib/log/tests/local_file_test.sh
+           src/lib/log/tests/logger_lock_test.sh
            src/lib/log/tests/severity_test.sh
            src/lib/log/tests/tempdir.h
            src/lib/util/python/mkpywrapper.py
@@ -1232,6 +1245,7 @@ AC_OUTPUT([doc/version.ent
            chmod +x src/lib/log/tests/destination_test.sh
            chmod +x src/lib/log/tests/init_logger_test.sh
            chmod +x src/lib/log/tests/local_file_test.sh
+           chmod +x src/lib/log/tests/logger_lock_test.sh
            chmod +x src/lib/log/tests/severity_test.sh
            chmod +x src/lib/util/python/mkpywrapper.py
            chmod +x src/lib/util/python/gen_wiredata.py
@@ -1287,8 +1301,10 @@ Features:
 
 Developer:
   Google Tests:  $gtest_path
+  Valgrind: $found_valgrind
   C++ Code Coverage: $USE_LCOV
   Python Code Coverage: $USE_PYCOVERAGE
+  Logger checks: $enable_logger_checks
   Generate Manuals:  $enable_man
 
 END

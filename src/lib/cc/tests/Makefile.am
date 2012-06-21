@@ -16,6 +16,9 @@ endif
 
 CLEANFILES = *.gcno *.gcda
 
+TESTS_ENVIRONMENT = \
+	libtool --mode=execute $(VALGRIND_COMMAND)
+
 TESTS =
 if HAVE_GTEST
 TESTS += run_unittests
@@ -26,7 +29,7 @@ run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 
 # We need to put our libs first, in case gtest (or any dependency, really)
 # is installed in the same location as a different version of bind10
-# Otherwise the linker may not use the source tree libs 
+# Otherwise the linker may not use the source tree libs
 run_unittests_LDADD =  $(top_builddir)/src/lib/cc/libcc.la
 run_unittests_LDADD +=  $(top_builddir)/src/lib/log/liblog.la
 run_unittests_LDADD +=  $(top_builddir)/src/lib/util/unittests/libutil_unittests.la

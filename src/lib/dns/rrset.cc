@@ -43,14 +43,24 @@ AbstractRRset::toText() const {
     string s;
     RdataIteratorPtr it = getRdataIterator();
 
+    // In the case of an empty rrset, just print name, ttl, class, and
+    // type
     if (it->isLast()) {
-        isc_throw(EmptyRRset, "ToText() is attempted for an empty RRset");
+        // But only for class ANY or NONE
+        if (getClass() != RRClass::ANY() &&
+            getClass() != RRClass::NONE()) {
+            isc_throw(EmptyRRset, "toText() is attempted for an empty RRset");
+        }
+
+        s += getName().toText() + " " + getTTL().toText() + " " +
+             getClass().toText() + " " + getType().toText() + "\n";
+        return (s);
     }
 
     do {
         s += getName().toText() + " " + getTTL().toText() + " " +
-            getClass().toText() + " " + getType().toText() + " " +
-            it->getCurrent().toText() + "\n";
+             getClass().toText() + " " + getType().toText() + " " +
+             it->getCurrent().toText() + "\n";
         it->next();
     } while (!it->isLast());
 
@@ -65,7 +75,21 @@ rrsetToWire(const AbstractRRset& rrset, T& output, const size_t limit) {
     RdataIteratorPtr it = rrset.getRdataIterator();
 
     if (it->isLast()) {
-        isc_throw(EmptyRRset, "ToWire() is attempted for an empty RRset");
+        // empty rrsets are only allowed for classes ANY and NONE
+        if (rrset.getClass() != RRClass::ANY() &&
+            rrset.getClass() != RRClass::NONE()) {
+            isc_throw(EmptyRRset, "toWire() is attempted for an empty RRset");
+        }
+
+        // For an empty RRset, write the name, type, class and TTL once,
+        // followed by empty rdata.
+        rrset.getName().toWire(output);
+        rrset.getType().toWire(output);
+        rrset.getClass().toWire(output);
+        rrset.getTTL().toWire(output);
+        output.writeUint16(0);
+        // Still counts as 1 'rr'; it does show up in the message
+        return (1);
     }
 
     // sort the set of Rdata based on rrset-order and sortlist, and possible

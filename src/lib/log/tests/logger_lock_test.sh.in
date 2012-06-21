@@ -1,0 +1,46 @@
+#!/bin/sh
+# Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+
+# Checks that the locker interprocess sync locks are acquired and
+# released correctly.
+
+failcount=0
+tempfile=@abs_builddir@/logger_lock_test_tempfile_$$
+destfile=@abs_builddir@/logger_lock_test_destfile_$$
+
+passfail() {
+    if [ $1 -eq 0 ]; then
+        echo " pass"
+    else
+        echo " FAIL"
+        failcount=`expr $failcount + $1`
+    fi
+}
+
+echo -n  "Testing that logger acquires and releases locks correctly:"
+cat > $tempfile << .
+LOGGER_LOCK_TEST: LOCK
+INFO  [bind10.log] LOG_LOCK_TEST_MESSAGE this is a test message.
+LOGGER_LOCK_TEST: UNLOCK
+.
+rm -f $destfile
+B10_LOGGER_SEVERITY=INFO B10_LOGGER_DESTINATION=stdout ./logger_lock_test > $destfile
+cut -d' ' -f3- $destfile | diff $tempfile -
+passfail $?
+
+# Tidy up.
+rm -f $tempfile $destfile
+
+exit $failcount

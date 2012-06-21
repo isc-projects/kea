@@ -142,8 +142,10 @@ const char* const TEST_RECORDS[][5] = {
     {"delegation.example.org.", "NS", "3600", "", "ns.example.com."},
     {"delegation.example.org.", "NS", "3600", "",
      "ns.delegation.example.org."},
-    {"delegation.example.org.", "DS", "3600", "", "1 RSAMD5 2 abcd"},
+    {"delegation.example.org.", "DS", "3600", "", "1 1 2 abcd"},
     {"delegation.example.org.", "RRSIG", "3600", "", "NS 5 3 3600 "
+     "20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
+    {"delegation.example.org.", "RRSIG", "3600", "", "DS 5 3 3600 "
      "20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
     {"ns.delegation.example.org.", "A", "3600", "", "192.0.2.1"},
     {"deep.below.delegation.example.org.", "A", "3600", "", "192.0.2.1"},
@@ -155,6 +157,16 @@ const char* const TEST_RECORDS[][5] = {
      "example.org. FAKEFAKEFAKE"},
 
     {"below.dname.example.org.", "A", "3600", "", "192.0.2.1"},
+
+    // Insecure delegation (i.e., no DS at the delegation point)
+    {"insecdelegation.example.org.", "NS", "3600", "", "ns.example.com."},
+    {"insecdelegation.example.org.", "NSEC", "3600", "",
+     "dummy.example.org. NS NSEC"},
+    // and a DS under the zone cut. Such an RR shouldn't exist in a sane zone,
+    // but it could by error or some malicious attempt.  It shouldn't confuse
+    // the implementation)
+    {"child.insecdelegation.example.org.", "DS", "3600", "", "DS 5 3 3600 "
+     "20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
 
     // Broken NS
     {"brokenns1.example.org.", "A", "3600", "", "192.0.2.1"},
@@ -212,6 +224,15 @@ const char* const TEST_RECORDS[][5] = {
     {"invalidrdata2.example.org.", "RRSIG", "3600", "", "Nonsense"},
 
     {NULL, NULL, NULL, NULL, NULL},
+};
+
+// NSEC3PARAM at the zone origin and its RRSIG.  These will be added
+// separately for some NSEC3 related tests.
+const char* TEST_NSEC3PARAM_RECORDS[][5] = {
+    {"example.org.", "NSEC3PARAM", "3600", "", "1 0 12 aabbccdd"},
+    {"example.org.", "RRSIG", "3600", "", "NSEC3PARAM 5 3 3600 20000101000000 "
+     "20000201000000 12345 example.org. FAKEFAKEFAKE"},
+    {NULL, NULL, NULL, NULL, NULL}
 };
 
 // FIXME: Taken from a different test. Fill with proper data when creating a test.
@@ -1065,24 +1086,15 @@ public:
     // tests. Note that the NSEC3 namespace is available in other tests, but
     // it should not be accessed at that time.
     void enableNSEC3() {
-        // We place the signature first, so it's in the block with the other
-        // signatures
-        vector<string> signature;
-        signature.push_back("RRSIG");
-        signature.push_back("3600");
-        signature.push_back("");
-        signature.push_back("NSEC3PARAM 5 3 3600 20000101000000 20000201000000 "
-                            "12345 example.org. FAKEFAKEFAKE");
-        signature.push_back("exmaple.org.");
-        (*readonly_records_)["example.org."].push_back(signature);
-        // Now the NSEC3 param itself
-        vector<string> param;
-        param.push_back("NSEC3PARAM");
-        param.push_back("3600");
-        param.push_back("");
-        param.push_back("1 0 12 aabbccdd");
-        param.push_back("example.org.");
-        (*readonly_records_)["example.org."].push_back(param);
+        for (int i = 0; TEST_NSEC3PARAM_RECORDS[i][0] != NULL; ++i) {
+            vector<string> param;
+            param.push_back(TEST_NSEC3PARAM_RECORDS[i][1]); // RRtype
+            param.push_back(TEST_NSEC3PARAM_RECORDS[i][2]); // TTL
+            param.push_back("");                            // sigtype, unused
+            param.push_back(TEST_NSEC3PARAM_RECORDS[i][4]); // RDATA
+            param.push_back(TEST_NSEC3PARAM_RECORDS[i][0]); // owner name
+            (*readonly_records_)[param.back()].push_back(param);
+        }
     }
 };
 
@@ -1324,6 +1336,36 @@ public:
 
             addRecordToZone(columns);
         }
+        // We don't add NSEC3s until we are explicitly told we need them
+        // in enableNSEC3(); these would break some non NSEC3 tests.
+        commit();
+    }
+
+    void enableNSEC3() {
+        startUpdateZone("example.org.", false);
+
+        // Add NSECPARAM at the zone origin
+        for (int i = 0; TEST_NSEC3PARAM_RECORDS[i][0] != NULL; ++i) {
+            const string param_columns[ADD_COLUMN_COUNT] = {
+                TEST_NSEC3PARAM_RECORDS[i][0], // name
+                Name(param_columns[ADD_NAME]).reverse().toText(), // revname
+                TEST_NSEC3PARAM_RECORDS[i][2],   // TTL
+                TEST_NSEC3PARAM_RECORDS[i][1],   // RR type
+                TEST_NSEC3PARAM_RECORDS[i][3],   // sigtype
+                TEST_NSEC3PARAM_RECORDS[i][4] }; // RDATA
+            addRecordToZone(param_columns);
+        }
+
+        // Add NSEC3s
+        for (int i = 0; TEST_NSEC3_RECORDS[i][0] != NULL; ++i) {
+            const string nsec3_columns[ADD_NSEC3_COLUMN_COUNT] = {
+                Name(TEST_NSEC3_RECORDS[i][0]).split(0, 1).toText(true),
+                TEST_NSEC3_RECORDS[i][2], // TTL
+                TEST_NSEC3_RECORDS[i][1], // RR type
+                TEST_NSEC3_RECORDS[i][4] }; // RDATA
+            addNSEC3RecordToZone(nsec3_columns);
+        }
+
         commit();
     }
 };
@@ -2169,6 +2211,48 @@ TYPED_TEST(DatabaseClientTest, findDelegation) {
                               this->qtype_,
                               ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
+}
+
+TYPED_TEST(DatabaseClientTest, findDS) {
+    // Type DS query is an exception to the general delegation case; the NS
+    // should be ignored and it should be treated just like normal
+    // authoritative data.
+
+    boost::shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
+
+    // DS exists at the delegation point.  It should be returned with result
+    // code of SUCCESS.
+    this->expected_rdatas_.push_back("1 1 2 abcd"),
+    this->expected_sig_rdatas_.push_back("DS 5 3 3600 20000101000000 "
+                                         "20000201000000 12345 example.org. "
+                                         "FAKEFAKEFAKE");
+    doFindTest(*finder, Name("delegation.example.org."),
+               RRType::DS(), RRType::DS(), this->rrttl_, ZoneFinder::SUCCESS,
+               this->expected_rdatas_, this->expected_sig_rdatas_,
+               ZoneFinder::RESULT_DEFAULT);
+
+    // DS doesn't exist at the delegation point.  The result should be
+    // NXRRSET, and if DNSSEC is requested and the zone is NSEC-signed,
+    // the corresponding NSEC should be returned (normally with its RRSIG,
+    // but in this simplified test setup it's omitted in the test data).
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back("dummy.example.org. NS NSEC");
+    this->expected_sig_rdatas_.clear();
+    doFindTest(*finder, Name("insecdelegation.example.org."),
+               RRType::DS(), RRType::NSEC(), this->rrttl_, ZoneFinder::NXRRSET,
+               this->expected_rdatas_, this->expected_sig_rdatas_,
+               ZoneFinder::RESULT_NSEC_SIGNED,
+               Name("insecdelegation.example.org."), ZoneFinder::FIND_DNSSEC);
+
+    // Some insane case: DS under a zone cut.  It's included in the DB, but
+    // shouldn't be visible via finder.
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back("ns.example.com");
+    doFindTest(*finder, Name("child.insecdelegation.example.org"),
+               RRType::DS(), RRType::NS(), this->rrttl_,
+               ZoneFinder::DELEGATION, this->expected_rdatas_,
+               this->empty_rdatas_, ZoneFinder::RESULT_DEFAULT,
+               Name("insecdelegation.example.org."), ZoneFinder::FIND_DNSSEC);
 }
 
 TYPED_TEST(DatabaseClientTest, emptyDomain) {
@@ -3538,33 +3622,6 @@ TYPED_TEST(DatabaseClientTest, compoundUpdate) {
                this->empty_rdatas_);
 }
 
-TYPED_TEST(DatabaseClientTest, previous) {
-    boost::shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
-
-    EXPECT_EQ(Name("www.example.org."),
-              finder->findPreviousName(Name("www2.example.org.")));
-    // Check a name that doesn't exist there
-    EXPECT_EQ(Name("www.example.org."),
-              finder->findPreviousName(Name("www1.example.org.")));
-    if (this->is_mock_) { // We can't really force the DB to throw
-        // Check it doesn't crash or anything if the underlying DB throws
-        DataSourceClient::FindResult
-            zone(this->client_->findZone(Name("bad.example.org")));
-        finder =
-            dynamic_pointer_cast<DatabaseClient::Finder>(zone.zone_finder);
-
-        EXPECT_THROW(finder->findPreviousName(Name("bad.example.org")),
-                     isc::NotImplemented);
-    } else {
-        // No need to test this on mock one, because we test only that
-        // the exception gets through
-
-        // A name before the origin
-        EXPECT_THROW(finder->findPreviousName(Name("example.com")),
-                     isc::NotImplemented);
-    }
-}
-
 TYPED_TEST(DatabaseClientTest, invalidRdata) {
     boost::shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
 
@@ -3590,13 +3647,6 @@ TEST_F(MockDatabaseClientTest, missingNSEC) {
     doFindTest(*finder, Name("badnsec2.example.org."), RRType::A(),
                RRType::A(), this->rrttl_, ZoneFinder::NXDOMAIN,
                this->expected_rdatas_, this->expected_sig_rdatas_);
-}
-
-TEST_F(MockDatabaseClientTest, badName) {
-    boost::shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
-
-    EXPECT_THROW(finder->findPreviousName(Name("brokenname.example.org.")),
-                 DataSourceError);
 }
 
 /*
@@ -3975,11 +4025,11 @@ TEST_F(MockDatabaseClientTest, journalWithBadData) {
 }
 
 /// Let us test a little bit of NSEC3.
-TEST_F(MockDatabaseClientTest, findNSEC3) {
+TYPED_TEST(DatabaseClientTest, findNSEC3) {
     // Set up the faked hash calculator.
-    setNSEC3HashCreator(&test_nsec3_hash_creator_);
+    setNSEC3HashCreator(&this->test_nsec3_hash_creator_);
 
-    DataSourceClient::FindResult
+    const DataSourceClient::FindResult
         zone(this->client_->findZone(Name("example.org")));
     ASSERT_EQ(result::SUCCESS, zone.code);
     boost::shared_ptr<DatabaseClient::Finder> finder(

@@ -270,6 +270,14 @@ void Option::setUint32(uint32_t value) {
   writeUint32(value, &data_[0]);
 }
 
+void Option::setData(const OptionBufferConstIter first,
+                     const OptionBufferConstIter last) {
+    // We will copy entire option buffer, so we have to resize data_.
+    data_.resize(std::distance(first, last));
+    std::copy(first, last, data_.begin());
+}
+
+
 Option::~Option() {
 
 }

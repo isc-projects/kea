@@ -65,11 +65,7 @@ public:
     /// \brief Returns the class of the zone.
     virtual isc::dns::RRClass getClass() const;
 
-    /// \brief Looks up an RRset in the zone.
-    ///
-    /// See documentation in \c Zone.
-    ///
-    /// It returns NULL pointer in case of NXDOMAIN and NXRRSET.
+    /// \brief Find an RRset in the datasource
     virtual ZoneFinderContextPtr find(const isc::dns::Name& name,
                                       const isc::dns::RRType& type,
                                       const FindOptions options =
@@ -90,12 +86,6 @@ public:
     /// See documentation in \c Zone.
     virtual FindNSEC3Result
     findNSEC3(const isc::dns::Name& name, bool recursive);
-
-    /// \brief Imelementation of the ZoneFinder::findPreviousName method
-    ///
-    /// This one throws NotImplemented exception, as InMemory doesn't
-    /// support DNSSEC currently.
-    virtual isc::dns::Name findPreviousName(const isc::dns::Name& query) const;
 
     /// \brief Inserts an rrset into the zone.
     ///
@@ -286,7 +276,7 @@ public:
     /// This method never throws an exception.
     ///
     /// \return The number of zones stored in the client.
-    unsigned int getZoneCount() const;
+    virtual unsigned int getZoneCount() const;
 
     /// Add a zone (in the form of \c ZoneFinder) to the \c InMemoryClient.
     ///

@@ -25,6 +25,7 @@
 #include <dhcp6/dhcp6_srv.h>
 #include <util/buffer.h>
 #include <util/range_utilities.h>
+#include <boost/scoped_ptr.hpp>
 
 using namespace std;
 using namespace isc;
@@ -34,7 +35,6 @@ using namespace isc::util;
 // namespace has to be named, because friends are defined in Dhcpv6Srv class
 // Maybe it should be isc::test?
 namespace {
-const char* const INTERFACE_FILE = "interfaces.txt";
 
 class NakedDhcpv6Srv: public Dhcpv6Srv {
     // "naked" Interface Manager, exposes internal fields
@@ -53,18 +53,10 @@ public:
 
 class Dhcpv6SrvTest : public ::testing::Test {
 public:
+    // these are empty for now, but let's keep them around
     Dhcpv6SrvTest() {
-        unlink(INTERFACE_FILE);
-        fstream fakeifaces(INTERFACE_FILE, ios::out | ios::trunc);
-        if (if_nametoindex("lo") > 0) {
-            fakeifaces << "lo ::1";
-        } else if (if_nametoindex("lo0") > 0) {
-            fakeifaces << "lo0 ::1";
-        }
-        fakeifaces.close();
     }
     ~Dhcpv6SrvTest() {
-        unlink(INTERFACE_FILE);
     };
 };
 
@@ -85,9 +77,9 @@ TEST_F(Dhcpv6SrvTest, basic) {
 TEST_F(Dhcpv6SrvTest, DUID) {
     // tests that DUID is generated properly
 
-    Dhcpv6Srv* srv = NULL;
+    boost::scoped_ptr<Dhcpv6Srv> srv;
     ASSERT_NO_THROW( {
-        srv = new Dhcpv6Srv(DHCP6_SERVER_PORT + 10000);
+        srv.reset(new Dhcpv6Srv(DHCP6_SERVER_PORT + 10000));
     });
 
     OptionPtr srvid = srv->getServerID();
@@ -143,18 +135,24 @@ TEST_F(Dhcpv6SrvTest, DUID) {
     }
     case DUID_LL: {
         // not supported yet
-        cout << "Test not implemented for DUID-LL yet." << endl;
+        cout << "Test not implemented for DUID-LL." << endl;
+
+        // No failure here. There's really no way for test LL DUID. It doesn't
+        // even make sense to check if that Link Layer is actually present on
+        // a physical interface. RFC3315 says a server should write its DUID
+        // and keep it despite hardware changes.
+        break;
     }
     case DUID_UUID: // not supported yet
     default:
-        cout << "Not supported duid type=" << duid_type << endl;
-        FAIL();
+        ADD_FAILURE() << "Not supported duid type=" << duid_type << endl;
+        break;
     }
 }
 
-TEST_F(Dhcpv6SrvTest, DISABLED_Solicit_basic) {
-    NakedDhcpv6Srv* srv = NULL;
-    ASSERT_NO_THROW( srv = new NakedDhcpv6Srv(); );
+TEST_F(Dhcpv6SrvTest, Solicit_basic) {
+    boost::scoped_ptr<NakedDhcpv6Srv> srv;
+    ASSERT_NO_THROW( srv.reset(new NakedDhcpv6Srv()) );
 
     // a dummy content for client-id
     OptionBuffer clntDuid(32);
@@ -223,8 +221,6 @@ TEST_F(Dhcpv6SrvTest, DISABLED_Solicit_basic) {
     EXPECT_TRUE(tmp->getData() == srv->getServerID()->getData());
 
     // more checks to be implemented
-    delete srv;
-
 }
 
 }

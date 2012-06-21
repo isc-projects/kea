@@ -19,6 +19,9 @@ endif
 
 CLEANFILES = *.gcno *.gcda
 
+TESTS_ENVIRONMENT = \
+        libtool --mode=execute $(VALGRIND_COMMAND)
+
 # Do not define global tests, use check-local so
 # environment can be set (needed for dynamic loading)
 TESTS =
@@ -44,9 +47,9 @@ run_unittests_SOURCES += statistics_unittest.cc
 run_unittests_SOURCES += run_unittests.cc
 # This is a temporary workaround for #1206, where the InMemoryClient has been
 # moved to an ldopened library. We could add that library to LDADD, but that
-# is nonportable. When #1207 is done this becomes moot anyway, and the
-# specific workaround is not needed anymore, so we can then remove this
-# line again.
+# is nonportable. This should've been moot after #1207, but there is still
+# one dependency; the in-memory-specific zone loader call is still in
+# auth.
 run_unittests_SOURCES += ${top_srcdir}/src/lib/datasrc/memory_datasrc.cc
 
 
@@ -54,9 +57,7 @@ nodist_run_unittests_SOURCES = ../auth_messages.h ../auth_messages.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
-run_unittests_LDADD = $(GTEST_LDADD)
-run_unittests_LDADD += $(SQLITE_LIBS)
-run_unittests_LDADD += $(top_builddir)/src/lib/testutils/libtestutils.la
+run_unittests_LDADD = $(top_builddir)/src/lib/testutils/libtestutils.la
 run_unittests_LDADD +=  $(top_builddir)/src/lib/datasrc/libdatasrc.la
 run_unittests_LDADD +=  $(top_builddir)/src/lib/dns/libdns++.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/libutil.la
@@ -71,6 +72,8 @@ run_unittests_LDADD += $(top_builddir)/src/lib/server_common/libserver_common.la
 run_unittests_LDADD += $(top_builddir)/src/lib/nsas/libnsas.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 run_unittests_LDADD += $(top_builddir)/src/lib/statistics/libstatistics.la
+run_unittests_LDADD += $(GTEST_LDADD)
+run_unittests_LDADD += $(SQLITE_LIBS)
 
 check-local:
 	B10_FROM_BUILD=${abs_top_builddir} ./run_unittests

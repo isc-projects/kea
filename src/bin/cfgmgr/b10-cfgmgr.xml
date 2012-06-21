@@ -20,7 +20,7 @@
 <refentry>
 
   <refentryinfo>
-    <date>March 10, 2010</date>
+    <date>June 20, 2012</date>
   </refentryinfo>
 
   <refmeta>
@@ -44,8 +44,11 @@
   <refsynopsisdiv>
     <cmdsynopsis>
       <command>b10-cfgmgr</command>
-      <arg><option>-c<replaceable>config-filename</replaceable></option></arg>
-      <arg><option>-p<replaceable>data_path</replaceable></option></arg>
+      <arg><option>-c <replaceable>config-filename</replaceable></option></arg>
+      <arg><option>-p <replaceable>data_path</replaceable></option></arg>
+      <arg><option>--clear-config</option></arg>
+      <arg><option>--config-filename <replaceable>config-filename</replaceable></option></arg>
+      <arg><option>--data-path <replaceable>data_path</replaceable></option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
@@ -77,13 +80,6 @@
       subscribers.
     </para>
 
-    <para>
-      When it exits, it saves its current configuration to
-      <filename>/usr/local/var/bind10-devel/b10-config.db</filename>.
-<!-- TODO: fix path -->
-<!-- TODO: does it periodically save configuration? -->
-    </para>
-
 <!-- TODO: add a verbose or quiet switch so it is not so noisy -->
   </refsect1>
 
@@ -95,19 +91,37 @@
     <variablelist>
       <varlistentry>
         <term>
-          <option>-c</option><replaceable>config-filename</replaceable>,
-          <option>--config-filename</option> <replaceable>config-filename</replaceable>
+          <option>--clear-config</option>
         </term>
         <listitem>
-          <para>The configuration database filename to use. Can be either
-          absolute or relative to data path.</para>
-          <para>Defaults to b10-config.db</para>
+          <para>
+            This will create a backup of the existing configuration
+            file, remove it, and
+            <refentrytitle>b10-cfgmgr</refentrytitle><manvolnum>8</manvolnum>
+            will use the default configurations.
+            The name of the backup file can be found in the logs
+            (<varname>CFGMGR_BACKED_UP_CONFIG_FILE</varname>).
+            (It will append a number to the backup filename if a
+            previous backup file exists.)
+          </para>
         </listitem>
       </varlistentry>
 
       <varlistentry>
         <term>
-          <option>-p</option><replaceable>data-path</replaceable>,
+          <option>-c</option> <replaceable>config-filename</replaceable>,
+          <option>--config-filename</option> <replaceable>config-filename</replaceable>
+        </term>
+        <listitem>
+          <para>The configuration database filename to use. Can be either
+          absolute or relative to data path.
+          It defaults to "<filename>b10-config.db</filename>".</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>
+          <option>-p</option> <replaceable>data-path</replaceable>,
           <option>--data-path</option> <replaceable>data-path</replaceable>
         </term>
         <listitem>

@@ -18,7 +18,8 @@
 #include <log/dummylog.h>
 #include <log/logger_support.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
-#include <dhcp/iface_mgr.h>
+#include <dhcp4/dhcp4_srv.h>
+#include <dhcp/dhcp4.h>
 
 using namespace std;
 using namespace isc::dhcp;
@@ -43,7 +44,8 @@ usage() {
     cerr << "Usage:  b10-dhcp4 [-v]"
          << endl;
     cerr << "\t-v: verbose output" << endl;
-    exit(1);
+    cerr << "\t-p number: specify non-standard port number 1-65535 (useful for testing only)" << endl;
+    exit(EXIT_FAILURE);
 }
 } // end of anonymous namespace
 
@@ -51,13 +53,24 @@ int
 main(int argc, char* argv[]) {
     int ch;
     bool verbose_mode = false; // should server be verbose?
+    int port_number = DHCP4_SERVER_PORT; // The default. any other values are
+                                         // useful for testing only.
 
-    while ((ch = getopt(argc, argv, "v")) != -1) {
+    while ((ch = getopt(argc, argv, "vp:")) != -1) {
         switch (ch) {
         case 'v':
             verbose_mode = true;
             isc::log::denabled = true;
             break;
+        case 'p':
+            port_number = strtol(optarg, NULL, 10);
+            if (port_number == 0) {
+                cerr << "Failed to parse port number: [" << optarg
+                     << "], 1-65535 allowed." << endl;
+                usage();
+            }
+            break;
+        case ':':
         default:
             usage();
         }
@@ -68,13 +81,14 @@ main(int argc, char* argv[]) {
                          (verbose_mode ? isc::log::DEBUG : isc::log::INFO),
                          isc::log::MAX_DEBUG_LEVEL, NULL);
 
-    cout << "b10-dhcp4: My pid is " << getpid() << endl;
+    cout << "b10-dhcp4: My pid=" << getpid() << ", binding to port " 
+         << port_number << ", verbose " << (verbose_mode?"yes":"no") << endl;
 
     if (argc - optind > 0) {
         usage();
     }
 
-    int ret = 0;
+    int ret = EXIT_SUCCESS;
 
     try {
 
@@ -83,12 +97,11 @@ main(int argc, char* argv[]) {
         ControlledDhcpv4Srv* server = new ControlledDhcpv4Srv(DHCP4_SERVER_PORT);
         server->run();
         delete server;
-
         server = NULL;
 
     } catch (const std::exception& ex) {
         cerr << "[b10-dhcp4] Server failed: " << ex.what() << endl;
-        ret = 1;
+        ret = EXIT_FAILURE;
     }
 
     return (ret);
