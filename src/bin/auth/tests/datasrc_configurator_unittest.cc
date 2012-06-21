@@ -19,20 +19,34 @@
 
 #include <gtest/gtest.h>
 #include <memory>
+#include <boost/shared_ptr.hpp>
 
 using namespace isc;
 using namespace isc::cc;
 using namespace isc::config;
 using namespace isc::data;
+using namespace isc::dns;
 using namespace std;
+using namespace boost;
 
 namespace {
 
 class DatasrcConfiguratorTest;
 
 class FakeList {
-
+public:
+    void configure(const Element& configuration, bool allow_cache) {
+        EXPECT_TRUE(allow_cache);
+        conf_ = configuration.get(0)->get("type")->stringValue();
+    }
+    const string& getConf() const {
+        return (conf_);
+    }
+private:
+    string conf_;
 };
+
+typedef shared_ptr<FakeList> ListPtr;
 
 // We use the test fixture as both parameters, this makes it possible
 // to easily fake all needed methods and look that they were called.
@@ -40,6 +54,16 @@ typedef DataSourceConfiguratorGeneric<DatasrcConfiguratorTest,
         FakeList> Configurator;
 
 class DatasrcConfiguratorTest : public ::testing::Test {
+public:
+    // These pretend to be the server
+    ListPtr getClientList(const RRClass& rrclass) {
+        log_ += "get " + rrclass.toText() + "\n";
+        return (lists_[rrclass]);
+    }
+    void setClientList(const RRClass& rrclass, const ListPtr& list) {
+        log_ += "set " + rrclass.toText() + " " + list->getConf() + "\n";
+        lists_[rrclass] = list;
+    }
 protected:
     DatasrcConfiguratorTest() :
         session(ElementPtr(new ListElement), ElementPtr(new ListElement),
@@ -77,6 +101,8 @@ protected:
     FakeSession session;
     auto_ptr<ModuleCCSession> mccs;
     const string specfile;
+    map<RRClass, ListPtr> lists_;
+    string log_;
 };
 
 // Check the initialization (and deinitialization)
@@ -95,6 +121,18 @@ TEST_F(DatasrcConfiguratorTest, initialization) {
     // But we can initialize it again now
     EXPECT_NO_THROW(init());
     EXPECT_TRUE(session.haveSubscription("data_sources", "*"));
+}
+
+// Push there a configuration with a single list.
+TEST_F(DatasrcConfiguratorTest, createList) {
+    const ElementPtr
+        config(Element::fromJSON("{\"IN\": [{\"type\": \"xxx\"}]}"));
+    session.addMessage(createCommand("config_update", config), "data_sources",
+                       "*");
+    mccs->checkCommand();
+    // Check it called the correct things (check that there's no IN yet and
+    // set a new one.
+    EXPECT_EQ("get IN\nset IN xxx\n", log_);
 }
 
 }

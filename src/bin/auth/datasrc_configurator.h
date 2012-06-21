@@ -49,6 +49,7 @@ private:
     }
     static Server* server_;
     static isc::config::ModuleCCSession* session_;
+    typedef boost::shared_ptr<List> ListPtr;
 public:
     /// \brief Initializes the class.
     ///
@@ -108,8 +109,23 @@ public:
     /// \param config The configuration value to parse. It is in the form
     ///     as an update from the config manager.
     /// \throw InvalidOperation if it is called when not initialized.
-    static void reconfigure(const isc::data::ConstElementPtr& ) {
-
+    static void reconfigure(const isc::data::ConstElementPtr& config) {
+        // TODO: The InvalidOperation thing
+        typedef std::map<std::string, isc::data::ConstElementPtr> Map;
+        const Map& map(config->mapValue());
+        for (Map::const_iterator it(map.begin()); it != map.end(); ++ it) {
+            isc::dns::RRClass rrclass(it->first);
+            ListPtr list(server_->getClientList(rrclass));
+            bool need_set(false);
+            if (!list) {
+                list.reset(new List);
+                need_set = true;
+            }
+            list->configure(*it->second, true);
+            if (need_set) {
+                server_->setClientList(rrclass, list);
+            }
+        }
     }
 };
 

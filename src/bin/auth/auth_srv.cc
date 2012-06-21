@@ -1038,12 +1038,12 @@ AuthSrv::setClientList(const RRClass& rrclass,
     }
 }
 
-boost::shared_ptr<const ClientList>
-AuthSrv::getClientList(const RRClass& rrclass) const {
+boost::shared_ptr<ClientList>
+AuthSrv::getClientList(const RRClass& rrclass) {
     const map<RRClass, boost::shared_ptr<ClientList> >::const_iterator
         it(impl_->client_lists_.find(rrclass));
     if (it == impl_->client_lists_.end()) {
-        return (boost::shared_ptr<const ClientList>());
+        return (boost::shared_ptr<ClientList>());
     } else {
         return (it->second);
     }
