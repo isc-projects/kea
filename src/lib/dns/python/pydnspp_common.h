@@ -43,6 +43,11 @@ extern PyObject* po_DNSMessageBADVERS;
 int readDataFromSequence(uint8_t *data, size_t len, PyObject* sequence);
 
 int addClassVariable(PyTypeObject& c, const char* name, PyObject* obj);
+
+// Short term workaround for unifying the return type of tp_hash
+#if PY_MINOR_VERSION < 2
+typedef long Py_hash_t;
+#endif
 } // namespace python
 } // namespace dns
 } // namespace isc

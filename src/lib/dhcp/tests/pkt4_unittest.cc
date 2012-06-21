@@ -31,7 +31,9 @@ using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::util;
-using namespace boost;
+// don't import the entire boost namespace.  It will unexpectedly hide uint8_t
+// for some systems.
+using boost::scoped_ptr;
 
 namespace {
 
@@ -597,5 +599,33 @@ TEST(Pkt4Test, metaFields) {
 
     delete pkt;
 }
+
+TEST(Pkt4Test, Timestamp) {
+    scoped_ptr<Pkt4> pkt(new Pkt4(DHCPOFFER, 1234));
+
+    // Just after construction timestamp is invalid
+    ASSERT_TRUE(pkt->getTimestamp().is_not_a_date_time());
+
+    // Update packet time.
+    pkt->updateTimestamp();
+
+    // Get updated packet time.
+    boost::posix_time::ptime ts_packet = pkt->getTimestamp();
+
+    // After timestamp is updated it should be date-time.
+    ASSERT_FALSE(ts_packet.is_not_a_date_time());
+
+    // Check current time.
+    boost::posix_time::ptime ts_now =
+        boost::posix_time::microsec_clock::universal_time();
+
+    // Calculate period between packet time and now.
+    boost::posix_time::time_period ts_period(ts_packet, ts_now);
+
+    // Duration should be positive or zero.
+    EXPECT_TRUE(ts_period.length().total_microseconds() >= 0);
+}
+
+
 
 } // end of anonymous namespace

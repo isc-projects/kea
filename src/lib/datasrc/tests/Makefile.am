@@ -17,6 +17,9 @@ endif
 
 CLEANFILES = *.gcno *.gcda
 
+TESTS_ENVIRONMENT = \
+	libtool --mode=execute $(VALGRIND_COMMAND)
+
 TESTS =
 noinst_PROGRAMS =
 if HAVE_GTEST
@@ -31,9 +34,7 @@ common_sources = run_unittests.cc
 common_sources += $(top_srcdir)/src/lib/dns/tests/unittest_util.h
 common_sources += $(top_srcdir)/src/lib/dns/tests/unittest_util.cc
 
-common_ldadd  = $(GTEST_LDADD)
-common_ldadd += $(SQLITE_LIBS)
-common_ldadd += $(top_builddir)/src/lib/datasrc/libdatasrc.la
+common_ldadd = $(top_builddir)/src/lib/datasrc/libdatasrc.la
 common_ldadd += $(top_builddir)/src/lib/dns/libdns++.la
 common_ldadd += $(top_builddir)/src/lib/util/libutil.la
 common_ldadd += $(top_builddir)/src/lib/log/liblog.la
@@ -41,6 +42,7 @@ common_ldadd += $(top_builddir)/src/lib/exceptions/libexceptions.la
 common_ldadd += $(top_builddir)/src/lib/cc/libcc.la
 common_ldadd += $(top_builddir)/src/lib/testutils/libtestutils.la
 common_ldadd += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
+common_ldadd += $(GTEST_LDADD) $(SQLITE_LIBS)
 
 # The general tests
 run_unittests_SOURCES = $(common_sources)
@@ -60,6 +62,7 @@ run_unittests_SOURCES += memory_datasrc_unittest.cc
 run_unittests_SOURCES += rbnode_rrset_unittest.cc
 run_unittests_SOURCES += zone_finder_context_unittest.cc
 run_unittests_SOURCES += faked_nsec3.h faked_nsec3.cc
+run_unittests_SOURCES += client_list_unittest.cc
 
 # We need the actual module implementation in the tests (they are not part
 # of libdatasrc)
@@ -114,3 +117,4 @@ EXTRA_DIST += testdata/test.sqlite3
 EXTRA_DIST += testdata/new_minor_schema.sqlite3
 EXTRA_DIST += testdata/newschema.sqlite3
 EXTRA_DIST += testdata/oldschema.sqlite3
+EXTRA_DIST += testdata/static.zone

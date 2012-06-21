@@ -21,6 +21,7 @@ import os
 import tempfile
 from zonemgr import *
 from isc.testutils.ccsession_mock import MockModuleCCSession
+from isc.notify import notify_out
 
 ZONE_NAME_CLASS1_IN = ("example.net.", "IN")
 ZONE_NAME_CLASS1_CH = ("example.net.", "CH")
@@ -111,6 +112,7 @@ class TestZonemgrRefresh(unittest.TestCase):
     def tearDown(self):
         if os.path.exists(TEST_SQLITE3_DBFILE):
             os.unlink(TEST_SQLITE3_DBFILE)
+        sys.stderr.close()
         sys.stderr = self.stderr_backup
 
     def test_random_jitter(self):
@@ -683,7 +685,7 @@ class TestZonemgr(unittest.TestCase):
         self.assertEqual(answer1, self.zonemgr._parse_cmd_params(params1, ZONE_NOTIFY_COMMAND))
         params2 = {"zone_name" : "example.com.", "zone_class" : "IN"}
         answer2 = ZONE_NAME_CLASS3_IN
-        self.assertEqual(answer2, self.zonemgr._parse_cmd_params(params2, ZONE_XFRIN_SUCCESS_COMMAND))
+        self.assertEqual(answer2, self.zonemgr._parse_cmd_params(params2, notify_out.ZONE_NEW_DATA_READY_CMD))
         self.assertRaises(ZonemgrException, self.zonemgr._parse_cmd_params, params2, ZONE_NOTIFY_COMMAND)
         params1 = {"zone_class" : "CH"}
         self.assertRaises(ZonemgrException, self.zonemgr._parse_cmd_params, params2, ZONE_NOTIFY_COMMAND)

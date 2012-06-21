@@ -1,0 +1,12 @@
+#
+# Rendering an empty IN/A RRset
+#
+#(4) t  e  s  t (7) e  x  a  m  p  l  e (3) c  o  m  .
+ 04 74 65 73 74 07 65 78 61 6d 70 6c 65 03 63 6f 6d 00
+# type/class: A = 1, ANY = 255
+00 01 00 ff
+# TTL: 3600
+00 00 0e 10
+#6  7
+# RDLENGTH: 0
+00 00

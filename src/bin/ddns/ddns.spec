@@ -4,22 +4,36 @@
     "config_data": [
       {
         "item_name": "zones",
-        "item_type": "named_set",
+        "item_type": "list",
         "item_optional": false,
-        "item_default": {},
-        "named_set_item_spec": {
+        "item_default": [],
+        "list_item_spec": {
           "item_name": "entry",
           "item_type": "map",
           "item_optional": true,
           "item_default": {
-            "update_acl": [{"action": "ACCEPT", "from": "127.0.0.1"},
-                           {"action": "ACCEPT", "from": "::1"}]
+	    "origin": "",
+	    "class": "IN",
+            "update_acl": []
           },
           "map_item_spec": [
+            {
+              "item_name": "origin",
+              "item_type": "string",
+              "item_optional": false,
+              "item_default": ""
+            },
+            {
+              "item_name": "class",
+              "item_type": "string",
+              "item_optional": false,
+              "item_default": "IN"
+            },
             {
               "item_name": "update_acl",
               "item_type": "list",
               "item_optional": false,
+	      "item_default": [],
               "list_item_spec": {
                 "item_name": "acl_element",
                 "item_type": "any",

@@ -16,6 +16,26 @@ DISTCHECK_CONFIGURE_FLAGS = --disable-install-configurations
 # Use same --with-gtest flag if set
 DISTCHECK_CONFIGURE_FLAGS += $(DISTCHECK_GTEST_CONFIGURE_FLAG)
 
+dist_doc_DATA = AUTHORS COPYING ChangeLog README
+
+.PHONY: check-valgrind check-valgrind-suppress
+
+check-valgrind:
+if HAVE_VALGRIND
+	@VALGRIND_COMMAND="$(VALGRIND) -q --gen-suppressions=all --track-origins=yes --num-callers=48 --leak-check=full --fullpath-after=" \
+	make -C $(abs_top_builddir) check
+else
+	@echo "*** Valgrind is required for check-valgrind ***"; exit 1;
+endif
+
+check-valgrind-suppress:
+if HAVE_VALGRIND
+	@VALGRIND_COMMAND="$(VALGRIND) -q --gen-suppressions=all --error-exitcode=1 --suppressions=$(abs_top_srcdir)/src/valgrind-suppressions --suppressions=$(abs_top_srcdir)/src/valgrind-suppressions.revisit --num-callers=48 --leak-check=full --fullpath-after=" \
+	make -C $(abs_top_builddir) check
+else
+	@echo "*** Valgrind is required for check-valgrind-suppress ***"; exit 1;
+endif
+
 clean-cpp-coverage:
 	@if [ $(USE_LCOV) = yes ] ; then \
 		$(LCOV) --directory . --zerocounters; \
@@ -405,3 +425,5 @@ EXTRA_DIST += ext/coroutine/coroutine.h
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = dns++.pc
+
+CLEANFILES = $(abs_top_builddir)/logger_lockfile

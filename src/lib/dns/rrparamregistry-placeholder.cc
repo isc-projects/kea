@@ -224,7 +224,7 @@ RRParamRegistry::getRegistry() {
 }
 
 void
-RRParamRegistry::add(const string& typecode_string, uint16_t typecode,
+RRParamRegistry::add(const std::string& typecode_string, uint16_t typecode,
                      RdataFactoryPtr rdata_factory)
 {
     bool type_added = false;
@@ -242,8 +242,8 @@ RRParamRegistry::add(const string& typecode_string, uint16_t typecode,
 }
 
 void
-RRParamRegistry::add(const string& typecode_string, uint16_t typecode,
-                     const string& classcode_string, uint16_t classcode,
+RRParamRegistry::add(const std::string& typecode_string, uint16_t typecode,
+                     const std::string& classcode_string, uint16_t classcode,
                      RdataFactoryPtr rdata_factory)
 {
     // Rollback logic on failure is complicated.  If adding the new type or
@@ -401,7 +401,7 @@ textToCode(const string& code_str, MS& stringmap) {
             return (code);
         }
     }
-    isc_throw(ET, "Unrecognized RR parameter string");
+    isc_throw(ET, "Unrecognized RR parameter string: " + code_str);
 }
 
 template <typename PT, typename MC>
@@ -470,7 +470,7 @@ RRParamRegistry::codeToClassText(uint16_t code) const {
 
 RdataPtr
 RRParamRegistry::createRdata(const RRType& rrtype, const RRClass& rrclass,
-                             const string& rdata_string)
+                             const std::string& rdata_string)
 {
     // If the text indicates that it's rdata of an "unknown" type (beginning
     // with '\# n'), parse it that way. (TBD)

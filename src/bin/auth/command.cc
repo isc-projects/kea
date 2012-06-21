@@ -210,8 +210,8 @@ private:
         const RRClass zone_class =
             class_elem ? RRClass(class_elem->stringValue()) : RRClass::IN();
 
-        AuthSrv::InMemoryClientPtr datasrc(server.
-                                           getInMemoryClient(zone_class));
+        isc::datasrc::DataSourceClient* datasrc(
+            server.getInMemoryClient(zone_class));
         if (datasrc == NULL) {
             isc_throw(AuthCommandError, "Memory data source is disabled");
         }
@@ -223,13 +223,16 @@ private:
         const Name origin = Name(origin_elem->stringValue());
 
         // Get the current zone
-        const InMemoryClient::FindResult result = datasrc->findZone(origin);
+        const DataSourceClient::FindResult result = datasrc->findZone(origin);
         if (result.code != result::SUCCESS) {
             isc_throw(AuthCommandError, "Zone " << origin <<
                       " is not found in data source");
         }
 
-        old_zone_finder_ = boost::dynamic_pointer_cast<InMemoryZoneFinder>(
+        // It would appear that dynamic_cast does not work on all systems;
+        // it seems to confuse the RTTI system, resulting in NULL return
+        // values. So we use the more dangerous static_pointer_cast here.
+        old_zone_finder_ = boost::static_pointer_cast<InMemoryZoneFinder>(
             result.zone_finder);
 
         return (true);

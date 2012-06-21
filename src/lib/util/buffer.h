@@ -18,8 +18,6 @@
 #include <stdlib.h>
 #include <cstring>
 #include <vector>
-#include <iterator>
-#include <string.h>
 
 #include <stdint.h>
 
@@ -101,17 +99,6 @@ public:
     /// \param len The length of the data in bytes.
     InputBuffer(const void* data, size_t len) :
         position_(0), data_(static_cast<const uint8_t*>(data)), len_(len) {}
-
-    /// @brief Constructor from vector<uint8_t>
-    ///
-    /// It is caller's responsibility to ensure that the data is valid as long
-    /// as the buffer exists.
-    ///
-    /// @param begin iterator to beginning of the vector
-    /// @param end iterator to end of the vector
-    InputBuffer(std::vector<uint8_t>::const_iterator begin,
-                std::vector<uint8_t>::const_iterator end) :
-        position_(0), data_(&(*begin)), len_(std::distance(begin, end)) {}
     //@}
 
     ///
@@ -209,7 +196,7 @@ public:
             throwError("read beyond end of buffer");
         }
 
-        memcpy(data, &data_[position_], len);
+        std::memcpy(data, &data_[position_], len);
         position_ += len;
     }
     //@}
@@ -219,8 +206,8 @@ public:
     /// If specified buffer is too short, it will be expanded
     /// using vector::resize() method.
     ///
-    /// @param Reference to a buffer (data will be stored there).
-    /// @param Size specified number of bytes to read in a vector.
+    /// @param data Reference to a buffer (data will be stored there).
+    /// @param len Size specified number of bytes to read in a vector.
     ///
     void readVector(std::vector<uint8_t>& data, size_t len) {
         if (position_ + len > len_) {
@@ -344,7 +331,7 @@ public:
         if (buffer_ == NULL && allocated_ != 0) {
             throw std::bad_alloc();
         }
-        memcpy(buffer_, other.buffer_, size_);
+        std::memcpy(buffer_, other.buffer_, size_);
     }
 
     /// \brief Destructor
@@ -363,7 +350,7 @@ public:
         buffer_ = newbuff;
         size_ = other.size_;
         allocated_ = other.allocated_;
-        memcpy(buffer_, other.buffer_, size_);
+        std::memcpy(buffer_, other.buffer_, size_);
         return (*this);
     }
 
@@ -504,7 +491,7 @@ public:
     void writeData(const void *data, size_t len)
     {
         ensureAllocated(size_ + len);
-        memcpy(buffer_ + size_, data, len);
+        std::memcpy(buffer_ + size_, data, len);
         size_ += len;
     }
     //@}

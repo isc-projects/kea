@@ -64,6 +64,7 @@ import posix
 import copy
 
 from bind10_config import LIBEXECPATH
+import bind10_config
 import isc.cc
 import isc.util.process
 import isc.net.parse
@@ -168,8 +169,8 @@ class BoB:
     
     def __init__(self, msgq_socket_file=None, data_path=None,
                  config_filename=None, clear_config=False, nocache=False,
-                 verbose=False, nokill=False, setuid=None, username=None,
-                 cmdctl_port=None, wait_time=10):
+                 verbose=False, nokill=False, setuid=None, setgid=None,
+                 username=None, cmdctl_port=None, wait_time=10):
         """
             Initialize the Boss of BIND. This is a singleton (only one can run).
         
@@ -207,6 +208,7 @@ class BoB:
         self.components_to_restart = []
         self.runnable = False
         self.uid = setuid
+        self.gid = setgid
         self.username = username
         self.verbose = verbose
         self.nokill = nokill
@@ -1122,6 +1124,28 @@ def unlink_pid_file(pid_file):
         if error.errno is not errno.ENOENT:
             raise
 
+def remove_lock_files():
+    """
+    Remove various lock files which were created by code such as in the
+    logger. This function should be called after BIND 10 shutdown.
+    """
+
+    lockfiles = ["logger_lockfile"]
+
+    lpath = bind10_config.DATA_PATH
+    if "B10_FROM_BUILD" in os.environ:
+        lpath = os.environ["B10_FROM_BUILD"]
+    if "B10_FROM_SOURCE_LOCALSTATEDIR" in os.environ:
+        lpath = os.environ["B10_FROM_SOURCE_LOCALSTATEDIR"]
+    if "B10_LOCKFILE_DIR_FROM_BUILD" in os.environ:
+        lpath = os.environ["B10_LOCKFILE_DIR_FROM_BUILD"]
+
+    for f in lockfiles:
+        fname = lpath + '/' + f
+        if os.path.isfile(fname):
+            os.unlink(fname)
+
+    return
 
 def main():
     global options
@@ -1133,12 +1157,14 @@ def main():
 
     # Check user ID.
     setuid = None
+    setgid = None
     username = None
     if options.user:
         # Try getting information about the user, assuming UID passed.
         try:
             pw_ent = pwd.getpwuid(int(options.user))
             setuid = pw_ent.pw_uid
+            setgid = pw_ent.pw_gid
             username = pw_ent.pw_name
         except ValueError:
             pass
@@ -1152,6 +1178,7 @@ def main():
         try:
             pw_ent = pwd.getpwnam(options.user)
             setuid = pw_ent.pw_uid
+            setgid = pw_ent.pw_gid
             username = pw_ent.pw_name
         except KeyError:
             pass
@@ -1182,7 +1209,7 @@ def main():
         boss_of_bind = BoB(options.msgq_socket_file, options.data_path,
                            options.config_file, options.clear_config,
                            options.nocache, options.verbose, options.nokill,
-                           setuid, username, options.cmdctl_port,
+                           setuid, setgid, username, options.cmdctl_port,
                            options.wait_time)
         startup_result = boss_of_bind.startup()
         if startup_result:
@@ -1201,6 +1228,7 @@ def main():
     finally:
         # Clean up the filesystem
         unlink_pid_file(options.pid_file)
+        remove_lock_files()
         if boss_of_bind is not None:
             boss_of_bind.remove_socket_srv()
     sys.exit(boss_of_bind.exitcode)

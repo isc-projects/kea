@@ -74,7 +74,7 @@ public:
     isc::data::ConstElementPtr getFirstMessage(std::string& group,
                                                std::string& to) const;
     void addMessage(isc::data::ConstElementPtr, const std::string& group,
-                    const std::string& to);
+                    const std::string& to, int seq = -1);
     bool haveSubscription(const std::string& group,
                           const std::string& instance);
     bool haveSubscription(const isc::data::ConstElementPtr group,

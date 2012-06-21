@@ -147,7 +147,8 @@ PyObject* ZoneFinder_helper_all(ZoneFinder* finder, PyObject* args) {
                 // increases the refcount and the container decreases it
                 // later. This way, it feels safer in case the build function
                 // would fail.
-                return (Py_BuildValue("IO", r, list_container.get()));
+                return (Py_BuildValue("IOI", r, list_container.get(),
+                                      result_flags));
             } else {
                 if (rrsp) {
                     // Use N instead of O so the refcount isn't increased twice
@@ -253,31 +254,6 @@ ZoneFinder_find_all(PyObject* po_self, PyObject* args) {
                                                         args));
 }
 
-PyObject*
-ZoneFinder_findPreviousName(PyObject* po_self, PyObject* args) {
-    s_ZoneFinder* const self = static_cast<s_ZoneFinder*>(po_self);
-    PyObject* name_obj;
-    if (PyArg_ParseTuple(args, "O!", &name_type, &name_obj)) {
-        try {
-            return (createNameObject(
-                self->cppobj->findPreviousName(PyName_ToName(name_obj))));
-        } catch (const isc::NotImplemented& nie) {
-            PyErr_SetString(getDataSourceException("NotImplemented"),
-                            nie.what());
-            return (NULL);
-        } catch (const std::exception& exc) {
-            PyErr_SetString(getDataSourceException("Error"), exc.what());
-            return (NULL);
-        } catch (...) {
-            PyErr_SetString(getDataSourceException("Error"),
-                            "Unexpected exception");
-            return (NULL);
-        }
-    } else {
-        return (NULL);
-    }
-}
-
 // This list contains the actual set of functions we have in
 // python. Each entry has
 // 1. Python method name
@@ -290,8 +266,6 @@ PyMethodDef ZoneFinder_methods[] = {
     { "get_class", ZoneFinder_getClass, METH_NOARGS, ZoneFinder_getClass_doc },
     { "find", ZoneFinder_find, METH_VARARGS, ZoneFinder_find_doc },
     { "find_all", ZoneFinder_find_all, METH_VARARGS, ZoneFinder_findAll_doc },
-    { "find_previous_name", ZoneFinder_findPreviousName, METH_VARARGS,
-      ZoneFinder_find_previous_name_doc },
     { NULL, NULL, 0, NULL }
 };
 

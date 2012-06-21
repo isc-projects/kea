@@ -221,6 +221,15 @@ initModulePart_Name(PyObject* mod) {
         NameComparisonResult::COMMONANCESTOR, "COMMONANCESTOR");
     addClassVariable(name_comparison_result_type, "NameRelation",
                      po_NameRelation);
+    // Add the constants themselves too
+    addClassVariable(name_comparison_result_type, "SUPERDOMAIN",
+                     Py_BuildValue("I", NameComparisonResult::SUPERDOMAIN));
+    addClassVariable(name_comparison_result_type, "SUBDOMAIN",
+                     Py_BuildValue("I", NameComparisonResult::SUBDOMAIN));
+    addClassVariable(name_comparison_result_type, "EQUAL",
+                     Py_BuildValue("I", NameComparisonResult::EQUAL));
+    addClassVariable(name_comparison_result_type, "COMMONANCESTOR",
+                     Py_BuildValue("I", NameComparisonResult::COMMONANCESTOR));
 
     PyModule_AddObject(mod, "NameComparisonResult",
         reinterpret_cast<PyObject*>(&name_comparison_result_type));

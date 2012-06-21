@@ -109,7 +109,7 @@ Feature: control with bindctl
         # nested_command contains another execute script
         When I send bind10 the command execute file data/commands/nested
         last bindctl output should contain shouldshow
-        last bindctl output should not contain Error    
+        last bindctl output should not contain Error
 
         # show commands from a file
         When I send bind10 the command execute file data/commands/bad_command show

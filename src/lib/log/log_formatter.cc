@@ -17,6 +17,10 @@
 
 #include <cassert>
 
+#ifdef ENABLE_LOGGER_CHECKS
+#include <iostream>
+#endif
+
 using namespace std;
 using namespace boost;
 
@@ -59,6 +63,9 @@ checkExcessPlaceholders(string* message, unsigned int placeholder) {
         // but we can't at least for now because this function is called from
         // the Formatter's destructor.
 #ifdef ENABLE_LOGGER_CHECKS
+        // Also, make sure we print the message so we can identify which
+        // identifier has the problem.
+        cerr << "Message " << *message << endl;
         assert("Excess logger placeholders still exist in message" == NULL);
 #else
         message->append(" @@Excess logger placeholders still exist@@");

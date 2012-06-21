@@ -678,30 +678,40 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
         except socket.error:
             logger.error(XFROUT_FETCH_REQUEST_ERROR)
             return
+        self._select_loop(request)
+
+    def _select_loop(self, request_sock):
+        '''Main loop for a single session between xfrout and auth.
+
+        This is a dedicated subroutine of handle_request(), but is defined
+        as a separate "protected" method for the convenience of tests.
+        '''
 
         # Check self._shutdown_event to ensure the real shutdown comes.
         # Linux could trigger a spurious readable event on the _read_sock
         # due to a bug, so we need perform a double check.
         while not self._shutdown_event.is_set(): # Check if xfrout is shutdown
             try:
-                (rlist, wlist, xlist) = select.select([self._read_sock, request], [], [])
+                (rlist, wlist, xlist) = select.select([self._read_sock,
+                                                       request_sock], [], [])
             except select.error as e:
                 if e.args[0] == errno.EINTR:
                     (rlist, wlist, xlist) = ([], [], [])
                     continue
                 else:
-                    logger.error(XFROUT_SOCKET_SELECT_ERROR, str(e))
+                    logger.error(XFROUT_SOCKET_SELECT_ERROR, e)
                     break
 
-            # self.server._shutdown_event will be set by now, if it is not a false
-            # alarm
+            # self.server._shutdown_event will be set by now, if it is not a
+            # false alarm
             if self._read_sock in rlist:
                 continue
 
             try:
-                self.process_request(request)
+                if not self.process_request(request_sock):
+                    break
             except Exception as pre:
-                logger.error(XFROUT_PROCESS_REQUEST_ERROR, str(pre))
+                logger.error(XFROUT_PROCESS_REQUEST_ERROR, pre)
                 break
 
     def _handle_request_noblock(self):
@@ -713,26 +723,33 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
 
     def process_request(self, request):
         """Receive socket fd and query message from auth, then
-        start a new thread to process the request."""
+        start a new thread to process the request.
+
+        Return: True if everything is okay; otherwise False, in which case
+        the calling thread will terminate.
+
+        """
         sock_fd = recv_fd(request.fileno())
         if sock_fd < 0:
-            # This may happen when one xfrout process try to connect to
-            # xfrout unix socket server, to check whether there is another
-            # xfrout running.
-            if sock_fd == FD_SYSTEM_ERROR:
-                logger.error(XFROUT_RECEIVE_FILE_DESCRIPTOR_ERROR)
-            return
+            logger.warn(XFROUT_RECEIVE_FILE_DESCRIPTOR_ERROR)
+            return False
 
-        # receive request msg
+        # receive request msg.  If it fails we simply terminate the thread;
+        # it might be possible to recover from this state, but it's more likely
+        # that auth and xfrout are in inconsistent states.  So it will make
+        # more sense to restart in a new session.
         request_data = self._receive_query_message(request)
-        if not request_data:
-            return
+        if request_data is None:
+            # The specific exception type doesn't matter so we use session
+            # error.
+            raise XfroutSessionError('Failed to get complete xfr request')
 
         t = threading.Thread(target=self.finish_request,
-                             args = (sock_fd, request_data))
+                             args=(sock_fd, request_data))
         if self.daemon_threads:
             t.daemon = True
         t.start()
+        return True
 
     def _guess_remote(self, sock_fd):
         """Guess remote address and port of the socket.
@@ -747,12 +764,15 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
         # to care about the SOCK_STREAM parameter at all (which it really is,
         # except for testing)
         if socket.has_ipv6:
-            sock = socket.fromfd(sock_fd, socket.AF_INET6, socket.SOCK_STREAM)
+            sock_domain = socket.AF_INET6
         else:
             # To make it work even on hosts without IPv6 support
             # (Any idea how to simulate this in test?)
-            sock = socket.fromfd(sock_fd, socket.AF_INET, socket.SOCK_STREAM)
+            sock_domain = socket.AF_INET
+
+        sock = socket.fromfd(sock_fd, sock_domain, socket.SOCK_STREAM)
         peer = sock.getpeername()
+        sock.close()
 
         # Identify the correct socket family.  Due to the above "trick",
         # we cannot simply use sock.family.
@@ -761,6 +781,7 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
             socket.inet_pton(socket.AF_INET6, peer[0])
         except socket.error:
             family = socket.AF_INET
+
         return (family, socket.SOCK_STREAM, peer)
 
     def finish_request(self, sock_fd, request_data):
@@ -805,8 +826,10 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
             sock = socket.socket(socket.AF_UNIX)
             sock.connect(sock_file)
         except socket.error as err:
+            sock.close()
             return False
         else:
+            sock.close()
             return True
 
     def shutdown(self):
@@ -985,7 +1008,7 @@ class XfroutServer:
             self.shutdown()
             answer = create_answer(0)
 
-        elif cmd == notify_out.ZONE_NEW_DATA_READY_CMD:
+        elif cmd == "notify":
             zone_name = args.get('zone_name')
             zone_class = args.get('zone_class')
             if not zone_class:
