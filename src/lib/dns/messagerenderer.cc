@@ -293,7 +293,7 @@ MessageRenderer::writeName(const Name& name, const bool compress) {
     LabelSequence sequence(name);
     const size_t nlabels = sequence.getLabelCount();
     size_t data_len;
-    const char* data;
+    const unsigned char* data;
 
     // Find the offset in the offset table whose name gives the longest
     // match against the name to be rendered.
