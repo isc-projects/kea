@@ -889,6 +889,10 @@ class XfrinConnection(asyncore.dispatcher):
             req_str = 'IXFR' if request_type == RRType.IXFR() else 'AXFR'
             if check_soa:
                 self._check_soa_serial()
+                self.close()
+                self.init_socket()
+                if not self.connect_to_master():
+                    raise XfrinException('Unable to reconnect to master')
 
             logger.info(XFRIN_XFR_TRANSFER_STARTED, req_str, self.zone_str())
             self._send_query(self._request_type)
