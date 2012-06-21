@@ -67,7 +67,7 @@ public:
     /// \param len Pointer to a size_t where the length of the data
     ///        will be stored (in number of octets)
     /// \return Pointer to the wire-format data of this label sequence
-    const char* getData(size_t* len) const;
+    const unsigned char* getData(size_t* len) const;
 
     /// \brief Return the length of the wire-format data of this LabelSequence
     ///
