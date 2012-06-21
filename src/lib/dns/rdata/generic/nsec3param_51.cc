@@ -46,7 +46,7 @@ struct NSEC3PARAMImpl {
     const vector<uint8_t> salt_;
 };
 
-NSEC3PARAM::NSEC3PARAM(const string& nsec3param_str) :
+NSEC3PARAM::NSEC3PARAM(const std::string& nsec3param_str) :
     impl_(NULL)
 {
     istringstream iss(nsec3param_str);

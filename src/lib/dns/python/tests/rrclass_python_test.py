@@ -78,6 +78,14 @@ class RRClassTest(unittest.TestCase):
         self.assertTrue(self.c1 <= self.c2)
         self.assertFalse(self.c1 != other_rrclass)
 
+    def test_hash(self):
+        # Exploiting the knowledge that the hash value is the numeric class
+        # value, we can predict the comparison result.
+        self.assertEqual(hash(RRClass.IN()), hash(RRClass("IN")))
+        self.assertEqual(hash(RRClass("in")), hash(RRClass("IN")))
+        self.assertNotEqual(hash(RRClass.IN()), hash(RRClass.CH()))
+        self.assertNotEqual(hash(RRClass.IN()), hash(RRClass("CLASS65535")))
+
     def test_statics(self):
         self.assertEqual(RRClass.IN(), RRClass("IN"))
         self.assertEqual(RRClass.CH(), RRClass("CH"))

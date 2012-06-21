@@ -25,6 +25,7 @@ using namespace isc::asiolink;
 using namespace isc::dhcp;
 
 namespace isc {
+namespace dhcp {
 
 void
 IfaceMgr::detectIfaces() {
@@ -48,6 +49,7 @@ bool IfaceMgr::os_receive4(struct msghdr& /*m*/, Pkt4Ptr& /*pkt*/) {
   return (true); // pretend that we have everything set up for reception.
 }
 
-}
+} // end of isc::dhcp namespace
+} // end of dhcp namespace
 
 #endif

@@ -170,39 +170,48 @@ IfaceMgr::~IfaceMgr() {
 }
 
 void IfaceMgr::stubDetectIfaces() {
-    string ifaceName, linkLocal;
+    string ifaceName;
+    const string v4addr("127.0.0.1"), v6addr("::1");
 
     // This is a stub implementation for interface detection. Actual detection
-    // is faked by reading a text file. It will eventually be removed once
-    // we have actual implementations for all supported systems.
+    // is faked by detecting loopback interface (lo or lo0). It will eventually
+    // be removed once we have actual implementations for all supported systems.
 
-    cout << "Interface detection is not implemented yet. "
-         << "Reading interfaces.txt file instead." << endl;
-    cout << "Please use format: interface-name link-local-address" << endl;
+    cout << "Interface detection is not implemented on this Operating System yet. "
+         << endl;
 
     try {
-        ifstream interfaces("interfaces.txt");
-
-        if (!interfaces.good()) {
-            cout << "interfaces.txt file is not available. Stub interface detection skipped." << endl;
-            return;
+        if (if_nametoindex("lo") > 0) {
+            ifaceName = "lo";
+            // this is Linux-like OS
+        } else if (if_nametoindex("lo0") > 0) {
+            ifaceName = "lo0";
+            // this is BSD-like OS
+        } else {
+            // we give up. What OS is this, anyway? Solaris? Hurd?
+            isc_throw(NotImplemented,
+                      "Interface detection on this OS is not supported.");
         }
-        interfaces >> ifaceName;
-        interfaces >> linkLocal;
-
-        cout << "Detected interface " << ifaceName << "/" << linkLocal << endl;
 
         Iface iface(ifaceName, if_nametoindex(ifaceName.c_str()));
         iface.flag_up_ = true;
         iface.flag_running_ = true;
+
+        // note that we claim that this is not a loopback. iface_mgr tries to open a
+        // socket on all interaces that are up, running and not loopback. As this is
+        // the only interface we were able to detect, let's pretend this is a normal
+        // interface.
         iface.flag_loopback_ = false;
         iface.flag_multicast_ = true;
         iface.flag_broadcast_ = true;
         iface.setHWType(HWTYPE_ETHERNET);
-        IOAddress addr(linkLocal);
-        iface.addAddress(addr);
+
+        iface.addAddress(IOAddress(v4addr));
+        iface.addAddress(IOAddress(v6addr));
         addInterface(iface);
-        interfaces.close();
+
+        cout << "Detected interface " << ifaceName << "/" << v4addr << "/"
+             << v6addr << endl;
     } catch (const std::exception& ex) {
         // TODO: deallocate whatever memory we used
         // not that important, since this function is going to be
@@ -214,15 +223,6 @@ void IfaceMgr::stubDetectIfaces() {
         throw;
     }
 }
-
-/// @todo: Remove this once we have OS-specific interface detection
-/// routines (or at least OS-specific files, like iface_mgr_solaris.cc)
-/// for all OSes.
-#if !defined(OS_LINUX) && !defined(OS_BSD)
-void IfaceMgr::detectIfaces() {
-    stubDetectIfaces();
-}
-#endif
 
 bool IfaceMgr::openSockets4(const uint16_t port) {
     int sock;
@@ -610,6 +610,8 @@ IfaceMgr::send(const Pkt6Ptr& pkt) {
     pktinfo->ipi6_ifindex = pkt->getIndex();
     m.msg_controllen = cmsg->cmsg_len;
 
+    pkt->updateTimestamp();
+
     result = sendmsg(getSocket(*pkt), &m, 0);
     if (result < 0) {
         isc_throw(Unexpected, "Pkt6 send failed: sendmsg() returned " << result);
@@ -668,6 +670,8 @@ IfaceMgr::send(const Pkt4Ptr& pkt)
          << pkt->getRemoteAddr().toText() << ":" << pkt->getRemotePort()
          << " over socket " << getSocket(*pkt) << " on interface "
          << getIface(pkt->getIface())->getFullName() << endl;
+
+    pkt->updateTimestamp();
 
     int result = sendmsg(getSocket(*pkt), &m, 0);
     if (result < 0) {
@@ -825,6 +829,8 @@ IfaceMgr::receive4(uint32_t timeout) {
     // We have all data let's create Pkt4 object.
     Pkt4Ptr pkt = Pkt4Ptr(new Pkt4(buf, result));
 
+    pkt->updateTimestamp();
+
     unsigned int ifindex = iface->getIndex();
 
     IOAddress from(htonl(from_addr.sin_addr.s_addr));
@@ -968,6 +974,8 @@ Pkt6Ptr IfaceMgr::receive6() {
         cout << "Failed to create new packet." << endl;
         return (Pkt6Ptr()); // NULL
     }
+
+    pkt->updateTimestamp();
 
     pkt->setLocalAddr(IOAddress::from_bytes(AF_INET6,
                       reinterpret_cast<const uint8_t*>(&to_addr)));

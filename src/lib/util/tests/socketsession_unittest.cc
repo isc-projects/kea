@@ -53,6 +53,7 @@ namespace {
 
 const char* const TEST_UNIX_FILE = TEST_DATA_TOPBUILDDIR "/test.unix";
 const char* const TEST_PORT = "53535";
+const char* const TEST_PORT2 = "53536"; // use this in case we need 2 ports
 const char TEST_DATA[] = "BIND10 test";
 
 // A simple helper structure to automatically close test sockets on return
@@ -540,8 +541,12 @@ ForwardTest::checkPushAndPop(int family, int type, int protocol,
 }
 
 TEST_F(ForwardTest, pushAndPop) {
-    // Pass a UDP/IPv6 session.
+    // Pass a UDP/IPv6 session.  We use different ports for different UDP
+    // tests because Solaris 11 seems to prohibit reusing the same port for
+    // some short period once the socket FD is forwarded, even if the sockets
+    // are closed.  See Trac #2028.
     const SockAddrInfo sai_local6(getSockAddr("::1", TEST_PORT));
+    const SockAddrInfo sai_local6_alt(getSockAddr("::1", TEST_PORT2));
     const SockAddrInfo sai_remote6(getSockAddr("2001:db8::1", "5300"));
     {
         SCOPED_TRACE("Passing UDP/IPv6 session");
@@ -559,6 +564,7 @@ TEST_F(ForwardTest, pushAndPop) {
     // receiver, which should be usable for multiple attempts of passing,
     // regardless of family of the passed session
     const SockAddrInfo sai_local4(getSockAddr("127.0.0.1", TEST_PORT));
+    const SockAddrInfo sai_local4_alt(getSockAddr("127.0.0.1", TEST_PORT2));
     const SockAddrInfo sai_remote4(getSockAddr("192.0.2.2", "5300"));
     {
         SCOPED_TRACE("Passing UDP/IPv4 session");
@@ -575,7 +581,7 @@ TEST_F(ForwardTest, pushAndPop) {
     // Also try large data
     {
         SCOPED_TRACE("Passing UDP/IPv6 session with large data");
-        checkPushAndPop(AF_INET6, SOCK_DGRAM, IPPROTO_UDP, sai_local6,
+        checkPushAndPop(AF_INET6, SOCK_DGRAM, IPPROTO_UDP, sai_local6_alt,
                         sai_remote6, large_text_.c_str(), large_text_.length(),
                         false);
     }
@@ -587,7 +593,7 @@ TEST_F(ForwardTest, pushAndPop) {
     }
     {
         SCOPED_TRACE("Passing UDP/IPv4 session with large data");
-        checkPushAndPop(AF_INET, SOCK_DGRAM, IPPROTO_UDP, sai_local4,
+        checkPushAndPop(AF_INET, SOCK_DGRAM, IPPROTO_UDP, sai_local4_alt,
                         sai_remote4, large_text_.c_str(), large_text_.length(),
                         false);
     }

@@ -15,6 +15,11 @@
 # No namespace declaration - these constants go in the global namespace
 # of the xfrin messages python module.
 
+% XFRIN_AUTH_LOADZONE sending Auth loadzone for origin=%1, class=%2, datasrc=%3
+There was a successful zone transfer, and the zone is served by b10-auth
+in the in-memory data source using sqlite3 as a backend. We send the
+"loadzone" command for the zone to b10-auth.
+
 % XFRIN_AXFR_INCONSISTENT_SOA AXFR SOAs are inconsistent for %1: %2 expected, %3 received
 The serial fields of the first and last SOAs of AXFR (including AXFR-style
 IXFR) are not the same.  According to RFC 5936 these two SOAs must be the
@@ -112,6 +117,10 @@ aborts the transfer just like a successful case.
 There was a problem sending a message to the xfrout module or the
 zone manager. This most likely means that the msgq daemon has quit or
 was killed.
+
+% XFRIN_MSGQ_SEND_ERROR_AUTH error while contacting %1
+There was a problem sending a message to b10-auth. This most likely
+means that the msgq daemon has quit or was killed.
 
 % XFRIN_MSGQ_SEND_ERROR_ZONE_MANAGER error while contacting %1
 There was a problem sending a message to the zone manager. This most

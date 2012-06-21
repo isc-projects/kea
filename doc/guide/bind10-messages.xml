@@ -303,6 +303,24 @@ discovered that the memory data source is enabled for the given class.
 </para></listitem>
 </varlistentry>
 
+<varlistentry id="AUTH_MESSAGE_FORWARD_ERROR">
+<term>AUTH_MESSAGE_FORWARD_ERROR failed to forward %1 request from %2: %3</term>
+<listitem><para>
+The authoritative server tried to forward some type DNS request
+message to a separate process (e.g., forwarding dynamic update
+requests to b10-ddns) to handle it, but it failed.  The authoritative
+server returns SERVFAIL to the client on behalf of the separate
+process.  The error could be configuration mismatch between b10-auth
+and the recipient component, or it may be because the requests are
+coming too fast and the receipient process cannot keep up with the
+rate, or some system level failure.  In either case this means the
+BIND 10 system is not working as expected, so the administrator should
+look into the cause and address the issue.  The log message includes
+the client's address (and port), and the error message sent from the
+lower layer that detects the failure.
+</para></listitem>
+</varlistentry>
+
 <varlistentry id="AUTH_NOTIFY_QUESTIONS">
 <term>AUTH_NOTIFY_QUESTIONS invalid number of questions (%1) in incoming NOTIFY</term>
 <listitem><para>
@@ -882,6 +900,15 @@ The boss module is sending a SIGTERM signal to the given process.
 </para></listitem>
 </varlistentry>
 
+<varlistentry id="BIND10_SETGID">
+<term>BIND10_SETGID setting GID to %1</term>
+<listitem><para>
+The boss switches the process group ID to the given value.  This happens
+when BIND 10 starts with the -u option, and the group ID will be set to
+that of the specified user.
+</para></listitem>
+</varlistentry>
+
 <varlistentry id="BIND10_SETUID">
 <term>BIND10_SETUID setting UID to %1</term>
 <listitem><para>
@@ -1399,7 +1426,7 @@ Debug message. The RRset is updating its data with this given RRset.
 </varlistentry>
 
 <varlistentry id="CC_ASYNC_READ_FAILED">
-<term>CC_ASYNC_READ_FAILED asynchronous read failed</term>
+<term>CC_ASYNC_READ_FAILED asynchronous read failed (error code = %1)</term>
 <listitem><para>
 This marks a low level error, we tried to read data from the message queue
 daemon asynchronously, but the ASIO library returned an error.
@@ -1588,6 +1615,16 @@ are now applied, and no action from the administrator is necessary.
 </para></listitem>
 </varlistentry>
 
+<varlistentry id="CFGMGR_BACKED_UP_CONFIG_FILE">
+<term>CFGMGR_BACKED_UP_CONFIG_FILE Config file %1 was removed; a backup was made at %2</term>
+<listitem><para>
+BIND 10 has been started with the command to clear the configuration
+file.  The existing file has been backed up (moved) to the given file
+name. A new configuration file will be created in the original location
+when necessary.
+</para></listitem>
+</varlistentry>
+
 <varlistentry id="CFGMGR_BAD_UPDATE_RESPONSE_FROM_MODULE">
 <term>CFGMGR_BAD_UPDATE_RESPONSE_FROM_MODULE Unable to parse response from module %1: %2</term>
 <listitem><para>
@@ -1604,6 +1641,14 @@ assumed to have failed, and will not be stored.
 <listitem><para>
 The configuration manager daemon was unable to connect to the messaging
 system. The most likely cause is that msgq is not running.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="CFGMGR_CONFIG_FILE">
+<term>CFGMGR_CONFIG_FILE Configuration manager starting with configuration file: %1</term>
+<listitem><para>
+The configuration manager is starting, reading and saving the configuration
+settings to the shown file.
 </para></listitem>
 </varlistentry>
 
@@ -1636,15 +1681,6 @@ was trying to write the configuration database to disk. The specific
 error is given. The most likely cause is that the system does not have
 write access to the configuration database file. The updated
 configuration is not stored.
-</para></listitem>
-</varlistentry>
-
-<varlistentry id="CFGMGR_RENAMED_CONFIG_FILE">
-<term>CFGMGR_RENAMED_CONFIG_FILE renamed configuration file %1 to %2, will create new %1</term>
-<listitem><para>
-BIND 10 has been started with the command to clear the configuration file.
-The existing file is backed up to the given file name, so that data is not
-immediately lost if this was done by accident.
 </para></listitem>
 </varlistentry>
 
@@ -2057,6 +2093,58 @@ in the answer as a result.
 </para></listitem>
 </varlistentry>
 
+<varlistentry id="DATASRC_DATABASE_FINDNSEC3">
+<term>DATASRC_DATABASE_FINDNSEC3 Looking for NSEC3 for %1 in %2 mode</term>
+<listitem><para>
+Debug information. A search in an database data source for NSEC3 that
+matches or covers the given name is being started.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="DATASRC_DATABASE_FINDNSEC3_COVER">
+<term>DATASRC_DATABASE_FINDNSEC3_COVER found a covering NSEC3 for %1 at label count %2: %3</term>
+<listitem><para>
+Debug information. An NSEC3 that covers the given name is found and
+being returned.  The found NSEC3 RRset is also displayed. When the shown label
+count is smaller than that of the given name, the matching NSEC3 is for a
+superdomain of the given name (see DATASRC_DATABSE_FINDNSEC3_TRYHASH).  The
+found NSEC3 RRset is also displayed.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="DATASRC_DATABASE_FINDNSEC3_MATCH">
+<term>DATASRC_DATABASE_FINDNSEC3_MATCH found a matching NSEC3 for %1 at label count %2: %3</term>
+<listitem><para>
+Debug information. An NSEC3 that matches (a possibly superdomain of)
+the given name is found and being returned.  When the shown label
+count is smaller than that of the given name, the matching NSEC3 is
+for a superdomain of the given name (see DATASRC_DATABSE_FINDNSEC3_TRYHASH).
+The found NSEC3 RRset is also displayed.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="DATASRC_DATABASE_FINDNSEC3_TRYHASH">
+<term>DATASRC_DATABASE_FINDNSEC3_TRYHASH looking for NSEC3 for %1 at label count %2 (hash %3)</term>
+<listitem><para>
+Debug information. In an attempt of finding an NSEC3 for the give name,
+(a possibly superdomain of) the name is hashed and searched for in the
+NSEC3 name space.  When the shown label count is smaller than that of the
+shown name, the search tries the superdomain name that share the shown
+(higher) label count of the shown name (e.g., for
+www.example.com. with shown label count of 3, example.com. is being
+tried, as "." is 1 label long).
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="DATASRC_DATABASE_FINDNSEC3_TRYHASH_PREV">
+<term>DATASRC_DATABASE_FINDNSEC3_TRYHASH_PREV looking for previous NSEC3 for %1 at label count %2 (hash %3)</term>
+<listitem><para>
+Debug information. An exact match on hash (see
+DATASRC_DATABASE_FINDNSEC3_TRYHASH) was unsuccessful. We get the previous hash
+to that one instead.
+</para></listitem>
+</varlistentry>
+
 <varlistentry id="DATASRC_DATABASE_FIND_RECORDS">
 <term>DATASRC_DATABASE_FIND_RECORDS looking in datasource %1 for record %2/%3/%4</term>
 <listitem><para>
@@ -2155,7 +2243,7 @@ has been requested and returned.
 </varlistentry>
 
 <varlistentry id="DATASRC_DATABASE_FOUND_RRSET">
-<term>DATASRC_DATABASE_FOUND_RRSET search in datasource %1 resulted in RRset %5</term>
+<term>DATASRC_DATABASE_FOUND_RRSET search in datasource %1 resulted in RRset %2</term>
 <listitem><para>
 The data returned by the database backend contained data for the given domain
 name, and it either matches the type or has a relevant type. The RRset that is
@@ -2189,10 +2277,12 @@ The name and RRtype of the RRset is indicated in the message.
 <varlistentry id="DATASRC_DATABASE_ITERATE_TTL_MISMATCH">
 <term>DATASRC_DATABASE_ITERATE_TTL_MISMATCH TTL values differ for RRs of %1/%2/%3, setting to %4</term>
 <listitem><para>
-While iterating through the zone, the time to live for RRs of the given RRset
-were found to be different. This isn't allowed on the wire and is considered
-an error, so we set it to the lowest value we found (but we don't modify the
-database). The data in database should be checked and fixed.
+While iterating through the zone, the time to live for RRs of the
+given RRset were found to be different. Since an RRset cannot have
+multiple TTLs, we set it to the lowest value we found (but we don't
+modify the database). This is what the client would do when such RRs
+were given in a DNS response according to RFC2181. The data in
+database should be checked and fixed.
 </para></listitem>
 </varlistentry>
 
@@ -2352,7 +2442,7 @@ namespace but has no RRs assopciated with it). This will produce NXRRSET.
 </varlistentry>
 
 <varlistentry id="DATASRC_DATABASE_WILDCARD_MATCH">
-<term>DATASRC_DATABASE_WILDCARD_MATCH search in datasource %1 resulted in wildcard match at %5 with RRset %6</term>
+<term>DATASRC_DATABASE_WILDCARD_MATCH search in datasource %1 resulted in wildcard match at %2 with RRset %3</term>
 <listitem><para>
 The database doesn't contain directly matching name.  When searching
 for a wildcard match, a wildcard record matching the name and type of
@@ -3096,6 +3186,21 @@ Debug information. The SQLite data source is closing the database file.
 </para></listitem>
 </varlistentry>
 
+<varlistentry id="DATASRC_SQLITE_COMPATIBLE_VERSION">
+<term>DATASRC_SQLITE_COMPATIBLE_VERSION database schema V%1.%2 not up to date (expecting V%3.%4) but is compatible</term>
+<listitem><para>
+The version of the SQLite3 database schema used to hold the zone data
+is not the latest one - the current version of BIND 10 was written
+with a later schema version in mind.  However, the database is
+compatible with the current version of BIND 10, and BIND 10 will run
+without any problems.
+</para><para>
+Consult the release notes for your version of BIND 10.  Depending on
+the changes made to the database schema, it is possible that improved
+performance could result if the database were upgraded.
+</para></listitem>
+</varlistentry>
+
 <varlistentry id="DATASRC_SQLITE_CONNCLOSE">
 <term>DATASRC_SQLITE_CONNCLOSE Closing sqlite database</term>
 <listitem><para>
@@ -3232,6 +3337,18 @@ source.
 <listitem><para>
 The SQLite data source was asked to provide a NSEC3 record for given zone.
 But it doesn't contain that zone.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="DATASRC_SQLITE_INCOMPATIBLE_VERSION">
+<term>DATASRC_SQLITE_INCOMPATIBLE_VERSION database schema V%1.%2 incompatible with version (V%3.%4) expected</term>
+<listitem><para>
+The version of the SQLite3 database schema used to hold the zone data
+is incompatible with the version expected by BIND 10.  As a result,
+BIND 10 is unable to run using the database file as the data source.
+</para><para>
+The database should be updated using the means described in the BIND
+10 documentation.
 </para></listitem>
 </varlistentry>
 
@@ -3517,6 +3634,16 @@ is logged.
 </para></listitem>
 </varlistentry>
 
+<varlistentry id="DDNS_AUTH_DBFILE_UPDATE">
+<term>DDNS_AUTH_DBFILE_UPDATE updated auth DB file to %1</term>
+<listitem><para>
+b10-ddns was notified of updates to the SQLite3 DB file that b10-auth
+uses for the underlying data source and on which b10-ddns needs to
+make updates.  b10-ddns then updated its internal setup so further
+updates would be made on the new DB.
+</para></listitem>
+</varlistentry>
+
 <varlistentry id="DDNS_CC_SESSION_ERROR">
 <term>DDNS_CC_SESSION_ERROR error reading from cc channel: %1</term>
 <listitem><para>
@@ -3542,6 +3669,18 @@ startup time.  Details of the error are included in the log message.
 </para></listitem>
 </varlistentry>
 
+<varlistentry id="DDNS_CONFIG_HANDLER_ERROR">
+<term>DDNS_CONFIG_HANDLER_ERROR failed to update ddns configuration: %1</term>
+<listitem><para>
+An update to b10-ddns configuration was delivered but an error was
+found while applying them.  None of the delivered updates were applied
+to the running b10-ddns system, and the server will keep running with
+the existing configuration.  If this happened in the initial
+configuration setup, the server will be running with the default
+configurations.
+</para></listitem>
+</varlistentry>
+
 <varlistentry id="DDNS_DROP_CONN">
 <term>DDNS_DROP_CONN dropping connection on file descriptor %1 because of error %2</term>
 <listitem><para>
@@ -3550,6 +3689,33 @@ connects to the ddns daemon). This might be OK, for example when the
 authoritative server shuts down, the connection would get closed. It also
 can mean the system is busy and can't keep up or that the other side got
 confused and sent bad data.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="DDNS_GET_REMOTE_CONFIG_FAIL">
+<term>DDNS_GET_REMOTE_CONFIG_FAIL failed to get %1 module configuration %2 times: %3</term>
+<listitem><para>
+b10-ddns tried to get configuration of some remote modules for its
+operation, but it failed.  The most likely cause of this is that the
+remote module has not fully started up and b10-ddns couldn't get the
+configuration in a timely fashion.  b10-ddns attempts to retry it a
+few times, imposing a short delay, hoping it eventually succeeds if
+it's just a timing issue.  The number of total failed attempts is also
+logged.  If it reaches an internal threshold b10-ddns considers it a
+fatal error and terminates.  Even in that case, if b10-ddns is
+configured as a "dispensable" component (which is the default), the
+parent bind10 process will restart it, and there will be another
+chance of getting the remote configuration successfully.  These are
+not the optimal behavior, but it's believed to be sufficient in
+practice (there would normally be no failure in the first place).  If
+it really causes an operational trouble other than having a few of
+these log messages, please submit a bug report; there can be several
+ways to make it more sophisticated.  Another, less likely reason for
+having this error is because the remote modules are not actually
+configured to run.  If that's the case fixing the configuration should
+solve the problem - either by making sure the remote module will run
+or by not running b10-ddns (without these remote modules b10-ddns is
+not functional, so there's no point in running it in this case).
 </para></listitem>
 </varlistentry>
 
@@ -3574,6 +3740,15 @@ coming from a b10-auth process.
 </para></listitem>
 </varlistentry>
 
+<varlistentry id="DDNS_RECEIVED_AUTH_UPDATE">
+<term>DDNS_RECEIVED_AUTH_UPDATE received configuration updates from auth server</term>
+<listitem><para>
+b10-ddns is notified of updates to b10-auth configuration
+(including a report of the initial configuration) that b10-ddns might
+be interested in.
+</para></listitem>
+</varlistentry>
+
 <varlistentry id="DDNS_RECEIVED_SHUTDOWN_COMMAND">
 <term>DDNS_RECEIVED_SHUTDOWN_COMMAND shutdown command received</term>
 <listitem><para>
@@ -3582,11 +3757,105 @@ and will now shut down.
 </para></listitem>
 </varlistentry>
 
-<varlistentry id="DDNS_RUNNING">
-<term>DDNS_RUNNING ddns server is running and listening for updates</term>
+<varlistentry id="DDNS_RECEIVED_ZONEMGR_UPDATE">
+<term>DDNS_RECEIVED_ZONEMGR_UPDATE received configuration updates from zonemgr</term>
 <listitem><para>
-The ddns process has successfully started and is now ready to receive commands
-and updates.
+b10-ddns is notified of updates to b10-zonemgr's configuration
+(including a report of the initial configuration).  It may possibly
+contain changes to the secondary zones, in which case b10-ddns will
+update its internal copy of that configuration.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="DDNS_REQUEST_PARSE_FAIL">
+<term>DDNS_REQUEST_PARSE_FAIL failed to parse update request: %1</term>
+<listitem><para>
+b10-ddns received an update request via b10-auth, but the received
+data failed to pass minimum validation: it was either broken wire
+format data for a valid DNS message (e.g. it's shorter than the
+fixed-length header), or the opcode is not update, or TSIG is included
+in the request but it fails to validate.  Since b10-auth should have
+performed this level of checks, such an error shouldn't be detected at
+this stage and should rather be considered an internal bug.  This
+event is therefore logged at the error level, and the request is
+simply dropped.  Additional information of the error is also logged.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="DDNS_REQUEST_TCP_QUOTA">
+<term>DDNS_REQUEST_TCP_QUOTA reject TCP update client %1 (%2 running)</term>
+<listitem><para>
+b10-ddns received a new update request from a client over TCP, but
+the number of TCP clients being handled by the server already reached
+the configured quota, so the latest client was rejected by closing
+the connection.  The administrator may want to check the status of
+b10-ddns, and if this happens even if the server is not very busy,
+the quota may have to be increased.  Or, if it's more likely to be
+malicious or simply bogus clients that somehow keep the TCP connection
+open for a long period, maybe they should be rejected with an
+appropriate ACL configuration or some lower layer filtering.  The
+number of existing TCP clients are shown in the log, which should be
+identical to the current quota.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="DDNS_RESPONSE_SOCKET_ERROR">
+<term>DDNS_RESPONSE_SOCKET_ERROR failed to send update response to %1: %2</term>
+<listitem><para>
+Network I/O error happens in sending an update response.  The
+client's address that caused the error and error details are also
+logged.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="DDNS_RESPONSE_TCP_SOCKET_ERROR">
+<term>DDNS_RESPONSE_TCP_SOCKET_ERROR failed to complete sending update response to %1 over TCP</term>
+<listitem><para>
+b10-ddns had tried to send an update response over TCP, and it hadn't
+been completed at that time, and a followup attempt to complete the
+send operation failed due to some network I/O error.  While a network
+error can happen any time, this event is quite unexpected for two
+reasons.  First, since the size of a response to an update request
+should be generally small, it's unlikely that the initial attempt
+didn't fail but wasn't completed.  Second, since the first attempt
+succeeded and the TCP connection had been established in the first
+place, it's more likely for the subsequent attempt to succeed.  In any
+case, there may not be able to do anything to fix it at the server
+side, but the administrator may want to check the general reachability
+with the client address.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="DDNS_SECONDARY_ZONES_UPDATE">
+<term>DDNS_SECONDARY_ZONES_UPDATE updated secondary zone list (%1 zones are listed)</term>
+<listitem><para>
+b10-ddns has successfully updated the internal copy of secondary zones
+obtained from b10-zonemgr, based on a latest update to zonemgr's
+configuration.  The number of newly configured (unique) secondary
+zones is logged.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="DDNS_SECONDARY_ZONES_UPDATE_FAIL">
+<term>DDNS_SECONDARY_ZONES_UPDATE_FAIL failed to update secondary zone list: %1</term>
+<listitem><para>
+An error message.  b10-ddns was notified of updates to a list of
+secondary zones from b10-zonemgr and tried to update its own internal
+copy of the list, but it failed.  This can happen if the configuration
+contains an error, and b10-zonemgr should also reject that update.
+Unfortunately, in the current implementation there is no way to ensure
+that both zonemgr and ddns have consistent information when an update
+contains an error; further, as of this writing zonemgr has a bug that
+it could partially update the list of secondary zones if part of the
+list has an error (see Trac ticket #2038).  b10-ddns still keeps
+running with the previous configuration, but it's strongly advisable
+to check log messages from zonemgr, and if it indicates there can be
+inconsistent state, it's better to restart the entire BIND 10 system
+(just restarting b10-ddns wouldn't be enough, because zonemgr can have
+partially updated configuration due to bug #2038).  The log message
+contains an error description, but it's intentionally kept simple as
+it's primarily a matter of zonemgr.  To know the details of the error,
+log messages of zonemgr should be consulted.
 </para></listitem>
 </varlistentry>
 
@@ -3605,6 +3874,14 @@ following log messages to see what of it.
 The ddns process is shutting down. It will no longer listen for new commands
 or updates. Any command or update that is being addressed at this moment will
 be completed, after which the process will exit.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="DDNS_STARTED">
+<term>DDNS_STARTED ddns server is running and listening for updates</term>
+<listitem><para>
+The ddns process has successfully started and is now ready to receive commands
+and updates.
 </para></listitem>
 </varlistentry>
 
@@ -3630,6 +3907,362 @@ process will now shut down.
 The b10-ddns process encountered an uncaught exception and will now shut
 down. This is indicative of a programming error and should not happen under
 normal circumstances. The exception type and message are printed.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="DDNS_UPDATE_NOTIFY">
+<term>DDNS_UPDATE_NOTIFY notified %1 of updates to %2</term>
+<listitem><para>
+Debug message.  b10-ddns has made updates to a zone based on an update
+request and has successfully notified an external module of the updates.
+The notified module will use that information for updating its own
+state or any necessary protocol action such as zone reloading or sending
+notify messages to secondary servers.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="DDNS_UPDATE_NOTIFY_FAIL">
+<term>DDNS_UPDATE_NOTIFY_FAIL failed to notify %1 of updates to %2: %3</term>
+<listitem><para>
+b10-ddns has made updates to a zone based on an update request and
+tried to notify an external component of the updates, but the
+notification fails.  One possible cause of this is that the external
+component is not really running and it times out in waiting for the
+response, although it will be less likely to happen in practice
+because these components will normally be configured to run when the
+server provides the authoritative DNS service; ddns is rather optional
+among them.  If this happens, however, it will suspend b10-ddns for a
+few seconds during which it cannot handle new requests (some may be
+delayed, some may be dropped, depending on the volume of the incoming
+requests).  This is obviously bad, and if this error happens due to
+this reason, the administrator should make sure the component in
+question should be configured to run.  For a longer term, b10-ddns
+should be more robust about this case such as by making this
+notification asynchronously and/or detecting the existence of the
+external components to avoid hopeless notification in the first place.
+Severity of this error for the receiving components depends on the
+type of the component.  If it's b10-xfrout, this means DNS notify
+messages won't be sent to secondary servers of the zone.  It's
+suboptimal, but not necessarily critical as the secondary servers will
+try to check the zone's status periodically.  If it's b10-auth and the
+notification was needed to have it reload the corresponding zone, it's
+more serious because b10-auth won't be able to serve the new version
+of the zone unless some explicit recovery action is taken.  So the
+administrator needs to examine this message and takes an appropriate
+action.  In either case, this notification is generally expected to
+succeed; so the fact it fails itself means there's something wrong in
+the BIND 10 system, and it would be advisable to check other log
+messages.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="LIBDDNS_DATASRC_ERROR">
+<term>LIBDDNS_DATASRC_ERROR update client %1 failed due to data source error: %2</term>
+<listitem><para>
+An update attempt failed due to some error in the corresponding data
+source.  This is generally an unexpected event, but can still happen
+for various reasons such as DB lock contention or a failure of the
+backend DB server.  The cause of the error is also logged.  It's
+advisable to check the message, and, if necessary, take an appropriate
+action (e.g., restarting the DB server if it dies).  If this message
+is logged the data source isn't modified due to the
+corresponding update request.  When used by the b10-ddns, the server
+will return a response with an RCODE of SERVFAIL.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="LIBDDNS_PREREQ_FORMERR">
+<term>LIBDDNS_PREREQ_FORMERR update client %1 for zone %2: Format error in prerequisite (%3). Non-zero TTL.</term>
+<listitem><para>
+The prerequisite with the given name, class and type is not well-formed.
+The specific prerequisite is shown. In this case, it has a non-zero TTL value.
+A FORMERR error response is sent to the client.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="LIBDDNS_PREREQ_FORMERR_ANY">
+<term>LIBDDNS_PREREQ_FORMERR_ANY update client %1 for zone %2: Format error in prerequisite (%3). Non-zero TTL or rdata found.</term>
+<listitem><para>
+The prerequisite with the given name, class and type is not well-formed.
+The specific prerequisite is shown. In this case, it either has a non-zero
+TTL value, or has rdata fields. A FORMERR error response is sent to the client.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="LIBDDNS_PREREQ_FORMERR_CLASS">
+<term>LIBDDNS_PREREQ_FORMERR_CLASS update client %1 for zone %2: Format error in prerequisite (%3). Bad class.</term>
+<listitem><para>
+The prerequisite with the given name, class and type is not well-formed.
+The specific prerequisite is shown. In this case, the class of the
+prerequisite should either match the class of the zone in the Zone Section,
+or it should be ANY or NONE, and it is not. A FORMERR error response is sent
+to the client.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="LIBDDNS_PREREQ_FORMERR_NONE">
+<term>LIBDDNS_PREREQ_FORMERR_NONE update client %1 for zone %2: Format error in prerequisite (%3). Non-zero TTL or rdata found.</term>
+<listitem><para>
+The prerequisite with the given name, class and type is not well-formed.
+The specific prerequisite is shown. In this case, it either has a non-zero
+TTL value, or has rdata fields. A FORMERR error response is sent to the client.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="LIBDDNS_PREREQ_NAME_IN_USE_FAILED">
+<term>LIBDDNS_PREREQ_NAME_IN_USE_FAILED update client %1 for zone %2: 'Name is in use' prerequisite not satisfied (%3), rcode: %4</term>
+<listitem><para>
+A DNS UPDATE prerequisite was not satisfied. The specific prerequisite that
+was not satisfied is shown. The client is sent an error response with the
+given rcode.
+In this case, the specific prerequisite is 'Name is in use'. From RFC2136:
+Name is in use.  At least one RR with a specified NAME (in
+the zone and class specified by the Zone Section) must exist.
+Note that this prerequisite is NOT satisfied by empty
+nonterminals.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="LIBDDNS_PREREQ_NAME_NOT_IN_USE_FAILED">
+<term>LIBDDNS_PREREQ_NAME_NOT_IN_USE_FAILED update client %1 for zone %2: 'Name is not in use' (%3) prerequisite not satisfied, rcode: %4</term>
+<listitem><para>
+A DNS UPDATE prerequisite was not satisfied. The specific prerequisite that
+was not satisfied is shown. The client is sent an error response with the
+given rcode.
+In this case, the specific prerequisite is 'Name is not in use'.
+From RFC2136:
+Name is not in use.  No RR of any type is owned by a
+specified NAME.  Note that this prerequisite IS satisfied by
+empty nonterminals.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="LIBDDNS_PREREQ_NOTZONE">
+<term>LIBDDNS_PREREQ_NOTZONE update client %1 for zone %2: prerequisite not in zone (%3)</term>
+<listitem><para>
+A DDNS UPDATE prerequisite has a name that does not appear to be inside
+the zone specified in the Zone section of the UPDATE message.
+The specific prerequisite is shown. A NOTZONE error response is sent to
+the client.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="LIBDDNS_PREREQ_RRSET_DOES_NOT_EXIST_FAILED">
+<term>LIBDDNS_PREREQ_RRSET_DOES_NOT_EXIST_FAILED update client %1 for zone %2: 'RRset does not exist' (%3) prerequisite not satisfied, rcode: %4</term>
+<listitem><para>
+A DNS UPDATE prerequisite was not satisfied. The specific prerequisite that
+was not satisfied is shown. The client is sent an error response with the
+given rcode.
+In this case, the specific prerequisite is 'RRset does not exist'.
+From RFC2136:
+RRset does not exist.  No RRs with a specified NAME and TYPE
+(in the zone and class denoted by the Zone Section) can exist.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="LIBDDNS_PREREQ_RRSET_EXISTS_FAILED">
+<term>LIBDDNS_PREREQ_RRSET_EXISTS_FAILED update client %1 for zone %2: 'RRset exists (value independent)' (%3) prerequisite not satisfied, rcode: %4</term>
+<listitem><para>
+A DNS UPDATE prerequisite was not satisfied. The specific prerequisite that
+was not satisfied is shown. The client is sent an error response with the
+given rcode.
+In this case, the specific prerequisite is 'RRset exists (value independent)'.
+From RFC2136:
+RRset exists (value dependent).  A set of RRs with a
+specified NAME and TYPE exists and has the same members
+with the same RDATAs as the RRset specified here in this
+Section.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="LIBDDNS_PREREQ_RRSET_EXISTS_VAL_FAILED">
+<term>LIBDDNS_PREREQ_RRSET_EXISTS_VAL_FAILED update client %1 for zone %2: 'RRset exists (value dependent)' (%3) prerequisite not satisfied, rcode: %4</term>
+<listitem><para>
+A DNS UPDATE prerequisite was not satisfied. The specific prerequisite that
+was not satisfied is shown. The client is sent an error response with the
+given rcode.
+In this case, the specific prerequisite is 'RRset exists (value dependent)'.
+From RFC2136:
+RRset exists (value independent).  At least one RR with a
+specified NAME and TYPE (in the zone and class specified by
+the Zone Section) must exist.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="LIBDDNS_UPDATE_ADD_BAD_TYPE">
+<term>LIBDDNS_UPDATE_ADD_BAD_TYPE update client %1 for zone %2: update addition RR bad type: %3</term>
+<listitem><para>
+The Update section of a DDNS update message contains a statement
+that tries to add a record of an invalid type. Most likely the
+record has an RRType that is considered a 'meta' type, which
+cannot be zone content data. The specific record is shown.
+A FORMERR response is sent back to the client.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="LIBDDNS_UPDATE_APPROVED">
+<term>LIBDDNS_UPDATE_APPROVED update client %1 for zone %2 approved</term>
+<listitem><para>
+Debug message.  An update request was approved in terms of the zone's
+update ACL.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="LIBDDNS_UPDATE_BAD_CLASS">
+<term>LIBDDNS_UPDATE_BAD_CLASS update client %1 for zone %2: bad class in update RR: %3</term>
+<listitem><para>
+The Update section of a DDNS update message contains an RRset with
+a bad class. The class of the update RRset must be either the same
+as the class in the Zone Section, ANY, or NONE.
+A FORMERR response is sent back to the client.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="LIBDDNS_UPDATE_DATASRC_ERROR">
+<term>LIBDDNS_UPDATE_DATASRC_ERROR error in datasource during DDNS update: %1</term>
+<listitem><para>
+An error occured while committing the DDNS update changes to the
+datasource. The specific error is printed. A SERVFAIL response is sent
+back to the client.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="LIBDDNS_UPDATE_DELETE_BAD_TYPE">
+<term>LIBDDNS_UPDATE_DELETE_BAD_TYPE update client %1 for zone %2: update deletion RR bad type: %3</term>
+<listitem><para>
+The Update section of a DDNS update message contains a statement
+that tries to delete an rrset of an invalid type. Most likely the
+record has an RRType that is considered a 'meta' type, which
+cannot be zone content data. The specific record is shown.
+A FORMERR response is sent back to the client.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="LIBDDNS_UPDATE_DELETE_NONZERO_TTL">
+<term>LIBDDNS_UPDATE_DELETE_NONZERO_TTL update client %1 for zone %2: update deletion RR has non-zero TTL: %3</term>
+<listitem><para>
+The Update section of a DDNS update message contains a 'delete rrset'
+statement with a non-zero TTL. This is not allowed by the protocol.
+A FORMERR response is sent back to the client.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="LIBDDNS_UPDATE_DELETE_RRSET_NOT_EMPTY">
+<term>LIBDDNS_UPDATE_DELETE_RRSET_NOT_EMPTY update client %1 for zone %2: update deletion RR contains data %3</term>
+<listitem><para>
+The Update section of a DDNS update message contains a 'delete rrset'
+statement with a non-empty RRset. This is not allowed by the protocol.
+A FORMERR response is sent back to the client.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="LIBDDNS_UPDATE_DELETE_RR_BAD_TYPE">
+<term>LIBDDNS_UPDATE_DELETE_RR_BAD_TYPE update client %1 for zone %2: update deletion RR bad type: %3</term>
+<listitem><para>
+The Update section of a DDNS update message contains a statement
+that tries to delete one or more rrs of an invalid type. Most
+likely the records have an RRType that is considered a 'meta'
+type, which cannot be zone content data. The specific record is
+shown. A FORMERR response is sent back to the client.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="LIBDDNS_UPDATE_DELETE_RR_NONZERO_TTL">
+<term>LIBDDNS_UPDATE_DELETE_RR_NONZERO_TTL update client %1 for zone %2: update deletion RR has non-zero TTL: %3</term>
+<listitem><para>
+The Update section of a DDNS update message contains a 'delete rrs'
+statement with a non-zero TTL. This is not allowed by the protocol.
+A FORMERR response is sent back to the client.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="LIBDDNS_UPDATE_DENIED">
+<term>LIBDDNS_UPDATE_DENIED update client %1 for zone %2 denied</term>
+<listitem><para>
+Informational message.  An update request was denied because it was
+rejected by the zone's update ACL.  When this library is used by
+b10-ddns, the server will respond to the request with an RCODE of
+REFUSED as described in Section 3.3 of RFC2136.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="LIBDDNS_UPDATE_DROPPED">
+<term>LIBDDNS_UPDATE_DROPPED update client %1 for zone %2 dropped</term>
+<listitem><para>
+Informational message.  An update request was denied because it was
+rejected by the zone's update ACL.  When this library is used by
+b10-ddns, the server will then completely ignore the request; no
+response will be sent.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="LIBDDNS_UPDATE_ERROR">
+<term>LIBDDNS_UPDATE_ERROR update client %1 for zone %2: %3</term>
+<listitem><para>
+Debug message.  An error is found in processing a dynamic update
+request.  This log message is used for general errors that are not
+normally expected to happen.  So, in general, it would mean some
+problem in the client implementation or an interoperability issue
+with this implementation.  The client's address, the zone name and
+class, and description of the error are logged.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="LIBDDNS_UPDATE_FORWARD_FAIL">
+<term>LIBDDNS_UPDATE_FORWARD_FAIL update client %1 for zone %2: update forwarding not supported</term>
+<listitem><para>
+Debug message.  An update request is sent to a secondary server.  This
+is not necessarily invalid, but this implementation does not yet
+support update forwarding as specified in Section 6 of RFC2136 and it
+will simply return a response with an RCODE of NOTIMP to the client.
+The client's address and the zone name/class are logged.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="LIBDDNS_UPDATE_NOTAUTH">
+<term>LIBDDNS_UPDATE_NOTAUTH update client %1 for zone %2: not authoritative for update zone</term>
+<listitem><para>
+Debug message.  An update request was received for a zone for which
+the receiving server doesn't have authority.  In theory this is an
+unexpected event, but there are client implementations that could send
+update requests carelessly, so it may not necessarily be so uncommon
+in practice.  If possible, you may want to check the implementation or
+configuration of those clients to suppress the requests.  As specified
+in Section 3.1 of RFC2136, the receiving server will return a response
+with an RCODE of NOTAUTH.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="LIBDDNS_UPDATE_NOTZONE">
+<term>LIBDDNS_UPDATE_NOTZONE update client %1 for zone %2: update RR out of zone %3</term>
+<listitem><para>
+A DDNS UPDATE record has a name that does not appear to be inside
+the zone specified in the Zone section of the UPDATE message.
+The specific update record is shown. A NOTZONE error response is
+sent to the client.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="LIBDDNS_UPDATE_PREREQUISITE_FAILED">
+<term>LIBDDNS_UPDATE_PREREQUISITE_FAILED prerequisite failed in update client %1 for zone %2: result code %3</term>
+<listitem><para>
+The handling of the prerequisite section (RFC2136 Section 3.2) found
+that one of the prerequisites was not satisfied. The result code
+should give more information on what prerequisite type failed.
+If the result code is FORMERR, the prerequisite section was not well-formed.
+An error response with the given result code is sent back to the client.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="LIBDDNS_UPDATE_UNCAUGHT_EXCEPTION">
+<term>LIBDDNS_UPDATE_UNCAUGHT_EXCEPTION update client %1 for zone %2: uncaught exception while processing update section: %3</term>
+<listitem><para>
+An uncaught exception was encountered while processing the Update
+section of a DDNS message. The specific exception is shown in the log message.
+To make sure DDNS service is not interrupted, this problem is caught instead
+of reraised; The update is aborted, and a SERVFAIL is sent back to the client.
+This is most probably a bug in the DDNS code, but *could* be caused by
+the data source.
 </para></listitem>
 </varlistentry>
 
@@ -3747,6 +4380,13 @@ the reason given.
 An invalid message identification (ID) has been found during the read of
 a message file.  Message IDs should comprise only alphanumeric characters
 and the underscore, and should not start with a digit.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="LOG_LOCK_TEST_MESSAGE">
+<term>LOG_LOCK_TEST_MESSAGE this is a test message.</term>
+<listitem><para>
+This is a log message used in testing.
 </para></listitem>
 </varlistentry>
 
@@ -4138,6 +4778,55 @@ an answer with a different given type and class.
 </para><para>
 This message indicates an internal error in the NSAS.  Please raise a
 bug report.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="PYSERVER_COMMON_AUTH_CONFIG_NAME_PARSER_ERROR">
+<term>PYSERVER_COMMON_AUTH_CONFIG_NAME_PARSER_ERROR Invalid name when parsing Auth configuration: %1</term>
+<listitem><para>
+There was an invalid name when parsing Auth configuration.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="PYSERVER_COMMON_AUTH_CONFIG_RRCLASS_ERROR">
+<term>PYSERVER_COMMON_AUTH_CONFIG_RRCLASS_ERROR Invalid RRClass when parsing Auth configuration: %1</term>
+<listitem><para>
+There was an invalid RR class when parsing Auth configuration.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="PYSERVER_COMMON_DNS_TCP_SEND_DONE">
+<term>PYSERVER_COMMON_DNS_TCP_SEND_DONE completed sending TCP message to %1 (%2 bytes in total)</term>
+<listitem><para>
+Debug message.  A complete DNS message has been successfully
+transmitted over a TCP connection, possibly after multiple send
+operations.  The destination address and the total size of the message
+(including the 2-byte length field) are shown in the log message.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="PYSERVER_COMMON_DNS_TCP_SEND_ERROR">
+<term>PYSERVER_COMMON_DNS_TCP_SEND_ERROR failed to send TCP message to %1 (%2/%3 bytes sent): %4</term>
+<listitem><para>
+A DNS message has been attempted to be sent out over a TCP connection,
+but it failed due to some network error.  Although it's not expected
+to happen too often, it can still happen for various reasons.  The
+administrator may want to examine the cause of the failure, which is
+included in the log message, to see if it requires some action to
+be taken at the server side.  When this message is logged, the
+corresponding  TCP connection was closed immediately after the error
+was detected.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="PYSERVER_COMMON_DNS_TCP_SEND_PENDING">
+<term>PYSERVER_COMMON_DNS_TCP_SEND_PENDING sent part TCP message to %1 (up to %2/%3 bytes)</term>
+<listitem><para>
+Debug message.  A part of DNS message has been transmitted over a TCP
+connection, and it's suspended because further attempt would block.
+The destination address and the total size of the message that has
+been transmitted so far (including the 2-byte length field) are shown
+in the log message.
 </para></listitem>
 </varlistentry>
 
@@ -5388,6 +6077,15 @@ Please check your installation.
 </para></listitem>
 </varlistentry>
 
+<varlistentry id="XFRIN_AUTH_LOADZONE">
+<term>XFRIN_AUTH_LOADZONE sending Auth loadzone for origin=%1, class=%2, datasrc=%3</term>
+<listitem><para>
+There was a successful zone transfer, and the zone is served by b10-auth
+in the in-memory data source using sqlite3 as a backend. We send the
+"loadzone" command for the zone to b10-auth.
+</para></listitem>
+</varlistentry>
+
 <varlistentry id="XFRIN_AXFR_INCONSISTENT_SOA">
 <term>XFRIN_AXFR_INCONSISTENT_SOA AXFR SOAs are inconsistent for %1: %2 expected, %3 received</term>
 <listitem><para>
@@ -5542,6 +6240,14 @@ was killed.
 </para></listitem>
 </varlistentry>
 
+<varlistentry id="XFRIN_MSGQ_SEND_ERROR_AUTH">
+<term>XFRIN_MSGQ_SEND_ERROR_AUTH error while contacting %1</term>
+<listitem><para>
+There was a problem sending a message to b10-auth. This most likely
+means that the msgq daemon has quit or was killed.
+</para></listitem>
+</varlistentry>
+
 <varlistentry id="XFRIN_MSGQ_SEND_ERROR_ZONE_MANAGER">
 <term>XFRIN_MSGQ_SEND_ERROR_ZONE_MANAGER error while contacting %1</term>
 <listitem><para>
@@ -5570,10 +6276,11 @@ zone name in the configuration.
 </para></listitem>
 </varlistentry>
 
-<varlistentry id="XFRIN_STARTING">
-<term>XFRIN_STARTING starting resolver with command line '%1'</term>
+<varlistentry id="XFRIN_STARTED">
+<term>XFRIN_STARTED xfrin started</term>
 <listitem><para>
-An informational message, this is output when the resolver starts up.
+This informational message is output by xfrin when all initialization
+has been completed and it is entering its main loop.
 </para></listitem>
 </varlistentry>
 
@@ -5909,12 +6616,16 @@ parsed by the b10-auth daemon, before it was passed here.
 </varlistentry>
 
 <varlistentry id="XFROUT_PROCESS_REQUEST_ERROR">
-<term>XFROUT_PROCESS_REQUEST_ERROR error processing transfer request: %2</term>
+<term>XFROUT_PROCESS_REQUEST_ERROR error processing transfer request: %1</term>
 <listitem><para>
-There was an error processing a transfer request. The error is included
-in the log message, but at this point no specific information other
-than that could be given. This points to incomplete exception handling
-in the code.
+There was an error in receiving a transfer request from b10-auth.
+This is generally an unexpected event, but is possible when, for
+example, b10-auth terminates in the middle of forwarding the request.
+When this happens it's unlikely to be recoverable with the same
+communication session with b10-auth, so b10-xfrout drops it and
+waits for a new session.  In any case, this error indicates that
+there's something very wrong in the system, so it's advisable to check
+the over all status of the BIND 10 system.
 </para></listitem>
 </varlistentry>
 
@@ -5964,9 +6675,16 @@ and will now shut down.
 <term>XFROUT_RECEIVE_FILE_DESCRIPTOR_ERROR error receiving the file descriptor for an XFR connection</term>
 <listitem><para>
 There was an error receiving the file descriptor for the transfer
-request. Normally, the request is received by b10-auth, and passed on
-to the xfrout daemon, so it can answer directly. However, there was a
-problem receiving this file descriptor. The request will be ignored.
+request from b10-auth.  There can be several reasons for this, but
+the most likely cause is that b10-auth terminates for some reason
+(maybe it's a bug of b10-auth, maybe it's an intentional restart by
+the administrator), so depending on how this happens it may or may not
+be a serious error.  But in any case this is not expected to happen
+frequently, and it's advisable to figure out how this happened if
+this message is logged.  Even if this error happens xfrout will reset
+its internal state and will keep receiving further requests.  So
+if it's just a temporary restart of b10-auth the administrator does
+not have to do anything.
 </para></listitem>
 </varlistentry>
 
@@ -5998,6 +6716,14 @@ the xfrout daemon that a new xfrout request has arrived. This should
 be a result of rare local error such as memory allocation failure and
 shouldn't happen under normal conditions. The error is included in the
 log message.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="XFROUT_STARTED">
+<term>XFROUT_STARTED xfrout started</term>
+<listitem><para>
+This informational message is output by xfrout when all initialization
+has been completed and it is entering its main loop.
 </para></listitem>
 </varlistentry>
 
@@ -6254,6 +6980,14 @@ problem is that the daemon is not running.
 <term>ZONEMGR_SHUTDOWN zone manager has shut down</term>
 <listitem><para>
 A debug message, output when the zone manager has shut down completely.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="ZONEMGR_STARTED">
+<term>ZONEMGR_STARTED zonemgr started</term>
+<listitem><para>
+This informational message is output by zonemgr when all initialization
+has been completed and it is entering its main loop.
 </para></listitem>
 </varlistentry>
 

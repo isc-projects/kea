@@ -2,17 +2,25 @@ SUBDIRS = .
 
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES)
-AM_CPPFLAGS += -DTEST_DATA_DIR=\"$(abs_top_srcdir)/src/lib/testutils/testdata\"
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/lib/dhcp/tests\"
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
+
+# Some versions of GCC warn about some versions of Boost regarding
+# missing initializer for members in its posix_time.
+# https://svn.boost.org/trac/boost/ticket/3477
+# But older GCC compilers don't have the flag.
+AM_CXXFLAGS += $(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 
 if USE_STATIC_LINK
 AM_LDFLAGS = -static
 endif
 
 CLEANFILES = *.gcno *.gcda
+
+TESTS_ENVIRONMENT = \
+	libtool --mode=execute $(VALGRIND_COMMAND)
 
 TESTS =
 if HAVE_GTEST
@@ -23,6 +31,7 @@ libdhcp___unittests_SOURCES += libdhcp++_unittest.cc
 libdhcp___unittests_SOURCES += ../iface_mgr.cc ../iface_mgr.h iface_mgr_unittest.cc
 libdhcp___unittests_SOURCES += ../iface_mgr_linux.cc
 libdhcp___unittests_SOURCES += ../iface_mgr_bsd.cc
+libdhcp___unittests_SOURCES += ../iface_mgr_sun.cc
 libdhcp___unittests_SOURCES += ../option6_iaaddr.h ../option6_iaaddr.cc option6_iaaddr_unittest.cc
 libdhcp___unittests_SOURCES += ../option6_ia.h ../option6_ia.cc option6_ia_unittest.cc
 libdhcp___unittests_SOURCES += ../option6_addrlst.h ../option6_addrlst.cc option6_addrlst_unittest.cc
@@ -38,8 +47,9 @@ libdhcp___unittests_CXXFLAGS = $(AM_CXXFLAGS)
 
 if USE_CLANGPP
 # This is to workaround unused variables tcout and tcerr in
-# log4cplus's streams.h.
-libdhcp___unittests_CXXFLAGS += -Wno-unused-variable
+# log4cplus's streams.h and unused parameters from some of the
+# Boost headers.
+libdhcp___unittests_CXXFLAGS += -Wno-unused-variable -Wno-unused-parameter
 endif
 libdhcp___unittests_LDADD  = $(GTEST_LDADD)
 libdhcp___unittests_LDADD += $(top_builddir)/src/lib/log/liblog.la

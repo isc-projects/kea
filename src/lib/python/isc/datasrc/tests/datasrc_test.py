@@ -83,7 +83,7 @@ def test_findall_common(self, tested):
 
     # A success. It should return the list now.
     # This also tests we can ommit the options parameter
-    result, rrsets = tested.find_all(isc.dns.Name("mix.example.com."))
+    result, rrsets, _ = tested.find_all(isc.dns.Name("mix.example.com."))
     self.assertEqual(ZoneFinder.SUCCESS, result)
     self.assertEqual(2, len(rrsets))
     rrsets.sort(key=lambda rrset: rrset.get_type().to_text())
@@ -425,25 +425,6 @@ class DataSrcClient(unittest.TestCase):
                           isc.dns.Name("cname-ext.example.com"),
                           isc.dns.RRType.A(),
                           "foo")
-
-    def test_find_previous(self):
-        dsc = isc.datasrc.DataSourceClient("sqlite3", READ_ZONE_DB_CONFIG)
-
-        result, finder = dsc.find_zone(isc.dns.Name("example.com"))
-        self.assertEqual(finder.SUCCESS, result)
-
-        prev = finder.find_previous_name(isc.dns.Name("bbb.example.com"))
-        self.assertEqual("example.com.", prev.to_text())
-
-        prev = finder.find_previous_name(isc.dns.Name("zzz.example.com"))
-        self.assertEqual("www.example.com.", prev.to_text())
-
-        prev = finder.find_previous_name(prev)
-        self.assertEqual("*.wild.example.com.", prev.to_text())
-
-        self.assertRaises(isc.datasrc.NotImplemented,
-                          finder.find_previous_name,
-                          isc.dns.Name("com"))
 
 class DataSrcUpdater(unittest.TestCase):
 

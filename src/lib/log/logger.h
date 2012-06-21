@@ -25,6 +25,7 @@
 #include <log/message_types.h>
 #include <log/log_formatter.h>
 
+#include <util/interprocess_sync.h>
 
 namespace isc {
 namespace log {
@@ -94,6 +95,17 @@ class LoggerImpl;   // Forward declaration of the implementation class
 class LoggingNotInitialized : public isc::Exception {
 public:
     LoggingNotInitialized(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what)
+    {}
+};
+
+/// \brief Bad Interprocess Sync
+///
+/// Exception thrown if a bad InterprocessSync object (such as NULL) is
+/// used.
+class BadInterprocessSync : public isc::Exception {
+public:
+    BadInterprocessSync(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what)
     {}
 };
@@ -236,6 +248,17 @@ public:
     ///
     /// \param ident Message identification.
     Formatter fatal(const MessageID& ident);
+
+    /// \brief Replace the interprocess synchronization object
+    ///
+    /// If this method is called with NULL as the argument, it throws a
+    /// BadInterprocessSync exception.
+    ///
+    /// \param sync The logger uses this synchronization object for
+    /// synchronizing output of log messages. It should be deletable and
+    /// the ownership is transferred to the logger. If NULL is passed,
+    /// a BadInterprocessSync exception is thrown.
+    void setInterprocessSync(isc::util::InterprocessSync* sync);
 
     /// \brief Equality
     ///

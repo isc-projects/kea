@@ -1,3 +1,6 @@
+*.gcda
+*.gcno
+*.gcov
 *.la
 *.lo
 *.o
@@ -28,4 +31,7 @@ TAGS
 /py-compile
 /stamp-h1
 
+/all.info
+/coverage-cpp-html
 /dns++.pc
+/report.info

@@ -1,0 +1,11 @@
+# Valgrind suppressions file. Place permanent suppressions that we never
+# want to reconsider again into this file. For temporary suppressions
+# that we want to revisit in the future, use
+# valgrind-suppressions.revisit.
+#
+# Don't add any "obj:" lines in suppressions as these are likely
+# site-specific. Use "..." instead to match these. Look at the other
+# suppressions as examples.
+#
+# In case you want to make sense of the following symbols, demangle them
+# with a command like: c++filt < valgrind-suppressions

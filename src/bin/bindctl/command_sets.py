@@ -92,4 +92,3 @@ def prepare_execute_commands(tool):
         module.add_command(cmd)
 
     tool.add_module_info(module)
-
