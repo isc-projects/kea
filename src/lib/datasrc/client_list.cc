@@ -26,15 +26,18 @@ namespace isc {
 namespace datasrc {
 
 void
-ConfigurableClientList::configure(const Element& config, bool) {
+ConfigurableClientList::configure(const ConstElementPtr& config, bool) {
+    if (!config) {
+        isc_throw(isc::BadValue, "NULL configuration passed");
+    }
     // TODO: Implement the cache
     // TODO: Implement recycling from the old configuration.
     size_t i(0); // Outside of the try to be able to access it in the catch
     try {
         vector<DataSourceInfo> new_data_sources;
-        for (; i < config.size(); ++i) {
+        for (; i < config->size(); ++i) {
             // Extract the parameters
-            const ConstElementPtr dconf(config.get(i));
+            const ConstElementPtr dconf(config->get(i));
             const ConstElementPtr typeElem(dconf->get("type"));
             if (typeElem == ConstElementPtr()) {
                 isc_throw(ConfigurationError, "Missing the type option in "
@@ -56,6 +59,7 @@ ConfigurableClientList::configure(const Element& config, bool) {
         // ready. So just put it there and let the old one die when we exit
         // the scope.
         data_sources_.swap(new_data_sources);
+        configuration_ = config;
     } catch (const TypeError& te) {
         isc_throw(ConfigurationError, "Malformed configuration at data source "
                   "no. " << i << ": " << te.what());

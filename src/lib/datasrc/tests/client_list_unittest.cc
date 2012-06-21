@@ -353,8 +353,10 @@ TEST_F(ListTest, multiBestMatch) {
 // Check the configuration is empty when the list is empty
 TEST_F(ListTest, configureEmpty) {
     ConstElementPtr elem(new ListElement);
-    list_->configure(*elem, true);
+    list_->configure(elem, true);
     EXPECT_TRUE(list_->getDataSources().empty());
+    // Check the exact configuration is preserved
+    EXPECT_EQ(elem, list_->getConfiguration());
 }
 
 // Check we can get multiple data sources and they are in the right order.
@@ -371,10 +373,12 @@ TEST_F(ListTest, configureMulti) {
         "   \"params\": {}"
         "}]"
     ));
-    list_->configure(*elem, true);
+    list_->configure(elem, true);
     EXPECT_EQ(2, list_->getDataSources().size());
     checkDS(0, "type1", "{}");
     checkDS(1, "type2", "{}");
+    // Check the exact configuration is preserved
+    EXPECT_EQ(elem, list_->getConfiguration());
 }
 
 // Check we can pass whatever we want to the params
@@ -397,7 +401,7 @@ TEST_F(ListTest, configureParams) {
             "   \"cache\": \"off\","
             "   \"params\": ") + *param +
             "}]"));
-        list_->configure(*elem, true);
+        list_->configure(elem, true);
         EXPECT_EQ(1, list_->getDataSources().size());
         checkDS(0, "t", *param);
     }
@@ -425,12 +429,12 @@ TEST_F(ListTest, wrongConfig) {
         NULL
     };
     // Put something inside to see it survives the exception
-    list_->configure(*config_elem_, true);
+    list_->configure(config_elem_, true);
     checkDS(0, "test_type", "{}");
     for (const char** config(configs); *config; ++config) {
         SCOPED_TRACE(*config);
         ConstElementPtr elem(Element::fromJSON(*config));
-        EXPECT_THROW(list_->configure(*elem, true),
+        EXPECT_THROW(list_->configure(elem, true),
                      ConfigurableClientList::ConfigurationError);
         // Still untouched
         checkDS(0, "test_type", "{}");
@@ -444,7 +448,7 @@ TEST_F(ListTest, defaults) {
         "{"
         "   \"type\": \"type1\""
         "}]"));
-    list_->configure(*elem, true);
+    list_->configure(elem, true);
     EXPECT_EQ(1, list_->getDataSources().size());
     checkDS(0, "type1", "null");
 }
@@ -452,11 +456,11 @@ TEST_F(ListTest, defaults) {
 // Check we can call the configure multiple times, to change the configuration
 TEST_F(ListTest, reconfigure) {
     ConstElementPtr empty(new ListElement);
-    list_->configure(*config_elem_, true);
+    list_->configure(config_elem_, true);
     checkDS(0, "test_type", "{}");
-    list_->configure(*empty, true);
+    list_->configure(empty, true);
     EXPECT_TRUE(list_->getDataSources().empty());
-    list_->configure(*config_elem_, true);
+    list_->configure(config_elem_, true);
     checkDS(0, "test_type", "{}");
 }
 
@@ -466,9 +470,9 @@ TEST_F(ListTest, dataSrcError) {
         "{"
         "   \"type\": \"error\""
         "}]"));
-    list_->configure(*config_elem_, true);
+    list_->configure(config_elem_, true);
     checkDS(0, "test_type", "{}");
-    EXPECT_THROW(list_->configure(*elem, true), DataSourceError);
+    EXPECT_THROW(list_->configure(elem, true), DataSourceError);
     checkDS(0, "test_type", "{}");
 }
 
