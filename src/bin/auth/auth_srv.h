@@ -44,7 +44,7 @@ class BaseSocketSessionForwarder;
 }
 namespace datasrc {
 class InMemoryClient;
-class ClientList;
+class ConfigurableClientList;
 }
 namespace xfr {
 class AbstractXfroutClient;
@@ -428,15 +428,15 @@ public:
     /// \param rrclass The class to modify.
     /// \param list Shared pointer to the client list. If it is NULL,
     ///     the list is removed instead.
-    void setClientList(const isc::dns::RRClass& rrclass,
-                       const boost::shared_ptr<isc::datasrc::ClientList>&
+    void setClientList(const isc::dns::RRClass& rrclass, const
+                       boost::shared_ptr<isc::datasrc::ConfigurableClientList>&
                        list);
 
     /// \brief Returns the currently used client list for the class.
     ///
     /// \param rrclass The class for which to get the list.
     /// \return The list, or NULL if no list is set for the class.
-    boost::shared_ptr<isc::datasrc::ClientList>
+    boost::shared_ptr<isc::datasrc::ConfigurableClientList>
         getClientList(const isc::dns::RRClass& rrclass);
 
     /// \brief Returns a list of classes that have a client list.

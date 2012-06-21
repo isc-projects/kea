@@ -45,6 +45,7 @@
 #include <auth/command.h>
 #include <auth/auth_srv.h>
 #include <auth/auth_log.h>
+#include <auth/datasrc_configurator.h>
 #include <asiodns/asiodns.h>
 #include <asiolink/asiolink.h>
 #include <log/logger_support.h>
@@ -204,6 +205,9 @@ main(int argc, char* argv[]) {
         isc::server_common::initKeyring(*config_session);
         auth_server->setTSIGKeyRing(&isc::server_common::keyring);
 
+        // Start the data source configuration
+        DataSourceConfigurator::init(config_session, auth_server);
+
         // Now start asynchronous read.
         config_session->start();
         LOG_DEBUG(auth_logger, DBG_AUTH_START, AUTH_CONFIG_CHANNEL_STARTED);
@@ -211,7 +215,6 @@ main(int argc, char* argv[]) {
         // Successfully initialized.
         LOG_INFO(auth_logger, AUTH_SERVER_STARTED);
         io_service.run();
-
     } catch (const std::exception& ex) {
         LOG_FATAL(auth_logger, AUTH_SERVER_FAILED).arg(ex.what());
         ret = 1;
@@ -225,6 +228,7 @@ main(int argc, char* argv[]) {
         xfrin_session->disconnect();
     }
 
+    DataSourceConfigurator::deinit();
     delete statistics_session;
     delete xfrin_session;
     delete config_session;
