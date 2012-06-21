@@ -48,7 +48,7 @@ logger_lock_test_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 logger_lock_test_LDADD += $(AM_LDADD) $(LOG4CPLUS_LIBS)
 
 TESTS_ENVIRONMENT = \
-	libtool --mode=execute $(VALGRIND_COMMAND)
+	$(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
 
 if HAVE_GTEST
 TESTS =

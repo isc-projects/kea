@@ -6,7 +6,7 @@ AM_CXXFLAGS = $(B10_CXXFLAGS)
 CLEANFILES = *.gcno *.gcda
 
 TESTS_ENVIRONMENT = \
-	libtool --mode=execute $(VALGRIND_COMMAND)
+	$(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
 
 TESTS =
 if HAVE_GTEST
