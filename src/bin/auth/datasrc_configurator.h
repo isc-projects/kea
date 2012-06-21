@@ -19,6 +19,7 @@
 
 #include <datasrc/client_list.h>
 #include <config/ccsession.h>
+#include <cc/data.h>
 
 /// \brief A class to configure the authoritative server's data source lists
 ///
@@ -110,20 +111,27 @@ public:
     ///     as an update from the config manager.
     /// \throw InvalidOperation if it is called when not initialized.
     static void reconfigure(const isc::data::ConstElementPtr& config) {
-        // TODO: The InvalidOperation thing
+        if (server_ == NULL) {
+            isc_throw(isc::InvalidOperation,
+                      "Can't reconfigure while not inited");
+        }
         typedef std::map<std::string, isc::data::ConstElementPtr> Map;
         const Map& map(config->mapValue());
         for (Map::const_iterator it(map.begin()); it != map.end(); ++ it) {
             isc::dns::RRClass rrclass(it->first);
-            ListPtr list(server_->getClientList(rrclass));
-            bool need_set(false);
-            if (!list) {
-                list.reset(new List);
-                need_set = true;
-            }
-            list->configure(*it->second, true);
-            if (need_set) {
-                server_->setClientList(rrclass, list);
+            if (it->second->getType() == isc::data::Element::null) {
+                server_->setClientList(rrclass, ListPtr());
+            } else {
+                ListPtr list(server_->getClientList(rrclass));
+                bool need_set(false);
+                if (!list) {
+                    list.reset(new List);
+                    need_set = true;
+                }
+                list->configure(*it->second, true);
+                if (need_set) {
+                    server_->setClientList(rrclass, list);
+                }
             }
         }
     }
