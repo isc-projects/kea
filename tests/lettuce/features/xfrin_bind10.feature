@@ -24,7 +24,7 @@ Feature: Xfrin
     The file data/test_nonexistent_db.sqlite3 should exist
 
     A query for www.example.org should have rcode REFUSED
-    When I send bind10 the command Xfrin retransfer example.org IN ::1 47807
+    When I send bind10 the command Xfrin retransfer example.org IN 127.0.0.1 47807
     Then wait for new bind10 stderr message XFRIN_TRANSFER_SUCCESS not XFRIN_XFR_PROCESS_FAILURE
     Then wait for new bind10 stderr message ZONEMGR_RECEIVE_XFRIN_SUCCESS
     A query for www.example.org should have rcode NOERROR
