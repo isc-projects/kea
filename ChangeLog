@@ -3,6 +3,7 @@
 	BIND10 framework. It can be started from BIND10 (using bindctl)
 	and can receive commands. The only supported command for now
 	is 'Dhcp4 shutdown'.
+	(Trac #1651, git 7e16a5a50d3311e63d10a224ec6ebcab5f25f62c)
 
 bind10-devel-20120621 released on June 21. 2012
 
