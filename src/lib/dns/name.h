@@ -679,7 +679,7 @@ public:
     //@}
 
 private:
-    std::string ndata_;
+    std::basic_string<uint8_t> ndata_;
     std::vector<unsigned char> offsets_;
     unsigned int length_;
     unsigned int labelcount_;

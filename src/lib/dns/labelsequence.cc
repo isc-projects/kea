@@ -23,7 +23,7 @@
 namespace isc {
 namespace dns {
 
-const char*
+const unsigned char*
 LabelSequence::getData(size_t *len) const {
     *len = getDataLength();
     return (&name_.ndata_[name_.offsets_[first_label_]]);
@@ -47,14 +47,16 @@ LabelSequence::getDataLength() const {
 bool
 LabelSequence::equals(const LabelSequence& other, bool case_sensitive) const {
     size_t len, other_len;
-    const char* data = getData(&len);
-    const char* other_data = other.getData(&other_len);
+    const unsigned char* data = getData(&len);
+    const unsigned char* other_data = other.getData(&other_len);
 
     if (len != other_len) {
         return (false);
     }
     if (case_sensitive) {
-        return (std::strncmp(data, other_data, len) == 0);
+        return (std::strncmp((const char*) data,
+                             (const char*) other_data,
+                             len) == 0);
     }
 
     // As long as the data was originally validated as (part of) a name,
@@ -97,7 +99,7 @@ LabelSequence::isAbsolute() const {
 size_t
 LabelSequence::getHash(bool case_sensitive) const {
     size_t length;
-    const char* s = getData(&length);
+    const unsigned char* s = getData(&length);
     if (length > 16) {
         length = 16;
     }
