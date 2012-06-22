@@ -345,8 +345,10 @@ public:
     /// to not wait infinitely, but rather do something useful
     /// (e.g. remove expired leases)
     ///
+    /// @param timeout specifies timeout (in seconds)
+    ///
     /// @return Pkt6 object representing received packet (or NULL)
-    Pkt6Ptr receive6();
+    Pkt6Ptr receive6(uint32_t timeout);
 
     /// @brief Tries to receive IPv4 packet over open IPv4 sockets.
     ///
