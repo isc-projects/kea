@@ -369,10 +369,30 @@ var/
   <chapter id="installation">
     <title>Installation</title>
 
-    <section>
+    <section id="packages">
+      <title>Packages</title>
+
+      <para>
+        Some operating systems or softare package vendors may
+        provide ready-to-use, pre-built software packages for
+        the BIND 10 suite.
+        Installing a pre-built package means you do not need to
+        install build-only prerequisites and do not need to
+        <emphasis>make</emphasis> the software.
+      </para>
+
+      <para>
+        FreeBSD ports, NetBSD pkgsrc, and Debian
+        <emphasis>testing</emphasis> package collections provide
+        all the prerequisite packages.
+      </para>
+    </section>
+
+    <section id="install-hierarchy">
       <title>Install Hierarchy</title>
       <para>
-        The following is the layout of the complete BIND 10 installation:
+        The following is the standard, common layout of the
+        complete BIND 10 installation:
         <itemizedlist>
           <listitem>
            <simpara>
