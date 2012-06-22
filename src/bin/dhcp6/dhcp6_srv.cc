@@ -79,9 +79,11 @@ void Dhcpv6Srv::shutdown() {
 
 bool Dhcpv6Srv::run() {
     while (!shutdown_) {
+        /// @todo: calculate actual timeout once we have lease database
+        int timeout = 1000;
 
         // client's message and server's response
-        Pkt6Ptr query = IfaceMgr::instance().receive6();
+        Pkt6Ptr query = IfaceMgr::instance().receive6(timeout);
         Pkt6Ptr rsp;
 
         if (query) {

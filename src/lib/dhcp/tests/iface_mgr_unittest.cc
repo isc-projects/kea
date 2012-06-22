@@ -309,7 +309,7 @@ TEST_F(IfaceMgrTest, sendReceive6) {
 
     EXPECT_EQ(true, ifacemgr->send(sendPkt));
 
-    rcvPkt = ifacemgr->receive6();
+    rcvPkt = ifacemgr->receive6(10);
 
     ASSERT_TRUE(rcvPkt); // received our own packet
 
