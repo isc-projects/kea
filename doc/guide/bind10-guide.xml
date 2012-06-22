@@ -36,8 +36,8 @@
     <abstract>
       <para>BIND 10 is a framework that features Domain Name System
       (DNS) suite and Dynamic Host Configuration Protocol (DHCP)
-      servers managed by Internet Systems Consortium (ISC). It
-      includes DNS libraries, modular components for controlling
+      servers with development managed by Internet Systems Consortium (ISC).
+      It includes DNS libraries, modular components for controlling
       authoritative and recursive DNS servers, and experimental DHCPv4
       and DHCPv6 servers.
       </para>
@@ -59,6 +59,8 @@
     <section id="acknowledgements">
       <title>Acknowledgements</title>
 
+<!-- TODO: acknowledge all sponsors and CNNIC and CZNIC too -->
+
       <para>ISC would like to acknowledge generous support for
       BIND 10 development of DHCPv4 and DHCPv6 components provided
       by <ulink url="http://www.comcast.com/">Comcast</ulink>.</para>
@@ -72,11 +74,13 @@
     <para>
       BIND is the popular implementation of a DNS server, developer
       interfaces, and DNS tools.
-      BIND 10 is a rewrite of BIND 9.  BIND 10 is written in C++ and Python
-      and provides a modular environment for serving and maintaining DNS.
+      BIND 10 is a rewrite of BIND 9 and ISC DHCP.
+      BIND 10 is written in C++ and Python and provides a modular
+      environment for serving, maintaining, and developing DNS and DHCP.
       BIND 10 provides a EDNS0- and DNSSEC-capable authoritative
       DNS server and a caching recursive name server which also
       provides forwarding.
+      It also provides experimental DHCPv4 and DHCPv6 servers.
     </para>
 
     <para>
@@ -105,7 +109,7 @@
       <para>
         BIND 10 requires at least Python 3.1
         (<ulink url="http://www.python.org/"/>).
-        It has also been tested with Python 3.2.
+        It also works with Python 3.2.
       </para>
 
       <para>
@@ -118,6 +122,7 @@
         BIND 10 uses the log4cplus C++ logging library
         (<ulink url="http://log4cplus.sourceforge.net/"/>).
         It requires at least log4cplus version 1.0.3.
+<!-- TODO: It is recommended to use at least version .... -->
       </para>
 
       <para>
@@ -218,8 +223,8 @@
             <simpara>
               <command>b10-resolver</command> &mdash;
               Recursive name server.
-              This process handles incoming queries.
-<!-- TODO: -->
+              This process handles incoming DNS queries and provides
+              answers from its cache or by recursively doing remote lookups.
             </simpara>
           </listitem>
 
@@ -262,15 +267,14 @@
               <command>b10-xfrout</command> &mdash;
               Outgoing zone transfer service.
               This process is used to handle transfer requests to
-              send a local zone to a remote secondary server,
-              when acting as a master server.
+              send a local zone to a remote secondary server.
             </simpara>
           </listitem>
 
           <listitem>
             <simpara>
               <command>b10-zonemgr</command> &mdash;
-              Secondary manager.
+              Secondary zone manager.
               This process keeps track of timers and other
               necessary information for BIND 10 to act as a slave server.
             </simpara>
@@ -280,8 +284,8 @@
       </para>
 
       <para>
-        These are ran automatically by <command>bind10</command>
-        and do not need to be run manually.
+        These are ran by <command>bind10</command>
+        and do not need to be manually started independently.
       </para>
 
     </section>
@@ -296,7 +300,7 @@
           <listitem>
             <simpara>
               <command>bindctl</command> &mdash;
-              interactive administration interface.
+              Interactive administration interface.
               This is a low-level command-line tool which allows
               a developer or an experienced administrator to control
               BIND 10.
@@ -305,7 +309,7 @@
           <listitem>
             <simpara>
               <command>b10-loadzone</command> &mdash;
-              zone file loader.
+              Zone file loader.
               This tool will load standard masterfile-format zone files into
               BIND 10.
             </simpara>
@@ -313,7 +317,7 @@
           <listitem>
             <simpara>
               <command>b10-cmdctl-usermgr</command> &mdash;
-              user access control.
+              User access control.
               This tool allows an administrator to authorize additional users
               to manage BIND 10.
             </simpara>
@@ -356,6 +360,7 @@ var/
       for C++ and Python for the message bus, configuration backend,
       and, of course, DNS. These include detailed developer
       documentation and code examples.
+<!-- TODO: DHCP also but no Python yet. -->
 <!-- TODO point to this -->
     </para>
 
@@ -369,7 +374,8 @@ var/
 
         <para>
           In addition to the run-time requirements, building BIND 10
-          from source code requires various development include headers.
+          from source code requires various development include headers and
+          program development tools.
         </para>
 
         <note>
@@ -841,6 +847,7 @@ as a dependency earlier -->
         in usual way. This is the list of components that need to be started
         in a special way, with the value of special used for them:
         <table>
+          <title>Special startup components</title>
           <tgroup cols='3' align='left'>
           <colspec colname='component'/>
           <colspec colname='special'/>
