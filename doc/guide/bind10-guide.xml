@@ -459,7 +459,8 @@ var/
       <title>Building Requirements</title>
 
         <para>
-          In addition to the run-time requirements, building BIND 10
+          In addition to the run-time requirements (listed in
+          <xref linkend="required-software"/>), building BIND 10
           from source code requires various development include headers and
           program development tools.
         </para>
@@ -505,7 +506,7 @@ as a dependency earlier -->
         </para>
 
         <para>
-          Visit the wiki at <ulink
+          Visit the user-contributed wiki at <ulink
           url="http://bind10.isc.org/wiki/SystemSpecificNotes" />
           for system-specific installation tips.
         </para>
@@ -574,7 +575,7 @@ as a dependency earlier -->
         </listitem>
 
         <listitem>
-
+<!-- TODO: this is wrong; b10-auth is not started by default any more -->
          <para>Test it; for example:
             <screen>$ <userinput>dig @127.0.0.1 -c CH -t TXT authors.bind</userinput></screen>
          </para>
@@ -600,10 +601,10 @@ as a dependency earlier -->
       <title>Installation from source</title>
       <para>
         BIND 10 is open source software written in C++ and Python.
-        It is freely available in source code form from ISC via
-        the Git code revision control system or as a downloadable
-        tar file. It may also be available in pre-compiled ready-to-use
-        packages from operating system vendors.
+        It is freely available in source code form from ISC as a
+        downloadable tar file or via BIND 10's Git code revision control
+        service. (It may also be available in pre-compiled ready-to-use
+        packages from operating system vendors.)
       </para>
 
       <section>
@@ -631,7 +632,7 @@ as a dependency earlier -->
 
         <note>
           <para>
-            When using source code retrieved via Git additional
+            When using source code retrieved via Git, additional
             software will be required:  automake (v1.11 or newer),
             libtoolize, and autoconf (2.59 or newer).
             These may need to be installed.
@@ -639,11 +640,12 @@ as a dependency earlier -->
         </note>
 
         <para>
-          The latest development code, including temporary experiments
-          and un-reviewed code, is available via the BIND 10 code revision
+          The latest development code (and temporary experiments
+          and un-reviewed code) is available via the BIND 10 code revision
           control system. This is powered by Git and all the BIND 10
           development is public.
-          The leading development is done in the <quote>master</quote>.
+          The leading development is done in the <quote>master</quote>
+          branch.
         </para>
         <para>
           The code can be checked out from
@@ -656,8 +658,8 @@ as a dependency earlier -->
         <para>
           When checking out the code from
           the code version control system, it doesn't include the
-          generated configure script, Makefile.in files, nor the
-          related configure files.
+          generated configure script, Makefile.in files, nor their
+          related build files.
           They can be created by running <command>autoreconf</command>
           with the <option>--install</option> switch.
           This will run <command>autoconf</command>,
@@ -681,7 +683,7 @@ as a dependency earlier -->
         </para>
         <para>
           Run <command>./configure</command> with the <option>--help</option>
-          switch to view the different options. The commonly-used options are:
+          switch to view the different options. Some commonly-used options are:
 
           <variablelist>
 
