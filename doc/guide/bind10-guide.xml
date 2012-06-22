@@ -2455,7 +2455,7 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
 &gt; <userinput>config commit</userinput></screen></para>
 
       <para>
-        At start, the server will detect available network interfaces
+        During start-up the server will detect available network interfaces
         and will attempt to open UDP sockets on all interfaces that
         are up, running, are not loopback, and have IPv4 address
         assigned.
@@ -2465,17 +2465,8 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
         will respond to them with OFFER and ACK, respectively.
 
         Since the DHCPv4 server opens privileged ports, it requires root
-        access. Make sure you run this daemon as root.</para>
-
-        <note>
-          <para>
-            Integration with <command>bind10</command> is
-            planned. Ultimately, <command>b10-dhcp4</command> will not
-            be started directly, but rather via
-            <command>bind10</command>. Please be aware of this planned
-            change.
-          </para>
-        </note>
+        access. Make sure you run this daemon as root.
+      </para>
 
     </section>
 
@@ -2640,22 +2631,25 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
       </para>
 
       <para>
-        The DHCPv6 server is implemented as <command>b10-dhcp6</command>
-        daemon. As it is not configurable yet, it is fully autonomous,
-        that is it does not interact with <command>b10-cfgmgr</command>.
-        To start DHCPv6 server, simply input:
+        <command>b10-dhcp6</command> is a BIND10 component and is being
+        run under BIND10 framework. To add a DHCPv6 process to the set of running
+        BIND10 services, you can use following commands in <command>bindctl</command>:
+        <screen>&gt; <userinput>config add Boss/components b10-dhcp6</userinput>
+&gt; <userinput>config set Boss/components/b10-dhcp6/kind dispensable</userinput>
+&gt; <userinput>config commit</userinput></screen>
+      </para>
 
-        <screen>
-#<userinput>cd src/bin/dhcp6</userinput>
-#<userinput>./b10-dhcp6</userinput>
-</screen>
+       <para>
+         To shutdown running <command>b10-dhcp6</command>, please use the
+         following command:
+         <screen>&gt; <userinput>Dhcp6 shutdown</userinput></screen>
+         or
+         <screen>&gt; <userinput>config remove Boss/components b10-dhcp6</userinput>
+&gt; <userinput>config commit</userinput></screen>
+       </para>
 
-        Depending on your installation, <command>b10-dhcp6</command>
-        binary may reside in src/bin/dhcp6 in your source code
-        directory, in /usr/local/bin/b10-dhcp6 or other directory
-        you specified during compilation.
-
-        At start, server will detect available network interfaces
+      <para>
+        During start-up the server will detect available network interfaces
         and will attempt to open UDP sockets on all interfaces that
         are up, running, are not loopback, are multicast-capable, and
         have IPv6 address assigned.
@@ -2667,16 +2661,6 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
         Since the DHCPv6 server opens privileged ports, it requires root
         access. Make sure you run this daemon as root.
       </para>
-
-        <note>
-          <para>
-            Integration with <command>bind10</command> is
-            planned. Ultimately, <command>b10-dhcp6</command> will not
-            be started directly, but rather via
-            <command>bind10</command>. Please be aware of this planned
-            change.
-          </para>
-        </note>
 
     </section>
 
@@ -2691,7 +2675,7 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
       <para>
         At this stage of development, the only way to alter server
         configuration is to tweak its source code. To do so, please
-        edit src/bin/dhcp6/dhcp6_srv.cc file and modify following
+        edit src/bin/dhcp6/dhcp6_srv.cc file, modify the following
         parameters and recompile:
         <screen>
 const std::string HARDCODED_LEASE = "2001:db8:1::1234:abcd";

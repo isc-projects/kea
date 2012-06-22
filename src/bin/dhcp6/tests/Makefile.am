@@ -42,9 +42,10 @@ if HAVE_GTEST
 
 TESTS += dhcp6_unittests
 
-dhcp6_unittests_SOURCES = ../dhcp6_srv.h ../dhcp6_srv.cc
+dhcp6_unittests_SOURCES = ../dhcp6_srv.h ../dhcp6_srv.cc ../ctrl_dhcp6_srv.cc
 dhcp6_unittests_SOURCES += dhcp6_unittests.cc
 dhcp6_unittests_SOURCES += dhcp6_srv_unittest.cc
+dhcp6_unittests_SOURCES += ctrl_dhcp6_srv_unittest.cc
 
 if USE_CLANGPP
 # Disable unused parameter warning caused by some of the
@@ -59,6 +60,8 @@ dhcp6_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libdhcp++.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/log/liblog.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/config/libcfgclient.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/cc/libcc.la
 
 endif
 
