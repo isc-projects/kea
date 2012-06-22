@@ -14,17 +14,12 @@
 
 #include <config.h>
 #include <iostream>
-#include <exceptions/exceptions.h>
 #include <log/dummylog.h>
 #include <log/logger_support.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
-#include <dhcp4/dhcp4_srv.h>
-#include <dhcp/dhcp4.h>
 
 using namespace std;
 using namespace isc::dhcp;
-
-
 
 /// This file contains entry point (main() function) for standard DHCPv4 server
 /// component for BIND10 framework. It parses command-line arguments and
@@ -44,7 +39,8 @@ usage() {
     cerr << "Usage:  b10-dhcp4 [-v]"
          << endl;
     cerr << "\t-v: verbose output" << endl;
-    cerr << "\t-p number: specify non-standard port number 1-65535 (useful for testing only)" << endl;
+    cerr << "\t-p number: specify non-standard port number 1-65535 "
+         << "(useful for testing only)" << endl;
     exit(EXIT_FAILURE);
 }
 } // end of anonymous namespace
@@ -94,6 +90,7 @@ main(int argc, char* argv[]) {
 
         cout << "[b10-dhcp4] Initiating DHCPv4 server operation." << endl;
 
+        /// @todo: pass verbose to the actul server once logging is implemented
         ControlledDhcpv4Srv* server = new ControlledDhcpv4Srv(port_number);
         server->run();
         delete server;
