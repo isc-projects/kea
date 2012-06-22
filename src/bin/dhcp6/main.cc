@@ -39,6 +39,7 @@ usage() {
     cerr << "Usage: b10-dhcp6 [-v]"
          << endl;
     cerr << "\t-v: verbose output" << endl;
+    cerr << "\t-s: stand-alone mode (don't connect to BIND10)" << endl;
     cerr << "\t-p number: specify non-standard port number 1-65535 "
          << "(useful for testing only)" << endl;
     exit(EXIT_FAILURE);
@@ -51,12 +52,16 @@ main(int argc, char* argv[]) {
     int port_number = DHCP6_SERVER_PORT; // The default. Any other values are
                                          // useful for testing only.
     bool verbose_mode = false; // Should server be verbose?
+    bool stand_alone = false; // should be connect to BIND10 msgq?
 
-    while ((ch = getopt(argc, argv, "vp:")) != -1) {
+    while ((ch = getopt(argc, argv, "vsp:")) != -1) {
         switch (ch) {
         case 'v':
             verbose_mode = true;
             isc::log::denabled = true;
+            break;
+        case 's':
+            stand_alone = true;
             break;
         case 'p':
             port_number = strtol(optarg, NULL, 10);
@@ -78,7 +83,8 @@ main(int argc, char* argv[]) {
                          isc::log::MAX_DEBUG_LEVEL, NULL);
 
     cout << "b10-dhcp6: My pid=" << getpid() << ", binding to port "
-         << port_number << ", verbose " << (verbose_mode?"yes":"no") << endl;
+         << port_number << ", verbose " << (verbose_mode?"yes":"no")
+         << ", stand-alone=" << (stand_alone?"yes":"no") << endl;
 
     if (argc - optind > 0) {
         usage();
@@ -90,17 +96,25 @@ main(int argc, char* argv[]) {
 
         cout << "b10-dhcp6: Initiating DHCPv6 server operation." << endl;
 
+        /// @todo: pass verbose to the actual server once logging is implemented
         ControlledDhcpv6Srv* server = new ControlledDhcpv6Srv(port_number);
+
+        if (!stand_alone) {
+            try {
+                server->establishSession();
+            } catch (const std::exception& ex) {
+                cerr << "Failed to establish BIND10 session. "
+                    "Running in stand-alone mode:" << ex.what() << endl;
+                // Let's continue. It is useful to have the ability to run 
+                // DHCP server in stand-alone mode, e.g. for testing
+            }
+        } else {
+            cout << "Skipping connection to the BIND10 msgq." << endl;
+        }
+
         server->run();
         delete server;
         server = NULL;
-
-        cout << "[b10-dhcp6] Initiating DHCPv6 operation." << endl;
-
-        /// @todo: pass verbose to the actual server once logging is implemented
-        Dhcpv6Srv* srv = new Dhcpv6Srv(port_number);
-
-        srv->run();
 
     } catch (const std::exception& ex) {
         cerr << "[b10-dhcp6] Server failed: " << ex.what() << endl;

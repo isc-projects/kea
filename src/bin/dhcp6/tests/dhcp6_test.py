@@ -158,7 +158,7 @@ class TestDhcpv6Daemon(unittest.TestCase):
     def test_portnumber_nonroot(self):
         print("Check that specifying unprivileged port number will work.")
 
-        (returncode, output, error) = self.runCommand(['../b10-dhcp6', '-p', '10057'])
+        (returncode, output, error) = self.runCommand(['../b10-dhcp6', '-p', '10547'])
 
         # When invalid port number is specified, return code must not be success
         # TODO: Temporarily commented out as socket binding on systems that do not have
@@ -166,7 +166,21 @@ class TestDhcpv6Daemon(unittest.TestCase):
         # self.assertTrue(returncode == 0)
 
         # Check that there is a message on stdout about opening proper port
-        self.assertEqual( str(output).count("opening sockets on port 10057"), 1)
+        self.assertEqual( str(output).count("opening sockets on port 10547"), 1)
+
+    def test_skip_msgq(self):
+        print("Check that connection to BIND10 msgq can be disabled.")
+
+        (returncode, output, error) = self.runDhcp4(['../b10-dhcp6', '-s', '-p', '10547'])
+
+        # When invalid port number is specified, return code must not be success
+        # TODO: Temporarily commented out as socket binding on systems that do not have
+        #       interface detection implemented currently fails.
+        # self.assertTrue(returncode == 0)
+
+        # Check that there is an error message about invalid port number printed on stderr
+        self.assertEqual( str(output).count("Skipping connection to the BIND10 msgq."), 1)
+
 
 if __name__ == '__main__':
     unittest.main()
