@@ -729,6 +729,12 @@ as a dependency earlier -->
             </listitem>
             <listitem>
               <simpara>
+                <filename>share/doc/bind10-devel/</filename> &mdash;
+                this guide and other supplementary documentation.
+              </simpara>
+            </listitem>
+            <listitem>
+              <simpara>
                 <filename>share/man/</filename> &mdash;
                 manual pages (online documentation).
               </simpara>
