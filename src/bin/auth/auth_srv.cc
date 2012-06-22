@@ -302,14 +302,6 @@ public:
                       isc::dns::Message& message,
                       bool done);
 private:
-    std::string db_file_;
-
-    MetaDataSrc data_sources_;
-    /// We keep a pointer to the currently running sqlite datasource
-    /// so that we can specifically remove that one should the database
-    /// file change
-    ConstDataSrcPtr cur_datasrc_;
-
     bool xfrout_connected_;
     AbstractXfroutClient& xfrout_client_;
 
@@ -338,13 +330,6 @@ AuthSrvImpl::AuthSrvImpl(const bool use_cache,
     xfrout_client_(xfrout_client),
     ddns_forwarder_("update", ddns_forwarder)
 {
-    // cur_datasrc_ is automatically initialized by the default constructor,
-    // effectively being an empty (sqlite) data source.  once ccsession is up
-    // the datasource will be set by the configuration setting
-
-    // add static data source
-    data_sources_.addDataSrc(ConstDataSrcPtr(new StaticDataSrc));
-
     // enable or disable the cache
     cache_.setEnabled(use_cache);
 }
@@ -925,56 +910,6 @@ AuthSrvImpl::validateStatistics(isc::data::ConstElementPtr data) const {
             data, true));
 }
 
-ConstElementPtr
-AuthSrvImpl::setDbFile(ConstElementPtr config) {
-    ConstElementPtr answer = isc::config::createAnswer();
-
-    if (config && config->contains("database_file")) {
-        db_file_ = config->get("database_file")->stringValue();
-    } else if (config_session_ != NULL) {
-        bool is_default;
-        string item("database_file");
-        ConstElementPtr value = config_session_->getValue(is_default, item);
-        ElementPtr final = Element::createMap();
-
-        // If the value is the default, and we are running from
-        // a specific directory ('from build'), we need to use
-        // a different value than the default (which may not exist)
-        // (btw, this should not be done here in the end, i think
-        //  the from-source script should have a check for this,
-        //  but for that we need offline access to config, so for
-        //  now this is a decent solution)
-        if (is_default && getenv("B10_FROM_BUILD")) {
-            value = Element::create(string(getenv("B10_FROM_BUILD")) +
-                                    "/bind10_zones.sqlite3");
-        }
-        final->set(item, value);
-        config = final;
-
-        db_file_ = value->stringValue();
-    } else {
-        return (answer);
-    }
-    LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_DATA_SOURCE).arg(db_file_);
-
-    // create SQL data source
-    // Note: the following step is tricky to be exception-safe and to ensure
-    // exception guarantee: We first need to perform all operations that can
-    // fail, while acquiring resources in the RAII manner.  We then perform
-    // delete and swap operations which should not fail.
-    DataSrcPtr datasrc_ptr(DataSrcPtr(new Sqlite3DataSrc));
-    datasrc_ptr->init(config);
-    data_sources_.addDataSrc(datasrc_ptr);
-
-    // The following code should be exception free.
-    if (cur_datasrc_ != NULL) {
-        data_sources_.removeDataSrc(cur_datasrc_);
-    }
-    cur_datasrc_ = datasrc_ptr;
-
-    return (answer);
-}
-
 void
 AuthSrvImpl::resumeServer(DNSServer* server, Message& message, bool done) {
     if (done) {
@@ -991,7 +926,7 @@ AuthSrv::updateConfig(ConstElementPtr new_config) {
         if (new_config) {
             configureAuthServer(*this, new_config);
         }
-        return (impl_->setDbFile(new_config));
+        return (isc::config::createAnswer());
     } catch (const isc::Exception& error) {
         LOG_ERROR(auth_logger, AUTH_CONFIG_UPDATE_FAIL).arg(error.what());
         return (isc::config::createAnswer(1, error.what()));
