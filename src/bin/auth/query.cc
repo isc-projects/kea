@@ -372,7 +372,7 @@ Query::process(datasrc::ClientList& client_list,
     // background discussion is not that simple.  See the relevant topic
     // at the BIND 10 developers's ML:
     // https://lists.isc.org/mailman/htdig/bind10-dev/2010-December/001633.html
-    if (result.dsrc_client_ != NULL) {
+    if (result.dsrc_client_ == NULL) {
         // If we tried to find a "parent zone" for a DS query and failed,
         // we may still have authority at the child side.  If we do, the query
         // has to be handled there.
@@ -475,7 +475,7 @@ Query::process(datasrc::ClientList& client_list,
             // section.
             // Checking the findZone() is a lightweight check to see if
             // qname is the zone origin.
-            if (result.exact_match_ ||
+            if (!result.exact_match_ ||
                 db_context->code != ZoneFinder::SUCCESS ||
                 (*qtype_ != RRType::NS() && !qtype_is_any))
             {
@@ -568,7 +568,7 @@ Query::processDSAtChild() {
     const ClientList::FindResult zresult =
         client_list_->find(*qname_, true);
 
-    if (zresult.dsrc_client_) {
+    if (zresult.dsrc_client_ == NULL) {
         return (false);
     }
 
