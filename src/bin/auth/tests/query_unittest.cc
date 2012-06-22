@@ -32,9 +32,9 @@
 #include <dns/rdataclass.h>
 
 #include <datasrc/memory_datasrc.h>
+#include <datasrc/client_list.h>
 
 #include <auth/query.h>
-#include <auth/list.h>
 
 #include <testutils/dnsmessage_test.h>
 
@@ -48,6 +48,32 @@ using namespace isc::auth;
 using namespace isc::testutils;
 
 namespace {
+
+// Simple wrapper for a sincle data source client.
+// The list simply delegates all the answers to the single
+// client.
+class SingletonList : public ClientList {
+public:
+    SingletonList(DataSourceClient& client) :
+        client_(client)
+    {}
+    virtual FindResult find(const Name& zone, bool exact, bool) const {
+        DataSourceClient::FindResult result(client_.findZone(zone));
+        switch (result.code) {
+            case result::SUCCESS:
+                return (FindResult(&client_, result.zone_finder, true));
+            case result::PARTIALMATCH:
+                if (!exact) {
+                    return (FindResult(&client_, result.zone_finder, false));
+                }
+            default:
+                return (FindResult());
+        }
+    }
+private:
+    DataSourceClient& client_;
+};
+
 
 // This is the content of the mock zone (see below).
 // It's a sequence of textual RRs that is supposed to be parsed by
