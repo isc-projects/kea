@@ -176,6 +176,33 @@ public:
             throw;
         }
     }
+    /// \brief Version of reconfigure for easier testing.
+    ///
+    /// This method can be used to reconfigure a server without first
+    /// initializing the configurator. This does not need a session.
+    /// Otherwise, it acts the same as reconfigure.
+    ///
+    /// This is not meant for production code. Do not use there.
+    ///
+    /// \param server The server to configure.
+    /// \param config The config to use.
+    /// \throw isc::InvalidOperation if the configurator is initialized.
+    /// \throw anything that reconfigure does.
+    static void testReconfigure(Server* server,
+                                const isc::data::ConstElementPtr& config)
+    {
+        if (server_ != NULL) {
+            isc_throw(isc::InvalidOperation, "Currently initialized.");
+        }
+        try {
+            server_ = server;
+            reconfigure(config);
+            server_ = NULL;
+        } catch (...) {
+            server_ = NULL;
+            throw;
+        }
+    }
 };
 
 template<class Server, class List>

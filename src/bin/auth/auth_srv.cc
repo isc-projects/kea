@@ -46,6 +46,7 @@
 #include <datasrc/memory_datasrc.h>
 #include <datasrc/static_datasrc.h>
 #include <datasrc/sqlite3_datasrc.h>
+#include <datasrc/client_list.h>
 
 #include <xfr/xfrout_client.h>
 
@@ -55,7 +56,6 @@
 #include <auth/query.h>
 #include <auth/statistics.h>
 #include <auth/auth_log.h>
-#include <auth/list.h>
 
 #include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
@@ -269,6 +269,18 @@ public:
 
     /// The client list
     map<RRClass, boost::shared_ptr<ConfigurableClientList> > client_lists_;
+
+    boost::shared_ptr<ConfigurableClientList> getClientList(const RRClass&
+                                                            rrclass)
+    {
+        const map<RRClass, boost::shared_ptr<ConfigurableClientList> >::
+            const_iterator it(client_lists_.find(rrclass));
+        if (it == client_lists_.end()) {
+            return (boost::shared_ptr<ConfigurableClientList>());
+        } else {
+            return (it->second);
+        }
+    }
 
     /// Bind the ModuleSpec object in config_session_ with
     /// isc:config::ModuleSpec::validateStatistics.
@@ -719,15 +731,14 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, Message& message,
         // If a memory data source is configured call the separate
         // Query::process()
         const ConstQuestionPtr question = *message.beginQuestion();
-        if (memory_client_container_ &&
-            memory_client_class_ == question->getClass()) {
+        const boost::shared_ptr<datasrc::ClientList>
+            list(getClientList(question->getClass()));
+        if (list) {
             const RRType& qtype = question->getType();
             const Name& qname = question->getName();
-            SingletonList list(memory_client_container_->getInstance());
-            query_.process(list, qname, qtype, message, dnssec_ok);
+            query_.process(*list, qname, qtype, message, dnssec_ok);
         } else {
-            datasrc::Query query(message, cache_, dnssec_ok);
-            data_sources_.doQuery(query);
+            makeErrorMessage(renderer_, message, buffer, Rcode::REFUSED());
         }
     } catch (const Exception& ex) {
         LOG_ERROR(auth_logger, AUTH_PROCESS_FAIL).arg(ex.what());
@@ -1038,16 +1049,9 @@ AuthSrv::setClientList(const RRClass& rrclass,
         impl_->client_lists_.erase(rrclass);
     }
 }
-
 boost::shared_ptr<ConfigurableClientList>
 AuthSrv::getClientList(const RRClass& rrclass) {
-    const map<RRClass, boost::shared_ptr<ConfigurableClientList> >::
-        const_iterator it(impl_->client_lists_.find(rrclass));
-    if (it == impl_->client_lists_.end()) {
-        return (boost::shared_ptr<ConfigurableClientList>());
-    } else {
-        return (it->second);
-    }
+    return (impl_->getClientList(rrclass));
 }
 
 vector<RRClass>
