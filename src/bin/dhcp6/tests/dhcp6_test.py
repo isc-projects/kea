@@ -1,4 +1,4 @@
-# Copyright (C) 2011,2012 Internet Systems Consortium.
+# copyright (C) 2011,2012 Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -131,7 +131,7 @@ class TestDhcpv6Daemon(unittest.TestCase):
         print("      not that is can bind sockets correctly. Please ignore binding errors.")
         (returncode, output, error) = self.runCommand(["../b10-dhcp6", "-v"])
 
-        self.assertEqual( str(output).count("[b10-dhcp6] Initiating DHCPv6 operation."), 1)
+        self.assertEqual( str(output).count("b10-dhcp6: Initiating DHCPv6 server operation."), 1)
 
     def test_portnumber_0(self):
         print("Check that specifying port number 0 is not allowed.")
