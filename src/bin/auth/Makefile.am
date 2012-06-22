@@ -49,7 +49,7 @@ b10_auth_SOURCES += command.cc command.h
 b10_auth_SOURCES += common.h common.cc
 b10_auth_SOURCES += statistics.cc statistics.h
 b10_auth_SOURCES += datasrc_configurator.h
-b10_auth_SOURCES += main.cc list.h
+b10_auth_SOURCES += main.cc
 # This is a temporary workaround for #1206, where the InMemoryClient has been
 # moved to an ldopened library. We could add that library to LDADD, but that
 # is nonportable. This should've been moot after #1207, but there is still
