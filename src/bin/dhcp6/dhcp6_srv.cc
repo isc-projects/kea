@@ -48,12 +48,12 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t port) {
         IfaceMgr::instance();
     } catch (const std::exception &e) {
         cout << "Failed to instantiate InterfaceManager:" << e.what() << ". Aborting." << endl;
-        shutdown = true;
+        shutdown_ = true;
     }
 
     if (IfaceMgr::instance().countIfaces() == 0) {
         cout << "Failed to detect any network interfaces. Aborting." << endl;
-        shutdown = true;
+        shutdown_ = true;
     }
 
     // Now try to open IPv6 sockets on detected interfaces.
@@ -63,7 +63,7 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t port) {
 
     setServerID();
 
-    shutdown = false;
+    shutdown_ = false;
 }
 
 Dhcpv6Srv::~Dhcpv6Srv() {
@@ -72,8 +72,13 @@ Dhcpv6Srv::~Dhcpv6Srv() {
     IfaceMgr::instance().closeSockets();
 }
 
+void Dhcpv6Srv::shutdown() {
+    cout << "b10-dhcp6: DHCPv6 server shutdown." << endl;
+    shutdown_ = true;
+}
+
 bool Dhcpv6Srv::run() {
-    while (!shutdown) {
+    while (!shutdown_) {
 
         // client's message and server's response
         Pkt6Ptr query = IfaceMgr::instance().receive6();

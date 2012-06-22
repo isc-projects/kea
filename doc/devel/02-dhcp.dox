@@ -72,11 +72,13 @@
  * DHCPv6 server component does not support relayed traffic yet, as
  * support for relay decapsulation is not implemented yet.
  *
- * DHCPv6 server component does not listen to BIND10 message queue.
- *
  * DHCPv6 server component does not use BIND10 logging yet.
  *
- * DHCPv6 server component is not integrated with boss yet.
+ * @section dhcpv6Session BIND10 message queue integration
+ *
+ * DHCPv4 server component is now integrated with BIND10 message queue.
+ * It follows the same principle as DHCPv4. See \ref dhcpv4Session for
+ * details.
  *
  * @page libdhcp libdhcp++
  *
