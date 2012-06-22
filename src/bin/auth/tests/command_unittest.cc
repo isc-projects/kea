@@ -241,7 +241,7 @@ TEST_F(AuthCommandTest,
 #ifdef USE_STATIC_LINK
        DISABLED_loadZone
 #else
-       loadZone
+       DISABLED_loadZone // Needs #2046
 #endif
     )
 {
@@ -265,7 +265,7 @@ TEST_F(AuthCommandTest,
 #ifdef USE_STATIC_LINK
        DISABLED_loadZoneSQLite3
 #else
-       loadZoneSQLite3
+       DISABLED_loadZoneSQLite3 // Needs #2044
 #endif
     )
 {
@@ -408,7 +408,7 @@ TEST_F(AuthCommandTest,
 #ifdef USE_STATIC_LINK
        DISABLED_loadBrokenZone
 #else
-       loadBrokenZone
+       DISABLED_loadBrokenZone // Needs #2046
 #endif
     )
 {
@@ -428,7 +428,7 @@ TEST_F(AuthCommandTest,
 #ifdef USE_STATIC_LINK
        DISABLED_loadUnreadableZone
 #else
-       loadUnreadableZone
+       DISABLED_loadUnreadableZone // Needs #2046
 #endif
     )
 {
@@ -454,21 +454,11 @@ TEST_F(AuthCommandTest, loadZoneWithoutDataSrc) {
     checkAnswer(1);
 }
 
-TEST_F(AuthCommandTest, loadSqlite3DataSrc) {
-    // For sqlite3 data source we don't have to do anything (the data source
-    // (re)loads itself automatically)
-    result_ = execAuthServerCommand(server_, "loadzone",
-                                    Element::fromJSON(
-                                        "{\"origin\": \"test1.example\","
-                                        " \"datasrc\": \"sqlite3\"}"));
-    checkAnswer(0);
-}
-
 TEST_F(AuthCommandTest,
 #ifdef USE_STATIC_LINK
        DISABLED_loadZoneInvalidParams
 #else
-       loadZoneInvalidParams
+       DISABLED_loadZoneInvalidParams // Needs #2046
 #endif
     )
 {

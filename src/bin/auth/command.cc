@@ -307,8 +307,11 @@ createAuthCommand(const string& command_id) {
         return (new ShutdownCommand());
     } else if (command_id == "sendstats") {
         return (new SendStatsCommand());
+#if 0
+    // FIXME: The loadzone command will use #2046
     } else if (command_id == "loadzone") {
         return (new LoadZoneCommand());
+#endif
     } else if (false && command_id == "_throw_exception") {
         // This is for testing purpose only and should not appear in the
         // actual configuration syntax.
