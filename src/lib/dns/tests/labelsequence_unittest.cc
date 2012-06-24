@@ -34,14 +34,21 @@ public:
                           n3("example.org"), n4("foo.bar.test.example"),
                           n5("example.ORG"), n6("ExAmPlE.org"),
                           n7("."), n8("foo.example.org.bar"),
+                          n9("\\000xample.org"),
+                          n10("\\000xample.org"),
+                          n11("\\000xample.com"),
+                          n12("\\000xamplE.com"),
                           ls1(n1), ls2(n2), ls3(n3), ls4(n4), ls5(n5),
-                          ls6(n6), ls7(n7), ls8(n8)
+                          ls6(n6), ls7(n7), ls8(n8),
+                          ls9(n9), ls10(n10), ls11(n11), ls12(n12)
     {};
     // Need to keep names in scope for at least the lifetime of
     // the labelsequences
     Name n1, n2, n3, n4, n5, n6, n7, n8;
+    Name n9, n10, n11, n12;
 
     LabelSequence ls1, ls2, ls3, ls4, ls5, ls6, ls7, ls8;
+    LabelSequence ls9, ls10, ls11, ls12;
 };
 
 // Basic equality tests
@@ -81,6 +88,11 @@ TEST_F(LabelSequenceTest, equals_sensitive) {
     EXPECT_FALSE(ls5.equals(ls6, true));
     EXPECT_FALSE(ls5.equals(ls7, true));
     EXPECT_FALSE(ls5.equals(ls8, true));
+
+    EXPECT_TRUE(ls9.equals(ls10, true));
+    EXPECT_FALSE(ls9.equals(ls11, true));
+    EXPECT_FALSE(ls9.equals(ls12, true));
+    EXPECT_FALSE(ls11.equals(ls12, true));
 }
 
 TEST_F(LabelSequenceTest, equals_insensitive) {
@@ -123,6 +135,11 @@ TEST_F(LabelSequenceTest, equals_insensitive) {
     EXPECT_TRUE(ls5.equals(ls5));
     EXPECT_TRUE(ls5.equals(ls6));
     EXPECT_FALSE(ls5.equals(ls7));
+
+    EXPECT_TRUE(ls9.equals(ls10));
+    EXPECT_FALSE(ls9.equals(ls11));
+    EXPECT_FALSE(ls9.equals(ls12));
+    EXPECT_TRUE(ls11.equals(ls12));
 }
 
 void
