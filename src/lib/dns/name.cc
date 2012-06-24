@@ -507,13 +507,26 @@ Name::toText(bool omit_final_dot) const {
 
 NameComparisonResult
 Name::compare(const Name& other) const {
+    return (partial_compare(other, 0, 0));
+}
+
+NameComparisonResult
+Name::partial_compare(const Name& other,
+                      unsigned int first_label,
+                      unsigned int first_label_other,
+                      bool case_sensitive) const {
     // Determine the relative ordering under the DNSSEC order relation of
     // 'this' and 'other', and also determine the hierarchical relationship
     // of the names.
 
+    if ((first_label > labelcount_) ||
+        (first_label_other > other.labelcount_)) {
+        isc_throw(BadValue, "Bad first label indices were passed");
+    }
+
     unsigned int nlabels = 0;
-    unsigned int l1 = labelcount_;
-    unsigned int l2 = other.labelcount_;
+    int l1 = labelcount_ - first_label;
+    int l2 = other.labelcount_ - first_label_other;
     int ldiff = (int)l1 - (int)l2;
     unsigned int l = (ldiff < 0) ? l1 : l2;
 
@@ -521,8 +534,8 @@ Name::compare(const Name& other) const {
         --l;
         --l1;
         --l2;
-        size_t pos1 = offsets_[l1];
-        size_t pos2 = other.offsets_[l2];
+        size_t pos1 = offsets_[l1 + first_label];
+        size_t pos2 = other.offsets_[l2 + first_label_other];
         unsigned int count1 = ndata_[pos1++];
         unsigned int count2 = other.ndata_[pos2++];
 
@@ -536,11 +549,17 @@ Name::compare(const Name& other) const {
         while (count > 0) {
             unsigned char label1 = ndata_[pos1];
             unsigned char label2 = other.ndata_[pos2];
+            int chdiff;
 
-            int chdiff = (int)maptolower[label1] - (int)maptolower[label2];
+            if (case_sensitive) {
+                chdiff = (int)label1 - (int)label2;
+            } else {
+                chdiff = (int)maptolower[label1] - (int)maptolower[label2];
+            }
+
             if (chdiff != 0) {
                 return (NameComparisonResult(chdiff, nlabels,
-                                         NameComparisonResult::COMMONANCESTOR));
+                                             NameComparisonResult::COMMONANCESTOR));
             }
             --count;
             ++pos1;
