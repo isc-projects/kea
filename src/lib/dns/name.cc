@@ -151,7 +151,7 @@ Name::Name(const std::string &namestring, bool downcase) {
     offsets.reserve(Name::MAX_LABELS);
     offsets.push_back(0);
 
-    std::basic_string<uint8_t> ndata;
+    NameString ndata;
     ndata.reserve(Name::MAX_WIRE);
 
     // should we refactor this code using, e.g, the state pattern?  Probably
@@ -436,8 +436,8 @@ Name::toText(bool omit_final_dot) const {
         return (".");
     }
 
-    std::basic_string<uint8_t>::const_iterator np = ndata_.begin();
-    std::basic_string<uint8_t>::const_iterator np_end = ndata_.end();
+    NameString::const_iterator np = ndata_.begin();
+    NameString::const_iterator np_end = ndata_.end();
     unsigned int labels = labelcount_; // use for integrity check
     // init with an impossible value to catch error cases in the end:
     unsigned int count = MAX_LABELLEN + 1;
@@ -665,7 +665,7 @@ Name::reverse() const {
     // Copy the original name, label by label, from tail to head.
     vector<unsigned char>::const_reverse_iterator rit0 = offsets_.rbegin();
     vector<unsigned char>::const_reverse_iterator rit1 = rit0 + 1;
-    basic_string<uint8_t>::const_iterator n0 = ndata_.begin();
+    NameString::const_iterator n0 = ndata_.begin();
     retname.offsets_.push_back(0);
     while (rit1 != offsets_.rend()) {
         retname.ndata_.append(n0 + *rit1, n0 + *rit0);
