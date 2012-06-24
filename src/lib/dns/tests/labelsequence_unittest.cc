@@ -125,6 +125,117 @@ TEST_F(LabelSequenceTest, equals_insensitive) {
     EXPECT_FALSE(ls5.equals(ls7));
 }
 
+// Compare tests
+TEST_F(LabelSequenceTest, compare) {
+    // "example.org." and "example.org.", case sensitive
+    NameComparisonResult result = ls1.compare(ls3, true);
+    EXPECT_EQ(isc::dns::NameComparisonResult::EQUAL,
+              result.getRelation());
+    EXPECT_EQ(3, result.getCommonLabels());
+
+    // "example.org." and "example.ORG.", case sensitive
+    result = ls3.compare(ls5, true);
+    EXPECT_EQ(isc::dns::NameComparisonResult::COMMONANCESTOR,
+              result.getRelation());
+    EXPECT_EQ(1, result.getCommonLabels());
+
+    // "example.org." and "example.ORG.", case in-sensitive
+    result = ls3.compare(ls5);
+    EXPECT_EQ(isc::dns::NameComparisonResult::EQUAL,
+              result.getRelation());
+    EXPECT_EQ(3, result.getCommonLabels());
+
+    Name na("a.example.org");
+    Name nb("b.example.org");
+    LabelSequence lsa(na);
+    LabelSequence lsb(nb);
+
+    // "a.example.org." and "b.example.org.", case in-sensitive
+    result = lsa.compare(lsb);
+    EXPECT_EQ(isc::dns::NameComparisonResult::COMMONANCESTOR,
+              result.getRelation());
+    EXPECT_EQ(3, result.getCommonLabels());
+
+    // "example.org." and "b.example.org.", case in-sensitive
+    lsa.stripLeft(1);
+    result = lsa.compare(lsb);
+    EXPECT_EQ(isc::dns::NameComparisonResult::SUPERDOMAIN,
+              result.getRelation());
+    EXPECT_EQ(3, result.getCommonLabels());
+
+    Name nc("g.f.e.d.c.example.org");
+    LabelSequence lsc(nc);
+
+    // "g.f.e.d.c.example.org." and "b.example.org" (no hierarchy), case
+    // in-sensitive
+    lsb.stripRight(1);
+    result = lsc.compare(lsb);
+    EXPECT_EQ(isc::dns::NameComparisonResult::NONE,
+              result.getRelation());
+    EXPECT_EQ(0, result.getCommonLabels());
+    EXPECT_EQ(0, result.getOrder());
+
+    // "g.f.e.d.c.example.org." and "example.org.", case in-sensitive
+    result = lsc.compare(ls1);
+    EXPECT_EQ(isc::dns::NameComparisonResult::SUBDOMAIN,
+              result.getRelation());
+    EXPECT_EQ(3, result.getCommonLabels());
+
+    // "e.d.c.example.org." and "example.org.", case in-sensitive
+    lsc.stripLeft(2);
+    result = lsc.compare(ls1);
+    EXPECT_EQ(isc::dns::NameComparisonResult::SUBDOMAIN,
+              result.getRelation());
+    EXPECT_EQ(3, result.getCommonLabels());
+
+    // "example.org." and "example.org.", case in-sensitive
+    lsc.stripLeft(3);
+    result = lsc.compare(ls1);
+    EXPECT_EQ(isc::dns::NameComparisonResult::EQUAL,
+              result.getRelation());
+    EXPECT_EQ(3, result.getCommonLabels());
+
+    // "." and "example.org.", case in-sensitive
+    lsc.stripLeft(2);
+    result = lsc.compare(ls1);
+    EXPECT_EQ(isc::dns::NameComparisonResult::SUPERDOMAIN,
+              result.getRelation());
+    EXPECT_EQ(1, result.getCommonLabels());
+
+    Name nd("a.b.c.isc.example.org");
+    LabelSequence lsd(nd);
+    Name ne("w.x.y.isc.EXAMPLE.org");
+    LabelSequence lse(ne);
+
+    // "a.b.c.isc.example.org." and "w.x.y.isc.EXAMPLE.org.",
+    // case sensitive
+    result = lsd.compare(lse, true);
+    EXPECT_EQ(isc::dns::NameComparisonResult::COMMONANCESTOR,
+              result.getRelation());
+    EXPECT_EQ(2, result.getCommonLabels());
+
+    // "a.b.c.isc.example.org." and "w.x.y.isc.EXAMPLE.org.",
+    // case in-sensitive
+    result = lsd.compare(lse);
+    EXPECT_EQ(isc::dns::NameComparisonResult::COMMONANCESTOR,
+              result.getRelation());
+    EXPECT_EQ(4, result.getCommonLabels());
+
+    // "isc.example.org." and "isc.EXAMPLE.org.", case sensitive
+    lsd.stripLeft(3);
+    lse.stripLeft(3);
+    result = lsd.compare(lse, true);
+    EXPECT_EQ(isc::dns::NameComparisonResult::COMMONANCESTOR,
+              result.getRelation());
+    EXPECT_EQ(2, result.getCommonLabels());
+
+    // "isc.example.org." and "isc.EXAMPLE.org.", case in-sensitive
+    result = lsd.compare(lse);
+    EXPECT_EQ(isc::dns::NameComparisonResult::EQUAL,
+              result.getRelation());
+    EXPECT_EQ(4, result.getCommonLabels());
+}
+
 void
 getDataCheck(const char* expected_data, size_t expected_len,
              const LabelSequence& ls)
