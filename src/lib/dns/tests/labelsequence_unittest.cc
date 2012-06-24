@@ -130,14 +130,14 @@ getDataCheck(const char* expected_data, size_t expected_len,
              const LabelSequence& ls)
 {
     size_t len;
-    const unsigned char* data = ls.getData(&len);
+    const uint8_t* data = ls.getData(&len);
     ASSERT_EQ(expected_len, len) << "Expected data: " << expected_data <<
                                     " name: " << ls.getName().toText();
     EXPECT_EQ(expected_len, ls.getDataLength()) <<
         "Expected data: " << expected_data <<
         " name: " << ls.getName().toText();
     for (size_t i = 0; i < len; ++i) {
-        EXPECT_EQ((const unsigned char) expected_data[i], data[i]) <<
+        EXPECT_EQ(static_cast<const uint8_t>(expected_data[i]), data[i]) <<
           "Difference at pos " << i << ": Expected data: " << expected_data <<
           " name: " << ls.getName().toText();;
     }
@@ -241,7 +241,7 @@ TEST_F(LabelSequenceTest, comparePart) {
 
     // Data comparison
     size_t len;
-    const unsigned char* data = ls1.getData(&len);
+    const uint8_t* data = ls1.getData(&len);
     getDataCheck((const char*) data, len, ls8);
 }
 
