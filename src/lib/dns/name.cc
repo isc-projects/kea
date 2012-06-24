@@ -75,7 +75,7 @@ const char digitvalue[256] = {
 
 namespace name {
 namespace internal {
-const unsigned char maptolower[] = {
+const uint8_t maptolower[] = {
     0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
     0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
     0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
@@ -467,7 +467,7 @@ Name::toText(bool omit_final_dot) const {
             }
 
             while (count-- > 0) {
-                unsigned char c = *np++;
+                uint8_t c = *np++;
                 switch (c) {
                 case 0x22: // '"'
                 case 0x28: // '('
@@ -534,8 +534,8 @@ Name::compare(const Name& other) const {
         unsigned int count = (cdiff < 0) ? count1 : count2;
 
         while (count > 0) {
-            unsigned char label1 = ndata_[pos1];
-            unsigned char label2 = other.ndata_[pos2];
+            uint8_t label1 = ndata_[pos1];
+            uint8_t label2 = other.ndata_[pos2];
 
             int chdiff = (int)maptolower[label1] - (int)maptolower[label2];
             if (chdiff != 0) {
@@ -571,15 +571,15 @@ Name::equals(const Name& other) const {
     }
 
     for (unsigned int l = labelcount_, pos = 0; l > 0; --l) {
-        unsigned char count = ndata_[pos];
+        uint8_t count = ndata_[pos];
         if (count != other.ndata_[pos]) {
             return (false);
         }
         ++pos;
 
         while (count-- > 0) {
-            unsigned char label1 = ndata_[pos];
-            unsigned char label2 = other.ndata_[pos];
+            uint8_t label1 = ndata_[pos];
+            uint8_t label2 = other.ndata_[pos];
 
             if (maptolower[label1] != maptolower[label2]) {
                 return (false);
@@ -746,7 +746,7 @@ Name::downcase() {
 
         while (count > 0) {
             ndata_.at(pos) =
-                maptolower[static_cast<unsigned char>(ndata_.at(pos))];
+                maptolower[ndata_.at(pos)];
             ++pos;
             --nlen;
             --count;
