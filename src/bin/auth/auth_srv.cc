@@ -828,7 +828,7 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
         return (false);
     }
 
-    LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_PROCESS_NOTIFY)
+    LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_RECEIVED_NOTIFY)
       .arg(question->getName().toText()).arg(question->getClass().toText());
 
     const string remote_ip_address =
