@@ -378,10 +378,10 @@ public:
 
     /// @brief Opens UDP/IP socket and binds it to interface specified.
     ///
-    /// This method differs from \ref openSocket such that it allows
-    /// not to specify local address to which socket will be bound.
-    /// Instead, method searches through addresses on specified
-    /// interface and selects one that matches address family.
+    /// This method differs from \ref openSocket in that it does not require
+    /// the specification of a local address to which socket will be bound.
+    /// Instead, the method searches through the addresses on the specified
+    /// interface and selects one that matches the address family.
     ///
     /// @param ifname name of the interface
     /// @param port UDP port
@@ -395,8 +395,8 @@ public:
 
     /// @brief Opens UDP/IP socket and binds to address specified
     ///
-    /// This methods differs from \ref openSocket such that it allows
-    /// not to specify interface to which socket will be bound.
+    /// This methods differs from \ref openSocket in that it does not require
+    /// the specification of the interface to which the socket will be bound.
     ///
     /// @param addr address to be bound
     /// @param port UDP port
@@ -408,10 +408,10 @@ public:
 
     /// @brief Opens UDP/IP socket to be used to connect to remote address
     ///
-    /// This method identifies local address to be used to connect
-    /// to remote address specified as argument.
-    /// Once local address is idetified \ref openSocket is called
-    /// to open socket and bind it to interface, address and port.
+    /// This method identifies the local address to be used to connect to the
+    /// remote address specified as argument.  Once the local address is
+    /// identified, \ref openSocket is called to open a socket and bind it to
+    /// the interface, address and port.
     ///
     /// @param remote_addr remote address to connect to
     /// @param port UDP port
