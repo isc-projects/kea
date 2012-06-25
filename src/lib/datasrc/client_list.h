@@ -33,6 +33,7 @@ typedef boost::shared_ptr<DataSourceClient> DataSourceClientPtr;
 class DataSourceClientContainer;
 typedef boost::shared_ptr<DataSourceClientContainer>
     DataSourceClientContainerPtr;
+class InMemoryClient;
 
 /// \brief The list of data source clients.
 ///
@@ -231,12 +232,11 @@ public:
             data_src_client_(NULL)
         {}
         DataSourceInfo(DataSourceClient* data_src_client,
-                       const DataSourceClientContainerPtr& container) :
-            data_src_client_(data_src_client),
-            container_(container)
-        {}
+                       const DataSourceClientContainerPtr& container,
+                       bool hasCache);
         DataSourceClient* data_src_client_;
         DataSourceClientContainerPtr container_;
+        boost::shared_ptr<InMemoryClient> cache_;
     };
 
     /// \brief The collection of data sources.

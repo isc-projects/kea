@@ -15,6 +15,7 @@
 #include "client_list.h"
 #include "client.h"
 #include "factory.h"
+#include "memory_datasrc.h"
 
 #include <memory>
 #include <boost/foreach.hpp>
@@ -24,6 +25,17 @@ using namespace std;
 
 namespace isc {
 namespace datasrc {
+
+ConfigurableClientList::DataSourceInfo::DataSourceInfo(
+    DataSourceClient* data_src_client,
+    const DataSourceClientContainerPtr& container, bool hasCache) :
+    data_src_client_(data_src_client),
+    container_(container)
+{
+    if (hasCache) {
+        cache_.reset(new InMemoryClient);
+    }
+}
 
 void
 ConfigurableClientList::configure(const Element& config, bool) {
@@ -50,7 +62,8 @@ ConfigurableClientList::configure(const Element& config, bool) {
             const DataSourcePair ds(this->getDataSourceClient(type,
                                                               paramConf));
             // And put it into the vector
-            new_data_sources.push_back(DataSourceInfo(ds.first, ds.second));
+            new_data_sources.push_back(DataSourceInfo(ds.first, ds.second,
+                                                      false));
         }
         // If everything is OK up until now, we have the new configuration
         // ready. So just put it there and let the old one die when we exit
