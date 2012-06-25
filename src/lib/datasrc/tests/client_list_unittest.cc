@@ -175,7 +175,7 @@ public:
                 ds(new MockDataSourceClient(ds_zones[i]));
             ds_.push_back(ds);
             ds_info_.push_back(ConfigurableClientList::DataSourceInfo(ds.get(),
-                DataSourceClientContainerPtr()));
+                DataSourceClientContainerPtr(), false));
         }
     }
     // Check the positive result is as we expect it.
@@ -220,7 +220,8 @@ public:
                 FAIL() << "Unknown configuration index " << index;
         }
     }
-    void checkDS(size_t index, const string& type, const string& params) const
+    void checkDS(size_t index, const string& type, const string& params,
+                 bool cache) const
     {
         ASSERT_GT(list_->getDataSources().size(), index);
         MockDataSourceClient* ds(dynamic_cast<MockDataSourceClient*>(
@@ -230,6 +231,8 @@ public:
         ASSERT_NE(ds, static_cast<const MockDataSourceClient*>(NULL));
         EXPECT_EQ(type, ds->type_);
         EXPECT_TRUE(Element::fromJSON(params)->equals(*ds->configuration_));
+        EXPECT_EQ(cache, list_->getDataSources()[index].cache_ !=
+                  shared_ptr<InMemoryClient>());
     }
     shared_ptr<TestedList> list_;
     const ClientList::FindResult negativeResult_;
@@ -370,8 +373,8 @@ TEST_F(ListTest, configureMulti) {
     ));
     list_->configure(*elem, true);
     EXPECT_EQ(2, list_->getDataSources().size());
-    checkDS(0, "type1", "{}");
-    checkDS(1, "type2", "{}");
+    checkDS(0, "type1", "{}", false);
+    checkDS(1, "type2", "{}", false);
 }
 
 // Check we can pass whatever we want to the params
@@ -396,7 +399,7 @@ TEST_F(ListTest, configureParams) {
             "}]"));
         list_->configure(*elem, true);
         EXPECT_EQ(1, list_->getDataSources().size());
-        checkDS(0, "t", *param);
+        checkDS(0, "t", *param, false);
     }
 }
 
@@ -423,14 +426,14 @@ TEST_F(ListTest, wrongConfig) {
     };
     // Put something inside to see it survives the exception
     list_->configure(*config_elem_, true);
-    checkDS(0, "test_type", "{}");
+    checkDS(0, "test_type", "{}", false);
     for (const char** config(configs); *config; ++config) {
         SCOPED_TRACE(*config);
         ConstElementPtr elem(Element::fromJSON(*config));
         EXPECT_THROW(list_->configure(*elem, true),
                      ConfigurableClientList::ConfigurationError);
         // Still untouched
-        checkDS(0, "test_type", "{}");
+        checkDS(0, "test_type", "{}", false);
         EXPECT_EQ(1, list_->getDataSources().size());
     }
 }
@@ -443,18 +446,18 @@ TEST_F(ListTest, defaults) {
         "}]"));
     list_->configure(*elem, true);
     EXPECT_EQ(1, list_->getDataSources().size());
-    checkDS(0, "type1", "null");
+    checkDS(0, "type1", "null", false);
 }
 
 // Check we can call the configure multiple times, to change the configuration
 TEST_F(ListTest, reconfigure) {
     ConstElementPtr empty(new ListElement);
     list_->configure(*config_elem_, true);
-    checkDS(0, "test_type", "{}");
+    checkDS(0, "test_type", "{}", false);
     list_->configure(*empty, true);
     EXPECT_TRUE(list_->getDataSources().empty());
     list_->configure(*config_elem_, true);
-    checkDS(0, "test_type", "{}");
+    checkDS(0, "test_type", "{}", false);
 }
 
 // Make sure the data source error exception from the factory is propagated
@@ -464,9 +467,9 @@ TEST_F(ListTest, dataSrcError) {
         "   \"type\": \"error\""
         "}]"));
     list_->configure(*config_elem_, true);
-    checkDS(0, "test_type", "{}");
+    checkDS(0, "test_type", "{}", false);
     EXPECT_THROW(list_->configure(*elem, true), DataSourceError);
-    checkDS(0, "test_type", "{}");
+    checkDS(0, "test_type", "{}", false);
 }
 
 }
