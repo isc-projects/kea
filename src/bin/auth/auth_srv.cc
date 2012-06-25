@@ -829,7 +829,7 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
     }
 
     LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_RECEIVED_NOTIFY)
-      .arg(question->getName().toText()).arg(question->getClass().toText());
+      .arg(question->getName()).arg(question->getClass());
 
     const string remote_ip_address =
         io_message.getRemoteEndpoint().getAddress().toText();
