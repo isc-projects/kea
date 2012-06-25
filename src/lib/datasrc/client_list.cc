@@ -38,8 +38,7 @@ ConfigurableClientList::DataSourceInfo::DataSourceInfo(
 }
 
 void
-ConfigurableClientList::configure(const Element& config, bool) {
-    // TODO: Implement the cache
+ConfigurableClientList::configure(const Element& config, bool allowCache) {
     // TODO: Implement recycling from the old configuration.
     size_t i(0); // Outside of the try to be able to access it in the catch
     try {
@@ -61,9 +60,12 @@ ConfigurableClientList::configure(const Element& config, bool) {
             // Ask the factory to create the data source for us
             const DataSourcePair ds(this->getDataSourceClient(type,
                                                               paramConf));
+            const bool wantCache(allowCache &&
+                                 dconf->contains("cache-enable") &&
+                                 dconf->get("cache-enable")->boolValue());
             // And put it into the vector
             new_data_sources.push_back(DataSourceInfo(ds.first, ds.second,
-                                                      false));
+                                                      wantCache));
         }
         // If everything is OK up until now, we have the new configuration
         // ready. So just put it there and let the old one die when we exit

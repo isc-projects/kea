@@ -166,7 +166,6 @@ public:
         config_elem_(Element::fromJSON("["
             "{"
             "   \"type\": \"test_type\","
-            "   \"cache\": \"off\","
             "   \"params\": {}"
             "}]"))
     {
@@ -470,6 +469,50 @@ TEST_F(ListTest, dataSrcError) {
     checkDS(0, "test_type", "{}", false);
     EXPECT_THROW(list_->configure(*elem, true), DataSourceError);
     checkDS(0, "test_type", "{}", false);
+}
+
+// Check we can get the cache
+TEST_F(ListTest, configureCacheEmpty) {
+    ConstElementPtr elem(Element::fromJSON("["
+        "{"
+        "   \"type\": \"type1\","
+        "   \"cache-enable\": true,"
+        "   \"cache-zones\": [],"
+        "   \"params\": {}"
+        "},"
+        "{"
+        "   \"type\": \"type2\","
+        "   \"cache-enable\": false,"
+        "   \"cache-zones\": [],"
+        "   \"params\": {}"
+        "}]"
+    ));
+    list_->configure(*elem, true);
+    EXPECT_EQ(2, list_->getDataSources().size());
+    checkDS(0, "type1", "{}", true);
+    checkDS(1, "type2", "{}", false);
+}
+
+// But no cache if we disallow it globally
+TEST_F(ListTest, configureCacheDisabled) {
+    ConstElementPtr elem(Element::fromJSON("["
+        "{"
+        "   \"type\": \"type1\","
+        "   \"cache-enable\": true,"
+        "   \"cache-zones\": [],"
+        "   \"params\": {}"
+        "},"
+        "{"
+        "   \"type\": \"type2\","
+        "   \"cache-enable\": false,"
+        "   \"cache-zones\": [],"
+        "   \"params\": {}"
+        "}]"
+    ));
+    list_->configure(*elem, false);
+    EXPECT_EQ(2, list_->getDataSources().size());
+    checkDS(0, "type1", "{}", false);
+    checkDS(1, "type2", "{}", false);
 }
 
 }
