@@ -198,7 +198,7 @@ void IfaceMgr::stubDetectIfaces() {
         iface.flag_up_ = true;
         iface.flag_running_ = true;
 
-        // note that we claim that this is not a loopback. iface_mgr tries to open a
+        // Note that we claim that this is not a loopback. iface_mgr tries to open a
         // socket on all interaces that are up, running and not loopback. As this is
         // the only interface we were able to detect, let's pretend this is a normal
         // interface.
@@ -229,8 +229,8 @@ bool IfaceMgr::openSockets4(const uint16_t port) {
     int sock;
     int count = 0;
 
-    for (IfaceCollection::iterator iface=ifaces_.begin();
-         iface!=ifaces_.end();
+    for (IfaceCollection::iterator iface = ifaces_.begin();
+         iface != ifaces_.end();
          ++iface) {
 
         cout << "Trying interface " << iface->getFullName() << endl;
@@ -242,18 +242,17 @@ bool IfaceMgr::openSockets4(const uint16_t port) {
         }
 
         AddressCollection addrs = iface->getAddresses();
-
-        for (AddressCollection::iterator addr= addrs.begin();
+        for (AddressCollection::iterator addr = addrs.begin();
              addr != addrs.end();
              ++addr) {
 
-            // skip IPv6 addresses
+            // Skip IPv6 addresses
             if (addr->getFamily() != AF_INET) {
                 continue;
             }
 
             sock = openSocket(iface->getName(), *addr, port);
-            if (sock<0) {
+            if (sock < 0) {
                 cout << "Failed to open unicast socket." << endl;
                 return (false);
             }
@@ -269,8 +268,8 @@ bool IfaceMgr::openSockets6(const uint16_t port) {
     int sock;
     int count = 0;
 
-    for (IfaceCollection::iterator iface=ifaces_.begin();
-         iface!=ifaces_.end();
+    for (IfaceCollection::iterator iface = ifaces_.begin();
+         iface != ifaces_.end();
          ++iface) {
 
         if (iface->flag_loopback_ ||
@@ -280,7 +279,6 @@ bool IfaceMgr::openSockets6(const uint16_t port) {
         }
 
         AddressCollection addrs = iface->getAddresses();
-
         for (AddressCollection::iterator addr = addrs.begin();
              addr != addrs.end();
              ++addr) {
@@ -291,7 +289,7 @@ bool IfaceMgr::openSockets6(const uint16_t port) {
             }
 
             sock = openSocket(iface->getName(), *addr, port);
-            if (sock<0) {
+            if (sock < 0) {
                 cout << "Failed to open unicast socket." << endl;
                 return (false);
             }
@@ -300,7 +298,7 @@ bool IfaceMgr::openSockets6(const uint16_t port) {
             // works well on Mac OS (and possibly other BSDs), but does not work
             // on Linux.
             if ( !joinMulticast(sock, iface->getName(),
-                                string(ALL_DHCP_RELAY_AGENTS_AND_SERVERS) ) ) {
+                                string(ALL_DHCP_RELAY_AGENTS_AND_SERVERS))) {
                 close(sock);
                 isc_throw(Unexpected, "Failed to join " << ALL_DHCP_RELAY_AGENTS_AND_SERVERS
                           << " multicast group.");
@@ -316,7 +314,7 @@ bool IfaceMgr::openSockets6(const uint16_t port) {
             int sock2 = openSocket(iface->getName(),
                                    IOAddress(ALL_DHCP_RELAY_AGENTS_AND_SERVERS),
                                    port);
-            if (sock2<0) {
+            if (sock2 < 0) {
                 isc_throw(Unexpected, "Failed to open multicast socket on "
                           << " interface " << iface->getFullName());
                 iface->delSocket(sock); // delete previously opened socket
@@ -401,8 +399,8 @@ int IfaceMgr::openSocketFromIface(const std::string& ifname,
                                   const uint8_t family) {
     int sock = 0;
     // Search for specified interface among detected interfaces.
-    for (IfaceCollection::iterator iface=ifaces_.begin();
-         iface!=ifaces_.end();
+    for (IfaceCollection::iterator iface = ifaces_.begin();
+         iface != ifaces_.end();
          ++iface) {
 
         if ((iface->getFullName() != ifname) &&
@@ -437,8 +435,8 @@ int IfaceMgr::openSocketFromAddress(const IOAddress& addr,
     int sock = 0;
     // Search through detected interfaces and addresses to match
     // local address we got.
-    for (IfaceCollection::iterator iface=ifaces_.begin();
-         iface!=ifaces_.end();
+    for (IfaceCollection::iterator iface = ifaces_.begin();
+         iface != ifaces_.end();
          ++iface) {
 
         AddressCollection addrs = iface->getAddresses();
