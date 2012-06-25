@@ -1012,22 +1012,10 @@ address, but the usual ones don't." mean? -->
       <para>
         Administrators do not communicate directly with the
         <command>b10-msgq</command> daemon.
-        By default, BIND 10 uses port 9912 for the
-        <command>b10-msgq</command> service.
-        It listens on 127.0.0.1.
+        By default, BIND 10 uses a UNIX domain socket file named
+        <filename>/usr/local/var/bind10-devel/msg_socket</filename>
+        for this interprocess communication.
       </para>
-
-<!-- TODO: this is broken, see Trac #111
-      <para>
-        To select an alternate port for the <command>b10-msgq</command> to
-        use, run <command>bind10</command> specifying the option:
-        <screen> $ <userinput>bind10 -TODO-msgq-port 9912</userinput></screen>
-      </para>
--->
-
-<!-- TODO: upcoming plans:
-Unix domain sockets
--->
 
   </chapter>
 
