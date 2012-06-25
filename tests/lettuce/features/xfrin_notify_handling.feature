@@ -16,7 +16,7 @@ Feature: Xfrin incoming notify handling
     And wait for bind10 stderr message XFRIN_STARTED
     And wait for bind10 stderr message ZONEMGR_STARTED
 
-    A query for www.example.org should have rcode NXDOMAIN
+    A query for www.example.org to [::1]:47806 should have rcode NXDOMAIN
 
     When I send bind10 with cmdctl port 47804 the command Xfrout notify example.org IN
     Then wait for new master stderr message XFROUT_NOTIFY_COMMAND
@@ -26,4 +26,4 @@ Feature: Xfrin incoming notify handling
     Then wait for new bind10 stderr message XFRIN_TRANSFER_SUCCESS not XFRIN_XFR_PROCESS_FAILURE
     Then wait for new bind10 stderr message ZONEMGR_RECEIVE_XFRIN_SUCCESS
 
-    A query for www.example.org should have rcode NOERROR
+    A query for www.example.org to [::1]:47806 should have rcode NOERROR
