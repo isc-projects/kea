@@ -20,7 +20,7 @@ Feature: Xfrin incoming notify handling
 
     When I send bind10 with cmdctl port 47804 the command Xfrout notify example.org IN
     Then wait for new master stderr message XFROUT_NOTIFY_COMMAND
-    Then wait for new bind10 stderr message AUTH_PROCESS_NOTIFY
+    Then wait for new bind10 stderr message AUTH_RECEIVED_NOTIFY
     Then wait for new bind10 stderr message ZONEMGR_RECEIVE_NOTIFY
     Then wait for new bind10 stderr message XFRIN_XFR_TRANSFER_STARTED
     Then wait for new bind10 stderr message XFRIN_TRANSFER_SUCCESS not XFRIN_XFR_PROCESS_FAILURE
