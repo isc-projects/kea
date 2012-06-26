@@ -143,7 +143,13 @@ public:
         isc_throw(isc::NotImplemented, "Not implemented");
     }
     virtual ZoneIteratorPtr getIterator(const Name& name, bool) const {
-        return (ZoneIteratorPtr(new Iterator(name)));
+        if (name == Name("noiter.org")) {
+            isc_throw(isc::NotImplemented, "Asked not to be implemented");
+        } else if (name == Name("null.org")) {
+            return (ZoneIteratorPtr());
+        } else {
+            return (ZoneIteratorPtr(new Iterator(name)));
+        }
     }
     const string type_;
     const ConstElementPtr configuration_;
@@ -393,14 +399,14 @@ TEST_F(ListTest, multiBestMatch) {
 
 // Check the configuration is empty when the list is empty
 TEST_F(ListTest, configureEmpty) {
-    ConstElementPtr elem(new ListElement);
+    const ConstElementPtr elem(new ListElement);
     list_->configure(*elem, true);
     EXPECT_TRUE(list_->getDataSources().empty());
 }
 
 // Check we can get multiple data sources and they are in the right order.
 TEST_F(ListTest, configureMulti) {
-    ConstElementPtr elem(Element::fromJSON("["
+    const ConstElementPtr elem(Element::fromJSON("["
         "{"
         "   \"type\": \"type1\","
         "   \"cache\": \"off\","
@@ -462,7 +468,28 @@ TEST_F(ListTest, wrongConfig) {
         "[{\"type\": \"test_type\", \"params\": 13}, {\"type\": null}]",
         "[{\"type\": \"test_type\", \"params\": 13}, {\"type\": []}]",
         "[{\"type\": \"test_type\", \"params\": 13}, {\"type\": {}}]",
-        // TODO: Once cache is supported, add some invalid cache values
+        // Bad type of cache-enable
+        "[{\"type\": \"test_type\", \"params\": 13}, "
+         "{\"type\": \"x\", \"cache-enable\": 13, \"cache-zones\": []}]",
+        "[{\"type\": \"test_type\", \"params\": 13}, "
+         "{\"type\": \"x\", \"cache-enable\": \"xx\", \"cache-zones\": []}]",
+        "[{\"type\": \"test_type\", \"params\": 13}, "
+         "{\"type\": \"x\", \"cache-enable\": [], \"cache-zones\": []}]",
+        "[{\"type\": \"test_type\", \"params\": 13}, "
+         "{\"type\": \"x\", \"cache-enable\": {}, \"cache-zones\": []}]",
+        "[{\"type\": \"test_type\", \"params\": 13}, "
+         "{\"type\": \"x\", \"cache-enable\": null, \"cache-zones\": []}]",
+        // Bad type of cache-zones
+        "[{\"type\": \"test_type\", \"params\": 13}, "
+         "{\"type\": \"x\", \"cache-enable\": true, \"cache-zones\": \"x\"}]",
+        "[{\"type\": \"test_type\", \"params\": 13}, "
+         "{\"type\": \"x\", \"cache-enable\": true, \"cache-zones\": true}]",
+        "[{\"type\": \"test_type\", \"params\": 13}, "
+         "{\"type\": \"x\", \"cache-enable\": true, \"cache-zones\": null}]",
+        "[{\"type\": \"test_type\", \"params\": 13}, "
+         "{\"type\": \"x\", \"cache-enable\": true, \"cache-zones\": 13}]",
+        "[{\"type\": \"test_type\", \"params\": 13}, "
+         "{\"type\": \"x\", \"cache-enable\": true, \"cache-zones\": {}}]",
         NULL
     };
     // Put something inside to see it survives the exception
@@ -481,7 +508,7 @@ TEST_F(ListTest, wrongConfig) {
 
 // The param thing defaults to null. Cache is not used yet.
 TEST_F(ListTest, defaults) {
-    ConstElementPtr elem(Element::fromJSON("["
+    const ConstElementPtr elem(Element::fromJSON("["
         "{"
         "   \"type\": \"type1\""
         "}]"));
@@ -492,7 +519,7 @@ TEST_F(ListTest, defaults) {
 
 // Check we can call the configure multiple times, to change the configuration
 TEST_F(ListTest, reconfigure) {
-    ConstElementPtr empty(new ListElement);
+    const ConstElementPtr empty(new ListElement);
     list_->configure(*config_elem_, true);
     checkDS(0, "test_type", "{}", false);
     list_->configure(*empty, true);
@@ -503,7 +530,7 @@ TEST_F(ListTest, reconfigure) {
 
 // Make sure the data source error exception from the factory is propagated
 TEST_F(ListTest, dataSrcError) {
-    ConstElementPtr elem(Element::fromJSON("["
+    const ConstElementPtr elem(Element::fromJSON("["
         "{"
         "   \"type\": \"error\""
         "}]"));
@@ -515,7 +542,7 @@ TEST_F(ListTest, dataSrcError) {
 
 // Check we can get the cache
 TEST_F(ListTest, configureCacheEmpty) {
-    ConstElementPtr elem(Element::fromJSON("["
+    const ConstElementPtr elem(Element::fromJSON("["
         "{"
         "   \"type\": \"type1\","
         "   \"cache-enable\": true,"
@@ -537,7 +564,7 @@ TEST_F(ListTest, configureCacheEmpty) {
 
 // But no cache if we disallow it globally
 TEST_F(ListTest, configureCacheDisabled) {
-    ConstElementPtr elem(Element::fromJSON("["
+    const ConstElementPtr elem(Element::fromJSON("["
         "{"
         "   \"type\": \"type1\","
         "   \"cache-enable\": true,"
@@ -559,7 +586,7 @@ TEST_F(ListTest, configureCacheDisabled) {
 
 // Put some zones into the cache
 TEST_F(ListTest, cacheZones) {
-    ConstElementPtr elem(Element::fromJSON("["
+    const ConstElementPtr elem(Element::fromJSON("["
         "{"
         "   \"type\": \"type1\","
         "   \"cache-enable\": true,"
@@ -576,6 +603,53 @@ TEST_F(ListTest, cacheZones) {
     EXPECT_EQ(result::SUCCESS, cache->findZone(Name("example.org")).code);
     EXPECT_EQ(result::SUCCESS, cache->findZone(Name("example.com")).code);
     EXPECT_EQ(result::NOTFOUND, cache->findZone(Name("example.cz")).code);
+}
+
+// Check the caching handles misbehaviour from the data source and
+// misconfiguration gracefully
+TEST_F(ListTest, badCache) {
+    list_->configure(*config_elem_, true);
+    checkDS(0, "test_type", "{}", false);
+    // First, the zone is not in the data source
+    const ConstElementPtr elem1(Element::fromJSON("["
+        "{"
+        "   \"type\": \"type1\","
+        "   \"cache-enable\": true,"
+        "   \"cache-zones\": [\"example.org\"],"
+        "   \"params\": []"
+        "}]"));
+    EXPECT_THROW(list_->configure(*elem1, true),
+                 ConfigurableClientList::ConfigurationError);
+    checkDS(0, "test_type", "{}", false);
+    // Now, the zone doesn't give an iterator
+    const ConstElementPtr elem2(Element::fromJSON("["
+        "{"
+        "   \"type\": \"type1\","
+        "   \"cache-enable\": true,"
+        "   \"cache-zones\": [\"noiter.org\"],"
+        "   \"params\": [\"noiter.org\"]"
+        "}]"));
+    EXPECT_THROW(list_->configure(*elem2, true), isc::NotImplemented);
+    checkDS(0, "test_type", "{}", false);
+    // Now, the zone returns NULL iterator
+    const ConstElementPtr elem3(Element::fromJSON("["
+        "{"
+        "   \"type\": \"type1\","
+        "   \"cache-enable\": true,"
+        "   \"cache-zones\": [\"null.org\"],"
+        "   \"params\": [\"null.org\"]"
+        "}]"));
+    EXPECT_THROW(list_->configure(*elem3, true), isc::Unexpected);
+    checkDS(0, "test_type", "{}", false);
+    // The autodetection of zones is not enabled
+    const ConstElementPtr elem4(Element::fromJSON("["
+        "{"
+        "   \"type\": \"type1\","
+        "   \"cache-enable\": true,"
+        "   \"params\": [\"example.org\"]"
+        "}]"));
+    EXPECT_THROW(list_->configure(*elem4, true), isc::NotImplemented);
+    checkDS(0, "test_type", "{}", false);
 }
 
 }
