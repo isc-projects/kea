@@ -40,7 +40,7 @@ ConfigurableClientList::DataSourceInfo::DataSourceInfo(
 }
 
 void
-ConfigurableClientList::configure(const Element& config, bool allowCache) {
+ConfigurableClientList::configure(const Element& config, bool allow_cache) {
     // TODO: Implement recycling from the old configuration.
     size_t i(0); // Outside of the try to be able to access it in the catch
     try {
@@ -62,17 +62,19 @@ ConfigurableClientList::configure(const Element& config, bool allowCache) {
             // Ask the factory to create the data source for us
             const DataSourcePair ds(this->getDataSourceClient(type,
                                                               paramConf));
-            const bool wantCache(allowCache &&
-                                 dconf->contains("cache-enable") &&
-                                 dconf->get("cache-enable")->boolValue());
+            const bool want_cache(allow_cache &&
+                                  dconf->contains("cache-enable") &&
+                                  dconf->get("cache-enable")->boolValue());
             // And put it into the vector
             new_data_sources.push_back(DataSourceInfo(ds.first, ds.second,
-                                                      wantCache));
-            if (wantCache) {
+                                                      want_cache));
+            if (want_cache) {
                 if (!dconf->contains("cache-zones")) {
                     isc_throw(isc::NotImplemented, "Auto-detection of zones "
                               "to cache is not yet implemented, supply "
                               "cache-zones parameter");
+                    // TODO: Auto-detect list of all zones in the
+                    // data source.
                 }
                 const ConstElementPtr zones(dconf->get("cache-zones"));
                 const shared_ptr<InMemoryClient>
