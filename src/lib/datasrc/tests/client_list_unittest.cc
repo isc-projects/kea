@@ -14,9 +14,13 @@
 
 #include <datasrc/client_list.h>
 #include <datasrc/client.h>
+#include <datasrc/iterator.h>
 #include <datasrc/data_source.h>
+#include <datasrc/memory_datasrc.h>
 
 #include <dns/rrclass.h>
+#include <dns/rrttl.h>
+#include <dns/rdataclass.h>
 
 #include <gtest/gtest.h>
 
@@ -41,7 +45,7 @@ public:
         Name getOrigin() const { return (origin_); }
         // The rest is not to be called, so just have them
         RRClass getClass() const {
-            isc_throw(isc::NotImplemented, "Not implemented");
+            return (RRClass::IN());
         }
         shared_ptr<Context> find(const Name&, const RRType&,
                                  const FindOptions)
@@ -60,6 +64,35 @@ public:
     private:
         Name origin_;
     };
+    class Iterator : public ZoneIterator {
+    public:
+        Iterator(const Name& origin) :
+            origin_(origin),
+            finished_(false),
+            soa_(new RRset(origin_, RRClass::IN(), RRType::SOA(), RRTTL(3600)))
+        {
+            // The RData here is bogus, but it is not used to anything. There
+            // just needs to be some.
+            soa_->addRdata(rdata::generic::SOA(Name::ROOT_NAME(),
+                                               Name::ROOT_NAME(),
+                                               0, 0, 0, 0, 0));
+        }
+        virtual isc::dns::ConstRRsetPtr getNextRRset() {
+            if (finished_) {
+                return (ConstRRsetPtr());
+            } else {
+                finished_ = true;
+                return (soa_);
+            }
+        }
+        virtual isc::dns::ConstRRsetPtr getSOA() const {
+            return (soa_);
+        }
+    private:
+        const Name origin_;
+        bool finished_;
+        const isc::dns::RRsetPtr soa_;
+    };
     // Constructor from a list of zones.
     MockDataSourceClient(const char* zone_names[]) {
         for (const char** zone(zone_names); *zone; ++zone) {
@@ -72,7 +105,13 @@ public:
                          const ConstElementPtr& configuration) :
         type_(type),
         configuration_(configuration)
-    {}
+    {
+        if (configuration_->getType() == Element::list) {
+            for (size_t i(0); i < configuration_->size(); ++i) {
+                zones.insert(Name(configuration_->get(i)->stringValue()));
+            }
+        }
+    }
     virtual FindResult findZone(const Name& name) const {
         if (zones.empty()) {
             return (FindResult(result::NOTFOUND, ZoneFinderPtr()));
@@ -102,6 +141,9 @@ public:
         getJournalReader(const Name&, uint32_t, uint32_t) const
     {
         isc_throw(isc::NotImplemented, "Not implemented");
+    }
+    virtual ZoneIteratorPtr getIterator(const Name& name, bool) const {
+        return (ZoneIteratorPtr(new Iterator(name)));
     }
     const string type_;
     const ConstElementPtr configuration_;
@@ -513,6 +555,27 @@ TEST_F(ListTest, configureCacheDisabled) {
     EXPECT_EQ(2, list_->getDataSources().size());
     checkDS(0, "type1", "{}", false);
     checkDS(1, "type2", "{}", false);
+}
+
+// Put some zones into the cache
+TEST_F(ListTest, cacheZones) {
+    ConstElementPtr elem(Element::fromJSON("["
+        "{"
+        "   \"type\": \"type1\","
+        "   \"cache-enable\": true,"
+        "   \"cache-zones\": [\"example.org\", \"example.com\"],"
+        "   \"params\": [\"example.org\", \"example.com\", \"exmaple.cz\"]"
+        "}]"));
+    list_->configure(*elem, true);
+    checkDS(0, "type1", "[\"example.org\", \"example.com\", \"exmaple.cz\"]",
+            true);
+
+    const shared_ptr<InMemoryClient> cache(list_->getDataSources()[0].cache_);
+    EXPECT_EQ(2, cache->getZoneCount());
+
+    EXPECT_EQ(result::SUCCESS, cache->findZone(Name("example.org")).code);
+    EXPECT_EQ(result::SUCCESS, cache->findZone(Name("example.com")).code);
+    EXPECT_EQ(result::NOTFOUND, cache->findZone(Name("example.cz")).code);
 }
 
 }

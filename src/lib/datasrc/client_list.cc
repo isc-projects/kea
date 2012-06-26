@@ -21,7 +21,9 @@
 #include <boost/foreach.hpp>
 
 using namespace isc::data;
+using namespace isc::dns;
 using namespace std;
+using namespace boost;
 
 namespace isc {
 namespace datasrc {
@@ -66,6 +68,25 @@ ConfigurableClientList::configure(const Element& config, bool allowCache) {
             // And put it into the vector
             new_data_sources.push_back(DataSourceInfo(ds.first, ds.second,
                                                       wantCache));
+            if (wantCache) {
+                const ConstElementPtr zones(dconf->get("cache-zones"));
+                const shared_ptr<InMemoryClient>
+                    cache(new_data_sources.back().cache_);
+                const DataSourceClient* const
+                    client(new_data_sources.back().data_src_client_);
+                for (size_t i(0); i < zones->size(); ++i) {
+                    const Name origin(zones->get(i)->stringValue());
+                    const DataSourceClient::FindResult
+                        zone(client->findZone(origin));
+                    // TODO check it is SUCCESS
+                    shared_ptr<InMemoryZoneFinder>
+                        finder(new
+                            InMemoryZoneFinder(zone.zone_finder->getClass(),
+                                               origin));
+                    finder->load(*client->getIterator(origin));
+                    cache->addZone(finder);
+                }
+            }
         }
         // If everything is OK up until now, we have the new configuration
         // ready. So just put it there and let the old one die when we exit
