@@ -69,6 +69,11 @@ ConfigurableClientList::configure(const Element& config, bool allowCache) {
             new_data_sources.push_back(DataSourceInfo(ds.first, ds.second,
                                                       wantCache));
             if (wantCache) {
+                if (!dconf->contains("cache-zones")) {
+                    isc_throw(isc::NotImplemented, "Auto-detection of zones "
+                              "to cache is not yet implemented, supply "
+                              "cache-zones parameter");
+                }
                 const ConstElementPtr zones(dconf->get("cache-zones"));
                 const shared_ptr<InMemoryClient>
                     cache(new_data_sources.back().cache_);
@@ -78,12 +83,22 @@ ConfigurableClientList::configure(const Element& config, bool allowCache) {
                     const Name origin(zones->get(i)->stringValue());
                     const DataSourceClient::FindResult
                         zone(client->findZone(origin));
-                    // TODO check it is SUCCESS
+                    if (zone.code != result::SUCCESS) {
+                        // The data source does not contain the zone, it can't
+                        // be cached.
+                        isc_throw(ConfigurationError, "Unable to cache "
+                                  "non-existent zone " << origin);
+                    }
                     shared_ptr<InMemoryZoneFinder>
                         finder(new
                             InMemoryZoneFinder(zone.zone_finder->getClass(),
                                                origin));
-                    finder->load(*client->getIterator(origin));
+                    ZoneIteratorPtr iterator(client->getIterator(origin));
+                    if (!iterator) {
+                        isc_throw(isc::Unexpected, "Got NULL iterator for "
+                                  "zone " << origin);
+                    }
+                    finder->load(*iterator);
                     cache->addZone(finder);
                 }
             }
