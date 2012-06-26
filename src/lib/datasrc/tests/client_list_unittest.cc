@@ -229,13 +229,21 @@ public:
     void positiveResult(const ClientList::FindResult& result,
                         const shared_ptr<MockDataSourceClient>& dsrc,
                         const Name& name, bool exact,
-                        const char* test)
+                        const char* test, bool from_cache = false)
     {
         SCOPED_TRACE(test);
-        EXPECT_EQ(dsrc.get(), result.dsrc_client_);
         ASSERT_NE(ZoneFinderPtr(), result.finder_);
         EXPECT_EQ(name, result.finder_->getOrigin());
         EXPECT_EQ(exact, result.exact_match_);
+        if (from_cache) {
+            EXPECT_NE(shared_ptr<InMemoryZoneFinder>(),
+                      dynamic_pointer_cast<InMemoryZoneFinder>(
+                          result.finder_)) << "Finder is not from cache";
+            EXPECT_TRUE(NULL !=
+                        dynamic_cast<InMemoryClient*>(result.dsrc_client_));
+        } else {
+            EXPECT_EQ(dsrc.get(), result.dsrc_client_);
+        }
     }
     // Configure the list with multiple data sources, according to
     // some configuration. It uses the index as parameter, to be able to
@@ -603,6 +611,16 @@ TEST_F(ListTest, cacheZones) {
     EXPECT_EQ(result::SUCCESS, cache->findZone(Name("example.org")).code);
     EXPECT_EQ(result::SUCCESS, cache->findZone(Name("example.com")).code);
     EXPECT_EQ(result::NOTFOUND, cache->findZone(Name("example.cz")).code);
+
+    // These are cached and answered from the cache
+    positiveResult(list_->find(Name("example.com.")), ds_[0],
+                   Name("example.com."), true, "com", true);
+    positiveResult(list_->find(Name("example.org.")), ds_[0],
+                   Name("example.org."), true, "org", true);
+    positiveResult(list_->find(Name("sub.example.com.")), ds_[0],
+                   Name("example.com."), false, "Subdomain of com", true);
+    // For now, the ones not cached are ignored.
+    EXPECT_TRUE(negativeResult_ == list_->find(Name("example.cz.")));
 }
 
 // Check the caching handles misbehaviour from the data source and

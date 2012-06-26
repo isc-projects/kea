@@ -139,14 +139,11 @@ ConfigurableClientList::find(const dns::Name& name, bool want_exact_match,
     } candidate;
 
     BOOST_FOREACH(const DataSourceInfo& info, data_sources_) {
-        // TODO: Once we have support for the caches, consider them too here
-        // somehow. This would probably get replaced by a function, that
-        // checks if there's a cache available, if it is, checks the loaded
-        // zones and zones expected to be in the real data source. If it is
-        // the cached one, provide the cached one. If it is in the external
-        // data source, use the datasource and don't provide the finder yet.
-        const DataSourceClient::FindResult result(
-            info.data_src_client_->findZone(name));
+        DataSourceClient* client(info.cache_ ? info.cache_.get() :
+                                 info.data_src_client_);
+        const DataSourceClient::FindResult result(client->findZone(name));
+        // TODO: Once we mark the zones that are not loaded, but are present
+        // in the data source somehow, check them too.
         switch (result.code) {
             case result::SUCCESS:
                 // If we found an exact match, we have no hope to getting
@@ -154,7 +151,7 @@ ConfigurableClientList::find(const dns::Name& name, bool want_exact_match,
 
                 // TODO: In case we have only the datasource and not the finder
                 // and the need_updater parameter is true, get the zone there.
-                return (FindResult(info.data_src_client_, result.zone_finder,
+                return (FindResult(client, result.zone_finder,
                                    true));
             case result::PARTIALMATCH:
                 if (!want_exact_match) {
@@ -175,7 +172,7 @@ ConfigurableClientList::find(const dns::Name& name, bool want_exact_match,
                     if (labels > candidate.matched_labels ||
                         !candidate.matched) {
                         // This one is strictly better. Replace it.
-                        candidate.datasrc_client = info.data_src_client_;
+                        candidate.datasrc_client = client;
                         candidate.finder = result.zone_finder;
                         candidate.matched_labels = labels;
                         candidate.matched = true;
