@@ -213,6 +213,11 @@ public:
     ///     client.
     /// \throw ConfigurationError if the configuration is invalid in some
     ///     sense.
+    /// \throw Unexpected if something misbehaves (like the data source
+    ///     returning NULL iterator).
+    /// \throw NotImplemented if the auto-detection of list of zones is
+    ///     needed.
+    /// \throw Whatever is propagated from within the data source.
     void configure(const data::Element& configuration, bool allow_cache);
 
     /// \brief Implementation of the ClientList::find.
