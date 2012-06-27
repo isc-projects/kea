@@ -444,11 +444,6 @@ DatabaseClient::Finder::findDelegationPoint(const isc::dns::Name& name,
     for (int i = remove_labels; i > 0; --i) {
         const Name superdomain(name.split(i));
 
-        // Note if this is the origin. (We don't count NS records at the origin
-        // as a delegation so this controls whether NS RRs are included in
-        // the results of some searches.)
-        const bool not_origin = (i != remove_labels);
-
         // Look if there's NS or DNAME at this point of the tree, but ignore
         // the NS RRs at the apex of the zone.
         const FoundRRsets found = getRRsets(superdomain.toText(),
@@ -457,6 +452,11 @@ DatabaseClient::Finder::findDelegationPoint(const isc::dns::Name& name,
             // This node contains either NS or DNAME RRs so it does exist.
             const FoundIterator nsi(found.second.find(RRType::NS()));
             const FoundIterator dni(found.second.find(RRType::DNAME()));
+
+            // Note if this is the origin. (We don't count NS records at the
+            // origin as a delegation so this controls whether NS RRs are
+            // included in the results of some searches.)
+            const bool not_origin = (i != remove_labels);
 
             // An optimisation.  We know that there is an exact match for
             // something at this point in the tree so remember it.  If we have
@@ -972,7 +972,6 @@ DatabaseClient::Finder::findInternal(const Name& name, const RRType& type,
     // - Requested name is a delegation point (NS only but not at the zone
     //   apex - DNAME is ignored here as it redirects DNS names subordinate to
     //   the owner name - the owner name itself is not redirected.)
-    const bool is_origin = (name == getOrigin());
     WantedTypes final_types(FINAL_TYPES());
     final_types.insert(type);
     const FoundRRsets found = getRRsets(name.toText(), final_types,
@@ -981,6 +980,7 @@ DatabaseClient::Finder::findInternal(const Name& name, const RRType& type,
     if (found.first) {
         // Something found at the domain name.  Look into it further to get
         // the final result.
+        const bool is_origin = (name == getOrigin());
         return (findOnNameResult(name, type, options, is_origin, found, NULL,
                                  target, dnssec_ctx));
     } else {
