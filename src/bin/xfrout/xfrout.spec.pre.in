@@ -21,13 +21,13 @@
          }
        },
        {
-         "item_name": "test_notify_slaves",
+         "item_name": "also_notify",
          "item_type": "list",
          "item_optional": true,
          "item_default": [],
          "list_item_spec":
          {
-             "item_name": "test_notify_slaves_element",
+             "item_name": "also_notify_element",
              "item_type": "map",
              "item_optional": true,
              "item_default": {},
