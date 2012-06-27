@@ -45,7 +45,7 @@ public:
         Name getOrigin() const { return (origin_); }
         // The rest is not to be called, so just have them
         RRClass getClass() const {
-            return (RRClass::IN());
+            isc_throw(isc::NotImplemented, "Not implemented");
         }
         shared_ptr<Context> find(const Name&, const RRType&,
                                  const FindOptions)
@@ -162,6 +162,9 @@ private:
 // some methods to dig directly in the internals, for the tests.
 class TestedList : public ConfigurableClientList {
 public:
+    TestedList(const RRClass& rrclass) :
+        ConfigurableClientList(rrclass)
+    {}
     DataSources& getDataSources() { return (data_sources_); }
     // Overwrite the list's method to get a data source with given type
     // and configuration. We mock the data source and don't create the
@@ -210,7 +213,7 @@ class ListTest : public ::testing::Test {
 public:
     ListTest() :
         // The empty list corresponds to a list with no elements inside
-        list_(new TestedList()),
+        list_(new TestedList(RRClass::IN())),
         config_elem_(Element::fromJSON("["
             "{"
             "   \"type\": \"test_type\","
@@ -611,6 +614,8 @@ TEST_F(ListTest, cacheZones) {
     EXPECT_EQ(result::SUCCESS, cache->findZone(Name("example.org")).code);
     EXPECT_EQ(result::SUCCESS, cache->findZone(Name("example.com")).code);
     EXPECT_EQ(result::NOTFOUND, cache->findZone(Name("example.cz")).code);
+    EXPECT_EQ(RRClass::IN(),
+              cache->findZone(Name("example.org")).zone_finder->getClass());
 
     // These are cached and answered from the cache
     positiveResult(list_->find(Name("example.com.")), ds_[0],
