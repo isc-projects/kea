@@ -92,7 +92,7 @@
       <title>Supported Platforms</title>
       <para>
   BIND 10 builds have been tested on (in no particular order)
-  Debian GNU/Linux 5 and unstable, Ubuntu 9.10, NetBSD 5,
+  Debian GNU/Linux 6 and unstable, Ubuntu 9.10, NetBSD 5,
   Solaris 10 and 11, FreeBSD 7 and 8, CentOS Linux 5.3,
   MacOS 10.6 and 10.7, and OpenBSD 5.1.
 
@@ -105,7 +105,17 @@
     </section>
 
     <section id="required-software">
-      <title>Required Software</title>
+      <title>Required Software at Run-time</title>
+
+      <para>
+        Running BIND 10 uses various extra software which may
+        not be provided in some operating systems' default
+        installations nor standard packages collections. You may
+        need to install this required software separately.
+        (For the build requirements, also see
+        <xref linkend="build-requirements"/>.)
+      </para>
+
       <para>
         BIND 10 requires at least Python 3.1
         (<ulink url="http://www.python.org/"/>).
@@ -140,15 +150,6 @@
         Python modules need to be built for the corresponding Python 3.
       </para>
 <!-- TODO: this will change ... -->
-
-      <note>
-        <para>
-          Some operating systems do not provide these dependencies
-          in their default installation nor standard packages
-          collections.
-          You may need to install them separately.
-        </para>
-      </note>
     </section>
 
     <section id="starting_stopping">
