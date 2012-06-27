@@ -1059,9 +1059,6 @@ address, but the usual ones don't." mean? -->
         specifications and all current settings to the
         <command>bindctl</command> client (via
         <command>b10-cmdctl</command>).
-      </para>
-
-      <para>
         <command>b10-cfgmgr</command> relays configurations received
         from <command>b10-cmdctl</command> to the appropriate modules.
       </para>
@@ -1080,7 +1077,7 @@ config changes are actually commands to cfgmgr
       <para>
         The stored configuration file is at
         <filename>/usr/local/var/bind10-devel/b10-config.db</filename>.
-        (The full path is what was defined at build configure time for
+        (The directory is what was defined at build configure time for
         <option>--localstatedir</option>.
         The default is <filename>/usr/local/var/</filename>.)
         The format is loosely based on JSON and is directly parseable
@@ -1198,7 +1195,7 @@ but you might wanna check with likun
 
 <!-- TODO
 openssl req -new -x509 -keyout server.pem -out server.pem -days 365 -nodes
-but that is a single file, maybethis should go back to that format?
+but that is a single file, maybe this should go back to that format?
 -->
 
 <!--
@@ -1265,7 +1262,6 @@ shutdown
 <!--
 TODO
 (12:21:30) jinmei: I'd like to have sample session using a command line www client such as wget
-(12:21:33) jinmei: btw
 -->
 
   </chapter>
