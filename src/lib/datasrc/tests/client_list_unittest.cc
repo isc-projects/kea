@@ -150,7 +150,12 @@ public:
         } else if (name == Name("null.org")) {
             return (ZoneIteratorPtr());
         } else {
-            return (ZoneIteratorPtr(new Iterator(name)));
+            FindResult result(findZone(name));
+            if (result.code == isc::datasrc::result::SUCCESS) {
+                return (ZoneIteratorPtr(new Iterator(name)));
+            } else {
+                isc_throw(DataSourceError, "No such zone");
+            }
         }
     }
     const string type_;
@@ -737,7 +742,7 @@ TEST_F(ListTest, masterFiles) {
                    true);
 
     // If cache is not enabled, nothing is loaded
-    list_->configure(*elem, true);
+    list_->configure(*elem, false);
     EXPECT_EQ(0, list_->getDataSources().size());
 }
 
