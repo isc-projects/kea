@@ -1,1 +1,1 @@
-from isc.sysinfo.cpu import *
+from isc.sysinfo.sysinfo import *

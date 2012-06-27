@@ -1,6 +1,5 @@
 python_PYTHON = __init__.py
-python_PYTHON += cpu.py
-python_PYTHON += platform.py
+python_PYTHON += sysinfo.py
 
 pythondir = $(pyexecdir)/isc/sysinfo
 
