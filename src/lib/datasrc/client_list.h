@@ -16,6 +16,7 @@
 #define DATASRC_CONTAINER_H
 
 #include <dns/name.h>
+#include <dns/rrclass.h>
 #include <cc/data.h>
 #include <exceptions/exceptions.h>
 
@@ -186,6 +187,12 @@ typedef boost::shared_ptr<const ClientList> ConstClientListPtr;
 /// inherited except for tests.
 class ConfigurableClientList : public ClientList {
 public:
+    /// \brief Constructor
+    ///
+    /// \param rrclass For which class the list should work.
+    ConfigurableClientList(const isc::dns::RRClass &rrclass) :
+        rrclass_(rrclass)
+    {}
     /// \brief Exception thrown when there's an error in configuration.
     class ConfigurationError : public Exception {
     public:
@@ -286,6 +293,8 @@ public:
     /// it might be, so it is just made public (there's no real reason to
     /// hide it).
     const DataSources& getDataSources() const { return (data_sources_); }
+private:
+    const isc::dns::RRClass rrclass_;
 };
 
 } // namespace datasrc

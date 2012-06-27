@@ -93,8 +93,7 @@ ConfigurableClientList::configure(const Element& config, bool allow_cache) {
                     }
                     shared_ptr<InMemoryZoneFinder>
                         finder(new
-                            InMemoryZoneFinder(zone.zone_finder->getClass(),
-                                               origin));
+                            InMemoryZoneFinder(rrclass_, origin));
                     ZoneIteratorPtr iterator(client->getIterator(origin));
                     if (!iterator) {
                         isc_throw(isc::Unexpected, "Got NULL iterator for "
