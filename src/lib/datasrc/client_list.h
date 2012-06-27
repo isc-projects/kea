@@ -236,16 +236,11 @@ public:
     ///
     /// \todo The content yet to be defined.
     struct DataSourceInfo {
-        /// \brief Default constructor.
-        ///
-        /// Don't use directly. It is here so the structure can live in
-        /// a vector.
-        DataSourceInfo() :
-            data_src_client_(NULL)
-        {}
+        // Plays a role of default constructor too (for vector)
+        DataSourceInfo(bool has_cache = false);
         DataSourceInfo(DataSourceClient* data_src_client,
                        const DataSourceClientContainerPtr& container,
-                       bool hasCache);
+                       bool has_cache);
         DataSourceClient* data_src_client_;
         DataSourceClientContainerPtr container_;
         boost::shared_ptr<InMemoryClient> cache_;
