@@ -407,7 +407,8 @@ private:
     /// <code>Name</code> and <code>other</code> and returns the result
     /// in the form of a <code>NameComparisonResult</code> object.
     ///
-    /// This method never throws an exception.
+    /// This method can throw the BadValue exception if bad label
+    /// indices are passed.
     ///
     /// \param other the right-hand operand to compare against.
     /// \param first_label the leftmost label of <code>Name</code> to
