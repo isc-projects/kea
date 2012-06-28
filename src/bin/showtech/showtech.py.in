@@ -35,6 +35,7 @@ def main():
 
     print('\nPlatform');
     print(' + Operating system: ' + s.get_platform_name())
+    print(' + Distribution: ' + s.get_platform_distro())
     print(' + Kernel version: ' + s.get_platform_version())
     if s.get_platform_is_smp():
         print(' + SMP kernel: yes')

@@ -18,6 +18,8 @@
 import os
 import sys
 import re
+import subprocess
+import os.path
 
 class SysInfo:
     def __init__(self):
@@ -71,6 +73,42 @@ class SysInfo:
                     self._mem_swap_free = int(r.group(1).strip()) * 1024
                     continue
 
+        self._platform_distro = None
+
+        try:
+            s = subprocess.check_output(['lsb_release', '-a'])
+            for line in s.decode('utf-8').split('\n'):
+                r = re.match('^Description:(.*)', line)
+                if r:
+                    self._platform_distro = r.group(1).strip()
+                    break
+        except (subprocess.CalledProcessError, OSError):
+            pass
+
+        if self._platform_distro is None:
+            files = ['/etc/debian_release',
+                     '/etc/debian_version',
+                     '/etc/SuSE-release',
+                     '/etc/UnitedLinux-release',
+                     '/etc/mandrake-release',
+                     '/etc/gentoo-release',
+                     '/etc/fedora-release',
+                     '/etc/redhat-release',
+                     '/etc/redhat_version',
+                     '/etc/slackware-release',
+                     '/etc/slackware-version',
+                     '/etc/arch-release',
+                     '/etc/lsb-release',
+                     '/etc/mageia-release']
+            for fn in files:
+                if os.path.exists(fn):
+                    with open(fn) as f:
+                        self._platform_distro = f.read().strip()
+                    break
+
+        if self._platform_distro is None:
+            self._platform_distro = 'Unknown'
+
     def get_num_processors(self):
         # This is the number of hyperthreads when hyper-threading is
         # used. This is not entirely portable, so we'll have to handle
@@ -94,6 +132,9 @@ class SysInfo:
 
     def get_platform_is_smp(self):
         return self._platform_is_smp
+
+    def get_platform_distro(self):
+        return self._platform_distro
 
     def get_uptime(self):
         return self._uptime
