@@ -143,7 +143,7 @@ TEST_F(LabelSequenceTest, equals_insensitive) {
 }
 
 void
-getDataCheck(const char* expected_data, size_t expected_len,
+getDataCheck(const uint8_t* expected_data, size_t expected_len,
              const LabelSequence& ls)
 {
     size_t len;
@@ -154,10 +154,23 @@ getDataCheck(const char* expected_data, size_t expected_len,
         "Expected data: " << expected_data <<
         " name: " << ls.getName().toText();
     for (size_t i = 0; i < len; ++i) {
-        EXPECT_EQ(static_cast<const uint8_t>(expected_data[i]), data[i]) <<
+        EXPECT_EQ(expected_data[i], data[i]) <<
           "Difference at pos " << i << ": Expected data: " << expected_data <<
           " name: " << ls.getName().toText();;
     }
+}
+
+// Convenient data converter for expected data.  Label data must be of
+// uint8_t*, while it's convenient if we can specify some test data in
+// plain string (which is of char*).  This wrapper converts the latter to
+// the former in a safer way.
+void
+getDataCheck(const char* expected_char_data, size_t expected_len,
+             const LabelSequence& ls)
+{
+    const vector<uint8_t> expected_data(expected_char_data,
+                                        expected_char_data + expected_len);
+    getDataCheck(&expected_data[0], expected_len, ls);
 }
 
 TEST_F(LabelSequenceTest, getData) {
@@ -259,7 +272,7 @@ TEST_F(LabelSequenceTest, comparePart) {
     // Data comparison
     size_t len;
     const uint8_t* data = ls1.getData(&len);
-    getDataCheck((const char*) data, len, ls8);
+    getDataCheck(data, len, ls8);
 }
 
 TEST_F(LabelSequenceTest, isAbsolute) {
