@@ -394,4 +394,10 @@ TEST_F(LabelSequenceTest, getHash) {
     hashDistributionCheck(ca_servers);
 }
 
+// test operator<<.  We simply confirm it appends the result of toText().
+TEST_F(LabelSequenceTest, LeftShiftOperator) {
+    ostringstream oss;
+    oss << ls1;
+    EXPECT_EQ(ls1.toText(), oss.str());
+}
 }
