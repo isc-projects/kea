@@ -110,6 +110,9 @@ look into the cause and address the issue.  The log message includes
 the client's address (and port), and the error message sent from the
 lower layer that detects the failure.
 
+% AUTH_RECEIVED_NOTIFY received incoming NOTIFY for zone name %1, zone class %2
+This is a debug message reporting that an incoming NOTIFY was received.
+
 % AUTH_NOTIFY_QUESTIONS invalid number of questions (%1) in incoming NOTIFY
 This debug message is logged by the authoritative server when it receives
 a NOTIFY packet that contains zero or more than one question. (A valid

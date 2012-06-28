@@ -67,11 +67,11 @@ def perform_axfr(step, zone_name, address, port):
     Step definition:
     An AXFR transfer of <zone_name> [from <address>:<port>]
 
-    Address defaults to 127.0.0.1
+    Address defaults to ::1
     Port defaults to 47806
     """
     if address is None:
-        address = "127.0.0.1"
+        address = "::1"
     # convert [IPv6_addr] to IPv6_addr:
     address = re.sub(r"\[(.+)\]", r"\1", address)
     if port is None:
