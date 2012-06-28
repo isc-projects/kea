@@ -306,8 +306,8 @@ def config_remove_command(step, name, value, cmdctl_port):
                 "quit"]
     run_bindctl(commands, cmdctl_port)
 
-@step('send bind10 the command (.+)(?: with cmdctl port (\d+))?')
-def send_command(step, command, cmdctl_port):
+@step('send bind10(?: with cmdctl port (\d+))? the command (.+)')
+def send_command(step, cmdctl_port, command):
     """
     Run bindctl, send the given command, and exit bindctl.
     Parameters:
