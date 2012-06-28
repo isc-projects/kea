@@ -20,7 +20,7 @@ endif
 CLEANFILES = *.gcno *.gcda
 
 TESTS_ENVIRONMENT = \
-        libtool --mode=execute $(VALGRIND_COMMAND)
+        $(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
 
 # Do not define global tests, use check-local so
 # environment can be set (needed for dynamic loading)

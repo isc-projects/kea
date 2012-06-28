@@ -1,3 +1,18 @@
+451.	[bug]		muks, jinmei
+	libdatasrc: the database-based data source now correctly returns
+	glue records on (not under) a zone cut, such as in the case where
+	the NS name of an NS record is identical to its owner name. (Note:
+	libdatasrc itself doesn't judge what kind of record type can be a
+	"glue"; it's the caller's responsibility.)
+	(Trac #1771, git 483f1075942965f0340291e7ff7dae7806df22af)
+
+450.	[func]*		tomek
+	b10-dhcp4: DHCPv4 server component is now integrated into
+	BIND10 framework. It can be started from BIND10 (using bindctl)
+	and can receive commands. The only supported command for now
+	is 'Dhcp4 shutdown'.
+	(Trac #1651, git 7e16a5a50d3311e63d10a224ec6ebcab5f25f62c)
+
 bind10-devel-20120621 released on June 21. 2012
 
 449.	[bug]		muks

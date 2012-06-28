@@ -963,17 +963,14 @@ public:
         ///
         /// \param name Which domain name should be scanned.
         /// \param types List of types the caller is interested in.
-        /// \param check_ns If this is set to true, it checks nothing lives
-        ///     together with NS record (with few little exceptions, like RRSIG
-        ///     or NSEC). This check is meant for non-apex NS records.
         /// \param construct_name If this is NULL, the resulting RRsets have
-        ///     their name set to name. If it is not NULL, it overrides the name
-        ///     and uses this one (this can be used for wildcard synthesized
-        ///     records).
+        ///     their name set to name. If it is not NULL, it overrides the
+        ///     name and uses this one (this can be used for wildcard
+        ///     synthesized records).
         /// \param any If this is true, it records all the types, not only the
         ///     ones requested by types. It also puts a NULL pointer under the
-        ///     ANY type into the result, if it finds any RRs at all, to easy the
-        ///     identification of success.
+        ///     ANY type into the result, if it finds any RRs at all, to easy
+        ///     the identification of success.
         /// \param srcContext This can be set to non-NULL value to override the
         ///     iterator context used for obtaining the data. This can be used,
         ///     for example, to get data from the NSEC3 namespace.
@@ -986,7 +983,7 @@ public:
         /// \throw DataSourceError If there's a low-level error with the
         ///     database or the database contains bad data.
         FoundRRsets getRRsets(const std::string& name,
-                              const WantedTypes& types, bool check_ns,
+                              const WantedTypes& types,
                               const std::string* construct_name = NULL,
                               bool any = false,
                               DatabaseAccessor::IteratorContextPtr srcContext =
