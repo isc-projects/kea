@@ -117,5 +117,11 @@ LabelSequence::toText() const {
     return (name_.toText(!isAbsolute(), first_label_, last_label_));
 }
 
+std::ostream&
+operator<<(std::ostream& os, const LabelSequence& label_sequence) {
+    os << label_sequence.toText();
+    return (os);
+}
+
 } // end namespace dns
 } // end namespace isc
