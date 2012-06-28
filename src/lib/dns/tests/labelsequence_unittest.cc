@@ -166,7 +166,7 @@ TEST_F(LabelSequenceTest, compare) {
     Name nc("g.f.e.d.c.example.org");
     LabelSequence lsc(nc);
 
-    // "g.f.e.d.c.example.org." and "b.example.org" (no hierarchy), case
+    // "g.f.e.d.c.example.org." and "b.example.org" (not absolute), case
     // in-sensitive
     lsb.stripRight(1);
     result = lsc.compare(lsb);
@@ -234,6 +234,91 @@ TEST_F(LabelSequenceTest, compare) {
     EXPECT_EQ(isc::dns::NameComparisonResult::EQUAL,
               result.getRelation());
     EXPECT_EQ(4, result.getCommonLabels());
+
+    Name nf("a.b.c.isc.example.org");
+    LabelSequence lsf(nf);
+    Name ng("w.x.y.isc.EXAMPLE.org");
+    LabelSequence lsg(ng);
+
+    // "a.b.c.isc.example.org." and "w.x.y.isc.EXAMPLE.org" (not
+    // absolute), case in-sensitive
+    lsg.stripRight(1);
+    result = lsg.compare(lsf);
+    EXPECT_EQ(isc::dns::NameComparisonResult::NONE,
+              result.getRelation());
+    EXPECT_EQ(0, result.getCommonLabels());
+
+    // "a.b.c.isc.example.org" (not absolute) and
+    // "w.x.y.isc.EXAMPLE.org" (not absolute), case in-sensitive
+    lsf.stripRight(1);
+    result = lsg.compare(lsf);
+    EXPECT_EQ(isc::dns::NameComparisonResult::COMMONANCESTOR,
+              result.getRelation());
+    EXPECT_EQ(3, result.getCommonLabels());
+
+    // "a.b.c.isc.example" (not absolute) and
+    // "w.x.y.isc.EXAMPLE" (not absolute), case in-sensitive
+    lsf.stripRight(1);
+    lsg.stripRight(1);
+    result = lsg.compare(lsf);
+    EXPECT_EQ(isc::dns::NameComparisonResult::COMMONANCESTOR,
+              result.getRelation());
+    EXPECT_EQ(2, result.getCommonLabels());
+
+    // "a.b.c" (not absolute) and
+    // "w.x.y" (not absolute), case in-sensitive
+    lsf.stripRight(2);
+    lsg.stripRight(2);
+    result = lsg.compare(lsf);
+    EXPECT_EQ(isc::dns::NameComparisonResult::NONE,
+              result.getRelation());
+    EXPECT_EQ(0, result.getCommonLabels());
+
+    Name nh("aexample.org");
+    LabelSequence lsh(nh);
+    Name ni("bexample.org");
+    LabelSequence lsi(ni);
+
+    // "aexample.org" (not absolute) and
+    // "bexample.org" (not absolute), case in-sensitive
+    lsh.stripRight(1);
+    lsi.stripRight(1);
+    result = lsh.compare(lsi);
+    EXPECT_EQ(isc::dns::NameComparisonResult::COMMONANCESTOR,
+              result.getRelation());
+    EXPECT_EQ(1, result.getCommonLabels());
+
+    // "aexample" (not absolute) and
+    // "bexample" (not absolute), case in-sensitive
+    lsh.stripRight(1);
+    lsi.stripRight(1);
+    result = lsh.compare(lsi);
+    EXPECT_EQ(isc::dns::NameComparisonResult::NONE,
+              result.getRelation());
+    EXPECT_EQ(0, result.getCommonLabels());
+
+    Name nj("example.org");
+    LabelSequence lsj(nj);
+    Name nk("example.org");
+    LabelSequence lsk(nk);
+
+    // "example.org" (not absolute) and
+    // "example.org" (not absolute), case in-sensitive
+    lsj.stripRight(1);
+    lsk.stripRight(1);
+    result = lsj.compare(lsk);
+    EXPECT_EQ(isc::dns::NameComparisonResult::EQUAL,
+              result.getRelation());
+    EXPECT_EQ(2, result.getCommonLabels());
+
+    // "example" (not absolute) and
+    // "example" (not absolute), case in-sensitive
+    lsj.stripRight(1);
+    lsk.stripRight(1);
+    result = lsj.compare(lsk);
+    EXPECT_EQ(isc::dns::NameComparisonResult::EQUAL,
+              result.getRelation());
+    EXPECT_EQ(1, result.getCommonLabels());
 }
 
 void
