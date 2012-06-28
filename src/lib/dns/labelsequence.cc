@@ -74,13 +74,15 @@ LabelSequence::equals(const LabelSequence& other, bool case_sensitive) const {
 NameComparisonResult
 LabelSequence::compare(const LabelSequence& other,
                        bool case_sensitive) const {
-    if ((!isAbsolute()) || (!other.isAbsolute())) {
+    if (isAbsolute() ^ other.isAbsolute()) {
         return (NameComparisonResult(0, 0, NameComparisonResult::NONE));
     }
 
     return (name_.partial_compare(other.name_,
                                   first_label_,
                                   other.first_label_,
+                                  last_label_,
+                                  other.last_label_,
                                   case_sensitive));
 }
 
