@@ -109,6 +109,53 @@ class SysInfo:
         if self._platform_distro is None:
             self._platform_distro = 'Unknown'
 
+        self._net_interfaces = None
+
+        try:
+            s = subprocess.check_output(['ip', 'addr'])
+            self._net_interfaces = s.decode('utf-8')
+        except (subprocess.CalledProcessError, OSError):
+            pass
+
+        if self._net_interfaces is None:
+            self._net_interfaces = 'Unknown'
+
+        self._net_routing_table = None
+
+        try:
+            s = subprocess.check_output(['ip', 'route'])
+            self._net_routing_table = s.decode('utf-8')
+            self._net_routing_table += '\n'
+            s = subprocess.check_output(['ip', '-f', 'inet6', 'route'])
+            self._net_routing_table += s.decode('utf-8')
+        except (subprocess.CalledProcessError, OSError):
+            pass
+
+        if self._net_routing_table is None:
+            self._net_routing_table = 'Unknown'
+
+        self._net_stats = None
+
+        try:
+            s = subprocess.check_output(['netstat', '-s'])
+            self._net_stats = s.decode('utf-8')
+        except (subprocess.CalledProcessError, OSError):
+            pass
+
+        if self._net_stats is None:
+            self._net_stats = 'Unknown'
+
+        self._net_connections = None
+
+        try:
+            s = subprocess.check_output(['netstat', '-apn'])
+            self._net_connections = s.decode('utf-8')
+        except (subprocess.CalledProcessError, OSError):
+            pass
+
+        if self._net_connections is None:
+            self._net_connections = 'Unknown'
+
     def get_num_processors(self):
         # This is the number of hyperthreads when hyper-threading is
         # used. This is not entirely portable, so we'll have to handle
@@ -118,7 +165,7 @@ class SysInfo:
     def get_endianness(self):
         return self._endianness
 
-    def get_hostname(self):
+    def get_platform_hostname(self):
         return self._hostname
 
     def get_platform_name(self):
@@ -159,3 +206,18 @@ class SysInfo:
 
     def get_mem_swap_free(self):
         return self._mem_swap_free
+
+    def get_mem_swap_free(self):
+        return self._mem_swap_free
+
+    def get_net_interfaces(self):
+        return self._net_interfaces
+
+    def get_net_routing_table(self):
+        return self._net_routing_table
+
+    def get_net_stats(self):
+        return self._net_stats
+
+    def get_net_connections(self):
+        return self._net_connections

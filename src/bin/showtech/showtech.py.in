@@ -27,7 +27,7 @@ def main():
     s = SysInfo()
 
     print('BIND 10 ShowTech tool')
-    print('---------------------')
+    print('=====================')
 
     print('\nCPU');
     print(' + Number of processors: ' + str(s.get_num_processors()))
@@ -42,6 +42,7 @@ def main():
     else:
         print(' + SMP kernel: no')
     print(' + Machine name: ' + s.get_platform_machine())
+    print(' + Hostname: ' + s.get_platform_hostname())
     print(' + Uptime: %d seconds' % (s.get_uptime()))
 
     l = s.get_loadavg()
@@ -55,10 +56,25 @@ def main():
     print(' + Swap total: %d bytes' % (s.get_mem_swap_total()))
     print(' + Swap free: %d bytes' % (s.get_mem_swap_free()))
 
-    print('\nNetwork');
-    print(' + Hostname: ' + s.get_hostname())
+    print('\n\nNetwork');
+    print('-------\n');
 
-    print('')
+    print('Interfaces')
+    print('~~~~~~~~~~\n')
+
+    print(s.get_net_interfaces())
+
+    print('Routing table')
+    print('~~~~~~~~~~~~~\n')
+    print(s.get_net_routing_table())
+
+    print('Statistics')
+    print('~~~~~~~~~~\n')
+    print(s.get_net_stats())
+
+    print('Connections')
+    print('~~~~~~~~~~~\n')
+    print(s.get_net_connections())
 
 if __name__ == '__main__':
     main()
