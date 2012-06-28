@@ -229,6 +229,11 @@ class Name {
     ///
     //@{
 private:
+    /// \brief Name data string
+    typedef std::basic_string<uint8_t> NameString;
+    /// \brief Name offsets type
+    typedef std::vector<uint8_t> NameOffsets;
+
     /// The default constructor
     ///
     /// This is used internally in the class implementation, but at least at
@@ -679,8 +684,8 @@ public:
     //@}
 
 private:
-    std::string ndata_;
-    std::vector<unsigned char> offsets_;
+    NameString ndata_;
+    NameOffsets offsets_;
     unsigned int length_;
     unsigned int labelcount_;
 };

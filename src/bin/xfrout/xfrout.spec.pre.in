@@ -21,6 +21,33 @@
          }
        },
        {
+         "item_name": "also_notify",
+         "item_type": "list",
+         "item_optional": true,
+         "item_default": [],
+         "list_item_spec":
+         {
+             "item_name": "also_notify_element",
+             "item_type": "map",
+             "item_optional": true,
+             "item_default": {},
+             "map_item_spec": [
+               {
+                   "item_name": "address",
+                   "item_type": "string",
+                   "item_optional": false,
+                   "item_default": ""
+               },
+               {
+                   "item_name": "port",
+                   "item_type": "integer",
+                   "item_optional": false,
+                   "item_default": 0
+               }
+             ]
+         }
+       },
+       {
          "item_name": "zone_config",
          "item_type": "list",
          "item_optional": true,

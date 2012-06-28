@@ -31,7 +31,7 @@ namespace isc {
 namespace dns {
 namespace name {
 namespace internal {
-extern const unsigned char maptolower[];
+extern const uint8_t maptolower[];
 } // end of internal
 } // end of name
 } // end of dns
