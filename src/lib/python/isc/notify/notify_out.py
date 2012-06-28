@@ -161,6 +161,12 @@ class NotifyOut:
             for item in slaves:
                 self._notify_infos[zone_id].notify_slaves.append((item, 53))
 
+    def add_slave(self, address, port):
+        for zone_name, zone_class in sqlite3_ds.get_zones_info(self._db_file):
+            zone_id = (zone_name, zone_class)
+            if zone_id in self._notify_infos:
+                self._notify_infos[zone_id].notify_slaves.append((address, port))
+
     def send_notify(self, zone_name, zone_class='IN'):
         '''Send notify to one zone's slaves, this function is
         the only interface for class NotifyOut which can be called
