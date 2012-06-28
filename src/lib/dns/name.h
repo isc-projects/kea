@@ -231,6 +231,8 @@ class Name {
 private:
     /// \brief Name data string
     typedef std::basic_string<uint8_t> NameString;
+    /// \brief Name offsets type
+    typedef std::vector<uint8_t> NameOffsets;
 
     /// The default constructor
     ///
@@ -683,7 +685,7 @@ public:
 
 private:
     NameString ndata_;
-    std::vector<uint8_t> offsets_;
+    NameOffsets offsets_;
     unsigned int length_;
     unsigned int labelcount_;
 };
