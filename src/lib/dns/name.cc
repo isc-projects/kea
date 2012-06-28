@@ -147,7 +147,7 @@ Name::Name(const std::string &namestring, bool downcase) {
     bool is_root = false;
     ft_state state = ft_init;
 
-    std::vector<unsigned char> offsets;
+    std::vector<uint8_t> offsets;
     offsets.reserve(Name::MAX_LABELS);
     offsets.push_back(0);
 
@@ -310,7 +310,7 @@ typedef enum {
 }
 
 Name::Name(InputBuffer& buffer, bool downcase) {
-    std::vector<unsigned char> offsets;
+    std::vector<uint8_t> offsets;
     offsets.reserve(Name::MAX_LABELS);
 
     /*
@@ -663,8 +663,8 @@ Name::reverse() const {
     retname.ndata_.reserve(length_);
 
     // Copy the original name, label by label, from tail to head.
-    vector<unsigned char>::const_reverse_iterator rit0 = offsets_.rbegin();
-    vector<unsigned char>::const_reverse_iterator rit1 = rit0 + 1;
+    vector<uint8_t>::const_reverse_iterator rit0 = offsets_.rbegin();
+    vector<uint8_t>::const_reverse_iterator rit1 = rit0 + 1;
     NameString::const_iterator n0 = ndata_.begin();
     retname.offsets_.push_back(0);
     while (rit1 != offsets_.rend()) {
