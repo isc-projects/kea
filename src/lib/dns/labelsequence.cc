@@ -23,7 +23,7 @@
 namespace isc {
 namespace dns {
 
-const char*
+const uint8_t*
 LabelSequence::getData(size_t *len) const {
     *len = getDataLength();
     return (&name_.ndata_[name_.offsets_[first_label_]]);
@@ -47,22 +47,22 @@ LabelSequence::getDataLength() const {
 bool
 LabelSequence::equals(const LabelSequence& other, bool case_sensitive) const {
     size_t len, other_len;
-    const char* data = getData(&len);
-    const char* other_data = other.getData(&other_len);
+    const uint8_t* data = getData(&len);
+    const uint8_t* other_data = other.getData(&other_len);
 
     if (len != other_len) {
         return (false);
     }
     if (case_sensitive) {
-        return (std::strncmp(data, other_data, len) == 0);
+        return (std::memcmp(data, other_data, len) == 0);
     }
 
     // As long as the data was originally validated as (part of) a name,
     // label length must never be a capital ascii character, so we can
     // simply compare them after converting to lower characters.
     for (size_t i = 0; i < len; ++i) {
-        const unsigned char ch = data[i];
-        const unsigned char other_ch = other_data[i];
+        const uint8_t ch = data[i];
+        const uint8_t other_ch = other_data[i];
         if (isc::dns::name::internal::maptolower[ch] !=
             isc::dns::name::internal::maptolower[other_ch]) {
             return (false);
@@ -97,14 +97,14 @@ LabelSequence::isAbsolute() const {
 size_t
 LabelSequence::getHash(bool case_sensitive) const {
     size_t length;
-    const char* s = getData(&length);
+    const uint8_t* s = getData(&length);
     if (length > 16) {
         length = 16;
     }
 
     size_t hash_val = 0;
     while (length > 0) {
-        const unsigned char c = *s++;
+        const uint8_t c = *s++;
         boost::hash_combine(hash_val, case_sensitive ? c :
                             isc::dns::name::internal::maptolower[c]);
         --length;
