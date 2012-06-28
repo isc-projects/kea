@@ -427,7 +427,15 @@ Name::toWire(AbstractMessageRenderer& renderer) const {
 }
 
 std::string
-Name::toText(bool omit_final_dot) const {
+Name::toText(bool omit_final_dot,
+             unsigned int first_label,
+             unsigned int last_label) const {
+    if ((first_label > labelcount_) ||
+        (last_label > labelcount_) ||
+        (first_label > last_label)) {
+        isc_throw(BadValue, "Bad first label indices were passed");
+    }
+
     if (length_ == 1) {
         //
         // Special handling for the root label.  We ignore omit_final_dot.
@@ -438,7 +446,7 @@ Name::toText(bool omit_final_dot) const {
 
     NameString::const_iterator np = ndata_.begin();
     NameString::const_iterator np_end = ndata_.end();
-    unsigned int labels = labelcount_; // use for integrity check
+    unsigned int labels = last_label - first_label; // use for integrity check
     // init with an impossible value to catch error cases in the end:
     unsigned int count = MAX_LABELLEN + 1;
 
@@ -446,6 +454,11 @@ Name::toText(bool omit_final_dot) const {
     // name data.  reserve that length to minimize reallocation.
     std::string result;
     result.reserve(length_);
+
+    for (unsigned int i = 0; i < first_label; i++) {
+        count = *np++;
+        np += count;
+    }
 
     while (np != np_end) {
         labels--;
@@ -458,6 +471,11 @@ Name::toText(bool omit_final_dot) const {
             break;
         }
             
+        if (labels == 0) {
+            count = 0;
+            break;
+        }
+
         if (count <= MAX_LABELLEN) {
             assert(np_end - np >= count);
 
@@ -503,6 +521,11 @@ Name::toText(bool omit_final_dot) const {
     assert(count == 0);         // a valid name must end with a 'dot'.
 
     return (result);
+}
+
+std::string
+Name::toText(bool omit_final_dot) const {
+    return toText(omit_final_dot, 0, labelcount_);
 }
 
 NameComparisonResult
