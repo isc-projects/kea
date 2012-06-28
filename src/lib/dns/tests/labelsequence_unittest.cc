@@ -292,6 +292,27 @@ TEST_F(LabelSequenceTest, isAbsolute) {
     ASSERT_TRUE(ls3.isAbsolute());
 }
 
+TEST_F(LabelSequenceTest, toText) {
+    EXPECT_EQ("example.org.", ls1.toText());
+    ls1.stripLeft(1);
+    EXPECT_EQ("org.", ls1.toText());
+    ls1.stripLeft(1);
+    EXPECT_EQ(".", ls1.toText());
+
+    EXPECT_EQ("example.com.", ls2.toText());
+    ls2.stripRight(1);
+    EXPECT_EQ("example", ls2.toText());
+    ls2.stripRight(1);
+    EXPECT_EQ("", ls2.toText());
+
+    EXPECT_EQ("foo.example.org.bar.", ls8.toText());
+    ls8.stripRight(2);
+    EXPECT_EQ("foo.example", ls8.toText());
+
+    EXPECT_EQ(".", ls7.toText());
+    EXPECT_THROW(ls7.stripLeft(1), isc::OutOfRange);
+}
+
 // The following are test data used in the getHash test below.  Normally
 // we use example/documentation domain names for testing, but in this case
 // we'd specifically like to use more realistic data, and are intentionally
