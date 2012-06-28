@@ -112,5 +112,10 @@ LabelSequence::getHash(bool case_sensitive) const {
     return (hash_val);
 }
 
+std::string
+LabelSequence::toText() const {
+    return (name_.toText(!isAbsolute(), first_label_, last_label_));
+}
+
 } // end namespace dns
 } // end namespace isc
