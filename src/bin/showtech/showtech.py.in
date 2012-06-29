@@ -24,7 +24,7 @@ import sys; sys.path.append ('@@PYTHONPATH@@')
 from isc.sysinfo import *
 
 def main():
-    s = SysInfo()
+    s = SysInfoFromFactory()
 
     print('BIND 10 ShowTech tool')
     print('=====================')
