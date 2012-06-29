@@ -1243,20 +1243,18 @@ or accounts database -->
       <title>Configuration specification for b10-cmdctl</title>
       <para>
         The configuration items for <command>b10-cmdctl</command> are:
-key_file
-cert_file
-accounts_file
+        <varname>accounts_file</varname> which defines the path to the
+        user accounts database (the default is
+        <filename>/usr/local/etc/bind10-devel/cmdctl-accounts.csv</filename>);
+        <varname>cert_file</varname> which defines the path to the
+        PEM certificate file (the default is
+        <filename>/usr/local/etc/bind10-devel/cmdctl-certfile.pem</filename>);
+        and
+	<varname>key_file</varname> which defines the path to the
+	PEM private key file (the default is
+        <filename>/usr/local/etc/bind10-devel/cmdctl-keyfile.pem</filename>).
       </para>
-<!-- TODO -->
 
-      <para>
-        The control commands are:
-print_settings
-<!-- TODO: remove that -->
-
-shutdown
-      </para>
-<!-- TODO -->
     </section>
 
 <!--
