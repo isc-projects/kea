@@ -20,8 +20,117 @@ import sys
 import re
 import subprocess
 import os.path
+import platform
 
 class SysInfo:
+    def __init__(self):
+        self._num_processors = -1
+        self._endianness = 'Unknown'
+        self._hostname = ''
+        self._platform_name = 'Unknown'
+        self._platform_version = 'Unknown'
+        self._platform_machine = 'Unknown'
+        self._platform_is_smp = False
+        self._uptime = -1
+        self._loadavg = [-1.0, -1.0, -1.0]
+        self._mem_total = -1
+        self._mem_free = -1
+        self._mem_cached = -1
+        self._mem_buffers = -1
+        self._mem_swap_total = -1
+        self._mem_swap_free = -1
+        self._platform_distro = 'Unknown'
+        self._net_interfaces = 'Unknown'
+        self._net_routing_table = 'Unknown'
+        self._net_stats = 'Unknown'
+        self._net_connections = 'Unknown'
+
+    def get_num_processors(self):
+        """Returns the number of processors. This is the number of
+        hyperthreads when hyper-threading is enabled.
+        """
+        return self._num_processors
+
+    def get_endianness(self):
+        """Returns 'big' or 'little'."""
+        return self._endianness
+
+    def get_platform_hostname(self):
+        """Returns the hostname of the system."""
+        return self._hostname
+
+    def get_platform_name(self):
+        """Returns the platform name (uname -s)."""
+        return self._platform_name
+
+    def get_platform_version(self):
+        """Returns the platform version (uname -v)."""
+        return self._platform_version
+
+    def get_platform_machine(self):
+        """Returns the platform machine architecture."""
+        return self._platform_machine
+
+    def get_platform_is_smp(self):
+        """Returns True if an SMP kernel is being used, False otherwise."""
+        return self._platform_is_smp
+
+    def get_platform_distro(self):
+        """Returns the name of the OS distribution in use."""
+        return self._platform_distro
+
+    def get_uptime(self):
+        """Returns the uptime in seconds."""
+        return self._uptime
+
+    def get_loadavg(self):
+        """Returns the load average as 3 floating point values in an array."""
+        return self._loadavg
+
+    def get_mem_total(self):
+        """Returns the total amount of memory in bytes."""
+        return self._mem_total
+
+    def get_mem_free(self):
+        """Returns the amount of free memory in bytes."""
+        return self._mem_free
+
+    def get_mem_cached(self):
+        """Returns the amount of cached memory in bytes."""
+        return self._mem_cached
+
+    def get_mem_buffers(self):
+        """Returns the amount of buffer in bytes."""
+        return self._mem_buffers
+
+    def get_mem_swap_total(self):
+        """Returns the total amount of swap in bytes."""
+        return self._mem_swap_total
+
+    def get_mem_swap_free(self):
+        """Returns the amount of free swap in bytes."""
+        return self._mem_swap_free
+
+    def get_net_interfaces(self):
+        """Returns information about network interfaces (as a multi-line string)."""
+        return self._net_interfaces
+
+    def get_net_routing_table(self):
+        """Returns information about network routing table (as a multi-line string)."""
+        return self._net_routing_table
+
+    def get_net_stats(self):
+        """Returns network statistics (as a multi-line string)."""
+        return self._net_stats
+
+    def get_net_connections(self):
+        """Returns network connection information (as a multi-line string)."""
+        return self._net_connections
+
+class SysInfoLinux(SysInfo):
+    """Linux implementation of the SysInfo class.
+    See the base class documentation for more information.
+    """
     def __init__(self):
         self._num_processors = os.sysconf('SC_NPROCESSORS_CONF')
         self._endianness = sys.byteorder
@@ -156,68 +265,9 @@ class SysInfo:
         if self._net_connections is None:
             self._net_connections = 'Unknown'
 
-    def get_num_processors(self):
-        # This is the number of hyperthreads when hyper-threading is
-        # used. This is not entirely portable, so we'll have to handle
-        # the case when it's not available.
-        return self._num_processors
-
-    def get_endianness(self):
-        return self._endianness
-
-    def get_platform_hostname(self):
-        return self._hostname
-
-    def get_platform_name(self):
-        return self._platform_name
-
-    def get_platform_version(self):
-        return self._platform_version
-
-    def get_platform_machine(self):
-        return self._platform_machine
-
-    def get_platform_is_smp(self):
-        return self._platform_is_smp
-
-    def get_platform_distro(self):
-        return self._platform_distro
-
-    def get_uptime(self):
-        return self._uptime
-
-    def get_loadavg(self):
-        return self._loadavg
-
-    def get_mem_total(self):
-        return self._mem_total
-
-    def get_mem_free(self):
-        return self._mem_free
-
-    def get_mem_cached(self):
-        return self._mem_cached
-
-    def get_mem_buffers(self):
-        return self._mem_buffers
-
-    def get_mem_swap_total(self):
-        return self._mem_swap_total
-
-    def get_mem_swap_free(self):
-        return self._mem_swap_free
-
-    def get_mem_swap_free(self):
-        return self._mem_swap_free
-
-    def get_net_interfaces(self):
-        return self._net_interfaces
-
-    def get_net_routing_table(self):
-        return self._net_routing_table
-
-    def get_net_stats(self):
-        return self._net_stats
-
-    def get_net_connections(self):
-        return self._net_connections
+def SysInfoFromFactory():
+    osname = platform.system()
+    if osname == 'Linux':
+        return SysInfoLinux()
+    else:
+        return SysInfo()
