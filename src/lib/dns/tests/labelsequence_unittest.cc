@@ -149,14 +149,14 @@ getDataCheck(const uint8_t* expected_data, size_t expected_len,
     size_t len;
     const uint8_t* data = ls.getData(&len);
     ASSERT_EQ(expected_len, len) << "Expected data: " << expected_data <<
-                                    " name: " << ls.getName().toText();
+                                    ", label sequence: " << ls;
     EXPECT_EQ(expected_len, ls.getDataLength()) <<
         "Expected data: " << expected_data <<
-        " name: " << ls.getName().toText();
+        ", label sequence: " << ls;
     for (size_t i = 0; i < len; ++i) {
         EXPECT_EQ(expected_data[i], data[i]) <<
           "Difference at pos " << i << ": Expected data: " << expected_data <<
-          " name: " << ls.getName().toText();;
+          ", label sequence: " << ls;
     }
 }
 

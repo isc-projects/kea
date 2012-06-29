@@ -139,17 +139,6 @@ public:
     /// \return a string representation of the <code>LabelSequence</code>.
     std::string toText() const;
 
-    /// \brief Returns the original Name object associated with this
-    ///        LabelSequence
-    ///
-    /// While the Name should still be in scope during the lifetime of
-    /// the LabelSequence, it can still be useful to have access to it,
-    /// for instance in helper functions that are only passed the
-    /// LabelSequence itself.
-    ///
-    /// \return Reference to the original Name object
-    const Name& getName() const { return (name_); }
-
     /// \brief Calculate a simple hash for the label sequence.
     ///
     /// This method calculates a hash value for the label sequence as binary
