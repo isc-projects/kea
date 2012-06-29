@@ -1807,10 +1807,7 @@ what if a NOTIFY is sent?
 
       <screen>&gt; <userinput>config add Zonemgr/secondary_zones</userinput>
 &gt; <userinput>config set Zonemgr/secondary_zones[0]/name "<option>example.com</option>"</userinput>
-&gt; <userinput>config set Zonemgr/secondary_zones[0]/class "<option>IN</option>"</userinput>
 &gt; <userinput>config commit</userinput></screen>
-
-<!-- TODO: remove the IN class example above when it is the default -->
 
       </para>
 
