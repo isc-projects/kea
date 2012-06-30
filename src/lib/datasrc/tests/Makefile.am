@@ -18,7 +18,7 @@ endif
 CLEANFILES = *.gcno *.gcda
 
 TESTS_ENVIRONMENT = \
-	libtool --mode=execute $(VALGRIND_COMMAND)
+	$(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
 
 TESTS =
 noinst_PROGRAMS =
@@ -67,7 +67,6 @@ run_unittests_SOURCES += client_list_unittest.cc
 # We need the actual module implementation in the tests (they are not part
 # of libdatasrc)
 run_unittests_SOURCES += $(top_srcdir)/src/lib/datasrc/sqlite3_accessor.cc
-run_unittests_SOURCES += $(top_srcdir)/src/lib/datasrc/memory_datasrc.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)

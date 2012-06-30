@@ -3622,33 +3622,6 @@ TYPED_TEST(DatabaseClientTest, compoundUpdate) {
                this->empty_rdatas_);
 }
 
-TYPED_TEST(DatabaseClientTest, previous) {
-    boost::shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
-
-    EXPECT_EQ(Name("www.example.org."),
-              finder->findPreviousName(Name("www2.example.org.")));
-    // Check a name that doesn't exist there
-    EXPECT_EQ(Name("www.example.org."),
-              finder->findPreviousName(Name("www1.example.org.")));
-    if (this->is_mock_) { // We can't really force the DB to throw
-        // Check it doesn't crash or anything if the underlying DB throws
-        DataSourceClient::FindResult
-            zone(this->client_->findZone(Name("bad.example.org")));
-        finder =
-            dynamic_pointer_cast<DatabaseClient::Finder>(zone.zone_finder);
-
-        EXPECT_THROW(finder->findPreviousName(Name("bad.example.org")),
-                     isc::NotImplemented);
-    } else {
-        // No need to test this on mock one, because we test only that
-        // the exception gets through
-
-        // A name before the origin
-        EXPECT_THROW(finder->findPreviousName(Name("example.com")),
-                     isc::NotImplemented);
-    }
-}
-
 TYPED_TEST(DatabaseClientTest, invalidRdata) {
     boost::shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
 
@@ -3674,13 +3647,6 @@ TEST_F(MockDatabaseClientTest, missingNSEC) {
     doFindTest(*finder, Name("badnsec2.example.org."), RRType::A(),
                RRType::A(), this->rrttl_, ZoneFinder::NXDOMAIN,
                this->expected_rdatas_, this->expected_sig_rdatas_);
-}
-
-TEST_F(MockDatabaseClientTest, badName) {
-    boost::shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
-
-    EXPECT_THROW(finder->findPreviousName(Name("brokenname.example.org.")),
-                 DataSourceError);
 }
 
 /*

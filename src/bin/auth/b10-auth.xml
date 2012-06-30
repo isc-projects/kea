@@ -20,7 +20,7 @@
 <refentry>
 
   <refentryinfo>
-    <date>May 16, 2012</date>
+    <date>June 20, 2012</date>
   </refentryinfo>
 
   <refmeta>
@@ -94,8 +94,8 @@
       <varlistentry>
         <term><option>-v</option></term>
         <listitem><para>
-          Enabled verbose mode. This enables diagnostic messages to
-          STDERR.
+	  Enable verbose logging mode. This enables logging of
+	  diagnostic messages at the maximum debug level.
         </para></listitem>
       </varlistentry>
 

@@ -1303,11 +1303,6 @@ public:
         return (real_zone_finder_->findNSEC3(name, recursive));
     }
 
-    virtual isc::dns::Name
-    findPreviousName(const isc::dns::Name& query) const {
-        return (real_zone_finder_->findPreviousName(query));
-    }
-
 private:
     isc::datasrc::ZoneFinderPtr real_zone_finder_;
     ThrowWhen throw_when_;
