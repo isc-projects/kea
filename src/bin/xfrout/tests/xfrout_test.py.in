@@ -60,6 +60,9 @@ class MySocket():
         self.sendqueue.extend(data);
         return len(data)
 
+    def fileno(self):
+        return 42               # simply return a constant dummy value
+
     def readsent(self):
         if len(self.sendqueue) >= 2:
             size = 2 + struct.unpack("!H", self.sendqueue[:2])[0]
@@ -1155,6 +1158,15 @@ class TestUnixSockServer(unittest.TestCase):
     def setUp(self):
         self.write_sock, self.read_sock = socket.socketpair()
         self.unix = MyUnixSockServer()
+        # Some test below modify these module-wide attributes.  We'll need
+        # to restore them at the end of each test, so we remember them here.
+        self.__select_bak = xfrout.select.select
+        self.__recv_fd_back = xfrout.recv_fd
+
+    def tearDown(self):
+        # Restore possibly faked module-wide attributes.
+        xfrout.select.select = self.__select_bak
+        xfrout.recv_fd = self.__recv_fd_back
 
     def test_tsig_keyring(self):
         """
@@ -1196,28 +1208,29 @@ class TestUnixSockServer(unittest.TestCase):
         # We test with UDP, as it can be "connected" without other
         # endpoint.  Note that in the current implementation _guess_remote()
         # unconditionally returns SOCK_STREAM.
-        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.connect(('127.0.0.1', 12345))
+        self.assertEqual((socket.AF_INET, socket.SOCK_STREAM,
+                          ('127.0.0.1', 12345)),
+                         self.unix._guess_remote(sock.fileno()))
+        sock.close()
+        if socket.has_ipv6:
+            # Don't check IPv6 address on hosts not supporting them
+            sock = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
+            sock.connect(('::1', 12345))
+            self.assertEqual((socket.AF_INET6, socket.SOCK_STREAM,
+                              ('::1', 12345, 0, 0)),
+                             self.unix._guess_remote(sock.fileno()))
+            sock.close()
+            # Try when pretending there's no IPv6 support
+            # (No need to pretend when there's really no IPv6)
+            xfrout.socket.has_ipv6 = False
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             sock.connect(('127.0.0.1', 12345))
             self.assertEqual((socket.AF_INET, socket.SOCK_STREAM,
                               ('127.0.0.1', 12345)),
                              self.unix._guess_remote(sock.fileno()))
-
-        if socket.has_ipv6:
-            # Don't check IPv6 address on hosts not supporting them
-            with socket.socket(socket.AF_INET6, socket.SOCK_DGRAM) as sock:
-                sock.connect(('::1', 12345))
-                self.assertEqual((socket.AF_INET6, socket.SOCK_STREAM,
-                                  ('::1', 12345, 0, 0)),
-                                 self.unix._guess_remote(sock.fileno()))
-
-            # Try when pretending there's no IPv6 support
-            # (No need to pretend when there's really no IPv6)
-            xfrout.socket.has_ipv6 = False
-            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
-                sock.connect(('127.0.0.1', 12345))
-                self.assertEqual((socket.AF_INET, socket.SOCK_STREAM,
-                                  ('127.0.0.1', 12345)),
-                                 self.unix._guess_remote(sock.fileno()))
+            sock.close()
             # Return it back
             xfrout.socket.has_ipv6 = True
 
@@ -1408,6 +1421,42 @@ class TestUnixSockServer(unittest.TestCase):
         sys.stdout.close()
         sys.stdout = old_stdout
         os.rmdir(dir_name)
+
+    def __fake_select(self, r, w, e):
+        '''select emulator used in select_loop_fail test.'''
+        # This simplified faked function assumes to be called at most once,
+        # and in that case just return a pre-configured "readable" sockets.
+        if self.__select_count > 0:
+            raise RuntimeError('select called unexpected number of times')
+        self.__select_count += 1
+        return (self.__select_return_redable, [], [])
+
+    def test_select_loop_fail(self):
+        '''Check failure events in the main loop.'''
+        # setup faked select() environments
+        self.unix._read_sock = MySocket(socket.AF_INET6, socket.SOCK_STREAM)
+        xfrout.select.select = self.__fake_select
+        self.__select_return_redable = [MySocket(socket.AF_INET6,
+                                                 socket.SOCK_STREAM)]
+
+        # Check that loop terminates if recv_fd() fails.
+        for ret_code in [-1, FD_SYSTEM_ERROR]:
+            # fake recv_fd so it returns the faked failure code.
+            xfrout.recv_fd = lambda fileno: ret_code
+
+            # reset the counter, go to the loop.
+            self.__select_count = 0
+            self.unix._select_loop(self.__select_return_redable[0])
+            # select should have been called exactly once.
+            self.assertEqual(1, self.__select_count)
+
+        # Next, we test the case where recf_fd succeeds but receiving the
+        # request fails.
+        self.__select_count = 0
+        xfrout.recv_fd = lambda fileno: 1
+        self.unix._receive_query_message = lambda fd: None
+        self.unix._select_loop(self.__select_return_redable[0])
+        self.assertEqual(1, self.__select_count)
 
 class TestInitialization(unittest.TestCase):
     def setEnv(self, name, value):
