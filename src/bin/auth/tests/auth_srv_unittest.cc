@@ -82,10 +82,7 @@ const char* const BADCONFIG_TESTDB =
 
 // This is a configuration that uses the in-memory data source containing
 // a signed example zone.
-const char* const CONFIG_INMEMORY_EXAMPLE =
-    "{\"datasources\": [{\"type\": \"memory\","
-    "\"zones\": [{\"origin\": \"example\","
-    "\"file\": \"" TEST_DATA_DIR "/rfc5155-example.zone.signed\"}]}]}";
+const char* const CONFIG_INMEMORY_EXAMPLE = TEST_DATA_DIR "/rfc5155-example.zone.signed";
 
 class AuthSrvTest : public SrvTestBase {
 protected:
@@ -850,6 +847,19 @@ updateDatabase(AuthSrv* server, const char* params) {
     DataSourceConfigurator::testReconfigure(server, config);
 }
 
+void
+updateInMemory(AuthSrv* server, const char* origin, const char* filename) {
+    const ConstElementPtr config(Element::fromJSON("{"
+        "\"IN\": [{"
+        "   \"type\": \"MasterFiles\","
+        "   \"params\": {"
+        "       \"" + string(origin) + "\": \"" + string(filename) + "\""
+        "   },"
+        "   \"cache-enable\": true"
+        "}]}"));
+    DataSourceConfigurator::testReconfigure(server, config);
+}
+
 // Install a Sqlite3 data source with testing data.
 #ifdef USE_STATIC_LINK
 TEST_F(AuthSrvTest, DISABLED_updateConfig) {
@@ -905,28 +915,23 @@ TEST_F(AuthSrvTest, DISABLED_updateConfigFail) {
     server.processMessage(*io_message, *parse_message, *response_obuffer,
                           &dnsserv);
     EXPECT_TRUE(dnsserv.hasAnswer());
-    headerCheck(*parse_message, default_qid, Rcode::NOERROR(), opcode.getCode(),
-                QR_FLAG | AA_FLAG, 1, 1, 1, 0);
+    headerCheck(*parse_message, default_qid, Rcode::NOERROR(),
+                opcode.getCode(), QR_FLAG | AA_FLAG, 1, 1, 1, 0);
 }
 
-TEST_F(AuthSrvTest,
-#ifdef USE_STATIC_LINK
-       DISABLED_updateWithInMemoryClient
-#else
-       DISABLED_updateWithInMemoryClient // Needs #2046
-#endif
-    )
-{
+TEST_F(AuthSrvTest, updateWithInMemoryClient) {
     // Test configuring memory data source.  Detailed test cases are covered
     // in the configuration tests.  We only check the AuthSrv interface here.
 
-    // By default memory data source isn't enabled
-    EXPECT_FALSE(server.hasInMemoryClient());
-    updateConfig(&server,
-                 "{\"datasources\": [{\"type\": \"memory\"}]}", true);
+    // Create an empty in-memory
+    const ConstElementPtr config(Element::fromJSON("{"
+        "\"IN\": [{"
+        "   \"type\": \"MasterFiles\","
+        "   \"params\": {},"
+        "   \"cache-enable\": true"
+        "}]}"));
+    DataSourceConfigurator::testReconfigure(&server, config);
     // after successful configuration, we should have one (with empty zoneset).
-    EXPECT_TRUE(server.hasInMemoryClient());
-    EXPECT_EQ(0, server.getInMemoryClient(rrclass)->getZoneCount());
 
     // The memory data source is empty, should return REFUSED rcode.
     createDataFromFile("examplequery_fromWire.wire");
@@ -937,21 +942,12 @@ TEST_F(AuthSrvTest,
                 opcode.getCode(), QR_FLAG, 1, 0, 0, 0);
 }
 
-TEST_F(AuthSrvTest,
-#ifdef USE_STATIC_LINK
-       DISABLED_queryWithInMemoryClientNoDNSSEC
-#else
-       DISABLED_queryWithInMemoryClientNoDNSSEC // Needs #2046
-#endif
-    )
-{
+TEST_F(AuthSrvTest, queryWithInMemoryClientNoDNSSEC) {
     // In this example, we do simple check that query is handled from the
     // query handler class, and confirm it returns no error and a non empty
     // answer section.  Detailed examination on the response content
     // for various types of queries are tested in the query tests.
-    updateConfig(&server, CONFIG_INMEMORY_EXAMPLE, true);
-    EXPECT_TRUE(server.hasInMemoryClient());
-    EXPECT_EQ(1, server.getInMemoryClient(rrclass)->getZoneCount());
+    updateInMemory(&server, "example.", CONFIG_INMEMORY_EXAMPLE);
 
     createDataFromFile("nsec3query_nodnssec_fromWire.wire");
     server.processMessage(*io_message, *parse_message, *response_obuffer,
@@ -962,20 +958,11 @@ TEST_F(AuthSrvTest,
                 opcode.getCode(), QR_FLAG | AA_FLAG, 1, 1, 2, 1);
 }
 
-TEST_F(AuthSrvTest,
-#ifdef USE_STATIC_LINK
-       DISABLED_queryWithInMemoryClientDNSSEC
-#else
-       DISABLED_queryWithInMemoryClientDNSSEC // Needs #2046
-#endif
-    )
-{
+TEST_F(AuthSrvTest, queryWithInMemoryClientDNSSEC) {
     // Similar to the previous test, but the query has the DO bit on.
     // The response should contain RRSIGs, and should have more RRs than
     // the previous case.
-    updateConfig(&server, CONFIG_INMEMORY_EXAMPLE, true);
-    EXPECT_TRUE(server.hasInMemoryClient());
-    EXPECT_EQ(1, server.getInMemoryClient(rrclass)->getZoneCount());
+    updateInMemory(&server, "example.", CONFIG_INMEMORY_EXAMPLE);
 
     createDataFromFile("nsec3query_fromWire.wire");
     server.processMessage(*io_message, *parse_message, *response_obuffer,
@@ -1405,6 +1392,7 @@ private:
 //
 // Set the proxies to never throw, this should have the same result as
 // queryWithInMemoryClientNoDNSSEC, and serves to test the two proxy classes
+#if 0
 TEST_F(AuthSrvTest,
 #ifdef USE_STATIC_LINK
        DISABLED_queryWithInMemoryClientProxy
@@ -1415,7 +1403,6 @@ TEST_F(AuthSrvTest,
 {
     // Set real inmem client to proxy
     updateConfig(&server, CONFIG_INMEMORY_EXAMPLE, true);
-    EXPECT_TRUE(server.hasInMemoryClient());
 
     isc::datasrc::DataSourceClientContainerPtr fake_client_container(
         new FakeContainer(server.getInMemoryClientContainer(rrclass),
@@ -1553,6 +1540,7 @@ TEST_F(AuthSrvTest,
     headerCheck(*parse_message, default_qid, Rcode::SERVFAIL(),
                 opcode.getCode(), QR_FLAG, 1, 0, 0, 0);
 }
+#endif
 
 //
 // DDNS related tests

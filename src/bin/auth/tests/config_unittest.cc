@@ -80,7 +80,8 @@ TEST_F(AuthConfigTest, versionConfig) {
 }
 
 TEST_F(AuthConfigTest, exceptionGuarantee) {
-    EXPECT_FALSE(server.hasInMemoryClient());
+    server.setStatisticsTimerInterval(1234);
+    EXPECT_EQ(1234, server.getStatisticsTimerInterval());
     // This configuration contains an invalid item, which will trigger
     // an exception.
     EXPECT_THROW(configureAuthServer(
@@ -89,7 +90,7 @@ TEST_F(AuthConfigTest, exceptionGuarantee) {
                          "{ \"no_such_config_var\": 1}")),
                  AuthConfigError);
     // The server state shouldn't change
-    EXPECT_FALSE(server.hasInMemoryClient());
+    EXPECT_EQ(1234, server.getStatisticsTimerInterval());
 }
 
 TEST_F(AuthConfigTest, badConfig) {
