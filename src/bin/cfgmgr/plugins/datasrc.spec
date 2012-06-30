@@ -30,6 +30,23 @@
                                 "item_type": "any",
                                 "item_optional": false,
                                 "item_default": null
+                            },
+                            {
+                                "item_name": "cache-enable",
+                                "item_type": "boolean",
+                                "item_optional": false,
+                                "item_default": false
+                            },
+                            {
+                                "item_name": "cache-zones",
+                                "item_type": "list",
+                                "item_optional": true,
+                                "list_item_spec": {
+                                    "item_name": "zone",
+                                    "item_type": "string",
+                                    "item_optional": false,
+                                    "item_default": ""
+                                }
                             }
                         ]
                     }
