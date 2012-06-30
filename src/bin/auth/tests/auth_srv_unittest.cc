@@ -1687,9 +1687,9 @@ TEST_F(AuthSrvTest, clientList) {
               server.getClientList(RRClass::IN()));
     // Put something in.
     const boost::shared_ptr<isc::datasrc::ConfigurableClientList>
-        list(new isc::datasrc::ConfigurableClientList());
+        list(new isc::datasrc::ConfigurableClientList(RRClass::IN()));
     const boost::shared_ptr<isc::datasrc::ConfigurableClientList>
-        list2(new isc::datasrc::ConfigurableClientList());
+        list2(new isc::datasrc::ConfigurableClientList(RRClass::CH()));
     server.setClientList(RRClass::IN(), list);
     server.setClientList(RRClass::CH(), list2);
     // There are two things in the list and they are IN and CH

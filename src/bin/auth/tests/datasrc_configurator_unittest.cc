@@ -35,7 +35,7 @@ class DatasrcConfiguratorTest;
 
 class FakeList {
 public:
-    FakeList() :
+    FakeList(const RRClass&) :
         configuration_(new ListElement)
     {}
     void configure(const ConstElementPtr& configuration, bool allow_cache) {
