@@ -1126,9 +1126,9 @@ DatabaseClient::Finder::findPreviousName(const Name& name) const {
                                                  name.reverse().toText()));
     try {
         return (Name(str));
-    }
-    catch (const isc::dns::NameParserException&) {
-        isc_throw(DataSourceError, "Bad name " + str + " from findPreviousName");
+    } catch (const isc::dns::NameParserException&) {
+        isc_throw(DataSourceError, "Bad name " + str +
+                  " from findPreviousName");
     }
 }
 

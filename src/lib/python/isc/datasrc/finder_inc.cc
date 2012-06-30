@@ -225,22 +225,4 @@ In the second element a single RRset is returned for cases where the\n\
 result is some kind of delegation, CNAME or similar; in other cases\n\
 a list of RRsets is returned, containing all the results.\n\
 ";
-
-const char* const ZoneFinder_find_previous_name_doc = "\
-find_previous_name(isc.dns.Name) -> isc.dns.Name\n\
-\n\
-Gets the previous name in the DNSSEC order. This can be used\n\
-to find the correct NSEC records for proving nonexistence\n\
-of domains.\n\
-\n\
-This method does not include under-zone-cut data (glue data).\n\
-\n\
-Raises isc.datasrc.NotImplemented in case the data source backend\n\
-doesn't support DNSSEC or there is no previous in the zone (NSEC\n\
-records might be missing in the DB, the queried name is less or\n\
-equal to the apex).\n\
-\n\
-Raises isc.datasrc.Error for low-level or internal datasource errors\n\
-(like broken connection to database, wrong data living there).\n\
-";
 } // unnamed namespace

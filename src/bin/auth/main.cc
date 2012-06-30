@@ -88,7 +88,7 @@ usage() {
     cerr << "Usage:  b10-auth [-u user] [-nv]"
          << endl;
     cerr << "\t-n: do not cache answers in memory" << endl;
-    cerr << "\t-v: verbose output" << endl;
+    cerr << "\t-v: verbose logging (debug-level)" << endl;
     exit(1);
 }
 

@@ -96,6 +96,20 @@ discovered that the memory data source is disabled for the given class.
 This is a debug message reporting that the authoritative server has
 discovered that the memory data source is enabled for the given class.
 
+% AUTH_MESSAGE_FORWARD_ERROR failed to forward %1 request from %2: %3
+The authoritative server tried to forward some type DNS request
+message to a separate process (e.g., forwarding dynamic update
+requests to b10-ddns) to handle it, but it failed.  The authoritative
+server returns SERVFAIL to the client on behalf of the separate
+process.  The error could be configuration mismatch between b10-auth
+and the recipient component, or it may be because the requests are
+coming too fast and the receipient process cannot keep up with the
+rate, or some system level failure.  In either case this means the
+BIND 10 system is not working as expected, so the administrator should
+look into the cause and address the issue.  The log message includes
+the client's address (and port), and the error message sent from the
+lower layer that detects the failure.
+
 % AUTH_NOTIFY_QUESTIONS invalid number of questions (%1) in incoming NOTIFY
 This debug message is logged by the authoritative server when it receives
 a NOTIFY packet that contains zero or more than one question. (A valid
@@ -254,20 +268,6 @@ This is a debug message, produced when a received DNS packet being
 processed by the authoritative server has been found to contain an
 unsupported opcode. (The opcode is included in the message.) The server
 will return an error code of NOTIMPL to the sender.
-
-% AUTH_MESSAGE_FORWARD_ERROR failed to forward %1 request from %2: %3
-The authoritative server tried to forward some type DNS request
-message to a separate process (e.g., forwarding dynamic update
-requests to b10-ddns) to handle it, but it failed.  The authoritative
-server returns SERVFAIL to the client on behalf of the separate
-process.  The error could be configuration mismatch between b10-auth
-and the recipient component, or it may be because the requests are
-coming too fast and the receipient process cannot keep up with the
-rate, or some system level failure.  In either case this means the
-BIND 10 system is not working as expected, so the administrator should
-look into the cause and address the issue.  The log message includes
-the client's address (and port), and the error message sent from the
-lower layer that detects the failure.
 
 % AUTH_XFRIN_CHANNEL_CREATED XFRIN session channel created
 This is a debug message indicating that the authoritative server has

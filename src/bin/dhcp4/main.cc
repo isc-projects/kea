@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2012  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -13,41 +13,31 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
-
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/select.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <stdlib.h>
-#include <errno.h>
-
-#include <cassert>
 #include <iostream>
-
 #include <exceptions/exceptions.h>
-#if 0
-// TODO cc is not used yet. It should be eventually
-#include <cc/session.h>
-#include <config/ccsession.h>
-#endif
-
-#include <util/buffer.h>
 #include <log/dummylog.h>
-
-#include <dhcp4/spec_config.h>
+#include <log/logger_support.h>
+#include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/dhcp4_srv.h>
 #include <dhcp/dhcp4.h>
 
 using namespace std;
-using namespace isc::util;
-
-using namespace isc;
 using namespace isc::dhcp;
+
+
+
+/// This file contains entry point (main() function) for standard DHCPv4 server
+/// component for BIND10 framework. It parses command-line arguments and
+/// instantiates ControlledDhcpv4Srv class that is responsible for establishing
+/// connection with msgq (receiving commands and configuration) and also
+/// creating Dhcpv4 server object as well.
+///
+/// For detailed explanation or relations between main(), ControlledDhcpv4Srv,
+/// Dhcpv4Srv and other classes, see \ref dhcpv4Session.
 
 namespace {
 
-bool verbose_mode = false;
+const char* const DHCP4_NAME = "b10-dhcp4";
 
 void
 usage() {
@@ -62,6 +52,7 @@ usage() {
 int
 main(int argc, char* argv[]) {
     int ch;
+    bool verbose_mode = false; // should server be verbose?
     int port_number = DHCP4_SERVER_PORT; // The default. any other values are
                                          // useful for testing only.
 
@@ -85,8 +76,13 @@ main(int argc, char* argv[]) {
         }
     }
 
-    cout << "My pid=" << getpid() << ", binding to port " << port_number
-         << ", verbose " << (verbose_mode?"yes":"no") << endl;
+    // Initialize logging.  If verbose, we'll use maximum verbosity.
+    isc::log::initLogger(DHCP4_NAME,
+                         (verbose_mode ? isc::log::DEBUG : isc::log::INFO),
+                         isc::log::MAX_DEBUG_LEVEL, NULL);
+
+    cout << "b10-dhcp4: My pid=" << getpid() << ", binding to port " 
+         << port_number << ", verbose " << (verbose_mode?"yes":"no") << endl;
 
     if (argc - optind > 0) {
         usage();
@@ -94,27 +90,14 @@ main(int argc, char* argv[]) {
 
     int ret = EXIT_SUCCESS;
 
-    // TODO remainder of auth to dhcp4 code copy. We need to enable this in
-    //      dhcp4 eventually
-#if 0
-    Session* cc_session = NULL;
-    Session* statistics_session = NULL;
-    ModuleCCSession* config_session = NULL;
-#endif
     try {
-        string specfile;
-        if (getenv("B10_FROM_BUILD")) {
-            specfile = string(getenv("B10_FROM_BUILD")) +
-                "/src/bin/auth/dhcp4.spec";
-        } else {
-            specfile = string(DHCP4_SPECFILE_LOCATION);
-        }
 
         cout << "[b10-dhcp4] Initiating DHCPv4 server operation." << endl;
 
-        Dhcpv4Srv* srv = new Dhcpv4Srv(port_number);
-
-        srv->run();
+        ControlledDhcpv4Srv* server = new ControlledDhcpv4Srv(port_number);
+        server->run();
+        delete server;
+        server = NULL;
 
     } catch (const std::exception& ex) {
         cerr << "[b10-dhcp4] Server failed: " << ex.what() << endl;

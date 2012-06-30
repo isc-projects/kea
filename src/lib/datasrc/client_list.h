@@ -33,6 +33,7 @@ typedef boost::shared_ptr<DataSourceClient> DataSourceClientPtr;
 class DataSourceClientContainer;
 typedef boost::shared_ptr<DataSourceClientContainer>
     DataSourceClientContainerPtr;
+class InMemoryClient;
 
 /// \brief The list of data source clients.
 ///
@@ -216,6 +217,11 @@ public:
     /// \throw ConfigurationError if the configuration is invalid in some
     ///     sense.
     /// \throw BadValue if configuration is NULL
+    /// \throw Unexpected if something misbehaves (like the data source
+    ///     returning NULL iterator).
+    /// \throw NotImplemented if the auto-detection of list of zones is
+    ///     needed.
+    /// \throw Whatever is propagated from within the data source.
     void configure(const isc::data::ConstElementPtr& configuration,
                    bool allow_cache);
 
@@ -244,12 +250,11 @@ public:
             data_src_client_(NULL)
         {}
         DataSourceInfo(DataSourceClient* data_src_client,
-                       const DataSourceClientContainerPtr& container) :
-            data_src_client_(data_src_client),
-            container_(container)
-        {}
+                       const DataSourceClientContainerPtr& container,
+                       bool hasCache);
         DataSourceClient* data_src_client_;
         DataSourceClientContainerPtr container_;
+        boost::shared_ptr<InMemoryClient> cache_;
     };
 
     /// \brief The collection of data sources.
