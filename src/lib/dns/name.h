@@ -422,12 +422,12 @@ private:
     /// \param case_sensitive If true, comparison is case-insensitive
     /// \return a <code>NameComparisonResult</code> object representing the
     /// comparison result.
-    NameComparisonResult partial_compare(const Name& other,
-                                         unsigned int first_label,
-                                         unsigned int first_label_other,
-                                         unsigned int last_label,
-                                         unsigned int last_label_other,
-                                         bool case_sensitive = false) const;
+    NameComparisonResult compare(const Name& other,
+                                 unsigned int first_label,
+                                 unsigned int first_label_other,
+                                 unsigned int last_label,
+                                 unsigned int last_label_other,
+                                 bool case_sensitive = false) const;
 
 public:
     /// \brief Return true iff two names are equal.
