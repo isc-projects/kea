@@ -568,7 +568,7 @@ Name::partial_compare(const Name& other,
                 if ((nlabels == 0) &&
                     ((last_label < labelcount_) ||
                      (last_label_other < other.labelcount_))) {
-                    return (NameComparisonResult(chdiff, 0,
+                    return (NameComparisonResult(0, 0,
                                                  NameComparisonResult::NONE));
                 } else {
                     return (NameComparisonResult(chdiff, nlabels,
@@ -583,7 +583,7 @@ Name::partial_compare(const Name& other,
             if ((nlabels == 0) &&
                 ((last_label < labelcount_) ||
                  (last_label_other < other.labelcount_))) {
-                return (NameComparisonResult(cdiff, 0,
+                return (NameComparisonResult(0, 0,
                                              NameComparisonResult::NONE));
             } else {
                 return (NameComparisonResult(cdiff, nlabels,
