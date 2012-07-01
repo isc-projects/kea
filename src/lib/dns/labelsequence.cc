@@ -78,12 +78,12 @@ LabelSequence::compare(const LabelSequence& other,
         return (NameComparisonResult(0, 0, NameComparisonResult::NONE));
     }
 
-    return (name_.partial_compare(other.name_,
-                                  first_label_,
-                                  other.first_label_,
-                                  last_label_,
-                                  other.last_label_,
-                                  case_sensitive));
+    return (name_.compare(other.name_,
+                          first_label_,
+                          other.first_label_,
+                          last_label_,
+                          other.last_label_,
+                          case_sensitive));
 }
 
 void

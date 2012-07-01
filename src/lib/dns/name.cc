@@ -507,16 +507,16 @@ Name::toText(bool omit_final_dot) const {
 
 NameComparisonResult
 Name::compare(const Name& other) const {
-    return (partial_compare(other, 0, 0, labelcount_, other.labelcount_));
+    return (compare(other, 0, 0, labelcount_, other.labelcount_));
 }
 
 NameComparisonResult
-Name::partial_compare(const Name& other,
-                      unsigned int first_label,
-                      unsigned int first_label_other,
-                      unsigned int last_label,
-                      unsigned int last_label_other,
-                      bool case_sensitive) const {
+Name::compare(const Name& other,
+              unsigned int first_label,
+              unsigned int first_label_other,
+              unsigned int last_label,
+              unsigned int last_label_other,
+              bool case_sensitive) const {
     // Determine the relative ordering under the DNSSEC order relation of
     // 'this' and 'other', and also determine the hierarchical relationship
     // of the names.
