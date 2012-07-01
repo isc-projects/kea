@@ -131,18 +131,21 @@ TEST_F(LabelSequenceTest, compare) {
     NameComparisonResult result = ls1.compare(ls3, true);
     EXPECT_EQ(isc::dns::NameComparisonResult::EQUAL,
               result.getRelation());
+    EXPECT_EQ(0, result.getOrder());
     EXPECT_EQ(3, result.getCommonLabels());
 
     // "example.org." and "example.ORG.", case sensitive
     result = ls3.compare(ls5, true);
     EXPECT_EQ(isc::dns::NameComparisonResult::COMMONANCESTOR,
               result.getRelation());
+    EXPECT_LT(0, result.getOrder());
     EXPECT_EQ(1, result.getCommonLabels());
 
     // "example.org." and "example.ORG.", case in-sensitive
     result = ls3.compare(ls5);
     EXPECT_EQ(isc::dns::NameComparisonResult::EQUAL,
               result.getRelation());
+    EXPECT_EQ(0, result.getOrder());
     EXPECT_EQ(3, result.getCommonLabels());
 
     Name na("a.example.org");
@@ -154,6 +157,7 @@ TEST_F(LabelSequenceTest, compare) {
     result = lsa.compare(lsb);
     EXPECT_EQ(isc::dns::NameComparisonResult::COMMONANCESTOR,
               result.getRelation());
+    EXPECT_GT(0, result.getOrder());
     EXPECT_EQ(3, result.getCommonLabels());
 
     // "example.org." and "b.example.org.", case in-sensitive
@@ -161,6 +165,7 @@ TEST_F(LabelSequenceTest, compare) {
     result = lsa.compare(lsb);
     EXPECT_EQ(isc::dns::NameComparisonResult::SUPERDOMAIN,
               result.getRelation());
+    EXPECT_GT(0, result.getOrder());
     EXPECT_EQ(3, result.getCommonLabels());
 
     Name nc("g.f.e.d.c.example.org");
@@ -172,13 +177,14 @@ TEST_F(LabelSequenceTest, compare) {
     result = lsc.compare(lsb);
     EXPECT_EQ(isc::dns::NameComparisonResult::NONE,
               result.getRelation());
-    EXPECT_EQ(0, result.getCommonLabels());
     EXPECT_EQ(0, result.getOrder());
+    EXPECT_EQ(0, result.getCommonLabels());
 
     // "g.f.e.d.c.example.org." and "example.org.", case in-sensitive
     result = lsc.compare(ls1);
     EXPECT_EQ(isc::dns::NameComparisonResult::SUBDOMAIN,
               result.getRelation());
+    EXPECT_LT(0, result.getOrder());
     EXPECT_EQ(3, result.getCommonLabels());
 
     // "e.d.c.example.org." and "example.org.", case in-sensitive
@@ -186,6 +192,7 @@ TEST_F(LabelSequenceTest, compare) {
     result = lsc.compare(ls1);
     EXPECT_EQ(isc::dns::NameComparisonResult::SUBDOMAIN,
               result.getRelation());
+    EXPECT_LT(0, result.getOrder());
     EXPECT_EQ(3, result.getCommonLabels());
 
     // "example.org." and "example.org.", case in-sensitive
@@ -193,6 +200,7 @@ TEST_F(LabelSequenceTest, compare) {
     result = lsc.compare(ls1);
     EXPECT_EQ(isc::dns::NameComparisonResult::EQUAL,
               result.getRelation());
+    EXPECT_EQ(0, result.getOrder());
     EXPECT_EQ(3, result.getCommonLabels());
 
     // "." and "example.org.", case in-sensitive
@@ -200,6 +208,7 @@ TEST_F(LabelSequenceTest, compare) {
     result = lsc.compare(ls1);
     EXPECT_EQ(isc::dns::NameComparisonResult::SUPERDOMAIN,
               result.getRelation());
+    EXPECT_GT(0, result.getOrder());
     EXPECT_EQ(1, result.getCommonLabels());
 
     Name nd("a.b.c.isc.example.org");
@@ -212,6 +221,7 @@ TEST_F(LabelSequenceTest, compare) {
     result = lsd.compare(lse, true);
     EXPECT_EQ(isc::dns::NameComparisonResult::COMMONANCESTOR,
               result.getRelation());
+    EXPECT_LT(0, result.getOrder());
     EXPECT_EQ(2, result.getCommonLabels());
 
     // "a.b.c.isc.example.org." and "w.x.y.isc.EXAMPLE.org.",
@@ -219,6 +229,7 @@ TEST_F(LabelSequenceTest, compare) {
     result = lsd.compare(lse);
     EXPECT_EQ(isc::dns::NameComparisonResult::COMMONANCESTOR,
               result.getRelation());
+    EXPECT_GT(0, result.getOrder());
     EXPECT_EQ(4, result.getCommonLabels());
 
     // "isc.example.org." and "isc.EXAMPLE.org.", case sensitive
@@ -227,12 +238,14 @@ TEST_F(LabelSequenceTest, compare) {
     result = lsd.compare(lse, true);
     EXPECT_EQ(isc::dns::NameComparisonResult::COMMONANCESTOR,
               result.getRelation());
+    EXPECT_LT(0, result.getOrder());
     EXPECT_EQ(2, result.getCommonLabels());
 
     // "isc.example.org." and "isc.EXAMPLE.org.", case in-sensitive
     result = lsd.compare(lse);
     EXPECT_EQ(isc::dns::NameComparisonResult::EQUAL,
               result.getRelation());
+    EXPECT_EQ(0, result.getOrder());
     EXPECT_EQ(4, result.getCommonLabels());
 
     Name nf("a.b.c.isc.example.org");
@@ -246,6 +259,7 @@ TEST_F(LabelSequenceTest, compare) {
     result = lsg.compare(lsf);
     EXPECT_EQ(isc::dns::NameComparisonResult::NONE,
               result.getRelation());
+    EXPECT_EQ(0, result.getOrder());
     EXPECT_EQ(0, result.getCommonLabels());
 
     // "a.b.c.isc.example.org" (not absolute) and
@@ -254,6 +268,7 @@ TEST_F(LabelSequenceTest, compare) {
     result = lsg.compare(lsf);
     EXPECT_EQ(isc::dns::NameComparisonResult::COMMONANCESTOR,
               result.getRelation());
+    EXPECT_LT(0, result.getOrder());
     EXPECT_EQ(3, result.getCommonLabels());
 
     // "a.b.c.isc.example" (not absolute) and
@@ -263,6 +278,7 @@ TEST_F(LabelSequenceTest, compare) {
     result = lsg.compare(lsf);
     EXPECT_EQ(isc::dns::NameComparisonResult::COMMONANCESTOR,
               result.getRelation());
+    EXPECT_LT(0, result.getOrder());
     EXPECT_EQ(2, result.getCommonLabels());
 
     // "a.b.c" (not absolute) and
@@ -272,6 +288,7 @@ TEST_F(LabelSequenceTest, compare) {
     result = lsg.compare(lsf);
     EXPECT_EQ(isc::dns::NameComparisonResult::NONE,
               result.getRelation());
+    EXPECT_EQ(0, result.getOrder());
     EXPECT_EQ(0, result.getCommonLabels());
 
     Name nh("aexample.org");
@@ -286,6 +303,7 @@ TEST_F(LabelSequenceTest, compare) {
     result = lsh.compare(lsi);
     EXPECT_EQ(isc::dns::NameComparisonResult::COMMONANCESTOR,
               result.getRelation());
+    EXPECT_GT(0, result.getOrder());
     EXPECT_EQ(1, result.getCommonLabels());
 
     // "aexample" (not absolute) and
@@ -295,6 +313,7 @@ TEST_F(LabelSequenceTest, compare) {
     result = lsh.compare(lsi);
     EXPECT_EQ(isc::dns::NameComparisonResult::NONE,
               result.getRelation());
+    EXPECT_EQ(0, result.getOrder());
     EXPECT_EQ(0, result.getCommonLabels());
 
     Name nj("example.org");
@@ -309,6 +328,7 @@ TEST_F(LabelSequenceTest, compare) {
     result = lsj.compare(lsk);
     EXPECT_EQ(isc::dns::NameComparisonResult::EQUAL,
               result.getRelation());
+    EXPECT_EQ(0, result.getOrder());
     EXPECT_EQ(2, result.getCommonLabels());
 
     // "example" (not absolute) and
@@ -318,6 +338,7 @@ TEST_F(LabelSequenceTest, compare) {
     result = lsj.compare(lsk);
     EXPECT_EQ(isc::dns::NameComparisonResult::EQUAL,
               result.getRelation());
+    EXPECT_EQ(0, result.getOrder());
     EXPECT_EQ(1, result.getCommonLabels());
 }
 
