@@ -21,63 +21,95 @@ BIND 10 showtech program.
 """
 
 import sys; sys.path.append ('@@PYTHONPATH@@')
+import getopt
 import isc.util.process
 from isc.sysinfo import *
 
 isc.util.process.rename()
 
+def usage():
+    print("Usage: %s [-h] [-o <output-file>]" % sys.argv[0], \
+              file=sys.stderr)
+    exit(1)
+
 def main():
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "o:h", \
+                                       ["output", "help"])
+    except getopt.GetoptError as e:
+        print(str(e))
+        usage()
+        exit(1)
+
+    output_filename = None
+    for option, arg in opts:
+        if option in ("-o", "--output"):
+            output_filename = arg
+        elif option in ("-h", "--help"):
+            usage()
+        else:
+            assert False, "unhandled option"
+
+    if output_filename is None:
+        f = sys.stdout
+    else:
+        f = open(output_filename, 'w')
+
     s = SysInfoFromFactory()
 
-    print('BIND 10 ShowTech tool')
-    print('=====================')
+    f.write('BIND 10 ShowTech tool\n')
+    f.write('=====================\n')
 
-    print('\nCPU');
-    print(' + Number of processors: ' + str(s.get_num_processors()))
-    print(' + Endianness: ' + s.get_endianness())
+    f.write('\nCPU\n');
+    f.write(' + Number of processors: %d\n' % (s.get_num_processors()))
+    f.write(' + Endianness: %s\n' % (s.get_endianness()))
 
-    print('\nPlatform');
-    print(' + Operating system: ' + s.get_platform_name())
-    print(' + Distribution: ' + s.get_platform_distro())
-    print(' + Kernel version: ' + s.get_platform_version())
+    f.write('\nPlatform\n');
+    f.write(' + Operating system: %s\n' % (s.get_platform_name()))
+    f.write(' + Distribution: %s\n' % (s.get_platform_distro()))
+    f.write(' + Kernel version: %s\n' % (s.get_platform_version()))
+
+    f.write(' + SMP kernel: ')
     if s.get_platform_is_smp():
-        print(' + SMP kernel: yes')
+        f.write('yes')
     else:
-        print(' + SMP kernel: no')
-    print(' + Machine name: ' + s.get_platform_machine())
-    print(' + Hostname: ' + s.get_platform_hostname())
-    print(' + Uptime: %d seconds' % (s.get_uptime()))
+        f.write('no')
+    f.write('\n')
+
+    f.write(' + Machine name: %s\n' % (s.get_platform_machine()))
+    f.write(' + Hostname: %s\n' % (s.get_platform_hostname()))
+    f.write(' + Uptime: %d seconds\n' % (s.get_uptime()))
 
     l = s.get_loadavg()
-    print(' + Loadavg: %f %f %f' % (l[0], l[1], l[2]))
+    f.write(' + Loadavg: %f %f %f\n' % (l[0], l[1], l[2]))
 
-    print('\nMemory');
-    print(' + Total: %d bytes' % (s.get_mem_total()))
-    print(' + Free: %d bytes' % (s.get_mem_free()))
-    print(' + Cached: %d bytes' % (s.get_mem_cached()))
-    print(' + Buffers: %d bytes' % (s.get_mem_buffers()))
-    print(' + Swap total: %d bytes' % (s.get_mem_swap_total()))
-    print(' + Swap free: %d bytes' % (s.get_mem_swap_free()))
+    f.write('\nMemory\n');
+    f.write(' + Total: %d bytes\n' % (s.get_mem_total()))
+    f.write(' + Free: %d bytes\n' % (s.get_mem_free()))
+    f.write(' + Cached: %d bytes\n' % (s.get_mem_cached()))
+    f.write(' + Buffers: %d bytes\n' % (s.get_mem_buffers()))
+    f.write(' + Swap total: %d bytes\n' % (s.get_mem_swap_total()))
+    f.write(' + Swap free: %d bytes\n' % (s.get_mem_swap_free()))
 
-    print('\n\nNetwork');
-    print('-------\n');
+    f.write('\n\nNetwork\n');
+    f.write('-------\n\n');
 
-    print('Interfaces')
-    print('~~~~~~~~~~\n')
+    f.write('Interfaces\n')
+    f.write('~~~~~~~~~~\n\n')
 
-    print(s.get_net_interfaces())
+    f.write(s.get_net_interfaces())
 
-    print('Routing table')
-    print('~~~~~~~~~~~~~\n')
-    print(s.get_net_routing_table())
+    f.write('\nRouting table\n')
+    f.write('~~~~~~~~~~~~~\n\n')
+    f.write(s.get_net_routing_table())
 
-    print('Statistics')
-    print('~~~~~~~~~~\n')
-    print(s.get_net_stats())
+    f.write('\nStatistics\n')
+    f.write('~~~~~~~~~~\n\n')
+    f.write(s.get_net_stats())
 
-    print('Connections')
-    print('~~~~~~~~~~~\n')
-    print(s.get_net_connections())
+    f.write('\nConnections\n')
+    f.write('~~~~~~~~~~~\n\n')
+    f.write(s.get_net_connections())
 
     try:
         if os.getuid() != 0:
@@ -87,6 +119,9 @@ def main():
             sys.stderr.write('      only available to the root user.\n\n')
     except Exception:
         pass
+
+    if f != sys.stdout:
+        f.close()
 
 if __name__ == '__main__':
     main()
