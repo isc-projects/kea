@@ -25,6 +25,7 @@
 #include <dns/name.h>
 #include <dns/name_internal.h>
 #include <dns/messagerenderer.h>
+#include <dns/labelsequence.h>
 
 using namespace std;
 using namespace isc::util;
@@ -427,105 +428,9 @@ Name::toWire(AbstractMessageRenderer& renderer) const {
 }
 
 std::string
-Name::toText(bool omit_final_dot,
-             unsigned int first_label,
-             unsigned int last_label) const {
-    if ((first_label > labelcount_) ||
-        (last_label > labelcount_) ||
-        (first_label > last_label)) {
-        isc_throw(BadValue, "Bad first label indices were passed");
-    }
-
-    if (length_ == 1) {
-        //
-        // Special handling for the root label.  We ignore omit_final_dot.
-        //
-        assert(labelcount_ == 1 && ndata_[0] == '\0');
-        return (".");
-    }
-
-    NameString::const_iterator np = ndata_.begin();
-    NameString::const_iterator np_end = ndata_.end();
-    unsigned int labels = last_label - first_label; // use for integrity check
-    // init with an impossible value to catch error cases in the end:
-    unsigned int count = MAX_LABELLEN + 1;
-
-    // result string: it will roughly have the same length as the wire format
-    // name data.  reserve that length to minimize reallocation.
-    std::string result;
-    result.reserve(length_);
-
-    for (unsigned int i = 0; i < first_label; i++) {
-        count = *np++;
-        np += count;
-    }
-
-    while (np != np_end) {
-        labels--;
-        count = *np++;
-
-        if (count == 0) {
-            if (!omit_final_dot) {
-                result.push_back('.');
-            }
-            break;
-        }
-            
-        if (labels == 0) {
-            count = 0;
-            break;
-        }
-
-        if (count <= MAX_LABELLEN) {
-            assert(np_end - np >= count);
-
-            if (!result.empty()) {
-                // just after a non-empty label.  add a separating dot.
-                result.push_back('.');
-            }
-
-            while (count-- > 0) {
-                uint8_t c = *np++;
-                switch (c) {
-                case 0x22: // '"'
-                case 0x28: // '('
-                case 0x29: // ')'
-                case 0x2E: // '.'
-                case 0x3B: // ';'
-                case 0x5C: // '\\'
-                    // Special modifiers in zone files.
-                case 0x40: // '@'
-                case 0x24: // '$'
-                    result.push_back('\\');
-                    result.push_back(c);
-                    break;
-                default:
-                    if (c > 0x20 && c < 0x7f) {
-                        // append printable characters intact
-                        result.push_back(c);
-                    } else {
-                        // encode non-printable characters in the form of \DDD
-                        result.push_back(0x5c);
-                        result.push_back(0x30 + ((c / 100) % 10));
-                        result.push_back(0x30 + ((c / 10) % 10));
-                        result.push_back(0x30 + (c % 10));
-                    }
-                }
-            }
-        } else {
-            isc_throw(BadLabelType, "unknown label type in name data");
-        }
-    }
-
-    assert(labels == 0);
-    assert(count == 0);         // a valid name must end with a 'dot'.
-
-    return (result);
-}
-
-std::string
 Name::toText(bool omit_final_dot) const {
-    return toText(omit_final_dot, 0, labelcount_);
+    LabelSequence ls(*this);
+    return (ls.toText(omit_final_dot));
 }
 
 NameComparisonResult
