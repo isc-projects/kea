@@ -359,33 +359,6 @@ public:
     /// \return a string representation of the <code>Name</code>.
     std::string toText(bool omit_final_dot = false) const;
 
-private:
-    /// \brief Convert the Name to a string.
-    ///
-    /// This method returns a <code>std::string</code> object representing the
-    /// Name as a string.  Unless <code>omit_final_dot</code> is
-    /// <code>true</code>, the returned string ends with a dot '.'; the default
-    /// is <code>false</code>.  The default value of this parameter is
-    /// <code>true</code>; converted names will have a trailing dot by default.
-    ///
-    /// This function assumes the name is in proper uncompressed wire format.
-    /// If it finds an unexpected label character including compression pointer,
-    /// an exception of class \c BadLabelType will be thrown.
-    /// In addition, if resource allocation for the result string fails, a
-    /// corresponding standard exception will be thrown.
-    ///
-    /// This function only returns a string for the range of labels
-    /// between <code>first_label</code> and <code>last_label</code>.
-    //
-    /// \param omit_final_dot whether to omit the trailing dot in the output.
-    /// \param first_label the first label which should be contained in the result.
-    /// \param last_label the last label which should be contained in the result.
-    /// \return a string representation of the <code>Name</code>.
-    std::string toText(bool omit_final_dot,
-                       unsigned int first_label,
-                       unsigned int last_label) const;
-
-public:
     /// \brief Render the <code>Name</code> in the wire format with compression.
     ///
     /// This method dumps the Name in wire format with help of \c renderer,
