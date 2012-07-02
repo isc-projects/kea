@@ -267,9 +267,18 @@ class SysInfoLinux(SysInfo):
         if self._net_connections is None:
             self._net_connections = 'Unknown'
 
+class SysInfoTestcase(SysInfo):
+    def __init__(self):
+        super().__init__()
+        self._endianness = 'bigrastafarian'
+        self._platform_name = 'b10test'
+        self._uptime = 131072
+
 def SysInfoFromFactory():
     osname = platform.system()
     if osname == 'Linux':
         return SysInfoLinux()
+    elif osname == 'BIND10Testcase':
+        return SysInfoTestcase()
     else:
         return SysInfo()
