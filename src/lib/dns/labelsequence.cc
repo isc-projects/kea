@@ -129,8 +129,9 @@ LabelSequence::toText(bool omit_final_dot) const {
     }
 
     Name::NameString::const_iterator np = name_.ndata_.begin();
-    Name::NameString::const_iterator np_end = name_.ndata_.end();
-    unsigned int labels = last_label_ - first_label_; // use for integrity check
+    const Name::NameString::const_iterator np_end = name_.ndata_.end();
+    // use for integrity check
+    unsigned int labels = last_label_ - first_label_;
     // init with an impossible value to catch error cases in the end:
     unsigned int count = Name::MAX_LABELLEN + 1;
 
@@ -169,7 +170,7 @@ LabelSequence::toText(bool omit_final_dot) const {
             }
 
             while (count-- > 0) {
-                uint8_t c = *np++;
+                const uint8_t c = *np++;
                 switch (c) {
                 case 0x22: // '"'
                 case 0x28: // '('
