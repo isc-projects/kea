@@ -15,6 +15,10 @@
 
 from isc.sysinfo import *
 import unittest
+import platform
+
+def _my_system():
+    return 'BIND10Testcase'
 
 class SysInfoTest(unittest.TestCase):
     def test_sysinfo(self):
@@ -41,6 +45,37 @@ class SysInfoTest(unittest.TestCase):
         self.assertEqual('Unknown', s.get_net_routing_table())
         self.assertEqual('Unknown', s.get_net_stats())
         self.assertEqual('Unknown', s.get_net_connections())
+
+    def test_sysinfo_factory(self):
+        """Test that SysInfoFromFactory returns a valid system-specific
+        SysInfo implementation."""
+
+        old_system = platform.system
+        platform.system = _my_system
+
+        s = SysInfoFromFactory()
+        self.assertEqual(-1, s.get_num_processors())
+        self.assertEqual('bigrastafarian', s.get_endianness())
+        self.assertEqual('', s.get_platform_hostname())
+        self.assertEqual('b10test', s.get_platform_name())
+        self.assertEqual('Unknown', s.get_platform_version())
+        self.assertEqual('Unknown', s.get_platform_machine())
+        self.assertFalse(s.get_platform_is_smp())
+        self.assertEqual(131072, s.get_uptime())
+        self.assertEqual([-1.0, -1.0, -1.0], s.get_loadavg())
+        self.assertEqual(-1, s.get_mem_total())
+        self.assertEqual(-1, s.get_mem_free())
+        self.assertEqual(-1, s.get_mem_cached())
+        self.assertEqual(-1, s.get_mem_buffers())
+        self.assertEqual(-1, s.get_mem_swap_total())
+        self.assertEqual(-1, s.get_mem_swap_free())
+        self.assertEqual('Unknown', s.get_platform_distro())
+        self.assertEqual('Unknown', s.get_net_interfaces())
+        self.assertEqual('Unknown', s.get_net_routing_table())
+        self.assertEqual('Unknown', s.get_net_stats())
+        self.assertEqual('Unknown', s.get_net_connections())
+
+        platform.system = old_system
 
 if __name__ == "__main__":
     unittest.main()
