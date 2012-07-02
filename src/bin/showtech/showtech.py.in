@@ -21,7 +21,10 @@ BIND 10 showtech program.
 """
 
 import sys; sys.path.append ('@@PYTHONPATH@@')
+import isc.util.process
 from isc.sysinfo import *
+
+isc.util.process.rename()
 
 def main():
     s = SysInfoFromFactory()
