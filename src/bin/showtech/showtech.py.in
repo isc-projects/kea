@@ -79,5 +79,14 @@ def main():
     print('~~~~~~~~~~~\n')
     print(s.get_net_connections())
 
+    try:
+        if os.getuid() != 0:
+            sys.stderr.write('\n')
+            sys.stderr.write('NOTE: You have to run this program as the root user so that it can\n')
+            sys.stderr.write('      collect all the information it requires. Some information is\n')
+            sys.stderr.write('      only available to the root user.\n\n')
+    except Exception:
+        pass
+
 if __name__ == '__main__':
     main()
