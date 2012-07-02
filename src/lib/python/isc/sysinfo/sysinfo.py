@@ -132,6 +132,8 @@ class SysInfoLinux(SysInfo):
     See the base class documentation for more information.
     """
     def __init__(self):
+        super().__init__()
+
         self._num_processors = os.sysconf('SC_NPROCESSORS_CONF')
         self._endianness = sys.byteorder
 
