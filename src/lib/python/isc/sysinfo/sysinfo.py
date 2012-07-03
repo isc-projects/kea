@@ -150,11 +150,13 @@ class SysInfoLinux(SysInfo):
 
         with open('/proc/uptime') as f:
             u = f.read().strip().split(' ')
-            self._uptime = int(round(float(u[0])))
+            if len(u) > 1:
+                self._uptime = int(round(float(u[0])))
 
         with open('/proc/loadavg') as f:
             l = f.read().strip().split(' ')
-            self._loadavg = [float(l[0]), float(l[1]), float(l[2])]
+            if len(l) >= 3:
+                self._loadavg = [float(l[0]), float(l[1]), float(l[2])]
 
         with open('/proc/meminfo') as f:
             m = f.readlines()
