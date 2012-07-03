@@ -75,7 +75,7 @@ const char digitvalue[256] = {
 
 namespace name {
 namespace internal {
-const unsigned char maptolower[] = {
+const uint8_t maptolower[] = {
     0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
     0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
     0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
@@ -147,11 +147,11 @@ Name::Name(const std::string &namestring, bool downcase) {
     bool is_root = false;
     ft_state state = ft_init;
 
-    std::vector<unsigned char> offsets;
+    NameOffsets offsets;
     offsets.reserve(Name::MAX_LABELS);
     offsets.push_back(0);
 
-    std::string ndata;
+    NameString ndata;
     ndata.reserve(Name::MAX_WIRE);
 
     // should we refactor this code using, e.g, the state pattern?  Probably
@@ -310,7 +310,7 @@ typedef enum {
 }
 
 Name::Name(InputBuffer& buffer, bool downcase) {
-    std::vector<unsigned char> offsets;
+    NameOffsets offsets;
     offsets.reserve(Name::MAX_LABELS);
 
     /*
@@ -436,8 +436,8 @@ Name::toText(bool omit_final_dot) const {
         return (".");
     }
 
-    std::string::const_iterator np = ndata_.begin();
-    std::string::const_iterator np_end = ndata_.end();
+    NameString::const_iterator np = ndata_.begin();
+    NameString::const_iterator np_end = ndata_.end();
     unsigned int labels = labelcount_; // use for integrity check
     // init with an impossible value to catch error cases in the end:
     unsigned int count = MAX_LABELLEN + 1;
@@ -467,7 +467,7 @@ Name::toText(bool omit_final_dot) const {
             }
 
             while (count-- > 0) {
-                unsigned char c = *np++;
+                uint8_t c = *np++;
                 switch (c) {
                 case 0x22: // '"'
                 case 0x28: // '('
@@ -507,13 +507,33 @@ Name::toText(bool omit_final_dot) const {
 
 NameComparisonResult
 Name::compare(const Name& other) const {
+    return (compare(other, 0, 0, labelcount_, other.labelcount_));
+}
+
+NameComparisonResult
+Name::compare(const Name& other,
+              unsigned int first_label,
+              unsigned int first_label_other,
+              unsigned int last_label,
+              unsigned int last_label_other,
+              bool case_sensitive) const {
     // Determine the relative ordering under the DNSSEC order relation of
     // 'this' and 'other', and also determine the hierarchical relationship
     // of the names.
 
+    if ((first_label > last_label) ||
+        (first_label_other > last_label_other)) {
+        isc_throw(BadValue, "Bad label index ranges were passed");
+    }
+
+    if ((first_label > labelcount_) ||
+        (first_label_other > other.labelcount_)) {
+        isc_throw(BadValue, "Bad first label indices were passed");
+    }
+
     unsigned int nlabels = 0;
-    unsigned int l1 = labelcount_;
-    unsigned int l2 = other.labelcount_;
+    int l1 = last_label - first_label;
+    int l2 = last_label_other - first_label_other;
     int ldiff = (int)l1 - (int)l2;
     unsigned int l = (ldiff < 0) ? l1 : l2;
 
@@ -521,8 +541,8 @@ Name::compare(const Name& other) const {
         --l;
         --l1;
         --l2;
-        size_t pos1 = offsets_[l1];
-        size_t pos2 = other.offsets_[l2];
+        size_t pos1 = offsets_[l1 + first_label];
+        size_t pos2 = other.offsets_[l2 + first_label_other];
         unsigned int count1 = ndata_[pos1++];
         unsigned int count2 = other.ndata_[pos2++];
 
@@ -534,21 +554,41 @@ Name::compare(const Name& other) const {
         unsigned int count = (cdiff < 0) ? count1 : count2;
 
         while (count > 0) {
-            unsigned char label1 = ndata_[pos1];
-            unsigned char label2 = other.ndata_[pos2];
+            uint8_t label1 = ndata_[pos1];
+            uint8_t label2 = other.ndata_[pos2];
+            int chdiff;
 
-            int chdiff = (int)maptolower[label1] - (int)maptolower[label2];
+            if (case_sensitive) {
+                chdiff = (int)label1 - (int)label2;
+            } else {
+                chdiff = (int)maptolower[label1] - (int)maptolower[label2];
+            }
+
             if (chdiff != 0) {
-                return (NameComparisonResult(chdiff, nlabels,
-                                         NameComparisonResult::COMMONANCESTOR));
+                if ((nlabels == 0) &&
+                    ((last_label < labelcount_) ||
+                     (last_label_other < other.labelcount_))) {
+                    return (NameComparisonResult(0, 0,
+                                                 NameComparisonResult::NONE));
+                } else {
+                    return (NameComparisonResult(chdiff, nlabels,
+                                                 NameComparisonResult::COMMONANCESTOR));
+                }
             }
             --count;
             ++pos1;
             ++pos2;
         }
         if (cdiff != 0) {
+            if ((nlabels == 0) &&
+                ((last_label < labelcount_) ||
+                 (last_label_other < other.labelcount_))) {
+                return (NameComparisonResult(0, 0,
+                                             NameComparisonResult::NONE));
+            } else {
                 return (NameComparisonResult(cdiff, nlabels,
-                                         NameComparisonResult::COMMONANCESTOR));
+                                             NameComparisonResult::COMMONANCESTOR));
+            }
         }
         ++nlabels;
     }
@@ -571,15 +611,15 @@ Name::equals(const Name& other) const {
     }
 
     for (unsigned int l = labelcount_, pos = 0; l > 0; --l) {
-        unsigned char count = ndata_[pos];
+        uint8_t count = ndata_[pos];
         if (count != other.ndata_[pos]) {
             return (false);
         }
         ++pos;
 
         while (count-- > 0) {
-            unsigned char label1 = ndata_[pos];
-            unsigned char label2 = other.ndata_[pos];
+            uint8_t label1 = ndata_[pos];
+            uint8_t label2 = other.ndata_[pos];
 
             if (maptolower[label1] != maptolower[label2]) {
                 return (false);
@@ -663,9 +703,9 @@ Name::reverse() const {
     retname.ndata_.reserve(length_);
 
     // Copy the original name, label by label, from tail to head.
-    vector<unsigned char>::const_reverse_iterator rit0 = offsets_.rbegin();
-    vector<unsigned char>::const_reverse_iterator rit1 = rit0 + 1;
-    string::const_iterator n0 = ndata_.begin();
+    NameOffsets::const_reverse_iterator rit0 = offsets_.rbegin();
+    NameOffsets::const_reverse_iterator rit1 = rit0 + 1;
+    NameString::const_iterator n0 = ndata_.begin();
     retname.offsets_.push_back(0);
     while (rit1 != offsets_.rend()) {
         retname.ndata_.append(n0 + *rit1, n0 + *rit0);
@@ -746,7 +786,7 @@ Name::downcase() {
 
         while (count > 0) {
             ndata_.at(pos) =
-                maptolower[static_cast<unsigned char>(ndata_.at(pos))];
+                maptolower[ndata_.at(pos)];
             ++pos;
             --nlen;
             --count;

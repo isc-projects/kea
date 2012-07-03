@@ -208,13 +208,6 @@ TEST_P(ZoneFinderContextTest, getAdditionalDelegation) {
 TEST_P(ZoneFinderContextTest, getAdditionalDelegationAtZoneCut) {
     // Similar to the previous case, but one of the NS addresses is at the
     // zone cut.
-
-    // XXX: the current database-based data source incorrectly rejects this
-    // setup (see #1771)
-    if (GetParam() == createSQLite3Client) {
-        return;
-    }
-
     ZoneFinderContextPtr ctx = finder_->find(Name("www.b.example.org"),
                                              RRType::SOA());
     EXPECT_EQ(ZoneFinder::DELEGATION, ctx->code);
@@ -316,12 +309,6 @@ TEST_P(ZoneFinderContextTest, getAdditionalMX) {
 }
 
 TEST_P(ZoneFinderContextTest, getAdditionalMXAtZoneCut) {
-    // XXX: the current database-based data source incorrectly rejects this
-    // setup (see #1771)
-    if (GetParam() == createSQLite3Client) {
-        return;
-    }
-
     ZoneFinderContextPtr ctx = finder_->find(Name("mxatcut.example.org."),
                                              RRType::MX());
     EXPECT_EQ(ZoneFinder::SUCCESS, ctx->code);
