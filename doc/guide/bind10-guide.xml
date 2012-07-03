@@ -36,8 +36,8 @@
     <abstract>
       <para>BIND 10 is a framework that features Domain Name System
       (DNS) suite and Dynamic Host Configuration Protocol (DHCP)
-      servers managed by Internet Systems Consortium (ISC). It
-      includes DNS libraries, modular components for controlling
+      servers with development managed by Internet Systems Consortium (ISC).
+      It includes DNS libraries, modular components for controlling
       authoritative and recursive DNS servers, and experimental DHCPv4
       and DHCPv6 servers.
       </para>
@@ -59,6 +59,8 @@
     <section id="acknowledgements">
       <title>Acknowledgements</title>
 
+<!-- TODO: acknowledge all sponsors and CNNIC and CZNIC too -->
+
       <para>ISC would like to acknowledge generous support for
       BIND 10 development of DHCPv4 and DHCPv6 components provided
       by <ulink url="http://www.comcast.com/">Comcast</ulink>.</para>
@@ -72,11 +74,13 @@
     <para>
       BIND is the popular implementation of a DNS server, developer
       interfaces, and DNS tools.
-      BIND 10 is a rewrite of BIND 9.  BIND 10 is written in C++ and Python
-      and provides a modular environment for serving and maintaining DNS.
+      BIND 10 is a rewrite of BIND 9 and ISC DHCP.
+      BIND 10 is written in C++ and Python and provides a modular
+      environment for serving, maintaining, and developing DNS and DHCP.
       BIND 10 provides a EDNS0- and DNSSEC-capable authoritative
       DNS server and a caching recursive name server which also
       provides forwarding.
+      It also provides experimental DHCPv4 and DHCPv6 servers.
     </para>
 
     <para>
@@ -88,7 +92,7 @@
       <title>Supported Platforms</title>
       <para>
   BIND 10 builds have been tested on (in no particular order)
-  Debian GNU/Linux 5 and unstable, Ubuntu 9.10, NetBSD 5,
+  Debian GNU/Linux 6 and unstable, Ubuntu 9.10, NetBSD 5,
   Solaris 10 and 11, FreeBSD 7 and 8, CentOS Linux 5.3,
   MacOS 10.6 and 10.7, and OpenBSD 5.1.
 
@@ -101,11 +105,21 @@
     </section>
 
     <section id="required-software">
-      <title>Required Software</title>
+      <title>Required Software at Run-time</title>
+
+      <para>
+        Running BIND 10 uses various extra software which may
+        not be provided in some operating systems' default
+        installations nor standard packages collections. You may
+        need to install this required software separately.
+        (For the build requirements, also see
+        <xref linkend="build-requirements"/>.)
+      </para>
+
       <para>
         BIND 10 requires at least Python 3.1
         (<ulink url="http://www.python.org/"/>).
-        It has also been tested with Python 3.2.
+        It also works with Python 3.2.
       </para>
 
       <para>
@@ -118,6 +132,7 @@
         BIND 10 uses the log4cplus C++ logging library
         (<ulink url="http://log4cplus.sourceforge.net/"/>).
         It requires at least log4cplus version 1.0.3.
+<!-- TODO: It is recommended to use at least version .... -->
       </para>
 
       <para>
@@ -132,20 +147,9 @@
         <command>b10-xfrout</command>, and <command>b10-zonemgr</command>
         components require the libpython3 library and the Python
         _sqlite3.so module (which is included with Python).
-        The <command>b10-stats-httpd</command> component uses the
-        Python pyexpat.so module.
-        The Python modules need to be built for the corresponding Python 3.
+        Python modules need to be built for the corresponding Python 3.
       </para>
 <!-- TODO: this will change ... -->
-
-      <note>
-        <para>
-          Some operating systems do not provide these dependencies
-          in their default installation nor standard packages
-          collections.
-          You may need to install them separately.
-        </para>
-      </note>
     </section>
 
     <section id="starting_stopping">
@@ -220,8 +224,8 @@
             <simpara>
               <command>b10-resolver</command> &mdash;
               Recursive name server.
-              This process handles incoming queries.
-<!-- TODO: -->
+              This process handles incoming DNS queries and provides
+              answers from its cache or by recursively doing remote lookups.
             </simpara>
           </listitem>
 
@@ -264,15 +268,14 @@
               <command>b10-xfrout</command> &mdash;
               Outgoing zone transfer service.
               This process is used to handle transfer requests to
-              send a local zone to a remote secondary server,
-              when acting as a master server.
+              send a local zone to a remote secondary server.
             </simpara>
           </listitem>
 
           <listitem>
             <simpara>
               <command>b10-zonemgr</command> &mdash;
-              Secondary manager.
+              Secondary zone manager.
               This process keeps track of timers and other
               necessary information for BIND 10 to act as a slave server.
             </simpara>
@@ -282,8 +285,8 @@
       </para>
 
       <para>
-        These are ran automatically by <command>bind10</command>
-        and do not need to be run manually.
+        These are ran by <command>bind10</command>
+        and do not need to be manually started independently.
       </para>
 
     </section>
@@ -298,7 +301,7 @@
           <listitem>
             <simpara>
               <command>bindctl</command> &mdash;
-              interactive administration interface.
+              Interactive administration interface.
               This is a low-level command-line tool which allows
               a developer or an experienced administrator to control
               BIND 10.
@@ -307,7 +310,7 @@
           <listitem>
             <simpara>
               <command>b10-loadzone</command> &mdash;
-              zone file loader.
+              Zone file loader.
               This tool will load standard masterfile-format zone files into
               BIND 10.
             </simpara>
@@ -315,7 +318,7 @@
           <listitem>
             <simpara>
               <command>b10-cmdctl-usermgr</command> &mdash;
-              user access control.
+              User access control.
               This tool allows an administrator to authorize additional users
               to manage BIND 10.
             </simpara>
@@ -358,6 +361,7 @@ var/
       for C++ and Python for the message bus, configuration backend,
       and, of course, DNS. These include detailed developer
       documentation and code examples.
+<!-- TODO: DHCP also but no Python yet. -->
 <!-- TODO point to this -->
     </para>
 
@@ -366,12 +370,100 @@ var/
   <chapter id="installation">
     <title>Installation</title>
 
+    <section id="packages">
+      <title>Packages</title>
+
+      <para>
+        Some operating systems or softare package vendors may
+        provide ready-to-use, pre-built software packages for
+        the BIND 10 suite.
+        Installing a pre-built package means you do not need to
+        install build-only prerequisites and do not need to
+        <emphasis>make</emphasis> the software.
+      </para>
+
+      <para>
+        FreeBSD ports, NetBSD pkgsrc, and Debian
+        <emphasis>testing</emphasis> package collections provide
+        all the prerequisite packages.
+      </para>
+    </section>
+
+    <section id="install-hierarchy">
+      <title>Install Hierarchy</title>
+      <para>
+        The following is the standard, common layout of the
+        complete BIND 10 installation:
+        <itemizedlist>
+          <listitem>
+           <simpara>
+              <filename>bin/</filename> &mdash;
+              general tools and diagnostic clients.
+            </simpara>
+          </listitem>
+          <listitem>
+          <simpara>
+            <filename>etc/bind10-devel/</filename> &mdash;
+            configuration files.
+          </simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+              <filename>lib/</filename> &mdash;
+              libraries and python modules.
+            </simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+              <filename>libexec/bind10-devel/</filename> &mdash;
+              executables that a user wouldn't normally run directly and
+              are not run independently.
+              These are the BIND 10 modules which are daemons started by
+              the <command>bind10</command> tool.
+            </simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+              <filename>sbin/</filename> &mdash;
+              commands used by the system administrator.
+            </simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+              <filename>share/bind10-devel/</filename> &mdash;
+              configuration specifications.
+            </simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+              <filename>share/doc/bind10-devel/</filename> &mdash;
+              this guide and other supplementary documentation.
+            </simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+              <filename>share/man/</filename> &mdash;
+              manual pages (online documentation).
+            </simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+              <filename>var/bind10-devel/</filename> &mdash;
+              data source and configuration databases.
+            </simpara>
+          </listitem>
+        </itemizedlist>
+      </para>
+    </section>
+
     <section id="build-requirements">
       <title>Building Requirements</title>
 
         <para>
-          In addition to the run-time requirements, building BIND 10
-          from source code requires various development include headers.
+          In addition to the run-time requirements (listed in
+          <xref linkend="required-software"/>), building BIND 10
+          from source code requires various development include headers and
+          program development tools.
         </para>
 
         <note>
@@ -415,7 +507,7 @@ as a dependency earlier -->
         </para>
 
         <para>
-          Visit the wiki at <ulink
+          Visit the user-contributed wiki at <ulink
           url="http://bind10.isc.org/wiki/SystemSpecificNotes" />
           for system-specific installation tips.
         </para>
@@ -484,7 +576,7 @@ as a dependency earlier -->
         </listitem>
 
         <listitem>
-
+<!-- TODO: this is wrong; b10-auth is not started by default any more -->
          <para>Test it; for example:
             <screen>$ <userinput>dig @127.0.0.1 -c CH -t TXT authors.bind</userinput></screen>
          </para>
@@ -510,10 +602,10 @@ as a dependency earlier -->
       <title>Installation from source</title>
       <para>
         BIND 10 is open source software written in C++ and Python.
-        It is freely available in source code form from ISC via
-        the Git code revision control system or as a downloadable
-        tar file. It may also be available in pre-compiled ready-to-use
-        packages from operating system vendors.
+        It is freely available in source code form from ISC as a
+        downloadable tar file or via BIND 10's Git code revision control
+        service. (It may also be available in pre-compiled ready-to-use
+        packages from operating system vendors.)
       </para>
 
       <section>
@@ -541,7 +633,7 @@ as a dependency earlier -->
 
         <note>
           <para>
-            When using source code retrieved via Git additional
+            When using source code retrieved via Git, additional
             software will be required:  automake (v1.11 or newer),
             libtoolize, and autoconf (2.59 or newer).
             These may need to be installed.
@@ -549,11 +641,12 @@ as a dependency earlier -->
         </note>
 
         <para>
-          The latest development code, including temporary experiments
-          and un-reviewed code, is available via the BIND 10 code revision
+          The latest development code (and temporary experiments
+          and un-reviewed code) is available via the BIND 10 code revision
           control system. This is powered by Git and all the BIND 10
           development is public.
-          The leading development is done in the <quote>master</quote>.
+          The leading development is done in the <quote>master</quote>
+          branch.
         </para>
         <para>
           The code can be checked out from
@@ -566,8 +659,8 @@ as a dependency earlier -->
         <para>
           When checking out the code from
           the code version control system, it doesn't include the
-          generated configure script, Makefile.in files, nor the
-          related configure files.
+          generated configure script, Makefile.in files, nor their
+          related build files.
           They can be created by running <command>autoreconf</command>
           with the <option>--install</option> switch.
           This will run <command>autoconf</command>,
@@ -591,7 +684,7 @@ as a dependency earlier -->
         </para>
         <para>
           Run <command>./configure</command> with the <option>--help</option>
-          switch to view the different options. The commonly-used options are:
+          switch to view the different options. Some commonly-used options are:
 
           <variablelist>
 
@@ -679,65 +772,6 @@ as a dependency earlier -->
 
   <!-- TODO: tests -->
 
-      <section>
-        <title>Install Hierarchy</title>
-        <para>
-          The following is the layout of the complete BIND 10 installation:
-          <itemizedlist>
-            <listitem>
-              <simpara>
-                <filename>bin/</filename> &mdash;
-                general tools and diagnostic clients.
-              </simpara>
-            </listitem>
-            <listitem>
-            <simpara>
-              <filename>etc/bind10-devel/</filename> &mdash;
-              configuration files.
-            </simpara>
-            </listitem>
-            <listitem>
-              <simpara>
-                <filename>lib/</filename> &mdash;
-                libraries and python modules.
-              </simpara>
-            </listitem>
-            <listitem>
-              <simpara>
-                <filename>libexec/bind10-devel/</filename> &mdash;
-                executables that a user wouldn't normally run directly and
-                are not run independently.
-                These are the BIND 10 modules which are daemons started by
-                the <command>bind10</command> tool.
-              </simpara>
-            </listitem>
-            <listitem>
-              <simpara>
-                <filename>sbin/</filename> &mdash;
-                commands used by the system administrator.
-              </simpara>
-            </listitem>
-            <listitem>
-              <simpara>
-                <filename>share/bind10-devel/</filename> &mdash;
-                configuration specifications.
-              </simpara>
-            </listitem>
-            <listitem>
-              <simpara>
-                <filename>share/man/</filename> &mdash;
-                manual pages (online documentation).
-              </simpara>
-            </listitem>
-            <listitem>
-              <simpara>
-                <filename>var/bind10-devel/</filename> &mdash;
-                data source and configuration databases.
-              </simpara>
-            </listitem>
-          </itemizedlist>
-        </para>
-      </section>
     </section>
 
   <!--
@@ -775,8 +809,9 @@ as a dependency earlier -->
       The <command>b10-cfgmgr</command> daemon is always needed by every
       module, if only to send information about themselves somewhere,
       but more importantly to ask about their own settings, and
-      about other modules. The <command>b10-sockcreator</command> will
-      allocate sockets for the rest of the system.
+      about other modules. The <command>b10-sockcreator</command> daemon
+      helps allocate Internet addresses and ports as needed for BIND 10
+      network services.
     </para>
 
     <para>
@@ -807,23 +842,22 @@ as a dependency earlier -->
 
     </section>
     <section id="bind10.config">
-      <title>Configuration of started processes</title>
+      <title>Configuration to start processes</title>
+
       <para>
-        The processes to be started can be configured, with the exception
-        of the <command>b10-sockcreator</command>, <command>b10-msgq</command>
-        and <command>b10-cfgmgr</command>.
+	The processes to be used can be configured for
+	<command>bind10</command> to start, with the exception
+	of the required <command>b10-sockcreator</command>,
+	<command>b10-msgq</command> and <command>b10-cfgmgr</command>
+	components.
+	The configuration is in the <varname>Boss/components</varname>
+	section. Each element represents one component, which is
+	an abstraction of a process.
       </para>
 
       <para>
-        The configuration is in the Boss/components section. Each element
-        represents one component, which is an abstraction of a process
-        (currently there's also one component which doesn't represent
-        a process).
-      </para>
-
-      <para>
-        To add a process to the set, let's say the resolver (which not started
-        by default), you would do this:
+	To add a process to the set, let's say the resolver (which
+	is not started by default), you would do this:
         <screen>&gt; <userinput>config add Boss/components b10-resolver</userinput>
 &gt; <userinput>config set Boss/components/b10-resolver/special resolver</userinput>
 &gt; <userinput>config set Boss/components/b10-resolver/kind needed</userinput>
@@ -831,27 +865,32 @@ as a dependency earlier -->
 &gt; <userinput>config commit</userinput></screen></para>
 
       <para>
-        Now, what it means. We add an entry called b10-resolver. It is both a
-        name used to reference this component in the configuration and the
-        name of the process to start. Then we set some parameters on how to
-        start it.
+	Now, what it means. We add an entry called
+	<quote>b10-resolver</quote>. It is both a name used to
+	reference this component in the configuration and the name
+	of the process to start. Then we set some parameters on
+	how to start it.
       </para>
 
       <para>
-        The special one is for components that need some kind of special care
-        during startup or shutdown. Unless specified, the component is started
-        in usual way. This is the list of components that need to be started
-        in a special way, with the value of special used for them:
+	The <varname>special</varname> setting is for components
+	that need some kind of special care during startup or
+	shutdown. Unless specified, the component is started in a
+	usual way. This is the list of components that need to be
+	started in a special way, with the value of special used
+	for them:
+<!-- TODO: this still doesn't explain why they are special -->
         <table>
+          <title>Special startup components</title>
           <tgroup cols='3' align='left'>
           <colspec colname='component'/>
           <colspec colname='special'/>
           <colspec colname='description'/>
           <thead><row><entry>Component</entry><entry>Special</entry><entry>Description</entry></row></thead>
           <tbody>
-            <row><entry>b10-auth</entry><entry>auth</entry><entry>Authoritative server</entry></row>
-            <row><entry>b10-resolver</entry><entry>resolver</entry><entry>The resolver</entry></row>
-            <row><entry>b10-cmdctl</entry><entry>cmdctl</entry><entry>The command control (remote control interface)</entry></row>
+            <row><entry>b10-auth</entry><entry>auth</entry><entry>Authoritative DNS server</entry></row>
+            <row><entry>b10-resolver</entry><entry>resolver</entry><entry>DNS resolver</entry></row>
+            <row><entry>b10-cmdctl</entry><entry>cmdctl</entry><entry>Command control (remote control interface)</entry></row>
             <!-- TODO Either add xfrin and xfrout as well or clean up the workarounds in boss before the release -->
           </tbody>
           </tgroup>
@@ -859,32 +898,34 @@ as a dependency earlier -->
       </para>
 
       <para>
-        The kind specifies how a failure of the component should
-        be handled.  If it is set to <quote>dispensable</quote>
-        (the default unless you set something else), it will get
-        started again if it fails. If it is set to <quote>needed</quote>
-        and it fails at startup, the whole <command>bind10</command>
-        shuts down and exits with error exit code. But if it fails
-        some time later, it is just started again. If you set it
-        to <quote>core</quote>, you indicate that the system is
-        not usable without the component and if such component
-        fails, the system shuts down no matter when the failure
-        happened.  This is the behaviour of the core components
-        (the ones you can't turn off), but you can declare any
-        other components as core as well if you wish (but you can
-        turn these off, they just can't fail).
+	The <varname>kind</varname> specifies how a failure of the
+	component should be handled.  If it is set to
+	<quote>dispensable</quote> (the default unless you set
+	something else), it will get started again if it fails. If
+	it is set to <quote>needed</quote> and it fails at startup,
+	the whole <command>bind10</command> shuts down and exits
+	with an error exit code. But if it fails some time later, it
+	is just started again. If you set it to <quote>core</quote>,
+	you indicate that the system is not usable without the
+	component and if such component fails, the system shuts
+	down no matter when the failure happened.  This is the
+	behaviour of the core components (the ones you can't turn
+	off), but you can declare any other components as core as
+	well if you wish (but you can turn these off, they just
+	can't fail).
       </para>
 
       <para>
-        The priority defines order in which the components should start.
-        The ones with higher number are started sooner than the ones with
-        lower ones. If you don't set it, 0 (zero) is used as the priority.
-        Usually, leaving it at the default is enough.
+	The <varname>priority</varname> defines order in which the
+	components should start.  The ones with higher numbers are
+	started sooner than the ones with lower ones. If you don't
+	set it, 0 (zero) is used as the priority.  Usually, leaving
+	it at the default is enough.
       </para>
 
       <para>
         There are other parameters we didn't use in our example.
-        One of them is <quote>address</quote>. It is the address
+        One of them is <varname>address</varname>. It is the address
         used by the component on the <command>b10-msgq</command>
         message bus. The special components already know their
         address, but the usual ones don't. The address is by
@@ -900,22 +941,14 @@ address, but the usual ones don't." mean? -->
 <!-- TODO: document params when is enabled -->
 
       <para>
-        The last one is process. It is the name of the process to be started.
-        It defaults to the name of the component if not set, but you can use
-        this to override it.
+	The last one is <varname>process</varname>. It is the name
+	of the process to be started.  It defaults to the name of
+	the component if not set, but you can use this to override
+	it. (The special components also already know their
+        executable name.)
       </para>
 
       <!-- TODO Add parameters when they work, not implemented yet-->
-
-      <note>
-        <para>
-          This system allows you to start the same component multiple times
-          (by including it in the configuration with different names, but the
-          same process setting). However, the rest of the system doesn't expect
-          such a situation, so it would probably not do what you want. Such
-          support is yet to be implemented.
-        </para>
-      </note>
 
       <note>
         <para>
@@ -938,7 +971,7 @@ address, but the usual ones don't." mean? -->
       </note>
       <para>
         It is possible to start some components multiple times (currently
-        <command>b10-auth</command> and <command>b10-resolzer</command>).
+        <command>b10-auth</command> and <command>b10-resolver</command>).
         You might want to do that to gain more performance (each one uses only
         single core). Just put multiple entries under different names, like
         this, with the same config:
@@ -953,6 +986,9 @@ address, but the usual ones don't." mean? -->
         server will keep its own copy of in-memory data and there could be
         problems with locking the sqlite database, if used. The configuration
         might be changed to something more convenient in future.
+	Other components don't expect such a situation, so it would
+	probably not do what you want. Such support is yet to be
+	implemented.
       </para>
     </section>
 
@@ -977,22 +1013,10 @@ address, but the usual ones don't." mean? -->
       <para>
         Administrators do not communicate directly with the
         <command>b10-msgq</command> daemon.
-        By default, BIND 10 uses port 9912 for the
-        <command>b10-msgq</command> service.
-        It listens on 127.0.0.1.
+        By default, BIND 10 uses a UNIX domain socket file named
+        <filename>/usr/local/var/bind10-devel/msg_socket</filename>
+        for this interprocess communication.
       </para>
-
-<!-- TODO: this is broken, see Trac #111
-      <para>
-        To select an alternate port for the <command>b10-msgq</command> to
-        use, run <command>bind10</command> specifying the option:
-        <screen> $ <userinput>bind10 -TODO-msgq-port 9912</userinput></screen>
-      </para>
--->
-
-<!-- TODO: upcoming plans:
-Unix domain sockets
--->
 
   </chapter>
 
@@ -1035,9 +1059,6 @@ Unix domain sockets
         specifications and all current settings to the
         <command>bindctl</command> client (via
         <command>b10-cmdctl</command>).
-      </para>
-
-      <para>
         <command>b10-cfgmgr</command> relays configurations received
         from <command>b10-cmdctl</command> to the appropriate modules.
       </para>
@@ -1056,7 +1077,7 @@ config changes are actually commands to cfgmgr
       <para>
         The stored configuration file is at
         <filename>/usr/local/var/bind10-devel/b10-config.db</filename>.
-        (The full path is what was defined at build configure time for
+        (The directory is what was defined at build configure time for
         <option>--localstatedir</option>.
         The default is <filename>/usr/local/var/</filename>.)
         The format is loosely based on JSON and is directly parseable
@@ -1174,7 +1195,7 @@ but you might wanna check with likun
 
 <!-- TODO
 openssl req -new -x509 -keyout server.pem -out server.pem -days 365 -nodes
-but that is a single file, maybethis should go back to that format?
+but that is a single file, maybe this should go back to that format?
 -->
 
 <!--
@@ -1241,7 +1262,6 @@ shutdown
 <!--
 TODO
 (12:21:30) jinmei: I'd like to have sample session using a command line www client such as wget
-(12:21:33) jinmei: btw
 -->
 
   </chapter>

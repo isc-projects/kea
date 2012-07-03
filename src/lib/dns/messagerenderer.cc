@@ -100,8 +100,8 @@ struct NameCompare {
         uint16_t item_label_len = 0;
         for (size_t i = 0; i < item.len_; ++i, ++item_pos) {
             item_pos = nextPosition(*buffer_, item_pos, item_label_len);
-            const unsigned char ch1 = (*buffer_)[item_pos];
-            const unsigned char ch2 = name_buf_->readUint8();
+            const uint8_t ch1 = (*buffer_)[item_pos];
+            const uint8_t ch2 = name_buf_->readUint8();
             if (CASE_SENSITIVE) {
                 if (ch1 != ch2) {
                     return (false);
@@ -293,7 +293,7 @@ MessageRenderer::writeName(const Name& name, const bool compress) {
     LabelSequence sequence(name);
     const size_t nlabels = sequence.getLabelCount();
     size_t data_len;
-    const char* data;
+    const uint8_t* data;
 
     // Find the offset in the offset table whose name gives the longest
     // match against the name to be rendered.
