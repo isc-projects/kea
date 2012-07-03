@@ -154,6 +154,8 @@ class SysInfoTest(unittest.TestCase):
         if osname != 'Linux':
             return
 
+        # Save and replace existing implementations of library functions
+        # with mock ones for testing.
         old_platform_system = platform.system
         platform.system = _my_linux_platform_system
         old_os_sysconf = os.sysconf
@@ -176,11 +178,16 @@ class SysInfoTest(unittest.TestCase):
         self.assertEqual(4294963200, s.get_mem_swap_total())
         self.assertEqual(4095451136, s.get_mem_swap_free())
         self.assertEqual('My Distribution', s.get_platform_distro())
+
+        # These test that the corresponding tools are being called (and
+        # no further processing is done on this data). Please see the
+        # implementation functions at the top of this file.
         self.assertEqual('qB2osV6vUOjqm3P/+tQ4d92xoYz8/U8P9v3KWRpNwlI=\n', s.get_net_interfaces())
         self.assertEqual('VGWAS92AlS14Pl2xqENJs5P2Ihe6Nv9g181Mu6Zz+aQ=\n\nXfizswwNA9NkXz6K36ZExpjV08Y5IXkHI8jjDSV+5Nc=\n', s.get_net_routing_table())
         self.assertEqual('osuxbrcc1g9VgaF4yf3FrtfodrfATrbSnjhqhuQSAs8=\n', s.get_net_stats())
         self.assertEqual('Z+w0lwa02/T+5+EIio84rrst/Dtizoz/aL9Im7J7ESA=\n', s.get_net_connections())
 
+        # Restore original implementations.
         platform.system = old_platform_system
         os.sysconf = old_os_sysconf
         __builtins__.open = old_open
