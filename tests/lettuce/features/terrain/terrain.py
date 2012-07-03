@@ -59,6 +59,8 @@ copylist = [
      "configurations/ddns/noddns.config"],
     ["data/inmem-xfrin.sqlite3.orig",
      "data/inmem-xfrin.sqlite3"],
+    ["data/xfrin-notify.sqlite3.orig",
+     "data/xfrin-notify.sqlite3"],
     ["data/ddns/example.org.sqlite3.orig",
      "data/ddns/example.org.sqlite3"]
 ]

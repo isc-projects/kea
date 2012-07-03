@@ -75,7 +75,7 @@ const char digitvalue[256] = {
 
 namespace name {
 namespace internal {
-const unsigned char maptolower[] = {
+const uint8_t maptolower[] = {
     0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
     0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
     0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
@@ -147,11 +147,11 @@ Name::Name(const std::string &namestring, bool downcase) {
     bool is_root = false;
     ft_state state = ft_init;
 
-    std::vector<unsigned char> offsets;
+    NameOffsets offsets;
     offsets.reserve(Name::MAX_LABELS);
     offsets.push_back(0);
 
-    std::string ndata;
+    NameString ndata;
     ndata.reserve(Name::MAX_WIRE);
 
     // should we refactor this code using, e.g, the state pattern?  Probably
@@ -310,7 +310,7 @@ typedef enum {
 }
 
 Name::Name(InputBuffer& buffer, bool downcase) {
-    std::vector<unsigned char> offsets;
+    NameOffsets offsets;
     offsets.reserve(Name::MAX_LABELS);
 
     /*
@@ -436,8 +436,8 @@ Name::toText(bool omit_final_dot) const {
         return (".");
     }
 
-    std::string::const_iterator np = ndata_.begin();
-    std::string::const_iterator np_end = ndata_.end();
+    NameString::const_iterator np = ndata_.begin();
+    NameString::const_iterator np_end = ndata_.end();
     unsigned int labels = labelcount_; // use for integrity check
     // init with an impossible value to catch error cases in the end:
     unsigned int count = MAX_LABELLEN + 1;
@@ -467,7 +467,7 @@ Name::toText(bool omit_final_dot) const {
             }
 
             while (count-- > 0) {
-                unsigned char c = *np++;
+                uint8_t c = *np++;
                 switch (c) {
                 case 0x22: // '"'
                 case 0x28: // '('
@@ -554,8 +554,8 @@ Name::compare(const Name& other,
         unsigned int count = (cdiff < 0) ? count1 : count2;
 
         while (count > 0) {
-            unsigned char label1 = ndata_[pos1];
-            unsigned char label2 = other.ndata_[pos2];
+            uint8_t label1 = ndata_[pos1];
+            uint8_t label2 = other.ndata_[pos2];
             int chdiff;
 
             if (case_sensitive) {
@@ -611,15 +611,15 @@ Name::equals(const Name& other) const {
     }
 
     for (unsigned int l = labelcount_, pos = 0; l > 0; --l) {
-        unsigned char count = ndata_[pos];
+        uint8_t count = ndata_[pos];
         if (count != other.ndata_[pos]) {
             return (false);
         }
         ++pos;
 
         while (count-- > 0) {
-            unsigned char label1 = ndata_[pos];
-            unsigned char label2 = other.ndata_[pos];
+            uint8_t label1 = ndata_[pos];
+            uint8_t label2 = other.ndata_[pos];
 
             if (maptolower[label1] != maptolower[label2]) {
                 return (false);
@@ -703,9 +703,9 @@ Name::reverse() const {
     retname.ndata_.reserve(length_);
 
     // Copy the original name, label by label, from tail to head.
-    vector<unsigned char>::const_reverse_iterator rit0 = offsets_.rbegin();
-    vector<unsigned char>::const_reverse_iterator rit1 = rit0 + 1;
-    string::const_iterator n0 = ndata_.begin();
+    NameOffsets::const_reverse_iterator rit0 = offsets_.rbegin();
+    NameOffsets::const_reverse_iterator rit1 = rit0 + 1;
+    NameString::const_iterator n0 = ndata_.begin();
     retname.offsets_.push_back(0);
     while (rit1 != offsets_.rend()) {
         retname.ndata_.append(n0 + *rit1, n0 + *rit0);
@@ -786,7 +786,7 @@ Name::downcase() {
 
         while (count > 0) {
             ndata_.at(pos) =
-                maptolower[static_cast<unsigned char>(ndata_.at(pos))];
+                maptolower[ndata_.at(pos)];
             ++pos;
             --nlen;
             --count;
