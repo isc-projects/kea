@@ -34,14 +34,21 @@ public:
                           n3("example.org"), n4("foo.bar.test.example"),
                           n5("example.ORG"), n6("ExAmPlE.org"),
                           n7("."), n8("foo.example.org.bar"),
+                          n9("\\000xample.org"),
+                          n10("\\000xample.org"),
+                          n11("\\000xample.com"),
+                          n12("\\000xamplE.com"),
                           ls1(n1), ls2(n2), ls3(n3), ls4(n4), ls5(n5),
-                          ls6(n6), ls7(n7), ls8(n8)
+                          ls6(n6), ls7(n7), ls8(n8),
+                          ls9(n9), ls10(n10), ls11(n11), ls12(n12)
     {};
     // Need to keep names in scope for at least the lifetime of
     // the labelsequences
     Name n1, n2, n3, n4, n5, n6, n7, n8;
+    Name n9, n10, n11, n12;
 
     LabelSequence ls1, ls2, ls3, ls4, ls5, ls6, ls7, ls8;
+    LabelSequence ls9, ls10, ls11, ls12;
 };
 
 // Basic equality tests
@@ -81,6 +88,11 @@ TEST_F(LabelSequenceTest, equals_sensitive) {
     EXPECT_FALSE(ls5.equals(ls6, true));
     EXPECT_FALSE(ls5.equals(ls7, true));
     EXPECT_FALSE(ls5.equals(ls8, true));
+
+    EXPECT_TRUE(ls9.equals(ls10, true));
+    EXPECT_FALSE(ls9.equals(ls11, true));
+    EXPECT_FALSE(ls9.equals(ls12, true));
+    EXPECT_FALSE(ls11.equals(ls12, true));
 }
 
 TEST_F(LabelSequenceTest, equals_insensitive) {
@@ -123,6 +135,11 @@ TEST_F(LabelSequenceTest, equals_insensitive) {
     EXPECT_TRUE(ls5.equals(ls5));
     EXPECT_TRUE(ls5.equals(ls6));
     EXPECT_FALSE(ls5.equals(ls7));
+
+    EXPECT_TRUE(ls9.equals(ls10));
+    EXPECT_FALSE(ls9.equals(ls11));
+    EXPECT_FALSE(ls9.equals(ls12));
+    EXPECT_TRUE(ls11.equals(ls12));
 }
 
 // Compare tests
@@ -343,23 +360,34 @@ TEST_F(LabelSequenceTest, compare) {
 }
 
 void
-getDataCheck(const char* expected_data, size_t expected_len,
+getDataCheck(const uint8_t* expected_data, size_t expected_len,
              const LabelSequence& ls)
 {
     size_t len;
-    const char* data = ls.getData(&len);
+    const uint8_t* data = ls.getData(&len);
     ASSERT_EQ(expected_len, len) << "Expected data: " << expected_data <<
                                     " name: " << ls.getName().toText();
     EXPECT_EQ(expected_len, ls.getDataLength()) <<
         "Expected data: " << expected_data <<
         " name: " << ls.getName().toText();
     for (size_t i = 0; i < len; ++i) {
-        EXPECT_EQ(expected_data[i], data[i]) << "Difference at pos " << i <<
-                                                ": Expected data: " <<
-                                                expected_data <<
-                                                " name: " <<
-                                                ls.getName().toText();;
+        EXPECT_EQ(expected_data[i], data[i]) <<
+          "Difference at pos " << i << ": Expected data: " << expected_data <<
+          " name: " << ls.getName().toText();;
     }
+}
+
+// Convenient data converter for expected data.  Label data must be of
+// uint8_t*, while it's convenient if we can specify some test data in
+// plain string (which is of char*).  This wrapper converts the latter to
+// the former in a safer way.
+void
+getDataCheck(const char* expected_char_data, size_t expected_len,
+             const LabelSequence& ls)
+{
+    const vector<uint8_t> expected_data(expected_char_data,
+                                        expected_char_data + expected_len);
+    getDataCheck(&expected_data[0], expected_len, ls);
 }
 
 TEST_F(LabelSequenceTest, getData) {
@@ -460,7 +488,7 @@ TEST_F(LabelSequenceTest, comparePart) {
 
     // Data comparison
     size_t len;
-    const char* data = ls1.getData(&len);
+    const uint8_t* data = ls1.getData(&len);
     getDataCheck(data, len, ls8);
 }
 
