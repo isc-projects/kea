@@ -103,6 +103,7 @@ Feature: Querying feature
         ns2.example.org.        3600    IN      A       192.0.2.4
         mail.example.org.       3600    IN      A       192.0.2.10
         """
+
     Scenario: Delegation query for unsigned child zone
         Given I have bind10 running with configuration example.org.inmem.config
         And wait for bind10 stderr message BIND10_STARTED_CC
@@ -122,7 +123,9 @@ Feature: Querying feature
         """
         ns.sub.example.org.	3600	IN	A	192.0.2.101
         """
+
     Scenario: SSHFP query
+        # We are testing one more RR type for a normal successful case
         Given I have bind10 running with configuration example.org.inmem.config
         And wait for bind10 stderr message BIND10_STARTED_CC
         And wait for bind10 stderr message CMDCTL_STARTED

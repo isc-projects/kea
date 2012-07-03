@@ -1260,6 +1260,9 @@ RBTree<T>::previousNode(RBTreeNodeChain<T>& node_path) const {
             // already, which located the exact node. The rest of the function
             // goes one domain left and returns it for us.
             break;
+        default:
+            // This must not happen as Name::compare() never returns NONE.
+            isc_throw(isc::Unexpected, "Name::compare() returned unexpected result");
     }
 
     // So, the node_path now contains the path to a node we want previous for.

@@ -67,7 +67,7 @@ public:
     /// \param len Pointer to a size_t where the length of the data
     ///        will be stored (in number of octets)
     /// \return Pointer to the wire-format data of this label sequence
-    const char* getData(size_t* len) const;
+    const uint8_t* getData(size_t* len) const;
 
     /// \brief Return the length of the wire-format data of this LabelSequence
     ///
@@ -85,6 +85,17 @@ public:
     /// \return The length of the data of the label sequence in octets.
     size_t getDataLength() const;
 
+    /// \brief Compares two label sequences for equality.
+    ///
+    /// Performs a (optionally case-insensitive) comparison between this
+    /// LabelSequence and another LabelSequence for equality.
+    ///
+    /// \param other The LabelSequence to compare with
+    /// \param case_sensitive If true, comparison is case-insensitive
+    /// \return true if The label sequences consist are the same length,
+    ///         and contain the same data.
+    bool equals(const LabelSequence& other, bool case_sensitive = false) const;
+
     /// \brief Compares two label sequences.
     ///
     /// Performs a (optionally case-insensitive) comparison between this
@@ -92,9 +103,10 @@ public:
     ///
     /// \param other The LabelSequence to compare with
     /// \param case_sensitive If true, comparison is case-insensitive
-    /// \return true if The label sequences consist are the same length,
-    ///         and contain the same data.
-    bool equals(const LabelSequence& other, bool case_sensitive = false) const;
+    /// \return a <code>NameComparisonResult</code> object representing the
+    /// comparison result.
+    NameComparisonResult compare(const LabelSequence& other,
+                                 bool case_sensitive = false) const;
 
     /// \brief Remove labels from the front of this LabelSequence
     ///
