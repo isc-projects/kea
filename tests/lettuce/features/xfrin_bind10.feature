@@ -23,11 +23,11 @@ Feature: Xfrin
     # Now we use the first step again to see if the file has been created
     The file data/test_nonexistent_db.sqlite3 should exist
 
-    A query for www.example.org should have rcode REFUSED
+    A query for www.example.org to [::1]:47806 should have rcode REFUSED
     When I send bind10 the command Xfrin retransfer example.org IN ::1 47807
     Then wait for new bind10 stderr message XFRIN_TRANSFER_SUCCESS not XFRIN_XFR_PROCESS_FAILURE
     Then wait for new bind10 stderr message ZONEMGR_RECEIVE_XFRIN_SUCCESS
-    A query for www.example.org should have rcode NOERROR
+    A query for www.example.org to [::1]:47806 should have rcode NOERROR
 
     # The transferred zone should have 11 non-NSEC3 RRs and 1 NSEC3 RR.
     # The following check will get these by AXFR, so the total # of RRs
