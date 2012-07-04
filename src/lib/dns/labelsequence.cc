@@ -188,7 +188,7 @@ LabelSequence::toText(bool omit_final_dot) const {
     }
 
     assert(labels == 0);
-    assert(count == 0);         // a valid name must end with a 'dot'.
+    assert(count == 0);
 
     return (result);
 }
