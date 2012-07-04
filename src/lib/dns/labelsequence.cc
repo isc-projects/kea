@@ -128,7 +128,8 @@ LabelSequence::toText(bool omit_final_dot) const {
         return (".");
     }
 
-    Name::NameString::const_iterator np = name_.ndata_.begin();
+    Name::NameString::const_iterator np = name_.ndata_.begin() +
+        name_.offsets_[first_label_];
     const Name::NameString::const_iterator np_end = name_.ndata_.end();
     // use for integrity check
     unsigned int labels = last_label_ - first_label_;
@@ -139,11 +140,6 @@ LabelSequence::toText(bool omit_final_dot) const {
     // name data.  reserve that length to minimize reallocation.
     std::string result;
     result.reserve(name_.length_);
-
-    for (unsigned int i = 0; i < first_label_; i++) {
-        count = *np++;
-        np += count;
-    }
 
     while (np != np_end) {
         labels--;
