@@ -1,6 +1,9 @@
 SUBDIRS = tests
 
-EXTRA_DIST = README logging.spec tsig_keys.spec datasrc.spec
+EXTRA_DIST = README logging.spec tsig_keys.spec
+
+datasrc.spec: datasrc.spec.pre
+	$(SED) -e "s|@@PKGDATADIR@@|$(pkgdatadir)|" datasrc.spec.pre >$@
 
 config_plugindir = @prefix@/share/@PACKAGE@/config_plugins
 config_plugin_DATA = logging.spec tsig_keys.spec datasrc.spec
