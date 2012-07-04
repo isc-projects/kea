@@ -114,11 +114,11 @@ LabelSequence::getHash(bool case_sensitive) const {
 
 std::string
 LabelSequence::toText(bool omit_final_dot) const {
-    if (name_.length_ == 1) {
+    if (name_.getLength() == 1) {
         //
         // Special handling for the root label.  We ignore omit_final_dot.
         //
-        assert(name_.labelcount_ == 1 && name_.ndata_[0] == '\0');
+        assert(name_.getLabelCount() == 1 && name_.ndata_[0] == '\0');
         return (".");
     }
 
@@ -133,7 +133,7 @@ LabelSequence::toText(bool omit_final_dot) const {
     // result string: it will roughly have the same length as the wire format
     // name data.  reserve that length to minimize reallocation.
     std::string result;
-    result.reserve(name_.length_);
+    result.reserve(name_.getLength());
 
     while (np != np_end) {
         labels--;
