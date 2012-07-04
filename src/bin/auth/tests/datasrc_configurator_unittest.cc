@@ -115,9 +115,15 @@ protected:
     void SetUp() {
         init();
     }
+    ElementPtr buildConfig(const string& config) const {
+        const ElementPtr internal(Element::fromJSON(config));
+        const ElementPtr external(Element::fromJSON("{\"version\": 1}"));
+        external->set("classes", internal);
+        return (external);
+    }
     void doInInit() {
         const ElementPtr
-            config(Element::fromJSON("{\"IN\": [{\"type\": \"xxx\"}]}"));
+            config(buildConfig("{\"IN\": [{\"type\": \"xxx\"}]}"));
         session.addMessage(createCommand("config_update", config), "data_sources",
                            "*");
         mccs->checkCommand();
@@ -163,7 +169,7 @@ TEST_F(DatasrcConfiguratorTest, modifyList) {
     doInInit();
     // And now change the configuration of the list
     const ElementPtr
-        config(Element::fromJSON("{\"IN\": [{\"type\": \"yyy\"}]}"));
+        config(buildConfig("{\"IN\": [{\"type\": \"yyy\"}]}"));
     session.addMessage(createCommand("config_update", config), "data_sources",
                        "*");
     log_ = "";
@@ -177,7 +183,7 @@ TEST_F(DatasrcConfiguratorTest, modifyList) {
 // Check we can have multiple lists at once
 TEST_F(DatasrcConfiguratorTest, multiple) {
     const ElementPtr
-        config(Element::fromJSON("{\"IN\": [{\"type\": \"yyy\"}], "
+        config(buildConfig("{\"IN\": [{\"type\": \"yyy\"}], "
                                  "\"CH\": [{\"type\": \"xxx\"}]}"));
     session.addMessage(createCommand("config_update", config), "data_sources",
                        "*");
@@ -198,8 +204,8 @@ TEST_F(DatasrcConfiguratorTest, multiple) {
 TEST_F(DatasrcConfiguratorTest, updateAdd) {
     doInInit();
     const ElementPtr
-        config(Element::fromJSON("{\"IN\": [{\"type\": \"yyy\"}], "
-                                 "\"CH\": [{\"type\": \"xxx\"}]}"));
+        config(buildConfig("{\"IN\": [{\"type\": \"yyy\"}], "
+                           "\"CH\": [{\"type\": \"xxx\"}]}"));
     session.addMessage(createCommand("config_update", config), "data_sources",
                        "*");
     log_ = "";
@@ -216,7 +222,7 @@ TEST_F(DatasrcConfiguratorTest, updateAdd) {
 TEST_F(DatasrcConfiguratorTest, updateDelete) {
     doInInit();
     const ElementPtr
-        config(Element::fromJSON("{}"));
+        config(buildConfig("{}"));
     session.addMessage(createCommand("config_update", config), "data_sources",
                        "*");
     log_ = "";
@@ -230,8 +236,8 @@ TEST_F(DatasrcConfiguratorTest, rollbackAddition) {
     doInInit();
     // The configuration is wrong. However, the CH one will get done first.
     const ElementPtr
-        config(Element::fromJSON("{\"IN\": [{\"type\": 13}], "
-                                 "\"CH\": [{\"type\": \"xxx\"}]}"));
+        config(buildConfig("{\"IN\": [{\"type\": 13}], "
+                           "\"CH\": [{\"type\": \"xxx\"}]}"));
     session.addMessage(createCommand("config_update", config), "data_sources",
                        "*");
     log_ = "";
