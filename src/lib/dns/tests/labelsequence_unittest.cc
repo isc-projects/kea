@@ -293,6 +293,8 @@ TEST_F(LabelSequenceTest, isAbsolute) {
 }
 
 TEST_F(LabelSequenceTest, toText) {
+    EXPECT_EQ(".", ls7.toText());
+
     EXPECT_EQ("example.org.", ls1.toText());
     ls1.stripLeft(1);
     EXPECT_EQ("org.", ls1.toText());
