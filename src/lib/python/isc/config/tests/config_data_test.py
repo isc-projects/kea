@@ -47,7 +47,7 @@ class TestConfigData(unittest.TestCase):
         self.assertRaises(isc.cc.data.DataTypeError, check_type, spec_part, "a")
         self.assertRaises(isc.cc.data.DataTypeError, check_type, spec_part, [ 1, 2 ])
         self.assertRaises(isc.cc.data.DataTypeError, check_type, spec_part, { "a": 1 })
-        
+
         spec_part = find_spec_part(config_spec, "value2")
         check_type(spec_part, 1.1)
         self.assertRaises(isc.cc.data.DataTypeError, check_type, spec_part, 1)
@@ -55,7 +55,7 @@ class TestConfigData(unittest.TestCase):
         self.assertRaises(isc.cc.data.DataTypeError, check_type, spec_part, "a")
         self.assertRaises(isc.cc.data.DataTypeError, check_type, spec_part, [ 1, 2 ])
         self.assertRaises(isc.cc.data.DataTypeError, check_type, spec_part, { "a": 1 })
-        
+
         spec_part = find_spec_part(config_spec, "value3")
         check_type(spec_part, True)
         check_type(spec_part, False)
@@ -64,7 +64,7 @@ class TestConfigData(unittest.TestCase):
         self.assertRaises(isc.cc.data.DataTypeError, check_type, spec_part, "a")
         self.assertRaises(isc.cc.data.DataTypeError, check_type, spec_part, [ 1, 2 ])
         self.assertRaises(isc.cc.data.DataTypeError, check_type, spec_part, { "a": 1 })
-        
+
         spec_part = find_spec_part(config_spec, "value4")
         check_type(spec_part, "asdf")
         self.assertRaises(isc.cc.data.DataTypeError, check_type, spec_part, 1)
@@ -72,7 +72,7 @@ class TestConfigData(unittest.TestCase):
         self.assertRaises(isc.cc.data.DataTypeError, check_type, spec_part, True)
         self.assertRaises(isc.cc.data.DataTypeError, check_type, spec_part, [ 1, 2 ])
         self.assertRaises(isc.cc.data.DataTypeError, check_type, spec_part, { "a": 1 })
-        
+
         spec_part = find_spec_part(config_spec, "value5")
         check_type(spec_part, [1, 2])
         self.assertRaises(isc.cc.data.DataTypeError, check_type, spec_part, 1)
@@ -81,7 +81,7 @@ class TestConfigData(unittest.TestCase):
         self.assertRaises(isc.cc.data.DataTypeError, check_type, spec_part, "a")
         self.assertRaises(isc.cc.data.DataTypeError, check_type, spec_part, [ "a", "b" ])
         self.assertRaises(isc.cc.data.DataTypeError, check_type, spec_part, { "a": 1 })
-        
+
         spec_part = find_spec_part(config_spec, "value6")
         check_type(spec_part, { "value1": "aaa", "value2": 2 })
         self.assertRaises(isc.cc.data.DataTypeError, check_type, spec_part, 1)
@@ -107,7 +107,7 @@ class TestConfigData(unittest.TestCase):
         self.assertRaises(isc.cc.data.DataTypeError, convert_type, spec_part, { "a": 1 })
         self.assertRaises(isc.cc.data.DataTypeError, convert_type, 1, "a")
         self.assertRaises(isc.cc.data.DataTypeError, convert_type, { 'somedict': 'somevalue' }, "a")
-        
+
         spec_part = find_spec_part(config_spec, "value2")
         self.assertEqual(1.1, convert_type(spec_part, '1.1'))
         self.assertEqual(123.0, convert_type(spec_part, '123'))
@@ -130,7 +130,7 @@ class TestConfigData(unittest.TestCase):
         self.assertEqual('1', convert_type(spec_part, 1))
         self.assertEqual('1.1', convert_type(spec_part, 1.1))
         self.assertEqual('True', convert_type(spec_part, True))
-        
+
         spec_part = find_spec_part(config_spec, "value5")
         self.assertEqual([1, 2], convert_type(spec_part, '1, 2'))
         self.assertEqual([1, 2, 3], convert_type(spec_part, '1 2  3'))
@@ -254,7 +254,7 @@ class TestConfigData(unittest.TestCase):
 
     def test_init(self):
         self.assertRaises(ConfigDataError, ConfigData, "asdf")
-        
+
     def test_get_value(self):
         value, default = self.cd.get_value("item1")
         self.assertEqual(1, value)
@@ -337,7 +337,7 @@ class TestMultiConfigData(unittest.TestCase):
         else:
             self.data_path = "../../../testdata"
         self.mcd = MultiConfigData()
-        
+
     def test_init(self):
         self.assertEqual({}, self.mcd._specifications)
         self.assertEqual({}, self.mcd._current_config)
@@ -491,6 +491,12 @@ class TestMultiConfigData(unittest.TestCase):
         self.assertEqual(2, value)
         value = self.mcd.get_default_value("Spec32/named_set_item/no_such_item")
         self.assertEqual(None, value)
+        # Check that top-level default value works when named set contains list
+        # (issue #2114)
+        value = self.mcd.get_default_value("Spec32/named_set_item3/values[2]")
+        self.assertEqual(3, value)
+        self.assertRaises(IndexError, self.mcd.get_default_value,
+                          "Spec32/named_set_item3/values[5]")
 
     def test_get_value(self):
         module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec2.spec")
@@ -535,7 +541,7 @@ class TestMultiConfigData(unittest.TestCase):
     def test_get_value_maps(self):
         maps = self.mcd.get_value_maps()
         self.assertEqual([], maps)
-        
+
         module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec1.spec")
         self.mcd.set_specification(module_spec)
 
@@ -557,7 +563,7 @@ class TestMultiConfigData(unittest.TestCase):
         self.assertEqual([], maps)
         self.mcd.remove_specification("Spec1")
         self.mcd.remove_specification("foo")
-        
+
         module_spec = isc.config.module_spec_from_file(self.data_path + os.sep + "spec2.spec")
         self.mcd.set_specification(module_spec)
         maps = self.mcd.get_value_maps()
@@ -749,9 +755,12 @@ class TestMultiConfigData(unittest.TestCase):
         config_items = self.mcd.get_config_item_list(None, False)
         self.assertEqual(['Spec32'], config_items)
         config_items = self.mcd.get_config_item_list(None, True)
-        self.assertEqual(['Spec32/named_set_item', 'Spec32/named_set_item2'], config_items)
-        self.mcd.set_value('Spec32/named_set_item', { "aaaa": 4, "aabb": 5, "bbbb": 6})
-        config_items = self.mcd.get_config_item_list("/Spec32/named_set_item", True)
+        self.assertEqual(['Spec32/named_set_item', 'Spec32/named_set_item2',
+                          'Spec32/named_set_item3'], config_items)
+        self.mcd.set_value('Spec32/named_set_item', { "aaaa": 4, "aabb": 5,
+                                                      "bbbb": 6})
+        config_items = self.mcd.get_config_item_list("/Spec32/named_set_item",
+                                                     True)
         self.assertEqual(['Spec32/named_set_item/aaaa',
                           'Spec32/named_set_item/aabb',
                           'Spec32/named_set_item/bbbb',
