@@ -48,7 +48,9 @@ private:
                                     isc::data::ConstElementPtr config,
                                     const isc::config::ConfigData&)
     {
-        reconfigure(config);
+        if (config->contains("classes")) {
+            reconfigure(config->get("classes"));
+        }
     }
     static Server* server_;
     static isc::config::ModuleCCSession* session_;
