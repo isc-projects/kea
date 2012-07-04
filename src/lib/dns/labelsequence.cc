@@ -114,14 +114,6 @@ LabelSequence::getHash(bool case_sensitive) const {
 
 std::string
 LabelSequence::toText(bool omit_final_dot) const {
-    if (name_.getLength() == 1) {
-        //
-        // Special handling for the root label.  We ignore omit_final_dot.
-        //
-        assert(name_.getLabelCount() == 1 && name_.ndata_[0] == '\0');
-        return (".");
-    }
-
     Name::NameString::const_iterator np = name_.ndata_.begin() +
         name_.offsets_[first_label_];
     const Name::NameString::const_iterator np_end = name_.ndata_.end();
@@ -140,7 +132,10 @@ LabelSequence::toText(bool omit_final_dot) const {
         count = *np++;
 
         if (count == 0) {
-            if (!omit_final_dot) {
+            // We've reached the "final dot".  If we've not dumped any
+            // character, the entire label sequence is the root name.
+            // In that case we don't omit the final dot.
+            if (!omit_final_dot || result.empty()) {
                 result.push_back('.');
             }
             break;
