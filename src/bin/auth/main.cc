@@ -207,6 +207,11 @@ main(int argc, char* argv[]) {
 
         // Start the data source configuration
         DataSourceConfigurator::init(config_session, auth_server);
+        // HACK: The default is not passed to the handler. This one will
+        // get the default (or, current value). Further updates will work
+        // the usual way.
+        DataSourceConfigurator::reconfigure(
+            config_session->getRemoteConfigValue("data_sources", "classes"));
 
         // Now start asynchronous read.
         config_session->start();
