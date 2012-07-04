@@ -114,12 +114,6 @@ LabelSequence::getHash(bool case_sensitive) const {
 
 std::string
 LabelSequence::toText(bool omit_final_dot) const {
-    if ((first_label_ > name_.labelcount_) ||
-        (last_label_ > name_.labelcount_) ||
-        (first_label_ > last_label_)) {
-        isc_throw(BadValue, "Bad first label indices were passed");
-    }
-
     if (name_.length_ == 1) {
         //
         // Special handling for the root label.  We ignore omit_final_dot.
