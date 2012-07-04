@@ -41,6 +41,9 @@ namespace dns {
 /// data of the associated Name object).
 ///
 class LabelSequence {
+    // Name calls the private toText(bool) method of LabelSequence.
+    friend std::string Name::toText(bool) const;
+
 public:
     /// \brief Constructs a LabelSequence for the given name
     ///
@@ -127,23 +130,6 @@ public:
     ///
     /// This method returns a <code>std::string</code> object representing the
     /// LabelSequence as a string.  The returned string ends with a dot
-    /// '.' if <code>omit_final_dot</code> is <code>false</code>.
-    ///
-    /// This function assumes the underlying name is in proper
-    /// uncompressed wire format.  If it finds an unexpected label
-    /// character including compression pointer, an exception of class
-    /// \c BadLabelType will be thrown.  In addition, if resource
-    /// allocation for the result string fails, a corresponding standard
-    /// exception will be thrown.
-    //
-    /// \param omit_final_dot whether to omit the trailing dot in the output.
-    /// \return a string representation of the <code>LabelSequence</code>.
-    std::string toText(bool omit_final_dot) const;
-
-    /// \brief Convert the LabelSequence to a string.
-    ///
-    /// This method returns a <code>std::string</code> object representing the
-    /// LabelSequence as a string.  The returned string ends with a dot
     /// '.' if the label sequence is absolute.
     ///
     /// This function assumes the underlying name is in proper
@@ -156,6 +142,19 @@ public:
     /// \return a string representation of the <code>LabelSequence</code>.
     std::string toText() const;
 
+private:
+    /// \brief Convert the LabelSequence to a string.
+    ///
+    /// This method is a version of the zero-argument toText() method,
+    /// that accepts a <code>omit_final_dot</code> argument. The
+    /// returned string ends with a dot '.' if
+    /// <code>omit_final_dot</code> is <code>false</code>.
+    ///
+    /// \param omit_final_dot whether to omit the trailing dot in the output.
+    /// \return a string representation of the <code>LabelSequence</code>.
+    std::string toText(bool omit_final_dot) const;
+
+public:
     /// \brief Calculate a simple hash for the label sequence.
     ///
     /// This method calculates a hash value for the label sequence as binary
