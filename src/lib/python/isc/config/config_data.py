@@ -486,14 +486,19 @@ class MultiConfigData:
                         else:
                             return None
                     id_part = id_parts.pop(0)
-                    item_id, list_indices = isc.cc.data.split_identifier_list_indices(id_part)
+                    item_id, list_indices =\
+                        isc.cc.data.split_identifier_list_indices(id_part)
 
                     named_set_value, type = self.get_value(id_list)
                     if item_id in named_set_value.keys():
                         result = named_set_value[item_id]
+                        # If the item is a list and we have indices in the
+                        # identifier part, continue with the item pointed to
+                        # by those indices
                         if list_indices is not None:
                             while len(list_indices) > 0:
                                 result = result[list_indices.pop(0)]
+
                         if len(id_parts) > 0:
                             # we are looking for the *default* value.
                             # so if not present in here, we need to
