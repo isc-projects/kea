@@ -675,6 +675,7 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, Message& message,
             query_.process(*list, qname, qtype, message, dnssec_ok);
         } else {
             makeErrorMessage(renderer_, message, buffer, Rcode::REFUSED());
+            return (true);
         }
     } catch (const Exception& ex) {
         LOG_ERROR(auth_logger, AUTH_PROCESS_FAIL).arg(ex.what());
