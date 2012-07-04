@@ -80,6 +80,8 @@ const char* const CONFIG_TESTDB =
 const char* const BADCONFIG_TESTDB =
     "{ \"database_file\": \"" TEST_DATA_DIR "/nodir/notexist\"}";
 
+const char* const STATIC_DSRC_FILE = DSRC_DIR "/static.zone";
+
 // This is a configuration that uses the in-memory data source containing
 // a signed example zone.
 const char* const CONFIG_INMEMORY_EXAMPLE = TEST_DATA_DIR "/rfc5155-example.zone.signed";
@@ -190,7 +192,8 @@ protected:
 // by default.  The resulting wire-format data will be stored in 'data'.
 void
 createBuiltinVersionResponse(const qid_t qid, vector<uint8_t>& data) {
-    const Name version_name("version.bind");
+    const Name version_name("VERSION.BIND.");
+    const Name apex_name("BIND.");
     Message message(Message::RENDER);
 
     UnitTestUtil::createRequestMessage(message, Opcode::QUERY(),
@@ -203,9 +206,9 @@ createBuiltinVersionResponse(const qid_t qid, vector<uint8_t>& data) {
     rrset_version->addRdata(generic::TXT(PACKAGE_STRING));
     message.addRRset(Message::SECTION_ANSWER, rrset_version);
 
-    RRsetPtr rrset_version_ns = RRsetPtr(new RRset(version_name, RRClass::CH(),
+    RRsetPtr rrset_version_ns = RRsetPtr(new RRset(apex_name, RRClass::CH(),
                                                    RRType::NS(), RRTTL(0)));
-    rrset_version_ns->addRdata(generic::NS(version_name));
+    rrset_version_ns->addRdata(generic::NS(apex_name));
     message.addRRset(Message::SECTION_AUTHORITY, rrset_version_ns);
 
     MessageRenderer renderer;
@@ -215,26 +218,6 @@ createBuiltinVersionResponse(const qid_t qid, vector<uint8_t>& data) {
     data.assign(static_cast<const uint8_t*>(renderer.getData()),
                 static_cast<const uint8_t*>(renderer.getData()) +
                 renderer.getLength());
-}
-
-// In the following tests we confirm the response data is rendered in
-// wire format in the expected way.
-
-// The most primitive check: checking the result of the processMessage()
-// method
-TEST_F(AuthSrvTest, DISABLED_builtInQuery) { // Needs builtin
-    UnitTestUtil::createRequestMessage(request_message, Opcode::QUERY(),
-                                       default_qid, Name("version.bind"),
-                                       RRClass::CH(), RRType::TXT());
-    createRequestPacket(request_message, IPPROTO_UDP);
-    server.processMessage(*io_message, *parse_message, *response_obuffer,
-                          &dnsserv);
-    createBuiltinVersionResponse(default_qid, response_data);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        response_obuffer->getData(),
-                        response_obuffer->getLength(),
-                        &response_data[0], response_data.size());
-    checkAllRcodeCountersZeroExcept(Rcode::NOERROR(), 1);
 }
 
 // We did not configure any client lists. Therefore it should be REFUSED
@@ -249,51 +232,6 @@ TEST_F(AuthSrvTest, noClientList) {
     EXPECT_TRUE(dnsserv.hasAnswer());
     headerCheck(*parse_message, default_qid, Rcode::REFUSED(),
                 opcode.getCode(), QR_FLAG, 1, 0, 0, 0);
-}
-
-// Same test emulating the UDPServer class behavior (defined in libasiolink).
-// This is not a good test in that it assumes internal implementation details
-// of UDPServer, but we've encountered a regression due to the introduction
-// of that class, so we add a test for that case to prevent such a regression
-// in future.
-// Besides, the generalization of UDPServer is probably too much for the
-// authoritative only server in terms of performance, and it's quite likely
-// we need to drop it for the authoritative server implementation.
-// At that point we can drop this test, too.
-TEST_F(AuthSrvTest, DISABLED_builtInQueryViaDNSServer) { //Needs builtin
-    UnitTestUtil::createRequestMessage(request_message, Opcode::QUERY(),
-                                       default_qid, Name("version.bind"),
-                                       RRClass::CH(), RRType::TXT());
-    createRequestPacket(request_message, IPPROTO_UDP);
-
-    (*server.getDNSLookupProvider())(*io_message, parse_message,
-                                     response_message,
-                                     response_obuffer, &dnsserv);
-    (*server.getDNSAnswerProvider())(*io_message, parse_message,
-                                     response_message, response_obuffer);
-
-    createBuiltinVersionResponse(default_qid, response_data);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        response_obuffer->getData(),
-                        response_obuffer->getLength(),
-                        &response_data[0], response_data.size());
-}
-
-// Same type of test as builtInQueryViaDNSServer but for an error response.
-TEST_F(AuthSrvTest, DISABLED_iqueryViaDNSServer) { // Needs builtin
-    createDataFromFile("iquery_fromWire.wire");
-    (*server.getDNSLookupProvider())(*io_message, parse_message,
-                                     response_message,
-                                     response_obuffer, &dnsserv);
-    (*server.getDNSAnswerProvider())(*io_message, parse_message,
-                                     response_message, response_obuffer);
-
-    UnitTestUtil::readWireData("iquery_response_fromWire.wire",
-                               response_data);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        response_obuffer->getData(),
-                        response_obuffer->getLength(),
-                        &response_data[0], response_data.size());
 }
 
 // Unsupported requests.  Should result in NOTIMP.
@@ -856,8 +794,102 @@ updateInMemory(AuthSrv* server, const char* origin, const char* filename) {
         "       \"" + string(origin) + "\": \"" + string(filename) + "\""
         "   },"
         "   \"cache-enable\": true"
+        "}],"
+        "\"CH\": [{"
+        "   \"type\": \"static\","
+        "   \"params\": \"" + string(STATIC_DSRC_FILE) + "\""
         "}]}"));
     DataSourceConfigurator::testReconfigure(server, config);
+}
+
+void
+updateBuiltin(AuthSrv* server) {
+    const ConstElementPtr config(Element::fromJSON("{"
+        "\"CH\": [{"
+        "   \"type\": \"static\","
+        "   \"params\": \"" + string(STATIC_DSRC_FILE) + "\""
+        "}]}"));
+    DataSourceConfigurator::testReconfigure(server, config);
+}
+
+// Same test emulating the UDPServer class behavior (defined in libasiolink).
+// This is not a good test in that it assumes internal implementation details
+// of UDPServer, but we've encountered a regression due to the introduction
+// of that class, so we add a test for that case to prevent such a regression
+// in future.
+// Besides, the generalization of UDPServer is probably too much for the
+// authoritative only server in terms of performance, and it's quite likely
+// we need to drop it for the authoritative server implementation.
+// At that point we can drop this test, too.
+#ifdef USE_STATIC_LINK
+TEST_F(AuthSrvTest, DISABLED_builtInQueryViaDNSServer) {
+#else
+TEST_F(AuthSrvTest, builtInQueryViaDNSServer) {
+#endif
+    updateBuiltin(&server);
+    UnitTestUtil::createRequestMessage(request_message, Opcode::QUERY(),
+                                       default_qid, Name("VERSION.BIND."),
+                                       RRClass::CH(), RRType::TXT());
+    createRequestPacket(request_message, IPPROTO_UDP);
+
+    (*server.getDNSLookupProvider())(*io_message, parse_message,
+                                     response_message,
+                                     response_obuffer, &dnsserv);
+    (*server.getDNSAnswerProvider())(*io_message, parse_message,
+                                     response_message, response_obuffer);
+
+    createBuiltinVersionResponse(default_qid, response_data);
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
+                        response_obuffer->getData(),
+                        response_obuffer->getLength(),
+                        &response_data[0], response_data.size());
+}
+
+// In the following tests we confirm the response data is rendered in
+// wire format in the expected way.
+
+// The most primitive check: checking the result of the processMessage()
+// method
+#ifdef USE_STATIC_LINK
+TEST_F(AuthSrvTest, DISABLED_builtInQuery) {
+#else
+TEST_F(AuthSrvTest, builtInQuery) {
+#endif
+    updateBuiltin(&server);
+    UnitTestUtil::createRequestMessage(request_message, Opcode::QUERY(),
+                                       default_qid, Name("VERSION.BIND."),
+                                       RRClass::CH(), RRType::TXT());
+    createRequestPacket(request_message, IPPROTO_UDP);
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
+                          &dnsserv);
+    createBuiltinVersionResponse(default_qid, response_data);
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
+                        response_obuffer->getData(),
+                        response_obuffer->getLength(),
+                        &response_data[0], response_data.size());
+    checkAllRcodeCountersZeroExcept(Rcode::NOERROR(), 1);
+}
+
+// Same type of test as builtInQueryViaDNSServer but for an error response.
+#ifdef USE_STATIC_LINK
+TEST_F(AuthSrvTest, DISABLED_iqueryViaDNSServer) { // Needs builtin
+#else
+TEST_F(AuthSrvTest, iqueryViaDNSServer) { // Needs builtin
+#endif
+    updateBuiltin(&server);
+    createDataFromFile("iquery_fromWire.wire");
+    (*server.getDNSLookupProvider())(*io_message, parse_message,
+                                     response_message,
+                                     response_obuffer, &dnsserv);
+    (*server.getDNSAnswerProvider())(*io_message, parse_message,
+                                     response_message, response_obuffer);
+
+    UnitTestUtil::readWireData("iquery_response_fromWire.wire",
+                               response_data);
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
+                        response_obuffer->getData(),
+                        response_obuffer->getLength(),
+                        &response_data[0], response_data.size());
 }
 
 // Install a Sqlite3 data source with testing data.
@@ -880,9 +912,9 @@ TEST_F(AuthSrvTest, updateConfig) {
 }
 
 #ifdef USE_STATIC_LINK
-TEST_F(AuthSrvTest, datasourceFail) {
-#else
 TEST_F(AuthSrvTest, DISABLED_datasourceFail) {
+#else
+TEST_F(AuthSrvTest, datasourceFail) {
 #endif
     updateDatabase(&server, CONFIG_TESTDB);
 
@@ -899,9 +931,9 @@ TEST_F(AuthSrvTest, DISABLED_datasourceFail) {
 }
 
 #ifdef USE_STATIC_LINK
-TEST_F(AuthSrvTest, updateConfigFail) {
-#else
 TEST_F(AuthSrvTest, DISABLED_updateConfigFail) {
+#else
+TEST_F(AuthSrvTest, updateConfigFail) {
 #endif
     // First, load a valid data source.
     updateDatabase(&server, CONFIG_TESTDB);
@@ -977,17 +1009,16 @@ TEST_F(AuthSrvTest,
 #ifdef USE_STATIC_LINK
        DISABLED_chQueryWithInMemoryClient
 #else
-       DISABLED_chQueryWithInMemoryClient // FIXME: Needs the built-in
+       chQueryWithInMemoryClient
 #endif
     )
 {
-    // Configure memory data source for class IN
-    updateConfig(&server, "{\"datasources\": "
-                 "[{\"class\": \"IN\", \"type\": \"memory\"}]}", true);
+    // Set up the in-memory
+    updateInMemory(&server, "example.", CONFIG_INMEMORY_EXAMPLE);
 
     // This shouldn't affect the result of class CH query
     UnitTestUtil::createRequestMessage(request_message, Opcode::QUERY(),
-                                       default_qid, Name("version.bind"),
+                                       default_qid, Name("VERSION.BIND."),
                                        RRClass::CH(), RRType::TXT());
     createRequestPacket(request_message, IPPROTO_UDP);
     server.processMessage(*io_message, *parse_message, *response_obuffer,
