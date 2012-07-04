@@ -128,6 +128,11 @@ LabelSequence::toText(bool omit_final_dot) const {
     result.reserve(name_.getLength());
 
     while (np != np_end) {
+        if (labels == 0) {
+            count = 0;
+            break;
+        }
+
         labels--;
         count = *np++;
 
@@ -138,11 +143,6 @@ LabelSequence::toText(bool omit_final_dot) const {
             if (!omit_final_dot || result.empty()) {
                 result.push_back('.');
             }
-            break;
-        }
-
-        if (labels == 0) {
-            count = 0;
             break;
         }
 
