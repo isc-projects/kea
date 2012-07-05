@@ -53,9 +53,33 @@ public:
     /// to the labels in the Name object).
     ///
     /// \param name The Name to construct a LabelSequence for
-    LabelSequence(const Name& name): name_(name),
+    explicit LabelSequence(const Name& name): /*name_(name),*/
+                                     data_(&name.ndata_[0]),
+                                     offsets_(&name.offsets_[0]),
+                                     offsets_size_(name.offsets_.size()),
                                      first_label_(0),
                                      last_label_(name.getLabelCount())
+    {}
+
+    /// \brief Constructs a LabelSequence for the given data
+    ///
+    /// \note The associated data MUST remain in scope during the lifetime
+    /// of this LabelSequence, since only the pointers are copied.
+    ///
+    /// \note No validation is done on the given data upon construction;
+    ///       use with care.
+    ///
+    /// \param data The Name data, in wire format
+    /// \param offsets The offsets of the labels in the Name, as given
+    ///        by the Name object or another LabelSequence
+    /// \param offsets_size The size of the offsets data
+    LabelSequence(const uint8_t* data,
+                  const uint8_t* offsets,
+                  size_t offsets_size) : data_(data),
+                                         offsets_(offsets),
+                                         offsets_size_(offsets_size),
+                                         first_label_(0),
+                                         last_label_(offsets_size_)
     {}
 
     /// \brief Return the wire-format data for this LabelSequence
@@ -201,7 +225,9 @@ public:
     bool isAbsolute() const;
 
 private:
-    const Name& name_;
+    const uint8_t* data_;
+    const uint8_t* offsets_;
+    size_t offsets_size_;
     size_t first_label_;
     size_t last_label_;
 };

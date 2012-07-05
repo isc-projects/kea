@@ -674,4 +674,46 @@ TEST_F(LabelSequenceTest, LeftShiftOperator) {
     oss << ls1;
     EXPECT_EQ(ls1.toText(), oss.str());
 }
+
+// Test different ways of construction, and see if they compare
+TEST(LabelSequence, rawConstruction) {
+    Name n("example.org");
+
+    uint8_t data[] = { 0x07, 'e', 'x', 'a', 'm', 'p', 'l', 'e',
+                       0x03, 'o', 'r', 'g',
+                       0x00 };
+    uint8_t offsets[] = { 0, 8, 12 };
+    size_t offsets_size = 3;
+
+    LabelSequence s1(n);
+    LabelSequence s2(s1);
+    LabelSequence s3(data, offsets, offsets_size);
+
+    // Assuming equality is transitive, so only comparing 1 to 2 and 1 to 3
+    NameComparisonResult result = s1.compare(s2);
+    EXPECT_EQ(isc::dns::NameComparisonResult::EQUAL,
+              result.getRelation());
+    EXPECT_EQ(0, result.getOrder());
+    EXPECT_EQ(3, result.getCommonLabels());
+
+    result = s1.compare(s3);
+    EXPECT_EQ(isc::dns::NameComparisonResult::EQUAL,
+              result.getRelation());
+    EXPECT_EQ(0, result.getOrder());
+    EXPECT_EQ(3, result.getCommonLabels());
+
+    // Modify the data and make sure it's not equal anymore
+    data[2] = 'f';
+    result = s1.compare(s3);
+    EXPECT_EQ(isc::dns::NameComparisonResult::COMMONANCESTOR,
+              result.getRelation());
+
+    s1.stripRight(1);
+    s2.stripRight(1);
+    data[9] = 'f';
+    result = s1.compare(s3);
+    EXPECT_EQ(isc::dns::NameComparisonResult::NONE,
+              result.getRelation());
+}
+
 }
