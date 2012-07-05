@@ -241,8 +241,8 @@ public:
     /// \brief Result of the reload() method.
     enum ReloadResult {
         CACHE_DISABLED,     ///< The cache is not enabled in this list.
-        ZONE_NOT_CACHED,    ///< Zone exists, but is not cached.
-        ZONE_NOT_FOUND,     ///< No data source in the list provides the zone.
+        ZONE_NOT_CACHED,    ///< Zone is served directly, not from cache.
+        ZONE_NOT_FOUND,     ///< Zone does not exist or not cached.
         ZONE_RELOADED       ///< The zone was successfully reloaded.
     };
 
@@ -335,6 +335,8 @@ private:
     const isc::dns::RRClass rrclass_;
     /// \brief Currently active configuration.
     isc::data::ConstElementPtr configuration_;
+    /// \brief The last set value of allow_cache.
+    bool allow_cache_;
 };
 
 } // namespace datasrc
