@@ -280,19 +280,24 @@ ConfigurableClientList::reload(const Name& name) {
         return (ZONE_NOT_CACHED);
     }
     DataSourceClient* client(info->data_src_client_);
-    if (!client) {
-        isc_throw(isc::NotImplemented,
-                  "Reloading of master files not implemented yet. "
-                  "Next commit or so.");
+    if (client) {
+        // Now do the final reload. If it does not exist in client,
+        // DataSourceError is thrown, which is exactly the result what we
+        // want, so no need to handle it.
+        ZoneIteratorPtr iterator(client->getIterator(name));
+        if (!iterator) {
+            isc_throw(isc::Unexpected, "Null iterator from " << name);
+        }
+        finder->load(*iterator);
+    } else {
+        // The MasterFiles special case
+        const string filename(finder->getFileName());
+        if (filename.empty()) {
+            isc_throw(isc::Unexpected, "Confused about missing both filename "
+                      "and data source");
+        }
+        finder->load(filename);
     }
-    // Now do the final reload. If it does not exist in client,
-    // DataSourceError is thrown, which is exactly the result what we
-    // want, so no need to handle it.
-    ZoneIteratorPtr iterator(client->getIterator(name));
-    if (!iterator) {
-        isc_throw(isc::Unexpected, "Null iterator from " << name);
-    }
-    finder->load(*iterator);
     return (ZONE_RELOADED);
 }
 
