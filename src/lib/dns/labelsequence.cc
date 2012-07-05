@@ -116,23 +116,18 @@ std::string
 LabelSequence::toText(bool omit_final_dot) const {
     Name::NameString::const_iterator np = name_.ndata_.begin() +
         name_.offsets_[first_label_];
-    const Name::NameString::const_iterator np_end = name_.ndata_.end();
+    const Name::NameString::const_iterator np_end = np + getDataLength();
     // use for integrity check
     unsigned int labels = last_label_ - first_label_;
     // init with an impossible value to catch error cases in the end:
     unsigned int count = Name::MAX_LABELLEN + 1;
 
     // result string: it will roughly have the same length as the wire format
-    // name data.  reserve that length to minimize reallocation.
+    // label sequence data.  reserve that length to minimize reallocation.
     std::string result;
-    result.reserve(name_.getLength());
+    result.reserve(getDataLength());
 
     while (np != np_end) {
-        if (labels == 0) {
-            count = 0;
-            break;
-        }
-
         labels--;
         count = *np++;
 
@@ -187,8 +182,9 @@ LabelSequence::toText(bool omit_final_dot) const {
         }
     }
 
+    // We should be at the end of the data and have consumed all labels.
+    assert(np == np_end);
     assert(labels == 0);
-    assert(count == 0);
 
     return (result);
 }
