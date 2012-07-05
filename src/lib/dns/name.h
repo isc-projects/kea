@@ -137,7 +137,7 @@ public:
     /// want to distinguish "com" and "com.", and the current definition would
     /// be more compatible for that purpose.
     /// If, on the other hand, we finally decide we really don't need that
-    /// notion, we'll probably reconsider the design here, too. 
+    /// notion, we'll probably reconsider the design here, too.
     enum NameRelation {
         SUPERDOMAIN = 0,
         SUBDOMAIN = 1,
@@ -427,12 +427,14 @@ private:
     /// \param case_sensitive If true, comparison is case-insensitive
     /// \return a <code>NameComparisonResult</code> object representing the
     /// comparison result.
+/*
     NameComparisonResult compare(const Name& other,
                                  unsigned int first_label,
                                  unsigned int first_label_other,
                                  unsigned int last_label,
                                  unsigned int last_label_other,
                                  bool case_sensitive = false) const;
+*/
 
 public:
     /// \brief Return true iff two names are equal.
@@ -551,7 +553,7 @@ public:
     /// \param first The start position (in labels) of the extracted name
     /// \param n Number of labels of the extracted name
     /// \return A new Name object based on the Name containing <code>n</code>
-    /// labels including and following the <code>first</code> label.  
+    /// labels including and following the <code>first</code> label.
     Name split(unsigned int first, unsigned int n) const;
 
     /// \brief Extract a specified super domain name of Name.
@@ -623,7 +625,7 @@ public:
     /// \brief Reverse the labels of a name
     ///
     /// This method reverses the labels of a name.  For example, if
-    /// \c this is "www.example.com.", this method will return 
+    /// \c this is "www.example.com.", this method will return
     /// "com.example.www."  (This is useful because DNSSEC sort order
     /// is equivalent to a lexical sort of label-reversed names.)
     Name reverse() const;
@@ -743,10 +745,11 @@ Name::ROOT_NAME() {
 /// parameter \c os after the insertion operation.
 std::ostream&
 operator<<(std::ostream& os, const Name& name);
+
 }
 }
 #endif // __NAME_H
 
-// Local Variables: 
+// Local Variables:
 // mode: c++
-// End: 
+// End:
