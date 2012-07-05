@@ -41,6 +41,9 @@ namespace dns {
 /// data of the associated Name object).
 ///
 class LabelSequence {
+    // Name calls the private toText(bool) method of LabelSequence.
+    friend std::string Name::toText(bool) const;
+
 public:
     /// \brief Constructs a LabelSequence for the given name
     ///
@@ -85,6 +88,17 @@ public:
     /// \return The length of the data of the label sequence in octets.
     size_t getDataLength() const;
 
+    /// \brief Compares two label sequences for equality.
+    ///
+    /// Performs a (optionally case-insensitive) comparison between this
+    /// LabelSequence and another LabelSequence for equality.
+    ///
+    /// \param other The LabelSequence to compare with
+    /// \param case_sensitive If true, comparison is case-insensitive
+    /// \return true if The label sequences consist are the same length,
+    ///         and contain the same data.
+    bool equals(const LabelSequence& other, bool case_sensitive = false) const;
+
     /// \brief Compares two label sequences.
     ///
     /// Performs a (optionally case-insensitive) comparison between this
@@ -92,9 +106,10 @@ public:
     ///
     /// \param other The LabelSequence to compare with
     /// \param case_sensitive If true, comparison is case-insensitive
-    /// \return true if The label sequences consist are the same length,
-    ///         and contain the same data.
-    bool equals(const LabelSequence& other, bool case_sensitive = false) const;
+    /// \return a <code>NameComparisonResult</code> object representing the
+    /// comparison result.
+    NameComparisonResult compare(const LabelSequence& other,
+                                 bool case_sensitive = false) const;
 
     /// \brief Remove labels from the front of this LabelSequence
     ///
@@ -123,17 +138,38 @@ public:
     /// \return The number of labels
     size_t getLabelCount() const { return (last_label_ - first_label_); }
 
-    /// \brief Returns the original Name object associated with this
-    ///        LabelSequence
+    /// \brief Convert the LabelSequence to a string.
     ///
-    /// While the Name should still be in scope during the lifetime of
-    /// the LabelSequence, it can still be useful to have access to it,
-    /// for instance in helper functions that are only passed the
-    /// LabelSequence itself.
+    /// This method returns a <code>std::string</code> object representing the
+    /// LabelSequence as a string.  The returned string ends with a dot
+    /// '.' if the label sequence is absolute.
     ///
-    /// \return Reference to the original Name object
-    const Name& getName() const { return (name_); }
+    /// This function assumes the underlying name is in proper
+    /// uncompressed wire format.  If it finds an unexpected label
+    /// character including compression pointer, an exception of class
+    /// \c BadLabelType will be thrown.  In addition, if resource
+    /// allocation for the result string fails, a corresponding standard
+    /// exception will be thrown.
+    //
+    /// \return a string representation of the <code>LabelSequence</code>.
+    std::string toText() const;
 
+private:
+    /// \brief Convert the LabelSequence to a string.
+    ///
+    /// This method is a version of the zero-argument toText() method,
+    /// that accepts a <code>omit_final_dot</code> argument. The
+    /// returned string ends with a dot '.' if
+    /// <code>omit_final_dot</code> is <code>false</code>.
+    ///
+    /// This method is used as a helper for <code>Name::toText()</code>
+    /// only.
+    ///
+    /// \param omit_final_dot whether to omit the trailing dot in the output.
+    /// \return a string representation of the <code>LabelSequence</code>.
+    std::string toText(bool omit_final_dot) const;
+
+public:
     /// \brief Calculate a simple hash for the label sequence.
     ///
     /// This method calculates a hash value for the label sequence as binary
@@ -170,6 +206,23 @@ private:
     size_t last_label_;
 };
 
+
+///
+/// \brief Insert the label sequence as a string into stream.
+///
+/// This method convert the \c label_sequence into a string and inserts
+/// it into the output stream \c os.
+///
+/// This function overloads the global operator<< to behave as described in
+/// ostream::operator<< but applied to \c LabelSequence objects.
+///
+/// \param os A \c std::ostream object on which the insertion operation is
+/// performed.
+/// \param name The \c LabelSequence object output by the operation.
+/// \return A reference to the same \c std::ostream object referenced by
+/// parameter \c os after the insertion operation.
+std::ostream&
+operator<<(std::ostream& os, const LabelSequence& label_sequence);
 
 } // end namespace dns
 } // end namespace isc

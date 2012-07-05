@@ -1027,6 +1027,7 @@ AC_CONFIG_FILES([Makefile
                  src/bin/dhcp4/tests/Makefile
                  src/bin/resolver/Makefile
                  src/bin/resolver/tests/Makefile
+                 src/bin/showtech/Makefile
                  src/bin/sockcreator/Makefile
                  src/bin/sockcreator/tests/Makefile
                  src/bin/xfrin/Makefile
@@ -1082,6 +1083,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/python/isc/xfrin/tests/Makefile
                  src/lib/python/isc/server_common/Makefile
                  src/lib/python/isc/server_common/tests/Makefile
+                 src/lib/python/isc/sysinfo/Makefile
+                 src/lib/python/isc/sysinfo/tests/Makefile
                  src/lib/config/Makefile
                  src/lib/config/tests/Makefile
                  src/lib/config/tests/testdata/Makefile
@@ -1159,6 +1162,7 @@ AC_OUTPUT([doc/version.ent
            src/bin/zonemgr/zonemgr.spec.pre
            src/bin/zonemgr/tests/zonemgr_test
            src/bin/zonemgr/run_b10-zonemgr.sh
+           src/bin/showtech/showtech.py
            src/bin/stats/stats.py
            src/bin/stats/stats_httpd.py
            src/bin/bind10/bind10_src.py
