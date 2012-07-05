@@ -121,6 +121,7 @@ class TestModuleSpec(unittest.TestCase):
         # value, we can predict the comparison result.
         self.assertEqual(hash(RRType.AAAA()), hash(RRType("AAAA")))
         self.assertEqual(hash(RRType("aaaa")), hash(RRType("AAAA")))
+        self.assertEqual(hash(RRType(28)), hash(RRType("AAAA")))
         self.assertNotEqual(hash(RRType.A()), hash(RRType.NS()))
         self.assertNotEqual(hash(RRType.AAAA()), hash(RRType("Type65535")))
 
