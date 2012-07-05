@@ -25,6 +25,7 @@
 #include <dns/name.h>
 #include <dns/name_internal.h>
 #include <dns/messagerenderer.h>
+#include <dns/labelsequence.h>
 
 using namespace std;
 using namespace isc::util;
@@ -428,92 +429,39 @@ Name::toWire(AbstractMessageRenderer& renderer) const {
 
 std::string
 Name::toText(bool omit_final_dot) const {
-    if (length_ == 1) {
-        //
-        // Special handling for the root label.  We ignore omit_final_dot.
-        //
-        assert(labelcount_ == 1 && ndata_[0] == '\0');
-        return (".");
-    }
-
-    NameString::const_iterator np = ndata_.begin();
-    NameString::const_iterator np_end = ndata_.end();
-    unsigned int labels = labelcount_; // use for integrity check
-    // init with an impossible value to catch error cases in the end:
-    unsigned int count = MAX_LABELLEN + 1;
-
-    // result string: it will roughly have the same length as the wire format
-    // name data.  reserve that length to minimize reallocation.
-    std::string result;
-    result.reserve(length_);
-
-    while (np != np_end) {
-        labels--;
-        count = *np++;
-
-        if (count == 0) {
-            if (!omit_final_dot) {
-                result.push_back('.');
-            }
-            break;
-        }
-            
-        if (count <= MAX_LABELLEN) {
-            assert(np_end - np >= count);
-
-            if (!result.empty()) {
-                // just after a non-empty label.  add a separating dot.
-                result.push_back('.');
-            }
-
-            while (count-- > 0) {
-                uint8_t c = *np++;
-                switch (c) {
-                case 0x22: // '"'
-                case 0x28: // '('
-                case 0x29: // ')'
-                case 0x2E: // '.'
-                case 0x3B: // ';'
-                case 0x5C: // '\\'
-                    // Special modifiers in zone files.
-                case 0x40: // '@'
-                case 0x24: // '$'
-                    result.push_back('\\');
-                    result.push_back(c);
-                    break;
-                default:
-                    if (c > 0x20 && c < 0x7f) {
-                        // append printable characters intact
-                        result.push_back(c);
-                    } else {
-                        // encode non-printable characters in the form of \DDD
-                        result.push_back(0x5c);
-                        result.push_back(0x30 + ((c / 100) % 10));
-                        result.push_back(0x30 + ((c / 10) % 10));
-                        result.push_back(0x30 + (c % 10));
-                    }
-                }
-            }
-        } else {
-            isc_throw(BadLabelType, "unknown label type in name data");
-        }
-    }
-
-    assert(labels == 0);
-    assert(count == 0);         // a valid name must end with a 'dot'.
-
-    return (result);
+    LabelSequence ls(*this);
+    return (ls.toText(omit_final_dot));
 }
 
 NameComparisonResult
 Name::compare(const Name& other) const {
+    return (compare(other, 0, 0, labelcount_, other.labelcount_));
+}
+
+NameComparisonResult
+Name::compare(const Name& other,
+              unsigned int first_label,
+              unsigned int first_label_other,
+              unsigned int last_label,
+              unsigned int last_label_other,
+              bool case_sensitive) const {
     // Determine the relative ordering under the DNSSEC order relation of
     // 'this' and 'other', and also determine the hierarchical relationship
     // of the names.
 
+    if ((first_label > last_label) ||
+        (first_label_other > last_label_other)) {
+        isc_throw(BadValue, "Bad label index ranges were passed");
+    }
+
+    if ((first_label > labelcount_) ||
+        (first_label_other > other.labelcount_)) {
+        isc_throw(BadValue, "Bad first label indices were passed");
+    }
+
     unsigned int nlabels = 0;
-    unsigned int l1 = labelcount_;
-    unsigned int l2 = other.labelcount_;
+    int l1 = last_label - first_label;
+    int l2 = last_label_other - first_label_other;
     int ldiff = (int)l1 - (int)l2;
     unsigned int l = (ldiff < 0) ? l1 : l2;
 
@@ -521,8 +469,8 @@ Name::compare(const Name& other) const {
         --l;
         --l1;
         --l2;
-        size_t pos1 = offsets_[l1];
-        size_t pos2 = other.offsets_[l2];
+        size_t pos1 = offsets_[l1 + first_label];
+        size_t pos2 = other.offsets_[l2 + first_label_other];
         unsigned int count1 = ndata_[pos1++];
         unsigned int count2 = other.ndata_[pos2++];
 
@@ -536,19 +484,39 @@ Name::compare(const Name& other) const {
         while (count > 0) {
             uint8_t label1 = ndata_[pos1];
             uint8_t label2 = other.ndata_[pos2];
+            int chdiff;
 
-            int chdiff = (int)maptolower[label1] - (int)maptolower[label2];
+            if (case_sensitive) {
+                chdiff = (int)label1 - (int)label2;
+            } else {
+                chdiff = (int)maptolower[label1] - (int)maptolower[label2];
+            }
+
             if (chdiff != 0) {
-                return (NameComparisonResult(chdiff, nlabels,
-                                         NameComparisonResult::COMMONANCESTOR));
+                if ((nlabels == 0) &&
+                    ((last_label < labelcount_) ||
+                     (last_label_other < other.labelcount_))) {
+                    return (NameComparisonResult(0, 0,
+                                                 NameComparisonResult::NONE));
+                } else {
+                    return (NameComparisonResult(chdiff, nlabels,
+                                                 NameComparisonResult::COMMONANCESTOR));
+                }
             }
             --count;
             ++pos1;
             ++pos2;
         }
         if (cdiff != 0) {
+            if ((nlabels == 0) &&
+                ((last_label < labelcount_) ||
+                 (last_label_other < other.labelcount_))) {
+                return (NameComparisonResult(0, 0,
+                                             NameComparisonResult::NONE));
+            } else {
                 return (NameComparisonResult(cdiff, nlabels,
-                                         NameComparisonResult::COMMONANCESTOR));
+                                             NameComparisonResult::COMMONANCESTOR));
+            }
         }
         ++nlabels;
     }

@@ -71,6 +71,21 @@ LabelSequence::equals(const LabelSequence& other, bool case_sensitive) const {
     return (true);
 }
 
+NameComparisonResult
+LabelSequence::compare(const LabelSequence& other,
+                       bool case_sensitive) const {
+    if (isAbsolute() ^ other.isAbsolute()) {
+        return (NameComparisonResult(0, 0, NameComparisonResult::NONE));
+    }
+
+    return (name_.compare(other.name_,
+                          first_label_,
+                          other.first_label_,
+                          last_label_,
+                          other.last_label_,
+                          case_sensitive));
+}
+
 void
 LabelSequence::stripLeft(size_t i) {
     if (i >= getLabelCount()) {
@@ -110,6 +125,94 @@ LabelSequence::getHash(bool case_sensitive) const {
         --length;
     }
     return (hash_val);
+}
+
+std::string
+LabelSequence::toText(bool omit_final_dot) const {
+    Name::NameString::const_iterator np = name_.ndata_.begin() +
+        name_.offsets_[first_label_];
+    const Name::NameString::const_iterator np_end = np + getDataLength();
+    // use for integrity check
+    unsigned int labels = last_label_ - first_label_;
+    // init with an impossible value to catch error cases in the end:
+    unsigned int count = Name::MAX_LABELLEN + 1;
+
+    // result string: it will roughly have the same length as the wire format
+    // label sequence data.  reserve that length to minimize reallocation.
+    std::string result;
+    result.reserve(getDataLength());
+
+    while (np != np_end) {
+        labels--;
+        count = *np++;
+
+        if (count == 0) {
+            // We've reached the "final dot".  If we've not dumped any
+            // character, the entire label sequence is the root name.
+            // In that case we don't omit the final dot.
+            if (!omit_final_dot || result.empty()) {
+                result.push_back('.');
+            }
+            break;
+        }
+
+        if (count <= Name::MAX_LABELLEN) {
+            assert(np_end - np >= count);
+
+            if (!result.empty()) {
+                // just after a non-empty label.  add a separating dot.
+                result.push_back('.');
+            }
+
+            while (count-- > 0) {
+                const uint8_t c = *np++;
+                switch (c) {
+                case 0x22: // '"'
+                case 0x28: // '('
+                case 0x29: // ')'
+                case 0x2E: // '.'
+                case 0x3B: // ';'
+                case 0x5C: // '\\'
+                    // Special modifiers in zone files.
+                case 0x40: // '@'
+                case 0x24: // '$'
+                    result.push_back('\\');
+                    result.push_back(c);
+                    break;
+                default:
+                    if (c > 0x20 && c < 0x7f) {
+                        // append printable characters intact
+                        result.push_back(c);
+                    } else {
+                        // encode non-printable characters in the form of \DDD
+                        result.push_back(0x5c);
+                        result.push_back(0x30 + ((c / 100) % 10));
+                        result.push_back(0x30 + ((c / 10) % 10));
+                        result.push_back(0x30 + (c % 10));
+                    }
+                }
+            }
+        } else {
+            isc_throw(BadLabelType, "unknown label type in name data");
+        }
+    }
+
+    // We should be at the end of the data and have consumed all labels.
+    assert(np == np_end);
+    assert(labels == 0);
+
+    return (result);
+}
+
+std::string
+LabelSequence::toText() const {
+    return (toText(!isAbsolute()));
+}
+
+std::ostream&
+operator<<(std::ostream& os, const LabelSequence& label_sequence) {
+    os << label_sequence.toText();
+    return (os);
 }
 
 } // end namespace dns

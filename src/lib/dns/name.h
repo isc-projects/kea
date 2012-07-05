@@ -142,7 +142,8 @@ public:
         SUPERDOMAIN = 0,
         SUBDOMAIN = 1,
         EQUAL = 2,
-        COMMONANCESTOR = 3
+        COMMONANCESTOR = 3,
+        NONE = 4
     };
 
     ///
@@ -404,6 +405,36 @@ public:
     /// comparison result.
     NameComparisonResult compare(const Name& other) const;
 
+private:
+    /// \brief Partially compare two <code>Name</code>s.
+    ///
+    /// This method performs a partial comparison of the
+    /// <code>Name</code> and <code>other</code> and returns the result
+    /// in the form of a <code>NameComparisonResult</code> object.
+    ///
+    /// This method can throw the BadValue exception if bad label
+    /// indices are passed.
+    ///
+    /// \param other the right-hand operand to compare against.
+    /// \param first_label the left-most label of <code>Name</code> to
+    /// begin comparing from.
+    /// \param first_label_other the left-most label of
+    /// <code>other</code> to begin comparing from.
+    /// \param last_label the right-most label of <code>Name</code> to
+    /// end comparing at.
+    /// \param last_label_other the right-most label of
+    /// <code>other</code> to end comparing at.
+    /// \param case_sensitive If true, comparison is case-insensitive
+    /// \return a <code>NameComparisonResult</code> object representing the
+    /// comparison result.
+    NameComparisonResult compare(const Name& other,
+                                 unsigned int first_label,
+                                 unsigned int first_label_other,
+                                 unsigned int last_label,
+                                 unsigned int last_label_other,
+                                 bool case_sensitive = false) const;
+
+public:
     /// \brief Return true iff two names are equal.
     ///
     /// Semantically this could be implemented based on the result of the
