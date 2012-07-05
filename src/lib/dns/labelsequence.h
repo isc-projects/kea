@@ -150,6 +150,9 @@ private:
     /// returned string ends with a dot '.' if
     /// <code>omit_final_dot</code> is <code>false</code>.
     ///
+    /// This method is used as a helper for <code>Name::toText()</code>
+    /// only.
+    ///
     /// \param omit_final_dot whether to omit the trailing dot in the output.
     /// \return a string representation of the <code>LabelSequence</code>.
     std::string toText(bool omit_final_dot) const;
