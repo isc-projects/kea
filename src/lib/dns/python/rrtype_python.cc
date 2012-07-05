@@ -371,8 +371,8 @@ RRType_ANY(s_RRType*) {
 
 Py_hash_t
 RRType_hash(PyObject* pyself) {
-    s_RRType* const self = static_cast<s_RRType*>(pyself);
-    return (self->cppobj->getCode());
+    const s_RRType* const self = static_cast<s_RRType*>(pyself);
+    return (convertToPyHash<uint16_t>(self->cppobj->getCode()));
 }
 } // end anonymous namespace
 
