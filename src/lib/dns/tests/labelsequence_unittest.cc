@@ -142,6 +142,223 @@ TEST_F(LabelSequenceTest, equals_insensitive) {
     EXPECT_TRUE(ls11.equals(ls12));
 }
 
+// Compare tests
+TEST_F(LabelSequenceTest, compare) {
+    // "example.org." and "example.org.", case sensitive
+    NameComparisonResult result = ls1.compare(ls3, true);
+    EXPECT_EQ(isc::dns::NameComparisonResult::EQUAL,
+              result.getRelation());
+    EXPECT_EQ(0, result.getOrder());
+    EXPECT_EQ(3, result.getCommonLabels());
+
+    // "example.org." and "example.ORG.", case sensitive
+    result = ls3.compare(ls5, true);
+    EXPECT_EQ(isc::dns::NameComparisonResult::COMMONANCESTOR,
+              result.getRelation());
+    EXPECT_LT(0, result.getOrder());
+    EXPECT_EQ(1, result.getCommonLabels());
+
+    // "example.org." and "example.ORG.", case in-sensitive
+    result = ls3.compare(ls5);
+    EXPECT_EQ(isc::dns::NameComparisonResult::EQUAL,
+              result.getRelation());
+    EXPECT_EQ(0, result.getOrder());
+    EXPECT_EQ(3, result.getCommonLabels());
+
+    Name na("a.example.org");
+    Name nb("b.example.org");
+    LabelSequence lsa(na);
+    LabelSequence lsb(nb);
+
+    // "a.example.org." and "b.example.org.", case in-sensitive
+    result = lsa.compare(lsb);
+    EXPECT_EQ(isc::dns::NameComparisonResult::COMMONANCESTOR,
+              result.getRelation());
+    EXPECT_GT(0, result.getOrder());
+    EXPECT_EQ(3, result.getCommonLabels());
+
+    // "example.org." and "b.example.org.", case in-sensitive
+    lsa.stripLeft(1);
+    result = lsa.compare(lsb);
+    EXPECT_EQ(isc::dns::NameComparisonResult::SUPERDOMAIN,
+              result.getRelation());
+    EXPECT_GT(0, result.getOrder());
+    EXPECT_EQ(3, result.getCommonLabels());
+
+    Name nc("g.f.e.d.c.example.org");
+    LabelSequence lsc(nc);
+
+    // "g.f.e.d.c.example.org." and "b.example.org" (not absolute), case
+    // in-sensitive
+    lsb.stripRight(1);
+    result = lsc.compare(lsb);
+    EXPECT_EQ(isc::dns::NameComparisonResult::NONE,
+              result.getRelation());
+    EXPECT_EQ(0, result.getOrder());
+    EXPECT_EQ(0, result.getCommonLabels());
+
+    // "g.f.e.d.c.example.org." and "example.org.", case in-sensitive
+    result = lsc.compare(ls1);
+    EXPECT_EQ(isc::dns::NameComparisonResult::SUBDOMAIN,
+              result.getRelation());
+    EXPECT_LT(0, result.getOrder());
+    EXPECT_EQ(3, result.getCommonLabels());
+
+    // "e.d.c.example.org." and "example.org.", case in-sensitive
+    lsc.stripLeft(2);
+    result = lsc.compare(ls1);
+    EXPECT_EQ(isc::dns::NameComparisonResult::SUBDOMAIN,
+              result.getRelation());
+    EXPECT_LT(0, result.getOrder());
+    EXPECT_EQ(3, result.getCommonLabels());
+
+    // "example.org." and "example.org.", case in-sensitive
+    lsc.stripLeft(3);
+    result = lsc.compare(ls1);
+    EXPECT_EQ(isc::dns::NameComparisonResult::EQUAL,
+              result.getRelation());
+    EXPECT_EQ(0, result.getOrder());
+    EXPECT_EQ(3, result.getCommonLabels());
+
+    // "." and "example.org.", case in-sensitive
+    lsc.stripLeft(2);
+    result = lsc.compare(ls1);
+    EXPECT_EQ(isc::dns::NameComparisonResult::SUPERDOMAIN,
+              result.getRelation());
+    EXPECT_GT(0, result.getOrder());
+    EXPECT_EQ(1, result.getCommonLabels());
+
+    Name nd("a.b.c.isc.example.org");
+    LabelSequence lsd(nd);
+    Name ne("w.x.y.isc.EXAMPLE.org");
+    LabelSequence lse(ne);
+
+    // "a.b.c.isc.example.org." and "w.x.y.isc.EXAMPLE.org.",
+    // case sensitive
+    result = lsd.compare(lse, true);
+    EXPECT_EQ(isc::dns::NameComparisonResult::COMMONANCESTOR,
+              result.getRelation());
+    EXPECT_LT(0, result.getOrder());
+    EXPECT_EQ(2, result.getCommonLabels());
+
+    // "a.b.c.isc.example.org." and "w.x.y.isc.EXAMPLE.org.",
+    // case in-sensitive
+    result = lsd.compare(lse);
+    EXPECT_EQ(isc::dns::NameComparisonResult::COMMONANCESTOR,
+              result.getRelation());
+    EXPECT_GT(0, result.getOrder());
+    EXPECT_EQ(4, result.getCommonLabels());
+
+    // "isc.example.org." and "isc.EXAMPLE.org.", case sensitive
+    lsd.stripLeft(3);
+    lse.stripLeft(3);
+    result = lsd.compare(lse, true);
+    EXPECT_EQ(isc::dns::NameComparisonResult::COMMONANCESTOR,
+              result.getRelation());
+    EXPECT_LT(0, result.getOrder());
+    EXPECT_EQ(2, result.getCommonLabels());
+
+    // "isc.example.org." and "isc.EXAMPLE.org.", case in-sensitive
+    result = lsd.compare(lse);
+    EXPECT_EQ(isc::dns::NameComparisonResult::EQUAL,
+              result.getRelation());
+    EXPECT_EQ(0, result.getOrder());
+    EXPECT_EQ(4, result.getCommonLabels());
+
+    Name nf("a.b.c.isc.example.org");
+    LabelSequence lsf(nf);
+    Name ng("w.x.y.isc.EXAMPLE.org");
+    LabelSequence lsg(ng);
+
+    // "a.b.c.isc.example.org." and "w.x.y.isc.EXAMPLE.org" (not
+    // absolute), case in-sensitive
+    lsg.stripRight(1);
+    result = lsg.compare(lsf);
+    EXPECT_EQ(isc::dns::NameComparisonResult::NONE,
+              result.getRelation());
+    EXPECT_EQ(0, result.getOrder());
+    EXPECT_EQ(0, result.getCommonLabels());
+
+    // "a.b.c.isc.example.org" (not absolute) and
+    // "w.x.y.isc.EXAMPLE.org" (not absolute), case in-sensitive
+    lsf.stripRight(1);
+    result = lsg.compare(lsf);
+    EXPECT_EQ(isc::dns::NameComparisonResult::COMMONANCESTOR,
+              result.getRelation());
+    EXPECT_LT(0, result.getOrder());
+    EXPECT_EQ(3, result.getCommonLabels());
+
+    // "a.b.c.isc.example" (not absolute) and
+    // "w.x.y.isc.EXAMPLE" (not absolute), case in-sensitive
+    lsf.stripRight(1);
+    lsg.stripRight(1);
+    result = lsg.compare(lsf);
+    EXPECT_EQ(isc::dns::NameComparisonResult::COMMONANCESTOR,
+              result.getRelation());
+    EXPECT_LT(0, result.getOrder());
+    EXPECT_EQ(2, result.getCommonLabels());
+
+    // "a.b.c" (not absolute) and
+    // "w.x.y" (not absolute), case in-sensitive
+    lsf.stripRight(2);
+    lsg.stripRight(2);
+    result = lsg.compare(lsf);
+    EXPECT_EQ(isc::dns::NameComparisonResult::NONE,
+              result.getRelation());
+    EXPECT_EQ(0, result.getOrder());
+    EXPECT_EQ(0, result.getCommonLabels());
+
+    Name nh("aexample.org");
+    LabelSequence lsh(nh);
+    Name ni("bexample.org");
+    LabelSequence lsi(ni);
+
+    // "aexample.org" (not absolute) and
+    // "bexample.org" (not absolute), case in-sensitive
+    lsh.stripRight(1);
+    lsi.stripRight(1);
+    result = lsh.compare(lsi);
+    EXPECT_EQ(isc::dns::NameComparisonResult::COMMONANCESTOR,
+              result.getRelation());
+    EXPECT_GT(0, result.getOrder());
+    EXPECT_EQ(1, result.getCommonLabels());
+
+    // "aexample" (not absolute) and
+    // "bexample" (not absolute), case in-sensitive
+    lsh.stripRight(1);
+    lsi.stripRight(1);
+    result = lsh.compare(lsi);
+    EXPECT_EQ(isc::dns::NameComparisonResult::NONE,
+              result.getRelation());
+    EXPECT_EQ(0, result.getOrder());
+    EXPECT_EQ(0, result.getCommonLabels());
+
+    Name nj("example.org");
+    LabelSequence lsj(nj);
+    Name nk("example.org");
+    LabelSequence lsk(nk);
+
+    // "example.org" (not absolute) and
+    // "example.org" (not absolute), case in-sensitive
+    lsj.stripRight(1);
+    lsk.stripRight(1);
+    result = lsj.compare(lsk);
+    EXPECT_EQ(isc::dns::NameComparisonResult::EQUAL,
+              result.getRelation());
+    EXPECT_EQ(0, result.getOrder());
+    EXPECT_EQ(2, result.getCommonLabels());
+
+    // "example" (not absolute) and
+    // "example" (not absolute), case in-sensitive
+    lsj.stripRight(1);
+    lsk.stripRight(1);
+    result = lsj.compare(lsk);
+    EXPECT_EQ(isc::dns::NameComparisonResult::EQUAL,
+              result.getRelation());
+    EXPECT_EQ(0, result.getOrder());
+    EXPECT_EQ(1, result.getCommonLabels());
+}
+
 void
 getDataCheck(const uint8_t* expected_data, size_t expected_len,
              const LabelSequence& ls)
@@ -149,14 +366,14 @@ getDataCheck(const uint8_t* expected_data, size_t expected_len,
     size_t len;
     const uint8_t* data = ls.getData(&len);
     ASSERT_EQ(expected_len, len) << "Expected data: " << expected_data <<
-                                    " name: " << ls.getName().toText();
+                                    ", label sequence: " << ls;
     EXPECT_EQ(expected_len, ls.getDataLength()) <<
         "Expected data: " << expected_data <<
-        " name: " << ls.getName().toText();
+        ", label sequence: " << ls;
     for (size_t i = 0; i < len; ++i) {
         EXPECT_EQ(expected_data[i], data[i]) <<
           "Difference at pos " << i << ": Expected data: " << expected_data <<
-          " name: " << ls.getName().toText();;
+          ", label sequence: " << ls;
     }
 }
 
@@ -292,6 +509,84 @@ TEST_F(LabelSequenceTest, isAbsolute) {
     ASSERT_TRUE(ls3.isAbsolute());
 }
 
+TEST_F(LabelSequenceTest, toText) {
+    EXPECT_EQ(".", ls7.toText());
+
+    EXPECT_EQ("example.org.", ls1.toText());
+    ls1.stripLeft(1);
+    EXPECT_EQ("org.", ls1.toText());
+    ls1.stripLeft(1);
+    EXPECT_EQ(".", ls1.toText());
+
+    EXPECT_EQ("example.com.", ls2.toText());
+    ls2.stripRight(1);
+    EXPECT_EQ("example.com", ls2.toText());
+    ls2.stripRight(1);
+    EXPECT_EQ("example", ls2.toText());
+
+    EXPECT_EQ("foo.example.org.bar.", ls8.toText());
+    ls8.stripRight(2);
+    EXPECT_EQ("foo.example.org", ls8.toText());
+
+    EXPECT_EQ(".", ls7.toText());
+    EXPECT_THROW(ls7.stripLeft(1), isc::OutOfRange);
+
+    Name n_long1("012345678901234567890123456789"
+                 "012345678901234567890123456789012."
+                 "012345678901234567890123456789"
+                 "012345678901234567890123456789012."
+                 "012345678901234567890123456789"
+                 "012345678901234567890123456789012."
+                 "012345678901234567890123456789"
+                 "0123456789012345678901234567890");
+    LabelSequence ls_long1(n_long1);
+
+    EXPECT_EQ("012345678901234567890123456789"
+              "012345678901234567890123456789012."
+              "012345678901234567890123456789"
+              "012345678901234567890123456789012."
+              "012345678901234567890123456789"
+              "012345678901234567890123456789012."
+              "012345678901234567890123456789"
+              "0123456789012345678901234567890.", ls_long1.toText());
+    ls_long1.stripRight(1);
+    EXPECT_EQ("012345678901234567890123456789"
+              "012345678901234567890123456789012."
+              "012345678901234567890123456789"
+              "012345678901234567890123456789012."
+              "012345678901234567890123456789"
+              "012345678901234567890123456789012."
+              "012345678901234567890123456789"
+              "0123456789012345678901234567890", ls_long1.toText());
+
+    Name n_long2("0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9."
+                 "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9."
+                 "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9."
+                 "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9."
+                 "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9."
+                 "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9."
+                 "0.1.2.3.4.5.6");
+    LabelSequence ls_long2(n_long2);
+
+    EXPECT_EQ("0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9."
+              "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9."
+              "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9."
+              "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9."
+              "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9."
+              "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9."
+              "0.1.2.3.4.5.6.", ls_long2.toText());
+    ls_long2.stripRight(1);
+    EXPECT_EQ("0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9."
+              "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9."
+              "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9."
+              "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9."
+              "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9."
+              "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9."
+              "0.1.2.3.4.5.6", ls_long2.toText());
+    ls_long2.stripRight(125);
+    EXPECT_EQ("0.1", ls_long2.toText());
+}
+
 // The following are test data used in the getHash test below.  Normally
 // we use example/documentation domain names for testing, but in this case
 // we'd specifically like to use more realistic data, and are intentionally
@@ -373,4 +668,10 @@ TEST_F(LabelSequenceTest, getHash) {
     hashDistributionCheck(ca_servers);
 }
 
+// test operator<<.  We simply confirm it appends the result of toText().
+TEST_F(LabelSequenceTest, LeftShiftOperator) {
+    ostringstream oss;
+    oss << ls1;
+    EXPECT_EQ(ls1.toText(), oss.str());
+}
 }
