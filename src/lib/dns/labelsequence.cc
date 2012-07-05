@@ -71,6 +71,21 @@ LabelSequence::equals(const LabelSequence& other, bool case_sensitive) const {
     return (true);
 }
 
+NameComparisonResult
+LabelSequence::compare(const LabelSequence& other,
+                       bool case_sensitive) const {
+    if (isAbsolute() ^ other.isAbsolute()) {
+        return (NameComparisonResult(0, 0, NameComparisonResult::NONE));
+    }
+
+    return (name_.compare(other.name_,
+                          first_label_,
+                          other.first_label_,
+                          last_label_,
+                          other.last_label_,
+                          case_sensitive));
+}
+
 void
 LabelSequence::stripLeft(size_t i) {
     if (i >= getLabelCount()) {
