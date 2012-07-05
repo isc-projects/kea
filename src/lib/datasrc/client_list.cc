@@ -15,19 +15,32 @@
 #include "client_list.h"
 #include "client.h"
 #include "factory.h"
+#include "memory_datasrc.h"
 
 #include <memory>
 #include <boost/foreach.hpp>
 
 using namespace isc::data;
+using namespace isc::dns;
 using namespace std;
+using namespace boost;
 
 namespace isc {
 namespace datasrc {
 
+ConfigurableClientList::DataSourceInfo::DataSourceInfo(
+    DataSourceClient* data_src_client,
+    const DataSourceClientContainerPtr& container, bool hasCache) :
+    data_src_client_(data_src_client),
+    container_(container)
+{
+    if (hasCache) {
+        cache_.reset(new InMemoryClient);
+    }
+}
+
 void
-ConfigurableClientList::configure(const Element& config, bool) {
-    // TODO: Implement the cache
+ConfigurableClientList::configure(const Element& config, bool allow_cache) {
     // TODO: Implement recycling from the old configuration.
     size_t i(0); // Outside of the try to be able to access it in the catch
     try {
@@ -49,8 +62,48 @@ ConfigurableClientList::configure(const Element& config, bool) {
             // Ask the factory to create the data source for us
             const DataSourcePair ds(this->getDataSourceClient(type,
                                                               paramConf));
+            const bool want_cache(allow_cache &&
+                                  dconf->contains("cache-enable") &&
+                                  dconf->get("cache-enable")->boolValue());
             // And put it into the vector
-            new_data_sources.push_back(DataSourceInfo(ds.first, ds.second));
+            new_data_sources.push_back(DataSourceInfo(ds.first, ds.second,
+                                                      want_cache));
+            if (want_cache) {
+                if (!dconf->contains("cache-zones")) {
+                    isc_throw(isc::NotImplemented, "Auto-detection of zones "
+                              "to cache is not yet implemented, supply "
+                              "cache-zones parameter");
+                    // TODO: Auto-detect list of all zones in the
+                    // data source.
+                }
+                const ConstElementPtr zones(dconf->get("cache-zones"));
+                const shared_ptr<InMemoryClient>
+                    cache(new_data_sources.back().cache_);
+                const DataSourceClient* const
+                    client(new_data_sources.back().data_src_client_);
+                for (size_t i(0); i < zones->size(); ++i) {
+                    const Name origin(zones->get(i)->stringValue());
+                    const DataSourceClient::FindResult
+                        zone(client->findZone(origin));
+                    if (zone.code != result::SUCCESS) {
+                        // The data source does not contain the zone, it can't
+                        // be cached.
+                        isc_throw(ConfigurationError, "Unable to cache "
+                                  "non-existent zone " << origin);
+                    }
+                    shared_ptr<InMemoryZoneFinder>
+                        finder(new
+                            InMemoryZoneFinder(zone.zone_finder->getClass(),
+                                               origin));
+                    ZoneIteratorPtr iterator(client->getIterator(origin));
+                    if (!iterator) {
+                        isc_throw(isc::Unexpected, "Got NULL iterator for "
+                                  "zone " << origin);
+                    }
+                    finder->load(*iterator);
+                    cache->addZone(finder);
+                }
+            }
         }
         // If everything is OK up until now, we have the new configuration
         // ready. So just put it there and let the old one die when we exit
@@ -88,14 +141,11 @@ ConfigurableClientList::find(const dns::Name& name, bool want_exact_match,
     } candidate;
 
     BOOST_FOREACH(const DataSourceInfo& info, data_sources_) {
-        // TODO: Once we have support for the caches, consider them too here
-        // somehow. This would probably get replaced by a function, that
-        // checks if there's a cache available, if it is, checks the loaded
-        // zones and zones expected to be in the real data source. If it is
-        // the cached one, provide the cached one. If it is in the external
-        // data source, use the datasource and don't provide the finder yet.
-        const DataSourceClient::FindResult result(
-            info.data_src_client_->findZone(name));
+        DataSourceClient* client(info.cache_ ? info.cache_.get() :
+                                 info.data_src_client_);
+        const DataSourceClient::FindResult result(client->findZone(name));
+        // TODO: Once we mark the zones that are not loaded, but are present
+        // in the data source somehow, check them too.
         switch (result.code) {
             case result::SUCCESS:
                 // If we found an exact match, we have no hope to getting
@@ -103,7 +153,7 @@ ConfigurableClientList::find(const dns::Name& name, bool want_exact_match,
 
                 // TODO: In case we have only the datasource and not the finder
                 // and the need_updater parameter is true, get the zone there.
-                return (FindResult(info.data_src_client_, result.zone_finder,
+                return (FindResult(client, result.zone_finder,
                                    true));
             case result::PARTIALMATCH:
                 if (!want_exact_match) {
@@ -124,7 +174,7 @@ ConfigurableClientList::find(const dns::Name& name, bool want_exact_match,
                     if (labels > candidate.matched_labels ||
                         !candidate.matched) {
                         // This one is strictly better. Replace it.
-                        candidate.datasrc_client = info.data_src_client_;
+                        candidate.datasrc_client = client;
                         candidate.finder = result.zone_finder;
                         candidate.matched_labels = labels;
                         candidate.matched = true;
