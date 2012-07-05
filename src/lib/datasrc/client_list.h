@@ -300,6 +300,16 @@ public:
     /// hide it).
     const DataSources& getDataSources() const { return (data_sources_); }
 private:
+    struct MutableResult;
+    /// \brief Internal implementation of find.
+    ///
+    /// The class itself needs to do some internal searches in other methods,
+    /// so the implementation is shared.
+    ///
+    /// The result is returned as parameter because MutableResult is not
+    /// defined in the header file.
+    void findInternal(MutableResult& result, const dns::Name& name,
+                      bool want_exact_match, bool want_finder) const;
     const isc::dns::RRClass rrclass_;
     /// \brief Currently active configuration.
     isc::data::ConstElementPtr configuration_;
