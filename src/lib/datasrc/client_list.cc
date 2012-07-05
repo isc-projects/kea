@@ -157,6 +157,7 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
         // the scope.
         data_sources_.swap(new_data_sources);
         configuration_ = config;
+        allow_cache_ = allow_cache;
     } catch (const TypeError& te) {
         isc_throw(ConfigurationError, "Malformed configuration at data source "
                   "no. " << i << ": " << te.what());
@@ -256,6 +257,43 @@ ConfigurableClientList::findInternal(MutableResult& candidate,
 
     // Return the partial match we have. In case we didn't want a partial
     // match, this surely contains the original empty result.
+}
+
+ConfigurableClientList::ReloadResult
+ConfigurableClientList::reload(const Name& name) {
+    if (!allow_cache_) {
+        return (CACHE_DISABLED);
+    }
+    // Try to find the correct zone.
+    MutableResult result;
+    findInternal(result, name, true, true);
+    if (!result.finder) {
+        return (ZONE_NOT_FOUND);
+    }
+    // Try to convert the finder to in-memory one. If it is the cache,
+    // it should work.
+    shared_ptr<InMemoryZoneFinder>
+        finder(dynamic_pointer_cast<InMemoryZoneFinder>(result.finder));
+    const DataSourceInfo* info(result.info);
+    // It is of a different type or there's no cache.
+    if (!info->cache_ || !finder) {
+        return (ZONE_NOT_CACHED);
+    }
+    DataSourceClient* client(info->data_src_client_);
+    if (!client) {
+        isc_throw(isc::NotImplemented,
+                  "Reloading of master files not implemented yet. "
+                  "Next commit or so.");
+    }
+    // Now do the final reload. If it does not exist in client,
+    // DataSourceError is thrown, which is exactly the result what we
+    // want, so no need to handle it.
+    ZoneIteratorPtr iterator(client->getIterator(name));
+    if (!iterator) {
+        isc_throw(isc::Unexpected, "Null iterator from " << name);
+    }
+    finder->load(*iterator);
+    return (ZONE_RELOADED);
 }
 
 // NOTE: This function is not tested, it would be complicated. However, the
