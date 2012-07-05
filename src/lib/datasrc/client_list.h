@@ -238,6 +238,28 @@ public:
         return (configuration_);
     }
 
+    /// \brief Result of the reload() method.
+    enum ReloadResult {
+        CACHE_DISABLED,     ///< The cache is not enabled in this list.
+        ZONE_NOT_CACHED,    ///< Zone exists, but is not cached.
+        ZONE_NOT_FOUND,     ///< No data source in the list provides the zone.
+        ZONE_RELOADED       ///< The zone was successfully reloaded.
+    };
+
+    /// \brief Reloads a cached zone.
+    ///
+    /// This method finds a zone which is loaded into a cache and reloads it.
+    /// This may be used to renew the cache when the underlying data source
+    /// changes.
+    ///
+    /// \param zone The origin of the zone to reload.
+    /// \return A status if the command worked.
+    /// \throw DataSourceError or anything else that the data source
+    ///      containing the zone might throw is propagated.
+    /// \throw DataSourceError if something unexpected happens, like when
+    ///      the original data source no longer contains the cached zone.
+    ReloadResult reload(const dns::Name& zone);
+
     /// \brief Implementation of the ClientList::find.
     virtual FindResult find(const dns::Name& zone,
                             bool want_exact_match = false,
