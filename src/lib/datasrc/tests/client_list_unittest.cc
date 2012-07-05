@@ -878,4 +878,36 @@ TEST_F(ListTest, reloadNullIterator) {
               list_->find(name).finder_->find(name, RRType::SOA())->code);
 }
 
+// Test we can reload the master files too (special-cased)
+TEST_F(ListTest, reloadMasterFile) {
+    const ConstElementPtr elem(Element::fromJSON("["
+        "{"
+        "   \"type\": \"MasterFiles\","
+        "   \"cache-enable\": true,"
+        "   \"params\": {"
+        "       \".\": \"" TEST_DATA_DIR "/root.zone\""
+        "   }"
+        "}]"));
+    list_->configure(elem, true);
+    // Add an element there so it differs from the one in file.
+    EXPECT_EQ(ZoneFinder::NXDOMAIN,
+              list_->find(Name(".")).finder_->find(Name("nosuchdomain"),
+                                                   RRType::TXT())->code);
+    RRsetPtr txt(new RRset(Name("nosuchdomain"), RRClass::IN(), RRType::TXT(),
+                                RRTTL(3600)));
+    txt->addRdata(rdata::generic::TXT("test"));
+    dynamic_pointer_cast<InMemoryZoneFinder>(list_->find(Name(".")).finder_)->
+        add(txt);
+    // It is here now.
+    EXPECT_EQ(ZoneFinder::SUCCESS,
+              list_->find(Name(".")).finder_->find(Name("nosuchdomain"),
+                                                   RRType::TXT())->code);
+    // Do the reload.
+    EXPECT_EQ(ConfigurableClientList::ZONE_RELOADED, list_->reload(Name(".")));
+    // And our TXT record disappeared again, as it is not in the file.
+    EXPECT_EQ(ZoneFinder::NXDOMAIN,
+              list_->find(Name(".")).finder_->find(Name("nosuchdomain"),
+                                                   RRType::TXT())->code);
+}
+
 }
