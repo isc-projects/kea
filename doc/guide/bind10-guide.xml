@@ -92,7 +92,7 @@
       <title>Supported Platforms</title>
       <para>
   BIND 10 builds have been tested on (in no particular order)
-  Debian GNU/Linux 5 and unstable, Ubuntu 9.10, NetBSD 5,
+  Debian GNU/Linux 6 and unstable, Ubuntu 9.10, NetBSD 5,
   Solaris 10 and 11, FreeBSD 7 and 8, CentOS Linux 5.3,
   MacOS 10.6 and 10.7, and OpenBSD 5.1.
 
@@ -105,7 +105,17 @@
     </section>
 
     <section id="required-software">
-      <title>Required Software</title>
+      <title>Required Software at Run-time</title>
+
+      <para>
+        Running BIND 10 uses various extra software which may
+        not be provided in some operating systems' default
+        installations nor standard packages collections. You may
+        need to install this required software separately.
+        (For the build requirements, also see
+        <xref linkend="build-requirements"/>.)
+      </para>
+
       <para>
         BIND 10 requires at least Python 3.1
         (<ulink url="http://www.python.org/"/>).
@@ -140,15 +150,6 @@
         Python modules need to be built for the corresponding Python 3.
       </para>
 <!-- TODO: this will change ... -->
-
-      <note>
-        <para>
-          Some operating systems do not provide these dependencies
-          in their default installation nor standard packages
-          collections.
-          You may need to install them separately.
-        </para>
-      </note>
     </section>
 
     <section id="starting_stopping">
@@ -1058,9 +1059,6 @@ address, but the usual ones don't." mean? -->
         specifications and all current settings to the
         <command>bindctl</command> client (via
         <command>b10-cmdctl</command>).
-      </para>
-
-      <para>
         <command>b10-cfgmgr</command> relays configurations received
         from <command>b10-cmdctl</command> to the appropriate modules.
       </para>
@@ -1079,7 +1077,7 @@ config changes are actually commands to cfgmgr
       <para>
         The stored configuration file is at
         <filename>/usr/local/var/bind10-devel/b10-config.db</filename>.
-        (The full path is what was defined at build configure time for
+        (The directory is what was defined at build configure time for
         <option>--localstatedir</option>.
         The default is <filename>/usr/local/var/</filename>.)
         The format is loosely based on JSON and is directly parseable
@@ -1197,7 +1195,7 @@ but you might wanna check with likun
 
 <!-- TODO
 openssl req -new -x509 -keyout server.pem -out server.pem -days 365 -nodes
-but that is a single file, maybethis should go back to that format?
+but that is a single file, maybe this should go back to that format?
 -->
 
 <!--
@@ -1264,7 +1262,6 @@ shutdown
 <!--
 TODO
 (12:21:30) jinmei: I'd like to have sample session using a command line www client such as wget
-(12:21:33) jinmei: btw
 -->
 
   </chapter>
