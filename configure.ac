@@ -454,20 +454,30 @@ AC_SUBST(PYCOVERAGE)
 AC_SUBST(PYCOVERAGE_RUN)
 AC_SUBST(USE_PYCOVERAGE)
 
+enable_gtest="no"
+
+AC_ARG_WITH([gtest-source],
+            [AS_HELP_STRING([--with-gtest-source=PATH],
+                            [location of the Googletest source, defaults to /usr/src/gtest])],
+            [enable_gtest="yes" ; GTEST_SOURCE="$withval";
+             GTEST_CPPFLAGS="-I$withval/include"],
+            [GTEST_SOURCE="/usr/src/gtest"])
+
+AC_ARG_WITH([gtest],
+	    [AS_HELP_STRING([--with-gtest=PATH],
+			    [specify a path to gtest header files (PATH/include) and library (PATH/lib)])],
+	[gtest_path="$withval"; enable_gtest="yes"], [gtest_path="no"])
+
 AC_ARG_WITH(lcov,
 [  --with-lcov[=PROGRAM]         enable gtest and coverage target using the specified lcov], lcov="$withval", lcov="no")
-
-AC_ARG_WITH(gtest,
-[  --with-gtest=PATH       specify a path to gtest header files (PATH/include) and library (PATH/lib)],
-    gtest_path="$withval", gtest_path="no")
 
 USE_LCOV="no"
 if test "$lcov" != "no"; then
 	# force gtest if not set
-	if test "$gtest_path" = "no"; then
+	if test "$enable_gtest" = "no"; then
 #		AC_MSG_ERROR("lcov needs gtest for test coverage report")
 		AC_MSG_NOTICE([gtest support is now enabled, because used by coverage tests])
-		gtest_path="yes"
+		enable_gtest="yes"
 	fi
 	if test "$lcov" != "yes"; then
 		LCOV=$lcov
@@ -813,9 +823,31 @@ AC_SUBST(MULTITHREADING_FLAG)
 #
 # Check availability of gtest, which will be used for unit tests.
 #
-if test "$gtest_path" != "no"
+if test "x$enable_gtest" = "xyes"
 then
-	DISTCHECK_GTEST_CONFIGURE_FLAG="--with-gtest=\"$gtest_path\""
+	DISTCHECK_GTEST_CONFIGURE_FLAG="--enable-gtest"
+
+	if test -n "$with_gtest_source" ; then
+
+          if test "x$GTEST_SOURCE" = "xyes" ; then
+
+            # If not specified, try some common paths.
+	    for d in /usr/src/gtest /usr/local /usr/pkg /opt /opt/local ; do
+		if test -f $d/gtest-all.cc -a $d/gtest_main.cc; then
+# TODO: set
+			break
+		fi
+	    done
+         else
+AC_CHECK_FILES([$GTEST_SOURCE/src/gtest-all.cc]
+               [$GTEST_SOURCE/src/gtest_main.cc],
+               [have_gtest_source=yes],
+               [AC_MSG_ERROR(no gtest source but it was selected)])
+
+		DISTCHECK_GTEST_CONFIGURE_FLAG="$DISTCHECK_GTEST_CONFIGURE_FLAG $GTEST_SOURCE"
+          fi
+        fi
+
 	if test "$gtest_path" != "yes"; then
 		GTEST_PATHS=$gtest_path
 		if test -x "${gtest_path}/bin/gtest-config" ; then
