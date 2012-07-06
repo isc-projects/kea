@@ -16,6 +16,7 @@
 #include "client.h"
 #include "factory.h"
 #include "memory_datasrc.h"
+#include "logger.h"
 
 #include <memory>
 #include <boost/foreach.hpp>
@@ -74,6 +75,15 @@ ConfigurableClientList::configure(const Element& config, bool allow_cache) {
                 // In case the cache is not allowed, we just skip the master
                 // files (at least for now)
                 if (!allow_cache) {
+                    // We're not going to load these zones. Issue warnings about it.
+                    const map<string, ConstElementPtr>
+                        zones_files(paramConf->mapValue());
+                    for (map<string, ConstElementPtr>::const_iterator
+                         it(zones_files.begin()); it != zones_files.end();
+                         ++it) {
+                        LOG_WARN(logger, DATASRC_LIST_NOT_CACHED).
+                            arg(it->first).arg(rrclass_);
+                    }
                     continue;
                 }
                 if (!want_cache) {
