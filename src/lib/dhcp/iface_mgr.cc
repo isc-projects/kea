@@ -397,7 +397,6 @@ int IfaceMgr::openSocket(const std::string& ifname, const IOAddress& addr,
 int IfaceMgr::openSocketFromIface(const std::string& ifname,
                                   const uint16_t port,
                                   const uint8_t family) {
-    int sock = 0;
     // Search for specified interface among detected interfaces.
     for (IfaceCollection::iterator iface = ifaces_.begin();
          iface != ifaces_.end();
@@ -411,28 +410,36 @@ int IfaceMgr::openSocketFromIface(const std::string& ifname,
         // Interface is now detected. Search for address on interface
         // that matches address family (v6 or v4).
         AddressCollection addrs = iface->getAddresses();
-        for (AddressCollection::iterator addr_it = addrs.begin();
-             addr_it != addrs.end();
-             ++addr_it) {
-
-            if (addr_it->getFamily() != family) {
-                continue;
+        AddressCollection::iterator addr_it = addrs.begin();
+        while (addr_it != addrs.end()) {
+            if (addr_it->getFamily() == family) {
+                // We have interface and address so let's open socket.
+                // This may cause isc::Unexpected exception.
+                return (openSocket(iface->getName(), *addr_it, port));
             }
-
-            // We have interface and address so let's open socket.
-            sock = openSocket(iface->getName(), *addr_it, port);
-            if (sock < 0) {
-                isc_throw(Unexpected, "Failed to open socket.");
+            ++addr_it;
+        }
+        // If we are at the end of address collection it means that we found
+        // interface but there is no address for family specified.
+        if (addr_it == addrs.end()) {
+            // Stringify the family value to append it to exception string.
+            std::string family_name("AF_INET");
+            if (family == AF_INET6) {
+                family_name = "AF_INET6";
             }
-            return (sock);
+            // We did not find address on the interface.
+            isc_throw(BadValue, "There is no address for interface: "
+                      << ifname << ", port: " << port << ", address "
+                      " family: " << family_name);
         }
     }
-    return (sock);
+    // If we got here it means that we had not found the specified interface.
+    // Otherwise we would have returned from previous exist points.
+    isc_throw(BadValue, "There is no " << ifname << " interface present.");
 }
 
 int IfaceMgr::openSocketFromAddress(const IOAddress& addr,
                                     const uint16_t port) {
-    int sock = 0;
     // Search through detected interfaces and addresses to match
     // local address we got.
     for (IfaceCollection::iterator iface = ifaces_.begin();
@@ -449,19 +456,16 @@ int IfaceMgr::openSocketFromAddress(const IOAddress& addr,
             // on detected interfaces. If it does, we have
             // address and interface detected so we can open
             // socket.
-            if (*addr_it != addr) {
-                continue;
+            if (*addr_it == addr) {
+                // Open socket using local interface, address and port.
+                // This may cause isc::Unexpected exception.
+                return (openSocket(iface->getName(), *addr_it, port));
             }
-
-            // Open socket using local interface, address and port.
-            sock = openSocket(iface->getName(), *addr_it, port);
-            if (sock < 0) {
-                isc_throw(Unexpected, "Failed to open unicast socket.");
-            }
-            return (sock);
         }
     }
-    return (sock);
+    // If we got here it means that we did not find specified address
+    // on any available interface.
+    isc_throw(BadValue, "There is no such address " << addr.toText());
 }
 
 int IfaceMgr::openSocketFromRemoteAddress(const IOAddress& remote_addr,
@@ -474,7 +478,7 @@ int IfaceMgr::openSocketFromRemoteAddress(const IOAddress& remote_addr,
 isc::asiolink::IOAddress
 IfaceMgr::getLocalAddress(const IOAddress& remote_addr, const uint16_t port) {
     // Create remote endpoint, we will be connecting to it.
-    boost::shared_ptr<const UDPEndpoint>
+    boost::scoped_ptr<const UDPEndpoint>
         remote_endpoint(static_cast<const UDPEndpoint*>
                         (UDPEndpoint::create(IPPROTO_UDP, remote_addr, port)));
     if (!remote_endpoint) {

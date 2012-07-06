@@ -18,6 +18,7 @@
 #include <sstream>
 
 #include <arpa/inet.h>
+#include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 
 #include <asiolink/io_address.h>
@@ -241,12 +242,13 @@ TEST_F(IfaceMgrTest, sockets6) {
 }
 
 TEST_F(IfaceMgrTest, socketsFromIface) {
-    NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
+    boost::scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
 
     // open v6 socket on loopback interface and bind to 10547 port
     int socket1 = 0;
+    const uint16_t port1 = 10547;
     EXPECT_NO_THROW(
-        socket1 = ifacemgr->openSocketFromIface(LOOPBACK, 10547, AF_INET6);
+        socket1 = ifacemgr->openSocketFromIface(LOOPBACK, port1, AF_INET6);
     );
     // socket descriptor must be positive integer
     EXPECT_GT(socket1, 0);
@@ -254,25 +256,26 @@ TEST_F(IfaceMgrTest, socketsFromIface) {
 
     // open v4 sicket on loopback interface and bind to 10548 port
     int socket2 = 0;
+    const uint16_t port2 = 10548;
     EXPECT_NO_THROW(
-        socket2 = ifacemgr->openSocketFromIface(LOOPBACK, 10547, AF_INET);
+        socket2 = ifacemgr->openSocketFromIface(LOOPBACK, port2, AF_INET);
     );
     // socket descriptor must be positive integer
     EXPECT_GT(socket2, 0);
     close(socket2);
 
-    delete ifacemgr;
 }
 
 
 TEST_F(IfaceMgrTest, socketsFromAddress) {
-    NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
+    boost::scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
 
     // open v6 socket on loopback address and bind to 10547 port
     int socket1 = 0;
+    const uint16_t port1 = 10547;
     IOAddress loAddr6("::1");
     EXPECT_NO_THROW(
-        socket1 = ifacemgr->openSocketFromAddress(loAddr6, 10547);
+        socket1 = ifacemgr->openSocketFromAddress(loAddr6, port1);
     );
     // socket descriptor must be positive integer
     EXPECT_GT(socket1, 0);
@@ -280,41 +283,40 @@ TEST_F(IfaceMgrTest, socketsFromAddress) {
 
     // open v4 socket on loopback address and bind to 10548 port
     int socket2 = 0;
+    const uint16_t port2 = 10548;
     IOAddress loAddr("127.0.0.1");
     EXPECT_NO_THROW(
-        socket2 = ifacemgr->openSocketFromAddress(loAddr, 10548);
+        socket2 = ifacemgr->openSocketFromAddress(loAddr, port2);
     );
     // socket descriptor must be positive integer
     EXPECT_GT(socket2, 0);
     close(socket2);
-
-    delete ifacemgr;
 }
 
 TEST_F(IfaceMgrTest, socketsFromRemoteAddress) {
-    NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
+    boost::scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
 
     // Open v6 socket to connect to remote address.
     // Loopback address is the only one that we know
     // so let's treat it as remote address.
     int socket1 = 0;
+    const uint16_t port1 = 10547;
     IOAddress loAddr6("::1");
     EXPECT_NO_THROW(
-        socket1 = ifacemgr->openSocketFromRemoteAddress(loAddr6, 10547);
+        socket1 = ifacemgr->openSocketFromRemoteAddress(loAddr6, port1);
     );
     EXPECT_GT(socket1, 0);
     close(socket1);
 
     // Open v4 socket to connect to remote address.
     int socket2 = 0;
+    const uint16_t port2 = 10548;
     IOAddress loAddr("127.0.0.1");
     EXPECT_NO_THROW(
-        socket2 = ifacemgr->openSocketFromRemoteAddress(loAddr, 10548);
+        socket2 = ifacemgr->openSocketFromRemoteAddress(loAddr, port2);
     );
     EXPECT_GT(socket2, 0);
     close(socket2);
-
-    delete ifacemgr;
 }
 
 // TODO: disabled due to other naming on various systems
