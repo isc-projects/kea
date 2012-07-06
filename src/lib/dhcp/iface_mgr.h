@@ -389,6 +389,8 @@ public:
     /// @return socket descriptor, if socket creation, binding and multicast
     /// group join were all successful.
     /// @throw isc::Unexpected if failed to create and bind socket.
+    /// @throw isc::BadValue if there is no address on specified interface
+    /// that belongs to given family.
     int openSocketFromIface(const std::string& ifname,
                             const uint16_t port,
                             const uint8_t family);
@@ -403,6 +405,8 @@ public:
     /// @return socket descriptor, if socket creation, binding and multicast
     /// group join were all successful.
     /// @throw isc::Unexpected if failed to create and bind socket
+    /// @throw isc::BadValue if specified address is not available on
+    /// any interface
     int openSocketFromAddress(const isc::asiolink::IOAddress& addr,
                               const uint16_t port);
 
