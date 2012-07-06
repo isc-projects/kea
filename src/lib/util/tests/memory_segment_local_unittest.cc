@@ -21,7 +21,7 @@ using namespace std;
 namespace isc {
 namespace util {
 
-TEST(MemorySegmentLocal, testDefault) {
+TEST(MemorySegmentLocal, TestLocal) {
   auto_ptr<MemorySegment> segment(new MemorySegmentLocal());
 
   // By default, nothing is allocated.
