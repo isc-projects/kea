@@ -228,7 +228,7 @@ main(int argc, char* argv[]) {
         xfrin_session->disconnect();
     }
 
-    DataSourceConfigurator::deinit();
+    DataSourceConfigurator::cleanup();
     delete statistics_session;
     delete xfrin_session;
     delete config_session;

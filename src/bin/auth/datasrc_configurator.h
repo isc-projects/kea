@@ -60,7 +60,7 @@ public:
     /// It hooks to the session now and downloads the configuration.
     /// It is synchronous (it may block for some time).
     ///
-    /// Note that you need to call deinit before the server or
+    /// Note that you need to call cleanup before the server or
     /// session dies, otherwise it might access them after they
     /// are destroyed.
     ///
@@ -95,7 +95,7 @@ public:
     ///
     /// This can be called even if it is not initialized currently. You
     /// can initialize it again after this.
-    static void deinit() {
+    static void cleanup() {
         if (session_ != NULL) {
             session_->removeRemoteConfig("data_sources");
         }
@@ -106,7 +106,7 @@ public:
     ///
     /// It instructs the server to replace the lists with new ones as needed.
     /// You don't need to call it directly (but you could, though the benefit
-    /// is unkown and it would be questionable at least). It is called
+    /// is unknown and it would be questionable at least). It is called
     /// automatically on normal updates.
     ///
     /// \param config The configuration value to parse. It is in the form
@@ -115,7 +115,7 @@ public:
     static void reconfigure(const isc::data::ConstElementPtr& config) {
         if (server_ == NULL) {
             isc_throw(isc::InvalidOperation,
-                      "Can't reconfigure while not inited");
+                      "Can't reconfigure while not initialized by init()");
         }
         typedef std::map<std::string, isc::data::ConstElementPtr> Map;
         typedef std::pair<isc::dns::RRClass, ListPtr> RollbackPair;
