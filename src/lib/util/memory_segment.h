@@ -20,10 +20,33 @@
 namespace isc {
 namespace util {
 
+/// \brief Memory Segment Class
+///
+/// This class specifies an interface for allocating memory
+/// segments. This is an abstract class and a real
+/// implementation such as MemorySegmentLocal should be used
+/// in code.
 class MemorySegment {
 public:
+    /// \brief Allocate/acquire a segment of memory. The source of the
+    /// memory is dependent on the implementation used.
+    ///
+    /// \param size The size of the memory requested in bytes.
+    /// \return Returns pointer to the memory allocated.
     virtual void* allocate(size_t size) = 0;
+
+    /// \brief Free/release a segment of memory.
+    ///
+    /// \param ptr Pointer to the block of memory to free/release. This
+    /// should be equal to a value returned by <code>allocate()</code>.
+    /// \param size The size of the memory to be freed in bytes. This
+    /// should be equal to the number of bytes originally allocated.
     virtual void deallocate(void* ptr, size_t size) = 0;
+
+    /// \brief Check if all allocated memory was deallocated.
+    ///
+    /// \return Returns <code>true</code> if all allocated memory was
+    /// deallocated, <code>false</code> otherwise.
     virtual bool allMemoryDeallocated() const = 0;
 };
 
