@@ -84,17 +84,22 @@ Py_hash_t
 convertToPyHash(HashvalType val) {
     BOOST_STATIC_ASSERT(sizeof(HashvalType) <= sizeof(Py_hash_t));
 
+    // Some versions of g++ doesn't ignore the impossible case of if/else
+    // below (depending on the size of HashvalType) and triggers a false
+    // warning.
+    // To work around it we use an intermediate mutable variable.
+    // See Trac #1883 for details.
+    size_t hash_val_bits = CHAR_BIT * sizeof(HashvalType);
+
     if (sizeof(HashvalType) < sizeof(Py_hash_t)) {
-        // The original hash type has small enough.  Do trivial conversion.
-        const Py_hash_t mask = ~(static_cast<Py_hash_t>(-1) <<
-                                 (CHAR_BIT * sizeof(HashvalType)));
+        // The original hash type is small enough.  Do trivial conversion.
+        const Py_hash_t mask = ~(static_cast<Py_hash_t>(-1) << hash_val_bits);
         return (static_cast<Py_hash_t>(val) & mask);
     } else {
         // Clear the highest bit of the original hash so the conversion is
         // safe and avoids -1.
-        const HashvalType mask = ~(static_cast<HashvalType>(1) <<
-                                   (CHAR_BIT * sizeof(HashvalType) - 1));
-        BOOST_STATIC_ASSERT(mask != static_cast<HashvalType>(-1));
+        HashvalType mask = ~(static_cast<HashvalType>(1) <<
+                             (hash_val_bits - 1));
         return (val & mask);
     }
 }
