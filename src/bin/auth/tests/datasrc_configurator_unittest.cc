@@ -96,7 +96,7 @@ protected:
     }
     void TearDown() {
         // Make sure no matter what we did, it is cleaned up.
-        Configurator::deinit();
+        Configurator::cleanup();
     }
     void init(const ElementPtr& config = ElementPtr()) {
         session.getMessages()->
@@ -115,7 +115,7 @@ protected:
     void SetUp() {
         init();
     }
-    void doInInit() {
+    void initializeINList() {
         const ElementPtr
             config(Element::fromJSON("{\"IN\": [{\"type\": \"xxx\"}]}"));
         session.addMessage(createCommand("config_update", config), "data_sources",
@@ -124,6 +124,7 @@ protected:
         // Check it called the correct things (check that there's no IN yet and
         // set a new one.
         EXPECT_EQ("get IN\nset IN xxx\n", log_);
+        EXPECT_EQ(1, lists_.size());
     }
     FakeSession session;
     auto_ptr<ModuleCCSession> mccs;
@@ -132,13 +133,13 @@ protected:
     string log_;
 };
 
-// Check the initialization (and deinitialization)
+// Check the initialization (and cleanup)
 TEST_F(DatasrcConfiguratorTest, initialization) {
     // It can't be initialized again
     EXPECT_THROW(init(), InvalidOperation);
     EXPECT_TRUE(session.haveSubscription("data_sources", "*"));
     // Deinitialize to make the tests reasonable
-    Configurator::deinit();
+    Configurator::cleanup();
     EXPECT_FALSE(session.haveSubscription("data_sources", "*"));
     // We can't reconfigure now (not even manually)
     EXPECT_THROW(Configurator::reconfigure(ElementPtr(new MapElement())),
@@ -155,12 +156,12 @@ TEST_F(DatasrcConfiguratorTest, initialization) {
 
 // Push there a configuration with a single list.
 TEST_F(DatasrcConfiguratorTest, createList) {
-    doInInit();
+    initializeINList();
 }
 
 TEST_F(DatasrcConfiguratorTest, modifyList) {
     // First, initialize the list
-    doInInit();
+    initializeINList();
     // And now change the configuration of the list
     const ElementPtr
         config(Element::fromJSON("{\"IN\": [{\"type\": \"yyy\"}]}"));
@@ -172,6 +173,7 @@ TEST_F(DatasrcConfiguratorTest, modifyList) {
     EXPECT_EQ("get IN\n", log_);
     // But this should contain the yyy configuration
     EXPECT_EQ("yyy", lists_[RRClass::IN()]->getConf());
+    EXPECT_EQ(1, lists_.size());
 }
 
 // Check we can have multiple lists at once
@@ -182,7 +184,7 @@ TEST_F(DatasrcConfiguratorTest, multiple) {
     session.addMessage(createCommand("config_update", config), "data_sources",
                        "*");
     mccs->checkCommand();
-    // This one does not set
+    // We have set commands for both classes.
     EXPECT_EQ("get CH\nset CH xxx\nget IN\nset IN yyy\n", log_);
     // We should have both there
     EXPECT_EQ("yyy", lists_[RRClass::IN()]->getConf());
@@ -196,7 +198,7 @@ TEST_F(DatasrcConfiguratorTest, multiple) {
 // It's almost like above, but we initialize first with single-list
 // config.
 TEST_F(DatasrcConfiguratorTest, updateAdd) {
-    doInInit();
+    initializeINList();
     const ElementPtr
         config(Element::fromJSON("{\"IN\": [{\"type\": \"yyy\"}], "
                                  "\"CH\": [{\"type\": \"xxx\"}]}"));
@@ -204,7 +206,7 @@ TEST_F(DatasrcConfiguratorTest, updateAdd) {
                        "*");
     log_ = "";
     mccs->checkCommand();
-    // This one does not set
+    // The CH is set, IN not
     EXPECT_EQ("get CH\nset CH xxx\nget IN\n", log_);
     // But this should contain the yyy configuration
     EXPECT_EQ("xxx", lists_[RRClass::CH()]->getConf());
@@ -214,7 +216,7 @@ TEST_F(DatasrcConfiguratorTest, updateAdd) {
 
 // We delete a class list in this test.
 TEST_F(DatasrcConfiguratorTest, updateDelete) {
-    doInInit();
+    initializeINList();
     const ElementPtr
         config(Element::fromJSON("{}"));
     session.addMessage(createCommand("config_update", config), "data_sources",
@@ -223,11 +225,15 @@ TEST_F(DatasrcConfiguratorTest, updateDelete) {
     mccs->checkCommand();
     EXPECT_EQ("get IN\nset IN \n", log_);
     EXPECT_FALSE(lists_[RRClass::IN()]);
+    // In real auth server, the NULL one would be removed. However, we just
+    // store it, so the IN bucket is still in there. This checks there's nothing
+    // else.
+    EXPECT_EQ(1, lists_.size());
 }
 
 // Check that we can rollback an addition if something else fails
 TEST_F(DatasrcConfiguratorTest, rollbackAddition) {
-    doInInit();
+    initializeINList();
     // The configuration is wrong. However, the CH one will get done first.
     const ElementPtr
         config(Element::fromJSON("{\"IN\": [{\"type\": 13}], "
@@ -246,7 +252,7 @@ TEST_F(DatasrcConfiguratorTest, rollbackAddition) {
 
 // Check that we can rollback a deletion if something else fails
 TEST_F(DatasrcConfiguratorTest, rollbackDeletion) {
-    doInInit();
+    initializeINList();
     // Put the CH there
     const ElementPtr
         config1(Element::fromJSON("{\"IN\": [{\"type\": \"yyy\"}], "
@@ -267,7 +273,7 @@ TEST_F(DatasrcConfiguratorTest, rollbackDeletion) {
 // Check that we can roll back configuration change if something
 // fails later on.
 TEST_F(DatasrcConfiguratorTest, rollbackConfiguration) {
-    doInInit();
+    initializeINList();
     // Put the CH there
     const ElementPtr
         config1(Element::fromJSON("{\"IN\": [{\"type\": \"yyy\"}], "
