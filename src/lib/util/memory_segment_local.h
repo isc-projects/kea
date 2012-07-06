@@ -20,16 +20,44 @@
 namespace isc {
 namespace util {
 
+/// \brief malloc/free based Memory Segment class
+///
+/// This class specifies a concrete implementation for a malloc/free
+/// based MemorySegment. Please see the MemorySegment class
+/// documentation for usage.
 class MemorySegmentLocal : public MemorySegment {
 public:
+    /// \brief Constructor
+    ///
+    /// Creates a local memory segment object
     MemorySegmentLocal() : allocated_size_(0) {
     }
 
+    /// \brief Allocate/acquire a segment of memory. The source of the
+    /// memory is libc's malloc().
+    ///
+    /// \param size The size of the memory requested in bytes.
+    /// \return Returns pointer to the memory allocated.
     void* allocate(size_t size);
+
+    /// \brief Free/release a segment of memory.
+    ///
+    /// \param ptr Pointer to the block of memory to free/release. This
+    /// should be equal to a value returned by <code>allocate()</code>.
+    /// \param size The size of the memory to be freed in bytes. This
+    /// should be equal to the number of bytes originally allocated.
     void deallocate(void* ptr, size_t size);
+
+    /// \brief Check if all allocated memory was deallocated.
+    ///
+    /// \return Returns <code>true</code> if all allocated memory was
+    /// deallocated, <code>false</code> otherwise.
     bool allMemoryDeallocated() const;
 
 private:
+    // allocated_size_ can underflow, wrap around to max size_t (which
+    // is unsigned). But because we only do a check against 0 and not a
+    // relation comparison, this is okay.
     size_t allocated_size_;
 };
 
