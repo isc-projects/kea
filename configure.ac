@@ -460,8 +460,7 @@ GTEST_INCLUDES=
 AC_ARG_WITH([gtest-source],
             [AS_HELP_STRING([--with-gtest-source=PATH],
                             [location of the Googletest source, defaults to /usr/src/gtest])],
-            [enable_gtest="yes" ; GTEST_SOURCE="$withval";
-             GTEST_INCLUDES="-I$withval -I$withval/include"],
+            [enable_gtest="yes" ; GTEST_SOURCE="$withval"],
             [GTEST_SOURCE="/usr/src/gtest"])
 
 AC_ARG_WITH([gtest],
@@ -826,9 +825,9 @@ AC_SUBST(MULTITHREADING_FLAG)
 #
 GTEST_LDFLAGS=
 GTEST_LDADD=
+# TODO: set DISTCHECK_GTEST_CONFIGURE_FLAG for --with-gtest too
 DISTCHECK_GTEST_CONFIGURE_FLAG=
 if test "x$enable_gtest" = "xyes" ; then
-	DISTCHECK_GTEST_CONFIGURE_FLAG="--enable-gtest"
 
 	if test -n "$with_gtest_source" ; then
 
@@ -837,22 +836,29 @@ GTEST_LDADD="$GTEST_LDADD $PTHREAD_LDFLAGS"
 
           if test "x$GTEST_SOURCE" = "xyes" ; then
 
+            AC_MSG_CHECKING([for gtest source])
             # If not specified, try some common paths.
+            GTEST_SOURCE=
 	    for d in /usr/src/gtest /usr/local /usr/pkg /opt /opt/local ; do
-		if test -f $d/gtest-all.cc -a $d/gtest_main.cc; then
-# TODO: set
+		if test -f $d/src/gtest-all.cc -a $d/src/gtest_main.cc; then
+			GTEST_SOURCE=$d
+                        AC_MSG_RESULT([$GTEST_SOURCE])
 			break
 		fi
 	    done
+            if test -z $GTEST_SOURCE ; then
+	            AC_MSG_ERROR([no gtest source but it was selected])
+            fi
          else
-AC_CHECK_FILES([$GTEST_SOURCE/src/gtest-all.cc]
+            AC_CHECK_FILES([$GTEST_SOURCE/src/gtest-all.cc]
                [$GTEST_SOURCE/src/gtest_main.cc],
                [have_gtest_source=yes],
-               [AC_MSG_ERROR(no gtest source but it was selected)])
-
-		DISTCHECK_GTEST_CONFIGURE_FLAG="$DISTCHECK_GTEST_CONFIGURE_FLAG $GTEST_SOURCE"
-		GTEST_LDFLAGS="\$(top_builddir)/libgtest.a"
+               [AC_MSG_ERROR([no gtest source at $GTEST_SOURCE])])
           fi
+          have_gtest_source=yes
+	  GTEST_LDFLAGS="\$(top_builddir)/libgtest.a"
+          DISTCHECK_GTEST_CONFIGURE_FLAG="--with-gtest-source=$GTEST_SOURCE"
+          GTEST_INCLUDES="-I$GTEST_SOURCE -I$GTEST_SOURCE/include"
         fi
 
   if test "$gtest_path" != "no" ; then
