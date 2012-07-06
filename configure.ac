@@ -455,12 +455,13 @@ AC_SUBST(PYCOVERAGE_RUN)
 AC_SUBST(USE_PYCOVERAGE)
 
 enable_gtest="no"
+GTEST_INCLUDES=
 
 AC_ARG_WITH([gtest-source],
             [AS_HELP_STRING([--with-gtest-source=PATH],
                             [location of the Googletest source, defaults to /usr/src/gtest])],
             [enable_gtest="yes" ; GTEST_SOURCE="$withval";
-             GTEST_CPPFLAGS="-I$withval/include"],
+             GTEST_INCLUDES="-I$withval -I$withval/include"],
             [GTEST_SOURCE="/usr/src/gtest"])
 
 AC_ARG_WITH([gtest],
@@ -823,11 +824,16 @@ AC_SUBST(MULTITHREADING_FLAG)
 #
 # Check availability of gtest, which will be used for unit tests.
 #
-if test "x$enable_gtest" = "xyes"
-then
+GTEST_LDFLAGS=
+GTEST_LDADD=
+DISTCHECK_GTEST_CONFIGURE_FLAG=
+if test "x$enable_gtest" = "xyes" ; then
 	DISTCHECK_GTEST_CONFIGURE_FLAG="--enable-gtest"
 
 	if test -n "$with_gtest_source" ; then
+
+# TODO: actually need to check if needs pthread
+GTEST_LDADD="$GTEST_LDADD $PTHREAD_LDFLAGS"
 
           if test "x$GTEST_SOURCE" = "xyes" ; then
 
@@ -845,8 +851,11 @@ AC_CHECK_FILES([$GTEST_SOURCE/src/gtest-all.cc]
                [AC_MSG_ERROR(no gtest source but it was selected)])
 
 		DISTCHECK_GTEST_CONFIGURE_FLAG="$DISTCHECK_GTEST_CONFIGURE_FLAG $GTEST_SOURCE"
+		GTEST_LDFLAGS="\$(top_builddir)/libgtest.a"
           fi
         fi
+
+  if test "$gtest_path" != "no" ; then
 
 	if test "$gtest_path" != "yes"; then
 		GTEST_PATHS=$gtest_path
@@ -926,17 +935,16 @@ AC_CHECK_FILES([$GTEST_SOURCE/src/gtest-all.cc]
 	if test "${GTEST_FOUND}" != "true"; then
 		AC_MSG_ERROR([Cannot find gtest in: $GTEST_PATHS])
 	fi
-else
-	GTEST_INCLUDES=
-	GTEST_LDFLAGS=
-	GTEST_LDADD=
-	DISTCHECK_GTEST_CONFIGURE_FLAG=
+
+  fi
 fi
-AM_CONDITIONAL(HAVE_GTEST, test $gtest_path != "no")
+AM_CONDITIONAL(HAVE_GTEST, test $enable_gtest != "no")
+AM_CONDITIONAL(HAVE_GTEST_SOURCE, test "X$have_gtest_source" = "Xyes")
 AC_SUBST(DISTCHECK_GTEST_CONFIGURE_FLAG)
 AC_SUBST(GTEST_INCLUDES)
 AC_SUBST(GTEST_LDFLAGS)
 AC_SUBST(GTEST_LDADD)
+AC_SUBST(GTEST_SOURCE)
 
 dnl check for pkg-config itself so we don't try the m4 macro without pkg-config
 AC_CHECK_PROG(HAVE_PKG_CONFIG, pkg-config, yes, no)
@@ -1336,12 +1344,12 @@ Features:
   $enable_features
 
 Developer:
-  Google Tests:  $gtest_path
+  Google Tests: $enable_gtest
   Valgrind: $found_valgrind
   C++ Code Coverage: $USE_LCOV
   Python Code Coverage: $USE_PYCOVERAGE
   Logger checks: $enable_logger_checks
-  Generate Manuals:  $enable_man
+  Generate Manuals: $enable_man
 
 END
 
