@@ -82,11 +82,6 @@ LabelSequence::compare(const LabelSequence& other,
     // 'this' and 'other', and also determine the hierarchical relationship
     // of the names.
 
-    if ((first_label_ > last_label_) ||
-        (other.first_label_ > other.last_label_)) {
-        isc_throw(BadValue, "Bad label index ranges were passed");
-    }
-
     unsigned int nlabels = 0;
     int l1 = last_label_ - first_label_;
     int l2 = other.last_label_ - other.first_label_;
@@ -117,7 +112,8 @@ LabelSequence::compare(const LabelSequence& other,
             if (case_sensitive) {
                 chdiff = (int)label1 - (int)label2;
             } else {
-                chdiff = (int)isc::dns::name::internal::maptolower[label1] - (int)isc::dns::name::internal::maptolower[label2];
+                chdiff = (int)isc::dns::name::internal::maptolower[label1] -
+                         (int)isc::dns::name::internal::maptolower[label2];
             }
 
             if (chdiff != 0) {
