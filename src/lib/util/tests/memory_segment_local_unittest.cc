@@ -17,9 +17,9 @@
 #include <memory>
 
 using namespace std;
+using namespace isc::util;
 
-namespace isc {
-namespace util {
+namespace {
 
 TEST(MemorySegmentLocal, TestLocal) {
     auto_ptr<MemorySegment> segment(new MemorySegmentLocal());
@@ -52,5 +52,4 @@ TEST(MemorySegmentLocal, TestLocal) {
     EXPECT_TRUE(segment->allMemoryDeallocated());
 }
 
-} // namespace util
-} // namespace isc
+} // anonymous namespace
