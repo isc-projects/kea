@@ -709,7 +709,12 @@ TEST(LabelSequence, rawConstruction) {
               result.getRelation());
 
     s1.stripRight(1);
-    s2.stripRight(1);
+    s3.stripRight(1);
+
+    result = s1.compare(s3);
+    EXPECT_EQ(isc::dns::NameComparisonResult::COMMONANCESTOR,
+              result.getRelation());
+
     data[9] = 'f';
     result = s1.compare(s3);
     EXPECT_EQ(isc::dns::NameComparisonResult::NONE,
