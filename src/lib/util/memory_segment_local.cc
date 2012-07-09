@@ -19,7 +19,7 @@ namespace util {
 
 void*
 MemorySegmentLocal::allocate(size_t size) {
-    void *ptr = malloc(size);
+    void* ptr = malloc(size);
 
     if (ptr != NULL) {
         allocated_size_ += size;
