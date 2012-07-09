@@ -1179,8 +1179,25 @@ class TestDDNSSession(unittest.TestCase):
             self.assertEqual([], self.__cc_session._sent_msg)
             self.assertEqual(0, self.__cc_session._recvmsg_called)
 
+    def check_session_start_forwarder_called(self):
+        '''Check that the command 'start_ddns_forwarder' has been called
+           This test removes said message from the sent message queue.
+        '''
+
+        sent_msg, sent_group = self.__cc_session._sent_msg.pop(0)
+        sent_cmd = sent_msg['command']
+        self.assertEqual('Auth', sent_group)
+        self.assertEqual('start_ddns_forwarder', sent_cmd[0])
+        self.assertEqual(1, len(sent_cmd))
+        self.assertEqual(1, self.__cc_session._recvmsg_called)
+        # reset it for other tests
+        self.__cc_session._recvmsg_called = 0
+
     def test_session_msg(self):
         '''Test post update communication with other modules.'''
+
+        self.check_session_start_forwarder_called()
+
         # Normal cases, confirming communication takes place iff update
         # succeeds
         for r in [UPDATE_SUCCESS, UPDATE_ERROR, UPDATE_DROP]:
@@ -1226,6 +1243,9 @@ class TestDDNSSession(unittest.TestCase):
 
     def test_session_msg_for_auth(self):
         '''Test post update communication with other modules including Auth.'''
+
+        self.check_session_start_forwarder_called()
+
         # Let the CC session return in-memory config with sqlite3 backend.
         # (The default case was covered by other tests.)
         self.__cc_session.auth_datasources = \
