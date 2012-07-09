@@ -1193,6 +1193,17 @@ class TestDDNSSession(unittest.TestCase):
         # reset it for other tests
         self.__cc_session._recvmsg_called = 0
 
+    def check_session_stop_forwarder_called(self):
+        '''Check that the command 'start_ddns_forwarder' has been called
+           This test removes said message from the sent message queue.
+        '''
+        # check the last message sent
+        sent_msg, sent_group = self.__cc_session._sent_msg.pop()
+        sent_cmd = sent_msg['command']
+        self.assertEqual('Auth', sent_group)
+        self.assertEqual('stop_ddns_forwarder', sent_cmd[0])
+        self.assertEqual(1, len(sent_cmd))
+
     def test_session_msg(self):
         '''Test post update communication with other modules.'''
 
@@ -1240,6 +1251,11 @@ class TestDDNSSession(unittest.TestCase):
         self.__cc_session.clear_msg()
         self.__cc_session._sendmsg_exception = RuntimeError('unexpected')
         self.assertRaises(RuntimeError, self.check_session)
+
+    def test_session_shutdown_cleanup(self):
+        '''Test that the stop forwarding message is sent'''
+        self.server.shutdown_cleanup()
+        self.check_session_stop_forwarder_called()
 
     def test_session_msg_for_auth(self):
         '''Test post update communication with other modules including Auth.'''

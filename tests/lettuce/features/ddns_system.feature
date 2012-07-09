@@ -52,7 +52,6 @@ Feature: DDNS System
         And wait for new bind10 stderr message DDNS_STARTED
 
         # Test 8
-        # Known issue: after shutdown, first new attempt results in SERVFAIL
         When I use DDNS to set the SOA serial to 1238
         The DDNS response should be SUCCESS
         And the SOA serial for example.org should be 1238
