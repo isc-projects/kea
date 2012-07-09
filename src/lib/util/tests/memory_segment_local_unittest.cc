@@ -27,12 +27,12 @@ TEST(MemorySegmentLocal, TestLocal) {
     // By default, nothing is allocated.
     EXPECT_TRUE(segment->allMemoryDeallocated());
 
-    void *ptr = segment->allocate(1024);
+    void* ptr = segment->allocate(1024);
 
     // Now, we have an allocation:
     EXPECT_FALSE(segment->allMemoryDeallocated());
 
-    void *ptr2 = segment->allocate(42);
+    void* ptr2 = segment->allocate(42);
 
     // Still:
     EXPECT_FALSE(segment->allMemoryDeallocated());
