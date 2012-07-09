@@ -53,7 +53,7 @@ public:
     /// to the labels in the Name object).
     ///
     /// \param name The Name to construct a LabelSequence for
-    explicit LabelSequence(const Name& name): /*name_(name),*/
+    explicit LabelSequence(const Name& name):
                                      data_(&name.ndata_[0]),
                                      offsets_(&name.offsets_[0]),
                                      offsets_size_(name.offsets_.size()),
