@@ -339,7 +339,7 @@ AuthSrvImpl::AuthSrvImpl(const bool use_cache,
     cache_.setEnabled(use_cache);
 
     // TODO: REMOVE and create 'on demand'
-    createDDNSForwarder();
+    //createDDNSForwarder();
 }
 
 AuthSrvImpl::~AuthSrvImpl() {
@@ -663,7 +663,12 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
             send_answer = impl_->processNotify(io_message, message, buffer,
                                                tsig_context);
         } else if (opcode == Opcode::UPDATE()) {
-            send_answer = impl_->processUpdate(io_message);
+            if (impl_->hasDDNSForwarder()) {
+                send_answer = impl_->processUpdate(io_message);
+            } else {
+                makeErrorMessage(impl_->renderer_, message, buffer,
+                                 Rcode::NOTIMP(), tsig_context);
+            }
         } else if (opcode != Opcode::QUERY()) {
             LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_UNSUPPORTED_OPCODE)
                       .arg(message.getOpcode().toText());
@@ -1056,3 +1061,15 @@ void
 AuthSrv::setTSIGKeyRing(const boost::shared_ptr<TSIGKeyRing>* keyring) {
     impl_->keyring_ = keyring;
 }
+
+void
+AuthSrv::createDDNSForwarder() {
+    impl_->createDDNSForwarder();
+}
+
+void
+AuthSrv::destroyDDNSForwarder() {
+    impl_->destroyDDNSForwarder();
+}
+
+

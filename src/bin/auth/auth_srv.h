@@ -111,7 +111,7 @@ public:
     /// This method should never throw an exception.
     void stop();
 
-    /// \brief Process an incoming DNS message, then signal 'server' to resume 
+    /// \brief Process an incoming DNS message, then signal 'server' to resume
     ///
     /// A DNS query (or other message) has been received by a \c DNSServer
     /// object.  Find an answer, then post the \c DNSServer object on the
@@ -355,13 +355,13 @@ public:
     bool submitStatistics() const;
 
     /// \brief Get the value of counter in the AuthCounters.
-    /// 
+    ///
     /// This function calls AuthCounters::getCounter() and
     /// returns its return value.
     ///
     /// This function never throws an exception as far as
     /// AuthCounters::getCounter() doesn't throw.
-    /// 
+    ///
     /// Note: Currently this function is for testing purpose only.
     ///
     /// \param type Type of a counter to get the value of
@@ -418,6 +418,11 @@ public:
     void setTSIGKeyRing(const boost::shared_ptr<isc::dns::TSIGKeyRing>*
                         keyring);
 
+    /// \brief Tells the server DDNS update packets can be forwarded internally
+    ///
+    void createDDNSForwarder();
+    void destroyDDNSForwarder();
+
 private:
     AuthSrvImpl* impl_;
     isc::asiolink::SimpleCallback* checkin_;
@@ -428,6 +433,6 @@ private:
 
 #endif // __AUTH_SRV_H
 
-// Local Variables: 
+// Local Variables:
 // mode: c++
-// End: 
+// End:
