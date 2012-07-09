@@ -13,9 +13,8 @@ Feature: DDNS System
 
         # Test 1
         When I use DDNS to set the SOA serial to 1235
-        # Note: test spec says refused here, system returns SERVFAIL
-        #The DDNS response should be REFUSED
-        The DDNS response should be SERVFAIL
+        # Note: test spec says refused here, system returns NOTIMP
+        The DDNS response should be NOTIMP
         And the SOA serial for example.org should be 1234
 
         # Test 2
@@ -84,7 +83,7 @@ Feature: DDNS System
         # Test 12
         When I use DDNS to set the SOA serial to 1240
         # should this be REFUSED again?
-        The DDNS response should be SERVFAIL
+        The DDNS response should be NOTIMP
         And the SOA serial for example.org should be 1239
 
     Scenario: ACL

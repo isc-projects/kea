@@ -141,6 +141,20 @@ public:
     }
 };
 
+class StartDDNSForwarderCommand : public AuthCommand {
+public:
+    virtual void exec(AuthSrv& server, isc::data::ConstElementPtr) {
+        server.createDDNSForwarder();
+    }
+};
+
+class StopDDNSForwarderCommand : public AuthCommand {
+public:
+    virtual void exec(AuthSrv& server, isc::data::ConstElementPtr) {
+        server.destroyDDNSForwarder();
+    }
+};
+
 // Handle the "loadzone" command.
 class LoadZoneCommand : public AuthCommand {
 public:
@@ -309,6 +323,10 @@ createAuthCommand(const string& command_id) {
         return (new SendStatsCommand());
     } else if (command_id == "loadzone") {
         return (new LoadZoneCommand());
+    } else if (command_id == "start_ddns_forwarder") {
+        return (new StartDDNSForwarderCommand());
+    } else if (command_id == "stop_ddns_forwarder") {
+        return (new StopDDNSForwarderCommand());
     } else if (false && command_id == "_throw_exception") {
         // This is for testing purpose only and should not appear in the
         // actual configuration syntax.
