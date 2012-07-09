@@ -900,13 +900,18 @@ AuthSrvImpl::createDDNSForwarder() {
     if (hasDDNSForwarder()) {
         destroyDDNSForwarder();
     }
-    ddns_forwarder_ = new SocketSessionForwarderHolder("update", ddns_base_forwarder_);
+    LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_START_DDNS_FORWARDER);
+    ddns_forwarder_ = new SocketSessionForwarderHolder("update",
+                                                       ddns_base_forwarder_);
 }
 
 void
 AuthSrvImpl::destroyDDNSForwarder() {
-    delete ddns_forwarder_;
-    ddns_forwarder_ = NULL;
+    if (ddns_forwarder_ != NULL) {
+        LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_STOP_DDNS_FORWARDER);
+        delete ddns_forwarder_;
+        ddns_forwarder_ = NULL;
+    }
 }
 
 bool
