@@ -210,6 +210,9 @@ main(int argc, char* argv[]) {
 
         // Successfully initialized.
         LOG_INFO(auth_logger, AUTH_SERVER_STARTED);
+
+        // Ping any interested module that (a new) auth is up
+        cc_session->group_sendmsg(isc::config::createCommand("auth_started"), "DDNS");
         io_service.run();
 
     } catch (const std::exception& ex) {
