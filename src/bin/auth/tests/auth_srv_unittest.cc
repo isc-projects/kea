@@ -99,6 +99,7 @@ protected:
         server.setDNSService(dnss_);
         server.setXfrinSession(&notify_session);
         server.setStatisticsSession(&statistics_session);
+        server.createDDNSForwarder();
     }
 
     ~AuthSrvTest() {
@@ -106,6 +107,7 @@ protected:
         // type information may be lost if the message is cleared
         // automatically later, so as a precaution we do it now.
         parse_message->clear(Message::PARSE);
+        server.destroyDDNSForwarder();
     }
 
     virtual void processMessage() {
@@ -1625,6 +1627,7 @@ TEST_F(AuthSrvTest, DDNSForwardPushFail) {
 
 TEST_F(AuthSrvTest, DDNSForwardClose) {
     scoped_ptr<AuthSrv> tmp_server(new AuthSrv(true, xfrout, ddns_forwarder));
+    tmp_server->createDDNSForwarder();
     UnitTestUtil::createRequestMessage(request_message, Opcode::UPDATE(),
                                        default_qid, Name("example.com"),
                                        RRClass::IN(), RRType::SOA());
