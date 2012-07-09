@@ -267,8 +267,8 @@ PyObject* RRClass_ANY(s_RRClass*) {
 
 Py_hash_t
 RRClass_hash(PyObject* pyself) {
-    s_RRClass* const self = static_cast<s_RRClass*>(pyself);
-    return (self->cppobj->getCode());
+    const s_RRClass* const self = static_cast<s_RRClass*>(pyself);
+    return (convertToPyHash<uint16_t>(self->cppobj->getCode()));
 }
 
 } // end anonymous namespace
