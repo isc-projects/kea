@@ -418,9 +418,23 @@ public:
     void setTSIGKeyRing(const boost::shared_ptr<isc::dns::TSIGKeyRing>*
                         keyring);
 
-    /// \brief Tells the server DDNS update packets can be forwarded internally
+    /// \brief Create the internal forwarder for DDNS update messages
     ///
+    /// Until this method is called (it is called when the
+    /// start_ddns_forwarder command is sent to b10-auth), b10-auth will
+    /// respond to UPDATE packets with a NOTIMP rcode.
+    /// If the internal forwarder was already created, it is destroyed and
+    /// created again. This is useful for instance when b10-ddns is shut
+    /// down and restarted.
     void createDDNSForwarder();
+
+    /// \brief Destroy the internal forwarder for DDNS update messages
+    ///
+    /// After this method has been called (it is called when the
+    /// stop_ddns_forwarder command is sent to b10-auth), DDNS Update
+    /// messages are no longer forwarded internally, but b10-auth will
+    /// immediately respond with a NOTIMP rcode.
+    /// If there was no forwarder yet, this method does nothing.
     void destroyDDNSForwarder();
 
 private:

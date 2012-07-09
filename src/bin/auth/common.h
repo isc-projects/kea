@@ -57,6 +57,11 @@ std::string getDDNSSocketPath();
 /// This is currently b10-auth, but it can be changed easily in one place.
 extern const char* const AUTH_NAME;
 
+/// \brief Notification string that is used to inform auth is starting
+///
+/// This is sent to interested modules (currently only b10-ddns)
+extern const char* const AUTH_STARTED_NOTIFICATION;
+
 #endif // __COMMON_H
 
 // Local Variables:
