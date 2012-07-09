@@ -58,6 +58,7 @@
 
 #include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include <algorithm>
 #include <cassert>
@@ -303,7 +304,7 @@ private:
 
     // Socket session forwarder for dynamic update requests
     BaseSocketSessionForwarder& ddns_base_forwarder_;
-    SocketSessionForwarderHolder* ddns_forwarder_;
+    boost::scoped_ptr<SocketSessionForwarderHolder> ddns_forwarder_;
 
     /// Increment query counter
     void incCounter(const int protocol);
@@ -337,9 +338,6 @@ AuthSrvImpl::AuthSrvImpl(const bool use_cache,
 
     // enable or disable the cache
     cache_.setEnabled(use_cache);
-
-    // TODO: REMOVE and create 'on demand'
-    //createDDNSForwarder();
 }
 
 AuthSrvImpl::~AuthSrvImpl() {
@@ -347,7 +345,6 @@ AuthSrvImpl::~AuthSrvImpl() {
         xfrout_client_.disconnect();
         xfrout_connected_ = false;
     }
-    destroyDDNSForwarder();
 }
 
 // This is a derived class of \c DNSLookup, to serve as a
@@ -892,25 +889,21 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
 
 bool
 AuthSrvImpl::hasDDNSForwarder() {
-    return (ddns_forwarder_ != NULL);
+    return (ddns_forwarder_);
 }
 
 void
 AuthSrvImpl::createDDNSForwarder() {
-    if (hasDDNSForwarder()) {
-        destroyDDNSForwarder();
-    }
     LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_START_DDNS_FORWARDER);
-    ddns_forwarder_ = new SocketSessionForwarderHolder("update",
-                                                       ddns_base_forwarder_);
+    ddns_forwarder_.reset(
+        new SocketSessionForwarderHolder("update", ddns_base_forwarder_));
 }
 
 void
 AuthSrvImpl::destroyDDNSForwarder() {
-    if (ddns_forwarder_ != NULL) {
+    if (ddns_forwarder_) {
         LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_STOP_DDNS_FORWARDER);
-        delete ddns_forwarder_;
-        ddns_forwarder_ = NULL;
+        ddns_forwarder_.reset();
     }
 }
 

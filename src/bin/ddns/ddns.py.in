@@ -548,7 +548,7 @@ class DDNSServer:
         answer, _ = self._cc._session.group_recvmsg(False, seq)
         rcode, error_msg = parse_answer(answer)
         if (rcode != 0):
-            raise Exception(error_msg)
+            logger.error(DDNS_START_FORWARDER_ERROR, error_msg)
 
     def __notify_stop_forwarder(self):
         '''Notify auth that DDNS Update packets can now be forwarded'''
@@ -557,7 +557,7 @@ class DDNSServer:
         answer, _ = self._cc._session.group_recvmsg(False, seq)
         rcode, error_msg = parse_answer(answer)
         if (rcode != 0):
-            raise Exception(error_msg)
+            logger.error(DDNS_STOP_FORWARDER_ERROR, error_msg)
 
     def __notify_auth(self, zname, zclass):
         '''Notify auth of the update, if necessary.'''
