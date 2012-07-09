@@ -237,6 +237,10 @@ public:
                        auto_ptr<TSIGContext> tsig_context);
     bool processUpdate(const IOMessage& io_message);
 
+    bool hasDDNSForwarder();
+    void createDDNSForwarder();
+    void destroyDDNSForwarder();
+
     IOService io_service_;
 
     MessageRenderer renderer_;
@@ -298,7 +302,8 @@ private:
     AbstractXfroutClient& xfrout_client_;
 
     // Socket session forwarder for dynamic update requests
-    SocketSessionForwarderHolder ddns_forwarder_;
+    BaseSocketSessionForwarder& ddns_base_forwarder_;
+    SocketSessionForwarderHolder* ddns_forwarder_;
 
     /// Increment query counter
     void incCounter(const int protocol);
@@ -320,7 +325,8 @@ AuthSrvImpl::AuthSrvImpl(const bool use_cache,
     keyring_(NULL),
     xfrout_connected_(false),
     xfrout_client_(xfrout_client),
-    ddns_forwarder_("update", ddns_forwarder)
+    ddns_base_forwarder_(ddns_forwarder),
+    ddns_forwarder_(NULL)
 {
     // cur_datasrc_ is automatically initialized by the default constructor,
     // effectively being an empty (sqlite) data source.  once ccsession is up
@@ -331,6 +337,9 @@ AuthSrvImpl::AuthSrvImpl(const bool use_cache,
 
     // enable or disable the cache
     cache_.setEnabled(use_cache);
+
+    // TODO: REMOVE and create 'on demand'
+    createDDNSForwarder();
 }
 
 AuthSrvImpl::~AuthSrvImpl() {
@@ -338,6 +347,7 @@ AuthSrvImpl::~AuthSrvImpl() {
         xfrout_client_.disconnect();
         xfrout_connected_ = false;
     }
+    destroyDDNSForwarder();
 }
 
 // This is a derived class of \c DNSLookup, to serve as a
@@ -456,7 +466,7 @@ makeErrorMessage(MessageRenderer& renderer, Message& message,
     for_each(questions.begin(), questions.end(), QuestionInserter(message));
 
     message.setRcode(rcode);
-    
+
     RendererHolder holder(renderer, &buffer);
     if (tsig_context.get() != NULL) {
         message.toWire(renderer, *tsig_context);
@@ -876,11 +886,30 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
 }
 
 bool
+AuthSrvImpl::hasDDNSForwarder() {
+    return (ddns_forwarder_ != NULL);
+}
+
+void
+AuthSrvImpl::createDDNSForwarder() {
+    if (hasDDNSForwarder()) {
+        destroyDDNSForwarder();
+    }
+    ddns_forwarder_ = new SocketSessionForwarderHolder("update", ddns_base_forwarder_);
+}
+
+void
+AuthSrvImpl::destroyDDNSForwarder() {
+    delete ddns_forwarder_;
+    ddns_forwarder_ = NULL;
+}
+
+bool
 AuthSrvImpl::processUpdate(const IOMessage& io_message) {
     // Push the update request to a separate process via the forwarder.
     // On successful push, the request shouldn't be responded from b10-auth,
     // so we return false.
-    ddns_forwarder_.push(io_message);
+    ddns_forwarder_->push(io_message);
     return (false);
 }
 
