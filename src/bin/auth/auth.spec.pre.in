@@ -131,6 +131,16 @@
             "item_optional": true, "item_default": "memory"
           }
         ]
+      },
+      {
+        "command_name": "start_ddns_forwarder",
+        "command_description": "(Re)start internal forwarding of DDNS Update packets.",
+        "command_args": []
+      },
+      {
+        "command_name": "stop_ddns_forwarder",
+        "command_description": "Stop internal forwarding of DDNS Update packets",
+        "command_args": []
       }
     ],
     "statistics": [
