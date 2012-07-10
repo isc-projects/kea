@@ -345,8 +345,8 @@ class SysInfoOpenBSD(SysInfoBSD):
             l = s.decode('utf-8').strip()
             r = re.match('^total: (\d+) 1K-blocks allocated, (\d+) used, (\d+) available', l)
             if r:
-                self._swap_total = int(r.group(1).strip()) * 1024
-                self._swap_free = int(r.group(3).strip()) * 1024
+                self._mem_swap_total = int(r.group(1).strip()) * 1024
+                self._mem_swap_free = int(r.group(3).strip()) * 1024
         except (subprocess.CalledProcessError, OSError):
             pass
 
