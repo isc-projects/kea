@@ -23,6 +23,7 @@
 #include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index/sequenced_index.hpp>
 #include <boost/multi_index/mem_fun.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <exceptions/exceptions.h>
 
@@ -150,15 +151,78 @@ public:
             return sent_packet;
         }
 
+        ///  \brief Update delay counters.
+        ///
+        /// Method updates delay counters based on timestamps of
+        /// sent and received packets.
+        ///
+        /// \param sent_packet sent packet
+        /// \param rcvd_packet received packet
+        /// \throw isc::Unexpected if failed to calculate timestamps
+        void updateDelays(const boost::shared_ptr<T> sent_packet,
+                          const boost::shared_ptr<T> rcvd_packet) {
+            boost::posix_time::ptime sent_time = sent_packet->getTimestamp();
+            boost::posix_time::ptime rcvd_time = rcvd_packet->getTimestamp();
+
+            if (sent_time.is_not_a_date_time() ||
+                rcvd_time.is_not_a_date_time()) {
+                isc_throw(Unexpected,
+                          "Timestamp must be set for sent and "
+                          "received packet to measure RTT");
+            }
+            boost::posix_time::time_period period(sent_time, rcvd_time);
+            double delta =
+                static_cast<double>(period.length().total_nanoseconds()) / 1e9;
+
+            if (delta < 0) {
+                isc_throw(Unexpected, "Sent packet's timestamp must not be "
+                          "greater than received packet's timestamp");
+            }
+
+            if (delta < min_delay_) {
+                min_delay_ = delta;
+            }
+            if (delta > max_delay_) {
+                max_delay_ = delta;
+            }
+            sum_delay_ += delta;
+            square_sum_delay_ += delta * delta;
+        }
+
+        /// \brief Return minumum delay between sent and received packet.
+        ///
+        /// Method returns minimum delay between sent and received packet.
+        ///
+        /// \return minimum delay between packets.
         double getMinDelay() const { return min_delay_; }
+
+        /// \brief Return maxmimum delay between sent and received packet.
+        ///
+        /// Method returns maximum delay between sent and received packet.
+        ///
+        /// \return maximum delay between packets.
         double getMaxDelay() const { return max_delay_; }
+
+        /// \brief Return sum of delays between sent and received packets.
+        ///
+        /// Method returns sum of delays between sent and received packets.
+        ///
+        /// \return sum of delays between sent and received packets.
         double getSumDelay() const { return sum_delay_; }
+
+        /// \brief Return square sum of delays between sent and received
+        /// packets.
+        ///
+        /// Method returns square sum of delays between sent and received
+        /// packets.
+        ///
+        /// \return square sum of delays between sent and received packets.
         double getSquareSumDelay() const  { return square_sum_delay_; }
     private:
 
         /// \brief Private default constructor.
         ///
-        /// Default constructor is private because we want client
+        /// Default constructor is private because we want the client
         /// class to specify exchange type explicitely.
         ExchangeStats();
 
@@ -240,9 +304,13 @@ public:
         if (it == exchanges_.end()) {
             isc_throw(BadValue, "Packets exchange not specified");
         }
+        ExchangeStatsPtr xchg_stats = it->second;
         boost::shared_ptr<T> sent_packet
-            = it->second->findSent(packet->getTransid());
+            = xchg_stats->findSent(packet->getTransid());
+
+        xchg_stats->updateDelays(sent_packet, packet);
     }
+
 
 private:
     ExchangesMap exchanges_;        ///< Map of exchange types.
