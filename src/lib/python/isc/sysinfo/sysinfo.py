@@ -288,7 +288,7 @@ class SysInfoBSD(SysInfoPOSIX):
 
         try:
             s = subprocess.check_output(['hostname'])
-            self._hostname = s.decode('utf-8')
+            self._hostname = s.decode('utf-8').strip()
         except (subprocess.CalledProcessError, OSError):
             pass
 
