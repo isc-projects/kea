@@ -24,6 +24,7 @@ libperfdhcp___la_SOURCES += localized_option.h
 libperfdhcp___la_SOURCES += perf_pkt6.cc perf_pkt6.h
 libperfdhcp___la_SOURCES += perf_pkt4.cc perf_pkt4.h
 libperfdhcp___la_SOURCES += pkt_transform.cc pkt_transform.h
+libperfdhcp___la_SOURCES += stats_mgr.h
 
 libperfdhcp___la_CXXFLAGS = $(AM_CXXFLAGS)
 if USE_CLANGPP
