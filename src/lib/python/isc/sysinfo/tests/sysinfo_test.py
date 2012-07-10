@@ -30,7 +30,7 @@ def _my_linux_os_sysconf(key):
         return 42
     assert False, 'Unhandled key'
 
-class MyFile:
+class MyLinuxFile:
     def __init__(self, filename):
         self._filename = filename
 
@@ -67,7 +67,7 @@ class MyFile:
         return
 
 def _my_linux_open(filename):
-    return MyFile(filename)
+    return MyLinuxFile(filename)
 
 def _my_linux_subprocess_check_output(command):
     assert type(command) == list, 'command argument is not a list'
