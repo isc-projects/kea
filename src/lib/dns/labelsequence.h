@@ -96,6 +96,16 @@ public:
     /// \return Pointer to the wire-format data of this label sequence
     const uint8_t* getData(size_t* len) const;
 
+    /// \brief Return the offset data for this LabelSequence
+    ///
+    /// The offsets are returned in the <code>placeholder</code> array.
+    ///
+    /// \param len Pointer to a size_t where the number of offsets
+    ///        will be stored
+    /// \param placeholder Array where the offset data will be returned
+    void getOffsetData(size_t* len,
+                       uint8_t placeholder[Name::MAX_LABELS]) const;
+
     /// \brief Return the length of the wire-format data of this LabelSequence
     ///
     /// This method returns the number of octets for the data that would

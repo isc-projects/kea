@@ -400,6 +400,93 @@ TEST_F(LabelSequenceTest, getData) {
     getDataCheck("\000", 1, ls7);
 };
 
+TEST_F(LabelSequenceTest, getOffsetData) {
+    size_t len;
+    uint8_t placeholder[Name::MAX_LABELS];
+
+    Name nx("x.isc.example.org");
+    LabelSequence lsx(nx);
+
+    // x.isc.example.org.
+    lsx.getOffsetData(&len, placeholder);
+    EXPECT_EQ(5, len);
+    EXPECT_EQ(0, placeholder[0]);
+    EXPECT_EQ(2, placeholder[1]);
+    EXPECT_EQ(6, placeholder[2]);
+    EXPECT_EQ(14, placeholder[3]);
+    EXPECT_EQ(18, placeholder[4]);
+
+    lsx.stripLeft(2);
+
+    // example.org.
+    lsx.getOffsetData(&len, placeholder);
+    EXPECT_EQ(3, len);
+    EXPECT_EQ(0, placeholder[0]);
+    EXPECT_EQ(8, placeholder[1]);
+    EXPECT_EQ(12, placeholder[2]);
+
+    lsx.stripLeft(1);
+
+    // org.
+    lsx.getOffsetData(&len, placeholder);
+    EXPECT_EQ(2, len);
+    EXPECT_EQ(0, placeholder[0]);
+    EXPECT_EQ(4, placeholder[1]);
+
+    lsx.stripLeft(1);
+
+    // .
+    lsx.getOffsetData(&len, placeholder);
+    EXPECT_EQ(1, len);
+    EXPECT_EQ(0, placeholder[0]);
+
+    Name ny("y.isc.example.org");
+    LabelSequence lsy(ny);
+
+    // y.isc.example.org.
+    lsy.getOffsetData(&len, placeholder);
+    EXPECT_EQ(5, len);
+    EXPECT_EQ(0, placeholder[0]);
+    EXPECT_EQ(2, placeholder[1]);
+    EXPECT_EQ(6, placeholder[2]);
+    EXPECT_EQ(14, placeholder[3]);
+    EXPECT_EQ(18, placeholder[4]);
+
+    lsy.stripRight(1);
+
+    // y.isc.example.org
+    lsy.getOffsetData(&len, placeholder);
+    EXPECT_EQ(4, len);
+    EXPECT_EQ(0, placeholder[0]);
+    EXPECT_EQ(2, placeholder[1]);
+    EXPECT_EQ(6, placeholder[2]);
+    EXPECT_EQ(14, placeholder[3]);
+
+    lsy.stripRight(1);
+
+    // y.isc.example
+    lsy.getOffsetData(&len, placeholder);
+    EXPECT_EQ(3, len);
+    EXPECT_EQ(0, placeholder[0]);
+    EXPECT_EQ(2, placeholder[1]);
+    EXPECT_EQ(6, placeholder[2]);
+
+    lsy.stripLeft(1);
+
+    // isc.example
+    lsy.getOffsetData(&len, placeholder);
+    EXPECT_EQ(2, len);
+    EXPECT_EQ(0, placeholder[0]);
+    EXPECT_EQ(4, placeholder[1]);
+
+    lsy.stripLeft(1);
+
+    // example
+    lsy.getOffsetData(&len, placeholder);
+    EXPECT_EQ(1, len);
+    EXPECT_EQ(0, placeholder[0]);
+};
+
 TEST_F(LabelSequenceTest, stripLeft) {
     EXPECT_TRUE(ls1.equals(ls3));
     ls1.stripLeft(0);
