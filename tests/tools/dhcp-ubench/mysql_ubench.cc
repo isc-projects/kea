@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
+#include <time.h>
 #include <mysql/mysql.h>
 
 using namespace std;
@@ -135,19 +136,52 @@ bool deleteLease4Test(MYSQL* conn, uint32_t num) {
     }
 }
 
+void print_clock(const std::string& operation, uint32_t num,
+                 const struct timespec& before,
+                 const struct timespec& after) {
+    long int tv_sec = after.tv_sec - before.tv_sec;
+
+    long int tv_nsec = after.tv_nsec - before.tv_nsec;
+
+    cout << "after.tv_nsec=" << after.tv_nsec
+         << " before.tv_nsec=" << before.tv_nsec << endl;
+
+    if (tv_nsec < 0) {
+        tv_sec++;
+        tv_nsec += 1000000000; // 10^9
+    }
+
+    double oneoper = (tv_nsec/1000 + tv_sec*1000000)/num;
+
+    cout << "Operation " << operation << " repeated " << num << " times took "
+         << tv_sec << " seconds, " << tv_nsec/1000 << " us, 1 operation took "
+         << oneoper << "us" << endl;
+
+}
+
 int main(int argc, const char * argv[]) {
 
     cout << "MySQL client version is " << mysql_get_client_info() << endl;
 
     uint32_t num = 100;
+    struct timespec ts[5];
 
     try {
         MYSQL *conn = connect();
 
+        clock_gettime(CLOCK_REALTIME, &ts[0]);
+
         createLease4Test(conn, num);
+        clock_gettime(CLOCK_REALTIME, &ts[1]);
+
         searchLease4Test(conn, num);
+        clock_gettime(CLOCK_REALTIME, &ts[2]);
+
         updateLease4Test(conn, num);
+        clock_gettime(CLOCK_REALTIME, &ts[3]);
+
         deleteLease4Test(conn, num);
+        clock_gettime(CLOCK_REALTIME, &ts[4]);
 
         disconnect(conn);
 
@@ -155,6 +189,8 @@ int main(int argc, const char * argv[]) {
         cout << "Failed: " << e << endl;
         return (-1);
     }
+
+    print_clock("Create leases4 ", num, ts[0], ts[1]);
 
     return (0);
 }
