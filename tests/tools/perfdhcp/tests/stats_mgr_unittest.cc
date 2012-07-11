@@ -39,6 +39,13 @@ class StatsMgrTest : public ::testing::Test {
 public:
     StatsMgrTest() {
     }
+
+    Pkt4* createPacket4(const uint8_t msg_type,
+                        const uint32_t transid) {
+        Pkt4* pkt = new Pkt4(msg_type, transid);
+        pkt->updateTimestamp();
+        return pkt;
+    }
 };
 
 TEST_F(StatsMgrTest, Constructor) {
@@ -47,27 +54,73 @@ TEST_F(StatsMgrTest, Constructor) {
 
 TEST_F(StatsMgrTest, Exchanges) {
     boost::scoped_ptr<StatsMgr4> stats_mgr(new StatsMgr4());
-    boost::shared_ptr<Pkt4> sent_packet(new Pkt4(DHCPDISCOVER, common_transid));
-    boost::shared_ptr<Pkt4> rcvd_packet(new Pkt4(DHCPOFFER, common_transid));
-    EXPECT_THROW(stats_mgr->passSentPacket(StatsMgr4::XCHG_DO, sent_packet), BadValue);
-    EXPECT_THROW(stats_mgr->passRcvdPacket(StatsMgr4::XCHG_DO, rcvd_packet), BadValue);
-    
-    stats_mgr->addExchangeStats(StatsMgr4::XCHG_DO);
-    EXPECT_THROW(stats_mgr->passSentPacket(StatsMgr4::XCHG_RA, sent_packet), BadValue);
-    EXPECT_THROW(stats_mgr->passRcvdPacket(StatsMgr4::XCHG_RA, rcvd_packet), BadValue);
+    boost::shared_ptr<Pkt4> sent_packet(createPacket4(DHCPDISCOVER,
+                                                      common_transid));
+    boost::shared_ptr<Pkt4> rcvd_packet(createPacket4(DHCPOFFER,
+                                                      common_transid));
+    EXPECT_THROW(
+        stats_mgr->passSentPacket(StatsMgr4::XCHG_DO, sent_packet),
+        BadValue
+    );
+    EXPECT_THROW(
+        stats_mgr->passRcvdPacket(StatsMgr4::XCHG_DO, rcvd_packet),
+        BadValue
+    );
 
-    EXPECT_NO_THROW(stats_mgr->passSentPacket(StatsMgr4::XCHG_DO, sent_packet));
-    EXPECT_NO_THROW(stats_mgr->passRcvdPacket(StatsMgr4::XCHG_DO, rcvd_packet));
+    stats_mgr->addExchangeStats(StatsMgr4::XCHG_DO);
+    EXPECT_THROW(
+        stats_mgr->passSentPacket(StatsMgr4::XCHG_RA, sent_packet),
+        BadValue
+    );
+    EXPECT_THROW(
+        stats_mgr->passRcvdPacket(StatsMgr4::XCHG_RA, rcvd_packet),
+        BadValue
+    );
+
+    EXPECT_NO_THROW(
+        stats_mgr->passSentPacket(StatsMgr4::XCHG_DO, sent_packet)
+    );
+    EXPECT_NO_THROW(
+        stats_mgr->passRcvdPacket(StatsMgr4::XCHG_DO, rcvd_packet)
+    );
 }
 
 TEST_F(StatsMgrTest, SendReceiveSimple) {
     boost::scoped_ptr<StatsMgr4> stats_mgr(new StatsMgr4());
-    boost::shared_ptr<Pkt4> sent_packet(new Pkt4(DHCPDISCOVER, common_transid));
-    boost::shared_ptr<Pkt4> rcvd_packet(new Pkt4(DHCPOFFER, common_transid));
+    boost::shared_ptr<Pkt4> sent_packet(createPacket4(DHCPDISCOVER,
+                                                      common_transid));
+    boost::shared_ptr<Pkt4> rcvd_packet(createPacket4(DHCPOFFER,
+                                                      common_transid));
     stats_mgr->addExchangeStats(StatsMgr4::XCHG_DO);
-    ASSERT_NO_THROW(stats_mgr->passSentPacket(StatsMgr4::XCHG_DO, sent_packet));
-    EXPECT_NO_THROW(stats_mgr->passRcvdPacket(StatsMgr4::XCHG_DO, rcvd_packet));
-    EXPECT_NO_THROW(stats_mgr->passRcvdPacket(StatsMgr4::XCHG_DO, rcvd_packet));
+    ASSERT_NO_THROW(
+        stats_mgr->passSentPacket(StatsMgr4::XCHG_DO, sent_packet)
+    );
+    EXPECT_NO_THROW(
+        stats_mgr->passRcvdPacket(StatsMgr4::XCHG_DO, rcvd_packet)
+    );
+    EXPECT_NO_THROW(
+        stats_mgr->passRcvdPacket(StatsMgr4::XCHG_DO, rcvd_packet)
+    );
+}
+
+TEST_F(StatsMgrTest, Orphans) {
+    const int packets_num = 6;
+    boost::scoped_ptr<StatsMgr4> stats_mgr(new StatsMgr4());
+    stats_mgr->addExchangeStats(StatsMgr4::XCHG_DO);
+
+    for (int i = 0; i < packets_num; i += 2) {
+        boost::shared_ptr<Pkt4> sent_packet(createPacket4(DHCPDISCOVER, i));
+        ASSERT_NO_THROW(
+            stats_mgr->passSentPacket(StatsMgr4::XCHG_DO, sent_packet)
+        );
+    }
+    for (int i = 0; i < packets_num; ++i) {
+        boost::shared_ptr<Pkt4> rcvd_packet(createPacket4(DHCPOFFER, i));
+        ASSERT_NO_THROW(
+            stats_mgr->passRcvdPacket(StatsMgr4::XCHG_DO, rcvd_packet);
+        );
+    }
+    EXPECT_EQ(packets_num / 2, stats_mgr->getOrphans(StatsMgr4::XCHG_DO));
 }
 
 }
