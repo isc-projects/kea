@@ -29,6 +29,15 @@ LabelSequence::getData(size_t *len) const {
     return &(data_[offsets_[first_label_]]);
 }
 
+void
+LabelSequence::getOffsetData(size_t* len,
+                             uint8_t placeholder[Name::MAX_LABELS]) const {
+  *len = last_label_ - first_label_;
+  for (size_t i = 0; i < *len; i++) {
+      placeholder[i] = offsets_[first_label_ + i] - offsets_[first_label_];
+  }
+}
+
 size_t
 LabelSequence::getDataLength() const {
     // If the labelsequence is absolute, the current last_label_ falls
