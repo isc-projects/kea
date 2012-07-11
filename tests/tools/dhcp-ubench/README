@@ -1,0 +1,45 @@
+
+ DHCP micro-benchmarks
+-----------------------
+
+This directory contains simplified prototypes for various DB back-ends
+that are planned or considered as a backend engine for BIND10 DHCP.
+Athough trivial now, they are expected to evolve into useful tools
+that will allow users to measure performance in their specific environment.
+
+Currently the following benchmarks are planned:
+- in memory+flat file
+- SQLite
+- MySQL
+
+As they require additional (sometimes heavy) dependencies, they are not
+built by default. Actually, their build system completely separated.
+It will be eventually merged with the main BIND10 makefile system, but
+that is a low priority for now.
+
+
+ MySQL backend
+---------------
+
+MySQL backend requires MySQL client development libraries. It uses
+mysql_config tool (that works similar to pkg-config) to discover
+required compilation and linking options. To install required packages
+on Ubuntu, use the following command:
+
+sudo apt-get install mysql-client mysql-server libmysqlclient-dev
+
+Running MySQL server is required. Make sure that you have your setup
+configured so there is a user that is able to create databases.
+
+Before running tests, you need to initialize your database. You can
+use mysql-init.sql script for that purpose.
+
+WARNING: It will drop existing Kea database. Do not run this on
+your production server. Assuming your MySQL user is kea, you can
+initialize your test database by:
+
+mysql -u kea -p < mysql-init.sql
+
+After that step, you are ready to run the test:
+
+./mysql_ubench
