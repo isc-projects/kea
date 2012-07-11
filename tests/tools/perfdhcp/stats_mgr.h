@@ -15,6 +15,7 @@
 #ifndef __STATS_MGR_H
 #define __STATS_MGR_H
 
+#include <iostream>
 #include <map>
 
 #include <boost/noncopyable.hpp>
@@ -96,7 +97,12 @@ public:
         ///
         /// \param xchg_type exchange type
         ExchangeStats(const ExchangeType xchg_type)
-            : xchg_type_(xchg_type) {
+            : xchg_type_(xchg_type),
+            min_delay_(std::numeric_limits<double>::max()),
+            max_delay_(0.),
+            sum_delay_(0.),
+            orphans_(0),
+            square_sum_delay_(0.) {
             sent_packets_cache_ = sent_packets_.begin();
         }
 
@@ -121,11 +127,12 @@ public:
         /// packet search time significantly.
         ///
         /// \param transid transaction id of the packet to search
-        /// \throw isc::Unexpected if packet could not be found
-        /// \return packet having specified transaction id
+        /// \return packet having specified transaction or NULL if packet
+        /// not found
         boost::shared_ptr<T> findSent(const uint32_t transid) {
             if (sent_packets_.size() == 0) {
-                isc_throw(Unexpected, "Sent packets list is empty.");
+                ++orphans_;
+                return boost::shared_ptr<T>();
             } else if (sent_packets_cache_ == sent_packets_.end()) {
                 sent_packets_cache_ = sent_packets_.begin();
             }
@@ -143,7 +150,8 @@ public:
             }
 
             if (!packet_found) {
-                isc_throw(Unexpected, "Unable to find sent packet.");
+                ++orphans_;
+                return boost::shared_ptr<T>();
             }
 
             boost::shared_ptr<T> sent_packet(*sent_packets_cache_);
@@ -218,6 +226,15 @@ public:
         ///
         /// \return square sum of delays between sent and received packets.
         double getSquareSumDelay() const  { return square_sum_delay_; }
+
+        /// \brief Return number of orphant packets.
+        ///
+        /// Method returns number of received packets that had no matching
+        /// sent packet. It is possible that such packet was late or not
+        /// for us.
+        ///
+        /// \return number of orphant received packets.
+        uint64_t getOrphans() const { return orphans_; }
     private:
 
         /// \brief Private default constructor.
@@ -244,6 +261,8 @@ public:
                                        ///< and received packets.
         double square_sum_delay_;      ///< Square sum of delays between
                                        ///< sent and recived packets.
+
+        uint64_t orphans_;             ///< Number of orphant received packets.
     };
 
     /// Pointer to ExchangeStats.
@@ -251,7 +270,7 @@ public:
     /// Map containing all specified exchange types.
     typedef typename std::map<ExchangeType, ExchangeStatsPtr> ExchangesMap;
     /// Iterator poiting to \ref ExchangesMap
-    typedef typename ExchangesMap::iterator ExchangesMapIterator;
+    typedef typename ExchangesMap::const_iterator ExchangesMapIterator;
 
     /// \brief Specify new exchange type.
     ///
@@ -279,11 +298,8 @@ public:
     /// \throw isc::BadValue if invalid exchange type specified.
     void passSentPacket(const ExchangeType xchg_type,
                         const boost::shared_ptr<T> packet) {
-        ExchangesMapIterator it = exchanges_.find(xchg_type);
-        if (it == exchanges_.end()) {
-            isc_throw(BadValue, "Packets exchange not specified");
-        }
-        it->second->appendSent(packet);
+        ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
+        xchg_stats->appendSent(packet);
     }
 
     /// \brief Add new received packet and match with sent packet.
@@ -300,19 +316,45 @@ public:
     /// found on the list of sent packets.
     void passRcvdPacket(const ExchangeType xchg_type,
                         const boost::shared_ptr<T> packet) {
+        ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
+        boost::shared_ptr<T> sent_packet
+            = xchg_stats->findSent(packet->getTransid());
+
+        if (sent_packet) {
+            xchg_stats->updateDelays(sent_packet, packet);
+        }
+    }
+
+    /// \brief Return number of orphant packets.
+    ///
+    /// Method returns number of orphant packets for specified
+    /// exchange type.
+    ///
+    /// \param xchg_type exchange type.
+    /// \throw isc::BadValue if invalid exchange type specified.
+    /// \return number of orphant packets so far.
+    uint64_t getOrphans(const ExchangeType xchg_type) const {
+        ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
+        return xchg_stats->getOrphans();
+    }
+private:
+
+    /// \brief Return exchange stats object for given exchange type
+    ///
+    /// Method returns exchange stats object for given exchange type.
+    ///
+    /// \param xchg_type exchange type.
+    /// \throw isc::BadValue if invalid exchange type specified.
+    /// \return exchange stats object.
+    ExchangeStatsPtr getExchangeStats(const ExchangeType xchg_type) const {
         ExchangesMapIterator it = exchanges_.find(xchg_type);
         if (it == exchanges_.end()) {
             isc_throw(BadValue, "Packets exchange not specified");
         }
         ExchangeStatsPtr xchg_stats = it->second;
-        boost::shared_ptr<T> sent_packet
-            = xchg_stats->findSent(packet->getTransid());
-
-        xchg_stats->updateDelays(sent_packet, packet);
+        return xchg_stats;
     }
 
-
-private:
     ExchangesMap exchanges_;        ///< Map of exchange types.
 };
 
