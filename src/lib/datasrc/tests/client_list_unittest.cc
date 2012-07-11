@@ -735,7 +735,8 @@ TEST_F(ListTest, masterFiles) {
     list_->configure(*elem, true);
 
     // It has only the cache
-    EXPECT_EQ(NULL, list_->getDataSources()[0].data_src_client_);
+    EXPECT_EQ(static_cast<const DataSourceClient*>(NULL),
+              list_->getDataSources()[0].data_src_client_);
 
     // And it can search
     positiveResult(list_->find(Name(".")), ds_[0], Name("."), true, "com",
