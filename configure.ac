@@ -827,12 +827,10 @@ GTEST_LDFLAGS=
 GTEST_LDADD=
 # TODO: set DISTCHECK_GTEST_CONFIGURE_FLAG for --with-gtest too
 DISTCHECK_GTEST_CONFIGURE_FLAG=
+
 if test "x$enable_gtest" = "xyes" ; then
 
 	if test -n "$with_gtest_source" ; then
-
-# TODO: actually need to check if needs pthread
-GTEST_LDADD="$GTEST_LDADD $PTHREAD_LDFLAGS"
 
           if test "x$GTEST_SOURCE" = "xyes" ; then
 
@@ -859,6 +857,13 @@ GTEST_LDADD="$GTEST_LDADD $PTHREAD_LDFLAGS"
 	  GTEST_LDFLAGS="\$(top_builddir)/libgtest.a"
           DISTCHECK_GTEST_CONFIGURE_FLAG="--with-gtest-source=$GTEST_SOURCE"
           GTEST_INCLUDES="-I$GTEST_SOURCE -I$GTEST_SOURCE/include"
+          # See $GTEST_SOURCE/include/gtest/internal/gtest-port.h
+          # about GTEST_HAS_PTHREAD.
+          case "$host" in
+            *-solaris*|*-linux*|*-hpux*)
+                GTEST_LDADD="$GTEST_LDADD $PTHREAD_LDFLAGS"
+                ;;
+          esac
         fi
 
   if test "$gtest_path" != "no" ; then
