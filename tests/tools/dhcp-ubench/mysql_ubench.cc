@@ -10,6 +10,7 @@ using namespace std;
 const char * hostname ="localhost";
 const char * user = "root";
 const char * passwd = "foobletch";
+const char * dbname = "kea";
 
 void failure(MYSQL* conn, const char* operation) {
     stringstream tmp;
@@ -28,10 +29,15 @@ MYSQL * connect() {
         cout << "MySQL library init successful." << endl;
     }
 
-    if (!mysql_real_connect(conn, hostname, user, passwd, NULL, 0, NULL, 0)) {
+    if (!mysql_real_connect(conn, hostname, user, passwd, dbname, 0, NULL, 0)) {
         failure(conn, "connecting to MySQL server");
     } else {
         cout << "MySQL connection established." << endl;
+    }
+
+    string q = "delete from lease4";
+    if (mysql_real_query(conn, q.c_str(), strlen(q.c_str()))) {
+        failure(conn, "dropping old lease4 entries.");
     }
 
     return (conn);
@@ -79,6 +85,8 @@ bool createLease4Test(MYSQL * conn, uint32_t num) {
         stringstream cltt;
         cltt << "2012-07-11 15:43:" << (i % 60);
 
+        addr++;
+
         // the first address is 1.0.0.0.
         char query[2000], * end;
         strcpy(query, "INSERT INTO lease4(addr,hwaddr,client_id,"
@@ -96,13 +104,17 @@ bool createLease4Test(MYSQL * conn, uint32_t num) {
         // lease_id field is set automatically
         // options and comments fields are not set
 
-        cout << "QUERY=[" << query << "]" << endl;
-
         unsigned int len = end - query;
         if (mysql_real_query(conn, query, len)) {
             // something failed.
-        }
+            failure(conn, "INSERT query");
+        } else {
+            printf(".");
+            fflush(stdout);
+        };
     }
+    printf("\n");
+    fflush(stdout);
 }
 
 bool searchLease4Test(MYSQL * conn, uint32_t num) {
@@ -127,7 +139,7 @@ int main(int argc, const char * argv[]) {
 
     cout << "MySQL client version is " << mysql_get_client_info() << endl;
 
-    uint32_t num = 1;
+    uint32_t num = 100;
 
     try {
         MYSQL *conn = connect();
