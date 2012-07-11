@@ -143,6 +143,10 @@ public:
 // Handle the "loadzone" command.
 class LoadZoneCommand : public AuthCommand {
 public:
+    LoadZoneCommand() :
+        zone_class_(RRClass::IN()), // We need to have something to compile
+        origin_(Name::ROOT_NAME())
+    {}
     virtual void exec(AuthSrv& server, isc::data::ConstElementPtr args) {
         // parse and validate the args.
         if (!validate(args)) {
@@ -218,11 +222,8 @@ createAuthCommand(const string& command_id) {
         return (new ShutdownCommand());
     } else if (command_id == "sendstats") {
         return (new SendStatsCommand());
-#if 0
-    // FIXME: The loadzone command will use #2046
     } else if (command_id == "loadzone") {
         return (new LoadZoneCommand());
-#endif
     } else if (false && command_id == "_throw_exception") {
         // This is for testing purpose only and should not appear in the
         // actual configuration syntax.
