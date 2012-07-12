@@ -103,6 +103,33 @@ TEST_F(StatsMgrTest, SendReceiveSimple) {
     );
 }
 
+TEST_F(StatsMgrTest, SendReceiveUnordered) {
+    const int packets_num = 10;
+    boost::scoped_ptr<StatsMgr4> stats_mgr(new StatsMgr4());
+    stats_mgr->addExchangeStats(StatsMgr4::XCHG_DO);
+
+    uint32_t transid[packets_num] = { 64322, 100203, 1, 232324, 6786, 23, 4523, 777883, 98082, 3 };
+    for (int i = 0; i < packets_num; ++i) {
+        //        uint32_t transid = i & 0xFFFFFFFE | !(i & 1);
+        boost::shared_ptr<Pkt4> sent_packet(createPacket4(DHCPDISCOVER,
+                                                          transid[i]));
+        ASSERT_NO_THROW(
+            stats_mgr->passSentPacket(StatsMgr4::XCHG_DO, sent_packet)
+        );
+    }
+
+    for (int i = 0; i < packets_num; ++i) {
+        boost::shared_ptr<Pkt4> rcvd_packet(createPacket4(DHCPDISCOVER,
+                                                          transid[packets_num - 1 - i]));
+        ASSERT_NO_THROW(
+            stats_mgr->passRcvdPacket(StatsMgr4::XCHG_DO, rcvd_packet);
+        );
+    }
+    EXPECT_EQ(0, stats_mgr->getOrphans(StatsMgr4::XCHG_DO));
+    EXPECT_EQ(10, stats_mgr->getUnorderedLookups(StatsMgr4::XCHG_DO));
+    std::cout << stats_mgr->getAvgUnorderedLookupSetSize(StatsMgr4::XCHG_DO) << std::endl;
+}
+
 TEST_F(StatsMgrTest, Orphans) {
     const int packets_num = 6;
     boost::scoped_ptr<StatsMgr4> stats_mgr(new StatsMgr4());
