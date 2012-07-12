@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include "util/memory_segment_local.h"
+#include <exceptions/exceptions.h>
 #include <gtest/gtest.h>
 #include <memory>
 
@@ -56,6 +57,33 @@ TEST(MemorySegmentLocal, TestTooMuchMemory) {
     auto_ptr<MemorySegment> segment(new MemorySegmentLocal());
 
     EXPECT_THROW(segment->allocate(0x7fffffffffffffff), bad_alloc);
+}
+
+TEST(MemorySegmentLocal, TestBadDeallocate) {
+    auto_ptr<MemorySegment> segment(new MemorySegmentLocal());
+
+    // By default, nothing is allocated.
+    EXPECT_TRUE(segment->allMemoryDeallocated());
+
+    void* ptr = segment->allocate(1024);
+
+    // Now, we have an allocation:
+    EXPECT_FALSE(segment->allMemoryDeallocated());
+
+    // This should not throw
+    EXPECT_NO_THROW(segment->deallocate(ptr, 1024));
+
+    // Now, we have an deallocated everything:
+    EXPECT_TRUE(segment->allMemoryDeallocated());
+
+    ptr = segment->allocate(1024);
+
+    // Now, we have another allocation:
+    EXPECT_FALSE(segment->allMemoryDeallocated());
+
+    // This should throw as the size passed to deallocate() is larger
+    // than what was allocated.
+    EXPECT_THROW(segment->deallocate(ptr, 2048), isc::OutOfRange);
 }
 
 } // anonymous namespace
