@@ -86,4 +86,17 @@ TEST(MemorySegmentLocal, TestBadDeallocate) {
     EXPECT_THROW(segment->deallocate(ptr, 2048), isc::OutOfRange);
 }
 
+TEST(MemorySegmentLocal, TestNullDeallocate) {
+    auto_ptr<MemorySegment> segment(new MemorySegmentLocal());
+
+    // By default, nothing is allocated.
+    EXPECT_TRUE(segment->allMemoryDeallocated());
+
+    // NULL deallocation is a no-op.
+    EXPECT_NO_THROW(segment->deallocate(NULL, 1024));
+
+    // This should still return true.
+    EXPECT_TRUE(segment->allMemoryDeallocated());
+}
+
 } // anonymous namespace
