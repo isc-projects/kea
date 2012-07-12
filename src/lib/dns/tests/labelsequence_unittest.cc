@@ -707,6 +707,7 @@ TEST(LabelSequence, rawConstruction) {
     result = s1.compare(s3);
     EXPECT_EQ(isc::dns::NameComparisonResult::COMMONANCESTOR,
               result.getRelation());
+    EXPECT_EQ(2, result.getCommonLabels());
 
     s1.stripRight(1);
     s3.stripRight(1);
@@ -714,11 +715,13 @@ TEST(LabelSequence, rawConstruction) {
     result = s1.compare(s3);
     EXPECT_EQ(isc::dns::NameComparisonResult::COMMONANCESTOR,
               result.getRelation());
+    EXPECT_EQ(1, result.getCommonLabels());
 
     data[9] = 'f';
     result = s1.compare(s3);
     EXPECT_EQ(isc::dns::NameComparisonResult::NONE,
               result.getRelation());
+    EXPECT_EQ(0, result.getCommonLabels());
 }
 
 }
