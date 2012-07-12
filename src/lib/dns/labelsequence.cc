@@ -26,7 +26,7 @@ namespace dns {
 const uint8_t*
 LabelSequence::getData(size_t *len) const {
     *len = getDataLength();
-    return &(data_[offsets_[first_label_]]);
+    return (&data_[offsets_[first_label_]]);
 }
 
 size_t
