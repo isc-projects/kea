@@ -16,6 +16,7 @@
 #define DATASRC_CONTAINER_H
 
 #include <dns/name.h>
+#include <dns/rrclass.h>
 #include <cc/data.h>
 #include <exceptions/exceptions.h>
 
@@ -186,6 +187,12 @@ typedef boost::shared_ptr<const ClientList> ConstClientListPtr;
 /// inherited except for tests.
 class ConfigurableClientList : public ClientList {
 public:
+    /// \brief Constructor
+    ///
+    /// \param rrclass For which class the list should work.
+    ConfigurableClientList(const isc::dns::RRClass &rrclass) :
+        rrclass_(rrclass)
+    {}
     /// \brief Exception thrown when there's an error in configuration.
     class ConfigurationError : public Exception {
     public:
@@ -229,16 +236,11 @@ public:
     ///
     /// \todo The content yet to be defined.
     struct DataSourceInfo {
-        /// \brief Default constructor.
-        ///
-        /// Don't use directly. It is here so the structure can live in
-        /// a vector.
-        DataSourceInfo() :
-            data_src_client_(NULL)
-        {}
+        // Plays a role of default constructor too (for vector)
+        DataSourceInfo(bool has_cache = false);
         DataSourceInfo(DataSourceClient* data_src_client,
                        const DataSourceClientContainerPtr& container,
-                       bool hasCache);
+                       bool has_cache);
         DataSourceClient* data_src_client_;
         DataSourceClientContainerPtr container_;
         boost::shared_ptr<InMemoryClient> cache_;
@@ -286,6 +288,8 @@ public:
     /// it might be, so it is just made public (there's no real reason to
     /// hide it).
     const DataSources& getDataSources() const { return (data_sources_); }
+private:
+    const isc::dns::RRClass rrclass_;
 };
 
 } // namespace datasrc
