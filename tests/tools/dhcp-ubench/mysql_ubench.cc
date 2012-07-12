@@ -2,6 +2,7 @@
 #include <sstream>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include <time.h>
 #include <mysql/mysql.h>
@@ -30,6 +31,8 @@ public:
 
 protected:
     uint32_t Num_; // number of operations (e.g. insert lease num times)
+
+    const static uint32_t BASE_ADDR4 = 0x01000000; // let's start from 1.0.0.0 address
 
     // five timestamps (1 at the beginning and 4 after each step)
     struct timespec ts[5];
@@ -105,7 +108,7 @@ int uBenchmark::run() {
 class MySQL_uBenchmark: public uBenchmark {
 public:
     MySQL_uBenchmark(const string& hostname, const string& user,
-                     const string& passwd, const string& db, 
+                     const string& passwd, const string& db,
                      uint32_t num_iterations);
 
     virtual void printInfo();
@@ -130,7 +133,7 @@ protected:
 MySQL_uBenchmark::MySQL_uBenchmark(const string& hostname, const string& user,
                                    const string& pass, const string& db,
                                    uint32_t num_iterations)
-    :uBenchmark(num_iterations), Hostname_(hostname), User_(user), 
+    :uBenchmark(num_iterations), Hostname_(hostname), User_(user),
      Pass_(pass), DB_(db), Conn_(NULL) {
 
 }
@@ -144,6 +147,8 @@ void MySQL_uBenchmark::failure(const char* operation) {
 
 void MySQL_uBenchmark::connect() {
 
+    srandom(time(NULL));
+
     Conn_ = mysql_init(NULL);
     if (!Conn_) {
         failure("initializing MySQL library");
@@ -154,7 +159,7 @@ void MySQL_uBenchmark::connect() {
     cout << "hostname=" << Hostname_ << ", user=" << User_
          << "pass=" << Pass_ << " db=" << DB_ << endl;
 
-    if (!mysql_real_connect(Conn_, Hostname_.c_str(), User_.c_str(), 
+    if (!mysql_real_connect(Conn_, Hostname_.c_str(), User_.c_str(),
                             Pass_.c_str(), DB_.c_str(), 0, NULL, 0)) {
         failure("connecting to MySQL server");
     } else {
@@ -180,7 +185,7 @@ void MySQL_uBenchmark::createLease4Test() {
         throw "Not connected to MySQL server.";
     }
 
-    uint32_t addr = 0x01000000; // Let's start with 1.0.0.0 address
+    uint32_t addr = BASE_ADDR4; // Let's start with 1.0.0.0 address
     char hwaddr[20];
     uint8_t hwaddr_len = 20; // not a real field
     char client_id[128];
@@ -241,6 +246,52 @@ void MySQL_uBenchmark::createLease4Test() {
 void MySQL_uBenchmark::searchLease4Test() {
     if (!Conn_) {
         throw "Not connected to MySQL server.";
+    }
+
+    // this formula should roughly find something a lease in 90% cases
+    float hitRatio = 0.9;
+
+    cout << "range=" << int(Num_ / hitRatio) << " minAddr=" << hex
+         << BASE_ADDR4 << " maxAddr=" << BASE_ADDR4 + int(Num_ / hitRatio)
+         << dec << endl;
+
+    for (uint32_t i = 0; i < Num_; i++) {
+
+        uint32_t x = BASE_ADDR4 + random() % int(Num_ / hitRatio);
+
+        char query[2000];
+        sprintf(query, "SELECT lease_id,addr,hwaddr,client_id,valid_lft,"
+                "cltt,pool_id,fixed,hostname,fqdn_fwd,fqdn_rev "
+                "FROM lease4 where addr=%d", x);
+        mysql_real_query(Conn_, query, strlen(query));
+
+        MYSQL_RES * result = mysql_store_result(Conn_);
+
+        int num_rows = mysql_num_rows(result);
+        int num_fields = mysql_num_fields(result);
+
+        if ( (num_rows != 0) && (num_rows != 1) ) {
+            stringstream tmp;
+            tmp << "Search: DB returned " << num_rows << " leases for address "
+                << hex << x << dec;
+            failure(tmp.str().c_str());
+        }
+
+        if (num_rows) {
+            MYSQL_ROW row = mysql_fetch_row(result);
+            // pretend to do something with it
+
+            printf("lease_id=%s addr=%s valid_lft=%s cltt=%s\n",
+                   (row[0]?row[0]:"NULL"),
+                   (row[1]?row[1]:"NULL"),
+                   (row[4]?row[4]:"NULL"),
+                   (row[5]?row[5]:"NULL"));
+
+            mysql_free_result(result);
+        } else {
+            printf("Address %x not found.\n", x);
+        }
+
     }
 }
 
