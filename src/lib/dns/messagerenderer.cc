@@ -302,6 +302,10 @@ MessageRenderer::writeName(const LabelSequence& ls, const bool compress) {
     const bool case_sensitive = (impl_->compress_mode_ ==
                                  MessageRenderer::CASE_SENSITIVE);
     for (nlabels_uncomp = 0; nlabels_uncomp < nlabels; ++nlabels_uncomp) {
+        if (nlabels_uncomp > 0) {
+            sequence.stripLeft(1);
+        }
+
         data = sequence.getData(&data_len);
         if (data_len == 1) { // trailing dot.
             ++nlabels_uncomp;
@@ -316,10 +320,6 @@ MessageRenderer::writeName(const LabelSequence& ls, const bool compress) {
                                        case_sensitive);
         if (ptr_offset != MessageRendererImpl::NO_OFFSET) {
             break;
-        }
-
-        if (nlabels_uncomp + 1 < nlabels) {
-            sequence.stripLeft(1);
         }
     }
 
