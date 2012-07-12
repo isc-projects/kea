@@ -52,4 +52,10 @@ TEST(MemorySegmentLocal, TestLocal) {
     EXPECT_TRUE(segment->allMemoryDeallocated());
 }
 
+TEST(MemorySegmentLocal, TestTooMuchMemory) {
+    auto_ptr<MemorySegment> segment(new MemorySegmentLocal());
+
+    EXPECT_THROW(segment->allocate(0x7fffffffffffffff), bad_alloc);
+}
+
 } // anonymous namespace

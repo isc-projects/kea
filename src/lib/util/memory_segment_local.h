@@ -39,6 +39,9 @@ public:
     /// \brief Allocate/acquire a segment of memory. The source of the
     /// memory is libc's malloc().
     ///
+    /// Throws <code>std::bad_alloc</code> if the implementation cannot
+    /// allocate the requested storage.
+    ///
     /// \param size The size of the memory requested in bytes.
     /// \return Returns pointer to the memory allocated.
     virtual void* allocate(size_t size);
