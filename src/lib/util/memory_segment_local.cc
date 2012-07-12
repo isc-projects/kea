@@ -31,6 +31,12 @@ MemorySegmentLocal::allocate(size_t size) {
 
 void
 MemorySegmentLocal::deallocate(void* ptr, size_t size) {
+    if (ptr == NULL) {
+        // Return early if NULL is passed to be deallocated (without
+        // modifying allocated_size, or comparing against it).
+        return;
+    }
+
     if (size > allocated_size_) {
       isc_throw(OutOfRange, "Invalid size to deallocate: " << size
                 << "; currently allocated size: " << allocated_size_);
