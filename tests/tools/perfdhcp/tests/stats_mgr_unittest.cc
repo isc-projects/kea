@@ -108,9 +108,8 @@ TEST_F(StatsMgrTest, SendReceiveUnordered) {
     boost::scoped_ptr<StatsMgr4> stats_mgr(new StatsMgr4());
     stats_mgr->addExchangeStats(StatsMgr4::XCHG_DO);
 
-    uint32_t transid[packets_num] = { 64322, 100203, 1, 232324, 6786, 23, 4523, 777883, 98082, 3 };
+    uint32_t transid[packets_num] = { 1, 1024, 2, 1025, 3, 1026, 4, 1027, 5, 1028 };
     for (int i = 0; i < packets_num; ++i) {
-        //        uint32_t transid = i & 0xFFFFFFFE | !(i & 1);
         boost::shared_ptr<Pkt4> sent_packet(createPacket4(DHCPDISCOVER,
                                                           transid[i]));
         ASSERT_NO_THROW(
