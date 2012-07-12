@@ -76,12 +76,7 @@ public:
     /// \param offsets_size The size of the offsets data
     LabelSequence(const uint8_t* data,
                   const uint8_t* offsets,
-                  size_t offsets_size) : data_(data),
-                                         offsets_(offsets),
-                                         offsets_size_(offsets_size),
-                                         first_label_(0),
-                                         last_label_(offsets_size_)
-    {}
+                  size_t offsets_size);
 
     /// \brief Return the wire-format data for this LabelSequence
     ///
