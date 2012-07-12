@@ -14,6 +14,24 @@
         }],
         "database_file": "@abs_builddir@/zone.sqlite3"
     },
+    "data_sources": {
+        "classes": {
+            "IN": [{
+                "type": "sqlite3",
+                "params": {
+                    "database_file": "@abs_builddir@/zone.sqlite3"
+                }
+            }]
+        }
+    },
+    "Logging": {
+        "loggers": [{
+            "name": "*",
+            "severity": "DEBUG",
+            "output_options": [],
+            "debuglevel": 99
+        }]
+    },
     "Zonemgr": {
         "secondary_zones": [{
             "name": "example.",
