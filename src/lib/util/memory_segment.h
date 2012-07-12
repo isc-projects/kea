@@ -28,6 +28,9 @@ namespace util {
 /// in code.
 class MemorySegment {
 public:
+    /// \brief Destructor
+    virtual ~MemorySegment() {}
+
     /// \brief Allocate/acquire a segment of memory. The source of the
     /// memory is dependent on the implementation used.
     ///
