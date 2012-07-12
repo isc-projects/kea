@@ -24,7 +24,7 @@
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/sequenced_index.hpp>
 #include <boost/multi_index/mem_fun.hpp>
-#include <boost/multi_index/composite_key.hpp>
+#include <boost/multi_index/global_fun.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <exceptions/exceptions.h>
@@ -70,6 +70,10 @@ public:
     class ExchangeStats {
     public:
 
+        static uint32_t transid_hash(boost::shared_ptr<T> packet) {
+            return packet->getTransid() & 1023;
+        }
+
         /// \brief List of packets (sent or received).
         ///
         /// List of packets based on multi index container allows efficient
@@ -80,8 +84,8 @@ public:
             boost::multi_index::indexed_by<
                 boost::multi_index::sequenced<>,
                 boost::multi_index::hashed_non_unique<
-                        boost::multi_index::const_mem_fun<
-                            T, uint32_t, &T::getTransid
+                        boost::multi_index::global_fun<
+                            boost::shared_ptr<T>, uint32_t, &ExchangeStats::transid_hash
                         >
                 >
             >
@@ -158,7 +162,7 @@ public:
             } else {
                 PktListTransidIndex& idx = sent_packets_.template get<1>();
                 std::pair<PktListTransidIterator,PktListTransidIterator> p =
-                    idx.equal_range(transid);
+                    idx.equal_range(transid & 1023);
                 ++unordered_lookups_;
                 unordered_lookup_size_sum_ += std::distance(p.first, p.second);
                 for (PktListTransidIterator it = p.first; it != p.second;
