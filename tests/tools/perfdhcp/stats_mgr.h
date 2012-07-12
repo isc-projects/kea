@@ -21,9 +21,10 @@
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/multi_index_container.hpp>
-#include <boost/multi_index/ordered_index.hpp>
+#include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/sequenced_index.hpp>
 #include <boost/multi_index/mem_fun.hpp>
+#include <boost/multi_index/composite_key.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <exceptions/exceptions.h>
@@ -78,9 +79,10 @@ public:
             boost::shared_ptr<T>,
             boost::multi_index::indexed_by<
                 boost::multi_index::sequenced<>,
-                boost::multi_index::ordered_unique<
-                    boost::multi_index::const_mem_fun<
-                        T, uint32_t, &T::getTransid>
+                boost::multi_index::hashed_non_unique<
+                        boost::multi_index::const_mem_fun<
+                            T, uint32_t, &T::getTransid
+                        >
                 >
             >
         > PktList;
@@ -102,7 +104,10 @@ public:
             max_delay_(0.),
             sum_delay_(0.),
             orphans_(0),
-            square_sum_delay_(0.) {
+            square_sum_delay_(0.),
+            ordered_lookups_(0),
+            unordered_lookup_size_sum_(0),
+            unordered_lookups_(0) {
             sent_packets_cache_ = sent_packets_.begin();
         }
 
@@ -110,9 +115,18 @@ public:
         ///
         /// Method adds new packet to list of sent packets.
         ///
-        /// \param packet packet object to be appended.
+        /// \param packet packet object to be added.
         void appendSent(const boost::shared_ptr<T> packet) {
             sent_packets_.template get<0>().push_back(packet);
+        }
+
+        /// \brief Add new packet to list of received packets.
+        ///
+        /// Method adds new packet to list of received packets.
+        ///
+        /// \param packet packet object to be added.
+        void appendRcvd(const boost::shared_ptr<T> packet) {
+            rcvd_packets_.template get<0>().push_back(packet);
         }
 
         /// \brief Find packet on the list of sent packets.
@@ -139,13 +153,22 @@ public:
 
             bool packet_found = false;
             if ((*sent_packets_cache_)->getTransid() == transid) {
+                ++ordered_lookups_;
                 packet_found = true;
             } else {
                 PktListTransidIndex& idx = sent_packets_.template get<1>();
-                PktListTransidIterator it =  idx.find(transid);
-                if (it != idx.end()) {
-                    packet_found = true;
-                    sent_packets_cache_ = sent_packets_.template project<0>(it);
+                std::pair<PktListTransidIterator,PktListTransidIterator> p =
+                    idx.equal_range(transid);
+                ++unordered_lookups_;
+                unordered_lookup_size_sum_ += std::distance(p.first, p.second);
+                for (PktListTransidIterator it = p.first; it != p.second;
+                     ++it) {
+                    if ((*it)->getTransid() == transid) {
+                        packet_found = true;
+                        sent_packets_cache_ =
+                            sent_packets_.template project<0>(it);
+                        break;
+                    }
                 }
             }
 
@@ -235,6 +258,40 @@ public:
         ///
         /// \return number of orphant received packets.
         uint64_t getOrphans() const { return orphans_; }
+
+        /// \brief Return average unordered lookup set size.
+        ///
+        /// Method returns average unordered lookup set size.
+        /// This value is changes every time \findSet function uses
+        /// unordered packet lookup using transaction id.
+        ///
+        /// \return average unordered lookup set size.
+        double getAvgUnorderedLookupSetSize() const {
+            return static_cast<double>(unordered_lookup_size_sum_) /
+                static_cast<double>(unordered_lookups_);
+        }
+
+        /// \brief Return number of unordered sent packets lookups
+        ///
+        /// Method returns number of unordered sent packet lookups.
+        /// Unordered lookup is used when received packet was sent
+        /// out of order by server - transaction id of received
+        /// packet does not match transaction id of next sent packet.
+        ///
+        /// \return number of unordered lookups.
+        uint64_t getUnorderedLookups() const { return unordered_lookups_; }
+
+
+        /// \brief Return number of ordered sent packets lookups
+        ///
+        /// Method returns number of ordered sent packet lookups.
+        /// Ordered lookup is used when packets are received in the
+        /// same order as they were sent to the server.
+        /// If packets are skipped or received out of order, lookup
+        /// function will use unordered lookup (with hash table).
+        ///
+        /// \return number of ordered lookups.
+        uint64_t getOrderedLookups() const { return ordered_lookups_; }
     private:
 
         /// \brief Private default constructor.
@@ -263,6 +320,19 @@ public:
                                        ///< sent and recived packets.
 
         uint64_t orphans_;             ///< Number of orphant received packets.
+
+        /// Sum of unordered lookup sets. Needed to calculate mean size of
+        /// lookup set. It is desired that number of unordered lookups is
+        /// minimal for performance reasons. Tracking number of lookups and
+        /// mean size of the lookup set should give idea of packets serach
+        /// complexity.
+        uint64_t unordered_lookup_size_sum_;
+
+        uint64_t unordered_lookups_;   ///< Number of unordered sent packets
+                                       ///< lookups.
+        uint64_t ordered_lookups_;     ///< Number of ordered sent packets
+                                       ///< lookups.
+
     };
 
     /// Pointer to ExchangeStats.
@@ -322,6 +392,7 @@ public:
 
         if (sent_packet) {
             xchg_stats->updateDelays(sent_packet, packet);
+            xchg_stats->appendRcvd(packet);
         }
     }
 
@@ -337,6 +408,47 @@ public:
         ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
         return xchg_stats->getOrphans();
     }
+
+    /// \brief Return average unordered lookup set size.
+    ///
+    /// Method returns average unordered lookup set size.
+    /// This value is changes every time \findSet function uses
+    /// unordered packet lookup using transaction id.
+    ///
+    /// \param xchg_type exchange type.
+    /// \return average unordered lookup set size.
+    double getAvgUnorderedLookupSetSize(const ExchangeType xchg_type) const {
+        ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
+        return xchg_stats->getAvgUnorderedLookupSetSize();
+    }
+
+    /// \brief Return number of unordered sent packets lookups
+    ///
+    /// Method returns number of unordered sent packet lookups.
+    /// Unordered lookup is used when received packet was sent
+    /// out of order by server - transaction id of received
+    /// packet does not match transaction id of next sent packet.
+    ///
+    /// \return number of unordered lookups.
+    uint64_t getUnorderedLookups(const ExchangeType xchg_type) const {
+        ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
+        return xchg_stats->getUnorderedLookups();
+    }
+
+    /// \brief Return number of ordered sent packets lookups
+    ///
+    /// Method returns number of ordered sent packet lookups.
+    /// Ordered lookup is used when packets are received in the
+    /// same order as they were sent to the server.
+    /// If packets are skipped or received out of order, lookup
+    /// function will use unordered lookup (with hash table).
+    ///
+    /// \return number of ordered lookups.
+    uint64_t getOrderedLookups(const ExchangeType xchg_type) const {
+        ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
+        return xchg_stats->getOrderedLookups();
+    }
+
 private:
 
     /// \brief Return exchange stats object for given exchange type
