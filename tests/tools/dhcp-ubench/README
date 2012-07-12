@@ -2,6 +2,10 @@
  DHCP micro-benchmarks
 -----------------------
 
+ Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+
+ by Tomasz Mrugalski
+
 This directory contains simplified prototypes for various DB back-ends
 that are planned or considered as a backend engine for BIND10 DHCP.
 Athough trivial now, they are expected to evolve into useful tools
@@ -17,6 +21,28 @@ built by default. Actually, their build system completely separated.
 It will be eventually merged with the main BIND10 makefile system, but
 that is a low priority for now.
 
+All planned benchmarks will follow the same pattern.
+
+1. prepare operation (connect to a database, create a file etc.)
+2. Measure timestamp 0
+3. commit new lease4 (step repeated X times)
+4. Measure timestamp 1
+5. search for random lease4 (step repeated X times)
+6. Measure timestamp 2
+7. update existing lease4 (step repeated X times)
+8. Measure timestamp 3
+9. delete existing lease4 (step repeated X times)
+10. Measure timestamp 4
+11. Print out statistics, based on X and measured timestamps.
+
+Although this approach does not attempt to simulate actual DHCP server
+operation that has mix of all steps intervening, it answers the
+questions about basic database strenghts and weak points. In particular
+it can show what is the impact of specific DB optimizations, like
+changing engine, optimizing for writes/reads etc.
+
+The framework attempts to do the same amount of operations for every
+backend thus allowing fair complarison between them.
 
  MySQL backend
 ---------------
@@ -32,7 +58,7 @@ Running MySQL server is required. Make sure that you have your setup
 configured so there is a user that is able to create databases.
 
 Before running tests, you need to initialize your database. You can
-use mysql-init.sql script for that purpose.
+use mysql-schema.sql script for that purpose.
 
 WARNING: It will drop existing Kea database. Do not run this on
 your production server. Assuming your MySQL user is kea, you can
@@ -43,3 +69,34 @@ mysql -u kea -p < mysql-init.sql
 After that step, you are ready to run the test:
 
 ./mysql_ubench
+
+or
+
+./mysql_ubench > results.txt
+
+Redirecting output to a file is important, because for each operation
+there is a single character printed to show progress. If you have a slow
+terminal, this may considerably affect test perfromance. On the other hand,
+printing something after each operation is required, as poor DB setting
+may slow down operations to around 20 per second. Observant user is expected
+to note that initial dots are printed too slowly and abort the test.
+
+Currently all parameters are hardcoded. To modify them, one needs to
+modify source code and recompile. Fortunately, that is quite easy.
+To modify MySQL parameters, see main() method at the end of mysql_ubench.c
+file. That is the plase where one can modify MySQL connection
+parameters (MySQL server hostname, user and password and database name).
+
+One parameter that has huge impact on performance is a a backend engine.
+You can get a list of engines of your MySQL implementation by using
+
+> show engines;
+
+in your mysql client. Two notable engines are MyISAM and InnoDB. You
+can tweak it by using the following command in mysql:
+
+> alter table lease4 engine=MyISAM;
+
+or
+
+> alter table lease4 engine=InnoDB;
