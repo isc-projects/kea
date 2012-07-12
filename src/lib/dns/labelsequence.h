@@ -70,6 +70,9 @@ public:
     /// \note No validation is done on the given data upon construction;
     ///       use with care.
     ///
+    /// \exception isc::BadValue if basic checks for the input data, or
+    ///            offsets fails.
+    ///
     /// \param data The raw data for the domain name, in wire format
     /// \param offsets The offsets of the labels in the domain name data,
     ///        as given by a Name object or another LabelSequence
