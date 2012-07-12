@@ -15,6 +15,7 @@
 #include <exceptions/exceptions.h>
 #include <util/buffer.h>
 #include <dns/name.h>
+#include <dns/labelsequence.h>
 #include <dns/messagerenderer.h>
 
 #include <dns/tests/unittest_util.h>
@@ -28,6 +29,7 @@
 
 using isc::UnitTestUtil;
 using isc::dns::Name;
+using isc::dns::LabelSequence;
 using isc::dns::MessageRenderer;
 using isc::util::OutputBuffer;
 using boost::lexical_cast;
@@ -174,6 +176,67 @@ TEST_F(MessageRendererTest, writeRootName) {
                         renderer.getLength(),
                         static_cast<const uint8_t*>(expected.getData()),
                         expected.getLength());
+}
+
+TEST_F(MessageRendererTest, writeNameLabelSequence1) {
+    UnitTestUtil::readWireData("name_toWire7", data);
+
+    Name n1("a.example.com");
+    LabelSequence ls1(n1);
+
+    // a.example.com.
+    renderer.writeName(ls1);
+
+    ls1.stripLeft(1);
+
+    // example.com.
+    renderer.writeName(ls1);
+
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
+                        renderer.getLength(), &data[0], data.size());
+}
+
+TEST_F(MessageRendererTest, writeNameLabelSequence2) {
+    UnitTestUtil::readWireData("name_toWire8", data);
+
+    Name n1("a.example.com");
+    LabelSequence ls1(n1);
+
+    ls1.stripRight(1);
+
+    // a.example.com (without root .)
+    renderer.writeName(ls1);
+
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
+                        renderer.getLength(), &data[0], data.size());
+}
+
+TEST_F(MessageRendererTest, writeNameLabelSequence3) {
+    UnitTestUtil::readWireData("name_toWire9", data);
+
+    Name n1("a.example.com");
+    LabelSequence ls1(n1);
+
+    // a.example.com.
+    renderer.writeName(ls1);
+
+    ls1.stripRight(1);
+
+    // a.example.com (without root .)
+    renderer.writeName(ls1);
+
+    ls1.stripRight(1);
+
+    // a.example
+    renderer.writeName(ls1);
+
+    ls1.stripLeft(1);
+
+    // example
+    renderer.writeName(ls1);
+
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
+                        renderer.getLength(), &data[0], data.size());
 }
 
 TEST_F(MessageRendererTest, setBuffer) {
