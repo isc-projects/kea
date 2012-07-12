@@ -33,6 +33,9 @@ public:
     MemorySegmentLocal() : allocated_size_(0) {
     }
 
+    /// \brief Destructor
+    virtual ~MemorySegmentLocal() {}
+
     /// \brief Allocate/acquire a segment of memory. The source of the
     /// memory is libc's malloc().
     ///
