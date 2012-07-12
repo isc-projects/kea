@@ -55,9 +55,6 @@ void uBenchmark::print_clock(const std::string& operation, uint32_t num,
 
     long int tv_nsec = after.tv_nsec - before.tv_nsec;
 
-    cout << "after.tv_nsec=" << after.tv_nsec
-         << " before.tv_nsec=" << before.tv_nsec << endl;
-
     if (tv_nsec < 0) {
         tv_sec++;
         tv_nsec += 1000000000; // 10^9
@@ -98,9 +95,9 @@ int uBenchmark::run() {
     }
 
     print_clock("Create leases4 ", Num_, ts[0], ts[1]);
-    // print_clock("Search leases4 ", num, ts[1], ts[2]);
-    // print_clock("Update leases4 ", num, ts[2], ts[3]);
-    // print_clock("Delete leases4 ", num, ts[3], ts[4]);
+    print_clock("Search leases4 ", Num_, ts[1], ts[2]);
+    print_clock("Update leases4 ", Num_, ts[2], ts[3]);
+    print_clock("Delete leases4 ", Num_, ts[3], ts[4]);
 
     return (0);
 }
@@ -120,6 +117,9 @@ public:
     virtual void deleteLease4Test();
 
 protected:
+    const static bool CONFIRM_UPDATE = false;
+    const static bool CONFIRM_DELETE = false;
+
     void failure(const char* operation);
 
     std::string Hostname_;
@@ -200,6 +200,8 @@ void MySQL_uBenchmark::createLease4Test() {
     bool fqdn_fwd = true; // let's pretend to do AAAA update
     bool fqdn_rev = true; // let's pretend to do PTR update
 
+    printf("CREATE:   ");
+
     for (uint8_t i = 0; i < 20; i++) {
         hwaddr[i] = 65 + i;
     }
@@ -251,9 +253,12 @@ void MySQL_uBenchmark::searchLease4Test() {
     // this formula should roughly find something a lease in 90% cases
     float hitRatio = 0.9;
 
-    cout << "range=" << int(Num_ / hitRatio) << " minAddr=" << hex
+    /* cout << "range=" << int(Num_ / hitRatio) << " minAddr=" << hex
          << BASE_ADDR4 << " maxAddr=" << BASE_ADDR4 + int(Num_ / hitRatio)
-         << dec << endl;
+         << dec << endl; */
+
+    printf("RETRIEVE: ");
+
 
     for (uint32_t i = 0; i < Num_; i++) {
 
@@ -281,6 +286,56 @@ void MySQL_uBenchmark::searchLease4Test() {
             MYSQL_ROW row = mysql_fetch_row(result);
             // pretend to do something with it
 
+            printf(".");
+            /* printf("lease_id=%s addr=%s valid_lft=%s cltt=%s\n",
+                   (row[0]?row[0]:"NULL"),
+                   (row[1]?row[1]:"NULL"),
+                   (row[4]?row[4]:"NULL"),
+                   (row[5]?row[5]:"NULL")); */
+
+            mysql_free_result(result);
+        } else {
+            // printf("Address %x not found.\n", x);
+            printf("x");
+        }
+    }
+
+    printf("\n");
+}
+
+void MySQL_uBenchmark::updateLease4Test() {
+    if (!Conn_) {
+        throw "Not connected to MySQL server.";
+    }
+
+    printf("UPDATE:   ");
+
+    for (uint32_t i = 0; i < Num_; i++) {
+
+        uint32_t x = BASE_ADDR4 + random() % Num_;
+
+        char query[2000];
+        sprintf(query, "UPDATE lease4 SET valid_lft=1002, cltt=now() WHERE addr=%d", x);
+        mysql_real_query(Conn_, query, strlen(query));
+
+        MYSQL_RES * result = NULL;
+
+        if (CONFIRM_UPDATE) {
+            mysql_store_result(Conn_);
+
+            int num_rows = mysql_num_rows(result);
+            int num_fields = mysql_num_fields(result);
+
+            if ( (num_rows != 1) ) {
+                stringstream tmp;
+                tmp << "Search: DB returned " << num_rows << " leases for address "
+                    << hex << x << dec;
+                failure(tmp.str().c_str());
+            }
+
+            MYSQL_ROW row = mysql_fetch_row(result);
+            // pretend to do something with it
+
             printf("lease_id=%s addr=%s valid_lft=%s cltt=%s\n",
                    (row[0]?row[0]:"NULL"),
                    (row[1]?row[1]:"NULL"),
@@ -288,23 +343,58 @@ void MySQL_uBenchmark::searchLease4Test() {
                    (row[5]?row[5]:"NULL"));
 
             mysql_free_result(result);
-        } else {
-            printf("Address %x not found.\n", x);
         }
-
+        printf(".");
     }
-}
 
-void MySQL_uBenchmark::updateLease4Test() {
-    if (!Conn_) {
-        throw "Not connected to MySQL server.";
-    }
+    printf("\n");
 }
 
 void MySQL_uBenchmark::deleteLease4Test() {
     if (!Conn_) {
         throw "Not connected to MySQL server.";
     }
+
+    printf("DELETE:   ");
+
+    for (uint32_t i = 0; i < Num_; i++) {
+
+        uint32_t x = BASE_ADDR4 + i;
+
+        char query[2000];
+        sprintf(query, "DELETE FROM lease4 WHERE addr=%d", x);
+        mysql_real_query(Conn_, query, strlen(query));
+
+        MYSQL_RES * result = NULL;
+
+        if (CONFIRM_DELETE) {
+            mysql_store_result(Conn_);
+
+            int num_rows = mysql_num_rows(result);
+            int num_fields = mysql_num_fields(result);
+
+            if ( (num_rows != 1) ) {
+                stringstream tmp;
+                tmp << "Search: DB returned " << num_rows << " leases for address "
+                    << hex << x << dec;
+                failure(tmp.str().c_str());
+            }
+
+            MYSQL_ROW row = mysql_fetch_row(result);
+            // pretend to do something with it
+
+            printf("lease_id=%s addr=%s valid_lft=%s cltt=%s\n",
+                   (row[0]?row[0]:"NULL"),
+                   (row[1]?row[1]:"NULL"),
+                   (row[4]?row[4]:"NULL"),
+                   (row[5]?row[5]:"NULL"));
+
+            mysql_free_result(result);
+        }
+        printf(".");
+    }
+
+    printf("\n");
 }
 
 void MySQL_uBenchmark::printInfo() {
@@ -316,7 +406,7 @@ int main(int argc, const char * argv[]) {
 
     const char * hostname ="localhost";
     const char * user = "root";
-    const char * passwd = "foobletch";
+    const char * passwd = "secret";
     const char * dbname = "kea";
     uint32_t num = 100;
 
