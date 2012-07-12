@@ -13,7 +13,8 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include "memory_segment_local.h"
-#include <new>
+#include <exceptions/exceptions.h>
+//#include <new>
 
 namespace isc {
 namespace util {
@@ -31,6 +32,11 @@ MemorySegmentLocal::allocate(size_t size) {
 
 void
 MemorySegmentLocal::deallocate(void* ptr, size_t size) {
+    if (size > allocated_size_) {
+      isc_throw(OutOfRange, "Invalid size to deallocate: " << size
+                << "; currently allocated size: " << allocated_size_);
+    }
+
     allocated_size_ -= size;
     free(ptr);
 }
