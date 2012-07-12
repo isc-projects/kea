@@ -31,7 +31,6 @@ LabelSequence::LabelSequence(const uint8_t* data,
                                                     first_label_(0),
                                                     last_label_(offsets_size_)
 {
-    // Check offsets
     if (data == NULL || offsets == NULL) {
         isc_throw(BadValue, "Null pointer passed to LabelSequence constructor");
     }
