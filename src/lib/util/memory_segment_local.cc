@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include "memory_segment_local.h"
+#include <new>
 
 namespace isc {
 namespace util {
@@ -20,11 +21,11 @@ namespace util {
 void*
 MemorySegmentLocal::allocate(size_t size) {
     void* ptr = malloc(size);
-
-    if (ptr != NULL) {
-        allocated_size_ += size;
+    if (ptr == NULL) {
+        throw std::bad_alloc();
     }
 
+    allocated_size_ += size;
     return (ptr);
 }
 
