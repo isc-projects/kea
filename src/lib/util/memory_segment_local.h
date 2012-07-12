@@ -48,6 +48,9 @@ public:
 
     /// \brief Free/release a segment of memory.
     ///
+    /// This method may throw <code>isc::OutOfRange</code> if \c size is
+    /// not equal to the originally allocated size.
+    ///
     /// \param ptr Pointer to the block of memory to free/release. This
     /// should be equal to a value returned by <code>allocate()</code>.
     /// \param size The size of the memory to be freed in bytes. This
