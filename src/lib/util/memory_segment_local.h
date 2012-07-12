@@ -41,7 +41,7 @@ public:
     ///
     /// \param size The size of the memory requested in bytes.
     /// \return Returns pointer to the memory allocated.
-    void* allocate(size_t size);
+    virtual void* allocate(size_t size);
 
     /// \brief Free/release a segment of memory.
     ///
@@ -49,13 +49,13 @@ public:
     /// should be equal to a value returned by <code>allocate()</code>.
     /// \param size The size of the memory to be freed in bytes. This
     /// should be equal to the number of bytes originally allocated.
-    void deallocate(void* ptr, size_t size);
+    virtual void deallocate(void* ptr, size_t size);
 
     /// \brief Check if all allocated memory was deallocated.
     ///
     /// \return Returns <code>true</code> if all allocated memory was
     /// deallocated, <code>false</code> otherwise.
-    bool allMemoryDeallocated() const;
+    virtual bool allMemoryDeallocated() const;
 
 private:
     // allocated_size_ can underflow, wrap around to max size_t (which
