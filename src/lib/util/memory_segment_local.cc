@@ -14,7 +14,6 @@
 
 #include "memory_segment_local.h"
 #include <exceptions/exceptions.h>
-//#include <new>
 
 namespace isc {
 namespace util {
