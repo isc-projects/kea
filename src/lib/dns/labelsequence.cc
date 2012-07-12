@@ -23,6 +23,35 @@
 namespace isc {
 namespace dns {
 
+LabelSequence::LabelSequence(const uint8_t* data,
+                             const uint8_t* offsets,
+                             size_t offsets_size) : data_(data),
+                                                    offsets_(offsets),
+                                                    offsets_size_(offsets_size),
+                                                    first_label_(0),
+                                                    last_label_(offsets_size_)
+{
+    // Check offsets
+    if (data == NULL || offsets == NULL) {
+        isc_throw(BadValue, "Null pointer passed to LabelSequence constructor");
+    }
+    if (offsets_size == 0) {
+        isc_throw(BadValue, "Zero offsets to LabelSequence constructor");
+    }
+    if (offsets_size > Name::MAX_LABELS) {
+        isc_throw(BadValue, "MAX_LABELS exceeded");
+    }
+    for (size_t cur_offset = 0; cur_offset < offsets_size; ++cur_offset) {
+        if (offsets[cur_offset] > Name::MAX_LABELLEN) {
+            isc_throw(BadValue, "MAX_LABEL_LEN exceeded");
+        }
+        if (cur_offset > 0 && offsets[cur_offset] <= offsets[cur_offset - 1]) {
+            isc_throw(BadValue, "Offset smaller than previous offset");
+        }
+    }
+}
+
+
 const uint8_t*
 LabelSequence::getData(size_t *len) const {
     *len = getDataLength();
