@@ -1,134 +1,29 @@
+// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
 #include <iostream>
 #include <sstream>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include <time.h>
 #include <mysql/mysql.h>
 
+#include "benchmark.h"
+#include "mysql_ubench.h"
+
 using namespace std;
-
-class uBenchmark {
-public:
-    uBenchmark(uint32_t numInterations);
-
-    virtual void printInfo() = 0;
-    virtual void connect() = 0;
-    virtual void disconnect() = 0;
-    virtual void createLease4Test() = 0;
-    virtual void searchLease4Test() = 0;
-    virtual void updateLease4Test() = 0;
-    virtual void deleteLease4Test() = 0;
-
-    virtual void failure(const char* operation);
-
-    void print_clock(const std::string& operation, uint32_t num,
-                     const struct timespec& before,
-                     const struct timespec& after);
-
-    int run();
-
-protected:
-    uint32_t Num_; // number of operations (e.g. insert lease num times)
-
-    const static uint32_t BASE_ADDR4 = 0x01000000; // let's start from 1.0.0.0 address
-
-    // five timestamps (1 at the beginning and 4 after each step)
-    struct timespec ts[5];
-};
-
-uBenchmark::uBenchmark(uint32_t iterations)
- :Num_(iterations) {
-
-}
-
-void uBenchmark::failure(const char* operation) {
-    cout << "Error during " << operation << endl;
-    throw string(operation);
-}
-
-void uBenchmark::print_clock(const std::string& operation, uint32_t num,
-                 const struct timespec& before,
-                 const struct timespec& after) {
-    long int tv_sec = after.tv_sec - before.tv_sec;
-
-    long int tv_nsec = after.tv_nsec - before.tv_nsec;
-
-    if (tv_nsec < 0) {
-        tv_sec++;
-        tv_nsec += 1000000000; // 10^9
-    }
-
-    double oneoper = (tv_nsec/1000 + tv_sec*1000000)/num;
-
-    cout << "Operation " << operation << " repeated " << num << " times took "
-         << tv_sec << " seconds, " << tv_nsec/1000 << " us, 1 operation took "
-         << oneoper << "us (or " << (1000000/oneoper) << " oper/sec)" << endl;
-
-}
-
-int uBenchmark::run() {
-
-    try {
-        connect();
-
-        clock_gettime(CLOCK_REALTIME, &ts[0]);
-
-        createLease4Test();
-        clock_gettime(CLOCK_REALTIME, &ts[1]);
-
-        searchLease4Test();
-        clock_gettime(CLOCK_REALTIME, &ts[2]);
-
-        updateLease4Test();
-        clock_gettime(CLOCK_REALTIME, &ts[3]);
-
-        deleteLease4Test();
-        clock_gettime(CLOCK_REALTIME, &ts[4]);
-
-        disconnect();
-
-    } catch (const std::string& e) {
-        cout << "Failed: " << e << endl;
-        return (-1);
-    }
-
-    print_clock("Create leases4 ", Num_, ts[0], ts[1]);
-    print_clock("Search leases4 ", Num_, ts[1], ts[2]);
-    print_clock("Update leases4 ", Num_, ts[2], ts[3]);
-    print_clock("Delete leases4 ", Num_, ts[3], ts[4]);
-
-    return (0);
-}
-
-class MySQL_uBenchmark: public uBenchmark {
-public:
-    MySQL_uBenchmark(const string& hostname, const string& user,
-                     const string& passwd, const string& db,
-                     uint32_t num_iterations);
-
-    virtual void printInfo();
-    virtual void connect();
-    virtual void disconnect();
-    virtual void createLease4Test();
-    virtual void searchLease4Test();
-    virtual void updateLease4Test();
-    virtual void deleteLease4Test();
-
-protected:
-    const static bool CONFIRM_UPDATE = false;
-    const static bool CONFIRM_DELETE = false;
-
-    void failure(const char* operation);
-
-    std::string Hostname_;
-    std::string User_;
-    std::string Pass_;
-    std::string DB_;
-    MYSQL * Conn_;
-};
-
 
 MySQL_uBenchmark::MySQL_uBenchmark(const string& hostname, const string& user,
                                    const string& pass, const string& db,
@@ -320,30 +215,6 @@ void MySQL_uBenchmark::updateLease4Test() {
 
         MYSQL_RES * result = NULL;
 
-        if (CONFIRM_UPDATE) {
-            mysql_store_result(Conn_);
-
-            int num_rows = mysql_num_rows(result);
-            int num_fields = mysql_num_fields(result);
-
-            if ( (num_rows != 1) ) {
-                stringstream tmp;
-                tmp << "Search: DB returned " << num_rows << " leases for address "
-                    << hex << x << dec;
-                failure(tmp.str().c_str());
-            }
-
-            MYSQL_ROW row = mysql_fetch_row(result);
-            // pretend to do something with it
-
-            printf("lease_id=%s addr=%s valid_lft=%s cltt=%s\n",
-                   (row[0]?row[0]:"NULL"),
-                   (row[1]?row[1]:"NULL"),
-                   (row[4]?row[4]:"NULL"),
-                   (row[5]?row[5]:"NULL"));
-
-            mysql_free_result(result);
-        }
         printf(".");
     }
 
@@ -367,30 +238,6 @@ void MySQL_uBenchmark::deleteLease4Test() {
 
         MYSQL_RES * result = NULL;
 
-        if (CONFIRM_DELETE) {
-            mysql_store_result(Conn_);
-
-            int num_rows = mysql_num_rows(result);
-            int num_fields = mysql_num_fields(result);
-
-            if ( (num_rows != 1) ) {
-                stringstream tmp;
-                tmp << "Search: DB returned " << num_rows << " leases for address "
-                    << hex << x << dec;
-                failure(tmp.str().c_str());
-            }
-
-            MYSQL_ROW row = mysql_fetch_row(result);
-            // pretend to do something with it
-
-            printf("lease_id=%s addr=%s valid_lft=%s cltt=%s\n",
-                   (row[0]?row[0]:"NULL"),
-                   (row[1]?row[1]:"NULL"),
-                   (row[4]?row[4]:"NULL"),
-                   (row[5]?row[5]:"NULL"));
-
-            mysql_free_result(result);
-        }
         printf(".");
     }
 
@@ -408,7 +255,7 @@ int main(int argc, const char * argv[]) {
     const char * user = "root";
     const char * passwd = "secret";
     const char * dbname = "kea";
-    uint32_t num = 100;
+    uint32_t num = 10000;
 
     MySQL_uBenchmark bench(hostname, user, passwd, dbname, num);
 
