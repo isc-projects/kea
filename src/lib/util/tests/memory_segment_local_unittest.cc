@@ -84,6 +84,12 @@ TEST(MemorySegmentLocal, TestBadDeallocate) {
     // This should throw as the size passed to deallocate() is larger
     // than what was allocated.
     EXPECT_THROW(segment->deallocate(ptr, 2048), isc::OutOfRange);
+
+    // This should not throw
+    EXPECT_NO_THROW(segment->deallocate(ptr, 1024));
+
+    // Now, we have an deallocated everything:
+    EXPECT_TRUE(segment->allMemoryDeallocated());
 }
 
 TEST(MemorySegmentLocal, TestNullDeallocate) {
