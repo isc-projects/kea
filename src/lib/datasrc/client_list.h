@@ -192,7 +192,8 @@ public:
     /// \param rrclass For which class the list should work.
     ConfigurableClientList(const isc::dns::RRClass &rrclass) :
         rrclass_(rrclass),
-        configuration_(new isc::data::ListElement)
+        configuration_(new isc::data::ListElement),
+        allow_cache_(false)
     {}
     /// \brief Exception thrown when there's an error in configuration.
     class ConfigurationError : public Exception {
