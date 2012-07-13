@@ -44,7 +44,11 @@ public:
     /// \brief Free/release a segment of memory.
     ///
     /// This method may throw <code>isc::OutOfRange</code> if \c size is
-    /// not equal to the originally allocated size.
+    /// not equal to the originally allocated size. \c size could be
+    /// used by some implementations such as a slice allocator, where
+    /// freeing memory also requires the size to be specified. We also
+    /// use this argument in some implementations to test if all allocated
+    /// memory was deallocated properly.
     ///
     /// \param ptr Pointer to the block of memory to free/release. This
     /// should be equal to a value returned by <code>allocate()</code>.
