@@ -27,6 +27,18 @@
             }
         ]
     },
+    "data_sources": {
+        "classes": {
+            "IN": [
+                {
+                    "type": "sqlite3",
+                    "params": {
+                        "database_file": "data/ddns/example.org.sqlite3"
+                    }
+                }
+            ]
+        }
+    },
     "Boss": {
         "components": {
             "b10-xfrout": {
