@@ -141,10 +141,10 @@ class SysInfoTest(unittest.TestCase):
         self.assertEqual(-1, s.get_mem_swap_total())
         self.assertEqual(-1, s.get_mem_swap_free())
         self.assertEqual('Unknown', s.get_platform_distro())
-        self.assertEqual('Unknown', s.get_net_interfaces())
-        self.assertEqual('Unknown', s.get_net_routing_table())
-        self.assertEqual('Unknown', s.get_net_stats())
-        self.assertEqual('Unknown', s.get_net_connections())
+        self.assertEqual('Unknown\n', s.get_net_interfaces())
+        self.assertEqual('Unknown\n', s.get_net_routing_table())
+        self.assertEqual('Unknown\n', s.get_net_stats())
+        self.assertEqual('Unknown\n', s.get_net_connections())
 
     def test_sysinfo_factory(self):
         """Test that SysInfoFromFactory returns a valid system-specific
@@ -170,10 +170,10 @@ class SysInfoTest(unittest.TestCase):
         self.assertEqual(-1, s.get_mem_swap_total())
         self.assertEqual(-1, s.get_mem_swap_free())
         self.assertEqual('Unknown', s.get_platform_distro())
-        self.assertEqual('Unknown', s.get_net_interfaces())
-        self.assertEqual('Unknown', s.get_net_routing_table())
-        self.assertEqual('Unknown', s.get_net_stats())
-        self.assertEqual('Unknown', s.get_net_connections())
+        self.assertEqual('Unknown\n', s.get_net_interfaces())
+        self.assertEqual('Unknown\n', s.get_net_routing_table())
+        self.assertEqual('Unknown\n', s.get_net_stats())
+        self.assertEqual('Unknown\n', s.get_net_connections())
 
         platform.system = old_platform_system
 

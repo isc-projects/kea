@@ -41,10 +41,10 @@ class SysInfo:
         self._mem_swap_total = -1
         self._mem_swap_free = -1
         self._platform_distro = 'Unknown'
-        self._net_interfaces = 'Unknown'
-        self._net_routing_table = 'Unknown'
-        self._net_stats = 'Unknown'
-        self._net_connections = 'Unknown'
+        self._net_interfaces = 'Unknown\n'
+        self._net_routing_table = 'Unknown\n'
+        self._net_stats = 'Unknown\n'
+        self._net_connections = 'Unknown\n'
 
     def get_num_processors(self):
         """Returns the number of processors. This is the number of
@@ -230,18 +230,11 @@ class SysInfoLinux(SysInfoPOSIX):
         if self._platform_distro is None:
             self._platform_distro = 'Unknown'
 
-        self._net_interfaces = None
-
         try:
             s = subprocess.check_output(['ip', 'addr'])
             self._net_interfaces = s.decode('utf-8')
         except (subprocess.CalledProcessError, OSError):
-            pass
-
-        if self._net_interfaces is None:
-            self._net_interfaces = 'Unknown'
-
-        self._net_routing_table = None
+            self._net_interfaces = 'Warning: "ip addr" command failed.\n'
 
         try:
             s = subprocess.check_output(['ip', 'route'])
@@ -250,32 +243,19 @@ class SysInfoLinux(SysInfoPOSIX):
             s = subprocess.check_output(['ip', '-f', 'inet6', 'route'])
             self._net_routing_table += s.decode('utf-8')
         except (subprocess.CalledProcessError, OSError):
-            pass
-
-        if self._net_routing_table is None:
-            self._net_routing_table = 'Unknown'
-
-        self._net_stats = None
+            self._net_routing_table = 'Warning: "ip route" or "ip -f inet6 route" command failed.\n'
 
         try:
             s = subprocess.check_output(['netstat', '-s'])
             self._net_stats = s.decode('utf-8')
         except (subprocess.CalledProcessError, OSError):
-            pass
-
-        if self._net_stats is None:
-            self._net_stats = 'Unknown'
-
-        self._net_connections = None
+            self._net_stats = 'Warning: "netstat -s" command failed.\n'
 
         try:
             s = subprocess.check_output(['netstat', '-apn'])
             self._net_connections = s.decode('utf-8')
         except (subprocess.CalledProcessError, OSError):
-            pass
-
-        if self._net_connections is None:
-            self._net_connections = 'Unknown'
+            self._net_connections = 'Warning: "netstat -apn" command failed.\n'
 
 class SysInfoBSD(SysInfoPOSIX):
     """Common BSD implementation of the SysInfo class.
@@ -284,16 +264,11 @@ class SysInfoBSD(SysInfoPOSIX):
     def __init__(self):
         super().__init__()
 
-        self._hostname = None
-
         try:
             s = subprocess.check_output(['hostname'])
             self._hostname = s.decode('utf-8').strip()
         except (subprocess.CalledProcessError, OSError):
             pass
-
-        if self._hostname is None:
-            self._hostname = 'Unknown'
 
         try:
             s = subprocess.check_output(['sysctl', '-n', 'kern.boottime'])
@@ -350,49 +325,29 @@ class SysInfoOpenBSD(SysInfoBSD):
         except (subprocess.CalledProcessError, OSError):
             pass
 
-        self._net_interfaces = None
-
         try:
             s = subprocess.check_output(['ifconfig'])
             self._net_interfaces = s.decode('utf-8')
         except (subprocess.CalledProcessError, OSError):
-            pass
-
-        if self._net_interfaces is None:
-            self._net_interfaces = 'Unknown'
-
-        self._net_routing_table = None
+            self._net_interfaces = 'Warning: "ifconfig" command failed.\n'
 
         try:
             s = subprocess.check_output(['route', '-n', 'show'])
             self._net_routing_table = s.decode('utf-8')
         except (subprocess.CalledProcessError, OSError):
-            pass
-
-        if self._net_routing_table is None:
-            self._net_routing_table = 'Unknown'
-
-        self._net_stats = None
+            self._net_routing_table = 'Warning: "route -n show" command failed.\n'
 
         try:
             s = subprocess.check_output(['netstat', '-s'])
             self._net_stats = s.decode('utf-8')
         except (subprocess.CalledProcessError, OSError):
-            pass
-
-        if self._net_stats is None:
-            self._net_stats = 'Unknown'
-
-        self._net_connections = None
+            self._net_stats = 'Warning: "netstat -s" command failed.\n'
 
         try:
             s = subprocess.check_output(['netstat', '-an'])
             self._net_connections = s.decode('utf-8')
         except (subprocess.CalledProcessError, OSError):
-            pass
-
-        if self._net_connections is None:
-            self._net_connections = 'Unknown'
+            self._net_connections = 'Warning: "netstat -an" command failed.\n'
 
 class SysInfoTestcase(SysInfo):
     def __init__(self):
