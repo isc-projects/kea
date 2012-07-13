@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <iostream>
+#include <stdlib.h>
 #include <string.h>
 #include "benchmark.h"
 
@@ -49,6 +50,8 @@ void uBenchmark::print_clock(const std::string& operation, uint32_t num,
 }
 
 int uBenchmark::run() {
+
+    srandom(time(NULL));
 
     try {
         connect();

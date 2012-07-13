@@ -42,8 +42,6 @@ void MySQL_uBenchmark::failure(const char* operation) {
 
 void MySQL_uBenchmark::connect() {
 
-    srandom(time(NULL));
-
     Conn_ = mysql_init(NULL);
     if (!Conn_) {
         failure("initializing MySQL library");
