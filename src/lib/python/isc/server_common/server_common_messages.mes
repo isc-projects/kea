@@ -21,12 +21,6 @@
 # have that at this moment. So when adding a message, make sure that
 # the name is not already used in src/lib/config/config_messages.mes
 
-% PYSERVER_COMMON_AUTH_CONFIG_NAME_PARSER_ERROR Invalid name when parsing Auth configuration: %1
-There was an invalid name when parsing Auth configuration.
-
-% PYSERVER_COMMON_AUTH_CONFIG_RRCLASS_ERROR Invalid RRClass when parsing Auth configuration: %1
-There was an invalid RR class when parsing Auth configuration.
-
 % PYSERVER_COMMON_DNS_TCP_SEND_DONE completed sending TCP message to %1 (%2 bytes in total)
 Debug message.  A complete DNS message has been successfully
 transmitted over a TCP connection, possibly after multiple send
