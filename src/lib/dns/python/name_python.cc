@@ -522,8 +522,9 @@ Name_isWildCard(s_Name* self) {
 
 Py_hash_t
 Name_hash(PyObject* pyself) {
-    s_Name* const self = static_cast<s_Name*>(pyself);
-    return (LabelSequence(*self->cppobj).getHash(false));
+    const s_Name* const self = static_cast<s_Name*>(pyself);
+    return (convertToPyHash<size_t>(
+                LabelSequence(*self->cppobj).getHash(false)));
 }
 
 } // end of unnamed namespace

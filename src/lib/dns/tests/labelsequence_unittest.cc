@@ -794,6 +794,7 @@ TEST(LabelSequence, rawConstruction) {
     result = s1.compare(s3);
     EXPECT_EQ(isc::dns::NameComparisonResult::COMMONANCESTOR,
               result.getRelation());
+    EXPECT_EQ(2, result.getCommonLabels());
 
     s1.stripRight(1);
     s3.stripRight(1);
@@ -801,11 +802,38 @@ TEST(LabelSequence, rawConstruction) {
     result = s1.compare(s3);
     EXPECT_EQ(isc::dns::NameComparisonResult::COMMONANCESTOR,
               result.getRelation());
+    EXPECT_EQ(1, result.getCommonLabels());
 
     data[9] = 'f';
     result = s1.compare(s3);
     EXPECT_EQ(isc::dns::NameComparisonResult::NONE,
               result.getRelation());
+    EXPECT_EQ(0, result.getCommonLabels());
+}
+
+// Test with some data that exceeds limits (MAX_LABELS and MAX_LABEL_LEN)
+TEST(LabelSequence, badRawConstruction) {
+    uint8_t data[1] = { 0 };
+    uint8_t offsets[1] = { 0 };
+
+    EXPECT_THROW(LabelSequence(NULL, offsets, 1), isc::BadValue);
+    EXPECT_THROW(LabelSequence(data, NULL, 1), isc::BadValue);
+    EXPECT_THROW(LabelSequence(data, offsets, 0), isc::BadValue);
+
+    // exceed MAX_LABELS
+    EXPECT_THROW(LabelSequence(data, offsets, 127), isc::BadValue);
+
+    // exceed MAX_LABEL_LEN
+    uint8_t offsets_toolonglabel[1] = { 64 };
+    EXPECT_THROW(LabelSequence(data, offsets_toolonglabel, 1), isc::BadValue);
+
+    // Add an offset that is lower than the previous offset
+    uint8_t offsets_lower[3] = { 0, 8, 4 };
+    EXPECT_THROW(LabelSequence(data, offsets_lower, 3), isc::BadValue);
+
+    // Add an offset that is equal to the previous offset
+    uint8_t offsets_noincrease[3] = { 0, 8, 8 };
+    EXPECT_THROW(LabelSequence(data, offsets_noincrease, 3), isc::BadValue);
 }
 
 }

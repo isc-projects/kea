@@ -19,6 +19,7 @@
 
 #include <unistd.h>
 #include <arpa/inet.h>
+#include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 
 #include <asiolink/io_address.h>
@@ -31,11 +32,16 @@ using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
 
-// name of loopback interface detection
-const size_t buf_size = 32;
-char LOOPBACK[buf_size] = "lo";
-
 namespace {
+
+// Name of loopback interface detection
+const size_t BUF_SIZE = 32;
+char LOOPBACK[BUF_SIZE] = "lo";
+
+// Ports used during testing
+const uint16_t PORT1 = 10547;   // V6 socket
+const uint16_t PORT2 = 10548;   // V4 socket
+
 
 class NakedIfaceMgr: public IfaceMgr {
     // "naked" Interface Manager, exposes internal fields
@@ -69,10 +75,10 @@ TEST_F(IfaceMgrTest, loDetect) {
     // is implemented
     if (if_nametoindex("lo") > 0) {
         cout << "This is Linux, using lo as loopback." << endl;
-        snprintf(LOOPBACK, buf_size - 1, "lo");
+        snprintf(LOOPBACK, BUF_SIZE - 1, "lo");
     } else if (if_nametoindex("lo0") > 0) {
         cout << "This is BSD, using lo0 as loopback." << endl;
-        snprintf(LOOPBACK, buf_size - 1, "lo0");
+        snprintf(LOOPBACK, BUF_SIZE - 1, "lo0");
     } else {
         cout << "Failed to detect loopback interface. Neither "
              << "lo nor lo0 worked. I give up." << endl;
@@ -80,7 +86,7 @@ TEST_F(IfaceMgrTest, loDetect) {
     }
 }
 
-// uncomment this test to create packet writer. It will
+// Uncomment this test to create packet writer. It will
 // write incoming DHCPv6 packets as C arrays. That is useful
 // for generating test sequences based on actual traffic
 //
@@ -239,6 +245,78 @@ TEST_F(IfaceMgrTest, sockets6) {
     close(socket2);
 
     delete ifacemgr;
+}
+
+TEST_F(IfaceMgrTest, socketsFromIface) {
+    boost::scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
+
+    // Open v6 socket on loopback interface and bind to port
+    int socket1 = 0;
+    EXPECT_NO_THROW(
+        socket1 = ifacemgr->openSocketFromIface(LOOPBACK, PORT1, AF_INET6);
+    );
+    // Socket descriptor must be positive integer
+    EXPECT_GT(socket1, 0);
+    close(socket1);
+
+    // Open v4 socket on loopback interface and bind to different port
+    int socket2 = 0;
+    EXPECT_NO_THROW(
+        socket2 = ifacemgr->openSocketFromIface(LOOPBACK, PORT2, AF_INET);
+    );
+    // socket descriptor must be positive integer
+    EXPECT_GT(socket2, 0);
+    close(socket2);
+
+}
+
+
+TEST_F(IfaceMgrTest, socketsFromAddress) {
+    boost::scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
+
+    // Open v6 socket on loopback interface and bind to port
+    int socket1 = 0;
+    IOAddress loAddr6("::1");
+    EXPECT_NO_THROW(
+        socket1 = ifacemgr->openSocketFromAddress(loAddr6, PORT1);
+    );
+    // socket descriptor must be positive integer
+    EXPECT_GT(socket1, 0);
+    close(socket1);
+
+    // Open v4 socket on loopback interface and bind to different port
+    int socket2 = 0;
+    IOAddress loAddr("127.0.0.1");
+    EXPECT_NO_THROW(
+        socket2 = ifacemgr->openSocketFromAddress(loAddr, PORT2);
+    );
+    // socket descriptor must be positive integer
+    EXPECT_GT(socket2, 0);
+    close(socket2);
+}
+
+TEST_F(IfaceMgrTest, socketsFromRemoteAddress) {
+    boost::scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
+
+    // Open v6 socket to connect to remote address.
+    // Loopback address is the only one that we know
+    // so let's treat it as remote address.
+    int socket1 = 0;
+    IOAddress loAddr6("::1");
+    EXPECT_NO_THROW(
+        socket1 = ifacemgr->openSocketFromRemoteAddress(loAddr6, PORT1);
+    );
+    EXPECT_GT(socket1, 0);
+    close(socket1);
+
+    // Open v4 socket to connect to remote address.
+    int socket2 = 0;
+    IOAddress loAddr("127.0.0.1");
+    EXPECT_NO_THROW(
+        socket2 = ifacemgr->openSocketFromRemoteAddress(loAddr, PORT2);
+    );
+    EXPECT_GT(socket2, 0);
+    close(socket2);
 }
 
 // TODO: disabled due to other naming on various systems
