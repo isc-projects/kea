@@ -289,8 +289,8 @@ MessageRenderer::setCompressMode(const CompressMode mode) {
 }
 
 void
-MessageRenderer::writeName(const Name& name, const bool compress) {
-    LabelSequence sequence(name);
+MessageRenderer::writeName(const LabelSequence& ls, const bool compress) {
+    LabelSequence sequence(ls);
     const size_t nlabels = sequence.getLabelCount();
     size_t data_len;
     const uint8_t* data;
@@ -302,6 +302,10 @@ MessageRenderer::writeName(const Name& name, const bool compress) {
     const bool case_sensitive = (impl_->compress_mode_ ==
                                  MessageRenderer::CASE_SENSITIVE);
     for (nlabels_uncomp = 0; nlabels_uncomp < nlabels; ++nlabels_uncomp) {
+        if (nlabels_uncomp > 0) {
+            sequence.stripLeft(1);
+        }
+
         data = sequence.getData(&data_len);
         if (data_len == 1) { // trailing dot.
             ++nlabels_uncomp;
@@ -317,14 +321,13 @@ MessageRenderer::writeName(const Name& name, const bool compress) {
         if (ptr_offset != MessageRendererImpl::NO_OFFSET) {
             break;
         }
-        sequence.stripLeft(1);
     }
 
     // Record the current offset before updating the offset table
     size_t offset = getLength();
     // Write uncompress part:
     if (nlabels_uncomp > 0 || !compress) {
-        LabelSequence uncomp_sequence(name);
+        LabelSequence uncomp_sequence(ls);
         if (compress && nlabels > nlabels_uncomp) {
             // If there's compressed part, strip off that part.
             uncomp_sequence.stripRight(nlabels - nlabels_uncomp);
@@ -342,7 +345,7 @@ MessageRenderer::writeName(const Name& name, const bool compress) {
     // in the hash table.  The renderer's buffer has just stored the
     // corresponding data, so we use the rendered data to get the length
     // of each label of the names.
-    size_t seqlen = name.getLength();
+    size_t seqlen = ls.getDataLength();
     for (size_t i = 0; i < nlabels_uncomp; ++i) {
         const uint8_t label_len = getBuffer()[offset];
         if (label_len == 0) { // offset for root doesn't need to be stored.
@@ -357,6 +360,11 @@ MessageRenderer::writeName(const Name& name, const bool compress) {
         offset += (label_len + 1);
         seqlen -= (label_len + 1);
     }
+}
+
+void
+MessageRenderer::writeName(const Name& name, const bool compress) {
+    writeName(LabelSequence(name), compress);
 }
 
 AbstractMessageRenderer::AbstractMessageRenderer() :

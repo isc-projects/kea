@@ -93,6 +93,7 @@ EXTRA_DIST += name_fromWire9 name_fromWire10 name_fromWire11 name_fromWire12
 EXTRA_DIST += name_fromWire13 name_fromWire14
 EXTRA_DIST += name_toWire1 name_toWire2 name_toWire3 name_toWire4
 EXTRA_DIST += name_toWire5.spec name_toWire6.spec
+EXTRA_DIST += name_toWire7 name_toWire8 name_toWire9
 EXTRA_DIST += question_fromWire question_toWire1 question_toWire2
 EXTRA_DIST += rdatafields1.spec rdatafields2.spec rdatafields3.spec
 EXTRA_DIST += rdatafields4.spec rdatafields5.spec rdatafields6.spec
