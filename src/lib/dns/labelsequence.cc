@@ -23,10 +23,38 @@
 namespace isc {
 namespace dns {
 
+LabelSequence::LabelSequence(const uint8_t* data,
+                             const uint8_t* offsets,
+                             size_t offsets_size) : data_(data),
+                                                    offsets_(offsets),
+                                                    offsets_size_(offsets_size),
+                                                    first_label_(0),
+                                                    last_label_(offsets_size_)
+{
+    if (data == NULL || offsets == NULL) {
+        isc_throw(BadValue, "Null pointer passed to LabelSequence constructor");
+    }
+    if (offsets_size == 0) {
+        isc_throw(BadValue, "Zero offsets to LabelSequence constructor");
+    }
+    if (offsets_size > Name::MAX_LABELS) {
+        isc_throw(BadValue, "MAX_LABELS exceeded");
+    }
+    for (size_t cur_offset = 0; cur_offset < offsets_size; ++cur_offset) {
+        if (offsets[cur_offset] > Name::MAX_LABELLEN) {
+            isc_throw(BadValue, "MAX_LABEL_LEN exceeded");
+        }
+        if (cur_offset > 0 && offsets[cur_offset] <= offsets[cur_offset - 1]) {
+            isc_throw(BadValue, "Offset smaller than previous offset");
+        }
+    }
+}
+
+
 const uint8_t*
 LabelSequence::getData(size_t *len) const {
     *len = getDataLength();
-    return (&name_.ndata_[name_.offsets_[first_label_]]);
+    return (&data_[offsets_[first_label_]]);
 }
 
 size_t
@@ -37,10 +65,10 @@ LabelSequence::getDataLength() const {
     // the length for the 'previous' label (the root label) plus
     // one (for the root label zero octet)
     if (isAbsolute()) {
-        return (name_.offsets_[last_label_ - 1] -
-                name_.offsets_[first_label_] + 1);
+        return (offsets_[last_label_ - 1] -
+                offsets_[first_label_] + 1);
     } else {
-        return (name_.offsets_[last_label_] - name_.offsets_[first_label_]);
+        return (offsets_[last_label_] - offsets_[first_label_]);
     }
 }
 
@@ -78,12 +106,83 @@ LabelSequence::compare(const LabelSequence& other,
         return (NameComparisonResult(0, 0, NameComparisonResult::NONE));
     }
 
-    return (name_.compare(other.name_,
-                          first_label_,
-                          other.first_label_,
-                          last_label_,
-                          other.last_label_,
-                          case_sensitive));
+    // Determine the relative ordering under the DNSSEC order relation of
+    // 'this' and 'other', and also determine the hierarchical relationship
+    // of the names.
+
+    unsigned int nlabels = 0;
+    int l1 = last_label_ - first_label_;
+    int l2 = other.last_label_ - other.first_label_;
+    int ldiff = (int)l1 - (int)l2;
+    unsigned int l = (ldiff < 0) ? l1 : l2;
+
+    while (l > 0) {
+        --l;
+        --l1;
+        --l2;
+        size_t pos1 = offsets_[l1 + first_label_];
+        size_t pos2 = other.offsets_[l2 + other.first_label_];
+        unsigned int count1 = data_[pos1++];
+        unsigned int count2 = other.data_[pos2++];
+
+        // We don't support any extended label types including now-obsolete
+        // bitstring labels.
+        assert(count1 <= Name::MAX_LABELLEN && count2 <= Name::MAX_LABELLEN);
+
+        int cdiff = (int)count1 - (int)count2;
+        unsigned int count = (cdiff < 0) ? count1 : count2;
+
+        while (count > 0) {
+            uint8_t label1 = data_[pos1];
+            uint8_t label2 = other.data_[pos2];
+            int chdiff;
+
+            if (case_sensitive) {
+                chdiff = (int)label1 - (int)label2;
+            } else {
+                chdiff = (int)isc::dns::name::internal::maptolower[label1] -
+                         (int)isc::dns::name::internal::maptolower[label2];
+            }
+
+            if (chdiff != 0) {
+                if ((nlabels == 0) &&
+                     (!isAbsolute() ||
+                     ((last_label_ < getLabelCount()) ||
+                      (other.last_label_ < other.getLabelCount())))) {
+                    return (NameComparisonResult(0, 0,
+                                                 NameComparisonResult::NONE));
+                } else {
+                    return (NameComparisonResult(chdiff, nlabels,
+                                                 NameComparisonResult::COMMONANCESTOR));
+                }
+            }
+            --count;
+            ++pos1;
+            ++pos2;
+        }
+        if (cdiff != 0) {
+            if ((nlabels == 0) &&
+                ((last_label_ < getLabelCount()) ||
+                 (other.last_label_ < other.getLabelCount()))) {
+                return (NameComparisonResult(0, 0,
+                                             NameComparisonResult::NONE));
+            } else {
+                return (NameComparisonResult(cdiff, nlabels,
+                                             NameComparisonResult::COMMONANCESTOR));
+            }
+        }
+        ++nlabels;
+    }
+
+    if (ldiff < 0) {
+        return (NameComparisonResult(ldiff, nlabels,
+                                     NameComparisonResult::SUPERDOMAIN));
+    } else if (ldiff > 0) {
+        return (NameComparisonResult(ldiff, nlabels,
+                                     NameComparisonResult::SUBDOMAIN));
+    }
+
+    return (NameComparisonResult(ldiff, nlabels, NameComparisonResult::EQUAL));
 }
 
 void
@@ -106,7 +205,7 @@ LabelSequence::stripRight(size_t i) {
 
 bool
 LabelSequence::isAbsolute() const {
-    return (last_label_ == name_.offsets_.size());
+    return (last_label_ == offsets_size_);
 }
 
 size_t
@@ -129,9 +228,9 @@ LabelSequence::getHash(bool case_sensitive) const {
 
 std::string
 LabelSequence::toText(bool omit_final_dot) const {
-    Name::NameString::const_iterator np = name_.ndata_.begin() +
-        name_.offsets_[first_label_];
-    const Name::NameString::const_iterator np_end = np + getDataLength();
+    const uint8_t* np = &data_[offsets_[first_label_]];
+    const uint8_t* np_end = np + getDataLength();
+
     // use for integrity check
     unsigned int labels = last_label_ - first_label_;
     // init with an impossible value to catch error cases in the end:
