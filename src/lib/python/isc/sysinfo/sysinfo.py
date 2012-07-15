@@ -271,6 +271,44 @@ class SysInfoBSD(SysInfoPOSIX):
             pass
 
         try:
+            s = subprocess.check_output(['sysctl', '-n', 'hw.physmem'])
+            self._mem_total = int(s.decode('utf-8').strip())
+        except (subprocess.CalledProcessError, OSError):
+            pass
+
+        self._platform_distro = self._platform_name + ' ' + self._platform_version
+
+        try:
+            s = subprocess.check_output(['ifconfig'])
+            self._net_interfaces = s.decode('utf-8')
+        except (subprocess.CalledProcessError, OSError):
+            self._net_interfaces = 'Warning: "ifconfig" command failed.\n'
+
+        try:
+            s = subprocess.check_output(['netstat', '-s'])
+            self._net_stats = s.decode('utf-8')
+        except (subprocess.CalledProcessError, OSError):
+            self._net_stats = 'Warning: "netstat -s" command failed.\n'
+
+        try:
+            s = subprocess.check_output(['netstat', '-an'])
+            self._net_connections = s.decode('utf-8')
+        except (subprocess.CalledProcessError, OSError):
+            self._net_connections = 'Warning: "netstat -an" command failed.\n'
+
+class SysInfoOpenBSD(SysInfoBSD):
+    """OpenBSD implementation of the SysInfo class.
+    See the SysInfo class documentation for more information.
+    """
+    def __init__(self):
+        super().__init__()
+
+        # Don't know how to gather these
+        self._platform_is_smp = False
+        self._mem_cached = -1
+        self._mem_buffers = -1
+
+        try:
             s = subprocess.check_output(['sysctl', '-n', 'kern.boottime'])
             t = s.decode('utf-8').strip()
             sec = time.time() - int(t)
@@ -287,12 +325,6 @@ class SysInfoBSD(SysInfoPOSIX):
             pass
 
         try:
-            s = subprocess.check_output(['sysctl', '-n', 'hw.physmem'])
-            self._mem_total = int(s.decode('utf-8').strip())
-        except (subprocess.CalledProcessError, OSError):
-            pass
-
-        try:
             s = subprocess.check_output(['vmstat'])
             lines = s.decode('utf-8').split('\n')
             v = re.split('\s+', lines[2])
@@ -300,20 +332,6 @@ class SysInfoBSD(SysInfoPOSIX):
             self._mem_free = self._mem_total - used
         except (subprocess.CalledProcessError, OSError):
             pass
-
-        self._platform_distro = self._platform_name + ' ' + self._platform_version
-
-class SysInfoOpenBSD(SysInfoBSD):
-    """OpenBSD implementation of the SysInfo class.
-    See the SysInfo class documentation for more information.
-    """
-    def __init__(self):
-        super().__init__()
-
-        # Don't know how to gather these
-        self._platform_is_smp = False
-        self._mem_cached = -1
-        self._mem_buffers = -1
 
         try:
             s = subprocess.check_output(['swapctl', '-s', '-k'])
@@ -326,28 +344,75 @@ class SysInfoOpenBSD(SysInfoBSD):
             pass
 
         try:
-            s = subprocess.check_output(['ifconfig'])
-            self._net_interfaces = s.decode('utf-8')
-        except (subprocess.CalledProcessError, OSError):
-            self._net_interfaces = 'Warning: "ifconfig" command failed.\n'
-
-        try:
             s = subprocess.check_output(['route', '-n', 'show'])
             self._net_routing_table = s.decode('utf-8')
         except (subprocess.CalledProcessError, OSError):
             self._net_routing_table = 'Warning: "route -n show" command failed.\n'
 
-        try:
-            s = subprocess.check_output(['netstat', '-s'])
-            self._net_stats = s.decode('utf-8')
-        except (subprocess.CalledProcessError, OSError):
-            self._net_stats = 'Warning: "netstat -s" command failed.\n'
+class SysInfoFreeBSD(SysInfoBSD):
+    """FreeBSD implementation of the SysInfo class.
+    See the SysInfo class documentation for more information.
+    """
+    def __init__(self):
+        super().__init__()
+
+        # Don't know how to gather these
+        self._mem_cached = -1
+        self._mem_buffers = -1
 
         try:
-            s = subprocess.check_output(['netstat', '-an'])
-            self._net_connections = s.decode('utf-8')
+            s = subprocess.check_output(['sysctl', '-n', 'kern.smp.active'])
+            self._platform_is_smp = int(s.decode('utf-8').strip()) > 0
         except (subprocess.CalledProcessError, OSError):
-            self._net_connections = 'Warning: "netstat -an" command failed.\n'
+            pass
+
+        try:
+            s = subprocess.check_output(['sysctl', '-n', 'kern.boottime'])
+            t = s.decode('utf-8').strip()
+            r = re.match('^\{\s+sec\s+\=\s+(\d+),.*', t)
+            if r:
+                sec = time.time() - int(r.group(1))
+                self._uptime = int(round(sec))
+        except (subprocess.CalledProcessError, OSError):
+            pass
+
+        try:
+            s = subprocess.check_output(['sysctl', '-n', 'vm.loadavg'])
+            l = s.decode('utf-8').strip()
+            r = re.match('^\{(.*)\}$', l)
+            if r:
+                la = r.group(1).strip().split(' ')
+            else:
+                la = l.split(' ')
+            if len(la) >= 3:
+                self._loadavg = [float(la[0]), float(la[1]), float(la[2])]
+        except (subprocess.CalledProcessError, OSError):
+            pass
+
+        try:
+            s = subprocess.check_output(['vmstat', '-H'])
+            lines = s.decode('utf-8').split('\n')
+            v = re.split('\s+', lines[2])
+            used = int(v[4]) * 1024
+            self._mem_free = self._mem_total - used
+        except (subprocess.CalledProcessError, OSError):
+            pass
+
+        try:
+            s = subprocess.check_output(['swapctl', '-s', '-k'])
+            l = s.decode('utf-8').strip()
+            r = re.match('^Total:\s+(\d+)\s+(\d+)', l)
+            if r:
+                self._mem_swap_total = int(r.group(1).strip()) * 1024
+                self._mem_swap_free = self._mem_swap_total - (int(r.group(2).strip()) * 1024)
+        except (subprocess.CalledProcessError, OSError):
+            pass
+
+        try:
+            s = subprocess.check_output(['netstat', '-nr'])
+            self._net_routing_table = s.decode('utf-8')
+        except (subprocess.CalledProcessError, OSError):
+            self._net_connections = 'Warning: "netstat -nr" command failed.\n'
 
 class SysInfoTestcase(SysInfo):
     def __init__(self):
@@ -362,6 +427,8 @@ def SysInfoFromFactory():
         return SysInfoLinux()
     elif osname == 'OpenBSD':
         return SysInfoOpenBSD()
+    elif osname == 'FreeBSD':
+        return SysInfoFreeBSD()
     elif osname == 'BIND10Testcase':
         return SysInfoTestcase()
     else:
