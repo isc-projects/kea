@@ -16,6 +16,7 @@
 #include <exceptions/exceptions.h>
 #include <gtest/gtest.h>
 #include <memory>
+#include <limits.h>
 
 using namespace std;
 using namespace isc::util;
@@ -56,7 +57,7 @@ TEST(MemorySegmentLocal, TestLocal) {
 TEST(MemorySegmentLocal, TestTooMuchMemory) {
     auto_ptr<MemorySegment> segment(new MemorySegmentLocal());
 
-    EXPECT_THROW(segment->allocate(0x7fffffffffffffff), bad_alloc);
+    EXPECT_THROW(segment->allocate(ULONG_MAX), bad_alloc);
 }
 
 TEST(MemorySegmentLocal, TestBadDeallocate) {
