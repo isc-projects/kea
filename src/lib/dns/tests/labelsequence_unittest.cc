@@ -400,6 +400,93 @@ TEST_F(LabelSequenceTest, getData) {
     getDataCheck("\000", 1, ls7);
 };
 
+TEST_F(LabelSequenceTest, getOffsetData) {
+    size_t len;
+    uint8_t placeholder[Name::MAX_LABELS];
+
+    Name nx("x.isc.example.org");
+    LabelSequence lsx(nx);
+
+    // x.isc.example.org.
+    lsx.getOffsetData(&len, placeholder);
+    EXPECT_EQ(5, len);
+    EXPECT_EQ(0, placeholder[0]);
+    EXPECT_EQ(2, placeholder[1]);
+    EXPECT_EQ(6, placeholder[2]);
+    EXPECT_EQ(14, placeholder[3]);
+    EXPECT_EQ(18, placeholder[4]);
+
+    lsx.stripLeft(2);
+
+    // example.org.
+    lsx.getOffsetData(&len, placeholder);
+    EXPECT_EQ(3, len);
+    EXPECT_EQ(0, placeholder[0]);
+    EXPECT_EQ(8, placeholder[1]);
+    EXPECT_EQ(12, placeholder[2]);
+
+    lsx.stripLeft(1);
+
+    // org.
+    lsx.getOffsetData(&len, placeholder);
+    EXPECT_EQ(2, len);
+    EXPECT_EQ(0, placeholder[0]);
+    EXPECT_EQ(4, placeholder[1]);
+
+    lsx.stripLeft(1);
+
+    // .
+    lsx.getOffsetData(&len, placeholder);
+    EXPECT_EQ(1, len);
+    EXPECT_EQ(0, placeholder[0]);
+
+    Name ny("y.isc.example.org");
+    LabelSequence lsy(ny);
+
+    // y.isc.example.org.
+    lsy.getOffsetData(&len, placeholder);
+    EXPECT_EQ(5, len);
+    EXPECT_EQ(0, placeholder[0]);
+    EXPECT_EQ(2, placeholder[1]);
+    EXPECT_EQ(6, placeholder[2]);
+    EXPECT_EQ(14, placeholder[3]);
+    EXPECT_EQ(18, placeholder[4]);
+
+    lsy.stripRight(1);
+
+    // y.isc.example.org
+    lsy.getOffsetData(&len, placeholder);
+    EXPECT_EQ(4, len);
+    EXPECT_EQ(0, placeholder[0]);
+    EXPECT_EQ(2, placeholder[1]);
+    EXPECT_EQ(6, placeholder[2]);
+    EXPECT_EQ(14, placeholder[3]);
+
+    lsy.stripRight(1);
+
+    // y.isc.example
+    lsy.getOffsetData(&len, placeholder);
+    EXPECT_EQ(3, len);
+    EXPECT_EQ(0, placeholder[0]);
+    EXPECT_EQ(2, placeholder[1]);
+    EXPECT_EQ(6, placeholder[2]);
+
+    lsy.stripLeft(1);
+
+    // isc.example
+    lsy.getOffsetData(&len, placeholder);
+    EXPECT_EQ(2, len);
+    EXPECT_EQ(0, placeholder[0]);
+    EXPECT_EQ(4, placeholder[1]);
+
+    lsy.stripLeft(1);
+
+    // example
+    lsy.getOffsetData(&len, placeholder);
+    EXPECT_EQ(1, len);
+    EXPECT_EQ(0, placeholder[0]);
+};
+
 TEST_F(LabelSequenceTest, stripLeft) {
     EXPECT_TRUE(ls1.equals(ls3));
     ls1.stripLeft(0);
@@ -674,4 +761,79 @@ TEST_F(LabelSequenceTest, LeftShiftOperator) {
     oss << ls1;
     EXPECT_EQ(ls1.toText(), oss.str());
 }
+
+// Test different ways of construction, and see if they compare
+TEST(LabelSequence, rawConstruction) {
+    Name n("example.org");
+
+    uint8_t data[] = { 0x07, 'e', 'x', 'a', 'm', 'p', 'l', 'e',
+                       0x03, 'o', 'r', 'g',
+                       0x00 };
+    uint8_t offsets[] = { 0, 8, 12 };
+    size_t offsets_size = 3;
+
+    LabelSequence s1(n);
+    LabelSequence s2(s1);
+    LabelSequence s3(data, offsets, offsets_size);
+
+    // Assuming equality is transitive, so only comparing 1 to 2 and 1 to 3
+    NameComparisonResult result = s1.compare(s2);
+    EXPECT_EQ(isc::dns::NameComparisonResult::EQUAL,
+              result.getRelation());
+    EXPECT_EQ(0, result.getOrder());
+    EXPECT_EQ(3, result.getCommonLabels());
+
+    result = s1.compare(s3);
+    EXPECT_EQ(isc::dns::NameComparisonResult::EQUAL,
+              result.getRelation());
+    EXPECT_EQ(0, result.getOrder());
+    EXPECT_EQ(3, result.getCommonLabels());
+
+    // Modify the data and make sure it's not equal anymore
+    data[2] = 'f';
+    result = s1.compare(s3);
+    EXPECT_EQ(isc::dns::NameComparisonResult::COMMONANCESTOR,
+              result.getRelation());
+    EXPECT_EQ(2, result.getCommonLabels());
+
+    s1.stripRight(1);
+    s3.stripRight(1);
+
+    result = s1.compare(s3);
+    EXPECT_EQ(isc::dns::NameComparisonResult::COMMONANCESTOR,
+              result.getRelation());
+    EXPECT_EQ(1, result.getCommonLabels());
+
+    data[9] = 'f';
+    result = s1.compare(s3);
+    EXPECT_EQ(isc::dns::NameComparisonResult::NONE,
+              result.getRelation());
+    EXPECT_EQ(0, result.getCommonLabels());
+}
+
+// Test with some data that exceeds limits (MAX_LABELS and MAX_LABEL_LEN)
+TEST(LabelSequence, badRawConstruction) {
+    uint8_t data[1] = { 0 };
+    uint8_t offsets[1] = { 0 };
+
+    EXPECT_THROW(LabelSequence(NULL, offsets, 1), isc::BadValue);
+    EXPECT_THROW(LabelSequence(data, NULL, 1), isc::BadValue);
+    EXPECT_THROW(LabelSequence(data, offsets, 0), isc::BadValue);
+
+    // exceed MAX_LABELS
+    EXPECT_THROW(LabelSequence(data, offsets, 127), isc::BadValue);
+
+    // exceed MAX_LABEL_LEN
+    uint8_t offsets_toolonglabel[1] = { 64 };
+    EXPECT_THROW(LabelSequence(data, offsets_toolonglabel, 1), isc::BadValue);
+
+    // Add an offset that is lower than the previous offset
+    uint8_t offsets_lower[3] = { 0, 8, 4 };
+    EXPECT_THROW(LabelSequence(data, offsets_lower, 3), isc::BadValue);
+
+    // Add an offset that is equal to the previous offset
+    uint8_t offsets_noincrease[3] = { 0, 8, 8 };
+    EXPECT_THROW(LabelSequence(data, offsets_noincrease, 3), isc::BadValue);
+}
+
 }
