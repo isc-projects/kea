@@ -435,8 +435,9 @@ Name::toText(bool omit_final_dot) const {
 
 NameComparisonResult
 Name::compare(const Name& other) const {
-    LabelSequence ls(*this);
-    return (ls.compare(LabelSequence(other)));
+    const LabelSequence ls1(*this);
+    const LabelSequence ls2(other);
+    return (ls1.compare(ls2));
 }
 
 bool
