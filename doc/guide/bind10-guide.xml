@@ -1243,20 +1243,18 @@ or accounts database -->
       <title>Configuration specification for b10-cmdctl</title>
       <para>
         The configuration items for <command>b10-cmdctl</command> are:
-key_file
-cert_file
-accounts_file
+        <varname>accounts_file</varname> which defines the path to the
+        user accounts database (the default is
+        <filename>/usr/local/etc/bind10-devel/cmdctl-accounts.csv</filename>);
+        <varname>cert_file</varname> which defines the path to the
+        PEM certificate file (the default is
+        <filename>/usr/local/etc/bind10-devel/cmdctl-certfile.pem</filename>);
+        and
+	<varname>key_file</varname> which defines the path to the
+	PEM private key file (the default is
+        <filename>/usr/local/etc/bind10-devel/cmdctl-keyfile.pem</filename>).
       </para>
-<!-- TODO -->
 
-      <para>
-        The control commands are:
-print_settings
-<!-- TODO: remove that -->
-
-shutdown
-      </para>
-<!-- TODO -->
     </section>
 
 <!--
@@ -1309,7 +1307,8 @@ TODO
 
     <para>
       The <command>b10-auth</command> is the authoritative DNS server.
-      It supports EDNS0 and DNSSEC. It supports IPv6.
+      It supports EDNS0, DNSSEC, IPv6, and SQLite3 and in-memory zone
+      data backends.
       Normally it is started by the <command>bind10</command> master
       process.
     </para>
@@ -1334,8 +1333,8 @@ since we used bind10 -->
               <simpara>This is an optional string to define the path to find
                  the SQLite3 database file.
 <!-- TODO: -->
-Note: Later the DNS server will use various data source backends.
-This may be a temporary setting until then.
+Note: This may be a temporary setting because the DNS server
+can use various data source backends.
               </simpara>
             </listitem>
           </varlistentry>
@@ -1356,7 +1355,9 @@ This may be a temporary setting until then.
       and
       <varname>zones</varname> to define
       the <varname>file</varname> path name,
-      the <varname>filetype</varname> (e.g., <varname>sqlite3</varname>),
+      the <varname>filetype</varname> (<quote>sqlite3</quote> to load
+      from a SQLite3 database file or <quote>text</quote> to
+      load from a master text file),
       and the <varname>origin</varname> (default domain).
 
       By default, this is empty.
@@ -1528,13 +1529,13 @@ This may be a temporary setting until then.
 &gt; <userinput>config commit</userinput></screen>
 
 	  The authoritative server will begin serving it immediately
-	  after it is loaded.
+	  after the zone data is loaded from the master text file.
 	</para>
 
       </section>
 
       <section id="in-memory-datasource-with-sqlite3-backend">
-	<title>In-memory Data Source With SQLite3 Backend</title>
+	<title>In-memory Data Source with SQLite3 Backend</title>
 
 	<para>
 <!--	  How to configure it. -->
@@ -1556,7 +1557,7 @@ This may be a temporary setting until then.
 &gt; <userinput>config commit</userinput></screen>
 
 	  The authoritative server will begin serving it immediately
-	  after it is loaded.
+	  after the zone data is loaded from the database file.
 	</para>
 
       </section>
@@ -1707,7 +1708,7 @@ TODO
       <command>b10-auth</command>.
       In combination with <command>b10-zonemgr</command> (for
       automated SOA checks), this allows the BIND 10 server to
-      provide <quote>secondary</quote> service.
+      provide <emphasis>secondary</emphasis> service.
     </para>
 
     <para>
@@ -1809,10 +1810,7 @@ what if a NOTIFY is sent?
 
       <screen>&gt; <userinput>config add Zonemgr/secondary_zones</userinput>
 &gt; <userinput>config set Zonemgr/secondary_zones[0]/name "<option>example.com</option>"</userinput>
-&gt; <userinput>config set Zonemgr/secondary_zones[0]/class "<option>IN</option>"</userinput>
 &gt; <userinput>config commit</userinput></screen>
-
-<!-- TODO: remove the IN class example above when it is the default -->
 
       </para>
 
@@ -1848,6 +1846,9 @@ what if a NOTIFY is sent?
         automatically sent a <varname>loadzone</varname> command to
         reload the corresponding zone into memory from the backend.
       </para>
+<!-- TODO: currently it delays the queries; see
+http://bind10.isc.org/wiki/ScalableZoneLoadDesign#a7.2UpdatingaZone
+-->
 
       <para>
 	The administrator doesn't have to do anything for
@@ -1870,7 +1871,7 @@ what if a NOTIFY is sent?
       When the <command>b10-auth</command> authoritative DNS server
       receives an AXFR or IXFR request, <command>b10-auth</command>
       internally forwards the request to <command>b10-xfrout</command>,
-      which handles the rest of request processing.
+      which handles the rest of this request processing.
       This is used to provide primary DNS service to share zones
       to secondary name servers.
       The <command>b10-xfrout</command> is also used to send
@@ -1919,8 +1920,9 @@ Xfrout/transfer_acl[0]	{"action": "ACCEPT"}	any	(default)</screen>
 &gt; <userinput>config set Xfrout/zone_config[0]/transfer_acl [{"action": "ACCEPT", "from": "192.0.2.1", "key": "key.example"}]</userinput>
 &gt; <userinput>config commit</userinput></screen>
 
-    <para>Both Xfrout and Auth will use the system wide keyring to check
-    TSIGs in the incoming messages and to sign responses.</para>
+    <para>Both <command>b10-xfrout</command> and <command>b10-auth</command>
+      will use the system wide keyring to check
+      TSIGs in the incoming messages and to sign responses.</para>
 
     <note><simpara>
         The way to specify zone specific configuration (ACLs, etc) is
@@ -1954,14 +1956,14 @@ what is XfroutClient xfr_client??
       When the <command>b10-auth</command> authoritative DNS server
       receives an UPDATE request, it internally forwards the request
       to <command>b10-ddns</command>, which handles the rest of
-      request processing.
-      When the processing is completed <command>b10-ddns</command>
-      will send a response to the client with the RCODE set to the
-      value as specified in RFC 2136 (NOERROR for successful update,
-      REFUSED if rejected due to ACL check, etc).
+      this request processing.
+      When the processing is completed, <command>b10-ddns</command>
+      will send a response to the client as specified in RFC 2136
+      (NOERROR for successful update, REFUSED if rejected due to
+      ACL check, etc).
       If the zone has been changed as a result, it will internally
       notify <command>b10-xfrout</command> so that other secondary
-      servers will be notified via the DNS notify protocol.
+      servers will be notified via the DNS NOTIFY protocol.
       In addition, if <command>b10-auth</command> serves the updated
       zone from its in-memory cache (as described in
       <xref linkend="in-memory-datasource-with-sqlite3-backend" />),
@@ -1987,10 +1989,10 @@ what is XfroutClient xfr_client??
       As of this writing <command>b10-ddns</command> does not support
       update forwarding for secondary zones.
       If it receives an update request for a secondary zone, it will
-      immediately return a response with an RCODE of NOTIMP.
+      immediately return a <quote>not implemented</quote> response.
       <note><simpara>
-	  For feature completeness update forwarding should be
-	  eventually supported.  But right now it's considered a lower
+	  For feature completeness, update forwarding should be
+	  eventually supported.  But currently it's considered a lower
 	  priority task and there is no specific plan of implementing
 	  this feature.
 <!-- See Trac #2063 -->
@@ -2020,9 +2022,9 @@ what is XfroutClient xfr_client??
         underlying data source storing the zone data be writable.
         In the current implementation this means the zone must be stored
         in an SQLite3-based data source.
-        Also, right now, the <command>b10-ddns</command> component
-        configures itself with the data source referring to the
-        <quote>database_file</quote> configuration parameter of
+	Also, in this development version, the <command>b10-ddns</command>
+	component configures itself with the data source referring to the
+        <varname>database_file</varname> configuration parameter of
         <command>b10-auth</command>.
         So this information must be configured correctly before starting
         <command>b10-ddns</command>.
@@ -2056,14 +2058,16 @@ what is XfroutClient xfr_client??
 &gt; <userinput>config commit</userinput>
 </screen>
       <note><simpara>
-	  In theory "kind" could be omitted because "dispensable" is its
-	  default.  But there's some peculiar behavior (which should
-	  be a bug and should be fixed eventually; see Trac ticket
-	  #2064) with bindctl and you'll still need to specify that explicitly.
-	  Likewise, "address" may look unnecessary because
-	  <command>b10-ddns</command> would start and work without
-	  specifying it.  But for it to shutdown gracefully this
-	  parameter should also be specified.
+	  In theory <varname>kind</varname> could be omitted because
+	  "dispensable" is its default.
+	  But there's some peculiar behavior (which should be a
+	  bug and should be fixed eventually; see Trac ticket #2064)
+	  with <command>bindctl</command> and you'll still need to
+	  specify that explicitly.  Likewise, <varname>address</varname>
+	  may look unnecessary because <command>b10-ddns</command>
+	  would start and work without specifying it.  But for it
+	  to shutdown gracefully this parameter should also be
+	  specified.
       </simpara></note>
       </para>
     </section>
@@ -2071,14 +2075,13 @@ what is XfroutClient xfr_client??
     <section>
       <title>Access Control</title>
       <para>
-        By default <command>b10-ddns</command> rejects any update
-        requests from any clients by returning a response with an RCODE
-        of REFUSED.
+        By default, <command>b10-ddns</command> rejects any update
+        requests from any clients by returning a REFUSED response.
         To allow updates to take effect, an access control rule
         (called update ACL) with a policy allowing updates must explicitly be
         configured.
         Update ACL must be configured per zone basis in the
-        <quote>zones</quote> configuration parameter of
+        <varname>zones</varname> configuration parameter of
         <command>b10-ddns</command>.
         This is a list of per-zone configurations regarding DDNS.
         Each list element consists of the following parameters:
@@ -2113,14 +2116,12 @@ what is XfroutClient xfr_client??
         In general, an update ACL rule that allows an update request
         should be configured with a TSIG key.
         This is an example update ACL that allows updates to the zone
-        named <quote>example.org</quote> of RR class <quote>IN</quote>
+        named <quote>example.org</quote> (of default RR class <quote>IN</quote>)
         from clients that send requests signed with a TSIG whose
         key name is "key.example.org" (and refuses all others):
       <screen>
 &gt; <userinput>config add DDNS/zones</userinput>
 &gt; <userinput>config set DDNS/zones[0]/origin example.org</userinput>
-&gt; <userinput>config set DDNS/zones[0]/class IN</userinput>
-(Note: "class" can be omitted)
 &gt; <userinput>config add DDNS/zones[0]/update_acl {"action": "ACCEPT", "key": "key.example.org"}</userinput>
 &gt; <userinput>config commit</userinput>
 </screen>
@@ -2145,11 +2146,13 @@ DDNS/zones[0]/update_acl[1]     {"action": "ACCEPT", "from": "::1", "key": "key.
 &gt; <userinput>config commit</userinput>
 </screen>
       (Note the "add" in the first line.  Before this sequence, we
-      have had only entry in zones[0]/update_acl.  The "add" command
-      with a value (rule) adds a new entry and sets it to the given rule.
+      have had only entry in <varname>zones[0]/update_acl</varname>.
+      The <command>add</command> command with a value (rule) adds
+      a new entry and sets it to the given rule.
+
       Due to a limitation of the current implementation, it doesn't
       work if you first try to just add a new entry and then set it to
-      a given rule).
+      a given rule.)
       </para>
 
       <note><simpara>
@@ -2171,6 +2174,7 @@ DDNS/zones[0]/update_acl[1]     {"action": "ACCEPT", "from": "::1", "key": "key.
 	which is rejecting any requests in the case of
 	<command>b10-ddns</command>.
       </para>
+<!-- TODO: what are the other defaults? -->
 
       <para>
 	Other actions than "ACCEPT", namely "REJECT" and "DROP", can be
@@ -2209,8 +2213,8 @@ DDNS/zones[0]/update_acl[1]     {"action": "ACCEPT", "from": "::1", "key": "key.
       <title>Miscellaneous Operational Issues</title>
       <para>
         Unlike BIND 9, BIND 10 currently does not support automatic
-        resigning of DNSSEC-signed zone when it's updated via DDNS.
-        It could be possible to resign the updated zone afterwards
+        re-signing of DNSSEC-signed zone when it's updated via DDNS.
+        It could be possible to re-sign the updated zone afterwards
         or make sure the update request also updates related DNSSEC
         records, but that will be pretty error-prone operation.
         In general, it's not advisable to allow DDNS for a signed zone
@@ -2234,8 +2238,8 @@ DDNS/zones[0]/update_acl[1]     {"action": "ACCEPT", "from": "::1", "key": "key.
         <command>b10-zonemgr</command>.  Zones listed in
         <quote>secondary_zones</quote> will never be updated via DDNS
         regardless of the update ACL configuration;
-	<command>b10-ddns</command> will return a response with an
-	RCODE of NOTAUTH as specified in RFC 2136.
+	<command>b10-ddns</command> will return a NOTAUTH (server
+        not authoritative for the zone) response.
         If you have a "conceptual" secondary zone whose content is a
         copy of some external source but is not updated via the
         standard zone transfers and therefore not listed in

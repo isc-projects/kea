@@ -127,7 +127,7 @@ typedef enum {
 
     // Unused at this moment.  We'll revisit this when we support master file
     // parser where @ is used to mean an origin name.
-    ft_at                  
+    ft_at
 } ft_state;
 }
 
@@ -435,101 +435,7 @@ Name::toText(bool omit_final_dot) const {
 
 NameComparisonResult
 Name::compare(const Name& other) const {
-    return (compare(other, 0, 0, labelcount_, other.labelcount_));
-}
-
-NameComparisonResult
-Name::compare(const Name& other,
-              unsigned int first_label,
-              unsigned int first_label_other,
-              unsigned int last_label,
-              unsigned int last_label_other,
-              bool case_sensitive) const {
-    // Determine the relative ordering under the DNSSEC order relation of
-    // 'this' and 'other', and also determine the hierarchical relationship
-    // of the names.
-
-    if ((first_label > last_label) ||
-        (first_label_other > last_label_other)) {
-        isc_throw(BadValue, "Bad label index ranges were passed");
-    }
-
-    if ((first_label > labelcount_) ||
-        (first_label_other > other.labelcount_)) {
-        isc_throw(BadValue, "Bad first label indices were passed");
-    }
-
-    unsigned int nlabels = 0;
-    int l1 = last_label - first_label;
-    int l2 = last_label_other - first_label_other;
-    int ldiff = (int)l1 - (int)l2;
-    unsigned int l = (ldiff < 0) ? l1 : l2;
-
-    while (l > 0) {
-        --l;
-        --l1;
-        --l2;
-        size_t pos1 = offsets_[l1 + first_label];
-        size_t pos2 = other.offsets_[l2 + first_label_other];
-        unsigned int count1 = ndata_[pos1++];
-        unsigned int count2 = other.ndata_[pos2++];
-
-        // We don't support any extended label types including now-obsolete
-        // bitstring labels.
-        assert(count1 <= MAX_LABELLEN && count2 <= MAX_LABELLEN);
-
-        int cdiff = (int)count1 - (int)count2;
-        unsigned int count = (cdiff < 0) ? count1 : count2;
-
-        while (count > 0) {
-            uint8_t label1 = ndata_[pos1];
-            uint8_t label2 = other.ndata_[pos2];
-            int chdiff;
-
-            if (case_sensitive) {
-                chdiff = (int)label1 - (int)label2;
-            } else {
-                chdiff = (int)maptolower[label1] - (int)maptolower[label2];
-            }
-
-            if (chdiff != 0) {
-                if ((nlabels == 0) &&
-                    ((last_label < labelcount_) ||
-                     (last_label_other < other.labelcount_))) {
-                    return (NameComparisonResult(0, 0,
-                                                 NameComparisonResult::NONE));
-                } else {
-                    return (NameComparisonResult(chdiff, nlabels,
-                                                 NameComparisonResult::COMMONANCESTOR));
-                }
-            }
-            --count;
-            ++pos1;
-            ++pos2;
-        }
-        if (cdiff != 0) {
-            if ((nlabels == 0) &&
-                ((last_label < labelcount_) ||
-                 (last_label_other < other.labelcount_))) {
-                return (NameComparisonResult(0, 0,
-                                             NameComparisonResult::NONE));
-            } else {
-                return (NameComparisonResult(cdiff, nlabels,
-                                             NameComparisonResult::COMMONANCESTOR));
-            }
-        }
-        ++nlabels;
-    }
-
-    if (ldiff < 0) {
-        return (NameComparisonResult(ldiff, nlabels,
-                                     NameComparisonResult::SUPERDOMAIN));
-    } else if (ldiff > 0) {
-        return (NameComparisonResult(ldiff, nlabels,
-                                     NameComparisonResult::SUBDOMAIN));
-    }
-
-    return (NameComparisonResult(ldiff, nlabels, NameComparisonResult::EQUAL));
+    return LabelSequence(*this).compare(LabelSequence(other));
 }
 
 bool
@@ -581,7 +487,7 @@ Name::gthan(const Name& other) const {
 
 bool
 Name::isWildcard() const {
-    return (length_ >= 2 && ndata_[0] == 1 && ndata_[1] == '*'); 
+    return (length_ >= 2 && ndata_[0] == 1 && ndata_[1] == '*');
 }
 
 Name
@@ -729,5 +635,6 @@ operator<<(std::ostream& os, const Name& name) {
     os << name.toText();
     return (os);
 }
+
 }
 }
