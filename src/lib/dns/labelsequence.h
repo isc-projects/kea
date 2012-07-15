@@ -21,30 +21,48 @@
 namespace isc {
 namespace dns {
 
-/// \brief Light-weight Accessor to Name object
+/// \brief Light-weight Accessor to data of Name object
 ///
 /// The purpose of this class is to easily match Names and parts of Names,
 /// without needing to copy the underlying data on each label strip.
 ///
-/// It can only work on existing Name objects, and the Name object MUST
+/// It can only work on existing Name objects, or data as provided by the
+/// Name object or another LabelSequence, and the data or Name MUST
 /// remain in scope during the entire lifetime of its associated
 /// LabelSequence(s).
 ///
 /// Upon creation of a LabelSequence, it records the offsets of the
 /// labels in the wireformat data of the Name. When stripLeft() or
 /// stripRight() is called on the LabelSequence, no changes in the
-/// Name's data occur, but the internal pointers of the
+/// original data occur, but the internal pointers of the
 /// LabelSequence are modified.
 ///
 /// LabelSequences can be compared to other LabelSequences, and their
 /// data can be requested (which then points to part of the original
-/// data of the associated Name object).
+/// data of the original Name object).
 ///
 class LabelSequence {
     // Name calls the private toText(bool) method of LabelSequence.
     friend std::string Name::toText(bool) const;
 
 public:
+    /// \brief Constructs a LabelSequence for the given label sequence
+    ///
+    /// \note The associated data MUST remain in scope during the lifetime
+    /// of this LabelSequence, since only the pointers are copied.
+    ///
+    /// \note No validation is done on the given data upon construction;
+    ///       use with care.
+    ///
+    /// \param ls The LabelSequence to construct a LabelSequence from
+    explicit LabelSequence(const LabelSequence& ls):
+                                     data_(ls.data_),
+                                     offsets_(ls.offsets_),
+                                     offsets_size_(ls.offsets_size_),
+                                     first_label_(ls.first_label_),
+                                     last_label_(ls.last_label_)
+    {}
+
     /// \brief Constructs a LabelSequence for the given name
     ///
     /// \note The associated Name MUST remain in scope during the lifetime
@@ -53,24 +71,57 @@ public:
     /// to the labels in the Name object).
     ///
     /// \param name The Name to construct a LabelSequence for
-    LabelSequence(const Name& name): name_(name),
+    explicit LabelSequence(const Name& name):
+                                     data_(&name.ndata_[0]),
+                                     offsets_(&name.offsets_[0]),
+                                     offsets_size_(name.offsets_.size()),
                                      first_label_(0),
                                      last_label_(name.getLabelCount())
     {}
 
+    /// \brief Constructs a LabelSequence for the given data
+    ///
+    /// \note The associated data MUST remain in scope during the lifetime
+    /// of this LabelSequence, since only the pointers are copied.
+    ///
+    /// \note No validation is done on the given data upon construction;
+    ///       use with care.
+    ///
+    /// \exception isc::BadValue if basic checks for the input data, or
+    ///            offsets fails.
+    ///
+    /// \param data The raw data for the domain name, in wire format
+    /// \param offsets The offsets of the labels in the domain name data,
+    ///        as given by a Name object or another LabelSequence
+    /// \param offsets_size The size of the offsets data
+    LabelSequence(const uint8_t* data,
+                  const uint8_t* offsets,
+                  size_t offsets_size);
+
     /// \brief Return the wire-format data for this LabelSequence
     ///
-    /// The data, is returned as a pointer to the original wireformat
-    /// data of the original Name object, and the given len value is
+    /// The data is returned as a pointer to (the part of) the original
+    /// wireformat data, from either the original Name object, or the
+    /// raw data given in the constructor, and the given len value is
     /// set to the number of octets that match this labelsequence.
     ///
     /// \note The data pointed to is only valid if the original Name
-    /// object is still in scope
+    /// object or data is still in scope
     ///
     /// \param len Pointer to a size_t where the length of the data
     ///        will be stored (in number of octets)
     /// \return Pointer to the wire-format data of this label sequence
     const uint8_t* getData(size_t* len) const;
+
+    /// \brief Return the offset data for this LabelSequence
+    ///
+    /// The offsets are returned in the <code>placeholder</code> array.
+    ///
+    /// \param len Pointer to a size_t where the number of offsets
+    ///        will be stored
+    /// \param placeholder Array where the offset data will be returned
+    void getOffsetData(size_t* len,
+                       uint8_t placeholder[Name::MAX_LABELS]) const;
 
     /// \brief Return the length of the wire-format data of this LabelSequence
     ///
@@ -83,7 +134,7 @@ public:
     /// versa.
     ///
     /// \note The data pointed to is only valid if the original Name
-    /// object is still in scope
+    /// object or data is still in scope
     ///
     /// \return The length of the data of the label sequence in octets.
     size_t getDataLength() const;
@@ -125,7 +176,7 @@ public:
     /// \brief Remove labels from the end of this LabelSequence
     ///
     /// \note No actual memory is changed, this operation merely updates the
-    /// internal pointers based on the offsets in the Name object.
+    /// internal pointers based on the offsets originally provided.
     ///
     /// \exception OutOfRange if i is greater than or equal to the number
     ///           of labels currently pointed to by this LabelSequence
@@ -144,13 +195,13 @@ public:
     /// LabelSequence as a string.  The returned string ends with a dot
     /// '.' if the label sequence is absolute.
     ///
-    /// This function assumes the underlying name is in proper
+    /// This function assumes the underlying data is in proper
     /// uncompressed wire format.  If it finds an unexpected label
     /// character including compression pointer, an exception of class
     /// \c BadLabelType will be thrown.  In addition, if resource
     /// allocation for the result string fails, a corresponding standard
     /// exception will be thrown.
-    //
+    ///
     /// \return a string representation of the <code>LabelSequence</code>.
     std::string toText() const;
 
@@ -201,7 +252,9 @@ public:
     bool isAbsolute() const;
 
 private:
-    const Name& name_;
+    const uint8_t* data_;
+    const uint8_t* offsets_;
+    size_t offsets_size_;
     size_t first_label_;
     size_t last_label_;
 };
@@ -218,7 +271,7 @@ private:
 ///
 /// \param os A \c std::ostream object on which the insertion operation is
 /// performed.
-/// \param name The \c LabelSequence object output by the operation.
+/// \param label_sequence The \c LabelSequence object output by the operation.
 /// \return A reference to the same \c std::ostream object referenced by
 /// parameter \c os after the insertion operation.
 std::ostream&
