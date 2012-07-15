@@ -364,7 +364,8 @@ MessageRenderer::writeName(const LabelSequence& ls, const bool compress) {
 
 void
 MessageRenderer::writeName(const Name& name, const bool compress) {
-    writeName(LabelSequence(name), compress);
+    const LabelSequence ls(name);
+    writeName(ls, compress);
 }
 
 AbstractMessageRenderer::AbstractMessageRenderer() :
