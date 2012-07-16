@@ -123,6 +123,7 @@ public:
     /// set to on by the \c setFlag() method.
     enum Flags {
         FLAG_CALLBACK = 1, ///< Callback enabled. See \ref callback
+        FLAG_RED = 2, ///< Node color; 1 if node is red, 0 if node is black.
         FLAG_USER1 = 0x80000000U, ///< Application specific flag
         FLAG_USER2 = 0x40000000U, ///< Application specific flag
         FLAG_USER3 = 0x20000000U  ///< Application specific flag
@@ -248,11 +249,21 @@ private:
 
     /// \brief Returns the color of this node
     RBNodeColor getColor() const {
-        return color_;
+        //return color_;
+        if ((flags_ & FLAG_RED) != 0) {
+            return (RED);
+        } else {
+            return (BLACK);
+        }
     }
 
     /// \brief Sets the color of this node
     void setColor(const RBNodeColor color) {
+        if (color == RED) {
+            flags_ |= FLAG_RED;
+        } else {
+            flags_ &= ~FLAG_RED;
+        }
         color_ = color;
     }
 
@@ -363,7 +374,7 @@ RBNode<T>::RBNode(const isc::dns::Name& name) :
     color_(RED),
     name_(name),
     down_(NULL_NODE()),
-    flags_(0)
+    flags_(FLAG_RED)
 {
 }
 
@@ -1419,8 +1430,11 @@ RBTree<T>::nodeFission(RBNode<T>& node, const isc::dns::Name& base_name) {
     // even if code after the call to this function throws an exception.
     std::swap(node.data_, down_node->data_);
     std::swap(node.flags_, down_node->flags_);
+
     down_node->down_ = node.down_;
     node.down_ = down_node.get();
+    // Restore the color of the node (may have gotten changed by the flags swap)
+    node.setColor(down_node->getColor());
     // root node of sub tree, the initial color is BLACK
     down_node->setColor(RBNode<T>::BLACK);
     ++node_count_;
