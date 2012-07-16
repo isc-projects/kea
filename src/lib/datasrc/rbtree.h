@@ -249,7 +249,6 @@ private:
 
     /// \brief Returns the color of this node
     RBNodeColor getColor() const {
-        //return color_;
         if ((flags_ & FLAG_RED) != 0) {
             return (RED);
         } else {
@@ -264,7 +263,6 @@ private:
         } else {
             flags_ &= ~FLAG_RED;
         }
-        color_ = color;
     }
 
     /// \brief return the next node which is bigger than current node
@@ -320,7 +318,6 @@ private:
     RBNode<T>*  parent_;
     RBNode<T>*  left_;
     RBNode<T>*  right_;
-    RBNodeColor color_;
     //@}
 
     /// \brief Relative name of the node.
@@ -353,7 +350,6 @@ RBNode<T>::RBNode() :
     parent_(NULL),
     left_(NULL),
     right_(NULL),
-    color_(BLACK),
     // dummy name, the value doesn't matter:
     name_(isc::dns::Name::ROOT_NAME()),
     down_(NULL),
@@ -371,7 +367,6 @@ RBNode<T>::RBNode(const isc::dns::Name& name) :
     parent_(NULL_NODE()),
     left_(NULL_NODE()),
     right_(NULL_NODE()),
-    color_(RED),
     name_(name),
     down_(NULL_NODE()),
     flags_(FLAG_RED)
