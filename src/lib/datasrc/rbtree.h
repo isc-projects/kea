@@ -246,6 +246,16 @@ private:
         return (&null_node);
     }
 
+    /// \brief Returns the color of this node
+    RBNodeColor getColor() const {
+        return color_;
+    }
+
+    /// \brief Sets the color of this node
+    void setColor(const RBNodeColor color) {
+        color_ = color;
+    }
+
     /// \brief return the next node which is bigger than current node
     /// in the same subtree
     ///
@@ -1374,7 +1384,7 @@ RBTree<T>::insert(const isc::dns::Name& target_name, RBNode<T>** new_node) {
         *current_root = node.get();
         //node is the new root of sub tree, so its init color
         // is BLACK
-        node->color_ = RBNode<T>::BLACK;
+        node->setColor(RBNode<T>::BLACK);
     } else if (order < 0) {
         parent->left_ = node.get();
     } else {
@@ -1412,7 +1422,7 @@ RBTree<T>::nodeFission(RBNode<T>& node, const isc::dns::Name& base_name) {
     down_node->down_ = node.down_;
     node.down_ = down_node.get();
     // root node of sub tree, the initial color is BLACK
-    down_node->color_ = RBNode<T>::BLACK;
+    down_node->setColor(RBNode<T>::BLACK);
     ++node_count_;
     down_node.release();
 }
@@ -1423,44 +1433,44 @@ void
 RBTree<T>::insertRebalance(RBNode<T>** root, RBNode<T>* node) {
 
     RBNode<T>* uncle;
-    while (node != *root && node->parent_->color_ == RBNode<T>::RED) {
+    while (node != *root && node->parent_->getColor() == RBNode<T>::RED) {
         if (node->parent_ == node->parent_->parent_->left_) {
             uncle = node->parent_->parent_->right_;
 
-            if (uncle->color_ == RBNode<T>::RED) {
-                node->parent_->color_ = RBNode<T>::BLACK;
-                uncle->color_ = RBNode<T>::BLACK;
-                node->parent_->parent_->color_ = RBNode<T>::RED;
+            if (uncle->getColor() == RBNode<T>::RED) {
+                node->parent_->setColor(RBNode<T>::BLACK);
+                uncle->setColor(RBNode<T>::BLACK);
+                node->parent_->parent_->setColor(RBNode<T>::RED);
                 node = node->parent_->parent_;
             } else {
                 if (node == node->parent_->right_) {
                     node = node->parent_;
                     leftRotate(root, node);
                 }
-                node->parent_->color_ = RBNode<T>::BLACK;
-                node->parent_->parent_->color_ = RBNode<T>::RED;
+                node->parent_->setColor(RBNode<T>::BLACK);
+                node->parent_->parent_->setColor(RBNode<T>::RED);
                 rightRotate(root, node->parent_->parent_);
             }
         } else {
             uncle = node->parent_->parent_->left_;
-            if (uncle->color_ == RBNode<T>::RED) {
-                node->parent_->color_ = RBNode<T>::BLACK;
-                uncle->color_ = RBNode<T>::BLACK;
-                node->parent_->parent_->color_ = RBNode<T>::RED;
+            if (uncle->getColor() == RBNode<T>::RED) {
+                node->parent_->setColor(RBNode<T>::BLACK);
+                uncle->setColor(RBNode<T>::BLACK);
+                node->parent_->parent_->setColor(RBNode<T>::RED);
                 node = node->parent_->parent_;
             } else {
                 if (node == node->parent_->left_) {
                     node = node->parent_;
                     rightRotate(root, node);
                 }
-                node->parent_->color_ = RBNode<T>::BLACK;
-                node->parent_->parent_->color_ = RBNode<T>::RED;
+                node->parent_->setColor(RBNode<T>::BLACK);
+                node->parent_->parent_->setColor(RBNode<T>::RED);
                 leftRotate(root, node->parent_->parent_);
             }
         }
     }
 
-    (*root)->color_ = RBNode<T>::BLACK;
+    (*root)->setColor(RBNode<T>::BLACK);
 }
 
 
@@ -1535,7 +1545,7 @@ RBTree<T>::dumpTreeHelper(std::ostream& os, const RBNode<T>* node,
 
     indent(os, depth);
     os << node->name_.toText() << " ("
-              << ((node->color_ == RBNode<T>::BLACK) ? "black" : "red") << ")";
+              << ((node->getColor() == RBNode<T>::BLACK) ? "black" : "red") << ")";
     os << ((node->isEmpty()) ? "[invisible] \n" : "\n");
 
     if (node->down_ != NULLNODE) {
