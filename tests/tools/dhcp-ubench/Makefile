@@ -6,7 +6,7 @@ LDFLAGS=-lrt
 SQLITE_CFLAGS=`pkg-config sqlite3 --cflags` $(LDFLAGS)
 SQLITE_LDFLAGS=`pkg-config sqlite3 --libs`
 
-all: mysql_ubench sqlite_ubench
+all: mysql_ubench sqlite_ubench memfile_ubench
 
 mysql_ubench.o: mysql_ubench.cc mysql_ubench.h
 	$(CXX) $< -c $(CFLAGS) $(MYSQL_CFLAGS)
@@ -23,5 +23,11 @@ sqlite_ubench.o: sqlite_ubench.cc sqlite_ubench.h
 sqlite_ubench: sqlite_ubench.o benchmark.o
 	$(CXX) $< benchmark.o -o sqlite_ubench $(CFLAGS) $(SQLITE_CFLAGS) $(SQLITE_LDFLAGS)
 
+memfile_ubench.o: memfile_ubench.cc memfile_ubench.h
+	$(CXX) $< -c $(CFLAGS) $(SQLLITE_CFLAGS)
+
+memfile_ubench: memfile_ubench.o benchmark.o
+	$(CXX) $< benchmark.o -o memfile_ubench $(LDFLAGS)
+
 clean:
-	rm -f mysql_ubench sqlite_ubench *.o
+	rm -f mysql_ubench sqlite_ubench memfile_ubench *.o
