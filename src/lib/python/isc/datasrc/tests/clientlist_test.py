@@ -17,6 +17,9 @@ import isc.log
 import isc.datasrc
 import isc.dns
 import unittest
+import os
+
+TESTDATA_PATH = os.environ['GLOBAL_TESTDATA_PATH'] + os.sep
 
 class ClientListTest(unittest.TestCase):
     """
@@ -39,6 +42,35 @@ class ClientListTest(unittest.TestCase):
         # Too many arguments
         self.assertRaises(TypeError, isc.datasrc.ConfigurableClientList,
                          isc.dns.RRClass.IN(), isc.dns.RRClass.IN())
+
+    def test_configure(self):
+        """
+        Test we can configure the client list. This tests if the valid
+        ones are acceptend and invalid rejected. We check the changes
+        have effect.
+        """
+        clist = isc.datasrc.ConfigurableClientList(isc.dns.RRClass.IN())
+        # This should be NOP now
+        clist.configure("[]", True)
+        # We can use this type, as it is not loaded dynamically.
+        clist.configure('''[{
+            "type": "MasterFiles",
+            "params": {
+                "example.org": "''' + TESTDATA_PATH + '''example.org.zone"
+            },
+            "cache-enable": true
+        }]''', True)
+        self.assertRaises(isc.datasrc.Error, clist.configure, '"bad type"',
+                          True)
+        self.assertRaises(isc.datasrc.Error, clist.configure, '''[{
+            "type": "bad type"
+        }]''', True)
+        self.assertRaises(isc.datasrc.Error, clist.configure, '''[{
+            bad JSON,
+        }]''', True)
+        self.assertRaises(TypeError, clist.configure, [], True)
+        self.assertRaises(TypeError, clist.configure, "[]")
+        self.assertRaises(TypeError, clist.configure, "[]", "true")
 
 if __name__ == "__main__":
     isc.log.init("bind10")
