@@ -40,7 +40,14 @@ void SQLite_uBenchmark::connect() {
         failure("Failed to open DB file");
     }
 
-    sqlite3_exec(DB_, "DELETE FROM lease4", 0, 0, 0);
+    sqlite3_exec(DB_, "DELETE FROM lease4", NULL, NULL, NULL);
+
+    sqlite3_exec(DB_, "PRAGMA synchronous = OFF", NULL, NULL, NULL);
+
+    // see http://www.sqlite.org/pragma.html#pragma_journal_mode
+    // for detailed explanation. Available modes: DELETE, TRUNCATE,
+    // PERSIST, MEMORY, WAL, OFF
+    sqlite3_exec(DB_, "PRAGMA journal_mode = OFF", NULL, NULL, NULL);
 }
 
 void SQLite_uBenchmark::disconnect() {
@@ -235,7 +242,7 @@ void SQLite_uBenchmark::printInfo() {
 int main(int argc, const char * argv[]) {
 
     const char * filename = "sqlite.db";
-    uint32_t num = 10;
+    uint32_t num = 10000;
 
     SQLite_uBenchmark bench(filename, num);
 

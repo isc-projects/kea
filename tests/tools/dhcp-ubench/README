@@ -64,7 +64,7 @@ WARNING: It will drop existing Kea database. Do not run this on
 your production server. Assuming your MySQL user is kea, you can
 initialize your test database by:
 
-mysql -u kea -p < mysql-init.sql
+mysql -u kea -p < mysql.schema
 
 After that step, you are ready to run the test:
 
@@ -72,7 +72,7 @@ After that step, you are ready to run the test:
 
 or
 
-./mysql_ubench > results.txt
+./mysql_ubench > results-mysql.txt
 
 Redirecting output to a file is important, because for each operation
 there is a single character printed to show progress. If you have a slow
@@ -100,3 +100,45 @@ can tweak it by using the following command in mysql:
 or
 
 > alter table lease4 engine=InnoDB;
+
+ SQLite backend
+----------------
+SQLite backend requires both sqlite3 development and run-time package. Their
+names may vary from system to system, but on Ubuntu 12.04 they are called
+sqlite3 libsqlite3-dev. To install them, use the following command:
+
+sudo apt-get install sqlite3 libsqlite3-dev
+
+To run SQLite3 tests, first create the database:
+
+cat sqlite.schema | sqlite3 sqlite.db
+
+A new database called sqlite.db will be created. That is the default name used
+by sqlite_ubench test. If you prefer other name, make sure you update
+sqlite_ubench.cc accordingly. Once the database is created, you can run
+tests:
+
+./sqlite_ubench > results-sqlite.txt
+
+Make sure to tweak number of iterations in sqlite_ubench.cc. See num variable
+in main() function near the end of sqlite_ubench.cc file.
+
+To improve performance, asynchronous mode is used (PRAGMA synchronous = OFF).
+If you do not like it, modify SQLite_uBenchmark::connect() by commenting it out
+and suffer the pain of having around 10 inserts per seconds.
+
+ Performance optimizations
+---------------------------
+
+The following section is a collection of loose notes, ideas and comments that
+could be investigated to possibly improve (or thrash) performance. Please
+consider them as developer's scratchpad only. However, if you are experienced
+programmer or a DB admin, you are welcome to try some of them. ISC engineers
+are more than welcome to discuss pros and cons of various approaches on
+bind10-dev@lists.isc.org list.
+
+- SQLite: Excellent article that discusses performance optimizations:
+  - http://stackoverflow.com/questions/1711631/how-do-i-improve-the-performance-of-sqlite
+  - http://blog.quibb.org/2010/08/fast-bulk-inserts-into-sqlite/
+  - use prepared statements
+  - use journal mode in memory (or disable it completely)
