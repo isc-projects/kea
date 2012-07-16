@@ -56,10 +56,12 @@ ConfigurableClientList_init(PyObject* po_self, PyObject* args, PyObject*) {
     s_ConfigurableClientList* self =
         static_cast<s_ConfigurableClientList*>(po_self);
     try {
-        isc::dns::RRClass rrclass(isc::dns::RRClass::IN());
+        const PyObject* rrclass;
         if (PyArg_ParseTuple(args, "O!", &isc::dns::python::rrclass_type,
                              &rrclass)) {
-            self->cppobj = new ConfigurableClientList(rrclass);
+            self->cppobj =
+                new ConfigurableClientList(isc::dns::python::
+                                           PyRRClass_ToRRClass(rrclass));
             return (0);
         }
     } catch (const exception& ex) {
@@ -84,6 +86,31 @@ ConfigurableClientList_destroy(PyObject* po_self) {
     Py_TYPE(self)->tp_free(self);
 }
 
+PyObject*
+ConfigurableClientList_configure(PyObject* po_self, PyObject* args) {
+    s_ConfigurableClientList* self =
+        static_cast<s_ConfigurableClientList*>(po_self);
+    try {
+        const char* configuration;
+        int allow_cache;
+        if (PyArg_ParseTuple(args, "si", &configuration, &allow_cache)) {
+            const isc::data::ConstElementPtr
+                element(isc::data::Element::fromJSON(string(configuration)));
+            self->cppobj->configure(*element, allow_cache);
+            Py_RETURN_NONE;
+        } else {
+            return (NULL);
+        }
+    } catch (const std::exception& exc) {
+        PyErr_SetString(getDataSourceException("Error"), exc.what());
+        return (NULL);
+    } catch (...) {
+        PyErr_SetString(getDataSourceException("Error"),
+                        "Unknown C++ exception");
+        return (NULL);
+    }
+}
+
 // This list contains the actual set of functions we have in
 // python. Each entry has
 // 1. Python method name
@@ -91,6 +118,8 @@ ConfigurableClientList_destroy(PyObject* po_self) {
 // 3. Argument type
 // 4. Documentation
 PyMethodDef ConfigurableClientList_methods[] = {
+    { "configure", ConfigurableClientList_configure, METH_VARARGS,
+        "TODO: Docs" },
     { NULL, NULL, 0, NULL }
 };
 } // end of unnamed namespace
