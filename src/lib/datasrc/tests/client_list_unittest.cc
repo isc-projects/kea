@@ -763,7 +763,8 @@ TEST_F(ListTest, masterFiles) {
     list_->configure(elem, true);
 
     // It has only the cache
-    EXPECT_EQ(NULL, list_->getDataSources()[0].data_src_client_);
+    EXPECT_EQ(static_cast<isc::datasrc::DataSourceClient*>(NULL),
+              list_->getDataSources()[0].data_src_client_);
 
     // And it can search
     positiveResult(list_->find(Name(".")), ds_[0], Name("."), true, "com",
@@ -821,9 +822,12 @@ TEST_F(ListTest, reloadNoSuchZone) {
     EXPECT_EQ(ConfigurableClientList::ZONE_NOT_FOUND,
               list_->reload(Name("sub.example.com")));
     // Nothing changed here - these zones don't exist
-    EXPECT_EQ(NULL, list_->find(name).dsrc_client_);
-    EXPECT_EQ(NULL, list_->find(Name("example.cz")).dsrc_client_);
-    EXPECT_EQ(NULL, list_->find(Name("sub.example.com"), true).dsrc_client_);
+    EXPECT_EQ(static_cast<isc::datasrc::DataSourceClient*>(NULL),
+              list_->find(name).dsrc_client_);
+    EXPECT_EQ(static_cast<isc::datasrc::DataSourceClient*>(NULL),
+              list_->find(Name("example.cz")).dsrc_client_);
+    EXPECT_EQ(static_cast<isc::datasrc::DataSourceClient*>(NULL),
+              list_->find(Name("sub.example.com"), true).dsrc_client_);
     // Not reloaded
     EXPECT_EQ(ZoneFinder::NXRRSET,
               list_->find(Name("example.com")).finder_->
