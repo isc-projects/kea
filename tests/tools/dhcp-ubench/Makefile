@@ -24,4 +24,4 @@ sqlite_ubench: sqlite_ubench.o benchmark.o
 	$(CXX) $< benchmark.o -o sqlite_ubench $(CFLAGS) $(SQLITE_CFLAGS) $(SQLITE_LDFLAGS)
 
 clean:
-	rm -f mysql_ubench *.o
+	rm -f mysql_ubench sqlite_ubench *.o
