@@ -77,7 +77,6 @@ protected:
     const RBNode<int>* crbtnode;
 };
 
-
 TEST_F(RBTreeTest, getNodeCount) {
     EXPECT_EQ(14, rbtree.getNodeCount());
 }
@@ -722,7 +721,7 @@ TEST_F(RBTreeTest, dumpTree) {
             "               end down from g.h.\n" <<
             "               NULL\n" <<
             "               NULL\n";
-    EXPECT_EQ(str.str(), str2.str());
+    EXPECT_EQ(str2.str(), str.str());
 }
 
 TEST_F(RBTreeTest, swap) {
