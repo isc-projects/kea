@@ -132,13 +132,22 @@ ConfigurableClientList_find(PyObject* po_self, PyObject* args) {
                 // reference counts correctly.
                 dsrc.reset(Py_BuildValue(""));
             } else {
-                dsrc.reset(wrapDataSourceClient(result.dsrc_client_));
+                // Make sure we have a keeper there too, so it doesn't
+                // die when the underlying client list dies or is
+                // reconfigured.
+                //
+                // However, as it is inside the C++ part, is there a
+                // reasonable way to test it?
+                dsrc.reset(wrapDataSourceClient(result.dsrc_client_,
+                                                result.life_keeper_));
             }
             PyObjectContainer finder;
             if (result.finder_ == NULL) {
                 finder.reset(Py_BuildValue(""));
             } else {
-                finder.reset(createZoneFinderObject(result.finder_));
+                // Make sure it keeps the data source client alive.
+                finder.reset(createZoneFinderObject(result.finder_,
+                                                    dsrc.get()));
             }
             PyObjectContainer exact(PyBool_FromLong(result.exact_match_));
 
