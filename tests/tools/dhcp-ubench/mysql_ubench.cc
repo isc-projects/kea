@@ -27,9 +27,10 @@ using namespace std;
 
 MySQL_uBenchmark::MySQL_uBenchmark(const string& hostname, const string& user,
                                    const string& pass, const string& db,
-                                   uint32_t num_iterations)
-    :uBenchmark(num_iterations), Hostname_(hostname), User_(user),
-     Pass_(pass), DB_(db), Conn_(NULL) {
+                                   uint32_t num_iterations, bool sync,
+                                   bool verbose)
+    :uBenchmark(num_iterations, db, sync, verbose, hostname, user, pass),
+     Conn_(NULL) {
 
 }
 
@@ -50,10 +51,10 @@ void MySQL_uBenchmark::connect() {
     }
 
     cout << "hostname=" << Hostname_ << ", user=" << User_
-         << "pass=" << Pass_ << " db=" << DB_ << endl;
+         << "pass=" << Passwd_ << " db=" << DBName_ << endl;
 
     if (!mysql_real_connect(Conn_, Hostname_.c_str(), User_.c_str(),
-                            Pass_.c_str(), DB_.c_str(), 0, NULL, 0)) {
+                            Passwd_.c_str(), DBName_.c_str(), 0, NULL, 0)) {
         failure("connecting to MySQL server");
     } else {
         cout << "MySQL connection established." << endl;
@@ -62,6 +63,17 @@ void MySQL_uBenchmark::connect() {
     string q = "delete from lease4;";
     if (mysql_real_query(Conn_, q.c_str(), strlen(q.c_str()))) {
         failure("dropping old lease4 entries.");
+    }
+
+    q = "ALTER TABLE lease4 engine=";
+    if (Sync_) {
+        q += "InnoDB";
+    } else {
+        q += "MyISAM";
+    }
+    if (mysql_query(Conn_, q.c_str())) {
+        q = "Failed to run query:" + q;
+        failure(q.c_str());
     }
 }
 
@@ -132,7 +144,9 @@ void MySQL_uBenchmark::createLease4Test() {
             // something failed.
             failure("INSERT query");
         } else {
-            printf(".");
+            if (Verbose_) {
+                printf(".");
+            }
         };
     }
     printf("\n");
@@ -179,17 +193,15 @@ void MySQL_uBenchmark::searchLease4Test() {
             MYSQL_ROW row = mysql_fetch_row(result);
             // pretend to do something with it
 
-            printf(".");
-            /* printf("lease_id=%s addr=%s valid_lft=%s cltt=%s\n",
-                   (row[0]?row[0]:"NULL"),
-                   (row[1]?row[1]:"NULL"),
-                   (row[4]?row[4]:"NULL"),
-                   (row[5]?row[5]:"NULL")); */
+            if (Verbose_) {
+                printf(".");
+            }
 
             mysql_free_result(result);
         } else {
-            // printf("Address %x not found.\n", x);
-            printf("x");
+            if (Verbose_) {
+                printf("x");
+            }
         }
     }
 
@@ -213,7 +225,8 @@ void MySQL_uBenchmark::updateLease4Test() {
 
         MYSQL_RES * result = NULL;
 
-        printf(".");
+        if (Verbose_)
+            printf(".");
     }
 
     printf("\n");
@@ -236,7 +249,9 @@ void MySQL_uBenchmark::deleteLease4Test() {
 
         MYSQL_RES * result = NULL;
 
-        printf(".");
+        if (Verbose_) {
+            printf(".");
+        }
     }
 
     printf("\n");
@@ -253,9 +268,11 @@ int main(int argc, const char * argv[]) {
     const char * user = "root";
     const char * passwd = "secret";
     const char * dbname = "kea";
-    uint32_t num = 10000;
+    uint32_t num = 100;
+    bool sync = true;
+    bool verbose = true;
 
-    MySQL_uBenchmark bench(hostname, user, passwd, dbname, num);
+    MySQL_uBenchmark bench(hostname, user, passwd, dbname, num, sync, verbose);
 
     int result = bench.run();
 

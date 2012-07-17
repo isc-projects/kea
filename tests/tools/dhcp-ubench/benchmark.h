@@ -20,7 +20,11 @@
 
 class uBenchmark {
 public:
-    uBenchmark(uint32_t numInterations);
+    uBenchmark(uint32_t iterations, const std::string& dbname,
+               bool sync, bool verbose,
+               const std::string& host = "",
+               const std::string& username = "",
+               const std::string& pass = "");
 
     virtual void printInfo() = 0;
     virtual void connect() = 0;
@@ -38,8 +42,17 @@ public:
 
     int run();
 
+    bool parseCmdline(int args, const char* argv[]);
+
 protected:
     uint32_t Num_; // number of operations (e.g. insert lease num times)
+
+    bool Sync_;  // synchronous or asynchonous mode?
+    bool Verbose_;
+    std::string Hostname_;// used by MySQL only
+    std::string User_;    // used by MySQL only
+    std::string Passwd_;  // used by MySQL only
+    std::string DBName_;  // used by MySQL, SQLite and memfile
 
     const static uint32_t BASE_ADDR4 = 0x01000000; // let's start from 1.0.0.0 address
 

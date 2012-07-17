@@ -41,7 +41,7 @@ class memfile_LeaseMgr;
 class memfile_uBenchmark: public uBenchmark {
 public:
     memfile_uBenchmark(const std::string& filename,
-                       uint32_t num_iterations);
+                       uint32_t num_iterations, bool sync, bool verbose);
 
     virtual void printInfo();
     virtual void connect();
