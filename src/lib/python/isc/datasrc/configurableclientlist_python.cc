@@ -26,12 +26,15 @@
 #include <util/python/pycppwrapper_util.h>
 
 #include <dns/python/rrclass_python.h>
+#include <dns/python/name_python.h>
 
 #include <datasrc/client_list.h>
 
 #include "configurableclientlist_python.h"
 #include "datasrc.h"
 #include "configurableclientlist_inc.cc"
+#include "finder_python.h"
+#include "client_python.h"
 
 using namespace std;
 using namespace isc::util::python;
@@ -47,9 +50,6 @@ s_ConfigurableClientList::s_ConfigurableClientList() : cppobj(NULL) {
 }
 
 namespace {
-// Shortcut type which would be convenient for adding class variables safely.
-typedef CPPPyObjectContainer<s_ConfigurableClientList, ConfigurableClientList>
-    ConfigurableClientListContainer;
 
 int
 ConfigurableClientList_init(PyObject* po_self, PyObject* args, PyObject*) {
@@ -111,6 +111,52 @@ ConfigurableClientList_configure(PyObject* po_self, PyObject* args) {
     }
 }
 
+PyObject*
+ConfigurableClientList_find(PyObject* po_self, PyObject* args) {
+    s_ConfigurableClientList* self =
+        static_cast<s_ConfigurableClientList*>(po_self);
+    try {
+        PyObject* name_obj;
+        int want_exact_match = 0;
+        int want_finder = 1;
+        if (PyArg_ParseTuple(args, "O!|ii", &isc::dns::python::name_type,
+                             &name_obj, &want_exact_match, &want_finder)) {
+            const isc::dns::Name
+                name(isc::dns::python::PyName_ToName(name_obj));
+            const ClientList::FindResult
+                result(self->cppobj->find(name, want_exact_match,
+                                          want_finder));
+            PyObjectContainer dsrc;
+            if (result.dsrc_client_ == NULL) {
+                // Use the Py_BuildValue, as it takes care of the
+                // reference counts correctly.
+                dsrc.reset(Py_BuildValue(""));
+            } else {
+                dsrc.reset(wrapDataSourceClient(result.dsrc_client_));
+            }
+            PyObjectContainer finder;
+            if (result.finder_ == NULL) {
+                finder.reset(Py_BuildValue(""));
+            } else {
+                finder.reset(createZoneFinderObject(result.finder_));
+            }
+            PyObjectContainer exact(PyBool_FromLong(result.exact_match_));
+
+            return (Py_BuildValue("OOO", dsrc.get(), finder.get(),
+                                  exact.get()));
+        } else {
+            return (NULL);
+        }
+    } catch (const std::exception& exc) {
+        PyErr_SetString(getDataSourceException("Error"), exc.what());
+        return (NULL);
+    } catch (...) {
+        PyErr_SetString(getDataSourceException("Error"),
+                        "Unknown C++ exception");
+        return (NULL);
+    }
+}
+
 // This list contains the actual set of functions we have in
 // python. Each entry has
 // 1. Python method name
@@ -120,6 +166,7 @@ ConfigurableClientList_configure(PyObject* po_self, PyObject* args) {
 PyMethodDef ConfigurableClientList_methods[] = {
     { "configure", ConfigurableClientList_configure, METH_VARARGS,
         "TODO: Docs" },
+    { "find", ConfigurableClientList_find, METH_VARARGS, "TODO: Docs" },
     { NULL, NULL, 0, NULL }
 };
 } // end of unnamed namespace
