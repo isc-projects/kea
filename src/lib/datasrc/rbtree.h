@@ -265,6 +265,10 @@ private:
         }
     }
 
+    bool isSubTreeRoot() const {
+        return (parent_ == NULL_NODE());
+    }
+
     /// \brief return the next node which is bigger than current node
     /// in the same subtree
     ///
@@ -1428,8 +1432,10 @@ RBTree<T>::nodeFission(RBNode<T>& node, const isc::dns::Name& base_name) {
 
     down_node->down_ = node.down_;
     node.down_ = down_node.get();
+
     // Restore the color of the node (may have gotten changed by the flags swap)
     node.setColor(down_node->getColor());
+
     // root node of sub tree, the initial color is BLACK
     down_node->setColor(RBNode<T>::BLACK);
     ++node_count_;
@@ -1555,7 +1561,13 @@ RBTree<T>::dumpTreeHelper(std::ostream& os, const RBNode<T>* node,
     indent(os, depth);
     os << node->name_.toText() << " ("
               << ((node->getColor() == RBNode<T>::BLACK) ? "black" : "red") << ")";
-    os << ((node->isEmpty()) ? "[invisible] \n" : "\n");
+    if (node->isEmpty()) {
+        os << " [invisible]";
+    }
+    if (node->isSubTreeRoot()) {
+        os << " [subtreeroot]";
+    }
+    os << "\n";
 
     if (node->down_ != NULLNODE) {
         indent(os, depth + 1);
