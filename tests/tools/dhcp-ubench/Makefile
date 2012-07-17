@@ -31,3 +31,16 @@ memfile_ubench: memfile_ubench.o benchmark.o
 
 clean:
 	rm -f mysql_ubench sqlite_ubench memfile_ubench *.o
+
+dhcp-perf-guide.html: dhcp-perf-guide.xml
+	xsltproc --novalid --xinclude --nonet \
+		-o $@ \
+		--path ../../../doc \
+		--stringparam section.autolabel 1 \
+		--stringparam section.label.includes.component.label 1 \
+		--stringparam html.stylesheet bind10-guide.css \
+		http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl \
+		dhcp-perf-guide.xml
+
+dhcp-perf-guide.pdf: dhcp-perf-guide.xml
+	docbook2pdf $<
