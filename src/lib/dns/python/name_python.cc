@@ -386,7 +386,7 @@ Name_split(s_Name* self, PyObject* args) {
             ret->cppobj = NULL;
             try {
                 ret->cppobj = new Name(self->cppobj->split(first, n));
-            } catch(const isc::OutOfRange& oor) {
+            } catch (const isc::OutOfRange& oor) {
                 PyErr_SetString(PyExc_IndexError, oor.what());
                 ret->cppobj = NULL;
             }
@@ -408,7 +408,7 @@ Name_split(s_Name* self, PyObject* args) {
             ret->cppobj = NULL;
             try {
                 ret->cppobj = new Name(self->cppobj->split(n));
-            } catch(const isc::OutOfRange& oor) {
+            } catch (const isc::OutOfRange& oor) {
                 PyErr_SetString(PyExc_IndexError, oor.what());
                 ret->cppobj = NULL;
             }
@@ -417,11 +417,10 @@ Name_split(s_Name* self, PyObject* args) {
                 return (NULL);
             }
         }
+    } else {
+        PyErr_Clear();
+        PyErr_SetString(PyExc_TypeError, "No valid type in split argument");
     }
-
-    PyErr_Clear();
-    PyErr_SetString(PyExc_TypeError,
-                    "No valid type in split argument");
     return (ret);
 }
 
