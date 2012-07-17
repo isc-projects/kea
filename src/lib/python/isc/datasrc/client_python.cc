@@ -51,8 +51,12 @@ namespace {
 // The s_* Class simply covers one instantiation of the object
 class s_DataSourceClient : public PyObject {
 public:
-    s_DataSourceClient() : cppobj(NULL) {};
+    s_DataSourceClient() :
+        cppobj(NULL),
+        client(NULL)
+    {};
     DataSourceClientContainer* cppobj;
+    DataSourceClient* client;
 };
 
 PyObject*
@@ -62,7 +66,7 @@ DataSourceClient_findZone(PyObject* po_self, PyObject* args) {
     if (PyArg_ParseTuple(args, "O!", &name_type, &name)) {
         try {
             DataSourceClient::FindResult find_result(
-                self->cppobj->getInstance().findZone(PyName_ToName(name)));
+                self->client->findZone(PyName_ToName(name)));
 
             result::Result r = find_result.code;
             ZoneFinderPtr zfp = find_result.zone_finder;
@@ -103,7 +107,7 @@ DataSourceClient_getIterator(PyObject* po_self, PyObject* args) {
                 }
             }
             return (createZoneIteratorObject(
-                self->cppobj->getInstance().getIterator(PyName_ToName(name_obj),
+                self->client->getIterator(PyName_ToName(name_obj),
                                                         separate_rrs),
                 po_self));
         } catch (const isc::NotImplemented& ne) {
@@ -139,7 +143,7 @@ DataSourceClient_getUpdater(PyObject* po_self, PyObject* args) {
         const bool journaling = (journaling_obj == Py_True);
         try {
             ZoneUpdaterPtr updater =
-                self->cppobj->getInstance().getUpdater(PyName_ToName(name_obj),
+                self->client->getUpdater(PyName_ToName(name_obj),
                                                        replace, journaling);
             if (!updater) {
                 return (Py_None);
@@ -184,7 +188,7 @@ DataSourceClient_getJournalReader(PyObject* po_self, PyObject* args) {
                          &begin_obj, &end_obj)) {
         try {
             pair<ZoneJournalReader::Result, ZoneJournalReaderPtr> result =
-                self->cppobj->getInstance().getJournalReader(
+                self->client->getJournalReader(
                     PyName_ToName(name_obj), static_cast<uint32_t>(begin_obj),
                     static_cast<uint32_t>(end_obj));
             PyObject* po_reader;
@@ -245,6 +249,7 @@ DataSourceClient_init(PyObject* po_self, PyObject* args, PyObject*) {
                 isc::data::Element::fromJSON(ds_config_str);
             self->cppobj = new DataSourceClientContainer(ds_type_str,
                                                          ds_config);
+            self->client = &self->cppobj->getInstance();
             return (0);
         } else {
             return (-1);
@@ -281,6 +286,7 @@ DataSourceClient_destroy(PyObject* po_self) {
     s_DataSourceClient* const self = static_cast<s_DataSourceClient*>(po_self);
     delete self->cppobj;
     self->cppobj = NULL;
+    self->client = NULL;
     Py_TYPE(self)->tp_free(self);
 }
 
