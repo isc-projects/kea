@@ -245,6 +245,12 @@ public:
         ASSERT_NE(ZoneFinderPtr(), result.finder_);
         EXPECT_EQ(name, result.finder_->getOrigin());
         EXPECT_EQ(exact, result.exact_match_);
+        // If it is a positive result, there's something to keep
+        // alive, even when we don't know what it is.
+        // Any better idea how to test it actually keeps the thing
+        // alive?
+        EXPECT_NE(shared_ptr<ClientList::FindResult::LifeKeeper>(),
+                  result.life_keeper_);
         if (from_cache) {
             EXPECT_NE(shared_ptr<InMemoryZoneFinder>(),
                       dynamic_pointer_cast<InMemoryZoneFinder>(
@@ -315,6 +321,9 @@ TEST_F(ListTest, selfTest) {
     EXPECT_EQ(result::NOTFOUND, ds_[1]->findZone(Name("example.org")).code);
     EXPECT_EQ(result::NOTFOUND, ds_[0]->findZone(Name("aaa")).code);
     EXPECT_EQ(result::NOTFOUND, ds_[0]->findZone(Name("zzz")).code);
+    // Nothing to keep alive here.
+    EXPECT_EQ(shared_ptr<ClientList::FindResult::LifeKeeper>(),
+                  negativeResult_.life_keeper_);
 }
 
 // Test the list we create with empty configuration is, in fact, empty
