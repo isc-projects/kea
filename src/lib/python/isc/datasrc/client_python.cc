@@ -28,6 +28,7 @@
 #include <datasrc/data_source.h>
 #include <datasrc/sqlite3_accessor.h>
 #include <datasrc/iterator.h>
+#include <datasrc/client_list.h>
 
 #include <dns/python/name_python.h>
 #include <dns/python/rrset_python.h>
@@ -53,10 +54,15 @@ class s_DataSourceClient : public PyObject {
 public:
     s_DataSourceClient() :
         cppobj(NULL),
-        client(NULL)
+        client(NULL),
+        keeper(NULL)
     {};
     DataSourceClientContainer* cppobj;
     DataSourceClient* client;
+    // We can't rely on the constructor or destructor being
+    // called, so this is a pointer to shared pointer, so we
+    // can call the new and delete explicitly.
+    boost::shared_ptr<ClientList::FindResult::LifeKeeper>* keeper;
 };
 
 PyObject*
@@ -250,6 +256,7 @@ DataSourceClient_init(PyObject* po_self, PyObject* args, PyObject*) {
             self->cppobj = new DataSourceClientContainer(ds_type_str,
                                                          ds_config);
             self->client = &self->cppobj->getInstance();
+            self->keeper = NULL;
             return (0);
         } else {
             return (-1);
@@ -285,8 +292,10 @@ void
 DataSourceClient_destroy(PyObject* po_self) {
     s_DataSourceClient* const self = static_cast<s_DataSourceClient*>(po_self);
     delete self->cppobj;
+    delete self->keeper;
     self->cppobj = NULL;
     self->client = NULL;
+    self->keeper = NULL;
     Py_TYPE(self)->tp_free(self);
 }
 
@@ -349,14 +358,20 @@ PyTypeObject datasourceclient_type = {
 };
 
 PyObject*
-wrapDataSourceClient(DataSourceClient* client) {
-    // There aro no exceptions here, so this is safe
+wrapDataSourceClient(DataSourceClient* client,
+                     const boost::shared_ptr<ClientList::FindResult::
+                     LifeKeeper>& life_keeper)
+{
     s_DataSourceClient *result =
         static_cast<s_DataSourceClient*>(PyObject_New(s_DataSourceClient,
                                                       &datasourceclient_type));
+    CPPPyObjectContainer<s_DataSourceClient, DataSourceClientContainer>
+        container(result);
     result->cppobj = NULL;
+    result->keeper =
+        new boost::shared_ptr<ClientList::FindResult::LifeKeeper>(life_keeper);
     result->client = client;
-    return (result);
+    return (container.release());
 }
 
 } // namespace python

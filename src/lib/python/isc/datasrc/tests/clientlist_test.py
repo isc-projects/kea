@@ -18,6 +18,7 @@ import isc.datasrc
 import isc.dns
 import unittest
 import os
+import sys
 
 TESTDATA_PATH = os.environ['GLOBAL_TESTDATA_PATH'] + os.sep
 
@@ -103,6 +104,12 @@ class ClientListTest(unittest.TestCase):
         self.assertTrue(isinstance(dsrc, isc.datasrc.DataSourceClient))
         self.assertIsNotNone(finder)
         self.assertTrue(isinstance(finder, isc.datasrc.ZoneFinder))
+        # Check the finder holds a reference to the data source
+        # Note that one reference is kept in the parameter list
+        # of getrefcount
+        self.assertEqual(3, sys.getrefcount(dsrc))
+        finder = None
+        self.assertEqual(2, sys.getrefcount(dsrc))
         # We check an exact match in test_configure already
         self.assertFalse(exact)
         dsrc, finder, exact = clist.find(isc.dns.Name("sub.example.org"),
