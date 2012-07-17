@@ -681,15 +681,15 @@ TEST_F(RBTreeTest, dumpTree) {
     std::ostringstream str2;
     rbtree.dumpTree(str);
     str2 << "tree has 14 node(s)\n" <<
-            "b. (black)\n" <<
+            "b. (black) [subtreeroot]\n" <<
             "     a. (black)\n" <<
             "          NULL\n" <<
             "          NULL\n" <<
-            "     d.e.f. (black)[invisible] \n" <<
+            "     d.e.f. (black) [invisible]\n" <<
             "          begin down from d.e.f.\n" <<
-            "          w.y. (black)[invisible] \n" <<
+            "          w.y. (black) [invisible] [subtreeroot]\n" <<
             "               begin down from w.y.\n" <<
-            "               p. (black)\n" <<
+            "               p. (black) [subtreeroot]\n" <<
             "                    o. (red)\n" <<
             "                         NULL\n" <<
             "                         NULL\n" <<
@@ -702,7 +702,7 @@ TEST_F(RBTreeTest, dumpTree) {
             "                    NULL\n" <<
             "               z. (red)\n" <<
             "                    begin down from z.\n" <<
-            "                    j. (black)\n" <<
+            "                    j. (black) [subtreeroot]\n" <<
             "                         NULL\n" <<
             "                         NULL\n" <<
             "                    end down from z.\n" <<
@@ -714,7 +714,7 @@ TEST_F(RBTreeTest, dumpTree) {
             "               NULL\n" <<
             "          g.h. (red)\n" <<
             "               begin down from g.h.\n" <<
-            "               i. (black)\n" <<
+            "               i. (black) [subtreeroot]\n" <<
             "                    NULL\n" <<
             "                    k. (red)\n" <<
             "                         NULL\n" <<
@@ -722,7 +722,6 @@ TEST_F(RBTreeTest, dumpTree) {
             "               end down from g.h.\n" <<
             "               NULL\n" <<
             "               NULL\n";
-    rbtree.dumpTree(std::cout);
     EXPECT_EQ(str.str(), str2.str());
 }
 
