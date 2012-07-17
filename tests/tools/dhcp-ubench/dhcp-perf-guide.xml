@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
+<!ENTITY mdash  "&#x2014;" >
+<!ENTITY % version SYSTEM "version.ent">
+%version;
+]>
+
+<!--
+ - Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+ -
+ - Permission to use, copy, modify, and/or distribute this software for any
+ - purpose with or without fee is hereby granted, provided that the above
+ - copyright notice and this permission notice appear in all copies.
+ -
+ - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ - AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ - LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ - PERFORMANCE OF THIS SOFTWARE.
+-->
+
+<book>
+  <?xml-stylesheet href="bind10-guide.css" type="text/css"?>
+
+  <bookinfo>
+    <title>DHCP Performance Guide</title>
+    <subtitle>Various aspects of DHCP Performance in BIND 10</subtitle>
+
+    <copyright>
+      <year>2012</year><holder>Internet Systems Consortium, Inc.</holder>
+    </copyright>
+
+    <abstract>
+      <para>BIND 10 is a framework that features Domain Name System
+      (DNS) suite and Dynamic Host Configuration Protocol (DHCP)
+      servers with development managed by Internet Systems Consortium (ISC).
+      This document describes various aspects of DHCP performance,
+      measurements and tuning. It covers BIND 10 DHCP (codename Kea),
+      existing ISC DHCP4 software, perfdhcp (a DHCP performance
+      measurement tool) and other related topics.</para>
+    </abstract>
+
+    <releaseinfo>This is a companion document for BIND 10 version
+    &__VERSION__;.</releaseinfo>
+
+  </bookinfo>
+
+  <preface>
+    <title>Preface</title>
+
+    <section id="acknowledgements">
+      <title>Acknowledgements</title>
+
+      <para>ISC would like to acknowledge generous support for
+      BIND 10 development of DHCPv4 and DHCPv6 components provided
+      by <ulink url="http://www.comcast.com/">Comcast</ulink>.</para>
+
+    </section>
+
+  </preface>
+
+  <chapter id="intro">
+    <title>Introduction</title>
+    <para>
+      This document is in its early stages of development. It is
+      expected to grow significantly in a near future. It will
+      cover topics like database backend perfomance measurements,
+      pros an cons of various optimization techniques and
+      tools.
+    </para>
+    <para>
+      Currently the following benchmarks are implemented:
+      <itemizedlist>
+        <listitem><para>in memory+flat file</para></listitem>
+        <listitem><para>SQLite</para></listitem>
+        <listitem><para>MySQL</para></listitem>
+      </itemizedlist>
+    </para>
+
+    <para>
+      As they require additional (sometimes heavy) dependencies, they are not
+      built by default. Actually, their build system completely separated.
+      It will be eventually merged with the main BIND10 makefile system, but
+      that is a low priority for now.
+    </para>
+
+    <para>
+      All benchmarks will follow the same pattern:
+      <orderedlist>
+        <listitem><para>prepare operation (connect to a database, create a file etc.)</para></listitem>
+        <listitem><para>Measure timestamp 0</para></listitem>
+        <listitem><para>Commit new lease4 (step repeated X times)</para></listitem>
+        <listitem><para>Measure timestamp 1</para></listitem>
+        <listitem><para>Search for random lease4 (step repeated X times)</para></listitem>
+        <listitem><para>Measure timestamp 2</para></listitem>
+        <listitem><para>Update existing lease4 (step repeated X times)</para></listitem>
+        <listitem><para>Measure timestamp 3</para></listitem>
+        <listitem><para>Delete existing lease4 (step repeated X times)</para></listitem>
+        <listitem><para>Measure timestamp 4</para></listitem>
+        <listitem><para>Print out statistics, based on X and measured timestamps.</para></listitem>
+      </orderedlist>
+
+      Although this approach does not attempt to simulate actual DHCP server
+      operation that has mix of all steps intervening, it answers the
+      questions about basic database strenghts and weak points. In particular
+      it can show what is the impact of specific DB optimizations, like
+      changing engine, optimizing for writes/reads etc.
+    </para>
+
+    <para>
+      The framework attempts to do the same amount of operations for every
+      backend thus allowing fair complarison between them.
+    </para>
+
+  </chapter>
+
+  <chapter id="dhcp4">
+    <title>ISC DHCP 4.x</title>
+    <para>
+      TODO: Write something about ISC DHCP4 here.
+    </para>
+  </chapter>
+
+  <chapter id="kea">
+    <title>Kea</title>
+    <para>
+
+    </para>
+
+    <section>
+      <title>Backend performance evaluation</title>
+      <para>
+        Kea will support several different database backends, using
+        both popular databases (like MySQL or SQLite) and
+        custom-developed solutions (like in-memory database).  BIND 10
+        source code features set of performance microbenchmarks.
+        These are small tools written in C/C++ that simulate expected
+        DHCP server behaviour and evaluate the performance of
+        considered databases.
+      </para>
+
+      <para>
+        Those benchmarks are stored in tests/tools/dhcp-ubench
+        directory.  This directory contains simplified prototypes for
+        various DB back-ends that are planned or considered as a
+        backend engine for BIND10 DHCP.  Athough trivial now, they are
+        expected to evolve into useful tools that will allow users to
+        measure performance in their specific environment.
+      </para>
+
+    </section>
+  </chapter>
+
+  <chapter id="perfdhcp">
+    <title>perfdhcp</title>
+    <para>
+      TODO: Write something about perfdhcp here.
+    </para>
+  </chapter>
+
+</book>
