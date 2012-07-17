@@ -19,9 +19,20 @@
 
 using namespace std;
 
-uBenchmark::uBenchmark(uint32_t iterations)
- :Num_(iterations) {
+uBenchmark::uBenchmark(uint32_t iterations, const std::string& dbname,
+                       bool sync /*= false*/, bool verbose /*= true*/,
+                       const std::string& host /* = "" */,
+                       const std::string& user /* = "" */,
+                       const std::string& pass /* = "" */)
+    :Num_(iterations), Sync_(sync), Verbose_(verbose),
+     Hostname_(host), User_(user), Passwd_(pass), DBName_(dbname)
+{
     memset(ts, 0, sizeof(ts));
+
+}
+
+bool uBenchmark::parseCmdline(int args, const char* argv[]) {
+    return false;
 }
 
 void uBenchmark::failure(const char* operation) {

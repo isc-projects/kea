@@ -18,8 +18,9 @@
 class MySQL_uBenchmark: public uBenchmark {
 public:
     MySQL_uBenchmark(const std::string& hostname, const std::string& user,
-                     const std::string& passwd, const std::string& db,
-                     uint32_t num_iterations);
+                     const std::string& pass, const std::string& db,
+                     uint32_t num_iterations, bool sync,
+                     bool verbose);
 
     virtual void printInfo();
     virtual void connect();
@@ -32,9 +33,5 @@ public:
 protected:
     void failure(const char* operation);
 
-    std::string Hostname_;
-    std::string User_;
-    std::string Pass_;
-    std::string DB_;
     MYSQL * Conn_;
 };

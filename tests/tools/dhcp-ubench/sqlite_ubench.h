@@ -18,7 +18,8 @@
 class SQLite_uBenchmark: public uBenchmark {
 public:
     SQLite_uBenchmark(const std::string& filename,
-                      uint32_t num_iterations);
+                      uint32_t num_iterations,
+                      bool sync, bool verbose);
 
     virtual void printInfo();
     virtual void connect();
@@ -31,6 +32,5 @@ public:
 protected:
     void failure(const char* operation);
 
-    std::string Filename_;
     sqlite3 *DB_;
 };
