@@ -680,7 +680,49 @@ TEST_F(RBTreeTest, dumpTree) {
     std::ostringstream str;
     std::ostringstream str2;
     rbtree.dumpTree(str);
-    str2 << "tree has 14 node(s)\nb. (black)\n     a. (black)\n          NULL\n          NULL\n     d.e.f. (black)[invisible] \n          begin down from d.e.f.\n          w.y. (black)[invisible] \n               begin down from w.y.\n               p. (black)\n                    o. (red)\n                         NULL\n                         NULL\n                    q. (red)\n                         NULL\n                         NULL\n               end down from w.y.\n               x. (red)\n                    NULL\n                    NULL\n               z. (red)\n                    begin down from z.\n                    j. (black)\n                         NULL\n                         NULL\n                    end down from z.\n                    NULL\n                    NULL\n          end down from d.e.f.\n          c. (red)\n               NULL\n               NULL\n          g.h. (red)\n               begin down from g.h.\n               i. (black)\n                    NULL\n                    k. (red)\n                         NULL\n                         NULL\n               end down from g.h.\n               NULL\n               NULL\n";
+    str2 << "tree has 14 node(s)\n" <<
+            "b. (black)\n" <<
+            "     a. (black)\n" <<
+            "          NULL\n" <<
+            "          NULL\n" <<
+            "     d.e.f. (black)[invisible] \n" <<
+            "          begin down from d.e.f.\n" <<
+            "          w.y. (black)[invisible] \n" <<
+            "               begin down from w.y.\n" <<
+            "               p. (black)\n" <<
+            "                    o. (red)\n" <<
+            "                         NULL\n" <<
+            "                         NULL\n" <<
+            "                    q. (red)\n" <<
+            "                         NULL\n" <<
+            "                         NULL\n" <<
+            "               end down from w.y.\n" <<
+            "               x. (red)\n" <<
+            "                    NULL\n" <<
+            "                    NULL\n" <<
+            "               z. (red)\n" <<
+            "                    begin down from z.\n" <<
+            "                    j. (black)\n" <<
+            "                         NULL\n" <<
+            "                         NULL\n" <<
+            "                    end down from z.\n" <<
+            "                    NULL\n" <<
+            "                    NULL\n" <<
+            "          end down from d.e.f.\n" <<
+            "          c. (red)\n" <<
+            "               NULL\n" <<
+            "               NULL\n" <<
+            "          g.h. (red)\n" <<
+            "               begin down from g.h.\n" <<
+            "               i. (black)\n" <<
+            "                    NULL\n" <<
+            "                    k. (red)\n" <<
+            "                         NULL\n" <<
+            "                         NULL\n" <<
+            "               end down from g.h.\n" <<
+            "               NULL\n" <<
+            "               NULL\n";
+    rbtree.dumpTree(std::cout);
     EXPECT_EQ(str.str(), str2.str());
 }
 
