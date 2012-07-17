@@ -24,8 +24,10 @@
 using namespace std;
 
 SQLite_uBenchmark::SQLite_uBenchmark(const string& filename,
-                                   uint32_t num_iterations)
-    :uBenchmark(num_iterations), Filename_(filename), DB_(NULL) {
+                                     uint32_t num_iterations,
+                                     bool sync, bool verbose)
+    :uBenchmark(num_iterations, filename, sync, verbose),
+     DB_(NULL) {
 
 }
 
@@ -34,15 +36,19 @@ void SQLite_uBenchmark::failure(const char* operation) {
 }
 
 void SQLite_uBenchmark::connect() {
-    int result = sqlite3_open(Filename_.c_str(), &DB_);
+    int result = sqlite3_open(DBName_.c_str(), &DB_);
     if (result) {
-        sqlite3_open(Filename_.c_str(), &DB_);
+        sqlite3_open(DBName_.c_str(), &DB_);
         failure("Failed to open DB file");
     }
 
     sqlite3_exec(DB_, "DELETE FROM lease4", NULL, NULL, NULL);
 
-    sqlite3_exec(DB_, "PRAGMA synchronous = OFF", NULL, NULL, NULL);
+    if (Sync_) {
+        sqlite3_exec(DB_, "PRAGMA synchronous = ON", NULL, NULL, NULL);
+    } else {
+        sqlite3_exec(DB_, "PRAGMA synchronous = OFF", NULL, NULL, NULL);
+    }
 
     // see http://www.sqlite.org/pragma.html#pragma_journal_mode
     // for detailed explanation. Available modes: DELETE, TRUNCATE,
@@ -116,7 +122,9 @@ void SQLite_uBenchmark::createLease4Test() {
             tmp << "INSERT error:" << errorMsg;
             failure(tmp.str().c_str());
         } else {
-            printf(".");
+            if (Verbose_) {
+                printf(".");
+            }
         };
 
     }
@@ -168,9 +176,13 @@ void SQLite_uBenchmark::searchLease4Test() {
         }
 
         if (cnt) {
-            printf(".");
+            if (Verbose_) {
+                printf(".");
+            }
         } else {
-            printf("X");
+            if (Verbose_) {
+                printf("X");
+            }
         }
 
     }
@@ -199,7 +211,9 @@ void SQLite_uBenchmark::updateLease4Test() {
             tmp << "UPDATE error:" << errorMsg;
             failure(tmp.str().c_str());
         }
-        printf(".");
+        if (Verbose_) {
+            printf(".");
+        }
     }
 
     printf("\n");
@@ -226,7 +240,9 @@ void SQLite_uBenchmark::deleteLease4Test() {
             tmp << "DELETE error:" << errorMsg;
             failure(tmp.str().c_str());
         }
-        printf(".");
+        if (Verbose_) {
+            printf(".");
+        }
     }
 
     printf("\n");
@@ -242,9 +258,11 @@ void SQLite_uBenchmark::printInfo() {
 int main(int argc, const char * argv[]) {
 
     const char * filename = "sqlite.db";
-    uint32_t num = 10000;
+    uint32_t num = 100;
+    bool sync = true;
+    bool verbose = true;
 
-    SQLite_uBenchmark bench(filename, num);
+    SQLite_uBenchmark bench(filename, num, sync, verbose);
 
     int result = bench.run();
 
