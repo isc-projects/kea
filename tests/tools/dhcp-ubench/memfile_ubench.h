@@ -14,7 +14,29 @@
 
 #include <string>
 #include <fstream>
+#include <vector>
+#include <boost/shared_ptr.hpp>
 #include "benchmark.h"
+
+struct Lease4 {
+    uint32_t addr;
+    std::vector<uint8_t> hwaddr;
+    std::vector<uint8_t> client_id;
+    uint32_t valid_lft;
+    uint32_t recycle_time;
+    time_t cltt;
+    uint32_t pool_id;
+    bool fixed;
+    std::string hostname;
+    bool fqdn_fwd;
+    bool fqdn_rev;
+    std::string options;
+    std::string comments;
+};
+
+typedef boost::shared_ptr<Lease4> Lease4Ptr;
+
+class memfile_LeaseMgr;
 
 class memfile_uBenchmark: public uBenchmark {
 public:
@@ -31,7 +53,8 @@ public:
 
 protected:
     void failure(const char* operation);
-    std::ofstream File_;
+
+    memfile_LeaseMgr * LeaseMgr_;
 
     std::string Filename_;
 };
