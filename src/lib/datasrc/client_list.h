@@ -65,15 +65,27 @@ public:
     /// Instead, all the member variables are defined as const and can be
     /// accessed directly.
     struct FindResult {
+        /// \brief Internal class for holding a reference.
+        ///
+        /// This is used to make sure the data source client isn't released
+        /// too soon.
+        ///
+        /// \see life_keeper_;
+        class LifeKeeper {
+        public:
+            virtual ~LifeKeeper() {};
+        };
         /// \brief Constructor.
         ///
         /// It simply fills in the member variables according to the
         /// parameters. See the member descriptions for their meaning.
         FindResult(DataSourceClient* dsrc_client, const ZoneFinderPtr& finder,
-                   bool exact_match) :
+                   bool exact_match,
+                   const boost::shared_ptr<LifeKeeper>& life_keeper) :
             dsrc_client_(dsrc_client),
             finder_(finder),
-            exact_match_(exact_match)
+            exact_match_(exact_match),
+            life_keeper_(life_keeper)
         {}
 
         /// \brief Negative answer constructor.
@@ -101,8 +113,9 @@ public:
         /// If no such data source exists, this is NULL pointer.
         ///
         /// Note that the pointer is valid only as long the ClientList which
-        /// returned the pointer is alive and was not reconfigured. The
-        /// ownership is preserved within the ClientList.
+        /// returned the pointer is alive and was not reconfigured or you hold
+        /// a reference to life_keeper_. The ownership is preserved within the
+        /// ClientList.
         DataSourceClient* const dsrc_client_;
 
         /// \brief The finder for the requested zone.
@@ -116,6 +129,12 @@ public:
 
         /// \brief If the result is an exact match.
         const bool exact_match_;
+
+        /// \brief Something that holds the dsrc_client_ valid.
+        ///
+        /// As long as you hold the life_keeper_, the dsrc_client_ is
+        /// guaranteed to be valid.
+        const boost::shared_ptr<LifeKeeper> life_keeper_;
     };
 
     /// \brief Search for a zone through the data sources.
