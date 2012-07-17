@@ -92,7 +92,6 @@ protected:
     AuthSrvTest() :
         dnss_(),
         server(true, xfrout, ddns_forwarder),
-        rrclass(RRClass::IN()),
         // The empty string is expected value of the parameter of
         // requestSocket, not the app_name (there's no fallback, it checks
         // the empty string is passed).
@@ -182,7 +181,6 @@ protected:
     MockXfroutClient xfrout;
     MockSocketSessionForwarder ddns_forwarder;
     AuthSrv server;
-    const RRClass rrclass;
     vector<uint8_t> response_data;
     AddressList address_store_;
     TestSocketRequestor sock_requestor_;
