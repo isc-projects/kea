@@ -32,6 +32,10 @@
     <copyright>
       <year>2012</year><holder>Internet Systems Consortium, Inc.</holder>
     </copyright>
+    <author>
+      <firstname>Tomasz</firstname>
+      <surname>Mrugalski</surname>
+    </author>
 
     <abstract>
       <para>BIND 10 is a framework that features Domain Name System
@@ -71,49 +75,6 @@
       pros an cons of various optimization techniques and
       tools.
     </para>
-    <para>
-      Currently the following benchmarks are implemented:
-      <itemizedlist>
-        <listitem><para>in memory+flat file</para></listitem>
-        <listitem><para>SQLite</para></listitem>
-        <listitem><para>MySQL</para></listitem>
-      </itemizedlist>
-    </para>
-
-    <para>
-      As they require additional (sometimes heavy) dependencies, they are not
-      built by default. Actually, their build system completely separated.
-      It will be eventually merged with the main BIND10 makefile system, but
-      that is a low priority for now.
-    </para>
-
-    <para>
-      All benchmarks will follow the same pattern:
-      <orderedlist>
-        <listitem><para>prepare operation (connect to a database, create a file etc.)</para></listitem>
-        <listitem><para>Measure timestamp 0</para></listitem>
-        <listitem><para>Commit new lease4 (step repeated X times)</para></listitem>
-        <listitem><para>Measure timestamp 1</para></listitem>
-        <listitem><para>Search for random lease4 (step repeated X times)</para></listitem>
-        <listitem><para>Measure timestamp 2</para></listitem>
-        <listitem><para>Update existing lease4 (step repeated X times)</para></listitem>
-        <listitem><para>Measure timestamp 3</para></listitem>
-        <listitem><para>Delete existing lease4 (step repeated X times)</para></listitem>
-        <listitem><para>Measure timestamp 4</para></listitem>
-        <listitem><para>Print out statistics, based on X and measured timestamps.</para></listitem>
-      </orderedlist>
-
-      Although this approach does not attempt to simulate actual DHCP server
-      operation that has mix of all steps intervening, it answers the
-      questions about basic database strenghts and weak points. In particular
-      it can show what is the impact of specific DB optimizations, like
-      changing engine, optimizing for writes/reads etc.
-    </para>
-
-    <para>
-      The framework attempts to do the same amount of operations for every
-      backend thus allowing fair complarison between them.
-    </para>
 
   </chapter>
 
@@ -151,7 +112,178 @@
         measure performance in their specific environment.
       </para>
 
+    <para>
+      Currently the following benchmarks are implemented:
+      <itemizedlist>
+        <listitem><para>in memory+flat file</para></listitem>
+        <listitem><para>SQLite</para></listitem>
+        <listitem><para>MySQL</para></listitem>
+      </itemizedlist>
+    </para>
+
+    <para>
+      As they require additional (sometimes heavy) dependencies, they are not
+      built by default. Actually, their build system is completely separated.
+      It will be eventually merged with the main BIND10 makefile system, but
+      that is a low priority for now.
+    </para>
+
+    <para>
+      All benchmarks will follow the same pattern:
+      <orderedlist>
+        <listitem><para>prepare operation (connect to a database, create a file etc.)</para></listitem>
+        <listitem><para>Measure timestamp 0</para></listitem>
+        <listitem><para>Commit new lease4 (repeated X times)</para></listitem>
+        <listitem><para>Measure timestamp 1</para></listitem>
+        <listitem><para>Search for random lease4 (repeated X times)</para></listitem>
+        <listitem><para>Measure timestamp 2</para></listitem>
+        <listitem><para>Update existing lease4 (repeated X times)</para></listitem>
+        <listitem><para>Measure timestamp 3</para></listitem>
+        <listitem><para>Delete existing lease4 (repeated X times)</para></listitem>
+        <listitem><para>Measure timestamp 4</para></listitem>
+        <listitem><para>Print out statistics, based on X and measured timestamps.</para></listitem>
+      </orderedlist>
+
+      Although this approach does not attempt to simulate actual DHCP server
+      operation that has mix of all steps intervening, it answers the
+      questions about basic database strenghts and weak points. In particular
+      it can show what is the impact of specific DB optimizations, like
+      changing engine, optimizing for writes/reads etc.
+    </para>
+
+    <para>
+      The framework attempts to do the same amount of operations for every
+      backend thus allowing fair complarison between them.
+    </para>
     </section>
+
+    <section id="mysql-backend">
+      <title>MySQL backend</title>
+      <para>MySQL backend requires MySQL client development libraries. It uses
+      mysql_config tool (that works similar to pkg-config) to discover required
+      compilation and linking options. To install required packages on Ubuntu,
+      use the following command:
+
+      <screen>$ <userinput>sudo apt-get install mysql-client mysql-server libmysqlclient-dev</userinput></screen>
+
+      Make sure that MySQL server is running. Make sure that you have your setup
+      configured so there is a user that is able to modify used database.</para>
+
+      <para>Before running tests, you need to initialize your database. You can
+      use mysql.schema script for that purpose. WARNING: It will drop existing
+      Kea database. Do not run this on your production server. Assuming your
+      MySQL user is kea, you can initialize your test database by:
+
+      <screen>$ <userinput>mysql -u kea -p &lt; mysql.schema</userinput></screen>
+      </para>
+
+      <para>After database is initialized, you are ready to run the test:
+      <screen>$ <userinput>./mysql_ubench</userinput></screen>
+
+      or
+
+      <screen>$ <userinput>./mysql_ubench &gt; results->mysql.txt</userinput></screen>
+
+      Redirecting output to a file is important, because for each operation
+      there is a single character printed to show progress. If you have a slow
+      terminal, this may considerably affect test perfromance. On the other hand,
+      printing something after each operation is required, as poor DB setting
+      may slow down operations to around 20 per second. Observant user is expected
+      to note that initial dots are printed too slowly and abort the test.</para>
+
+      <para>Currently all parameters are hardcoded. To modify them, one needs to
+      modify source code and recompile. Fortunately, that is quite easy.
+      To modify MySQL parameters, see main() method at the end of mysql_ubench.c
+      file. That is the plase where one can modify MySQL connection
+      parameters (MySQL server hostname, user and password and database name).</para>
+
+      <section>
+        <title>MySQL tweaks</title>
+        <para>To reconfigure mysql_ubench parameters, a modification to the source
+        code and recompilation is required. All parameters are listed in main()
+        function in mysql_ubench.cc file, near the end of the file. Currently supported
+        parameter are (default values specified in brackets):
+        <orderedlist>
+          <listitem><para>hostname - name of the host to connect to ("localhost")</para></listitem>
+          <listitem><para>user - MySQL username ("root")</para></listitem>
+          <listitem><para>passwd - MySQL password ("secret")</para></listitem>
+          <listitem><para>dbname - MySQL database name ("kea")</para></listitem>
+          <listitem><para>num - number of iterations (100)</para></listitem>
+          <listitem><para>sync - should the operations be performend in synchronous (true)
+          or asynchronous (false) manner (true)</para></listitem>
+          <listitem><para>verbose - should the test print out progress? (true)</para></listitem>
+        </orderedlist>
+        </para>
+
+        <para>One parameter that has huge impact on performance is a a backend engine.
+        You can get a list of engines of your MySQL implementation by using
+
+        <screen>&gt; <userinput>show engines;</userinput></screen>
+
+        in your mysql client. Two notable engines are MyISAM and InnoDB. mysql_ubench will
+        use MyISAM for synchronous mode and InnoDB for asynchronous.</para>
+    </section>
+    </section>
+
+
+    <section id="sqlite-ubench">
+      <title>SQLite-ubench</title>
+      <para>SQLite backend requires both sqlite3 development and run-time package. Their
+      names may vary from system to system, but on Ubuntu 12.04 they are called
+      sqlite3 libsqlite3-dev. To install them, use the following command:
+
+      <screen>&gt; <userinput>sudo apt-get install sqlite3 libsqlite3-dev</userinput></screen>
+
+      Before running the test the database has to be created. Use the following command for that:
+      <screen>&gt; <userinput>cat sqlite.schema | sqlite3 sqlite.db</userinput></screen>
+
+      A new database called sqlite.db will be created. That is the default name used
+      by sqlite_ubench test. If you prefer other name, make sure you update
+      sqlite_ubench.cc accordingly.</para>
+
+      <para>Once the database is created, you can run tests:
+      <screen>&gt; <userinput>./sqlite_ubench</userinput></screen>
+      or
+      <screen>&gt; <userinput>./sqlite_ubench > results-sqlite.txt</userinput></screen>
+      </para>
+
+      <section id="sqlite-tweaks">
+        <title>SQLite tweaks</title>
+        <para>To reconfigure sqlite_ubench parameters, a modification to the source
+        code and recompilation is required. All parameters are listed in main()
+        function in sqlite_ubench.cc file, near the end of the file. Currently supported
+        parameter are (default values specified in brackets):
+        <orderedlist>
+          <listitem><para>filename - name of the database file ("sqlite.db")</para></listitem>
+          <listitem><para>num - number of iterations (100)</para></listitem>
+          <listitem><para>sync - should the operations be performend in synchronous (true)
+          or asynchronous (false) manner (true)</para></listitem>
+          <listitem><para>verbose - should the test print out progress? (true)</para></listitem>
+        </orderedlist>
+        </para>
+
+        <para>SQLite can run in asynchronous or synchronous mode. This
+        mode can be controlled by using sync parameter. It is set
+        using (PRAGMA synchronous = ON or OFF).</para>
+
+        <para>Another tweakable feature is journal mode. It can be
+        turned to several modes of operation. Its value can be
+        modified in SQLite_uBenchmark::connect().  See
+        http://www.sqlite.org/pragma.html#pragma_journal_mode for
+        detailed explanantion.</para>
+      </section>
+    </section>
+
+    <section id="memfile-ubench">
+      <title>memfile-ubench</title>
+      <para> TODO </para>
+
+      <section id="memfile-tweaks">
+        <title>SQLite tweaks</title>
+        <para> ... </para>
+      </section>
+    </section>
+
   </chapter>
 
   <chapter id="perfdhcp">
