@@ -25,6 +25,9 @@ namespace python {
 
 extern PyTypeObject datasourceclient_type;
 
+// TODO: Documentation, warning
+PyObject* wrapDataSourceClient(DataSourceClient* client);
+
 } // namespace python
 } // namespace datasrc
 } // namespace isc

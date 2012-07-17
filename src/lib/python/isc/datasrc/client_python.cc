@@ -348,6 +348,17 @@ PyTypeObject datasourceclient_type = {
     0                                   // tp_version_tag
 };
 
+PyObject*
+wrapDataSourceClient(DataSourceClient* client) {
+    // There aro no exceptions here, so this is safe
+    s_DataSourceClient *result =
+        static_cast<s_DataSourceClient*>(PyObject_New(s_DataSourceClient,
+                                                      &datasourceclient_type));
+    result->cppobj = NULL;
+    result->client = client;
+    return (result);
+}
+
 } // namespace python
 } // namespace datasrc
 } // namespace isc
