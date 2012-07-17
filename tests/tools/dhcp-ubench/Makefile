@@ -8,6 +8,8 @@ SQLITE_LDFLAGS=`pkg-config sqlite3 --libs`
 
 all: mysql_ubench sqlite_ubench memfile_ubench
 
+doc: dhcp-perf-guide.html dhcp-perf-guide.pdf
+
 mysql_ubench.o: mysql_ubench.cc mysql_ubench.h
 	$(CXX) $< -c $(CFLAGS) $(MYSQL_CFLAGS)
 
