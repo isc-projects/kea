@@ -15,6 +15,8 @@
 #ifndef __PYTHON_DATASRC_CLIENT_H
 #define __PYTHON_DATASRC_CLIENT_H 1
 
+#include <datasrc/client_list.h>
+
 #include <Python.h>
 
 namespace isc {
@@ -26,7 +28,11 @@ namespace python {
 extern PyTypeObject datasourceclient_type;
 
 // TODO: Documentation, warning
-PyObject* wrapDataSourceClient(DataSourceClient* client);
+PyObject*
+wrapDataSourceClient(DataSourceClient* client,
+                     const boost::shared_ptr<ClientList::FindResult::
+                     LifeKeeper>& life_keeper = boost::shared_ptr<ClientList::
+                     FindResult::LifeKeeper>());
 
 } // namespace python
 } // namespace datasrc
