@@ -34,7 +34,10 @@ memfile_ubench: memfile_ubench.o benchmark.o
 clean:
 	rm -f mysql_ubench sqlite_ubench memfile_ubench *.o
 
-dhcp-perf-guide.html: dhcp-perf-guide.xml
+version.ent:
+	ln -s ../../../doc/version.ent
+
+dhcp-perf-guide.html: dhcp-perf-guide.xml version.ent
 	xsltproc --novalid --xinclude --nonet \
 		-o $@ \
 		--path ../../../doc \
