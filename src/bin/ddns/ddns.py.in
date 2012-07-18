@@ -554,7 +554,9 @@ class DDNSServer:
             logger.error(DDNS_START_FORWARDER_FAIL, ex)
 
     def __notify_stop_forwarder(self):
-        '''Notify auth that DDNS Update messages should no longer be forwarded'''
+        '''Notify auth that DDNS Update messages should no longer be forwarded.
+
+        '''
         try:
             seq = self._cc._session.group_sendmsg(create_command(
                     "stop_ddns_forwarder"), AUTH_MODULE_NAME)
