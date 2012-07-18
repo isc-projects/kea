@@ -12,24 +12,12 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef DATASRC_MEMORY_RDATA_ENCODER_H
-#define DATASRC_MEMORY_RDATA_ENCODER_H 1
+#include <gtest/gtest.h>
+#include <util/unittests/run_all.h>
 
-namespace isc {
-namespace datasrc {
-namespace memory {
+int
+main(int argc, char* argv[]) {
+    ::testing::InitGoogleTest(&argc, argv);
 
-enum RdataNameAttributes {
-    NAMEATTR_COMPRESSIBLE = 1,
-    NAMEATTR_ADDITIONAL = (NAMEATTR_COMPRESSIBLE << 1)
-};
-
-} // namespace memory
-} // namespace datasrc
-} // namespace isc
-
-#endif // DATASRC_MEMORY_RDATA_ENCODER_H
-
-// Local Variables:
-// mode: c++
-// End:
+    return (isc::util::unittests::run_all());
+}

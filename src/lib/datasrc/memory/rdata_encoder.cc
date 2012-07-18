@@ -55,13 +55,13 @@ struct RdataEncodeSpec {
     const RdataFieldSpec* fields;
 };
 
-const uint16_t NAME_NOATTRIBUTE_INITIALIZER = static_cast<uint16_t>(0);
-const uint16_t NAME_COMPRESSIBLE_INITIALIZER =
-    static_cast<uint16_t>(NAME_COMPRESSIBLE);
-const uint16_t NAME_ADDITIONAL_INITIALIZER =
-    static_cast<uint16_t>(NAME_ADDITIONAL);
-const uint16_t NAME_COMPADDITIONAL_INITIALIZER =
-    static_cast<uint16_t>(NAME_COMPRESSIBLE | NAME_ADDITIONAL);
+const uint16_t NAMEATTR_NOATTRIBUTE_INITIALIZER = static_cast<uint16_t>(0);
+const uint16_t NAMEATTR_COMPRESSIBLE_INITIALIZER =
+    static_cast<uint16_t>(NAMEATTR_COMPRESSIBLE);
+const uint16_t NAMEATTR_ADDITIONAL_INITIALIZER =
+    static_cast<uint16_t>(NAMEATTR_ADDITIONAL);
+const uint16_t NAMEATTR_COMPADDITIONAL_INITIALIZER =
+    static_cast<uint16_t>(NAMEATTR_COMPRESSIBLE | NAMEATTR_ADDITIONAL);
 
 const RdataFieldSpec generic_data_fields[] = {
     {RdataFieldSpec::VARLEN_DATA, {0}}
@@ -70,7 +70,7 @@ const uint16_t generic_data_fields_count =
     sizeof(generic_data_fields) / sizeof(RdataFieldSpec);
 
 const RdataFieldSpec generic_single_name_fields[] = {
-    {RdataFieldSpec::VARLEN_DATA, {NAME_COMPADDITIONAL_INITIALIZER}}
+    {RdataFieldSpec::VARLEN_DATA, {NAMEATTR_COMPADDITIONAL_INITIALIZER}}
 };
 
 // Class IN encode specs
