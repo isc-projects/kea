@@ -255,7 +255,7 @@ void SQLite_uBenchmark::printInfo() {
 
 
 
-int main(int argc, const char * argv[]) {
+int main(int argc, char * const argv[]) {
 
     const char * filename = "sqlite.db";
     uint32_t num = 100;
@@ -263,6 +263,8 @@ int main(int argc, const char * argv[]) {
     bool verbose = true;
 
     SQLite_uBenchmark bench(filename, num, sync, verbose);
+
+    bench.parseCmdline(argc, argv);
 
     int result = bench.run();
 
