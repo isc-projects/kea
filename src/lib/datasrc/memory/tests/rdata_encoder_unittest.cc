@@ -12,24 +12,20 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef DATASRC_MEMORY_RDATA_ENCODER_H
-#define DATASRC_MEMORY_RDATA_ENCODER_H 1
+#include <datasrc/memory/rdata_encoder.h>
 
-namespace isc {
-namespace datasrc {
-namespace memory {
+#include <gtest/gtest.h>
 
-enum RdataNameAttributes {
-    NAMEATTR_COMPRESSIBLE = 1,
-    NAMEATTR_ADDITIONAL = (NAMEATTR_COMPRESSIBLE << 1)
+using namespace isc::datasrc::memory;
+
+namespace {
+class RdataEncoderTest : public ::testing::Test {
+protected:
+    RdataEncoderTest() {}
 };
 
-} // namespace memory
-} // namespace datasrc
-} // namespace isc
+TEST_F(RdataEncoderTest, test1) {
+    EXPECT_NE(NAMEATTR_COMPRESSIBLE, NAMEATTR_ADDITIONAL);
+}
 
-#endif // DATASRC_MEMORY_RDATA_ENCODER_H
-
-// Local Variables:
-// mode: c++
-// End:
+}
