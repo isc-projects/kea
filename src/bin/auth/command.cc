@@ -169,13 +169,13 @@ public:
                 return;
             case ConfigurableClientList::ZONE_NOT_FOUND:
                 isc_throw(AuthCommandError, "Zone " << origin_ << "/" <<
-                          zone_class_ << " was not found in any configure "
+                          zone_class_ << " was not found in any configured "
                           "data source. Configure it first.");
             case ConfigurableClientList::ZONE_NOT_CACHED:
                 isc_throw(AuthCommandError, "Zone " << origin_ << "/" <<
                           zone_class_ << " is not served from memory, but "
                           "direcly from the data source. It is not possible "
-                          "to reload into memory, configure it to be cached "
+                          "to reload it into memory. Configure it to be cached "
                           "first.");
             case ConfigurableClientList::CACHE_DISABLED:
                 // This is an internal error. Auth server must have the cache

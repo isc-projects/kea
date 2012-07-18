@@ -311,7 +311,7 @@ TEST_F(AuthCommandTest,
     result_ = execAuthServerCommand(server_, "loadzone",
                                     Element::fromJSON(
                                         "{\"origin\": \"example.org\"}"));
-    checkAnswer(0, "Successfull load");
+    checkAnswer(0, "Successful load");
 
     // And now it should be present too.
     EXPECT_EQ(ZoneFinder::SUCCESS, server_.getClientList(RRClass::IN())->
