@@ -1646,9 +1646,8 @@ TEST_F(AuthSrvTest, DDNSForwardClose) {
 namespace {
     // Send a basic command without arguments, and check the response has
     // result code 0
-    void sendSimpleCommand(AuthSrv& server, const std::string&command) {
-        ConstElementPtr response = execAuthServerCommand(server,
-                                                         command,
+    void sendSimpleCommand(AuthSrv& server, const std::string& command) {
+        ConstElementPtr response = execAuthServerCommand(server, command,
                                                          ConstElementPtr());
         int command_result = -1;
         isc::config::parseAnswer(command_result, response);
@@ -1657,9 +1656,9 @@ namespace {
 } // end anonymous namespace
 
 TEST_F(AuthSrvTest, DDNSForwardCreateDestroy) {
-    // Test that AuthSrv returns NOTIMPL before ddns forwarder is created,
+    // Test that AuthSrv returns NOTIMP before ddns forwarder is created,
     // that is is connected when the start_ddns_forwarder command is sent,
-    // and that is it is no longer connected and returns NOTIMPL after
+    // and that is it is no longer connected and returns NOTIMP after
     // the stop_ddns_forwarding command is sent.
     scoped_ptr<AuthSrv> tmp_server(new AuthSrv(true, xfrout, ddns_forwarder));
 
