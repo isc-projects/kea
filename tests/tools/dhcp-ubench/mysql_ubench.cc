@@ -50,9 +50,6 @@ void MySQL_uBenchmark::connect() {
         cout << "MySQL library init successful." << endl;
     }
 
-    cout << "hostname=" << Hostname_ << ", user=" << User_
-         << "pass=" << Passwd_ << " db=" << DBName_ << endl;
-
     if (!mysql_real_connect(Conn_, Hostname_.c_str(), User_.c_str(),
                             Passwd_.c_str(), DBName_.c_str(), 0, NULL, 0)) {
         failure("connecting to MySQL server");
@@ -262,17 +259,19 @@ void MySQL_uBenchmark::printInfo() {
 }
 
 
-int main(int argc, const char * argv[]) {
+int main(int argc, char * const argv[]) {
 
-    const char * hostname ="localhost";
-    const char * user = "root";
-    const char * passwd = "secret";
-    const char * dbname = "kea";
-    uint32_t num = 100;
-    bool sync = true;
-    bool verbose = true;
+    const char * hostname ="localhost"; // -m (MySQL server)
+    const char * user = "root";  // -u
+    const char * passwd = "secret"; // -p
+    const char * dbname = "kea"; // -f
+    uint32_t num = 100; // -n
+    bool sync = true;  // -s
+    bool verbose = true; // -v
 
     MySQL_uBenchmark bench(hostname, user, passwd, dbname, num, sync, verbose);
+
+   bench.parseCmdline(argc, argv);
 
     int result = bench.run();
 

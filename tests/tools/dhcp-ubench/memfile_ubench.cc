@@ -292,11 +292,11 @@ void memfile_uBenchmark::deleteLease4Test() {
 }
 
 void memfile_uBenchmark::printInfo() {
-    cout << "Using memory db + write-only file." << endl;
+    cout << "Memory db (using std::map) + write-only file." << endl;
 }
 
 
-int main(int argc, const char * argv[]) {
+int main(int argc, char * const argv[]) {
 
     const char * filename = "dhcpd.leases";
     uint32_t num = 100;
@@ -304,6 +304,8 @@ int main(int argc, const char * argv[]) {
     bool verbose = false;
 
     memfile_uBenchmark bench(filename, num, sync, verbose);
+
+    bench.parseCmdline(argc, argv);
 
     int result = bench.run();
 

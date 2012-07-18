@@ -100,12 +100,23 @@
         source code features set of performance microbenchmarks.
         These are small tools written in C/C++ that simulate expected
         DHCP server behaviour and evaluate the performance of
-        considered databases.
+        considered databases. As implemented benchmarks are not really
+        simulating DHCP operation, but rather use set of primitives
+        that can be used by a real server, they are called
+        micro-benchmarks.
+      </para>
+
+      <para>Although there are many operations and data types that
+      server could store in a database, the most frequently used data
+      type is lease information. Although lease information for IPv4
+      and IPv6 differs slightly, it is expected that the performance
+      differences will be minimal between IPv4 and IPv6 lease operations.
+      Therefore each test uses lease4 table for performance measurements.
       </para>
 
       <para>
         Those benchmarks are stored in tests/tools/dhcp-ubench
-        directory.  This directory contains simplified prototypes for
+        directory. This directory contains simplified prototypes for
         various DB back-ends that are planned or considered as a
         backend engine for BIND10 DHCP.  Athough trivial now, they are
         expected to evolve into useful tools that will allow users to
@@ -191,29 +202,32 @@
       may slow down operations to around 20 per second. Observant user is expected
       to note that initial dots are printed too slowly and abort the test.</para>
 
-      <para>Currently all parameters are hardcoded. To modify them, one needs to
-      modify source code and recompile. Fortunately, that is quite easy.
-      To modify MySQL parameters, see main() method at the end of mysql_ubench.c
-      file. That is the plase where one can modify MySQL connection
-      parameters (MySQL server hostname, user and password and database name).</para>
+      <para>Currently all default parameters are hardcoded. Default values can be
+      overwritten using command line switches. Although all benchmarks take
+      the same list of parameters, some of them are specific to a given backend
+      type. To get a list of supported parameters, run your benchmark with -h option:
+
+      <screen>$ <userinput>./mysql_ubench -h</userinput>
+This is a benchmark designed to measure expected performance
+of several backends. This particular version identifies itself
+as following:
+MySQL client version is 5.5.24
+
+Possible command-line parameters:
+ -h - help (you are reading this)
+ -m hostname - specifies MySQL server to connect (MySQL backend only)
+ -u username - specifies MySQL user name (MySQL backend only)
+ -p password - specifies MySQL passwod (MySQL backend only)
+ -f name - database or filename (MySQL, SQLite and memfile)
+ -n integer - number of test repetitions (MySQL, SQLite and memfile)
+ -s yes|no - synchronous/asynchronous operation (MySQL, SQLite and memfile)
+ -v yes|no - verbose mode (MySQL, SQLite and memfile)
+</screen>
+
+      </para>
 
       <section>
         <title>MySQL tweaks</title>
-        <para>To reconfigure mysql_ubench parameters, a modification to the source
-        code and recompilation is required. All parameters are listed in main()
-        function in mysql_ubench.cc file, near the end of the file. Currently supported
-        parameter are (default values specified in brackets):
-        <orderedlist>
-          <listitem><para>hostname - name of the host to connect to ("localhost")</para></listitem>
-          <listitem><para>user - MySQL username ("root")</para></listitem>
-          <listitem><para>passwd - MySQL password ("secret")</para></listitem>
-          <listitem><para>dbname - MySQL database name ("kea")</para></listitem>
-          <listitem><para>num - number of iterations (100)</para></listitem>
-          <listitem><para>sync - should the operations be performend in synchronous (true)
-          or asynchronous (false) manner (true)</para></listitem>
-          <listitem><para>verbose - should the test print out progress? (true)</para></listitem>
-        </orderedlist>
-        </para>
 
         <para>One parameter that has huge impact on performance is a a backend engine.
         You can get a list of engines of your MySQL implementation by using
@@ -249,16 +263,15 @@
 
       <section id="sqlite-tweaks">
         <title>SQLite tweaks</title>
-        <para>To reconfigure sqlite_ubench parameters, a modification to the source
-        code and recompilation is required. All parameters are listed in main()
-        function in sqlite_ubench.cc file, near the end of the file. Currently supported
-        parameter are (default values specified in brackets):
+        <para>To modify default sqlite_ubench parameters, command line
+        switches can be used. Currently supported parameters are
+        (default values specified in brackets):
         <orderedlist>
-          <listitem><para>filename - name of the database file ("sqlite.db")</para></listitem>
-          <listitem><para>num - number of iterations (100)</para></listitem>
-          <listitem><para>sync - should the operations be performend in synchronous (true)
-          or asynchronous (false) manner (true)</para></listitem>
-          <listitem><para>verbose - should the test print out progress? (true)</para></listitem>
+          <listitem><para>-f filename - name of the database file ("sqlite.db")</para></listitem>
+          <listitem><para>-n num - number of iterations (100)</para></listitem>
+          <listitem><para>-s yes|no - should the operations be performend in synchronous (yes)
+          or asynchronous (no) manner (yes)</para></listitem>
+          <listitem><para>-v yes|no - verbose mode. Should the test print out progress? (yes)</para></listitem>
         </orderedlist>
         </para>
 
@@ -276,11 +289,32 @@
 
     <section id="memfile-ubench">
       <title>memfile-ubench</title>
-      <para> TODO </para>
+      <para>Memfile backend is custom developed prototype backend that
+      somewhat mimics operation of ISC DHCP4. It uses in-memory
+      storage using standard C++ and boost mechanisms (std::map and
+      boost::shared_ptr&gt;&lt;). All database changes are also
+      written to a lease file. That file is strictly write-only. This
+      approach takes advantage of the fact that simple append is faster
+      than edition with potential whole file relocation.</para>
 
       <section id="memfile-tweaks">
-        <title>SQLite tweaks</title>
-        <para> ... </para>
+        <title>memfile tweaks</title>
+        <para>To modify default memfile_ubench parameters, command line
+        switches can be used. Currently supported parameters are
+        (default values specified in brackets):
+        <orderedlist>
+          <listitem><para>-f filename - name of the database file ("dhcpd.leases")</para></listitem>
+          <listitem><para>-n num - number of iterations (100)</para></listitem>
+          <listitem><para>-s yes|no - should the operations be performend in synchronous (yes)
+          or asynchronous (no) manner (yes)</para></listitem>
+          <listitem><para>-v yes|no - verbose mode. Should the test print out progress? (yes)</para></listitem>
+        </orderedlist>
+        </para>
+
+        <para>memfile can run in asynchronous or synchronous mode. This
+        mode can be controlled by using sync parameter. It uses
+        fflush() and fsync() in synchronous mode to make sure that
+        data is not buffered and physically stored on disk.</para>
       </section>
     </section>
 

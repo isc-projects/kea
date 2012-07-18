@@ -31,8 +31,71 @@ uBenchmark::uBenchmark(uint32_t iterations, const std::string& dbname,
 
 }
 
-bool uBenchmark::parseCmdline(int args, const char* argv[]) {
-    return false;
+void uBenchmark::usage() {
+    cout << "This is a benchmark designed to measure expected performance" << endl;
+    cout << "of several backends. This backend identifies itself as:" << endl;
+    printInfo();
+
+    cout << endl << "Possible command-line parameters:" << endl;
+    cout << " -h - help (you are reading this)" << endl;
+    cout << " -m hostname - specifies MySQL server to connect (MySQL backend only)" << endl;
+    cout << " -u username - specifies MySQL user name (MySQL backend only)" << endl;
+    cout << " -p password - specifies MySQL passwod (MySQL backend only)" << endl;
+    cout << " -f name - database or filename (MySQL, SQLite and memfile)" << endl;
+    cout << " -n integer - number of test repetitions (MySQL, SQLite and memfile)" << endl;
+    cout << " -s yes|no - synchronous/asynchronous operation (MySQL, SQLite and memfile)" << endl;
+    cout << " -v yes|no - verbose mode (MySQL, SQLite and memfile)" << endl;
+
+    exit(EXIT_FAILURE);
+}
+
+bool uBenchmark::parseCmdline(int argc, char* const argv[]) {
+    int ch;
+
+    while ((ch = getopt(argc, argv, "hm:u:p:f:n:s:v:")) != -1) {
+        switch (ch) {
+        case 'h':
+            usage();
+        case 'm':
+            Hostname_ = string(optarg);
+            break;
+        case 'u':
+            User_ = string(optarg);
+            break;
+        case 'p':
+            Passwd_ = string(optarg);
+            break;
+        case 'f':
+            DBName_ = string(optarg);
+            break;
+        case 'n':
+            Num_ = strtol(optarg, NULL, 10);
+            if (Num_ <= 0) {
+                cerr << "Failed to iterations (-n option)." << endl;
+                usage();
+            }
+            break;
+        case 's':
+            if (!strcasecmp(optarg, "yes") || !strcmp(optarg,"1")) {
+                Sync_ = true;
+            } else {
+                Sync_ = false;
+            }
+            break;
+        case 'v':
+            if (!strcasecmp(optarg, "yes") || !strcmp(optarg,"1")) {
+                Verbose_ = true;
+            } else {
+                Verbose_ = false;
+            }
+            break;
+        case ':':
+        default:
+            usage();
+        }
+    }
+
+    return true;
 }
 
 void uBenchmark::failure(const char* operation) {
@@ -61,6 +124,16 @@ void uBenchmark::print_clock(const std::string& operation, uint32_t num,
 }
 
 int uBenchmark::run() {
+
+    cout << "Starting test. Parameters: " << endl
+         << "Number of iterations :" << Num_ << endl
+         << "Sync/async           :" << (Sync_?"sync":"async") << endl
+         << "Verbose              :" << (Verbose_?"verbose":"quiet") << endl
+         << "Database name        :" << DBName_ << endl
+         << "MySQL hostname       :" << Hostname_ << endl
+         << "MySQL username       :" << User_ << endl
+         << "MySQL password       :" << Passwd_ << endl << endl;
+
 
     srandom(time(NULL));
 
