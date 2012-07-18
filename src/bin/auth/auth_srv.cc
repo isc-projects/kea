@@ -238,10 +238,6 @@ public:
                        auto_ptr<TSIGContext> tsig_context);
     bool processUpdate(const IOMessage& io_message);
 
-    bool hasDDNSForwarder();
-    void createDDNSForwarder();
-    void destroyDDNSForwarder();
-
     IOService io_service_;
 
     MessageRenderer renderer_;
@@ -275,6 +271,14 @@ public:
     /// isc:config::ModuleSpec::validateStatistics.
     void registerStatisticsValidator();
 
+    /// Socket session forwarder for dynamic update requests
+    BaseSocketSessionForwarder& ddns_base_forwarder_;
+
+    /// Holder for the DDNS Forwarder, which is used to send
+    /// DDNS messages to b10-ddns, but can be set to empty if
+    /// b10-ddns is not running
+    boost::scoped_ptr<SocketSessionForwarderHolder> ddns_forwarder_;
+
     /// \brief Resume the server
     ///
     /// This is a wrapper call for DNSServer::resume(done), if 'done' is true,
@@ -290,6 +294,7 @@ public:
     void resumeServer(isc::asiodns::DNSServer* server,
                       isc::dns::Message& message,
                       bool done);
+
 private:
     std::string db_file_;
 
@@ -301,10 +306,6 @@ private:
 
     bool xfrout_connected_;
     AbstractXfroutClient& xfrout_client_;
-
-    // Socket session forwarder for dynamic update requests
-    BaseSocketSessionForwarder& ddns_base_forwarder_;
-    boost::scoped_ptr<SocketSessionForwarderHolder> ddns_forwarder_;
 
     /// Increment query counter
     void incCounter(const int protocol);
@@ -324,10 +325,10 @@ AuthSrvImpl::AuthSrvImpl(const bool use_cache,
     statistics_timer_(io_service_),
     counters_(),
     keyring_(NULL),
-    xfrout_connected_(false),
-    xfrout_client_(xfrout_client),
     ddns_base_forwarder_(ddns_forwarder),
-    ddns_forwarder_(NULL)
+    ddns_forwarder_(NULL),
+    xfrout_connected_(false),
+    xfrout_client_(xfrout_client)
 {
     // cur_datasrc_ is automatically initialized by the default constructor,
     // effectively being an empty (sqlite) data source.  once ccsession is up
@@ -660,7 +661,7 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
             send_answer = impl_->processNotify(io_message, message, buffer,
                                                tsig_context);
         } else if (opcode == Opcode::UPDATE()) {
-            if (impl_->hasDDNSForwarder()) {
+            if (impl_->ddns_forwarder_) {
                 send_answer = impl_->processUpdate(io_message);
             } else {
                 makeErrorMessage(impl_->renderer_, message, buffer,
@@ -888,26 +889,6 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
 }
 
 bool
-AuthSrvImpl::hasDDNSForwarder() {
-    return (ddns_forwarder_);
-}
-
-void
-AuthSrvImpl::createDDNSForwarder() {
-    LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_START_DDNS_FORWARDER);
-    ddns_forwarder_.reset(
-        new SocketSessionForwarderHolder("update", ddns_base_forwarder_));
-}
-
-void
-AuthSrvImpl::destroyDDNSForwarder() {
-    if (ddns_forwarder_) {
-        LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_STOP_DDNS_FORWARDER);
-        ddns_forwarder_.reset();
-    }
-}
-
-bool
 AuthSrvImpl::processUpdate(const IOMessage& io_message) {
     // Push the update request to a separate process via the forwarder.
     // On successful push, the request shouldn't be responded from b10-auth,
@@ -1062,12 +1043,17 @@ AuthSrv::setTSIGKeyRing(const boost::shared_ptr<TSIGKeyRing>* keyring) {
 
 void
 AuthSrv::createDDNSForwarder() {
-    impl_->createDDNSForwarder();
+    LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_START_DDNS_FORWARDER);
+    impl_->ddns_forwarder_.reset(
+        new SocketSessionForwarderHolder("update", impl_->ddns_base_forwarder_));
 }
 
 void
 AuthSrv::destroyDDNSForwarder() {
-    impl_->destroyDDNSForwarder();
+    if (impl_->ddns_forwarder_) {
+        LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_STOP_DDNS_FORWARDER);
+        impl_->ddns_forwarder_.reset();
+    }
 }
 
 

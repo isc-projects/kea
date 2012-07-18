@@ -134,12 +134,12 @@
       },
       {
         "command_name": "start_ddns_forwarder",
-        "command_description": "(Re)start internal forwarding of DDNS Update packets. This is automatically called if b10-ddns is started.",
+        "command_description": "(Re)start internal forwarding of DDNS Update messages. This is automatically called if b10-ddns is started.",
         "command_args": []
       },
       {
         "command_name": "stop_ddns_forwarder",
-        "command_description": "Stop internal forwarding of DDNS Update packets. This is automatically called if b10-ddns is stopped.",
+        "command_description": "Stop internal forwarding of DDNS Update messages. This is automatically called if b10-ddns is stopped.",
         "command_args": []
       }
     ],

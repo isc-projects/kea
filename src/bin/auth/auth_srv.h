@@ -422,7 +422,7 @@ public:
     ///
     /// Until this method is called (it is called when the
     /// start_ddns_forwarder command is sent to b10-auth), b10-auth will
-    /// respond to UPDATE packets with a NOTIMP rcode.
+    /// respond to UPDATE messages with a NOTIMP rcode.
     /// If the internal forwarder was already created, it is destroyed and
     /// created again. This is useful for instance when b10-ddns is shut
     /// down and restarted.

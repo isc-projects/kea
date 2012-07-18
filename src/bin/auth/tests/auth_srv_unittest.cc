@@ -31,6 +31,7 @@
 
 #include <datasrc/memory_datasrc.h>
 #include <auth/auth_srv.h>
+#include <auth/command.h>
 #include <auth/common.h>
 #include <auth/statistics.h>
 
@@ -1640,6 +1641,88 @@ TEST_F(AuthSrvTest, DDNSForwardClose) {
     // Destroy the server.  The forwarder should close the connection.
     tmp_server.reset();
     EXPECT_FALSE(ddns_forwarder.isConnected());
+}
+
+namespace {
+    // Send a basic command without arguments, and check the response has
+    // result code 0
+    void sendSimpleCommand(AuthSrv& server, const std::string&command) {
+        ConstElementPtr response = execAuthServerCommand(server,
+                                                         command,
+                                                         ConstElementPtr());
+        int command_result = -1;
+        isc::config::parseAnswer(command_result, response);
+        EXPECT_EQ(0, command_result);
+    }
+} // end anonymous namespace
+
+TEST_F(AuthSrvTest, DDNSForwardCreateDestroy) {
+    // Test that AuthSrv returns NOTIMPL before ddns forwarder is created,
+    // that is is connected when the start_ddns_forwarder command is sent,
+    // and that is it is no longer connected and returns NOTIMPL after
+    // the stop_ddns_forwarding command is sent.
+    scoped_ptr<AuthSrv> tmp_server(new AuthSrv(true, xfrout, ddns_forwarder));
+
+    // Prepare update message to send
+    UnitTestUtil::createRequestMessage(request_message, Opcode::UPDATE(),
+                                       default_qid, Name("example.com"),
+                                       RRClass::IN(), RRType::SOA());
+    createRequestPacket(request_message, IPPROTO_UDP);
+
+    // before creating forwarder. isConnected() should be false and
+    // rcode to UPDATE should be NOTIMP
+    parse_message->clear(Message::PARSE);
+    tmp_server->processMessage(*io_message, *parse_message, *response_obuffer,
+                               &dnsserv);
+    EXPECT_FALSE(ddns_forwarder.isConnected());
+    EXPECT_TRUE(dnsserv.hasAnswer());
+    headerCheck(*parse_message, default_qid, Rcode::NOTIMP(),
+                Opcode::UPDATE().getCode(), QR_FLAG, 0, 0, 0, 0);
+
+    // now create forwarder
+    sendSimpleCommand(*tmp_server, "start_ddns_forwarder");
+
+    // our mock does not respond, and since auth is supposed to send it on,
+    // there should now be no result when an UPDATE is sent
+    parse_message->clear(Message::PARSE);
+    tmp_server->processMessage(*io_message, *parse_message, *response_obuffer,
+                               &dnsserv);
+    EXPECT_FALSE(dnsserv.hasAnswer());
+    EXPECT_TRUE(ddns_forwarder.isConnected());
+
+    // If we send a start again, the connection should be recreated,
+    // visible because isConnected() reports false until an actual message
+    // has been forwarded
+    sendSimpleCommand(*tmp_server, "start_ddns_forwarder");
+
+    EXPECT_FALSE(ddns_forwarder.isConnected());
+    parse_message->clear(Message::PARSE);
+    tmp_server->processMessage(*io_message, *parse_message, *response_obuffer,
+                               &dnsserv);
+    EXPECT_FALSE(dnsserv.hasAnswer());
+    EXPECT_TRUE(ddns_forwarder.isConnected());
+
+    // Now tell it to stop forwarder, should respond with NOTIMP again
+    sendSimpleCommand(*tmp_server, "stop_ddns_forwarder");
+
+    parse_message->clear(Message::PARSE);
+    tmp_server->processMessage(*io_message, *parse_message, *response_obuffer,
+                               &dnsserv);
+    EXPECT_FALSE(ddns_forwarder.isConnected());
+    EXPECT_TRUE(dnsserv.hasAnswer());
+    headerCheck(*parse_message, default_qid, Rcode::NOTIMP(),
+                Opcode::UPDATE().getCode(), QR_FLAG, 0, 0, 0, 0);
+
+    // Sending stop again should make no difference
+    sendSimpleCommand(*tmp_server, "stop_ddns_forwarder");
+
+    parse_message->clear(Message::PARSE);
+    tmp_server->processMessage(*io_message, *parse_message, *response_obuffer,
+                               &dnsserv);
+    EXPECT_FALSE(ddns_forwarder.isConnected());
+    EXPECT_TRUE(dnsserv.hasAnswer());
+    headerCheck(*parse_message, default_qid, Rcode::NOTIMP(),
+                Opcode::UPDATE().getCode(), QR_FLAG, 0, 0, 0, 0);
 }
 
 }
