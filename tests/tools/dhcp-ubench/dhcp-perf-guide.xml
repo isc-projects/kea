@@ -27,10 +27,11 @@
 
   <bookinfo>
     <title>DHCP Performance Guide</title>
-    <subtitle>Various aspects of DHCP Performance in BIND 10</subtitle>
+    <!-- <subtitle>Various aspects of DHCP Performance in BIND 10</subtitle> -->
 
     <copyright>
-      <year>2012</year><holder>Internet Systems Consortium, Inc.</holder>
+      <year>2012</year>
+      <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
     <author>
       <firstname>Tomasz</firstname>
@@ -292,7 +293,7 @@ Possible command-line parameters:
       <para>Memfile backend is custom developed prototype backend that
       somewhat mimics operation of ISC DHCP4. It uses in-memory
       storage using standard C++ and boost mechanisms (std::map and
-      boost::shared_ptr&gt;&lt;). All database changes are also
+      boost::shared_ptr&lt;&gt;). All database changes are also
       written to a lease file. That file is strictly write-only. This
       approach takes advantage of the fact that simple append is faster
       than edition with potential whole file relocation.</para>
@@ -316,6 +317,224 @@ Possible command-line parameters:
         fflush() and fsync() in synchronous mode to make sure that
         data is not buffered and physically stored on disk.</para>
       </section>
+    </section>
+
+    <section>
+      <title>Performance measurements</title>
+      <para>This section contains sample results for backend performance measurements,
+      taken using microbenchmarks. Tests were conducted on reasonably powerful machine:
+      <screen>
+        CPU: Quad-core Intel(R) Core(TM) i7-2600K CPU @ 3.40GHz (8 logical cores)
+        HDD: 1,5TB Seagate Barracude ST31500341AS 7200rpm (used only one of them), ext4 partition
+        OS: Ubuntu 12.04, running kernel 3.2.0-26-generic SMP x86_64
+        compilers: g++ (Ubuntu/Linaro 4.6.3-1ubuntu5) 4.6.3
+        MySQL version: 5.5.24
+        SQLite version: 3.7.9sourceid version is 2011-11-01 00:52:41 c7c6050ef060877ebe77b41d959e9df13f8c9b5e
+      </screen>
+      </para>
+
+      <para>Benchmarks were run in two series: synchronous and
+      asynchronous. As those modes offer radically different
+      performances, synchronous mode was conducted for 1000 (one
+      thousand) repetitions and asynchronous mode was conducted for
+      100000 (hundred thousand) repetitions.</para>
+
+      <!-- raw results sync -->
+      <table><title>Synchronous results:</title>
+      <tgroup cols='6' align='center' colsep='1' rowsep='1'>
+        <colspec colname='Backend'/>
+        <colspec colname='Num' />
+        <colspec colname='Create'/>
+        <colspec colname='Search'/>
+        <colspec colname='Update'/>
+        <colspec colname='Delete'/>
+        <colspec colname='Average'/>
+        <thead>
+          <row>
+            <entry>Backend</entry>
+            <entry>Operations</entry>
+            <entry>Create</entry>
+            <entry>Search</entry>
+            <entry>Update</entry>
+            <entry>Delete</entry>
+            <entry>Average</entry>
+          </row>
+        </thead>
+        <tbody>
+          <row>
+            <entry>MySQL</entry>
+            <entry>1000</entry>
+            <entry>31.603978s</entry>
+            <entry> 0.116612s</entry>
+            <entry>27.964191s</entry>
+            <entry>27.695209s</entry>
+            <entry>21.844998s</entry>
+          </row>
+
+          <row>
+            <entry>SQLite</entry>
+            <entry>1000</entry>
+            <entry>61.421356s</entry>
+            <entry> 0.033283s</entry>
+            <entry>59.476638s</entry>
+            <entry>56.034150s</entry>
+            <entry>44.241357s</entry>
+          </row>
+
+          <row>
+            <entry>memfile</entry>
+            <entry>1000</entry>
+            <entry>41.711886s</entry>
+            <entry> 0.000724s</entry>
+            <entry>42.267578s</entry>
+            <entry>42.169679s</entry>
+            <entry>31.537467s</entry>
+          </row>
+
+        </tbody>
+      </tgroup>
+      </table>
+
+      <para>Following parameters were measured for asynchronous mode.
+      MySQL and SQLite were run with 100 thousand repetitions. Memfile
+      was run for 1 million repetitions due to much larger performance.</para>
+
+      <!-- raw results async -->
+      <table><title>Asynchronous results:</title>
+      <tgroup cols='6' align='center' colsep='1' rowsep='1'>
+        <colspec colname='Backend'/>
+        <colspec colname='Num' />
+        <colspec colname='Create'/>
+        <colspec colname='Search'/>
+        <colspec colname='Update'/>
+        <colspec colname='Delete'/>
+        <colspec colname='Average'/>
+        <thead>
+          <row>
+            <entry>Backend</entry>
+            <entry>Operations</entry>
+            <entry>Create [s]</entry>
+            <entry>Search [s]</entry>
+            <entry>Update [s]</entry>
+            <entry>Delete [s]</entry>
+            <entry>Average [s]</entry>
+          </row>
+        </thead>
+        <tbody>
+          <row>
+            <entry>MySQL</entry>
+            <entry>100000</entry>
+            <entry>10.584842s</entry>
+            <entry>10.386402s</entry>
+            <entry>10.062384s</entry>
+            <entry> 8.890197s</entry>
+            <entry> 9.980956s</entry>
+          </row>
+
+          <row>
+            <entry>SQLite</entry>
+            <entry>100000</entry>
+            <entry> 3.710356s</entry>
+            <entry> 3.159129s</entry>
+            <entry> 2.865354s</entry>
+            <entry> 2.439406s</entry>
+            <entry> 3.043561s</entry>
+          </row>
+
+          <row>
+            <entry>memfile</entry>
+            <entry>1000000 (sic!)</entry>
+            <entry> 6.084131s</entry>
+            <entry> 0.862667s</entry>
+            <entry> 6.018585s</entry>
+            <entry> 5.146704s</entry>
+            <entry> 4.528022s</entry>
+          </row>
+
+        </tbody>
+      </tgroup>
+      </table>
+
+      <para>Estimated performance:</para>
+
+      <table><title>Estimated performance</title>
+      <tgroup cols='6' align='center' colsep='1' rowsep='1'>
+        <colspec colname='Backend'/>
+        <colspec colname='Create'/>
+        <colspec colname='Search'/>
+        <colspec colname='Update'/>
+        <colspec colname='Delete'/>
+        <colspec colname='Average'/>
+        <thead>
+          <row>
+            <entry>Backend</entry>
+            <entry>Create [oper/s]</entry>
+            <entry>Search [oper/s]</entry>
+            <entry>Update [oper/s]</entry>
+            <entry>Delete [oper/s]</entry>
+            <entry>Average [oper/s]</entry>
+          </row>
+        </thead>
+        <tbody>
+          <row>
+            <entry>MySQL (async)</entry>
+            <entry>9447.47</entry>
+            <entry>9627.97</entry>
+            <entry>9938.00</entry>
+            <entry>11248.34</entry>
+            <entry>10065.45</entry>
+          </row>
+
+          <row>
+            <entry>SQLite (async)</entry>
+            <entry>26951.59</entry>
+            <entry>31654.29</entry>
+            <entry>34899.70</entry>
+            <entry>40993.59</entry>
+            <entry>33624.79</entry>
+          </row>
+
+          <row>
+            <entry>memfile (async)</entry>
+            <entry>164362.01</entry>
+            <entry>1159195.84</entry>
+            <entry>166152.01</entry>
+            <entry>194299.11</entry>
+            <entry>421002.24</entry>
+          </row>
+
+
+          <row>
+            <entry>MySQL (sync)</entry>
+            <entry>31.64</entry>
+            <entry>8575.45</entry>
+            <entry>35.76</entry>
+            <entry>36.11</entry>
+            <entry>2169.74</entry>
+          </row>
+
+          <row>
+            <entry>SQLite (sync)</entry>
+            <entry>16.28</entry>
+            <entry>20045.37</entry>
+            <entry>16.81</entry>
+            <entry>17.85</entry>
+            <entry>7524.08</entry>
+          </row>
+
+          <row>
+            <entry>memfile (sync)</entry>
+            <entry>23.97</entry>
+            <entry>1381215.47</entry>
+            <entry>23.66</entry>
+            <entry>23.71</entry>
+            <entry>345321.70</entry>
+          </row>
+
+        </tbody>
+      </tgroup>
+      </table>
+
     </section>
 
   </chapter>
