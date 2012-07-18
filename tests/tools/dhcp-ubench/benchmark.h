@@ -42,9 +42,11 @@ public:
 
     int run();
 
-    bool parseCmdline(int args, const char* argv[]);
+    bool parseCmdline(int args, char* const argv[]);
 
 protected:
+    void usage();
+
     uint32_t Num_; // number of operations (e.g. insert lease num times)
 
     bool Sync_;  // synchronous or asynchonous mode?
