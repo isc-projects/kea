@@ -46,23 +46,6 @@ class LabelSequence {
     friend std::string Name::toText(bool) const;
 
 public:
-    /// \brief Constructs a LabelSequence for the given label sequence
-    ///
-    /// \note The associated data MUST remain in scope during the lifetime
-    /// of this LabelSequence, since only the pointers are copied.
-    ///
-    /// \note No validation is done on the given data upon construction;
-    ///       use with care.
-    ///
-    /// \param ls The LabelSequence to construct a LabelSequence from
-    explicit LabelSequence(const LabelSequence& ls):
-                                     data_(ls.data_),
-                                     offsets_(ls.offsets_),
-                                     offsets_size_(ls.offsets_size_),
-                                     first_label_(ls.first_label_),
-                                     last_label_(ls.last_label_)
-    {}
-
     /// \brief Constructs a LabelSequence for the given name
     ///
     /// \note The associated Name MUST remain in scope during the lifetime
@@ -97,6 +80,23 @@ public:
     LabelSequence(const uint8_t* data,
                   const uint8_t* offsets,
                   size_t offsets_size);
+
+    /// \brief Copy constructor.
+    ///
+    /// \note The associated data MUST remain in scope during the lifetime
+    /// of this LabelSequence, since only the pointers are copied.
+    ///
+    /// \note No validation is done on the given data upon construction;
+    ///       use with care.
+    ///
+    /// \param ls The LabelSequence to construct a LabelSequence from
+    LabelSequence(const LabelSequence& ls):
+                                     data_(ls.data_),
+                                     offsets_(ls.offsets_),
+                                     offsets_size_(ls.offsets_size_),
+                                     first_label_(ls.first_label_),
+                                     last_label_(ls.last_label_)
+    {}
 
     /// \brief Return the wire-format data for this LabelSequence
     ///
