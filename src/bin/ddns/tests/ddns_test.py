@@ -1183,7 +1183,6 @@ class TestDDNSSession(unittest.TestCase):
         '''Check that the command 'start_ddns_forwarder' has been called
            This test removes said message from the sent message queue.
         '''
-
         sent_msg, sent_group = self.__cc_session._sent_msg.pop(0)
         sent_cmd = sent_msg['command']
         self.assertEqual('Auth', sent_group)
@@ -1194,7 +1193,7 @@ class TestDDNSSession(unittest.TestCase):
         self.__cc_session._recvmsg_called = 0
 
     def check_session_stop_forwarder_called(self):
-        '''Check that the command 'start_ddns_forwarder' has been called
+        '''Check that the command 'stop_ddns_forwarder' has been called
            This test removes said message from the sent message queue.
         '''
         # check the last message sent
@@ -1207,6 +1206,8 @@ class TestDDNSSession(unittest.TestCase):
     def test_session_msg(self):
         '''Test post update communication with other modules.'''
 
+        # Check that start_ddns_forwarder has been called upon
+        # initialization
         self.check_session_start_forwarder_called()
 
         # Normal cases, confirming communication takes place iff update
@@ -1305,6 +1306,37 @@ class TestDDNSSession(unittest.TestCase):
 
         # check the result
         self.check_session(UPDATE_DROP)
+
+    def test_session_start_stop_forwarder_failures(self):
+        '''Check that we don't crash if the server reports an error
+           setting up or closing down the DDNS UPDATE message forwarder,
+           or if there is an exception from the message queue.'''
+        self.__cc_session._answer_code = 1
+        self.server._DDNSServer__notify_start_forwarder()
+        self.server._DDNSServer__notify_stop_forwarder()
+
+        for exc in [ SessionError("sessionerror"),
+                     SessionTimeout("sessiontimeout"),
+                     ProtocolError("protocolerror") ]:
+            self.__cc_session._recvmsg_exception = exc
+            self.server._DDNSServer__notify_start_forwarder()
+            self.server._DDNSServer__notify_stop_forwarder()
+            self.__cc_session._recvmsg_exception = None
+
+            self.__cc_session._sendmsg_exception = exc
+            self.server._DDNSServer__notify_start_forwarder()
+            self.server._DDNSServer__notify_stop_forwarder()
+            self.__cc_session._recvmsg_exception = None
+
+    def test_session_auth_started(self):
+        '''Check that 'start_ddns_forwarder' is sent when the notification
+           'auth_started' is received'''
+        # It should have already been called during init
+        self.check_session_start_forwarder_called()
+
+        # auth_started message should trigger it again
+        answer = self.server.command_handler('auth_started', None)
+        self.check_session_start_forwarder_called()
 
 class TestMain(unittest.TestCase):
     def setUp(self):
