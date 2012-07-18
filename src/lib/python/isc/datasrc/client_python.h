@@ -27,7 +27,17 @@ namespace python {
 
 extern PyTypeObject datasourceclient_type;
 
-// TODO: Documentation, warning
+/// \brief Create a DataSourceClient python object
+///
+/// Unlike many similar functions, this one does not create a copied instance
+/// of the passed object. It wraps the given one. This is why the name is
+/// different than the usual.
+///
+/// \param client The client to wrap.
+/// \param life_keeper An optional object which keeps the client pointer valid.
+///     The object will be kept inside the wrapper too, making sure that the
+///     client is not destroyed sooner than the python object. The keeper thing
+///     is designed to acommodate the interface of the ClientList.
 PyObject*
 wrapDataSourceClient(DataSourceClient* client,
                      const boost::shared_ptr<ClientList::FindResult::

@@ -32,7 +32,6 @@
 
 #include "configurableclientlist_python.h"
 #include "datasrc.h"
-#include "configurableclientlist_inc.cc"
 #include "finder_python.h"
 #include "client_python.h"
 
@@ -174,10 +173,54 @@ ConfigurableClientList_find(PyObject* po_self, PyObject* args) {
 // 4. Documentation
 PyMethodDef ConfigurableClientList_methods[] = {
     { "configure", ConfigurableClientList_configure, METH_VARARGS,
-        "TODO: Docs" },
-    { "find", ConfigurableClientList_find, METH_VARARGS, "TODO: Docs" },
+        "configure(configuration, allow_cache) -> None\n\
+\n\
+Wrapper around C++ ConfigurableClientList::configure\n\
+\n\
+This sets the active configuration. It fills the ConfigurableClientList with\
+corresponding data source clients.\n\
+\n\
+If any error is detected, an exception is raised and the previous\
+configuration preserved.\n\
+\n\
+Parameters:\n\
+  configuration     The configuration, as a JSON encoded string.\
+  allow_cache       If caching is allowed." },
+    { "find", ConfigurableClientList_find, METH_VARARGS,
+"find(zone, want_exact_match=False, want_finder=True) -> datasrc_client,\
+zone_finder, exact_match\n\
+\n\
+Look for a data source containing the given zone.\n\
+\n\
+It searches through the contained data sources and returns a data source\
+containing the zone, the zone finder of the zone and a boolean if the answer\
+is an exact match.\n\
+\n\
+The first parameter is isc.dns.Name object of a name in the zone. If the\
+want_exact_match is True, only zone with this exact origin is returned.\
+If it is False, the best matching zone is returned.\n\
+\n\
+If the want_finder is False, the returned zone_finder might be None even\
+if the data source is identified (in such case, the datasrc_client is not\
+None). Setting it to false allows the client list some optimisations, if\
+you don't need it, but if you do need it, it is better to set it to True\
+instead of getting it from the datasrc_client later.\n\
+\n\
+If no answer is found, the datasrc_client and zone_finder are None." },
     { NULL, NULL, 0, NULL }
 };
+
+const char* const ConfigurableClientList_doc = "\
+The list of data source clients\n\
+\n\
+The purpose is to have several data source clients of the same class\
+and then be able to search through them to identify the one containing\
+a given zone.\n\
+\n\
+Unlike the C++ version, we don't have the abstract base class. Abstract\
+classes are not needed due to the duck typing nature of python.\
+";
+
 } // end of unnamed namespace
 
 namespace isc {
