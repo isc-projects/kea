@@ -1101,6 +1101,7 @@ AC_CONFIG_FILES([Makefile
                  src/lib/exceptions/Makefile
                  src/lib/exceptions/tests/Makefile
                  src/lib/datasrc/Makefile
+                 src/lib/datasrc/memory/Makefile
                  src/lib/datasrc/tests/Makefile
                  src/lib/datasrc/tests/testdata/Makefile
                  src/lib/xfr/Makefile
