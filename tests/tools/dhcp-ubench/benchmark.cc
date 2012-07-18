@@ -117,8 +117,8 @@ void uBenchmark::print_clock(const std::string& operation, uint32_t num,
 
     double oneoper = (tv_nsec/1000 + tv_sec*1000000)/num;
 
-    cout << "Operation " << operation << " repeated " << num << " times took "
-         << tv_sec << " seconds, " << tv_nsec/1000 << " us, 1 operation took "
+    cout << operation << " repeated " << num << " times took "
+         << tv_sec << " s, " << tv_nsec/1000 << " us, 1 operation took "
          << oneoper << "us (or " << (1000000/oneoper) << " oper/sec)" << endl;
 
 }
