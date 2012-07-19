@@ -419,8 +419,9 @@ RBNode<T>::abstractSuccessor(typename RBNode<T>::RBNodePtr RBNode<T>::*left,
     // subtree.
     if (current->*right != RBNode<T>::NULL_NODE()) {
         current = (current->*right).get();
-        while (current->*left != RBNode<T>::NULL_NODE()) {
-            current = (current->*left).get();
+        const RBNode<T>* left_n;
+        while ((left_n = (current->*left).get()) != RBNode<T>::NULL_NODE()) {
+            current = left_n;
         }
         return (current);
     }
@@ -1090,9 +1091,11 @@ RBTree<T>::deleteHelper(RBNode<T>* root) {
 
     RBNode<T>* node = root;
     while (root->getLeft() != NULLNODE || root->getRight() != NULLNODE) {
-        while (node->getLeft() != NULLNODE || node->getRight() != NULLNODE) {
-            node = (node->getLeft() != NULLNODE) ? node->getLeft() :
-                node->getRight();
+        RBNode<T>* left(NULLNODE);
+        RBNode<T>* right(NULLNODE);
+        while ((left = node->getLeft()) != NULLNODE ||
+               (right = node->getRight()) != NULLNODE) {
+            node = (left != NULLNODE) ? left : right;
         }
 
         RBNode<T>* parent = node->getParent();
@@ -1193,8 +1196,9 @@ RBTree<T>::nextNode(RBTreeNodeChain<T>& node_path) const {
     const RBNode<T>* node = node_path.top();
     // if node has sub domain, the next domain is the smallest
     // domain in sub domain tree
-    if (node->getDown() != NULLNODE) {
-        const RBNode<T>* left_most = node->getDown();
+    const RBNode<T>* down = node->getDown();
+    if (down != NULLNODE) {
+        const RBNode<T>* left_most = down;
         while (left_most->left_ != NULLNODE) {
             left_most = left_most->getLeft();
         }
@@ -1265,11 +1269,12 @@ RBTree<T>::previousNode(RBTreeNodeChain<T>& node_path) const {
                     node_path.push(current);
                     // Go a level down and as much right there as possible
                     current = current->getDown();
-                    while (current->getRight() != NULLNODE) {
+                    const RBNode<T>* right(NULLNODE);
+                    while ((right = current->getRight()) != NULLNODE) {
                         // A small trick. The current may be NULLNODE, but
                         // such node has the right_ pointer and it is equal
                         // to NULLNODE.
-                        current = current->getRight();
+                        current = right;
                     }
                 }
                 // Now, the one on top of the path is the one we want. We
@@ -1343,12 +1348,14 @@ RBTree<T>::previousNode(RBTreeNodeChain<T>& node_path) const {
     node_path.push(node);
 
     // Try going as deep as possible, keeping on the right side of the trees
-    while (node->getDown() != NULLNODE) {
+    const RBNode<T>* down;
+    while ((down = node->getDown()) != NULLNODE) {
         // Move to the tree below
-        node = node->getDown();
+        node = down;
         // And get as much to the right of the tree as possible
-        while (node->getRight() != NULLNODE) {
-            node = node->getRight();
+        const RBNode<T>* right(NULLNODE);
+        while ((right = node->getRight()) != NULLNODE) {
+            node = right;
         }
         // Now, we found the right-most node in the sub-tree, we need to
         // include it in the path
@@ -1470,39 +1477,43 @@ RBTree<T>::insertRebalance(typename RBNode<T>::RBNodePtr* root,
                            RBNode<T>* node)
 {
     RBNode<T>* uncle;
-    while (node != *root && node->getParent()->color_ == RBNode<T>::RED) {
-        if (node->getParent() == node->getParent()->getParent()->getLeft()) {
-            uncle = node->getParent()->getParent()->getRight();
+    RBNode<T>* parent;
+    while (node != *root &&
+           (parent = node->getParent())->color_ == RBNode<T>::RED) {
+        if (parent == parent->getParent()->getLeft()) {
+            uncle = parent->getParent()->getRight();
 
             if (uncle->color_ == RBNode<T>::RED) {
-                node->getParent()->color_ = RBNode<T>::BLACK;
+                parent->color_ = RBNode<T>::BLACK;
                 uncle->color_ = RBNode<T>::BLACK;
-                node->getParent()->getParent()->color_ = RBNode<T>::RED;
-                node = node->getParent()->getParent();
+                parent->getParent()->color_ = RBNode<T>::RED;
+                node = parent->getParent();
             } else {
-                if (node == node->getParent()->getRight()) {
-                    node = node->getParent();
+                if (node == parent->getRight()) {
+                    node = parent;
+                    parent = node->getParent();
                     leftRotate(root, node);
                 }
-                node->getParent()->color_ = RBNode<T>::BLACK;
-                node->getParent()->getParent()->color_ = RBNode<T>::RED;
-                rightRotate(root, node->getParent()->getParent());
+                parent->color_ = RBNode<T>::BLACK;
+                parent->getParent()->color_ = RBNode<T>::RED;
+                rightRotate(root, parent->getParent());
             }
         } else {
-            uncle = node->getParent()->getParent()->getLeft();
+            uncle = parent->getParent()->getLeft();
             if (uncle->color_ == RBNode<T>::RED) {
-                node->getParent()->color_ = RBNode<T>::BLACK;
+                parent->color_ = RBNode<T>::BLACK;
                 uncle->color_ = RBNode<T>::BLACK;
-                node->getParent()->getParent()->color_ = RBNode<T>::RED;
-                node = node->getParent()->getParent();
+                parent->getParent()->color_ = RBNode<T>::RED;
+                node = parent->getParent();
             } else {
-                if (node == node->getParent()->getLeft()) {
-                    node = node->getParent();
+                if (node == parent->getLeft()) {
+                    node = parent;
+                    parent = node->getParent();
                     rightRotate(root, node);
                 }
-                node->getParent()->color_ = RBNode<T>::BLACK;
-                node->getParent()->getParent()->color_ = RBNode<T>::RED;
-                leftRotate(root, node->getParent()->getParent());
+                parent->color_ = RBNode<T>::BLACK;
+                parent->getParent()->color_ = RBNode<T>::RED;
+                leftRotate(root, parent->getParent());
             }
         }
     }
@@ -1515,17 +1526,19 @@ template <typename T>
 RBNode<T>*
 RBTree<T>::leftRotate(typename RBNode<T>::RBNodePtr* root, RBNode<T>* node) {
     RBNode<T>* right = node->getRight();
-    node->right_ = right->getLeft();
-    if (right->getLeft() != NULLNODE)
-        right->getLeft()->parent_ = node;
+    RBNode<T>* rleft = right->getLeft();
+    node->right_ = rleft;
+    if (rleft != NULLNODE)
+        rleft->parent_ = node;
 
-    right->parent_ = node->getParent();
+    RBNode<T>* parent = node->getParent();
+    right->parent_ = parent;
 
-    if (node->getParent() != NULLNODE) {
-        if (node == node->getParent()->getLeft()) {
-            node->getParent()->left_ = right;
+    if (parent != NULLNODE) {
+        if (node == parent->getLeft()) {
+            parent->left_ = right;
         } else  {
-            node->getParent()->right_ = right;
+            parent->right_ = right;
         }
     } else {
         *root = right;
@@ -1540,17 +1553,19 @@ template <typename T>
 RBNode<T>*
 RBTree<T>::rightRotate(typename RBNode<T>::RBNodePtr* root, RBNode<T>* node) {
     RBNode<T>* left = node->getLeft();
-    node->left_ = left->getRight();
-    if (left->getRight() != NULLNODE)
-        left->getRight()->parent_ = node;
+    RBNode<T>* lright = left->getRight();
+    node->left_ = lright;
+    if (lright != NULLNODE)
+        lright->parent_ = node;
 
-    left->parent_ = node->getParent();
+    RBNode<T>* parent = node->getParent();
+    left->parent_ = parent;
 
     if (node->parent_ != NULLNODE) {
-        if (node == node->getParent()->getRight()) {
-            node->getParent()->right_ = left;
+        if (node == parent->getRight()) {
+            parent->right_ = left;
         } else  {
-            node->getParent()->left_ = left;
+            parent->left_ = left;
         }
     } else {
         *root = left;
@@ -1585,10 +1600,11 @@ RBTree<T>::dumpTreeHelper(std::ostream& os, const RBNode<T>* node,
               << ((node->color_ == RBNode<T>::BLACK) ? "black" : "red") << ")";
     os << ((node->isEmpty()) ? "[invisible] \n" : "\n");
 
-    if (node->getDown() != NULLNODE) {
+    const RBNode<T>* down = node->getDown();
+    if (down != NULLNODE) {
         indent(os, depth + 1);
         os << "begin down from " << node->name_.toText() << "\n";
-        dumpTreeHelper(os, node->getDown(), depth + 1);
+        dumpTreeHelper(os, down, depth + 1);
         indent(os, depth + 1);
         os << "end down from " << node->name_.toText() << "\n";
     }
