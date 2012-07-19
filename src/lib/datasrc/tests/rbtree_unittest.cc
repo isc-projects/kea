@@ -16,6 +16,8 @@
 
 #include <exceptions/exceptions.h>
 
+#include <util/memory_segment_local.h>
+
 #include <dns/name.h>
 #include <dns/rrclass.h>
 #include <dns/rrset.h>
@@ -54,9 +56,30 @@ const size_t Name::MAX_LABELS;
  */
 
 namespace {
+class TreeHolder {
+public:
+    TreeHolder(util::MemorySegment& mem_sgmt, RBTree<int>* tree) :
+        mem_sgmt_(mem_sgmt), tree_(tree)
+    {}
+    ~TreeHolder() {
+        RBTree<int>::destroy(mem_sgmt_, tree_);
+    }
+    RBTree<int>* get() { return (tree_); }
+private:
+    util::MemorySegment& mem_sgmt_;
+    RBTree<int>* tree_;
+};
+
 class RBTreeTest : public::testing::Test {
 protected:
-    RBTreeTest() : rbtree_expose_empty_node(true), crbtnode(NULL) {
+    RBTreeTest() :
+        rbtree_holder_(mem_sgmt_, RBTree<int>::create(mem_sgmt_)),
+        rbtree_expose_empty_node_holder_(mem_sgmt_,
+                                         RBTree<int>::create(mem_sgmt_, true)),
+        rbtree(*rbtree_holder_.get()),
+        rbtree_expose_empty_node(*rbtree_expose_empty_node_holder_.get()),
+        crbtnode(NULL)
+    {
         const char* const domain_names[] = {
             "c", "b", "a", "x.d.e.f", "z.d.e.f", "g.h", "i.g.h", "o.w.y.d.e.f",
             "j.z.d.e.f", "p.w.y.d.e.f", "q.w.y.d.e.f", "k.g.h"};
@@ -71,8 +94,11 @@ protected:
         }
     }
 
-    RBTree<int> rbtree;
-    RBTree<int> rbtree_expose_empty_node;
+    util::MemorySegmentLocal mem_sgmt_;
+    TreeHolder rbtree_holder_;
+    TreeHolder rbtree_expose_empty_node_holder_;
+    RBTree<int>& rbtree;
+    RBTree<int>& rbtree_expose_empty_node;
     RBNode<int>* rbtnode;
     const RBNode<int>* crbtnode;
 };
@@ -275,7 +301,8 @@ TEST_F(RBTreeTest, chainLevel) {
 
     // insert one node to the tree and find it.  there should be exactly
     // one level in the chain.
-    RBTree<int> tree(true);
+    TreeHolder tree_holder(mem_sgmt_, RBTree<int>::create(mem_sgmt_, true));
+    RBTree<int>& tree(*tree_holder.get());
     Name node_name(Name::ROOT_NAME());
     EXPECT_EQ(RBTree<int>::SUCCESS, tree.insert(node_name, &rbtnode));
     EXPECT_EQ(RBTree<int>::EXACTMATCH,
@@ -542,7 +569,8 @@ TEST_F(RBTreeTest, previousNode) {
     {
         SCOPED_TRACE("Lookup in empty tree");
         // Just check it doesn't crash, etc.
-        RBTree<int> empty_tree;
+        TreeHolder tree_holder(mem_sgmt_, RBTree<int>::create(mem_sgmt_));
+        RBTree<int>& empty_tree(*tree_holder.get());
         EXPECT_EQ(RBTree<int>::NOTFOUND,
                   empty_tree.find(Name("x"), &node, node_path));
         EXPECT_EQ(static_cast<void*>(NULL), node);
@@ -586,7 +614,8 @@ TEST_F(RBTreeTest, getLastComparedNode) {
     EXPECT_EQ(static_cast<void*>(NULL), chain.getLastComparedNode());
 
     // A search for an empty tree should result in no 'last compared', too.
-    RBTree<int> empty_tree;
+    TreeHolder tree_holder(mem_sgmt_, RBTree<int>::create(mem_sgmt_));
+    RBTree<int>& empty_tree(*tree_holder.get());
     EXPECT_EQ(RBTree<int>::NOTFOUND,
               empty_tree.find(Name("a"), &crbtnode, chain));
     EXPECT_EQ(static_cast<void*>(NULL), chain.getLastComparedNode());
@@ -731,7 +760,8 @@ TEST_F(RBTreeTest, swap) {
     size_t count1(rbtree.getNodeCount());
 
     // Create second one and store state
-    RBTree<int> tree2;
+    TreeHolder tree_holder(mem_sgmt_, RBTree<int>::create(mem_sgmt_));
+    RBTree<int>& tree2(*tree_holder.get());
     RBNode<int>* node;
     tree2.insert(Name("second"), &node);
     std::ostringstream str2;
@@ -757,7 +787,8 @@ TEST_F(RBTreeTest, swap) {
 // any domain names should be considered a subdomain of it), so it makes
 // sense to test cases with the root zone explicitly.
 TEST_F(RBTreeTest, root) {
-    RBTree<int> root;
+    TreeHolder tree_holder(mem_sgmt_, RBTree<int>::create(mem_sgmt_));
+    RBTree<int>& root(*tree_holder.get());
     root.insert(Name::ROOT_NAME(), &rbtnode);
     rbtnode->setData(RBNode<int>::NodeDataPtr(new int(1)));
 
@@ -778,7 +809,9 @@ TEST_F(RBTreeTest, root) {
 
     // Perform the same tests for the tree that allows matching against empty
     // nodes.
-    RBTree<int> root_emptyok(true);
+    TreeHolder tree_holder_emptyok(mem_sgmt_,
+                                   RBTree<int>::create(mem_sgmt_, true));
+    RBTree<int>& root_emptyok(*tree_holder_emptyok.get());
     root_emptyok.insert(Name::ROOT_NAME(), &rbtnode);
     EXPECT_EQ(RBTree<int>::EXACTMATCH,
               root_emptyok.find(Name::ROOT_NAME(), &crbtnode));
