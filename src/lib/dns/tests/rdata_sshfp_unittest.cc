@@ -56,11 +56,28 @@ TEST_F(Rdata_SSHFP_Test, createFromText) {
     EXPECT_EQ(0, rdata_sshfp4.compare(rdata_sshfp));
 }
 
+TEST_F(Rdata_SSHFP_Test, algorithmTypes) {
+    // Some of these may not be RFC conformant, but we relax the check
+    // in our code to work with algorithm and fingerprint types that may
+    // show up in the future.
+    EXPECT_NO_THROW(const generic::SSHFP rdata_sshfp("0 1 123456789abcdef67890123456789abcdef67890"));
+    EXPECT_NO_THROW(const generic::SSHFP rdata_sshfp("1 1 123456789abcdef67890123456789abcdef67890"));
+    EXPECT_NO_THROW(const generic::SSHFP rdata_sshfp("2 1 123456789abcdef67890123456789abcdef67890"));
+    EXPECT_NO_THROW(const generic::SSHFP rdata_sshfp("3 1 123456789abcdef67890123456789abcdef67890"));
+    EXPECT_NO_THROW(const generic::SSHFP rdata_sshfp("128 1 123456789abcdef67890123456789abcdef67890"));
+    EXPECT_NO_THROW(const generic::SSHFP rdata_sshfp("255 1 123456789abcdef67890123456789abcdef67890"));
+    EXPECT_NO_THROW(const generic::SSHFP rdata_sshfp("1 1 123456789abcdef67890123456789abcdef67890"));
+    EXPECT_NO_THROW(const generic::SSHFP rdata_sshfp("1 2 123456789abcdef67890123456789abcdef67890"));
+    EXPECT_NO_THROW(const generic::SSHFP rdata_sshfp("1 3 123456789abcdef67890123456789abcdef67890"));
+    EXPECT_NO_THROW(const generic::SSHFP rdata_sshfp("1 128 123456789abcdef67890123456789abcdef67890"));
+    EXPECT_NO_THROW(const generic::SSHFP rdata_sshfp("1 255 123456789abcdef67890123456789abcdef67890"));
+}
+
 TEST_F(Rdata_SSHFP_Test, badText) {
     EXPECT_THROW(const generic::SSHFP rdata_sshfp("1"), InvalidRdataText);
     EXPECT_THROW(const generic::SSHFP rdata_sshfp("1 2"), InvalidRdataText);
     EXPECT_THROW(const generic::SSHFP rdata_sshfp("BUCKLE MY SHOES"), InvalidRdataText);
-    EXPECT_THROW(const generic::SSHFP rdata_sshfp("1 2 foo bar"), InvalidRdataText);
+    EXPECT_THROW(const generic::SSHFP rdata_sshfp("1 2 foo bar"), isc::BadValue);
 }
 
 TEST_F(Rdata_SSHFP_Test, copy) {
