@@ -331,6 +331,10 @@ private:
     ///
     /// The result is returned as parameter because MutableResult is not
     /// defined in the header file.
+    ///
+    /// If there's no match, the result is not modified. Therefore, this
+    /// expects to get a fresh result object each time it is called, not
+    /// to reuse it.
     void findInternal(MutableResult& result, const dns::Name& name,
                       bool want_exact_match, bool want_finder) const;
     const isc::dns::RRClass rrclass_;
