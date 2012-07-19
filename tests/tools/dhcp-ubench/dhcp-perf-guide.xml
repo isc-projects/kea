@@ -459,10 +459,10 @@ SQLite version: 3.7.9sourceid version is 2011-11-01 00:52:41 c7c6050ef060877ebe7
 
       <para>Presented performance results can be computed into operations per second metrics.
       It should be noted that due to large differences between various operations (sometime
-      over 3 orders of magnitude), it is not possible to create a simple, readable chart with
+      over 3 orders of magnitude), it is difficult to create a simple, readable chart with
       that data.</para>
 
-      <table><title>Estimated performance</title>
+      <table id="tbl-perf-results"><title>Estimated performance</title>
       <tgroup cols='6' align='center' colsep='1' rowsep='1'>
         <colspec colname='Backend'/>
         <colspec colname='Create'/>
@@ -539,6 +539,19 @@ SQLite version: 3.7.9sourceid version is 2011-11-01 00:52:41 c7c6050ef060877ebe7
         </tbody>
       </tgroup>
       </table>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="performance-results-graph1.png" format="PNG"/>
+        </imageobject>
+        <textobject>
+          <phrase>Performance measurements</phrase>
+        </textobject>
+        <caption>
+          <para>Graphical representation of the performance results
+          presented in table <xref linkend="tbl-perf-results" />.</para>
+        </caption>
+      </mediaobject>
 
     </section>
 
