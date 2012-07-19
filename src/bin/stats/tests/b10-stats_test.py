@@ -169,6 +169,7 @@ class TestStats(unittest.TestCase):
         self.assertTrue('command_show' in self.stats.callbacks)
         self.assertTrue('command_showschema' in self.stats.callbacks)
         self.assertTrue('command_set' in self.stats.callbacks)
+        self.assertEqual(self.stats.config['poll-interval'], 60)
 
     def test_init_undefcmd(self):
         spec_str = """\
