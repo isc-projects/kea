@@ -91,7 +91,7 @@ class AuthSrvTest : public SrvTestBase {
 protected:
     AuthSrvTest() :
         dnss_(),
-        server(true, xfrout, ddns_forwarder),
+        server(xfrout, ddns_forwarder),
         // The empty string is expected value of the parameter of
         // requestSocket, not the app_name (there's no fallback, it checks
         // the empty string is passed).
@@ -1032,16 +1032,6 @@ TEST_F(AuthSrvTest,
                 opcode.getCode(), QR_FLAG | AA_FLAG, 1, 1, 1, 0);
 }
 
-TEST_F(AuthSrvTest, cacheSlots) {
-    // simple check for the get/set operations
-    server.setCacheSlots(10);    // 10 = arbitrary choice
-    EXPECT_EQ(10, server.getCacheSlots());
-
-    // 0 is a valid size
-    server.setCacheSlots(0);
-    EXPECT_EQ(00, server.getCacheSlots());
-}
-
 // Submit UDP normal query and check query counter
 TEST_F(AuthSrvTest, queryCounterUDPNormal) {
     // The counter should be initialized to 0.
@@ -1677,7 +1667,7 @@ TEST_F(AuthSrvTest, DDNSForwardPushFail) {
 }
 
 TEST_F(AuthSrvTest, DDNSForwardClose) {
-    scoped_ptr<AuthSrv> tmp_server(new AuthSrv(true, xfrout, ddns_forwarder));
+    scoped_ptr<AuthSrv> tmp_server(new AuthSrv(xfrout, ddns_forwarder));
     UnitTestUtil::createRequestMessage(request_message, Opcode::UPDATE(),
                                        default_qid, Name("example.com"),
                                        RRClass::IN(), RRType::SOA());
