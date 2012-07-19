@@ -227,11 +227,6 @@ class TestStats(unittest.TestCase):
         self.stats_server = ThreadingServerManager(MyStats)
         self.stats = self.stats_server.server
         self.stats_server.run()
-        # test updating poll-interval
-        self.assertEqual(self.stats.config['poll-interval'], 60)
-        self.assertEqual(self.stats.config_handler({'poll-interval': 120}),
-                         isc.config.create_answer(0))
-        self.assertEqual(self.stats.config['poll-interval'], 120)
 
         # command_handler
         self.base.boss.server._started.wait()
@@ -437,6 +432,37 @@ class TestStats(unittest.TestCase):
         self.assertEqual(self.stats.statistics_data_bypid['Auth'][9999]['queries.tcp'], 1001)
         self.assertEqual(self.stats.statistics_data_bypid['Auth'][9998]['queries.tcp'], 1002)
         self.assertEqual(self.stats.statistics_data_bypid['Auth'][9998]['queries.udp'], 1003)
+
+    def test_config(self):
+        stats_server = ThreadingServerManager(MyStats)
+        stats = stats_server.server
+        # test updating poll-interval
+        self.assertEqual(stats.config['poll-interval'], 60)
+        self.assertEqual(stats.config_handler({'poll-interval': 120}),
+                         isc.config.create_answer(0))
+        self.assertEqual(stats.config['poll-interval'], 120)
+        self.assertEqual(stats.config_handler({'poll-interval': "foo"}),
+                         isc.config.create_answer(1, 'foo should be an integer'))
+        self.assertEqual(stats.config_handler({'poll-interval': -1}),
+                         isc.config.create_answer(1, 'Negative integer ignored'))
+        # unknown item
+        self.assertEqual(
+            stats.config_handler({'_UNKNOWN_KEY_': None}),
+            isc.config.ccsession.create_answer(
+                1, "unknown item _UNKNOWN_KEY_"))
+        # test no change if zero interval time
+        self.assertEqual(stats.config_handler({'poll-interval': 0}),
+                         isc.config.create_answer(0))
+        self.assertEqual(stats.config['poll-interval'], 0)
+        stats_server.run()
+        self.base.boss.server._started.wait()
+        self.base.boss.server._started.clear()
+        self.assertEqual(
+            send_command(
+                'show', 'Stats',
+                params={ 'owner' : 'Boss',
+                  'name'  : 'boot_time' }),
+            (0, {'Boss': {'boot_time': '1970-01-01T00:00:00Z'}}))
 
     def test_commands(self):
         # status

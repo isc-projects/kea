@@ -159,42 +159,50 @@ class Stats:
         self.running = True
         logger.info(STATS_STARTING)
 
-        # request Bob to send statistics data
-        logger.debug(DBG_STATS_MESSAGING, STATS_SEND_REQUEST_BOSS)
-        cmd = isc.config.ccsession.create_command("getstats", None)
-        seq = self.cc_session.group_sendmsg(cmd, 'Boss')
-        try:
-            answer, env = self.cc_session.group_recvmsg(False, seq)
-            if answer:
-                rcode, args = isc.config.ccsession.parse_answer(answer)
-                if rcode == 0:
-                    errors = self.update_statistics_data(
-                        args["owner"], **args["data"])
-                    if errors:
-                        raise StatsError("boss spec file is incorrect: "
-                                         + ", ".join(errors))
-                    errors = self.update_statistics_data(
-                                self.module_name,
-                                last_update_time=get_datetime())
-                    if errors:
-                        raise StatsError("stats spec file is incorrect: "
-                                         + ", ".join(errors))
-        except isc.cc.session.SessionTimeout:
-            pass
-
         # initialized Statistics data
         errors = self.update_statistics_data(
             self.module_name,
             lname=self.cc_session.lname,
-            boot_time=get_datetime(_BASETIME)
+            boot_time=get_datetime(_BASETIME),
+            last_update_time=get_datetime()
             )
         if errors:
             raise StatsError("stats spec file is incorrect: "
                              + ", ".join(errors))
 
         try:
+            start_time = get_timestamp() - self.config['poll-interval']
             while self.running:
-                self.mccs.check_command(False)
+                if get_timestamp() - start_time >= self.config['poll-interval'] \
+                        and self.config['poll-interval'] > 0:
+                    # request Bob to send statistics data
+                    logger.debug(DBG_STATS_MESSAGING, STATS_SEND_REQUEST_BOSS)
+                    cmd = isc.config.ccsession.create_command("getstats", None)
+                    seq = self.cc_session.group_sendmsg(cmd, 'Boss')
+                    try:
+                        answer, env = self.cc_session.group_recvmsg(False, seq)
+                        if answer:
+                            rcode, args = isc.config.ccsession.parse_answer(answer)
+                            if rcode == 0:
+                                errors = self.update_statistics_data(
+                                    args["owner"], **args["data"])
+                                if errors:
+                                    raise StatsError("boss spec file is incorrect: "
+                                                     + ", ".join(errors))
+                                errors = self.update_statistics_data(
+                                            self.module_name,
+                                            last_update_time=get_datetime())
+                                if errors:
+                                    raise StatsError("stats spec file is incorrect: "
+                                                     + ", ".join(errors))
+                    except isc.cc.session.SessionTimeout:
+                        raise
+                    start_time = get_timestamp()
+                try:
+                    answer, env = self.cc_session.group_recvmsg(False)
+                    self.mccs.check_command_without_recvmsg(answer, env)
+                except isc.cc.session.SessionTimeout:
+                    pass
         finally:
             self.mccs.send_stopping()
 
@@ -204,11 +212,18 @@ class Stats:
         """
         logger.debug(DBG_STATS_MESSAGING, STATS_RECEIVED_NEW_CONFIG,
                      new_config)
-        # update to new config
-        if new_config and type(new_config) is dict:
-            # backup old config
-            self.old_config = self.config.copy()
-            self.config.update(new_config)
+        errors = []
+        if not self.mccs.get_module_spec().\
+                validate_config(False, new_config, errors):
+                return isc.config.ccsession.create_answer(
+                    1, ", ".join(errors))
+
+        if 'poll-interval' in new_config \
+                and new_config['poll-interval'] < 0:
+            return isc.config.ccsession.create_answer(
+                1, "Negative integer ignored")
+
+        self.config.update(new_config)
         return isc.config.create_answer(0)
 
     def command_handler(self, command, kwargs):
