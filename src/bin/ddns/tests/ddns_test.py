@@ -918,6 +918,10 @@ class TestDDNSSession(unittest.TestCase):
         self.orig_tsig_keyring = isc.server_common.tsig_keyring
         isc.server_common.tsig_keyring = FakeKeyringModule()
         self.server = ddns.DDNSServer(self.__cc_session)
+        # Check that start_ddns_forwarder has been called upon
+        # initialization (before we do anything else that might
+        # cause messages to be sent)
+        self.check_session_start_forwarder_called()
         self.server._UpdateSessionClass = self.__fake_session_creator
         self.__faked_result = UPDATE_SUCCESS # will be returned by fake session
         self.__sock = FakeSocket(-1)
@@ -1206,10 +1210,6 @@ class TestDDNSSession(unittest.TestCase):
     def test_session_msg(self):
         '''Test post update communication with other modules.'''
 
-        # Check that start_ddns_forwarder has been called upon
-        # initialization
-        self.check_session_start_forwarder_called()
-
         # Normal cases, confirming communication takes place iff update
         # succeeds
         for r in [UPDATE_SUCCESS, UPDATE_ERROR, UPDATE_DROP]:
@@ -1260,8 +1260,6 @@ class TestDDNSSession(unittest.TestCase):
 
     def test_session_msg_for_auth(self):
         '''Test post update communication with other modules including Auth.'''
-
-        self.check_session_start_forwarder_called()
 
         # Let the CC session return in-memory config with sqlite3 backend.
         # (The default case was covered by other tests.)
@@ -1329,11 +1327,8 @@ class TestDDNSSession(unittest.TestCase):
             self.__cc_session._recvmsg_exception = None
 
     def test_session_auth_started(self):
-        '''Check that 'start_ddns_forwarder' is sent when the notification
-           'auth_started' is received'''
-        # It should have already been called during init
-        self.check_session_start_forwarder_called()
-
+        '''Check that 'start_ddns_forwarder' is sent (again) when the
+           notification 'auth_started' is received'''
         # auth_started message should trigger it again
         answer = self.server.command_handler('auth_started', None)
         self.check_session_start_forwarder_called()
