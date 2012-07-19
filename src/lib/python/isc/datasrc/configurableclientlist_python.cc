@@ -300,25 +300,6 @@ initModulePart_ConfigurableClientList(PyObject* mod) {
     }
     Py_INCREF(&configurableclientlist_type);
 
-#if 0
-    TODO: The return states, etc.
-    try {
-        // Constant class variables
-        installClassVariable(configurableclientlist_type, "REPLACE_ME",
-                             Py_BuildValue("REPLACE ME"));
-    } catch (const exception& ex) {
-        const string ex_what =
-            "Unexpected failure in ConfigurableClientList initialization: " +
-            string(ex.what());
-        PyErr_SetString(po_IscException, ex_what.c_str());
-        return (false);
-    } catch (...) {
-        PyErr_SetString(PyExc_SystemError,
-                        "Unexpected failure in ConfigurableClientList initialization");
-        return (false);
-    }
-#endif
-
     return (true);
 }
 
