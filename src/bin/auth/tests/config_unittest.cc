@@ -54,7 +54,7 @@ protected:
     AuthConfigTest() :
         dnss_(),
         rrclass(RRClass::IN()),
-        server(true, xfrout, ddns_forwarder),
+        server(xfrout, ddns_forwarder),
         // The empty string is expected value of the parameter of
         // requestSocket, not the app_name (there's no fallback, it checks
         // the empty string is passed).

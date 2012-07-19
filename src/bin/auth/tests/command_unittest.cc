@@ -63,7 +63,7 @@ namespace {
 class AuthCommandTest : public ::testing::Test {
 protected:
     AuthCommandTest() :
-        server_(false, xfrout_, ddns_forwarder_),
+        server_(xfrout_, ddns_forwarder_),
         rcode_(-1),
         expect_rcode_(0),
         itimer_(server_.getIOService())
