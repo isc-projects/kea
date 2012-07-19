@@ -52,6 +52,68 @@ template <class T>
 class StatsMgr : public boost::noncopyable {
 public:
 
+    /// \brief Custom Counter
+    ///
+    /// This class represents custom statistics counters. Client class
+    /// may create unlimited number of counters. Such counters are
+    /// being stored in map in Statistics Manager and access using
+    /// unique string key.
+    class CustomCounter {
+    public:
+        /// \brief Constructor.
+        ///
+        /// This constructor sets counter name. This name is used in
+        /// log file to report value of each counter.
+        ///
+        /// \param name name of the counter used in log file.
+        CustomCounter(const std::string& name) :
+            counter_(0),
+            name_(name) { };
+
+        /// \brief Increment operator.
+        const CustomCounter& operator++() {
+            ++counter_;
+            return *this;
+        }
+
+        /// \brief Increment operator.
+        const CustomCounter& operator++(int) {
+            CustomCounter& this_counter(*this);
+            operator++();
+            return this_counter;
+        }
+
+        /// \brief Return counter value.
+        ///
+        /// Method returns counter value.
+        ///
+        /// \return counter value.
+        uint64_t getValue() const {
+            return counter_;
+        }
+
+        /// \brief Return counter name.
+        ///
+        /// Method returns counter name.
+        ///
+        /// \return counter name.
+        const std::string& getName() const {
+            return name_;
+        }
+    private:
+        /// \brief Default constructor.
+        ///
+        /// Default constrcutor is private because we don't want client
+        /// class to call it because we want client class to specify
+        /// counter's name.
+        CustomCounter() { };
+
+        uint64_t counter_;  ///< Counter's value.
+        std::string name_;  ///< Counter's name.
+    };
+
+    typedef typename boost::shared_ptr<CustomCounter> CustomCounterPtr;
+
     /// DHCP packet exchange types.
     enum ExchangeType {
         XCHG_DO,  ///< DHCPv4 DISCOVER-OFFER
@@ -431,6 +493,16 @@ public:
     typedef typename std::map<ExchangeType, ExchangeStatsPtr> ExchangesMap;
     /// Iterator poiting to \ref ExchangesMap
     typedef typename ExchangesMap::const_iterator ExchangesMapIterator;
+    /// Map containing custom counters.
+    typedef typename std::map<std::string, CustomCounterPtr> CustomCountersMap;
+    /// Iterator for \ref CustomCountersMap.
+    typedef typename CustomCountersMap::iterator CustomCountersMapIterator;
+
+    /// \brief Constructor.
+    StatsMgr()
+        : exchanges_(),
+          custom_counters_() {
+    }
 
     /// \brief Specify new exchange type.
     ///
@@ -445,6 +517,49 @@ public:
             isc_throw(BadValue, "Exchange of specified type already added.");
         }
         exchanges_[xchg_type] = ExchangeStatsPtr(new ExchangeStats(xchg_type));
+    }
+
+    /// \brief Add named custom uint64 counter.
+    ///
+    /// Method creates new named counter and stores in counter's map under
+    /// key specified here as short_name.
+    ///
+    /// \param short_name key to use to access counter in the map.
+    /// \param long_name name of the counter presented in the log file.
+    void addCustomCounter(const std::string& short_name,
+                          const std::string& long_name) {
+        if (custom_counters_.find(short_name) != custom_counters_.end()) {
+            isc_throw(BadValue,
+                      "Custom counter " << short_name << " already added.");
+        }
+        custom_counters_[short_name] =
+            CustomCounterPtr(new CustomCounter(long_name));
+    }
+
+    /// \brief Return specified counter.
+    ///
+    /// Method returns specified counter.
+    ///
+    /// \param counter_key key poiting to the counter in the counters map.
+    /// \return pointer to specified counter object.
+    CustomCounterPtr getCounter(const std::string& counter_key) {
+        CustomCountersMapIterator it = custom_counters_.find(counter_key);
+        if (it == custom_counters_.end()) {
+            isc_throw(BadValue,
+                      "Custom counter " << counter_key << "does not exist");
+        }
+        return it->second;
+    }
+
+    /// \brief Increment specified counter.
+    ///
+    /// Increement counter value by one.
+    ///
+    /// \param counter_key key poitinh to the counter in the counters map.
+    /// \return pointer to specified counter after incrementation.
+    const CustomCounter& IncrementCounter(const std::string& counter_key) {
+        CustomCounterPtr counter = getCounter(counter_key);
+        return ++(*counter);
     }
 
     /// \brief Adds new packet to the sent packets list.
@@ -622,6 +737,7 @@ public:
         ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
         return xchg_stats->getRcvdPacketsNum();
     }
+
 private:
     /// \brief Return exchange stats object for given exchange type
     ///
@@ -639,7 +755,8 @@ private:
         return xchg_stats;
     }
 
-    ExchangesMap exchanges_;        ///< Map of exchange types.
+    ExchangesMap exchanges_;            ///< Map of exchange types.
+    CustomCountersMap custom_counters_; ///< Map with custom counters.
 };
 
 } // namespace perfdhcp
