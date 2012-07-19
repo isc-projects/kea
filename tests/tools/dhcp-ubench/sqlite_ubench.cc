@@ -69,10 +69,10 @@ void SQLite_uBenchmark::createLease4Test() {
     }
 
     uint32_t addr = BASE_ADDR4; // Let's start with 1.0.0.0 address
-    char hwaddr[20];
-    uint8_t hwaddr_len = 20; // not a real field
-    char client_id[128];
-    uint8_t client_id_len = 128;
+    const uint8_t hwaddr_len = 20; // not a real field
+    char hwaddr[hwaddr_len];
+    const uint8_t client_id_len = 128;
+    char client_id[client_id_len];
     uint32_t valid_lft = 1000;  // we can use the same value for all leases
     uint32_t recycle_time = 0;  // not supported in any foresable future,
                                 // so keep this as 0
@@ -85,15 +85,16 @@ void SQLite_uBenchmark::createLease4Test() {
 
     printf("CREATE:   ");
 
-    for (uint8_t i = 0; i < 20; i++) {
+    for (uint8_t i = 0; i < hwaddr_len; i++) {
         hwaddr[i] = 65 + i;
     }
     hwaddr[19] = 0; // workaround
 
-    for (uint8_t i = 0; i < 128; i++) {
+    for (uint8_t i = 0; i < client_id_len; i++) {
         client_id[i] = 33 + i;
     }
-    client_id[6] = 'X';
+    client_id[6] = 'X'; // there's apostrophe here. It would confuse
+                        // query formatting, let's get rid of it
     client_id[127] = 0; // workaround
 
     for (uint32_t i = 0; i < Num_; i++) {
@@ -105,7 +106,7 @@ void SQLite_uBenchmark::createLease4Test() {
         char * errorMsg = NULL;
 
         // the first address is 1.0.0.0.
-        char query[2000], * end;
+        char query[2000];
         /// @todo: Encode HWADDR and CLIENT-ID properly
         sprintf(query, "INSERT INTO lease4(addr,hwaddr,client_id,"
                "valid_lft,recycle_time,cltt,pool_id,fixed,hostname,"
@@ -131,7 +132,8 @@ void SQLite_uBenchmark::createLease4Test() {
     printf("\n");
 }
 
-static int search_callback(void *counter, int argc, char **argv, char **azColName){
+static int search_callback(void *counter, int /*argc*/, char **/*argv*/, 
+                           char **/*azColName*/){
 
     int * cnt = static_cast<int*>(counter);
     (*cnt)++;
@@ -225,7 +227,6 @@ void SQLite_uBenchmark::deleteLease4Test() {
     }
 
     printf("DELETE:   ");
-    char * errorMsg = NULL;
 
     for (uint32_t i = 0; i < Num_; i++) {
 

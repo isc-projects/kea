@@ -179,7 +179,7 @@ void MySQL_uBenchmark::searchLease4Test() {
         int num_rows = mysql_num_rows(result);
         int num_fields = mysql_num_fields(result);
 
-        if ( (num_rows != 0) && (num_rows != 1) ) {
+        if ( (num_rows > 1) ) {
             stringstream tmp;
             tmp << "Search: DB returned " << num_rows << " leases for address "
                 << hex << x << dec;
@@ -187,14 +187,22 @@ void MySQL_uBenchmark::searchLease4Test() {
         }
 
         if (num_rows) {
+            if (num_fields == 0) {
+                failure("Query returned empty set");
+            }
+
             MYSQL_ROW row = mysql_fetch_row(result);
+
             // pretend to do something with it
+            if (row[0] == NULL) {
+                failure("SELECT returned NULL data.");
+            }
+            mysql_free_result(result);
 
             if (Verbose_) {
                 printf(".");
             }
 
-            mysql_free_result(result);
         } else {
             if (Verbose_) {
                 printf("x");
@@ -220,8 +228,6 @@ void MySQL_uBenchmark::updateLease4Test() {
         sprintf(query, "UPDATE lease4 SET valid_lft=1002, cltt=now() WHERE addr=%d", x);
         mysql_real_query(Conn_, query, strlen(query));
 
-        MYSQL_RES * result = NULL;
-
         if (Verbose_)
             printf(".");
     }
@@ -243,8 +249,6 @@ void MySQL_uBenchmark::deleteLease4Test() {
         char query[2000];
         sprintf(query, "DELETE FROM lease4 WHERE addr=%d", x);
         mysql_real_query(Conn_, query, strlen(query));
-
-        MYSQL_RES * result = NULL;
 
         if (Verbose_) {
             printf(".");
