@@ -1658,9 +1658,8 @@ namespace {
 TEST_F(AuthSrvTest, DDNSForwardCreateDestroy) {
     // Test that AuthSrv returns NOTIMP before ddns forwarder is created,
     // that the ddns_forwarder is connected when the 'start_ddns_forwarder'
-    // command has been sent,
-    // and that it is no longer connected and auth returns NOTIMP after
-    // the stop_ddns_forwarding command is sent.
+    // command has been sent, and that it is no longer connected and auth
+    // returns NOTIMP after the stop_ddns_forwarding command is sent.
     scoped_ptr<AuthSrv> tmp_server(new AuthSrv(true, xfrout, ddns_forwarder));
 
     // Prepare update message to send
