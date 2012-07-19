@@ -324,4 +324,42 @@ TEST_F(StatsMgrTest, Delays) {
     EXPECT_GT(stats_mgr->getSquareSumDelay(StatsMgr4::XCHG_DO), 1);
 }
 
+TEST_F(StatsMgrTest, CustomCounters) {
+    boost::scoped_ptr<StatsMgr4> stats_mgr(new StatsMgr4());
+
+    // Specify counter keys and names.
+    const std::string too_short_key("tooshort");
+    const std::string too_short_name("Too short packets");
+    const std::string too_late_key("toolate");
+    const std::string too_late_name("Packets sent too late");
+
+    // Add two custom counters.
+    stats_mgr->addCustomCounter(too_short_key, too_short_name);
+    stats_mgr->addCustomCounter(too_late_key, too_late_name);
+
+    // Increment one of the counters 10 times.
+    const uint64_t tooshort_num = 10;
+    for (uint64_t i = 0; i < tooshort_num; ++i) {
+        stats_mgr->IncrementCounter(too_short_key);
+    }
+
+    // Increment another counter by 5 times.
+    const uint64_t toolate_num = 5;
+    for (uint64_t i = 0; i < toolate_num; ++i) {
+        stats_mgr->IncrementCounter(too_late_key);
+    }
+
+    // Check counter's current value and name.
+    StatsMgr4::CustomCounterPtr tooshort_counter =
+        stats_mgr->getCounter(too_short_key);
+    EXPECT_EQ(too_short_name, tooshort_counter->getName());
+    EXPECT_EQ(tooshort_num, tooshort_counter->getValue());
+
+    // Check counter's current value and name.
+    StatsMgr4::CustomCounterPtr toolate_counter =
+        stats_mgr->getCounter(too_late_key);
+    EXPECT_EQ(too_late_name, toolate_counter->getName());
+    EXPECT_EQ(toolate_num, toolate_counter->getValue());
+}
+
 }
