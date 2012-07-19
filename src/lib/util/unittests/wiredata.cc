@@ -35,8 +35,8 @@ matchWireData(const void* expected_data, size_t expected_len,
         const int abyte = static_cast<const uint8_t*>(actual_data)[i];
         if (ebyte != abyte) {
             FAIL() << "Wire data mismatch at " << i << "th byte\n"
-                   << "  Actual: " << ebyte << "\n"
-                   << "Expected: " << abyte << "\n";
+                   << "  Actual: " << abyte << "\n"
+                   << "Expected: " << ebyte << "\n";
             return;
         }
     }
