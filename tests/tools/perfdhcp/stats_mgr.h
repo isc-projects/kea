@@ -85,7 +85,9 @@ public:
                 boost::multi_index::sequenced<>,
                 boost::multi_index::hashed_non_unique<
                         boost::multi_index::global_fun<
-                            boost::shared_ptr<T>, uint32_t, &ExchangeStats::transid_hash
+                            boost::shared_ptr<T>,
+                            uint32_t,
+                            &ExchangeStats::transid_hash
                         >
                 >
             >
@@ -111,7 +113,9 @@ public:
             square_sum_delay_(0.),
             ordered_lookups_(0),
             unordered_lookup_size_sum_(0),
-            unordered_lookups_(0) {
+            unordered_lookups_(0),
+            sent_packets_num_(0),
+            rcvd_packets_num_(0) {
             sent_packets_cache_ = sent_packets_.begin();
         }
 
@@ -121,6 +125,7 @@ public:
         ///
         /// \param packet packet object to be added.
         void appendSent(const boost::shared_ptr<T> packet) {
+            ++sent_packets_num_;
             sent_packets_.template get<0>().push_back(packet);
         }
 
@@ -130,60 +135,8 @@ public:
         ///
         /// \param packet packet object to be added.
         void appendRcvd(const boost::shared_ptr<T> packet) {
+            ++rcvd_packets_num_;
             rcvd_packets_.template get<0>().push_back(packet);
-        }
-
-        /// \brief Find packet on the list of sent packets.
-        ///
-        /// Method finds packet with specified transaction id on the list
-        /// of sent packets. It is used to match received packet with
-        /// corresponding sent packet.
-        /// Since packets from the server most often come in the same order
-        /// as they were sent by client, this method will first check if
-        /// next sent packet matches. If it doesn't, function will search
-        /// the packet using indexing by transaction id. This reduces
-        /// packet search time significantly.
-        ///
-        /// \param transid transaction id of the packet to search
-        /// \return packet having specified transaction or NULL if packet
-        /// not found
-        boost::shared_ptr<T> findSent(const uint32_t transid) {
-            if (sent_packets_.size() == 0) {
-                ++orphans_;
-                return boost::shared_ptr<T>();
-            } else if (sent_packets_cache_ == sent_packets_.end()) {
-                sent_packets_cache_ = sent_packets_.begin();
-            }
-
-            bool packet_found = false;
-            if ((*sent_packets_cache_)->getTransid() == transid) {
-                ++ordered_lookups_;
-                packet_found = true;
-            } else {
-                PktListTransidIndex& idx = sent_packets_.template get<1>();
-                std::pair<PktListTransidIterator,PktListTransidIterator> p =
-                    idx.equal_range(transid & 1023);
-                ++unordered_lookups_;
-                unordered_lookup_size_sum_ += std::distance(p.first, p.second);
-                for (PktListTransidIterator it = p.first; it != p.second;
-                     ++it) {
-                    if ((*it)->getTransid() == transid) {
-                        packet_found = true;
-                        sent_packets_cache_ =
-                            sent_packets_.template project<0>(it);
-                        break;
-                    }
-                }
-            }
-
-            if (!packet_found) {
-                ++orphans_;
-                return boost::shared_ptr<T>();
-            }
-
-            boost::shared_ptr<T> sent_packet(*sent_packets_cache_);
-            ++sent_packets_cache_;
-            return sent_packet;
         }
 
         ///  \brief Update delay counters.
@@ -206,6 +159,9 @@ public:
                           "received packet to measure RTT");
             }
             boost::posix_time::time_period period(sent_time, rcvd_time);
+            // We don't bother calculating deltas in nanoseconds. It is much
+            // more convenient to use seconds instead because we are going to
+            // sum them up.
             double delta =
                 static_cast<double>(period.length().total_nanoseconds()) / 1e9;
 
@@ -214,14 +170,109 @@ public:
                           "greater than received packet's timestamp");
             }
 
+            // Record the minimum delay between sent and received packets.
             if (delta < min_delay_) {
                 min_delay_ = delta;
             }
+            // Record the maximum delay between sent and received packets.
             if (delta > max_delay_) {
                 max_delay_ = delta;
             }
+            // Update delay sum and square sum. That will be used to calculate
+            // mean delays.
             sum_delay_ += delta;
             square_sum_delay_ += delta * delta;
+        }
+
+        /// \brief Find packet on the list of sent packets.
+        ///
+        /// Method finds packet with specified transaction id on the list
+        /// of sent packets. It is used to match received packet with
+        /// corresponding sent packet.
+        /// Since packets from the server most often come in the same order
+        /// as they were sent by client, this method will first check if
+        /// next sent packet matches. If it doesn't, function will search
+        /// the packet using indexing by transaction id. This reduces
+        /// packet search time significantly.
+        ///
+        /// \param transid transaction id of the packet to search
+        /// \return packet having specified transaction or NULL if packet
+        /// not found
+        boost::shared_ptr<T> findSent(const uint32_t transid) {
+            if (sent_packets_.size() == 0) {
+                // List of sent packets is empty so there is no sense
+                // to continue looking fo the packet. It also means
+                // that the received packet we got has no corresponding
+                // sent packet so orphans counter has to be updated.
+                ++orphans_;
+                return boost::shared_ptr<T>();
+            } else if (sent_packets_cache_ == sent_packets_.end()) {
+                // Even if there are still many unmatched packets on the
+                // list we might hit the end of it because of unordered
+                // lookups. The next logical step is to reset cache.
+                sent_packets_cache_ = sent_packets_.begin();
+            }
+
+            // With this variable we will be signalling success or failure
+            // to find the packet.
+            bool packet_found = false;
+            // Most likely responses are sent from the server in the same
+            // order as client's requests to the server. We are caching
+            // next sent packet and first try to match with it the next
+            // incoming packet. We are successful if there is no
+            // packet drop or out of order packets sent. This is actually
+            // the fastest way to look for packets.
+            if ((*sent_packets_cache_)->getTransid() == transid) {
+                ++ordered_lookups_;
+                packet_found = true;
+            } else {
+                // If we are here, it means that we were unable to match the
+                // next incoming packet with next sent packet so we need to
+                // take a little more expensive approach to look packets using
+                // alternative index (transaction id & 1023).
+                PktListTransidIndex& idx = sent_packets_.template get<1>();
+                // Packets are grouped using trasaction id masking with value
+                // of 1023. For instance, packets with transaction id equal to
+                // 1, 1024 ... will belong to the same group (a.k.a. bucket).
+                // When using alternative index we don't find the packet but
+                // bucket of packets and need to iterate through the bucket
+                // to find the one that has desired transaction id.
+                std::pair<PktListTransidIterator,PktListTransidIterator> p =
+                    idx.equal_range(transid & 1023);
+                // We want to keep statistics of unordered lookups to make
+                // sure that there is a right balance before number of
+                // unordered lookups and ordered lookups. If number of unordered
+                // lookups is high it may mean that many packets are lost or
+                // sent out of order.
+                ++unordered_lookups_;
+                // We also want to keep the mean value of the bucket. The lower
+                // bucket size the better. If bucket sizes appear to big we
+                // might want to increase number of buckets.
+                unordered_lookup_size_sum_ += std::distance(p.first, p.second);
+                for (PktListTransidIterator it = p.first; it != p.second;
+                     ++it) {
+                    if ((*it)->getTransid() == transid) {
+                        packet_found = true;
+                        sent_packets_cache_ =
+                            sent_packets_.template project<0>(it);
+                        break;
+                    }
+                }
+            }
+
+            if (!packet_found) {
+                // If we are here, it means that both ordered lookup and
+                // unordered lookup failed. Searched packet is not on the list.
+                ++orphans_;
+                return boost::shared_ptr<T>();
+            }
+
+            boost::shared_ptr<T> sent_packet(*sent_packets_cache_);
+            // If packet was found, we assume it will be never searched
+            // again. We want to delete this packet from the list to
+            // improve performance of future searches.
+            sent_packets_cache_ = eraseSent(sent_packets_cache_);
+            return sent_packet;
         }
 
         /// \brief Return minumum delay between sent and received packet.
@@ -271,6 +322,9 @@ public:
         ///
         /// \return average unordered lookup set size.
         double getAvgUnorderedLookupSetSize() const {
+            if (unordered_lookups_ == 0) {
+                return 0.;
+            }
             return static_cast<double>(unordered_lookup_size_sum_) /
                 static_cast<double>(unordered_lookups_);
         }
@@ -285,7 +339,6 @@ public:
         /// \return number of unordered lookups.
         uint64_t getUnorderedLookups() const { return unordered_lookups_; }
 
-
         /// \brief Return number of ordered sent packets lookups
         ///
         /// Method returns number of ordered sent packet lookups.
@@ -296,6 +349,25 @@ public:
         ///
         /// \return number of ordered lookups.
         uint64_t getOrderedLookups() const { return ordered_lookups_; }
+
+        /// \brief Return total number of sent packets
+        ///
+        /// Method returns total number of sent packets.
+        ///
+        /// \return number of sent packets.
+        uint64_t getSentPacketsNum() const {
+            return sent_packets_num_;
+        }
+
+        /// \brief Return total number of received packets
+        ///
+        /// Method returns total number of received packets.
+        ///
+        /// \return number of received packets.
+        uint64_t getRcvdPacketsNum() const {
+            return rcvd_packets_num_;
+        }
+
     private:
 
         /// \brief Private default constructor.
@@ -303,6 +375,18 @@ public:
         /// Default constructor is private because we want the client
         /// class to specify exchange type explicitely.
         ExchangeStats();
+
+
+        /// \brief Erase packet from the list of sent packets.
+        ///
+        /// Method erases packet from the list of sent packets.
+        ///
+        /// \param it iterator pointing to packet to be erased.
+        /// \return iterator pointing to packet following erased
+        /// packet or sent_packets_.end() if packet not found.
+         PktListIterator eraseSent(const PktListIterator it) {
+            return sent_packets_.template get<0>().erase(it);
+        }
 
         ExchangeType xchg_type_;             ///< Packet exchange type.
         PktList sent_packets_;               ///< List of sent packets.
@@ -337,6 +421,8 @@ public:
         uint64_t ordered_lookups_;     ///< Number of ordered sent packets
                                        ///< lookups.
 
+        uint64_t sent_packets_num_;    ///< Total number of sent packets.
+        uint64_t rcvd_packets_num_;    ///< Total number of received packets.
     };
 
     /// Pointer to ExchangeStats.
@@ -400,6 +486,59 @@ public:
         }
     }
 
+    /// \brief Return minumum delay between sent and received packet.
+    ///
+    /// Method returns minimum delay between sent and received packet
+    /// for specified exchange type.
+    ///
+    /// \param xchg_type exchange type.
+    /// \throw isc::BadValue if invalid exchange type specified.
+    /// \return minimum delay between packets.
+    double getMinDelay(const ExchangeType xchg_type) const {
+        ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
+        return xchg_stats->getMinDelay();
+    }
+
+    /// \brief Return maxmimum delay between sent and received packet.
+    ///
+    /// Method returns maximum delay between sent and received packet
+    /// for specified exchange type.
+    ///
+    /// \param xchg_type exchange type.
+    /// \throw isc::BadValue if invalid exchange type specified.
+    /// \return maximum delay between packets.
+    double getMaxDelay(const ExchangeType xchg_type) const {
+        ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
+        return xchg_stats->getMaxDelay();
+    }
+
+    /// \brief Return sum of delays between sent and received packets.
+    ///
+    /// Method returns sum of delays between sent and received packets
+    /// for specified exchange type.
+    ///
+    /// \param xchg_type exchange type.
+    /// \throw isc::BadValue if invalid exchange type specified.
+    /// \return sum of delays between sent and received packets.
+    double getSumDelay(const ExchangeType xchg_type) const {
+        ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
+        return xchg_stats->getSumDelay();
+    }
+
+    /// \brief Return square sum of delays between sent and received
+    /// packets.
+    ///
+    /// Method returns square sum of delays between sent and received
+    /// packets for specified exchange type.
+    ///
+    /// \param xchg_type exchange type.
+    /// \throw isc::BadValue if invalid exchange type specified.
+    /// \return square sum of delays between sent and received packets.
+    double getSquareSumDelay(const ExchangeType xchg_type) const {
+        ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
+        return xchg_stats->getSquareSumDelay();
+    }
+
     /// \brief Return number of orphant packets.
     ///
     /// Method returns number of orphant packets for specified
@@ -420,6 +559,7 @@ public:
     /// unordered packet lookup using transaction id.
     ///
     /// \param xchg_type exchange type.
+    /// \throw isc::BadValue if invalid exchange type specified.
     /// \return average unordered lookup set size.
     double getAvgUnorderedLookupSetSize(const ExchangeType xchg_type) const {
         ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
@@ -433,6 +573,8 @@ public:
     /// out of order by server - transaction id of received
     /// packet does not match transaction id of next sent packet.
     ///
+    /// \param xchg_type exchange type.
+    /// \throw isc::BadValue if invalid exchange type specified.
     /// \return number of unordered lookups.
     uint64_t getUnorderedLookups(const ExchangeType xchg_type) const {
         ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
@@ -447,14 +589,40 @@ public:
     /// If packets are skipped or received out of order, lookup
     /// function will use unordered lookup (with hash table).
     ///
+    /// \param xchg_type exchange type.
+    /// \throw isc::BadValue if invalid exchange type specified.
     /// \return number of ordered lookups.
     uint64_t getOrderedLookups(const ExchangeType xchg_type) const {
         ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
         return xchg_stats->getOrderedLookups();
     }
 
-private:
+    /// \brief Return total number of sent packets
+    ///
+    /// Method returns total number of sent packets for specified
+    /// exchange type.
+    ///
+    /// \param xchg_type exchange type.
+    /// \throw isc::BadValue if invalid exchange type specified.
+    /// \return number of sent packets.
+    uint64_t getSentPacketsNum(const ExchangeType xchg_type) const {
+        ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
+        return xchg_stats->getSentPacketsNum();
+    }
 
+    /// \brief Return total number of received packets
+    ///
+    /// Method returns total number of received packets for specified
+    /// exchange type.
+    ///
+    /// \param xchg_type exchange type.
+    /// \throw isc::BadValue if invalid exchange type specified.
+    /// \return number of received packets.
+    uint64_t getRcvdPacketsNum(const ExchangeType xchg_type) const {
+        ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
+        return xchg_stats->getRcvdPacketsNum();
+    }
+private:
     /// \brief Return exchange stats object for given exchange type
     ///
     /// Method returns exchange stats object for given exchange type.
