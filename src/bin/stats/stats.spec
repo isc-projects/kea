@@ -2,7 +2,13 @@
   "module_spec": {
     "module_name": "Stats",
     "module_description": "Stats daemon",
-    "config_data": [],
+    "config_data": [
+      { "item_name": "poll-interval",
+        "item_type": "integer",
+        "item_optional": true,
+        "item_default": 60
+      }
+    ],
     "commands": [
       {
         "command_name": "status",
