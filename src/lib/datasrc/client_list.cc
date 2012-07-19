@@ -254,9 +254,6 @@ ConfigurableClientList::findInternal(MutableResult& candidate,
 
     // TODO: In case we have only the datasource and not the finder
     // and the need_updater parameter is true, get the zone there.
-
-    // Return the partial match we have. In case we didn't want a partial
-    // match, this surely contains the original empty result.
 }
 
 ConfigurableClientList::ReloadResult
