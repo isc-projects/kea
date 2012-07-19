@@ -38,27 +38,41 @@ namespace datasrc {
 namespace memory {
 
 namespace {
+/// Specification of a single RDATA field in terms of internal encoding.
 struct RdataFieldSpec {
     enum FieldType {
-        FIXEDLEN_DATA = 0,
-        VARLEN_DATA,
-        DOMAIN_NAME
+        FIXEDLEN_DATA = 0,      // fixed-length data field
+        VARLEN_DATA,            // variable-length data field
+        DOMAIN_NAME             // domain name
     };
         
-    FieldType type;
+    const FieldType type;       // field type
+
+    // type specific data.  We use a union so it'll be clear only one of them
+    // (determined by the type) is valid.  Since we want to make it as
+    // lightweight as possible, we use a relatively lower-level primitives
+    // here.
     union {
-        uint16_t fixeddata_len;
-        RdataNameAttributes name_attributes;
+        // The length of fixed-length data field.  Only valid for FIXEDLEN_DATA
+        const uint16_t fixeddata_len;
+
+        // Attributes of the name.  Only valid for DOMAIN_NAME.
+        const RdataNameAttributes name_attributes;
     };
 };
 
+/// Specification of RDATA in terms of internal encoding.
 struct RdataEncodeSpec {
-    uint16_t field_count;
-    uint16_t name_count;
-    uint16_t varlen_count;
-    const RdataFieldSpec* fields;
+    const uint16_t field_count; // total number of fields (# of fields member)
+    const uint16_t name_count;  // number of domain name fields
+    const uint16_t varlen_count; // number of variable-length data fields
+    const RdataFieldSpec* const fields; // list of field specs
 };
 
+// These constants are convenient shortcut to initialize the name_attributes
+// member of RdataFieldSpec (since it's a union, we can only directly
+// initialize fixeddata_len member, so we need to convert it to its type).
+// These are essentially small integers, so the cast should be safe.
 const uint16_t NAMEATTR_NOATTRIBUTE_INITIALIZER = static_cast<uint16_t>(0);
 const uint16_t NAMEATTR_COMPRESSIBLE_INITIALIZER =
     static_cast<uint16_t>(NAMEATTR_COMPRESSIBLE);
@@ -67,33 +81,33 @@ const uint16_t NAMEATTR_ADDITIONAL_INITIALIZER =
 const uint16_t NAMEATTR_COMPADDITIONAL_INITIALIZER =
     static_cast<uint16_t>(NAMEATTR_COMPRESSIBLE | NAMEATTR_ADDITIONAL);
 
-// TBD
+// Many types of RDATA can be treated as a single-field, variable length
+// field (in terms of our encoding).  The following define such most general
+// form of field spec.
 const RdataFieldSpec generic_data_fields[] = {
     {RdataFieldSpec::VARLEN_DATA, {0}}
 };
 const uint16_t n_generic_data_fields =
     sizeof(generic_data_fields) / sizeof(RdataFieldSpec);
-
-// Most general form of field spec: that consisting of single variable-len
-// data field.
 const RdataEncodeSpec generic_data_spec = {
     n_generic_data_fields, 0, 1, generic_data_fields
 };
 
-// TBD
+// RDATA consist of a single IPv4 address field.
 const RdataFieldSpec single_ipv4_fields[] = {
     {RdataFieldSpec::FIXEDLEN_DATA, {sizeof(uint32_t)}}
 };
 const uint16_t n_ipv4_fields =
     sizeof(single_ipv4_fields) / sizeof(RdataFieldSpec);
 
+// RDATA consist of a single IPv6 address field.
 const RdataFieldSpec single_ipv6_fields[] = {
     {RdataFieldSpec::FIXEDLEN_DATA, {16}} // 128bits = 16 bytes
 };
 const uint16_t n_ipv6_fields =
     sizeof(single_ipv6_fields) / sizeof(RdataFieldSpec);
 
-// TBD
+// There are several RR types that consist of a single domain name.
 const RdataFieldSpec single_noattr_name_fields[] = {
     {RdataFieldSpec::DOMAIN_NAME, {NAMEATTR_NOATTRIBUTE_INITIALIZER}}
 };
@@ -119,8 +133,7 @@ const RdataFieldSpec double_noattr_name_fields[] = {
 const uint16_t n_double_name_fields =
     sizeof(double_compressible_name_fields) / sizeof(RdataFieldSpec);
 
-
-// SOA specific: two compressible names + 20-byte data
+// SOA specific: two compressible names + 5*32-bit data
 const RdataFieldSpec soa_fields[] = {
     {RdataFieldSpec::DOMAIN_NAME, {NAMEATTR_COMPRESSIBLE_INITIALIZER}},
     {RdataFieldSpec::DOMAIN_NAME, {NAMEATTR_COMPRESSIBLE_INITIALIZER}},
@@ -165,7 +178,10 @@ const RdataFieldSpec nsec_fields[] = {
 };
 const uint16_t n_nsec_fields = sizeof(nsec_fields) / sizeof(RdataFieldSpec);
 
-// Class IN encode specs
+// Class IN encode specs.  This gives a shortcut to the encode spec for
+// some well-known types of RDATA specific to class IN (most of which are
+// generic and can be used for other classes).  The array index is the
+// RR type code.
 const RdataEncodeSpec encode_spec_list_in[] = {
     generic_data_spec,                         // #0: (NONE)
     {n_ipv4_fields, 0, 0, single_ipv4_fields},   // #1: A
@@ -213,6 +229,7 @@ const RdataEncodeSpec encode_spec_list_in[] = {
     // least for currently supported RR types.
 };
 
+// # of entries in encode_spec_list_in
 const size_t encode_spec_list_in_size =
     sizeof(encode_spec_list_in) / sizeof(encode_spec_list_in[0]);
 BOOST_STATIC_ASSERT(encode_spec_list_in_size == 48);
@@ -220,12 +237,16 @@ BOOST_STATIC_ASSERT(encode_spec_list_in_size == 48);
 inline
 const RdataEncodeSpec&
 getRdataEncodeSpec(RRClass rrclass, RRType rrtype) {
+    // Special case: for classes other than IN, we treat RDATA of RR types
+    // that are class-IN specific as generic opaque data.
     if (rrclass != RRClass::IN() &&
         (rrtype == RRType::A() || rrtype == RRType::AAAA() ||
          rrtype == RRType::SRV())) {
         return (generic_data_spec);
     }
 
+    // Otherwise, if the type is in the pre-defined range, we use the defined
+    // spec; otherwise we treat it as opaque data.
     const uint16_t typecode = rrtype.getCode();
     if (typecode < encode_spec_list_in_size) {
         return (encode_spec_list_in[rrtype.getCode()]);
@@ -247,6 +268,7 @@ getNAPTRDataLen(const rdata::Rdata& rdata) {
 }
 } // end of unnamed namespace
 
+namespace testing {
 void
 encodeRdata(const rdata::Rdata& rdata, RRClass rrclass, RRType rrtype,
             vector<uint8_t>& data_result, vector<uint16_t>& len_result)
@@ -352,6 +374,7 @@ foreachRdataField(RRClass rrclass, RRType rrtype,
     assert(name_count == encode_spec.name_count);
     assert(varlen_count == encode_spec.varlen_count);
 }
+} // namespace testing
 
 } // namespace memory
 } // namespace datasrc

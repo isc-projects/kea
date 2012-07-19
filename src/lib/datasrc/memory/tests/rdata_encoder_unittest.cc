@@ -34,18 +34,25 @@
 using namespace isc::dns;
 using namespace isc::dns::rdata;
 using namespace isc::datasrc::memory;
+using namespace isc::datasrc::memory::testing;
 
 using isc::util::unittests::matchWireData;
 using std::string;
 using std::vector;
 
 namespace {
+// This defines a tuple of test data used in test_rdata_list below.
 struct TestRdata {
-    const char* const rrclass;
-    const char* const rrtype;
-    const char* const rdata;
+    const char* const rrclass;  // RR class, textual form
+    const char* const rrtype;   // RR type, textual form
+    const char* const rdata;    // textual RDATA
     const size_t n_varlen_fields; // expected # of variable-len fields
 };
+
+// This test data consist of all supported types of RDATA (+ some
+// unusual and corner cases).  We'll construct corresponding Rdata
+// object from this, and compare its wire format data both generated
+// by normal libdns++ interface and via encoding conversion.
 const TestRdata test_rdata_list[] = {
     {"IN", "A", "192.0.2.1", 0},
     {"IN", "NS", "ns.example.com", 0},
@@ -85,6 +92,8 @@ const TestRdata test_rdata_list[] = {
     {NULL, NULL, NULL, 0}
 };
 
+// The following two functions will be used to generate wire format data
+// from encoded representation of each RDATA.
 void
 renderNameField(MessageRenderer* renderer, bool additional_required,
                 const LabelSequence& labels, RdataNameAttributes attributes)
@@ -102,12 +111,22 @@ renderDataField(MessageRenderer* renderer, const uint8_t* data,
 }
 
 TEST(RdataFieldSpec, checkData) {
+    // These two names will be rendered before and after the test RDATA,
+    // to check in case the RDATA contain a domain name whether it's
+    // compressed or not correctly.  The names in the RDATA should basically
+    // a subdomain of example.com, so it can be compressed due to dummy_name.
+    // Likewise, dummy_name2 should be able to be fully compressed due to
+    // the name in the RDATA.
     const Name dummy_name("com");
     const Name dummy_name2("example.com");
+
     MessageRenderer expected_renderer, actual_renderer;
     vector<uint8_t> encoded_data;
     vector<uint16_t> varlen_list;
 
+    // The set of RR types that require additional section processing.
+    // We'll pass it to renderNameField to check the stored attribute matches
+    // our expectation.
     std::set<RRType> need_additionals;
     need_additionals.insert(RRType::NS());
     need_additionals.insert(RRType::MX());
