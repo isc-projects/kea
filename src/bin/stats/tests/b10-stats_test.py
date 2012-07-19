@@ -1,4 +1,4 @@
-# Copyright (C) 2010, 2011  Internet Systems Consortium.
+# Copyright (C) 2010, 2011, 2012  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -227,9 +227,11 @@ class TestStats(unittest.TestCase):
         self.stats_server = ThreadingServerManager(MyStats)
         self.stats = self.stats_server.server
         self.stats_server.run()
-        # config_handler
-        self.assertEqual(self.stats.config_handler({'foo':'bar'}),
+        # test updating poll-interval
+        self.assertEqual(self.stats.config['poll-interval'], 60)
+        self.assertEqual(self.stats.config_handler({'poll-interval': 120}),
                          isc.config.create_answer(0))
+        self.assertEqual(self.stats.config['poll-interval'], 120)
 
         # command_handler
         self.base.boss.server._started.wait()
