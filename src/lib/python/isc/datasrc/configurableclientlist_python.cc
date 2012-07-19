@@ -100,6 +100,11 @@ ConfigurableClientList_configure(PyObject* po_self, PyObject* args) {
         } else {
             return (NULL);
         }
+    } catch (const isc::data::JSONError& jse) {
+        const string ex_what(std::string("JSON parse error in data source"
+                               " configuration: ") + jse.what());
+        PyErr_SetString(getDataSourceException("Error"), ex_what.c_str());
+        return (NULL);
     } catch (const std::exception& exc) {
         PyErr_SetString(getDataSourceException("Error"), exc.what());
         return (NULL);
