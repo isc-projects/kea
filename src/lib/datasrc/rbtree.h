@@ -1410,7 +1410,7 @@ RBTree<T>::insert(const isc::dns::Name& target_name, RBNode<T>** new_node) {
     }
 
     typename RBNode<T>::RBNodePtr* current_root = (up_node != NULLNODE) ?
-        &up_node->down_ : &root_;
+        &(up_node->down_) : &root_;
     // using auto_ptr here is avoid memory leak in case of exceptoin raised
     // after the RBNode creation, if we can make sure no exception will be
     // raised until the end of the function, we can remove it for optimization
@@ -1548,7 +1548,7 @@ RBTree<T>::rightRotate(typename RBNode<T>::RBNodePtr* root, RBNode<T>* node) {
 
     if (node->parent_ != NULLNODE) {
         if (node == node->getParent()->getRight()) {
-            node->getParent()->left_ = left;
+            node->getParent()->right_ = left;
         } else  {
             node->getParent()->left_ = left;
         }
