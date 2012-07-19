@@ -221,10 +221,9 @@ private:
     AuthSrvImpl(const AuthSrvImpl& source);
     AuthSrvImpl& operator=(const AuthSrvImpl& source);
 public:
-    AuthSrvImpl(const bool use_cache, AbstractXfroutClient& xfrout_client,
+    AuthSrvImpl(AbstractXfroutClient& xfrout_client,
                 BaseSocketSessionForwarder& ddns_forwarder);
     ~AuthSrvImpl();
-    isc::data::ConstElementPtr setDbFile(isc::data::ConstElementPtr config);
 
     bool processNormalQuery(const IOMessage& io_message, Message& message,
                             OutputBuffer& buffer,
@@ -246,10 +245,6 @@ public:
     /// These members are public because AuthSrv accesses them directly.
     ModuleCCSession* config_session_;
     AbstractSession* xfrin_session_;
-
-    /// In-memory data source.  Currently class IN only for simplicity.
-    /// Hot spot cache
-    isc::datasrc::HotCache cache_;
 
     /// Interval timer for periodic submission of statistics counters.
     IntervalTimer statistics_timer_;
@@ -313,8 +308,7 @@ private:
     auth::Query query_;
 };
 
-AuthSrvImpl::AuthSrvImpl(const bool use_cache,
-                         AbstractXfroutClient& xfrout_client,
+AuthSrvImpl::AuthSrvImpl(AbstractXfroutClient& xfrout_client,
                          BaseSocketSessionForwarder& ddns_forwarder) :
     config_session_(NULL),
     xfrin_session_(NULL),
@@ -324,10 +318,7 @@ AuthSrvImpl::AuthSrvImpl(const bool use_cache,
     xfrout_connected_(false),
     xfrout_client_(xfrout_client),
     ddns_forwarder_("update", ddns_forwarder)
-{
-    // enable or disable the cache
-    cache_.setEnabled(use_cache);
-}
+{}
 
 AuthSrvImpl::~AuthSrvImpl() {
     if (xfrout_connected_) {
@@ -386,11 +377,10 @@ private:
     AuthSrv* server_;
 };
 
-AuthSrv::AuthSrv(const bool use_cache,
-                 isc::xfr::AbstractXfroutClient& xfrout_client,
+AuthSrv::AuthSrv(isc::xfr::AbstractXfroutClient& xfrout_client,
                  isc::util::io::BaseSocketSessionForwarder& ddns_forwarder)
 {
-    impl_ = new AuthSrvImpl(use_cache, xfrout_client, ddns_forwarder);
+    impl_ = new AuthSrvImpl(xfrout_client, ddns_forwarder);
     checkin_ = new ConfigChecker(this);
     dns_lookup_ = new MessageLookup(this);
     dns_answer_ = new MessageAnswer(this);
@@ -467,16 +457,6 @@ makeErrorMessage(MessageRenderer& renderer, Message& message,
 IOService&
 AuthSrv::getIOService() {
     return (impl_->io_service_);
-}
-
-void
-AuthSrv::setCacheSlots(const size_t slots) {
-    impl_->cache_.setSlots(slots);
-}
-
-size_t
-AuthSrv::getCacheSlots() const {
-    return (impl_->cache_.getSlots());
 }
 
 void

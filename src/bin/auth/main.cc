@@ -85,9 +85,8 @@ my_command_handler(const string& command, ConstElementPtr args) {
 
 void
 usage() {
-    cerr << "Usage:  b10-auth [-u user] [-nv]"
+    cerr << "Usage:  b10-auth [-v]"
          << endl;
-    cerr << "\t-n: do not cache answers in memory" << endl;
     cerr << "\t-v: verbose logging (debug-level)" << endl;
     exit(1);
 }
@@ -97,14 +96,10 @@ usage() {
 int
 main(int argc, char* argv[]) {
     int ch;
-    bool cache = true;
     bool verbose = false;
 
     while ((ch = getopt(argc, argv, ":nu:v")) != -1) {
         switch (ch) {
-        case 'n':
-            cache = false;
-            break;
         case 'v':
             verbose = true;
             break;
@@ -143,7 +138,7 @@ main(int argc, char* argv[]) {
             specfile = string(AUTH_SPECFILE_LOCATION);
         }
 
-        auth_server = new AuthSrv(cache, xfrout_client, ddns_forwarder);
+        auth_server = new AuthSrv(xfrout_client, ddns_forwarder);
         LOG_INFO(auth_logger, AUTH_SERVER_CREATED);
 
         SimpleCallback* checkin = auth_server->getCheckinProvider();
