@@ -61,12 +61,6 @@ SSHFP::SSHFP(const std::string& sshfp_str)
     if (iss.bad() || iss.fail()) {
       isc_throw(InvalidRdataText, "Invalid SSHFP text");
     }
-    if ((algorithm < 1) || (algorithm > 2)) {
-      isc_throw(InvalidRdataText, "SSHFP algorithm number out of range");
-    }
-    if (fingerprint_type != 1) {
-      isc_throw(InvalidRdataText, "SSHFP fingerprint type out of range");
-    }
 
     iss.read(&peekc, 1);
     if (!iss.good() || !isspace(peekc, iss.getloc())) {
@@ -82,13 +76,6 @@ SSHFP::SSHFP(const std::string& sshfp_str)
 
 SSHFP::SSHFP(uint8_t algorithm, uint8_t fingerprint_type, const std::string& fingerprint)
 {
-    if ((algorithm < 1) || (algorithm > 2)) {
-      isc_throw(InvalidRdataText, "SSHFP algorithm number out of range");
-    }
-    if (fingerprint_type != 1) {
-      isc_throw(InvalidRdataText, "SSHFP fingerprint type out of range");
-    }
-
     algorithm_ = algorithm;
     fingerprint_type_ = fingerprint_type;
     decodeHex(fingerprint, fingerprint_);
