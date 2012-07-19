@@ -1,6 +1,6 @@
 MYSQL_CFLAGS=`mysql_config --cflags`
 MYSQL_LDFLAGS=`mysql_config --libs`
-CFLAGS=-g -O0
+CFLAGS=-g -O0 -Wall -pedantic -Wextra
 LDFLAGS=-lrt
 
 SQLITE_CFLAGS=`pkg-config sqlite3 --cflags` $(LDFLAGS)
