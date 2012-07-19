@@ -255,7 +255,8 @@ public:
                                               0, 0, 0, 0, 0));
             finder->add(soa);
         }
-        // We leave the zone empty, so we can check it was reloaded.
+        // If we don't do prefill, we leave the zone empty. This way,
+        // we can check when it was reloaded.
         cache->addZone(finder);
         list_->getDataSources()[index].cache_ = cache;
     }
@@ -811,7 +812,9 @@ TEST_F(ListTest, reloadNotEnabled) {
 TEST_F(ListTest, reloadNoSuchZone) {
     list_->configure(config_elem_zones_, true);
     Name name("example.org");
-    // We put the cache in even when not enabled. This won't confuse the thing.
+    // We put the cache in even when not enabled. This won't confuse the
+    // reload method, as that one looks at the real state of things, not
+    // at the configuration.
     prepareCache(0, Name("example.com"));
     // Not in the data sources
     EXPECT_EQ(ConfigurableClientList::ZONE_NOT_FOUND,
