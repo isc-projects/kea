@@ -35,8 +35,7 @@ using namespace isc::util::encode;
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
 
-SSHFP::SSHFP(InputBuffer& buffer, size_t rdata_len)
-{
+SSHFP::SSHFP(InputBuffer& buffer, size_t rdata_len) {
     if (rdata_len < 2) {
       isc_throw(InvalidRdataLength, "SSHFP record too short");
     }
@@ -49,8 +48,7 @@ SSHFP::SSHFP(InputBuffer& buffer, size_t rdata_len)
     buffer.readData(&fingerprint_[0], rdata_len);
 }
 
-SSHFP::SSHFP(const std::string& sshfp_str)
-{
+SSHFP::SSHFP(const std::string& sshfp_str) {
     std::istringstream iss(sshfp_str);
     // peekc should be of iss's char_type for isspace to work
     std::istringstream::char_type peekc;
@@ -74,7 +72,8 @@ SSHFP::SSHFP(const std::string& sshfp_str)
     decodeHex(fingerprintbuf.str(), fingerprint_);
 }
 
-SSHFP::SSHFP(uint8_t algorithm, uint8_t fingerprint_type, const std::string& fingerprint)
+SSHFP::SSHFP(uint8_t algorithm, uint8_t fingerprint_type,
+             const std::string& fingerprint)
 {
     algorithm_ = algorithm;
     fingerprint_type_ = fingerprint_type;
@@ -82,7 +81,9 @@ SSHFP::SSHFP(uint8_t algorithm, uint8_t fingerprint_type, const std::string& fin
 }
 
 SSHFP::SSHFP(const SSHFP& other) :
-  Rdata(), algorithm_(other.algorithm_), fingerprint_type_(other.fingerprint_type_), fingerprint_(other.fingerprint_)
+  Rdata(), algorithm_(other.algorithm_),
+  fingerprint_type_(other.fingerprint_type_),
+  fingerprint_(other.fingerprint_)
 {}
 
 void
