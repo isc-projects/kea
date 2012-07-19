@@ -115,6 +115,9 @@
       Therefore each test uses lease4 table for performance measurements.
       </para>
 
+      <para>All benchmarks are implemented as single threaded applications
+      that take advantage of a single database connection.</para>
+
       <para>
         Those benchmarks are stored in tests/tools/dhcp-ubench
         directory. This directory contains simplified prototypes for
@@ -339,7 +342,7 @@ SQLite version: 3.7.9sourceid version is 2011-11-01 00:52:41 c7c6050ef060877ebe7
       100000 (hundred thousand) repetitions.</para>
 
       <!-- raw results sync -->
-      <table><title>Synchronous results:</title>
+      <table><title>Synchronous results</title>
       <tgroup cols='6' align='center' colsep='1' rowsep='1'>
         <colspec colname='Backend'/>
         <colspec colname='Num' />
@@ -399,7 +402,7 @@ SQLite version: 3.7.9sourceid version is 2011-11-01 00:52:41 c7c6050ef060877ebe7
       was run for 1 million repetitions due to much larger performance.</para>
 
       <!-- raw results async -->
-      <table><title>Asynchronous results:</title>
+      <table><title>Asynchronous results</title>
       <tgroup cols='6' align='center' colsep='1' rowsep='1'>
         <colspec colname='Backend'/>
         <colspec colname='Num' />
@@ -454,7 +457,10 @@ SQLite version: 3.7.9sourceid version is 2011-11-01 00:52:41 c7c6050ef060877ebe7
       </tgroup>
       </table>
 
-      <para>Estimated performance:</para>
+      <para>Presented performance results can be computed into operations per second metrics.
+      It should be noted that due to large differences between various operations (sometime
+      over 3 orders of magnitude), it is not possible to create a simple, readable chart with
+      that data.</para>
 
       <table><title>Estimated performance</title>
       <tgroup cols='6' align='center' colsep='1' rowsep='1'>
@@ -534,6 +540,31 @@ SQLite version: 3.7.9sourceid version is 2011-11-01 00:52:41 c7c6050ef060877ebe7
       </tgroup>
       </table>
 
+    </section>
+
+    <section>
+      <title>Possible further optimizations</title>
+      <para>
+        For debugging purposes the code was compiled with -g -O0
+        flags. While majority of the time was spent in backend
+        functions (that was probably compiled with -O2 flags), the
+        benchmark code could perform faster, when compiled with -O2,
+        rather than -O0. That is expected to affect memfile benchmark.
+      </para>
+      <para>
+        Currently all operations were conducted on one by one
+        basis. Each operation was treated as a separate
+        transaction. Grouping X operations together will potentially
+        bring almost X fold increase in synchronous operations.
+        Extension for this benchmark in this regard should be considered.
+        That affects only write operations (insert, update and delete). Read
+        operations (search) are expected to be barely affected.
+      </para>
+      <para>
+        Multi-threaded or multi-process benchmark may be considered in
+        the future. It may be somewhat difficult as only some backends
+        support concurrent access.
+      </para>
     </section>
 
   </chapter>
