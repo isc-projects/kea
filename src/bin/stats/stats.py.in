@@ -144,6 +144,7 @@ class Stats:
                 self.callbacks[name] = Callback(command=callback, kwargs=kwargs)
             except AttributeError:
                 raise StatsError(STATS_UNKNOWN_COMMAND_IN_SPEC, cmd["command_name"])
+        self.config = {}
         self.mccs.start()
         # setup my config
         self.config = dict([
@@ -203,7 +204,11 @@ class Stats:
         """
         logger.debug(DBG_STATS_MESSAGING, STATS_RECEIVED_NEW_CONFIG,
                      new_config)
-        # do nothing currently
+        # update to new config
+        if new_config and type(new_config) is dict:
+            # backup old config
+            self.old_config = self.config.copy()
+            self.config.update(new_config)
         return isc.config.create_answer(0)
 
     def command_handler(self, command, kwargs):
