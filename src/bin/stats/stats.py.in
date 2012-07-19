@@ -1,6 +1,6 @@
 #!@PYTHON@
 
-# Copyright (C) 2010, 2011  Internet Systems Consortium.
+# Copyright (C) 2010, 2011, 2012  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -145,6 +145,11 @@ class Stats:
             except AttributeError:
                 raise StatsError(STATS_UNKNOWN_COMMAND_IN_SPEC, cmd["command_name"])
         self.mccs.start()
+        # setup my config
+        self.config = dict([
+                (itm['item_name'], self.mccs.get_value(itm['item_name'])[0])
+                for itm in self.mccs.get_module_spec().get_config_spec()
+                ])
 
     def start(self):
         """
