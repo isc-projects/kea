@@ -156,10 +156,10 @@ void memfile_uBenchmark::createLease4Test() {
     }
 
     uint32_t addr = BASE_ADDR4; // Let's start with 1.0.0.0 address
-    char hwaddr_tmp[20];
-    uint8_t hwaddr_len = 20; // not a real field
-    char client_id_tmp[128];
-    uint8_t client_id_len = 128;
+    const uint8_t hwaddr_len = 20; // not a real field
+    char hwaddr_tmp[hwaddr_len];
+    const uint8_t client_id_len = 128;
+    char client_id_tmp[client_id_len];
     uint32_t valid_lft = 1000;  // we can use the same value for all leases
     uint32_t recycle_time = 0;  // not supported in any foresable future,
                                 // so keep this as 0
@@ -172,12 +172,14 @@ void memfile_uBenchmark::createLease4Test() {
 
     printf("CREATE:   ");
 
-    for (uint8_t i = 0; i < 20; i++) {
+    // while we could put the data directly into vector, I would like to
+    // keep the code as  similar to other benchmarks as possible
+    for (uint8_t i = 0; i < hwaddr_len; i++) {
         hwaddr_tmp[i] = 65 + i;
     }
     vector<uint8_t> hwaddr(hwaddr_tmp, hwaddr_tmp+19);
 
-    for (uint8_t i = 0; i < 128; i++) {
+    for (uint8_t i = 0; i < client_id_len; i++) {
         client_id_tmp[i] = 33 + i;
     }
     vector<uint8_t> client_id(client_id_tmp, client_id_tmp+19);
@@ -191,13 +193,13 @@ void memfile_uBenchmark::createLease4Test() {
         lease->hwaddr = hwaddr;
         lease->client_id = client_id;
         lease->valid_lft = valid_lft;
-        lease->recycle_time = 0;
+        lease->recycle_time = recycle_time;
         lease->cltt = cltt;
-        lease->pool_id = 0;
-        lease->fixed = false;
+        lease->pool_id = pool_id;
+        lease->fixed = fixed;
         lease->hostname = "foo";
-        lease->fqdn_fwd = true;
-        lease->fqdn_rev = true;
+        lease->fqdn_fwd = fqdn_fwd;
+        lease->fqdn_rev = fqdn_rev;
 
         if (!LeaseMgr_->addLease(lease)) {
             failure("addLease() failed");
@@ -272,7 +274,6 @@ void memfile_uBenchmark::deleteLease4Test() {
     }
 
     printf("DELETE:   ");
-    char * errorMsg = NULL;
 
     for (uint32_t i = 0; i < Num_; i++) {
 
