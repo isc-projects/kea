@@ -14,6 +14,8 @@
 
 #include <exceptions/exceptions.h>
 
+#include <util/memory_segment_local.h>
+
 #include <dns/name.h>
 #include <dns/nsec3hash.h>
 #include <dns/rdataclass.h>
@@ -120,8 +122,14 @@ typedef NSEC3Map::value_type NSEC3Pair;
 // Actual zone data: Essentially a set of zone's RRs.  This is defined as
 // a separate structure so that it'll be replaceable on reload.
 struct ZoneData {
+    // Note: this code is not entirely exception safe; domains_storage_ could
+    // leak if the constructor throws.  But since it's an intermediate version
+    // toward a full revision and the actual risk of leak should be very small
+    // in practice, we leave it open for now.
     ZoneData(const Name& origin) :
-        domains_(true),
+        domains_storage_(DomainTree::create(local_mem_sgmt_, true)),
+        domains_(*domains_storage_),
+        aux_wild_domains_(NULL),
         origin_data_(NULL),
         nsec_signed_(false)
     {
@@ -131,8 +139,29 @@ struct ZoneData {
         origin_data_->setData(origin_domain);
     }
 
-    // The main data (name + RRsets)
-    DomainTree domains_;
+    ~ZoneData() {
+        DomainTree::destroy(local_mem_sgmt_, domains_storage_);
+        if (aux_wild_domains_ != NULL) {
+            DomainTree::destroy(local_mem_sgmt_, aux_wild_domains_);
+        }
+
+        // The assert may be too harsh, but we assume we'll discard (rewrite)
+        // this code soon enough.  Until then this would be a good way to
+        // detect any memory leak.
+        assert(local_mem_sgmt_.allMemoryDeallocated());
+    }
+
+    // Memory segment to allocate/deallocate memory for the tree and the nodes.
+    // (This will eventually have to be abstract; for now we hardcode the
+    // specific derived segment class).
+    util::MemorySegmentLocal local_mem_sgmt_;
+
+    // The main data (name + RRsets).  We use domains_ as a reference to
+    // domains_storage_ so we don't have to update the rest of the code;
+    // it will eventually have to be revised substantially, at which point
+    // we should clean this up, too.
+    DomainTree* domains_storage_;
+    DomainTree& domains_;
 
     // An auxiliary tree for wildcard expanded data used in additional data
     // processing.  It contains names like "ns.wild.example" in the following
@@ -150,11 +179,11 @@ struct ZoneData {
     // should be even empty, and even if it has content it should be very
     // small.
 private:
-    scoped_ptr<DomainTree> aux_wild_domains_;
+    DomainTree* aux_wild_domains_;
 public:
     DomainTree& getAuxWildDomains() {
-        if (!aux_wild_domains_) {
-            aux_wild_domains_.reset(new DomainTree);
+        if (aux_wild_domains_ == NULL) {
+            aux_wild_domains_ = DomainTree::create(local_mem_sgmt_);
         }
         return (*aux_wild_domains_);
     }
@@ -1782,9 +1811,23 @@ InMemoryZoneFinder::getFileName() const {
 /// member variables later for new features.
 class InMemoryClient::InMemoryClientImpl {
 public:
-    InMemoryClientImpl() : zone_count(0) {}
+    InMemoryClientImpl() : zone_count(0),
+                           zone_table(ZoneTable::create(local_mem_sgmt_))
+    {}
+    ~InMemoryClientImpl() {
+        ZoneTable::destroy(local_mem_sgmt_, zone_table);
+
+        // see above for the assert().
+        assert(local_mem_sgmt_.allMemoryDeallocated());
+    }
+private:
+    // Memory segment to allocate/deallocate memory for the zone table.
+    // (This will eventually have to be abstract; for now we hardcode the
+    // specific derived segment class).
+    util::MemorySegmentLocal local_mem_sgmt_;
+public:
     unsigned int zone_count;
-    ZoneTable zone_table;
+    ZoneTable* zone_table;
 };
 
 InMemoryClient::InMemoryClient() : impl_(new InMemoryClientImpl)
@@ -1809,7 +1852,7 @@ InMemoryClient::addZone(ZoneFinderPtr zone_finder) {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_ADD_ZONE).
         arg(zone_finder->getOrigin()).arg(zone_finder->getClass().toText());
 
-    const result::Result result = impl_->zone_table.addZone(zone_finder);
+    const result::Result result = impl_->zone_table->addZone(zone_finder);
     if (result == result::SUCCESS) {
         ++impl_->zone_count;
     }
@@ -1819,7 +1862,7 @@ InMemoryClient::addZone(ZoneFinderPtr zone_finder) {
 InMemoryClient::FindResult
 InMemoryClient::findZone(const isc::dns::Name& name) const {
     LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_FIND_ZONE).arg(name);
-    ZoneTable::FindResult result(impl_->zone_table.findZone(name));
+    ZoneTable::FindResult result(impl_->zone_table->findZone(name));
     return (FindResult(result.code, result.zone));
 }
 
@@ -1925,7 +1968,7 @@ public:
 
 ZoneIteratorPtr
 InMemoryClient::getIterator(const Name& name, bool separate_rrs) const {
-    ZoneTable::FindResult result(impl_->zone_table.findZone(name));
+    ZoneTable::FindResult result(impl_->zone_table->findZone(name));
     if (result.code != result::SUCCESS) {
         isc_throw(DataSourceError, "No such zone: " + name.toText());
     }
