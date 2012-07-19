@@ -24,11 +24,12 @@
 ///     to be used as a base data structure by other modules.
 
 #include <exceptions/exceptions.h>
-
+#include <util/memory_segment.h>
 #include <dns/name.h>
+
 #include <boost/utility.hpp>
 #include <boost/shared_ptr.hpp>
-#include <exceptions/exceptions.h>
+
 #include <ostream>
 #include <algorithm>
 #include <cassert>
@@ -708,17 +709,59 @@ public:
         ALREADYEXISTS,
     };
 
+    /// \brief Allocate and construct \c RBTree
+    ///
+    /// This static method allocates memory for a new \c RBTree object
+    /// from the given memory segment, constructs the object, and returns
+    /// a pointer to it.
+    ///
+    /// \throw std::bad_alloc Memory allocation fails.
+    ///
+    /// \param mem_sgmt A \c MemorySegment from which memory for the new
+    /// \c RBTree is allocated.
+    static RBTree* create(util::MemorySegment& mem_sgmt,
+                          bool return_empty_node = false)
+    {
+        void* p = mem_sgmt.allocate(sizeof(RBTree<T>));
+        return (new(p) RBTree<T>(return_empty_node));
+    }
+
+    /// \brief Destruct and deallocate \c RBTree
+    ///
+    /// \throw none
+    ///
+    /// \param mem_sgmt The \c MemorySegment that allocated memory for
+    /// \c rbtree.
+    /// \param rbtree A non NULL pointer to a valid \c RBTree object
+    /// that was originally created by the \c create() method (the behavior
+    /// is undefined if this condition isn't met).
+    static void destroy(util::MemorySegment& mem_sgmt, RBTree<T>* rbtree) {
+        rbtree->~RBTree<T>();
+        mem_sgmt.deallocate(rbtree, sizeof(RBTree<T>));
+    }
+
+private:
     /// \name Constructor and Destructor
     //@{
-    /// The constructor.
+    /// \brief The constructor.
+    ///
+    /// An object of this class is always expected to be created by the
+    /// allocator (\c create()), so the constructor is hidden as private.
     ///
     /// It never throws an exception.
     explicit RBTree(bool returnEmptyNode = false);
 
-    /// \b Note: RBTree is not intended to be inherited so the destructor
+    /// \brief The destructor.
+    ///
+    /// An object of this class is always expected to be destroyed explicitly
+    /// by \c destroy(), so the constructor is hidden as private.
+    ///
+    /// \note RBTree is not intended to be inherited so the destructor
     /// is not virtual
     ~RBTree();
     //@}
+
+public:
 
     /// \name Find methods
     ///
