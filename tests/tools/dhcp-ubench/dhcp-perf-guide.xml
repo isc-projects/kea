@@ -324,13 +324,12 @@ Possible command-line parameters:
       <para>This section contains sample results for backend performance measurements,
       taken using microbenchmarks. Tests were conducted on reasonably powerful machine:
       <screen>
-        CPU: Quad-core Intel(R) Core(TM) i7-2600K CPU @ 3.40GHz (8 logical cores)
-        HDD: 1,5TB Seagate Barracude ST31500341AS 7200rpm (used only one of them), ext4 partition
-        OS: Ubuntu 12.04, running kernel 3.2.0-26-generic SMP x86_64
-        compilers: g++ (Ubuntu/Linaro 4.6.3-1ubuntu5) 4.6.3
-        MySQL version: 5.5.24
-        SQLite version: 3.7.9sourceid version is 2011-11-01 00:52:41 c7c6050ef060877ebe77b41d959e9df13f8c9b5e
-      </screen>
+CPU: Quad-core Intel(R) Core(TM) i7-2600K CPU @ 3.40GHz (8 logical cores)
+HDD: 1,5TB Seagate Barracuda ST31500341AS 7200rpm (used only one of them), ext4 partition
+OS: Ubuntu 12.04, running kernel 3.2.0-26-generic SMP x86_64
+compiler: g++ (Ubuntu/Linaro 4.6.3-1ubuntu5) 4.6.3
+MySQL version: 5.5.24
+SQLite version: 3.7.9sourceid version is 2011-11-01 00:52:41 c7c6050ef060877ebe77b41d959e9df13f8c9b5e</screen>
       </para>
 
       <para>Benchmarks were run in two series: synchronous and
