@@ -280,7 +280,7 @@ public:
             bool packet_found = false;
             // Most likely responses are sent from the server in the same
             // order as client's requests to the server. We are caching
-            // next sent packet and first try to match with it the next
+            // next sent packet and first try to match it with the next
             // incoming packet. We are successful if there is no
             // packet drop or out of order packets sent. This is actually
             // the fastest way to look for packets.
@@ -293,16 +293,16 @@ public:
                 // take a little more expensive approach to look packets using
                 // alternative index (transaction id & 1023).
                 PktListTransidIndex& idx = sent_packets_.template get<1>();
-                // Packets are grouped using trasaction id masking with value
+                // Packets are grouped using trasaction id masked with value
                 // of 1023. For instance, packets with transaction id equal to
                 // 1, 1024 ... will belong to the same group (a.k.a. bucket).
                 // When using alternative index we don't find the packet but
-                // bucket of packets and need to iterate through the bucket
+                // bucket of packets and we need to iterate through the bucket
                 // to find the one that has desired transaction id.
                 std::pair<PktListTransidIterator,PktListTransidIterator> p =
                     idx.equal_range(transid & 1023);
                 // We want to keep statistics of unordered lookups to make
-                // sure that there is a right balance before number of
+                // sure that there is a right balance between number of
                 // unordered lookups and ordered lookups. If number of unordered
                 // lookups is high it may mean that many packets are lost or
                 // sent out of order.
