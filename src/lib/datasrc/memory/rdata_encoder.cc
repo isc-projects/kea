@@ -45,7 +45,7 @@ struct RdataFieldSpec {
         VARLEN_DATA,            // variable-length data field
         DOMAIN_NAME             // domain name
     };
-        
+
     const FieldType type;       // field type
 
     // type specific data.  We use a union so it'll be clear only one of them
