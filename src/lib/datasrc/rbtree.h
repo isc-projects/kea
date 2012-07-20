@@ -417,7 +417,7 @@ RBNode<T>::abstractSuccessor(typename RBNode<T>::RBNodePtr RBNode<T>::*left,
     const RBNode<T>* current = this;
     // If it has right node, the successor is the left-most node of the right
     // subtree.
-    if (current->*right != RBNode<T>::NULL_NODE()) {
+    if ((current->*right).get() != RBNode<T>::NULL_NODE()) {
         current = (current->*right).get();
         const RBNode<T>* left_n;
         while ((left_n = (current->*left).get()) != RBNode<T>::NULL_NODE()) {
@@ -1199,7 +1199,7 @@ RBTree<T>::nextNode(RBTreeNodeChain<T>& node_path) const {
     const RBNode<T>* down = node->getDown();
     if (down != NULLNODE) {
         const RBNode<T>* left_most = down;
-        while (left_most->left_ != NULLNODE) {
+        while (left_most->getLeft() != NULLNODE) {
             left_most = left_most->getLeft();
         }
         node_path.push(left_most);
@@ -1478,7 +1478,7 @@ RBTree<T>::insertRebalance(typename RBNode<T>::RBNodePtr* root,
 {
     RBNode<T>* uncle;
     RBNode<T>* parent;
-    while (node != *root &&
+    while (node != (*root).get() &&
            (parent = node->getParent())->color_ == RBNode<T>::RED) {
         if (parent == parent->getParent()->getLeft()) {
             uncle = parent->getParent()->getRight();
@@ -1525,13 +1525,14 @@ RBTree<T>::insertRebalance(typename RBNode<T>::RBNodePtr* root,
 template <typename T>
 RBNode<T>*
 RBTree<T>::leftRotate(typename RBNode<T>::RBNodePtr* root, RBNode<T>* node) {
-    RBNode<T>* right = node->getRight();
-    RBNode<T>* rleft = right->getLeft();
+    RBNode<T>* const right = node->getRight();
+    RBNode<T>* const rleft = right->getLeft();
     node->right_ = rleft;
-    if (rleft != NULLNODE)
+    if (rleft != NULLNODE) {
         rleft->parent_ = node;
+    }
 
-    RBNode<T>* parent = node->getParent();
+    RBNode<T>* const parent = node->getParent();
     right->parent_ = parent;
 
     if (parent != NULLNODE) {
@@ -1552,16 +1553,17 @@ RBTree<T>::leftRotate(typename RBNode<T>::RBNodePtr* root, RBNode<T>* node) {
 template <typename T>
 RBNode<T>*
 RBTree<T>::rightRotate(typename RBNode<T>::RBNodePtr* root, RBNode<T>* node) {
-    RBNode<T>* left = node->getLeft();
-    RBNode<T>* lright = left->getRight();
+    RBNode<T>* const left = node->getLeft();
+    RBNode<T>* const lright = left->getRight();
     node->left_ = lright;
-    if (lright != NULLNODE)
+    if (lright != NULLNODE) {
         lright->parent_ = node;
+    }
 
-    RBNode<T>* parent = node->getParent();
+    RBNode<T>* const parent = node->getParent();
     left->parent_ = parent;
 
-    if (node->parent_ != NULLNODE) {
+    if (node->getParent() != NULLNODE) {
         if (node == parent->getRight()) {
             parent->right_ = left;
         } else  {
