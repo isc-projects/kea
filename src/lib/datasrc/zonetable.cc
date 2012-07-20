@@ -48,7 +48,7 @@ struct ZoneTable::ZoneTableImpl {
      */
 
     // Implementation of ZoneTable::addZone
-    result::Result addZone(ZoneFinderPtr zone) {
+    result::Result addZone(util::MemorySegment& mem_sgmt, ZoneFinderPtr zone) {
         // Sanity check
         if (!zone) {
             isc_throw(InvalidParameter,
@@ -57,7 +57,7 @@ struct ZoneTable::ZoneTableImpl {
 
         // Get the node where we put the zone
         ZoneNode* node(NULL);
-        switch (zones_->insert(zone->getOrigin(), &node)) {
+        switch (zones_->insert(mem_sgmt, zone->getOrigin(), &node)) {
             // This is OK
             case ZoneTree::SUCCESS:
             case ZoneTree::ALREADYEXISTS:
@@ -139,8 +139,8 @@ ZoneTable::destroy(util::MemorySegment& mem_sgmt, ZoneTable* ztable) {
 }
 
 result::Result
-ZoneTable::addZone(ZoneFinderPtr zone) {
-    return (impl_->addZone(zone));
+ZoneTable::addZone(util::MemorySegment& mem_sgmt, ZoneFinderPtr zone) {
+    return (impl_->addZone(mem_sgmt, zone));
 }
 
 result::Result
