@@ -17,8 +17,8 @@
 
 #include <cstddef>
 
-/// @file wiredata.h
-/// @short Utilities for tests with wire data.
+/// \file wiredata.h
+/// \brief Utilities for tests with wire data.
 ///
 /// This utility provides convenient helper functions for unit tests using
 /// wire (binary) data.
