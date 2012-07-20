@@ -17,6 +17,7 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>            // for std::min
+#include <stdint.h>
 
 using namespace std;
 
