@@ -112,10 +112,6 @@ NameComparisonResult
 LabelSequence::compare(const LabelSequence& other,
                        bool case_sensitive) const
 {
-    if (isAbsolute() ^ other.isAbsolute()) {
-        return (NameComparisonResult(0, 0, NameComparisonResult::NONE));
-    }
-
     // Determine the relative ordering under the DNSSEC order relation of
     // 'this' and 'other', and also determine the hierarchical relationship
     // of the names.
