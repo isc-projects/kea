@@ -1509,8 +1509,10 @@ RBTree<T>::nodeFission(RBNode<T>& node, const isc::dns::Name& base_name) {
     // the rest of this function should be exception free so that it keeps
     // consistent behavior (i.e., a weak form of strong exception guarantee)
     // even if code after the call to this function throws an exception.
+    bool is_root = node.isSubTreeRoot();
     std::swap(node.data_, down_node->data_);
     std::swap(node.flags_, down_node->flags_);
+    node.setSubTreeRoot(is_root);
 
     down_node->down_ = node.getDown();
 
