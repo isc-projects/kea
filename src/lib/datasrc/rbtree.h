@@ -1055,7 +1055,8 @@ public:
     /// Graphviz's dot.
     ///
     /// \param os A \c std::ostream object to which the tree is printed.
-    void dumpDot(std::ostream& os) const;
+    /// \param show_pointers Show node and parent pointers in the node
+    void dumpDot(std::ostream& os, bool show_pointers = false) const;
     //@}
 
     /// \name Modify functions
@@ -1124,7 +1125,7 @@ private:
 
     /// \brief Print the information of given RBNode for dot.
     int dumpDotHelper(std::ostream& os, const RBNode<T>* node,
-                      int* nodecount) const;
+                      int* nodecount, bool show_pointers) const;
 
     /// \brief Indentation helper function for dumpTree
     static void indent(std::ostream& os, unsigned int depth);
@@ -1731,33 +1732,37 @@ RBTree<T>::indent(std::ostream& os, unsigned int depth) {
 
 template <typename T>
 void
-RBTree<T>::dumpDot(std::ostream& os) const {
+RBTree<T>::dumpDot(std::ostream& os, bool show_pointers) const {
     int nodecount = 0;
 
     os << "digraph g {\n";
     os << "node [shape = record,height=.1];\n";
-    dumpDotHelper(os, root_, &nodecount);
+    dumpDotHelper(os, root_, &nodecount, show_pointers);
     os << "}\n";
 }
 
 template <typename T>
 int
 RBTree<T>::dumpDotHelper(std::ostream& os, const RBNode<T>* node,
-                         int* nodecount) const
+                         int* nodecount, bool show_pointers) const
 {
     if (node == NULLNODE) {
         return 0;
     }
 
-    int l = dumpDotHelper(os, node->left_, nodecount);
-    int r = dumpDotHelper(os, node->right_, nodecount);
-    int d = dumpDotHelper(os, node->down_, nodecount);
+    int l = dumpDotHelper(os, node->left_, nodecount, show_pointers);
+    int r = dumpDotHelper(os, node->right_, nodecount, show_pointers);
+    int d = dumpDotHelper(os, node->down_, nodecount, show_pointers);
 
     *nodecount += 1;
 
     os << "node" << *nodecount <<
           "[label = \"<f0> |<f1> " << node->name_.toText() <<
-          "|<f2>\"] [";
+          "|<f2>";
+    if (show_pointers) {
+        os << "|<f3> n=" << node << "|<f4> p=" << node->parent_;
+    }
+    os << "\"] [";
 
     if (node->getColor() == RBNode<T>::RED) {
         os << "color=red";
