@@ -34,18 +34,17 @@ matchWireData(const void* expected_data, size_t expected_len,
     for (size_t i = 0; i < cmplen; ++i) {
         const int ebyte = static_cast<const uint8_t*>(expected_data)[i];
         const int abyte = static_cast<const uint8_t*>(actual_data)[i];
-        if (ebyte != abyte) {
-            FAIL() << "Wire data mismatch at " << i << "th byte\n"
-                   << "  Actual: " << abyte << "\n"
-                   << "Expected: " << ebyte << "\n";
-            return;
-        }
+        // Once we find a mismatch, it's quite likely that there will be many
+        // mismatches after this point.  So we stop here by using ASSERT not
+        // to be too noisy.
+        ASSERT_EQ(ebyte, abyte) << "Wire data mismatch at " << i << "th byte\n"
+                                << "  Actual: " << abyte << "\n"
+                                << "Expected: " << ebyte << "\n";
     }
-    if (expected_len != actual_len) {
-        FAIL() << "Wire data mismatch in length:\n"
-               << "  Actual: " << actual_len << "\n"
-               << "Expected: " << expected_len << "\n";
-    }
+    EXPECT_EQ(expected_len, actual_len)
+        << "Wire data mismatch in length:\n"
+        << "  Actual: " << actual_len << "\n"
+        << "Expected: " << expected_len << "\n";
 }
 
 } // unittests
