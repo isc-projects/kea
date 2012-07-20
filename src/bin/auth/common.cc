@@ -57,3 +57,4 @@ getDDNSSocketPath() {
 }
 
 const char* const AUTH_NAME = "b10-auth";
+const char* const AUTH_STARTED_NOTIFICATION = "auth_started";
