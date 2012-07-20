@@ -157,13 +157,10 @@ LabelSequence::compare(const LabelSequence& other,
             }
 
             if (chdiff != 0) {
-                if (nlabels == 0 && !isAbsolute()) {
-                    return (NameComparisonResult(chdiff, 0,
-                                                 NameComparisonResult::NONE));
-                } else {
-                    return (NameComparisonResult(chdiff, nlabels,
-                                                 NameComparisonResult::COMMONANCESTOR));
-                }
+                return (NameComparisonResult(
+                            chdiff, nlabels,
+                            nlabels == 0 ? NameComparisonResult::NONE :
+                            NameComparisonResult::COMMONANCESTOR));
             }
             --count;
             ++pos1;
