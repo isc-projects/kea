@@ -107,7 +107,41 @@ private:
     /// \param name The *relative* domain name (if this will live inside
     ///     a.b.c and is called d.e.a.b.c, then you pass d.e).
     RBNode(const isc::dns::Name& name);
+
+    /// \brief Destructor
+    ~RBNode();
     //@}
+
+    /// \brief Allocate and construct \c RBNode
+    ///
+    /// This static method allocates memory for a new \c RBNode object
+    /// from the given memory segment, constructs the object, and returns
+    /// a pointer to it.
+    ///
+    /// \throw std::bad_alloc Memory allocation fails.
+    ///
+    /// \param mem_sgmt A \c MemorySegment from which memory for the new
+    /// \c RBNode is allocated.
+    static RBNode<T>* create(util::MemorySegment& mem_sgmt,
+                             const dns::Name& name)
+    {
+        void* p = mem_sgmt.allocate(sizeof(RBNode<T>));
+        return (new(p) RBNode<T>(name));
+    }
+
+    /// \brief Destruct and deallocate \c RBNode
+    ///
+    /// \throw none
+    ///
+    /// \param mem_sgmt The \c MemorySegment that allocated memory for
+    /// \c rbnode.
+    /// \param ztable A non NULL pointer to a valid \c RBNode object
+    /// that was originally created by the \c create() method (the behavior
+    /// is undefined if this condition isn't met).
+    static void destroy(util::MemorySegment& mem_sgmt, RBNode<T>* rbnode) {
+        rbnode->~RBNode<T>();
+        mem_sgmt.deallocate(rbnode, sizeof(RBNode<T>));
+    }
 
 public:
     /// \brief Alias for shared pointer to the data.
@@ -140,17 +174,6 @@ private:
                                             FLAG_USER2 | FLAG_USER3);
 
 public:
-
-    /// \brief Destructor
-    ///
-    /// It might seem strange that constructors are private and destructor
-    /// public, but this is needed because of shared pointers need access
-    /// to the destructor.
-    ///
-    /// You should never call anything like:
-    /// \code delete pointer_to_node; \endcode
-    /// The RBTree handles both creation and destructoion of nodes.
-    ~RBNode();
 
     /// \name Getter functions.
     //@{
@@ -728,14 +751,19 @@ public:
 
     /// \brief Destruct and deallocate \c RBTree
     ///
+    /// This method also destroys and deallocates all nodes inserted to the
+    /// tree.
+    ///
     /// \throw none
     ///
     /// \param mem_sgmt The \c MemorySegment that allocated memory for
-    /// \c rbtree.
+    /// \c rbtree (and for all nodes inserted to the tree, due to the
+    /// requirement of \c insert()).
     /// \param rbtree A non NULL pointer to a valid \c RBTree object
     /// that was originally created by the \c create() method (the behavior
     /// is undefined if this condition isn't met).
     static void destroy(util::MemorySegment& mem_sgmt, RBTree<T>* rbtree) {
+        rbtree->deleteAllNodes(mem_sgmt);
         rbtree->~RBTree<T>();
         mem_sgmt.deallocate(rbtree, sizeof(RBTree<T>));
     }
@@ -1037,6 +1065,9 @@ public:
     /// the same.  This method provides the weak exception guarantee in its
     /// normal sense.
     ///
+    /// \param mem_sgmt A \c MemorySegment object for allocating memory of
+    /// a new node to be inserted.  Must be the same segment as that used
+    /// for creating the tree itself.
     /// \param name The name to be inserted into the tree.
     /// \param inserted_node This is an output parameter and is set to the
     ///     node.
@@ -1045,7 +1076,17 @@ public:
     ///  - SUCCESS The node was added.
     ///  - ALREADYEXISTS There was already a node of that name, so it was not
     ///     added.
-    Result insert(const isc::dns::Name& name, RBNode<T>** inserted_node);
+    Result insert(util::MemorySegment& mem_sgmt, const isc::dns::Name& name,
+                  RBNode<T>** inserted_node);
+
+    /// \brief Delete all tree nodes.
+    ///
+    /// \throw none.
+    ///
+    /// \param mem_sgmt The \c MemorySegment object used to insert the nodes
+    /// (which was also used for creating the tree due to the requirement of
+    /// \c inert()).
+    void deleteAllNodes(util::MemorySegment& mem_sgmt);
 
     /// \brief Swaps two tree's contents.
     ///
@@ -1069,7 +1110,7 @@ private:
     /// \name Helper functions
     //@{
     /// \brief delete tree whose root is equal to node
-    void deleteHelper(RBNode<T> *node);
+    void deleteHelper(util::MemorySegment& mem_sgmt, RBNode<T> *node);
 
     /// \brief Print the information of given RBNode.
     void dumpTreeHelper(std::ostream& os, const RBNode<T>* node,
@@ -1081,8 +1122,10 @@ private:
     /// Split one node into two nodes, keep the old node and create one new
     /// node, old node will hold the base name, new node will be the down node
     /// of old node, new node will hold the sub_name, the data
-    /// of old node will be move into new node, and old node became non-terminal
-    void nodeFission(RBNode<T>& node, const isc::dns::Name& sub_name);
+    /// of old node will be move into new node, and old node became
+    /// non-terminal
+    void nodeFission(util::MemorySegment& mem_sgmt, RBNode<T>& node,
+                     const isc::dns::Name& sub_name);
     //@}
 
     RBNode<T>*  NULLNODE;
@@ -1104,13 +1147,12 @@ RBTree<T>::RBTree(bool returnEmptyNode) :
 
 template <typename T>
 RBTree<T>::~RBTree() {
-    deleteHelper(root_);
     assert(node_count_ == 0);
 }
 
 template <typename T>
 void
-RBTree<T>::deleteHelper(RBNode<T>* root) {
+RBTree<T>::deleteHelper(util::MemorySegment& mem_sgmt, RBNode<T>* root) {
     if (root == NULLNODE) {
         return;
     }
@@ -1128,14 +1170,14 @@ RBTree<T>::deleteHelper(RBNode<T>* root) {
             parent->right_ = NULLNODE;
         }
 
-        deleteHelper(node->down_);
-        delete node;
+        deleteHelper(mem_sgmt, node->down_);
+        RBNode<T>::destroy(mem_sgmt, node);
         --node_count_;
         node = parent;
     }
 
-    deleteHelper(root->down_);
-    delete root;
+    deleteHelper(mem_sgmt, root->down_);
+    RBNode<T>::destroy(mem_sgmt, root);
     --node_count_;
 }
 
@@ -1388,7 +1430,9 @@ RBTree<T>::previousNode(RBTreeNodeChain<T>& node_path) const {
 
 template <typename T>
 typename RBTree<T>::Result
-RBTree<T>::insert(const isc::dns::Name& target_name, RBNode<T>** new_node) {
+RBTree<T>::insert(util::MemorySegment& mem_sgmt,
+                  const isc::dns::Name& target_name, RBNode<T>** new_node)
+{
     using namespace helper;
     RBNode<T>* parent = NULLNODE;
     RBNode<T>* current = root_;
@@ -1429,7 +1473,7 @@ RBTree<T>::insert(const isc::dns::Name& target_name, RBNode<T>** new_node) {
                     const isc::dns::Name common_ancestor = name.split(
                         name.getLabelCount() - common_label_count,
                         common_label_count);
-                    nodeFission(*current, common_ancestor);
+                    nodeFission(mem_sgmt, *current, common_ancestor);
                 }
             }
         }
@@ -1437,34 +1481,37 @@ RBTree<T>::insert(const isc::dns::Name& target_name, RBNode<T>** new_node) {
 
     RBNode<T>** current_root = (up_node != NULLNODE) ?
         &(up_node->down_) : &root_;
-    // using auto_ptr here is avoid memory leak in case of exceptoin raised
-    // after the RBNode creation, if we can make sure no exception will be
-    // raised until the end of the function, we can remove it for optimization
-    std::auto_ptr<RBNode<T> > node(new RBNode<T>(name));
+    // Once a new node is created, no exception will be thrown until the end
+    // of the function, so we can simply create and hold a new node pointer.
+    RBNode<T>* node = RBNode<T>::create(mem_sgmt, name);
     node->parent_ = parent;
     if (parent == NULLNODE) {
-        *current_root = node.get();
-        //node is the new root of sub tree, so its init color
-        // is BLACK
+        *current_root = node;
+        // node is the new root of sub tree, so its init color is BLACK
         node->setColor(RBNode<T>::BLACK);
         node->setSubTreeRoot(true);
     } else if (order < 0) {
         node->setSubTreeRoot(false);
-        parent->left_ = node.get();
+        parent->left_ = node;
     } else {
         node->setSubTreeRoot(false);
-        parent->right_ = node.get();
+        parent->right_ = node;
     }
-    insertRebalance(current_root, node.get());
+    insertRebalance(current_root, node);
     if (new_node != NULL) {
-        *new_node = node.get();
+        *new_node = node;
     }
 
     ++node_count_;
-    node.release();
     return (SUCCESS);
 }
 
+template <typename T>
+void
+RBTree<T>::deleteAllNodes(util::MemorySegment& mem_sgmt) {
+    deleteHelper(mem_sgmt, root_);
+    root_ = NULLNODE;
+}
 
 // Note: when we redesign this (still keeping the basic concept), we should
 // change this part so the newly created node will be used for the inserted
@@ -1472,12 +1519,14 @@ RBTree<T>::insert(const isc::dns::Name& target_name, RBNode<T>** new_node) {
 // Otherwise, things like shortcut links between nodes won't work.
 template <typename T>
 void
-RBTree<T>::nodeFission(RBNode<T>& node, const isc::dns::Name& base_name) {
+RBTree<T>::nodeFission(util::MemorySegment& mem_sgmt, RBNode<T>& node,
+                       const isc::dns::Name& base_name)
+{
     using namespace helper;
     const isc::dns::Name sub_name = node.name_ - base_name;
-    // using auto_ptr here is to avoid memory leak in case of exception raised
-    // after the RBNode creation
-    std::auto_ptr<RBNode<T> > down_node(new RBNode<T>(sub_name));
+    // Note: the following code is not entirely exception safe (name copy
+    // can result in exception), but will soon be so within Trac #2091.
+    RBNode<T>* down_node = RBNode<T>::create(mem_sgmt, sub_name);
     node.name_ = base_name;
     // the rest of this function should be exception free so that it keeps
     // consistent behavior (i.e., a weak form of strong exception guarantee)
@@ -1486,9 +1535,10 @@ RBTree<T>::nodeFission(RBNode<T>& node, const isc::dns::Name& base_name) {
     std::swap(node.flags_, down_node->flags_);
 
     down_node->down_ = node.down_;
-    node.down_ = down_node.get();
+    node.down_ = down_node;
 
-    // Restore the color of the node (may have gotten changed by the flags swap)
+    // Restore the color of the node (may have gotten changed by the flags
+    // swap)
     node.setColor(down_node->getColor());
 
     // root node of sub tree, the initial color is BLACK
@@ -1498,7 +1548,6 @@ RBTree<T>::nodeFission(RBNode<T>& node, const isc::dns::Name& base_name) {
     down_node->setSubTreeRoot(true);
 
     ++node_count_;
-    down_node.release();
 }
 
 

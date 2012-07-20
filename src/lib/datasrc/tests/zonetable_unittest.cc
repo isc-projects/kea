@@ -53,51 +53,54 @@ protected:
                                                    Name("example.net"))),
                       zone3(new InMemoryZoneFinder(RRClass::IN(),
                                                    Name("example"))),
-                      zone_table(ZoneTable::create(local_mem_sgmt_))
+                      zone_table(ZoneTable::create(mem_sgmt_))
     {}
 
     ~ZoneTableTest() {
-        ZoneTable::destroy(local_mem_sgmt_, zone_table);
+        ZoneTable::destroy(mem_sgmt_, zone_table);
     }
     ZoneFinderPtr zone1, zone2, zone3;
-    isc::util::MemorySegmentLocal local_mem_sgmt_;
+    isc::util::MemorySegmentLocal mem_sgmt_;
     ZoneTable* zone_table;
 };
 
 TEST_F(ZoneTableTest, addZone) {
-    EXPECT_EQ(result::SUCCESS, zone_table->addZone(zone1));
-    EXPECT_EQ(result::EXIST, zone_table->addZone(zone1));
+    EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, zone1));
+    EXPECT_EQ(result::EXIST, zone_table->addZone(mem_sgmt_, zone1));
     // names are compared in a case insensitive manner.
     EXPECT_EQ(result::EXIST, zone_table->addZone(
+                  mem_sgmt_,
                   ZoneFinderPtr(new InMemoryZoneFinder(RRClass::IN(),
                                                        Name("EXAMPLE.COM")))));
 
-    EXPECT_EQ(result::SUCCESS, zone_table->addZone(zone2));
-    EXPECT_EQ(result::SUCCESS, zone_table->addZone(zone3));
+    EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, zone2));
+    EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, zone3));
 
     // Zone table is indexed only by name.  Duplicate origin name with
     // different zone class isn't allowed.
     EXPECT_EQ(result::EXIST, zone_table->addZone(
+                  mem_sgmt_,
                   ZoneFinderPtr(new InMemoryZoneFinder(RRClass::CH(),
                                                        Name("example.com")))));
 
     /// Bogus zone (NULL)
-    EXPECT_THROW(zone_table->addZone(ZoneFinderPtr()), isc::InvalidParameter);
+    EXPECT_THROW(zone_table->addZone(mem_sgmt_, ZoneFinderPtr()),
+                 isc::InvalidParameter);
 }
 
 TEST_F(ZoneTableTest, DISABLED_removeZone) {
-    EXPECT_EQ(result::SUCCESS, zone_table->addZone(zone1));
-    EXPECT_EQ(result::SUCCESS, zone_table->addZone(zone2));
-    EXPECT_EQ(result::SUCCESS, zone_table->addZone(zone3));
+    EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, zone1));
+    EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, zone2));
+    EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, zone3));
 
     EXPECT_EQ(result::SUCCESS, zone_table->removeZone(Name("example.net")));
     EXPECT_EQ(result::NOTFOUND, zone_table->removeZone(Name("example.net")));
 }
 
 TEST_F(ZoneTableTest, findZone) {
-    EXPECT_EQ(result::SUCCESS, zone_table->addZone(zone1));
-    EXPECT_EQ(result::SUCCESS, zone_table->addZone(zone2));
-    EXPECT_EQ(result::SUCCESS, zone_table->addZone(zone3));
+    EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, zone1));
+    EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, zone2));
+    EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, zone3));
 
     EXPECT_EQ(result::SUCCESS, zone_table->findZone(Name("example.com")).code);
     EXPECT_EQ(Name("example.com"),
@@ -118,7 +121,7 @@ TEST_F(ZoneTableTest, findZone) {
     // make sure the partial match is indeed the longest match by adding
     // a zone with a shorter origin and query again.
     ZoneFinderPtr zone_com(new InMemoryZoneFinder(RRClass::IN(), Name("com")));
-    EXPECT_EQ(result::SUCCESS, zone_table->addZone(zone_com));
+    EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, zone_com));
     EXPECT_EQ(Name("example.com"),
               zone_table->findZone(Name("www.example.com")).zone->getOrigin());
 }

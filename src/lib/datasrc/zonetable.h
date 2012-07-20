@@ -114,7 +114,7 @@ public:
     /// added to the zone table.
     /// \return \c result::EXIST The zone table already contains
     /// zone of the same origin.
-    result::Result addZone(ZoneFinderPtr zone);
+    result::Result addZone(util::MemorySegment& mem_sgmt, ZoneFinderPtr zone);
 
     /// Remove a \c Zone of the given origin name from the \c ZoneTable.
     ///
