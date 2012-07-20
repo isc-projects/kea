@@ -21,7 +21,7 @@
 namespace isc {
 namespace dns {
 
-/// \brief Light-weight Accessor to data of Name object
+/// \brief Light-weight Accessor to Name data.
 ///
 /// The purpose of this class is to easily match Names and parts of Names,
 /// without needing to copy the underlying data on each label strip.
@@ -54,11 +54,10 @@ public:
     ///
     /// \param name The Name to construct a LabelSequence for
     explicit LabelSequence(const Name& name):
-                                     data_(&name.ndata_[0]),
-                                     offsets_(&name.offsets_[0]),
-                                     offsets_size_(name.offsets_.size()),
-                                     first_label_(0),
-                                     last_label_(name.getLabelCount())
+        data_(&name.ndata_[0]),
+        offsets_(&name.offsets_[0]),
+        first_label_(0),
+        last_label_(name.getLabelCount() - 1)
     {}
 
     /// \brief Constructs a LabelSequence for the given data
@@ -90,11 +89,10 @@ public:
     ///
     /// \param ls The LabelSequence to construct a LabelSequence from
     LabelSequence(const LabelSequence& ls):
-                                     data_(ls.data_),
-                                     offsets_(ls.offsets_),
-                                     offsets_size_(ls.offsets_size_),
-                                     first_label_(ls.first_label_),
-                                     last_label_(ls.last_label_)
+        data_(ls.data_),
+        offsets_(ls.offsets_),
+        first_label_(ls.first_label_),
+        last_label_(ls.last_label_)
     {}
 
     /// \brief Return the wire-format data for this LabelSequence
@@ -186,7 +184,9 @@ public:
     /// \brief Returns the current number of labels for this LabelSequence
     ///
     /// \return The number of labels
-    size_t getLabelCount() const { return (last_label_ - first_label_); }
+    size_t getLabelCount() const {
+        return (last_label_ - first_label_ + 1);
+    }
 
     /// \brief Convert the LabelSequence to a string.
     ///
@@ -251,11 +251,12 @@ public:
     bool isAbsolute() const;
 
 private:
-    const uint8_t* data_;
-    const uint8_t* offsets_;
-    size_t offsets_size_;
-    size_t first_label_;
-    size_t last_label_;
+    const uint8_t* data_;       // wire-format name data
+    const uint8_t* offsets_;    // an array of offsets in data_ for the labels
+    size_t first_label_;        // index of offsets_ for the first label
+    size_t last_label_;         // index of offsets_ for the last label.
+                                // can be equal to first_label_, but must not
+                                // be smaller (the class ensures that)
 };
 
 

@@ -25,14 +25,15 @@ namespace dns {
 
 LabelSequence::LabelSequence(const uint8_t* data,
                              const uint8_t* offsets,
-                             size_t offsets_size) : data_(data),
-                                                    offsets_(offsets),
-                                                    offsets_size_(offsets_size),
-                                                    first_label_(0),
-                                                    last_label_(offsets_size_)
+                             size_t offsets_size) :
+    data_(data),
+    offsets_(offsets),
+    first_label_(0),
+    last_label_(offsets_size - 1)
 {
     if (data == NULL || offsets == NULL) {
-        isc_throw(BadValue, "Null pointer passed to LabelSequence constructor");
+        isc_throw(BadValue,
+                  "Null pointer passed to LabelSequence constructor");
     }
     if (offsets_size == 0) {
         isc_throw(BadValue, "Zero offsets to LabelSequence constructor");
@@ -59,26 +60,18 @@ LabelSequence::getData(size_t *len) const {
 
 void
 LabelSequence::getOffsetData(size_t* len,
-                             uint8_t placeholder[Name::MAX_LABELS]) const {
-  *len = last_label_ - first_label_;
-  for (size_t i = 0; i < *len; i++) {
-      placeholder[i] = offsets_[first_label_ + i] - offsets_[first_label_];
-  }
+                             uint8_t placeholder[Name::MAX_LABELS]) const
+{
+    *len = getLabelCount();
+    for (size_t i = 0; i < *len; ++i) {
+        placeholder[i] = offsets_[first_label_ + i] - offsets_[first_label_];
+    }
 }
 
 size_t
 LabelSequence::getDataLength() const {
-    // If the labelsequence is absolute, the current last_label_ falls
-    // out of the vector (since it points to the 'label' after the
-    // root label, which doesn't exist; in that case, return
-    // the length for the 'previous' label (the root label) plus
-    // one (for the root label zero octet)
-    if (isAbsolute()) {
-        return (offsets_[last_label_ - 1] -
-                offsets_[first_label_] + 1);
-    } else {
-        return (offsets_[last_label_] - offsets_[first_label_]);
-    }
+    const size_t last_label_len = data_[offsets_[last_label_]] + 1;
+    return (offsets_[last_label_] - offsets_[first_label_] + last_label_len);
 }
 
 bool
@@ -117,8 +110,8 @@ LabelSequence::compare(const LabelSequence& other,
     // of the labels.
 
     unsigned int nlabels = 0;
-    int l1 = last_label_ - first_label_;
-    int l2 = other.last_label_ - other.first_label_;
+    int l1 = getLabelCount();
+    int l2 = other.getLabelCount();
     const int ldiff = static_cast<int>(l1) - static_cast<int>(l2);
     unsigned int l = (ldiff < 0) ? l1 : l2;
 
@@ -202,7 +195,7 @@ LabelSequence::stripRight(size_t i) {
 
 bool
 LabelSequence::isAbsolute() const {
-    return (last_label_ == offsets_size_);
+    return (data_[offsets_[last_label_]] == 0);
 }
 
 size_t
@@ -229,7 +222,7 @@ LabelSequence::toText(bool omit_final_dot) const {
     const uint8_t* np_end = np + getDataLength();
 
     // use for integrity check
-    unsigned int labels = last_label_ - first_label_;
+    unsigned int labels = getLabelCount();
     // init with an impossible value to catch error cases in the end:
     unsigned int count = Name::MAX_LABELLEN + 1;
 
