@@ -114,7 +114,7 @@ LabelSequence::compare(const LabelSequence& other,
 {
     // Determine the relative ordering under the DNSSEC order relation of
     // 'this' and 'other', and also determine the hierarchical relationship
-    // of the names.
+    // of the labels.
 
     unsigned int nlabels = 0;
     int l1 = last_label_ - first_label_;
