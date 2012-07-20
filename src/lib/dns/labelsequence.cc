@@ -110,7 +110,8 @@ LabelSequence::equals(const LabelSequence& other, bool case_sensitive) const {
 
 NameComparisonResult
 LabelSequence::compare(const LabelSequence& other,
-                       bool case_sensitive) const {
+                       bool case_sensitive) const
+{
     if (isAbsolute() ^ other.isAbsolute()) {
         return (NameComparisonResult(0, 0, NameComparisonResult::NONE));
     }
@@ -122,7 +123,7 @@ LabelSequence::compare(const LabelSequence& other,
     unsigned int nlabels = 0;
     int l1 = last_label_ - first_label_;
     int l2 = other.last_label_ - other.first_label_;
-    int ldiff = (int)l1 - (int)l2;
+    const int ldiff = static_cast<int>(l1) - static_cast<int>(l2);
     unsigned int l = (ldiff < 0) ? l1 : l2;
 
     while (l > 0) {
@@ -138,19 +139,21 @@ LabelSequence::compare(const LabelSequence& other,
         // bitstring labels.
         assert(count1 <= Name::MAX_LABELLEN && count2 <= Name::MAX_LABELLEN);
 
-        int cdiff = (int)count1 - (int)count2;
+        const int cdiff = static_cast<int>(count1) - static_cast<int>(count2);
         unsigned int count = (cdiff < 0) ? count1 : count2;
 
         while (count > 0) {
-            uint8_t label1 = data_[pos1];
-            uint8_t label2 = other.data_[pos2];
+            const uint8_t label1 = data_[pos1];
+            const uint8_t label2 = other.data_[pos2];
             int chdiff;
 
             if (case_sensitive) {
-                chdiff = (int)label1 - (int)label2;
+                chdiff = static_cast<int>(label1) - static_cast<int>(label2);
             } else {
-                chdiff = (int)isc::dns::name::internal::maptolower[label1] -
-                         (int)isc::dns::name::internal::maptolower[label2];
+                chdiff = static_cast<int>(
+                    isc::dns::name::internal::maptolower[label1]) -
+                    static_cast<int>(
+                        isc::dns::name::internal::maptolower[label2]);
             }
 
             if (chdiff != 0) {

@@ -40,7 +40,6 @@ namespace dns {
 /// LabelSequences can be compared to other LabelSequences, and their
 /// data can be requested (which then points to part of the original
 /// data of the original Name object).
-///
 class LabelSequence {
     // Name calls the private toText(bool) method of LabelSequence.
     friend std::string Name::toText(bool) const;
@@ -281,3 +280,7 @@ operator<<(std::ostream& os, const LabelSequence& label_sequence);
 } // end namespace isc
 
 #endif
+
+// Local Variables:
+// mode: c++
+// End:
