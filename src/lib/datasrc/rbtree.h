@@ -1491,8 +1491,8 @@ RBTree<T>::insertRebalance(typename RBNode<T>::RBNodePtr* root,
             } else {
                 if (node == parent->getRight()) {
                     node = parent;
-                    parent = node->getParent();
                     leftRotate(root, node);
+                    parent = node->getParent();
                 }
                 parent->color_ = RBNode<T>::BLACK;
                 parent->getParent()->color_ = RBNode<T>::RED;
@@ -1508,8 +1508,8 @@ RBTree<T>::insertRebalance(typename RBNode<T>::RBNodePtr* root,
             } else {
                 if (node == parent->getLeft()) {
                     node = parent;
-                    parent = node->getParent();
                     rightRotate(root, node);
+                    parent = node->getParent();
                 }
                 parent->color_ = RBNode<T>::BLACK;
                 parent->getParent()->color_ = RBNode<T>::RED;
