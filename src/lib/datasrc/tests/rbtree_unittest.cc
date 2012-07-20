@@ -374,6 +374,42 @@ const char* const names[] = {
     "g.h", "i.g.h", "k.g.h"};
 const size_t name_count(sizeof(names) / sizeof(*names));
 
+const char* const upper_node_names[] = {
+    NULL, NULL, NULL, NULL, "d.e.f", "d.e.f", "w.y.d.e.f",
+    "w.y.d.e.f", "w.y.d.e.f", "d.e.f", "z.d.e.f",
+    NULL, "g.h", "g.h"};
+
+TEST_F(RBTreeTest, getUpperNode) {
+    RBTreeNodeChain<int> node_path;
+    const RBNode<int>* node = NULL;
+    EXPECT_EQ(RBTree<int>::EXACTMATCH,
+              rbtree_expose_empty_node.find(Name(names[0]),
+                                            &node,
+                                            node_path));
+    for (int i = 0; i < name_count; ++i) {
+        EXPECT_NE(static_cast<void*>(NULL), node);
+
+        const RBNode<int>* upper_node = node->getUpperNode();
+        EXPECT_NE(static_cast<void*>(NULL), upper_node);
+
+        if (upper_node_names[i] != NULL) {
+            const RBNode<int>* upper_node2 = NULL;
+            EXPECT_EQ(RBTree<int>::EXACTMATCH,
+                      rbtree_expose_empty_node.find(Name(upper_node_names[i]),
+                                                    &upper_node2));
+            EXPECT_NE(static_cast<void*>(NULL), upper_node2);
+            EXPECT_FALSE(upper_node2->isNull());
+
+            EXPECT_EQ(upper_node, upper_node2);
+        }
+
+        node = rbtree_expose_empty_node.nextNode(node_path);
+    }
+
+    // We should have reached the end of the tree.
+    EXPECT_EQ(static_cast<void*>(NULL), node);
+}
+
 TEST_F(RBTreeTest, nextNode) {
     RBTreeNodeChain<int> node_path;
     const RBNode<int>* node = NULL;

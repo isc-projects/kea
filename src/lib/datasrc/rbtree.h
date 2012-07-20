@@ -182,6 +182,9 @@ public:
     /// empty nodes anywhere.
     bool isEmpty() const { return (data_.get() == NULL); }
 
+    /// \brief return whether the node is a null node.
+    bool isNull() const { return (this == NULL_NODE()); }
+
     //@}
 
     /// \name Setter functions.
@@ -285,6 +288,18 @@ private:
         return ((flags_ & FLAG_SUBTREE_ROOT) != 0);
     }
 
+public:
+    /// \brief returns the parent of the root of its subtree
+    ///
+    /// This method takes a node and returns the parent of the root of
+    /// its subtree (i.e, it returns the node's immediate ancestor in
+    /// the tree-of-tree hierarchy). If the node is at the top level
+    /// (which should be absolute), it will return \c NULL_NODE().
+    ///
+    /// This method never throws an exception.
+    const RBNode<T>* getUpperNode() const;
+
+private:
     /// \brief return the next node which is bigger than current node
     /// in the same subtree
     ///
@@ -437,6 +452,17 @@ RBNode<T>::RBNode(const isc::dns::Name& name) :
 
 template <typename T>
 RBNode<T>::~RBNode() {
+}
+
+template <typename T>
+const RBNode<T>*
+RBNode<T>::getUpperNode() const {
+    const RBNode<T>* current = this;
+    while (!current->isSubTreeRoot()) {
+        current = current->getParent();
+    }
+
+    return (current->getParent());
 }
 
 template <typename T>
