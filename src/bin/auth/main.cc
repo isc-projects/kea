@@ -210,6 +210,12 @@ main(int argc, char* argv[]) {
 
         // Successfully initialized.
         LOG_INFO(auth_logger, AUTH_SERVER_STARTED);
+
+        // Ping any interested module that (a new) auth is up
+        // Currently, only the DDNS module is notified, but we could consider
+        // make an announcement channel for these (one-way) messages
+        cc_session->group_sendmsg(
+            isc::config::createCommand(AUTH_STARTED_NOTIFICATION), "DDNS");
         io_service.run();
 
     } catch (const std::exception& ex) {
