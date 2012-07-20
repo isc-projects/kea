@@ -157,11 +157,8 @@ LabelSequence::compare(const LabelSequence& other,
             }
 
             if (chdiff != 0) {
-                if ((nlabels == 0) &&
-                     (!isAbsolute() ||
-                     ((last_label_ < getLabelCount()) ||
-                      (other.last_label_ < other.getLabelCount())))) {
-                    return (NameComparisonResult(0, 0,
+                if (nlabels == 0 && !isAbsolute()) {
+                    return (NameComparisonResult(chdiff, 0,
                                                  NameComparisonResult::NONE));
                 } else {
                     return (NameComparisonResult(chdiff, nlabels,
@@ -173,15 +170,10 @@ LabelSequence::compare(const LabelSequence& other,
             ++pos2;
         }
         if (cdiff != 0) {
-            if ((nlabels == 0) &&
-                ((last_label_ < getLabelCount()) ||
-                 (other.last_label_ < other.getLabelCount()))) {
-                return (NameComparisonResult(0, 0,
-                                             NameComparisonResult::NONE));
-            } else {
-                return (NameComparisonResult(cdiff, nlabels,
-                                             NameComparisonResult::COMMONANCESTOR));
-            }
+            return (NameComparisonResult(
+                        cdiff, nlabels,
+                        nlabels == 0 ? NameComparisonResult::NONE :
+                        NameComparisonResult::COMMONANCESTOR));
         }
         ++nlabels;
     }
