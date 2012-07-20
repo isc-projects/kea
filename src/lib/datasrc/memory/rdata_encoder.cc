@@ -310,9 +310,11 @@ encodeRdata(const rdata::Rdata& rdata, RRClass rrclass, RRType rrtype,
             const LabelSequence labels(name);
             size_t nlen;
             const uint8_t* ndata = labels.getData(&nlen);
+            assert(nlen < 256); // nlen should fit in 8 bits
             size_t olen;
             uint8_t offset_holder[Name::MAX_LABELS];
             labels.getOffsetData(&olen, offset_holder);
+            assert(olen < 256); // olen should fit in 8 bits
             data_result.push_back(nlen);
             data_result.push_back(olen);
             data_result.insert(data_result.end(), ndata, ndata + nlen);
