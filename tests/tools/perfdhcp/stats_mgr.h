@@ -23,7 +23,6 @@
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/sequenced_index.hpp>
-#include <boost/multi_index/mem_fun.hpp>
 #include <boost/multi_index/global_fun.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
@@ -132,7 +131,7 @@ public:
     class ExchangeStats {
     public:
 
-        static uint32_t transid_hash(boost::shared_ptr<T> packet) {
+        static uint32_t transid_hash(const boost::shared_ptr<T> packet) {
             return packet->getTransid() & 1023;
         }
 
@@ -156,12 +155,12 @@ public:
         > PktList;
 
         /// Packet list iterator for sequencial access to elements.
-        typedef typename PktList::iterator PktListIterator;
+        typedef typename PktList::const_iterator PktListIterator;
         /// Packet list index to search packets using transaction id.
         typedef typename PktList::template nth_index<1>::type
             PktListTransidIndex;
         /// Packet list iterator to access packets using transaction id.
-        typedef typename PktListTransidIndex::iterator PktListTransidIterator;
+        typedef typename PktListTransidIndex::const_iterator PktListTransidIterator;
 
         /// \brief Constructor
         ///
@@ -209,8 +208,8 @@ public:
         /// \param sent_packet sent packet
         /// \param rcvd_packet received packet
         /// \throw isc::Unexpected if failed to calculate timestamps
-        void updateDelays(const boost::shared_ptr<T> sent_packet,
-                          const boost::shared_ptr<T> rcvd_packet) {
+        void updateDelays(const boost::shared_ptr<const T> sent_packet,
+                          const boost::shared_ptr<const T> rcvd_packet) {
             boost::posix_time::ptime sent_time = sent_packet->getTimestamp();
             boost::posix_time::ptime rcvd_time = rcvd_packet->getTimestamp();
 
@@ -496,7 +495,7 @@ public:
     /// Map containing custom counters.
     typedef typename std::map<std::string, CustomCounterPtr> CustomCountersMap;
     /// Iterator for \ref CustomCountersMap.
-    typedef typename CustomCountersMap::iterator CustomCountersMapIterator;
+    typedef typename CustomCountersMap::const_iterator CustomCountersMapIterator;
 
     /// \brief Constructor.
     StatsMgr()
