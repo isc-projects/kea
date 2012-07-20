@@ -189,11 +189,11 @@ TEST_F(LabelSequenceTest, compare) {
     LabelSequence lsc(nc);
 
     // "g.f.e.d.c.example.org." and "b.example.org" (not absolute), case
-    // in-sensitive
+    // in-sensitive; the absolute one is always smaller.
     lsb.stripRight(1);
     result = lsc.compare(lsb);
     EXPECT_EQ(isc::dns::NameComparisonResult::NONE, result.getRelation());
-    EXPECT_EQ(0, result.getOrder());
+    EXPECT_GT(0, result.getOrder());
     EXPECT_EQ(0, result.getCommonLabels());
 
     // "g.f.e.d.c.example.org." and "example.org.", case in-sensitive
@@ -269,13 +269,13 @@ TEST_F(LabelSequenceTest, compare) {
     Name ng("w.x.y.isc.EXAMPLE.org");
     LabelSequence lsg(ng);
 
-    // "a.b.c.isc.example.org." and "w.x.y.isc.EXAMPLE.org" (not
-    // absolute), case in-sensitive
+    // lsf: "a.b.c.isc.example.org."
+    // lsg: "w.x.y.isc.EXAMPLE.org" (not absolute), case in-sensitive.
+    // the absolute one is always smaller.
     lsg.stripRight(1);
-    result = lsg.compare(lsf);
-    EXPECT_EQ(isc::dns::NameComparisonResult::NONE,
-              result.getRelation());
-    EXPECT_EQ(0, result.getOrder());
+    result = lsg.compare(lsf);  // lsg > lsf
+    EXPECT_EQ(isc::dns::NameComparisonResult::NONE, result.getRelation());
+    EXPECT_LT(0, result.getOrder());
     EXPECT_EQ(0, result.getCommonLabels());
 
     // "a.b.c.isc.example.org" (not absolute) and
