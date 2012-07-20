@@ -1019,6 +1019,12 @@ public:
     /// will begin with space character repeating <code>5 * depth</code>
     /// times.
     void dumpTree(std::ostream& os, unsigned int depth = 0) const;
+
+    /// \brief Print the nodes in the trees for processing with
+    /// Graphviz's dot.
+    ///
+    /// \param os A \c std::ostream object to which the tree is printed.
+    void dumpDot(std::ostream& os) const;
     //@}
 
     /// \name Modify functions
@@ -1084,6 +1090,10 @@ private:
     /// \brief Print the information of given RBNode.
     void dumpTreeHelper(std::ostream& os, const RBNode<T>* node,
                         unsigned int depth) const;
+
+    /// \brief Print the information of given RBNode for dot.
+    int dumpDotHelper(std::ostream& os, const RBNode<T>* node,
+                      int* nodecount) const;
 
     /// \brief Indentation helper function for dumpTree
     static void indent(std::ostream& os, unsigned int depth);
@@ -1687,6 +1697,67 @@ void
 RBTree<T>::indent(std::ostream& os, unsigned int depth) {
     static const unsigned int INDENT_FOR_EACH_DEPTH = 5;
     os << std::string(depth * INDENT_FOR_EACH_DEPTH, ' ');
+}
+
+template <typename T>
+void
+RBTree<T>::dumpDot(std::ostream& os) const {
+    int nodecount = 0;
+
+    os << "digraph g {\n";
+    os << "node [shape = record,height=.1];\n";
+    dumpDotHelper(os, root_, &nodecount);
+    os << "}\n";
+}
+
+template <typename T>
+int
+RBTree<T>::dumpDotHelper(std::ostream& os, const RBNode<T>* node,
+                         int* nodecount) const
+{
+    if (node == NULLNODE) {
+        return 0;
+    }
+
+    int l = dumpDotHelper(os, node->left_, nodecount);
+    int r = dumpDotHelper(os, node->right_, nodecount);
+    int d = dumpDotHelper(os, node->down_, nodecount);
+
+    *nodecount += 1;
+
+    os << "node" << *nodecount <<
+          "[label = \"<f0> |<f1> " << node->name_.toText() <<
+          "|<f2>\"] [";
+
+    if (node->getColor() == RBNode<T>::RED) {
+        os << "color=red";
+    } else {
+        os << "color=black";
+    }
+
+    if (node->isSubTreeRoot()) {
+        os << ",penwidth=3";
+    }
+
+    if (node->isEmpty()) {
+        os << ",style=filled,fillcolor=lightgrey";
+    }
+
+    os << "];\n";
+
+    if (node->left_ != NULLNODE) {
+        os << "\"node" << *nodecount << "\":f0 -> \"node" << l << "\":f1;\n";
+    }
+
+    if (node->down_ != NULLNODE) {
+        os << "\"node" << *nodecount << "\":f1 -> \"node" << d << "\":f1 [penwidth=5];\n";
+    }
+
+    if (node->right_ != NULLNODE) {
+        os << "\"node" << *nodecount << "\":f2 -> \"node" << r << "\":f1;\n";
+    }
+
+    return (*nodecount);
 }
 
 }
