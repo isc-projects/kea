@@ -60,25 +60,6 @@ public:
         last_label_(name.getLabelCount() - 1)
     {}
 
-    /// \brief Constructs a LabelSequence for the given data
-    ///
-    /// \note The associated data MUST remain in scope during the lifetime
-    /// of this LabelSequence, since only the pointers are copied.
-    ///
-    /// \note No validation is done on the given data upon construction;
-    ///       use with care.
-    ///
-    /// \exception isc::BadValue if basic checks for the input data, or
-    ///            offsets fails.
-    ///
-    /// \param data The raw data for the domain name, in wire format
-    /// \param offsets The offsets of the labels in the domain name data,
-    ///        as given by a Name object or another LabelSequence
-    /// \param offsets_size The size of the offsets data
-    LabelSequence(const uint8_t* data,
-                  const uint8_t* offsets,
-                  size_t offsets_size);
-
     /// \brief Constructor from serialized image.
     ///
     /// This constructor restores a \c LabelSequence object from a serialized
@@ -127,16 +108,6 @@ public:
     ///        will be stored (in number of octets)
     /// \return Pointer to the wire-format data of this label sequence
     const uint8_t* getData(size_t* len) const;
-
-    /// \brief Return the offset data for this LabelSequence
-    ///
-    /// The offsets are returned in the <code>placeholder</code> array.
-    ///
-    /// \param len Pointer to a size_t where the number of offsets
-    ///        will be stored
-    /// \param placeholder Array where the offset data will be returned
-    void getOffsetData(size_t* len,
-                       uint8_t placeholder[Name::MAX_LABELS]) const;
 
     /// \brief Return the length of the wire-format data of this LabelSequence
     ///
