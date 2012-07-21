@@ -170,34 +170,69 @@ class Stats:
             raise StatsError("stats spec file is incorrect: "
                              + ", ".join(errors))
 
-        try:
-            start_time = get_timestamp() - self.config['poll-interval']
-            while self.running:
-                if get_timestamp() - start_time >= self.config['poll-interval'] \
-                        and self.config['poll-interval'] > 0:
-                    # request Bob to send statistics data
-                    logger.debug(DBG_STATS_MESSAGING, STATS_SEND_REQUEST_BOSS)
-                    cmd = isc.config.ccsession.create_command("getstats", None)
-                    seq = self.cc_session.group_sendmsg(cmd, 'Boss')
-                    try:
+        def _poll_modules():
+            """poll modules for statistics data"""
+            # exam number of multi-type module by getting
+            # components of boss config
+            num_of_modules = {}
+            seq = self.cc_session.group_sendmsg(
+                isc.config.ccsession.create_command(
+                    isc.config.ccsession.COMMAND_GET_CONFIG,
+                    {"module_name": "Boss"}), 'ConfigManager')
+            (answer, env) = self.cc_session.group_recvmsg(False, seq)
+            if answer:
+                (rcode, value) = isc.config.ccsession.parse_answer(answer)
+                if rcode == 0 and 'components' in value:
+                    for c in value['components'].values():
+                        if 'special' in c:
+                            mname = c['special'].capitalize()
+                            if mname in num_of_modules:
+                                num_of_modules[mname] += 1
+                            else:
+                                num_of_modules[mname] = 1
+
+            # start requesting each module to collect statistics data
+            for (module_name, data) in self.get_statistics_data().items():
+                # skip if module_name is 'Stats'
+                if module_name == self.module_name: continue
+                logger.debug(DBG_STATS_MESSAGING, STATS_SEND_REQUEST,
+                             module_name)
+                cmd = isc.config.ccsession.create_command(
+                    "getstats", {'trees': [k for k in data.keys()]})
+                seq = self.cc_session.group_sendmsg(cmd, module_name)
+                try:
+                    n = 1
+                    if  module_name in num_of_modules \
+                            and num_of_modules[module_name] > 1:
+                        n = num_of_modules[module_name]
+                    for i in range(n):
                         answer, env = self.cc_session.group_recvmsg(False, seq)
                         if answer:
                             rcode, args = isc.config.ccsession.parse_answer(answer)
-                            if rcode == 0:
-                                errors = self.update_statistics_data(
-                                    args["owner"], **args["data"])
-                                if errors:
-                                    raise StatsError("boss spec file is incorrect: "
-                                                     + ", ".join(errors))
-                                errors = self.update_statistics_data(
-                                            self.module_name,
-                                            last_update_time=get_datetime())
-                                if errors:
-                                    raise StatsError("stats spec file is incorrect: "
-                                                     + ", ".join(errors))
-                    except isc.cc.session.SessionTimeout:
-                        raise
-                    start_time = get_timestamp()
+                        if rcode == 0:
+                            errors = self.update_statistics_data(
+                                module_name, env['from'] if n > 1 else -1, **args)
+                            if errors:
+                                raise StatsError("spec file is incorrect: "
+                                                 + ", ".join(errors))
+                            errors = self.update_statistics_data(
+                                        self.module_name,
+                                        last_update_time=get_datetime())
+                            if errors:
+                                raise StatsError("stats spec file is incorrect: "
+                                                 + ", ".join(errors))
+                # skip this module if SessionTimeout raised
+                except isc.cc.session.SessionTimeout:
+                    raise
+
+        try:
+            start_poll = get_timestamp() - self.config['poll-interval']
+            while self.running:
+                # don't do polling if 'poll-interval' is 0
+                if self.config['poll-interval'] > 0 and \
+                        get_timestamp() - start_poll >= self.config['poll-interval']:
+                    _poll_modules()
+                    start_poll = get_timestamp()
                 try:
                     answer, env = self.cc_session.group_recvmsg(False)
                     self.mccs.check_command_without_recvmsg(answer, env)
