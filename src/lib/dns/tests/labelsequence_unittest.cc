@@ -21,10 +21,16 @@
 #include <boost/functional/hash.hpp>
 
 #include <string>
+#include <vector>
+#include <utility>
 #include <set>
 
 using namespace isc::dns;
 using namespace std;
+
+// XXX: this is defined as class static constants, but some compilers
+// seemingly cannot find the symbols when used in the EXPECT_xxx macros.
+const size_t LabelSequence::MAX_SERIALIZED_LENGTH;
 
 namespace {
 
@@ -38,6 +44,13 @@ public:
                           n10("\\000xample.org"),
                           n11("\\000xample.com"),
                           n12("\\000xamplE.com"),
+                          n_maxlabel("0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9."
+                                     "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9."
+                                     "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9."
+                                     "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9."
+                                     "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9."
+                                     "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9."
+                                     "0.1.2.3.4.5.6"),
                           ls1(n1), ls2(n2), ls3(n3), ls4(n4), ls5(n5),
                           ls6(n6), ls7(n7), ls8(n8),
                           ls9(n9), ls10(n10), ls11(n11), ls12(n12)
@@ -46,6 +59,7 @@ public:
     // the labelsequences
     Name n1, n2, n3, n4, n5, n6, n7, n8;
     Name n9, n10, n11, n12;
+    const Name n_maxlabel;
 
     LabelSequence ls1, ls2, ls3, ls4, ls5, ls6, ls7, ls8;
     LabelSequence ls9, ls10, ls11, ls12;
@@ -654,14 +668,7 @@ TEST_F(LabelSequenceTest, toText) {
               "012345678901234567890123456789"
               "0123456789012345678901234567890", ls_long1.toText());
 
-    Name n_long2("0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9."
-                 "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9."
-                 "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9."
-                 "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9."
-                 "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9."
-                 "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9."
-                 "0.1.2.3.4.5.6");
-    LabelSequence ls_long2(n_long2);
+    LabelSequence ls_long2(n_maxlabel);
 
     EXPECT_EQ("0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9."
               "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9."
@@ -841,6 +848,122 @@ TEST(LabelSequence, badRawConstruction) {
     // Add an offset that is equal to the previous offset
     uint8_t offsets_noincrease[3] = { 0, 8, 8 };
     EXPECT_THROW(LabelSequence(data, offsets_noincrease, 3), isc::BadValue);
+}
+
+TEST_F(LabelSequenceTest, serializedLength) {
+    // Initially, the labels are "example.org."
+    const size_t base_size = n1.getLength() + n1.getLabelCount() + 1;
+    EXPECT_EQ(base_size, ls1.getSerializedLength());
+
+    // Strip off the trailing dot.  We'll lose 1 label and 1-byte data
+    LabelSequence ls1_stripped = ls1;
+    ls1_stripped.stripRight(1);
+    EXPECT_EQ(base_size - 2, ls1_stripped.getSerializedLength());
+
+    // Strip off the leftmost label (example).  We'll lose 1 label and
+    // 8-byte data (1 + len('example')).
+    ls1_stripped = ls1;
+    ls1_stripped.stripLeft(1);
+    EXPECT_EQ(base_size - 9, ls1_stripped.getSerializedLength());
+
+    // Longest possible serialized length.  Confirm there's indeed such a case.
+    EXPECT_EQ(LabelSequence::MAX_SERIALIZED_LENGTH,
+              LabelSequence(n_maxlabel).getSerializedLength());
+}
+
+TEST_F(LabelSequenceTest, serialize) {
+    // placeholder for serialized data
+    uint8_t labels_buf[LabelSequence::MAX_SERIALIZED_LENGTH];
+
+    // vector to store expected and actual data
+    vector<LabelSequence> actual_labelseqs;
+    typedef pair<size_t, const uint8_t*> DataPair;
+    vector<DataPair> expected;
+
+    // An absolute sequence directly constructed from a valid name.
+    // labels = 3, offset sequence = 0, 8, 12, data = "example.com."
+    actual_labelseqs.push_back(ls1);
+    const uint8_t const expected_data1[] = {
+        3, 0, 8, 12, 7, 'e', 'x', 'a', 'm', 'p', 'l', 'e',
+        3, 'o', 'r', 'g', 0 };
+    expected.push_back(DataPair(sizeof(expected_data1), expected_data1));
+
+    // Strip the original one from right.
+    // labels = 2, offset sequence = 0, 8, data = "example.com" (non absolute)
+    LabelSequence ls_rstripped = ls1;
+    ls_rstripped.stripRight(1);
+    actual_labelseqs.push_back(ls_rstripped);
+    const uint8_t const expected_data2[] = {
+        2, 0, 8, 7, 'e', 'x', 'a', 'm', 'p', 'l', 'e',
+        3, 'o', 'r', 'g'};
+    expected.push_back(DataPair(sizeof(expected_data2), expected_data2));
+
+    // Strip the original one from left.
+    // labels = 2, offset sequence = 0, 4, data = "com."
+    // Note that offsets are adjusted so that they begin with 0.
+    LabelSequence ls_lstripped = ls1;
+    ls_lstripped.stripLeft(1);
+    actual_labelseqs.push_back(ls_lstripped);
+    const uint8_t const expected_data3[] = {
+        2, 0, 4, 3, 'o', 'r', 'g', 0 };
+    expected.push_back(DataPair(sizeof(expected_data3), expected_data3));
+
+    // Root label.
+    LabelSequence ls_root(Name::ROOT_NAME());
+    actual_labelseqs.push_back(ls_root);
+    const uint8_t const expected_data4[] = { 1, 0, 0 };
+    expected.push_back(DataPair(sizeof(expected_data4), expected_data4));
+
+    // Non absolute single-label.
+    LabelSequence ls_single = ls_rstripped;
+    ls_single.stripRight(1);
+    actual_labelseqs.push_back(ls_single);
+    const uint8_t const expected_data5[] = {
+        1, 0, 7, 'e', 'x', 'a', 'm', 'p', 'l', 'e' };
+    expected.push_back(DataPair(sizeof(expected_data5), expected_data5));
+
+    // For each data set, serialize the labels and compare the data to the
+    // expected one.
+    vector<DataPair>::const_iterator it = expected.begin();
+    vector<LabelSequence>::const_iterator itl = actual_labelseqs.begin();
+    for (; it != expected.end(); ++it, ++itl) {
+        SCOPED_TRACE(itl->toText());
+
+        const size_t serialized_len = itl->getSerializedLength();
+
+        ASSERT_GE(LabelSequence::MAX_SERIALIZED_LENGTH, serialized_len);
+        itl->serialize(labels_buf, serialized_len);
+        EXPECT_EQ(it->first, serialized_len);
+        EXPECT_EQ(0, memcmp(it->second, labels_buf, serialized_len));
+
+        EXPECT_EQ(NameComparisonResult::EQUAL,
+                  LabelSequence(labels_buf).compare(*itl).getRelation());
+    }
+
+    EXPECT_THROW(ls1.serialize(labels_buf, ls1.getSerializedLength() - 1),
+                 isc::BadValue);
+}
+
+TEST_F(LabelSequenceTest, badDeserialize) {
+    EXPECT_THROW(LabelSequence(NULL), isc::BadValue);
+    const uint8_t const zero_offsets[] = { 0 };
+    EXPECT_THROW(LabelSequence ls(zero_offsets), isc::BadValue);
+    const uint8_t const toomany_offsets[] = { Name::MAX_LABELS + 1 };
+    EXPECT_THROW(LabelSequence ls(toomany_offsets), isc::BadValue);
+
+    // exceed MAX_LABEL_LEN
+    const uint8_t const offsets_toolonglabel[] = { 2, 0, 64 };
+    EXPECT_THROW(LabelSequence ls(offsets_toolonglabel), isc::BadValue);
+
+    // Inconsistent data: an offset is lower than the previous offset
+    const uint8_t const offsets_lower[] = { 3, // # of offsets
+                                            0, 2, 1, // offsets
+                                            1, 'a', 1, 'b', 0};
+    EXPECT_THROW(LabelSequence ls(offsets_lower), isc::BadValue);
+
+    // Inconsistent data: an offset is equal to the previous offset
+    const uint8_t const offsets_noincrease[] = { 2, 0, 0, 0, 0 };
+    EXPECT_THROW(LabelSequence ls(offsets_noincrease), isc::BadValue);
 }
 
 }
