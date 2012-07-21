@@ -383,29 +383,31 @@ class TestStats(unittest.TestCase):
         self.assertEqual(self.stats.statistics_data_bypid['Auth'][9999]['queries.tcp'], 1001)
         self.assertEqual(self.stats.statistics_data_bypid,
                          {'Auth': {9999: {'queries.tcp': 1001}}})
-        # non-existent pid of Auth, but no changes in statistics data
+        # check consolidation of statistics data even if there is
+        # non-existent pid of Auth
         self.stats.update_statistics_data(owner='Auth',
                                           pid=10000,
                                           **{'queries.tcp':2001})
         self.assertTrue('Auth' in self.stats.statistics_data)
         self.assertTrue('queries.tcp' in self.stats.statistics_data['Auth'])
-        self.assertEqual(self.stats.statistics_data['Auth']['queries.tcp'], 1001)
+        self.assertEqual(self.stats.statistics_data['Auth']['queries.tcp'], 3002)
         self.assertTrue('Auth' in self.stats.statistics_data_bypid)
         self.assertTrue(9999 in self.stats.statistics_data_bypid['Auth'])
         self.assertTrue('queries.tcp' in self.stats.statistics_data_bypid['Auth'][9999])
         self.assertEqual(self.stats.statistics_data_bypid['Auth'][9999]['queries.tcp'], 1001)
         self.assertEqual(self.stats.statistics_data_bypid,
-                         {'Auth': {9999: {'queries.tcp': 1001}}})
-        # kill running Auth, then statistics is reset
+                         {'Auth': {9999: {'queries.tcp': 1001},
+                                   10000: {'queries.tcp': 2001}}})
+        # kill running Auth but the statistics data is preserved
         self.assertEqual(self.base.boss.server.pid_list[0][0], 9999)
         killed = self.base.boss.server.pid_list.pop(0)
         self.stats.update_statistics_data()
         self.assertTrue('Auth' in self.stats.statistics_data)
         self.assertTrue('queries.tcp' in self.stats.statistics_data['Auth'])
         self.assertTrue('queries.udp' in self.stats.statistics_data['Auth'])
-        self.assertEqual(self.stats.statistics_data['Auth']['queries.tcp'], 0)
+        self.assertEqual(self.stats.statistics_data['Auth']['queries.tcp'], 3002)
         self.assertEqual(self.stats.statistics_data['Auth']['queries.udp'], 0)
-        self.assertFalse('Auth' in self.stats.statistics_data_bypid)
+        self.assertTrue('Auth' in self.stats.statistics_data_bypid)
         # restore statistics data of killed auth
         self.base.boss.server.pid_list = [ killed ] + self.base.boss.server.pid_list[:]
         self.stats.update_statistics_data(owner='Auth',
@@ -419,7 +421,7 @@ class TestStats(unittest.TestCase):
         self.assertTrue('Auth' in self.stats.statistics_data)
         self.assertTrue('queries.tcp' in self.stats.statistics_data['Auth'])
         self.assertTrue('queries.udp' in self.stats.statistics_data['Auth'])
-        self.assertEqual(self.stats.statistics_data['Auth']['queries.tcp'], 2003)
+        self.assertEqual(self.stats.statistics_data['Auth']['queries.tcp'], 4004)
         self.assertEqual(self.stats.statistics_data['Auth']['queries.udp'], 1003)
         self.assertTrue('Auth' in self.stats.statistics_data_bypid)
         self.assertTrue(9999 in self.stats.statistics_data_bypid['Auth'])
@@ -832,7 +834,8 @@ class TestStats(unittest.TestCase):
                           { 'zonename': 'test2.example',
                             'queries.tcp': 2,
                             'queries.udp': 3 }])
-        # non-existent pid of Auth, but no changes in statistics data
+        # check consolidation of statistics data even if there is
+        # non-existent pid of Auth
         retval = isc.config.ccsession.parse_answer(
             self.stats.command_set(owner='Auth',
                                    pid=10000,
@@ -846,13 +849,13 @@ class TestStats(unittest.TestCase):
         self.assertEqual(retval, (0,None))
         self.assertTrue('Auth' in self.stats.statistics_data)
         self.assertTrue('queries.tcp' in self.stats.statistics_data['Auth'])
-        self.assertEqual(self.stats.statistics_data['Auth']['queries.tcp'], 1001)
+        self.assertEqual(self.stats.statistics_data['Auth']['queries.tcp'], 3002)
         self.assertEqual(self.stats.statistics_data['Auth']['queries.perzone'],
                          [{ 'zonename': 'test1.example',
-                            'queries.tcp': 1 },
+                            'queries.tcp': 102 },
                           { 'zonename': 'test2.example',
-                            'queries.tcp': 2,
-                            'queries.udp': 3 }])
+                            'queries.tcp': 104,
+                            'queries.udp': 106 }])
         self.assertTrue('Auth' in self.stats.statistics_data_bypid)
         self.assertTrue(9997 in self.stats.statistics_data_bypid['Auth'])
         self.assertTrue('queries.tcp' in self.stats.statistics_data_bypid['Auth'][9997])
@@ -881,15 +884,15 @@ class TestStats(unittest.TestCase):
         self.assertTrue('queries.tcp' in self.stats.statistics_data['Auth'])
         self.assertTrue('queries.udp' in self.stats.statistics_data['Auth'])
         self.assertTrue('queries.perzone' in self.stats.statistics_data['Auth'])
-        self.assertEqual(self.stats.statistics_data['Auth']['queries.tcp'], 2003)
+        self.assertEqual(self.stats.statistics_data['Auth']['queries.tcp'], 4004)
         self.assertEqual(self.stats.statistics_data['Auth']['queries.udp'], 1003)
         self.assertEqual(self.stats.statistics_data['Auth']['queries.perzone'],
                          [{ 'zonename': 'test1.example',
-                            'queries.tcp': 11,
+                            'queries.tcp': 112,
                             'queries.udp': 11},
                           { 'zonename': 'test2.example',
-                            'queries.tcp': 14,
-                            'queries.udp': 16 }])
+                            'queries.tcp': 116,
+                            'queries.udp': 119 }])
         self.assertTrue('Auth' in self.stats.statistics_data_bypid)
         self.assertTrue(9997 in self.stats.statistics_data_bypid['Auth'])
         self.assertTrue(9996 in self.stats.statistics_data_bypid['Auth'])
