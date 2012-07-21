@@ -51,6 +51,37 @@ LabelSequence::LabelSequence(const uint8_t* data,
     }
 }
 
+LabelSequence::LabelSequence(const void* buf) {
+    if (buf == NULL) {
+        isc_throw(BadValue,
+                  "Null pointer passed to LabelSequence constructor");
+    }
+
+    const uint8_t* bp = reinterpret_cast<const uint8_t*>(buf);
+
+    first_label_ = 0;
+    const uint8_t offsets_len = *bp++;
+    if (offsets_len == 0 || offsets_len > Name::MAX_LABELS) {
+        isc_throw(BadValue,
+                  "Bad offsets len in serialized LabelSequence data: "
+                  << static_cast<unsigned int>(offsets_len));
+    }
+    last_label_ = offsets_len - 1;
+    offsets_ = bp;
+    data_ = bp + offsets_len;
+
+    // Check the integrity on the offsets and the name data
+    const uint8_t* dp = data_;
+    for (size_t cur_offset = 0; cur_offset < offsets_len; ++cur_offset) {
+        if (offsets_[cur_offset] > Name::MAX_LABELLEN ||
+            dp - data_ != offsets_[cur_offset]) {
+            isc_throw(BadValue,
+                      "Broken offset or name data in serialized "
+                      "LabelSequence data");
+        }
+        dp += (1 + *dp);
+    }
+}
 
 const uint8_t*
 LabelSequence::getData(size_t *len) const {
@@ -72,6 +103,33 @@ size_t
 LabelSequence::getDataLength() const {
     const size_t last_label_len = data_[offsets_[last_label_]] + 1;
     return (offsets_[last_label_] - offsets_[first_label_] + last_label_len);
+}
+
+size_t
+LabelSequence::getSerializedLength() const {
+    return (1 + getLabelCount() + getDataLength());
+}
+
+void
+LabelSequence::serialize(void* buf, size_t buf_len) const {
+    const size_t expected_size = getSerializedLength();
+    if (expected_size > buf_len) {
+        isc_throw(BadValue, "buffer too short for LabelSequence::serialize");
+    }
+
+    const size_t offsets_len = getLabelCount();
+    assert(offsets_len < 256);  // should be in the 8-bit range
+
+    uint8_t* bp = reinterpret_cast<uint8_t*>(buf);
+    *bp++ = offsets_len;
+    for (size_t i = 0; i < offsets_len; ++i) {
+        *bp++ = offsets_[first_label_ + i] - offsets_[first_label_];
+    }
+    const size_t ndata_len = getDataLength();
+    memcpy(bp, &data_[offsets_[first_label_]], ndata_len);
+    bp += ndata_len;
+
+    assert(bp - reinterpret_cast<const uint8_t*>(buf) == expected_size);
 }
 
 bool
