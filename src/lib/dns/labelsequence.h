@@ -94,23 +94,6 @@ public:
         last_label_(ls.last_label_)
     {}
 
-    /// \brief Copy constructor.
-    ///
-    /// \note The associated data MUST remain in scope during the lifetime
-    /// of this LabelSequence, since only the pointers are copied.
-    ///
-    /// \note No validation is done on the given data upon construction;
-    ///       use with care.
-    ///
-    /// \param ls The LabelSequence to construct a LabelSequence from
-    LabelSequence(const LabelSequence& ls):
-                                     data_(ls.data_),
-                                     offsets_(ls.offsets_),
-                                     offsets_size_(ls.offsets_size_),
-                                     first_label_(ls.first_label_),
-                                     last_label_(ls.last_label_)
-    {}
-
     /// \brief Return the wire-format data for this LabelSequence
     ///
     /// The data is returned as a pointer to (the part of) the original
