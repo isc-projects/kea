@@ -504,22 +504,6 @@ class Stats:
                 1, "specified arguments are incorrect: " \
                     + "owner: " + str(owner) + ", name: " + str(name))
 
-    def command_set(self, owner, pid=-1, data={}):
-        """
-        handle set command
-        """
-        errors = self.update_statistics_data(owner, pid, **data)
-        if errors:
-            return isc.config.create_answer(
-                1, "errors while setting statistics data: " \
-                    + ", ".join(errors))
-        errors = self.update_statistics_data(
-            self.module_name, last_update_time=get_datetime() )
-        if errors:
-            raise StatsError("stats spec file is incorrect: "
-                             + ", ".join(errors))
-        return isc.config.create_answer(0)
-
 if __name__ == "__main__":
     try:
         parser = OptionParser()

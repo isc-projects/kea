@@ -1,6 +1,6 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
-	       [<!ENTITY mdash "&#8212;">]>
+               [<!ENTITY mdash "&#8212;">]>
 <!--
  - Copyright (C) 2010-2012  Internet Systems Consortium, Inc. ("ISC")
  -
@@ -59,11 +59,11 @@
       <command>bind10</command> and communicates by using the
       Command Channel by <command>b10-msgq</command> with other
       modules like <command>bind10</command>, <command>b10-auth</command>
-      and so on. It waits for coming data from other modules, then
-      other modules send data to stats module periodically. Other
-      modules send stats data to stats module independently from
-      implementation of stats module, so the frequency of sending
-      data may not be constant. The stats module collects data and
+      and so on. <command>b10-stats</command> periodically requests statistics
+      data to each module and receives. The interval time can be configured
+      via <command>bindctl</command>. <command>b10-stats</command> cannot
+      accept any command from other modules for updating statistics data. The
+      stats module collects data and
       aggregates it. <command>b10-stats</command> invokes an internal
       command for <command>bind10</command> after its initial
       starting to make sure it collects statistics data from
@@ -78,9 +78,9 @@
       <varlistentry>
         <term><option>-v</option>, <option>--verbose</option></term>
         <listitem>
-	  <para>
-          This enables maximum debug logging.
-	  </para>
+          <para>
+            This enables maximum debug logging.
+          </para>
         </listitem>
       </varlistentry>
     </variablelist>
@@ -90,20 +90,27 @@
     <title>CONFIGURATION AND COMMANDS</title>
 
     <para>
-      The <command>b10-stats</command> command does not have any
-      configurable settings.
+      The configurable setting in <filename>stats.spec</filename> is:
     </para>
+
+    <variablelist>
+      <varlistentry>
+        <term><varname>poll-interval</varname></term>
+        <listitem>
+          <para>
+            is a timer interval in seconds for <command>b10-stats</command> to
+            polling each module for its statistics data. The default is 60
+            second. Polling can be disabled by setting to 0. The type of the
+            value should be an unsigned integer. Setting to a negative integer
+            is ignored.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
 
 <!-- TODO: formating -->
     <para>
       The configuration commands are:
-    </para>
-
-    <para>
-      <command>set</command> will set new statistics data specified in
-      arguments. Statistics data to be set and the module name which owns
-      statistics data are required in argument. Pid of the module in argument
-      is optional.
     </para>
 
     <para>

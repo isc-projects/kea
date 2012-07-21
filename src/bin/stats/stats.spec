@@ -65,34 +65,6 @@
             "item_description": "statistics item name of the owner"
           }
         ]
-      },
-      {
-        "command_name": "set",
-        "command_description": "set the value of specified name in statistics data",
-        "command_args": [
-          {
-            "item_name": "owner",
-            "item_type": "string",
-            "item_optional": false,
-            "item_default": "",
-            "item_description": "module name of the owner of the statistics data"
-          },
-	  {
-	    "item_name": "pid",
-            "item_type": "integer",
-            "item_optional": true,
-            "item_default": -1,
-            "item_description": "process id of the owner module"
-          },
-	  {
-	    "item_name": "data",
-            "item_type": "map",
-            "item_optional": false,
-            "item_default": {},
-            "item_description": "statistics data set of the owner",
-            "map_item_spec": []
-          }
-        ]
       }
     ],
     "statistics": [
