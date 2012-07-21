@@ -125,7 +125,7 @@ class MockCfgmgr:
     def __init__(self):
         self._started = threading.Event()
         self.cfgmgr = isc.config.cfgmgr.ConfigManager(
-            os.environ['CONFIG_TESTDATA_PATH'], "b10-config.db")
+            os.environ['CONFIG_TESTDATA_PATH'], "b10-config_test.db")
         self.cfgmgr.read_config()
 
     def run(self):
@@ -144,11 +144,76 @@ class MockBoss:
   "module_spec": {
     "module_name": "Boss",
     "module_description": "Mock Master process",
-    "config_data": [],
+    "config_data": [
+      {
+        "item_name": "components",
+        "item_type": "named_set",
+        "item_optional": false,
+        "item_default": {
+          "b10-stats": { "address": "Stats", "kind": "dispensable" },
+          "b10-cmdctl": { "special": "cmdctl", "kind": "needed" }
+        },
+        "named_set_item_spec": {
+          "item_name": "component",
+          "item_type": "map",
+          "item_optional": false,
+          "item_default": { },
+          "map_item_spec": [
+            {
+              "item_name": "special",
+              "item_optional": true,
+              "item_type": "string"
+            },
+            {
+              "item_name": "process",
+              "item_optional": true,
+              "item_type": "string"
+            },
+            {
+              "item_name": "kind",
+              "item_optional": false,
+              "item_type": "string",
+              "item_default": "dispensable"
+            },
+            {
+              "item_name": "address",
+              "item_optional": true,
+              "item_type": "string"
+            },
+            {
+              "item_name": "params",
+              "item_optional": true,
+              "item_type": "list",
+              "list_item_spec": {
+                "item_name": "param",
+                "item_optional": false,
+                "item_type": "string",
+                "item_default": ""
+              }
+            },
+            {
+              "item_name": "priority",
+              "item_optional": true,
+              "item_type": "integer"
+            }
+          ]
+        }
+      }
+    ],
     "commands": [
+      {
+        "command_name": "shutdown",
+        "command_description": "Shut down BIND 10",
+        "command_args": []
+      },
       {
         "command_name": "sendstats",
         "command_description": "Send data to a statistics module at once",
+        "command_args": []
+      },
+      {
+        "command_name": "ping",
+        "command_description": "Ping the boss process",
         "command_args": []
       },
       {
@@ -209,16 +274,21 @@ class MockBoss:
     def command_handler(self, command, *args, **kwargs):
         self._started.set()
         self.got_command_name = command
+        sdata = {
+            'boot_time': time.strftime('%Y-%m-%dT%H:%M:%SZ', self._BASETIME)
+            }
         params = { "owner": "Boss",
-                   "data": {
-                'boot_time': time.strftime('%Y-%m-%dT%H:%M:%SZ', self._BASETIME)
-                }
+                   "data": sdata
                    }
         if command == 'sendstats':
             send_command("set", "Stats", params=params, session=self.cc_session)
             return isc.config.create_answer(0)
         elif command == 'getstats':
-            return isc.config.create_answer(0, params)
+            notfound = [ t for t in args[0]['trees'] if t not in sdata ]
+            if notfound:
+                return isc.config.create_answer(1, notfound)
+            return isc.config.create_answer(
+                0, dict([(t,sdata[t]) for t in args[0]['trees'] if t in sdata ]))
         elif command == 'show_processes':
             # Return dummy pids
             return isc.config.create_answer(
@@ -349,12 +419,19 @@ class MockAuth:
 
     def command_handler(self, command, *args, **kwargs):
         self.got_command_name = command
+        sdata = { 'queries.tcp': self.queries_tcp,
+                       'queries.udp': self.queries_udp,
+                       'queries.perzone' : self.queries_per_zone }
         if command == 'sendstats':
             params = { "owner": "Auth",
-                       "data": { 'queries.tcp': self.queries_tcp,
-                                 'queries.udp': self.queries_udp,
-                                 'queries.perzone' : self.queries_per_zone } }
+                       "data":  sdata }
             return send_command("set", "Stats", params=params, session=self.cc_session)
+        elif command == 'getstats':
+            notfound = [ t for t in args[0]['trees'] if t not in sdata ]
+            if notfound:
+                return isc.config.create_answer(1, notfound)
+            return isc.config.create_answer(
+                0, dict([(t,sdata[t]) for t in args[0]['trees'] if t in sdata ]))
         return isc.config.create_answer(1, "Unknown Command")
 
 class MyStats(stats.Stats):
@@ -425,9 +502,15 @@ class BaseModules:
         # MockBoss
         self.boss = ThreadingServerManager(MockBoss)
         self.boss.run()
-        # MockAuth
+        # MockAuth * 4
         self.auth = ThreadingServerManager(MockAuth)
+        self.auth2 = ThreadingServerManager(MockAuth)
+        self.auth3 = ThreadingServerManager(MockAuth)
+        self.auth4 = ThreadingServerManager(MockAuth)
         self.auth.run()
+        self.auth2.run()
+        self.auth3.run()
+        self.auth4.run()
 
     def shutdown(self):
         # MockAuth
