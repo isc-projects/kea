@@ -62,8 +62,6 @@ private:
 
         outputer.writeUint8(regexp_.size());
         outputer.writeData(regexp_.c_str(), regexp_.size());
-
-        replacement_.toWire(outputer);
     }
 
     uint16_t order_;
