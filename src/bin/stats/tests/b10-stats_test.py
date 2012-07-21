@@ -453,6 +453,7 @@ class TestStats(unittest.TestCase):
                 params={ 'owner' : 'Boss',
                   'name'  : 'boot_time' }),
             (0, {'Boss': {'boot_time': '1970-01-01T00:00:00Z'}}))
+        stats_server.shutdown()
 
     def test_commands(self):
         # status
@@ -742,6 +743,50 @@ class TestStats(unittest.TestCase):
         self.assertEqual(self.stats.command_showschema(name='bar'),
                          isc.config.create_answer(
                 1, "module name is not specified"))
+
+    def test_statistics_data(self):
+        stats_server = ThreadingServerManager(MyStats)
+        stats = stats_server.server
+        stats_server.run()
+        self.assertEqual(
+            send_command('status', 'Stats'),
+            (0, "Stats is up. (PID " + str(os.getpid()) + ")"))
+        # check statistics data of 'Boss'
+        self.assertEqual(
+            stats.statistics_data_bymid['Boss']\
+                [self.base.boss.server.cc_session.lname],
+            {'boot_time': self.const_datetime})
+        self.assertEqual(
+            len(stats.statistics_data_bymid['Boss']), 1)
+        self.assertEqual(
+            stats.statistics_data['Boss'],
+            {'boot_time': self.const_datetime})
+        # check statistics data of each 'Auth' instances
+        list_auth = ['', '2', '3', '4']
+        for i in list_auth:
+            auth = getattr(self.base,"auth"+i).server
+            self.assertEqual(
+                stats.statistics_data_bymid['Auth']\
+                    [auth.cc_session.lname],
+                {'queries.perzone': auth.queries_per_zone,
+                 'queries.tcp': auth.queries_tcp,
+                 'queries.udp': auth.queries_udp})
+            n = len(stats.statistics_data_bymid['Auth'])
+            self.assertEqual(n, len(list_auth))
+            # check consolidation of statistics data of the auth
+            # instances
+            self.assertEqual(
+                stats.statistics_data['Auth'],
+                {'queries.perzone': [
+                        {'zonename':
+                             auth.queries_per_zone[0]['zonename'],
+                         'queries.tcp':
+                             auth.queries_per_zone[0]['queries.tcp']*n,
+                         'queries.udp':
+                             auth.queries_per_zone[0]['queries.udp']*n}],
+                     'queries.tcp': auth.queries_tcp*n,
+                     'queries.udp': auth.queries_udp*n})
+        stats_server.shutdown()
 
 class TestOSEnv(unittest.TestCase):
     def test_osenv(self):
