@@ -485,14 +485,10 @@ class BaseModules:
         self.boss = ThreadingServerManager(MockBoss)
         self.boss.run()
         # MockAuth * 4
-        self.auth = ThreadingServerManager(MockAuth)
-        self.auth2 = ThreadingServerManager(MockAuth)
-        self.auth3 = ThreadingServerManager(MockAuth)
-        self.auth4 = ThreadingServerManager(MockAuth)
-        self.auth.run()
-        self.auth2.run()
-        self.auth3.run()
-        self.auth4.run()
+        for i in ['', '2', '3', '4']:
+            setattr(self,"auth"+i, \
+                        ThreadingServerManager(MockAuth))
+            getattr(self, "auth"+i).run()
 
     def shutdown(self):
         # MockAuth
