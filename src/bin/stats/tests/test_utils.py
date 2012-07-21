@@ -249,6 +249,9 @@ class MockBoss:
                          [ 9998, "b10-auth-2" ],
                          [ 9997, "b10-auth-3" ],
                          [ 9996, "b10-auth-4" ]]
+        self.statistics_data = {
+            'boot_time': time.strftime('%Y-%m-%dT%H:%M:%SZ', self._BASETIME)
+            }
 
     def run(self):
         self.mccs.start()
@@ -269,9 +272,7 @@ class MockBoss:
     def command_handler(self, command, *args, **kwargs):
         self._started.set()
         self.got_command_name = command
-        sdata = {
-            'boot_time': time.strftime('%Y-%m-%dT%H:%M:%SZ', self._BASETIME)
-            }
+        sdata = self.statistics_data
         params = { "owner": "Boss",
                    "data": sdata
                    }
@@ -426,7 +427,7 @@ class MyStats(stats.Stats):
         try:
             self.start()
         except Exception:
-            raise
+            pass
 
     def shutdown(self):
         self.command_shutdown()

@@ -217,11 +217,6 @@ class TestStats(unittest.TestCase):
         # Also temporarily disabled for #1668, see above
         #self.assertTrue(self.stats.mccs.stopped)
 
-        # start with err
-        self.stats = stats.Stats()
-        self.stats.update_statistics_data = lambda x,**y: ['an error']
-        self.assertRaises(stats.StatsError, self.stats.start)
-
     def test_handlers(self):
         self.stats_server = ThreadingServerManager(MyStats)
         self.stats = self.stats_server.server
@@ -744,39 +739,39 @@ class TestStats(unittest.TestCase):
                          isc.config.create_answer(
                 1, "module name is not specified"))
 
-    def test_statistics_data(self):
+    def test_polling(self):
         stats_server = ThreadingServerManager(MyStats)
-        stats = stats_server.server
+        stat = stats_server.server
         stats_server.run()
         self.assertEqual(
             send_command('status', 'Stats'),
             (0, "Stats is up. (PID " + str(os.getpid()) + ")"))
         # check statistics data of 'Boss'
+        boss = self.base.boss.server
         self.assertEqual(
-            stats.statistics_data_bymid['Boss']\
-                [self.base.boss.server.cc_session.lname],
+            stat.statistics_data_bymid['Boss'][boss.cc_session.lname],
             {'boot_time': self.const_datetime})
         self.assertEqual(
-            len(stats.statistics_data_bymid['Boss']), 1)
+            len(stat.statistics_data_bymid['Boss']), 1)
         self.assertEqual(
-            stats.statistics_data['Boss'],
+            stat.statistics_data['Boss'],
             {'boot_time': self.const_datetime})
         # check statistics data of each 'Auth' instances
         list_auth = ['', '2', '3', '4']
         for i in list_auth:
             auth = getattr(self.base,"auth"+i).server
             self.assertEqual(
-                stats.statistics_data_bymid['Auth']\
+                stat.statistics_data_bymid['Auth']\
                     [auth.cc_session.lname],
                 {'queries.perzone': auth.queries_per_zone,
                  'queries.tcp': auth.queries_tcp,
                  'queries.udp': auth.queries_udp})
-            n = len(stats.statistics_data_bymid['Auth'])
+            n = len(stat.statistics_data_bymid['Auth'])
             self.assertEqual(n, len(list_auth))
             # check consolidation of statistics data of the auth
             # instances
             self.assertEqual(
-                stats.statistics_data['Auth'],
+                stat.statistics_data['Auth'],
                 {'queries.perzone': [
                         {'zonename':
                              auth.queries_per_zone[0]['zonename'],
@@ -784,8 +779,38 @@ class TestStats(unittest.TestCase):
                              auth.queries_per_zone[0]['queries.tcp']*n,
                          'queries.udp':
                              auth.queries_per_zone[0]['queries.udp']*n}],
-                     'queries.tcp': auth.queries_tcp*n,
-                     'queries.udp': auth.queries_udp*n})
+                 'queries.tcp': auth.queries_tcp*n,
+                 'queries.udp': auth.queries_udp*n})
+        # check statistics data of 'Stats'
+        self.assertEqual(
+            len(stat.statistics_data['Stats']), 5)
+        self.assertTrue('boot_time' in
+            stat.statistics_data['Stats'])
+        self.assertTrue('last_update_time' in
+            stat.statistics_data['Stats'])
+        self.assertTrue('report_time' in
+            stat.statistics_data['Stats'])
+        self.assertTrue('timestamp' in
+            stat.statistics_data['Stats'])
+        self.assertEqual(
+            stat.statistics_data['Stats']['lname'],
+            stat.cc_session.lname)
+        stats_server.shutdown()
+
+    def test_polling2(self):
+        stats_server = ThreadingServerManager(MyStats)
+        stat = stats_server.server
+        boss = self.base.boss.server
+        # set invalid statistics
+        boss.statistics_data = {'boot_time':1}
+        stats_server.run()
+        self.assertEqual(
+            send_command('status', 'Stats'),
+            (0, "Stats is up. (PID " + str(os.getpid()) + ")"))
+        # check default statistics data of 'Boss'
+        self.assertEqual(
+            stat.statistics_data['Boss'],
+            {'boot_time': self.const_default_datetime})
         stats_server.shutdown()
 
 class TestOSEnv(unittest.TestCase):
