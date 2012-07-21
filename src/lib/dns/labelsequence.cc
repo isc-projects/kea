@@ -23,34 +23,6 @@
 namespace isc {
 namespace dns {
 
-LabelSequence::LabelSequence(const uint8_t* data,
-                             const uint8_t* offsets,
-                             size_t offsets_size) :
-    data_(data),
-    offsets_(offsets),
-    first_label_(0),
-    last_label_(offsets_size - 1)
-{
-    if (data == NULL || offsets == NULL) {
-        isc_throw(BadValue,
-                  "Null pointer passed to LabelSequence constructor");
-    }
-    if (offsets_size == 0) {
-        isc_throw(BadValue, "Zero offsets to LabelSequence constructor");
-    }
-    if (offsets_size > Name::MAX_LABELS) {
-        isc_throw(BadValue, "MAX_LABELS exceeded");
-    }
-    for (size_t cur_offset = 0; cur_offset < offsets_size; ++cur_offset) {
-        if (offsets[cur_offset] > Name::MAX_LABELLEN) {
-            isc_throw(BadValue, "MAX_LABEL_LEN exceeded");
-        }
-        if (cur_offset > 0 && offsets[cur_offset] <= offsets[cur_offset - 1]) {
-            isc_throw(BadValue, "Offset smaller than previous offset");
-        }
-    }
-}
-
 LabelSequence::LabelSequence(const void* buf) {
     if (buf == NULL) {
         isc_throw(BadValue,
@@ -87,16 +59,6 @@ const uint8_t*
 LabelSequence::getData(size_t *len) const {
     *len = getDataLength();
     return (&data_[offsets_[first_label_]]);
-}
-
-void
-LabelSequence::getOffsetData(size_t* len,
-                             uint8_t placeholder[Name::MAX_LABELS]) const
-{
-    *len = getLabelCount();
-    for (size_t i = 0; i < *len; ++i) {
-        placeholder[i] = offsets_[first_label_ + i] - offsets_[first_label_];
-    }
 }
 
 size_t
