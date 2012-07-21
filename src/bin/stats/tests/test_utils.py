@@ -207,11 +207,6 @@ class MockBoss:
         "command_args": []
       },
       {
-        "command_name": "sendstats",
-        "command_description": "Send data to a statistics module at once",
-        "command_args": []
-      },
-      {
         "command_name": "ping",
         "command_description": "Ping the boss process",
         "command_args": []
@@ -280,10 +275,7 @@ class MockBoss:
         params = { "owner": "Boss",
                    "data": sdata
                    }
-        if command == 'sendstats':
-            send_command("set", "Stats", params=params, session=self.cc_session)
-            return isc.config.create_answer(0)
-        elif command == 'getstats':
+        if command == 'getstats':
             notfound = [ t for t in args[0]['trees'] if t not in sdata ]
             if notfound:
                 return isc.config.create_answer(1, notfound)
@@ -302,13 +294,7 @@ class MockAuth:
     "module_name": "Auth",
     "module_description": "Mock Authoritative service",
     "config_data": [],
-    "commands": [
-      {
-        "command_name": "sendstats",
-        "command_description": "Send data to a statistics module at once",
-        "command_args": []
-      }
-    ],
+    "commands": [],
     "statistics": [
       {
         "item_name": "queries.tcp",
@@ -422,11 +408,7 @@ class MockAuth:
         sdata = { 'queries.tcp': self.queries_tcp,
                        'queries.udp': self.queries_udp,
                        'queries.perzone' : self.queries_per_zone }
-        if command == 'sendstats':
-            params = { "owner": "Auth",
-                       "data":  sdata }
-            return send_command("set", "Stats", params=params, session=self.cc_session)
-        elif command == 'getstats':
+        if command == 'getstats':
             notfound = [ t for t in args[0]['trees'] if t not in sdata ]
             if notfound:
                 return isc.config.create_answer(1, notfound)
