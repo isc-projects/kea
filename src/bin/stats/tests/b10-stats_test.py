@@ -168,7 +168,6 @@ class TestStats(unittest.TestCase):
         self.assertTrue('command_shutdown' in self.stats.callbacks)
         self.assertTrue('command_show' in self.stats.callbacks)
         self.assertTrue('command_showschema' in self.stats.callbacks)
-        self.assertTrue('command_set' in self.stats.callbacks)
         self.assertEqual(self.stats.config['poll-interval'], 60)
 
     def test_init_undefcmd(self):
@@ -235,12 +234,6 @@ class TestStats(unittest.TestCase):
                 params={ 'owner' : 'Boss',
                   'name'  : 'boot_time' }),
             (0, {'Boss': {'boot_time': self.const_datetime}}))
-        self.assertEqual(
-            send_command(
-                'set', 'Stats',
-                params={ 'owner' : 'Boss',
-                  'data'  : { 'boot_time' : self.const_datetime } }),
-            (0, None))
         self.assertEqual(
             send_command(
                 'show', 'Stats',
@@ -750,172 +743,6 @@ class TestStats(unittest.TestCase):
         self.assertEqual(self.stats.command_showschema(name='bar'),
                          isc.config.create_answer(
                 1, "module name is not specified"))
-
-    def test_command_set(self):
-        orig_get_datetime = stats.get_datetime
-        stats.get_datetime = lambda : self.const_datetime
-        (rcode, value) = isc.config.ccsession.parse_answer(
-            self.stats.command_set(owner='Boss',
-                                   data={ 'boot_time' : self.const_datetime }))
-        stats.get_datetime = orig_get_datetime
-        self.assertEqual(rcode, 0)
-        self.assertTrue(value is None)
-        self.assertEqual(self.stats.statistics_data['Boss']['boot_time'],
-                         self.const_datetime)
-        self.assertEqual(self.stats.statistics_data['Stats']['last_update_time'],
-                         self.const_datetime)
-        self.assertEqual(self.stats.command_set(owner='Stats',
-                                                data={ 'lname' : 'foo@bar' }),
-                         isc.config.create_answer(0, None))
-        self.stats.statistics_data['Stats'] = {}
-        self.stats.mccs.specification = isc.config.module_spec.ModuleSpec(
-            { "module_name": self.stats.module_name,
-              "statistics": [] } )
-        self.assertEqual(self.stats.command_set(owner='Stats',
-                                                data={ 'lname' : '_foo_@_bar_' }),
-                         isc.config.create_answer(
-                1,
-                "errors while setting statistics data: unknown item lname"))
-        self.stats.statistics_data['Stats'] = {}
-        self.stats.mccs.specification = isc.config.module_spec.ModuleSpec(
-            { "module_name": self.stats.module_name } )
-        self.assertEqual(self.stats.command_set(owner='Stats',
-                                                data={ 'lname' : '_foo_@_bar_' }),
-                         isc.config.create_answer(
-                1,
-                "errors while setting statistics data: No statistics specification"))
-        self.stats.statistics_data['Stats'] = {}
-        self.stats.mccs.specification = isc.config.module_spec.ModuleSpec(
-            { "module_name": self.stats.module_name,
-              "statistics": [
-                    {
-                        "item_name": "dummy",
-                        "item_type": "string",
-                        "item_optional": False,
-                        "item_default": "",
-                        "item_title": "Local Name",
-                        "item_description": "brabra"
-                        } ] } )
-        self.assertRaises(stats.StatsError,
-                          self.stats.command_set, owner='Stats', data={ 'dummy' : '_xxxx_yyyy_zzz_' })
-
-    def test_command_set_withpid(self):
-        # one pid of Auth
-        retval = isc.config.ccsession.parse_answer(
-            self.stats.command_set(owner='Auth',
-                                   pid=9997,
-                                   data={ 'queries.tcp' : 1001,
-                                          'queries.perzone':
-                                              [{ 'zonename': 'test1.example',
-                                                 'queries.tcp': 1 },
-                                               { 'zonename': 'test2.example',
-                                                 'queries.tcp': 2,
-                                                 'queries.udp': 3 }]}))
-        self.assertEqual(retval, (0,None))
-        self.assertTrue('Auth' in self.stats.statistics_data)
-        self.assertTrue('queries.tcp' in self.stats.statistics_data['Auth'])
-        self.assertEqual(self.stats.statistics_data['Auth']['queries.tcp'], 1001)
-        self.assertEqual(self.stats.statistics_data['Auth']['queries.perzone'],
-                         [{ 'zonename': 'test1.example',
-                            'queries.tcp': 1 },
-                          { 'zonename': 'test2.example',
-                            'queries.tcp': 2,
-                            'queries.udp': 3 }])
-        self.assertTrue('Stats' in self.stats.statistics_data)
-        self.assertTrue('last_update_time' in self.stats.statistics_data['Stats'])
-        self.assertTrue('Auth' in self.stats.statistics_data_bypid)
-        self.assertTrue(9997 in self.stats.statistics_data_bypid['Auth'])
-        self.assertTrue('queries.tcp' in self.stats.statistics_data_bypid['Auth'][9997])
-        self.assertTrue('queries.perzone' in self.stats.statistics_data_bypid['Auth'][9997])
-        self.assertEqual(self.stats.statistics_data_bypid['Auth'][9997]['queries.tcp'], 1001)
-        self.assertEqual(self.stats.statistics_data_bypid['Auth'][9997]['queries.perzone'],
-                         [{ 'zonename': 'test1.example',
-                            'queries.tcp': 1 },
-                          { 'zonename': 'test2.example',
-                            'queries.tcp': 2,
-                            'queries.udp': 3 }])
-        # check consolidation of statistics data even if there is
-        # non-existent pid of Auth
-        retval = isc.config.ccsession.parse_answer(
-            self.stats.command_set(owner='Auth',
-                                   pid=10000,
-                                   data={ 'queries.tcp' : 2001,
-                                          'queries.perzone':
-                                              [{ 'zonename': 'test1.example',
-                                                 'queries.tcp': 101 },
-                                               { 'zonename': 'test2.example',
-                                                 'queries.tcp': 102,
-                                                 'queries.udp': 103 }]}))
-        self.assertEqual(retval, (0,None))
-        self.assertTrue('Auth' in self.stats.statistics_data)
-        self.assertTrue('queries.tcp' in self.stats.statistics_data['Auth'])
-        self.assertEqual(self.stats.statistics_data['Auth']['queries.tcp'], 3002)
-        self.assertEqual(self.stats.statistics_data['Auth']['queries.perzone'],
-                         [{ 'zonename': 'test1.example',
-                            'queries.tcp': 102 },
-                          { 'zonename': 'test2.example',
-                            'queries.tcp': 104,
-                            'queries.udp': 106 }])
-        self.assertTrue('Auth' in self.stats.statistics_data_bypid)
-        self.assertTrue(9997 in self.stats.statistics_data_bypid['Auth'])
-        self.assertTrue('queries.tcp' in self.stats.statistics_data_bypid['Auth'][9997])
-        self.assertEqual(self.stats.statistics_data_bypid['Auth'][9997]['queries.tcp'], 1001)
-        self.assertEqual(self.stats.statistics_data_bypid['Auth'][9997]['queries.perzone'],
-                         [{ 'zonename': 'test1.example',
-                            'queries.tcp': 1 },
-                          { 'zonename': 'test2.example',
-                            'queries.tcp': 2,
-                            'queries.udp': 3 }])
-        # another pid of Auth
-        retval = isc.config.ccsession.parse_answer(
-            self.stats.command_set(owner='Auth',
-                                   pid=9996,
-                                   data={ 'queries.tcp' : 1002,
-                                          'queries.udp' : 1003,
-                                          'queries.perzone':
-                                              [{ 'zonename': 'test1.example',
-                                                 'queries.tcp': 10,
-                                                 'queries.udp': 11},
-                                               { 'zonename': 'test2.example',
-                                                 'queries.tcp': 12,
-                                                 'queries.udp': 13 }]}))
-        self.assertEqual(retval, (0,None))
-        self.assertTrue('Auth' in self.stats.statistics_data)
-        self.assertTrue('queries.tcp' in self.stats.statistics_data['Auth'])
-        self.assertTrue('queries.udp' in self.stats.statistics_data['Auth'])
-        self.assertTrue('queries.perzone' in self.stats.statistics_data['Auth'])
-        self.assertEqual(self.stats.statistics_data['Auth']['queries.tcp'], 4004)
-        self.assertEqual(self.stats.statistics_data['Auth']['queries.udp'], 1003)
-        self.assertEqual(self.stats.statistics_data['Auth']['queries.perzone'],
-                         [{ 'zonename': 'test1.example',
-                            'queries.tcp': 112,
-                            'queries.udp': 11},
-                          { 'zonename': 'test2.example',
-                            'queries.tcp': 116,
-                            'queries.udp': 119 }])
-        self.assertTrue('Auth' in self.stats.statistics_data_bypid)
-        self.assertTrue(9997 in self.stats.statistics_data_bypid['Auth'])
-        self.assertTrue(9996 in self.stats.statistics_data_bypid['Auth'])
-        self.assertTrue('queries.tcp' in self.stats.statistics_data_bypid['Auth'][9997])
-        self.assertTrue('queries.udp' in self.stats.statistics_data_bypid['Auth'][9996])
-        self.assertTrue('queries.udp' in self.stats.statistics_data_bypid['Auth'][9996])
-        self.assertTrue('queries.perzone' in self.stats.statistics_data_bypid['Auth'][9996])
-        self.assertEqual(self.stats.statistics_data_bypid['Auth'][9997]['queries.tcp'], 1001)
-        self.assertEqual(self.stats.statistics_data_bypid['Auth'][9997]['queries.perzone'],
-                         [{ 'zonename': 'test1.example',
-                            'queries.tcp': 1 },
-                          { 'zonename': 'test2.example',
-                            'queries.tcp': 2,
-                            'queries.udp': 3 }])
-        self.assertEqual(self.stats.statistics_data_bypid['Auth'][9996]['queries.tcp'], 1002)
-        self.assertEqual(self.stats.statistics_data_bypid['Auth'][9996]['queries.udp'], 1003)
-        self.assertEqual(self.stats.statistics_data_bypid['Auth'][9996]['queries.perzone'],
-                         [{ 'zonename': 'test1.example',
-                            'queries.tcp': 10,
-                            'queries.udp': 11},
-                          { 'zonename': 'test2.example',
-                            'queries.tcp': 12,
-                            'queries.udp': 13 }])
 
 class TestOSEnv(unittest.TestCase):
     def test_osenv(self):
