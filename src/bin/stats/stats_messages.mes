@@ -53,7 +53,11 @@ response indicating that it is running normally.
 An unknown command has been sent to the stats module. The stats module
 will respond with an error and the command will be ignored.
 
-% STATS_SEND_REQUEST requesting %1 to send statistics
+% STATS_RECEIVED_INVALID_STATISTICS_DATA received invalid statistics data from %1
+Invalid statistics data has been received from the module while
+polling and it has been discarded.
+
+% STATS_SEND_STATISTICS_REQUEST requesting %1 to send statistics
 This debug message is printed when a request is sent to the module
 to send its data to the stats module.
 

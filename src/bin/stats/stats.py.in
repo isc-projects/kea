@@ -160,15 +160,13 @@ class Stats:
         logger.info(STATS_STARTING)
 
         # initialized Statistics data
-        errors = self.update_statistics_data(
+        if self.update_statistics_data(
             self.module_name,
             lname=self.cc_session.lname,
             boot_time=get_datetime(_BASETIME),
-            last_update_time=get_datetime()
-            )
-        if errors:
-            raise StatsError("stats spec file is incorrect: "
-                             + ", ".join(errors))
+            last_update_time=get_datetime()):
+            logger.warn(STATS_RECEIVED_INVALID_STATISTICS_DATA,
+                        self.module_name)
 
         def _poll_modules():
             """poll modules for statistics data"""
@@ -195,7 +193,7 @@ class Stats:
             for (module_name, data) in self.get_statistics_data().items():
                 # skip if module_name is 'Stats'
                 if module_name == self.module_name: continue
-                logger.debug(DBG_STATS_MESSAGING, STATS_SEND_REQUEST,
+                logger.debug(DBG_STATS_MESSAGING, STATS_SEND_STATISTICS_REQUEST,
                              module_name)
                 cmd = isc.config.ccsession.create_command(
                     "getstats", {'trees': [k for k in data.keys()]})
@@ -210,20 +208,19 @@ class Stats:
                         if answer:
                             rcode, args = isc.config.ccsession.parse_answer(answer)
                         if rcode == 0:
-                            errors = self.update_statistics_data(
-                                module_name, env['from'], **args)
-                            if errors:
-                                raise StatsError("spec file is incorrect: "
-                                                 + ", ".join(errors))
-                            errors = self.update_statistics_data(
-                                        self.module_name,
-                                        last_update_time=get_datetime())
-                            if errors:
-                                raise StatsError("stats spec file is incorrect: "
-                                                 + ", ".join(errors))
+                            if self.update_statistics_data(
+                                module_name, env['from'], **args):
+                                logger.warn(STATS_RECEIVED_INVALID_STATISTICS_DATA,
+                                            module_name)
+                            else:
+                                if self.update_statistics_data(
+                                    self.module_name,
+                                    last_update_time=get_datetime()):
+                                    logger.warn(STATS_RECEIVED_INVALID_STATISTICS_DATA,
+                                                self.module_name)
                 # skip this module if SessionTimeout raised
                 except isc.cc.session.SessionTimeout:
-                    raise
+                    pass
 
         try:
             start_poll = get_timestamp() - self.config['poll-interval']
