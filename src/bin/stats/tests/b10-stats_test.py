@@ -229,8 +229,6 @@ class TestStats(unittest.TestCase):
         self.stats_server.run()
 
         # command_handler
-        self.base.boss.server._started.wait()
-        self.base.boss.server._started.clear()
         self.assertEqual(
             send_command(
                 'show', 'Stats',
@@ -455,8 +453,6 @@ class TestStats(unittest.TestCase):
                          isc.config.create_answer(0))
         self.assertEqual(stats.config['poll-interval'], 0)
         stats_server.run()
-        self.base.boss.server._started.wait()
-        self.base.boss.server._started.clear()
         self.assertEqual(
             send_command(
                 'show', 'Stats',
