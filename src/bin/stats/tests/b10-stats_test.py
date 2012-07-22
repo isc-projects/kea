@@ -289,7 +289,7 @@ class TestStats(unittest.TestCase):
         self.stats_server.shutdown()
 
     def test_update_modules(self):
-        self.assertEqual(len(self.stats.modules), 0)
+        self.assertEqual(len(self.stats.modules), 3) # Auth, Boss, Stats
         self.stats.update_modules()
         self.assertTrue('Stats' in self.stats.modules)
         self.assertTrue('Boss' in self.stats.modules)
@@ -329,13 +329,13 @@ class TestStats(unittest.TestCase):
         my_statistics_data = self.stats.get_statistics_data(owner='Stats', name='report_time')
         self.assertEqual(my_statistics_data['Stats']['report_time'], self.const_default_datetime)
         my_statistics_data = self.stats.get_statistics_data(owner='Stats', name='boot_time')
-        self.assertEqual(my_statistics_data['Stats']['boot_time'], self.const_default_datetime)
+        self.assertTrue('boot_time' in my_statistics_data['Stats'])
         my_statistics_data = self.stats.get_statistics_data(owner='Stats', name='last_update_time')
-        self.assertEqual(my_statistics_data['Stats']['last_update_time'], self.const_default_datetime)
+        self.assertTrue('last_update_time' in my_statistics_data['Stats'])
         my_statistics_data = self.stats.get_statistics_data(owner='Stats', name='timestamp')
         self.assertEqual(my_statistics_data['Stats']['timestamp'], 0.0)
         my_statistics_data = self.stats.get_statistics_data(owner='Stats', name='lname')
-        self.assertEqual(my_statistics_data, {'Stats': {'lname':''}})
+        self.assertTrue(len(my_statistics_data['Stats']['lname']) >0)
         self.assertRaises(stats.StatsError, self.stats.get_statistics_data,
                           owner='Stats', name='Bar')
         self.assertRaises(stats.StatsError, self.stats.get_statistics_data,
@@ -344,47 +344,49 @@ class TestStats(unittest.TestCase):
                           name='Bar')
 
     def test_update_statistics_data(self):
-        self.stats.update_statistics_data(owner='Stats', lname='foo@bar')
-        self.assertTrue('Stats' in self.stats.statistics_data)
-        my_statistics_data = self.stats.statistics_data['Stats']
-        self.assertEqual(my_statistics_data['lname'], 'foo@bar')
-        self.stats.update_statistics_data(owner='Stats', last_update_time=self.const_datetime)
-        self.assertTrue('Stats' in self.stats.statistics_data)
-        my_statistics_data = self.stats.statistics_data['Stats']
-        self.assertEqual(my_statistics_data['last_update_time'], self.const_datetime)
-        self.assertEqual(self.stats.update_statistics_data(owner='Stats', lname=0.0),
+        # success
+        self.assertEqual(self.stats.statistics_data['Stats']['lname'],
+                         self.stats.cc_session.lname)
+        self.stats.update_statistics_data(
+            'Stats', self.stats.cc_session.lname,
+            {'lname': 'foo@bar'})
+        self.assertEqual(self.stats.statistics_data['Stats']['lname'],
+                         'foo@bar')
+        # error case
+        self.assertEqual(self.stats.update_statistics_data('Stats', None,
+                                                           {'lname': 0.0}),
                          ['0.0 should be a string'])
-        self.assertEqual(self.stats.update_statistics_data(owner='Dummy', foo='bar'),
+        self.assertEqual(self.stats.update_statistics_data('Dummy', None,
+                                                           {'foo': 'bar'}),
                          ['unknown module name: Dummy'])
 
     def test_update_statistics_data_withmid(self):
         # one id of Auth
-        self.stats.update_statistics_data(owner='Auth',
-                                          mid="bar@foo",
-                                          **{'queries.tcp':1001})
+        self.stats.update_statistics_data('Auth', "bar@foo",
+                                          {'queries.tcp':1001})
         self.assertTrue('Auth' in self.stats.statistics_data)
         self.assertTrue('queries.tcp' in self.stats.statistics_data['Auth'])
-        self.assertEqual(self.stats.statistics_data['Auth']['queries.tcp'], 1001)
+        self.assertEqual(self.stats.statistics_data['Auth']['queries.tcp'], 1001 + 3 * 4)
         self.assertTrue('Auth' in self.stats.statistics_data_bymid)
         self.assertTrue('bar@foo' in self.stats.statistics_data_bymid['Auth'])
         self.assertTrue('queries.tcp' in self.stats.statistics_data_bymid['Auth']['bar@foo'])
         self.assertEqual(self.stats.statistics_data_bymid['Auth']['bar@foo']['queries.tcp'], 1001)
-        self.assertEqual(self.stats.statistics_data_bymid,
-                         {'Auth': {'bar@foo': {'queries.tcp': 1001}}})
+        self.assertEqual(self.stats.statistics_data_bymid['Auth']['bar@foo'],
+                         {'queries.tcp': 1001})
         # check consolidation of statistics data
-        self.stats.update_statistics_data(owner='Auth',
-                                          mid="bar2@foo",
-                                          **{'queries.tcp':2001})
+        self.stats.update_statistics_data('Auth', "bar2@foo",
+                                          {'queries.tcp':2001})
         self.assertTrue('Auth' in self.stats.statistics_data)
         self.assertTrue('queries.tcp' in self.stats.statistics_data['Auth'])
-        self.assertEqual(self.stats.statistics_data['Auth']['queries.tcp'], 3002)
+        self.assertEqual(self.stats.statistics_data['Auth']['queries.tcp'], 3002 + 3 * 4)
         self.assertTrue('Auth' in self.stats.statistics_data_bymid)
         self.assertTrue('bar@foo' in self.stats.statistics_data_bymid['Auth'])
         self.assertTrue('queries.tcp' in self.stats.statistics_data_bymid['Auth']['bar@foo'])
         self.assertEqual(self.stats.statistics_data_bymid['Auth']['bar@foo']['queries.tcp'], 1001)
-        self.assertEqual(self.stats.statistics_data_bymid,
-                         {'Auth': {'bar@foo': {'queries.tcp': 1001},
-                                   'bar2@foo': {'queries.tcp': 2001}}})
+        self.assertEqual(self.stats.statistics_data_bymid['Auth']['bar@foo'],
+                         {'queries.tcp': 1001})
+        self.assertEqual(self.stats.statistics_data_bymid['Auth']['bar2@foo'],
+                         {'queries.tcp': 2001})
         # kill running Auth but the statistics data is preserved
         self.assertEqual(self.base.boss.server.pid_list[0][0], 9999)
         killed = self.base.boss.server.pid_list.pop(0)
@@ -392,24 +394,24 @@ class TestStats(unittest.TestCase):
         self.assertTrue('Auth' in self.stats.statistics_data)
         self.assertTrue('queries.tcp' in self.stats.statistics_data['Auth'])
         self.assertTrue('queries.udp' in self.stats.statistics_data['Auth'])
-        self.assertEqual(self.stats.statistics_data['Auth']['queries.tcp'], 3002)
-        self.assertEqual(self.stats.statistics_data['Auth']['queries.udp'], 0)
+        self.assertEqual(self.stats.statistics_data['Auth']['queries.tcp'], 3002 + 3 * 4)
+        self.assertEqual(self.stats.statistics_data['Auth']['queries.udp'], 2 * 4)
         self.assertTrue('Auth' in self.stats.statistics_data_bymid)
         # restore statistics data of killed auth
         self.base.boss.server.pid_list = [ killed ] + self.base.boss.server.pid_list[:]
-        self.stats.update_statistics_data(owner='Auth',
-                                          mid="bar@foo",
-                                          **{'queries.tcp':1001})
+        self.stats.update_statistics_data('Auth',
+                                          "bar@foo",
+                                          {'queries.tcp': 1001})
         # another mid of Auth
-        self.stats.update_statistics_data(owner='Auth',
-                                          mid="bar3@foo",
-                                          **{'queries.tcp':1002,
-                                             'queries.udp':1003})
+        self.stats.update_statistics_data('Auth',
+                                          "bar3@foo",
+                                          {'queries.tcp':1002,
+                                           'queries.udp':1003})
         self.assertTrue('Auth' in self.stats.statistics_data)
         self.assertTrue('queries.tcp' in self.stats.statistics_data['Auth'])
         self.assertTrue('queries.udp' in self.stats.statistics_data['Auth'])
-        self.assertEqual(self.stats.statistics_data['Auth']['queries.tcp'], 4004)
-        self.assertEqual(self.stats.statistics_data['Auth']['queries.udp'], 1003)
+        self.assertEqual(self.stats.statistics_data['Auth']['queries.tcp'], 4004 + 3 * 4)
+        self.assertEqual(self.stats.statistics_data['Auth']['queries.udp'], 1003 + 2 * 4)
         self.assertTrue('Auth' in self.stats.statistics_data_bymid)
         self.assertTrue('bar@foo' in self.stats.statistics_data_bymid['Auth'])
         self.assertTrue('bar3@foo' in self.stats.statistics_data_bymid['Auth'])
@@ -421,33 +423,40 @@ class TestStats(unittest.TestCase):
         self.assertEqual(self.stats.statistics_data_bymid['Auth']['bar3@foo']['queries.udp'], 1003)
 
     def test_config(self):
+        orig_get_timestamp = stats.get_timestamp
+        stats.get_timestamp = lambda : self.const_timestamp
         stats_server = ThreadingServerManager(MyStats)
-        stats = stats_server.server
+        stat = stats_server.server
         # test updating poll-interval
-        self.assertEqual(stats.config['poll-interval'], 60)
-        self.assertEqual(stats.config_handler({'poll-interval': 120}),
+        self.assertEqual(stat.config['poll-interval'], 60)
+        self.assertEqual(stat.get_interval(), 60)
+        self.assertEqual(stat.next_polltime, self.const_timestamp + 60)
+        self.assertEqual(stat.config_handler({'poll-interval': 120}),
                          isc.config.create_answer(0))
-        self.assertEqual(stats.config['poll-interval'], 120)
-        self.assertEqual(stats.config_handler({'poll-interval': "foo"}),
+        self.assertEqual(stat.config['poll-interval'], 120)
+        self.assertEqual(stat.get_interval(), 120)
+        self.assertEqual(stat.next_polltime, self.const_timestamp + 120)
+        stats.get_timestamp = orig_get_timestamp
+        self.assertEqual(stat.config_handler({'poll-interval': "foo"}),
                          isc.config.create_answer(1, 'foo should be an integer'))
-        self.assertEqual(stats.config_handler({'poll-interval': -1}),
+        self.assertEqual(stat.config_handler({'poll-interval': -1}),
                          isc.config.create_answer(1, 'Negative integer ignored'))
         # unknown item
         self.assertEqual(
-            stats.config_handler({'_UNKNOWN_KEY_': None}),
+            stat.config_handler({'_UNKNOWN_KEY_': None}),
             isc.config.ccsession.create_answer(
                 1, "unknown item _UNKNOWN_KEY_"))
         # test no change if zero interval time
-        self.assertEqual(stats.config_handler({'poll-interval': 0}),
+        self.assertEqual(stat.config_handler({'poll-interval': 0}),
                          isc.config.create_answer(0))
-        self.assertEqual(stats.config['poll-interval'], 0)
+        self.assertEqual(stat.config['poll-interval'], 0)
         stats_server.run()
         self.assertEqual(
             send_command(
                 'show', 'Stats',
                 params={ 'owner' : 'Boss',
                   'name'  : 'boot_time' }),
-            (0, {'Boss': {'boot_time': '1970-01-01T00:00:00Z'}}))
+            (0, {'Boss': {'boot_time': self.const_datetime}}))
         stats_server.shutdown()
 
     def test_commands(self):
@@ -474,37 +483,32 @@ class TestStats(unittest.TestCase):
                 1, "specified arguments are incorrect: owner: Foo, name: bar"))
         self.assertEqual(self.stats.command_show(owner='Auth'),
                          isc.config.create_answer(
-                0, {'Auth':{ 'queries.udp': 0,
-                     'queries.tcp': 0,
+                0, {'Auth':{ 'queries.udp': 8,
+                     'queries.tcp': 12,
                      'queries.perzone': [{ 'zonename': 'test1.example',
-                                           'queries.udp': 1,
-                                           'queries.tcp': 2 },
-                                         { 'zonename': 'test2.example',
-                                           'queries.udp': 3,
-                                           'queries.tcp': 4 }] }}))
+                                           'queries.udp': 16,
+                                           'queries.tcp': 20 }
+                                         ]}}))
         self.assertEqual(self.stats.command_show(owner='Auth', name='queries.udp'),
                          isc.config.create_answer(
-                0, {'Auth': {'queries.udp':0}}))
+                0, {'Auth': {'queries.udp':8}}))
         self.assertEqual(self.stats.command_show(owner='Auth', name='queries.perzone'),
                          isc.config.create_answer(
                 0, {'Auth': {'queries.perzone': [{ 'zonename': 'test1.example',
-                      'queries.udp': 1,
-                      'queries.tcp': 2 },
-                    { 'zonename': 'test2.example',
-                      'queries.udp': 3,
-                      'queries.tcp': 4 }]}}))
-        orig_get_timestamp = stats.get_timestamp
+                      'queries.udp': 16,
+                      'queries.tcp': 20 }]}}))
         orig_get_datetime = stats.get_datetime
+        orig_get_timestamp = stats.get_timestamp
+        stats.get_datetime = lambda x=None: self.const_datetime
         stats.get_timestamp = lambda : self.const_timestamp
-        stats.get_datetime = lambda : self.const_datetime
-        self.assertEqual(stats.get_timestamp(), self.const_timestamp)
-        self.assertEqual(stats.get_datetime(), self.const_datetime)
-        self.assertEqual(self.stats.command_show(owner='Stats', name='report_time'), \
-                             isc.config.create_answer(0, {'Stats': {'report_time':self.const_datetime}}))
-        self.assertEqual(self.stats.statistics_data['Stats']['timestamp'], self.const_timestamp)
-        self.assertEqual(self.stats.statistics_data['Stats']['boot_time'], self.const_default_datetime)
-        stats.get_timestamp = orig_get_timestamp
+        self.assertEqual(self.stats.command_show(owner='Stats', name='report_time'),
+                         isc.config.create_answer(
+                0, {'Stats': {'report_time':self.const_datetime}}))
+        self.assertEqual(self.stats.command_show(owner='Stats', name='timestamp'),
+                         isc.config.create_answer(
+                0, {'Stats': {'timestamp':self.const_timestamp}}))
         stats.get_datetime = orig_get_datetime
+        stats.get_timestamp = orig_get_timestamp
         self.stats.mccs.specification = isc.config.module_spec.ModuleSpec(
             { "module_name": self.stats.module_name,
               "statistics": [] } )
@@ -794,15 +798,15 @@ class TestStats(unittest.TestCase):
             stat.statistics_data['Stats'])
         self.assertEqual(
             stat.statistics_data['Stats']['lname'],
-            stat.cc_session.lname)
+            stat.mccs._session.lname)
         stats_server.shutdown()
 
     def test_polling2(self):
+        # set invalid statistics
+        boss = self.base.boss.server
+        boss.statistics_data = {'boot_time':1}
         stats_server = ThreadingServerManager(MyStats)
         stat = stats_server.server
-        boss = self.base.boss.server
-        # set invalid statistics
-        boss.statistics_data = {'boot_time':1}
         stats_server.run()
         self.assertEqual(
             send_command('status', 'Stats'),
