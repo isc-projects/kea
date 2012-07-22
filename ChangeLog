@@ -1,3 +1,10 @@
+454.	[bug]		jelte
+	b10-cfgmgr now loads its configuration check plugins directly from
+	the plugin search path, as opposed to importing them from the
+	general python system module path list; this prevents naming
+	conflicts with real python modules.
+	(Trac #2119, git 2f68d7ac5c3c7cc88a3663191113eece32d46a3d)
+
 453.	[bug]		jelte
 	b10-auth no longer tries to send DDNS UPDATE messages to b10-ddns if
 	b10-ddns is not running. Sending an UPDATE to BIND 10 that is not
