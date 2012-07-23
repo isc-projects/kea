@@ -17,6 +17,7 @@
 #include <log/dummylog.h>
 #include <log/logger_support.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
+#include <boost/lexical_cast.hpp>
 
 using namespace std;
 using namespace isc::dhcp;
@@ -64,8 +65,14 @@ main(int argc, char* argv[]) {
             stand_alone = true;
             break;
         case 'p':
-            port_number = strtol(optarg, NULL, 10);
-            if (port_number == 0) {
+            try {
+                port_number = boost::lexical_cast<int>(optarg);
+            } catch (const boost::bad_lexical_cast &) {
+                cerr << "Failed to parse port number: [" << optarg
+                     << "], 1-65535 allowed." << endl;
+                usage();
+            }
+            if (port_number <= 0 || port_number > 65535) {
                 cerr << "Failed to parse port number: [" << optarg
                      << "], 1-65535 allowed." << endl;
                 usage();
@@ -97,11 +104,11 @@ main(int argc, char* argv[]) {
         cout << "[b10-dhcp4] Initiating DHCPv4 server operation." << endl;
 
         /// @todo: pass verbose to the actul server once logging is implemented
-        ControlledDhcpv4Srv* server = new ControlledDhcpv4Srv(port_number);
+        ControlledDhcpv4Srv server(port_number);
 
         if (!stand_alone) {
             try {
-                server->establishSession();
+                server.establishSession();
             } catch (const std::exception& ex) {
                 cerr << "Failed to establish BIND10 session. "
                     "Running in stand-alone mode:" << ex.what() << endl;
@@ -112,10 +119,7 @@ main(int argc, char* argv[]) {
             cout << "Skipping connection to the BIND10 msgq." << endl;
         }
 
-        server->run();
-        delete server;
-        server = NULL;
-
+        server.run();
     } catch (const std::exception& ex) {
         cerr << "[b10-dhcp4] Server failed: " << ex.what() << endl;
         ret = EXIT_FAILURE;
