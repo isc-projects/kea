@@ -702,7 +702,7 @@ TEST_F(LabelSequenceTest, serialize) {
     // An absolute sequence directly constructed from a valid name.
     // labels = 3, offset sequence = 0, 8, 12, data = "example.com."
     actual_labelseqs.push_back(ls1);
-    const uint8_t const expected_data1[] = {
+    const uint8_t expected_data1[] = {
         3, 0, 8, 12, 7, 'e', 'x', 'a', 'm', 'p', 'l', 'e',
         3, 'o', 'r', 'g', 0 };
     expected.push_back(DataPair(sizeof(expected_data1), expected_data1));
@@ -712,7 +712,7 @@ TEST_F(LabelSequenceTest, serialize) {
     LabelSequence ls_rstripped = ls1;
     ls_rstripped.stripRight(1);
     actual_labelseqs.push_back(ls_rstripped);
-    const uint8_t const expected_data2[] = {
+    const uint8_t expected_data2[] = {
         2, 0, 8, 7, 'e', 'x', 'a', 'm', 'p', 'l', 'e',
         3, 'o', 'r', 'g'};
     expected.push_back(DataPair(sizeof(expected_data2), expected_data2));
@@ -723,21 +723,20 @@ TEST_F(LabelSequenceTest, serialize) {
     LabelSequence ls_lstripped = ls1;
     ls_lstripped.stripLeft(1);
     actual_labelseqs.push_back(ls_lstripped);
-    const uint8_t const expected_data3[] = {
-        2, 0, 4, 3, 'o', 'r', 'g', 0 };
+    const uint8_t expected_data3[] = { 2, 0, 4, 3, 'o', 'r', 'g', 0 };
     expected.push_back(DataPair(sizeof(expected_data3), expected_data3));
 
     // Root label.
     LabelSequence ls_root(Name::ROOT_NAME());
     actual_labelseqs.push_back(ls_root);
-    const uint8_t const expected_data4[] = { 1, 0, 0 };
+    const uint8_t expected_data4[] = { 1, 0, 0 };
     expected.push_back(DataPair(sizeof(expected_data4), expected_data4));
 
     // Non absolute single-label.
     LabelSequence ls_single = ls_rstripped;
     ls_single.stripRight(1);
     actual_labelseqs.push_back(ls_single);
-    const uint8_t const expected_data5[] = {
+    const uint8_t expected_data5[] = {
         1, 0, 7, 'e', 'x', 'a', 'm', 'p', 'l', 'e' };
     expected.push_back(DataPair(sizeof(expected_data5), expected_data5));
 
@@ -765,23 +764,23 @@ TEST_F(LabelSequenceTest, serialize) {
 
 TEST_F(LabelSequenceTest, badDeserialize) {
     EXPECT_THROW(LabelSequence(NULL), isc::BadValue);
-    const uint8_t const zero_offsets[] = { 0 };
+    const uint8_t zero_offsets[] = { 0 };
     EXPECT_THROW(LabelSequence ls(zero_offsets), isc::BadValue);
-    const uint8_t const toomany_offsets[] = { Name::MAX_LABELS + 1 };
+    const uint8_t toomany_offsets[] = { Name::MAX_LABELS + 1 };
     EXPECT_THROW(LabelSequence ls(toomany_offsets), isc::BadValue);
 
     // exceed MAX_LABEL_LEN
-    const uint8_t const offsets_toolonglabel[] = { 2, 0, 64 };
+    const uint8_t offsets_toolonglabel[] = { 2, 0, 64 };
     EXPECT_THROW(LabelSequence ls(offsets_toolonglabel), isc::BadValue);
 
     // Inconsistent data: an offset is lower than the previous offset
-    const uint8_t const offsets_lower[] = { 3, // # of offsets
-                                            0, 2, 1, // offsets
-                                            1, 'a', 1, 'b', 0};
+    const uint8_t offsets_lower[] = { 3, // # of offsets
+                                      0, 2, 1, // offsets
+                                      1, 'a', 1, 'b', 0};
     EXPECT_THROW(LabelSequence ls(offsets_lower), isc::BadValue);
 
     // Inconsistent data: an offset is equal to the previous offset
-    const uint8_t const offsets_noincrease[] = { 2, 0, 0, 0, 0 };
+    const uint8_t offsets_noincrease[] = { 2, 0, 0, 0, 0 };
     EXPECT_THROW(LabelSequence ls(offsets_noincrease), isc::BadValue);
 }
 
