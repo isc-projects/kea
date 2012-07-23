@@ -131,7 +131,7 @@ public:
     class ExchangeStats {
     public:
 
-        static uint32_t transid_hash(const boost::shared_ptr<T> packet) {
+        static uint32_t hashTransid(const boost::shared_ptr<T> packet) {
             return packet->getTransid() & 1023;
         }
 
@@ -148,7 +148,7 @@ public:
                         boost::multi_index::global_fun<
                             boost::shared_ptr<T>,
                             uint32_t,
-                            &ExchangeStats::transid_hash
+                            &ExchangeStats::hashTransid
                         >
                 >
             >
@@ -259,7 +259,7 @@ public:
         /// \param transid transaction id of the packet to search
         /// \return packet having specified transaction or NULL if packet
         /// not found
-        boost::shared_ptr<T> findSent(const uint32_t transid) {
+        boost::shared_ptr<T> findSent(const boost::shared_ptr<T> rcvd_packet) {
             if (sent_packets_.size() == 0) {
                 // List of sent packets is empty so there is no sense
                 // to continue looking fo the packet. It also means
@@ -283,7 +283,7 @@ public:
             // incoming packet. We are successful if there is no
             // packet drop or out of order packets sent. This is actually
             // the fastest way to look for packets.
-            if ((*sent_packets_cache_)->getTransid() == transid) {
+            if ((*sent_packets_cache_)->getTransid() == rcvd_packet->getTransid()) {
                 ++ordered_lookups_;
                 packet_found = true;
             } else {
@@ -299,7 +299,7 @@ public:
                 // bucket of packets and we need to iterate through the bucket
                 // to find the one that has desired transaction id.
                 std::pair<PktListTransidIterator,PktListTransidIterator> p =
-                    idx.equal_range(transid & 1023);
+                    idx.equal_range(hashTransid(rcvd_packet));
                 // We want to keep statistics of unordered lookups to make
                 // sure that there is a right balance between number of
                 // unordered lookups and ordered lookups. If number of unordered
@@ -312,7 +312,7 @@ public:
                 unordered_lookup_size_sum_ += std::distance(p.first, p.second);
                 for (PktListTransidIterator it = p.first; it != p.second;
                      ++it) {
-                    if ((*it)->getTransid() == transid) {
+                    if ((*it)->getTransid() == rcvd_packet->getTransid()) {
                         packet_found = true;
                         sent_packets_cache_ =
                             sent_packets_.template project<0>(it);
@@ -592,7 +592,7 @@ public:
                         const boost::shared_ptr<T> packet) {
         ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
         boost::shared_ptr<T> sent_packet
-            = xchg_stats->findSent(packet->getTransid());
+            = xchg_stats->findSent(packet);
 
         if (sent_packet) {
             xchg_stats->updateDelays(sent_packet, packet);
