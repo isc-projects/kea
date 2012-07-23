@@ -85,7 +85,12 @@ SSHFP::SSHFP(const std::string& sshfp_str) {
 
     algorithm_ = algorithm;
     fingerprint_type_ = fingerprint_type;
-    decodeHex(fingerprintbuf.str(), fingerprint_);
+
+    try {
+        decodeHex(fingerprintbuf.str(), fingerprint_);
+    } catch (const isc::BadValue& e) {
+        isc_throw(InvalidRdataText, "Bad SSHFP fingerprint: " << e.what());
+    }
 }
 
 SSHFP::SSHFP(uint8_t algorithm, uint8_t fingerprint_type,
@@ -101,7 +106,12 @@ SSHFP::SSHFP(uint8_t algorithm, uint8_t fingerprint_type,
 
     algorithm_ = algorithm;
     fingerprint_type_ = fingerprint_type;
-    decodeHex(fingerprint, fingerprint_);
+
+    try {
+        decodeHex(fingerprint, fingerprint_);
+    } catch (const isc::BadValue& e) {
+        isc_throw(InvalidRdataText, "Bad SSHFP fingerprint: " << e.what());
+    }
 }
 
 SSHFP::SSHFP(const SSHFP& other) :

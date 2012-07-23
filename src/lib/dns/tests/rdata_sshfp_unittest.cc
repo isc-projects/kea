@@ -82,7 +82,7 @@ TEST_F(Rdata_SSHFP_Test, badText) {
     EXPECT_THROW(const generic::SSHFP rdata_sshfp("1"), InvalidRdataText);
     EXPECT_THROW(const generic::SSHFP rdata_sshfp("1 2"), InvalidRdataText);
     EXPECT_THROW(const generic::SSHFP rdata_sshfp("BUCKLE MY SHOES"), InvalidRdataText);
-    EXPECT_THROW(const generic::SSHFP rdata_sshfp("1 2 foo bar"), isc::BadValue);
+    EXPECT_THROW(const generic::SSHFP rdata_sshfp("1 2 foo bar"), InvalidRdataText);
 }
 
 TEST_F(Rdata_SSHFP_Test, copy) {
