@@ -18,6 +18,8 @@ datasrc_la_SOURCES += iterator_python.cc iterator_python.h
 datasrc_la_SOURCES += finder_python.cc finder_python.h
 datasrc_la_SOURCES += updater_python.cc updater_python.h
 datasrc_la_SOURCES += journal_reader_python.cc journal_reader_python.h
+datasrc_la_SOURCES += configurableclientlist_python.cc
+datasrc_la_SOURCES += configurableclientlist_python.h
 
 datasrc_la_CPPFLAGS = $(AM_CPPFLAGS) $(PYTHON_INCLUDES)
 datasrc_la_CXXFLAGS = $(AM_CXXFLAGS) $(PYTHON_CXXFLAGS)

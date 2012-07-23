@@ -123,6 +123,8 @@ public:
     /// set to on by the \c setFlag() method.
     enum Flags {
         FLAG_CALLBACK = 1, ///< Callback enabled. See \ref callback
+        FLAG_RED = 2, ///< Node color; 1 if node is red, 0 if node is black.
+        FLAG_SUBTREE_ROOT = 4, ///< Set if the node is the root of a subtree
         FLAG_USER1 = 0x80000000U, ///< Application specific flag
         FLAG_USER2 = 0x40000000U, ///< Application specific flag
         FLAG_USER3 = 0x20000000U  ///< Application specific flag
@@ -246,6 +248,36 @@ private:
         return (&null_node);
     }
 
+    /// \brief Returns the color of this node
+    RBNodeColor getColor() const {
+        if ((flags_ & FLAG_RED) != 0) {
+            return (RED);
+        } else {
+            return (BLACK);
+        }
+    }
+
+    /// \brief Sets the color of this node
+    void setColor(const RBNodeColor color) {
+        if (color == RED) {
+            flags_ |= FLAG_RED;
+        } else {
+            flags_ &= ~FLAG_RED;
+        }
+    }
+
+    void setSubTreeRoot(bool root) {
+        if (root) {
+            flags_ |= FLAG_SUBTREE_ROOT;
+        } else {
+            flags_ &= ~FLAG_SUBTREE_ROOT;
+        }
+    }
+
+    bool isSubTreeRoot() const {
+        return ((flags_ & FLAG_SUBTREE_ROOT) != 0);
+    }
+
     /// \brief return the next node which is bigger than current node
     /// in the same subtree
     ///
@@ -299,7 +331,6 @@ private:
     RBNode<T>*  parent_;
     RBNode<T>*  left_;
     RBNode<T>*  right_;
-    RBNodeColor color_;
     //@}
 
     /// \brief Relative name of the node.
@@ -332,11 +363,10 @@ RBNode<T>::RBNode() :
     parent_(NULL),
     left_(NULL),
     right_(NULL),
-    color_(BLACK),
     // dummy name, the value doesn't matter:
     name_(isc::dns::Name::ROOT_NAME()),
     down_(NULL),
-    flags_(0)
+    flags_(FLAG_SUBTREE_ROOT)
 {
     // Some compilers object to use of "this" in initializer lists.
     parent_ = this;
@@ -350,10 +380,9 @@ RBNode<T>::RBNode(const isc::dns::Name& name) :
     parent_(NULL_NODE()),
     left_(NULL_NODE()),
     right_(NULL_NODE()),
-    color_(RED),
     name_(name),
     down_(NULL_NODE()),
-    flags_(0)
+    flags_(FLAG_RED | FLAG_SUBTREE_ROOT)
 {
 }
 
@@ -1374,10 +1403,13 @@ RBTree<T>::insert(const isc::dns::Name& target_name, RBNode<T>** new_node) {
         *current_root = node.get();
         //node is the new root of sub tree, so its init color
         // is BLACK
-        node->color_ = RBNode<T>::BLACK;
+        node->setColor(RBNode<T>::BLACK);
+        node->setSubTreeRoot(true);
     } else if (order < 0) {
+        node->setSubTreeRoot(false);
         parent->left_ = node.get();
     } else {
+        node->setSubTreeRoot(false);
         parent->right_ = node.get();
     }
     insertRebalance(current_root, node.get());
@@ -1409,10 +1441,19 @@ RBTree<T>::nodeFission(RBNode<T>& node, const isc::dns::Name& base_name) {
     // even if code after the call to this function throws an exception.
     std::swap(node.data_, down_node->data_);
     std::swap(node.flags_, down_node->flags_);
+
     down_node->down_ = node.down_;
     node.down_ = down_node.get();
+
+    // Restore the color of the node (may have gotten changed by the flags swap)
+    node.setColor(down_node->getColor());
+
     // root node of sub tree, the initial color is BLACK
-    down_node->color_ = RBNode<T>::BLACK;
+    down_node->setColor(RBNode<T>::BLACK);
+
+    // mark it as the root of a subtree
+    down_node->setSubTreeRoot(true);
+
     ++node_count_;
     down_node.release();
 }
@@ -1423,44 +1464,44 @@ void
 RBTree<T>::insertRebalance(RBNode<T>** root, RBNode<T>* node) {
 
     RBNode<T>* uncle;
-    while (node != *root && node->parent_->color_ == RBNode<T>::RED) {
+    while (node != *root && node->parent_->getColor() == RBNode<T>::RED) {
         if (node->parent_ == node->parent_->parent_->left_) {
             uncle = node->parent_->parent_->right_;
 
-            if (uncle->color_ == RBNode<T>::RED) {
-                node->parent_->color_ = RBNode<T>::BLACK;
-                uncle->color_ = RBNode<T>::BLACK;
-                node->parent_->parent_->color_ = RBNode<T>::RED;
+            if (uncle->getColor() == RBNode<T>::RED) {
+                node->parent_->setColor(RBNode<T>::BLACK);
+                uncle->setColor(RBNode<T>::BLACK);
+                node->parent_->parent_->setColor(RBNode<T>::RED);
                 node = node->parent_->parent_;
             } else {
                 if (node == node->parent_->right_) {
                     node = node->parent_;
                     leftRotate(root, node);
                 }
-                node->parent_->color_ = RBNode<T>::BLACK;
-                node->parent_->parent_->color_ = RBNode<T>::RED;
+                node->parent_->setColor(RBNode<T>::BLACK);
+                node->parent_->parent_->setColor(RBNode<T>::RED);
                 rightRotate(root, node->parent_->parent_);
             }
         } else {
             uncle = node->parent_->parent_->left_;
-            if (uncle->color_ == RBNode<T>::RED) {
-                node->parent_->color_ = RBNode<T>::BLACK;
-                uncle->color_ = RBNode<T>::BLACK;
-                node->parent_->parent_->color_ = RBNode<T>::RED;
+            if (uncle->getColor() == RBNode<T>::RED) {
+                node->parent_->setColor(RBNode<T>::BLACK);
+                uncle->setColor(RBNode<T>::BLACK);
+                node->parent_->parent_->setColor(RBNode<T>::RED);
                 node = node->parent_->parent_;
             } else {
                 if (node == node->parent_->left_) {
                     node = node->parent_;
                     rightRotate(root, node);
                 }
-                node->parent_->color_ = RBNode<T>::BLACK;
-                node->parent_->parent_->color_ = RBNode<T>::RED;
+                node->parent_->setColor(RBNode<T>::BLACK);
+                node->parent_->parent_->setColor(RBNode<T>::RED);
                 leftRotate(root, node->parent_->parent_);
             }
         }
     }
 
-    (*root)->color_ = RBNode<T>::BLACK;
+    (*root)->setColor(RBNode<T>::BLACK);
 }
 
 
@@ -1469,23 +1510,30 @@ RBNode<T>*
 RBTree<T>::leftRotate(RBNode<T>** root, RBNode<T>* node) {
     RBNode<T>* right = node->right_;
     node->right_ = right->left_;
-    if (right->left_ != NULLNODE)
+    if (right->left_ != NULLNODE) {
         right->left_->parent_ = node;
+        right->left_->setSubTreeRoot(false);
+    } else {
+        right->left_->setSubTreeRoot(true);
+    }
 
     right->parent_ = node->parent_;
 
     if (node->parent_ != NULLNODE) {
+        right->setSubTreeRoot(false);
         if (node == node->parent_->left_) {
             node->parent_->left_ = right;
         } else  {
             node->parent_->right_ = right;
         }
     } else {
+        right->setSubTreeRoot(true);
         *root = right;
     }
 
     right->left_ = node;
     node->parent_ = right;
+    node->setSubTreeRoot(false);
     return (node);
 }
 
@@ -1494,22 +1542,30 @@ RBNode<T>*
 RBTree<T>::rightRotate(RBNode<T>** root, RBNode<T>* node) {
     RBNode<T>* left = node->left_;
     node->left_ = left->right_;
-    if (left->right_ != NULLNODE)
+    if (left->right_ != NULLNODE) {
         left->right_->parent_ = node;
+        left->right_->setSubTreeRoot(false);
+    } else {
+        left->right_->setSubTreeRoot(true);
+    }
 
     left->parent_ = node->parent_;
 
     if (node->parent_ != NULLNODE) {
+        left->setSubTreeRoot(false);
         if (node == node->parent_->right_) {
             node->parent_->right_ = left;
         } else  {
             node->parent_->left_ = left;
         }
     } else {
+        left->setSubTreeRoot(true);
         *root = left;
     }
     left->right_ = node;
     node->parent_ = left;
+    node->setSubTreeRoot(false);
+
     return (node);
 }
 
@@ -1535,8 +1591,14 @@ RBTree<T>::dumpTreeHelper(std::ostream& os, const RBNode<T>* node,
 
     indent(os, depth);
     os << node->name_.toText() << " ("
-              << ((node->color_ == RBNode<T>::BLACK) ? "black" : "red") << ")";
-    os << ((node->isEmpty()) ? "[invisible] \n" : "\n");
+              << ((node->getColor() == RBNode<T>::BLACK) ? "black" : "red") << ")";
+    if (node->isEmpty()) {
+        os << " [invisible]";
+    }
+    if (node->isSubTreeRoot()) {
+        os << " [subtreeroot]";
+    }
+    os << "\n";
 
     if (node->down_ != NULLNODE) {
         indent(os, depth + 1);

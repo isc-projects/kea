@@ -28,6 +28,7 @@
 #include <datasrc/data_source.h>
 #include <datasrc/sqlite3_accessor.h>
 #include <datasrc/iterator.h>
+#include <datasrc/client_list.h>
 
 #include <dns/python/name_python.h>
 #include <dns/python/rrset_python.h>
@@ -51,8 +52,17 @@ namespace {
 // The s_* Class simply covers one instantiation of the object
 class s_DataSourceClient : public PyObject {
 public:
-    s_DataSourceClient() : cppobj(NULL) {};
+    s_DataSourceClient() :
+        cppobj(NULL),
+        client(NULL),
+        keeper(NULL)
+    {};
     DataSourceClientContainer* cppobj;
+    DataSourceClient* client;
+    // We can't rely on the constructor or destructor being
+    // called, so this is a pointer to shared pointer, so we
+    // can call the new and delete explicitly.
+    boost::shared_ptr<ClientList::FindResult::LifeKeeper>* keeper;
 };
 
 PyObject*
@@ -62,7 +72,7 @@ DataSourceClient_findZone(PyObject* po_self, PyObject* args) {
     if (PyArg_ParseTuple(args, "O!", &name_type, &name)) {
         try {
             DataSourceClient::FindResult find_result(
-                self->cppobj->getInstance().findZone(PyName_ToName(name)));
+                self->client->findZone(PyName_ToName(name)));
 
             result::Result r = find_result.code;
             ZoneFinderPtr zfp = find_result.zone_finder;
@@ -103,7 +113,7 @@ DataSourceClient_getIterator(PyObject* po_self, PyObject* args) {
                 }
             }
             return (createZoneIteratorObject(
-                self->cppobj->getInstance().getIterator(PyName_ToName(name_obj),
+                self->client->getIterator(PyName_ToName(name_obj),
                                                         separate_rrs),
                 po_self));
         } catch (const isc::NotImplemented& ne) {
@@ -139,7 +149,7 @@ DataSourceClient_getUpdater(PyObject* po_self, PyObject* args) {
         const bool journaling = (journaling_obj == Py_True);
         try {
             ZoneUpdaterPtr updater =
-                self->cppobj->getInstance().getUpdater(PyName_ToName(name_obj),
+                self->client->getUpdater(PyName_ToName(name_obj),
                                                        replace, journaling);
             if (!updater) {
                 return (Py_None);
@@ -184,7 +194,7 @@ DataSourceClient_getJournalReader(PyObject* po_self, PyObject* args) {
                          &begin_obj, &end_obj)) {
         try {
             pair<ZoneJournalReader::Result, ZoneJournalReaderPtr> result =
-                self->cppobj->getInstance().getJournalReader(
+                self->client->getJournalReader(
                     PyName_ToName(name_obj), static_cast<uint32_t>(begin_obj),
                     static_cast<uint32_t>(end_obj));
             PyObject* po_reader;
@@ -245,6 +255,8 @@ DataSourceClient_init(PyObject* po_self, PyObject* args, PyObject*) {
                 isc::data::Element::fromJSON(ds_config_str);
             self->cppobj = new DataSourceClientContainer(ds_type_str,
                                                          ds_config);
+            self->client = &self->cppobj->getInstance();
+            self->keeper = NULL;
             return (0);
         } else {
             return (-1);
@@ -280,7 +292,10 @@ void
 DataSourceClient_destroy(PyObject* po_self) {
     s_DataSourceClient* const self = static_cast<s_DataSourceClient*>(po_self);
     delete self->cppobj;
+    delete self->keeper;
     self->cppobj = NULL;
+    self->client = NULL;
+    self->keeper = NULL;
     Py_TYPE(self)->tp_free(self);
 }
 
@@ -341,6 +356,23 @@ PyTypeObject datasourceclient_type = {
     NULL,                               // tp_del
     0                                   // tp_version_tag
 };
+
+PyObject*
+wrapDataSourceClient(DataSourceClient* client,
+                     const boost::shared_ptr<ClientList::FindResult::
+                     LifeKeeper>& life_keeper)
+{
+    s_DataSourceClient *result =
+        static_cast<s_DataSourceClient*>(PyObject_New(s_DataSourceClient,
+                                                      &datasourceclient_type));
+    CPPPyObjectContainer<s_DataSourceClient, DataSourceClientContainer>
+        container(result);
+    result->cppobj = NULL;
+    result->keeper =
+        new boost::shared_ptr<ClientList::FindResult::LifeKeeper>(life_keeper);
+    result->client = client;
+    return (container.release());
+}
 
 } // namespace python
 } // namespace datasrc

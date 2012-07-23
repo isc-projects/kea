@@ -476,9 +476,9 @@ ModuleSpec::validateSpecList(ConstElementPtr spec, ConstElementPtr data,
     typedef std::pair<std::string, ConstElementPtr> maptype;
     
     BOOST_FOREACH(maptype m, data->mapValue()) {
-        bool found = false;
         // Ignore 'version' as a config element
         if (m.first.compare("version") != 0) {
+            bool found = false;
             BOOST_FOREACH(ConstElementPtr cur_spec_el, spec->listValue()) {
                 if (cur_spec_el->get("item_name")->stringValue().compare(m.first) == 0) {
                     found = true;
