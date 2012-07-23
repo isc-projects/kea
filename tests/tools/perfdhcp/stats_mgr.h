@@ -131,7 +131,20 @@ public:
     class ExchangeStats {
     public:
 
+        /// \brief Hash transaction id of the packet.
+        ///
+        /// Function hashes transaction id of the packet. Hashing is
+        /// non-unique. Many packets may have the same hash value and thus
+        /// they belong to the same packet buckets. Packet buckets are
+        /// used for unordered packets search with multi index container.
+        ///
+        /// \param packet packet which transaction id is to be hashed.
+        /// \throw isc::BadValue if packet is null.
+        /// \return transaction id hash.
         static uint32_t hashTransid(const boost::shared_ptr<T> packet) {
+            if (!packet) {
+                isc_throw(BadValue, "Packet is null");
+            }
             return packet->getTransid() & 1023;
         }
 
@@ -185,7 +198,11 @@ public:
         /// Method adds new packet to list of sent packets.
         ///
         /// \param packet packet object to be added.
+        /// \throw isc::BadValue if packet is null.
         void appendSent(const boost::shared_ptr<T> packet) {
+            if (!packet) {
+                isc_throw(BadValue, "Packet is null");
+            }
             ++sent_packets_num_;
             sent_packets_.template get<0>().push_back(packet);
         }
@@ -195,7 +212,11 @@ public:
         /// Method adds new packet to list of received packets.
         ///
         /// \param packet packet object to be added.
+        /// \throw isc::BadValue if packet is null.
         void appendRcvd(const boost::shared_ptr<T> packet) {
+            if (!packet) {
+                isc_throw(BadValue, "Packet is null");
+            }
             ++rcvd_packets_num_;
             rcvd_packets_.template get<0>().push_back(packet);
         }
@@ -207,9 +228,17 @@ public:
         ///
         /// \param sent_packet sent packet
         /// \param rcvd_packet received packet
+        /// \throw isc::BadValue if sent or received packet is null.
         /// \throw isc::Unexpected if failed to calculate timestamps
         void updateDelays(const boost::shared_ptr<const T> sent_packet,
                           const boost::shared_ptr<const T> rcvd_packet) {
+            if (!sent_packet) {
+                isc_throw(BadValue, "Sent packet is null");
+            }
+            if (!rcvd_packet) {
+                isc_throw(BadValue, "Received packet is null");
+            }
+
             boost::posix_time::ptime sent_time = sent_packet->getTimestamp();
             boost::posix_time::ptime rcvd_time = rcvd_packet->getTimestamp();
 
@@ -257,9 +286,14 @@ public:
         /// packet search time significantly.
         ///
         /// \param transid transaction id of the packet to search
+        /// \throw isc::BadValue if received packet is null.
         /// \return packet having specified transaction or NULL if packet
         /// not found
         boost::shared_ptr<T> findSent(const boost::shared_ptr<T> rcvd_packet) {
+            if (!rcvd_packet) {
+                isc_throw(BadValue, "Received packet is null");
+            }
+
             if (sent_packets_.size() == 0) {
                 // List of sent packets is empty so there is no sense
                 // to continue looking fo the packet. It also means
@@ -569,7 +603,8 @@ public:
     ///
     /// \param xchg_type exchange type.
     /// \param packet packet to be added to the list
-    /// \throw isc::BadValue if invalid exchange type specified.
+    /// \throw isc::BadValue if invalid exchange type specified or
+    /// packet is null.
     void passSentPacket(const ExchangeType xchg_type,
                         const boost::shared_ptr<T> packet) {
         ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
@@ -585,7 +620,8 @@ public:
     ///
     /// \param xchg_type exchange type.
     /// \param packet received packet
-    /// \throw isc::BadValue if invalid exchange type specified.
+    /// \throw isc::BadValue if invalid exchange type specified
+    /// or packet is null.
     /// \throw isc::Unexpected if corresponding packet was not
     /// found on the list of sent packets.
     void passRcvdPacket(const ExchangeType xchg_type,
