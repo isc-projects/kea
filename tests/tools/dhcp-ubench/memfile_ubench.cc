@@ -139,7 +139,6 @@ void memfile_uBenchmark::failure(const char* operation) {
 void memfile_uBenchmark::connect() {
     try {
         LeaseMgr_ = new memfile_LeaseMgr(Filename_, Sync_);
-
     } catch (const std::string& e) {
         failure(e.c_str());
     }
@@ -155,34 +154,34 @@ void memfile_uBenchmark::createLease4Test() {
         throw "No LeaseMgr instantiated.";
     }
 
-    uint32_t addr = BASE_ADDR4; // Let's start with 1.0.0.0 address
-    const uint8_t hwaddr_len = 20; // not a real field
+    uint32_t addr = BASE_ADDR4;     // Let's start with 1.0.0.0 address
+    const uint8_t hwaddr_len = 20;  // Not a real field
     char hwaddr_tmp[hwaddr_len];
     const uint8_t client_id_len = 128;
     char client_id_tmp[client_id_len];
-    uint32_t valid_lft = 1000;  // we can use the same value for all leases
-    uint32_t recycle_time = 0;  // not supported in any foresable future,
-                                // so keep this as 0
-    time_t cltt = time(NULL); // timestamp
-    uint32_t pool_id = 0; // let's use pools 0-99
-    bool fixed = false;   //
-    string hostname("foo");      // will generate it dynamically
-    bool fqdn_fwd = true; // let's pretend to do AAAA update
-    bool fqdn_rev = true; // let's pretend to do PTR update
+    uint32_t valid_lft = 1000;      // We can use the same value for all leases
+    uint32_t recycle_time = 0;      // Not supported in any foreseeable future,
+                                    //     so keep this as 0
+    time_t cltt = time(NULL);       // Timestamp
+    uint32_t pool_id = 0;           // Let's use pools 0-99
+    bool fixed = false;
+    string hostname("foo");         // Will generate it dynamically
+    bool fqdn_fwd = true;           // Let's pretend to do AAAA update
+    bool fqdn_rev = true;           // Let's pretend to do PTR update
 
     printf("CREATE:   ");
 
-    // while we could put the data directly into vector, I would like to
+    // While we could put the data directly into vector, I would like to
     // keep the code as  similar to other benchmarks as possible
     for (uint8_t i = 0; i < hwaddr_len; i++) {
         hwaddr_tmp[i] = 65 + i;
     }
-    vector<uint8_t> hwaddr(hwaddr_tmp, hwaddr_tmp+19);
+    vector<uint8_t> hwaddr(hwaddr_tmp, hwaddr_tmp + 19);
 
     for (uint8_t i = 0; i < client_id_len; i++) {
         client_id_tmp[i] = 33 + i;
     }
-    vector<uint8_t> client_id(client_id_tmp, client_id_tmp+19);
+    vector<uint8_t> client_id(client_id_tmp, client_id_tmp + 19);
 
     for (uint32_t i = 0; i < Num_; i++) {
 
@@ -219,13 +218,12 @@ void memfile_uBenchmark::searchLease4Test() {
         throw "No LeaseMgr instantiated.";
     }
 
-    // this formula should roughly find something a lease in 90% cases
+    // This formula should roughly find something a lease in 90% cases
     float hitRatio = 0.5;
 
     printf("RETRIEVE: ");
 
     for (uint32_t i = 0; i < Num_; i++) {
-
         uint32_t x = BASE_ADDR4 + random() % int(Num_ / hitRatio);
 
         Lease4Ptr lease = LeaseMgr_->getLease(x);

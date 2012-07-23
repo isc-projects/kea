@@ -89,18 +89,18 @@ void MySQL_uBenchmark::createLease4Test() {
 
     uint32_t addr = BASE_ADDR4; // Let's start with 1.0.0.0 address
     char hwaddr[20];
-    uint8_t hwaddr_len = 20; // not a real field
+    uint8_t hwaddr_len = 20;    // Not a real field
     char client_id[128];
     uint8_t client_id_len = 128;
-    uint32_t valid_lft = 1000;  // we can use the same value for all leases
-    uint32_t recycle_time = 0;  // not supported in any foresable future,
-                                // so keep this as 0
-    string cltt = "now()"; // timestamp
-    uint32_t pool_id = 0; // let's use pools 0-99
-    bool fixed = false;   //
-    string hostname("foo");      // will generate it dynamically
-    bool fqdn_fwd = true; // let's pretend to do AAAA update
-    bool fqdn_rev = true; // let's pretend to do PTR update
+    uint32_t valid_lft = 1000;  // We can use the same value for all leases
+    uint32_t recycle_time = 0;  //    not supported in any foresable future,
+                                //    so keep this as 0
+    string cltt = "now()";      // Timestamp
+    uint32_t pool_id = 0;       // Let's use pools 0-99
+    bool fixed = false;
+    string hostname("foo");     // Will generate it dynamically
+    bool fqdn_fwd = true;       // Let's pretend to do AAAA update
+    bool fqdn_rev = true;       // Let's pretend to do PTR update
 
     printf("CREATE:   ");
 
@@ -228,8 +228,9 @@ void MySQL_uBenchmark::updateLease4Test() {
         sprintf(query, "UPDATE lease4 SET valid_lft=1002, cltt=now() WHERE addr=%d", x);
         mysql_real_query(Conn_, query, strlen(query));
 
-        if (Verbose_)
+        if (Verbose_) {
             printf(".");
+        }
     }
 
     printf("\n");
@@ -265,17 +266,17 @@ void MySQL_uBenchmark::printInfo() {
 
 int main(int argc, char * const argv[]) {
 
-    const char * hostname ="localhost"; // -m (MySQL server)
-    const char * user = "root";  // -u
-    const char * passwd = "secret"; // -p
-    const char * dbname = "kea"; // -f
-    uint32_t num = 100; // -n
-    bool sync = true;  // -s
-    bool verbose = true; // -v
+    const char* hostname ="localhost";  // -m (MySQL server)
+    const char* user = "root";          // -u
+    const char* passwd = "secret";      // -p
+    const char* dbname = "kea";         // -f
+    uint32_t num = 100;                 // -n
+    bool sync = true;                   // -s
+    bool verbose = true;                // -v
 
     MySQL_uBenchmark bench(hostname, user, passwd, dbname, num, sync, verbose);
 
-   bench.parseCmdline(argc, argv);
+    bench.parseCmdline(argc, argv);
 
     int result = bench.run();
 
