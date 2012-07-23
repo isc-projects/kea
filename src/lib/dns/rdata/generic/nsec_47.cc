@@ -124,7 +124,9 @@ NSEC::toWire(OutputBuffer& buffer) const {
 
 void
 NSEC::toWire(AbstractMessageRenderer& renderer) const {
-    impl_->nextname_.toWire(renderer);
+    // Type NSEC is not "well-known", and name compression must be disabled
+    // per RFC3597.
+    renderer.writeName(impl_->nextname_, false);
     renderer.writeData(&impl_->typebits_[0], impl_->typebits_.size());
 }
 
