@@ -105,7 +105,27 @@ TEST_F(Rdata_SSHFP_Test, createFromWire) {
     EXPECT_EQ(0, rdata_sshfp.compare(
                   *rdataFactoryFromFile(RRType("SSHFP"), RRClass("IN"),
                                         "rdata_sshfp_fromWire2")));
-    // TBD: more tests
+    // algorithm=1, fingerprint=1
+    EXPECT_NO_THROW(rdataFactoryFromFile(RRType("SSHFP"), RRClass("IN"),
+                                         "rdata_sshfp_fromWire3.wire"));
+
+    // algorithm=255, fingerprint=1
+    EXPECT_NO_THROW(rdataFactoryFromFile(RRType("SSHFP"), RRClass("IN"),
+                                         "rdata_sshfp_fromWire4.wire"));
+
+    // algorithm=0, fingerprint=1
+    EXPECT_THROW(rdataFactoryFromFile(RRType("SSHFP"), RRClass("IN"),
+                                      "rdata_sshfp_fromWire5.wire"),
+                 InvalidRdataText);
+
+    // algorithm=5, fingerprint=0
+    EXPECT_THROW(rdataFactoryFromFile(RRType("SSHFP"), RRClass("IN"),
+                                      "rdata_sshfp_fromWire6.wire"),
+                 InvalidRdataText);
+
+    // algorithm=255, fingerprint=255
+    EXPECT_NO_THROW(rdataFactoryFromFile(RRType("SSHFP"), RRClass("IN"),
+                                         "rdata_sshfp_fromWire7.wire"));
 }
 
 TEST_F(Rdata_SSHFP_Test, toText) {
