@@ -33,5 +33,5 @@ public:
 protected:
     void failure(const char* operation);
 
-    MYSQL * Conn_;
+    MYSQL* Conn_;
 };
