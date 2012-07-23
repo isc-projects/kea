@@ -245,9 +245,8 @@ class Stats:
             seconds"""
             # backup original timeout
             orig_timeout = self.cc_session.get_timeout()
-            # set config['poll-interval'] * 1000 (milliseconds) to
-            # timeout of cc-sesson
-            self.cc_session.set_timeout(self.get_interval()*1000)
+            # set cc-session timeout to half of a second(500ms)
+            self.cc_session.set_timeout(500)
             try:
                 answer, env = self.cc_session.group_recvmsg(nonblock)
                 self.mccs.check_command_without_recvmsg(answer, env)
@@ -260,9 +259,14 @@ class Stats:
             self.running = True
             while self.running:
                 _check_command()
-                if self.get_interval() > 0 and get_timestamp() >= self.next_polltime:
-                    # update the next polling timestamp
-                    self.next_polltime = get_timestamp() + self.get_interval()
+                now = get_timestamp()
+                if self.get_interval() > 0 and now >= self.next_polltime:
+                    intval = self.get_interval()
+                    # decide the next polling timestamp
+                    self.next_polltime += intval
+                    # adjust next time
+                    if self.next_polltime < now:
+                        self.next_polltime = now
                     self.do_polling()
         finally:
             self.mccs.send_stopping()
