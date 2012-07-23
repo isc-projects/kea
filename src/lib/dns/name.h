@@ -117,9 +117,9 @@ public:
 ///
 /// Note that the ordering is defined for two label sequences that have no
 /// hierarchical relationship (in which case the relationship will be NONE).
-/// For example, two non absolute sequences "example.com" and "example.org"
-/// have no hierarchical relationship, and the former should be sorted before
-/// (i.e. "smaller") than the latter.
+/// For example, two non absolute (or "relative") sequences "example.com" and
+/// "example.org" have no hierarchical relationship, and the former should be
+/// sorted before (i.e. "smaller") than the latter.
 class NameComparisonResult {
 public:
     /// The relation of two names under comparison.
