@@ -15,11 +15,13 @@
 #ifndef __ZONETABLE_H
 #define __ZONETABLE_H 1
 
-#include <boost/shared_ptr.hpp>
+#include <util/memory_segment.h>
 
 #include <dns/rrset.h>
 
 #include <datasrc/zone.h>
+
+#include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace dns {
@@ -58,17 +60,46 @@ private:
     ZoneTable(const ZoneTable& source);
     ZoneTable& operator=(const ZoneTable& source);
 
-public:
-    /// Default constructor.
+    /// Constructor.
+    ///
+    /// An object of this class is always expected to be created by the
+    /// allocator (\c create()), so the constructor is hidden as private.
     ///
     /// This constructor internally involves resource allocation, and if
     /// it fails, a corresponding standard exception will be thrown.
     /// It never throws an exception otherwise.
-    ZoneTable();
+    ZoneTable(util::MemorySegment& mem_sgmt);
 
     /// The destructor.
+    ///
+    /// An object of this class is always expected to be destroyed explicitly
+    /// by \c destroy(), so the constructor is hidden as private.
     ~ZoneTable();
     //@}
+
+public:
+    /// \brief Allocate and construct \c ZoneTable
+    ///
+    /// This static method allocates memory for a new \c ZoneTable object
+    /// from the given memory segment, constructs the object, and returns
+    /// a pointer to it.
+    ///
+    /// \throw std::bad_alloc Memory allocation fails.
+    ///
+    /// \param mem_sgmt A \c MemorySegment from which memory for the new
+    /// \c ZoneTable is allocated.
+    static ZoneTable* create(util::MemorySegment& mem_sgmt);
+
+    /// \brief Destruct and deallocate \c ZoneTable
+    ///
+    /// \throw none
+    ///
+    /// \param mem_sgmt The \c MemorySegment that allocated memory for
+    /// \c ztable.
+    /// \param ztable A non NULL pointer to a valid \c ZoneTable object
+    /// that was originally created by the \c create() method (the behavior
+    /// is undefined if this condition isn't met).
+    static void destroy(util::MemorySegment& mem_sgmt, ZoneTable* ztable);
 
     /// Add a \c Zone to the \c ZoneTable.
     ///
@@ -83,7 +114,7 @@ public:
     /// added to the zone table.
     /// \return \c result::EXIST The zone table already contains
     /// zone of the same origin.
-    result::Result addZone(ZoneFinderPtr zone);
+    result::Result addZone(util::MemorySegment& mem_sgmt, ZoneFinderPtr zone);
 
     /// Remove a \c Zone of the given origin name from the \c ZoneTable.
     ///
