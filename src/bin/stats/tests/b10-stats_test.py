@@ -150,7 +150,6 @@ class TestStats(unittest.TestCase):
         # set the signal handler for deadlock
         self.sig_handler = SignalHandler(self.fail)
         self.base = BaseModules()
-        self.stats = stats.Stats()
         self.const_timestamp = 1308730448.965706
         self.const_datetime = '2011-06-22T08:14:08Z'
         self.const_default_datetime = '1970-01-01T00:00:00Z'
@@ -161,6 +160,7 @@ class TestStats(unittest.TestCase):
         self.sig_handler.reset()
 
     def test_init(self):
+        self.stats = stats.Stats()
         self.assertEqual(self.stats.module_name, 'Stats')
         self.assertFalse(self.stats.running)
         self.assertTrue('command_show' in self.stats.callbacks)
@@ -289,6 +289,7 @@ class TestStats(unittest.TestCase):
         self.stats_server.shutdown()
 
     def test_update_modules(self):
+        self.stats = stats.Stats()
         self.assertEqual(len(self.stats.modules), 3) # Auth, Boss, Stats
         self.stats.update_modules()
         self.assertTrue('Stats' in self.stats.modules)
@@ -314,6 +315,7 @@ class TestStats(unittest.TestCase):
         stats.isc.config.ccsession.parse_answer = orig_parse_answer
 
     def test_get_statistics_data(self):
+        self.stats = stats.Stats()
         my_statistics_data = self.stats.get_statistics_data()
         self.assertTrue('Stats' in my_statistics_data)
         self.assertTrue('Boss' in my_statistics_data)
@@ -344,6 +346,8 @@ class TestStats(unittest.TestCase):
                           name='Bar')
 
     def test_update_statistics_data(self):
+        self.stats = stats.Stats()
+
         # success
         self.assertEqual(self.stats.statistics_data['Stats']['lname'],
                          self.stats.cc_session.lname)
@@ -361,6 +365,7 @@ class TestStats(unittest.TestCase):
                          ['unknown module name: Dummy'])
 
     def test_update_statistics_data_withmid(self):
+        self.stats = stats.Stats()
         # one id of Auth
         self.stats.update_statistics_data('Auth', "bar@foo",
                                           {'queries.tcp':1001})
@@ -460,6 +465,8 @@ class TestStats(unittest.TestCase):
         stats_server.shutdown()
 
     def test_commands(self):
+        self.stats = stats.Stats()
+
         # status
         self.assertEqual(self.stats.command_status(),
                 isc.config.create_answer(
@@ -472,6 +479,7 @@ class TestStats(unittest.TestCase):
         self.assertFalse(self.stats.running)
 
     def test_command_show(self):
+        self.stats = stats.Stats()
         self.assertEqual(self.stats.command_show(owner='Foo', name=None),
                          isc.config.create_answer(
                 1, "specified arguments are incorrect: owner: Foo, name: None"))
@@ -516,6 +524,7 @@ class TestStats(unittest.TestCase):
             stats.StatsError, self.stats.command_show, owner='Foo', name='bar')
 
     def test_command_showchema(self):
+        self.stats = stats.Stats()
         (rcode, value) = isc.config.ccsession.parse_answer(
             self.stats.command_showschema())
         self.assertEqual(rcode, 0)
