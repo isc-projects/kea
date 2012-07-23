@@ -76,6 +76,12 @@ TEST_F(Rdata_SSHFP_Test, algorithmTypes) {
                  InvalidRdataText);
     EXPECT_THROW(const generic::SSHFP rdata_sshfp("1 0 12ab"),
                  InvalidRdataText);
+
+    // > 255 would be broken
+    EXPECT_THROW(const generic::SSHFP rdata_sshfp("256 1 12ab"),
+                 InvalidRdataText);
+    EXPECT_THROW(const generic::SSHFP rdata_sshfp("2 256 12ab"),
+                 InvalidRdataText);
 }
 
 TEST_F(Rdata_SSHFP_Test, badText) {
