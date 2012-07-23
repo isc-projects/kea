@@ -147,6 +147,37 @@ TEST_F(RBTreeTest, insertNames) {
     EXPECT_EQ(RBTree<int>::SUCCESS, rbtree.insert(Name("n"), &rbtnode));
 }
 
+TEST_F(RBTreeTest, subTreeRoot) {
+    // This is a testcase for a particular issue that went unchecked in
+    // #2089's implementation, but was fixed in #2092. The issue was
+    // that when a node was fissioned, FLAG_SUBTREE_ROOT was not being
+    // copied correctly.
+
+    EXPECT_EQ(RBTree<int>::ALREADYEXISTS, rbtree_expose_empty_node.insert(Name("d.e.f"),
+                                                        &rbtnode));
+    EXPECT_EQ(RBTree<int>::SUCCESS, rbtree_expose_empty_node.insert(Name("."), &rbtnode));
+    EXPECT_EQ(RBTree<int>::SUCCESS, rbtree_expose_empty_node.insert(Name("example.com"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::ALREADYEXISTS, rbtree_expose_empty_node.insert(Name("example.com"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::SUCCESS, rbtree_expose_empty_node.insert(Name("k.e.f"), &rbtnode));
+
+    // "g.h" is not a subtree root
+    EXPECT_EQ(RBTree<int>::EXACTMATCH, rbtree_expose_empty_node.find(Name("g.h"),
+                                                                     &rbtnode));
+    EXPECT_FALSE(rbtnode->getFlag(RBNode<int>::FLAG_SUBTREE_ROOT));
+
+    // fission the node "g.h"
+    EXPECT_EQ(RBTree<int>::ALREADYEXISTS, rbtree_expose_empty_node.insert(Name("h"), &rbtnode));
+
+    // the node "h" (h.down_ -> "g") should not be a subtree root. "g"
+    // should be a subtree root.
+    EXPECT_FALSE(rbtnode->getFlag(RBNode<int>::FLAG_SUBTREE_ROOT));
+
+    // "g.h" should be a subtree root now.
+    EXPECT_EQ(RBTree<int>::EXACTMATCH, rbtree_expose_empty_node.find(Name("g.h"),
+                                                                     &rbtnode));
+    EXPECT_TRUE(rbtnode->getFlag(RBNode<int>::FLAG_SUBTREE_ROOT));
+}
+
 TEST_F(RBTreeTest, findName) {
     // find const rbtnode
     // exact match
