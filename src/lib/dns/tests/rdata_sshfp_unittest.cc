@@ -60,7 +60,6 @@ TEST_F(Rdata_SSHFP_Test, algorithmTypes) {
     // Some of these may not be RFC conformant, but we relax the check
     // in our code to work with algorithm and fingerprint types that may
     // show up in the future.
-    EXPECT_NO_THROW(const generic::SSHFP rdata_sshfp("0 1 123456789abcdef67890123456789abcdef67890"));
     EXPECT_NO_THROW(const generic::SSHFP rdata_sshfp("1 1 123456789abcdef67890123456789abcdef67890"));
     EXPECT_NO_THROW(const generic::SSHFP rdata_sshfp("2 1 123456789abcdef67890123456789abcdef67890"));
     EXPECT_NO_THROW(const generic::SSHFP rdata_sshfp("3 1 123456789abcdef67890123456789abcdef67890"));
@@ -71,6 +70,12 @@ TEST_F(Rdata_SSHFP_Test, algorithmTypes) {
     EXPECT_NO_THROW(const generic::SSHFP rdata_sshfp("1 3 123456789abcdef67890123456789abcdef67890"));
     EXPECT_NO_THROW(const generic::SSHFP rdata_sshfp("1 128 123456789abcdef67890123456789abcdef67890"));
     EXPECT_NO_THROW(const generic::SSHFP rdata_sshfp("1 255 123456789abcdef67890123456789abcdef67890"));
+
+    // 0 is still reserved.
+    EXPECT_THROW(const generic::SSHFP rdata_sshfp("0 1 123456789abcdef67890123456789abcdef67890"),
+                 InvalidRdataText);
+    EXPECT_THROW(const generic::SSHFP rdata_sshfp("1 0 123456789abcdef67890123456789abcdef67890"),
+                 InvalidRdataText);
 }
 
 TEST_F(Rdata_SSHFP_Test, badText) {
