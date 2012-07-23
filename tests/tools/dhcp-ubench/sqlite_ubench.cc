@@ -68,20 +68,20 @@ void SQLite_uBenchmark::createLease4Test() {
         throw "SQLite connection is closed.";
     }
 
-    uint32_t addr = BASE_ADDR4; // Let's start with 1.0.0.0 address
-    const uint8_t hwaddr_len = 20; // not a real field
+    uint32_t addr = BASE_ADDR4;     // Let's start with 1.0.0.0 address
+    const uint8_t hwaddr_len = 20;  // Not a real field
     char hwaddr[hwaddr_len];
     const uint8_t client_id_len = 128;
     char client_id[client_id_len];
-    uint32_t valid_lft = 1000;  // we can use the same value for all leases
-    uint32_t recycle_time = 0;  // not supported in any foresable future,
-                                // so keep this as 0
-    string cltt = "now"; // timestamp
-    uint32_t pool_id = 0; // let's use pools 0-99
-    bool fixed = false;   //
-    string hostname("foo");      // will generate it dynamically
-    bool fqdn_fwd = true; // let's pretend to do AAAA update
-    bool fqdn_rev = true; // let's pretend to do PTR update
+    uint32_t valid_lft = 1000;      // We can use the same value for all leases
+    uint32_t recycle_time = 0;      // Not supported in any foresable future,
+                                    //     so keep this as 0
+    string cltt = "now";            // Timestamp
+    uint32_t pool_id = 0;           // Let's use pools 0-99
+    bool fixed = false;
+    string hostname("foo");         // Will generate it dynamically
+    bool fqdn_fwd = true;           // Let's pretend to do AAAA update
+    bool fqdn_rev = true;           // Let's pretend to do PTR update
 
     printf("CREATE:   ");
 
@@ -103,7 +103,7 @@ void SQLite_uBenchmark::createLease4Test() {
         cltt << "2012-07-11 15:43:" << (i % 60);
 
         addr++;
-        char * errorMsg = NULL;
+        char* errorMsg = NULL;
 
         // the first address is 1.0.0.0.
         char query[2000];
@@ -132,10 +132,10 @@ void SQLite_uBenchmark::createLease4Test() {
     printf("\n");
 }
 
-static int search_callback(void *counter, int /*argc*/, char **/*argv*/, 
-                           char **/*azColName*/){
+static int search_callback(void *counter, int /*argc*/, char** /*argv*/, 
+                           char** /*azColName*/){
 
-    int * cnt = static_cast<int*>(counter);
+    int* cnt = static_cast<int*>(counter);
     (*cnt)++;
 
 #if 0
@@ -162,7 +162,7 @@ void SQLite_uBenchmark::searchLease4Test() {
 
         uint32_t x = BASE_ADDR4 + random() % int(Num_ / hitRatio);
 
-        char * errorMsg = NULL;
+        char* errorMsg = NULL;
 
         int cnt = 0;
 
@@ -203,7 +203,7 @@ void SQLite_uBenchmark::updateLease4Test() {
 
         uint32_t x = BASE_ADDR4 + random() % Num_;
 
-        char * errorMsg = NULL;
+        char* errorMsg = NULL;
         char query[2000];
         sprintf(query, "UPDATE lease4 SET valid_lft=1002, cltt='now' WHERE addr=%d", x);
 
@@ -231,7 +231,7 @@ void SQLite_uBenchmark::deleteLease4Test() {
     for (uint32_t i = 0; i < Num_; i++) {
 
         uint32_t x = BASE_ADDR4 + i;
-        char * errorMsg = NULL;
+        char* errorMsg = NULL;
 
         char query[2000];
         sprintf(query, "DELETE FROM lease4 WHERE addr=%d", x);
@@ -256,9 +256,9 @@ void SQLite_uBenchmark::printInfo() {
 
 
 
-int main(int argc, char * const argv[]) {
+int main(int argc, char* const argv[]) {
 
-    const char * filename = "sqlite.db";
+    const char* filename = "sqlite.db";
     uint32_t num = 100;
     bool sync = true;
     bool verbose = true;

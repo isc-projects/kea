@@ -76,14 +76,14 @@ bool uBenchmark::parseCmdline(int argc, char* const argv[]) {
             }
             break;
         case 's':
-            if (!strcasecmp(optarg, "yes") || !strcmp(optarg,"1")) {
+            if (!strcasecmp(optarg, "yes") || !strcmp(optarg, "1")) {
                 Sync_ = true;
             } else {
                 Sync_ = false;
             }
             break;
         case 'v':
-            if (!strcasecmp(optarg, "yes") || !strcmp(optarg,"1")) {
+            if (!strcasecmp(optarg, "yes") || !strcmp(optarg, "1")) {
                 Verbose_ = true;
             } else {
                 Verbose_ = false;
@@ -125,14 +125,14 @@ void uBenchmark::print_clock(const std::string& operation, uint32_t num,
 
 int uBenchmark::run() {
 
-    cout << "Starting test. Parameters: " << endl
-         << "Number of iterations :" << Num_ << endl
-         << "Sync/async           :" << (Sync_?"sync":"async") << endl
-         << "Verbose              :" << (Verbose_?"verbose":"quiet") << endl
-         << "Database name        :" << DBName_ << endl
-         << "MySQL hostname       :" << Hostname_ << endl
-         << "MySQL username       :" << User_ << endl
-         << "MySQL password       :" << Passwd_ << endl << endl;
+    cout << "Starting test. Parameters:" << endl
+         << "Number of iterations : " << Num_ << endl
+         << "Sync/async           : " << (Sync_ ? "sync" : "async") << endl
+         << "Verbose              : " << (Verbose_ ? "verbose" : "quiet") << endl
+         << "Database name        : " << DBName_ << endl
+         << "MySQL hostname       : " << Hostname_ << endl
+         << "MySQL username       : " << User_ << endl
+         << "MySQL password       : " << Passwd_ << endl << endl;
 
 
     srandom(time(NULL));
