@@ -304,6 +304,12 @@ private:
         const;
 
     /// \name Data to maintain the rbtree structure.
+    ///
+    /// We keep them as offset pointers. This is part of a future plan, when we
+    /// want to share the image of the tree between multiple processes.
+    /// However, whenever we have a chance, we switch to bare pointers during
+    /// the processing. The pointers on stack are never shared and the offset
+    /// pointers have non-trivial performance impact.
     //@{
     RBNodePtr parent_;
     /// \brief Access the parent_ as bare pointer.
