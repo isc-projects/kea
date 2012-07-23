@@ -58,6 +58,7 @@
 
 #include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include <algorithm>
 #include <cassert>
@@ -270,6 +271,14 @@ public:
     /// isc:config::ModuleSpec::validateStatistics.
     void registerStatisticsValidator();
 
+    /// Socket session forwarder for dynamic update requests
+    BaseSocketSessionForwarder& ddns_base_forwarder_;
+
+    /// Holder for the DDNS Forwarder, which is used to send
+    /// DDNS messages to b10-ddns, but can be set to empty if
+    /// b10-ddns is not running
+    boost::scoped_ptr<SocketSessionForwarderHolder> ddns_forwarder_;
+
     /// \brief Resume the server
     ///
     /// This is a wrapper call for DNSServer::resume(done), if 'done' is true,
@@ -285,6 +294,7 @@ public:
     void resumeServer(isc::asiodns::DNSServer* server,
                       isc::dns::Message& message,
                       bool done);
+
 private:
     std::string db_file_;
 
@@ -296,9 +306,6 @@ private:
 
     bool xfrout_connected_;
     AbstractXfroutClient& xfrout_client_;
-
-    // Socket session forwarder for dynamic update requests
-    SocketSessionForwarderHolder ddns_forwarder_;
 
     /// Increment query counter
     void incCounter(const int protocol);
@@ -318,9 +325,10 @@ AuthSrvImpl::AuthSrvImpl(const bool use_cache,
     statistics_timer_(io_service_),
     counters_(),
     keyring_(NULL),
+    ddns_base_forwarder_(ddns_forwarder),
+    ddns_forwarder_(NULL),
     xfrout_connected_(false),
-    xfrout_client_(xfrout_client),
-    ddns_forwarder_("update", ddns_forwarder)
+    xfrout_client_(xfrout_client)
 {
     // cur_datasrc_ is automatically initialized by the default constructor,
     // effectively being an empty (sqlite) data source.  once ccsession is up
@@ -456,7 +464,7 @@ makeErrorMessage(MessageRenderer& renderer, Message& message,
     for_each(questions.begin(), questions.end(), QuestionInserter(message));
 
     message.setRcode(rcode);
-    
+
     RendererHolder holder(renderer, &buffer);
     if (tsig_context.get() != NULL) {
         message.toWire(renderer, *tsig_context);
@@ -653,7 +661,12 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
             send_answer = impl_->processNotify(io_message, message, buffer,
                                                tsig_context);
         } else if (opcode == Opcode::UPDATE()) {
-            send_answer = impl_->processUpdate(io_message);
+            if (impl_->ddns_forwarder_) {
+                send_answer = impl_->processUpdate(io_message);
+            } else {
+                makeErrorMessage(impl_->renderer_, message, buffer,
+                                 Rcode::NOTIMP(), tsig_context);
+            }
         } else if (opcode != Opcode::QUERY()) {
             LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_UNSUPPORTED_OPCODE)
                       .arg(message.getOpcode().toText());
@@ -880,7 +893,7 @@ AuthSrvImpl::processUpdate(const IOMessage& io_message) {
     // Push the update request to a separate process via the forwarder.
     // On successful push, the request shouldn't be responded from b10-auth,
     // so we return false.
-    ddns_forwarder_.push(io_message);
+    ddns_forwarder_->push(io_message);
     return (false);
 }
 
@@ -1027,3 +1040,20 @@ void
 AuthSrv::setTSIGKeyRing(const boost::shared_ptr<TSIGKeyRing>* keyring) {
     impl_->keyring_ = keyring;
 }
+
+void
+AuthSrv::createDDNSForwarder() {
+    LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_START_DDNS_FORWARDER);
+    impl_->ddns_forwarder_.reset(
+        new SocketSessionForwarderHolder("update", impl_->ddns_base_forwarder_));
+}
+
+void
+AuthSrv::destroyDDNSForwarder() {
+    if (impl_->ddns_forwarder_) {
+        LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_STOP_DDNS_FORWARDER);
+        impl_->ddns_forwarder_.reset();
+    }
+}
+
+
