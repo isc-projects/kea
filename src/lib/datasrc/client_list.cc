@@ -167,6 +167,39 @@ ConfigurableClientList::configure(const Element& config, bool allow_cache) {
     }
 }
 
+namespace {
+
+class CacheKeeper : public ClientList::FindResult::LifeKeeper {
+public:
+    CacheKeeper(const boost::shared_ptr<InMemoryClient>& cache) :
+        cache_(cache)
+    {}
+private:
+    const boost::shared_ptr<InMemoryClient> cache_;
+};
+
+class ContainerKeeper : public ClientList::FindResult::LifeKeeper {
+public:
+    ContainerKeeper(const DataSourceClientContainerPtr& container) :
+        container_(container)
+    {}
+private:
+    const DataSourceClientContainerPtr container_;
+};
+
+boost::shared_ptr<ClientList::FindResult::LifeKeeper>
+genKeeper(const ConfigurableClientList::DataSourceInfo& info) {
+    if (info.cache_) {
+        return (boost::shared_ptr<ClientList::FindResult::LifeKeeper>(
+            new CacheKeeper(info.cache_)));
+    } else {
+        return (boost::shared_ptr<ClientList::FindResult::LifeKeeper>(
+            new ContainerKeeper(info.container_)));
+    }
+}
+
+}
+
 ClientList::FindResult
 ConfigurableClientList::find(const dns::Name& name, bool want_exact_match,
                             bool) const
@@ -185,10 +218,11 @@ ConfigurableClientList::find(const dns::Name& name, bool want_exact_match,
         ZoneFinderPtr finder;
         uint8_t matched_labels;
         bool matched;
+        boost::shared_ptr<FindResult::LifeKeeper> keeper;
         operator FindResult() const {
             // Conversion to the right result. If we return this, there was
             // a partial match at best.
-            return (FindResult(datasrc_client, finder, false));
+            return (FindResult(datasrc_client, finder, false, keeper));
         }
     } candidate;
 
@@ -206,7 +240,7 @@ ConfigurableClientList::find(const dns::Name& name, bool want_exact_match,
                 // TODO: In case we have only the datasource and not the finder
                 // and the need_updater parameter is true, get the zone there.
                 return (FindResult(client, result.zone_finder,
-                                   true));
+                                   true, genKeeper(info)));
             case result::PARTIALMATCH:
                 if (!want_exact_match) {
                     // In case we have a partial match, check if it is better
@@ -230,6 +264,7 @@ ConfigurableClientList::find(const dns::Name& name, bool want_exact_match,
                         candidate.finder = result.zone_finder;
                         candidate.matched_labels = labels;
                         candidate.matched = true;
+                        candidate.keeper = genKeeper(info);
                     }
                 }
                 break;
