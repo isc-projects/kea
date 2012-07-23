@@ -285,7 +285,7 @@ public:
         /// the packet using indexing by transaction id. This reduces
         /// packet search time significantly.
         ///
-        /// \param transid transaction id of the packet to search
+        /// \param rcvd_packet received packet to be matched with sent packet.
         /// \throw isc::BadValue if received packet is null.
         /// \return packet having specified transaction or NULL if packet
         /// not found
@@ -412,8 +412,8 @@ public:
         /// \brief Return average unordered lookup set size.
         ///
         /// Method returns average unordered lookup set size.
-        /// This value is changes every time \findSet function uses
-        /// unordered packet lookup using transaction id.
+        /// This value changes every time \ref ExchangeStats::findSent
+        /// function performs unordered packet lookup.
         ///
         /// \return average unordered lookup set size.
         double getAvgUnorderedLookupSetSize() const {
@@ -705,8 +705,8 @@ public:
     /// \brief Return average unordered lookup set size.
     ///
     /// Method returns average unordered lookup set size.
-    /// This value is changes every time \findSet function uses
-    /// unordered packet lookup using transaction id.
+    /// This value changes every time \ref ExchangeStats::findSent
+    /// function performs unordered packet lookup.
     ///
     /// \param xchg_type exchange type.
     /// \throw isc::BadValue if invalid exchange type specified.
