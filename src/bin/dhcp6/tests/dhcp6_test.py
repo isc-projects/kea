@@ -171,7 +171,7 @@ class TestDhcpv6Daemon(unittest.TestCase):
     def test_skip_msgq(self):
         print("Check that connection to BIND10 msgq can be disabled.")
 
-        (returncode, output, error) = self.runDhcp4(['../b10-dhcp6', '-s', '-p', '10547'])
+        (returncode, output, error) = self.runCommand(['../b10-dhcp6', '-s', '-p', '10547'])
 
         # When invalid port number is specified, return code must not be success
         # TODO: Temporarily commented out as socket binding on systems that do not have
