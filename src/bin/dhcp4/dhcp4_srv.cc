@@ -37,16 +37,21 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";
 Dhcpv4Srv::Dhcpv4Srv(uint16_t port) {
     cout << "Initialization: opening sockets on port " << port << endl;
 
-    // first call to instance() will create IfaceMgr (it's a singleton)
-    // it may throw something if things go wrong
-    IfaceMgr::instance();
+    try {
+        // first call to instance() will create IfaceMgr (it's a singleton)
+        // it may throw something if things go wrong
+        IfaceMgr::instance();
 
-    /// @todo: instantiate LeaseMgr here once it is imlpemented.
-    IfaceMgr::instance().printIfaces();
+        /// @todo: instantiate LeaseMgr here once it is imlpemented.
 
-    IfaceMgr::instance().openSockets4(port);
+        IfaceMgr::instance().openSockets4(port);
 
-    setServerID();
+        setServerID();
+    } catch (const std::exception &e) {
+        cerr << "Error during DHCPv4 server startup: " << e.what() << endl;
+        shutdown_ = true;
+        return;
+    }
 
     shutdown_ = false;
 }

@@ -45,23 +45,24 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t port) {
     // first call to instance() will create IfaceMgr (it's a singleton)
     // it may throw something if things go wrong
     try {
-        IfaceMgr::instance();
+
+        if (IfaceMgr::instance().countIfaces() == 0) {
+            cout << "Failed to detect any network interfaces. Aborting." << endl;
+            shutdown_ = true;
+            return;
+        }
+
+        IfaceMgr::instance().openSockets6(port);
+
+        setServerID();
+
+        /// @todo: instantiate LeaseMgr here once it is imlpemented.
+
     } catch (const std::exception &e) {
-        cout << "Failed to instantiate InterfaceManager:" << e.what() << ". Aborting." << endl;
+        cerr << "Error during DHCPv4 server startup: " << e.what() << endl;
         shutdown_ = true;
+        return;
     }
-
-    if (IfaceMgr::instance().countIfaces() == 0) {
-        cout << "Failed to detect any network interfaces. Aborting." << endl;
-        shutdown_ = true;
-    }
-
-    // Now try to open IPv6 sockets on detected interfaces.
-    IfaceMgr::instance().openSockets6(port);
-
-    /// @todo: instantiate LeaseMgr here once it is imlpemented.
-
-    setServerID();
 
     shutdown_ = false;
 }

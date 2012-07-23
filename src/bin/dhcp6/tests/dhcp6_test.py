@@ -155,17 +155,38 @@ class TestDhcpv6Daemon(unittest.TestCase):
         # Check that there is an error message about invalid port number printed on stderr
         self.assertEqual( str(error).count("option requires an argument"), 1)
 
+    def test_portnumber_invalid1(self):
+        print("Check that -p option is check against bogus port number (999999).")
+
+        (returncode, output, error) = self.runCommand(['../b10-dhcp6', '-p','999999'])
+
+        # When invalid port number is specified, return code must not be success
+        self.assertTrue(returncode != 0)
+
+        # Check that there is an error message about invalid port number printed on stderr
+        self.assertEqual( str(error).count("Failed to parse port number"), 1)
+
+    def test_portnumber_invalid2(self):
+        print("Check that -p option is check against bogus port number (123garbage).")
+
+        (returncode, output, error) = self.runCommand(['../b10-dhcp6', '-p','123garbage'])
+
+        # When invalid port number is specified, return code must not be success
+        self.assertTrue(returncode != 0)
+
+        # Check that there is an error message about invalid port number printed on stderr
+        self.assertEqual( str(error).count("Failed to parse port number"), 1)
+
     def test_portnumber_nonroot(self):
         print("Check that specifying unprivileged port number will work.")
 
-        (returncode, output, error) = self.runCommand(['../b10-dhcp6', '-p', '10547'])
+        (returncode, output, error) = self.runCommand(['../b10-dhcp6', '-s', '-p', '10547'])
 
         # When invalid port number is specified, return code must not be success
         # TODO: Temporarily commented out as socket binding on systems that do not have
         #       interface detection implemented currently fails.
         # self.assertTrue(returncode == 0)
 
-        # Check that there is a message on stdout about opening proper port
         self.assertEqual( str(output).count("opening sockets on port 10547"), 1)
 
     def test_skip_msgq(self):
@@ -178,7 +199,6 @@ class TestDhcpv6Daemon(unittest.TestCase):
         #       interface detection implemented currently fails.
         # self.assertTrue(returncode == 0)
 
-        # Check that there is an error message about invalid port number printed on stderr
         self.assertEqual( str(output).count("Skipping connection to the BIND10 msgq."), 1)
 
 
