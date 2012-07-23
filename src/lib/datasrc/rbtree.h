@@ -754,11 +754,23 @@ public:
     /// This method also destroys and deallocates all nodes inserted to the
     /// tree.
     ///
+    /// \note The memory segment (\c mem_sgmt) must be the same one that
+    /// was originally used to allocate memory for the tree (and for all
+    /// nodes inserted to the tree, due to the requirement of \c insert()),
+    /// since the tree itself doesn't maintain a reference to the segment.
+    /// This is not a robust interface, but since we plan to share the tree
+    /// structure by multiple processes via shared memory or possibly allow
+    /// the memory image to be dumped to a file for later reload, there
+    /// doesn't seem to be an easy way to store such reference in the data
+    /// itself.  We should probably consider a wrapper interface that
+    /// encapsulates the corresponding segment and always use it for any
+    /// allocation/deallocation of tree related data (the tree itself, their
+    /// nodes, and node data) to keep the usage as safe as possible.
+    ///
     /// \throw none
     ///
     /// \param mem_sgmt The \c MemorySegment that allocated memory for
-    /// \c rbtree (and for all nodes inserted to the tree, due to the
-    /// requirement of \c insert()).
+    /// \c rbtree and for all nodes inserted to the tree.
     /// \param rbtree A non NULL pointer to a valid \c RBTree object
     /// that was originally created by the \c create() method (the behavior
     /// is undefined if this condition isn't met).
@@ -1089,6 +1101,10 @@ public:
     void deleteAllNodes(util::MemorySegment& mem_sgmt);
 
     /// \brief Swaps two tree's contents.
+    ///
+    /// This and \c other trees must have been created with the same
+    /// memory segment (see the discussion in \c create()); otherwise the
+    /// behavior is undefined.
     ///
     /// This acts the same as many std::*.swap functions, exchanges the
     /// contents. This doesn't throw anything.
