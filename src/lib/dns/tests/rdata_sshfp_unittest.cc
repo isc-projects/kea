@@ -60,21 +60,21 @@ TEST_F(Rdata_SSHFP_Test, algorithmTypes) {
     // Some of these may not be RFC conformant, but we relax the check
     // in our code to work with algorithm and fingerprint types that may
     // show up in the future.
-    EXPECT_NO_THROW(const generic::SSHFP rdata_sshfp("1 1 123456789abcdef67890123456789abcdef67890"));
-    EXPECT_NO_THROW(const generic::SSHFP rdata_sshfp("2 1 123456789abcdef67890123456789abcdef67890"));
-    EXPECT_NO_THROW(const generic::SSHFP rdata_sshfp("3 1 123456789abcdef67890123456789abcdef67890"));
-    EXPECT_NO_THROW(const generic::SSHFP rdata_sshfp("128 1 123456789abcdef67890123456789abcdef67890"));
-    EXPECT_NO_THROW(const generic::SSHFP rdata_sshfp("255 1 123456789abcdef67890123456789abcdef67890"));
-    EXPECT_NO_THROW(const generic::SSHFP rdata_sshfp("1 1 123456789abcdef67890123456789abcdef67890"));
-    EXPECT_NO_THROW(const generic::SSHFP rdata_sshfp("1 2 123456789abcdef67890123456789abcdef67890"));
-    EXPECT_NO_THROW(const generic::SSHFP rdata_sshfp("1 3 123456789abcdef67890123456789abcdef67890"));
-    EXPECT_NO_THROW(const generic::SSHFP rdata_sshfp("1 128 123456789abcdef67890123456789abcdef67890"));
-    EXPECT_NO_THROW(const generic::SSHFP rdata_sshfp("1 255 123456789abcdef67890123456789abcdef67890"));
+    EXPECT_NO_THROW(const generic::SSHFP rdata_sshfp("1 1 12ab"));
+    EXPECT_NO_THROW(const generic::SSHFP rdata_sshfp("2 1 12ab"));
+    EXPECT_NO_THROW(const generic::SSHFP rdata_sshfp("3 1 12ab"));
+    EXPECT_NO_THROW(const generic::SSHFP rdata_sshfp("128 1 12ab"));
+    EXPECT_NO_THROW(const generic::SSHFP rdata_sshfp("255 1 12ab"));
+    EXPECT_NO_THROW(const generic::SSHFP rdata_sshfp("1 1 12ab"));
+    EXPECT_NO_THROW(const generic::SSHFP rdata_sshfp("1 2 12ab"));
+    EXPECT_NO_THROW(const generic::SSHFP rdata_sshfp("1 3 12ab"));
+    EXPECT_NO_THROW(const generic::SSHFP rdata_sshfp("1 128 12ab"));
+    EXPECT_NO_THROW(const generic::SSHFP rdata_sshfp("1 255 12ab"));
 
     // 0 is still reserved.
-    EXPECT_THROW(const generic::SSHFP rdata_sshfp("0 1 123456789abcdef67890123456789abcdef67890"),
+    EXPECT_THROW(const generic::SSHFP rdata_sshfp("0 1 12ab"),
                  InvalidRdataText);
-    EXPECT_THROW(const generic::SSHFP rdata_sshfp("1 0 123456789abcdef67890123456789abcdef67890"),
+    EXPECT_THROW(const generic::SSHFP rdata_sshfp("1 0 12ab"),
                  InvalidRdataText);
 }
 
