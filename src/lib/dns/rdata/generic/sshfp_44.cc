@@ -37,7 +37,7 @@ using namespace isc::util::encode;
 
 SSHFP::SSHFP(InputBuffer& buffer, size_t rdata_len) {
     if (rdata_len < 2) {
-      isc_throw(InvalidRdataLength, "SSHFP record too short");
+        isc_throw(InvalidRdataLength, "SSHFP record too short");
     }
 
     algorithm_ = buffer.readUint8();
@@ -57,12 +57,12 @@ SSHFP::SSHFP(const std::string& sshfp_str) {
 
     iss >> algorithm >> fingerprint_type;
     if (iss.bad() || iss.fail()) {
-      isc_throw(InvalidRdataText, "Invalid SSHFP text");
+        isc_throw(InvalidRdataText, "Invalid SSHFP text");
     }
 
     iss.read(&peekc, 1);
     if (!iss.good() || !isspace(peekc, iss.getloc())) {
-      isc_throw(InvalidRdataText, "SSHFP presentation format error");
+        isc_throw(InvalidRdataText, "SSHFP presentation format error");
     }
 
     iss >> &fingerprintbuf;
@@ -131,10 +131,10 @@ SSHFP::compare(const Rdata& other) const {
     size_t cmplen = min(this_len, other_len);
     int cmp = memcmp(&fingerprint_[0], &other_sshfp.fingerprint_[0], cmplen);
     if (cmp != 0) {
-      return (cmp);
+        return (cmp);
     } else {
-      return ((this_len == other_len)
-	      ? 0 : (this_len < other_len) ? -1 : 1);
+        return ((this_len == other_len)
+                ? 0 : (this_len < other_len) ? -1 : 1);
     }
 }
 
