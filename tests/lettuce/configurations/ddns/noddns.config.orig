@@ -17,20 +17,23 @@
                 "port": 47806,
                 "address": "127.0.0.1"
             }
-        ],
-        "datasources": [
-            {
-                "type": "memory",
-                "class": "IN",
-                "zones": [
-                    {
-                        "origin": "example.org",
-                        "filetype": "sqlite3",
-                        "file": "data/ddns/example.org.sqlite3"
-                    }
-                ]
-            }
         ]
+    },
+    "data_sources": {
+        "classes": {
+            "IN": [
+                {
+                    "type": "sqlite3",
+                    "params": {
+                        "database_file": "data/ddns/example.org.sqlite3"
+                    },
+                    "cache-enable": true,
+                    "cache-zones": [
+                        "example.org"
+                    ]
+                }
+            ]
+        }
     },
     "Boss": {
         "components": {
