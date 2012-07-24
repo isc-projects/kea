@@ -1589,9 +1589,6 @@ RBTree<T>::leftRotate(typename RBNode<T>::RBNodePtr* root, RBNode<T>* node) {
     node->right_ = rleft;
     if (rleft != NULLNODE) {
         rleft->parent_ = node;
-        rleft->setSubTreeRoot(false);
-    } else {
-        rleft->setSubTreeRoot(true);
     }
 
     RBNode<T>* const parent = node->getParent();
@@ -1623,9 +1620,6 @@ RBTree<T>::rightRotate(typename RBNode<T>::RBNodePtr* root, RBNode<T>* node) {
     node->left_ = lright;
     if (lright != NULLNODE) {
         lright->parent_ = node;
-        lright->setSubTreeRoot(false);
-    } else {
-        lright->setSubTreeRoot(false);
     }
 
     RBNode<T>* const parent = node->getParent();
