@@ -1142,6 +1142,7 @@ AC_CONFIG_FILES([Makefile
 AC_OUTPUT([doc/version.ent
            src/bin/cfgmgr/b10-cfgmgr.py
            src/bin/cfgmgr/tests/b10-cfgmgr_test.py
+           src/bin/cfgmgr/plugins/datasrc.spec.pre
            src/bin/cmdctl/cmdctl.py
            src/bin/cmdctl/run_b10-cmdctl.sh
            src/bin/cmdctl/tests/cmdctl_test
