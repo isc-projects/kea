@@ -273,15 +273,8 @@ class MockBoss:
         self._started.set()
         self.got_command_name = command
         sdata = self.statistics_data
-        params = { "owner": "Boss",
-                   "data": sdata
-                   }
         if command == 'getstats':
-            notfound = [ t for t in args[0]['trees'] if t not in sdata ]
-            if notfound:
-                return isc.config.create_answer(1, notfound)
-            return isc.config.create_answer(
-                0, dict([(t,sdata[t]) for t in args[0]['trees'] if t in sdata ]))
+            return isc.config.create_answer(0, self.statistics_data)
         elif command == 'show_processes':
             # Return dummy pids
             return isc.config.create_answer(
@@ -410,11 +403,7 @@ class MockAuth:
                        'queries.udp': self.queries_udp,
                        'queries.perzone' : self.queries_per_zone }
         if command == 'getstats':
-            notfound = [ t for t in args[0]['trees'] if t not in sdata ]
-            if notfound:
-                return isc.config.create_answer(1, notfound)
-            return isc.config.create_answer(
-                0, dict([(t,sdata[t]) for t in args[0]['trees'] if t in sdata ]))
+            return isc.config.create_answer(0, sdata)
         return isc.config.create_answer(1, "Unknown Command")
 
 class MyStats(stats.Stats):
