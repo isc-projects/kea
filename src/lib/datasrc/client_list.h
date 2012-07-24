@@ -238,6 +238,28 @@ public:
         return (configuration_);
     }
 
+    /// \brief Result of the reload() method.
+    enum ReloadResult {
+        CACHE_DISABLED,     ///< The cache is not enabled in this list.
+        ZONE_NOT_CACHED,    ///< Zone is served directly, not from cache.
+        ZONE_NOT_FOUND,     ///< Zone does not exist or not cached.
+        ZONE_RELOADED       ///< The zone was successfully reloaded.
+    };
+
+    /// \brief Reloads a cached zone.
+    ///
+    /// This method finds a zone which is loaded into a cache and reloads it.
+    /// This may be used to renew the cache when the underlying data source
+    /// changes.
+    ///
+    /// \param zone The origin of the zone to reload.
+    /// \return A status if the command worked.
+    /// \throw DataSourceError or anything else that the data source
+    ///      containing the zone might throw is propagated.
+    /// \throw DataSourceError if something unexpected happens, like when
+    ///      the original data source no longer contains the cached zone.
+    ReloadResult reload(const dns::Name& zone);
+
     /// \brief Implementation of the ClientList::find.
     virtual FindResult find(const dns::Name& zone,
                             bool want_exact_match = false,
@@ -300,9 +322,21 @@ public:
     /// hide it).
     const DataSources& getDataSources() const { return (data_sources_); }
 private:
+    struct MutableResult;
+    /// \brief Internal implementation of find.
+    ///
+    /// The class itself needs to do some internal searches in other methods,
+    /// so the implementation is shared.
+    ///
+    /// The result is returned as parameter because MutableResult is not
+    /// defined in the header file.
+    void findInternal(MutableResult& result, const dns::Name& name,
+                      bool want_exact_match, bool want_finder) const;
     const isc::dns::RRClass rrclass_;
     /// \brief Currently active configuration.
     isc::data::ConstElementPtr configuration_;
+    /// \brief The last set value of allow_cache.
+    bool allow_cache_;
 };
 
 } // namespace datasrc
