@@ -122,6 +122,10 @@ TEST_F(Rdata_SSHFP_Test, createFromWire) {
     // algorithm=255, fingerprint=255
     EXPECT_NO_THROW(rdataFactoryFromFile(RRType("SSHFP"), RRClass("IN"),
                                          "rdata_sshfp_fromWire7.wire"));
+
+    // short fingerprint data
+    EXPECT_NO_THROW(rdataFactoryFromFile(RRType("SSHFP"), RRClass("IN"),
+                                         "rdata_sshfp_fromWire8.wire"));
 }
 
 TEST_F(Rdata_SSHFP_Test, toText) {
