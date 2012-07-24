@@ -92,13 +92,11 @@ private:
 public:
     /// The constructor.
     ///
-    /// \param use_cache Whether to enable hot spot cache for lookup results.
     /// \param xfrout_client Communication interface with a separate xfrout
     /// process.  It's normally a reference to an xfr::XfroutClient object,
     /// but can refer to a local mock object for testing (or other
     /// experimental) purposes.
-    AuthSrv(const bool use_cache,
-            isc::xfr::AbstractXfroutClient& xfrout_client,
+    AuthSrv(isc::xfr::AbstractXfroutClient& xfrout_client,
             isc::util::io::BaseSocketSessionForwarder& ddns_forwarder);
     ~AuthSrv();
     //@}
@@ -186,26 +184,6 @@ public:
 
     /// \brief Return pointer to the Checkin callback function
     isc::asiolink::SimpleCallback* getCheckinProvider() const { return (checkin_); }
-
-    /// \brief Set or update the size (number of slots) of hot spot cache.
-    ///
-    /// If the specified size is 0, it means the size will be unlimited.
-    /// The specified size is recorded even if the cache is disabled; the
-    /// new size will be effective when the cache is enabled.
-    ///
-    /// This method never throws an exception.
-    ///
-    /// \param slots The number of cache slots.
-    void setCacheSlots(const size_t slots);
-
-    /// \brief Get the current size (number of slots) of hot spot cache.
-    ///
-    /// It always returns the recorded size regardless of the cache is enabled.
-    ///
-    /// This method never throws an exception.
-    ///
-    /// \return The current number of cache slots.
-    size_t getCacheSlots() const;
 
     /// \brief Set the communication session with a separate process for
     /// outgoing zone transfers.

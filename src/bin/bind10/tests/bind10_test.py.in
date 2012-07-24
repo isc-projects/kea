@@ -349,7 +349,6 @@ class TestBoB(unittest.TestCase):
         self.assertEqual(bob.runnable, False)
         self.assertEqual(bob.uid, None)
         self.assertEqual(bob.username, None)
-        self.assertEqual(bob.nocache, False)
         self.assertIsNone(bob._socket_cache)
 
     def test_set_creator(self):
@@ -377,7 +376,6 @@ class TestBoB(unittest.TestCase):
         self.assertEqual(bob.runnable, False)
         self.assertEqual(bob.uid, None)
         self.assertEqual(bob.username, None)
-        self.assertEqual(bob.nocache, False)
 
     def test_command_handler(self):
         class DummySession():

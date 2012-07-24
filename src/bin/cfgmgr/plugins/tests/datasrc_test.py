@@ -18,7 +18,7 @@ import sys
 import os
 sys.path.extend(os.environ["B10_TEST_PLUGIN_DIR"].split(':'))
 
-import datasrc
+import datasrc_config_plugin
 import unittest
 
 class DatasrcTest(unittest.TestCase):
@@ -26,11 +26,11 @@ class DatasrcTest(unittest.TestCase):
         """
         Checks the entry point returns the correct values.
         """
-        (spec, check) = datasrc.load()
+        (spec, check) = datasrc_config_plugin.load()
         # It returns the checking function
-        self.assertEqual(check, datasrc.check)
+        self.assertEqual(check, datasrc_config_plugin.check)
         # The plugin stores it's spec
-        self.assertEqual(spec, datasrc.spec)
+        self.assertEqual(spec, datasrc_config_plugin.spec)
 
 if __name__ == '__main__':
         unittest.main()
