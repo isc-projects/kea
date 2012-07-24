@@ -55,16 +55,16 @@
       process runs as a process separated from the process of the BIND 10 Stats
       daemon (<command>b10-stats</command>). The server is initially executed
       by the BIND 10 boss process (<command>bind10</command>) and eventually
-      exited by it.  The server is intended to be server requests by HTTP
+      exited by it.  The server is intended to serve requests by HTTP
       clients like web browsers and third-party modules. When the server is
       asked, it requests BIND 10 statistics data or its schema from
-      <command>b10-stats</command>, and it sends the data back in Python
-      dictionary format and the server converts it into XML format. The server
-      sends it to the HTTP client. The server can send three types of document,
+      <command>b10-stats</command> which sends the data back in Python
+      dictionary format, and the server converts it into XML format. The server
+      sends it to the HTTP client. The server can send three types of documents,
       which are XML (Extensible Markup Language), XSD (XML Schema definition)
       and XSL (Extensible Stylesheet Language). The XML document is the
-      statistics data of BIND 10, The XSD document is the data schema of it,
-      and The XSL document is the style sheet to be showed for the web
+      statistics data of BIND 10, the XSD document is the data schema of it,
+      and the XSL document is the style sheet to be showed for the web
       browsers. There is different URL for each document. But please note that
       you would be redirected to the URL of XML document if you request the URL
       of the root document. For example, you would be redirected to
@@ -81,6 +81,8 @@
       configuration of the server.
     </para>
   </refsect1>
+
+<!-- TODO: this is too verbose; move some of this into the guide instead -->
 
   <refsect1>
     <title>OPTIONS</title>

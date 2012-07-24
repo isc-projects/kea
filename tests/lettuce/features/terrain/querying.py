@@ -240,8 +240,8 @@ def query(step, dnssec, query_name, qtype, qclass, addr, port, rcode):
         "Expected: " + rcode + ", got " + query_result.rcode
     world.last_query_result = query_result
 
-@step('The SOA serial for ([\w.]+) should be ([0-9]+)')
-def query_soa(step, query_name, serial):
+@step('The SOA serial for ([\S.]+) (?:at (\S+)(?::([0-9]+)) )?should be ([0-9]+)')
+def query_soa(step, query_name, address, port, serial=None):
     """
     Convenience function to check the SOA SERIAL value of the given zone at
     the nameserver at the default address (127.0.0.1:47806).
@@ -251,7 +251,11 @@ def query_soa(step, query_name, serial):
     If the rcode is not NOERROR, or the answer section does not contain the
     SOA record, this step fails.
     """
-    query_result = QueryResult(query_name, "SOA", "IN", "127.0.0.1", "47806")
+    if address is None:
+        address = "127.0.0.1"
+    if port is None:
+        port = "47806"
+    query_result = QueryResult(query_name, "SOA", "IN", address, port)
     assert "NOERROR" == query_result.rcode,\
         "Got " + query_result.rcode + ", expected NOERROR"
     assert len(query_result.answer_section) == 1,\

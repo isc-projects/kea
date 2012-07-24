@@ -452,10 +452,6 @@ public:
     // answers when DNSSEC is required.
     void setNSEC3Flag(bool on) { use_nsec3_ = on; }
 
-    virtual Name findPreviousName(const Name&) const {
-        isc_throw(isc::NotImplemented, "Mock doesn't support previous name");
-    }
-
     // This method allows tests to insert new record in the middle of the test.
     //
     // \param record_txt textual RR representation of RR (such as soa_txt, etc)

@@ -185,7 +185,9 @@ private:
     // On success, it sets 'old_zone_finder_' to the zone to be updated.
     // It returns true if everything is okay; and false if the command is
     // valid but there's no need for further process.
-    bool validate(AuthSrv& server, isc::data::ConstElementPtr args) {
+    bool validate(AuthSrv& , isc::data::ConstElementPtr ) {
+#if 0
+        TODO: Rewrite
         if (args == NULL) {
             isc_throw(AuthCommandError, "Null argument");
         }
@@ -235,6 +237,7 @@ private:
         old_zone_finder_ = boost::static_pointer_cast<InMemoryZoneFinder>(
             result.zone_finder);
 
+#endif
         return (true);
     }
 

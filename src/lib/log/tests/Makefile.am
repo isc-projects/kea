@@ -48,7 +48,7 @@ logger_lock_test_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 logger_lock_test_LDADD += $(AM_LDADD) $(LOG4CPLUS_LIBS)
 
 TESTS_ENVIRONMENT = \
-	libtool --mode=execute $(VALGRIND_COMMAND)
+	$(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
 
 if HAVE_GTEST
 TESTS =
@@ -61,9 +61,9 @@ endif
 AM_CPPFLAGS += $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)
 AM_LDFLAGS  += $(GTEST_LDFLAGS)
 
+AM_LDADD += $(top_builddir)/src/lib/util/libutil.la
 AM_LDADD += $(top_builddir)/src/lib/log/liblog.la
 AM_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
-AM_LDADD += $(top_builddir)/src/lib/util/libutil.la
 AM_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 AM_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 AM_LDADD += $(GTEST_LDADD)

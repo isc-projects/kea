@@ -88,7 +88,7 @@ usage() {
     cerr << "Usage:  b10-auth [-u user] [-nv]"
          << endl;
     cerr << "\t-n: do not cache answers in memory" << endl;
-    cerr << "\t-v: verbose output" << endl;
+    cerr << "\t-v: verbose logging (debug-level)" << endl;
     exit(1);
 }
 
@@ -207,6 +207,11 @@ main(int argc, char* argv[]) {
 
         // Start the data source configuration
         DataSourceConfigurator::init(config_session, auth_server);
+        // HACK: The default is not passed to the handler. This one will
+        // get the default (or, current value). Further updates will work
+        // the usual way.
+        DataSourceConfigurator::reconfigure(
+            config_session->getRemoteConfigValue("data_sources", "classes"));
 
         // Now start asynchronous read.
         config_session->start();

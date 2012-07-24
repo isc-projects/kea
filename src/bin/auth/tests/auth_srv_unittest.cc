@@ -49,6 +49,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
+#include <boost/foreach.hpp>
 
 #include <vector>
 
@@ -80,12 +81,11 @@ const char* const CONFIG_TESTDB =
 const char* const BADCONFIG_TESTDB =
     "{ \"database_file\": \"" TEST_DATA_DIR "/nodir/notexist\"}";
 
+const char* const STATIC_DSRC_FILE = DSRC_DIR "/static.zone";
+
 // This is a configuration that uses the in-memory data source containing
 // a signed example zone.
-const char* const CONFIG_INMEMORY_EXAMPLE =
-    "{\"datasources\": [{\"type\": \"memory\","
-    "\"zones\": [{\"origin\": \"example\","
-    "\"file\": \"" TEST_DATA_DIR "/rfc5155-example.zone.signed\"}]}]}";
+const char* const CONFIG_INMEMORY_EXAMPLE = TEST_DATA_DIR "/rfc5155-example.zone.signed";
 
 class AuthSrvTest : public SrvTestBase {
 protected:
@@ -193,7 +193,8 @@ protected:
 // by default.  The resulting wire-format data will be stored in 'data'.
 void
 createBuiltinVersionResponse(const qid_t qid, vector<uint8_t>& data) {
-    const Name version_name("version.bind");
+    const Name version_name("VERSION.BIND.");
+    const Name apex_name("BIND.");
     Message message(Message::RENDER);
 
     UnitTestUtil::createRequestMessage(message, Opcode::QUERY(),
@@ -206,9 +207,9 @@ createBuiltinVersionResponse(const qid_t qid, vector<uint8_t>& data) {
     rrset_version->addRdata(generic::TXT(PACKAGE_STRING));
     message.addRRset(Message::SECTION_ANSWER, rrset_version);
 
-    RRsetPtr rrset_version_ns = RRsetPtr(new RRset(version_name, RRClass::CH(),
+    RRsetPtr rrset_version_ns = RRsetPtr(new RRset(apex_name, RRClass::CH(),
                                                    RRType::NS(), RRTTL(0)));
-    rrset_version_ns->addRdata(generic::NS(version_name));
+    rrset_version_ns->addRdata(generic::NS(apex_name));
     message.addRRset(Message::SECTION_AUTHORITY, rrset_version_ns);
 
     MessageRenderer renderer;
@@ -218,26 +219,6 @@ createBuiltinVersionResponse(const qid_t qid, vector<uint8_t>& data) {
     data.assign(static_cast<const uint8_t*>(renderer.getData()),
                 static_cast<const uint8_t*>(renderer.getData()) +
                 renderer.getLength());
-}
-
-// In the following tests we confirm the response data is rendered in
-// wire format in the expected way.
-
-// The most primitive check: checking the result of the processMessage()
-// method
-TEST_F(AuthSrvTest, DISABLED_builtInQuery) { // Needs builtin
-    UnitTestUtil::createRequestMessage(request_message, Opcode::QUERY(),
-                                       default_qid, Name("version.bind"),
-                                       RRClass::CH(), RRType::TXT());
-    createRequestPacket(request_message, IPPROTO_UDP);
-    server.processMessage(*io_message, *parse_message, *response_obuffer,
-                          &dnsserv);
-    createBuiltinVersionResponse(default_qid, response_data);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        response_obuffer->getData(),
-                        response_obuffer->getLength(),
-                        &response_data[0], response_data.size());
-    checkAllRcodeCountersZeroExcept(Rcode::NOERROR(), 1);
 }
 
 // We did not configure any client lists. Therefore it should be REFUSED
@@ -252,51 +233,6 @@ TEST_F(AuthSrvTest, noClientList) {
     EXPECT_TRUE(dnsserv.hasAnswer());
     headerCheck(*parse_message, default_qid, Rcode::REFUSED(),
                 opcode.getCode(), QR_FLAG, 1, 0, 0, 0);
-}
-
-// Same test emulating the UDPServer class behavior (defined in libasiolink).
-// This is not a good test in that it assumes internal implementation details
-// of UDPServer, but we've encountered a regression due to the introduction
-// of that class, so we add a test for that case to prevent such a regression
-// in future.
-// Besides, the generalization of UDPServer is probably too much for the
-// authoritative only server in terms of performance, and it's quite likely
-// we need to drop it for the authoritative server implementation.
-// At that point we can drop this test, too.
-TEST_F(AuthSrvTest, DISABLED_builtInQueryViaDNSServer) { //Needs builtin
-    UnitTestUtil::createRequestMessage(request_message, Opcode::QUERY(),
-                                       default_qid, Name("version.bind"),
-                                       RRClass::CH(), RRType::TXT());
-    createRequestPacket(request_message, IPPROTO_UDP);
-
-    (*server.getDNSLookupProvider())(*io_message, parse_message,
-                                     response_message,
-                                     response_obuffer, &dnsserv);
-    (*server.getDNSAnswerProvider())(*io_message, parse_message,
-                                     response_message, response_obuffer);
-
-    createBuiltinVersionResponse(default_qid, response_data);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        response_obuffer->getData(),
-                        response_obuffer->getLength(),
-                        &response_data[0], response_data.size());
-}
-
-// Same type of test as builtInQueryViaDNSServer but for an error response.
-TEST_F(AuthSrvTest, DISABLED_iqueryViaDNSServer) { // Needs builtin
-    createDataFromFile("iquery_fromWire.wire");
-    (*server.getDNSLookupProvider())(*io_message, parse_message,
-                                     response_message,
-                                     response_obuffer, &dnsserv);
-    (*server.getDNSAnswerProvider())(*io_message, parse_message,
-                                     response_message, response_obuffer);
-
-    UnitTestUtil::readWireData("iquery_response_fromWire.wire",
-                               response_data);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        response_obuffer->getData(),
-                        response_obuffer->getLength(),
-                        &response_data[0], response_data.size());
 }
 
 // Unsupported requests.  Should result in NOTIMP.
@@ -361,43 +297,6 @@ TEST_F(AuthSrvTest, AXFRSuccess) {
     EXPECT_FALSE(dnsserv.hasAnswer());
     EXPECT_TRUE(xfrout.isConnected());
     checkAllRcodeCountersZero();
-}
-
-// Try giving the server a TSIG signed request and see it can anwer signed as
-// well
-TEST_F(AuthSrvTest, DISABLED_TSIGSigned) { // Needs builtin
-    // Prepare key, the client message, etc
-    const TSIGKey key("key:c2VjcmV0Cg==:hmac-sha1");
-    TSIGContext context(key);
-    UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
-                                       Name("version.bind"), RRClass::CH(),
-                                       RRType::TXT());
-    createRequestPacket(request_message, IPPROTO_UDP, &context);
-
-    // Run the message through the server
-    boost::shared_ptr<TSIGKeyRing> keyring(new TSIGKeyRing);
-    keyring->add(key);
-    server.setTSIGKeyRing(&keyring);
-    server.processMessage(*io_message, *parse_message, *response_obuffer,
-                          &dnsserv);
-
-    // What did we get?
-    EXPECT_TRUE(dnsserv.hasAnswer());
-    headerCheck(*parse_message, default_qid, Rcode::NOERROR(),
-                opcode.getCode(), QR_FLAG | AA_FLAG, 1, 1, 1, 0);
-    // We need to parse the message ourself, or getTSIGRecord won't work
-    InputBuffer ib(response_obuffer->getData(), response_obuffer->getLength());
-    Message m(Message::PARSE);
-    m.fromWire(ib);
-
-    const TSIGRecord* tsig = m.getTSIGRecord();
-    ASSERT_TRUE(tsig != NULL) << "Missing TSIG signature";
-    TSIGError error(context.verify(tsig, response_obuffer->getData(),
-                                   response_obuffer->getLength()));
-    EXPECT_EQ(TSIGError::NOERROR(), error) <<
-        "The server signed the response, but it doesn't seem to be valid";
-
-    checkAllRcodeCountersZeroExcept(Rcode::NOERROR(), 1);
 }
 
 // Give the server a signed request, but don't give it the key. It will
@@ -850,6 +749,155 @@ updateDatabase(AuthSrv* server, const char* params) {
     DataSourceConfigurator::testReconfigure(server, config);
 }
 
+void
+updateInMemory(AuthSrv* server, const char* origin, const char* filename) {
+    const ConstElementPtr config(Element::fromJSON("{"
+        "\"IN\": [{"
+        "   \"type\": \"MasterFiles\","
+        "   \"params\": {"
+        "       \"" + string(origin) + "\": \"" + string(filename) + "\""
+        "   },"
+        "   \"cache-enable\": true"
+        "}],"
+        "\"CH\": [{"
+        "   \"type\": \"static\","
+        "   \"params\": \"" + string(STATIC_DSRC_FILE) + "\""
+        "}]}"));
+    DataSourceConfigurator::testReconfigure(server, config);
+}
+
+void
+updateBuiltin(AuthSrv* server) {
+    const ConstElementPtr config(Element::fromJSON("{"
+        "\"CH\": [{"
+        "   \"type\": \"static\","
+        "   \"params\": \"" + string(STATIC_DSRC_FILE) + "\""
+        "}]}"));
+    DataSourceConfigurator::testReconfigure(server, config);
+}
+
+// Try giving the server a TSIG signed request and see it can anwer signed as
+// well
+#ifdef USE_STATIC_LINK
+TEST_F(AuthSrvTest, DISABLED_TSIGSigned) { // Needs builtin
+#else
+TEST_F(AuthSrvTest, TSIGSigned) {
+#endif
+    // Prepare key, the client message, etc
+    updateBuiltin(&server);
+    const TSIGKey key("key:c2VjcmV0Cg==:hmac-sha1");
+    TSIGContext context(key);
+    UnitTestUtil::createRequestMessage(request_message, opcode, default_qid,
+                                       Name("VERSION.BIND."), RRClass::CH(),
+                                       RRType::TXT());
+    createRequestPacket(request_message, IPPROTO_UDP, &context);
+
+    // Run the message through the server
+    boost::shared_ptr<TSIGKeyRing> keyring(new TSIGKeyRing);
+    keyring->add(key);
+    server.setTSIGKeyRing(&keyring);
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
+                          &dnsserv);
+
+    // What did we get?
+    EXPECT_TRUE(dnsserv.hasAnswer());
+    headerCheck(*parse_message, default_qid, Rcode::NOERROR(),
+                opcode.getCode(), QR_FLAG | AA_FLAG, 1, 1, 1, 0);
+    // We need to parse the message ourself, or getTSIGRecord won't work
+    InputBuffer ib(response_obuffer->getData(), response_obuffer->getLength());
+    Message m(Message::PARSE);
+    m.fromWire(ib);
+
+    const TSIGRecord* tsig = m.getTSIGRecord();
+    ASSERT_TRUE(tsig != NULL) << "Missing TSIG signature";
+    TSIGError error(context.verify(tsig, response_obuffer->getData(),
+                                   response_obuffer->getLength()));
+    EXPECT_EQ(TSIGError::NOERROR(), error) <<
+        "The server signed the response, but it doesn't seem to be valid";
+
+    checkAllRcodeCountersZeroExcept(Rcode::NOERROR(), 1);
+}
+
+// Same test emulating the UDPServer class behavior (defined in libasiolink).
+// This is not a good test in that it assumes internal implementation details
+// of UDPServer, but we've encountered a regression due to the introduction
+// of that class, so we add a test for that case to prevent such a regression
+// in future.
+// Besides, the generalization of UDPServer is probably too much for the
+// authoritative only server in terms of performance, and it's quite likely
+// we need to drop it for the authoritative server implementation.
+// At that point we can drop this test, too.
+#ifdef USE_STATIC_LINK
+TEST_F(AuthSrvTest, DISABLED_builtInQueryViaDNSServer) {
+#else
+TEST_F(AuthSrvTest, builtInQueryViaDNSServer) {
+#endif
+    updateBuiltin(&server);
+    UnitTestUtil::createRequestMessage(request_message, Opcode::QUERY(),
+                                       default_qid, Name("VERSION.BIND."),
+                                       RRClass::CH(), RRType::TXT());
+    createRequestPacket(request_message, IPPROTO_UDP);
+
+    (*server.getDNSLookupProvider())(*io_message, parse_message,
+                                     response_message,
+                                     response_obuffer, &dnsserv);
+    (*server.getDNSAnswerProvider())(*io_message, parse_message,
+                                     response_message, response_obuffer);
+
+    createBuiltinVersionResponse(default_qid, response_data);
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
+                        response_obuffer->getData(),
+                        response_obuffer->getLength(),
+                        &response_data[0], response_data.size());
+}
+
+// In the following tests we confirm the response data is rendered in
+// wire format in the expected way.
+
+// The most primitive check: checking the result of the processMessage()
+// method
+#ifdef USE_STATIC_LINK
+TEST_F(AuthSrvTest, DISABLED_builtInQuery) {
+#else
+TEST_F(AuthSrvTest, builtInQuery) {
+#endif
+    updateBuiltin(&server);
+    UnitTestUtil::createRequestMessage(request_message, Opcode::QUERY(),
+                                       default_qid, Name("VERSION.BIND."),
+                                       RRClass::CH(), RRType::TXT());
+    createRequestPacket(request_message, IPPROTO_UDP);
+    server.processMessage(*io_message, *parse_message, *response_obuffer,
+                          &dnsserv);
+    createBuiltinVersionResponse(default_qid, response_data);
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
+                        response_obuffer->getData(),
+                        response_obuffer->getLength(),
+                        &response_data[0], response_data.size());
+    checkAllRcodeCountersZeroExcept(Rcode::NOERROR(), 1);
+}
+
+// Same type of test as builtInQueryViaDNSServer but for an error response.
+#ifdef USE_STATIC_LINK
+TEST_F(AuthSrvTest, DISABLED_iqueryViaDNSServer) { // Needs builtin
+#else
+TEST_F(AuthSrvTest, iqueryViaDNSServer) { // Needs builtin
+#endif
+    updateBuiltin(&server);
+    createDataFromFile("iquery_fromWire.wire");
+    (*server.getDNSLookupProvider())(*io_message, parse_message,
+                                     response_message,
+                                     response_obuffer, &dnsserv);
+    (*server.getDNSAnswerProvider())(*io_message, parse_message,
+                                     response_message, response_obuffer);
+
+    UnitTestUtil::readWireData("iquery_response_fromWire.wire",
+                               response_data);
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
+                        response_obuffer->getData(),
+                        response_obuffer->getLength(),
+                        &response_data[0], response_data.size());
+}
+
 // Install a Sqlite3 data source with testing data.
 #ifdef USE_STATIC_LINK
 TEST_F(AuthSrvTest, DISABLED_updateConfig) {
@@ -870,9 +918,9 @@ TEST_F(AuthSrvTest, updateConfig) {
 }
 
 #ifdef USE_STATIC_LINK
-TEST_F(AuthSrvTest, datasourceFail) {
-#else
 TEST_F(AuthSrvTest, DISABLED_datasourceFail) {
+#else
+TEST_F(AuthSrvTest, datasourceFail) {
 #endif
     updateDatabase(&server, CONFIG_TESTDB);
 
@@ -889,9 +937,9 @@ TEST_F(AuthSrvTest, DISABLED_datasourceFail) {
 }
 
 #ifdef USE_STATIC_LINK
-TEST_F(AuthSrvTest, updateConfigFail) {
-#else
 TEST_F(AuthSrvTest, DISABLED_updateConfigFail) {
+#else
+TEST_F(AuthSrvTest, updateConfigFail) {
 #endif
     // First, load a valid data source.
     updateDatabase(&server, CONFIG_TESTDB);
@@ -905,28 +953,23 @@ TEST_F(AuthSrvTest, DISABLED_updateConfigFail) {
     server.processMessage(*io_message, *parse_message, *response_obuffer,
                           &dnsserv);
     EXPECT_TRUE(dnsserv.hasAnswer());
-    headerCheck(*parse_message, default_qid, Rcode::NOERROR(), opcode.getCode(),
-                QR_FLAG | AA_FLAG, 1, 1, 1, 0);
+    headerCheck(*parse_message, default_qid, Rcode::NOERROR(),
+                opcode.getCode(), QR_FLAG | AA_FLAG, 1, 1, 1, 0);
 }
 
-TEST_F(AuthSrvTest,
-#ifdef USE_STATIC_LINK
-       DISABLED_updateWithInMemoryClient
-#else
-       DISABLED_updateWithInMemoryClient // Needs #2046
-#endif
-    )
-{
+TEST_F(AuthSrvTest, updateWithInMemoryClient) {
     // Test configuring memory data source.  Detailed test cases are covered
     // in the configuration tests.  We only check the AuthSrv interface here.
 
-    // By default memory data source isn't enabled
-    EXPECT_FALSE(server.hasInMemoryClient());
-    updateConfig(&server,
-                 "{\"datasources\": [{\"type\": \"memory\"}]}", true);
+    // Create an empty in-memory
+    const ConstElementPtr config(Element::fromJSON("{"
+        "\"IN\": [{"
+        "   \"type\": \"MasterFiles\","
+        "   \"params\": {},"
+        "   \"cache-enable\": true"
+        "}]}"));
+    DataSourceConfigurator::testReconfigure(&server, config);
     // after successful configuration, we should have one (with empty zoneset).
-    EXPECT_TRUE(server.hasInMemoryClient());
-    EXPECT_EQ(0, server.getInMemoryClient(rrclass)->getZoneCount());
 
     // The memory data source is empty, should return REFUSED rcode.
     createDataFromFile("examplequery_fromWire.wire");
@@ -937,21 +980,12 @@ TEST_F(AuthSrvTest,
                 opcode.getCode(), QR_FLAG, 1, 0, 0, 0);
 }
 
-TEST_F(AuthSrvTest,
-#ifdef USE_STATIC_LINK
-       DISABLED_queryWithInMemoryClientNoDNSSEC
-#else
-       DISABLED_queryWithInMemoryClientNoDNSSEC // Needs #2046
-#endif
-    )
-{
+TEST_F(AuthSrvTest, queryWithInMemoryClientNoDNSSEC) {
     // In this example, we do simple check that query is handled from the
     // query handler class, and confirm it returns no error and a non empty
     // answer section.  Detailed examination on the response content
     // for various types of queries are tested in the query tests.
-    updateConfig(&server, CONFIG_INMEMORY_EXAMPLE, true);
-    EXPECT_TRUE(server.hasInMemoryClient());
-    EXPECT_EQ(1, server.getInMemoryClient(rrclass)->getZoneCount());
+    updateInMemory(&server, "example.", CONFIG_INMEMORY_EXAMPLE);
 
     createDataFromFile("nsec3query_nodnssec_fromWire.wire");
     server.processMessage(*io_message, *parse_message, *response_obuffer,
@@ -962,20 +996,11 @@ TEST_F(AuthSrvTest,
                 opcode.getCode(), QR_FLAG | AA_FLAG, 1, 1, 2, 1);
 }
 
-TEST_F(AuthSrvTest,
-#ifdef USE_STATIC_LINK
-       DISABLED_queryWithInMemoryClientDNSSEC
-#else
-       DISABLED_queryWithInMemoryClientDNSSEC // Needs #2046
-#endif
-    )
-{
+TEST_F(AuthSrvTest, queryWithInMemoryClientDNSSEC) {
     // Similar to the previous test, but the query has the DO bit on.
     // The response should contain RRSIGs, and should have more RRs than
     // the previous case.
-    updateConfig(&server, CONFIG_INMEMORY_EXAMPLE, true);
-    EXPECT_TRUE(server.hasInMemoryClient());
-    EXPECT_EQ(1, server.getInMemoryClient(rrclass)->getZoneCount());
+    updateInMemory(&server, "example.", CONFIG_INMEMORY_EXAMPLE);
 
     createDataFromFile("nsec3query_fromWire.wire");
     server.processMessage(*io_message, *parse_message, *response_obuffer,
@@ -990,17 +1015,16 @@ TEST_F(AuthSrvTest,
 #ifdef USE_STATIC_LINK
        DISABLED_chQueryWithInMemoryClient
 #else
-       DISABLED_chQueryWithInMemoryClient // FIXME: Needs the built-in
+       chQueryWithInMemoryClient
 #endif
     )
 {
-    // Configure memory data source for class IN
-    updateConfig(&server, "{\"datasources\": "
-                 "[{\"class\": \"IN\", \"type\": \"memory\"}]}", true);
+    // Set up the in-memory
+    updateInMemory(&server, "example.", CONFIG_INMEMORY_EXAMPLE);
 
     // This shouldn't affect the result of class CH query
     UnitTestUtil::createRequestMessage(request_message, Opcode::QUERY(),
-                                       default_qid, Name("version.bind"),
+                                       default_qid, Name("VERSION.BIND."),
                                        RRClass::CH(), RRType::TXT());
     createRequestPacket(request_message, IPPROTO_UDP);
     server.processMessage(*io_message, *parse_message, *response_obuffer,
@@ -1303,11 +1327,6 @@ public:
         return (real_zone_finder_->findNSEC3(name, recursive));
     }
 
-    virtual isc::dns::Name
-    findPreviousName(const isc::dns::Name& query) const {
-        return (real_zone_finder_->findPreviousName(query));
-    }
-
 private:
     isc::datasrc::ZoneFinderPtr real_zone_finder_;
     ThrowWhen throw_when_;
@@ -1331,7 +1350,7 @@ public:
     ///                      throw std::exception
     /// \param fake_rrset If non NULL, it will be used as an answer to
     /// find() for that name and type.
-    FakeClient(isc::datasrc::DataSourceClientContainerPtr real_client,
+    FakeClient(const DataSourceClient* real_client,
                ThrowWhen throw_when, bool isc_exception,
                ConstRRsetPtr fake_rrset = ConstRRsetPtr()) :
         real_client_ptr_(real_client),
@@ -1350,7 +1369,7 @@ public:
     findZone(const isc::dns::Name& name) const {
         checkThrow(THROW_AT_FIND_ZONE, throw_when_, isc_exception_);
         const FindResult result =
-            real_client_ptr_->getInstance().findZone(name);
+            real_client_ptr_->findZone(name);
         return (FindResult(result.code, isc::datasrc::ZoneFinderPtr(
                                         new FakeZoneFinder(result.zone_finder,
                                                            throw_when_,
@@ -1370,38 +1389,39 @@ public:
                   "fake data source");
     }
 private:
-    const isc::datasrc::DataSourceClientContainerPtr real_client_ptr_;
+    const DataSourceClient* real_client_ptr_;
     ThrowWhen throw_when_;
     bool isc_exception_;
     ConstRRsetPtr fake_rrset_;
 };
 
-class FakeContainer : public isc::datasrc::DataSourceClientContainer {
+class FakeList : public isc::datasrc::ConfigurableClientList {
 public:
-    /// \brief Creates a fake container for the given in-memory client
+    /// \brief Creates a fake list for the given in-memory client
     ///
-    /// The initializer creates a fresh instance of a memory datasource,
-    /// which is ignored for the rest (but we do not allow 'null' containers
-    /// atm, and this is only needed in these tests, this may be changed
-    /// if we generalize the container class a bit more)
-    ///
-    /// It will also create a FakeClient, with the given arguments, which
-    /// is actually used when the instance is requested.
-    FakeContainer(isc::datasrc::DataSourceClientContainerPtr real_client,
-                  ThrowWhen throw_when, bool isc_exception,
-                  ConstRRsetPtr fake_rrset = ConstRRsetPtr()) :
-        DataSourceClientContainer("memory",
-                                  Element::fromJSON("{\"type\": \"memory\"}")),
-        client_(new FakeClient(real_client, throw_when, isc_exception,
-                               fake_rrset))
-    {}
-
-    isc::datasrc::DataSourceClient& getInstance() {
-        return (*client_);
+    /// It will create a FakeClient for each client in the original list,
+    /// with the given arguments, which is used when searching for the
+    /// corresponding data source.
+    FakeList(const boost::shared_ptr<isc::datasrc::ConfigurableClientList>
+             real_list, ThrowWhen throw_when, bool isc_exception,
+             ConstRRsetPtr fake_rrset = ConstRRsetPtr()) :
+        ConfigurableClientList(RRClass::IN()),
+        real_(real_list)
+    {
+        BOOST_FOREACH(const DataSourceInfo& info, real_->getDataSources()) {
+             const isc::datasrc::DataSourceClientPtr
+                 client(new FakeClient(info.data_src_client_ != NULL ?
+                                       info.data_src_client_ :
+                                       info.cache_.get(),
+                                       throw_when, isc_exception, fake_rrset));
+             clients_.push_back(client);
+             data_sources_.push_back(DataSourceInfo(client.get(),
+                 isc::datasrc::DataSourceClientContainerPtr(), false));
+        }
     }
-
 private:
-    const boost::scoped_ptr<isc::datasrc::DataSourceClient> client_;
+    const boost::shared_ptr<isc::datasrc::ConfigurableClientList> real_;
+    vector<isc::datasrc::DataSourceClientPtr> clients_;
 };
 
 } // end anonymous namespace for throwing proxy classes
@@ -1414,18 +1434,16 @@ TEST_F(AuthSrvTest,
 #ifdef USE_STATIC_LINK
        DISABLED_queryWithInMemoryClientProxy
 #else
-       DISABLED_queryWithInMemoryClientProxy // Needs #2046
+       queryWithInMemoryClientProxy
 #endif
     )
 {
     // Set real inmem client to proxy
-    updateConfig(&server, CONFIG_INMEMORY_EXAMPLE, true);
-    EXPECT_TRUE(server.hasInMemoryClient());
-
-    isc::datasrc::DataSourceClientContainerPtr fake_client_container(
-        new FakeContainer(server.getInMemoryClientContainer(rrclass),
-                          THROW_NEVER, false));
-    server.setInMemoryClient(rrclass, fake_client_container);
+    updateInMemory(&server, "example.", CONFIG_INMEMORY_EXAMPLE);
+    boost::shared_ptr<isc::datasrc::ConfigurableClientList>
+        list(new FakeList(server.getClientList(RRClass::IN()), THROW_NEVER,
+                          false));
+    server.setClientList(RRClass::IN(), list);
 
     createDataFromFile("nsec3query_nodnssec_fromWire.wire");
     server.processMessage(*io_message, *parse_message, *response_obuffer,
@@ -1443,28 +1461,22 @@ TEST_F(AuthSrvTest,
 // If non null rrset is given, it will be passed to the proxy so it can
 // return some faked response.
 void
-setupThrow(AuthSrv* server, const char *config, ThrowWhen throw_when,
-           bool isc_exception, ConstRRsetPtr rrset = ConstRRsetPtr())
+setupThrow(AuthSrv* server, ThrowWhen throw_when, bool isc_exception,
+           ConstRRsetPtr rrset = ConstRRsetPtr())
 {
-    // Set real inmem client to proxy
-    updateConfig(server, config, true);
+    updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE);
 
-    // Set it to throw on findZone(), this should result in
-    // SERVFAIL on any exception
-    isc::datasrc::DataSourceClientContainerPtr fake_client_container(
-        new FakeContainer(
-            server->getInMemoryClientContainer(isc::dns::RRClass::IN()),
-            throw_when, isc_exception, rrset));
-
-    ASSERT_TRUE(server->hasInMemoryClient());
-    server->setInMemoryClient(isc::dns::RRClass::IN(), fake_client_container);
+    boost::shared_ptr<isc::datasrc::ConfigurableClientList>
+        list(new FakeList(server->getClientList(RRClass::IN()), throw_when,
+                          isc_exception, rrset));
+    server->setClientList(RRClass::IN(), list);
 }
 
 TEST_F(AuthSrvTest,
 #ifdef USE_STATIC_LINK
        DISABLED_queryWithThrowingProxyServfails
 #else
-       DISABLED_queryWithThrowingProxyServfails // Needs #2046
+       queryWithThrowingProxyServfails
 #endif
     )
 {
@@ -1480,11 +1492,11 @@ TEST_F(AuthSrvTest,
                                              RRClass::IN(), RRType::TXT());
     for (ThrowWhen* when(throws); *when != THROW_NEVER; ++when) {
         createRequestPacket(request_message, IPPROTO_UDP);
-        setupThrow(&server, CONFIG_INMEMORY_EXAMPLE, *when, true);
+        setupThrow(&server, *when, true);
         processAndCheckSERVFAIL();
         // To be sure, check same for non-isc-exceptions
         createRequestPacket(request_message, IPPROTO_UDP);
-        setupThrow(&server, CONFIG_INMEMORY_EXAMPLE, *when, false);
+        setupThrow(&server, *when, false);
         processAndCheckSERVFAIL();
     }
 }
@@ -1495,12 +1507,12 @@ TEST_F(AuthSrvTest,
 #ifdef USE_STATIC_LINK
        DISABLED_queryWithInMemoryClientProxyGetClass
 #else
-       DISABLED_queryWithInMemoryClientProxyGetClass // Needs #2046
+       queryWithInMemoryClientProxyGetClass
 #endif
     )
 {
     createDataFromFile("nsec3query_nodnssec_fromWire.wire");
-    setupThrow(&server, CONFIG_INMEMORY_EXAMPLE, THROW_AT_GET_CLASS, true);
+    setupThrow(&server, THROW_AT_GET_CLASS, true);
 
     // getClass is not called so it should just answer
     server.processMessage(*io_message, *parse_message, *response_obuffer,
@@ -1515,7 +1527,7 @@ TEST_F(AuthSrvTest,
 #ifdef USE_STATIC_LINK
        DISABLED_queryWithThrowingInToWire
 #else
-       DISABLED_queryWithThrowingInToWire // Needs #2046
+       queryWithThrowingInToWire
 #endif
     )
 {
@@ -1524,8 +1536,7 @@ TEST_F(AuthSrvTest,
     ConstRRsetPtr empty_rrset(new RRset(Name("foo.example"),
                                         RRClass::IN(), RRType::TXT(),
                                         RRTTL(0)));
-    setupThrow(&server, CONFIG_INMEMORY_EXAMPLE, THROW_NEVER, true,
-               empty_rrset);
+    setupThrow(&server, THROW_NEVER, true, empty_rrset);
 
     // Repeat the query processing two times.  Due to the faked RRset,
     // toWire() should throw, and it should result in SERVFAIL.
@@ -1692,9 +1703,9 @@ TEST_F(AuthSrvTest, clientList) {
               server.getClientList(RRClass::IN()));
     // Put something in.
     const boost::shared_ptr<isc::datasrc::ConfigurableClientList>
-        list(new isc::datasrc::ConfigurableClientList());
+        list(new isc::datasrc::ConfigurableClientList(RRClass::IN()));
     const boost::shared_ptr<isc::datasrc::ConfigurableClientList>
-        list2(new isc::datasrc::ConfigurableClientList());
+        list2(new isc::datasrc::ConfigurableClientList(RRClass::CH()));
     server.setClientList(RRClass::IN(), list);
     server.setClientList(RRClass::CH(), list2);
     // There are two things in the list and they are IN and CH

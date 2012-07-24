@@ -47,5 +47,5 @@ if USE_CLANGPP
 liblog_la_CXXFLAGS += -Wno-error
 endif
 liblog_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
-liblog_la_LIBADD   = $(LOG4CPLUS_LIBS) $(top_builddir)/src/lib/util/libutil.la
+liblog_la_LIBADD   = $(top_builddir)/src/lib/util/libutil.la $(LOG4CPLUS_LIBS)
 liblog_la_LDFLAGS = -no-undefined -version-info 1:0:0

@@ -29,7 +29,6 @@ from isc.config.module_spec import ModuleSpecError
 from isc.cc import SessionError, SessionTimeout, ProtocolError
 import isc.util.process
 import isc.util.cio.socketsession
-from isc.notify.notify_out import ZONE_NEW_DATA_READY_CMD
 import isc.server_common.tsig_keyring
 from isc.server_common.dns_tcp import DNSTCPContext
 from isc.datasrc import DataSourceClient
@@ -543,7 +542,7 @@ class DDNSServer:
     def __notify_xfrout(self, zname, zclass):
         '''Notify xfrout of the update.'''
         param = {'zone_name': zname.to_text(), 'zone_class': zclass.to_text()}
-        msg = create_command(ZONE_NEW_DATA_READY_CMD, param)
+        msg = create_command('notify', param)
         self.__notify_update(XFROUT_MODULE_NAME, msg, zname, zclass)
 
     def __notify_update(self, modname, msg, zname, zclass):
@@ -615,7 +614,7 @@ class DDNSServer:
         Get and process all commands sent from cfgmgr or other modules.
         This loops waiting for events until self.shutdown() has been called.
         '''
-        logger.info(DDNS_RUNNING)
+        logger.info(DDNS_STARTED)
         cc_fileno = self._cc.get_socket().fileno()
         listen_fileno = self._listen_socket.fileno()
         while not self._shutdown:

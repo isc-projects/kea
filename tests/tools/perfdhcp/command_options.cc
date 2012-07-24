@@ -88,7 +88,25 @@ CommandOptions::parse(int argc, char** const argv) {
     // Reset internal variables used by getopt
     // to eliminate undefined behavior when
     // parsing different command lines multiple times
+
+#ifdef __GLIBC__
+    // Warning: non-portable code. This is due to a bug in glibc's
+    // getopt() which keeps internal state about an old argument vector
+    // (argc, argv) from last call and tries to scan them when a new
+    // argument vector (argc, argv) is passed. As the old vector may not
+    // be main()'s arguments, but heap allocated and may have been freed
+    // since, this becomes a use after free and results in random
+    // behavior. According to the NOTES section in glibc getopt()'s
+    // manpage, setting optind=0 resets getopt()'s state. Though this is
+    // not required in our usage of getopt(), the bug still happens
+    // unless we set optind=0.
+    //
+    // Setting optind=0 is non-portable code.
+    optind = 0;
+#else
     optind = 1;
+#endif
+
     opterr = 0;
 
     // Reset values of class members

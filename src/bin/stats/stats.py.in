@@ -495,7 +495,7 @@ if __name__ == "__main__":
         parser = OptionParser()
         parser.add_option(
             "-v", "--verbose", dest="verbose", action="store_true",
-            help="display more about what is going on")
+            help="enable maximum debug logging")
         (options, args) = parser.parse_args()
         if options.verbose:
             isc.log.init("b10-stats", "DEBUG", 99)
