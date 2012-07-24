@@ -401,6 +401,8 @@ TEST_F(RBTreeTest, getUpperNode) {
             EXPECT_FALSE(upper_node2->isNull());
 
             EXPECT_EQ(upper_node, upper_node2);
+        } else {
+            EXPECT_TRUE(upper_node->isNull());
         }
 
         node = rbtree_expose_empty_node.nextNode(node_path);
