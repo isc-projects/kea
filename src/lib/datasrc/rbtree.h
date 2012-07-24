@@ -1313,7 +1313,7 @@ RBTree<T>::previousNode(RBTreeNodeChain<T>& node_path) const {
                     // Go a level down and as much right there as possible
                     current = current->getDown();
                     if (current != NULL) {
-                        const RBNode<T>* right(NULL);
+                        const RBNode<T>* right;
                         while ((right = current->getRight()) != NULL) {
                             current = right;
                         }
@@ -1396,7 +1396,7 @@ RBTree<T>::previousNode(RBTreeNodeChain<T>& node_path) const {
         node = down;
         if (node != NULL) {
             // And get as much to the right of the tree as possible
-            const RBNode<T>* right(NULL);
+            const RBNode<T>* right;
             while ((right = node->getRight()) != NULL) {
                 node = right;
             }
