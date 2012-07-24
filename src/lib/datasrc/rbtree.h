@@ -123,7 +123,7 @@ private:
     ///
     /// \param mem_sgmt The \c MemorySegment that allocated memory for
     /// \c rbnode.
-    /// \param ztable A non NULL pointer to a valid \c RBNode object
+    /// \param rbnode A non NULL pointer to a valid \c RBNode object
     /// that was originally created by the \c create() method (the behavior
     /// is undefined if this condition isn't met).
     static void destroy(util::MemorySegment& mem_sgmt, RBNode<T>* rbnode) {
@@ -138,14 +138,10 @@ private:
     }
 
     /// TBD
-    const void* getLabelsData() const {
-        return (this + 1);
-    }
+    const void* getLabelsData() const { return (this + 1); }
 
     /// TBD
-    void* getLabelsData() {
-        return (this + 1);
-    }
+    void* getLabelsData() { return (this + 1); }
 
 public:
     /// \brief Alias for shared pointer to the data.
@@ -752,6 +748,8 @@ private:
  *
  * the tree will look like:
  *  \verbatim
+                                .
+                                |
                                 b
                               /   \
                              a    d.e.f
@@ -768,8 +766,6 @@ private:
    \endverbatim
  *  \todo
  *  - add remove interface
- *  - add iterator to iterate over the whole \c RBTree.  This may be necessary,
- *    for example, to support AXFR.
  */
 template <typename T>
 class RBTree : public boost::noncopyable {
@@ -1762,8 +1758,9 @@ RBTree<T>::dumpTreeHelper(std::ostream& os, const RBNode<T>* node,
     }
 
     indent(os, depth);
-    os << node->getName().toText() << " ("
-              << ((node->getColor() == RBNode<T>::BLACK) ? "black" : "red") << ")";
+    os << node->getLabels() << " ("
+       << ((node->getColor() == RBNode<T>::BLACK) ? "black" : "red")
+       << ")";
     if (node->isEmpty()) {
         os << " [invisible]";
     }
@@ -1775,10 +1772,10 @@ RBTree<T>::dumpTreeHelper(std::ostream& os, const RBNode<T>* node,
     const RBNode<T>* down = node->getDown();
     if (down != NULLNODE) {
         indent(os, depth + 1);
-        os << "begin down from " << node->getName().toText() << "\n";
+        os << "begin down from " << node->getLabels() << "\n";
         dumpTreeHelper(os, down, depth + 1);
         indent(os, depth + 1);
-        os << "end down from " << node->getName().toText() << "\n";
+        os << "end down from " << node->getLabels() << "\n";
     }
     dumpTreeHelper(os, node->getLeft(), depth + 1);
     dumpTreeHelper(os, node->getRight(), depth + 1);
