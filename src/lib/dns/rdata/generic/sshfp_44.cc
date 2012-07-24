@@ -43,14 +43,6 @@ SSHFP::SSHFP(InputBuffer& buffer, size_t rdata_len) {
     algorithm_ = buffer.readUint8();
     fingerprint_type_ = buffer.readUint8();
 
-    if (algorithm_ < 1) {
-        isc_throw(InvalidRdataText, "SSHFP algorithm number out of range");
-    }
-
-    if (fingerprint_type_ < 1) {
-        isc_throw(InvalidRdataText, "SSHFP fingerprint type out of range");
-    }
-
     rdata_len -= 2;
     fingerprint_.resize(rdata_len);
     buffer.readData(&fingerprint_[0], rdata_len);
@@ -68,11 +60,11 @@ SSHFP::SSHFP(const std::string& sshfp_str) {
         isc_throw(InvalidRdataText, "Invalid SSHFP text");
     }
 
-    if ((algorithm < 1) || (algorithm > 255)) {
+    if (algorithm > 255) {
         isc_throw(InvalidRdataText, "SSHFP algorithm number out of range");
     }
 
-    if ((fingerprint_type < 1) || (fingerprint_type > 255)) {
+    if (fingerprint_type > 255) {
         isc_throw(InvalidRdataText, "SSHFP fingerprint type out of range");
     }
 
@@ -96,14 +88,6 @@ SSHFP::SSHFP(const std::string& sshfp_str) {
 SSHFP::SSHFP(uint8_t algorithm, uint8_t fingerprint_type,
              const std::string& fingerprint)
 {
-    if (algorithm < 1) {
-        isc_throw(InvalidRdataText, "SSHFP algorithm number out of range");
-    }
-
-    if (fingerprint_type < 1) {
-        isc_throw(InvalidRdataText, "SSHFP fingerprint type out of range");
-    }
-
     algorithm_ = algorithm;
     fingerprint_type_ = fingerprint_type;
 
