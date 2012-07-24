@@ -25,6 +25,7 @@
 #include <gtest/gtest.h>
 
 #include <set>
+#include <fstream>
 
 using namespace isc::datasrc;
 using namespace isc::data;
@@ -887,32 +888,36 @@ TEST_F(ListTest, reloadNullIterator) {
 
 // Test we can reload the master files too (special-cased)
 TEST_F(ListTest, reloadMasterFile) {
+    const char* const install_cmd = INSTALL_PROG " -c " TEST_DATA_DIR
+        "/root.zone " TEST_DATA_BUILDDIR "/root.zone.copied";
+    if (system(install_cmd) != 0) {
+        // any exception will do, this is failure in test setup, but
+        // nice to show the command that fails, and shouldn't be caught
+        isc_throw(isc::Exception,
+          "Error setting up; command failed: " << install_cmd);
+    }
+
     const ConstElementPtr elem(Element::fromJSON("["
         "{"
         "   \"type\": \"MasterFiles\","
         "   \"cache-enable\": true,"
         "   \"params\": {"
-        "       \".\": \"" TEST_DATA_DIR "/root.zone\""
+        "       \".\": \"" TEST_DATA_BUILDDIR "/root.zone.copied\""
         "   }"
         "}]"));
     list_->configure(elem, true);
-    // Add an element there so it differs from the one in file.
+    // Add a record that is not in the zone
     EXPECT_EQ(ZoneFinder::NXDOMAIN,
               list_->find(Name(".")).finder_->find(Name("nosuchdomain"),
                                                    RRType::TXT())->code);
-    RRsetPtr txt(new RRset(Name("nosuchdomain"), RRClass::IN(), RRType::TXT(),
-                                RRTTL(3600)));
-    txt->addRdata(rdata::generic::TXT("test"));
-    dynamic_pointer_cast<InMemoryZoneFinder>(list_->find(Name(".")).finder_)->
-        add(txt);
-    // It is here now.
-    EXPECT_EQ(ZoneFinder::SUCCESS,
-              list_->find(Name(".")).finder_->find(Name("nosuchdomain"),
-                                                   RRType::TXT())->code);
+    ofstream f;
+    f.open(TEST_DATA_BUILDDIR "/root.zone.copied", ios::out | ios::app);
+    f << "nosuchdomain.\t\t3600\tIN\tTXT\ttest" << std::endl;
+    f.close();
     // Do the reload.
     EXPECT_EQ(ConfigurableClientList::ZONE_RELOADED, list_->reload(Name(".")));
-    // And our TXT record disappeared again, as it is not in the file.
-    EXPECT_EQ(ZoneFinder::NXDOMAIN,
+    // It is here now.
+    EXPECT_EQ(ZoneFinder::SUCCESS,
               list_->find(Name(".")).finder_->find(Name("nosuchdomain"),
                                                    RRType::TXT())->code);
 }
