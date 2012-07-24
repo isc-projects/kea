@@ -84,6 +84,7 @@
 /rdata_sshfp_fromWire5.wire
 /rdata_sshfp_fromWire6.wire
 /rdata_sshfp_fromWire7.wire
+/rdata_sshfp_fromWire8.wire
 /rdata_tsig_fromWire1.wire
 /rdata_tsig_fromWire2.wire
 /rdata_tsig_fromWire3.wire
