@@ -53,8 +53,14 @@ copylist = [
      "configurations/resolver/resolver_basic.config"],
     ["configurations/multi_instance/multi_auth.config.orig",
      "configurations/multi_instance/multi_auth.config"],
+    ["configurations/ddns/ddns.config.orig",
+     "configurations/ddns/ddns.config"],
+    ["configurations/ddns/noddns.config.orig",
+     "configurations/ddns/noddns.config"],
     ["data/inmem-xfrin.sqlite3.orig",
-     "data/inmem-xfrin.sqlite3"]
+     "data/inmem-xfrin.sqlite3"],
+    ["data/ddns/example.org.sqlite3.orig",
+     "data/ddns/example.org.sqlite3"]
 ]
 
 # This is a list of files that, if present, will be removed before a scenario
@@ -258,7 +264,7 @@ class RunningProcesses:
         Initialize with no running processes.
         """
         self.processes = {}
-    
+
     def add_process(self, step, process_name, args):
         """
         Start a process with the given arguments, and store it under the given
@@ -297,14 +303,14 @@ class RunningProcesses:
             "Process " + name + " unknown"
         self.processes[process_name].stop_process()
         del self.processes[process_name]
-        
+
     def stop_all_processes(self):
         """
         Stop all running processes.
         """
         for process in self.processes.values():
             process.stop_process()
-    
+
     def keep_files(self):
         """
         Keep the redirection files for stdout/stderr output of all processes

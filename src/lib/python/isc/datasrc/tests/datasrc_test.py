@@ -426,25 +426,6 @@ class DataSrcClient(unittest.TestCase):
                           isc.dns.RRType.A(),
                           "foo")
 
-    def test_find_previous(self):
-        dsc = isc.datasrc.DataSourceClient("sqlite3", READ_ZONE_DB_CONFIG)
-
-        result, finder = dsc.find_zone(isc.dns.Name("example.com"))
-        self.assertEqual(finder.SUCCESS, result)
-
-        prev = finder.find_previous_name(isc.dns.Name("bbb.example.com"))
-        self.assertEqual("example.com.", prev.to_text())
-
-        prev = finder.find_previous_name(isc.dns.Name("zzz.example.com"))
-        self.assertEqual("www.example.com.", prev.to_text())
-
-        prev = finder.find_previous_name(prev)
-        self.assertEqual("*.wild.example.com.", prev.to_text())
-
-        self.assertRaises(isc.datasrc.NotImplemented,
-                          finder.find_previous_name,
-                          isc.dns.Name("com"))
-
 class DataSrcUpdater(unittest.TestCase):
 
     def setUp(self):

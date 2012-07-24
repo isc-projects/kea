@@ -48,7 +48,9 @@ private:
                                     isc::data::ConstElementPtr config,
                                     const isc::config::ConfigData&)
     {
-        reconfigure(config);
+        if (config->contains("classes")) {
+            reconfigure(config->get("classes"));
+        }
     }
     static Server* server_;
     static isc::config::ModuleCCSession* session_;
@@ -142,7 +144,7 @@ public:
                         push_back(RollbackConfiguration(rrclass,
                             list->getConfiguration()));
                 } else {
-                    list.reset(new List);
+                    list.reset(new List(rrclass));
                     need_set = true;
                     rollback_sets.push_back(RollbackPair(rrclass, ListPtr()));
                 }

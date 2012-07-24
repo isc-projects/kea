@@ -1,3 +1,31 @@
+450.	[func]*		tomek
+	b10-dhcp4: DHCPv4 server component is now integrated into
+	BIND10 framework. It can be started from BIND10 (using bindctl)
+	and can receive commands. The only supported command for now
+	is 'Dhcp4 shutdown'.
+	(Trac #1651, git 7e16a5a50d3311e63d10a224ec6ebcab5f25f62c)
+
+bind10-devel-20120621 released on June 21. 2012
+
+449.	[bug]		muks
+	b10-xfin: fixed a bug where xfrin sent the wrong notification
+	message to zonemgr on successful zone transfer. This also
+	solves other reported problems such as too frequent attempts
+	of zone refreshing (see Trac #1786 and #1834).
+	(Trac #2023, git b5fbf8a408a047a2552e89ef435a609f5df58d8c)
+
+448.	[func]		team
+	b10-ddns is now functional and handles dynamic update requests
+	per RFC 2136.  See BIND 10 guide for configuration and operation
+	details.
+	(Multiple Trac tickets)
+
+447.	[bug]		jinmei
+	Fixed a bug in b10-xfrout where a helper thread could fall into
+	an infinite loop if b10-auth stops while the thread is waiting for
+	forwarded requests from b10-auth.
+	(Trac #988 and #1833, git 95a03bbefb559615f3f6e529d408b749964d390a)
+
 446.	[bug]		muks
 	A number of warnings reported by Python about unclosed file and
 	socket objects were fixed. Some related code was also made safer.
@@ -16,7 +44,7 @@
 	authoritative data even on a delegation point.
 	(Trac #1912, git 7130da883f823ce837c10cbf6e216a15e1996e5d)
 
-443.    [func]*		muks
+443.	[func]*		muks
 	The logger now uses a lockfile named `logger_lockfile' that is
 	created in the local state directory to mutually separate
 	individual logging operations from various processes. This is

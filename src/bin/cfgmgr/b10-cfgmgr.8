@@ -2,12 +2,12 @@
 .\"     Title: b10-cfgmgr
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
-.\"      Date: April 12, 2010
+.\"      Date: June 20, 2012
 .\"    Manual: BIND10
 .\"    Source: BIND10
 .\"  Language: English
 .\"
-.TH "B10\-CFGMGR" "8" "April 12, 2010" "BIND10" "BIND10"
+.TH "B10\-CFGMGR" "8" "June 20, 2012" "BIND10" "BIND10"
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -42,10 +42,6 @@ C\-Channel connection\&. If this connection is not established,
 will exit\&.
 .PP
 The daemon may be cleanly stopped by sending the SIGTERM signal to the process\&. This shutdown does not notify the subscribers\&.
-.PP
-When it exits, it saves its current configuration to
-/usr/local/var/bind10\-devel/b10\-config\&.db\&.
-
 .SH "ARGUMENTS"
 .PP
 The arguments are as follows:
@@ -59,9 +55,7 @@ will use the default configurations\&. The name of the backup file can be found 
 .PP
 \fB\-c\fR \fIconfig\-filename\fR, \fB\-\-config\-filename\fR \fIconfig\-filename\fR
 .RS 4
-The configuration database filename to use\&. Can be either absolute or relative to data path\&.
-.sp
-Defaults to b10\-config\&.db
+The configuration database filename to use\&. Can be either absolute or relative to data path\&. It defaults to "b10\-config\&.db"\&.
 .RE
 .PP
 \fB\-p\fR \fIdata\-path\fR, \fB\-\-data\-path\fR \fIdata\-path\fR

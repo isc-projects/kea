@@ -14,9 +14,13 @@
 
 #include <datasrc/client_list.h>
 #include <datasrc/client.h>
+#include <datasrc/iterator.h>
 #include <datasrc/data_source.h>
+#include <datasrc/memory_datasrc.h>
 
 #include <dns/rrclass.h>
+#include <dns/rrttl.h>
+#include <dns/rdataclass.h>
 
 #include <gtest/gtest.h>
 
@@ -57,11 +61,37 @@ public:
         FindNSEC3Result findNSEC3(const Name&, bool) {
             isc_throw(isc::NotImplemented, "Not implemented");
         }
-        Name findPreviousName(const Name&) const {
-            isc_throw(isc::NotImplemented, "Not implemented");
-        }
     private:
         Name origin_;
+    };
+    class Iterator : public ZoneIterator {
+    public:
+        Iterator(const Name& origin) :
+            origin_(origin),
+            finished_(false),
+            soa_(new RRset(origin_, RRClass::IN(), RRType::SOA(), RRTTL(3600)))
+        {
+            // The RData here is bogus, but it is not used to anything. There
+            // just needs to be some.
+            soa_->addRdata(rdata::generic::SOA(Name::ROOT_NAME(),
+                                               Name::ROOT_NAME(),
+                                               0, 0, 0, 0, 0));
+        }
+        virtual isc::dns::ConstRRsetPtr getNextRRset() {
+            if (finished_) {
+                return (ConstRRsetPtr());
+            } else {
+                finished_ = true;
+                return (soa_);
+            }
+        }
+        virtual isc::dns::ConstRRsetPtr getSOA() const {
+            return (soa_);
+        }
+    private:
+        const Name origin_;
+        bool finished_;
+        const isc::dns::RRsetPtr soa_;
     };
     // Constructor from a list of zones.
     MockDataSourceClient(const char* zone_names[]) {
@@ -75,7 +105,15 @@ public:
                          const ConstElementPtr& configuration) :
         type_(type),
         configuration_(configuration)
-    {}
+    {
+        EXPECT_NE("MasterFiles", type) << "MasterFiles is a special case "
+            "and it never should be created as a data source client";
+        if (configuration_->getType() == Element::list) {
+            for (size_t i(0); i < configuration_->size(); ++i) {
+                zones.insert(Name(configuration_->get(i)->stringValue()));
+            }
+        }
+    }
     virtual FindResult findZone(const Name& name) const {
         if (zones.empty()) {
             return (FindResult(result::NOTFOUND, ZoneFinderPtr()));
@@ -106,6 +144,20 @@ public:
     {
         isc_throw(isc::NotImplemented, "Not implemented");
     }
+    virtual ZoneIteratorPtr getIterator(const Name& name, bool) const {
+        if (name == Name("noiter.org")) {
+            isc_throw(isc::NotImplemented, "Asked not to be implemented");
+        } else if (name == Name("null.org")) {
+            return (ZoneIteratorPtr());
+        } else {
+            FindResult result(findZone(name));
+            if (result.code == isc::datasrc::result::SUCCESS) {
+                return (ZoneIteratorPtr(new Iterator(name)));
+            } else {
+                isc_throw(DataSourceError, "No such zone");
+            }
+        }
+    }
     const string type_;
     const ConstElementPtr configuration_;
 private:
@@ -117,6 +169,9 @@ private:
 // some methods to dig directly in the internals, for the tests.
 class TestedList : public ConfigurableClientList {
 public:
+    TestedList(const RRClass& rrclass) :
+        ConfigurableClientList(rrclass)
+    {}
     DataSources& getDataSources() { return (data_sources_); }
     // Overwrite the list's method to get a data source with given type
     // and configuration. We mock the data source and don't create the
@@ -165,11 +220,10 @@ class ListTest : public ::testing::Test {
 public:
     ListTest() :
         // The empty list corresponds to a list with no elements inside
-        list_(new TestedList()),
+        list_(new TestedList(RRClass::IN())),
         config_elem_(Element::fromJSON("["
             "{"
             "   \"type\": \"test_type\","
-            "   \"cache\": \"off\","
             "   \"params\": {}"
             "}]"))
     {
@@ -178,20 +232,28 @@ public:
                 ds(new MockDataSourceClient(ds_zones[i]));
             ds_.push_back(ds);
             ds_info_.push_back(ConfigurableClientList::DataSourceInfo(ds.get(),
-                DataSourceClientContainerPtr()));
+                DataSourceClientContainerPtr(), false));
         }
     }
     // Check the positive result is as we expect it.
     void positiveResult(const ClientList::FindResult& result,
                         const shared_ptr<MockDataSourceClient>& dsrc,
                         const Name& name, bool exact,
-                        const char* test)
+                        const char* test, bool from_cache = false)
     {
         SCOPED_TRACE(test);
-        EXPECT_EQ(dsrc.get(), result.dsrc_client_);
         ASSERT_NE(ZoneFinderPtr(), result.finder_);
         EXPECT_EQ(name, result.finder_->getOrigin());
         EXPECT_EQ(exact, result.exact_match_);
+        if (from_cache) {
+            EXPECT_NE(shared_ptr<InMemoryZoneFinder>(),
+                      dynamic_pointer_cast<InMemoryZoneFinder>(
+                          result.finder_)) << "Finder is not from cache";
+            EXPECT_TRUE(NULL !=
+                        dynamic_cast<InMemoryClient*>(result.dsrc_client_));
+        } else {
+            EXPECT_EQ(dsrc.get(), result.dsrc_client_);
+        }
     }
     // Configure the list with multiple data sources, according to
     // some configuration. It uses the index as parameter, to be able to
@@ -223,7 +285,8 @@ public:
                 FAIL() << "Unknown configuration index " << index;
         }
     }
-    void checkDS(size_t index, const string& type, const string& params) const
+    void checkDS(size_t index, const string& type, const string& params,
+                 bool cache) const
     {
         ASSERT_GT(list_->getDataSources().size(), index);
         MockDataSourceClient* ds(dynamic_cast<MockDataSourceClient*>(
@@ -233,6 +296,8 @@ public:
         ASSERT_NE(ds, static_cast<const MockDataSourceClient*>(NULL));
         EXPECT_EQ(type, ds->type_);
         EXPECT_TRUE(Element::fromJSON(params)->equals(*ds->configuration_));
+        EXPECT_EQ(cache, list_->getDataSources()[index].cache_ !=
+                  shared_ptr<InMemoryClient>());
     }
     shared_ptr<TestedList> list_;
     const ClientList::FindResult negativeResult_;
@@ -352,7 +417,7 @@ TEST_F(ListTest, multiBestMatch) {
 
 // Check the configuration is empty when the list is empty
 TEST_F(ListTest, configureEmpty) {
-    ConstElementPtr elem(new ListElement);
+    const ConstElementPtr elem(new ListElement);
     list_->configure(elem, true);
     EXPECT_TRUE(list_->getDataSources().empty());
     // Check the exact configuration is preserved
@@ -361,7 +426,7 @@ TEST_F(ListTest, configureEmpty) {
 
 // Check we can get multiple data sources and they are in the right order.
 TEST_F(ListTest, configureMulti) {
-    ConstElementPtr elem(Element::fromJSON("["
+    const ConstElementPtr elem(Element::fromJSON("["
         "{"
         "   \"type\": \"type1\","
         "   \"cache\": \"off\","
@@ -375,8 +440,8 @@ TEST_F(ListTest, configureMulti) {
     ));
     list_->configure(elem, true);
     EXPECT_EQ(2, list_->getDataSources().size());
-    checkDS(0, "type1", "{}");
-    checkDS(1, "type2", "{}");
+    checkDS(0, "type1", "{}", false);
+    checkDS(1, "type2", "{}", false);
     // Check the exact configuration is preserved
     EXPECT_EQ(elem, list_->getConfiguration());
 }
@@ -403,7 +468,7 @@ TEST_F(ListTest, configureParams) {
             "}]"));
         list_->configure(elem, true);
         EXPECT_EQ(1, list_->getDataSources().size());
-        checkDS(0, "t", *param);
+        checkDS(0, "t", *param, false);
     }
 }
 
@@ -425,55 +490,264 @@ TEST_F(ListTest, wrongConfig) {
         "[{\"type\": \"test_type\", \"params\": 13}, {\"type\": null}]",
         "[{\"type\": \"test_type\", \"params\": 13}, {\"type\": []}]",
         "[{\"type\": \"test_type\", \"params\": 13}, {\"type\": {}}]",
-        // TODO: Once cache is supported, add some invalid cache values
+        // Bad type of cache-enable
+        "[{\"type\": \"test_type\", \"params\": 13}, "
+         "{\"type\": \"x\", \"cache-enable\": 13, \"cache-zones\": []}]",
+        "[{\"type\": \"test_type\", \"params\": 13}, "
+         "{\"type\": \"x\", \"cache-enable\": \"xx\", \"cache-zones\": []}]",
+        "[{\"type\": \"test_type\", \"params\": 13}, "
+         "{\"type\": \"x\", \"cache-enable\": [], \"cache-zones\": []}]",
+        "[{\"type\": \"test_type\", \"params\": 13}, "
+         "{\"type\": \"x\", \"cache-enable\": {}, \"cache-zones\": []}]",
+        "[{\"type\": \"test_type\", \"params\": 13}, "
+         "{\"type\": \"x\", \"cache-enable\": null, \"cache-zones\": []}]",
+        // Bad type of cache-zones
+        "[{\"type\": \"test_type\", \"params\": 13}, "
+         "{\"type\": \"x\", \"cache-enable\": true, \"cache-zones\": \"x\"}]",
+        "[{\"type\": \"test_type\", \"params\": 13}, "
+         "{\"type\": \"x\", \"cache-enable\": true, \"cache-zones\": true}]",
+        "[{\"type\": \"test_type\", \"params\": 13}, "
+         "{\"type\": \"x\", \"cache-enable\": true, \"cache-zones\": null}]",
+        "[{\"type\": \"test_type\", \"params\": 13}, "
+         "{\"type\": \"x\", \"cache-enable\": true, \"cache-zones\": 13}]",
+        "[{\"type\": \"test_type\", \"params\": 13}, "
+         "{\"type\": \"x\", \"cache-enable\": true, \"cache-zones\": {}}]",
+        // Some bad inputs for MasterFiles special case
+
+        // It must have the cache enabled
+        "[{\"type\": \"test_type\", \"params\": 13}, "
+         "{\"type\": \"MasterFiles\", \"cache-enable\": false,"
+         "\"params\": {}}]",
+        // No cache-zones allowed here
+        "[{\"type\": \"test_type\", \"params\": 13}, "
+         "{\"type\": \"MasterFiles\", \"cache-enable\": true,"
+         "\"param\": {}, \"cache-zones\": []}]",
+        // Some bad types of params
+        "[{\"type\": \"test_type\", \"params\": 13}, "
+         "{\"type\": \"MasterFiles\", \"cache-enable\": false,"
+         "\"params\": []}]",
+        "[{\"type\": \"test_type\", \"params\": 13}, "
+         "{\"type\": \"MasterFiles\", \"cache-enable\": false,"
+         "\"params\": 13}]",
+        "[{\"type\": \"test_type\", \"params\": 13}, "
+         "{\"type\": \"MasterFiles\", \"cache-enable\": false,"
+         "\"params\": true}]",
+        "[{\"type\": \"test_type\", \"params\": 13}, "
+         "{\"type\": \"MasterFiles\", \"cache-enable\": false,"
+         "\"params\": null}]",
+        "[{\"type\": \"test_type\", \"params\": 13}, "
+         "{\"type\": \"MasterFiles\", \"cache-enable\": false,"
+         "\"params\": \"x\"}]",
+        "[{\"type\": \"test_type\", \"params\": 13}, "
+         "{\"type\": \"MasterFiles\", \"cache-enable\": false,"
+         "\"params\": {\".\": 13}}]",
+        "[{\"type\": \"test_type\", \"params\": 13}, "
+         "{\"type\": \"MasterFiles\", \"cache-enable\": false,"
+         "\"params\": {\".\": true}}]",
+        "[{\"type\": \"test_type\", \"params\": 13}, "
+         "{\"type\": \"MasterFiles\", \"cache-enable\": false,"
+         "\"params\": {\".\": null}}]",
+        "[{\"type\": \"test_type\", \"params\": 13}, "
+         "{\"type\": \"MasterFiles\", \"cache-enable\": false,"
+         "\"params\": {\".\": []}}]",
+        "[{\"type\": \"test_type\", \"params\": 13}, "
+         "{\"type\": \"MasterFiles\", \"cache-enable\": false,"
+         "\"params\": {\".\": {}}}]",
         NULL
     };
     // Put something inside to see it survives the exception
     list_->configure(config_elem_, true);
-    checkDS(0, "test_type", "{}");
+    checkDS(0, "test_type", "{}", false);
     for (const char** config(configs); *config; ++config) {
         SCOPED_TRACE(*config);
         ConstElementPtr elem(Element::fromJSON(*config));
         EXPECT_THROW(list_->configure(elem, true),
                      ConfigurableClientList::ConfigurationError);
         // Still untouched
-        checkDS(0, "test_type", "{}");
+        checkDS(0, "test_type", "{}", false);
         EXPECT_EQ(1, list_->getDataSources().size());
     }
 }
 
 // The param thing defaults to null. Cache is not used yet.
 TEST_F(ListTest, defaults) {
-    ConstElementPtr elem(Element::fromJSON("["
+    const ConstElementPtr elem(Element::fromJSON("["
         "{"
         "   \"type\": \"type1\""
         "}]"));
     list_->configure(elem, true);
     EXPECT_EQ(1, list_->getDataSources().size());
-    checkDS(0, "type1", "null");
+    checkDS(0, "type1", "null", false);
 }
 
 // Check we can call the configure multiple times, to change the configuration
 TEST_F(ListTest, reconfigure) {
-    ConstElementPtr empty(new ListElement);
+    const ConstElementPtr empty(new ListElement);
     list_->configure(config_elem_, true);
-    checkDS(0, "test_type", "{}");
+    checkDS(0, "test_type", "{}", false);
     list_->configure(empty, true);
     EXPECT_TRUE(list_->getDataSources().empty());
     list_->configure(config_elem_, true);
-    checkDS(0, "test_type", "{}");
+    checkDS(0, "test_type", "{}", false);
 }
 
 // Make sure the data source error exception from the factory is propagated
 TEST_F(ListTest, dataSrcError) {
-    ConstElementPtr elem(Element::fromJSON("["
+    const ConstElementPtr elem(Element::fromJSON("["
         "{"
         "   \"type\": \"error\""
         "}]"));
     list_->configure(config_elem_, true);
-    checkDS(0, "test_type", "{}");
+    checkDS(0, "test_type", "{}", false);
     EXPECT_THROW(list_->configure(elem, true), DataSourceError);
-    checkDS(0, "test_type", "{}");
+    checkDS(0, "test_type", "{}", false);
+}
+
+// Check we can get the cache
+TEST_F(ListTest, configureCacheEmpty) {
+    const ConstElementPtr elem(Element::fromJSON("["
+        "{"
+        "   \"type\": \"type1\","
+        "   \"cache-enable\": true,"
+        "   \"cache-zones\": [],"
+        "   \"params\": {}"
+        "},"
+        "{"
+        "   \"type\": \"type2\","
+        "   \"cache-enable\": false,"
+        "   \"cache-zones\": [],"
+        "   \"params\": {}"
+        "}]"
+    ));
+    list_->configure(elem, true);
+    EXPECT_EQ(2, list_->getDataSources().size());
+    checkDS(0, "type1", "{}", true);
+    checkDS(1, "type2", "{}", false);
+}
+
+// But no cache if we disallow it globally
+TEST_F(ListTest, configureCacheDisabled) {
+    const ConstElementPtr elem(Element::fromJSON("["
+        "{"
+        "   \"type\": \"type1\","
+        "   \"cache-enable\": true,"
+        "   \"cache-zones\": [],"
+        "   \"params\": {}"
+        "},"
+        "{"
+        "   \"type\": \"type2\","
+        "   \"cache-enable\": false,"
+        "   \"cache-zones\": [],"
+        "   \"params\": {}"
+        "}]"
+    ));
+    list_->configure(elem, false);
+    EXPECT_EQ(2, list_->getDataSources().size());
+    checkDS(0, "type1", "{}", false);
+    checkDS(1, "type2", "{}", false);
+}
+
+// Put some zones into the cache
+TEST_F(ListTest, cacheZones) {
+    const ConstElementPtr elem(Element::fromJSON("["
+        "{"
+        "   \"type\": \"type1\","
+        "   \"cache-enable\": true,"
+        "   \"cache-zones\": [\"example.org\", \"example.com\"],"
+        "   \"params\": [\"example.org\", \"example.com\", \"exmaple.cz\"]"
+        "}]"));
+    list_->configure(elem, true);
+    checkDS(0, "type1", "[\"example.org\", \"example.com\", \"exmaple.cz\"]",
+            true);
+
+    const shared_ptr<InMemoryClient> cache(list_->getDataSources()[0].cache_);
+    EXPECT_EQ(2, cache->getZoneCount());
+
+    EXPECT_EQ(result::SUCCESS, cache->findZone(Name("example.org")).code);
+    EXPECT_EQ(result::SUCCESS, cache->findZone(Name("example.com")).code);
+    EXPECT_EQ(result::NOTFOUND, cache->findZone(Name("example.cz")).code);
+    EXPECT_EQ(RRClass::IN(),
+              cache->findZone(Name("example.org")).zone_finder->getClass());
+
+    // These are cached and answered from the cache
+    positiveResult(list_->find(Name("example.com.")), ds_[0],
+                   Name("example.com."), true, "com", true);
+    positiveResult(list_->find(Name("example.org.")), ds_[0],
+                   Name("example.org."), true, "org", true);
+    positiveResult(list_->find(Name("sub.example.com.")), ds_[0],
+                   Name("example.com."), false, "Subdomain of com", true);
+    // For now, the ones not cached are ignored.
+    EXPECT_TRUE(negativeResult_ == list_->find(Name("example.cz.")));
+}
+
+// Check the caching handles misbehaviour from the data source and
+// misconfiguration gracefully
+TEST_F(ListTest, badCache) {
+    list_->configure(config_elem_, true);
+    checkDS(0, "test_type", "{}", false);
+    // First, the zone is not in the data source
+    const ConstElementPtr elem1(Element::fromJSON("["
+        "{"
+        "   \"type\": \"type1\","
+        "   \"cache-enable\": true,"
+        "   \"cache-zones\": [\"example.org\"],"
+        "   \"params\": []"
+        "}]"));
+    EXPECT_THROW(list_->configure(elem1, true),
+                 ConfigurableClientList::ConfigurationError);
+    checkDS(0, "test_type", "{}", false);
+    // Now, the zone doesn't give an iterator
+    const ConstElementPtr elem2(Element::fromJSON("["
+        "{"
+        "   \"type\": \"type1\","
+        "   \"cache-enable\": true,"
+        "   \"cache-zones\": [\"noiter.org\"],"
+        "   \"params\": [\"noiter.org\"]"
+        "}]"));
+    EXPECT_THROW(list_->configure(elem2, true), isc::NotImplemented);
+    checkDS(0, "test_type", "{}", false);
+    // Now, the zone returns NULL iterator
+    const ConstElementPtr elem3(Element::fromJSON("["
+        "{"
+        "   \"type\": \"type1\","
+        "   \"cache-enable\": true,"
+        "   \"cache-zones\": [\"null.org\"],"
+        "   \"params\": [\"null.org\"]"
+        "}]"));
+    EXPECT_THROW(list_->configure(elem3, true), isc::Unexpected);
+    checkDS(0, "test_type", "{}", false);
+    // The autodetection of zones is not enabled
+    const ConstElementPtr elem4(Element::fromJSON("["
+        "{"
+        "   \"type\": \"type1\","
+        "   \"cache-enable\": true,"
+        "   \"params\": [\"example.org\"]"
+        "}]"));
+    EXPECT_THROW(list_->configure(elem4, true), isc::NotImplemented);
+    checkDS(0, "test_type", "{}", false);
+}
+
+TEST_F(ListTest, masterFiles) {
+    const ConstElementPtr elem(Element::fromJSON("["
+        "{"
+        "   \"type\": \"MasterFiles\","
+        "   \"cache-enable\": true,"
+        "   \"params\": {"
+        "       \".\": \"" TEST_DATA_DIR "/root.zone\""
+        "   }"
+        "}]"));
+    list_->configure(elem, true);
+
+    // It has only the cache
+    EXPECT_EQ(NULL, list_->getDataSources()[0].data_src_client_);
+
+    // And it can search
+    positiveResult(list_->find(Name(".")), ds_[0], Name("."), true, "com",
+                   true);
+
+    // If cache is not enabled, nothing is loaded
+    list_->configure(elem, false);
+    EXPECT_EQ(0, list_->getDataSources().size());
 }
 
 }
