@@ -1480,6 +1480,7 @@ RBTree<T>::insert(const isc::dns::Name& target_name, RBNode<T>** new_node) {
         // is BLACK
         node->setColor(RBNode<T>::BLACK);
         node->setSubTreeRoot(true);
+        node->parent_ = up_node;
     } else if (order < 0) {
         node->setSubTreeRoot(false);
         parent->left_ = node.get();
@@ -1520,8 +1521,10 @@ RBTree<T>::nodeFission(RBNode<T>& node, const isc::dns::Name& base_name) {
     node.setSubTreeRoot(is_root);
 
     down_node->down_ = node.getDown();
+    down_node->down_->parent_ = down_node.get();
 
     node.down_ = down_node.get();
+    down_node->parent_ = &node;
 
     // Restore the color of the node (may have gotten changed by the flags swap)
     node.setColor(down_node->getColor());
