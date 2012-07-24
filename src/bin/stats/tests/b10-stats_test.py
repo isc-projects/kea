@@ -366,66 +366,84 @@ class TestStats(unittest.TestCase):
 
     def test_update_statistics_data_withmid(self):
         self.stats = stats.Stats()
-        # one id of Auth
-        self.stats.update_statistics_data('Auth', "bar@foo",
-                                          {'queries.tcp':1001})
+        # samples of query number
+        bar1_tcp = 1001
+        bar2_tcp = 2001
+        bar3_tcp = 1002
+        bar3_udp = 1003
+        # four auth instances invoked
+        list_auth = [ self.base.auth.server,
+                      self.base.auth2.server,
+                      self.base.auth3.server,
+                      self.base.auth4.server ]
+        sum_qtcp = 0
+        for a in list_auth: sum_qtcp += a.queries_tcp
+        sum_qudp = 0
+        for a in list_auth: sum_qudp += a.queries_udp
+        self.stats.update_statistics_data('Auth', "bar1@foo",
+                                          {'queries.tcp':bar1_tcp})
         self.assertTrue('Auth' in self.stats.statistics_data)
         self.assertTrue('queries.tcp' in self.stats.statistics_data['Auth'])
-        self.assertEqual(self.stats.statistics_data['Auth']['queries.tcp'], 1001 + 3 * 4)
+        self.assertEqual(self.stats.statistics_data['Auth']['queries.tcp'],
+                         bar1_tcp + sum_qtcp)
         self.assertTrue('Auth' in self.stats.statistics_data_bymid)
-        self.assertTrue('bar@foo' in self.stats.statistics_data_bymid['Auth'])
-        self.assertTrue('queries.tcp' in self.stats.statistics_data_bymid['Auth']['bar@foo'])
-        self.assertEqual(self.stats.statistics_data_bymid['Auth']['bar@foo']['queries.tcp'], 1001)
-        self.assertEqual(self.stats.statistics_data_bymid['Auth']['bar@foo'],
-                         {'queries.tcp': 1001})
+        self.assertTrue('bar1@foo' in self.stats.statistics_data_bymid['Auth'])
+        self.assertTrue('queries.tcp' in self.stats.statistics_data_bymid['Auth']['bar1@foo'])
+        self.assertEqual(self.stats.statistics_data_bymid['Auth']['bar1@foo']['queries.tcp'],
+                         bar1_tcp)
+        self.assertEqual(self.stats.statistics_data_bymid['Auth']['bar1@foo'],
+                         {'queries.tcp': bar1_tcp})
         # check consolidation of statistics data
         self.stats.update_statistics_data('Auth', "bar2@foo",
-                                          {'queries.tcp':2001})
+                                          {'queries.tcp': bar2_tcp})
         self.assertTrue('Auth' in self.stats.statistics_data)
         self.assertTrue('queries.tcp' in self.stats.statistics_data['Auth'])
-        self.assertEqual(self.stats.statistics_data['Auth']['queries.tcp'], 3002 + 3 * 4)
+        self.assertEqual(self.stats.statistics_data['Auth']['queries.tcp'],
+                         bar1_tcp + bar2_tcp + sum_qtcp)
         self.assertTrue('Auth' in self.stats.statistics_data_bymid)
-        self.assertTrue('bar@foo' in self.stats.statistics_data_bymid['Auth'])
-        self.assertTrue('queries.tcp' in self.stats.statistics_data_bymid['Auth']['bar@foo'])
-        self.assertEqual(self.stats.statistics_data_bymid['Auth']['bar@foo']['queries.tcp'], 1001)
-        self.assertEqual(self.stats.statistics_data_bymid['Auth']['bar@foo'],
-                         {'queries.tcp': 1001})
+        self.assertTrue('bar1@foo' in self.stats.statistics_data_bymid['Auth'])
+        self.assertTrue('queries.tcp' in self.stats.statistics_data_bymid['Auth']['bar1@foo'])
+        self.assertEqual(self.stats.statistics_data_bymid['Auth']['bar1@foo']['queries.tcp'], bar1_tcp)
+        self.assertEqual(self.stats.statistics_data_bymid['Auth']['bar1@foo'],
+                         {'queries.tcp': bar1_tcp})
         self.assertEqual(self.stats.statistics_data_bymid['Auth']['bar2@foo'],
-                         {'queries.tcp': 2001})
-        # kill running Auth but the statistics data is preserved
-        self.assertEqual(self.base.boss.server.pid_list[0][0], 9999)
-        killed = self.base.boss.server.pid_list.pop(0)
+                         {'queries.tcp': bar2_tcp})
+        # kill running Auth but the statistics data doesn't change
+        self.base.auth4.server.shutdown()
         self.stats.update_statistics_data()
         self.assertTrue('Auth' in self.stats.statistics_data)
         self.assertTrue('queries.tcp' in self.stats.statistics_data['Auth'])
         self.assertTrue('queries.udp' in self.stats.statistics_data['Auth'])
-        self.assertEqual(self.stats.statistics_data['Auth']['queries.tcp'], 3002 + 3 * 4)
-        self.assertEqual(self.stats.statistics_data['Auth']['queries.udp'], 2 * 4)
+        self.assertEqual(self.stats.statistics_data['Auth']['queries.tcp'],
+                         bar1_tcp + bar2_tcp + sum_qtcp)
+        self.assertEqual(self.stats.statistics_data['Auth']['queries.udp'], sum_qudp)
         self.assertTrue('Auth' in self.stats.statistics_data_bymid)
         # restore statistics data of killed auth
-        self.base.boss.server.pid_list = [ killed ] + self.base.boss.server.pid_list[:]
+        # self.base.boss.server.pid_list = [ killed ] + self.base.boss.server.pid_list[:]
         self.stats.update_statistics_data('Auth',
-                                          "bar@foo",
-                                          {'queries.tcp': 1001})
-        # another mid of Auth
+                                          "bar1@foo",
+                                          {'queries.tcp': bar1_tcp})
+        # set another mid of Auth
         self.stats.update_statistics_data('Auth',
                                           "bar3@foo",
-                                          {'queries.tcp':1002,
-                                           'queries.udp':1003})
+                                          {'queries.tcp':bar3_tcp,
+                                           'queries.udp':bar3_udp})
         self.assertTrue('Auth' in self.stats.statistics_data)
         self.assertTrue('queries.tcp' in self.stats.statistics_data['Auth'])
         self.assertTrue('queries.udp' in self.stats.statistics_data['Auth'])
-        self.assertEqual(self.stats.statistics_data['Auth']['queries.tcp'], 4004 + 3 * 4)
-        self.assertEqual(self.stats.statistics_data['Auth']['queries.udp'], 1003 + 2 * 4)
+        self.assertEqual(self.stats.statistics_data['Auth']['queries.tcp'],
+                         bar1_tcp + bar2_tcp + bar3_tcp + sum_qtcp)
+        self.assertEqual(self.stats.statistics_data['Auth']['queries.udp'],
+                         bar3_udp + sum_qudp)
         self.assertTrue('Auth' in self.stats.statistics_data_bymid)
-        self.assertTrue('bar@foo' in self.stats.statistics_data_bymid['Auth'])
+        self.assertTrue('bar1@foo' in self.stats.statistics_data_bymid['Auth'])
         self.assertTrue('bar3@foo' in self.stats.statistics_data_bymid['Auth'])
-        self.assertTrue('queries.tcp' in self.stats.statistics_data_bymid['Auth']['bar@foo'])
+        self.assertTrue('queries.tcp' in self.stats.statistics_data_bymid['Auth']['bar1@foo'])
         self.assertTrue('queries.udp' in self.stats.statistics_data_bymid['Auth']['bar3@foo'])
         self.assertTrue('queries.udp' in self.stats.statistics_data_bymid['Auth']['bar3@foo'])
-        self.assertEqual(self.stats.statistics_data_bymid['Auth']['bar@foo']['queries.tcp'], 1001)
-        self.assertEqual(self.stats.statistics_data_bymid['Auth']['bar3@foo']['queries.tcp'], 1002)
-        self.assertEqual(self.stats.statistics_data_bymid['Auth']['bar3@foo']['queries.udp'], 1003)
+        self.assertEqual(self.stats.statistics_data_bymid['Auth']['bar1@foo']['queries.tcp'], bar1_tcp)
+        self.assertEqual(self.stats.statistics_data_bymid['Auth']['bar3@foo']['queries.tcp'], bar3_tcp)
+        self.assertEqual(self.stats.statistics_data_bymid['Auth']['bar3@foo']['queries.udp'], bar3_udp)
 
     def test_config(self):
         orig_get_timestamp = stats.get_timestamp
