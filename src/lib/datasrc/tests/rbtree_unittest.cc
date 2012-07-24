@@ -40,6 +40,8 @@ const size_t Name::MAX_LABELS;
 
 /* The initial structure of rbtree
  *
+*              .
+ *             |
  *             b
  *           /   \
  *          a    d.e.f
@@ -105,7 +107,7 @@ protected:
 };
 
 TEST_F(RBTreeTest, nodeCount) {
-    EXPECT_EQ(14, rbtree.getNodeCount());
+    EXPECT_EQ(15, rbtree.getNodeCount());
 
     // Delete all nodes, then the count should be set to 0.  This also tests
     // the behavior of deleteAllNodes().
@@ -123,60 +125,61 @@ TEST_F(RBTreeTest, insertNames) {
                                                         Name("d.e.f"),
                                                         &rbtnode));
     EXPECT_EQ(Name("d.e.f"), rbtnode->getName());
-    EXPECT_EQ(14, rbtree.getNodeCount());
-
-    //insert not exist node
-    EXPECT_EQ(RBTree<int>::SUCCESS, rbtree.insert(mem_sgmt_, Name("."),
-                                                  &rbtnode));
-    EXPECT_EQ(Name("."), rbtnode->getName());
     EXPECT_EQ(15, rbtree.getNodeCount());
+
+    // insert not exist node
+    EXPECT_EQ(RBTree<int>::SUCCESS, rbtree.insert(mem_sgmt_, Name("0"),
+                                                  &rbtnode));
+    EXPECT_EQ(Name("0"), rbtnode->getName());
+    EXPECT_EQ(16, rbtree.getNodeCount());
 
     EXPECT_EQ(RBTree<int>::SUCCESS, rbtree.insert(mem_sgmt_,
                                                   Name("example.com"),
                                                   &rbtnode));
-    EXPECT_EQ(16, rbtree.getNodeCount());
+    EXPECT_EQ(17, rbtree.getNodeCount());
     rbtnode->setData(RBNode<int>::NodeDataPtr(new int(12)));
 
-    // return ALREADYEXISTS, since node "example.com" already has been explicitly inserted
+    // return ALREADYEXISTS, since node "example.com" already has
+    // been explicitly inserted
     EXPECT_EQ(RBTree<int>::ALREADYEXISTS, rbtree.insert(mem_sgmt_,
                                                         Name("example.com"),
                                                         &rbtnode));
-    EXPECT_EQ(16, rbtree.getNodeCount());
+    EXPECT_EQ(17, rbtree.getNodeCount());
 
     // split the node "d.e.f"
     EXPECT_EQ(RBTree<int>::SUCCESS, rbtree.insert(mem_sgmt_, Name("k.e.f"),
                                                   &rbtnode));
     EXPECT_EQ(Name("k"), rbtnode->getName());
-    EXPECT_EQ(18, rbtree.getNodeCount());
+    EXPECT_EQ(19, rbtree.getNodeCount());
 
     // split the node "g.h"
     EXPECT_EQ(RBTree<int>::ALREADYEXISTS, rbtree.insert(mem_sgmt_, Name("h"),
                                                         &rbtnode));
     EXPECT_EQ(Name("h"), rbtnode->getName());
-    EXPECT_EQ(19, rbtree.getNodeCount());
+    EXPECT_EQ(20, rbtree.getNodeCount());
 
     // add child domain
     EXPECT_EQ(RBTree<int>::SUCCESS, rbtree.insert(mem_sgmt_,
                                                   Name("m.p.w.y.d.e.f"),
                                                   &rbtnode));
     EXPECT_EQ(Name("m"), rbtnode->getName());
-    EXPECT_EQ(20, rbtree.getNodeCount());
+    EXPECT_EQ(21, rbtree.getNodeCount());
     EXPECT_EQ(RBTree<int>::SUCCESS, rbtree.insert(mem_sgmt_,
                                                   Name("n.p.w.y.d.e.f"),
                                                   &rbtnode));
     EXPECT_EQ(Name("n"), rbtnode->getName());
-    EXPECT_EQ(21, rbtree.getNodeCount());
+    EXPECT_EQ(22, rbtree.getNodeCount());
 
     EXPECT_EQ(RBTree<int>::SUCCESS, rbtree.insert(mem_sgmt_, Name("l.a"),
                                                   &rbtnode));
     EXPECT_EQ(Name("l"), rbtnode->getName());
-    EXPECT_EQ(22, rbtree.getNodeCount());
+    EXPECT_EQ(23, rbtree.getNodeCount());
 
     EXPECT_EQ(RBTree<int>::SUCCESS, rbtree.insert(mem_sgmt_, Name("r.d.e.f"),
                                                   &rbtnode));
     EXPECT_EQ(RBTree<int>::SUCCESS, rbtree.insert(mem_sgmt_, Name("s.d.e.f"),
                                                   &rbtnode));
-    EXPECT_EQ(24, rbtree.getNodeCount());
+    EXPECT_EQ(25, rbtree.getNodeCount());
 
     EXPECT_EQ(RBTree<int>::SUCCESS, rbtree.insert(mem_sgmt_,
                                                   Name("h.w.y.d.e.f"),
@@ -232,7 +235,8 @@ TEST_F(RBTreeTest, findName) {
               rbtree_expose_empty_node.find(Name("m.d.e.f"), &crbtnode));
 
     // find rbtnode
-    EXPECT_EQ(RBTree<int>::EXACTMATCH, rbtree.find(Name("q.w.y.d.e.f"), &rbtnode));
+    EXPECT_EQ(RBTree<int>::EXACTMATCH, rbtree.find(Name("q.w.y.d.e.f"),
+                                                   &rbtnode));
     EXPECT_EQ(Name("q"), rbtnode->getName());
 }
 
@@ -388,8 +392,10 @@ TEST_F(RBTreeTest, getAbsoluteNameError) {
 
 /*
  *the domain order should be:
- * a, b, c, d.e.f, x.d.e.f, w.y.d.e.f, o.w.y.d.e.f, p.w.y.d.e.f, q.w.y.d.e.f,
- * z.d.e.f, j.z.d.e.f, g.h, i.g.h, k.g.h
+ * ., a, b, c, d.e.f, x.d.e.f, w.y.d.e.f, o.w.y.d.e.f, p.w.y.d.e.f,
+ * q.w.y.d.e.f, z.d.e.f, j.z.d.e.f, g.h, i.g.h, k.g.h
+ *             . (no data, can't be found)
+ *             |
  *             b
  *           /   \
  *          a    d.e.f
@@ -467,6 +473,11 @@ previousWalk(RBTree<int>& rbtree, const RBNode<int>* node,
     }
 
     // We should have reached the start of the tree.
+    ASSERT_NE(static_cast<void*>(NULL), node);
+    EXPECT_EQ(".", node->getLabels().toText());
+
+    // With one more call it results in NULL
+    node = rbtree.previousNode(node_path);
     EXPECT_EQ(static_cast<void*>(NULL), node);
 
     // Calling previousNode() yet again should still return NULL without
@@ -508,18 +519,23 @@ TEST_F(RBTreeTest, previousNode) {
         EXPECT_EQ(RBTree<int>::EXACTMATCH,
                   rbtree.find(Name(names[0]), &node, node_path));
         EXPECT_NE(static_cast<void*>(NULL), node);
-        EXPECT_EQ(static_cast<void*>(NULL), rbtree.previousNode(node_path));
+        node = rbtree.previousNode(node_path);
+        ASSERT_NE(static_cast<void*>(NULL), node);
+        EXPECT_EQ(".", node->getLabels().toText());
         node = NULL;
         node_path.clear();
     }
 
     {
         SCOPED_TRACE("Start before the first");
-        // If we start before the lowest (0 < a), we should not get a node nor
+        // If we start before the lowest (. < 0. < a.), we should not get a
+        // node.  Its previous node should be the root.
         EXPECT_EQ(RBTree<int>::NOTFOUND,
                   rbtree.find<void*>(Name("0"), &node, node_path, NULL, NULL));
         EXPECT_EQ(static_cast<void*>(NULL), node);
-        EXPECT_EQ(static_cast<void*>(NULL), rbtree.previousNode(node_path));
+        node = rbtree.previousNode(node_path);
+        ASSERT_NE(static_cast<void*>(NULL), node);
+        EXPECT_EQ(".", node->getLabels().toText());
         node = NULL;
         node_path.clear();
     }
@@ -667,8 +683,8 @@ TEST_F(RBTreeTest, getLastComparedNode) {
     EXPECT_EQ(RBTree<int>::EXACTMATCH,
               tree.find(Name("x.d.e.f"), &expected_node, chain));
     EXPECT_EQ(expected_node, chain.getLastComparedNode());
-    // 2 = # labels of "x."
-    comparisonChecks(chain, 0, 2, NameComparisonResult::EQUAL);
+    // 1 = # labels of "x" (note: excluding ".")
+    comparisonChecks(chain, 0, 1, NameComparisonResult::EQUAL);
     chain.clear();
 
     // Partial match, search stopped at the matching node, which should be
@@ -678,8 +694,8 @@ TEST_F(RBTreeTest, getLastComparedNode) {
     EXPECT_EQ(RBTree<int>::PARTIALMATCH,
               tree.find(Name("x.k.g.h"), &crbtnode, chain));
     EXPECT_EQ(expected_node, chain.getLastComparedNode());
-    // k.g.h < x.k.g.h, 2 = # labels of "k."
-    comparisonChecks(chain, 1, 2, NameComparisonResult::SUBDOMAIN);
+    // k.g.h < x.k.g.h, 1 = # labels of "k"
+    comparisonChecks(chain, 1, 1, NameComparisonResult::SUBDOMAIN);
     chain.clear();
 
     // Partial match, search stopped in the subtree below the matching node
@@ -689,8 +705,8 @@ TEST_F(RBTreeTest, getLastComparedNode) {
     EXPECT_EQ(RBTree<int>::PARTIALMATCH,
               tree.find(Name("a.d.e.f"), &crbtnode, chain));
     EXPECT_EQ(expected_node, chain.getLastComparedNode());
-    // a < x, 1 = # labels of "." (trailing dot)
-    comparisonChecks(chain, -1, 1, NameComparisonResult::COMMONANCESTOR);
+    // a < x, no common labels
+    comparisonChecks(chain, -1, 0, NameComparisonResult::NONE);
     chain.clear();
 
     // Partial match, search stopped in the subtree below the matching node
@@ -700,8 +716,8 @@ TEST_F(RBTreeTest, getLastComparedNode) {
     EXPECT_EQ(RBTree<int>::PARTIALMATCH,
               tree.find(Name("zz.d.e.f"), &crbtnode, chain));
     EXPECT_EQ(expected_node, chain.getLastComparedNode());
-    // zz > z, 1 = # labels of "." (trailing dot)
-    comparisonChecks(chain, 1, 1, NameComparisonResult::COMMONANCESTOR);
+    // zz > z, no common label
+    comparisonChecks(chain, 1, 0, NameComparisonResult::NONE);
     chain.clear();
 
     // Partial match, search stopped at a node for a super domain of the
@@ -711,8 +727,8 @@ TEST_F(RBTreeTest, getLastComparedNode) {
     EXPECT_EQ(RBTree<int>::PARTIALMATCH,
               tree.find(Name("y.d.e.f"), &crbtnode, chain));
     EXPECT_EQ(expected_node, chain.getLastComparedNode());
-    // y < w.y, 2 = # labels of "y."
-    comparisonChecks(chain, -1, 2, NameComparisonResult::SUPERDOMAIN);
+    // y < w.y, 1 = # labels of "y"
+    comparisonChecks(chain, -1, 1, NameComparisonResult::SUPERDOMAIN);
     chain.clear();
 
     // Partial match, search stopped at a node that share a common ancestor
@@ -721,26 +737,28 @@ TEST_F(RBTreeTest, getLastComparedNode) {
     EXPECT_EQ(RBTree<int>::PARTIALMATCH,
               tree.find(Name("z.y.d.e.f"), &crbtnode, chain));
     EXPECT_EQ(expected_node, chain.getLastComparedNode());
-    // z.y > w.y, 2 = # labels of "y."
-    comparisonChecks(chain, 1, 2, NameComparisonResult::COMMONANCESTOR);
+    // z.y > w.y, 1 = # labels of "y"
+    comparisonChecks(chain, 1, 1, NameComparisonResult::COMMONANCESTOR);
     chain.clear();
 
-    // Search stops in the highest level after following a left branch.
+    // Search stops in the highest level (under ".") after following a left
+    // branch. (find() still returns PARTIALMATCH due to the top level ".")
     EXPECT_EQ(RBTree<int>::EXACTMATCH, tree.find(Name("c"), &expected_node));
-    EXPECT_EQ(RBTree<int>::NOTFOUND,
+    EXPECT_EQ(RBTree<int>::PARTIALMATCH,
               tree.find(Name("bb"), &crbtnode, chain));
     EXPECT_EQ(expected_node, chain.getLastComparedNode());
-    // bb < c, 1 = # labels of "." (trailing dot)
-    comparisonChecks(chain, -1, 1, NameComparisonResult::COMMONANCESTOR);
+    // bb < c, no common label
+    //comparisonChecks(chain, -1, 1, NameComparisonResult::COMMONANCESTOR);
+    comparisonChecks(chain, -1, 0, NameComparisonResult::NONE);
     chain.clear();
 
-    // Search stops in the highest level after following a right branch.
-    // (the expected node is the same as the previous case)
-    EXPECT_EQ(RBTree<int>::NOTFOUND,
+    // Search stops in the highest level (under ".") after following a right
+    // branch. (the expected node is the same as the previous case)
+    EXPECT_EQ(RBTree<int>::PARTIALMATCH,
               tree.find(Name("d"), &crbtnode, chain));
     EXPECT_EQ(expected_node, chain.getLastComparedNode());
-    // d > c, 1 = # labels of "." (trailing dot)
-    comparisonChecks(chain, 1, 1, NameComparisonResult::COMMONANCESTOR);
+    // d > c, no common label
+    comparisonChecks(chain, 1, 0, NameComparisonResult::NONE);
     chain.clear();
 }
 
@@ -748,48 +766,53 @@ TEST_F(RBTreeTest, dumpTree) {
     std::ostringstream str;
     std::ostringstream str2;
     rbtree.dumpTree(str);
-    str2 << "tree has 14 node(s)\n"
-            "b. (black) [subtreeroot]\n"
-            "     a. (black)\n"
-            "          NULL\n"
-            "          NULL\n"
-            "     d.e.f. (black) [invisible]\n"
-            "          begin down from d.e.f.\n"
-            "          w.y. (black) [invisible] [subtreeroot]\n"
-            "               begin down from w.y.\n"
-            "               p. (black) [subtreeroot]\n"
-            "                    o. (red)\n"
-            "                         NULL\n"
-            "                         NULL\n"
-            "                    q. (red)\n"
-            "                         NULL\n"
-            "                         NULL\n"
-            "               end down from w.y.\n"
-            "               x. (red)\n"
-            "                    NULL\n"
-            "                    NULL\n"
-            "               z. (red)\n"
-            "                    begin down from z.\n"
-            "                    j. (black) [subtreeroot]\n"
-            "                         NULL\n"
-            "                         NULL\n"
-            "                    end down from z.\n"
-            "                    NULL\n"
-            "                    NULL\n"
-            "          end down from d.e.f.\n"
-            "          c. (red)\n"
+    str2 << "tree has 15 node(s)\n"
+            ". (black) [invisible] [subtreeroot]\n"
+            "     begin down from .\n"
+            "     b. (black) [subtreeroot]\n"
+            "          a. (black)\n"
             "               NULL\n"
             "               NULL\n"
-            "          g.h. (red)\n"
-            "               begin down from g.h.\n"
-            "               i. (black) [subtreeroot]\n"
+            "          d.e.f. (black) [invisible]\n"
+            "               begin down from d.e.f.\n"
+            "               w.y. (black) [invisible] [subtreeroot]\n"
+            "                    begin down from w.y.\n"
+            "                    p. (black) [subtreeroot]\n"
+            "                         o. (red)\n"
+            "                              NULL\n"
+            "                              NULL\n"
+            "                         q. (red)\n"
+            "                              NULL\n"
+            "                              NULL\n"
+            "                    end down from w.y.\n"
+            "                    x. (red)\n"
+            "                         NULL\n"
+            "                         NULL\n"
+            "                    z. (red)\n"
+            "                         begin down from z.\n"
+            "                         j. (black) [subtreeroot]\n"
+            "                              NULL\n"
+            "                              NULL\n"
+            "                         end down from z.\n"
+            "                         NULL\n"
+            "                         NULL\n"
+            "               end down from d.e.f.\n"
+            "               c. (red)\n"
             "                    NULL\n"
-            "                    k. (red)\n"
+            "                    NULL\n"
+            "               g.h. (red)\n"
+            "                    begin down from g.h.\n"
+            "                    i. (black) [subtreeroot]\n"
             "                         NULL\n"
-            "                         NULL\n"
-            "               end down from g.h.\n"
-            "               NULL\n"
-            "               NULL\n";
+            "                         k. (red)\n"
+            "                              NULL\n"
+            "                              NULL\n"
+            "                    end down from g.h.\n"
+            "                    NULL\n"
+            "                    NULL\n"
+            "     end down from .\n"
+            "     NULL\n"
+            "     NULL\n";
     EXPECT_EQ(str2.str(), str.str());
 }
 

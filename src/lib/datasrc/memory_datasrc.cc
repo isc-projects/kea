@@ -479,15 +479,11 @@ ZoneData::findNode(const Name& name, RBTreeNodeChain<Domain>& node_path,
         if (node->getFlag(domain_flag::WILD) && // maybe a wildcard, check only
             (options & ZoneFinder::NO_WILDCARD) == 0) { // if not disabled.
             if (node_path.getLastComparisonResult().getRelation() ==
-                NameComparisonResult::COMMONANCESTOR &&
-                node_path.getLastComparisonResult().getCommonLabels() > 1) {
-                // Wildcard canceled.  Treat it as NXDOMAIN.
-                // Note: Because the way the tree stores relative names, we
-                // will have exactly one common label (the ".") in case we have
-                // nothing common under the node we got, and we will get
-                // more common labels otherwise (yes, this relies on the
-                // internal RBTree structure, which leaks out through this
-                // little bit).
+                NameComparisonResult::COMMONANCESTOR) {
+                // This means, e.g., we have *.wild.example and
+                // bar.foo.wild.example and are looking for
+                // baz.foo.wild.example. The common ancestor, foo.wild.example,
+                // should cancel wildcard.  Treat it as NXDOMAIN.
                 LOG_DEBUG(logger, DBG_TRACE_DATA,
                           DATASRC_MEM_WILDCARD_CANCEL).arg(name);
                 return (ResultType(ZoneFinder::NXDOMAIN, NULL,
