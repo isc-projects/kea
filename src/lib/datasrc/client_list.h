@@ -192,7 +192,8 @@ public:
     /// \param rrclass For which class the list should work.
     ConfigurableClientList(const isc::dns::RRClass &rrclass) :
         rrclass_(rrclass),
-        configuration_(new isc::data::ListElement)
+        configuration_(new isc::data::ListElement),
+        allow_cache_(false)
     {}
     /// \brief Exception thrown when there's an error in configuration.
     class ConfigurationError : public Exception {
@@ -330,6 +331,10 @@ private:
     ///
     /// The result is returned as parameter because MutableResult is not
     /// defined in the header file.
+    ///
+    /// If there's no match, the result is not modified. Therefore, this
+    /// expects to get a fresh result object each time it is called, not
+    /// to reuse it.
     void findInternal(MutableResult& result, const dns::Name& name,
                       bool want_exact_match, bool want_finder) const;
     const isc::dns::RRClass rrclass_;

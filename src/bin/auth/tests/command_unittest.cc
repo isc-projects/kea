@@ -63,7 +63,7 @@ namespace {
 class AuthCommandTest : public ::testing::Test {
 protected:
     AuthCommandTest() :
-        server_(false, xfrout_, ddns_forwarder_),
+        server_(xfrout_, ddns_forwarder_),
         rcode_(-1),
         expect_rcode_(0),
         itimer_(server_.getIOService())
@@ -311,7 +311,7 @@ TEST_F(AuthCommandTest,
     result_ = execAuthServerCommand(server_, "loadzone",
                                     Element::fromJSON(
                                         "{\"origin\": \"example.org\"}"));
-    checkAnswer(0, "Successfull load");
+    checkAnswer(0, "Successful load");
 
     // And now it should be present too.
     EXPECT_EQ(ZoneFinder::SUCCESS, server_.getClientList(RRClass::IN())->
