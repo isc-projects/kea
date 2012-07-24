@@ -157,37 +157,49 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
         // the scope.
         data_sources_.swap(new_data_sources);
         configuration_ = config;
+        allow_cache_ = allow_cache;
     } catch (const TypeError& te) {
         isc_throw(ConfigurationError, "Malformed configuration at data source "
                   "no. " << i << ": " << te.what());
     }
 }
 
+// We have this class as a temporary storage, as the FindResult can't be
+// assigned.
+struct ConfigurableClientList::MutableResult {
+    MutableResult() :
+        datasrc_client(NULL),
+        matched_labels(0),
+        matched(false),
+        exact(false),
+        info(NULL)
+    {}
+    DataSourceClient* datasrc_client;
+    ZoneFinderPtr finder;
+    uint8_t matched_labels;
+    bool matched;
+    bool exact;
+    const DataSourceInfo* info;
+    operator FindResult() const {
+        // Conversion to the right result.
+        return (FindResult(datasrc_client, finder, exact));
+    }
+};
+
 ClientList::FindResult
 ConfigurableClientList::find(const dns::Name& name, bool want_exact_match,
-                            bool) const
+                             bool want_finder) const
 {
-    // Nothing found yet.
-    //
-    // We have this class as a temporary storage, as the FindResult can't be
-    // assigned.
-    struct MutableResult {
-        MutableResult() :
-            datasrc_client(NULL),
-            matched_labels(0),
-            matched(false)
-        {}
-        DataSourceClient* datasrc_client;
-        ZoneFinderPtr finder;
-        uint8_t matched_labels;
-        bool matched;
-        operator FindResult() const {
-            // Conversion to the right result. If we return this, there was
-            // a partial match at best.
-            return (FindResult(datasrc_client, finder, false));
-        }
-    } candidate;
+    MutableResult result;
+    findInternal(result, name, want_exact_match, want_finder);
+    return (result);
+}
 
+void
+ConfigurableClientList::findInternal(MutableResult& candidate,
+                                     const dns::Name& name,
+                                     bool want_exact_match, bool) const
+{
     BOOST_FOREACH(const DataSourceInfo& info, data_sources_) {
         DataSourceClient* client(info.cache_ ? info.cache_.get() :
                                  info.data_src_client_);
@@ -201,8 +213,12 @@ ConfigurableClientList::find(const dns::Name& name, bool want_exact_match,
 
                 // TODO: In case we have only the datasource and not the finder
                 // and the need_updater parameter is true, get the zone there.
-                return (FindResult(client, result.zone_finder,
-                                   true));
+                candidate.datasrc_client = client;
+                candidate.finder = result.zone_finder;
+                candidate.matched = true;
+                candidate.exact = true;
+                candidate.info = &info;
+                return;
             case result::PARTIALMATCH:
                 if (!want_exact_match) {
                     // In case we have a partial match, check if it is better
@@ -226,6 +242,7 @@ ConfigurableClientList::find(const dns::Name& name, bool want_exact_match,
                         candidate.finder = result.zone_finder;
                         candidate.matched_labels = labels;
                         candidate.matched = true;
+                        candidate.info = &info;
                     }
                 }
                 break;
@@ -240,7 +257,48 @@ ConfigurableClientList::find(const dns::Name& name, bool want_exact_match,
 
     // Return the partial match we have. In case we didn't want a partial
     // match, this surely contains the original empty result.
-    return (candidate);
+}
+
+ConfigurableClientList::ReloadResult
+ConfigurableClientList::reload(const Name& name) {
+    if (!allow_cache_) {
+        return (CACHE_DISABLED);
+    }
+    // Try to find the correct zone.
+    MutableResult result;
+    findInternal(result, name, true, true);
+    if (!result.finder) {
+        return (ZONE_NOT_FOUND);
+    }
+    // Try to convert the finder to in-memory one. If it is the cache,
+    // it should work.
+    shared_ptr<InMemoryZoneFinder>
+        finder(dynamic_pointer_cast<InMemoryZoneFinder>(result.finder));
+    const DataSourceInfo* info(result.info);
+    // It is of a different type or there's no cache.
+    if (!info->cache_ || !finder) {
+        return (ZONE_NOT_CACHED);
+    }
+    DataSourceClient* client(info->data_src_client_);
+    if (client) {
+        // Now do the final reload. If it does not exist in client,
+        // DataSourceError is thrown, which is exactly the result what we
+        // want, so no need to handle it.
+        ZoneIteratorPtr iterator(client->getIterator(name));
+        if (!iterator) {
+            isc_throw(isc::Unexpected, "Null iterator from " << name);
+        }
+        finder->load(*iterator);
+    } else {
+        // The MasterFiles special case
+        const string filename(finder->getFileName());
+        if (filename.empty()) {
+            isc_throw(isc::Unexpected, "Confused about missing both filename "
+                      "and data source");
+        }
+        finder->load(filename);
+    }
+    return (ZONE_RELOADED);
 }
 
 // NOTE: This function is not tested, it would be complicated. However, the
