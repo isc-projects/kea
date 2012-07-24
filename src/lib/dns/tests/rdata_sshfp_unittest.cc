@@ -71,11 +71,9 @@ TEST_F(Rdata_SSHFP_Test, algorithmTypes) {
     EXPECT_NO_THROW(const generic::SSHFP rdata_sshfp("1 128 12ab"));
     EXPECT_NO_THROW(const generic::SSHFP rdata_sshfp("1 255 12ab"));
 
-    // 0 is still reserved.
-    EXPECT_THROW(const generic::SSHFP rdata_sshfp("0 1 12ab"),
-                 InvalidRdataText);
-    EXPECT_THROW(const generic::SSHFP rdata_sshfp("1 0 12ab"),
-                 InvalidRdataText);
+    // 0 is reserved, but we allow that too
+    EXPECT_NO_THROW(const generic::SSHFP rdata_sshfp("0 1 12ab"));
+    EXPECT_NO_THROW(const generic::SSHFP rdata_sshfp("1 0 12ab"));
 
     // > 255 would be broken
     EXPECT_THROW(const generic::SSHFP rdata_sshfp("256 1 12ab"),
@@ -114,14 +112,12 @@ TEST_F(Rdata_SSHFP_Test, createFromWire) {
                                          "rdata_sshfp_fromWire4.wire"));
 
     // algorithm=0, fingerprint=1
-    EXPECT_THROW(rdataFactoryFromFile(RRType("SSHFP"), RRClass("IN"),
-                                      "rdata_sshfp_fromWire5.wire"),
-                 InvalidRdataText);
+    EXPECT_NO_THROW(rdataFactoryFromFile(RRType("SSHFP"), RRClass("IN"),
+                                         "rdata_sshfp_fromWire5.wire"));
 
     // algorithm=5, fingerprint=0
-    EXPECT_THROW(rdataFactoryFromFile(RRType("SSHFP"), RRClass("IN"),
-                                      "rdata_sshfp_fromWire6.wire"),
-                 InvalidRdataText);
+    EXPECT_NO_THROW(rdataFactoryFromFile(RRType("SSHFP"), RRClass("IN"),
+                                         "rdata_sshfp_fromWire6.wire"));
 
     // algorithm=255, fingerprint=255
     EXPECT_NO_THROW(rdataFactoryFromFile(RRType("SSHFP"), RRClass("IN"),
