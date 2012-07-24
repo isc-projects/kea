@@ -1187,13 +1187,15 @@ private:
     /// \brief Indentation helper function for dumpTree
     static void indent(std::ostream& os, unsigned int depth);
 
-    /// Split one node into two nodes, keep the old node and create one new
-    /// node, old node will hold the base name, new node will be the down node
-    /// of old node, new node will hold the sub_name, the data
-    /// of old node will be move into new node, and old node became
-    /// non-terminal
+    /// Split one node into two nodes for "prefix" and "suffix" parts of
+    /// the labels of the original node, respectively.  The given node
+    /// will hold the suffix labels, while the new node will hold the prefix.
+    /// The newly created node represents the labels that the original node
+    /// did, so necessary data are swapped.
+    /// (Note: as commented in the code, this behavior should be changed).
     void nodeFission(util::MemorySegment& mem_sgmt, RBNode<T>& node,
-                     const isc::dns::LabelSequence& sub_labels);
+                     const isc::dns::LabelSequence& new_prefix,
+                     const isc::dns::LabelSequence& new_suffix);
     //@}
 
     RBNode<T>* NULLNODE;
@@ -1503,8 +1505,9 @@ RBTree<T>::insert(util::MemorySegment& mem_sgmt,
 
     int order = -1;
     while (current != NULLNODE) {
+        const dns::LabelSequence current_labels(current->getLabels());
         const isc::dns::NameComparisonResult compare_result =
-            target_labels.compare(current->getLabels());
+            target_labels.compare(current_labels);
         const isc::dns::NameComparisonResult::NameRelation relation =
             compare_result.getRelation();
         if (relation == isc::dns::NameComparisonResult::EQUAL) {
@@ -1523,15 +1526,16 @@ RBTree<T>::insert(util::MemorySegment& mem_sgmt,
             target_labels.stripRight(compare_result.getCommonLabels());
             current = current->getDown();
         } else {
-            // The number of labels in common is fewer
-            // than the number of labels at the current
-            // node, so the current node must be adjusted
-            // to have just the common suffix, and a down
-            // pointer made to a new tree.
+            // The number of labels in common is fewer than the number of
+            // labels at the current node, so the current node must be
+            // adjusted to have just the common suffix, and a down pointer
+            // made to a new tree.
             dns::LabelSequence common_ancestor = target_labels;
             common_ancestor.stripLeft(target_labels.getLabelCount() -
                                       compare_result.getCommonLabels());
-            nodeFission(mem_sgmt, *current, common_ancestor);
+            dns::LabelSequence new_prefix = current_labels;
+            new_prefix.stripRight(compare_result.getCommonLabels());
+            nodeFission(mem_sgmt, *current, new_prefix, common_ancestor);
         }
     }
 
@@ -1576,17 +1580,16 @@ RBTree<T>::deleteAllNodes(util::MemorySegment& mem_sgmt) {
 template <typename T>
 void
 RBTree<T>::nodeFission(util::MemorySegment& mem_sgmt, RBNode<T>& node,
-                       const isc::dns::LabelSequence& base_labels)
+                       const isc::dns::LabelSequence& new_prefix,
+                       const isc::dns::LabelSequence& new_suffix)
 {
-    dns::LabelSequence sub_labels = node.getLabels();
-    sub_labels.stripRight(base_labels.getLabelCount());
-
+    // Create and reset the labels.
     // Once a new node is created, no exception will be thrown until
     // the end of the function, and it will keep consistent behavior
     // (i.e., a weak form of strong exception guarantee) even if code
     // after the call to this function throws an exception.
-    RBNode<T>* down_node = RBNode<T>::create(mem_sgmt, sub_labels);
-    node.resetLabels(base_labels);
+    RBNode<T>* down_node = RBNode<T>::create(mem_sgmt, new_prefix);
+    node.resetLabels(new_suffix);
 
     std::swap(node.data_, down_node->data_);
 
