@@ -77,9 +77,9 @@ class RBTree;
 /// The second one is to store data for one domain name. The data related
 /// functions can be used to access and set the data.
 ///
-/// The third role is to keep the hierarchy of domains. The down pointer points
-/// to a subtree of subdomains. Note that we can traverse the hierarchy down,
-/// but not up.
+/// The third role is to keep the hierarchy of domains. The down pointer
+/// points to a subtree of subdomains. The parent pointer of a subtree's
+/// root node points to the parent leaf of the upper tree.
 ///
 /// One special kind of node is non-terminal node. It has subdomains with
 /// RRsets, but doesn't have any RRsets itself.
