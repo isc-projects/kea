@@ -390,19 +390,15 @@ TEST_F(RBTreeTest, getUpperNode) {
         EXPECT_NE(static_cast<void*>(NULL), node);
 
         const RBNode<int>* upper_node = node->getUpperNode();
-        EXPECT_NE(static_cast<void*>(NULL), upper_node);
-
         if (upper_node_names[i] != NULL) {
             const RBNode<int>* upper_node2 = NULL;
             EXPECT_EQ(RBTree<int>::EXACTMATCH,
                       rbtree_expose_empty_node.find(Name(upper_node_names[i]),
                                                     &upper_node2));
             EXPECT_NE(static_cast<void*>(NULL), upper_node2);
-            EXPECT_FALSE(upper_node2->isNull());
-
             EXPECT_EQ(upper_node, upper_node2);
         } else {
-            EXPECT_TRUE(upper_node->isNull());
+            EXPECT_EQ(static_cast<void*>(NULL), upper_node);
         }
 
         node = rbtree_expose_empty_node.nextNode(node_path);
