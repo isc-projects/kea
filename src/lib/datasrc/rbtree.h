@@ -50,7 +50,7 @@ class RBTree;
 ///
 /// This is meant to be used only from RBTree. It is meaningless to inherit it
 /// or create instances of it from elsewhere. For that reason, the constructor
-/// is private.
+/// (and the allocator, see below) is private.
 ///
 /// It serves three roles. One is to keep structure of the \c RBTree as a
 /// red-black tree. For that purpose, it has left, right and parent pointers
@@ -65,6 +65,16 @@ class RBTree;
 ///
 /// One special kind of node is non-terminal node. It has subdomains with
 /// RRsets, but doesn't have any RRsets itself.
+///
+/// In order to keep memory footprint as small as possible, the node data
+/// are heavily packed.  Specifically, some internal node properties (such as
+/// the node color) are encoded as part of "flags", some of the flag bits
+/// can also be set by the user application.  Each node is associated with
+/// a sequence of domain name labels, which is essentially the search/insert
+/// key for the noce (see also the description of RBTree).  This is encoded
+/// as opaque binary immediately followed by the main node object.  The size
+/// of the allocated space for the labels data is encoded by borrowing some
+/// bits of the "flags" field.
 template <typename T>
 class RBNode : public boost::noncopyable {
 private:
@@ -96,6 +106,20 @@ private:
     /// \brief Destructor
     ~RBNode();
     //@}
+
+    /// \brief Accessor to the memory region for node labels.
+    ///
+    /// The only valid usage of the returned pointer is to pass it to the
+    /// corresponding constructor of \c dns::LabelSequence.
+    const void* getLabelsData() const { return (this + 1); }
+
+    /// \brief Accessor to the memory region for node labels, mutable version.
+    ///
+    /// The only valid usage of the returned pointer is to pass it to
+    /// \c LabelSequence::serialize() with the node's labels_capacity_ member
+    /// (which should be sufficiently large for the \c LabelSequence in that
+    /// context).
+    void* getLabelsData() { return (this + 1); }
 
     /// \brief Allocate and construct \c RBNode
     ///
@@ -132,16 +156,13 @@ private:
         mem_sgmt.deallocate(rbnode, sizeof(RBNode<T>) + labels_capacity);
     }
 
-    /// TBD
+    /// \brief Reset node's label sequence to a new one.
+    ///
+    /// The new labels must be a sub sequence of the current label sequence;
+    /// otherwise the serialize() method will throw an exception.
     void resetLabels(const dns::LabelSequence& labels) {
         labels.serialize(getLabelsData(), labels_capacity_);
     }
-
-    /// TBD
-    const void* getLabelsData() const { return (this + 1); }
-
-    /// TBD
-    void* getLabelsData() { return (this + 1); }
 
 public:
     /// \brief Alias for shared pointer to the data.
@@ -162,7 +183,8 @@ public:
         FLAG_SUBTREE_ROOT = 4, ///< Set if the node is the root of a subtree
         FLAG_USER1 = 0x400000U, ///< Application specific flag
         FLAG_USER2 = 0x200000U, ///< Application specific flag
-        FLAG_USER3 = 0x100000U  ///< Application specific flag
+        FLAG_USER3 = 0x100000U, ///< Application specific flag
+        FLAG_MAX = 0x400000U    // for integrity check
     };
 private:
     // Some flag values are expected to be used for internal purposes
@@ -184,12 +206,18 @@ public:
     /// To get the absolute name of one node, the node path from the top node
     /// to current node has to be recorded.
     const isc::dns::Name getName() const {
-        assert(labels_capacity_ != 0);
+        assert(labels_capacity_ != 0); // shouldn't be called on a NULL node.
         return (dns::Name(dns::LabelSequence(getLabelsData()).toText()));
     }
 
+    /// \brief Return the label sequence of the node.
+    ///
+    /// This method returns the label sequence corresponding to this node
+    /// in the form of \c dns::LabelSequence object.  Any modification to
+    /// the tree can invalidate the returned \c LabelSequence object or copy
+    /// of it; in general, it's expected to be used in a very limited scope.
     dns::LabelSequence getLabels() const {
-        assert(labels_capacity_ != 0);
+        assert(labels_capacity_ != 0); // shouldn't be called on a NULL node.
         return (dns::LabelSequence(getLabelsData()));
     }
 
@@ -395,7 +423,6 @@ private:
     const RBNode<T>* getRight() const {
         return (right_.get());
     }
-    RBNodeColor color_;
     //@}
 
     /// \brief Data stored here.
@@ -420,13 +447,23 @@ private:
         return (down_.get());
     }
 
-    /// \brief If callback should be called when traversing this node in
-    /// RBTree::find().
+    /// \brief Internal or user-configurable flags of node's properties.
     ///
-    /// \todo It might be needed to put it into more general attributes field.
+    /// See the \c Flags enum for available flags.
+    ///
+    /// For memory efficiency reasons, we only use a subset of the 32-bit
+    /// space, and use the rest to store the allocated size for the node's
+    /// label sequence data.
     uint32_t flags_ : 23;          // largest flag being 0x400000
-    const uint32_t labels_capacity_ : 9; // range is 0..511
-    /// TBD
+    BOOST_STATIC_ASSERT((1 << 23) > FLAG_MAX); // assumption check
+
+    const uint32_t labels_capacity_ : 9; // size for labelseq; range is 0..511
+    // Make sure the reserved space for labels_capacity_ is sufficiently
+    // large.  In effect, we use the knowledge of the implementation of the
+    // serialization, but we still only use its public interface, and the
+    // public interface of this class doesn't rely on this assumption.
+    // So we can change this implementation without affecting its users if
+    // a future change to LabelSequence breaks this assumption.
     BOOST_STATIC_ASSERT((1 << 9) > dns::LabelSequence::MAX_SERIALIZED_LENGTH);
 };
 
