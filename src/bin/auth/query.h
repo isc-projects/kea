@@ -32,7 +32,7 @@ class RRset;
 }
 
 namespace datasrc {
-class DataSourceClient;
+class ClientList;
 }
 
 namespace auth {
@@ -55,8 +55,6 @@ namespace auth {
 ///   separate attribute setter.
 /// - likewise, we'll eventually need to do per zone access control, for which
 ///   we need querier's information such as its IP address.
-/// - datasrc_client and response may better be parameters to process() instead
-///   of the constructor.
 ///
 /// <b>Note:</b> The class name is intentionally the same as the one used in
 /// the datasrc library.  This is because the plan is to eventually merge
@@ -240,14 +238,14 @@ private:
     /// This is the first step of the process() method, and initializes
     /// the member data
     ///
-    /// \param datasrc_client The datasource wherein the answer to the query is
-    /// to be found.
+    /// \param client_list The datasource list wherein the answer to the query
+    /// is to be found.
     /// \param qname The query name
     /// \param qtype The RR type of the query
     /// \param response The response message to store the answer to the query.
     /// \param dnssec If the answer should include signatures and NSEC/NSEC3 if
     ///     possible.
-    void initialize(datasrc::DataSourceClient& datasrc_client,
+    void initialize(datasrc::ClientList& client_list,
                     const isc::dns::Name& qname, const isc::dns::RRType& qtype,
                     isc::dns::Message& response, bool dnssec = false);
 
@@ -281,7 +279,7 @@ public:
     /// Query parameters will be set by the call to process()
     ///
     Query() :
-        datasrc_client_(NULL), qname_(NULL), qtype_(NULL),
+        client_list_(NULL), qname_(NULL), qtype_(NULL),
         dnssec_(false), dnssec_opt_(isc::datasrc::ZoneFinder::FIND_DEFAULT),
         response_(NULL)
     {
@@ -318,14 +316,14 @@ public:
     /// shouldn't happen in real-life (as BadZone means wrong data, it should
     /// have been rejected upon loading).
     ///
-    /// \param datasrc_client The datasource wherein the answer to the query is
-    /// to be found.
+    /// \param client_list The datasource list wherein the answer to the query
+    /// is to be found.
     /// \param qname The query name
     /// \param qtype The RR type of the query
     /// \param response The response message to store the answer to the query.
     /// \param dnssec If the answer should include signatures and NSEC/NSEC3 if
     ///     possible.
-    void process(datasrc::DataSourceClient& datasrc_client,
+    void process(datasrc::ClientList& client_list,
                  const isc::dns::Name& qname, const isc::dns::RRType& qtype,
                  isc::dns::Message& response, bool dnssec = false);
 
@@ -483,7 +481,7 @@ public:
     };
 
 private:
-    const isc::datasrc::DataSourceClient* datasrc_client_;
+    const isc::datasrc::ClientList* client_list_;
     const isc::dns::Name* qname_;
     const isc::dns::RRType* qtype_;
     bool dnssec_;

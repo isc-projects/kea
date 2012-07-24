@@ -160,12 +160,12 @@ Feature: Example feature
 
         A query for www.example.org should have rcode NOERROR
         Wait for new bind10 stderr message AUTH_SEND_NORMAL_RESPONSE
-        Then set bind10 configuration Auth/database_file to data/empty_db.sqlite3
-        And wait for new bind10 stderr message DATASRC_SQLITE_OPEN
+        Then set bind10 configuration data_sources/classes/IN[0]/params to {"database_file": "data/empty_db.sqlite3"}
+        And wait for new bind10 stderr message DATASRC_SQLITE_CONNOPEN
         A query for www.example.org should have rcode REFUSED
         Wait for new bind10 stderr message AUTH_SEND_NORMAL_RESPONSE
-        Then set bind10 configuration Auth/database_file to data/example.org.sqlite3
-        And wait for new bind10 stderr message DATASRC_SQLITE_OPEN
+        Then set bind10 configuration data_sources/classes/IN[0]/params to {"database_file": "data/example.org.sqlite3"}
+        And wait for new bind10 stderr message DATASRC_SQLITE_CONNOPEN
         A query for www.example.org should have rcode NOERROR
 
     Scenario: two bind10 instances
@@ -186,8 +186,8 @@ Feature: Example feature
         The SOA serial for example.org at 127.0.0.1:47806 should be 1234
         The SOA serial for example.org at ::1:47807 should be 1234
 
-        Then set bind10 configuration Auth/database_file to data/empty_db.sqlite3
-        And wait for bind10_one stderr message DATASRC_SQLITE_OPEN
+        Then set bind10 configuration data_sources/classes/IN[0]/params to {"database_file": "data/empty_db.sqlite3"}
+        And wait for bind10_one stderr message DATASRC_SQLITE_CONNOPEN
 
         A query for www.example.org to 127.0.0.1:47806 should have rcode REFUSED
         A query for www.example.org to [::1]:47807 should have rcode NOERROR
