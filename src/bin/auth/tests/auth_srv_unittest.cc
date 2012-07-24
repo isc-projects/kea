@@ -726,21 +726,6 @@ TEST_F(AuthSrvTest, notifyWithSessionMessageError) {
 }
 
 void
-updateConfig(AuthSrv* server, const char* const config_data,
-             const bool expect_success)
-{
-    ConstElementPtr config_answer =
-        server->updateConfig(Element::fromJSON(config_data));
-    EXPECT_EQ(Element::map, config_answer->getType());
-    EXPECT_TRUE(config_answer->contains("result"));
-
-    ConstElementPtr result = config_answer->get("result");
-    EXPECT_EQ(Element::list, result->getType());
-    EXPECT_EQ(expect_success ? 0 : 1, result->get(0)->intValue()) <<
-        "Bad result from updateConfig: " << result->str();
-}
-
-void
 updateDatabase(AuthSrv* server, const char* params) {
     const ConstElementPtr config(Element::fromJSON("{"
         "\"IN\": [{"
