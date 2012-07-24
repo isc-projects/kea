@@ -43,7 +43,6 @@
 
 #include <datasrc/query.h>
 #include <datasrc/data_source.h>
-#include <datasrc/memory_datasrc.h>
 #include <datasrc/static_datasrc.h>
 #include <datasrc/sqlite3_datasrc.h>
 #include <datasrc/client_list.h>
@@ -249,9 +248,6 @@ public:
     AbstractSession* xfrin_session_;
 
     /// In-memory data source.  Currently class IN only for simplicity.
-    const RRClass memory_client_class_;
-    isc::datasrc::DataSourceClientContainerPtr memory_client_container_;
-
     /// Hot spot cache
     isc::datasrc::HotCache cache_;
 
@@ -322,7 +318,6 @@ AuthSrvImpl::AuthSrvImpl(const bool use_cache,
                          BaseSocketSessionForwarder& ddns_forwarder) :
     config_session_(NULL),
     xfrin_session_(NULL),
-    memory_client_class_(RRClass::IN()),
     statistics_timer_(io_service_),
     counters_(),
     keyring_(NULL),
@@ -505,48 +500,6 @@ AuthSrv::getConfigSession() const {
     return (impl_->config_session_);
 }
 
-isc::datasrc::DataSourceClientContainerPtr
-AuthSrv::getInMemoryClientContainer(const RRClass& rrclass) {
-    if (rrclass != impl_->memory_client_class_) {
-        isc_throw(InvalidParameter,
-                  "Memory data source is not supported for RR class "
-                  << rrclass);
-    }
-    return (impl_->memory_client_container_);
-}
-
-isc::datasrc::DataSourceClient*
-AuthSrv::getInMemoryClient(const RRClass& rrclass) {
-    if (hasInMemoryClient()) {
-        return (&getInMemoryClientContainer(rrclass)->getInstance());
-    } else {
-        return (NULL);
-    }
-}
-
-bool
-AuthSrv::hasInMemoryClient() const {
-    return (impl_->memory_client_container_);
-}
-
-void
-AuthSrv::setInMemoryClient(const isc::dns::RRClass& rrclass,
-                           DataSourceClientContainerPtr memory_client)
-{
-    if (rrclass != impl_->memory_client_class_) {
-        isc_throw(InvalidParameter,
-                  "Memory data source is not supported for RR class "
-                  << rrclass);
-    } else if (!impl_->memory_client_container_ && memory_client) {
-        LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_MEM_DATASRC_ENABLED)
-                  .arg(rrclass);
-    } else if (impl_->memory_client_container_ && !memory_client) {
-        LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_MEM_DATASRC_DISABLED)
-                  .arg(rrclass);
-    }
-    impl_->memory_client_container_ = memory_client;
-}
-
 uint32_t
 AuthSrv::getStatisticsTimerInterval() const {
     return (impl_->statistics_timer_.getInterval() / 1000);
@@ -713,8 +666,6 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, Message& message,
     }
 
     try {
-        // If a memory data source is configured call the separate
-        // Query::process()
         const ConstQuestionPtr question = *message.beginQuestion();
         const boost::shared_ptr<datasrc::ClientList>
             list(getClientList(question->getClass()));
@@ -724,6 +675,7 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, Message& message,
             query_.process(*list, qname, qtype, message, dnssec_ok);
         } else {
             makeErrorMessage(renderer_, message, buffer, Rcode::REFUSED());
+            return (true);
         }
     } catch (const Exception& ex) {
         LOG_ERROR(auth_logger, AUTH_PROCESS_FAIL).arg(ex.what());

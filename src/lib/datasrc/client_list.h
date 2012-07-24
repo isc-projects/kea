@@ -16,6 +16,7 @@
 #define DATASRC_CONTAINER_H
 
 #include <dns/name.h>
+#include <dns/rrclass.h>
 #include <cc/data.h>
 #include <exceptions/exceptions.h>
 
@@ -33,6 +34,7 @@ typedef boost::shared_ptr<DataSourceClient> DataSourceClientPtr;
 class DataSourceClientContainer;
 typedef boost::shared_ptr<DataSourceClientContainer>
     DataSourceClientContainerPtr;
+class InMemoryClient;
 
 /// \brief The list of data source clients.
 ///
@@ -185,7 +187,11 @@ typedef boost::shared_ptr<const ClientList> ConstClientListPtr;
 /// inherited except for tests.
 class ConfigurableClientList : public ClientList {
 public:
-    ConfigurableClientList() :
+    /// \brief Constructor
+    ///
+    /// \param rrclass For which class the list should work.
+    ConfigurableClientList(const isc::dns::RRClass &rrclass) :
+        rrclass_(rrclass),
         configuration_(new isc::data::ListElement)
     {}
     /// \brief Exception thrown when there's an error in configuration.
@@ -216,6 +222,11 @@ public:
     /// \throw ConfigurationError if the configuration is invalid in some
     ///     sense.
     /// \throw BadValue if configuration is NULL
+    /// \throw Unexpected if something misbehaves (like the data source
+    ///     returning NULL iterator).
+    /// \throw NotImplemented if the auto-detection of list of zones is
+    ///     needed.
+    /// \throw Whatever is propagated from within the data source.
     void configure(const isc::data::ConstElementPtr& configuration,
                    bool allow_cache);
 
@@ -236,20 +247,14 @@ public:
     ///
     /// \todo The content yet to be defined.
     struct DataSourceInfo {
-        /// \brief Default constructor.
-        ///
-        /// Don't use directly. It is here so the structure can live in
-        /// a vector.
-        DataSourceInfo() :
-            data_src_client_(NULL)
-        {}
+        // Plays a role of default constructor too (for vector)
+        DataSourceInfo(bool has_cache = false);
         DataSourceInfo(DataSourceClient* data_src_client,
-                       const DataSourceClientContainerPtr& container) :
-            data_src_client_(data_src_client),
-            container_(container)
-        {}
+                       const DataSourceClientContainerPtr& container,
+                       bool has_cache);
         DataSourceClient* data_src_client_;
         DataSourceClientContainerPtr container_;
+        boost::shared_ptr<InMemoryClient> cache_;
     };
 
     /// \brief The collection of data sources.
@@ -286,9 +291,6 @@ protected:
     virtual DataSourcePair getDataSourceClient(const std::string& type,
                                                const data::ConstElementPtr&
                                                configuration);
-private:
-    /// \brief Currently active configuration.
-    isc::data::ConstElementPtr configuration_;
 public:
     /// \brief Access to the data source clients.
     ///
@@ -297,6 +299,10 @@ public:
     /// it might be, so it is just made public (there's no real reason to
     /// hide it).
     const DataSources& getDataSources() const { return (data_sources_); }
+private:
+    const isc::dns::RRClass rrclass_;
+    /// \brief Currently active configuration.
+    isc::data::ConstElementPtr configuration_;
 };
 
 } // namespace datasrc

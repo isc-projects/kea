@@ -15,22 +15,45 @@
 #include "client_list.h"
 #include "client.h"
 #include "factory.h"
+#include "memory_datasrc.h"
 
 #include <memory>
 #include <boost/foreach.hpp>
 
 using namespace isc::data;
+using namespace isc::dns;
 using namespace std;
+using namespace boost;
 
 namespace isc {
 namespace datasrc {
 
+ConfigurableClientList::DataSourceInfo::DataSourceInfo(
+    DataSourceClient* data_src_client,
+    const DataSourceClientContainerPtr& container, bool has_cache) :
+    data_src_client_(data_src_client),
+    container_(container)
+{
+    if (has_cache) {
+        cache_.reset(new InMemoryClient);
+    }
+}
+
+ConfigurableClientList::DataSourceInfo::DataSourceInfo(bool has_cache) :
+    data_src_client_(NULL)
+{
+    if (has_cache) {
+        cache_.reset(new InMemoryClient);
+    }
+}
+
 void
-ConfigurableClientList::configure(const ConstElementPtr& config, bool) {
+ConfigurableClientList::configure(const ConstElementPtr& config,
+                                  bool allow_cache)
+{
     if (!config) {
         isc_throw(isc::BadValue, "NULL configuration passed");
     }
-    // TODO: Implement the cache
     // TODO: Implement recycling from the old configuration.
     size_t i(0); // Outside of the try to be able to access it in the catch
     try {
@@ -48,12 +71,86 @@ ConfigurableClientList::configure(const ConstElementPtr& config, bool) {
             if (paramConf == ConstElementPtr()) {
                 paramConf.reset(new NullElement());
             }
-            // TODO: Special-case the master files type.
-            // Ask the factory to create the data source for us
-            const DataSourcePair ds(this->getDataSourceClient(type,
-                                                              paramConf));
-            // And put it into the vector
-            new_data_sources.push_back(DataSourceInfo(ds.first, ds.second));
+            const bool want_cache(allow_cache &&
+                                  dconf->contains("cache-enable") &&
+                                  dconf->get("cache-enable")->boolValue());
+
+            if (type == "MasterFiles") {
+                // In case the cache is not allowed, we just skip the master
+                // files (at least for now)
+                if (!allow_cache) {
+                    continue;
+                }
+                if (!want_cache) {
+                    isc_throw(ConfigurationError, "The cache must be enabled "
+                              "for the MasterFiles type");
+                }
+                new_data_sources.push_back(DataSourceInfo(true));
+            } else {
+                // Ask the factory to create the data source for us
+                const DataSourcePair ds(this->getDataSourceClient(type,
+                                                                  paramConf));
+                // And put it into the vector
+                new_data_sources.push_back(DataSourceInfo(ds.first, ds.second,
+                                                          want_cache));
+            }
+
+            if (want_cache) {
+                if (!dconf->contains("cache-zones") && type != "MasterFiles") {
+                    isc_throw(isc::NotImplemented, "Auto-detection of zones "
+                              "to cache is not yet implemented, supply "
+                              "cache-zones parameter");
+                    // TODO: Auto-detect list of all zones in the
+                    // data source.
+                }
+
+                // List the zones we are loading
+                vector<string> zones_origins;
+                if (type == "MasterFiles") {
+                    const map<string, ConstElementPtr>
+                        zones_files(paramConf->mapValue());
+                    for (map<string, ConstElementPtr>::const_iterator
+                         it(zones_files.begin()); it != zones_files.end();
+                         ++it) {
+                        zones_origins.push_back(it->first);
+                    }
+                } else {
+                    const ConstElementPtr zones(dconf->get("cache-zones"));
+                    for (size_t i(0); i < zones->size(); ++i) {
+                        zones_origins.push_back(zones->get(i)->stringValue());
+                    }
+                }
+
+                const shared_ptr<InMemoryClient>
+                    cache(new_data_sources.back().cache_);
+                const DataSourceClient* const
+                    client(new_data_sources.back().data_src_client_);
+                for (vector<string>::const_iterator it(zones_origins.begin());
+                     it != zones_origins.end(); ++it) {
+                    const Name origin(*it);
+                    shared_ptr<InMemoryZoneFinder>
+                        finder(new
+                            InMemoryZoneFinder(rrclass_, origin));
+                    if (type == "MasterFiles") {
+                        finder->load(paramConf->get(*it)->stringValue());
+                    } else {
+                        ZoneIteratorPtr iterator;
+                        try {
+                            iterator = client->getIterator(origin);
+                        }
+                        catch (const DataSourceError&) {
+                            isc_throw(ConfigurationError, "Unable to cache "
+                                      "non-existent zone " << origin);
+                        }
+                        if (!iterator) {
+                            isc_throw(isc::Unexpected, "Got NULL iterator for "
+                                      "zone " << origin);
+                        }
+                        finder->load(*iterator);
+                    }
+                    cache->addZone(finder);
+                }
+            }
         }
         // If everything is OK up until now, we have the new configuration
         // ready. So just put it there and let the old one die when we exit
@@ -92,14 +189,11 @@ ConfigurableClientList::find(const dns::Name& name, bool want_exact_match,
     } candidate;
 
     BOOST_FOREACH(const DataSourceInfo& info, data_sources_) {
-        // TODO: Once we have support for the caches, consider them too here
-        // somehow. This would probably get replaced by a function, that
-        // checks if there's a cache available, if it is, checks the loaded
-        // zones and zones expected to be in the real data source. If it is
-        // the cached one, provide the cached one. If it is in the external
-        // data source, use the datasource and don't provide the finder yet.
-        const DataSourceClient::FindResult result(
-            info.data_src_client_->findZone(name));
+        DataSourceClient* client(info.cache_ ? info.cache_.get() :
+                                 info.data_src_client_);
+        const DataSourceClient::FindResult result(client->findZone(name));
+        // TODO: Once we mark the zones that are not loaded, but are present
+        // in the data source somehow, check them too.
         switch (result.code) {
             case result::SUCCESS:
                 // If we found an exact match, we have no hope to getting
@@ -107,7 +201,7 @@ ConfigurableClientList::find(const dns::Name& name, bool want_exact_match,
 
                 // TODO: In case we have only the datasource and not the finder
                 // and the need_updater parameter is true, get the zone there.
-                return (FindResult(info.data_src_client_, result.zone_finder,
+                return (FindResult(client, result.zone_finder,
                                    true));
             case result::PARTIALMATCH:
                 if (!want_exact_match) {
@@ -128,7 +222,7 @@ ConfigurableClientList::find(const dns::Name& name, bool want_exact_match,
                     if (labels > candidate.matched_labels ||
                         !candidate.matched) {
                         // This one is strictly better. Replace it.
-                        candidate.datasrc_client = info.data_src_client_;
+                        candidate.datasrc_client = client;
                         candidate.finder = result.zone_finder;
                         candidate.matched_labels = labels;
                         candidate.matched = true;
