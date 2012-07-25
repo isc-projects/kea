@@ -34,6 +34,25 @@ const size_t LabelSequence::MAX_SERIALIZED_LENGTH;
 
 namespace {
 
+// Common check that two labelsequences are equal
+void check_equal(const LabelSequence& ls1, const LabelSequence& ls2) {
+    NameComparisonResult result = ls1.compare(ls2);
+    EXPECT_EQ(isc::dns::NameComparisonResult::EQUAL,
+              result.getRelation()) << ls1.toText() << " <> " << ls2.toText();
+    EXPECT_EQ(0, result.getOrder()) << ls1.toText() << " <> " << ls2.toText();
+    EXPECT_EQ(ls1.getLabelCount(), result.getCommonLabels());
+}
+
+// Common check for general comparison of two labelsequences
+void check_compare(const LabelSequence& ls1, const LabelSequence& ls2,
+                   isc::dns::NameComparisonResult::NameRelation relation,
+                   size_t common_labels) {
+    NameComparisonResult result = ls1.compare(ls2);
+    EXPECT_EQ(relation, result.getRelation());
+    EXPECT_EQ(common_labels, result.getCommonLabels());
+}
+
+
 class LabelSequenceTest : public ::testing::Test {
 public:
     LabelSequenceTest() : n1("example.org"), n2("example.com"),
@@ -783,5 +802,120 @@ TEST_F(LabelSequenceTest, badDeserialize) {
     const uint8_t offsets_noincrease[] = { 2, 0, 0, 0, 0 };
     EXPECT_THROW(LabelSequence ls(offsets_noincrease), isc::BadValue);
 }
+
+namespace {
+
+// Helper function; repeatedly calls
+// - Initially, all three labelsequences should be the same
+// - repeatedly performs:
+//   - checks all three are equal
+//   - stripLeft on ls1
+//   - checks ls1 and ls2 are different, and ls2 and ls3 are equal
+//   - stripLeft on ls2
+//   - checks ls1 and ls2 are equal, and ls2 and ls3 are different
+//   - stripLeft on ls3
+//
+// (this test makes sure the stripLeft of one has no effect on the other
+// two, and that the strip properties hold regardless of how they were
+// constructed)
+//
+void stripLeftCheck(LabelSequence ls1, LabelSequence ls2, LabelSequence ls3) {
+    ASSERT_LT(1, ls1.getLabelCount());
+    while (ls1.getLabelCount() > 1) {
+        check_equal(ls1, ls2);
+        check_equal(ls2, ls3);
+
+        ls1.stripLeft(1);
+        check_compare(ls1, ls2, isc::dns::NameComparisonResult::SUPERDOMAIN,
+                      ls1.getLabelCount());
+        check_equal(ls2, ls3);
+
+        ls2.stripLeft(1);
+        check_equal(ls1, ls2);
+        check_compare(ls2, ls3, isc::dns::NameComparisonResult::SUPERDOMAIN,
+                      ls1.getLabelCount());
+
+        ls3.stripLeft(1);
+    }
+}
+
+// Similar to stripLeftCheck, but using stripRight()
+void stripRightCheck(LabelSequence ls1, LabelSequence ls2, LabelSequence ls3) {
+    ASSERT_LT(1, ls1.getLabelCount());
+    while (ls1.getLabelCount() > 1) {
+        check_equal(ls1, ls2);
+        check_equal(ls2, ls3);
+
+        ls1.stripRight(1);
+        check_compare(ls1, ls2, isc::dns::NameComparisonResult::NONE, 0);
+        check_equal(ls2, ls3);
+
+        ls2.stripRight(1);
+        check_equal(ls1, ls2);
+        check_compare(ls2, ls3, isc::dns::NameComparisonResult::NONE, 0);
+
+        ls3.stripRight(1);
+    }
+}
+
+} // end anonymous namespace
+
+// Test that 'extendable' labelsequences behave correctly when using
+// stripLeft() and stripRight()
+TEST(LabelSequence, extendableLabelSequence) {
+    Name n1("example.org.");
+    LabelSequence ls1(n1);
+    LabelSequence ls2(n1);
+
+    uint8_t buf[LabelSequence::MAX_SERIALIZED_LENGTH];
+    memset(buf, 0, LabelSequence::MAX_SERIALIZED_LENGTH);
+    LabelSequence els(ls1, buf);
+
+    ASSERT_EQ(ls1.getDataLength(), els.getDataLength());
+    stripLeftCheck(ls1, els, ls2);
+    stripRightCheck(ls1, els, ls2);
+}
+
+// Test that 'extendable' LabelSequences behave correctly when initialized
+// with a stripped source LabelSequence
+TEST(LabelSequence, extendableLabelSequenceStrippedSource) {
+    Name n1("foo.bar.example.org.");
+    LabelSequence ls1(n1);
+    LabelSequence ls2(n1);
+
+    while (ls1.getLabelCount() > 2) {
+        ls1.stripLeft(1);
+        ls2.stripLeft(1);
+
+        uint8_t buf[LabelSequence::MAX_SERIALIZED_LENGTH];
+        memset(buf, 0, LabelSequence::MAX_SERIALIZED_LENGTH);
+        LabelSequence els(ls1, buf);
+
+        ASSERT_EQ(ls1.getDataLength(), els.getDataLength());
+        stripLeftCheck(ls1, els, ls2);
+        stripRightCheck(ls1, els, ls2);
+    }
+}
+
+TEST(LabelSequence, extendableLabelSequenceRightStrippedSource) {
+    Name n1("foo.bar.example.org.");
+    LabelSequence ls1(n1);
+    LabelSequence ls2(n1);
+
+    while (ls1.getLabelCount() > 2) {
+        ls1.stripRight(1);
+        ls2.stripRight(1);
+
+        uint8_t buf[LabelSequence::MAX_SERIALIZED_LENGTH];
+        memset(buf, 0, LabelSequence::MAX_SERIALIZED_LENGTH);
+        LabelSequence els(ls1, buf);
+
+        ASSERT_EQ(ls1.getDataLength(), els.getDataLength());
+        stripLeftCheck(ls1, els, ls2);
+        stripRightCheck(ls1, els, ls2);
+    }
+}
+
+
 
 }
