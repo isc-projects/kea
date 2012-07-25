@@ -362,35 +362,34 @@ class TestStats(unittest.TestCase):
         self.assertEqual(self.stats.update_statistics_data(owner='Dummy', foo='bar'),
                          ['unknown module name: Dummy'])
 
-    def test_update_statistics_data_withpid(self):
-        # one pid of Auth
+    def test_update_statistics_data_withmid(self):
+        # one id of Auth
         self.stats.update_statistics_data(owner='Auth',
-                                          pid=9999,
+                                          mid="bar@foo",
                                           **{'queries.tcp':1001})
         self.assertTrue('Auth' in self.stats.statistics_data)
         self.assertTrue('queries.tcp' in self.stats.statistics_data['Auth'])
         self.assertEqual(self.stats.statistics_data['Auth']['queries.tcp'], 1001)
-        self.assertTrue('Auth' in self.stats.statistics_data_bypid)
-        self.assertTrue(9999 in self.stats.statistics_data_bypid['Auth'])
-        self.assertTrue('queries.tcp' in self.stats.statistics_data_bypid['Auth'][9999])
-        self.assertEqual(self.stats.statistics_data_bypid['Auth'][9999]['queries.tcp'], 1001)
-        self.assertEqual(self.stats.statistics_data_bypid,
-                         {'Auth': {9999: {'queries.tcp': 1001}}})
-        # check consolidation of statistics data even if there is
-        # non-existent pid of Auth
+        self.assertTrue('Auth' in self.stats.statistics_data_bymid)
+        self.assertTrue('bar@foo' in self.stats.statistics_data_bymid['Auth'])
+        self.assertTrue('queries.tcp' in self.stats.statistics_data_bymid['Auth']['bar@foo'])
+        self.assertEqual(self.stats.statistics_data_bymid['Auth']['bar@foo']['queries.tcp'], 1001)
+        self.assertEqual(self.stats.statistics_data_bymid,
+                         {'Auth': {'bar@foo': {'queries.tcp': 1001}}})
+        # check consolidation of statistics data
         self.stats.update_statistics_data(owner='Auth',
-                                          pid=10000,
+                                          mid="bar2@foo",
                                           **{'queries.tcp':2001})
         self.assertTrue('Auth' in self.stats.statistics_data)
         self.assertTrue('queries.tcp' in self.stats.statistics_data['Auth'])
         self.assertEqual(self.stats.statistics_data['Auth']['queries.tcp'], 3002)
-        self.assertTrue('Auth' in self.stats.statistics_data_bypid)
-        self.assertTrue(9999 in self.stats.statistics_data_bypid['Auth'])
-        self.assertTrue('queries.tcp' in self.stats.statistics_data_bypid['Auth'][9999])
-        self.assertEqual(self.stats.statistics_data_bypid['Auth'][9999]['queries.tcp'], 1001)
-        self.assertEqual(self.stats.statistics_data_bypid,
-                         {'Auth': {9999: {'queries.tcp': 1001},
-                                   10000: {'queries.tcp': 2001}}})
+        self.assertTrue('Auth' in self.stats.statistics_data_bymid)
+        self.assertTrue('bar@foo' in self.stats.statistics_data_bymid['Auth'])
+        self.assertTrue('queries.tcp' in self.stats.statistics_data_bymid['Auth']['bar@foo'])
+        self.assertEqual(self.stats.statistics_data_bymid['Auth']['bar@foo']['queries.tcp'], 1001)
+        self.assertEqual(self.stats.statistics_data_bymid,
+                         {'Auth': {'bar@foo': {'queries.tcp': 1001},
+                                   'bar2@foo': {'queries.tcp': 2001}}})
         # kill running Auth but the statistics data is preserved
         self.assertEqual(self.base.boss.server.pid_list[0][0], 9999)
         killed = self.base.boss.server.pid_list.pop(0)
@@ -400,15 +399,15 @@ class TestStats(unittest.TestCase):
         self.assertTrue('queries.udp' in self.stats.statistics_data['Auth'])
         self.assertEqual(self.stats.statistics_data['Auth']['queries.tcp'], 3002)
         self.assertEqual(self.stats.statistics_data['Auth']['queries.udp'], 0)
-        self.assertTrue('Auth' in self.stats.statistics_data_bypid)
+        self.assertTrue('Auth' in self.stats.statistics_data_bymid)
         # restore statistics data of killed auth
         self.base.boss.server.pid_list = [ killed ] + self.base.boss.server.pid_list[:]
         self.stats.update_statistics_data(owner='Auth',
-                                          pid=9999,
+                                          mid="bar@foo",
                                           **{'queries.tcp':1001})
-        # another pid of Auth
+        # another mid of Auth
         self.stats.update_statistics_data(owner='Auth',
-                                          pid=9998,
+                                          mid="bar3@foo",
                                           **{'queries.tcp':1002,
                                              'queries.udp':1003})
         self.assertTrue('Auth' in self.stats.statistics_data)
@@ -416,15 +415,15 @@ class TestStats(unittest.TestCase):
         self.assertTrue('queries.udp' in self.stats.statistics_data['Auth'])
         self.assertEqual(self.stats.statistics_data['Auth']['queries.tcp'], 4004)
         self.assertEqual(self.stats.statistics_data['Auth']['queries.udp'], 1003)
-        self.assertTrue('Auth' in self.stats.statistics_data_bypid)
-        self.assertTrue(9999 in self.stats.statistics_data_bypid['Auth'])
-        self.assertTrue(9998 in self.stats.statistics_data_bypid['Auth'])
-        self.assertTrue('queries.tcp' in self.stats.statistics_data_bypid['Auth'][9999])
-        self.assertTrue('queries.udp' in self.stats.statistics_data_bypid['Auth'][9998])
-        self.assertTrue('queries.udp' in self.stats.statistics_data_bypid['Auth'][9998])
-        self.assertEqual(self.stats.statistics_data_bypid['Auth'][9999]['queries.tcp'], 1001)
-        self.assertEqual(self.stats.statistics_data_bypid['Auth'][9998]['queries.tcp'], 1002)
-        self.assertEqual(self.stats.statistics_data_bypid['Auth'][9998]['queries.udp'], 1003)
+        self.assertTrue('Auth' in self.stats.statistics_data_bymid)
+        self.assertTrue('bar@foo' in self.stats.statistics_data_bymid['Auth'])
+        self.assertTrue('bar3@foo' in self.stats.statistics_data_bymid['Auth'])
+        self.assertTrue('queries.tcp' in self.stats.statistics_data_bymid['Auth']['bar@foo'])
+        self.assertTrue('queries.udp' in self.stats.statistics_data_bymid['Auth']['bar3@foo'])
+        self.assertTrue('queries.udp' in self.stats.statistics_data_bymid['Auth']['bar3@foo'])
+        self.assertEqual(self.stats.statistics_data_bymid['Auth']['bar@foo']['queries.tcp'], 1001)
+        self.assertEqual(self.stats.statistics_data_bymid['Auth']['bar3@foo']['queries.tcp'], 1002)
+        self.assertEqual(self.stats.statistics_data_bymid['Auth']['bar3@foo']['queries.udp'], 1003)
 
     def test_config(self):
         stats_server = ThreadingServerManager(MyStats)

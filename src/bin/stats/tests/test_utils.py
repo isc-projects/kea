@@ -426,7 +426,7 @@ class MyStats(stats.Stats):
         try:
             self.start()
         except Exception:
-            pass
+            raise
 
     def shutdown(self):
         self.command_shutdown()
