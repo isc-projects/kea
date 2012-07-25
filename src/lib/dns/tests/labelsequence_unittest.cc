@@ -860,15 +860,40 @@ void stripRightCheck(LabelSequence ls1, LabelSequence ls2, LabelSequence ls3) {
 
 } // end anonymous namespace
 
-// Test that 'extendable' labelsequences behave correctly when using
-// stripLeft() and stripRight()
-TEST(LabelSequence, extendableLabelSequence) {
-    Name n1("example.org.");
-    LabelSequence ls1(n1);
-    LabelSequence ls2(n1);
+class ExtendableLabelSequenceTest : public ::testing::Test {
+public:
+    ExtendableLabelSequenceTest() : bar("bar."),
+                                    example_org("example.org"),
+                                    foo("foo."),
+                                    foo_bar("foo.bar."),
+                                    foo_bar_example_org("foo.bar.example.org."),
+                                    foo_bar_foo_bar("foo.bar.foo.bar."),
+                                    foo_example("foo.example."),
+                                    org("org")
+    {
+        // explicitely set to non-zero data, to make sure
+        // we don't try to use data we don't set
+        memset(buf, 0xff, LabelSequence::MAX_SERIALIZED_LENGTH);
+    }
+
+    Name bar;
+    Name example_org;
+    Name foo;
+    Name foo_bar;
+    Name foo_bar_example_org;
+    Name foo_bar_foo_bar;
+    Name foo_example;
+    Name org;
 
     uint8_t buf[LabelSequence::MAX_SERIALIZED_LENGTH];
-    memset(buf, 0, LabelSequence::MAX_SERIALIZED_LENGTH);
+};
+
+// Test that 'extendable' labelsequences behave correctly when using
+// stripLeft() and stripRight()
+TEST_F(ExtendableLabelSequenceTest, extendableLabelSequence) {
+    LabelSequence ls1(example_org);
+    LabelSequence ls2(example_org);
+
     LabelSequence els(ls1, buf);
 
     ASSERT_EQ(ls1.getDataLength(), els.getDataLength());
@@ -878,17 +903,14 @@ TEST(LabelSequence, extendableLabelSequence) {
 
 // Test that 'extendable' LabelSequences behave correctly when initialized
 // with a stripped source LabelSequence
-TEST(LabelSequence, extendableLabelSequenceStrippedSource) {
-    Name n1("foo.bar.example.org.");
-    LabelSequence ls1(n1);
-    LabelSequence ls2(n1);
+TEST_F(ExtendableLabelSequenceTest, extendableLabelSequenceStrippedSource) {
+    LabelSequence ls1(foo_bar_example_org);
+    LabelSequence ls2(foo_bar_example_org);
 
     while (ls1.getLabelCount() > 2) {
         ls1.stripLeft(1);
         ls2.stripLeft(1);
 
-        uint8_t buf[LabelSequence::MAX_SERIALIZED_LENGTH];
-        memset(buf, 0, LabelSequence::MAX_SERIALIZED_LENGTH);
         LabelSequence els(ls1, buf);
 
         ASSERT_EQ(ls1.getDataLength(), els.getDataLength());
@@ -897,17 +919,14 @@ TEST(LabelSequence, extendableLabelSequenceStrippedSource) {
     }
 }
 
-TEST(LabelSequence, extendableLabelSequenceRightStrippedSource) {
-    Name n1("foo.bar.example.org.");
-    LabelSequence ls1(n1);
-    LabelSequence ls2(n1);
+TEST_F(ExtendableLabelSequenceTest, extendableLabelSequenceRightStrippedSource) {
+    LabelSequence ls1(foo_bar_example_org);
+    LabelSequence ls2(foo_bar_example_org);
 
     while (ls1.getLabelCount() > 2) {
         ls1.stripRight(1);
         ls2.stripRight(1);
 
-        uint8_t buf[LabelSequence::MAX_SERIALIZED_LENGTH];
-        memset(buf, 0, LabelSequence::MAX_SERIALIZED_LENGTH);
         LabelSequence els(ls1, buf);
 
         ASSERT_EQ(ls1.getDataLength(), els.getDataLength());
@@ -917,17 +936,12 @@ TEST(LabelSequence, extendableLabelSequenceRightStrippedSource) {
 }
 
 // Check some basic 'extend' functionality
-TEST(LabelSequence, extend) {
-    Name n1("foo.bar.");
-    Name n2("foo");
-    Name n3("bar");
-    LabelSequence ls1(n1);
-    LabelSequence ls2(n2);
-    LabelSequence ls3(n3);
-    LabelSequence ls4(n1);
+TEST_F(ExtendableLabelSequenceTest, extend) {
+    LabelSequence ls1(foo_bar);
+    LabelSequence ls2(foo);
+    LabelSequence ls3(bar);
+    LabelSequence ls4(foo_bar);
 
-    uint8_t buf[LabelSequence::MAX_SERIALIZED_LENGTH];
-    memset(buf, 0, LabelSequence::MAX_SERIALIZED_LENGTH);
     LabelSequence els(ls2, buf);
 
     check_compare(ls1, els, isc::dns::NameComparisonResult::COMMONANCESTOR, 1);
@@ -959,17 +973,11 @@ TEST(LabelSequence, extend) {
     check_equal(ls1, els);
 }
 
-TEST(LabelSequence, extendLeftStripped) {
-    Name n1("foo.example");
-    Name n2("example.org");
-    Name n3("org");
+TEST_F(ExtendableLabelSequenceTest, extendLeftStripped) {
+    LabelSequence ls1(foo_example);
+    LabelSequence ls2(example_org);
+    LabelSequence ls3(org);
 
-    LabelSequence ls1(n1);
-    LabelSequence ls2(n2);
-    LabelSequence ls3(n3);
-
-    uint8_t buf[LabelSequence::MAX_SERIALIZED_LENGTH];
-    memset(buf, 0, LabelSequence::MAX_SERIALIZED_LENGTH);
     LabelSequence els(ls1, buf);
 
     els.stripLeft(1);
@@ -978,14 +986,10 @@ TEST(LabelSequence, extendLeftStripped) {
 }
 
 // Check that when extending with itself, it does not cause horrible failures
-TEST(LabelSequence, extendWithItself) {
-    Name n1("foo.bar.");
-    Name n2("foo.bar.foo.bar.");
-    LabelSequence ls1(n1);
-    LabelSequence ls2(n2);
+TEST_F(ExtendableLabelSequenceTest, extendWithItself) {
+    LabelSequence ls1(foo_bar);
+    LabelSequence ls2(foo_bar_foo_bar);
 
-    uint8_t buf[LabelSequence::MAX_SERIALIZED_LENGTH];
-    memset(buf, 0, LabelSequence::MAX_SERIALIZED_LENGTH);
     LabelSequence els(ls1, buf);
 
     els.extend(els, buf);
@@ -1007,10 +1011,8 @@ TEST(LabelSequence, extendWithItself) {
 
 // Test that 'extending' with just a root label is a no-op, iff the original
 // was already absolute
-TEST(LabelSequence, extendWithRoot) {
-    Name n1("example.org");
-    LabelSequence ls1(n1);
-    uint8_t buf[LabelSequence::MAX_SERIALIZED_LENGTH];
+TEST_F(ExtendableLabelSequenceTest, extendWithRoot) {
+    LabelSequence ls1(example_org);
 
     LabelSequence els(LabelSequence(ls1, buf));
     check_equal(ls1, els);
@@ -1020,7 +1022,7 @@ TEST(LabelSequence, extendWithRoot) {
     // but not if the original was not absolute (it will be equal to
     // the original labelsequence used above, but not the one it was based
     // on).
-    LabelSequence ls2(n1);
+    LabelSequence ls2(example_org);
     ls2.stripRight(1);
     els = LabelSequence(ls2, buf);
     els.extend(LabelSequence(Name(".")), buf);
@@ -1029,12 +1031,9 @@ TEST(LabelSequence, extendWithRoot) {
 }
 
 // Check possible failure modes of extend()
-TEST(LabelSequence, extendBadData) {
-    Name n1("example.org.");
-    LabelSequence ls1(n1);
+TEST_F(ExtendableLabelSequenceTest, extendBadData) {
+    LabelSequence ls1(example_org);
 
-    uint8_t buf[LabelSequence::MAX_SERIALIZED_LENGTH];
-    memset(buf, 0, LabelSequence::MAX_SERIALIZED_LENGTH);
     LabelSequence els(ls1, buf);
 
     // try use with unrelated labelsequence
