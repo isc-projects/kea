@@ -15,6 +15,8 @@
 #ifndef DATASRC_MEMORY_RDATA_ENCODER_H
 #define DATASRC_MEMORY_RDATA_ENCODER_H 1
 
+#include <exceptions/exceptions.h>
+
 #include <dns/labelsequence.h>
 #include <dns/rdata.h>
 #include <dns/rrclass.h>
@@ -28,6 +30,17 @@
 namespace isc {
 namespace datasrc {
 namespace memory {
+
+/// \brief General error in RDATA encoding.
+///
+/// This is thrown when \c RdataEncoder encounters a rare, unsupported
+/// situation. a method is called for a name or RRset which
+/// is not in or below the zone.
+class RdataEncodingError : public Exception {
+public:
+    RdataEncodingError(const char* file, size_t line, const char* what) :
+        Exception(file, line, what) {}
+};
 
 /// \brief Attributes of domain name fields of encoded RDATA.
 ///
@@ -71,7 +84,16 @@ public:
 
     /// \brief TBD
     ///
+    /// This implementation does not support RDATA (or any subfield of it)
+    /// whose size exceeds 65535 bytes (max uint16_t value).  Such RDATA
+    /// may not necessarily considered invalid in terms of protocol
+    /// specification, but in practice it's mostly useless because the
+    /// corresponding RR won't fit in any valid DNS message.
+    ///
     /// \throw InvalidOperation called before start().
+    /// \throw BadValue inconsistent data found.
+    /// \throw RdataEncodingError A very unusual case, such as over 64KB RDATA.
+    /// \throw std::bad_alloc Internal memory allocation failure.
     void addRdata(const dns::rdata::Rdata& rdata);
 
     /// \brief TBD
