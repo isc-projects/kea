@@ -260,12 +260,13 @@ public:
     const boost::shared_ptr<TSIGKeyRing>* keyring_;
 
     /// The client list
-    map<RRClass, boost::shared_ptr<ConfigurableClientList> > client_lists_;
+    std::map<RRClass, boost::shared_ptr<ConfigurableClientList> >
+        client_lists_;
 
     boost::shared_ptr<ConfigurableClientList> getClientList(const RRClass&
                                                             rrclass)
     {
-        const map<RRClass, boost::shared_ptr<ConfigurableClientList> >::
+        const std::map<RRClass, boost::shared_ptr<ConfigurableClientList> >::
             const_iterator it(client_lists_.find(rrclass));
         if (it == client_lists_.end()) {
             return (boost::shared_ptr<ConfigurableClientList>());
@@ -955,7 +956,7 @@ AuthSrv::getClientList(const RRClass& rrclass) {
 vector<RRClass>
 AuthSrv::getClientListClasses() const {
     vector<RRClass> result;
-    for (map<RRClass, boost::shared_ptr<ConfigurableClientList> >::
+    for (std::map<RRClass, boost::shared_ptr<ConfigurableClientList> >::
          const_iterator it(impl_->client_lists_.begin());
          it != impl_->client_lists_.end(); ++it) {
         result.push_back(it->first);
