@@ -286,14 +286,31 @@ public:
     virtual void setTruncated() {}
     virtual void setLengthLimit(size_t) {}
     virtual void setCompressMode(CompressMode) {}
-    virtual void writeName(const Name& name, bool /*compress*/) {
-        assert(current_field_ < encode_spec_->field_count); // TBD
-
+    virtual void writeName(const Name& name, bool compress) {
+        if (current_field_ >= encode_spec_->field_count) {
+            isc_throw(BadValue,
+                      "RDATA encoder encounters an unexpected name data: " <<
+                      name);
+        }
         extendData();
+        if (current_field_ >= encode_spec_->field_count) {
+            isc_throw(BadValue,
+                      "RDATA encoder encounters an unexpected name data: " <<
+                      name);
+        }
 
+        // At this point it's ensured we still have a field in the spec,
+        // and it's a domain name field.
         const RdataFieldSpec& field =
             encode_spec_->fields[current_field_++];
-        assert(field.type == RdataFieldSpec::DOMAIN_NAME); // TBD
+        assert(field.type == RdataFieldSpec::DOMAIN_NAME);
+
+        // It would be compressed iff the field has that attribute.
+        if (compress !=
+            ((field.name_attributes & NAMEATTR_COMPRESSIBLE) != 0)) {
+            isc_throw(BadValue, "RDATA encoder error, inconsistent name "
+                      "compression policy: " << name);
+        }
 
         const LabelSequence labels(name);
         labels.serialize(labels_placeholder_, sizeof(labels_placeholder_));
@@ -314,10 +331,14 @@ public:
         current_field_ = 0;
     }
     void endRdata() {
+        // Handle any remaining data (there should be no more name).  Then
+        // we should reach the end of the fields.
         if (current_field_ < encode_spec_->field_count) {
             extendData();
         }
-        assert(current_field_ == encode_spec_->field_count); // TBD
+        if (current_field_ != encode_spec_->field_count) {
+            isc_throw(BadValue, "RDATA encoder finds missing field");
+        }
     }
     vector<pair<size_t, size_t> > data_positions_;
     vector<pair<size_t, Name> > names_;
@@ -340,18 +361,32 @@ private:
             }
             ++current_field_;
             if (field.type == RdataFieldSpec::FIXEDLEN_DATA) {
-                // TBD: validation
+                if (data_len < field.fixeddata_len) {
+                    isc_throw(BadValue,
+                              "RDATA encoding: available data too short "
+                              "for the type");
+                }
                 data_len -= field.fixeddata_len;
                 continue;
             }
-            // We are looking at a variable-length data field.
-            // TBD: 16bit len check
+            // We are looking at a variable-length data field.  For encoding
+            // purposes, it's a single field covering all data, even if it
+            // may consist of multiple fields as DNS RDATA (e.g. TXT).
+            if (data_len > 0xffff) {
+                isc_throw(RdataEncodingError, "RDATA field is too large: "
+                          << data_len << " bytes");
+            }
             data_lengths_.push_back(data_len);
             data_len = 0;
             break;
         }
-        // TBD: data_len must be 0;
-        assert(data_len == 0);
+
+        // We've reached the end of the RDATA or just consumed a variable
+        // length data field.  So we should have eaten all available data
+        // at this moment.
+        if (data_len != 0) {
+            isc_throw(BadValue, "redundant data for encoding in RDATA");
+        }
 
         // We added this much data from last time
         data_positions_.push_back(
