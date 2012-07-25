@@ -128,8 +128,10 @@ protected:
                      const vector<ConstRdataPtr>& rdata_list,
                      size_t expected_varlen_fields);
 
-    const ConstRdataPtr a_rdata_;     // commonly used RDATA
-    const ConstRdataPtr aaaa_rdata_;  // commonly used RDATA
+    // Some commonly used RDATA
+    const ConstRdataPtr a_rdata_;
+    const ConstRdataPtr aaaa_rdata_;
+
     RdataEncoder encoder_;
     vector<uint8_t> encoded_data_;
     MessageRenderer expected_renderer_;
@@ -333,6 +335,11 @@ TEST_F(RdataEncoderTest, badAddRdata) {
     encoder_.start(RRClass::IN(), RRType::DHCID());
     EXPECT_THROW(encoder_.addRdata(in::DHCID(buffer, encoded_data_.size())),
                                    RdataEncodingError);
+
+    // RRSIG cannot be used as the main RDATA type (can only be added as
+    // a signature for some other type of RDATAs).
+    EXPECT_THROW(encoder_.start(RRClass::IN(), RRType::RRSIG()),
+                 isc::BadValue);
 }
 
 // Note: in our implementation RRSIG is treated as opaque data (including

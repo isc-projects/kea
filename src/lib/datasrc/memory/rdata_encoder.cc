@@ -407,6 +407,10 @@ RdataEncoder::~RdataEncoder() {
 
 void
 RdataEncoder::start(RRClass rrclass, RRType rrtype) {
+    if (rrtype == RRType::RRSIG()) {
+        isc_throw(BadValue, "RRSIG cannot be encoded as main RDATA type");
+    }
+
     impl_->encode_spec_ = &getRdataEncodeSpec(rrclass, rrtype);
     impl_->field_composer_.clearLocal(impl_->encode_spec_);
     impl_->rdata_count_ = 0;
