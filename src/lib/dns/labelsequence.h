@@ -103,6 +103,11 @@ public:
     ///
     /// \note The given buf MUST remain in scope during the lifetime of
     /// the LabelSequence created here.
+    /// \note The buffer should never be modified except through
+    /// calls to extend().
+    /// \note Also, only associate the buffer with at most one
+    /// LabelSequence. Behaviour is undefined if two LabelSequences are
+    /// using the same buffer.
     ///
     /// \param src LabelSequence to copy the initial data from
     /// \param buf external buffer to store this labelsequence's data in
@@ -260,6 +265,29 @@ public:
     ///
     /// \return a string representation of the <code>LabelSequence</code>.
     std::string toText() const;
+
+    /// \brief Extend this LabelSequence with the given labelsequence
+    ///
+    /// The given labels are added to the name data, and internal data
+    /// is updated accordingly.
+    /// The data from the given LabelSequence is copied into the buffer
+    /// associated with this LabelSequence; the appended LabelSequence
+    /// can be released if it is not needed for other operations anymore.
+    ///
+    /// Some minimal checking is done on the data, but internal integrity
+    /// is not assumed. Do NOT modify the given buffer except through calls
+    /// to this method, and do NOT call this method if the buffer is
+    /// associated to another LabelSequence (behaviour of the other
+    /// LabelSequence is undefined in that scenario).
+    ///
+    /// \exception BadValue If the buffer does not appear to be associated
+    /// with this LabelSequence, or if the maximum wire length or maximum
+    /// number of labels would be exceeded by this operation
+    ///
+    /// \param labels The labels to append to this LabelSequence
+    /// \param buf The buffer associated with this LabelSequence
+    void extend(const LabelSequence& labels,
+                uint8_t buf[MAX_SERIALIZED_LENGTH]);
 
 private:
     /// \brief Convert the LabelSequence to a string.

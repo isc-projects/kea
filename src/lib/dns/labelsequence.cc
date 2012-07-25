@@ -337,6 +337,46 @@ LabelSequence::toText() const {
     return (toText(!isAbsolute()));
 }
 
+void
+LabelSequence::extend(const LabelSequence& labels,
+                      uint8_t buf[MAX_SERIALIZED_LENGTH])
+{
+    // check whether this labelsequence appears to have anything to do with
+    // the given buf at all
+    if (data_ != buf || offsets_ != &buf[Name::MAX_WIRE]) {
+        isc_throw(BadValue,
+                  "extend() called with unrelated buffer");
+    }
+
+    // check name does not become too long
+    size_t orig_len = getDataLength() - 1;
+    if (orig_len + labels.getDataLength() > Name::MAX_WIRE) {
+        isc_throw(BadValue,
+                  "extend() would exceed maximum wire length");
+    }
+
+    // check offsets data does not become too long
+    if (getLabelCount() + labels.getLabelCount() > Name::MAX_LABELS) {
+        isc_throw(BadValue,
+                  "extend() would exceed maximum number of labels");
+    }
+
+    // append second to first labelsequence
+    size_t data_len;
+    const uint8_t *data = labels.getData(&data_len);
+    memcpy(buf + orig_len, data, data_len);
+
+    // append offsets
+    for (size_t i = 0; i < labels.getLabelCount(); ++i) {
+        buf[Name::MAX_WIRE + last_label_ + i] =
+                                  offsets_[last_label_] +
+                                  labels.offsets_[i + labels.first_label_] -
+                                  labels.offsets_[labels.first_label_];
+    }
+    last_label_ += labels.last_label_ - labels.first_label_;
+}
+
+
 std::ostream&
 operator<<(std::ostream& os, const LabelSequence& label_sequence) {
     os << label_sequence.toText();
