@@ -71,8 +71,8 @@ class RBTree;
 /// the node color) are encoded as part of "flags", some of the flag bits
 /// can also be set by the user application.  Each node is associated with
 /// a sequence of domain name labels, which is essentially the search/insert
-/// key for the noce (see also the description of RBTree).  This is encoded
-/// as opaque binary immediately followed by the main node object.  The size
+/// key for the node (see also the description of RBTree).  This is encoded
+/// as opaque binary immediately following the main node object.  The size
 /// of the allocated space for the labels data is encoded by borrowing some
 /// bits of the "flags" field.
 template <typename T>
