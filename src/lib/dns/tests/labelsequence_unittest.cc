@@ -933,12 +933,48 @@ TEST(LabelSequence, extend) {
     check_compare(ls1, els, isc::dns::NameComparisonResult::COMMONANCESTOR, 1);
     els.extend(ls3, buf);
 
-    check_compare(ls1, els, isc::dns::NameComparisonResult::EQUAL, 3);
+    check_equal(ls1, els);
     stripLeftCheck(ls1, els, ls4);
     stripRightCheck(ls1, els, ls4);
 
+    // strip, then extend again
+    els.stripRight(2); // (2, 1 for root label, 1 for last label)
+    els.extend(ls3, buf);
+    check_equal(ls1, els);
+
+    // Extending again should make it different
     els.extend(ls3, buf);
     check_compare(ls1, ls2, isc::dns::NameComparisonResult::COMMONANCESTOR, 1);
+
+    // Extending with a non-absolute name should make it non-absolute as well
+    ls3.stripRight(1);
+    els.extend(ls3, buf);
+    EXPECT_FALSE(els.isAbsolute());
+
+    // And try extending when both are not absolute
+    els.stripRight(3);
+    ls1.stripRight(1);
+    EXPECT_FALSE(els.isAbsolute());
+    els.extend(ls3, buf);
+    check_equal(ls1, els);
+}
+
+TEST(LabelSequence, extendLeftStripped) {
+    Name n1("foo.example");
+    Name n2("example.org");
+    Name n3("org");
+
+    LabelSequence ls1(n1);
+    LabelSequence ls2(n2);
+    LabelSequence ls3(n3);
+
+    uint8_t buf[LabelSequence::MAX_SERIALIZED_LENGTH];
+    memset(buf, 0, LabelSequence::MAX_SERIALIZED_LENGTH);
+    LabelSequence els(ls1, buf);
+
+    els.stripLeft(1);
+    els.extend(ls3, buf);
+    check_equal(ls2, els);
 }
 
 // Check that when extending with itself, it does not cause horrible failures
@@ -952,14 +988,25 @@ TEST(LabelSequence, extendWithItself) {
     memset(buf, 0, LabelSequence::MAX_SERIALIZED_LENGTH);
     LabelSequence els(ls1, buf);
 
-    std::cout << "[XX] " << els.toText() << std::endl;
-    // some men just want to watch the world burn.
     els.extend(els, buf);
-    std::cout << "[XX] " << els.toText() << std::endl;
+    check_equal(ls2, els);
+
+    // Also try for non-absolute names
+    ls2.stripRight(1);
+    els = LabelSequence(ls1, buf);
+    els.stripRight(1);
+    els.extend(els, buf);
+    check_equal(ls2, els);
+
+    // Once more, now start out with non-absolue
+    ls1.stripRight(1);
+    els = LabelSequence(ls1, buf);
+    els.extend(els, buf);
     check_equal(ls2, els);
 }
 
-// Test that 'extending' with just a root label is a no-op
+// Test that 'extending' with just a root label is a no-op, iff the original
+// was already absolute
 TEST(LabelSequence, extendWithRoot) {
     Name n1("example.org");
     LabelSequence ls1(n1);
@@ -969,6 +1016,16 @@ TEST(LabelSequence, extendWithRoot) {
     check_equal(ls1, els);
     els.extend(LabelSequence(Name(".")), buf);
     check_equal(ls1, els);
+
+    // but not if the original was not absolute (it will be equal to
+    // the original labelsequence used above, but not the one it was based
+    // on).
+    LabelSequence ls2(n1);
+    ls2.stripRight(1);
+    els = LabelSequence(ls2, buf);
+    els.extend(LabelSequence(Name(".")), buf);
+    check_equal(ls1, els);
+    check_compare(ls2, els, isc::dns::NameComparisonResult::NONE, 0);
 }
 
 // Check possible failure modes of extend()
@@ -996,6 +1053,7 @@ TEST(LabelSequence, extendBadData) {
     els.extend(LabelSequence(Name("123456789")), buf);
     // But now, even the shortest extension should fail
     EXPECT_THROW(els.extend(LabelSequence(Name("1")), buf), isc::BadValue);
+/*
 
     // Also check that extending past MAX_LABELS is not possible
     Name shortname("1.");
@@ -1005,6 +1063,7 @@ TEST(LabelSequence, extendBadData) {
         els.extend(short_ls, buf);
     }
     EXPECT_THROW(els.extend(short_ls, buf), isc::BadValue);
+*/
 }
 
 }

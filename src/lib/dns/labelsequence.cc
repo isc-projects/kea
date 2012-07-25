@@ -341,45 +341,88 @@ void
 LabelSequence::extend(const LabelSequence& labels,
                       uint8_t buf[MAX_SERIALIZED_LENGTH])
 {
-    // check whether this labelsequence appears to have anything to do with
-    // the given buf at all
+    // collect data to perform steps before anything is changed
+    bool absolute = isAbsolute();
+    size_t label_count = last_label_ + 1;
+    // Since we may have been stripped, do not use getDataLength(), but
+    // calculate actual data size we use
+    size_t data_pos = offsets_[last_label_] + data_[offsets_[last_label_]] + 1;
+
+    // If this labelsequence is absolute, virtually strip the root label.
+    if (absolute) {
+        data_pos--;
+        label_count--;
+    }
+    size_t append_label_count = labels.getLabelCount();
+    size_t data_len;
+    const uint8_t *data = labels.getData(&data_len);
+
+    // Sanity checks
     if (data_ != buf || offsets_ != &buf[Name::MAX_WIRE]) {
         isc_throw(BadValue,
                   "extend() called with unrelated buffer");
     }
-
-    // check name does not become too long
-    size_t orig_len = getDataLength() - 1;
-    if (orig_len + labels.getDataLength() > Name::MAX_WIRE) {
+    if (data_pos + data_len > Name::MAX_WIRE) {
         isc_throw(BadValue,
                   "extend() would exceed maximum wire length");
     }
-
-    // check offsets data does not become too long
-    if (getLabelCount() + labels.getLabelCount() > Name::MAX_LABELS) {
+    if (label_count + append_label_count > Name::MAX_LABELS) {
         isc_throw(BadValue,
                   "extend() would exceed maximum number of labels");
     }
 
-    // append second to first labelsequence
-    size_t data_len;
-    const uint8_t *data = labels.getData(&data_len);
-    memcpy(buf + orig_len, data, data_len);
+    // All seems to be reasonably ok, let's proceed.
 
-    // append offsets
-    for (size_t i = 0; i < labels.getLabelCount(); ++i) {
-        buf[Name::MAX_WIRE + last_label_ + i] =
-                                  offsets_[last_label_] +
+    // Note: In theory this could be done with a straightforward memcpy.
+    // However, one can extend a labelsequence with itself, in which
+    // case we'd be copying overlapping data (overwriting the current last
+    // label if this LabelSequence is absolute). Therefore we do this
+    // manually, and more importantly, backwards.
+    // (note2 obviously this destroys data_len, don't use below,
+    // or reset it)
+    while (--data_len) {
+        buf[data_pos + data_len] = data[data_len];
+    }
+    buf[data_pos + data_len] = data[data_len];
+
+    for (size_t i = 0; i < append_label_count; ++i) {
+        buf[Name::MAX_WIRE + label_count + i] =
+                                  offsets_[label_count] +
                                   labels.offsets_[i + labels.first_label_] -
                                   labels.offsets_[labels.first_label_];
     }
-    last_label_ += labels.last_label_ - labels.first_label_;
+    last_label_ = label_count + append_label_count - 1;
 }
 
 std::ostream&
 operator<<(std::ostream& os, const LabelSequence& label_sequence) {
     os << label_sequence.toText();
     return (os);
+}
+
+void
+LabelSequence::dump() const {
+    std::cout << "[XX] serialized data: ";
+    for (size_t i = 0; i < getDataLength(); ++i) {
+        std::cout << (int)data_[i] << " ";
+    }
+    std::cout << std::endl;
+    std::cout << "[XX] offsets: ";
+    size_t cur_offset = 0;
+    uint8_t cur_ll = data_[offsets_[cur_offset]];
+    while(cur_ll != 0) {
+        std::cout << (int)offsets_[cur_offset] << " ";
+        cur_offset++;
+        cur_ll = data_[offsets_[cur_offset]];
+    }
+    std::cout << std::endl;
+    std::cout << "[XX] first label: " << first_label_ << std::endl;
+    std::cout << "[XX] last label: " << last_label_ << std::endl;
+    if (isAbsolute()) {
+        std::cout << "[XX] absolute" << std::endl;
+    } else {
+        std::cout << "[XX] not absolute" << std::endl;
+    }
 }
 
 } // end namespace dns
