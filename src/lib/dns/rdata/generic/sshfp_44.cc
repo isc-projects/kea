@@ -56,8 +56,6 @@ SSHFP::SSHFP(InputBuffer& buffer, size_t rdata_len) {
 
 SSHFP::SSHFP(const std::string& sshfp_str) {
     std::istringstream iss(sshfp_str);
-    // peekc should be of iss's char_type for isspace to work
-    std::istringstream::char_type peekc;
     std::stringbuf fingerprintbuf;
     uint32_t algorithm, fingerprint_type;
 
@@ -74,21 +72,16 @@ SSHFP::SSHFP(const std::string& sshfp_str) {
         isc_throw(InvalidRdataText, "SSHFP fingerprint type out of range");
     }
 
-    iss.read(&peekc, 1);
-    if (!iss.good() || !isspace(peekc, iss.getloc())) {
-        isc_throw(InvalidRdataText, "SSHFP presentation format error");
-    }
-
     iss >> &fingerprintbuf;
-
-    algorithm_ = algorithm;
-    fingerprint_type_ = fingerprint_type;
-
     try {
         decodeHex(fingerprintbuf.str(), fingerprint_);
     } catch (const isc::BadValue& e) {
-        isc_throw(InvalidRdataText, "Bad SSHFP fingerprint: " << e.what());
+        isc_throw(InvalidRdataText,
+                  "Bad SSHFP fingerprint: " << e.what());
     }
+
+    algorithm_ = algorithm;
+    fingerprint_type_ = fingerprint_type;
 }
 
 SSHFP::SSHFP(uint8_t algorithm, uint8_t fingerprint_type,
@@ -114,14 +107,20 @@ void
 SSHFP::toWire(OutputBuffer& buffer) const {
     buffer.writeUint8(algorithm_);
     buffer.writeUint8(fingerprint_type_);
-    buffer.writeData(&fingerprint_[0], fingerprint_.size());
+
+    if (fingerprint_.size() > 0) {
+        buffer.writeData(&fingerprint_[0], fingerprint_.size());
+    }
 }
 
 void
 SSHFP::toWire(AbstractMessageRenderer& renderer) const {
     renderer.writeUint8(algorithm_);
     renderer.writeUint8(fingerprint_type_);
-    renderer.writeData(&fingerprint_[0], fingerprint_.size());
+
+    if (fingerprint_.size() > 0) {
+        renderer.writeData(&fingerprint_[0], fingerprint_.size());
+    }
 }
 
 string
@@ -170,6 +169,11 @@ SSHFP::getSSHFPAlgorithmNumber() const {
 uint8_t
 SSHFP::getSSHFPFingerprintType() const {
     return (fingerprint_type_);
+}
+
+size_t
+SSHFP::getFingerprintLen() const {
+    return (fingerprint_.size());
 }
 
 // END_RDATA_NAMESPACE
