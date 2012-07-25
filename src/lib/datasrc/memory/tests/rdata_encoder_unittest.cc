@@ -14,10 +14,13 @@
 
 #include <exceptions/exceptions.h>
 
+#include <util/buffer.h>
+
 #include <dns/name.h>
 #include <dns/labelsequence.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
+#include <dns/rdataclass.h>
 #include <dns/rrclass.h>
 #include <dns/rrtype.h>
 
@@ -111,7 +114,9 @@ renderDataField(MessageRenderer* renderer, const uint8_t* data,
 class RdataEncoderTest : public ::testing::Test {
 protected:
     RdataEncoderTest() : a_rdata_(createRdata(RRType::A(), RRClass::IN(),
-                                              "192.0.2.53"))
+                                              "192.0.2.53")),
+                         aaaa_rdata_(createRdata(RRType::AAAA(), RRClass::IN(),
+                                                 "2001:db8::53"))
     {}
 
     // This helper test method constructs encodes the given list of RDATAs
@@ -124,6 +129,7 @@ protected:
                      size_t expected_varlen_fields);
 
     const ConstRdataPtr a_rdata_;     // commonly used RDATA
+    const ConstRdataPtr aaaa_rdata_;  // commonly used RDATA
     RdataEncoder encoder_;
     vector<uint8_t> encoded_data_;
     MessageRenderer expected_renderer_;
@@ -279,9 +285,55 @@ TEST_F(RdataEncoderTest, badAddRdata) {
                  isc::BadValue);
     encoded_data_.resize(buf_len + 1);
     encoder_.encode(&encoded_data_[1], buf_len);
-}
 
-// TODO: add before start
+    // Type of RDATA and the specified RR type don't match.  addRdata() should
+    // detect this inconsistency.
+    encoder_.start(RRClass::IN(), RRType::AAAA());
+    EXPECT_THROW(encoder_.addRdata(*a_rdata_), isc::BadValue);
+
+    // Likewise.
+    encoder_.start(RRClass::IN(), RRType::A());
+    EXPECT_THROW(encoder_.addRdata(*aaaa_rdata_), isc::BadValue);
+
+    // Likewise.  The encoder expects the first name completes the data, and
+    // throws on the second due as an unexpected name field.
+    const ConstRdataPtr rp_rdata =
+        createRdata(RRType::RP(), RRClass::IN(), "a.example. b.example");
+    encoder_.start(RRClass::IN(), RRType::NS());
+    EXPECT_THROW(encoder_.addRdata(*rp_rdata), isc::BadValue);
+
+    // Likewise.  The encoder considers the name data a variable length data
+    // field, and throws on the first name.
+    encoder_.start(RRClass::IN(), RRType::DHCID());
+    EXPECT_THROW(encoder_.addRdata(*rp_rdata), isc::BadValue);
+
+    // Likewise.  The text RDATA (2 bytes) will be treated as MX preference,
+    // and the encoder will still expect to see a domain name.
+    const ConstRdataPtr txt_rdata = createRdata(RRType::TXT(), RRClass::IN(),
+                                                "a");
+    encoder_.start(RRClass::IN(), RRType::MX());
+    EXPECT_THROW(encoder_.addRdata(*txt_rdata), isc::BadValue);
+
+    // Likewise.  Inconsistent name compression policy.
+    const ConstRdataPtr ns_rdata =
+        createRdata(RRType::NS(), RRClass::IN(), "ns.example");
+    encoder_.start(RRClass::IN(), RRType::DNAME());
+    EXPECT_THROW(encoder_.addRdata(*ns_rdata), isc::BadValue);
+
+    // Same as the previous one, opposite inconsistency.
+    const ConstRdataPtr dname_rdata =
+        createRdata(RRType::DNAME(), RRClass::IN(), "dname.example");
+    encoder_.start(RRClass::IN(), RRType::NS());
+    EXPECT_THROW(encoder_.addRdata(*dname_rdata), isc::BadValue);
+
+    // RDATA len exceeds the 16-bit range.  Technically not invalid, but
+    // we don't support that (and it's practically useless anyway).
+    encoded_data_.resize(65536); // use encoded_data_ for placeholder
+    isc::util::InputBuffer buffer(&encoded_data_[0], encoded_data_.size());
+    encoder_.start(RRClass::IN(), RRType::DHCID());
+    EXPECT_THROW(encoder_.addRdata(in::DHCID(buffer, encoded_data_.size())),
+                                   RdataEncodingError);
+}
 
 // Note: in our implementation RRSIG is treated as opaque data (including
 // the signer name).  We use "com" for signer so it won't be a compress
