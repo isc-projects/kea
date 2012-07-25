@@ -343,7 +343,6 @@ public:
     /// \return true if the last label is the root label
     bool isAbsolute() const;
 
-    void dump() const;
 private:
     const uint8_t* data_;       // wire-format name data
     const uint8_t* offsets_;    // an array of offsets in data_ for the labels
