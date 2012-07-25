@@ -18,11 +18,8 @@
 #include <dns/labelsequence.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
-#include <dns/rdataclass.h>     // for a test function
 #include <dns/rrclass.h>
 #include <dns/rrtype.h>
-
-#include <util/buffer.h>        // for test functions
 
 #include "rdata_encoder.h"
 
@@ -35,7 +32,6 @@
 #include <stdint.h>
 
 using namespace isc::dns;
-using std::pair;
 using std::vector;
 
 namespace isc {
@@ -315,15 +311,12 @@ public:
         const LabelSequence labels(name);
         labels.serialize(labels_placeholder_, sizeof(labels_placeholder_));
         writeData(labels_placeholder_, labels.getSerializedLength());
-        names_.push_back(pair<size_t, Name>(0, name));
 
         last_data_pos_ += labels.getSerializedLength();
     }
     void clearLocal(const RdataEncodeSpec* encode_spec) {
         AbstractMessageRenderer::clear();
         encode_spec_ = encode_spec;
-        data_positions_.clear();
-        names_.clear();
         data_lengths_.clear();
         last_data_pos_ = 0;
     }
@@ -340,8 +333,6 @@ public:
             isc_throw(BadValue, "RDATA encoder finds missing field");
         }
     }
-    vector<pair<size_t, size_t> > data_positions_;
-    vector<pair<size_t, Name> > names_;
     vector<uint16_t> data_lengths_;
 
 private:
@@ -388,9 +379,6 @@ private:
             isc_throw(BadValue, "redundant data for encoding in RDATA");
         }
 
-        // We added this much data from last time
-        data_positions_.push_back(
-            pair<size_t, size_t>(last_data_pos_, cur_pos - last_data_pos_));
         last_data_pos_ = cur_pos;
     }
 
