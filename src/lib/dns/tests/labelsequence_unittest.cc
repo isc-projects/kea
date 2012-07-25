@@ -916,6 +916,95 @@ TEST(LabelSequence, extendableLabelSequenceRightStrippedSource) {
     }
 }
 
+// Check some basic 'extend' functionality
+TEST(LabelSequence, extend) {
+    Name n1("foo.bar.");
+    Name n2("foo");
+    Name n3("bar");
+    LabelSequence ls1(n1);
+    LabelSequence ls2(n2);
+    LabelSequence ls3(n3);
+    LabelSequence ls4(n1);
 
+    uint8_t buf[LabelSequence::MAX_SERIALIZED_LENGTH];
+    memset(buf, 0, LabelSequence::MAX_SERIALIZED_LENGTH);
+    LabelSequence els(ls2, buf);
+
+    check_compare(ls1, els, isc::dns::NameComparisonResult::COMMONANCESTOR, 1);
+    els.extend(ls3, buf);
+
+    check_compare(ls1, els, isc::dns::NameComparisonResult::EQUAL, 3);
+    stripLeftCheck(ls1, els, ls4);
+    stripRightCheck(ls1, els, ls4);
+
+    els.extend(ls3, buf);
+    check_compare(ls1, ls2, isc::dns::NameComparisonResult::COMMONANCESTOR, 1);
+}
+
+// Check that when extending with itself, it does not cause horrible failures
+TEST(LabelSequence, extendWithItself) {
+    Name n1("foo.bar.");
+    Name n2("foo.bar.foo.bar.");
+    LabelSequence ls1(n1);
+    LabelSequence ls2(n2);
+
+    uint8_t buf[LabelSequence::MAX_SERIALIZED_LENGTH];
+    memset(buf, 0, LabelSequence::MAX_SERIALIZED_LENGTH);
+    LabelSequence els(ls1, buf);
+
+    std::cout << "[XX] " << els.toText() << std::endl;
+    // some men just want to watch the world burn.
+    els.extend(els, buf);
+    std::cout << "[XX] " << els.toText() << std::endl;
+    check_equal(ls2, els);
+}
+
+// Test that 'extending' with just a root label is a no-op
+TEST(LabelSequence, extendWithRoot) {
+    Name n1("example.org");
+    LabelSequence ls1(n1);
+    uint8_t buf[LabelSequence::MAX_SERIALIZED_LENGTH];
+
+    LabelSequence els(LabelSequence(ls1, buf));
+    check_equal(ls1, els);
+    els.extend(LabelSequence(Name(".")), buf);
+    check_equal(ls1, els);
+}
+
+// Check possible failure modes of extend()
+TEST(LabelSequence, extendBadData) {
+    Name n1("example.org.");
+    LabelSequence ls1(n1);
+
+    uint8_t buf[LabelSequence::MAX_SERIALIZED_LENGTH];
+    memset(buf, 0, LabelSequence::MAX_SERIALIZED_LENGTH);
+    LabelSequence els(ls1, buf);
+
+    // try use with unrelated labelsequence
+    EXPECT_THROW(ls1.extend(ls1, buf), isc::BadValue);
+
+    // Create a long name, but so that we can still extend once
+    Name longlabel("1234567890123456789012345678901234567890"
+                   "12345678901234567890");
+    LabelSequence ls2(longlabel);
+    els = LabelSequence(ls2, buf);
+    els.extend(els, buf);
+    els.extend(ls2, buf);
+    els.extend(ls2, buf);
+    ASSERT_EQ(245, els.getDataLength());
+    // Extending once more with 10 bytes should still work
+    els.extend(LabelSequence(Name("123456789")), buf);
+    // But now, even the shortest extension should fail
+    EXPECT_THROW(els.extend(LabelSequence(Name("1")), buf), isc::BadValue);
+
+    // Also check that extending past MAX_LABELS is not possible
+    Name shortname("1.");
+    LabelSequence short_ls(shortname);
+    els = LabelSequence(short_ls, buf);
+    for (size_t i=0; i < 125; ++i) {
+        els.extend(short_ls, buf);
+    }
+    EXPECT_THROW(els.extend(short_ls, buf), isc::BadValue);
+}
 
 }
