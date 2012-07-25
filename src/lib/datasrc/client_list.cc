@@ -24,7 +24,9 @@
 using namespace isc::data;
 using namespace isc::dns;
 using namespace std;
-using namespace boost;
+using boost::lexical_cast;
+using boost::shared_ptr;
+using boost::dynamic_pointer_cast;
 
 namespace isc {
 namespace datasrc {
