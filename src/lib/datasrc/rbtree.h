@@ -1638,16 +1638,13 @@ RBTree<T>::nodeFission(util::MemorySegment& mem_sgmt, RBNode<T>& node,
 
     std::swap(node.data_, down_node->data_);
 
-    // Swap flags bitfields; yes, this is ugly.  The right solution is to
-    // implement the above note regarding #2054, then we won't have to swap
-    // the flags in the first place.
-    struct {
-        uint32_t flags_ : 23;
-        uint32_t unused_ : 9;
-    } tmp;
-    tmp.flags_ = node.flags_;
+    // Swap flags bitfields; yes, this is ugly (it appears we cannot use
+    // std::swap for bitfields).  The right solution is to implement
+    // the above note regarding #2054, then we won't have to swap the
+    // flags in the first place.
+    const uint32_t tmp = node.flags_;
     node.flags_ = down_node->flags_;
-    down_node->flags_ = tmp.flags_;
+    down_node->flags_ = tmp;
 
     down_node->down_ = node.getDown();
     node.down_ = down_node;
