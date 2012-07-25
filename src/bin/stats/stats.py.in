@@ -129,8 +129,8 @@ class Stats:
         self.module_name = self.mccs.get_module_spec().get_module_name()
         self.modules = {}
         self.statistics_data = {}
-        # statistics data by each pid
-        self.statistics_data_bypid = {}
+        # statistics data by each mid
+        self.statistics_data_bymid = {}
         # get commands spec
         self.commands_spec = self.mccs.get_module_spec().get_commands_spec()
         # add event handler related command_handler of ModuleCCSession
@@ -211,7 +211,7 @@ class Stats:
                             rcode, args = isc.config.ccsession.parse_answer(answer)
                         if rcode == 0:
                             errors = self.update_statistics_data(
-                                module_name, env['from'] if n > 1 else -1, **args)
+                                module_name, env['from'], **args)
                             if errors:
                                 raise StatsError("spec file is incorrect: "
                                                  + ", ".join(errors))
@@ -327,14 +327,14 @@ class Stats:
                          + "owner: " + str(owner) + ", "
                          + "name: " + str(name))
 
-    def update_statistics_data(self, owner=None, pid=-1, **data):
+    def update_statistics_data(self, owner=None, mid=None, **data):
         """
         change statistics date of specified module into specified
         data. It updates information of each module first, and it
         updates statistics data. If specified data is invalid for
         statistics spec of specified owner, it returns a list of error
         messages. If there is no error or if neither owner nor data is
-        specified in args, it returns None. pid is the process id of
+        specified in args, it returns None. The 'mid' argument is a identifier of
         the sender module in order for stats to identify which
         instance sends statistics data in the situation that multiple
         instances are working.
@@ -342,16 +342,16 @@ class Stats:
         # Note:
         # The fix of #1751 is for multiple instances working. It is
         # assumed here that they send different statistics data with
-        # each PID. Stats should save their statistics data by
-        # PID. The statistics data, which is the existing variable, is
-        # preserved by accumlating from statistics data by PID. This
+        # each the sender module id(mid) . Stats should save their statistics data by
+        # mid. The statistics data, which is the existing variable, is
+        # preserved by accumlating from statistics data by the module id. This
         # is an ad-hoc fix because administrators can not see
         # statistics by each instance via bindctl or HTTP/XML. These
         # interfaces aren't changed in this fix.
 
-        def _accum_bymodule(statistics_data_bypid):
+        def _accum_bymodule(statistics_data_bymid):
             # This is an internal function for the superordinate
-            # function. It accumulates statistics data of each PID by
+            # function. It accumulates statistics data of each module id by
             # module. It returns the accumulation result.
             def _accum(a, b):
                 # If the first arg is dict or list type, two values
@@ -372,6 +372,12 @@ class Stats:
                                          if len(a) <= i ]
                 # If the first arg is integer or float type, two
                 # values are just added.
+                # FIXME: A issue might happen when consolidating
+                # statistics of the multiple instances. If they have
+                # different statistics data which are not for adding
+                # each other, this might happen: If these are integer
+                # or float, these are added each other, otherwise
+                # these are overwritten into one of them.
                 elif type(a) is int or type(a) is float:
                     return a + b
                 # If the first arg is str or other types than above,
@@ -379,7 +385,7 @@ class Stats:
                 # to be the newer value.
                 return a
             ret = {}
-            for data in statistics_data_bypid.values():
+            for data in statistics_data_bymid.values():
                 ret.update(_accum(data, ret))
             return ret
 
@@ -393,31 +399,31 @@ class Stats:
         self.statistics_data = statistics_data
 
         # If the "owner" and "data" arguments in this function are
-        # specified, then the variable of statistics data of each pid
+        # specified, then the variable of statistics data of each module id
         # would be updated.
         errors = []
         if owner and data:
             try:
                 if self.modules[owner].validate_statistics(False, data, errors):
-                    if owner in self.statistics_data_bypid:
-                        if pid in self.statistics_data_bypid[owner]:
-                            self.statistics_data_bypid[owner][pid].update(data)
+                    if owner in self.statistics_data_bymid:
+                        if mid in self.statistics_data_bymid[owner]:
+                            self.statistics_data_bymid[owner][mid].update(data)
                         else:
-                            self.statistics_data_bypid[owner][pid] = data
+                            self.statistics_data_bymid[owner][mid] = data
                     else:
-                        self.statistics_data_bypid[owner] = { pid : data }
+                        self.statistics_data_bymid[owner] = { mid : data }
             except KeyError:
                 errors.append("unknown module name: " + str(owner))
 
         # Just consolidate statistics data of each module without
         # removing that of modules which have been already dead
-        mlist = [ k for k in self.statistics_data_bypid.keys() ]
+        mlist = [ k for k in self.statistics_data_bymid.keys() ]
         for m in mlist:
-            if self.statistics_data_bypid[m]:
+            if self.statistics_data_bymid[m]:
                 if m in self.statistics_data:
                     self.statistics_data[m].update(
                         _accum_bymodule(
-                            self.statistics_data_bypid[m]))
+                            self.statistics_data_bymid[m]))
 
         if errors: return errors
 
