@@ -41,6 +41,13 @@ public:
     StatsMgrTest() {
     }
 
+    /// \brief Create DHCPv4 packet.
+    ///
+    /// Method creates DHCPv4 packet and updates its timestamp.
+    ///
+    /// \param msg_type DHCPv4 message type.
+    /// \param transid transaction id for the packet.
+    /// \return DHCPv4 packet.
     Pkt4* createPacket4(const uint8_t msg_type,
                         const uint32_t transid) {
         Pkt4* pkt = new Pkt4(msg_type, transid);
@@ -52,6 +59,13 @@ public:
         return pkt;
     }
 
+    /// \brief Create DHCPv6 packet.
+    ///
+    /// Method creates DHCPv6 packet and updates its timestamp.
+    ///
+    /// \param msg_type DHCPv6 message type.
+    /// \param transid transaction id.
+    /// \return DHCPv6 packet.
     Pkt6* createPacket6(const uint8_t msg_type,
                         const uint32_t transid) {
         Pkt6* pkt = new Pkt6(msg_type, transid);
@@ -63,6 +77,16 @@ public:
         return pkt;
     }
 
+    /// \brief Pass multiple DHCPv6 packets to Statistics Manager.
+    ///
+    /// Method simulates sending or receiving  multiple DHCPv6 packets.
+    ///
+    /// \param stats_mgr Statistics Manager instance to be used.
+    /// \param xchg_type packet exchange types.
+    /// \param packet_type DHCPv6 packet type.
+    /// \param num_packets packets to be passed to Statistics Manager.
+    /// \param receive simulated packets are received (if true)
+    /// or sent (if false)
     void passMultiplePackets6(const boost::shared_ptr<StatsMgr6> stats_mgr,
                               const StatsMgr6::ExchangeType xchg_type,
                               const uint8_t packet_type,
@@ -84,6 +108,49 @@ public:
         }
     }
 
+    /// \brief Simulate DHCPv4 DISCOVER-OFFER with delay.
+    ///
+    /// Method simulates DHCPv4 DISCOVER-OFFER exchange. The OFFER packet
+    /// creation is delayed by the specified number of seconds. This imposes
+    /// different packet timestamps and affects delay counters in Statistics
+    /// Manager.
+    ///
+    /// \param stats_mgr Statistics Manager instance.
+    /// \param delay delay in seconds between DISCOVER and OFFER packets.
+    void passDOPacketsWithDelay(const boost::shared_ptr<StatsMgr4> stats_mgr,
+                                unsigned int delay,
+                                uint32_t transid) {
+        boost::shared_ptr<Pkt4> sent_packet(createPacket4(DHCPDISCOVER,
+                                                      transid));
+        ASSERT_NO_THROW(
+            stats_mgr->passSentPacket(StatsMgr4::XCHG_DO, sent_packet)
+        );
+
+        // There is way to differentiate timstamps of two packets other than
+        // sleep for before we create another packet. Packet is using current
+        // time to update its timestamp.
+        // Sleeping for X seconds will guarantee that delay between packets
+        // will be greater than 1 second. Note that posix time value is
+        // transformed to double value and it makes it hard to determine
+        // actual value to expect.
+        std::cout << "Sleeping for " << delay << "s to test packet delays"
+                  << std::endl;
+        sleep(delay);
+
+        boost::shared_ptr<Pkt4> rcvd_packet(createPacket4(DHCPOFFER,
+                                                      transid));
+        ASSERT_NO_THROW(
+            stats_mgr->passRcvdPacket(StatsMgr4::XCHG_DO, rcvd_packet);
+        );
+
+        // Calculate period between packets.
+        boost::posix_time::ptime sent_time = sent_packet->getTimestamp();
+        boost::posix_time::ptime rcvd_time = rcvd_packet->getTimestamp();
+
+        ASSERT_FALSE(sent_time.is_not_a_date_time());
+        ASSERT_FALSE(rcvd_time.is_not_a_date_time());
+    }
+
 };
 
 TEST_F(StatsMgrTest, Constructor) {
@@ -94,19 +161,17 @@ TEST_F(StatsMgrTest, Constructor) {
         stats_mgr->getMinDelay(StatsMgr4::XCHG_DO)
     );
     EXPECT_EQ(0, stats_mgr->getMaxDelay(StatsMgr4::XCHG_DO));
-    EXPECT_EQ(0, stats_mgr->getSumDelay(StatsMgr4::XCHG_DO));
     EXPECT_EQ(0, stats_mgr->getOrphans(StatsMgr4::XCHG_DO));
-    EXPECT_EQ(0, stats_mgr->getSquareSumDelay(StatsMgr4::XCHG_DO));
     EXPECT_EQ(0, stats_mgr->getOrderedLookups(StatsMgr4::XCHG_DO));
     EXPECT_EQ(0, stats_mgr->getUnorderedLookups(StatsMgr4::XCHG_DO));
     EXPECT_EQ(0, stats_mgr->getSentPacketsNum(StatsMgr4::XCHG_DO));
     EXPECT_EQ(0, stats_mgr->getRcvdPacketsNum(StatsMgr4::XCHG_DO));
 
-    double avg_size = 0.;
-    ASSERT_NO_THROW(
-        avg_size = stats_mgr->getAvgUnorderedLookupSetSize(StatsMgr4::XCHG_DO);
-    );
-    EXPECT_EQ(0., avg_size);
+    EXPECT_THROW(stats_mgr->getAvgDelay(StatsMgr4::XCHG_DO), InvalidOperation);
+    EXPECT_THROW(stats_mgr->getStdDevDelay(StatsMgr4::XCHG_DO),
+                 InvalidOperation);
+    EXPECT_THROW(stats_mgr->getAvgUnorderedLookupSetSize(StatsMgr4::XCHG_DO),
+                 InvalidOperation);
 }
 
 TEST_F(StatsMgrTest, Exchange) {
@@ -275,39 +340,14 @@ TEST_F(StatsMgrTest, Orphans) {
 }
 
 TEST_F(StatsMgrTest, Delays) {
-    boost::scoped_ptr<StatsMgr4> stats_mgr(new StatsMgr4());
+
+    boost::shared_ptr<StatsMgr4> stats_mgr(new StatsMgr4());
     stats_mgr->addExchangeStats(StatsMgr4::XCHG_DO);
 
-    boost::shared_ptr<Pkt4> sent_packet(createPacket4(DHCPDISCOVER,
-                                                      common_transid));
-    ASSERT_NO_THROW(
-        stats_mgr->passSentPacket(StatsMgr4::XCHG_DO, sent_packet)
-    );
-
-    // There is way to differentiate timstamps of two packets other than
-    // sleep for before we create another packet. Packet is using current
-    // time to update its timestamp.
-    // Sleeping for two seconds will guarantee that delay between packets
-    // will be greater than 1 second. Note that posix time value is
-    // transformed to double value and it makes it hard to determine
-    // actual value to expect.
-    std::cout << "Sleeping for 2 seconds to test packet delays" << std::endl;
-    sleep(2);
-
-    boost::shared_ptr<Pkt4> rcvd_packet(createPacket4(DHCPOFFER,
-                                                      common_transid));
-    ASSERT_NO_THROW(
-        stats_mgr->passRcvdPacket(StatsMgr4::XCHG_DO, rcvd_packet);
-    );
-
-    // Calculate period between packets.
-    boost::posix_time::ptime sent_time = sent_packet->getTimestamp();
-    boost::posix_time::ptime rcvd_time = rcvd_packet->getTimestamp();
-
-    ASSERT_FALSE(sent_time.is_not_a_date_time());
-    ASSERT_FALSE(rcvd_time.is_not_a_date_time());
-
-    boost::posix_time::time_period period(sent_time, rcvd_time);
+    // Send DISCOVER, wait 2s and receive OFFER. This will affect
+    // counters in Stats Manager.
+    const unsigned int delay1 = 2;
+    passDOPacketsWithDelay(stats_mgr, 2, common_transid);
 
     // Initially min delay is equal to MAX_DOUBLE. After first packets
     // are passed, it is expected to set to actual value.
@@ -320,8 +360,15 @@ TEST_F(StatsMgrTest, Delays) {
     EXPECT_GT(stats_mgr->getMaxDelay(StatsMgr4::XCHG_DO), 1);
 
     // Delay sums are now the same as minimum or maximum delay.
-    EXPECT_GT(stats_mgr->getSumDelay(StatsMgr4::XCHG_DO), 1);
-    EXPECT_GT(stats_mgr->getSquareSumDelay(StatsMgr4::XCHG_DO), 1);
+    EXPECT_GT(stats_mgr->getAvgDelay(StatsMgr4::XCHG_DO), 1);
+
+    // Simulate another DISCOVER-OFFER exchange with delay between
+    // sent and received packets. Delay is now shorter than earlier
+    // so standard deviation of delay will now increase.
+    const unsigned int delay2 = 1;
+    passDOPacketsWithDelay(stats_mgr, delay2, common_transid + 1);
+    // Standard deviation is expected to be non-zero.
+    EXPECT_GT(stats_mgr->getStdDevDelay(StatsMgr4::XCHG_DO), 0);
 }
 
 TEST_F(StatsMgrTest, CustomCounters) {
@@ -360,6 +407,8 @@ TEST_F(StatsMgrTest, CustomCounters) {
         stats_mgr->getCounter(too_late_key);
     EXPECT_EQ(too_late_name, toolate_counter->getName());
     EXPECT_EQ(toolate_num, toolate_counter->getValue());
+
 }
+
 
 }

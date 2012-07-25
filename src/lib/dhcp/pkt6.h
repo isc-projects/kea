@@ -139,7 +139,7 @@ public:
     /// Returns value of transaction-id field
     ///
     /// @return transaction-id
-    uint32_t getTransid() { return (transid_); };
+    uint32_t getTransid() const { return (transid_); };
 
     /// Adds an option to this packet.
     ///
