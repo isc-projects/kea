@@ -1,0 +1,6 @@
+# Test where fingerprint length is smaller than what RDATA len indicates
+
+# SSHFP RDATA, RDLEN=32
+0020
+# ALGORITHM=2 FINGERPRINT_TYPE=1 FINGERPRINT=123456789abcdef67890123456789abcdef67890
+02 01 123456789abcdef67890123456789abcdef67890
