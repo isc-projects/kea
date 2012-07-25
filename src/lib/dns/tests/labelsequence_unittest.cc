@@ -986,11 +986,11 @@ TEST(LabelSequence, extendBadData) {
     // Create a long name, but so that we can still extend once
     Name longlabel("1234567890123456789012345678901234567890"
                    "12345678901234567890");
-    LabelSequence ls2(longlabel);
-    els = LabelSequence(ls2, buf);
+    LabelSequence long_ls(longlabel);
+    els = LabelSequence(long_ls, buf);
     els.extend(els, buf);
-    els.extend(ls2, buf);
-    els.extend(ls2, buf);
+    els.extend(long_ls, buf);
+    els.extend(long_ls, buf);
     ASSERT_EQ(245, els.getDataLength());
     // Extending once more with 10 bytes should still work
     els.extend(LabelSequence(Name("123456789")), buf);
