@@ -376,7 +376,6 @@ LabelSequence::extend(const LabelSequence& labels,
     last_label_ += labels.last_label_ - labels.first_label_;
 }
 
-
 std::ostream&
 operator<<(std::ostream& os, const LabelSequence& label_sequence) {
     os << label_sequence.toText();
