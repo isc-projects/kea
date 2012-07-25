@@ -257,19 +257,6 @@ getRdataEncodeSpec(RRClass rrclass, RRType rrtype) {
     return (generic_data_spec);
 }
 
-// A temporary helper of temporary encodeRdata(): it calculates the length
-// of the data portion of a NAPTR RDATA (i.e., the RDATA fields before the
-// "replacement" name).
-size_t
-getNAPTRDataLen(const rdata::Rdata& rdata) {
-    const rdata::generic::NAPTR& naptr_rdata =
-        dynamic_cast<const rdata::generic::NAPTR&>(rdata);
-
-    util::OutputBuffer buffer(0);
-    rdata.toWire(buffer);
-    return (buffer.getLength() - naptr_rdata.getReplacement().getLength());
-}
-
 // This class is used to divide the content of RDATA into \c RdataField
 // fields via message rendering logic.
 // The idea is to identify domain name fields in the writeName() method,
@@ -437,56 +424,8 @@ RdataEncoder::encode(void* buf, size_t buf_len) const {
 
 namespace testing {
 void
-encodeRdata(const rdata::Rdata& rdata, RRClass rrclass, RRType rrtype,
-            vector<uint8_t>& data_result, vector<uint16_t>& len_result)
-{
-    util::OutputBuffer buffer(0);
-    rdata.toWire(buffer);
-    util::InputBuffer ibuffer(buffer.getData(), buffer.getLength());
-    vector<uint8_t> tmp;        // used as temporary placeholder below
-
-    const RdataEncodeSpec& encode_spec = getRdataEncodeSpec(rrclass, rrtype);
-    for (size_t i = 0; i < encode_spec.field_count; ++i) {
-        const RdataFieldSpec& field_spec = encode_spec.fields[i];
-        switch (field_spec.type) {
-        case RdataFieldSpec::FIXEDLEN_DATA:
-            tmp.resize(field_spec.fixeddata_len);
-            ibuffer.readData(&tmp[0], tmp.size());
-            data_result.insert(data_result.end(), tmp.begin(), tmp.end());
-            break;
-        case RdataFieldSpec::VARLEN_DATA:
-        {
-            // In the vast majority cases of our supported RR types,
-            // variable-length data fields are placed at the end of RDATA,
-            // so the length of the field should be the remaining length
-            // of the output buffer.  The only exception is NAPTR, for which
-            // we use an ad hoc workaround (remember this function is for
-            // initial testing only, and will be cleaned up eventually).
-            const size_t pos = ibuffer.getPosition();
-            const size_t data_len = rrtype == RRType::NAPTR() ?
-                getNAPTRDataLen(rdata) : (ibuffer.getLength() - pos);
-            tmp.resize(data_len);
-            ibuffer.readData(&tmp[0], tmp.size());
-            data_result.insert(data_result.end(), tmp.begin(), tmp.end());
-            len_result.push_back(data_len);
-            break;
-        }
-        case RdataFieldSpec::DOMAIN_NAME:
-        {
-            const Name name(ibuffer);
-            const LabelSequence labels(name);
-            uint8_t labels_holder[LabelSequence::MAX_SERIALIZED_LENGTH];
-            labels.serialize(labels_holder, sizeof(labels_holder));
-            data_result.insert(data_result.end(), labels_holder,
-                               labels_holder + labels.getSerializedLength());
-            break;
-        }
-        }
-    }
-}
-
-void
 foreachRdataField(RRClass rrclass, RRType rrtype,
+                  size_t rdata_count,
                   const vector<uint8_t>& encoded_data,
                   const vector<uint16_t>& varlen_list,
                   NameCallback name_callback, DataCallback data_callback)
@@ -496,40 +435,42 @@ foreachRdataField(RRClass rrclass, RRType rrtype,
     size_t off = 0;
     size_t varlen_count = 0;
     size_t name_count = 0;
-    for (size_t i = 0; i < encode_spec.field_count; ++i) {
-        const RdataFieldSpec& field_spec = encode_spec.fields[i];
-        switch (field_spec.type) {
-        case RdataFieldSpec::FIXEDLEN_DATA:
-            if (data_callback) {
-                data_callback(&encoded_data.at(off), field_spec.fixeddata_len);
+    for (size_t count = 0; count < rdata_count; ++count) {
+        for (size_t i = 0; i < encode_spec.field_count; ++i) {
+            const RdataFieldSpec& field_spec = encode_spec.fields[i];
+            switch (field_spec.type) {
+            case RdataFieldSpec::FIXEDLEN_DATA:
+                if (data_callback) {
+                    data_callback(&encoded_data.at(off),
+                                  field_spec.fixeddata_len);
+                }
+                off += field_spec.fixeddata_len;
+                break;
+            case RdataFieldSpec::VARLEN_DATA:
+            {
+                const size_t varlen = varlen_list.at(varlen_count);
+                if (data_callback && varlen > 0) {
+                    data_callback(&encoded_data.at(off), varlen);
+                }
+                off += varlen;
+                ++varlen_count;
+                break;
             }
-            off += field_spec.fixeddata_len;
-            break;
-        case RdataFieldSpec::VARLEN_DATA:
-        {
-            const size_t varlen = varlen_list.at(varlen_count);
-            if (data_callback && varlen > 0) {
-                data_callback(&encoded_data.at(off), varlen);
+            case RdataFieldSpec::DOMAIN_NAME:
+            {
+                ++name_count;
+                const LabelSequence labels(&encoded_data.at(off));
+                if (name_callback) {
+                    name_callback(labels, field_spec.name_attributes);
+                }
+                off += labels.getSerializedLength();
+                break;
             }
-            off += varlen;
-            ++varlen_count;
-            break;
-        }
-        case RdataFieldSpec::DOMAIN_NAME:
-        {
-            ++name_count;
-            const LabelSequence labels(&encoded_data.at(off));
-            if (name_callback) {
-                name_callback(labels, field_spec.name_attributes);
             }
-            off += labels.getSerializedLength();
-            break;
-        }
         }
     }
-
-    assert(name_count == encode_spec.name_count);
-    assert(varlen_count == encode_spec.varlen_count);
+    assert(name_count == encode_spec.name_count * rdata_count);
+    assert(varlen_count == encode_spec.varlen_count * rdata_count);
 }
 } // namespace testing
 
