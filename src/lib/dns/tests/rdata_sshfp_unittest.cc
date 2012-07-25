@@ -126,6 +126,21 @@ TEST_F(Rdata_SSHFP_Test, createFromWire) {
     // short fingerprint data
     EXPECT_NO_THROW(rdataFactoryFromFile(RRType("SSHFP"), RRClass("IN"),
                                          "rdata_sshfp_fromWire8.wire"));
+
+    // fingerprint is shorter than rdata len
+    EXPECT_THROW(rdataFactoryFromFile(RRType("SSHFP"), RRClass("IN"),
+                                      "rdata_sshfp_fromWire9"),
+                 InvalidRdataLength);
+
+    // fingerprint is missing
+    EXPECT_THROW(rdataFactoryFromFile(RRType("SSHFP"), RRClass("IN"),
+                                      "rdata_sshfp_fromWire10"),
+                 InvalidRdataLength);
+
+    // all rdata is missing
+    EXPECT_THROW(rdataFactoryFromFile(RRType("SSHFP"), RRClass("IN"),
+                                      "rdata_sshfp_fromWire11"),
+                 InvalidRdataLength);
 }
 
 TEST_F(Rdata_SSHFP_Test, toText) {
