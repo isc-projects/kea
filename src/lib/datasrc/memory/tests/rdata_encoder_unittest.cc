@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <exceptions/exceptions.h>
+
 #include <dns/name.h>
 #include <dns/labelsequence.h>
 #include <dns/messagerenderer.h>
@@ -108,7 +110,9 @@ renderDataField(MessageRenderer* renderer, const uint8_t* data,
 
 class RdataEncoderTest : public ::testing::Test {
 protected:
-    RdataEncoderTest() {}
+    RdataEncoderTest() : a_rdata_(createRdata(RRType::A(), RRClass::IN(),
+                                              "192.0.2.53"))
+    {}
 
     // This helper test method constructs encodes the given list of RDATAs
     // (in rdata_list), and then iterates over the data, rendering the fields
@@ -119,6 +123,7 @@ protected:
                      const vector<ConstRdataPtr>& rdata_list,
                      size_t expected_varlen_fields);
 
+    const ConstRdataPtr a_rdata_;     // commonly used RDATA
     RdataEncoder encoder_;
     vector<uint8_t> encoded_data_;
     MessageRenderer expected_renderer_;
@@ -217,12 +222,10 @@ TEST_F(RdataEncoderTest, addRdataMulti) {
     // Four different cases are tested: a single fixed-len RDATA (A),
     // fixed-len data + domain name (MX), variable-len data only (TXT),
     // variable-len data + domain name (NAPTR).
-    ConstRdataPtr a_rdata1 = createRdata(RRType::A(), RRClass::IN(),
-                                        "192.0.2.53");
     ConstRdataPtr a_rdata2 = createRdata(RRType::A(), RRClass::IN(),
                                          "192.0.2.54");
     rdata_list_.clear();
-    rdata_list_.push_back(a_rdata1);
+    rdata_list_.push_back(a_rdata_);
     rdata_list_.push_back(a_rdata2);
     checkEncode(RRClass::IN(), RRType::A(), rdata_list_, 0);
 
@@ -254,6 +257,28 @@ TEST_F(RdataEncoderTest, addRdataMulti) {
     rdata_list_.push_back(naptr_rdata1);
     rdata_list_.push_back(naptr_rdata2);
     checkEncode(RRClass::IN(), RRType::NAPTR(), rdata_list_, 1);
+}
+
+TEST_F(RdataEncoderTest, badAddRdata) {
+    // Some operations must follow start().
+    EXPECT_THROW(encoder_.addRdata(*a_rdata_), isc::InvalidOperation);
+    EXPECT_THROW(encoder_.getStorageLength(), isc::InvalidOperation);
+    encoded_data_.resize(256); // allocate space of some arbitrary size
+    EXPECT_THROW(encoder_.encode(&encoded_data_[0], encoded_data_.size()),
+                 isc::InvalidOperation);
+
+    // Bad buffer for encode
+    encoder_.start(RRClass::IN(), RRType::A());
+    encoder_.addRdata(*a_rdata_);
+    const size_t buf_len = encoder_.getStorageLength();
+    // NULL buffer for encode
+    EXPECT_THROW(encoder_.encode(NULL, buf_len), isc::BadValue);
+    // buffer length is too short
+    encoded_data_.resize(buf_len - 1);
+    EXPECT_THROW(encoder_.encode(&encoded_data_[0], buf_len - 1),
+                 isc::BadValue);
+    encoded_data_.resize(buf_len + 1);
+    encoder_.encode(&encoded_data_[1], buf_len);
 }
 
 // TODO: add before start
