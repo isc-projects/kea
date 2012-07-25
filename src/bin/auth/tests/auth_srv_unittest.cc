@@ -966,7 +966,11 @@ TEST_F(AuthSrvTest, updateWithInMemoryClient) {
                 opcode.getCode(), QR_FLAG, 1, 0, 0, 0);
 }
 
+#ifdef USE_STATIC_LINK
+TEST_F(AuthSrvTest, DISABLED_queryWithInMemoryClientNoDNSSEC) {
+#else
 TEST_F(AuthSrvTest, queryWithInMemoryClientNoDNSSEC) {
+#endif
     // In this example, we do simple check that query is handled from the
     // query handler class, and confirm it returns no error and a non empty
     // answer section.  Detailed examination on the response content
@@ -982,7 +986,11 @@ TEST_F(AuthSrvTest, queryWithInMemoryClientNoDNSSEC) {
                 opcode.getCode(), QR_FLAG | AA_FLAG, 1, 1, 2, 1);
 }
 
+#ifdef USE_STATIC_LINK
+TEST_F(AuthSrvTest, DISABLED_queryWithInMemoryClientDNSSEC) {
+#else
 TEST_F(AuthSrvTest, queryWithInMemoryClientDNSSEC) {
+#endif
     // Similar to the previous test, but the query has the DO bit on.
     // The response should contain RRSIGs, and should have more RRs than
     // the previous case.
