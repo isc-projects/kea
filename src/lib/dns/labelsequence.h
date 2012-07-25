@@ -268,11 +268,19 @@ public:
 
     /// \brief Extend this LabelSequence with the given labelsequence
     ///
-    /// The given labels are added to the name data, and internal data
-    /// is updated accordingly.
+    /// The given labels are added to the name data, and internal offset
+    /// data is updated accordingly.
+    ///
     /// The data from the given LabelSequence is copied into the buffer
     /// associated with this LabelSequence; the appended LabelSequence
     /// can be released if it is not needed for other operations anymore.
+    ///
+    /// If this LabelSequence is absolute, its root label will be stripped
+    /// before the given LabelSequence is appended; after extend(),
+    /// this LabelSequence will be absolute if, and only if, the appended
+    /// LabelSequence was. A side-effect of this property is that adding
+    /// the root label to an absolute LabelSequence has no effect (the
+    /// root label is stripped, then added again).
     ///
     /// Some minimal checking is done on the data, but internal integrity
     /// is not assumed. Do NOT modify the given buffer except through calls

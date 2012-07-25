@@ -345,7 +345,7 @@ LabelSequence::extend(const LabelSequence& labels,
     bool absolute = isAbsolute();
     size_t label_count = last_label_ + 1;
     // Since we may have been stripped, do not use getDataLength(), but
-    // calculate actual data size we use
+    // calculate actual data size this labelsequence currently uses
     size_t data_pos = offsets_[last_label_] + data_[offsets_[last_label_]] + 1;
 
     // If this labelsequence is absolute, virtually strip the root label.
@@ -378,7 +378,7 @@ LabelSequence::extend(const LabelSequence& labels,
     // case we'd be copying overlapping data (overwriting the current last
     // label if this LabelSequence is absolute). Therefore we do this
     // manually, and more importantly, backwards.
-    // (note2 obviously this destroys data_len, don't use below,
+    // (note2: obviously this destroys data_len, don't use below,
     // or reset it)
     while (--data_len) {
         buf[data_pos + data_len] = data[data_len];
@@ -387,9 +387,9 @@ LabelSequence::extend(const LabelSequence& labels,
 
     for (size_t i = 0; i < append_label_count; ++i) {
         buf[Name::MAX_WIRE + label_count + i] =
-                                  offsets_[label_count] +
-                                  labels.offsets_[i + labels.first_label_] -
-                                  labels.offsets_[labels.first_label_];
+            offsets_[label_count] +
+            labels.offsets_[i + labels.first_label_] -
+            labels.offsets_[labels.first_label_];
     }
     last_label_ = label_count + append_label_count - 1;
 }
@@ -398,31 +398,6 @@ std::ostream&
 operator<<(std::ostream& os, const LabelSequence& label_sequence) {
     os << label_sequence.toText();
     return (os);
-}
-
-void
-LabelSequence::dump() const {
-    std::cout << "[XX] serialized data: ";
-    for (size_t i = 0; i < getDataLength(); ++i) {
-        std::cout << (int)data_[i] << " ";
-    }
-    std::cout << std::endl;
-    std::cout << "[XX] offsets: ";
-    size_t cur_offset = 0;
-    uint8_t cur_ll = data_[offsets_[cur_offset]];
-    while(cur_ll != 0) {
-        std::cout << (int)offsets_[cur_offset] << " ";
-        cur_offset++;
-        cur_ll = data_[offsets_[cur_offset]];
-    }
-    std::cout << std::endl;
-    std::cout << "[XX] first label: " << first_label_ << std::endl;
-    std::cout << "[XX] last label: " << last_label_ << std::endl;
-    if (isAbsolute()) {
-        std::cout << "[XX] absolute" << std::endl;
-    } else {
-        std::cout << "[XX] not absolute" << std::endl;
-    }
 }
 
 } // end namespace dns
