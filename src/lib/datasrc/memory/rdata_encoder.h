@@ -21,6 +21,7 @@
 #include <dns/rrtype.h>
 
 #include <boost/function.hpp>
+#include <boost/noncopyable.hpp>
 
 #include <vector>
 
@@ -37,6 +38,46 @@ enum RdataNameAttributes {
     NAMEATTR_ADDITIONAL = (NAMEATTR_COMPRESSIBLE << 1) ///< Name requires
                                                       ///< Additional section
                                                       ///< handling
+};
+
+/// \brief TBD
+///
+/// Encoding, FYI:
+/// uint16_t n1_1: size of 1st variable len field (if any) of 1st RDATA
+/// uint16_t n1_2: size of 2nd variable len field of 1st RDATA
+/// ...
+/// uint16_t nN_M: size of last (Mth) variable len field of last (Nth) RDATA
+/// A sequence of packed data fields follow:
+/// uint8_t[]: data field value, length specified by nI_J (in case it's
+///            variable) or by the field spec (in case it's fixed-length).
+/// or
+/// opaque data, LabelSequence::getSerializedLength() bytes: data for a name
+/// (a possible 1-byte padding)
+/// uint16_t ns1: size of 1st RRSIG data
+/// ...
+/// uint16_t nsL: size of last (Lth) RRSIG data
+/// uint8_t[ns1]: 1st RRSIG data
+/// ...
+/// uint8_t[nsL]: last RRSIG data
+class RdataEncoder : boost::noncopyable {
+public:
+    /// \brief Default constructor.
+    RdataEncoder();
+
+    /// \brief The destrcutor.
+    ~RdataEncoder();
+
+    void start(dns::RRClass rrclass, dns::RRType rrtype);
+
+    void addRdata(const dns::rdata::Rdata& rdata);
+
+    size_t getStorageLength() const;
+
+    void encode(void* buf, size_t buf_len) const;
+
+private:
+    struct RdataEncoderImpl;
+    RdataEncoderImpl* impl_;
 };
 
 // We use the following quick-hack version of encoder and "foreach"

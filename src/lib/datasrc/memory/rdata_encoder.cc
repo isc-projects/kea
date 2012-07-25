@@ -14,6 +14,7 @@
 
 #include <dns/name.h>
 #include <dns/labelsequence.h>
+#include <dns/messagerenderer.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>     // for a test function
 #include <dns/rrclass.h>
@@ -26,11 +27,13 @@
 #include <boost/static_assert.hpp>
 
 #include <cassert>
+#include <utility>
 #include <vector>
 
 #include <stdint.h>
 
 using namespace isc::dns;
+using std::pair;
 using std::vector;
 
 namespace isc {
@@ -266,7 +269,171 @@ getNAPTRDataLen(const rdata::Rdata& rdata) {
     rdata.toWire(buffer);
     return (buffer.getLength() - naptr_rdata.getReplacement().getLength());
 }
+
+// This class is used to divide the content of RDATA into \c RdataField
+// fields via message rendering logic.
+// The idea is to identify domain name fields in the writeName() method,
+// and determine whether they are compressible using the "compress"
+// parameter.
+// Other types of data are simply copied into the internal buffer, and
+// consecutive such fields are combined into a single \c RdataField field.
+//
+// Technically, this use of inheritance may be considered a violation of
+// Liskov Substitution Principle in that it doesn't actually compress domain
+// names, and some of the methods are not expected to be used.
+// In fact, skip() or trim() may not be make much sense in this context.
+// Nevertheless we keep this idea at the moment.  Since the usage is limited
+// (it's only used within this file, and only used with \c Rdata variants),
+// it's hopefully an acceptable practice.
+class RdataFieldComposer : public AbstractMessageRenderer {
+public:
+    RdataFieldComposer() : last_data_pos_(0), encode_spec_(NULL),
+                           current_field_(0)
+    {}
+    virtual ~RdataFieldComposer() {}
+    virtual bool isTruncated() const { return (false); }
+    virtual size_t getLengthLimit() const { return (65535); }
+    virtual CompressMode getCompressMode() const { return (CASE_INSENSITIVE); }
+    virtual void setTruncated() {}
+    virtual void setLengthLimit(size_t) {}
+    virtual void setCompressMode(CompressMode) {}
+    virtual void writeName(const Name& name, bool /*compress*/) {
+        assert(current_field_ < encode_spec_->field_count); // TBD
+
+        extendData();
+
+        const RdataFieldSpec& field =
+            encode_spec_->fields[current_field_++];
+        assert(field.type == RdataFieldSpec::DOMAIN_NAME); // TBD
+
+        const LabelSequence labels(name);
+        labels.serialize(labels_placeholder_, sizeof(labels_placeholder_));
+        writeData(labels_placeholder_, labels.getSerializedLength());
+        names_.push_back(pair<size_t, Name>(0, name));
+
+        last_data_pos_ += labels.getSerializedLength();
+    }
+    void clearLocal(const RdataEncodeSpec* encode_spec) {
+        AbstractMessageRenderer::clear();
+        encode_spec_ = encode_spec;
+        data_positions_.clear();
+        names_.clear();
+        data_lengths_.clear();
+        last_data_pos_ = 0;
+    }
+    void startRdata() {
+        current_field_ = 0;
+    }
+    void endRdata() {
+        if (current_field_ < encode_spec_->field_count) {
+            extendData();
+        }
+        assert(current_field_ == encode_spec_->field_count); // TBD
+    }
+    vector<pair<size_t, size_t> > data_positions_;
+    vector<pair<size_t, Name> > names_;
+    vector<uint16_t> data_lengths_;
+
+private:
+    // We use generict write* methods, with the exception of writeName.
+    // So new data can arrive without us knowing it, this considers all new
+    // data to be just data and extends the fields to take it into account.
+    size_t last_data_pos_;
+    void extendData() {
+        assert(current_field_ < encode_spec_->field_count); // must be true
+
+        const size_t cur_pos = getLength();
+        size_t data_len = cur_pos - last_data_pos_;
+        while (current_field_ < encode_spec_->field_count) {
+            const RdataFieldSpec& field = encode_spec_->fields[current_field_];
+            if (field.type == RdataFieldSpec::DOMAIN_NAME) {
+                return;
+            }
+            ++current_field_;
+            if (field.type == RdataFieldSpec::FIXEDLEN_DATA) {
+                // TBD: validation
+                data_len -= field.fixeddata_len;
+                continue;
+            }
+            // We are looking at a variable-length data field.
+            // TBD: 16bit len check
+            data_lengths_.push_back(data_len);
+            data_len = 0;
+            break;
+        }
+        // TBD: data_len must be 0;
+        assert(data_len == 0);
+
+        // We added this much data from last time
+        data_positions_.push_back(
+            pair<size_t, size_t>(last_data_pos_, cur_pos - last_data_pos_));
+        last_data_pos_ = cur_pos;
+    }
+
+    const RdataEncodeSpec* encode_spec_;
+    size_t current_field_;
+    uint8_t labels_placeholder_[LabelSequence::MAX_SERIALIZED_LENGTH];
+};
 } // end of unnamed namespace
+
+struct RdataEncoder::RdataEncoderImpl {
+    RdataEncoderImpl() : encode_spec_(NULL), rdata_count_(0)
+    {}
+
+    const RdataEncodeSpec* encode_spec_; // encode spec of current RDATA set
+    RdataFieldComposer field_composer_;
+    size_t rdata_count_;
+};
+
+RdataEncoder::RdataEncoder() :
+    impl_(new RdataEncoderImpl)
+{}
+
+RdataEncoder::~RdataEncoder() {
+    delete impl_;
+}
+
+void
+RdataEncoder::start(RRClass rrclass, RRType rrtype) {
+    impl_->encode_spec_ = &getRdataEncodeSpec(rrclass, rrtype);
+    impl_->field_composer_.clearLocal(impl_->encode_spec_);
+    impl_->rdata_count_ = 0;
+}
+
+void
+RdataEncoder::addRdata(const rdata::Rdata& rdata) {
+    impl_->field_composer_.startRdata();
+    rdata.toWire(impl_->field_composer_);
+    impl_->field_composer_.endRdata();
+    ++impl_->rdata_count_;
+}
+
+size_t
+RdataEncoder::getStorageLength() const {
+    return (sizeof(uint16_t) * impl_->field_composer_.data_lengths_.size() +
+            impl_->field_composer_.getLength());
+}
+
+void
+RdataEncoder::encode(void* buf, size_t buf_len) const {
+    // validation
+
+    const uint8_t* const dp_beg = reinterpret_cast<uint8_t*>(buf);
+    uint8_t* dp = reinterpret_cast<uint8_t*>(buf);
+    if (!impl_->field_composer_.data_lengths_.empty()) {
+        const size_t varlen_fields_len =
+            impl_->field_composer_.data_lengths_.size() * sizeof(uint16_t);
+        uint16_t* lenp = reinterpret_cast<uint16_t*>(buf);
+        memcpy(lenp, &impl_->field_composer_.data_lengths_[0],
+               varlen_fields_len);
+        dp += varlen_fields_len;
+    }
+    memcpy(dp, impl_->field_composer_.getData(),
+           impl_->field_composer_.getLength());
+    dp += impl_->field_composer_.getLength();
+
+    assert(buf_len >= dp - dp_beg);
+}
 
 namespace testing {
 void

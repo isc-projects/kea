@@ -27,6 +27,7 @@
 
 #include <boost/bind.hpp>
 
+#include <cstring>
 #include <set>
 #include <string>
 #include <vector>
@@ -74,8 +75,8 @@ const TestRdata test_rdata_list[] = {
     // Note: in our implementation RRSIG is treated as opaque data (including
     // the signer name).  We use "com" for signer so it won't be a compress
     // target in the test.
-    {"IN", "RRSIG", "SOA 5 2 3600 20120814220826 20120715220826 12345 "
-     "com. FAKEFAKEFAKE", 1},
+    //{"IN", "RRSIG", "SOA 5 2 3600 20120814220826 20120715220826 12345 "
+    //"com. FAKEFAKEFAKE", 1},
     {"IN", "NSEC", "next.example.com. A AAAA NSEC RRSIG", 1},
     {"IN", "DNSKEY", "256 3 5 FAKEFAKE", 1},
     {"IN", "DHCID", "FAKEFAKE", 1},
@@ -132,7 +133,7 @@ TEST(RdataFieldSpec, checkData) {
     need_additionals.insert(RRType::MX());
     need_additionals.insert(RRType::SRV());
 
-    for (size_t i = 1; test_rdata_list[i].rrclass != NULL; ++i) {
+    for (size_t i = 0; test_rdata_list[i].rrclass != NULL; ++i) {
         SCOPED_TRACE(string(test_rdata_list[i].rrclass) + "/" +
                      test_rdata_list[i].rrtype);
 
@@ -168,5 +169,84 @@ TEST(RdataFieldSpec, checkData) {
                       actual_renderer.getLength());
     }
 }
+
+class RdataEncoderTest : public ::testing::Test {
+protected:
+    RdataEncoderTest() {}
+
+    RdataEncoder encoder_;
+    vector<uint8_t> encoded_data_;
+    MessageRenderer expected_renderer_;
+    MessageRenderer actual_renderer_;
+};
+
+TEST_F(RdataEncoderTest, addRdata) {
+    // These two names will be rendered before and after the test RDATA,
+    // to check in case the RDATA contain a domain name whether it's
+    // compressed or not correctly.  The names in the RDATA should basically
+    // a subdomain of example.com, so it can be compressed due to dummy_name.
+    // Likewise, dummy_name2 should be able to be fully compressed due to
+    // the name in the RDATA.
+    const Name dummy_name("com");
+    const Name dummy_name2("example.com");
+
+    // The set of RR types that require additional section processing.
+    // We'll pass it to renderNameField to check the stored attribute matches
+    // our expectation.
+    std::set<RRType> need_additionals;
+    need_additionals.insert(RRType::NS());
+    need_additionals.insert(RRType::MX());
+    need_additionals.insert(RRType::SRV());
+
+    for (size_t i = 0; test_rdata_list[i].rrclass != NULL; ++i) {
+        SCOPED_TRACE(string(test_rdata_list[i].rrclass) + "/" +
+                     test_rdata_list[i].rrtype);
+
+        expected_renderer_.clear();
+        actual_renderer_.clear();
+        expected_renderer_.writeName(dummy_name);
+        actual_renderer_.writeName(dummy_name);
+        encoded_data_.clear();
+
+        const RRClass rrclass(test_rdata_list[i].rrclass);
+        const RRType rrtype(test_rdata_list[i].rrtype);
+        const ConstRdataPtr rdata = createRdata(rrtype, rrclass,
+                                                test_rdata_list[i].rdata);
+        const bool additional_required =
+            (need_additionals.find(rrtype) != need_additionals.end());
+
+        rdata->toWire(expected_renderer_);
+        expected_renderer_.writeName(dummy_name2);
+
+        encoder_.start(rrclass, rrtype);
+        encoder_.addRdata(*rdata);
+
+        vector<uint16_t> varlen_list;
+        encoded_data_.resize(encoder_.getStorageLength());
+        encoder_.encode(&encoded_data_[0], encoded_data_.size());
+        if (test_rdata_list[i].n_varlen_fields > 0) {
+            const size_t varlen_list_size =
+                test_rdata_list[i].n_varlen_fields * sizeof(uint16_t);
+            ASSERT_LE(varlen_list_size, encoded_data_.size());
+            varlen_list.resize(test_rdata_list[i].n_varlen_fields);
+            std::memcpy(&varlen_list[0], &encoded_data_[0], varlen_list_size);
+            encoded_data_.assign(encoded_data_.begin() + varlen_list_size,
+                                 encoded_data_.end());
+        }
+        foreachRdataField(rrclass, rrtype, encoded_data_, varlen_list,
+                          boost::bind(renderNameField, &actual_renderer_,
+                                      additional_required, _1, _2),
+                          boost::bind(renderDataField, &actual_renderer_,
+                                      _1, _2));
+
+        actual_renderer_.writeName(dummy_name2);
+        matchWireData(expected_renderer_.getData(),
+                      expected_renderer_.getLength(),
+                      actual_renderer_.getData(),
+                      actual_renderer_.getLength());
+    }
+}
+
+// TODO: add before start
 
 }
