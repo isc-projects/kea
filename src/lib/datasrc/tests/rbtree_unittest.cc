@@ -748,7 +748,6 @@ TEST_F(RBTreeTest, getLastComparedNode) {
               tree.find(Name("bb"), &crbtnode, chain));
     EXPECT_EQ(expected_node, chain.getLastComparedNode());
     // bb < c, no common label
-    //comparisonChecks(chain, -1, 1, NameComparisonResult::COMMONANCESTOR);
     comparisonChecks(chain, -1, 0, NameComparisonResult::NONE);
     chain.clear();
 
