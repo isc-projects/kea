@@ -23,6 +23,7 @@ AM_CPPFLAGS += -DUSE_STATIC_LINK=1
 endif
 
 CLEANFILES = *.gcno *.gcda
+CLEANFILES += $(abs_top_builddir)/src/lib/testutils/testdata/does-not-exist.sqlite3
 
 TESTS_ENVIRONMENT = \
         $(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
