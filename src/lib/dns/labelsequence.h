@@ -92,6 +92,18 @@ public:
     /// labelsequence into the given external buffer, which is subsequently
     /// extendable by calling extend()
     ///
+    /// The data is placed into the given buffer as follows:
+    /// - binary sequence of name data, starting at position 0,
+    ///   length determined by source LabelSequence
+    /// - offsets, starting at position Name::MAX_WIRE, length
+    ///   determined by source LabelSequence
+    /// The offsets are updated to be correct for the potentially partial
+    /// name data (as stripLeft() and stripRight may have been called on
+    /// the source LabelSequence).
+    ///
+    /// \note The given buf MUST remain in scope during the lifetime of
+    /// the LabelSequence created here.
+    ///
     /// \param src LabelSequence to copy the initial data from
     /// \param buf external buffer to store this labelsequence's data in
     LabelSequence(const LabelSequence& src, uint8_t buf[MAX_SERIALIZED_LENGTH]);
