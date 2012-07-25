@@ -55,6 +55,25 @@ LabelSequence::LabelSequence(const void* buf) {
     }
 }
 
+LabelSequence::LabelSequence(const LabelSequence& src,
+                             uint8_t buf[MAX_SERIALIZED_LENGTH])
+{
+    size_t data_len;
+    const uint8_t *data = src.getData(&data_len);
+    memcpy(buf, data, data_len);
+
+    for (size_t i = 0; i < src.getLabelCount(); ++i) {
+        buf[Name::MAX_WIRE + i] = src.offsets_[i + src.first_label_] -
+                                  src.offsets_[src.first_label_];
+    }
+
+    first_label_ = 0;
+    last_label_ = src.last_label_ - src.first_label_;
+    data_ = buf;
+    offsets_ = &buf[Name::MAX_WIRE];
+}
+
+
 const uint8_t*
 LabelSequence::getData(size_t *len) const {
     *len = getDataLength();
