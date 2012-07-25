@@ -1053,17 +1053,15 @@ TEST(LabelSequence, extendBadData) {
     els.extend(LabelSequence(Name("123456789")), buf);
     // But now, even the shortest extension should fail
     EXPECT_THROW(els.extend(LabelSequence(Name("1")), buf), isc::BadValue);
-/*
 
     // Also check that extending past MAX_LABELS is not possible
     Name shortname("1.");
     LabelSequence short_ls(shortname);
     els = LabelSequence(short_ls, buf);
-    for (size_t i=0; i < 125; ++i) {
+    for (size_t i=0; i < 126; ++i) {
         els.extend(short_ls, buf);
     }
     EXPECT_THROW(els.extend(short_ls, buf), isc::BadValue);
-*/
 }
 
 }
