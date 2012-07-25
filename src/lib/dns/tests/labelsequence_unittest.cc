@@ -946,6 +946,7 @@ TEST_F(ExtendableLabelSequenceTest, extend) {
 
     check_compare(ls1, els, isc::dns::NameComparisonResult::COMMONANCESTOR, 1);
     els.extend(ls3, buf);
+    EXPECT_TRUE(els.isAbsolute());
 
     check_equal(ls1, els);
     stripLeftCheck(ls1, els, ls4);
