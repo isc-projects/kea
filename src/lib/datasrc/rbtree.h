@@ -205,6 +205,13 @@ public:
     ///
     /// To get the absolute name of one node, the node path from the top node
     /// to current node has to be recorded.
+    ///
+    /// \note We should eventually deprecate this method and revise all its
+    /// usage with \c getLabels().  At this point the only user of this method
+    /// is getAbsoluteName()::getAbsoluteName(), which would have to be revised
+    /// using \c LabelSequence.  Until then we keep this interface as a
+    /// simplest form of wrapper; it's not efficient, but should be replaced
+    /// before we need to worry about that.
     const isc::dns::Name getName() const {
         assert(labels_capacity_ != 0); // shouldn't be called on a NULL node.
         return (dns::Name(dns::LabelSequence(getLabelsData()).toText()));
@@ -1614,6 +1621,7 @@ RBTree<T>::deleteAllNodes(util::MemorySegment& mem_sgmt) {
 // change this part so the newly created node will be used for the inserted
 // name (and therefore the name for the existing node doesn't change).
 // Otherwise, things like shortcut links between nodes won't work.
+// See Trac #2054.
 template <typename T>
 void
 RBTree<T>::nodeFission(util::MemorySegment& mem_sgmt, RBNode<T>& node,
@@ -1631,8 +1639,8 @@ RBTree<T>::nodeFission(util::MemorySegment& mem_sgmt, RBNode<T>& node,
     std::swap(node.data_, down_node->data_);
 
     // Swap flags bitfields; yes, this is ugly.  The right solution is to
-    // implement the above note, then we won't have to swap the flags in the
-    // first place.
+    // implement the above note regarding #2054, then we won't have to swap
+    // the flags in the first place.
     struct {
         uint32_t flags_ : 23;
         uint32_t unused_ : 9;
