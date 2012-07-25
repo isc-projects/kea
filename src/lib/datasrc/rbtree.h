@@ -213,7 +213,6 @@ public:
     /// simplest form of wrapper; it's not efficient, but should be replaced
     /// before we need to worry about that.
     const isc::dns::Name getName() const {
-        assert(labels_capacity_ != 0); // shouldn't be called on a NULL node.
         return (dns::Name(dns::LabelSequence(getLabelsData()).toText()));
     }
 
