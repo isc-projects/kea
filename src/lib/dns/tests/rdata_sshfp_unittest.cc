@@ -195,9 +195,25 @@ TEST_F(Rdata_SSHFP_Test, emptyFingerprintFromWire) {
 
 TEST_F(Rdata_SSHFP_Test, emptyFingerprintFromString) {
     const generic::SSHFP rdata_sshfp2("5 6");
+    const uint8_t rdata_sshfp2_wiredata[] = {
+        // algorithm
+        0x05,
+        // fingerprint type
+        0x06
+    };
 
     EXPECT_EQ(5, rdata_sshfp2.getSSHFPAlgorithmNumber());
     EXPECT_EQ(6, rdata_sshfp2.getSSHFPFingerprintType());
     EXPECT_EQ(0, rdata_sshfp2.getFingerprintLen());
+
+    this->obuffer.clear();
+    rdata_sshfp2.toWire(this->obuffer);
+
+    EXPECT_EQ(2, this->obuffer.getLength());
+
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
+                        this->obuffer.getData(),
+                        this->obuffer.getLength(),
+                        rdata_sshfp2_wiredata, sizeof(rdata_sshfp2_wiredata));
 }
 }
