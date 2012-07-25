@@ -111,65 +111,6 @@ renderDataField(MessageRenderer* renderer, const uint8_t* data,
     renderer->writeData(data, data_len);
 }
 
-TEST(RdataFieldSpec, checkData) {
-    // These two names will be rendered before and after the test RDATA,
-    // to check in case the RDATA contain a domain name whether it's
-    // compressed or not correctly.  The names in the RDATA should basically
-    // a subdomain of example.com, so it can be compressed due to dummy_name.
-    // Likewise, dummy_name2 should be able to be fully compressed due to
-    // the name in the RDATA.
-    const Name dummy_name("com");
-    const Name dummy_name2("example.com");
-
-    MessageRenderer expected_renderer, actual_renderer;
-    vector<uint8_t> encoded_data;
-    vector<uint16_t> varlen_list;
-
-    // The set of RR types that require additional section processing.
-    // We'll pass it to renderNameField to check the stored attribute matches
-    // our expectation.
-    std::set<RRType> need_additionals;
-    need_additionals.insert(RRType::NS());
-    need_additionals.insert(RRType::MX());
-    need_additionals.insert(RRType::SRV());
-
-    for (size_t i = 0; test_rdata_list[i].rrclass != NULL; ++i) {
-        SCOPED_TRACE(string(test_rdata_list[i].rrclass) + "/" +
-                     test_rdata_list[i].rrtype);
-
-        expected_renderer.clear();
-        actual_renderer.clear();
-        expected_renderer.writeName(dummy_name);
-        actual_renderer.writeName(dummy_name);
-        encoded_data.clear();
-        varlen_list.clear();
-
-        const RRClass rrclass(test_rdata_list[i].rrclass);
-        const RRType rrtype(test_rdata_list[i].rrtype);
-        const ConstRdataPtr rdata = createRdata(rrtype, rrclass,
-                                                test_rdata_list[i].rdata);
-        rdata->toWire(expected_renderer);
-        expected_renderer.writeName(dummy_name2);
-
-        const bool additional_required =
-            (need_additionals.find(rrtype) != need_additionals.end());
-
-        encodeRdata(*rdata, rrclass, rrtype, encoded_data, varlen_list);
-        EXPECT_EQ(varlen_list.size(), test_rdata_list[i].n_varlen_fields);
-        foreachRdataField(rrclass, rrtype, encoded_data, varlen_list,
-                          boost::bind(renderNameField, &actual_renderer,
-                                      additional_required, _1, _2),
-                          boost::bind(renderDataField, &actual_renderer,
-                                      _1, _2));
-
-        actual_renderer.writeName(dummy_name2);
-        matchWireData(expected_renderer.getData(),
-                      expected_renderer.getLength(),
-                      actual_renderer.getData(),
-                      actual_renderer.getLength());
-    }
-}
-
 class RdataEncoderTest : public ::testing::Test {
 protected:
     RdataEncoderTest() {}
