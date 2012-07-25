@@ -69,10 +69,20 @@ public:
 
     void start(dns::RRClass rrclass, dns::RRType rrtype);
 
+    /// \brief TBD
+    ///
+    /// \throw InvalidOperation called before start().
     void addRdata(const dns::rdata::Rdata& rdata);
 
+    /// \brief TBD
+    ///
+    /// \throw InvalidOperation called before start().
     size_t getStorageLength() const;
 
+    /// \brief TBD
+    ///
+    /// \throw InvalidOperation called before start().
+    /// \throw BadValue buffer is NULL or it's too short for the encoded data.
     void encode(void* buf, size_t buf_len) const;
 
 private:

@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <exceptions/exceptions.h>
+
 #include <dns/name.h>
 #include <dns/labelsequence.h>
 #include <dns/messagerenderer.h>
@@ -389,6 +391,11 @@ RdataEncoder::start(RRClass rrclass, RRType rrtype) {
 
 void
 RdataEncoder::addRdata(const rdata::Rdata& rdata) {
+    if (impl_->encode_spec_ == NULL) {
+        isc_throw(InvalidOperation,
+                  "RdataEncoder::addRdata performed before start");
+    }
+
     impl_->field_composer_.startRdata();
     rdata.toWire(impl_->field_composer_);
     impl_->field_composer_.endRdata();
@@ -397,20 +404,35 @@ RdataEncoder::addRdata(const rdata::Rdata& rdata) {
 
 size_t
 RdataEncoder::getStorageLength() const {
+    if (impl_->encode_spec_ == NULL) {
+        isc_throw(InvalidOperation,
+                  "RdataEncoder::getStorageLength performed before start");
+    }
+
     return (sizeof(uint16_t) * impl_->field_composer_.data_lengths_.size() +
             impl_->field_composer_.getLength());
 }
 
 void
 RdataEncoder::encode(void* buf, size_t buf_len) const {
-    // validation
+    if (impl_->encode_spec_ == NULL) {
+        isc_throw(InvalidOperation,
+                  "RdataEncoder::encode performed before start");
+    }
+    if (buf == NULL) {
+        isc_throw(BadValue,
+                  "RdataEncoder::encode NULL buffer is given");
+    }
+    if (getStorageLength() > buf_len) {
+        isc_throw(BadValue, "RdataEncoder::encode short buffer given");
+    }
 
-    const uint8_t* const dp_beg = reinterpret_cast<uint8_t*>(buf);
-    uint8_t* dp = reinterpret_cast<uint8_t*>(buf);
+    uint8_t* const dp_beg = reinterpret_cast<uint8_t*>(buf);
+    uint8_t* dp = dp_beg;
     if (!impl_->field_composer_.data_lengths_.empty()) {
         const size_t varlen_fields_len =
             impl_->field_composer_.data_lengths_.size() * sizeof(uint16_t);
-        uint16_t* lenp = reinterpret_cast<uint16_t*>(buf);
+        uint16_t* const lenp = reinterpret_cast<uint16_t*>(buf);
         memcpy(lenp, &impl_->field_composer_.data_lengths_[0],
                varlen_fields_len);
         dp += varlen_fields_len;
@@ -419,6 +441,7 @@ RdataEncoder::encode(void* buf, size_t buf_len) const {
            impl_->field_composer_.getLength());
     dp += impl_->field_composer_.getLength();
 
+    // The validation at the entrance must ensure this
     assert(buf_len >= dp - dp_beg);
 }
 
