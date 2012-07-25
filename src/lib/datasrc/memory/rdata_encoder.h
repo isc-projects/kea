@@ -80,6 +80,9 @@ public:
     /// \brief The destrcutor.
     ~RdataEncoder();
 
+    /// \brief TBD
+    ///
+    /// \throw BadValue RRSIG is specified as rrtype.
     void start(dns::RRClass rrclass, dns::RRType rrtype);
 
     /// \brief TBD
