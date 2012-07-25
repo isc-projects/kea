@@ -75,7 +75,7 @@ public:
     }
     vector<RRClass> getClientListClasses() const {
         vector<RRClass> result;
-        for (map<RRClass, ListPtr>::const_iterator it(lists_.begin());
+        for (std::map<RRClass, ListPtr>::const_iterator it(lists_.begin());
              it != lists_.end(); ++it) {
             result.push_back(it->first);
         }
@@ -135,7 +135,7 @@ protected:
     FakeSession session;
     auto_ptr<ModuleCCSession> mccs;
     const string specfile;
-    map<RRClass, ListPtr> lists_;
+    std::map<RRClass, ListPtr> lists_;
     string log_;
 };
 
