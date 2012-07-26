@@ -196,6 +196,13 @@ TEST_F(Rdata_SSHFP_Test, getFingerprintLen) {
 }
 
 TEST_F(Rdata_SSHFP_Test, emptyFingerprintFromWire) {
+    const uint8_t rdf_wiredata[] = {
+        // algorithm
+        0x04,
+        // fingerprint type
+        0x09
+    };
+
     const generic::SSHFP rdf =
         dynamic_cast<const generic::SSHFP&>
         (*rdataFactoryFromFile(RRType("SSHFP"), RRClass("IN"),
@@ -204,6 +211,16 @@ TEST_F(Rdata_SSHFP_Test, emptyFingerprintFromWire) {
     EXPECT_EQ(4, rdf.getSSHFPAlgorithmNumber());
     EXPECT_EQ(9, rdf.getSSHFPFingerprintType());
     EXPECT_EQ(0, rdf.getFingerprintLen());
+
+    this->obuffer.clear();
+    rdf.toWire(this->obuffer);
+
+    EXPECT_EQ(2, this->obuffer.getLength());
+
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
+                        this->obuffer.getData(),
+                        this->obuffer.getLength(),
+                        rdf_wiredata, sizeof(rdf_wiredata));
 }
 
 TEST_F(Rdata_SSHFP_Test, emptyFingerprintFromString) {
