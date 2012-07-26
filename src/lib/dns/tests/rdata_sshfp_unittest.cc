@@ -183,7 +183,7 @@ TEST_F(Rdata_SSHFP_Test, getFingerprintLen) {
 }
 
 TEST_F(Rdata_SSHFP_Test, emptyFingerprintFromWire) {
-    const generic::SSHFP& rdf =
+    const generic::SSHFP rdf =
         dynamic_cast<const generic::SSHFP&>
         (*rdataFactoryFromFile(RRType("SSHFP"), RRClass("IN"),
                                "rdata_sshfp_fromWire12"));
