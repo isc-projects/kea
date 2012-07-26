@@ -45,9 +45,10 @@ SSHFP::SSHFP(InputBuffer& buffer, size_t rdata_len) {
         fingerprint_type_ = buffer.readUint8();
 
         rdata_len -= 2;
-        fingerprint_.resize(rdata_len);
-
-        buffer.readData(&fingerprint_[0], rdata_len);
+        if (rdata_len > 0) {
+            fingerprint_.resize(rdata_len);
+            buffer.readData(&fingerprint_[0], rdata_len);
+        }
     } catch (const isc::util::InvalidBufferPosition& e) {
         isc_throw(InvalidRdataLength,
                   "SSHFP record shorter than RDATA len: " << e.what());
@@ -152,6 +153,10 @@ SSHFP::compare(const Rdata& other) const {
     size_t this_len = fingerprint_.size();
     size_t other_len = other_sshfp.fingerprint_.size();
     size_t cmplen = min(this_len, other_len);
+    if (cmplen == 0) {
+        return ((this_len == other_len)
+                ? 0 : (this_len < other_len) ? -1 : 1);
+    }
     int cmp = memcmp(&fingerprint_[0], &other_sshfp.fingerprint_[0], cmplen);
     if (cmp != 0) {
         return (cmp);
