@@ -445,7 +445,10 @@ RdataEncoder::addSIGRdata(const rdata::Rdata& sig_rdata) {
     const size_t cur_pos = impl_->rrsig_buffer_.getLength();
     sig_rdata.toWire(impl_->rrsig_buffer_);
     const size_t rrsig_datalen = impl_->rrsig_buffer_.getLength() - cur_pos;
-    // TBD: too large data
+    if (rrsig_datalen > 0xffff) {
+        isc_throw(RdataEncodingError, "RRSIG is too large: "
+                  << rrsig_datalen << " bytes");
+    }
     impl_->rrsig_lengths_.push_back(rrsig_datalen);
 }
 
