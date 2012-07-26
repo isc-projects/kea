@@ -116,7 +116,11 @@ protected:
     RdataEncoderTest() : a_rdata_(createRdata(RRType::A(), RRClass::IN(),
                                               "192.0.2.53")),
                          aaaa_rdata_(createRdata(RRType::AAAA(), RRClass::IN(),
-                                                 "2001:db8::53"))
+                                                 "2001:db8::53")),
+                         rrsig_rdata_(createRdata(
+                                          RRType::RRSIG(), RRClass::IN(),
+                                          "A 5 2 3600 20120814220826 "
+                                          "20120715220826 12345 com. FAKE"))
     {}
 
     // This helper test method constructs encodes the given list of RDATAs
@@ -126,11 +130,16 @@ protected:
     // works as intended.
     void checkEncode(RRClass rrclass, RRType rrtype,
                      const vector<ConstRdataPtr>& rdata_list,
-                     size_t expected_varlen_fields);
+                     size_t expected_varlen_fields,
+                     const vector<ConstRdataPtr>& rrsig_list);
+
+    void addRdataCommon(const vector<ConstRdataPtr>& rrsigs);
+    void addRdataMultiCommon(const vector<ConstRdataPtr>& rrsigs);
 
     // Some commonly used RDATA
     const ConstRdataPtr a_rdata_;
     const ConstRdataPtr aaaa_rdata_;
+    const ConstRdataPtr rrsig_rdata_;
 
     RdataEncoder encoder_;
     vector<uint8_t> encoded_data_;
@@ -142,7 +151,9 @@ protected:
 void
 RdataEncoderTest::checkEncode(RRClass rrclass, RRType rrtype,
                               const vector<ConstRdataPtr>& rdata_list,
-                              size_t expected_varlen_fields)
+                              size_t expected_varlen_fields,
+                              const vector<ConstRdataPtr>& rrsig_list =
+                              vector<ConstRdataPtr>())
 {
     // These two names will be rendered before and after the test RDATA,
     // to check in case the RDATA contain a domain name whether it's
@@ -160,24 +171,34 @@ RdataEncoderTest::checkEncode(RRClass rrclass, RRType rrtype,
     need_additionals.insert(RRType::NS());
     need_additionals.insert(RRType::MX());
     need_additionals.insert(RRType::SRV());
-
     expected_renderer_.clear();
     actual_renderer_.clear();
-    expected_renderer_.writeName(dummy_name);
-    actual_renderer_.writeName(dummy_name);
     encoded_data_.clear();
 
     const bool additional_required =
         (need_additionals.find(rrtype) != need_additionals.end());
 
+    // Build expected wire-format data
+    expected_renderer_.writeName(dummy_name);
     BOOST_FOREACH(const ConstRdataPtr& rdata, rdata_list) {
         rdata->toWire(expected_renderer_);
     }
     expected_renderer_.writeName(dummy_name2);
+    BOOST_FOREACH(const ConstRdataPtr& rdata, rrsig_list) {
+        rdata->toWire(expected_renderer_);
+    }
 
+    // Then build wire format data using the encoded data.
+    // 1st dummy name
+    actual_renderer_.writeName(dummy_name);
+
+    // Create encoded data
     encoder_.start(rrclass, rrtype);
     BOOST_FOREACH(const ConstRdataPtr& rdata, rdata_list) {
         encoder_.addRdata(*rdata);
+    }
+    BOOST_FOREACH(const ConstRdataPtr& rdata, rrsig_list) {
+        encoder_.addSIGRdata(*rdata);
     }
     encoded_data_.resize(encoder_.getStorageLength());
     encoder_.encode(&encoded_data_[0], encoded_data_.size());
@@ -197,18 +218,39 @@ RdataEncoderTest::checkEncode(RRClass rrclass, RRType rrtype,
         encoded_data_.assign(encoded_data_.begin() + varlen_list_size,
                              encoded_data_.end());
     }
+
+    // If RRSIGs are given, we need to extract the list of the RRSIG lengths
+    // and adjust encoded_data_ further (this will be unnecessary at #2096,
+    // too).
+    vector<uint16_t> rrsiglen_list;
+    if (rrsig_list.size() > 0) {
+        const size_t rrsig_len_size = rrsig_list.size() * sizeof(uint16_t);
+        ASSERT_LE(rrsig_len_size, encoded_data_.size());
+        rrsiglen_list.resize(rrsig_list.size() * rrsig_len_size);
+        std::memcpy(&rrsiglen_list[0], &encoded_data_[0], rrsig_len_size);
+        encoded_data_.assign(encoded_data_.begin() + rrsig_len_size,
+                             encoded_data_.end());
+    }
+
+    // Create wire-format data from the encoded data
     foreachRdataField(rrclass, rrtype, rdata_list.size(), encoded_data_,
                       varlen_list,
                       boost::bind(renderNameField, &actual_renderer_,
                                   additional_required, _1, _2),
                       boost::bind(renderDataField, &actual_renderer_, _1, _2));
-
+    // 2nd dummy name
     actual_renderer_.writeName(dummy_name2);
+    // Finally, dump any RRSIGs in wire format.
+    foreachRRSig(encoded_data_, rrsiglen_list,
+                 boost::bind(renderDataField, &actual_renderer_, _1, _2));
+
+    // Two sets of wire-format data should be identical.
     matchWireData(expected_renderer_.getData(), expected_renderer_.getLength(),
                   actual_renderer_.getData(), actual_renderer_.getLength());
 }
 
-TEST_F(RdataEncoderTest, addRdata) {
+void
+RdataEncoderTest::addRdataCommon(const vector<ConstRdataPtr>& rrsigs) {
     // Basic check on the encoded data for (most of) all supported RR types,
     // in a comprehensive manner.
     for (size_t i = 0; test_rdata_list[i].rrclass != NULL; ++i) {
@@ -221,11 +263,22 @@ TEST_F(RdataEncoderTest, addRdata) {
         rdata_list_.clear();
         rdata_list_.push_back(rdata);
         checkEncode(rrclass, rrtype, rdata_list_,
-                    test_rdata_list[i].n_varlen_fields);
+                    test_rdata_list[i].n_varlen_fields, rrsigs);
     }
 }
 
-TEST_F(RdataEncoderTest, addRdataMulti) {
+TEST_F(RdataEncoderTest, addRdata) {
+    vector<ConstRdataPtr> rrsigs;
+    addRdataCommon(rrsigs);     // basic tests without RRSIGs (empty vector)
+
+    // Test with RRSIGs (covered type doesn't always match, but the encoder
+    // doesn't check that)
+    rrsigs.push_back(rrsig_rdata_);
+    addRdataCommon(rrsigs);
+}
+
+void
+RdataEncoderTest::addRdataMultiCommon(const vector<ConstRdataPtr>& rrsigs) {
     // Similar to addRdata(), but test with multiple RDATAs.
     // Four different cases are tested: a single fixed-len RDATA (A),
     // fixed-len data + domain name (MX), variable-len data only (TXT),
@@ -235,7 +288,7 @@ TEST_F(RdataEncoderTest, addRdataMulti) {
     rdata_list_.clear();
     rdata_list_.push_back(a_rdata_);
     rdata_list_.push_back(a_rdata2);
-    checkEncode(RRClass::IN(), RRType::A(), rdata_list_, 0);
+    checkEncode(RRClass::IN(), RRType::A(), rdata_list_, 0, rrsigs);
 
     ConstRdataPtr mx_rdata1 = createRdata(RRType::MX(), RRClass::IN(),
                                           "5 mx1.example.com");
@@ -244,7 +297,7 @@ TEST_F(RdataEncoderTest, addRdataMulti) {
     rdata_list_.clear();
     rdata_list_.push_back(mx_rdata1);
     rdata_list_.push_back(mx_rdata2);
-    checkEncode(RRClass::IN(), RRType::MX(), rdata_list_, 0);
+    checkEncode(RRClass::IN(), RRType::MX(), rdata_list_, 0, rrsigs);
 
     ConstRdataPtr txt_rdata1 = createRdata(RRType::TXT(), RRClass::IN(),
                                            "foo bar baz");
@@ -253,7 +306,7 @@ TEST_F(RdataEncoderTest, addRdataMulti) {
     rdata_list_.clear();
     rdata_list_.push_back(txt_rdata1);
     rdata_list_.push_back(txt_rdata2);
-    checkEncode(RRClass::IN(), RRType::TXT(), rdata_list_, 1);
+    checkEncode(RRClass::IN(), RRType::TXT(), rdata_list_, 1, rrsigs);
 
     ConstRdataPtr naptr_rdata1 =
         createRdata(RRType::NAPTR(), RRClass::IN(),
@@ -264,7 +317,19 @@ TEST_F(RdataEncoderTest, addRdataMulti) {
     rdata_list_.clear();
     rdata_list_.push_back(naptr_rdata1);
     rdata_list_.push_back(naptr_rdata2);
-    checkEncode(RRClass::IN(), RRType::NAPTR(), rdata_list_, 1);
+    checkEncode(RRClass::IN(), RRType::NAPTR(), rdata_list_, 1, rrsigs);
+}
+
+TEST_F(RdataEncoderTest, addRdataMulti) {
+    vector<ConstRdataPtr> rrsigs;
+    addRdataMultiCommon(rrsigs); // test without RRSIGs (empty vector)
+
+    // Tests with two RRSIGs
+    rrsigs.push_back(rrsig_rdata_);
+    rrsigs.push_back(createRdata(RRType::RRSIG(), RRClass::IN(),
+                                 "A 5 2 3600 20120814220826 "
+                                 "20120715220826 54321 com. FAKE"));
+    addRdataMultiCommon(rrsigs);
 }
 
 TEST_F(RdataEncoderTest, badAddRdata) {
@@ -342,9 +407,18 @@ TEST_F(RdataEncoderTest, badAddRdata) {
                  isc::BadValue);
 }
 
-// Note: in our implementation RRSIG is treated as opaque data (including
-// the signer name).  We use "com" for signer so it won't be a compress
-// target in the test.
-//{"IN", "RRSIG", "SOA 5 2 3600 20120814220826 20120715220826 12345 "
-//"com. FAKEFAKEFAKE", 1},
+TEST_F(RdataEncoderTest, addSIGRdata) {
+    encoder_.start(RRClass::IN(), RRType::A());
+    encoder_.addRdata(*a_rdata_);
+    encoder_.addSIGRdata(*rrsig_rdata_);
+    // 4-byte A RDATA, 2-byte length field (for the RRSIG), and RRSIG data
+    // (26 bytes).
+    EXPECT_EQ(4 + 2 + 26, encoder_.getStorageLength());
+}
+
+TEST_F(RdataEncoderTest, badAddSIGRdata) {
+    EXPECT_THROW(encoder_.addSIGRdata(*rrsig_rdata_), isc::InvalidOperation);
+
+    // TBD: reject very large RRSIG
+}
 }
