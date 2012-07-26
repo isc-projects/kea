@@ -28,7 +28,6 @@
 #include <boost/static_assert.hpp>
 
 #include <cassert>
-#include <utility>
 #include <vector>
 
 #include <stdint.h>
