@@ -128,7 +128,7 @@ string
 SSHFP::toText() const {
     return (lexical_cast<string>(static_cast<int>(algorithm_)) +
             " " + lexical_cast<string>(static_cast<int>(fingerprint_type_)) +
-            " " + encodeHex(fingerprint_));
+            (fingerprint_.size() > 0 ? " " + encodeHex(fingerprint_) : ""));
 }
 
 int
