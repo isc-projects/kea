@@ -170,6 +170,12 @@ TEST_F(Rdata_SSHFP_Test, toWire) {
                         rdata_sshfp_wiredata, sizeof(rdata_sshfp_wiredata));
 }
 
+TEST_F(Rdata_SSHFP_Test, compare) {
+    const generic::SSHFP rdata_sshfp2("2 1");
+    EXPECT_EQ(-1, rdata_sshfp2.compare(rdata_sshfp));
+    EXPECT_EQ(1, rdata_sshfp.compare(rdata_sshfp2));
+}
+
 TEST_F(Rdata_SSHFP_Test, getSSHFPAlgorithmNumber) {
     EXPECT_EQ(2, rdata_sshfp.getSSHFPAlgorithmNumber());
 }
