@@ -320,6 +320,26 @@ RdataEncoderTest::addRdataMultiCommon(const vector<ConstRdataPtr>& rrsigs) {
     checkEncode(RRClass::IN(), RRType::NAPTR(), rdata_list_, 1, rrsigs);
 }
 
+TEST_F(RdataEncoderTest, encodeLargeRdata) {
+    // There should be no reason for a large RDATA to fail in encoding,
+    // but we check such a  case explicitly.
+
+    encoded_data_.resize(65535); // max unsigned 16-bit int
+    isc::util::InputBuffer buffer(&encoded_data_[0], encoded_data_.size());
+    const in::DHCID large_dhcid(buffer, encoded_data_.size());
+
+    encoder_.start(RRClass::IN(), RRType::DHCID());
+    encoder_.addRdata(large_dhcid);
+    encoded_data_.resize(encoder_.getStorageLength());
+    encoder_.encode(&encoded_data_[0], encoded_data_.size());
+
+    // The encoded data should be identical to the original one.
+    ASSERT_LT(sizeof(uint16_t), encoder_.getStorageLength());
+    isc::util::InputBuffer ib(&encoded_data_[2], encoded_data_.size() - 2);
+    const in::DHCID encoded_dhcid(ib, ib.getLength());
+    EXPECT_EQ(0, encoded_dhcid.compare(large_dhcid));
+}
+
 TEST_F(RdataEncoderTest, addRdataMulti) {
     vector<ConstRdataPtr> rrsigs;
     addRdataMultiCommon(rrsigs); // test without RRSIGs (empty vector)
@@ -407,13 +427,19 @@ TEST_F(RdataEncoderTest, badAddRdata) {
                  isc::BadValue);
 }
 
-TEST_F(RdataEncoderTest, addSIGRdata) {
+TEST_F(RdataEncoderTest, addSIGRdataOnly) {
+    // Encoded data that only contain RRSIGs.  Mostly useless, but can happen
+    // (in a partially broken zone) and it's accepted.
     encoder_.start(RRClass::IN(), RRType::A());
-    encoder_.addRdata(*a_rdata_);
     encoder_.addSIGRdata(*rrsig_rdata_);
-    // 4-byte A RDATA, 2-byte length field (for the RRSIG), and RRSIG data
-    // (26 bytes).
-    EXPECT_EQ(4 + 2 + 26, encoder_.getStorageLength());
+    encoded_data_.resize(encoder_.getStorageLength());
+    encoder_.encode(&encoded_data_[0], encoded_data_.size());
+    ASSERT_LT(sizeof(uint16_t), encoder_.getStorageLength());
+
+    // The encoded data should be identical to the given one.
+    isc::util::InputBuffer ib(&encoded_data_[2], encoded_data_.size() - 2);
+    const generic::RRSIG encoded_sig(ib, ib.getLength());
+    EXPECT_EQ(0, encoded_sig.compare(*rrsig_rdata_));
 }
 
 TEST_F(RdataEncoderTest, badAddSIGRdata) {
@@ -429,7 +455,7 @@ TEST_F(RdataEncoderTest, badAddSIGRdata) {
     ASSERT_EQ(65536, ob.getLength());
 
     isc::util::InputBuffer ib(ob.getData(), ob.getLength());
-    generic::RRSIG big_sigrdata(ib, ob.getLength());
+    const generic::RRSIG big_sigrdata(ib, ob.getLength());
     encoder_.start(RRClass::IN(), RRType::A());
     EXPECT_THROW(encoder_.addSIGRdata(big_sigrdata), RdataEncodingError);
 }
