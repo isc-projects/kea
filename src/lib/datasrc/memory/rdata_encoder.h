@@ -99,6 +99,8 @@ public:
     /// \throw std::bad_alloc Internal memory allocation failure.
     void addRdata(const dns::rdata::Rdata& rdata);
 
+    void addSIGRdata(const dns::rdata::Rdata& sig_rdata);
+
     /// \brief TBD
     ///
     /// \throw InvalidOperation called before start().
@@ -131,12 +133,20 @@ typedef boost::function<void(const uint8_t*, size_t)> DataCallback;
 // normal data fields data_callback will be called).  rdata_count is
 // the number of RDATAs.  If the encoded data contain variable-length
 // data fields, varlen_list should store a sequence of their lengths,
-// in the of the appearance.
+// in the order of the appearance.
 void foreachRdataField(dns::RRClass rrclass, dns::RRType rrtype,
                        size_t rdata_count,
                        const std::vector<uint8_t>& encoded_data,
                        const std::vector<uint16_t>& varlen_list,
                        NameCallback name_callback, DataCallback data_callback);
+
+// Iterate over each RRSIG stored in encoded_data, and call the given
+// callback for each.  rrsiglen_list should store a sequence of their lengths,
+// in the order of the appearance.  Its size is the number of RRSIGs.
+// The list can be empty, in which case this function does nothing.
+void foreachRRSig(const std::vector<uint8_t>& encoded_data,
+                  const std::vector<uint16_t>& rrsiglen_list,
+                  DataCallback data_callback);
 }
 
 } // namespace memory
