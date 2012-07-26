@@ -167,12 +167,12 @@ SSHFP::compare(const Rdata& other) const {
 }
 
 uint8_t
-SSHFP::getSSHFPAlgorithmNumber() const {
+SSHFP::getAlgorithmNumber() const {
     return (algorithm_);
 }
 
 uint8_t
-SSHFP::getSSHFPFingerprintType() const {
+SSHFP::getFingerprintType() const {
     return (fingerprint_type_);
 }
 
