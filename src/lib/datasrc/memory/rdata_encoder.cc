@@ -257,13 +257,11 @@ getRdataEncodeSpec(RRClass rrclass, RRType rrtype) {
     return (generic_data_spec);
 }
 
-// This class is used to divide the content of RDATA into \c RdataField
-// fields via message rendering logic.
+// This class is a helper for RdataEncoder to divide the content of RDATA
+// fields for encoding by "abusing" the  message rendering logic.
 // The idea is to identify domain name fields in the writeName() method,
-// and determine whether they are compressible using the "compress"
-// parameter.
-// Other types of data are simply copied into the internal buffer, and
-// consecutive such fields are combined into a single \c RdataField field.
+// while keeping track of the size and position of other types of data
+// around the names.
 //
 // Technically, this use of inheritance may be considered a violation of
 // Liskov Substitution Principle in that it doesn't actually compress domain
@@ -284,13 +282,20 @@ public:
     virtual void setTruncated() {}
     virtual void setLengthLimit(size_t) {}
     virtual void setCompressMode(CompressMode) {}
+
+    // Called for each domain name in the RDATA, from the RDATA's toWire()
+    // implementation.
     virtual void writeName(const Name& name, bool compress) {
+        // First, after checking the spec consistency, see if we have other
+        // data already stored in the renderer's buffer.
         if (current_field_ >= encode_spec_->field_count) {
             isc_throw(BadValue,
                       "RDATA encoder encounters an unexpected name data: " <<
                       name);
         }
-        extendData();
+        updateOtherData();
+        // If there are data fields, current_field_ has been updated.  We
+        // should still be expected to have a domain name in the spec.
         if (current_field_ >= encode_spec_->field_count) {
             isc_throw(BadValue,
                       "RDATA encoder encounters an unexpected name data: " <<
@@ -316,35 +321,41 @@ public:
 
         last_data_pos_ += labels.getSerializedLength();
     }
+    // Clear all internal states and resources for a new set of RDATA.
     void clearLocal(const RdataEncodeSpec* encode_spec) {
         AbstractMessageRenderer::clear();
         encode_spec_ = encode_spec;
         data_lengths_.clear();
         last_data_pos_ = 0;
     }
+    // Called at the beginning of an RDATA.
     void startRdata() {
         current_field_ = 0;
     }
+    // Called at the end of an RDATA.
     void endRdata() {
         // Handle any remaining data (there should be no more name).  Then
         // we should reach the end of the fields.
         if (current_field_ < encode_spec_->field_count) {
-            extendData();
+            updateOtherData();
         }
         if (current_field_ != encode_spec_->field_count) {
             isc_throw(BadValue, "RDATA encoder finds missing field");
         }
     }
+
+    // Hold the lengths of variable length fields, in the order of their
+    // appearance.  For convenience, allow the encoder to refer to it
+    // directly.
     vector<uint16_t> data_lengths_;
 
 private:
     // We use generict write* methods, with the exception of writeName.
     // So new data can arrive without us knowing it, this considers all new
-    // data to be just data and extends the fields to take it into account.
+    // data to be just data, checking consistency with the field spec, and
+    // if it contains variable-length field, record its length.
     size_t last_data_pos_;
-    void extendData() {
-        assert(current_field_ < encode_spec_->field_count); // must be true
-
+    void updateOtherData() {
         const size_t cur_pos = getLength();
         size_t data_len = cur_pos - last_data_pos_;
         while (current_field_ < encode_spec_->field_count) {
@@ -384,8 +395,13 @@ private:
         last_data_pos_ = cur_pos;
     }
 
+    // The RDATA field spec of the current session.  Set at the beginning of
+    // each session.
     const RdataEncodeSpec* encode_spec_;
+    // the RDATA field (for encoding) currently handled.  Reset to 0 for
+    // each RDATA of the session.
     size_t current_field_;
+    // Placeholder to convert a name object to a label sequence.
     uint8_t labels_placeholder_[LabelSequence::MAX_SERIALIZED_LENGTH];
 };
 } // end of unnamed namespace
