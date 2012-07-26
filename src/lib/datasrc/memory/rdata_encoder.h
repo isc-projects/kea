@@ -60,15 +60,14 @@ enum RdataNameAttributes {
 /// uint16_t n1_2: size of 2nd variable len field of 1st RDATA
 /// ...
 /// uint16_t nN_M: size of last (Mth) variable len field of last (Nth) RDATA
+/// uint16_t ns1: size of 1st RRSIG data
+/// ...
+/// uint16_t nsL: size of last (Lth) RRSIG data
 /// A sequence of packed data fields follow:
 /// uint8_t[]: data field value, length specified by nI_J (in case it's
 ///            variable) or by the field spec (in case it's fixed-length).
 /// or
 /// opaque data, LabelSequence::getSerializedLength() bytes: data for a name
-/// (a possible 1-byte padding)
-/// uint16_t ns1: size of 1st RRSIG data
-/// ...
-/// uint16_t nsL: size of last (Lth) RRSIG data
 /// uint8_t[ns1]: 1st RRSIG data
 /// ...
 /// uint8_t[nsL]: last RRSIG data
@@ -99,6 +98,14 @@ public:
     /// \throw std::bad_alloc Internal memory allocation failure.
     void addRdata(const dns::rdata::Rdata& rdata);
 
+    /// \brief TBD
+    ///
+    /// Like addRdata(), this implementation does not support RRSIG RDATA
+    /// whose size (in the form of wire format) exceeds 65535 bytes.
+    ///
+    /// \throw InvalidOperation called before start().
+    /// \throw RdataEncodingError A very unusual case, such as over 64KB RDATA.
+    /// \throw std::bad_alloc Internal memory allocation failure.
     void addSIGRdata(const dns::rdata::Rdata& sig_rdata);
 
     /// \brief TBD
