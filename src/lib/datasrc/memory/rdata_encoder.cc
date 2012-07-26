@@ -48,17 +48,13 @@ struct RdataFieldSpec {
 
     const FieldType type;       // field type
 
-    // type specific data.  We use a union so it'll be clear only one of them
-    // (determined by the type) is valid.  Since we want to make it as
-    // lightweight as possible, we use a relatively lower-level primitives
-    // here.
-    union {
-        // The length of fixed-length data field.  Only valid for FIXEDLEN_DATA
-        const uint16_t fixeddata_len;
+    // The length of fixed-length data field.  Only valid for FIXEDLEN_DATA.
+    // For type DOMAIN_NAME, set it to 0.
+    const uint16_t fixeddata_len;
 
-        // Attributes of the name.  Only valid for DOMAIN_NAME.
-        const RdataNameAttributes name_attributes;
-    };
+    // Attributes of the name.  Only valid for DOMAIN_NAME.
+    // For type _DATA, set it to NAMEATTR_NONE.
+    const RdataNameAttributes name_attributes;
 };
 
 /// Specification of RDATA in terms of internal encoding.
@@ -69,23 +65,11 @@ struct RdataEncodeSpec {
     const RdataFieldSpec* const fields; // list of field specs
 };
 
-// These constants are convenient shortcut to initialize the name_attributes
-// member of RdataFieldSpec (since it's a union, we can only directly
-// initialize fixeddata_len member, so we need to convert it to its type).
-// These are essentially small integers, so the cast should be safe.
-const uint16_t NAMEATTR_NOATTRIBUTE_INITIALIZER = static_cast<uint16_t>(0);
-const uint16_t NAMEATTR_COMPRESSIBLE_INITIALIZER =
-    static_cast<uint16_t>(NAMEATTR_COMPRESSIBLE);
-const uint16_t NAMEATTR_ADDITIONAL_INITIALIZER =
-    static_cast<uint16_t>(NAMEATTR_ADDITIONAL);
-const uint16_t NAMEATTR_COMPADDITIONAL_INITIALIZER =
-    static_cast<uint16_t>(NAMEATTR_COMPRESSIBLE | NAMEATTR_ADDITIONAL);
-
 // Many types of RDATA can be treated as a single-field, variable length
 // field (in terms of our encoding).  The following define such most general
 // form of field spec.
 const RdataFieldSpec generic_data_fields[] = {
-    {RdataFieldSpec::VARLEN_DATA, {0}}
+    {RdataFieldSpec::VARLEN_DATA, 0, NAMEATTR_NONE}
 };
 const uint16_t n_generic_data_fields =
     sizeof(generic_data_fields) / sizeof(RdataFieldSpec);
@@ -95,70 +79,75 @@ const RdataEncodeSpec generic_data_spec = {
 
 // RDATA consist of a single IPv4 address field.
 const RdataFieldSpec single_ipv4_fields[] = {
-    {RdataFieldSpec::FIXEDLEN_DATA, {sizeof(uint32_t)}}
+    {RdataFieldSpec::FIXEDLEN_DATA, sizeof(uint32_t), NAMEATTR_NONE}
 };
 const uint16_t n_ipv4_fields =
     sizeof(single_ipv4_fields) / sizeof(RdataFieldSpec);
 
 // RDATA consist of a single IPv6 address field.
 const RdataFieldSpec single_ipv6_fields[] = {
-    {RdataFieldSpec::FIXEDLEN_DATA, {16}} // 128bits = 16 bytes
+    {RdataFieldSpec::FIXEDLEN_DATA, 16, NAMEATTR_NONE} // 128bits = 16 bytes
 };
 const uint16_t n_ipv6_fields =
     sizeof(single_ipv6_fields) / sizeof(RdataFieldSpec);
 
 // There are several RR types that consist of a single domain name.
 const RdataFieldSpec single_noattr_name_fields[] = {
-    {RdataFieldSpec::DOMAIN_NAME, {NAMEATTR_NOATTRIBUTE_INITIALIZER}}
+    {RdataFieldSpec::DOMAIN_NAME, 0, NAMEATTR_NONE}
 };
 const RdataFieldSpec single_compressible_name_fields[] = {
-    {RdataFieldSpec::DOMAIN_NAME, {NAMEATTR_COMPRESSIBLE_INITIALIZER}}
+    {RdataFieldSpec::DOMAIN_NAME, 0, NAMEATTR_COMPRESSIBLE}
 };
 const RdataFieldSpec single_compadditional_name_fields[] = {
-    {RdataFieldSpec::DOMAIN_NAME,
-     {NAMEATTR_COMPRESSIBLE_INITIALIZER|NAMEATTR_COMPADDITIONAL_INITIALIZER}}
+    {RdataFieldSpec::DOMAIN_NAME, 0,
+     static_cast<RdataNameAttributes>(
+         static_cast<unsigned int>(NAMEATTR_COMPRESSIBLE) |
+         static_cast<unsigned int>(NAMEATTR_ADDITIONAL))}
 };
 const uint16_t n_single_name_fields =
     sizeof(single_noattr_name_fields) / sizeof(RdataFieldSpec);
 
 // RDATA consisting of two names.  There are some of this type.
 const RdataFieldSpec double_compressible_name_fields[] = {
-    {RdataFieldSpec::DOMAIN_NAME, {NAMEATTR_COMPRESSIBLE_INITIALIZER}},
-    {RdataFieldSpec::DOMAIN_NAME, {NAMEATTR_COMPRESSIBLE_INITIALIZER}}
+    {RdataFieldSpec::DOMAIN_NAME, 0, NAMEATTR_COMPRESSIBLE},
+    {RdataFieldSpec::DOMAIN_NAME, 0, NAMEATTR_COMPRESSIBLE}
 };
 const RdataFieldSpec double_noattr_name_fields[] = {
-    {RdataFieldSpec::DOMAIN_NAME, {NAMEATTR_NOATTRIBUTE_INITIALIZER}},
-    {RdataFieldSpec::DOMAIN_NAME, {NAMEATTR_NOATTRIBUTE_INITIALIZER}}
+    {RdataFieldSpec::DOMAIN_NAME, 0, NAMEATTR_NONE},
+    {RdataFieldSpec::DOMAIN_NAME, 0, NAMEATTR_NONE}
 };
 const uint16_t n_double_name_fields =
     sizeof(double_compressible_name_fields) / sizeof(RdataFieldSpec);
 
 // SOA specific: two compressible names + 5*32-bit data
 const RdataFieldSpec soa_fields[] = {
-    {RdataFieldSpec::DOMAIN_NAME, {NAMEATTR_COMPRESSIBLE_INITIALIZER}},
-    {RdataFieldSpec::DOMAIN_NAME, {NAMEATTR_COMPRESSIBLE_INITIALIZER}},
-    {RdataFieldSpec::FIXEDLEN_DATA, {sizeof(uint32_t) * 5}}
+    {RdataFieldSpec::DOMAIN_NAME, 0, NAMEATTR_COMPRESSIBLE},
+    {RdataFieldSpec::DOMAIN_NAME, 0, NAMEATTR_COMPRESSIBLE},
+    {RdataFieldSpec::FIXEDLEN_DATA, sizeof(uint32_t) * 5, NAMEATTR_NONE}
 };
 const uint16_t n_soa_fields = sizeof(soa_fields) / sizeof(RdataFieldSpec);
 
 // MX specific: 16-bit data + compressible/additional name
 const RdataFieldSpec mx_fields[] = {
-    {RdataFieldSpec::FIXEDLEN_DATA, {sizeof(uint16_t)}},
-    {RdataFieldSpec::DOMAIN_NAME, {NAMEATTR_COMPADDITIONAL_INITIALIZER}}
+    {RdataFieldSpec::FIXEDLEN_DATA, sizeof(uint16_t), NAMEATTR_NONE},
+    {RdataFieldSpec::DOMAIN_NAME, 0,
+     static_cast<RdataNameAttributes>(
+         static_cast<unsigned int>(NAMEATTR_COMPRESSIBLE) |
+         static_cast<unsigned int>(NAMEATTR_ADDITIONAL))}
 };
 const uint16_t n_mx_fields = sizeof(mx_fields) / sizeof(RdataFieldSpec);
 
 // AFSDB specific: 16-bit data + no-attribute name
 const RdataFieldSpec afsdb_fields[] = {
-    {RdataFieldSpec::FIXEDLEN_DATA, {sizeof(uint16_t)}},
-    {RdataFieldSpec::DOMAIN_NAME, {NAMEATTR_NOATTRIBUTE_INITIALIZER}}
+    {RdataFieldSpec::FIXEDLEN_DATA, sizeof(uint16_t), NAMEATTR_NONE},
+    {RdataFieldSpec::DOMAIN_NAME, 0, NAMEATTR_NONE}
 };
 const uint16_t n_afsdb_fields = sizeof(afsdb_fields) / sizeof(RdataFieldSpec);
 
 // SRV specific: 3*16-bit data + additional name
 const RdataFieldSpec srv_fields[] = {
-    {RdataFieldSpec::FIXEDLEN_DATA, {sizeof(uint16_t) * 3}},
-    {RdataFieldSpec::DOMAIN_NAME, {NAMEATTR_ADDITIONAL_INITIALIZER}}
+    {RdataFieldSpec::FIXEDLEN_DATA, sizeof(uint16_t) * 3, NAMEATTR_NONE},
+    {RdataFieldSpec::DOMAIN_NAME, 0, NAMEATTR_ADDITIONAL}
 };
 const uint16_t n_srv_fields = sizeof(srv_fields) / sizeof(RdataFieldSpec);
 
@@ -166,15 +155,15 @@ const uint16_t n_srv_fields = sizeof(srv_fields) / sizeof(RdataFieldSpec);
 // NAPTR requires complicated additional section handling; for now, we skip
 // the additional handling completely.
 const RdataFieldSpec naptr_fields[] = {
-    {RdataFieldSpec::VARLEN_DATA, {0}},
-    {RdataFieldSpec::DOMAIN_NAME, {NAMEATTR_NOATTRIBUTE_INITIALIZER}}
+    {RdataFieldSpec::VARLEN_DATA, 0, NAMEATTR_NONE},
+    {RdataFieldSpec::DOMAIN_NAME, 0, NAMEATTR_NONE}
 };
 const uint16_t n_naptr_fields = sizeof(naptr_fields) / sizeof(RdataFieldSpec);
 
 // NSEC specific: no-attribute name + varlen data
 const RdataFieldSpec nsec_fields[] = {
-    {RdataFieldSpec::DOMAIN_NAME, {NAMEATTR_NOATTRIBUTE_INITIALIZER}},
-    {RdataFieldSpec::VARLEN_DATA, {0}}
+    {RdataFieldSpec::DOMAIN_NAME, 0, NAMEATTR_NONE},
+    {RdataFieldSpec::VARLEN_DATA, 0, NAMEATTR_NONE}
 };
 const uint16_t n_nsec_fields = sizeof(nsec_fields) / sizeof(RdataFieldSpec);
 
