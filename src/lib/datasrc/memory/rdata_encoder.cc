@@ -14,6 +14,8 @@
 
 #include <exceptions/exceptions.h>
 
+#include <util/buffer.h>
+
 #include <dns/name.h>
 #include <dns/labelsequence.h>
 #include <dns/messagerenderer.h>
@@ -389,12 +391,15 @@ private:
 } // end of unnamed namespace
 
 struct RdataEncoder::RdataEncoderImpl {
-    RdataEncoderImpl() : encode_spec_(NULL), rdata_count_(0)
+    RdataEncoderImpl() : encode_spec_(NULL), rrsig_buffer_(0),
+                         rdata_count_(0)
     {}
 
     const RdataEncodeSpec* encode_spec_; // encode spec of current RDATA set
     RdataFieldComposer field_composer_;
+    util::OutputBuffer rrsig_buffer_;
     size_t rdata_count_;
+    vector<uint16_t> rrsig_lengths_;
 };
 
 RdataEncoder::RdataEncoder() :
@@ -413,7 +418,9 @@ RdataEncoder::start(RRClass rrclass, RRType rrtype) {
 
     impl_->encode_spec_ = &getRdataEncodeSpec(rrclass, rrtype);
     impl_->field_composer_.clearLocal(impl_->encode_spec_);
+    impl_->rrsig_buffer_.clear();
     impl_->rdata_count_ = 0;
+    impl_->rrsig_lengths_.clear();
 }
 
 void
@@ -429,6 +436,19 @@ RdataEncoder::addRdata(const rdata::Rdata& rdata) {
     ++impl_->rdata_count_;
 }
 
+void
+RdataEncoder::addSIGRdata(const rdata::Rdata& sig_rdata) {
+    if (impl_->encode_spec_ == NULL) {
+        isc_throw(InvalidOperation,
+                  "RdataEncoder::addSIGRdata performed before start");
+    }
+    const size_t cur_pos = impl_->rrsig_buffer_.getLength();
+    sig_rdata.toWire(impl_->rrsig_buffer_);
+    const size_t rrsig_datalen = impl_->rrsig_buffer_.getLength() - cur_pos;
+    // TBD: too large data
+    impl_->rrsig_lengths_.push_back(rrsig_datalen);
+}
+
 size_t
 RdataEncoder::getStorageLength() const {
     if (impl_->encode_spec_ == NULL) {
@@ -437,6 +457,8 @@ RdataEncoder::getStorageLength() const {
     }
 
     return (sizeof(uint16_t) * impl_->field_composer_.data_lengths_.size() +
+            sizeof(uint16_t) * impl_->rrsig_lengths_.size() +
+            impl_->rrsig_buffer_.getLength() +
             impl_->field_composer_.getLength());
 }
 
@@ -456,17 +478,32 @@ RdataEncoder::encode(void* buf, size_t buf_len) const {
 
     uint8_t* const dp_beg = reinterpret_cast<uint8_t*>(buf);
     uint8_t* dp = dp_beg;
+    uint16_t* lenp = reinterpret_cast<uint16_t*>(buf);
+
+    // Encode list of lengths for variable length fields (if any)
     if (!impl_->field_composer_.data_lengths_.empty()) {
         const size_t varlen_fields_len =
             impl_->field_composer_.data_lengths_.size() * sizeof(uint16_t);
-        uint16_t* const lenp = reinterpret_cast<uint16_t*>(buf);
         memcpy(lenp, &impl_->field_composer_.data_lengths_[0],
                varlen_fields_len);
+        lenp += impl_->field_composer_.data_lengths_.size();
         dp += varlen_fields_len;
     }
+    // Encode list of lengths for RRSIGs (if any)
+    if (!impl_->rrsig_lengths_.empty()) {
+        const size_t rrsigs_len =
+            impl_->rrsig_lengths_.size() * sizeof(uint16_t);
+        memcpy(lenp, &impl_->rrsig_lengths_[0], rrsigs_len);
+        dp += rrsigs_len;
+    }
+    // Encode main RDATA
     memcpy(dp, impl_->field_composer_.getData(),
            impl_->field_composer_.getLength());
     dp += impl_->field_composer_.getLength();
+    // Encode RRSIGs, if any
+    memcpy(dp, impl_->rrsig_buffer_.getData(),
+           impl_->rrsig_buffer_.getLength());
+    dp += impl_->rrsig_buffer_.getLength();
 
     // The validation at the entrance must ensure this
     assert(buf_len >= dp - dp_beg);
@@ -521,6 +558,26 @@ foreachRdataField(RRClass rrclass, RRType rrtype,
     }
     assert(name_count == encode_spec.name_count * rdata_count);
     assert(varlen_count == encode_spec.varlen_count * rdata_count);
+}
+
+void
+foreachRRSig(const vector<uint8_t>& encoded_data,
+             const vector<uint16_t>& rrsiglen_list,
+             DataCallback data_callback)
+{
+    size_t rrsig_totallen = 0;
+    for (vector<uint16_t>::const_iterator it = rrsiglen_list.begin();
+         it != rrsiglen_list.end();
+         ++it) {
+        rrsig_totallen += *it;
+    }
+    assert(encoded_data.size() >= rrsig_totallen);
+
+    const uint8_t* dp = &encoded_data[encoded_data.size() - rrsig_totallen];
+    for (size_t i = 0; i < rrsiglen_list.size(); ++i) {
+        data_callback(dp, rrsiglen_list[i]);
+        dp += rrsiglen_list[i];
+    }
 }
 } // namespace testing
 
