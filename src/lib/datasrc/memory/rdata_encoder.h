@@ -182,7 +182,7 @@ public:
     ///
     /// \note This implementation does not support RDATA (or any subfield of
     /// it) whose size exceeds 65535 bytes (max uint16_t value).  Such RDATA
-    /// may not necessarily considered invalid in terms of protocol
+    /// may not necessarily be considered invalid in terms of protocol
     /// specification, but in practice it's mostly useless because the
     /// corresponding RR won't fit in any valid DNS message.
     ///
@@ -272,8 +272,8 @@ private:
     RdataEncoderImpl* impl_;
 };
 
-// We use the following quick-hack version of encoder and "foreach"
-// operator until we implement the complete versions.  The plan is to
+// We use the following quick-hack version of "foreach"
+// operators until we implement the complete versions.  The plan is to
 // update the test cases that use these functions with the complete
 // functions/classes, and then remove the entire namespace.
 namespace testing {
