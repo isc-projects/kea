@@ -417,8 +417,20 @@ TEST_F(RdataEncoderTest, addSIGRdata) {
 }
 
 TEST_F(RdataEncoderTest, badAddSIGRdata) {
+    // try adding SIG before start
     EXPECT_THROW(encoder_.addSIGRdata(*rrsig_rdata_), isc::InvalidOperation);
 
-    // TBD: reject very large RRSIG
+    // Very big RRSIG.  This implementation rejects it.
+    isc::util::OutputBuffer ob(0);
+    rrsig_rdata_->toWire(ob);
+    // append dummy trailing signature to make it too big
+    vector<uint8_t> dummy_sig(65536 - ob.getLength());
+    ob.writeData(&dummy_sig[0], dummy_sig.size());
+    ASSERT_EQ(65536, ob.getLength());
+
+    isc::util::InputBuffer ib(ob.getData(), ob.getLength());
+    generic::RRSIG big_sigrdata(ib, ob.getLength());
+    encoder_.start(RRClass::IN(), RRType::A());
+    EXPECT_THROW(encoder_.addSIGRdata(big_sigrdata), RdataEncodingError);
 }
 }
