@@ -276,12 +276,12 @@ TEST_F(RBTreeTest, flags) {
 }
 
 bool
-testCallback(const RBNode<int>&, bool* callack_checker) {
-    *callack_checker = true;
+testCallback(const RBNode<int>&, bool* callback_checker) {
+    *callback_checker = true;
     return (false);
 }
 
-TEST_F(RBTreeTest, callback) {
+TEST_F(RBTreeTest, callbackName) {
     // by default callback isn't enabled
     EXPECT_EQ(RBTree<int>::SUCCESS, rbtree.insert(mem_sgmt_,
                                                   Name("callback.example"),
@@ -307,7 +307,7 @@ TEST_F(RBTreeTest, callback) {
     EXPECT_EQ(RBTree<int>::ALREADYEXISTS, rbtree.insert(mem_sgmt_,
                                                         Name("example"),
                                                         &parentrbtnode));
-    //  the chilld/parent nodes shouldn't "inherit" the callback flag.
+    // the child/parent nodes shouldn't "inherit" the callback flag.
     // "rbtnode" may be invalid due to the insertion, so we need to re-find
     // it.
     EXPECT_EQ(RBTree<int>::EXACTMATCH, rbtree.find(Name("callback.example"),
@@ -333,6 +333,32 @@ TEST_F(RBTreeTest, callback) {
               rbtree.find(Name("callback.example"), &crbtnode, node_path2,
                           testCallback, &callback_called));
     EXPECT_FALSE(callback_called);
+}
+
+TEST_F(RBTreeTest, callbackLabelSequence) {
+    EXPECT_EQ(RBTree<int>::SUCCESS, rbtree.insert(mem_sgmt_,
+                                                  Name("callback.example"),
+                                                  &rbtnode));
+    rbtnode->setData(RBNode<int>::NodeDataPtr(new int(1)));
+    rbtnode->setFlag(RBNode<int>::FLAG_CALLBACK);
+
+    // add more levels below and above the callback node for partial match.
+    EXPECT_EQ(RBTree<int>::SUCCESS, rbtree.insert(mem_sgmt_,
+                                                  Name("sub.callback.example"),
+                                                  &rbtnode));
+    rbtnode->setData(RBNode<int>::NodeDataPtr(new int(2)));
+    EXPECT_EQ(RBTree<int>::ALREADYEXISTS, rbtree.insert(mem_sgmt_,
+                                                        Name("example"),
+                                                        &rbtnode));
+    // check if the callback is called from find()
+    RBTreeNodeChain<int> node_path1;
+    bool callback_called = false;
+    const Name name("sub.callback.example");
+    const LabelSequence ls(name);
+    EXPECT_EQ(RBTree<int>::EXACTMATCH,
+              rbtree.find(ls, &rbtnode, node_path1,
+                          testCallback, &callback_called));
+    EXPECT_TRUE(callback_called);
 }
 
 TEST_F(RBTreeTest, chainLevel) {
