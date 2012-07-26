@@ -322,7 +322,7 @@ RdataEncoderTest::addRdataMultiCommon(const vector<ConstRdataPtr>& rrsigs) {
 
 TEST_F(RdataEncoderTest, encodeLargeRdata) {
     // There should be no reason for a large RDATA to fail in encoding,
-    // but we check such a  case explicitly.
+    // but we check such a case explicitly.
 
     encoded_data_.resize(65535); // max unsigned 16-bit int
     isc::util::InputBuffer buffer(&encoded_data_[0], encoded_data_.size());
