@@ -156,6 +156,13 @@ TEST_F(Rdata_SSHFP_Test, createFromWire) {
 
 TEST_F(Rdata_SSHFP_Test, toText) {
     EXPECT_TRUE(boost::iequals(sshfp_txt, rdata_sshfp.toText()));
+
+    const string sshfp_txt2("2 1");
+    const generic::SSHFP rdata_sshfp2(sshfp_txt2);
+    EXPECT_TRUE(boost::iequals(sshfp_txt2, rdata_sshfp2.toText()));
+
+    const generic::SSHFP rdata_sshfp3("2 1 ");
+    EXPECT_TRUE(boost::iequals(sshfp_txt2, rdata_sshfp3.toText()));
 }
 
 TEST_F(Rdata_SSHFP_Test, toWire) {
