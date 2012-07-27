@@ -454,20 +454,30 @@ AC_SUBST(PYCOVERAGE)
 AC_SUBST(PYCOVERAGE_RUN)
 AC_SUBST(USE_PYCOVERAGE)
 
+enable_gtest="no"
+GTEST_INCLUDES=
+
+AC_ARG_WITH([gtest-source],
+            [AS_HELP_STRING([--with-gtest-source=PATH],
+                            [location of the Googletest source, defaults to /usr/src/gtest])],
+            [enable_gtest="yes" ; GTEST_SOURCE="$withval"],
+            [GTEST_SOURCE="/usr/src/gtest"])
+
+AC_ARG_WITH([gtest],
+	    [AS_HELP_STRING([--with-gtest=PATH],
+			    [specify a path to gtest header files (PATH/include) and library (PATH/lib)])],
+	[gtest_path="$withval"; enable_gtest="yes"], [gtest_path="no"])
+
 AC_ARG_WITH(lcov,
 [  --with-lcov[=PROGRAM]         enable gtest and coverage target using the specified lcov], lcov="$withval", lcov="no")
-
-AC_ARG_WITH(gtest,
-[  --with-gtest=PATH       specify a path to gtest header files (PATH/include) and library (PATH/lib)],
-    gtest_path="$withval", gtest_path="no")
 
 USE_LCOV="no"
 if test "$lcov" != "no"; then
 	# force gtest if not set
-	if test "$gtest_path" = "no"; then
+	if test "$enable_gtest" = "no"; then
 #		AC_MSG_ERROR("lcov needs gtest for test coverage report")
 		AC_MSG_NOTICE([gtest support is now enabled, because used by coverage tests])
-		gtest_path="yes"
+		enable_gtest="yes"
 	fi
 	if test "$lcov" != "yes"; then
 		LCOV=$lcov
@@ -813,98 +823,138 @@ AC_SUBST(MULTITHREADING_FLAG)
 #
 # Check availability of gtest, which will be used for unit tests.
 #
-if test "$gtest_path" != "no"
-then
-	DISTCHECK_GTEST_CONFIGURE_FLAG="--with-gtest=\"$gtest_path\""
-	if test "$gtest_path" != "yes"; then
-		GTEST_PATHS=$gtest_path
-		if test -x "${gtest_path}/bin/gtest-config" ; then
-			GTEST_CONFIG="${gtest_path}/bin/gtest-config"
-		fi
-	else
-		AC_PATH_PROG([GTEST_CONFIG], [gtest-config])
-	fi
-	if test -x "${GTEST_CONFIG}" ; then :
-		# using cppflags instead of cxxflags
-		GTEST_INCLUDES=`${GTEST_CONFIG} --cppflags`
-		GTEST_LDFLAGS=`${GTEST_CONFIG} --ldflags`
-		GTEST_LDADD=`${GTEST_CONFIG} --libs`
-		GTEST_FOUND="true"
-	else
-		AC_MSG_WARN([Unable to locate Google Test gtest-config.])
-		if test -z "${GTEST_PATHS}" ; then
-			GTEST_PATHS="/usr /usr/local"
-		fi
-		GTEST_FOUND="false"
-	fi
-	if test "${GTEST_FOUND}" != "true"; then
-		GTEST_FOUND="false"
-		for dir in $GTEST_PATHS; do
-			if test -f "$dir/include/gtest/gtest.h"; then
-				GTEST_INCLUDES="-I$dir/include"
-				GTEST_LDFLAGS="-L$dir/lib"
-				GTEST_LDADD="-lgtest"
-				GTEST_FOUND="true"
-				# There is no gtest-config script on this
-				# system, which is supposed to inform us
-				# whether we need pthreads as well (a
-				# gtest compile-time option). So we still
-				# need to test that manually.
-				CPPFLAGS_SAVED="$CPPFLAGS"
-				CPPFLAGS="$CPPFLAGS $GTEST_INCLUDES"
-				LDFLAGS_SAVED="$LDFLAGS"
-				LDFLAGS="$LDFLAGS $GTEST_LDFLAGS"
-				LIBS_SAVED=$LIBS
-				LIBS="$LIBS $GTEST_LDADD"
-				AC_MSG_CHECKING([Checking whether gtest tests need pthreads])
-				# First try to compile without pthreads
-				AC_TRY_LINK([
-					#include <gtest/gtest.h>
-					],[
-						int i = 0;
-						char* c = NULL;
-						::testing::InitGoogleTest(&i, &c);
-						return (0);
-					],
-					[ AC_MSG_RESULT(no) ],
-					[
-						LIBS="$SAVED_LIBS $GTEST_LDADD $PTHREAD_LDFLAGS"
-						# Now try to compile with pthreads
-						AC_TRY_LINK([
-							#include <gtest/gtest.h>
-							],[
-								int i = 0;
-								char* c = NULL;
-								::testing::InitGoogleTest(&i, &c);
-								return (0);
-							],
-							[ AC_MSG_RESULT(yes)
-							  GTEST_LDADD="$GTEST_LDADD $PTHREAD_LDFLAGS"
-							],
-							# Apparently we can't compile it at all
-							[ AC_MSG_ERROR(unable to compile with gtest) ])
-				])
-				CPPFLAGS=$CPPFLAGS_SAVED
-				LDFLAGS=$LDFLAGS_SAVED
-				LIBS=$LIBS_SAVED
-				break
-			fi
-		done
-	fi
-	if test "${GTEST_FOUND}" != "true"; then
-		AC_MSG_ERROR([Cannot find gtest in: $GTEST_PATHS])
-	fi
-else
-	GTEST_INCLUDES=
-	GTEST_LDFLAGS=
-	GTEST_LDADD=
-	DISTCHECK_GTEST_CONFIGURE_FLAG=
+GTEST_LDFLAGS=
+GTEST_LDADD=
+# TODO: set DISTCHECK_GTEST_CONFIGURE_FLAG for --with-gtest too
+DISTCHECK_GTEST_CONFIGURE_FLAG=
+
+if test "x$enable_gtest" = "xyes" ; then
+
+    if test -n "$with_gtest_source" ; then
+
+          if test "x$GTEST_SOURCE" = "xyes" ; then
+
+            AC_MSG_CHECKING([for gtest source])
+            # If not specified, try some common paths.
+            GTEST_SOURCE=
+            for d in /usr/src/gtest /usr/local /usr/pkg /opt /opt/local ; do
+                if test -f $d/src/gtest-all.cc -a $d/src/gtest_main.cc; then
+                    GTEST_SOURCE=$d
+                    AC_MSG_RESULT([$GTEST_SOURCE])
+                    break
+                fi
+            done
+            if test -z $GTEST_SOURCE ; then
+                AC_MSG_ERROR([no gtest source but it was selected])
+            fi
+         else
+            AC_CHECK_FILES([$GTEST_SOURCE/src/gtest-all.cc]
+               [$GTEST_SOURCE/src/gtest_main.cc],
+               [have_gtest_source=yes],
+               [AC_MSG_ERROR([no gtest source at $GTEST_SOURCE])])
+          fi
+          have_gtest_source=yes
+          GTEST_LDFLAGS="\$(top_builddir)/libgtest.a"
+          DISTCHECK_GTEST_CONFIGURE_FLAG="--with-gtest-source=$GTEST_SOURCE"
+          GTEST_INCLUDES="-I$GTEST_SOURCE -I$GTEST_SOURCE/include"
+          # See $GTEST_SOURCE/include/gtest/internal/gtest-port.h
+          # about GTEST_HAS_PTHREAD.
+          case "$host" in
+            *-solaris*|*-linux*|*-hpux*)
+                GTEST_LDADD="$GTEST_LDADD $PTHREAD_LDFLAGS"
+                ;;
+          esac
+        fi
+
+if test "$gtest_path" != "no" ; then
+    if test "$gtest_path" != "yes"; then
+        GTEST_PATHS=$gtest_path
+        if test -x "${gtest_path}/bin/gtest-config" ; then
+            GTEST_CONFIG="${gtest_path}/bin/gtest-config"
+        fi
+    else
+        AC_PATH_PROG([GTEST_CONFIG], [gtest-config])
+    fi
+    if test -x "${GTEST_CONFIG}" ; then :
+        # using cppflags instead of cxxflags
+        GTEST_INCLUDES=`${GTEST_CONFIG} --cppflags`
+        GTEST_LDFLAGS=`${GTEST_CONFIG} --ldflags`
+        GTEST_LDADD=`${GTEST_CONFIG} --libs`
+        GTEST_FOUND="true"
+    else
+        AC_MSG_WARN([Unable to locate Google Test gtest-config.])
+        if test -z "${GTEST_PATHS}" ; then
+            GTEST_PATHS="/usr /usr/local"
+        fi
+        GTEST_FOUND="false"
+    fi
+    if test "${GTEST_FOUND}" != "true"; then
+        GTEST_FOUND="false"
+        for dir in $GTEST_PATHS; do
+            if test -f "$dir/include/gtest/gtest.h"; then
+                GTEST_INCLUDES="-I$dir/include"
+                GTEST_LDFLAGS="-L$dir/lib"
+                GTEST_LDADD="-lgtest"
+                GTEST_FOUND="true"
+                # There is no gtest-config script on this
+                # system, which is supposed to inform us
+                # whether we need pthreads as well (a
+                # gtest compile-time option). So we still
+                # need to test that manually.
+                CPPFLAGS_SAVED="$CPPFLAGS"
+                CPPFLAGS="$CPPFLAGS $GTEST_INCLUDES"
+                LDFLAGS_SAVED="$LDFLAGS"
+                LDFLAGS="$LDFLAGS $GTEST_LDFLAGS"
+                LIBS_SAVED=$LIBS
+                LIBS="$LIBS $GTEST_LDADD"
+                AC_MSG_CHECKING([Checking whether gtest tests need pthreads])
+                # First try to compile without pthreads
+                AC_TRY_LINK([
+                    #include <gtest/gtest.h>
+                    ],[
+                        int i = 0;
+                        char* c = NULL;
+                        ::testing::InitGoogleTest(&i, &c);
+                        return (0);
+                    ],
+                    [ AC_MSG_RESULT(no) ],
+                    [
+                        LIBS="$SAVED_LIBS $GTEST_LDADD $PTHREAD_LDFLAGS"
+                        # Now try to compile with pthreads
+                        AC_TRY_LINK([
+                            #include <gtest/gtest.h>
+                            ],[
+                                int i = 0;
+                                char* c = NULL;
+                                ::testing::InitGoogleTest(&i, &c);
+                                return (0);
+                            ],
+                            [ AC_MSG_RESULT(yes)
+                              GTEST_LDADD="$GTEST_LDADD $PTHREAD_LDFLAGS"
+                            ],
+                            # Apparently we can't compile it at all
+                            [ AC_MSG_ERROR(unable to compile with gtest) ])
+                ])
+                CPPFLAGS=$CPPFLAGS_SAVED
+                LDFLAGS=$LDFLAGS_SAVED
+                LIBS=$LIBS_SAVED
+                break
+            fi
+        done
+    fi
+    if test "${GTEST_FOUND}" != "true"; then
+        AC_MSG_ERROR([Cannot find gtest in: $GTEST_PATHS])
+    fi
+
+  fi
 fi
-AM_CONDITIONAL(HAVE_GTEST, test $gtest_path != "no")
+AM_CONDITIONAL(HAVE_GTEST, test $enable_gtest != "no")
+AM_CONDITIONAL(HAVE_GTEST_SOURCE, test "X$have_gtest_source" = "Xyes")
 AC_SUBST(DISTCHECK_GTEST_CONFIGURE_FLAG)
 AC_SUBST(GTEST_INCLUDES)
 AC_SUBST(GTEST_LDFLAGS)
 AC_SUBST(GTEST_LDADD)
+AC_SUBST(GTEST_SOURCE)
 
 dnl check for pkg-config itself so we don't try the m4 macro without pkg-config
 AC_CHECK_PROG(HAVE_PKG_CONFIG, pkg-config, yes, no)
@@ -1308,12 +1358,12 @@ Features:
   $enable_features
 
 Developer:
-  Google Tests:  $gtest_path
+  Google Tests: $enable_gtest
   Valgrind: $found_valgrind
   C++ Code Coverage: $USE_LCOV
   Python Code Coverage: $USE_PYCOVERAGE
   Logger checks: $enable_logger_checks
-  Generate Manuals:  $enable_man
+  Generate Manuals: $enable_man
 
 END
 
