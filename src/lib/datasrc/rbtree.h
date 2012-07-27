@@ -1320,7 +1320,7 @@ RBTree<T>::deleteHelper(util::MemorySegment& mem_sgmt, RBNode<T>* root) {
 template <typename T>
 template <typename CBARG>
 typename RBTree<T>::Result
-RBTree<T>::find(const isc::dns::LabelSequence& target_labels,
+RBTree<T>::find(const isc::dns::LabelSequence& target_labels_orig,
                 RBNode<T>** target,
                 RBTreeNodeChain<T>& node_path,
                 bool (*callback)(const RBNode<T>&, CBARG),
@@ -1332,11 +1332,11 @@ RBTree<T>::find(const isc::dns::LabelSequence& target_labels,
 
     RBNode<T>* node = root_.get();
     Result ret = NOTFOUND;
-    dns::LabelSequence target_labels_copy(target_labels);
+    dns::LabelSequence target_labels(target_labels_orig);
 
     while (node != NULLNODE) {
         node_path.last_compared_ = node;
-        node_path.last_comparison_ = target_labels_copy.compare(node->getLabels());
+        node_path.last_comparison_ = target_labels.compare(node->getLabels());
         const isc::dns::NameComparisonResult::NameRelation relation =
             node_path.last_comparison_.getRelation();
 
@@ -1365,7 +1365,7 @@ RBTree<T>::find(const isc::dns::LabelSequence& target_labels,
                     }
                 }
                 node_path.push(node);
-                target_labels_copy.stripRight(
+                target_labels.stripRight(
                     node_path.last_comparison_.getCommonLabels());
                 node = node->getDown();
             } else {
