@@ -946,7 +946,8 @@ public:
     /// Acts as described in the \ref find section.
     Result find(const isc::dns::Name& name, RBNode<T>** node) const {
         RBTreeNodeChain<T> node_path;
-        return (find<void*>(name, node, node_path, NULL, NULL));
+        const isc::dns::LabelSequence ls(name);
+        return (find<void*>(ls, node, node_path, NULL, NULL));
     }
 
     /// \brief Simple find returning immutable node.
@@ -956,7 +957,8 @@ public:
     Result find(const isc::dns::Name& name, const RBNode<T>** node) const {
         RBTreeNodeChain<T> node_path;
         RBNode<T> *target_node = NULL;
-        Result ret = (find<void*>(name, &target_node, node_path, NULL, NULL));
+        const isc::dns::LabelSequence ls(name);
+        Result ret = (find<void*>(ls, &target_node, node_path, NULL, NULL));
         if (ret != NOTFOUND) {
             *node = target_node;
         }
@@ -969,7 +971,8 @@ public:
     Result find(const isc::dns::Name& name, RBNode<T>** node,
                 RBTreeNodeChain<T>& node_path) const
     {
-        return (find<void*>(name, node, node_path, NULL, NULL));
+        const isc::dns::LabelSequence ls(name);
+        return (find<void*>(ls, node, node_path, NULL, NULL));
     }
 
     /// \brief Simple find returning immutable node, with node_path tracking
@@ -980,87 +983,12 @@ public:
                 RBTreeNodeChain<T>& node_path) const
     {
         RBNode<T> *target_node = NULL;
-        Result ret = (find<void*>(name, &target_node, node_path, NULL, NULL));
+        const isc::dns::LabelSequence ls(name);
+        Result ret = (find<void*>(ls, &target_node, node_path, NULL, NULL));
         if (ret != NOTFOUND) {
             *node = target_node;
         }
         return (ret);
-    }
-
-    /// \brief Find with callback and node chain (Name version).
-    /// \anchor callback
-    ///
-    /// This version of \c find() is specifically designed for the backend
-    /// of the \c InMemoryZoneFinder class, and implements all necessary
-    /// features for that purpose.  Other applications shouldn't need these
-    /// additional features, and should normally use the simpler versions.
-    ///
-    /// This version of \c find() calls the callback whenever traversing (on
-    /// the way from root down the tree) a marked node on the way down through
-    /// the domain namespace (see \c RBNode::FLAG_CALLBACK).
-    ///
-    /// If you return true from the callback, the search is stopped and a
-    /// PARTIALMATCH is returned with the given node. Note that this node
-    /// doesn't really need to be the one with longest possible match.
-    ///
-    /// The callback is not called for the node which matches exactly
-    /// (EXACTMATCH is returned). This is typically the last node in the
-    /// traversal during a successful search.
-    ///
-    /// This callback mechanism was designed with zone cut (delegation)
-    /// processing in mind. The marked nodes would be the ones at delegation
-    /// points. It is not expected that any other applications would need
-    /// callbacks; they should use the versions of find without callbacks.
-    /// The callbacks are not general functors for the same reason - we don't
-    /// expect it to be needed.
-    ///
-    /// Another special feature of this version is the ability to record
-    /// more detailed information regarding the search result.
-    ///
-    /// This information will be returned via the \c node_path parameter,
-    /// which is an object of class \c RBTreeNodeChain.
-    /// The passed parameter must be empty.
-    ///
-    /// On success, the node sequence stored in \c node_path will contain all
-    /// the ancestor nodes from the found node towards the root.
-    /// For example, if we look for o.w.y.d.e.f in the example \ref diagram,
-    /// \c node_path will contain w.y and d.e.f; the \c top() node of the
-    /// chain will be o, w.y and d.e.f will be stored below it.
-    ///
-    /// This feature can be used to get the absolute name for a node;
-    /// to do so, we need to travel upside from the node toward the root,
-    /// concatenating all ancestor names.  With the current implementation
-    /// it's not possible without a node chain, because there is a no pointer
-    /// from the root of a subtree to the parent subtree (this may change
-    /// in a future version).  A node chain can also be used to find the
-    /// next and previous nodes of a given node in the entire RBTree;
-    /// the \c nextNode() and \c previousNode() methods take a node
-    /// chain as a parameter.
-    ///
-    /// \exception isc::BadValue node_path is not empty.
-    ///
-    /// \param name Target to be found
-    /// \param node On success (either \c EXACTMATCH or \c PARTIALMATCH)
-    ///     it will store a pointer to the matching node
-    /// \param node_path Other search details will be stored (see the
-    ///        description)
-    /// \param callback If non- \c NULL, a call back function to be called
-    ///     at marked nodes (see the description).
-    /// \param callback_arg A caller supplied argument to be passed to
-    ///     \c callback.
-    ///
-    /// \return As in the description, but in case of callback returning
-    ///     \c true, it returns immediately with the current node.
-    template <typename CBARG>
-    Result find(const isc::dns::Name& name,
-                RBNode<T>** node,
-                RBTreeNodeChain<T>& node_path,
-                bool (*callback)(const RBNode<T>&, CBARG),
-                CBARG callback_arg) const
-    {
-        const isc::dns::LabelSequence target_labels(name);
-        return (find(target_labels, node, node_path,
-                     callback, callback_arg));
     }
 
     /// \brief Simple find returning immutable node.
@@ -1075,7 +1003,8 @@ public:
                 CBARG callback_arg) const
     {
         RBNode<T>* target_node = NULL;
-        Result ret = find(name, &target_node, node_path, callback,
+        const isc::dns::LabelSequence ls(name);
+        Result ret = find(ls, &target_node, node_path, callback,
                           callback_arg);
         if (ret != NOTFOUND) {
             *node = target_node;
@@ -1083,7 +1012,7 @@ public:
         return (ret);
     }
 
-    /// \brief Find with callback and node chain (LabelSequence version).
+    /// \brief Find with callback and node chain
     /// \anchor callback
     ///
     /// This version of \c find() calls the callback whenever traversing (on
@@ -1148,6 +1077,26 @@ public:
                 RBTreeNodeChain<T>& node_path,
                 bool (*callback)(const RBNode<T>&, CBARG),
                 CBARG callback_arg) const;
+
+    /// \brief Simple find returning immutable node.
+    ///
+    /// Acts as described in the \ref find section, but returns immutable
+    /// node pointer.
+    template <typename CBARG>
+    Result find(const isc::dns::LabelSequence& target_labels,
+                const RBNode<T>** node,
+                RBTreeNodeChain<T>& node_path,
+                bool (*callback)(const RBNode<T>&, CBARG),
+                CBARG callback_arg) const
+    {
+        RBNode<T>* target_node = NULL;
+        Result ret = find(target_labels, &target_node, node_path,
+                          callback, callback_arg);
+        if (ret != NOTFOUND) {
+            *node = target_node;
+        }
+        return (ret);
+    }
     //@}
 
     /// \brief return the next bigger node in DNSSEC order from a given node
