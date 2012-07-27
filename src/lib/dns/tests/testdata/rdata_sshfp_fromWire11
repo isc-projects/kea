@@ -1,4 +1,4 @@
 # Test where RDATA is completely missing
 
-# SSHFP RDATA, RDLEN=22
+# SSHFP RDATA, RDLEN=32
 0020
