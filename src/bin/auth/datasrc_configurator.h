@@ -73,8 +73,8 @@ public:
     /// \throw isc::InvalidParameter if any of the parameters is NULL
     /// \throw isc::config::ModuleCCError if the remote configuration is not
     ///     available for some reason.
-    static void init(isc::config::ModuleCCSession *session,
-                     Server *server)
+    static void init(isc::config::ModuleCCSession* session,
+                     Server* server)
     {
         if (session == NULL) {
             isc_throw(isc::InvalidParameter, "The session must not be NULL");
