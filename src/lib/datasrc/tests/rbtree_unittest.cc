@@ -283,10 +283,11 @@ testCallback(const RBNode<int>&, bool* callback_checker) {
 
 template <typename T>
 void
-performCallbackTest(RBTree<int> &rbtree,
+performCallbackTest(RBTree<int>& rbtree,
                     util::MemorySegmentLocal& mem_sgmt,
                     const T& name_called,
-                    const T& name_not_called) {
+                    const T& name_not_called)
+{
     RBNode<int>* rbtnode;
     const RBNode<int>* crbtnode;
 
