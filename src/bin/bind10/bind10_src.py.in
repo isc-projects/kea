@@ -286,10 +286,8 @@ class BoB:
         return process_list
 
     def _get_stats_data(self):
-        return { "owner": "Boss",
-                 "data": { 'boot_time':
-                               time.strftime('%Y-%m-%dT%H:%M:%SZ', _BASETIME)
-                           }
+        return { 'boot_time':
+                     time.strftime('%Y-%m-%dT%H:%M:%SZ', _BASETIME)
                  }
 
     def command_handler(self, command, args):
@@ -302,25 +300,8 @@ class BoB:
                 self.runnable = False
                 answer = isc.config.ccsession.create_answer(0)
             elif command == "getstats":
-                answer = isc.config.ccsession.create_answer(0, self._get_stats_data())
-            elif command == "sendstats":
-                # send statistics data to the stats daemon immediately
-                stats_data = self._get_stats_data()
-                valid = self.ccs.get_module_spec().validate_statistics(
-                    True, stats_data["data"])
-                if valid:
-                    cmd = isc.config.ccsession.create_command('set', stats_data)
-                    seq = self.cc_session.group_sendmsg(cmd, 'Stats')
-                    # Consume the answer, in case it becomes a orphan message.
-                    try:
-                        self.cc_session.group_recvmsg(False, seq)
-                    except isc.cc.session.SessionTimeout:
-                        pass
-                    answer = isc.config.ccsession.create_answer(0)
-                else:
-                    logger.fatal(BIND10_INVALID_STATISTICS_DATA);
-                    answer = isc.config.ccsession.create_answer(
-                        1, "specified statistics data is invalid")
+                answer = isc.config.ccsession.create_answer(
+                    0, self._get_stats_data())
             elif command == "ping":
                 answer = isc.config.ccsession.create_answer(0, "pong")
             elif command == "show_processes":
