@@ -30,7 +30,7 @@ import imp
 
 import stats
 import isc.cc.session
-from test_utils import BaseModules, ThreadingServerManager, MyStats, SignalHandler, send_command, send_shutdown
+from test_utils import BaseModules, ThreadingServerManager, MyStats, SignalHandler, send_command, send_shutdown, MockAuth
 from isc.testutils.ccsession_mock import MockModuleCCSession
 
 class TestUtilties(unittest.TestCase):
@@ -150,11 +150,19 @@ class TestStats(unittest.TestCase):
         # set the signal handler for deadlock
         self.sig_handler = SignalHandler(self.fail)
         self.base = BaseModules()
+        # invoke more three MockAuth
+        for i in ['2', '3', '4']:
+            setattr(self.base, "auth"+i, \
+                        ThreadingServerManager(MockAuth))
+            getattr(self.base, "auth"+i).run()
         self.const_timestamp = 1308730448.965706
         self.const_datetime = '2011-06-22T08:14:08Z'
         self.const_default_datetime = '1970-01-01T00:00:00Z'
 
     def tearDown(self):
+        # shutdown more three MockAuth
+        for i in ['2', '3', '4']:
+            getattr(self.base, "auth"+i).shutdown()
         self.base.shutdown()
         # reset the signal handler
         self.sig_handler.reset()
