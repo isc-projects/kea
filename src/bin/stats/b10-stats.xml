@@ -99,9 +99,9 @@
         <listitem>
           <para>
             is a timer interval in seconds for <command>b10-stats</command> to
-            polling each module for its statistics data. The default is 60
-            second. Polling can be disabled by setting to 0. The type of the
-            value should be an unsigned integer. Setting to a negative integer
+            request each module to return its statistics data. The default is 60
+            second. Polling can be disabled by setting it to 0. The type of the
+            value should be an unsigned integer. A negative integer
             is ignored.
           </para>
         </listitem>
