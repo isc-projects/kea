@@ -342,18 +342,17 @@ LabelSequence::extend(const LabelSequence& labels,
                       uint8_t buf[MAX_SERIALIZED_LENGTH])
 {
     // collect data to perform steps before anything is changed
-    bool absolute = isAbsolute();
     size_t label_count = last_label_ + 1;
     // Since we may have been stripped, do not use getDataLength(), but
     // calculate actual data size this labelsequence currently uses
     size_t data_pos = offsets_[last_label_] + data_[offsets_[last_label_]] + 1;
 
     // If this labelsequence is absolute, virtually strip the root label.
-    if (absolute) {
+    if (isAbsolute()) {
         data_pos--;
         label_count--;
     }
-    size_t append_label_count = labels.getLabelCount();
+    const size_t append_label_count = labels.getLabelCount();
     size_t data_len;
     const uint8_t *data = labels.getData(&data_len);
 
@@ -372,18 +371,7 @@ LabelSequence::extend(const LabelSequence& labels,
     }
 
     // All seems to be reasonably ok, let's proceed.
-
-    // Note: In theory this could be done with a straightforward memcpy.
-    // However, one can extend a labelsequence with itself, in which
-    // case we'd be copying overlapping data (overwriting the current last
-    // label if this LabelSequence is absolute). Therefore we do this
-    // manually, and more importantly, backwards.
-    // (note2: obviously this destroys data_len, don't use below,
-    // or reset it)
-    while (--data_len) {
-        buf[data_pos + data_len] = data[data_len];
-    }
-    buf[data_pos + data_len] = data[data_len];
+    memmove(&buf[data_pos], data, data_len);
 
     for (size_t i = 0; i < append_label_count; ++i) {
         buf[Name::MAX_WIRE + label_count + i] =

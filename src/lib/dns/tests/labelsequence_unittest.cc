@@ -38,20 +38,22 @@ namespace {
 void check_equal(const LabelSequence& ls1, const LabelSequence& ls2) {
     NameComparisonResult result = ls1.compare(ls2);
     EXPECT_EQ(isc::dns::NameComparisonResult::EQUAL,
-              result.getRelation()) << ls1.toText() << " <> " << ls2.toText();
-    EXPECT_EQ(0, result.getOrder()) << ls1.toText() << " <> " << ls2.toText();
+              result.getRelation()) << ls1.toText() << " != " << ls2.toText();
+    EXPECT_EQ(0, result.getOrder()) << ls1.toText() << " != " << ls2.toText();
     EXPECT_EQ(ls1.getLabelCount(), result.getCommonLabels());
 }
 
 // Common check for general comparison of two labelsequences
 void check_compare(const LabelSequence& ls1, const LabelSequence& ls2,
                    isc::dns::NameComparisonResult::NameRelation relation,
-                   size_t common_labels) {
+                   size_t common_labels, bool check_order, int order=0) {
     NameComparisonResult result = ls1.compare(ls2);
     EXPECT_EQ(relation, result.getRelation());
     EXPECT_EQ(common_labels, result.getCommonLabels());
+    if (check_order) {
+        EXPECT_EQ(order, result.getOrder());
+    }
 }
-
 
 class LabelSequenceTest : public ::testing::Test {
 public:
@@ -827,13 +829,13 @@ void stripLeftCheck(LabelSequence ls1, LabelSequence ls2, LabelSequence ls3) {
 
         ls1.stripLeft(1);
         check_compare(ls1, ls2, isc::dns::NameComparisonResult::SUPERDOMAIN,
-                      ls1.getLabelCount());
+                      ls1.getLabelCount(), true, -1);
         check_equal(ls2, ls3);
 
         ls2.stripLeft(1);
         check_equal(ls1, ls2);
         check_compare(ls2, ls3, isc::dns::NameComparisonResult::SUPERDOMAIN,
-                      ls1.getLabelCount());
+                      ls1.getLabelCount(), true, -1);
 
         ls3.stripLeft(1);
     }
@@ -847,12 +849,14 @@ void stripRightCheck(LabelSequence ls1, LabelSequence ls2, LabelSequence ls3) {
         check_equal(ls2, ls3);
 
         ls1.stripRight(1);
-        check_compare(ls1, ls2, isc::dns::NameComparisonResult::NONE, 0);
+        check_compare(ls1, ls2, isc::dns::NameComparisonResult::NONE, 0,
+                      false);
         check_equal(ls2, ls3);
 
         ls2.stripRight(1);
         check_equal(ls1, ls2);
-        check_compare(ls2, ls3, isc::dns::NameComparisonResult::NONE, 0);
+        check_compare(ls2, ls3, isc::dns::NameComparisonResult::NONE, 0,
+                      false);
 
         ls3.stripRight(1);
     }
@@ -895,15 +899,30 @@ TEST_F(ExtendableLabelSequenceTest, extendableLabelSequence) {
     LabelSequence ls2(example_org);
 
     LabelSequence els(ls1, buf);
+    // ls1 is absolte, so els should be too
+    EXPECT_TRUE(els.isAbsolute());
+    check_equal(ls1, els);
 
     ASSERT_EQ(ls1.getDataLength(), els.getDataLength());
     stripLeftCheck(ls1, els, ls2);
     stripRightCheck(ls1, els, ls2);
+
+    // Creating an extendable labelsequence from a non-absolute
+    // label sequence should result in a non-absolute label sequence
+    ls1.stripRight(1);
+    els = LabelSequence(ls1, buf);
+    EXPECT_FALSE(els.isAbsolute());
+    check_equal(ls1, els);
+
+    // and extending with the root label should make it absolute again
+    els.extend(LabelSequence(Name(".")), buf);
+    EXPECT_TRUE(els.isAbsolute());
+    check_equal(ls2, els);
 }
 
 // Test that 'extendable' LabelSequences behave correctly when initialized
 // with a stripped source LabelSequence
-TEST_F(ExtendableLabelSequenceTest, extendableLabelSequenceStrippedSource) {
+TEST_F(ExtendableLabelSequenceTest, extendableLabelSequenceLeftStrippedSource) {
     LabelSequence ls1(foo_bar_example_org);
     LabelSequence ls2(foo_bar_example_org);
 
@@ -944,7 +963,8 @@ TEST_F(ExtendableLabelSequenceTest, extend) {
 
     LabelSequence els(ls2, buf);
 
-    check_compare(ls1, els, isc::dns::NameComparisonResult::COMMONANCESTOR, 1);
+    check_compare(ls1, els, isc::dns::NameComparisonResult::COMMONANCESTOR, 1,
+                  true, -4);
     els.extend(ls3, buf);
     EXPECT_TRUE(els.isAbsolute());
 
@@ -955,23 +975,38 @@ TEST_F(ExtendableLabelSequenceTest, extend) {
     // strip, then extend again
     els.stripRight(2); // (2, 1 for root label, 1 for last label)
     els.extend(ls3, buf);
+    EXPECT_TRUE(els.isAbsolute());
     check_equal(ls1, els);
 
     // Extending again should make it different
     els.extend(ls3, buf);
-    check_compare(ls1, ls2, isc::dns::NameComparisonResult::COMMONANCESTOR, 1);
+    EXPECT_TRUE(els.isAbsolute());
+    check_compare(ls1, els, isc::dns::NameComparisonResult::COMMONANCESTOR, 2,
+                  true, 4);
 
     // Extending with a non-absolute name should make it non-absolute as well
     ls3.stripRight(1);
     els.extend(ls3, buf);
     EXPECT_FALSE(els.isAbsolute());
 
+    Name check_name("foo.bar.bar.bar");
+    LabelSequence check_ls(check_name);
+    check_ls.stripRight(1);
+    check_equal(check_ls, els);
+
     // And try extending when both are not absolute
     els.stripRight(3);
     ls1.stripRight(1);
     EXPECT_FALSE(els.isAbsolute());
     els.extend(ls3, buf);
+    EXPECT_FALSE(els.isAbsolute());
     check_equal(ls1, els);
+
+    // Extending non-absolute with absolute should make it absolute again
+    EXPECT_FALSE(els.isAbsolute());
+    els.extend(LabelSequence(Name("absolute.")), buf);
+    EXPECT_TRUE(els.isAbsolute());
+    check_equal(LabelSequence(Name("foo.bar.absolute")), els);
 }
 
 TEST_F(ExtendableLabelSequenceTest, extendLeftStripped) {
@@ -983,6 +1018,7 @@ TEST_F(ExtendableLabelSequenceTest, extendLeftStripped) {
 
     els.stripLeft(1);
     els.extend(ls3, buf);
+    EXPECT_TRUE(els.isAbsolute());
     check_equal(ls2, els);
 }
 
@@ -994,6 +1030,7 @@ TEST_F(ExtendableLabelSequenceTest, extendWithItself) {
     LabelSequence els(ls1, buf);
 
     els.extend(els, buf);
+    EXPECT_TRUE(els.isAbsolute());
     check_equal(ls2, els);
 
     // Also try for non-absolute names
@@ -1001,12 +1038,14 @@ TEST_F(ExtendableLabelSequenceTest, extendWithItself) {
     els = LabelSequence(ls1, buf);
     els.stripRight(1);
     els.extend(els, buf);
+    EXPECT_FALSE(els.isAbsolute());
     check_equal(ls2, els);
 
-    // Once more, now start out with non-absolue
+    // Once more, now start out with non-absolute labelsequence
     ls1.stripRight(1);
     els = LabelSequence(ls1, buf);
     els.extend(els, buf);
+    EXPECT_FALSE(els.isAbsolute());
     check_equal(ls2, els);
 }
 
@@ -1018,6 +1057,7 @@ TEST_F(ExtendableLabelSequenceTest, extendWithRoot) {
     LabelSequence els(LabelSequence(ls1, buf));
     check_equal(ls1, els);
     els.extend(LabelSequence(Name(".")), buf);
+    EXPECT_TRUE(els.isAbsolute());
     check_equal(ls1, els);
 
     // but not if the original was not absolute (it will be equal to
@@ -1026,9 +1066,11 @@ TEST_F(ExtendableLabelSequenceTest, extendWithRoot) {
     LabelSequence ls2(example_org);
     ls2.stripRight(1);
     els = LabelSequence(ls2, buf);
+    EXPECT_FALSE(els.isAbsolute());
     els.extend(LabelSequence(Name(".")), buf);
+    EXPECT_TRUE(els.isAbsolute());
     check_equal(ls1, els);
-    check_compare(ls2, els, isc::dns::NameComparisonResult::NONE, 0);
+    check_compare(ls2, els, isc::dns::NameComparisonResult::NONE, 0, true, 3);
 }
 
 // Check possible failure modes of extend()
@@ -1051,8 +1093,24 @@ TEST_F(ExtendableLabelSequenceTest, extendBadData) {
     ASSERT_EQ(245, els.getDataLength());
     // Extending once more with 10 bytes should still work
     els.extend(LabelSequence(Name("123456789")), buf);
+    EXPECT_TRUE(els.isAbsolute());
+
+    // Extended label sequence should now look like
+    const Name full_name(
+        "123456789012345678901234567890123456789012345678901234567890."
+        "123456789012345678901234567890123456789012345678901234567890."
+        "123456789012345678901234567890123456789012345678901234567890."
+        "123456789012345678901234567890123456789012345678901234567890."
+        "123456789.");
+    const LabelSequence full_ls(full_name);
+    check_equal(full_ls, els);
+
     // But now, even the shortest extension should fail
     EXPECT_THROW(els.extend(LabelSequence(Name("1")), buf), isc::BadValue);
+
+    // Check it hasn't been changed
+    EXPECT_TRUE(els.isAbsolute());
+    check_equal(full_ls, els);
 
     // Also check that extending past MAX_LABELS is not possible
     Name shortname("1.");
@@ -1061,7 +1119,22 @@ TEST_F(ExtendableLabelSequenceTest, extendBadData) {
     for (size_t i=0; i < 126; ++i) {
         els.extend(short_ls, buf);
     }
+
+    // Should now look like this
+    const Name full_name2(
+        "1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1."
+        "1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1."
+        "1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1."
+        "1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1.1."
+        "1.1.1.1.1.1.1.");
+    const LabelSequence full_ls2(full_name2);
+    EXPECT_TRUE(els.isAbsolute());
+    check_equal(full_ls2, els);
+
     EXPECT_THROW(els.extend(short_ls, buf), isc::BadValue);
+
+    EXPECT_TRUE(els.isAbsolute());
+    check_equal(full_ls2, els);
 }
 
 }
