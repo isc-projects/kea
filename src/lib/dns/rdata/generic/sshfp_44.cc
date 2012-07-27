@@ -109,7 +109,7 @@ SSHFP::toWire(OutputBuffer& buffer) const {
     buffer.writeUint8(algorithm_);
     buffer.writeUint8(fingerprint_type_);
 
-    if (fingerprint_.size() > 0) {
+    if (!fingerprint_.empty()) {
         buffer.writeData(&fingerprint_[0], fingerprint_.size());
     }
 }
@@ -119,7 +119,7 @@ SSHFP::toWire(AbstractMessageRenderer& renderer) const {
     renderer.writeUint8(algorithm_);
     renderer.writeUint8(fingerprint_type_);
 
-    if (fingerprint_.size() > 0) {
+    if (!fingerprint_.empty()) {
         renderer.writeData(&fingerprint_[0], fingerprint_.size());
     }
 }
@@ -150,14 +150,15 @@ SSHFP::compare(const Rdata& other) const {
         return (1);
     }
 
-    size_t this_len = fingerprint_.size();
-    size_t other_len = other_sshfp.fingerprint_.size();
-    size_t cmplen = min(this_len, other_len);
+    const size_t this_len = fingerprint_.size();
+    const size_t other_len = other_sshfp.fingerprint_.size();
+    const size_t cmplen = min(this_len, other_len);
     if (cmplen == 0) {
         return ((this_len == other_len)
                 ? 0 : (this_len < other_len) ? -1 : 1);
     }
-    int cmp = memcmp(&fingerprint_[0], &other_sshfp.fingerprint_[0], cmplen);
+    const int cmp = memcmp(&fingerprint_[0], &other_sshfp.fingerprint_[0],
+                           cmplen);
     if (cmp != 0) {
         return (cmp);
     } else {
