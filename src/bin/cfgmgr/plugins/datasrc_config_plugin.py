@@ -22,6 +22,10 @@ def check(config):
     """
     Check the configuration.
     """
+    # Check the data layout first
+    errors=[]
+    if not spec.validate_config(False, config, errors):
+        return ' '.join(errors)
     # TODO: Once we have solved ticket #2051, create the list and
     # fill it with the configuration. We probably want to have some way
     # to not load the data sources, just the configuration. It could

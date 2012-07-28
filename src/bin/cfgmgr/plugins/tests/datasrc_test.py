@@ -22,6 +22,20 @@ import datasrc_config_plugin
 import unittest
 
 class DatasrcTest(unittest.TestCase):
+    def reject(self, config):
+        """
+        Just a shortcut to check the config is rejected.
+        """
+        self.assertIsNotNone(datasrc_config_plugin.check({"datasources":
+                                                         config}))
+
+    def accept(self, config):
+        """
+        Just a shortcut to check the config is accepted.
+        """
+        self.assertIsNone(datasrc_config_plugin.check({"datasources":
+                                                      config}))
+
     def test_load(self):
         """
         Checks the entry point returns the correct values.
@@ -31,6 +45,23 @@ class DatasrcTest(unittest.TestCase):
         self.assertEqual(check, datasrc_config_plugin.check)
         # The plugin stores it's spec
         self.assertEqual(spec, datasrc_config_plugin.spec)
+
+    def test_empty(self):
+        """
+        Check an empty input is OK.
+        """
+        self.assertIsNone(datasrc_config_plugin.check({}))
+
+    def test_invalid_spec(self):
+        """
+        Check it rejects stuff that is not well-formed according
+        to the spec.
+        """
+        self.reject("test")
+        self.reject(13)
+        self.reject([])
+        self.reject({"IN": {}})
+        self.reject({"IN": [{"bad-name": True}]})
 
 if __name__ == '__main__':
         unittest.main()
