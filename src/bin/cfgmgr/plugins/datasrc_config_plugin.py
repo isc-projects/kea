@@ -19,6 +19,8 @@ from bind10_config import PLUGIN_PATHS
 import isc.dns
 import isc.datasrc
 import json
+import os.path
+
 spec = module_spec_from_file(path_search('datasrc.spec', PLUGIN_PATHS))
 
 def check(config):
@@ -42,12 +44,26 @@ def check(config):
             return str(irc)
 
         dlist = isc.datasrc.ConfigurableClientList(rr_class)
+        client_config = classes.get(rr_class_str)
         try:
-            dlist.configure(json.dumps(classes.get(rr_class_str)),
-                            False)
+            dlist.configure(json.dumps(client_config), False)
         except isc.datasrc.Error as dse:
             return str(dse)
 
+        for client in client_config:
+            if client['type'] == 'MasterFiles':
+                if not client.get('cache-enable', False):
+                    return 'The cache must be enabled in MasterFiles type'
+                params = client.get('params')
+                if type(params) != dict:
+                    return 'Params of MasterFiles must be a named set'
+                for name in params:
+                    try:
+                        isc.dns.Name(name)
+                    except Exception as e: # There are many related exceptions
+                        return str(e)
+                    if not os.path.exists(params[name]):
+                        return "Master file " + params[name] + " does not exist"
     return None
 
 def load():

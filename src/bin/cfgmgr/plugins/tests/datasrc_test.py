@@ -17,6 +17,7 @@
 import sys
 import os
 sys.path.extend(os.environ["B10_TEST_PLUGIN_DIR"].split(':'))
+import isc.log
 
 import datasrc_config_plugin
 import unittest
@@ -95,5 +96,55 @@ class DatasrcTest(unittest.TestCase):
             "type": "No such type"
         }]})
 
+    def test_invalid_mem_params(self):
+        """
+        The client list skips in-memory sources. So we check it locally that
+        invalid things are rejected.
+        """
+        # The 'params' key is mandatory for MasterFiles
+        self.reject({"IN": [{
+            "type": "MasterFiles",
+            "cache-enable": True
+        }]})
+        # The cache must be enabled
+        self.reject({"IN": [{
+            "type": "MasterFiles",
+            "cache-enable": False,
+            "params": {}
+        }]})
+        self.reject({"IN": [{
+            "type": "MasterFiles",
+            "params": {}
+        }]})
+        # Bad params type
+        self.reject({"IN": [{
+            "type": "MasterFiles",
+            "cache-enable": True,
+            "params": []
+        }]})
+        # Bad name
+        self.reject({"IN": [{
+            "type": "MasterFiles",
+            "cache-enable": True,
+            "params": {
+                "example....org.": '/file/does/not/exist'
+            }
+        }]})
+
+    def test_no_such_file_mem(self):
+        """
+        We also check the existance of master files. Not the actual content,
+        though.
+        """
+        self.reject({"IN": [{
+            "type": "MasterFiles",
+            "cache-enable": True,
+            "params": {
+                "example.org.": '/file/does/not/exist'
+            }
+        }]})
+
 if __name__ == '__main__':
-        unittest.main()
+    isc.log.init("bind10")
+    isc.log.resetUnitTestRootLogger()
+    unittest.main()
