@@ -73,5 +73,27 @@ class DatasrcTest(unittest.TestCase):
         for c in ["IN", "CH", "HS"]:
             self.accept({c: []})
 
+    def test_mem_ok(self):
+        """
+        Test we accept an in-memory data source. It doesn't really matter
+        which one it is. We just want to make sure we accept something
+        and this one does not need any kind of path mangling to find
+        plugins.
+        """
+        self.accept({"IN": [{
+            "type": "MasterFiles",
+            "cache-enable": True,
+            "params": {}
+        }]})
+
+    def test_dstype_bad(self):
+        """
+        The configuration is correct by the spec, but it would be rejected
+        by the client list. Check we reject it.
+        """
+        self.reject({"IN": [{
+            "type": "No such type"
+        }]})
+
 if __name__ == '__main__':
         unittest.main()
