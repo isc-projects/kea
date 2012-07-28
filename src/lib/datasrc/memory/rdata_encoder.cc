@@ -297,18 +297,10 @@ encodeRdata(const rdata::Rdata& rdata, RRClass rrclass, RRType rrtype,
         {
             const Name name(ibuffer);
             const LabelSequence labels(name);
-            size_t nlen;
-            const uint8_t* ndata = labels.getData(&nlen);
-            assert(nlen < 256); // nlen should fit in 8 bits
-            size_t olen;
-            uint8_t offset_holder[Name::MAX_LABELS];
-            labels.getOffsetData(&olen, offset_holder);
-            assert(olen < 256); // olen should fit in 8 bits
-            data_result.push_back(nlen);
-            data_result.push_back(olen);
-            data_result.insert(data_result.end(), ndata, ndata + nlen);
-            data_result.insert(data_result.end(), offset_holder,
-                               offset_holder + olen);
+            uint8_t labels_holder[LabelSequence::MAX_SERIALIZED_LENGTH];
+            labels.serialize(labels_holder, sizeof(labels_holder));
+            data_result.insert(data_result.end(), labels_holder,
+                               labels_holder + labels.getSerializedLength());
             break;
         }
         }
@@ -348,15 +340,11 @@ foreachRdataField(RRClass rrclass, RRType rrtype,
         case RdataFieldSpec::DOMAIN_NAME:
         {
             ++name_count;
-            const uint8_t nlen = encoded_data.at(off);
-            const uint8_t olen = encoded_data.at(off + 1);
+            const LabelSequence labels(&encoded_data.at(off));
             if (name_callback) {
-                const uint8_t* ndata = &encoded_data.at(off + 2);
-                const uint8_t* odata = &encoded_data.at(off + 2 + nlen);
-                name_callback(LabelSequence(ndata, odata, olen),
-                              field_spec.name_attributes);
+                name_callback(labels, field_spec.name_attributes);
             }
-            off += (2 + nlen + olen);
+            off += labels.getSerializedLength();
             break;
         }
         }
