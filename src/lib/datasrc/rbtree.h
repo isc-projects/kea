@@ -223,7 +223,6 @@ public:
     /// the tree can invalidate the returned \c LabelSequence object or copy
     /// of it; in general, it's expected to be used in a very limited scope.
     dns::LabelSequence getLabels() const {
-        assert(labels_capacity_ != 0); // shouldn't be called on a NULL node.
         return (dns::LabelSequence(getLabelsData()));
     }
 
