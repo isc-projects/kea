@@ -16,6 +16,7 @@
 from isc.config.module_spec import module_spec_from_file
 from isc.util.file import path_search
 from bind10_config import PLUGIN_PATHS
+import isc.dns
 spec = module_spec_from_file(path_search('datasrc.spec', PLUGIN_PATHS))
 
 def check(config):
@@ -26,14 +27,18 @@ def check(config):
     errors=[]
     if not spec.validate_config(False, config, errors):
         return ' '.join(errors)
-    # TODO: Once we have solved ticket #2051, create the list and
-    # fill it with the configuration. We probably want to have some way
-    # to not load the data sources, just the configuration. It could
-    # be hacked together by subclassing ConfigurableClientList and
-    # having empty getDataSource method. But it looks like a hack and it
-    # won't really check the params configuration.
-    #
-    # For now, we let everything pass.
+
+    classes = config.get('classes')
+    # Nothing passed here
+    if classes is None:
+        return None
+
+    for rr_class_str in classes:
+        try:
+            rr_class = isc.dns.RRClass(rr_class_str)
+        except isc.dns.InvalidRRClass as irc:
+            return str(irc)
+
     return None
 
 def load():

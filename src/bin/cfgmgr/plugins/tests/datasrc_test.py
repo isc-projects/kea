@@ -26,14 +26,14 @@ class DatasrcTest(unittest.TestCase):
         """
         Just a shortcut to check the config is rejected.
         """
-        self.assertIsNotNone(datasrc_config_plugin.check({"datasources":
+        self.assertIsNotNone(datasrc_config_plugin.check({"classes":
                                                          config}))
 
     def accept(self, config):
         """
         Just a shortcut to check the config is accepted.
         """
-        self.assertIsNone(datasrc_config_plugin.check({"datasources":
+        self.assertIsNone(datasrc_config_plugin.check({"classes":
                                                       config}))
 
     def test_load(self):
@@ -50,7 +50,7 @@ class DatasrcTest(unittest.TestCase):
         """
         Check an empty input is OK.
         """
-        self.assertIsNone(datasrc_config_plugin.check({}))
+        self.accept({})
 
     def test_invalid_spec(self):
         """
@@ -62,6 +62,16 @@ class DatasrcTest(unittest.TestCase):
         self.reject([])
         self.reject({"IN": {}})
         self.reject({"IN": [{"bad-name": True}]})
+
+    def test_class(self):
+        """
+        The class is rejected, if it is wrong.
+        """
+        self.reject({"BAD": []})
+        self.reject({"": []})
+        # But with a good one, it works
+        for c in ["IN", "CH", "HS"]:
+            self.accept({c: []})
 
 if __name__ == '__main__':
         unittest.main()
