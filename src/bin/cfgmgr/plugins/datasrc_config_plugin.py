@@ -17,6 +17,8 @@ from isc.config.module_spec import module_spec_from_file
 from isc.util.file import path_search
 from bind10_config import PLUGIN_PATHS
 import isc.dns
+import isc.datasrc
+import json
 spec = module_spec_from_file(path_search('datasrc.spec', PLUGIN_PATHS))
 
 def check(config):
@@ -38,6 +40,13 @@ def check(config):
             rr_class = isc.dns.RRClass(rr_class_str)
         except isc.dns.InvalidRRClass as irc:
             return str(irc)
+
+        dlist = isc.datasrc.ConfigurableClientList(rr_class)
+        try:
+            dlist.configure(json.dumps(classes.get(rr_class_str)),
+                            False)
+        except isc.datasrc.Error as dse:
+            return str(dse)
 
     return None
 
