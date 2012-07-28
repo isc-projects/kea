@@ -106,38 +106,45 @@ public:
 };
 
 ///
-/// This is a supplemental class used only as a return value of Name::compare().
-/// It encapsulate a tuple of the comparison: ordering, number of common labels,
-/// and relationship as follows:
+/// This is a supplemental class used only as a return value of
+/// Name::compare() and LabelSequence::compare().
+/// It encapsulate a tuple of the comparison: ordering, number of common
+/// labels, and relationship as follows:
 /// - ordering: relative ordering under the DNSSEC order relation
-/// - labels: the number of common significant labels of the two names being
-///   compared
+/// - labels: the number of common significant labels of the two names or
+///   two label sequences being compared
 /// - relationship: see NameComparisonResult::NameRelation
 ///
+/// Note that the ordering is defined for two label sequences that have no
+/// hierarchical relationship (in which case the relationship will be NONE).
+/// For example, two non absolute (or "relative") sequences "example.com" and
+/// "example.org" have no hierarchical relationship, and the former should be
+/// sorted before (i.e. "smaller") than the latter.
 class NameComparisonResult {
 public:
     /// The relation of two names under comparison.
     /// Its semantics for the case of
     /// <code>name1->compare(name2)</code> (where name1 and name2 are instances
-    /// of the Name class) is as follows:
+    /// of the \c Name or \c LabelSequence class) is as follows:
     ///    - SUPERDOMAIN: name1 properly contains name2; name2 is a proper
     ///      subdomain of name1
     ///    - SUBDOMAIN: name1 is a proper subdomain of name2
     ///    - EQUAL: name1 and name2 are equal
     ///    - COMMONANCESTOR: name1 and name2 share a common ancestor
+    ///    - NONE: There's no hierarchical relationship between name1 and name2
     ///
-    /// Note that in our implementation there's always a hierarchical
-    /// relationship between any two names since all names are absolute and
+    /// Note that there's always a hierarchical relationship between any two
+    /// names since all names (not generic label sequences) are absolute and
     /// they at least share the trailing empty label.
     /// So, for example, the relationship between "com." and "net." is
-    /// "commonancestor".  This may be counter intuitive and inconvenient, but
-    /// we'll keep this design at the moment until we decide whether and how to
-    /// handle "non absolute" names (see the description of the \c Name class).
-    /// If we want to (re)introduce the notion of non absolute names, we'll
-    /// want to distinguish "com" and "com.", and the current definition would
-    /// be more compatible for that purpose.
-    /// If, on the other hand, we finally decide we really don't need that
-    /// notion, we'll probably reconsider the design here, too.
+    /// "commonancestor".  The relationship of "NONE" can only happen for
+    /// comparison between two label sequences (\c LabelSequence objects);
+    /// usually only SUPERDOMAIN, SUBDOMAIN or EQUAL are important relationship
+    /// between two names.
+    ///
+    /// When two \c LabelSequence objects are compared, it's generally expected
+    /// they are either both absolute or both non absolute; if one is absolute
+    /// and the other is not, the resulting relationship will be NONE.
     enum NameRelation {
         SUPERDOMAIN = 0,
         SUBDOMAIN = 1,
