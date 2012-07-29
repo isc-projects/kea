@@ -1256,7 +1256,7 @@ def _do_auth_loadzone(server, zone_name, zone_class):
     if msg is not None:
         param = msg['command'][1]
         logger.debug(DBG_XFRIN_TRACE, XFRIN_AUTH_LOADZONE, param["origin"],
-                     param["class"], param["datasrc"])
+                     param["class"])
         seq = server._send_cc_session.group_sendmsg(msg, AUTH_MODULE_NAME)
         answer, env = server._send_cc_session.group_recvmsg(False, seq)
 

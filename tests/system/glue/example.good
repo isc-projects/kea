@@ -15,5 +15,8 @@ example.			172800	IN	NS	NS.example.
 ;; ADDITIONAL SECTION:
 NS.example.		172800	IN	A	192.0.2.1
 NS.example.		172800	IN	A	192.0.2.2
-NS1.example.COM.	172800	IN	A	192.0.2.101
-NS1.example.COM.		172800	IN	AAAA	2001:db8::1
+NS1.example.COM.	172800	IN	A	192.0.2.3
+;; These are not used now - they are in a different master file
+;; than the answer.
+; NS1.example.COM.	172800	IN	A	192.0.2.101
+; NS1.example.COM.		172800	IN	AAAA	2001:db8::1

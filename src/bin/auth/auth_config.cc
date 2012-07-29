@@ -43,20 +43,6 @@ using namespace isc::datasrc;
 using namespace isc::server_common::portconfig;
 
 namespace {
-/// A derived \c AuthConfigParser class for the "datasources" configuration
-/// identifier.
-class DatasourcesConfig : public AuthConfigParser {
-public:
-    DatasourcesConfig(AuthSrv& server) : server_(server)
-    {}
-    virtual void build(ConstElementPtr config_value);
-    virtual void commit();
-private:
-    AuthSrv& server_;
-    vector<boost::shared_ptr<AuthConfigParser> > datasources_;
-    set<string> configured_sources_;
-    vector<pair<RRClass, DataSourceClientContainerPtr> > clients_;
-};
 
 /// A derived \c AuthConfigParser for the version value
 /// (which is not used at this moment)
@@ -66,79 +52,6 @@ public:
     virtual void build(ConstElementPtr) {};
     virtual void commit() {};
 };
-
-void
-DatasourcesConfig::build(ConstElementPtr config_value) {
-    BOOST_FOREACH(ConstElementPtr datasrc_elem, config_value->listValue()) {
-        // The caller is supposed to perform syntax-level checks, but we'll
-        // do minimum level of validation ourselves so that we won't crash due
-        // to a buggy application.
-        ConstElementPtr datasrc_type = datasrc_elem->get("type");
-        if (!datasrc_type) {
-            isc_throw(AuthConfigError, "Missing data source type");
-        }
-
-        if (configured_sources_.find(datasrc_type->stringValue()) !=
-            configured_sources_.end()) {
-            isc_throw(AuthConfigError, "Data source type '" <<
-                      datasrc_type->stringValue() << "' already configured");
-        }
-
-        // Apart from that it's not really easy to get at the default
-        // class value for the class here, it should probably really
-        // be a property of the instantiated data source. For now
-        // use hardcoded default IN.
-        const RRClass rrclass =
-            datasrc_elem->contains("class") ?
-            RRClass(datasrc_elem->get("class")->stringValue()) : RRClass::IN();
-
-        // Right now, we only support the in-memory data source for the
-        // RR class of IN.  We reject other cases explicitly by hardcoded
-        // checks.  This will soon be generalized, at which point these
-        // checks will also have to be cleaned up.
-        if (rrclass != RRClass::IN()) {
-            isc_throw(isc::InvalidParameter, "Unsupported data source class: "
-                      << rrclass);
-        }
-        if (datasrc_type->stringValue() != "memory") {
-            isc_throw(AuthConfigError, "Unsupported data source type: "
-                      << datasrc_type->stringValue());
-        }
-
-        // Create a new client for the specified data source and store it
-        // in the local vector.  For now, we always build a new client
-        // from the scratch, and replace any existing ones with the new ones.
-        // We might eventually want to optimize building zones (in case of
-        // reloading) by selectively loading fresh zones for data source
-        // where zone loading is expensive (such as in-memory).
-        clients_.push_back(
-            pair<RRClass, DataSourceClientContainerPtr>(
-                rrclass,
-                DataSourceClientContainerPtr(new DataSourceClientContainer(
-                                                 datasrc_type->stringValue(),
-                                                 datasrc_elem))));
-
-        configured_sources_.insert(datasrc_type->stringValue());
-    }
-}
-
-void
-DatasourcesConfig::commit() {
-    // As noted in build(), the current implementation only supports the
-    // in-memory data source for class IN, and build() should have ensured
-    // it.  So, depending on the vector is empty or not, we either clear
-    // or install an in-memory data source for the server.
-    //
-    // When we generalize it, we'll somehow install all data source clients
-    // built in the vector, clearing deleted ones from the server.
-    if (clients_.empty()) {
-        server_.setInMemoryClient(RRClass::IN(),
-                                  DataSourceClientContainerPtr());
-    } else {
-        server_.setInMemoryClient(clients_.front().first,
-                                  clients_.front().second);
-    }
-}
 
 /// A derived \c AuthConfigParser class for the "statistics-internal"
 /// configuration identifier.
@@ -242,9 +155,7 @@ createAuthConfigParser(AuthSrv& server, const std::string& config_id) {
     // simplicity.  In future we'll probably generalize it using map-like
     // data structure, and may even provide external register interface so
     // that it can be dynamically customized.
-    if (config_id == "datasources") {
-        return (new DatasourcesConfig(server));
-    } else if (config_id == "statistics-interval") {
+    if (config_id == "statistics-interval") {
         return (new StatisticsIntervalConfig(server));
     } else if (config_id == "listen_on") {
         return (new ListenAddressConfig(server));
@@ -260,6 +171,14 @@ createAuthConfigParser(AuthSrv& server, const std::string& config_id) {
         // Currently, the version identifier is ignored, but it should
         // later be used to mark backwards incompatible changes in the
         // config data
+        return (new VersionConfig());
+    } else if (config_id == "datasources") {
+        // TODO: Ignored for now, since the value is probably used by
+        // other modules. Once they have been removed from there, remove
+        // it from here and the spec file.
+
+        // We need to return something. The VersionConfig is empty now,
+        // so we may abuse that one, as it is a short-term solution only.
         return (new VersionConfig());
     } else {
         isc_throw(AuthConfigError, "Unknown configuration identifier: " <<

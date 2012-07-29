@@ -26,9 +26,7 @@ AUTH_MODULE_NAME = 'Auth'
 def auth_loadzone_command(module_cc, zone_name, zone_class):
     '''Create a 'loadzone' command with a given zone for Auth server.
 
-    This function checks the Auth module configuration to see if it
-    servers a given zone via an in-memory data source on top of SQLite3
-    data source, and, if so, generate an inter-module command for Auth
+    This function generates an inter-module command for Auth
     to force it to reload the zone.
 
     Parameters:
@@ -38,9 +36,7 @@ def auth_loadzone_command(module_cc, zone_name, zone_class):
     zone_class (isc.dns.RRClass): the RR class of the zone to be possibly
       reloaded.
 
-    Return: a CC command message for the reload if the zone is found;
-      otherwise None.
-
+    Return: a CC command message for the reload.
     '''
     # Note: this function was originally a dedicated subroutine of xfrin,
     # but was moved here so it can be shared by some other modules
@@ -50,41 +46,12 @@ def auth_loadzone_command(module_cc, zone_name, zone_class):
     # deprecated (which is a more likely scenario).  For this reason, the
     # corresponding tests were still kept in xfrin.
 
-    datasources, is_default =\
-        module_cc.get_remote_config_value(AUTH_MODULE_NAME, "datasources")
-    if is_default:
-        return None
-    for d in datasources:
-        if "type" not in d:
-            continue
-        try:
-            if "class" in d:
-                dclass = RRClass(d["class"])
-            else:
-                dclass = RRClass("IN")
-        except InvalidRRClass as err:
-            logger.info(PYSERVER_COMMON_AUTH_CONFIG_RRCLASS_ERROR, err)
-            continue
+    # Note: The function got very simplified by #1976. There's plan to move
+    # to notification-driven approach, at which point the function would
+    # be changed a lot.
 
-        if d["type"].lower() == "memory" and dclass == zone_class:
-            for zone in d["zones"]:
-                if "filetype" not in zone:
-                    continue
-                if "origin" not in zone:
-                    continue
-                if "filetype" not in zone:
-                    continue
-                try:
-                    name = Name(zone["origin"])
-                except (EmptyLabel, TooLongLabel, BadLabelType, BadEscape,
-                        TooLongName, IncompleteName):
-                    logger.info(PYSERVER_COMMON_AUTH_CONFIG_NAME_PARSER_ERROR,
-                                err)
-                    continue
-
-                if zone["filetype"].lower() == "sqlite3" and name == zone_name:
-                    param = {"origin": zone_name.to_text(),
-                             "class": zone_class.to_text(),
-                             "datasrc": d["type"]}
-                    return create_command("loadzone", param)
-    return None
+    param = {
+        "origin": zone_name.to_text(),
+        "class": zone_class.to_text()
+    }
+    return create_command("loadzone", param)
