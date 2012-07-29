@@ -28,6 +28,7 @@
 #include <boost/static_assert.hpp>
 
 #include <cassert>
+#include <cstring>
 #include <vector>
 
 #include <stdint.h>
@@ -502,8 +503,8 @@ RdataEncoder::encode(void* buf, size_t buf_len) const {
     if (!impl_->field_composer_.data_lengths_.empty()) {
         const size_t varlen_fields_len =
             impl_->field_composer_.data_lengths_.size() * sizeof(uint16_t);
-        memcpy(lenp, &impl_->field_composer_.data_lengths_[0],
-               varlen_fields_len);
+        std::memcpy(lenp, &impl_->field_composer_.data_lengths_[0],
+                    varlen_fields_len);
         lenp += impl_->field_composer_.data_lengths_.size();
         dp += varlen_fields_len;
     }
@@ -511,16 +512,16 @@ RdataEncoder::encode(void* buf, size_t buf_len) const {
     if (!impl_->rrsig_lengths_.empty()) {
         const size_t rrsigs_len =
             impl_->rrsig_lengths_.size() * sizeof(uint16_t);
-        memcpy(lenp, &impl_->rrsig_lengths_[0], rrsigs_len);
+        std::memcpy(lenp, &impl_->rrsig_lengths_[0], rrsigs_len);
         dp += rrsigs_len;
     }
     // Encode main RDATA
-    memcpy(dp, impl_->field_composer_.getData(),
-           impl_->field_composer_.getLength());
+    std::memcpy(dp, impl_->field_composer_.getData(),
+                impl_->field_composer_.getLength());
     dp += impl_->field_composer_.getLength();
     // Encode RRSIGs, if any
-    memcpy(dp, impl_->rrsig_buffer_.getData(),
-           impl_->rrsig_buffer_.getLength());
+    std::memcpy(dp, impl_->rrsig_buffer_.getData(),
+                impl_->rrsig_buffer_.getLength());
     dp += impl_->rrsig_buffer_.getLength();
 
     // The validation at the entrance must ensure this
