@@ -153,17 +153,21 @@ SSHFP::compare(const Rdata& other) const {
     const size_t this_len = fingerprint_.size();
     const size_t other_len = other_sshfp.fingerprint_.size();
     const size_t cmplen = min(this_len, other_len);
-    if (cmplen == 0) {
-        return ((this_len == other_len)
-                ? 0 : (this_len < other_len) ? -1 : 1);
+
+    if (cmplen > 0) {
+        const int cmp = memcmp(&fingerprint_[0], &other_sshfp.fingerprint_[0],
+                               cmplen);
+        if (cmp != 0) {
+            return (cmp);
+        }
     }
-    const int cmp = memcmp(&fingerprint_[0], &other_sshfp.fingerprint_[0],
-                           cmplen);
-    if (cmp != 0) {
-        return (cmp);
+
+    if (this_len == other_len) {
+        return (0);
+    } else if (this_len < other_len) {
+        return (-1);
     } else {
-        return ((this_len == other_len)
-                ? 0 : (this_len < other_len) ? -1 : 1);
+        return (1);
     }
 }
 
