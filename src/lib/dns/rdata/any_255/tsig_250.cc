@@ -29,7 +29,7 @@
 #include <dns/tsigerror.h>
 
 using namespace std;
-using namespace boost;
+using boost::lexical_cast;
 using namespace isc::util;
 using namespace isc::util::encode;
 using namespace isc::util::str;

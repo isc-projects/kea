@@ -210,6 +210,48 @@ TEST_F(RBTreeTest, insertNames) {
                                                   &rbtnode));
 }
 
+TEST_F(RBTreeTest, subTreeRoot) {
+    // This is a testcase for a particular issue that went unchecked in
+    // #2089's implementation, but was fixed in #2092. The issue was
+    // that when a node was fissioned, FLAG_SUBTREE_ROOT was not being
+    // copied correctly.
+
+    EXPECT_EQ(RBTree<int>::ALREADYEXISTS,
+              rbtree_expose_empty_node.insert(mem_sgmt_, Name("d.e.f"),
+                                              &rbtnode));
+    EXPECT_EQ(RBTree<int>::SUCCESS,
+              rbtree_expose_empty_node.insert(mem_sgmt_, Name("0"),
+                                              &rbtnode));
+    EXPECT_EQ(RBTree<int>::SUCCESS,
+              rbtree_expose_empty_node.insert(mem_sgmt_, Name("example.com"),
+                                              &rbtnode));
+    EXPECT_EQ(RBTree<int>::ALREADYEXISTS,
+              rbtree_expose_empty_node.insert(mem_sgmt_, Name("example.com"),
+                                              &rbtnode));
+    EXPECT_EQ(RBTree<int>::SUCCESS,
+              rbtree_expose_empty_node.insert(mem_sgmt_, Name("k.e.f"),
+                                              &rbtnode));
+
+    // "g.h" is not a subtree root
+    EXPECT_EQ(RBTree<int>::EXACTMATCH,
+              rbtree_expose_empty_node.find(Name("g.h"), &rbtnode));
+    EXPECT_FALSE(rbtnode->getFlag(RBNode<int>::FLAG_SUBTREE_ROOT));
+
+    // fission the node "g.h"
+    EXPECT_EQ(RBTree<int>::ALREADYEXISTS,
+              rbtree_expose_empty_node.insert(mem_sgmt_, Name("h"),
+                                              &rbtnode));
+
+    // the node "h" (h.down_ -> "g") should not be a subtree root. "g"
+    // should be a subtree root.
+    EXPECT_FALSE(rbtnode->getFlag(RBNode<int>::FLAG_SUBTREE_ROOT));
+
+    // "g.h" should be a subtree root now.
+    EXPECT_EQ(RBTree<int>::EXACTMATCH,
+              rbtree_expose_empty_node.find(Name("g.h"), &rbtnode));
+    EXPECT_TRUE(rbtnode->getFlag(RBNode<int>::FLAG_SUBTREE_ROOT));
+}
+
 TEST_F(RBTreeTest, findName) {
     // find const rbtnode
     // exact match
@@ -440,6 +482,40 @@ const char* const names[] = {
     "p.w.y.d.e.f", "q.w.y.d.e.f", "z.d.e.f", "j.z.d.e.f",
     "g.h", "i.g.h", "k.g.h"};
 const size_t name_count(sizeof(names) / sizeof(*names));
+
+const char* const upper_node_names[] = {
+    ".", ".", ".", ".", "d.e.f", "d.e.f", "w.y.d.e.f",
+    "w.y.d.e.f", "w.y.d.e.f", "d.e.f", "z.d.e.f",
+    ".", "g.h", "g.h"};
+
+TEST_F(RBTreeTest, getUpperNode) {
+    RBTreeNodeChain<int> node_path;
+    const RBNode<int>* node = NULL;
+    EXPECT_EQ(RBTree<int>::EXACTMATCH,
+              rbtree_expose_empty_node.find(Name(names[0]),
+                                            &node,
+                                            node_path));
+    for (int i = 0; i < name_count; ++i) {
+        EXPECT_NE(static_cast<void*>(NULL), node);
+
+        const RBNode<int>* upper_node = node->getUpperNode();
+        if (upper_node_names[i] != NULL) {
+            const RBNode<int>* upper_node2 = NULL;
+            EXPECT_EQ(RBTree<int>::EXACTMATCH,
+                      rbtree_expose_empty_node.find(Name(upper_node_names[i]),
+                                                    &upper_node2));
+            EXPECT_NE(static_cast<void*>(NULL), upper_node2);
+            EXPECT_EQ(upper_node, upper_node2);
+        } else {
+            EXPECT_EQ(static_cast<void*>(NULL), upper_node);
+        }
+
+        node = rbtree_expose_empty_node.nextNode(node_path);
+    }
+
+    // We should have reached the end of the tree.
+    EXPECT_EQ(static_cast<void*>(NULL), node);
+}
 
 TEST_F(RBTreeTest, nextNode) {
     RBTreeNodeChain<int> node_path;

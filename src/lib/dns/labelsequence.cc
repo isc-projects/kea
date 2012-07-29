@@ -88,7 +88,7 @@ LabelSequence::serialize(void* buf, size_t buf_len) const {
         *bp++ = offsets_[first_label_ + i] - offsets_[first_label_];
     }
     const size_t ndata_len = getDataLength();
-    memcpy(bp, &data_[offsets_[first_label_]], ndata_len);
+    std::memcpy(bp, &data_[offsets_[first_label_]], ndata_len);
     bp += ndata_len;
 
     assert(bp - reinterpret_cast<const uint8_t*>(buf) == expected_size);
