@@ -451,9 +451,9 @@ ZoneData::findNode(const Name& name, RBTreeNodeChain<Domain>& node_path,
     DomainNode* node = NULL;
     FindState state((options & ZoneFinder::FIND_GLUE_OK) != 0);
 
-    const LabelSequence ls(name);
     const DomainTree::Result result =
-        domains_.find(ls, &node, node_path, cutCallback, &state);
+        domains_.find(LabelSequence(name), &node, node_path,
+                      cutCallback, &state);
     const unsigned int zonecut_flag =
         (state.zonecut_node_ != NULL) ? FindNodeResult::FIND_ZONECUT : 0;
     if (result == DomainTree::EXACTMATCH) {
