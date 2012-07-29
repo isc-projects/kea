@@ -14,6 +14,8 @@
 
 #include <exceptions/exceptions.h>
 
+#include <util/memory_segment_local.h>
+
 #include <dns/name.h>
 #include <dns/nsec3hash.h>
 #include <dns/rdataclass.h>
@@ -120,19 +122,48 @@ typedef NSEC3Map::value_type NSEC3Pair;
 // Actual zone data: Essentially a set of zone's RRs.  This is defined as
 // a separate structure so that it'll be replaceable on reload.
 struct ZoneData {
+    // Note: this code is not entirely exception safe; domains_storage_ could
+    // leak if the constructor throws.  But since it's an intermediate version
+    // toward a full revision and the actual risk of leak should be very small
+    // in practice, we leave it open for now.
     ZoneData(const Name& origin) :
-        domains_(true),
+        domains_storage_(DomainTree::create(local_mem_sgmt_, true)),
+        domains_(*domains_storage_),
+        aux_wild_domains_(NULL),
         origin_data_(NULL),
         nsec_signed_(false)
     {
         // We create the node for origin (it needs to exist anyway in future)
-        domains_.insert(origin, &origin_data_);
+        domains_.insert(local_mem_sgmt_, origin, &origin_data_);
         DomainPtr origin_domain(new Domain);
         origin_data_->setData(origin_domain);
     }
 
-    // The main data (name + RRsets)
-    DomainTree domains_;
+    ~ZoneData() {
+        DomainTree::destroy(local_mem_sgmt_, domains_storage_);
+        if (aux_wild_domains_ != NULL) {
+            DomainTree::destroy(local_mem_sgmt_, aux_wild_domains_);
+        }
+
+        // The assert may be too harsh, but we assume we'll discard (rewrite)
+        // this code soon enough.  Until then this would be a good way to
+        // detect any memory leak.  Also, at that point we shouldn't use
+        // a single separate memory segment for each zone tree; normally
+        // zone data for multiple zones will be managed in a single segment.
+        assert(local_mem_sgmt_.allMemoryDeallocated());
+    }
+
+    // Memory segment to allocate/deallocate memory for the tree and the nodes.
+    // (This will eventually have to be abstract; for now we hardcode the
+    // specific derived segment class).
+    util::MemorySegmentLocal local_mem_sgmt_;
+
+    // The main data (name + RRsets).  We use domains_ as a reference to
+    // domains_storage_ so we don't have to update the rest of the code;
+    // it will eventually have to be revised substantially, at which point
+    // we should clean this up, too.
+    DomainTree* domains_storage_;
+    DomainTree& domains_;
 
     // An auxiliary tree for wildcard expanded data used in additional data
     // processing.  It contains names like "ns.wild.example" in the following
@@ -150,11 +181,11 @@ struct ZoneData {
     // should be even empty, and even if it has content it should be very
     // small.
 private:
-    scoped_ptr<DomainTree> aux_wild_domains_;
+    DomainTree* aux_wild_domains_;
 public:
     DomainTree& getAuxWildDomains() {
-        if (!aux_wild_domains_) {
-            aux_wild_domains_.reset(new DomainTree);
+        if (aux_wild_domains_ == NULL) {
+            aux_wild_domains_ = DomainTree::create(local_mem_sgmt_);
         }
         return (*aux_wild_domains_);
     }
@@ -421,7 +452,8 @@ ZoneData::findNode(const Name& name, RBTreeNodeChain<Domain>& node_path,
     FindState state((options & ZoneFinder::FIND_GLUE_OK) != 0);
 
     const DomainTree::Result result =
-        domains_.find(name, &node, node_path, cutCallback, &state);
+        domains_.find(LabelSequence(name), &node, node_path,
+                      cutCallback, &state);
     const unsigned int zonecut_flag =
         (state.zonecut_node_ != NULL) ? FindNodeResult::FIND_ZONECUT : 0;
     if (result == DomainTree::EXACTMATCH) {
@@ -448,15 +480,11 @@ ZoneData::findNode(const Name& name, RBTreeNodeChain<Domain>& node_path,
         if (node->getFlag(domain_flag::WILD) && // maybe a wildcard, check only
             (options & ZoneFinder::NO_WILDCARD) == 0) { // if not disabled.
             if (node_path.getLastComparisonResult().getRelation() ==
-                NameComparisonResult::COMMONANCESTOR &&
-                node_path.getLastComparisonResult().getCommonLabels() > 1) {
-                // Wildcard canceled.  Treat it as NXDOMAIN.
-                // Note: Because the way the tree stores relative names, we
-                // will have exactly one common label (the ".") in case we have
-                // nothing common under the node we got, and we will get
-                // more common labels otherwise (yes, this relies on the
-                // internal RBTree structure, which leaks out through this
-                // little bit).
+                NameComparisonResult::COMMONANCESTOR) {
+                // This means, e.g., we have *.wild.example and
+                // bar.foo.wild.example and are looking for
+                // baz.foo.wild.example. The common ancestor, foo.wild.example,
+                // should cancel wildcard.  Treat it as NXDOMAIN.
                 LOG_DEBUG(logger, DBG_TRACE_DATA,
                           DATASRC_MEM_WILDCARD_CANCEL).arg(name);
                 return (ResultType(ZoneFinder::NXDOMAIN, NULL,
@@ -857,7 +885,9 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
     //
     // We also perform the same trick for empty wild card names possibly
     // contained in 'name' (e.g., '*.foo.example' in 'bar.*.foo.example').
-    void addWildcards(DomainTree& domains, const Name& name) {
+    void addWildcards(util::MemorySegment& mem_sgmt, DomainTree& domains,
+                      const Name& name)
+    {
         Name wname(name);
         const unsigned int labels(wname.getLabelCount());
         const unsigned int origin_labels(origin_.getLabelCount());
@@ -870,7 +900,8 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                 // Ensure a separate level exists for the "wildcarding" name,
                 // and mark the node as "wild".
                 DomainNode* node;
-                DomainTree::Result result(domains.insert(wname.split(1),
+                DomainTree::Result result(domains.insert(mem_sgmt,
+                                                         wname.split(1),
                                                          &node));
                 assert(result == DomainTree::SUCCESS ||
                        result == DomainTree::ALREADYEXISTS);
@@ -880,7 +911,7 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
                 // Note: for 'name' itself we do this later anyway, but the
                 // overhead should be marginal because wildcard names should
                 // be rare.
-                result = domains.insert(wname, &node);
+                result = domains.insert(mem_sgmt, wname, &node);
                 assert(result == DomainTree::SUCCESS ||
                        result == DomainTree::ALREADYEXISTS);
             }
@@ -1167,12 +1198,14 @@ struct InMemoryZoneFinder::InMemoryZoneFinderImpl {
         // tree.
         // Note: this can throw an exception, breaking strong exception
         // guarantee.  (see also the note for contextCheck() below).
-        addWildcards(zone_data.domains_, rrset->getName());
+        addWildcards(zone_data.local_mem_sgmt_, zone_data.domains_,
+                     rrset->getName());
 
         // Get the node
         DomainNode* node;
-        DomainTree::Result result = zone_data.domains_.insert(rrset->getName(),
-                                                              &node);
+        DomainTree::Result result =
+            zone_data.domains_.insert(zone_data.local_mem_sgmt_,
+                                      rrset->getName(), &node);
         // Just check it returns reasonable results
         assert((result == DomainTree::SUCCESS ||
                 result == DomainTree::ALREADYEXISTS) && node!= NULL);
@@ -1605,7 +1638,8 @@ addAdditional(RBNodeRRset* rrset, ZoneData* zone_data,
             // Wildcard and glue shouldn't coexist.  Make it sure here.
             assert(!node->getFlag(domain_flag::GLUE));
 
-            if (zone_data->getAuxWildDomains().insert(name, &wildnode)
+            if (zone_data->getAuxWildDomains().insert(
+                    zone_data->local_mem_sgmt_, name, &wildnode)
                 == DomainTree::SUCCESS) {
                 // If we first insert the node, copy the RRsets.  If the
                 // original node was empty, we add empty data so
@@ -1782,9 +1816,22 @@ InMemoryZoneFinder::getFileName() const {
 /// member variables later for new features.
 class InMemoryClient::InMemoryClientImpl {
 public:
-    InMemoryClientImpl() : zone_count(0) {}
+    InMemoryClientImpl() : zone_count(0),
+                           zone_table(ZoneTable::create(local_mem_sgmt))
+    {}
+    ~InMemoryClientImpl() {
+        ZoneTable::destroy(local_mem_sgmt, zone_table);
+
+        // see above for the assert().
+        assert(local_mem_sgmt.allMemoryDeallocated());
+    }
+
+    // Memory segment to allocate/deallocate memory for the zone table.
+    // (This will eventually have to be abstract; for now we hardcode the
+    // specific derived segment class).
+    util::MemorySegmentLocal local_mem_sgmt;
     unsigned int zone_count;
-    ZoneTable zone_table;
+    ZoneTable* zone_table;
 };
 
 InMemoryClient::InMemoryClient() : impl_(new InMemoryClientImpl)
@@ -1809,7 +1856,8 @@ InMemoryClient::addZone(ZoneFinderPtr zone_finder) {
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_ADD_ZONE).
         arg(zone_finder->getOrigin()).arg(zone_finder->getClass().toText());
 
-    const result::Result result = impl_->zone_table.addZone(zone_finder);
+    const result::Result result =
+        impl_->zone_table->addZone(impl_->local_mem_sgmt, zone_finder);
     if (result == result::SUCCESS) {
         ++impl_->zone_count;
     }
@@ -1819,7 +1867,7 @@ InMemoryClient::addZone(ZoneFinderPtr zone_finder) {
 InMemoryClient::FindResult
 InMemoryClient::findZone(const isc::dns::Name& name) const {
     LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_FIND_ZONE).arg(name);
-    ZoneTable::FindResult result(impl_->zone_table.findZone(name));
+    ZoneTable::FindResult result(impl_->zone_table->findZone(name));
     return (FindResult(result.code, result.zone));
 }
 
@@ -1925,7 +1973,7 @@ public:
 
 ZoneIteratorPtr
 InMemoryClient::getIterator(const Name& name, bool separate_rrs) const {
-    ZoneTable::FindResult result(impl_->zone_table.findZone(name));
+    ZoneTable::FindResult result(impl_->zone_table->findZone(name));
     if (result.code != result::SUCCESS) {
         isc_throw(DataSourceError, "No such zone: " + name.toText());
     }

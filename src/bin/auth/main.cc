@@ -45,6 +45,7 @@
 #include <auth/command.h>
 #include <auth/auth_srv.h>
 #include <auth/auth_log.h>
+#include <auth/datasrc_configurator.h>
 #include <asiodns/asiodns.h>
 #include <asiolink/asiolink.h>
 #include <log/logger_support.h>
@@ -84,9 +85,8 @@ my_command_handler(const string& command, ConstElementPtr args) {
 
 void
 usage() {
-    cerr << "Usage:  b10-auth [-u user] [-nv]"
+    cerr << "Usage:  b10-auth [-v]"
          << endl;
-    cerr << "\t-n: do not cache answers in memory" << endl;
     cerr << "\t-v: verbose logging (debug-level)" << endl;
     exit(1);
 }
@@ -96,14 +96,10 @@ usage() {
 int
 main(int argc, char* argv[]) {
     int ch;
-    bool cache = true;
     bool verbose = false;
 
     while ((ch = getopt(argc, argv, ":nu:v")) != -1) {
         switch (ch) {
-        case 'n':
-            cache = false;
-            break;
         case 'v':
             verbose = true;
             break;
@@ -142,7 +138,7 @@ main(int argc, char* argv[]) {
             specfile = string(AUTH_SPECFILE_LOCATION);
         }
 
-        auth_server = new AuthSrv(cache, xfrout_client, ddns_forwarder);
+        auth_server = new AuthSrv(xfrout_client, ddns_forwarder);
         LOG_INFO(auth_logger, AUTH_SERVER_CREATED);
 
         SimpleCallback* checkin = auth_server->getCheckinProvider();
@@ -204,14 +200,27 @@ main(int argc, char* argv[]) {
         isc::server_common::initKeyring(*config_session);
         auth_server->setTSIGKeyRing(&isc::server_common::keyring);
 
+        // Start the data source configuration
+        DataSourceConfigurator::init(config_session, auth_server);
+        // HACK: The default is not passed to the handler. This one will
+        // get the default (or, current value). Further updates will work
+        // the usual way.
+        DataSourceConfigurator::reconfigure(
+            config_session->getRemoteConfigValue("data_sources", "classes"));
+
         // Now start asynchronous read.
         config_session->start();
         LOG_DEBUG(auth_logger, DBG_AUTH_START, AUTH_CONFIG_CHANNEL_STARTED);
 
         // Successfully initialized.
         LOG_INFO(auth_logger, AUTH_SERVER_STARTED);
-        io_service.run();
 
+        // Ping any interested module that (a new) auth is up
+        // Currently, only the DDNS module is notified, but we could consider
+        // make an announcement channel for these (one-way) messages
+        cc_session->group_sendmsg(
+            isc::config::createCommand(AUTH_STARTED_NOTIFICATION), "DDNS");
+        io_service.run();
     } catch (const std::exception& ex) {
         LOG_FATAL(auth_logger, AUTH_SERVER_FAILED).arg(ex.what());
         ret = 1;
@@ -225,6 +234,7 @@ main(int argc, char* argv[]) {
         xfrin_session->disconnect();
     }
 
+    DataSourceConfigurator::cleanup();
     delete statistics_session;
     delete xfrin_session;
     delete config_session;

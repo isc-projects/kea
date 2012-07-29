@@ -157,7 +157,7 @@ SRV::~SRV() {
 /// \return A \c string object that represents the \c SRV object.
 string
 SRV::toText() const {
-    using namespace boost;
+    using boost::lexical_cast;
     return (lexical_cast<string>(impl_->priority_) +
         " " + lexical_cast<string>(impl_->weight_) +
         " " + lexical_cast<string>(impl_->port_) +

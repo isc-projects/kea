@@ -28,7 +28,7 @@
 #include <dns/rdataclass.h>
 
 using namespace std;
-using namespace boost;
+using boost::lexical_cast;
 using namespace isc::util;
 using namespace isc::util::encode;
 
