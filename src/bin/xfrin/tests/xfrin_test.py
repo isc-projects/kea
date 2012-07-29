@@ -2739,17 +2739,7 @@ class TestMain(unittest.TestCase):
 
 class TestXfrinProcessMockCC:
     def __init__(self):
-        self.get_called = False
-        self.get_called_correctly = False
         self.config = []
-
-    def get_remote_config_value(self, module, identifier):
-        self.get_called = True
-        if module == 'Auth' and identifier == 'datasources':
-            self.get_called_correctly = True
-            return (self.config, False)
-        else:
-            return (None, True)
 
 class TestXfrinProcessMockCCSession:
     def __init__(self):
@@ -2869,22 +2859,17 @@ class TestXfrinProcess(unittest.TestCase):
         # Create a connection for each attempt
         self.assertEqual(len(transfers), self.__created_connections)
         self.assertEqual([published], self.__published)
-        if published == XFRIN_OK:
-            self.assertTrue(self._module_cc.get_called)
-            self.assertTrue(self._module_cc.get_called_correctly)
-        else:
-            self.assertFalse(self._module_cc.get_called)
-            self.assertFalse(self._module_cc.get_called_correctly)
 
     def test_ixfr_ok(self):
         """
         Everything OK the first time, over IXFR.
         """
         self.__do_test([XFRIN_OK], [RRType.IXFR()], RRType.IXFR())
-        self.assertFalse(self._send_cc_session.send_called)
-        self.assertFalse(self._send_cc_session.send_called_correctly)
-        self.assertFalse(self._send_cc_session.recv_called)
-        self.assertFalse(self._send_cc_session.recv_called_correctly)
+        # Check there was loadzone command
+        self.assertTrue(self._send_cc_session.send_called)
+        self.assertTrue(self._send_cc_session.send_called_correctly)
+        self.assertTrue(self._send_cc_session.recv_called)
+        self.assertTrue(self._send_cc_session.recv_called_correctly)
 
     def test_axfr_ok(self):
         """
@@ -2916,136 +2901,15 @@ class TestXfrinProcess(unittest.TestCase):
         self.__do_test([XFRIN_FAIL, XFRIN_FAIL],
                        [RRType.IXFR(), RRType.AXFR()], RRType.IXFR())
 
-    def test_inmem_ok(self):
+    def test_send_loadzone(self):
         """
-        Inmem configuration where all the configuration is just right
-        for loadzone to be sent to b10-auth (origin is the name received
-        by xfrin, filetype is sqlite3, type is memory and class is the
-        one received by xfrin).
+        Check the loadzone command is sent after successful transfer.
         """
-        self._module_cc.config = [{'zones': [{'origin': 'example.org', 'filetype': 'sqlite3',
-                                              'file': 'data/inmem-xfrin.sqlite3'}],
-                                   'type': 'memory', 'class': 'IN'}]
         self.__do_test([XFRIN_OK], [RRType.IXFR()], RRType.IXFR())
         self.assertTrue(self._send_cc_session.send_called)
         self.assertTrue(self._send_cc_session.send_called_correctly)
         self.assertTrue(self._send_cc_session.recv_called)
         self.assertTrue(self._send_cc_session.recv_called_correctly)
-
-    def test_inmem_datasource_type_not_memory(self):
-        """
-        Inmem configuration where the datasource type is not memory. In
-        this case, loadzone should not be sent to b10-auth.
-        """
-        self._module_cc.config = [{'zones': [{'origin': 'example.org', 'filetype': 'sqlite3',
-                                              'file': 'data/inmem-xfrin.sqlite3'}],
-                                   'type': 'punched-card', 'class': 'IN'}]
-        self.__do_test([XFRIN_OK], [RRType.IXFR()], RRType.IXFR())
-        self.assertFalse(self._send_cc_session.send_called)
-        self.assertFalse(self._send_cc_session.send_called_correctly)
-        self.assertFalse(self._send_cc_session.recv_called)
-        self.assertFalse(self._send_cc_session.recv_called_correctly)
-
-    def test_inmem_datasource_type_is_missing(self):
-        """
-        Inmem configuration where the datasource type is missing. In
-        this case, loadzone should not be sent to b10-auth.
-        """
-        self._module_cc.config = [{'zones': [{'origin': 'example.org', 'filetype': 'sqlite3',
-                                              'file': 'data/inmem-xfrin.sqlite3'}],
-                                   'class': 'IN'}]
-        self.__do_test([XFRIN_OK], [RRType.IXFR()], RRType.IXFR())
-        self.assertFalse(self._send_cc_session.send_called)
-        self.assertFalse(self._send_cc_session.send_called_correctly)
-        self.assertFalse(self._send_cc_session.recv_called)
-        self.assertFalse(self._send_cc_session.recv_called_correctly)
-
-    def test_inmem_backend_type_not_sqlite3(self):
-        """
-        Inmem configuration where the datasource backing file is not of
-        type sqlite3. In this case, loadzone should not be sent to
-        b10-auth.
-        """
-        self._module_cc.config = [{'zones': [{'origin': 'example.org', 'filetype': 'postgresql',
-                                              'file': 'data/inmem-xfrin.db'}],
-                                   'type': 'memory', 'class': 'IN'}]
-        self.__do_test([XFRIN_OK], [RRType.IXFR()], RRType.IXFR())
-        self.assertFalse(self._send_cc_session.send_called)
-        self.assertFalse(self._send_cc_session.send_called_correctly)
-        self.assertFalse(self._send_cc_session.recv_called)
-        self.assertFalse(self._send_cc_session.recv_called_correctly)
-
-    def test_inmem_backend_type_is_missing(self):
-        """
-        Inmem configuration where the datasource backing file type is
-        not set. In this case, loadzone should not be sent to b10-auth.
-        """
-        self._module_cc.config = [{'zones': [{'origin': 'example.org',
-                                              'file': 'data/inmem-xfrin'}],
-                                   'type': 'memory', 'class': 'IN'}]
-        self.__do_test([XFRIN_OK], [RRType.IXFR()], RRType.IXFR())
-        self.assertFalse(self._send_cc_session.send_called)
-        self.assertFalse(self._send_cc_session.send_called_correctly)
-        self.assertFalse(self._send_cc_session.recv_called)
-        self.assertFalse(self._send_cc_session.recv_called_correctly)
-
-    def test_inmem_class_is_different(self):
-        """
-        Inmem configuration where the datasource class does not match
-        the received class. In this case, loadzone should not be sent to
-        b10-auth.
-        """
-        self._module_cc.config = [{'zones': [{'origin': 'example.org', 'filetype': 'sqlite3',
-                                              'file': 'data/inmem-xfrin.sqlite3'}],
-                                   'type': 'memory', 'class': 'XX'}]
-        self.__do_test([XFRIN_OK], [RRType.IXFR()], RRType.IXFR())
-        self.assertFalse(self._send_cc_session.send_called)
-        self.assertFalse(self._send_cc_session.send_called_correctly)
-        self.assertFalse(self._send_cc_session.recv_called)
-        self.assertFalse(self._send_cc_session.recv_called_correctly)
-
-    def test_inmem_class_is_missing(self):
-        """
-        Inmem configuration where the datasource class is missing. In
-        this case, we assume the IN class and loadzone may be sent to
-        b10-auth if everything else matches.
-        """
-        self._module_cc.config = [{'zones': [{'origin': 'example.org', 'filetype': 'sqlite3',
-                                              'file': 'data/inmem-xfrin.sqlite3'}],
-                                   'type': 'memory'}]
-        self.__do_test([XFRIN_OK], [RRType.IXFR()], RRType.IXFR())
-        self.assertTrue(self._send_cc_session.send_called)
-        self.assertTrue(self._send_cc_session.send_called_correctly)
-        self.assertTrue(self._send_cc_session.recv_called)
-        self.assertTrue(self._send_cc_session.recv_called_correctly)
-
-    def test_inmem_name_doesnt_match(self):
-        """
-        Inmem configuration where the origin does not match the received
-        name. In this case, loadzone should not be sent to b10-auth.
-        """
-        self._module_cc.config = [{'zones': [{'origin': 'isc.org', 'filetype': 'sqlite3',
-                                              'file': 'data/inmem-xfrin.sqlite3'}],
-                                   'type': 'memory', 'class': 'IN'}]
-        self.__do_test([XFRIN_OK], [RRType.IXFR()], RRType.IXFR())
-        self.assertFalse(self._send_cc_session.send_called)
-        self.assertFalse(self._send_cc_session.send_called_correctly)
-        self.assertFalse(self._send_cc_session.recv_called)
-        self.assertFalse(self._send_cc_session.recv_called_correctly)
-
-    def test_inmem_name_is_missing(self):
-        """
-        Inmem configuration where the origin is missing. In this case,
-        loadzone should not be sent to b10-auth.
-        """
-        self._module_cc.config = [{'zones': [{'filetype': 'sqlite3',
-                                              'file': 'data/inmem-xfrin.sqlite3'}],
-                                   'type': 'memory', 'class': 'IN'}]
-        self.__do_test([XFRIN_OK], [RRType.IXFR()], RRType.IXFR())
-        self.assertFalse(self._send_cc_session.send_called)
-        self.assertFalse(self._send_cc_session.send_called_correctly)
-        self.assertFalse(self._send_cc_session.recv_called)
-        self.assertFalse(self._send_cc_session.recv_called_correctly)
 
 class TestFormatting(unittest.TestCase):
     # If the formatting functions are moved to a more general library

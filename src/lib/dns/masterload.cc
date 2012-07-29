@@ -17,6 +17,7 @@
 #include <sstream>
 #include <string>
 #include <cctype>
+#include <cerrno>
 
 #include <boost/scoped_ptr.hpp>
 
@@ -71,7 +72,8 @@ masterLoad(const char* const filename, const Name& origin,
     ifstream ifs;
     ifs.open(filename, ios_base::in);
     if (ifs.fail()) {
-        isc_throw(MasterLoadError, "Failed to open master file: " << filename);
+        isc_throw(MasterLoadError, "Failed to open master file: " <<
+                  filename << ": " << strerror(errno));
     }
     masterLoad(ifs, origin, zone_class, callback);
     ifs.close();

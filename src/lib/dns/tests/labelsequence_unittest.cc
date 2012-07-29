@@ -21,10 +21,16 @@
 #include <boost/functional/hash.hpp>
 
 #include <string>
+#include <vector>
+#include <utility>
 #include <set>
 
 using namespace isc::dns;
 using namespace std;
+
+// XXX: this is defined as class static constants, but some compilers
+// seemingly cannot find the symbols when used in the EXPECT_xxx macros.
+const size_t LabelSequence::MAX_SERIALIZED_LENGTH;
 
 namespace {
 
@@ -38,6 +44,13 @@ public:
                           n10("\\000xample.org"),
                           n11("\\000xample.com"),
                           n12("\\000xamplE.com"),
+                          n_maxlabel("0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9."
+                                     "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9."
+                                     "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9."
+                                     "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9."
+                                     "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9."
+                                     "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9."
+                                     "0.1.2.3.4.5.6"),
                           ls1(n1), ls2(n2), ls3(n3), ls4(n4), ls5(n5),
                           ls6(n6), ls7(n7), ls8(n8),
                           ls9(n9), ls10(n10), ls11(n11), ls12(n12)
@@ -46,6 +59,7 @@ public:
     // the labelsequences
     Name n1, n2, n3, n4, n5, n6, n7, n8;
     Name n9, n10, n11, n12;
+    const Name n_maxlabel;
 
     LabelSequence ls1, ls2, ls3, ls4, ls5, ls6, ls7, ls8;
     LabelSequence ls9, ls10, ls11, ls12;
@@ -189,12 +203,11 @@ TEST_F(LabelSequenceTest, compare) {
     LabelSequence lsc(nc);
 
     // "g.f.e.d.c.example.org." and "b.example.org" (not absolute), case
-    // in-sensitive
+    // in-sensitive; the absolute one is always smaller.
     lsb.stripRight(1);
     result = lsc.compare(lsb);
-    EXPECT_EQ(isc::dns::NameComparisonResult::NONE,
-              result.getRelation());
-    EXPECT_EQ(0, result.getOrder());
+    EXPECT_EQ(isc::dns::NameComparisonResult::NONE, result.getRelation());
+    EXPECT_GT(0, result.getOrder());
     EXPECT_EQ(0, result.getCommonLabels());
 
     // "g.f.e.d.c.example.org." and "example.org.", case in-sensitive
@@ -270,13 +283,13 @@ TEST_F(LabelSequenceTest, compare) {
     Name ng("w.x.y.isc.EXAMPLE.org");
     LabelSequence lsg(ng);
 
-    // "a.b.c.isc.example.org." and "w.x.y.isc.EXAMPLE.org" (not
-    // absolute), case in-sensitive
+    // lsf: "a.b.c.isc.example.org."
+    // lsg: "w.x.y.isc.EXAMPLE.org" (not absolute), case in-sensitive.
+    // the absolute one is always smaller.
     lsg.stripRight(1);
-    result = lsg.compare(lsf);
-    EXPECT_EQ(isc::dns::NameComparisonResult::NONE,
-              result.getRelation());
-    EXPECT_EQ(0, result.getOrder());
+    result = lsg.compare(lsf);  // lsg > lsf
+    EXPECT_EQ(isc::dns::NameComparisonResult::NONE, result.getRelation());
+    EXPECT_LT(0, result.getOrder());
     EXPECT_EQ(0, result.getCommonLabels());
 
     // "a.b.c.isc.example.org" (not absolute) and
@@ -298,14 +311,23 @@ TEST_F(LabelSequenceTest, compare) {
     EXPECT_LT(0, result.getOrder());
     EXPECT_EQ(2, result.getCommonLabels());
 
-    // "a.b.c" (not absolute) and
-    // "w.x.y" (not absolute), case in-sensitive
+    // lsf: "a.b.c" (not absolute) and
+    // lsg: "w.x.y" (not absolute), case in-sensitive; a.b.c < w.x.y;
+    // no common labels.
     lsf.stripRight(2);
     lsg.stripRight(2);
-    result = lsg.compare(lsf);
-    EXPECT_EQ(isc::dns::NameComparisonResult::NONE,
-              result.getRelation());
-    EXPECT_EQ(0, result.getOrder());
+    result = lsf.compare(lsg);
+    EXPECT_EQ(isc::dns::NameComparisonResult::NONE, result.getRelation());
+    EXPECT_GT(0, result.getOrder());
+    EXPECT_EQ(0, result.getCommonLabels());
+
+    // lsf2: a.b.cc (not absolute); a.b.c < a.b.cc, no common labels.
+    const Name nf2("a.b.cc");
+    LabelSequence lsf2(nf2);
+    lsf2.stripRight(1);
+    result = lsf.compare(lsf2);
+    EXPECT_EQ(isc::dns::NameComparisonResult::NONE, result.getRelation());
+    EXPECT_GT(0, result.getOrder());
     EXPECT_EQ(0, result.getCommonLabels());
 
     Name nh("aexample.org");
@@ -324,13 +346,13 @@ TEST_F(LabelSequenceTest, compare) {
     EXPECT_EQ(1, result.getCommonLabels());
 
     // "aexample" (not absolute) and
-    // "bexample" (not absolute), case in-sensitive
+    // "bexample" (not absolute), case in-sensitive;
+    // aexample < bexample; no common labels.
     lsh.stripRight(1);
     lsi.stripRight(1);
     result = lsh.compare(lsi);
-    EXPECT_EQ(isc::dns::NameComparisonResult::NONE,
-              result.getRelation());
-    EXPECT_EQ(0, result.getOrder());
+    EXPECT_EQ(isc::dns::NameComparisonResult::NONE, result.getRelation());
+    EXPECT_GT(0, result.getOrder());
     EXPECT_EQ(0, result.getCommonLabels());
 
     Name nj("example.org");
@@ -398,93 +420,6 @@ TEST_F(LabelSequenceTest, getData) {
     getDataCheck("\007example\003ORG\000", 13, ls5);
     getDataCheck("\007ExAmPlE\003org\000", 13, ls6);
     getDataCheck("\000", 1, ls7);
-};
-
-TEST_F(LabelSequenceTest, getOffsetData) {
-    size_t len;
-    uint8_t placeholder[Name::MAX_LABELS];
-
-    Name nx("x.isc.example.org");
-    LabelSequence lsx(nx);
-
-    // x.isc.example.org.
-    lsx.getOffsetData(&len, placeholder);
-    EXPECT_EQ(5, len);
-    EXPECT_EQ(0, placeholder[0]);
-    EXPECT_EQ(2, placeholder[1]);
-    EXPECT_EQ(6, placeholder[2]);
-    EXPECT_EQ(14, placeholder[3]);
-    EXPECT_EQ(18, placeholder[4]);
-
-    lsx.stripLeft(2);
-
-    // example.org.
-    lsx.getOffsetData(&len, placeholder);
-    EXPECT_EQ(3, len);
-    EXPECT_EQ(0, placeholder[0]);
-    EXPECT_EQ(8, placeholder[1]);
-    EXPECT_EQ(12, placeholder[2]);
-
-    lsx.stripLeft(1);
-
-    // org.
-    lsx.getOffsetData(&len, placeholder);
-    EXPECT_EQ(2, len);
-    EXPECT_EQ(0, placeholder[0]);
-    EXPECT_EQ(4, placeholder[1]);
-
-    lsx.stripLeft(1);
-
-    // .
-    lsx.getOffsetData(&len, placeholder);
-    EXPECT_EQ(1, len);
-    EXPECT_EQ(0, placeholder[0]);
-
-    Name ny("y.isc.example.org");
-    LabelSequence lsy(ny);
-
-    // y.isc.example.org.
-    lsy.getOffsetData(&len, placeholder);
-    EXPECT_EQ(5, len);
-    EXPECT_EQ(0, placeholder[0]);
-    EXPECT_EQ(2, placeholder[1]);
-    EXPECT_EQ(6, placeholder[2]);
-    EXPECT_EQ(14, placeholder[3]);
-    EXPECT_EQ(18, placeholder[4]);
-
-    lsy.stripRight(1);
-
-    // y.isc.example.org
-    lsy.getOffsetData(&len, placeholder);
-    EXPECT_EQ(4, len);
-    EXPECT_EQ(0, placeholder[0]);
-    EXPECT_EQ(2, placeholder[1]);
-    EXPECT_EQ(6, placeholder[2]);
-    EXPECT_EQ(14, placeholder[3]);
-
-    lsy.stripRight(1);
-
-    // y.isc.example
-    lsy.getOffsetData(&len, placeholder);
-    EXPECT_EQ(3, len);
-    EXPECT_EQ(0, placeholder[0]);
-    EXPECT_EQ(2, placeholder[1]);
-    EXPECT_EQ(6, placeholder[2]);
-
-    lsy.stripLeft(1);
-
-    // isc.example
-    lsy.getOffsetData(&len, placeholder);
-    EXPECT_EQ(2, len);
-    EXPECT_EQ(0, placeholder[0]);
-    EXPECT_EQ(4, placeholder[1]);
-
-    lsy.stripLeft(1);
-
-    // example
-    lsy.getOffsetData(&len, placeholder);
-    EXPECT_EQ(1, len);
-    EXPECT_EQ(0, placeholder[0]);
 };
 
 TEST_F(LabelSequenceTest, stripLeft) {
@@ -646,14 +581,7 @@ TEST_F(LabelSequenceTest, toText) {
               "012345678901234567890123456789"
               "0123456789012345678901234567890", ls_long1.toText());
 
-    Name n_long2("0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9."
-                 "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9."
-                 "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9."
-                 "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9."
-                 "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9."
-                 "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9."
-                 "0.1.2.3.4.5.6");
-    LabelSequence ls_long2(n_long2);
+    LabelSequence ls_long2(n_maxlabel);
 
     EXPECT_EQ("0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9."
               "0.1.2.3.4.5.6.7.8.9.0.1.2.3.4.5.6.7.8.9."
@@ -762,78 +690,98 @@ TEST_F(LabelSequenceTest, LeftShiftOperator) {
     EXPECT_EQ(ls1.toText(), oss.str());
 }
 
-// Test different ways of construction, and see if they compare
-TEST(LabelSequence, rawConstruction) {
-    Name n("example.org");
+TEST_F(LabelSequenceTest, serialize) {
+    // placeholder for serialized data
+    uint8_t labels_buf[LabelSequence::MAX_SERIALIZED_LENGTH];
 
-    uint8_t data[] = { 0x07, 'e', 'x', 'a', 'm', 'p', 'l', 'e',
-                       0x03, 'o', 'r', 'g',
-                       0x00 };
-    uint8_t offsets[] = { 0, 8, 12 };
-    size_t offsets_size = 3;
+    // vector to store expected and actual data
+    vector<LabelSequence> actual_labelseqs;
+    typedef pair<size_t, const uint8_t*> DataPair;
+    vector<DataPair> expected;
 
-    LabelSequence s1(n);
-    LabelSequence s2(s1);
-    LabelSequence s3(data, offsets, offsets_size);
+    // An absolute sequence directly constructed from a valid name.
+    // labels = 3, offset sequence = 0, 8, 12, data = "example.com."
+    actual_labelseqs.push_back(ls1);
+    const uint8_t expected_data1[] = {
+        3, 0, 8, 12, 7, 'e', 'x', 'a', 'm', 'p', 'l', 'e',
+        3, 'o', 'r', 'g', 0 };
+    expected.push_back(DataPair(sizeof(expected_data1), expected_data1));
 
-    // Assuming equality is transitive, so only comparing 1 to 2 and 1 to 3
-    NameComparisonResult result = s1.compare(s2);
-    EXPECT_EQ(isc::dns::NameComparisonResult::EQUAL,
-              result.getRelation());
-    EXPECT_EQ(0, result.getOrder());
-    EXPECT_EQ(3, result.getCommonLabels());
+    // Strip the original one from right.
+    // labels = 2, offset sequence = 0, 8, data = "example.com" (non absolute)
+    LabelSequence ls_rstripped = ls1;
+    ls_rstripped.stripRight(1);
+    actual_labelseqs.push_back(ls_rstripped);
+    const uint8_t expected_data2[] = {
+        2, 0, 8, 7, 'e', 'x', 'a', 'm', 'p', 'l', 'e',
+        3, 'o', 'r', 'g'};
+    expected.push_back(DataPair(sizeof(expected_data2), expected_data2));
 
-    result = s1.compare(s3);
-    EXPECT_EQ(isc::dns::NameComparisonResult::EQUAL,
-              result.getRelation());
-    EXPECT_EQ(0, result.getOrder());
-    EXPECT_EQ(3, result.getCommonLabels());
+    // Strip the original one from left.
+    // labels = 2, offset sequence = 0, 4, data = "com."
+    // Note that offsets are adjusted so that they begin with 0.
+    LabelSequence ls_lstripped = ls1;
+    ls_lstripped.stripLeft(1);
+    actual_labelseqs.push_back(ls_lstripped);
+    const uint8_t expected_data3[] = { 2, 0, 4, 3, 'o', 'r', 'g', 0 };
+    expected.push_back(DataPair(sizeof(expected_data3), expected_data3));
 
-    // Modify the data and make sure it's not equal anymore
-    data[2] = 'f';
-    result = s1.compare(s3);
-    EXPECT_EQ(isc::dns::NameComparisonResult::COMMONANCESTOR,
-              result.getRelation());
-    EXPECT_EQ(2, result.getCommonLabels());
+    // Root label.
+    LabelSequence ls_root(Name::ROOT_NAME());
+    actual_labelseqs.push_back(ls_root);
+    const uint8_t expected_data4[] = { 1, 0, 0 };
+    expected.push_back(DataPair(sizeof(expected_data4), expected_data4));
 
-    s1.stripRight(1);
-    s3.stripRight(1);
+    // Non absolute single-label.
+    LabelSequence ls_single = ls_rstripped;
+    ls_single.stripRight(1);
+    actual_labelseqs.push_back(ls_single);
+    const uint8_t expected_data5[] = {
+        1, 0, 7, 'e', 'x', 'a', 'm', 'p', 'l', 'e' };
+    expected.push_back(DataPair(sizeof(expected_data5), expected_data5));
 
-    result = s1.compare(s3);
-    EXPECT_EQ(isc::dns::NameComparisonResult::COMMONANCESTOR,
-              result.getRelation());
-    EXPECT_EQ(1, result.getCommonLabels());
+    // For each data set, serialize the labels and compare the data to the
+    // expected one.
+    vector<DataPair>::const_iterator it = expected.begin();
+    vector<LabelSequence>::const_iterator itl = actual_labelseqs.begin();
+    for (; it != expected.end(); ++it, ++itl) {
+        SCOPED_TRACE(itl->toText());
 
-    data[9] = 'f';
-    result = s1.compare(s3);
-    EXPECT_EQ(isc::dns::NameComparisonResult::NONE,
-              result.getRelation());
-    EXPECT_EQ(0, result.getCommonLabels());
+        const size_t serialized_len = itl->getSerializedLength();
+
+        ASSERT_GE(LabelSequence::MAX_SERIALIZED_LENGTH, serialized_len);
+        itl->serialize(labels_buf, serialized_len);
+        EXPECT_EQ(it->first, serialized_len);
+        EXPECT_EQ(0, memcmp(it->second, labels_buf, serialized_len));
+
+        EXPECT_EQ(NameComparisonResult::EQUAL,
+                  LabelSequence(labels_buf).compare(*itl).getRelation());
+    }
+
+    EXPECT_THROW(ls1.serialize(labels_buf, ls1.getSerializedLength() - 1),
+                 isc::BadValue);
 }
 
-// Test with some data that exceeds limits (MAX_LABELS and MAX_LABEL_LEN)
-TEST(LabelSequence, badRawConstruction) {
-    uint8_t data[1] = { 0 };
-    uint8_t offsets[1] = { 0 };
-
-    EXPECT_THROW(LabelSequence(NULL, offsets, 1), isc::BadValue);
-    EXPECT_THROW(LabelSequence(data, NULL, 1), isc::BadValue);
-    EXPECT_THROW(LabelSequence(data, offsets, 0), isc::BadValue);
-
-    // exceed MAX_LABELS
-    EXPECT_THROW(LabelSequence(data, offsets, 127), isc::BadValue);
+TEST_F(LabelSequenceTest, badDeserialize) {
+    EXPECT_THROW(LabelSequence(NULL), isc::BadValue);
+    const uint8_t zero_offsets[] = { 0 };
+    EXPECT_THROW(LabelSequence ls(zero_offsets), isc::BadValue);
+    const uint8_t toomany_offsets[] = { Name::MAX_LABELS + 1 };
+    EXPECT_THROW(LabelSequence ls(toomany_offsets), isc::BadValue);
 
     // exceed MAX_LABEL_LEN
-    uint8_t offsets_toolonglabel[1] = { 64 };
-    EXPECT_THROW(LabelSequence(data, offsets_toolonglabel, 1), isc::BadValue);
+    const uint8_t offsets_toolonglabel[] = { 2, 0, 64 };
+    EXPECT_THROW(LabelSequence ls(offsets_toolonglabel), isc::BadValue);
 
-    // Add an offset that is lower than the previous offset
-    uint8_t offsets_lower[3] = { 0, 8, 4 };
-    EXPECT_THROW(LabelSequence(data, offsets_lower, 3), isc::BadValue);
+    // Inconsistent data: an offset is lower than the previous offset
+    const uint8_t offsets_lower[] = { 3, // # of offsets
+                                      0, 2, 1, // offsets
+                                      1, 'a', 1, 'b', 0};
+    EXPECT_THROW(LabelSequence ls(offsets_lower), isc::BadValue);
 
-    // Add an offset that is equal to the previous offset
-    uint8_t offsets_noincrease[3] = { 0, 8, 8 };
-    EXPECT_THROW(LabelSequence(data, offsets_noincrease, 3), isc::BadValue);
+    // Inconsistent data: an offset is equal to the previous offset
+    const uint8_t offsets_noincrease[] = { 2, 0, 0, 0, 0 };
+    EXPECT_THROW(LabelSequence ls(offsets_noincrease), isc::BadValue);
 }
 
 }

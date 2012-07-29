@@ -33,6 +33,7 @@ namespace memory {
 /// The enum values define special traits of the name that can affect how
 /// it should be handled in rendering or query processing.
 enum RdataNameAttributes {
+    NAMEATTR_NONE = 0,          ///< No special attributes
     NAMEATTR_COMPRESSIBLE = 1,  ///< Name should be compressed when rendered
     NAMEATTR_ADDITIONAL = (NAMEATTR_COMPRESSIBLE << 1) ///< Name requires
                                                       ///< Additional section
