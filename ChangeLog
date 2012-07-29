@@ -1,3 +1,10 @@
+455.	[func]*		vorner
+	The server now uses newer API for data sources. This would be an
+	internal change, however, the data sources are now configured
+	differently. Please, migrate your configuration to the top-level
+	"data_sources" module.
+	(Trac #1976, git 0d4685b3e7603585afde1b587cbfefdfaf6a1bb3)
+
 454.	[bug]		jelte
 	b10-cfgmgr now loads its configuration check plugins directly from
 	the plugin search path, as opposed to importing them from the

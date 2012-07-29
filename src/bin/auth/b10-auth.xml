@@ -44,7 +44,6 @@
   <refsynopsisdiv>
     <cmdsynopsis>
       <command>b10-auth</command>
-      <arg><option>-n</option></arg>
       <arg><option>-v</option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
@@ -79,18 +78,6 @@
     <para>The arguments are as follows:</para>
 
     <variablelist>
-      <varlistentry>
-        <term><option>-n</option></term>
-        <listitem><para>
-          Do not cache answers in memory.
-          The default is to use the cache for faster responses.
-	  The cache keeps the most recent 30,000 answers (positive
-	  and negative) in memory for 30 seconds (instead of querying
-	  the data source, such as SQLite3 database, each time).
-        </para></listitem>
-<!-- TODO: this is SQLite3 only -->
-      </varlistentry>
-
       <varlistentry>
         <term><option>-v</option></term>
         <listitem><para>
