@@ -38,7 +38,8 @@
 using namespace isc::dns;
 using namespace std;
 using namespace isc::dns::rdata;
-using namespace boost;
+using boost::lexical_cast;
+using boost::scoped_ptr;
 
 namespace isc {
 namespace datasrc {
