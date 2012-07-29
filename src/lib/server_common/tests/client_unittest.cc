@@ -31,7 +31,8 @@
 
 #include <gtest/gtest.h>
 
-using namespace boost;
+using boost::lexical_cast;
+using boost::scoped_ptr;
 using namespace isc::acl;
 using namespace isc::asiolink;
 using namespace isc::server_common;

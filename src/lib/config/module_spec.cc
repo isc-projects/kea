@@ -37,7 +37,7 @@ check_leaf_item(ConstElementPtr spec, const std::string& name,
                 Element::types type, bool mandatory)
 {
     if (spec->contains(name)) {
-        if (spec->get(name)->getType() == type) {
+        if (type == Element::any || spec->get(name)->getType() == type) {
             return;
         } else {
             isc_throw(ModuleSpecError,

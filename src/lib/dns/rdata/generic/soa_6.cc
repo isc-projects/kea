@@ -27,7 +27,7 @@
 #include <dns/rdataclass.h>
 
 using namespace std;
-using namespace boost;
+using boost::lexical_cast;
 using namespace isc::util;
 
 // BEGIN_ISC_NAMESPACE

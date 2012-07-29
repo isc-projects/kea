@@ -2,7 +2,7 @@ ACLOCAL_AMFLAGS = -I m4macros ${ACLOCAL_FLAGS}
 # ^^^^^^^^ This has to be the first line and cannot come later in this
 # Makefile.am due to some bork in some versions of autotools.
 
-SUBDIRS = compatcheck doc src tests
+SUBDIRS = compatcheck doc . src tests
 USE_LCOV=@USE_LCOV@
 LCOV=@LCOV@
 GENHTML=@GENHTML@
@@ -427,3 +427,9 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = dns++.pc
 
 CLEANFILES = $(abs_top_builddir)/logger_lockfile
+
+if HAVE_GTEST_SOURCE
+noinst_LIBRARIES = libgtest.a
+libgtest_a_CXXFLAGS = $(GTEST_INCLUDES) $(AM_CXXFLAGS)
+nodist_libgtest_a_SOURCES = $(GTEST_SOURCE)/src/gtest-all.cc
+endif
