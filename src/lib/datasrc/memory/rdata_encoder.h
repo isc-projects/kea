@@ -39,7 +39,8 @@
 /// data structures, so it can be located anywhere in the memory or even
 /// dumped to a file.
 ///
-/// Two main classes are provided: one is \c RdataEncoder, which allows
+/// Two main classes are provided: one is
+/// \c isc::datasrc::memory::RdataEncoder, which allows
 /// the application to create encoded data for a set of RDATA;
 /// the other (TBD) provides an interface to iterate over encoded set of
 /// RDATA for purposes such as data lookups or rendering the data into the
@@ -49,9 +50,10 @@
 /// and the application shouldn't assume anything about that except that
 /// each RDATA is considered to consist of one or more generic fields,
 /// and each field is typed as either opaque data or a domain name.
-/// A domain name field has additional attributes (see \c RdataNameAttributes)
+/// A domain name field has additional attributes
+/// (see \c isc::datasrc::memory::RdataNameAttributes)
 /// so the application can change how the name should be handled in terms
-/// the DNS protocol (e.g., whether it's subject to name compression).
+/// of the DNS protocol (e.g., whether it's subject to name compression).
 ///
 /// The following are the current implementation of internal encoding, shown
 /// only for reference.  Applications must not assume this particular form
@@ -129,12 +131,13 @@ enum RdataNameAttributes {
 /// Any number of calls to \c addRdata() or \c addSIGRdata() follow, each
 /// of which updates the internal state of the encoder with the encoding
 /// information for the given RDATA or RRSIG RDATA, respectively.
-/// The \c addRdata() is expected to be called with an \c Rdata object
+/// The \c addRdata() is expected to be called with an
+/// \c isc::dns::rdata::Rdata object
 /// of the specified class and type, and \c addRdata() checks the consistency
 /// for the purpose of encoding (but it's not completely type safe; for
 /// example, it wouldn't distinguish TXT RDATA and HINFO RDATA.
-/// Likewise, an \c Rdata given to \c addSIGRdata() is expected to be of
-/// RRSIG, but the method does not check the assumption.
+/// Likewise, an \c isc::dns::rdata::Rdata given to \c addSIGRdata() is
+/// expected to be of RRSIG, but the method does not check the assumption).
 ///
 /// After passing the complete set of RDATA and their RRSIG, the application
 /// is expected to call \c getStorageLength() to know the size of storage
