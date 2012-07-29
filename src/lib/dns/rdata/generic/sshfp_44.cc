@@ -40,18 +40,13 @@ SSHFP::SSHFP(InputBuffer& buffer, size_t rdata_len) {
         isc_throw(InvalidRdataLength, "SSHFP record too short");
     }
 
-    try {
-        algorithm_ = buffer.readUint8();
-        fingerprint_type_ = buffer.readUint8();
+    algorithm_ = buffer.readUint8();
+    fingerprint_type_ = buffer.readUint8();
 
-        rdata_len -= 2;
-        if (rdata_len > 0) {
-            fingerprint_.resize(rdata_len);
-            buffer.readData(&fingerprint_[0], rdata_len);
-        }
-    } catch (const isc::util::InvalidBufferPosition& e) {
-        isc_throw(InvalidRdataLength,
-                  "SSHFP record shorter than RDATA len: " << e.what());
+    rdata_len -= 2;
+    if (rdata_len > 0) {
+        fingerprint_.resize(rdata_len);
+        buffer.readData(&fingerprint_[0], rdata_len);
     }
 }
 
