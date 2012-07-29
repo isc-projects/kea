@@ -24,39 +24,21 @@
 ///     to be used as a base data structure by other modules.
 
 #include <exceptions/exceptions.h>
-
+#include <util/memory_segment.h>
 #include <dns/name.h>
+#include <dns/labelsequence.h>
+
 #include <boost/utility.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/interprocess/offset_ptr.hpp>
-#include <exceptions/exceptions.h>
+#include <boost/static_assert.hpp>
+
 #include <ostream>
 #include <algorithm>
 #include <cassert>
 
 namespace isc {
 namespace datasrc {
-
-namespace helper {
-
-/// \brief Helper function to remove the base domain from super domain.
-///
-/// The precondition of this function is the super_name contains the
-/// sub_name so
-/// \code Name a("a.b.c");
-/// Name b("b.c");
-/// Name c = a - b;
-/// \endcode
-/// c will contain "a".
-///
-/// \note Functions in this namespace is not intended to be used outside of
-///     RBTree implementation.
-inline isc::dns::Name
-operator-(const isc::dns::Name& super_name, const isc::dns::Name& sub_name) {
-    return (super_name.split(0, super_name.getLabelCount() -
-                             sub_name.getLabelCount()));
-}
-}
 
 /// Forward declare RBTree class here is convinent for following friend
 /// class declare inside RBNode and RBTreeNodeChain
@@ -68,7 +50,7 @@ class RBTree;
 ///
 /// This is meant to be used only from RBTree. It is meaningless to inherit it
 /// or create instances of it from elsewhere. For that reason, the constructor
-/// is private.
+/// (and the allocator, see below) is private.
 ///
 /// It serves three roles. One is to keep structure of the \c RBTree as a
 /// red-black tree. For that purpose, it has left, right and parent pointers
@@ -83,6 +65,16 @@ class RBTree;
 ///
 /// One special kind of node is non-terminal node. It has subdomains with
 /// RRsets, but doesn't have any RRsets itself.
+///
+/// In order to keep memory footprint as small as possible, the node data
+/// are heavily packed.  Specifically, some internal node properties (such as
+/// the node color) are encoded as part of "flags", some of the flag bits
+/// can also be set by the user application.  Each node is associated with
+/// a sequence of domain name labels, which is essentially the search/insert
+/// key for the node (see also the description of RBTree).  This is encoded
+/// as opaque binary immediately following the main node object.  The size
+/// of the allocated space for the labels data is encoded by borrowing some
+/// bits of the "flags" field.
 template <typename T>
 class RBNode : public boost::noncopyable {
 private:
@@ -102,12 +94,70 @@ private:
     ///     Therefore the constructors are private.
     //@{
 
-    /// \brief Constructor from the node name.
-    ///
-    /// \param name The *relative* domain name (if this will live inside
-    ///     a.b.c and is called d.e.a.b.c, then you pass d.e).
-    RBNode(const isc::dns::Name& name);
+    /// \brief Constructor from normal nodes.
+    RBNode(size_t labels_capacity);
+
+    /// \brief Destructor
+    ~RBNode();
+
     //@}
+
+    /// \brief Accessor to the memory region for node labels.
+    ///
+    /// The only valid usage of the returned pointer is to pass it to the
+    /// corresponding constructor of \c dns::LabelSequence.
+    const void* getLabelsData() const { return (this + 1); }
+
+    /// \brief Accessor to the memory region for node labels, mutable version.
+    ///
+    /// The only valid usage of the returned pointer is to pass it to
+    /// \c LabelSequence::serialize() with the node's labels_capacity_ member
+    /// (which should be sufficiently large for the \c LabelSequence in that
+    /// context).
+    void* getLabelsData() { return (this + 1); }
+
+    /// \brief Allocate and construct \c RBNode
+    ///
+    /// This static method allocates memory for a new \c RBNode object
+    /// from the given memory segment, constructs the object, and returns
+    /// a pointer to it.
+    ///
+    /// \throw std::bad_alloc Memory allocation fails.
+    ///
+    /// \param mem_sgmt A \c MemorySegment from which memory for the new
+    /// \c RBNode is allocated.
+    static RBNode<T>* create(util::MemorySegment& mem_sgmt,
+                             const dns::LabelSequence& labels)
+    {
+        const size_t labels_len = labels.getSerializedLength();
+        void* p = mem_sgmt.allocate(sizeof(RBNode<T>) + labels_len);
+        RBNode<T>* node = new(p) RBNode<T>(labels_len);
+        labels.serialize(node->getLabelsData(), labels_len);
+        return (node);
+    }
+
+    /// \brief Destruct and deallocate \c RBNode
+    ///
+    /// \throw none
+    ///
+    /// \param mem_sgmt The \c MemorySegment that allocated memory for
+    /// \c rbnode.
+    /// \param rbnode A non NULL pointer to a valid \c RBNode object
+    /// that was originally created by the \c create() method (the behavior
+    /// is undefined if this condition isn't met).
+    static void destroy(util::MemorySegment& mem_sgmt, RBNode<T>* rbnode) {
+        const size_t labels_capacity = rbnode->labels_capacity_;
+        rbnode->~RBNode<T>();
+        mem_sgmt.deallocate(rbnode, sizeof(RBNode<T>) + labels_capacity);
+    }
+
+    /// \brief Reset node's label sequence to a new one.
+    ///
+    /// The new labels must be a sub sequence of the current label sequence;
+    /// otherwise the serialize() method will throw an exception.
+    void resetLabels(const dns::LabelSequence& labels) {
+        labels.serialize(getLabelsData(), labels_capacity_);
+    }
 
 public:
     /// \brief Alias for shared pointer to the data.
@@ -126,9 +176,10 @@ public:
         FLAG_CALLBACK = 1, ///< Callback enabled. See \ref callback
         FLAG_RED = 2, ///< Node color; 1 if node is red, 0 if node is black.
         FLAG_SUBTREE_ROOT = 4, ///< Set if the node is the root of a subtree
-        FLAG_USER1 = 0x80000000U, ///< Application specific flag
-        FLAG_USER2 = 0x40000000U, ///< Application specific flag
-        FLAG_USER3 = 0x20000000U  ///< Application specific flag
+        FLAG_USER1 = 0x400000U, ///< Application specific flag
+        FLAG_USER2 = 0x200000U, ///< Application specific flag
+        FLAG_USER3 = 0x100000U, ///< Application specific flag
+        FLAG_MAX = 0x400000U    // for integrity check
     };
 private:
     // Some flag values are expected to be used for internal purposes
@@ -141,17 +192,6 @@ private:
 
 public:
 
-    /// \brief Destructor
-    ///
-    /// It might seem strange that constructors are private and destructor
-    /// public, but this is needed because of shared pointers need access
-    /// to the destructor.
-    ///
-    /// You should never call anything like:
-    /// \code delete pointer_to_node; \endcode
-    /// The RBTree handles both creation and destructoion of nodes.
-    ~RBNode();
-
     /// \name Getter functions.
     //@{
     /// \brief Return the name of current node.
@@ -160,7 +200,26 @@ public:
     ///
     /// To get the absolute name of one node, the node path from the top node
     /// to current node has to be recorded.
-    const isc::dns::Name& getName() const { return (name_); }
+    ///
+    /// \note We should eventually deprecate this method and revise all its
+    /// usage with \c getLabels().  At this point the only user of this method
+    /// is getAbsoluteName()::getAbsoluteName(), which would have to be revised
+    /// using \c LabelSequence.  Until then we keep this interface as a
+    /// simplest form of wrapper; it's not efficient, but should be replaced
+    /// before we need to worry about that.
+    const isc::dns::Name getName() const {
+        return (dns::Name(dns::LabelSequence(getLabelsData()).toText()));
+    }
+
+    /// \brief Return the label sequence of the node.
+    ///
+    /// This method returns the label sequence corresponding to this node
+    /// in the form of \c dns::LabelSequence object.  Any modification to
+    /// the tree can invalidate the returned \c LabelSequence object or copy
+    /// of it; in general, it's expected to be used in a very limited scope.
+    dns::LabelSequence getLabels() const {
+        return (dns::LabelSequence(getLabelsData()));
+    }
 
     /// \brief Return the data stored in this node.
     ///
@@ -370,11 +429,8 @@ private:
     const RBNode<T>* getRight() const {
         return (right_.get());
     }
-    RBNodeColor color_;
     //@}
 
-    /// \brief Relative name of the node.
-    isc::dns::Name     name_;
     /// \brief Data stored here.
     NodeDataPtr       data_;
 
@@ -397,21 +453,34 @@ private:
         return (down_.get());
     }
 
-    /// \brief If callback should be called when traversing this node in
-    /// RBTree::find().
+    /// \brief Internal or user-configurable flags of node's properties.
     ///
-    /// \todo It might be needed to put it into more general attributes field.
-    uint32_t flags_;
+    /// See the \c Flags enum for available flags.
+    ///
+    /// For memory efficiency reasons, we only use a subset of the 32-bit
+    /// space, and use the rest to store the allocated size for the node's
+    /// label sequence data.
+    uint32_t flags_ : 23;          // largest flag being 0x400000
+    BOOST_STATIC_ASSERT((1 << 23) > FLAG_MAX); // assumption check
+
+    const uint32_t labels_capacity_ : 9; // size for labelseq; range is 0..511
+    // Make sure the reserved space for labels_capacity_ is sufficiently
+    // large.  In effect, we use the knowledge of the implementation of the
+    // serialization, but we still only use its public interface, and the
+    // public interface of this class doesn't rely on this assumption.
+    // So we can change this implementation without affecting its users if
+    // a future change to LabelSequence breaks this assumption.
+    BOOST_STATIC_ASSERT((1 << 9) > dns::LabelSequence::MAX_SERIALIZED_LENGTH);
 };
 
 template <typename T>
-RBNode<T>::RBNode(const isc::dns::Name& name) :
+RBNode<T>::RBNode(size_t labels_capacity) :
     parent_(NULL),
     left_(NULL),
     right_(NULL),
-    name_(name),
     down_(NULL),
-    flags_(FLAG_RED | FLAG_SUBTREE_ROOT)
+    flags_(FLAG_RED | FLAG_SUBTREE_ROOT),
+    labels_capacity_(labels_capacity)
 {
 }
 
@@ -724,6 +793,8 @@ private:
  *
  * the tree will look like:
  *  \verbatim
+                                .
+                                |
                                 b
                               /   \
                              a    d.e.f
@@ -740,8 +811,6 @@ private:
    \endverbatim
  *  \todo
  *  - add remove interface
- *  - add iterator to iterate over the whole \c RBTree.  This may be necessary,
- *    for example, to support AXFR.
  */
 template <typename T>
 class RBTree : public boost::noncopyable {
@@ -758,17 +827,76 @@ public:
         ALREADYEXISTS,
     };
 
+    /// \brief Allocate and construct \c RBTree
+    ///
+    /// This static method allocates memory for a new \c RBTree object
+    /// from the given memory segment, constructs the object, and returns
+    /// a pointer to it.
+    ///
+    /// \throw std::bad_alloc Memory allocation fails.
+    ///
+    /// \param mem_sgmt A \c MemorySegment from which memory for the new
+    /// \c RBTree is allocated.
+    static RBTree* create(util::MemorySegment& mem_sgmt,
+                          bool return_empty_node = false)
+    {
+        void* p = mem_sgmt.allocate(sizeof(RBTree<T>));
+        return (new(p) RBTree<T>(return_empty_node));
+    }
+
+    /// \brief Destruct and deallocate \c RBTree
+    ///
+    /// This method also destroys and deallocates all nodes inserted to the
+    /// tree.
+    ///
+    /// \note The memory segment (\c mem_sgmt) must be the same one that
+    /// was originally used to allocate memory for the tree (and for all
+    /// nodes inserted to the tree, due to the requirement of \c insert()),
+    /// since the tree itself doesn't maintain a reference to the segment.
+    /// This is not a robust interface, but since we plan to share the tree
+    /// structure by multiple processes via shared memory or possibly allow
+    /// the memory image to be dumped to a file for later reload, there
+    /// doesn't seem to be an easy way to store such reference in the data
+    /// itself.  We should probably consider a wrapper interface that
+    /// encapsulates the corresponding segment and always use it for any
+    /// allocation/deallocation of tree related data (the tree itself, their
+    /// nodes, and node data) to keep the usage as safe as possible.
+    ///
+    /// \throw none
+    ///
+    /// \param mem_sgmt The \c MemorySegment that allocated memory for
+    /// \c rbtree and for all nodes inserted to the tree.
+    /// \param rbtree A non NULL pointer to a valid \c RBTree object
+    /// that was originally created by the \c create() method (the behavior
+    /// is undefined if this condition isn't met).
+    static void destroy(util::MemorySegment& mem_sgmt, RBTree<T>* rbtree) {
+        rbtree->deleteAllNodes(mem_sgmt);
+        rbtree->~RBTree<T>();
+        mem_sgmt.deallocate(rbtree, sizeof(RBTree<T>));
+    }
+
+private:
     /// \name Constructor and Destructor
     //@{
-    /// The constructor.
+    /// \brief The constructor.
+    ///
+    /// An object of this class is always expected to be created by the
+    /// allocator (\c create()), so the constructor is hidden as private.
     ///
     /// It never throws an exception.
     explicit RBTree(bool returnEmptyNode = false);
 
-    /// \b Note: RBTree is not intended to be inherited so the destructor
+    /// \brief The destructor.
+    ///
+    /// An object of this class is always expected to be destroyed explicitly
+    /// by \c destroy(), so the constructor is hidden as private.
+    ///
+    /// \note RBTree is not intended to be inherited so the destructor
     /// is not virtual
     ~RBTree();
     //@}
+
+public:
 
     /// \name Find methods
     ///
@@ -1051,6 +1179,9 @@ public:
     /// the same.  This method provides the weak exception guarantee in its
     /// normal sense.
     ///
+    /// \param mem_sgmt A \c MemorySegment object for allocating memory of
+    /// a new node to be inserted.  Must be the same segment as that used
+    /// for creating the tree itself.
     /// \param name The name to be inserted into the tree.
     /// \param inserted_node This is an output parameter and is set to the
     ///     node.
@@ -1059,9 +1190,23 @@ public:
     ///  - SUCCESS The node was added.
     ///  - ALREADYEXISTS There was already a node of that name, so it was not
     ///     added.
-    Result insert(const isc::dns::Name& name, RBNode<T>** inserted_node);
+    Result insert(util::MemorySegment& mem_sgmt, const isc::dns::Name& name,
+                  RBNode<T>** inserted_node);
+
+    /// \brief Delete all tree nodes.
+    ///
+    /// \throw none.
+    ///
+    /// \param mem_sgmt The \c MemorySegment object used to insert the nodes
+    /// (which was also used for creating the tree due to the requirement of
+    /// \c inert()).
+    void deleteAllNodes(util::MemorySegment& mem_sgmt);
 
     /// \brief Swaps two tree's contents.
+    ///
+    /// This and \c other trees must have been created with the same
+    /// memory segment (see the discussion in \c create()); otherwise the
+    /// behavior is undefined.
     ///
     /// This acts the same as many std::*.swap functions, exchanges the
     /// contents. This doesn't throw anything.
@@ -1084,7 +1229,7 @@ private:
     /// \name Helper functions
     //@{
     /// \brief delete tree whose root is equal to node
-    void deleteHelper(RBNode<T> *node);
+    void deleteHelper(util::MemorySegment& mem_sgmt, RBNode<T> *node);
 
     /// \brief Print the information of given RBNode.
     void dumpTreeHelper(std::ostream& os, const RBNode<T>* node,
@@ -1097,11 +1242,15 @@ private:
     /// \brief Indentation helper function for dumpTree
     static void indent(std::ostream& os, unsigned int depth);
 
-    /// Split one node into two nodes, keep the old node and create one new
-    /// node, old node will hold the base name, new node will be the down node
-    /// of old node, new node will hold the sub_name, the data
-    /// of old node will be move into new node, and old node became non-terminal
-    void nodeFission(RBNode<T>& node, const isc::dns::Name& sub_name);
+    /// Split one node into two nodes for "prefix" and "suffix" parts of
+    /// the labels of the original node, respectively.  The given node
+    /// will hold the suffix labels, while the new node will hold the prefix.
+    /// The newly created node represents the labels that the original node
+    /// did, so necessary data are swapped.
+    /// (Note: as commented in the code, this behavior should be changed).
+    void nodeFission(util::MemorySegment& mem_sgmt, RBNode<T>& node,
+                     const isc::dns::LabelSequence& new_prefix,
+                     const isc::dns::LabelSequence& new_suffix);
     //@}
 
     typename RBNode<T>::RBNodePtr root_;
@@ -1121,13 +1270,12 @@ RBTree<T>::RBTree(bool returnEmptyNode) :
 
 template <typename T>
 RBTree<T>::~RBTree() {
-    deleteHelper(root_.get());
     assert(node_count_ == 0);
 }
 
 template <typename T>
 void
-RBTree<T>::deleteHelper(RBNode<T>* root) {
+RBTree<T>::deleteHelper(util::MemorySegment& mem_sgmt, RBNode<T>* root) {
     if (root == NULL) {
         return;
     }
@@ -1148,14 +1296,14 @@ RBTree<T>::deleteHelper(RBNode<T>* root) {
             parent->right_ = NULL;
         }
 
-        deleteHelper(node->getDown());
-        delete node;
+        deleteHelper(mem_sgmt, node->getDown());
+        RBNode<T>::destroy(mem_sgmt, node);
         --node_count_;
         node = parent;
     }
 
-    deleteHelper(root->getDown());
-    delete root;
+    deleteHelper(mem_sgmt, root->getDown());
+    RBNode<T>::destroy(mem_sgmt, root);
     --node_count_;
 }
 
@@ -1168,19 +1316,17 @@ RBTree<T>::find(const isc::dns::Name& target_name,
                 bool (*callback)(const RBNode<T>&, CBARG),
                 CBARG callback_arg) const
 {
-    using namespace helper;
-
     if (!node_path.isEmpty()) {
         isc_throw(isc::BadValue, "RBTree::find is given a non empty chain");
     }
 
     RBNode<T>* node = root_.get();
     Result ret = NOTFOUND;
-    isc::dns::Name name = target_name;
+    dns::LabelSequence target_labels(target_name);
 
     while (node != NULL) {
         node_path.last_compared_ = node;
-        node_path.last_comparison_ = name.compare(node->name_);
+        node_path.last_comparison_ = target_labels.compare(node->getLabels());
         const isc::dns::NameComparisonResult::NameRelation relation =
             node_path.last_comparison_.getRelation();
 
@@ -1191,22 +1337,13 @@ RBTree<T>::find(const isc::dns::Name& target_name,
                 ret = EXACTMATCH;
             }
             break;
+        } else if (relation == isc::dns::NameComparisonResult::NONE) {
+            // If the two labels have no hierarchical relationship in terms
+            // of matching, we should continue the binary search.
+            node = (node_path.last_comparison_.getOrder() < 0) ?
+                node->getLeft() : node->getRight();
         } else {
-            const int common_label_count =
-                node_path.last_comparison_.getCommonLabels();
-            // If the common label count is 1, there is no common label between
-            // the two names, except the trailing "dot".  In this case the two
-            // sequences of labels have essentially no hierarchical
-            // relationship in terms of matching, so we should continue the
-            // binary search.  One important exception is when the node
-            // represents the root name ("."), in which case the comparison
-            // result must indeed be considered subdomain matching. (We use
-            // getLength() to check if the name is root, which is an equivalent
-            // but cheaper way).
-            if (common_label_count == 1 && node->name_.getLength() != 1) {
-                node = (node_path.last_comparison_.getOrder() < 0) ?
-                    node->getLeft() : node->getRight();
-            } else if (relation == isc::dns::NameComparisonResult::SUBDOMAIN) {
+            if (relation == isc::dns::NameComparisonResult::SUBDOMAIN) {
                 if (needsReturnEmptyNode_ || !node->isEmpty()) {
                     ret = PARTIALMATCH;
                     *target = node;
@@ -1218,7 +1355,8 @@ RBTree<T>::find(const isc::dns::Name& target_name,
                     }
                 }
                 node_path.push(node);
-                name = name - node->name_;
+                target_labels.stripRight(
+                    node_path.last_comparison_.getCommonLabels());
                 node = node->getDown();
             } else {
                 break;
@@ -1290,6 +1428,7 @@ RBTree<T>::previousNode(RBTreeNodeChain<T>& node_path) const {
     // all the cases and decide where to go from there.
     switch (node_path.last_comparison_.getRelation()) {
         case dns::NameComparisonResult::COMMONANCESTOR:
+        case dns::NameComparisonResult::NONE:
             // We compared with a leaf in the tree and wanted to go to one of
             // the children. But the child was not there. It now depends on the
             // direction in which we wanted to go.
@@ -1353,9 +1492,6 @@ RBTree<T>::previousNode(RBTreeNodeChain<T>& node_path) const {
             // already, which located the exact node. The rest of the function
             // goes one domain left and returns it for us.
             break;
-        default:
-            // This must not happen as Name::compare() never returns NONE.
-            isc_throw(isc::Unexpected, "Name::compare() returned unexpected result");
     }
 
     // So, the node_path now contains the path to a node we want previous for.
@@ -1413,17 +1549,19 @@ RBTree<T>::previousNode(RBTreeNodeChain<T>& node_path) const {
 
 template <typename T>
 typename RBTree<T>::Result
-RBTree<T>::insert(const isc::dns::Name& target_name, RBNode<T>** new_node) {
-    using namespace helper;
+RBTree<T>::insert(util::MemorySegment& mem_sgmt,
+                  const isc::dns::Name& target_name, RBNode<T>** new_node)
+{
     RBNode<T>* parent = NULL;
     RBNode<T>* current = root_.get();
     RBNode<T>* up_node = NULL;
-    isc::dns::Name name = target_name;
+    isc::dns::LabelSequence target_labels(target_name);
 
     int order = -1;
     while (current != NULL) {
+        const dns::LabelSequence current_labels(current->getLabels());
         const isc::dns::NameComparisonResult compare_result =
-            name.compare(current->name_);
+            target_labels.compare(current_labels);
         const isc::dns::NameComparisonResult::NameRelation relation =
             compare_result.getRelation();
         if (relation == isc::dns::NameComparisonResult::EQUAL) {
@@ -1431,97 +1569,106 @@ RBTree<T>::insert(const isc::dns::Name& target_name, RBNode<T>** new_node) {
                 *new_node = current;
             }
             return (ALREADYEXISTS);
+        } else if (relation == isc::dns::NameComparisonResult::NONE) {
+            parent = current;
+            order = compare_result.getOrder();
+            current = order < 0 ? current->getLeft() : current->getRight();
+        } else if (relation == isc::dns::NameComparisonResult::SUBDOMAIN) {
+            // insert sub domain to sub tree
+            parent = NULL;
+            up_node = current;
+            target_labels.stripRight(compare_result.getCommonLabels());
+            current = current->getDown();
         } else {
-            const int common_label_count = compare_result.getCommonLabels();
-            // Note: see find() for the check of getLength().
-            if (common_label_count == 1 && current->name_.getLength() != 1) {
-                parent = current;
-                order = compare_result.getOrder();
-                current = order < 0 ? current->getLeft() : current->getRight();
-            } else {
-                // insert sub domain to sub tree
-                if (relation == isc::dns::NameComparisonResult::SUBDOMAIN) {
-                    parent = NULL;
-                    up_node = current;
-                    name = name - current->name_;
-                    current = current->getDown();
-                } else {
-                    // The number of labels in common is fewer
-                    // than the number of labels at the current
-                    // node, so the current node must be adjusted
-                    // to have just the common suffix, and a down
-                    // pointer made to a new tree.
-                    const isc::dns::Name common_ancestor = name.split(
-                        name.getLabelCount() - common_label_count,
-                        common_label_count);
-                    nodeFission(*current, common_ancestor);
-                }
-            }
+            // The number of labels in common is fewer than the number of
+            // labels at the current node, so the current node must be
+            // adjusted to have just the common suffix, and a down pointer
+            // made to a new tree.
+            dns::LabelSequence common_ancestor = target_labels;
+            common_ancestor.stripLeft(target_labels.getLabelCount() -
+                                      compare_result.getCommonLabels());
+            dns::LabelSequence new_prefix = current_labels;
+            new_prefix.stripRight(compare_result.getCommonLabels());
+            nodeFission(mem_sgmt, *current, new_prefix, common_ancestor);
         }
     }
 
     typename RBNode<T>::RBNodePtr* current_root = (up_node != NULL) ?
         &(up_node->down_) : &root_;
-    // using auto_ptr here is avoid memory leak in case of exceptoin raised
-    // after the RBNode creation, if we can make sure no exception will be
-    // raised until the end of the function, we can remove it for optimization
-    std::auto_ptr<RBNode<T> > node(new RBNode<T>(name));
+    // Once a new node is created, no exception will be thrown until the end
+    // of the function, so we can simply create and hold a new node pointer.
+    RBNode<T>* node = RBNode<T>::create(mem_sgmt, target_labels);
     node->parent_ = parent;
     if (parent == NULL) {
-        *current_root = node.get();
-        //node is the new root of sub tree, so its init color
-        // is BLACK
+        *current_root = node;
+        // node is the new root of sub tree, so its init color is BLACK
         node->setColor(RBNode<T>::BLACK);
         node->setSubTreeRoot(true);
         node->parent_ = up_node;
     } else if (order < 0) {
         node->setSubTreeRoot(false);
-        parent->left_ = node.get();
+        parent->left_ = node;
     } else {
         node->setSubTreeRoot(false);
-        parent->right_ = node.get();
+        parent->right_ = node;
     }
-    insertRebalance(current_root, node.get());
+    insertRebalance(current_root, node);
     if (new_node != NULL) {
-        *new_node = node.get();
+        *new_node = node;
     }
 
     ++node_count_;
-    node.release();
     return (SUCCESS);
 }
 
+template <typename T>
+void
+RBTree<T>::deleteAllNodes(util::MemorySegment& mem_sgmt) {
+    deleteHelper(mem_sgmt, root_.get());
+    root_ = NULL;
+}
 
 // Note: when we redesign this (still keeping the basic concept), we should
 // change this part so the newly created node will be used for the inserted
 // name (and therefore the name for the existing node doesn't change).
 // Otherwise, things like shortcut links between nodes won't work.
+// See Trac #2054.
 template <typename T>
 void
-RBTree<T>::nodeFission(RBNode<T>& node, const isc::dns::Name& base_name) {
-    using namespace helper;
-    const isc::dns::Name sub_name = node.name_ - base_name;
-    // using auto_ptr here is to avoid memory leak in case of exception raised
-    // after the RBNode creation
-    std::auto_ptr<RBNode<T> > down_node(new RBNode<T>(sub_name));
-    node.name_ = base_name;
-    // the rest of this function should be exception free so that it keeps
-    // consistent behavior (i.e., a weak form of strong exception guarantee)
-    // even if code after the call to this function throws an exception.
-    bool is_root = node.isSubTreeRoot();
+RBTree<T>::nodeFission(util::MemorySegment& mem_sgmt, RBNode<T>& node,
+                       const isc::dns::LabelSequence& new_prefix,
+                       const isc::dns::LabelSequence& new_suffix)
+{
+    // Create and reset the labels.
+    // Once a new node is created, no exception will be thrown until
+    // the end of the function, and it will keep consistent behavior
+    // (i.e., a weak form of strong exception guarantee) even if code
+    // after the call to this function throws an exception.
+    RBNode<T>* down_node = RBNode<T>::create(mem_sgmt, new_prefix);
+    node.resetLabels(new_suffix);
+
     std::swap(node.data_, down_node->data_);
-    std::swap(node.flags_, down_node->flags_);
+
+    // Swap flags bitfields; yes, this is ugly (it appears we cannot use
+    // std::swap for bitfields).  The right solution is to implement
+    // the above note regarding #2054, then we won't have to swap the
+    // flags in the first place.
+    const bool is_root = node.isSubTreeRoot();
+    const uint32_t tmp = node.flags_;
+    node.flags_ = down_node->flags_;
+    down_node->flags_ = tmp;
     node.setSubTreeRoot(is_root);
 
     down_node->down_ = node.getDown();
     if (down_node->down_ != NULL) {
-        down_node->down_->parent_ = down_node.get();
+        down_node->down_->parent_ = down_node;
     }
 
-    node.down_ = down_node.get();
+    node.down_ = down_node;
     down_node->parent_ = &node;
 
-    // Restore the color of the node (may have gotten changed by the flags swap)
+    // Restore the color of the node (may have gotten changed by the flags
+    // swap)
     node.setColor(down_node->getColor());
 
     // root node of sub tree, the initial color is BLACK
@@ -1531,7 +1678,6 @@ RBTree<T>::nodeFission(RBNode<T>& node, const isc::dns::Name& base_name) {
     down_node->setSubTreeRoot(true);
 
     ++node_count_;
-    down_node.release();
 }
 
 
@@ -1671,8 +1817,9 @@ RBTree<T>::dumpTreeHelper(std::ostream& os, const RBNode<T>* node,
     }
 
     indent(os, depth);
-    os << node->name_.toText() << " ("
-              << ((node->getColor() == RBNode<T>::BLACK) ? "black" : "red") << ")";
+    os << node->getLabels() << " ("
+       << ((node->getColor() == RBNode<T>::BLACK) ? "black" : "red")
+       << ")";
     if (node->isEmpty()) {
         os << " [invisible]";
     }
@@ -1684,10 +1831,10 @@ RBTree<T>::dumpTreeHelper(std::ostream& os, const RBNode<T>* node,
     const RBNode<T>* down = node->getDown();
     if (down != NULL) {
         indent(os, depth + 1);
-        os << "begin down from " << node->name_.toText() << "\n";
+        os << "begin down from " << node->getLabels() << "\n";
         dumpTreeHelper(os, down, depth + 1);
         indent(os, depth + 1);
-        os << "end down from " << node->name_.toText() << "\n";
+        os << "end down from " << node->getLabels() << "\n";
     }
     dumpTreeHelper(os, node->getLeft(), depth + 1);
     dumpTreeHelper(os, node->getRight(), depth + 1);
@@ -1707,7 +1854,7 @@ RBTree<T>::dumpDot(std::ostream& os, bool show_pointers) const {
 
     os << "digraph g {\n";
     os << "node [shape = record,height=.1];\n";
-    dumpDotHelper(os, root_, &nodecount, show_pointers);
+    dumpDotHelper(os, root_.get(), &nodecount, show_pointers);
     os << "}\n";
 }
 
@@ -1727,10 +1874,10 @@ RBTree<T>::dumpDotHelper(std::ostream& os, const RBNode<T>* node,
     *nodecount += 1;
 
     os << "node" << *nodecount <<
-          "[label = \"<f0> |<f1> " << node->name_.toText() <<
+          "[label = \"<f0> |<f1> " << node->getLabels() <<
           "|<f2>";
     if (show_pointers) {
-        os << "|<f3> n=" << node << "|<f4> p=" << node->parent_;
+        os << "|<f3> n=" << node << "|<f4> p=" << node->getParent();
     }
     os << "\"] [";
 

@@ -125,10 +125,6 @@
 	  {
             "item_name": "origin", "item_type": "string",
             "item_optional": false, "item_default": ""
-          },
-	  {
-            "item_name": "datasrc", "item_type": "string",
-            "item_optional": true, "item_default": "memory"
           }
         ]
       },

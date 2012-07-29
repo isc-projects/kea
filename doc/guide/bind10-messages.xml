@@ -413,6 +413,13 @@ a command on the command channel.
 </para></listitem>
 </varlistentry>
 
+<varlistentry id="AUTH_RECEIVED_NOTIFY">
+<term>AUTH_RECEIVED_NOTIFY received incoming NOTIFY for zone name %1, zone class %2</term>
+<listitem><para>
+This is a debug message reporting that an incoming NOTIFY was received.
+</para></listitem>
+</varlistentry>
+
 <varlistentry id="AUTH_RECEIVED_SENDSTATS">
 <term>AUTH_RECEIVED_SENDSTATS command 'sendstats' received</term>
 <listitem><para>
@@ -523,6 +530,17 @@ so no further validation is needed.
 </para></listitem>
 </varlistentry>
 
+<varlistentry id="AUTH_START_DDNS_FORWARDER">
+<term>AUTH_START_DDNS_FORWARDER DDNS UPDATE handling started</term>
+<listitem><para>
+This is a debug message indicating that b10-auth has received a message
+that it should internally forward UPDATE message to b10-ddns. When b10-ddns
+is not running, b10-auth will respond to UPDATE requests with rcode NOTIMP.
+When b10-ddns is running, b10-ddns will handle and respond to the UPDATE
+message.
+</para></listitem>
+</varlistentry>
+
 <varlistentry id="AUTH_STATS_CHANNEL_CREATED">
 <term>AUTH_STATS_CHANNEL_CREATED STATS session channel created</term>
 <listitem><para>
@@ -575,6 +593,19 @@ being produced.
 This is a debug message indicating that the statistics timer has been
 enabled and that the authoritative server will produce statistics data
 at the specified interval.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="AUTH_STOP_DDNS_FORWARDER">
+<term>AUTH_STOP_DDNS_FORWARDER DDNS UPDATE handling stopped</term>
+<listitem><para>
+This is a debug message indicating that b10-auth has received a message
+that it should stop internally forwarding UPDATE message to b10-ddns.
+b10-auth will no longer forward UPDATE messages to b10-ddns, but will
+respond itself with error code NOTIMP.
+This message is also logged when the forwarding is restarted (for instance
+if b10-ddns is restarted and the internal connection needs to be created
+again), in which case it should be followed by AUTH_START_DDNS_FORWARDER.
 </para></listitem>
 </varlistentry>
 
@@ -2476,6 +2507,17 @@ processed.
 </para></listitem>
 </varlistentry>
 
+<varlistentry id="DATASRC_LIST_NOT_CACHED">
+<term>DATASRC_LIST_NOT_CACHED zone %1/%2 not cached, cache disabled globally. Will not be available.</term>
+<listitem><para>
+The process disabled caching of RR data completely. However, the given zone
+is provided as a master file and it can be served from memory cache only.
+Therefore, the zone will not be available for this process. If this is
+a problem, you should move the zone to some database backend (sqlite3, for
+example) and use it from there.
+</para></listitem>
+</varlistentry>
+
 <varlistentry id="DATASRC_MEM_ADD_RRSET">
 <term>DATASRC_MEM_ADD_RRSET adding RRset '%1/%2' into zone '%3'</term>
 <listitem><para>
@@ -3885,6 +3927,33 @@ and updates.
 </para></listitem>
 </varlistentry>
 
+<varlistentry id="DDNS_START_FORWARDER_ERROR">
+<term>DDNS_START_FORWARDER_ERROR Error from b10-auth when requesting DDNS UPDATE forwarding: %1</term>
+<listitem><para>
+There was an error response from b10-auth to the command to start
+forwarding DDNS UPDATE messages to b10-ddns.
+It is almost certain that DDNS UPDATE messages are not handled now, and that
+they will be responded to with a NOTIMP error code, even though b10-ddns is
+running.
+The error message is printed, and additional information may be found in
+the b10-auth log output. Since this is an error that is sent by the
+b10-auth module, it should have more information as to what the actual
+problem was.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="DDNS_START_FORWARDER_FAIL">
+<term>DDNS_START_FORWARDER_FAIL Error sending request for DDNS UPDATE forwarding to b10-auth: %1</term>
+<listitem><para>
+There was an error when attempting to send b10-auth the request to forward
+DDNS UPDATE messages to the b10-ddns module. This points to an internal
+problem using the inter-module messaging system.
+This needs to be inspected, as it is almost certain that DDNS UPDATE messages
+are not handled now.
+The specific error is printed in the log message.
+</para></listitem>
+</varlistentry>
+
 <varlistentry id="DDNS_STOPPED">
 <term>DDNS_STOPPED ddns server has stopped</term>
 <listitem><para>
@@ -3898,6 +3967,32 @@ handling commands or updates, and will now exit.
 <listitem><para>
 There was a keyboard interrupt signal to stop the ddns process. The
 process will now shut down.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="DDNS_STOP_FORWARDER_ERROR">
+<term>DDNS_STOP_FORWARDER_ERROR Error from b10-auth when requesting to stop DDNS UPDATE forwarding: %1</term>
+<listitem><para>
+There was an error response from b10-auth to the command to stop
+forwarding DDNS UPDATE messages to b10-ddns.
+This specific error may not be fatal; instead of returning NOTIMP for future
+DDNS UPDATE messages, it will return SERVFAIL. However, this does point to
+an underlying problem in the messaging system, and should be inspected.
+The error message is printed, and additional information may be found in
+the b10-auth log output.
+</para></listitem>
+</varlistentry>
+
+<varlistentry id="DDNS_STOP_FORWARDER_FAIL">
+<term>DDNS_STOP_FORWARDER_FAIL Error sending request to stop DDNS UPDATE forwarding to b10-auth: %1</term>
+<listitem><para>
+There was an error when attempting to send b10-auth the request to stop
+forwarding DDNS UPDATE messages to the b10-ddns module. This points to an
+internal problem using the inter-module messaging system.
+This specific error may not be fatal; instead of returning NOTIMP for future
+DDNS UPDATE messages, it will return SERVFAIL. However, this does point to
+an underlying problem in the messaging system, and should be inspected.
+The specific error is printed in the log message.
 </para></listitem>
 </varlistentry>
 
@@ -4778,20 +4873,6 @@ an answer with a different given type and class.
 </para><para>
 This message indicates an internal error in the NSAS.  Please raise a
 bug report.
-</para></listitem>
-</varlistentry>
-
-<varlistentry id="PYSERVER_COMMON_AUTH_CONFIG_NAME_PARSER_ERROR">
-<term>PYSERVER_COMMON_AUTH_CONFIG_NAME_PARSER_ERROR Invalid name when parsing Auth configuration: %1</term>
-<listitem><para>
-There was an invalid name when parsing Auth configuration.
-</para></listitem>
-</varlistentry>
-
-<varlistentry id="PYSERVER_COMMON_AUTH_CONFIG_RRCLASS_ERROR">
-<term>PYSERVER_COMMON_AUTH_CONFIG_RRCLASS_ERROR Invalid RRClass when parsing Auth configuration: %1</term>
-<listitem><para>
-There was an invalid RR class when parsing Auth configuration.
 </para></listitem>
 </varlistentry>
 
@@ -6078,11 +6159,10 @@ Please check your installation.
 </varlistentry>
 
 <varlistentry id="XFRIN_AUTH_LOADZONE">
-<term>XFRIN_AUTH_LOADZONE sending Auth loadzone for origin=%1, class=%2, datasrc=%3</term>
+<term>XFRIN_AUTH_LOADZONE sending Auth loadzone for origin=%1, class=%2</term>
 <listitem><para>
-There was a successful zone transfer, and the zone is served by b10-auth
-in the in-memory data source using sqlite3 as a backend. We send the
-"loadzone" command for the zone to b10-auth.
+There was a successful zone transfer.  We send the "loadzone" command for the
+zone to b10-auth.
 </para></listitem>
 </varlistentry>
 
