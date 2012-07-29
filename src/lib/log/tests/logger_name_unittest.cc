@@ -31,9 +31,9 @@ using namespace isc::log;
 
 class LoggerNameTest : public ::testing::Test {
 public:
-    LoggerNameTest() {
-        name_ = getRootLoggerName();
-    }
+    LoggerNameTest() :
+        name_(getRootLoggerName())
+    {}
     ~LoggerNameTest() {
         setRootLoggerName(name_);
     }

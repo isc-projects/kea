@@ -65,15 +65,27 @@ public:
     /// Instead, all the member variables are defined as const and can be
     /// accessed directly.
     struct FindResult {
+        /// \brief Internal class for holding a reference.
+        ///
+        /// This is used to make sure the data source client isn't released
+        /// too soon.
+        ///
+        /// \see life_keeper_;
+        class LifeKeeper {
+        public:
+            virtual ~LifeKeeper() {};
+        };
         /// \brief Constructor.
         ///
         /// It simply fills in the member variables according to the
         /// parameters. See the member descriptions for their meaning.
         FindResult(DataSourceClient* dsrc_client, const ZoneFinderPtr& finder,
-                   bool exact_match) :
+                   bool exact_match,
+                   const boost::shared_ptr<LifeKeeper>& life_keeper) :
             dsrc_client_(dsrc_client),
             finder_(finder),
-            exact_match_(exact_match)
+            exact_match_(exact_match),
+            life_keeper_(life_keeper)
         {}
 
         /// \brief Negative answer constructor.
@@ -101,8 +113,9 @@ public:
         /// If no such data source exists, this is NULL pointer.
         ///
         /// Note that the pointer is valid only as long the ClientList which
-        /// returned the pointer is alive and was not reconfigured. The
-        /// ownership is preserved within the ClientList.
+        /// returned the pointer is alive and was not reconfigured or you hold
+        /// a reference to life_keeper_. The ownership is preserved within the
+        /// ClientList.
         DataSourceClient* const dsrc_client_;
 
         /// \brief The finder for the requested zone.
@@ -116,6 +129,12 @@ public:
 
         /// \brief If the result is an exact match.
         const bool exact_match_;
+
+        /// \brief Something that holds the dsrc_client_ valid.
+        ///
+        /// As long as you hold the life_keeper_, the dsrc_client_ is
+        /// guaranteed to be valid.
+        const boost::shared_ptr<LifeKeeper> life_keeper_;
     };
 
     /// \brief Search for a zone through the data sources.
@@ -191,7 +210,9 @@ public:
     ///
     /// \param rrclass For which class the list should work.
     ConfigurableClientList(const isc::dns::RRClass &rrclass) :
-        rrclass_(rrclass)
+        rrclass_(rrclass),
+        configuration_(new isc::data::ListElement),
+        allow_cache_(false)
     {}
     /// \brief Exception thrown when there's an error in configuration.
     class ConfigurationError : public Exception {
@@ -220,12 +241,44 @@ public:
     ///     client.
     /// \throw ConfigurationError if the configuration is invalid in some
     ///     sense.
+    /// \throw BadValue if configuration is NULL
     /// \throw Unexpected if something misbehaves (like the data source
     ///     returning NULL iterator).
     /// \throw NotImplemented if the auto-detection of list of zones is
     ///     needed.
     /// \throw Whatever is propagated from within the data source.
-    void configure(const data::Element& configuration, bool allow_cache);
+    void configure(const isc::data::ConstElementPtr& configuration,
+                   bool allow_cache);
+
+    /// \brief Returns the currently active configuration.
+    ///
+    /// In case configure was not called yet, it returns an empty
+    /// list, which corresponds to the default content.
+    const isc::data::ConstElementPtr& getConfiguration() const {
+        return (configuration_);
+    }
+
+    /// \brief Result of the reload() method.
+    enum ReloadResult {
+        CACHE_DISABLED,     ///< The cache is not enabled in this list.
+        ZONE_NOT_CACHED,    ///< Zone is served directly, not from cache.
+        ZONE_NOT_FOUND,     ///< Zone does not exist or not cached.
+        ZONE_RELOADED       ///< The zone was successfully reloaded.
+    };
+
+    /// \brief Reloads a cached zone.
+    ///
+    /// This method finds a zone which is loaded into a cache and reloads it.
+    /// This may be used to renew the cache when the underlying data source
+    /// changes.
+    ///
+    /// \param zone The origin of the zone to reload.
+    /// \return A status if the command worked.
+    /// \throw DataSourceError or anything else that the data source
+    ///      containing the zone might throw is propagated.
+    /// \throw DataSourceError if something unexpected happens, like when
+    ///      the original data source no longer contains the cached zone.
+    ReloadResult reload(const dns::Name& zone);
 
     /// \brief Implementation of the ClientList::find.
     virtual FindResult find(const dns::Name& zone,
@@ -289,7 +342,25 @@ public:
     /// hide it).
     const DataSources& getDataSources() const { return (data_sources_); }
 private:
+    struct MutableResult;
+    /// \brief Internal implementation of find.
+    ///
+    /// The class itself needs to do some internal searches in other methods,
+    /// so the implementation is shared.
+    ///
+    /// The result is returned as parameter because MutableResult is not
+    /// defined in the header file.
+    ///
+    /// If there's no match, the result is not modified. Therefore, this
+    /// expects to get a fresh result object each time it is called, not
+    /// to reuse it.
+    void findInternal(MutableResult& result, const dns::Name& name,
+                      bool want_exact_match, bool want_finder) const;
     const isc::dns::RRClass rrclass_;
+    /// \brief Currently active configuration.
+    isc::data::ConstElementPtr configuration_;
+    /// \brief The last set value of allow_cache.
+    bool allow_cache_;
 };
 
 } // namespace datasrc
