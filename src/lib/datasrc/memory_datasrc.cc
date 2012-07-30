@@ -147,11 +147,9 @@ struct ZoneData {
 
         // The assert may be too harsh, but we assume we'll discard (rewrite)
         // this code soon enough.  Until then this would be a good way to
-        // detect any memory leak.  Also, at that point we should use
-        // a single separate memory segment for each zone tree; eventually
-        // zone data for multiple zones will be managed in a single segment,
-        // at which point the segment will be passed from outside of this
-        // module.
+        // detect any memory leak.  Also, at that point we shouldn't use
+        // a single separate memory segment for each zone tree; normally
+        // zone data for multiple zones will be managed in a single segment.
         assert(local_mem_sgmt_.allMemoryDeallocated());
     }
 
