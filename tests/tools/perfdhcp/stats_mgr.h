@@ -251,7 +251,7 @@ public:
             unordered_lookups_(0),
             sent_packets_num_(0),
             rcvd_packets_num_(0) {
-            sent_packets_cache_ = sent_packets_.begin();
+            next_sent_ = sent_packets_.begin();
         }
 
         /// \brief Add new packet to list of sent packets.
@@ -362,11 +362,11 @@ public:
                 // sent packet so orphans counter has to be updated.
                 ++orphans_;
                 return(boost::shared_ptr<const T>());
-            } else if (sent_packets_cache_ == sent_packets_.end()) {
+            } else if (next_sent_ == sent_packets_.end()) {
                 // Even if there are still many unmatched packets on the
                 // list we might hit the end of it because of unordered
-                // lookups. The next logical step is to reset cache.
-                sent_packets_cache_ = sent_packets_.begin();
+                // lookups. The next logical step is to reset iterator.
+                next_sent_ = sent_packets_.begin();
             }
 
             // With this variable we will be signalling success or failure
@@ -378,7 +378,7 @@ public:
             // incoming packet. We are successful if there is no
             // packet drop or out of order packets sent. This is actually
             // the fastest way to look for packets.
-            if ((*sent_packets_cache_)->getTransid() == rcvd_packet->getTransid()) {
+            if ((*next_sent_)->getTransid() == rcvd_packet->getTransid()) {
                 ++ordered_lookups_;
                 packet_found = true;
             } else {
@@ -409,7 +409,7 @@ public:
                      ++it) {
                     if ((*it)->getTransid() == rcvd_packet->getTransid()) {
                         packet_found = true;
-                        sent_packets_cache_ =
+                        next_sent_ =
                             sent_packets_.template project<0>(it);
                         break;
                     }
@@ -423,11 +423,11 @@ public:
                 return(boost::shared_ptr<const T>());
             }
 
-            boost::shared_ptr<const T> sent_packet(*sent_packets_cache_);
+            boost::shared_ptr<const T> sent_packet(*next_sent_);
             // If packet was found, we assume it will be never searched
             // again. We want to delete this packet from the list to
             // improve performance of future searches.
-            sent_packets_cache_ = eraseSent(sent_packets_cache_);
+            next_sent_ = eraseSent(next_sent_);
             return(sent_packet);
         }
 
@@ -657,7 +657,7 @@ public:
         /// Iterator pointing to the packet on sent list which will most
         /// likely match next received packet. This is based on the
         /// assumption that server responds in order to incoming packets.
-        PktListIterator sent_packets_cache_;
+        PktListIterator next_sent_;
 
         PktList rcvd_packets_;         ///< List of received packets.
 
@@ -747,6 +747,7 @@ public:
     /// Method returns specified counter.
     ///
     /// \param counter_key key poiting to the counter in the counters map.
+    /// The short counter name has to be used to access counter.
     /// \return pointer to specified counter object.
     CustomCounterPtr getCounter(const std::string& counter_key) {
         CustomCountersMapIterator it = custom_counters_.find(counter_key);
