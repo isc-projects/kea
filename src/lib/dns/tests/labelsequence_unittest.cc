@@ -899,7 +899,7 @@ TEST_F(ExtendableLabelSequenceTest, extendableLabelSequence) {
     LabelSequence ls2(example_org);
 
     LabelSequence els(ls1, buf);
-    // ls1 is absolte, so els should be too
+    // ls1 is absolute, so els should be too
     EXPECT_TRUE(els.isAbsolute());
     check_equal(ls1, els);
 
