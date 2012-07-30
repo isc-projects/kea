@@ -410,5 +410,41 @@ TEST_F(StatsMgrTest, CustomCounters) {
 
 }
 
+TEST_F(StatsMgrTest, PrintStats) {
+    std::cout << "This unit test is checking statistics printing "
+              << "capabilities. It is expected that some counters "
+              << "will be printed during this test. It may also "
+              << "cause spurious errors." << std::endl;
+    boost::shared_ptr<StatsMgr6> stats_mgr(new StatsMgr6());
+    stats_mgr->addExchangeStats(StatsMgr6::XCHG_SA);
+
+    // Simulate sending and receiving one packet. Otherwise printing
+    // functions will complain about lack of packets.
+    const int packets_num = 1;
+    passMultiplePackets6(stats_mgr, StatsMgr6::XCHG_SA, DHCPV6_SOLICIT,
+                         packets_num);
+    passMultiplePackets6(stats_mgr, StatsMgr6::XCHG_SA, DHCPV6_ADVERTISE,
+                         packets_num, true);
+
+    // This function will print statistics even if packets are not
+    // archived because it relies on counters. There is at least one
+    // exchange needed to count the average delay and std deviation.
+    EXPECT_NO_THROW(stats_mgr->printStats());
+
+    // Printing timestamps is expected to fail because by default we
+    // disable packets archiving mode. Without packets we can't get
+    // timestamps.
+    EXPECT_THROW(stats_mgr->printTimestamps(), isc::InvalidOperation);
+
+    // Now, we create another statistics manager instance and enable
+    // packets archiving mode.
+    const bool archive_packets = true;
+    boost::shared_ptr<StatsMgr6> stats_mgr2(new StatsMgr6(archive_packets));
+    stats_mgr2->addExchangeStats(StatsMgr6::XCHG_SA);
+
+    // Timestamps should now get printed because packets have been preserved.
+    EXPECT_NO_THROW(stats_mgr2->printTimestamps());
+}
+
 
 }
