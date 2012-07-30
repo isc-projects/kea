@@ -55,6 +55,25 @@ LabelSequence::LabelSequence(const void* buf) {
     }
 }
 
+LabelSequence::LabelSequence(const LabelSequence& src,
+                             uint8_t buf[MAX_SERIALIZED_LENGTH])
+{
+    size_t data_len;
+    const uint8_t *data = src.getData(&data_len);
+    memcpy(buf, data, data_len);
+
+    for (size_t i = 0; i < src.getLabelCount(); ++i) {
+        buf[Name::MAX_WIRE + i] = src.offsets_[i + src.first_label_] -
+                                  src.offsets_[src.first_label_];
+    }
+
+    first_label_ = 0;
+    last_label_ = src.last_label_ - src.first_label_;
+    data_ = buf;
+    offsets_ = &buf[Name::MAX_WIRE];
+}
+
+
 const uint8_t*
 LabelSequence::getData(size_t *len) const {
     *len = getDataLength();
@@ -316,6 +335,51 @@ LabelSequence::toText(bool omit_final_dot) const {
 std::string
 LabelSequence::toText() const {
     return (toText(!isAbsolute()));
+}
+
+void
+LabelSequence::extend(const LabelSequence& labels,
+                      uint8_t buf[MAX_SERIALIZED_LENGTH])
+{
+    // collect data to perform steps before anything is changed
+    size_t label_count = last_label_ + 1;
+    // Since we may have been stripped, do not use getDataLength(), but
+    // calculate actual data size this labelsequence currently uses
+    size_t data_pos = offsets_[last_label_] + data_[offsets_[last_label_]] + 1;
+
+    // If this labelsequence is absolute, virtually strip the root label.
+    if (isAbsolute()) {
+        data_pos--;
+        label_count--;
+    }
+    const size_t append_label_count = labels.getLabelCount();
+    size_t data_len;
+    const uint8_t *data = labels.getData(&data_len);
+
+    // Sanity checks
+    if (data_ != buf || offsets_ != &buf[Name::MAX_WIRE]) {
+        isc_throw(BadValue,
+                  "extend() called with unrelated buffer");
+    }
+    if (data_pos + data_len > Name::MAX_WIRE) {
+        isc_throw(BadValue,
+                  "extend() would exceed maximum wire length");
+    }
+    if (label_count + append_label_count > Name::MAX_LABELS) {
+        isc_throw(BadValue,
+                  "extend() would exceed maximum number of labels");
+    }
+
+    // All seems to be reasonably ok, let's proceed.
+    memmove(&buf[data_pos], data, data_len);
+
+    for (size_t i = 0; i < append_label_count; ++i) {
+        buf[Name::MAX_WIRE + label_count + i] =
+            offsets_[label_count] +
+            labels.offsets_[i + labels.first_label_] -
+            labels.offsets_[labels.first_label_];
+    }
+    last_label_ = label_count + append_label_count - 1;
 }
 
 std::ostream&
