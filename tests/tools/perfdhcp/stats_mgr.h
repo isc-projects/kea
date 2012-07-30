@@ -73,14 +73,14 @@ public:
         /// \brief Increment operator.
         const CustomCounter& operator++() {
             ++counter_;
-            return *this;
+            return(*this);
         }
 
         /// \brief Increment operator.
         const CustomCounter& operator++(int) {
             CustomCounter& this_counter(*this);
             operator++();
-            return this_counter;
+            return(this_counter);
         }
 
         /// \brief Return counter value.
@@ -88,18 +88,14 @@ public:
         /// Method returns counter value.
         ///
         /// \return counter value.
-        uint64_t getValue() const {
-            return counter_;
-        }
+        uint64_t getValue() const { return counter_; }
 
         /// \brief Return counter name.
         ///
         /// Method returns counter name.
         ///
         /// \return counter name.
-        const std::string& getName() const {
-            return name_;
-        }
+        const std::string& getName() const { return name_; }
     private:
         /// \brief Default constructor.
         ///
@@ -146,7 +142,7 @@ public:
             if (!packet) {
                 isc_throw(BadValue, "Packet is null");
             }
-            return packet->getTransid() & 1023;
+            return(packet->getTransid() & 1023);
         }
 
         /// \brief List of packets (sent or received).
@@ -199,7 +195,7 @@ public:
             max_delay_(0.),
             sum_delay_(0.),
             orphans_(0),
-            square_sum_delay_(0.),
+            sum_delay_squared_(0.),
             ordered_lookups_(0),
             unordered_lookup_size_sum_(0),
             unordered_lookups_(0),
@@ -286,7 +282,7 @@ public:
             // Update delay sum and square sum. That will be used to calculate
             // mean delays.
             sum_delay_ += delta;
-            square_sum_delay_ += delta * delta;
+            sum_delay_squared_ += delta * delta;
         }
 
         /// \brief Find packet on the list of sent packets.
@@ -315,7 +311,7 @@ public:
                 // that the received packet we got has no corresponding
                 // sent packet so orphans counter has to be updated.
                 ++orphans_;
-                return boost::shared_ptr<const T>();
+                return(boost::shared_ptr<const T>());
             } else if (sent_packets_cache_ == sent_packets_.end()) {
                 // Even if there are still many unmatched packets on the
                 // list we might hit the end of it because of unordered
@@ -374,7 +370,7 @@ public:
                 // If we are here, it means that both ordered lookup and
                 // unordered lookup failed. Searched packet is not on the list.
                 ++orphans_;
-                return boost::shared_ptr<const T>();
+                return(boost::shared_ptr<const T>());
             }
 
             boost::shared_ptr<const T> sent_packet(*sent_packets_cache_);
@@ -382,7 +378,7 @@ public:
             // again. We want to delete this packet from the list to
             // improve performance of future searches.
             sent_packets_cache_ = eraseSent(sent_packets_cache_);
-            return sent_packet;
+            return(sent_packet);
         }
 
         /// \brief Return minumum delay between sent and received packet.
@@ -390,14 +386,14 @@ public:
         /// Method returns minimum delay between sent and received packet.
         ///
         /// \return minimum delay between packets.
-        double getMinDelay() const { return min_delay_; }
+        double getMinDelay() const { return(min_delay_); }
 
         /// \brief Return maxmimum delay between sent and received packet.
         ///
         /// Method returns maximum delay between sent and received packet.
         ///
         /// \return maximum delay between packets.
-        double getMaxDelay() const { return max_delay_; }
+        double getMaxDelay() const { return(max_delay_); }
 
         /// \brief Return avarage packet delay.
         ///
@@ -412,7 +408,7 @@ public:
             if (sum_delay_ == 0) {
                 isc_throw(InvalidOperation, "no packets received");
             }
-            return sum_delay_ / rcvd_packets_num_;
+            return(sum_delay_ / rcvd_packets_num_);
         }
 
         /// \brief Return standard deviation of packet delay.
@@ -429,8 +425,8 @@ public:
             if (rcvd_packets_num_ == 0) {
                 isc_throw(InvalidOperation, "no packets received");
             }
-            return sqrt(square_sum_delay_ / rcvd_packets_num_ -
-                        getAvgDelay() * getAvgDelay());
+            return(sqrt(sum_delay_squared_ / rcvd_packets_num_ -
+                        getAvgDelay() * getAvgDelay()));
         }
 
         /// \brief Return number of orphant packets.
@@ -440,7 +436,7 @@ public:
         /// for us.
         ///
         /// \return number of orphant received packets.
-        uint64_t getOrphans() const { return orphans_; }
+        uint64_t getOrphans() const { return(orphans_); }
 
         /// \brief Return average unordered lookup set size.
         ///
@@ -455,8 +451,8 @@ public:
             if (unordered_lookups_ == 0) {
                 isc_throw(InvalidOperation, "no unordered lookups");
             }
-            return static_cast<double>(unordered_lookup_size_sum_) /
-                static_cast<double>(unordered_lookups_);
+            return(static_cast<double>(unordered_lookup_size_sum_) /
+                   static_cast<double>(unordered_lookups_));
         }
 
         /// \brief Return number of unordered sent packets lookups
@@ -467,7 +463,7 @@ public:
         /// packet does not match transaction id of next sent packet.
         ///
         /// \return number of unordered lookups.
-        uint64_t getUnorderedLookups() const { return unordered_lookups_; }
+        uint64_t getUnorderedLookups() const { return(unordered_lookups_); }
 
         /// \brief Return number of ordered sent packets lookups
         ///
@@ -478,25 +474,21 @@ public:
         /// function will use unordered lookup (with hash table).
         ///
         /// \return number of ordered lookups.
-        uint64_t getOrderedLookups() const { return ordered_lookups_; }
+        uint64_t getOrderedLookups() const { return(ordered_lookups_); }
 
         /// \brief Return total number of sent packets
         ///
         /// Method returns total number of sent packets.
         ///
         /// \return number of sent packets.
-        uint64_t getSentPacketsNum() const {
-            return sent_packets_num_;
-        }
+        uint64_t getSentPacketsNum() const { return(sent_packets_num_); }
 
         /// \brief Return total number of received packets
         ///
         /// Method returns total number of received packets.
         ///
         /// \return number of received packets.
-        uint64_t getRcvdPacketsNum() const {
-            return rcvd_packets_num_;
-        }
+        uint64_t getRcvdPacketsNum() const { return(rcvd_packets_num_); }
 
         //// \brief Print timestamps for sent and received packets.
         ///
@@ -568,7 +560,7 @@ public:
              // archived packets may be used for diagnostics
              // when test is completed.
              archived_packets_.push_back(*it);
-             return sent_packets_.template get<0>().erase(it);
+             return(sent_packets_.template get<0>().erase(it));
         }
 
         ExchangeType xchg_type_;             ///< Packet exchange type.
@@ -592,7 +584,7 @@ public:
                                        ///< and received packets.
         double sum_delay_;             ///< Sum of delays between sent
                                        ///< and received packets.
-        double square_sum_delay_;      ///< Square sum of delays between
+        double sum_delay_squared_;     ///< Squared sum of delays between
                                        ///< sent and recived packets.
 
         uint64_t orphans_;   ///< Number of orphant received packets.
@@ -674,7 +666,7 @@ public:
             isc_throw(BadValue,
                       "Custom counter " << counter_key << "does not exist");
         }
-        return it->second;
+        return(it->second);
     }
 
     /// \brief Increment specified counter.
@@ -685,7 +677,7 @@ public:
     /// \return pointer to specified counter after incrementation.
     const CustomCounter& IncrementCounter(const std::string& counter_key) {
         CustomCounterPtr counter = getCounter(counter_key);
-        return ++(*counter);
+        return(++(*counter));
     }
 
     /// \brief Adds new packet to the sent packets list.
@@ -739,7 +731,7 @@ public:
     /// \return minimum delay between packets.
     double getMinDelay(const ExchangeType xchg_type) const {
         ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
-        return xchg_stats->getMinDelay();
+        return(xchg_stats->getMinDelay());
     }
 
     /// \brief Return maxmimum delay between sent and received packet.
@@ -752,7 +744,7 @@ public:
     /// \return maximum delay between packets.
     double getMaxDelay(const ExchangeType xchg_type) const {
         ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
-        return xchg_stats->getMaxDelay();
+        return(xchg_stats->getMaxDelay());
     }
 
     /// \brief Return avarage packet delay.
@@ -763,7 +755,7 @@ public:
     /// \return average packet delay.
     double getAvgDelay(const ExchangeType xchg_type) const {
         ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
-        return xchg_stats->getAvgDelay();
+        return(xchg_stats->getAvgDelay());
     }
 
     /// \brief Return standard deviation of packet delay.
@@ -774,7 +766,7 @@ public:
     /// \return standard deviation of packet delay.
     double getStdDevDelay(const ExchangeType xchg_type) const {
         ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
-        return xchg_stats->getStdDevDelay();
+        return(xchg_stats->getStdDevDelay());
     }
 
     /// \brief Return number of orphant packets.
@@ -787,7 +779,7 @@ public:
     /// \return number of orphant packets so far.
     uint64_t getOrphans(const ExchangeType xchg_type) const {
         ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
-        return xchg_stats->getOrphans();
+        return(xchg_stats->getOrphans());
     }
 
     /// \brief Return average unordered lookup set size.
@@ -801,7 +793,7 @@ public:
     /// \return average unordered lookup set size.
     double getAvgUnorderedLookupSetSize(const ExchangeType xchg_type) const {
         ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
-        return xchg_stats->getAvgUnorderedLookupSetSize();
+        return(xchg_stats->getAvgUnorderedLookupSetSize());
     }
 
     /// \brief Return number of unordered sent packets lookups
@@ -816,7 +808,7 @@ public:
     /// \return number of unordered lookups.
     uint64_t getUnorderedLookups(const ExchangeType xchg_type) const {
         ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
-        return xchg_stats->getUnorderedLookups();
+        return(xchg_stats->getUnorderedLookups());
     }
 
     /// \brief Return number of ordered sent packets lookups
@@ -832,7 +824,7 @@ public:
     /// \return number of ordered lookups.
     uint64_t getOrderedLookups(const ExchangeType xchg_type) const {
         ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
-        return xchg_stats->getOrderedLookups();
+        return(xchg_stats->getOrderedLookups());
     }
 
     /// \brief Return total number of sent packets
@@ -845,7 +837,7 @@ public:
     /// \return number of sent packets.
     uint64_t getSentPacketsNum(const ExchangeType xchg_type) const {
         ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
-        return xchg_stats->getSentPacketsNum();
+        return(xchg_stats->getSentPacketsNum());
     }
 
     /// \brief Return total number of received packets
@@ -858,7 +850,7 @@ public:
     /// \return number of received packets.
     uint64_t getRcvdPacketsNum(const ExchangeType xchg_type) const {
         ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
-        return xchg_stats->getRcvdPacketsNum();
+        return(xchg_stats->getRcvdPacketsNum());
     }
 
     /// \brief Return name of the exchange.
@@ -871,15 +863,15 @@ public:
     std::string exchangeToString(ExchangeType xchg_type) const {
         switch(xchg_type) {
         case XCHG_DO:
-            return "DISCOVER-OFFER";
+            return("DISCOVER-OFFER");
         case XCHG_RA:
-            return "REQUEST-ACK";
+            return("REQUEST-ACK");
         case XCHG_SA:
-            return "SOLICIT-ADVERTISE";
+            return("SOLICIT-ADVERTISE");
         case XCHG_RR:
-            return "REQUEST-REPLY";
+            return("REQUEST-REPLY");
         default:
-            return "Unknown exchange type";
+            return("Unknown exchange type");
         }
     }
 
@@ -982,7 +974,7 @@ private:
             isc_throw(BadValue, "Packets exchange not specified");
         }
         ExchangeStatsPtr xchg_stats = it->second;
-        return xchg_stats;
+        return(xchg_stats);
     }
 
     ExchangesMap exchanges_;            ///< Map of exchange types.
