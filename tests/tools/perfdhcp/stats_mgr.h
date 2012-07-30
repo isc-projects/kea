@@ -505,6 +505,9 @@ public:
         ///
         /// \throw isc::InvalidOperation if found packet with no timestamp set.
         void printTimestamps() {
+            // We will be using boost::posix_time extensivelly here
+            using namespace boost::posix_time;
+
             // Iterate through all received packets.
             for (PktListIterator it = rcvd_packets_.begin();
                  it != rcvd_packets_.end();
@@ -520,10 +523,8 @@ public:
                 if (it_archived != idx.end()) {
                     boost::shared_ptr<const T> sent_packet = *it_archived;
                     // Get sent and received packet times.
-                    boost::posix_time::ptime sent_time =
-                        sent_packet->getTimestamp();
-                    boost::posix_time::ptime rcvd_time =
-                        rcvd_packet->getTimestamp();
+                    ptime sent_time = sent_packet->getTimestamp();
+                    ptime rcvd_time = rcvd_packet->getTimestamp();
                     // All sent and received packets should have timestamps
                     // set but if there is a bug somewhere and packet does
                     // not have timestamp we want to catch this here.
@@ -532,16 +533,14 @@ public:
                         isc_throw(InvalidOperation, "packet time is not set");
                     }
                     // Calculate durations of packets from beginning of epoch.
-                    boost::posix_time::ptime
-                        epoch_time(boost::posix_time::min_date_time);
-                    boost::posix_time::time_period
-                        sent_period(epoch_time, sent_time);
-                    boost::posix_time::time_period
-                        rcvd_period(epoch_time, rcvd_time);
+                    ptime epoch_time(min_date_time);
+                    time_period sent_period(epoch_time, sent_time);
+                    time_period rcvd_period(epoch_time, rcvd_time);
                     // Print timestamps for sent and received packet.
-                    printf("sent/received times: %s / %s\n",
-                           boost::posix_time::to_iso_string(sent_period.length()).c_str(),
-                           boost::posix_time::to_iso_string(rcvd_period.length()).c_str());
+                    std::cout << "sent / received: "
+                              << to_iso_string(sent_period.length())
+                              << " / " << to_iso_string(rcvd_period.length())
+                              << std::endl;
                 }
             }
         }
@@ -894,15 +893,16 @@ public:
              it != exchanges_.end();
              ++it) {
             ExchangeStatsPtr xchg_stats = it->second;
-            printf("***Statistics for packet exchange %s***\n"
-                   "sent: %llu, received: %llu\n"
-                   "drops: %lld, orphans: %llu\n\n",
-                   exchangeToString(it->first).c_str(),
-                   xchg_stats->getSentPacketsNum(),
-                   xchg_stats->getRcvdPacketsNum(),
-                   xchg_stats->getRcvdPacketsNum()
-                   - xchg_stats->getSentPacketsNum(),
-                   xchg_stats->getOrphans());
+            unsigned long long drops = xchg_stats->getRcvdPacketsNum() -
+                xchg_stats->getSentPacketsNum();
+            std::cout << "***Statistics for packet exchange "
+                      << exchangeToString(it->first) << "***" << std::endl
+                      << "sent: " << xchg_stats->getSentPacketsNum() << ", "
+                      << "received: " << xchg_stats->getRcvdPacketsNum()
+                      << std::endl
+                      << "drops: " << drops << ", orphans: "
+                      << xchg_stats->getOrphans()
+                      << std::endl << std::endl;
         }
     }
 
@@ -914,20 +914,22 @@ public:
     /// is a duration between sending a packet to server and receiving
     /// response from server.
     void printRTTStats() const {
+        using namespace std;
         for (ExchangesMapIterator it = exchanges_.begin();
              it != exchanges_.end();
              ++it) {
             ExchangeStatsPtr xchg_stats = it->second;
-            printf("***Round trip time Statistics for packet exchange %s***\n"
-                   "min delay: %.3f\n"
-                   "avg delay: %.3f\n"
-                   "max delay: %.3f\n"
-                   "std deviation: %.3f\n",
-                   exchangeToString(it->first).c_str(),
-                   xchg_stats->getMinDelay(),
-                   xchg_stats->getAvgDelay(),
-                   xchg_stats->getMaxDelay(),
-                   xchg_stats->getStdDevDelay());
+            cout << "***Round trip time Statistics for packet exchange "
+                 << exchangeToString(it->first) << "***" << endl
+                 << fixed << setprecision(3)
+                 << "min delay: " << xchg_stats->getMinDelay() * 1e3
+                 << " ms" << endl
+                 << "avg delay: " <<  xchg_stats->getAvgDelay() * 1e3
+                 << " ms" << endl
+                 << "max delay: " << xchg_stats->getMaxDelay() * 1e3
+                 << " ms" << endl
+                 << "std deviation: " << xchg_stats->getStdDevDelay() * 1e3
+                 << " ms" << endl << endl;
         }
     }
 
@@ -943,9 +945,10 @@ public:
              it != exchanges_.end();
              ++it) {
             ExchangeStatsPtr xchg_stats = it->second;
-            printf("***Timestamps for packets in exchange %s***\n",
-                   exchangeToString(it->first).c_str());
+            std::cout << "***Timestamps for packets in exchange "
+                      << exchangeToString(it->first) << "***" << std::endl;
             xchg_stats->printTimestamps();
+            std::cout << std::endl;
         }
     }
 
@@ -955,14 +958,13 @@ public:
     /// are defined by client class for tracking different statistics.
     void printCustomCounters() const {
         if (custom_counters_.size() > 0) {
-            printf("***Various statistics counters***\n");
+            std::cout << "***Various statistics counters***" << std::endl;
         }
         for (CustomCountersMapIterator it = custom_counters_.begin();
              it != custom_counters_.end();
              ++it) {
             CustomCounterPtr counter = it->second;
-            printf("%s: %llu\n", counter->getName().c_str(),
-                   counter->getValue());
+            std::cout << counter->getName() << ": " << counter->getValue() << std::endl;
         }
     }
 
