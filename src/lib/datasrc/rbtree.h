@@ -229,9 +229,6 @@ public:
     /// It takes the (partial) name of the node itself, and extends it
     /// with all upper nodes.
     ///
-    /// The label sequence that is returned should therefore always be
-    /// absolute.
-    ///
     /// \note Care must be taken with the buffer that is used here; this
     /// method overwrites its data, so it should not be associated with
     /// any other LabelSequence during the lifetime of the LabelSequence
