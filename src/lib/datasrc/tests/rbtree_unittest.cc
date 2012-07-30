@@ -988,4 +988,32 @@ TEST_F(RBTreeTest, root) {
               root.find(Name("example.com"), &crbtnode));
     EXPECT_EQ(rbtnode, crbtnode);
 }
+
+TEST_F(RBTreeTest, getAbsoluteLabels) {
+    // The full absolute names of the nodes in the tree
+    const char* const domain_names[] = {
+        "c", "b", "a", "x.d.e.f", "z.d.e.f", "g.h", "i.g.h", "o.w.y.d.e.f",
+        "j.z.d.e.f", "p.w.y.d.e.f", "q.w.y.d.e.f", "k.g.h"};
+    // The names of the nodes themselves, as they end up in the tree
+    const char* const first_labels[] = {
+        "c", "b", "a", "x", "z", "g.h", "i", "o",
+        "j", "p", "q", "k"};
+
+    int name_count = sizeof(domain_names) / sizeof(domain_names[0]);
+    uint8_t buf[LabelSequence::MAX_SERIALIZED_LENGTH];
+    for (int i = 0; i < name_count; ++i) {
+        EXPECT_EQ(RBTree<int>::EXACTMATCH, rbtree.find(Name(domain_names[i]), &crbtnode));
+
+        // First make sure the names themselves are not absolute
+        LabelSequence ls(crbtnode->getLabels());
+        EXPECT_EQ(first_labels[i], ls.toText());
+        EXPECT_FALSE(ls.isAbsolute());
+
+        // Now check the absolute names
+        LabelSequence abs_ls = crbtnode->getAbsoluteLabelSequence(buf);
+        EXPECT_EQ(Name(domain_names[i]).toText(), abs_ls.toText());
+        EXPECT_TRUE(abs_ls.isAbsolute());
+    }
+}
+
 }
