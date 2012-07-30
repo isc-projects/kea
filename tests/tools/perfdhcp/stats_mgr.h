@@ -142,7 +142,7 @@ public:
         /// \param packet packet which transaction id is to be hashed.
         /// \throw isc::BadValue if packet is null.
         /// \return transaction id hash.
-        static uint32_t hashTransid(const boost::shared_ptr<T> packet) {
+        static uint32_t hashTransid(const boost::shared_ptr<const T>& packet) {
             if (!packet) {
                 isc_throw(BadValue, "Packet is null");
             }
@@ -155,12 +155,12 @@ public:
         /// search of packets based on their sequence (order in which they
         /// were inserted) as well as based on packet transaction id.
         typedef boost::multi_index_container<
-            boost::shared_ptr<T>,
+            boost::shared_ptr<const T>,
             boost::multi_index::indexed_by<
                 boost::multi_index::sequenced<>,
                 boost::multi_index::hashed_non_unique<
                         boost::multi_index::global_fun<
-                            boost::shared_ptr<T>,
+                            const boost::shared_ptr<const T>&,
                             uint32_t,
                             &ExchangeStats::hashTransid
                         >
@@ -214,7 +214,7 @@ public:
         ///
         /// \param packet packet object to be added.
         /// \throw isc::BadValue if packet is null.
-        void appendSent(const boost::shared_ptr<T> packet) {
+        void appendSent(const boost::shared_ptr<const T>& packet) {
             if (!packet) {
                 isc_throw(BadValue, "Packet is null");
             }
@@ -228,7 +228,7 @@ public:
         ///
         /// \param packet packet object to be added.
         /// \throw isc::BadValue if packet is null.
-        void appendRcvd(const boost::shared_ptr<T> packet) {
+        void appendRcvd(const boost::shared_ptr<const T>& packet) {
             if (!packet) {
                 isc_throw(BadValue, "Packet is null");
             }
@@ -245,8 +245,8 @@ public:
         /// \param rcvd_packet received packet
         /// \throw isc::BadValue if sent or received packet is null.
         /// \throw isc::Unexpected if failed to calculate timestamps
-        void updateDelays(const boost::shared_ptr<const T> sent_packet,
-                          const boost::shared_ptr<const T> rcvd_packet) {
+        void updateDelays(const boost::shared_ptr<const T>& sent_packet,
+                          const boost::shared_ptr<const T>& rcvd_packet) {
             if (!sent_packet) {
                 isc_throw(BadValue, "Sent packet is null");
             }
@@ -304,7 +304,7 @@ public:
         /// \throw isc::BadValue if received packet is null.
         /// \return packet having specified transaction or NULL if packet
         /// not found
-        boost::shared_ptr<T> findSent(const boost::shared_ptr<T> rcvd_packet) {
+        boost::shared_ptr<const T> findSent(const boost::shared_ptr<const T>& rcvd_packet) {
             if (!rcvd_packet) {
                 isc_throw(BadValue, "Received packet is null");
             }
@@ -315,7 +315,7 @@ public:
                 // that the received packet we got has no corresponding
                 // sent packet so orphans counter has to be updated.
                 ++orphans_;
-                return boost::shared_ptr<T>();
+                return boost::shared_ptr<const T>();
             } else if (sent_packets_cache_ == sent_packets_.end()) {
                 // Even if there are still many unmatched packets on the
                 // list we might hit the end of it because of unordered
@@ -374,10 +374,10 @@ public:
                 // If we are here, it means that both ordered lookup and
                 // unordered lookup failed. Searched packet is not on the list.
                 ++orphans_;
-                return boost::shared_ptr<T>();
+                return boost::shared_ptr<const T>();
             }
 
-            boost::shared_ptr<T> sent_packet(*sent_packets_cache_);
+            boost::shared_ptr<const T> sent_packet(*sent_packets_cache_);
             // If packet was found, we assume it will be never searched
             // again. We want to delete this packet from the list to
             // improve performance of future searches.
@@ -509,7 +509,7 @@ public:
             for (PktListIterator it = rcvd_packets_.begin();
                  it != rcvd_packets_.end();
                  ++it) {
-                boost::shared_ptr<T> rcvd_packet = *it;
+                boost::shared_ptr<const T> rcvd_packet = *it;
                 // Search for corresponding sent packet using transaction id
                 // of received packet.
                 PktListTransidIndex& idx = archived_packets_.template get<2>();
@@ -518,7 +518,7 @@ public:
                 // This should not happen that there is no corresponding
                 // sent packet. If it does however, we just drop the packet.
                 if (it_archived != idx.end()) {
-                    boost::shared_ptr<T> sent_packet = *it_archived;
+                    boost::shared_ptr<const T> sent_packet = *it_archived;
                     // Get sent and received packet times.
                     boost::posix_time::ptime sent_time =
                         sent_packet->getTimestamp();
@@ -700,7 +700,7 @@ public:
     /// \throw isc::BadValue if invalid exchange type specified or
     /// packet is null.
     void passSentPacket(const ExchangeType xchg_type,
-                        const boost::shared_ptr<T> packet) {
+                        const boost::shared_ptr<const T>& packet) {
         ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
         xchg_stats->appendSent(packet);
     }
@@ -719,9 +719,9 @@ public:
     /// \throw isc::Unexpected if corresponding packet was not
     /// found on the list of sent packets.
     void passRcvdPacket(const ExchangeType xchg_type,
-                        const boost::shared_ptr<T> packet) {
+                        const boost::shared_ptr<const T>& packet) {
         ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
-        boost::shared_ptr<T> sent_packet
+        boost::shared_ptr<const T> sent_packet
             = xchg_stats->findSent(packet);
 
         if (sent_packet) {
