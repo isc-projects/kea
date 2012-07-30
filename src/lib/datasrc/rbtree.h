@@ -221,6 +221,10 @@ public:
         return (dns::LabelSequence(getLabelsData()));
     }
 
+    ///
+    isc::dns::LabelSequence getAbsoluteLabelSequence(
+        uint8_t buf[isc::dns::LabelSequence::MAX_SERIALIZED_LENGTH]) const;
+
     /// \brief Return the data stored in this node.
     ///
     /// You should not delete the data, it is handled by shared pointers.
@@ -500,6 +504,21 @@ RBNode<T>::getUpperNode() const {
     }
 
     return (current->getParent());
+}
+
+template <typename T>
+isc::dns::LabelSequence
+RBNode<T>::getAbsoluteLabelSequence(
+    uint8_t buf[isc::dns::LabelSequence::MAX_SERIALIZED_LENGTH]) const
+{
+    isc::dns::LabelSequence result(getLabels(), buf);
+    const RBNode<T>* upper = getUpperNode();
+    while (upper != NULL) {
+        result.extend(upper->getLabels(), buf);
+        upper = upper->getUpperNode();
+    }
+
+    return (isc::dns::LabelSequence(result));
 }
 
 template <typename T>
