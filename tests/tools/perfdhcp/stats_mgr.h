@@ -88,7 +88,7 @@ public:
         /// Method returns counter value.
         ///
         /// \return counter value.
-        unsigned long long getValue() const {
+        uint64_t getValue() const {
             return counter_;
         }
 
@@ -108,7 +108,7 @@ public:
         /// counter's name.
         CustomCounter() { };
 
-        unsigned long long counter_;  ///< Counter's value.
+        uint64_t counter_;  ///< Counter's value.
         std::string name_;            ///< Counter's name.
     };
 
@@ -440,7 +440,7 @@ public:
         /// for us.
         ///
         /// \return number of orphant received packets.
-        unsigned long long getOrphans() const { return orphans_; }
+        uint64_t getOrphans() const { return orphans_; }
 
         /// \brief Return average unordered lookup set size.
         ///
@@ -467,7 +467,7 @@ public:
         /// packet does not match transaction id of next sent packet.
         ///
         /// \return number of unordered lookups.
-        unsigned long long getUnorderedLookups() const { return unordered_lookups_; }
+        uint64_t getUnorderedLookups() const { return unordered_lookups_; }
 
         /// \brief Return number of ordered sent packets lookups
         ///
@@ -478,14 +478,14 @@ public:
         /// function will use unordered lookup (with hash table).
         ///
         /// \return number of ordered lookups.
-        unsigned long long getOrderedLookups() const { return ordered_lookups_; }
+        uint64_t getOrderedLookups() const { return ordered_lookups_; }
 
         /// \brief Return total number of sent packets
         ///
         /// Method returns total number of sent packets.
         ///
         /// \return number of sent packets.
-        unsigned long long getSentPacketsNum() const {
+        uint64_t getSentPacketsNum() const {
             return sent_packets_num_;
         }
 
@@ -494,7 +494,7 @@ public:
         /// Method returns total number of received packets.
         ///
         /// \return number of received packets.
-        unsigned long long getRcvdPacketsNum() const {
+        uint64_t getRcvdPacketsNum() const {
             return rcvd_packets_num_;
         }
 
@@ -595,22 +595,22 @@ public:
         double square_sum_delay_;      ///< Square sum of delays between
                                        ///< sent and recived packets.
 
-        unsigned long long orphans_;   ///< Number of orphant received packets.
+        uint64_t orphans_;   ///< Number of orphant received packets.
 
         /// Sum of unordered lookup sets. Needed to calculate mean size of
         /// lookup set. It is desired that number of unordered lookups is
         /// minimal for performance reasons. Tracking number of lookups and
         /// mean size of the lookup set should give idea of packets serach
         /// complexity.
-        unsigned long long unordered_lookup_size_sum_;
+        uint64_t unordered_lookup_size_sum_;
 
-        unsigned long long unordered_lookups_;   ///< Number of unordered sent packets
+        uint64_t unordered_lookups_;   ///< Number of unordered sent packets
                                        ///< lookups.
-        unsigned long long ordered_lookups_;     ///< Number of ordered sent packets
+        uint64_t ordered_lookups_;     ///< Number of ordered sent packets
                                        ///< lookups.
 
-        unsigned long long sent_packets_num_;    ///< Total number of sent packets.
-        unsigned long long rcvd_packets_num_;    ///< Total number of received packets.
+        uint64_t sent_packets_num_;    ///< Total number of sent packets.
+        uint64_t rcvd_packets_num_;    ///< Total number of received packets.
     };
 
     /// Pointer to ExchangeStats.
@@ -785,7 +785,7 @@ public:
     /// \param xchg_type exchange type.
     /// \throw isc::BadValue if invalid exchange type specified.
     /// \return number of orphant packets so far.
-    unsigned long long getOrphans(const ExchangeType xchg_type) const {
+    uint64_t getOrphans(const ExchangeType xchg_type) const {
         ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
         return xchg_stats->getOrphans();
     }
@@ -814,7 +814,7 @@ public:
     /// \param xchg_type exchange type.
     /// \throw isc::BadValue if invalid exchange type specified.
     /// \return number of unordered lookups.
-    unsigned long long getUnorderedLookups(const ExchangeType xchg_type) const {
+    uint64_t getUnorderedLookups(const ExchangeType xchg_type) const {
         ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
         return xchg_stats->getUnorderedLookups();
     }
@@ -830,7 +830,7 @@ public:
     /// \param xchg_type exchange type.
     /// \throw isc::BadValue if invalid exchange type specified.
     /// \return number of ordered lookups.
-    unsigned long long getOrderedLookups(const ExchangeType xchg_type) const {
+    uint64_t getOrderedLookups(const ExchangeType xchg_type) const {
         ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
         return xchg_stats->getOrderedLookups();
     }
@@ -843,7 +843,7 @@ public:
     /// \param xchg_type exchange type.
     /// \throw isc::BadValue if invalid exchange type specified.
     /// \return number of sent packets.
-    unsigned long long getSentPacketsNum(const ExchangeType xchg_type) const {
+    uint64_t getSentPacketsNum(const ExchangeType xchg_type) const {
         ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
         return xchg_stats->getSentPacketsNum();
     }
@@ -856,7 +856,7 @@ public:
     /// \param xchg_type exchange type.
     /// \throw isc::BadValue if invalid exchange type specified.
     /// \return number of received packets.
-    unsigned long long getRcvdPacketsNum(const ExchangeType xchg_type) const {
+    uint64_t getRcvdPacketsNum(const ExchangeType xchg_type) const {
         ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
         return xchg_stats->getRcvdPacketsNum();
     }
@@ -893,7 +893,7 @@ public:
              it != exchanges_.end();
              ++it) {
             ExchangeStatsPtr xchg_stats = it->second;
-            unsigned long long drops = xchg_stats->getRcvdPacketsNum() -
+            uint64_t drops = xchg_stats->getRcvdPacketsNum() -
                 xchg_stats->getSentPacketsNum();
             std::cout << "***Statistics for packet exchange "
                       << exchangeToString(it->first) << "***" << std::endl
