@@ -401,6 +401,11 @@ TEST_F(RdataEncoderTest, badAddRdata) {
     encoder_.start(RRClass::IN(), RRType::MX());
     EXPECT_THROW(encoder_.addRdata(*txt_rdata), isc::BadValue);
 
+    // Similar to the previous one, but in this case there's no data field
+    // in the spec.
+    encoder_.start(RRClass::IN(), RRType::NS());
+    EXPECT_THROW(encoder_.addRdata(*txt_rdata), isc::BadValue);
+
     // Likewise.  Inconsistent name compression policy.
     const ConstRdataPtr ns_rdata =
         createRdata(RRType::NS(), RRClass::IN(), "ns.example");
