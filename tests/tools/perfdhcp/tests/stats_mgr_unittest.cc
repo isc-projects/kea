@@ -156,11 +156,11 @@ public:
 TEST_F(StatsMgrTest, Constructor) {
     boost::scoped_ptr<StatsMgr4> stats_mgr(new StatsMgr4());
     stats_mgr->addExchangeStats(StatsMgr4::XCHG_DO);
-    EXPECT_EQ(
+    EXPECT_DOUBLE_EQ(
         std::numeric_limits<double>::max(),
         stats_mgr->getMinDelay(StatsMgr4::XCHG_DO)
     );
-    EXPECT_EQ(0, stats_mgr->getMaxDelay(StatsMgr4::XCHG_DO));
+    EXPECT_DOUBLE_EQ(0, stats_mgr->getMaxDelay(StatsMgr4::XCHG_DO));
     EXPECT_EQ(0, stats_mgr->getOrphans(StatsMgr4::XCHG_DO));
     EXPECT_EQ(0, stats_mgr->getOrderedLookups(StatsMgr4::XCHG_DO));
     EXPECT_EQ(0, stats_mgr->getUnorderedLookups(StatsMgr4::XCHG_DO));
