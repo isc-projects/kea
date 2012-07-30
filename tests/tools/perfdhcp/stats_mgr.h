@@ -239,7 +239,7 @@ public:
         /// \brief Constructor
         ///
         /// \param xchg_type exchange type
-        ExchangeStats(const ExchangeType xchg_type)
+        ExchangeStats(const ExchangeType xchg_type, const bool archive_enabled)
             : xchg_type_(xchg_type),
             min_delay_(std::numeric_limits<double>::max()),
             max_delay_(0.),
@@ -250,7 +250,11 @@ public:
             unordered_lookup_size_sum_(0),
             unordered_lookups_(0),
             sent_packets_num_(0),
-            rcvd_packets_num_(0) {
+            rcvd_packets_num_(0),
+            sent_packets_(),
+            rcvd_packets_(),
+            archived_packets_(),
+            archive_enabled_(archive_enabled) {
             next_sent_ = sent_packets_.begin();
         }
 
@@ -278,7 +282,6 @@ public:
             if (!packet) {
                 isc_throw(BadValue, "Packet is null");
             }
-            ++rcvd_packets_num_;
             rcvd_packets_.push_back(packet);
         }
 
@@ -423,6 +426,7 @@ public:
                 return(boost::shared_ptr<const T>());
             }
 
+            ++rcvd_packets_num_;
             boost::shared_ptr<const T> sent_packet(*next_sent_);
             // If packet was found, we assume it will be never searched
             // again. We want to delete this packet from the list to
@@ -455,7 +459,7 @@ public:
         /// have been received yet.
         /// \return average packet delay.
         double getAvgDelay() const {
-            if (sum_delay_ == 0) {
+            if (rcvd_packets_num_  == 0) {
                 isc_throw(InvalidOperation, "no packets received");
             }
             return(sum_delay_ / rcvd_packets_num_);
@@ -563,21 +567,38 @@ public:
         /// response from server.
         void printRTTStats() const {
             using namespace std;
-            cout << fixed << setprecision(3)
-                 << "min delay: " << getMinDelay() * 1e3 << " ms" << endl
-                 << "avg delay: " << getAvgDelay() * 1e3 << " ms" << endl
-                 << "max delay: " << getMaxDelay() * 1e3 << " ms" << endl
-                 << "std deviation: " << getStdDevDelay() * 1e3 << " ms"
-                 << endl;
+            try {
+                cout << fixed << setprecision(3)
+                     << "min delay: " << getMinDelay() * 1e3 << " ms" << endl
+                     << "avg delay: " << getAvgDelay() * 1e3 << " ms" << endl
+                     << "max delay: " << getMaxDelay() * 1e3 << " ms" << endl
+                     << "std deviation: " << getStdDevDelay() * 1e3 << " ms"
+                     << endl;
+            } catch (const Exception& e) {
+                cout << "Unavailable! No packets received." << endl;
+            }
         }
 
         //// \brief Print timestamps for sent and received packets.
         ///
         /// Method prints timestamps for all sent and received packets for
-        /// packet exchange.
+        /// packet exchange. In order to run this method the packets
+        /// archiving mode has to be enabled during object constructions.
+        /// Otherwise sent packets are not stored during tests execution
+        /// and this method has no ability to get and print their timestamps.
         ///
-        /// \throw isc::InvalidOperation if found packet with no timestamp set.
+        /// \throw isc::InvalidOperation if found packet with no timestamp or
+        /// if packets archive mode is disabled.
         void printTimestamps() {
+            // If archive mode is disabled there is no sense to proceed
+            // because we don't have packets and their timestamps.
+            if (!archive_enabled_) {
+                isc_throw(isc::InvalidOperation,
+                          "packets archive mode is disabled");
+            }
+            if (rcvd_packets_num_ == 0) {
+                std::cout << "Unavailable! No packets received." << std::endl;
+            }
             // We will be using boost::posix_time extensivelly here
             using namespace boost::posix_time;
 
@@ -605,7 +626,8 @@ public:
                         // not have timestamp we want to catch this here.
                         if (sent_time.is_not_a_date_time() ||
                             rcvd_time.is_not_a_date_time()) {
-                            isc_throw(InvalidOperation, "packet time is not set");
+                            isc_throw(InvalidOperation,
+                                      "packet time is not set");
                         }
                         // Calculate durations of packets from beginning of epoch.
                         ptime epoch_time(min_date_time);
@@ -639,13 +661,15 @@ public:
         /// \return iterator pointing to packet following erased
         /// packet or sent_packets_.end() if packet not found.
          PktListIterator eraseSent(const PktListIterator it) {
-             // We don't want to keep list of all sent packets
-             // because it will affect packet lookup performance.
-             // If packet is matched with received packet we
-             // move it to list of archived packets. List of
-             // archived packets may be used for diagnostics
-             // when test is completed.
-             archived_packets_.push_back(*it);
+             if (archive_enabled_) {
+                 // We don't want to keep list of all sent packets
+                 // because it will affect packet lookup performance.
+                 // If packet is matched with received packet we
+                 // move it to list of archived packets. List of
+                 // archived packets may be used for diagnostics
+                 // when test is completed.
+                 archived_packets_.push_back(*it);
+             }
              // get<0>() template returns sequencial index to
              // container.
              return(sent_packets_.template get<0>().erase(it));
@@ -665,6 +689,19 @@ public:
         /// been matched with received packet are moved to this
         /// list for diagnostics purposes.
         PktList archived_packets_;
+
+        /// Indicates all packets have to be preserved after matching.
+        /// By default this is disabled which means that when received
+        /// packet is matched with sent packet both are deleted. This
+        /// is important when test is executed for extended period of
+        /// time and high memory usage might be the issue.
+        /// When timestamps listing is specified from the command line
+        /// (using diagnostics selector), all packets have to be preserved
+        /// so as the printing method may read their timestamps and
+        /// print it to user. In such usage model it will be rare to
+        /// run test for extended period of time so it should be fine
+        /// to keep all packets archived throughout the test.
+        bool archive_enabled_;
 
         double min_delay_;             ///< Minimum delay between sent
                                        ///< and received packets.
@@ -704,10 +741,32 @@ public:
     /// Iterator for \ref CustomCountersMap.
     typedef typename CustomCountersMap::const_iterator CustomCountersMapIterator;
 
+    /// \brief Default constructor.
+    ///
+    /// This constructor by default disables packets archiving mode.
+    /// In this mode all packets from the list of sent packets are
+    /// moved to list of archived packets once they have been matched
+    /// with received packets. This is required if it has been selected
+    /// from the command line to print timestamps for all packets after
+    /// the test. If this is not selected archiving should be disabled
+    /// for performance reasons and to avoid waste of memory for storing
+    /// large list of archived packets.
+    StatsMgr() :
+        exchanges_(),
+        custom_counters_(),
+        archive_enabled_(false) {
+    }
+
     /// \brief Constructor.
-    StatsMgr()
-        : exchanges_(),
-          custom_counters_() {
+    ///
+    /// Use this constructor to set packets archive mode.
+    ///
+    /// \param archive_enabled true indicates that packets
+    /// archive mode is enabled.
+    StatsMgr(const bool archive_enabled) :
+        exchanges_(),
+        custom_counters_(),
+        archive_enabled_(archive_enabled) {
     }
 
     /// \brief Specify new exchange type.
@@ -722,7 +781,8 @@ public:
         if (exchanges_.find(xchg_type) != exchanges_.end()) {
             isc_throw(BadValue, "Exchange of specified type already added.");
         }
-        exchanges_[xchg_type] = ExchangeStatsPtr(new ExchangeStats(xchg_type));
+        exchanges_[xchg_type] =
+            ExchangeStatsPtr(new ExchangeStats(xchg_type, archive_enabled_));
     }
 
     /// \brief Add named custom uint64 counter.
@@ -806,7 +866,9 @@ public:
 
         if (sent_packet) {
             xchg_stats->updateDelays(sent_packet, packet);
-            xchg_stats->appendRcvd(packet);
+            if (archive_enabled_) {
+                xchg_stats->appendRcvd(packet);
+            }
         }
     }
 
@@ -974,7 +1036,14 @@ public:
     /// - average packets delay,
     /// - maximum packets delay,
     /// - standard deviation of packets delay.
+    ///
+    /// \throw isc::InvalidOperation if no exchange type added to
+    /// track statistics.
      void printStats() const {
+        if (exchanges_.size() == 0) {
+            isc_throw(isc::InvalidOperation,
+                      "no exchange type added for tracking");
+        }
         for (ExchangesMapIterator it = exchanges_.begin();
              it != exchanges_.end();
              ++it) {
@@ -994,8 +1063,16 @@ public:
     /// packets for all defined exchange types.
     ///
     /// \throw isc::InvalidOperation if one of the packets has
-    /// no timestamp value set.
+    /// no timestamp value set or if packets archive mode is
+    /// disabled.
+    ///
+    /// \throw isc::InvalidOperation if no exchange type added to
+    /// track statistics or packets archive mode is disabled.
     void printTimestamps() const {
+        if (exchanges_.size() == 0) {
+            isc_throw(isc::InvalidOperation,
+                      "no exchange type added for tracking");
+        }
         for (ExchangesMapIterator it = exchanges_.begin();
              it != exchanges_.end();
              ++it) {
@@ -1012,19 +1089,23 @@ public:
     ///
     /// Method prints names and values of custom counters. Custom counters
     /// are defined by client class for tracking different statistics.
+    ///
+    /// \throw isc::InvalidOperation if no custom counters added for tracking.
     void printCustomCounters() const {
-        if (custom_counters_.size() > 0) {
-            std::cout << "***Various statistics counters***" << std::endl;
+        if (custom_counters_.size() == 0) {
+            isc_throw(isc::InvalidOperation, "no custom counters specified");
         }
         for (CustomCountersMapIterator it = custom_counters_.begin();
              it != custom_counters_.end();
              ++it) {
             CustomCounterPtr counter = it->second;
-            std::cout << counter->getName() << ": " << counter->getValue() << std::endl;
+            std::cout << counter->getName() << ": " << counter->getValue()
+                      << std::endl;
         }
     }
 
 private:
+
     /// \brief Return exchange stats object for given exchange type
     ///
     /// Method returns exchange stats object for given exchange type.
@@ -1043,6 +1124,16 @@ private:
 
     ExchangesMap exchanges_;            ///< Map of exchange types.
     CustomCountersMap custom_counters_; ///< Map with custom counters.
+
+    /// Indicates that packets from list of sent packets should be
+    /// archived (moved to list of archived packets) once they are
+    /// matched with received packets. This is required when it has
+    /// been selected from the command line to print packets'
+    /// timestamps after test. This may affect performance and
+    /// consume large amount of memory when the test is running
+    /// for extended period of time and many packets have to be
+    /// archived.
+    bool archive_enabled_;
 };
 
 } // namespace perfdhcp
