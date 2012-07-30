@@ -340,7 +340,8 @@ public:
             updateOtherData();
         }
         if (current_field_ != encode_spec_->field_count) {
-            isc_throw(BadValue, "RDATA encoder finds missing field");
+            isc_throw(BadValue,
+                      "RDATA encoder didn't find all expected fields");
         }
     }
 
