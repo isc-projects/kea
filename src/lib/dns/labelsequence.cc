@@ -60,7 +60,7 @@ LabelSequence::LabelSequence(const LabelSequence& src,
 {
     size_t data_len;
     const uint8_t *data = src.getData(&data_len);
-    memcpy(buf, data, data_len);
+    std::memcpy(buf, data, data_len);
 
     for (size_t i = 0; i < src.getLabelCount(); ++i) {
         buf[Name::MAX_WIRE + i] = src.offsets_[i + src.first_label_] -
@@ -371,11 +371,11 @@ LabelSequence::extend(const LabelSequence& labels,
     }
 
     // All seems to be reasonably ok, let's proceed.
-    memmove(&buf[data_pos], data, data_len);
+    std::memmove(&buf[data_pos], data, data_len);
 
     for (size_t i = 0; i < append_label_count; ++i) {
         buf[Name::MAX_WIRE + label_count + i] =
-            offsets_[label_count] +
+            data_pos +
             labels.offsets_[i + labels.first_label_] -
             labels.offsets_[labels.first_label_];
     }
