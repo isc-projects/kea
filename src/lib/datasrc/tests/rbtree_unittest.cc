@@ -1011,7 +1011,7 @@ TEST_F(RBTreeTest, getAbsoluteLabels) {
         EXPECT_FALSE(ls.isAbsolute());
 
         // Now check the absolute names
-        LabelSequence abs_ls(crbtnode->getAbsoluteLabelSequence(buf));
+        LabelSequence abs_ls(crbtnode->getAbsoluteLabels(buf));
         EXPECT_EQ(Name(domain_names[i]).toText(), abs_ls.toText());
         EXPECT_TRUE(abs_ls.isAbsolute());
     }

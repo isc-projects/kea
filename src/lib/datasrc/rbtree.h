@@ -238,7 +238,7 @@ public:
     /// \param buf A data buffer where the label sequence will be built.
     ///            The data in this buffer will be overwritten by this call,
     /// \return A LabelSequence with the absolute name of this node.
-    isc::dns::LabelSequence getAbsoluteLabelSequence(
+    isc::dns::LabelSequence getAbsoluteLabels(
         uint8_t buf[isc::dns::LabelSequence::MAX_SERIALIZED_LENGTH]) const;
 
     /// \brief Return the data stored in this node.
@@ -524,7 +524,7 @@ RBNode<T>::getUpperNode() const {
 
 template <typename T>
 isc::dns::LabelSequence
-RBNode<T>::getAbsoluteLabelSequence(
+RBNode<T>::getAbsoluteLabels(
     uint8_t buf[isc::dns::LabelSequence::MAX_SERIALIZED_LENGTH]) const
 {
     isc::dns::LabelSequence result(getLabels(), buf);
