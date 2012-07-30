@@ -132,6 +132,8 @@ protected:
                      const vector<ConstRdataPtr>& rdata_list,
                      size_t expected_varlen_fields,
                      const vector<ConstRdataPtr>& rrsig_list);
+    // A wraper for RdataEncoder::encode() with buffer overrun check.
+    void encodeWrapper(size_t data_len);
 
     void addRdataCommon(const vector<ConstRdataPtr>& rrsigs);
     void addRdataMultiCommon(const vector<ConstRdataPtr>& rrsigs);
@@ -147,6 +149,23 @@ protected:
     MessageRenderer actual_renderer_;
     vector<ConstRdataPtr> rdata_list_;
 };
+
+
+void
+RdataEncoderTest::encodeWrapper(size_t data_len) {
+    // make sure the data buffer is large enough for the canary
+    encoded_data_.resize(data_len + 2);
+    // set the canary data
+    encoded_data_.at(data_len) = 0xde;
+    encoded_data_.at(data_len + 1) = 0xad;
+    // encode, then check the canary is intact
+    encoder_.encode(&encoded_data_[0], data_len);
+    EXPECT_EQ(0xde, encoded_data_.at(data_len));
+    EXPECT_EQ(0xad, encoded_data_.at(data_len + 1));
+    // shrink the data buffer to the originally expected size (some tests
+    // expect that).  the actual encoded data should be intact.
+    encoded_data_.resize(data_len);
+}
 
 void
 RdataEncoderTest::checkEncode(RRClass rrclass, RRType rrtype,
@@ -200,8 +219,7 @@ RdataEncoderTest::checkEncode(RRClass rrclass, RRType rrtype,
     BOOST_FOREACH(const ConstRdataPtr& rdata, rrsig_list) {
         encoder_.addSIGRdata(*rdata);
     }
-    encoded_data_.resize(encoder_.getStorageLength());
-    encoder_.encode(&encoded_data_[0], encoded_data_.size());
+    encodeWrapper(encoder_.getStorageLength());
 
     // If this type of RDATA is expected to contain variable-length fields,
     // we brute force the encoded data, exploiting our knowledge of actual
@@ -330,8 +348,7 @@ TEST_F(RdataEncoderTest, encodeLargeRdata) {
 
     encoder_.start(RRClass::IN(), RRType::DHCID());
     encoder_.addRdata(large_dhcid);
-    encoded_data_.resize(encoder_.getStorageLength());
-    encoder_.encode(&encoded_data_[0], encoded_data_.size());
+    encodeWrapper(encoder_.getStorageLength());
 
     // The encoded data should be identical to the original one.
     ASSERT_LT(sizeof(uint16_t), encoder_.getStorageLength());
@@ -356,9 +373,8 @@ TEST_F(RdataEncoderTest, badAddRdata) {
     // Some operations must follow start().
     EXPECT_THROW(encoder_.addRdata(*a_rdata_), isc::InvalidOperation);
     EXPECT_THROW(encoder_.getStorageLength(), isc::InvalidOperation);
-    encoded_data_.resize(256); // allocate space of some arbitrary size
-    EXPECT_THROW(encoder_.encode(&encoded_data_[0], encoded_data_.size()),
-                 isc::InvalidOperation);
+    // will allocate space of some arbitrary size (256 bytes)
+    EXPECT_THROW(encodeWrapper(256), isc::InvalidOperation);
 
     // Bad buffer for encode
     encoder_.start(RRClass::IN(), RRType::A());
@@ -366,12 +382,11 @@ TEST_F(RdataEncoderTest, badAddRdata) {
     const size_t buf_len = encoder_.getStorageLength();
     // NULL buffer for encode
     EXPECT_THROW(encoder_.encode(NULL, buf_len), isc::BadValue);
-    // buffer length is too short
+    // buffer length is too short (we don't use the wrraper because we don't
+    // like to tweak the length arg to encode()).
     encoded_data_.resize(buf_len - 1);
     EXPECT_THROW(encoder_.encode(&encoded_data_[0], buf_len - 1),
                  isc::BadValue);
-    encoded_data_.resize(buf_len + 1);
-    encoder_.encode(&encoded_data_[1], buf_len);
 
     // Type of RDATA and the specified RR type don't match.  addRdata() should
     // detect this inconsistency.
@@ -437,8 +452,7 @@ TEST_F(RdataEncoderTest, addSIGRdataOnly) {
     // (in a partially broken zone) and it's accepted.
     encoder_.start(RRClass::IN(), RRType::A());
     encoder_.addSIGRdata(*rrsig_rdata_);
-    encoded_data_.resize(encoder_.getStorageLength());
-    encoder_.encode(&encoded_data_[0], encoded_data_.size());
+    encodeWrapper(encoder_.getStorageLength());
     ASSERT_LT(sizeof(uint16_t), encoder_.getStorageLength());
 
     // The encoded data should be identical to the given one.
