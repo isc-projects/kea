@@ -149,7 +149,70 @@ public:
         ///
         /// List of packets based on multi index container allows efficient
         /// search of packets based on their sequence (order in which they
-        /// were inserted) as well as based on packet transaction id.
+        /// were inserted) as well as based on their hashed transaction id.
+        /// The first index (sequenced) provides the way to use container
+        /// as a regular list (including iterators, removal of elements from
+        /// the middle of the collection etc.). This index is meant to be used
+        /// more frequently than the latter one and it is based on the
+        /// assumption that responses from the DHCP server are received in
+        /// order. In this case, when next packet is received it can be
+        /// matched with next packet on the list of sent packets. This
+        /// prevents intensive searches on the list of sent packets every
+        /// time new packet arrives. In many cases however packets can be
+        /// dropped by the server or may be sent out of order and we still
+        ///  want to have ability to search packets using transaction id.
+        /// The second index can be used for this purpose. This index is
+        /// hashing transaction ids using custom function \ref hashTransid.
+        /// Note that other possibility would be to simply specify index
+        /// that uses transaction id directly (instead of hashing with
+        /// \ref hashTransid). In this case however we have chosen to use
+        /// hashing function because it shortens the index size to just
+        /// 1023 values maximum. Search operation on this index generally
+        /// returns the range of packets that have the same transaction id
+        /// hash assigned but most often these ranges will be short so further
+        /// search within a range to find a packet with pacrticular transaction
+        /// id will not be intensive.
+        ///
+        /// Example 1: Add elements to the list
+        /// \code
+        /// PktList packets_collection();
+        /// boost::shared_ptr<Pkt4> pkt1(new Pkt4(...));
+        /// boost::shared_ptr<Pkt4> pkt2(new Pkt4(...));
+        /// // Add new packet to the container, it will be available through
+        /// // both indexes
+        /// packets_collection.push_back(pkt1);
+        /// // Here is another way to add packet to the container. The result
+        /// // is exactly the same as previously.
+        /// packets_collection.template get<0>().push_back(pkt2);
+        /// \endcode
+        ///
+        /// Example 2: Access elements through sequencial index
+        /// \code
+        /// PktList packets_collection();
+        /// ...  # Add elements to the container
+        /// for (PktListIterator it = packets_collection.begin();
+        ///      it != packets_collection.end();
+        ///      ++it) {
+        ///          boost::shared_ptr<Pkt4> pkt = *it;
+        ///          # Do something with packet;
+        ///      }
+        /// \endcode
+        ///
+        /// Example 3: Access elements through hashed index
+        /// \code
+        /// // Get the instance of the second search index.
+        /// PktListTransidHashIndex& idx = sent_packets_.template get<1>();
+        /// // Get the range (bucket) of packets sharing the same transaction
+        /// // id hash.
+        /// std::pair<PktListTransidHashIterator,PktListTransidHashIterator> p =
+        ///     idx.equal_range(hashTransid(rcvd_packet));
+        /// // Iterate through the returned bucket.
+        /// for (PktListTransidHashIterator it = p.first; it != p.second;
+        ///     ++it) {
+        ///    boost::shared_ptr pkt = *it;
+        ///    ... # Do something with the packet (e.g. check transaction id)
+        /// }
+        /// \endcode
         typedef boost::multi_index_container<
             boost::shared_ptr<const T>,
             boost::multi_index::indexed_by<
@@ -160,13 +223,6 @@ public:
                             uint32_t,
                             &ExchangeStats::hashTransid
                         >
-                >,
-                boost::multi_index::hashed_non_unique<
-                    boost::multi_index::const_mem_fun<
-                        T,
-                        uint32_t,
-                        &T::getTransid
-                    >
                 >
             >
         > PktList;
@@ -179,12 +235,6 @@ public:
         /// Packet list iterator to access packets using transaction id hash.
         typedef typename PktListTransidHashIndex::const_iterator
             PktListTransidHashIterator;
-        /// Packet list index to search packets using transaction id.
-        typedef typename PktList::template nth_index<2>::type
-            PktListTransidIndex;
-        /// Packet list iterator to access packets using transaction id.
-        typedef typename PktListTransidIndex::const_iterator
-            PktListTransidIterator;
 
         /// \brief Constructor
         ///
@@ -536,34 +586,39 @@ public:
                  it != rcvd_packets_.end();
                  ++it) {
                 boost::shared_ptr<const T> rcvd_packet = *it;
-                // Search for corresponding sent packet using transaction id
-                // of received packet.
-                PktListTransidIndex& idx = archived_packets_.template get<2>();
-                PktListTransidIterator it_archived =
-                    idx.find(rcvd_packet->getTransid());
-                // This should not happen that there is no corresponding
-                // sent packet. If it does however, we just drop the packet.
-                if (it_archived != idx.end()) {
-                    boost::shared_ptr<const T> sent_packet = *it_archived;
-                    // Get sent and received packet times.
-                    ptime sent_time = sent_packet->getTimestamp();
-                    ptime rcvd_time = rcvd_packet->getTimestamp();
-                    // All sent and received packets should have timestamps
-                    // set but if there is a bug somewhere and packet does
-                    // not have timestamp we want to catch this here.
-                    if (sent_time.is_not_a_date_time() ||
-                        rcvd_time.is_not_a_date_time()) {
-                        isc_throw(InvalidOperation, "packet time is not set");
+                PktListTransidHashIndex& idx =
+                    archived_packets_.template get<1>();
+                std::pair<PktListTransidHashIterator,
+                          PktListTransidHashIterator> p =
+                    idx.equal_range(hashTransid(rcvd_packet));
+                for (PktListTransidHashIterator it_archived = p.first;
+                     it_archived != p.second;
+                     ++it) {
+                    if ((*it_archived)->getTransid() ==
+                        rcvd_packet->getTransid()) {
+                        boost::shared_ptr<const T> sent_packet = *it_archived;
+                        // Get sent and received packet times.
+                        ptime sent_time = sent_packet->getTimestamp();
+                        ptime rcvd_time = rcvd_packet->getTimestamp();
+                        // All sent and received packets should have timestamps
+                        // set but if there is a bug somewhere and packet does
+                        // not have timestamp we want to catch this here.
+                        if (sent_time.is_not_a_date_time() ||
+                            rcvd_time.is_not_a_date_time()) {
+                            isc_throw(InvalidOperation, "packet time is not set");
+                        }
+                        // Calculate durations of packets from beginning of epoch.
+                        ptime epoch_time(min_date_time);
+                        time_period sent_period(epoch_time, sent_time);
+                        time_period rcvd_period(epoch_time, rcvd_time);
+                        // Print timestamps for sent and received packet.
+                        std::cout << "sent / received: "
+                                  << to_iso_string(sent_period.length())
+                                  << " / "
+                                  << to_iso_string(rcvd_period.length())
+                                  << std::endl;
+                        break;
                     }
-                    // Calculate durations of packets from beginning of epoch.
-                    ptime epoch_time(min_date_time);
-                    time_period sent_period(epoch_time, sent_time);
-                    time_period rcvd_period(epoch_time, rcvd_time);
-                    // Print timestamps for sent and received packet.
-                    std::cout << "sent / received: "
-                              << to_iso_string(sent_period.length())
-                              << " / " << to_iso_string(rcvd_period.length())
-                              << std::endl;
                 }
             }
         }
@@ -591,6 +646,8 @@ public:
              // archived packets may be used for diagnostics
              // when test is completed.
              archived_packets_.push_back(*it);
+             // get<0>() template returns sequencial index to
+             // container.
              return(sent_packets_.template get<0>().erase(it));
         }
 
