@@ -537,7 +537,7 @@ RBNode<T>::getAbsoluteLabelSequence(
         upper = upper->getUpperNode();
     }
 
-    return (isc::dns::LabelSequence(result));
+    return (result);
 }
 
 template <typename T>
