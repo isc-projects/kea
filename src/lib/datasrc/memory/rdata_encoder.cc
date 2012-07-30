@@ -65,6 +65,22 @@ struct RdataFieldSpec {
 };
 
 /// Specification of RDATA in terms of internal encoding.
+///
+/// The fields must be a sequence of:
+/// <0 or more fixed/var-len data fields>,
+/// <0 or more domain name fields>,
+/// <0 or more fixed/var-len data fields>,
+/// <0 or more domain name fields>,
+/// ...and so on.
+/// There must not be more than one consecutive data fields (i.e., without
+/// interleaved by a domain name); it would just be inefficient in terms of
+/// memory footprint and iterating over the fields, and it would break
+/// some assumption within the encoder implementation.  For consecutive
+/// data fields in the DNS protocol, if all fields have fixed lengths, they
+/// should be combined into a single fixed-length field (like the last 20
+/// bytes of SOA RDATA).  If there's a variable length field, they should be
+/// combined into a single variable-length field (such as DNSKEY, which has
+/// 3 fixed-length field followed by one variable-length field).
 struct RdataEncodeSpec {
     const uint16_t field_count; // total number of fields (# of fields member)
     const uint16_t name_count;  // number of domain name fields
@@ -286,24 +302,20 @@ public:
     // Called for each domain name in the RDATA, from the RDATA's toWire()
     // implementation.
     virtual void writeName(const Name& name, bool compress) {
-        // First, after checking the spec consistency, see if we have other
-        // data already stored in the renderer's buffer.
-        if (current_field_ >= encode_spec_->field_count) {
-            isc_throw(BadValue,
-                      "RDATA encoder encounters an unexpected name data: " <<
-                      name);
-        }
+        // First, see if we have other data already stored in the renderer's
+        // buffer, and handle it appropriately.
         updateOtherData();
-        // If there are data fields, current_field_ has been updated.  We
-        // should still be expected to have a domain name in the spec.
+
+        // Then, we still have a field in the spec, and it must be a domain
+        // name field.  Since we know we've passed any prior data field, the
+        // next field must be a domain name as long as it exists; otherwise
+        // it's a bug in the spec (not a bogus input).  So we assert() that
+        // condition.
         if (current_field_ >= encode_spec_->field_count) {
             isc_throw(BadValue,
                       "RDATA encoder encounters an unexpected name data: " <<
                       name);
         }
-
-        // At this point it's ensured we still have a field in the spec,
-        // and it's a domain name field.
         const RdataFieldSpec& field =
             encode_spec_->fields[current_field_++];
         assert(field.type == RdataFieldSpec::DOMAIN_NAME);
@@ -336,9 +348,7 @@ public:
     void endRdata() {
         // Handle any remaining data (there should be no more name).  Then
         // we should reach the end of the fields.
-        if (current_field_ < encode_spec_->field_count) {
-            updateOtherData();
-        }
+        updateOtherData();
         if (current_field_ != encode_spec_->field_count) {
             isc_throw(BadValue,
                       "RDATA encoder didn't find all expected fields");
@@ -357,42 +367,38 @@ private:
     // if it contains variable-length field, record its length.
     size_t last_data_pos_;
     void updateOtherData() {
+        // If we've reached the end of the fields or we are expecting a
+        // domain name, there's nothing to do here.
+        if (current_field_ >= encode_spec_->field_count ||
+            encode_spec_->fields[current_field_].type ==
+            RdataFieldSpec::DOMAIN_NAME) {
+            return;
+        }
+
         const size_t cur_pos = getLength();
-        size_t data_len = cur_pos - last_data_pos_;
-        while (current_field_ < encode_spec_->field_count) {
-            const RdataFieldSpec& field = encode_spec_->fields[current_field_];
-            if (field.type == RdataFieldSpec::DOMAIN_NAME) {
-                return;
+        const size_t data_len = cur_pos - last_data_pos_;
+
+        const RdataFieldSpec& field = encode_spec_->fields[current_field_];
+        if (field.type == RdataFieldSpec::FIXEDLEN_DATA) {
+            // The data length of a fixed length field must be the one
+            // specified in the field spec.
+            if (data_len != field.fixeddata_len) {
+                isc_throw(BadValue,
+                          "RDATA encoding: available data too short for the "
+                          "type");
             }
-            ++current_field_;
-            if (field.type == RdataFieldSpec::FIXEDLEN_DATA) {
-                if (data_len < field.fixeddata_len) {
-                    isc_throw(BadValue,
-                              "RDATA encoding: available data too short "
-                              "for the type");
-                }
-                data_len -= field.fixeddata_len;
-                continue;
-            }
-            // We are looking at a variable-length data field.  For encoding
-            // purposes, it's a single field covering all data, even if it
-            // may consist of multiple fields as DNS RDATA (e.g. TXT).
+        } else {
+            // For encoding purposes, a variable-length data field is
+            // a single field covering all data, even if it may
+            // consist of multiple fields as DNS RDATA (e.g. TXT).
             if (data_len > 0xffff) {
                 isc_throw(RdataEncodingError, "RDATA field is too large: "
                           << data_len << " bytes");
             }
             data_lengths_.push_back(data_len);
-            data_len = 0;
-            break;
         }
 
-        // We've reached the end of the RDATA or just consumed a variable
-        // length data field.  So we should have eaten all available data
-        // at this moment.
-        if (data_len != 0) {
-            isc_throw(BadValue, "redundant data for encoding in RDATA");
-        }
-
+        ++current_field_;
         last_data_pos_ = cur_pos;
     }
 
