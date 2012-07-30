@@ -490,6 +490,37 @@ public:
         /// \return number of received packets.
         uint64_t getRcvdPacketsNum() const { return(rcvd_packets_num_); }
 
+        /// \brief Print main statistics for packet exchange.
+        ///
+        /// Method prints main statistics for particular exchange.
+        /// Statistics includes: number of sent and received packets,
+        /// number of dropped packets and number of orphans.
+        void printMainStats() const {
+            using namespace std;
+            uint64_t drops = getRcvdPacketsNum() - getSentPacketsNum();
+            cout << "sent packets: " << getSentPacketsNum() << endl
+                 << "received packets: " << getRcvdPacketsNum() << endl
+                 << "drops: " << drops << endl
+                 << "orphans: " << getOrphans() << endl;
+        }
+
+        /// \brief Print round trip time packets statistics.
+        ///
+        /// Method prints round trip time packets statistics. Statistics
+        /// includes minimum packet delay, maximum packet delay, average
+        /// packet delay and standard deviation of delays. Packet delay
+        /// is a duration between sending a packet to server and receiving
+        /// response from server.
+        void printRTTStats() const {
+            using namespace std;
+            cout << fixed << setprecision(3)
+                 << "min delay: " << getMinDelay() * 1e3 << " ms" << endl
+                 << "avg delay: " << getAvgDelay() * 1e3 << " ms" << endl
+                 << "max delay: " << getMaxDelay() * 1e3 << " ms" << endl
+                 << "std deviation: " << getStdDevDelay() * 1e3 << " ms"
+                 << endl;
+        }
+
         //// \brief Print timestamps for sent and received packets.
         ///
         /// Method prints timestamps for all sent and received packets for
@@ -875,53 +906,27 @@ public:
         }
     }
 
-    /// \brief Print main statistics for all exchange types.
+   /// \brief Print statistics counters for all exchange types.
     ///
-    /// Method prints main statistics for all exchange types.
-    /// Statistics includes: number of sent and received packets,
-    /// number of dropped packets and number of orphans.
-    void printMainStats() const {
+    /// Method prints statistics for all exchange types.
+    /// Statistics includes:
+    /// - number of sent and received packets
+    /// - number of dropped packets and number of orphans
+    /// - minimum packets delay,
+    /// - average packets delay,
+    /// - maximum packets delay,
+    /// - standard deviation of packets delay.
+     void printStats() const {
         for (ExchangesMapIterator it = exchanges_.begin();
              it != exchanges_.end();
              ++it) {
             ExchangeStatsPtr xchg_stats = it->second;
-            uint64_t drops = xchg_stats->getRcvdPacketsNum() -
-                xchg_stats->getSentPacketsNum();
-            std::cout << "***Statistics for packet exchange "
-                      << exchangeToString(it->first) << "***" << std::endl
-                      << "sent: " << xchg_stats->getSentPacketsNum() << ", "
-                      << "received: " << xchg_stats->getRcvdPacketsNum()
-                      << std::endl
-                      << "drops: " << drops << ", orphans: "
-                      << xchg_stats->getOrphans()
-                      << std::endl << std::endl;
-        }
-    }
-
-    /// \brief Print round trip time packets statistics.
-    ///
-    /// Method prints round trip time packets statistics. Statistics
-    /// includes minimum packet delay, maximum packet delay, average
-    /// packet delay and standard deviation of delays. Packet delay
-    /// is a duration between sending a packet to server and receiving
-    /// response from server.
-    void printRTTStats() const {
-        using namespace std;
-        for (ExchangesMapIterator it = exchanges_.begin();
-             it != exchanges_.end();
-             ++it) {
-            ExchangeStatsPtr xchg_stats = it->second;
-            cout << "***Round trip time Statistics for packet exchange "
-                 << exchangeToString(it->first) << "***" << endl
-                 << fixed << setprecision(3)
-                 << "min delay: " << xchg_stats->getMinDelay() * 1e3
-                 << " ms" << endl
-                 << "avg delay: " <<  xchg_stats->getAvgDelay() * 1e3
-                 << " ms" << endl
-                 << "max delay: " << xchg_stats->getMaxDelay() * 1e3
-                 << " ms" << endl
-                 << "std deviation: " << xchg_stats->getStdDevDelay() * 1e3
-                 << " ms" << endl << endl;
+            std::cout << "***Statistics for: " << exchangeToString(it->first)
+                      << "***" << std::endl;
+            xchg_stats->printMainStats();
+            std::cout << std::endl;
+            xchg_stats->printRTTStats();
+            std::cout << std::endl;
         }
     }
 
@@ -937,8 +942,9 @@ public:
              it != exchanges_.end();
              ++it) {
             ExchangeStatsPtr xchg_stats = it->second;
-            std::cout << "***Timestamps for packets in exchange "
-                      << exchangeToString(it->first) << "***" << std::endl;
+            std::cout << "***Timestamps for packets: "
+                      << exchangeToString(it->first)
+                      << "***" << std::endl;
             xchg_stats->printTimestamps();
             std::cout << std::endl;
         }
