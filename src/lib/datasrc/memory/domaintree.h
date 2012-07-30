@@ -43,7 +43,7 @@ namespace memory {
 
 /// Forward declare DomainTree class here is convinent for following friend
 /// class declare inside DomainTreeNode and DomainTreeNodeChain
-template <typename T>
+template <typename T, typename DT>
 class DomainTree;
 
 /// \brief \c DomainTreeNode is used by DomainTree to store any data related to one domain
@@ -76,18 +76,18 @@ class DomainTree;
 /// as opaque binary immediately following the main node object.  The size
 /// of the allocated space for the labels data is encoded by borrowing some
 /// bits of the "flags" field.
-template <typename T>
+template <typename T, typename DT>
 class DomainTreeNode : public boost::noncopyable {
 private:
     /// The DomainTreeNode is meant for use from within DomainTree, so it has access to
     /// it.
-    friend class DomainTree<T>;
+    friend class DomainTree<T,DT>;
 
     /// \brief Just a type alias
     ///
     /// We are going to use a lot of these offset pointers here and they
     /// have a long name.
-    typedef boost::interprocess::offset_ptr<DomainTreeNode<T> > DomainTreeNodePtr;
+    typedef boost::interprocess::offset_ptr<DomainTreeNode<T,DT> > DomainTreeNodePtr;
 
     /// \name Constructors
     ///
@@ -127,12 +127,12 @@ private:
     ///
     /// \param mem_sgmt A \c MemorySegment from which memory for the new
     /// \c DomainTreeNode is allocated.
-    static DomainTreeNode<T>* create(util::MemorySegment& mem_sgmt,
+    static DomainTreeNode<T,DT>* create(util::MemorySegment& mem_sgmt,
                              const dns::LabelSequence& labels)
     {
         const size_t labels_len = labels.getSerializedLength();
-        void* p = mem_sgmt.allocate(sizeof(DomainTreeNode<T>) + labels_len);
-        DomainTreeNode<T>* node = new(p) DomainTreeNode<T>(labels_len);
+        void* p = mem_sgmt.allocate(sizeof(DomainTreeNode<T,DT>) + labels_len);
+        DomainTreeNode<T,DT>* node = new(p) DomainTreeNode<T,DT>(labels_len);
         labels.serialize(node->getLabelsData(), labels_len);
         return (node);
     }
@@ -146,10 +146,10 @@ private:
     /// \param rbnode A non NULL pointer to a valid \c DomainTreeNode object
     /// that was originally created by the \c create() method (the behavior
     /// is undefined if this condition isn't met).
-    static void destroy(util::MemorySegment& mem_sgmt, DomainTreeNode<T>* rbnode) {
+    static void destroy(util::MemorySegment& mem_sgmt, DomainTreeNode<T,DT>* rbnode) {
         const size_t labels_capacity = rbnode->labels_capacity_;
-        rbnode->~DomainTreeNode<T>();
-        mem_sgmt.deallocate(rbnode, sizeof(DomainTreeNode<T>) + labels_capacity);
+        rbnode->~DomainTreeNode<T,DT>();
+        mem_sgmt.deallocate(rbnode, sizeof(DomainTreeNode<T,DT>) + labels_capacity);
     }
 
     /// \brief Reset node's label sequence to a new one.
@@ -161,9 +161,6 @@ private:
     }
 
 public:
-    /// \brief Alias for shared pointer to the data.
-    typedef boost::shared_ptr<T> NodeDataPtr;
-
     /// Node flags.
     ///
     /// Each flag value defines a non default property for a specific node.
@@ -225,22 +222,27 @@ public:
     /// \brief Return the data stored in this node.
     ///
     /// You should not delete the data, it is handled by shared pointers.
-    NodeDataPtr& getData() { return (data_); }
+    T* getData() { return (data_); }
     /// \brief Return the data stored in this node.
-    const NodeDataPtr& getData() const { return (data_); }
+    const T* getData() const { return (data_); }
 
     /// \brief return whether the node has related data.
     ///
     /// There can be empty nodes inside the DomainTree. They are usually the
     /// non-terminal domains, but it is possible (yet probably meaningless)
     /// empty nodes anywhere.
-    bool isEmpty() const { return (data_.get() == NULL); }
+    bool isEmpty() const { return (data_ == NULL); }
     //@}
 
     /// \name Setter functions.
     //@{
     /// \brief Set the data stored in the node.
-    void setData(const NodeDataPtr& data) { data_ = data; }
+    void setData(T* data) {
+        const DT deleter;
+        deleter(data_);
+
+        data_ = data;
+    }
     //@}
 
     /// \name Node flag manipulation methods
@@ -291,7 +293,7 @@ public:
 private:
     /// \name Callback related methods
     ///
-    /// See the description of \c DomainTree<T>::find() at \ref callback
+    /// See the description of \c DomainTree<T,DT>::find() at \ref callback
     /// about callbacks.
     ///
     /// These methods never throw an exception.
@@ -342,7 +344,7 @@ public:
     /// (which should be absolute), it will return \c NULL.
     ///
     /// This method never throws an exception.
-    const DomainTreeNode<T>* getUpperNode() const;
+    const DomainTreeNode<T,DT>* getUpperNode() const;
 
 private:
     /// \brief return the next node which is bigger than current node
@@ -360,7 +362,7 @@ private:
     /// returns \c NULL.
     ///
     /// This method never throws an exception.
-    const DomainTreeNode<T>* successor() const;
+    const DomainTreeNode<T,DT>* successor() const;
 
     /// \brief return the next node which is smaller than current node
     /// in the same subtree
@@ -377,7 +379,7 @@ private:
     /// returns \c NULL.
     ///
     /// This method never throws an exception.
-    const DomainTreeNode<T>* predecessor() const;
+    const DomainTreeNode<T,DT>* predecessor() const;
 
     /// \brief private shared implementation of successor and predecessor
     ///
@@ -390,9 +392,9 @@ private:
     /// The overhead of the member pointers should be optimised out, as this
     /// will probably get completely inlined into predecessor and successor
     /// methods.
-    const DomainTreeNode<T>*
-        abstractSuccessor(typename DomainTreeNode<T>::DomainTreeNodePtr DomainTreeNode<T>::*left,
-                          typename DomainTreeNode<T>::DomainTreeNodePtr DomainTreeNode<T>::*right)
+    const DomainTreeNode<T,DT>*
+        abstractSuccessor(typename DomainTreeNode<T,DT>::DomainTreeNodePtr DomainTreeNode<T,DT>::*left,
+                          typename DomainTreeNode<T,DT>::DomainTreeNodePtr DomainTreeNode<T,DT>::*right)
         const;
 
     /// \name Data to maintain the rbtree structure.
@@ -405,35 +407,35 @@ private:
     //@{
     DomainTreeNodePtr parent_;
     /// \brief Access the parent_ as bare pointer.
-    DomainTreeNode<T>* getParent() {
+    DomainTreeNode<T,DT>* getParent() {
         return (parent_.get());
     }
     /// \brief Access the parent_ as bare pointer, const.
-    const DomainTreeNode<T>* getParent() const {
+    const DomainTreeNode<T,DT>* getParent() const {
         return (parent_.get());
     }
     DomainTreeNodePtr left_;
     /// \brief Access the left_ as bare pointer.
-    DomainTreeNode<T>* getLeft() {
+    DomainTreeNode<T,DT>* getLeft() {
         return (left_.get());
     }
     /// \brief Access the left_ as bare pointer, const.
-    const DomainTreeNode<T>* getLeft() const {
+    const DomainTreeNode<T,DT>* getLeft() const {
         return (left_.get());
     }
     DomainTreeNodePtr right_;
     /// \brief Access the right_ as bare pointer.
-    DomainTreeNode<T>* getRight() {
+    DomainTreeNode<T,DT>* getRight() {
         return (right_.get());
     }
     /// \brief Access the right_ as bare pointer, const.
-    const DomainTreeNode<T>* getRight() const {
+    const DomainTreeNode<T,DT>* getRight() const {
         return (right_.get());
     }
     //@}
 
     /// \brief Data stored here.
-    NodeDataPtr       data_;
+    T* data_;
 
     /// \brief The subdomain tree.
     ///
@@ -446,11 +448,11 @@ private:
     ///     avoiding storage of the same domain labels multiple times.
     DomainTreeNodePtr down_;
     /// \brief Access the down_ as bare pointer.
-    DomainTreeNode<T>* getDown() {
+    DomainTreeNode<T,DT>* getDown() {
         return (down_.get());
     }
     /// \brief Access the down_ as bare pointer, const.
-    const DomainTreeNode<T>* getDown() const {
+    const DomainTreeNode<T,DT>* getDown() const {
         return (down_.get());
     }
 
@@ -474,8 +476,8 @@ private:
     BOOST_STATIC_ASSERT((1 << 9) > dns::LabelSequence::MAX_SERIALIZED_LENGTH);
 };
 
-template <typename T>
-DomainTreeNode<T>::DomainTreeNode(size_t labels_capacity) :
+template <typename T, typename DT>
+DomainTreeNode<T,DT>::DomainTreeNode(size_t labels_capacity) :
     parent_(NULL),
     left_(NULL),
     right_(NULL),
@@ -483,16 +485,17 @@ DomainTreeNode<T>::DomainTreeNode(size_t labels_capacity) :
     flags_(FLAG_RED | FLAG_SUBTREE_ROOT),
     labels_capacity_(labels_capacity)
 {
+    data_ = NULL;
 }
 
-template <typename T>
-DomainTreeNode<T>::~DomainTreeNode() {
+template <typename T, typename DT>
+DomainTreeNode<T,DT>::~DomainTreeNode() {
 }
 
-template <typename T>
-const DomainTreeNode<T>*
-DomainTreeNode<T>::getUpperNode() const {
-    const DomainTreeNode<T>* current = this;
+template <typename T, typename DT>
+const DomainTreeNode<T,DT>*
+DomainTreeNode<T,DT>::getUpperNode() const {
+    const DomainTreeNode<T,DT>* current = this;
 
     // current would never be equal to NULL here (in a correct tree
     // implementation)
@@ -503,10 +506,10 @@ DomainTreeNode<T>::getUpperNode() const {
     return (current->getParent());
 }
 
-template <typename T>
-const DomainTreeNode<T>*
-DomainTreeNode<T>::abstractSuccessor(typename DomainTreeNode<T>::DomainTreeNodePtr DomainTreeNode<T>::*left,
-                             typename DomainTreeNode<T>::DomainTreeNodePtr DomainTreeNode<T>::*right)
+template <typename T, typename DT>
+const DomainTreeNode<T,DT>*
+DomainTreeNode<T,DT>::abstractSuccessor(typename DomainTreeNode<T,DT>::DomainTreeNodePtr DomainTreeNode<T,DT>::*left,
+                             typename DomainTreeNode<T,DT>::DomainTreeNodePtr DomainTreeNode<T,DT>::*right)
     const
 {
     // This function is written as a successor. It becomes predecessor if
@@ -514,12 +517,12 @@ DomainTreeNode<T>::abstractSuccessor(typename DomainTreeNode<T>::DomainTreeNodeP
     // the left pointer points to right and vice versa. Don't get confused
     // by the idea, just imagine the pointers look into a mirror.
 
-    const DomainTreeNode<T>* current = this;
+    const DomainTreeNode<T,DT>* current = this;
     // If it has right node, the successor is the left-most node of the right
     // subtree.
     if ((current->*right).get() != NULL) {
         current = (current->*right).get();
-        const DomainTreeNode<T>* left_n;
+        const DomainTreeNode<T,DT>* left_n;
         while ((left_n = (current->*left).get()) != NULL) {
             current = left_n;
         }
@@ -529,7 +532,7 @@ DomainTreeNode<T>::abstractSuccessor(typename DomainTreeNode<T>::DomainTreeNodeP
     // Otherwise go up until we find the first left branch on our path to
     // root.  If found, the parent of the branch is the successor.
     // Otherwise, we return the null node
-    const DomainTreeNode<T>* parent = current->getParent();
+    const DomainTreeNode<T,DT>* parent = current->getParent();
     while ((!current->isSubTreeRoot()) &&
            (current == (parent->*right).get())) {
         current = parent;
@@ -543,17 +546,17 @@ DomainTreeNode<T>::abstractSuccessor(typename DomainTreeNode<T>::DomainTreeNodeP
     }
 }
 
-template <typename T>
-const DomainTreeNode<T>*
-DomainTreeNode<T>::successor() const {
-    return (abstractSuccessor(&DomainTreeNode<T>::left_, &DomainTreeNode<T>::right_));
+template <typename T, typename DT>
+const DomainTreeNode<T,DT>*
+DomainTreeNode<T,DT>::successor() const {
+    return (abstractSuccessor(&DomainTreeNode<T,DT>::left_, &DomainTreeNode<T,DT>::right_));
 }
 
-template <typename T>
-const DomainTreeNode<T>*
-DomainTreeNode<T>::predecessor() const {
+template <typename T, typename DT>
+const DomainTreeNode<T,DT>*
+DomainTreeNode<T,DT>::predecessor() const {
     // Swap the left and right pointers for the abstractSuccessor
-    return (abstractSuccessor(&DomainTreeNode<T>::right_, &DomainTreeNode<T>::left_));
+    return (abstractSuccessor(&DomainTreeNode<T,DT>::right_, &DomainTreeNode<T,DT>::left_));
 }
 
 /// \brief DomainTreeNodeChain stores detailed information of \c DomainTree::find()
@@ -590,11 +593,11 @@ DomainTreeNode<T>::predecessor() const {
 /// DomainTree.
 /// This is the reason why manipulation methods such as \c push() and \c pop()
 /// are private (and not shown in the doxygen document).
-template <typename T>
+template <typename T, typename DT>
 class DomainTreeNodeChain {
     /// DomainTreeNodeChain is initialized by DomainTree, only DomainTree has
     /// knowledge to manipulate it.
-    friend class DomainTree<T>;
+    friend class DomainTree<T,DT>;
 public:
     /// \name Constructors and Assignment Operator.
     ///
@@ -614,8 +617,8 @@ public:
     {}
 
 private:
-    DomainTreeNodeChain(const DomainTreeNodeChain<T>&);
-    DomainTreeNodeChain<T>& operator=(const DomainTreeNodeChain<T>&);
+    DomainTreeNodeChain(const DomainTreeNodeChain<T,DT>&);
+    DomainTreeNodeChain<T,DT>& operator=(const DomainTreeNodeChain<T,DT>&);
     //@}
 
 public:
@@ -641,7 +644,7 @@ public:
     /// this method returns \c NULL.
     ///
     /// \exception None
-    const DomainTreeNode<T>* getLastComparedNode() const {
+    const DomainTreeNode<T,DT>* getLastComparedNode() const {
         return (last_compared_);
     }
 
@@ -681,7 +684,7 @@ public:
                       "chain");
         }
 
-        const DomainTreeNode<T>* top_node = top();
+        const DomainTreeNode<T,DT>* top_node = top();
         isc::dns::Name absolute_name = top_node->getName();
         int node_count = node_count_ - 1;
         while (node_count > 0) {
@@ -709,7 +712,7 @@ private:
     /// root node of DomainTree
     ///
     /// \exception None
-    const DomainTreeNode<T>* top() const {
+    const DomainTreeNode<T,DT>* top() const {
         assert(!isEmpty());
         return (nodes_[node_count_ - 1]);
     }
@@ -732,7 +735,7 @@ private:
     /// otherwise the node should be the root node of DomainTree.
     ///
     /// \exception None
-    void push(const DomainTreeNode<T>* node) {
+    void push(const DomainTreeNode<T,DT>* node) {
         assert(node_count_ < RBT_MAX_LEVEL);
         nodes_[node_count_++] = node;
     }
@@ -744,8 +747,8 @@ private:
     const static int RBT_MAX_LEVEL = isc::dns::Name::MAX_LABELS;
 
     int node_count_;
-    const DomainTreeNode<T>* nodes_[RBT_MAX_LEVEL];
-    const DomainTreeNode<T>* last_compared_;
+    const DomainTreeNode<T,DT>* nodes_[RBT_MAX_LEVEL];
+    const DomainTreeNode<T,DT>* last_compared_;
     isc::dns::NameComparisonResult last_comparison_;
 };
 
@@ -813,9 +816,9 @@ private:
  *  \todo
  *  - add remove interface
  */
-template <typename T>
+template <typename T, typename DT>
 class DomainTree : public boost::noncopyable {
-    friend class DomainTreeNode<T>;
+    friend class DomainTreeNode<T,DT>;
 public:
     /// \brief The return value for the \c find() and insert() methods
     enum Result {
@@ -841,8 +844,8 @@ public:
     static DomainTree* create(util::MemorySegment& mem_sgmt,
                           bool return_empty_node = false)
     {
-        void* p = mem_sgmt.allocate(sizeof(DomainTree<T>));
-        return (new(p) DomainTree<T>(return_empty_node));
+        void* p = mem_sgmt.allocate(sizeof(DomainTree<T,DT>));
+        return (new(p) DomainTree<T,DT>(return_empty_node));
     }
 
     /// \brief Destruct and deallocate \c DomainTree
@@ -870,10 +873,10 @@ public:
     /// \param rbtree A non NULL pointer to a valid \c DomainTree object
     /// that was originally created by the \c create() method (the behavior
     /// is undefined if this condition isn't met).
-    static void destroy(util::MemorySegment& mem_sgmt, DomainTree<T>* rbtree) {
+    static void destroy(util::MemorySegment& mem_sgmt, DomainTree<T,DT>* rbtree) {
         rbtree->deleteAllNodes(mem_sgmt);
-        rbtree->~DomainTree<T>();
-        mem_sgmt.deallocate(rbtree, sizeof(DomainTree<T>));
+        rbtree->~DomainTree<T,DT>();
+        mem_sgmt.deallocate(rbtree, sizeof(DomainTree<T,DT>));
     }
 
 private:
@@ -947,8 +950,8 @@ public:
     /// \brief Simple find.
     ///
     /// Acts as described in the \ref find section.
-    Result find(const isc::dns::Name& name, DomainTreeNode<T>** node) const {
-        DomainTreeNodeChain<T> node_path;
+    Result find(const isc::dns::Name& name, DomainTreeNode<T,DT>** node) const {
+        DomainTreeNodeChain<T,DT> node_path;
         const isc::dns::LabelSequence ls(name);
         return (find<void*>(ls, node, node_path, NULL, NULL));
     }
@@ -957,9 +960,9 @@ public:
     ///
     /// Acts as described in the \ref find section, but returns immutable node
     /// pointer.
-    Result find(const isc::dns::Name& name, const DomainTreeNode<T>** node) const {
-        DomainTreeNodeChain<T> node_path;
-        DomainTreeNode<T> *target_node = NULL;
+    Result find(const isc::dns::Name& name, const DomainTreeNode<T,DT>** node) const {
+        DomainTreeNodeChain<T,DT> node_path;
+        DomainTreeNode<T,DT> *target_node = NULL;
         const isc::dns::LabelSequence ls(name);
         Result ret = (find<void*>(ls, &target_node, node_path, NULL, NULL));
         if (ret != NOTFOUND) {
@@ -971,8 +974,8 @@ public:
     /// \brief Simple find, with node_path tracking
     ///
     /// Acts as described in the \ref find section.
-    Result find(const isc::dns::Name& name, DomainTreeNode<T>** node,
-                DomainTreeNodeChain<T>& node_path) const
+    Result find(const isc::dns::Name& name, DomainTreeNode<T,DT>** node,
+                DomainTreeNodeChain<T,DT>& node_path) const
     {
         const isc::dns::LabelSequence ls(name);
         return (find<void*>(ls, node, node_path, NULL, NULL));
@@ -982,10 +985,10 @@ public:
     ///
     /// Acts as described in the \ref find section, but returns immutable node
     /// pointer.
-    Result find(const isc::dns::Name& name, const DomainTreeNode<T>** node,
-                DomainTreeNodeChain<T>& node_path) const
+    Result find(const isc::dns::Name& name, const DomainTreeNode<T,DT>** node,
+                DomainTreeNodeChain<T,DT>& node_path) const
     {
-        DomainTreeNode<T> *target_node = NULL;
+        DomainTreeNode<T,DT> *target_node = NULL;
         const isc::dns::LabelSequence ls(name);
         Result ret = (find<void*>(ls, &target_node, node_path, NULL, NULL));
         if (ret != NOTFOUND) {
@@ -1000,12 +1003,12 @@ public:
     /// node pointer.
     template <typename CBARG>
     Result find(const isc::dns::Name& name,
-                const DomainTreeNode<T>** node,
-                DomainTreeNodeChain<T>& node_path,
-                bool (*callback)(const DomainTreeNode<T>&, CBARG),
+                const DomainTreeNode<T,DT>** node,
+                DomainTreeNodeChain<T,DT>& node_path,
+                bool (*callback)(const DomainTreeNode<T,DT>&, CBARG),
                 CBARG callback_arg) const
     {
-        DomainTreeNode<T>* target_node = NULL;
+        DomainTreeNode<T,DT>* target_node = NULL;
         const isc::dns::LabelSequence ls(name);
         Result ret = find(ls, &target_node, node_path, callback,
                           callback_arg);
@@ -1089,9 +1092,9 @@ public:
     ///     \c true, it returns immediately with the current node.
     template <typename CBARG>
     Result find(const isc::dns::LabelSequence& target_labels_orig,
-                DomainTreeNode<T>** node,
-                DomainTreeNodeChain<T>& node_path,
-                bool (*callback)(const DomainTreeNode<T>&, CBARG),
+                DomainTreeNode<T,DT>** node,
+                DomainTreeNodeChain<T,DT>& node_path,
+                bool (*callback)(const DomainTreeNode<T,DT>&, CBARG),
                 CBARG callback_arg) const;
 
     /// \brief Simple find returning immutable node.
@@ -1100,12 +1103,12 @@ public:
     /// node pointer.
     template <typename CBARG>
     Result find(const isc::dns::LabelSequence& target_labels,
-                const DomainTreeNode<T>** node,
-                DomainTreeNodeChain<T>& node_path,
-                bool (*callback)(const DomainTreeNode<T>&, CBARG),
+                const DomainTreeNode<T,DT>** node,
+                DomainTreeNodeChain<T,DT>& node_path,
+                bool (*callback)(const DomainTreeNode<T,DT>&, CBARG),
                 CBARG callback_arg) const
     {
-        DomainTreeNode<T>* target_node = NULL;
+        DomainTreeNode<T,DT>* target_node = NULL;
         Result ret = find(target_labels, &target_node, node_path,
                           callback, callback_arg);
         if (ret != NOTFOUND) {
@@ -1138,7 +1141,7 @@ public:
     ///
     /// \return An \c DomainTreeNode that is next bigger than \c node; if \c node is
     /// the largest, \c NULL will be returned.
-    const DomainTreeNode<T>* nextNode(DomainTreeNodeChain<T>& node_path) const;
+    const DomainTreeNode<T,DT>* nextNode(DomainTreeNodeChain<T,DT>& node_path) const;
 
     /// \brief return the next smaller node in DNSSEC order from a node
     ///     searched by DomainTree::find().
@@ -1162,7 +1165,7 @@ public:
     ///
     /// \return An \c DomainTreeNode that is next smaller than \c node; if \c node is
     /// the smallest, \c NULL will be returned.
-    const DomainTreeNode<T>* previousNode(DomainTreeNodeChain<T>& node_path) const;
+    const DomainTreeNode<T,DT>* previousNode(DomainTreeNodeChain<T,DT>& node_path) const;
 
     /// \brief Get the total number of nodes in the tree
     ///
@@ -1225,7 +1228,7 @@ public:
     ///  - ALREADYEXISTS There was already a node of that name, so it was not
     ///     added.
     Result insert(util::MemorySegment& mem_sgmt, const isc::dns::Name& name,
-                  DomainTreeNode<T>** inserted_node);
+                  DomainTreeNode<T,DT>** inserted_node);
 
     /// \brief Delete all tree nodes.
     ///
@@ -1244,7 +1247,7 @@ public:
     ///
     /// This acts the same as many std::*.swap functions, exchanges the
     /// contents. This doesn't throw anything.
-    void swap(DomainTree<T>& other) {
+    void swap(DomainTree<T,DT>& other) {
         std::swap(root_, other.root_);
         std::swap(node_count_, other.node_count_);
     }
@@ -1253,24 +1256,25 @@ public:
 private:
     /// \name DomainTree balance functions
     //@{
-    void insertRebalance(typename DomainTreeNode<T>::DomainTreeNodePtr* root, DomainTreeNode<T>* node);
-    DomainTreeNode<T>* rightRotate(typename DomainTreeNode<T>::DomainTreeNodePtr* root,
-                           DomainTreeNode<T>* node);
-    DomainTreeNode<T>* leftRotate(typename DomainTreeNode<T>::DomainTreeNodePtr* root,
-                          DomainTreeNode<T>* node);
+    void insertRebalance(typename DomainTreeNode<T,DT>::DomainTreeNodePtr* root, DomainTreeNode<T,DT>* node);
+    DomainTreeNode<T,DT>* rightRotate(typename DomainTreeNode<T,DT>::DomainTreeNodePtr* root,
+                           DomainTreeNode<T,DT>* node);
+    DomainTreeNode<T,DT>* leftRotate(typename DomainTreeNode<T,DT>::DomainTreeNodePtr* root,
+                          DomainTreeNode<T,DT>* node);
     //@}
 
     /// \name Helper functions
     //@{
     /// \brief delete tree whose root is equal to node
-    void deleteHelper(util::MemorySegment& mem_sgmt, DomainTreeNode<T> *node);
+    void deleteHelper(util::MemorySegment& mem_sgmt, DomainTreeNode<T,DT> *node,
+		      const DT& deleter);
 
     /// \brief Print the information of given DomainTreeNode.
-    void dumpTreeHelper(std::ostream& os, const DomainTreeNode<T>* node,
+    void dumpTreeHelper(std::ostream& os, const DomainTreeNode<T,DT>* node,
                         unsigned int depth) const;
 
     /// \brief Print the information of given DomainTreeNode for dot.
-    int dumpDotHelper(std::ostream& os, const DomainTreeNode<T>* node,
+    int dumpDotHelper(std::ostream& os, const DomainTreeNode<T,DT>* node,
                       int* nodecount, bool show_pointers) const;
 
     /// \brief Indentation helper function for dumpTree
@@ -1282,79 +1286,82 @@ private:
     /// The newly created node represents the labels that the original node
     /// did, so necessary data are swapped.
     /// (Note: as commented in the code, this behavior should be changed).
-    void nodeFission(util::MemorySegment& mem_sgmt, DomainTreeNode<T>& node,
+    void nodeFission(util::MemorySegment& mem_sgmt, DomainTreeNode<T,DT>& node,
                      const isc::dns::LabelSequence& new_prefix,
                      const isc::dns::LabelSequence& new_suffix);
     //@}
 
-    typename DomainTreeNode<T>::DomainTreeNodePtr root_;
+    typename DomainTreeNode<T,DT>::DomainTreeNodePtr root_;
     /// the node count of current tree
     unsigned int node_count_;
     /// search policy for rbtree
     const bool needsReturnEmptyNode_;
 };
 
-template <typename T>
-DomainTree<T>::DomainTree(bool returnEmptyNode) :
+template <typename T, typename DT>
+DomainTree<T,DT>::DomainTree(bool returnEmptyNode) :
     root_(NULL),
     node_count_(0),
     needsReturnEmptyNode_(returnEmptyNode)
 {
 }
 
-template <typename T>
-DomainTree<T>::~DomainTree() {
+template <typename T, typename DT>
+DomainTree<T,DT>::~DomainTree() {
     assert(node_count_ == 0);
 }
 
-template <typename T>
+template <typename T, typename DT>
 void
-DomainTree<T>::deleteHelper(util::MemorySegment& mem_sgmt, DomainTreeNode<T>* root) {
+DomainTree<T,DT>::deleteHelper(util::MemorySegment& mem_sgmt, DomainTreeNode<T,DT>* root,
+			       const DT& deleter) {
     if (root == NULL) {
         return;
     }
 
-    DomainTreeNode<T>* node = root;
+    DomainTreeNode<T,DT>* node = root;
     while (root->getLeft() != NULL || root->getRight() != NULL) {
-        DomainTreeNode<T>* left(NULL);
-        DomainTreeNode<T>* right(NULL);
+        DomainTreeNode<T,DT>* left(NULL);
+        DomainTreeNode<T,DT>* right(NULL);
         while ((left = node->getLeft()) != NULL ||
                (right = node->getRight()) != NULL) {
             node = (left != NULL) ? left : right;
         }
 
-        DomainTreeNode<T>* parent = node->getParent();
+        DomainTreeNode<T,DT>* parent = node->getParent();
         if (parent->getLeft() == node) {
             parent->left_ = NULL;
         } else {
             parent->right_ = NULL;
         }
 
-        deleteHelper(mem_sgmt, node->getDown());
-        DomainTreeNode<T>::destroy(mem_sgmt, node);
+        deleteHelper(mem_sgmt, node->getDown(), deleter);
+	deleter(node->data_);
+        DomainTreeNode<T,DT>::destroy(mem_sgmt, node);
         --node_count_;
         node = parent;
     }
 
-    deleteHelper(mem_sgmt, root->getDown());
-    DomainTreeNode<T>::destroy(mem_sgmt, root);
+    deleteHelper(mem_sgmt, root->getDown(), deleter);
+    deleter(root->data_);
+    DomainTreeNode<T,DT>::destroy(mem_sgmt, root);
     --node_count_;
 }
 
-template <typename T>
+template <typename T, typename DT>
 template <typename CBARG>
-typename DomainTree<T>::Result
-DomainTree<T>::find(const isc::dns::LabelSequence& target_labels_orig,
-                DomainTreeNode<T>** target,
-                DomainTreeNodeChain<T>& node_path,
-                bool (*callback)(const DomainTreeNode<T>&, CBARG),
+typename DomainTree<T,DT>::Result
+DomainTree<T,DT>::find(const isc::dns::LabelSequence& target_labels_orig,
+                DomainTreeNode<T,DT>** target,
+                DomainTreeNodeChain<T,DT>& node_path,
+                bool (*callback)(const DomainTreeNode<T,DT>&, CBARG),
                 CBARG callback_arg) const
 {
     if (!node_path.isEmpty()) {
         isc_throw(isc::BadValue, "DomainTree::find is given a non empty chain");
     }
 
-    DomainTreeNode<T>* node = root_.get();
+    DomainTreeNode<T,DT>* node = root_.get();
     Result ret = NOTFOUND;
     dns::LabelSequence target_labels(target_labels_orig);
 
@@ -1382,7 +1389,7 @@ DomainTree<T>::find(const isc::dns::LabelSequence& target_labels_orig,
                     ret = PARTIALMATCH;
                     *target = node;
                     if (callback != NULL &&
-                        node->getFlag(DomainTreeNode<T>::FLAG_CALLBACK)) {
+                        node->getFlag(DomainTreeNode<T,DT>::FLAG_CALLBACK)) {
                         if ((callback)(*node, callback_arg)) {
                             break;
                         }
@@ -1401,19 +1408,19 @@ DomainTree<T>::find(const isc::dns::LabelSequence& target_labels_orig,
     return (ret);
 }
 
-template <typename T>
-const DomainTreeNode<T>*
-DomainTree<T>::nextNode(DomainTreeNodeChain<T>& node_path) const {
+template <typename T, typename DT>
+const DomainTreeNode<T,DT>*
+DomainTree<T,DT>::nextNode(DomainTreeNodeChain<T,DT>& node_path) const {
     if (node_path.isEmpty()) {
         isc_throw(isc::BadValue, "DomainTree::nextNode is given an empty chain");
     }
 
-    const DomainTreeNode<T>* node = node_path.top();
+    const DomainTreeNode<T,DT>* node = node_path.top();
     // if node has sub domain, the next domain is the smallest
     // domain in sub domain tree
-    const DomainTreeNode<T>* down = node->getDown();
+    const DomainTreeNode<T,DT>* down = node->getDown();
     if (down != NULL) {
-        const DomainTreeNode<T>* left_most = down;
+        const DomainTreeNode<T,DT>* left_most = down;
         while (left_most->getLeft() != NULL) {
             left_most = left_most->getLeft();
         }
@@ -1427,7 +1434,7 @@ DomainTree<T>::nextNode(DomainTreeNodeChain<T>& node_path) const {
     // up node doesn't have successor we gonna keep moving to up
     // level
     while (!node_path.isEmpty()) {
-        const DomainTreeNode<T>* up_node_successor = node_path.top()->successor();
+        const DomainTreeNode<T,DT>* up_node_successor = node_path.top()->successor();
         node_path.pop();
         if (up_node_successor != NULL) {
             node_path.push(up_node_successor);
@@ -1438,9 +1445,9 @@ DomainTree<T>::nextNode(DomainTreeNodeChain<T>& node_path) const {
     return (NULL);
 }
 
-template <typename T>
-const DomainTreeNode<T>*
-DomainTree<T>::previousNode(DomainTreeNodeChain<T>& node_path) const {
+template <typename T, typename DT>
+const DomainTreeNode<T,DT>*
+DomainTree<T,DT>::previousNode(DomainTreeNodeChain<T,DT>& node_path) const {
     if (getNodeCount() == 0) {
         // Special case for empty trees. It would look every time like
         // we didn't search, because the last compared is empty. This is
@@ -1480,13 +1487,13 @@ DomainTree<T>::previousNode(DomainTreeNodeChain<T>& node_path) const {
                 // compared one (it is either the compared one, or some
                 // subdomain of it). There probably is not an easy trick
                 // for this, so we just find the correct place.
-                const DomainTreeNode<T>* current(node_path.last_compared_);
+                const DomainTreeNode<T,DT>* current(node_path.last_compared_);
                 while (current != NULL) {
                     node_path.push(current);
                     // Go a level down and as much right there as possible
                     current = current->getDown();
                     if (current != NULL) {
-                        const DomainTreeNode<T>* right;
+                        const DomainTreeNode<T,DT>* right;
                         while ((right = current->getRight()) != NULL) {
                             current = right;
                         }
@@ -1537,7 +1544,7 @@ DomainTree<T>::previousNode(DomainTreeNodeChain<T>& node_path) const {
         return (NULL);
     }
 
-    const DomainTreeNode<T>* node(node_path.top());
+    const DomainTreeNode<T,DT>* node(node_path.top());
 
     // Try going left in this tree
     node = node->predecessor();
@@ -1560,13 +1567,13 @@ DomainTree<T>::previousNode(DomainTreeNodeChain<T>& node_path) const {
     node_path.push(node);
 
     // Try going as deep as possible, keeping on the right side of the trees
-    const DomainTreeNode<T>* down;
+    const DomainTreeNode<T,DT>* down;
     while ((down = node->getDown()) != NULL) {
         // Move to the tree below
         node = down;
         if (node != NULL) {
             // And get as much to the right of the tree as possible
-            const DomainTreeNode<T>* right;
+            const DomainTreeNode<T,DT>* right;
             while ((right = node->getRight()) != NULL) {
                 node = right;
             }
@@ -1581,14 +1588,14 @@ DomainTree<T>::previousNode(DomainTreeNodeChain<T>& node_path) const {
     return (node);
 }
 
-template <typename T>
-typename DomainTree<T>::Result
-DomainTree<T>::insert(util::MemorySegment& mem_sgmt,
-                  const isc::dns::Name& target_name, DomainTreeNode<T>** new_node)
+template <typename T, typename DT>
+typename DomainTree<T,DT>::Result
+DomainTree<T,DT>::insert(util::MemorySegment& mem_sgmt,
+                  const isc::dns::Name& target_name, DomainTreeNode<T,DT>** new_node)
 {
-    DomainTreeNode<T>* parent = NULL;
-    DomainTreeNode<T>* current = root_.get();
-    DomainTreeNode<T>* up_node = NULL;
+    DomainTreeNode<T,DT>* parent = NULL;
+    DomainTreeNode<T,DT>* current = root_.get();
+    DomainTreeNode<T,DT>* up_node = NULL;
     isc::dns::LabelSequence target_labels(target_name);
 
     int order = -1;
@@ -1627,16 +1634,16 @@ DomainTree<T>::insert(util::MemorySegment& mem_sgmt,
         }
     }
 
-    typename DomainTreeNode<T>::DomainTreeNodePtr* current_root = (up_node != NULL) ?
+    typename DomainTreeNode<T,DT>::DomainTreeNodePtr* current_root = (up_node != NULL) ?
         &(up_node->down_) : &root_;
     // Once a new node is created, no exception will be thrown until the end
     // of the function, so we can simply create and hold a new node pointer.
-    DomainTreeNode<T>* node = DomainTreeNode<T>::create(mem_sgmt, target_labels);
+    DomainTreeNode<T,DT>* node = DomainTreeNode<T,DT>::create(mem_sgmt, target_labels);
     node->parent_ = parent;
     if (parent == NULL) {
         *current_root = node;
         // node is the new root of sub tree, so its init color is BLACK
-        node->setColor(DomainTreeNode<T>::BLACK);
+        node->setColor(DomainTreeNode<T,DT>::BLACK);
         node->setSubTreeRoot(true);
         node->parent_ = up_node;
     } else if (order < 0) {
@@ -1655,10 +1662,11 @@ DomainTree<T>::insert(util::MemorySegment& mem_sgmt,
     return (SUCCESS);
 }
 
-template <typename T>
+template <typename T, typename DT>
 void
-DomainTree<T>::deleteAllNodes(util::MemorySegment& mem_sgmt) {
-    deleteHelper(mem_sgmt, root_.get());
+DomainTree<T,DT>::deleteAllNodes(util::MemorySegment& mem_sgmt) {
+    const DT deleter;
+    deleteHelper(mem_sgmt, root_.get(), deleter);
     root_ = NULL;
 }
 
@@ -1667,9 +1675,9 @@ DomainTree<T>::deleteAllNodes(util::MemorySegment& mem_sgmt) {
 // name (and therefore the name for the existing node doesn't change).
 // Otherwise, things like shortcut links between nodes won't work.
 // See Trac #2054.
-template <typename T>
+template <typename T, typename DT>
 void
-DomainTree<T>::nodeFission(util::MemorySegment& mem_sgmt, DomainTreeNode<T>& node,
+DomainTree<T,DT>::nodeFission(util::MemorySegment& mem_sgmt, DomainTreeNode<T,DT>& node,
                        const isc::dns::LabelSequence& new_prefix,
                        const isc::dns::LabelSequence& new_suffix)
 {
@@ -1678,7 +1686,7 @@ DomainTree<T>::nodeFission(util::MemorySegment& mem_sgmt, DomainTreeNode<T>& nod
     // the end of the function, and it will keep consistent behavior
     // (i.e., a weak form of strong exception guarantee) even if code
     // after the call to this function throws an exception.
-    DomainTreeNode<T>* down_node = DomainTreeNode<T>::create(mem_sgmt, new_prefix);
+    DomainTreeNode<T,DT>* down_node = DomainTreeNode<T,DT>::create(mem_sgmt, new_prefix);
     node.resetLabels(new_suffix);
 
     std::swap(node.data_, down_node->data_);
@@ -1706,7 +1714,7 @@ DomainTree<T>::nodeFission(util::MemorySegment& mem_sgmt, DomainTreeNode<T>& nod
     node.setColor(down_node->getColor());
 
     // root node of sub tree, the initial color is BLACK
-    down_node->setColor(DomainTreeNode<T>::BLACK);
+    down_node->setColor(DomainTreeNode<T,DT>::BLACK);
 
     // mark it as the root of a subtree
     down_node->setSubTreeRoot(true);
@@ -1715,24 +1723,24 @@ DomainTree<T>::nodeFission(util::MemorySegment& mem_sgmt, DomainTreeNode<T>& nod
 }
 
 
-template <typename T>
+template <typename T, typename DT>
 void
-DomainTree<T>::insertRebalance(typename DomainTreeNode<T>::DomainTreeNodePtr* root,
-                           DomainTreeNode<T>* node)
+DomainTree<T,DT>::insertRebalance(typename DomainTreeNode<T,DT>::DomainTreeNodePtr* root,
+                           DomainTreeNode<T,DT>* node)
 {
-    DomainTreeNode<T>* uncle;
-    DomainTreeNode<T>* parent;
+    DomainTreeNode<T,DT>* uncle;
+    DomainTreeNode<T,DT>* parent;
     while (node != (*root).get() &&
-           (parent = node->getParent())->getColor() == DomainTreeNode<T>::RED) {
+           (parent = node->getParent())->getColor() == DomainTreeNode<T,DT>::RED) {
         // Here, node->parent_ is not NULL and it is also red, so
         // node->parent_->parent_ is also not NULL.
         if (parent == parent->getParent()->getLeft()) {
             uncle = parent->getParent()->getRight();
 
-            if (uncle != NULL && uncle->getColor() == DomainTreeNode<T>::RED) {
-                parent->setColor(DomainTreeNode<T>::BLACK);
-                uncle->setColor(DomainTreeNode<T>::BLACK);
-                parent->getParent()->setColor(DomainTreeNode<T>::RED);
+            if (uncle != NULL && uncle->getColor() == DomainTreeNode<T,DT>::RED) {
+                parent->setColor(DomainTreeNode<T,DT>::BLACK);
+                uncle->setColor(DomainTreeNode<T,DT>::BLACK);
+                parent->getParent()->setColor(DomainTreeNode<T,DT>::RED);
                 node = parent->getParent();
             } else {
                 if (node == parent->getRight()) {
@@ -1740,16 +1748,16 @@ DomainTree<T>::insertRebalance(typename DomainTreeNode<T>::DomainTreeNodePtr* ro
                     leftRotate(root, node);
                     parent = node->getParent();
                 }
-                parent->setColor(DomainTreeNode<T>::BLACK);
-                parent->getParent()->setColor(DomainTreeNode<T>::RED);
+                parent->setColor(DomainTreeNode<T,DT>::BLACK);
+                parent->getParent()->setColor(DomainTreeNode<T,DT>::RED);
                 rightRotate(root, parent->getParent());
             }
         } else {
             uncle = parent->getParent()->getLeft();
-            if (uncle != NULL && uncle->getColor() == DomainTreeNode<T>::RED) {
-                parent->setColor(DomainTreeNode<T>::BLACK);
-                uncle->setColor(DomainTreeNode<T>::BLACK);
-                parent->getParent()->setColor(DomainTreeNode<T>::RED);
+            if (uncle != NULL && uncle->getColor() == DomainTreeNode<T,DT>::RED) {
+                parent->setColor(DomainTreeNode<T,DT>::BLACK);
+                uncle->setColor(DomainTreeNode<T,DT>::BLACK);
+                parent->getParent()->setColor(DomainTreeNode<T,DT>::RED);
                 node = parent->getParent();
             } else {
                 if (node == parent->getLeft()) {
@@ -1757,28 +1765,28 @@ DomainTree<T>::insertRebalance(typename DomainTreeNode<T>::DomainTreeNodePtr* ro
                     rightRotate(root, node);
                     parent = node->getParent();
                 }
-                parent->setColor(DomainTreeNode<T>::BLACK);
-                parent->getParent()->setColor(DomainTreeNode<T>::RED);
+                parent->setColor(DomainTreeNode<T,DT>::BLACK);
+                parent->getParent()->setColor(DomainTreeNode<T,DT>::RED);
                 leftRotate(root, parent->getParent());
             }
         }
     }
 
-    (*root)->setColor(DomainTreeNode<T>::BLACK);
+    (*root)->setColor(DomainTreeNode<T,DT>::BLACK);
 }
 
 
-template <typename T>
-DomainTreeNode<T>*
-DomainTree<T>::leftRotate(typename DomainTreeNode<T>::DomainTreeNodePtr* root, DomainTreeNode<T>* node) {
-    DomainTreeNode<T>* const right = node->getRight();
-    DomainTreeNode<T>* const rleft = right->getLeft();
+template <typename T, typename DT>
+DomainTreeNode<T,DT>*
+DomainTree<T,DT>::leftRotate(typename DomainTreeNode<T,DT>::DomainTreeNodePtr* root, DomainTreeNode<T,DT>* node) {
+    DomainTreeNode<T,DT>* const right = node->getRight();
+    DomainTreeNode<T,DT>* const rleft = right->getLeft();
     node->right_ = rleft;
     if (rleft != NULL) {
         rleft->parent_ = node;
     }
 
-    DomainTreeNode<T>* const parent = node->getParent();
+    DomainTreeNode<T,DT>* const parent = node->getParent();
     right->parent_ = parent;
 
     if (!node->isSubTreeRoot()) {
@@ -1799,17 +1807,17 @@ DomainTree<T>::leftRotate(typename DomainTreeNode<T>::DomainTreeNodePtr* root, D
     return (node);
 }
 
-template <typename T>
-DomainTreeNode<T>*
-DomainTree<T>::rightRotate(typename DomainTreeNode<T>::DomainTreeNodePtr* root, DomainTreeNode<T>* node) {
-    DomainTreeNode<T>* const left = node->getLeft();
-    DomainTreeNode<T>* const lright = left->getRight();
+template <typename T, typename DT>
+DomainTreeNode<T,DT>*
+DomainTree<T,DT>::rightRotate(typename DomainTreeNode<T,DT>::DomainTreeNodePtr* root, DomainTreeNode<T,DT>* node) {
+    DomainTreeNode<T,DT>* const left = node->getLeft();
+    DomainTreeNode<T,DT>* const lright = left->getRight();
     node->left_ = lright;
     if (lright != NULL) {
         lright->parent_ = node;
     }
 
-    DomainTreeNode<T>* const parent = node->getParent();
+    DomainTreeNode<T,DT>* const parent = node->getParent();
     left->parent_ = parent;
 
     if (!node->isSubTreeRoot()) {
@@ -1831,17 +1839,17 @@ DomainTree<T>::rightRotate(typename DomainTreeNode<T>::DomainTreeNodePtr* root, 
 }
 
 
-template <typename T>
+template <typename T, typename DT>
 void
-DomainTree<T>::dumpTree(std::ostream& os, unsigned int depth) const {
+DomainTree<T,DT>::dumpTree(std::ostream& os, unsigned int depth) const {
     indent(os, depth);
     os << "tree has " << node_count_ << " node(s)\n";
     dumpTreeHelper(os, root_.get(), depth);
 }
 
-template <typename T>
+template <typename T, typename DT>
 void
-DomainTree<T>::dumpTreeHelper(std::ostream& os, const DomainTreeNode<T>* node,
+DomainTree<T,DT>::dumpTreeHelper(std::ostream& os, const DomainTreeNode<T,DT>* node,
                           unsigned int depth) const
 {
     if (node == NULL) {
@@ -1852,7 +1860,7 @@ DomainTree<T>::dumpTreeHelper(std::ostream& os, const DomainTreeNode<T>* node,
 
     indent(os, depth);
     os << node->getLabels() << " ("
-       << ((node->getColor() == DomainTreeNode<T>::BLACK) ? "black" : "red")
+       << ((node->getColor() == DomainTreeNode<T,DT>::BLACK) ? "black" : "red")
        << ")";
     if (node->isEmpty()) {
         os << " [invisible]";
@@ -1862,7 +1870,7 @@ DomainTree<T>::dumpTreeHelper(std::ostream& os, const DomainTreeNode<T>* node,
     }
     os << "\n";
 
-    const DomainTreeNode<T>* down = node->getDown();
+    const DomainTreeNode<T,DT>* down = node->getDown();
     if (down != NULL) {
         indent(os, depth + 1);
         os << "begin down from " << node->getLabels() << "\n";
@@ -1874,16 +1882,16 @@ DomainTree<T>::dumpTreeHelper(std::ostream& os, const DomainTreeNode<T>* node,
     dumpTreeHelper(os, node->getRight(), depth + 1);
 }
 
-template <typename T>
+template <typename T, typename DT>
 void
-DomainTree<T>::indent(std::ostream& os, unsigned int depth) {
+DomainTree<T,DT>::indent(std::ostream& os, unsigned int depth) {
     static const unsigned int INDENT_FOR_EACH_DEPTH = 5;
     os << std::string(depth * INDENT_FOR_EACH_DEPTH, ' ');
 }
 
-template <typename T>
+template <typename T, typename DT>
 void
-DomainTree<T>::dumpDot(std::ostream& os, bool show_pointers) const {
+DomainTree<T,DT>::dumpDot(std::ostream& os, bool show_pointers) const {
     int nodecount = 0;
 
     os << "digraph g {\n";
@@ -1892,9 +1900,9 @@ DomainTree<T>::dumpDot(std::ostream& os, bool show_pointers) const {
     os << "}\n";
 }
 
-template <typename T>
+template <typename T, typename DT>
 int
-DomainTree<T>::dumpDotHelper(std::ostream& os, const DomainTreeNode<T>* node,
+DomainTree<T,DT>::dumpDotHelper(std::ostream& os, const DomainTreeNode<T,DT>* node,
                          int* nodecount, bool show_pointers) const
 {
     if (node == NULL) {
@@ -1915,7 +1923,7 @@ DomainTree<T>::dumpDotHelper(std::ostream& os, const DomainTreeNode<T>* node,
     }
     os << "\"] [";
 
-    if (node->getColor() == DomainTreeNode<T>::RED) {
+    if (node->getColor() == DomainTreeNode<T,DT>::RED) {
         os << "color=red";
     } else {
         os << "color=black";
