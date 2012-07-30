@@ -1002,7 +1002,8 @@ TEST_F(RBTreeTest, getAbsoluteLabels) {
     int name_count = sizeof(domain_names) / sizeof(domain_names[0]);
     uint8_t buf[LabelSequence::MAX_SERIALIZED_LENGTH];
     for (int i = 0; i < name_count; ++i) {
-        EXPECT_EQ(RBTree<int>::EXACTMATCH, rbtree.find(Name(domain_names[i]), &crbtnode));
+        EXPECT_EQ(RBTree<int>::EXACTMATCH, rbtree.find(Name(domain_names[i]),
+                  &crbtnode));
 
         // First make sure the names themselves are not absolute
         LabelSequence ls(crbtnode->getLabels());
