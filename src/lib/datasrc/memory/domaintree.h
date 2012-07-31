@@ -146,15 +146,15 @@ private:
     /// \throw none
     ///
     /// \param mem_sgmt The \c MemorySegment that allocated memory for
-    /// \c rbnode.
-    /// \param rbnode A non NULL pointer to a valid \c DomainTreeNode object
+    /// \c node.
+    /// \param node A non NULL pointer to a valid \c DomainTreeNode object
     /// that was originally created by the \c create() method (the behavior
     /// is undefined if this condition isn't met).
     static void destroy(util::MemorySegment& mem_sgmt,
-                        DomainTreeNode<T, DT>* rbnode) {
-        const size_t labels_capacity = rbnode->labels_capacity_;
-        rbnode->~DomainTreeNode<T, DT>();
-        mem_sgmt.deallocate(rbnode,
+                        DomainTreeNode<T, DT>* node) {
+        const size_t labels_capacity = node->labels_capacity_;
+        node->~DomainTreeNode<T, DT>();
+        mem_sgmt.deallocate(node,
                             sizeof(DomainTreeNode<T, DT>) + labels_capacity);
     }
 
@@ -311,7 +311,7 @@ private:
     //@}
 
 
-    /// \brief Define rbnode color
+    /// \brief Define node color
     enum DomainTreeNodeColor {BLACK, RED};
 
     /// \brief Returns the color of this node
@@ -758,9 +758,9 @@ private:
     }
 
 private:
-    // The max label count for one domain name is Name::MAX_LABELS (128).
-    // Since each node in rbtree stores at least one label, it's also equal
-    // to the possible maximum level.
+    // The max label count for one domain name is Name::MAX_LABELS
+    // (128).  Since each node in domaintree stores at least one label,
+    // it's also equal to the possible maximum level.
     const static int RBT_MAX_LEVEL = isc::dns::Name::MAX_LABELS;
 
     int node_count_;
@@ -789,11 +789,11 @@ private:
  *  - Decreases the memory footprint, as it doesn't store the suffix labels
  *      multiple times.
  *
- * Depending on different usage, rbtree will support different search policies.
- * Whether to return an empty node to end user is one policy among them.
- * The default policy is to NOT return an empty node to end user;
- * to change the behavior, specify \c true for the constructor parameter
- * \c returnEmptyNode.
+ * Depending on different usage, domaintree will support different
+ * search policies.  Whether to return an empty node to end user is one
+ * policy among them.  The default policy is to NOT return an empty node
+ * to end user; to change the behavior, specify \c true for the
+ * constructor parameter \c returnEmptyNode.
  * \note The search policy only affects the \c find() behavior of DomainTree.
  * When inserting one name into DomainTree, if the node with the name already
  * exists in the DomainTree and it's an empty node which doesn't have any data,
@@ -887,15 +887,15 @@ public:
     /// \throw none
     ///
     /// \param mem_sgmt The \c MemorySegment that allocated memory for
-    /// \c rbtree and for all nodes inserted to the tree.
-    /// \param rbtree A non NULL pointer to a valid \c DomainTree object
+    /// \c tree and for all nodes inserted to the tree.
+    /// \param tree A non NULL pointer to a valid \c DomainTree object
     /// that was originally created by the \c create() method (the behavior
     /// is undefined if this condition isn't met).
     static void destroy(util::MemorySegment& mem_sgmt,
-                        DomainTree<T, DT>* rbtree) {
-        rbtree->deleteAllNodes(mem_sgmt);
-        rbtree->~DomainTree<T, DT>();
-        mem_sgmt.deallocate(rbtree, sizeof(DomainTree<T, DT>));
+                        DomainTree<T, DT>* tree) {
+        tree->deleteAllNodes(mem_sgmt);
+        tree->~DomainTree<T, DT>();
+        mem_sgmt.deallocate(tree, sizeof(DomainTree<T, DT>));
     }
 
 private:
@@ -1329,7 +1329,7 @@ private:
     typename DomainTreeNode<T, DT>::DomainTreeNodePtr root_;
     /// the node count of current tree
     unsigned int node_count_;
-    /// search policy for rbtree
+    /// search policy for domaintree
     const bool needsReturnEmptyNode_;
 };
 
