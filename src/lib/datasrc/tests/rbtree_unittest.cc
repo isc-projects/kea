@@ -1028,7 +1028,7 @@ TEST_F(RBTreeTest, getAbsoluteLabels) {
         EXPECT_TRUE(abs_ls.isAbsolute());
     }
 
-    // Explicitely add and find a root node, to see that getAbsoluteLabels
+    // Explicitly add and find a root node, to see that getAbsoluteLabels
     // also works when getLabels() already returns an absolute LabelSequence
     rbtree.insert(mem_sgmt_, Name("."), &rbtnode);
     rbtnode->setData(RBNode<int>::NodeDataPtr(new int(1)));
