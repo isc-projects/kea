@@ -236,7 +236,7 @@ public:
     /// by this method.
     ///
     /// \param buf A data buffer where the label sequence will be built.
-    ///            The data in this buffer will be overwritten by this call,
+    ///            The data in this buffer will be overwritten by this call.
     /// \return A LabelSequence with the absolute name of this node.
     isc::dns::LabelSequence getAbsoluteLabels(
         uint8_t buf[isc::dns::LabelSequence::MAX_SERIALIZED_LENGTH]) const;
