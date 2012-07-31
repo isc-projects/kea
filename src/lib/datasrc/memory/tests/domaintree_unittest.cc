@@ -61,7 +61,7 @@ namespace {
 
 class DeleterType {
 public:
-    void operator()(int *i) const {
+    void operator()(int* i) const {
         delete i;
     }
 };
