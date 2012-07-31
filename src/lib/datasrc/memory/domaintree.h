@@ -445,9 +445,6 @@ private:
     }
     //@}
 
-    /// \brief Data stored here.
-    T* data_;
-
     /// \brief The subdomain tree.
     ///
     /// This points to the root node of trees of subdomains of this domain.
@@ -466,6 +463,9 @@ private:
     const DomainTreeNode<T,DT>* getDown() const {
         return (down_.get());
     }
+
+    /// \brief Data stored here.
+    T* data_;
 
     /// \brief Internal or user-configurable flags of node's properties.
     ///
@@ -493,10 +493,10 @@ DomainTreeNode<T,DT>::DomainTreeNode(size_t labels_capacity) :
     left_(NULL),
     right_(NULL),
     down_(NULL),
+    data_(NULL),
     flags_(FLAG_RED | FLAG_SUBTREE_ROOT),
     labels_capacity_(labels_capacity)
 {
-    data_ = NULL;
 }
 
 template <typename T, typename DT>
