@@ -67,10 +67,11 @@ struct RdataFieldSpec {
 /// Specification of RDATA in terms of internal encoding.
 ///
 /// The fields must be a sequence of:
-/// <0 or more fixed/var-len data fields>,
-/// <0 or more domain name fields>,
-/// <0 or more fixed/var-len data fields>,
-/// <0 or more domain name fields>,
+/// <0 or 1 fixed/var-len data field>,
+/// <1 or more domain name fields>,
+/// <1 fixed/var-len data field>,
+/// <1 or more domain name fields>,
+/// <1 fixed/var-len data field>,
 /// ...and so on.
 /// There must not be more than one consecutive data fields (i.e., without
 /// interleaved by a domain name); it would just be inefficient in terms of
@@ -80,7 +81,7 @@ struct RdataFieldSpec {
 /// should be combined into a single fixed-length field (like the last 20
 /// bytes of SOA RDATA).  If there's a variable length field, they should be
 /// combined into a single variable-length field (such as DNSKEY, which has
-/// 3 fixed-length field followed by one variable-length field).
+/// 3 fixed-length fields followed by one variable-length field).
 struct RdataEncodeSpec {
     const uint16_t field_count; // total number of fields (# of fields member)
     const uint16_t name_count;  // number of domain name fields
@@ -306,11 +307,8 @@ public:
         // buffer, and handle it appropriately.
         updateOtherData();
 
-        // Then, we still have a field in the spec, and it must be a domain
-        // name field.  Since we know we've passed any prior data field, the
-        // next field must be a domain name as long as it exists; otherwise
-        // it's a bug in the spec (not a bogus input).  So we assert() that
-        // condition.
+        // Then, we should still have a field in the spec, and it must be a
+        // domain name field.
         if (current_field_ >= encode_spec_->field_count) {
             isc_throw(BadValue,
                       "RDATA encoder encounters an unexpected name data: " <<
@@ -318,6 +316,9 @@ public:
         }
         const RdataFieldSpec& field =
             encode_spec_->fields[current_field_++];
+        // Since we know we've passed any prior data field, the next field
+        // must be a domain name as long as it exists; otherwise it's a bug
+        // in the spec (not a bogus input).  So we assert() that condition.
         assert(field.type == RdataFieldSpec::DOMAIN_NAME);
 
         // It would be compressed iff the field has that attribute.
