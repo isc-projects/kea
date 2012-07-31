@@ -999,19 +999,19 @@ TEST_F(RBTreeTest, getAbsoluteLabels) {
         "c", "b", "a", "x", "z", "g.h", "i", "o",
         "j", "p", "q", "k"};
 
-    int name_count = sizeof(domain_names) / sizeof(domain_names[0]);
+    const int name_count = sizeof(domain_names) / sizeof(domain_names[0]);
     uint8_t buf[LabelSequence::MAX_SERIALIZED_LENGTH];
     for (int i = 0; i < name_count; ++i) {
         EXPECT_EQ(RBTree<int>::EXACTMATCH, rbtree.find(Name(domain_names[i]),
                   &crbtnode));
 
         // First make sure the names themselves are not absolute
-        LabelSequence ls(crbtnode->getLabels());
+        const LabelSequence ls(crbtnode->getLabels());
         EXPECT_EQ(first_labels[i], ls.toText());
         EXPECT_FALSE(ls.isAbsolute());
 
         // Now check the absolute names
-        LabelSequence abs_ls(crbtnode->getAbsoluteLabels(buf));
+        const LabelSequence abs_ls(crbtnode->getAbsoluteLabels(buf));
         EXPECT_EQ(Name(domain_names[i]).toText(), abs_ls.toText());
         EXPECT_TRUE(abs_ls.isAbsolute());
     }
