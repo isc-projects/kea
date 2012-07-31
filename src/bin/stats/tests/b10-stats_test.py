@@ -30,7 +30,7 @@ import imp
 
 import stats
 import isc.cc.session
-from test_utils import BaseModules, ThreadingServerManager, MyStats, SignalHandler, send_command, send_shutdown, MockAuth
+from test_utils import BaseModules, ThreadingServerManager, MyStats, SignalHandler, send_command, send_shutdown
 from isc.testutils.ccsession_mock import MockModuleCCSession
 
 class TestUtilties(unittest.TestCase):
@@ -150,19 +150,11 @@ class TestStats(unittest.TestCase):
         # set the signal handler for deadlock
         self.sig_handler = SignalHandler(self.fail)
         self.base = BaseModules()
-        # invoke more three MockAuth
-        for i in ['2', '3', '4']:
-            setattr(self.base, "auth"+i, \
-                        ThreadingServerManager(MockAuth))
-            getattr(self.base, "auth"+i).run()
         self.const_timestamp = 1308730448.965706
         self.const_datetime = '2011-06-22T08:14:08Z'
         self.const_default_datetime = '1970-01-01T00:00:00Z'
 
     def tearDown(self):
-        # shutdown more three MockAuth
-        for i in ['2', '3', '4']:
-            getattr(self.base, "auth"+i).shutdown()
         self.base.shutdown()
         # reset the signal handler
         self.sig_handler.reset()
@@ -379,11 +371,9 @@ class TestStats(unittest.TestCase):
         bar2_tcp = 2001
         bar3_tcp = 1002
         bar3_udp = 1003
-        # four auth instances invoked
+        # two auth instances invoked
         list_auth = [ self.base.auth.server,
-                      self.base.auth2.server,
-                      self.base.auth3.server,
-                      self.base.auth4.server ]
+                      self.base.auth2.server ]
         sum_qtcp = 0
         for a in list_auth: sum_qtcp += a.queries_tcp
         sum_qudp = 0
@@ -417,7 +407,7 @@ class TestStats(unittest.TestCase):
         self.assertEqual(self.stats.statistics_data_bymid['Auth']['bar2@foo'],
                          {'queries.tcp': bar2_tcp})
         # kill running Auth but the statistics data doesn't change
-        self.base.auth4.server.shutdown()
+        self.base.auth2.server.shutdown()
         self.stats.update_statistics_data()
         self.assertTrue('Auth' in self.stats.statistics_data)
         self.assertTrue('queries.tcp' in self.stats.statistics_data['Auth'])
@@ -505,6 +495,13 @@ class TestStats(unittest.TestCase):
         self.assertFalse(self.stats.running)
 
     def test_command_show(self):
+        # two auth instances invoked
+        list_auth = [ self.base.auth.server,
+                      self.base.auth2.server ]
+        sum_qtcp = 0
+        sum_qudp = 0
+        sum_qtcp_perzone = 0
+        sum_qudp_perzone = 0
         self.stats = stats.Stats()
         self.assertEqual(self.stats.command_show(owner='Foo', name=None),
                          isc.config.create_answer(
@@ -515,22 +512,30 @@ class TestStats(unittest.TestCase):
         self.assertEqual(self.stats.command_show(owner='Foo', name='bar'),
                          isc.config.create_answer(
                 1, "specified arguments are incorrect: owner: Foo, name: bar"))
+
+        for a in list_auth:
+            sum_qtcp += a.queries_tcp
+            sum_qudp += a.queries_udp
+            zonename = a.queries_per_zone[0]['zonename']
+            sum_qtcp_perzone += a.queries_per_zone[0]['queries.tcp']
+            sum_qudp_perzone += a.queries_per_zone[0]['queries.udp']
+
         self.assertEqual(self.stats.command_show(owner='Auth'),
                          isc.config.create_answer(
-                0, {'Auth':{ 'queries.udp': 8,
-                     'queries.tcp': 12,
+                0, {'Auth':{ 'queries.udp': sum_qudp,
+                     'queries.tcp': sum_qtcp,
                      'queries.perzone': [{ 'zonename': 'test1.example',
-                                           'queries.udp': 16,
-                                           'queries.tcp': 20 }
+                                           'queries.udp': sum_qudp_perzone,
+                                           'queries.tcp': sum_qtcp_perzone }
                                          ]}}))
         self.assertEqual(self.stats.command_show(owner='Auth', name='queries.udp'),
                          isc.config.create_answer(
-                0, {'Auth': {'queries.udp':8}}))
+                0, {'Auth': {'queries.udp':sum_qudp}}))
         self.assertEqual(self.stats.command_show(owner='Auth', name='queries.perzone'),
                          isc.config.create_answer(
                 0, {'Auth': {'queries.perzone': [{ 'zonename': 'test1.example',
-                      'queries.udp': 16,
-                      'queries.tcp': 20 }]}}))
+                      'queries.udp': sum_qudp_perzone,
+                      'queries.tcp': sum_qtcp_perzone }]}}))
         orig_get_datetime = stats.get_datetime
         orig_get_timestamp = stats.get_timestamp
         stats.get_datetime = lambda x=None: self.const_datetime
@@ -796,7 +801,7 @@ class TestStats(unittest.TestCase):
             stat.statistics_data['Boss'],
             {'boot_time': self.const_datetime})
         # check statistics data of each 'Auth' instances
-        list_auth = ['', '2', '3', '4']
+        list_auth = ['', '2']
         for i in list_auth:
             auth = getattr(self.base,"auth"+i).server
             for s in stat.statistics_data_bymid['Auth'].values():

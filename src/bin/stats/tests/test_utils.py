@@ -246,9 +246,7 @@ class MockBoss:
         self.cc_session = self.mccs._session
         self.got_command_name = ''
         self.pid_list = [[ 9999, "b10-auth"   ],
-                         [ 9998, "b10-auth-2" ],
-                         [ 9997, "b10-auth-3" ],
-                         [ 9996, "b10-auth-4" ]]
+                         [ 9998, "b10-auth-2" ]]
         self.statistics_data = {
             'boot_time': time.strftime('%Y-%m-%dT%H:%M:%SZ', self._BASETIME)
             }
@@ -274,7 +272,7 @@ class MockBoss:
         self.got_command_name = command
         sdata = self.statistics_data
         if command == 'getstats':
-            return isc.config.create_answer(0, self.statistics_data)
+            return isc.config.create_answer(0, sdata)
         elif command == 'show_processes':
             # Return dummy pids
             return isc.config.create_answer(
@@ -477,9 +475,13 @@ class BaseModules:
         # MockAuth
         self.auth = ThreadingServerManager(MockAuth)
         self.auth.run()
+        self.auth2 = ThreadingServerManager(MockAuth)
+        self.auth2.run()
+
 
     def shutdown(self):
         # MockAuth
+        self.auth2.shutdown()
         self.auth.shutdown()
         # MockBoss
         self.boss.shutdown()
