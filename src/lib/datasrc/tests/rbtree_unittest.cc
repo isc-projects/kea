@@ -104,6 +104,7 @@ protected:
     RBTree<int>& rbtree_expose_empty_node;
     RBNode<int>* rbtnode;
     const RBNode<int>* crbtnode;
+    uint8_t buf[LabelSequence::MAX_SERIALIZED_LENGTH];
 };
 
 TEST_F(RBTreeTest, nodeCount) {
@@ -419,6 +420,11 @@ TEST_F(RBTreeTest, chainLevel) {
               tree.find(node_name, &crbtnode, chain));
     EXPECT_EQ(1, chain.getLevelCount());
 
+    // Check the name of the found node (should have '.' as both non-absolute
+    // and absolute name
+    EXPECT_EQ(".", crbtnode->getLabels().toText());
+    EXPECT_EQ(".", crbtnode->getAbsoluteLabels(buf).toText());
+
     /*
      * Now creating a possibly deepest tree with MAX_LABELS levels.
      * it should look like:
@@ -442,6 +448,12 @@ TEST_F(RBTreeTest, chainLevel) {
         EXPECT_EQ(RBTree<int>::EXACTMATCH,
                   tree.find(node_name, &crbtnode, found_chain));
         EXPECT_EQ(i, found_chain.getLevelCount());
+
+        // The non-absolute name should only have the first label
+        EXPECT_EQ("a", crbtnode->getLabels().toText());
+        // But the absolute name should have all labels
+        EXPECT_EQ(node_name.toText(),
+                  crbtnode->getAbsoluteLabels(buf).toText());
     }
 
     // Confirm the last inserted name has the possible maximum length with
@@ -991,6 +1003,7 @@ TEST_F(RBTreeTest, root) {
 
 TEST_F(RBTreeTest, getAbsoluteLabels) {
     // The full absolute names of the nodes in the tree
+    // with the addition of the explicit root node
     const char* const domain_names[] = {
         "c", "b", "a", "x.d.e.f", "z.d.e.f", "g.h", "i.g.h", "o.w.y.d.e.f",
         "j.z.d.e.f", "p.w.y.d.e.f", "q.w.y.d.e.f", "k.g.h"};
@@ -1000,7 +1013,6 @@ TEST_F(RBTreeTest, getAbsoluteLabels) {
         "j", "p", "q", "k"};
 
     const int name_count = sizeof(domain_names) / sizeof(domain_names[0]);
-    uint8_t buf[LabelSequence::MAX_SERIALIZED_LENGTH];
     for (int i = 0; i < name_count; ++i) {
         EXPECT_EQ(RBTree<int>::EXACTMATCH, rbtree.find(Name(domain_names[i]),
                   &crbtnode));
@@ -1015,6 +1027,18 @@ TEST_F(RBTreeTest, getAbsoluteLabels) {
         EXPECT_EQ(Name(domain_names[i]).toText(), abs_ls.toText());
         EXPECT_TRUE(abs_ls.isAbsolute());
     }
+
+    // Explicitely add and find a root node, to see that getAbsoluteLabels
+    // also works when getLabels() already returns an absolute LabelSequence
+    rbtree.insert(mem_sgmt_, Name("."), &rbtnode);
+    rbtnode->setData(RBNode<int>::NodeDataPtr(new int(1)));
+
+    EXPECT_EQ(RBTree<int>::EXACTMATCH, rbtree.find(Name("."), &crbtnode));
+
+    EXPECT_TRUE(crbtnode->getLabels().isAbsolute());
+    EXPECT_EQ(".", crbtnode->getLabels().toText());
+    EXPECT_TRUE(crbtnode->getAbsoluteLabels(buf).isAbsolute());
+    EXPECT_EQ(".", crbtnode->getAbsoluteLabels(buf).toText());
 }
 
 }
