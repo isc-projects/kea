@@ -785,7 +785,7 @@ private:
  *
  *  \c DomainTree splits the domain space into hierarchy red black trees; nodes
  * in one tree has the same base name. The benefit of this struct is that:
- *  - Enhances the query performace compared with one big flat red black tree.
+ *  - Enhances the query performance compared with one big flat red black tree.
  *  - Decreases the memory footprint, as it doesn't store the suffix labels
  *      multiple times.
  *
@@ -799,6 +799,13 @@ private:
  * exists in the DomainTree and it's an empty node which doesn't have any data,
  * the \c insert() method will still return \c ALREADYEXISTS regardless of
  * the search policy.
+ *
+ * The template parameters taken by \c DomainTree are \c T (the type of
+ * data which is stored by the tree) and \c DT (a type whose instance is
+ * used to destroy data stored in the tree). <code>operator()</code> is
+ * called on a \c DT instance and passed a pointer to the data
+ * (<code>T*</code>) to be destroyed. This method should be written to
+ * accept \c NULL arguments.
  *
  * \anchor diagram
  *
