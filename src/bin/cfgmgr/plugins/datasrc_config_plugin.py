@@ -41,7 +41,7 @@ def check(config):
         try:
             rr_class = isc.dns.RRClass(rr_class_str)
         except isc.dns.InvalidRRClass as irc:
-            return str(irc)
+            return "The class '" + rr_class_str + "' is invalid"
 
         dlist = isc.datasrc.ConfigurableClientList(rr_class)
         client_config = classes.get(rr_class_str)
