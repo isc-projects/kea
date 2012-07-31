@@ -1623,6 +1623,7 @@ RBTree<T>::insert(util::MemorySegment& mem_sgmt,
             dns::LabelSequence new_prefix = current_labels;
             new_prefix.stripRight(compare_result.getCommonLabels());
             nodeFission(mem_sgmt, *current, new_prefix, common_ancestor);
+            current = current->getParent();
         }
     }
 
@@ -1661,11 +1662,6 @@ RBTree<T>::deleteAllNodes(util::MemorySegment& mem_sgmt) {
     root_ = NULL;
 }
 
-// Note: when we redesign this (still keeping the basic concept), we should
-// change this part so the newly created node will be used for the inserted
-// name (and therefore the name for the existing node doesn't change).
-// Otherwise, things like shortcut links between nodes won't work.
-// See Trac #2054.
 template <typename T>
 void
 RBTree<T>::nodeFission(util::MemorySegment& mem_sgmt, RBNode<T>& node,
@@ -1677,38 +1673,45 @@ RBTree<T>::nodeFission(util::MemorySegment& mem_sgmt, RBNode<T>& node,
     // the end of the function, and it will keep consistent behavior
     // (i.e., a weak form of strong exception guarantee) even if code
     // after the call to this function throws an exception.
-    RBNode<T>* down_node = RBNode<T>::create(mem_sgmt, new_prefix);
-    node.resetLabels(new_suffix);
+    RBNode<T>* up_node = RBNode<T>::create(mem_sgmt, new_suffix);
+    node.resetLabels(new_prefix);
 
-    std::swap(node.data_, down_node->data_);
-
-    // Swap flags bitfields; yes, this is ugly (it appears we cannot use
-    // std::swap for bitfields).  The right solution is to implement
-    // the above note regarding #2054, then we won't have to swap the
-    // flags in the first place.
-    const bool is_root = node.isSubTreeRoot();
-    const uint32_t tmp = node.flags_;
-    node.flags_ = down_node->flags_;
-    down_node->flags_ = tmp;
-    node.setSubTreeRoot(is_root);
-
-    down_node->down_ = node.getDown();
-    if (down_node->down_ != NULL) {
-        down_node->down_->parent_ = down_node;
+    up_node->parent_ = node.getParent();
+    if (node.getParent() != NULL) {
+        if (node.getParent()->getLeft() == &node) {
+            node.getParent()->left_ = up_node;
+        } else if (node.getParent()->getRight() == &node) {
+            node.getParent()->right_ = up_node;
+        } else {
+            node.getParent()->down_ = up_node;
+        }
+    } else {
+        this->root_ = up_node;
     }
 
-    node.down_ = down_node;
-    down_node->parent_ = &node;
+    up_node->down_ = &node;
+    node.parent_ = up_node;
 
-    // Restore the color of the node (may have gotten changed by the flags
-    // swap)
-    node.setColor(down_node->getColor());
+    // inherit the left/right pointers from the original node, and set
+    // the original node's left/right pointers to NULL.
+    up_node->left_ = node.getLeft();
+    if (node.getLeft() != NULL) {
+        node.getLeft()->parent_ = up_node;
+    }
+    up_node->right_ = node.getRight();
+    if (node.getRight() != NULL) {
+        node.getRight()->parent_ = up_node;
+    }
+    node.left_ = NULL;
+    node.right_ = NULL;
 
-    // root node of sub tree, the initial color is BLACK
-    down_node->setColor(RBNode<T>::BLACK);
+    // set color of both nodes; the initial subtree node color is BLACK
+    up_node->setColor(node.getColor());
+    node.setColor(RBNode<T>::BLACK);
 
-    // mark it as the root of a subtree
-    down_node->setSubTreeRoot(true);
+    // set the subtree root flag of both nodes
+    up_node->setSubTreeRoot(node.isSubTreeRoot());
+    node.setSubTreeRoot(true);
 
     ++node_count_;
 }
