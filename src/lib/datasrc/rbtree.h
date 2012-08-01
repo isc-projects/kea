@@ -1277,10 +1277,11 @@ private:
 
     /// Split one node into two nodes for "prefix" and "suffix" parts of
     /// the labels of the original node, respectively.  The given node
-    /// will hold the suffix labels, while the new node will hold the prefix.
-    /// The newly created node represents the labels that the original node
-    /// did, so necessary data are swapped.
-    /// (Note: as commented in the code, this behavior should be changed).
+    /// will hold the prefix, while a newly created node will hold the prefix.
+    /// Note that the original node still represents the same domain name in
+    /// the entire tree.  This ensures that a pointer to a node keeps its
+    /// semantics even if the tree structure is changed (as long as the node
+    /// itself remains valid).
     void nodeFission(util::MemorySegment& mem_sgmt, RBNode<T>& node,
                      const isc::dns::LabelSequence& new_prefix,
                      const isc::dns::LabelSequence& new_suffix);
