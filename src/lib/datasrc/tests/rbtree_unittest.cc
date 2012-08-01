@@ -252,6 +252,36 @@ TEST_F(RBTreeTest, subTreeRoot) {
     EXPECT_TRUE(rbtnode->getFlag(RBNode<int>::FLAG_SUBTREE_ROOT));
 }
 
+TEST_F(RBTreeTest, additionalNodeFission) {
+    // These are additional nodeFission tests added by #2054's rewrite
+    // of RBTree::nodeFission(). These test specific corner cases that
+    // are not covered by other tests.
+
+    // Insert "t.0" (which becomes the left child of its parent)
+    EXPECT_EQ(RBTree<int>::SUCCESS,
+              rbtree_expose_empty_node.insert(mem_sgmt_, Name("t.0"),
+                                              &rbtnode));
+
+    // "t.0" is not a subtree root
+    EXPECT_EQ(RBTree<int>::EXACTMATCH,
+              rbtree_expose_empty_node.find(Name("t.0"), &rbtnode));
+    EXPECT_FALSE(rbtnode->getFlag(RBNode<int>::FLAG_SUBTREE_ROOT));
+
+    // fission the node "t.0"
+    EXPECT_EQ(RBTree<int>::ALREADYEXISTS,
+              rbtree_expose_empty_node.insert(mem_sgmt_, Name("0"),
+                                              &rbtnode));
+
+    // the node "0" ("0".down_ -> "t") should not be a subtree root. "t"
+    // should be a subtree root.
+    EXPECT_FALSE(rbtnode->getFlag(RBNode<int>::FLAG_SUBTREE_ROOT));
+
+    // "t.0" should be a subtree root now.
+    EXPECT_EQ(RBTree<int>::EXACTMATCH,
+              rbtree_expose_empty_node.find(Name("t.0"), &rbtnode));
+    EXPECT_TRUE(rbtnode->getFlag(RBNode<int>::FLAG_SUBTREE_ROOT));
+}
+
 TEST_F(RBTreeTest, findName) {
     // find const rbtnode
     // exact match
