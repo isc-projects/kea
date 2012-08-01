@@ -40,7 +40,7 @@ const size_t Name::MAX_LABELS;
 
 /* The initial structure of rbtree
  *
-*              .
+ *             .
  *             |
  *             b
  *           /   \
@@ -458,7 +458,7 @@ TEST_F(RBTreeTest, getAbsoluteNameError) {
 }
 
 /*
- *the domain order should be:
+ * The domain order should be:
  * ., a, b, c, d.e.f, x.d.e.f, w.y.d.e.f, o.w.y.d.e.f, p.w.y.d.e.f,
  * q.w.y.d.e.f, z.d.e.f, j.z.d.e.f, g.h, i.g.h, k.g.h
  *             . (no data, can't be found)
