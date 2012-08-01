@@ -16,26 +16,35 @@
 # Make sure we can load the module, put it into path
 import sys
 import os
+import unittest
+import json
 sys.path.extend(os.environ["B10_TEST_PLUGIN_DIR"].split(':'))
 import isc.log
 
 import datasrc_config_plugin
-import unittest
 
 class DatasrcTest(unittest.TestCase):
     def reject(self, config):
         """
         Just a shortcut to check the config is rejected.
         """
+        old = json.dumps(config)
         self.assertIsNotNone(datasrc_config_plugin.check({"classes":
                                                          config}))
+        # There's some data mangling inside the plugin. Check it does
+        # not propagate out, as it could change the real configuration.
+        self.assertEqual(old, json.dumps(config))
 
     def accept(self, config):
         """
         Just a shortcut to check the config is accepted.
         """
+        old = json.dumps(config)
         self.assertIsNone(datasrc_config_plugin.check({"classes":
                                                       config}))
+        # There's some data mangling inside the plugin. Check it does
+        # not propagate out, as it could change the real configuration.
+        self.assertEqual(old, json.dumps(config))
 
     def test_load(self):
         """

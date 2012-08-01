@@ -20,6 +20,7 @@ import isc.dns
 import isc.datasrc
 import json
 import os.path
+import copy
 
 spec = module_spec_from_file(path_search('datasrc.spec', PLUGIN_PATHS))
 
@@ -44,11 +45,10 @@ def check(config):
             return "The class '" + rr_class_str + "' is invalid"
 
         dlist = isc.datasrc.ConfigurableClientList(rr_class)
-        client_config = classes.get(rr_class_str)
-        try:
-            dlist.configure(json.dumps(client_config), False)
-        except isc.datasrc.Error as dse:
-            return str(dse)
+        # We get a copy here, as we are going to mangle the configuration.
+        # But we don't want our changes to propagate outside, to the real
+        # configuration.
+        client_config = copy.deepcopy(classes.get(rr_class_str))
 
         for client in client_config:
             if client['type'] == 'MasterFiles':
@@ -64,6 +64,16 @@ def check(config):
                         return str(e)
                     if not os.path.exists(params[name]):
                         return "Master file " + params[name] + " does not exist"
+                # We remove the list of zones locally. We already checked them,
+                # and the client list would have skipped them anyway, as we
+                # forbid cache. But it would produce a warning and we don't
+                # want that here.
+                client['params'] = {}
+
+        try:
+            dlist.configure(json.dumps(client_config), False)
+        except isc.datasrc.Error as dse:
+            return str(dse)
     return None
 
 def load():
