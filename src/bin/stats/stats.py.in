@@ -207,6 +207,7 @@ class Stats:
                 sequences = sequences + [ (module_name, seq) \
                                               for i in range(cnt-1) ]
         # start receiving statistics data
+        _statistics_data = []
         while len(sequences) > 0:
             try:
                 (module_name, seq) = sequences.pop(0)
@@ -216,22 +217,27 @@ class Stats:
                     rcode, args = isc.config.ccsession.parse_answer(
                         answer)
                     if rcode == 0:
-                        if self.update_statistics_data(
-                            module_name, env['from'], args):
-                            logger.warn(
-                                STATS_RECEIVED_INVALID_STATISTICS_DATA,
-                                module_name)
-                        else:
-                            if self.update_statistics_data(
-                                self.module_name,
-                                self.cc_session.lname,
-                                {'last_update_time': get_datetime()}):
-                                logger.warn(
-                                    STATS_RECEIVED_INVALID_STATISTICS_DATA,
-                                    self.module_name)
+                        _statistics_data.append(
+                            (module_name, env['from'], args))
             # skip this module if SessionTimeout raised
             except isc.cc.session.SessionTimeout:
                 pass
+
+        # update statistics data
+        while len(_statistics_data) > 0:
+            (_module_name, _lname, _args) = _statistics_data.pop(0)
+            if self.update_statistics_data(_module_name, _lname, _args):
+                logger.warn(
+                STATS_RECEIVED_INVALID_STATISTICS_DATA,
+                _module_name)
+            else:
+                if self.update_statistics_data(
+                    self.module_name,
+                    self.cc_session.lname,
+                    {'last_update_time': get_datetime()}):
+                    logger.warn(
+                        STATS_RECEIVED_INVALID_STATISTICS_DATA,
+                        self.module_name)
 
     def start(self):
         """
