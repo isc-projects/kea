@@ -164,6 +164,8 @@ class Stats:
              'last_update_time': get_datetime()}):
             logger.warn(STATS_RECEIVED_INVALID_STATISTICS_DATA,
                         self.module_name)
+        # define the variable of the last time of polling
+        self._lasttime_poll = 0.0
         # try to do polling firstly
         self.do_polling()
 
@@ -238,6 +240,8 @@ class Stats:
                     logger.warn(
                         STATS_RECEIVED_INVALID_STATISTICS_DATA,
                         self.module_name)
+        # if successfully done, set the last time of polling
+        self._lasttime_poll = get_timestamp()
 
     def start(self):
         """
@@ -487,6 +491,14 @@ class Stats:
         """
         handle show command
         """
+        # decide if polling should be done by the the last time of
+        # polling. If more than one seconds past since the last
+        # request to each module, the stats module requests each
+        # module statistics data and then shows the latest
+        # result. Otherwise, the stats module just shows statistics
+        # data which it has.
+        if get_timestamp() - self._lasttime_poll > 1.0:
+            self.do_polling()
         if owner or name:
             logger.debug(DBG_STATS_MESSAGING,
                          STATS_RECEIVED_SHOW_NAME_COMMAND,
