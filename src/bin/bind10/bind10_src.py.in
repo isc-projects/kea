@@ -282,7 +282,8 @@ class BoB:
         pids.sort()
         process_list = [ ]
         for pid in pids:
-            process_list.append([pid, self.components[pid].name()])
+            process_list.append([pid, self.components[pid].name(),
+                                 self.components[pid].address()])
         return process_list
 
     def _get_stats_data(self):
