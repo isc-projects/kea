@@ -66,6 +66,23 @@ public:
     /// @return a pointer to a created option object
     typedef OptionPtr Factory(Option::Universe u, uint16_t type, const OptionBuffer& buf);
 
+    /// @brief Factory function to create instance of option.
+    ///
+    /// Factory method creates instance of specified option. The option
+    /// to be created has to have corresponding factory function
+    /// registered with \ref LibDHCP::OptionFactoryRegister.
+    ///
+    /// @param u universe of the option (V4 or V6)
+    /// @param type option-type
+    /// @param buf option-buffer
+    /// @throw isc::InvalidOperation if there is no factory function
+    /// registered for specified option type.
+    /// @return instance of option.
+    static OptionPtr factory(Option::Universe u,
+                             uint16_t type,
+                             const OptionBuffer& buf);
+
+
     /// @brief ctor, used for options constructed, usually during transmission
     ///
     /// @param u option universe (DHCPv4 or DHCPv6)
