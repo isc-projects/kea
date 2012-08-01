@@ -29,6 +29,14 @@ using namespace isc::util;
 namespace isc {
 namespace dhcp {
 
+OptionPtr
+Option::factory(Option::Universe u,
+        uint16_t type,
+        const OptionBuffer& buf) {
+    return(LibDHCP::optionFactory(u, type, buf));
+}
+
+
 Option::Option(Universe u, uint16_t type)
     :universe_(u), type_(type) {
 
