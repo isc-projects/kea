@@ -69,7 +69,7 @@ private:
     /// \return true if any of the exit conditions is fulfiled.
     bool checkExitConditions() const;
 
-    dhcp::Pkt4* createDiscoverPkt4();
+    boost::shared_ptr<dhcp::Pkt4> createDiscoverPkt4() const;
 
     static dhcp::OptionPtr factoryRequestList4(dhcp::Option::Universe u,
                                                uint16_t type,
