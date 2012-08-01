@@ -58,14 +58,18 @@ TestControl::checkExitConditions() const {
     return(false);
 }
 
-Pkt4*
-TestControl::createDiscoverPkt4() {
+boost::shared_ptr<Pkt4>
+TestControl::createDiscoverPkt4() const {
     const uint32_t transid = static_cast<uint32_t>(random());
-    Pkt4* pkt4 = new Pkt4(DHCPDISCOVER, transid);
+    boost::shared_ptr<Pkt4> pkt4(new Pkt4(DHCPDISCOVER, transid));
+    if (!pkt4) {
+        isc_throw(isc::Unexpected, "failed to create DISCOVER packet");
+    }
 
-    OptionBuffer opt_request_list_buf();
-    // createRequestListBuffer4(opt_request_list_buf);
-    return NULL;
+    OptionPtr request_list_option =
+        Option::factory(Option::V4, DHO_DHCP_PARAMETER_REQUEST_LIST);
+    pkt4->addOption(request_list_option);
+    return pkt4;
 }
 
 OptionPtr
@@ -85,8 +89,7 @@ TestControl::factoryRequestList4(Option::Universe u,
 
     OptionBuffer buf_with_options(buf_array, buf_array + sizeof(buf_array));
     Option* opt = new Option(u, type, buf);
-    opt->setData(buf_with_options.begin(),
-                 buf_with_options.end());
+    opt->setData(buf_with_options.begin(), buf_with_options.end());
     return OptionPtr(opt);
 }
 
