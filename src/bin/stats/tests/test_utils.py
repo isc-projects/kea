@@ -245,8 +245,8 @@ class MockBoss:
         self.spec_file.close()
         self.cc_session = self.mccs._session
         self.got_command_name = ''
-        self.pid_list = [[ 9999, "b10-auth"   ],
-                         [ 9998, "b10-auth-2" ]]
+        self.pid_list = [[ 9999, "b10-auth", "Auth" ],
+                         [ 9998, "b10-auth-2", "Auth" ]]
         self.statistics_data = {
             'boot_time': time.strftime('%Y-%m-%dT%H:%M:%SZ', self._BASETIME)
             }
