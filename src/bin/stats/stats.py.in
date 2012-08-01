@@ -179,20 +179,19 @@ class Stats:
            each module to invoke 'getstats'. Finally updates internal
            statistics data every time it gets from each instance."""
 
-        # count the number of instances of same module by examing
-        # 'components' of Boss via ConfigManager
+        # It counts the number of instances of same module by
+        # examining the third value from the array result of
+        # 'show_processes' of Boss
         seq = self.cc_session.group_sendmsg(
-            isc.config.ccsession.create_command(
-                isc.config.ccsession.COMMAND_GET_CONFIG,
-                {"module_name": "Boss"}), 'ConfigManager')
+            isc.config.ccsession.create_command("show_processes"),
+            'Boss')
         (answer, env) = self.cc_session.group_recvmsg(False, seq)
         modules = []
         if answer:
             (rcode, value) = isc.config.ccsession.parse_answer(answer)
-            if rcode == 0 and 'components' in value:
-                modules = [ c['special'].capitalize() \
-                                for c in value['components'].values() \
-                                if 'special' in c ]
+            if rcode == 0 and type(value) is list:
+                modules = [ v[2] if type(v) is list and len(v) > 2 \
+                                else None for v in value ]
         # start requesting each module to collect statistics data
         sequences = []
         for (module_name, data) in self.get_statistics_data().items():
