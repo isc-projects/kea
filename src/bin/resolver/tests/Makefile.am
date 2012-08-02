@@ -37,7 +37,7 @@ run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)
 
 run_unittests_LDADD  = $(GTEST_LDADD)
-run_unittests_LDADD += $(top_builddir)/src/lib/testutils/libtestutils.la
+run_unittests_LDADD += $(top_builddir)/src/lib/testutils/libb10-testutils.la
 run_unittests_LDADD += $(top_builddir)/src/lib/dns/libb10-dns++.la
 run_unittests_LDADD += $(top_builddir)/src/lib/asiodns/libb10-asiodns.la
 run_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la

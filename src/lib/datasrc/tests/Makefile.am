@@ -40,7 +40,7 @@ common_ldadd += $(top_builddir)/src/lib/util/libb10-util.la
 common_ldadd += $(top_builddir)/src/lib/log/libb10-log.la
 common_ldadd += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 common_ldadd += $(top_builddir)/src/lib/cc/libb10-cc.la
-common_ldadd += $(top_builddir)/src/lib/testutils/libtestutils.la
+common_ldadd += $(top_builddir)/src/lib/testutils/libb10-testutils.la
 common_ldadd += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 common_ldadd += $(GTEST_LDADD) $(SQLITE_LIBS)
 
