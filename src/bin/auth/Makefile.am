@@ -71,7 +71,7 @@ b10_auth_LDADD += $(top_builddir)/src/lib/asiodns/libb10-asiodns.la
 b10_auth_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 b10_auth_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
 b10_auth_LDADD += $(top_builddir)/src/lib/xfr/libb10-xfr.la
-b10_auth_LDADD += $(top_builddir)/src/lib/server_common/libserver_common.la
+b10_auth_LDADD += $(top_builddir)/src/lib/server_common/libb10-server-common.la
 b10_auth_LDADD += $(top_builddir)/src/lib/statistics/libstatistics.la
 b10_auth_LDADD += $(SQLITE_LIBS)
 
