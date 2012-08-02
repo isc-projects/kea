@@ -58,7 +58,7 @@ nodist_b10_resolver_SOURCES = resolver_messages.cc resolver_messages.h
 
 b10_resolver_LDADD =  $(top_builddir)/src/lib/dns/libb10-dns++.la
 b10_resolver_LDADD += $(top_builddir)/src/lib/config/libcfgclient.la
-b10_resolver_LDADD += $(top_builddir)/src/lib/cc/libcc.la
+b10_resolver_LDADD += $(top_builddir)/src/lib/cc/libb10-cc.la
 b10_resolver_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
 b10_resolver_LDADD += $(top_builddir)/src/lib/acl/libdnsacl.la
 b10_resolver_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
