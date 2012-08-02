@@ -29,7 +29,7 @@ run_unittests_LDADD += libfake_session.la
 run_unittests_LDADD += $(top_builddir)/src/lib/cc/libcc.la
 run_unittests_LDADD += $(top_builddir)/src/lib/config/libcfgclient.la
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
-run_unittests_LDADD += $(top_builddir)/src/lib/log/liblog.la
+run_unittests_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 
 endif
