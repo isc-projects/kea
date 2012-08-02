@@ -16,6 +16,7 @@
 #define __LOGGER_LEVEL_IMPL_H
 
 #include <log4cplus/logger.h>
+#include <log4cplus/version.h>
 #include <log/logger_level.h>
 
 namespace isc {
@@ -65,6 +66,12 @@ namespace log {
 class LoggerLevelImpl {
 public:
 
+#if (LOG4CPLUS_VERSION >= LOG4CPLUS_MAKE_VERSION(1, 1, 0))
+    typedef log4cplus::tstring const & LogLevelString;
+#else
+    typedef log4cplus::tstring LogLevelString;
+#endif
+
     /// \brief Convert BIND 10 level to log4cplus logging level
     ///
     /// Converts the BIND 10 severity level into a log4cplus logging level.
@@ -112,7 +119,7 @@ public:
     /// \param level Extended logging level
     ///
     /// \return Equivalent string.
-    static log4cplus::tstring logLevelToString(log4cplus::LogLevel level);
+    static LogLevelString logLevelToString(log4cplus::LogLevel level);
 
     /// \brief Initialize extended logging levels
     ///
