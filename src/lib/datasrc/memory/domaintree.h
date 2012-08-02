@@ -244,12 +244,21 @@ public:
 
     /// \name Setter functions.
     //@{
-    /// \brief Set the data stored in the node. If there is old data, it
-    /// is destroyed.
-    void setData(T* data) {
-        const DT deleter;
-        deleter(data_);
 
+    /// \brief Set the data stored in the node. If there is old data, it
+    /// is either returned or destroyed based on what is passed in \c
+    /// old_data.
+    /// \param data The new data to set.
+    /// \param old_data If \c NULL is passed here, any old data is
+    ///                 destroyed. Otherwise, the old data is returned
+    ///                 in this location.
+    void setData(T* data, T** old_data = NULL) {
+        if (old_data != NULL) {
+            *old_data = data;
+        } else {
+            const DT deleter;
+            deleter(data_);
+        }
         data_ = data;
     }
     //@}
