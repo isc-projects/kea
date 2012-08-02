@@ -37,7 +37,7 @@ run_unittests_LDADD += $(top_builddir)/src/lib/cc/libb10-cc.la
 run_unittests_LDADD += $(top_builddir)/src/lib/dns/libb10-dns++.la
 run_unittests_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
-run_unittests_LDADD += $(top_builddir)/src/lib/acl/libdnsacl.la
+run_unittests_LDADD += $(top_builddir)/src/lib/acl/libb10-dnsacl.la
 endif
 
 noinst_PROGRAMS = $(TESTS)
