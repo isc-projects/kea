@@ -30,7 +30,7 @@ run_unittests_SOURCES += recursive_query_unittest_3.cc
 
 run_unittests_LDADD = $(GTEST_LDADD)
 run_unittests_LDADD +=  $(top_builddir)/src/lib/nsas/libb10-nsas.la
-run_unittests_LDADD +=  $(top_builddir)/src/lib/cache/libcache.la
+run_unittests_LDADD +=  $(top_builddir)/src/lib/cache/libb10-cache.la
 run_unittests_LDADD +=  $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 run_unittests_LDADD +=  $(top_builddir)/src/lib/asiodns/libb10-asiodns.la
 run_unittests_LDADD +=  $(top_builddir)/src/lib/resolve/libresolve.la
