@@ -27,7 +27,7 @@ endif
 
 badpacket_LDADD  = $(top_builddir)/src/lib/asiodns/libasiodns.la
 badpacket_LDADD += $(top_builddir)/src/lib/dns/libb10-dns++.la
-badpacket_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
+badpacket_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 badpacket_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
 badpacket_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
 badpacket_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la

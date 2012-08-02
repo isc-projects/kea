@@ -54,7 +54,7 @@ endif
 libdhcp___unittests_LDADD  = $(GTEST_LDADD)
 libdhcp___unittests_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
 libdhcp___unittests_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
-libdhcp___unittests_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
+libdhcp___unittests_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 libdhcp___unittests_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 endif
 
