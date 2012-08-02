@@ -168,12 +168,15 @@ const char* const TEST_RECORDS[][5] = {
     {"child.insecdelegation.example.org.", "DS", "3600", "", "DS 5 3 3600 "
      "20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE"},
 
-    // Broken NS
+    // Delegation NS and other ordinary type of RR coexist at the same
+    // name.  This is deviant (except for some special cases like the other
+    // RR could be used for addressing the NS name), but as long as the
+    // other records are hidden behind the delegation for normal queries
+    // it's not necessarily harmful. (so "broken" may be too strong, but we
+    // keep the name since it could be in a chain of sorted names for DNSSEC
+    // processing and renaming them may have other bad effects for tests).
     {"brokenns1.example.org.", "A", "3600", "", "192.0.2.1"},
     {"brokenns1.example.org.", "NS", "3600", "", "ns.example.com."},
-
-    {"brokenns2.example.org.", "NS", "3600", "", "ns.example.com."},
-    {"brokenns2.example.org.", "A", "3600", "", "192.0.2.1"},
 
     // Now double DNAME, to test failure mode
     {"baddname.example.org.", "DNAME", "3600", "", "dname1.example.com."},
@@ -2202,15 +2205,23 @@ TYPED_TEST(DatabaseClientTest, findDelegation) {
                               ZoneFinder::FIND_DEFAULT),
                  DataSourceError);
 
-    // Broken NS - it lives together with something else
-    EXPECT_THROW(finder->find(isc::dns::Name("brokenns1.example.org."),
-                              this->qtype_,
-                              ZoneFinder::FIND_DEFAULT),
-                 DataSourceError);
-    EXPECT_THROW(finder->find(isc::dns::Name("brokenns2.example.org."),
-                              this->qtype_,
-                              ZoneFinder::FIND_DEFAULT),
-                 DataSourceError);
+    // NS and other type coexist: deviant and not necessarily harmful.
+    // It should normally just result in DELEGATION; if GLUE_OK is specified,
+    // the other RR should be visible.
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back("ns.example.com");
+    doFindTest(*finder, Name("brokenns1.example.org"), this->qtype_,
+               RRType::NS(), this->rrttl_, ZoneFinder::DELEGATION,
+               this->expected_rdatas_, this->empty_rdatas_,
+               ZoneFinder::RESULT_DEFAULT);
+
+    this->expected_rdatas_.clear();
+    this->expected_rdatas_.push_back("192.0.2.1");
+    doFindTest(*finder, Name("brokenns1.example.org"), this->qtype_,
+               this->qtype_, this->rrttl_, ZoneFinder::SUCCESS,
+               this->expected_rdatas_, this->empty_rdatas_,
+               ZoneFinder::RESULT_DEFAULT, Name("brokenns1.example.org"),
+               ZoneFinder::FIND_GLUE_OK);
 }
 
 TYPED_TEST(DatabaseClientTest, findDS) {
@@ -3622,33 +3633,6 @@ TYPED_TEST(DatabaseClientTest, compoundUpdate) {
                this->empty_rdatas_);
 }
 
-TYPED_TEST(DatabaseClientTest, previous) {
-    boost::shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
-
-    EXPECT_EQ(Name("www.example.org."),
-              finder->findPreviousName(Name("www2.example.org.")));
-    // Check a name that doesn't exist there
-    EXPECT_EQ(Name("www.example.org."),
-              finder->findPreviousName(Name("www1.example.org.")));
-    if (this->is_mock_) { // We can't really force the DB to throw
-        // Check it doesn't crash or anything if the underlying DB throws
-        DataSourceClient::FindResult
-            zone(this->client_->findZone(Name("bad.example.org")));
-        finder =
-            dynamic_pointer_cast<DatabaseClient::Finder>(zone.zone_finder);
-
-        EXPECT_THROW(finder->findPreviousName(Name("bad.example.org")),
-                     isc::NotImplemented);
-    } else {
-        // No need to test this on mock one, because we test only that
-        // the exception gets through
-
-        // A name before the origin
-        EXPECT_THROW(finder->findPreviousName(Name("example.com")),
-                     isc::NotImplemented);
-    }
-}
-
 TYPED_TEST(DatabaseClientTest, invalidRdata) {
     boost::shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
 
@@ -3674,13 +3658,6 @@ TEST_F(MockDatabaseClientTest, missingNSEC) {
     doFindTest(*finder, Name("badnsec2.example.org."), RRType::A(),
                RRType::A(), this->rrttl_, ZoneFinder::NXDOMAIN,
                this->expected_rdatas_, this->expected_sig_rdatas_);
-}
-
-TEST_F(MockDatabaseClientTest, badName) {
-    boost::shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
-
-    EXPECT_THROW(finder->findPreviousName(Name("brokenname.example.org.")),
-                 DataSourceError);
 }
 
 /*

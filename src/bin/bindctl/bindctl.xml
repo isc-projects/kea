@@ -2,7 +2,7 @@
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
 	       [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2010-2012  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -20,7 +20,7 @@
 <refentry>
 
   <refentryinfo>
-    <date>December 23, 2010</date>
+    <date>June 20, 2012</date>
   </refentryinfo>
 
   <refmeta>
@@ -74,7 +74,7 @@
       <citerefentry><refentrytitle>b10-cmdctl</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
       The
 <citerefentry><refentrytitle>b10-cfgmgr</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-      daemon stores the configurations and defines the commands.
+      daemon stores the configurations.
     </para>
 
   </refsect1>
@@ -120,8 +120,8 @@
 	    The directory name in which the user/password CSV file
             is stored (see AUTHENTICATION).
 	    By default this option doesn't have any value,
-	    in which case the ".bind10" directory under the user's
-            home directory will be used.
+	    in which case the "<filename>.bind10</filename>" directory
+            under the user's home directory will be used.
           </para>
          </listitem>
       </varlistentry>
@@ -167,8 +167,9 @@
       On the first successful login, it will save the details to
       a comma-separated-value (CSV) file
       which will be used for later uses of <command>bindctl</command>.
-      The file name is <filename>default_user.csv</filename>
-      located under the directory specified by the --csv-file-dir option.
+      The file name is "<filename>default_user.csv</filename>"
+      located under the directory specified by the
+      <option>--csv-file-dir</option> option.
     </para>
 
 <!-- TODO: mention HTTPS? -->
@@ -208,8 +209,8 @@
      <para>
        The <command>quit</command>
        command is used to exit
-       <command>bindctl</command>
-       (and doesn't stop the BIND 10 services).
+       <command>bindctl</command>.
+       (It doesn't stop the BIND 10 services.)
      </para>
 
      <para>

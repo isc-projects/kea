@@ -7,7 +7,7 @@
 // THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
 // REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
 // AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
- // INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
@@ -17,7 +17,9 @@
 #include <fstream>
 #include <sstream>
 
+#include <unistd.h>
 #include <arpa/inet.h>
+#include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 
 #include <asiolink/io_address.h>
@@ -30,11 +32,16 @@ using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
 
-// name of loopback interface detection
-const size_t buf_size = 32;
-char LOOPBACK[buf_size] = "lo";
-
 namespace {
+
+// Name of loopback interface detection
+const size_t BUF_SIZE = 32;
+char LOOPBACK[BUF_SIZE] = "lo";
+
+// Ports used during testing
+const uint16_t PORT1 = 10547;   // V6 socket
+const uint16_t PORT2 = 10548;   // V4 socket
+
 
 class NakedIfaceMgr: public IfaceMgr {
     // "naked" Interface Manager, exposes internal fields
@@ -68,10 +75,10 @@ TEST_F(IfaceMgrTest, loDetect) {
     // is implemented
     if (if_nametoindex("lo") > 0) {
         cout << "This is Linux, using lo as loopback." << endl;
-        snprintf(LOOPBACK, buf_size - 1, "lo");
+        snprintf(LOOPBACK, BUF_SIZE - 1, "lo");
     } else if (if_nametoindex("lo0") > 0) {
         cout << "This is BSD, using lo0 as loopback." << endl;
-        snprintf(LOOPBACK, buf_size - 1, "lo0");
+        snprintf(LOOPBACK, BUF_SIZE - 1, "lo0");
     } else {
         cout << "Failed to detect loopback interface. Neither "
              << "lo nor lo0 worked. I give up." << endl;
@@ -79,7 +86,7 @@ TEST_F(IfaceMgrTest, loDetect) {
     }
 }
 
-// uncomment this test to create packet writer. It will
+// Uncomment this test to create packet writer. It will
 // write incoming DHCPv6 packets as C arrays. That is useful
 // for generating test sequences based on actual traffic
 //
@@ -240,6 +247,78 @@ TEST_F(IfaceMgrTest, sockets6) {
     delete ifacemgr;
 }
 
+TEST_F(IfaceMgrTest, socketsFromIface) {
+    boost::scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
+
+    // Open v6 socket on loopback interface and bind to port
+    int socket1 = 0;
+    EXPECT_NO_THROW(
+        socket1 = ifacemgr->openSocketFromIface(LOOPBACK, PORT1, AF_INET6);
+    );
+    // Socket descriptor must be positive integer
+    EXPECT_GT(socket1, 0);
+    close(socket1);
+
+    // Open v4 socket on loopback interface and bind to different port
+    int socket2 = 0;
+    EXPECT_NO_THROW(
+        socket2 = ifacemgr->openSocketFromIface(LOOPBACK, PORT2, AF_INET);
+    );
+    // socket descriptor must be positive integer
+    EXPECT_GT(socket2, 0);
+    close(socket2);
+
+}
+
+
+TEST_F(IfaceMgrTest, socketsFromAddress) {
+    boost::scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
+
+    // Open v6 socket on loopback interface and bind to port
+    int socket1 = 0;
+    IOAddress loAddr6("::1");
+    EXPECT_NO_THROW(
+        socket1 = ifacemgr->openSocketFromAddress(loAddr6, PORT1);
+    );
+    // socket descriptor must be positive integer
+    EXPECT_GT(socket1, 0);
+    close(socket1);
+
+    // Open v4 socket on loopback interface and bind to different port
+    int socket2 = 0;
+    IOAddress loAddr("127.0.0.1");
+    EXPECT_NO_THROW(
+        socket2 = ifacemgr->openSocketFromAddress(loAddr, PORT2);
+    );
+    // socket descriptor must be positive integer
+    EXPECT_GT(socket2, 0);
+    close(socket2);
+}
+
+TEST_F(IfaceMgrTest, socketsFromRemoteAddress) {
+    boost::scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
+
+    // Open v6 socket to connect to remote address.
+    // Loopback address is the only one that we know
+    // so let's treat it as remote address.
+    int socket1 = 0;
+    IOAddress loAddr6("::1");
+    EXPECT_NO_THROW(
+        socket1 = ifacemgr->openSocketFromRemoteAddress(loAddr6, PORT1);
+    );
+    EXPECT_GT(socket1, 0);
+    close(socket1);
+
+    // Open v4 socket to connect to remote address.
+    int socket2 = 0;
+    IOAddress loAddr("127.0.0.1");
+    EXPECT_NO_THROW(
+        socket2 = ifacemgr->openSocketFromRemoteAddress(loAddr, PORT2);
+    );
+    EXPECT_GT(socket2, 0);
+    close(socket2);
+}
+
 // TODO: disabled due to other naming on various systems
 // (lo in Linux, lo0 in BSD systems)
 TEST_F(IfaceMgrTest, DISABLED_sockets6Mcast) {
@@ -381,7 +460,7 @@ TEST_F(IfaceMgrTest, sendReceive4) {
 
     EXPECT_EQ(true, ifacemgr->send(sendPkt));
 
-    rcvPkt = ifacemgr->receive4();
+    rcvPkt = ifacemgr->receive4(10);
 
     ASSERT_TRUE(rcvPkt); // received our own packet
 
@@ -898,5 +977,53 @@ TEST_F(IfaceMgrTest, DISABLED_detectIfaces_linux) {
     delete ifacemgr;
 }
 #endif
+
+volatile bool callback_ok;
+
+void my_callback(void) {
+    cout << "Callback triggered." << endl;
+    callback_ok = true;
+}
+
+TEST_F(IfaceMgrTest, controlSession) {
+    // tests if extra control socket and its callback can be passed and
+    // it is supported properly by receive4() method.
+
+    callback_ok = false;
+
+    NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
+
+    // create pipe and register it as extra socket
+    int pipefd[2];
+    EXPECT_TRUE(pipe(pipefd) == 0);
+    EXPECT_NO_THROW(ifacemgr->set_session_socket(pipefd[0], my_callback));
+
+    Pkt4Ptr pkt4;
+    pkt4 = ifacemgr->receive4(1);
+
+    // Our callback should not be called this time (there was no data)
+    EXPECT_FALSE(callback_ok);
+
+    // IfaceMgr should not process control socket data as incoming packets
+    EXPECT_FALSE(pkt4);
+
+    // Now, send some data over pipe (38 bytes)
+    EXPECT_EQ(38, write(pipefd[1], "Hi, this is a message sent over a pipe", 38));
+
+    // ... and repeat
+    pkt4 = ifacemgr->receive4(1);
+
+    // IfaceMgr should not process control socket data as incoming packets
+    EXPECT_FALSE(pkt4);
+
+    // There was some data, so this time callback should be called
+    EXPECT_TRUE(callback_ok);
+
+    delete ifacemgr;
+
+    // close both pipe ends
+    close(pipefd[1]);
+    close(pipefd[0]);
+}
 
 }

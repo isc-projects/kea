@@ -14,6 +14,18 @@
             "address": "127.0.0.1"
         } ]
     },
+    "data_sources": {
+        "classes": {
+            "IN": [
+                {
+                    "type": "sqlite3",
+                    "params": {
+                        "database_file": "data/example.org.sqlite3"
+                    }
+                }
+            ]
+        }
+    },
     "Boss": {
         "components": {
             "b10-auth": { "kind": "needed", "special": "auth" },

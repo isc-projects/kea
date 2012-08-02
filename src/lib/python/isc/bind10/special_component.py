@@ -37,6 +37,7 @@ class SockCreator(BaseComponent):
         BaseComponent.__init__(self, boss, kind)
         self.__creator = None
         self.__uid = boss.uid
+        self.__gid = boss.gid
 
     def _start_internal(self):
         self._boss.curproc = 'b10-sockcreator'
@@ -45,6 +46,9 @@ class SockCreator(BaseComponent):
         self._boss.register_process(self.pid(), self)
         self._boss.set_creator(self.__creator)
         self._boss.log_started(self.pid())
+        if self.__gid is not None:
+            logger.info(BIND10_SETGID, self.__gid)
+            posix.setgid(self.__gid)
         if self.__uid is not None:
             logger.info(BIND10_SETUID, self.__uid)
             posix.setuid(self.__uid)

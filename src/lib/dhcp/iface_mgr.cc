@@ -18,11 +18,15 @@
 #include <string.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <sys/select.h>
+#include <asio.hpp>
 
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/iface_mgr.h>
 #include <exceptions/exceptions.h>
+#include <asiolink/udp_endpoint.h>
+#include <asiolink/io_error.h>
 #include <util/io/pktinfo_utilities.h>
 
 using namespace std;
@@ -121,7 +125,8 @@ bool IfaceMgr::Iface::delSocket(uint16_t sockfd) {
 
 IfaceMgr::IfaceMgr()
     :control_buf_len_(CMSG_SPACE(sizeof(struct in6_pktinfo))),
-     control_buf_(new char[control_buf_len_])
+     control_buf_(new char[control_buf_len_]),
+     session_socket_(INVALID_SOCKET), session_callback_(NULL)
 {
 
     cout << "IfaceMgr initialization." << endl;
@@ -195,7 +200,7 @@ void IfaceMgr::stubDetectIfaces() {
         iface.flag_up_ = true;
         iface.flag_running_ = true;
 
-        // note that we claim that this is not a loopback. iface_mgr tries to open a
+        // Note that we claim that this is not a loopback. iface_mgr tries to open a
         // socket on all interaces that are up, running and not loopback. As this is
         // the only interface we were able to detect, let's pretend this is a normal
         // interface.
@@ -226,31 +231,32 @@ bool IfaceMgr::openSockets4(const uint16_t port) {
     int sock;
     int count = 0;
 
-    for (IfaceCollection::iterator iface=ifaces_.begin();
-         iface!=ifaces_.end();
+    for (IfaceCollection::iterator iface = ifaces_.begin();
+         iface != ifaces_.end();
          ++iface) {
 
-        cout << "Trying interface " << iface->getFullName() << endl;
+        cout << "Trying opening socket on interface " << iface->getFullName() << endl;
 
         if (iface->flag_loopback_ ||
             !iface->flag_up_ ||
             !iface->flag_running_) {
+            cout << "Interface " << iface->getFullName()
+                 << " not suitable: is loopback, is down or not running" << endl;
             continue;
         }
 
         AddressCollection addrs = iface->getAddresses();
-
-        for (AddressCollection::iterator addr= addrs.begin();
+        for (AddressCollection::iterator addr = addrs.begin();
              addr != addrs.end();
              ++addr) {
 
-            // skip IPv6 addresses
+            // Skip IPv6 addresses
             if (addr->getFamily() != AF_INET) {
                 continue;
             }
 
             sock = openSocket(iface->getName(), *addr, port);
-            if (sock<0) {
+            if (sock < 0) {
                 cout << "Failed to open unicast socket." << endl;
                 return (false);
             }
@@ -266,8 +272,8 @@ bool IfaceMgr::openSockets6(const uint16_t port) {
     int sock;
     int count = 0;
 
-    for (IfaceCollection::iterator iface=ifaces_.begin();
-         iface!=ifaces_.end();
+    for (IfaceCollection::iterator iface = ifaces_.begin();
+         iface != ifaces_.end();
          ++iface) {
 
         if (iface->flag_loopback_ ||
@@ -277,8 +283,7 @@ bool IfaceMgr::openSockets6(const uint16_t port) {
         }
 
         AddressCollection addrs = iface->getAddresses();
-
-        for (AddressCollection::iterator addr= addrs.begin();
+        for (AddressCollection::iterator addr = addrs.begin();
              addr != addrs.end();
              ++addr) {
 
@@ -288,7 +293,7 @@ bool IfaceMgr::openSockets6(const uint16_t port) {
             }
 
             sock = openSocket(iface->getName(), *addr, port);
-            if (sock<0) {
+            if (sock < 0) {
                 cout << "Failed to open unicast socket." << endl;
                 return (false);
             }
@@ -297,7 +302,7 @@ bool IfaceMgr::openSockets6(const uint16_t port) {
             // works well on Mac OS (and possibly other BSDs), but does not work
             // on Linux.
             if ( !joinMulticast(sock, iface->getName(),
-                                string(ALL_DHCP_RELAY_AGENTS_AND_SERVERS) ) ) {
+                                string(ALL_DHCP_RELAY_AGENTS_AND_SERVERS))) {
                 close(sock);
                 isc_throw(Unexpected, "Failed to join " << ALL_DHCP_RELAY_AGENTS_AND_SERVERS
                           << " multicast group.");
@@ -313,7 +318,7 @@ bool IfaceMgr::openSockets6(const uint16_t port) {
             int sock2 = openSocket(iface->getName(),
                                    IOAddress(ALL_DHCP_RELAY_AGENTS_AND_SERVERS),
                                    port);
-            if (sock2<0) {
+            if (sock2 < 0) {
                 isc_throw(Unexpected, "Failed to open multicast socket on "
                           << " interface " << iface->getFullName());
                 iface->delSocket(sock); // delete previously opened socket
@@ -391,6 +396,117 @@ int IfaceMgr::openSocket(const std::string& ifname, const IOAddress& addr,
         isc_throw(BadValue, "Failed to detect family of address: "
                   << addr.toText());
     }
+}
+
+int IfaceMgr::openSocketFromIface(const std::string& ifname,
+                                  const uint16_t port,
+                                  const uint8_t family) {
+    // Search for specified interface among detected interfaces.
+    for (IfaceCollection::iterator iface = ifaces_.begin();
+         iface != ifaces_.end();
+         ++iface) {
+
+        if ((iface->getFullName() != ifname) &&
+            (iface->getName() != ifname)) {
+            continue;
+        }
+
+        // Interface is now detected. Search for address on interface
+        // that matches address family (v6 or v4).
+        AddressCollection addrs = iface->getAddresses();
+        AddressCollection::iterator addr_it = addrs.begin();
+        while (addr_it != addrs.end()) {
+            if (addr_it->getFamily() == family) {
+                // We have interface and address so let's open socket.
+                // This may cause isc::Unexpected exception.
+                return (openSocket(iface->getName(), *addr_it, port));
+            }
+            ++addr_it;
+        }
+        // If we are at the end of address collection it means that we found
+        // interface but there is no address for family specified.
+        if (addr_it == addrs.end()) {
+            // Stringify the family value to append it to exception string.
+            std::string family_name("AF_INET");
+            if (family == AF_INET6) {
+                family_name = "AF_INET6";
+            }
+            // We did not find address on the interface.
+            isc_throw(BadValue, "There is no address for interface: "
+                      << ifname << ", port: " << port << ", address "
+                      " family: " << family_name);
+        }
+    }
+    // If we got here it means that we had not found the specified interface.
+    // Otherwise we would have returned from previous exist points.
+    isc_throw(BadValue, "There is no " << ifname << " interface present.");
+}
+
+int IfaceMgr::openSocketFromAddress(const IOAddress& addr,
+                                    const uint16_t port) {
+    // Search through detected interfaces and addresses to match
+    // local address we got.
+    for (IfaceCollection::iterator iface = ifaces_.begin();
+         iface != ifaces_.end();
+         ++iface) {
+
+        AddressCollection addrs = iface->getAddresses();
+
+        for (AddressCollection::iterator addr_it = addrs.begin();
+             addr_it != addrs.end();
+             ++addr_it) {
+
+            // Local address must match one of the addresses
+            // on detected interfaces. If it does, we have
+            // address and interface detected so we can open
+            // socket.
+            if (*addr_it == addr) {
+                // Open socket using local interface, address and port.
+                // This may cause isc::Unexpected exception.
+                return (openSocket(iface->getName(), *addr_it, port));
+            }
+        }
+    }
+    // If we got here it means that we did not find specified address
+    // on any available interface.
+    isc_throw(BadValue, "There is no such address " << addr.toText());
+}
+
+int IfaceMgr::openSocketFromRemoteAddress(const IOAddress& remote_addr,
+                                          const uint16_t port) {
+    // Get local address to be used to connect to remote location.
+    IOAddress local_address(getLocalAddress(remote_addr, port).getAddress());
+    return openSocketFromAddress(local_address, port);
+}
+
+isc::asiolink::IOAddress
+IfaceMgr::getLocalAddress(const IOAddress& remote_addr, const uint16_t port) {
+    // Create remote endpoint, we will be connecting to it.
+    boost::scoped_ptr<const UDPEndpoint>
+        remote_endpoint(static_cast<const UDPEndpoint*>
+                        (UDPEndpoint::create(IPPROTO_UDP, remote_addr, port)));
+    if (!remote_endpoint) {
+        isc_throw(Unexpected, "Unable to create remote endpoint");
+    }
+
+    // Create socket that will be used to connect to remote endpoint.
+    asio::io_service io_service;
+    asio::ip::udp::socket sock(io_service);
+
+    // Try to connect to remote endpoint and check if attempt is successful.
+    asio::error_code err_code;
+    sock.connect(remote_endpoint->getASIOEndpoint(), err_code);
+    if (err_code) {
+        isc_throw(Unexpected,"Failed to connect to remote endpoint.");
+    }
+
+    // Once we are connected socket object holds local endpoint.
+    asio::ip::udp::socket::endpoint_type local_endpoint =
+        sock.local_endpoint();
+    asio::ip::address local_address(local_endpoint.address());
+
+    // Return address of local endpoint.
+    return IOAddress(local_address);
 }
 
 int IfaceMgr::openSocket4(Iface& iface, const IOAddress& addr, uint16_t port) {
@@ -685,35 +801,101 @@ IfaceMgr::send(const Pkt4Ptr& pkt)
 
 
 boost::shared_ptr<Pkt4>
-IfaceMgr::receive4() {
+IfaceMgr::receive4(uint32_t timeout) {
 
     const SocketInfo* candidate = 0;
     IfaceCollection::const_iterator iface;
+
+    fd_set sockets;
+    FD_ZERO(&sockets);
+    int maxfd = 0;
+
+    stringstream names;
+
+    /// @todo: marginal performance optimization. We could create the set once
+    /// and then use its copy for select(). Please note that select() modifies
+    /// provided set to indicated which sockets have something to read.
     for (iface = ifaces_.begin(); iface != ifaces_.end(); ++iface) {
 
-        /// @todo: rewrite this as part of #1555
         for (SocketCollection::const_iterator s = iface->sockets_.begin();
              s != iface->sockets_.end(); ++s) {
 
-            // We don't want IPv6 addresses here.
-            if (s->addr_.getFamily() != AF_INET) {
-                continue;
-            }
+            // Only deal with IPv4 addresses.
+            if (s->addr_.getFamily() == AF_INET) {
+                names << s->sockfd_ << "(" << iface->getName() << ") ";
 
-            // This address looks good.
-            if (!candidate) {
+                // Add this socket to listening set
+                FD_SET(s->sockfd_, &sockets);
+                if (maxfd < s->sockfd_) {
+                    maxfd = s->sockfd_;
+                }
+            }
+        }
+    }
+
+    // if there is session socket registered...
+    if (session_socket_ != INVALID_SOCKET) {
+        // at it to the set as well
+        FD_SET(session_socket_, &sockets);
+        if (maxfd < session_socket_)
+            maxfd = session_socket_;
+        names << session_socket_ << "(session)";
+    }
+
+    /// @todo: implement sub-second precision one day
+    struct timeval select_timeout;
+    select_timeout.tv_sec = timeout;
+    select_timeout.tv_usec = 0;
+
+    cout << "Trying to receive data on sockets: " << names.str()
+         << ". Timeout is " << timeout << " seconds." << endl;
+    int result = select(maxfd + 1, &sockets, NULL, NULL, &select_timeout);
+    cout << "select returned " << result << endl;
+
+    if (result == 0) {
+        // nothing received and timeout has been reached
+        return (Pkt4Ptr()); // NULL
+    } else if (result < 0) {
+        cout << "Socket read error: " << strerror(errno) << endl;
+
+        /// @todo: perhaps throw here?
+        return (Pkt4Ptr()); // NULL
+    }
+
+    // Let's find out which socket has the data
+    if ((session_socket_ != INVALID_SOCKET) && (FD_ISSET(session_socket_, &sockets))) {
+        // something received over session socket
+        cout << "BIND10 command or config available over session socket." << endl;
+
+        if (session_callback_) {
+            // in theory we could call io_service.run_one() here, instead of
+            // implementing callback mechanism, but that would introduce
+            // asiolink dependency to libdhcp++ and that is something we want
+            // to avoid (see CPE market and out long term plans for minimalistic
+            // implementations.
+            session_callback_();
+        }
+
+        return (Pkt4Ptr()); // NULL
+    }
+
+    // Let's find out which interface/socket has the data
+    for (iface = ifaces_.begin(); iface != ifaces_.end(); ++iface) {
+        for (SocketCollection::const_iterator s = iface->sockets_.begin();
+             s != iface->sockets_.end(); ++s) {
+            if (FD_ISSET(s->sockfd_, &sockets)) {
                 candidate = &(*s);
                 break;
             }
         }
-
         if (candidate) {
             break;
         }
     }
 
     if (!candidate) {
-        isc_throw(Unexpected, "Failed to find any suitable sockets on all interfaces.");
+        cout << "Received data over unknown socket." << endl;
+        return (Pkt4Ptr()); // NULL
     }
 
     cout << "Trying to receive over UDP4 socket " << candidate->sockfd_ << " bound to "
@@ -750,7 +932,7 @@ IfaceMgr::receive4() {
     m.msg_control = &control_buf_[0];
     m.msg_controllen = control_buf_len_;
 
-    int result = recvmsg(candidate->sockfd_, &m, 0);
+    result = recvmsg(candidate->sockfd_, &m, 0);
     if (result < 0) {
         cout << "Failed to receive UDP4 data." << endl;
         return (Pkt4Ptr()); // NULL

@@ -88,6 +88,7 @@ public:
     void startRead(boost::function<void()> user_handler);
     void setTimeout(size_t seconds) { timeout_ = seconds; };
     size_t getTimeout() const { return timeout_; };
+    int getSocketDesc();
 
     long int sequence_; // the next sequence number to use
     std::string lname_;
@@ -254,6 +255,16 @@ SessionImpl::internalRead(const asio::error_code& error,
     }
 }
 
+int
+SessionImpl::getSocketDesc() {
+    /// @todo boost 1.42 uses native() method, but it is deprecated
+    /// in 1.49 and native_handle() is recommended instead
+    if (!socket_.is_open()) {
+        isc_throw(InvalidOperation, "Can't return socket desciptor: no socket opened.");
+    }
+    return socket_.native();
+}
+
 Session::Session(asio::io_service& io_service) :
     impl_(new SessionImpl(io_service))
 {}
@@ -271,6 +282,11 @@ void
 Session::startRead(boost::function<void()> read_callback) {
     LOG_DEBUG(logger, DBG_TRACE_DETAILED, CC_START_READ);
     impl_->startRead(read_callback);
+}
+
+int
+Session::getSocketDesc() const {
+    return impl_->getSocketDesc();
 }
 
 namespace {                     // maybe unnecessary.

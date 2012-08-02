@@ -17,6 +17,9 @@ endif
 
 CLEANFILES = *.gcno *.gcda
 
+TESTS_ENVIRONMENT = \
+	$(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
+
 TESTS =
 noinst_PROGRAMS =
 if HAVE_GTEST
@@ -57,6 +60,7 @@ run_unittests_SOURCES += sqlite3_unittest.cc
 run_unittests_SOURCES += sqlite3_accessor_unittest.cc
 run_unittests_SOURCES += memory_datasrc_unittest.cc
 run_unittests_SOURCES += rbnode_rrset_unittest.cc
+run_unittests_SOURCES += zonetable_unittest.cc
 run_unittests_SOURCES += zone_finder_context_unittest.cc
 run_unittests_SOURCES += faked_nsec3.h faked_nsec3.cc
 run_unittests_SOURCES += client_list_unittest.cc
@@ -64,7 +68,6 @@ run_unittests_SOURCES += client_list_unittest.cc
 # We need the actual module implementation in the tests (they are not part
 # of libdatasrc)
 run_unittests_SOURCES += $(top_srcdir)/src/lib/datasrc/sqlite3_accessor.cc
-run_unittests_SOURCES += $(top_srcdir)/src/lib/datasrc/memory_datasrc.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)

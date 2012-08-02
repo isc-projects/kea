@@ -19,8 +19,11 @@
  *
  * @section DHCP
  * - @subpage dhcpv4
+ *   - @subpage dhcpv4Session
  * - @subpage dhcpv6
  * - @subpage libdhcp
+ *   - @subpage libdhcpIntro
+ *   - @subpage libdhcpIfaceMgr
  *
  * @section misc Miscellaneous topics
  * - @subpage LoggingApi

@@ -74,15 +74,15 @@ def check_type(spec_part, value):
         raise isc.cc.data.DataTypeError(str(value) + " is not a map")
 
 def convert_type(spec_part, value):
-    """Convert the given value(type is string) according specification 
-    part relevant for the value. Raises an isc.cc.data.DataTypeError 
+    """Convert the given value(type is string) according specification
+    part relevant for the value. Raises an isc.cc.data.DataTypeError
     exception if conversion failed.
     """
     if type(spec_part) == dict and 'item_type' in spec_part:
         data_type = spec_part['item_type']
     else:
         raise isc.cc.data.DataTypeError(str("Incorrect specification part for type conversion"))
-   
+
     try:
         if data_type == "integer":
             return int(value)
@@ -95,9 +95,9 @@ def convert_type(spec_part, value):
         elif data_type == "list":
             ret = []
             if type(value) == list:
-                for item in value:    
+                for item in value:
                     ret.append(convert_type(spec_part['list_item_spec'], item))
-            elif type(value) == str:    
+            elif type(value) == str:
                 value = value.split(',')
                 for item in value:
                     sub_value = item.split()
@@ -257,7 +257,7 @@ class ConfigData:
     """This class stores the module specs and the current non-default
        config values. It provides functions to get the actual value or
        the default value if no non-default value has been set"""
-   
+
     def __init__(self, specification):
         """Initialize a ConfigData instance. If specification is not
            of type ModuleSpec, a ConfigDataError is raised."""
@@ -350,7 +350,7 @@ class MultiConfigData:
     CURRENT = 2
     DEFAULT = 3
     NONE    = 4
-    
+
     def __init__(self):
         self._specifications = {}
         self._current_config = {}
@@ -413,7 +413,7 @@ class MultiConfigData:
            the module name, and the value is the config values for
            that module"""
         return self._current_config
-        
+
     def get_local_changes(self):
         """Returns the local config changes, i.e. those that have not
            been committed yet and are not known by the configuration
@@ -440,7 +440,7 @@ class MultiConfigData:
            get_value() for a general way to find a configuration value
            """
         return isc.cc.data.find_no_exc(self._local_changes, identifier)
-        
+
     def get_current_value(self, identifier):
         """Returns the current non-default value as known by the
            configuration manager, or None if it is not set.
@@ -448,7 +448,7 @@ class MultiConfigData:
            value
         """
         return isc.cc.data.find_no_exc(self._current_config, identifier)
-        
+
     def get_default_value(self, identifier):
         """Returns the default value for the given identifier as
            specified by the module specification, or None if there is
@@ -486,22 +486,32 @@ class MultiConfigData:
                         else:
                             return None
                     id_part = id_parts.pop(0)
+                    item_id, list_indices =\
+                        isc.cc.data.split_identifier_list_indices(id_part)
 
                     named_set_value, type = self.get_value(id_list)
-                    if id_part in named_set_value:
+                    if item_id in named_set_value.keys():
+                        result = named_set_value[item_id]
+                        # If the item is a list and we have indices in the
+                        # identifier part, continue with the item pointed to
+                        # by those indices
+                        if list_indices is not None:
+                            while len(list_indices) > 0:
+                                result = result[list_indices.pop(0)]
+
                         if len(id_parts) > 0:
                             # we are looking for the *default* value.
                             # so if not present in here, we need to
                             # lookup the one from the spec
                             rest_of_id = "/".join(id_parts)
-                            result = isc.cc.data.find_no_exc(named_set_value[id_part], rest_of_id)
+                            result = isc.cc.data.find_no_exc(result, rest_of_id)
                             if result is None:
                                 spec_part = self.find_spec_part(identifier)
                                 if 'item_default' in spec_part:
                                     return spec_part['item_default']
                             return result
                         else:
-                            return named_set_value[id_part]
+                            return result
                     else:
                         return None
                 elif list_indices is not None:
@@ -512,7 +522,7 @@ class MultiConfigData:
                     # So if the list item *itself* is a default,
                     # we need to get the value out of that. If not, we
                     # need to find the default for the specific element.
-                    list_value, type = self.get_value(id_list) 
+                    list_value, type = self.get_value(id_list)
                     list_spec = find_spec_part(self._specifications[module].get_config_spec(), id_prefix)
                     if type == self.DEFAULT:
                         if 'item_default' in list_spec:
@@ -523,7 +533,7 @@ class MultiConfigData:
                                 else:
                                     # out of range, return None
                                     return None
-                                
+
                             if len(id_parts) > 0:
                                 rest_of_id = "/".join(id_parts)
                                 return isc.cc.data.find(list_value, rest_of_id)
@@ -538,7 +548,7 @@ class MultiConfigData:
                             else:
                                 # out of range, return None
                                 return None
-                    
+
             spec = find_spec_part(self._specifications[module].get_config_spec(), id)
             if 'item_default' in spec:
                 # one special case, named_set

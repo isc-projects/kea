@@ -14,6 +14,9 @@ CLEANFILES = *.gcno *.gcda
 noinst_LTLIBRARIES = libfake_session.la
 libfake_session_la_SOURCES = fake_session.h fake_session.cc
 
+TESTS_ENVIRONMENT = \
+	$(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
+
 TESTS =
 if HAVE_GTEST
 TESTS += run_unittests

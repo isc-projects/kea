@@ -168,9 +168,9 @@ class BoB:
     """Boss of BIND class."""
     
     def __init__(self, msgq_socket_file=None, data_path=None,
-                 config_filename=None, clear_config=False, nocache=False,
-                 verbose=False, nokill=False, setuid=None, username=None,
-                 cmdctl_port=None, wait_time=10):
+                 config_filename=None, clear_config=False,
+                 verbose=False, nokill=False, setuid=None, setgid=None,
+                 username=None, cmdctl_port=None, wait_time=10):
         """
             Initialize the Boss of BIND. This is a singleton (only one can run).
         
@@ -192,7 +192,6 @@ class BoB:
         self.ccs = None
         self.curproc = None
         self.msgq_socket_file = msgq_socket_file
-        self.nocache = nocache
         self.component_config = {}
         # Some time in future, it may happen that a single component has
         # multple processes (like a pipeline-like component). If so happens,
@@ -208,6 +207,7 @@ class BoB:
         self.components_to_restart = []
         self.runnable = False
         self.uid = setuid
+        self.gid = setgid
         self.username = username
         self.verbose = verbose
         self.nokill = nokill
@@ -567,8 +567,6 @@ class BoB:
         if self.uid is not None and self.__started:
             logger.warn(BIND10_START_AS_NON_ROOT_AUTH)
         authargs = ['b10-auth']
-        if self.nocache:
-            authargs += ['-n']
         if self.verbose:
             authargs += ['-v']
 
@@ -1051,8 +1049,6 @@ def parse_args(args=sys.argv[1:], Parser=OptionParser):
     parser.add_option("-m", "--msgq-socket-file", dest="msgq_socket_file",
                       type="string", default=None,
                       help="UNIX domain socket file the b10-msgq daemon will use")
-    parser.add_option("-n", "--no-cache", action="store_true", dest="nocache",
-                      default=False, help="disable hot-spot cache in authoritative DNS server")
     parser.add_option("-i", "--no-kill", action="store_true", dest="nokill",
                       default=False, help="do not send SIGTERM and SIGKILL signals to modules during shutdown")
     parser.add_option("-u", "--user", dest="user", type="string", default=None,
@@ -1156,12 +1152,14 @@ def main():
 
     # Check user ID.
     setuid = None
+    setgid = None
     username = None
     if options.user:
         # Try getting information about the user, assuming UID passed.
         try:
             pw_ent = pwd.getpwuid(int(options.user))
             setuid = pw_ent.pw_uid
+            setgid = pw_ent.pw_gid
             username = pw_ent.pw_name
         except ValueError:
             pass
@@ -1175,6 +1173,7 @@ def main():
         try:
             pw_ent = pwd.getpwnam(options.user)
             setuid = pw_ent.pw_uid
+            setgid = pw_ent.pw_gid
             username = pw_ent.pw_name
         except KeyError:
             pass
@@ -1204,8 +1203,8 @@ def main():
         # Go bob!
         boss_of_bind = BoB(options.msgq_socket_file, options.data_path,
                            options.config_file, options.clear_config,
-                           options.nocache, options.verbose, options.nokill,
-                           setuid, username, options.cmdctl_port,
+                           options.verbose, options.nokill,
+                           setuid, setgid, username, options.cmdctl_port,
                            options.wait_time)
         startup_result = boss_of_bind.startup()
         if startup_result:
