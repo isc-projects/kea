@@ -1,3 +1,8 @@
+456.	[bug]		muks
+	BIND 10 now compiles against log4cplus-1.1.0 (RC releases)
+	also. Thanks to John Lumby for sending a patch.
+	(Trac #2169, git 7d7e5269d57451191c0aef1b127d292d3615fe2c)
+
 455.	[func]*		vorner
 	The server now uses newer API for data sources. This would be an
 	internal change, however, the data sources are now configured
