@@ -60,7 +60,7 @@ b10_auth_SOURCES += ${top_srcdir}/src/lib/datasrc/memory_datasrc.cc
 nodist_b10_auth_SOURCES = auth_messages.h auth_messages.cc
 EXTRA_DIST += auth_messages.mes
 
-b10_auth_LDADD =  $(top_builddir)/src/lib/datasrc/libdatasrc.la
+b10_auth_LDADD =  $(top_builddir)/src/lib/datasrc/libb10-datasrc.la
 b10_auth_LDADD += $(top_builddir)/src/lib/dns/libb10-dns++.la
 b10_auth_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
 b10_auth_LDADD += $(top_builddir)/src/lib/util/io/libutil_io.la
