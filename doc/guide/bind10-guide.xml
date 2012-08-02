@@ -1616,6 +1616,22 @@ can use various data source backends.
           as above.
         </para>
       </section>
+
+      <note>
+      <para>
+        There's also <varname>Auth/database_file</varname> configuration
+        variable, pointing to a sqlite3 database file. This is no longer
+        used by <command>b10-auth</command>, but it is left in place for
+        now, since other modules use it. Once <command>b10-xfrin</command>,
+        <command>b10-xfrout</command> and <command>b10-ddns</command>
+        are ported to the new configuration, this will disappear. But for
+        now, make sure that if you use any of these modules, the new
+        and old configuration correspond. The defaults are consistent, so
+        unless you tweaked either the new or the old configuration, you're
+        good.
+      </para>
+      </note>
+
     </section>
 
     <section>
