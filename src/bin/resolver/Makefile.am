@@ -68,7 +68,7 @@ b10_resolver_LDADD += $(top_builddir)/src/lib/xfr/libb10-xfr.la
 b10_resolver_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
 b10_resolver_LDADD += $(top_builddir)/src/lib/server_common/libserver_common.la
 b10_resolver_LDADD += $(top_builddir)/src/lib/cache/libcache.la
-b10_resolver_LDADD += $(top_builddir)/src/lib/nsas/libnsas.la
+b10_resolver_LDADD += $(top_builddir)/src/lib/nsas/libb10-nsas.la
 b10_resolver_LDADD += $(top_builddir)/src/lib/resolve/libresolve.la
 b10_resolver_LDFLAGS = -pthread
 

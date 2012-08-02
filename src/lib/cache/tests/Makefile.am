@@ -52,7 +52,7 @@ run_unittests_LDADD    = $(GTEST_LDADD)
 
 run_unittests_LDADD += $(top_builddir)/src/lib/cache/libcache.la
 run_unittests_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
-run_unittests_LDADD += $(top_builddir)/src/lib/nsas/libnsas.la
+run_unittests_LDADD += $(top_builddir)/src/lib/nsas/libb10-nsas.la
 run_unittests_LDADD += $(top_builddir)/src/lib/dns/libb10-dns++.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
 run_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
