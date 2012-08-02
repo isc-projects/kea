@@ -65,7 +65,7 @@ dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libdhcp++.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
-dhcp4_unittests_LDADD += $(top_builddir)/src/lib/config/libcfgclient.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/cc/libb10-cc.la
 endif
 

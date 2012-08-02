@@ -43,7 +43,7 @@ b10_dhcp4_LDADD = $(top_builddir)/src/lib/dhcp/libdhcp++.la
 b10_dhcp4_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 b10_dhcp4_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
 b10_dhcp4_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
-b10_dhcp4_LDADD += $(top_builddir)/src/lib/config/libcfgclient.la
+b10_dhcp4_LDADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la
 b10_dhcp4_LDADD += $(top_builddir)/src/lib/cc/libb10-cc.la
 
 
