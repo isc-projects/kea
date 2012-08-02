@@ -25,7 +25,7 @@ if USE_CLANGPP
 badpacket_CXXFLAGS += -Wno-error
 endif
 
-badpacket_LDADD  = $(top_builddir)/src/lib/asiodns/libasiodns.la
+badpacket_LDADD  = $(top_builddir)/src/lib/asiodns/libb10-asiodns.la
 badpacket_LDADD += $(top_builddir)/src/lib/dns/libb10-dns++.la
 badpacket_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 badpacket_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
