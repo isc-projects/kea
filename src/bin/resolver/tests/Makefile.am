@@ -38,7 +38,7 @@ run_unittests_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)
 
 run_unittests_LDADD  = $(GTEST_LDADD)
 run_unittests_LDADD += $(top_builddir)/src/lib/testutils/libtestutils.la
-run_unittests_LDADD += $(top_builddir)/src/lib/dns/libdns++.la
+run_unittests_LDADD += $(top_builddir)/src/lib/dns/libb10-dns++.la
 run_unittests_LDADD += $(top_builddir)/src/lib/asiodns/libasiodns.la
 run_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
 run_unittests_LDADD += $(top_builddir)/src/lib/config/libcfgclient.la
