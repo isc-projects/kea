@@ -104,6 +104,8 @@ class ComponentTests(BossUtils, unittest.TestCase):
         self.__stop_process_params = None
         self.__start_simple_params = None
         # Pretending to be boss
+        self.gid = None
+        self.__gid_set = None
         self.uid = None
         self.__uid_set = None
 
@@ -609,6 +611,9 @@ class ComponentTests(BossUtils, unittest.TestCase):
         self.assertTrue(process.killed)
         self.assertFalse(process.terminated)
 
+    def setgid(self, gid):
+        self.__gid_set = gid
+
     def setuid(self, uid):
         self.__uid_set = uid
 
@@ -637,7 +642,9 @@ class ComponentTests(BossUtils, unittest.TestCase):
         """
         component = isc.bind10.special_component.SockCreator(None, self,
                                                              'needed', None)
+        orig_setgid = isc.bind10.special_component.posix.setgid
         orig_setuid = isc.bind10.special_component.posix.setuid
+        isc.bind10.special_component.posix.setgid = self.setgid
         isc.bind10.special_component.posix.setuid = self.setuid
         orig_creator = \
             isc.bind10.special_component.isc.bind10.sockcreator.Creator
@@ -645,18 +652,22 @@ class ComponentTests(BossUtils, unittest.TestCase):
         isc.bind10.special_component.isc.bind10.sockcreator.Creator = \
             lambda path: self.FakeCreator()
         component.start()
-        # No uid set in boss, nothing called.
+        # No gid/uid set in boss, nothing called.
+        self.assertIsNone(self.__gid_set)
         self.assertIsNone(self.__uid_set)
         # Doesn't do anything, but doesn't crash
         component.stop()
         component.kill()
         component.kill(True)
+        self.gid = 4200
         self.uid = 42
         component = isc.bind10.special_component.SockCreator(None, self,
                                                              'needed', None)
         component.start()
         # This time, it get's called
+        self.assertEqual(4200, self.__gid_set)
         self.assertEqual(42, self.__uid_set)
+        isc.bind10.special_component.posix.setgid = orig_setgid
         isc.bind10.special_component.posix.setuid = orig_setuid
         isc.bind10.special_component.isc.bind10.sockcreator.Creator = \
             orig_creator

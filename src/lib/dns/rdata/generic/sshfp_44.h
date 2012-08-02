@@ -38,8 +38,9 @@ public:
     ///
     /// Specialized methods
     ///
-    uint8_t getSSHFPAlgorithmNumber() const;
-    uint8_t getSSHFPFingerprintType() const;
+    uint8_t getAlgorithmNumber() const;
+    uint8_t getFingerprintType() const;
+    size_t getFingerprintLen() const;
 
 private:
     /// Note: this is a prototype version; we may reconsider

@@ -1,0 +1,6 @@
+# Test where fingerprint is missing
+
+# SSHFP RDATA, RDLEN=32
+0020
+# ALGORITHM=2 FINGERPRINT_TYPE=1 FINGERPRINT=(none)
+02 01

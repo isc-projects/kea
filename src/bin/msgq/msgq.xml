@@ -20,7 +20,7 @@
 <refentry>
 
   <refentryinfo>
-    <date>August 4, 2010</date>
+    <date>June 25, 2012</date>
   </refentryinfo>
 
   <refmeta>
@@ -89,10 +89,6 @@
       </para></listitem>
 
       </itemizedlist>
-    </para>
-
-    <para>
-      It listens on 127.0.0.1.
     </para>
 
     <para>
@@ -167,6 +163,4 @@
  - mode: sgml
  - End:
 -->
-
-
 

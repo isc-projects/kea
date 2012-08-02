@@ -306,8 +306,8 @@ def config_remove_command(step, name, value, cmdctl_port):
                 "quit"]
     run_bindctl(commands, cmdctl_port)
 
-@step('send bind10 the command (.+)(?: with cmdctl port (\d+))?')
-def send_command(step, command, cmdctl_port):
+@step('send bind10(?: with cmdctl port (\d+))? the command (.+)')
+def send_command(step, cmdctl_port, command):
     """
     Run bindctl, send the given command, and exit bindctl.
     Parameters:
@@ -334,3 +334,31 @@ def module_is_running(step, name, not_str):
         not_str = ""
     step.given('send bind10 the command help')
     step.given('last bindctl output should' + not_str + ' contain ' + name + ' exactly')
+
+@step('Configure BIND10 to run DDNS')
+def configure_ddns_on(step):
+    """
+    Convenience compound step to enable the b10-ddns module.
+    """
+    step.behave_as("""
+    When I send bind10 the following commands
+        \"\"\"
+        config add Boss/components b10-ddns
+        config set Boss/components/b10-ddns/kind dispensable
+        config set Boss/components/b10-ddns/address DDNS
+        config commit
+        \"\"\"
+    """)
+
+@step('Configure BIND10 to stop running DDNS')
+def configure_ddns_off(step):
+    """
+    Convenience compound step to disable the b10-ddns module.
+    """
+    step.behave_as("""
+    When I send bind10 the following commands
+        \"\"\"
+        config remove Boss/components b10-ddns
+        config commit
+        \"\"\"
+    """)

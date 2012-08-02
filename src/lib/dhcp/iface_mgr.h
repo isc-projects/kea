@@ -39,6 +39,9 @@ public:
     /// type that defines list of addresses
     typedef std::vector<isc::asiolink::IOAddress> AddressCollection;
 
+    /// defines callback used when commands are received over control session
+    typedef void (*SessionCallback) (void);
+
     /// maximum MAC address length (Infiniband uses 20 bytes)
     static const unsigned int MAX_MAC_LEN = 20;
 
@@ -351,12 +354,10 @@ public:
     /// If reception is successful and all information about its sender
     /// are obtained, Pkt4 object is created and returned.
     ///
-    /// TODO Start using select() and add timeout to be able
-    /// to not wait infinitely, but rather do something useful
-    /// (e.g. remove expired leases)
+    /// @param timeout specifies timeout (in seconds)
     ///
     /// @return Pkt4 object representing received packet (or NULL)
-    Pkt4Ptr receive4();
+    Pkt4Ptr receive4(uint32_t timeout);
 
     /// Opens UDP/IP socket and binds it to address, interface and port.
     ///
@@ -373,7 +374,58 @@ public:
     /// @return socket descriptor, if socket creation, binding and multicast
     /// group join were all successful.
     int openSocket(const std::string& ifname,
-                   const isc::asiolink::IOAddress& addr, const uint16_t port);
+                   const isc::asiolink::IOAddress& addr,
+                   const uint16_t port);
+
+    /// @brief Opens UDP/IP socket and binds it to interface specified.
+    ///
+    /// This method differs from \ref openSocket in that it does not require
+    /// the specification of a local address to which socket will be bound.
+    /// Instead, the method searches through the addresses on the specified
+    /// interface and selects one that matches the address family.
+    ///
+    /// @param ifname name of the interface
+    /// @param port UDP port
+    /// @param family address family (AF_INET or AF_INET6)
+    /// @return socket descriptor, if socket creation, binding and multicast
+    /// group join were all successful.
+    /// @throw isc::Unexpected if failed to create and bind socket.
+    /// @throw isc::BadValue if there is no address on specified interface
+    /// that belongs to given family.
+    int openSocketFromIface(const std::string& ifname,
+                            const uint16_t port,
+                            const uint8_t family);
+
+    /// @brief Opens UDP/IP socket and binds to address specified
+    ///
+    /// This methods differs from \ref openSocket in that it does not require
+    /// the specification of the interface to which the socket will be bound.
+    ///
+    /// @param addr address to be bound
+    /// @param port UDP port
+    /// @return socket descriptor, if socket creation, binding and multicast
+    /// group join were all successful.
+    /// @throw isc::Unexpected if failed to create and bind socket
+    /// @throw isc::BadValue if specified address is not available on
+    /// any interface
+    int openSocketFromAddress(const isc::asiolink::IOAddress& addr,
+                              const uint16_t port);
+
+    /// @brief Opens UDP/IP socket to be used to connect to remote address
+    ///
+    /// This method identifies the local address to be used to connect to the
+    /// remote address specified as argument.  Once the local address is
+    /// identified, \ref openSocket is called to open a socket and bind it to
+    /// the interface, address and port.
+    ///
+    /// @param remote_addr remote address to connect to
+    /// @param port UDP port
+    /// @return socket descriptor, if socket creation, binding and multicast
+    /// group join were all successful.
+    /// @throw isc::Unexpected if failed to create and bind socket
+    int openSocketFromRemoteAddress(const isc::asiolink::IOAddress& remote_addr,
+                                    const uint16_t port);
+
 
     /// Opens IPv6 sockets on detected interfaces.
     ///
@@ -400,6 +452,21 @@ public:
     ///
     /// @return number of detected interfaces
     uint16_t countIfaces() { return ifaces_.size(); }
+
+    /// @brief Sets session socket and a callback
+    ///
+    /// Specifies session socket and a callback that will be called
+    /// when data will be received over that socket.
+    ///
+    /// @param socketfd socket descriptor
+    /// @param callback callback function
+    void set_session_socket(int socketfd, SessionCallback callback) {
+        session_socket_ = socketfd;
+        session_callback_ = callback;
+    }
+
+    /// A value of socket descriptor representing "not specified" state.
+    static const int INVALID_SOCKET = -1;
 
     // don't use private, we need derived classes in tests
 protected:
@@ -487,7 +554,6 @@ protected:
     /// control-buffer, used in transmission and reception
     boost::scoped_array<char> control_buf_;
 
-
     /// @brief A wrapper for OS-specific operations before sending IPv4 packet
     ///
     /// @param m message header (will be later used for sendmsg() call)
@@ -505,6 +571,11 @@ protected:
     /// @return true if successful, false otherwise
     bool os_receive4(struct msghdr& m, Pkt4Ptr& pkt);
 
+    /// socket descriptor of the session socket
+    int session_socket_;
+
+    /// a callback that will be called when data arrives over session_socket_
+    SessionCallback session_callback_;
 private:
 
     /// @brief Creates a single instance of this class (a singleton implementation)
@@ -528,6 +599,23 @@ private:
     joinMulticast(int sock, const std::string& ifname,
                   const std::string& mcast);
 
+    /// @brief Identifies local network address to be used to
+    /// connect to remote address.
+    ///
+    /// This method identifies local network address that can be used
+    /// to connect to remote address specified.
+    /// It first creates socket and makes attempt to connect
+    /// to remote location via this socket. If connection
+    /// is established successfully, the local address to which
+    /// socket is bound is returned.
+    ///
+    /// @param remote_addr remote address to connect to
+    /// @param port port to be used
+    /// @return local address to be used to connect to remote address
+    /// @throw isc::Unexpected if unable to indentify local address
+    isc::asiolink::IOAddress
+    getLocalAddress(const isc::asiolink::IOAddress& remote_addr,
+                    const uint16_t port);
 };
 
 }; // namespace isc::dhcp

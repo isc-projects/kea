@@ -20,7 +20,7 @@
 <refentry>
 
   <refentryinfo>
-    <date>April 12, 2010</date>
+    <date>June 20, 2012</date>
   </refentryinfo>
 
   <refmeta>
@@ -80,13 +80,6 @@
       subscribers.
     </para>
 
-    <para>
-      When it exits, it saves its current configuration to
-      <filename>/usr/local/var/bind10-devel/b10-config.db</filename>.
-<!-- TODO: fix path -->
-<!-- TODO: does it periodically save configuration? -->
-    </para>
-
 <!-- TODO: add a verbose or quiet switch so it is not so noisy -->
   </refsect1>
 
@@ -121,8 +114,8 @@
         </term>
         <listitem>
           <para>The configuration database filename to use. Can be either
-          absolute or relative to data path.</para>
-          <para>Defaults to b10-config.db</para>
+          absolute or relative to data path.
+          It defaults to "<filename>b10-config.db</filename>".</para>
         </listitem>
       </varlistentry>
 
