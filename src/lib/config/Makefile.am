@@ -17,7 +17,7 @@ libcfgclient_la_SOURCES += module_spec.h module_spec.cc
 libcfgclient_la_SOURCES += ccsession.cc ccsession.h
 libcfgclient_la_SOURCES += config_log.h config_log.cc
 
-libcfgclient_la_LIBADD = $(top_builddir)/src/lib/cc/libcc.la
+libcfgclient_la_LIBADD = $(top_builddir)/src/lib/cc/libb10-cc.la
 libcfgclient_la_LIBADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 
 libcfgclient_la_LDFLAGS = -no-undefined -version-info 1:0:1
