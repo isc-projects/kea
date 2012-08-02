@@ -34,7 +34,7 @@ EXTRA_DIST  = README
 
 libdhcp___la_CXXFLAGS = $(AM_CXXFLAGS)
 libdhcp___la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
-libdhcp___la_LIBADD   = $(top_builddir)/src/lib/asiolink/libasiolink.la
+libdhcp___la_LIBADD   = $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 libdhcp___la_LIBADD  += $(top_builddir)/src/lib/util/libb10-util.la
 libdhcp___la_LDFLAGS  = -no-undefined -version-info 2:0:0
 
