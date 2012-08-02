@@ -22,6 +22,6 @@ endif
 
 libutil_unittests_la_LIBADD  = $(top_builddir)/src/lib/util/libutil.la
 libutil_unittests_la_LIBADD += $(top_builddir)/src/lib/util/io/libutil_io.la
-libutil_unittests_la_LIBADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
+libutil_unittests_la_LIBADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 
 CLEANFILES = *.gcno *.gcda

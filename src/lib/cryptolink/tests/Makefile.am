@@ -24,7 +24,7 @@ run_unittests_LDADD = $(GTEST_LDADD) $(BOTAN_LIBS)
 run_unittests_LDADD += $(top_builddir)/src/lib/util/libutil.la
 run_unittests_LDADD += $(top_builddir)/src/lib/cryptolink/libcryptolink.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
-run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
+run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 endif
 
 noinst_PROGRAMS = $(TESTS)

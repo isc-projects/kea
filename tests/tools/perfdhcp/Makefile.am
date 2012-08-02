@@ -32,7 +32,7 @@ if USE_CLANGPP
 libperfdhcp___la_CXXFLAGS += -Wno-unused-parameter
 endif
 
-libperfdhcp___la_LIBADD = $(top_builddir)/src/lib/exceptions/libexceptions.la
+libperfdhcp___la_LIBADD = $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 libperfdhcp___la_LIBADD += $(top_builddir)/src/lib/dhcp/libdhcp++.la
 libperfdhcp___la_LIBADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
 

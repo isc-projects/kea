@@ -31,5 +31,5 @@ libutil_la_SOURCES += random/random_number_generator.h
 
 EXTRA_DIST = python/pycppwrapper_util.h
 
-libutil_la_LIBADD = $(top_builddir)/src/lib/exceptions/libexceptions.la
+libutil_la_LIBADD = $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 CLEANFILES = *.gcno *.gcda

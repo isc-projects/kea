@@ -48,6 +48,6 @@ EXTRA_DIST += nsec3hash_python_inc.cc
 # suffix for dynamic objects.  -module is necessary to work this around.
 pydnspp_la_LDFLAGS += -module -avoid-version
 pydnspp_la_LIBADD = $(top_builddir)/src/lib/dns/libdns++.la
-pydnspp_la_LIBADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
+pydnspp_la_LIBADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 pydnspp_la_LIBADD += libpydnspp.la
 pydnspp_la_LIBADD += $(PYTHON_LIB)

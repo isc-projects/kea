@@ -55,7 +55,7 @@ libdhcp___unittests_LDADD  = $(GTEST_LDADD)
 libdhcp___unittests_LDADD += $(top_builddir)/src/lib/log/liblog.la
 libdhcp___unittests_LDADD += $(top_builddir)/src/lib/util/libutil.la
 libdhcp___unittests_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
-libdhcp___unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
+libdhcp___unittests_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 endif
 
 noinst_PROGRAMS = $(TESTS)
