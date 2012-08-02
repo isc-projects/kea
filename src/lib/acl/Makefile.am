@@ -17,11 +17,11 @@ libb10_acl_la_LIBADD += $(top_builddir)/src/lib/cc/libb10-cc.la
 libb10_acl_la_LIBADD += $(top_builddir)/src/lib/util/libb10-util.la
 
 # DNS specialized one
-lib_LTLIBRARIES += libdnsacl.la
+lib_LTLIBRARIES += libb10-dnsacl.la
 
-libdnsacl_la_SOURCES = dns.h dns.cc dnsname_check.h
+libb10_dnsacl_la_SOURCES = dns.h dns.cc dnsname_check.h
 
-libdnsacl_la_LIBADD = libb10-acl.la
-libdnsacl_la_LIBADD += $(top_builddir)/src/lib/dns/libb10-dns++.la
+libb10_dnsacl_la_LIBADD = libb10-acl.la
+libb10_dnsacl_la_LIBADD += $(top_builddir)/src/lib/dns/libb10-dns++.la
 
 CLEANFILES = *.gcno *.gcda
