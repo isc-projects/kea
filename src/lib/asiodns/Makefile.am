@@ -40,4 +40,4 @@ if USE_CLANGPP
 libasiodns_la_CXXFLAGS += -Wno-error
 endif
 libasiodns_la_CPPFLAGS = $(AM_CPPFLAGS)
-libasiodns_la_LIBADD = $(top_builddir)/src/lib/log/liblog.la
+libasiodns_la_LIBADD = $(top_builddir)/src/lib/log/libb10-log.la

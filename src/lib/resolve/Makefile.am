@@ -33,7 +33,7 @@ nodist_libresolve_la_SOURCES = resolve_messages.h resolve_messages.cc
 
 libresolve_la_LIBADD = $(top_builddir)/src/lib/dns/libdns++.la
 libresolve_la_LIBADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
-libresolve_la_LIBADD += $(top_builddir)/src/lib/log/liblog.la
+libresolve_la_LIBADD += $(top_builddir)/src/lib/log/libb10-log.la
 libresolve_la_LIBADD += $(top_builddir)/src/lib/asiodns/libasiodns.la
 
 # The message file should be in the distribution.
