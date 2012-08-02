@@ -38,7 +38,7 @@ query_bench_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
 query_bench_LDADD += $(top_builddir)/src/lib/nsas/libnsas.la
 query_bench_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 query_bench_LDADD += $(top_builddir)/src/lib/server_common/libserver_common.la
-query_bench_LDADD += $(top_builddir)/src/lib/asiodns/libasiodns.la
+query_bench_LDADD += $(top_builddir)/src/lib/asiodns/libb10-asiodns.la
 query_bench_LDADD += $(top_builddir)/src/lib/statistics/libstatistics.la
 query_bench_LDADD += $(SQLITE_LIBS)
 
