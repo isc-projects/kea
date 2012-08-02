@@ -49,7 +49,7 @@ run_unittests_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
 run_unittests_LDADD += $(top_builddir)/src/lib/dns/libb10-dns++.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
-run_unittests_LDADD += $(top_builddir)/src/lib/config/libcfgclient.la
+run_unittests_LDADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la
 run_unittests_LDADD += $(top_builddir)/src/lib/config/tests/libfake_session.la
 endif
 
