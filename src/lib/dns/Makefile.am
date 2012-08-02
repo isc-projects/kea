@@ -129,7 +129,7 @@ libdns___la_CPPFLAGS = $(AM_CPPFLAGS)
 # so we add the dependency here so that the applications don't have to link
 # libcryptolink explicitly.
 libdns___la_LIBADD = $(top_builddir)/src/lib/cryptolink/libcryptolink.la
-libdns___la_LIBADD += $(top_builddir)/src/lib/util/libutil.la
+libdns___la_LIBADD += $(top_builddir)/src/lib/util/libb10-util.la
 
 nodist_libdns___include_HEADERS = rdataclass.h rrclass.h rrtype.h
 nodist_libdns___la_SOURCES = rdataclass.cc rrparamregistry.cc

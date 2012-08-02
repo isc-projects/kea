@@ -62,7 +62,7 @@ EXTRA_DIST += auth_messages.mes
 
 b10_auth_LDADD =  $(top_builddir)/src/lib/datasrc/libdatasrc.la
 b10_auth_LDADD += $(top_builddir)/src/lib/dns/libdns++.la
-b10_auth_LDADD += $(top_builddir)/src/lib/util/libutil.la
+b10_auth_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
 b10_auth_LDADD += $(top_builddir)/src/lib/util/io/libutil_io.la
 b10_auth_LDADD += $(top_builddir)/src/lib/config/libcfgclient.la
 b10_auth_LDADD += $(top_builddir)/src/lib/cc/libcc.la
