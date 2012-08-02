@@ -7,12 +7,19 @@ pkglibexec_SCRIPTS = b10-msgq
 CLEANFILES = b10-msgq msgq.pyc
 
 man_MANS = b10-msgq.8
+CLEANFILES += $(man_MANS)
 EXTRA_DIST = $(man_MANS) msgq.xml
 
 if ENABLE_MAN
 
 b10-msgq.8: msgq.xml
 	xsltproc --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/msgq.xml
+
+else
+
+$(man_MANS):
+	@echo Man generation disabled.  Creating dummy $@.  Configure with --enable-man to enable it.
+	@echo Man generation disabled.  Remove this file, configure with --enable-man, and rebuild BIND 10 > $@
 
 endif
 
