@@ -64,7 +64,7 @@ nodist_run_unittests_SOURCES = ../auth_messages.h ../auth_messages.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
-run_unittests_LDADD = $(top_builddir)/src/lib/testutils/libtestutils.la
+run_unittests_LDADD = $(top_builddir)/src/lib/testutils/libb10-testutils.la
 run_unittests_LDADD +=  $(top_builddir)/src/lib/datasrc/libdatasrc.la
 run_unittests_LDADD +=  $(top_builddir)/src/lib/dns/libb10-dns++.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
