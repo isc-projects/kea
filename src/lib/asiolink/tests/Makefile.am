@@ -36,7 +36,7 @@ run_unittests_SOURCES += udp_socket_unittest.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 
-run_unittests_LDADD = $(top_builddir)/src/lib/asiolink/libasiolink.la
+run_unittests_LDADD = $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 run_unittests_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la

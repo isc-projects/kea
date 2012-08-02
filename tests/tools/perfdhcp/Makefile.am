@@ -34,7 +34,7 @@ endif
 
 libperfdhcp___la_LIBADD = $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 libperfdhcp___la_LIBADD += $(top_builddir)/src/lib/dhcp/libdhcp++.la
-libperfdhcp___la_LIBADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
+libperfdhcp___la_LIBADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 
 pkglibexec_PROGRAMS  = perfdhcp
 perfdhcp_SOURCES  = perfdhcp.c
