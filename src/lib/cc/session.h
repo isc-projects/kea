@@ -141,6 +141,11 @@ namespace isc {
             virtual bool hasQueuedMsgs() const;
             virtual void setTimeout(size_t milliseconds);
             virtual size_t getTimeout() const;
+
+            /// @brief returns socket descriptor from underlying socket connection
+            ///
+            /// @param returns socket descriptor used for session connection
+            virtual int getSocketDesc() const;
     private:
             void sendmsg(isc::data::ConstElementPtr msg);
             void sendmsg(isc::data::ConstElementPtr env,

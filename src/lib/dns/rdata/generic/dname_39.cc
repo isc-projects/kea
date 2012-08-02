@@ -54,7 +54,9 @@ DNAME::toWire(OutputBuffer& buffer) const {
 
 void
 DNAME::toWire(AbstractMessageRenderer& renderer) const {
-    renderer.writeName(dname_);
+    // Type DNAME is not "well-known", and name compression must be disabled
+    // per RFC3597.
+    renderer.writeName(dname_, false);
 }
 
 string

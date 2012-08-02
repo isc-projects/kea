@@ -349,7 +349,6 @@ class TestBoB(unittest.TestCase):
         self.assertEqual(bob.runnable, False)
         self.assertEqual(bob.uid, None)
         self.assertEqual(bob.username, None)
-        self.assertEqual(bob.nocache, False)
         self.assertIsNone(bob._socket_cache)
 
     def test_set_creator(self):
@@ -377,7 +376,6 @@ class TestBoB(unittest.TestCase):
         self.assertEqual(bob.runnable, False)
         self.assertEqual(bob.uid, None)
         self.assertEqual(bob.username, None)
-        self.assertEqual(bob.nocache, False)
 
     def test_command_handler(self):
         class DummySession():
@@ -1055,22 +1053,29 @@ class TestPIDFile(unittest.TestCase):
         # dump PID to the file, and confirm the content is correct
         dump_pid(self.pid_file)
         my_pid = os.getpid()
-        self.assertEqual(my_pid, int(open(self.pid_file, "r").read()))
+        with open(self.pid_file, "r") as f:
+            self.assertEqual(my_pid, int(f.read()))
 
     def test_dump_pid(self):
         self.check_pid_file()
 
         # make sure any existing content will be removed
-        open(self.pid_file, "w").write('dummy data\n')
+        with open(self.pid_file, "w") as f:
+            f.write('dummy data\n')
         self.check_pid_file()
 
     def test_unlink_pid_file_notexist(self):
         dummy_data = 'dummy_data\n'
-        open(self.pid_file, "w").write(dummy_data)
+
+        with open(self.pid_file, "w") as f:
+            f.write(dummy_data)
+
         unlink_pid_file("no_such_pid_file")
+
         # the file specified for unlink_pid_file doesn't exist,
         # and the original content of the file should be intact.
-        self.assertEqual(dummy_data, open(self.pid_file, "r").read())
+        with open(self.pid_file, "r") as f:
+            self.assertEqual(dummy_data, f.read())
 
     def test_dump_pid_with_none(self):
         # Check the behavior of dump_pid() and unlink_pid_file() with None.
@@ -1079,9 +1084,14 @@ class TestPIDFile(unittest.TestCase):
         self.assertFalse(os.path.exists(self.pid_file))
 
         dummy_data = 'dummy_data\n'
-        open(self.pid_file, "w").write(dummy_data)
+
+        with open(self.pid_file, "w") as f:
+            f.write(dummy_data)
+
         unlink_pid_file(None)
-        self.assertEqual(dummy_data, open(self.pid_file, "r").read())
+
+        with open(self.pid_file, "r") as f:
+            self.assertEqual(dummy_data, f.read())
 
     def test_dump_pid_failure(self):
         # the attempt to open file will fail, which should result in exception.

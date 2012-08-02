@@ -29,7 +29,6 @@ from isc.config.module_spec import ModuleSpecError
 from isc.cc import SessionError, SessionTimeout, ProtocolError
 import isc.util.process
 import isc.util.cio.socketsession
-from isc.notify.notify_out import ZONE_NEW_DATA_READY_CMD
 import isc.server_common.tsig_keyring
 from isc.server_common.dns_tcp import DNSTCPContext
 from isc.datasrc import DataSourceClient
@@ -229,6 +228,9 @@ class DDNSServer:
         # Outstanding TCP context: fileno=>(context_obj, dst)
         self._tcp_ctxs = {}
 
+        # Notify Auth server that DDNS update messages can now be forwarded
+        self.__notify_start_forwarder()
+
     class InternalError(Exception):
         '''Exception for internal errors in an update session.
 
@@ -275,6 +277,9 @@ class DDNSServer:
             logger.info(DDNS_RECEIVED_SHUTDOWN_COMMAND)
             self.trigger_shutdown()
             answer = create_answer(0)
+        elif cmd == "auth_started":
+            self.__notify_start_forwarder()
+            answer = None
         else:
             answer = create_answer(1, "Unknown command: " + str(cmd))
         return answer
@@ -378,10 +383,15 @@ class DDNSServer:
         Perform any cleanup that is necessary when shutting down the server.
         Do NOT call this to initialize shutdown, use trigger_shutdown().
 
-        Currently, it only causes the ModuleCCSession to send a message that
-        this module is stopping.
         '''
+        # tell Auth not to forward UPDATE messages anymore
+        self.__notify_stop_forwarder()
+        # tell the ModuleCCSession to send a message that this module is
+        # stopping.
         self._cc.send_stopping()
+        # make sure any open socket is explicitly closed, per Python
+        # convention.
+        self._listen_socket.close()
 
     def accept(self):
         """
@@ -531,6 +541,32 @@ class DDNSServer:
 
         return True
 
+    def __notify_start_forwarder(self):
+        '''Notify auth that DDNS Update messages can now be forwarded'''
+        try:
+            seq = self._cc._session.group_sendmsg(create_command(
+                    "start_ddns_forwarder"), AUTH_MODULE_NAME)
+            answer, _ = self._cc._session.group_recvmsg(False, seq)
+            rcode, error_msg = parse_answer(answer)
+            if rcode != 0:
+                logger.error(DDNS_START_FORWARDER_ERROR, error_msg)
+        except (SessionTimeout, SessionError, ProtocolError) as ex:
+            logger.error(DDNS_START_FORWARDER_FAIL, ex)
+
+    def __notify_stop_forwarder(self):
+        '''Notify auth that DDNS Update messages should no longer be forwarded.
+
+        '''
+        try:
+            seq = self._cc._session.group_sendmsg(create_command(
+                    "stop_ddns_forwarder"), AUTH_MODULE_NAME)
+            answer, _ = self._cc._session.group_recvmsg(False, seq)
+            rcode, error_msg = parse_answer(answer)
+            if rcode != 0:
+                logger.error(DDNS_STOP_FORWARDER_ERROR, error_msg)
+        except (SessionTimeout, SessionError, ProtocolError) as ex:
+            logger.error(DDNS_STOP_FORWARDER_FAIL, ex)
+
     def __notify_auth(self, zname, zclass):
         '''Notify auth of the update, if necessary.'''
         msg = auth_loadzone_command(self._cc, zname, zclass)
@@ -540,7 +576,7 @@ class DDNSServer:
     def __notify_xfrout(self, zname, zclass):
         '''Notify xfrout of the update.'''
         param = {'zone_name': zname.to_text(), 'zone_class': zclass.to_text()}
-        msg = create_command(ZONE_NEW_DATA_READY_CMD, param)
+        msg = create_command('notify', param)
         self.__notify_update(XFROUT_MODULE_NAME, msg, zname, zclass)
 
     def __notify_update(self, modname, msg, zname, zclass):
@@ -612,7 +648,7 @@ class DDNSServer:
         Get and process all commands sent from cfgmgr or other modules.
         This loops waiting for events until self.shutdown() has been called.
         '''
-        logger.info(DDNS_RUNNING)
+        logger.info(DDNS_STARTED)
         cc_fileno = self._cc.get_socket().fileno()
         listen_fileno = self._listen_socket.fileno()
         while not self._shutdown:

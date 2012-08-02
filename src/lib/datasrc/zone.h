@@ -138,7 +138,7 @@ public:
     ///
     /// This class encapsulates results and (possibly) associated context
     /// of a call to the \c find() method.   The public member variables of
-    /// this class reprsent the result of the call.  They are a
+    /// this class represent the result of the call.  They are a
     /// straightforward tuple of the result code and a pointer (and
     /// optionally special flags) to the found RRset.
     ///
@@ -376,6 +376,16 @@ public:
     ///   RRsets for that name are searched just like the normal case;
     ///   otherwise, if the search has encountered a zone cut, \c DELEGATION
     ///   with the information of the highest zone cut will be returned.
+    ///   Note: the term "glue" in the DNS protocol standard may sometimes
+    ///   cause confusion: some people use this term strictly for an address
+    ///   record (type AAAA or A) for the name used in the RDATA of an NS RR;
+    ///   some others seem to give it broader flexibility.  Nevertheless,
+    ///   in this API the "GLUE OK" simply means the search by find() can
+    ///   continue beyond a zone cut; the derived class implementation does
+    ///   not have to, and should not, check whether the type is an address
+    ///   record or whether the query name is pointed by some NS RR.
+    ///   It's up to the caller with which definition of "glue" the search
+    ///   result with this option should be used.
     /// - \c FIND_DNSSEC Request that DNSSEC data (like NSEC, RRSIGs) are
     ///   returned with the answer. It is allowed for the data source to
     ///   include them even when not requested.
@@ -617,31 +627,6 @@ public:
     /// a matching NSEC3, in the form of \c FindNSEC3Result object.
     virtual FindNSEC3Result
     findNSEC3(const isc::dns::Name& name, bool recursive) = 0;
-
-    /// \brief Get previous name in the zone
-    ///
-    /// Gets the previous name in the DNSSEC order. This can be used
-    /// to find the correct NSEC records for proving nonexistence
-    /// of domains.
-    ///
-    /// The concrete implementation might throw anything it thinks appropriate,
-    /// however it is recommended to stick to the ones listed here. The user
-    /// of this method should be able to handle any exceptions.
-    ///
-    /// This method does not include under-zone-cut data (glue data).
-    ///
-    /// \param query The name for which one we look for a previous one. The
-    ///     queried name doesn't have to exist in the zone.
-    /// \return The preceding name
-    ///
-    /// \throw NotImplemented in case the data source backend doesn't support
-    ///     DNSSEC or there is no previous in the zone (NSEC records might be
-    ///     missing in the DB, the queried name is less or equal to the apex).
-    /// \throw DataSourceError for low-level or internal datasource errors
-    ///     (like broken connection to database, wrong data living there).
-    /// \throw std::bad_alloc For allocation errors.
-    virtual isc::dns::Name findPreviousName(const isc::dns::Name& query)
-        const = 0;
     //@}
 };
 

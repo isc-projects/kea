@@ -19,6 +19,9 @@ endif
 
 CLEANFILES = *.gcno *.gcda
 
+TESTS_ENVIRONMENT = \
+	$(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
+
 TESTS =
 if HAVE_GTEST
 TESTS += libdhcp++_unittests

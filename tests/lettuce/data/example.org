@@ -10,3 +10,4 @@ dname.example.org.	3600	IN	DNAME	dname.example.info.
 dname2.foo.example.org.	3600	IN	DNAME	dname2.example.info.
 ns1.example.org.	3600	IN	A	192.0.2.3
 ns2.example.org.	3600	IN	A	192.0.2.4
+shell.example.org.	3600	IN	SSHFP	2 1 123456789abcdef67890123456789abcdef67890
