@@ -818,7 +818,7 @@ AC_TRY_COMPILE([
 ],,
 [AC_MSG_RESULT(yes)],
 [AC_MSG_RESULT(no)
- AC_MSG_ERROR([Failed to compile a required header file.  See the ChangeLog entry for Trac no. 2147])])
+ AC_MSG_ERROR([Failed to compile a required header file.  Try upgrading Boost to 1.44 or higher (when using clang++) or specifying --without-werror.  See the ChangeLog entry for Trac no. 2147 for more details.])])
 
 CPPFLAGS="$CPPFLAGS_SAVES $CPPFLAGS_BOOST_THREADCONF"
 AC_SUBST(BOOST_INCLUDES)
