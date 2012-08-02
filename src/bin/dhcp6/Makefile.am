@@ -42,7 +42,7 @@ endif
 
 b10_dhcp6_LDADD = $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
-b10_dhcp6_LDADD += $(top_builddir)/src/lib/log/liblog.la
+b10_dhcp6_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/dhcp/libdhcp++.la
 
 b10_dhcp6dir = $(pkgdatadir)
