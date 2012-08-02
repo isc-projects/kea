@@ -13,12 +13,19 @@ pkglibexecdir = $(libexecdir)/@PACKAGE@
 CLEANFILES = *.gcno *.gcda
 
 man_MANS = b10-sockcreator.8
+CLEANFILES += $(man_MANS)
 EXTRA_DIST = $(man_MANS) b10-sockcreator.xml
 
 if ENABLE_MAN
 
 b10-sockcreator.8: b10-sockcreator.xml
         xsltproc --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/b10-sockcreator.xml
+
+else
+
+$(man_MANS):
+	@echo Man generation disabled.  Creating dummy $@.  Configure with --enable-man to enable it.
+	@echo Man generation disabled.  Remove this file, configure with --enable-man, and rebuild BIND 10 > $@
 
 endif
 

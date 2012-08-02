@@ -17,6 +17,7 @@ b10_host_LDADD += $(top_builddir)/src/lib/util/libutil.la
 b10_host_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
 
 man_MANS = b10-host.1
+CLEANFILES += $(man_MANS)
 EXTRA_DIST = $(man_MANS) b10-host.xml
 
 .PHONY: man
@@ -26,5 +27,11 @@ man: b10-host.1
 
 b10-host.1: b10-host.xml
 	xsltproc --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/b10-host.xml
+
+else
+
+$(man_MANS):
+	@echo Man generation disabled.  Creating dummy $@.  Configure with --enable-man to enable it.
+	@echo Man generation disabled.  Remove this file, configure with --enable-man, and rebuild BIND 10 > $@
 
 endif
