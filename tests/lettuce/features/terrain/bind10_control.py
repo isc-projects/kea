@@ -362,4 +362,3 @@ def configure_ddns_off(step):
         config commit
         \"\"\"
     """)
-
