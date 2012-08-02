@@ -33,7 +33,7 @@ libperfdhcp___la_CXXFLAGS += -Wno-unused-parameter
 endif
 
 libperfdhcp___la_LIBADD = $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
-libperfdhcp___la_LIBADD += $(top_builddir)/src/lib/dhcp/libdhcp++.la
+libperfdhcp___la_LIBADD += $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
 libperfdhcp___la_LIBADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 
 pkglibexec_PROGRAMS  = perfdhcp
