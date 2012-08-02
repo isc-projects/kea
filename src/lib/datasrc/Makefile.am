@@ -61,7 +61,7 @@ static_ds_la_LIBADD = $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 static_ds_la_LIBADD += libdatasrc.la
 
 libdatasrc_la_LIBADD = $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
-libdatasrc_la_LIBADD += $(top_builddir)/src/lib/dns/libdns++.la
+libdatasrc_la_LIBADD += $(top_builddir)/src/lib/dns/libb10-dns++.la
 libdatasrc_la_LIBADD += $(top_builddir)/src/lib/log/libb10-log.la
 libdatasrc_la_LIBADD += $(top_builddir)/src/lib/cc/libcc.la
 libdatasrc_la_LIBADD += memory/libdatasrc_memory.la # convenience library
