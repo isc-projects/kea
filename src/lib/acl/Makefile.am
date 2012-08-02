@@ -14,7 +14,7 @@ libacl_la_SOURCES += loader.h loader.cc
 
 libacl_la_LIBADD = $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 libacl_la_LIBADD += $(top_builddir)/src/lib/cc/libcc.la
-libacl_la_LIBADD += $(top_builddir)/src/lib/util/libutil.la
+libacl_la_LIBADD += $(top_builddir)/src/lib/util/libb10-util.la
 
 # DNS specialized one
 lib_LTLIBRARIES += libdnsacl.la

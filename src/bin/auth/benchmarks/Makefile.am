@@ -27,7 +27,7 @@ query_bench_SOURCES += ${top_srcdir}/src/lib/datasrc/memory_datasrc.cc
 nodist_query_bench_SOURCES = ../auth_messages.h ../auth_messages.cc
 
 query_bench_LDADD = $(top_builddir)/src/lib/dns/libdns++.la
-query_bench_LDADD += $(top_builddir)/src/lib/util/libutil.la
+query_bench_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
 query_bench_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 query_bench_LDADD += $(top_builddir)/src/lib/bench/libbench.la
 query_bench_LDADD += $(top_builddir)/src/lib/datasrc/libdatasrc.la

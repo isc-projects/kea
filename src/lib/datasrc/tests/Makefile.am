@@ -36,7 +36,7 @@ common_sources += $(top_srcdir)/src/lib/dns/tests/unittest_util.cc
 
 common_ldadd = $(top_builddir)/src/lib/datasrc/libdatasrc.la
 common_ldadd += $(top_builddir)/src/lib/dns/libdns++.la
-common_ldadd += $(top_builddir)/src/lib/util/libutil.la
+common_ldadd += $(top_builddir)/src/lib/util/libb10-util.la
 common_ldadd += $(top_builddir)/src/lib/log/liblog.la
 common_ldadd += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 common_ldadd += $(top_builddir)/src/lib/cc/libcc.la
