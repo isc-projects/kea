@@ -40,7 +40,7 @@ b10_dhcp4_CXXFLAGS = -Wno-unused-parameter
 endif
 
 b10_dhcp4_LDADD = $(top_builddir)/src/lib/dhcp/libdhcp++.la
-b10_dhcp4_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
+b10_dhcp4_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 b10_dhcp4_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
 b10_dhcp4_LDADD += $(top_builddir)/src/lib/log/liblog.la
 b10_dhcp4_LDADD += $(top_builddir)/src/lib/config/libcfgclient.la

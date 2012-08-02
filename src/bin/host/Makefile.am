@@ -14,7 +14,7 @@ bin_PROGRAMS = b10-host
 b10_host_SOURCES = host.cc
 b10_host_LDADD = $(top_builddir)/src/lib/dns/libdns++.la
 b10_host_LDADD += $(top_builddir)/src/lib/util/libutil.la
-b10_host_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
+b10_host_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 
 man_MANS = b10-host.1
 EXTRA_DIST = $(man_MANS) b10-host.xml
