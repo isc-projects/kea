@@ -56,7 +56,7 @@ b10_resolver_SOURCES += common.cc common.h
 nodist_b10_resolver_SOURCES = resolver_messages.cc resolver_messages.h
 
 
-b10_resolver_LDADD =  $(top_builddir)/src/lib/dns/libdns++.la
+b10_resolver_LDADD =  $(top_builddir)/src/lib/dns/libb10-dns++.la
 b10_resolver_LDADD += $(top_builddir)/src/lib/config/libcfgclient.la
 b10_resolver_LDADD += $(top_builddir)/src/lib/cc/libcc.la
 b10_resolver_LDADD += $(top_builddir)/src/lib/util/libb10-util.la

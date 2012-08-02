@@ -28,7 +28,7 @@ run_unittests_SOURCES += io_fetch_unittest.cc
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 
 run_unittests_LDADD  = $(GTEST_LDADD)
-run_unittests_LDADD += $(top_builddir)/src/lib/dns/libdns++.la
+run_unittests_LDADD += $(top_builddir)/src/lib/dns/libb10-dns++.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
 run_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
