@@ -46,21 +46,21 @@ sqlite3_ds_la_SOURCES = sqlite3_accessor.h sqlite3_accessor.cc
 sqlite3_ds_la_SOURCES += sqlite3_accessor_link.cc
 sqlite3_ds_la_LDFLAGS = -module -avoid-version
 sqlite3_ds_la_LDFLAGS += -no-undefined -version-info 1:0:0
-sqlite3_ds_la_LIBADD = $(top_builddir)/src/lib/exceptions/libexceptions.la
+sqlite3_ds_la_LIBADD = $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 sqlite3_ds_la_LIBADD += libdatasrc.la
 sqlite3_ds_la_LIBADD += $(SQLITE_LIBS)
 
 memory_ds_la_SOURCES = memory_datasrc_link.cc
 memory_ds_la_LDFLAGS = -module -avoid-version
-memory_ds_la_LIBADD = $(top_builddir)/src/lib/exceptions/libexceptions.la
+memory_ds_la_LIBADD = $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 memory_ds_la_LIBADD += libdatasrc.la
 
 static_ds_la_SOURCES = static_datasrc_link.cc
 static_ds_la_LDFLAGS = -module -avoid-version
-static_ds_la_LIBADD = $(top_builddir)/src/lib/exceptions/libexceptions.la
+static_ds_la_LIBADD = $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 static_ds_la_LIBADD += libdatasrc.la
 
-libdatasrc_la_LIBADD = $(top_builddir)/src/lib/exceptions/libexceptions.la
+libdatasrc_la_LIBADD = $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 libdatasrc_la_LIBADD += $(top_builddir)/src/lib/dns/libdns++.la
 libdatasrc_la_LIBADD += $(top_builddir)/src/lib/log/liblog.la
 libdatasrc_la_LIBADD += $(top_builddir)/src/lib/cc/libcc.la

@@ -32,7 +32,7 @@ libresolve_la_SOURCES += recursive_query.cc recursive_query.h
 nodist_libresolve_la_SOURCES = resolve_messages.h resolve_messages.cc
 
 libresolve_la_LIBADD = $(top_builddir)/src/lib/dns/libdns++.la
-libresolve_la_LIBADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
+libresolve_la_LIBADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 libresolve_la_LIBADD += $(top_builddir)/src/lib/log/liblog.la
 libresolve_la_LIBADD += $(top_builddir)/src/lib/asiodns/libasiodns.la
 

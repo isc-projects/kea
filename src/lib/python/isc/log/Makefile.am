@@ -17,7 +17,7 @@ log_la_LDFLAGS += -module -avoid-version
 log_la_LIBADD = $(top_builddir)/src/lib/log/liblog.la
 log_la_LIBADD += $(top_builddir)/src/lib/cc/libcc.la
 log_la_LIBADD += $(top_builddir)/src/lib/config/libcfgclient.la
-log_la_LIBADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
+log_la_LIBADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 log_la_LIBADD += $(PYTHON_LIB)
 
 # This is not installed, it helps locate the module during tests
