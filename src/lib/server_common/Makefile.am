@@ -31,7 +31,7 @@ libb10_server_common_la_LIBADD += $(top_builddir)/src/lib/config/libb10-cfgclien
 libb10_server_common_la_LIBADD += $(top_builddir)/src/lib/log/libb10-log.la
 libb10_server_common_la_LIBADD += $(top_builddir)/src/lib/acl/libb10-acl.la
 libb10_server_common_la_LIBADD += $(top_builddir)/src/lib/dns/libb10-dns++.la
-libb10_server_common_la_LIBADD += $(top_builddir)/src/lib/util/io/libutil_io.la
+libb10_server_common_la_LIBADD += $(top_builddir)/src/lib/util/io/libb10-util-io.la
 BUILT_SOURCES = server_common_messages.h server_common_messages.cc
 server_common_messages.h server_common_messages.cc: server_common_messages.mes
 	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/server_common/server_common_messages.mes
