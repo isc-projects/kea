@@ -6,10 +6,10 @@ AM_CXXFLAGS = $(B10_CXXFLAGS)
 
 CLEANFILES = *.gcno *.gcda
 
-lib_LTLIBRARIES = libcryptolink.la
+lib_LTLIBRARIES = libb10-cryptolink.la
 
-libcryptolink_la_SOURCES = cryptolink.h cryptolink.cc
-libcryptolink_la_SOURCES += crypto_hmac.h crypto_hmac.cc
+libb10_cryptolink_la_SOURCES = cryptolink.h cryptolink.cc
+libb10_cryptolink_la_SOURCES += crypto_hmac.h crypto_hmac.cc
 
-libcryptolink_la_LDFLAGS = ${BOTAN_LDFLAGS}
-libcryptolink_la_LIBADD = ${BOTAN_LIBS} ${BOTAN_RPATH}
+libb10_cryptolink_la_LDFLAGS = ${BOTAN_LDFLAGS}
+libb10_cryptolink_la_LIBADD = ${BOTAN_LIBS} ${BOTAN_RPATH}
