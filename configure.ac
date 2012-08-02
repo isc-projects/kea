@@ -809,6 +809,17 @@ AC_TRY_COMPILE([
  CPPFLAGS_BOOST_THREADCONF="-DBOOST_DISABLE_THREADS=1"],
 [AC_MSG_RESULT(yes)])
 
+# Boost offset_ptr is required in one library (not optional right now), and
+# it's known it doesn't compile on some platforms, depending on boost version,
+# its local configuration, and compiler.
+AC_MSG_CHECKING([Boost offset_ptr compiles])
+AC_TRY_COMPILE([
+#include <boost/interprocess/offset_ptr.hpp>
+],,
+[AC_MSG_RESULT(yes)],
+[AC_MSG_RESULT(no)
+ AC_MSG_ERROR([Failed to compile a required header file.  See the ChangeLog entry for Trac no. 2147])])
+
 CPPFLAGS="$CPPFLAGS_SAVES $CPPFLAGS_BOOST_THREADCONF"
 AC_SUBST(BOOST_INCLUDES)
 
