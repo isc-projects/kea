@@ -1324,10 +1324,11 @@ private:
 
     /// Split one node into two nodes for "prefix" and "suffix" parts of
     /// the labels of the original node, respectively.  The given node
-    /// will hold the suffix labels, while the new node will hold the prefix.
-    /// The newly created node represents the labels that the original node
-    /// did, so necessary data are swapped.
-    /// (Note: as commented in the code, this behavior should be changed).
+    /// will hold the prefix, while a newly created node will hold the prefix.
+    /// Note that the original node still represents the same domain name in
+    /// the entire tree.  This ensures that a pointer to a node keeps its
+    /// semantics even if the tree structure is changed (as long as the node
+    /// itself remains valid).
     void nodeFission(util::MemorySegment& mem_sgmt, DomainTreeNode<T, DT>& node,
                      const isc::dns::LabelSequence& new_prefix,
                      const isc::dns::LabelSequence& new_suffix);
@@ -1637,8 +1638,8 @@ DomainTree<T, DT>::previousNode(DomainTreeNodeChain<T, DT>& node_path) const {
 template <typename T, typename DT>
 typename DomainTree<T, DT>::Result
 DomainTree<T, DT>::insert(util::MemorySegment& mem_sgmt,
-                         const isc::dns::Name& target_name,
-                         DomainTreeNode<T, DT>** new_node)
+                          const isc::dns::Name& target_name,
+                          DomainTreeNode<T, DT>** new_node)
 {
     DomainTreeNode<T, DT>* parent = NULL;
     DomainTreeNode<T, DT>* current = root_.get();
@@ -1678,6 +1679,7 @@ DomainTree<T, DT>::insert(util::MemorySegment& mem_sgmt,
             dns::LabelSequence new_prefix = current_labels;
             new_prefix.stripRight(compare_result.getCommonLabels());
             nodeFission(mem_sgmt, *current, new_prefix, common_ancestor);
+            current = current->getParent();
         }
     }
 
@@ -1718,56 +1720,58 @@ DomainTree<T, DT>::deleteAllNodes(util::MemorySegment& mem_sgmt) {
     root_ = NULL;
 }
 
-// Note: when we redesign this (still keeping the basic concept), we should
-// change this part so the newly created node will be used for the inserted
-// name (and therefore the name for the existing node doesn't change).
-// Otherwise, things like shortcut links between nodes won't work.
-// See Trac #2054.
 template <typename T, typename DT>
 void
 DomainTree<T, DT>::nodeFission(util::MemorySegment& mem_sgmt,
-                              DomainTreeNode<T, DT>& node,
-                              const isc::dns::LabelSequence& new_prefix,
-                              const isc::dns::LabelSequence& new_suffix)
+                               DomainTreeNode<T, DT>& node,
+                               const isc::dns::LabelSequence& new_prefix,
+                               const isc::dns::LabelSequence& new_suffix)
 {
     // Create and reset the labels.
     // Once a new node is created, no exception will be thrown until
     // the end of the function, and it will keep consistent behavior
     // (i.e., a weak form of strong exception guarantee) even if code
     // after the call to this function throws an exception.
-    DomainTreeNode<T, DT>* down_node = DomainTreeNode<T, DT>::create(mem_sgmt,
-                                                                   new_prefix);
-    node.resetLabels(new_suffix);
+    DomainTreeNode<T, DT>* up_node = DomainTreeNode<T, DT>::create(mem_sgmt,
+                                                                   new_suffix);
+    node.resetLabels(new_prefix);
 
-    std::swap(node.data_, down_node->data_);
-
-    // Swap flags bitfields; yes, this is ugly (it appears we cannot use
-    // std::swap for bitfields).  The right solution is to implement
-    // the above note regarding #2054, then we won't have to swap the
-    // flags in the first place.
-    const bool is_root = node.isSubTreeRoot();
-    const uint32_t tmp = node.flags_;
-    node.flags_ = down_node->flags_;
-    down_node->flags_ = tmp;
-    node.setSubTreeRoot(is_root);
-
-    down_node->down_ = node.getDown();
-    if (down_node->down_ != NULL) {
-        down_node->down_->parent_ = down_node;
+    up_node->parent_ = node.getParent();
+    if (node.getParent() != NULL) {
+        if (node.getParent()->getLeft() == &node) {
+            node.getParent()->left_ = up_node;
+        } else if (node.getParent()->getRight() == &node) {
+            node.getParent()->right_ = up_node;
+        } else {
+            node.getParent()->down_ = up_node;
+        }
+    } else {
+        this->root_ = up_node;
     }
 
-    node.down_ = down_node;
-    down_node->parent_ = &node;
+    up_node->down_ = &node;
+    node.parent_ = up_node;
 
-    // Restore the color of the node (may have gotten changed by the flags
-    // swap)
-    node.setColor(down_node->getColor());
+    // inherit the left/right pointers from the original node, and set
+    // the original node's left/right pointers to NULL.
+    up_node->left_ = node.getLeft();
+    if (node.getLeft() != NULL) {
+        node.getLeft()->parent_ = up_node;
+    }
+    up_node->right_ = node.getRight();
+    if (node.getRight() != NULL) {
+        node.getRight()->parent_ = up_node;
+    }
+    node.left_ = NULL;
+    node.right_ = NULL;
 
-    // root node of sub tree, the initial color is BLACK
-    down_node->setColor(DomainTreeNode<T, DT>::BLACK);
+    // set color of both nodes; the initial subtree node color is BLACK
+    up_node->setColor(node.getColor());
+    node.setColor(DomainTreeNode<T, DT>::BLACK);
 
-    // mark it as the root of a subtree
-    down_node->setSubTreeRoot(true);
+    // set the subtree root flag of both nodes
+    up_node->setSubTreeRoot(node.isSubTreeRoot());
+    node.setSubTreeRoot(true);
 
     ++node_count_;
 }

@@ -40,7 +40,7 @@ const size_t Name::MAX_LABELS;
 
 /* The initial structure of dtree
  *
-*              .
+ *             .
  *             |
  *             b
  *           /   \
@@ -266,6 +266,36 @@ TEST_F(DomainTreeTest, subTreeRoot) {
     EXPECT_TRUE(dtnode->getFlag(TestDomainTreeNode::FLAG_SUBTREE_ROOT));
 }
 
+TEST_F(DomainTreeTest, additionalNodeFission) {
+    // These are additional nodeFission tests added by #2054's rewrite
+    // of DomainTree::nodeFission(). These test specific corner cases that
+    // are not covered by other tests.
+
+    // Insert "t.0" (which becomes the left child of its parent)
+    EXPECT_EQ(TestDomainTree::SUCCESS,
+              dtree_expose_empty_node.insert(mem_sgmt_, Name("t.0"),
+                                             &dtnode));
+
+    // "t.0" is not a subtree root
+    EXPECT_EQ(TestDomainTree::EXACTMATCH,
+              dtree_expose_empty_node.find(Name("t.0"), &dtnode));
+    EXPECT_FALSE(dtnode->getFlag(TestDomainTreeNode::FLAG_SUBTREE_ROOT));
+
+    // fission the node "t.0"
+    EXPECT_EQ(TestDomainTree::ALREADYEXISTS,
+              dtree_expose_empty_node.insert(mem_sgmt_, Name("0"),
+                                             &dtnode));
+
+    // the node "0" ("0".down_ -> "t") should not be a subtree root. "t"
+    // should be a subtree root.
+    EXPECT_FALSE(dtnode->getFlag(TestDomainTreeNode::FLAG_SUBTREE_ROOT));
+
+    // "t.0" should be a subtree root now.
+    EXPECT_EQ(TestDomainTree::EXACTMATCH,
+              dtree_expose_empty_node.find(Name("t.0"), &dtnode));
+    EXPECT_TRUE(dtnode->getFlag(TestDomainTreeNode::FLAG_SUBTREE_ROOT));
+}
+
 TEST_F(DomainTreeTest, findName) {
     // find const dtnode
     // exact match
@@ -472,7 +502,7 @@ TEST_F(DomainTreeTest, getAbsoluteNameError) {
 }
 
 /*
- *the domain order should be:
+ * The domain order should be:
  * ., a, b, c, d.e.f, x.d.e.f, w.y.d.e.f, o.w.y.d.e.f, p.w.y.d.e.f,
  * q.w.y.d.e.f, z.d.e.f, j.z.d.e.f, g.h, i.g.h, k.g.h
  *             . (no data, can't be found)
