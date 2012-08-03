@@ -15,5 +15,5 @@ CLEANFILES = *.gcno *.gcda
 pkglibexec_PROGRAMS = b10-sockcreator
 
 b10_sockcreator_SOURCES = sockcreator.cc sockcreator.h main.cc
-b10_sockcreator_LDADD  = $(top_builddir)/src/lib/util/io/libutil_io.la
-b10_sockcreator_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
+b10_sockcreator_LDADD  = $(top_builddir)/src/lib/util/io/libb10-util-io.la
+b10_sockcreator_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la

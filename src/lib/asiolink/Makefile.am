@@ -13,32 +13,32 @@ CLEANFILES = *.gcno *.gcda
 # gcc's unused-parameter warning, which would make the build fail
 # with -Werror (our default setting).
 
-lib_LTLIBRARIES = libasiolink.la
+lib_LTLIBRARIES = libb10-asiolink.la
 
-libasiolink_la_LDFLAGS = -no-undefined -version-info 1:0:1
+libb10_asiolink_la_LDFLAGS = -no-undefined -version-info 1:0:1
 
-libasiolink_la_SOURCES  = asiolink.h
-libasiolink_la_SOURCES += dummy_io_cb.h
-libasiolink_la_SOURCES += interval_timer.cc interval_timer.h
-libasiolink_la_SOURCES += io_address.cc io_address.h
-libasiolink_la_SOURCES += io_asio_socket.h
-libasiolink_la_SOURCES += io_endpoint.cc io_endpoint.h
-libasiolink_la_SOURCES += io_error.h
-libasiolink_la_SOURCES += io_message.h
-libasiolink_la_SOURCES += io_service.h io_service.cc
-libasiolink_la_SOURCES += io_socket.h io_socket.cc
-libasiolink_la_SOURCES += simple_callback.h
-libasiolink_la_SOURCES += tcp_endpoint.h
-libasiolink_la_SOURCES += tcp_socket.h
-libasiolink_la_SOURCES += udp_endpoint.h
-libasiolink_la_SOURCES += udp_socket.h
+libb10_asiolink_la_SOURCES  = asiolink.h
+libb10_asiolink_la_SOURCES += dummy_io_cb.h
+libb10_asiolink_la_SOURCES += interval_timer.cc interval_timer.h
+libb10_asiolink_la_SOURCES += io_address.cc io_address.h
+libb10_asiolink_la_SOURCES += io_asio_socket.h
+libb10_asiolink_la_SOURCES += io_endpoint.cc io_endpoint.h
+libb10_asiolink_la_SOURCES += io_error.h
+libb10_asiolink_la_SOURCES += io_message.h
+libb10_asiolink_la_SOURCES += io_service.h io_service.cc
+libb10_asiolink_la_SOURCES += io_socket.h io_socket.cc
+libb10_asiolink_la_SOURCES += simple_callback.h
+libb10_asiolink_la_SOURCES += tcp_endpoint.h
+libb10_asiolink_la_SOURCES += tcp_socket.h
+libb10_asiolink_la_SOURCES += udp_endpoint.h
+libb10_asiolink_la_SOURCES += udp_socket.h
 
 # Note: the ordering matters: -Wno-... must follow -Wextra (defined in
 # B10_CXXFLAGS)
-libasiolink_la_CXXFLAGS = $(AM_CXXFLAGS)
+libb10_asiolink_la_CXXFLAGS = $(AM_CXXFLAGS)
 if USE_CLANGPP
 # Same for clang++, but we need to turn off -Werror completely.
-libasiolink_la_CXXFLAGS += -Wno-error
+libb10_asiolink_la_CXXFLAGS += -Wno-error
 endif
-libasiolink_la_CPPFLAGS = $(AM_CPPFLAGS)
-libasiolink_la_LIBADD = $(top_builddir)/src/lib/log/liblog.la
+libb10_asiolink_la_CPPFLAGS = $(AM_CPPFLAGS)
+libb10_asiolink_la_LIBADD = $(top_builddir)/src/lib/log/libb10-log.la
