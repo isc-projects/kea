@@ -1302,6 +1302,135 @@ TODO
 
   </chapter>
 
+  <chapter id="common">
+    <title>Common configuration elements</title>
+
+    <para>
+      Some things are configured in the same or similar manner across
+      many modules. So we show them here in one place.
+    </para>
+
+    <section id='common-acl'>
+      <title>ACLs</title>
+
+      <para>
+        An ACL, or Access Control List, is a way to describe if a request
+        is allowed or disallowed. The principle is, there's a list of rules.
+        A request either matches the rule or it doesn't. If it matches,
+        a decision is made and no more ACL processing happens. If it does
+        not match, the processing moves to the next rule. If there are
+        no more rules, a default action is taken.
+      </para>
+
+      <para>
+        Each element in the ACL is a dictionary. There's exactly one
+        <varname>action</varname> element. This element describes the
+        decision taken when the rule matches. If it is set to
+        "ACCEPT", the request processed. In case of "REJECT", the request
+        is not processed and an error message is sent back (what it means
+        depends on which ACL it is). The action of "DROP" does not
+        process the request and sends no answer &mdash; pretending the
+        request never came (which means the sender might resend it).
+      </para>
+
+      <para>
+        Other elements inside the rule describe the properties a request
+        must have to match. The request must match all the properties
+        in the check.
+      </para>
+
+      <section>
+        <title>Matching properties</title>
+
+        <para>
+          The first thing you can check against is the source address
+          of request. The name is <varname>from</varname> and the value
+          is a string containing either a single IPv4 or IPv6 address,
+          or a range in the usual slash notation (eg. "192.0.2.0/24").
+        </para>
+
+        <para>
+          The other is TSIG key by which the message was signed. The ACL
+          contains only the name (under the name "key"), the key itself
+          must be stored in the global keyring. <!-- TODO: Section for
+          the keyring and link to it.-->
+        </para>
+
+        <para>
+          More properties to match are planned &mdash; the destination
+          address, ports, matches against the packet content.
+        </para>
+      </section>
+
+      <section>
+        <title>More complicated matches</title>
+
+        <para>
+          From time to time, you need to express something more complex
+          than just a single address or key.
+        </para>
+
+        <para>
+          You can specify a list of values instead of single value. Then
+          the property needs to match at least one of the values listed
+          &mdash; so you can say <quote>"from": ["192.0.2.0/24",
+          "2001:db8::/32"]</quote> to match any address in the ranges
+          set aside for documentation. The keys or any future properties
+          will work in a similar way.
+        </para>
+
+        <para>
+          If that is not enough, you can compose the matching conditions
+          to logical expressions. They are called "ANY", "ALL" and "NOT".
+          The "ANY" and "ALL" ones contain lists of subexpressions &mdash;
+          each subexpression is a similar dictionary, just not containing
+          the "action" element. The "NOT" contains single subexpression.
+          Their function should be obvious &mdash; "NOT" matches if and
+          only if the subexpression does not match. The "ALL" matches exactly
+          when each of the subexpressions matches and "ANY" when at least
+          one matches.
+        </para>
+      </section>
+
+      <section>
+        <title>Examples</title>
+
+        <para>
+          All the examples here is just the JSON representing the ACL,
+          nicely formatted and split across lines. They are out of any
+          surrounding context. This is similar to what you'd get from
+          <command>config show_json</command> called on the entry containing
+          the ACL.
+        </para>
+
+        <para>
+          In the first example, the ACL accepts queries from two known hosts.
+          Each host has an IP addresses (both IPv4 and IPv6) and a TSIG
+          key. Other queries are politely rejected. The last entry in the list
+          has no conditions &mdash; making it match any query.
+
+          <screen>[
+  {
+    "from": ["192.0.2.1", "2001:db8::1"],
+    "key": "first.key",
+    "action": "ACCEPT
+  },
+  {
+    "from": ["192.0.2.2", "2001:db8::2"],
+    "key": "second.key",
+    "action": "ACCEPT"
+  },
+  {
+    "action": "REJECT"
+  }
+]</screen>
+        </para>
+
+        <!-- TODO: Two ways to express accept only from private ranges-->
+      </section>
+    </section>
+  </chapter>
+
   <chapter id="authserver">
     <title>Authoritative Server</title>
 
