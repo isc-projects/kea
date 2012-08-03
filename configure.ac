@@ -1016,15 +1016,15 @@ AC_SUBST(PERL)
 AC_PATH_PROGS(AWK, gawk awk)
 AC_SUBST(AWK)
 
-AC_ARG_ENABLE(man, [AC_HELP_STRING([--enable-man],
-  [regenerate man pages using Docbook [default=no]])],
-  enable_man=$enableval, enable_man=no)
+AC_ARG_ENABLE(generate_docs, [AC_HELP_STRING([--enable-generate-docs],
+  [regenerate documentation using Docbook [default=no]])],
+  enable_generate_docs=$enableval, enable_generate_docs=no)
 
 # Check for xsltproc
-if test "x$enable_man" != xno ; then
+if test "x$enable_generate_docs" != xno ; then
   AC_PATH_PROG([XSLTPROC], [xsltproc])
   if test -z "$XSLTPROC"; then
-    AC_MSG_ERROR("xsltproc not found; it is required for --enable-man")
+    AC_MSG_ERROR("xsltproc not found; it is required for --enable-generate-docs")
   else
     AC_MSG_CHECKING([if $XSLTPROC works])
     # run xsltproc to see if works
@@ -1041,7 +1041,7 @@ if test "x$enable_man" != xno ; then
 fi
 
 
-AM_CONDITIONAL(ENABLE_MAN, test x$enable_man != xno)
+AM_CONDITIONAL(GENERATE_DOCS, test x$enable_generate_docs != xno)
 
 AC_ARG_ENABLE(install-configurations,
   [AC_HELP_STRING([--disable-install-configurations],
@@ -1385,7 +1385,7 @@ Developer:
   C++ Code Coverage: $USE_LCOV
   Python Code Coverage: $USE_PYCOVERAGE
   Logger checks: $enable_logger_checks
-  Generate Manuals: $enable_man
+  Generate Documentation: $enable_generate_docs
 
 END
 

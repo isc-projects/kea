@@ -9,7 +9,7 @@ EXTRA_DIST = bind10-guide.xml
 CLEANFILES = $(HTMLDOCS) $(DOCS) bind10-messages.xml
 
 # This is not a "man" manual, but reuse this for now for docbook.
-if ENABLE_MAN
+if GENERATE_DOCS
 
 bind10-guide.html: bind10-guide.xml
 	@XSLTPROC@ --novalid --xinclude --nonet \
@@ -40,7 +40,7 @@ bind10-messages.xml:
 else
 
 $(HTMLDOCS) $(DOCS):
-	@echo Doc generation disabled.  Creating dummy $@.  Configure with --enable-man to enable it.
-	@echo Doc generation disabled.  Remove this file, configure with --enable-man, and rebuild BIND 10 > $@
+	@echo Doc generation disabled.  Creating dummy $@.  Configure with --enable-generate-docs to enable it.
+	@echo Doc generation disabled.  Remove this file, configure with --enable-generate-docs, and rebuild BIND 10 > $@
 
 endif
