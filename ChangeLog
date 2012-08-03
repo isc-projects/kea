@@ -1,3 +1,16 @@
+458.	[build]*	jinmei
+	BIND 10 now relies on Boost offset_ptr, which caused some new
+	portability issues.  Such issues are detected at ./configure time.
+	If ./configure stops due to this, try the following workaround:
+	- If it's about the use of mutable for a reference with clang++,
+	  upgrade Boost version to 1.44 or higher, or try a different
+	  compiler (e.g. g++ generally seems to be free from this issue)
+	- If it's about the use of "variadic templates", specify
+	  --without-werror so the warning won't be promoted to an error.
+	  Specifying BOOST_NO_USER_CONFIG in CXXFLAGS may also work
+	  (which would be the case if Boost is installed via pkgsrc)
+	(Trac #2147, git 30061d1139aad8716e97d6b620c259752fd0a3cd)
+
 457.	[build]*	muks
 	BIND 10 library names now have a "b10-" prefix. This is to avoid
 	clashes with other similarly named libraries on the system.
