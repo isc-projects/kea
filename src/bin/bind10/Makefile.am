@@ -20,7 +20,7 @@ man_MANS = bind10.8
 CLEANFILES += $(man_MANS)
 EXTRA_DIST += $(man_MANS) bind10.xml bind10_messages.mes
 
-if ENABLE_MAN
+if GENERATE_DOCS
 
 bind10.8: bind10.xml
 	@XSLTPROC@ --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/bind10.xml 
@@ -31,11 +31,11 @@ bind10.8: bind10.xml
 else
 
 $(man_MANS):
-	@echo Man generation disabled.  Creating dummy $@.  Configure with --enable-man to enable it.
-	@echo Man generation disabled.  Remove this file, configure with --enable-man, and rebuild BIND 10 > $@
+	@echo Man generation disabled.  Creating dummy $@.  Configure with --enable-generate-docs to enable it.
+	@echo Man generation disabled.  Remove this file, configure with --enable-generate-docs, and rebuild BIND 10 > $@
 
 #dist-local-check-mans-enabled:
-#	@echo "*** --enable-man must be used in order to make dist"
+#	@echo "*** --enable-generate-docs must be used in order to make dist"
 #	@false
 
 endif

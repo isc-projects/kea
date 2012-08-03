@@ -20,7 +20,7 @@ man_MANS = b10-ddns.8
 CLEANFILES += $(man_MANS)
 EXTRA_DIST += $(man_MANS) b10-ddns.xml
 
-if ENABLE_MAN
+if GENERATE_DOCS
 
 b10-ddns.8: b10-ddns.xml
 	@XSLTPROC@ --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/b10-ddns.xml
@@ -28,8 +28,8 @@ b10-ddns.8: b10-ddns.xml
 else
 
 $(man_MANS):
-	@echo Man generation disabled.  Creating dummy $@.  Configure with --enable-man to enable it.
-	@echo Man generation disabled.  Remove this file, configure with --enable-man, and rebuild BIND 10 > $@
+	@echo Man generation disabled.  Creating dummy $@.  Configure with --enable-generate-docs to enable it.
+	@echo Man generation disabled.  Remove this file, configure with --enable-generate-docs, and rebuild BIND 10 > $@
 
 endif
 
