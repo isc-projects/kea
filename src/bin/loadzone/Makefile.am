@@ -11,7 +11,7 @@ EXTRA_DIST = $(man_MANS) b10-loadzone.xml
 if ENABLE_MAN
 
 b10-loadzone.8: b10-loadzone.xml
-	xsltproc --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/b10-loadzone.xml
+	@XSLTPROC@ --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/b10-loadzone.xml
 
 else
 

@@ -13,7 +13,7 @@ EXTRA_DIST = bind10-guide.xml bind10-messages.xml
 CLEANFILES = $(HTMLDOCS) $(DOCS) bind10-messages.xml
 
 bind10-guide.html: bind10-guide.xml
-	xsltproc --novalid --xinclude --nonet \
+	@XSLTPROC@ --novalid --xinclude --nonet \
 		--path $(top_builddir)/doc \
 		-o $@ \
 		--stringparam section.autolabel 1 \
@@ -28,7 +28,7 @@ bind10-guide.txt: bind10-guide.html
 	$(HTML2TXT) bind10-guide.html > $@
 
 bind10-messages.html: bind10-messages.xml
-	xsltproc --novalid --xinclude --nonet \
+	@XSLTPROC@ --novalid --xinclude --nonet \
 		--path $(top_builddir)/doc \
 		-o $@ \
 		--stringparam html.stylesheet $(srcdir)/bind10-guide.css \

@@ -13,7 +13,7 @@ EXTRA_DIST = $(man_MANS) msgq.xml
 if ENABLE_MAN
 
 b10-msgq.8: msgq.xml
-	xsltproc --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/msgq.xml
+	@XSLTPROC@ --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/msgq.xml
 
 else
 

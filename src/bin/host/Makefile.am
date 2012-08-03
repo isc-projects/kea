@@ -26,7 +26,7 @@ if ENABLE_MAN
 man: b10-host.1
 
 b10-host.1: b10-host.xml
-	xsltproc --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/b10-host.xml
+	@XSLTPROC@ --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/b10-host.xml
 
 else
 
