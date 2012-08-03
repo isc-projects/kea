@@ -1,3 +1,8 @@
+457.	[build]*	muks
+	BIND 10 library names now have a "b10-" prefix. This is to avoid
+	clashes with other similarly named libraries on the system.
+	(Trac #2071, git ac20a00c28069804edc0a36050995df52f601efb)
+
 456.	[build]*	muks
 	BIND 10 now compiles against log4cplus-1.1.0 (RC releases)
 	also.  Note: some older versions of log4cplus don't work any more;
