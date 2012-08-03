@@ -21,7 +21,7 @@ EXTRA_DIST = $(man_MANS) b10-xfrout.xml xfrout_messages.mes
 if ENABLE_MAN
 
 b10-xfrout.8: b10-xfrout.xml
-	xsltproc --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/b10-xfrout.xml
+	@XSLTPROC@ --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/b10-xfrout.xml
 
 else
 

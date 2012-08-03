@@ -22,7 +22,7 @@ EXTRA_DIST = $(man_MANS) b10-dhcp6.xml dhcp6.spec
 if ENABLE_MAN
 
 b10-dhcp6.8: b10-dhcp6.xml
-	xsltproc --novalid --xinclude --nonet -o $@ \
+	@XSLTPROC@ --novalid --xinclude --nonet -o $@ \
         http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl \
         $(srcdir)/b10-dhcp6.xml
 

@@ -19,7 +19,7 @@ EXTRA_DIST = $(man_MANS) b10-sockcreator.xml
 if ENABLE_MAN
 
 b10-sockcreator.8: b10-sockcreator.xml
-        xsltproc --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/b10-sockcreator.xml
+	@XSLTPROC@ --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/b10-sockcreator.xml
 
 else
 
