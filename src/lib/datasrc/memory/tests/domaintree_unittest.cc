@@ -63,7 +63,7 @@ class DeleterType {
 public:
     DeleterType() {}
 
-    void operator()(int* i) const {
+    void operator()(util::MemorySegment&, int* i) const {
         delete i;
     }
 };
@@ -102,11 +102,11 @@ protected:
         int name_count = sizeof(domain_names) / sizeof(domain_names[0]);
         for (int i = 0; i < name_count; ++i) {
             dtree.insert(mem_sgmt_, Name(domain_names[i]), &dtnode);
-            dtnode->setData(new int(i + 1));
+            dtnode->setData(mem_sgmt_, new int(i + 1));
 
             dtree_expose_empty_node.insert(mem_sgmt_, Name(domain_names[i]),
                                             &dtnode);
-            dtnode->setData(new int(i + 1));
+            dtnode->setData(mem_sgmt_, new int(i + 1));
 
         }
     }
@@ -130,7 +130,7 @@ TEST_F(DomainTreeTest, nodeCount) {
 }
 
 TEST_F(DomainTreeTest, setGetData) {
-    dtnode->setData(new int(11));
+    dtnode->setData(mem_sgmt_, new int(11));
     EXPECT_EQ(11, *(dtnode->getData()));
 }
 
@@ -151,7 +151,7 @@ TEST_F(DomainTreeTest, insertNames) {
                                                   Name("example.com"),
                                                   &dtnode));
     EXPECT_EQ(17, dtree.getNodeCount());
-    dtnode->setData(new int(12));
+    dtnode->setData(mem_sgmt_, new int(12));
 
     // return ALREADYEXISTS, since node "example.com" already has
     // been explicitly inserted
@@ -381,7 +381,7 @@ performCallbackTest(TestDomainTree& dtree,
     EXPECT_EQ(TestDomainTree::SUCCESS, dtree.insert(mem_sgmt,
                                                   Name("callback.example"),
                                                   &dtnode));
-    dtnode->setData(new int(1));
+    dtnode->setData(mem_sgmt, new int(1));
     EXPECT_FALSE(dtnode->getFlag(TestDomainTreeNode::FLAG_CALLBACK));
 
     // enable/re-disable callback
@@ -397,7 +397,7 @@ performCallbackTest(TestDomainTree& dtree,
     EXPECT_EQ(TestDomainTree::SUCCESS, dtree.insert(mem_sgmt,
                                                   Name("sub.callback.example"),
                                                   &subdtnode));
-    subdtnode->setData(new int(2));
+    subdtnode->setData(mem_sgmt, new int(2));
     TestDomainTreeNode* parentdtnode;
     EXPECT_EQ(TestDomainTree::ALREADYEXISTS, dtree.insert(mem_sgmt,
                                                         Name("example"),
@@ -997,7 +997,7 @@ TEST_F(DomainTreeTest, root) {
     TreeHolder tree_holder(mem_sgmt_, TestDomainTree::create(mem_sgmt_));
     TestDomainTree& root(*tree_holder.get());
     root.insert(mem_sgmt_, Name::ROOT_NAME(), &dtnode);
-    dtnode->setData(new int(1));
+    dtnode->setData(mem_sgmt_, new int(1));
 
     EXPECT_EQ(TestDomainTree::EXACTMATCH,
               root.find(Name::ROOT_NAME(), &cdtnode));
@@ -1009,7 +1009,7 @@ TEST_F(DomainTreeTest, root) {
     // Insert a new name that better matches the query name.  find() should
     // find the better one.
     root.insert(mem_sgmt_, Name("com"), &dtnode);
-    dtnode->setData(new int(2));
+    dtnode->setData(mem_sgmt_, new int(2));
     EXPECT_EQ(TestDomainTree::PARTIALMATCH,
               root.find(Name("example.com"), &cdtnode));
     EXPECT_EQ(dtnode, cdtnode);
