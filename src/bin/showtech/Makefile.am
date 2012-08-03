@@ -17,7 +17,7 @@ CLEANFILES += $(man_MANS)
 if ENABLE_MAN
 
 .xml.1:
-	xsltproc --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $<
+	@XSLTPROC@ --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $<
 
 else
 

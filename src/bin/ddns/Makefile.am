@@ -23,7 +23,7 @@ EXTRA_DIST += $(man_MANS) b10-ddns.xml
 if ENABLE_MAN
 
 b10-ddns.8: b10-ddns.xml
-	xsltproc --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/b10-ddns.xml
+	@XSLTPROC@ --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/b10-ddns.xml
 
 else
 

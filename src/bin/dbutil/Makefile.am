@@ -19,7 +19,7 @@ CLEANFILES += $(man_MANS)
 if ENABLE_MAN
 
 b10-dbutil.8: b10-dbutil.xml
-	xsltproc --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/b10-dbutil.xml
+	@XSLTPROC@ --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/b10-dbutil.xml
 
 else
 

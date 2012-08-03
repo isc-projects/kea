@@ -22,7 +22,7 @@ EXTRA_DIST += xfrin.spec xfrin_messages.mes
 if ENABLE_MAN
 
 b10-xfrin.8: b10-xfrin.xml
-	xsltproc --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/b10-xfrin.xml
+	@XSLTPROC@ --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/b10-xfrin.xml
 
 else
 

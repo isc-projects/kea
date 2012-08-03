@@ -21,7 +21,7 @@ EXTRA_DIST = $(man_MANS) b10-zonemgr.xml zonemgr_messages.mes
 if ENABLE_MAN
 
 b10-zonemgr.8: b10-zonemgr.xml
-	xsltproc --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/b10-zonemgr.xml
+	@XSLTPROC@ --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/b10-zonemgr.xml
 
 else
 
