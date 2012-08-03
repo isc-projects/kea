@@ -1,6 +1,3 @@
-# This is not a "man" manual, but reuse this for now for docbook.
-if ENABLE_MAN
-
 # generated documentation
 HTMLDOCS = bind10-guide.html bind10-messages.html
 DOCS = bind10-guide.txt
@@ -8,9 +5,11 @@ DOCS = bind10-guide.txt
 dist_doc_DATA = $(DOCS)
 dist_html_DATA = $(HTMLDOCS) bind10-guide.css
 
-# TODO: okay to include the generated bind10-messages.xml in dist tarfile too?
-EXTRA_DIST = bind10-guide.xml bind10-messages.xml
+EXTRA_DIST = bind10-guide.xml
 CLEANFILES = $(HTMLDOCS) $(DOCS) bind10-messages.xml
+
+# This is not a "man" manual, but reuse this for now for docbook.
+if ENABLE_MAN
 
 bind10-guide.html: bind10-guide.xml
 	@XSLTPROC@ --novalid --xinclude --nonet \
@@ -37,5 +36,11 @@ bind10-messages.html: bind10-messages.xml
 
 bind10-messages.xml:
 	$(PYTHON) $(top_srcdir)/tools/system_messages.py -o $@ $(top_srcdir)
+
+else
+
+$(HTMLDOCS) $(DOCS):
+	@echo Doc generation disabled.  Creating dummy $@.  Configure with --enable-man to enable it.
+	@echo Doc generation disabled.  Remove this file, configure with --enable-man, and rebuild BIND 10 > $@
 
 endif
