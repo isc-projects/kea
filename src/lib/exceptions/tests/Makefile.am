@@ -20,7 +20,7 @@ run_unittests_SOURCES += exceptions_unittest.cc
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(GTEST_LDFLAGS)
 run_unittests_LDADD = $(GTEST_LDADD)
-run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
+run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 endif
 
 noinst_PROGRAMS = $(TESTS)

@@ -21,18 +21,18 @@ if USE_CLANGPP
 AM_CXXFLAGS += -Wno-unused-parameter
 endif
 
-lib_LTLIBRARIES = libcache.la
-libcache_la_SOURCES  = resolver_cache.h resolver_cache.cc
-libcache_la_SOURCES  += message_cache.h message_cache.cc
-libcache_la_SOURCES  += message_entry.h message_entry.cc
-libcache_la_SOURCES  += rrset_cache.h rrset_cache.cc
-libcache_la_SOURCES  += rrset_entry.h rrset_entry.cc
-libcache_la_SOURCES  += cache_entry_key.h cache_entry_key.cc
-libcache_la_SOURCES  += rrset_copy.h rrset_copy.cc
-libcache_la_SOURCES  += local_zone_data.h local_zone_data.cc
-libcache_la_SOURCES  += message_utility.h message_utility.cc
-libcache_la_SOURCES  += logger.h logger.cc
-nodist_libcache_la_SOURCES = cache_messages.cc cache_messages.h
+lib_LTLIBRARIES = libb10-cache.la
+libb10_cache_la_SOURCES  = resolver_cache.h resolver_cache.cc
+libb10_cache_la_SOURCES  += message_cache.h message_cache.cc
+libb10_cache_la_SOURCES  += message_entry.h message_entry.cc
+libb10_cache_la_SOURCES  += rrset_cache.h rrset_cache.cc
+libb10_cache_la_SOURCES  += rrset_entry.h rrset_entry.cc
+libb10_cache_la_SOURCES  += cache_entry_key.h cache_entry_key.cc
+libb10_cache_la_SOURCES  += rrset_copy.h rrset_copy.cc
+libb10_cache_la_SOURCES  += local_zone_data.h local_zone_data.cc
+libb10_cache_la_SOURCES  += message_utility.h message_utility.cc
+libb10_cache_la_SOURCES  += logger.h logger.cc
+nodist_libb10_cache_la_SOURCES = cache_messages.cc cache_messages.h
 
 BUILT_SOURCES = cache_messages.cc cache_messages.h
 

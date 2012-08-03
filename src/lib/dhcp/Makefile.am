@@ -13,33 +13,33 @@ AM_CXXFLAGS += $(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 
 CLEANFILES = *.gcno *.gcda
 
-lib_LTLIBRARIES = libdhcp++.la
-libdhcp___la_SOURCES  =
-libdhcp___la_SOURCES += libdhcp++.cc libdhcp++.h
-libdhcp___la_SOURCES += iface_mgr.cc iface_mgr.h
-libdhcp___la_SOURCES += iface_mgr_linux.cc
-libdhcp___la_SOURCES += iface_mgr_bsd.cc
-libdhcp___la_SOURCES += iface_mgr_sun.cc
-libdhcp___la_SOURCES += option.cc option.h
-libdhcp___la_SOURCES += option6_ia.cc option6_ia.h
-libdhcp___la_SOURCES += option6_iaaddr.cc option6_iaaddr.h
-libdhcp___la_SOURCES += option6_addrlst.cc option6_addrlst.h
-libdhcp___la_SOURCES += option4_addrlst.cc option4_addrlst.h
-libdhcp___la_SOURCES += dhcp6.h dhcp4.h
-libdhcp___la_SOURCES += pkt6.cc pkt6.h
-libdhcp___la_SOURCES += pkt4.cc pkt4.h
+lib_LTLIBRARIES = libb10-dhcp++.la
+libb10_dhcp___la_SOURCES  =
+libb10_dhcp___la_SOURCES += libdhcp++.cc libdhcp++.h
+libb10_dhcp___la_SOURCES += iface_mgr.cc iface_mgr.h
+libb10_dhcp___la_SOURCES += iface_mgr_linux.cc
+libb10_dhcp___la_SOURCES += iface_mgr_bsd.cc
+libb10_dhcp___la_SOURCES += iface_mgr_sun.cc
+libb10_dhcp___la_SOURCES += option.cc option.h
+libb10_dhcp___la_SOURCES += option6_ia.cc option6_ia.h
+libb10_dhcp___la_SOURCES += option6_iaaddr.cc option6_iaaddr.h
+libb10_dhcp___la_SOURCES += option6_addrlst.cc option6_addrlst.h
+libb10_dhcp___la_SOURCES += option4_addrlst.cc option4_addrlst.h
+libb10_dhcp___la_SOURCES += dhcp6.h dhcp4.h
+libb10_dhcp___la_SOURCES += pkt6.cc pkt6.h
+libb10_dhcp___la_SOURCES += pkt4.cc pkt4.h
 
 EXTRA_DIST  = README
 #EXTRA_DIST += log_messages.mes
 
-libdhcp___la_CXXFLAGS = $(AM_CXXFLAGS)
-libdhcp___la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
-libdhcp___la_LIBADD   = $(top_builddir)/src/lib/asiolink/libasiolink.la
-libdhcp___la_LIBADD  += $(top_builddir)/src/lib/util/libutil.la
-libdhcp___la_LDFLAGS  = -no-undefined -version-info 2:0:0
+libb10_dhcp___la_CXXFLAGS = $(AM_CXXFLAGS)
+libb10_dhcp___la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
+libb10_dhcp___la_LIBADD   = $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
+libb10_dhcp___la_LIBADD  += $(top_builddir)/src/lib/util/libb10-util.la
+libb10_dhcp___la_LDFLAGS  = -no-undefined -version-info 2:0:0
 
 if USE_CLANGPP
 # Disable unused parameter warning caused by some of the
 # Boost headers when compiling with clang.
-libdhcp___la_CXXFLAGS += -Wno-unused-parameter
+libb10_dhcp___la_CXXFLAGS += -Wno-unused-parameter
 endif

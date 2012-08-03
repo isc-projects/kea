@@ -8,4 +8,4 @@ Description: BIND 10 DNS library
 Version: @PACKAGE_VERSION@
 Requires: botan-1.8
 Cflags: -I${includedir}/@PACKAGE_NAME@
-Libs: -L${libdir} -ldns++ -lcryptolink -lutil -lexceptions -lm
+Libs: -L${libdir} -lb10-dns++ -lb10-cryptolink -lb10-util -lb10-exceptions -lm

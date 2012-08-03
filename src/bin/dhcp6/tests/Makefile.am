@@ -55,10 +55,10 @@ endif
 dhcp6_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 dhcp6_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 dhcp6_unittests_LDADD = $(GTEST_LDADD)
-dhcp6_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
-dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libdhcp++.la
-dhcp6_unittests_LDADD += $(top_builddir)/src/lib/log/liblog.la
-dhcp6_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 
 endif
 

@@ -24,7 +24,7 @@ socketsession_la_CXXFLAGS = $(AM_CXXFLAGS) $(PYTHON_CXXFLAGS)
 # Python prefers .so, while some OSes (specifically MacOS) use a different
 # suffix for dynamic objects.  -module is necessary to work this around.
 socketsession_la_LDFLAGS += -module -avoid-version
-socketsession_la_LIBADD = $(top_builddir)/src/lib/util/io/libutil_io.la
+socketsession_la_LIBADD = $(top_builddir)/src/lib/util/io/libb10-util-io.la
 socketsession_la_LIBADD += $(PYTHON_LIB)
 
 # This is not installed, it helps locate the module during tests

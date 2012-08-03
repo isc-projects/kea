@@ -22,6 +22,7 @@
 #include <boost/static_assert.hpp>
 
 #include <log4cplus/configurator.h>
+#include <log4cplus/loggingmacros.h>
 
 #include <log/logger.h>
 #include <log/logger_impl.h>

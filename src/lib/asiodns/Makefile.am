@@ -16,28 +16,28 @@ asiodns_messages.h asiodns_messages.cc: asiodns_messages.mes
 
 BUILT_SOURCES = asiodns_messages.h asiodns_messages.cc
 
-lib_LTLIBRARIES = libasiodns.la
-libasiodns_la_SOURCES = dns_answer.h
-libasiodns_la_SOURCES += asiodns.h
-libasiodns_la_SOURCES += dns_lookup.h
-libasiodns_la_SOURCES += dns_server.h
-libasiodns_la_SOURCES += dns_service.cc dns_service.h
-libasiodns_la_SOURCES += tcp_server.cc tcp_server.h
-libasiodns_la_SOURCES += udp_server.cc udp_server.h
-libasiodns_la_SOURCES += sync_udp_server.cc sync_udp_server.h
-libasiodns_la_SOURCES += io_fetch.cc io_fetch.h
-libasiodns_la_SOURCES += logger.h logger.cc
+lib_LTLIBRARIES = libb10-asiodns.la
+libb10_asiodns_la_SOURCES = dns_answer.h
+libb10_asiodns_la_SOURCES += asiodns.h
+libb10_asiodns_la_SOURCES += dns_lookup.h
+libb10_asiodns_la_SOURCES += dns_server.h
+libb10_asiodns_la_SOURCES += dns_service.cc dns_service.h
+libb10_asiodns_la_SOURCES += tcp_server.cc tcp_server.h
+libb10_asiodns_la_SOURCES += udp_server.cc udp_server.h
+libb10_asiodns_la_SOURCES += sync_udp_server.cc sync_udp_server.h
+libb10_asiodns_la_SOURCES += io_fetch.cc io_fetch.h
+libb10_asiodns_la_SOURCES += logger.h logger.cc
 
-nodist_libasiodns_la_SOURCES = asiodns_messages.cc asiodns_messages.h
+nodist_libb10_asiodns_la_SOURCES = asiodns_messages.cc asiodns_messages.h
 
 EXTRA_DIST = asiodns_messages.mes
 
 # Note: the ordering matters: -Wno-... must follow -Wextra (defined in
 # B10_CXXFLAGS)
-libasiodns_la_CXXFLAGS = $(AM_CXXFLAGS)
+libb10_asiodns_la_CXXFLAGS = $(AM_CXXFLAGS)
 if USE_CLANGPP
 # Same for clang++, but we need to turn off -Werror completely.
-libasiodns_la_CXXFLAGS += -Wno-error
+libb10_asiodns_la_CXXFLAGS += -Wno-error
 endif
-libasiodns_la_CPPFLAGS = $(AM_CPPFLAGS)
-libasiodns_la_LIBADD = $(top_builddir)/src/lib/log/liblog.la
+libb10_asiodns_la_CPPFLAGS = $(AM_CPPFLAGS)
+libb10_asiodns_la_LIBADD = $(top_builddir)/src/lib/log/libb10-log.la

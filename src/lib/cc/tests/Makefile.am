@@ -30,10 +30,10 @@ run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 # We need to put our libs first, in case gtest (or any dependency, really)
 # is installed in the same location as a different version of bind10
 # Otherwise the linker may not use the source tree libs
-run_unittests_LDADD =  $(top_builddir)/src/lib/cc/libcc.la
-run_unittests_LDADD +=  $(top_builddir)/src/lib/log/liblog.la
+run_unittests_LDADD =  $(top_builddir)/src/lib/cc/libb10-cc.la
+run_unittests_LDADD +=  $(top_builddir)/src/lib/log/libb10-log.la
 run_unittests_LDADD +=  $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
-run_unittests_LDADD +=  $(top_builddir)/src/lib/exceptions/libexceptions.la
+run_unittests_LDADD +=  $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 run_unittests_LDADD += $(GTEST_LDADD)
 
 endif

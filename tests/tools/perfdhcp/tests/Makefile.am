@@ -36,10 +36,10 @@ run_unittests_CXXFLAGS = -Wno-unused-parameter
 endif
 
 run_unittests_LDADD  = $(GTEST_LDADD)
-run_unittests_LDADD += $(top_builddir)/src/lib/util/libutil.la
-run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
-run_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
-run_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libdhcp++.la
+run_unittests_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
+run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
+run_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
+run_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 endif
 
