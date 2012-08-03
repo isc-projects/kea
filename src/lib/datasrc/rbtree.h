@@ -1345,35 +1345,41 @@ RBTree<T>::~RBTree() {
 template <typename T>
 void
 RBTree<T>::deleteHelper(util::MemorySegment& mem_sgmt, RBNode<T>* root) {
-    if (root == NULL) {
-        return;
-    }
-
-    RBNode<T>* node = root;
-    while (root->getLeft() != NULL || root->getRight() != NULL) {
-        RBNode<T>* left(NULL);
-        RBNode<T>* right(NULL);
-        while ((left = node->getLeft()) != NULL ||
-               (right = node->getRight()) != NULL) {
-            node = (left != NULL) ? left : right;
+    while (root != NULL) {
+        // Walk to the left-most node under the root node.
+        while (root->getLeft() != NULL) {
+            root = root->getLeft();
         }
 
-        RBNode<T>* parent = node->getParent();
-        if (parent->getLeft() == node) {
-            parent->left_ = NULL;
+        // If there is a right node, walk into that one and repeat from
+        // start.
+        if (root->getRight() != NULL) {
+            root = root->getRight();
         } else {
-            parent->right_ = NULL;
+            // If there is a down node, walk into that one and repeat
+            // from start.
+            if (root->getDown() != NULL) {
+                root = root->getDown();
+            } else {
+                // There are no left, right or down nodes, so we can
+                // free this one and go back to its parent.
+                RBNode<T>* node = root;
+                root = root->getParent();
+                if (root != NULL) {
+                    if (root->getRight() == node) {
+                        root->right_ = NULL;
+                    } else if (root->getLeft() == node) {
+                        root->left_ = NULL;
+                    } else {
+                        root->down_ = NULL;
+                    }
+                }
+
+                RBNode<T>::destroy(mem_sgmt, node);
+                --node_count_;
+            }
         }
-
-        deleteHelper(mem_sgmt, node->getDown());
-        RBNode<T>::destroy(mem_sgmt, node);
-        --node_count_;
-        node = parent;
     }
-
-    deleteHelper(mem_sgmt, root->getDown());
-    RBNode<T>::destroy(mem_sgmt, root);
-    --node_count_;
 }
 
 template <typename T>
