@@ -1346,38 +1346,27 @@ template <typename T>
 void
 RBTree<T>::deleteHelper(util::MemorySegment& mem_sgmt, RBNode<T>* root) {
     while (root != NULL) {
-        // Walk to the left-most node under the root node.
-        while (root->getLeft() != NULL) {
+        // If there is a left, right or down node, walk into it and
+        // iterate.
+        if (root->getLeft() != NULL) {
+            RBNode<T>* node = root;
             root = root->getLeft();
-        }
-
-        // If there is a right node, walk into that one and repeat from
-        // start.
-        if (root->getRight() != NULL) {
+            node->left_ = NULL;
+        } else if (root->getRight() != NULL) {
+            RBNode<T>* node = root;
             root = root->getRight();
+            node->right_ = NULL;
+        } else if (root->getDown() != NULL) {
+            RBNode<T>* node = root;
+            root = root->getDown();
+            node->down_ = NULL;
         } else {
-            // If there is a down node, walk into that one and repeat
-            // from start.
-            if (root->getDown() != NULL) {
-                root = root->getDown();
-            } else {
-                // There are no left, right or down nodes, so we can
-                // free this one and go back to its parent.
-                RBNode<T>* node = root;
-                root = root->getParent();
-                if (root != NULL) {
-                    if (root->getRight() == node) {
-                        root->right_ = NULL;
-                    } else if (root->getLeft() == node) {
-                        root->left_ = NULL;
-                    } else {
-                        root->down_ = NULL;
-                    }
-                }
-
-                RBNode<T>::destroy(mem_sgmt, node);
-                --node_count_;
-            }
+            // There are no left, right or down nodes, so we can
+            // free this one and go back to its parent.
+            RBNode<T>* node = root;
+            root = root->getParent();
+            RBNode<T>::destroy(mem_sgmt, node);
+            --node_count_;
         }
     }
 }
