@@ -33,6 +33,24 @@ namespace perfdhcp {
 ///
 class TestControl : public boost::noncopyable {
 public:
+
+    class TestControlSocket {
+    public:
+
+        TestControlSocket(const int socket);
+        ~TestControlSocket();
+
+        const std::string& getIface() const { return(iface_); }
+
+    private:
+        void initInterface();
+
+        int socket_;
+        std::string iface_;
+    };
+
+    static const uint8_t HW_ETHER_LEN = 6;
+
     /// TestControl is a singleton class. This method returns reference
     /// to its sole instance.
     ///
@@ -69,11 +87,18 @@ private:
     /// \return true if any of the exit conditions is fulfiled.
     bool checkExitConditions() const;
 
-    boost::shared_ptr<dhcp::Pkt4> createDiscoverPkt4() const;
+    boost::shared_ptr<dhcp::Pkt4>
+    createDiscoverPkt4(const std::vector<uint8_t>& mac_addr) const;
+
+    static dhcp::OptionPtr factoryGeneric4(dhcp::Option::Universe u,
+                                           uint16_t type,
+                                           const dhcp::OptionBuffer& buf);
 
     static dhcp::OptionPtr factoryRequestList4(dhcp::Option::Universe u,
                                                uint16_t type,
                                                const dhcp::OptionBuffer& buf);
+
+    const std::vector<uint8_t>& generateMacAddress();
 
     /// \brief Returns number of exchanges to be started.
     ///
@@ -85,15 +110,19 @@ private:
     /// \return number of exchanges to be started immediatelly.
     uint64_t getNextExchangesNum() const;
 
+    int openSocket() const;
+
     void registerOptionFactories4() const;
 
     void registerOptionFactories6() const;
 
     void registerOptionFactories() const;
 
+    void resetMacAddress();
+
     /// \brief Start new exchange of DHCP messages.
     ///
-    void startExchange();
+    void startExchange(const TestControlSocket& socket);
 
     /// \brief Update due time to initiate next chunk of exchanges.
     ///
@@ -106,6 +135,8 @@ private:
                                            ///< of exchanges.
     boost::posix_time::ptime last_sent_;   ///< Indicates when the last exchange
                                            /// was initiated.
+
+    std::vector<uint8_t> last_mac_address_;/// Least generated MAC address.
 
     uint64_t sent_packets_0_;
     uint64_t sent_packets_1_;

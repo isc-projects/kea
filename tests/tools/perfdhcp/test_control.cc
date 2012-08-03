@@ -19,9 +19,11 @@
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 
-#include <dhcp/libdhcp++.h>
-#include <dhcp/dhcp4.h>
 #include <exceptions/exceptions.h>
+#include <asiolink/io_address.h>
+#include <dhcp/libdhcp++.h>
+#include <dhcp/iface_mgr.h>
+#include <dhcp/dhcp4.h>
 #include "test_control.h"
 #include "command_options.h"
 
@@ -30,9 +32,42 @@ using namespace boost;
 using namespace boost::posix_time;
 using namespace isc;
 using namespace isc::dhcp;
+using namespace isc::asiolink;
 
 namespace isc {
 namespace perfdhcp {
+
+TestControl::TestControlSocket::TestControlSocket(int socket) :
+    socket_(socket) {
+    initInterface();
+}
+
+TestControl::TestControlSocket::~TestControlSocket() {
+    IfaceMgr::instance().closeSockets();
+}
+
+void
+TestControl::TestControlSocket::initInterface() {
+    const IfaceMgr::IfaceCollection& ifaces =
+        IfaceMgr::instance().getIfaces();
+    for (IfaceMgr::IfaceCollection::const_iterator it = ifaces.begin();
+         it != ifaces.end();
+         ++it) {
+        const IfaceMgr::SocketCollection& socket_collection =
+            it->getSockets();
+        for (IfaceMgr::SocketCollection::const_iterator s =
+                 socket_collection.begin();
+             s != socket_collection.end();
+             ++s) {
+            if (s->sockfd_ == socket_) {
+                iface_ = it->getName();
+                return;
+            }
+        }
+    }
+    isc_throw(BadValue, "interface for for specified socket "
+              "descriptor not found");
+}
 
 TestControl&
 TestControl::instance() {
@@ -59,24 +94,37 @@ TestControl::checkExitConditions() const {
 }
 
 boost::shared_ptr<Pkt4>
-TestControl::createDiscoverPkt4() const {
+TestControl::createDiscoverPkt4(const std::vector<uint8_t>& mac_addr) const {
     const uint32_t transid = static_cast<uint32_t>(random());
     boost::shared_ptr<Pkt4> pkt4(new Pkt4(DHCPDISCOVER, transid));
     if (!pkt4) {
         isc_throw(isc::Unexpected, "failed to create DISCOVER packet");
     }
 
-    OptionPtr request_list_option =
-        Option::factory(Option::V4, DHO_DHCP_PARAMETER_REQUEST_LIST);
-    pkt4->addOption(request_list_option);
+    if (HW_ETHER_LEN != mac_addr.size()) {
+        isc_throw(BadValue, "invalid MAC address size");
+    }
+    pkt4->setHWAddr(HTYPE_ETHER, HW_ETHER_LEN, mac_addr);
+
+    OptionBuffer buf_msg_type;
+    buf_msg_type.push_back(DHCPDISCOVER);
+    pkt4->addOption(Option::factory(Option::V4, DHO_DHCP_MESSAGE_TYPE, buf_msg_type));
+    pkt4->addOption(Option::factory(Option::V4, DHO_DHCP_PARAMETER_REQUEST_LIST));
     return pkt4;
+}
+
+OptionPtr
+TestControl::factoryGeneric4(Option::Universe u,
+                                 uint16_t type,
+                                 const OptionBuffer& buf) {
+    OptionPtr opt(new Option(u, type, buf));
+    return opt;
 }
 
 OptionPtr
 TestControl::factoryRequestList4(Option::Universe u,
                                  uint16_t type,
-                                 const OptionBuffer& buf)
-{
+                                 const OptionBuffer& buf) {
     const uint8_t buf_array[] = {
         DHO_SUBNET_MASK,
         DHO_BROADCAST_ADDRESS,
@@ -88,9 +136,26 @@ TestControl::factoryRequestList4(Option::Universe u,
     };
 
     OptionBuffer buf_with_options(buf_array, buf_array + sizeof(buf_array));
-    Option* opt = new Option(u, type, buf);
+    OptionPtr opt(new Option(u, type, buf));
     opt->setData(buf_with_options.begin(), buf_with_options.end());
-    return OptionPtr(opt);
+    return opt;
+}
+
+const std::vector<uint8_t>&
+TestControl::generateMacAddress() {
+    CommandOptions& options = CommandOptions::instance();
+    uint32_t clients_num = options.getClientsNum();
+    if ((clients_num == 0) || (clients_num == 1)) {
+        return last_mac_address_;
+    }
+    for (std::vector<uint8_t>::iterator it = last_mac_address_.end() - 1;
+         it >= last_mac_address_.begin();
+         --it) {
+        if (++(*it) > 0) {
+            break;
+        }
+    }
+    return last_mac_address_;
 }
 
 uint64_t
@@ -141,10 +206,57 @@ TestControl::getNextExchangesNum() const {
     return (0);
 }
 
+int
+TestControl::openSocket() const {
+    CommandOptions& options = CommandOptions::instance();
+    std::string localname = options.getLocalName();
+    std::string servername = options.getServerName();
+    uint8_t family = AF_INET;
+    uint16_t port = 67;
+    int sock = 0;
+    if (options.getIpVersion() == 6) {
+        family = AF_INET6;
+        port = 547;
+    }
+    if (!localname.empty()) {
+        bool is_interface = false;;
+        try {
+            sock = IfaceMgr::instance().openSocketFromIface(localname,
+                                                            port,
+                                                            family);
+            is_interface = true;
+        } catch (...) {
+            // This is not fatal error. It may be the case that
+            // parameter given from command line is not interface
+            // name but local IP address.
+        }
+        if (!is_interface) {
+            IOAddress localaddr(localname);
+            // We don't catch exception here because parameter given
+            // must be either interface name or local address. If
+            // both attempts failed, we want exception to be emited.
+            sock = IfaceMgr::instance().openSocketFromAddress(localaddr,
+                                                              port);
+        }
+    } else if (!servername.empty()) {
+        IOAddress remoteaddr(servername);
+        sock = IfaceMgr::instance().openSocketFromRemoteAddress(remoteaddr,
+                                                                port);
+    }
+    if (sock <= 0) {
+        isc_throw(BadValue, "unable to open socket to communicate with "
+                  "DHCP server");
+    }
+    return sock;
+}
+
 void
 TestControl::registerOptionFactories4() const {
     static bool factories_registered = false;
     if (!factories_registered) {
+        LibDHCP::OptionFactoryRegister(Option::V4,
+                                       DHO_DHCP_MESSAGE_TYPE,
+                                       &TestControl::factoryGeneric4);
         LibDHCP::OptionFactoryRegister(Option::V4,
                                        DHO_DHCP_PARAMETER_REQUEST_LIST,
                                        &TestControl::factoryRequestList4);
@@ -177,19 +289,31 @@ TestControl::registerOptionFactories() const {
 }
 
 void
+TestControl::resetMacAddress() {
+    CommandOptions& options = CommandOptions::instance();
+    std::vector<uint8_t> mac_prefix(options.getMacPrefix());
+    if (mac_prefix.size() != HW_ETHER_LEN) {
+        isc_throw(Unexpected, "MAC address prefix is invalid");
+    }
+    std::swap(mac_prefix, last_mac_address_);
+}
+
+void
 TestControl::run() {
     sent_packets_0_ = 0;
     sent_packets_1_ = 0;
     CommandOptions& options = CommandOptions::instance();
     // Ip version is not set ONLY in case the command options
-    // where not parsed. This surely means that parse() function
+    // were not parsed. This surely means that parse() function
     // was not called prior to starting the test. This is fatal
     // error.
     if (options.getIpVersion() == 0) {
-        isc_throw(InvalidOperation, "command options must be parsed before running " 
-                  "a test");
+        isc_throw(InvalidOperation,
+                  "command options must be parsed before running a test");
     }
     registerOptionFactories();
+    TestControlSocket socket(openSocket());
+    resetMacAddress();
     uint64_t packets_sent = 0;
     for (;;) {
         updateSendDue();
@@ -198,18 +322,26 @@ TestControl::run() {
         }
         uint64_t packets_due = getNextExchangesNum();
         for (uint64_t i = packets_due; i > 0; --i) {
-            startExchange();
+            startExchange(socket);
             ++packets_sent;
             cout << "Packets sent " << packets_sent << endl;
         }
     }
-
 }
 
 void
-TestControl::startExchange() {
+TestControl::startExchange(const TestControlSocket& socket) {
     ++sent_packets_0_;
     last_sent_ = microsec_clock::universal_time();
+    std::vector<uint8_t> mac_address = generateMacAddress();
+    boost::shared_ptr<Pkt4> pkt4 = createDiscoverPkt4(mac_address);
+    pkt4->setIface(socket.getIface());
+    try {
+        pkt4->pack();
+        IfaceMgr::instance().send(pkt4);
+    } catch (const Exception& e) {
+        std::cout << e.what() << std::endl;
+    }
 }
 
 void
