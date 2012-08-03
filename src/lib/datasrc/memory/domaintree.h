@@ -248,16 +248,18 @@ public:
     /// \brief Set the data stored in the node. If there is old data, it
     /// is either returned or destroyed based on what is passed in \c
     /// old_data.
+    /// \param mem_sgmt The \c MemorySegment that allocated memory for
+    ///                 the node data.
     /// \param data The new data to set.
     /// \param old_data If \c NULL is passed here, any old data is
     ///                 destroyed. Otherwise, the old data is returned
     ///                 in this location.
-    void setData(T* data, T** old_data = NULL) {
+    void setData(util::MemorySegment& mem_sgmt, T* data, T** old_data = NULL) {
         if (old_data != NULL) {
             *old_data = data;
         } else {
             const DT deleter;
-            deleter(data_);
+            deleter(mem_sgmt, data_);
         }
         data_ = data;
     }
@@ -876,7 +878,7 @@ public:
     /// \param mem_sgmt A \c MemorySegment from which memory for the new
     /// \c DomainTree is allocated.
     static DomainTree* create(util::MemorySegment& mem_sgmt,
-                          bool return_empty_node = false)
+                              bool return_empty_node = false)
     {
         void* p = mem_sgmt.allocate(sizeof(DomainTree<T, DT>));
         return (new(p) DomainTree<T, DT>(return_empty_node));
@@ -1389,14 +1391,14 @@ DomainTree<T, DT>::deleteHelper(util::MemorySegment& mem_sgmt,
         }
 
         deleteHelper(mem_sgmt, node->getDown(), deleter);
-        deleter(node->data_);
+        deleter(mem_sgmt, node->data_);
         DomainTreeNode<T, DT>::destroy(mem_sgmt, node);
         --node_count_;
         node = parent;
     }
 
     deleteHelper(mem_sgmt, root->getDown(), deleter);
-    deleter(root->data_);
+    deleter(mem_sgmt, root->data_);
     DomainTreeNode<T, DT>::destroy(mem_sgmt, root);
     --node_count_;
 }
