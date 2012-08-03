@@ -16,7 +16,7 @@ CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/dbutil_messages.pyc
 CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/dbutil_messages.pyo
 CLEANFILES += $(man_MANS)
 
-if ENABLE_MAN
+if GENERATE_DOCS
 
 b10-dbutil.8: b10-dbutil.xml
 	@XSLTPROC@ --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/b10-dbutil.xml
@@ -24,8 +24,8 @@ b10-dbutil.8: b10-dbutil.xml
 else
 
 $(man_MANS):
-	@echo Man generation disabled.  Creating dummy $@.  Configure with --enable-man to enable it.
-	@echo Man generation disabled.  Remove this file, configure with --enable-man, and rebuild BIND 10 > $@
+	@echo Man generation disabled.  Creating dummy $@.  Configure with --enable-generate-docs to enable it.
+	@echo Man generation disabled.  Remove this file, configure with --enable-generate-docs, and rebuild BIND 10 > $@
 
 endif
 

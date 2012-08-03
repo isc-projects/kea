@@ -26,7 +26,7 @@ EXTRA_DIST += stats.spec stats-httpd.spec
 EXTRA_DIST += stats-httpd-xml.tpl stats-httpd-xsd.tpl stats-httpd-xsl.tpl
 EXTRA_DIST += stats_messages.mes stats_httpd_messages.mes
 
-if ENABLE_MAN
+if GENERATE_DOCS
 
 b10-stats.8: b10-stats.xml
 	@XSLTPROC@ --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/b10-stats.xml
@@ -37,8 +37,8 @@ b10-stats-httpd.8: b10-stats-httpd.xml
 else
 
 $(man_MANS):
-	@echo Man generation disabled.  Creating dummy $@.  Configure with --enable-man to enable it.
-	@echo Man generation disabled.  Remove this file, configure with --enable-man, and rebuild BIND 10 > $@
+	@echo Man generation disabled.  Creating dummy $@.  Configure with --enable-generate-docs to enable it.
+	@echo Man generation disabled.  Remove this file, configure with --enable-generate-docs, and rebuild BIND 10 > $@
 
 endif
 
