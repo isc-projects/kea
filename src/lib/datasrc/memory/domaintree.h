@@ -1368,39 +1368,33 @@ DomainTree<T, DT>::~DomainTree() {
 template <typename T, typename DT>
 void
 DomainTree<T, DT>::deleteHelper(util::MemorySegment& mem_sgmt,
-                               DomainTreeNode<T, DT>* root,
-                               const DT& deleter) {
-    if (root == NULL) {
-        return;
-    }
-
-    DomainTreeNode<T, DT>* node = root;
-    while (root->getLeft() != NULL || root->getRight() != NULL) {
-        DomainTreeNode<T, DT>* left(NULL);
-        DomainTreeNode<T, DT>* right(NULL);
-        while ((left = node->getLeft()) != NULL ||
-               (right = node->getRight()) != NULL) {
-            node = (left != NULL) ? left : right;
-        }
-
-        DomainTreeNode<T, DT>* parent = node->getParent();
-        if (parent->getLeft() == node) {
-            parent->left_ = NULL;
+                                DomainTreeNode<T, DT>* root,
+                                const DT& deleter) {
+    while (root != NULL) {
+        // If there is a left, right or down node, walk into it and
+        // iterate.
+        if (root->getLeft() != NULL) {
+            DomainTreeNode<T, DT>* node = root;
+            root = root->getLeft();
+            node->left_ = NULL;
+        } else if (root->getRight() != NULL) {
+            DomainTreeNode<T, DT>* node = root;
+            root = root->getRight();
+            node->right_ = NULL;
+        } else if (root->getDown() != NULL) {
+            DomainTreeNode<T, DT>* node = root;
+            root = root->getDown();
+            node->down_ = NULL;
         } else {
-            parent->right_ = NULL;
+            // There are no left, right or down nodes, so we can
+            // free this one and go back to its parent.
+            DomainTreeNode<T, DT>* node = root;
+            root = root->getParent();
+            deleter(mem_sgmt, node->data_);
+            DomainTreeNode<T, DT>::destroy(mem_sgmt, node);
+            --node_count_;
         }
-
-        deleteHelper(mem_sgmt, node->getDown(), deleter);
-        deleter(mem_sgmt, node->data_);
-        DomainTreeNode<T, DT>::destroy(mem_sgmt, node);
-        --node_count_;
-        node = parent;
     }
-
-    deleteHelper(mem_sgmt, root->getDown(), deleter);
-    deleter(mem_sgmt, root->data_);
-    DomainTreeNode<T, DT>::destroy(mem_sgmt, root);
-    --node_count_;
 }
 
 template <typename T, typename DT>
