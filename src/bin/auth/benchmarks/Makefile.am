@@ -26,19 +26,19 @@ query_bench_SOURCES += ${top_srcdir}/src/lib/datasrc/memory_datasrc.cc
 
 nodist_query_bench_SOURCES = ../auth_messages.h ../auth_messages.cc
 
-query_bench_LDADD = $(top_builddir)/src/lib/dns/libdns++.la
-query_bench_LDADD += $(top_builddir)/src/lib/util/libutil.la
-query_bench_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
-query_bench_LDADD += $(top_builddir)/src/lib/bench/libbench.la
-query_bench_LDADD += $(top_builddir)/src/lib/datasrc/libdatasrc.la
-query_bench_LDADD += $(top_builddir)/src/lib/config/libcfgclient.la
-query_bench_LDADD += $(top_builddir)/src/lib/cc/libcc.la
-query_bench_LDADD += $(top_builddir)/src/lib/xfr/libxfr.la
-query_bench_LDADD += $(top_builddir)/src/lib/log/liblog.la
-query_bench_LDADD += $(top_builddir)/src/lib/nsas/libnsas.la
-query_bench_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
-query_bench_LDADD += $(top_builddir)/src/lib/server_common/libserver_common.la
-query_bench_LDADD += $(top_builddir)/src/lib/asiodns/libasiodns.la
-query_bench_LDADD += $(top_builddir)/src/lib/statistics/libstatistics.la
+query_bench_LDADD = $(top_builddir)/src/lib/dns/libb10-dns++.la
+query_bench_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
+query_bench_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
+query_bench_LDADD += $(top_builddir)/src/lib/bench/libb10-bench.la
+query_bench_LDADD += $(top_builddir)/src/lib/datasrc/libb10-datasrc.la
+query_bench_LDADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la
+query_bench_LDADD += $(top_builddir)/src/lib/cc/libb10-cc.la
+query_bench_LDADD += $(top_builddir)/src/lib/xfr/libb10-xfr.la
+query_bench_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
+query_bench_LDADD += $(top_builddir)/src/lib/nsas/libb10-nsas.la
+query_bench_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
+query_bench_LDADD += $(top_builddir)/src/lib/server_common/libb10-server-common.la
+query_bench_LDADD += $(top_builddir)/src/lib/asiodns/libb10-asiodns.la
+query_bench_LDADD += $(top_builddir)/src/lib/statistics/libb10-statistics.la
 query_bench_LDADD += $(SQLITE_LIBS)
 

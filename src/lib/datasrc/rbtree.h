@@ -221,6 +221,26 @@ public:
         return (dns::LabelSequence(getLabelsData()));
     }
 
+    /// \brief Return the absolute label sequence of the node.
+    ///
+    /// This method returns the label sequence corresponding to the full
+    /// name of the node; i.e. the entire name as it appears in the zone.
+    ///
+    /// It takes the (partial) name of the node itself, and extends it
+    /// with all upper nodes.
+    ///
+    /// \note Care must be taken with the buffer that is used here; this
+    /// method overwrites its data, so it should not be associated with
+    /// any other LabelSequence during the lifetime of the LabelSequence
+    /// returned by this method. See LabelSequence::extend(), which is used
+    /// by this method.
+    ///
+    /// \param buf A data buffer where the label sequence will be built.
+    ///            The data in this buffer will be overwritten by this call.
+    /// \return A LabelSequence with the absolute name of this node.
+    isc::dns::LabelSequence getAbsoluteLabels(
+        uint8_t buf[isc::dns::LabelSequence::MAX_SERIALIZED_LENGTH]) const;
+
     /// \brief Return the data stored in this node.
     ///
     /// You should not delete the data, it is handled by shared pointers.
@@ -500,6 +520,21 @@ RBNode<T>::getUpperNode() const {
     }
 
     return (current->getParent());
+}
+
+template <typename T>
+isc::dns::LabelSequence
+RBNode<T>::getAbsoluteLabels(
+    uint8_t buf[isc::dns::LabelSequence::MAX_SERIALIZED_LENGTH]) const
+{
+    isc::dns::LabelSequence result(getLabels(), buf);
+    const RBNode<T>* upper = getUpperNode();
+    while (upper != NULL) {
+        result.extend(upper->getLabels(), buf);
+        upper = upper->getUpperNode();
+    }
+
+    return (result);
 }
 
 template <typename T>
@@ -1277,10 +1312,11 @@ private:
 
     /// Split one node into two nodes for "prefix" and "suffix" parts of
     /// the labels of the original node, respectively.  The given node
-    /// will hold the suffix labels, while the new node will hold the prefix.
-    /// The newly created node represents the labels that the original node
-    /// did, so necessary data are swapped.
-    /// (Note: as commented in the code, this behavior should be changed).
+    /// will hold the prefix, while a newly created node will hold the prefix.
+    /// Note that the original node still represents the same domain name in
+    /// the entire tree.  This ensures that a pointer to a node keeps its
+    /// semantics even if the tree structure is changed (as long as the node
+    /// itself remains valid).
     void nodeFission(util::MemorySegment& mem_sgmt, RBNode<T>& node,
                      const isc::dns::LabelSequence& new_prefix,
                      const isc::dns::LabelSequence& new_suffix);
@@ -1309,35 +1345,30 @@ RBTree<T>::~RBTree() {
 template <typename T>
 void
 RBTree<T>::deleteHelper(util::MemorySegment& mem_sgmt, RBNode<T>* root) {
-    if (root == NULL) {
-        return;
-    }
-
-    RBNode<T>* node = root;
-    while (root->getLeft() != NULL || root->getRight() != NULL) {
-        RBNode<T>* left(NULL);
-        RBNode<T>* right(NULL);
-        while ((left = node->getLeft()) != NULL ||
-               (right = node->getRight()) != NULL) {
-            node = (left != NULL) ? left : right;
-        }
-
-        RBNode<T>* parent = node->getParent();
-        if (parent->getLeft() == node) {
-            parent->left_ = NULL;
+    while (root != NULL) {
+        // If there is a left, right or down node, walk into it and
+        // iterate.
+        if (root->getLeft() != NULL) {
+            RBNode<T>* node = root;
+            root = root->getLeft();
+            node->left_ = NULL;
+        } else if (root->getRight() != NULL) {
+            RBNode<T>* node = root;
+            root = root->getRight();
+            node->right_ = NULL;
+        } else if (root->getDown() != NULL) {
+            RBNode<T>* node = root;
+            root = root->getDown();
+            node->down_ = NULL;
         } else {
-            parent->right_ = NULL;
+            // There are no left, right or down nodes, so we can
+            // free this one and go back to its parent.
+            RBNode<T>* node = root;
+            root = root->getParent();
+            RBNode<T>::destroy(mem_sgmt, node);
+            --node_count_;
         }
-
-        deleteHelper(mem_sgmt, node->getDown());
-        RBNode<T>::destroy(mem_sgmt, node);
-        --node_count_;
-        node = parent;
     }
-
-    deleteHelper(mem_sgmt, root->getDown());
-    RBNode<T>::destroy(mem_sgmt, root);
-    --node_count_;
 }
 
 template <typename T>
@@ -1623,6 +1654,7 @@ RBTree<T>::insert(util::MemorySegment& mem_sgmt,
             dns::LabelSequence new_prefix = current_labels;
             new_prefix.stripRight(compare_result.getCommonLabels());
             nodeFission(mem_sgmt, *current, new_prefix, common_ancestor);
+            current = current->getParent();
         }
     }
 
@@ -1661,11 +1693,6 @@ RBTree<T>::deleteAllNodes(util::MemorySegment& mem_sgmt) {
     root_ = NULL;
 }
 
-// Note: when we redesign this (still keeping the basic concept), we should
-// change this part so the newly created node will be used for the inserted
-// name (and therefore the name for the existing node doesn't change).
-// Otherwise, things like shortcut links between nodes won't work.
-// See Trac #2054.
 template <typename T>
 void
 RBTree<T>::nodeFission(util::MemorySegment& mem_sgmt, RBNode<T>& node,
@@ -1677,38 +1704,45 @@ RBTree<T>::nodeFission(util::MemorySegment& mem_sgmt, RBNode<T>& node,
     // the end of the function, and it will keep consistent behavior
     // (i.e., a weak form of strong exception guarantee) even if code
     // after the call to this function throws an exception.
-    RBNode<T>* down_node = RBNode<T>::create(mem_sgmt, new_prefix);
-    node.resetLabels(new_suffix);
+    RBNode<T>* up_node = RBNode<T>::create(mem_sgmt, new_suffix);
+    node.resetLabels(new_prefix);
 
-    std::swap(node.data_, down_node->data_);
-
-    // Swap flags bitfields; yes, this is ugly (it appears we cannot use
-    // std::swap for bitfields).  The right solution is to implement
-    // the above note regarding #2054, then we won't have to swap the
-    // flags in the first place.
-    const bool is_root = node.isSubTreeRoot();
-    const uint32_t tmp = node.flags_;
-    node.flags_ = down_node->flags_;
-    down_node->flags_ = tmp;
-    node.setSubTreeRoot(is_root);
-
-    down_node->down_ = node.getDown();
-    if (down_node->down_ != NULL) {
-        down_node->down_->parent_ = down_node;
+    up_node->parent_ = node.getParent();
+    if (node.getParent() != NULL) {
+        if (node.getParent()->getLeft() == &node) {
+            node.getParent()->left_ = up_node;
+        } else if (node.getParent()->getRight() == &node) {
+            node.getParent()->right_ = up_node;
+        } else {
+            node.getParent()->down_ = up_node;
+        }
+    } else {
+        this->root_ = up_node;
     }
 
-    node.down_ = down_node;
-    down_node->parent_ = &node;
+    up_node->down_ = &node;
+    node.parent_ = up_node;
 
-    // Restore the color of the node (may have gotten changed by the flags
-    // swap)
-    node.setColor(down_node->getColor());
+    // inherit the left/right pointers from the original node, and set
+    // the original node's left/right pointers to NULL.
+    up_node->left_ = node.getLeft();
+    if (node.getLeft() != NULL) {
+        node.getLeft()->parent_ = up_node;
+    }
+    up_node->right_ = node.getRight();
+    if (node.getRight() != NULL) {
+        node.getRight()->parent_ = up_node;
+    }
+    node.left_ = NULL;
+    node.right_ = NULL;
 
-    // root node of sub tree, the initial color is BLACK
-    down_node->setColor(RBNode<T>::BLACK);
+    // set color of both nodes; the initial subtree node color is BLACK
+    up_node->setColor(node.getColor());
+    node.setColor(RBNode<T>::BLACK);
 
-    // mark it as the root of a subtree
-    down_node->setSubTreeRoot(true);
+    // set the subtree root flag of both nodes
+    up_node->setSubTreeRoot(node.isSubTreeRoot());
+    node.setSubTreeRoot(true);
 
     ++node_count_;
 }
