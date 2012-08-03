@@ -141,21 +141,26 @@ TestControl::factoryRequestList4(Option::Universe u,
     return opt;
 }
 
-const std::vector<uint8_t>&
-TestControl::generateMacAddress() {
+std::vector<uint8_t>
+TestControl::generateMacAddress() const {
     CommandOptions& options = CommandOptions::instance();
     uint32_t clients_num = options.getClientsNum();
     if ((clients_num == 0) || (clients_num == 1)) {
-        return last_mac_address_;
+        return options.getMacPrefix();
     }
-    for (std::vector<uint8_t>::iterator it = last_mac_address_.end() - 1;
-         it >= last_mac_address_.begin();
+    std::vector<uint8_t> mac_addr(options.getMacPrefix());
+    uint32_t r = random();
+    r %= clients_num + 1;
+    for (std::vector<uint8_t>::iterator it = mac_addr.end() - 1;
+         it >= mac_addr.begin();
          --it) {
-        if (++(*it) > 0) {
+        (*it) += r;
+        if (r < 256) {
             break;
         }
+        r >>= 8;
     }
-    return last_mac_address_;
+    return mac_addr;
 }
 
 uint64_t
@@ -165,7 +170,7 @@ TestControl::getNextExchangesNum() const {
     uint64_t due_exchanges = 0;
     // Get current time.
     ptime now(microsec_clock::universal_time());
-    // The due time indicates when we should start sening next chunk
+    // The due time indicates when we should start sending next chunk
     // of packets. If it is already due time, we should calculate
     // how many packets to send.
     if (now >= send_due_) {
@@ -289,16 +294,6 @@ TestControl::registerOptionFactories() const {
 }
 
 void
-TestControl::resetMacAddress() {
-    CommandOptions& options = CommandOptions::instance();
-    std::vector<uint8_t> mac_prefix(options.getMacPrefix());
-    if (mac_prefix.size() != HW_ETHER_LEN) {
-        isc_throw(Unexpected, "MAC address prefix is invalid");
-    }
-    std::swap(mac_prefix, last_mac_address_);
-}
-
-void
 TestControl::run() {
     sent_packets_0_ = 0;
     sent_packets_1_ = 0;
@@ -313,7 +308,6 @@ TestControl::run() {
     }
     registerOptionFactories();
     TestControlSocket socket(openSocket());
-    resetMacAddress();
     uint64_t packets_sent = 0;
     for (;;) {
         updateSendDue();
@@ -336,12 +330,8 @@ TestControl::startExchange(const TestControlSocket& socket) {
     std::vector<uint8_t> mac_address = generateMacAddress();
     boost::shared_ptr<Pkt4> pkt4 = createDiscoverPkt4(mac_address);
     pkt4->setIface(socket.getIface());
-    try {
-        pkt4->pack();
-        IfaceMgr::instance().send(pkt4);
-    } catch (const Exception& e) {
-        std::cout << e.what() << std::endl;
-    }
+    pkt4->pack();
+    IfaceMgr::instance().send(pkt4);
 }
 
 void
