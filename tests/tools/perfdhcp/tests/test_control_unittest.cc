@@ -48,7 +48,7 @@ TEST_F(TestControlTest, Run) {
     // The command line is to run single test iteration and exit.
     // We have to declare argv as const walk around the problem
     // of deprecated conversion from string to char*.
-    const char* argv[] = { "perfdhcp", "-l", "eth0", "-r", "10", "-n", "1" };
+    const char* argv[] = { "perfdhcp", "-l", "127.0.0.1", "-r", "10", "-n", "1" };
     const int argc = sizeof(argv) / sizeof(argv[0]);
     CommandOptions& options = CommandOptions::instance();
 
