@@ -66,6 +66,16 @@ IfaceMgr::Iface::Iface(const std::string& name, int ifindex)
     memset(mac_, 0, sizeof(mac_));
 }
 
+void
+IfaceMgr::Iface::closeSockets() {
+    for (SocketCollection::iterator sock = sockets_.begin();
+         sock != sockets_.end(); ++sock) {
+        cout << "Closing socket " << sock->sockfd_ << endl;
+        close(sock->sockfd_);
+    }
+    sockets_.clear();
+}
+
 std::string
 IfaceMgr::Iface::getFullName() const {
     ostringstream tmp;
@@ -154,15 +164,8 @@ IfaceMgr::IfaceMgr()
 void IfaceMgr::closeSockets() {
     for (IfaceCollection::iterator iface = ifaces_.begin();
          iface != ifaces_.end(); ++iface) {
-
-        for (SocketCollection::iterator sock = iface->sockets_.begin();
-             sock != iface->sockets_.end(); ++sock) {
-            cout << "Closing socket " << sock->sockfd_ << endl;
-            close(sock->sockfd_);
-        }
-        iface->sockets_.clear();
+        iface->closeSockets();
     }
-
 }
 
 IfaceMgr::~IfaceMgr() {
@@ -561,8 +564,7 @@ int IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, uint16_t port) {
     struct sockaddr_in6 addr6;
     memset(&addr6, 0, sizeof(addr6));
     addr6.sin6_family = AF_INET6;
-    addr6.sin6_port = htons(port);
-    if (addr.toText() != "::1")
+    addr6.sin6_port = htons(port);    if (addr.toText() != "::1")
       addr6.sin6_scope_id = if_nametoindex(iface.getName().c_str());
 
     memcpy(&addr6.sin6_addr,
@@ -740,7 +742,6 @@ IfaceMgr::send(const Pkt6Ptr& pkt) {
 bool
 IfaceMgr::send(const Pkt4Ptr& pkt)
 {
-
     Iface* iface = getIface(pkt->getIface());
     if (!iface) {
         isc_throw(BadValue, "Unable to send Pkt4. Invalid interface ("
@@ -817,8 +818,9 @@ IfaceMgr::receive4(uint32_t timeout) {
     /// provided set to indicated which sockets have something to read.
     for (iface = ifaces_.begin(); iface != ifaces_.end(); ++iface) {
 
-        for (SocketCollection::const_iterator s = iface->sockets_.begin();
-             s != iface->sockets_.end(); ++s) {
+        const SocketCollection& socket_collection = iface->getSockets();
+        for (SocketCollection::const_iterator s = socket_collection.begin();
+             s != socket_collection.end(); ++s) {
 
             // Only deal with IPv4 addresses.
             if (s->addr_.getFamily() == AF_INET) {
@@ -881,8 +883,9 @@ IfaceMgr::receive4(uint32_t timeout) {
 
     // Let's find out which interface/socket has the data
     for (iface = ifaces_.begin(); iface != ifaces_.end(); ++iface) {
-        for (SocketCollection::const_iterator s = iface->sockets_.begin();
-             s != iface->sockets_.end(); ++s) {
+        const SocketCollection& socket_collection = iface->getSockets();
+        for (SocketCollection::const_iterator s = socket_collection.begin();
+             s != socket_collection.end(); ++s) {
             if (FD_ISSET(s->sockfd_, &sockets)) {
                 candidate = &(*s);
                 break;
@@ -1010,8 +1013,9 @@ Pkt6Ptr IfaceMgr::receive6() {
     IfaceCollection::const_iterator iface = ifaces_.begin();
     const SocketInfo* candidate = 0;
     while (iface != ifaces_.end()) {
-        for (SocketCollection::const_iterator s = iface->sockets_.begin();
-             s != iface->sockets_.end(); ++s) {
+        const SocketCollection& socket_collection = iface->getSockets();
+        for (SocketCollection::const_iterator s = socket_collection.begin();
+             s != socket_collection.end(); ++s) {
             if (s->addr_.getFamily() != AF_INET6) {
                 continue;
             }
@@ -1122,11 +1126,12 @@ uint16_t IfaceMgr::getSocket(const isc::dhcp::Pkt6& pkt) {
                   << pkt.getIface());
     }
 
+    const SocketCollection& socket_collection = iface->getSockets();
     SocketCollection::const_iterator s;
-    for (s = iface->sockets_.begin(); s != iface->sockets_.end(); ++s) {
+    for (s = socket_collection.begin(); s != socket_collection.end(); ++s) {
         if ((s->family_ == AF_INET6) &&
             (!s->addr_.getAddress().to_v6().is_multicast())) {
-            return (s->sockfd_);
+            return (s->sockfd_);t
         }
         /// @todo: Add more checks here later. If remote address is
         /// not link-local, we can't use link local bound socket
@@ -1144,8 +1149,9 @@ uint16_t IfaceMgr::getSocket(isc::dhcp::Pkt4 const& pkt) {
                   << pkt.getIface());
     }
 
+    const SocketCollection& socket_collection = iface->getSockets();
     SocketCollection::const_iterator s;
-    for (s = iface->sockets_.begin(); s != iface->sockets_.end(); ++s) {
+    for (s = socket_collection.begin(); s != socket_collection.end(); ++s) {
         if (s->family_ == AF_INET) {
             return (s->sockfd_);
         }
