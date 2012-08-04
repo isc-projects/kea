@@ -138,6 +138,39 @@ class TestUtilties(unittest.TestCase):
                 [ {}, {'four': 1, 'five': 2, 'six': 3} ]),
                 [ {'one': 1, 'two': 2, 'three': 3}, {'four': 5, 'five': 7, 'six': 9} ])
 
+    def test_merge_oldnre(self):
+        self.assertEqual(stats.merge_oldnew(1, 2), 2)
+        self.assertEqual(stats.merge_oldnew(0.5, 0.3), 0.3)
+        self.assertEqual(stats.merge_oldnew('aa','bb'), 'bb')
+        self.assertEqual(stats.merge_oldnew(
+                [1, 2, 3], [4, 5]), [4, 5, 3])
+        self.assertEqual(stats.merge_oldnew(
+                [4, 5], [1, 2, 3]), [1, 2, 3])
+        self.assertEqual(stats.merge_oldnew(
+                [1, 2, 3], [None, 5, 6]), [None, 5, 6])
+        self.assertEqual(stats.merge_oldnew(
+                [None, 5, 6], [1, 2, 3]), [1, 2, 3])
+        self.assertEqual(stats.merge_oldnew(
+                [1, 2, 3], [None, None, None, None]), [None, None, None, None])
+        self.assertEqual(stats.merge_oldnew(
+                [[1,2],3],[[],5,6]), [[1,2],5,6])
+        self.assertEqual(stats.merge_oldnew(
+                {'one': 1, 'two': 2, 'three': 3},
+                {'one': 4, 'two': 5}),
+                         {'one': 4, 'two': 5, 'three': 3})
+        self.assertEqual(stats.merge_oldnew(
+                {'one': 1, 'two': 2, 'three': 3},
+                {'four': 4, 'five': 5}),
+                         {'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5})
+        self.assertEqual(stats.merge_oldnew(
+                {'one': [1, 2], 'two': [3, None, 5], 'three': [None, 3, None]},
+                {'one': [2], 'two': [4, 5], 'three': [None, None, None], 'four': 'FOUR'}),
+                         {'one':[2,2], 'two':[4,5,5], 'three':[None,None,None], 'four': 'FOUR'})
+        self.assertEqual(stats.merge_oldnew(
+                [ {'one': 1, 'two': 2, 'three': 3}, {'four': 4, 'five': 5, 'six': 6} ],
+                [ {}, {'four': 1, 'five': 2, 'six': 3} ]),
+                [ {'one': 1, 'two': 2, 'three': 3}, {'four': 1, 'five': 2, 'six': 3} ])
+
 class TestCallback(unittest.TestCase):
     def setUp(self):
         self.dummy_func = lambda *x, **y : (x, y)
@@ -385,8 +418,21 @@ class TestStats(unittest.TestCase):
 
     def test_update_statistics_data(self):
         self.stats = stats.Stats()
-
-        # success
+        _test_exp1 = {
+            'zonename': 'test1.example',
+            'queries.tcp': 5,
+            'queries.udp': 4
+            }
+        _test_exp2 = {
+            'zonename': 'test2.example',
+            'queries.tcp': 3,
+            'queries.udp': 2
+            }
+        _test_exp3 ={}
+        _test_exp4 ={
+            'queries.udp': 4
+            }
+        # Success cases
         self.assertEqual(self.stats.statistics_data['Stats']['lname'],
                          self.stats.cc_session.lname)
         self.stats.update_statistics_data(
@@ -394,13 +440,36 @@ class TestStats(unittest.TestCase):
             {'lname': 'foo@bar'})
         self.assertEqual(self.stats.statistics_data['Stats']['lname'],
                          'foo@bar')
-        # error case
+        self.assertIsNone(self.stats.update_statistics_data(
+            'Auth', 'foo1', {'queries.perzone': [_test_exp1]}))
+        self.assertEqual(self.stats.statistics_data_bymid['Auth']\
+                             ['foo1']['queries.perzone'],\
+                             [_test_exp1])
+        self.assertIsNone(self.stats.update_statistics_data(
+            'Auth', 'foo1', {'queries.perzone': [_test_exp2]}))
+        self.assertEqual(self.stats.statistics_data_bymid['Auth']\
+                             ['foo1']['queries.perzone'],\
+                             [_test_exp2])
+        self.assertIsNone(self.stats.update_statistics_data(
+            'Auth', 'foo1', {'queries.perzone': [_test_exp1,_test_exp2]}))
+        self.assertEqual(self.stats.statistics_data_bymid['Auth']\
+                             ['foo1']['queries.perzone'],
+                         [_test_exp1,_test_exp2])
+        # differential update
+        self.assertIsNone(self.stats.update_statistics_data(
+            'Auth', 'foo1', {'queries.perzone': [_test_exp3,_test_exp4]}))
+        self.assertEqual(self.stats.statistics_data_bymid['Auth']\
+                             ['foo1']['queries.perzone'], \
+                             [_test_exp1,stats.merge_oldnew(_test_exp2,_test_exp4)])
+        # Error cases
         self.assertEqual(self.stats.update_statistics_data('Stats', None,
                                                            {'lname': 0.0}),
                          ['0.0 should be a string'])
         self.assertEqual(self.stats.update_statistics_data('Dummy', None,
                                                            {'foo': 'bar'}),
                          ['unknown module name: Dummy'])
+        self.assertEqual(self.stats.update_statistics_data(
+                'Auth', 'foo1', {'queries.perzone': [None]}), ['None should be a map'])
 
     def test_update_statistics_data_withmid(self):
         self.stats = stats.Stats()
