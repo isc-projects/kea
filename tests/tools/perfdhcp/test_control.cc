@@ -252,7 +252,21 @@ TestControl::openSocket() const {
         isc_throw(BadValue, "unable to open socket to communicate with "
                   "DHCP server");
     }
-    return sock;
+    return(sock);
+}
+
+void
+TestControl::receivePackets() {
+    int timeout = 0;
+    bool receiving = true;
+    while (receiving) {
+        Pkt4Ptr pkt4 = IfaceMgr::instance().receive4(timeout);
+        if (!pkt4) {
+            receiving = false;
+        } else {
+            std::cout << "Received packet" << std::endl;
+        }
+    }
 }
 
 void
@@ -315,6 +329,9 @@ TestControl::run() {
             break;
         }
         uint64_t packets_due = getNextExchangesNum();
+
+        receivePackets();
+
         for (uint64_t i = packets_due; i > 0; --i) {
             startExchange(socket);
             ++packets_sent;
