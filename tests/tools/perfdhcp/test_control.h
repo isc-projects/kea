@@ -230,6 +230,8 @@ private:
     /// \return socket descriptor.
     int openSocket() const;
 
+    void receivePackets();
+
     /// \brief Register option factory functions for DHCPv4
     ///
     /// Method registers option factory functions for DHCPv4.
