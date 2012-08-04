@@ -1,3 +1,10 @@
+nnn.    [func]          naokikambe
+        The stats module was supported differential statistics updates. Each
+        module can return only statistics data which are updated since the last
+        time it sent to the stats module. The purpose of differential updating
+        is reducing amounts of statistics data sent in the message queue.
+        (Trac #2179, git TBD)
+
 452.	[func]*		muks
 	b10-showtech: An initial implementation of the b10-showtech tool
 	is now available. It gathers and outputs system information which
