@@ -137,6 +137,33 @@ def _accum(a, b):
     # Nothing matches above, the first arg is returned
     return a
 
+def merge_oldnew(old, new):
+    """
+    Merges two arguments.  If old data contains the corresponding name
+    against new data, the value of the name is replaced with the
+    corresponding value in new data. Otherwise, the new date are added
+    at same name or same id. Both old data and new data should be same
+    data type. This method returns the merged result.
+    """
+    # If the first arg is dict or list type, two values
+    # would be merged
+    if type(old) is dict and type(new) is dict:
+        return dict([ (k, merge_oldnew(old[k], v)) \
+                          if k in old else (k, v) \
+                          for (k, v) in new.items() ] \
+                        + [ (k, v) \
+                                for (k, v) in old.items() \
+                                if k not in new ])
+    elif type(old) is list and type(new) is list:
+        return [ merge_oldnew(old[i], new[i]) \
+                     if len(old) > i else new[i] \
+                     for i in range(len(new)) ] \
+                     + [ old[i] \
+                             for i in range(len(old)) \
+                             if len(new) <= i ]
+    else:
+        return new
+
 class Callback():
     """
     A Callback handler class
@@ -490,7 +517,11 @@ class Stats:
                 if self.modules[owner].validate_statistics(False, data, errors):
                     if owner in self.statistics_data_bymid:
                         if mid in self.statistics_data_bymid[owner]:
-                            self.statistics_data_bymid[owner][mid].update(data)
+                            # merge recursively old value and new
+                            # value each other
+                            self.statistics_data_bymid[owner][mid] = \
+                                merge_oldnew(self.statistics_data_bymid[owner][mid],
+                                             data)
                         else:
                             self.statistics_data_bymid[owner][mid] = data
                     else:
