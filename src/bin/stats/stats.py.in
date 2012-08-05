@@ -196,7 +196,8 @@ class Stats:
         sequences = []
         for (module_name, data) in self.get_statistics_data().items():
             # skip if module_name is 'Stats'
-            if module_name == self.module_name: continue
+            if module_name == self.module_name:
+                continue
             logger.debug(DBG_STATS_MESSAGING, STATS_SEND_STATISTICS_REQUEST,
                          module_name)
             cmd = isc.config.ccsession.create_command(
