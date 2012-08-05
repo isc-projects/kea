@@ -398,8 +398,8 @@ class MockAuth:
     def command_handler(self, command, *args, **kwargs):
         self.got_command_name = command
         sdata = { 'queries.tcp': self.queries_tcp,
-                       'queries.udp': self.queries_udp,
-                       'queries.perzone' : self.queries_per_zone }
+                  'queries.udp': self.queries_udp,
+                  'queries.perzone' : self.queries_per_zone }
         if command == 'getstats':
             return isc.config.create_answer(0, sdata)
         return isc.config.create_answer(1, "Unknown Command")
