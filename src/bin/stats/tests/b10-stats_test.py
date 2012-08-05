@@ -391,7 +391,8 @@ class TestStats(unittest.TestCase):
                          bar1_tcp)
         self.assertEqual(self.stats.statistics_data_bymid['Auth']['bar1@foo'],
                          {'queries.tcp': bar1_tcp})
-        # check consolidation of statistics data
+        # check consolidation of statistics data even if there is
+        # non-existent mid of Auth
         self.stats.update_statistics_data('Auth', "bar2@foo",
                                           {'queries.tcp': bar2_tcp})
         self.assertTrue('Auth' in self.stats.statistics_data)
