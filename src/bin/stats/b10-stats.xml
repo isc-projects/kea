@@ -90,7 +90,8 @@
     <title>CONFIGURATION AND COMMANDS</title>
 
     <para>
-      The configurable setting in <filename>stats.spec</filename> is:
+      The only configurable setting in <filename>stats.spec</filename>
+      is:
     </para>
 
     <variablelist>
@@ -98,11 +99,10 @@
         <term><varname>poll-interval</varname></term>
         <listitem>
           <para>
-            is a timer interval in seconds for <command>b10-stats</command> to
-            request each module to return its statistics data. The default is 60
-            second. Polling can be disabled by setting it to 0. The type of the
-            value should be an unsigned integer. A negative integer
-            is ignored.
+            is a time interval in seconds at which <command>b10-stats</command>
+            requests each module to return its statistics data. The default is 60
+            seconds. Polling can be disabled by setting it to 0. The type of the
+            value should be an unsigned integer. Negative integers are ignored.
           </para>
         </listitem>
       </varlistentry>
