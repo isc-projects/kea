@@ -60,7 +60,7 @@
       Command Channel by <command>b10-msgq</command> with other
       modules like <command>bind10</command>, <command>b10-auth</command>
       and so on. <command>b10-stats</command> periodically requests statistics
-      data to each module and receives. The interval time can be configured
+      data from each module. The interval time can be configured
       via <command>bindctl</command>. <command>b10-stats</command> cannot
       accept any command from other modules for updating statistics data. The
       stats module collects data and
