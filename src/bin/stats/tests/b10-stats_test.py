@@ -454,6 +454,19 @@ class TestStats(unittest.TestCase):
         _test_exp4 = {
               'queries.udp': 4
             }
+        _test_exp5_1 = {
+              'queries.perzone': [
+                { },
+                {
+                  'queries.udp': 9876
+                }
+              ]
+            }
+        _test_exp5_2 = {
+              'queries.perzone[1]/queries.udp':
+                  isc.cc.data.find(_test_exp5_1,
+                                   'queries.perzone[1]/queries.udp')
+            }
         # Success cases
         self.assertEqual(self.stats.statistics_data['Stats']['lname'],
                          self.stats.cc_session.lname)
@@ -480,9 +493,17 @@ class TestStats(unittest.TestCase):
         # differential update
         self.assertIsNone(self.stats.update_statistics_data(
             'Auth', 'foo1', {'queries.perzone': [_test_exp3,_test_exp4]}))
+        _new_data = stats.merge_oldnew(_test_exp2,_test_exp4)
         self.assertEqual(self.stats.statistics_data_bymid['Auth']\
                              ['foo1']['queries.perzone'], \
-                             [_test_exp1,stats.merge_oldnew(_test_exp2,_test_exp4)])
+                             [_test_exp1,_new_data])
+        self.assertIsNone(self.stats.update_statistics_data(
+            'Auth', 'foo1', _test_exp5_2))
+        _new_data = stats.merge_oldnew(_new_data,
+                                       _test_exp5_1['queries.perzone'][1])
+        self.assertEqual(self.stats.statistics_data_bymid['Auth']\
+                             ['foo1']['queries.perzone'], \
+                             [_test_exp1,_new_data])
         # Error cases
         self.assertEqual(self.stats.update_statistics_data('Stats', None,
                                                            {'lname': 0.0}),
@@ -515,6 +536,22 @@ class TestStats(unittest.TestCase):
                   'queries.udp': 4
               }
             }
+        _test_exp5_1 = {
+              'test10.example': {
+                 'queries.udp': 5432
+              }
+            }
+        _test_exp5_2 ={
+              'nds_queries.perzone/test10.example/queries.udp':
+                  isc.cc.data.find(_test_exp5_1,
+                                   'test10.example/queries.udp')
+            }
+        _test_exp6 = {
+              'foo/bar':  'brabra'
+            }
+        _test_exp7 = {
+              'foo[100]': 'bar'
+            }
         # Success cases
         self.assertIsNone(self.stats.update_statistics_data(
             'Auth', 'foo1', {'nds_queries.perzone': _test_exp1}))
@@ -534,12 +571,38 @@ class TestStats(unittest.TestCase):
         # differential update
         self.assertIsNone(self.stats.update_statistics_data(
             'Auth', 'foo1', {'nds_queries.perzone': dict(_test_exp3,**_test_exp4)}))
+        _new_val = dict(_test_exp1,
+                        **stats.merge_oldnew(_test_exp2,_test_exp4))
         self.assertEqual(self.stats.statistics_data_bymid['Auth']\
                              ['foo1']['nds_queries.perzone'],\
-                             dict(_test_exp1,**stats.merge_oldnew(_test_exp2,_test_exp4)))
+                             _new_val)
+        self.assertIsNone(self.stats.update_statistics_data(
+            'Auth', 'foo1', _test_exp5_2))
+        _new_val = stats.merge_oldnew(_new_val, _test_exp5_1)
+        self.assertEqual(self.stats.statistics_data_bymid['Auth']\
+                             ['foo1']['nds_queries.perzone'],\
+                             _new_val)
+        self.assertIsNone(self.stats.update_statistics_data(
+            'Auth', 'foo2', _test_exp5_2))
+        _new_val = stats.merge_oldnew(_new_val, _test_exp5_1)
+        self.assertEqual(self.stats.statistics_data_bymid['Auth']\
+                             ['foo2']['nds_queries.perzone'],\
+                             _test_exp5_1)
         # Error cases
         self.assertEqual(self.stats.update_statistics_data(
                 'Auth', 'foo1', {'nds_queries.perzone': None}), ['None should be a map'])
+        self.assertEqual(self.stats.statistics_data_bymid['Auth']\
+                             ['foo1']['nds_queries.perzone'],\
+                             _new_val)
+        self.assertEqual(self.stats.update_statistics_data(
+                'Auth', 'foo1', _test_exp6), ['unknown item foo'])
+        self.assertEqual(self.stats.statistics_data_bymid['Auth']\
+                             ['foo1']['nds_queries.perzone'],\
+                             _new_val)
+        self.assertEqual(self.stats.update_statistics_data(
+                'Boss', 'bar1', _test_exp7), ["KeyError: 'foo'"])
+        self.assertEqual(self.stats.update_statistics_data(
+                'Foo', 'foo1', _test_exp6), ['unknown module name: Foo'])
 
     def test_update_statistics_data_withmid(self):
         self.stats = stats.Stats()
