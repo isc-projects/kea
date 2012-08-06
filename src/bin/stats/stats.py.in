@@ -94,6 +94,9 @@ def get_spec_defaults(spec):
             return spec.get(
                     "item_default",
                     dict([ (s["item_name"], _get_spec_defaults(s)) for s in spec["map_item_spec"] ]) )
+        elif item_type == "named_set":
+            # in a named_set type, it returns {} as a default value
+            return spec.get("item_default", {})
         else:
             return spec.get("item_default", None)
     return dict([ (s['item_name'], _get_spec_defaults(s)) for s in spec ])

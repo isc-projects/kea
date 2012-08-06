@@ -223,6 +223,15 @@ TEST(ModuleSpec, StatisticsValidation) {
     ElementPtr errors = Element::createList();
     EXPECT_FALSE(statisticsTestWithErrors(dd, "data33_2.data", errors));
     EXPECT_EQ("[ \"Format mismatch\", \"Format mismatch\", \"Format mismatch\" ]", errors->str());
+
+    dd = moduleSpecFromFile(specfile("spec40.spec"));
+
+    EXPECT_TRUE(statisticsTest(dd, "data40_1.data"));
+    EXPECT_FALSE(statisticsTest(dd, "data40_2.data"));
+
+    errors = Element::createList();
+    EXPECT_FALSE(statisticsTestWithErrors(dd, "data40_2.data", errors));
+    EXPECT_EQ("[ \"Type mismatch\" ]", errors->str());
 }
 
 TEST(ModuleSpec, CommandValidation) {
