@@ -414,6 +414,82 @@ class SysInfoFreeBSD(SysInfoBSD):
         except (subprocess.CalledProcessError, OSError):
             self._net_connections = 'Warning: "netstat -nr" command failed.\n'
 
+class SysInfoOSX(SysInfoBSD):
+    """OS X (Darwin) implementation of the SysInfo class.
+    See the SysInfo class documentation for more information.
+    """
+    def __init__(self):
+        super().__init__()
+
+        # Don't know how to gather these
+        self._mem_cached = -1
+        self._mem_buffers = -1
+
+        try:
+            s = subprocess.check_output(['sysctl', '-n', 'kern.smp.active'])
+            self._platform_is_smp = int(s.decode('utf-8').strip()) > 0
+        except (subprocess.CalledProcessError, OSError):
+            pass
+
+        try:
+            s = subprocess.check_output(['sysctl', '-n', 'kern.boottime'])
+            t = s.decode('utf-8').strip()
+            r = re.match('^\{\s+sec\s+\=\s+(\d+),.*', t)
+            if r:
+                sec = time.time() - int(r.group(1))
+                self._uptime = int(round(sec))
+        except (subprocess.CalledProcessError, OSError):
+            pass
+
+        try:
+            s = subprocess.check_output(['sysctl', '-n', 'vm.loadavg'])
+            l = s.decode('utf-8').strip()
+            r = re.match('^\{(.*)\}$', l)
+            if r:
+                la = r.group(1).strip().split(' ')
+            else:
+                la = l.split(' ')
+            if len(la) >= 3:
+                self._loadavg = [float(la[0]), float(la[1]), float(la[2])]
+        except (subprocess.CalledProcessError, OSError):
+            pass
+
+        try:
+            s = subprocess.check_output(['vm_stat'])
+            lines = s.decode('utf-8').split('\n')
+            # store all values in a dict
+            values = {}
+            page_size = 4096
+            page_size_re = re.compile('page size of [0-9]+ bytes')
+            for line in lines:
+                page_size_m = page_size_re.match(line)
+                if page_size_m:
+                    page_size = int(page_size_m.group(1))
+                else:
+                    key, _, value = line.partition(':')
+                    values[key] = value.strip()[:-1]
+            self._mem_free = int(values['Pages free']) * page_size
+        except (subprocess.CalledProcessError, OSError):
+            pass
+
+        try:
+            s = subprocess.check_output(['sysctl', '-n', 'vm.swapusage'])
+            l = s.decode('utf-8').strip()
+            r = re.match('^total = (\d+\.\d+)M\s+used = (\d+\.\d+)M\s+free = (\d+\.\d+)M', l)
+            if r:
+                self._mem_swap_total = float(r.group(1).strip()) * 1024
+                self._mem_swap_free = float(r.group(3).strip()) * 1024
+        except (subprocess.CalledProcessError, OSError):
+            pass
+
+        try:
+            s = subprocess.check_output(['netstat', '-nr'])
+            self._net_routing_table = s.decode('utf-8')
+        except (subprocess.CalledProcessError, OSError):
+            self._net_connections = 'Warning: "netstat -nr" command failed.\n'
+
+
+
 class SysInfoTestcase(SysInfo):
     def __init__(self):
         super().__init__()
@@ -429,6 +505,8 @@ def SysInfoFromFactory():
         return SysInfoOpenBSD()
     elif osname == 'FreeBSD':
         return SysInfoFreeBSD()
+    elif osname == 'Darwin':
+        return SysInfoOSX()
     elif osname == 'BIND10Testcase':
         return SysInfoTestcase()
     else:
