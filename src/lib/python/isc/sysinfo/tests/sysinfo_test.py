@@ -155,6 +155,41 @@ def _my_freebsd_subprocess_check_output(command):
     else:
         assert False, 'Unhandled command'
 
+def _my_osx_platform_system():
+    return 'Darwin'
+
+def _my_osx_os_sysconf(key):
+    if key == 'SC_NPROCESSORS_CONF':
+        return 91
+    assert False, 'Unhandled key'
+
+def _my_osx_subprocess_check_output(command):
+    assert type(command) == list, 'command argument is not a list'
+    if command == ['hostname']:
+        return b'daemon.example.com\n'
+    elif command == ['sysctl', '-n', 'hw.physmem']:
+        return b'987654321\n'
+    elif command == ['ifconfig']:
+        return b'qB2osV6vUOjqm3P/+tQ4d92xoYz8/U8P9v3KWRpNwlI=\n'
+    elif command == ['netstat', '-s']:
+        return b'osuxbrcc1g9VgaF4yf3FrtfodrfATrbSnjhqhuQSAs8=\n'
+    elif command == ['netstat', '-an']:
+        return b'Z+w0lwa02/T+5+EIio84rrst/Dtizoz/aL9Im7J7ESA=\n'
+    elif command == ['sysctl', '-n', 'kern.smp.active']:
+        return b'0\n'
+    elif command == ['sysctl', '-n', 'kern.boottime']:
+        return bytes('{ sec = ' + str(int(time.time() - 76632)) + ', usec = 0 }\n', 'utf-8')
+    elif command == ['sysctl', '-n', 'vm.loadavg']:
+        return b'{ 0.2 0.4 0.6 }\n'
+    elif command == ['vm_stat']:
+        return b'Pages free: 12345.\n'
+    elif command == ['sysctl', '-n', 'vm.swapusage']:
+        return b'total = 18432.00M  used = 17381.23M  free = 1050.77M\n'
+    elif command == ['netstat', '-nr']:
+        return b'XfizswwNA9NkXz6K36ZExpjV08Y5IXkHI8jjDSV+5Nc=\n'
+    else:
+        assert False, 'Unhandled command: ' + str(command)
+
 class SysInfoTest(unittest.TestCase):
     def test_sysinfo(self):
         """Test that the various methods on SysInfo exist and return data."""
@@ -344,6 +379,54 @@ class SysInfoTest(unittest.TestCase):
         self.assertEqual(1037533184, s.get_mem_swap_total())
         self.assertEqual(1037533184, s.get_mem_swap_free())
         self.assertRegexpMatches(s.get_platform_distro(), '^FreeBSD\s+.*')
+
+        # These test that the corresponding tools are being called (and
+        # no further processing is done on this data). Please see the
+        # implementation functions at the top of this file.
+        self.assertEqual('qB2osV6vUOjqm3P/+tQ4d92xoYz8/U8P9v3KWRpNwlI=\n', s.get_net_interfaces())
+        self.assertEqual('XfizswwNA9NkXz6K36ZExpjV08Y5IXkHI8jjDSV+5Nc=\n', s.get_net_routing_table())
+        self.assertEqual('osuxbrcc1g9VgaF4yf3FrtfodrfATrbSnjhqhuQSAs8=\n', s.get_net_stats())
+        self.assertEqual('Z+w0lwa02/T+5+EIio84rrst/Dtizoz/aL9Im7J7ESA=\n', s.get_net_connections())
+
+        # Restore original implementations.
+        platform.system = old_platform_system
+        os.sysconf = old_os_sysconf
+        subprocess.check_output = old_subprocess_check_output
+
+    def test_sysinfo_osx(self):
+        """Tests the OS X implementation of SysInfo. Note that this
+        tests deep into the implementation, and not just the
+        interfaces."""
+
+        # Don't run this test on platform other than FreeBSD as some
+        # system calls may not even be available.
+        osname = platform.system()
+        if osname != 'Darwin':
+            return
+
+        # Save and replace existing implementations of library functions
+        # with mock ones for testing.
+        old_platform_system = platform.system
+        platform.system = _my_osx_platform_system
+        old_os_sysconf = os.sysconf
+        os.sysconf = _my_osx_os_sysconf
+        old_subprocess_check_output = subprocess.check_output
+        subprocess.check_output = _my_osx_subprocess_check_output
+
+        s = SysInfoFromFactory()
+        self.assertEqual(91, s.get_num_processors())
+        self.assertEqual('daemon.example.com', s.get_platform_hostname())
+        self.assertFalse(s.get_platform_is_smp())
+
+        self.assertLess(abs(76632 - s.get_uptime()), 4)
+        self.assertEqual([0.2, 0.4, 0.6], s.get_loadavg())
+        self.assertEqual(987654321, s.get_mem_total())
+        self.assertEqual((12345 * 4096), s.get_mem_free())
+        self.assertEqual(-1, s.get_mem_cached())
+        self.assertEqual(-1, s.get_mem_buffers())
+        self.assertEqual(18874368.0, s.get_mem_swap_total())
+        self.assertEqual(1075988.48, s.get_mem_swap_free())
+        self.assertRegexpMatches(s.get_platform_distro(), '^Darwin\s+.*')
 
         # These test that the corresponding tools are being called (and
         # no further processing is done on this data). Please see the
