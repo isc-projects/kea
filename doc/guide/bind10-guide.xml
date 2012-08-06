@@ -1489,15 +1489,16 @@ can use various data source backends.
       <title>Data Source Backends</title>
 
       <para>
-        Bind 10 has the concept of data sources. A data source is some place
-        where authoritative zone data reside and where they can be served from.
-        This can be a master file or a database or something completely else.
+        Bind 10 has the concept of data sources. A data source is a place
+        where authoritative zone data reside and where they can be served
+        from. This can be a master file, a database or something completely
+        different.
       </para>
 
       <para>
         Once a query arrives, <command>b10-auth</command> goes through a
         configured list of data sources and finds the one containing a best
-        matching zone. From the equaly good ones, the first one is taken.
+        matching zone. From the equally good ones, the first one is taken.
         This data source is then used to answer the query.
       </para>
 
@@ -1520,7 +1521,7 @@ can use various data source backends.
       </para>
 
       <para>
-        Each data source has several option. The first one is
+        Each data source has several options. The first one is
         <varname>type</varname>, which specifies the type of data source to
         use. Valid types include the ones listed below, but bind10 uses
         dynamically loaded modules for them, so there may be more in your
@@ -1528,21 +1529,22 @@ can use various data source backends.
       </para>
 
       <para>
-        Another option is <varname>params</varname>. This one is type
-        specific. It means it holds different data depending on the type
+        Another option is <varname>params</varname>. This option is type
+        specific; it holds different data depending on the type
         above. Also, depending on the type, it could be possible to omit it.
       </para>
 
       <para>
-        Another two options are related to so-called cache. If you enable
+        There are two options related to the so-called cache. If you enable
         cache, zone data from the data source are loaded into memory.
         Then, when answering a query, <command>b10-auth</command> looks
         into the memory only instead of the data source, which speeds
         answering up. The first option is <varname>cache-enable</varname>,
-        a boolean value turning the cache on and off (off is default).
+        a boolean value turning the cache on and off (off is the default).
         The second one, <varname>cache-zones</varname>, is a list of zone
         origins to load into in-memory. Remember that zones in the data source
-        not listed here will not be loaded and will not be available.
+        not listed here will not be loaded and will not be available from
+        memory.
       </para>
 
       <section id='datasource-types'>
@@ -2567,7 +2569,7 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
     </section>
 
     <section id="dhcp4-limit">
-      <title>DHCPv4 Server Limitations</title> 
+      <title>DHCPv4 Server Limitations</title>
       <para>These are the current limitations of the DHCPv4 server
       software. Most of them are reflections of the early stage of
       development and should be treated as <quote>not implemented
