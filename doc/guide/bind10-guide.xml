@@ -1426,7 +1426,68 @@ TODO
 ]</screen>
         </para>
 
-        <!-- TODO: Two ways to express accept only from private ranges-->
+        <para>
+          Now we show two ways to accept only the queries from private ranges.
+          This is the same as rejecting anything that is outside.
+
+          <screen>[
+  {
+    "from": [
+      "10.0.0.0/8",
+      "172.16.0.0/12",
+      "192.168.0.0/16",
+      "fc00::/7"
+    ],
+    "action": "ACCEPT"
+  },
+  {
+    "action": "REJECT"
+  }
+]</screen>
+
+          <screen>[
+  {
+    "NOT": {
+       "ANY": [
+         {"from": "10.0.0.0/8"},
+         {"from": "172.16.0.0/12"},
+         {"from": "192.168.0.0/16"},
+         {"from": "fc00::/7"}
+       ]
+    },
+    "action": "REJECT"
+  },
+  {
+    "action": "ACCEPT"
+  }
+]</screen>
+        </para>
+      </section>
+
+      <section>
+        <title>Interaction with <command>bindctl</command></title>
+
+        <para>
+          Currently, <command>bindctl</command> has hard time coping with
+          the variable nature of the ACL syntax. This technical limitation
+          makes it impossible to edit parts of the entries. You need to
+          set the whole entry at once, providing the whole JSON value.
+        </para>
+
+        <para>
+          This limitation is planned to be solved soon at least partially.
+        </para>
+
+        <para>
+          You'd do something like this to create the second example.
+          Note that the whole JSON must be on a single line.
+
+          <screen>&gt; <userinput>config add somewhere/acl</userinput>
+&gt; <userinput>config set somewhere/acl[0] { "from": [ "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "fc00::/7" ], "action": "ACCEPT" }</userinput>
+&gt; <userinput>config add somewhere/acl</userinput>
+&gt; <userinput>config set somewhere/acl[1] { "action": "REJECT" }</userinput>
+&gt; <userinput>config commit</userinput></screen>
+        </para>
       </section>
     </section>
   </chapter>
