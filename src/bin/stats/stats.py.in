@@ -516,21 +516,48 @@ class Stats:
         # would be updated.
         errors = []
         if owner and data:
+            _data = self.statistics_data_bymid.copy()
             try:
-                if self.modules[owner].validate_statistics(False, data, errors):
-                    if owner in self.statistics_data_bymid:
-                        if mid in self.statistics_data_bymid[owner]:
+                for (_key, _val) in data.items():
+                    if self.modules[owner].validate_statistics(
+                        False, {_key: _val}, errors):
+                        if owner not in _data:
+                            _data[owner] = { mid: { _key: _val } }
+                        elif mid not in _data[owner]:
+                            _data[owner][mid] = { _key: _val }
+                        else:
                             # merge recursively old value and new
                             # value each other
-                            self.statistics_data_bymid[owner][mid] = \
-                                merge_oldnew(self.statistics_data_bymid[owner][mid],
-                                             data)
-                        else:
-                            self.statistics_data_bymid[owner][mid] = data
-                    else:
-                        self.statistics_data_bymid[owner] = { mid : data }
+                            _data[owner][mid] = \
+                                merge_oldnew(_data[owner][mid],
+                                             {_key: _val})
+                        continue
+                    # the key string might be a "xx/yy/zz[0]"
+                    # type. try it.
+                    if _key.find('/') >= 0 or \
+                            isc.cc.data.identifier_has_list_index(_key):
+                        # remove the last error
+                        if errors: errors.pop()
+                        # try updata and check validation in adavance
+                        __data = _data.copy()
+                        if owner not in _data:
+                            __data[owner] = {}
+                        if mid not in _data[owner]:
+                            __data[owner][mid] = {}
+                        # use the isc.cc.data.set method
+                        try:
+                            isc.cc.data.set(__data[owner][mid],
+                                            _key, _val)
+                            if self.modules[owner].validate_statistics(
+                                False, __data[owner][mid], errors):
+                                _data = __data
+                        except Exception as e:
+                            errors.append(
+                                "%s: %s" % (e.__class__.__name__, e))
             except KeyError:
                 errors.append("unknown module name: " + str(owner))
+            if not errors:
+                self.statistics_data_bymid = _data
 
         # Just consolidate statistics data of each module without
         # removing that of modules which have been already dead
