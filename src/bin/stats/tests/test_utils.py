@@ -449,7 +449,18 @@ class MockAuth:
         sdata = { 'queries.tcp': self.queries_tcp,
                   'queries.udp': self.queries_udp,
                   'queries.perzone' : self.queries_per_zone,
-                  'nds_queries.perzone' : self.nds_queries_per_zone }
+                  'nds_queries.perzone' : {
+                    'test10.example': {
+                    'queries.tcp': \
+                      isc.cc.data.find(
+                        self.nds_queries_per_zone,
+                        'test10.example/queries.tcp')
+                    }
+                  },
+                  'nds_queries.perzone/test10.example/queries.udp' :
+                      isc.cc.data.find(self.nds_queries_per_zone,
+                                       'test10.example/queries.udp')
+                }
         if command == 'getstats':
             return isc.config.create_answer(0, sdata)
         return isc.config.create_answer(1, "Unknown Command")
