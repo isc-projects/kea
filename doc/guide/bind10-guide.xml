@@ -2073,37 +2073,22 @@ http://bind10.isc.org/wiki/ScalableZoneLoadDesign#a7.2UpdatingaZone
       can be used to control accessibility of the outbound zone
       transfer service.
       By default, <command>b10-xfrout</command> allows any clients to
-      perform zone transfers for any zones:
+      perform zone transfers for any zones.
     </para>
 
       <screen>&gt; <userinput>config show Xfrout/transfer_acl</userinput>
 Xfrout/transfer_acl[0]	{"action": "ACCEPT"}	any	(default)</screen>
 
     <para>
-      You can change this to, for example, rejecting all transfer
-      requests by default while allowing requests for the transfer
-      of zone "example.com" from 192.0.2.1 and 2001:db8::1 as follows:
+      You can configure it the same as any ACL
+      (<xref linkend="common-acl" />).
     </para>
-
-      <screen>&gt; <userinput>config set Xfrout/transfer_acl[0] {"action": "REJECT"}</userinput>
-&gt; <userinput>config add Xfrout/zone_config</userinput>
-&gt; <userinput>config set Xfrout/zone_config[0]/origin "example.com"</userinput>
-&gt; <userinput>config set Xfrout/zone_config[0]/transfer_acl [{"action": "ACCEPT", "from": "192.0.2.1"},</userinput>
-<userinput>                                                 {"action": "ACCEPT", "from": "2001:db8::1"}]</userinput>
-&gt; <userinput>config commit</userinput></screen>
-
-    <note><simpara>
-        In the above example the lines
-        for <option>transfer_acl</option> were divided for
-        readability.  In the actual input it must be in a single line.
-    </simpara></note>
 
     <para>
       If you want to require TSIG in access control, a system wide TSIG
       "key ring" must be configured.
-      For example, to change the previous example to allowing requests
-      from 192.0.2.1 signed by a TSIG with a key name of
-      "key.example", you'll need to do this:
+      In this example, we allow client matching both the IP address
+      and key.
     </para>
 
     <screen>&gt; <userinput>config set tsig_keys/keys ["key.example:&lt;base64-key&gt;"]</userinput>
@@ -2320,29 +2305,7 @@ what is XfroutClient xfr_client??
       </para>
 
       <para>
-        Multiple rules can be specified in the ACL, and an ACL rule
-        can consist of multiple constraints, such as a combination of
-        IP address and TSIG.
-        The following configuration sequence will add a new rule to
-        the ACL created in the above example.  This additional rule
-	allows update requests sent from a client
-        using TSIG key name of "key.example" (different from the
-        key used in the previous example) and has an IPv6 address of ::1.
-      <screen>
-&gt; <userinput>config add DDNS/zones[0]/update_acl {"action": "ACCEPT", "from": "::1", "key": "key.example"}</userinput>
-&gt; <userinput>config show DDNS/zones[0]/update_acl</userinput>
-DDNS/zones[0]/update_acl[0]     {"action": "ACCEPT", "key": "key.example.org"} any (modified)
-DDNS/zones[0]/update_acl[1]     {"action": "ACCEPT", "from": "::1", "key": "key.example"} any (modified)
-&gt; <userinput>config commit</userinput>
-</screen>
-      (Note the "add" in the first line.  Before this sequence, we
-      have had only entry in <varname>zones[0]/update_acl</varname>.
-      The <command>add</command> command with a value (rule) adds
-      a new entry and sets it to the given rule.
-
-      Due to a limitation of the current implementation, it doesn't
-      work if you first try to just add a new entry and then set it to
-      a given rule.)
+        Full description of ACLs can be found in <xref linkend="common-acl" />.
       </para>
 
       <note><simpara>
@@ -2356,21 +2319,6 @@ DDNS/zones[0]/update_acl[1]     {"action": "ACCEPT", "from": "::1", "key": "key.
           its consequence, any update ACL rule that allows updates
           should have a TSIG key in its constraints.
       </simpara></note>
-
-      <para>
-	The ACL rules will be checked in the listed order, and the
-	first matching one will apply.
-	If none of the rules matches, the default rule will apply,
-	which is rejecting any requests in the case of
-	<command>b10-ddns</command>.
-      </para>
-<!-- TODO: what are the other defaults? -->
-
-      <para>
-	Other actions than "ACCEPT", namely "REJECT" and "DROP", can be
-	used, too.
-	See <xref linkend="resolverserver"/> about their effects.
-      </para>
 
       <para>
         Currently update ACL can only control updates per zone basis;
@@ -2511,58 +2459,8 @@ DDNS/zones[0]/update_acl[1]     {"action": "ACCEPT", "from": "::1", "key": "key.
         DNS queries from the localhost (127.0.0.1 and ::1).
         The <option>Resolver/query_acl</option> configuration may
         be used to reject, drop, or allow specific IPs or networks.
-        This configuration list is first match.
+        See <xref linkend="common-acl" />.
       </para>
-
-      <para>
-        The configuration's <option>action</option> item may be
-        set to <quote>ACCEPT</quote> to allow the incoming query,
-        <quote>REJECT</quote> to respond with a DNS REFUSED return
-        code, or <quote>DROP</quote> to ignore the query without
-        any response (such as a blackhole).  For more information,
-        see the respective debugging messages:  <ulink
-        url="bind10-messages.html#RESOLVER_QUERY_ACCEPTED">RESOLVER_QUERY_ACCEPTED</ulink>,
-        <ulink
-        url="bind10-messages.html#RESOLVER_QUERY_REJECTED">RESOLVER_QUERY_REJECTED</ulink>,
-        and <ulink
-url="bind10-messages.html#RESOLVER_QUERY_DROPPED">RESOLVER_QUERY_DROPPED</ulink>.
-      </para>
-
-      <para>
-        The required configuration's <option>from</option> item is set
-        to an IPv4 or IPv6 address, addresses with an network mask, or to
-        the special lowercase keywords <quote>any6</quote> (for
-        any IPv6 address) or <quote>any4</quote> (for any IPv4
-        address).
-      </para>
-
-<!-- TODO:
-/0 is for any address in that address family
-does that need any address too?
-
-TODO: tsig
--->
-
-      <para>
-        For example to allow the <replaceable>192.168.1.0/24</replaceable>
-        network to use your recursive name server, at the
-        <command>bindctl</command> prompt run:
-      </para>
-
-      <screen>
-&gt; <userinput>config add Resolver/query_acl</userinput>
-&gt; <userinput>config set Resolver/query_acl[<replaceable>2</replaceable>]/action "ACCEPT"</userinput>
-&gt; <userinput>config set Resolver/query_acl[<replaceable>2</replaceable>]/from "<replaceable>192.168.1.0/24</replaceable>"</userinput>
-&gt; <userinput>config commit</userinput>
-</screen>
-
-     <simpara>(Replace the <quote><replaceable>2</replaceable></quote>
-       as needed; run <quote><userinput>config show
-       Resolver/query_acl</userinput></quote> if needed.)</simpara>
-
-<!-- TODO: check this -->
-      <note><simpara>This prototype access control configuration
-      syntax may be changed.</simpara></note>
 
     </section>
 
