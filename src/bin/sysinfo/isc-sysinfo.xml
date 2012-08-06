@@ -24,13 +24,13 @@
   </refentryinfo>
 
   <refmeta>
-    <refentrytitle>b10-showtech</refentrytitle>
+    <refentrytitle>isc-sysinfo</refentrytitle>
     <manvolnum>1</manvolnum>
     <refmiscinfo>BIND10</refmiscinfo>
   </refmeta>
 
   <refnamediv>
-    <refname>b10-showtech</refname>
+    <refname>isc-sysinfo</refname>
     <refpurpose>BIND 10 system information display tool</refpurpose>
   </refnamediv>
 
@@ -43,14 +43,14 @@
 
   <refsynopsisdiv>
     <cmdsynopsis>
-      <command>b10-showtech</command>
+      <command>isc-sysinfo</command>
     </cmdsynopsis>
   </refsynopsisdiv>
 
   <refsect1>
     <title>DESCRIPTION</title>
     <para>
-      The <command>b10-showtech</command> program collects and outputs a
+      The <command>isc-sysinfo</command> program collects and outputs a
       variety of information about the system that BIND 10 is running
       on. This information can be useful to people involved in debugging
       and technical support.
@@ -73,7 +73,7 @@
         <term>-o <replaceable class="parameter">output-file</replaceable></term>
         <listitem><para>
           If an output file is specified, the output
-          of <command>b10-showtech</command> is written to this file. By
+          of <command>isc-sysinfo</command> is written to this file. By
           default, the output is written to standard output.
         </para></listitem>
       </varlistentry>
@@ -95,7 +95,7 @@
   <refsect1>
     <title>HISTORY</title>
     <para>
-      The <command>b10-showtech</command> daemon was initially
+      The <command>isc-sysinfo</command> daemon was initially
       implemented by ISC staff in June, 2012.
     </para>
   </refsect1>

@@ -1,14 +1,14 @@
-bin_SCRIPTS = b10-showtech
+bin_SCRIPTS = isc-sysinfo
 
-CLEANFILES = b10-showtech showtech.pyc
+CLEANFILES = isc-sysinfo sysinfo.pyc
 
 # this is done here since configure.ac AC_OUTPUT doesn't expand exec_prefix
-b10-showtech: showtech.py
-	$(SED) -e "s|@@PYTHONPATH@@|@pyexecdir@|" showtech.py >$@
+isc-sysinfo: sysinfo.py
+	$(SED) -e "s|@@PYTHONPATH@@|@pyexecdir@|" sysinfo.py >$@
 	chmod a+x $@
 
 MAN1_FILES = \
-	b10-showtech.xml
+	isc-sysinfo.xml
 
 man_MANS = \
 	$(MAN1_FILES:.xml=.1)
