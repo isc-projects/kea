@@ -61,7 +61,27 @@ class TestUtilties(unittest.TestCase):
         { 'item_name': 'test_map3',  'item_type': 'map',     'item_default': {'a':'one','b':'two','c':'three'},
           'map_item_spec'  : [ { 'item_name': 'a', 'item_type': 'string'},
                                { 'item_name': 'b', 'item_type': 'string'},
-                               { 'item_name': 'c', 'item_type': 'string'} ] }
+                               { 'item_name': 'c', 'item_type': 'string'} ] },
+        {
+          'item_name': 'test_named_set',
+          'item_type': 'named_set',
+          'item_default': { },
+          'named_set_item_spec': {
+            'item_name': 'name',
+            'item_type': 'map',
+            'item_default': { },
+            'map_item_spec': [
+              {
+                'item_name': 'number1',
+                'item_type': 'integer'
+                },
+              {
+                'item_name': 'number2',
+                'item_type': 'integer'
+                }
+              ]
+            }
+          }
         ]
 
     def setUp(self):
@@ -88,7 +108,8 @@ class TestUtilties(unittest.TestCase):
                 'test_map2'  : { 'A' : 0, 'B' : 0, 'C' : 0 },
                 'test_none'  : None,
                 'test_list3' : [ "one", "two", "three" ],
-                'test_map3'  : { 'a' : 'one', 'b' : 'two', 'c' : 'three' } })
+                'test_map3'  : { 'a' : 'one', 'b' : 'two', 'c' : 'three' },
+                'test_named_set' : {} })
         self.assertEqual(stats.get_spec_defaults(None), {})
         self.assertRaises(KeyError, stats.get_spec_defaults, [{'item_name':'Foo'}])
 
@@ -417,20 +438,21 @@ class TestStats(unittest.TestCase):
                           name='Bar')
 
     def test_update_statistics_data(self):
+        """test for list-type statistics"""
         self.stats = stats.Stats()
         _test_exp1 = {
-            'zonename': 'test1.example',
-            'queries.tcp': 5,
-            'queries.udp': 4
+              'zonename': 'test1.example',
+              'queries.tcp': 5,
+              'queries.udp': 4
             }
         _test_exp2 = {
-            'zonename': 'test2.example',
-            'queries.tcp': 3,
-            'queries.udp': 2
+              'zonename': 'test2.example',
+              'queries.tcp': 3,
+              'queries.udp': 2
             }
-        _test_exp3 ={}
-        _test_exp4 ={
-            'queries.udp': 4
+        _test_exp3 = {}
+        _test_exp4 = {
+              'queries.udp': 4
             }
         # Success cases
         self.assertEqual(self.stats.statistics_data['Stats']['lname'],
@@ -470,6 +492,54 @@ class TestStats(unittest.TestCase):
                          ['unknown module name: Dummy'])
         self.assertEqual(self.stats.update_statistics_data(
                 'Auth', 'foo1', {'queries.perzone': [None]}), ['None should be a map'])
+
+    def test_update_statistics_data_pt2(self):
+        """test for named_set-type statistics"""
+        self.stats = stats.Stats()
+        self.stats.do_polling()
+        _test_exp1 = {
+              'test10.example': {
+                  'queries.tcp': 5,
+                  'queries.udp': 4
+              }
+            }
+        _test_exp2 = {
+              'test20.example': {
+                  'queries.tcp': 3,
+                  'queries.udp': 2
+              }
+            }
+        _test_exp3 = {}
+        _test_exp4 = {
+              'test20.example': {
+                  'queries.udp': 4
+              }
+            }
+        # Success cases
+        self.assertIsNone(self.stats.update_statistics_data(
+            'Auth', 'foo1', {'nds_queries.perzone': _test_exp1}))
+        self.assertEqual(self.stats.statistics_data_bymid['Auth']\
+                             ['foo1']['nds_queries.perzone'],\
+                             _test_exp1)
+        self.assertIsNone(self.stats.update_statistics_data(
+            'Auth', 'foo1', {'nds_queries.perzone': _test_exp2}))
+        self.assertEqual(self.stats.statistics_data_bymid['Auth']\
+                             ['foo1']['nds_queries.perzone'],\
+                         dict(_test_exp1,**_test_exp2))
+        self.assertIsNone(self.stats.update_statistics_data(
+            'Auth', 'foo1', {'nds_queries.perzone': dict(_test_exp1,**_test_exp2)}))
+        self.assertEqual(self.stats.statistics_data_bymid['Auth']\
+                             ['foo1']['nds_queries.perzone'],
+                         dict(_test_exp1,**_test_exp2))
+        # differential update
+        self.assertIsNone(self.stats.update_statistics_data(
+            'Auth', 'foo1', {'nds_queries.perzone': dict(_test_exp3,**_test_exp4)}))
+        self.assertEqual(self.stats.statistics_data_bymid['Auth']\
+                             ['foo1']['nds_queries.perzone'],\
+                             dict(_test_exp1,**stats.merge_oldnew(_test_exp2,_test_exp4)))
+        # Error cases
+        self.assertEqual(self.stats.update_statistics_data(
+                'Auth', 'foo1', {'nds_queries.perzone': None}), ['None should be a map'])
 
     def test_update_statistics_data_withmid(self):
         self.stats = stats.Stats()
@@ -610,6 +680,8 @@ class TestStats(unittest.TestCase):
         sum_qudp = 0
         sum_qtcp_perzone = 0
         sum_qudp_perzone = 0
+        sum_qtcp_nds_perzone = 0
+        sum_qudp_nds_perzone = 0
         self.stats = stats.Stats()
         self.assertEqual(self.stats.command_show(owner='Foo', name=None),
                          isc.config.create_answer(
@@ -624,9 +696,10 @@ class TestStats(unittest.TestCase):
         for a in list_auth:
             sum_qtcp += a.queries_tcp
             sum_qudp += a.queries_udp
-            zonename = a.queries_per_zone[0]['zonename']
             sum_qtcp_perzone += a.queries_per_zone[0]['queries.tcp']
             sum_qudp_perzone += a.queries_per_zone[0]['queries.udp']
+            sum_qtcp_nds_perzone += a.nds_queries_per_zone['test10.example']['queries.tcp']
+            sum_qudp_nds_perzone += a.nds_queries_per_zone['test10.example']['queries.udp']
 
         self.assertEqual(self.stats.command_show(owner='Auth'),
                          isc.config.create_answer(
@@ -635,7 +708,11 @@ class TestStats(unittest.TestCase):
                      'queries.perzone': [{ 'zonename': 'test1.example',
                                            'queries.udp': sum_qudp_perzone,
                                            'queries.tcp': sum_qtcp_perzone }
-                                         ]}}))
+                                         ],
+                     'nds_queries.perzone': { 'test10.example' : {
+                                              'queries.udp': sum_qudp_nds_perzone,
+                                              'queries.tcp': sum_qtcp_nds_perzone } }
+                             }}))
         self.assertEqual(self.stats.command_show(owner='Auth', name='queries.udp'),
                          isc.config.create_answer(
                 0, {'Auth': {'queries.udp': sum_qudp}}))
@@ -644,6 +721,11 @@ class TestStats(unittest.TestCase):
                 0, {'Auth': {'queries.perzone': [{ 'zonename': 'test1.example',
                       'queries.udp': sum_qudp_perzone,
                       'queries.tcp': sum_qtcp_perzone }]}}))
+        self.assertEqual(self.stats.command_show(owner='Auth', name='nds_queries.perzone'),
+                         isc.config.create_answer(
+                0, {'Auth': {'nds_queries.perzone': { 'test10.example': {
+                      'queries.udp': sum_qudp_nds_perzone,
+                      'queries.tcp': sum_qtcp_nds_perzone }}}}))
         orig_get_datetime = stats.get_datetime
         orig_get_timestamp = stats.get_timestamp
         stats.get_datetime = lambda x=None: self.const_datetime
@@ -698,9 +780,9 @@ class TestStats(unittest.TestCase):
             self.assertTrue('item_format' in item)
 
         schema = value['Auth']
-        self.assertEqual(len(schema), 3)
+        self.assertEqual(len(schema), 4)
         for item in schema:
-            if item['item_type'] == 'list':
+            if item['item_type'] == 'list' or item['item_type'] == 'named_set':
                 self.assertEqual(len(item), 7)
             else:
                 self.assertEqual(len(item), 6)
@@ -819,6 +901,49 @@ class TestStats(unittest.TestCase):
                                     }
                                 ]
                             }
+                        },
+                    {
+                        "item_name": "nds_queries.perzone",
+                        "item_type": "named_set",
+                        "item_optional": False,
+                        "item_default": {
+                            "test10.example" : {
+                                "queries.udp" : 1,
+                                "queries.tcp" : 2
+                            },
+                            "test20.example" : {
+                                "queries.udp" : 3,
+                                "queries.tcp" : 4
+                            }
+                        },
+                        "item_title": "Queries per zone",
+                        "item_description": "Queries per zone",
+                        "named_set_item_spec": {
+                            "item_name": "zonename",
+                            "item_type": "map",
+                            "item_optional": False,
+                            "item_default": {},
+                            "item_title": "Zonename",
+                            "item_description": "Zonename",
+                            "map_item_spec": [
+                                {
+                                    "item_name": "queries.udp",
+                                    "item_type": "integer",
+                                    "item_optional": False,
+                                    "item_default": 0,
+                                    "item_title": "Queries UDP per zone",
+                                    "item_description": "A number of UDP query counts per zone"
+                                    },
+                                {
+                                    "item_name": "queries.tcp",
+                                    "item_type": "integer",
+                                    "item_optional": False,
+                                    "item_default": 0,
+                                    "item_title": "Queries TCP per zone",
+                                    "item_description": "A number of TCP query counts per zone"
+                                    }
+                                ]
+                            }
                         }]}))
         self.assertEqual(self.stats.command_showschema(owner='Auth', name='queries.tcp'),
                          isc.config.create_answer(
@@ -881,6 +1006,51 @@ class TestStats(unittest.TestCase):
                                 "item_description": "A number of TCP query counts per zone"
                                 }
                             ]
+                         }
+                     }]}))
+        self.assertEqual(self.stats.command_showschema(owner='Auth', name='nds_queries.perzone'),
+                         isc.config.create_answer(
+                0, {'Auth':[{
+                    "item_name": "nds_queries.perzone",
+                    "item_type": "named_set",
+                    "item_optional": False,
+                    "item_default": {
+                        "test10.example" : {
+                            "queries.udp" : 1,
+                            "queries.tcp" : 2
+                        },
+                        "test20.example" : {
+                            "queries.udp" : 3,
+                            "queries.tcp" : 4
+                        }
+                    },
+                    "item_title": "Queries per zone",
+                    "item_description": "Queries per zone",
+                    "named_set_item_spec": {
+                        "item_name": "zonename",
+                        "item_type": "map",
+                        "item_optional": False,
+                        "item_default": {},
+                        "item_title": "Zonename",
+                        "item_description": "Zonename",
+                        "map_item_spec": [
+                            {
+                                "item_name": "queries.udp",
+                                "item_type": "integer",
+                                "item_optional": False,
+                                "item_default": 0,
+                                "item_title": "Queries UDP per zone",
+                                "item_description": "A number of UDP query counts per zone"
+                                },
+                            {
+                                "item_name": "queries.tcp",
+                                "item_type": "integer",
+                                "item_optional": False,
+                                "item_default": 0,
+                                "item_title": "Queries TCP per zone",
+                                "item_description": "A number of TCP query counts per zone"
+                                }
+                            ]
                         }
                     }]}))
 
@@ -915,6 +1085,7 @@ class TestStats(unittest.TestCase):
             for s in stat.statistics_data_bymid['Auth'].values():
                 self.assertEqual(
                     s, {'queries.perzone': auth.queries_per_zone,
+                        'nds_queries.perzone': auth.nds_queries_per_zone,
                         'queries.tcp': auth.queries_tcp,
                         'queries.udp': auth.queries_udp})
             n = len(stat.statistics_data_bymid['Auth'])
@@ -930,6 +1101,12 @@ class TestStats(unittest.TestCase):
                              auth.queries_per_zone[0]['queries.tcp']*n,
                          'queries.udp':
                              auth.queries_per_zone[0]['queries.udp']*n}],
+                 'nds_queries.perzone': {
+                         'test10.example': {
+                             'queries.tcp':
+                                 auth.nds_queries_per_zone['test10.example']['queries.tcp']*n,
+                             'queries.udp':
+                                 auth.nds_queries_per_zone['test10.example']['queries.udp']*n}},
                  'queries.tcp': auth.queries_tcp*n,
                  'queries.udp': auth.queries_udp*n})
         # check statistics data of 'Stats'
