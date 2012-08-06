@@ -67,6 +67,11 @@ public:
         /// \return name of the interface where socket is bound to.
         const std::string& getIface() const { return(iface_); }
 
+        /// \brief Return address where socket is bound to.
+        ///
+        /// \return address where socket is bound to.
+        const asiolink::IOAddress& getAddress() const { return(addr_); }
+
     private:
         /// \brief Private default constructor.
         ///
@@ -74,18 +79,18 @@ public:
         /// socket descriptor is passed to create object.
         TestControlSocket();
 
-        /// \brief Initialize name of the interface.
+        /// \brief Initialize socket data.
         ///
-        /// This method intializes the name of the interface where
-        /// socket is bound to. This name can be later retreived by
-        /// client class to set interface name in DHCP packet objects.
+        /// This method initializes members of the class that Interface
+        /// Manager holds: interface name, local address.
         ///
         /// \throw isc::BadValue if interface for specified socket
         /// descriptor does not exist.
-        void initInterface();
+        void initSocketData();
 
-        int socket_;          ///< Socket descirptor.
-        std::string iface_;   ///< Name of the interface.
+        int socket_;               ///< Socket descirptor.
+        std::string iface_;        ///< Name of the interface.
+        asiolink::IOAddress addr_; ///< Address bound.
     };
 
     /// \brief Length of the Ethernet HW address (MAC) in bytes.
@@ -126,30 +131,6 @@ private:
     ///
     /// \return true if any of the exit conditions is fulfiled.
     bool checkExitConditions() const;
-
-    /// \brief Create DHCPv4 DISCOVER packet.
-    ///
-    /// Create instance of DHCPv4 DISCOVER packet with ethernet
-    /// HW type and MAC address specified as parameter. The following
-    /// DHCP options are added to the packet:
-    /// - DHO_DHCP_MESSAGE_TYPE with DHCPDISCOVER message type value
-    /// - DHO_DHCP_PARAMETER_REQUEST_LIST with the following options
-    /// being requested from the server:
-    ///    - DHO_SUBNET_MASK,
-    ///    - DHO_BROADCAST_ADDRESS,
-    ///    - DHO_TIME_OFFSET,
-    ///    - DHO_ROUTERS,
-    ///    - DHO_DOMAIN_NAME,
-    ///    - DHO_DOMAIN_NAME_SERVERS,
-    ///    - DHO_HOST_NAME.
-    ///
-    /// \param mac_addr MAC address to be set for the packet. MAC address
-    /// has to be exactly 6 octets long.
-    /// \throw isc::Unexpected if failed to create new packet instance.
-    /// \throw isc::BadValue if MAC address has invalid length.
-    /// \return insance of the DHCPv4 DISCOVER packet.
-    boost::shared_ptr<dhcp::Pkt4>
-    createDiscoverPkt4(const std::vector<uint8_t>& mac_addr) const;
 
     /// \brief Factory function to create generic option.
     ///
@@ -205,6 +186,8 @@ private:
     /// Based on this the random value is generated and added to
     /// the MAC address prefix (default MAC address).
     ///
+    /// \throw isc::BadValue if MAC address prefix (default or specified
+    /// from the command line) has invalid size (expected 6 octets).
     /// \return generated MAC address.
     std::vector<uint8_t> generateMacAddress() const;
 
@@ -254,16 +237,38 @@ private:
     ///
     /// Method registers option factory functions for DHCPv4 or DHCPv6,
     /// depending in whch mode test is currently running.
-     void registerOptionFactories() const;
+    void registerOptionFactories() const;
 
-    /// \brief Start new exchange of DHCP messages.
+    /// \brief Send DHCPv4 DISCOVER message.
     ///
-    /// Method starts new DHCP exchange by sending new DHCPv4 DISCOVER
-    /// or DHCPv6 SOLICIT packet to the server.
+    /// Method creates and sends DHCPv4 DISCOVER message to the server
+    /// with the following options:
+    /// - MESSAGE_TYPE set to DHCPDISCOVER
+    /// - PARAMETER_REQUEST_LIST with the same list of requested options
+    /// as described in \ref factoryRequestList.
+    /// The transaction id and MAC address are randomly generated for
+    /// the message. Range of unique MAC addresses generated depends
+    /// on the number of clients specified from the command line.
     ///
-    /// \param socket socket used to send DHCP message.
-    /// \throw isc::Unexpected if failed to create or send packet
-    void startExchange(const TestControlSocket& socket);
+    /// \param socket socket to be used to send the message.
+    /// \throw isc::Unexpected if failed to create new packet instance.
+    /// \throw isc::BadValue if MAC address has invalid length.
+    void sendDiscover4(const TestControlSocket &socket);
+
+    /// \brief Set default DHCPv4 packet data.
+    ///
+    /// This method sets default data on the DHCPv4 packet:
+    /// - interface name,
+    /// - local port = 68 (DHCP client port),
+    /// - remote port = 67 (DHCP server port),
+    /// - server's address,
+    /// - GIADDR = local address where socket is bound to,
+    /// - hops = 1 (pretending that we are a relay)
+    ///
+    /// \param socket socket used to send the packet.
+    /// \param pkt packet to be configured.
+    void setDefaults4(const TestControlSocket& socket,
+                      const boost::shared_ptr<dhcp::Pkt4>& pkt);
 
     /// \brief Update due time to initiate next chunk of exchanges.
     ///

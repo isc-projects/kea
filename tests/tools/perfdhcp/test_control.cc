@@ -38,8 +38,9 @@ namespace isc {
 namespace perfdhcp {
 
 TestControl::TestControlSocket::TestControlSocket(int socket) :
-    socket_(socket) {
-    initInterface();
+    socket_(socket),
+    addr_("127.0.0.1") {
+    initSocketData();
 }
 
 TestControl::TestControlSocket::~TestControlSocket() {
@@ -47,7 +48,7 @@ TestControl::TestControlSocket::~TestControlSocket() {
 }
 
 void
-TestControl::TestControlSocket::initInterface() {
+TestControl::TestControlSocket::initSocketData() {
     const IfaceMgr::IfaceCollection& ifaces =
         IfaceMgr::instance().getIfaces();
     for (IfaceMgr::IfaceCollection::const_iterator it = ifaces.begin();
@@ -61,6 +62,7 @@ TestControl::TestControlSocket::initInterface() {
              ++s) {
             if (s->sockfd_ == socket_) {
                 iface_ = it->getName();
+                addr_ = s->addr_;
                 return;
             }
         }
@@ -91,26 +93,6 @@ TestControl::checkExitConditions() const {
         return(true);
     }
     return(false);
-}
-
-boost::shared_ptr<Pkt4>
-TestControl::createDiscoverPkt4(const std::vector<uint8_t>& mac_addr) const {
-    const uint32_t transid = static_cast<uint32_t>(random());
-    boost::shared_ptr<Pkt4> pkt4(new Pkt4(DHCPDISCOVER, transid));
-    if (!pkt4) {
-        isc_throw(isc::Unexpected, "failed to create DISCOVER packet");
-    }
-
-    if (HW_ETHER_LEN != mac_addr.size()) {
-        isc_throw(BadValue, "invalid MAC address size");
-    }
-    pkt4->setHWAddr(HTYPE_ETHER, HW_ETHER_LEN, mac_addr);
-
-    OptionBuffer buf_msg_type;
-    buf_msg_type.push_back(DHCPDISCOVER);
-    pkt4->addOption(Option::factory(Option::V4, DHO_DHCP_MESSAGE_TYPE, buf_msg_type));
-    pkt4->addOption(Option::factory(Option::V4, DHO_DHCP_PARAMETER_REQUEST_LIST));
-    return pkt4;
 }
 
 OptionPtr
@@ -149,8 +131,11 @@ TestControl::generateMacAddress() const {
         return options.getMacPrefix();
     }
     std::vector<uint8_t> mac_addr(options.getMacPrefix());
+    if (mac_addr.size() != HW_ETHER_LEN) {
+        isc_throw(BadValue, "invalid MAC address prefix specified");
+    }
     uint32_t r = random();
-    r %= clients_num + 1;
+    r %= clients_num;
     for (std::vector<uint8_t>::iterator it = mac_addr.end() - 1;
          it >= mac_addr.begin();
          --it) {
@@ -333,7 +318,7 @@ TestControl::run() {
         receivePackets();
 
         for (uint64_t i = packets_due; i > 0; --i) {
-            startExchange(socket);
+            sendDiscover4(socket);
             ++packets_sent;
             cout << "Packets sent " << packets_sent << endl;
         }
@@ -341,20 +326,43 @@ TestControl::run() {
 }
 
 void
-TestControl::startExchange(const TestControlSocket& socket) {
+TestControl::sendDiscover4(const TestControlSocket& socket) {
     ++sent_packets_0_;
     last_sent_ = microsec_clock::universal_time();
     std::vector<uint8_t> mac_address = generateMacAddress();
-    boost::shared_ptr<Pkt4> pkt4 = createDiscoverPkt4(mac_address);
-    pkt4->setIface(socket.getIface());
+    const uint32_t transid = static_cast<uint32_t>(random());
+    boost::shared_ptr<Pkt4> pkt4(new Pkt4(DHCPDISCOVER, transid));
+    if (!pkt4) {
+        isc_throw(Unexpected, "failed to create DISCOVER packet");
+    }
+    OptionBuffer buf_msg_type;
+    buf_msg_type.push_back(DHCPDISCOVER);
+    pkt4->addOption(Option::factory(Option::V4, DHO_DHCP_MESSAGE_TYPE,
+                                    buf_msg_type));
+    pkt4->addOption(Option::factory(Option::V4,
+                                    DHO_DHCP_PARAMETER_REQUEST_LIST));
+
+    setDefaults4(socket, pkt4);
     pkt4->pack();
     IfaceMgr::instance().send(pkt4);
 }
 
 void
+TestControl::setDefaults4(const TestControlSocket &socket,
+                          const boost::shared_ptr<Pkt4>& pkt) {
+    CommandOptions& options = CommandOptions::instance();
+    pkt->setIface(socket.getIface());
+    pkt->setLocalPort(DHCP4_CLIENT_PORT);
+    pkt->setRemotePort(DHCP4_SERVER_PORT);
+    pkt->setRemoteAddr(IOAddress(options.getServerName()));
+    pkt->setGiaddr(IOAddress(socket.getAddress()));
+    pkt->setHops(1);
+}
+
+void
 TestControl::updateSendDue() {
     // If default constructor was called, this should not happen but
-    // if somebody has changed default constructor it is better to
+    // if somebody has cw/e August 3, 2012hanged default constructor it is better to
     // keep this check.
     if (last_sent_.is_not_a_date_time()) {
         isc_throw(Unexpected, "time of last sent packet not initialized");
