@@ -88,14 +88,14 @@ public:
         /// Method returns counter value.
         ///
         /// \return counter value.
-        uint64_t getValue() const { return counter_; }
+        uint64_t getValue() const { return(counter_); }
 
         /// \brief Return counter name.
         ///
         /// Method returns counter name.
         ///
         /// \return counter name.
-        const std::string& getName() const { return name_; }
+        const std::string& getName() const { return(name_); }
     private:
         /// \brief Default constructor.
         ///
@@ -239,6 +239,8 @@ public:
         /// \brief Constructor
         ///
         /// \param xchg_type exchange type
+        /// \param archive_enabled if true packets archive mode is enabled.
+        /// In this mode all packets are stored throughout the test execution.
         ExchangeStats(const ExchangeType xchg_type, const bool archive_enabled)
             : xchg_type_(xchg_type),
             min_delay_(std::numeric_limits<double>::max()),
@@ -338,7 +340,7 @@ public:
             sum_delay_squared_ += delta * delta;
         }
 
-        /// \brief Find packet on the list of sent packets.
+        /// \brief Match received packet with the corresponding sent packet.
         ///
         /// Method finds packet with specified transaction id on the list
         /// of sent packets. It is used to match received packet with
@@ -353,7 +355,7 @@ public:
         /// \throw isc::BadValue if received packet is null.
         /// \return packet having specified transaction or NULL if packet
         /// not found
-        boost::shared_ptr<const T> findSent(const boost::shared_ptr<const T>& rcvd_packet) {
+        boost::shared_ptr<const T> matchPackets(const boost::shared_ptr<const T>& rcvd_packet) {
             if (!rcvd_packet) {
                 isc_throw(BadValue, "Received packet is null");
             }
@@ -426,6 +428,8 @@ public:
                 return(boost::shared_ptr<const T>());
             }
 
+            // Packet is matched so we count it. We don't count unmatched packets
+            // as they are counted as orphans with a separate counter.
             ++rcvd_packets_num_;
             boost::shared_ptr<const T> sent_packet(*next_sent_);
             // If packet was found, we assume it will be never searched
@@ -495,7 +499,7 @@ public:
         /// \brief Return average unordered lookup set size.
         ///
         /// Method returns average unordered lookup set size.
-        /// This value changes every time \ref ExchangeStats::findSent
+        /// This value changes every time \ref ExchangeStats::matchPackets
         /// function performs unordered packet lookup.
         ///
         /// \throw isc::InvalidOperation if there have been no unordered
@@ -741,7 +745,7 @@ public:
     /// Iterator for \ref CustomCountersMap.
     typedef typename CustomCountersMap::const_iterator CustomCountersMapIterator;
 
-    /// \brief Default constructor.
+    /// \brief Constructor.
     ///
     /// This constructor by default disables packets archiving mode.
     /// In this mode all packets from the list of sent packets are
@@ -751,19 +755,10 @@ public:
     /// the test. If this is not selected archiving should be disabled
     /// for performance reasons and to avoid waste of memory for storing
     /// large list of archived packets.
-    StatsMgr() :
-        exchanges_(),
-        custom_counters_(),
-        archive_enabled_(false) {
-    }
-
-    /// \brief Constructor.
-    ///
-    /// Use this constructor to set packets archive mode.
     ///
     /// \param archive_enabled true indicates that packets
     /// archive mode is enabled.
-    StatsMgr(const bool archive_enabled) :
+    StatsMgr(const bool archive_enabled = false) :
         exchanges_(),
         custom_counters_(),
         archive_enabled_(archive_enabled) {
@@ -862,7 +857,7 @@ public:
                         const boost::shared_ptr<const T>& packet) {
         ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
         boost::shared_ptr<const T> sent_packet
-            = xchg_stats->findSent(packet);
+            = xchg_stats->matchPackets(packet);
 
         if (sent_packet) {
             xchg_stats->updateDelays(sent_packet, packet);
@@ -936,7 +931,7 @@ public:
     /// \brief Return average unordered lookup set size.
     ///
     /// Method returns average unordered lookup set size.
-    /// This value changes every time \ref ExchangeStats::findSent
+    /// This value changes every time \ref ExchangeStats::matchPackets
     /// function performs unordered packet lookup.
     ///
     /// \param xchg_type exchange type.
