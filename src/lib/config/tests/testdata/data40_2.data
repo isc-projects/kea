@@ -1,0 +1,16 @@
+{
+    "zones": [
+      	{
+      	    "example.org": {
+      	        "queries.tcp": 100,
+      	        "queries.udp": 200
+      	    }
+      	},
+      	{
+      	    "example.net": {
+      	        "queries.tcp": 300,
+      	        "queries.udp": 400
+      	    }
+        }
+    ]
+}
