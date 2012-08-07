@@ -21,8 +21,8 @@
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 
-#include "exceptions/exceptions.h"
-
+#include <exceptions/exceptions.h>
+#include <dhcp/iface_mgr.h>
 #include "command_options.h"
 
 using namespace std;
@@ -219,6 +219,7 @@ CommandOptions::initialize(int argc, char** argv) {
 
         case 'l':
             localname_ = std::string(optarg);
+            initIsInterface();
             break;
 
         case 'L':
@@ -351,7 +352,21 @@ CommandOptions::initialize(int argc, char** argv) {
         }
     }
 
-    // TODO handle -l option with IfaceManager when it is created
+    // Handle the local '-l' address/interface
+    if (!localname_.empty()) {
+        if (server_name_.empty()) {
+            if (is_interface_ && (ipversion_ == 4)) {
+                broadcast_ = 1;
+                server_name_ = "255.255.255.255";
+            } else if (is_interface_ && (ipversion_ == 6)) {
+                server_name_ = "FF02::1:2";
+            }
+        }
+    }
+    if (server_name_.empty()) {
+        isc_throw(InvalidParameter,
+                  "without an inteface server is required");
+    }
 }
 
 void
@@ -373,6 +388,17 @@ CommandOptions::initClientsNum() {
         clients_num_ = boost::lexical_cast<uint32_t>(optarg);
     } catch (boost::bad_lexical_cast&) {
         isc_throw(isc::InvalidParameter, errmsg);
+    }
+}
+
+void
+CommandOptions::initIsInterface() {
+    is_interface_ = false;
+    if (!localname_.empty()) {
+        dhcp::IfaceMgr& iface_mgr = dhcp::IfaceMgr::instance();
+        if (iface_mgr.getIface(localname_) != NULL)  {
+            is_interface_ = true;
+        }
     }
 }
 
