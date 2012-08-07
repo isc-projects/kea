@@ -209,7 +209,10 @@ private:
     /// from the command line). If socket can't be created for any
     /// reason, exception is thrown.
     ///
-    /// \throw isc::BadValue if socket can't be created.
+    /// \throw isc::BadValue if socket can't be created for given
+    /// interface, local address or remote address.
+    /// \throw isc::InvalidOperation if broadcast option can't be
+    /// set for the socket.
     /// \return socket descriptor.
     int openSocket() const;
 

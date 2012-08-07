@@ -208,27 +208,24 @@ TestControl::openSocket() const {
         family = AF_INET6;
         port = 547;
     }
+    // Local name is specified along with '-l' option.
+    // It may point to interface name or local address.
     if (!localname.empty()) {
-        bool is_interface = false;;
-        try {
+        // CommandOptions should be already aware wether local name
+        // is interface name or address because it uses IfaceMgr to
+        // scan interfaces and get's their names.
+        if (options.isInterface()) {
             sock = IfaceMgr::instance().openSocketFromIface(localname,
                                                             port,
                                                             family);
-            is_interface = true;
-        } catch (...) {
-            // This is not fatal error. It may be the case that
-            // parameter given from command line is not interface
-            // name but local IP address.
-        }
-        if (!is_interface) {
+        } else {
             IOAddress localaddr(localname);
-            // We don't catch exception here because parameter given
-            // must be either interface name or local address. If
-            // both attempts failed, we want exception to be emited.
             sock = IfaceMgr::instance().openSocketFromAddress(localaddr,
                                                               port);
         }
     } else if (!servername.empty()) {
+        // If only server name is given we will need to try to resolve
+        // the local address to bind socket to based on remote address.
         IOAddress remoteaddr(servername);
         sock = IfaceMgr::instance().openSocketFromRemoteAddress(remoteaddr,
                                                                 port);
@@ -237,6 +234,20 @@ TestControl::openSocket() const {
         isc_throw(BadValue, "unable to open socket to communicate with "
                   "DHCP server");
     }
+
+    // IfaceMgr does not set broadcast option on the socket. We rely
+    // on CommandOptions object to find out if socket has to have
+    // broadcast enabled.
+    if ((options.getIpVersion() == 4) && options.isBroadcast()) {
+        int broadcast_enable = 1;
+        int ret = setsockopt(sock, SOL_SOCKET, SO_BROADCAST,
+                             &broadcast_enable, sizeof(broadcast_enable));
+        if (ret < 0) {
+            isc_throw(InvalidOperation,
+                      "unable to set broadcast option on the socket");
+        }
+    }
+
     return(sock);
 }
 
@@ -362,7 +373,7 @@ TestControl::setDefaults4(const TestControlSocket &socket,
 void
 TestControl::updateSendDue() {
     // If default constructor was called, this should not happen but
-    // if somebody has cw/e August 3, 2012hanged default constructor it is better to
+    // if somebody has changed default constructor it is better to
     // keep this check.
     if (last_sent_.is_not_a_date_time()) {
         isc_throw(Unexpected, "time of last sent packet not initialized");
