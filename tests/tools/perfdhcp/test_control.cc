@@ -96,12 +96,49 @@ TestControl::checkExitConditions() const {
 }
 
 OptionPtr
-TestControl::factoryGeneric4(Option::Universe u,
-                                 uint16_t type,
-                                 const OptionBuffer& buf) {
+TestControl::factoryElapsedTimeSolicit6(Option::Universe, uint16_t,
+                                        const OptionBuffer&) {
+    return OptionPtr(new Option(Option::V6, D6O_ELAPSED_TIME,
+                                OptionBuffer(2, 0)));
+}
+
+OptionPtr
+TestControl::factoryGeneric(Option::Universe u, uint16_t type,
+                            const OptionBuffer& buf) {
     OptionPtr opt(new Option(u, type, buf));
     return opt;
 }
+
+OptionPtr
+TestControl::factoryIana6(Option::Universe, uint16_t,
+                          const OptionBuffer&) {
+    const uint8_t buf_array[] = {
+        0, 0, 0, 1,                     // IAID = 1
+        0, 0, 3600 >> 8, 3600 && 0xff,  // T1 = 3600
+        0, 0, 5400 >> 8, 5400 & 0xff,   // T2 = 5400
+    };
+    OptionBuffer buf(buf_array, buf_array + sizeof(buf_array));
+    return OptionPtr(new Option(Option::V6, D6O_IA_NA, buf));
+}
+
+OptionPtr
+TestControl::factoryRapidCommit6(Option::Universe, uint16_t,
+                                 const OptionBuffer&) {
+    return OptionPtr(new Option(Option::V6, D6O_RAPID_COMMIT, OptionBuffer()));
+}
+
+OptionPtr
+TestControl::factoryOptionRequestOption6(Option::Universe,
+                                         uint16_t,
+                                         const OptionBuffer&) {
+    const uint8_t buf_array[] = {
+        D6O_NAME_SERVERS,
+        D6O_DOMAIN_SEARCH
+    };
+    OptionBuffer buf_with_options(buf_array, buf_array + sizeof(buf_array));
+    return OptionPtr(new Option(Option::V6, D6O_ORO, buf_with_options));
+}
+
 
 OptionPtr
 TestControl::factoryRequestList4(Option::Universe u,
@@ -122,6 +159,8 @@ TestControl::factoryRequestList4(Option::Universe u,
     opt->setData(buf_with_options.begin(), buf_with_options.end());
     return opt;
 }
+
+
 
 std::vector<uint8_t>
 TestControl::generateMacAddress() const {
@@ -158,6 +197,18 @@ TestControl::generateMacAddress() const {
         r >>= 8;
     }
     return mac_addr;
+}
+
+std::vector<uint8_t>
+TestControl::generateDuid() const {
+    CommandOptions& options = CommandOptions::instance();
+    uint32_t clients_num = options.getClientsNum();
+    if ((clients_num == 0) || (clients_num == 1)) {
+        return options.getDuidPrefix();
+    }
+    // Get the base MAC address. We are going to randomize part of it.
+    std::vector<uint8_t> duid(options.getDuidPrefix());
+    return duid;
 }
 
 uint64_t
@@ -287,7 +338,7 @@ TestControl::registerOptionFactories4() const {
         // DHCP_MESSAGE_TYPE option factory.
         LibDHCP::OptionFactoryRegister(Option::V4,
                                        DHO_DHCP_MESSAGE_TYPE,
-                                       &TestControl::factoryGeneric4);
+                                       &TestControl::factoryGeneric);
         // DHCP_PARAMETER_REQUEST_LIST option factory.
         LibDHCP::OptionFactoryRegister(Option::V4,
                                        DHO_DHCP_PARAMETER_REQUEST_LIST,
@@ -300,7 +351,24 @@ void
 TestControl::registerOptionFactories6() const {
     static bool factories_registered = false;
     if (!factories_registered) {
-        // This is a placeholder for v6 factories.
+        LibDHCP::OptionFactoryRegister(Option::V6,
+                                       D6O_ELAPSED_TIME,
+                                       &TestControl::factoryElapsedTimeSolicit6);
+        LibDHCP::OptionFactoryRegister(Option::V6,
+                                       D6O_RAPID_COMMIT,
+                                       &TestControl::factoryRapidCommit6);
+        LibDHCP::OptionFactoryRegister(Option::V6,
+                                       D6O_ORO,
+                                       &TestControl::factoryOptionRequestOption6);
+        LibDHCP::OptionFactoryRegister(Option::V6,
+                                       D6O_CLIENTID,
+                                       &TestControl::factoryGeneric);
+
+        LibDHCP::OptionFactoryRegister(Option::V6,
+                                       D6O_IA_NA,
+                                       &TestControl::factoryIana6);
+
+
     }
     factories_registered = true;
 }
@@ -347,7 +415,11 @@ TestControl::run() {
         receivePackets();
 
         for (uint64_t i = packets_due; i > 0; --i) {
-            sendDiscover4(socket);
+            if (options.getIpVersion() == 4) {
+                sendDiscover4(socket);
+            } else {
+                sendSolicit6(socket);
+            }
             ++packets_sent;
             cout << "Packets sent " << packets_sent << endl;
         }
@@ -382,7 +454,32 @@ TestControl::sendDiscover4(const TestControlSocket& socket) {
 }
 
 void
-TestControl::setDefaults4(const TestControlSocket &socket,
+TestControl::sendSolicit6(const TestControlSocket& socket) {
+    ++sent_packets_0_;
+    last_sent_ = microsec_clock::universal_time();
+    // Generate the MAC address to be passed in the packet.
+    std::vector<uint8_t> mac_address = generateMacAddress();
+    // Generate DUID to be passed to the packet
+    std::vector<uint8_t> duid = generateDuid();
+    // Generate trasnaction id to be set for the new exchange.
+    const uint32_t transid = static_cast<uint32_t>(random());
+    boost::shared_ptr<Pkt6> pkt6(new Pkt6(DHCPV6_SOLICIT, transid));
+    if (!pkt6) {
+        isc_throw(Unexpected, "failed to create SOLICIT packet");
+    }
+    pkt6->addOption(Option::factory(Option::V6, D6O_ELAPSED_TIME));
+    pkt6->addOption(Option::factory(Option::V6, D6O_RAPID_COMMIT));
+    pkt6->addOption(Option::factory(Option::V6, D6O_CLIENTID, duid));
+    pkt6->addOption(Option::factory(Option::V6, D6O_ORO));
+    pkt6->addOption(Option::factory(Option::V6, D6O_IA_NA));
+
+    setDefaults6(socket, pkt6);
+    pkt6->pack();
+    IfaceMgr::instance().send(pkt6);
+}
+
+void
+TestControl::setDefaults4(const TestControlSocket& socket,
                           const boost::shared_ptr<Pkt4>& pkt) {
     CommandOptions& options = CommandOptions::instance();
     // Interface name.
@@ -397,6 +494,20 @@ TestControl::setDefaults4(const TestControlSocket &socket,
     pkt->setGiaddr(IOAddress(socket.getAddress()));
     // Pretend that we have one relay (which is us).
     pkt->setHops(1);
+}
+
+void
+TestControl::setDefaults6(const TestControlSocket& socket,
+                          const boost::shared_ptr<Pkt6>& pkt) {
+    CommandOptions& options = CommandOptions::instance();
+    // Interface name.
+    pkt->setIface(socket.getIface());
+    // Local client's port (547)
+    pkt->setLocalPort(DHCP6_CLIENT_PORT);
+    // Server's port (548)
+    pkt->setRemotePort(DHCP6_SERVER_PORT);
+    // The remote server's name or IP.
+    pkt->setRemoteAddr(IOAddress(options.getServerName()));
 }
 
 void
