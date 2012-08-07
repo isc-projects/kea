@@ -130,19 +130,31 @@ TestControl::generateMacAddress() const {
     if ((clients_num == 0) || (clients_num == 1)) {
         return options.getMacPrefix();
     }
+    // Get the base MAC address. We are going to randomize part of it.
     std::vector<uint8_t> mac_addr(options.getMacPrefix());
     if (mac_addr.size() != HW_ETHER_LEN) {
         isc_throw(BadValue, "invalid MAC address prefix specified");
     }
     uint32_t r = random();
+    // The random number must be in the range 0..clients_num. This
+    // will guarantee that every client has exactly one random MAC
+    // address assigned.
     r %= clients_num;
+    // Randomize MAC address octets.
     for (std::vector<uint8_t>::iterator it = mac_addr.end() - 1;
          it >= mac_addr.begin();
          --it) {
+        // Add the random value to the current octet.
         (*it) += r;
         if (r < 256) {
+            // If we are here it means that there is no sense
+            // to randomize the remaining octets of MAC address
+            // because the following bytes of random value
+            // are zero and it will have no effect.
             break;
         }
+        // Randomize the next octet with the following
+        // byte of random value.
         r >>= 8;
     }
     return mac_addr;
@@ -260,6 +272,9 @@ TestControl::receivePackets() {
         if (!pkt4) {
             receiving = false;
         } else {
+            // TODO: replace this with use of StatsMgr to increase
+            // number of received packets. This can be done once
+            // the 1958 ticket is reviewed and checked-in.
             std::cout << "Received packet" << std::endl;
         }
     }
@@ -269,9 +284,11 @@ void
 TestControl::registerOptionFactories4() const {
     static bool factories_registered = false;
     if (!factories_registered) {
+        // DHCP_MESSAGE_TYPE option factory.
         LibDHCP::OptionFactoryRegister(Option::V4,
                                        DHO_DHCP_MESSAGE_TYPE,
                                        &TestControl::factoryGeneric4);
+        // DHCP_PARAMETER_REQUEST_LIST option factory.
         LibDHCP::OptionFactoryRegister(Option::V4,
                                        DHO_DHCP_PARAMETER_REQUEST_LIST,
                                        &TestControl::factoryRequestList4);
@@ -283,6 +300,7 @@ void
 TestControl::registerOptionFactories6() const {
     static bool factories_registered = false;
     if (!factories_registered) {
+        // This is a placeholder for v6 factories.
     }
     factories_registered = true;
 }
@@ -340,12 +358,15 @@ void
 TestControl::sendDiscover4(const TestControlSocket& socket) {
     ++sent_packets_0_;
     last_sent_ = microsec_clock::universal_time();
+    // Generate the MAC address to be passed in the packet.
     std::vector<uint8_t> mac_address = generateMacAddress();
+    // Generate trasnaction id to be set for the new exchange.
     const uint32_t transid = static_cast<uint32_t>(random());
     boost::shared_ptr<Pkt4> pkt4(new Pkt4(DHCPDISCOVER, transid));
     if (!pkt4) {
         isc_throw(Unexpected, "failed to create DISCOVER packet");
     }
+    // Set options: DHCP_MESSAGE_TYPE and DHCP_PARAMETER_REQUEST_LIST
     OptionBuffer buf_msg_type;
     buf_msg_type.push_back(DHCPDISCOVER);
     pkt4->addOption(Option::factory(Option::V4, DHO_DHCP_MESSAGE_TYPE,
@@ -353,6 +374,8 @@ TestControl::sendDiscover4(const TestControlSocket& socket) {
     pkt4->addOption(Option::factory(Option::V4,
                                     DHO_DHCP_PARAMETER_REQUEST_LIST));
 
+    // Set client's and server's ports as well as server's address,
+    // and local (relay) address.
     setDefaults4(socket, pkt4);
     pkt4->pack();
     IfaceMgr::instance().send(pkt4);
@@ -362,11 +385,17 @@ void
 TestControl::setDefaults4(const TestControlSocket &socket,
                           const boost::shared_ptr<Pkt4>& pkt) {
     CommandOptions& options = CommandOptions::instance();
+    // Interface name.
     pkt->setIface(socket.getIface());
+    // Local client's port (68)
     pkt->setLocalPort(DHCP4_CLIENT_PORT);
+    // Server's port (67)
     pkt->setRemotePort(DHCP4_SERVER_PORT);
+    // The remote server's name or IP.
     pkt->setRemoteAddr(IOAddress(options.getServerName()));
+    // Set relay (GIADDR) address to local address.
     pkt->setGiaddr(IOAddress(socket.getAddress()));
+    // Pretend that we have one relay (which is us).
     pkt->setHops(1);
 }
 
