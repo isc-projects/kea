@@ -496,11 +496,28 @@ IfaceMgr::getLocalAddress(const IOAddress& remote_addr, const uint16_t port) {
     asio::io_service io_service;
     asio::ip::udp::socket sock(io_service);
 
-    // Try to connect to remote endpoint and check if attempt is successful.
     asio::error_code err_code;
+    // If remote address is broadcast address we have to
+    // allow this on the socket.
+    if (remote_addr.getAddress().is_v4() && 
+        (remote_addr == IOAddress("255.255.255.255"))) {
+        // Socket has to be open prior to setting the broadcast
+        // option. Otherwise set_option will complain about
+        // bad file descriptor.
+        sock.open(asio::ip::udp::v4(), err_code);
+        if (err_code) {
+            isc_throw(Unexpected, "failed to open UDPv4 socket");
+        }
+        sock.set_option(asio::socket_base::broadcast(true), err_code);
+        if (err_code) {
+            isc_throw(Unexpected, "failed to enable broadcast on the socket");
+        }
+    }
+
+    // Try to connect to remote endpoint and check if attempt is successful.
     sock.connect(remote_endpoint->getASIOEndpoint(), err_code);
     if (err_code) {
-        isc_throw(Unexpected,"Failed to connect to remote endpoint.");
+        isc_throw(Unexpected,"failed to connect to remote endpoint.");
     }
 
     // Once we are connected socket object holds local endpoint.
@@ -1131,7 +1148,7 @@ uint16_t IfaceMgr::getSocket(const isc::dhcp::Pkt6& pkt) {
     for (s = socket_collection.begin(); s != socket_collection.end(); ++s) {
         if ((s->family_ == AF_INET6) &&
             (!s->addr_.getAddress().to_v6().is_multicast())) {
-            return (s->sockfd_);t
+            return (s->sockfd_);
         }
         /// @todo: Add more checks here later. If remote address is
         /// not link-local, we can't use link local bound socket
