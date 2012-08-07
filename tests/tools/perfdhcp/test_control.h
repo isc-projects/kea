@@ -21,6 +21,7 @@
 #include <boost/noncopyable.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
+#include <dhcp/dhcp6.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
 
@@ -132,6 +133,12 @@ private:
     /// \return true if any of the exit conditions is fulfiled.
     bool checkExitConditions() const;
 
+    static dhcp::OptionPtr
+    factoryElapsedTimeSolicit6(dhcp::Option::Universe u,
+                               uint16_t type,
+                               const dhcp::OptionBuffer& buf);
+    
+
     /// \brief Factory function to create generic option.
     ///
     /// Factory function is registered using \ref LibDHCP::OptionFactoryRegister.
@@ -147,9 +154,23 @@ private:
     /// \param type option-type.
     /// \param buf option-buffer.
     /// \return instance o the generic option.
-    static dhcp::OptionPtr factoryGeneric4(dhcp::Option::Universe u,
-                                           uint16_t type,
-                                           const dhcp::OptionBuffer& buf);
+    static dhcp::OptionPtr factoryGeneric(dhcp::Option::Universe u,
+                                          uint16_t type,
+                                          const dhcp::OptionBuffer& buf);
+
+    static dhcp::OptionPtr factoryIana6(dhcp::Option::Universe u,
+                                        uint16_t type,
+                                        const dhcp::OptionBuffer& buf);
+
+    static dhcp::OptionPtr
+    factoryOptionRequestOption6(dhcp::Option::Universe u,
+                                uint16_t type,
+                                const dhcp::OptionBuffer& buf);
+
+    static dhcp::OptionPtr factoryRapidCommit6(dhcp::Option::Universe u,
+                                               uint16_t type,
+                                               const dhcp::OptionBuffer& buf);
+
 
     /// \brief Factory function to create DHCPv4 Request List option.
     ///
@@ -176,6 +197,8 @@ private:
      static dhcp::OptionPtr factoryRequestList4(dhcp::Option::Universe u,
                                                uint16_t type,
                                                const dhcp::OptionBuffer& buf);
+
+    std::vector<uint8_t> generateDuid() const;
 
     /// \brief Generate MAC address.
     ///
@@ -256,7 +279,9 @@ private:
     /// \param socket socket to be used to send the message.
     /// \throw isc::Unexpected if failed to create new packet instance.
     /// \throw isc::BadValue if MAC address has invalid length.
-    void sendDiscover4(const TestControlSocket &socket);
+    void sendDiscover4(const TestControlSocket& socket);
+
+    void sendSolicit6(const TestControlSocket& socket);
 
     /// \brief Set default DHCPv4 packet data.
     ///
@@ -272,6 +297,9 @@ private:
     /// \param pkt packet to be configured.
     void setDefaults4(const TestControlSocket& socket,
                       const boost::shared_ptr<dhcp::Pkt4>& pkt);
+
+    void setDefaults6(const TestControlSocket& socket,
+                      const boost::shared_ptr<dhcp::Pkt6>& pkt);
 
     /// \brief Update due time to initiate next chunk of exchanges.
     ///
