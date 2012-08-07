@@ -398,7 +398,7 @@ class SysInfoTest(unittest.TestCase):
         tests deep into the implementation, and not just the
         interfaces."""
 
-        # Don't run this test on platform other than FreeBSD as some
+        # Don't run this test on platform other than OS X as some
         # system calls may not even be available.
         osname = platform.system()
         if osname != 'Darwin':
