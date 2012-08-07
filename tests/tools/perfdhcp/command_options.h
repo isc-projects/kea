@@ -301,6 +301,13 @@ private:
     /// \throw InvalidParameter if -R<value> is wrong
     void initClientsNum();
 
+    /// \brief Sets value indicating if interface name was given.
+    ///
+    /// Method checks if the command line argument given with
+    /// '-l' option is the interface name. The is_interface_ member
+    /// is set accordingly.
+    void initIsInterface();
+
     /// \brief Decodes base provided with -b<base>
     ///
     /// Function decodes argument of -b switch, which
