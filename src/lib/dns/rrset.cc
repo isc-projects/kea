@@ -143,8 +143,8 @@ AbstractRRset::isSameKind(const AbstractRRset& other) const {
   // names late in the list too, as these are expensive. So we compare
   // types first, names second and classes last.
   return (getType() == other.getType() &&
-	  getName() == other.getName() &&
-	  getClass() == other.getClass());
+          getName() == other.getName() &&
+          getClass() == other.getClass());
 }
 
 ostream&
