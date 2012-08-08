@@ -125,7 +125,7 @@ class MockCfgmgr:
     def __init__(self):
         self._started = threading.Event()
         self.cfgmgr = isc.config.cfgmgr.ConfigManager(
-            os.environ['CONFIG_TESTDATA_PATH'], "b10-config_test.db")
+            os.environ['CONFIG_TESTDATA_PATH'], "b10-config.db")
         self.cfgmgr.read_config()
 
     def run(self):
