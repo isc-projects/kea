@@ -349,9 +349,9 @@ class SysInfoOpenBSD(SysInfoBSD):
         except (subprocess.CalledProcessError, OSError):
             self._net_routing_table = 'Warning: "route -n show" command failed.\n'
 
-class SysInfoFreeBSD(SysInfoBSD):
-    """FreeBSD implementation of the SysInfo class.
-    See the SysInfo class documentation for more information.
+class SysInfoFreeBSDOSX(SysInfoBSD):
+    """Shared code for the FreeBSD and OS X implementations of the SysInfo
+    class. See the SysInfo class documentation for more information.
     """
     def __init__(self):
         super().__init__()
@@ -359,12 +359,6 @@ class SysInfoFreeBSD(SysInfoBSD):
         # Don't know how to gather these
         self._mem_cached = -1
         self._mem_buffers = -1
-
-        try:
-            s = subprocess.check_output(['sysctl', '-n', 'kern.smp.active'])
-            self._platform_is_smp = int(s.decode('utf-8').strip()) > 0
-        except (subprocess.CalledProcessError, OSError):
-            pass
 
         try:
             s = subprocess.check_output(['sysctl', '-n', 'kern.boottime'])
@@ -386,6 +380,25 @@ class SysInfoFreeBSD(SysInfoBSD):
                 la = l.split(' ')
             if len(la) >= 3:
                 self._loadavg = [float(la[0]), float(la[1]), float(la[2])]
+        except (subprocess.CalledProcessError, OSError):
+            pass
+
+        try:
+            s = subprocess.check_output(['netstat', '-nr'])
+            self._net_routing_table = s.decode('utf-8')
+        except (subprocess.CalledProcessError, OSError):
+            self._net_connections = 'Warning: "netstat -nr" command failed.\n'
+
+class SysInfoFreeBSD(SysInfoFreeBSDOSX):
+    """FreeBSD implementation of the SysInfo class.
+    See the SysInfo class documentation for more information.
+    """
+    def __init__(self):
+        super().__init()
+
+        try:
+            s = subprocess.check_output(['sysctl', '-n', 'kern.smp.active'])
+            self._platform_is_smp = int(s.decode('utf-8').strip()) > 0
         except (subprocess.CalledProcessError, OSError):
             pass
 
@@ -408,49 +421,22 @@ class SysInfoFreeBSD(SysInfoBSD):
         except (subprocess.CalledProcessError, OSError):
             pass
 
-        try:
-            s = subprocess.check_output(['netstat', '-nr'])
-            self._net_routing_table = s.decode('utf-8')
-        except (subprocess.CalledProcessError, OSError):
-            self._net_connections = 'Warning: "netstat -nr" command failed.\n'
 
-class SysInfoOSX(SysInfoBSD):
+
+class SysInfoOSX(SysInfoFreeBSDOSX):
     """OS X (Darwin) implementation of the SysInfo class.
     See the SysInfo class documentation for more information.
     """
     def __init__(self):
         super().__init__()
 
-        # Don't know how to gather these
-        self._mem_cached = -1
-        self._mem_buffers = -1
-
+        # note; this call overrides the value already set when hw.physmem
+        # was read. However, on OSX, physmem is not necessarily the correct
+        # value. But since it does not fail and does work on most BSD's, it's
+        # left in the base class and overwritten here
         try:
-            s = subprocess.check_output(['sysctl', '-n', 'kern.smp.active'])
-            self._platform_is_smp = int(s.decode('utf-8').strip()) > 0
-        except (subprocess.CalledProcessError, OSError):
-            pass
-
-        try:
-            s = subprocess.check_output(['sysctl', '-n', 'kern.boottime'])
-            t = s.decode('utf-8').strip()
-            r = re.match('^\{\s+sec\s+\=\s+(\d+),.*', t)
-            if r:
-                sec = time.time() - int(r.group(1))
-                self._uptime = int(round(sec))
-        except (subprocess.CalledProcessError, OSError):
-            pass
-
-        try:
-            s = subprocess.check_output(['sysctl', '-n', 'vm.loadavg'])
-            l = s.decode('utf-8').strip()
-            r = re.match('^\{(.*)\}$', l)
-            if r:
-                la = r.group(1).strip().split(' ')
-            else:
-                la = l.split(' ')
-            if len(la) >= 3:
-                self._loadavg = [float(la[0]), float(la[1]), float(la[2])]
+            s = subprocess.check_output(['sysctl', '-n', 'hw.memsize'])
+            self._mem_total = int(s.decode('utf-8').strip())
         except (subprocess.CalledProcessError, OSError):
             pass
 
@@ -459,7 +445,7 @@ class SysInfoOSX(SysInfoBSD):
             lines = s.decode('utf-8').split('\n')
             # store all values in a dict
             values = {}
-            page_size = 4096
+            page_size = None
             page_size_re = re.compile('page size of [0-9]+ bytes')
             for line in lines:
                 page_size_m = page_size_re.match(line)
@@ -468,7 +454,10 @@ class SysInfoOSX(SysInfoBSD):
                 else:
                     key, _, value = line.partition(':')
                     values[key] = value.strip()[:-1]
-            self._mem_free = int(values['Pages free']) * page_size
+            # Only calculate memory if page size is known
+            if page_size is not None:
+                self._mem_free = int(values['Pages free']) * page_size +
+                                 int(values['Pages speculative']) * page_size
         except (subprocess.CalledProcessError, OSError):
             pass
 
@@ -481,13 +470,6 @@ class SysInfoOSX(SysInfoBSD):
                 self._mem_swap_free = float(r.group(3).strip()) * 1024
         except (subprocess.CalledProcessError, OSError):
             pass
-
-        try:
-            s = subprocess.check_output(['netstat', '-nr'])
-            self._net_routing_table = s.decode('utf-8')
-        except (subprocess.CalledProcessError, OSError):
-            self._net_connections = 'Warning: "netstat -nr" command failed.\n'
-
 
 
 class SysInfoTestcase(SysInfo):
