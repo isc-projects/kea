@@ -9,6 +9,15 @@
 .\"
 .TH "BINDCTL" "1" "June 20, 2012" "BIND10" "BIND10"
 .\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
 .\" disable hyphenation
@@ -54,7 +63,7 @@ The PEM formatted server certificate validation chain file\&.
 .PP
 \fB\-\-csv\-file\-dir\fR\fIfile\fR
 .RS 4
-The directory name in which the user/password CSV file is stored (see AUTHENTICATION)\&. By default this option doesn\'t have any value, in which case the "\&.bind10" directory under the user\'s home directory will be used\&.
+The directory name in which the user/password CSV file is stored (see AUTHENTICATION)\&. By default this option doesn\*(Aqt have any value, in which case the "\&.bind10" directory under the user\*(Aqs home directory will be used\&.
 .RE
 .PP
 \fB\-h\fR, \fB\-\-help\fR
@@ -105,17 +114,17 @@ prompt shows
 \fIparam1 = value1 , \fR\fI\fIparam2 = value2\fR\fR
 .PP
 
-\fBbindctl\fR\'s interactive interface provides command\-line completion and hints\&. Press the Tab key to get a hint for the module, command, and/or parameters\&.
+\fBbindctl\fR\*(Aqs interactive interface provides command\-line completion and hints\&. Press the Tab key to get a hint for the module, command, and/or parameters\&.
 The arrow keys and Emacs\-style editing keys may be used to edit and recall previous lines\&.
 .PP
 You can use the
 \fBhelp\fR
-keyword to receive usage assistance for a module or a module\'s command\&.
+keyword to receive usage assistance for a module or a module\*(Aqs command\&.
 .PP
 The
 \fBquit\fR
 command is used to exit
-\fBbindctl\fR\&. (It doesn\'t stop the BIND 10 services\&.)
+\fBbindctl\fR\&. (It doesn\*(Aqt stop the BIND 10 services\&.)
 .PP
 The following module is available by default:
 \fBconfig\fR

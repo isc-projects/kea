@@ -1,3 +1,16 @@
+458.	[build]*	jinmei
+	BIND 10 now relies on Boost offset_ptr, which caused some new
+	portability issues.  Such issues are detected at ./configure time.
+	If ./configure stops due to this, try the following workaround:
+	- If it's about the use of mutable for a reference with clang++,
+	  upgrade Boost version to 1.44 or higher, or try a different
+	  compiler (e.g. g++ generally seems to be free from this issue)
+	- If it's about the use of "variadic templates", specify
+	  --without-werror so the warning won't be promoted to an error.
+	  Specifying BOOST_NO_USER_CONFIG in CXXFLAGS may also work
+	  (which would be the case if Boost is installed via pkgsrc)
+	(Trac #2147, git 30061d1139aad8716e97d6b620c259752fd0a3cd)
+
 457.	[build]*	muks
 	BIND 10 library names now have a "b10-" prefix. This is to avoid
 	clashes with other similarly named libraries on the system.
@@ -32,7 +45,7 @@
 	(Trac #1986, git bd6b0a5ed3481f78fb4e5cb0b18c7b6e5920f9f8)
 
 452.	[func]*		muks
-	b10-showtech: An initial implementation of the b10-showtech tool
+	isc-sysinfo: An initial implementation of the isc-sysinfo tool
 	is now available. It gathers and outputs system information which
 	can be used by future tech support staff.
 	(Trac #2062, git 144e80212746f8d55e6a59edcf689fec9f32ae95)
