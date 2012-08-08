@@ -45,6 +45,20 @@ class ZoneData;
 /// For more descriptions about its struct and interfaces, please refer to the
 /// corresponding struct and interfaces of \c MemoryDataSrc.
 class ZoneTable {
+private:
+    struct ZoneDataDeleter {
+        ZoneDataDeleter() {}
+        void operator()(util::MemorySegment& mem_sgmt,
+                        ZoneData* zone_data) const
+        {
+            mem_sgmt.deallocate(zone_data, sizeof(ZoneData));
+        }
+    };
+
+    // Type aliases to make it shorter
+    typedef DomainTree<ZoneData, ZoneDataDeleter> ZoneTableTree;
+    typedef DomainTreeNode<ZoneData, ZoneDataDeleter> ZoneTableNode;
+
 public:
     struct FindResult {
         FindResult(result::Result param_code, const ZoneFinderPtr param_zone) :
@@ -72,7 +86,8 @@ private:
     /// This constructor internally involves resource allocation, and if
     /// it fails, a corresponding standard exception will be thrown.
     /// It never throws an exception otherwise.
-    ZoneTable(util::MemorySegment& mem_sgmt);
+    ZoneTable(ZoneTableTree* zones) : zones_(zones)
+    {}
     //@}
 
 public:
@@ -143,19 +158,6 @@ public:
     FindResult findZone(const isc::dns::Name& name) const;
 
 private:
-    struct ZoneDataDeleter {
-        ZoneDataDeleter() {}
-        void operator()(util::MemorySegment& mem_sgmt,
-                        ZoneData* zone_data) const
-        {
-            mem_sgmt.deallocate(zone_data, sizeof(ZoneData));
-        }
-    };
-
-    // Type aliases to make it shorter
-    typedef DomainTree<ZoneData, ZoneDataDeleter> ZoneTableTree;
-    typedef DomainTreeNode<ZoneData, ZoneDataDeleter> ZoneTableNode;
-
     ZoneTableTree* zones_;
 };
 }

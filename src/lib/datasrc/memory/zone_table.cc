@@ -28,35 +28,38 @@ using namespace isc::dns;
 namespace isc {
 namespace datasrc {
 namespace memory {
-
-ZoneTable::ZoneTable(util::MemorySegment& mem_sgmt) :
-    zones_(ZoneTableTree::create(mem_sgmt))
-{}
-
 namespace {
-// A simple holder to make resource allocation for ZoneTable exception safe.
-// It works like std::auto_ptr but much more simplified.
-struct ZoneTableHolder {
-    ZoneTableHolder(util::MemorySegment& mem_sgmt, void* ptr) :
-        mem_sgmt_(mem_sgmt), ptr_(ptr)
+// A simple holder to create and use some objects in this implementation
+// in an exception safe manner.   It works like std::auto_ptr but much
+// more simplified.
+template <typename T>
+class Holder {
+public:
+    Holder(util::MemorySegment& mem_sgmt, T* obj) :
+        mem_sgmt_(mem_sgmt), obj_(obj)
     {}
-    ~ZoneTableHolder() {
-        if (ptr_ != NULL) {
-            mem_sgmt_.deallocate(ptr_, sizeof(ZoneTable));
+    ~Holder() {
+        if (obj_ != NULL) {
+            T::destroy(mem_sgmt_, obj_);
         }
     }
-    void* get() { return (ptr_); }
-    void release() { ptr_ = NULL; }
+    T* get() { return (obj_); }
+    T* release() {
+        T* ret = obj_;
+        obj_ = NULL;
+        return (ret);
+    }
 private:
     util::MemorySegment& mem_sgmt_;
-    void* ptr_;
+    T* obj_;
 };
 }
 
 ZoneTable*
 ZoneTable::create(util::MemorySegment& mem_sgmt) {
-    ZoneTableHolder holder(mem_sgmt, mem_sgmt.allocate(sizeof(ZoneTable)));
-    ZoneTable* zone_table = new(holder.get()) ZoneTable(mem_sgmt);
+    Holder<ZoneTableTree> holder(mem_sgmt, ZoneTableTree::create(mem_sgmt));
+    void* p = mem_sgmt.allocate(sizeof(ZoneTable));
+    ZoneTable* zone_table = new(p) ZoneTable(holder.get());
     holder.release();
     return (zone_table);
 }
@@ -69,13 +72,13 @@ ZoneTable::destroy(util::MemorySegment& mem_sgmt, ZoneTable* ztable) {
 
 result::Result
 ZoneTable::addZone(util::MemorySegment& mem_sgmt, const Name& zone_name) {
-    // Create a new ZoneData instance first.  If it already exists the new
-    // one will soon be destroyed, but we want to make sure if this allocation
-    // fails the tree won't be changed to provide as strong guarantee as
-    // possible.  In practice, we generally expect the caller tries to add
-    // a zone only when it's a new one, so this should be a minor concern.
-    void* p = mem_sgmt.allocate(sizeof(ZoneData)); // XXX safety
-    ZoneData* zone_data = new(p) ZoneData(zone_name);
+    // Create a new ZoneData instance first.  If the specified name already
+    // exists in the table, the new data will soon be destroyed, but we want
+    // to make sure if this allocation fails the tree won't be changed to
+    // provide as strong guarantee as possible.  In practice, we generally
+    // expect the caller tries to add a zone only when it's a new one, so
+    // this should be a minor concern.
+    Holder<ZoneData> holder(mem_sgmt, ZoneData::create(mem_sgmt, zone_name));
 
     // Get the node where we put the zone
     ZoneTableNode* node(NULL);
@@ -93,10 +96,9 @@ ZoneTable::addZone(util::MemorySegment& mem_sgmt, const Name& zone_name) {
 
     // Is it empty? We either just created it or it might be nonterminal
     if (node->isEmpty()) {
-        node->setData(mem_sgmt, zone_data);
+        node->setData(mem_sgmt, holder.release());
         return (result::SUCCESS);
     } else { // There's something there already
-        mem_sgmt.deallocate(p, sizeof(ZoneData));
         return (result::EXIST);
     }
 }
