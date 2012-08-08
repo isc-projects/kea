@@ -29,6 +29,7 @@
 #include <dns/rrtype.h>
 
 #include <datasrc/memory/rdata_encoder.h>
+#include <datasrc/memory/rdata_field.h>
 
 #include <util/unittests/wiredata.h>
 
@@ -172,6 +173,78 @@ const Name dummy_name2("example.com");
 // but it allows the tests to check the internals of the data.
 class ManualDecoderStyle {
 public:
+    static void foreachRdataField(RRClass rrclass, RRType rrtype,
+                                  size_t rdata_count,
+                                  const vector<uint8_t>& encoded_data,
+                                  const vector<uint16_t>& varlen_list,
+                                  NameCallback name_callback,
+                                  DataCallback data_callback)
+    {
+        const RdataEncodeSpec& encode_spec = getRdataEncodeSpec(rrclass,
+                                                                rrtype);
+
+        size_t off = 0;
+        size_t varlen_count = 0;
+        size_t name_count = 0;
+        for (size_t count = 0; count < rdata_count; ++count) {
+            for (size_t i = 0; i < encode_spec.field_count; ++i) {
+                const RdataFieldSpec& field_spec = encode_spec.fields[i];
+                switch (field_spec.type) {
+                    case RdataFieldSpec::FIXEDLEN_DATA:
+                        if (data_callback) {
+                            data_callback(&encoded_data.at(off),
+                                          field_spec.fixeddata_len);
+                        }
+                        off += field_spec.fixeddata_len;
+                        break;
+                    case RdataFieldSpec::VARLEN_DATA:
+                        {
+                            const size_t varlen = varlen_list.at(varlen_count);
+                            if (data_callback && varlen > 0) {
+                                data_callback(&encoded_data.at(off), varlen);
+                            }
+                            off += varlen;
+                            ++varlen_count;
+                            break;
+                        }
+                    case RdataFieldSpec::DOMAIN_NAME:
+                        {
+                            ++name_count;
+                            const LabelSequence labels(&encoded_data.at(off));
+                            if (name_callback) {
+                                name_callback(labels,
+                                              field_spec.name_attributes);
+                            }
+                            off += labels.getSerializedLength();
+                            break;
+                        }
+                }
+            }
+        }
+        assert(name_count == encode_spec.name_count * rdata_count);
+        assert(varlen_count == encode_spec.varlen_count * rdata_count);
+    }
+
+    static void foreachRRSig(const vector<uint8_t>& encoded_data,
+                             const vector<uint16_t>& rrsiglen_list,
+                             DataCallback data_callback)
+    {
+        size_t rrsig_totallen = 0;
+        for (vector<uint16_t>::const_iterator it = rrsiglen_list.begin();
+             it != rrsiglen_list.end();
+             ++it) {
+            rrsig_totallen += *it;
+        }
+        assert(encoded_data.size() >= rrsig_totallen);
+
+        const uint8_t* dp = &encoded_data[encoded_data.size() -
+            rrsig_totallen];
+        for (size_t i = 0; i < rrsiglen_list.size(); ++i) {
+            data_callback(dp, rrsiglen_list[i]);
+            dp += rrsiglen_list[i];
+        }
+    }
+
     static void decode(const isc::dns::RRClass& rrclass,
                        const isc::dns::RRType& rrtype,
                        size_t rdata_count,
