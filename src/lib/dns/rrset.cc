@@ -249,6 +249,15 @@ RRset::RRset(const Name& name, const RRClass& rrclass,
 
 RRset::~RRset() {}
 
+unsigned int
+RRset::getSIGRdataCount() const {
+    if (rrsig_ != NULL) {
+        return (rrsig_->getRdataCount());
+    } else {
+        return (0);
+    }
+}
+
 namespace {
 class BasicRdataIterator : public RdataIterator {
 private:
