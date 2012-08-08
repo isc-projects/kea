@@ -530,7 +530,7 @@ class TestStats(unittest.TestCase):
                                          ]}}))
         self.assertEqual(self.stats.command_show(owner='Auth', name='queries.udp'),
                          isc.config.create_answer(
-                0, {'Auth': {'queries.udp':sum_qudp}}))
+                0, {'Auth': {'queries.udp': sum_qudp}}))
         self.assertEqual(self.stats.command_show(owner='Auth', name='queries.perzone'),
                          isc.config.create_answer(
                 0, {'Auth': {'queries.perzone': [{ 'zonename': 'test1.example',
