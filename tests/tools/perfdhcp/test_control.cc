@@ -62,6 +62,7 @@ TestControl::TestControlSocket::initSocketData() {
              ++s) {
             if (s->sockfd_ == socket_) {
                 iface_ = it->getName();
+                ifindex_ = it->getIndex();
                 addr_ = s->addr_;
                 return;
             }
@@ -267,6 +268,7 @@ TestControl::openSocket() const {
     uint8_t family = AF_INET;
     uint16_t port = 67;
     int sock = 0;
+    IOAddress remoteaddr(servername);
     if (options.getIpVersion() == 6) {
         family = AF_INET6;
         port = 547;
@@ -289,7 +291,6 @@ TestControl::openSocket() const {
     } else if (!servername.empty()) {
         // If only server name is given we will need to try to resolve
         // the local address to bind socket to based on remote address.
-        IOAddress remoteaddr(servername);
         sock = IfaceMgr::instance().openSocketFromRemoteAddress(remoteaddr,
                                                                 port);
     }
@@ -309,8 +310,34 @@ TestControl::openSocket() const {
             isc_throw(InvalidOperation,
                       "unable to set broadcast option on the socket");
         }
+    } else if (options.getIpVersion() == 6) {
+        // If remote address is multicast we need to enable it on
+        // the socket that has been created.
+        asio::ip::address_v6 remote_v6 = remoteaddr.getAddress().to_v6();
+        if (remote_v6.is_multicast()) {
+            int hops = 1;
+            int ret = setsockopt(sock, IPPROTO_IPV6, IPV6_MULTICAST_HOPS,
+                                 &hops, sizeof(hops));
+            // If user specified interface name with '-l' the
+            // IPV6_MULTICAST_IF has to be set.
+            if ((ret >= 0)  && options.isInterface()) {
+                IfaceMgr::Iface* iface =
+                    IfaceMgr::instance().getIface(options.getLocalName());
+                if (iface == NULL) {
+                    isc_throw(Unexpected, "unknown interface "
+                              << options.getLocalName());
+                }
+                int idx = iface->getIndex();
+                ret = setsockopt(sock, IPPROTO_IPV6, IPV6_MULTICAST_IF,
+                                     &idx, sizeof(idx));
+            }
+            if (ret < 0) {
+                isc_throw(InvalidOperation, 
+                          "unable to enable multicast on socket " <<  sock
+                          << ". errno = " << errno);
+            }
+        }
     }
-
     return(sock);
 }
 
@@ -319,14 +346,23 @@ TestControl::receivePackets() {
     int timeout = 0;
     bool receiving = true;
     while (receiving) {
-        Pkt4Ptr pkt4 = IfaceMgr::instance().receive4(timeout);
-        if (!pkt4) {
-            receiving = false;
-        } else {
-            // TODO: replace this with use of StatsMgr to increase
-            // number of received packets. This can be done once
-            // the 1958 ticket is reviewed and checked-in.
-            std::cout << "Received packet" << std::endl;
+        if (CommandOptions::instance().getIpVersion() == 4) {
+            Pkt4Ptr pkt4 = IfaceMgr::instance().receive4(timeout);
+            if (!pkt4) {
+                receiving = false;
+            } else {
+                // TODO: replace this with use of StatsMgr to increase
+                // number of received packets. This can be done once
+                // the 1958 ticket is reviewed and checked-in.
+                std::cout << "Received packet" << std::endl;
+            }
+        } else if (CommandOptions::instance().getIpVersion() == 6) {
+            Pkt6Ptr pkt6 = IfaceMgr::instance().receive6();
+            if (!pkt6) {
+                receiving  = false;
+            } else {
+                std::cout << "Received DHCPv6 packet" << std::endl;
+            }
         }
     }
 }
@@ -484,6 +520,8 @@ TestControl::setDefaults4(const TestControlSocket& socket,
     CommandOptions& options = CommandOptions::instance();
     // Interface name.
     pkt->setIface(socket.getIface());
+    // Interface index.
+    pkt->setIndex(socket.getIfIndex());
     // Local client's port (68)
     pkt->setLocalPort(DHCP4_CLIENT_PORT);
     // Server's port (67)
@@ -502,6 +540,8 @@ TestControl::setDefaults6(const TestControlSocket& socket,
     CommandOptions& options = CommandOptions::instance();
     // Interface name.
     pkt->setIface(socket.getIface());
+    // Interface index.
+    pkt->setIndex(socket.getIfIndex());
     // Local client's port (547)
     pkt->setLocalPort(DHCP6_CLIENT_PORT);
     // Server's port (548)
