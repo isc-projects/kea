@@ -138,7 +138,11 @@ public:
         /// \brief The domain label.
         ///
         /// This holds the domain label. It is only valid if type() == NAME.
-        const dns::LabelSequence& sequence;
+        const dns::LabelSequence& label() const;
+        /// \brief Is the name in label() compressible?
+        ///
+        /// This is valid only if type() == NAME.
+        bool compressible() const;
         /// \brief If there are data returned.
         ///
         /// This returns if there are any data at all returned. This is

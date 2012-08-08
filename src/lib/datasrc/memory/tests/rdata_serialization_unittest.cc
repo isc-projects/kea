@@ -30,6 +30,7 @@
 
 #include <datasrc/memory/rdata_encoder.h>
 #include <datasrc/memory/rdata_field.h>
+#include <datasrc/memory/rdata_reader.h>
 
 #include <util/unittests/wiredata.h>
 
@@ -102,7 +103,7 @@ const TestRdata test_rdata_list[] = {
 // from encoded representation of each RDATA.
 void
 renderNameField(MessageRenderer* renderer, bool additional_required,
-                const LabelSequence& labels, RdataNameAttributes attributes)
+                const LabelSequence& labels, unsigned attributes)
 {
     EXPECT_EQ(additional_required,
               (attributes & NAMEATTR_ADDITIONAL) != 0);
@@ -168,6 +169,21 @@ public:
 // Used across more classes and scopes. But it's just uninteresting
 // constant.
 const Name dummy_name2("example.com");
+
+bool
+additionalRequired(const RRType& type) {
+    // The set of RR types that require additional section processing.
+    // We'll pass it to renderNameField to check the stored attribute matches
+    // our expectation.
+    static std::set<RRType> need_additionals;
+    if (need_additionals.empty()) {
+        need_additionals.insert(RRType::NS());
+        need_additionals.insert(RRType::MX());
+        need_additionals.insert(RRType::SRV());
+    }
+
+    return (need_additionals.find(type) != need_additionals.end());
+}
 
 // A decoder that does not use RdataReader. Not recommended for use,
 // but it allows the tests to check the internals of the data.
@@ -282,22 +298,11 @@ public:
                                 encoded_data.end());
         }
 
-        // The set of RR types that require additional section processing.
-        // We'll pass it to renderNameField to check the stored attribute matches
-        // our expectation.
-        std::set<RRType> need_additionals;
-        need_additionals.insert(RRType::NS());
-        need_additionals.insert(RRType::MX());
-        need_additionals.insert(RRType::SRV());
-
-        const bool additional_required =
-            (need_additionals.find(rrtype) != need_additionals.end());
-
         // Create wire-format data from the encoded data
         foreachRdataField(rrclass, rrtype, rdata_count, encoded_data,
                           varlen_list,
                           boost::bind(renderNameField, &renderer,
-                                      additional_required, _1, _2),
+                                      additionalRequired(rrtype), _1, _2),
                           boost::bind(renderDataField, &renderer, _1, _2));
 
     // 2nd dummy name
@@ -308,7 +313,87 @@ public:
     }
 };
 
-typedef ::testing::Types<ManualDecoderStyle> DecoderStyles;
+// Decode using reader with the return value of next
+class NextDecoder {
+public:
+    static void decode(const isc::dns::RRClass& rrclass,
+                       const isc::dns::RRType& rrtype,
+                       size_t, size_t, size_t,
+                       const vector<uint8_t>& encoded_data,
+                       MessageRenderer& renderer)
+    {
+        RDataReader reader(rrclass, rrtype, encoded_data.size(),
+                           &encoded_data[0]);
+        RDataReader::Result field;
+        while (field = reader.next()) {
+            switch (field.type()) {
+                case RDataReader::DATA:
+                    renderer.writeData(field.data(), field.size());
+                    break;
+                case RDataReader::NAME:
+                    renderer.writeName(field.label(), field.compressible());
+                    break;
+                default:
+                    FAIL();
+            }
+        }
+
+        renderer.writeName(dummy_name2);
+
+        while (field = reader.nextSig()) {
+            switch (field.type()) {
+                case RDataReader::DATA:
+                    renderer.writeData(field.data(), field.size());
+                    break;
+                default: // There are also no NAME fields in RRSigs
+                    FAIL();
+            }
+        }
+    }
+};
+
+// Check using callbacks and calling next until the end.
+class CallbackDecoder {
+public:
+    static void decode(const isc::dns::RRClass& rrclass,
+                       const isc::dns::RRType& rrtype,
+                       size_t, size_t, size_t,
+                       const vector<uint8_t>& encoded_data,
+                       MessageRenderer& renderer)
+    {
+        RDataReader reader(rrclass, rrtype, encoded_data.size(),
+                           &encoded_data[0],
+                           boost::bind(renderNameField, &renderer,
+                                       additionalRequired(rrtype), _1, _2),
+                           boost::bind(renderDataField, &renderer, _1, _2));
+        while (reader.next()) { }
+        renderer.writeName(dummy_name2);
+        while (reader.nextSig()) { }
+    }
+};
+
+// Check using callbacks and calling iterate.
+class IterateDecoder {
+public:
+    static void decode(const isc::dns::RRClass& rrclass,
+                       const isc::dns::RRType& rrtype,
+                       size_t, size_t, size_t,
+                       const vector<uint8_t>& encoded_data,
+                       MessageRenderer& renderer)
+    {
+        RDataReader reader(rrclass, rrtype, encoded_data.size(),
+                           &encoded_data[0],
+                           boost::bind(renderNameField, &renderer,
+                                       additionalRequired(rrtype), _1, _2),
+                           boost::bind(renderDataField, &renderer, _1, _2));
+        reader.iterate();
+        renderer.writeName(dummy_name2);
+        reader.iterateSig();
+    }
+};
+
+typedef ::testing::Types<ManualDecoderStyle, NextDecoder, CallbackDecoder,
+                         IterateDecoder> DecoderStyles;
 TYPED_TEST_CASE(RdataEncodeDecodeTest, DecoderStyles);
 
 void
