@@ -20,6 +20,13 @@ import platform
 import subprocess
 import time
 
+# Long list of different values used throughout the tests
+NPROCESSORS_LINUX = 42
+NPROCESSORS_OPENBSD = 43
+NPROCESSORS_FREEBSD = 44
+NPROCESSORS_OSX = 45
+
+
 def _my_testcase_platform_system():
     return 'BIND10Testcase'
 
@@ -28,7 +35,7 @@ def _my_linux_platform_system():
 
 def _my_linux_os_sysconf(key):
     if key == 'SC_NPROCESSORS_CONF':
-        return 42
+        return NPROCESSORS_LINUX
     assert False, 'Unhandled key'
 
 class MyLinuxFile:
@@ -92,106 +99,102 @@ def _my_openbsd_platform_system():
 
 def _my_openbsd_os_sysconf(key):
     if key == 'SC_NPROCESSORS_CONF':
-        return 53
+        return NPROCESSORS_OPENBSD
     assert False, 'Unhandled key'
 
-def _my_openbsd_subprocess_check_output(command):
+def _my_bsd_subprocess_check_output(command):
+    '''subprocess output for all bsd types'''
     assert type(command) == list, 'command argument is not a list'
     if command == ['hostname']:
         return b'blowfish.example.com\n'
-    elif command == ['sysctl', '-n', 'kern.boottime']:
-        return bytes(str(int(time.time() - 76632)), 'utf-8')
-    elif command == ['sysctl', '-n', 'vm.loadavg']:
-        return b'0.7 0.9 0.8\n'
     elif command == ['sysctl', '-n', 'hw.physmem']:
         return b'543214321\n'
-    elif command == ['vmstat']:
-        return b' procs    memory       page                    disks    traps          cpu\n r b w    avm     fre  flt  re  pi  po  fr  sr wd0 cd0  int   sys   cs us sy id\n 0 0 0   121212  123456   47   0   0   0   0   0   2   0    2    80   14  0  1 99\n'
-    elif command == ['swapctl', '-s', '-k']:
-        return b'total: 553507 1K-blocks allocated, 2 used, 553505 available'
     elif command == ['ifconfig']:
         return b'qB2osV6vUOjqm3P/+tQ4d92xoYz8/U8P9v3KWRpNwlI=\n'
-    elif command == ['route', '-n', 'show']:
-        return b'XfizswwNA9NkXz6K36ZExpjV08Y5IXkHI8jjDSV+5Nc=\n'
     elif command == ['netstat', '-s']:
         return b'osuxbrcc1g9VgaF4yf3FrtfodrfATrbSnjhqhuQSAs8=\n'
     elif command == ['netstat', '-an']:
         return b'Z+w0lwa02/T+5+EIio84rrst/Dtizoz/aL9Im7J7ESA=\n'
     else:
-        assert False, 'Unhandled command'
+        return None
+
+def _my_openbsd_subprocess_check_output(command):
+    assert type(command) == list, 'command argument is not a list'
+    bsd_output = _my_bsd_subprocess_check_output(command)
+    if command == ['sysctl', '-n', 'kern.boottime']:
+        return bytes(str(int(time.time() - 76632)), 'utf-8')
+    elif command == ['sysctl', '-n', 'vm.loadavg']:
+        return b'0.7 0.9 0.8\n'
+    elif command == ['vmstat']:
+        return b' procs    memory       page                    disks    traps          cpu\n r b w    avm     fre  flt  re  pi  po  fr  sr wd0 cd0  int   sys   cs us sy id\n 0 0 0   121212  123456   47   0   0   0   0   0   2   0    2    80   14  0  1 99\n'
+    elif command == ['swapctl', '-s', '-k']:
+        return b'total: 553507 1K-blocks allocated, 2 used, 553505 available'
+    elif command == ['route', '-n', 'show']:
+        return b'XfizswwNA9NkXz6K36ZExpjV08Y5IXkHI8jjDSV+5Nc=\n'
+    else:
+        if bsd_output is not None:
+            return bsd_output
+        else:
+            assert False, 'Unhandled command'
 
 def _my_freebsd_platform_system():
     return 'FreeBSD'
 
 def _my_freebsd_os_sysconf(key):
     if key == 'SC_NPROCESSORS_CONF':
-        return 91
+        return NPROCESSORS_FREEBSD
     assert False, 'Unhandled key'
 
-def _my_freebsd_subprocess_check_output(command):
+def _my_freebsd_osx_subprocess_check_output(command):
+    '''subprocess output shared for freebsd and osx'''
     assert type(command) == list, 'command argument is not a list'
-    if command == ['hostname']:
-        return b'daemon.example.com\n'
-    elif command == ['sysctl', '-n', 'kern.smp.active']:
-        return b'1\n'
-    elif command == ['sysctl', '-n', 'kern.boottime']:
+    if command == ['sysctl', '-n', 'kern.boottime']:
         return bytes('{ sec = ' + str(int(time.time() - 76632)) + ', usec = 0 }\n', 'utf-8')
     elif command == ['sysctl', '-n', 'vm.loadavg']:
         return b'{ 0.2 0.4 0.6 }\n'
-    elif command == ['sysctl', '-n', 'hw.physmem']:
-        return b'987654321\n'
+    elif command == ['netstat', '-nr']:
+        return b'XfizswwNA9NkXz6K36ZExpjV08Y5IXkHI8jjDSV+5Nc=\n'
+    else:
+        return _my_bsd_subprocess_check_output(command)
+
+def _my_freebsd_subprocess_check_output(command):
+    assert type(command) == list, 'command argument is not a list'
+    if command == ['sysctl', '-n', 'kern.smp.active']:
+        return b'1\n'
     elif command == ['vmstat', '-H']:
         return b' procs    memory       page                    disks    traps          cpu\n r b w    avm     fre  flt  re  pi  po  fr  sr wd0 cd0  int   sys   cs us sy id\n 0 0 0   343434  123456   47   0   0   0   0   0   2   0    2    80   14  0  1 99\n'
     elif command == ['swapctl', '-s', '-k']:
         return b'Total:         1013216    0\n'
-    elif command == ['ifconfig']:
-        return b'qB2osV6vUOjqm3P/+tQ4d92xoYz8/U8P9v3KWRpNwlI=\n'
-    elif command == ['netstat', '-nr']:
-        return b'XfizswwNA9NkXz6K36ZExpjV08Y5IXkHI8jjDSV+5Nc=\n'
-    elif command == ['netstat', '-s']:
-        return b'osuxbrcc1g9VgaF4yf3FrtfodrfATrbSnjhqhuQSAs8=\n'
-    elif command == ['netstat', '-an']:
-        return b'Z+w0lwa02/T+5+EIio84rrst/Dtizoz/aL9Im7J7ESA=\n'
     else:
-        assert False, 'Unhandled command'
+        freebsd_osx_output = _my_freebsd_osx_subprocess_check_output(command)
+        if freebsd_osx_output is not None:
+            return freebsd_osx_output
+        else:
+            assert False, 'Unhandled command'
 
 def _my_osx_platform_system():
     return 'Darwin'
 
 def _my_osx_os_sysconf(key):
     if key == 'SC_NPROCESSORS_CONF':
-        return 91
+        return NPROCESSORS_OSX
     assert False, 'Unhandled key'
 
 def _my_osx_subprocess_check_output(command):
     assert type(command) == list, 'command argument is not a list'
-    if command == ['hostname']:
-        return b'daemon.example.com\n'
-    elif command == ['sysctl', '-n', 'hw.physmem']:
-        return b'987654321\n'
-    elif command == ['sysctl', '-n', 'hw.memsize']:
-        # Something different than physmem
+    if command == ['sysctl', '-n', 'hw.memsize']:
+        # Something different than physmem from bsd
         return b'123456789\n'
-    elif command == ['ifconfig']:
-        return b'qB2osV6vUOjqm3P/+tQ4d92xoYz8/U8P9v3KWRpNwlI=\n'
-    elif command == ['netstat', '-s']:
-        return b'osuxbrcc1g9VgaF4yf3FrtfodrfATrbSnjhqhuQSAs8=\n'
-    elif command == ['netstat', '-an']:
-        return b'Z+w0lwa02/T+5+EIio84rrst/Dtizoz/aL9Im7J7ESA=\n'
-    elif command == ['sysctl', '-n', 'kern.smp.active']:
-        return b'0\n'
-    elif command == ['sysctl', '-n', 'kern.boottime']:
-        return bytes('{ sec = ' + str(int(time.time() - 76632)) + ', usec = 0 }\n', 'utf-8')
-    elif command == ['sysctl', '-n', 'vm.loadavg']:
-        return b'{ 0.2 0.4 0.6 }\n'
     elif command == ['vm_stat']:
         return b'Mach Virtual Memory Statistics: (page size of 4096 bytes)\nPages free: 12345.\nPages speculative: 11111.\n'
     elif command == ['sysctl', '-n', 'vm.swapusage']:
         return b'total = 18432.00M  used = 17381.23M  free = 1050.77M\n'
-    elif command == ['netstat', '-nr']:
-        return b'XfizswwNA9NkXz6K36ZExpjV08Y5IXkHI8jjDSV+5Nc=\n'
     else:
-        assert False, 'Unhandled command: ' + str(command)
+        freebsd_osx_output = _my_freebsd_osx_subprocess_check_output(command)
+        if freebsd_osx_output is not None:
+            return freebsd_osx_output
+        else:
+            assert False, 'Unhandled command'
 
 class SysInfoTest(unittest.TestCase):
     def test_sysinfo(self):
@@ -273,7 +276,7 @@ class SysInfoTest(unittest.TestCase):
         subprocess.check_output = _my_linux_subprocess_check_output
 
         s = SysInfoFromFactory()
-        self.assertEqual(42, s.get_num_processors())
+        self.assertEqual(NPROCESSORS_LINUX, s.get_num_processors())
         self.assertEqual('myhostname', s.get_platform_hostname())
         self.assertTrue(s.get_platform_is_smp())
         self.assertEqual(86401, s.get_uptime())
@@ -321,7 +324,7 @@ class SysInfoTest(unittest.TestCase):
         subprocess.check_output = _my_openbsd_subprocess_check_output
 
         s = SysInfoFromFactory()
-        self.assertEqual(53, s.get_num_processors())
+        self.assertEqual(NPROCESSORS_OPENBSD, s.get_num_processors())
         self.assertEqual('blowfish.example.com', s.get_platform_hostname())
         self.assertFalse(s.get_platform_is_smp())
 
@@ -369,14 +372,14 @@ class SysInfoTest(unittest.TestCase):
         subprocess.check_output = _my_freebsd_subprocess_check_output
 
         s = SysInfoFromFactory()
-        self.assertEqual(91, s.get_num_processors())
-        self.assertEqual('daemon.example.com', s.get_platform_hostname())
+        self.assertEqual(NPROCESSORS_FREEBSD, s.get_num_processors())
+        self.assertEqual('blowfish.example.com', s.get_platform_hostname())
         self.assertTrue(s.get_platform_is_smp())
 
         self.assertLess(abs(76632 - s.get_uptime()), 4)
         self.assertEqual([0.2, 0.4, 0.6], s.get_loadavg())
-        self.assertEqual(987654321, s.get_mem_total())
-        self.assertEqual(987654321 - (343434 * 1024), s.get_mem_free())
+        self.assertEqual(543214321, s.get_mem_total())
+        self.assertEqual(543214321 - (343434 * 1024), s.get_mem_free())
         self.assertEqual(-1, s.get_mem_cached())
         self.assertEqual(-1, s.get_mem_buffers())
         self.assertEqual(1037533184, s.get_mem_swap_total())
@@ -417,8 +420,8 @@ class SysInfoTest(unittest.TestCase):
         subprocess.check_output = _my_osx_subprocess_check_output
 
         s = SysInfoFromFactory()
-        self.assertEqual(91, s.get_num_processors())
-        self.assertEqual('daemon.example.com', s.get_platform_hostname())
+        self.assertEqual(NPROCESSORS_OSX, s.get_num_processors())
+        self.assertEqual('blowfish.example.com', s.get_platform_hostname())
         self.assertFalse(s.get_platform_is_smp())
 
         self.assertLess(abs(76632 - s.get_uptime()), 4)
