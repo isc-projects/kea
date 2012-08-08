@@ -346,6 +346,12 @@ private:
     /// \param base Base string given as -b duid=0F1234
     /// \throws isc::InvalidParameter if DUID is invalid
     void decodeDuid(const std::string& base);
+    
+    /// \brief Generates DUID-LLT (based on link layer address).
+    ///
+    /// Function generates DUID based on link layer address and
+    /// initiates duid_prefix_ value with it.
+    void generateDuidPrefix();
 
     /// \brief Converts two-digit hexadecimal string to a byte
     ///
