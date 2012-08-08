@@ -16,8 +16,9 @@
 
 #include <dns/name.h>
 
-#include <datasrc/zonetable.h>
-#include <datasrc/rbtree.h>
+#include <datasrc/memory/zone_data.h>
+#include <datasrc/memory/zone_table.h>
+#include <datasrc/memory/domaintree.h>
 
 #include <cassert>
 
@@ -26,19 +27,27 @@ using namespace isc::dns;
 
 namespace isc {
 namespace datasrc {
+namespace memory {
+
+namespace {
+struct ZoneDataDeleter {
+    ZoneDataDeleter() {}
+    void operator()(util::MemorySegment&, ZoneData*) const {}
+};
+}
 
 /// \short Private data and implementation of ZoneTable
 struct ZoneTable::ZoneTableImpl {
     // Type aliases to make it shorter
-    typedef RBTree<ZoneFinder> ZoneTree;
-    typedef RBNode<ZoneFinder> ZoneNode;
+    typedef DomainTree<ZoneData, ZoneDataDeleter> ZoneTableTree;
+    typedef DomainTreeNode<ZoneData, ZoneDataDeleter> ZoneTableNode;
 
     // The actual storage
-    ZoneTree* zones_;
+    ZoneTableTree* zones_;
 
     // Constructor
     ZoneTableImpl(util::MemorySegment& mem_sgmt) :
-        zones_(ZoneTree::create(mem_sgmt))
+        zones_(ZoneTableTree::create(mem_sgmt))
     {}
 
     /*
@@ -48,30 +57,32 @@ struct ZoneTable::ZoneTableImpl {
      */
 
     // Implementation of ZoneTable::addZone
-    result::Result addZone(util::MemorySegment& mem_sgmt, ZoneFinderPtr zone) {
+    result::Result addZone(util::MemorySegment& mem_sgmt,
+                           const Name& zone_name, ZoneData* zone_data)
+    {
         // Sanity check
-        if (!zone) {
+        if (zone_data == NULL) {
             isc_throw(InvalidParameter,
                       "Null pointer is passed to ZoneTable::addZone()");
         }
 
         // Get the node where we put the zone
-        ZoneNode* node(NULL);
-        switch (zones_->insert(mem_sgmt, zone->getOrigin(), &node)) {
+        ZoneTableNode* node(NULL);
+        switch (zones_->insert(mem_sgmt, zone_name, &node)) {
             // This is OK
-            case ZoneTree::SUCCESS:
-            case ZoneTree::ALREADYEXISTS:
+            case ZoneTableTree::SUCCESS:
+            case ZoneTableTree::ALREADYEXISTS:
                 break;
             // Can Not Happen
             default:
                 assert(0);
         }
         // Can Not Happen
-        assert(node);
+        assert(node != NULL);
 
         // Is it empty? We either just created it or it might be nonterminal
         if (node->isEmpty()) {
-            node->setData(zone);
+            node->setData(mem_sgmt, zone_data);
             return (result::SUCCESS);
         } else { // There's something there already
             return (result::EXIST);
@@ -80,19 +91,19 @@ struct ZoneTable::ZoneTableImpl {
 
     // Implementation of ZoneTable::findZone
     ZoneTable::FindResult findZone(const Name& name) const {
-        ZoneNode *node(NULL);
+        ZoneTableNode* node(NULL);
         result::Result my_result;
 
         // Translate the return codes
         switch (zones_->find(name, &node)) {
-            case ZoneTree::EXACTMATCH:
+            case ZoneTableTree::EXACTMATCH:
                 my_result = result::SUCCESS;
                 break;
-            case ZoneTree::PARTIALMATCH:
+            case ZoneTableTree::PARTIALMATCH:
                 my_result = result::PARTIALMATCH;
                 break;
             // We have no data there, so translate the pointer to NULL as well
-            case ZoneTree::NOTFOUND:
+            case ZoneTableTree::NOTFOUND:
                 return (FindResult(result::NOTFOUND, ZoneFinderPtr()));
             // Can Not Happen
             default:
@@ -102,9 +113,11 @@ struct ZoneTable::ZoneTableImpl {
         }
 
         // Can Not Happen (remember, NOTFOUND is handled)
-        assert(node);
+        assert(node != NULL);
 
-        return (FindResult(my_result, node->getData()));
+        // Temporarily return an easy fake value
+        return (FindResult(result::NOTFOUND, ZoneFinderPtr()));
+        //return (FindResult(my_result, node->getData()));
     }
 };
 
@@ -133,14 +146,16 @@ ZoneTable::create(util::MemorySegment& mem_sgmt) {
 
 void
 ZoneTable::destroy(util::MemorySegment& mem_sgmt, ZoneTable* ztable) {
-    ZoneTableImpl::ZoneTree::destroy(mem_sgmt, ztable->impl_->zones_);
+    ZoneTableImpl::ZoneTableTree::destroy(mem_sgmt, ztable->impl_->zones_);
     ztable->~ZoneTable();
     mem_sgmt.deallocate(ztable, sizeof(ZoneTable));
 }
 
 result::Result
-ZoneTable::addZone(util::MemorySegment& mem_sgmt, ZoneFinderPtr zone) {
-    return (impl_->addZone(mem_sgmt, zone));
+ZoneTable::addZone(util::MemorySegment& mem_sgmt, const Name& zone_name,
+                   ZoneData* zone_data)
+{
+    return (impl_->addZone(mem_sgmt, zone_name, zone_data));
 }
 
 result::Result
@@ -156,5 +171,6 @@ ZoneTable::findZone(const Name& name) const {
     return (impl_->findZone(name));
 }
 
+} // end of namespace memory
 } // end of namespace datasrc
 } // end of namespace isc
