@@ -22,10 +22,22 @@ namespace isc {
 namespace datasrc {
 namespace memory {
 class ZoneData {
-public:
+private:
     ZoneData(const dns::Name& zone_name) :
         zone_name_(zone_name)
     {}
+public:
+    static ZoneData* create(util::MemorySegment& mem_sgmt,
+                            const dns::Name& zone_name)
+    {
+        void* p = mem_sgmt.allocate(sizeof(ZoneData));
+        ZoneData* zone_data = new(p) ZoneData(zone_name);
+        return (zone_data);
+    }
+    static void destroy(util::MemorySegment& mem_sgmt, ZoneData* zone_data) {
+        zone_data->~ZoneData();
+        mem_sgmt.deallocate(zone_data, sizeof(ZoneData));
+    }
 
 private:
     const dns::Name zone_name_;
