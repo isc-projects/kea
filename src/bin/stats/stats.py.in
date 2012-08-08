@@ -491,12 +491,11 @@ class Stats:
         """
         handle show command
         """
-        # decide if polling should be done by the the last time of
-        # polling. If more than one seconds past since the last
-        # request to each module, the stats module requests each
-        # module statistics data and then shows the latest
-        # result. Otherwise, the stats module just shows statistics
-        # data which it has.
+        # decide if polling should be done based on the the last time of
+        # polling. If more than one second has passed since the last
+        # request to each module, the stats module requests each module
+        # statistics data and then shows the latest result. Otherwise,
+        # the stats module just shows statistics data which it has.
         if get_timestamp() - self._lasttime_poll > 1.0:
             self.do_polling()
         if owner or name:
