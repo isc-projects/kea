@@ -269,8 +269,8 @@ class Stats:
             while self.running:
                 _check_command()
                 now = get_timestamp()
-                if self.get_interval() > 0 and now >= self.next_polltime:
-                    intval = self.get_interval()
+                intval = self.get_interval()
+                if intval > 0 and now >= self.next_polltime:
                     # decide the next polling timestamp
                     self.next_polltime += intval
                     # adjust next time
