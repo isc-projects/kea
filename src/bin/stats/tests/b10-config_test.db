@@ -1,1 +1,0 @@
-{"version": 2, "Boss": {"components": {"b10-auth": {"kind": "needed", "special": "auth"}, "b10-auth-2": {"kind": "needed", "special": "auth"}}}}
