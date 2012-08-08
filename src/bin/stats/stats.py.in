@@ -205,8 +205,6 @@ class Stats:
                         self.module_name)
         # define the variable of the last time of polling
         self._lasttime_poll = 0.0
-        # try to do polling firstly
-        self.do_polling()
 
     def get_interval(self):
         """return the current value of 'poll-interval'"""
