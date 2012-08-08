@@ -68,6 +68,11 @@ public:
         /// \return name of the interface where socket is bound to.
         const std::string& getIface() const { return(iface_); }
 
+        /// \brief Return interface index where socket is bound to.
+        ///
+        /// \return index fo the interface where sockert is bound to.
+        int getIfIndex() const { return(ifindex_); }
+
         /// \brief Return address where socket is bound to.
         ///
         /// \return address where socket is bound to.
@@ -91,6 +96,7 @@ public:
 
         int socket_;               ///< Socket descirptor.
         std::string iface_;        ///< Name of the interface.
+        int ifindex_;              ///< Index of the interface.
         asiolink::IOAddress addr_; ///< Address bound.
     };
 
@@ -231,11 +237,16 @@ private:
     /// to create a socket, depending on what is available (specified
     /// from the command line). If socket can't be created for any
     /// reason, exception is thrown.
+    /// If destination address is broadcast (for DHCPv4) or multicast
+    /// (for DHCPv6) than broadcast or multicast option is set on
+    /// the socket.
     ///
     /// \throw isc::BadValue if socket can't be created for given
     /// interface, local address or remote address.
     /// \throw isc::InvalidOperation if broadcast option can't be
-    /// set for the socket.
+    /// set for the v4 socket or if multicast option cat't be set
+    /// for the v6 socket.
+    /// \throw isc::Unexpected if interal unexpected error occured.
     /// \return socket descriptor.
     int openSocket() const;
 
