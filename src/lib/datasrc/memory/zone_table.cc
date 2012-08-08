@@ -70,7 +70,7 @@ ZoneTable::destroy(util::MemorySegment& mem_sgmt, ZoneTable* ztable) {
     mem_sgmt.deallocate(ztable, sizeof(ZoneTable));
 }
 
-result::Result
+ZoneTable::AddResult
 ZoneTable::addZone(util::MemorySegment& mem_sgmt, const Name& zone_name) {
     // Create a new ZoneData instance first.  If the specified name already
     // exists in the table, the new data will soon be destroyed, but we want
@@ -96,10 +96,10 @@ ZoneTable::addZone(util::MemorySegment& mem_sgmt, const Name& zone_name) {
 
     // Is it empty? We either just created it or it might be nonterminal
     if (node->isEmpty()) {
-        node->setData(mem_sgmt, holder.release());
-        return (result::SUCCESS);
+        node->setData(mem_sgmt, holder.get());
+        return (AddResult(result::SUCCESS, holder.release()));
     } else { // There's something there already
-        return (result::EXIST);
+        return (AddResult(result::EXIST, node->getData()));
     }
 }
 

@@ -46,6 +46,7 @@ class ZoneData;
 /// corresponding struct and interfaces of \c MemoryDataSrc.
 class ZoneTable {
 private:
+    // The deleter for the zone data stored in the table.
     struct ZoneDataDeleter {
         ZoneDataDeleter() {}
         void operator()(util::MemorySegment& mem_sgmt,
@@ -60,6 +61,13 @@ private:
     typedef DomainTreeNode<ZoneData, ZoneDataDeleter> ZoneTableNode;
 
 public:
+    struct AddResult {
+        AddResult(result::Result param_code, ZoneData* param_zone_data) :
+            code(param_code), zone_data(param_zone_data)
+        {}
+        const result::Result code;
+        ZoneData* const zone_data;
+    };
     struct FindResult {
         FindResult(result::Result param_code, const ZoneFinderPtr param_zone) :
             code(param_code), zone(param_zone)
@@ -123,8 +131,8 @@ public:
     /// added to the zone table.
     /// \return \c result::EXIST The zone table already contains
     /// zone of the same origin.
-    result::Result addZone(util::MemorySegment& mem_sgmt,
-                           const dns::Name& zone_name);
+    AddResult addZone(util::MemorySegment& mem_sgmt,
+                      const dns::Name& zone_name);
 
     /// Remove a \c Zone of the given origin name from the \c ZoneTable.
     ///
