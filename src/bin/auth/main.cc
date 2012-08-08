@@ -123,9 +123,7 @@ main(int argc, char* argv[]) {
     // XXX: we should eventually pass io_service here.
     Session* cc_session = NULL;
     Session* xfrin_session = NULL;
-    Session* statistics_session = NULL;
     bool xfrin_session_established = false; // XXX (see Trac #287)
-    bool statistics_session_established = false; // XXX (see Trac #287)
     ModuleCCSession* config_session = NULL;
     XfroutClient xfrout_client(getXfroutSocketPath());
     SocketSessionForwarder ddns_forwarder(getDDNSSocketPath());
@@ -173,14 +171,7 @@ main(int argc, char* argv[]) {
         xfrin_session_established = true;
         LOG_DEBUG(auth_logger, DBG_AUTH_START, AUTH_XFRIN_CHANNEL_ESTABLISHED);
 
-        statistics_session = new Session(io_service.get_io_service());
-        LOG_DEBUG(auth_logger, DBG_AUTH_START, AUTH_STATS_CHANNEL_CREATED);
-        statistics_session->establish(NULL);
-        statistics_session_established = true;
-        LOG_DEBUG(auth_logger, DBG_AUTH_START, AUTH_STATS_CHANNEL_ESTABLISHED);
-
         auth_server->setXfrinSession(xfrin_session);
-        auth_server->setStatisticsSession(statistics_session);
 
         // Configure the server.  configureAuthServer() is expected to install
         // all initial configurations, but as a short term workaround we
@@ -226,16 +217,11 @@ main(int argc, char* argv[]) {
         ret = 1;
     }
 
-    if (statistics_session_established) {
-        statistics_session->disconnect();
-    }
-
     if (xfrin_session_established) {
         xfrin_session->disconnect();
     }
 
     DataSourceConfigurator::cleanup();
-    delete statistics_session;
     delete xfrin_session;
     delete config_session;
     delete cc_session;

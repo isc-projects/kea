@@ -79,20 +79,6 @@ TEST_F(AuthConfigTest, versionConfig) {
                         Element::fromJSON("{\"version\": 0}")));
 }
 
-TEST_F(AuthConfigTest, exceptionGuarantee) {
-    server.setStatisticsTimerInterval(1234);
-    EXPECT_EQ(1234, server.getStatisticsTimerInterval());
-    // This configuration contains an invalid item, which will trigger
-    // an exception.
-    EXPECT_THROW(configureAuthServer(
-                     server,
-                     Element::fromJSON(
-                         "{ \"no_such_config_var\": 1}")),
-                 AuthConfigError);
-    // The server state shouldn't change
-    EXPECT_EQ(1234, server.getStatisticsTimerInterval());
-}
-
 TEST_F(AuthConfigTest, badConfig) {
     // These should normally not happen, but should be handled to avoid
     // an unexpected crash due to a bug of the caller.
@@ -142,41 +128,4 @@ protected:
     AuthConfigParser* parser;
 };
 
-TEST_F(StatisticsIntervalConfigTest, setInterval) {
-    // initially the timer is not configured.
-    EXPECT_EQ(0, server.getStatisticsTimerInterval());
-
-    // initialize the timer
-    parser->build(Element::fromJSON("5"));
-    parser->commit();
-    EXPECT_EQ(5, server.getStatisticsTimerInterval());
-
-    // reset the timer with a new interval
-    delete parser;
-    parser = createAuthConfigParser(server, "statistics-interval");
-    ASSERT_NE(static_cast<void*>(NULL), parser);
-    parser->build(Element::fromJSON("10"));
-    parser->commit();
-    EXPECT_EQ(10, server.getStatisticsTimerInterval());
-
-    // disable the timer again
-    delete parser;
-    parser = createAuthConfigParser(server, "statistics-interval");
-    ASSERT_NE(static_cast<void*>(NULL), parser);
-    parser->build(Element::fromJSON("0"));
-    parser->commit();
-    EXPECT_EQ(0, server.getStatisticsTimerInterval());
-}
-
-TEST_F(StatisticsIntervalConfigTest, badInterval) {
-    EXPECT_THROW(parser->build(Element::fromJSON("\"should be integer\"")),
-                 isc::data::TypeError);
-    EXPECT_THROW(parser->build(Element::fromJSON("2.5")),
-                 isc::data::TypeError);
-    EXPECT_THROW(parser->build(Element::fromJSON("-1")), AuthConfigError);
-    // bounds check: interval value must be equal to or shorter than
-    // 86400 seconds (1 day)
-    EXPECT_NO_THROW(parser->build(Element::fromJSON("86400")));
-    EXPECT_THROW(parser->build(Element::fromJSON("86401")), AuthConfigError);
-}
 }
