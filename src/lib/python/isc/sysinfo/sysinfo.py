@@ -446,7 +446,7 @@ class SysInfoOSX(SysInfoFreeBSDOSX):
             # store all values in a dict
             values = {}
             page_size = None
-            page_size_re = re.compile('page size of [0-9]+ bytes')
+            page_size_re = re.compile('.*page size of ([0-9]+) bytes')
             for line in lines:
                 page_size_m = page_size_re.match(line)
                 if page_size_m:
@@ -456,7 +456,7 @@ class SysInfoOSX(SysInfoFreeBSDOSX):
                     values[key] = value.strip()[:-1]
             # Only calculate memory if page size is known
             if page_size is not None:
-                self._mem_free = int(values['Pages free']) * page_size +
+                self._mem_free = int(values['Pages free']) * page_size +\
                                  int(values['Pages speculative']) * page_size
         except (subprocess.CalledProcessError, OSError):
             pass
