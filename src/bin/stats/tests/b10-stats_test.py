@@ -587,11 +587,11 @@ class TestStats(unittest.TestCase):
                 0, {'Stats': {'timestamp':self.const_timestamp}}))
         stats.get_datetime = orig_get_datetime
         stats.get_timestamp = orig_get_timestamp
-        self.stats.mccs.specification = isc.config.module_spec.ModuleSpec(
+        self.stats.modules[self.stats.module_name] = isc.config.module_spec.ModuleSpec(
             { "module_name": self.stats.module_name,
               "statistics": [] } )
         self.assertRaises(
-            stats.StatsError, self.stats.command_show, owner='Foo', name='bar')
+            stats.StatsError, self.stats.command_show, owner=self.stats.module_name, name='bar')
 
     def test_command_showchema(self):
         self.stats = stats.Stats()
