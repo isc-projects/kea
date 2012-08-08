@@ -843,11 +843,10 @@ class TestStats(unittest.TestCase):
         for i in list_auth:
             auth = getattr(self.base,"auth"+i).server
             for s in stat.statistics_data_bymid['Auth'].values():
-                for t in s.values():
-                    self.assertEqual(
-                        s, {'queries.perzone': auth.queries_per_zone,
-                            'queries.tcp': auth.queries_tcp,
-                            'queries.udp': auth.queries_udp})
+                self.assertEqual(
+                    s, {'queries.perzone': auth.queries_per_zone,
+                        'queries.tcp': auth.queries_tcp,
+                        'queries.udp': auth.queries_udp})
             n = len(stat.statistics_data_bymid['Auth'])
             self.assertEqual(n, len(list_auth))
             # check consolidation of statistics data of the auth
