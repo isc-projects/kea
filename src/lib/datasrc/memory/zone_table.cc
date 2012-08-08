@@ -33,19 +33,32 @@ ZoneTable::ZoneTable(util::MemorySegment& mem_sgmt) :
     zones_(ZoneTableTree::create(mem_sgmt))
 {}
 
+namespace {
+// A simple holder to make resource allocation for ZoneTable exception safe.
+// It works like std::auto_ptr but much more simplified.
+struct ZoneTableHolder {
+    ZoneTableHolder(util::MemorySegment& mem_sgmt, void* ptr) :
+        mem_sgmt_(mem_sgmt), ptr_(ptr)
+    {}
+    ~ZoneTableHolder() {
+        if (ptr_ != NULL) {
+            mem_sgmt_.deallocate(ptr_, sizeof(ZoneTable));
+        }
+    }
+    void* get() { return (ptr_); }
+    void release() { ptr_ = NULL; }
+private:
+    util::MemorySegment& mem_sgmt_;
+    void* ptr_;
+};
+}
+
 ZoneTable*
 ZoneTable::create(util::MemorySegment& mem_sgmt) {
-    // The ZoneTable constructor can throw, so we need to prevent memory leak.
-    // This is ugly, but for now this seems to be the only place we need
-    // this, and since we'll substantially revise this code soon, so we don't
-    // work around it by this hack at the moment.
-    void* p = mem_sgmt.allocate(sizeof(ZoneTable));
-    try {
-        return (new(p) ZoneTable(mem_sgmt));
-    } catch (...) {
-        mem_sgmt.deallocate(p, sizeof(ZoneTable));
-        throw;
-    }
+    ZoneTableHolder holder(mem_sgmt, mem_sgmt.allocate(sizeof(ZoneTable)));
+    ZoneTable* zone_table = new(holder.get()) ZoneTable(mem_sgmt);
+    holder.release();
+    return (zone_table);
 }
 
 void
@@ -73,7 +86,7 @@ ZoneTable::addZone(util::MemorySegment& mem_sgmt, const Name& zone_name,
         break;
         // Can Not Happen
     default:
-        assert(0);
+        assert(false);
     }
     // Can Not Happen
     assert(node != NULL);
@@ -90,7 +103,7 @@ ZoneTable::addZone(util::MemorySegment& mem_sgmt, const Name& zone_name,
 result::Result
 ZoneTable::removeZone(const Name&) {
     // TODO Implement
-    assert(0);
+    assert(false);
     // This should not ever be returned, the assert should kill us by now
     return (result::SUCCESS);
 }
