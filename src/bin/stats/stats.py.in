@@ -195,6 +195,7 @@ class Stats:
         # set a absolute timestamp polling at next time
         self.next_polltime = get_timestamp() + self.get_interval()
         # initialized Statistics data
+        self.update_modules()
         if self.update_statistics_data(
             self.module_name,
             self.cc_session.lname,
@@ -288,6 +289,7 @@ class Stats:
                 pass
 
         # update statistics data
+        self.update_modules()
         while len(_statistics_data) > 0:
             (_module_name, _lname, _args) = _statistics_data.pop(0)
             if self.update_statistics_data(_module_name, _lname, _args):
@@ -412,7 +414,7 @@ class Stats:
         module. If it can't find specified statistics data, it raises
         StatsError.
         """
-        self.update_statistics_data()
+        self.update_modules()
         if owner and name:
             try:
                 return {owner:{name:self.statistics_data[owner][name]}}
@@ -472,7 +474,6 @@ class Stats:
             return ret
 
         # Firstly, it gets default statistics data in each spec file.
-        self.update_modules()
         statistics_data = {}
         for (name, module) in self.modules.items():
             value = get_spec_defaults(module.get_statistics_spec())
