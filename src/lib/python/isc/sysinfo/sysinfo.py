@@ -394,7 +394,7 @@ class SysInfoFreeBSD(SysInfoFreeBSDOSX):
     See the SysInfo class documentation for more information.
     """
     def __init__(self):
-        super().__init()
+        super().__init__()
 
         try:
             s = subprocess.check_output(['sysctl', '-n', 'kern.smp.active'])
