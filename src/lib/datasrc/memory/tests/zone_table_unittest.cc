@@ -83,7 +83,7 @@ TEST_F(ZoneTableTest, DISABLED_removeZone) {
     EXPECT_EQ(result::NOTFOUND, zone_table->removeZone(Name("example.net")));
 }
 
-TEST_F(ZoneTableTest, findZone) {
+TEST_F(ZoneTableTest, DISABLED_findZone) {
     EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, zname1, zone1));
     EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, zname2, zone2));
     EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, zname3, zone3));
