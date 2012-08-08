@@ -86,14 +86,21 @@ TEST_F(ZoneTableTest, create) {
 }
 
 TEST_F(ZoneTableTest, addZone) {
-    EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, zname1));
-    EXPECT_EQ(result::EXIST, zone_table->addZone(mem_sgmt_, zname1));
+    // Normal successful case.
+    const ZoneTable::AddResult result1 =
+        zone_table->addZone(mem_sgmt_, zname1);
+    EXPECT_EQ(result::SUCCESS, result1.code);
+
+    // Duplicate add doesn't replace the existing data.
+    EXPECT_EQ(result::EXIST, zone_table->addZone(mem_sgmt_, zname1).code);
+    EXPECT_EQ(result1.zone_data,
+              zone_table->addZone(mem_sgmt_, zname1).zone_data);
     // names are compared in a case insensitive manner.
     EXPECT_EQ(result::EXIST, zone_table->addZone(mem_sgmt_,
-                                                 Name("EXAMPLE.COM")));
+                                                 Name("EXAMPLE.COM")).code);
     // Add some more different ones.  Should just succeed.
-    EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, zname2));
-    EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, zname3));
+    EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, zname2).code);
+    EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, zname3).code);
 
     // Have the memory segment throw an exception in extending the internal
     // tree.  It still shouldn't cause memory leak (which would be detected
@@ -104,18 +111,18 @@ TEST_F(ZoneTableTest, addZone) {
 }
 
 TEST_F(ZoneTableTest, DISABLED_removeZone) {
-    EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, zname1));
-    EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, zname2));
-    EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, zname3));
+    EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, zname1).code);
+    EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, zname2).code);
+    EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, zname3).code);
 
     EXPECT_EQ(result::SUCCESS, zone_table->removeZone(Name("example.net")));
     EXPECT_EQ(result::NOTFOUND, zone_table->removeZone(Name("example.net")));
 }
 
 TEST_F(ZoneTableTest, DISABLED_findZone) {
-    EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, zname1));
-    EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, zname2));
-    EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, zname3));
+    EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, zname1).code);
+    EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, zname2).code);
+    EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, zname3).code);
 
     EXPECT_EQ(result::SUCCESS, zone_table->findZone(Name("example.com")).code);
     EXPECT_EQ(Name("example.com"),
@@ -135,7 +142,8 @@ TEST_F(ZoneTableTest, DISABLED_findZone) {
 
     // make sure the partial match is indeed the longest match by adding
     // a zone with a shorter origin and query again.
-    EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, Name("com")));
+    EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_,
+                                                   Name("com")).code);
     EXPECT_EQ(Name("example.com"),
               zone_table->findZone(Name("www.example.com")).zone->getOrigin());
 }
