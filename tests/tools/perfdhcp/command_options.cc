@@ -20,8 +20,10 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <exceptions/exceptions.h>
+#include <dhcp/dhcp6.h>
 #include <dhcp/iface_mgr.h>
 #include "command_options.h"
 
@@ -367,6 +369,12 @@ CommandOptions::initialize(int argc, char** argv) {
         isc_throw(InvalidParameter,
                   "without an inteface server is required");
     }
+
+    // If DUID is not specified from command line we need to
+    // generate one.
+    if (duid_prefix_.size() == 0) {
+        generateDuidPrefix();
+    }
 }
 
 void
@@ -474,6 +482,36 @@ CommandOptions::decodeDuid(const std::string& base) {
         }
         duid_prefix_.push_back(static_cast<uint8_t>(ui));
     }
+}
+
+void
+CommandOptions::generateDuidPrefix() {
+    using namespace boost::posix_time;
+    // Duid prefix will be most likely generated only once but
+    // it is ok if it is called more then once so we simply
+    //  regenerate it and discard previous value.
+    duid_prefix_.clear();
+    const uint8_t duid_prefix_len = 14;
+    duid_prefix_.resize(duid_prefix_len);
+    // The first four octets consist of DUID LLT and hardware type.
+    duid_prefix_[0] = DUID_LLT >> 8;
+    duid_prefix_[1] = DUID_LLT & 0xff;
+    duid_prefix_[2] = HWTYPE_ETHERNET >> 8;
+    duid_prefix_[3] = HWTYPE_ETHERNET & 0xff;
+    
+    // As described in RFC3315: 'the time value is the time
+    // that the DUID is generated represented in seconds
+    // since midnight (UTC), January 1, 2000, modulo 2^32.'
+    ptime now = microsec_clock::universal_time();
+    ptime duid_epoch(from_iso_string("20000101T000000"));
+    time_period period(duid_epoch, now);
+    uint32_t duration_sec = htonl(period.length().total_seconds());
+    memcpy(&duid_prefix_[4], &duration_sec, 4);
+
+    // Set link layer address (6 octets). This value may be
+    // randomized before sending a packet to simulate different
+    // clients.
+    memcpy(&duid_prefix_[8], &mac_prefix_[0], 6);
 }
 
 uint8_t

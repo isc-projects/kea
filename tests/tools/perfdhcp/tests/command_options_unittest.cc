@@ -71,10 +71,24 @@ protected:
         EXPECT_EQ(0, opt.getClientsNum());
 
         // default mac
-        uint8_t mac[6] = { 0x00, 0x0C, 0x01, 0x02, 0x03, 0x04 };
+        const uint8_t mac[6] = { 0x00, 0x0C, 0x01, 0x02, 0x03, 0x04 };
         std::vector<uint8_t> v1 = opt.getMacPrefix();
         ASSERT_EQ(6, v1.size());
         EXPECT_TRUE(std::equal(v1.begin(), v1.end(), mac));
+
+        // Check if DUID is initialized. The DUID-LLT is expected
+        // to start with DUID_LLT value of 1 and hardware ethernet
+        // type equal to 1 (HWETHER_TYPE).
+        const uint8_t duid_llt_and_hw[4] = { 0x0, 0x1, 0x0, 0x1 };
+        // We assume DUID-LLT length 14. This includes 4 octets of
+        // DUID_LLT value, two octets of hardware type, 4 octets
+        // of time value and 6 octets of variable link layer (MAC)
+        // address.
+        const int duid_llt_size = 14; 
+        std::vector<uint8_t> v2 = opt.getDuidPrefix();
+        ASSERT_EQ(duid_llt_size, opt.getDuidPrefix().size());
+        EXPECT_TRUE(std::equal(v2.begin(), v2.begin() + 4,
+                               duid_llt_and_hw));
 
         EXPECT_EQ(0, opt.getBase().size());
         EXPECT_EQ(0, opt.getNumRequests().size());
