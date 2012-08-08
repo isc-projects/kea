@@ -67,16 +67,13 @@ protected:
         rcode_(-1),
         expect_rcode_(0),
         itimer_(server_.getIOService())
-    {
-        server_.setStatisticsSession(&statistics_session_);
-    }
+    {}
     void checkAnswer(const int expected_code, const char* name = "") {
         SCOPED_TRACE(name);
 
         parseAnswer(rcode_, result_);
         EXPECT_EQ(expected_code, rcode_) << result_->str();
     }
-    MockSession statistics_session_;
     MockXfroutClient xfrout_;
     MockSocketSessionForwarder ddns_forwarder_;
     AuthSrv server_;
@@ -104,14 +101,6 @@ TEST_F(AuthCommandTest, DISABLED_unexpectedException) {
     EXPECT_THROW(execAuthServerCommand(server_, "_throw_exception",
                                        ConstElementPtr()),
                  runtime_error);
-}
-
-TEST_F(AuthCommandTest, sendStatistics) {
-    result_ = execAuthServerCommand(server_, "sendstats", ConstElementPtr());
-    // Just check some message has been sent.  Detailed tests specific to
-    // statistics are done in its own tests.
-    EXPECT_EQ("Stats", statistics_session_.getMessageDest());
-    checkAnswer(0);
 }
 
 void
@@ -424,5 +413,14 @@ TEST_F(AuthCommandTest, loadZoneInvalidParams) {
     result_ = execAuthServerCommand(server_, "loadzone",
                                     Element::fromJSON("{\"origin\": 10}"));
     checkAnswer(1, "Integral name");
+}
+
+TEST_F(AuthCommandTest, getStats) {
+    result_ = execAuthServerCommand(server_, "getstats",
+                                    ConstElementPtr());
+    parseAnswer(rcode_, result_);
+    // Just check some message has been sent.  Detailed tests specific to
+    // statistics are done in its own tests.
+    EXPECT_EQ(0, rcode_);
 }
 }

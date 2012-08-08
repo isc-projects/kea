@@ -17,7 +17,6 @@
 
 #include <string>
 
-#include <cc/data.h>
 #include <config/ccsession.h>
 #include <datasrc/factory.h>
 #include <dns/message.h>
@@ -222,45 +221,21 @@ public:
     /// is shutdown.
     void setStatisticsSession(isc::cc::AbstractSession* statistics_session);
 
-    /// Return the interval of periodic submission of statistics in seconds.
-    ///
-    /// If the statistics submission is disabled, it returns 0.
-    ///
-    /// This method never throws an exception.
-    uint32_t getStatisticsTimerInterval() const;
-
-    /// Set the interval of periodic submission of statistics.
-    ///
-    /// If the specified value is non 0, the \c AuthSrv object will submit
-    /// its statistics to the statistics module every \c interval seconds.
-    /// If it's 0, and \c AuthSrv currently submits statistics, the submission
-    /// will be disabled. \c interval must be equal to or shorter than 86400
-    /// seconds (1 day).
-    ///
-    /// This method should normally not throw an exception; however, its
-    /// underlying library routines may involve resource allocation, and
-    /// when it fails it would result in a corresponding standard exception.
-    ///
-    /// \param interval The submission interval in seconds if non 0;
-    /// or a value of 0 to disable the submission.
-    void setStatisticsTimerInterval(uint32_t interval);
-
-    /// \brief Submit statistics counters to statistics module.
+    /// \brief Returns statistics data
     ///
     /// This function can throw an exception from
-    /// AuthCounters::submitStatistics().
+    /// AuthCounters::getStatistics().
     ///
-    /// \return true on success, false on failure (e.g. session timeout,
-    /// session error).
-    bool submitStatistics() const;
+    /// \return JSON format statistics data.
+    isc::data::ElementPtr getStatistics() const;
 
     /// \brief Get the value of counter in the AuthCounters.
     ///
-    /// This function calls AuthCounters::getCounter() and
+    /// This function calls AuthCounters::getStatistics() and
     /// returns its return value.
     ///
     /// This function never throws an exception as far as
-    /// AuthCounters::getCounter() doesn't throw.
+    /// AuthCounters::getStatistics() doesn't throw.
     ///
     /// Note: Currently this function is for testing purpose only.
     ///
