@@ -810,6 +810,15 @@ public:
 
     virtual ~RRset();
 
+    /// \brief Returns the number of \c RRSIG records associated with
+    /// the \c RRset.
+    ///
+    /// Note that an \c RRset with no RRSIG records may exist, so this
+    /// method may return 0.
+    ///
+    /// \return The number of \c RRSIG records associated.
+    unsigned int getSIGRdataCount() const;
+
     /// \brief Updates the owner name of the \c RRset, including RRSIGs if any
     virtual void setName(const Name& n) {
         BasicRRset::setName(n);
