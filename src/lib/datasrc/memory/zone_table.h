@@ -99,21 +99,17 @@ public:
     /// is undefined if this condition isn't met).
     static void destroy(util::MemorySegment& mem_sgmt, ZoneTable* ztable);
 
-    /// Add a \c Zone to the \c ZoneTable.
+    /// Add a new zone to the \c ZoneTable.
     ///
-    /// \c Zone must not be associated with a NULL pointer; otherwise
-    /// an exception of class \c InvalidParameter will be thrown.
-    /// If internal resource allocation fails, a corresponding standard
-    /// exception will be thrown.
-    /// This method never throws an exception otherwise.
+    /// \throw std::bad_alloc Internal resource allocation fails.
     ///
-    /// \param zone A \c Zone object to be added.
+    /// \param zone_name The name of the zone to be added.
     /// \return \c result::SUCCESS If the zone is successfully
     /// added to the zone table.
     /// \return \c result::EXIST The zone table already contains
     /// zone of the same origin.
     result::Result addZone(util::MemorySegment& mem_sgmt,
-                           const dns::Name& zone_name, ZoneData* zone_data);
+                           const dns::Name& zone_name);
 
     /// Remove a \c Zone of the given origin name from the \c ZoneTable.
     ///
@@ -149,7 +145,11 @@ public:
 private:
     struct ZoneDataDeleter {
         ZoneDataDeleter() {}
-        void operator()(util::MemorySegment&, ZoneData*) const {}
+        void operator()(util::MemorySegment& mem_sgmt,
+                        ZoneData* zone_data) const
+        {
+            mem_sgmt.deallocate(zone_data, sizeof(ZoneData));
+        }
     };
 
     // Type aliases to make it shorter

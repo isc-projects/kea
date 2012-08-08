@@ -23,12 +23,11 @@ namespace datasrc {
 namespace memory {
 class ZoneData {
 public:
-    ZoneData(dns::RRClass zone_class, const dns::Name& zone_name) :
-        zone_class_(zone_class), zone_name_(zone_name)
+    ZoneData(const dns::Name& zone_name) :
+        zone_name_(zone_name)
     {}
 
 private:
-    const dns::RRClass zone_class_;
     const dns::Name zone_name_;
 };
 } // namespace memory
