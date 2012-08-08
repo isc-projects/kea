@@ -68,24 +68,24 @@ ZoneTable::destroy(util::MemorySegment& mem_sgmt, ZoneTable* ztable) {
 }
 
 result::Result
-ZoneTable::addZone(util::MemorySegment& mem_sgmt, const Name& zone_name,
-                   ZoneData* zone_data)
-{
-    // Sanity check
-    if (zone_data == NULL) {
-        isc_throw(InvalidParameter,
-                  "Null pointer is passed to ZoneTable::addZone()");
-    }
+ZoneTable::addZone(util::MemorySegment& mem_sgmt, const Name& zone_name) {
+    // Create a new ZoneData instance first.  If it already exists the new
+    // one will soon be destroyed, but we want to make sure if this allocation
+    // fails the tree won't be changed to provide as strong guarantee as
+    // possible.  In practice, we generally expect the caller tries to add
+    // a zone only when it's a new one, so this should be a minor concern.
+    void* p = mem_sgmt.allocate(sizeof(ZoneData)); // XXX safety
+    ZoneData* zone_data = new(p) ZoneData(zone_name);
 
     // Get the node where we put the zone
     ZoneTableNode* node(NULL);
     switch (zones_->insert(mem_sgmt, zone_name, &node)) {
-        // This is OK
     case ZoneTableTree::SUCCESS:
     case ZoneTableTree::ALREADYEXISTS:
+        // These are OK
         break;
-        // Can Not Happen
     default:
+        // Can Not Happen
         assert(false);
     }
     // Can Not Happen
@@ -96,6 +96,7 @@ ZoneTable::addZone(util::MemorySegment& mem_sgmt, const Name& zone_name,
         node->setData(mem_sgmt, zone_data);
         return (result::SUCCESS);
     } else { // There's something there already
+        mem_sgmt.deallocate(p, sizeof(ZoneData));
         return (result::EXIST);
     }
 }
