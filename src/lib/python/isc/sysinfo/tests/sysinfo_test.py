@@ -169,6 +169,9 @@ def _my_osx_subprocess_check_output(command):
         return b'daemon.example.com\n'
     elif command == ['sysctl', '-n', 'hw.physmem']:
         return b'987654321\n'
+    elif command == ['sysctl', '-n', 'hw.memsize']:
+        # Something different than physmem
+        return b'123456789\n'
     elif command == ['ifconfig']:
         return b'qB2osV6vUOjqm3P/+tQ4d92xoYz8/U8P9v3KWRpNwlI=\n'
     elif command == ['netstat', '-s']:
@@ -182,7 +185,7 @@ def _my_osx_subprocess_check_output(command):
     elif command == ['sysctl', '-n', 'vm.loadavg']:
         return b'{ 0.2 0.4 0.6 }\n'
     elif command == ['vm_stat']:
-        return b'Pages free: 12345.\n'
+        return b'Mach Virtual Memory Statistics: (page size of 4096 bytes)\nPages free: 12345.\nPages speculative: 11111.\n'
     elif command == ['sysctl', '-n', 'vm.swapusage']:
         return b'total = 18432.00M  used = 17381.23M  free = 1050.77M\n'
     elif command == ['netstat', '-nr']:
@@ -420,8 +423,8 @@ class SysInfoTest(unittest.TestCase):
 
         self.assertLess(abs(76632 - s.get_uptime()), 4)
         self.assertEqual([0.2, 0.4, 0.6], s.get_loadavg())
-        self.assertEqual(987654321, s.get_mem_total())
-        self.assertEqual((12345 * 4096), s.get_mem_free())
+        self.assertEqual(123456789, s.get_mem_total())
+        self.assertEqual((23456 * 4096), s.get_mem_free())
         self.assertEqual(-1, s.get_mem_cached())
         self.assertEqual(-1, s.get_mem_buffers())
         self.assertEqual(18874368.0, s.get_mem_swap_total())
