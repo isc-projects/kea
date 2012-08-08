@@ -404,6 +404,7 @@ class TestStats(unittest.TestCase):
 
     def test_update_statistics_data_withmid(self):
         self.stats = stats.Stats()
+        self.stats.do_polling()
         # samples of query number
         bar1_tcp = 1001
         bar2_tcp = 2001
@@ -826,8 +827,8 @@ class TestStats(unittest.TestCase):
         stat = stats_server.server
         stats_server.run()
         self.assertEqual(
-            send_command('status', 'Stats'),
-            (0, "Stats is up. (PID " + str(os.getpid()) + ")"))
+            send_command('show', 'Stats'),
+            (0, stat.statistics_data))
         # check statistics data of 'Boss'
         boss = self.base.boss.server
         self.assertEqual(
