@@ -30,6 +30,8 @@ class RRClass;
 }
 
 namespace datasrc {
+namespace memory {
+class ZoneData;
 
 /// \brief A set of authoritative zones.
 ///
@@ -114,7 +116,8 @@ public:
     /// added to the zone table.
     /// \return \c result::EXIST The zone table already contains
     /// zone of the same origin.
-    result::Result addZone(util::MemorySegment& mem_sgmt, ZoneFinderPtr zone);
+    result::Result addZone(util::MemorySegment& mem_sgmt,
+                           const dns::Name& zone_name, ZoneData* zone_data);
 
     /// Remove a \c Zone of the given origin name from the \c ZoneTable.
     ///
@@ -151,6 +154,7 @@ private:
     struct ZoneTableImpl;
     ZoneTableImpl* impl_;
 };
+}
 }
 }
 #endif  // __ZONETABLE_H
