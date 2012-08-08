@@ -145,7 +145,7 @@ public:
         /// equivalent to action != END, but it allows for more convenient
         /// code of a loop through the data.
         operator bool() const {
-            return (action() != END);
+            return (type() != END);
         }
     };
 
