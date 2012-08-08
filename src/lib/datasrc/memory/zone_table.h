@@ -12,14 +12,16 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef __ZONETABLE_H
-#define __ZONETABLE_H 1
+#ifndef __DATASRC_MEMORY_ZONE_TABLE_H
+#define __DATASRC_MEMORY_ZONE_TABLE_H 1
 
 #include <util/memory_segment.h>
 
 #include <dns/rrset.h>
 
 #include <datasrc/zone.h>
+#include <datasrc/memory/domaintree.h>
+#include <datasrc/memory/zone_table.h>
 
 #include <boost/shared_ptr.hpp>
 
@@ -71,12 +73,6 @@ private:
     /// it fails, a corresponding standard exception will be thrown.
     /// It never throws an exception otherwise.
     ZoneTable(util::MemorySegment& mem_sgmt);
-
-    /// The destructor.
-    ///
-    /// An object of this class is always expected to be destroyed explicitly
-    /// by \c destroy(), so the constructor is hidden as private.
-    ~ZoneTable();
     //@}
 
 public:
@@ -151,13 +147,21 @@ public:
     FindResult findZone(const isc::dns::Name& name) const;
 
 private:
-    struct ZoneTableImpl;
-    ZoneTableImpl* impl_;
+    struct ZoneDataDeleter {
+        ZoneDataDeleter() {}
+        void operator()(util::MemorySegment&, ZoneData*) const {}
+    };
+
+    // Type aliases to make it shorter
+    typedef DomainTree<ZoneData, ZoneDataDeleter> ZoneTableTree;
+    typedef DomainTreeNode<ZoneData, ZoneDataDeleter> ZoneTableNode;
+
+    ZoneTableTree* zones_;
 };
 }
 }
 }
-#endif  // __ZONETABLE_H
+#endif  // __DATASRC_MEMORY_ZONE_TABLE_H
 
 // Local Variables:
 // mode: c++
