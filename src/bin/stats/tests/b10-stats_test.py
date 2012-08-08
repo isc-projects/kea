@@ -375,9 +375,11 @@ class TestStats(unittest.TestCase):
         list_auth = [ self.base.auth.server,
                       self.base.auth2.server ]
         sum_qtcp = 0
-        for a in list_auth: sum_qtcp += a.queries_tcp
+        for a in list_auth:
+            sum_qtcp += a.queries_tcp
         sum_qudp = 0
-        for a in list_auth: sum_qudp += a.queries_udp
+        for a in list_auth:
+            sum_qudp += a.queries_udp
         self.stats.update_statistics_data('Auth', "bar1@foo",
                                           {'queries.tcp':bar1_tcp})
         self.assertTrue('Auth' in self.stats.statistics_data)
