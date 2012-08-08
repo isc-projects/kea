@@ -110,8 +110,8 @@
         ]
       },
       {
-        "command_name": "sendstats",
-        "command_description": "Send data to a statistics module at once",
+        "command_name": "getstats",
+        "command_description": "Retrieve statistics data",
         "command_args": []
       },
       {
