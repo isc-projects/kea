@@ -389,8 +389,6 @@ class TestStats(unittest.TestCase):
         self.assertTrue('Auth' in self.stats.statistics_data_bymid)
         self.assertTrue('bar1@foo' in self.stats.statistics_data_bymid['Auth'])
         self.assertTrue('queries.tcp' in self.stats.statistics_data_bymid['Auth']['bar1@foo'])
-        self.assertEqual(self.stats.statistics_data_bymid['Auth']['bar1@foo']['queries.tcp'],
-                         bar1_tcp)
         self.assertEqual(self.stats.statistics_data_bymid['Auth']['bar1@foo'],
                          {'queries.tcp': bar1_tcp})
         # check consolidation of statistics data even if there is
@@ -404,7 +402,6 @@ class TestStats(unittest.TestCase):
         self.assertTrue('Auth' in self.stats.statistics_data_bymid)
         self.assertTrue('bar1@foo' in self.stats.statistics_data_bymid['Auth'])
         self.assertTrue('queries.tcp' in self.stats.statistics_data_bymid['Auth']['bar1@foo'])
-        self.assertEqual(self.stats.statistics_data_bymid['Auth']['bar1@foo']['queries.tcp'], bar1_tcp)
         self.assertEqual(self.stats.statistics_data_bymid['Auth']['bar1@foo'],
                          {'queries.tcp': bar1_tcp})
         self.assertEqual(self.stats.statistics_data_bymid['Auth']['bar2@foo'],
