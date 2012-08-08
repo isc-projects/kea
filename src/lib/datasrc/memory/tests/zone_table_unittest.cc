@@ -22,8 +22,6 @@
 #include <datasrc/result.h>
 #include <datasrc/memory/zone_data.h>
 #include <datasrc/memory/zone_table.h>
-// We use InMemoryZone to put something into the table
-#include <datasrc/memory_datasrc.h>
 
 #include <gtest/gtest.h>
 
