@@ -272,4 +272,70 @@ TEST_F(RRsetTest, LeftShiftOperator) {
     oss << rrset_a;
     EXPECT_EQ(rrset_a.toText(), oss.str());
 }
+
+class RRsetRRSIGTest : public ::testing::Test {
+protected:
+    RRsetRRSIGTest() : test_name("test.example.com")
+    {
+        rrset_a = new RRset(test_name, RRClass::IN(),
+                            RRType::A(), RRTTL(3600));
+        rrset_a->addRdata(in::A("192.0.2.1"));
+        rrset_a->addRdata(in::A("192.0.2.2"));
+
+        rrset_aaaa = new RRset(test_name, RRClass::IN(),
+                               RRType::AAAA(), RRTTL(3600));
+        rrset_aaaa->addRdata(in::AAAA("2001:db8::1234"));
+
+        rrset_rrsig = RRsetPtr(new RRset(test_name, RRClass::IN(),
+                                         RRType::RRSIG(), RRTTL(3600)));
+        rrset_rrsig->addRdata(generic::RRSIG("AAAA 5 3 7200 20100322084538 "
+                                             "20100220084538 1 example.com "
+                                             "FAKEFAKEFAKEFAKE"));
+        rrset_aaaa->addRRsig(rrset_rrsig);
+    }
+
+    const Name test_name;
+    RRset* rrset_a;           // A RRset with two RDATAs
+    RRset* rrset_aaaa;        // AAAA RRset with one RDATA with RRSIG
+    RRsetPtr rrset_rrsig;       // RRSIG for the AAAA RRset
+};
+
+TEST_F(RRsetRRSIGTest, getRRsig) {
+    RRsetPtr sp = rrset_a->getRRsig();
+    EXPECT_EQ(static_cast<void*>(NULL), sp.get());
+
+    sp = rrset_aaaa->getRRsig();
+    EXPECT_NE(static_cast<void*>(NULL), sp.get());
+}
+
+TEST_F(RRsetRRSIGTest, addRRsig) {
+    RRsetPtr sp = rrset_a->getRRsig();
+    EXPECT_EQ(static_cast<void*>(NULL), sp.get());
+
+    rrset_rrsig = RRsetPtr(new RRset(test_name, RRClass::IN(),
+                                     RRType::RRSIG(), RRTTL(3600)));
+    // one signature algorithm (5 = RSA/SHA-1)
+    rrset_rrsig->addRdata(generic::RRSIG("A 5 3 3600 "
+                                         "20000101000000 20000201000000 "
+                                         "12345 example.com. FAKEFAKEFAKE"));
+    // another signature algorithm (3 = DSA/SHA-1)
+    rrset_rrsig->addRdata(generic::RRSIG("A 3 3 3600 "
+                                         "20000101000000 20000201000000 "
+                                         "12345 example.com. FAKEFAKEFAKE"));
+    rrset_a->addRRsig(rrset_rrsig);
+
+    sp = rrset_a->getRRsig();
+    EXPECT_NE(static_cast<void*>(NULL), sp.get());
+    EXPECT_EQ(2, sp->getRdataCount());
+
+    // add to existing RRSIG
+    rrset_rrsig = RRsetPtr(new RRset(test_name, RRClass::IN(),
+                                     RRType::RRSIG(), RRTTL(3600)));
+    // another signature algorithm (4 = ECC)
+    rrset_rrsig->addRdata(generic::RRSIG("A 4 3 3600 "
+                                         "20000101000000 20000201000000 "
+                                         "12345 example.com. FAKEFAKEFAKE"));
+    rrset_a->addRRsig(rrset_rrsig);
+    EXPECT_EQ(3, sp->getRdataCount());
+}
 }
