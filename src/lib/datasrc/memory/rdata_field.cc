@@ -14,6 +14,9 @@
 
 #include "rdata_field.h"
 
+#include <dns/rrclass.h>
+#include <dns/rrtype.h>
+
 #include <boost/static_assert.hpp>
 
 using namespace isc::dns;

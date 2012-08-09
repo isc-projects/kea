@@ -322,15 +322,15 @@ public:
                        const vector<uint8_t>& encoded_data,
                        MessageRenderer& renderer)
     {
-        RDataReader reader(rrclass, rrtype, encoded_data.size(),
+        RdataReader reader(rrclass, rrtype, encoded_data.size(),
                            &encoded_data[0]);
-        RDataReader::Result field;
+        RdataReader::Result field;
         while (field = reader.next()) {
             switch (field.type()) {
-                case RDataReader::DATA:
+                case RdataReader::DATA:
                     renderer.writeData(field.data(), field.size());
                     break;
-                case RDataReader::NAME:
+                case RdataReader::NAME:
                     renderer.writeName(field.label(), field.compressible());
                     break;
                 default:
@@ -342,7 +342,7 @@ public:
 
         while (field = reader.nextSig()) {
             switch (field.type()) {
-                case RDataReader::DATA:
+                case RdataReader::DATA:
                     renderer.writeData(field.data(), field.size());
                     break;
                 default: // There are also no NAME fields in RRSigs
@@ -361,7 +361,7 @@ public:
                        const vector<uint8_t>& encoded_data,
                        MessageRenderer& renderer)
     {
-        RDataReader reader(rrclass, rrtype, encoded_data.size(),
+        RdataReader reader(rrclass, rrtype, encoded_data.size(),
                            &encoded_data[0],
                            boost::bind(renderNameField, &renderer,
                                        additionalRequired(rrtype), _1, _2),
@@ -381,7 +381,7 @@ public:
                        const vector<uint8_t>& encoded_data,
                        MessageRenderer& renderer)
     {
-        RDataReader reader(rrclass, rrtype, encoded_data.size(),
+        RdataReader reader(rrclass, rrtype, encoded_data.size(),
                            &encoded_data[0],
                            boost::bind(renderNameField, &renderer,
                                        additionalRequired(rrtype), _1, _2),
@@ -679,5 +679,47 @@ TEST_F(RdataSerializationTest, badAddSIGRdata) {
     const generic::RRSIG big_sigrdata(ib, ob.getLength());
     encoder_.start(RRClass::IN(), RRType::A());
     EXPECT_THROW(encoder_.addSIGRdata(big_sigrdata), RdataEncodingError);
+}
+
+// Test the result returns what it was constructed with.
+TEST_F(RdataSerializationTest, readerResult) {
+    // Default constructor
+    RdataReader::Result empty;
+    // Everything should be at the "empty" values, type END
+    EXPECT_EQ(RdataReader::END, empty.type());
+    EXPECT_EQ(NULL, empty.data());
+    EXPECT_EQ(0, empty.size());
+    EXPECT_TRUE(empty.label().equals(LabelSequence(Name::ROOT_NAME())));
+    EXPECT_FALSE(empty);
+    EXPECT_FALSE(empty.compressible());
+    EXPECT_FALSE(empty.additional());
+    // Constructor from label sequence
+    LabelSequence seq(Name("example.org"));
+    RdataReader::Result compressible(seq, NAMEATTR_COMPRESSIBLE);
+    EXPECT_EQ(RdataReader::NAME, compressible.type());
+    EXPECT_EQ(NULL, compressible.data());
+    EXPECT_EQ(0, compressible.size());
+    EXPECT_TRUE(compressible.label().equals(seq));
+    EXPECT_TRUE(compressible);
+    EXPECT_TRUE(compressible.compressible());
+    EXPECT_FALSE(empty.additional());
+    RdataReader::Result incompressible(seq, NAMEATTR_ADDITIONAL);
+    EXPECT_EQ(RdataReader::NAME, incompressible.type());
+    EXPECT_EQ(NULL, incompressible.data());
+    EXPECT_EQ(0, incompressible.size());
+    EXPECT_TRUE(incompressible.label().equals(seq));
+    EXPECT_TRUE(incompressible);
+    EXPECT_FALSE(incompressible.compressible());
+    EXPECT_TRUE(empty.additional());
+    // Constructor from data
+    uint8_t byte;
+    RdataReader::Result data(&byte, 1);
+    EXPECT_EQ(RdataReader::DATA, data.type());
+    EXPECT_EQ(&byte, data.data());
+    EXPECT_EQ(1, data.size());
+    EXPECT_TRUE(data.label().equals(LabelSequence(Name::ROOT_NAME())));
+    EXPECT_FALSE(data);
+    EXPECT_FALSE(data.compressible());
+    EXPECT_FALSE(empty.additional());
 }
 }

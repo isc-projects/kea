@@ -13,7 +13,6 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include "rdata_encoder.h"
-#include "rdata_field.h"
 
 #include <exceptions/exceptions.h>
 
@@ -29,8 +28,6 @@
 #include <cassert>
 #include <cstring>
 #include <vector>
-
-#include <stdint.h>
 
 using namespace isc::dns;
 using std::vector;
