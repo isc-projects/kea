@@ -317,12 +317,12 @@ class NextDecoder {
 public:
     static void decode(const isc::dns::RRClass& rrclass,
                        const isc::dns::RRType& rrtype,
-                       size_t, size_t, size_t,
+                       size_t rdata_count, size_t sig_count, size_t,
                        const vector<uint8_t>& encoded_data,
                        MessageRenderer& renderer)
     {
         RdataReader reader(rrclass, rrtype, encoded_data.size(),
-                           &encoded_data[0]);
+                           &encoded_data[0], rdata_count, sig_count);
         RdataReader::Result field;
         while (field = reader.next()) {
             switch (field.type()) {
@@ -356,12 +356,12 @@ class CallbackDecoder {
 public:
     static void decode(const isc::dns::RRClass& rrclass,
                        const isc::dns::RRType& rrtype,
-                       size_t, size_t, size_t,
+                       size_t rdata_count, size_t sig_count, size_t,
                        const vector<uint8_t>& encoded_data,
                        MessageRenderer& renderer)
     {
         RdataReader reader(rrclass, rrtype, encoded_data.size(),
-                           &encoded_data[0],
+                           &encoded_data[0], rdata_count, sig_count,
                            boost::bind(renderNameField, &renderer,
                                        additionalRequired(rrtype), _1, _2),
                            boost::bind(renderDataField, &renderer, _1, _2));
@@ -376,12 +376,12 @@ class IterateDecoder {
 public:
     static void decode(const isc::dns::RRClass& rrclass,
                        const isc::dns::RRType& rrtype,
-                       size_t, size_t, size_t,
+                       size_t rdata_count, size_t sig_count, size_t,
                        const vector<uint8_t>& encoded_data,
                        MessageRenderer& renderer)
     {
         RdataReader reader(rrclass, rrtype, encoded_data.size(),
-                           &encoded_data[0],
+                           &encoded_data[0], rdata_count, sig_count,
                            boost::bind(renderNameField, &renderer,
                                        additionalRequired(rrtype), _1, _2),
                            boost::bind(renderDataField, &renderer, _1, _2));
