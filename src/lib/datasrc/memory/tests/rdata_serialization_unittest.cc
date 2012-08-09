@@ -47,7 +47,6 @@
 using namespace isc::dns;
 using namespace isc::dns::rdata;
 using namespace isc::datasrc::memory;
-using namespace isc::datasrc::memory::testing;
 
 using isc::util::unittests::matchWireData;
 using std::string;
@@ -193,8 +192,8 @@ public:
                                   size_t rdata_count,
                                   const vector<uint8_t>& encoded_data,
                                   const vector<uint16_t>& varlen_list,
-                                  NameCallback name_callback,
-                                  DataCallback data_callback)
+                                  RdataReader::NameAction name_callback,
+                                  RdataReader::DataAction data_callback)
     {
         const RdataEncodeSpec& encode_spec = getRdataEncodeSpec(rrclass,
                                                                 rrtype);
@@ -243,7 +242,7 @@ public:
 
     static void foreachRRSig(const vector<uint8_t>& encoded_data,
                              const vector<uint16_t>& rrsiglen_list,
-                             DataCallback data_callback)
+                             RdataReader::DataAction data_callback)
     {
         size_t rrsig_totallen = 0;
         for (vector<uint16_t>::const_iterator it = rrsiglen_list.begin();
