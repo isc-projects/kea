@@ -701,7 +701,7 @@ TEST_F(RdataSerializationTest, readerResult) {
     EXPECT_TRUE(compressible.label().equals(seq));
     EXPECT_TRUE(compressible);
     EXPECT_TRUE(compressible.compressible());
-    EXPECT_FALSE(empty.additional());
+    EXPECT_FALSE(compressible.additional());
     RdataReader::Result incompressible(seq, NAMEATTR_ADDITIONAL);
     EXPECT_EQ(RdataReader::NAME, incompressible.type());
     EXPECT_EQ(NULL, incompressible.data());
@@ -709,7 +709,7 @@ TEST_F(RdataSerializationTest, readerResult) {
     EXPECT_TRUE(incompressible.label().equals(seq));
     EXPECT_TRUE(incompressible);
     EXPECT_FALSE(incompressible.compressible());
-    EXPECT_TRUE(empty.additional());
+    EXPECT_TRUE(incompressible.additional());
     // Constructor from data
     uint8_t byte;
     RdataReader::Result data(&byte, 1);
@@ -717,8 +717,8 @@ TEST_F(RdataSerializationTest, readerResult) {
     EXPECT_EQ(&byte, data.data());
     EXPECT_EQ(1, data.size());
     EXPECT_TRUE(data.label().equals(LabelSequence(Name::ROOT_NAME())));
-    EXPECT_FALSE(data);
+    EXPECT_TRUE(data);
     EXPECT_FALSE(data.compressible());
-    EXPECT_FALSE(empty.additional());
+    EXPECT_FALSE(data.additional());
 }
 }
