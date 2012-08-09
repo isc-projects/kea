@@ -73,7 +73,7 @@ ZoneTable::create(util::MemorySegment& mem_sgmt) {
 
 void
 ZoneTable::destroy(util::MemorySegment& mem_sgmt, ZoneTable* ztable) {
-    ZoneTableTree::destroy(mem_sgmt, ztable->zones_);
+    ZoneTableTree::destroy(mem_sgmt, ztable->zones_.get());
     mem_sgmt.deallocate(ztable, sizeof(ZoneTable));
 }
 
