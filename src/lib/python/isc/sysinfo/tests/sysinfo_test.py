@@ -20,7 +20,8 @@ import platform
 import subprocess
 import time
 
-# Long list of different values used throughout the tests
+# different fake 'number of processors' values used for the different
+# operating systems
 NPROCESSORS_LINUX = 42
 NPROCESSORS_OPENBSD = 43
 NPROCESSORS_FREEBSD = 44
@@ -102,11 +103,30 @@ def _my_openbsd_os_sysconf(key):
         return NPROCESSORS_OPENBSD
     assert False, 'Unhandled key'
 
+# For the BSD types, there is a hierarchy that mostly resembles the
+# class hierarchy in the sysinfo library;
+# These are output strings of commands that sysinfo calls
+#
+# The test hierarchy is used as follows:
+# Each operating system has its own _my_<OS>_subprocess_check_output
+# call. If the call is not found, it calls it's 'parent' (e.g.
+# for openbsd that is my_bsd_subprocesses_check_output).
+#
+# If that returns None, the call had no test value and the test fails
+# (and needs to be updated).
+# The child classes are checked first so that they can override
+# output from the parents, if necessary.
+#
+# Some parents have their own parent
+# (e.g. _my_freebsd_osx_subprocess_check_output), in that case,
+# if they do not recognize the command, they simply return whatever
+# their parent returns
+
 def _my_bsd_subprocess_check_output(command):
     '''subprocess output for all bsd types'''
     assert type(command) == list, 'command argument is not a list'
     if command == ['hostname']:
-        return b'blowfish.example.com\n'
+        return b'test.example.com\n'
     elif command == ['sysctl', '-n', 'hw.physmem']:
         return b'543214321\n'
     elif command == ['ifconfig']:
@@ -325,7 +345,7 @@ class SysInfoTest(unittest.TestCase):
 
         s = SysInfoFromFactory()
         self.assertEqual(NPROCESSORS_OPENBSD, s.get_num_processors())
-        self.assertEqual('blowfish.example.com', s.get_platform_hostname())
+        self.assertEqual('test.example.com', s.get_platform_hostname())
         self.assertFalse(s.get_platform_is_smp())
 
         self.assertLess(abs(76632 - s.get_uptime()), 4)
@@ -373,7 +393,7 @@ class SysInfoTest(unittest.TestCase):
 
         s = SysInfoFromFactory()
         self.assertEqual(NPROCESSORS_FREEBSD, s.get_num_processors())
-        self.assertEqual('blowfish.example.com', s.get_platform_hostname())
+        self.assertEqual('test.example.com', s.get_platform_hostname())
         self.assertTrue(s.get_platform_is_smp())
 
         self.assertLess(abs(76632 - s.get_uptime()), 4)
@@ -421,7 +441,7 @@ class SysInfoTest(unittest.TestCase):
 
         s = SysInfoFromFactory()
         self.assertEqual(NPROCESSORS_OSX, s.get_num_processors())
-        self.assertEqual('blowfish.example.com', s.get_platform_hostname())
+        self.assertEqual('test.example.com', s.get_platform_hostname())
         self.assertFalse(s.get_platform_is_smp())
 
         self.assertLess(abs(76632 - s.get_uptime()), 4)
