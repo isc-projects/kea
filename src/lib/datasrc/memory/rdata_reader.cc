@@ -13,3 +13,40 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include "rdata_reader.h"
+
+namespace isc {
+namespace datasrc {
+namespace memory {
+
+void
+RdataReader::emptyNameAction(const dns::LabelSequence&, unsigned) {
+    // Do nothing here. On purpose, it's not unfinished.
+}
+
+void
+RdataReader::emptyDataAction(const uint8_t*, size_t) {
+    // Do nothing here. On purpose, it's not unfinished.
+}
+
+RdataReader::Result::Result(const dns::LabelSequence& label,
+                            unsigned attributes) :
+    label_(label),
+    data_(NULL),
+    size_(0),
+    type_(NAME),
+    compressible_((attributes & NAMEATTR_COMPRESSIBLE) != 0),
+    additional_((attributes & NAMEATTR_ADDITIONAL) != 0)
+{}
+
+RdataReader::Result::Result(const uint8_t* data, size_t size) :
+    label_(dns::Name::ROOT_NAME()),
+    data_(data),
+    size_(size),
+    type_(DATA),
+    compressible_(false),
+    additional_(false)
+{}
+
+}
+}
+}

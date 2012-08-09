@@ -15,12 +15,16 @@
 #ifndef DATASRC_MEMORY_RDATA_READER_H
 #define DATASRC_MEMORY_RDATA_READER_H 1
 
+#include "rdata_field.h"
+
 #include <boost/function.hpp>
+
+#include <dns/labelsequence.h>
+#include <dns/name.h>
 
 namespace isc {
 // Some forward declarations
 namespace dns{
-class LabelSequence;
 class RRClass;
 class RRType;
 }
@@ -47,7 +51,7 @@ namespace memory {
 ///     ...
 /// }
 ///
-/// RDataReader reader(RRClass::IN(), RRType::AAAA(), size, data,
+/// RdataReader reader(RRClass::IN(), RRType::AAAA(), size, data,
 ///                    &handleLabel, handleData);
 /// reader.iterate();
 /// \endcode
@@ -58,25 +62,25 @@ namespace memory {
 /// there's no much difference on the technical side.
 ///
 /// \code
-/// RDataReader reader(RRClass::IN(), RRType::AAAA(), size, data,
+/// RdataReader reader(RRClass::IN(), RRType::AAAA(), size, data,
 ///                    &handleLabel, handleData);
-/// RDataReader::Result data;
+/// RdataReader::Result data;
 /// while (data = reader.next()) {
 ///     switch(data.type()) {
-///         case RDataReader::NAME:
+///         case RdataReader::NAME:
 ///             ...
 ///             break;
-///         case RDataReader::DATA:
+///         case RdataReader::DATA:
 ///             ...
 ///             break;
 ///         default: assert(0); // Can not happen
 ///     }
 /// }
 /// \endcode
-class RDataReader {
+class RdataReader {
 public:
     /// \brief Function called on each name encountered in the data.
-    typedef boost::function<void(const dns::LabelSequence&, unsigned int)>
+    typedef boost::function<void(const dns::LabelSequence&, unsigned)>
         NameAction;
     /// \brief Function called on each data field in the data.
     typedef boost::function<void(const uint8_t*, size_t)> DataAction;
@@ -86,7 +90,7 @@ public:
     /// This is a NameAction function that does nothing. It is used
     /// as a default in the constructor.
     static void emptyNameAction(const dns::LabelSequence& label,
-                                unsigned int attributes);
+                                unsigned attributes);
     /// \brief a DataAction that does nothing.
     ///
     /// This is a DataAction function that does nothing. It is used
@@ -106,7 +110,7 @@ public:
     /// \param data The actual data.
     /// \param name_action The callback to be called on each encountered name.
     /// \param data_action The callback to be called on each data chunk.
-    RDataReader(const dns::RRClass& rrclass, const dns::RRType& rrtype,
+    RdataReader(const dns::RRClass& rrclass, const dns::RRType& rrtype,
                 size_t size, const uint8_t* data,
                 const NameAction& name_action = &emptyNameAction,
                 const DataAction& data_action = &emptyDataAction);
@@ -122,27 +126,66 @@ public:
     ///
     /// Each time you call next() or nextSig(), it returns some data.
     /// This holds the data.
+    ///
+    /// It is valid only for as long as the RdataReader that returned it.
+    ///
+    /// All the methods can be called under any circumstances. However,
+    /// if the required property is not valid for the given type (eg.
+    /// when calling size() on type() == NAME), it returns some "empty"
+    /// value (0, NULL, or the like).
     class Result {
     public:
+        /// \brief Default constructor
+        ///
+        /// It creates an empty result (with no data) of type END.
+        Result() :
+            // TODO: Do we maybe want to have a static one to copy
+            // instead of constructing new one from the root Name?
+            label_(dns::Name::ROOT_NAME()),
+            data_(NULL),
+            size_(0),
+            type_(END),
+            compressible_(false),
+            additional_(false)
+        {}
+        /// \brief Constructor from a domain label
+        ///
+        /// Creates the NAME type result. Used internally from RdataReader.
+        ///
+        /// \param label The label to hold
+        /// \param attributes The attributes, as stored by the serialized
+        ///     data.
+        Result(const dns::LabelSequence& label, unsigned attributes);
+        /// \brief Constructor from data
+        ///
+        /// Creates the DATA type result. Used internally from RdataReader.
+        ///
+        /// \param data The data pointer to hold.
+        /// \param size The size to hold.
+        Result(const uint8_t* data, size_t size);
         /// \brief The type of data returned.
-        DataType type() const;
+        DataType type() const { return (type_); }
         /// \brief The raw data.
         ///
         /// This is only valid if type() == DATA.
-        const uint8_t* data() const;
+        const uint8_t* data() const { return (data_); }
         /// \brief The size of the raw data.
         ///
         /// This is the number of bytes the data takes. It is valid only
         /// if type() == DATA.
-        size_t size() const;
+        size_t size() const { return (size_); }
         /// \brief The domain label.
         ///
         /// This holds the domain label. It is only valid if type() == NAME.
-        const dns::LabelSequence& label() const;
+        const dns::LabelSequence& label() const { return (label_); }
         /// \brief Is the name in label() compressible?
         ///
         /// This is valid only if type() == NAME.
-        bool compressible() const;
+        bool compressible() const { return (compressible_); }
+        /// \brief Does the name expect additional processing?
+        ///
+        /// This is valid only if type() == NAME.
+        bool additional() const { return (additional_); }
         /// \brief If there are data returned.
         ///
         /// This returns if there are any data at all returned. This is
@@ -151,6 +194,13 @@ public:
         operator bool() const {
             return (type() != END);
         }
+    private:
+        dns::LabelSequence label_;
+        const uint8_t* data_;
+        size_t size_;
+        DataType type_;
+        bool compressible_;
+        bool additional_;
     };
 
     /// \brief Step to next piece of data.
