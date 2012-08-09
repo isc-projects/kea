@@ -332,6 +332,21 @@ class SysInfoTest(unittest.TestCase):
         self.assertEqual('osuxbrcc1g9VgaF4yf3FrtfodrfATrbSnjhqhuQSAs8=\n', s.get_net_stats())
         self.assertEqual('Z+w0lwa02/T+5+EIio84rrst/Dtizoz/aL9Im7J7ESA=\n', s.get_net_connections())
 
+    def check_bsd_values(self, s):
+        # check values shared by all bsd implementations
+        self.assertEqual('test.example.com', s.get_platform_hostname())
+        self.assertLess(abs(76632 - s.get_uptime()), 4)
+        self.assertEqual(-1, s.get_mem_cached())
+        self.assertEqual(-1, s.get_mem_buffers())
+
+        # These test that the corresponding tools are being called (and
+        # no further processing is done on this data). Please see the
+        # implementation functions at the top of this file.
+        self.assertEqual('qB2osV6vUOjqm3P/+tQ4d92xoYz8/U8P9v3KWRpNwlI=\n', s.get_net_interfaces())
+        self.assertEqual('XfizswwNA9NkXz6K36ZExpjV08Y5IXkHI8jjDSV+5Nc=\n', s.get_net_routing_table())
+        self.assertEqual('osuxbrcc1g9VgaF4yf3FrtfodrfATrbSnjhqhuQSAs8=\n', s.get_net_stats())
+        self.assertEqual('Z+w0lwa02/T+5+EIio84rrst/Dtizoz/aL9Im7J7ESA=\n', s.get_net_connections())
+
     def test_sysinfo_openbsd(self):
         """Tests the OpenBSD implementation of SysInfo. Note that this
         tests deep into the implementation, and not just the
@@ -346,31 +361,22 @@ class SysInfoTest(unittest.TestCase):
 
         s = SysInfoFromFactory()
         self.assertEqual(NPROCESSORS_OPENBSD, s.get_num_processors())
-        self.assertEqual('test.example.com', s.get_platform_hostname())
-        self.assertFalse(s.get_platform_is_smp())
 
-        self.assertLess(abs(76632 - s.get_uptime()), 4)
+        self.check_bsd_values(s)
+
         self.assertEqual([0.7, 0.9, 0.8], s.get_loadavg())
+        self.assertFalse(s.get_platform_is_smp())
         self.assertEqual(543214321, s.get_mem_total())
         self.assertEqual(543214321 - (121212 * 1024), s.get_mem_free())
-        self.assertEqual(-1, s.get_mem_cached())
-        self.assertEqual(-1, s.get_mem_buffers())
         self.assertEqual(566791168, s.get_mem_swap_total())
         self.assertEqual(566789120, s.get_mem_swap_free())
+
         # Try new regex assertion (which replaced the deprecated
         # assertRegexpMatches. If it is not available, use the old one
         try:
             self.assertRegex(s.get_platform_distro(), '^OpenBSD\s+.*')
         except AttributeError:
             self.assertRegexpMatches(s.get_platform_distro(), '^OpenBSD\s+.*')
-
-        # These test that the corresponding tools are being called (and
-        # no further processing is done on this data). Please see the
-        # implementation functions at the top of this file.
-        self.assertEqual('qB2osV6vUOjqm3P/+tQ4d92xoYz8/U8P9v3KWRpNwlI=\n', s.get_net_interfaces())
-        self.assertEqual('XfizswwNA9NkXz6K36ZExpjV08Y5IXkHI8jjDSV+5Nc=\n', s.get_net_routing_table())
-        self.assertEqual('osuxbrcc1g9VgaF4yf3FrtfodrfATrbSnjhqhuQSAs8=\n', s.get_net_stats())
-        self.assertEqual('Z+w0lwa02/T+5+EIio84rrst/Dtizoz/aL9Im7J7ESA=\n', s.get_net_connections())
 
     def test_sysinfo_freebsd(self):
         """Tests the FreeBSD implementation of SysInfo. Note that this
@@ -386,15 +392,13 @@ class SysInfoTest(unittest.TestCase):
 
         s = SysInfoFromFactory()
         self.assertEqual(NPROCESSORS_FREEBSD, s.get_num_processors())
-        self.assertEqual('test.example.com', s.get_platform_hostname())
         self.assertTrue(s.get_platform_is_smp())
 
-        self.assertLess(abs(76632 - s.get_uptime()), 4)
+        self.check_bsd_values(s)
+
         self.assertEqual([0.2, 0.4, 0.6], s.get_loadavg())
         self.assertEqual(543214321, s.get_mem_total())
         self.assertEqual(543214321 - (343434 * 1024), s.get_mem_free())
-        self.assertEqual(-1, s.get_mem_cached())
-        self.assertEqual(-1, s.get_mem_buffers())
         self.assertEqual(1037533184, s.get_mem_swap_total())
         self.assertEqual(1037533184, s.get_mem_swap_free())
         # Try new regex assertion (which replaced the deprecated
@@ -403,14 +407,6 @@ class SysInfoTest(unittest.TestCase):
             self.assertRegex(s.get_platform_distro(), '^FreeBSD\s+.*')
         except AttributeError:
             self.assertRegexpMatches(s.get_platform_distro(), '^FreeBSD\s+.*')
-
-        # These test that the corresponding tools are being called (and
-        # no further processing is done on this data). Please see the
-        # implementation functions at the top of this file.
-        self.assertEqual('qB2osV6vUOjqm3P/+tQ4d92xoYz8/U8P9v3KWRpNwlI=\n', s.get_net_interfaces())
-        self.assertEqual('XfizswwNA9NkXz6K36ZExpjV08Y5IXkHI8jjDSV+5Nc=\n', s.get_net_routing_table())
-        self.assertEqual('osuxbrcc1g9VgaF4yf3FrtfodrfATrbSnjhqhuQSAs8=\n', s.get_net_stats())
-        self.assertEqual('Z+w0lwa02/T+5+EIio84rrst/Dtizoz/aL9Im7J7ESA=\n', s.get_net_connections())
 
     def test_sysinfo_osx(self):
         """Tests the OS X implementation of SysInfo. Note that this
@@ -426,15 +422,13 @@ class SysInfoTest(unittest.TestCase):
 
         s = SysInfoFromFactory()
         self.assertEqual(NPROCESSORS_OSX, s.get_num_processors())
-        self.assertEqual('test.example.com', s.get_platform_hostname())
         self.assertFalse(s.get_platform_is_smp())
 
-        self.assertLess(abs(76632 - s.get_uptime()), 4)
+        self.check_bsd_values(s)
+
         self.assertEqual([0.2, 0.4, 0.6], s.get_loadavg())
         self.assertEqual(123456789, s.get_mem_total())
         self.assertEqual((23456 * 4096), s.get_mem_free())
-        self.assertEqual(-1, s.get_mem_cached())
-        self.assertEqual(-1, s.get_mem_buffers())
         self.assertEqual(18874368.0, s.get_mem_swap_total())
         self.assertEqual(1075988.48, s.get_mem_swap_free())
         # Try new regex assertion (which replaced the deprecated
@@ -443,14 +437,6 @@ class SysInfoTest(unittest.TestCase):
             self.assertRegex(s.get_platform_distro(), '^Darwin\s+.*')
         except AttributeError:
             self.assertRegexpMatches(s.get_platform_distro(), '^Darwin\s+.*')
-
-        # These test that the corresponding tools are being called (and
-        # no further processing is done on this data). Please see the
-        # implementation functions at the top of this file.
-        self.assertEqual('qB2osV6vUOjqm3P/+tQ4d92xoYz8/U8P9v3KWRpNwlI=\n', s.get_net_interfaces())
-        self.assertEqual('XfizswwNA9NkXz6K36ZExpjV08Y5IXkHI8jjDSV+5Nc=\n', s.get_net_routing_table())
-        self.assertEqual('osuxbrcc1g9VgaF4yf3FrtfodrfATrbSnjhqhuQSAs8=\n', s.get_net_stats())
-        self.assertEqual('Z+w0lwa02/T+5+EIio84rrst/Dtizoz/aL9Im7J7ESA=\n', s.get_net_connections())
 
 if __name__ == "__main__":
     unittest.main()
