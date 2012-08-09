@@ -1413,7 +1413,7 @@ TODO
   {
     "from": ["192.0.2.1", "2001:db8::1"],
     "key": "first.key",
-    "action": "ACCEPT
+    "action": "ACCEPT"
   },
   {
     "from": ["192.0.2.2", "2001:db8::2"],
