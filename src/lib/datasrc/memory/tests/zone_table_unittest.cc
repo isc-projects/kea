@@ -119,32 +119,34 @@ TEST_F(ZoneTableTest, DISABLED_removeZone) {
     EXPECT_EQ(result::NOTFOUND, zone_table->removeZone(Name("example.net")));
 }
 
-TEST_F(ZoneTableTest, DISABLED_findZone) {
-    EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, zname1).code);
+TEST_F(ZoneTableTest, findZone) {
+    const ZoneTable::AddResult add_result1 =
+        zone_table->addZone(mem_sgmt_, zname1);
+    EXPECT_EQ(result::SUCCESS, add_result1.code);
     EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, zname2).code);
     EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, zname3).code);
 
-    EXPECT_EQ(result::SUCCESS, zone_table->findZone(Name("example.com")).code);
-    EXPECT_EQ(Name("example.com"),
-              zone_table->findZone(Name("example.com")).zone->getOrigin());
+    const ZoneTable::FindResult find_result1 =
+        zone_table->findZone(Name("example.com"));
+    EXPECT_EQ(result::SUCCESS, find_result1.code);
+    EXPECT_EQ(add_result1.zone_data, find_result1.zone_data);
 
     EXPECT_EQ(result::NOTFOUND,
               zone_table->findZone(Name("example.org")).code);
-    EXPECT_EQ(ConstZoneFinderPtr(),
-              zone_table->findZone(Name("example.org")).zone);
+    EXPECT_EQ(NULL, zone_table->findZone(Name("example.org")).zone_data);
 
     // there's no exact match.  the result should be the longest match,
     // and the code should be PARTIALMATCH.
     EXPECT_EQ(result::PARTIALMATCH,
               zone_table->findZone(Name("www.example.com")).code);
-    EXPECT_EQ(Name("example.com"),
-              zone_table->findZone(Name("www.example.com")).zone->getOrigin());
+    EXPECT_EQ(add_result1.zone_data,
+              zone_table->findZone(Name("www.example.com")).zone_data);
 
     // make sure the partial match is indeed the longest match by adding
     // a zone with a shorter origin and query again.
     EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_,
                                                    Name("com")).code);
-    EXPECT_EQ(Name("example.com"),
-              zone_table->findZone(Name("www.example.com")).zone->getOrigin());
+    EXPECT_EQ(add_result1.zone_data,
+              zone_table->findZone(Name("www.example.com")).zone_data);
 }
 }

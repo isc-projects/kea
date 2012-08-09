@@ -15,32 +15,25 @@
 #ifndef DATASRC_MEMORY_ZONE_DATA_H
 #define DATASRC_MEMORY_ZONE_DATA_H 1
 
-#include <dns/name.h>
-#include <dns/rrclass.h>
+#include <util/memory_segment.h>
 
 namespace isc {
 namespace datasrc {
 namespace memory {
 class ZoneData {
 private:
-    ZoneData(const dns::Name& zone_name) :
-        zone_name_(zone_name)
-    {}
+    ZoneData() {}
+    ~ZoneData() {}
 public:
-    static ZoneData* create(util::MemorySegment& mem_sgmt,
-                            const dns::Name& zone_name)
-    {
+    static ZoneData* create(util::MemorySegment& mem_sgmt) {
         void* p = mem_sgmt.allocate(sizeof(ZoneData));
-        ZoneData* zone_data = new(p) ZoneData(zone_name);
+        ZoneData* zone_data = new(p) ZoneData();
         return (zone_data);
     }
     static void destroy(util::MemorySegment& mem_sgmt, ZoneData* zone_data) {
         zone_data->~ZoneData();
         mem_sgmt.deallocate(zone_data, sizeof(ZoneData));
     }
-
-private:
-    const dns::Name zone_name_;
 };
 } // namespace memory
 } // namespace datasrc

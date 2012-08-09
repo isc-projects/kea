@@ -55,6 +55,13 @@ private:
 };
 }
 
+void
+ZoneTable::ZoneDataDeleter::operator()(util::MemorySegment& mem_sgmt,
+                                       ZoneData* zone_data) const
+{
+    ZoneData::destroy(mem_sgmt, zone_data);
+}
+
 ZoneTable*
 ZoneTable::create(util::MemorySegment& mem_sgmt) {
     Holder<ZoneTableTree> holder(mem_sgmt, ZoneTableTree::create(mem_sgmt));
@@ -78,7 +85,7 @@ ZoneTable::addZone(util::MemorySegment& mem_sgmt, const Name& zone_name) {
     // provide as strong guarantee as possible.  In practice, we generally
     // expect the caller tries to add a zone only when it's a new one, so
     // this should be a minor concern.
-    Holder<ZoneData> holder(mem_sgmt, ZoneData::create(mem_sgmt, zone_name));
+    Holder<ZoneData> holder(mem_sgmt, ZoneData::create(mem_sgmt));
 
     // Get the node where we put the zone
     ZoneTableNode* node(NULL);
@@ -124,22 +131,20 @@ ZoneTable::findZone(const Name& name) const {
     case ZoneTableTree::PARTIALMATCH:
         my_result = result::PARTIALMATCH;
         break;
-        // We have no data there, so translate the pointer to NULL as well
     case ZoneTableTree::NOTFOUND:
-        return (FindResult(result::NOTFOUND, ZoneFinderPtr()));
-        // Can Not Happen
+        // We have no data there, so translate the pointer to NULL as well
+        return (FindResult(result::NOTFOUND, NULL));
     default:
+        // Can Not Happen
         assert(0);
         // Because of warning
-        return (FindResult(result::NOTFOUND, ZoneFinderPtr()));
+        return (FindResult(result::NOTFOUND, NULL));
     }
 
     // Can Not Happen (remember, NOTFOUND is handled)
     assert(node != NULL);
 
-    // Temporarily return an easy fake value
-    return (FindResult(result::NOTFOUND, ZoneFinderPtr()));
-    //return (FindResult(my_result, node->getData()));
+    return (FindResult(my_result, node->getData()));
 }
 
 } // end of namespace memory
