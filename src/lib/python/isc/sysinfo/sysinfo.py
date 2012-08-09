@@ -164,7 +164,7 @@ class SysInfoLinux(SysInfoPOSIX):
         with open('/proc/loadavg') as f:
             l = f.read().strip().split(' ')
             if len(l) >= 3:
-                self._loadavg = [float(l[0]), float(l[1]), float(l[2])]
+                self._loadavg = (float(l[0]), float(l[1]), float(l[2]))
 
         with open('/proc/meminfo') as f:
             m = f.readlines()
@@ -315,7 +315,7 @@ class SysInfoOpenBSD(SysInfoBSD):
             s = subprocess.check_output(['sysctl', '-n', 'vm.loadavg'])
             l = s.decode('utf-8').strip().split(' ')
             if len(l) >= 3:
-                self._loadavg = [float(l[0]), float(l[1]), float(l[2])]
+                self._loadavg = (float(l[0]), float(l[1]), float(l[2]))
         except (subprocess.CalledProcessError, OSError):
             pass
 
@@ -370,7 +370,7 @@ class SysInfoFreeBSDOSX(SysInfoBSD):
             else:
                 la = l.split(' ')
             if len(la) >= 3:
-                self._loadavg = [float(la[0]), float(la[1]), float(la[2])]
+                self._loadavg = (float(la[0]), float(la[1]), float(la[2]))
         except (subprocess.CalledProcessError, OSError):
             pass
 

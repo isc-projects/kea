@@ -90,8 +90,7 @@ def main():
     write_value(f, ' + Hostname: %s\n', s.get_platform_hostname)
     write_value(f, ' + Uptime: %d seconds\n', s.get_uptime)
 
-    l = s.get_loadavg()
-    f.write(' + Loadavg: %f %f %f\n' % (l[0], l[1], l[2]))
+    write_value(f, ' + Loadavg: %f %f %f\n', s.get_loadavg)
 
     f.write('\nMemory\n');
     write_value(f, ' + Total: %d bytes\n', s.get_mem_total)
