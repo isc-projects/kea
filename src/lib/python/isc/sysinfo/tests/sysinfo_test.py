@@ -143,7 +143,6 @@ def _my_bsd_subprocess_check_output(command):
 
 def _my_openbsd_subprocess_check_output(command):
     assert type(command) == list, 'command argument is not a list'
-    bsd_output = _my_bsd_subprocess_check_output(command)
     if command == ['sysctl', '-n', 'kern.boottime']:
         return bytes(str(int(time.time() - 76632)), 'utf-8')
     elif command == ['sysctl', '-n', 'vm.loadavg']:
@@ -155,6 +154,7 @@ def _my_openbsd_subprocess_check_output(command):
     elif command == ['route', '-n', 'show']:
         return b'XfizswwNA9NkXz6K36ZExpjV08Y5IXkHI8jjDSV+5Nc=\n'
     else:
+        bsd_output = _my_bsd_subprocess_check_output(command)
         if bsd_output is not None:
             return bsd_output
         else:
