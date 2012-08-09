@@ -31,9 +31,9 @@ class SysInfo:
         self._platform_name = 'Unknown'
         self._platform_version = 'Unknown'
         self._platform_machine = 'Unknown'
-        self._platform_is_smp = False
+        self._platform_is_smp = None
         self._uptime = None
-        self._loadavg = [-1.0, -1.0, -1.0]
+        self._loadavg = None
         self._mem_total = None
         self._mem_free = None
         self._mem_cached = None
