@@ -77,6 +77,12 @@ namespace memory {
 ///     }
 /// }
 /// \endcode
+///
+/// \note It is caller's responsibility to pass valid data here. This means
+///     the data returned by RdataEncoder and the corresponding class and type.
+///     The reader tries to detect some of the inconsistencies, but it's
+///     not perfect. Also, if anything throws, it is improper use of the class
+///     and the class might be in inconsistent or unknown state.
 class RdataReader {
 public:
     /// \brief Function called on each name encountered in the data.
@@ -108,10 +114,14 @@ public:
     /// \param rrtype The type of the encode rdata.
     /// \param size Number of bytes the data have in serialized form.
     /// \param data The actual data.
+    /// \param rdata_count The number of Rdata encoded in the data.
+    /// \param sig_count The number of RRSig rdata bundled with the data.
     /// \param name_action The callback to be called on each encountered name.
     /// \param data_action The callback to be called on each data chunk.
+    /// \throw isc::BadValue if mismatch of size and counts is detected.
     RdataReader(const dns::RRClass& rrclass, const dns::RRType& rrtype,
                 size_t size, const uint8_t* data,
+                size_t rdata_count, size_t sig_count,
                 const NameAction& name_action = &emptyNameAction,
                 const DataAction& data_action = &emptyDataAction);
 
@@ -245,6 +255,23 @@ public:
     ///
     /// This just returns whatever was passed to the constructor as size.
     size_t getSize() const;
+private:
+    const NameAction name_action_;
+    const DataAction data_action_;
+    const size_t size_;
+    const RdataEncodeSpec& spec_;
+    // Total number of var-length fields, count of signatures
+    const size_t var_count_total_, sig_count_, spec_count_;
+    // Pointer to the beginning of length fields
+    const uint16_t* const lengths_;
+    // Pointer to the beginning of the data (after the lengths)
+    const uint8_t* const data_;
+    // Pointer to the first data signature
+    const uint8_t* const sigs_;
+    const uint8_t* findSigs() const;
+    // The positions in data.
+    size_t data_pos_, spec_pos_, length_pos_;
+    size_t sig_pos_, sig_data_pos_;
 };
 
 }
