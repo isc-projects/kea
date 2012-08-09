@@ -57,8 +57,8 @@ def main():
 
     s = SysInfoFromFactory()
 
-    f.write('BIND 10 ShowTech tool\n')
-    f.write('=====================\n')
+    f.write('ISC Sysinfo tool\n')
+    f.write('================\n')
 
     f.write('\nCPU\n');
     f.write(' + Number of processors: %d\n' % (s.get_num_processors()))
@@ -69,12 +69,13 @@ def main():
     f.write(' + Distribution: %s\n' % (s.get_platform_distro()))
     f.write(' + Kernel version: %s\n' % (s.get_platform_version()))
 
-    f.write(' + SMP kernel: ')
-    if s.get_platform_is_smp():
-        f.write('yes')
-    else:
-        f.write('no')
-    f.write('\n')
+    if s.get_platform_is_smp() is not None:
+        f.write(' + SMP kernel: ')
+        if s.get_platform_is_smp():
+            f.write('yes')
+        else:
+            f.write('no')
+        f.write('\n')
 
     f.write(' + Machine name: %s\n' % (s.get_platform_machine()))
     f.write(' + Hostname: %s\n' % (s.get_platform_hostname()))
@@ -86,8 +87,10 @@ def main():
     f.write('\nMemory\n');
     f.write(' + Total: %d bytes\n' % (s.get_mem_total()))
     f.write(' + Free: %d bytes\n' % (s.get_mem_free()))
-    f.write(' + Cached: %d bytes\n' % (s.get_mem_cached()))
-    f.write(' + Buffers: %d bytes\n' % (s.get_mem_buffers()))
+    if s.get_mem_cached() is not None:
+        f.write(' + Cached: %d bytes\n' % (s.get_mem_cached()))
+    if s.get_mem_buffers() is not None:
+        f.write(' + Buffers: %d bytes\n' % (s.get_mem_buffers()))
     f.write(' + Swap total: %d bytes\n' % (s.get_mem_swap_total()))
     f.write(' + Swap free: %d bytes\n' % (s.get_mem_swap_free()))
 
