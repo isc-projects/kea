@@ -12,4 +12,5 @@ noinst_LTLIBRARIES = libdatasrc_memory.la
 
 libdatasrc_memory_la_SOURCES = rdata_encoder.h rdata_encoder.cc
 libdatasrc_memory_la_SOURCES += domaintree.h
+libdatasrc_memory_la_SOURCES += zone_data.h
 libdatasrc_memory_la_SOURCES += zone_table.h zone_table.cc
