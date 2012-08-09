@@ -110,15 +110,6 @@ TEST_F(ZoneTableTest, addZone) {
                  std::bad_alloc);
 }
 
-TEST_F(ZoneTableTest, DISABLED_removeZone) {
-    EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, zname1).code);
-    EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, zname2).code);
-    EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, zname3).code);
-
-    EXPECT_EQ(result::SUCCESS, zone_table->removeZone(Name("example.net")));
-    EXPECT_EQ(result::NOTFOUND, zone_table->removeZone(Name("example.net")));
-}
-
 TEST_F(ZoneTableTest, findZone) {
     const ZoneTable::AddResult add_result1 =
         zone_table->addZone(mem_sgmt_, zname1);
