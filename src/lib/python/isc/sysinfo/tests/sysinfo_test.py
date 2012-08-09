@@ -226,6 +226,22 @@ def _my_osx_subprocess_check_output(command):
             assert False, 'Unhandled command'
 
 class SysInfoTest(unittest.TestCase):
+
+    def setUp(self):
+        # Save existing implementations of library functions
+        # (they are replaced in the tests)
+        self.old_platform_system = platform.system
+        self.old_os_sysconf = os.sysconf
+        self.old_open = __builtins__.open
+        self.old_subprocess_check_output = subprocess.check_output
+
+    def tearDown(self):
+        # Restore the library functions
+        platform.system = self.old_platform_system
+        os.sysconf = self.old_os_sysconf
+        __builtins__.open = self.old_open
+        subprocess.check_output = self.old_subprocess_check_output
+
     def test_sysinfo(self):
         """Test that the various methods on SysInfo exist and return data."""
 
@@ -287,15 +303,11 @@ class SysInfoTest(unittest.TestCase):
         tests deep into the implementation, and not just the
         interfaces."""
 
-        # Save and replace existing implementations of library functions
+        # Replace existing implementations of library functions
         # with mock ones for testing.
-        old_platform_system = platform.system
         platform.system = _my_linux_platform_system
-        old_os_sysconf = os.sysconf
         os.sysconf = _my_linux_os_sysconf
-        old_open = __builtins__.open
         __builtins__.open = _my_linux_open
-        old_subprocess_check_output = subprocess.check_output
         subprocess.check_output = _my_linux_subprocess_check_output
 
         s = SysInfoFromFactory()
@@ -320,26 +332,16 @@ class SysInfoTest(unittest.TestCase):
         self.assertEqual('osuxbrcc1g9VgaF4yf3FrtfodrfATrbSnjhqhuQSAs8=\n', s.get_net_stats())
         self.assertEqual('Z+w0lwa02/T+5+EIio84rrst/Dtizoz/aL9Im7J7ESA=\n', s.get_net_connections())
 
-        # Restore original implementations.
-        platform.system = old_platform_system
-        os.sysconf = old_os_sysconf
-        __builtins__.open = old_open
-        subprocess.check_output = old_subprocess_check_output
-
     def test_sysinfo_openbsd(self):
         """Tests the OpenBSD implementation of SysInfo. Note that this
         tests deep into the implementation, and not just the
         interfaces."""
 
-        # Save and replace existing implementations of library functions
+        # Replace existing implementations of library functions
         # with mock ones for testing.
-        old_platform_system = platform.system
         platform.system = _my_openbsd_platform_system
-        old_os_sysconf = os.sysconf
         os.sysconf = _my_openbsd_os_sysconf
-        old_subprocess_check_output = subprocess.check_output
         subprocess.check_output = _my_openbsd_subprocess_check_output
-        old_os_uname = os.uname
         os.uname = _my_openbsd_platform_uname
 
         s = SysInfoFromFactory()
@@ -370,25 +372,16 @@ class SysInfoTest(unittest.TestCase):
         self.assertEqual('osuxbrcc1g9VgaF4yf3FrtfodrfATrbSnjhqhuQSAs8=\n', s.get_net_stats())
         self.assertEqual('Z+w0lwa02/T+5+EIio84rrst/Dtizoz/aL9Im7J7ESA=\n', s.get_net_connections())
 
-        # Restore original implementations.
-        platform.system = old_platform_system
-        os.sysconf = old_os_sysconf
-        subprocess.check_output = old_subprocess_check_output
-
     def test_sysinfo_freebsd(self):
         """Tests the FreeBSD implementation of SysInfo. Note that this
         tests deep into the implementation, and not just the
         interfaces."""
 
-        # Save and replace existing implementations of library functions
+        # Replace existing implementations of library functions
         # with mock ones for testing.
-        old_platform_system = platform.system
         platform.system = _my_freebsd_platform_system
-        old_os_sysconf = os.sysconf
         os.sysconf = _my_freebsd_os_sysconf
-        old_subprocess_check_output = subprocess.check_output
         subprocess.check_output = _my_freebsd_subprocess_check_output
-        old_os_uname = os.uname
         os.uname = _my_freebsd_platform_uname
 
         s = SysInfoFromFactory()
@@ -419,25 +412,16 @@ class SysInfoTest(unittest.TestCase):
         self.assertEqual('osuxbrcc1g9VgaF4yf3FrtfodrfATrbSnjhqhuQSAs8=\n', s.get_net_stats())
         self.assertEqual('Z+w0lwa02/T+5+EIio84rrst/Dtizoz/aL9Im7J7ESA=\n', s.get_net_connections())
 
-        # Restore original implementations.
-        platform.system = old_platform_system
-        os.sysconf = old_os_sysconf
-        subprocess.check_output = old_subprocess_check_output
-
     def test_sysinfo_osx(self):
         """Tests the OS X implementation of SysInfo. Note that this
         tests deep into the implementation, and not just the
         interfaces."""
 
-        # Save and replace existing implementations of library functions
+        # Replace existing implementations of library functions
         # with mock ones for testing.
-        old_platform_system = platform.system
         platform.system = _my_osx_platform_system
-        old_os_sysconf = os.sysconf
         os.sysconf = _my_osx_os_sysconf
-        old_subprocess_check_output = subprocess.check_output
         subprocess.check_output = _my_osx_subprocess_check_output
-        old_os_uname = os.uname
         os.uname = _my_osx_platform_uname
 
         s = SysInfoFromFactory()
@@ -467,11 +451,6 @@ class SysInfoTest(unittest.TestCase):
         self.assertEqual('XfizswwNA9NkXz6K36ZExpjV08Y5IXkHI8jjDSV+5Nc=\n', s.get_net_routing_table())
         self.assertEqual('osuxbrcc1g9VgaF4yf3FrtfodrfATrbSnjhqhuQSAs8=\n', s.get_net_stats())
         self.assertEqual('Z+w0lwa02/T+5+EIio84rrst/Dtizoz/aL9Im7J7ESA=\n', s.get_net_connections())
-
-        # Restore original implementations.
-        platform.system = old_platform_system
-        os.sysconf = old_os_sysconf
-        subprocess.check_output = old_subprocess_check_output
 
 if __name__ == "__main__":
     unittest.main()
