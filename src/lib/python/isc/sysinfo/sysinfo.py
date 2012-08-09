@@ -25,21 +25,21 @@ import time
 
 class SysInfo:
     def __init__(self):
-        self._num_processors = -1
+        self._num_processors = None
         self._endianness = 'Unknown'
         self._hostname = ''
         self._platform_name = 'Unknown'
         self._platform_version = 'Unknown'
         self._platform_machine = 'Unknown'
         self._platform_is_smp = False
-        self._uptime = -1
+        self._uptime = None
         self._loadavg = [-1.0, -1.0, -1.0]
-        self._mem_total = -1
-        self._mem_free = -1
-        self._mem_cached = -1
-        self._mem_buffers = -1
-        self._mem_swap_total = -1
-        self._mem_swap_free = -1
+        self._mem_total = None
+        self._mem_free = None
+        self._mem_cached = None
+        self._mem_buffers = None
+        self._mem_swap_total = None
+        self._mem_swap_free = None
         self._platform_distro = 'Unknown'
         self._net_interfaces = 'Unknown\n'
         self._net_routing_table = 'Unknown\n'
@@ -303,11 +303,6 @@ class SysInfoOpenBSD(SysInfoBSD):
     def __init__(self):
         super().__init__()
 
-        # Don't know how to gather these
-        self._platform_is_smp = False
-        self._mem_cached = -1
-        self._mem_buffers = -1
-
         try:
             s = subprocess.check_output(['sysctl', '-n', 'kern.boottime'])
             t = s.decode('utf-8').strip()
@@ -355,10 +350,6 @@ class SysInfoFreeBSDOSX(SysInfoBSD):
     """
     def __init__(self):
         super().__init__()
-
-        # Don't know how to gather these
-        self._mem_cached = -1
-        self._mem_buffers = -1
 
         try:
             s = subprocess.check_output(['sysctl', '-n', 'kern.boottime'])
