@@ -103,6 +103,9 @@ def _my_openbsd_os_sysconf(key):
         return NPROCESSORS_OPENBSD
     assert False, 'Unhandled key'
 
+def _my_openbsd_platform_uname():
+    return ('OpenBSD', 'test.example.com', '5.0', '', 'amd64')
+
 # For the BSD types, there is a hierarchy that mostly resembles the
 # class hierarchy in the sysinfo library;
 # These are output strings of commands that sysinfo calls
@@ -165,6 +168,9 @@ def _my_freebsd_os_sysconf(key):
         return NPROCESSORS_FREEBSD
     assert False, 'Unhandled key'
 
+def _my_freebsd_platform_uname():
+    return ('FreeBSD', 'freebsd', '8.2-RELEASE', '', 'i386')
+
 def _my_freebsd_osx_subprocess_check_output(command):
     '''subprocess output shared for freebsd and osx'''
     assert type(command) == list, 'command argument is not a list'
@@ -194,6 +200,9 @@ def _my_freebsd_subprocess_check_output(command):
 
 def _my_osx_platform_system():
     return 'Darwin'
+
+def _my_osx_platform_uname():
+    return ('Darwin', 'test.example.com', '10.6.0', '', '')
 
 def _my_osx_os_sysconf(key):
     if key == 'SC_NPROCESSORS_CONF':
@@ -278,12 +287,6 @@ class SysInfoTest(unittest.TestCase):
         tests deep into the implementation, and not just the
         interfaces."""
 
-        # Don't run this test on platform other than Linux as some
-        # system calls may not even be available.
-        osname = platform.system()
-        if osname != 'Linux':
-            return
-
         # Save and replace existing implementations of library functions
         # with mock ones for testing.
         old_platform_system = platform.system
@@ -328,12 +331,6 @@ class SysInfoTest(unittest.TestCase):
         tests deep into the implementation, and not just the
         interfaces."""
 
-        # Don't run this test on platform other than OpenBSD as some
-        # system calls may not even be available.
-        osname = platform.system()
-        if osname != 'OpenBSD':
-            return
-
         # Save and replace existing implementations of library functions
         # with mock ones for testing.
         old_platform_system = platform.system
@@ -342,6 +339,8 @@ class SysInfoTest(unittest.TestCase):
         os.sysconf = _my_openbsd_os_sysconf
         old_subprocess_check_output = subprocess.check_output
         subprocess.check_output = _my_openbsd_subprocess_check_output
+        old_os_uname = os.uname
+        os.uname = _my_openbsd_platform_uname
 
         s = SysInfoFromFactory()
         self.assertEqual(NPROCESSORS_OPENBSD, s.get_num_processors())
@@ -356,7 +355,12 @@ class SysInfoTest(unittest.TestCase):
         self.assertEqual(-1, s.get_mem_buffers())
         self.assertEqual(566791168, s.get_mem_swap_total())
         self.assertEqual(566789120, s.get_mem_swap_free())
-        self.assertRegexpMatches(s.get_platform_distro(), '^OpenBSD\s+.*')
+        # Try new regex assertion (which replaced the deprecated
+        # assertRegexpMatches. If it is not available, use the old one
+        try:
+            self.assertRegex(s.get_platform_distro(), '^OpenBSD\s+.*')
+        except AttributeError:
+            self.assertRegexpMatches(s.get_platform_distro(), '^OpenBSD\s+.*')
 
         # These test that the corresponding tools are being called (and
         # no further processing is done on this data). Please see the
@@ -376,12 +380,6 @@ class SysInfoTest(unittest.TestCase):
         tests deep into the implementation, and not just the
         interfaces."""
 
-        # Don't run this test on platform other than FreeBSD as some
-        # system calls may not even be available.
-        osname = platform.system()
-        if osname != 'FreeBSD':
-            return
-
         # Save and replace existing implementations of library functions
         # with mock ones for testing.
         old_platform_system = platform.system
@@ -390,6 +388,8 @@ class SysInfoTest(unittest.TestCase):
         os.sysconf = _my_freebsd_os_sysconf
         old_subprocess_check_output = subprocess.check_output
         subprocess.check_output = _my_freebsd_subprocess_check_output
+        old_os_uname = os.uname
+        os.uname = _my_freebsd_platform_uname
 
         s = SysInfoFromFactory()
         self.assertEqual(NPROCESSORS_FREEBSD, s.get_num_processors())
@@ -404,7 +404,12 @@ class SysInfoTest(unittest.TestCase):
         self.assertEqual(-1, s.get_mem_buffers())
         self.assertEqual(1037533184, s.get_mem_swap_total())
         self.assertEqual(1037533184, s.get_mem_swap_free())
-        self.assertRegexpMatches(s.get_platform_distro(), '^FreeBSD\s+.*')
+        # Try new regex assertion (which replaced the deprecated
+        # assertRegexpMatches. If it is not available, use the old one
+        try:
+            self.assertRegex(s.get_platform_distro(), '^FreeBSD\s+.*')
+        except AttributeError:
+            self.assertRegexpMatches(s.get_platform_distro(), '^FreeBSD\s+.*')
 
         # These test that the corresponding tools are being called (and
         # no further processing is done on this data). Please see the
@@ -424,12 +429,6 @@ class SysInfoTest(unittest.TestCase):
         tests deep into the implementation, and not just the
         interfaces."""
 
-        # Don't run this test on platform other than OS X as some
-        # system calls may not even be available.
-        osname = platform.system()
-        if osname != 'Darwin':
-            return
-
         # Save and replace existing implementations of library functions
         # with mock ones for testing.
         old_platform_system = platform.system
@@ -438,6 +437,8 @@ class SysInfoTest(unittest.TestCase):
         os.sysconf = _my_osx_os_sysconf
         old_subprocess_check_output = subprocess.check_output
         subprocess.check_output = _my_osx_subprocess_check_output
+        old_os_uname = os.uname
+        os.uname = _my_osx_platform_uname
 
         s = SysInfoFromFactory()
         self.assertEqual(NPROCESSORS_OSX, s.get_num_processors())
@@ -452,7 +453,12 @@ class SysInfoTest(unittest.TestCase):
         self.assertEqual(-1, s.get_mem_buffers())
         self.assertEqual(18874368.0, s.get_mem_swap_total())
         self.assertEqual(1075988.48, s.get_mem_swap_free())
-        self.assertRegexpMatches(s.get_platform_distro(), '^Darwin\s+.*')
+        # Try new regex assertion (which replaced the deprecated
+        # assertRegexpMatches. If it is not available, use the old one
+        try:
+            self.assertRegex(s.get_platform_distro(), '^Darwin\s+.*')
+        except AttributeError:
+            self.assertRegexpMatches(s.get_platform_distro(), '^Darwin\s+.*')
 
         # These test that the corresponding tools are being called (and
         # no further processing is done on this data). Please see the
