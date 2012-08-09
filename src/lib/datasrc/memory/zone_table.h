@@ -17,13 +17,8 @@
 
 #include <util/memory_segment.h>
 
-#include <dns/rrset.h>
-
-#include <datasrc/zone.h>
+#include <datasrc/result.h>
 #include <datasrc/memory/domaintree.h>
-#include <datasrc/memory/zone_table.h>
-
-#include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace dns {
@@ -33,27 +28,20 @@ class RRClass;
 
 namespace datasrc {
 namespace memory {
+// forward declaration: in this header it's mostly an opaque type.
 class ZoneData;
 
 /// \brief A set of authoritative zones.
 ///
-/// \c ZoneTable class is primarily intended to be used as a backend for the
-/// \c MemoryDataSrc class, but is exposed as a separate class in case some
-/// application wants to use it directly (e.g. for a customized data source
-/// implementation).
-///
-/// For more descriptions about its struct and interfaces, please refer to the
-/// corresponding struct and interfaces of \c MemoryDataSrc.
+/// This class is intended to be used as a backend for the \c MemoryDataSrc
+/// class, and is not intended to be used for other general purposes.
 class ZoneTable {
 private:
     // The deleter for the zone data stored in the table.
     struct ZoneDataDeleter {
         ZoneDataDeleter() {}
         void operator()(util::MemorySegment& mem_sgmt,
-                        ZoneData* zone_data) const
-        {
-            mem_sgmt.deallocate(zone_data, sizeof(ZoneData));
-        }
+                        ZoneData* zone_data) const;
     };
 
     // Type aliases to make it shorter
@@ -69,12 +57,14 @@ public:
         ZoneData* const zone_data;
     };
     struct FindResult {
-        FindResult(result::Result param_code, const ZoneFinderPtr param_zone) :
-            code(param_code), zone(param_zone)
+        FindResult(result::Result param_code,
+                   const ZoneData* param_zone_data) :
+            code(param_code), zone_data(param_zone_data)
         {}
         const result::Result code;
-        const ZoneFinderPtr zone;
+        const ZoneData* const zone_data;
     };
+
     ///
     /// \name Constructors and Destructor.
     ///
@@ -134,9 +124,9 @@ public:
     AddResult addZone(util::MemorySegment& mem_sgmt,
                       const dns::Name& zone_name);
 
-    /// Remove a \c Zone of the given origin name from the \c ZoneTable.
+    /// Remove a zone of the given origin name from the \c ZoneTable.
     ///
-    /// This method never throws an exception.
+    /// This method should never throw an exception.
     ///
     /// \param origin The origin name of the zone to be removed.
     /// \return \c result::SUCCESS If the zone is successfully
@@ -145,9 +135,9 @@ public:
     /// store the zone that matches \c origin.
     result::Result removeZone(const isc::dns::Name& origin);
 
-    /// Find a \c Zone that best matches the given name in the \c ZoneTable.
+    /// Find a zone that best matches the given name in the \c ZoneTable.
     ///
-    /// It searches the internal storage for a \c Zone that gives the
+    /// It searches the internal storage for a zone that gives the
     /// longest match against \c name, and returns the result in the
     /// form of a \c FindResult object as follows:
     /// - \c code: The result code of the operation.
@@ -156,10 +146,10 @@ public:
     ///   - \c result::PARTIALMATCH: A zone whose origin is a
     ///    super domain of \c name is found (but there is no exact match)
     ///   - \c result::NOTFOUND: For all other cases.
-    /// - \c zone: A "Boost" shared pointer to the found \c Zone object if one
-    ///  is found; otherwise \c NULL.
+    /// - \c zone_data: corresponding zone data of the found zone; NULL if
+    ///   no matching zone is found.
     ///
-    /// This method never throws an exception.
+    /// \throw none
     ///
     /// \param name A domain name for which the search is performed.
     /// \return A \c FindResult object enclosing the search result (see above).
