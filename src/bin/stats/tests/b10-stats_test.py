@@ -100,6 +100,44 @@ class TestUtilties(unittest.TestCase):
         self.assertNotEqual(stats.get_datetime(
                 (2011, 6, 22, 8, 23, 40, 2, 173, 0)), self.const_datetime)
 
+    def test__accum(self):
+        self.assertEqual(stats._accum(None, None), None)
+        self.assertEqual(stats._accum(None, "b"), "b")
+        self.assertEqual(stats._accum("a", None), "a")
+        self.assertEqual(stats._accum(1, 2), 3)
+        self.assertEqual(stats._accum(0.5, 0.3), 0.8)
+        self.assertEqual(stats._accum('aa','bb'), 'bb')
+        self.assertEqual(stats._accum('1970-01-01T09:00:00Z','2012-08-09T09:33:31Z'),
+                         '2012-08-09T09:33:31Z')
+        self.assertEqual(stats._accum(
+                [1, 2, 3], [4, 5]), [5, 7, 3])
+        self.assertEqual(stats._accum(
+                [4, 5], [1, 2, 3]), [5, 7, 3])
+        self.assertEqual(stats._accum(
+                [1, 2, 3], [None, 5, 6]), [1, 7, 9])
+        self.assertEqual(stats._accum(
+                [None, 5, 6], [1, 2, 3]), [1, 7, 9])
+        self.assertEqual(stats._accum(
+                [1, 2, 3], [None, None, None, None]), [1,2,3,None])
+        self.assertEqual(stats._accum(
+                [[1,2],3],[[],5,6]), [[1,2],8,6])
+        self.assertEqual(stats._accum(
+                {'one': 1, 'two': 2, 'three': 3},
+                {'one': 4, 'two': 5}),
+                         {'one': 5, 'two': 7, 'three': 3})
+        self.assertEqual(stats._accum(
+                {'one': 1, 'two': 2, 'three': 3},
+                {'four': 4, 'five': 5}),
+                         {'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5})
+        self.assertEqual(stats._accum(
+                {'one': [1, 2], 'two': [3, None, 5], 'three': [None, 3, None]},
+                {'one': [2], 'two': [4, 5], 'three': [None, None, None], 'four': 'FOUR'}),
+                         {'one':[3,2], 'two':[7,5,5], 'three':[None,3,None], 'four': 'FOUR'})
+        self.assertEqual(stats._accum(
+                [ {'one': 1, 'two': 2, 'three': 3}, {'four': 4, 'five': 5, 'six': 6} ],
+                [ {}, {'four': 1, 'five': 2, 'six': 3} ]),
+                [ {'one': 1, 'two': 2, 'three': 3}, {'four': 5, 'five': 7, 'six': 9} ])
+
 class TestCallback(unittest.TestCase):
     def setUp(self):
         self.dummy_func = lambda *x, **y : (x, y)
