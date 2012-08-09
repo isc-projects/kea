@@ -315,7 +315,7 @@ class SysInfoTest(unittest.TestCase):
         self.assertEqual('myhostname', s.get_platform_hostname())
         self.assertTrue(s.get_platform_is_smp())
         self.assertEqual(86401, s.get_uptime())
-        self.assertEqual([0.1, 0.2, 0.3], s.get_loadavg())
+        self.assertEqual((0.1, 0.2, 0.3), s.get_loadavg())
         self.assertEqual(3157884928, s.get_mem_total())
         self.assertEqual(891383808, s.get_mem_free())
         self.assertEqual(1335152640, s.get_mem_cached())
@@ -364,7 +364,7 @@ class SysInfoTest(unittest.TestCase):
 
         self.check_bsd_values(s)
 
-        self.assertEqual([0.7, 0.9, 0.8], s.get_loadavg())
+        self.assertEqual((0.7, 0.9, 0.8), s.get_loadavg())
         self.assertFalse(s.get_platform_is_smp())
         self.assertEqual(543214321, s.get_mem_total())
         self.assertEqual(543214321 - (121212 * 1024), s.get_mem_free())
@@ -396,7 +396,7 @@ class SysInfoTest(unittest.TestCase):
 
         self.check_bsd_values(s)
 
-        self.assertEqual([0.2, 0.4, 0.6], s.get_loadavg())
+        self.assertEqual((0.2, 0.4, 0.6), s.get_loadavg())
         self.assertEqual(543214321, s.get_mem_total())
         self.assertEqual(543214321 - (343434 * 1024), s.get_mem_free())
         self.assertEqual(1037533184, s.get_mem_swap_total())
@@ -426,7 +426,7 @@ class SysInfoTest(unittest.TestCase):
 
         self.check_bsd_values(s)
 
-        self.assertEqual([0.2, 0.4, 0.6], s.get_loadavg())
+        self.assertEqual((0.2, 0.4, 0.6), s.get_loadavg())
         self.assertEqual(123456789, s.get_mem_total())
         self.assertEqual((23456 * 4096), s.get_mem_free())
         self.assertEqual(18874368.0, s.get_mem_swap_total())
