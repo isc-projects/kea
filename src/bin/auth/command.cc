@@ -101,13 +101,13 @@ public:
     /// \param server The \c AuthSrv object on which the command is executed.
     /// \param args Command specific argument.
     /// \return command result data in JSON format.
-    virtual ElementPtr exec(AuthSrv& server, isc::data::ConstElementPtr args) = 0;
+    virtual ConstElementPtr exec(AuthSrv& server, isc::data::ConstElementPtr args) = 0;
 };
 
 // Handle the "shutdown" command.
 class ShutdownCommand : public AuthCommand {
 public:
-    virtual ElementPtr exec(AuthSrv& server, isc::data::ConstElementPtr args) {
+    virtual ConstElementPtr exec(AuthSrv& server, isc::data::ConstElementPtr args) {
         // Is the pid argument provided?
         if (args && args->contains("pid")) {
             // If it is, we check it is the same as our PID
@@ -123,44 +123,44 @@ public:
                 // there are multiple instances of the server running and
                 // another instance is being shut down, we get the message
                 // too, due to the multicast nature of our message bus.
-                return (Element::createList());
+                return (createAnswer());
             }
         }
         LOG_DEBUG(auth_logger, DBG_AUTH_SHUT, AUTH_SHUTDOWN);
         server.stop();
-        return (Element::createList());
+        return (createAnswer());
     }
 };
 
 // Handle the "getstats" command.  The argument is a list.
 class GetStatsCommand : public AuthCommand {
 public:
-    virtual ElementPtr exec(AuthSrv& server, isc::data::ConstElementPtr) {
+    virtual ConstElementPtr exec(AuthSrv& server, isc::data::ConstElementPtr) {
         LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_RECEIVED_SENDSTATS);
-        return (server.getStatistics());
+        return (createAnswer(0, server.getStatistics()));
     }
 };
 
 class StartDDNSForwarderCommand : public AuthCommand {
 public:
-    virtual ElementPtr exec(AuthSrv& server, isc::data::ConstElementPtr) {
+    virtual ConstElementPtr exec(AuthSrv& server, isc::data::ConstElementPtr) {
         server.createDDNSForwarder();
-        return (Element::fromJSON("{}"));
+        return (createAnswer());
     }
 };
 
 class StopDDNSForwarderCommand : public AuthCommand {
 public:
-    virtual ElementPtr exec(AuthSrv& server, isc::data::ConstElementPtr) {
+    virtual ConstElementPtr exec(AuthSrv& server, isc::data::ConstElementPtr) {
         server.destroyDDNSForwarder();
-        return (Element::fromJSON("{}"));
+        return (createAnswer());
     }
 };
 
 // Handle the "loadzone" command.
 class LoadZoneCommand : public AuthCommand {
 public:
-    virtual ElementPtr exec(AuthSrv& server, isc::data::ConstElementPtr args) {
+    virtual ConstElementPtr exec(AuthSrv& server, isc::data::ConstElementPtr args) {
         if (args == NULL) {
             isc_throw(AuthCommandError, "Null argument");
         }
@@ -188,7 +188,7 @@ public:
                 // Everything worked fine.
                 LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_LOAD_ZONE)
                     .arg(zone_class).arg(origin);
-                return (Element::createList());
+                return (createAnswer());
             case ConfigurableClientList::ZONE_NOT_FOUND:
                 isc_throw(AuthCommandError, "Zone " << origin << "/" <<
                           zone_class << " was not found in any configured "
@@ -205,7 +205,7 @@ public:
                 isc_throw(isc::Unexpected, "Cache disabled in client list of "
                           "class " << zone_class);
         }
-        return (Element::createList());
+        return (createAnswer());
     }
 };
 
@@ -240,7 +240,7 @@ ConstElementPtr
 execAuthServerCommand(AuthSrv& server, const string& command_id,
                       ConstElementPtr args)
 {
-    ElementPtr value;
+    ConstElementPtr value;
 
     LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_RECEIVED_COMMAND).arg(command_id);
     try {
@@ -252,5 +252,5 @@ execAuthServerCommand(AuthSrv& server, const string& command_id,
         return (createAnswer(1, ex.what()));
     }
 
-    return (createAnswer(0, value));
+    return (value);
 }
