@@ -20,6 +20,8 @@
 #include <datasrc/result.h>
 #include <datasrc/memory/domaintree.h>
 
+#include <boost/interprocess/offset_ptr.hpp>
+
 namespace isc {
 namespace dns {
 class Name;
@@ -174,7 +176,7 @@ public:
     FindResult findZone(const isc::dns::Name& name) const;
 
 private:
-    ZoneTableTree* zones_;
+    boost::interprocess::offset_ptr<ZoneTableTree> zones_;
 };
 }
 }
