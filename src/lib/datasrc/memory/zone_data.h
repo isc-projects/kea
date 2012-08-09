@@ -20,6 +20,11 @@
 namespace isc {
 namespace datasrc {
 namespace memory {
+/// \brief Data for a single zone.
+///
+/// It's currently empty and is only provided for the implementation of
+/// ZoneTable.  The actual implementation of this class is the subject of
+/// Trac #2107.
 class ZoneData {
 private:
     ZoneData() {}
