@@ -245,19 +245,15 @@ public:
     /// \name Setter functions.
     //@{
 
-    /// \brief Set the data stored in the node. If there is old data, it
-    /// is either returned or destroyed based on what is passed in \c
-    /// old_data.
+    /// \brief Set the data stored in the node.
+    ///
+    /// Any old data is destroyed.
+    ///
     /// \param mem_sgmt The \c MemorySegment that allocated memory for
     ///                 the node data.
     /// \param data The new data to set.
-    /// \param old_data If \c NULL is passed here, any old data is
-    ///                 destroyed. Otherwise, the old data is returned
-    ///                 in this location.
-    void setData(util::MemorySegment& mem_sgmt, T* data, T** old_data = NULL) {
-        if (old_data != NULL) {
-            *old_data = data;
-        } else {
+    void setData(util::MemorySegment& mem_sgmt, T* data) {
+        if (data_) {
             const DT deleter;
             deleter(mem_sgmt, data_.get());
         }
