@@ -110,14 +110,6 @@ ZoneTable::addZone(util::MemorySegment& mem_sgmt, const Name& zone_name) {
     }
 }
 
-result::Result
-ZoneTable::removeZone(const Name&) {
-    // TODO Implement
-    assert(false);
-    // This should not ever be returned, the assert should kill us by now
-    return (result::SUCCESS);
-}
-
 ZoneTable::FindResult
 ZoneTable::findZone(const Name& name) const {
     ZoneTableNode* node(NULL);
