@@ -31,7 +31,27 @@ namespace memory {
 // forward declaration: in this header it's mostly an opaque type.
 class ZoneData;
 
-/// \brief A set of authoritative zones.
+/// \brief A conceptual table of authoritative zones.
+///
+/// This class is actually a simple wrapper for a \c DomainTree whose data is
+/// of \c ZoneData, and provides allocator, deallocator, and some basic
+/// manipulation methods.
+///
+/// A single \c ZoneData object is intended to be used for a single specific
+/// RR class, and provides a mapping from a name to a \c ZoneData (using the
+/// best matching search semantics).  The \c ZoneData class itself does not
+/// maintain the information of the RR class; the user of this class is
+/// responsible for associating a specific RR class to a corresponding
+/// \c ZoneData object.
+///
+/// This class is designed so an instance can be stored in a shared memory
+/// region.  So it only contains straightforward data (e.g., it doesn't hold
+/// a pointer to an object of some base class that contains virtual methods),
+/// and some pointers (either as a direct or indirect member variable) are
+/// represented as offset pointers.  For the same reason this class should
+/// never has virtual methods (and as a result, should never be inherited
+/// in practice).  When this class is extended these properties must be
+/// retained.
 ///
 /// This class is intended to be used as a backend for the \c MemoryDataSrc
 /// class, and is not intended to be used for other general purposes.
@@ -49,6 +69,7 @@ private:
     typedef DomainTreeNode<ZoneData, ZoneDataDeleter> ZoneTableNode;
 
 public:
+    /// \brief Result data of addZone() method.
     struct AddResult {
         AddResult(result::Result param_code, ZoneData* param_zone_data) :
             code(param_code), zone_data(param_zone_data)
@@ -56,6 +77,8 @@ public:
         const result::Result code;
         ZoneData* const zone_data;
     };
+
+    /// \brief Result data of findZone() method.
     struct FindResult {
         FindResult(result::Result param_code,
                    const ZoneData* param_zone_data) :
@@ -113,6 +136,12 @@ public:
     static void destroy(util::MemorySegment& mem_sgmt, ZoneTable* ztable);
 
     /// Add a new zone to the \c ZoneTable.
+    ///
+    /// This method creates a new \c ZoneData for the given zone name and
+    /// holds it in the internal table.  The newly created zone data will be
+    /// returned via the \c zone_data member of the return value.  If the given
+    /// zone name already exists in the table, a new data object won't be
+    /// created; instead, the existing corresponding data will be returned.
     ///
     /// \throw std::bad_alloc Internal resource allocation fails.
     ///
