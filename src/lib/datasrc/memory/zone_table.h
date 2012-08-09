@@ -153,17 +153,6 @@ public:
     AddResult addZone(util::MemorySegment& mem_sgmt,
                       const dns::Name& zone_name);
 
-    /// Remove a zone of the given origin name from the \c ZoneTable.
-    ///
-    /// This method should never throw an exception.
-    ///
-    /// \param origin The origin name of the zone to be removed.
-    /// \return \c result::SUCCESS If the zone is successfully
-    /// removed from the zone table.
-    /// \return \c result::NOTFOUND The zone table does not
-    /// store the zone that matches \c origin.
-    result::Result removeZone(const isc::dns::Name& origin);
-
     /// Find a zone that best matches the given name in the \c ZoneTable.
     ///
     /// It searches the internal storage for a zone that gives the
