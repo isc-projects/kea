@@ -83,27 +83,34 @@ RdataReader::rewind() {
 }
 
 RdataReader::Result
-RdataReader::next() {
+RdataReader::nextInternal(const NameAction& name_action,
+                          const DataAction& data_action)
+{
     if (spec_pos_ < spec_count_) {
         const RdataFieldSpec& spec(spec_.fields[(spec_pos_ ++) %
                                                 spec_.field_count]);
         if (spec.type == RdataFieldSpec::DOMAIN_NAME) {
             const LabelSequence sequence(data_ + data_pos_);
             data_pos_ += sequence.getSerializedLength();
-            name_action_(sequence, spec.name_attributes);
+            name_action(sequence, spec.name_attributes);
             return (Result(sequence, spec.name_attributes));
         } else {
             const size_t length(spec.type == RdataFieldSpec::FIXEDLEN_DATA ?
                                 spec.fixeddata_len : lengths_[length_pos_ ++]);
             Result result(data_ + data_pos_, length);
             data_pos_ += length;
-            data_action_(result.data(), result.size());
+            data_action(result.data(), result.size());
             return (result);
         }
     } else {
         sigs_ = data_ + data_pos_;
         return (Result());
     }
+}
+
+RdataReader::Result
+RdataReader::next() {
+    return (nextInternal(name_action_, data_action_));
 }
 
 RdataReader::Result
@@ -117,7 +124,7 @@ RdataReader::nextSig() {
             size_t spec_pos = spec_pos_;
             size_t length_pos = length_pos_;
             // When the next() gets to the last item, it sets the sigs_
-            iterate();
+            while (nextInternal(emptyNameAction, emptyDataAction)) {}
             assert(sigs_ != NULL);
             // Return the state
             data_pos_ = data_pos;
