@@ -52,7 +52,7 @@ def start_bind10(step, config_file, cmdctl_port, msgq_sockfile, process_name):
     It will also fail if there is a running process with the given process_name
     already.
     """
-    args = [ 'bind10', '-n', '-v' ]
+    args = [ 'bind10', '-v' ]
     if config_file is not None:
         args.append('-p')
         args.append("configurations/")
@@ -362,4 +362,3 @@ def configure_ddns_off(step):
         config commit
         \"\"\"
     """)
-

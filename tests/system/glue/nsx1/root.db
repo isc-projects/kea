@@ -37,8 +37,6 @@ example.			172800	IN	NS	NS.example.
 example.			172800	IN	NS	NS1.example.COM.
 NS.example.			172800	IN	A	192.0.2.1
 NS.example.			172800	IN	A	192.0.2.2
-; this "glue" is below a zone cut for com.  BIND 9 still uses it for
-; the delegation to example.  BIND 10 (with sqlite3 data source) doesn't.
 NS1.example.COM.		172800	IN	A	192.0.2.3
 
 ;

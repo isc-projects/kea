@@ -21,10 +21,10 @@ run_unittests_SOURCES += crypto_unittests.cc
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS =  $(BOTAN_LDFLAGS) $(GTEST_LDFLAGS) $(AM_LDFLAGS)
 run_unittests_LDADD = $(GTEST_LDADD) $(BOTAN_LIBS)
-run_unittests_LDADD += $(top_builddir)/src/lib/util/libutil.la
-run_unittests_LDADD += $(top_builddir)/src/lib/cryptolink/libcryptolink.la
+run_unittests_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
+run_unittests_LDADD += $(top_builddir)/src/lib/cryptolink/libb10-cryptolink.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
-run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
+run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 endif
 
 noinst_PROGRAMS = $(TESTS)

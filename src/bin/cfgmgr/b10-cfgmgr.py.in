@@ -25,6 +25,7 @@ import os
 from optparse import OptionParser
 import glob
 import os.path
+import imp
 import isc.log
 isc.log.init("b10-cfgmgr")
 from isc.config.cfgmgr import ConfigManager, ConfigManagerDataReadError, logger
@@ -67,23 +68,16 @@ def load_plugins(path, cm):
     """Load all python files in the given path and treat them as plugins."""
     # Find the python files
     plugins = glob.glob(path + os.sep + '*.py')
-    # Search this directory first, but leave the others there for the imports
-    # of the modules
-    sys.path.insert(0, path)
-    try:
-        for plugin in plugins:
-            # Generate the name of the plugin
-            filename = os.path.basename(plugin)
-            name = filename[:-3]
-            # Load it
-            module = __import__(name)
-            # Ask it to provide the spec and checking function
-            (spec, check_func) = module.load()
-            # And insert it into the manager
-            cm.set_virtual_module(spec, check_func)
-    finally:
-        # Restore the search path
-        sys.path = sys.path[1:]
+    for plugin in plugins:
+        # Generate the name of the plugin
+        filename = os.path.basename(plugin)
+        name = filename[:-3]
+        # Load it
+        module = imp.load_source(name, plugin)
+        # Ask it to provide the spec and checking function
+        (spec, check_func) = module.load()
+        # And insert it into the manager
+        cm.set_virtual_module(spec, check_func)
 
 
 def determine_path_and_file(data_path_option, config_file_option):

@@ -81,7 +81,7 @@ main(int argc, char* argv[]) {
                          (verbose_mode ? isc::log::DEBUG : isc::log::INFO),
                          isc::log::MAX_DEBUG_LEVEL, NULL);
 
-    cout << "b10-dhcp4: My pid=" << getpid() << ", binding to port " 
+    cout << "b10-dhcp4: My pid=" << getpid() << ", binding to port "
          << port_number << ", verbose " << (verbose_mode?"yes":"no") << endl;
 
     if (argc - optind > 0) {

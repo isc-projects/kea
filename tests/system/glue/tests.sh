@@ -38,10 +38,12 @@ $DIG +norec @10.53.0.1 -p 53210 foo.bar.example. A >dig.out.$n || status=1
 $PERL $DIGCOMP example.good dig.out.$n || status=1
 n=`expr $n + 1`
 
-echo "I:testing that we find glue A RRs we are authoritative for ($n)"
-$DIG +norec @10.53.0.1 -p 53210 foo.bar.example.org. a >dig.out.$n || status=1
-$PERL $DIGCOMP auth.good dig.out.$n || status=1
-n=`expr $n + 1`
+# Disabling this test, as it checks for looking up glue in a different zone
+# finder than the answer is from. This is not supported now.
+#echo "I:testing that we find glue A RRs we are authoritative for ($n)"
+#$DIG +norec @10.53.0.1 -p 53210 foo.bar.example.org. a >dig.out.$n || status=1
+#$PERL $DIGCOMP auth.good dig.out.$n || status=1
+#n=`expr $n + 1`
 
 # We cannot do this test for BIND 10 because b10-auth doesn't act as a
 # recursive (caching) server (by design)

@@ -13,9 +13,8 @@ Feature: DDNS System
 
         # Test 1
         When I use DDNS to set the SOA serial to 1235
-        # Note: test spec says refused here, system returns SERVFAIL
-        #The DDNS response should be REFUSED
-        The DDNS response should be SERVFAIL
+        # Note: test spec says refused here, system returns NOTIMP
+        The DDNS response should be NOTIMP
         And the SOA serial for example.org should be 1234
 
         # Test 2
@@ -53,15 +52,14 @@ Feature: DDNS System
         And wait for new bind10 stderr message DDNS_STARTED
 
         # Test 8
-        # Known issue: after shutdown, first new attempt results in SERVFAIL
         When I use DDNS to set the SOA serial to 1238
-        The DDNS response should be SERVFAIL
-        And the SOA serial for example.org should be 1237
-
-        When I use DDNS to set the SOA serial to 1238
-        And wait for new bind10 stderr message AUTH_LOAD_ZONE
         The DDNS response should be SUCCESS
         And the SOA serial for example.org should be 1238
+
+        When I use DDNS to set the SOA serial to 1239
+        And wait for new bind10 stderr message AUTH_LOAD_ZONE
+        The DDNS response should be SUCCESS
+        And the SOA serial for example.org should be 1239
 
         # Test 9
         When I send bind10 the command Auth shutdown
@@ -70,10 +68,10 @@ Feature: DDNS System
         And wait for new bind10 stderr message AUTH_SERVER_STARTED
 
         # Test 10
-        When I use DDNS to set the SOA serial to 1239
+        When I use DDNS to set the SOA serial to 1240
         And wait for new bind10 stderr message AUTH_LOAD_ZONE
         The DDNS response should be SUCCESS
-        And the SOA serial for example.org should be 1239
+        And the SOA serial for example.org should be 1240
 
         # Test 11
         When I configure BIND10 to stop running DDNS
@@ -82,10 +80,10 @@ Feature: DDNS System
         bind10 module DDNS should not be running
 
         # Test 12
-        When I use DDNS to set the SOA serial to 1240
+        When I use DDNS to set the SOA serial to 1241
         # should this be REFUSED again?
-        The DDNS response should be SERVFAIL
-        And the SOA serial for example.org should be 1239
+        The DDNS response should be NOTIMP
+        And the SOA serial for example.org should be 1240
 
     Scenario: ACL
         Given I have bind10 running with configuration ddns/ddns.config

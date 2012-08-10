@@ -22,8 +22,8 @@
 #define __UTIL_UNITTESTS_TEXTDATA_H 1
 
 /**
- * @file textdata.h
- * @short Utilities for tests with text data.
+ * \file textdata.h
+ * \brief Utilities for tests with text data.
  *
  * This utility provides convenient helper functions for unit tests using
  * textual data.

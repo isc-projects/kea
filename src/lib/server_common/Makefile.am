@@ -16,22 +16,22 @@ if USE_CLANGPP
 AM_CXXFLAGS += -Wno-unused-parameter
 endif
 
-lib_LTLIBRARIES = libserver_common.la
-libserver_common_la_SOURCES = client.h client.cc
-libserver_common_la_SOURCES += keyring.h keyring.cc
-libserver_common_la_SOURCES += portconfig.h portconfig.cc
-libserver_common_la_SOURCES += logger.h logger.cc
-libserver_common_la_SOURCES += socket_request.h socket_request.cc
-nodist_libserver_common_la_SOURCES = server_common_messages.h
-nodist_libserver_common_la_SOURCES += server_common_messages.cc
-libserver_common_la_LIBADD = $(top_builddir)/src/lib/exceptions/libexceptions.la
-libserver_common_la_LIBADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
-libserver_common_la_LIBADD += $(top_builddir)/src/lib/cc/libcc.la
-libserver_common_la_LIBADD += $(top_builddir)/src/lib/config/libcfgclient.la
-libserver_common_la_LIBADD += $(top_builddir)/src/lib/log/liblog.la
-libserver_common_la_LIBADD += $(top_builddir)/src/lib/acl/libacl.la
-libserver_common_la_LIBADD += $(top_builddir)/src/lib/dns/libdns++.la
-libserver_common_la_LIBADD += $(top_builddir)/src/lib/util/io/libutil_io.la
+lib_LTLIBRARIES = libb10-server-common.la
+libb10_server_common_la_SOURCES = client.h client.cc
+libb10_server_common_la_SOURCES += keyring.h keyring.cc
+libb10_server_common_la_SOURCES += portconfig.h portconfig.cc
+libb10_server_common_la_SOURCES += logger.h logger.cc
+libb10_server_common_la_SOURCES += socket_request.h socket_request.cc
+nodist_libb10_server_common_la_SOURCES = server_common_messages.h
+nodist_libb10_server_common_la_SOURCES += server_common_messages.cc
+libb10_server_common_la_LIBADD = $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
+libb10_server_common_la_LIBADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
+libb10_server_common_la_LIBADD += $(top_builddir)/src/lib/cc/libb10-cc.la
+libb10_server_common_la_LIBADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la
+libb10_server_common_la_LIBADD += $(top_builddir)/src/lib/log/libb10-log.la
+libb10_server_common_la_LIBADD += $(top_builddir)/src/lib/acl/libb10-acl.la
+libb10_server_common_la_LIBADD += $(top_builddir)/src/lib/dns/libb10-dns++.la
+libb10_server_common_la_LIBADD += $(top_builddir)/src/lib/util/io/libb10-util-io.la
 BUILT_SOURCES = server_common_messages.h server_common_messages.cc
 server_common_messages.h server_common_messages.cc: server_common_messages.mes
 	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/server_common/server_common_messages.mes

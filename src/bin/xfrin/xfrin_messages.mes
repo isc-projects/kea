@@ -15,10 +15,9 @@
 # No namespace declaration - these constants go in the global namespace
 # of the xfrin messages python module.
 
-% XFRIN_AUTH_LOADZONE sending Auth loadzone for origin=%1, class=%2, datasrc=%3
-There was a successful zone transfer, and the zone is served by b10-auth
-in the in-memory data source using sqlite3 as a backend. We send the
-"loadzone" command for the zone to b10-auth.
+% XFRIN_AUTH_LOADZONE sending Auth loadzone for origin=%1, class=%2
+There was a successful zone transfer.  We send the "loadzone" command for the
+zone to b10-auth.
 
 % XFRIN_AXFR_INCONSISTENT_SOA AXFR SOAs are inconsistent for %1: %2 expected, %3 received
 The serial fields of the first and last SOAs of AXFR (including AXFR-style

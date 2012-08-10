@@ -12,12 +12,14 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <cassert>
+#include <util/memory_segment.h>
 
 #include <dns/name.h>
 
 #include <datasrc/zonetable.h>
 #include <datasrc/rbtree.h>
+
+#include <cassert>
 
 using namespace std;
 using namespace isc::dns;
@@ -30,8 +32,14 @@ struct ZoneTable::ZoneTableImpl {
     // Type aliases to make it shorter
     typedef RBTree<ZoneFinder> ZoneTree;
     typedef RBNode<ZoneFinder> ZoneNode;
+
     // The actual storage
-    ZoneTree zones_;
+    ZoneTree* zones_;
+
+    // Constructor
+    ZoneTableImpl(util::MemorySegment& mem_sgmt) :
+        zones_(ZoneTree::create(mem_sgmt))
+    {}
 
     /*
      * The implementation methods are here and just wrap-called in the
@@ -40,7 +48,7 @@ struct ZoneTable::ZoneTableImpl {
      */
 
     // Implementation of ZoneTable::addZone
-    result::Result addZone(ZoneFinderPtr zone) {
+    result::Result addZone(util::MemorySegment& mem_sgmt, ZoneFinderPtr zone) {
         // Sanity check
         if (!zone) {
             isc_throw(InvalidParameter,
@@ -49,7 +57,7 @@ struct ZoneTable::ZoneTableImpl {
 
         // Get the node where we put the zone
         ZoneNode* node(NULL);
-        switch (zones_.insert(zone->getOrigin(), &node)) {
+        switch (zones_->insert(mem_sgmt, zone->getOrigin(), &node)) {
             // This is OK
             case ZoneTree::SUCCESS:
             case ZoneTree::ALREADYEXISTS:
@@ -76,7 +84,7 @@ struct ZoneTable::ZoneTableImpl {
         result::Result my_result;
 
         // Translate the return codes
-        switch (zones_.find(name, &node)) {
+        switch (zones_->find(name, &node)) {
             case ZoneTree::EXACTMATCH:
                 my_result = result::SUCCESS;
                 break;
@@ -100,16 +108,39 @@ struct ZoneTable::ZoneTableImpl {
     }
 };
 
-ZoneTable::ZoneTable() : impl_(new ZoneTableImpl)
+ZoneTable::ZoneTable(util::MemorySegment& mem_sgmt) :
+    impl_(new ZoneTableImpl(mem_sgmt))
 {}
 
 ZoneTable::~ZoneTable() {
     delete impl_;
 }
 
+ZoneTable*
+ZoneTable::create(util::MemorySegment& mem_sgmt) {
+    // The ZoneTable constructor can throw, so we need to prevent memory leak.
+    // This is ugly, but for now this seems to be the only place we need
+    // this, and since we'll substantially revise this code soon, so we don't
+    // work around it by this hack at the moment.
+    void* p = mem_sgmt.allocate(sizeof(ZoneTable));
+    try {
+        return (new(p) ZoneTable(mem_sgmt));
+    } catch (...) {
+        mem_sgmt.deallocate(p, sizeof(ZoneTable));
+        throw;
+    }
+}
+
+void
+ZoneTable::destroy(util::MemorySegment& mem_sgmt, ZoneTable* ztable) {
+    ZoneTableImpl::ZoneTree::destroy(mem_sgmt, ztable->impl_->zones_);
+    ztable->~ZoneTable();
+    mem_sgmt.deallocate(ztable, sizeof(ZoneTable));
+}
+
 result::Result
-ZoneTable::addZone(ZoneFinderPtr zone) {
-    return (impl_->addZone(zone));
+ZoneTable::addZone(util::MemorySegment& mem_sgmt, ZoneFinderPtr zone) {
+    return (impl_->addZone(mem_sgmt, zone));
 }
 
 result::Result
