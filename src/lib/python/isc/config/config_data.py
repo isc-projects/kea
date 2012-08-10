@@ -556,7 +556,6 @@ class MultiConfigData:
             if 'item_default' in spec:
                 # one special case, named_set
                 if spec['item_type'] == 'named_set':
-                    print("is " + id_part + " in named set?")
                     return spec['item_default']
                 else:
                     return spec['item_default']
@@ -585,6 +584,14 @@ class MultiConfigData:
             value = self.get_default_value(identifier)
             if value is not None:
                 return value, self.DEFAULT
+            else:
+                # get_default_value returns None for both
+                # the cases where there is no default, and where
+                # it is set to null, so we need to catch the latter
+                spec_part = self.find_spec_part(identifier)
+                if spec_part and 'item_default' in spec_part and\
+                   spec_part['item_default'] is None:
+                    return None, self.DEFAULT
         return None, self.NONE
 
     def _append_value_item(self, result, spec_part, identifier, all, first = False):
@@ -650,7 +657,8 @@ class MultiConfigData:
                                                 all)
             else:
                 value, status = self.get_value(identifier)
-                if status == self.NONE and not spec_part['item_optional']:
+                if status == self.NONE and not spec_part['item_optional']:# and\
+                   #not ('item_default' in spec_part):
                     raise isc.cc.data.DataNotFoundError(identifier + " not found")
 
                 entry = _create_value_map_entry(identifier,
