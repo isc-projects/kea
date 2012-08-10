@@ -80,9 +80,7 @@ namespace memory {
 ///
 /// \note It is caller's responsibility to pass valid data here. This means
 ///     the data returned by RdataEncoder and the corresponding class and type.
-///     The reader tries to detect some of the inconsistencies, but it's
-///     not perfect. Also, if anything throws, it is improper use of the class
-///     and the class might be in inconsistent or unknown state.
+///     If this is not the case, all the kinds of pointer hell might get loose.
 class RdataReader {
 public:
     /// \brief Function called on each name encountered in the data.
@@ -118,7 +116,6 @@ public:
     /// \param sig_count The number of RRSig rdata bundled with the data.
     /// \param name_action The callback to be called on each encountered name.
     /// \param data_action The callback to be called on each data chunk.
-    /// \throw isc::BadValue if mismatch of size and counts is detected.
     RdataReader(const dns::RRClass& rrclass, const dns::RRType& rrtype,
                 size_t size, const uint8_t* data,
                 size_t rdata_count, size_t sig_count,
@@ -267,8 +264,8 @@ private:
     // Pointer to the beginning of the data (after the lengths)
     const uint8_t* const data_;
     // Pointer to the first data signature
-    const uint8_t* const sigs_;
-    const uint8_t* findSigs() const;
+    // Will be computed during the normal RR iteration
+    const uint8_t* sigs_;
     // The positions in data.
     size_t data_pos_, spec_pos_, length_pos_;
     size_t sig_pos_, sig_data_pos_;
