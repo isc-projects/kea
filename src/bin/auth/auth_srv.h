@@ -202,25 +202,6 @@ public:
     ///
     void setXfrinSession(isc::cc::AbstractSession* xfrin_session);
 
-    /// \brief Set the communication session with Statistics.
-    ///
-    /// This function never throws an exception as far as
-    /// AuthCounters::setStatisticsSession() doesn't throw.
-    ///
-    /// Note: this interface is tentative.  We'll revisit the ASIO and
-    /// session frameworks, at which point the session will probably
-    /// be passed on construction of the server.
-    ///
-    /// \param statistics_session A Session object over which statistics
-    /// information is exchanged with statistics module.
-    /// The session must be established before setting in the server
-    /// object.
-    /// Ownership isn't transferred: the caller is responsible for keeping
-    /// this object to be valid while the server object is working and for
-    /// disconnecting the session and destroying the object when the server
-    /// is shutdown.
-    void setStatisticsSession(isc::cc::AbstractSession* statistics_session);
-
     /// \brief Returns statistics data
     ///
     /// This function can throw an exception from
