@@ -35,8 +35,6 @@ class AuthCountersImpl;
 /// statistics module.
 ///
 /// This class is designed to be a part of \c AuthSrv.
-/// Call \c setStatisticsSession() to set a session to communicate with
-/// statistics module like Xfrin session.
 /// Call \c inc() to increment a counter for specific type of query in
 /// the query processing function. use \c enum \c CounterType to specify
 /// the type of query.
