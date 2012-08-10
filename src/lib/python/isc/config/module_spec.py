@@ -386,6 +386,8 @@ def _validate_format(spec, value, errors):
     return True
 
 def _validate_item(spec, full, data, errors):
+    if spec.get('item_type') == 'any':
+        return True
     if not _validate_type(spec, data, errors):
         return False
     elif type(data) == list:

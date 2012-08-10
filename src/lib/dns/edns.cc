@@ -34,7 +34,7 @@
 #include <dns/rrtype.h>
 
 using namespace std;
-using namespace boost;
+using boost::lexical_cast;
 using namespace isc::dns::rdata;
 using namespace isc::util;
 

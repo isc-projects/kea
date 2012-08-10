@@ -26,7 +26,7 @@ nsas_messages.h nsas_messages.cc: nsas_messages.mes
 	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/nsas/nsas_messages.mes
 
 # What is being built.
-lib_LTLIBRARIES = libnsas.la
+lib_LTLIBRARIES = libb10-nsas.la
 
 # Tell Automake that the nsas_messages.{cc,h} source files are created in the build
 # process, so it must create these before doing anything else.  Although they
@@ -37,24 +37,24 @@ lib_LTLIBRARIES = libnsas.la
 BUILT_SOURCES = nsas_messages.h nsas_messages.cc
 
 # Library sources. The generated files will not be in the distribution.
-libnsas_la_SOURCES  = address_entry.h address_entry.cc
-libnsas_la_SOURCES += asiolink.h
-libnsas_la_SOURCES += hash.cc hash.h
-libnsas_la_SOURCES += hash_deleter.h
-libnsas_la_SOURCES += hash_key.cc hash_key.h
-libnsas_la_SOURCES += hash_table.h
-libnsas_la_SOURCES += nameserver_address_store.cc nameserver_address_store.h
-libnsas_la_SOURCES += nameserver_address.h nameserver_address.cc
-libnsas_la_SOURCES += nameserver_entry.cc nameserver_entry.h
-libnsas_la_SOURCES += nsas_entry_compare.h
-libnsas_la_SOURCES += nsas_entry.h nsas_types.h
-libnsas_la_SOURCES += nsas_log.cc nsas_log.h
-libnsas_la_SOURCES += zone_entry.cc zone_entry.h
-libnsas_la_SOURCES += fetchable.h
-libnsas_la_SOURCES += address_request_callback.h
-libnsas_la_SOURCES += glue_hints.h glue_hints.cc
+libb10_nsas_la_SOURCES  = address_entry.h address_entry.cc
+libb10_nsas_la_SOURCES += asiolink.h
+libb10_nsas_la_SOURCES += hash.cc hash.h
+libb10_nsas_la_SOURCES += hash_deleter.h
+libb10_nsas_la_SOURCES += hash_key.cc hash_key.h
+libb10_nsas_la_SOURCES += hash_table.h
+libb10_nsas_la_SOURCES += nameserver_address_store.cc nameserver_address_store.h
+libb10_nsas_la_SOURCES += nameserver_address.h nameserver_address.cc
+libb10_nsas_la_SOURCES += nameserver_entry.cc nameserver_entry.h
+libb10_nsas_la_SOURCES += nsas_entry_compare.h
+libb10_nsas_la_SOURCES += nsas_entry.h nsas_types.h
+libb10_nsas_la_SOURCES += nsas_log.cc nsas_log.h
+libb10_nsas_la_SOURCES += zone_entry.cc zone_entry.h
+libb10_nsas_la_SOURCES += fetchable.h
+libb10_nsas_la_SOURCES += address_request_callback.h
+libb10_nsas_la_SOURCES += glue_hints.h glue_hints.cc
 
-nodist_libnsas_la_SOURCES  = nsas_messages.h nsas_messages.cc
+nodist_libb10_nsas_la_SOURCES  = nsas_messages.h nsas_messages.cc
 
 # The message file should be in the distribution.
 EXTRA_DIST = nsas_messages.mes

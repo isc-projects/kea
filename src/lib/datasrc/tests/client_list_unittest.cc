@@ -25,6 +25,7 @@
 #include <gtest/gtest.h>
 
 #include <set>
+#include <fstream>
 
 using namespace isc::datasrc;
 using namespace isc::data;
@@ -225,6 +226,12 @@ public:
             "{"
             "   \"type\": \"test_type\","
             "   \"params\": {}"
+            "}]")),
+        config_elem_zones_(Element::fromJSON("["
+            "{"
+            "   \"type\": \"test_type\","
+            "   \"params\": [\"example.org\", \"example.com\", "
+            "                \"noiter.org\", \"null.org\"]"
             "}]"))
     {
         for (size_t i(0); i < ds_count; ++ i) {
@@ -234,6 +241,25 @@ public:
             ds_info_.push_back(ConfigurableClientList::DataSourceInfo(ds.get(),
                 DataSourceClientContainerPtr(), false));
         }
+    }
+    void prepareCache(size_t index, const Name& zone, bool prefill = false) {
+        const shared_ptr<InMemoryClient> cache(new InMemoryClient());
+        const shared_ptr<InMemoryZoneFinder>
+            finder(new InMemoryZoneFinder(RRClass::IN(), zone));
+        if (prefill) {
+            RRsetPtr soa(new RRset(zone, RRClass::IN(), RRType::SOA(),
+                                   RRTTL(3600)));
+            // The RData here is bogus, but it is not used to anything. There
+            // just needs to be some.
+            soa->addRdata(rdata::generic::SOA(Name::ROOT_NAME(),
+                                              Name::ROOT_NAME(),
+                                              0, 0, 0, 0, 0));
+            finder->add(soa);
+        }
+        // If we don't do prefill, we leave the zone empty. This way,
+        // we can check when it was reloaded.
+        cache->addZone(finder);
+        list_->getDataSources()[index].cache_ = cache;
     }
     // Check the positive result is as we expect it.
     void positiveResult(const ClientList::FindResult& result,
@@ -245,6 +271,12 @@ public:
         ASSERT_NE(ZoneFinderPtr(), result.finder_);
         EXPECT_EQ(name, result.finder_->getOrigin());
         EXPECT_EQ(exact, result.exact_match_);
+        // If it is a positive result, there's something to keep
+        // alive, even when we don't know what it is.
+        // Any better idea how to test it actually keeps the thing
+        // alive?
+        EXPECT_NE(shared_ptr<ClientList::FindResult::LifeKeeper>(),
+                  result.life_keeper_);
         if (from_cache) {
             EXPECT_NE(shared_ptr<InMemoryZoneFinder>(),
                       dynamic_pointer_cast<InMemoryZoneFinder>(
@@ -303,7 +335,7 @@ public:
     const ClientList::FindResult negativeResult_;
     vector<shared_ptr<MockDataSourceClient> > ds_;
     vector<ConfigurableClientList::DataSourceInfo> ds_info_;
-    const ConstElementPtr config_elem_;
+    const ConstElementPtr config_elem_, config_elem_zones_;
 };
 
 // Test the test itself
@@ -315,6 +347,9 @@ TEST_F(ListTest, selfTest) {
     EXPECT_EQ(result::NOTFOUND, ds_[1]->findZone(Name("example.org")).code);
     EXPECT_EQ(result::NOTFOUND, ds_[0]->findZone(Name("aaa")).code);
     EXPECT_EQ(result::NOTFOUND, ds_[0]->findZone(Name("zzz")).code);
+    // Nothing to keep alive here.
+    EXPECT_EQ(shared_ptr<ClientList::FindResult::LifeKeeper>(),
+                  negativeResult_.life_keeper_);
 }
 
 // Test the list we create with empty configuration is, in fact, empty
@@ -418,8 +453,10 @@ TEST_F(ListTest, multiBestMatch) {
 // Check the configuration is empty when the list is empty
 TEST_F(ListTest, configureEmpty) {
     const ConstElementPtr elem(new ListElement);
-    list_->configure(*elem, true);
+    list_->configure(elem, true);
     EXPECT_TRUE(list_->getDataSources().empty());
+    // Check the exact configuration is preserved
+    EXPECT_EQ(elem, list_->getConfiguration());
 }
 
 // Check we can get multiple data sources and they are in the right order.
@@ -436,10 +473,12 @@ TEST_F(ListTest, configureMulti) {
         "   \"params\": {}"
         "}]"
     ));
-    list_->configure(*elem, true);
+    list_->configure(elem, true);
     EXPECT_EQ(2, list_->getDataSources().size());
     checkDS(0, "type1", "{}", false);
     checkDS(1, "type2", "{}", false);
+    // Check the exact configuration is preserved
+    EXPECT_EQ(elem, list_->getConfiguration());
 }
 
 // Check we can pass whatever we want to the params
@@ -462,7 +501,7 @@ TEST_F(ListTest, configureParams) {
             "   \"cache\": \"off\","
             "   \"params\": ") + *param +
             "}]"));
-        list_->configure(*elem, true);
+        list_->configure(elem, true);
         EXPECT_EQ(1, list_->getDataSources().size());
         checkDS(0, "t", *param, false);
     }
@@ -552,12 +591,12 @@ TEST_F(ListTest, wrongConfig) {
         NULL
     };
     // Put something inside to see it survives the exception
-    list_->configure(*config_elem_, true);
+    list_->configure(config_elem_, true);
     checkDS(0, "test_type", "{}", false);
     for (const char** config(configs); *config; ++config) {
         SCOPED_TRACE(*config);
         ConstElementPtr elem(Element::fromJSON(*config));
-        EXPECT_THROW(list_->configure(*elem, true),
+        EXPECT_THROW(list_->configure(elem, true),
                      ConfigurableClientList::ConfigurationError);
         // Still untouched
         checkDS(0, "test_type", "{}", false);
@@ -571,7 +610,7 @@ TEST_F(ListTest, defaults) {
         "{"
         "   \"type\": \"type1\""
         "}]"));
-    list_->configure(*elem, true);
+    list_->configure(elem, true);
     EXPECT_EQ(1, list_->getDataSources().size());
     checkDS(0, "type1", "null", false);
 }
@@ -579,11 +618,11 @@ TEST_F(ListTest, defaults) {
 // Check we can call the configure multiple times, to change the configuration
 TEST_F(ListTest, reconfigure) {
     const ConstElementPtr empty(new ListElement);
-    list_->configure(*config_elem_, true);
+    list_->configure(config_elem_, true);
     checkDS(0, "test_type", "{}", false);
-    list_->configure(*empty, true);
+    list_->configure(empty, true);
     EXPECT_TRUE(list_->getDataSources().empty());
-    list_->configure(*config_elem_, true);
+    list_->configure(config_elem_, true);
     checkDS(0, "test_type", "{}", false);
 }
 
@@ -593,9 +632,9 @@ TEST_F(ListTest, dataSrcError) {
         "{"
         "   \"type\": \"error\""
         "}]"));
-    list_->configure(*config_elem_, true);
+    list_->configure(config_elem_, true);
     checkDS(0, "test_type", "{}", false);
-    EXPECT_THROW(list_->configure(*elem, true), DataSourceError);
+    EXPECT_THROW(list_->configure(elem, true), DataSourceError);
     checkDS(0, "test_type", "{}", false);
 }
 
@@ -615,7 +654,7 @@ TEST_F(ListTest, configureCacheEmpty) {
         "   \"params\": {}"
         "}]"
     ));
-    list_->configure(*elem, true);
+    list_->configure(elem, true);
     EXPECT_EQ(2, list_->getDataSources().size());
     checkDS(0, "type1", "{}", true);
     checkDS(1, "type2", "{}", false);
@@ -637,7 +676,7 @@ TEST_F(ListTest, configureCacheDisabled) {
         "   \"params\": {}"
         "}]"
     ));
-    list_->configure(*elem, false);
+    list_->configure(elem, false);
     EXPECT_EQ(2, list_->getDataSources().size());
     checkDS(0, "type1", "{}", false);
     checkDS(1, "type2", "{}", false);
@@ -652,7 +691,7 @@ TEST_F(ListTest, cacheZones) {
         "   \"cache-zones\": [\"example.org\", \"example.com\"],"
         "   \"params\": [\"example.org\", \"example.com\", \"exmaple.cz\"]"
         "}]"));
-    list_->configure(*elem, true);
+    list_->configure(elem, true);
     checkDS(0, "type1", "[\"example.org\", \"example.com\", \"exmaple.cz\"]",
             true);
 
@@ -679,7 +718,7 @@ TEST_F(ListTest, cacheZones) {
 // Check the caching handles misbehaviour from the data source and
 // misconfiguration gracefully
 TEST_F(ListTest, badCache) {
-    list_->configure(*config_elem_, true);
+    list_->configure(config_elem_, true);
     checkDS(0, "test_type", "{}", false);
     // First, the zone is not in the data source
     const ConstElementPtr elem1(Element::fromJSON("["
@@ -689,7 +728,7 @@ TEST_F(ListTest, badCache) {
         "   \"cache-zones\": [\"example.org\"],"
         "   \"params\": []"
         "}]"));
-    EXPECT_THROW(list_->configure(*elem1, true),
+    EXPECT_THROW(list_->configure(elem1, true),
                  ConfigurableClientList::ConfigurationError);
     checkDS(0, "test_type", "{}", false);
     // Now, the zone doesn't give an iterator
@@ -700,7 +739,7 @@ TEST_F(ListTest, badCache) {
         "   \"cache-zones\": [\"noiter.org\"],"
         "   \"params\": [\"noiter.org\"]"
         "}]"));
-    EXPECT_THROW(list_->configure(*elem2, true), isc::NotImplemented);
+    EXPECT_THROW(list_->configure(elem2, true), isc::NotImplemented);
     checkDS(0, "test_type", "{}", false);
     // Now, the zone returns NULL iterator
     const ConstElementPtr elem3(Element::fromJSON("["
@@ -710,7 +749,7 @@ TEST_F(ListTest, badCache) {
         "   \"cache-zones\": [\"null.org\"],"
         "   \"params\": [\"null.org\"]"
         "}]"));
-    EXPECT_THROW(list_->configure(*elem3, true), isc::Unexpected);
+    EXPECT_THROW(list_->configure(elem3, true), isc::Unexpected);
     checkDS(0, "test_type", "{}", false);
     // The autodetection of zones is not enabled
     const ConstElementPtr elem4(Element::fromJSON("["
@@ -719,7 +758,7 @@ TEST_F(ListTest, badCache) {
         "   \"cache-enable\": true,"
         "   \"params\": [\"example.org\"]"
         "}]"));
-    EXPECT_THROW(list_->configure(*elem4, true), isc::NotImplemented);
+    EXPECT_THROW(list_->configure(elem4, true), isc::NotImplemented);
     checkDS(0, "test_type", "{}", false);
 }
 
@@ -732,7 +771,7 @@ TEST_F(ListTest, masterFiles) {
         "       \".\": \"" TEST_DATA_DIR "/root.zone\""
         "   }"
         "}]"));
-    list_->configure(*elem, true);
+    list_->configure(elem, true);
 
     // It has only the cache
     EXPECT_EQ(static_cast<const DataSourceClient*>(NULL),
@@ -743,8 +782,153 @@ TEST_F(ListTest, masterFiles) {
                    true);
 
     // If cache is not enabled, nothing is loaded
-    list_->configure(*elem, false);
+    list_->configure(elem, false);
     EXPECT_EQ(0, list_->getDataSources().size());
+}
+
+// Test we can reload a zone
+TEST_F(ListTest, reloadSuccess) {
+    list_->configure(config_elem_zones_, true);
+    Name name("example.org");
+    prepareCache(0, name);
+    // Not there yet. It would be NXDOMAIN, but it is in apex and
+    // it returns NXRRSET instead.
+    EXPECT_EQ(ZoneFinder::NXRRSET,
+              list_->find(name).finder_->find(name, RRType::SOA())->code);
+    // Now reload. It should be there now.
+    EXPECT_EQ(ConfigurableClientList::ZONE_RELOADED, list_->reload(name));
+    EXPECT_EQ(ZoneFinder::SUCCESS,
+              list_->find(name).finder_->find(name, RRType::SOA())->code);
+}
+
+// The cache is not enabled. The load should be rejected.
+TEST_F(ListTest, reloadNotEnabled) {
+    list_->configure(config_elem_zones_, false);
+    Name name("example.org");
+    // We put the cache in even when not enabled. This won't confuse the thing.
+    prepareCache(0, name);
+    // Not there yet. It would be NXDOMAIN, but it is in apex and
+    // it returns NXRRSET instead.
+    EXPECT_EQ(ZoneFinder::NXRRSET,
+              list_->find(name).finder_->find(name, RRType::SOA())->code);
+    // Now reload. It should reject it.
+    EXPECT_EQ(ConfigurableClientList::CACHE_DISABLED, list_->reload(name));
+    // Nothing changed here
+    EXPECT_EQ(ZoneFinder::NXRRSET,
+              list_->find(name).finder_->find(name, RRType::SOA())->code);
+}
+
+// Test several cases when the zone does not exist
+TEST_F(ListTest, reloadNoSuchZone) {
+    list_->configure(config_elem_zones_, true);
+    Name name("example.org");
+    // We put the cache in even when not enabled. This won't confuse the
+    // reload method, as that one looks at the real state of things, not
+    // at the configuration.
+    prepareCache(0, Name("example.com"));
+    // Not in the data sources
+    EXPECT_EQ(ConfigurableClientList::ZONE_NOT_FOUND,
+              list_->reload(Name("example.cz")));
+    // Not cached
+    EXPECT_EQ(ConfigurableClientList::ZONE_NOT_FOUND, list_->reload(name));
+    // Partial match
+    EXPECT_EQ(ConfigurableClientList::ZONE_NOT_FOUND,
+              list_->reload(Name("sub.example.com")));
+    // Nothing changed here - these zones don't exist
+    EXPECT_EQ(static_cast<isc::datasrc::DataSourceClient*>(NULL),
+              list_->find(name).dsrc_client_);
+    EXPECT_EQ(static_cast<isc::datasrc::DataSourceClient*>(NULL),
+              list_->find(Name("example.cz")).dsrc_client_);
+    EXPECT_EQ(static_cast<isc::datasrc::DataSourceClient*>(NULL),
+              list_->find(Name("sub.example.com"), true).dsrc_client_);
+    // Not reloaded
+    EXPECT_EQ(ZoneFinder::NXRRSET,
+              list_->find(Name("example.com")).finder_->
+              find(Name("example.com"), RRType::SOA())->code);
+}
+
+// Check we gracefuly throw an exception when a zone disappeared in
+// the underlying data source when we want to reload it
+TEST_F(ListTest, reloadZoneGone) {
+    list_->configure(config_elem_, true);
+    Name name("example.org");
+    // We put in a cache for non-existant zone. This emulates being loaded
+    // and then the zone disappearing. We prefill the cache, so we can check
+    // it.
+    prepareCache(0, name, true);
+    // The zone contains something
+    EXPECT_EQ(ZoneFinder::SUCCESS,
+              list_->find(name).finder_->find(name, RRType::SOA())->code);
+    // The zone is not there, so abort the reload.
+    EXPECT_THROW(list_->reload(name), DataSourceError);
+    // The zone is not hurt.
+    EXPECT_EQ(ZoneFinder::SUCCESS,
+              list_->find(name).finder_->find(name, RRType::SOA())->code);
+}
+
+// The underlying data source throws. Check we don't modify the state.
+TEST_F(ListTest, reloadZoneThrow) {
+    list_->configure(config_elem_zones_, true);
+    Name name("noiter.org");
+    prepareCache(0, name, true);
+    // The zone contains stuff now
+    EXPECT_EQ(ZoneFinder::SUCCESS,
+              list_->find(name).finder_->find(name, RRType::SOA())->code);
+    // The iterator throws, so abort the reload.
+    EXPECT_THROW(list_->reload(name), isc::NotImplemented);
+    // The zone is not hurt.
+    EXPECT_EQ(ZoneFinder::SUCCESS,
+              list_->find(name).finder_->find(name, RRType::SOA())->code);
+}
+
+TEST_F(ListTest, reloadNullIterator) {
+    list_->configure(config_elem_zones_, true);
+    Name name("null.org");
+    prepareCache(0, name, true);
+    // The zone contains stuff now
+    EXPECT_EQ(ZoneFinder::SUCCESS,
+              list_->find(name).finder_->find(name, RRType::SOA())->code);
+    // The iterator throws, so abort the reload.
+    EXPECT_THROW(list_->reload(name), isc::Unexpected);
+    // The zone is not hurt.
+    EXPECT_EQ(ZoneFinder::SUCCESS,
+              list_->find(name).finder_->find(name, RRType::SOA())->code);
+}
+
+// Test we can reload the master files too (special-cased)
+TEST_F(ListTest, reloadMasterFile) {
+    const char* const install_cmd = INSTALL_PROG " -c " TEST_DATA_DIR
+        "/root.zone " TEST_DATA_BUILDDIR "/root.zone.copied";
+    if (system(install_cmd) != 0) {
+        // any exception will do, this is failure in test setup, but
+        // nice to show the command that fails, and shouldn't be caught
+        isc_throw(isc::Exception,
+          "Error setting up; command failed: " << install_cmd);
+    }
+
+    const ConstElementPtr elem(Element::fromJSON("["
+        "{"
+        "   \"type\": \"MasterFiles\","
+        "   \"cache-enable\": true,"
+        "   \"params\": {"
+        "       \".\": \"" TEST_DATA_BUILDDIR "/root.zone.copied\""
+        "   }"
+        "}]"));
+    list_->configure(elem, true);
+    // Add a record that is not in the zone
+    EXPECT_EQ(ZoneFinder::NXDOMAIN,
+              list_->find(Name(".")).finder_->find(Name("nosuchdomain"),
+                                                   RRType::TXT())->code);
+    ofstream f;
+    f.open(TEST_DATA_BUILDDIR "/root.zone.copied", ios::out | ios::app);
+    f << "nosuchdomain.\t\t3600\tIN\tTXT\ttest" << std::endl;
+    f.close();
+    // Do the reload.
+    EXPECT_EQ(ConfigurableClientList::ZONE_RELOADED, list_->reload(Name(".")));
+    // It is here now.
+    EXPECT_EQ(ZoneFinder::SUCCESS,
+              list_->find(Name(".")).finder_->find(Name("nosuchdomain"),
+                                                   RRType::TXT())->code);
 }
 
 }

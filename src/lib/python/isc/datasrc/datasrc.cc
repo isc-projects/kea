@@ -28,6 +28,7 @@
 #include "iterator_python.h"
 #include "updater_python.h"
 #include "journal_reader_python.h"
+#include "configurableclientlist_python.h"
 
 #include <util/python/pycppwrapper_util.h>
 #include <dns/python/pydnspp_common.h>
@@ -280,6 +281,11 @@ PyInit_datasrc(void) {
     }
 
     if (!initModulePart_ZoneJournalReader(mod)) {
+        Py_DECREF(mod);
+        return (NULL);
+    }
+
+    if (!initModulePart_ConfigurableClientList(mod)) {
         Py_DECREF(mod);
         return (NULL);
     }

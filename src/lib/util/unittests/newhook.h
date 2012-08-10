@@ -16,8 +16,8 @@
 #define __UTIL_UNITTESTS_NEWHOOK_H 1
 
 /**
- * @file newhook.h
- * @short Enable the use of special operator new that throws for testing.
+ * \file newhook.h
+ * \brief Enable the use of special operator new that throws for testing.
  *
  * This small utility allows a test case to force the global operator new
  * to throw for a given size to test a case where memory allocation fails

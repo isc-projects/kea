@@ -1,10 +1,10 @@
-<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>BIND 10 Messages Manual</title><link rel="stylesheet" href="./bind10-guide.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"><meta name="description" content="BIND 10 is a Domain Name System (DNS) suite managed by Internet Systems Consortium (ISC). It includes DNS libraries and modular components for controlling authoritative and recursive DNS servers. This is the messages manual for BIND 10 version 20120405. The most up-to-date version of this document, along with other documents for BIND 10, can be found at ."></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="book" title="BIND 10 Messages Manual"><div class="titlepage"><div><div><h1 class="title"><a name="id1168229451102"></a>BIND 10 Messages Manual</h1></div><div><p class="releaseinfo">This is the messages manual for BIND 10 version
-        20120405.</p></div><div><p class="copyright">Copyright © 2011-2012 Internet Systems Consortium, Inc.</p></div><div><div class="abstract" title="Abstract"><p class="title"><b>Abstract</b></p><p>BIND 10 is a Domain Name System (DNS) suite managed by
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>BIND 10 Messages Manual</title><link rel="stylesheet" href="./bind10-guide.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"><meta name="description" content="BIND 10 is a Domain Name System (DNS) suite managed by Internet Systems Consortium (ISC). It includes DNS libraries and modular components for controlling authoritative and recursive DNS servers. This is the messages manual for BIND 10 version 20120712. The most up-to-date version of this document, along with other documents for BIND 10, can be found at ."></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="book" title="BIND 10 Messages Manual"><div class="titlepage"><div><div><h1 class="title"><a name="idp98160"></a>BIND 10 Messages Manual</h1></div><div><p class="releaseinfo">This is the messages manual for BIND 10 version
+        20120712.</p></div><div><p class="copyright">Copyright © 2011-2012 Internet Systems Consortium, Inc.</p></div><div><div class="abstract" title="Abstract"><p class="title"><b>Abstract</b></p><p>BIND 10 is a Domain Name System (DNS) suite managed by
 	  Internet Systems Consortium (ISC). It includes DNS libraries
 	  and modular components for controlling authoritative and
 	  recursive DNS servers.
       </p><p>
-        This is the messages manual for BIND 10 version 20120405.
+        This is the messages manual for BIND 10 version 20120712.
 	    The most up-to-date version of this document, along with
 	    other documents for BIND 10, can be found at
         <a class="ulink" href="http://bind10.isc.org/docs" target="_top">http://bind10.isc.org/docs</a>.
@@ -191,6 +191,8 @@ bug ticket for this issue.
 </p></dd><dt><a name="AUTH_RECEIVED_COMMAND"></a><span class="term">AUTH_RECEIVED_COMMAND command '%1' received</span></dt><dd><p>
 This is a debug message issued when the authoritative server has received
 a command on the command channel.
+</p></dd><dt><a name="AUTH_RECEIVED_NOTIFY"></a><span class="term">AUTH_RECEIVED_NOTIFY received incoming NOTIFY for zone name %1, zone class %2</span></dt><dd><p>
+This is a debug message reporting that an incoming NOTIFY was received.
 </p></dd><dt><a name="AUTH_RECEIVED_SENDSTATS"></a><span class="term">AUTH_RECEIVED_SENDSTATS command 'sendstats' received</span></dt><dd><p>
 This is a debug message issued when the authoritative server has received
 a command from the statistics module to send it data. The 'sendstats'
@@ -246,6 +248,12 @@ complying to the request.
 This is a debug message indicating that the authoritative server has
 found that the data source it is loading is an SQLite3 data source,
 so no further validation is needed.
+</p></dd><dt><a name="AUTH_START_DDNS_FORWARDER"></a><span class="term">AUTH_START_DDNS_FORWARDER DDNS UPDATE handling started</span></dt><dd><p>
+This is a debug message indicating that b10-auth has received a message
+that it should internally forward UPDATE message to b10-ddns. When b10-ddns
+is not running, b10-auth will respond to UPDATE requests with rcode NOTIMP.
+When b10-ddns is running, b10-ddns will handle and respond to the UPDATE
+message.
 </p></dd><dt><a name="AUTH_STATS_CHANNEL_CREATED"></a><span class="term">AUTH_STATS_CHANNEL_CREATED STATS session channel created</span></dt><dd><p>
 This is a debug message indicating that the authoritative server has
 created a channel to the statistics process.  It is issued during server
@@ -271,6 +279,14 @@ being produced.
 This is a debug message indicating that the statistics timer has been
 enabled and that the authoritative server will produce statistics data
 at the specified interval.
+</p></dd><dt><a name="AUTH_STOP_DDNS_FORWARDER"></a><span class="term">AUTH_STOP_DDNS_FORWARDER DDNS UPDATE handling stopped</span></dt><dd><p>
+This is a debug message indicating that b10-auth has received a message
+that it should stop internally forwarding UPDATE message to b10-ddns.
+b10-auth will no longer forward UPDATE messages to b10-ddns, but will
+respond itself with error code NOTIMP.
+This message is also logged when the forwarding is restarted (for instance
+if b10-ddns is restarted and the internal connection needs to be created
+again), in which case it should be followed by AUTH_START_DDNS_FORWARDER.
 </p></dd><dt><a name="AUTH_UNSUPPORTED_OPCODE"></a><span class="term">AUTH_UNSUPPORTED_OPCODE unsupported opcode: %1</span></dt><dd><p>
 This is a debug message, produced when a received DNS packet being
 processed by the authoritative server has been found to contain an
@@ -1089,6 +1105,12 @@ not contain RRs the requested type.  AN NXRRSET indication is returned.
 </p></dd><dt><a name="DATASRC_DO_QUERY"></a><span class="term">DATASRC_DO_QUERY handling query for '%1/%2'</span></dt><dd><p>
 A debug message indicating that a query for the given name and RR type is being
 processed.
+</p></dd><dt><a name="DATASRC_LIST_NOT_CACHED"></a><span class="term">DATASRC_LIST_NOT_CACHED zone %1/%2 not cached, cache disabled globally. Will not be available.</span></dt><dd><p>
+The process disabled caching of RR data completely. However, the given zone
+is provided as a master file and it can be served from memory cache only.
+Therefore, the zone will not be available for this process. If this is
+a problem, you should move the zone to some database backend (sqlite3, for
+example) and use it from there.
 </p></dd><dt><a name="DATASRC_MEM_ADD_RRSET"></a><span class="term">DATASRC_MEM_ADD_RRSET adding RRset '%1/%2' into zone '%3'</span></dt><dd><p>
 Debug information. An RRset is being added to the in-memory data source.
 </p></dd><dt><a name="DATASRC_MEM_ADD_WILDCARD"></a><span class="term">DATASRC_MEM_ADD_WILDCARD adding wildcards for '%1'</span></dt><dd><p>
@@ -1693,12 +1715,45 @@ be completed, after which the process will exit.
 </p></dd><dt><a name="DDNS_STARTED"></a><span class="term">DDNS_STARTED ddns server is running and listening for updates</span></dt><dd><p>
 The ddns process has successfully started and is now ready to receive commands
 and updates.
+</p></dd><dt><a name="DDNS_START_FORWARDER_ERROR"></a><span class="term">DDNS_START_FORWARDER_ERROR Error from b10-auth when requesting DDNS UPDATE forwarding: %1</span></dt><dd><p>
+There was an error response from b10-auth to the command to start
+forwarding DDNS UPDATE messages to b10-ddns.
+It is almost certain that DDNS UPDATE messages are not handled now, and that
+they will be responded to with a NOTIMP error code, even though b10-ddns is
+running.
+The error message is printed, and additional information may be found in
+the b10-auth log output. Since this is an error that is sent by the
+b10-auth module, it should have more information as to what the actual
+problem was.
+</p></dd><dt><a name="DDNS_START_FORWARDER_FAIL"></a><span class="term">DDNS_START_FORWARDER_FAIL Error sending request for DDNS UPDATE forwarding to b10-auth: %1</span></dt><dd><p>
+There was an error when attempting to send b10-auth the request to forward
+DDNS UPDATE messages to the b10-ddns module. This points to an internal
+problem using the inter-module messaging system.
+This needs to be inspected, as it is almost certain that DDNS UPDATE messages
+are not handled now.
+The specific error is printed in the log message.
 </p></dd><dt><a name="DDNS_STOPPED"></a><span class="term">DDNS_STOPPED ddns server has stopped</span></dt><dd><p>
 The ddns process has successfully stopped and is no longer listening for or
 handling commands or updates, and will now exit.
 </p></dd><dt><a name="DDNS_STOPPED_BY_KEYBOARD"></a><span class="term">DDNS_STOPPED_BY_KEYBOARD keyboard interrupt, shutting down</span></dt><dd><p>
 There was a keyboard interrupt signal to stop the ddns process. The
 process will now shut down.
+</p></dd><dt><a name="DDNS_STOP_FORWARDER_ERROR"></a><span class="term">DDNS_STOP_FORWARDER_ERROR Error from b10-auth when requesting to stop DDNS UPDATE forwarding: %1</span></dt><dd><p>
+There was an error response from b10-auth to the command to stop
+forwarding DDNS UPDATE messages to b10-ddns.
+This specific error may not be fatal; instead of returning NOTIMP for future
+DDNS UPDATE messages, it will return SERVFAIL. However, this does point to
+an underlying problem in the messaging system, and should be inspected.
+The error message is printed, and additional information may be found in
+the b10-auth log output.
+</p></dd><dt><a name="DDNS_STOP_FORWARDER_FAIL"></a><span class="term">DDNS_STOP_FORWARDER_FAIL Error sending request to stop DDNS UPDATE forwarding to b10-auth: %1</span></dt><dd><p>
+There was an error when attempting to send b10-auth the request to stop
+forwarding DDNS UPDATE messages to the b10-ddns module. This points to an
+internal problem using the inter-module messaging system.
+This specific error may not be fatal; instead of returning NOTIMP for future
+DDNS UPDATE messages, it will return SERVFAIL. However, this does point to
+an underlying problem in the messaging system, and should be inspected.
+The specific error is printed in the log message.
 </p></dd><dt><a name="DDNS_UNCAUGHT_EXCEPTION"></a><span class="term">DDNS_UNCAUGHT_EXCEPTION uncaught exception of type %1: %2</span></dt><dd><p>
 The b10-ddns process encountered an uncaught exception and will now shut
 down. This is indicative of a programming error and should not happen under
@@ -2169,10 +2224,6 @@ an answer with a different given type and class.
 </p><p>
 This message indicates an internal error in the NSAS.  Please raise a
 bug report.
-</p></dd><dt><a name="PYSERVER_COMMON_AUTH_CONFIG_NAME_PARSER_ERROR"></a><span class="term">PYSERVER_COMMON_AUTH_CONFIG_NAME_PARSER_ERROR Invalid name when parsing Auth configuration: %1</span></dt><dd><p>
-There was an invalid name when parsing Auth configuration.
-</p></dd><dt><a name="PYSERVER_COMMON_AUTH_CONFIG_RRCLASS_ERROR"></a><span class="term">PYSERVER_COMMON_AUTH_CONFIG_RRCLASS_ERROR Invalid RRClass when parsing Auth configuration: %1</span></dt><dd><p>
-There was an invalid RR class when parsing Auth configuration.
 </p></dd><dt><a name="PYSERVER_COMMON_DNS_TCP_SEND_DONE"></a><span class="term">PYSERVER_COMMON_DNS_TCP_SEND_DONE completed sending TCP message to %1 (%2 bytes in total)</span></dt><dd><p>
 Debug message.  A complete DNS message has been successfully
 transmitted over a TCP connection, possibly after multiple send
@@ -2760,10 +2811,9 @@ is unknown in the implementation. The most likely cause is an
 installation problem, where the specification file stats.spec is
 from a different version of BIND 10 than the stats module itself.
 Please check your installation.
-</p></dd><dt><a name="XFRIN_AUTH_LOADZONE"></a><span class="term">XFRIN_AUTH_LOADZONE sending Auth loadzone for origin=%1, class=%2, datasrc=%3</span></dt><dd><p>
-There was a successful zone transfer, and the zone is served by b10-auth
-in the in-memory data source using sqlite3 as a backend. We send the
-"loadzone" command for the zone to b10-auth.
+</p></dd><dt><a name="XFRIN_AUTH_LOADZONE"></a><span class="term">XFRIN_AUTH_LOADZONE sending Auth loadzone for origin=%1, class=%2</span></dt><dd><p>
+There was a successful zone transfer.  We send the "loadzone" command for the
+zone to b10-auth.
 </p></dd><dt><a name="XFRIN_AXFR_INCONSISTENT_SOA"></a><span class="term">XFRIN_AXFR_INCONSISTENT_SOA AXFR SOAs are inconsistent for %1: %2 expected, %3 received</span></dt><dd><p>
 The serial fields of the first and last SOAs of AXFR (including AXFR-style
 IXFR) are not the same.  According to RFC 5936 these two SOAs must be the
