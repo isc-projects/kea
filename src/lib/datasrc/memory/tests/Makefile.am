@@ -19,6 +19,7 @@ TESTS += run_unittests
 
 run_unittests_SOURCES = run_unittests.cc
 run_unittests_SOURCES += rdata_serialization_unittest.cc
+run_unittests_SOURCES += rdataset_unittest.cc
 run_unittests_SOURCES += domaintree_unittest.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
