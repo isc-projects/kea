@@ -159,7 +159,8 @@ public:
     void checkEncode(RRClass rrclass, RRType rrtype,
                      const vector<ConstRdataPtr>& rdata_list,
                      size_t expected_varlen_fields,
-                     const vector<ConstRdataPtr>& rrsig_list);
+                     const vector<ConstRdataPtr>& rrsig_list =
+                     vector<ConstRdataPtr>());
 
     void addRdataCommon(const vector<ConstRdataPtr>& rrsigs);
     void addRdataMultiCommon(const vector<ConstRdataPtr>& rrsigs);
@@ -324,7 +325,7 @@ public:
         RdataReader reader(rrclass, rrtype, encoded_data.size(),
                            &encoded_data[0], rdata_count, sig_count);
         RdataReader::Result field;
-        while (field = reader.next()) {
+        while ((field = reader.next())) {
             switch (field.type()) {
                 case RdataReader::DATA:
                     renderer.writeData(field.data(), field.size());
@@ -339,7 +340,7 @@ public:
 
         renderer.writeName(dummy_name2);
 
-        while (field = reader.nextSig()) {
+        while ((field = reader.nextSig())) {
             switch (field.type()) {
                 case RdataReader::DATA:
                     renderer.writeData(field.data(), field.size());
@@ -368,7 +369,7 @@ public:
         reader.iterate();
         reader.rewind();
         RdataReader::Result field;
-        while (field = reader.next()) {
+        while ((field = reader.next())) {
             switch (field.type()) {
                 case RdataReader::DATA:
                     renderer.writeData(field.data(), field.size());
@@ -383,7 +384,7 @@ public:
 
         renderer.writeName(dummy_name2);
 
-        while (field = reader.nextSig()) {
+        while ((field = reader.nextSig())) {
             switch (field.type()) {
                 case RdataReader::DATA:
                     renderer.writeData(field.data(), field.size());
@@ -529,7 +530,7 @@ RdataEncodeDecodeTest<DecoderStyle>::
 checkEncode(RRClass rrclass, RRType rrtype,
             const vector<ConstRdataPtr>& rdata_list,
             size_t expected_varlen_fields,
-            const vector<ConstRdataPtr>& rrsig_list = vector<ConstRdataPtr>())
+            const vector<ConstRdataPtr>& rrsig_list)
 {
     // These two names will be rendered before and after the test RDATA,
     // to check in case the RDATA contain a domain name whether it's
