@@ -269,6 +269,8 @@ private:
     // The positions in data.
     size_t data_pos_, spec_pos_, length_pos_;
     size_t sig_pos_, sig_data_pos_;
+    Result nextInternal(const NameAction& name_action,
+                        const DataAction& data_action);
 };
 
 }
