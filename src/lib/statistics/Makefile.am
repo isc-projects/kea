@@ -17,8 +17,8 @@ if USE_CLANGPP
 AM_CXXFLAGS += -Wno-unused-parameter
 endif
 
-lib_LTLIBRARIES = libstatistics.la
-libstatistics_la_SOURCES  = counter.h counter.cc
-libstatistics_la_SOURCES  += counter_dict.h counter_dict.cc
+lib_LTLIBRARIES = libb10-statistics.la
+libb10_statistics_la_SOURCES  = counter.h counter.cc
+libb10_statistics_la_SOURCES  += counter_dict.h counter_dict.cc
 
 CLEANFILES = *.gcno *.gcda

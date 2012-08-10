@@ -27,7 +27,7 @@
 #include <dns/rdataclass.h>
 
 using namespace std;
-using namespace boost;
+using boost::lexical_cast;
 using namespace isc::util;
 using namespace isc::dns;
 using namespace isc::dns::characterstr;
@@ -125,11 +125,16 @@ NAPTR::NAPTR(const NAPTR& naptr):
 void
 NAPTR::toWire(OutputBuffer& buffer) const {
     toWireHelper(buffer);
+    replacement_.toWire(buffer);
+
 }
 
 void
 NAPTR::toWire(AbstractMessageRenderer& renderer) const {
     toWireHelper(renderer);
+    // Type NAPTR is not "well-known", and name compression must be disabled
+    // per RFC3597.
+    renderer.writeName(replacement_, false);
 }
 
 string

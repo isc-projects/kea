@@ -1,3 +1,5 @@
+SUBDIRS = testdata .
+
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_builddir)/src/bin # for generated spec_config.h header
 AM_CPPFLAGS += -I$(top_builddir)/src/lib/dns -I$(top_srcdir)/src/bin
@@ -5,7 +7,10 @@ AM_CPPFLAGS += -I$(top_builddir)/src/lib/cc
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -DAUTH_OBJ_DIR=\"$(abs_top_builddir)/src/bin/auth\"
 AM_CPPFLAGS += -DTEST_DATA_DIR=\"$(abs_top_srcdir)/src/lib/testutils/testdata\"
+AM_CPPFLAGS += -DTEST_OWN_DATA_DIR=\"$(abs_top_srcdir)/src/bin/auth/tests/testdata\"
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/lib/testutils/testdata\"
+AM_CPPFLAGS += -DDSRC_DIR=\"$(abs_top_builddir)/src/lib/datasrc\"
+AM_CPPFLAGS += -DPLUGIN_DATA_PATH=\"$(abs_top_builddir)/src/bin/cfgmgr/plugins\"
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
@@ -18,6 +23,7 @@ AM_CPPFLAGS += -DUSE_STATIC_LINK=1
 endif
 
 CLEANFILES = *.gcno *.gcda
+CLEANFILES += $(abs_top_builddir)/src/lib/testutils/testdata/does-not-exist.sqlite3
 
 TESTS_ENVIRONMENT = \
         $(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
@@ -44,6 +50,7 @@ run_unittests_SOURCES += command_unittest.cc
 run_unittests_SOURCES += common_unittest.cc
 run_unittests_SOURCES += query_unittest.cc
 run_unittests_SOURCES += statistics_unittest.cc
+run_unittests_SOURCES += datasrc_configurator_unittest.cc
 run_unittests_SOURCES += run_unittests.cc
 # This is a temporary workaround for #1206, where the InMemoryClient has been
 # moved to an ldopened library. We could add that library to LDADD, but that
@@ -57,21 +64,22 @@ nodist_run_unittests_SOURCES = ../auth_messages.h ../auth_messages.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
-run_unittests_LDADD = $(top_builddir)/src/lib/testutils/libtestutils.la
-run_unittests_LDADD +=  $(top_builddir)/src/lib/datasrc/libdatasrc.la
-run_unittests_LDADD +=  $(top_builddir)/src/lib/dns/libdns++.la
-run_unittests_LDADD += $(top_builddir)/src/lib/util/libutil.la
-run_unittests_LDADD += $(top_builddir)/src/lib/asiodns/libasiodns.la
-run_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
-run_unittests_LDADD += $(top_builddir)/src/lib/config/libcfgclient.la
-run_unittests_LDADD += $(top_builddir)/src/lib/cc/libcc.la
-run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
-run_unittests_LDADD += $(top_builddir)/src/lib/xfr/libxfr.la
-run_unittests_LDADD += $(top_builddir)/src/lib/log/liblog.la
-run_unittests_LDADD += $(top_builddir)/src/lib/server_common/libserver_common.la
-run_unittests_LDADD += $(top_builddir)/src/lib/nsas/libnsas.la
+run_unittests_LDADD = $(top_builddir)/src/lib/testutils/libb10-testutils.la
+run_unittests_LDADD +=  $(top_builddir)/src/lib/datasrc/libb10-datasrc.la
+run_unittests_LDADD +=  $(top_builddir)/src/lib/dns/libb10-dns++.la
+run_unittests_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
+run_unittests_LDADD += $(top_builddir)/src/lib/asiodns/libb10-asiodns.la
+run_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
+run_unittests_LDADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la
+run_unittests_LDADD += $(top_builddir)/src/lib/cc/libb10-cc.la
+run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
+run_unittests_LDADD += $(top_builddir)/src/lib/xfr/libb10-xfr.la
+run_unittests_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
+run_unittests_LDADD += $(top_builddir)/src/lib/server_common/libb10-server-common.la
+run_unittests_LDADD += $(top_builddir)/src/lib/nsas/libb10-nsas.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
-run_unittests_LDADD += $(top_builddir)/src/lib/statistics/libstatistics.la
+run_unittests_LDADD += $(top_builddir)/src/lib/statistics/libb10-statistics.la
+run_unittests_LDADD += $(top_builddir)/src/lib/config/tests/libfake_session.la
 run_unittests_LDADD += $(GTEST_LDADD)
 run_unittests_LDADD += $(SQLITE_LIBS)
 

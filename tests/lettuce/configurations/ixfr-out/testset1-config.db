@@ -1,4 +1,56 @@
-{"Xfrin": {"zones": [{"use_ixfr": true, "class": "IN", "name": "example.com.", "master_addr": "178.18.82.80"}]}, "version": 2, "Logging": {"loggers": [{"debuglevel": 99, "severity": "DEBUG", "output_options": [{"output": "stderr", "flush": true}], "name": "*"}]}, "Auth": {"database_file": "data/ixfr-out/zones.sqlite3", "listen_on": [{"port": 47806, "address": "::"}, {"port": 47806, "address": "0.0.0.0"}]},
+{
+    "Xfrin": {
+        "zones": [
+            {
+                "use_ixfr": true,
+                "class": "IN",
+                "name": "example.com.",
+                "master_addr": "178.18.82.80"
+            }
+        ]
+    },
+    "version": 2,
+    "Logging": {
+        "loggers":
+            [
+                {
+                    "debuglevel": 99,
+                    "severity": "DEBUG",
+                    "output_options": [
+                        {
+                            "output": "stderr",
+                            "flush": true
+                        }
+                    ],
+                    "name": "*"
+                }
+        ]
+    },
+    "Auth": {
+        "database_file": "data/ixfr-out/zones.sqlite3",
+        "listen_on": [
+            {
+                "port": 47806,
+                "address": "::"
+            },
+            {
+                "port": 47806,
+                "address": "0.0.0.0"
+            }
+        ]
+    },
+    "data_sources": {
+        "classes": {
+            "IN": [
+                {
+                    "type": "sqlite3",
+                    "params": {
+                        "database_file": "data/ixfr-out/zones.sqlite3"
+                    }
+                }
+            ]
+        }
+    },
     "Boss": {
         "components": {
             "b10-auth": { "kind": "needed", "special": "auth" },

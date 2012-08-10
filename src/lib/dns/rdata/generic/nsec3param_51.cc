@@ -95,7 +95,7 @@ NSEC3PARAM::~NSEC3PARAM() {
 
 string
 NSEC3PARAM::toText() const {
-    using namespace boost;
+    using boost::lexical_cast;
     return (lexical_cast<string>(static_cast<int>(impl_->hashalg_)) +
             " " + lexical_cast<string>(static_cast<int>(impl_->flags_)) +
             " " + lexical_cast<string>(static_cast<int>(impl_->iterations_)) +

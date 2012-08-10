@@ -230,7 +230,7 @@ TEST_F(Rdata_TSIG_Test, createFromParams) {
                   any::TSIG(Name("hmac-sha1"), 1286779327, 300, 12,
                             fake_data, 16020, 18, 6, fake_data2)));
 
-    EXPECT_THROW(any::TSIG(Name("hmac-sha256"), 1LLU << 48, 300, 12,
+    EXPECT_THROW(any::TSIG(Name("hmac-sha256"), 1ULL << 48, 300, 12,
                            fake_data, 16020, 18, 6, fake_data2),
                  isc::OutOfRange);
     EXPECT_THROW(any::TSIG(Name("hmac-sha256"), 0, 300, 0, fake_data, 16020,

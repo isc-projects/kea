@@ -21,30 +21,30 @@ BUILT_SOURCES = resolve_messages.h resolve_messages.cc
 
 CLEANFILES = *.gcno *.gcda resolve_messages.cc resolve_messages.h
 
-lib_LTLIBRARIES = libresolve.la
-libresolve_la_SOURCES = resolve.h resolve.cc
-libresolve_la_SOURCES += resolve_log.h resolve_log.cc
-libresolve_la_SOURCES += resolver_interface.h
-libresolve_la_SOURCES += resolver_callback.h resolver_callback.cc
-libresolve_la_SOURCES += response_classifier.cc response_classifier.h
-libresolve_la_SOURCES += recursive_query.cc recursive_query.h
+lib_LTLIBRARIES = libb10-resolve.la
+libb10_resolve_la_SOURCES = resolve.h resolve.cc
+libb10_resolve_la_SOURCES += resolve_log.h resolve_log.cc
+libb10_resolve_la_SOURCES += resolver_interface.h
+libb10_resolve_la_SOURCES += resolver_callback.h resolver_callback.cc
+libb10_resolve_la_SOURCES += response_classifier.cc response_classifier.h
+libb10_resolve_la_SOURCES += recursive_query.cc recursive_query.h
 
-nodist_libresolve_la_SOURCES = resolve_messages.h resolve_messages.cc
+nodist_libb10_resolve_la_SOURCES = resolve_messages.h resolve_messages.cc
 
-libresolve_la_LIBADD = $(top_builddir)/src/lib/dns/libdns++.la
-libresolve_la_LIBADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
-libresolve_la_LIBADD += $(top_builddir)/src/lib/log/liblog.la
-libresolve_la_LIBADD += $(top_builddir)/src/lib/asiodns/libasiodns.la
+libb10_resolve_la_LIBADD = $(top_builddir)/src/lib/dns/libb10-dns++.la
+libb10_resolve_la_LIBADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
+libb10_resolve_la_LIBADD += $(top_builddir)/src/lib/log/libb10-log.la
+libb10_resolve_la_LIBADD += $(top_builddir)/src/lib/asiodns/libb10-asiodns.la
 
 # The message file should be in the distribution.
 EXTRA_DIST = resolve_messages.mes
 
 # Note: the ordering matters: -Wno-... must follow -Wextra (defined in
 # B10_CXXFLAGS)
-libresolve_la_CXXFLAGS = $(AM_CXXFLAGS)
+libb10_resolve_la_CXXFLAGS = $(AM_CXXFLAGS)
 if USE_CLANGPP
 # For clang++, we need to turn off -Werror completely.
-libresolve_la_CXXFLAGS += -Wno-error
+libb10_resolve_la_CXXFLAGS += -Wno-error
 endif
-libresolve_la_CPPFLAGS = $(AM_CPPFLAGS)
+libb10_resolve_la_CPPFLAGS = $(AM_CPPFLAGS)
 

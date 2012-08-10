@@ -47,7 +47,6 @@
       <arg><option>-c <replaceable>config-filename</replaceable></option></arg>
       <arg><option>-i</option></arg>
       <arg><option>-m <replaceable>file</replaceable></option></arg>
-      <arg><option>-n</option></arg>
       <arg><option>-p <replaceable>data_path</replaceable></option></arg>
       <arg><option>-u <replaceable>user</replaceable></option></arg>
       <arg><option>-v</option></arg>
@@ -57,7 +56,6 @@
       <arg><option>--config-file</option> <replaceable>config-filename</replaceable></arg>
       <arg><option>--data-path</option> <replaceable>directory</replaceable></arg>
       <arg><option>--msgq-socket-file <replaceable>file</replaceable></option></arg>
-      <arg><option>--no-cache</option></arg>
       <arg><option>--no-kill</option></arg>
       <arg><option>--pid-file</option> <replaceable>filename</replaceable></arg>
       <arg><option>--pretty-name <replaceable>name</replaceable></option></arg>
@@ -166,15 +164,6 @@
 <!-- @localstatedir@/@PACKAGE_NAME@/msg_socket -->
            </para>
          </listitem>
-      </varlistentry>
-
-      <varlistentry>
-        <term><option>-n</option>, <option>--no-cache</option></term>
-        <listitem>
-	  <para>Disables the hot-spot caching used by the
-	    <citerefentry><refentrytitle>b10-auth</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-	  daemon.</para>
-        </listitem>
       </varlistentry>
 
       <varlistentry>

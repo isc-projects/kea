@@ -60,13 +60,13 @@ endif
 dhcp4_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 dhcp4_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 dhcp4_unittests_LDADD = $(GTEST_LDADD)
-dhcp4_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
-dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libdhcp++.la
-dhcp4_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
-dhcp4_unittests_LDADD += $(top_builddir)/src/lib/log/liblog.la
-dhcp4_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
-dhcp4_unittests_LDADD += $(top_builddir)/src/lib/config/libcfgclient.la
-dhcp4_unittests_LDADD += $(top_builddir)/src/lib/cc/libcc.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/cc/libb10-cc.la
 endif
 
 noinst_PROGRAMS = $(TESTS)

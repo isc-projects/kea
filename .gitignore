@@ -35,3 +35,4 @@ TAGS
 /coverage-cpp-html
 /dns++.pc
 /report.info
+/logger_lockfile
