@@ -33,7 +33,7 @@ class TestHelperFunctions(unittest.TestCase):
         self.assertRaises(ModuleCCSessionError, parse_answer, { 'result': [] })
         self.assertRaises(ModuleCCSessionError, parse_answer, { 'result': [ 'not_an_rcode' ] })
         self.assertRaises(ModuleCCSessionError, parse_answer, { 'result': [ 1, 2 ] })
-        
+
         rcode, val = parse_answer({ 'result': [ 0 ] })
         self.assertEqual(0, rcode)
         self.assertEqual(None, val)
@@ -107,7 +107,7 @@ class TestModuleCCSession(unittest.TestCase):
 
     def spec_file(self, file):
         return self.data_path + os.sep + file
-        
+
     def create_session(self, spec_file_name, config_handler = None,
                        command_handler = None, cc_session = None):
         return ModuleCCSession(self.spec_file(spec_file_name),
@@ -335,7 +335,7 @@ class TestModuleCCSession(unittest.TestCase):
         self.assertEqual(len(fake_session.message_queue), 1)
         self.assertEqual({'result': [1, 'No config_data specification']},
                          fake_session.get_message('Spec1', None))
-        
+
     def test_check_command3(self):
         fake_session = FakeModuleCCSession()
         mccs = self.create_session("spec2.spec", None, None, fake_session)
@@ -348,7 +348,7 @@ class TestModuleCCSession(unittest.TestCase):
         self.assertEqual(len(fake_session.message_queue), 1)
         self.assertEqual({'result': [0]},
                          fake_session.get_message('Spec2', None))
-        
+
     def test_check_command4(self):
         fake_session = FakeModuleCCSession()
         mccs = self.create_session("spec2.spec", None, None, fake_session)
@@ -361,7 +361,7 @@ class TestModuleCCSession(unittest.TestCase):
         self.assertEqual(len(fake_session.message_queue), 1)
         self.assertEqual({'result': [1, 'aaa should be an integer']},
                          fake_session.get_message('Spec2', None))
-        
+
     def test_check_command5(self):
         fake_session = FakeModuleCCSession()
         mccs = self.create_session("spec2.spec", None, None, fake_session)
@@ -374,7 +374,7 @@ class TestModuleCCSession(unittest.TestCase):
         self.assertEqual(len(fake_session.message_queue), 1)
         self.assertEqual({'result': [1, 'aaa should be an integer']},
                          fake_session.get_message('Spec2', None))
-        
+
     def test_check_command6(self):
         fake_session = FakeModuleCCSession()
         mccs = self.create_session("spec2.spec", None, None, fake_session)
@@ -460,7 +460,7 @@ class TestModuleCCSession(unittest.TestCase):
         self.assertEqual(len(fake_session.message_queue), 1)
         self.assertEqual({'result': [1, 'No config_data specification']},
                          fake_session.get_message('Spec1', None))
- 
+
     def test_check_command_without_recvmsg2(self):
         "copied from test_check_command3"
         fake_session = FakeModuleCCSession()
@@ -474,7 +474,7 @@ class TestModuleCCSession(unittest.TestCase):
         self.assertEqual(len(fake_session.message_queue), 1)
         self.assertEqual({'result': [0]},
                           fake_session.get_message('Spec2', None))
- 
+
     def test_check_command_without_recvmsg3(self):
         "copied from test_check_command7"
         fake_session = FakeModuleCCSession()
@@ -487,7 +487,7 @@ class TestModuleCCSession(unittest.TestCase):
         mccs.check_command_without_recvmsg(cmd, env)
         self.assertEqual({'result': [0]},
                          fake_session.get_message('Spec2', None))
- 
+
     def test_check_command_block_timeout(self):
         """Check it works if session has timeout and it sets it back."""
         def cmd_check(mccs, session):
@@ -893,22 +893,22 @@ class fakeUIConn():
 
     def set_get_answer(self, name, answer):
         self.get_answers[name] = answer
-    
+
     def set_post_answer(self, name, answer):
         self.post_answers[name] = answer
-    
+
     def send_GET(self, name, arg = None):
         if name in self.get_answers:
             return self.get_answers[name]
         else:
             return {}
-    
+
     def send_POST(self, name, arg = None):
         if name in self.post_answers:
             return self.post_answers[name]
         else:
             return fakeAnswer()
-    
+
 
 class TestUIModuleCCSession(unittest.TestCase):
     def setUp(self):
@@ -919,9 +919,9 @@ class TestUIModuleCCSession(unittest.TestCase):
 
     def spec_file(self, file):
         return self.data_path + os.sep + file
-        
-    def create_uccs2(self, fake_conn):
-        module_spec = isc.config.module_spec_from_file(self.spec_file("spec2.spec"))
+
+    def create_uccs(self, fake_conn, specfile="spec2.spec"):
+        module_spec = isc.config.module_spec_from_file(self.spec_file(specfile))
         fake_conn.set_get_answer('/module_spec', { module_spec.get_module_name(): module_spec.get_full_spec()})
         fake_conn.set_get_answer('/config_data', { 'version': BIND10_CONFIG_DATA_VERSION })
         return UIModuleCCSession(fake_conn)
@@ -989,7 +989,7 @@ class TestUIModuleCCSession(unittest.TestCase):
 
     def test_add_remove_value(self):
         fake_conn = fakeUIConn()
-        uccs = self.create_uccs2(fake_conn)
+        uccs = self.create_uccs(fake_conn)
 
         self.assertRaises(isc.cc.data.DataNotFoundError, uccs.add_value, 1, "a")
         self.assertRaises(isc.cc.data.DataNotFoundError, uccs.add_value, "no_such_item", "a")
@@ -1019,6 +1019,76 @@ class TestUIModuleCCSession(unittest.TestCase):
         # Intending to empty a list element, but forget specifying the index.
         self.assertRaises(isc.cc.data.DataTypeError,
                           uccs.remove_value, "Spec2/item5", None)
+
+    # Test adding and removing values for type = any
+    def test_add_remove_value_any(self):
+        fake_conn = fakeUIConn()
+        uccs = self.create_uccs(fake_conn, "spec40.spec")
+
+        # Test item set of basic types
+        items = [ 1234, "foo", True, False ]
+        items_as_str = [ '1234', 'foo', 'true', 'false' ]
+
+        def test_fails():
+            self.assertRaises(isc.cc.data.DataNotFoundError, uccs.add_value, "Spec40/item1", "foo")
+            self.assertRaises(isc.cc.data.DataNotFoundError, uccs.add_value, "Spec40/item1", "foo", "bar")
+            self.assertRaises(isc.cc.data.DataNotFoundError, uccs.remove_value, "Spec40/item1", "foo")
+            self.assertRaises(isc.cc.data.DataTypeError, uccs.remove_value, "Spec40/item1[0]", None)
+
+        # A few helper functions to perform a number of tests
+        # (to repeat the same test for nested data)
+        def check_list(identifier):
+            for item in items_as_str:
+                uccs.add_value(identifier, item)
+            self.assertEqual((items, 1), uccs.get_value(identifier))
+
+            # Removing from list should work in both ways
+            uccs.remove_value(identifier, "foo")
+            uccs.remove_value(identifier + "[1]", None)
+            self.assertEqual(([1234, False], 1), uccs.get_value(identifier))
+
+            # As should item indexing
+            self.assertEqual((1234, 1), uccs.get_value(identifier + "[0]"))
+            self.assertEqual((False, 1), uccs.get_value(identifier + "[1]"))
+
+        def check_named_set(identifier):
+            for item in items_as_str:
+                # use string version as key as well
+                uccs.add_value(identifier, item, item)
+
+            self.assertEqual((1234, 1), uccs.get_value(identifier + "/1234"))
+            self.assertEqual((True, 1), uccs.get_value(identifier + "/true"))
+
+            for item in items_as_str:
+                # use string version as key as well
+                uccs.remove_value(identifier, item)
+
+
+        # should fail when set to value of primitive type
+        for item in items:
+            uccs.set_value("Spec40/item1", item)
+            test_fails()
+
+        # When set to list, add and remove should work, and its elements
+        # should be considered of type 'any' themselves.
+        uccs.set_value("Spec40/item1", [])
+        check_list("Spec40/item1")
+
+        # When set to dict, it should have the behaviour of a named set
+        uccs.set_value("Spec40/item1", {})
+        check_named_set("Spec40/item1")
+
+        # And, or course, we may need nesting.
+        uccs.set_value("Spec40/item1", { "foo": {}, "bar": [] })
+        check_named_set("Spec40/item1/foo")
+        check_list("Spec40/item1/bar")
+        uccs.set_value("Spec40/item1", [ {}, [] ] )
+        check_named_set("Spec40/item1[0]")
+        check_list("Spec40/item1[1]")
+        uccs.set_value("Spec40/item1", [[[[[[]]]]]] )
+        check_list("Spec40/item1[0][0][0][0][0]")
+        uccs.set_value("Spec40/item1", { 'a': { 'a': { 'a': {} } } } )
+        check_named_set("Spec40/item1/a/a/a")
 
     def test_add_dup_value(self):
         fake_conn = fakeUIConn()
@@ -1101,7 +1171,7 @@ class TestUIModuleCCSession(unittest.TestCase):
 
     def test_commit(self):
         fake_conn = fakeUIConn()
-        uccs = self.create_uccs2(fake_conn)
+        uccs = self.create_uccs(fake_conn)
         uccs.commit()
         uccs._local_changes = {'Spec2': {'item5': [ 'a' ]}}
         uccs.commit()

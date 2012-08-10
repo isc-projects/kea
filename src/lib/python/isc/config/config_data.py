@@ -204,6 +204,9 @@ def find_spec_part(element, identifier, strict_identifier = True):
     # always want the 'full' spec of the item
     for id_part in id_parts[:-1]:
         cur_el = _find_spec_part_single(cur_el, id_part)
+        # As soon as we find 'any', return that
+        if cur_el["item_type"] == "any":
+            return cur_el
         if strict_identifier and spec_part_is_list(cur_el) and\
            not isc.cc.data.identifier_has_list_index(id_part):
             raise isc.cc.data.DataNotFoundError(id_part +
@@ -742,6 +745,8 @@ class MultiConfigData:
                 # list
                 cur_list = cur_value
                 for list_index in list_indices:
+                    if type(cur_list) != list:
+                        raise isc.cc.data.DataTypeError(id + " is not a list")
                     if list_index >= len(cur_list):
                         raise isc.cc.data.DataNotFoundError("No item " +
                                   str(list_index) + " in " + id_part)
