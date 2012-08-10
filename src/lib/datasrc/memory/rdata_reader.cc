@@ -49,29 +49,6 @@ RdataReader::Result::Result(const uint8_t* data, size_t size) :
     additional_(false)
 {}
 
-const uint8_t*
-RdataReader::findSigs() const {
-    // Validate the lengths - we want to make sure all the lengths
-    // fit. The base would be the beginning of all the data.
-    const uint8_t* const
-        base(static_cast<const uint8_t*>(static_cast<const void*>(lengths_)));
-    if (base + size_ < data_) {
-        isc_throw(isc::BadValue, "Size won't even hold all the length fields");
-    }
-    // It is easier to look from the end than from the beginning -
-    // this way we just need to sum all the sig lenghs together.
-    size_t sum(0);
-    for (size_t i(0); i < sig_count_; ++ i) {
-        sum += lengths_[var_count_total_ + i];
-    }
-    const uint8_t* const result(data_ + size_ - sum);
-    // Validate the signatures fit.
-    if (result < data_) {
-        isc_throw(isc::BadValue, "Size won't even hold all the RRSigs");
-    }
-    return (result);
-}
-
 RdataReader::RdataReader(const RRClass& rrclass, const RRType& rrtype,
                          size_t size, const uint8_t* data,
                          size_t rdata_count, size_t sig_count,
@@ -91,7 +68,7 @@ RdataReader::RdataReader(const RRClass& rrclass, const RRType& rrtype,
              static_cast<const void*>(data))), // The lenghts are stored first
     // And the data just after all the lengths
     data_(data + (var_count_total_ + sig_count_) * sizeof(uint16_t)),
-    sigs_(findSigs())
+    sigs_(NULL)
 {
     rewind();
 }
@@ -107,33 +84,46 @@ RdataReader::rewind() {
 
 RdataReader::Result
 RdataReader::next() {
-    // TODO: Add checks we are in the valid part of memory
     if (spec_pos_ < spec_count_) {
         const RdataFieldSpec& spec(spec_.fields[(spec_pos_ ++) %
                                                 spec_.field_count]);
         if (spec.type == RdataFieldSpec::DOMAIN_NAME) {
-            const LabelSequence sequence(&data_[data_pos_]);
+            const LabelSequence sequence(data_ + data_pos_);
             data_pos_ += sequence.getSerializedLength();
             name_action_(sequence, spec.name_attributes);
             return (Result(sequence, spec.name_attributes));
         } else {
             const size_t length(spec.type == RdataFieldSpec::FIXEDLEN_DATA ?
                                 spec.fixeddata_len : lengths_[length_pos_ ++]);
-            Result result(&data_[data_pos_], length);
+            Result result(data_ + data_pos_, length);
             data_pos_ += length;
             data_action_(result.data(), result.size());
             return (result);
         }
     } else {
+        sigs_ = data_ + data_pos_;
         return (Result());
     }
 }
 
 RdataReader::Result
 RdataReader::nextSig() {
-    // We ensured the whole block of signatures is in the valid block,
-    // so we don't need any checking here.
     if (sig_pos_ < sig_count_) {
+        if (sigs_ == NULL) {
+            // We didn't find where the signatures start yet. We do it
+            // by iterating the whole data and then returning the state
+            // back.
+            size_t data_pos = data_pos_;
+            size_t spec_pos = spec_pos_;
+            size_t length_pos = length_pos_;
+            // When the next() gets to the last item, it sets the sigs_
+            iterate();
+            assert(sigs_ != NULL);
+            // Return the state
+            data_pos_ = data_pos;
+            spec_pos_ = spec_pos;
+            length_pos_ = length_pos;
+        }
         // Extract the result
         Result result(sigs_ + sig_data_pos_, lengths_[var_count_total_ +
                       sig_pos_]);
