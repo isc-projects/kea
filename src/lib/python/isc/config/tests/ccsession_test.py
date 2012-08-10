@@ -1020,6 +1020,18 @@ class TestUIModuleCCSession(unittest.TestCase):
         self.assertRaises(isc.cc.data.DataTypeError,
                           uccs.remove_value, "Spec2/item5", None)
 
+    # Check that the difference between no default and default = null
+    # is recognized
+    def test_default_null(self):
+        fake_conn = fakeUIConn()
+        uccs = self.create_uccs(fake_conn, "spec40.spec")
+        (value, status) = uccs.get_value("/Spec40/item2")
+        self.assertIsNone(value)
+        self.assertEqual(uccs.NONE, status)
+        (value, status) = uccs.get_value("/Spec40/item3")
+        self.assertIsNone(value)
+        self.assertEqual(uccs.DEFAULT, status)
+
     # Test adding and removing values for type = any
     def test_add_remove_value_any(self):
         fake_conn = fakeUIConn()
