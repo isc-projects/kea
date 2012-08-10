@@ -1316,27 +1316,48 @@ TODO
       <para>
         An ACL, or Access Control List, is a way to describe if a request
         is allowed or disallowed. The principle is, there's a list of rules.
-        A request either matches the rule or it doesn't. If it matches,
-        a decision is made and no more ACL processing happens. If it does
-        not match, the processing moves to the next rule. If there are
-        no more rules, a default action is taken.
+        Each rule is a name-value mapping (a dictionary, in the JSON
+        terminology). Each rule must contain exactly one mapping called
+        "action", which describes what should happen if the rule applies.
+        There may be more mappings, calld matches, which describe the
+        conditions under which the rule applies.
       </para>
 
       <para>
-        Each element in the ACL is a dictionary. There's exactly one
-        <varname>action</varname> element. This element describes the
-        decision taken when the rule matches. If it is set to
-        "ACCEPT", the request processed. In case of "REJECT", the request
-        is not processed and an error message is sent back (what it means
-        depends on which ACL it is). The action of "DROP" does not
-        process the request and sends no answer &mdash; pretending the
-        request never came (which means the sender might resend it).
+        When there's a query, the first rule is examined. If it matches, the
+        action in it is taken. If not, next rule is examined. If there are no
+        more rules to examine, a default action is taken.
       </para>
 
       <para>
-        Other elements inside the rule describe the properties a request
-        must have to match. The request must match all the properties
-        in the check.
+        There are three possible "action" values. The "ACCEPT" value means
+        the query is handled. If it is "REJECT", the query is not answered,
+        but a polite error message is sent back (if that makes sense in the
+        context). The "DROP" action acts like a black hole. The query is
+        not answered and no error message is sent.
+      </para>
+
+      <para>
+        If there are multiple matching conditions inside the rule, all of
+        them must be satisfied for the rule to apply. This can be used,
+        for example, to require the query to be signed by a TSIG key and
+        originate from given address.
+      </para>
+
+      <para>
+        This is encoded in form of JSON. Semi-formal description could look
+        something like this. It is described in more details below.
+        <!-- FIXME: Is <screen> really the correct one?-->
+        <screen>ACL := [ RULE, RULE, ... ]
+RULE := { "action": "ACCEPT"|"REJECT"|"DROP", MATCH, MATCH, ... }
+RULE_RAW := { MATCH, MATCH, ... }
+MATCH := FROM_MATCH|KEY_MATCH|NOT_MATCH|OR_MATCH|AND_MATCH|...
+FROM_MATCH := "from": "&lt;ip range&gt;
+KEY_MATCH := "key": "&lt;key name&gt;
+NOT_MATCH := "NOT": RULE_RAW
+OR_MATCH := "ANY": [ RULE_RAW, RULE_RAW, ... ]
+AND_MATCH := "ALL": [ RULE_RAW, RULE_RAW, ... ]
+</screen>
       </para>
 
       <section>
