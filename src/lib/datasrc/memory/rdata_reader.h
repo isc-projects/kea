@@ -251,7 +251,7 @@ public:
     /// \brief Returns the size of associated data.
     ///
     /// This just returns whatever was passed to the constructor as size.
-    size_t getSize() const;
+    size_t getSize() const { return (size_); }
 private:
     const NameAction name_action_;
     const DataAction data_action_;
