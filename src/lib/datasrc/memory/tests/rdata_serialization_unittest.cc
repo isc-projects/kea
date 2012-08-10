@@ -351,6 +351,50 @@ public:
     }
 };
 
+// Decode using reader with the return value of next, but after the reader
+// was used and rewund.
+class RewundDecoder {
+public:
+    static void decode(const isc::dns::RRClass& rrclass,
+                       const isc::dns::RRType& rrtype,
+                       size_t rdata_count, size_t sig_count, size_t,
+                       const vector<uint8_t>& encoded_data,
+                       MessageRenderer& renderer)
+    {
+        RdataReader reader(rrclass, rrtype, encoded_data.size(),
+                           &encoded_data[0], rdata_count, sig_count);
+        // Use the reader first and rewind it
+        reader.iterateSig();
+        reader.iterate();
+        reader.rewind();
+        RdataReader::Result field;
+        while (field = reader.next()) {
+            switch (field.type()) {
+                case RdataReader::DATA:
+                    renderer.writeData(field.data(), field.size());
+                    break;
+                case RdataReader::NAME:
+                    renderer.writeName(field.label(), field.compressible());
+                    break;
+                default:
+                    FAIL();
+            }
+        }
+
+        renderer.writeName(dummy_name2);
+
+        while (field = reader.nextSig()) {
+            switch (field.type()) {
+                case RdataReader::DATA:
+                    renderer.writeData(field.data(), field.size());
+                    break;
+                default: // There are also no NAME fields in RRSigs
+                    FAIL();
+            }
+        }
+    }
+};
+
 // Check using callbacks and calling next until the end.
 class CallbackDecoder {
 public:
@@ -391,8 +435,72 @@ public:
     }
 };
 
-typedef ::testing::Types<ManualDecoderStyle, NextDecoder, CallbackDecoder,
-                         IterateDecoder> DecoderStyles;
+// This one does not adhere to the usual way the reader is used, trying
+// to confuse it. It iterates part of the data manually and then reads
+// the rest through iterate. It also reads the signatures in the middle
+// of rendering.
+template<bool start_data, bool start_sig>
+class HybridDecoder {
+private:
+    // Append data either to the renderer or to the vector passed.
+    // The double pointer is there so we can change the renderer to NULL
+    // and back during the test.
+    static void appendData(vector<uint8_t>* where, MessageRenderer** renderer,
+                           const uint8_t* data, size_t size)
+    {
+        if (*renderer != NULL) {
+            (*renderer)->writeData(data, size);
+        } else {
+            where->insert(where->end(), data, data + size);
+        }
+    }
+public:
+    static void decode(const isc::dns::RRClass& rrclass,
+                       const isc::dns::RRType& rrtype,
+                       size_t rdata_count, size_t sig_count, size_t,
+                       const vector<uint8_t>& encoded_data,
+                       MessageRenderer& renderer)
+    {
+        vector<uint8_t> data;
+        MessageRenderer* current;
+        RdataReader reader(rrclass, rrtype, encoded_data.size(),
+                           &encoded_data[0], rdata_count, sig_count,
+                           boost::bind(renderNameField, &renderer,
+                                       additionalRequired(rrtype), _1, _2),
+                           boost::bind(appendData, &data, &current, _1, _2));
+        if (start_sig) {
+            current = NULL;
+            reader.nextSig();
+        }
+        // Render first part of data. If there's none, return empty Result and
+        // do nothing.
+        if (start_data) {
+            current = &renderer;
+            reader.next();
+        }
+        // Now, we let all sigs to be copied to data. We disable the
+        // renderer for this.
+        current = NULL;
+        reader.iterateSig();
+        // Now return the renderer and render the rest of the data
+        current = &renderer;
+        reader.iterate();
+        // Now, this should not break anything and should be valid, but should
+        // return ends.
+        EXPECT_FALSE(reader.next());
+        EXPECT_FALSE(reader.nextSig());
+        // Render the name and the sigs
+        renderer.writeName(dummy_name2);
+        renderer.writeData(&data[0], data.size());
+    }
+};
+
+typedef ::testing::Types<ManualDecoderStyle, NextDecoder, RewundDecoder,
+                         CallbackDecoder, IterateDecoder,
+                         HybridDecoder<true, true>, HybridDecoder<true, false>,
+                         HybridDecoder<false, true>,
+                         HybridDecoder<false, false> >
+    DecoderStyles;
 TYPED_TEST_CASE(RdataEncodeDecodeTest, DecoderStyles);
 
 void
