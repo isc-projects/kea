@@ -468,6 +468,8 @@ public:
                            boost::bind(renderNameField, &renderer,
                                        additionalRequired(rrtype), _1, _2),
                            boost::bind(appendData, &data, &current, _1, _2));
+        // The size matches
+        EXPECT_EQ(encoded_data.size(), reader.getSize());
         if (start_sig) {
             current = NULL;
             reader.nextSig();
@@ -492,6 +494,8 @@ public:
         // Render the name and the sigs
         renderer.writeName(dummy_name2);
         renderer.writeData(&data[0], data.size());
+        // The size matches even after use
+        EXPECT_EQ(encoded_data.size(), reader.getSize());
     }
 };
 
