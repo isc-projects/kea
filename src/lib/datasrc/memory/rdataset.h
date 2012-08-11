@@ -17,16 +17,32 @@
 
 #include <util/memory_segment.h>
 
+#include <dns/rrtype.h>
+#include <dns/rrset.h>
+#include <dns/rrttl.h>
+
+#include <stdint.h>
+
 namespace isc {
 namespace datasrc {
 namespace memory {
+class RdataEncoder;
 
 struct RdataSet {
-    static RdataSet* create(util::MemorySegment& mem_sgmt);
+    static RdataSet* create(util::MemorySegment& mem_sgmt,
+                            RdataEncoder& encoder,
+                            dns::ConstRRsetPtr rrset,
+                            dns::ConstRRsetPtr sig_rrset);
     static void destroy(util::MemorySegment& mem_sgmt, RdataSet* rdataset);
 
+    const dns::RRType type;
+    const uint16_t sig_rdata_count : 3;
+    const uint16_t rdata_count : 13;
+    const uint32_t ttl;       ///< TTL of the RdataSet, net byte order
+
 private:
-    RdataSet() {}
+    RdataSet(dns::RRType type, size_t rdata_count, size_t sig_rdata_count,
+             dns::RRTTL ttl);
     ~RdataSet() {}
 };
 
