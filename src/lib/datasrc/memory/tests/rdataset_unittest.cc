@@ -12,29 +12,54 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <util/buffer.h>
 #include <util/memory_segment_local.h>
 
+#include <dns/rrset.h>
+#include <dns/rrttl.h>
+
+#include <datasrc/memory/rdata_encoder.h>
 #include <datasrc/memory/rdataset.h>
+
+#include <testutils/dnsmessage_test.h>
 
 #include <gtest/gtest.h>
 
+using namespace isc::dns;
 using namespace isc::datasrc::memory;
+using namespace isc::testutils;
 
 namespace {
 
 class RdataSetTest : public ::testing::Test {
 protected:
-    RdataSetTest() {}
+    RdataSetTest() :
+        // 1076895760 = 0x40302010.  Use this so we fill in all 8-bit "field"
+        // of the 32-bit TTL
+        a_rrset_(textToRRset("www.example.com. 1076895760 IN A 192.0.2.1"))
+    {}
     void TearDown() {
         EXPECT_TRUE(mem_sgmt_.allMemoryDeallocated());
     }
 
+    ConstRRsetPtr a_rrset_;
     isc::util::MemorySegmentLocal mem_sgmt_;
+    RdataEncoder encoder_;
 };
 
+RRTTL
+restoreTTL(uint32_t net_ttl) {
+    isc::util::InputBuffer b(&net_ttl, sizeof(net_ttl));
+    return (RRTTL(b));
+}
+
 TEST_F(RdataSetTest, create) {
-    RdataSet* rdataset = RdataSet::create(mem_sgmt_);
-    EXPECT_NE(static_cast<RdataSet*>(NULL), rdataset);
+    RdataSet* rdataset = RdataSet::create(mem_sgmt_, encoder_, a_rrset_,
+                                          ConstRRsetPtr());
+    EXPECT_EQ(RRType::A(), rdataset->type);
+    EXPECT_EQ(RRTTL(1076895760), restoreTTL(rdataset->ttl));
+    EXPECT_EQ(1, rdataset->rdata_count);
+    EXPECT_EQ(0, rdataset->sig_rdata_count);
     RdataSet::destroy(mem_sgmt_, rdataset);
 }
 }
