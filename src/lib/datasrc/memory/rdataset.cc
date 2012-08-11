@@ -18,6 +18,9 @@
 #include "rdataset.h"
 #include "rdata_encoder.h"
 
+#include <boost/static_assert.hpp>
+
+#include <stdint.h>
 #include <cstring>
 #include <new>                  // for the placement new
 
@@ -69,6 +72,10 @@ RdataSet::RdataSet(RRType type_param, size_t rdata_count_param,
     type(type_param), sig_rdata_count(sig_rdata_count_param),
     rdata_count(rdata_count_param), ttl(convertTTL(ttl_param))
 {
+    // Make sure an RRType object is essentially a plain 16-bit value, so
+    // our assumption of the size of RdataSet holds.  If it's not the case
+    // we should use the bare value instead of the class object.
+    BOOST_STATIC_ASSERT(sizeof(type) == sizeof(uint16_t));
 }
 
 } // namespace memory
