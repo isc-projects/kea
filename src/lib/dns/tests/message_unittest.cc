@@ -743,6 +743,45 @@ TEST_F(MessageTest, toWire) {
                         renderer.getLength(), &data[0], data.size());
 }
 
+TEST_F(MessageTest, toWireSigned) {
+    message_render.setQid(0x75c1);
+    message_render.setOpcode(Opcode::QUERY());
+    message_render.setRcode(Rcode::NOERROR());
+    message_render.setHeaderFlag(Message::HEADERFLAG_QR, true);
+    message_render.setHeaderFlag(Message::HEADERFLAG_RD, true);
+    message_render.setHeaderFlag(Message::HEADERFLAG_AA, true);
+    message_render.addQuestion(Question(Name("test.example.com"), RRClass::IN(),
+                                        RRType::A()));
+
+    rrset_rrsig = RRsetPtr(new RRset(test_name, RRClass::IN(),
+                                     RRType::RRSIG(), RRTTL(3600)));
+    // one signature algorithm (5 = RSA/SHA-1)
+    rrset_rrsig->addRdata(generic::RRSIG("A 5 3 3600 "
+                                         "20000101000000 20000201000000 "
+                                         "12345 example.com. FAKEFAKEFAKE"));
+    // another signature algorithm (3 = DSA/SHA-1)
+    rrset_rrsig->addRdata(generic::RRSIG("A 3 3 3600 "
+                                         "20000101000000 20000201000000 "
+                                         "12345 example.com. FAKEFAKEFAKE"));
+    rrset_a->addRRsig(rrset_rrsig);
+
+    const RRset* rr = dynamic_cast<const RRset*>(rrset_a.get());
+    EXPECT_EQ(2, rr->getSIGRdataCount());
+
+    message_render.addRRset(Message::SECTION_ANSWER, rrset_a, true);
+
+    EXPECT_EQ(1, message_render.getRRCount(Message::SECTION_QUESTION));
+    EXPECT_EQ(4, message_render.getRRCount(Message::SECTION_ANSWER));
+    EXPECT_EQ(0, message_render.getRRCount(Message::SECTION_AUTHORITY));
+    EXPECT_EQ(0, message_render.getRRCount(Message::SECTION_ADDITIONAL));
+
+    message_render.toWire(renderer);
+    vector<unsigned char> data;
+    UnitTestUtil::readWireData("message_toWire6", data);
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
+                        renderer.getLength(), &data[0], data.size());
+}
+
 TEST_F(MessageTest, toWireInParseMode) {
     // toWire() isn't allowed in the parse mode.
     EXPECT_THROW(message_parse.toWire(renderer), InvalidMessageOperation);
