@@ -31,22 +31,32 @@ namespace datasrc {
 namespace memory {
 
 RdataSet*
-RdataSet::create(util::MemorySegment& mem_sgmt, RdataEncoder& /*encoder*/,
-                 dns::ConstRRsetPtr rrset, dns::ConstRRsetPtr sig_rrset)
+RdataSet::create(util::MemorySegment& mem_sgmt, RdataEncoder& encoder,
+                 ConstRRsetPtr rrset, ConstRRsetPtr sig_rrset)
 {
-    void* p = mem_sgmt.allocate(sizeof(RdataSet));
+    encoder.start(rrset->getClass(), rrset->getType());
+    for (RdataIteratorPtr it = rrset->getRdataIterator();
+         !it->isLast();
+         it->next()) {
+        encoder.addRdata(it->getCurrent());
+    }
+
+    const size_t data_len = encoder.getStorageLength();
+    assert(data_len == 4);
+    void* p = mem_sgmt.allocate(sizeof(RdataSet) + data_len);
     RdataSet* rdataset = new(p) RdataSet(rrset->getType(),
                                          rrset->getRdataCount(),
                                          sig_rrset ?
                                          sig_rrset->getRdataCount() : 0,
                                          rrset->getTTL());
+    encoder.encode(rdataset + 1, data_len);
     return (rdataset);
 }
 
 void
 RdataSet::destroy(util::MemorySegment& mem_sgmt, RdataSet* rdataset) {
     rdataset->~RdataSet();
-    mem_sgmt.deallocate(rdataset, sizeof(RdataSet));
+    mem_sgmt.deallocate(rdataset, sizeof(RdataSet) + 4);
 }
 
 namespace {
