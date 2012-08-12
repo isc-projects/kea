@@ -1,0 +1,48 @@
+#
+# A simple DNS query message (with a signed response)
+# ID = 0x75c1
+# QR=1 (response), Opcode=0, AA=1, RD=1 (other fields are 0)
+# QDCOUNT=1, ANCOUNT=2, other COUNTS=0
+# Question: test.example.com. IN A
+# Answer:
+#  test.example.com. 3600 IN A 192.0.2.1
+#  test.example.com. 7200 IN A 192.0.2.2
+#
+75c1 8500
+0001 0004 0000 0000
+#(4) t  e  s  t (7) e  x  a  m  p  l  e (3) c  o  m  .
+ 04 74 65 73 74 07 65 78 61 6d 70 6c 65 03 63 6f 6d 00
+0001 0001
+# same name, fully compressed
+c0 0c
+# TTL=3600, A, IN, RDLENGTH=4, RDATA
+0001 0001 00000e10 0004 c0 00 02 01
+# mostly same, with the slight difference in RDATA
+c0 0c
+0001 0001 00000e10 0004 c0 00 02 02
+
+# signature 1
+
+# same name
+c0 0c
+# RRSIG, IN, TTL=3600, RDLENGTH=0x28 TYPE_COV=A ALGO=5 (RSA/SHA-1) LABELS=3 ORIG_TTL=3600
+002e 0001 00000e10 0028 0001 05 03 00000e10
+# SIG_EXPIRY=20000101000000 SIG_INCEP=20000201000000 KEY_ID=12345
+386d4380 38962200 3039
+#(7) e  x  a  m  p  l  e (3) c  o  m  .
+ 07 65 78 61 6d 70 6c 65 03 63 6f 6d 00
+# FAKEFAKEFAKE
+14 02 84 14 02 84 14 02 84
+
+# signature 2
+
+# same name
+c0 0c
+# RRSIG, IN, TTL=3600, RDLENGTH=0x28 TYPE_COV=A ALGO=3 (DSA/SHA-1) LABELS=3 ORIG_TTL=3600
+002e 0001 00000e10 0028 0001 03 03 00000e10
+# SIG_EXPIRY=20000101000000 SIG_INCEP=20000201000000 KEY_ID=12345
+386d4380 38962200 3039
+#(7) e  x  a  m  p  l  e (3) c  o  m  .
+ 07 65 78 61 6d 70 6c 65 03 63 6f 6d 00
+# FAKEFAKEFAKE
+14 02 84 14 02 84 14 02 84
