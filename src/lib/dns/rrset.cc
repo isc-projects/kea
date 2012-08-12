@@ -251,7 +251,7 @@ RRset::~RRset() {}
 
 unsigned int
 RRset::getSIGRdataCount() const {
-    if (rrsig_ != NULL) {
+    if (rrsig_) {
         return (rrsig_->getRdataCount());
     } else {
         return (0);
