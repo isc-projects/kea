@@ -354,7 +354,9 @@ TEST_F(RRsetRRSIGTest, getSIGRdataCount) {
                                          "20000101000000 20000201000000 "
                                          "12345 example.com. FAKEFAKEFAKE"));
     rrset_a->addRRsig(rrset_rrsig);
-
     EXPECT_EQ(2, rrset_a->getSIGRdataCount());
+
+    rrset_a->removeRRsig();
+    EXPECT_EQ(0, rrset_a->getSIGRdataCount());
 }
 }
