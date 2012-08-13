@@ -741,10 +741,14 @@ class TestStats(unittest.TestCase):
                       self.base.auth2.server ]
         sum_qtcp = 0
         sum_qudp = 0
-        sum_qtcp_perzone = 0
-        sum_qudp_perzone = 0
-        sum_qtcp_nds_perzone = 0
-        sum_qudp_nds_perzone = 0
+        sum_qtcp_perzone1 = 0
+        sum_qudp_perzone1 = 0
+        sum_qtcp_perzone2 = 4 * len(list_auth)
+        sum_qudp_perzone2 = 3 * len(list_auth)
+        sum_qtcp_nds_perzone10 = 0
+        sum_qudp_nds_perzone10 = 0
+        sum_qtcp_nds_perzone20 = 4 * len(list_auth)
+        sum_qudp_nds_perzone20 = 3 * len(list_auth)
         self.stats = stats.Stats()
         self.assertEqual(self.stats.command_show(owner='Foo', name=None),
                          isc.config.create_answer(
@@ -759,36 +763,50 @@ class TestStats(unittest.TestCase):
         for a in list_auth:
             sum_qtcp += a.queries_tcp
             sum_qudp += a.queries_udp
-            sum_qtcp_perzone += a.queries_per_zone[0]['queries.tcp']
-            sum_qudp_perzone += a.queries_per_zone[0]['queries.udp']
-            sum_qtcp_nds_perzone += a.nds_queries_per_zone['test10.example']['queries.tcp']
-            sum_qudp_nds_perzone += a.nds_queries_per_zone['test10.example']['queries.udp']
+            sum_qtcp_perzone1 += a.queries_per_zone[0]['queries.tcp']
+            sum_qudp_perzone1 += a.queries_per_zone[0]['queries.udp']
+            sum_qtcp_nds_perzone10 += a.nds_queries_per_zone['test10.example']['queries.tcp']
+            sum_qudp_nds_perzone10 += a.nds_queries_per_zone['test10.example']['queries.udp']
 
         self.assertEqual(self.stats.command_show(owner='Auth'),
                          isc.config.create_answer(
                 0, {'Auth':{ 'queries.udp': sum_qudp,
                      'queries.tcp': sum_qtcp,
                      'queries.perzone': [{ 'zonename': 'test1.example',
-                                           'queries.udp': sum_qudp_perzone,
-                                           'queries.tcp': sum_qtcp_perzone }
+                                           'queries.udp': sum_qudp_perzone1,
+                                           'queries.tcp': sum_qtcp_perzone1 },
+                                         { 'zonename': 'test2.example',
+                                           'queries.udp': sum_qudp_perzone2,
+                                           'queries.tcp': sum_qtcp_perzone2 }
                                          ],
                      'nds_queries.perzone': { 'test10.example' : {
-                                              'queries.udp': sum_qudp_nds_perzone,
-                                              'queries.tcp': sum_qtcp_nds_perzone } }
-                             }}))
+                                              'queries.udp': sum_qudp_nds_perzone10,
+                                              'queries.tcp': sum_qtcp_nds_perzone10 },
+                                              'test20.example' : {
+                                              'queries.udp': sum_qudp_nds_perzone20,
+                                              'queries.tcp': sum_qtcp_nds_perzone20 }
+                             }}}))
         self.assertEqual(self.stats.command_show(owner='Auth', name='queries.udp'),
                          isc.config.create_answer(
                 0, {'Auth': {'queries.udp': sum_qudp}}))
         self.assertEqual(self.stats.command_show(owner='Auth', name='queries.perzone'),
                          isc.config.create_answer(
-                0, {'Auth': {'queries.perzone': [{ 'zonename': 'test1.example',
-                      'queries.udp': sum_qudp_perzone,
-                      'queries.tcp': sum_qtcp_perzone }]}}))
+                0, {'Auth': {'queries.perzone': [
+                            { 'zonename': 'test1.example',
+                              'queries.udp': sum_qudp_perzone1,
+                              'queries.tcp': sum_qtcp_perzone1 },
+                            { 'zonename': 'test2.example',
+                              'queries.udp': sum_qudp_perzone2,
+                              'queries.tcp': sum_qtcp_perzone2 }]}}))
         self.assertEqual(self.stats.command_show(owner='Auth', name='nds_queries.perzone'),
                          isc.config.create_answer(
-                0, {'Auth': {'nds_queries.perzone': { 'test10.example': {
-                      'queries.udp': sum_qudp_nds_perzone,
-                      'queries.tcp': sum_qtcp_nds_perzone }}}}))
+                0, {'Auth': {'nds_queries.perzone': {
+                            'test10.example': {
+                                'queries.udp': sum_qudp_nds_perzone10,
+                                'queries.tcp': sum_qtcp_nds_perzone10 },
+                            'test20.example': {
+                                'queries.udp': sum_qudp_nds_perzone20,
+                                'queries.tcp': sum_qtcp_nds_perzone20 }}}}))
         orig_get_datetime = stats.get_datetime
         orig_get_timestamp = stats.get_timestamp
         stats.get_datetime = lambda x=None: self.const_datetime
@@ -1163,13 +1181,23 @@ class TestStats(unittest.TestCase):
                          'queries.tcp':
                              auth.queries_per_zone[0]['queries.tcp']*n,
                          'queries.udp':
-                             auth.queries_per_zone[0]['queries.udp']*n}],
+                             auth.queries_per_zone[0]['queries.udp']*n},
+                        {'zonename': "test2.example",
+                         'queries.tcp': 4*n,
+                         'queries.udp': 3*n },
+                        ],
                  'nds_queries.perzone': {
                          'test10.example': {
                              'queries.tcp':
                                  auth.nds_queries_per_zone['test10.example']['queries.tcp']*n,
                              'queries.udp':
-                                 auth.nds_queries_per_zone['test10.example']['queries.udp']*n}},
+                                 auth.nds_queries_per_zone['test10.example']['queries.udp']*n},
+                         'test20.example': {
+                             'queries.tcp':
+                                 4*n,
+                             'queries.udp':
+                                 3*n},
+                         },
                  'queries.tcp': auth.queries_tcp*n,
                  'queries.udp': auth.queries_udp*n})
         # check statistics data of 'Stats'
