@@ -303,6 +303,12 @@ class SysInfoBSD(SysInfoPOSIX):
         except (subprocess.CalledProcessError, OSError):
             self._net_connections = 'Warning: "netstat -an" command failed.\n'
 
+        try:
+            s = subprocess.check_output(['netstat', '-nr'])
+            self._net_routing_table = s.decode('utf-8')
+        except (subprocess.CalledProcessError, OSError):
+            self._net_connections = 'Warning: "netstat -nr" command failed.\n'
+
 class SysInfoOpenBSD(SysInfoBSD):
     """OpenBSD implementation of the SysInfo class.
     See the SysInfo class documentation for more information.
@@ -345,12 +351,6 @@ class SysInfoOpenBSD(SysInfoBSD):
         except (subprocess.CalledProcessError, OSError):
             pass
 
-        try:
-            s = subprocess.check_output(['route', '-n', 'show'])
-            self._net_routing_table = s.decode('utf-8')
-        except (subprocess.CalledProcessError, OSError):
-            self._net_routing_table = 'Warning: "route -n show" command failed.\n'
-
 class SysInfoFreeBSDOSX(SysInfoBSD):
     """Shared code for the FreeBSD and OS X implementations of the SysInfo
     class. See the SysInfo class documentation for more information.
@@ -380,12 +380,6 @@ class SysInfoFreeBSDOSX(SysInfoBSD):
                 self._loadavg = (float(la[0]), float(la[1]), float(la[2]))
         except (subprocess.CalledProcessError, OSError):
             pass
-
-        try:
-            s = subprocess.check_output(['netstat', '-nr'])
-            self._net_routing_table = s.decode('utf-8')
-        except (subprocess.CalledProcessError, OSError):
-            self._net_connections = 'Warning: "netstat -nr" command failed.\n'
 
 class SysInfoFreeBSD(SysInfoFreeBSDOSX):
     """FreeBSD implementation of the SysInfo class.
