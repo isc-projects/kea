@@ -565,7 +565,19 @@ class Stats:
         for m in mlist:
             if self.statistics_data_bymid[m]:
                 if m in self.statistics_data:
-                    self.statistics_data[m].update(
+                    # propagate the default values by times of
+                    # instances
+                    _len = len(self.statistics_data_bymid[m])
+                    for i in range(0, _len - 1):
+                        self.statistics_data[m] = _accum(
+                            self.statistics_data[m],
+                            self.statistics_data[m])
+                    # replace the default values with summaries of the
+                    # collected values of each module. But the default
+                    # values which are not included in collected
+                    # values are not replaced.
+                    self.statistics_data[m] = merge_oldnew(
+                        self.statistics_data[m],
                         _accum_bymodule(
                             self.statistics_data_bymid[m]))
 
