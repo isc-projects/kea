@@ -16,6 +16,8 @@
 #include <util/memory_segment_local.h>
 
 #include <dns/rrset.h>
+#include <dns/rrclass.h>
+#include <dns/rrtype.h>
 #include <dns/rrttl.h>
 
 #include <datasrc/memory/rdata_encoder.h>
@@ -47,6 +49,8 @@ protected:
     RdataEncoder encoder_;
 };
 
+// Convert the given 32-bit integer (network byte order) to the corresponding
+// RRTTL object.
 RRTTL
 restoreTTL(uint32_t net_ttl) {
     isc::util::InputBuffer b(&net_ttl, sizeof(net_ttl));
@@ -54,12 +58,15 @@ restoreTTL(uint32_t net_ttl) {
 }
 
 TEST_F(RdataSetTest, create) {
+    // A simple case of creating an RdataSet.  Confirming the resulting
+    // fields have the expected values, and then destroying it (TearDown()
+    // would detect any memory leak)
     RdataSet* rdataset = RdataSet::create(mem_sgmt_, encoder_, a_rrset_,
                                           ConstRRsetPtr());
     EXPECT_EQ(RRType::A(), rdataset->type);
     EXPECT_EQ(RRTTL(1076895760), restoreTTL(rdataset->ttl));
     EXPECT_EQ(1, rdataset->rdata_count);
     EXPECT_EQ(0, rdataset->sig_rdata_count);
-    RdataSet::destroy(mem_sgmt_, rdataset);
+    RdataSet::destroy(mem_sgmt_, RRClass::IN(), rdataset);
 }
 }
