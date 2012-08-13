@@ -29,7 +29,8 @@ namespace datasrc {
 namespace memory {
 class RdataEncoder;
 
-struct RdataSet {
+class RdataSet {
+public:
     static RdataSet* create(util::MemorySegment& mem_sgmt,
                             RdataEncoder& encoder,
                             dns::ConstRRsetPtr rrset,
@@ -38,9 +39,15 @@ struct RdataSet {
                         RdataSet* rdataset);
 
     const dns::RRType type;
+private:
     const uint16_t sig_rdata_count : 3;
     const uint16_t rdata_count : 13;
     const uint32_t ttl;       ///< TTL of the RdataSet, net byte order
+public:
+    size_t getRdataCount() const { return (rdata_count); }
+    size_t getSigRdataCount() const { return (sig_rdata_count); }
+    const void* getTTLData() const { return (&ttl); }
+    void* getDataBuf() { return (this + 1); }
 
 private:
     RdataSet(dns::RRType type, size_t rdata_count, size_t sig_rdata_count,
