@@ -44,14 +44,13 @@ RdataSet::create(util::MemorySegment& mem_sgmt, RdataEncoder& encoder,
     }
 
     const size_t data_len = encoder.getStorageLength();
-    assert(data_len == 4);
     void* p = mem_sgmt.allocate(sizeof(RdataSet) + data_len);
     RdataSet* rdataset = new(p) RdataSet(rrset->getType(),
                                          rrset->getRdataCount(),
                                          sig_rrset ?
                                          sig_rrset->getRdataCount() : 0,
                                          rrset->getTTL());
-    encoder.encode(rdataset + 1, data_len);
+    encoder.encode(rdataset->getDataBuf(), data_len);
     return (rdataset);
 }
 
@@ -61,7 +60,7 @@ RdataSet::destroy(util::MemorySegment& mem_sgmt, RRClass rrclass,
 {
     const size_t data_len =
         RdataReader(rrclass, rdataset->type,
-                    reinterpret_cast<const uint8_t*>(rdataset + 1),
+                    reinterpret_cast<const uint8_t*>(rdataset->getDataBuf()),
                     rdataset->rdata_count,
                     rdataset->sig_rdata_count).getSize();
     rdataset->~RdataSet();

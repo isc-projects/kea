@@ -52,8 +52,8 @@ protected:
 // Convert the given 32-bit integer (network byte order) to the corresponding
 // RRTTL object.
 RRTTL
-restoreTTL(uint32_t net_ttl) {
-    isc::util::InputBuffer b(&net_ttl, sizeof(net_ttl));
+restoreTTL(const void* ttl_data) {
+    isc::util::InputBuffer b(ttl_data, sizeof(uint32_t));
     return (RRTTL(b));
 }
 
@@ -64,9 +64,9 @@ TEST_F(RdataSetTest, create) {
     RdataSet* rdataset = RdataSet::create(mem_sgmt_, encoder_, a_rrset_,
                                           ConstRRsetPtr());
     EXPECT_EQ(RRType::A(), rdataset->type);
-    EXPECT_EQ(RRTTL(1076895760), restoreTTL(rdataset->ttl));
-    EXPECT_EQ(1, rdataset->rdata_count);
-    EXPECT_EQ(0, rdataset->sig_rdata_count);
+    EXPECT_EQ(RRTTL(1076895760), restoreTTL(rdataset->getTTLData()));
+    EXPECT_EQ(1, rdataset->getRdataCount());
+    EXPECT_EQ(0, rdataset->getSigRdataCount());
     RdataSet::destroy(mem_sgmt_, RRClass::IN(), rdataset);
 }
 }
