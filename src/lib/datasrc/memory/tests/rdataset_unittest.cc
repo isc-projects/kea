@@ -63,6 +63,7 @@ TEST_F(RdataSetTest, create) {
     // would detect any memory leak)
     RdataSet* rdataset = RdataSet::create(mem_sgmt_, encoder_, a_rrset_,
                                           ConstRRsetPtr());
+    EXPECT_FALSE(rdataset->next); // by default the next pointer should be NULL
     EXPECT_EQ(RRType::A(), rdataset->type);
     EXPECT_EQ(RRTTL(1076895760), restoreTTL(rdataset->getTTLData()));
     EXPECT_EQ(1, rdataset->getRdataCount());
