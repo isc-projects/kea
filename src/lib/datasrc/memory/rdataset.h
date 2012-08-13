@@ -17,6 +17,7 @@
 
 #include <util/memory_segment.h>
 
+#include <dns/rrclass.h>
 #include <dns/rrtype.h>
 #include <dns/rrset.h>
 #include <dns/rrttl.h>
@@ -33,7 +34,8 @@ struct RdataSet {
                             RdataEncoder& encoder,
                             dns::ConstRRsetPtr rrset,
                             dns::ConstRRsetPtr sig_rrset);
-    static void destroy(util::MemorySegment& mem_sgmt, RdataSet* rdataset);
+    static void destroy(util::MemorySegment& mem_sgmt, dns::RRClass rrclass,
+                        RdataSet* rdataset);
 
     const dns::RRType type;
     const uint16_t sig_rdata_count : 3;

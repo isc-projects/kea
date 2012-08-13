@@ -12,11 +12,13 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <dns/rrclass.h>
 #include <dns/rrtype.h>
 #include <dns/rrset.h>
 
 #include "rdataset.h"
 #include "rdata_encoder.h"
+#include "rdata_reader.h"
 
 #include <boost/static_assert.hpp>
 
@@ -54,9 +56,16 @@ RdataSet::create(util::MemorySegment& mem_sgmt, RdataEncoder& encoder,
 }
 
 void
-RdataSet::destroy(util::MemorySegment& mem_sgmt, RdataSet* rdataset) {
+RdataSet::destroy(util::MemorySegment& mem_sgmt, RRClass rrclass,
+                  RdataSet* rdataset)
+{
+    const size_t data_len =
+        RdataReader(rrclass, rdataset->type,
+                    reinterpret_cast<const uint8_t*>(rdataset + 1),
+                    rdataset->rdata_count,
+                    rdataset->sig_rdata_count).getSize();
     rdataset->~RdataSet();
-    mem_sgmt.deallocate(rdataset, sizeof(RdataSet) + 4);
+    mem_sgmt.deallocate(rdataset, sizeof(RdataSet) + data_len);
 }
 
 namespace {
