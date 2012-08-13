@@ -425,6 +425,7 @@ class SysInfoOSX(SysInfoFreeBSDOSX):
         # was read. However, on OSX, physmem is not necessarily the correct
         # value. But since it does not fail and does work on most BSD's, it's
         # left in the base class and overwritten here
+        self._mem_total = None
         try:
             s = subprocess.check_output(['sysctl', '-n', 'hw.memsize'])
             self._mem_total = int(s.decode('utf-8').strip())
