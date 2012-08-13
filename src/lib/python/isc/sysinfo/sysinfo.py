@@ -36,15 +36,19 @@ class SysInfo:
         self._loadavg = None
         self._mem_total = None
         self._mem_free = None
-        self._mem_cached = None
-        self._mem_buffers = None
         self._mem_swap_total = None
         self._mem_swap_free = None
-        self._platform_distro = 'Unknown'
         self._net_interfaces = 'Unknown\n'
         self._net_routing_table = 'Unknown\n'
         self._net_stats = 'Unknown\n'
         self._net_connections = 'Unknown\n'
+
+        # The following are Linux speicific, and should eventually be removed
+        # from this level; for now we simply default to None (so they won't
+        # be printed)
+        self._platform_distro = None
+        self._mem_cached = None
+        self._mem_buffers = None
 
     def get_num_processors(self):
         """Returns the number of processors. This is the number of
@@ -77,7 +81,12 @@ class SysInfo:
         return self._platform_is_smp
 
     def get_platform_distro(self):
-        """Returns the name of the OS distribution in use."""
+        """Returns the name of the OS distribution in use.
+
+        Note: the concept of 'distribution' is Linux specific.  This shouldn't
+        be at this level.
+
+        """
         return self._platform_distro
 
     def get_uptime(self):
@@ -275,8 +284,6 @@ class SysInfoBSD(SysInfoPOSIX):
             self._mem_total = int(s.decode('utf-8').strip())
         except (subprocess.CalledProcessError, OSError):
             pass
-
-        self._platform_distro = self._platform_name + ' ' + self._platform_version
 
         try:
             s = subprocess.check_output(['ifconfig'])
