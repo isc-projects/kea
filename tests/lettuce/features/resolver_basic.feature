@@ -27,10 +27,10 @@ Feature: Basic Resolver
         A query for l.root-servers.net. should have rcode REFUSED
 
         # Test whether acl ACCEPT works
-        When I set bind10 configuration Resolver/query_acl[0]/action to ACCEPT
+        When I set bind10 configuration Resolver/query_acl[0] to {"action": "ACCEPT", "from": "127.0.0.1"}
         # This address is currently hardcoded, so shouldn't cause outside traffic
         A query for l.root-servers.net. should have rcode NOERROR
 
         # Check whether setting the ACL to reject again works
-        When I set bind10 configuration Resolver/query_acl[0]/action to REJECT
+        When I set bind10 configuration Resolver/query_acl[0] to {"action": "REJECT", "from": "127.0.0.1"}
         A query for l.root-servers.net. should have rcode REFUSED
