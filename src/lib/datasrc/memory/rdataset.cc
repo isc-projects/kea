@@ -94,6 +94,10 @@ RdataSet::RdataSet(RRType type_param, size_t rdata_count_param,
     // our assumption of the size of RdataSet holds.  If it's not the case
     // we should use the bare value instead of the class object.
     BOOST_STATIC_ASSERT(sizeof(type) == sizeof(uint16_t));
+
+    // Confirm we meet the alignment requirement for RdataEncoder
+    // ("this + 1" should be safely passed to the encoder).
+    BOOST_STATIC_ASSERT(sizeof(RdataSet) % sizeof(uint16_t) == 0);
 }
 
 } // namespace memory

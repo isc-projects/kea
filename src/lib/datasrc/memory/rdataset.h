@@ -22,6 +22,8 @@
 #include <dns/rrset.h>
 #include <dns/rrttl.h>
 
+#include <boost/interprocess/offset_ptr.hpp>
+
 #include <stdint.h>
 
 namespace isc {
@@ -38,6 +40,14 @@ public:
     static void destroy(util::MemorySegment& mem_sgmt, dns::RRClass rrclass,
                         RdataSet* rdataset);
 
+    typedef boost::interprocess::offset_ptr<RdataSet> RdataSetPtr;
+    typedef boost::interprocess::offset_ptr<const RdataSet> ConstRdataSetPtr;
+
+    // Note: the size and order of the members are important.  Don't change
+    // them unless there's strong reason for that and the consequences are
+    // considered.
+
+    RdataSetPtr next;
     const dns::RRType type;
 private:
     const uint16_t sig_rdata_count : 3;
