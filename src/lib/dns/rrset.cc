@@ -250,7 +250,7 @@ RRset::RRset(const Name& name, const RRClass& rrclass,
 RRset::~RRset() {}
 
 unsigned int
-RRset::getSIGRdataCount() const {
+RRset::getRRsigDataCount() const {
     if (rrsig_) {
         return (rrsig_->getRdataCount());
     } else {

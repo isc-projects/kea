@@ -764,9 +764,7 @@ TEST_F(MessageTest, toWireSigned) {
                                          "20000101000000 20000201000000 "
                                          "12345 example.com. FAKEFAKEFAKE"));
     rrset_a->addRRsig(rrset_rrsig);
-
-    const RRset* rr = dynamic_cast<const RRset*>(rrset_a.get());
-    EXPECT_EQ(2, rr->getSIGRdataCount());
+    EXPECT_EQ(2, rrset_a->getRRsigDataCount());
 
     message_render.addRRset(Message::SECTION_ANSWER, rrset_a, true);
 

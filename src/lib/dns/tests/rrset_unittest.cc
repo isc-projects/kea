@@ -339,9 +339,9 @@ TEST_F(RRsetRRSIGTest, addRRsig) {
     EXPECT_EQ(3, sp->getRdataCount());
 }
 
-TEST_F(RRsetRRSIGTest, getSIGRdataCount) {
-    EXPECT_EQ(1, rrset_aaaa->getSIGRdataCount());
-    EXPECT_EQ(0, rrset_a->getSIGRdataCount());
+TEST_F(RRsetRRSIGTest, getRRsigDataCount) {
+    EXPECT_EQ(1, rrset_aaaa->getRRsigDataCount());
+    EXPECT_EQ(0, rrset_a->getRRsigDataCount());
 
     rrset_rrsig = RRsetPtr(new RRset(test_name, RRClass::IN(),
                                      RRType::RRSIG(), RRTTL(3600)));
@@ -354,9 +354,9 @@ TEST_F(RRsetRRSIGTest, getSIGRdataCount) {
                                          "20000101000000 20000201000000 "
                                          "12345 example.com. FAKEFAKEFAKE"));
     rrset_a->addRRsig(rrset_rrsig);
-    EXPECT_EQ(2, rrset_a->getSIGRdataCount());
+    EXPECT_EQ(2, rrset_a->getRRsigDataCount());
 
     rrset_a->removeRRsig();
-    EXPECT_EQ(0, rrset_a->getSIGRdataCount());
+    EXPECT_EQ(0, rrset_a->getRRsigDataCount());
 }
 }
