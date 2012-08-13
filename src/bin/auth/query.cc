@@ -57,7 +57,7 @@ namespace auth {
 void
 Query::ResponseCreator::addRRset(isc::dns::Message& message,
                                  const isc::dns::Message::Section section,
-                                 const ConstRRsetPtr& rrset, const bool dnssec)
+                                 const ConstRRsetPtr& rrset)
 {
     /// Is this RRset already in the list of RRsets added to the message?
     const std::vector<const AbstractRRset*>::const_iterator i =
@@ -68,8 +68,7 @@ Query::ResponseCreator::addRRset(isc::dns::Message& message,
         // No - add it to both the message and the list of RRsets processed.
         // The const-cast is wrong, but the message interface seems to insist.
         message.addRRset(section,
-                         boost::const_pointer_cast<AbstractRRset>(rrset),
-                         dnssec);
+                         boost::const_pointer_cast<AbstractRRset>(rrset));
         added_.push_back(rrset.get());
     }
 }
@@ -78,8 +77,7 @@ void
 Query::ResponseCreator::create(Message& response,
                                const vector<ConstRRsetPtr>& answers,
                                const vector<ConstRRsetPtr>& authorities,
-                               const vector<ConstRRsetPtr>& additionals,
-                               const bool dnssec)
+                               const vector<ConstRRsetPtr>& additionals)
 {
     // Inserter should be reset each time the query is reset, so should be
     // empty at this point.
@@ -91,13 +89,13 @@ Query::ResponseCreator::create(Message& response,
     // guarantee that if there are duplicates, the single RRset added will
     // appear in the most important section.
     BOOST_FOREACH(const ConstRRsetPtr& rrset, answers) {
-        addRRset(response, Message::SECTION_ANSWER, rrset, dnssec);
+        addRRset(response, Message::SECTION_ANSWER, rrset);
     }
     BOOST_FOREACH(const ConstRRsetPtr& rrset, authorities) {
-        addRRset(response, Message::SECTION_AUTHORITY, rrset, dnssec);
+        addRRset(response, Message::SECTION_AUTHORITY, rrset);
     }
     BOOST_FOREACH(const ConstRRsetPtr& rrset, additionals) {
-        addRRset(response, Message::SECTION_ADDITIONAL, rrset, dnssec);
+        addRRset(response, Message::SECTION_ADDITIONAL, rrset);
     }
 }
 
@@ -354,14 +352,14 @@ findZone(const ClientList& list, const Name& qname, RRType qtype) {
 void
 Query::process(datasrc::ClientList& client_list,
                const isc::dns::Name& qname, const isc::dns::RRType& qtype,
-               isc::dns::Message& response, bool dnssec)
+               isc::dns::Message& response)
 {
     // Set up the cleaner object so internal pointers and vectors are
     // always reset after scope leaves this method
     QueryCleaner cleaner(*this);
 
     // Set up query parameters for the rest of the (internal) methods
-    initialize(client_list, qname, qtype, response, dnssec);
+    initialize(client_list, qname, qtype, response);
 
     // Found a zone which is the nearest ancestor to QNAME
     const ClientList::FindResult result = findZone(*client_list_, *qname_,
@@ -533,8 +531,7 @@ Query::process(datasrc::ClientList& client_list,
             break;
     }
 
-    response_creator_.create(*response_, answers_, authorities_, additionals_,
-                             dnssec_);
+    response_creator_.create(*response_, answers_, authorities_, additionals_);
 }
 
 void
@@ -592,8 +589,7 @@ Query::processDSAtChild() {
         }
     }
 
-    response_creator_.create(*response_, answers_, authorities_, additionals_,
-                             dnssec_);
+    response_creator_.create(*response_, answers_, authorities_, additionals_);
     return (true);
 }
 

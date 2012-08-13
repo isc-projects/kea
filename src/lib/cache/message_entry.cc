@@ -110,8 +110,7 @@ MessageEntry::getRRsetEntries(vector<RRsetEntryPtr>& rrset_entry_vec,
 void
 MessageEntry::addRRset(isc::dns::Message& message,
                        const vector<RRsetEntryPtr>& rrset_entry_vec,
-                       const isc::dns::Message::Section& section,
-                       bool dnssec_need)
+                       const isc::dns::Message::Section& section)
 {
     uint16_t start_index = 0;
     uint16_t end_index = answer_count_;
@@ -126,8 +125,7 @@ MessageEntry::addRRset(isc::dns::Message& message,
     }
 
     for (uint16_t index = start_index; index < end_index; ++index) {
-        message.addRRset(section, rrset_entry_vec[index]->getRRset(),
-                         dnssec_need);
+        message.addRRset(section, rrset_entry_vec[index]->getRRset());
     }
 }
 
@@ -156,10 +154,9 @@ MessageEntry::genMessage(const time_t& time_now,
         msg.setHeaderFlag(Message::HEADERFLAG_AA, false);
         msg.setHeaderFlag(Message::HEADERFLAG_TC, headerflag_tc_);
 
-        bool dnssec_need = msg.getEDNS().get();
-        addRRset(msg, rrset_entry_vec, Message::SECTION_ANSWER, dnssec_need);
-        addRRset(msg, rrset_entry_vec, Message::SECTION_AUTHORITY, dnssec_need);
-        addRRset(msg, rrset_entry_vec, Message::SECTION_ADDITIONAL, dnssec_need);
+        addRRset(msg, rrset_entry_vec, Message::SECTION_ANSWER);
+        addRRset(msg, rrset_entry_vec, Message::SECTION_AUTHORITY);
+        addRRset(msg, rrset_entry_vec, Message::SECTION_ADDITIONAL);
 
         return (true);
     }
