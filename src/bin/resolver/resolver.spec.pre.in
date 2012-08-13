@@ -116,37 +116,23 @@
       },
       {
         "item_name": "query_acl",
-	"item_type": "list",
-	"item_optional": false,
-	"item_default": [
-	  {
-	    "action": "ACCEPT",
-	    "from": "127.0.0.1"
-	  },
-	  {
-	    "action": "ACCEPT",
-	    "from": "::1"
-	  }
-	],
-	"list_item_spec": {
-	  "item_name": "rule",
-	  "item_type": "map",
-	  "item_optional": false,
-	  "item_default": {},
-	  "map_item_spec": [
-	    {
-	      "item_name": "action",
-	      "item_type": "string",
-	      "item_optional": false,
-	      "item_default": ""
-	    },
-	    {
-	      "item_name": "from",
-	      "item_type": "string",
-	      "item_optional": false,
-	      "item_default": ""
-	    }
-	  ]
+        "item_type": "list",
+        "item_optional": false,
+        "item_default": [
+          {
+            "action": "ACCEPT",
+            "from": "127.0.0.1"
+          },
+          {
+            "action": "ACCEPT",
+            "from": "::1"
+          }
+        ],
+        "list_item_spec": {
+          "item_name": "rule",
+          "item_type": "any",
+          "item_optional": false,
+          "item_default": {"action": "REJECT"}
         }
       }
     ],
