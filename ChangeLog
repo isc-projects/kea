@@ -1,4 +1,4 @@
-451.	[func]		tomek
+459.	[func]		tomek
 	b10-dhcp6: DHCPv6 server component is now integrated into
 	BIND10 framework. It can be started from BIND10 (using bindctl)
 	and can receive commands. The only supported command for now
@@ -6,6 +6,66 @@
 	b10-dhcp4: Command line-switch '-s' to disable msgq was added.
 	b10-dhcp6: Command line-switch '-s' to disable msgq was added.
 	(Trac #1708, git tbd)
+
+458.	[build]*	jinmei
+	BIND 10 now relies on Boost offset_ptr, which caused some new
+	portability issues.  Such issues are detected at ./configure time.
+	If ./configure stops due to this, try the following workaround:
+	- If it's about the use of mutable for a reference with clang++,
+	  upgrade Boost version to 1.44 or higher, or try a different
+	  compiler (e.g. g++ generally seems to be free from this issue)
+	- If it's about the use of "variadic templates", specify
+	  --without-werror so the warning won't be promoted to an error.
+	  Specifying BOOST_NO_USER_CONFIG in CXXFLAGS may also work
+	  (which would be the case if Boost is installed via pkgsrc)
+	(Trac #2147, git 30061d1139aad8716e97d6b620c259752fd0a3cd)
+
+457.	[build]*	muks
+	BIND 10 library names now have a "b10-" prefix. This is to avoid
+	clashes with other similarly named libraries on the system.
+	(Trac #2071, git ac20a00c28069804edc0a36050995df52f601efb)
+
+456.	[build]*	muks
+	BIND 10 now compiles against log4cplus-1.1.0 (RC releases)
+	also.  Note: some older versions of log4cplus don't work any more;
+	known oldest workable version is 1.0.4.  Thanks to John Lumby for
+	sending a patch.
+	(Trac #2169, git 7d7e5269d57451191c0aef1b127d292d3615fe2c)
+
+455.	[func]*		vorner
+	The server now uses newer API for data sources. This would be an
+	internal change, however, the data sources are now configured
+	differently. Please, migrate your configuration to the top-level
+	"data_sources" module.
+	(Trac #1976, git 0d4685b3e7603585afde1b587cbfefdfaf6a1bb3)
+
+454.	[bug]		jelte
+	b10-cfgmgr now loads its configuration check plugins directly from
+	the plugin search path, as opposed to importing them from the
+	general python system module path list; this prevents naming
+	conflicts with real python modules.
+	(Trac #2119, git 2f68d7ac5c3c7cc88a3663191113eece32d46a3d)
+
+453.	[bug]		jelte
+	b10-auth no longer tries to send DDNS UPDATE messages to b10-ddns if
+	b10-ddns is not running. Sending an UPDATE to BIND 10 that is not
+	configured to run DDNS will now result in a response with rcode
+	NOTIMP instead of SERVFAIL.
+	(Trac #1986, git bd6b0a5ed3481f78fb4e5cb0b18c7b6e5920f9f8)
+
+452.	[func]*		muks
+	isc-sysinfo: An initial implementation of the isc-sysinfo tool
+	is now available. It gathers and outputs system information which
+	can be used by future tech support staff.
+	(Trac #2062, git 144e80212746f8d55e6a59edcf689fec9f32ae95)
+
+451.	[bug]		muks, jinmei
+	libdatasrc: the database-based data source now correctly returns
+	glue records on (not under) a zone cut, such as in the case where
+	the NS name of an NS record is identical to its owner name. (Note:
+	libdatasrc itself doesn't judge what kind of record type can be a
+	"glue"; it's the caller's responsibility.)
+	(Trac #1771, git 483f1075942965f0340291e7ff7dae7806df22af)
 
 450.	[func]*		tomek
 	b10-dhcp4: DHCPv4 server component is now integrated into
@@ -286,8 +346,8 @@ bind10-devel-20120329 released on March 29, 2012
 
 407.	[build]		haikuo
 	Remove "--enable-boost-threads" switch in configure command. This
-	thread lock mechanism is useless for bind10 and causes performance 
-	hits. 
+	thread lock mechanism is useless for bind10 and causes performance
+	hits.
 	(Trac #1680, git 9c4d0cadf4adc802cc41a2610dc2c30b25aad728)
 
 406.	[bug]		muks
@@ -783,26 +843,26 @@ bind10-devel-20120119 released on January 19, 2012
 	(Trac #1350, git cc20ff993da1ddb1c6e8a98370438b45a2be9e0a)
 
 336.	[func]		jelte
-	libdns++ (and its python wrapper) now includes a class Serial, for 
-	SOA SERIAL comparison and addition. Operations on instances of this 
-	class follow the specification from RFC 1982. 
-	Rdata::SOA::getSerial() now returns values of this type (and not 
+	libdns++ (and its python wrapper) now includes a class Serial, for
+	SOA SERIAL comparison and addition. Operations on instances of this
+	class follow the specification from RFC 1982.
+	Rdata::SOA::getSerial() now returns values of this type (and not
 	uint32_t).
 	(Trac #1278, git 2ae72d76c74f61a67590722c73ebbf631388acbd)
 
 335.	[bug]*		jelte
-	The DataSourceClientContainer class that dynamically loads 
-	datasource backend libraries no longer provides just a .so file name 
-	to its call to dlopen(), but passes it an absolute path. This means 
-	that it is no longer an system implementation detail that depends on 
-	[DY]LD_LIBRARY_PATH which file is chosen, should there be multiple 
-	options (for instance, when test-running a new build while a 
+	The DataSourceClientContainer class that dynamically loads
+	datasource backend libraries no longer provides just a .so file name
+	to its call to dlopen(), but passes it an absolute path. This means
+	that it is no longer an system implementation detail that depends on
+	[DY]LD_LIBRARY_PATH which file is chosen, should there be multiple
+	options (for instance, when test-running a new build while a
 	different version is installed).
-	These loadable libraries are also no longer installed in the default 
-	library path, but in a subdirectory of the libexec directory of the 
+	These loadable libraries are also no longer installed in the default
+	library path, but in a subdirectory of the libexec directory of the
 	target ($prefix/libexec/[version]/backends).
-	This also removes the need to handle b10-xfin and b10-xfrout as 
-	'special' hardcoded components, and they are now started as regular 
+	This also removes the need to handle b10-xfin and b10-xfrout as
+	'special' hardcoded components, and they are now started as regular
 	components as dictated by the configuration of the boss process.
 	(Trac #1292, git 83ce13c2d85068a1bec015361e4ef8c35590a5d0)
 
@@ -947,12 +1007,12 @@ bind10-devel-20111128 released on November 28, 2011
 	(Trac #1228, git 31d5a4f66b18cca838ca1182b9f13034066427a7)
 
 314.	[bug]		jelte
-	b10-xfrin would previously initiate incoming transfers upon 
-	receiving NOTIFY messages from any address (if the zone was 
-	known to b10-xfrin, and using the configured address). It now 
-	only starts a transfer if the source address from the NOTIFY 
-	packet matches the configured master address and port. This was 
-	really already fixed in release bind10-devel-20111014, but there 
+	b10-xfrin would previously initiate incoming transfers upon
+	receiving NOTIFY messages from any address (if the zone was
+	known to b10-xfrin, and using the configured address). It now
+	only starts a transfer if the source address from the NOTIFY
+	packet matches the configured master address and port. This was
+	really already fixed in release bind10-devel-20111014, but there
 	were some deferred cleanups to add.
 	(Trac #1298, git 1177bfe30e17a76bea6b6447e14ae9be9e1ca8c2)
 
@@ -966,7 +1026,7 @@ bind10-devel-20111128 released on November 28, 2011
 	(Trac #1329, git 1aa233fab1d74dc776899df61181806679d14013)
 
 312.	[func]		jelte
-	Added an initial framework for doing system tests using the 
+	Added an initial framework for doing system tests using the
 	cucumber-based BDD tool Lettuce. A number of general steps are
 	included,  for instance running bind10 with specific
 	configurations, sending queries, and inspecting query answers. A
@@ -1344,7 +1404,7 @@ bind10-devel-20110705 released on July 05, 2011
 	(Trac #710, git dae1d2e24f993e1eef9ab429326652f40a006dfb)
 
 257.	[bug]		y-aharen
-	Fixed a bug an instance of IntervalTimerImpl may be destructed 
+	Fixed a bug an instance of IntervalTimerImpl may be destructed
 	while deadline_timer is holding the handler. This fix addresses
 	occasional failure of IntervalTimerTest.destructIntervalTimer.
 	(Trac #957, git e59c215e14b5718f62699ec32514453b983ff603)
@@ -2014,7 +2074,7 @@ bind10-devel-20110120 released on January 20, 2011
 	(Trac #513, git 285c5ee3d5582ed6df02d1aa00387f92a74e3695)
 
 151.	[bug]		smann
-	lib/log/dummylog.h: 
+	lib/log/dummylog.h:
 	lib/log/dummylog.cc: Modify dlog so that it takes an optional
 	2nd argument of type bool (true or false). This flag, if
 	set, will cause the message to be printed whether or not
@@ -2322,11 +2382,11 @@ bind10-devel-20101201 released on December 01, 2010
 104.	[bug]		jerry
 	bin/zonemgr: zonemgr should be attempting to refresh expired zones.
 	(Trac #336, r3139)
- 
+
 103.	[bug]		jerry
 	lib/python/isc/log: Fixed an issue with python logging,
 	python log shouldn't die with OSError. (Trac #267, r3137)
- 
+
 102.	[build]		jinmei
 	Disable threads in ASIO to minimize build time dependency.
 	(Trac #345, r3100)
@@ -2361,7 +2421,7 @@ bind10-devel-20101201 released on December 01, 2010
 	it can be customized; Make sure --disable-static works.
 	(Trac #325, r2976)
 
-bind10-devel-20100917 released on September 17, 2010 
+bind10-devel-20100917 released on September 17, 2010
 
 95.	[doc]		jreed
 	Add b10-zonemgr manual page. Update other docs to introduce
@@ -2414,14 +2474,14 @@ bind10-devel-20100917 released on September 17, 2010
 	reason. (Trac #296, r2761)
 
 87.	[func]		zhanglikun
-	lib/python/isc/notifyout: Add the feature of notify-out, when 
+	lib/python/isc/notifyout: Add the feature of notify-out, when
 	zone axfr/ixfr finishing, the server will notify its slaves.
 	(Trac #289, svn r2737)
 
 86.	[func]		jerry
-	bin/zonemgr: Added zone manager module. The zone manager is one 
-	of the co-operating processes of BIND10, which keeps track of 
-	timers and other information necessary for BIND10 to act as a 
+	bin/zonemgr: Added zone manager module. The zone manager is one
+	of the co-operating processes of BIND10, which keeps track of
+	timers and other information necessary for BIND10 to act as a
 	slave. (Trac #215, svn r2737)
 
 85.	[build]*		jinmei
@@ -2434,7 +2494,7 @@ bind10-devel-20100917 released on September 17, 2010
 bind10-devel-20100812 released on August 12, 2010
 
 84.	[bug]		jinmei, jerry
-	This is a quick fix patch for the issue: AXFR fails half the 
+	This is a quick fix patch for the issue: AXFR fails half the
 	time because of connection problems. xfrout client will make
 	a new connection every time. (Trac #299, svn r2697)
 
@@ -2484,7 +2544,7 @@ bind10-devel-20100812 released on August 12, 2010
 	(Trac #256, r2549)
 
 77.	[func]		zhanglikun
-	Make error message be more friendly when running cmdctl and it's 
+	Make error message be more friendly when running cmdctl and it's
 	already running (listening on same port)(Trac #277, r2540)
 
 76.	[bug]		jelte
@@ -2540,8 +2600,8 @@ bind10-devel-20100701 released on July 1, 2010
 68.	[func]		zhanglikun
 	Add options -c (--certificate-chain) to bindctl. Override class
 	HTTPSConnection to support server certificate validation.
-	Add support to cmdctl.spec file, now there are three configurable 
-	items for cmdctl: 'key_file', 'cert_file' and 'accounts_file', 
+	Add support to cmdctl.spec file, now there are three configurable
+	items for cmdctl: 'key_file', 'cert_file' and 'accounts_file',
 	all of them can be changed in runtime.
 	(Trac #127, svn r2357)
 
@@ -2561,7 +2621,7 @@ bind10-devel-20100701 released on July 1, 2010
 	section; this, among other things, will prevent multiple copies
 	of the same CNAME from showing up when there's a loop. (Trac #69,
 	svn r2350)
-    
+
 65.	[func]		shentingting
 	Various loadzone improvements: allow optional comment for
 	$TTL, allow optional origin and comment for $INCLUDE, allow
@@ -2582,7 +2642,7 @@ bind10-devel-20100701 released on July 1, 2010
 
 63.	[func]		shane
 	Added initial support for setuid(), using the "-u" flag. This will
-	be replaced in the future, but for now provides a reasonable 
+	be replaced in the future, but for now provides a reasonable
 	starting point.
 	(Trac #180, svn r2330)
 
@@ -2631,17 +2691,17 @@ bind10-devel-20100701 released on July 1, 2010
 	(Trac #224, svn r2103)
 
 53.	[bug]		zhanglikun
-	bin/bindctl: Generate a unique session ID by using 
-	socket.gethostname() instead of socket.gethostbyname(), 
-	since the latter one could make bindctl	stall if its own 
+	bin/bindctl: Generate a unique session ID by using
+	socket.gethostname() instead of socket.gethostbyname(),
+	since the latter one could make bindctl	stall if its own
 	host name can't be resolved.
 	(Trac #228, svn r2096)
 
 52.	[func]		zhanglikun
 	bin/xfrout: When xfrout is launched, check whether the
-	socket file is being used by one running xfrout process, 
-	if it is, exit from python.	If the file isn't a socket file 
-	or nobody is listening, it will be removed. If it can't 
+	socket file is being used by one running xfrout process,
+	if it is, exit from python.	If the file isn't a socket file
+	or nobody is listening, it will be removed. If it can't
 	be removed, exit from python.
 	(Trac #151, svn r2091)
 
@@ -2654,7 +2714,7 @@ bind10-devel-20100602 released on June 2, 2010
 	(Trac #223)
 
 50.	[bug]		zhanglikun
-	bin/xfrin: a regression in xfrin: it can't communicate with 
+	bin/xfrin: a regression in xfrin: it can't communicate with
 	a remote server. (Trac #218, svn r2038)
 
 49.	[func]*		jelte

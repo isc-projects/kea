@@ -228,6 +228,9 @@ class DDNSServer:
         # Outstanding TCP context: fileno=>(context_obj, dst)
         self._tcp_ctxs = {}
 
+        # Notify Auth server that DDNS update messages can now be forwarded
+        self.__notify_start_forwarder()
+
     class InternalError(Exception):
         '''Exception for internal errors in an update session.
 
@@ -274,6 +277,9 @@ class DDNSServer:
             logger.info(DDNS_RECEIVED_SHUTDOWN_COMMAND)
             self.trigger_shutdown()
             answer = create_answer(0)
+        elif cmd == "auth_started":
+            self.__notify_start_forwarder()
+            answer = None
         else:
             answer = create_answer(1, "Unknown command: " + str(cmd))
         return answer
@@ -378,6 +384,8 @@ class DDNSServer:
         Do NOT call this to initialize shutdown, use trigger_shutdown().
 
         '''
+        # tell Auth not to forward UPDATE messages anymore
+        self.__notify_stop_forwarder()
         # tell the ModuleCCSession to send a message that this module is
         # stopping.
         self._cc.send_stopping()
@@ -532,6 +540,32 @@ class DDNSServer:
             return False
 
         return True
+
+    def __notify_start_forwarder(self):
+        '''Notify auth that DDNS Update messages can now be forwarded'''
+        try:
+            seq = self._cc._session.group_sendmsg(create_command(
+                    "start_ddns_forwarder"), AUTH_MODULE_NAME)
+            answer, _ = self._cc._session.group_recvmsg(False, seq)
+            rcode, error_msg = parse_answer(answer)
+            if rcode != 0:
+                logger.error(DDNS_START_FORWARDER_ERROR, error_msg)
+        except (SessionTimeout, SessionError, ProtocolError) as ex:
+            logger.error(DDNS_START_FORWARDER_FAIL, ex)
+
+    def __notify_stop_forwarder(self):
+        '''Notify auth that DDNS Update messages should no longer be forwarded.
+
+        '''
+        try:
+            seq = self._cc._session.group_sendmsg(create_command(
+                    "stop_ddns_forwarder"), AUTH_MODULE_NAME)
+            answer, _ = self._cc._session.group_recvmsg(False, seq)
+            rcode, error_msg = parse_answer(answer)
+            if rcode != 0:
+                logger.error(DDNS_STOP_FORWARDER_ERROR, error_msg)
+        except (SessionTimeout, SessionError, ProtocolError) as ex:
+            logger.error(DDNS_STOP_FORWARDER_FAIL, ex)
 
     def __notify_auth(self, zname, zclass):
         '''Notify auth of the update, if necessary.'''

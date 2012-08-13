@@ -889,6 +889,10 @@ class XfrinConnection(asyncore.dispatcher):
             req_str = 'IXFR' if request_type == RRType.IXFR() else 'AXFR'
             if check_soa:
                 self._check_soa_serial()
+                self.close()
+                self.init_socket()
+                if not self.connect_to_master():
+                    raise XfrinException('Unable to reconnect to master')
 
             logger.info(XFRIN_XFR_TRANSFER_STARTED, req_str, self.zone_str())
             self._send_query(self._request_type)
@@ -1252,7 +1256,7 @@ def _do_auth_loadzone(server, zone_name, zone_class):
     if msg is not None:
         param = msg['command'][1]
         logger.debug(DBG_XFRIN_TRACE, XFRIN_AUTH_LOADZONE, param["origin"],
-                     param["class"], param["datasrc"])
+                     param["class"])
         seq = server._send_cc_session.group_sendmsg(msg, AUTH_MODULE_NAME)
         answer, env = server._send_cc_session.group_recvmsg(False, seq)
 

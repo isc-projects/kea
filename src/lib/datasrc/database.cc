@@ -38,7 +38,8 @@
 using namespace isc::dns;
 using namespace std;
 using namespace isc::dns::rdata;
-using namespace boost;
+using boost::lexical_cast;
+using boost::scoped_ptr;
 
 namespace isc {
 namespace datasrc {
@@ -179,8 +180,7 @@ private:
 
 DatabaseClient::Finder::FoundRRsets
 DatabaseClient::Finder::getRRsets(const string& name, const WantedTypes& types,
-                                  bool check_ns, const string* construct_name,
-                                  bool any,
+                                  const string* construct_name, bool any,
                                   DatabaseAccessor::IteratorContextPtr context)
 {
     RRsigStore sig_store;
@@ -204,9 +204,7 @@ DatabaseClient::Finder::getRRsets(const string& name, const WantedTypes& types,
     const Name construct_name_object(*construct_name);
 
     bool seen_cname(false);
-    bool seen_ds(false);
     bool seen_other(false);
-    bool seen_ns(false);
 
     while (context->getNext(columns)) {
         // The domain is not empty
@@ -249,16 +247,12 @@ DatabaseClient::Finder::getRRsets(const string& name, const WantedTypes& types,
 
             if (cur_type == RRType::CNAME()) {
                 seen_cname = true;
-            } else if (cur_type == RRType::NS()) {
-                seen_ns = true;
-            } else if (cur_type == RRType::DS()) {
-                seen_ds = true;
             } else if (cur_type != RRType::RRSIG() &&
                        cur_type != RRType::NSEC3() &&
                        cur_type != RRType::NSEC()) {
                 // NSEC and RRSIG can coexist with anything, otherwise
                 // we've seen something that can't live together with potential
-                // CNAME or NS
+                // CNAME.
                 //
                 // NSEC3 lives in separate namespace from everything, therefore
                 // we just ignore it here for these checks as well.
@@ -278,12 +272,8 @@ DatabaseClient::Finder::getRRsets(const string& name, const WantedTypes& types,
                       RDATA_COLUMN]);
         }
     }
-    if (seen_cname && (seen_other || seen_ns || seen_ds)) {
+    if (seen_cname && seen_other) {
         isc_throw(DataSourceError, "CNAME shares domain " << name <<
-                  " with something else");
-    }
-    if (check_ns && seen_ns && seen_other) {
-        isc_throw(DataSourceError, "NS shares domain " << name <<
                   " with something else");
     }
     // Add signatures to all found RRsets
@@ -455,19 +445,19 @@ DatabaseClient::Finder::findDelegationPoint(const isc::dns::Name& name,
     for (int i = remove_labels; i > 0; --i) {
         const Name superdomain(name.split(i));
 
-        // Note if this is the origin. (We don't count NS records at the origin
-        // as a delegation so this controls whether NS RRs are included in
-        // the results of some searches.)
-        const bool not_origin = (i != remove_labels);
-
         // Look if there's NS or DNAME at this point of the tree, but ignore
         // the NS RRs at the apex of the zone.
         const FoundRRsets found = getRRsets(superdomain.toText(),
-                                            DELEGATION_TYPES(), not_origin);
+                                            DELEGATION_TYPES());
         if (found.first) {
             // This node contains either NS or DNAME RRs so it does exist.
             const FoundIterator nsi(found.second.find(RRType::NS()));
             const FoundIterator dni(found.second.find(RRType::DNAME()));
+
+            // Note if this is the origin. (We don't count NS records at the
+            // origin as a delegation so this controls whether NS RRs are
+            // included in the results of some searches.)
+            const bool not_origin = (i != remove_labels);
 
             // An optimisation.  We know that there is an exact match for
             // something at this point in the tree so remember it.  If we have
@@ -477,7 +467,7 @@ DatabaseClient::Finder::findDelegationPoint(const isc::dns::Name& name,
             last_known = superdomain.getLabelCount();
 
             if (glue_ok && !first_ns && not_origin &&
-                    nsi != found.second.end()) {
+                nsi != found.second.end()) {
                 // If we are searching for glue ("glue OK" mode), store the
                 // highest NS record that we find that is not the apex.  This
                 // is another optimisation for later, where we need the
@@ -590,8 +580,9 @@ DatabaseClient::Finder::findWildcardMatch(
         // TODO Add a check for DNAME, as DNAME wildcards are discouraged (see
         // RFC 4592 section 4.4).
         // Search for a match.  The types are the same as with original query.
-        FoundRRsets found = getRRsets(wildcard, final_types, true,
-                                      &construct_name, type == RRType::ANY());
+        const FoundRRsets found = getRRsets(wildcard, final_types,
+                                            &construct_name,
+                                            type == RRType::ANY());
         if (found.first) {
             // Found something - but what?
 
@@ -694,7 +685,7 @@ DatabaseClient::Finder::FindDNSSECContext::probe() {
             // such cases).
             const string origin = finder_.getOrigin().toText();
             const FoundRRsets nsec3_found =
-                finder_.getRRsets(origin, NSEC3PARAM_TYPES(), false);
+                finder_.getRRsets(origin, NSEC3PARAM_TYPES());
             const FoundIterator nfi=
                 nsec3_found.second.find(RRType::NSEC3PARAM());
             is_nsec3_ = (nfi != nsec3_found.second.end());
@@ -705,7 +696,7 @@ DatabaseClient::Finder::FindDNSSECContext::probe() {
             // described in Section 10.4 of RFC 5155.
             if (!is_nsec3_) {
                 const FoundRRsets nsec_found =
-                    finder_.getRRsets(origin, NSEC_TYPES(), false);
+                    finder_.getRRsets(origin, NSEC_TYPES());
                 const FoundIterator nfi =
                     nsec_found.second.find(RRType::NSEC());
                 is_nsec_ = (nfi != nsec_found.second.end());
@@ -757,10 +748,8 @@ DatabaseClient::Finder::FindDNSSECContext::getDNSSECRRset(const Name &name,
     try {
         const Name& nsec_name =
             covering ? finder_.findPreviousName(name) : name;
-        const bool need_nscheck = (nsec_name != finder_.getOrigin());
         const FoundRRsets found = finder_.getRRsets(nsec_name.toText(),
-                                                    NSEC_TYPES(),
-                                                    need_nscheck);
+                                                    NSEC_TYPES());
         const FoundIterator nci = found.second.find(RRType::NSEC());
         if (nci != found.second.end()) {
             return (nci->second);
@@ -984,16 +973,15 @@ DatabaseClient::Finder::findInternal(const Name& name, const RRType& type,
     // - Requested name is a delegation point (NS only but not at the zone
     //   apex - DNAME is ignored here as it redirects DNS names subordinate to
     //   the owner name - the owner name itself is not redirected.)
-    const bool is_origin = (name == getOrigin());
     WantedTypes final_types(FINAL_TYPES());
     final_types.insert(type);
     const FoundRRsets found = getRRsets(name.toText(), final_types,
-                                        !is_origin, NULL,
-                                        type == RRType::ANY());
+                                        NULL, type == RRType::ANY());
     FindDNSSECContext dnssec_ctx(*this, options);
     if (found.first) {
         // Something found at the domain name.  Look into it further to get
         // the final result.
+        const bool is_origin = (name == getOrigin());
         return (findOnNameResult(name, type, options, is_origin, found, NULL,
                                  target, dnssec_ctx));
     } else {
@@ -1021,7 +1009,7 @@ DatabaseClient::Finder::findNSEC3(const Name& name, bool recursive) {
     // Now, we need to get the NSEC3 params from the apex and create the hash
     // creator for it.
     const FoundRRsets nsec3param(getRRsets(getOrigin().toText(),
-                                 NSEC3PARAM_TYPES(), false));
+                                           NSEC3PARAM_TYPES()));
     const FoundIterator param(nsec3param.second.find(RRType::NSEC3PARAM()));
     if (!nsec3param.first || param == nsec3param.second.end()) {
         // No NSEC3 params? :-(
@@ -1061,7 +1049,7 @@ DatabaseClient::Finder::findNSEC3(const Name& name, bool recursive) {
         }
 
         const FoundRRsets nsec3(getRRsets(hash + "." + otext, NSEC3_TYPES(),
-                                          false, NULL, false, context));
+                                          NULL, false, context));
 
         if (nsec3.first) {
             // We found an exact match against the current label.
@@ -1086,8 +1074,8 @@ DatabaseClient::Finder::findNSEC3(const Name& name, bool recursive) {
                 arg(labels).arg(prevHash);
             context = accessor_->getNSEC3Records(prevHash, zone_id_);
             const FoundRRsets prev_nsec3(getRRsets(prevHash + "." + otext,
-                                                   NSEC3_TYPES(), false, NULL,
-                                                   false, context));
+                                                   NSEC3_TYPES(), NULL, false,
+                                                   context));
 
             if (!prev_nsec3.first) {
                 isc_throw(DataSourceError, "Hash " + prevHash + " returned "

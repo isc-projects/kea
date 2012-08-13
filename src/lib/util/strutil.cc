@@ -39,10 +39,9 @@ normalizeSlash(std::string& name) {
 
 string
 trim(const string& instring) {
-    static const char* blanks = " \t\n";
-
     string retstring = "";
     if (!instring.empty()) {
+        static const char* blanks = " \t\n";
 
         // Search for first non-blank character in the string
         size_t first = instring.find_first_not_of(blanks);

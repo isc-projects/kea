@@ -7,7 +7,7 @@
  01 61 07 65 78 61 6d 70 6c 65 03 63 6f 6d 00
 
 #15                                        29 (bytes)
-#(1) b(7)  e  x  a  m  p  l  e (3) c  o  m  .; specified to be not compressed,
+#(1) b (7) e  x  a  m  p  l  e (3) c  o  m  .; specified to be not compressed,
 #                                              but can be pointed to from others
  01 62 07 65 78 61 6d 70 6c 65 03 63 6f 6d 00
 #[0f] referring to the second (uncompressed name)

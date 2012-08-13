@@ -18,8 +18,8 @@
 #include <unistd.h>
 
 /**
- * @file fork.h
- * @short Help functions to fork the test case process.
+ * \file fork.h
+ * \brief Help functions to fork the test case process.
  * Various functions to fork a process and feed some data to pipe, check
  * its output and such lives here.
  */

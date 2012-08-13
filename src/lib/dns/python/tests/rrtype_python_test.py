@@ -116,6 +116,15 @@ class TestModuleSpec(unittest.TestCase):
 
         self.assertFalse(self.rrtype_1 == 1)
 
+    def test_hash(self):
+        # Exploiting the knowledge that the hash value is the numeric class
+        # value, we can predict the comparison result.
+        self.assertEqual(hash(RRType.AAAA()), hash(RRType("AAAA")))
+        self.assertEqual(hash(RRType("aaaa")), hash(RRType("AAAA")))
+        self.assertEqual(hash(RRType(28)), hash(RRType("AAAA")))
+        self.assertNotEqual(hash(RRType.A()), hash(RRType.NS()))
+        self.assertNotEqual(hash(RRType.AAAA()), hash(RRType("Type65535")))
+
     def test_statics(self):
         self.assertEqual(RRType("NSEC3PARAM"), RRType.NSEC3PARAM())
         self.assertEqual(RRType("DNAME"), RRType.DNAME())

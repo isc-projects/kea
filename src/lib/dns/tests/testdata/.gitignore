@@ -79,6 +79,12 @@
 /rdata_soa_toWireUncompressed.wire
 /rdata_sshfp_fromWire1.wire
 /rdata_sshfp_fromWire2.wire
+/rdata_sshfp_fromWire3.wire
+/rdata_sshfp_fromWire4.wire
+/rdata_sshfp_fromWire5.wire
+/rdata_sshfp_fromWire6.wire
+/rdata_sshfp_fromWire7.wire
+/rdata_sshfp_fromWire8.wire
 /rdata_tsig_fromWire1.wire
 /rdata_tsig_fromWire2.wire
 /rdata_tsig_fromWire3.wire

@@ -1,5 +1,6 @@
 /auth_test.sqlite3.copied
 /badExampleQuery_fromWire.wire
+/does-not-exist.sqlite3
 /examplequery_fromWire.wire
 /iquery_fromWire.wire
 /iquery_response_fromWire.wire

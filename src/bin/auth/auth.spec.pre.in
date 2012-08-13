@@ -125,12 +125,18 @@
 	  {
             "item_name": "origin", "item_type": "string",
             "item_optional": false, "item_default": ""
-          },
-	  {
-            "item_name": "datasrc", "item_type": "string",
-            "item_optional": true, "item_default": "memory"
           }
         ]
+      },
+      {
+        "command_name": "start_ddns_forwarder",
+        "command_description": "(Re)start internal forwarding of DDNS Update messages. This is automatically called if b10-ddns is started, and is not expected to be called by administrators; it will be removed as a public command in the future.",
+        "command_args": []
+      },
+      {
+        "command_name": "stop_ddns_forwarder",
+        "command_description": "Stop internal forwarding of DDNS Update messages. This is automatically called if b10-ddns is stopped, and is not expected to be called by administrators; it will be removed as a public command in the future.",
+        "command_args": []
       }
     ],
     "statistics": [
