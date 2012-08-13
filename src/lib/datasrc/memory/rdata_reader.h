@@ -110,15 +110,13 @@ public:
     ///
     /// \param rrclass The class the encoded rdata belongs to.
     /// \param rrtype The type of the encode rdata.
-    /// \param size Number of bytes the data have in serialized form.
     /// \param data The actual data.
     /// \param rdata_count The number of Rdata encoded in the data.
     /// \param sig_count The number of RRSig rdata bundled with the data.
     /// \param name_action The callback to be called on each encountered name.
     /// \param data_action The callback to be called on each data chunk.
     RdataReader(const dns::RRClass& rrclass, const dns::RRType& rrtype,
-                size_t size, const uint8_t* data,
-                size_t rdata_count, size_t sig_count,
+                const uint8_t* data, size_t rdata_count, size_t sig_count,
                 const NameAction& name_action = &emptyNameAction,
                 const DataAction& data_action = &emptyDataAction);
 
@@ -250,12 +248,21 @@ public:
 
     /// \brief Returns the size of associated data.
     ///
-    /// This just returns whatever was passed to the constructor as size.
-    size_t getSize() const { return (size_); }
+    /// This should be the same as the return value of
+    /// RdataEncoder::getStorageLength() for the same set of data.
+    /// The intended use of this method is to tell the caller the size of
+    /// data that were possibly dynamically allocated so that the caller can
+    /// use it for deallocation.
+    ///
+    /// This method only uses the parameters given at the construction of the
+    /// object, and does not rely on or modify other mutable states.
+    /// In practice, when the caller wants to call this method, that would be
+    /// the only purpose of that RdataReader object (although it doesn't have
+    /// to be so).
+    size_t getSize() const;
 private:
     const NameAction name_action_;
     const DataAction data_action_;
-    const size_t size_;
     const RdataEncodeSpec& spec_;
     // Total number of var-length fields, count of signatures
     const size_t var_count_total_, sig_count_, spec_count_;

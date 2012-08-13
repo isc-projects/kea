@@ -268,7 +268,7 @@ public:
                        size_t expected_varlen_fields,
                        // Warning: this test actualy might change the
                        // encoded_data !
-                       vector<uint8_t>& encoded_data,
+                       vector<uint8_t>& encoded_data, size_t,
                        MessageRenderer& renderer)
     {
         // If this type of RDATA is expected to contain variable-length fields,
@@ -319,11 +319,11 @@ public:
     static void decode(const isc::dns::RRClass& rrclass,
                        const isc::dns::RRType& rrtype,
                        size_t rdata_count, size_t sig_count, size_t,
-                       const vector<uint8_t>& encoded_data,
+                       const vector<uint8_t>& encoded_data, size_t,
                        MessageRenderer& renderer)
     {
-        RdataReader reader(rrclass, rrtype, encoded_data.size(),
-                           &encoded_data[0], rdata_count, sig_count);
+        RdataReader reader(rrclass, rrtype, &encoded_data[0], rdata_count,
+                           sig_count);
         RdataReader::Result field;
         while ((field = reader.next())) {
             switch (field.type()) {
@@ -359,11 +359,11 @@ public:
     static void decode(const isc::dns::RRClass& rrclass,
                        const isc::dns::RRType& rrtype,
                        size_t rdata_count, size_t sig_count, size_t,
-                       const vector<uint8_t>& encoded_data,
+                       const vector<uint8_t>& encoded_data, size_t,
                        MessageRenderer& renderer)
     {
-        RdataReader reader(rrclass, rrtype, encoded_data.size(),
-                           &encoded_data[0], rdata_count, sig_count);
+        RdataReader reader(rrclass, rrtype, &encoded_data[0], rdata_count,
+                           sig_count);
         // Use the reader first and rewind it
         reader.iterateSig();
         reader.iterate();
@@ -402,11 +402,11 @@ public:
     static void decode(const isc::dns::RRClass& rrclass,
                        const isc::dns::RRType& rrtype,
                        size_t rdata_count, size_t sig_count, size_t,
-                       const vector<uint8_t>& encoded_data,
+                       const vector<uint8_t>& encoded_data, size_t,
                        MessageRenderer& renderer)
     {
-        RdataReader reader(rrclass, rrtype, encoded_data.size(),
-                           &encoded_data[0], rdata_count, sig_count,
+        RdataReader reader(rrclass, rrtype, &encoded_data[0], rdata_count,
+                           sig_count,
                            boost::bind(renderNameField, &renderer,
                                        additionalRequired(rrtype), _1, _2),
                            boost::bind(renderDataField, &renderer, _1, _2));
@@ -422,11 +422,11 @@ public:
     static void decode(const isc::dns::RRClass& rrclass,
                        const isc::dns::RRType& rrtype,
                        size_t rdata_count, size_t sig_count, size_t,
-                       const vector<uint8_t>& encoded_data,
+                       const vector<uint8_t>& encoded_data, size_t,
                        MessageRenderer& renderer)
     {
-        RdataReader reader(rrclass, rrtype, encoded_data.size(),
-                           &encoded_data[0], rdata_count, sig_count,
+        RdataReader reader(rrclass, rrtype, &encoded_data[0],
+                           rdata_count, sig_count,
                            boost::bind(renderNameField, &renderer,
                                        additionalRequired(rrtype), _1, _2),
                            boost::bind(renderDataField, &renderer, _1, _2));
@@ -460,17 +460,18 @@ public:
                        const isc::dns::RRType& rrtype,
                        size_t rdata_count, size_t sig_count, size_t,
                        const vector<uint8_t>& encoded_data,
+                       size_t encoded_data_len,
                        MessageRenderer& renderer)
     {
         vector<uint8_t> data;
         MessageRenderer* current;
-        RdataReader reader(rrclass, rrtype, encoded_data.size(),
-                           &encoded_data[0], rdata_count, sig_count,
+        RdataReader reader(rrclass, rrtype, &encoded_data[0],
+                           rdata_count, sig_count,
                            boost::bind(renderNameField, &renderer,
                                        additionalRequired(rrtype), _1, _2),
                            boost::bind(appendData, &data, &current, _1, _2));
         // The size matches
-        EXPECT_EQ(encoded_data.size(), reader.getSize());
+        EXPECT_EQ(encoded_data_len, reader.getSize());
         if (start_sig) {
             current = NULL;
             reader.nextSig();
@@ -496,7 +497,7 @@ public:
         renderer.writeName(dummy_name2);
         renderer.writeData(&data[0], data.size());
         // The size matches even after use
-        EXPECT_EQ(encoded_data.size(), reader.getSize());
+        EXPECT_EQ(encoded_data_len, reader.getSize());
     }
 };
 
@@ -566,10 +567,11 @@ checkEncode(RRClass rrclass, RRType rrtype,
     BOOST_FOREACH(const ConstRdataPtr& rdata, rrsig_list) {
         encoder_.addSIGRdata(*rdata);
     }
-    encodeWrapper(encoder_.getStorageLength());
+    const size_t storage_len = encoder_.getStorageLength();
+    encodeWrapper(storage_len);
 
     DecoderStyle::decode(rrclass, rrtype, rdata_list.size(), rrsig_list.size(),
-                         expected_varlen_fields, encoded_data_,
+                         expected_varlen_fields, encoded_data_, storage_len,
                          actual_renderer_);
 
     // Two sets of wire-format data should be identical.
