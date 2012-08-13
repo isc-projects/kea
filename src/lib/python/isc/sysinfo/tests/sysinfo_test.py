@@ -261,7 +261,7 @@ class SysInfoTest(unittest.TestCase):
         self.assertEqual(None, s.get_mem_buffers())
         self.assertEqual(None, s.get_mem_swap_total())
         self.assertEqual(None, s.get_mem_swap_free())
-        self.assertEqual('Unknown', s.get_platform_distro())
+        self.assertEqual(None, s.get_platform_distro())
         self.assertEqual('Unknown\n', s.get_net_interfaces())
         self.assertEqual('Unknown\n', s.get_net_routing_table())
         self.assertEqual('Unknown\n', s.get_net_stats())
@@ -290,7 +290,7 @@ class SysInfoTest(unittest.TestCase):
         self.assertEqual(None, s.get_mem_buffers())
         self.assertEqual(None, s.get_mem_swap_total())
         self.assertEqual(None, s.get_mem_swap_free())
-        self.assertEqual('Unknown', s.get_platform_distro())
+        self.assertEqual(None, s.get_platform_distro())
         self.assertEqual('Unknown\n', s.get_net_interfaces())
         self.assertEqual('Unknown\n', s.get_net_routing_table())
         self.assertEqual('Unknown\n', s.get_net_stats())
@@ -338,6 +338,7 @@ class SysInfoTest(unittest.TestCase):
         self.assertLess(abs(76632 - s.get_uptime()), 4)
         self.assertEqual(None, s.get_mem_cached())
         self.assertEqual(None, s.get_mem_buffers())
+        self.assertEqual(None, s.get_platform_distro())
 
         # These test that the corresponding tools are being called (and
         # no further processing is done on this data). Please see the
@@ -371,13 +372,6 @@ class SysInfoTest(unittest.TestCase):
         self.assertEqual(566791168, s.get_mem_swap_total())
         self.assertEqual(566789120, s.get_mem_swap_free())
 
-        # Try new regex assertion (which replaced the deprecated
-        # assertRegexpMatches. If it is not available, use the old one
-        try:
-            self.assertRegex(s.get_platform_distro(), '^OpenBSD\s+.*')
-        except AttributeError:
-            self.assertRegexpMatches(s.get_platform_distro(), '^OpenBSD\s+.*')
-
     def test_sysinfo_freebsd(self):
         """Tests the FreeBSD implementation of SysInfo. Note that this
         tests deep into the implementation, and not just the
@@ -401,12 +395,6 @@ class SysInfoTest(unittest.TestCase):
         self.assertEqual(543214321 - (343434 * 1024), s.get_mem_free())
         self.assertEqual(1037533184, s.get_mem_swap_total())
         self.assertEqual(1037533184, s.get_mem_swap_free())
-        # Try new regex assertion (which replaced the deprecated
-        # assertRegexpMatches. If it is not available, use the old one
-        try:
-            self.assertRegex(s.get_platform_distro(), '^FreeBSD\s+.*')
-        except AttributeError:
-            self.assertRegexpMatches(s.get_platform_distro(), '^FreeBSD\s+.*')
 
     def test_sysinfo_osx(self):
         """Tests the OS X implementation of SysInfo. Note that this
@@ -431,12 +419,6 @@ class SysInfoTest(unittest.TestCase):
         self.assertEqual((23456 * 4096), s.get_mem_free())
         self.assertEqual(18874368.0, s.get_mem_swap_total())
         self.assertEqual(1075988.48, s.get_mem_swap_free())
-        # Try new regex assertion (which replaced the deprecated
-        # assertRegexpMatches. If it is not available, use the old one
-        try:
-            self.assertRegex(s.get_platform_distro(), '^Darwin\s+.*')
-        except AttributeError:
-            self.assertRegexpMatches(s.get_platform_distro(), '^Darwin\s+.*')
 
 if __name__ == "__main__":
     unittest.main()
