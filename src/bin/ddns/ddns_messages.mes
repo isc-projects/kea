@@ -192,6 +192,25 @@ be completed, after which the process will exit.
 The ddns process has successfully started and is now ready to receive commands
 and updates.
 
+% DDNS_START_FORWARDER_ERROR Error from b10-auth when requesting DDNS UPDATE forwarding: %1
+There was an error response from b10-auth to the command to start
+forwarding DDNS UPDATE messages to b10-ddns.
+It is almost certain that DDNS UPDATE messages are not handled now, and that
+they will be responded to with a NOTIMP error code, even though b10-ddns is
+running.
+The error message is printed, and additional information may be found in
+the b10-auth log output. Since this is an error that is sent by the
+b10-auth module, it should have more information as to what the actual
+problem was.
+
+% DDNS_START_FORWARDER_FAIL Error sending request for DDNS UPDATE forwarding to b10-auth: %1
+There was an error when attempting to send b10-auth the request to forward
+DDNS UPDATE messages to the b10-ddns module. This points to an internal
+problem using the inter-module messaging system.
+This needs to be inspected, as it is almost certain that DDNS UPDATE messages
+are not handled now.
+The specific error is printed in the log message.
+
 % DDNS_STOPPED ddns server has stopped
 The ddns process has successfully stopped and is no longer listening for or
 handling commands or updates, and will now exit.
@@ -199,6 +218,24 @@ handling commands or updates, and will now exit.
 % DDNS_STOPPED_BY_KEYBOARD keyboard interrupt, shutting down
 There was a keyboard interrupt signal to stop the ddns process. The
 process will now shut down.
+
+% DDNS_STOP_FORWARDER_ERROR Error from b10-auth when requesting to stop DDNS UPDATE forwarding: %1
+There was an error response from b10-auth to the command to stop
+forwarding DDNS UPDATE messages to b10-ddns.
+This specific error may not be fatal; instead of returning NOTIMP for future
+DDNS UPDATE messages, it will return SERVFAIL. However, this does point to
+an underlying problem in the messaging system, and should be inspected.
+The error message is printed, and additional information may be found in
+the b10-auth log output.
+
+% DDNS_STOP_FORWARDER_FAIL Error sending request to stop DDNS UPDATE forwarding to b10-auth: %1
+There was an error when attempting to send b10-auth the request to stop
+forwarding DDNS UPDATE messages to the b10-ddns module. This points to an
+internal problem using the inter-module messaging system.
+This specific error may not be fatal; instead of returning NOTIMP for future
+DDNS UPDATE messages, it will return SERVFAIL. However, this does point to
+an underlying problem in the messaging system, and should be inspected.
+The specific error is printed in the log message.
 
 % DDNS_UNCAUGHT_EXCEPTION uncaught exception of type %1: %2
 The b10-ddns process encountered an uncaught exception and will now shut

@@ -18,6 +18,7 @@ EXTRA_DIST += shortquestion_fromWire
 EXTRA_DIST += shortresponse_fromWire
 EXTRA_DIST += simplequery_fromWire.spec
 EXTRA_DIST += simpleresponse_fromWire.spec
+EXTRA_DIST += spec.spec
 
 EXTRA_DIST += example.com
 EXTRA_DIST += example.sqlite3

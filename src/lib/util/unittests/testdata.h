@@ -16,8 +16,8 @@
 #define __UTIL_UNITTESTS_TESTDATA_H 1
 
 /**
- * @file testdata.h
- * @short Manipulating test data files.
+ * \file testdata.h
+ * \brief Manipulating test data files.
  *
  * This utility defines functions that help test case handle test data
  * stored in a file.

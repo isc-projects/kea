@@ -166,6 +166,9 @@ bug ticket for this issue.
 This is a debug message issued when the authoritative server has received
 a command on the command channel.
 
+% AUTH_RECEIVED_NOTIFY received incoming NOTIFY for zone name %1, zone class %2
+This is a debug message reporting that an incoming NOTIFY was received.
+
 % AUTH_RECEIVED_SENDSTATS command 'sendstats' received
 This is a debug message issued when the authoritative server has received
 a command from the statistics module to send it data. The 'sendstats'
@@ -232,6 +235,13 @@ This is a debug message indicating that the authoritative server has
 found that the data source it is loading is an SQLite3 data source,
 so no further validation is needed.
 
+% AUTH_START_DDNS_FORWARDER DDNS UPDATE handling started
+This is a debug message indicating that b10-auth has received a message
+that it should internally forward UPDATE message to b10-ddns. When b10-ddns
+is not running, b10-auth will respond to UPDATE requests with rcode NOTIMP.
+When b10-ddns is running, b10-ddns will handle and respond to the UPDATE
+message.
+
 % AUTH_STATS_CHANNEL_CREATED STATS session channel created
 This is a debug message indicating that the authoritative server has
 created a channel to the statistics process.  It is issued during server
@@ -262,6 +272,15 @@ being produced.
 This is a debug message indicating that the statistics timer has been
 enabled and that the authoritative server will produce statistics data
 at the specified interval.
+
+% AUTH_STOP_DDNS_FORWARDER DDNS UPDATE handling stopped
+This is a debug message indicating that b10-auth has received a message
+that it should stop internally forwarding UPDATE message to b10-ddns.
+b10-auth will no longer forward UPDATE messages to b10-ddns, but will
+respond itself with error code NOTIMP.
+This message is also logged when the forwarding is restarted (for instance
+if b10-ddns is restarted and the internal connection needs to be created
+again), in which case it should be followed by AUTH_START_DDNS_FORWARDER.
 
 % AUTH_UNSUPPORTED_OPCODE unsupported opcode: %1
 This is a debug message, produced when a received DNS packet being

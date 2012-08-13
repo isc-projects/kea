@@ -1,0 +1,106 @@
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+               "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
+	       [<!ENTITY mdash "&#8212;">]>
+<!--
+ - Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+ -
+ - Permission to use, copy, modify, and/or distribute this software for any
+ - purpose with or without fee is hereby granted, provided that the above
+ - copyright notice and this permission notice appear in all copies.
+ -
+ - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ - AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ - LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ - PERFORMANCE OF THIS SOFTWARE.
+-->
+
+<refentry>
+
+  <refentryinfo>
+    <date>June 26, 2012</date>
+  </refentryinfo>
+
+  <refmeta>
+    <refentrytitle>isc-sysinfo</refentrytitle>
+    <manvolnum>1</manvolnum>
+    <refmiscinfo>BIND10</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>isc-sysinfo</refname>
+    <refpurpose>BIND 10 system information display tool</refpurpose>
+  </refnamediv>
+
+  <docinfo>
+    <copyright>
+      <year>2012</year>
+      <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
+    </copyright>
+  </docinfo>
+
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>isc-sysinfo</command>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>DESCRIPTION</title>
+    <para>
+      The <command>isc-sysinfo</command> program collects and outputs a
+      variety of information about the system that BIND 10 is running
+      on. This information can be useful to people involved in debugging
+      and technical support.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>ARGUMENTS</title>
+
+    <variablelist>
+
+      <varlistentry>
+        <term>-h</term>
+        <listitem><para>
+          Displays usage instructions.
+        </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-o <replaceable class="parameter">output-file</replaceable></term>
+        <listitem><para>
+          If an output file is specified, the output
+          of <command>isc-sysinfo</command> is written to this file. By
+          default, the output is written to standard output.
+        </para></listitem>
+      </varlistentry>
+
+    </variablelist>
+
+  </refsect1>
+
+  <refsect1>
+    <title>SEE ALSO</title>
+    <para>
+      <citerefentry>
+        <refentrytitle>bind10</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citetitle>BIND 10 Guide</citetitle>.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>HISTORY</title>
+    <para>
+      The <command>isc-sysinfo</command> daemon was initially
+      implemented by ISC staff in June, 2012.
+    </para>
+  </refsect1>
+</refentry><!--
+ - Local variables:
+ - mode: sgml
+ - End:
+-->

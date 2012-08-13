@@ -450,7 +450,7 @@ private:
     // NOTE: client_fd could leak on exception.  This should be cleaned up.
     // See the note about SocketSessionReceiver in socket_request.cc.
     void
-    serve(const std::vector<std::pair<std::string, int> > data) {
+    serve(const std::vector<std::pair<std::string, int> >& data) {
         const int client_fd = accept(fd_, NULL, NULL);
         if (client_fd == -1) {
             isc_throw(Unexpected, "Error in accept(): " << strerror(errno));

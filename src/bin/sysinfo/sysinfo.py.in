@@ -1,0 +1,127 @@
+#!@PYTHON@
+
+# Copyright (C) 2012  Internet Systems Consortium.
+#
+# Permission to use, copy, modify, and distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SYSTEMS CONSORTIUM
+# DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+# INTERNET SYSTEMS CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+# FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+# NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+# WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+"""
+ISC sysinfo program.
+
+"""
+
+import sys; sys.path.append ('@@PYTHONPATH@@')
+import getopt
+import isc.util.process
+from isc.sysinfo import *
+
+isc.util.process.rename()
+
+def usage():
+    print("Usage: %s [-h] [-o <output-file>]" % sys.argv[0], \
+              file=sys.stderr)
+    exit(1)
+
+def main():
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "o:h", \
+                                       ["output", "help"])
+    except getopt.GetoptError as e:
+        print(str(e))
+        usage()
+        exit(1)
+
+    output_filename = None
+    for option, arg in opts:
+        if option in ("-o", "--output"):
+            output_filename = arg
+        elif option in ("-h", "--help"):
+            usage()
+        else:
+            assert False, "unhandled option"
+
+    if output_filename is None:
+        f = sys.stdout
+    else:
+        f = open(output_filename, 'w')
+
+    s = SysInfoFromFactory()
+
+    f.write('BIND 10 ShowTech tool\n')
+    f.write('=====================\n')
+
+    f.write('\nCPU\n');
+    f.write(' + Number of processors: %d\n' % (s.get_num_processors()))
+    f.write(' + Endianness: %s\n' % (s.get_endianness()))
+
+    f.write('\nPlatform\n');
+    f.write(' + Operating system: %s\n' % (s.get_platform_name()))
+    f.write(' + Distribution: %s\n' % (s.get_platform_distro()))
+    f.write(' + Kernel version: %s\n' % (s.get_platform_version()))
+
+    f.write(' + SMP kernel: ')
+    if s.get_platform_is_smp():
+        f.write('yes')
+    else:
+        f.write('no')
+    f.write('\n')
+
+    f.write(' + Machine name: %s\n' % (s.get_platform_machine()))
+    f.write(' + Hostname: %s\n' % (s.get_platform_hostname()))
+    f.write(' + Uptime: %d seconds\n' % (s.get_uptime()))
+
+    l = s.get_loadavg()
+    f.write(' + Loadavg: %f %f %f\n' % (l[0], l[1], l[2]))
+
+    f.write('\nMemory\n');
+    f.write(' + Total: %d bytes\n' % (s.get_mem_total()))
+    f.write(' + Free: %d bytes\n' % (s.get_mem_free()))
+    f.write(' + Cached: %d bytes\n' % (s.get_mem_cached()))
+    f.write(' + Buffers: %d bytes\n' % (s.get_mem_buffers()))
+    f.write(' + Swap total: %d bytes\n' % (s.get_mem_swap_total()))
+    f.write(' + Swap free: %d bytes\n' % (s.get_mem_swap_free()))
+
+    f.write('\n\nNetwork\n');
+    f.write('-------\n\n');
+
+    f.write('Interfaces\n')
+    f.write('~~~~~~~~~~\n\n')
+
+    f.write(s.get_net_interfaces())
+
+    f.write('\nRouting table\n')
+    f.write('~~~~~~~~~~~~~\n\n')
+    f.write(s.get_net_routing_table())
+
+    f.write('\nStatistics\n')
+    f.write('~~~~~~~~~~\n\n')
+    f.write(s.get_net_stats())
+
+    f.write('\nConnections\n')
+    f.write('~~~~~~~~~~~\n\n')
+    f.write(s.get_net_connections())
+
+    try:
+        if os.getuid() != 0:
+            sys.stderr.write('\n')
+            sys.stderr.write('NOTE: You have to run this program as the root user so that it can\n')
+            sys.stderr.write('      collect all the information it requires. Some information is\n')
+            sys.stderr.write('      only available to the root user.\n\n')
+    except Exception:
+        pass
+
+    if f != sys.stdout:
+        f.close()
+
+if __name__ == '__main__':
+    main()

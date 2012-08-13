@@ -49,6 +49,7 @@ PyObject* RRType_str(PyObject* self);
 PyObject* RRType_toWire(s_RRType* self, PyObject* args);
 PyObject* RRType_getCode(s_RRType* self);
 PyObject* RRType_richcmp(s_RRType* self, s_RRType* other, int op);
+Py_hash_t RRType_hash(PyObject* pyself);
 PyObject* RRType_NSEC3PARAM(s_RRType *self);
 PyObject* RRType_DNAME(s_RRType *self);
 PyObject* RRType_PTR(s_RRType *self);
@@ -368,6 +369,11 @@ RRType_ANY(s_RRType*) {
     return (RRType_createStatic(RRType::ANY()));
 }
 
+Py_hash_t
+RRType_hash(PyObject* pyself) {
+    const s_RRType* const self = static_cast<s_RRType*>(pyself);
+    return (convertToPyHash<uint16_t>(self->cppobj->getCode()));
+}
 } // end anonymous namespace
 
 namespace isc {
@@ -394,7 +400,7 @@ PyTypeObject rrtype_type = {
     NULL,                               // tp_as_number
     NULL,                               // tp_as_sequence
     NULL,                               // tp_as_mapping
-    NULL,                               // tp_hash
+    RRType_hash,                        // tp_hash
     NULL,                               // tp_call
     RRType_str,                         // tp_str
     NULL,                               // tp_getattro

@@ -26,18 +26,18 @@ Feature: In-memory zone using SQLite3 backend
         And wait for bind10 stderr message XFRIN_STARTED
         And wait for bind10 stderr message ZONEMGR_STARTED
 
-        A query for www.example.org should have rcode NOERROR
+        A query for www.example.org to [::1]:47806 should have rcode NOERROR
         """
         www.example.org.        3600    IN      A       192.0.2.63
         """
-        A query for mail.example.org should have rcode NXDOMAIN
+        A query for mail.example.org to [::1]:47806 should have rcode NXDOMAIN
         When I send bind10 the command Xfrin retransfer example.org IN ::1 47807
         Then wait for new bind10 stderr message XFRIN_TRANSFER_SUCCESS not XFRIN_XFR_PROCESS_FAILURE
         Then wait for new bind10 stderr message AUTH_LOAD_ZONE
 
-        A query for www.example.org should have rcode NOERROR
+        A query for www.example.org to [::1]:47807 should have rcode NOERROR
         The answer section of the last query response should be
         """
         www.example.org.        3600    IN      A       192.0.2.1
         """
-        A query for mail.example.org should have rcode NOERROR
+        A query for mail.example.org to [::1]:47806 should have rcode NOERROR

@@ -1,4 +1,0 @@
-- In some configuration we intentionally use an IPv6 address (::1) with
-  port 47807.  DO NOT CHANGE THAT; at least do not change it to
-  127.0.0.1:47807.  See git e3f4b290d17a68db728166cdffcbe93517966e8b
-  for why.

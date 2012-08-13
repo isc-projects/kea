@@ -34,9 +34,9 @@ Filename::split(const string& full_name, string& directory,
     string& name, string& extension) const
 {
     directory = name = extension = "";
-    bool dir_present = false;
     if (!full_name.empty()) {
 
+        bool dir_present = false;
         // Find the directory.
         size_t last_slash = full_name.find_last_of('/');
         if (last_slash != string::npos) {

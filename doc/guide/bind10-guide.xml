@@ -36,8 +36,8 @@
     <abstract>
       <para>BIND 10 is a framework that features Domain Name System
       (DNS) suite and Dynamic Host Configuration Protocol (DHCP)
-      servers managed by Internet Systems Consortium (ISC). It
-      includes DNS libraries, modular components for controlling
+      servers with development managed by Internet Systems Consortium (ISC).
+      It includes DNS libraries, modular components for controlling
       authoritative and recursive DNS servers, and experimental DHCPv4
       and DHCPv6 servers.
       </para>
@@ -59,6 +59,8 @@
     <section id="acknowledgements">
       <title>Acknowledgements</title>
 
+<!-- TODO: acknowledge all sponsors and CNNIC and CZNIC too -->
+
       <para>ISC would like to acknowledge generous support for
       BIND 10 development of DHCPv4 and DHCPv6 components provided
       by <ulink url="http://www.comcast.com/">Comcast</ulink>.</para>
@@ -72,11 +74,13 @@
     <para>
       BIND is the popular implementation of a DNS server, developer
       interfaces, and DNS tools.
-      BIND 10 is a rewrite of BIND 9.  BIND 10 is written in C++ and Python
-      and provides a modular environment for serving and maintaining DNS.
+      BIND 10 is a rewrite of BIND 9 and ISC DHCP.
+      BIND 10 is written in C++ and Python and provides a modular
+      environment for serving, maintaining, and developing DNS and DHCP.
       BIND 10 provides a EDNS0- and DNSSEC-capable authoritative
       DNS server and a caching recursive name server which also
       provides forwarding.
+      It also provides experimental DHCPv4 and DHCPv6 servers.
     </para>
 
     <para>
@@ -88,7 +92,7 @@
       <title>Supported Platforms</title>
       <para>
   BIND 10 builds have been tested on (in no particular order)
-  Debian GNU/Linux 5 and unstable, Ubuntu 9.10, NetBSD 5,
+  Debian GNU/Linux 6 and unstable, Ubuntu 9.10, NetBSD 5,
   Solaris 10 and 11, FreeBSD 7 and 8, CentOS Linux 5.3,
   MacOS 10.6 and 10.7, and OpenBSD 5.1.
 
@@ -101,11 +105,21 @@
     </section>
 
     <section id="required-software">
-      <title>Required Software</title>
+      <title>Required Software at Run-time</title>
+
+      <para>
+        Running BIND 10 uses various extra software which may
+        not be provided in some operating systems' default
+        installations nor standard packages collections. You may
+        need to install this required software separately.
+        (For the build requirements, also see
+        <xref linkend="build-requirements"/>.)
+      </para>
+
       <para>
         BIND 10 requires at least Python 3.1
         (<ulink url="http://www.python.org/"/>).
-        It has also been tested with Python 3.2.
+        It also works with Python 3.2.
       </para>
 
       <para>
@@ -118,6 +132,7 @@
         BIND 10 uses the log4cplus C++ logging library
         (<ulink url="http://log4cplus.sourceforge.net/"/>).
         It requires at least log4cplus version 1.0.3.
+<!-- TODO: It is recommended to use at least version .... -->
       </para>
 
       <para>
@@ -132,20 +147,9 @@
         <command>b10-xfrout</command>, and <command>b10-zonemgr</command>
         components require the libpython3 library and the Python
         _sqlite3.so module (which is included with Python).
-        The <command>b10-stats-httpd</command> component uses the
-        Python pyexpat.so module.
-        The Python modules need to be built for the corresponding Python 3.
+        Python modules need to be built for the corresponding Python 3.
       </para>
 <!-- TODO: this will change ... -->
-
-      <note>
-        <para>
-          Some operating systems do not provide these dependencies
-          in their default installation nor standard packages
-          collections.
-          You may need to install them separately.
-        </para>
-      </note>
     </section>
 
     <section id="starting_stopping">
@@ -220,8 +224,8 @@
             <simpara>
               <command>b10-resolver</command> &mdash;
               Recursive name server.
-              This process handles incoming queries.
-<!-- TODO: -->
+              This process handles incoming DNS queries and provides
+              answers from its cache or by recursively doing remote lookups.
             </simpara>
           </listitem>
 
@@ -264,15 +268,14 @@
               <command>b10-xfrout</command> &mdash;
               Outgoing zone transfer service.
               This process is used to handle transfer requests to
-              send a local zone to a remote secondary server,
-              when acting as a master server.
+              send a local zone to a remote secondary server.
             </simpara>
           </listitem>
 
           <listitem>
             <simpara>
               <command>b10-zonemgr</command> &mdash;
-              Secondary manager.
+              Secondary zone manager.
               This process keeps track of timers and other
               necessary information for BIND 10 to act as a slave server.
             </simpara>
@@ -282,8 +285,8 @@
       </para>
 
       <para>
-        These are ran automatically by <command>bind10</command>
-        and do not need to be run manually.
+        These are ran by <command>bind10</command>
+        and do not need to be manually started independently.
       </para>
 
     </section>
@@ -298,7 +301,7 @@
           <listitem>
             <simpara>
               <command>bindctl</command> &mdash;
-              interactive administration interface.
+              Interactive administration interface.
               This is a low-level command-line tool which allows
               a developer or an experienced administrator to control
               BIND 10.
@@ -307,7 +310,7 @@
           <listitem>
             <simpara>
               <command>b10-loadzone</command> &mdash;
-              zone file loader.
+              Zone file loader.
               This tool will load standard masterfile-format zone files into
               BIND 10.
             </simpara>
@@ -315,7 +318,7 @@
           <listitem>
             <simpara>
               <command>b10-cmdctl-usermgr</command> &mdash;
-              user access control.
+              User access control.
               This tool allows an administrator to authorize additional users
               to manage BIND 10.
             </simpara>
@@ -358,6 +361,7 @@ var/
       for C++ and Python for the message bus, configuration backend,
       and, of course, DNS. These include detailed developer
       documentation and code examples.
+<!-- TODO: DHCP also but no Python yet. -->
 <!-- TODO point to this -->
     </para>
 
@@ -366,12 +370,100 @@ var/
   <chapter id="installation">
     <title>Installation</title>
 
+    <section id="packages">
+      <title>Packages</title>
+
+      <para>
+        Some operating systems or softare package vendors may
+        provide ready-to-use, pre-built software packages for
+        the BIND 10 suite.
+        Installing a pre-built package means you do not need to
+        install build-only prerequisites and do not need to
+        <emphasis>make</emphasis> the software.
+      </para>
+
+      <para>
+        FreeBSD ports, NetBSD pkgsrc, and Debian
+        <emphasis>testing</emphasis> package collections provide
+        all the prerequisite packages.
+      </para>
+    </section>
+
+    <section id="install-hierarchy">
+      <title>Install Hierarchy</title>
+      <para>
+        The following is the standard, common layout of the
+        complete BIND 10 installation:
+        <itemizedlist>
+          <listitem>
+           <simpara>
+              <filename>bin/</filename> &mdash;
+              general tools and diagnostic clients.
+            </simpara>
+          </listitem>
+          <listitem>
+          <simpara>
+            <filename>etc/bind10-devel/</filename> &mdash;
+            configuration files.
+          </simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+              <filename>lib/</filename> &mdash;
+              libraries and python modules.
+            </simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+              <filename>libexec/bind10-devel/</filename> &mdash;
+              executables that a user wouldn't normally run directly and
+              are not run independently.
+              These are the BIND 10 modules which are daemons started by
+              the <command>bind10</command> tool.
+            </simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+              <filename>sbin/</filename> &mdash;
+              commands used by the system administrator.
+            </simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+              <filename>share/bind10-devel/</filename> &mdash;
+              configuration specifications.
+            </simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+              <filename>share/doc/bind10-devel/</filename> &mdash;
+              this guide and other supplementary documentation.
+            </simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+              <filename>share/man/</filename> &mdash;
+              manual pages (online documentation).
+            </simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+              <filename>var/bind10-devel/</filename> &mdash;
+              data source and configuration databases.
+            </simpara>
+          </listitem>
+        </itemizedlist>
+      </para>
+    </section>
+
     <section id="build-requirements">
       <title>Building Requirements</title>
 
         <para>
-          In addition to the run-time requirements, building BIND 10
-          from source code requires various development include headers.
+          In addition to the run-time requirements (listed in
+          <xref linkend="required-software"/>), building BIND 10
+          from source code requires various development include headers and
+          program development tools.
         </para>
 
         <note>
@@ -415,7 +507,7 @@ as a dependency earlier -->
         </para>
 
         <para>
-          Visit the wiki at <ulink
+          Visit the user-contributed wiki at <ulink
           url="http://bind10.isc.org/wiki/SystemSpecificNotes" />
           for system-specific installation tips.
         </para>
@@ -484,7 +576,7 @@ as a dependency earlier -->
         </listitem>
 
         <listitem>
-
+<!-- TODO: this is wrong; b10-auth is not started by default any more -->
          <para>Test it; for example:
             <screen>$ <userinput>dig @127.0.0.1 -c CH -t TXT authors.bind</userinput></screen>
          </para>
@@ -510,10 +602,10 @@ as a dependency earlier -->
       <title>Installation from source</title>
       <para>
         BIND 10 is open source software written in C++ and Python.
-        It is freely available in source code form from ISC via
-        the Git code revision control system or as a downloadable
-        tar file. It may also be available in pre-compiled ready-to-use
-        packages from operating system vendors.
+        It is freely available in source code form from ISC as a
+        downloadable tar file or via BIND 10's Git code revision control
+        service. (It may also be available in pre-compiled ready-to-use
+        packages from operating system vendors.)
       </para>
 
       <section>
@@ -541,7 +633,7 @@ as a dependency earlier -->
 
         <note>
           <para>
-            When using source code retrieved via Git additional
+            When using source code retrieved via Git, additional
             software will be required:  automake (v1.11 or newer),
             libtoolize, and autoconf (2.59 or newer).
             These may need to be installed.
@@ -549,11 +641,12 @@ as a dependency earlier -->
         </note>
 
         <para>
-          The latest development code, including temporary experiments
-          and un-reviewed code, is available via the BIND 10 code revision
+          The latest development code (and temporary experiments
+          and un-reviewed code) is available via the BIND 10 code revision
           control system. This is powered by Git and all the BIND 10
           development is public.
-          The leading development is done in the <quote>master</quote>.
+          The leading development is done in the <quote>master</quote>
+          branch.
         </para>
         <para>
           The code can be checked out from
@@ -566,8 +659,8 @@ as a dependency earlier -->
         <para>
           When checking out the code from
           the code version control system, it doesn't include the
-          generated configure script, Makefile.in files, nor the
-          related configure files.
+          generated configure script, Makefile.in files, nor their
+          related build files.
           They can be created by running <command>autoreconf</command>
           with the <option>--install</option> switch.
           This will run <command>autoconf</command>,
@@ -591,7 +684,7 @@ as a dependency earlier -->
         </para>
         <para>
           Run <command>./configure</command> with the <option>--help</option>
-          switch to view the different options. The commonly-used options are:
+          switch to view the different options. Some commonly-used options are:
 
           <variablelist>
 
@@ -679,65 +772,6 @@ as a dependency earlier -->
 
   <!-- TODO: tests -->
 
-      <section>
-        <title>Install Hierarchy</title>
-        <para>
-          The following is the layout of the complete BIND 10 installation:
-          <itemizedlist>
-            <listitem>
-              <simpara>
-                <filename>bin/</filename> &mdash;
-                general tools and diagnostic clients.
-              </simpara>
-            </listitem>
-            <listitem>
-            <simpara>
-              <filename>etc/bind10-devel/</filename> &mdash;
-              configuration files.
-            </simpara>
-            </listitem>
-            <listitem>
-              <simpara>
-                <filename>lib/</filename> &mdash;
-                libraries and python modules.
-              </simpara>
-            </listitem>
-            <listitem>
-              <simpara>
-                <filename>libexec/bind10-devel/</filename> &mdash;
-                executables that a user wouldn't normally run directly and
-                are not run independently.
-                These are the BIND 10 modules which are daemons started by
-                the <command>bind10</command> tool.
-              </simpara>
-            </listitem>
-            <listitem>
-              <simpara>
-                <filename>sbin/</filename> &mdash;
-                commands used by the system administrator.
-              </simpara>
-            </listitem>
-            <listitem>
-              <simpara>
-                <filename>share/bind10-devel/</filename> &mdash;
-                configuration specifications.
-              </simpara>
-            </listitem>
-            <listitem>
-              <simpara>
-                <filename>share/man/</filename> &mdash;
-                manual pages (online documentation).
-              </simpara>
-            </listitem>
-            <listitem>
-              <simpara>
-                <filename>var/bind10-devel/</filename> &mdash;
-                data source and configuration databases.
-              </simpara>
-            </listitem>
-          </itemizedlist>
-        </para>
-      </section>
     </section>
 
   <!--
@@ -775,8 +809,9 @@ as a dependency earlier -->
       The <command>b10-cfgmgr</command> daemon is always needed by every
       module, if only to send information about themselves somewhere,
       but more importantly to ask about their own settings, and
-      about other modules. The <command>b10-sockcreator</command> will
-      allocate sockets for the rest of the system.
+      about other modules. The <command>b10-sockcreator</command> daemon
+      helps allocate Internet addresses and ports as needed for BIND 10
+      network services.
     </para>
 
     <para>
@@ -807,23 +842,22 @@ as a dependency earlier -->
 
     </section>
     <section id="bind10.config">
-      <title>Configuration of started processes</title>
+      <title>Configuration to start processes</title>
+
       <para>
-        The processes to be started can be configured, with the exception
-        of the <command>b10-sockcreator</command>, <command>b10-msgq</command>
-        and <command>b10-cfgmgr</command>.
+	The processes to be used can be configured for
+	<command>bind10</command> to start, with the exception
+	of the required <command>b10-sockcreator</command>,
+	<command>b10-msgq</command> and <command>b10-cfgmgr</command>
+	components.
+	The configuration is in the <varname>Boss/components</varname>
+	section. Each element represents one component, which is
+	an abstraction of a process.
       </para>
 
       <para>
-        The configuration is in the Boss/components section. Each element
-        represents one component, which is an abstraction of a process
-        (currently there's also one component which doesn't represent
-        a process).
-      </para>
-
-      <para>
-        To add a process to the set, let's say the resolver (which not started
-        by default), you would do this:
+	To add a process to the set, let's say the resolver (which
+	is not started by default), you would do this:
         <screen>&gt; <userinput>config add Boss/components b10-resolver</userinput>
 &gt; <userinput>config set Boss/components/b10-resolver/special resolver</userinput>
 &gt; <userinput>config set Boss/components/b10-resolver/kind needed</userinput>
@@ -831,27 +865,32 @@ as a dependency earlier -->
 &gt; <userinput>config commit</userinput></screen></para>
 
       <para>
-        Now, what it means. We add an entry called b10-resolver. It is both a
-        name used to reference this component in the configuration and the
-        name of the process to start. Then we set some parameters on how to
-        start it.
+	Now, what it means. We add an entry called
+	<quote>b10-resolver</quote>. It is both a name used to
+	reference this component in the configuration and the name
+	of the process to start. Then we set some parameters on
+	how to start it.
       </para>
 
       <para>
-        The special one is for components that need some kind of special care
-        during startup or shutdown. Unless specified, the component is started
-        in usual way. This is the list of components that need to be started
-        in a special way, with the value of special used for them:
+	The <varname>special</varname> setting is for components
+	that need some kind of special care during startup or
+	shutdown. Unless specified, the component is started in a
+	usual way. This is the list of components that need to be
+	started in a special way, with the value of special used
+	for them:
+<!-- TODO: this still doesn't explain why they are special -->
         <table>
+          <title>Special startup components</title>
           <tgroup cols='3' align='left'>
           <colspec colname='component'/>
           <colspec colname='special'/>
           <colspec colname='description'/>
           <thead><row><entry>Component</entry><entry>Special</entry><entry>Description</entry></row></thead>
           <tbody>
-            <row><entry>b10-auth</entry><entry>auth</entry><entry>Authoritative server</entry></row>
-            <row><entry>b10-resolver</entry><entry>resolver</entry><entry>The resolver</entry></row>
-            <row><entry>b10-cmdctl</entry><entry>cmdctl</entry><entry>The command control (remote control interface)</entry></row>
+            <row><entry>b10-auth</entry><entry>auth</entry><entry>Authoritative DNS server</entry></row>
+            <row><entry>b10-resolver</entry><entry>resolver</entry><entry>DNS resolver</entry></row>
+            <row><entry>b10-cmdctl</entry><entry>cmdctl</entry><entry>Command control (remote control interface)</entry></row>
             <!-- TODO Either add xfrin and xfrout as well or clean up the workarounds in boss before the release -->
           </tbody>
           </tgroup>
@@ -859,32 +898,34 @@ as a dependency earlier -->
       </para>
 
       <para>
-        The kind specifies how a failure of the component should
-        be handled.  If it is set to <quote>dispensable</quote>
-        (the default unless you set something else), it will get
-        started again if it fails. If it is set to <quote>needed</quote>
-        and it fails at startup, the whole <command>bind10</command>
-        shuts down and exits with error exit code. But if it fails
-        some time later, it is just started again. If you set it
-        to <quote>core</quote>, you indicate that the system is
-        not usable without the component and if such component
-        fails, the system shuts down no matter when the failure
-        happened.  This is the behaviour of the core components
-        (the ones you can't turn off), but you can declare any
-        other components as core as well if you wish (but you can
-        turn these off, they just can't fail).
+	The <varname>kind</varname> specifies how a failure of the
+	component should be handled.  If it is set to
+	<quote>dispensable</quote> (the default unless you set
+	something else), it will get started again if it fails. If
+	it is set to <quote>needed</quote> and it fails at startup,
+	the whole <command>bind10</command> shuts down and exits
+	with an error exit code. But if it fails some time later, it
+	is just started again. If you set it to <quote>core</quote>,
+	you indicate that the system is not usable without the
+	component and if such component fails, the system shuts
+	down no matter when the failure happened.  This is the
+	behaviour of the core components (the ones you can't turn
+	off), but you can declare any other components as core as
+	well if you wish (but you can turn these off, they just
+	can't fail).
       </para>
 
       <para>
-        The priority defines order in which the components should start.
-        The ones with higher number are started sooner than the ones with
-        lower ones. If you don't set it, 0 (zero) is used as the priority.
-        Usually, leaving it at the default is enough.
+	The <varname>priority</varname> defines order in which the
+	components should start.  The ones with higher numbers are
+	started sooner than the ones with lower ones. If you don't
+	set it, 0 (zero) is used as the priority.  Usually, leaving
+	it at the default is enough.
       </para>
 
       <para>
         There are other parameters we didn't use in our example.
-        One of them is <quote>address</quote>. It is the address
+        One of them is <varname>address</varname>. It is the address
         used by the component on the <command>b10-msgq</command>
         message bus. The special components already know their
         address, but the usual ones don't. The address is by
@@ -900,22 +941,14 @@ address, but the usual ones don't." mean? -->
 <!-- TODO: document params when is enabled -->
 
       <para>
-        The last one is process. It is the name of the process to be started.
-        It defaults to the name of the component if not set, but you can use
-        this to override it.
+	The last one is <varname>process</varname>. It is the name
+	of the process to be started.  It defaults to the name of
+	the component if not set, but you can use this to override
+	it. (The special components also already know their
+        executable name.)
       </para>
 
       <!-- TODO Add parameters when they work, not implemented yet-->
-
-      <note>
-        <para>
-          This system allows you to start the same component multiple times
-          (by including it in the configuration with different names, but the
-          same process setting). However, the rest of the system doesn't expect
-          such a situation, so it would probably not do what you want. Such
-          support is yet to be implemented.
-        </para>
-      </note>
 
       <note>
         <para>
@@ -938,7 +971,7 @@ address, but the usual ones don't." mean? -->
       </note>
       <para>
         It is possible to start some components multiple times (currently
-        <command>b10-auth</command> and <command>b10-resolzer</command>).
+        <command>b10-auth</command> and <command>b10-resolver</command>).
         You might want to do that to gain more performance (each one uses only
         single core). Just put multiple entries under different names, like
         this, with the same config:
@@ -953,6 +986,9 @@ address, but the usual ones don't." mean? -->
         server will keep its own copy of in-memory data and there could be
         problems with locking the sqlite database, if used. The configuration
         might be changed to something more convenient in future.
+	Other components don't expect such a situation, so it would
+	probably not do what you want. Such support is yet to be
+	implemented.
       </para>
     </section>
 
@@ -977,22 +1013,10 @@ address, but the usual ones don't." mean? -->
       <para>
         Administrators do not communicate directly with the
         <command>b10-msgq</command> daemon.
-        By default, BIND 10 uses port 9912 for the
-        <command>b10-msgq</command> service.
-        It listens on 127.0.0.1.
+        By default, BIND 10 uses a UNIX domain socket file named
+        <filename>/usr/local/var/bind10-devel/msg_socket</filename>
+        for this interprocess communication.
       </para>
-
-<!-- TODO: this is broken, see Trac #111
-      <para>
-        To select an alternate port for the <command>b10-msgq</command> to
-        use, run <command>bind10</command> specifying the option:
-        <screen> $ <userinput>bind10 -TODO-msgq-port 9912</userinput></screen>
-      </para>
--->
-
-<!-- TODO: upcoming plans:
-Unix domain sockets
--->
 
   </chapter>
 
@@ -1035,9 +1059,6 @@ Unix domain sockets
         specifications and all current settings to the
         <command>bindctl</command> client (via
         <command>b10-cmdctl</command>).
-      </para>
-
-      <para>
         <command>b10-cfgmgr</command> relays configurations received
         from <command>b10-cmdctl</command> to the appropriate modules.
       </para>
@@ -1056,7 +1077,7 @@ config changes are actually commands to cfgmgr
       <para>
         The stored configuration file is at
         <filename>/usr/local/var/bind10-devel/b10-config.db</filename>.
-        (The full path is what was defined at build configure time for
+        (The directory is what was defined at build configure time for
         <option>--localstatedir</option>.
         The default is <filename>/usr/local/var/</filename>.)
         The format is loosely based on JSON and is directly parseable
@@ -1174,7 +1195,7 @@ but you might wanna check with likun
 
 <!-- TODO
 openssl req -new -x509 -keyout server.pem -out server.pem -days 365 -nodes
-but that is a single file, maybethis should go back to that format?
+but that is a single file, maybe this should go back to that format?
 -->
 
 <!--
@@ -1222,26 +1243,23 @@ or accounts database -->
       <title>Configuration specification for b10-cmdctl</title>
       <para>
         The configuration items for <command>b10-cmdctl</command> are:
-key_file
-cert_file
-accounts_file
+        <varname>accounts_file</varname> which defines the path to the
+        user accounts database (the default is
+        <filename>/usr/local/etc/bind10-devel/cmdctl-accounts.csv</filename>);
+        <varname>cert_file</varname> which defines the path to the
+        PEM certificate file (the default is
+        <filename>/usr/local/etc/bind10-devel/cmdctl-certfile.pem</filename>);
+        and
+	<varname>key_file</varname> which defines the path to the
+	PEM private key file (the default is
+        <filename>/usr/local/etc/bind10-devel/cmdctl-keyfile.pem</filename>).
       </para>
-<!-- TODO -->
 
-      <para>
-        The control commands are:
-print_settings
-<!-- TODO: remove that -->
-
-shutdown
-      </para>
-<!-- TODO -->
     </section>
 
 <!--
 TODO
 (12:21:30) jinmei: I'd like to have sample session using a command line www client such as wget
-(12:21:33) jinmei: btw
 -->
 
   </chapter>
@@ -1289,7 +1307,8 @@ TODO
 
     <para>
       The <command>b10-auth</command> is the authoritative DNS server.
-      It supports EDNS0 and DNSSEC. It supports IPv6.
+      It supports EDNS0, DNSSEC, IPv6, and SQLite3 and in-memory zone
+      data backends.
       Normally it is started by the <command>bind10</command> master
       process.
     </para>
@@ -1314,8 +1333,8 @@ since we used bind10 -->
               <simpara>This is an optional string to define the path to find
                  the SQLite3 database file.
 <!-- TODO: -->
-Note: Later the DNS server will use various data source backends.
-This may be a temporary setting until then.
+Note: This may be a temporary setting because the DNS server
+can use various data source backends.
               </simpara>
             </listitem>
           </varlistentry>
@@ -1336,7 +1355,9 @@ This may be a temporary setting until then.
       and
       <varname>zones</varname> to define
       the <varname>file</varname> path name,
-      the <varname>filetype</varname> (e.g., <varname>sqlite3</varname>),
+      the <varname>filetype</varname> (<quote>sqlite3</quote> to load
+      from a SQLite3 database file or <quote>text</quote> to
+      load from a master text file),
       and the <varname>origin</varname> (default domain).
 
       By default, this is empty.
@@ -1464,133 +1485,153 @@ This may be a temporary setting until then.
 
     </section>
 
-    <section>
+    <section id='datasrc'>
       <title>Data Source Backends</title>
 
+      <para>
+        Bind 10 has the concept of data sources. A data source is a place
+        where authoritative zone data reside and where they can be served
+        from. This can be a master file, a database or something completely
+        different.
+      </para>
+
+      <para>
+        Once a query arrives, <command>b10-auth</command> goes through a
+        configured list of data sources and finds the one containing a best
+        matching zone. From the equally good ones, the first one is taken.
+        This data source is then used to answer the query.
+      </para>
+
       <note><para>
-        For the development prototype release, <command>b10-auth</command>
-        supports a SQLite3 data source backend and in-memory data source
-        backend.
+        In the development prototype release, <command>b10-auth</command>
+        can serve data from a SQLite3 data source backend and from master
+        files.
         Upcoming versions will be able to use multiple different
         data sources, such as MySQL and Berkeley DB.
       </para></note>
 
-
       <para>
-        By default, the SQLite3 backend uses the data file located at
+        The configuration is located in data_sources/classes. Each item there
+        represents one RR class and a list used to answer queries for that
+        class. The default contains two classes. The CH class contains a static
+        data source &mdash; one that serves things like
+        <quote>AUTHORS.BIND.</quote>. The IN class contains single SQLite3
+        data source with database file located at
         <filename>/usr/local/var/bind10-devel/zone.sqlite3</filename>.
-        (The full path is what was defined at build configure time for
-        <option>--localstatedir</option>.
-        The default is <filename>/usr/local/var/</filename>.)
-	This data file location may be changed by defining the
-	<quote>database_file</quote> configuration.
       </para>
 
-      <section id="in-memory-datasource">
-	<title>In-memory Data Source</title>
+      <para>
+        Each data source has several options. The first one is
+        <varname>type</varname>, which specifies the type of data source to
+        use. Valid types include the ones listed below, but bind10 uses
+        dynamically loaded modules for them, so there may be more in your
+        case. This option is mandatory.
+      </para>
 
-	<para>
-<!--	  How to configure it. -->
-	  The following commands to <command>bindctl</command>
-	  provide an example of configuring an in-memory data
-	  source containing the <quote>example.com</quote> zone
-	  with the zone file named <quote>example.com.zone</quote>:
+      <para>
+        Another option is <varname>params</varname>. This option is type
+        specific; it holds different data depending on the type
+        above. Also, depending on the type, it could be possible to omit it.
+      </para>
 
-<!--
-	  <screen>&gt; <userinput> config set Auth/datasources/ [{"type": "memory", "zones": [{"origin": "example.com", "file": "example.com.zone"}]}]</userinput></screen>
--->
+      <para>
+        There are two options related to the so-called cache. If you enable
+        cache, zone data from the data source are loaded into memory.
+        Then, when answering a query, <command>b10-auth</command> looks
+        into the memory only instead of the data source, which speeds
+        answering up. The first option is <varname>cache-enable</varname>,
+        a boolean value turning the cache on and off (off is the default).
+        The second one, <varname>cache-zones</varname>, is a list of zone
+        origins to load into in-memory. Remember that zones in the data source
+        not listed here will not be loaded and will not be available at all.
+      </para>
 
-          <screen>&gt; <userinput>config add Auth/datasources</userinput>
-&gt; <userinput>config set Auth/datasources[0]/type "<option>memory</option>"</userinput>
-&gt; <userinput>config add Auth/datasources[0]/zones</userinput>
-&gt; <userinput>config set Auth/datasources[0]/zones[0]/origin "<option>example.com</option>"</userinput>
-&gt; <userinput>config set Auth/datasources[0]/zones[0]/file "<option>example.com.zone</option>"</userinput>
-&gt; <userinput>config commit</userinput></screen>
-
-	  The authoritative server will begin serving it immediately
-	  after it is loaded.
-	</para>
-
-      </section>
-
-      <section id="in-memory-datasource-with-sqlite3-backend">
-	<title>In-memory Data Source With SQLite3 Backend</title>
-
-	<para>
-<!--	  How to configure it. -->
-	  The following commands to <command>bindctl</command>
-	  provide an example of configuring an in-memory data
-	  source containing the <quote>example.org</quote> zone
-	  with a SQLite3 backend file named <quote>example.org.sqlite3</quote>:
-
-<!--
-	  <screen>&gt; <userinput> config set Auth/datasources/ [{"type": "memory", "zones": [{"origin": "example.org", "file": "example.org.sqlite3", "filetype": "sqlite3"}]}]</userinput></screen>
--->
-
-          <screen>&gt; <userinput>config add Auth/datasources</userinput>
-&gt; <userinput>config set Auth/datasources[1]/type "<option>memory</option>"</userinput>
-&gt; <userinput>config add Auth/datasources[1]/zones</userinput>
-&gt; <userinput>config set Auth/datasources[1]/zones[0]/origin "<option>example.org</option>"</userinput>
-&gt; <userinput>config set Auth/datasources[1]/zones[0]/file "<option>example.org.sqlite3</option>"</userinput>
-&gt; <userinput>config set Auth/datasources[1]/zones[0]/filetype "<option>sqlite3</option>"</userinput>
-&gt; <userinput>config commit</userinput></screen>
-
-	  The authoritative server will begin serving it immediately
-	  after it is loaded.
-	</para>
-
-      </section>
-
-      <section id="in-memory-datasource-loading">
-	<title>Reloading an In-memory Data Source</title>
-
-	<para>
-	  Use the <command>Auth loadzone</command> command in
-	  <command>bindctl</command> to reload a changed master
-	  file into memory; for example:
-
-	  <screen>&gt; <userinput>Auth loadzone origin="example.com"</userinput>
-</screen>
-
-	</para>
-
-<!--
+      <section id='datasource-types'>
+        <title>Data source types</title>
         <para>
-          The <varname>file</varname> may be an absolute path to the
-          master zone file or it is relative to the directory BIND 10 is
-          started from.
-	</para>
--->
-
-      </section>
-      <section id="in-memory-datasource-disabling">
-	<title>Disabling In-memory Data Sources</title>
+          As mentioned, the type used by default is <quote>sqlite3</quote>.
+          It has single configuration option inside <varname>params</varname>
+          &mdash; <varname>database_file</varname>, which contains the path
+          to the sqlite3 file containing the data.
+        </para>
 
         <para>
-	By default, the memory data source is disabled; it must be
-	configured explicitly.  To disable all the in-memory zones,
-	specify a null list for <varname>Auth/datasources</varname>:
-
-<!-- TODO: this assumes that Auth/datasources is for memory only -->
-
-	  <screen>&gt; <userinput>config set Auth/datasources/ []</userinput>
-&gt; <userinput>config commit</userinput></screen>
-	</para>
-
-	<para>
-          The following example stops serving a specific zone:
-
-	  <screen>&gt; <userinput>config remove Auth/datasources[<option>0</option>]/zones[<option>0</option>]</userinput>
-&gt; <userinput>config commit</userinput></screen>
-
-	  (Replace the list number(s) in
-	  <varname>datasources[<replaceable>0</replaceable>]</varname>
-	  and/or <varname>zones[<replaceable>0</replaceable>]</varname>
-	  for the relevant zone as needed.)
-
-	</para>
-
+          Another type is called <quote>MasterFiles</quote>. This one is
+          slightly special. The data are stored in RFC1034 master files.
+          Because answering directly from them would be impractical,
+          this type mandates the cache to be enabled. Also, the list of
+          zones (<varname>cache-zones</varname>) should be omitted. The
+          <varname>params</varname> is a dictionary mapping from zone
+          origins to the files they reside in.
+        </para>
       </section>
+
+      <section id='datasrc-examples'>
+        <title>Examples</title>
+        <para>
+          As this is one of the more complex configurations of Bind10,
+          we show some examples. They all assume they start with default
+          configuration.
+        </para>
+
+        <para>
+          First, let's disable the static data source
+          (<quote>VERSION.BIND</quote> and friends). As it is the only
+          data source in the CH class, we can remove the whole class.
+
+          <screen>&gt; <userinput>config remove data_sources/classes CH</userinput>
+&gt; <userinput>config commit</userinput></screen>
+        </para>
+
+        <para>
+          Another one, let's say our default data source contains zones
+          <quote>example.org.</quote> and <quote>example.net.</quote>.
+          We want them to be served from memory to make the answering
+          faster.
+
+          <screen>&gt; <userinput>config set data_sources/classes/IN[0]/cache-enable true</userinput>
+&gt; <userinput>config add data_sources/classes/IN[0]/cache-zones example.org.</userinput>
+&gt; <userinput>config add data_sources/classes/IN[0]/cache-zones example.net.</userinput>
+&gt; <userinput>config commit</userinput></screen>
+
+          Now every time the zone in the data source is changed by the
+          operator, Bind10 needs to be told to reload it, by
+          <screen>&gt; <userinput>Auth loadzone example.org</userinput></screen>
+          You don't need to do this when the zone is modified by
+          XfrIn, it does so automatically.
+        </para>
+
+        <para>
+          Now, the last example is when there are master files we want to
+          serve in addition to whatever is inside the sqlite3 database.
+
+          <screen>&gt; <userinput>config add data_sources/classes/IN</userinput>
+&gt; <userinput>config set data_sources/classes/IN[1]/type MasterFiles</userinput>
+&gt; <userinput>config set data_sources/classes/IN[1]/cache-enable true</userinput>
+&gt; <userinput>config set data_sources/classes/IN[1]/params { "example.org": "/path/to/example.org", "example.com": "/path/to/example.com" }</userinput>
+&gt; <userinput>config commit</userinput></screen>
+
+          Unfortunately, due to current technical limitations, the params must
+          be set as one JSON blob, it can't be edited in
+          <command>bindctl</command>. To reload a zone, you the same command
+          as above.
+        </para>
+      </section>
+
+      <note>
+      <para>
+        There's also <varname>Auth/database_file</varname> configuration
+        variable, pointing to a sqlite3 database file. This is no longer
+        used by <command>b10-auth</command>, but it is left in place for
+        now, since other modules use it. Once <command>b10-xfrin</command>,
+        <command>b10-xfrout</command> and <command>b10-ddns</command>
+        are ported to the new configuration, this will disappear. But for
+        now, make sure that if you use any of these modules, the new
+        and old configuration correspond. The defaults are consistent, so
+        unless you tweaked either the new or the old configuration, you're
+        good.
+      </para>
+      </note>
 
     </section>
 
@@ -1687,7 +1728,7 @@ TODO
       <command>b10-auth</command>.
       In combination with <command>b10-zonemgr</command> (for
       automated SOA checks), this allows the BIND 10 server to
-      provide <quote>secondary</quote> service.
+      provide <emphasis>secondary</emphasis> service.
     </para>
 
     <para>
@@ -1789,10 +1830,7 @@ what if a NOTIFY is sent?
 
       <screen>&gt; <userinput>config add Zonemgr/secondary_zones</userinput>
 &gt; <userinput>config set Zonemgr/secondary_zones[0]/name "<option>example.com</option>"</userinput>
-&gt; <userinput>config set Zonemgr/secondary_zones[0]/class "<option>IN</option>"</userinput>
 &gt; <userinput>config commit</userinput></screen>
-
-<!-- TODO: remove the IN class example above when it is the default -->
 
       </para>
 
@@ -1828,12 +1866,15 @@ what if a NOTIFY is sent?
         automatically sent a <varname>loadzone</varname> command to
         reload the corresponding zone into memory from the backend.
       </para>
+<!-- TODO: currently it delays the queries; see
+http://bind10.isc.org/wiki/ScalableZoneLoadDesign#a7.2UpdatingaZone
+-->
 
       <para>
 	The administrator doesn't have to do anything for
 	<command>b10-auth</command> to serve the new version of the
 	zone, except for the configuration such as the one described in
-	<xref linkend="in-memory-datasource-with-sqlite3-backend" />.
+	<xref linkend="datasrc" />.
       </para>
     </section>
 
@@ -1850,7 +1891,7 @@ what if a NOTIFY is sent?
       When the <command>b10-auth</command> authoritative DNS server
       receives an AXFR or IXFR request, <command>b10-auth</command>
       internally forwards the request to <command>b10-xfrout</command>,
-      which handles the rest of request processing.
+      which handles the rest of this request processing.
       This is used to provide primary DNS service to share zones
       to secondary name servers.
       The <command>b10-xfrout</command> is also used to send
@@ -1899,8 +1940,9 @@ Xfrout/transfer_acl[0]	{"action": "ACCEPT"}	any	(default)</screen>
 &gt; <userinput>config set Xfrout/zone_config[0]/transfer_acl [{"action": "ACCEPT", "from": "192.0.2.1", "key": "key.example"}]</userinput>
 &gt; <userinput>config commit</userinput></screen>
 
-    <para>Both Xfrout and Auth will use the system wide keyring to check
-    TSIGs in the incoming messages and to sign responses.</para>
+    <para>Both <command>b10-xfrout</command> and <command>b10-auth</command>
+      will use the system wide keyring to check
+      TSIGs in the incoming messages and to sign responses.</para>
 
     <note><simpara>
         The way to specify zone specific configuration (ACLs, etc) is
@@ -1934,20 +1976,20 @@ what is XfroutClient xfr_client??
       When the <command>b10-auth</command> authoritative DNS server
       receives an UPDATE request, it internally forwards the request
       to <command>b10-ddns</command>, which handles the rest of
-      request processing.
-      When the processing is completed <command>b10-ddns</command>
-      will send a response to the client with the RCODE set to the
-      value as specified in RFC 2136 (NOERROR for successful update,
-      REFUSED if rejected due to ACL check, etc).
+      this request processing.
+      When the processing is completed, <command>b10-ddns</command>
+      will send a response to the client as specified in RFC 2136
+      (NOERROR for successful update, REFUSED if rejected due to
+      ACL check, etc).
       If the zone has been changed as a result, it will internally
       notify <command>b10-xfrout</command> so that other secondary
-      servers will be notified via the DNS notify protocol.
+      servers will be notified via the DNS NOTIFY protocol.
       In addition, if <command>b10-auth</command> serves the updated
-      zone from its in-memory cache (as described in
-      <xref linkend="in-memory-datasource-with-sqlite3-backend" />),
+      zone (as described in
+      <xref linkend="datasrc" />),
       <command>b10-ddns</command> will also
       notify <command>b10-auth</command> so that <command>b10-auth</command>
-      will re-cache the updated zone content.
+      will re-cache the updated zone content if necessary.
     </para>
 
     <para>
@@ -1967,10 +2009,10 @@ what is XfroutClient xfr_client??
       As of this writing <command>b10-ddns</command> does not support
       update forwarding for secondary zones.
       If it receives an update request for a secondary zone, it will
-      immediately return a response with an RCODE of NOTIMP.
+      immediately return a <quote>not implemented</quote> response.
       <note><simpara>
-	  For feature completeness update forwarding should be
-	  eventually supported.  But right now it's considered a lower
+	  For feature completeness, update forwarding should be
+	  eventually supported.  But currently it's considered a lower
 	  priority task and there is no specific plan of implementing
 	  this feature.
 <!-- See Trac #2063 -->
@@ -2000,9 +2042,9 @@ what is XfroutClient xfr_client??
         underlying data source storing the zone data be writable.
         In the current implementation this means the zone must be stored
         in an SQLite3-based data source.
-        Also, right now, the <command>b10-ddns</command> component
-        configures itself with the data source referring to the
-        <quote>database_file</quote> configuration parameter of
+	Also, in this development version, the <command>b10-ddns</command>
+	component configures itself with the data source referring to the
+        <varname>database_file</varname> configuration parameter of
         <command>b10-auth</command>.
         So this information must be configured correctly before starting
         <command>b10-ddns</command>.
@@ -2036,14 +2078,16 @@ what is XfroutClient xfr_client??
 &gt; <userinput>config commit</userinput>
 </screen>
       <note><simpara>
-	  In theory "kind" could be omitted because "dispensable" is its
-	  default.  But there's some peculiar behavior (which should
-	  be a bug and should be fixed eventually; see Trac ticket
-	  #2064) with bindctl and you'll still need to specify that explicitly.
-	  Likewise, "address" may look unnecessary because
-	  <command>b10-ddns</command> would start and work without
-	  specifying it.  But for it to shutdown gracefully this
-	  parameter should also be specified.
+	  In theory <varname>kind</varname> could be omitted because
+	  "dispensable" is its default.
+	  But there's some peculiar behavior (which should be a
+	  bug and should be fixed eventually; see Trac ticket #2064)
+	  with <command>bindctl</command> and you'll still need to
+	  specify that explicitly.  Likewise, <varname>address</varname>
+	  may look unnecessary because <command>b10-ddns</command>
+	  would start and work without specifying it.  But for it
+	  to shutdown gracefully this parameter should also be
+	  specified.
       </simpara></note>
       </para>
     </section>
@@ -2051,14 +2095,13 @@ what is XfroutClient xfr_client??
     <section>
       <title>Access Control</title>
       <para>
-        By default <command>b10-ddns</command> rejects any update
-        requests from any clients by returning a response with an RCODE
-        of REFUSED.
+        By default, <command>b10-ddns</command> rejects any update
+        requests from any clients by returning a REFUSED response.
         To allow updates to take effect, an access control rule
         (called update ACL) with a policy allowing updates must explicitly be
         configured.
         Update ACL must be configured per zone basis in the
-        <quote>zones</quote> configuration parameter of
+        <varname>zones</varname> configuration parameter of
         <command>b10-ddns</command>.
         This is a list of per-zone configurations regarding DDNS.
         Each list element consists of the following parameters:
@@ -2093,14 +2136,12 @@ what is XfroutClient xfr_client??
         In general, an update ACL rule that allows an update request
         should be configured with a TSIG key.
         This is an example update ACL that allows updates to the zone
-        named <quote>example.org</quote> of RR class <quote>IN</quote>
+        named <quote>example.org</quote> (of default RR class <quote>IN</quote>)
         from clients that send requests signed with a TSIG whose
         key name is "key.example.org" (and refuses all others):
       <screen>
 &gt; <userinput>config add DDNS/zones</userinput>
 &gt; <userinput>config set DDNS/zones[0]/origin example.org</userinput>
-&gt; <userinput>config set DDNS/zones[0]/class IN</userinput>
-(Note: "class" can be omitted)
 &gt; <userinput>config add DDNS/zones[0]/update_acl {"action": "ACCEPT", "key": "key.example.org"}</userinput>
 &gt; <userinput>config commit</userinput>
 </screen>
@@ -2125,11 +2166,13 @@ DDNS/zones[0]/update_acl[1]     {"action": "ACCEPT", "from": "::1", "key": "key.
 &gt; <userinput>config commit</userinput>
 </screen>
       (Note the "add" in the first line.  Before this sequence, we
-      have had only entry in zones[0]/update_acl.  The "add" command
-      with a value (rule) adds a new entry and sets it to the given rule.
+      have had only entry in <varname>zones[0]/update_acl</varname>.
+      The <command>add</command> command with a value (rule) adds
+      a new entry and sets it to the given rule.
+
       Due to a limitation of the current implementation, it doesn't
       work if you first try to just add a new entry and then set it to
-      a given rule).
+      a given rule.)
       </para>
 
       <note><simpara>
@@ -2151,6 +2194,7 @@ DDNS/zones[0]/update_acl[1]     {"action": "ACCEPT", "from": "::1", "key": "key.
 	which is rejecting any requests in the case of
 	<command>b10-ddns</command>.
       </para>
+<!-- TODO: what are the other defaults? -->
 
       <para>
 	Other actions than "ACCEPT", namely "REJECT" and "DROP", can be
@@ -2189,8 +2233,8 @@ DDNS/zones[0]/update_acl[1]     {"action": "ACCEPT", "from": "::1", "key": "key.
       <title>Miscellaneous Operational Issues</title>
       <para>
         Unlike BIND 9, BIND 10 currently does not support automatic
-        resigning of DNSSEC-signed zone when it's updated via DDNS.
-        It could be possible to resign the updated zone afterwards
+        re-signing of DNSSEC-signed zone when it's updated via DDNS.
+        It could be possible to re-sign the updated zone afterwards
         or make sure the update request also updates related DNSSEC
         records, but that will be pretty error-prone operation.
         In general, it's not advisable to allow DDNS for a signed zone
@@ -2214,8 +2258,8 @@ DDNS/zones[0]/update_acl[1]     {"action": "ACCEPT", "from": "::1", "key": "key.
         <command>b10-zonemgr</command>.  Zones listed in
         <quote>secondary_zones</quote> will never be updated via DDNS
         regardless of the update ACL configuration;
-	<command>b10-ddns</command> will return a response with an
-	RCODE of NOTAUTH as specified in RFC 2136.
+	<command>b10-ddns</command> will return a NOTAUTH (server
+        not authoritative for the zone) response.
         If you have a "conceptual" secondary zone whose content is a
         copy of some external source but is not updated via the
         standard zone transfers and therefore not listed in
@@ -2515,7 +2559,7 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
     </section>
 
     <section id="dhcp4-limit">
-      <title>DHCPv4 Server Limitations</title> 
+      <title>DHCPv4 Server Limitations</title>
       <para>These are the current limitations of the DHCPv4 server
       software. Most of them are reflections of the early stage of
       development and should be treated as <quote>not implemented

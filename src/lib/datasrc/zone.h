@@ -138,7 +138,7 @@ public:
     ///
     /// This class encapsulates results and (possibly) associated context
     /// of a call to the \c find() method.   The public member variables of
-    /// this class reprsent the result of the call.  They are a
+    /// this class represent the result of the call.  They are a
     /// straightforward tuple of the result code and a pointer (and
     /// optionally special flags) to the found RRset.
     ///
@@ -376,6 +376,16 @@ public:
     ///   RRsets for that name are searched just like the normal case;
     ///   otherwise, if the search has encountered a zone cut, \c DELEGATION
     ///   with the information of the highest zone cut will be returned.
+    ///   Note: the term "glue" in the DNS protocol standard may sometimes
+    ///   cause confusion: some people use this term strictly for an address
+    ///   record (type AAAA or A) for the name used in the RDATA of an NS RR;
+    ///   some others seem to give it broader flexibility.  Nevertheless,
+    ///   in this API the "GLUE OK" simply means the search by find() can
+    ///   continue beyond a zone cut; the derived class implementation does
+    ///   not have to, and should not, check whether the type is an address
+    ///   record or whether the query name is pointed by some NS RR.
+    ///   It's up to the caller with which definition of "glue" the search
+    ///   result with this option should be used.
     /// - \c FIND_DNSSEC Request that DNSSEC data (like NSEC, RRSIGs) are
     ///   returned with the answer. It is allowed for the data source to
     ///   include them even when not requested.
