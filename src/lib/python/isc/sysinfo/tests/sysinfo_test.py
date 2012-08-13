@@ -138,6 +138,8 @@ def _my_bsd_subprocess_check_output(command):
         return b'osuxbrcc1g9VgaF4yf3FrtfodrfATrbSnjhqhuQSAs8=\n'
     elif command == ['netstat', '-an']:
         return b'Z+w0lwa02/T+5+EIio84rrst/Dtizoz/aL9Im7J7ESA=\n'
+    elif command == ['netstat', '-nr']:
+        return b'XfizswwNA9NkXz6K36ZExpjV08Y5IXkHI8jjDSV+5Nc=\n'
     else:
         return None
 
@@ -151,8 +153,6 @@ def _my_openbsd_subprocess_check_output(command):
         return b' procs    memory       page                    disks    traps          cpu\n r b w    avm     fre  flt  re  pi  po  fr  sr wd0 cd0  int   sys   cs us sy id\n 0 0 0   121212  123456   47   0   0   0   0   0   2   0    2    80   14  0  1 99\n'
     elif command == ['swapctl', '-s', '-k']:
         return b'total: 553507 1K-blocks allocated, 2 used, 553505 available'
-    elif command == ['route', '-n', 'show']:
-        return b'XfizswwNA9NkXz6K36ZExpjV08Y5IXkHI8jjDSV+5Nc=\n'
     else:
         bsd_output = _my_bsd_subprocess_check_output(command)
         if bsd_output is not None:
@@ -178,8 +178,6 @@ def _my_freebsd_osx_subprocess_check_output(command):
         return bytes('{ sec = ' + str(int(time.time() - 76632)) + ', usec = 0 }\n', 'utf-8')
     elif command == ['sysctl', '-n', 'vm.loadavg']:
         return b'{ 0.2 0.4 0.6 }\n'
-    elif command == ['netstat', '-nr']:
-        return b'XfizswwNA9NkXz6K36ZExpjV08Y5IXkHI8jjDSV+5Nc=\n'
     else:
         return _my_bsd_subprocess_check_output(command)
 
