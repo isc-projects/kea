@@ -312,6 +312,8 @@ public:
     /// providing compatible behavior may have its own benefit, so this point
     /// should be revisited later.
     ///
+    /// The answer will include signatures and NSEC/NSEC3 if possible.
+    ///
     /// This might throw BadZone or any of its specific subclasses, but that
     /// shouldn't happen in real-life (as BadZone means wrong data, it should
     /// have been rejected upon loading).
@@ -321,11 +323,9 @@ public:
     /// \param qname The query name
     /// \param qtype The RR type of the query
     /// \param response The response message to store the answer to the query.
-    /// \param dnssec If the answer should include signatures and NSEC/NSEC3 if
-    ///     possible.
     void process(datasrc::ClientList& client_list,
                  const isc::dns::Name& qname, const isc::dns::RRType& qtype,
-                 isc::dns::Message& response, bool dnssec = false);
+                 isc::dns::Message& response);
 
     /// \short Bad zone data encountered.
     ///
@@ -441,16 +441,13 @@ public:
         /// authority, and additional sections, and add them to their
         /// corresponding sections in the given message.  The RRsets are
         /// filtered such that a particular RRset appears only once in the
-        /// message.
-        ///
-        /// If \c dnssec is true, it tells the message to include any RRSIGs
-        /// attached to the RRsets.
+        /// message. Any RRSIGs attached to the RRsets will be included
+        /// when they are rendered.
         void create(
             isc::dns::Message& message,
             const std::vector<isc::dns::ConstRRsetPtr>& answers_,
             const std::vector<isc::dns::ConstRRsetPtr>& authorities_,
-            const std::vector<isc::dns::ConstRRsetPtr>& additionals_,
-            const bool dnssec);
+            const std::vector<isc::dns::ConstRRsetPtr>& additionals_);
 
     private:
         // \brief RRset comparison functor.
@@ -469,10 +466,9 @@ public:
         /// \param message Message to which the RRset is to be added
         /// \param section Section of the message in which the RRset is put
         /// \param rrset Pointer to RRset to be added to the message
-        /// \param dnssec Whether RRSIG records should be added as well
         void addRRset(isc::dns::Message& message,
                       const isc::dns::Message::Section section,
-                      const isc::dns::ConstRRsetPtr& rrset, const bool dnssec);
+                      const isc::dns::ConstRRsetPtr& rrset);
 
 
     private:
