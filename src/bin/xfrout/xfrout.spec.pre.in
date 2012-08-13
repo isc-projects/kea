@@ -17,7 +17,8 @@
          {
              "item_name": "acl_element",
              "item_type": "any",
-             "item_optional": true
+             "item_optional": true,
+             "item_default": {"action": "ACCEPT"}
          }
        },
        {
@@ -80,7 +81,8 @@
                    {
                        "item_name": "acl_element",
                        "item_type": "any",
-                       "item_optional": true
+                       "item_optional": true,
+                       "item_default": {"action": "ACCEPT"}
                    }
                }
              ]
