@@ -154,11 +154,9 @@ protected:
     /// \param rrset_entry_vec vector for rrset entries in
     ///        different sections.
     /// \param section The section to add to
-    /// \param dnssec_need need dnssec records or not.
     void addRRset(isc::dns::Message& message,
                   const std::vector<RRsetEntryPtr>& rrset_entry_vec,
-                  const isc::dns::Message::Section& section,
-                  bool dnssec_need);
+                  const isc::dns::Message::Section& section);
 
     /// \brief Get the all the rrset entries for the message entry.
     ///

@@ -666,7 +666,7 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, Message& message,
         if (list) {
             const RRType& qtype = question->getType();
             const Name& qname = question->getName();
-            query_.process(*list, qname, qtype, message, dnssec_ok);
+            query_.process(*list, qname, qtype, message);
         } else {
             makeErrorMessage(renderer_, message, buffer, Rcode::REFUSED());
             return (true);
