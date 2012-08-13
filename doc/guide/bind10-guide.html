@@ -1,4 +1,4 @@
-<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>BIND 10 Guide</title><link rel="stylesheet" type="text/css" href="./bind10-guide.css"><meta name="generator" content="DocBook XSL Stylesheets V1.76.1"><meta name="description" content="BIND 10 is a framework that features Domain Name System (DNS) suite and Dynamic Host Configuration Protocol (DHCP) servers with development managed by Internet Systems Consortium (ISC). It includes DNS libraries, modular components for controlling authoritative and recursive DNS servers, and experimental DHCPv4 and DHCPv6 servers. This is the reference guide for BIND 10 version 20120712. The most up-to-date version of this document (in PDF, HTML, and plain text formats), along with other documents for BIND 10, can be found at ."></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="book" title="BIND 10 Guide"><div class="titlepage"><div><div><h1 class="title"><a name="idp61472"></a>BIND 10 Guide</h1></div><div><h2 class="subtitle">Administrator Reference for BIND 10</h2></div><div><p class="releaseinfo">This is the reference guide for BIND 10 version
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>BIND 10 Guide</title><link rel="stylesheet" href="./bind10-guide.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"><meta name="description" content="BIND 10 is a framework that features Domain Name System (DNS) suite and Dynamic Host Configuration Protocol (DHCP) servers with development managed by Internet Systems Consortium (ISC). It includes DNS libraries, modular components for controlling authoritative and recursive DNS servers, and experimental DHCPv4 and DHCPv6 servers. This is the reference guide for BIND 10 version 20120712. The most up-to-date version of this document (in PDF, HTML, and plain text formats), along with other documents for BIND 10, can be found at ."></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="book" title="BIND 10 Guide"><div class="titlepage"><div><div><h1 class="title"><a name="idp25872"></a>BIND 10 Guide</h1></div><div><h2 class="subtitle">Administrator Reference for BIND 10</h2></div><div><p class="releaseinfo">This is the reference guide for BIND 10 version
         20120712.</p></div><div><p class="copyright">Copyright © 2010-2012 Internet Systems Consortium, Inc.</p></div><div><div class="abstract" title="Abstract"><p class="title"><b>Abstract</b></p><p>BIND 10 is a framework that features Domain Name System
       (DNS) suite and Dynamic Host Configuration Protocol (DHCP)
       servers with development managed by Internet Systems Consortium (ISC).
@@ -10,9 +10,9 @@
         The most up-to-date version of this document (in PDF, HTML,
         and plain text formats), along with other documents for
         BIND 10, can be found at <a class="ulink" href="http://bind10.isc.org/docs" target="_top">http://bind10.isc.org/docs</a>.
-        </p></div></div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="preface"><a href="#idp68304">Preface</a></span></dt><dd><dl><dt><span class="section"><a href="#acknowledgements">1. Acknowledgements</a></span></dt></dl></dd><dt><span class="chapter"><a href="#intro">1. Introduction</a></span></dt><dd><dl><dt><span class="section"><a href="#idp74064">1.1. Supported Platforms</a></span></dt><dt><span class="section"><a href="#required-software">1.2. Required Software at Run-time</a></span></dt><dt><span class="section"><a href="#starting_stopping">1.3. Starting and Stopping the Server</a></span></dt><dt><span class="section"><a href="#managing_once_running">1.4. Managing BIND 10</a></span></dt></dl></dd><dt><span class="chapter"><a href="#installation">2. Installation</a></span></dt><dd><dl><dt><span class="section"><a href="#packages">2.1. Packages</a></span></dt><dt><span class="section"><a href="#install-hierarchy">2.2. Install Hierarchy</a></span></dt><dt><span class="section"><a href="#build-requirements">2.3. Building Requirements</a></span></dt><dt><span class="section"><a href="#quickstart">2.4. Quick start</a></span></dt><dt><span class="section"><a href="#install">2.5. Installation from source</a></span></dt><dd><dl><dt><span class="section"><a href="#idp183024">2.5.1. Download Tar File</a></span></dt><dt><span class="section"><a href="#idp185808">2.5.2. Retrieve from Git</a></span></dt><dt><span class="section"><a href="#idp194832">2.5.3. Configure before the build</a></span></dt><dt><span class="section"><a href="#idp208176">2.5.4. Build</a></span></dt><dt><span class="section"><a href="#idp210160">2.5.5. Install</a></span></dt></dl></dd></dl></dd><dt><span class="chapter"><a href="#bind10">3. Starting BIND10 with <span class="command"><strong>bind10</strong></span></a></span></dt><dd><dl><dt><span class="section"><a href="#start">3.1. Starting BIND 10</a></span></dt><dt><span class="section"><a href="#bind10.config">3.2. Configuration to start processes</a></span></dt></dl></dd><dt><span class="chapter"><a href="#msgq">4. Command channel</a></span></dt><dt><span class="chapter"><a href="#cfgmgr">5. Configuration manager</a></span></dt><dt><span class="chapter"><a href="#cmdctl">6. Remote control daemon</a></span></dt><dd><dl><dt><span class="section"><a href="#cmdctl.spec">6.1. Configuration specification for b10-cmdctl</a></span></dt></dl></dd><dt><span class="chapter"><a href="#bindctl">7. Control and configure user interface</a></span></dt><dt><span class="chapter"><a href="#authserver">8. Authoritative Server</a></span></dt><dd><dl><dt><span class="section"><a href="#idp324512">8.1. Server Configurations</a></span></dt><dt><span class="section"><a href="#datasrc">8.2. Data Source Backends</a></span></dt><dd><dl><dt><span class="section"><a href="#datasource-types">8.2.1. Data source types</a></span></dt><dt><span class="section"><a href="#datasrc-examples">8.2.2. Examples</a></span></dt></dl></dd><dt><span class="section"><a href="#idp391504">8.3. Loading Master Zones Files</a></span></dt></dl></dd><dt><span class="chapter"><a href="#xfrin">9. Incoming Zone Transfers</a></span></dt><dd><dl><dt><span class="section"><a href="#idp409712">9.1. Configuration for Incoming Zone Transfers</a></span></dt><dt><span class="section"><a href="#idp415056">9.2. Enabling IXFR</a></span></dt><dt><span class="section"><a href="#zonemgr">9.3. Secondary Manager</a></span></dt><dt><span class="section"><a href="#idp431472">9.4. Trigger an Incoming Zone Transfer Manually</a></span></dt><dt><span class="section"><a href="#idp435168">9.5. Incoming Transfers with In-memory Datasource</a></span></dt></dl></dd><dt><span class="chapter"><a href="#xfrout">10. Outbound Zone Transfers</a></span></dt><dt><span class="chapter"><a href="#ddns">11. Dynamic DNS Update</a></span></dt><dd><dl><dt><span class="section"><a href="#idp469152">11.1. Enabling Dynamic Update</a></span></dt><dt><span class="section"><a href="#idp484736">11.2. Access Control</a></span></dt><dt><span class="section"><a href="#idp509104">11.3. Miscellaneous Operational Issues</a></span></dt></dl></dd><dt><span class="chapter"><a href="#resolverserver">12. Recursive Name Server</a></span></dt><dd><dl><dt><span class="section"><a href="#idp530160">12.1. Access Control</a></span></dt><dt><span class="section"><a href="#idp546880">12.2. Forwarding</a></span></dt></dl></dd><dt><span class="chapter"><a href="#dhcp4">13. DHCPv4 Server</a></span></dt><dd><dl><dt><span class="section"><a href="#dhcp4-usage">13.1. DHCPv4 Server Usage</a></span></dt><dt><span class="section"><a href="#dhcp4-config">13.2. DHCPv4 Server Configuration</a></span></dt><dt><span class="section"><a href="#dhcp4-std">13.3. Supported standards</a></span></dt><dt><span class="section"><a href="#dhcp4-limit">13.4. DHCPv4 Server Limitations</a></span></dt></dl></dd><dt><span class="chapter"><a href="#dhcp6">14. DHCPv6 Server</a></span></dt><dd><dl><dt><span class="section"><a href="#dhcp6-usage">14.1. DHCPv6 Server Usage</a></span></dt><dt><span class="section"><a href="#dhcp6-config">14.2. DHCPv6 Server Configuration</a></span></dt><dt><span class="section"><a href="#dhcp6-std">14.3. Supported DHCPv6 Standards</a></span></dt><dt><span class="section"><a href="#dhcp6-limit">14.4. DHCPv6 Server Limitations</a></span></dt></dl></dd><dt><span class="chapter"><a href="#libdhcp">15. libdhcp++ library</a></span></dt><dd><dl><dt><span class="section"><a href="#iface-detect">15.1. Interface detection</a></span></dt><dt><span class="section"><a href="#packet-handling">15.2. DHCPv4/DHCPv6 packet handling</a></span></dt></dl></dd><dt><span class="chapter"><a href="#statistics">16. Statistics</a></span></dt><dt><span class="chapter"><a href="#logging">17. Logging</a></span></dt><dd><dl><dt><span class="section"><a href="#idp653136">17.1. Logging configuration</a></span></dt><dd><dl><dt><span class="section"><a href="#idp654832">17.1.1. Loggers</a></span></dt><dt><span class="section"><a href="#idp691200">17.1.2. Output Options</a></span></dt><dt><span class="section"><a href="#idp716256">17.1.3. Example session</a></span></dt></dl></dd><dt><span class="section"><a href="#idp747024">17.2. Logging Message Format</a></span></dt></dl></dd></dl></div><div class="list-of-tables"><p><b>List of Tables</b></p><dl><dt>3.1. <a href="#idp236992">Special startup components</a></dt></dl></div><div class="preface" title="Preface"><div class="titlepage"><div><div><h2 class="title"><a name="idp68304"></a>Preface</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#acknowledgements">1. Acknowledgements</a></span></dt></dl></div><div class="section" title="1. Acknowledgements"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="acknowledgements"></a>1. Acknowledgements</h2></div></div></div><p>ISC would like to acknowledge generous support for
+        </p></div></div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="preface"><a href="#idp32704">Preface</a></span></dt><dd><dl><dt><span class="section"><a href="#acknowledgements">1. Acknowledgements</a></span></dt></dl></dd><dt><span class="chapter"><a href="#intro">1. Introduction</a></span></dt><dd><dl><dt><span class="section"><a href="#idp38720">1.1. Supported Platforms</a></span></dt><dt><span class="section"><a href="#required-software">1.2. Required Software at Run-time</a></span></dt><dt><span class="section"><a href="#starting_stopping">1.3. Starting and Stopping the Server</a></span></dt><dt><span class="section"><a href="#managing_once_running">1.4. Managing BIND 10</a></span></dt></dl></dd><dt><span class="chapter"><a href="#installation">2. Installation</a></span></dt><dd><dl><dt><span class="section"><a href="#packages">2.1. Packages</a></span></dt><dt><span class="section"><a href="#install-hierarchy">2.2. Install Hierarchy</a></span></dt><dt><span class="section"><a href="#build-requirements">2.3. Building Requirements</a></span></dt><dt><span class="section"><a href="#quickstart">2.4. Quick start</a></span></dt><dt><span class="section"><a href="#install">2.5. Installation from source</a></span></dt><dd><dl><dt><span class="section"><a href="#idp146688">2.5.1. Download Tar File</a></span></dt><dt><span class="section"><a href="#idp149472">2.5.2. Retrieve from Git</a></span></dt><dt><span class="section"><a href="#idp158496">2.5.3. Configure before the build</a></span></dt><dt><span class="section"><a href="#idp171840">2.5.4. Build</a></span></dt><dt><span class="section"><a href="#idp173824">2.5.5. Install</a></span></dt></dl></dd></dl></dd><dt><span class="chapter"><a href="#bind10">3. Starting BIND10 with <span class="command"><strong>bind10</strong></span></a></span></dt><dd><dl><dt><span class="section"><a href="#start">3.1. Starting BIND 10</a></span></dt><dt><span class="section"><a href="#bind10.config">3.2. Configuration to start processes</a></span></dt></dl></dd><dt><span class="chapter"><a href="#msgq">4. Command channel</a></span></dt><dt><span class="chapter"><a href="#cfgmgr">5. Configuration manager</a></span></dt><dt><span class="chapter"><a href="#cmdctl">6. Remote control daemon</a></span></dt><dd><dl><dt><span class="section"><a href="#cmdctl.spec">6.1. Configuration specification for b10-cmdctl</a></span></dt></dl></dd><dt><span class="chapter"><a href="#bindctl">7. Control and configure user interface</a></span></dt><dt><span class="chapter"><a href="#authserver">8. Authoritative Server</a></span></dt><dd><dl><dt><span class="section"><a href="#idp288016">8.1. Server Configurations</a></span></dt><dt><span class="section"><a href="#datasrc">8.2. Data Source Backends</a></span></dt><dd><dl><dt><span class="section"><a href="#datasource-types">8.2.1. Data source types</a></span></dt><dt><span class="section"><a href="#datasrc-examples">8.2.2. Examples</a></span></dt></dl></dd><dt><span class="section"><a href="#idp357664">8.3. Loading Master Zones Files</a></span></dt></dl></dd><dt><span class="chapter"><a href="#xfrin">9. Incoming Zone Transfers</a></span></dt><dd><dl><dt><span class="section"><a href="#idp375872">9.1. Configuration for Incoming Zone Transfers</a></span></dt><dt><span class="section"><a href="#idp381216">9.2. Enabling IXFR</a></span></dt><dt><span class="section"><a href="#zonemgr">9.3. Secondary Manager</a></span></dt><dt><span class="section"><a href="#idp396992">9.4. Trigger an Incoming Zone Transfer Manually</a></span></dt><dt><span class="section"><a href="#idp400688">9.5. Incoming Transfers with In-memory Datasource</a></span></dt></dl></dd><dt><span class="chapter"><a href="#xfrout">10. Outbound Zone Transfers</a></span></dt><dt><span class="chapter"><a href="#ddns">11. Dynamic DNS Update</a></span></dt><dd><dl><dt><span class="section"><a href="#idp434672">11.1. Enabling Dynamic Update</a></span></dt><dt><span class="section"><a href="#idp450256">11.2. Access Control</a></span></dt><dt><span class="section"><a href="#idp475168">11.3. Miscellaneous Operational Issues</a></span></dt></dl></dd><dt><span class="chapter"><a href="#resolverserver">12. Recursive Name Server</a></span></dt><dd><dl><dt><span class="section"><a href="#idp496224">12.1. Access Control</a></span></dt><dt><span class="section"><a href="#idp512960">12.2. Forwarding</a></span></dt></dl></dd><dt><span class="chapter"><a href="#dhcp4">13. DHCPv4 Server</a></span></dt><dd><dl><dt><span class="section"><a href="#dhcp4-usage">13.1. DHCPv4 Server Usage</a></span></dt><dt><span class="section"><a href="#dhcp4-config">13.2. DHCPv4 Server Configuration</a></span></dt><dt><span class="section"><a href="#dhcp4-std">13.3. Supported standards</a></span></dt><dt><span class="section"><a href="#dhcp4-limit">13.4. DHCPv4 Server Limitations</a></span></dt></dl></dd><dt><span class="chapter"><a href="#dhcp6">14. DHCPv6 Server</a></span></dt><dd><dl><dt><span class="section"><a href="#dhcp6-usage">14.1. DHCPv6 Server Usage</a></span></dt><dt><span class="section"><a href="#dhcp6-config">14.2. DHCPv6 Server Configuration</a></span></dt><dt><span class="section"><a href="#dhcp6-std">14.3. Supported DHCPv6 Standards</a></span></dt><dt><span class="section"><a href="#dhcp6-limit">14.4. DHCPv6 Server Limitations</a></span></dt></dl></dd><dt><span class="chapter"><a href="#libdhcp">15. libdhcp++ library</a></span></dt><dd><dl><dt><span class="section"><a href="#iface-detect">15.1. Interface detection</a></span></dt><dt><span class="section"><a href="#packet-handling">15.2. DHCPv4/DHCPv6 packet handling</a></span></dt></dl></dd><dt><span class="chapter"><a href="#statistics">16. Statistics</a></span></dt><dt><span class="chapter"><a href="#logging">17. Logging</a></span></dt><dd><dl><dt><span class="section"><a href="#idp611696">17.1. Logging configuration</a></span></dt><dd><dl><dt><span class="section"><a href="#idp613392">17.1.1. Loggers</a></span></dt><dt><span class="section"><a href="#idp649760">17.1.2. Output Options</a></span></dt><dt><span class="section"><a href="#idp674816">17.1.3. Example session</a></span></dt></dl></dd><dt><span class="section"><a href="#idp705584">17.2. Logging Message Format</a></span></dt></dl></dd></dl></div><div class="list-of-tables"><p><b>List of Tables</b></p><dl><dt>3.1. <a href="#idp200656">Special startup components</a></dt></dl></div><div class="preface" title="Preface"><div class="titlepage"><div><div><h2 class="title"><a name="idp32704"></a>Preface</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#acknowledgements">1. Acknowledgements</a></span></dt></dl></div><div class="section" title="1. Acknowledgements"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="acknowledgements"></a>1. Acknowledgements</h2></div></div></div><p>ISC would like to acknowledge generous support for
       BIND 10 development of DHCPv4 and DHCPv6 components provided
-      by <a class="ulink" href="http://www.comcast.com/" target="_top">Comcast</a>.</p></div></div><div class="chapter" title="Chapter 1. Introduction"><div class="titlepage"><div><div><h2 class="title"><a name="intro"></a>Chapter 1. Introduction</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#idp74064">1.1. Supported Platforms</a></span></dt><dt><span class="section"><a href="#required-software">1.2. Required Software at Run-time</a></span></dt><dt><span class="section"><a href="#starting_stopping">1.3. Starting and Stopping the Server</a></span></dt><dt><span class="section"><a href="#managing_once_running">1.4. Managing BIND 10</a></span></dt></dl></div><p>
+      by <a class="ulink" href="http://www.comcast.com/" target="_top">Comcast</a>.</p></div></div><div class="chapter" title="Chapter 1. Introduction"><div class="titlepage"><div><div><h2 class="title"><a name="intro"></a>Chapter 1. Introduction</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#idp38720">1.1. Supported Platforms</a></span></dt><dt><span class="section"><a href="#required-software">1.2. Required Software at Run-time</a></span></dt><dt><span class="section"><a href="#starting_stopping">1.3. Starting and Stopping the Server</a></span></dt><dt><span class="section"><a href="#managing_once_running">1.4. Managing BIND 10</a></span></dt></dl></div><p>
       BIND is the popular implementation of a DNS server, developer
       interfaces, and DNS tools.
       BIND 10 is a rewrite of BIND 9 and ISC DHCP.
@@ -25,7 +25,7 @@
     </p><p>
       This guide covers the experimental prototype of
       BIND 10 version 20120712.
-    </p><div class="section" title="1.1. Supported Platforms"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idp74064"></a>1.1. Supported Platforms</h2></div></div></div><p>
+    </p><div class="section" title="1.1. Supported Platforms"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idp38720"></a>1.1. Supported Platforms</h2></div></div></div><p>
   BIND 10 builds have been tested on (in no particular order)
   Debian GNU/Linux 6 and unstable, Ubuntu 9.10, NetBSD 5,
   Solaris 10 and 11, FreeBSD 7 and 8, CentOS Linux 5.3,
@@ -174,7 +174,7 @@
       documentation and code examples.
 
 
-    </p></div><div class="chapter" title="Chapter 2. Installation"><div class="titlepage"><div><div><h2 class="title"><a name="installation"></a>Chapter 2. Installation</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#packages">2.1. Packages</a></span></dt><dt><span class="section"><a href="#install-hierarchy">2.2. Install Hierarchy</a></span></dt><dt><span class="section"><a href="#build-requirements">2.3. Building Requirements</a></span></dt><dt><span class="section"><a href="#quickstart">2.4. Quick start</a></span></dt><dt><span class="section"><a href="#install">2.5. Installation from source</a></span></dt><dd><dl><dt><span class="section"><a href="#idp183024">2.5.1. Download Tar File</a></span></dt><dt><span class="section"><a href="#idp185808">2.5.2. Retrieve from Git</a></span></dt><dt><span class="section"><a href="#idp194832">2.5.3. Configure before the build</a></span></dt><dt><span class="section"><a href="#idp208176">2.5.4. Build</a></span></dt><dt><span class="section"><a href="#idp210160">2.5.5. Install</a></span></dt></dl></dd></dl></div><div class="section" title="2.1. Packages"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="packages"></a>2.1. Packages</h2></div></div></div><p>
+    </p></div><div class="chapter" title="Chapter 2. Installation"><div class="titlepage"><div><div><h2 class="title"><a name="installation"></a>Chapter 2. Installation</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#packages">2.1. Packages</a></span></dt><dt><span class="section"><a href="#install-hierarchy">2.2. Install Hierarchy</a></span></dt><dt><span class="section"><a href="#build-requirements">2.3. Building Requirements</a></span></dt><dt><span class="section"><a href="#quickstart">2.4. Quick start</a></span></dt><dt><span class="section"><a href="#install">2.5. Installation from source</a></span></dt><dd><dl><dt><span class="section"><a href="#idp146688">2.5.1. Download Tar File</a></span></dt><dt><span class="section"><a href="#idp149472">2.5.2. Retrieve from Git</a></span></dt><dt><span class="section"><a href="#idp158496">2.5.3. Configure before the build</a></span></dt><dt><span class="section"><a href="#idp171840">2.5.4. Build</a></span></dt><dt><span class="section"><a href="#idp173824">2.5.5. Install</a></span></dt></dl></dd></dl></div><div class="section" title="2.1. Packages"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="packages"></a>2.1. Packages</h2></div></div></div><p>
         Some operating systems or softare package vendors may
         provide ready-to-use, pre-built software packages for
         the BIND 10 suite.
@@ -283,14 +283,14 @@
         downloadable tar file or via BIND 10's Git code revision control
         service. (It may also be available in pre-compiled ready-to-use
         packages from operating system vendors.)
-      </p><div class="section" title="2.5.1. Download Tar File"><div class="titlepage"><div><div><h3 class="title"><a name="idp183024"></a>2.5.1. Download Tar File</h3></div></div></div><p>
+      </p><div class="section" title="2.5.1. Download Tar File"><div class="titlepage"><div><div><h3 class="title"><a name="idp146688"></a>2.5.1. Download Tar File</h3></div></div></div><p>
           Downloading a release tar file is the recommended method to
           obtain the source code.
         </p><p>
           The BIND 10 releases are available as tar file downloads from
           <a class="ulink" href="ftp://ftp.isc.org/isc/bind10/" target="_top">ftp://ftp.isc.org/isc/bind10/</a>.
           Periodic development snapshots may also be available.
-        </p></div><div class="section" title="2.5.2. Retrieve from Git"><div class="titlepage"><div><div><h3 class="title"><a name="idp185808"></a>2.5.2. Retrieve from Git</h3></div></div></div><p>
+        </p></div><div class="section" title="2.5.2. Retrieve from Git"><div class="titlepage"><div><div><h3 class="title"><a name="idp149472"></a>2.5.2. Retrieve from Git</h3></div></div></div><p>
           Downloading this "bleeding edge" code is recommended only for
           developers or advanced users.  Using development code in a production
           environment is not recommended.
@@ -325,7 +325,7 @@
           <span class="command"><strong>autoheader</strong></span>,
           <span class="command"><strong>automake</strong></span>,
           and related commands.
-        </p></div><div class="section" title="2.5.3. Configure before the build"><div class="titlepage"><div><div><h3 class="title"><a name="idp194832"></a>2.5.3. Configure before the build</h3></div></div></div><p>
+        </p></div><div class="section" title="2.5.3. Configure before the build"><div class="titlepage"><div><div><h3 class="title"><a name="idp158496"></a>2.5.3. Configure before the build</h3></div></div></div><p>
           BIND 10 uses the GNU Build System to discover build environment
           details.
           To generate the makefiles using the defaults, simply run:
@@ -356,12 +356,12 @@
         </p><p>
           If the configure fails, it may be due to missing or old
           dependencies.
-        </p></div><div class="section" title="2.5.4. Build"><div class="titlepage"><div><div><h3 class="title"><a name="idp208176"></a>2.5.4. Build</h3></div></div></div><p>
+        </p></div><div class="section" title="2.5.4. Build"><div class="titlepage"><div><div><h3 class="title"><a name="idp171840"></a>2.5.4. Build</h3></div></div></div><p>
     After the configure step is complete, to build the executables
     from the C++ code and prepare the Python scripts, run:
 
           </p><pre class="screen">$ <strong class="userinput"><code>make</code></strong></pre><p>
-        </p></div><div class="section" title="2.5.5. Install"><div class="titlepage"><div><div><h3 class="title"><a name="idp210160"></a>2.5.5. Install</h3></div></div></div><p>
+        </p></div><div class="section" title="2.5.5. Install"><div class="titlepage"><div><div><h3 class="title"><a name="idp173824"></a>2.5.5. Install</h3></div></div></div><p>
           To install the BIND 10 executables, support files,
           and documentation, run:
           </p><pre class="screen">$ <strong class="userinput"><code>make install</code></strong></pre><p>
@@ -432,7 +432,7 @@
 	started in a special way, with the value of special used
 	for them:
 
-        </p><div class="table"><a name="idp236992"></a><p class="title"><b>Table 3.1. Special startup components</b></p><div class="table-contents"><table summary="Special startup components" border="1"><colgroup><col align="left" class="component"><col align="left" class="special"><col align="left" class="description"></colgroup><thead><tr><th align="left">Component</th><th align="left">Special</th><th align="left">Description</th></tr></thead><tbody><tr><td align="left">b10-auth</td><td align="left">auth</td><td align="left">Authoritative DNS server</td></tr><tr><td align="left">b10-resolver</td><td align="left">resolver</td><td align="left">DNS resolver</td></tr><tr><td align="left">b10-cmdctl</td><td align="left">cmdctl</td><td align="left">Command control (remote control interface)</td></tr></tbody></table></div></div><p><br class="table-break">
+        </p><div class="table"><a name="idp200656"></a><p class="title"><b>Table 3.1. Special startup components</b></p><div class="table-contents"><table summary="Special startup components" border="1"><colgroup><col align="left"><col align="left"><col align="left"></colgroup><thead><tr><th align="left">Component</th><th align="left">Special</th><th align="left">Description</th></tr></thead><tbody><tr><td align="left">b10-auth</td><td align="left">auth</td><td align="left">Authoritative DNS server</td></tr><tr><td align="left">b10-resolver</td><td align="left">resolver</td><td align="left">DNS resolver</td></tr><tr><td align="left">b10-cmdctl</td><td align="left">cmdctl</td><td align="left">Command control (remote control interface)</td></tr></tbody></table></div></div><p><br class="table-break">
       </p><p>
 	The <code class="varname">kind</code> specifies how a failure of the
 	component should be handled.  If it is set to
@@ -661,13 +661,13 @@
       the details and relays (over a <span class="command"><strong>b10-msgq</strong></span> command
       channel) the configuration on to the specified module.
     </p><p>
-    </p></div><div class="chapter" title="Chapter 8. Authoritative Server"><div class="titlepage"><div><div><h2 class="title"><a name="authserver"></a>Chapter 8. Authoritative Server</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#idp324512">8.1. Server Configurations</a></span></dt><dt><span class="section"><a href="#datasrc">8.2. Data Source Backends</a></span></dt><dd><dl><dt><span class="section"><a href="#datasource-types">8.2.1. Data source types</a></span></dt><dt><span class="section"><a href="#datasrc-examples">8.2.2. Examples</a></span></dt></dl></dd><dt><span class="section"><a href="#idp391504">8.3. Loading Master Zones Files</a></span></dt></dl></div><p>
+    </p></div><div class="chapter" title="Chapter 8. Authoritative Server"><div class="titlepage"><div><div><h2 class="title"><a name="authserver"></a>Chapter 8. Authoritative Server</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#idp288016">8.1. Server Configurations</a></span></dt><dt><span class="section"><a href="#datasrc">8.2. Data Source Backends</a></span></dt><dd><dl><dt><span class="section"><a href="#datasource-types">8.2.1. Data source types</a></span></dt><dt><span class="section"><a href="#datasrc-examples">8.2.2. Examples</a></span></dt></dl></dd><dt><span class="section"><a href="#idp357664">8.3. Loading Master Zones Files</a></span></dt></dl></div><p>
       The <span class="command"><strong>b10-auth</strong></span> is the authoritative DNS server.
       It supports EDNS0, DNSSEC, IPv6, and SQLite3 and in-memory zone
       data backends.
       Normally it is started by the <span class="command"><strong>bind10</strong></span> master
       process.
-    </p><div class="section" title="8.1. Server Configurations"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idp324512"></a>8.1. Server Configurations</h2></div></div></div><p>
+    </p><div class="section" title="8.1. Server Configurations"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idp288016"></a>8.1. Server Configurations</h2></div></div></div><p>
         <span class="command"><strong>b10-auth</strong></span> is configured via the
         <span class="command"><strong>b10-cfgmgr</strong></span> configuration manager.
         The module name is <span class="quote">&#8220;<span class="quote">Auth</span>&#8221;</span>.
@@ -860,8 +860,19 @@ can use various data source backends.
 &gt; <strong class="userinput"><code>config set data_sources/classes/IN[1]/params { "example.org": "/path/to/example.org", "example.com": "/path/to/example.com" }</code></strong>
 &gt; <strong class="userinput"><code>config commit</code></strong></pre><p>
 
-          Unfortunately, due to current technical limitations, the params must
-          be set as one JSON blob, it can't be edited in
+          Initially, a map value has to be set, but this value may be an
+          empty map. After that, key/value pairs can be added with 'config
+          add' and keys can be removed with 'config remove'. The initial
+          value may be an empty map, but it has to be set before zones are
+          added or removed.
+
+          </p><pre class="screen">
+&gt; <strong class="userinput"><code>config set data_sources/classes/IN[1]/params {}</code></strong>
+&gt; <strong class="userinput"><code>config add data_sources/classes/IN[1]/params another.example.org /path/to/another.example.org</code></strong>
+&gt; <strong class="userinput"><code>config add data_sources/classes/IN[1]/params another.example.com /path/to/another.example.com</code></strong>
+&gt; <strong class="userinput"><code>config remove data_sources/classes/IN[1]/params another.example.org</code></strong>
+          </pre><p>
+
           <span class="command"><strong>bindctl</strong></span>. To reload a zone, you the same command
           as above.
         </p></div><div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
@@ -875,7 +886,7 @@ can use various data source backends.
         and old configuration correspond. The defaults are consistent, so
         unless you tweaked either the new or the old configuration, you're
         good.
-      </p></div></div><div class="section" title="8.3. Loading Master Zones Files"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idp391504"></a>8.3. Loading Master Zones Files</h2></div></div></div><p>
+      </p></div></div><div class="section" title="8.3. Loading Master Zones Files"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idp357664"></a>8.3. Loading Master Zones Files</h2></div></div></div><p>
         RFC 1035 style DNS master zone files may imported
         into a BIND 10 SQLite3 data source by using the
         <span class="command"><strong>b10-loadzone</strong></span> utility.
@@ -904,7 +915,7 @@ can use various data source backends.
         If you reload a zone already existing in the database,
         all records from that prior zone disappear and a whole new set
         appears.
-      </p></div></div><div class="chapter" title="Chapter 9. Incoming Zone Transfers"><div class="titlepage"><div><div><h2 class="title"><a name="xfrin"></a>Chapter 9. Incoming Zone Transfers</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#idp409712">9.1. Configuration for Incoming Zone Transfers</a></span></dt><dt><span class="section"><a href="#idp415056">9.2. Enabling IXFR</a></span></dt><dt><span class="section"><a href="#zonemgr">9.3. Secondary Manager</a></span></dt><dt><span class="section"><a href="#idp431472">9.4. Trigger an Incoming Zone Transfer Manually</a></span></dt><dt><span class="section"><a href="#idp435168">9.5. Incoming Transfers with In-memory Datasource</a></span></dt></dl></div><p>
+      </p></div></div><div class="chapter" title="Chapter 9. Incoming Zone Transfers"><div class="titlepage"><div><div><h2 class="title"><a name="xfrin"></a>Chapter 9. Incoming Zone Transfers</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#idp375872">9.1. Configuration for Incoming Zone Transfers</a></span></dt><dt><span class="section"><a href="#idp381216">9.2. Enabling IXFR</a></span></dt><dt><span class="section"><a href="#zonemgr">9.3. Secondary Manager</a></span></dt><dt><span class="section"><a href="#idp396992">9.4. Trigger an Incoming Zone Transfer Manually</a></span></dt><dt><span class="section"><a href="#idp400688">9.5. Incoming Transfers with In-memory Datasource</a></span></dt></dl></div><p>
       Incoming zones are transferred using the <span class="command"><strong>b10-xfrin</strong></span>
       process which is started by <span class="command"><strong>bind10</strong></span>.
       When received, the zone is stored in the corresponding BIND 10
@@ -918,7 +929,7 @@ can use various data source backends.
       IXFR.  Due to some implementation limitations of the current
       development release, however, it only tries AXFR by default,
       and care should be taken to enable IXFR.
-    </p><div class="section" title="9.1. Configuration for Incoming Zone Transfers"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idp409712"></a>9.1. Configuration for Incoming Zone Transfers</h2></div></div></div><p>
+    </p><div class="section" title="9.1. Configuration for Incoming Zone Transfers"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idp375872"></a>9.1. Configuration for Incoming Zone Transfers</h2></div></div></div><p>
         In practice, you need to specify a list of secondary zones to
         enable incoming zone transfers for these zones (you can still
         trigger a zone transfer manually, without a prior configuration
@@ -934,7 +945,7 @@ can use various data source backends.
 &gt; <strong class="userinput"><code>config commit</code></strong></pre><p>
 
       (We assume there has been no zone configuration before).
-      </p></div><div class="section" title="9.2. Enabling IXFR"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idp415056"></a>9.2. Enabling IXFR</h2></div></div></div><p>
+      </p></div><div class="section" title="9.2. Enabling IXFR"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idp381216"></a>9.2. Enabling IXFR</h2></div></div></div><p>
         As noted above, <span class="command"><strong>b10-xfrin</strong></span> uses AXFR for
         zone transfers by default.  To enable IXFR for zone transfers
         for a particular zone, set the <strong class="userinput"><code>use_ixfr</code></strong>
@@ -983,13 +994,13 @@ can use various data source backends.
         (i.e. no SOA record for it), <span class="command"><strong>b10-zonemgr</strong></span>
         will automatically tell <span class="command"><strong>b10-xfrin</strong></span>
         to transfer the zone in.
-      </p></div><div class="section" title="9.4. Trigger an Incoming Zone Transfer Manually"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idp431472"></a>9.4. Trigger an Incoming Zone Transfer Manually</h2></div></div></div><p>
+      </p></div><div class="section" title="9.4. Trigger an Incoming Zone Transfer Manually"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idp396992"></a>9.4. Trigger an Incoming Zone Transfer Manually</h2></div></div></div><p>
         To manually trigger a zone transfer to retrieve a remote zone,
         you may use the <span class="command"><strong>bindctl</strong></span> utility.
         For example, at the <span class="command"><strong>bindctl</strong></span> prompt run:
 
         </p><pre class="screen">&gt; <strong class="userinput"><code>Xfrin retransfer zone_name="<code class="option">foo.example.org</code>" master=<code class="option">192.0.2.99</code></code></strong></pre><p>
-      </p></div><div class="section" title="9.5. Incoming Transfers with In-memory Datasource"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idp435168"></a>9.5. Incoming Transfers with In-memory Datasource</h2></div></div></div><p>
+      </p></div><div class="section" title="9.5. Incoming Transfers with In-memory Datasource"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idp400688"></a>9.5. Incoming Transfers with In-memory Datasource</h2></div></div></div><p>
         In the case of an incoming zone transfer, the received zone is
         first stored in the corresponding BIND 10 datasource. In
         case the secondary zone is served by an in-memory datasource
@@ -1045,7 +1056,7 @@ Xfrout/transfer_acl[0]	{"action": "ACCEPT"}	any	(default)</pre><p>
       TSIGs in the incoming messages and to sign responses.</p><div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
         The way to specify zone specific configuration (ACLs, etc) is
         likely to be changed.
-    </p></div></div><div class="chapter" title="Chapter 11. Dynamic DNS Update"><div class="titlepage"><div><div><h2 class="title"><a name="ddns"></a>Chapter 11. Dynamic DNS Update</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#idp469152">11.1. Enabling Dynamic Update</a></span></dt><dt><span class="section"><a href="#idp484736">11.2. Access Control</a></span></dt><dt><span class="section"><a href="#idp509104">11.3. Miscellaneous Operational Issues</a></span></dt></dl></div><p>
+    </p></div></div><div class="chapter" title="Chapter 11. Dynamic DNS Update"><div class="titlepage"><div><div><h2 class="title"><a name="ddns"></a>Chapter 11. Dynamic DNS Update</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#idp434672">11.1. Enabling Dynamic Update</a></span></dt><dt><span class="section"><a href="#idp450256">11.2. Access Control</a></span></dt><dt><span class="section"><a href="#idp475168">11.3. Miscellaneous Operational Issues</a></span></dt></dl></div><p>
       BIND 10 supports the server side of the Dynamic DNS Update
       (DDNS) protocol as defined in RFC 2136.
       This service is provided by the <span class="command"><strong>b10-ddns</strong></span>
@@ -1092,7 +1103,7 @@ Xfrout/transfer_acl[0]	{"action": "ACCEPT"}	any	(default)</pre><p>
 	  this feature.
 
       </p></div><p>
-    </p><div class="section" title="11.1. Enabling Dynamic Update"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idp469152"></a>11.1. Enabling Dynamic Update</h2></div></div></div><p>
+    </p><div class="section" title="11.1. Enabling Dynamic Update"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idp434672"></a>11.1. Enabling Dynamic Update</h2></div></div></div><p>
         First off, it must be made sure that a few components on which
         <span class="command"><strong>b10-ddns</strong></span> depends are configured to run,
         which are <span class="command"><strong>b10-auth</strong></span>
@@ -1153,7 +1164,7 @@ Xfrout/transfer_acl[0]	{"action": "ACCEPT"}	any	(default)</pre><p>
 	  to shutdown gracefully this parameter should also be
 	  specified.
       </p></div><p>
-      </p></div><div class="section" title="11.2. Access Control"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idp484736"></a>11.2. Access Control</h2></div></div></div><p>
+      </p></div><div class="section" title="11.2. Access Control"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idp450256"></a>11.2. Access Control</h2></div></div></div><p>
         By default, <span class="command"><strong>b10-ddns</strong></span> rejects any update
         requests from any clients by returning a REFUSED response.
         To allow updates to take effect, an access control rule
@@ -1251,7 +1262,7 @@ DDNS/zones[0]/update_acl[1]     {"action": "ACCEPT", "from": "::1", "key": "key.
         arbitrary clients.
         There have been other troubles that could have been avoided if
         the ACL could be checked before the prerequisite check.
-      </p></div></div><div class="section" title="11.3. Miscellaneous Operational Issues"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idp509104"></a>11.3. Miscellaneous Operational Issues</h2></div></div></div><p>
+      </p></div></div><div class="section" title="11.3. Miscellaneous Operational Issues"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idp475168"></a>11.3. Miscellaneous Operational Issues</h2></div></div></div><p>
         Unlike BIND 9, BIND 10 currently does not support automatic
         re-signing of DNSSEC-signed zone when it's updated via DDNS.
         It could be possible to re-sign the updated zone afterwards
@@ -1293,7 +1304,7 @@ DDNS/zones[0]/update_acl[1]     {"action": "ACCEPT", "from": "::1", "key": "key.
         IXFR.
         This is done automatically; it does not require specific
         configuration to make this possible.
-      </p></div></div><div class="chapter" title="Chapter 12. Recursive Name Server"><div class="titlepage"><div><div><h2 class="title"><a name="resolverserver"></a>Chapter 12. Recursive Name Server</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#idp530160">12.1. Access Control</a></span></dt><dt><span class="section"><a href="#idp546880">12.2. Forwarding</a></span></dt></dl></div><p>
+      </p></div></div><div class="chapter" title="Chapter 12. Recursive Name Server"><div class="titlepage"><div><div><h2 class="title"><a name="resolverserver"></a>Chapter 12. Recursive Name Server</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#idp496224">12.1. Access Control</a></span></dt><dt><span class="section"><a href="#idp512960">12.2. Forwarding</a></span></dt></dl></div><p>
       The <span class="command"><strong>b10-resolver</strong></span> process is started by
       <span class="command"><strong>bind10</strong></span>.
 
@@ -1327,7 +1338,7 @@ DDNS/zones[0]/update_acl[1]     {"action": "ACCEPT", "from": "::1", "key": "key.
 </pre><p>
     </p><p>(Replace the <span class="quote">&#8220;<span class="quote"><em class="replaceable"><code>2</code></em></span>&#8221;</span>
        as needed; run <span class="quote">&#8220;<span class="quote"><strong class="userinput"><code>config show
-       Resolver/listen_on</code></strong></span>&#8221;</span> if needed.)</p><div class="section" title="12.1. Access Control"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idp530160"></a>12.1. Access Control</h2></div></div></div><p>
+       Resolver/listen_on</code></strong></span>&#8221;</span> if needed.)</p><div class="section" title="12.1. Access Control"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idp496224"></a>12.1. Access Control</h2></div></div></div><p>
         By default, the <span class="command"><strong>b10-resolver</strong></span> daemon only accepts
         DNS queries from the localhost (127.0.0.1 and ::1).
         The <code class="option">Resolver/query_acl</code> configuration may
@@ -1360,7 +1371,7 @@ DDNS/zones[0]/update_acl[1]     {"action": "ACCEPT", "from": "::1", "key": "key.
 </pre><p>(Replace the <span class="quote">&#8220;<span class="quote"><em class="replaceable"><code>2</code></em></span>&#8221;</span>
        as needed; run <span class="quote">&#8220;<span class="quote"><strong class="userinput"><code>config show
        Resolver/query_acl</code></strong></span>&#8221;</span> if needed.)</p><div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>This prototype access control configuration
-      syntax may be changed.</p></div></div><div class="section" title="12.2. Forwarding"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idp546880"></a>12.2. Forwarding</h2></div></div></div><p>
+      syntax may be changed.</p></div></div><div class="section" title="12.2. Forwarding"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idp512960"></a>12.2. Forwarding</h2></div></div></div><p>
 
         To enable forwarding, the upstream address and port must be
         configured to forward queries to, such as:
@@ -1639,7 +1650,7 @@ const std::string HARDCODED_DNS_SERVER = "2001:db8:1::1";</pre><p>
     }
 }
        </pre><p>
-    </p></div><div class="chapter" title="Chapter 17. Logging"><div class="titlepage"><div><div><h2 class="title"><a name="logging"></a>Chapter 17. Logging</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#idp653136">17.1. Logging configuration</a></span></dt><dd><dl><dt><span class="section"><a href="#idp654832">17.1.1. Loggers</a></span></dt><dt><span class="section"><a href="#idp691200">17.1.2. Output Options</a></span></dt><dt><span class="section"><a href="#idp716256">17.1.3. Example session</a></span></dt></dl></dd><dt><span class="section"><a href="#idp747024">17.2. Logging Message Format</a></span></dt></dl></div><div class="section" title="17.1. Logging configuration"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idp653136"></a>17.1. Logging configuration</h2></div></div></div><p>
+    </p></div><div class="chapter" title="Chapter 17. Logging"><div class="titlepage"><div><div><h2 class="title"><a name="logging"></a>Chapter 17. Logging</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#idp611696">17.1. Logging configuration</a></span></dt><dd><dl><dt><span class="section"><a href="#idp613392">17.1.1. Loggers</a></span></dt><dt><span class="section"><a href="#idp649760">17.1.2. Output Options</a></span></dt><dt><span class="section"><a href="#idp674816">17.1.3. Example session</a></span></dt></dl></dd><dt><span class="section"><a href="#idp705584">17.2. Logging Message Format</a></span></dt></dl></div><div class="section" title="17.1. Logging configuration"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idp611696"></a>17.1. Logging configuration</h2></div></div></div><p>
 
         The logging system in BIND 10 is configured through the
         Logging module. All BIND 10 modules will look at the
@@ -1648,7 +1659,7 @@ const std::string HARDCODED_DNS_SERVER = "2001:db8:1::1";</pre><p>
 
 
 
-      </p><div class="section" title="17.1.1. Loggers"><div class="titlepage"><div><div><h3 class="title"><a name="idp654832"></a>17.1.1. Loggers</h3></div></div></div><p>
+      </p><div class="section" title="17.1.1. Loggers"><div class="titlepage"><div><div><h3 class="title"><a name="idp613392"></a>17.1.1. Loggers</h3></div></div></div><p>
 
           Within BIND 10, a message is logged through a component
           called a "logger". Different parts of BIND 10 log messages
@@ -1669,7 +1680,7 @@ const std::string HARDCODED_DNS_SERVER = "2001:db8:1::1";</pre><p>
           (what to log), and the <code class="option">output_options</code>
           (where to log).
 
-        </p><div class="section" title="17.1.1.1. name (string)"><div class="titlepage"><div><div><h4 class="title"><a name="idp658592"></a>17.1.1.1. name (string)</h4></div></div></div><p>
+        </p><div class="section" title="17.1.1.1. name (string)"><div class="titlepage"><div><div><h4 class="title"><a name="idp617152"></a>17.1.1.1. name (string)</h4></div></div></div><p>
           Each logger in the system has a name, the name being that
           of the component using it to log messages. For instance,
           if you want to configure logging for the resolver module,
@@ -1742,7 +1753,7 @@ const std::string HARDCODED_DNS_SERVER = "2001:db8:1::1";</pre><p>
           <span class="quote">&#8220;<span class="quote">Auth.cache</span>&#8221;</span> logger will appear in the output
           with a logger name of <span class="quote">&#8220;<span class="quote">b10-auth.cache</span>&#8221;</span>).
 
-        </p></div><div class="section" title="17.1.1.2. severity (string)"><div class="titlepage"><div><div><h4 class="title"><a name="idp674640"></a>17.1.1.2. severity (string)</h4></div></div></div><p>
+        </p></div><div class="section" title="17.1.1.2. severity (string)"><div class="titlepage"><div><div><h4 class="title"><a name="idp633200"></a>17.1.1.2. severity (string)</h4></div></div></div><p>
 
           This specifies the category of messages logged.
           Each message is logged with an associated severity which
@@ -1758,7 +1769,7 @@ const std::string HARDCODED_DNS_SERVER = "2001:db8:1::1";</pre><p>
 
 
 
-        </p></div><div class="section" title="17.1.1.3. output_options (list)"><div class="titlepage"><div><div><h4 class="title"><a name="idp681616"></a>17.1.1.3. output_options (list)</h4></div></div></div><p>
+        </p></div><div class="section" title="17.1.1.3. output_options (list)"><div class="titlepage"><div><div><h4 class="title"><a name="idp640176"></a>17.1.1.3. output_options (list)</h4></div></div></div><p>
 
           Each logger can have zero or more
           <code class="option">output_options</code>. These specify where log
@@ -1768,7 +1779,7 @@ const std::string HARDCODED_DNS_SERVER = "2001:db8:1::1";</pre><p>
 
           The other options for a logger are:
 
-        </p></div><div class="section" title="17.1.1.4. debuglevel (integer)"><div class="titlepage"><div><div><h4 class="title"><a name="idp683888"></a>17.1.1.4. debuglevel (integer)</h4></div></div></div><p>
+        </p></div><div class="section" title="17.1.1.4. debuglevel (integer)"><div class="titlepage"><div><div><h4 class="title"><a name="idp642448"></a>17.1.1.4. debuglevel (integer)</h4></div></div></div><p>
 
           When a logger's severity is set to DEBUG, this value
           specifies what debug messages should be printed. It ranges
@@ -1777,7 +1788,7 @@ const std::string HARDCODED_DNS_SERVER = "2001:db8:1::1";</pre><p>
 
           If severity for the logger is not DEBUG, this value is ignored.
 
-        </p></div><div class="section" title="17.1.1.5. additive (true or false)"><div class="titlepage"><div><div><h4 class="title"><a name="idp686272"></a>17.1.1.5. additive (true or false)</h4></div></div></div><p>
+        </p></div><div class="section" title="17.1.1.5. additive (true or false)"><div class="titlepage"><div><div><h4 class="title"><a name="idp644832"></a>17.1.1.5. additive (true or false)</h4></div></div></div><p>
 
           If this is true, the <code class="option">output_options</code> from
           the parent will be used. For example, if there are two
@@ -1791,18 +1802,18 @@ const std::string HARDCODED_DNS_SERVER = "2001:db8:1::1";</pre><p>
 
 
 
-      </p></div></div><div class="section" title="17.1.2. Output Options"><div class="titlepage"><div><div><h3 class="title"><a name="idp691200"></a>17.1.2. Output Options</h3></div></div></div><p>
+      </p></div></div><div class="section" title="17.1.2. Output Options"><div class="titlepage"><div><div><h3 class="title"><a name="idp649760"></a>17.1.2. Output Options</h3></div></div></div><p>
 
           The main settings for an output option are the
           <code class="option">destination</code> and a value called
           <code class="option">output</code>, the meaning of which depends on
           the destination that is set.
 
-        </p><div class="section" title="17.1.2.1. destination (string)"><div class="titlepage"><div><div><h4 class="title"><a name="idp693280"></a>17.1.2.1. destination (string)</h4></div></div></div><p>
+        </p><div class="section" title="17.1.2.1. destination (string)"><div class="titlepage"><div><div><h4 class="title"><a name="idp651840"></a>17.1.2.1. destination (string)</h4></div></div></div><p>
 
             The destination is the type of output. It can be one of:
 
-          </p><div class="itemizedlist"><ul class="itemizedlist" type="disc"><li class="listitem"> console </li><li class="listitem"> file </li><li class="listitem"> syslog </li></ul></div></div><div class="section" title="17.1.2.2. output (string)"><div class="titlepage"><div><div><h4 class="title"><a name="idp697344"></a>17.1.2.2. output (string)</h4></div></div></div><p>
+          </p><div class="itemizedlist"><ul class="itemizedlist" type="disc"><li class="listitem"> console </li><li class="listitem"> file </li><li class="listitem"> syslog </li></ul></div></div><div class="section" title="17.1.2.2. output (string)"><div class="titlepage"><div><div><h4 class="title"><a name="idp655904"></a>17.1.2.2. output (string)</h4></div></div></div><p>
 
           Depending on what is set as the output destination, this
           value is interpreted as follows:
@@ -1832,12 +1843,12 @@ const std::string HARDCODED_DNS_SERVER = "2001:db8:1::1";</pre><p>
 
           The other options for <code class="option">output_options</code> are:
 
-        </p><div class="section" title="17.1.2.2.1. flush (true of false)"><div class="titlepage"><div><div><h5 class="title"><a name="idp710304"></a>17.1.2.2.1. flush (true of false)</h5></div></div></div><p>
+        </p><div class="section" title="17.1.2.2.1. flush (true of false)"><div class="titlepage"><div><div><h5 class="title"><a name="idp668864"></a>17.1.2.2.1. flush (true of false)</h5></div></div></div><p>
             Flush buffers after each log message. Doing this will
             reduce performance but will ensure that if the program
             terminates abnormally, all messages up to the point of
             termination are output.
-          </p></div><div class="section" title="17.1.2.2.2. maxsize (integer)"><div class="titlepage"><div><div><h5 class="title"><a name="idp711744"></a>17.1.2.2.2. maxsize (integer)</h5></div></div></div><p>
+          </p></div><div class="section" title="17.1.2.2.2. maxsize (integer)"><div class="titlepage"><div><div><h5 class="title"><a name="idp670304"></a>17.1.2.2.2. maxsize (integer)</h5></div></div></div><p>
             Only relevant when destination is file, this is maximum
             file size of output files in bytes. When the maximum
             size is reached, the file is renamed and a new file opened.
@@ -1846,11 +1857,11 @@ const std::string HARDCODED_DNS_SERVER = "2001:db8:1::1";</pre><p>
             etc.)
           </p><p>
             If this is 0, no maximum file size is used.
-          </p></div><div class="section" title="17.1.2.2.3. maxver (integer)"><div class="titlepage"><div><div><h5 class="title"><a name="idp713808"></a>17.1.2.2.3. maxver (integer)</h5></div></div></div><p>
+          </p></div><div class="section" title="17.1.2.2.3. maxver (integer)"><div class="titlepage"><div><div><h5 class="title"><a name="idp672368"></a>17.1.2.2.3. maxver (integer)</h5></div></div></div><p>
             Maximum number of old log files to keep around when
             rolling the output file. Only relevant when
             <code class="option">destination</code> is <span class="quote">&#8220;<span class="quote">file</span>&#8221;</span>.
-          </p></div></div></div><div class="section" title="17.1.3. Example session"><div class="titlepage"><div><div><h3 class="title"><a name="idp716256"></a>17.1.3. Example session</h3></div></div></div><p>
+          </p></div></div></div><div class="section" title="17.1.3. Example session"><div class="titlepage"><div><div><h3 class="title"><a name="idp674816"></a>17.1.3. Example session</h3></div></div></div><p>
 
           In this example we want to set the global logging to
           write to the file <code class="filename">/var/log/my_bind10.log</code>,
@@ -2011,7 +2022,7 @@ Logging/loggers[0]/output_options[0]/maxver	8	integer	(modified)
           And every module will now be using the values from the
           logger named <span class="quote">&#8220;<span class="quote">*</span>&#8221;</span>.
 
-        </p></div></div><div class="section" title="17.2. Logging Message Format"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idp747024"></a>17.2. Logging Message Format</h2></div></div></div><p>
+        </p></div></div><div class="section" title="17.2. Logging Message Format"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idp705584"></a>17.2. Logging Message Format</h2></div></div></div><p>
           Each message written by BIND 10 to the configured logging
           destinations comprises a number of components that identify
           the origin of the message and, if the message indicates

@@ -6,6 +6,15 @@
         "item_type": "any",
         "item_optional": false,
         "item_default": "asdf"
+      },
+      { "item_name": "item2",
+        "item_type": "any",
+        "item_optional": true
+      },
+      { "item_name": "item3",
+        "item_type": "any",
+        "item_optional": true,
+        "item_default": null
       }
     ]
   }
