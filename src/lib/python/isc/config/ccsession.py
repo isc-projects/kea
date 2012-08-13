@@ -594,7 +594,6 @@ class UIModuleCCSession(MultiConfigData):
             item_name = None
             item_value = None
             if value_str is not None:
-                #item_name =  isc.cc.data.parse_value_str(value_str)
                 item_name = value_str
             if set_value_str is not None:
                 item_value = isc.cc.data.parse_value_str(set_value_str)
@@ -669,7 +668,7 @@ class UIModuleCCSession(MultiConfigData):
            (type_any and type(cur_value) == dict):
             self._remove_value_from_named_set(identifier, value_str)
         else:
-            raise isc.cc.data.DataNotFoundError(str(identifier) + " is not a list or a named_set " + str(module_spec) + " and type " + str(type(cur_value)))
+            raise isc.cc.data.DataNotFoundError(str(identifier) + " is not a list or a named_set")
 
 
 

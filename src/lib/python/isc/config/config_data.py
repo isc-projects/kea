@@ -657,8 +657,7 @@ class MultiConfigData:
                                                 all)
             else:
                 value, status = self.get_value(identifier)
-                if status == self.NONE and not spec_part['item_optional']:# and\
-                   #not ('item_default' in spec_part):
+                if status == self.NONE and not spec_part['item_optional']:
                     raise isc.cc.data.DataNotFoundError(identifier + " not found")
 
                 entry = _create_value_map_entry(identifier,
