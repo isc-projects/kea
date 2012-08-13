@@ -5,7 +5,7 @@
 	is 'Dhcp6 shutdown'.
 	b10-dhcp4: Command line-switch '-s' to disable msgq was added.
 	b10-dhcp6: Command line-switch '-s' to disable msgq was added.
-	(Trac #1708, git tbd)
+	(Trac #1708, git e0d7c52a71414f4de1361b09d3c70431c96daa3f)
 
 458.	[build]*	jinmei
 	BIND 10 now relies on Boost offset_ptr, which caused some new
