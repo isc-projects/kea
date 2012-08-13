@@ -876,7 +876,8 @@ public:
     virtual void removeRRsig() { rrsig_ = RRsetPtr(); }
 
     /// \brief Return a pointer to this RRset's RRSIG RRset
-    RRsetPtr getRRsig() const { return (rrsig_); }
+    virtual RRsetPtr getRRsig() const { return (rrsig_); }
+
 private:
     RRsetPtr rrsig_;
 };
