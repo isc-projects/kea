@@ -1352,8 +1352,10 @@ TODO
 RULE := { "action": "ACCEPT"|"REJECT"|"DROP", MATCH, MATCH, ... }
 RULE_RAW := { MATCH, MATCH, ... }
 MATCH := FROM_MATCH|KEY_MATCH|NOT_MATCH|OR_MATCH|AND_MATCH|...
-FROM_MATCH := "from": "&lt;ip range&gt;
-KEY_MATCH := "key": "&lt;key name&gt;
+FROM_MATCH := "from": [RANGE, RANGE, RANGE, ...] | RANGE
+RANGE := "&lt;ip range&gt;
+KEY_MATCH := "key": [KEY, KEY, KEY, ...] | KEY
+KEY := "&lt;key name&gt;
 NOT_MATCH := "NOT": RULE_RAW
 OR_MATCH := "ANY": [ RULE_RAW, RULE_RAW, ... ]
 AND_MATCH := "ALL": [ RULE_RAW, RULE_RAW, ... ]
@@ -1373,8 +1375,9 @@ AND_MATCH := "ALL": [ RULE_RAW, RULE_RAW, ... ]
         <para>
           The other is TSIG key by which the message was signed. The ACL
           contains only the name (under the name "key"), the key itself
-          must be stored in the global keyring. <!-- TODO: Section for
-          the keyring and link to it.-->
+          must be stored in the global keyring. This property is applicable only
+          to the DNS context. <!-- TODO: Section for the keyring and link to
+          it.-->
         </para>
 
         <para>
@@ -2101,7 +2104,7 @@ http://bind10.isc.org/wiki/ScalableZoneLoadDesign#a7.2UpdatingaZone
 Xfrout/transfer_acl[0]	{"action": "ACCEPT"}	any	(default)</screen>
 
     <para>
-      You can configure it the same as any ACL
+      You can configure it in the same way as any ACL
       (<xref linkend="common-acl" />).
     </para>
 
@@ -2481,6 +2484,27 @@ what is XfroutClient xfr_client??
         The <option>Resolver/query_acl</option> configuration may
         be used to reject, drop, or allow specific IPs or networks.
         See <xref linkend="common-acl" />.
+      </para>
+
+      <para>
+        To allow queries on the "192.168.1.1" interface, these commands could be
+        issued. Note that we don't set the value of the third rule -- in the case
+        of resolver, rejecting all queries is the default value of new rule. And
+        that last final rule is not needed too, as the default, when a query falls
+        off the list, is rejection.
+        <screen>
+> <userinput>config show Resolver/query_acl</userinput>
+Resolver/query_acl[0]   {"action": "ACCEPT", "from": "127.0.0.1"}   any (default)
+Resolver/query_acl[1]   {"action": "ACCEPT", "from": "::1"} any (default)
+> <userinput>config add Resolver/query_acl</userinput>
+> <userinput>config set Resolver/query_acl[2] {"action": "ACCEPT", "from": "192.168.1.1/24"}</userinput>
+> <userinput>config add Resolver/query_acl</userinput>
+> <userinput>config show Resolver/query_acl</userinput>
+Resolver/query_acl[0]   {"action": "ACCEPT", "from": "127.0.0.1"}   any (modified)
+Resolver/query_acl[1]   {"action": "ACCEPT", "from": "::1"} any (modified)
+Resolver/query_acl[2]   {"action": "ACCEPT", "from": "192.168.1.1/24"}  any (modified)
+Resolver/query_acl[3]   {"action": "REJECT"}    any (modified)
+> <userinput>config commit</userinput></screen>
       </para>
 
     </section>
