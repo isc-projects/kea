@@ -952,6 +952,9 @@ class XfroutServer:
     def _start_notifier(self):
         datasrc = self._unix_socket_server.get_db_file()
         self._notifier = notify_out.NotifyOut(datasrc)
+        if 'also_notify' in self._config_data:
+            for slave in self._config_data['also_notify']:
+                self._notifier.add_slave(slave['address'], slave['port'])
         self._notifier.dispatcher()
 
     def send_notify(self, zone_name, zone_class):

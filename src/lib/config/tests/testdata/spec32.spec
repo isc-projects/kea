@@ -33,6 +33,22 @@
           }
           ]
         }
+      },
+      { "item_name": "named_set_item3",
+        "item_type": "named_set",
+        "item_optional": true,
+        "item_default": { "values": [ 1, 2, 3 ] },
+        "named_set_item_spec": {
+          "item_name": "named_set_element",
+          "item_type": "list",
+          "item_optional": false,
+          "item_default": [],
+          "list_item_spec":
+          { "item_name": "list_value",
+            "item_type": "integer",
+            "item_optional": true
+          }
+        }
       }
     ]
   }

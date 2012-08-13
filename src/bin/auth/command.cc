@@ -17,8 +17,7 @@
 #include <auth/auth_srv.h>
 
 #include <cc/data.h>
-#include <datasrc/memory_datasrc.h>
-#include <datasrc/factory.h>
+#include <datasrc/client_list.h>
 #include <config/ccsession.h>
 #include <exceptions/exceptions.h>
 #include <dns/rrclass.h>
@@ -141,160 +140,68 @@ public:
     }
 };
 
+class StartDDNSForwarderCommand : public AuthCommand {
+public:
+    virtual void exec(AuthSrv& server, isc::data::ConstElementPtr) {
+        server.createDDNSForwarder();
+    }
+};
+
+class StopDDNSForwarderCommand : public AuthCommand {
+public:
+    virtual void exec(AuthSrv& server, isc::data::ConstElementPtr) {
+        server.destroyDDNSForwarder();
+    }
+};
+
 // Handle the "loadzone" command.
 class LoadZoneCommand : public AuthCommand {
 public:
     virtual void exec(AuthSrv& server, isc::data::ConstElementPtr args) {
-        // parse and validate the args.
-        if (!validate(server, args)) {
-            return;
-        }
-
-        const ConstElementPtr zone_config = getZoneConfig(server);
-
-        // Load a new zone and replace the current zone with the new one.
-        // TODO: eventually this should be incremental or done in some way
-        // that doesn't block other server operations.
-        // TODO: we may (should?) want to check the "last load time" and
-        // the timestamp of the file and skip loading if the file isn't newer.
-        const ConstElementPtr type(zone_config->get("filetype"));
-        boost::shared_ptr<InMemoryZoneFinder> zone_finder(
-            new InMemoryZoneFinder(old_zone_finder_->getClass(),
-                                   old_zone_finder_->getOrigin()));
-        if (type && type->stringValue() == "sqlite3") {
-            scoped_ptr<DataSourceClientContainer>
-                container(new DataSourceClientContainer("sqlite3",
-                                                        Element::fromJSON(
-                    "{\"database_file\": \"" +
-                    zone_config->get("file")->stringValue() + "\"}")));
-            zone_finder->load(*container->getInstance().getIterator(
-                old_zone_finder_->getOrigin()));
-        } else {
-            zone_finder->load(old_zone_finder_->getFileName());
-        }
-        old_zone_finder_->swap(*zone_finder);
-        LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_LOAD_ZONE)
-                  .arg(zone_finder->getOrigin()).arg(zone_finder->getClass());
-    }
-
-private:
-    // zone finder to be updated with the new file.
-    boost::shared_ptr<InMemoryZoneFinder> old_zone_finder_;
-
-    // A helper private method to parse and validate command parameters.
-    // On success, it sets 'old_zone_finder_' to the zone to be updated.
-    // It returns true if everything is okay; and false if the command is
-    // valid but there's no need for further process.
-    bool validate(AuthSrv& server, isc::data::ConstElementPtr args) {
         if (args == NULL) {
             isc_throw(AuthCommandError, "Null argument");
         }
 
-        // In this initial implementation, we assume memory data source
-        // for class IN by default.
-        ConstElementPtr datasrc_elem = args->get("datasrc");
-        if (datasrc_elem) {
-            if (datasrc_elem->stringValue() == "sqlite3") {
-                LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_SQLITE3);
-                return (false);
-            } else if (datasrc_elem->stringValue() != "memory") {
-                // (note: at this point it's guaranteed that datasrc_elem
-                // is of string type)
-                isc_throw(AuthCommandError,
-                          "Data source type " << datasrc_elem->stringValue()
-                          << " is not supported");
-            }
-        }
-
         ConstElementPtr class_elem = args->get("class");
-        const RRClass zone_class =
-            class_elem ? RRClass(class_elem->stringValue()) : RRClass::IN();
-
-        isc::datasrc::DataSourceClient* datasrc(
-            server.getInMemoryClient(zone_class));
-        if (datasrc == NULL) {
-            isc_throw(AuthCommandError, "Memory data source is disabled");
-        }
+        RRClass zone_class(class_elem ? RRClass(class_elem->stringValue()) :
+            RRClass::IN());
 
         ConstElementPtr origin_elem = args->get("origin");
         if (!origin_elem) {
             isc_throw(AuthCommandError, "Zone origin is missing");
         }
-        const Name origin = Name(origin_elem->stringValue());
+        Name origin(origin_elem->stringValue());
 
-        // Get the current zone
-        const DataSourceClient::FindResult result = datasrc->findZone(origin);
-        if (result.code != result::SUCCESS) {
-            isc_throw(AuthCommandError, "Zone " << origin <<
-                      " is not found in data source");
+        const boost::shared_ptr<isc::datasrc::ConfigurableClientList>
+            list(server.getClientList(zone_class));
+
+        if (!list) {
+            isc_throw(AuthCommandError, "There's no client list for "
+                      "class " << zone_class);
         }
 
-        // It would appear that dynamic_cast does not work on all systems;
-        // it seems to confuse the RTTI system, resulting in NULL return
-        // values. So we use the more dangerous static_pointer_cast here.
-        old_zone_finder_ = boost::static_pointer_cast<InMemoryZoneFinder>(
-            result.zone_finder);
-
-        return (true);
-    }
-
-    ConstElementPtr getZoneConfig(const AuthSrv &server) {
-        if (!server.getConfigSession()) {
-            // FIXME: This is a hack to make older tests pass. We should
-            // update these tests as well sometime and remove this hack.
-            // (note that under normal situation, the
-            // server.getConfigSession() does not return NULL)
-
-            // We provide an empty map, which means no configuration --
-            // defaults.
-            return (ConstElementPtr(new MapElement()));
+        switch (list->reload(origin)) {
+            case ConfigurableClientList::ZONE_RELOADED:
+                // Everything worked fine.
+                LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_LOAD_ZONE)
+                    .arg(zone_class).arg(origin);
+                return;
+            case ConfigurableClientList::ZONE_NOT_FOUND:
+                isc_throw(AuthCommandError, "Zone " << origin << "/" <<
+                          zone_class << " was not found in any configured "
+                          "data source. Configure it first.");
+            case ConfigurableClientList::ZONE_NOT_CACHED:
+                isc_throw(AuthCommandError, "Zone " << origin << "/" <<
+                          zone_class << " is not served from memory, but "
+                          "direcly from the data source. It is not possible "
+                          "to reload it into memory. Configure it to be cached "
+                          "first.");
+            case ConfigurableClientList::CACHE_DISABLED:
+                // This is an internal error. Auth server must have the cache
+                // enabled.
+                isc_throw(isc::Unexpected, "Cache disabled in client list of "
+                          "class " << zone_class);
         }
-
-        // Find the config corresponding to the zone.
-        // We expect the configuration to be valid, as we have it and we
-        // accepted it before, therefore it must be validated.
-        const ConstElementPtr config(server.getConfigSession()->
-                                     getValue("datasources"));
-        ConstElementPtr zone_list;
-        // Unfortunately, we need to walk the list to find the correct data
-        // source.
-        // TODO: Make it named sets. These lists are uncomfortable.
-        for (size_t i(0); i < config->size(); ++i) {
-            // We use the getValue to get defaults as well
-            const ConstElementPtr dsrc_config(config->get(i));
-            const ConstElementPtr class_config(dsrc_config->get("class"));
-            const string class_type(class_config ?
-                                    class_config->stringValue() : "IN");
-            // It is in-memory and our class matches.
-            // FIXME: Is it allowed to have two datasources for the same
-            // type and class at once? It probably would not work now
-            // anyway and we may want to change the configuration of
-            // datasources somehow.
-            if (dsrc_config->get("type")->stringValue() == "memory" &&
-                RRClass(class_type) == old_zone_finder_->getClass()) {
-                zone_list = dsrc_config->get("zones");
-                break;
-            }
-        }
-
-        if (!zone_list) {
-            isc_throw(AuthCommandError,
-                      "Corresponding data source configuration was not found");
-        }
-
-        // Now we need to walk the zones and find the correct one.
-        for (size_t i(0); i < zone_list->size(); ++i) {
-            const ConstElementPtr zone_config(zone_list->get(i));
-            if (Name(zone_config->get("origin")->stringValue()) ==
-                old_zone_finder_->getOrigin()) {
-                // The origins are the same, so we consider this config to be
-                // for the zone.
-                return (zone_config);
-            }
-        }
-
-        isc_throw(AuthCommandError,
-                  "Corresponding zone configuration was not found");
     }
 };
 
@@ -309,6 +216,10 @@ createAuthCommand(const string& command_id) {
         return (new SendStatsCommand());
     } else if (command_id == "loadzone") {
         return (new LoadZoneCommand());
+    } else if (command_id == "start_ddns_forwarder") {
+        return (new StartDDNSForwarderCommand());
+    } else if (command_id == "stop_ddns_forwarder") {
+        return (new StopDDNSForwarderCommand());
     } else if (false && command_id == "_throw_exception") {
         // This is for testing purpose only and should not appear in the
         // actual configuration syntax.

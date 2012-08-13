@@ -22,7 +22,7 @@
 b10-auth \- Authoritative DNS server
 .SH "SYNOPSIS"
 .HP \w'\fBb10\-auth\fR\ 'u
-\fBb10\-auth\fR [\fB\-n\fR] [\fB\-v\fR]
+\fBb10\-auth\fR [\fB\-v\fR]
 .SH "DESCRIPTION"
 .PP
 The
@@ -41,11 +41,6 @@ It receives its configurations from
 .SH "OPTIONS"
 .PP
 The arguments are as follows:
-.PP
-\fB\-n\fR
-.RS 4
-Do not cache answers in memory\&. The default is to use the cache for faster responses\&. The cache keeps the most recent 30,000 answers (positive and negative) in memory for 30 seconds (instead of querying the data source, such as SQLite3 database, each time)\&.
-.RE
 .PP
 \fB\-v\fR
 .RS 4

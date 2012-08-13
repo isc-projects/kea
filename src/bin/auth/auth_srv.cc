@@ -43,9 +43,9 @@
 
 #include <datasrc/query.h>
 #include <datasrc/data_source.h>
-#include <datasrc/memory_datasrc.h>
 #include <datasrc/static_datasrc.h>
 #include <datasrc/sqlite3_datasrc.h>
+#include <datasrc/client_list.h>
 
 #include <xfr/xfrout_client.h>
 
@@ -58,6 +58,7 @@
 
 #include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include <algorithm>
 #include <cassert>
@@ -221,10 +222,9 @@ private:
     AuthSrvImpl(const AuthSrvImpl& source);
     AuthSrvImpl& operator=(const AuthSrvImpl& source);
 public:
-    AuthSrvImpl(const bool use_cache, AbstractXfroutClient& xfrout_client,
+    AuthSrvImpl(AbstractXfroutClient& xfrout_client,
                 BaseSocketSessionForwarder& ddns_forwarder);
     ~AuthSrvImpl();
-    isc::data::ConstElementPtr setDbFile(isc::data::ConstElementPtr config);
 
     bool processNormalQuery(const IOMessage& io_message, Message& message,
                             OutputBuffer& buffer,
@@ -247,13 +247,6 @@ public:
     ModuleCCSession* config_session_;
     AbstractSession* xfrin_session_;
 
-    /// In-memory data source.  Currently class IN only for simplicity.
-    const RRClass memory_client_class_;
-    isc::datasrc::DataSourceClientContainerPtr memory_client_container_;
-
-    /// Hot spot cache
-    isc::datasrc::HotCache cache_;
-
     /// Interval timer for periodic submission of statistics counters.
     IntervalTimer statistics_timer_;
 
@@ -266,9 +259,33 @@ public:
     /// The TSIG keyring
     const boost::shared_ptr<TSIGKeyRing>* keyring_;
 
+    /// The client list
+    std::map<RRClass, boost::shared_ptr<ConfigurableClientList> >
+        client_lists_;
+
+    boost::shared_ptr<ConfigurableClientList> getClientList(const RRClass&
+                                                            rrclass)
+    {
+        const std::map<RRClass, boost::shared_ptr<ConfigurableClientList> >::
+            const_iterator it(client_lists_.find(rrclass));
+        if (it == client_lists_.end()) {
+            return (boost::shared_ptr<ConfigurableClientList>());
+        } else {
+            return (it->second);
+        }
+    }
+
     /// Bind the ModuleSpec object in config_session_ with
     /// isc:config::ModuleSpec::validateStatistics.
     void registerStatisticsValidator();
+
+    /// Socket session forwarder for dynamic update requests
+    BaseSocketSessionForwarder& ddns_base_forwarder_;
+
+    /// Holder for the DDNS Forwarder, which is used to send
+    /// DDNS messages to b10-ddns, but can be set to empty if
+    /// b10-ddns is not running
+    boost::scoped_ptr<SocketSessionForwarderHolder> ddns_forwarder_;
 
     /// \brief Resume the server
     ///
@@ -285,20 +302,10 @@ public:
     void resumeServer(isc::asiodns::DNSServer* server,
                       isc::dns::Message& message,
                       bool done);
+
 private:
-    std::string db_file_;
-
-    MetaDataSrc data_sources_;
-    /// We keep a pointer to the currently running sqlite datasource
-    /// so that we can specifically remove that one should the database
-    /// file change
-    ConstDataSrcPtr cur_datasrc_;
-
     bool xfrout_connected_;
     AbstractXfroutClient& xfrout_client_;
-
-    // Socket session forwarder for dynamic update requests
-    SocketSessionForwarderHolder ddns_forwarder_;
 
     /// Increment query counter
     void incCounter(const int protocol);
@@ -309,29 +316,18 @@ private:
     auth::Query query_;
 };
 
-AuthSrvImpl::AuthSrvImpl(const bool use_cache,
-                         AbstractXfroutClient& xfrout_client,
+AuthSrvImpl::AuthSrvImpl(AbstractXfroutClient& xfrout_client,
                          BaseSocketSessionForwarder& ddns_forwarder) :
     config_session_(NULL),
     xfrin_session_(NULL),
-    memory_client_class_(RRClass::IN()),
     statistics_timer_(io_service_),
     counters_(),
     keyring_(NULL),
+    ddns_base_forwarder_(ddns_forwarder),
+    ddns_forwarder_(NULL),
     xfrout_connected_(false),
-    xfrout_client_(xfrout_client),
-    ddns_forwarder_("update", ddns_forwarder)
-{
-    // cur_datasrc_ is automatically initialized by the default constructor,
-    // effectively being an empty (sqlite) data source.  once ccsession is up
-    // the datasource will be set by the configuration setting
-
-    // add static data source
-    data_sources_.addDataSrc(ConstDataSrcPtr(new StaticDataSrc));
-
-    // enable or disable the cache
-    cache_.setEnabled(use_cache);
-}
+    xfrout_client_(xfrout_client)
+{}
 
 AuthSrvImpl::~AuthSrvImpl() {
     if (xfrout_connected_) {
@@ -390,11 +386,10 @@ private:
     AuthSrv* server_;
 };
 
-AuthSrv::AuthSrv(const bool use_cache,
-                 isc::xfr::AbstractXfroutClient& xfrout_client,
+AuthSrv::AuthSrv(isc::xfr::AbstractXfroutClient& xfrout_client,
                  isc::util::io::BaseSocketSessionForwarder& ddns_forwarder)
 {
-    impl_ = new AuthSrvImpl(use_cache, xfrout_client, ddns_forwarder);
+    impl_ = new AuthSrvImpl(xfrout_client, ddns_forwarder);
     checkin_ = new ConfigChecker(this);
     dns_lookup_ = new MessageLookup(this);
     dns_answer_ = new MessageAnswer(this);
@@ -456,7 +451,7 @@ makeErrorMessage(MessageRenderer& renderer, Message& message,
     for_each(questions.begin(), questions.end(), QuestionInserter(message));
 
     message.setRcode(rcode);
-    
+
     RendererHolder holder(renderer, &buffer);
     if (tsig_context.get() != NULL) {
         message.toWire(renderer, *tsig_context);
@@ -471,16 +466,6 @@ makeErrorMessage(MessageRenderer& renderer, Message& message,
 IOService&
 AuthSrv::getIOService() {
     return (impl_->io_service_);
-}
-
-void
-AuthSrv::setCacheSlots(const size_t slots) {
-    impl_->cache_.setSlots(slots);
-}
-
-size_t
-AuthSrv::getCacheSlots() const {
-    return (impl_->cache_.getSlots());
 }
 
 void
@@ -502,48 +487,6 @@ AuthSrv::setStatisticsSession(AbstractSession* statistics_session) {
 ModuleCCSession*
 AuthSrv::getConfigSession() const {
     return (impl_->config_session_);
-}
-
-isc::datasrc::DataSourceClientContainerPtr
-AuthSrv::getInMemoryClientContainer(const RRClass& rrclass) {
-    if (rrclass != impl_->memory_client_class_) {
-        isc_throw(InvalidParameter,
-                  "Memory data source is not supported for RR class "
-                  << rrclass);
-    }
-    return (impl_->memory_client_container_);
-}
-
-isc::datasrc::DataSourceClient*
-AuthSrv::getInMemoryClient(const RRClass& rrclass) {
-    if (hasInMemoryClient()) {
-        return (&getInMemoryClientContainer(rrclass)->getInstance());
-    } else {
-        return (NULL);
-    }
-}
-
-bool
-AuthSrv::hasInMemoryClient() const {
-    return (impl_->memory_client_container_);
-}
-
-void
-AuthSrv::setInMemoryClient(const isc::dns::RRClass& rrclass,
-                           DataSourceClientContainerPtr memory_client)
-{
-    if (rrclass != impl_->memory_client_class_) {
-        isc_throw(InvalidParameter,
-                  "Memory data source is not supported for RR class "
-                  << rrclass);
-    } else if (!impl_->memory_client_container_ && memory_client) {
-        LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_MEM_DATASRC_ENABLED)
-                  .arg(rrclass);
-    } else if (impl_->memory_client_container_ && !memory_client) {
-        LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_MEM_DATASRC_DISABLED)
-                  .arg(rrclass);
-    }
-    impl_->memory_client_container_ = memory_client;
 }
 
 uint32_t
@@ -653,7 +596,12 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
             send_answer = impl_->processNotify(io_message, message, buffer,
                                                tsig_context);
         } else if (opcode == Opcode::UPDATE()) {
-            send_answer = impl_->processUpdate(io_message);
+            if (impl_->ddns_forwarder_) {
+                send_answer = impl_->processUpdate(io_message);
+            } else {
+                makeErrorMessage(impl_->renderer_, message, buffer,
+                                 Rcode::NOTIMP(), tsig_context);
+            }
         } else if (opcode != Opcode::QUERY()) {
             LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_UNSUPPORTED_OPCODE)
                       .arg(message.getOpcode().toText());
@@ -712,18 +660,16 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, Message& message,
     }
 
     try {
-        // If a memory data source is configured call the separate
-        // Query::process()
         const ConstQuestionPtr question = *message.beginQuestion();
-        if (memory_client_container_ &&
-            memory_client_class_ == question->getClass()) {
+        const boost::shared_ptr<datasrc::ClientList>
+            list(getClientList(question->getClass()));
+        if (list) {
             const RRType& qtype = question->getType();
             const Name& qname = question->getName();
-            query_.process(memory_client_container_->getInstance(),
-                           qname, qtype, message, dnssec_ok);
+            query_.process(*list, qname, qtype, message, dnssec_ok);
         } else {
-            datasrc::Query query(message, cache_, dnssec_ok);
-            data_sources_.doQuery(query);
+            makeErrorMessage(renderer_, message, buffer, Rcode::REFUSED());
+            return (true);
         }
     } catch (const Exception& ex) {
         LOG_ERROR(auth_logger, AUTH_PROCESS_FAIL).arg(ex.what());
@@ -828,6 +774,9 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
         return (false);
     }
 
+    LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_RECEIVED_NOTIFY)
+      .arg(question->getName()).arg(question->getClass());
+
     const string remote_ip_address =
         io_message.getRemoteEndpoint().getAddress().toText();
     static const string command_template_start =
@@ -877,7 +826,7 @@ AuthSrvImpl::processUpdate(const IOMessage& io_message) {
     // Push the update request to a separate process via the forwarder.
     // On successful push, the request shouldn't be responded from b10-auth,
     // so we return false.
-    ddns_forwarder_.push(io_message);
+    ddns_forwarder_->push(io_message);
     return (false);
 }
 
@@ -910,56 +859,6 @@ AuthSrvImpl::validateStatistics(isc::data::ConstElementPtr data) const {
             data, true));
 }
 
-ConstElementPtr
-AuthSrvImpl::setDbFile(ConstElementPtr config) {
-    ConstElementPtr answer = isc::config::createAnswer();
-
-    if (config && config->contains("database_file")) {
-        db_file_ = config->get("database_file")->stringValue();
-    } else if (config_session_ != NULL) {
-        bool is_default;
-        string item("database_file");
-        ConstElementPtr value = config_session_->getValue(is_default, item);
-        ElementPtr final = Element::createMap();
-
-        // If the value is the default, and we are running from
-        // a specific directory ('from build'), we need to use
-        // a different value than the default (which may not exist)
-        // (btw, this should not be done here in the end, i think
-        //  the from-source script should have a check for this,
-        //  but for that we need offline access to config, so for
-        //  now this is a decent solution)
-        if (is_default && getenv("B10_FROM_BUILD")) {
-            value = Element::create(string(getenv("B10_FROM_BUILD")) +
-                                    "/bind10_zones.sqlite3");
-        }
-        final->set(item, value);
-        config = final;
-
-        db_file_ = value->stringValue();
-    } else {
-        return (answer);
-    }
-    LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_DATA_SOURCE).arg(db_file_);
-
-    // create SQL data source
-    // Note: the following step is tricky to be exception-safe and to ensure
-    // exception guarantee: We first need to perform all operations that can
-    // fail, while acquiring resources in the RAII manner.  We then perform
-    // delete and swap operations which should not fail.
-    DataSrcPtr datasrc_ptr(DataSrcPtr(new Sqlite3DataSrc));
-    datasrc_ptr->init(config);
-    data_sources_.addDataSrc(datasrc_ptr);
-
-    // The following code should be exception free.
-    if (cur_datasrc_ != NULL) {
-        data_sources_.removeDataSrc(cur_datasrc_);
-    }
-    cur_datasrc_ = datasrc_ptr;
-
-    return (answer);
-}
-
 void
 AuthSrvImpl::resumeServer(DNSServer* server, Message& message, bool done) {
     if (done) {
@@ -976,7 +875,7 @@ AuthSrv::updateConfig(ConstElementPtr new_config) {
         if (new_config) {
             configureAuthServer(*this, new_config);
         }
-        return (impl_->setDbFile(new_config));
+        return (isc::config::createAnswer());
     } catch (const isc::Exception& error) {
         LOG_ERROR(auth_logger, AUTH_CONFIG_UPDATE_FAIL).arg(error.what());
         return (isc::config::createAnswer(1, error.what()));
@@ -1023,4 +922,44 @@ AuthSrv::setDNSService(isc::asiodns::DNSServiceBase& dnss) {
 void
 AuthSrv::setTSIGKeyRing(const boost::shared_ptr<TSIGKeyRing>* keyring) {
     impl_->keyring_ = keyring;
+}
+
+void
+AuthSrv::createDDNSForwarder() {
+    LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_START_DDNS_FORWARDER);
+    impl_->ddns_forwarder_.reset(
+        new SocketSessionForwarderHolder("update", impl_->ddns_base_forwarder_));
+}
+
+void
+AuthSrv::destroyDDNSForwarder() {
+    if (impl_->ddns_forwarder_) {
+        LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_STOP_DDNS_FORWARDER);
+        impl_->ddns_forwarder_.reset();
+    }
+}
+
+void
+AuthSrv::setClientList(const RRClass& rrclass,
+                       const boost::shared_ptr<ConfigurableClientList>& list) {
+    if (list) {
+        impl_->client_lists_[rrclass] = list;
+    } else {
+        impl_->client_lists_.erase(rrclass);
+    }
+}
+boost::shared_ptr<ConfigurableClientList>
+AuthSrv::getClientList(const RRClass& rrclass) {
+    return (impl_->getClientList(rrclass));
+}
+
+vector<RRClass>
+AuthSrv::getClientListClasses() const {
+    vector<RRClass> result;
+    for (std::map<RRClass, boost::shared_ptr<ConfigurableClientList> >::
+         const_iterator it(impl_->client_lists_.begin());
+         it != impl_->client_lists_.end(); ++it) {
+        result.push_back(it->first);
+    }
+    return (result);
 }
