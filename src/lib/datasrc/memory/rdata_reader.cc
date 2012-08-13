@@ -50,13 +50,12 @@ RdataReader::Result::Result(const uint8_t* data, size_t size) :
 {}
 
 RdataReader::RdataReader(const RRClass& rrclass, const RRType& rrtype,
-                         size_t size, const uint8_t* data,
+                         const uint8_t* data,
                          size_t rdata_count, size_t sig_count,
                          const NameAction& name_action,
                          const DataAction& data_action) :
     name_action_(name_action),
     data_action_(data_action),
-    size_(size),
     spec_(getRdataEncodeSpec(rrclass, rrtype)),
     var_count_total_(spec_.varlen_count * rdata_count),
     sig_count_(sig_count),
@@ -143,6 +142,42 @@ RdataReader::nextSig() {
     } else {
         return (Result());
     }
+}
+
+size_t
+RdataReader::getSize() const {
+    size_t storage_size = 0;    // this will be the end result
+    size_t data_pos = 0;
+    size_t length_pos = 0;
+
+    // Go over all data fields, adding their lengths to storage_size
+    for (size_t spec_pos = 0; spec_pos < spec_count_; ++spec_pos) {
+        const RdataFieldSpec& spec =
+            spec_.fields[spec_pos % spec_.field_count];
+        if (spec.type == RdataFieldSpec::DOMAIN_NAME) {
+            const size_t seq_len =
+                LabelSequence(data_ + data_pos).getSerializedLength();
+            data_pos += seq_len;
+            storage_size += seq_len;
+        } else {
+            const size_t data_len =
+                (spec.type == RdataFieldSpec::FIXEDLEN_DATA ?
+                 spec.fixeddata_len : lengths_[length_pos++]);
+            data_pos += data_len;
+            storage_size += data_len;
+        }
+    }
+    // Same for all RRSIG data
+    for (size_t sig_pos = 0; sig_pos < sig_count_; ++sig_pos) {
+        const size_t sig_data_len = lengths_[length_pos++];
+        storage_size += sig_data_len;
+    }
+
+    // Finally, add the size for 16-bit length fields
+    storage_size += (var_count_total_ * sizeof(uint16_t) +
+                     sig_count_ * sizeof(uint16_t));
+
+    return (storage_size);
 }
 
 }
