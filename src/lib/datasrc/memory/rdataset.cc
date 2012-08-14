@@ -135,7 +135,7 @@ RdataSet::destroy(util::MemorySegment& mem_sgmt, RRClass rrclass,
                     rdataset->getRdataCount(),
                     rdataset->getSigRdataCount()).getSize();
     const size_t ext_rrsig_count_len =
-        rdataset->sig_rdata_count >= MANY_RRSIG_COUNT ? sizeof(uint16_t) : 0;
+        rdataset->sig_rdata_count_ >= MANY_RRSIG_COUNT ? sizeof(uint16_t) : 0;
     rdataset->~RdataSet();
     mem_sgmt.deallocate(rdataset,
                         sizeof(RdataSet) + ext_rrsig_count_len + data_len);
@@ -159,12 +159,12 @@ convertTTL(RRTTL ttl) {
 }
 }
 
-RdataSet::RdataSet(RRType type_param, size_t rdata_count_param,
-                   size_t sig_rdata_count_param, RRTTL ttl_param) :
+RdataSet::RdataSet(RRType type_param, size_t rdata_count,
+                   size_t sig_rdata_count, RRTTL ttl) :
     type(type_param),
-    sig_rdata_count(sig_rdata_count_param >= MANY_RRSIG_COUNT ?
-                    MANY_RRSIG_COUNT : sig_rdata_count_param),
-    rdata_count(rdata_count_param), ttl(convertTTL(ttl_param))
+    sig_rdata_count_(sig_rdata_count >= MANY_RRSIG_COUNT ?
+                     MANY_RRSIG_COUNT : sig_rdata_count),
+    rdata_count_(rdata_count), ttl_(convertTTL(ttl))
 {
     // Make sure an RRType object is essentially a plain 16-bit value, so
     // our assumption of the size of RdataSet holds.  If it's not the case
