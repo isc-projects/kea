@@ -100,8 +100,7 @@ namespace memory {
 /// \brief General error in RDATA encoding.
 ///
 /// This is thrown when \c RdataEncoder encounters a rare, unsupported
-/// situation. a method is called for a name or RRset which
-/// is not in or below the zone.
+/// situation.
 class RdataEncodingError : public Exception {
 public:
     RdataEncodingError(const char* file, size_t line, const char* what) :
