@@ -823,12 +823,11 @@ IfaceMgr::receive4(uint32_t timeout) {
 
     const SocketInfo* candidate = 0;
     IfaceCollection::const_iterator iface;
-
     fd_set sockets;
-    FD_ZERO(&sockets);
     int maxfd = 0;
-
     stringstream names;
+
+    FD_ZERO(&sockets);
 
     /// @todo: marginal performance optimization. We could create the set once
     /// and then use its copy for select(). Please note that select() modifies
@@ -990,9 +989,109 @@ IfaceMgr::receive4(uint32_t timeout) {
     return (pkt);
 }
 
-Pkt6Ptr IfaceMgr::receive6() {
-    uint8_t buf[RCVBUFSIZE];
+Pkt6Ptr IfaceMgr::receive6(uint32_t timeout) {
 
+    const SocketInfo* candidate = 0;
+    fd_set sockets;
+    int maxfd = 0;
+    stringstream names;
+
+    FD_ZERO(&sockets);
+
+    /// @todo: marginal performance optimization. We could create the set once
+    /// and then use its copy for select(). Please note that select() modifies
+    /// provided set to indicated which sockets have something to read.
+    IfaceCollection::const_iterator iface;
+    for (iface = ifaces_.begin(); iface != ifaces_.end(); ++iface) {
+        const SocketCollection& socket_collection = iface->getSockets();
+        for (SocketCollection::const_iterator s = socket_collection.begin();
+             s != socket_collection.end(); ++s) {
+
+            // Only deal with IPv4 addresses.
+            if (s->addr_.getFamily() == AF_INET6) {
+                names << s->sockfd_ << "(" << iface->getName() << ") ";
+
+                // Add this socket to listening set
+                FD_SET(s->sockfd_, &sockets);
+                if (maxfd < s->sockfd_) {
+                    maxfd = s->sockfd_;
+                }
+            }
+        }
+    }
+
+    // if there is session socket registered...
+    if (session_socket_ != INVALID_SOCKET) {
+        // at it to the set as well
+        FD_SET(session_socket_, &sockets);
+        if (maxfd < session_socket_)
+            maxfd = session_socket_;
+        names << session_socket_ << "(session)";
+    }
+
+    cout << "Trying to receive data on sockets:" << names.str()
+         << ".Timeout is " << timeout << " seconds." << endl;
+
+    /// @todo: implement sub-second precision one day
+    struct timeval select_timeout;
+    select_timeout.tv_sec = timeout;
+    select_timeout.tv_usec = 0;
+
+    int result = select(maxfd + 1, &sockets, NULL, NULL, &select_timeout);
+
+    if (result == 0) {
+        // nothing received and timeout has been reached
+        return (Pkt6Ptr()); // NULL
+    } else if (result < 0) {
+        cout << "Socket read error: " << strerror(errno) << endl;
+
+        /// @todo: perhaps throw here?
+        return (Pkt6Ptr()); // NULL
+    }
+
+    // Let's find out which socket has the data
+    if ((session_socket_ != INVALID_SOCKET) && (FD_ISSET(session_socket_, &sockets))) {
+        // something received over session socket
+        cout << "BIND10 command or config available over session socket." << endl;
+
+        if (session_callback_) {
+            // in theory we could call io_service.run_one() here, instead of
+            // implementing callback mechanism, but that would introduce
+            // asiolink dependency to libdhcp++ and that is something we want
+            // to avoid (see CPE market and out long term plans for minimalistic
+            // implementations.
+            session_callback_();
+        }
+
+        return (Pkt6Ptr()); // NULL
+    }
+
+    // Let's find out which interface/socket has the data
+    for (iface = ifaces_.begin(); iface != ifaces_.end(); ++iface) {
+        const SocketCollection& socket_collection = iface->getSockets();
+        for (SocketCollection::const_iterator s = socket_collection.begin();
+             s != socket_collection.end(); ++s) {
+            if (FD_ISSET(s->sockfd_, &sockets)) {
+                candidate = &(*s);
+                break;
+            }
+        }
+        if (candidate) {
+            break;
+        }
+    }
+
+    if (!candidate) {
+        cout << "Received data over unknown socket." << endl;
+        return (Pkt6Ptr()); // NULL
+    }
+
+    cout << "Trying to receive over UDP6 socket " << candidate->sockfd_ << " bound to "
+         << candidate->addr_.toText() << "/port=" << candidate->port_ << " on "
+         << iface->getFullName() << endl;
+
+    // Now we have a socket, let's get some data from it!
+    uint8_t buf[RCVBUFSIZE];
     memset(&control_buf_[0], 0, control_buf_len_);
     struct sockaddr_in6 from;
     memset(&from, 0, sizeof(from));
@@ -1024,44 +1123,7 @@ Pkt6Ptr IfaceMgr::receive6() {
     m.msg_control = &control_buf_[0];
     m.msg_controllen = control_buf_len_;
 
-    /// TODO: Need to move to select() and pool over
-    /// all available sockets. For now, we just take the
-    /// first interface and use first socket from it.
-    IfaceCollection::const_iterator iface = ifaces_.begin();
-    const SocketInfo* candidate = 0;
-    while (iface != ifaces_.end()) {
-        const SocketCollection& socket_collection = iface->getSockets();
-        for (SocketCollection::const_iterator s = socket_collection.begin();
-             s != socket_collection.end(); ++s) {
-            if (s->addr_.getFamily() != AF_INET6) {
-                continue;
-            }
-            if (s->addr_.getAddress().to_v6().is_multicast()) {
-                candidate = &(*s);
-                break;
-            }
-            if (!candidate) {
-                candidate = &(*s); // it's not multicast, but it's better than nothing
-            }
-        }
-        if (candidate) {
-            break;
-        }
-        ++iface;
-    }
-    if (iface == ifaces_.end()) {
-        isc_throw(Unexpected, "No suitable IPv6 interfaces detected. Can't receive anything.");
-    }
-
-    if (!candidate) {
-        isc_throw(Unexpected, "Interface " << iface->getFullName()
-                  << " does not have any sockets open.");
-    }
-
-    cout << "Trying to receive over UDP6 socket " << candidate->sockfd_ << " bound to "
-         << candidate->addr_.toText() << "/port=" << candidate->port_ << " on "
-         << iface->getFullName() << endl;
-    int result = recvmsg(candidate->sockfd_, &m, 0);
+    result = recvmsg(candidate->sockfd_, &m, 0);
 
     struct in6_addr to_addr;
     memset(&to_addr, 0, sizeof(to_addr));

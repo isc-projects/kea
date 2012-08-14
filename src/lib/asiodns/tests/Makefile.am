@@ -28,13 +28,13 @@ run_unittests_SOURCES += io_fetch_unittest.cc
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 
 run_unittests_LDADD  = $(GTEST_LDADD)
-run_unittests_LDADD += $(top_builddir)/src/lib/dns/libdns++.la
+run_unittests_LDADD += $(top_builddir)/src/lib/dns/libb10-dns++.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
-run_unittests_LDADD += $(top_builddir)/src/lib/util/libutil.la
-run_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
-run_unittests_LDADD += $(top_builddir)/src/lib/log/liblog.la
-run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
-run_unittests_LDADD += $(top_builddir)/src/lib/asiodns/libasiodns.la
+run_unittests_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
+run_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
+run_unittests_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
+run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
+run_unittests_LDADD += $(top_builddir)/src/lib/asiodns/libb10-asiodns.la
 
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 

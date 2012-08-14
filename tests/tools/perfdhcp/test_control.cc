@@ -370,7 +370,7 @@ TestControl::receivePackets() {
                 std::cout << "Received packet" << std::endl;
             }
         } else if (CommandOptions::instance().getIpVersion() == 6) {
-            Pkt6Ptr pkt6 = IfaceMgr::instance().receive6();
+            Pkt6Ptr pkt6 = IfaceMgr::instance().receive6(timeout);
             if (!pkt6) {
                 receiving  = false;
             } else {

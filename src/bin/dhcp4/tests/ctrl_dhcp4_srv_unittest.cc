@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -64,7 +64,7 @@ TEST_F(CtrlDhcpv4SrvTest, commands) {
     ConstElementPtr comment = parseAnswer(rcode, result);
     EXPECT_EQ(1, rcode); // expect failure (no such command as blah)
 
-    // case 1: send shutdown command without any parameters
+    // case 2: send shutdown command without any parameters
     result = ControlledDhcpv4Srv::execDhcpv4ServerCommand("shutdown", params);
     comment = parseAnswer(rcode, result);
     EXPECT_EQ(0, rcode); // expect success
@@ -73,7 +73,7 @@ TEST_F(CtrlDhcpv4SrvTest, commands) {
     ConstElementPtr x(new isc::data::IntElement(pid));
     params->set("pid", x);
 
-    // case 2: send shutdown command with 1 parameter: pid
+    // case 3: send shutdown command with 1 parameter: pid
     result = ControlledDhcpv4Srv::execDhcpv4ServerCommand("shutdown", params);
     comment = parseAnswer(rcode, result);
     EXPECT_EQ(0, rcode); // expect success

@@ -95,7 +95,7 @@ ConfigurableClientList_configure(PyObject* po_self, PyObject* args) {
         if (PyArg_ParseTuple(args, "si", &configuration, &allow_cache)) {
             const isc::data::ConstElementPtr
                 element(isc::data::Element::fromJSON(string(configuration)));
-            self->cppobj->configure(*element, allow_cache);
+            self->cppobj->configure(element, allow_cache);
             Py_RETURN_NONE;
         } else {
             return (NULL);
