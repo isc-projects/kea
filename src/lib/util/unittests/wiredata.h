@@ -32,8 +32,8 @@ namespace unittests {
 /// This method checks if the expected and actual data have the same length
 /// and all bytes are the same.  If not, it reports the point of mismatch in
 /// the google test format.
-void matchWireData(const void* expected_data, size_t expected_len,
-                   const void* actual_data, size_t actual_len);
+void matchWireData(const void* expected_data, std::size_t expected_len,
+                   const void* actual_data, std::size_t actual_len);
 }
 }
 }

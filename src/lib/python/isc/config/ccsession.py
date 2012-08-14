@@ -144,7 +144,7 @@ class ModuleCCSession(ConfigData):
        module, and one to update the configuration run-time. These
        callbacks are called when 'check_command' is called on the
        ModuleCCSession"""
-       
+
     def __init__(self, spec_file_name, config_handler, command_handler,
                  cc_session=None, handle_logging_config=True,
                  socket_file = None):
@@ -178,9 +178,9 @@ class ModuleCCSession(ConfigData):
         """
         module_spec = isc.config.module_spec_from_file(spec_file_name)
         ConfigData.__init__(self, module_spec)
-        
+
         self._module_name = module_spec.get_module_name()
-        
+
         self.set_config_handler(config_handler)
         self.set_command_handler(command_handler)
 
@@ -248,7 +248,7 @@ class ModuleCCSession(ConfigData):
            returns nothing.
            It calls check_command_without_recvmsg()
            to parse the received message.
-           
+
            If nonblock is True, it just checks if there's a command
            and does nothing if there isn't. If nonblock is False, it
            waits until it arrives. It temporarily sets timeout to infinity,
@@ -265,7 +265,7 @@ class ModuleCCSession(ConfigData):
         """Parse the given message to see if there is a command or a
            configuration update. Calls the corresponding handler
            functions if present. Responds on the channel if the
-           handler returns a message.""" 
+           handler returns a message."""
         # should we default to an answer? success-by-default? unhandled error?
         if msg is not None and not 'result' in msg:
             answer = None
@@ -314,7 +314,7 @@ class ModuleCCSession(ConfigData):
                 answer = create_answer(1, str(exc))
             if answer:
                 self._session.group_reply(env, answer)
-    
+
     def set_config_handler(self, config_handler):
         """Set the config handler for this module. The handler is a
            function that takes the full configuration and handles it.
@@ -521,7 +521,7 @@ class UIModuleCCSession(MultiConfigData):
         if not cur_list:
             cur_list = []
 
-        if value is None:
+        if value is None and "list_item_spec" in module_spec:
             if "item_default" in module_spec["list_item_spec"]:
                 value = module_spec["list_item_spec"]["item_default"]
 
@@ -572,8 +572,14 @@ class UIModuleCCSession(MultiConfigData):
         if module_spec is None:
             raise isc.cc.data.DataNotFoundError("Unknown item " + str(identifier))
 
+        # for type any, we determine the 'type' by what value is set
+        # (which would be either list or dict)
+        cur_value, _ = self.get_value(identifier)
+        type_any = module_spec['item_type'] == 'any'
+
         # the specified element must be a list or a named_set
-        if 'list_item_spec' in module_spec:
+        if 'list_item_spec' in module_spec or\
+           (type_any and type(cur_value) == list):
             value = None
             # in lists, we might get the value with spaces, making it
             # the third argument. In that case we interpret both as
@@ -583,11 +589,12 @@ class UIModuleCCSession(MultiConfigData):
                     value_str += set_value_str
                 value = isc.cc.data.parse_value_str(value_str)
             self._add_value_to_list(identifier, value, module_spec)
-        elif 'named_set_item_spec' in module_spec:
+        elif 'named_set_item_spec' in module_spec or\
+           (type_any and type(cur_value) == dict):
             item_name = None
             item_value = None
             if value_str is not None:
-                item_name =  isc.cc.data.parse_value_str(value_str)
+                item_name = value_str
             if set_value_str is not None:
                 item_value = isc.cc.data.parse_value_str(set_value_str)
             else:
@@ -643,12 +650,23 @@ class UIModuleCCSession(MultiConfigData):
         if value_str is not None:
             value = isc.cc.data.parse_value_str(value_str)
 
-        if 'list_item_spec' in module_spec:
-            if value is not None:
+        # for type any, we determine the 'type' by what value is set
+        # (which would be either list or dict)
+        cur_value, _ = self.get_value(identifier)
+        type_any = module_spec['item_type'] == 'any'
+
+        # there's two forms of 'remove from list'; the remove-value-from-list
+        # form, and the 'remove-by-index' form. We can recognize the second
+        # case by value is None
+        if 'list_item_spec' in module_spec or\
+           (type_any and type(cur_value) == list) or\
+           value is None:
+            if not type_any and value is not None:
                 isc.config.config_data.check_type(module_spec['list_item_spec'], value)
             self._remove_value_from_list(identifier, value)
-        elif 'named_set_item_spec' in module_spec:
-            self._remove_value_from_named_set(identifier, value)
+        elif 'named_set_item_spec' in module_spec or\
+           (type_any and type(cur_value) == dict):
+            self._remove_value_from_named_set(identifier, value_str)
         else:
             raise isc.cc.data.DataNotFoundError(str(identifier) + " is not a list or a named_set")
 

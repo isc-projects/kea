@@ -16,7 +16,7 @@
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 """
-BIND 10 showtech program.
+ISC sysinfo program.
 
 """
 
@@ -31,6 +31,15 @@ def usage():
     print("Usage: %s [-h] [-o <output-file>]" % sys.argv[0], \
               file=sys.stderr)
     exit(1)
+
+def write_value(out, fmt, call):
+    '''Helper function for standard value writing.
+       Writes the result from the call in the given format to out.
+       Does not write anything if the result of the call is None.
+    '''
+    value = call()
+    if value is not None:
+        out.write(fmt % value)
 
 def main():
     try:
@@ -57,39 +66,39 @@ def main():
 
     s = SysInfoFromFactory()
 
-    f.write('BIND 10 ShowTech tool\n')
-    f.write('=====================\n')
+    f.write('ISC Sysinfo tool\n')
+    f.write('================\n')
 
     f.write('\nCPU\n');
-    f.write(' + Number of processors: %d\n' % (s.get_num_processors()))
-    f.write(' + Endianness: %s\n' % (s.get_endianness()))
+    write_value(f, ' + Number of processors: %d\n', s.get_num_processors)
+    write_value(f, ' + Endianness: %s\n', s.get_endianness)
 
     f.write('\nPlatform\n');
-    f.write(' + Operating system: %s\n' % (s.get_platform_name()))
-    f.write(' + Distribution: %s\n' % (s.get_platform_distro()))
-    f.write(' + Kernel version: %s\n' % (s.get_platform_version()))
+    write_value(f, ' + Operating system: %s\n', s.get_platform_name)
+    write_value(f, ' + Distribution: %s\n', s.get_platform_distro)
+    write_value(f, ' + Kernel version: %s\n', s.get_platform_version)
 
-    f.write(' + SMP kernel: ')
-    if s.get_platform_is_smp():
-        f.write('yes')
-    else:
-        f.write('no')
-    f.write('\n')
+    if s.get_platform_is_smp() is not None:
+        f.write(' + SMP kernel: ')
+        if s.get_platform_is_smp():
+            f.write('yes')
+        else:
+            f.write('no')
+        f.write('\n')
 
-    f.write(' + Machine name: %s\n' % (s.get_platform_machine()))
-    f.write(' + Hostname: %s\n' % (s.get_platform_hostname()))
-    f.write(' + Uptime: %d seconds\n' % (s.get_uptime()))
+    write_value(f, ' + Machine name: %s\n', s.get_platform_machine)
+    write_value(f, ' + Hostname: %s\n', s.get_platform_hostname)
+    write_value(f, ' + Uptime: %d seconds\n', s.get_uptime)
 
-    l = s.get_loadavg()
-    f.write(' + Loadavg: %f %f %f\n' % (l[0], l[1], l[2]))
+    write_value(f, ' + Loadavg: %f %f %f\n', s.get_loadavg)
 
     f.write('\nMemory\n');
-    f.write(' + Total: %d bytes\n' % (s.get_mem_total()))
-    f.write(' + Free: %d bytes\n' % (s.get_mem_free()))
-    f.write(' + Cached: %d bytes\n' % (s.get_mem_cached()))
-    f.write(' + Buffers: %d bytes\n' % (s.get_mem_buffers()))
-    f.write(' + Swap total: %d bytes\n' % (s.get_mem_swap_total()))
-    f.write(' + Swap free: %d bytes\n' % (s.get_mem_swap_free()))
+    write_value(f, ' + Total: %d bytes\n', s.get_mem_total)
+    write_value(f, ' + Free: %d bytes\n', s.get_mem_free)
+    write_value(f, ' + Cached: %d bytes\n', s.get_mem_cached)
+    write_value(f, ' + Buffers: %d bytes\n', s.get_mem_buffers)
+    write_value(f, ' + Swap total: %d bytes\n', s.get_mem_swap_total)
+    write_value(f, ' + Swap free: %d bytes\n', s.get_mem_swap_free)
 
     f.write('\n\nNetwork\n');
     f.write('-------\n\n');
@@ -97,19 +106,19 @@ def main():
     f.write('Interfaces\n')
     f.write('~~~~~~~~~~\n\n')
 
-    f.write(s.get_net_interfaces())
+    write_value(f, '%s', s.get_net_interfaces)
 
     f.write('\nRouting table\n')
     f.write('~~~~~~~~~~~~~\n\n')
-    f.write(s.get_net_routing_table())
+    write_value(f, '%s', s.get_net_routing_table)
 
     f.write('\nStatistics\n')
     f.write('~~~~~~~~~~\n\n')
-    f.write(s.get_net_stats())
+    write_value(f, '%s', s.get_net_stats)
 
     f.write('\nConnections\n')
     f.write('~~~~~~~~~~~\n\n')
-    f.write(s.get_net_connections())
+    write_value(f, '%s', s.get_net_connections)
 
     try:
         if os.getuid() != 0:

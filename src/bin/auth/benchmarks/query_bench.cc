@@ -77,10 +77,9 @@ protected:
 private:
     typedef boost::shared_ptr<const IOEndpoint> IOEndpointPtr;
 protected:
-    QueryBenchMark(const bool enable_cache,
-                   const BenchQueries& queries, Message& query_message,
+    QueryBenchMark(const BenchQueries& queries, Message& query_message,
                    OutputBuffer& buffer) :
-        server_(new AuthSrv(enable_cache, xfrout_client, ddns_forwarder)),
+        server_(new AuthSrv(xfrout_client, ddns_forwarder)),
         queries_(queries),
         query_message_(query_message),
         buffer_(buffer),
@@ -119,17 +118,12 @@ private:
 
 class Sqlite3QueryBenchMark  : public QueryBenchMark {
 public:
-    Sqlite3QueryBenchMark(const int cache_slots,
-                          const char* const datasrc_file,
+    Sqlite3QueryBenchMark(const char* const datasrc_file,
                           const BenchQueries& queries,
                           Message& query_message,
                           OutputBuffer& buffer) :
-        QueryBenchMark(cache_slots >= 0 ? true : false, queries,
-                       query_message, buffer)
+        QueryBenchMark(queries, query_message, buffer)
     {
-        if (cache_slots >= 0) {
-            server_->setCacheSlots(cache_slots);
-        }
         server_->updateConfig(Element::fromJSON("{\"database_file\": \"" +
                                                 string(datasrc_file) + "\"}"));
     }
@@ -142,7 +136,7 @@ public:
                           const BenchQueries& queries,
                           Message& query_message,
                           OutputBuffer& buffer) :
-        QueryBenchMark(false, queries, query_message, buffer)
+        QueryBenchMark(queries, query_message, buffer)
     {
         configureAuthServer(*server_,
                             Element::fromJSON(
@@ -274,27 +268,9 @@ main(int argc, char* argv[]) {
 
     switch (datasrc_type) {
     case SQLITE3:
-        cout << "Benchmark enabling Hot Spot Cache with unlimited slots "
-             << endl;
+        cout << "Benchmark with SQLite3" << endl;
         BenchMark<Sqlite3QueryBenchMark>(
-            iteration, Sqlite3QueryBenchMark(0, datasrc_file, queries,
-                                             message, buffer));
-
-        cout << "Benchmark enabling Hot Spot Cache with 10*#queries slots "
-             << endl;
-        BenchMark<Sqlite3QueryBenchMark>(
-            iteration, Sqlite3QueryBenchMark(10 * queries.size(), datasrc_file,
-                                             queries, message, buffer));
-
-        cout << "Benchmark enabling Hot Spot Cache with #queries/2 slots "
-             << endl;
-        BenchMark<Sqlite3QueryBenchMark>(
-            iteration, Sqlite3QueryBenchMark(queries.size() / 2, datasrc_file,
-                                             queries, message, buffer));
-
-        cout << "Benchmark disabling Hot Spot Cache" << endl;
-        BenchMark<Sqlite3QueryBenchMark>(
-            iteration, Sqlite3QueryBenchMark(-1, datasrc_file, queries,
+            iteration, Sqlite3QueryBenchMark(datasrc_file, queries,
                                              message, buffer));
         break;
     case MEMORY:

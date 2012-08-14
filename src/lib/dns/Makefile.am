@@ -86,53 +86,53 @@ EXTRA_DIST += rdata/in_1/srv_33.h
 BUILT_SOURCES = rrclass.h rrtype.h rrparamregistry.cc
 BUILT_SOURCES += rdataclass.h rdataclass.cc
 
-lib_LTLIBRARIES = libdns++.la
+lib_LTLIBRARIES = libb10-dns++.la
 
-libdns___la_LDFLAGS = -no-undefined -version-info 2:0:0
+libb10_dns___la_LDFLAGS = -no-undefined -version-info 2:0:0
 
-libdns___la_SOURCES =
-libdns___la_SOURCES += edns.h edns.cc
-libdns___la_SOURCES += exceptions.h exceptions.cc
-libdns___la_SOURCES += labelsequence.h labelsequence.cc
-libdns___la_SOURCES += masterload.h masterload.cc
-libdns___la_SOURCES += message.h message.cc
-libdns___la_SOURCES += messagerenderer.h messagerenderer.cc
-libdns___la_SOURCES += name.h name.cc
-libdns___la_SOURCES += name_internal.h
-libdns___la_SOURCES += nsec3hash.h nsec3hash.cc
-libdns___la_SOURCES += opcode.h opcode.cc
-libdns___la_SOURCES += rcode.h rcode.cc
-libdns___la_SOURCES += rdata.h rdata.cc
-libdns___la_SOURCES += rdatafields.h rdatafields.cc
-libdns___la_SOURCES += rrclass.cc
-libdns___la_SOURCES += rrparamregistry.h
-libdns___la_SOURCES += rrset.h rrset.cc
-libdns___la_SOURCES += rrsetlist.h rrsetlist.cc
-libdns___la_SOURCES += rrttl.h rrttl.cc
-libdns___la_SOURCES += rrtype.cc
-libdns___la_SOURCES += question.h question.cc
-libdns___la_SOURCES += serial.h serial.cc
-libdns___la_SOURCES += tsig.h tsig.cc
-libdns___la_SOURCES += tsigerror.h tsigerror.cc
-libdns___la_SOURCES += tsigkey.h tsigkey.cc
-libdns___la_SOURCES += tsigrecord.h tsigrecord.cc
-libdns___la_SOURCES += character_string.h character_string.cc
-libdns___la_SOURCES += rdata/generic/detail/nsec_bitmap.h
-libdns___la_SOURCES += rdata/generic/detail/nsec_bitmap.cc
-libdns___la_SOURCES += rdata/generic/detail/nsec3param_common.cc
-libdns___la_SOURCES += rdata/generic/detail/nsec3param_common.h
-libdns___la_SOURCES += rdata/generic/detail/txt_like.h
-libdns___la_SOURCES += rdata/generic/detail/ds_like.h
+libb10_dns___la_SOURCES =
+libb10_dns___la_SOURCES += edns.h edns.cc
+libb10_dns___la_SOURCES += exceptions.h exceptions.cc
+libb10_dns___la_SOURCES += labelsequence.h labelsequence.cc
+libb10_dns___la_SOURCES += masterload.h masterload.cc
+libb10_dns___la_SOURCES += message.h message.cc
+libb10_dns___la_SOURCES += messagerenderer.h messagerenderer.cc
+libb10_dns___la_SOURCES += name.h name.cc
+libb10_dns___la_SOURCES += name_internal.h
+libb10_dns___la_SOURCES += nsec3hash.h nsec3hash.cc
+libb10_dns___la_SOURCES += opcode.h opcode.cc
+libb10_dns___la_SOURCES += rcode.h rcode.cc
+libb10_dns___la_SOURCES += rdata.h rdata.cc
+libb10_dns___la_SOURCES += rdatafields.h rdatafields.cc
+libb10_dns___la_SOURCES += rrclass.cc
+libb10_dns___la_SOURCES += rrparamregistry.h
+libb10_dns___la_SOURCES += rrset.h rrset.cc
+libb10_dns___la_SOURCES += rrsetlist.h rrsetlist.cc
+libb10_dns___la_SOURCES += rrttl.h rrttl.cc
+libb10_dns___la_SOURCES += rrtype.cc
+libb10_dns___la_SOURCES += question.h question.cc
+libb10_dns___la_SOURCES += serial.h serial.cc
+libb10_dns___la_SOURCES += tsig.h tsig.cc
+libb10_dns___la_SOURCES += tsigerror.h tsigerror.cc
+libb10_dns___la_SOURCES += tsigkey.h tsigkey.cc
+libb10_dns___la_SOURCES += tsigrecord.h tsigrecord.cc
+libb10_dns___la_SOURCES += character_string.h character_string.cc
+libb10_dns___la_SOURCES += rdata/generic/detail/nsec_bitmap.h
+libb10_dns___la_SOURCES += rdata/generic/detail/nsec_bitmap.cc
+libb10_dns___la_SOURCES += rdata/generic/detail/nsec3param_common.cc
+libb10_dns___la_SOURCES += rdata/generic/detail/nsec3param_common.h
+libb10_dns___la_SOURCES += rdata/generic/detail/txt_like.h
+libb10_dns___la_SOURCES += rdata/generic/detail/ds_like.h
 
-libdns___la_CPPFLAGS = $(AM_CPPFLAGS)
+libb10_dns___la_CPPFLAGS = $(AM_CPPFLAGS)
 # Most applications of libdns++ will only implicitly rely on libcryptolink,
 # so we add the dependency here so that the applications don't have to link
 # libcryptolink explicitly.
-libdns___la_LIBADD = $(top_builddir)/src/lib/cryptolink/libcryptolink.la
-libdns___la_LIBADD += $(top_builddir)/src/lib/util/libutil.la
+libb10_dns___la_LIBADD = $(top_builddir)/src/lib/cryptolink/libb10-cryptolink.la
+libb10_dns___la_LIBADD += $(top_builddir)/src/lib/util/libb10-util.la
 
 nodist_libdns___include_HEADERS = rdataclass.h rrclass.h rrtype.h
-nodist_libdns___la_SOURCES = rdataclass.cc rrparamregistry.cc
+nodist_libb10_dns___la_SOURCES = rdataclass.cc rrparamregistry.cc
 
 rrclass.h: rrclass-placeholder.h
 rrtype.h: rrtype-placeholder.h

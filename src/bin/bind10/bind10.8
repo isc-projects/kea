@@ -22,7 +22,7 @@
 bind10 \- BIND 10 boss process
 .SH "SYNOPSIS"
 .HP \w'\fBbind10\fR\ 'u
-\fBbind10\fR [\fB\-c\ \fR\fB\fIconfig\-filename\fR\fR] [\fB\-i\fR] [\fB\-m\ \fR\fB\fIfile\fR\fR] [\fB\-n\fR] [\fB\-p\ \fR\fB\fIdata_path\fR\fR] [\fB\-u\ \fR\fB\fIuser\fR\fR] [\fB\-v\fR] [\fB\-w\ \fR\fB\fIwait_time\fR\fR] [\fB\-\-clear\-config\fR] [\fB\-\-cmdctl\-port\fR\ \fIport\fR] [\fB\-\-config\-file\fR\ \fIconfig\-filename\fR] [\fB\-\-data\-path\fR\ \fIdirectory\fR] [\fB\-\-msgq\-socket\-file\ \fR\fB\fIfile\fR\fR] [\fB\-\-no\-cache\fR] [\fB\-\-no\-kill\fR] [\fB\-\-pid\-file\fR\ \fIfilename\fR] [\fB\-\-pretty\-name\ \fR\fB\fIname\fR\fR] [\fB\-\-user\ \fR\fB\fIuser\fR\fR] [\fB\-\-verbose\fR] [\fB\-\-wait\ \fR\fB\fIwait_time\fR\fR]
+\fBbind10\fR [\fB\-c\ \fR\fB\fIconfig\-filename\fR\fR] [\fB\-i\fR] [\fB\-m\ \fR\fB\fIfile\fR\fR] [\fB\-p\ \fR\fB\fIdata_path\fR\fR] [\fB\-u\ \fR\fB\fIuser\fR\fR] [\fB\-v\fR] [\fB\-w\ \fR\fB\fIwait_time\fR\fR] [\fB\-\-clear\-config\fR] [\fB\-\-cmdctl\-port\fR\ \fIport\fR] [\fB\-\-config\-file\fR\ \fIconfig\-filename\fR] [\fB\-\-data\-path\fR\ \fIdirectory\fR] [\fB\-\-msgq\-socket\-file\ \fR\fB\fIfile\fR\fR] [\fB\-\-no\-kill\fR] [\fB\-\-pid\-file\fR\ \fIfilename\fR] [\fB\-\-pretty\-name\ \fR\fB\fIname\fR\fR] [\fB\-\-user\ \fR\fB\fIuser\fR\fR] [\fB\-\-verbose\fR] [\fB\-\-wait\ \fR\fB\fIwait_time\fR\fR]
 .SH "DESCRIPTION"
 .PP
 The
@@ -67,13 +67,6 @@ The UNIX domain socket file for the
 \fBb10-msgq\fR(8)
 daemon to use\&. The default is
 /usr/local/var/bind10\-devel/msg_socket\&.
-.RE
-.PP
-\fB\-n\fR, \fB\-\-no\-cache\fR
-.RS 4
-Disables the hot\-spot caching used by the
-\fBb10-auth\fR(8)
-daemon\&.
 .RE
 .PP
 \fB\-i\fR, \fB\-\-no\-kill\fR

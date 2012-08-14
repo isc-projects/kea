@@ -19,6 +19,7 @@
 #include <dns/rdataclass.h>
 
 #include <datasrc/client.h>
+#include <datasrc/client_list.h>
 
 #include <auth/query.h>
 
@@ -341,17 +342,17 @@ namespace {
 // the qname consists of a single label, which also means it's the root name),
 // we should search the deepest zone we have (which should be the root zone;
 // otherwise it's a query error).
-DataSourceClient::FindResult
-findZone(const DataSourceClient& client, const Name& qname, RRType qtype) {
+ClientList::FindResult
+findZone(const ClientList& list, const Name& qname, RRType qtype) {
     if (qtype != RRType::DS() || qname.getLabelCount() == 1) {
-        return (client.findZone(qname));
+        return (list.find(qname));
     }
-    return (client.findZone(qname.split(1)));
+    return (list.find(qname.split(1)));
 }
 }
 
 void
-Query::process(datasrc::DataSourceClient& datasrc_client,
+Query::process(datasrc::ClientList& client_list,
                const isc::dns::Name& qname, const isc::dns::RRType& qtype,
                isc::dns::Message& response, bool dnssec)
 {
@@ -360,19 +361,18 @@ Query::process(datasrc::DataSourceClient& datasrc_client,
     QueryCleaner cleaner(*this);
 
     // Set up query parameters for the rest of the (internal) methods
-    initialize(datasrc_client, qname, qtype, response, dnssec);
+    initialize(client_list, qname, qtype, response, dnssec);
 
     // Found a zone which is the nearest ancestor to QNAME
-    const DataSourceClient::FindResult result = findZone(*datasrc_client_,
-                                                         *qname_, *qtype_);
+    const ClientList::FindResult result = findZone(*client_list_, *qname_,
+                                                   *qtype_);
 
     // If we have no matching authoritative zone for the query name, return
     // REFUSED.  In short, this is to be compatible with BIND 9, but the
     // background discussion is not that simple.  See the relevant topic
     // at the BIND 10 developers's ML:
     // https://lists.isc.org/mailman/htdig/bind10-dev/2010-December/001633.html
-    if (result.code != result::SUCCESS &&
-        result.code != result::PARTIALMATCH) {
+    if (result.dsrc_client_ == NULL) {
         // If we tried to find a "parent zone" for a DS query and failed,
         // we may still have authority at the child side.  If we do, the query
         // has to be handled there.
@@ -384,7 +384,7 @@ Query::process(datasrc::DataSourceClient& datasrc_client,
         response_->setRcode(Rcode::REFUSED());
         return;
     }
-    ZoneFinder& zfinder = *result.zone_finder;
+    ZoneFinder& zfinder = *result.finder_;
 
     // We have authority for a zone that contain the query name (possibly
     // indirectly via delegation).  Look into the zone.
@@ -457,7 +457,7 @@ Query::process(datasrc::DataSourceClient& datasrc_client,
             // If the answer is a result of wildcard substitution,
             // add a proof that there's no closer name.
             if (dnssec_ && db_context->isWildcard()) {
-                addWildcardProof(*result.zone_finder, *db_context);
+                addWildcardProof(*result.finder_, *db_context);
             }
             break;
         case ZoneFinder::SUCCESS:
@@ -475,17 +475,17 @@ Query::process(datasrc::DataSourceClient& datasrc_client,
             // section.
             // Checking the findZone() is a lightweight check to see if
             // qname is the zone origin.
-            if (result.code != result::SUCCESS ||
+            if (!result.exact_match_ ||
                 db_context->code != ZoneFinder::SUCCESS ||
                 (*qtype_ != RRType::NS() && !qtype_is_any))
             {
-                addAuthAdditional(*result.zone_finder, additionals_);
+                addAuthAdditional(*result.finder_, additionals_);
             }
 
             // If the answer is a result of wildcard substitution,
             // add a proof that there's no closer name.
             if (dnssec_ && db_context->isWildcard()) {
-                addWildcardProof(*result.zone_finder, *db_context);
+                addWildcardProof(*result.finder_, *db_context);
             }
             break;
         case ZoneFinder::DELEGATION:
@@ -505,12 +505,12 @@ Query::process(datasrc::DataSourceClient& datasrc_client,
             // If DNSSEC is requested, see whether there is a DS
             // record for this delegation.
             if (dnssec_) {
-                addDS(*result.zone_finder, db_context->rrset->getName());
+                addDS(*result.finder_, db_context->rrset->getName());
             }
             break;
         case ZoneFinder::NXDOMAIN:
             response_->setRcode(Rcode::NXDOMAIN());
-            addSOA(*result.zone_finder);
+            addSOA(*result.finder_);
             if (dnssec_) {
                 if (db_context->isNSECSigned() && db_context->rrset) {
                     addNXDOMAINProofByNSEC(zfinder, db_context->rrset);
@@ -520,7 +520,7 @@ Query::process(datasrc::DataSourceClient& datasrc_client,
             }
             break;
         case ZoneFinder::NXRRSET:
-            addSOA(*result.zone_finder);
+            addSOA(*result.finder_);
             if (dnssec_) {
                 addNXRRsetProof(zfinder, *db_context);
             }
@@ -538,11 +538,11 @@ Query::process(datasrc::DataSourceClient& datasrc_client,
 }
 
 void
-Query::initialize(datasrc::DataSourceClient& datasrc_client,
+Query::initialize(datasrc::ClientList& client_list,
                   const isc::dns::Name& qname, const isc::dns::RRType& qtype,
                   isc::dns::Message& response, bool dnssec)
 {
-    datasrc_client_ = &datasrc_client;
+    client_list_ = &client_list;
     qname_ = &qname;
     qtype_ = &qtype;
     response_ = &response;
@@ -553,7 +553,7 @@ Query::initialize(datasrc::DataSourceClient& datasrc_client,
 
 void
 Query::reset() {
-    datasrc_client_ = NULL;
+    client_list_ = NULL;
     qname_ = NULL;
     qtype_ = NULL;
     response_ = NULL;
@@ -565,10 +565,10 @@ Query::reset() {
 
 bool
 Query::processDSAtChild() {
-    const DataSourceClient::FindResult zresult =
-        datasrc_client_->findZone(*qname_);
+    const ClientList::FindResult zresult =
+        client_list_->find(*qname_, true);
 
-    if (zresult.code != result::SUCCESS) {
+    if (zresult.dsrc_client_ == NULL) {
         return (false);
     }
 
@@ -583,12 +583,12 @@ Query::processDSAtChild() {
     // by seeing the SOA.
     response_->setHeaderFlag(Message::HEADERFLAG_AA);
     response_->setRcode(Rcode::NOERROR());
-    addSOA(*zresult.zone_finder);
+    addSOA(*zresult.finder_);
     ConstZoneFinderContextPtr ds_context =
-        zresult.zone_finder->find(*qname_, RRType::DS(), dnssec_opt_);
+        zresult.finder_->find(*qname_, RRType::DS(), dnssec_opt_);
     if (ds_context->code == ZoneFinder::NXRRSET) {
         if (dnssec_) {
-            addNXRRsetProof(*zresult.zone_finder, *ds_context);
+            addNXRRsetProof(*zresult.finder_, *ds_context);
         }
     }
 

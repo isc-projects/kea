@@ -6,7 +6,9 @@
 ;;
 ;; in the bindctl.
 
+;; This is here mostly for technical reasons.
 BIND.           0   CH  SOA bind. authors.bind. 0 28800 7200 604800 86400
+BIND.           0   CH  NS  BIND.
 
 VERSION.BIND.   0   CH  TXT "@@VERSION_STRING@@"
 ;; HOSTNAME.BIND    0   CH  TXT "localhost"
