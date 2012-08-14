@@ -55,6 +55,7 @@ RdataSet*
 RdataSet::create(util::MemorySegment& mem_sgmt, RdataEncoder& encoder,
                  ConstRRsetPtr rrset, ConstRRsetPtr sig_rrset)
 {
+    // Check basic validity
     if (!rrset && !sig_rrset) {
         isc_throw(BadValue, "Both RRset and RRSIG are NULL");
     }
@@ -69,6 +70,18 @@ RdataSet::create(util::MemorySegment& mem_sgmt, RdataEncoder& encoder,
             isc_throw(BadValue,
                       "RR class doesn't match between RRset and RRSIG");
         }
+    }
+
+    // Check assumptions on the number of RDATAs
+    if (rrset && rrset->getRdataCount() > MAX_RDATA_COUNT) {
+        isc_throw(RdataSetError, "Too many RDATAs for RdataSet: "
+                  << rrset->getRdataCount() << ", must be <= "
+                  << MAX_RDATA_COUNT);
+    }
+    if (sig_rrset && sig_rrset->getRdataCount() > MAX_RRSIG_COUNT) {
+        isc_throw(RdataSetError, "Too many RRSIGs for RdataSet: "
+                  << sig_rrset->getRdataCount() << ", must be <= "
+                  << MAX_RRSIG_COUNT);
     }
 
     const RRClass rrclass = rrset ? rrset->getClass() : sig_rrset->getClass();
@@ -96,13 +109,18 @@ RdataSet::create(util::MemorySegment& mem_sgmt, RdataEncoder& encoder,
         }
     }
 
+    const size_t rrsig_count = sig_rrset ? sig_rrset->getRdataCount() : 0;
+    const size_t ext_rrsig_count_len =
+        rrsig_count >= MANY_RRSIG_COUNT ? sizeof(uint16_t) : 0;
     const size_t data_len = encoder.getStorageLength();
-    void* p = mem_sgmt.allocate(sizeof(RdataSet) + data_len);
+    void* p = mem_sgmt.allocate(sizeof(RdataSet) + ext_rrsig_count_len +
+                                data_len);
     RdataSet* rdataset = new(p) RdataSet(rrtype,
                                          rrset ? rrset->getRdataCount() : 0,
-                                         sig_rrset ?
-                                         sig_rrset->getRdataCount() : 0,
-                                         rrttl);
+                                         rrsig_count, rrttl);
+    if (rrsig_count >= MANY_RRSIG_COUNT) {
+        *rdataset->getExtSIGCountBuf() = rrsig_count;
+    }
     encoder.encode(rdataset->getDataBuf(), data_len);
     return (rdataset);
 }
@@ -114,10 +132,13 @@ RdataSet::destroy(util::MemorySegment& mem_sgmt, RRClass rrclass,
     const size_t data_len =
         RdataReader(rrclass, rdataset->type,
                     reinterpret_cast<const uint8_t*>(rdataset->getDataBuf()),
-                    rdataset->rdata_count,
-                    rdataset->sig_rdata_count).getSize();
+                    rdataset->getRdataCount(),
+                    rdataset->getSigRdataCount()).getSize();
+    const size_t ext_rrsig_count_len =
+        rdataset->sig_rdata_count >= MANY_RRSIG_COUNT ? sizeof(uint16_t) : 0;
     rdataset->~RdataSet();
-    mem_sgmt.deallocate(rdataset, sizeof(RdataSet) + data_len);
+    mem_sgmt.deallocate(rdataset,
+                        sizeof(RdataSet) + ext_rrsig_count_len + data_len);
 }
 
 namespace {
@@ -140,7 +161,9 @@ convertTTL(RRTTL ttl) {
 
 RdataSet::RdataSet(RRType type_param, size_t rdata_count_param,
                    size_t sig_rdata_count_param, RRTTL ttl_param) :
-    type(type_param), sig_rdata_count(sig_rdata_count_param),
+    type(type_param),
+    sig_rdata_count(sig_rdata_count_param >= MANY_RRSIG_COUNT ?
+                    MANY_RRSIG_COUNT : sig_rdata_count_param),
     rdata_count(rdata_count_param), ttl(convertTTL(ttl_param))
 {
     // Make sure an RRType object is essentially a plain 16-bit value, so

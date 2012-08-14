@@ -17,6 +17,7 @@
 #include <util/buffer.h>
 #include <util/memory_segment_local.h>
 
+#include <dns/rdata.h>
 #include <dns/rrset.h>
 #include <dns/rrclass.h>
 #include <dns/rrtype.h>
@@ -29,9 +30,14 @@
 
 #include <gtest/gtest.h>
 
+#include <boost/lexical_cast.hpp>
+
+#include <string>
+
 using namespace isc::dns;
 using namespace isc::datasrc::memory;
 using namespace isc::testutils;
+using boost::lexical_cast;
 
 namespace {
 
@@ -76,6 +82,33 @@ TEST_F(RdataSetTest, create) {
     RdataSet::destroy(mem_sgmt_, RRClass::IN(), rdataset);
 }
 
+ConstRRsetPtr
+getRRsetWithRdataCount(size_t rdata_count) {
+    RRsetPtr rrset(new RRset(Name("example.com"), RRClass::IN(), RRType::TXT(),
+                             RRTTL(3600)));
+    for (size_t i = 0; i < rdata_count; ++i) {
+        rrset->addRdata(rdata::createRdata(RRType::TXT(), RRClass::IN(),
+                                           lexical_cast<std::string>(i)));
+    }
+    return (rrset);
+}
+
+TEST_F(RdataSetTest, createManyRRs) {
+    // RRset with possible maximum number of RDATAs
+    RdataSet* rdataset = RdataSet::create(mem_sgmt_, encoder_,
+                                          getRRsetWithRdataCount(8191),
+                                          ConstRRsetPtr());
+    EXPECT_EQ(8191, rdataset->getRdataCount());
+    EXPECT_EQ(0, rdataset->getSigRdataCount());
+    RdataSet::destroy(mem_sgmt_, RRClass::IN(), rdataset);
+
+    // Exceeding that will result in an exception.
+    EXPECT_THROW(RdataSet::create(mem_sgmt_, encoder_,
+                                  getRRsetWithRdataCount(8192),
+                                  ConstRRsetPtr()),
+                 RdataSetError);
+}
+
 TEST_F(RdataSetTest, createWithRRSIG) {
     // Normal case.
     RdataSet* rdataset = RdataSet::create(mem_sgmt_, encoder_, a_rrset_,
@@ -93,6 +126,48 @@ TEST_F(RdataSetTest, createWithRRSIG) {
     rdataset = RdataSet::create(mem_sgmt_, encoder_, a_rrset_, rrsig_badttl);
     EXPECT_EQ(RRTTL(1076895760), restoreTTL(rdataset->getTTLData()));
     RdataSet::destroy(mem_sgmt_, RRClass::IN(), rdataset);
+}
+
+ConstRRsetPtr
+getRRSIGWithRdataCount(size_t sig_count) {
+    RRsetPtr rrset(new RRset(Name("example.com"), RRClass::IN(),
+                             RRType::RRSIG(), RRTTL(3600)));
+    for (size_t i = 0; i < sig_count; ++i) {
+        rrset->addRdata(rdata::createRdata(
+                            RRType::RRSIG(), RRClass::IN(),
+                            "A 5 2 3600 20120814220826 20120715220826 " +
+                            lexical_cast<std::string>(i) +
+                            " example.com. FAKE"));
+    }
+    return (rrset);
+}
+
+TEST_F(RdataSetTest, createManyRRSIGs) {
+    // 7 has a special meaning in the implementation: if the number of the
+    // RRSIGs reaches this value, an extra 'sig count' field will be created.
+    RdataSet* rdataset = RdataSet::create(mem_sgmt_, encoder_, a_rrset_,
+                                          getRRSIGWithRdataCount(7));
+    EXPECT_EQ(7, rdataset->getSigRdataCount());
+    RdataSet::destroy(mem_sgmt_, RRClass::IN(), rdataset);
+
+    // 8 would cause overflow in the normal 3-bit field if there were no extra
+    // count field.
+    rdataset = RdataSet::create(mem_sgmt_, encoder_, a_rrset_,
+                                getRRSIGWithRdataCount(8));
+    EXPECT_EQ(8, rdataset->getSigRdataCount());
+    RdataSet::destroy(mem_sgmt_, RRClass::IN(), rdataset);
+
+    // Up to 2^16-1 RRSIGs are allowed (although that would be useless
+    // in practice)
+    rdataset = RdataSet::create(mem_sgmt_, encoder_, a_rrset_,
+                                getRRSIGWithRdataCount(65535));
+    EXPECT_EQ(65535, rdataset->getSigRdataCount());
+    RdataSet::destroy(mem_sgmt_, RRClass::IN(), rdataset);
+
+    // Exceeding this limit will result in an exception.
+    EXPECT_THROW(RdataSet::create(mem_sgmt_, encoder_, a_rrset_,
+                                  getRRSIGWithRdataCount(65536)),
+                 RdataSetError);
 }
 
 TEST_F(RdataSetTest, createWithRRSIGOnly) {
@@ -132,6 +207,11 @@ TEST_F(RdataSetTest, badCeate) {
 
     // Pass non RRSIG for the sig parameter
     EXPECT_THROW(RdataSet::create(mem_sgmt_, encoder_, a_rrset_, a_rrset_),
+                 isc::BadValue);
+
+    // Pass RRSIG for normal RRset (the RdataEncoder will catch this and throw)
+    EXPECT_THROW(RdataSet::create(mem_sgmt_, encoder_, rrsig_rrset_,
+                                  rrsig_rrset_),
                  isc::BadValue);
 
     // RR class doesn't match between RRset and RRSIG
