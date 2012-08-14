@@ -18,12 +18,14 @@
 #include <util/memory_segment_local.h>
 
 #include <dns/rdata.h>
+#include <dns/rdataclass.h>
 #include <dns/rrset.h>
 #include <dns/rrclass.h>
 #include <dns/rrtype.h>
 #include <dns/rrttl.h>
 
 #include <datasrc/memory/rdata_encoder.h>
+#include <datasrc/memory/rdata_reader.h>
 #include <datasrc/memory/rdataset.h>
 
 #include <testutils/dnsmessage_test.h>
@@ -35,6 +37,7 @@
 #include <string>
 
 using namespace isc::dns;
+using namespace isc::dns::rdata;
 using namespace isc::datasrc::memory;
 using namespace isc::testutils;
 using boost::lexical_cast;
@@ -68,20 +71,53 @@ restoreTTL(const void* ttl_data) {
     return (RRTTL(b));
 }
 
+// A helper callback for checkRdataSet.  This confirms the given data
+// is the expected in::A RDATA (the value is taken from the RdataSetTest
+// constructor).
+void
+checkData(const uint8_t* data, size_t size) {
+    isc::util::InputBuffer b(data, size);
+    EXPECT_EQ(0, in::A(b, size).compare(in::A("192.0.2.1")));
+}
+
+// This is a set of checks for an RdataSet created with some simple
+// conditions.  with_rrset/with_rrsig is true iff the RdataSet is supposed to
+// contain normal/RRSIG RDATA.
+void
+checkRdataSet(const RdataSet& rdataset, bool with_rrset, bool with_rrsig) {
+    EXPECT_FALSE(rdataset.next); // by default the next pointer should be NULL
+    EXPECT_EQ(RRType::A(), rdataset.type);
+    // See the RdataSetTest constructor for the magic number.
+    EXPECT_EQ(RRTTL(1076895760), restoreTTL(rdataset.getTTLData()));
+    EXPECT_EQ(with_rrset ? 1 : 0, rdataset.getRdataCount());
+    EXPECT_EQ(with_rrsig ? 1 : 0, rdataset.getSigRdataCount());
+
+    // A simple test for the data content.  Details tests for the encoder/
+    // reader should be basically sufficient for various cases of the data,
+    // and the fact that this test doesn't detect memory leak should be
+    // reasonably sufficient that the implementation handles the data region
+    // correctly.  Here we check one simple case for a simple form of RDATA,
+    // mainly for checking the behavior of getDataBuf().
+    RdataReader reader(RRClass::IN(), RRType::A(),
+                       reinterpret_cast<const uint8_t*>(
+                           rdataset.getDataBuf()),
+                       rdataset.getRdataCount(), rdataset.getSigRdataCount(),
+                       &RdataReader::emptyNameAction, checkData);
+    reader.iterate();
+}
+
 TEST_F(RdataSetTest, create) {
     // A simple case of creating an RdataSet.  Confirming the resulting
     // fields have the expected values, and then destroying it (TearDown()
     // would detect any memory leak)
     RdataSet* rdataset = RdataSet::create(mem_sgmt_, encoder_, a_rrset_,
                                           ConstRRsetPtr());
-    EXPECT_FALSE(rdataset->next); // by default the next pointer should be NULL
-    EXPECT_EQ(RRType::A(), rdataset->type);
-    EXPECT_EQ(RRTTL(1076895760), restoreTTL(rdataset->getTTLData()));
-    EXPECT_EQ(1, rdataset->getRdataCount());
-    EXPECT_EQ(0, rdataset->getSigRdataCount());
+    checkRdataSet(*rdataset, true, false);
     RdataSet::destroy(mem_sgmt_, RRClass::IN(), rdataset);
 }
 
+// A helper function to create an RRset containing the given number of
+// unique RDATAs.
 ConstRRsetPtr
 getRRsetWithRdataCount(size_t rdata_count) {
     RRsetPtr rrset(new RRset(Name("example.com"), RRClass::IN(), RRType::TXT(),
@@ -113,8 +149,7 @@ TEST_F(RdataSetTest, createWithRRSIG) {
     // Normal case.
     RdataSet* rdataset = RdataSet::create(mem_sgmt_, encoder_, a_rrset_,
                                           rrsig_rrset_);
-    EXPECT_EQ(RRTTL(1076895760), restoreTTL(rdataset->getTTLData()));
-    EXPECT_EQ(1, rdataset->getSigRdataCount());
+    checkRdataSet(*rdataset, true, true);
     RdataSet::destroy(mem_sgmt_, RRClass::IN(), rdataset);
 
     // Unusual case: TTL doesn't match.  This implementation accepts that,
@@ -124,10 +159,12 @@ TEST_F(RdataSetTest, createWithRRSIG) {
                                    "A 5 2 3600 20120814220826 "
                                    "20120715220826 1234 example.com. FAKE"));
     rdataset = RdataSet::create(mem_sgmt_, encoder_, a_rrset_, rrsig_badttl);
-    EXPECT_EQ(RRTTL(1076895760), restoreTTL(rdataset->getTTLData()));
+    checkRdataSet(*rdataset, true, true);
     RdataSet::destroy(mem_sgmt_, RRClass::IN(), rdataset);
 }
 
+// A helper function to create an RRSIG RRset containing the given number of
+// unique RDATAs.
 ConstRRsetPtr
 getRRSIGWithRdataCount(size_t sig_count) {
     RRsetPtr rrset(new RRset(Name("example.com"), RRClass::IN(),
@@ -175,10 +212,7 @@ TEST_F(RdataSetTest, createWithRRSIGOnly) {
     // RRSIG.
     RdataSet* rdataset = RdataSet::create(mem_sgmt_, encoder_, ConstRRsetPtr(),
                                           rrsig_rrset_);
-    EXPECT_EQ(RRType::A(), rdataset->type); // type covered is used as type
-    EXPECT_EQ(RRTTL(1076895760), restoreTTL(rdataset->getTTLData()));
-    EXPECT_EQ(0, rdataset->getRdataCount());
-    EXPECT_EQ(1, rdataset->getSigRdataCount());
+    checkRdataSet(*rdataset, false, true);
     RdataSet::destroy(mem_sgmt_, RRClass::IN(), rdataset);
 }
 
