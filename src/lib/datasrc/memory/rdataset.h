@@ -31,6 +31,16 @@ namespace datasrc {
 namespace memory {
 class RdataEncoder;
 
+/// \brief General error on creating RdataSet.
+///
+/// This is thrown when creating \c RdataSet encounters a rare, unsupported
+/// situation.
+class RdataSetError : public Exception {
+public:
+    RdataSetError(const char* file, size_t line, const char* what) :
+        Exception(file, line, what) {}
+};
+
 class RdataSet {
 public:
     static RdataSet* create(util::MemorySegment& mem_sgmt,
@@ -43,9 +53,9 @@ public:
     typedef boost::interprocess::offset_ptr<RdataSet> RdataSetPtr;
     typedef boost::interprocess::offset_ptr<const RdataSet> ConstRdataSetPtr;
 
-    // Note: the size and order of the members are important.  Don't change
-    // them unless there's strong reason for that and the consequences are
-    // considered.
+    // Note: the size and order of the members are carefully chosen to
+    // maximize efficiency.  Don't change them unless there's strong reason
+    // for that and the consequences are considered.
 
     RdataSetPtr next;
     const dns::RRType type;
@@ -53,13 +63,36 @@ private:
     const uint16_t sig_rdata_count : 3;
     const uint16_t rdata_count : 13;
     const uint32_t ttl;       ///< TTL of the RdataSet, net byte order
+
+    static const size_t MAX_RDATA_COUNT = (1 << 13) - 1;
+    static const size_t MAX_RRSIG_COUNT = (1 << 16) - 1;
+    static const size_t MANY_RRSIG_COUNT = (1 << 3) - 1;
 public:
     size_t getRdataCount() const { return (rdata_count); }
-    size_t getSigRdataCount() const { return (sig_rdata_count); }
+    size_t getSigRdataCount() const {
+        if (sig_rdata_count < MANY_RRSIG_COUNT) {
+            return (sig_rdata_count);
+        } else {
+            return (*getExtSIGCountBuf());
+        }
+    }
     const void* getTTLData() const { return (&ttl); }
-    void* getDataBuf() { return (this + 1); }
+    void* getDataBuf() {
+        if (sig_rdata_count < MANY_RRSIG_COUNT) {
+            return (this + 1);
+        } else {
+            return (getExtSIGCountBuf() + 1);
+        }
+    }
 
 private:
+    uint16_t* getExtSIGCountBuf() {
+        return (reinterpret_cast<uint16_t*>(this + 1));
+    }
+    const uint16_t* getExtSIGCountBuf() const {
+        return (reinterpret_cast<const uint16_t*>(this + 1));
+    }
+
     RdataSet(dns::RRType type, size_t rdata_count, size_t sig_rdata_count,
              dns::RRTTL ttl);
     ~RdataSet() {}
