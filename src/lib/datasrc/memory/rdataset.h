@@ -60,25 +60,25 @@ public:
     RdataSetPtr next;
     const dns::RRType type;
 private:
-    const uint16_t sig_rdata_count : 3;
-    const uint16_t rdata_count : 13;
-    const uint32_t ttl;       ///< TTL of the RdataSet, net byte order
+    const uint16_t sig_rdata_count_ : 3;
+    const uint16_t rdata_count_ : 13;
+    const uint32_t ttl_;       ///< TTL of the RdataSet, net byte order
 
     static const size_t MAX_RDATA_COUNT = (1 << 13) - 1;
     static const size_t MAX_RRSIG_COUNT = (1 << 16) - 1;
     static const size_t MANY_RRSIG_COUNT = (1 << 3) - 1;
 public:
-    size_t getRdataCount() const { return (rdata_count); }
+    size_t getRdataCount() const { return (rdata_count_); }
     size_t getSigRdataCount() const {
-        if (sig_rdata_count < MANY_RRSIG_COUNT) {
-            return (sig_rdata_count);
+        if (sig_rdata_count_ < MANY_RRSIG_COUNT) {
+            return (sig_rdata_count_);
         } else {
             return (*getExtSIGCountBuf());
         }
     }
-    const void* getTTLData() const { return (&ttl); }
+    const void* getTTLData() const { return (&ttl_); }
     void* getDataBuf() {
-        if (sig_rdata_count < MANY_RRSIG_COUNT) {
+        if (sig_rdata_count_ < MANY_RRSIG_COUNT) {
             return (this + 1);
         } else {
             return (getExtSIGCountBuf() + 1);
