@@ -2116,11 +2116,6 @@ http://bind10.isc.org/wiki/ScalableZoneLoadDesign#a7.2UpdatingaZone
 Xfrout/transfer_acl[0]	{"action": "ACCEPT"}	any	(default)</screen>
 
     <para>
-      You can configure it in the same way as any ACL
-      (<xref linkend="common-acl" />).
-    </para>
-
-    <para>
       If you want to require TSIG in access control, a system wide TSIG
       "key ring" must be configured.
       In this example, we allow client matching both the IP address
@@ -2134,6 +2129,11 @@ Xfrout/transfer_acl[0]	{"action": "ACCEPT"}	any	(default)</screen>
     <para>Both <command>b10-xfrout</command> and <command>b10-auth</command>
       will use the system wide keyring to check
       TSIGs in the incoming messages and to sign responses.</para>
+
+    <para>
+      For further details on ACL configuration, see 
+      <xref linkend="common-acl" />.
+    </para>
 
     <note><simpara>
         The way to specify zone specific configuration (ACLs, etc) is
