@@ -1,3 +1,5 @@
+SUBDIRS = testdata .
+
 PYCOVERAGE_RUN = @PYCOVERAGE_RUN@
 PYTESTS = b10-stats_test.py b10-stats-httpd_test.py
 EXTRA_DIST = $(PYTESTS) test_utils.py
@@ -23,7 +25,7 @@ endif
 	PYTHONPATH=$(COMMON_PYTHON_PATH):$(abs_top_builddir)/src/bin/stats:$(abs_top_builddir)/src/bin/stats/tests:$(abs_top_builddir)/src/bin/msgq:$(abs_top_builddir)/src/lib/python/isc/config \
 	B10_FROM_SOURCE=$(abs_top_srcdir) \
 	BIND10_MSGQ_SOCKET_FILE=$(abs_top_builddir)/msgq_socket \
-	CONFIG_TESTDATA_PATH=$(abs_top_srcdir)/src/lib/config/tests/testdata \
+	CONFIG_TESTDATA_PATH=$(abs_top_srcdir)/src/bin/stats/tests/testdata \
 	B10_LOCKFILE_DIR_FROM_BUILD=$(abs_top_builddir) \
 	$(PYCOVERAGE_RUN) $(abs_srcdir)/$$pytest || exit ; \
 	done
