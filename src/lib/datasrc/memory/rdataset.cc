@@ -12,6 +12,10 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <exceptions/exceptions.h>
+
+#include <dns/rdata.h>
+#include <dns/rdataclass.h>
 #include <dns/rrclass.h>
 #include <dns/rrtype.h>
 #include <dns/rrset.h>
@@ -24,32 +28,81 @@
 
 #include <stdint.h>
 #include <cstring>
+#include <typeinfo>             // for bad_cast
 #include <new>                  // for the placement new
 
 using namespace isc::dns;
+using namespace isc::dns::rdata;
 
 namespace isc {
 namespace datasrc {
 namespace memory {
 
+namespace {
+RRType
+getCoveredType(const Rdata& rdata) {
+    try {
+        const generic::RRSIG& rrsig_rdata =
+            dynamic_cast<const generic::RRSIG&>(rdata);
+        return (rrsig_rdata.typeCovered());
+    } catch (const std::bad_cast&) {
+        isc_throw(BadValue, "Non RRSIG is given where it's expected");
+    }
+}
+}
+
 RdataSet*
 RdataSet::create(util::MemorySegment& mem_sgmt, RdataEncoder& encoder,
                  ConstRRsetPtr rrset, ConstRRsetPtr sig_rrset)
 {
-    encoder.start(rrset->getClass(), rrset->getType());
-    for (RdataIteratorPtr it = rrset->getRdataIterator();
-         !it->isLast();
-         it->next()) {
-        encoder.addRdata(it->getCurrent());
+    if (!rrset && !sig_rrset) {
+        isc_throw(BadValue, "Both RRset and RRSIG are NULL");
+    }
+    if (rrset && rrset->getRdataCount() == 0) {
+        isc_throw(BadValue, "Empty RRset");
+    }
+    if (sig_rrset && sig_rrset->getRdataCount() == 0) {
+        isc_throw(BadValue, "Empty SIG RRset");
+    }
+    if (rrset && sig_rrset) {
+        if (rrset->getClass() != sig_rrset->getClass()) {
+            isc_throw(BadValue,
+                      "RR class doesn't match between RRset and RRSIG");
+        }
+    }
+
+    const RRClass rrclass = rrset ? rrset->getClass() : sig_rrset->getClass();
+    const RRType rrtype = rrset ? rrset->getType() :
+        getCoveredType(sig_rrset->getRdataIterator()->getCurrent());
+    const RRTTL rrttl = rrset ? rrset->getTTL() : sig_rrset->getTTL();
+
+    encoder.start(rrclass, rrtype);
+    if (rrset) {
+        for (RdataIteratorPtr it = rrset->getRdataIterator();
+             !it->isLast();
+             it->next()) {
+            encoder.addRdata(it->getCurrent());
+        }
+    }
+    if (sig_rrset) {
+        for (RdataIteratorPtr it = sig_rrset->getRdataIterator();
+             !it->isLast();
+             it->next())
+        {
+            if (getCoveredType(it->getCurrent()) != rrtype) {
+                isc_throw(BadValue, "Type covered doesn't match");
+            }
+            encoder.addSIGRdata(it->getCurrent());
+        }
     }
 
     const size_t data_len = encoder.getStorageLength();
     void* p = mem_sgmt.allocate(sizeof(RdataSet) + data_len);
-    RdataSet* rdataset = new(p) RdataSet(rrset->getType(),
-                                         rrset->getRdataCount(),
+    RdataSet* rdataset = new(p) RdataSet(rrtype,
+                                         rrset ? rrset->getRdataCount() : 0,
                                          sig_rrset ?
                                          sig_rrset->getRdataCount() : 0,
-                                         rrset->getTTL());
+                                         rrttl);
     encoder.encode(rdataset->getDataBuf(), data_len);
     return (rdataset);
 }
