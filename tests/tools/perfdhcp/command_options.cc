@@ -57,8 +57,9 @@ CommandOptions::reset() {
     report_delay_ = 0;
     clients_num_ = 0;
     mac_prefix_.assign(mac, mac + 6);
-    base_.resize(0);
-    num_request_.resize(0);
+    duid_prefix_.clear();
+    base_.clear();
+    num_request_.clear();
     period_ = 0;
     drop_time_set_ = 0;
     drop_time_.assign(dt, dt + 2);
@@ -83,6 +84,8 @@ CommandOptions::reset() {
     diags_.clear();
     wrapped_.clear();
     server_name_.clear();
+
+    generateDuidPrefix();
 }
 
 void
@@ -461,6 +464,7 @@ CommandOptions::decodeMac(const std::string& base) {
 void
 CommandOptions::decodeDuid(const std::string& base) {
     // Strip argument from duid=
+    std::vector<uint8_t> duid_prefix;
     size_t found = base.find('=');
     check(found == std::string::npos, "expected -b<base> format for duid is -b duid=<duid>");
     std::string b = base.substr(found + 1);
@@ -480,8 +484,10 @@ CommandOptions::decodeDuid(const std::string& base) {
             isc_throw(isc::InvalidParameter,
                       "invalid characters in DUID provided, exepected hex digits");
         }
-        duid_prefix_.push_back(static_cast<uint8_t>(ui));
+        duid_prefix.push_back(static_cast<uint8_t>(ui));
     }
+    // Assign the new duid only if successfully generated.
+    std::swap(duid_prefix, duid_prefix_);
 }
 
 void

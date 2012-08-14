@@ -33,6 +33,14 @@ namespace perfdhcp {
 /// This class is responsible for executing DHCP performance
 /// test end to end.
 ///
+/// Option factory functions are registered using
+/// \ref LibDHCP::OptionFactoryRegister. Registered factory functions
+/// provide a way to create options of the same type in the same way.
+///  When new option instance is needed the corresponding factory
+/// function is called to create it. This is done by calling
+/// \ref Option::factory with DHCP message type specified as one of
+///  parameters. Some of the parameters passed to factory function
+/// may be ignored (e.g. option buffer).
 class TestControl : public boost::noncopyable {
 public:
 
@@ -119,11 +127,16 @@ public:
     /// \throw isc::Unexpected if internal Test Controler error occured.
     void run();
 
-private:
+protected:
 
-    /// \brief Private default constructor.
+    // We would really like these methods and members to be private but
+    // they have to be accessible for unit-testing. Another, possibly better,
+    // solution is to make this class friend of test class but this is not
+    // what's followed in other classes.
+
+    /// \brief Default constructor.
     ///
-    /// Default constructor is private as the object can be created
+    /// Default constructor is protected as the object can be created
     /// only via \ref instance method.
     TestControl();
 
@@ -139,40 +152,76 @@ private:
     /// \return true if any of the exit conditions is fulfiled.
     bool checkExitConditions() const;
 
-    static dhcp::OptionPtr
-    factoryElapsedTimeSolicit6(dhcp::Option::Universe u,
-                               uint16_t type,
-                               const dhcp::OptionBuffer& buf);
-    
 
-    /// \brief Factory function to create generic option.
+    /// \brief Factory function to create DHCPv6 ELAPSED_TIME option.
     ///
-    /// Factory function is registered using \ref LibDHCP::OptionFactoryRegister.
-    /// Registered factory functions provide a way to create options of the
-    /// same type in the same way. When new option instance is needed the
-    /// corresponding factory function is called to create it. This is done
-    /// by calling \ref Option::factory with DHCP message type specified as
-    /// one of parameters. Some of the parameters passed to factory function
-    /// may be ignored (e.g. option buffer). For generic option however, factory
-    /// function creates option using contents of the buffer.
+    /// This factory function creates DHCPv6 ELAPSED_TIME option instance.
+    /// If empty buffer is passed the option buffer will be initialized
+    /// to length 2 and values will be initialized to zeros. Otherwise
+    /// function will initialize option buffer with values in passed buffer.
     ///
     /// \param u universe (V6 or V4).
     /// \param type option-type.
     /// \param buf option-buffer.
-    /// \return instance o the generic option.
+    /// \throw if elapsed time buffer size is neither 2 nor 0.
+    /// \return instance o the option.
+    static dhcp::OptionPtr
+    factoryElapsedTime6(dhcp::Option::Universe u,
+                        uint16_t type,
+                        const dhcp::OptionBuffer& buf);
+
+    /// \brief Factory function to create generic option.
+    ///
+    /// This factory function creates option with specified universe,
+    /// type and buf. It does not have any additional logic validating
+    /// the buffer contents, size  etc.
+    ///
+    /// \param u universe (V6 or V4).
+    /// \param type option-type.
+    /// \param buf option-buffer.
+    /// \return instance o the option.
     static dhcp::OptionPtr factoryGeneric(dhcp::Option::Universe u,
                                           uint16_t type,
                                           const dhcp::OptionBuffer& buf);
 
+    /// \brief Factory function to create IA_NA option.
+    ///
+    /// This factory function creates DHCPv6 IA_NA option instance.
+    /// \TODO: add support for IA Address options.
+    /// \param u universe (V6 or V4).
+    /// \param type option-type.
+    /// \param buf option-buffer.
+    /// \return instance of IA_NA option.
     static dhcp::OptionPtr factoryIana6(dhcp::Option::Universe u,
                                         uint16_t type,
                                         const dhcp::OptionBuffer& buf);
 
+    /// \brief Factory function to create DHCPv6 ORO option.
+    ///
+    /// This factory function creates DHCPv6 Option Request Option instance.
+    /// The created option will contain the following set of requested options:
+    /// - D6O_NAME_SERVERS
+    /// - D6O_DOMAIN_SEARCH
+    ///
+    /// \param u universe (V6 or V4).
+    /// \param type option-type.
+    /// \param buf option-buffer (ignored and should be empty).
+    /// \return instance of ORO option.
     static dhcp::OptionPtr
     factoryOptionRequestOption6(dhcp::Option::Universe u,
                                 uint16_t type,
                                 const dhcp::OptionBuffer& buf);
 
+    /// \brief Factory function to create DHCPv6 RAPID_COMMIT option instance.
+    ///
+    /// This factory function creates DHCPv6 RAPID_COMMIT option instance.
+    /// The buffer passed to this option must be empty because option does
+    /// not have any payload.
+    ///
+    /// \param u universe (V6 or V4).
+    /// \param type option-type.
+    /// \param buf option-buffer (ignored and should be empty).
+    /// \return instance of RAPID_COMMIT option..
     static dhcp::OptionPtr factoryRapidCommit6(dhcp::Option::Universe u,
                                                uint16_t type,
                                                const dhcp::OptionBuffer& buf);
@@ -180,14 +229,8 @@ private:
 
     /// \brief Factory function to create DHCPv4 Request List option.
     ///
-    /// Factory function is registered using \ref LibDHCP::OptionFactoryRegister.
-    /// Registered factory functions provide a way to create options of the
-    /// same type in the same way. When new option instance is needed the
-    /// corresponding factory function is called to create it. This is done
-    /// by calling \ref Option::factory with DHCP message type specified as
-    /// one of parameters. This factory function ignores contents of the
-    /// buffer provided and creates option buffer internally with the following
-    /// list of requested options:
+    /// This factory function creayes DHCPv4 PARAMETER_REQUEST_LIST option
+    /// instance with the following set of requested options:
     /// - DHO_SUBNET_MASK,
     /// - DHO_BROADCAST_ADDRESS,
     /// - DHO_TIME_OFFSET,
@@ -198,12 +241,23 @@ private:
     ///
     /// \param u universe (V6 or V4).
     /// \param type option-type.
-    /// \param buf option-buffer.
+    /// \param buf option-buffer (ignored and should be empty).
     /// \return instance o the generic option.
      static dhcp::OptionPtr factoryRequestList4(dhcp::Option::Universe u,
                                                uint16_t type,
                                                const dhcp::OptionBuffer& buf);
 
+    /// \brief Generate DUID.
+    ///
+    /// Method generates unique DUID. The number of DUIDs it can generate
+    /// depends on the number of simulated clinets, which is specified
+    /// from the command line. It uses \ref CommandOptions object to retrieve
+    /// number of clinets. Since the last six octets of DUID are constructed
+    /// from the MAC address, this function uses \ref generateMacAddress
+    /// internally to randomize the DUID.
+    ///
+    /// \throw isc::BadValue if \ref generateMacAddress throws.
+    /// \return vector representing DUID.
     std::vector<uint8_t> generateDuid() const;
 
     /// \brief Generate MAC address.
@@ -241,6 +295,7 @@ private:
     /// (for DHCPv6) than broadcast or multicast option is set on
     /// the socket.
     ///
+    /// \param port port to bound socket to.
     /// \throw isc::BadValue if socket can't be created for given
     /// interface, local address or remote address.
     /// \throw isc::InvalidOperation if broadcast option can't be
@@ -248,8 +303,11 @@ private:
     /// for the v6 socket.
     /// \throw isc::Unexpected if interal unexpected error occured.
     /// \return socket descriptor.
-    int openSocket() const;
+    int openSocket(uint16_t port = 0) const;
 
+    /// \brief Receive DHCPv4 or DHCPv6 packets from the server.
+    ///
+    /// Method receives DHCPv4 or DHCPv6 packets from the server.
     void receivePackets();
 
     /// \brief Register option factory functions for DHCPv4
@@ -292,11 +350,23 @@ private:
     /// \throw isc::BadValue if MAC address has invalid length.
     void sendDiscover4(const TestControlSocket& socket);
 
+    /// \brief Send DHCPv6 SOLICIT message.
+    ///
+    /// Method creates and sends DHCPv6 SOLICIT message to the server
+    /// with the following options:
+    /// - D6O_ELAPSED_TIME,
+    /// - D6O_RAPID_COMMIT if rapid commit is requested in command line,
+    /// - D6O_CLIENTID,
+    /// - D6O_ORO (Option Request Option),
+    /// - D6O_IA_NA.
+    ///
+    /// \param socket socket to be used to send the message.
+    /// \throw isc::Unexpected if failed to create new packet instance.
     void sendSolicit6(const TestControlSocket& socket);
 
-    /// \brief Set default DHCPv4 packet data.
+    /// \brief Set default DHCPv4 packet parameters.
     ///
-    /// This method sets default data on the DHCPv4 packet:
+    /// This method sets default parameters on the DHCPv4 packet:
     /// - interface name,
     /// - local port = 68 (DHCP client port),
     /// - remote port = 67 (DHCP server port),
@@ -305,10 +375,22 @@ private:
     /// - hops = 1 (pretending that we are a relay)
     ///
     /// \param socket socket used to send the packet.
-    /// \param pkt packet to be configured.
+    /// \param pkt reference to packet to be configured.
     void setDefaults4(const TestControlSocket& socket,
                       const boost::shared_ptr<dhcp::Pkt4>& pkt);
 
+    /// \brief Set default DHCPv6 packet parameters.
+    ///
+    /// This method sets default parameters on the DHCPv6 packet:
+    /// - interface name,
+    /// - interface index,
+    /// - local port,
+    /// - remote port,
+    /// - local address,
+    /// - remote address (server).
+    ///
+    /// \param socket socket used to send the packet.
+    /// \param pkt reference to packet to be configured.
     void setDefaults6(const TestControlSocket& socket,
                       const boost::shared_ptr<dhcp::Pkt6>& pkt);
 
@@ -318,6 +400,8 @@ private:
     /// Function takes current time, last sent packet's time and
     /// expected rate in its calculations.
     void updateSendDue();
+
+private:
 
     boost::posix_time::ptime send_due_;    ///< Due time to initiate next chunk
                                            ///< of exchanges.

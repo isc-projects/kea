@@ -97,10 +97,16 @@ TestControl::checkExitConditions() const {
 }
 
 OptionPtr
-TestControl::factoryElapsedTimeSolicit6(Option::Universe, uint16_t,
-                                        const OptionBuffer&) {
-    return OptionPtr(new Option(Option::V6, D6O_ELAPSED_TIME,
-                                OptionBuffer(2, 0)));
+TestControl::factoryElapsedTime6(Option::Universe, uint16_t,
+                                 const OptionBuffer& buf) {
+    if (buf.size() == 2) {
+        return OptionPtr(new Option(Option::V6, D6O_ELAPSED_TIME, buf));
+    } else if (buf.size() == 0) {
+        return OptionPtr(new Option(Option::V6, D6O_ELAPSED_TIME,
+                                    OptionBuffer(2, 0)));
+    }
+    isc_throw(isc::BadValue,
+              "elapsed time option buffer size has to be 0 or 2");
 }
 
 OptionPtr
@@ -112,14 +118,17 @@ TestControl::factoryGeneric(Option::Universe u, uint16_t type,
 
 OptionPtr
 TestControl::factoryIana6(Option::Universe, uint16_t,
-                          const OptionBuffer&) {
+                          const OptionBuffer& buf) {
     const uint8_t buf_array[] = {
         0, 0, 0, 1,                     // IAID = 1
         0, 0, 3600 >> 8, 3600 && 0xff,  // T1 = 3600
         0, 0, 5400 >> 8, 5400 & 0xff,   // T2 = 5400
     };
-    OptionBuffer buf(buf_array, buf_array + sizeof(buf_array));
-    return OptionPtr(new Option(Option::V6, D6O_IA_NA, buf));
+    OptionBuffer buf_ia_na(buf_array, buf_array + sizeof(buf_array));
+    for (int i = 0;  i < buf.size(); ++i) {
+        buf_ia_na.push_back(buf[i]);
+    }
+    return OptionPtr(new Option(Option::V6, D6O_IA_NA, buf_ia_na));
 }
 
 OptionPtr
@@ -207,8 +216,13 @@ TestControl::generateDuid() const {
     if ((clients_num == 0) || (clients_num == 1)) {
         return options.getDuidPrefix();
     }
-    // Get the base MAC address. We are going to randomize part of it.
+    // Get the base DUID. We are going to randomize part of it.
     std::vector<uint8_t> duid(options.getDuidPrefix());
+    std::vector<uint8_t> mac_addr(generateMacAddress());
+    duid.resize(duid.size() - mac_addr.size());
+    for (int i = 0; i < mac_addr.size(); ++i) {
+        duid.push_back(mac_addr[i]);
+    }
     return duid;
 }
 
@@ -227,12 +241,6 @@ TestControl::getNextExchangesNum() const {
         // synchornize with it.
         if (options.getRate() != 0) {
             time_period period(send_due_, now);
-            // Null condition should not occur because we
-            // have checked it in the first if statement but
-            // let's keep this check just in case.
-            if (period.is_null()) {
-                return (0);
-            }
             time_duration duration = period.length();
             // due_factor indicates the number of seconds that
             // sending next chunk of packets will take.
@@ -261,17 +269,22 @@ TestControl::getNextExchangesNum() const {
 }
 
 int
-TestControl::openSocket() const {
+TestControl::openSocket(uint16_t port) const {
     CommandOptions& options = CommandOptions::instance();
     std::string localname = options.getLocalName();
     std::string servername = options.getServerName();
     uint8_t family = AF_INET;
-    uint16_t port = 67;
     int sock = 0;
     IOAddress remoteaddr(servername);
+    if (port == 0) {
+        if (options.getIpVersion() == 6) {
+            port = 547;
+        } else if (port == 0) {
+            port = 67;
+        }
+    }
     if (options.getIpVersion() == 6) {
         family = AF_INET6;
-        port = 547;
     }
     // Local name is specified along with '-l' option.
     // It may point to interface name or local address.
@@ -332,7 +345,7 @@ TestControl::openSocket() const {
                                      &idx, sizeof(idx));
             }
             if (ret < 0) {
-                isc_throw(InvalidOperation, 
+                isc_throw(InvalidOperation,
                           "unable to enable multicast on socket " <<  sock
                           << ". errno = " << errno);
             }
@@ -389,7 +402,7 @@ TestControl::registerOptionFactories6() const {
     if (!factories_registered) {
         LibDHCP::OptionFactoryRegister(Option::V6,
                                        D6O_ELAPSED_TIME,
-                                       &TestControl::factoryElapsedTimeSolicit6);
+                                       &TestControl::factoryElapsedTime6);
         LibDHCP::OptionFactoryRegister(Option::V6,
                                        D6O_RAPID_COMMIT,
                                        &TestControl::factoryRapidCommit6);
@@ -528,6 +541,8 @@ TestControl::setDefaults4(const TestControlSocket& socket,
     pkt->setRemotePort(DHCP4_SERVER_PORT);
     // The remote server's name or IP.
     pkt->setRemoteAddr(IOAddress(options.getServerName()));
+    // Set local addresss.
+    pkt->setLocalAddr(IOAddress(socket.getAddress()));
     // Set relay (GIADDR) address to local address.
     pkt->setGiaddr(IOAddress(socket.getAddress()));
     // Pretend that we have one relay (which is us).
@@ -546,6 +561,8 @@ TestControl::setDefaults6(const TestControlSocket& socket,
     pkt->setLocalPort(DHCP6_CLIENT_PORT);
     // Server's port (548)
     pkt->setRemotePort(DHCP6_SERVER_PORT);
+    // Set local address.
+    pkt->setLocalAddr(socket.getAddress());
     // The remote server's name or IP.
     pkt->setRemoteAddr(IOAddress(options.getServerName()));
 }
