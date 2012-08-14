@@ -2499,24 +2499,26 @@ what is XfroutClient xfr_client??
       </para>
 
       <para>
-        To allow queries on the "192.168.1.1" interface, these commands could be
-        issued. Note that we don't set the value of the third rule -- in the case
-        of resolver, rejecting all queries is the default value of new rule. And
-        that last final rule is not needed too, as the default, when a query falls
-        off the list, is rejection.
+	The following session is an example of extending the ACL to also
+	allow queries from 192.0.2.0/24:
         <screen>
 > <userinput>config show Resolver/query_acl</userinput>
 Resolver/query_acl[0]   {"action": "ACCEPT", "from": "127.0.0.1"}   any (default)
 Resolver/query_acl[1]   {"action": "ACCEPT", "from": "::1"} any (default)
 > <userinput>config add Resolver/query_acl</userinput>
-> <userinput>config set Resolver/query_acl[2] {"action": "ACCEPT", "from": "192.168.1.1/24"}</userinput>
+> <userinput>config set Resolver/query_acl[2] {"action": "ACCEPT", "from": "192.0.2.0/24"}</userinput>
 > <userinput>config add Resolver/query_acl</userinput>
 > <userinput>config show Resolver/query_acl</userinput>
 Resolver/query_acl[0]   {"action": "ACCEPT", "from": "127.0.0.1"}   any (modified)
 Resolver/query_acl[1]   {"action": "ACCEPT", "from": "::1"} any (modified)
-Resolver/query_acl[2]   {"action": "ACCEPT", "from": "192.168.1.1/24"}  any (modified)
+Resolver/query_acl[2]   {"action": "ACCEPT", "from": "192.0.2.0/24"}  any (modified)
 Resolver/query_acl[3]   {"action": "REJECT"}    any (modified)
 > <userinput>config commit</userinput></screen>
+	Note that we didn't set the value of the last final rule
+	(query_acl[3]) -- in the case of resolver, rejecting all queries is
+	the default value of a new rule.  In fact, this rule can even be
+	omitted completely, as the default, when a query falls off the list,
+	is rejection.
       </para>
 
     </section>
