@@ -417,7 +417,7 @@ xfrin
       <command>show_processes</command> lists the current processes
       managed by <command>bind10</command>.
       The output is an array in JSON format containing the process
-      ID and the name for each.
+      ID, the name for each and the address name used on each message bus.
 <!-- TODO: what is name? -->
 <!-- TODO: change to JSON object format? -->
 <!-- TODO: ticket #1406 -->
