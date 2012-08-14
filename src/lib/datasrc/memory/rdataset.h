@@ -78,11 +78,10 @@ public:
     }
     const void* getTTLData() const { return (&ttl_); }
     void* getDataBuf() {
-        if (sig_rdata_count_ < MANY_RRSIG_COUNT) {
-            return (this + 1);
-        } else {
-            return (getExtSIGCountBuf() + 1);
-        }
+        return (getDataBuf<void, RdataSet>(this));
+    }
+    const void* getDataBuf() const {
+        return (getDataBuf<const void, const RdataSet>(this));
     }
 
 private:
@@ -91,6 +90,14 @@ private:
     }
     const uint16_t* getExtSIGCountBuf() const {
         return (reinterpret_cast<const uint16_t*>(this + 1));
+    }
+    template <typename RetType, typename ThisType>
+    static RetType* getDataBuf(ThisType* rdataset) {
+        if (rdataset->sig_rdata_count_ < MANY_RRSIG_COUNT) {
+            return (rdataset + 1);
+        } else {
+            return (rdataset->getExtSIGCountBuf() + 1);
+        }
     }
 
     RdataSet(dns::RRType type, size_t rdata_count, size_t sig_rdata_count,
