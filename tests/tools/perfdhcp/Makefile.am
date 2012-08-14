@@ -25,7 +25,9 @@ perfdhcp2_SOURCES += localized_option.h
 perfdhcp2_SOURCES += perf_pkt6.cc perf_pkt6.h
 perfdhcp2_SOURCES += perf_pkt4.cc perf_pkt4.h
 perfdhcp2_SOURCES += pkt_transform.cc pkt_transform.h
+perfdhcp2_SOURCES += stats_mgr.h
 perfdhcp2_SOURCES += test_control.cc test_control.h
+libb10_perfdhcp___la_CXXFLAGS = $(AM_CXXFLAGS)
 
 perfdhcp2_CXXFLAGS = $(AM_CXXFLAGS)
 if USE_CLANGPP
@@ -34,9 +36,9 @@ if USE_CLANGPP
 perfdhcp2_CXXFLAGS += -Wno-unused-parameter
 endif
 
-perfdhcp2_LDADD = $(top_builddir)/src/lib/exceptions/libexceptions.la
-perfdhcp2_LDADD += $(top_builddir)/src/lib/dhcp/libdhcp++.la
-perfdhcp2_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
+perfdhcp2_LDADD = $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
+perfdhcp2_LDADD += $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
+perfdhcp2_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 
 #pkglibexec_PROGRAMS  = perfdhcp
 #perfdhcp_SOURCES  = perfdhcp.c

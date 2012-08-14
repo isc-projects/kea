@@ -20,11 +20,11 @@ if USE_CLANGPP
 AM_CXXFLAGS += -Wno-error
 endif
 
-lib_LTLIBRARIES = libcc.la
-libcc_la_SOURCES = data.cc data.h session.cc session.h
-libcc_la_SOURCES += logger.cc logger.h
-nodist_libcc_la_SOURCES = cc_messages.cc cc_messages.h
-libcc_la_LIBADD = $(top_builddir)/src/lib/log/liblog.la
+lib_LTLIBRARIES = libb10-cc.la
+libb10_cc_la_SOURCES = data.cc data.h session.cc session.h
+libb10_cc_la_SOURCES += logger.cc logger.h
+nodist_libb10_cc_la_SOURCES = cc_messages.cc cc_messages.h
+libb10_cc_la_LIBADD = $(top_builddir)/src/lib/log/libb10-log.la
 
 CLEANFILES = *.gcno *.gcda session_config.h cc_messages.cc cc_messages.h
 

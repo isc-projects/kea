@@ -42,9 +42,10 @@ if HAVE_GTEST
 
 TESTS += dhcp6_unittests
 
-dhcp6_unittests_SOURCES = ../dhcp6_srv.h ../dhcp6_srv.cc
+dhcp6_unittests_SOURCES = ../dhcp6_srv.h ../dhcp6_srv.cc ../ctrl_dhcp6_srv.cc
 dhcp6_unittests_SOURCES += dhcp6_unittests.cc
 dhcp6_unittests_SOURCES += dhcp6_srv_unittest.cc
+dhcp6_unittests_SOURCES += ctrl_dhcp6_srv_unittest.cc
 
 if USE_CLANGPP
 # Disable unused parameter warning caused by some of the
@@ -55,10 +56,12 @@ endif
 dhcp6_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 dhcp6_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 dhcp6_unittests_LDADD = $(GTEST_LDADD)
-dhcp6_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
-dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libdhcp++.la
-dhcp6_unittests_LDADD += $(top_builddir)/src/lib/log/liblog.la
-dhcp6_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/cc/libb10-cc.la
 
 endif
 

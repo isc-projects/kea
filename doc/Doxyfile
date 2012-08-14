@@ -573,7 +573,8 @@ WARN_LOGFILE           =
 # with spaces.
 
 INPUT                  = ../src/lib/exceptions ../src/lib/cc \
-    ../src/lib/config ../src/lib/cryptolink ../src/lib/dns ../src/lib/datasrc \
+    ../src/lib/config ../src/lib/cryptolink ../src/lib/dns \
+    ../src/lib/datasrc ../src/lib/datasrc/memory \
     ../src/bin/auth ../src/bin/resolver ../src/lib/bench ../src/lib/log \
     ../src/lib/log/compiler ../src/lib/asiolink/ ../src/lib/nsas \
     ../src/lib/testutils ../src/lib/cache ../src/lib/server_common/ \

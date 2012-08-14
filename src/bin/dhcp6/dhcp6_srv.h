@@ -67,6 +67,8 @@ public:
     ///         critical error.
     bool run();
 
+    /// @brief Instructs the server to shut down.
+    void shutdown();
 protected:
     /// @brief Processes incoming SOLICIT and returns response.
     ///
@@ -184,7 +186,7 @@ protected:
 
     /// indicates if shutdown is in progress. Setting it to true will
     /// initiate server shutdown procedure.
-    volatile bool shutdown;
+    volatile bool shutdown_;
 };
 
 }; // namespace isc::dhcp

@@ -82,19 +82,19 @@ void ControlledDhcpv4Srv::sessionReader(void) {
 }
 
 void ControlledDhcpv4Srv::establishSession() {
-    
+
     string specfile;
     if (getenv("B10_FROM_BUILD")) {
         specfile = string(getenv("B10_FROM_BUILD")) +
-            "/src/bin/auth/dhcp4.spec";
+            "/src/bin/dhcp4/dhcp4.spec";
     } else {
         specfile = string(DHCP4_SPECFILE_LOCATION);
     }
 
     /// @todo: Check if session is not established already. Throw, if it is.
-    
+
     cout << "b10-dhcp4: my specfile is " << specfile << endl;
-    
+
     cc_session_ = new Session(io_service_.get_io_service());
 
     config_session_ = new ModuleCCSession(specfile, *cc_session_,

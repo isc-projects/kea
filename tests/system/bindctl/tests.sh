@@ -108,9 +108,9 @@ if [ $status != 0 ]; then echo "I:failed"; fi
 n=`expr $n + 1`
 
 echo "I:Changing the data source from sqlite3 to in-memory ($n)"
-DATASRC_SPEC='[{"type": "memory", "zones": [{"origin": "com","file":'
-DATASRC_SPEC="${DATASRC_SPEC} \"${TEST_TOP}/bindctl/nsx1/example-normalized.db\"}]}]"
-echo "config set Auth/datasources ${DATASRC_SPEC}
+DATASRC_SPEC='{"type": "MasterFiles", "cache-enable": true, "params": {"com":'
+DATASRC_SPEC="${DATASRC_SPEC} \"${TEST_TOP}/bindctl/nsx1/example-normalized.db\"}}"
+echo "config set data_sources/classes/IN[0] ${DATASRC_SPEC}
 config commit
 quit
 " | $RUN_BINDCTL \

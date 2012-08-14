@@ -3,6 +3,26 @@
    "listen_on": [{"address": "10.53.0.1", "port": 53210}],
    "database_file": "@abs_builddir@/zone.sqlite3"
  },
+ "data_sources": {
+    "classes": {
+        "IN": [{
+            "type": "sqlite3",
+            "params": {
+                "database_file": "@abs_builddir@/zone.sqlite3"
+            }
+        }]
+    }
+ },
+ "Logging": {
+     "loggers": [
+        {
+            "name": "*",
+            "severity": "DEBUG",
+            "output_options": [],
+            "debuglevel": 99
+        }
+     ]
+ },
  "Boss": {
    "components": {
      "b10-auth": {"kind": "needed", "special": "auth" },

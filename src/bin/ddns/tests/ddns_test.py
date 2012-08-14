@@ -1136,7 +1136,7 @@ class TestDDNSSession(unittest.TestCase):
         num_rrsets = len(self.__req_message.get_section(SECTION_PREREQUISITE))
         self.assertEqual(2, num_rrsets)
 
-    def check_session_msg(self, result, expect_recv=1, notify_auth=False):
+    def check_session_msg(self, result, expect_recv=2):
         '''Check post update communication with other modules.'''
         # iff the update succeeds, b10-ddns should tell interested other
         # modules the information about the update zone.  Possible modules
@@ -1145,32 +1145,28 @@ class TestDDNSSession(unittest.TestCase):
         #                         'zone_class', <updated_zone_class>}]}
         # for auth, it should be:
         # {'command': ['loadzone', {'origin': <updated_zone_name>,
-        #                           'class', <updated_zone_class>,
-        #                           'datasrc', <datasrc type, should be
-        #                                       "memory" in practice>}]}
+        #                           'class', <updated_zone_class>}]}
         # and expect an answer by calling group_recvmsg().
         #
         # expect_recv indicates the expected number of calls to
-        # group_recvmsg(), which is normally 1, but can be 0 if send fails;
+        # group_recvmsg(), which is normally 2, but can be 0 if send fails;
         # if the message is to be sent
         if result == UPDATE_SUCCESS:
-            expected_sentmsg = 2 if notify_auth else 1
+            expected_sentmsg = 2
             self.assertEqual(expected_sentmsg,
                              len(self.__cc_session._sent_msg))
             self.assertEqual(expect_recv, self.__cc_session._recvmsg_called)
             msg_cnt = 0
-            if notify_auth:
-                sent_msg, sent_group = self.__cc_session._sent_msg[msg_cnt]
-                sent_cmd = sent_msg['command']
-                self.assertEqual('Auth', sent_group)
-                self.assertEqual('loadzone', sent_cmd[0])
-                self.assertEqual(3, len(sent_cmd[1]))
-                self.assertEqual(TEST_ZONE_NAME.to_text(),
-                                 sent_cmd[1]['origin'])
-                self.assertEqual(TEST_RRCLASS.to_text(),
-                                 sent_cmd[1]['class'])
-                self.assertEqual('memory', sent_cmd[1]['datasrc'])
-                msg_cnt += 1
+            sent_msg, sent_group = self.__cc_session._sent_msg[msg_cnt]
+            sent_cmd = sent_msg['command']
+            self.assertEqual('Auth', sent_group)
+            self.assertEqual('loadzone', sent_cmd[0])
+            self.assertEqual(2, len(sent_cmd[1]))
+            self.assertEqual(TEST_ZONE_NAME.to_text(),
+                             sent_cmd[1]['origin'])
+            self.assertEqual(TEST_RRCLASS.to_text(),
+                             sent_cmd[1]['class'])
+            msg_cnt += 1
             sent_msg, sent_group = self.__cc_session._sent_msg[msg_cnt]
             sent_cmd = sent_msg['command']
             self.assertEqual('Xfrout', sent_group)
@@ -1267,21 +1263,21 @@ class TestDDNSSession(unittest.TestCase):
             [{'type': 'memory', 'class': 'IN', 'zones': [
                     {'origin': TEST_ZONE_NAME_STR, 'filetype': 'sqlite3'}]}]
         self.check_session()
-        self.check_session_msg(UPDATE_SUCCESS, expect_recv=2, notify_auth=True)
+        self.check_session_msg(UPDATE_SUCCESS)
 
         # Let sendmsg() raise an exception.  The first exception shouldn't
         # stop sending the second message.  There's just no recv calls.
         self.__cc_session.clear_msg()
         self.__cc_session._sendmsg_exception = SessionError('send error')
         self.check_session()
-        self.check_session_msg(UPDATE_SUCCESS, expect_recv=0, notify_auth=True)
+        self.check_session_msg(UPDATE_SUCCESS, expect_recv=0)
 
         # Likewise, in the case recvmsg() raises (and there should be recv
         # calls in this case)
         self.__cc_session.clear_msg()
         self.__cc_session._recvmsg_exception = SessionError('recv error')
         self.check_session()
-        self.check_session_msg(UPDATE_SUCCESS, expect_recv=2, notify_auth=True)
+        self.check_session_msg(UPDATE_SUCCESS)
 
     def test_session_with_config(self):
         '''Check a session with more realistic config setups.

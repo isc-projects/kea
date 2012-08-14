@@ -138,7 +138,7 @@ public:
     ///
     /// This class encapsulates results and (possibly) associated context
     /// of a call to the \c find() method.   The public member variables of
-    /// this class reprsent the result of the call.  They are a
+    /// this class represent the result of the call.  They are a
     /// straightforward tuple of the result code and a pointer (and
     /// optionally special flags) to the found RRset.
     ///
