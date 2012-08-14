@@ -65,11 +65,8 @@ RdataSet::create(util::MemorySegment& mem_sgmt, RdataEncoder& encoder,
     if (sig_rrset && sig_rrset->getRdataCount() == 0) {
         isc_throw(BadValue, "Empty SIG RRset");
     }
-    if (rrset && sig_rrset) {
-        if (rrset->getClass() != sig_rrset->getClass()) {
-            isc_throw(BadValue,
-                      "RR class doesn't match between RRset and RRSIG");
-        }
+    if (rrset && sig_rrset && rrset->getClass() != sig_rrset->getClass()) {
+        isc_throw(BadValue, "RR class doesn't match between RRset and RRSIG");
     }
 
     // Check assumptions on the number of RDATAs
@@ -135,7 +132,7 @@ RdataSet::destroy(util::MemorySegment& mem_sgmt, RRClass rrclass,
                     rdataset->getRdataCount(),
                     rdataset->getSigRdataCount()).getSize();
     const size_t ext_rrsig_count_len =
-        rdataset->sig_rdata_count_ >= MANY_RRSIG_COUNT ? sizeof(uint16_t) : 0;
+        rdataset->sig_rdata_count_ == MANY_RRSIG_COUNT ? sizeof(uint16_t) : 0;
     rdataset->~RdataSet();
     mem_sgmt.deallocate(rdataset,
                         sizeof(RdataSet) + ext_rrsig_count_len + data_len);
