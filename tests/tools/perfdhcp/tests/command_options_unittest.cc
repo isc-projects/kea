@@ -245,7 +245,8 @@ TEST_F(CommandOptionsTest, Base) {
     process("perfdhcp -6 -b MAC=10::20::30::40::50::60 "
             "-l ethx -b duiD=1AB7F5670901FF all");
     uint8_t mac[6] = {0x10, 0x20, 0x30, 0x40, 0x50, 0x60 };
-    uint8_t duid[7] = { 0x1A, 0xB7, 0xF5, 0x67, 0x09, 0x01, 0xFF };
+    uint8_t duid[14] = {  0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
+                          0x01, 0x01, 0x01, 0x10, 0x11, 0x1F, 0x14 };
 
     // Test Mac
     std::vector<uint8_t> v1 = opt.getMacPrefix();
@@ -256,11 +257,15 @@ TEST_F(CommandOptionsTest, Base) {
                  isc::InvalidParameter);
 
     // Test DUID
+    EXPECT_NO_THROW(
+        process("perfdhcp -b duid=0101010101010101010110111F14 -l 127.0.0.1 all")
+    );
     std::vector<uint8_t> v2 = opt.getDuidPrefix();
     ASSERT_EQ(sizeof(duid) / sizeof(uint8_t), v2.size());
     EXPECT_TRUE(std::equal(v2.begin(), v2.end(), duid));
-    // "t" is invalid digit in DUID
-    EXPECT_THROW(process("perfdhcp -6 -l ethx -b duiD=1AB7Ft670901FF all"),
+    // "t" is invalid character in DUID
+    EXPECT_THROW(process("perfdhcp -6 -l ethx -b "
+                         "duiD=010101010101010101t110111F14 all"),
                  isc::InvalidParameter);
 
     // Some more negative test cases
