@@ -34,7 +34,7 @@ class TestDhcpv4Daemon(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def runDhcp4(self, params, wait=1):
+    def runCommand(self, params, wait=1):
         """
         This method runs dhcp4 and returns a touple: (returncode, stdout, stderr)
         """
@@ -127,14 +127,14 @@ class TestDhcpv4Daemon(unittest.TestCase):
         print("Note: Purpose of some of the tests is to check if DHCPv4 server can be started,")
         print("      not that is can bind sockets correctly. Please ignore binding errors.")
 
-        (returncode, output, error) = self.runDhcp4(["../b10-dhcp4", "-v"])
+        (returncode, output, error) = self.runCommand(["../b10-dhcp4", "-v"])
 
         self.assertEqual( str(output).count("[b10-dhcp4] Initiating DHCPv4 server operation."), 1)
 
     def test_portnumber_0(self):
         print("Check that specifying port number 0 is not allowed.")
 
-        (returncode, output, error) = self.runDhcp4(['../b10-dhcp4', '-p', '0'])
+        (returncode, output, error) = self.runCommand(['../b10-dhcp4', '-p', '0'])
 
         # When invalid port number is specified, return code must not be success
         self.assertTrue(returncode != 0)
@@ -145,7 +145,7 @@ class TestDhcpv4Daemon(unittest.TestCase):
     def test_portnumber_missing(self):
         print("Check that -p option requires a parameter.")
 
-        (returncode, output, error) = self.runDhcp4(['../b10-dhcp4', '-p'])
+        (returncode, output, error) = self.runCommand(['../b10-dhcp4', '-p'])
 
         # When invalid port number is specified, return code must not be success
         self.assertTrue(returncode != 0)
@@ -153,10 +153,32 @@ class TestDhcpv4Daemon(unittest.TestCase):
         # Check that there is an error message about invalid port number printed on stderr
         self.assertEqual( str(error).count("option requires an argument"), 1)
 
+    def test_portnumber_invalid1(self):
+        print("Check that -p option is check against bogus port number (999999).")
+
+        (returncode, output, error) = self.runCommand(['../b10-dhcp4', '-p','999999'])
+
+        # When invalid port number is specified, return code must not be success
+        self.assertTrue(returncode != 0)
+
+        # Check that there is an error message about invalid port number printed on stderr
+        self.assertEqual( str(error).count("Failed to parse port number"), 1)
+
+    def test_portnumber_invalid2(self):
+        print("Check that -p option is check against bogus port number (123garbage).")
+
+        (returncode, output, error) = self.runCommand(['../b10-dhcp4', '-p','123garbage'])
+
+        # When invalid port number is specified, return code must not be success
+        self.assertTrue(returncode != 0)
+
+        # Check that there is an error message about invalid port number printed on stderr
+        self.assertEqual( str(error).count("Failed to parse port number"), 1)
+
     def test_portnumber_nonroot(self):
         print("Check that specifying unprivileged port number will work.")
 
-        (returncode, output, error) = self.runDhcp4(['../b10-dhcp4', '-p', '10057'])
+        (returncode, output, error) = self.runCommand(['../b10-dhcp4', '-s', '-p', '10057'])
 
         # When invalid port number is specified, return code must not be success
         # TODO: Temporarily commented out as socket binding on systems that do not have
@@ -165,6 +187,19 @@ class TestDhcpv4Daemon(unittest.TestCase):
 
         # Check that there is an error message about invalid port number printed on stderr
         self.assertEqual( str(output).count("opening sockets on port 10057"), 1)
+
+    def test_skip_msgq(self):
+        print("Check that connection to BIND10 msgq can be disabled.")
+
+        (returncode, output, error) = self.runCommand(['../b10-dhcp4', '-s', '-p', '10057'])
+
+        # When invalid port number is specified, return code must not be success
+        # TODO: Temporarily commented out as socket binding on systems that do not have
+        #       interface detection implemented currently fails.
+        # self.assertTrue(returncode == 0)
+
+        # Check that there is an error message about invalid port number printed on stderr
+        self.assertEqual( str(output).count("Skipping connection to the BIND10 msgq."), 1)
 
 if __name__ == '__main__':
     unittest.main()

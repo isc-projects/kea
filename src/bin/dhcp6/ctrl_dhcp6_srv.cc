@@ -22,8 +22,8 @@
 #include <cc/session.h>
 #include <config/ccsession.h>
 #include <util/buffer.h>
-#include <dhcp4/spec_config.h>
-#include <dhcp4/ctrl_dhcp4_srv.h>
+#include <dhcp6/spec_config.h>
+#include <dhcp6/ctrl_dhcp6_srv.h>
 #include <dhcp/iface_mgr.h>
 #include <asiolink/asiolink.h>
 
@@ -39,23 +39,23 @@ using namespace isc::asiolink;
 namespace isc {
 namespace dhcp {
 
-ControlledDhcpv4Srv* ControlledDhcpv4Srv::server_ = NULL;
+ControlledDhcpv6Srv* ControlledDhcpv6Srv::server_ = NULL;
 
 ConstElementPtr
-ControlledDhcpv4Srv::dhcp4ConfigHandler(ConstElementPtr new_config) {
-    cout << "b10-dhcp4: Received new config:" << new_config->str() << endl;
+ControlledDhcpv6Srv::dhcp6ConfigHandler(ConstElementPtr new_config) {
+    cout << "b10-dhcp6: Received new config:" << new_config->str() << endl;
     ConstElementPtr answer = isc::config::createAnswer(0,
                              "Thank you for sending config.");
     return (answer);
 }
 
 ConstElementPtr
-ControlledDhcpv4Srv::dhcp4CommandHandler(const string& command, ConstElementPtr args) {
-    cout << "b10-dhcp4: Received new command: [" << command << "], args="
+ControlledDhcpv6Srv::dhcp6CommandHandler(const string& command, ConstElementPtr args) {
+    cout << "b10-dhcp6: Received new command: [" << command << "], args="
          << args->str() << endl;
     if (command == "shutdown") {
-        if (ControlledDhcpv4Srv::server_) {
-            ControlledDhcpv4Srv::server_->shutdown();
+        if (ControlledDhcpv6Srv::server_) {
+            ControlledDhcpv6Srv::server_->shutdown();
         } else {
             cout << "Server not initialized yet or already shut down." << endl;
             ConstElementPtr answer = isc::config::createAnswer(1,
@@ -73,7 +73,7 @@ ControlledDhcpv4Srv::dhcp4CommandHandler(const string& command, ConstElementPtr 
     return (answer);
 }
 
-void ControlledDhcpv4Srv::sessionReader(void) {
+void ControlledDhcpv6Srv::sessionReader(void) {
     // Process one asio event. If there are more events, iface_mgr will call
     // this callback more than once.
     if (server_) {
@@ -81,37 +81,37 @@ void ControlledDhcpv4Srv::sessionReader(void) {
     }
 }
 
-void ControlledDhcpv4Srv::establishSession() {
-
+void ControlledDhcpv6Srv::establishSession() {
+    
     string specfile;
     if (getenv("B10_FROM_BUILD")) {
         specfile = string(getenv("B10_FROM_BUILD")) +
-            "/src/bin/dhcp4/dhcp4.spec";
+            "/src/bin/dhcp6/dhcp6.spec";
     } else {
-        specfile = string(DHCP4_SPECFILE_LOCATION);
+        specfile = string(DHCP6_SPECFILE_LOCATION);
     }
 
     /// @todo: Check if session is not established already. Throw, if it is.
-
-    cout << "b10-dhcp4: my specfile is " << specfile << endl;
-
+    
+    cout << "b10-dhcp6: my specfile is " << specfile << endl;
+    
     cc_session_ = new Session(io_service_.get_io_service());
 
     config_session_ = new ModuleCCSession(specfile, *cc_session_,
-                                          dhcp4ConfigHandler,
-                                          dhcp4CommandHandler, false);
+                                          dhcp6ConfigHandler,
+                                          dhcp6CommandHandler, false);
     config_session_->start();
 
     /// Integrate the asynchronous I/O model of BIND 10 configuration
     /// control with the "select" model of the DHCP server.  This is
-    /// fully explained in \ref dhcpv4Session.
+    /// fully explained in \ref dhcpv6Session.
     int ctrl_socket = cc_session_->getSocketDesc();
-    cout << "b10-dhcp4: Control session started, socket="
+    cout << "b10-dhcp6: Control session started, socket="
          << ctrl_socket << endl;
     IfaceMgr::instance().set_session_socket(ctrl_socket, sessionReader);
 }
 
-void ControlledDhcpv4Srv::disconnectSession() {
+void ControlledDhcpv6Srv::disconnectSession() {
     if (config_session_) {
         delete config_session_;
         config_session_ = NULL;
@@ -126,17 +126,17 @@ void ControlledDhcpv4Srv::disconnectSession() {
     IfaceMgr::instance().set_session_socket(IfaceMgr::INVALID_SOCKET, NULL);
 }
 
-ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t port /*= DHCP4_SERVER_PORT*/)
-    :Dhcpv4Srv(port), cc_session_(NULL), config_session_(NULL) {
+ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t port /*= DHCP6_SERVER_PORT*/)
+    :Dhcpv6Srv(port), cc_session_(NULL), config_session_(NULL) {
     server_ = this; // remember this instance for use in callback
 }
 
-void ControlledDhcpv4Srv::shutdown() {
+void ControlledDhcpv6Srv::shutdown() {
     io_service_.stop(); // Stop ASIO transmissions
-    Dhcpv4Srv::shutdown(); // Initiate DHCPv4 shutdown procedure.
+    Dhcpv6Srv::shutdown(); // Initiate DHCPv6 shutdown procedure.
 }
 
-ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
+ControlledDhcpv6Srv::~ControlledDhcpv6Srv() {
     disconnectSession();
 
     server_ = NULL; // forget this instance. There should be no callback anymore
@@ -144,10 +144,10 @@ ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
 }
 
 isc::data::ConstElementPtr
-ControlledDhcpv4Srv::execDhcpv4ServerCommand(const std::string& command_id,
+ControlledDhcpv6Srv::execDhcpv6ServerCommand(const std::string& command_id,
                                              isc::data::ConstElementPtr args) {
     try {
-        return (dhcp4CommandHandler(command_id, args));
+        return (dhcp6CommandHandler(command_id, args));
     } catch (const Exception& ex) {
         ConstElementPtr answer = isc::config::createAnswer(1, ex.what());
         return (answer);

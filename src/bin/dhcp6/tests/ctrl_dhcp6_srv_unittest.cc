@@ -20,8 +20,8 @@
 #include <arpa/inet.h>
 #include <gtest/gtest.h>
 
-#include <dhcp/dhcp4.h>
-#include <dhcp4/ctrl_dhcp4_srv.h>
+#include <dhcp/dhcp6.h>
+#include <dhcp6/ctrl_dhcp6_srv.h>
 #include <config/ccsession.h>
 
 using namespace std;
@@ -33,26 +33,26 @@ using namespace isc::config;
 
 namespace {
 
-class NakedControlledDhcpv4Srv: public ControlledDhcpv4Srv {
-    // "naked" DHCPv4 server, exposes internal fields
+class NakedControlledDhcpv6Srv: public ControlledDhcpv6Srv {
+    // "naked" DHCPv6 server, exposes internal fields
 public:
-    NakedControlledDhcpv4Srv():ControlledDhcpv4Srv(DHCP4_SERVER_PORT + 10000) { }
+    NakedControlledDhcpv6Srv():ControlledDhcpv6Srv(DHCP6_SERVER_PORT + 10000) { }
 };
 
-class CtrlDhcpv4SrvTest : public ::testing::Test {
+class CtrlDhcpv6SrvTest : public ::testing::Test {
 public:
-    CtrlDhcpv4SrvTest() {
+    CtrlDhcpv6SrvTest() {
     }
 
-    ~CtrlDhcpv4SrvTest() {
+    ~CtrlDhcpv6SrvTest() {
     };
 };
 
-TEST_F(CtrlDhcpv4SrvTest, commands) {
+TEST_F(CtrlDhcpv6SrvTest, commands) {
 
-    ControlledDhcpv4Srv* srv = NULL;
+    ControlledDhcpv6Srv* srv = NULL;
     ASSERT_NO_THROW({
-        srv = new ControlledDhcpv4Srv(DHCP4_SERVER_PORT + 10000);
+        srv = new ControlledDhcpv6Srv(DHCP6_SERVER_PORT + 10000);
     });
 
     // use empty parameters list
@@ -60,12 +60,12 @@ TEST_F(CtrlDhcpv4SrvTest, commands) {
     int rcode = -1;
 
     // case 1: send bogus command
-    ConstElementPtr result = ControlledDhcpv4Srv::execDhcpv4ServerCommand("blah", params);
+    ConstElementPtr result = ControlledDhcpv6Srv::execDhcpv6ServerCommand("blah", params);
     ConstElementPtr comment = parseAnswer(rcode, result);
     EXPECT_EQ(1, rcode); // expect failure (no such command as blah)
 
     // case 2: send shutdown command without any parameters
-    result = ControlledDhcpv4Srv::execDhcpv4ServerCommand("shutdown", params);
+    result = ControlledDhcpv6Srv::execDhcpv6ServerCommand("shutdown", params);
     comment = parseAnswer(rcode, result);
     EXPECT_EQ(0, rcode); // expect success
 
@@ -74,7 +74,7 @@ TEST_F(CtrlDhcpv4SrvTest, commands) {
     params->set("pid", x);
 
     // case 3: send shutdown command with 1 parameter: pid
-    result = ControlledDhcpv4Srv::execDhcpv4ServerCommand("shutdown", params);
+    result = ControlledDhcpv6Srv::execDhcpv6ServerCommand("shutdown", params);
     comment = parseAnswer(rcode, result);
     EXPECT_EQ(0, rcode); // expect success
 

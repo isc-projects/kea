@@ -1,3 +1,12 @@
+459.	[func]		tomek
+	b10-dhcp6: DHCPv6 server component is now integrated into
+	BIND10 framework. It can be started from BIND10 (using bindctl)
+	and can receive commands. The only supported command for now
+	is 'Dhcp6 shutdown'.
+	b10-dhcp4: Command line-switch '-s' to disable msgq was added.
+	b10-dhcp6: Command line-switch '-s' to disable msgq was added.
+	(Trac #1708, git e0d7c52a71414f4de1361b09d3c70431c96daa3f)
+
 458.	[build]*	jinmei
 	BIND 10 now relies on Boost offset_ptr, which caused some new
 	portability issues.  Such issues are detected at ./configure time.
