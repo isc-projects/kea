@@ -86,7 +86,7 @@ RdataReader::nextInternal(const NameAction& name_action,
                           const DataAction& data_action)
 {
     if (spec_pos_ < spec_count_) {
-        const RdataFieldSpec& spec(spec_.fields[(spec_pos_ ++) %
+        const RdataFieldSpec& spec(spec_.fields[(spec_pos_++) %
                                                 spec_.field_count]);
         if (spec.type == RdataFieldSpec::DOMAIN_NAME) {
             const LabelSequence sequence(data_ + data_pos_);
@@ -95,8 +95,8 @@ RdataReader::nextInternal(const NameAction& name_action,
             return (Result(sequence, spec.name_attributes));
         } else {
             const size_t length(spec.type == RdataFieldSpec::FIXEDLEN_DATA ?
-                                spec.fixeddata_len : lengths_[length_pos_ ++]);
-            Result result(data_ + data_pos_, length);
+                                spec.fixeddata_len : lengths_[length_pos_++]);
+            const Result result(data_ + data_pos_, length);
             data_pos_ += length;
             data_action(result.data(), result.size());
             return (result);
@@ -119,9 +119,9 @@ RdataReader::nextSig() {
             // We didn't find where the signatures start yet. We do it
             // by iterating the whole data and then returning the state
             // back.
-            size_t data_pos = data_pos_;
-            size_t spec_pos = spec_pos_;
-            size_t length_pos = length_pos_;
+            const size_t data_pos = data_pos_;
+            const size_t spec_pos = spec_pos_;
+            const size_t length_pos = length_pos_;
             // When the next() gets to the last item, it sets the sigs_
             while (nextInternal(emptyNameAction, emptyDataAction)) {}
             assert(sigs_ != NULL);
@@ -131,11 +131,11 @@ RdataReader::nextSig() {
             length_pos_ = length_pos;
         }
         // Extract the result
-        Result result(sigs_ + sig_data_pos_, lengths_[var_count_total_ +
-                      sig_pos_]);
+        const Result result(sigs_ + sig_data_pos_, lengths_[var_count_total_ +
+                                                            sig_pos_]);
         // Move the position of iterator.
         sig_data_pos_ += lengths_[var_count_total_ + sig_pos_];
-        sig_pos_ ++;
+        ++sig_pos_;
         // Call the callback
         data_action_(result.data(), result.size());
         return (result);
