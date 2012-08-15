@@ -143,6 +143,11 @@ TEST_F(RdataSetTest, createManyRRs) {
                                   getRRsetWithRdataCount(8192),
                                   ConstRRsetPtr()),
                  RdataSetError);
+    // To be very sure even try larger number than the threshold
+    EXPECT_THROW(RdataSet::create(mem_sgmt_, encoder_,
+                                  getRRsetWithRdataCount(65535),
+                                  ConstRRsetPtr()),
+                 RdataSetError);
 }
 
 TEST_F(RdataSetTest, createWithRRSIG) {
@@ -169,12 +174,22 @@ ConstRRsetPtr
 getRRSIGWithRdataCount(size_t sig_count) {
     RRsetPtr rrset(new RRset(Name("example.com"), RRClass::IN(),
                              RRType::RRSIG(), RRTTL(3600)));
+    // We use a base wire-format image and tweak the original TTL field to
+    // generate unique RDATAs in the loop.  (Creating them from corresponding
+    // text is simpler, but doing so for a large number of RRSIGs is
+    // relatively heavy and could be too long for unittests).
+    ConstRdataPtr rrsig_base =
+        rdata::createRdata(RRType::RRSIG(), RRClass::IN(),
+                           "A 5 2 3600 20120814220826 20120715220826 1234 "
+                           "example.com. FAKE");
+    isc::util::OutputBuffer ob(0);
+    rrsig_base->toWire(ob);
     for (size_t i = 0; i < sig_count; ++i) {
-        rrset->addRdata(rdata::createRdata(
-                            RRType::RRSIG(), RRClass::IN(),
-                            "A 5 2 3600 20120814220826 20120715220826 " +
-                            lexical_cast<std::string>(i) +
-                            " example.com. FAKE"));
+        ob.writeUint16At((i >> 16) & 0xffff, 4);
+        ob.writeUint16At(i & 0xffff, 6);
+        isc::util::InputBuffer ib(ob.getData(), ob.getLength());
+        rrset->addRdata(rdata::createRdata(RRType::RRSIG(), RRClass::IN(),
+                                           ib, ib.getLength()));
     }
     return (rrset);
 }
@@ -204,6 +219,10 @@ TEST_F(RdataSetTest, createManyRRSIGs) {
     // Exceeding this limit will result in an exception.
     EXPECT_THROW(RdataSet::create(mem_sgmt_, encoder_, a_rrset_,
                                   getRRSIGWithRdataCount(65536)),
+                 RdataSetError);
+    // To be very sure even try larger number than the threshold
+    EXPECT_THROW(RdataSet::create(mem_sgmt_, encoder_, a_rrset_,
+                                  getRRSIGWithRdataCount(70000)),
                  RdataSetError);
 }
 
