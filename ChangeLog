@@ -7,7 +7,7 @@
 	b10-dhcp6: Command line-switch '-s' to disable msgq was added.
 	(Trac #1708, git e0d7c52a71414f4de1361b09d3c70431c96daa3f)
 
-458.	[build]*	jinmei
+458.	[build]*		jinmei
 	BIND 10 now relies on Boost offset_ptr, which caused some new
 	portability issues.  Such issues are detected at ./configure time.
 	If ./configure stops due to this, try the following workaround:
@@ -20,12 +20,12 @@
 	  (which would be the case if Boost is installed via pkgsrc)
 	(Trac #2147, git 30061d1139aad8716e97d6b620c259752fd0a3cd)
 
-457.	[build]*	muks
+457.	[build]*		muks
 	BIND 10 library names now have a "b10-" prefix. This is to avoid
 	clashes with other similarly named libraries on the system.
 	(Trac #2071, git ac20a00c28069804edc0a36050995df52f601efb)
 
-456.	[build]*	muks
+456.	[build]*		muks
 	BIND 10 now compiles against log4cplus-1.1.0 (RC releases)
 	also.  Note: some older versions of log4cplus don't work any more;
 	known oldest workable version is 1.0.4.  Thanks to John Lumby for
