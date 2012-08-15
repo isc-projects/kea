@@ -312,8 +312,6 @@ public:
     /// providing compatible behavior may have its own benefit, so this point
     /// should be revisited later.
     ///
-    /// The answer will include signatures and NSEC/NSEC3 if possible.
-    ///
     /// This might throw BadZone or any of its specific subclasses, but that
     /// shouldn't happen in real-life (as BadZone means wrong data, it should
     /// have been rejected upon loading).
@@ -323,9 +321,11 @@ public:
     /// \param qname The query name
     /// \param qtype The RR type of the query
     /// \param response The response message to store the answer to the query.
+    /// \param dnssec If the answer should include signatures and NSEC/NSEC3 if
+    ///     possible.
     void process(datasrc::ClientList& client_list,
                  const isc::dns::Name& qname, const isc::dns::RRType& qtype,
-                 isc::dns::Message& response);
+                 isc::dns::Message& response, bool dnssec = false);
 
     /// \short Bad zone data encountered.
     ///
