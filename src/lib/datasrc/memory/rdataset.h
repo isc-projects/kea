@@ -50,9 +50,9 @@ public:
 /// This class is primarily intended to be used in the in-memory data source
 /// implementation, and is not supposed to be used by general applications.
 /// The major design goals is to keep required memory footprint for the given
-/// amount of data as small as possible, while providing reasonably efficient
-/// interface to examine the data, focusing on zone lookup and DNS message
-/// rendering.
+/// amount of data as small as possible, while providing a reasonably
+/// efficient interface to examine the data, focusing on zone lookup and DNS
+/// message rendering.
 ///
 /// It encodes a specific set of RRset and (when signed) its RRSIGs, excluding
 /// the owner name and the RR class.  The owner name is supposed to be
