@@ -24,8 +24,10 @@ libb10_perfdhcp___la_SOURCES += localized_option.h
 libb10_perfdhcp___la_SOURCES += perf_pkt6.cc perf_pkt6.h
 libb10_perfdhcp___la_SOURCES += perf_pkt4.cc perf_pkt4.h
 libb10_perfdhcp___la_SOURCES += pkt_transform.cc pkt_transform.h
+libb10_perfdhcp___la_SOURCES += stats_mgr.h
 
 libb10_perfdhcp___la_CXXFLAGS = $(AM_CXXFLAGS)
+
 if USE_CLANGPP
 # Disable unused parameter warning caused by some of the
 # Boost headers when compiling with clang.
