@@ -23,6 +23,7 @@
 #include <dns/rrttl.h>
 
 #include <boost/interprocess/offset_ptr.hpp>
+#include <boost/noncopyable.hpp>
 
 #include <stdint.h>
 
@@ -110,7 +111,7 @@ public:
 /// assume any particular format of data in this region directly; it must
 /// get access to it via public interfaces provided in the main \c RdataSet
 /// class.
-class RdataSet {
+class RdataSet : boost::noncopyable {
 public:
     /// \brief Allocate and construct \c RdataSet
     ///
