@@ -14,17 +14,13 @@
 
 #include <config.h>
 #include <iostream>
-#include <exceptions/exceptions.h>
 #include <log/dummylog.h>
 #include <log/logger_support.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
-#include <dhcp4/dhcp4_srv.h>
-#include <dhcp/dhcp4.h>
+#include <boost/lexical_cast.hpp>
 
 using namespace std;
 using namespace isc::dhcp;
-
-
 
 /// This file contains entry point (main() function) for standard DHCPv4 server
 /// component for BIND10 framework. It parses command-line arguments and
@@ -44,7 +40,9 @@ usage() {
     cerr << "Usage:  b10-dhcp4 [-v]"
          << endl;
     cerr << "\t-v: verbose output" << endl;
-    cerr << "\t-p number: specify non-standard port number 1-65535 (useful for testing only)" << endl;
+    cerr << "\t-s: stand-alone mode (don't connect to BIND10)" << endl;
+    cerr << "\t-p number: specify non-standard port number 1-65535 "
+         << "(useful for testing only)" << endl;
     exit(EXIT_FAILURE);
 }
 } // end of anonymous namespace
@@ -55,16 +53,26 @@ main(int argc, char* argv[]) {
     bool verbose_mode = false; // should server be verbose?
     int port_number = DHCP4_SERVER_PORT; // The default. any other values are
                                          // useful for testing only.
+    bool stand_alone = false; // should be connect to BIND10 msgq?
 
-    while ((ch = getopt(argc, argv, "vp:")) != -1) {
+    while ((ch = getopt(argc, argv, "vsp:")) != -1) {
         switch (ch) {
         case 'v':
             verbose_mode = true;
             isc::log::denabled = true;
             break;
+        case 's':
+            stand_alone = true;
+            break;
         case 'p':
-            port_number = strtol(optarg, NULL, 10);
-            if (port_number == 0) {
+            try {
+                port_number = boost::lexical_cast<int>(optarg);
+            } catch (const boost::bad_lexical_cast &) {
+                cerr << "Failed to parse port number: [" << optarg
+                     << "], 1-65535 allowed." << endl;
+                usage();
+            }
+            if (port_number <= 0 || port_number > 65535) {
                 cerr << "Failed to parse port number: [" << optarg
                      << "], 1-65535 allowed." << endl;
                 usage();
@@ -82,7 +90,8 @@ main(int argc, char* argv[]) {
                          isc::log::MAX_DEBUG_LEVEL, NULL);
 
     cout << "b10-dhcp4: My pid=" << getpid() << ", binding to port "
-         << port_number << ", verbose " << (verbose_mode?"yes":"no") << endl;
+         << port_number << ", verbose " << (verbose_mode?"yes":"no")
+         << ", stand-alone=" << (stand_alone?"yes":"no") << endl;
 
     if (argc - optind > 0) {
         usage();
@@ -94,11 +103,23 @@ main(int argc, char* argv[]) {
 
         cout << "[b10-dhcp4] Initiating DHCPv4 server operation." << endl;
 
-        ControlledDhcpv4Srv* server = new ControlledDhcpv4Srv(port_number);
-        server->run();
-        delete server;
-        server = NULL;
+        /// @todo: pass verbose to the actul server once logging is implemented
+        ControlledDhcpv4Srv server(port_number);
 
+        if (!stand_alone) {
+            try {
+                server.establishSession();
+            } catch (const std::exception& ex) {
+                cerr << "Failed to establish BIND10 session. "
+                    "Running in stand-alone mode:" << ex.what() << endl;
+                // Let's continue. It is useful to have the ability to run
+                // DHCP server in stand-alone mode, e.g. for testing
+            }
+        } else {
+            cout << "Skipping connection to the BIND10 msgq." << endl;
+        }
+
+        server.run();
     } catch (const std::exception& ex) {
         cerr << "[b10-dhcp4] Server failed: " << ex.what() << endl;
         ret = EXIT_FAILURE;

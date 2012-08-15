@@ -1,4 +1,4 @@
-# Copyright (C) 2011,2012 Internet Systems Consortium.
+# copyright (C) 2011,2012 Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -131,7 +131,7 @@ class TestDhcpv6Daemon(unittest.TestCase):
         print("      not that is can bind sockets correctly. Please ignore binding errors.")
         (returncode, output, error) = self.runCommand(["../b10-dhcp6", "-v"])
 
-        self.assertEqual( str(output).count("[b10-dhcp6] Initiating DHCPv6 operation."), 1)
+        self.assertEqual( str(output).count("b10-dhcp6: Initiating DHCPv6 server operation."), 1)
 
     def test_portnumber_0(self):
         print("Check that specifying port number 0 is not allowed.")
@@ -155,18 +155,52 @@ class TestDhcpv6Daemon(unittest.TestCase):
         # Check that there is an error message about invalid port number printed on stderr
         self.assertEqual( str(error).count("option requires an argument"), 1)
 
+    def test_portnumber_invalid1(self):
+        print("Check that -p option is check against bogus port number (999999).")
+
+        (returncode, output, error) = self.runCommand(['../b10-dhcp6', '-p','999999'])
+
+        # When invalid port number is specified, return code must not be success
+        self.assertTrue(returncode != 0)
+
+        # Check that there is an error message about invalid port number printed on stderr
+        self.assertEqual( str(error).count("Failed to parse port number"), 1)
+
+    def test_portnumber_invalid2(self):
+        print("Check that -p option is check against bogus port number (123garbage).")
+
+        (returncode, output, error) = self.runCommand(['../b10-dhcp6', '-p','123garbage'])
+
+        # When invalid port number is specified, return code must not be success
+        self.assertTrue(returncode != 0)
+
+        # Check that there is an error message about invalid port number printed on stderr
+        self.assertEqual( str(error).count("Failed to parse port number"), 1)
+
     def test_portnumber_nonroot(self):
         print("Check that specifying unprivileged port number will work.")
 
-        (returncode, output, error) = self.runCommand(['../b10-dhcp6', '-p', '10057'])
+        (returncode, output, error) = self.runCommand(['../b10-dhcp6', '-s', '-p', '10547'])
 
         # When invalid port number is specified, return code must not be success
         # TODO: Temporarily commented out as socket binding on systems that do not have
         #       interface detection implemented currently fails.
         # self.assertTrue(returncode == 0)
 
-        # Check that there is a message on stdout about opening proper port
-        self.assertEqual( str(output).count("opening sockets on port 10057"), 1)
+        self.assertEqual( str(output).count("opening sockets on port 10547"), 1)
+
+    def test_skip_msgq(self):
+        print("Check that connection to BIND10 msgq can be disabled.")
+
+        (returncode, output, error) = self.runCommand(['../b10-dhcp6', '-s', '-p', '10547'])
+
+        # When invalid port number is specified, return code must not be success
+        # TODO: Temporarily commented out as socket binding on systems that do not have
+        #       interface detection implemented currently fails.
+        # self.assertTrue(returncode == 0)
+
+        self.assertEqual( str(output).count("Skipping connection to the BIND10 msgq."), 1)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -1302,6 +1302,232 @@ TODO
 
   </chapter>
 
+  <chapter id="common">
+    <title>Common configuration elements</title>
+
+    <para>
+      Some things are configured in the same or similar manner across
+      many modules. So we show them here in one place.
+    </para>
+
+    <section id='common-acl'>
+      <title>ACLs</title>
+
+      <para>
+        An ACL, or Access Control List, is a way to describe if a request
+        is allowed or disallowed. The principle is, there's a list of rules.
+        Each rule is a name-value mapping (a dictionary, in the JSON
+        terminology). Each rule must contain exactly one mapping called
+        "action", which describes what should happen if the rule applies.
+        There may be more mappings, calld matches, which describe the
+        conditions under which the rule applies.
+      </para>
+
+      <para>
+        When there's a query, the first rule is examined. If it matches, the
+        action in it is taken. If not, next rule is examined. If there are no
+        more rules to examine, a default action is taken.
+      </para>
+
+      <para>
+        There are three possible "action" values. The "ACCEPT" value means
+        the query is handled. If it is "REJECT", the query is not answered,
+        but a polite error message is sent back (if that makes sense in the
+        context). The "DROP" action acts like a black hole. The query is
+        not answered and no error message is sent.
+      </para>
+
+      <para>
+        If there are multiple matching conditions inside the rule, all of
+        them must be satisfied for the rule to apply. This can be used,
+        for example, to require the query to be signed by a TSIG key and
+        originate from given address.
+      </para>
+
+      <para>
+        This is encoded in form of JSON. Semi-formal description could look
+        something like this. It is described in more details below.
+        <!-- FIXME: Is <screen> really the correct one?-->
+        <screen>ACL := [ RULE, RULE, ... ]
+RULE := { "action": "ACCEPT"|"REJECT"|"DROP", MATCH, MATCH, ... }
+RULE_RAW := { MATCH, MATCH, ... }
+MATCH := FROM_MATCH|KEY_MATCH|NOT_MATCH|OR_MATCH|AND_MATCH|...
+FROM_MATCH := "from": [RANGE, RANGE, RANGE, ...] | RANGE
+RANGE := "&lt;ip range&gt;"
+KEY_MATCH := "key": [KEY, KEY, KEY, ...] | KEY
+KEY := "&lt;key name&gt;"
+NOT_MATCH := "NOT": RULE_RAW
+OR_MATCH := "ANY": [ RULE_RAW, RULE_RAW, ... ]
+AND_MATCH := "ALL": [ RULE_RAW, RULE_RAW, ... ]
+</screen>
+      </para>
+
+      <section>
+        <title>Matching properties</title>
+
+        <para>
+          The first thing you can check against is the source address
+          of request. The name is <varname>from</varname> and the value
+          is a string containing either a single IPv4 or IPv6 address,
+          or a range in the usual slash notation (eg. "192.0.2.0/24").
+        </para>
+
+        <para>
+          The other is TSIG key by which the message was signed. The ACL
+          contains only the name (under the name "key"), the key itself
+          must be stored in the global keyring. This property is applicable only
+          to the DNS context. <!-- TODO: Section for the keyring and link to
+          it.-->
+        </para>
+
+        <para>
+          More properties to match are planned &mdash; the destination
+          address, ports, matches against the packet content.
+        </para>
+      </section>
+
+      <section>
+        <title>More complicated matches</title>
+
+        <para>
+          From time to time, you need to express something more complex
+          than just a single address or key.
+        </para>
+
+        <para>
+          You can specify a list of values instead of single value. Then
+          the property needs to match at least one of the values listed
+          &mdash; so you can say <quote>"from": ["192.0.2.0/24",
+          "2001:db8::/32"]</quote> to match any address in the ranges
+          set aside for documentation. The keys or any future properties
+          will work in a similar way.
+        </para>
+
+        <note>
+          <simpara>
+	    The list form is currently rejected due to an
+	    implementation bug.  There is a plan to fix it relatively
+	    soon, so the syntax is kept here, but note that it won't
+	    work until the bug is fixed.  To keep track of the status
+	    of the issue, see
+	    <ulink url="http://bind10.isc.org/ticket/2191">Trac #2191</ulink>.
+	    Until then, the value must be a single string.
+          </simpara>
+        </note>
+
+        <para>
+          If that is not enough, you can compose the matching conditions
+          to logical expressions. They are called "ANY", "ALL" and "NOT".
+          The "ANY" and "ALL" ones contain lists of subexpressions &mdash;
+          each subexpression is a similar dictionary, just not containing
+          the "action" element. The "NOT" contains single subexpression.
+          Their function should be obvious &mdash; "NOT" matches if and
+          only if the subexpression does not match. The "ALL" matches exactly
+          when each of the subexpressions matches and "ANY" when at least
+          one matches.
+        </para>
+      </section>
+
+      <section>
+        <title>Examples</title>
+
+        <para>
+          All the examples here is just the JSON representing the ACL,
+          nicely formatted and split across lines. They are out of any
+          surrounding context. This is similar to what you'd get from
+          <command>config show_json</command> called on the entry containing
+          the ACL.
+        </para>
+
+        <para>
+          In the first example, the ACL accepts queries from two known hosts.
+          Each host has an IP addresses (both IPv4 and IPv6) and a TSIG
+          key. Other queries are politely rejected. The last entry in the list
+          has no conditions &mdash; making it match any query.
+
+          <screen>[
+  {
+    "from": ["192.0.2.1", "2001:db8::1"],
+    "key": "first.key",
+    "action": "ACCEPT"
+  },
+  {
+    "from": ["192.0.2.2", "2001:db8::2"],
+    "key": "second.key",
+    "action": "ACCEPT"
+  },
+  {
+    "action": "REJECT"
+  }
+]</screen>
+        </para>
+
+        <para>
+          Now we show two ways to accept only the queries from private ranges.
+          This is the same as rejecting anything that is outside.
+
+          <screen>[
+  {
+    "from": [
+      "10.0.0.0/8",
+      "172.16.0.0/12",
+      "192.168.0.0/16",
+      "fc00::/7"
+    ],
+    "action": "ACCEPT"
+  },
+  {
+    "action": "REJECT"
+  }
+]</screen>
+
+          <screen>[
+  {
+    "NOT": {
+       "ANY": [
+         {"from": "10.0.0.0/8"},
+         {"from": "172.16.0.0/12"},
+         {"from": "192.168.0.0/16"},
+         {"from": "fc00::/7"}
+       ]
+    },
+    "action": "REJECT"
+  },
+  {
+    "action": "ACCEPT"
+  }
+]</screen>
+        </para>
+      </section>
+
+      <section>
+        <title>Interaction with <command>bindctl</command></title>
+
+        <para>
+          Currently, <command>bindctl</command> has hard time coping with
+          the variable nature of the ACL syntax. This technical limitation
+          makes it impossible to edit parts of the entries. You need to
+          set the whole entry at once, providing the whole JSON value.
+        </para>
+
+        <para>
+          This limitation is planned to be solved soon at least partially.
+        </para>
+
+        <para>
+          You'd do something like this to create the second example.
+          Note that the whole JSON must be on a single line.
+
+          <screen>&gt; <userinput>config add somewhere/acl</userinput>
+&gt; <userinput>config set somewhere/acl[0] { "from": [ "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "fc00::/7" ], "action": "ACCEPT" }</userinput>
+&gt; <userinput>config add somewhere/acl</userinput>
+&gt; <userinput>config set somewhere/acl[1] { "action": "REJECT" }</userinput>
+&gt; <userinput>config commit</userinput></screen>
+        </para>
+      </section>
+    </section>
+  </chapter>
+
   <chapter id="authserver">
     <title>Authoritative Server</title>
 
@@ -1611,8 +1837,19 @@ can use various data source backends.
 &gt; <userinput>config set data_sources/classes/IN[1]/params { "example.org": "/path/to/example.org", "example.com": "/path/to/example.com" }</userinput>
 &gt; <userinput>config commit</userinput></screen>
 
-          Unfortunately, due to current technical limitations, the params must
-          be set as one JSON blob, it can't be edited in
+          Initially, a map value has to be set, but this value may be an
+          empty map. After that, key/value pairs can be added with 'config
+          add' and keys can be removed with 'config remove'. The initial
+          value may be an empty map, but it has to be set before zones are
+          added or removed.
+
+          <screen>
+&gt; <userinput>config set data_sources/classes/IN[1]/params {}</userinput>
+&gt; <userinput>config add data_sources/classes/IN[1]/params another.example.org /path/to/another.example.org</userinput>
+&gt; <userinput>config add data_sources/classes/IN[1]/params another.example.com /path/to/another.example.com</userinput>
+&gt; <userinput>config remove data_sources/classes/IN[1]/params another.example.org</userinput>
+          </screen>
+
           <command>bindctl</command>. To reload a zone, you the same command
           as above.
         </para>
@@ -1903,37 +2140,17 @@ http://bind10.isc.org/wiki/ScalableZoneLoadDesign#a7.2UpdatingaZone
       can be used to control accessibility of the outbound zone
       transfer service.
       By default, <command>b10-xfrout</command> allows any clients to
-      perform zone transfers for any zones:
+      perform zone transfers for any zones.
     </para>
 
       <screen>&gt; <userinput>config show Xfrout/transfer_acl</userinput>
 Xfrout/transfer_acl[0]	{"action": "ACCEPT"}	any	(default)</screen>
 
     <para>
-      You can change this to, for example, rejecting all transfer
-      requests by default while allowing requests for the transfer
-      of zone "example.com" from 192.0.2.1 and 2001:db8::1 as follows:
-    </para>
-
-      <screen>&gt; <userinput>config set Xfrout/transfer_acl[0] {"action": "REJECT"}</userinput>
-&gt; <userinput>config add Xfrout/zone_config</userinput>
-&gt; <userinput>config set Xfrout/zone_config[0]/origin "example.com"</userinput>
-&gt; <userinput>config set Xfrout/zone_config[0]/transfer_acl [{"action": "ACCEPT", "from": "192.0.2.1"},</userinput>
-<userinput>                                                 {"action": "ACCEPT", "from": "2001:db8::1"}]</userinput>
-&gt; <userinput>config commit</userinput></screen>
-
-    <note><simpara>
-        In the above example the lines
-        for <option>transfer_acl</option> were divided for
-        readability.  In the actual input it must be in a single line.
-    </simpara></note>
-
-    <para>
       If you want to require TSIG in access control, a system wide TSIG
       "key ring" must be configured.
-      For example, to change the previous example to allowing requests
-      from 192.0.2.1 signed by a TSIG with a key name of
-      "key.example", you'll need to do this:
+      In this example, we allow client matching both the IP address
+      and key.
     </para>
 
     <screen>&gt; <userinput>config set tsig_keys/keys ["key.example:&lt;base64-key&gt;"]</userinput>
@@ -1943,6 +2160,11 @@ Xfrout/transfer_acl[0]	{"action": "ACCEPT"}	any	(default)</screen>
     <para>Both <command>b10-xfrout</command> and <command>b10-auth</command>
       will use the system wide keyring to check
       TSIGs in the incoming messages and to sign responses.</para>
+
+    <para>
+      For further details on ACL configuration, see 
+      <xref linkend="common-acl" />.
+    </para>
 
     <note><simpara>
         The way to specify zone specific configuration (ACLs, etc) is
@@ -2150,29 +2372,7 @@ what is XfroutClient xfr_client??
       </para>
 
       <para>
-        Multiple rules can be specified in the ACL, and an ACL rule
-        can consist of multiple constraints, such as a combination of
-        IP address and TSIG.
-        The following configuration sequence will add a new rule to
-        the ACL created in the above example.  This additional rule
-	allows update requests sent from a client
-        using TSIG key name of "key.example" (different from the
-        key used in the previous example) and has an IPv6 address of ::1.
-      <screen>
-&gt; <userinput>config add DDNS/zones[0]/update_acl {"action": "ACCEPT", "from": "::1", "key": "key.example"}</userinput>
-&gt; <userinput>config show DDNS/zones[0]/update_acl</userinput>
-DDNS/zones[0]/update_acl[0]     {"action": "ACCEPT", "key": "key.example.org"} any (modified)
-DDNS/zones[0]/update_acl[1]     {"action": "ACCEPT", "from": "::1", "key": "key.example"} any (modified)
-&gt; <userinput>config commit</userinput>
-</screen>
-      (Note the "add" in the first line.  Before this sequence, we
-      have had only entry in <varname>zones[0]/update_acl</varname>.
-      The <command>add</command> command with a value (rule) adds
-      a new entry and sets it to the given rule.
-
-      Due to a limitation of the current implementation, it doesn't
-      work if you first try to just add a new entry and then set it to
-      a given rule.)
+        Full description of ACLs can be found in <xref linkend="common-acl" />.
       </para>
 
       <note><simpara>
@@ -2186,21 +2386,6 @@ DDNS/zones[0]/update_acl[1]     {"action": "ACCEPT", "from": "::1", "key": "key.
           its consequence, any update ACL rule that allows updates
           should have a TSIG key in its constraints.
       </simpara></note>
-
-      <para>
-	The ACL rules will be checked in the listed order, and the
-	first matching one will apply.
-	If none of the rules matches, the default rule will apply,
-	which is rejecting any requests in the case of
-	<command>b10-ddns</command>.
-      </para>
-<!-- TODO: what are the other defaults? -->
-
-      <para>
-	Other actions than "ACCEPT", namely "REJECT" and "DROP", can be
-	used, too.
-	See <xref linkend="resolverserver"/> about their effects.
-      </para>
 
       <para>
         Currently update ACL can only control updates per zone basis;
@@ -2341,58 +2526,31 @@ DDNS/zones[0]/update_acl[1]     {"action": "ACCEPT", "from": "::1", "key": "key.
         DNS queries from the localhost (127.0.0.1 and ::1).
         The <option>Resolver/query_acl</option> configuration may
         be used to reject, drop, or allow specific IPs or networks.
-        This configuration list is first match.
+        See <xref linkend="common-acl" />.
       </para>
 
       <para>
-        The configuration's <option>action</option> item may be
-        set to <quote>ACCEPT</quote> to allow the incoming query,
-        <quote>REJECT</quote> to respond with a DNS REFUSED return
-        code, or <quote>DROP</quote> to ignore the query without
-        any response (such as a blackhole).  For more information,
-        see the respective debugging messages:  <ulink
-        url="bind10-messages.html#RESOLVER_QUERY_ACCEPTED">RESOLVER_QUERY_ACCEPTED</ulink>,
-        <ulink
-        url="bind10-messages.html#RESOLVER_QUERY_REJECTED">RESOLVER_QUERY_REJECTED</ulink>,
-        and <ulink
-url="bind10-messages.html#RESOLVER_QUERY_DROPPED">RESOLVER_QUERY_DROPPED</ulink>.
+	The following session is an example of extending the ACL to also
+	allow queries from 192.0.2.0/24:
+        <screen>
+> <userinput>config show Resolver/query_acl</userinput>
+Resolver/query_acl[0]   {"action": "ACCEPT", "from": "127.0.0.1"}   any (default)
+Resolver/query_acl[1]   {"action": "ACCEPT", "from": "::1"} any (default)
+> <userinput>config add Resolver/query_acl</userinput>
+> <userinput>config set Resolver/query_acl[2] {"action": "ACCEPT", "from": "192.0.2.0/24"}</userinput>
+> <userinput>config add Resolver/query_acl</userinput>
+> <userinput>config show Resolver/query_acl</userinput>
+Resolver/query_acl[0]   {"action": "ACCEPT", "from": "127.0.0.1"}   any (modified)
+Resolver/query_acl[1]   {"action": "ACCEPT", "from": "::1"} any (modified)
+Resolver/query_acl[2]   {"action": "ACCEPT", "from": "192.0.2.0/24"}  any (modified)
+Resolver/query_acl[3]   {"action": "REJECT"}    any (modified)
+> <userinput>config commit</userinput></screen>
+	Note that we didn't set the value of the last final rule
+	(query_acl[3]) -- in the case of resolver, rejecting all queries is
+	the default value of a new rule.  In fact, this rule can even be
+	omitted completely, as the default, when a query falls off the list,
+	is rejection.
       </para>
-
-      <para>
-        The required configuration's <option>from</option> item is set
-        to an IPv4 or IPv6 address, addresses with an network mask, or to
-        the special lowercase keywords <quote>any6</quote> (for
-        any IPv6 address) or <quote>any4</quote> (for any IPv4
-        address).
-      </para>
-
-<!-- TODO:
-/0 is for any address in that address family
-does that need any address too?
-
-TODO: tsig
--->
-
-      <para>
-        For example to allow the <replaceable>192.168.1.0/24</replaceable>
-        network to use your recursive name server, at the
-        <command>bindctl</command> prompt run:
-      </para>
-
-      <screen>
-&gt; <userinput>config add Resolver/query_acl</userinput>
-&gt; <userinput>config set Resolver/query_acl[<replaceable>2</replaceable>]/action "ACCEPT"</userinput>
-&gt; <userinput>config set Resolver/query_acl[<replaceable>2</replaceable>]/from "<replaceable>192.168.1.0/24</replaceable>"</userinput>
-&gt; <userinput>config commit</userinput>
-</screen>
-
-     <simpara>(Replace the <quote><replaceable>2</replaceable></quote>
-       as needed; run <quote><userinput>config show
-       Resolver/query_acl</userinput></quote> if needed.)</simpara>
-
-<!-- TODO: check this -->
-      <note><simpara>This prototype access control configuration
-      syntax may be changed.</simpara></note>
 
     </section>
 
@@ -2499,7 +2657,7 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
 &gt; <userinput>config commit</userinput></screen></para>
 
       <para>
-        At start, the server will detect available network interfaces
+        During start-up the server will detect available network interfaces
         and will attempt to open UDP sockets on all interfaces that
         are up, running, are not loopback, and have IPv4 address
         assigned.
@@ -2509,17 +2667,8 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
         will respond to them with OFFER and ACK, respectively.
 
         Since the DHCPv4 server opens privileged ports, it requires root
-        access. Make sure you run this daemon as root.</para>
-
-        <note>
-          <para>
-            Integration with <command>bind10</command> is
-            planned. Ultimately, <command>b10-dhcp4</command> will not
-            be started directly, but rather via
-            <command>bind10</command>. Please be aware of this planned
-            change.
-          </para>
-        </note>
+        access. Make sure you run this daemon as root.
+      </para>
 
     </section>
 
@@ -2684,22 +2833,25 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
       </para>
 
       <para>
-        The DHCPv6 server is implemented as <command>b10-dhcp6</command>
-        daemon. As it is not configurable yet, it is fully autonomous,
-        that is it does not interact with <command>b10-cfgmgr</command>.
-        To start DHCPv6 server, simply input:
+        <command>b10-dhcp6</command> is a BIND10 component and is being
+        run under BIND10 framework. To add a DHCPv6 process to the set of running
+        BIND10 services, you can use following commands in <command>bindctl</command>:
+        <screen>&gt; <userinput>config add Boss/components b10-dhcp6</userinput>
+&gt; <userinput>config set Boss/components/b10-dhcp6/kind dispensable</userinput>
+&gt; <userinput>config commit</userinput></screen>
+      </para>
 
-        <screen>
-#<userinput>cd src/bin/dhcp6</userinput>
-#<userinput>./b10-dhcp6</userinput>
-</screen>
+       <para>
+         To shutdown running <command>b10-dhcp6</command>, please use the
+         following command:
+         <screen>&gt; <userinput>Dhcp6 shutdown</userinput></screen>
+         or
+         <screen>&gt; <userinput>config remove Boss/components b10-dhcp6</userinput>
+&gt; <userinput>config commit</userinput></screen>
+       </para>
 
-        Depending on your installation, <command>b10-dhcp6</command>
-        binary may reside in src/bin/dhcp6 in your source code
-        directory, in /usr/local/bin/b10-dhcp6 or other directory
-        you specified during compilation.
-
-        At start, server will detect available network interfaces
+      <para>
+        During start-up the server will detect available network interfaces
         and will attempt to open UDP sockets on all interfaces that
         are up, running, are not loopback, are multicast-capable, and
         have IPv6 address assigned.
@@ -2711,16 +2863,6 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
         Since the DHCPv6 server opens privileged ports, it requires root
         access. Make sure you run this daemon as root.
       </para>
-
-        <note>
-          <para>
-            Integration with <command>bind10</command> is
-            planned. Ultimately, <command>b10-dhcp6</command> will not
-            be started directly, but rather via
-            <command>bind10</command>. Please be aware of this planned
-            change.
-          </para>
-        </note>
 
     </section>
 
@@ -2735,7 +2877,7 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
       <para>
         At this stage of development, the only way to alter server
         configuration is to tweak its source code. To do so, please
-        edit src/bin/dhcp6/dhcp6_srv.cc file and modify following
+        edit src/bin/dhcp6/dhcp6_srv.cc file, modify the following
         parameters and recompile:
         <screen>
 const std::string HARDCODED_LEASE = "2001:db8:1::1234:abcd";
