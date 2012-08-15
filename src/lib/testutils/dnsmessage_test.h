@@ -168,6 +168,10 @@ public:
     {}
     void operator()(isc::dns::ConstRRsetPtr rrset) {
         output_ += "  " + rrset->toText();
+
+        if (rrset->getRRsig()) {
+            output_ += "  " + rrset->getRRsig()->toText();
+        }
     }
 private:
     std::string& output_;
@@ -256,6 +260,7 @@ rrsetsCheck(EXPECTED_ITERATOR expected_begin, EXPECTED_ITERATOR expected_end,
         if (found_rrset_it != expected_end) {
             rrsetCheck(*found_rrset_it, *it);
             ++rrset_matched;
+            rrset_matched += (*it)->getRRsigDataCount();
         }
     }
 
