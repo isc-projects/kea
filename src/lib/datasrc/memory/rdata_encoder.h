@@ -15,7 +15,7 @@
 #ifndef DATASRC_MEMORY_RDATA_ENCODER_H
 #define DATASRC_MEMORY_RDATA_ENCODER_H 1
 
-#include "rdata_field.h"
+#include <datasrc/memory/rdata_field.h>
 
 #include <exceptions/exceptions.h>
 
@@ -44,7 +44,8 @@
 /// Two main classes are provided: one is
 /// \c isc::datasrc::memory::RdataEncoder, which allows
 /// the application to create encoded data for a set of RDATA;
-/// the other (TBD) provides an interface to iterate over encoded set of
+/// the other is \c isc::datasrc::memory::RdataReader, which provides an
+/// interface to iterate over encoded set of
 /// RDATA for purposes such as data lookups or rendering the data into the
 /// wire format to create a DNS message.
 ///

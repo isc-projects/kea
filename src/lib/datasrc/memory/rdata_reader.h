@@ -34,13 +34,13 @@ namespace memory {
 
 /// \brief Class to read serialized rdata
 ///
-/// This class allows you to read the data encoded by RDataEncoder.
+/// This class allows you to read the data encoded by RdataEncoder.
 /// It is rather low-level -- it provides sequence of data fields
 /// and names. It does not give you convenient Rdata or RRset class.
 ///
 /// It allows two types of operation. First one is by providing callbacks
-/// to the constructor and then iterating by repeatedly calling next, or
-/// calling iterate once. The callbacks are then called with each part of
+/// to the constructor and then iterating by repeatedly calling next(), or
+/// calling iterate() once. The callbacks are then called with each part of
 /// the data.
 ///
 /// \code
@@ -52,7 +52,7 @@ namespace memory {
 /// }
 ///
 /// RdataReader reader(RRClass::IN(), RRType::AAAA(), size, data,
-///                    &handleLabel, handleData);
+///                    handleLabel, handleData);
 /// reader.iterate();
 /// \endcode
 ///
@@ -66,7 +66,7 @@ namespace memory {
 ///                    &handleLabel, handleData);
 /// RdataReader::Result data;
 /// while (data = reader.next()) {
-///     switch(data.type()) {
+///     switch (data.type()) {
 ///         case RdataReader::NAME:
 ///             ...
 ///             break;
@@ -86,6 +86,7 @@ public:
     /// \brief Function called on each name encountered in the data.
     typedef boost::function<void(const dns::LabelSequence&, unsigned)>
         NameAction;
+
     /// \brief Function called on each data field in the data.
     typedef boost::function<void(const uint8_t*, size_t)> DataAction;
 
@@ -95,6 +96,7 @@ public:
     /// as a default in the constructor.
     static void emptyNameAction(const dns::LabelSequence& label,
                                 unsigned attributes);
+
     /// \brief a DataAction that does nothing.
     ///
     /// This is a DataAction function that does nothing. It is used
@@ -153,6 +155,7 @@ public:
             compressible_(false),
             additional_(false)
         {}
+
         /// \brief Constructor from a domain label
         ///
         /// Creates the NAME type result. Used internally from RdataReader.
@@ -161,6 +164,7 @@ public:
         /// \param attributes The attributes, as stored by the serialized
         ///     data.
         Result(const dns::LabelSequence& label, unsigned attributes);
+
         /// \brief Constructor from data
         ///
         /// Creates the DATA type result. Used internally from RdataReader.
@@ -168,29 +172,36 @@ public:
         /// \param data The data pointer to hold.
         /// \param size The size to hold.
         Result(const uint8_t* data, size_t size);
+
         /// \brief The type of data returned.
         DataType type() const { return (type_); }
+
         /// \brief The raw data.
         ///
         /// This is only valid if type() == DATA.
         const uint8_t* data() const { return (data_); }
+
         /// \brief The size of the raw data.
         ///
         /// This is the number of bytes the data takes. It is valid only
         /// if type() == DATA.
         size_t size() const { return (size_); }
+
         /// \brief The domain label.
         ///
         /// This holds the domain label. It is only valid if type() == NAME.
         const dns::LabelSequence& label() const { return (label_); }
+
         /// \brief Is the name in label() compressible?
         ///
         /// This is valid only if type() == NAME.
         bool compressible() const { return (compressible_); }
+
         /// \brief Does the name expect additional processing?
         ///
         /// This is valid only if type() == NAME.
         bool additional() const { return (additional_); }
+
         /// \brief If there are data returned.
         ///
         /// This returns if there are any data at all returned. This is
@@ -217,29 +228,33 @@ public:
     /// If there are no more data, a Result with type END is returned and
     /// no callback is called.
     Result next();
+
     /// \brief Call next() until the end.
     ///
     /// This is just convenience method to iterate through all the data.
-    /// It calls next until it reaches the end (it does not revind before,
+    /// It calls next until it reaches the end (it does not rewind before,
     /// therefore if you already called next() yourself, it does not start
     /// at the beginning).
     ///
     /// The method only makes sense if you set the callbacks in constructor.
     void iterate() {
-        while (next()) { }
+        while (next()) {}
     }
+
     /// \brief Step to next piece of RRSig data.
     ///
     /// This is almost the same as next(), but it iterates through the
     /// associated RRSig data, not the data for the given RRType.
     Result nextSig();
+
     /// \brief Iterate through all RRSig data.
     ///
     /// This is almost the same as iterate(), but it iterates through the
     /// RRSig data instead.
     void iterateSig() {
-        while (nextSig()) { }
+        while (nextSig()) {}
     }
+
     /// \brief Rewind the iterator to the beginnig of data.
     ///
     /// The following next() and nextSig() will start iterating from the
