@@ -738,7 +738,24 @@ prepareRRset(const Name& name, const ConstRBNodeRRsetPtr& rrset, bool rename,
         rrset->copyAdditionalNodes(*result);
         return (result);
     } else {
-        return (rrset);
+        ConstRRsetPtr sig_rrset = rrset->getRRsig();
+        if (sig_rrset &&
+            ((options & ZoneFinder::FIND_DNSSEC) == 0)) {
+            RRsetPtr result_base(new RRset(name, rrset->getClass(),
+                                           rrset->getType(),
+                                           rrset->getTTL()));
+            for (RdataIteratorPtr i(rrset->getRdataIterator());
+                 !i->isLast();
+                 i->next()) {
+                result_base->addRdata(i->getCurrent());
+            }
+
+            RBNodeRRsetPtr result(new RBNodeRRset(result_base));
+            rrset->copyAdditionalNodes(*result);
+            return (result);
+        } else {
+            return (rrset);
+        }
     }
 }
 
