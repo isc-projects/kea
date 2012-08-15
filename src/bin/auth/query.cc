@@ -352,14 +352,14 @@ findZone(const ClientList& list, const Name& qname, RRType qtype) {
 void
 Query::process(datasrc::ClientList& client_list,
                const isc::dns::Name& qname, const isc::dns::RRType& qtype,
-               isc::dns::Message& response)
+               isc::dns::Message& response, bool dnssec)
 {
     // Set up the cleaner object so internal pointers and vectors are
     // always reset after scope leaves this method
     QueryCleaner cleaner(*this);
 
     // Set up query parameters for the rest of the (internal) methods
-    initialize(client_list, qname, qtype, response);
+    initialize(client_list, qname, qtype, response, dnssec);
 
     // Found a zone which is the nearest ancestor to QNAME
     const ClientList::FindResult result = findZone(*client_list_, *qname_,
