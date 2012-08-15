@@ -1263,12 +1263,14 @@ TEST_F(InMemoryZoneFinderTest, loadFromIterator) {
     RRsetPtr expected_answer = textToRRset(soa_txt, RRClass::IN(), origin_);
     expected_answer->addRRsig(textToRRset(soa_sig_txt));
     findTest(origin_, RRType::SOA(), ZoneFinder::SUCCESS, true,
-             expected_answer);
+             expected_answer, ZoneFinder::RESULT_DEFAULT, NULL,
+             ZoneFinder::FIND_DNSSEC);
 
     expected_answer = textToRRset(a_txt);
     expected_answer->addRRsig(textToRRset(a_sig_txt));
     findTest(Name("ns1.example.org"), RRType::A(), ZoneFinder::SUCCESS, true,
-             expected_answer);
+             expected_answer, ZoneFinder::RESULT_DEFAULT, NULL,
+             ZoneFinder::FIND_DNSSEC);
 
     // File name should be (re)set to empty.
     EXPECT_TRUE(zone_finder_.getFileName().empty());
