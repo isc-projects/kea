@@ -95,11 +95,14 @@ bind10-devel-20120816 released on August 16, 2012
 	NOTIMP instead of SERVFAIL.
 	(Trac #1986, git bd6b0a5ed3481f78fb4e5cb0b18c7b6e5920f9f8)
 
-452.	[func]		muks
-	isc-sysinfo: An initial implementation of the isc-sysinfo tool
-	is now available. It gathers and outputs system information which
-	can be used by future tech support staff.
-	(Trac #2062, git 144e80212746f8d55e6a59edcf689fec9f32ae95)
+452.	[func]		muks, jelte
+	isc-sysinfo: An initial implementation of the isc-sysinfo
+	tool is now available for Linux, OpenBSD, FreeBSD, and Mac
+	OS X. It gathers and outputs system information which can
+	be used by future tech support staff. This includes a
+	generic Python "sysinfo" module.
+	(Trac #2062, #2121, #2122, #2172,
+	git 144e80212746f8d55e6a59edcf689fec9f32ae95)
 
 451.	[bug]		muks, jinmei
 	libdatasrc: the database-based data source now correctly returns
