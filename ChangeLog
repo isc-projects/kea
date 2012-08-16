@@ -1,5 +1,15 @@
 bind10-devel-20120816 released on August 16, 2012
 
+467.	[bug]		jelte
+	For configurations, allow named sets to contain lists of items.
+	(Trac #2114, git 712637513505f7afb8434292ca2a98c3517dffd3)
+
+466.	[func]		jelte
+	Allow bindctl to add and remove items to and from lists
+	and dicts for items of type "any". This is for easier
+	configurations.
+	(Trac #2184, git ad2d728d1496a9ff59d622077850eed0638b54eb)
+
 465.	[doc]		vorner
 	Improved documentation about ACLs in the Guide.
 	(Trac #2066, git 76f733925b3f3560cfc2ee96d2a19905b623bfc3)
