@@ -1,3 +1,5 @@
+bind10-devel-20120816 released on August 16, 2012
+
 459.	[func]		tomek
 	b10-dhcp6: DHCPv6 server component is now integrated into
 	BIND10 framework. It can be started from BIND10 (using bindctl)
