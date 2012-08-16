@@ -1,3 +1,9 @@
+462.	[bug]		jreed
+	BIND 10 now compiles against googletest-1.6.0 versions that are
+	installed on the system as source code. For such versions, use the
+	--with-gtest-source configure switch.
+	(Trac #1999, git 6a26d459a40d7eed8ebcff01835377b3394a78de)
+
 461.	[bug]		muks
 	We now set g+w and g+s permissions (mode 02770) on BIND 10 local
 	state directory ($prefix/var/bind10-devel/) so that permissions to
