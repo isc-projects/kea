@@ -1347,7 +1347,7 @@ TODO
       <para>
         This is encoded in form of JSON. Semi-formal description could look
         something like this. It is described in more details below.
-        <!-- FIXME: Is <screen> really the correct one?-->
+<!-- FIXME: Is <screen> really the correct one?-->
         <screen>ACL := [ RULE, RULE, ... ]
 RULE := { "action": "ACCEPT"|"REJECT"|"DROP", MATCH, MATCH, ... }
 RULE_RAW := { MATCH, MATCH, ... }
@@ -1376,8 +1376,8 @@ AND_MATCH := "ALL": [ RULE_RAW, RULE_RAW, ... ]
           The other is TSIG key by which the message was signed. The ACL
           contains only the name (under the name "key"), the key itself
           must be stored in the global keyring. This property is applicable only
-          to the DNS context. <!-- TODO: Section for the keyring and link to
-          it.-->
+          to the DNS context.
+<!-- TODO: Section for the keyring and link to it.-->
         </para>
 
         <para>
@@ -2162,7 +2162,7 @@ Xfrout/transfer_acl[0]	{"action": "ACCEPT"}	any	(default)</screen>
       TSIGs in the incoming messages and to sign responses.</para>
 
     <para>
-      For further details on ACL configuration, see 
+      For further details on ACL configuration, see
       <xref linkend="common-acl" />.
     </para>
 
