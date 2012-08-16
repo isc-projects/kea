@@ -1,3 +1,9 @@
+460.	[bug]		muks
+	SSHFP's algorithm and fingerprint type checks have been relaxed
+	such that they will accept any values in [0,255]. This is so that
+	future algorithm and fingerprint types are accomodated.
+	(Trac #2124, git 49e6644811a7ad09e1326f20dd73ab43116dfd21)
+
 bind10-devel-20120816 released on August 16, 2012
 
 459.	[func]		tomek
