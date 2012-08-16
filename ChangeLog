@@ -1,3 +1,14 @@
+464.	[func]		jelte, muks
+	libdns++: The LabelSequence class has been extended with some new
+	methods.  These are mainly intended for internal development, but
+	the class is public, so interested users may want to look into the
+	extensions.
+	(Trac #2052, 57c61f2^..dbef0e2)
+	(Trac #2053, 1fc2b06b57a008ec602daa2dac79939b3cc6b65d)
+	(Trac #2086, 3fac7d5579c5f51b8e952b50db510b45bfa986f3)
+	(Trac #2087, 49ad6346f574d00cfbd1d12905915fd0dd6a0bac)
+	(Trac #2148, 285c2845ca96e7ef89f9158f1dea8cda147b6566)
+
 463.	[func]		jinmei
 	Python isc.dns: the Name, RRType and RRClass classes are now
 	hashable.  So, for example, objects of these classes can be used
