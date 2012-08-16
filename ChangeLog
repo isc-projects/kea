@@ -1,3 +1,9 @@
+463.	[func]		jinmei
+	Python isc.dns: the Name, RRType and RRClass classes are now
+	hashable.  So, for example, objects of these classes can be used
+	as a dictionary key.
+	(Trac #1883, 93ec40dd0a1df963c676037cc60c066c748b3030)
+
 462.	[bug]		jreed
 	BIND 10 now compiles against googletest-1.6.0 versions that are
 	installed on the system as source code. For such versions, use the
