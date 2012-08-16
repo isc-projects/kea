@@ -1,5 +1,9 @@
 bind10-devel-20120816 released on August 16, 2012
 
+465.	[doc]		vorner
+	Improved documentation about ACLs in the Guide.
+	(Trac #2066, git 76f733925b3f3560cfc2ee96d2a19905b623bfc3)
+
 464.	[func]		jelte, muks
 	libdns++: The LabelSequence class has been extended with some new
 	methods.  These are mainly intended for internal development, but
@@ -24,9 +28,10 @@ bind10-devel-20120816 released on August 16, 2012
 	(Trac #1999, git 6a26d459a40d7eed8ebcff01835377b3394a78de)
 
 461.	[bug]		muks
-	We now set g+w and g+s permissions (mode 02770) on BIND 10 local
-	state directory ($prefix/var/bind10-devel/) so that permissions to
-	files and sub-directories created in that directory are inherited.
+	We now set g+w and g+s permissions (mode 02770) during
+	installation for the BIND 10 local state directory
+	($prefix/var/bind10-devel/) so that permissions to files
+	and sub-directories created in that directory are inherited.
 	(Trac #2171, git ab4d20907abdb3ce972172463dcc73405b3dee79)
 
 460.	[bug]		muks
@@ -37,7 +42,7 @@ bind10-devel-20120816 released on August 16, 2012
 
 459.	[func]		tomek
 	b10-dhcp6: DHCPv6 server component is now integrated into
-	BIND10 framework. It can be started from BIND10 (using bindctl)
+	BIND 10 framework. It can be started from BIND 10 (using bindctl)
 	and can receive commands. The only supported command for now
 	is 'Dhcp6 shutdown'.
 	b10-dhcp4: Command line-switch '-s' to disable msgq was added.
@@ -106,7 +111,7 @@ bind10-devel-20120816 released on August 16, 2012
 
 450.	[func]		tomek
 	b10-dhcp4: DHCPv4 server component is now integrated into
-	BIND10 framework. It can be started from BIND10 (using bindctl)
+	BIND 10 framework. It can be started from BIND 10 (using bindctl)
 	and can receive commands. The only supported command for now
 	is 'Dhcp4 shutdown'.
 	(Trac #1651, git 7e16a5a50d3311e63d10a224ec6ebcab5f25f62c)
@@ -751,7 +756,7 @@ bind10-devel-20120119 released on January 19, 2012
 	(Trac #1430, git b35797ba1a49c78246abc8f2387901f9690b328d)
 
 356.	[doc]		tomek
-	BIND10 Guide updated. It now describes DHCPv4 and DHCPv6
+	BIND 10 Guide updated. It now describes DHCPv4 and DHCPv6
 	components, including their overview, usage, supported standard
 	and limitations. libdhcp++ is also described.
 	(Trac #1367, git 3758ab360efe1cdf616636b76f2e0fb41f2a62a0)
@@ -1567,7 +1572,7 @@ bind10-devel-20110519 released on May 19, 2011
 	(Trac #719, git a234b20dc6617392deb8a1e00eb0eed0ff353c0a)
 
 236.	[func]		jelte
-	C++ client side of configuration now uses BIND10 logging system.
+	C++ client side of configuration now uses BIND 10 logging system.
 	It also has improved error handling when communicating with the
 	rest of the system.
 	(Trac #743, git 86632c12308c3ed099d75eb828f740c526dd7ec0)
@@ -2517,8 +2522,8 @@ bind10-devel-20100917 released on September 17, 2010
 
 86.	[func]		jerry
 	bin/zonemgr: Added zone manager module. The zone manager is one
-	of the co-operating processes of BIND10, which keeps track of
-	timers and other information necessary for BIND10 to act as a
+	of the co-operating processes of BIND 10, which keeps track of
+	timers and other information necessary for BIND 10 to act as a
 	slave. (Trac #215, svn r2737)
 
 85.	[build]*		jinmei
