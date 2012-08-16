@@ -1,3 +1,5 @@
+bind10-devel-20120816 released on August 16, 2012
+
 464.	[func]		jelte, muks
 	libdns++: The LabelSequence class has been extended with some new
 	methods.  These are mainly intended for internal development, but
@@ -33,8 +35,6 @@
 	future algorithm and fingerprint types are accomodated.
 	(Trac #2124, git 49e6644811a7ad09e1326f20dd73ab43116dfd21)
 
-bind10-devel-20120816 released on August 16, 2012
-
 459.	[func]		tomek
 	b10-dhcp6: DHCPv6 server component is now integrated into
 	BIND10 framework. It can be started from BIND10 (using bindctl)
@@ -62,7 +62,7 @@ bind10-devel-20120816 released on August 16, 2012
 	clashes with other similarly named libraries on the system.
 	(Trac #2071, git ac20a00c28069804edc0a36050995df52f601efb)
 
-456.	[build]*		muks
+456.	[build]		muks
 	BIND 10 now compiles against log4cplus-1.1.0 (RC releases)
 	also.  Note: some older versions of log4cplus don't work any more;
 	known oldest workable version is 1.0.4.  Thanks to John Lumby for
@@ -90,7 +90,7 @@ bind10-devel-20120816 released on August 16, 2012
 	NOTIMP instead of SERVFAIL.
 	(Trac #1986, git bd6b0a5ed3481f78fb4e5cb0b18c7b6e5920f9f8)
 
-452.	[func]*		muks
+452.	[func]		muks
 	isc-sysinfo: An initial implementation of the isc-sysinfo tool
 	is now available. It gathers and outputs system information which
 	can be used by future tech support staff.
@@ -104,7 +104,7 @@ bind10-devel-20120816 released on August 16, 2012
 	"glue"; it's the caller's responsibility.)
 	(Trac #1771, git 483f1075942965f0340291e7ff7dae7806df22af)
 
-450.	[func]*		tomek
+450.	[func]		tomek
 	b10-dhcp4: DHCPv4 server component is now integrated into
 	BIND10 framework. It can be started from BIND10 (using bindctl)
 	and can receive commands. The only supported command for now
