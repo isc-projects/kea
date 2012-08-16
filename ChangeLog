@@ -31,7 +31,7 @@ bind10-devel-20120816 released on August 16, 2012
 	as a dictionary key.
 	(Trac #1883, 93ec40dd0a1df963c676037cc60c066c748b3030)
 
-462.	[bug]		jreed
+462.	[build]		jreed
 	BIND 10 now compiles against googletest-1.6.0 versions that are
 	installed on the system as source code. For such versions, use the
 	--with-gtest-source configure switch.
