@@ -19,11 +19,14 @@
 #include <vector>
 
 #include <boost/noncopyable.hpp>
+#include <boost/shared_ptr.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <dhcp/dhcp6.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
+
+#include "stats_mgr.h"
 
 namespace isc {
 namespace perfdhcp {
@@ -43,6 +46,15 @@ namespace perfdhcp {
 /// may be ignored (e.g. option buffer).
 class TestControl : public boost::noncopyable {
 public:
+
+    // Statistics Manager for DHCPv4.
+    typedef StatsMgr<dhcp::Pkt4> StatsMgr4;
+    // Pointer to Statistics Manager for DHCPv4;
+    typedef boost::shared_ptr<StatsMgr4> StatsMgr4Ptr;
+    // Statictics Manager for DHCPv6.
+    typedef StatsMgr<dhcp::Pkt6> StatsMgr6;
+    // Pointer to Statistics Manager for DHCPv6.
+    typedef boost::shared_ptr<StatsMgr6> StatsMgr6Ptr;
 
     /// \brief Socket wrapper class.
     ///
@@ -151,7 +163,6 @@ protected:
     ///
     /// \return true if any of the exit conditions is fulfiled.
     bool checkExitConditions() const;
-
 
     /// \brief Factory function to create DHCPv6 ELAPSED_TIME option.
     ///
@@ -284,6 +295,12 @@ protected:
     /// \return number of exchanges to be started immediatelly.
     uint64_t getNextExchangesNum() const;
 
+    /// \brief Initializes Statistics Manager.
+    ///
+    /// This function initializes Statistics Manager. If there is
+    /// the one initialized already it is released.
+    void initializeStatsMgr();
+
     /// \brief Open socket to communicate with DHCP server.
     ///
     /// Method opens socket and binds it to local address. Function will
@@ -304,6 +321,17 @@ protected:
     /// \throw isc::Unexpected if interal unexpected error occured.
     /// \return socket descriptor.
     int openSocket(uint16_t port = 0) const;
+
+    /// \brief Print performance statistics.
+    ///
+    /// Method prints performance statistics.
+    /// \throws isc::InvalidOperation if Statistics Manager was
+    /// not initialized.
+    void printStats() const;
+
+    void receivePacket4(dhcp::Pkt4Ptr& pkt4);
+
+    void receivePacket6(dhcp::Pkt6Ptr& pkt4);
 
     /// \brief Receive DHCPv4 or DHCPv6 packets from the server.
     ///
@@ -407,6 +435,9 @@ private:
                                            ///< of exchanges.
     boost::posix_time::ptime last_sent_;   ///< Indicates when the last exchange
                                            /// was initiated.
+
+    StatsMgr4Ptr stats_mgr4_;  /// Statistics Manager 4.
+    StatsMgr6Ptr stats_mgr6_;  /// Statistics Manager 6.
 
     uint64_t sent_packets_0_;
     uint64_t sent_packets_1_;

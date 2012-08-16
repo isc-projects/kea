@@ -243,20 +243,21 @@ public:
         /// In this mode all packets are stored throughout the test execution.
         ExchangeStats(const ExchangeType xchg_type, const bool archive_enabled)
             : xchg_type_(xchg_type),
-            min_delay_(std::numeric_limits<double>::max()),
-            max_delay_(0.),
-            sum_delay_(0.),
-            orphans_(0),
-            sum_delay_squared_(0.),
-            ordered_lookups_(0),
-            unordered_lookup_size_sum_(0),
-            unordered_lookups_(0),
-            sent_packets_num_(0),
-            rcvd_packets_num_(0),
             sent_packets_(),
             rcvd_packets_(),
             archived_packets_(),
-            archive_enabled_(archive_enabled) {
+            archive_enabled_(archive_enabled),
+            min_delay_(std::numeric_limits<double>::max()),
+            max_delay_(0.),
+            sum_delay_(0.),
+            sum_delay_squared_(0.),
+            orphans_(0),
+            unordered_lookup_size_sum_(0),
+            unordered_lookups_(0),
+            ordered_lookups_(0),
+            sent_packets_num_(0),
+            rcvd_packets_num_(0)
+        {
             next_sent_ = sent_packets_.begin();
         }
 
@@ -555,7 +556,10 @@ public:
         /// number of dropped packets and number of orphans.
         void printMainStats() const {
             using namespace std;
-            uint64_t drops = getRcvdPacketsNum() - getSentPacketsNum();
+            uint64_t drops = 0;
+            if (getRcvdPacketsNum() >= getSentPacketsNum()) {
+                drops = getRcvdPacketsNum() - getSentPacketsNum();
+            }
             cout << "sent packets: " << getSentPacketsNum() << endl
                  << "received packets: " << getRcvdPacketsNum() << endl
                  << "drops: " << drops << endl
