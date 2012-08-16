@@ -268,6 +268,27 @@ TestControl::getNextExchangesNum() const {
     return (0);
 }
 
+void
+TestControl::initializeStatsMgr() {
+    CommandOptions& options = CommandOptions::instance();
+    if (options.getIpVersion() == 4) {
+        stats_mgr4_.reset();
+        stats_mgr4_ = StatsMgr4Ptr(new StatsMgr4());
+        stats_mgr4_->addExchangeStats(StatsMgr4::XCHG_DO);
+        if (options.getExchangeMode() == CommandOptions::DO_SA) {
+            stats_mgr4_->addExchangeStats(StatsMgr4::XCHG_RA);
+        }
+
+    } else if (options.getIpVersion() == 6) {
+        stats_mgr6_.reset();
+        stats_mgr6_ = StatsMgr6Ptr(new StatsMgr6());
+        stats_mgr6_->addExchangeStats(StatsMgr6::XCHG_SA);
+        if (options.getExchangeMode() == CommandOptions::DO_SA) {
+            stats_mgr6_->addExchangeStats(StatsMgr6::XCHG_RR);
+        } 
+    }
+}
+
 int
 TestControl::openSocket(uint16_t port) const {
     CommandOptions& options = CommandOptions::instance();
@@ -278,9 +299,9 @@ TestControl::openSocket(uint16_t port) const {
     IOAddress remoteaddr(servername);
     if (port == 0) {
         if (options.getIpVersion() == 6) {
-            port = 547;
-        } else if (port == 0) {
-            port = 67;
+            port = DHCP6_CLIENT_PORT;
+        } else if (options.getIpVersion() == 4) {
+            port = 67; //  TODO: find out why port 68 is wrong here.
         }
     }
     if (options.getIpVersion() == 6) {
@@ -351,7 +372,57 @@ TestControl::openSocket(uint16_t port) const {
             }
         }
     }
+
     return(sock);
+}
+
+void
+TestControl::printStats() const {
+    CommandOptions& options = CommandOptions::instance();
+    if (options.getIpVersion() == 4) {
+        if (!stats_mgr4_) {
+            isc_throw(InvalidOperation, "Statistics Manager for DHCPv4 "
+                      "hasn't been initialized");
+        }
+        stats_mgr4_->printStats();
+    } else if (options.getIpVersion() == 6) {
+        if (!stats_mgr6_) {
+            isc_throw(InvalidOperation, "Statistics Manager for DHCPv6 "
+                      "hasn't been initialized");
+        }
+        stats_mgr6_->printStats();
+    }
+}
+
+void
+TestControl::receivePacket4(Pkt4Ptr& pkt4) {
+    switch(pkt4->getType()) {
+    case DHCPOFFER :
+        stats_mgr4_->passRcvdPacket(StatsMgr4::XCHG_DO, pkt4);
+        break;
+    case DHCPACK :
+        stats_mgr4_->passRcvdPacket(StatsMgr4::XCHG_RA, pkt4);
+        break;
+    default:
+        isc_throw(BadValue, "unknown type " << pkt4->getType()
+                  << " of received DHCPv4 packet");
+    }
+}
+
+void
+TestControl::receivePacket6(Pkt6Ptr& pkt6) {
+    switch(pkt6->getType()) {
+    case DHCPV6_ADVERTISE :
+        stats_mgr6_->passRcvdPacket(StatsMgr6::XCHG_SA, pkt6);
+        break;
+    case DHCPV6_REPLY :
+        stats_mgr6_->passRcvdPacket(StatsMgr6::XCHG_RR, pkt6);
+        break;
+    default:
+        isc_throw(BadValue, "unknown type " << pkt6->getType()
+                  << " of received DHCPv6 packet");
+    }
+
 }
 
 void
@@ -364,17 +435,17 @@ TestControl::receivePackets() {
             if (!pkt4) {
                 receiving = false;
             } else {
-                // TODO: replace this with use of StatsMgr to increase
-                // number of received packets. This can be done once
-                // the 1958 ticket is reviewed and checked-in.
-                std::cout << "Received packet" << std::endl;
+                pkt4->unpack();
+                receivePacket4(pkt4);
             }
         } else if (CommandOptions::instance().getIpVersion() == 6) {
             Pkt6Ptr pkt6 = IfaceMgr::instance().receive6(timeout);
             if (!pkt6) {
                 receiving  = false;
             } else {
-                std::cout << "Received DHCPv6 packet" << std::endl;
+                if (pkt6->unpack()) {
+                    receivePacket6(pkt6);
+                }
             }
         }
     }
@@ -453,6 +524,8 @@ TestControl::run() {
     }
     registerOptionFactories();
     TestControlSocket socket(openSocket());
+    
+    initializeStatsMgr();
     uint64_t packets_sent = 0;
     for (;;) {
         updateSendDue();
@@ -470,9 +543,9 @@ TestControl::run() {
                 sendSolicit6(socket);
             }
             ++packets_sent;
-            cout << "Packets sent " << packets_sent << endl;
         }
     }
+    printStats();
 }
 
 void
@@ -482,7 +555,7 @@ TestControl::sendDiscover4(const TestControlSocket& socket) {
     // Generate the MAC address to be passed in the packet.
     std::vector<uint8_t> mac_address = generateMacAddress();
     // Generate trasnaction id to be set for the new exchange.
-    const uint32_t transid = static_cast<uint32_t>(random());
+    const uint32_t transid = static_cast<uint32_t>(random() % 0x00FFFFFF);
     boost::shared_ptr<Pkt4> pkt4(new Pkt4(DHCPDISCOVER, transid));
     if (!pkt4) {
         isc_throw(Unexpected, "failed to create DISCOVER packet");
@@ -500,6 +573,11 @@ TestControl::sendDiscover4(const TestControlSocket& socket) {
     setDefaults4(socket, pkt4);
     pkt4->pack();
     IfaceMgr::instance().send(pkt4);
+    if (!stats_mgr4_) {
+        isc_throw(InvalidOperation, "Statistics Manager for DHCPv4 "
+                  "hasn't been initialized");
+    }
+    stats_mgr4_->passSentPacket(StatsMgr4::XCHG_DO, pkt4);
 }
 
 void
@@ -511,7 +589,7 @@ TestControl::sendSolicit6(const TestControlSocket& socket) {
     // Generate DUID to be passed to the packet
     std::vector<uint8_t> duid = generateDuid();
     // Generate trasnaction id to be set for the new exchange.
-    const uint32_t transid = static_cast<uint32_t>(random());
+    const uint32_t transid = static_cast<uint32_t>(random() % 0x00FFFFFF);
     boost::shared_ptr<Pkt6> pkt6(new Pkt6(DHCPV6_SOLICIT, transid));
     if (!pkt6) {
         isc_throw(Unexpected, "failed to create SOLICIT packet");
@@ -525,6 +603,11 @@ TestControl::sendSolicit6(const TestControlSocket& socket) {
     setDefaults6(socket, pkt6);
     pkt6->pack();
     IfaceMgr::instance().send(pkt6);
+    if (!stats_mgr6_) {
+        isc_throw(InvalidOperation, "Statistics Manager for DHCPv6 "
+                  "hasn't been initialized");
+    }
+    stats_mgr6_->passSentPacket(StatsMgr6::XCHG_SA, pkt6);
 }
 
 void
