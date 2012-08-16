@@ -1,3 +1,9 @@
+461.	[bug]		muks
+	We now set g+w and g+s permissions (mode 02770) on BIND 10 local
+	state directory ($prefix/var/bind10-devel/) so that permissions to
+	files and sub-directories created in that directory are inherited.
+	(Trac #2171, git ab4d20907abdb3ce972172463dcc73405b3dee79)
+
 460.	[bug]		muks
 	SSHFP's algorithm and fingerprint type checks have been relaxed
 	such that they will accept any values in [0,255]. This is so that
