@@ -88,7 +88,8 @@ bind10-devel-20120816 released on August 16, 2012
 	The server now uses newer API for data sources. This would be an
 	internal change, however, the data sources are now configured
 	differently. Please, migrate your configuration to the top-level
-	"data_sources" module.
+	"data_sources" module.  Also the bind10 -n and --no-cache
+	and b10-auth -n options are removed.
 	(Trac #1976, git 0d4685b3e7603585afde1b587cbfefdfaf6a1bb3)
 
 454.	[bug]		jelte
