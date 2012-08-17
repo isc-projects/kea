@@ -277,13 +277,13 @@ class RRsetRRSIGTest : public ::testing::Test {
 protected:
     RRsetRRSIGTest() : test_name("test.example.com")
     {
-        rrset_a = new RRset(test_name, RRClass::IN(),
-                            RRType::A(), RRTTL(3600));
+        rrset_a = RRsetPtr(new RRset(test_name, RRClass::IN(),
+                                     RRType::A(), RRTTL(3600)));
         rrset_a->addRdata(in::A("192.0.2.1"));
         rrset_a->addRdata(in::A("192.0.2.2"));
 
-        rrset_aaaa = new RRset(test_name, RRClass::IN(),
-                               RRType::AAAA(), RRTTL(3600));
+        rrset_aaaa = RRsetPtr(new RRset(test_name, RRClass::IN(),
+                                        RRType::AAAA(), RRTTL(3600)));
         rrset_aaaa->addRdata(in::AAAA("2001:db8::1234"));
 
         rrset_rrsig = RRsetPtr(new RRset(test_name, RRClass::IN(),
@@ -295,8 +295,8 @@ protected:
     }
 
     const Name test_name;
-    RRset* rrset_a;           // A RRset with two RDATAs
-    RRset* rrset_aaaa;        // AAAA RRset with one RDATA with RRSIG
+    RRsetPtr rrset_a;           // A RRset with two RDATAs
+    RRsetPtr rrset_aaaa;        // AAAA RRset with one RDATA with RRSIG
     RRsetPtr rrset_rrsig;       // RRSIG for the AAAA RRset
 };
 
