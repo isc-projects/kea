@@ -125,9 +125,10 @@ class ZoneNotifyInfo:
 class NotifyOut:
     '''This class is used to handle notify logic for all zones(sending
     notify message to its slaves). notify service can be started by
-    calling  dispatcher(), and it can be stoped by calling shutdown()
+    calling  dispatcher(), and it can be stopped by calling shutdown()
     in another thread. '''
-    def __init__(self, datasrc_file, verbose=True):
+    def __init__(self, datasrc_file, counter_handler=None, verbose=True,
+                 counter_notifyoutv4=None, counter_notifyoutv6=None):
         self._notify_infos = {} # key is (zone_name, zone_class)
         self._waiting_zones = []
         self._notifying_zones = []
@@ -142,6 +143,14 @@ class NotifyOut:
         # Use nonblock event to eliminate busy loop
         # If there are no notifying zones, clear the event bit and wait.
         self._nonblock_event = threading.Event()
+        # Set counter handlers for counting notifies. An argument is
+        # required for zone name.
+        self._counter_notifyoutv4 = lambda x: None
+        if hasattr(counter_notifyoutv4, '__call__'):
+            self._counter_notifyoutv4 = counter_notifyoutv4
+        self._counter_notifyoutv6 = lambda x: None
+        if hasattr(counter_notifyoutv6, '__call__'):
+            self._counter_notifyoutv6 = counter_notifyoutv6
 
     def _init_notify_out(self, datasrc_file):
         '''Get all the zones name and its notify target's address.
@@ -478,6 +487,11 @@ class NotifyOut:
         try:
             sock = zone_notify_info.create_socket(addrinfo[0])
             sock.sendto(render.get_data(), 0, addrinfo)
+            # count notifying by IPv4 or IPv6 for statistics
+            if zone_notify_info.get_socket().family == socket.AF_INET:
+                self._counter_notifyoutv4(zone_notify_info.zone_name)
+            elif zone_notify_info.get_socket().family == socket.AF_INET6:
+                self._counter_notifyoutv6(zone_notify_info.zone_name)
             logger.info(NOTIFY_OUT_SENDING_NOTIFY, addrinfo[0],
                         addrinfo[1])
         except (socket.error, addr.InvalidAddress) as err:
