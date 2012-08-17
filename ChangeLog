@@ -1,4 +1,11 @@
 nnn.    [func]          naokikambe
+        Added Xfrout statistics counters: notifyoutv4, notifyoutv6, xfrrej, and
+        xfrreqdone. These are per-zone type counters. The value of these
+        counters can be seen with zone name by invoking "Stats show Xfrout" via
+        bindctl.
+        (Trac #2158, git TBD)
+
+nnn.    [func]          naokikambe
         The stats module was supported differential statistics updates. Each
         module can return only statistics data which are updated since the last
         time it sent to the stats module. The purpose of differential updating
