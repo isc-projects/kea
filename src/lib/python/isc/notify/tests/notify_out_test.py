@@ -61,6 +61,7 @@ class MockZoneNotifyInfo(notify_out.ZoneNotifyInfo):
         self.sock_family = self._sock.family
         self._sock.close()
         self._sock = MockSocket()
+        self._sock.family = self.sock_family
         return self._sock
 
 class TestZoneNotifyInfo(unittest.TestCase):
@@ -95,7 +96,13 @@ class TestZoneNotifyInfo(unittest.TestCase):
 class TestNotifyOut(unittest.TestCase):
     def setUp(self):
         self._db_file = TESTDATA_SRCDIR + '/test.sqlite3'
-        self._notify = notify_out.NotifyOut(self._db_file)
+        self._notifiedv4_zone_name = None
+        def _dummy_counter_notifyoutv4(z): self._notifiedv4_zone_name = z
+        self._notifiedv6_zone_name = None
+        def _dummy_counter_notifyoutv6(z): self._notifiedv6_zone_name = z
+        self._notify = notify_out.NotifyOut(self._db_file,
+                                            counter_notifyoutv4=_dummy_counter_notifyoutv4,
+                                            counter_notifyoutv6=_dummy_counter_notifyoutv6)
         self._notify._notify_infos[('example.com.', 'IN')] = MockZoneNotifyInfo('example.com.', 'IN')
         self._notify._notify_infos[('example.com.', 'CH')] = MockZoneNotifyInfo('example.com.', 'CH')
         self._notify._notify_infos[('example.net.', 'IN')] = MockZoneNotifyInfo('example.net.', 'IN')
@@ -262,17 +269,25 @@ class TestNotifyOut(unittest.TestCase):
     def test_send_notify_message_udp_ipv4(self):
         example_com_info = self._notify._notify_infos[('example.net.', 'IN')]
         example_com_info.prepare_notify_out()
+        self.assertIsNone(self._notifiedv4_zone_name)
+        self.assertIsNone(self._notifiedv6_zone_name)
         ret = self._notify._send_notify_message_udp(example_com_info,
                                                     ('192.0.2.1', 53))
         self.assertTrue(ret)
         self.assertEqual(socket.AF_INET, example_com_info.sock_family)
+        self.assertEqual(self._notifiedv4_zone_name, 'example.net.')
+        self.assertIsNone(self._notifiedv6_zone_name)
 
     def test_send_notify_message_udp_ipv6(self):
         example_com_info = self._notify._notify_infos[('example.net.', 'IN')]
+        self.assertIsNone(self._notifiedv4_zone_name)
+        self.assertIsNone(self._notifiedv6_zone_name)
         ret = self._notify._send_notify_message_udp(example_com_info,
                                                     ('2001:db8::53', 53))
         self.assertTrue(ret)
         self.assertEqual(socket.AF_INET6, example_com_info.sock_family)
+        self.assertIsNone(self._notifiedv4_zone_name)
+        self.assertEqual(self._notifiedv6_zone_name, 'example.net.')
 
     def test_send_notify_message_with_bogus_address(self):
         example_com_info = self._notify._notify_infos[('example.net.', 'IN')]
@@ -281,9 +296,13 @@ class TestNotifyOut(unittest.TestCase):
         # happen, but right now it's not actually the case.  Even if the
         # data source does its job, it's prudent to confirm the behavior for
         # an unexpected case.
+        self.assertIsNone(self._notifiedv4_zone_name)
+        self.assertIsNone(self._notifiedv6_zone_name)
         ret = self._notify._send_notify_message_udp(example_com_info,
                                                     ('invalid', 53))
         self.assertFalse(ret)
+        self.assertIsNone(self._notifiedv4_zone_name)
+        self.assertIsNone(self._notifiedv6_zone_name)
 
     def test_zone_notify_handler(self):
         old_send_msg = self._notify._send_notify_message_udp
