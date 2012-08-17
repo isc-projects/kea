@@ -277,13 +277,23 @@ class TestXfroutSessionBase(unittest.TestCase):
                                        # When not testing ACLs, simply accept
                                        isc.acl.dns.REQUEST_LOADER.load(
                                            [{"action": "ACCEPT"}]),
-                                       {})
+                                       {},
+                                       counter_xfrrej=self._counter_xfrrej,
+                                       counter_xfrreqdone=self._counter_xfrreqdone)
         self.set_request_type(RRType.AXFR()) # test AXFR by default
         self.mdata = self.create_request_data()
         self.soa_rrset = create_soa(SOA_CURRENT_VERSION)
         # some test replaces a module-wide function.  We should ensure the
         # original is used elsewhere.
         self.orig_get_rrset_len = xfrout.get_rrset_len
+        self._zone_name_xfrrej = None
+        self._zone_name_xfrreqdone = None
+
+    def _counter_xfrrej(self, zone_name):
+        self._zone_name_xfrrej = zone_name
+
+    def _counter_xfrreqdone(self, zone_name):
+        self._zone_name_xfrreqdone = zone_name
 
     def tearDown(self):
         xfrout.get_rrset_len = self.orig_get_rrset_len
@@ -458,7 +468,9 @@ class TestXfroutSession(TestXfroutSessionBase):
         # ACL checks only with the default ACL
         def acl_setter(acl):
             self.xfrsess._acl = acl
+        self.assertIsNone(self._zone_name_xfrrej)
         self.check_transfer_acl(acl_setter)
+        self.assertEqual(self._zone_name_xfrrej, TEST_ZONE_NAME_STR)
 
     def test_transfer_zoneacl(self):
         # ACL check with a per zone ACL + default ACL.  The per zone ACL
@@ -469,7 +481,9 @@ class TestXfroutSession(TestXfroutSessionBase):
             self.xfrsess._zone_config[zone_key]['transfer_acl'] = acl
             self.xfrsess._acl = isc.acl.dns.REQUEST_LOADER.load([
                     {"from": "127.0.0.1", "action": "DROP"}])
+        self.assertIsNone(self._zone_name_xfrrej)
         self.check_transfer_acl(acl_setter)
+        self.assertEqual(self._zone_name_xfrrej, TEST_ZONE_NAME_STR)
 
     def test_transfer_zoneacl_nomatch(self):
         # similar to the previous one, but the per zone doesn't match the
@@ -481,7 +495,9 @@ class TestXfroutSession(TestXfroutSessionBase):
                 isc.acl.dns.REQUEST_LOADER.load([
                     {"from": "127.0.0.1", "action": "DROP"}])
             self.xfrsess._acl = acl
+        self.assertIsNone(self._zone_name_xfrrej)
         self.check_transfer_acl(acl_setter)
+        self.assertEqual(self._zone_name_xfrrej, TEST_ZONE_NAME_STR)
 
     def test_get_transfer_acl(self):
         # set the default ACL.  If there's no specific zone ACL, this one
@@ -831,9 +847,11 @@ class TestXfroutSession(TestXfroutSessionBase):
         def myreply(msg, sock):
             self.sock.send(b"success")
 
+        self.assertIsNone(self._zone_name_xfrreqdone)
         self.xfrsess._reply_xfrout_query = myreply
         self.xfrsess.dns_xfrout_start(self.sock, self.mdata)
         self.assertEqual(self.sock.readsent(), b"success")
+        self.assertEqual(self._zone_name_xfrreqdone, TEST_ZONE_NAME_STR)
 
     def test_reply_xfrout_query_axfr(self):
         self.xfrsess._soa = self.soa_rrset
@@ -1153,6 +1171,7 @@ class MyUnixSockServer(UnixSockServer):
         self._common_init()
         self._cc = MyCCSession()
         self.update_config_data(self._cc.get_full_config())
+        self._counters = {}
 
 class TestUnixSockServer(unittest.TestCase):
     def setUp(self):
@@ -1504,6 +1523,80 @@ class MyXfroutServer(XfroutServer):
         self._unix_socket_server = None
         # Disable the wait for threads
         self._wait_for_threads = lambda : None
+        self._cc.get_module_spec = lambda:\
+            isc.config.module_spec_from_file(xfrout.SPECFILE_LOCATION)
+        # setup an XfroutCount object
+        self._counter = XfroutCounter(
+            self._cc.get_module_spec().get_statistics_spec())
+
+class TestXfroutCounter(unittest.TestCase):
+    def setUp(self):
+        statistics_spec = \
+            isc.config.module_spec_from_file(\
+            xfrout.SPECFILE_LOCATION).get_statistics_spec()
+        self.xfrout_counter = XfroutCounter(statistics_spec)
+        self._counters = isc.config.spec_name_list(\
+            isc.config.find_spec_part(\
+                statistics_spec, XfroutCounter.perzone_prefix)\
+                ['named_set_item_spec']['map_item_spec'])
+        self._started = threading.Event()
+        self._number = 3 # number of the threads
+        self._cycle = 10000 # number of counting per thread
+
+    def test_get_default_statistics_data(self):
+        self.assertEqual(self.xfrout_counter._get_default_statistics_data(),
+                         {XfroutCounter.perzone_prefix: {
+                            XfroutCounter.entire_server: \
+                              dict([(cnt, 0) for cnt in self._counters])
+                         }})
+
+    def setup_incrementer(self, incrementer):
+        self._started.wait()
+        for i in range(self._cycle): incrementer(TEST_ZONE_NAME_STR)
+
+    def start_incrementer(self, incrementer):
+        threads = []
+        for i in range(self._number):
+            threads.append(threading.Thread(\
+                    target=self.setup_incrementer,\
+                        args=(incrementer,)\
+                        ))
+        for th in threads: th.start()
+        self._started.set()
+        for th in threads: th.join()
+
+    def get_count(self, zone_name, counter_name):
+        return isc.cc.data.find(\
+            self.xfrout_counter.get_statistics(),\
+                '%s/%s/%s' % (XfroutCounter.perzone_prefix,\
+                                  zone_name, counter_name))
+
+    def test_incrementers(self):
+        result = { XfroutCounter.entire_server: {},
+                   TEST_ZONE_NAME_STR: {} }
+        for counter_name in self._counters:
+                incrementer = getattr(self.xfrout_counter, 'inc_%s' % counter_name)
+                self.start_incrementer(incrementer)
+                self.assertEqual(self.get_count(\
+                            TEST_ZONE_NAME_STR, counter_name), \
+                                     self._number * self._cycle)
+                self.assertEqual(self.get_count(\
+                        XfroutCounter.entire_server, counter_name), \
+                                     self._number * self._cycle)
+                result[XfroutCounter.entire_server][counter_name] = \
+                    result[TEST_ZONE_NAME_STR][counter_name] = \
+                    self._number * self._cycle
+        self.assertEqual(
+            self.xfrout_counter.get_statistics(),
+            {XfroutCounter.perzone_prefix: result})
+
+    def test_add_perzone_counter(self):
+        for counter_name in self._counters:
+            self.assertRaises(isc.cc.data.DataNotFoundError,\
+                                  self.get_count, TEST_ZONE_NAME_STR, counter_name)
+        self.xfrout_counter._add_perzone_counter(TEST_ZONE_NAME_STR)
+        for counter_name in self._counters:
+            self.assertEqual(self.get_count(TEST_ZONE_NAME_STR, counter_name), 0)
 
 class TestXfroutServer(unittest.TestCase):
     def setUp(self):
@@ -1513,6 +1606,11 @@ class TestXfroutServer(unittest.TestCase):
         self.xfrout_server.shutdown()
         self.assertTrue(self.xfrout_server._notifier.shutdown_called)
         self.assertTrue(self.xfrout_server._cc.stopped)
+
+    def test_getstats(self):
+        self.assertEqual(
+            self.xfrout_server.command_handler('getstats', None),
+            isc.config.ccsession.create_answer(0,  {}))
 
 if __name__== "__main__":
     isc.log.resetUnitTestRootLogger()
