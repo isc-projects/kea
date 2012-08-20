@@ -20,26 +20,81 @@
 using namespace std;
 
 
+/// @brief In-memory + lease file database implementation
+///
+/// This is a simplified in-memory database that mimics ISC DHCP4 implementation.
+/// It uses STL and boost: std::map for storage, boost::shared ptr for memory
+/// management. It does use C file operations (fopen, fwrite, etc.), because
+/// C++ streams does not offer any easy way to flush their contents, like
+/// fflush() and fsync() does.
+///
+/// IPv4 address is used as a key in the hash.
 class memfile_LeaseMgr {
 public:
-typedef std::map<uint32_t /* addr */, Lease4Ptr /* lease info */> IPv4Hash;
-typedef std::map<uint32_t, Lease4Ptr>::iterator leaseIt;
+
+    /// A hash table for Lease4 leases.
+    typedef std::map<uint32_t /* addr */, Lease4Ptr /* lease info */> IPv4Hash;
+
+    /// An iterator for Lease4 hash table.
+    typedef std::map<uint32_t, Lease4Ptr>::iterator leaseIt;
+
+    /// @brief The sole memfile lease manager constructor
+    ///
+    /// @param filename name of the lease file (will be overwritten)
+    /// @param sync should operations be
     memfile_LeaseMgr(const std::string& filename, bool sync);
+
+    /// @brief Destructor (closes file)
     ~memfile_LeaseMgr();
+
+    /// @brief adds a lease to the hash
+    ///
+    /// @param lease lease to be added
     bool addLease(Lease4Ptr lease);
+
+    /// @brief returns existing lease
+    ///
+    /// @param addr address of the searched lease
+    ///
+    /// @return smart pointer to the lease (or NULL if lease is not found)
     Lease4Ptr getLease(uint32_t addr);
+
+    /// @brief Simplified lease update.
+    ///
+    /// Searches for a lease and then updates its client last transmission
+    /// time. Writes new lease content to lease file (and calls fflush()/fsync(),
+    /// if synchronous operation is enabled).
+    ///
+    /// @param addr IPv4 address
+    /// @param new_cltt New client last transmission time
+    ///
+    /// @return pointer to the updated lease (or NULL)
     Lease4Ptr updateLease(uint32_t addr, uint32_t new_cltt);
+
+    /// @brief Deletes a lease.
+    ///
+    /// @param addr IPv4 address of the lease to be deleted.
+    ///
+    /// @return true if deletion was successful, false if no such lease exists
     bool deleteLease(uint32_t addr);
 
 protected:
 
+    /// @brief Writes updated lease to a file.
+    ///
+    /// @param lease lease to be written
     void writeLease(Lease4Ptr lease);
 
+    /// Name of the lease file.
     std::string Filename_;
-    bool Sync_; // should we do flush after each operation?
 
-    // we have to use fe
+    /// should we do flush after each operation?
+    bool Sync_;
+
+    /// File handle to the open lease file.
     FILE * File_;
+
+    /// Hash table for IPv4 leases
     IPv4Hash ip4Hash_;
 };
 
@@ -130,10 +185,6 @@ memfile_uBenchmark::memfile_uBenchmark(const string& filename,
     :uBenchmark(num_iterations, filename, sync, verbose),
      Filename_(filename) {
 
-}
-
-void memfile_uBenchmark::failure(const char* operation) {
-    throw string(operation);
 }
 
 void memfile_uBenchmark::connect() {

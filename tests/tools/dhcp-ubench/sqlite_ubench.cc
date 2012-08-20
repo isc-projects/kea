@@ -31,10 +31,6 @@ SQLite_uBenchmark::SQLite_uBenchmark(const string& filename,
 
 }
 
-void SQLite_uBenchmark::failure(const char* operation) {
-    throw string(operation);
-}
-
 void SQLite_uBenchmark::connect() {
     int result = sqlite3_open(DBName_.c_str(), &DB_);
     if (result) {
