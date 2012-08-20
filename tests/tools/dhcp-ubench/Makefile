@@ -14,7 +14,7 @@ all: mysql_ubench sqlite_ubench memfile_ubench
 
 doc: dhcp-perf-guide.html dhcp-perf-guide.pdf
 
-mysql_ubench.o: mysql_ubench.cc mysql_ubench.h
+mysql_ubench.o: mysql_ubench.cc mysql_ubench.h benchmark.h
 	$(CXX) $< -c $(CFLAGS) $(MYSQL_CFLAGS)
 
 benchmark.o: benchmark.cc benchmark.h
@@ -23,13 +23,13 @@ benchmark.o: benchmark.cc benchmark.h
 mysql_ubench: mysql_ubench.o benchmark.o
 	$(CXX) $< benchmark.o -o mysql_ubench $(CFLAGS) $(MYSQL_CFLAGS) $(LDFLAGS) $(MYSQL_LDFLAGS)
 
-sqlite_ubench.o: sqlite_ubench.cc sqlite_ubench.h
+sqlite_ubench.o: sqlite_ubench.cc sqlite_ubench.h benchmark.h
 	$(CXX) $< -c $(CFLAGS) $(SQLLITE_CFLAGS)
 
 sqlite_ubench: sqlite_ubench.o benchmark.o
 	$(CXX) $< benchmark.o -o sqlite_ubench $(CFLAGS) $(SQLITE_CFLAGS) $(LDFLAGS) $(SQLITE_LDFLAGS)
 
-memfile_ubench.o: memfile_ubench.cc memfile_ubench.h
+memfile_ubench.o: memfile_ubench.cc memfile_ubench.h benchmark.h
 	$(CXX) $< -c $(CFLAGS) $(MEMFILE_CFLAGS)
 
 memfile_ubench: memfile_ubench.o benchmark.o

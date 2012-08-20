@@ -173,25 +173,32 @@ protected:
     void usage();
 
     /// Number of operations (e.g. insert lease num times)
-    uint32_t Num_;
+    uint32_t num_;
 
     /// Synchronous or asynchonous mode?
-    bool Sync_;
+    bool sync_;
 
     /// Should the test print out extra information?
-    bool Verbose_;
+    bool verbose_;
 
     // DB parameters
-    std::string Hostname_; // used by MySQL only
-    std::string User_;     // used by MySQL only
-    std::string Passwd_;   // used by MySQL only
-    std::string DBName_;   // used by MySQL, SQLite and memfile
+    std::string hostname_; // used by MySQL only
+    std::string user_;     // used by MySQL only
+    std::string passwd_;   // used by MySQL only
+    std::string dbname_;   // used by MySQL, SQLite and memfile
+
+    /// @brief hit ratio for search test (must be between 0.0 and 1.0)
+    ///
+    /// This parameter is used in seatch. The formula causes the search
+    /// to find something a lease in 90% cases of hit ratio is 0.9.
+    ///
+    float hitratio_;
 
     /// benchmarks must generate the leases starting from 1.0.0.0 address
     const static uint32_t BASE_ADDR4 = 0x01000000;
 
     /// five timestamps (1 at the beginning and 4 after each step)
-    struct timespec ts[5];
+    struct timespec ts_[5];
 };
 
 #endif

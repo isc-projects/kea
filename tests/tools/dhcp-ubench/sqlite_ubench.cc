@@ -27,40 +27,40 @@ SQLite_uBenchmark::SQLite_uBenchmark(const string& filename,
                                      uint32_t num_iterations,
                                      bool sync, bool verbose)
     :uBenchmark(num_iterations, filename, sync, verbose),
-     DB_(NULL) {
+     db_(NULL) {
 
 }
 
 void SQLite_uBenchmark::connect() {
-    int result = sqlite3_open(DBName_.c_str(), &DB_);
+    int result = sqlite3_open(dbname_.c_str(), &db_);
     if (result) {
-        sqlite3_open(DBName_.c_str(), &DB_);
+        sqlite3_open(dbname_.c_str(), &db_);
         failure("Failed to open DB file");
     }
 
-    sqlite3_exec(DB_, "DELETE FROM lease4", NULL, NULL, NULL);
+    sqlite3_exec(db_, "DELETE FROM lease4", NULL, NULL, NULL);
 
-    if (Sync_) {
-        sqlite3_exec(DB_, "PRAGMA synchronous = ON", NULL, NULL, NULL);
+    if (sync_) {
+        sqlite3_exec(db_, "PRAGMA synchronous = ON", NULL, NULL, NULL);
     } else {
-        sqlite3_exec(DB_, "PRAGMA synchronous = OFF", NULL, NULL, NULL);
+        sqlite3_exec(db_, "PRAGMA synchronous = OFF", NULL, NULL, NULL);
     }
 
     // see http://www.sqlite.org/pragma.html#pragma_journal_mode
     // for detailed explanation. Available modes: DELETE, TRUNCATE,
     // PERSIST, MEMORY, WAL, OFF
-    sqlite3_exec(DB_, "PRAGMA journal_mode = OFF", NULL, NULL, NULL);
+    sqlite3_exec(db_, "PRAGMA journal_mode = OFF", NULL, NULL, NULL);
 }
 
 void SQLite_uBenchmark::disconnect() {
-    if (DB_) {
-        sqlite3_close(DB_);
-        DB_ = NULL;
+    if (db_) {
+        sqlite3_close(db_);
+        db_ = NULL;
     }
 }
 
 void SQLite_uBenchmark::createLease4Test() {
-    if (!DB_) {
+    if (!db_) {
         throw "SQLite connection is closed.";
     }
 
@@ -93,7 +93,7 @@ void SQLite_uBenchmark::createLease4Test() {
                         // query formatting, let's get rid of it
     client_id[127] = 0; // workaround
 
-    for (uint32_t i = 0; i < Num_; i++) {
+    for (uint32_t i = 0; i < num_; i++) {
 
         stringstream cltt;
         cltt << "2012-07-11 15:43:" << (i % 60);
@@ -112,14 +112,14 @@ void SQLite_uBenchmark::createLease4Test() {
                hostname.c_str(), (fqdn_fwd?"true":"false"), (fqdn_rev?"true":"false"));
         // printf("QUERY=[%s]\n", query);
 
-        int result = sqlite3_exec(DB_, query, NULL, 0, &errorMsg);
+        int result = sqlite3_exec(db_, query, NULL, 0, &errorMsg);
 
         if (result != SQLITE_OK) {
             stringstream tmp;
             tmp << "INSERT error:" << errorMsg;
             failure(tmp.str().c_str());
         } else {
-            if (Verbose_) {
+            if (verbose_) {
                 printf(".");
             }
         };
@@ -145,18 +145,15 @@ static int search_callback(void *counter, int /*argc*/, char** /*argv*/,
 }
 
 void SQLite_uBenchmark::searchLease4Test() {
-    if (!DB_) {
+    if (!db_) {
         throw "SQLite connection is closed.";
     }
 
-    // this formula should roughly find something a lease in 90% cases
-    float hitRatio = 0.5;
-
     printf("RETRIEVE: ");
 
-    for (uint32_t i = 0; i < Num_; i++) {
+    for (uint32_t i = 0; i < num_; i++) {
 
-        uint32_t x = BASE_ADDR4 + random() % int(Num_ / hitRatio);
+        uint32_t x = BASE_ADDR4 + random() % int(num_ / hitratio_);
 
         char* errorMsg = NULL;
 
@@ -166,7 +163,7 @@ void SQLite_uBenchmark::searchLease4Test() {
         sprintf(query, "SELECT lease_id,addr,hwaddr,client_id,valid_lft,"
                 "cltt,pool_id,fixed,hostname,fqdn_fwd,fqdn_rev "
                 "FROM lease4 where addr=%d", x);
-        int result = sqlite3_exec(DB_, query, search_callback, &cnt, &errorMsg);
+        int result = sqlite3_exec(db_, query, search_callback, &cnt, &errorMsg);
         if (result != SQLITE_OK) {
             stringstream tmp;
             tmp << "SELECT failed: " << errorMsg;
@@ -174,11 +171,11 @@ void SQLite_uBenchmark::searchLease4Test() {
         }
 
         if (cnt) {
-            if (Verbose_) {
+            if (verbose_) {
                 printf(".");
             }
         } else {
-            if (Verbose_) {
+            if (verbose_) {
                 printf("X");
             }
         }
@@ -189,27 +186,27 @@ void SQLite_uBenchmark::searchLease4Test() {
 }
 
 void SQLite_uBenchmark::updateLease4Test() {
-    if (!DB_) {
+    if (!db_) {
         throw "SQLite connection is closed.";
     }
 
     printf("UPDATE:   ");
 
-    for (uint32_t i = 0; i < Num_; i++) {
+    for (uint32_t i = 0; i < num_; i++) {
 
-        uint32_t x = BASE_ADDR4 + random() % Num_;
+        uint32_t x = BASE_ADDR4 + random() % num_;
 
         char* errorMsg = NULL;
         char query[2000];
         sprintf(query, "UPDATE lease4 SET valid_lft=1002, cltt='now' WHERE addr=%d", x);
 
-        int result = sqlite3_exec(DB_, query, NULL /* no callback here*/, 0, &errorMsg);
+        int result = sqlite3_exec(db_, query, NULL /* no callback here*/, 0, &errorMsg);
         if (result != SQLITE_OK) {
             stringstream tmp;
             tmp << "UPDATE error:" << errorMsg;
             failure(tmp.str().c_str());
         }
-        if (Verbose_) {
+        if (verbose_) {
             printf(".");
         }
     }
@@ -218,26 +215,26 @@ void SQLite_uBenchmark::updateLease4Test() {
 }
 
 void SQLite_uBenchmark::deleteLease4Test() {
-    if (!DB_) {
+    if (!db_) {
         throw "SQLite connection is closed.";
     }
 
     printf("DELETE:   ");
 
-    for (uint32_t i = 0; i < Num_; i++) {
+    for (uint32_t i = 0; i < num_; i++) {
 
         uint32_t x = BASE_ADDR4 + i;
         char* errorMsg = NULL;
 
         char query[2000];
         sprintf(query, "DELETE FROM lease4 WHERE addr=%d", x);
-        int result = sqlite3_exec(DB_, query, NULL /* no callback here*/, 0, &errorMsg);
+        int result = sqlite3_exec(db_, query, NULL /* no callback here*/, 0, &errorMsg);
         if (result != SQLITE_OK) {
             stringstream tmp;
             tmp << "DELETE error:" << errorMsg;
             failure(tmp.str().c_str());
         }
-        if (Verbose_) {
+        if (verbose_) {
             printf(".");
         }
     }

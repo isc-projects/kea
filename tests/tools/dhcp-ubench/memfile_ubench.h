@@ -99,8 +99,5 @@ public:
 protected:
 
     /// Lease Manager (concrete backend implementation, based on STL maps)
-    memfile_LeaseMgr * LeaseMgr_;
-
-    /// Name of the lease file.
-    std::string Filename_;
+    memfile_LeaseMgr * leaseMgr_;
 };

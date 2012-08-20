@@ -149,8 +149,9 @@ bool memfile_LeaseMgr::addLease(Lease4Ptr lease) {
 
 Lease4Ptr memfile_LeaseMgr::getLease(uint32_t addr) {
     leaseIt x = ip4Hash_.find(addr);
-    if (x != ip4Hash_.end())
+    if (x != ip4Hash_.end()) {
         return x->second; // found
+    }
 
     // not found
     return Lease4Ptr();
@@ -182,26 +183,24 @@ memfile_uBenchmark::memfile_uBenchmark(const string& filename,
                                        uint32_t num_iterations,
                                        bool sync,
                                        bool verbose)
-    :uBenchmark(num_iterations, filename, sync, verbose),
-     Filename_(filename) {
-
+    :uBenchmark(num_iterations, filename, sync, verbose) {
 }
 
 void memfile_uBenchmark::connect() {
     try {
-        LeaseMgr_ = new memfile_LeaseMgr(Filename_, Sync_);
+        leaseMgr_ = new memfile_LeaseMgr(dbname_, sync_);
     } catch (const std::string& e) {
         failure(e.c_str());
     }
 }
 
 void memfile_uBenchmark::disconnect() {
-    delete LeaseMgr_;
-    LeaseMgr_ = NULL;
+    delete leaseMgr_;
+    leaseMgr_ = NULL;
 }
 
 void memfile_uBenchmark::createLease4Test() {
-    if (!LeaseMgr_) {
+    if (!leaseMgr_) {
         throw "No LeaseMgr instantiated.";
     }
 
@@ -234,7 +233,7 @@ void memfile_uBenchmark::createLease4Test() {
     }
     vector<uint8_t> client_id(client_id_tmp, client_id_tmp + 19);
 
-    for (uint32_t i = 0; i < Num_; i++) {
+    for (uint32_t i = 0; i < num_; i++) {
 
         cltt++;
 
@@ -251,10 +250,10 @@ void memfile_uBenchmark::createLease4Test() {
         lease->fqdn_fwd = fqdn_fwd;
         lease->fqdn_rev = fqdn_rev;
 
-        if (!LeaseMgr_->addLease(lease)) {
+        if (!leaseMgr_->addLease(lease)) {
             failure("addLease() failed");
         } else {
-            if (Verbose_) {
+            if (verbose_) {
                 printf(".");
             }
         };
@@ -265,7 +264,7 @@ void memfile_uBenchmark::createLease4Test() {
 }
 
 void memfile_uBenchmark::searchLease4Test() {
-    if (!LeaseMgr_) {
+    if (!leaseMgr_) {
         throw "No LeaseMgr instantiated.";
     }
 
@@ -274,11 +273,11 @@ void memfile_uBenchmark::searchLease4Test() {
 
     printf("RETRIEVE: ");
 
-    for (uint32_t i = 0; i < Num_; i++) {
-        uint32_t x = BASE_ADDR4 + random() % int(Num_ / hitRatio);
+    for (uint32_t i = 0; i < num_; i++) {
+        uint32_t x = BASE_ADDR4 + random() % int(num_ / hitRatio);
 
-        Lease4Ptr lease = LeaseMgr_->getLease(x);
-        if (Verbose_) {
+        Lease4Ptr lease = leaseMgr_->getLease(x);
+        if (verbose_) {
             if (lease) {
                 printf(".");
             } else {
@@ -291,7 +290,7 @@ void memfile_uBenchmark::searchLease4Test() {
 }
 
 void memfile_uBenchmark::updateLease4Test() {
-    if (!LeaseMgr_) {
+    if (!leaseMgr_) {
         throw "No LeaseMgr instantiated.";
     }
 
@@ -299,17 +298,17 @@ void memfile_uBenchmark::updateLease4Test() {
 
     time_t cltt = time(NULL);
 
-    for (uint32_t i = 0; i < Num_; i++) {
+    for (uint32_t i = 0; i < num_; i++) {
 
-        uint32_t x = BASE_ADDR4 + random() % Num_;
+        uint32_t x = BASE_ADDR4 + random() % num_;
 
-        Lease4Ptr lease = LeaseMgr_->updateLease(x, cltt);
+        Lease4Ptr lease = leaseMgr_->updateLease(x, cltt);
         if (!lease) {
             stringstream tmp;
             tmp << "UPDATE failed for lease " << hex << x << dec;
             failure(tmp.str().c_str());
         }
-        if (Verbose_) {
+        if (verbose_) {
             printf(".");
         }
     }
@@ -318,22 +317,22 @@ void memfile_uBenchmark::updateLease4Test() {
 }
 
 void memfile_uBenchmark::deleteLease4Test() {
-    if (!LeaseMgr_) {
+    if (!leaseMgr_) {
         throw "No LeaseMgr instantiated.";
     }
 
     printf("DELETE:   ");
 
-    for (uint32_t i = 0; i < Num_; i++) {
+    for (uint32_t i = 0; i < num_; i++) {
 
         uint32_t x = BASE_ADDR4 + i;
 
-        if (!LeaseMgr_->deleteLease(x)) {
+        if (!leaseMgr_->deleteLease(x)) {
             stringstream tmp;
             tmp << "UPDATE failed for lease " << hex << x << dec;
             failure(tmp.str().c_str());
         }
-        if (Verbose_) {
+        if (verbose_) {
             printf(".");
         }
     }
