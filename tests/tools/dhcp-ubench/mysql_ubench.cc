@@ -467,6 +467,12 @@ void MySQL_uBenchmark::searchLease4Test() {
         }
     }
 
+    if (compiled_stmt_) {
+        if (mysql_stmt_close(stmt)) {
+            failure("Failed to close compiled statement, mysql_stmt_close returned non-zero");
+        }
+    }
+
     printf("\n");
 }
 
@@ -477,16 +483,71 @@ void MySQL_uBenchmark::updateLease4Test() {
 
     printf("UPDATE:   ");
 
+    uint32_t valid_lft = 1002; // just some dummy value
+    char cltt[] = "now()";
+    size_t cltt_len = strlen(cltt);
+    uint32_t addr = 0;
+
+    MYSQL_STMT * stmt = NULL;
+    MYSQL_BIND bind[3];
+    if (compiled_stmt_) {
+        stmt = mysql_stmt_init(Conn_);
+        if (!stmt) {
+            failure("Unable to create compiled statement");
+        }
+        const char * statement = "UPDATE lease4 SET valid_lft=?, cltt=? WHERE addr=?";
+        if (mysql_stmt_prepare(stmt, statement, strlen(statement))) {
+           failure("Failed to prepare statement, mysql_stmt_prepare() returned non-zero");
+        }
+        int param_cnt = mysql_stmt_param_count(stmt);
+        if (param_cnt != 3) {
+            failure("Parameter count sanity check failed.");
+        }
+
+        memset(bind, 0, sizeof(bind));
+
+        // 1st parameter: valid lifetime
+        bind[0].buffer_type = MYSQL_TYPE_LONG;
+        bind[0].buffer = &valid_lft;
+
+        // 2nd parameter: cltt
+        bind[1].buffer_type = MYSQL_TYPE_STRING;
+        bind[1].buffer = &cltt;
+        bind[1].buffer_length = cltt_len;
+
+        bind[2].buffer_type = MYSQL_TYPE_LONG;
+        bind[2].buffer = &addr;
+    }
+
+
     for (uint32_t i = 0; i < num_; i++) {
 
-        uint32_t x = BASE_ADDR4 + random() % num_;
+        addr = BASE_ADDR4 + random() % num_;
 
-        char query[2000];
-        sprintf(query, "UPDATE lease4 SET valid_lft=1002, cltt=now() WHERE addr=%d", x);
-        mysql_real_query(Conn_, query, strlen(query));
+        if (!compiled_stmt_) {
+            char query[128];
+            sprintf(query, "UPDATE lease4 SET valid_lft=1002, cltt=now() WHERE addr=%d", addr);
+            mysql_real_query(Conn_, query, strlen(query));
+
+        } else {
+            // compiled statement
+            if (mysql_stmt_bind_param(stmt, bind)) {
+                failure("Failed to bind parameters: mysql_stmt_bind_param() returned non-zero");
+            }
+
+            if (mysql_stmt_execute(stmt)) {
+                failure("Failed to execute statement: mysql_stmt_execute() returned non-zero");
+            }
+        }
 
         if (verbose_) {
             printf(".");
+        }
+    }
+
+    if (compiled_stmt_) {
+        if (mysql_stmt_close(stmt)) {
+            failure("Failed to close compiled statement, mysql_stmt_close returned non-zero");
         }
     }
 
@@ -500,16 +561,64 @@ void MySQL_uBenchmark::deleteLease4Test() {
 
     printf("DELETE:   ");
 
+    uint32_t addr = 0;
+
+    MYSQL_STMT * stmt = NULL;
+    MYSQL_BIND bind[1]; // just a single element
+    if (compiled_stmt_) {
+
+        stmt = mysql_stmt_init(Conn_);
+        if (!stmt) {
+            failure("Unable to create compiled statement, mysql_stmt_init() failed");
+        }
+
+        const char * statement = "DELETE FROM lease4 WHERE addr=?";
+
+        if (mysql_stmt_prepare(stmt, statement, strlen(statement) )) {
+            failure("Failed to prepare statement, mysql_stmt_prepare() returned non-zero");
+        }
+        int param_cnt = mysql_stmt_param_count(stmt);
+        if (param_cnt != 1) {
+            failure("Parameter count sanity check failed.");
+        }
+
+        memset(bind, 0, sizeof(bind));
+
+        // 1st parameter: IPv4 address
+        bind[0].buffer_type = MYSQL_TYPE_LONG;
+        bind[0].buffer = (&addr);
+        bind[0].is_null = 0;
+        bind[0].length = 0;
+    }
+
+
     for (uint32_t i = 0; i < num_; i++) {
 
-        uint32_t x = BASE_ADDR4 + i;
+        addr = BASE_ADDR4 + i;
 
-        char query[2000];
-        sprintf(query, "DELETE FROM lease4 WHERE addr=%d", x);
-        mysql_real_query(Conn_, query, strlen(query));
+        if (!compiled_stmt_) {
+            char query[128];
+            sprintf(query, "DELETE FROM lease4 WHERE addr=%d", addr);
+            mysql_real_query(Conn_, query, strlen(query));
+        } else {
+            // compiled statement
+            if (mysql_stmt_bind_param(stmt, bind)) {
+                failure("Failed to bind parameters: mysql_stmt_bind_param() returned non-zero");
+            }
+
+            if (mysql_stmt_execute(stmt)) {
+                failure("Failed to execute statement: mysql_stmt_execute() returned non-zero");
+            }
+        }
 
         if (verbose_) {
             printf(".");
+        }
+    }
+
+    if (compiled_stmt_) {
+        if (mysql_stmt_close(stmt)) {
+            failure("Failed to close compiled statement, mysql_stmt_close returned non-zero");
         }
     }
 
