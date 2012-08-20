@@ -15,6 +15,7 @@
 #include <iostream>
 #include <stdlib.h>
 #include <string.h>
+#include <boost/lexical_cast.hpp>
 #include "benchmark.h"
 
 using namespace std;
@@ -24,11 +25,13 @@ uBenchmark::uBenchmark(uint32_t iterations, const std::string& dbname,
                        const std::string& host /* = "" */,
                        const std::string& user /* = "" */,
                        const std::string& pass /* = "" */)
-    :Num_(iterations), Sync_(sync), Verbose_(verbose),
-     Hostname_(host), User_(user), Passwd_(pass), DBName_(dbname)
+    :num_(iterations), sync_(sync), verbose_(verbose),
+     hostname_(host), user_(user), passwd_(pass), dbname_(dbname)
 {
-    memset(ts, 0, sizeof(ts));
+    /// @todo: convert this to user-configurable parameter
+    hitratio_ = 0.9f;
 
+    memset(ts_, 0, sizeof(ts_));
 }
 
 void uBenchmark::usage() {
@@ -57,39 +60,31 @@ void uBenchmark::parseCmdline(int argc, char* const argv[]) {
         case 'h':
             usage();
         case 'm':
-            Hostname_ = string(optarg);
+            hostname_ = string(optarg);
             break;
         case 'u':
-            User_ = string(optarg);
+            user_ = string(optarg);
             break;
         case 'p':
-            Passwd_ = string(optarg);
+            passwd_ = string(optarg);
             break;
         case 'f':
-            DBName_ = string(optarg);
+            dbname_ = string(optarg);
             break;
         case 'n':
-            Num_ = strtol(optarg, NULL, 10);
-            if (Num_ <= 0) {
+            try {
+                num_ = boost::lexical_cast<int>(optarg);
+            } catch (const boost::bad_lexical_cast &) {
                 cerr << "Failed to iterations (-n option)." << endl;
                 usage();
             }
             break;
         case 's':
-            if (!strcasecmp(optarg, "yes") || !strcmp(optarg, "1")) {
-                Sync_ = true;
-            } else {
-                Sync_ = false;
-            }
+            sync_ = !strcasecmp(optarg, "yes") || !strcmp(optarg, "1");
             break;
         case 'v':
-            if (!strcasecmp(optarg, "yes") || !strcmp(optarg, "1")) {
-                Verbose_ = true;
-            } else {
-                Verbose_ = false;
-            }
+            verbose_ = !strcasecmp(optarg, "yes") || !strcmp(optarg, "1");
             break;
-        case ':':
         default:
             usage();
         }
@@ -124,13 +119,13 @@ void uBenchmark::print_clock(const std::string& operation, uint32_t num,
 int uBenchmark::run() {
 
     cout << "Starting test. Parameters:" << endl
-         << "Number of iterations : " << Num_ << endl
-         << "Sync/async           : " << (Sync_ ? "sync" : "async") << endl
-         << "Verbose              : " << (Verbose_ ? "verbose" : "quiet") << endl
-         << "Database name        : " << DBName_ << endl
-         << "MySQL hostname       : " << Hostname_ << endl
-         << "MySQL username       : " << User_ << endl
-         << "MySQL password       : " << Passwd_ << endl << endl;
+         << "Number of iterations : " << num_ << endl
+         << "Sync/async           : " << (sync_ ? "sync" : "async") << endl
+         << "Verbose              : " << (verbose_ ? "verbose" : "quiet") << endl
+         << "Database name        : " << dbname_ << endl
+         << "MySQL hostname       : " << hostname_ << endl
+         << "MySQL username       : " << user_ << endl
+         << "MySQL password       : " << passwd_ << endl << endl;
 
 
     srandom(time(NULL));
@@ -138,19 +133,19 @@ int uBenchmark::run() {
     try {
         connect();
 
-        clock_gettime(CLOCK_REALTIME, &ts[0]);
+        clock_gettime(CLOCK_REALTIME, &ts_[0]);
 
         createLease4Test();
-        clock_gettime(CLOCK_REALTIME, &ts[1]);
+        clock_gettime(CLOCK_REALTIME, &ts_[1]);
 
         searchLease4Test();
-        clock_gettime(CLOCK_REALTIME, &ts[2]);
+        clock_gettime(CLOCK_REALTIME, &ts_[2]);
 
         updateLease4Test();
-        clock_gettime(CLOCK_REALTIME, &ts[3]);
+        clock_gettime(CLOCK_REALTIME, &ts_[3]);
 
         deleteLease4Test();
-        clock_gettime(CLOCK_REALTIME, &ts[4]);
+        clock_gettime(CLOCK_REALTIME, &ts_[4]);
 
         disconnect();
 
@@ -159,10 +154,10 @@ int uBenchmark::run() {
         return (-1);
     }
 
-    print_clock("Create leases4", Num_, ts[0], ts[1]);
-    print_clock("Search leases4", Num_, ts[1], ts[2]);
-    print_clock("Update leases4", Num_, ts[2], ts[3]);
-    print_clock("Delete leases4", Num_, ts[3], ts[4]);
+    print_clock("Create leases4", num_, ts_[0], ts_[1]);
+    print_clock("Search leases4", num_, ts_[1], ts_[2]);
+    print_clock("Update leases4", num_, ts_[2], ts_[3]);
+    print_clock("Delete leases4", num_, ts_[3], ts_[4]);
 
     return (0);
 }
