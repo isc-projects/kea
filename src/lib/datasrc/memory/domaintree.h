@@ -229,17 +229,17 @@ public:
     ///
     /// You should not delete the data, it is deleted when the tree is
     /// destroyed.
-    T* getData() { return (data_); }
+    T* getData() { return (data_.get()); }
 
     /// \brief Return the data stored in this node (const).
-    const T* getData() const { return (data_); }
+    const T* getData() const { return (data_.get()); }
 
     /// \brief return whether the node has related data.
     ///
     /// There can be empty nodes inside the DomainTree. They are usually the
     /// non-terminal domains, but it is possible (yet probably meaningless)
     /// empty nodes anywhere.
-    bool isEmpty() const { return (data_ == NULL); }
+    bool isEmpty() const { return (!data_); }
     //@}
 
     /// \name Setter functions.
@@ -259,7 +259,7 @@ public:
             *old_data = data;
         } else {
             const DT deleter;
-            deleter(mem_sgmt, data_);
+            deleter(mem_sgmt, data_.get());
         }
         data_ = data;
     }
@@ -476,7 +476,7 @@ private:
     }
 
     /// \brief Data stored here.
-    T* data_;
+    boost::interprocess::offset_ptr<T> data_;
 
     /// \brief Internal or user-configurable flags of node's properties.
     ///
@@ -1390,7 +1390,7 @@ DomainTree<T, DT>::deleteHelper(util::MemorySegment& mem_sgmt,
             // free this one and go back to its parent.
             DomainTreeNode<T, DT>* node = root;
             root = root->getParent();
-            deleter(mem_sgmt, node->data_);
+            deleter(mem_sgmt, node->data_.get());
             DomainTreeNode<T, DT>::destroy(mem_sgmt, node);
             --node_count_;
         }
