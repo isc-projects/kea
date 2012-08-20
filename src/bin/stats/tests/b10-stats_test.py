@@ -61,7 +61,27 @@ class TestUtilties(unittest.TestCase):
         { 'item_name': 'test_map3',  'item_type': 'map',     'item_default': {'a':'one','b':'two','c':'three'},
           'map_item_spec'  : [ { 'item_name': 'a', 'item_type': 'string'},
                                { 'item_name': 'b', 'item_type': 'string'},
-                               { 'item_name': 'c', 'item_type': 'string'} ] }
+                               { 'item_name': 'c', 'item_type': 'string'} ] },
+        {
+          'item_name': 'test_named_set',
+          'item_type': 'named_set',
+          'item_default': { },
+          'named_set_item_spec': {
+            'item_name': 'name',
+            'item_type': 'map',
+            'item_default': { },
+            'map_item_spec': [
+              {
+                'item_name': 'number1',
+                'item_type': 'integer'
+                },
+              {
+                'item_name': 'number2',
+                'item_type': 'integer'
+                }
+              ]
+            }
+          }
         ]
 
     def setUp(self):
@@ -88,7 +108,8 @@ class TestUtilties(unittest.TestCase):
                 'test_map2'  : { 'A' : 0, 'B' : 0, 'C' : 0 },
                 'test_none'  : None,
                 'test_list3' : [ "one", "two", "three" ],
-                'test_map3'  : { 'a' : 'one', 'b' : 'two', 'c' : 'three' } })
+                'test_map3'  : { 'a' : 'one', 'b' : 'two', 'c' : 'three' },
+                'test_named_set' : {} })
         self.assertEqual(stats.get_spec_defaults(None), {})
         self.assertRaises(KeyError, stats.get_spec_defaults, [{'item_name':'Foo'}])
 
@@ -137,6 +158,39 @@ class TestUtilties(unittest.TestCase):
                 [ {'one': 1, 'two': 2, 'three': 3}, {'four': 4, 'five': 5, 'six': 6} ],
                 [ {}, {'four': 1, 'five': 2, 'six': 3} ]),
                 [ {'one': 1, 'two': 2, 'three': 3}, {'four': 5, 'five': 7, 'six': 9} ])
+
+    def test_merge_oldnre(self):
+        self.assertEqual(stats.merge_oldnew(1, 2), 2)
+        self.assertEqual(stats.merge_oldnew(0.5, 0.3), 0.3)
+        self.assertEqual(stats.merge_oldnew('aa','bb'), 'bb')
+        self.assertEqual(stats.merge_oldnew(
+                [1, 2, 3], [4, 5]), [4, 5, 3])
+        self.assertEqual(stats.merge_oldnew(
+                [4, 5], [1, 2, 3]), [1, 2, 3])
+        self.assertEqual(stats.merge_oldnew(
+                [1, 2, 3], [None, 5, 6]), [None, 5, 6])
+        self.assertEqual(stats.merge_oldnew(
+                [None, 5, 6], [1, 2, 3]), [1, 2, 3])
+        self.assertEqual(stats.merge_oldnew(
+                [1, 2, 3], [None, None, None, None]), [None, None, None, None])
+        self.assertEqual(stats.merge_oldnew(
+                [[1,2],3],[[],5,6]), [[1,2],5,6])
+        self.assertEqual(stats.merge_oldnew(
+                {'one': 1, 'two': 2, 'three': 3},
+                {'one': 4, 'two': 5}),
+                         {'one': 4, 'two': 5, 'three': 3})
+        self.assertEqual(stats.merge_oldnew(
+                {'one': 1, 'two': 2, 'three': 3},
+                {'four': 4, 'five': 5}),
+                         {'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5})
+        self.assertEqual(stats.merge_oldnew(
+                {'one': [1, 2], 'two': [3, None, 5], 'three': [None, 3, None]},
+                {'one': [2], 'two': [4, 5], 'three': [None, None, None], 'four': 'FOUR'}),
+                         {'one':[2,2], 'two':[4,5,5], 'three':[None,None,None], 'four': 'FOUR'})
+        self.assertEqual(stats.merge_oldnew(
+                [ {'one': 1, 'two': 2, 'three': 3}, {'four': 4, 'five': 5, 'six': 6} ],
+                [ {}, {'four': 1, 'five': 2, 'six': 3} ]),
+                [ {'one': 1, 'two': 2, 'three': 3}, {'four': 1, 'five': 2, 'six': 3} ])
 
 class TestCallback(unittest.TestCase):
     def setUp(self):
@@ -384,9 +438,36 @@ class TestStats(unittest.TestCase):
                           name='Bar')
 
     def test_update_statistics_data(self):
+        """test for list-type statistics"""
         self.stats = stats.Stats()
-
-        # success
+        _test_exp1 = {
+              'zonename': 'test1.example',
+              'queries.tcp': 5,
+              'queries.udp': 4
+            }
+        _test_exp2 = {
+              'zonename': 'test2.example',
+              'queries.tcp': 3,
+              'queries.udp': 2
+            }
+        _test_exp3 = {}
+        _test_exp4 = {
+              'queries.udp': 4
+            }
+        _test_exp5_1 = {
+              'queries.perzone': [
+                { },
+                {
+                  'queries.udp': 9876
+                }
+              ]
+            }
+        _test_exp5_2 = {
+              'queries.perzone[1]/queries.udp':
+                  isc.cc.data.find(_test_exp5_1,
+                                   'queries.perzone[1]/queries.udp')
+            }
+        # Success cases
         self.assertEqual(self.stats.statistics_data['Stats']['lname'],
                          self.stats.cc_session.lname)
         self.stats.update_statistics_data(
@@ -394,13 +475,134 @@ class TestStats(unittest.TestCase):
             {'lname': 'foo@bar'})
         self.assertEqual(self.stats.statistics_data['Stats']['lname'],
                          'foo@bar')
-        # error case
+        self.assertIsNone(self.stats.update_statistics_data(
+            'Auth', 'foo1', {'queries.perzone': [_test_exp1]}))
+        self.assertEqual(self.stats.statistics_data_bymid['Auth']\
+                             ['foo1']['queries.perzone'],\
+                             [_test_exp1])
+        self.assertIsNone(self.stats.update_statistics_data(
+            'Auth', 'foo1', {'queries.perzone': [_test_exp2]}))
+        self.assertEqual(self.stats.statistics_data_bymid['Auth']\
+                             ['foo1']['queries.perzone'],\
+                             [_test_exp2])
+        self.assertIsNone(self.stats.update_statistics_data(
+            'Auth', 'foo1', {'queries.perzone': [_test_exp1,_test_exp2]}))
+        self.assertEqual(self.stats.statistics_data_bymid['Auth']\
+                             ['foo1']['queries.perzone'],
+                         [_test_exp1,_test_exp2])
+        # differential update
+        self.assertIsNone(self.stats.update_statistics_data(
+            'Auth', 'foo1', {'queries.perzone': [_test_exp3,_test_exp4]}))
+        _new_data = stats.merge_oldnew(_test_exp2,_test_exp4)
+        self.assertEqual(self.stats.statistics_data_bymid['Auth']\
+                             ['foo1']['queries.perzone'], \
+                             [_test_exp1,_new_data])
+        self.assertIsNone(self.stats.update_statistics_data(
+            'Auth', 'foo1', _test_exp5_2))
+        _new_data = stats.merge_oldnew(_new_data,
+                                       _test_exp5_1['queries.perzone'][1])
+        self.assertEqual(self.stats.statistics_data_bymid['Auth']\
+                             ['foo1']['queries.perzone'], \
+                             [_test_exp1,_new_data])
+        # Error cases
         self.assertEqual(self.stats.update_statistics_data('Stats', None,
                                                            {'lname': 0.0}),
                          ['0.0 should be a string'])
         self.assertEqual(self.stats.update_statistics_data('Dummy', None,
                                                            {'foo': 'bar'}),
                          ['unknown module name: Dummy'])
+        self.assertEqual(self.stats.update_statistics_data(
+                'Auth', 'foo1', {'queries.perzone': [None]}), ['None should be a map'])
+
+    def test_update_statistics_data_pt2(self):
+        """test for named_set-type statistics"""
+        self.stats = stats.Stats()
+        self.stats.do_polling()
+        _test_exp1 = {
+              'test10.example': {
+                  'queries.tcp': 5,
+                  'queries.udp': 4
+              }
+            }
+        _test_exp2 = {
+              'test20.example': {
+                  'queries.tcp': 3,
+                  'queries.udp': 2
+              }
+            }
+        _test_exp3 = {}
+        _test_exp4 = {
+              'test20.example': {
+                  'queries.udp': 4
+              }
+            }
+        _test_exp5_1 = {
+              'test10.example': {
+                 'queries.udp': 5432
+              }
+            }
+        _test_exp5_2 ={
+              'nds_queries.perzone/test10.example/queries.udp':
+                  isc.cc.data.find(_test_exp5_1,
+                                   'test10.example/queries.udp')
+            }
+        _test_exp6 = {
+              'foo/bar':  'brabra'
+            }
+        _test_exp7 = {
+              'foo[100]': 'bar'
+            }
+        # Success cases
+        self.assertIsNone(self.stats.update_statistics_data(
+            'Auth', 'foo1', {'nds_queries.perzone': _test_exp1}))
+        self.assertEqual(self.stats.statistics_data_bymid['Auth']\
+                             ['foo1']['nds_queries.perzone'],\
+                             _test_exp1)
+        self.assertIsNone(self.stats.update_statistics_data(
+            'Auth', 'foo1', {'nds_queries.perzone': _test_exp2}))
+        self.assertEqual(self.stats.statistics_data_bymid['Auth']\
+                             ['foo1']['nds_queries.perzone'],\
+                         dict(_test_exp1,**_test_exp2))
+        self.assertIsNone(self.stats.update_statistics_data(
+            'Auth', 'foo1', {'nds_queries.perzone': dict(_test_exp1,**_test_exp2)}))
+        self.assertEqual(self.stats.statistics_data_bymid['Auth']\
+                             ['foo1']['nds_queries.perzone'],
+                         dict(_test_exp1,**_test_exp2))
+        # differential update
+        self.assertIsNone(self.stats.update_statistics_data(
+            'Auth', 'foo1', {'nds_queries.perzone': dict(_test_exp3,**_test_exp4)}))
+        _new_val = dict(_test_exp1,
+                        **stats.merge_oldnew(_test_exp2,_test_exp4))
+        self.assertEqual(self.stats.statistics_data_bymid['Auth']\
+                             ['foo1']['nds_queries.perzone'],\
+                             _new_val)
+        self.assertIsNone(self.stats.update_statistics_data(
+            'Auth', 'foo1', _test_exp5_2))
+        _new_val = stats.merge_oldnew(_new_val, _test_exp5_1)
+        self.assertEqual(self.stats.statistics_data_bymid['Auth']\
+                             ['foo1']['nds_queries.perzone'],\
+                             _new_val)
+        self.assertIsNone(self.stats.update_statistics_data(
+            'Auth', 'foo2', _test_exp5_2))
+        _new_val = stats.merge_oldnew(_new_val, _test_exp5_1)
+        self.assertEqual(self.stats.statistics_data_bymid['Auth']\
+                             ['foo2']['nds_queries.perzone'],\
+                             _test_exp5_1)
+        # Error cases
+        self.assertEqual(self.stats.update_statistics_data(
+                'Auth', 'foo1', {'nds_queries.perzone': None}), ['None should be a map'])
+        self.assertEqual(self.stats.statistics_data_bymid['Auth']\
+                             ['foo1']['nds_queries.perzone'],\
+                             _new_val)
+        self.assertEqual(self.stats.update_statistics_data(
+                'Auth', 'foo1', _test_exp6), ['unknown item foo'])
+        self.assertEqual(self.stats.statistics_data_bymid['Auth']\
+                             ['foo1']['nds_queries.perzone'],\
+                             _new_val)
+        self.assertEqual(self.stats.update_statistics_data(
+                'Boss', 'bar1', _test_exp7), ["KeyError: 'foo'"])
+        self.assertEqual(self.stats.update_statistics_data(
+                'Foo', 'foo1', _test_exp6), ['unknown module name: Foo'])
 
     def test_update_statistics_data_withmid(self):
         self.stats = stats.Stats()
@@ -539,8 +741,14 @@ class TestStats(unittest.TestCase):
                       self.base.auth2.server ]
         sum_qtcp = 0
         sum_qudp = 0
-        sum_qtcp_perzone = 0
-        sum_qudp_perzone = 0
+        sum_qtcp_perzone1 = 0
+        sum_qudp_perzone1 = 0
+        sum_qtcp_perzone2 = 4 * len(list_auth)
+        sum_qudp_perzone2 = 3 * len(list_auth)
+        sum_qtcp_nds_perzone10 = 0
+        sum_qudp_nds_perzone10 = 0
+        sum_qtcp_nds_perzone20 = 4 * len(list_auth)
+        sum_qudp_nds_perzone20 = 3 * len(list_auth)
         self.stats = stats.Stats()
         self.assertEqual(self.stats.command_show(owner='Foo', name=None),
                          isc.config.create_answer(
@@ -555,26 +763,50 @@ class TestStats(unittest.TestCase):
         for a in list_auth:
             sum_qtcp += a.queries_tcp
             sum_qudp += a.queries_udp
-            zonename = a.queries_per_zone[0]['zonename']
-            sum_qtcp_perzone += a.queries_per_zone[0]['queries.tcp']
-            sum_qudp_perzone += a.queries_per_zone[0]['queries.udp']
+            sum_qtcp_perzone1 += a.queries_per_zone[0]['queries.tcp']
+            sum_qudp_perzone1 += a.queries_per_zone[0]['queries.udp']
+            sum_qtcp_nds_perzone10 += a.nds_queries_per_zone['test10.example']['queries.tcp']
+            sum_qudp_nds_perzone10 += a.nds_queries_per_zone['test10.example']['queries.udp']
 
         self.assertEqual(self.stats.command_show(owner='Auth'),
                          isc.config.create_answer(
                 0, {'Auth':{ 'queries.udp': sum_qudp,
                      'queries.tcp': sum_qtcp,
                      'queries.perzone': [{ 'zonename': 'test1.example',
-                                           'queries.udp': sum_qudp_perzone,
-                                           'queries.tcp': sum_qtcp_perzone }
-                                         ]}}))
+                                           'queries.udp': sum_qudp_perzone1,
+                                           'queries.tcp': sum_qtcp_perzone1 },
+                                         { 'zonename': 'test2.example',
+                                           'queries.udp': sum_qudp_perzone2,
+                                           'queries.tcp': sum_qtcp_perzone2 }
+                                         ],
+                     'nds_queries.perzone': { 'test10.example' : {
+                                              'queries.udp': sum_qudp_nds_perzone10,
+                                              'queries.tcp': sum_qtcp_nds_perzone10 },
+                                              'test20.example' : {
+                                              'queries.udp': sum_qudp_nds_perzone20,
+                                              'queries.tcp': sum_qtcp_nds_perzone20 }
+                             }}}))
         self.assertEqual(self.stats.command_show(owner='Auth', name='queries.udp'),
                          isc.config.create_answer(
                 0, {'Auth': {'queries.udp': sum_qudp}}))
         self.assertEqual(self.stats.command_show(owner='Auth', name='queries.perzone'),
                          isc.config.create_answer(
-                0, {'Auth': {'queries.perzone': [{ 'zonename': 'test1.example',
-                      'queries.udp': sum_qudp_perzone,
-                      'queries.tcp': sum_qtcp_perzone }]}}))
+                0, {'Auth': {'queries.perzone': [
+                            { 'zonename': 'test1.example',
+                              'queries.udp': sum_qudp_perzone1,
+                              'queries.tcp': sum_qtcp_perzone1 },
+                            { 'zonename': 'test2.example',
+                              'queries.udp': sum_qudp_perzone2,
+                              'queries.tcp': sum_qtcp_perzone2 }]}}))
+        self.assertEqual(self.stats.command_show(owner='Auth', name='nds_queries.perzone'),
+                         isc.config.create_answer(
+                0, {'Auth': {'nds_queries.perzone': {
+                            'test10.example': {
+                                'queries.udp': sum_qudp_nds_perzone10,
+                                'queries.tcp': sum_qtcp_nds_perzone10 },
+                            'test20.example': {
+                                'queries.udp': sum_qudp_nds_perzone20,
+                                'queries.tcp': sum_qtcp_nds_perzone20 }}}}))
         orig_get_datetime = stats.get_datetime
         orig_get_timestamp = stats.get_timestamp
         stats.get_datetime = lambda x=None: self.const_datetime
@@ -629,9 +861,9 @@ class TestStats(unittest.TestCase):
             self.assertTrue('item_format' in item)
 
         schema = value['Auth']
-        self.assertEqual(len(schema), 3)
+        self.assertEqual(len(schema), 4)
         for item in schema:
-            if item['item_type'] == 'list':
+            if item['item_type'] == 'list' or item['item_type'] == 'named_set':
                 self.assertEqual(len(item), 7)
             else:
                 self.assertEqual(len(item), 6)
@@ -750,6 +982,49 @@ class TestStats(unittest.TestCase):
                                     }
                                 ]
                             }
+                        },
+                    {
+                        "item_name": "nds_queries.perzone",
+                        "item_type": "named_set",
+                        "item_optional": False,
+                        "item_default": {
+                            "test10.example" : {
+                                "queries.udp" : 1,
+                                "queries.tcp" : 2
+                            },
+                            "test20.example" : {
+                                "queries.udp" : 3,
+                                "queries.tcp" : 4
+                            }
+                        },
+                        "item_title": "Queries per zone",
+                        "item_description": "Queries per zone",
+                        "named_set_item_spec": {
+                            "item_name": "zonename",
+                            "item_type": "map",
+                            "item_optional": False,
+                            "item_default": {},
+                            "item_title": "Zonename",
+                            "item_description": "Zonename",
+                            "map_item_spec": [
+                                {
+                                    "item_name": "queries.udp",
+                                    "item_type": "integer",
+                                    "item_optional": False,
+                                    "item_default": 0,
+                                    "item_title": "Queries UDP per zone",
+                                    "item_description": "A number of UDP query counts per zone"
+                                    },
+                                {
+                                    "item_name": "queries.tcp",
+                                    "item_type": "integer",
+                                    "item_optional": False,
+                                    "item_default": 0,
+                                    "item_title": "Queries TCP per zone",
+                                    "item_description": "A number of TCP query counts per zone"
+                                    }
+                                ]
+                            }
                         }]}))
         self.assertEqual(self.stats.command_showschema(owner='Auth', name='queries.tcp'),
                          isc.config.create_answer(
@@ -812,6 +1087,51 @@ class TestStats(unittest.TestCase):
                                 "item_description": "A number of TCP query counts per zone"
                                 }
                             ]
+                         }
+                     }]}))
+        self.assertEqual(self.stats.command_showschema(owner='Auth', name='nds_queries.perzone'),
+                         isc.config.create_answer(
+                0, {'Auth':[{
+                    "item_name": "nds_queries.perzone",
+                    "item_type": "named_set",
+                    "item_optional": False,
+                    "item_default": {
+                        "test10.example" : {
+                            "queries.udp" : 1,
+                            "queries.tcp" : 2
+                        },
+                        "test20.example" : {
+                            "queries.udp" : 3,
+                            "queries.tcp" : 4
+                        }
+                    },
+                    "item_title": "Queries per zone",
+                    "item_description": "Queries per zone",
+                    "named_set_item_spec": {
+                        "item_name": "zonename",
+                        "item_type": "map",
+                        "item_optional": False,
+                        "item_default": {},
+                        "item_title": "Zonename",
+                        "item_description": "Zonename",
+                        "map_item_spec": [
+                            {
+                                "item_name": "queries.udp",
+                                "item_type": "integer",
+                                "item_optional": False,
+                                "item_default": 0,
+                                "item_title": "Queries UDP per zone",
+                                "item_description": "A number of UDP query counts per zone"
+                                },
+                            {
+                                "item_name": "queries.tcp",
+                                "item_type": "integer",
+                                "item_optional": False,
+                                "item_default": 0,
+                                "item_title": "Queries TCP per zone",
+                                "item_description": "A number of TCP query counts per zone"
+                                }
+                            ]
                         }
                     }]}))
 
@@ -846,6 +1166,7 @@ class TestStats(unittest.TestCase):
             for s in stat.statistics_data_bymid['Auth'].values():
                 self.assertEqual(
                     s, {'queries.perzone': auth.queries_per_zone,
+                        'nds_queries.perzone': auth.nds_queries_per_zone,
                         'queries.tcp': auth.queries_tcp,
                         'queries.udp': auth.queries_udp})
             n = len(stat.statistics_data_bymid['Auth'])
@@ -860,7 +1181,23 @@ class TestStats(unittest.TestCase):
                          'queries.tcp':
                              auth.queries_per_zone[0]['queries.tcp']*n,
                          'queries.udp':
-                             auth.queries_per_zone[0]['queries.udp']*n}],
+                             auth.queries_per_zone[0]['queries.udp']*n},
+                        {'zonename': "test2.example",
+                         'queries.tcp': 4*n,
+                         'queries.udp': 3*n },
+                        ],
+                 'nds_queries.perzone': {
+                         'test10.example': {
+                             'queries.tcp':
+                                 auth.nds_queries_per_zone['test10.example']['queries.tcp']*n,
+                             'queries.udp':
+                                 auth.nds_queries_per_zone['test10.example']['queries.udp']*n},
+                         'test20.example': {
+                             'queries.tcp':
+                                 4*n,
+                             'queries.udp':
+                                 3*n},
+                         },
                  'queries.tcp': auth.queries_tcp*n,
                  'queries.udp': auth.queries_udp*n})
         # check statistics data of 'Stats'

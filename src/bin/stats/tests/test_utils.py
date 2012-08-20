@@ -354,6 +354,49 @@ class MockAuth:
             }
           ]
         }
+      },
+      {
+        "item_name": "nds_queries.perzone",
+        "item_type": "named_set",
+        "item_optional": false,
+        "item_default": {
+          "test10.example" : {
+            "queries.udp" : 1,
+            "queries.tcp" : 2
+          },
+          "test20.example" : {
+            "queries.udp" : 3,
+            "queries.tcp" : 4
+          }
+        },
+        "item_title": "Queries per zone",
+        "item_description": "Queries per zone",
+        "named_set_item_spec": {
+          "item_name": "zonename",
+          "item_type": "map",
+          "item_optional": false,
+          "item_default": {},
+          "item_title": "Zonename",
+          "item_description": "Zonename",
+          "map_item_spec": [
+            {
+              "item_name": "queries.udp",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "Queries UDP per zone",
+              "item_description": "A number of UDP query counts per zone"
+            },
+            {
+              "item_name": "queries.tcp",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "Queries TCP per zone",
+              "item_description": "A number of TCP query counts per zone"
+            }
+          ]
+        }
       }
     ]
   }
@@ -378,6 +421,12 @@ class MockAuth:
                 'queries.tcp': 5,
                 'queries.udp': 4
                 }]
+        self.nds_queries_per_zone = {
+            'test10.example': {
+                'queries.tcp': 5,
+                'queries.udp': 4
+                }
+            }
 
     def run(self):
         self.mccs.start()
@@ -399,7 +448,19 @@ class MockAuth:
         self.got_command_name = command
         sdata = { 'queries.tcp': self.queries_tcp,
                   'queries.udp': self.queries_udp,
-                  'queries.perzone' : self.queries_per_zone }
+                  'queries.perzone' : self.queries_per_zone,
+                  'nds_queries.perzone' : {
+                    'test10.example': {
+                    'queries.tcp': \
+                      isc.cc.data.find(
+                        self.nds_queries_per_zone,
+                        'test10.example/queries.tcp')
+                    }
+                  },
+                  'nds_queries.perzone/test10.example/queries.udp' :
+                      isc.cc.data.find(self.nds_queries_per_zone,
+                                       'test10.example/queries.udp')
+                }
         if command == 'getstats':
             return isc.config.create_answer(0, sdata)
         return isc.config.create_answer(1, "Unknown Command")
