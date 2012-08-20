@@ -15,6 +15,8 @@
 #ifndef DATASRC_MEMORY_RDATA_ENCODER_H
 #define DATASRC_MEMORY_RDATA_ENCODER_H 1
 
+#include "rdata_field.h"
+
 #include <exceptions/exceptions.h>
 
 #include <dns/labelsequence.h>
@@ -98,24 +100,11 @@ namespace memory {
 /// \brief General error in RDATA encoding.
 ///
 /// This is thrown when \c RdataEncoder encounters a rare, unsupported
-/// situation. a method is called for a name or RRset which
-/// is not in or below the zone.
+/// situation.
 class RdataEncodingError : public Exception {
 public:
     RdataEncodingError(const char* file, size_t line, const char* what) :
         Exception(file, line, what) {}
-};
-
-/// \brief Attributes of domain name fields of encoded RDATA.
-///
-/// The enum values define special traits of the name that can affect how
-/// it should be handled in rendering or query processing.
-enum RdataNameAttributes {
-    NAMEATTR_NONE = 0,          ///< No special attributes
-    NAMEATTR_COMPRESSIBLE = 1,  ///< Name should be compressed when rendered
-    NAMEATTR_ADDITIONAL = (NAMEATTR_COMPRESSIBLE << 1) ///< Name requires
-                                                      ///< Additional section
-                                                      ///< handling
 };
 
 /// \brief RDATA encoder.
@@ -275,38 +264,6 @@ private:
     struct RdataEncoderImpl;
     RdataEncoderImpl* impl_;
 };
-
-// We use the following quick-hack version of "foreach"
-// operators until we implement the complete versions.  The plan is to
-// update the test cases that use these functions with the complete
-// functions/classes, and then remove the entire namespace.
-namespace testing {
-// Callbacks used in foreachRdataField.
-typedef boost::function<void(const dns::LabelSequence&,
-                             RdataNameAttributes)> NameCallback;
-typedef boost::function<void(const uint8_t*, size_t)> DataCallback;
-
-// Iterate over each field (in terms of the internal encoding) of each
-// RDATA stored in encoded_data, and call the given callback for each
-// data (for domain name fields, name_callback will be called; for
-// normal data fields data_callback will be called).  rdata_count is
-// the number of RDATAs.  If the encoded data contain variable-length
-// data fields, varlen_list should store a sequence of their lengths,
-// in the order of the appearance.
-void foreachRdataField(dns::RRClass rrclass, dns::RRType rrtype,
-                       size_t rdata_count,
-                       const std::vector<uint8_t>& encoded_data,
-                       const std::vector<uint16_t>& varlen_list,
-                       NameCallback name_callback, DataCallback data_callback);
-
-// Iterate over each RRSIG stored in encoded_data, and call the given
-// callback for each.  rrsiglen_list should store a sequence of their lengths,
-// in the order of the appearance.  Its size is the number of RRSIGs.
-// The list can be empty, in which case this function does nothing.
-void foreachRRSig(const std::vector<uint8_t>& encoded_data,
-                  const std::vector<uint16_t>& rrsiglen_list,
-                  DataCallback data_callback);
-}
 
 } // namespace memory
 } // namespace datasrc
