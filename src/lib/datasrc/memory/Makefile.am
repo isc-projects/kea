@@ -15,4 +15,5 @@ libdatasrc_memory_la_SOURCES = \
 	rdata_field.h rdata_field.cc \
 	rdata_reader.h rdata_reader.cc \
 	rdataset.h rdataset.cc \
-	domaintree.h
+	domaintree.h \
+	zone_data.h zone_data.cc
