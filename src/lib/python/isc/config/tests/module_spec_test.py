@@ -138,6 +138,8 @@ class TestModuleSpec(unittest.TestCase):
         self.assertFalse(self.read_spec_file("spec1.spec").validate_statistics(True, None, None));
         self.assertTrue(_validate_stat("spec33.spec", "data33_1.data"))
         self.assertFalse(_validate_stat("spec33.spec", "data33_2.data"))
+        self.assertTrue(_validate_stat("spec41.spec", "data41_1.data"))
+        self.assertFalse(_validate_stat("spec41.spec", "data41_2.data"))
 
     def test_init(self):
         self.assertRaises(ModuleSpecError, ModuleSpec, 1)

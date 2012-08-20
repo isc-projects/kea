@@ -1,3 +1,10 @@
+nnn.    [func]          naokikambe
+        The stats module was supported differential statistics updates. Each
+        module can return only statistics data which are updated since the last
+        time it sent to the stats module. The purpose of differential updating
+        is reducing amounts of statistics data sent in the message queue.
+        (Trac #2179, git TBD)
+
 bind10-devel-20120816 released on August 16, 2012
 
 467.	[bug]		jelte
