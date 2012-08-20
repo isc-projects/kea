@@ -2067,7 +2067,7 @@ TEST_F(InMemoryZoneFinderTest, addNSEC3WithRRSIG) {
     // Then look for it.  The NSEC3 should have the RRSIG that was just added.
     findNSEC3Check(true, origin_.getLabelCount(),
                    nsec3_text + "\n" + nsec3_rrsig_text, "",
-                   zone_finder_.findNSEC3(Name("example.org"), false), true);
+                   zone_finder_.findNSEC3(Name("example.org"), false));
 
     // Duplicate add of RRSIG for the same NSEC3 is prohibited.
     EXPECT_THROW(zone_finder_.add(textToRRset(nsec3_rrsig_text)),

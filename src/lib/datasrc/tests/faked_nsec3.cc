@@ -93,8 +93,7 @@ void
 findNSEC3Check(bool expected_matched, uint8_t expected_labels,
                const string& expected_closest,
                const string& expected_next,
-               const ZoneFinder::FindNSEC3Result& result,
-               bool expected_sig)
+               const ZoneFinder::FindNSEC3Result& result)
 {
     EXPECT_EQ(expected_matched, result.matched);
     // Convert to int so the error messages would be more readable:
@@ -104,9 +103,6 @@ findNSEC3Check(bool expected_matched, uint8_t expected_labels,
     vector<ConstRRsetPtr> actual_rrsets;
     ASSERT_TRUE(result.closest_proof);
     actual_rrsets.push_back(result.closest_proof);
-    if (expected_sig) {
-        actual_rrsets.push_back(result.closest_proof->getRRsig());
-    }
     rrsetsCheck(expected_closest, actual_rrsets.begin(),
                 actual_rrsets.end());
 
@@ -116,9 +112,6 @@ findNSEC3Check(bool expected_matched, uint8_t expected_labels,
     } else {
         ASSERT_TRUE(result.next_proof);
         actual_rrsets.push_back(result.next_proof);
-        if (expected_sig) {
-            actual_rrsets.push_back(result.next_proof->getRRsig());
-        }
         rrsetsCheck(expected_next, actual_rrsets.begin(),
                     actual_rrsets.end());
     }

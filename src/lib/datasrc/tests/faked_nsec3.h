@@ -69,8 +69,7 @@ void
 findNSEC3Check(bool expected_matched, uint8_t expected_labels,
                const std::string& expected_closest,
                const std::string& expected_next,
-               const isc::datasrc::ZoneFinder::FindNSEC3Result& result,
-               bool expected_sig = false);
+               const isc::datasrc::ZoneFinder::FindNSEC3Result& result);
 
 // Perform the shared part of NSEC3 test (shared between in-memory and database
 // tests).
