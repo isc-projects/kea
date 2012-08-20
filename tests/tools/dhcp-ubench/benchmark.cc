@@ -26,8 +26,11 @@ uBenchmark::uBenchmark(uint32_t iterations, const std::string& dbname,
                        const std::string& user /* = "" */,
                        const std::string& pass /* = "" */)
     :num_(iterations), sync_(sync), verbose_(verbose),
-     hostname_(host), user_(user), passwd_(pass), dbname_(dbname)
+     hostname_(host), user_(user), passwd_(pass), dbname_(dbname),
+     compiled_stmt_(true)
 {
+    /// @todo: make compiled statements a configurable parameter
+
     /// @todo: convert this to user-configurable parameter
     hitratio_ = 0.9f;
 
@@ -55,7 +58,7 @@ void uBenchmark::usage() {
 void uBenchmark::parseCmdline(int argc, char* const argv[]) {
     int ch;
 
-    while ((ch = getopt(argc, argv, "hm:u:p:f:n:s:v:")) != -1) {
+    while ((ch = getopt(argc, argv, "hm:u:p:f:n:s:v:c:")) != -1) {
         switch (ch) {
         case 'h':
             usage();
@@ -78,6 +81,9 @@ void uBenchmark::parseCmdline(int argc, char* const argv[]) {
                 cerr << "Failed to iterations (-n option)." << endl;
                 usage();
             }
+            break;
+        case 'c':
+            compiled_stmt_ = !strcasecmp(optarg, "yes") || !strcmp(optarg, "1");
             break;
         case 's':
             sync_ = !strcasecmp(optarg, "yes") || !strcmp(optarg, "1");
@@ -122,6 +128,7 @@ int uBenchmark::run() {
          << "Number of iterations : " << num_ << endl
          << "Sync/async           : " << (sync_ ? "sync" : "async") << endl
          << "Verbose              : " << (verbose_ ? "verbose" : "quiet") << endl
+         << "Compiled statements  : " << (compiled_stmt_ ? "yes": "no") << endl
          << "Database name        : " << dbname_ << endl
          << "MySQL hostname       : " << hostname_ << endl
          << "MySQL username       : " << user_ << endl

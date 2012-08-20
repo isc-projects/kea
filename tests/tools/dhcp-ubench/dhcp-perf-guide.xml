@@ -226,6 +226,7 @@ Possible command-line parameters:
  -n integer - number of test repetitions (MySQL, SQLite and memfile)
  -s yes|no - synchronous/asynchronous operation (MySQL, SQLite and memfile)
  -v yes|no - verbose mode (MySQL, SQLite and memfile)
+ -c yes|no - should compiled statements be used (MySQL only)
 </screen>
 
       </para>

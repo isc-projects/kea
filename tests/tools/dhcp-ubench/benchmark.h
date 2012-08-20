@@ -199,6 +199,9 @@ protected:
 
     /// five timestamps (1 at the beginning and 4 after each step)
     struct timespec ts_[5];
+
+    /// should compiled statements be used?
+    bool compiled_stmt_;
 };
 
 #endif
