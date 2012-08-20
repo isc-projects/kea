@@ -101,13 +101,16 @@ public:
     /// \param server The \c AuthSrv object on which the command is executed.
     /// \param args Command specific argument.
     /// \return command result data in JSON format.
-    virtual ConstElementPtr exec(AuthSrv& server, isc::data::ConstElementPtr args) = 0;
+    virtual ConstElementPtr exec(AuthSrv& server,
+                                 isc::data::ConstElementPtr args) = 0;
 };
 
 // Handle the "shutdown" command.
 class ShutdownCommand : public AuthCommand {
 public:
-    virtual ConstElementPtr exec(AuthSrv& server, isc::data::ConstElementPtr args) {
+    virtual ConstElementPtr exec(AuthSrv& server,
+                                 isc::data::ConstElementPtr args)
+    {
         // Is the pid argument provided?
         if (args && args->contains("pid")) {
             // If it is, we check it is the same as our PID
@@ -160,7 +163,9 @@ public:
 // Handle the "loadzone" command.
 class LoadZoneCommand : public AuthCommand {
 public:
-    virtual ConstElementPtr exec(AuthSrv& server, isc::data::ConstElementPtr args) {
+    virtual ConstElementPtr exec(AuthSrv& server,
+                                 isc::data::ConstElementPtr args)
+    {
         if (args == NULL) {
             isc_throw(AuthCommandError, "Null argument");
         }
@@ -244,8 +249,8 @@ execAuthServerCommand(AuthSrv& server, const string& command_id,
 
     LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_RECEIVED_COMMAND).arg(command_id);
     try {
-        value = scoped_ptr<AuthCommand>(createAuthCommand(command_id))->exec(server,
-                                                                             args);
+        value = scoped_ptr<AuthCommand>(
+            createAuthCommand(command_id))->exec(server, args);
     } catch (const isc::Exception& ex) {
         LOG_ERROR(auth_logger, AUTH_COMMAND_FAILED).arg(command_id)
                                                    .arg(ex.what());
