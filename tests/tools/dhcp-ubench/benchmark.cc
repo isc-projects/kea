@@ -49,7 +49,7 @@ void uBenchmark::usage() {
     exit(EXIT_FAILURE);
 }
 
-bool uBenchmark::parseCmdline(int argc, char* const argv[]) {
+void uBenchmark::parseCmdline(int argc, char* const argv[]) {
     int ch;
 
     while ((ch = getopt(argc, argv, "hm:u:p:f:n:s:v:")) != -1) {
@@ -94,8 +94,6 @@ bool uBenchmark::parseCmdline(int argc, char* const argv[]) {
             usage();
         }
     }
-
-    return true;
 }
 
 void uBenchmark::failure(const char* operation) {
