@@ -299,7 +299,9 @@ public:
     private:
         ZoneFinder& finder_;
         const FindResultFlags flags_;
+    protected:
         const FindOptions options_;
+    private:
         std::vector<isc::dns::ConstRRsetPtr> all_set_;
     };
 
