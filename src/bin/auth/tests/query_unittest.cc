@@ -308,6 +308,27 @@ textToRRset(const string& text_rrset, const Name& origin = Name::ROOT_NAME()) {
     return (rrset);
 }
 
+ConstRRsetPtr
+prepareRRset(ConstRRsetPtr rr, const ZoneFinder::FindOptions options) {
+    ConstRRsetPtr sig_rrset = rr->getRRsig();
+    if (sig_rrset &&
+        ((options & ZoneFinder::FIND_DNSSEC) == 0)) {
+        RRsetPtr result_base(new RRset(rr->getName(),
+                                       rr->getClass(),
+                                       rr->getType(),
+                                       rr->getTTL()));
+        for (RdataIteratorPtr i(rr->getRdataIterator());
+             !i->isLast();
+             i->next()) {
+            result_base->addRdata(i->getCurrent());
+        }
+
+        return(result_base);
+    } else {
+        return(rr);
+    }
+}
+
 // This is a mock Zone Finder class for testing.
 // It is a derived class of ZoneFinder for the convenient of tests.
 // Its find() method emulates the common behavior of protocol compliant
@@ -479,9 +500,10 @@ protected:
                                        isc::dns::ConstRRsetPtr rrset,
                                        FindResultFlags flags = RESULT_DEFAULT)
     {
+        ConstRRsetPtr rr = (rrset ? prepareRRset(rrset, options) : rrset);
         return (ZoneFinderContextPtr(
                     new Context(*this, options,
-                                ResultContext(code, rrset, flags))));
+                                ResultContext(code, rr, flags))));
     }
 
 private:
@@ -594,7 +616,7 @@ MockZoneFinder::findAll(const Name& name, std::vector<ConstRRsetPtr>& target,
                  found_domain->second.begin();
                  found_rrset != found_domain->second.end(); ++found_rrset) {
                 // Insert RRs under the domain name into target
-                target.push_back(found_rrset->second);
+                target.push_back(prepareRRset(found_rrset->second, options));
             }
             return (ZoneFinderContextPtr(
                         new Context(*this, options,
