@@ -930,7 +930,7 @@ private:
     /// \brief The destructor.
     ///
     /// An object of this class is always expected to be destroyed explicitly
-    /// by \c destroy(), so the constructor is hidden as private.
+    /// by \c destroy(), so the destructor is hidden as private.
     ///
     /// \note DomainTree is not intended to be inherited so the destructor
     /// is not virtual

@@ -17,6 +17,8 @@
 
 #include <util/buffer.h>
 
+#include <boost/noncopyable.hpp>
+
 namespace isc {
 
 namespace dns {
@@ -346,7 +348,8 @@ public:
 /// end of the buffer at the time of construction.  However, if the
 /// pre-existing portion of the buffer contains DNS names, these names won't
 /// be considered for name compression.
-class MessageRenderer : public AbstractMessageRenderer {
+class MessageRenderer : public AbstractMessageRenderer,
+    public boost::noncopyable { // Can crash if copied
 public:
     using AbstractMessageRenderer::CASE_INSENSITIVE;
     using AbstractMessageRenderer::CASE_SENSITIVE;
