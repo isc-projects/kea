@@ -50,8 +50,8 @@ void MySQL_uBenchmark::connect() {
         cout << "MySQL library init successful." << endl;
     }
 
-    if (!mysql_real_connect(Conn_, Hostname_.c_str(), User_.c_str(),
-                            Passwd_.c_str(), DBName_.c_str(), 0, NULL, 0)) {
+    if (!mysql_real_connect(Conn_, hostname_.c_str(), user_.c_str(),
+                            passwd_.c_str(), dbname_.c_str(), 0, NULL, 0)) {
         failure("connecting to MySQL server");
     } else {
         cout << "MySQL connection established." << endl;
@@ -63,7 +63,7 @@ void MySQL_uBenchmark::connect() {
     }
 
     q = "ALTER TABLE lease4 engine=";
-    if (Sync_) {
+    if (sync_) {
         q += "InnoDB";
     } else {
         q += "MyISAM";
@@ -112,7 +112,7 @@ void MySQL_uBenchmark::createLease4Test() {
         client_id[i] = 33 + i;
     }
 
-    for (uint32_t i = 0; i < Num_; i++) {
+    for (uint32_t i = 0; i < num_; i++) {
 
         stringstream cltt;
         cltt << "2012-07-11 15:43:" << (i % 60);
@@ -141,7 +141,7 @@ void MySQL_uBenchmark::createLease4Test() {
             // something failed.
             failure("INSERT query");
         } else {
-            if (Verbose_) {
+            if (verbose_) {
                 printf(".");
             }
         };
@@ -154,9 +154,6 @@ void MySQL_uBenchmark::searchLease4Test() {
         throw "Not connected to MySQL server.";
     }
 
-    // this formula should roughly find something a lease in 90% cases
-    float hitRatio = 0.9;
-
     /* cout << "range=" << int(Num_ / hitRatio) << " minAddr=" << hex
          << BASE_ADDR4 << " maxAddr=" << BASE_ADDR4 + int(Num_ / hitRatio)
          << dec << endl; */
@@ -164,9 +161,9 @@ void MySQL_uBenchmark::searchLease4Test() {
     printf("RETRIEVE: ");
 
 
-    for (uint32_t i = 0; i < Num_; i++) {
+    for (uint32_t i = 0; i < num_; i++) {
 
-        uint32_t x = BASE_ADDR4 + random() % int(Num_ / hitRatio);
+        uint32_t x = BASE_ADDR4 + random() % int(num_ / hitratio_);
 
         char query[2000];
         sprintf(query, "SELECT lease_id,addr,hwaddr,client_id,valid_lft,"
@@ -199,12 +196,12 @@ void MySQL_uBenchmark::searchLease4Test() {
             }
             mysql_free_result(result);
 
-            if (Verbose_) {
+            if (verbose_) {
                 printf(".");
             }
 
         } else {
-            if (Verbose_) {
+            if (verbose_) {
                 printf("x");
             }
         }
@@ -220,15 +217,15 @@ void MySQL_uBenchmark::updateLease4Test() {
 
     printf("UPDATE:   ");
 
-    for (uint32_t i = 0; i < Num_; i++) {
+    for (uint32_t i = 0; i < num_; i++) {
 
-        uint32_t x = BASE_ADDR4 + random() % Num_;
+        uint32_t x = BASE_ADDR4 + random() % num_;
 
         char query[2000];
         sprintf(query, "UPDATE lease4 SET valid_lft=1002, cltt=now() WHERE addr=%d", x);
         mysql_real_query(Conn_, query, strlen(query));
 
-        if (Verbose_) {
+        if (verbose_) {
             printf(".");
         }
     }
@@ -243,7 +240,7 @@ void MySQL_uBenchmark::deleteLease4Test() {
 
     printf("DELETE:   ");
 
-    for (uint32_t i = 0; i < Num_; i++) {
+    for (uint32_t i = 0; i < num_; i++) {
 
         uint32_t x = BASE_ADDR4 + i;
 
@@ -251,7 +248,7 @@ void MySQL_uBenchmark::deleteLease4Test() {
         sprintf(query, "DELETE FROM lease4 WHERE addr=%d", x);
         mysql_real_query(Conn_, query, strlen(query));
 
-        if (Verbose_) {
+        if (verbose_) {
             printf(".");
         }
     }

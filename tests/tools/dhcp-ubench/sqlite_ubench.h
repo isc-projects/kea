@@ -70,5 +70,5 @@ public:
 protected:
 
     /// Handle to SQLite database connection.
-    sqlite3 *DB_;
+    sqlite3 *db_;
 };
