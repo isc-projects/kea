@@ -360,6 +360,11 @@ protected:
     /// \return socket descriptor.
     int openSocket(uint16_t port = 0) const;
 
+    /// \brief Print rate statistics.
+    ///
+    /// Method print packet exchange rate statistics.
+    void printRate() const;
+
     /// \brief Print performance statistics.
     ///
     /// Method prints performance statistics.

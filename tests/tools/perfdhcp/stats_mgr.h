@@ -775,7 +775,8 @@ public:
     StatsMgr(const bool archive_enabled = false) :
         exchanges_(),
         custom_counters_(),
-        archive_enabled_(archive_enabled) {
+        archive_enabled_(archive_enabled),
+        boot_time_(boost::posix_time::microsec_clock::universal_time()) {
     }
 
     /// \brief Specify new exchange type.
@@ -1028,6 +1029,20 @@ public:
         return(xchg_stats->getDroppedPacketsNum());
     }
 
+    /// \brief Get time period since the start of test.
+    ///
+    /// Calculate dna return period since the test start. This
+    /// can be specifically helpful when calculating packet
+    /// exchange rates.
+    ///
+    /// \return test period so far.
+    boost::posix_time::time_period getTestPeriod() const {
+        using namespace boost::posix_time;
+        time_period test_period(boot_time_,
+                                microsec_clock::universal_time());
+        return test_period;
+    }
+
     /// \brief Return name of the exchange.
     ///
     /// Method returns name of the specified exchange type.
@@ -1158,6 +1173,8 @@ private:
     /// for extended period of time and many packets have to be
     /// archived.
     bool archive_enabled_;
+
+    boost::posix_time::ptime boot_time_; ///< Time when test is started.
 };
 
 } // namespace perfdhcp
