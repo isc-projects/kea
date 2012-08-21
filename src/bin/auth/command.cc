@@ -98,9 +98,16 @@ public:
     /// \c AuthCommandError when it encounters an internal error, such as
     /// semantics error on the command arguments.
     ///
+    /// This method should return the execution result in the form of
+    /// \c ConstElementPtr.  It will be transparently used as the return
+    /// value from the command handler called from the corresponding
+    /// \c CCSession object.  For a successful completion of the command,
+    /// it should suffice to return the return value of
+    /// \c isc::config::createAnswer() with no argument.
+    ///
     /// \param server The \c AuthSrv object on which the command is executed.
     /// \param args Command specific argument.
-    /// \return command result using createAnswer().
+    /// \return Command execution result.
     virtual ConstElementPtr exec(AuthSrv& server,
                                  isc::data::ConstElementPtr args) = 0;
 };
