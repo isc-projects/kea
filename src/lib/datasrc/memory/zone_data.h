@@ -18,6 +18,7 @@
 #include <util/memory_segment.h>
 
 #include <dns/name.h>
+#include <dns/rrclass.h>
 
 #include <datasrc/memory/domaintree.h>
 #include <datasrc/memory/rdataset.h>
@@ -33,13 +34,14 @@ class ZoneData : boost::noncopyable {
     struct RdataSetDeleter {
     public:
         RdataSetDeleter() {}
-        void operator()(util::MemorySegment& /*mem_sgmt*/,
-                        RdataSet* /*rdataset_head*/) const
-        {}
+        void operator()(util::MemorySegment& mem_sgmt,
+                        RdataSet* rdataset_head) const;
     };
-    typedef DomainTree<RdataSet, RdataSetDeleter> ZoneTree;
-    typedef DomainTreeNode<RdataSet, RdataSetDeleter> ZoneNode;
+public:
+    typedef DomainTree<RdataSet> ZoneTree;
+    typedef DomainTreeNode<RdataSet> ZoneNode;
 
+private:
     ZoneData(ZoneTree* zone_tree, ZoneNode* origin_node) :
         zone_tree_(zone_tree), origin_node_(origin_node)
     {}
@@ -47,7 +49,13 @@ class ZoneData : boost::noncopyable {
 public:
     static ZoneData* create(util::MemorySegment& mem_sgmt,
                             const dns::Name& zone_name);
-    static void destroy(util::MemorySegment& mem_sgmt, ZoneData* zone_data);
+    static void destroy(dns::RRClass zone_class, util::MemorySegment& mem_sgmt,
+                        ZoneData* zone_data);
+
+    void insertName(util::MemorySegment& mem_sgmt, const dns::Name& name,
+                    ZoneNode** node);
+
+    // This is a shortcut.
     const ZoneNode* getOriginNode() const {
         return (origin_node_.get());
     }

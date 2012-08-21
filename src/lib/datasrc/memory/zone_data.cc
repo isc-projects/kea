@@ -15,10 +15,13 @@
 #include <util/memory_segment.h>
 
 #include <dns/name.h>
+#include <dns/rrclass.h>
 
 #include "rdataset.h"
 #include "rdata_encoder.h"
 #include "zone_data.h"
+
+#include <boost/bind.hpp>
 
 #include <cassert>
 #include <new>                  // for the placement new
@@ -42,10 +45,38 @@ ZoneData::create(util::MemorySegment& mem_sgmt, const Name& zone_origin) {
     return (zone_data);
 }
 
+namespace {
 void
-ZoneData::destroy(util::MemorySegment& mem_sgmt, ZoneData* zone_data) {
-    ZoneTree::destroy(mem_sgmt, zone_data->zone_tree_.get());
+rdataSetDeleter(RRClass rrclass, util::MemorySegment* mem_sgmt,
+                RdataSet* rdataset_head)
+{
+    for (RdataSet* rdataset = rdataset_head;
+         rdataset != NULL;
+         rdataset = rdataset->getNext()) {
+        RdataSet::destroy(*mem_sgmt, rrclass, rdataset);
+    }
+}
+}
+
+void
+ZoneData::destroy(RRClass zone_class, util::MemorySegment& mem_sgmt,
+                  ZoneData* zone_data)
+{
+    ZoneTree::destroy(mem_sgmt, zone_data->zone_tree_.get(),
+                      boost::bind(rdataSetDeleter, zone_class, &mem_sgmt,
+                                  _1));
     mem_sgmt.deallocate(zone_data, sizeof(ZoneData));
+}
+
+void
+ZoneData::insertName(util::MemorySegment& mem_sgmt, const Name& name,
+                     ZoneNode** node)
+{
+    const ZoneTree::Result result = zone_tree_->insert(mem_sgmt, name, node);
+
+    // This should be ensured by the API:
+    assert((result == ZoneTree::SUCCESS ||
+            result == ZoneTree::ALREADYEXISTS) && node!= NULL);
 }
 
 } // namespace memory
