@@ -100,12 +100,13 @@ public:
     ///
     /// \param server The \c AuthSrv object on which the command is executed.
     /// \param args Command specific argument.
-    /// \return command result data in JSON format.
+    /// \return command result using createAnswer().
     virtual ConstElementPtr exec(AuthSrv& server,
                                  isc::data::ConstElementPtr args) = 0;
 };
 
-// Handle the "shutdown" command.
+// Handle the "shutdown" command. An optional parameter "pid" is used to
+// see if it is really for our instance.
 class ShutdownCommand : public AuthCommand {
 public:
     virtual ConstElementPtr exec(AuthSrv& server,
@@ -138,7 +139,8 @@ public:
 // Handle the "getstats" command.  The argument is a list.
 class GetStatsCommand : public AuthCommand {
 public:
-    virtual ConstElementPtr exec(AuthSrv& server, isc::data::ConstElementPtr) {
+    virtual ConstElementPtr exec(AuthSrv& server,
+                                 isc::data::ConstElementPtr) {
         LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_RECEIVED_GETSTATS);
         return (createAnswer(0, server.getStatistics()));
     }
@@ -146,7 +148,8 @@ public:
 
 class StartDDNSForwarderCommand : public AuthCommand {
 public:
-    virtual ConstElementPtr exec(AuthSrv& server, isc::data::ConstElementPtr) {
+    virtual ConstElementPtr exec(AuthSrv& server,
+                                 isc::data::ConstElementPtr) {
         server.createDDNSForwarder();
         return (createAnswer());
     }
@@ -154,7 +157,8 @@ public:
 
 class StopDDNSForwarderCommand : public AuthCommand {
 public:
-    virtual ConstElementPtr exec(AuthSrv& server, isc::data::ConstElementPtr) {
+    virtual ConstElementPtr exec(AuthSrv& server,
+                                 isc::data::ConstElementPtr) {
         server.destroyDDNSForwarder();
         return (createAnswer());
     }
@@ -245,17 +249,13 @@ ConstElementPtr
 execAuthServerCommand(AuthSrv& server, const string& command_id,
                       ConstElementPtr args)
 {
-    ConstElementPtr value;
-
     LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_RECEIVED_COMMAND).arg(command_id);
     try {
-        value = scoped_ptr<AuthCommand>(
-            createAuthCommand(command_id))->exec(server, args);
+        return (scoped_ptr<AuthCommand>(
+                    createAuthCommand(command_id))->exec(server, args));
     } catch (const isc::Exception& ex) {
         LOG_ERROR(auth_logger, AUTH_COMMAND_FAILED).arg(command_id)
                                                    .arg(ex.what());
         return (createAnswer(1, ex.what()));
     }
-
-    return (value);
 }

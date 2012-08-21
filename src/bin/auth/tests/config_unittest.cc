@@ -79,6 +79,29 @@ TEST_F(AuthConfigTest, versionConfig) {
                         Element::fromJSON("{\"version\": 0}")));
 }
 
+TEST_F(AuthConfigTest, exceptionGuarantee) {
+    using namespace isc::server_common::portconfig;
+    AddressList a, b, c;
+    a.push_back(AddressPair("127.0.0.1", 53210));
+    server.setListenAddresses(a);
+    b = server.getListenAddresses();
+    EXPECT_EQ(a.size(), b.size());
+    EXPECT_EQ(a.at(0).first, b.at(0).first);
+    EXPECT_EQ(a.at(0).second, b.at(0).second);
+    // This configuration contains an invalid item, which will trigger
+    // an exception.
+    EXPECT_THROW(configureAuthServer(
+                     server,
+                     Element::fromJSON(
+                         "{ \"no_such_config_var\": 1}")),
+                 AuthConfigError);
+    // The server state shouldn't change
+    c = server.getListenAddresses();
+    EXPECT_EQ(a.size(), c.size());
+    EXPECT_EQ(a.at(0).first, c.at(0).first);
+    EXPECT_EQ(a.at(0).second, c.at(0).second);
+}
+
 TEST_F(AuthConfigTest, badConfig) {
     // These should normally not happen, but should be handled to avoid
     // an unexpected crash due to a bug of the caller.
