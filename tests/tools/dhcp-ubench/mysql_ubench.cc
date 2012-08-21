@@ -406,7 +406,7 @@ void MySQL_uBenchmark::searchLease4Test() {
 
             // 4th parameter: Client-id
             response[3].buffer_type = MYSQL_TYPE_STRING;
-            response[3].buffer = client_id;
+            response[3].buffer = &client_id;
 
             // 5th parameter: valid-lifetime
             response[4].buffer_type = MYSQL_TYPE_LONG;
@@ -426,7 +426,7 @@ void MySQL_uBenchmark::searchLease4Test() {
 
             // 9th parameter: hostname
             response[8].buffer_type = MYSQL_TYPE_STRING;
-            response[8].buffer = hostname;
+            response[8].buffer = &hostname;
 
             // 10th parameter: fqdn_fwd
             response[9].buffer_type = MYSQL_TYPE_TINY;
