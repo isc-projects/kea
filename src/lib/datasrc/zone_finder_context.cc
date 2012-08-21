@@ -47,24 +47,8 @@ getAdditionalAddrs(ZoneFinder& finder, const Name& name,
     BOOST_FOREACH(RRType rrtype, requested_types) {
         ConstZoneFinderContextPtr ctx = finder.find(name, rrtype, options);
         if (ctx->code == ZoneFinder::SUCCESS) {
-            ConstRRsetPtr rr = ctx->rrset;
-            ConstRRsetPtr sig_rrset = rr->getRRsig();
-            if (sig_rrset &&
-                ((options & ZoneFinder::FIND_DNSSEC) == 0)) {
-                RRsetPtr result_base(new RRset(rr->getName(),
-                                               rr->getClass(),
-                                               rr->getType(),
-                                               rr->getTTL()));
-                for (RdataIteratorPtr i(rr->getRdataIterator());
-                     !i->isLast();
-                     i->next()) {
-                    result_base->addRdata(i->getCurrent());
-                }
-
-                result_rrsets.push_back(result_base);
-            } else {
-                result_rrsets.push_back(rr);
-            }
+            result_rrsets.push_back(ZoneFinder::stripRRsigs(ctx->rrset,
+                                                            options));
         }
     }
 }
