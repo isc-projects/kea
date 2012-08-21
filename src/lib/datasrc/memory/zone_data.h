@@ -17,6 +17,8 @@
 
 #include <util/memory_segment.h>
 
+#include <dns/name.h>
+
 #include <datasrc/memory/domaintree.h>
 #include <datasrc/memory/rdataset.h>
 
@@ -36,12 +38,23 @@ class ZoneData : boost::noncopyable {
         {}
     };
     typedef DomainTree<RdataSet, RdataSetDeleter> ZoneTree;
+    typedef DomainTreeNode<RdataSet, RdataSetDeleter> ZoneNode;
+
+    ZoneData(ZoneTree* zone_tree, ZoneNode* origin_node) :
+        zone_tree_(zone_tree), origin_node_(origin_node)
+    {}
 
 public:
-    static ZoneData* create(util::MemorySegment& mem_sgmt);
+    static ZoneData* create(util::MemorySegment& mem_sgmt,
+                            const dns::Name& zone_name);
     static void destroy(util::MemorySegment& mem_sgmt, ZoneData* zone_data);
+    const ZoneNode* getOriginNode() const {
+        return (origin_node_.get());
+    }
 
-    boost::interprocess::offset_ptr<ZoneTree> zone_tree; 
+private:
+    const boost::interprocess::offset_ptr<ZoneTree> zone_tree_;
+    const boost::interprocess::offset_ptr<ZoneNode> origin_node_;
 };
 
 } // namespace memory
