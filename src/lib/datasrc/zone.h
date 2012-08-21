@@ -134,6 +134,29 @@ protected:
     };
 
 public:
+    /// \brief A helper function to strip RRSIGs when FIND_DNSSEC is not
+    /// requested.
+    static isc::dns::ConstRRsetPtr
+    stripRRsigs(isc::dns::ConstRRsetPtr rr, const FindOptions options) {
+        isc::dns::ConstRRsetPtr sig_rrset = rr->getRRsig();
+        if (sig_rrset &&
+            ((options & ZoneFinder::FIND_DNSSEC) == 0)) {
+            isc::dns::RRsetPtr result_base(new isc::dns::RRset(rr->getName(),
+                                           rr->getClass(),
+                                           rr->getType(),
+                                           rr->getTTL()));
+            for (isc::dns::RdataIteratorPtr i(rr->getRdataIterator());
+                 !i->isLast();
+                 i->next()) {
+                result_base->addRdata(i->getCurrent());
+            }
+
+            return(result_base);
+        } else {
+            return(rr);
+        }
+    }
+
     /// \brief Context of the result of a find() call.
     ///
     /// This class encapsulates results and (possibly) associated context

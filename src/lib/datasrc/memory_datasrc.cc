@@ -860,24 +860,7 @@ private:
                     } else {
                         rr = found->second;
                     }
-
-                    ConstRRsetPtr sig_rrset = rr->getRRsig();
-                    if (sig_rrset &&
-                        ((options & ZoneFinder::FIND_DNSSEC) == 0)) {
-                        RRsetPtr result_base(new RRset(rr->getName(),
-                                                       rr->getClass(),
-                                                       rr->getType(),
-                                                       rr->getTTL()));
-                        for (RdataIteratorPtr i(rr->getRdataIterator());
-                             !i->isLast();
-                             i->next()) {
-                            result_base->addRdata(i->getCurrent());
-                        }
-
-                        result.push_back(result_base);
-                    } else {
-                        result.push_back(rr);
-                    }
+                    result.push_back(ZoneFinder::stripRRsigs(rr, options));
                 }
             }
         }
