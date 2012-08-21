@@ -74,7 +74,7 @@ findNSEC3Check(bool expected_matched, uint8_t expected_labels,
 // Perform the shared part of NSEC3 test (shared between in-memory and database
 // tests).
 void
-performNSEC3Test(ZoneFinder &finder);
+performNSEC3Test(ZoneFinder &finder, bool rrsigs_exist = false);
 
 }
 }

@@ -4053,7 +4053,7 @@ TYPED_TEST(DatabaseClientTest, findNSEC3) {
     this->current_accessor_->enableNSEC3();
 
     // The rest is in the function, it is shared with in-memory tests
-    performNSEC3Test(*finder);
+    performNSEC3Test(*finder, true);
 }
 
 }
