@@ -208,7 +208,7 @@ public:
     /// AuthCounters::getStatistics().
     ///
     /// \return JSON format statistics data.
-    isc::data::ElementPtr getStatistics() const;
+    isc::data::ConstElementPtr getStatistics() const;
 
     /// \brief Get the value of counter in the AuthCounters.
     ///
