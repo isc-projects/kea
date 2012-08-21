@@ -114,7 +114,7 @@ public:
     ///
     /// \return statistics data
     ///
-    isc::data::ElementPtr getStatistics() const;
+    isc::data::ConstElementPtr getStatistics() const;
 
     /// \brief Get the value of a counter in the AuthCounters.
     ///
