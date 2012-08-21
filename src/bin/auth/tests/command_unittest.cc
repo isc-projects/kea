@@ -418,7 +418,7 @@ TEST_F(AuthCommandTest, loadZoneInvalidParams) {
 TEST_F(AuthCommandTest, getStats) {
     result_ = execAuthServerCommand(server_, "getstats", ConstElementPtr());
     parseAnswer(rcode_, result_);
-    // Just check some message has been received.  Detailed tests specific to
+    // Just check the command execution succeeded.  Detailed tests specific to
     // statistics are done in its own tests.
     EXPECT_EQ(0, rcode_);
 }
