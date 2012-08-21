@@ -105,12 +105,10 @@ AuthCountersImpl::inc(const std::string& zone,
 isc::data::ElementPtr
 AuthCountersImpl::getStatistics() const {
     std::stringstream statistics_string;
-    statistics_string 
-                      <<     "{ \"queries.udp\": "
-                      <<     server_counter_.get(AuthCounters::SERVER_UDP_QUERY)
-                      <<     ", \"queries.tcp\": "
-                      <<     server_counter_.get(
-                          AuthCounters::SERVER_TCP_QUERY);
+    statistics_string << "{ \"queries.udp\": "
+                      << server_counter_.get(AuthCounters::SERVER_UDP_QUERY)
+                      << ", \"queries.tcp\": "
+                      << server_counter_.get(AuthCounters::SERVER_TCP_QUERY);
     // Insert non 0 Opcode counters.
     for (int i = 0; i < NUM_OPCODES; ++i) {
         const Counter::Type counter = opcode_counter_.get(i);
@@ -143,7 +141,9 @@ AuthCountersImpl::getStatistics() const {
         isc::data::Element::fromJSON(statistics_string);
     // validate the statistics data before send
     if (validator_) {
-        if (!validator_(statistics_element)) {
+        if (!validator_(
+                 static_cast<isc::data::ConstElementPtr>(statistics_element)))
+        {
             LOG_ERROR(auth_logger, AUTH_INVALID_STATISTICS_DATA);
             return (isc::data::ElementPtr());
         }
