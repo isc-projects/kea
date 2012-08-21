@@ -846,7 +846,7 @@ AuthSrv::updateConfig(ConstElementPtr new_config) {
     }
 }
 
-ElementPtr AuthSrv::getStatistics() const {
+ConstElementPtr AuthSrv::getStatistics() const {
     return (impl_->counters_.getStatistics());
 }
 

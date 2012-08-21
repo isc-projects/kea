@@ -55,7 +55,7 @@ public:
     }
     void inc(const std::string& zone,
              const AuthCounters::PerZoneCounterType type);
-    isc::data::ElementPtr getStatistics() const;
+    isc::data::ConstElementPtr getStatistics() const;
     void registerStatisticsValidator
     (AuthCounters::validator_type validator);
     // Currently for testing purpose only
@@ -102,7 +102,7 @@ AuthCountersImpl::inc(const std::string& zone,
     per_zone_counter_[zone].inc(type);
 }
 
-isc::data::ElementPtr
+isc::data::ConstElementPtr
 AuthCountersImpl::getStatistics() const {
     std::stringstream statistics_string;
     statistics_string << "{ \"queries.udp\": "
@@ -137,13 +137,11 @@ AuthCountersImpl::getStatistics() const {
     }
     statistics_string << "}";
 
-    isc::data::ElementPtr statistics_element =
+    isc::data::ConstElementPtr statistics_element =
         isc::data::Element::fromJSON(statistics_string);
     // validate the statistics data before send
     if (validator_) {
-        if (!validator_(
-                 static_cast<isc::data::ConstElementPtr>(statistics_element)))
-        {
+        if (!validator_(statistics_element)) {
             LOG_ERROR(auth_logger, AUTH_INVALID_STATISTICS_DATA);
             return (isc::data::ElementPtr());
         }
@@ -184,7 +182,7 @@ AuthCounters::inc(const Rcode rcode) {
     impl_->inc(rcode);
 }
 
-isc::data::ElementPtr
+isc::data::ConstElementPtr
 AuthCounters::getStatistics() const {
     return (impl_->getStatistics());
 }
