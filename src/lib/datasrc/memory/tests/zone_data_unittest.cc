@@ -41,7 +41,7 @@ protected:
     {}
     void TearDown() {
         if (zone_data_ != NULL) {
-            ZoneData::destroy(RRClass::IN(), mem_sgmt_, zone_data_);
+            ZoneData::destroy(mem_sgmt_, RRClass::IN(), zone_data_);
         }
         // detect any memory leak in the test memory segment
         EXPECT_TRUE(mem_sgmt_.allMemoryDeallocated());

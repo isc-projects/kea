@@ -49,7 +49,7 @@ private:
 public:
     static ZoneData* create(util::MemorySegment& mem_sgmt,
                             const dns::Name& zone_name);
-    static void destroy(dns::RRClass zone_class, util::MemorySegment& mem_sgmt,
+    static void destroy(util::MemorySegment& mem_sgmt, dns::RRClass zone_class,
                         ZoneData* zone_data);
 
     void insertName(util::MemorySegment& mem_sgmt, const dns::Name& name,
