@@ -14,33 +14,39 @@
 
 #include <util/memory_segment.h>
 
+#include <dns/name.h>
+
 #include "rdataset.h"
 #include "rdata_encoder.h"
 #include "zone_data.h"
 
+#include <cassert>
 #include <new>                  // for the placement new
+
+using namespace isc::dns;
 
 namespace isc {
 namespace datasrc {
 namespace memory {
 
 ZoneData*
-ZoneData::create(util::MemorySegment& mem_sgmt) {
+ZoneData::create(util::MemorySegment& mem_sgmt, const Name& zone_origin) {
     ZoneTree* tree = ZoneTree::create(mem_sgmt, true);
+    ZoneNode* origin_node = NULL;
+    const ZoneTree::Result result =
+        tree->insert(mem_sgmt, zone_origin, &origin_node);
+    assert(result == ZoneTree::SUCCESS);
     void* p = mem_sgmt.allocate(sizeof(ZoneData));
-    ZoneData* zone_data = new(p) ZoneData;
-    zone_data->zone_tree = tree;
+    ZoneData* zone_data = new(p) ZoneData(tree, origin_node);
 
     return (zone_data);
 }
 
 void
 ZoneData::destroy(util::MemorySegment& mem_sgmt, ZoneData* zone_data) {
-    ZoneTree::destroy(mem_sgmt, zone_data->zone_tree.get());
+    ZoneTree::destroy(mem_sgmt, zone_data->zone_tree_.get());
     mem_sgmt.deallocate(zone_data, sizeof(ZoneData));
 }
-
-
 
 } // namespace memory
 } // namespace datasrc

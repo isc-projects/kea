@@ -16,30 +16,36 @@
 
 #include <util/memory_segment_local.h>
 
+#include <dns/name.h>
+#include <dns/labelsequence.h>
+
 #include <datasrc/memory/rdata_encoder.h>
 #include <datasrc/memory/rdataset.h>
 #include <datasrc/memory/zone_data.h>
 
 #include <gtest/gtest.h>
 
+using namespace isc::dns;
 using namespace isc::datasrc::memory;
 
 namespace {
 
 class ZoneDataTest : public ::testing::Test {
 protected:
-    ZoneDataTest() {}
+    ZoneDataTest() : zname_("example.com") {}
     void TearDown() {
         // detect any memory leak in the test memory segment
         EXPECT_TRUE(mem_sgmt_.allMemoryDeallocated());
     }
 
+    const Name zname_;
     isc::util::MemorySegmentLocal mem_sgmt_;
     RdataEncoder encoder_;
 };
 
 TEST_F(ZoneDataTest, create) {
-    ZoneData* zone_data = ZoneData::create(mem_sgmt_);
+    ZoneData* zone_data = ZoneData::create(mem_sgmt_, zname_);
+    EXPECT_EQ(LabelSequence(zname_), zone_data->getOriginNode()->getLabels());
     ZoneData::destroy(mem_sgmt_, zone_data);
 }
 }
