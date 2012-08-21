@@ -59,7 +59,7 @@ rdataSetDeleter(RRClass rrclass, util::MemorySegment* mem_sgmt,
 }
 
 void
-ZoneData::destroy(RRClass zone_class, util::MemorySegment& mem_sgmt,
+ZoneData::destroy(util::MemorySegment& mem_sgmt, RRClass zone_class,
                   ZoneData* zone_data)
 {
     ZoneTree::destroy(mem_sgmt, zone_data->zone_tree_.get(),
