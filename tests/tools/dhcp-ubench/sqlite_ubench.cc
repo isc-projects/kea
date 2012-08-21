@@ -33,12 +33,14 @@ SQLite_uBenchmark::SQLite_uBenchmark(const string& filename,
 
 void SQLite_uBenchmark::connect() {
     int result = sqlite3_open(dbname_.c_str(), &db_);
-    if (result) {
-        sqlite3_open(dbname_.c_str(), &db_);
+    if (result != SQLITE_OK) {
         failure("Failed to open DB file");
     }
 
-    sqlite3_exec(db_, "DELETE FROM lease4", NULL, NULL, NULL);
+    result = sqlite3_exec(db_, "DELETE FROM lease4", NULL, NULL, NULL);
+    if (result != SQLITE_OK) {
+        failure("Failed to delete old entries");
+    }
 
     if (sync_) {
         sqlite3_exec(db_, "PRAGMA synchronous = ON", NULL, NULL, NULL);
@@ -72,7 +74,7 @@ void SQLite_uBenchmark::createLease4Test() {
     uint32_t valid_lft = 1000;      // We can use the same value for all leases
     uint32_t recycle_time = 0;      // Not supported in any foresable future,
                                     //     so keep this as 0
-    string cltt = "now";            // Timestamp
+    char cltt[48];                  // Timestamp
     uint32_t pool_id = 0;           // Let's use pools 0-99
     bool fixed = false;
     string hostname("foo");         // Will generate it dynamically
@@ -93,42 +95,128 @@ void SQLite_uBenchmark::createLease4Test() {
                         // query formatting, let's get rid of it
     client_id[127] = 0; // workaround
 
+
+    sqlite3_stmt *stmt = NULL;
+    if (compiled_stmt_) {
+        char query[] = "INSERT INTO lease4(addr,hwaddr,client_id,"
+            "valid_lft,recycle_time,cltt,pool_id,fixed,hostname,"
+            "fqdn_fwd,fqdn_rev) VALUES(?001,?002,?003,?004,?005,?006,?007,?008,?009,?010,?011);";
+        int result = sqlite3_prepare_v2(db_, query, strlen(query), &stmt, NULL);
+        if (result != SQLITE_OK) {
+            failure("Failed to compile statement");
+        }
+    }
+
+
+
     for (uint32_t i = 0; i < num_; i++) {
 
-        stringstream cltt;
-        cltt << "2012-07-11 15:43:" << (i % 60);
+        sprintf(cltt, "2012-07-11 15:43:%02d", i % 60);
 
         addr++;
         char* errorMsg = NULL;
 
-        // the first address is 1.0.0.0.
-        char query[2000];
-        /// @todo: Encode HWADDR and CLIENT-ID properly
-        sprintf(query, "INSERT INTO lease4(addr,hwaddr,client_id,"
-               "valid_lft,recycle_time,cltt,pool_id,fixed,hostname,"
-               "fqdn_fwd,fqdn_rev) VALUES(%u,'%s','%s',%d,%d,'%s',%d,'%s','%s','%s','%s');",
-               addr, hwaddr, client_id, valid_lft, recycle_time,
-               cltt.str().c_str(), pool_id, (fixed?"true":"false"),
-               hostname.c_str(), (fqdn_fwd?"true":"false"), (fqdn_rev?"true":"false"));
-        // printf("QUERY=[%s]\n", query);
+        if (!compiled_stmt_) {
+            // the first address is 1.0.0.0.
+            char query[2000];
+            /// @todo: Encode HWADDR and CLIENT-ID properly
+            sprintf(query, "INSERT INTO lease4(addr,hwaddr,client_id,"
+                    "valid_lft,recycle_time,cltt,pool_id,fixed,hostname,"
+                    "fqdn_fwd,fqdn_rev) VALUES(%u,'%s','%s',%d,%d,'%s',%d,'%s','%s','%s','%s');",
+                    addr, hwaddr, client_id, valid_lft, recycle_time,
+                    cltt, pool_id, (fixed?"true":"false"),
+                    hostname.c_str(), (fqdn_fwd?"true":"false"), (fqdn_rev?"true":"false"));
+            // printf("QUERY=[%s]\n", query);
 
-        int result = sqlite3_exec(db_, query, NULL, 0, &errorMsg);
+            int result = sqlite3_exec(db_, query, NULL, 0, &errorMsg);
 
-        if (result != SQLITE_OK) {
-            stringstream tmp;
-            tmp << "INSERT error:" << errorMsg;
-            failure(tmp.str().c_str());
-        } else {
-            if (verbose_) {
-                printf(".");
+            if (result != SQLITE_OK) {
+                stringstream tmp;
+                tmp << "INSERT error:" << errorMsg;
+                failure(tmp.str().c_str());
             }
-        };
+        } else {
+            // compiled statement
+            int result = sqlite3_bind_int(stmt, 1, addr);
+            if (result != SQLITE_OK) {
+                failure("sqlite3_bind_int() for column 1");
+            }
 
+            result = sqlite3_bind_blob(stmt, 2, hwaddr, hwaddr_len, NULL);
+            if (result != SQLITE_OK) {
+                failure("sqlite3_bind_blob() for column 2");
+            }
+
+            result = sqlite3_bind_blob(stmt, 3, client_id, client_id_len, NULL);
+            if (result != SQLITE_OK) {
+                failure("sqlite3_bind_blob() for column 3");
+            }
+
+            if (sqlite3_bind_int(stmt, 4, valid_lft) != SQLITE_OK) {
+                failure("sqlite3_bind_int() for column 4");
+            }
+
+            if (sqlite3_bind_int(stmt, 5, recycle_time) != SQLITE_OK) {
+                failure("sqlite3_bind_int() for column 5");
+            }
+
+            if (sqlite3_bind_text(stmt, 6, cltt, strlen(cltt), NULL) != SQLITE_OK) {
+                failure("sqlite3_bind_int() for column 6");
+            }
+
+            if (sqlite3_bind_int(stmt, 7, pool_id) != SQLITE_OK) {
+                failure("sqlite3_bind_int() for column 7");
+            }
+
+            if (sqlite3_bind_int(stmt, 7, pool_id) != SQLITE_OK) {
+                failure("sqlite3_bind_int() for column 7");
+            }
+
+            if (sqlite3_bind_int(stmt, 8, fixed) != SQLITE_OK) {
+                failure("sqlite3_bind_int() for column 8");
+            }
+
+            if (sqlite3_bind_text(stmt, 9, hostname.c_str(), hostname.length(), NULL) != SQLITE_OK) {
+                failure("sqlite3_bind_int() for column 9");
+            }
+
+            if (sqlite3_bind_int(stmt, 10, fqdn_fwd) != SQLITE_OK) {
+                failure("sqlite3_bind_int() for column 10");
+            }
+
+            if (sqlite3_bind_int(stmt, 11, fqdn_rev) != SQLITE_OK) {
+                failure("sqlite3_bind_int() for column 11");
+            }
+
+            result = sqlite3_step(stmt);
+
+            if (result != SQLITE_DONE) {
+                failure("Failed to execute INSERT clause");
+            }
+
+            // let's reset the compiled statement, so it can be used in the
+            // next iteration
+            result = sqlite3_reset(stmt);
+            if (result != SQLITE_OK) {
+                failure("Failed to execute sqlite3_reset()");
+            }
+
+        }
+
+        if (verbose_) {
+            printf(".");
+        }
     }
+
+    int result = sqlite3_finalize(stmt);
+    if (result != SQLITE_OK) {
+        failure("sqlite3_finalize() failed");
+    }
+
     printf("\n");
 }
 
-static int search_callback(void *counter, int /*argc*/, char** /*argv*/, 
+static int search_callback(void *counter, int /*argc*/, char** /*argv*/,
                            char** /*azColName*/){
 
     int* cnt = static_cast<int*>(counter);
