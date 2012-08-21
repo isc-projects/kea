@@ -81,22 +81,25 @@ TEST_F(AuthConfigTest, versionConfig) {
 
 TEST_F(AuthConfigTest, exceptionGuarantee) {
     using namespace isc::server_common::portconfig;
-    AddressList a, b, c;
+    AddressList a;
     a.push_back(AddressPair("127.0.0.1", 53210));
     server.setListenAddresses(a);
-    b = server.getListenAddresses();
+    const AddressList b = server.getListenAddresses();
     EXPECT_EQ(a.size(), b.size());
     EXPECT_EQ(a.at(0).first, b.at(0).first);
     EXPECT_EQ(a.at(0).second, b.at(0).second);
-    // This configuration contains an invalid item, which will trigger
-    // an exception.
+    // The test socket request will reject the second address (192.0.2.2)
+    // with an exception
     EXPECT_THROW(configureAuthServer(
                      server,
                      Element::fromJSON(
-                         "{ \"no_such_config_var\": 1}")),
+                         "{ \"listen_on\": ["
+                           "{\"address\": \"::1\", \"port\": 53210},"
+                           "{\"address\": \"192.0.2.2\", \"port\": 53210}"
+                         "]}")),
                  AuthConfigError);
     // The server state shouldn't change
-    c = server.getListenAddresses();
+    const AddressList c = server.getListenAddresses();
     EXPECT_EQ(a.size(), c.size());
     EXPECT_EQ(a.at(0).first, c.at(0).first);
     EXPECT_EQ(a.at(0).second, c.at(0).second);
