@@ -31,12 +31,6 @@ namespace datasrc {
 namespace memory {
 
 class ZoneData : boost::noncopyable {
-    struct RdataSetDeleter {
-    public:
-        RdataSetDeleter() {}
-        void operator()(util::MemorySegment& mem_sgmt,
-                        RdataSet* rdataset_head) const;
-    };
 public:
     typedef DomainTree<RdataSet> ZoneTree;
     typedef DomainTreeNode<RdataSet> ZoneNode;
