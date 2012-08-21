@@ -32,20 +32,24 @@ namespace {
 
 class ZoneDataTest : public ::testing::Test {
 protected:
-    ZoneDataTest() : zname_("example.com") {}
+    ZoneDataTest() : zname_("example.com"),
+                     zone_data_(ZoneData::create(mem_sgmt_, zname_))
+    {}
     void TearDown() {
+        if (zone_data_ != NULL) {
+            ZoneData::destroy(mem_sgmt_, zone_data_);
+        }
         // detect any memory leak in the test memory segment
         EXPECT_TRUE(mem_sgmt_.allMemoryDeallocated());
     }
 
-    const Name zname_;
     isc::util::MemorySegmentLocal mem_sgmt_;
+    const Name zname_;
+    ZoneData* zone_data_;
     RdataEncoder encoder_;
 };
 
-TEST_F(ZoneDataTest, create) {
-    ZoneData* zone_data = ZoneData::create(mem_sgmt_, zname_);
-    EXPECT_EQ(LabelSequence(zname_), zone_data->getOriginNode()->getLabels());
-    ZoneData::destroy(mem_sgmt_, zone_data);
+TEST_F(ZoneDataTest, getOriginNode) {
+    EXPECT_EQ(LabelSequence(zname_), zone_data_->getOriginNode()->getLabels());
 }
 }
