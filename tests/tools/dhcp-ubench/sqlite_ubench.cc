@@ -208,9 +208,11 @@ void SQLite_uBenchmark::createLease4Test() {
         }
     }
 
-    int result = sqlite3_finalize(stmt);
-    if (result != SQLITE_OK) {
-        failure("sqlite3_finalize() failed");
+    if (compiled_stmt_) {
+        int result = sqlite3_finalize(stmt);
+        if (result != SQLITE_OK) {
+            failure("sqlite3_finalize() failed");
+        }
     }
 
     printf("\n");
@@ -239,35 +241,105 @@ void SQLite_uBenchmark::searchLease4Test() {
 
     printf("RETRIEVE: ");
 
+    sqlite3_stmt *stmt = NULL;
+    if (compiled_stmt_) {
+        const char query[] = "SELECT lease_id,addr,hwaddr,client_id,valid_lft,"
+            "cltt,pool_id,fixed,hostname,fqdn_fwd,fqdn_rev "
+            "FROM lease4 where addr=?1";
+
+        int result = sqlite3_prepare_v2(db_, query, strlen(query), &stmt, NULL);
+        if (result != SQLITE_OK) {
+            failure("Failed to compile statement");
+        }
+    }
+
+
     for (uint32_t i = 0; i < num_; i++) {
 
-        uint32_t x = BASE_ADDR4 + random() % int(num_ / hitratio_);
-
-        char* errorMsg = NULL;
+        uint32_t addr = BASE_ADDR4 + random() % int(num_ / hitratio_);
 
         int cnt = 0;
 
-        char query[2000];
-        sprintf(query, "SELECT lease_id,addr,hwaddr,client_id,valid_lft,"
-                "cltt,pool_id,fixed,hostname,fqdn_fwd,fqdn_rev "
-                "FROM lease4 where addr=%d", x);
-        int result = sqlite3_exec(db_, query, search_callback, &cnt, &errorMsg);
-        if (result != SQLITE_OK) {
-            stringstream tmp;
-            tmp << "SELECT failed: " << errorMsg;
-            failure(tmp.str().c_str());
-        }
+        if (!compiled_stmt_) {
+            char* errorMsg = NULL;
 
-        if (cnt) {
-            if (verbose_) {
-                printf(".");
+            char query[512];
+            sprintf(query, "SELECT lease_id,addr,hwaddr,client_id,valid_lft,"
+                    "cltt,pool_id,fixed,hostname,fqdn_fwd,fqdn_rev "
+                    "FROM lease4 where addr=%d", addr);
+            int result = sqlite3_exec(db_, query, search_callback, &cnt, &errorMsg);
+            if (result != SQLITE_OK) {
+                stringstream tmp;
+                tmp << "SELECT failed: " << errorMsg;
+                failure(tmp.str().c_str());
             }
         } else {
-            if (verbose_) {
-                printf("X");
+            // compiled statement
+            int result = sqlite3_bind_int(stmt, 1, addr);
+            if (result != SQLITE_OK) {
+                failure("sqlite3_bind_int() for column 1");
+            }
+
+            result = sqlite3_step(stmt);
+            switch (result) {
+            case SQLITE_ROW:
+            {
+                uint32_t lease_addr = sqlite3_column_int(stmt, 1);
+                const void * lease_hwaddr = sqlite3_column_blob(stmt, 2);
+                uint32_t lease_hwaddr_len = sqlite3_column_bytes(stmt, 2);
+                const void * lease_clientid = sqlite3_column_blob(stmt, 3);
+                uint32_t lease_clientid_len = sqlite3_column_bytes(stmt, 3);
+                uint32_t lease_valid_lft = sqlite3_column_int(stmt, 4);
+
+                // cltt
+                const unsigned char *lease_cltt = sqlite3_column_text(stmt, 5);
+
+                uint32_t lease_pool_id = sqlite3_column_int(stmt, 6);
+                uint32_t lease_fixed = sqlite3_column_int(stmt, 7);
+
+                const unsigned char *lease_hostname = sqlite3_column_text(stmt, 8);
+
+                uint32_t lease_fqdn_fwd = sqlite3_column_int(stmt, 9);
+                uint32_t lease_fqdn_rev = sqlite3_column_int(stmt, 10);
+
+                if (lease_addr || lease_hwaddr || lease_hwaddr_len || lease_clientid ||
+                    lease_clientid_len || lease_valid_lft || lease_cltt || lease_pool_id ||
+                    lease_fixed || lease_hostname || lease_fqdn_fwd || lease_fqdn_rev) {
+                    // we don't need this information, we just want to obtain it to measure
+                    // the overhead. That strange if is only to quell compiler/cppcheck
+                    // warning about unused variables.
+
+                    cnt = 1;
+                }
+
+                cnt = 1; // there is at least one row
+                break;
+            }
+            case SQLITE_DONE:
+                cnt = 0; // there are no rows at all (i.e. no such lease)
+                break;
+            default:
+                failure("Failed to execute SELECT clause");
+            }
+
+            // let's reset the compiled statement, so it can be used in the
+            // next iteration
+            result = sqlite3_reset(stmt);
+            if (result != SQLITE_OK) {
+                failure("Failed to execute sqlite3_reset()");
             }
         }
 
+        if (verbose_) {
+            printf("%s", (cnt?".":"X"));
+        }
+    }
+
+    if (compiled_stmt_) {
+        int result = sqlite3_finalize(stmt);
+        if (result != SQLITE_OK) {
+            failure("sqlite3_finalize() failed");
+        }
     }
 
     printf("\n");
@@ -280,22 +352,62 @@ void SQLite_uBenchmark::updateLease4Test() {
 
     printf("UPDATE:   ");
 
+    sqlite3_stmt *stmt = NULL;
+    if (compiled_stmt_) {
+        const char query[] = "UPDATE lease4 SET valid_lft=1002, cltt='now' WHERE addr=?1";
+
+        int result = sqlite3_prepare_v2(db_, query, strlen(query), &stmt, NULL);
+        if (result != SQLITE_OK) {
+            failure("Failed to compile statement");
+        }
+    }
+
     for (uint32_t i = 0; i < num_; i++) {
 
-        uint32_t x = BASE_ADDR4 + random() % num_;
+        uint32_t addr = BASE_ADDR4 + random() % num_;
 
-        char* errorMsg = NULL;
-        char query[2000];
-        sprintf(query, "UPDATE lease4 SET valid_lft=1002, cltt='now' WHERE addr=%d", x);
+        if (!compiled_stmt_) {
+            char* errorMsg = NULL;
+            char query[512];
+            sprintf(query, "UPDATE lease4 SET valid_lft=1002, cltt='now' WHERE addr=%d",
+                    addr);
 
-        int result = sqlite3_exec(db_, query, NULL /* no callback here*/, 0, &errorMsg);
-        if (result != SQLITE_OK) {
-            stringstream tmp;
-            tmp << "UPDATE error:" << errorMsg;
-            failure(tmp.str().c_str());
+            int result = sqlite3_exec(db_, query, NULL /* no callback here*/, 0, &errorMsg);
+            if (result != SQLITE_OK) {
+                stringstream tmp;
+                tmp << "UPDATE error:" << errorMsg;
+                failure(tmp.str().c_str());
+            }
+        } else {
+
+            int result = sqlite3_bind_int(stmt, 1, addr);
+            if (result != SQLITE_OK) {
+                failure("sqlite3_bind_int() for column 1");
+            }
+
+            result = sqlite3_step(stmt);
+            if (result != SQLITE_OK && result != SQLITE_DONE) {
+                failure("Failed to execute sqlite3_step() for UPDATE");
+            }
+
+            // let's reset the compiled statement, so it can be used in the
+            // next iteration
+            result = sqlite3_reset(stmt);
+            if (result != SQLITE_OK) {
+                failure("Failed to execute sqlite3_reset()");
+            }
+
         }
+
         if (verbose_) {
             printf(".");
+        }
+    }
+
+    if (compiled_stmt_) {
+        int result = sqlite3_finalize(stmt);
+        if (result != SQLITE_OK) {
+            failure("sqlite3_finalize() failed");
         }
     }
 
@@ -309,21 +421,60 @@ void SQLite_uBenchmark::deleteLease4Test() {
 
     printf("DELETE:   ");
 
+    sqlite3_stmt *stmt = NULL;
+    if (compiled_stmt_) {
+        const char query[] = "DELETE FROM lease4 WHERE addr=?1";
+
+        int result = sqlite3_prepare_v2(db_, query, strlen(query), &stmt, NULL);
+        if (result != SQLITE_OK) {
+            failure("Failed to compile statement");
+        }
+    }
+
     for (uint32_t i = 0; i < num_; i++) {
 
-        uint32_t x = BASE_ADDR4 + i;
-        char* errorMsg = NULL;
+        uint32_t addr = BASE_ADDR4 + i;
+        if (!compiled_stmt_) {
+            char* errorMsg = NULL;
 
-        char query[2000];
-        sprintf(query, "DELETE FROM lease4 WHERE addr=%d", x);
-        int result = sqlite3_exec(db_, query, NULL /* no callback here*/, 0, &errorMsg);
-        if (result != SQLITE_OK) {
-            stringstream tmp;
-            tmp << "DELETE error:" << errorMsg;
-            failure(tmp.str().c_str());
+            char query[2000];
+            sprintf(query, "DELETE FROM lease4 WHERE addr=%d", addr);
+            int result = sqlite3_exec(db_, query, NULL /* no callback here*/, 0, &errorMsg);
+            if (result != SQLITE_OK) {
+                stringstream tmp;
+                tmp << "DELETE error:" << errorMsg;
+                failure(tmp.str().c_str());
+            }
+        } else {
+            // compiled statement
+
+            int result = sqlite3_bind_int(stmt, 1, addr);
+            if (result != SQLITE_OK) {
+                failure("sqlite3_bind_int() for column 1");
+            }
+
+            result = sqlite3_step(stmt);
+            if (result != SQLITE_OK && result != SQLITE_DONE) {
+                failure("Failed to execute sqlite3_step() for UPDATE");
+            }
+
+            // let's reset the compiled statement, so it can be used in the
+            // next iteration
+            result = sqlite3_reset(stmt);
+            if (result != SQLITE_OK) {
+                failure("Failed to execute sqlite3_reset()");
+            }
+
         }
         if (verbose_) {
             printf(".");
+        }
+    }
+
+    if (compiled_stmt_) {
+        int result = sqlite3_finalize(stmt);
+        if (result != SQLITE_OK) {
+            failure("sqlite3_finalize() failed");
         }
     }
 
