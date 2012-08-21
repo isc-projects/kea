@@ -105,7 +105,8 @@ public:
                                  isc::data::ConstElementPtr args) = 0;
 };
 
-// Handle the "shutdown" command.
+// Handle the "shutdown" command. An optional parameter "pid" is used to
+// see if it is really for our instance.
 class ShutdownCommand : public AuthCommand {
 public:
     virtual ConstElementPtr exec(AuthSrv& server,
