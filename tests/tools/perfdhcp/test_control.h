@@ -20,6 +20,7 @@
 
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/function.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <dhcp/dhcp6.h>
@@ -55,6 +56,8 @@ public:
     typedef StatsMgr<dhcp::Pkt6> StatsMgr6;
     // Pointer to Statistics Manager for DHCPv6.
     typedef boost::shared_ptr<StatsMgr6> StatsMgr6Ptr;
+    // Packet exchange type.
+    typedef StatsMgr<>::ExchangeType ExchangeType;
 
     /// \brief Socket wrapper class.
     ///
@@ -120,6 +123,26 @@ public:
         asiolink::IOAddress addr_; ///< Address bound.
     };
 
+    /// \brief Default transaction id generator class.
+    ///
+    /// This is default transaction id generator class. The member
+    /// function is used to generate unique transaction id value.
+    /// Other generator classes should derive from this one to
+    /// override the standard generation algorithm (e.g. unit tests
+    /// override this class wih algorithm that produces more predictable
+    /// transaction id values).
+    class TransidGenerator {
+    public:
+        /// \brief generate transaction id.
+        ///
+        /// \return generated transazction id value.
+        virtual uint32_t generate() {
+            return static_cast<uint32_t>(random() % 0x00FFFFFF);
+        }
+    };
+
+    typedef boost::shared_ptr<TransidGenerator> TransidGeneratorPtr;
+
     /// \brief Length of the Ethernet HW address (MAC) in bytes.
     static const uint8_t HW_ETHER_LEN = 6;
 
@@ -129,7 +152,7 @@ public:
     /// \return the only existing instance of test control
     static TestControl& instance();
 
-    /// Run performance test.
+    /// brief\ Run performance test.
     ///
     /// Method runs whole performance test. Command line options must
     /// be parsed prior to running this function. Othewise function will
@@ -138,6 +161,14 @@ public:
     /// \throw isc::InvalidOperation if command line options are not parsed.
     /// \throw isc::Unexpected if internal Test Controler error occured.
     void run();
+
+    /// \brief Set new transaction id generator.
+    ///
+    /// \param generator generator object to be used.
+    void setTransidGenerator(TransidGeneratorPtr& generator) {
+        transid_gen_.reset();
+        transid_gen_ = generator;
+    }
 
 protected:
 
@@ -285,6 +316,13 @@ protected:
     /// \return generated MAC address.
     std::vector<uint8_t> generateMacAddress() const;
 
+    /// \brief generate transaction id.
+    ///
+    /// \return generated transaction id.
+    uint32_t generateTransid() {
+        return(transid_gen_->generate());
+    }
+
     /// \brief Returns number of exchanges to be started.
     ///
     /// Method returns number of new exchanges to be started as soon
@@ -329,14 +367,45 @@ protected:
     /// not initialized.
     void printStats() const;
 
-    void receivePacket4(dhcp::Pkt4Ptr& pkt4);
+    /// \brief Receive DHCPv4 packet.
+    ///
+    /// Method performs reception of the DHCPv4 packet, updates
+    /// statistics and responsds to the server if required, e.g.
+    /// when OFFER packet arrives, this function will initiate
+    /// REQUEST message to the server.
+    ///
+    /// \param socket socket to be used.
+    /// \param pkt4 object representing DHCPv4 packet received.
+    /// \throw isc::BadValue if unknown message type received.
+    /// \throw isc::Unexpected if unexpected error occured.
+    void receivePacket4(const TestControlSocket& socket,
+                        const dhcp::Pkt4Ptr& pkt4);
 
-    void receivePacket6(dhcp::Pkt6Ptr& pkt4);
+    /// \brief Receive DHCPv6 packet.
+    ///
+    /// Method performs reception of the DHCPv6 packet, updates
+    /// statistics and responsds to the server if required, e.g.
+    /// when ADVERTISE packet arrives, this function will initiate
+    /// REQUEST message to the server.
+    ///
+    /// \param socket socket to be used.
+    /// \param pkt6 object representing DHCPv6 packet received.
+    /// \throw isc::BadValue if unknown message type received.
+    /// \throw isc::Unexpected if unexpected error occured.
+    void receivePacket6(const TestControlSocket& socket,
+                        const dhcp::Pkt6Ptr& pkt6);
 
     /// \brief Receive DHCPv4 or DHCPv6 packets from the server.
     ///
     /// Method receives DHCPv4 or DHCPv6 packets from the server.
-    void receivePackets();
+    /// This function will call \ref receivePacket4 or
+    /// \ref receivePacket6 depending if DHCPv4 or DHCPv6 packet
+    /// has arrived.
+    ///
+    /// \param socket socket to be used.
+    /// \throw::BadValue if unknown message type received.
+    /// \throw::Unexpected if unexpected error occured.
+    void receivePackets(const TestControlSocket& socket);
 
     /// \brief Register option factory functions for DHCPv4
     ///
@@ -378,6 +447,28 @@ protected:
     /// \throw isc::BadValue if MAC address has invalid length.
     void sendDiscover4(const TestControlSocket& socket);
 
+    /// \brief Sent DHCPv6 REQUEST message.
+    ///
+    /// Method creates and sends DHCPv6 REQUEST message to the server
+    /// with the following options:
+    /// - D6O_ELAPSED_TIME
+    /// - D6O_CLIENTID
+    /// - D6O_SERVERID
+    /// The elapsed time is calculated based on the duration between
+    /// sending a SOLICIT and receiving the ADVERTISE packet prior.
+    /// For this reason both solicit and advertise packet objects have
+    /// to be passed when calling this function.
+    ///
+    /// \param socket socket to be used to send message.
+    /// \param solicit_pkt6 SOLICIT packet object.
+    /// \param advertise_pkt6 ADVERTISE packet object.
+    /// \throw isc::Unexpected if unexpected error occured.
+    /// \throw isc::InvalidOperation if Statistics Manager has not been
+    /// initialized.
+    void sendRequest6(const TestControlSocket& socket,
+                      const dhcp::Pkt6Ptr& solicit_pkt6,
+                      const dhcp::Pkt6Ptr& advertise_pkt6);
+
     /// \brief Send DHCPv6 SOLICIT message.
     ///
     /// Method creates and sends DHCPv6 SOLICIT message to the server
@@ -405,7 +496,7 @@ protected:
     /// \param socket socket used to send the packet.
     /// \param pkt reference to packet to be configured.
     void setDefaults4(const TestControlSocket& socket,
-                      const boost::shared_ptr<dhcp::Pkt4>& pkt);
+                      const dhcp::Pkt4Ptr& pkt);
 
     /// \brief Set default DHCPv6 packet parameters.
     ///
@@ -420,7 +511,7 @@ protected:
     /// \param socket socket used to send the packet.
     /// \param pkt reference to packet to be configured.
     void setDefaults6(const TestControlSocket& socket,
-                      const boost::shared_ptr<dhcp::Pkt6>& pkt);
+                      const dhcp::Pkt6Ptr& pkt);
 
     /// \brief Update due time to initiate next chunk of exchanges.
     ///
@@ -431,13 +522,38 @@ protected:
 
 private:
 
+    /// \brief Generate transaction id using random function.
+    ///
+    /// \return generated transaction id value.
+    static uint32_t generateTransidRandom();
+
+    /// \brief Get number of received packets.
+    ///
+    /// Get the number of received packets from the Statistics Manager.
+    /// Function may throw if Statistics Manager object is not
+    /// initialized.
+    /// \param xchg_type packet exchange type.
+    /// \return number of received packets.
+    uint64_t getRcvdPacketsNum(const ExchangeType xchg_type) const;
+
+    /// \brief Get number of sent packets.
+    ///
+    /// Get the number of sent packets from the Statistics Manager.
+    /// Function may throw if Statistics Manager object is not
+    /// initialized.
+    /// \param xchg_type packet exchange type.
+    /// \return number of sent packets.
+    uint64_t getSentPacketsNum(const ExchangeType xchg_type) const;
+
     boost::posix_time::ptime send_due_;    ///< Due time to initiate next chunk
                                            ///< of exchanges.
     boost::posix_time::ptime last_sent_;   ///< Indicates when the last exchange
                                            /// was initiated.
+    StatsMgr4Ptr stats_mgr4_;  ///< Statistics Manager 4.
+    StatsMgr6Ptr stats_mgr6_;  ///< Statistics Manager 6.
 
-    StatsMgr4Ptr stats_mgr4_;  /// Statistics Manager 4.
-    StatsMgr6Ptr stats_mgr6_;  /// Statistics Manager 6.
+    // Pointers to functions.
+    TransidGeneratorPtr transid_gen_; ///< Transaction id generator.
 
     uint64_t sent_packets_0_;
     uint64_t sent_packets_1_;

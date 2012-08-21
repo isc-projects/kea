@@ -38,6 +38,34 @@ using namespace isc::perfdhcp;
 /// to allow unit testing.
 class NakedTestControl: public TestControl {
 public:
+
+    /// \brief Incremental transaction id generaator.
+    ///
+    /// This is incremental transaction id generator. It overrides
+    /// the default transaction id generator that generates transaction
+    /// ids using random function. This generator will generate values
+    /// like: 1,2,3 etc.
+    class IncrementalGenerator : public TestControl::TransidGenerator {
+    public:
+        /// \brief Default constructor.
+        IncrementalGenerator() :
+            TransidGenerator(),
+            transid_(0) {
+        }
+
+        /// \brief Generate unique transaction id.
+        ///
+        /// Generate unique transaction ids incrementally:
+        /// 1,2,3,4 etc.
+        ///
+        /// \return generated transaction id.
+        virtual uint32_t generate() {
+            return ++transid_;
+        }
+    private:
+        uint32_t transid_; ///< Last generated transaction id.
+    };
+
     using TestControl::checkExitConditions;
     using TestControl::factoryElapsedTime6;
     using TestControl::factoryGeneric;
@@ -48,14 +76,15 @@ public:
     using TestControl::generateDuid;
     using TestControl::generateMacAddress;
     using TestControl::getNextExchangesNum;
+    using TestControl::initializeStatsMgr;
     using TestControl::openSocket;
-    using TestControl::receivePackets;
+    using TestControl::receivePacket4;
+    using TestControl::receivePacket6;
     using TestControl::registerOptionFactories;
     using TestControl::sendDiscover4;
     using TestControl::sendSolicit6;
     using TestControl::setDefaults4;
     using TestControl::setDefaults6;
-    using TestControl::updateSendDue;
 
     NakedTestControl() : TestControl() { };
 
@@ -77,6 +106,11 @@ public:
 
     /// \brief Default Constructor
     TestControlTest() { }
+
+    static uint32_t generateTransidIncremental() {
+        static uint32_t transid(1);
+        return ++transid;
+    }
 
     /// \brief Get local loopback interface name.
     ///
@@ -260,6 +294,107 @@ public:
         }
     }
 
+    /// \brief Test DHCPv4 exchanges.
+    ///
+    /// Function simulates DHCPv4 exchanges. Function caller specifies
+    /// number of exchanges to be simulated and number of simulated
+    /// responses. When number of responses is lower than number of
+    /// iterations than the difference between them is the number
+    /// of simulated packet drops. This is useful to test if program
+    /// exit conditions are handled properly (maximum number of packet
+    /// drops specified as -D<max-drops> is taken into account).
+    ///
+    /// \param iterations_num number of exchanges to simulate.
+    /// \param receive_num number of received OFFER packets.
+    /// \param iterations_performed actual number of iterations.
+    void testPkt4Exchange(int iterations_num,
+                          int receive_num,
+                          int& iterations_performed) const {
+        uint16_t port = 10547;
+        int sock_handle = 0;
+        NakedTestControl tc;
+        tc.initializeStatsMgr();
+        // Incremental transaction id generator will generate
+        // predictable values of transaction id for each iteration.
+        // This is important because we need to simulate reponses
+        // from the server and use the same transaction ids as in
+        // packets sent by client.
+        TestControl::TransidGeneratorPtr
+            generator(new NakedTestControl::IncrementalGenerator());
+        tc.setTransidGenerator(generator);
+        // Socket is needed to send packets through the interface.
+        ASSERT_NO_THROW(sock_handle = tc.openSocket(port));
+        TestControl::TestControlSocket sock(sock_handle);
+        int i = 0;
+        for (; i < iterations_num; ++i) {
+            if (tc.checkExitConditions()) {
+                break;
+            }
+            ASSERT_NO_THROW(tc.sendDiscover4(sock));
+            // Do not simulate responses for packets later
+            // that specified as receive_num. This simulates
+            // packet drops.
+            if (i - 1 < receive_num) {
+                boost::shared_ptr<Pkt4> offer_pkt4(createOfferPkt4(i));
+                // Receive OFFER and send REQUEST.
+                ASSERT_NO_THROW(tc.receivePacket4(sock, offer_pkt4));
+            }
+        }
+        // Return the number of iterations performed.
+        iterations_performed = i;
+    }
+
+    /// \brief Test DHCPv6 exchanges.
+    ///
+    /// Function simulates DHCPv6 exchanges. Function caller specifies
+    /// number of exchanges to be simulated and number of simulated
+    /// responses. When number of responses is lower than number of
+    /// iterations than the difference between them is the number
+    /// of simulated packet drops. This is useful to test if program
+    /// exit conditions are handled properly (maximum number of packet
+    /// drops specified as -D<max-drops> is taken into account).
+    ///
+    /// \param iterations_num number of exchanges to simulate.
+    /// \param receive_num number of received OFFER packets.
+    /// \param iterations_performed actual number of iterations.
+    void testPkt6Exchange(int iterations_num,
+                          int receive_num,
+                          int& iterations_performed) const {
+        uint16_t port = 10547;
+        int sock_handle = 0;
+        NakedTestControl tc;
+        tc.initializeStatsMgr();
+        // Incremental transaction id generator will generate
+        // predictable values of transaction id for each iteration.
+        // This is important because we need to simulate reponses
+        // from the server and use the same transaction ids as in
+        // packets sent by client.
+        TestControl::TransidGeneratorPtr
+            generator(new NakedTestControl::IncrementalGenerator());
+        tc.setTransidGenerator(generator);
+        // Socket is needed to send packets through the interface.
+        ASSERT_NO_THROW(sock_handle = tc.openSocket(port));
+        TestControl::TestControlSocket sock(sock_handle);
+        int i = 0;
+        for (; i < iterations_num; ++i) {
+            if (tc.checkExitConditions()) {
+                break;
+            }
+            // Do not simulate responses for packets later
+            // that specified as receive_num. This simulates
+            // packet drops.
+            ASSERT_NO_THROW(tc.sendSolicit6(sock));
+            if (i - 1 < receive_num) {
+                boost::shared_ptr<Pkt6> advertise_pkt6(createAdvertisePkt6(i));
+                // Receive ADVERTISE and send REQUEST.
+                ASSERT_NO_THROW(tc.receivePacket6(sock, advertise_pkt6));
+            }
+
+        }
+        // Return the number of iterations performed.
+        iterations_performed = i;
+    }
+
     /// \brief Test generation of multiple MAC addresses.
     ///
     /// This method validates generation of multiple MAC addresses.
@@ -320,6 +455,33 @@ public:
     /// \throw isc::InvalidParameter if command line is invalid.
     void processCmdLine(const std::string& cmdline) const {
         CommandOptionsHelper::process(cmdline);
+    }
+
+private:
+    boost::shared_ptr<Pkt4>
+    createOfferPkt4(uint32_t transid) const {
+        boost::shared_ptr<Pkt4> offer(new Pkt4(DHCPOFFER, transid));
+        OptionPtr opt_msg_type = Option::factory(Option::V4, DHO_DHCP_MESSAGE_TYPE,
+                                                 OptionBuffer(DHCPOFFER));
+        offer->setYiaddr(asiolink::IOAddress("127.0.0.1"));
+        offer->addOption(opt_msg_type);
+        offer->updateTimestamp();
+        return(offer);
+    }
+
+    boost::shared_ptr<Pkt6>
+    createAdvertisePkt6(uint32_t transid) const {
+        OptionPtr opt_ia_na = Option::factory(Option::V6, D6O_IA_NA);
+        OptionPtr opt_serverid(new Option(Option::V6, D6O_SERVERID));
+        NakedTestControl tc;
+        std::vector<uint8_t> duid(tc.generateDuid());
+        OptionPtr opt_clientid(Option::factory(Option::V6, D6O_CLIENTID, duid));
+        boost::shared_ptr<Pkt6> advertise(new Pkt6(DHCPV6_ADVERTISE, transid));
+        advertise->addOption(opt_ia_na);
+        advertise->addOption(opt_serverid);
+        advertise->addOption(opt_clientid);
+        advertise->updateTimestamp();
+        return(advertise);
     }
 
 };
@@ -566,6 +728,77 @@ TEST_F(TestControlTest, Packet6) {
         std::cout << "Unable to find the loopback interface. Skip test. "
                   << std::endl;
     }
+}
+
+TEST_F(TestControlTest, Packet4Exchange) {
+    // Get the local loopback interface to open socket on
+    // it and test packets exchanges. We don't want to fail
+    // the test if interface is not available.
+    std::string loopback_iface(getLocalLoopback());
+    if (loopback_iface.empty()) {
+        std::cout << "Unable to find the loopback interface. Skip test."
+                  << std::endl;
+        return;
+    }
+
+    // Set number of iterations to some high value.
+    const int iterations_num = 100;
+    processCmdLine("perfdhcp -l " + loopback_iface
+                   + " -r 100 -n 10 -R 20 127.0.0.1");
+    // The actual number of iterations will be stored in the
+    // following variable.
+    int iterations_performed = 0;
+    testPkt4Exchange(iterations_num, iterations_num, iterations_performed);
+    // The command line restricts the number of iterations to 10
+    // with -n 10 parameter.
+    EXPECT_EQ(10, iterations_performed);
+
+    // With the following command line we restrict the maximum
+    // number of dropped packets to 20% of all.
+    processCmdLine("perfdhcp -l " + loopback_iface
+                   + " -r 100 -R 20 -n 20 -D 10% 127.0.0.1");
+    // The number iterations is restricted by the percentage of
+    // dropped packets (-D 10%). We also have to bump up the number
+    // of iterations because the percentage limitation checks starts
+    // at packet #10. We expect that at packet #12 the 10% threshold
+    // will be reached.
+    const int received_num = 10;
+    testPkt4Exchange(iterations_num, received_num, iterations_performed);
+    EXPECT_EQ(12, iterations_performed);
+}
+
+TEST_F(TestControlTest, Packet6Exchange) {
+    // Get the local loopback interface to open socket on
+    // it and test packets exchanges. We don't want to fail
+    // the test if interface is not available.
+    std::string loopback_iface(getLocalLoopback());
+    if (loopback_iface.empty()) {
+        std::cout << "Unable to find the loopback interface. Skip test."
+                  << std::endl;
+        return;
+    }
+
+    const int iterations_num = 100;
+    // Set number of iterations to 10.
+    processCmdLine("perfdhcp -l " + loopback_iface
+                   + " -6 -r 100 -n 10 -R 20 ::1");
+    int iterations_performed = 0;
+    // Set number of received packets equal to number of iterations.
+    // This simulates no packet drops.
+    testPkt6Exchange(iterations_num, iterations_num, iterations_performed);
+    // Actual number of iterations should be 10.
+    EXPECT_EQ(10, iterations_performed);
+
+    // The maximum number of dropped packets is 3 (because of -D 3).
+    processCmdLine("perfdhcp -l " + loopback_iface
+                   + " -6 -r 100 -n 10 -R 20 -D 3 ::1");
+    // For the first 3 packets we are simulating responses from server.
+    // For other packets we don't so packet as 4,5,6 will be dropped and
+    // then test should be interrupted and actual number of iterations will
+    // be 6.
+    const int received_num = 3;
+    testPkt6Exchange(iterations_num, received_num, iterations_performed);
+    EXPECT_EQ(6, iterations_performed);
 }
 
 TEST_F(TestControlTest, RateControl) {
