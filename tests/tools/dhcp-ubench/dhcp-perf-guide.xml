@@ -277,6 +277,7 @@ Possible command-line parameters:
           <listitem><para>-s yes|no - should the operations be performend in synchronous (yes)
           or asynchronous (no) manner (yes)</para></listitem>
           <listitem><para>-v yes|no - verbose mode. Should the test print out progress? (yes)</para></listitem>
+          <listitem><para>-c yes|no - compiled statements. Should the SQL statements be precompiled?</para></listitem>
         </orderedlist>
         </para>
 
