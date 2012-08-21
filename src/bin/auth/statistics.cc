@@ -135,7 +135,7 @@ AuthCountersImpl::getStatistics() const {
                               << counter;
         }
     }
-    statistics_string <<   "}";
+    statistics_string << "}";
 
     isc::data::ElementPtr statistics_element =
         isc::data::Element::fromJSON(statistics_string);
