@@ -481,7 +481,30 @@ TestControl::openSocket(uint16_t port) const {
 }
 
 void
+TestControl::printRate() const {
+    double rate = 0;
+    CommandOptions& options = CommandOptions::instance();
+    if (options.getIpVersion() == 4) {
+        double duration =
+            stats_mgr4_->getTestPeriod().length().total_nanoseconds() / 1e9;
+        rate = stats_mgr4_->getRcvdPacketsNum(StatsMgr4::XCHG_DO) / duration;
+    } else if (options.getIpVersion() == 6) {
+        double duration =
+            stats_mgr6_->getTestPeriod().length().total_nanoseconds() / 1e9;
+        rate = stats_mgr6_->getRcvdPacketsNum(StatsMgr6::XCHG_SA) / duration;
+    }
+    std::cout << "***Rate statistics***" << std::endl;
+    if (options.getRate() > 0) {
+        std::cout << "Rate: " << rate << ", expected rate: "
+                  << options.getRate() << std::endl << std::endl;
+    } else {
+        std::cout << "Rate: " << rate << std::endl << std::endl;
+    }
+}
+
+void
 TestControl::printStats() const {
+    printRate();
     CommandOptions& options = CommandOptions::instance();
     if (options.getIpVersion() == 4) {
         if (!stats_mgr4_) {
