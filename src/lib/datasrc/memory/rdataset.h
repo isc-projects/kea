@@ -228,6 +228,17 @@ private:
     static const size_t MANY_RRSIG_COUNT = (1 << 3) - 1;
 
 public:
+    /// \brief Return the bare pointer to the next node.
+    ///
+    /// In such an operation as iterating over a linked list of \c RdataSet
+    /// object, using this method is generally more efficient than using
+    /// the \c next member directly because it prevents unintentional
+    /// creation of offset pointer objects.  While the application can
+    /// get the same result by directly calling get() on \c next, it would
+    /// help encourage the use of more efficient usage if we provide an
+    /// explicit accessor.
+    RdataSet* getNext() const { return (next.get()); }
+
     /// \brief Return the number of RDATAs stored in the \c RdataSet.
     size_t getRdataCount() const { return (rdata_count_); }
 
