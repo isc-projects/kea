@@ -30,27 +30,27 @@ MySQL_uBenchmark::MySQL_uBenchmark(const string& hostname, const string& user,
                                    uint32_t num_iterations, bool sync,
                                    bool verbose)
     :uBenchmark(num_iterations, db, sync, verbose, hostname, user, pass),
-     Conn_(NULL) {
+     conn_(NULL) {
 
 }
 
 void MySQL_uBenchmark::failure(const char* operation) {
     stringstream tmp;
-    tmp << "Error " << mysql_errno(Conn_) << " during " << operation
-        << ": " << mysql_error(Conn_);
+    tmp << "Error " << mysql_errno(conn_) << " during " << operation
+        << ": " << mysql_error(conn_);
     throw tmp.str();
 }
 
 void MySQL_uBenchmark::connect() {
 
-    Conn_ = mysql_init(NULL);
-    if (!Conn_) {
+    conn_ = mysql_init(NULL);
+    if (!conn_) {
         failure("initializing MySQL library");
     } else {
         cout << "MySQL library init successful." << endl;
     }
 
-    if (!mysql_real_connect(Conn_, hostname_.c_str(), user_.c_str(),
+    if (!mysql_real_connect(conn_, hostname_.c_str(), user_.c_str(),
                             passwd_.c_str(), dbname_.c_str(), 0, NULL, 0)) {
         failure("connecting to MySQL server");
     } else {
@@ -58,7 +58,7 @@ void MySQL_uBenchmark::connect() {
     }
 
     string q = "delete from lease4;";
-    if (mysql_real_query(Conn_, q.c_str(), strlen(q.c_str()))) {
+    if (mysql_real_query(conn_, q.c_str(), strlen(q.c_str()))) {
         failure("dropping old lease4 entries.");
     }
 
@@ -68,22 +68,22 @@ void MySQL_uBenchmark::connect() {
     } else {
         q += "MyISAM";
     }
-    if (mysql_query(Conn_, q.c_str())) {
+    if (mysql_query(conn_, q.c_str())) {
         q = "Failed to run query:" + q;
         failure(q.c_str());
     }
 }
 
 void MySQL_uBenchmark::disconnect() {
-    if (!Conn_) {
+    if (!conn_) {
         throw "NULL MySQL connection pointer.";
     }
-    mysql_close(Conn_);
-    Conn_ = NULL;
+    mysql_close(conn_);
+    conn_ = NULL;
 }
 
 void MySQL_uBenchmark::createLease4Test() {
-    if (!Conn_) {
+    if (!conn_) {
         throw "Not connected to MySQL server.";
     }
 
@@ -128,7 +128,7 @@ void MySQL_uBenchmark::createLease4Test() {
 
     if (compiled_stmt_) {
         // create a statement once
-        stmt = mysql_stmt_init(Conn_);
+        stmt = mysql_stmt_init(conn_);
         if (!stmt) {
             failure("Unable to create compiled statement, mysql_stmt_init() failed");
         }
@@ -233,9 +233,9 @@ void MySQL_uBenchmark::createLease4Test() {
                    "fqdn_fwd,fqdn_rev) VALUES(");
             end = query + strlen(query);
             end += sprintf(end, "%u,\'", addr);
-            end += mysql_real_escape_string(Conn_, end, hwaddr, hwaddr_len);
+            end += mysql_real_escape_string(conn_, end, hwaddr, hwaddr_len);
             end += sprintf(end,"\',\'");
-            end += mysql_real_escape_string(Conn_, end, client_id, client_id_len);
+            end += mysql_real_escape_string(conn_, end, client_id, client_id_len);
             end += sprintf(end, "\',%d,%d,'%s',%d,%s,\'%s\',%s,%s);",
                            valid_lft, recycle_time, cltt,
                            pool_id, (fixed?"true":"false"), hostname,
@@ -244,7 +244,7 @@ void MySQL_uBenchmark::createLease4Test() {
             // options and comments fields are not set
 
             unsigned int len = end - query;
-            if (mysql_real_query(Conn_, query, len)) {
+            if (mysql_real_query(conn_, query, len)) {
                 // something failed.
                 failure("INSERT query");
             }
@@ -276,7 +276,7 @@ void MySQL_uBenchmark::createLease4Test() {
 }
 
 void MySQL_uBenchmark::searchLease4Test() {
-    if (!Conn_) {
+    if (!conn_) {
         throw "Not connected to MySQL server.";
     }
 
@@ -287,7 +287,7 @@ void MySQL_uBenchmark::searchLease4Test() {
     MYSQL_STMT * stmt = NULL;
     MYSQL_BIND bind[1]; // just a single element
     if (compiled_stmt_) {
-        stmt = mysql_stmt_init(Conn_);
+        stmt = mysql_stmt_init(conn_);
         if (!stmt) {
             failure("Unable to create compiled statement");
         }
@@ -320,9 +320,9 @@ void MySQL_uBenchmark::searchLease4Test() {
             sprintf(query, "SELECT lease_id,addr,hwaddr,client_id,valid_lft,"
                     "cltt,pool_id,fixed,hostname,fqdn_fwd,fqdn_rev "
                     "FROM lease4 where addr=%d", addr);
-            mysql_real_query(Conn_, query, strlen(query));
+            mysql_real_query(conn_, query, strlen(query));
 
-            MYSQL_RES * result = mysql_store_result(Conn_);
+            MYSQL_RES * result = mysql_store_result(conn_);
 
             int num_rows = mysql_num_rows(result);
             int num_fields = mysql_num_fields(result);
@@ -477,7 +477,7 @@ void MySQL_uBenchmark::searchLease4Test() {
 }
 
 void MySQL_uBenchmark::updateLease4Test() {
-    if (!Conn_) {
+    if (!conn_) {
         throw "Not connected to MySQL server.";
     }
 
@@ -491,7 +491,7 @@ void MySQL_uBenchmark::updateLease4Test() {
     MYSQL_STMT * stmt = NULL;
     MYSQL_BIND bind[3];
     if (compiled_stmt_) {
-        stmt = mysql_stmt_init(Conn_);
+        stmt = mysql_stmt_init(conn_);
         if (!stmt) {
             failure("Unable to create compiled statement");
         }
@@ -527,7 +527,7 @@ void MySQL_uBenchmark::updateLease4Test() {
         if (!compiled_stmt_) {
             char query[128];
             sprintf(query, "UPDATE lease4 SET valid_lft=1002, cltt=now() WHERE addr=%d", addr);
-            mysql_real_query(Conn_, query, strlen(query));
+            mysql_real_query(conn_, query, strlen(query));
 
         } else {
             // compiled statement
@@ -555,7 +555,7 @@ void MySQL_uBenchmark::updateLease4Test() {
 }
 
 void MySQL_uBenchmark::deleteLease4Test() {
-    if (!Conn_) {
+    if (!conn_) {
         throw "Not connected to MySQL server.";
     }
 
@@ -567,7 +567,7 @@ void MySQL_uBenchmark::deleteLease4Test() {
     MYSQL_BIND bind[1]; // just a single element
     if (compiled_stmt_) {
 
-        stmt = mysql_stmt_init(Conn_);
+        stmt = mysql_stmt_init(conn_);
         if (!stmt) {
             failure("Unable to create compiled statement, mysql_stmt_init() failed");
         }
@@ -599,7 +599,7 @@ void MySQL_uBenchmark::deleteLease4Test() {
         if (!compiled_stmt_) {
             char query[128];
             sprintf(query, "DELETE FROM lease4 WHERE addr=%d", addr);
-            mysql_real_query(Conn_, query, strlen(query));
+            mysql_real_query(conn_, query, strlen(query));
         } else {
             // compiled statement
             if (mysql_stmt_bind_param(stmt, bind)) {

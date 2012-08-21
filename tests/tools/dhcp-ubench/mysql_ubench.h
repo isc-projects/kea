@@ -83,5 +83,5 @@ protected:
     void failure(const char* operation);
 
     /// Handle to MySQL database connection.
-    MYSQL* Conn_;
+    MYSQL* conn_;
 };
