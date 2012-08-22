@@ -232,9 +232,15 @@ void masterLoad(const char* const filename, const Name& origin,
 /// \param zone_class The RR class of the zone.
 /// \param callback A callback functor or function that is to be called for
 /// each RRset.
+/// \param source A string to use in error messages if zone content is bad
+/// (e.g. the file name when reading from a file). If this value is NULL,
+/// or left out, the error will use the string '<unknown>'
 void masterLoad(std::istream& input, const Name& origin,
-                const RRClass& zone_class, MasterLoadCallback callback);
+                const RRClass& zone_class, MasterLoadCallback callback,
+                const char* source=NULL);
 }
+
+
 //@}
 }
 
