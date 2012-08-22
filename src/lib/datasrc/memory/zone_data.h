@@ -27,13 +27,58 @@
 #include <boost/noncopyable.hpp>
 
 namespace isc {
+namespace dns {
+namespace rdata {
+namespace generic {
+class NSEC3PARAM;
+}
+}
+}
+
 namespace datasrc {
 namespace memory {
 
+typedef DomainTree<RdataSet> ZoneTree;
+typedef DomainTreeNode<RdataSet> ZoneNode;
+
+class NSEC3Data : boost::noncopyable {
+public:
+    static NSEC3Data* create(util::MemorySegment& mem_sgmt,
+                             const dns::rdata::generic::NSEC3PARAM& rdata);
+    static void destroy(util::MemorySegment& mem_sgmt, NSEC3Data* data,
+                        dns::RRClass nsec3_class);
+
+    const boost::interprocess::offset_ptr<ZoneTree> nsec3_tree_;
+public:
+    const uint8_t hashalg;
+    const uint8_t flags;
+    const uint16_t iterations;
+    // For 64-bit machines there'll be a padding space here, but since
+    // only at most one (or a few in very rare cases) instance will be
+    // created per zone, the overhead should be acceptable.
+
+    const ZoneTree* getNSEC3Tree() const { return (nsec3_tree_.get()); }
+    ZoneTree* getNSEC3Tree() { return (nsec3_tree_.get()); }
+    size_t getSaltLen() const { return (*getSaltBuf()); }
+    const uint8_t* getSaltData() const { return (getSaltBuf() + 1); }
+
+private:
+    NSEC3Data(ZoneTree* nsec3_tree_param, uint8_t hashalg_param,
+              uint8_t flags_param, uint16_t iterations_param) :
+        nsec3_tree_(nsec3_tree_param), hashalg(hashalg_param),
+        flags(flags_param), iterations(iterations_param)
+    {}
+
+    const uint8_t* getSaltBuf() const {
+        return (reinterpret_cast<const uint8_t*>(this + 1));
+    }
+    uint8_t* getSaltBuf() {
+        return (reinterpret_cast<uint8_t*>(this + 1));
+    }
+};
+
 class ZoneData : boost::noncopyable {
 public:
-    typedef DomainTree<RdataSet> ZoneTree;
-    typedef DomainTreeNode<RdataSet> ZoneNode;
 
 private:
     ZoneData(ZoneTree* zone_tree, ZoneNode* origin_node) :
