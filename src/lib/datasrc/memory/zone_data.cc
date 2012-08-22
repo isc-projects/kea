@@ -75,7 +75,9 @@ NSEC3Data::create(util::MemorySegment& mem_sgmt,
                          rdata.getFlags(), rdata.getIterations());
     uint8_t* dp = param_data->getSaltBuf();
     *dp++ =  salt_len;
-    memcpy(dp, &rdata.getSalt().at(0), salt_len); // use at for safety
+    if (salt_len > 0) {
+        memcpy(dp, &rdata.getSalt().at(0), salt_len); // use at for safety
+    }
 
     return (param_data);
 }
@@ -87,7 +89,6 @@ NSEC3Data::destroy(util::MemorySegment& mem_sgmt, NSEC3Data* data,
     ZoneTree::destroy(mem_sgmt, data->nsec3_tree_.get(),
                       boost::bind(rdataSetDeleter, nsec3_class, &mem_sgmt,
                                   _1));
-
     mem_sgmt.deallocate(data, sizeof(NSEC3Data) + 1 + data->getSaltLen());
 }
 
