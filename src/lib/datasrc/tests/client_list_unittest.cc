@@ -787,24 +787,28 @@ TEST_F(ListTest, masterFiles) {
 }
 
 TEST_F(ListTest, BadMasterFile) {
-    // Configure one zone correctly, and one with the wrong origin
-    // (resulting in out-of-zone data)
-    // Configuration should succeed, and the correct zone should
-    // be loaded.
+    // Configure two zone correctly, and one with the wrong origin
+    // (resulting in an out-of-zone data error)
+    // Configuration should succeed, and the correct zones should
+    // be loaded. Neither the 'bad' origin or the zone it used
+    // should be loaded
     const ConstElementPtr elem(Element::fromJSON("["
         "{"
         "   \"type\": \"MasterFiles\","
         "   \"cache-enable\": true,"
         "   \"params\": {"
-        "       \"foo.bar.\": \"" TEST_DATA_DIR "/example.org\","
+        "       \"example.com.\": \"" TEST_DATA_DIR "/example.com.flattened\","
+        "       \"foo.bar.\": \"" TEST_DATA_DIR "/example.org.nsec3-signed\","
         "       \".\": \"" TEST_DATA_DIR "/root.zone\""
         "   }"
         "}]"));
     list_->configure(elem, true);
 
-    EXPECT_TRUE(negativeResult_ == list_->find(Name("example.org."), true));
-    EXPECT_TRUE(negativeResult_ == list_->find(Name("foo.bar"), true));
-    positiveResult(list_->find(Name(".")), ds_[0], Name("."), true, "com",
+    positiveResult(list_->find(Name("example.com."), true), ds_[0],
+                   Name("example.com."), true, "example.com", true);
+    EXPECT_EQ(negativeResult_, list_->find(Name("example.org."), true));
+    EXPECT_EQ(negativeResult_, list_->find(Name("foo.bar"), true));
+    positiveResult(list_->find(Name(".")), ds_[0], Name("."), true, "root",
                    true);
 }
 
