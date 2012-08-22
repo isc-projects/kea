@@ -786,6 +786,28 @@ TEST_F(ListTest, masterFiles) {
     EXPECT_EQ(0, list_->getDataSources().size());
 }
 
+TEST_F(ListTest, BadMasterFile) {
+    // Configure one zone correctly, and one with the wrong origin
+    // (resulting in out-of-zone data)
+    // Configuration should succeed, and the correct zone should
+    // be loaded.
+    const ConstElementPtr elem(Element::fromJSON("["
+        "{"
+        "   \"type\": \"MasterFiles\","
+        "   \"cache-enable\": true,"
+        "   \"params\": {"
+        "       \"foo.bar.\": \"" TEST_DATA_DIR "/example.org\","
+        "       \".\": \"" TEST_DATA_DIR "/root.zone\""
+        "   }"
+        "}]"));
+    list_->configure(elem, true);
+
+    EXPECT_TRUE(negativeResult_ == list_->find(Name("example.org."), true));
+    EXPECT_TRUE(negativeResult_ == list_->find(Name("foo.bar"), true));
+    positiveResult(list_->find(Name(".")), ds_[0], Name("."), true, "com",
+                   true);
+}
+
 // Test we can reload a zone
 TEST_F(ListTest, reloadSuccess) {
     list_->configure(config_elem_zones_, true);

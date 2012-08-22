@@ -17,6 +17,7 @@
 #include "factory.h"
 #include "memory_datasrc.h"
 #include "logger.h"
+#include <dns/masterload.h>
 
 #include <memory>
 #include <boost/foreach.hpp>
@@ -139,28 +140,34 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
                     client(new_data_sources.back().data_src_client_);
                 for (vector<string>::const_iterator it(zones_origins.begin());
                      it != zones_origins.end(); ++it) {
-                    const Name origin(*it);
-                    shared_ptr<InMemoryZoneFinder>
-                        finder(new
-                            InMemoryZoneFinder(rrclass_, origin));
-                    if (type == "MasterFiles") {
-                        finder->load(paramConf->get(*it)->stringValue());
-                    } else {
-                        ZoneIteratorPtr iterator;
-                        try {
-                            iterator = client->getIterator(origin);
+                    try {
+                        const Name origin(*it);
+                        shared_ptr<InMemoryZoneFinder>
+                            finder(new
+                                InMemoryZoneFinder(rrclass_, origin));
+                        if (type == "MasterFiles") {
+                            finder->load(paramConf->get(*it)->stringValue());
+                        } else {
+                            ZoneIteratorPtr iterator;
+                            try {
+                                iterator = client->getIterator(origin);
+                            }
+                            catch (const DataSourceError&) {
+                                isc_throw(ConfigurationError, "Unable to "
+                                          "cache non-existent zone "
+                                          << origin);
+                            }
+                            if (!iterator) {
+                                isc_throw(isc::Unexpected, "Got NULL iterator "
+                                          "for zone " << origin);
+                            }
+                            finder->load(*iterator);
                         }
-                        catch (const DataSourceError&) {
-                            isc_throw(ConfigurationError, "Unable to cache "
-                                      "non-existent zone " << origin);
-                        }
-                        if (!iterator) {
-                            isc_throw(isc::Unexpected, "Got NULL iterator for "
-                                      "zone " << origin);
-                        }
-                        finder->load(*iterator);
+                        cache->addZone(finder);
+                    } catch (const isc::dns::MasterLoadError& mle) {
+                        LOG_ERROR(logger, DATASRC_MASTERLOAD_ERROR)
+                            .arg(mle.what());
                     }
-                    cache->addZone(finder);
                 }
             }
         }
