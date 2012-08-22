@@ -58,14 +58,21 @@ NSEC3Data*
 NSEC3Data::create(util::MemorySegment& mem_sgmt,
                   const generic::NSEC3PARAM& rdata)
 {
-    ZoneTree* tree = ZoneTree::create(mem_sgmt, true);
+    // NSEC3Data allocation can throw.  To avoid leaking the tree, we manage
+    // it in the holder.
+    // Note: we won't add any RdataSet, so we use the NO-OP deleter
+    // (with an assertion check for that).
+    typedef boost::function<void(RdataSet*)> RdataSetDeleterType;
+    detail::SegmentObjectHolder<ZoneTree, RdataSetDeleterType> holder(
+        mem_sgmt, ZoneTree::create(mem_sgmt, true),
+        boost::bind(nullDeleter, _1));
 
     const size_t salt_len = rdata.getSalt().size();
 
     void* p = mem_sgmt.allocate(sizeof(NSEC3Data) + salt_len + 1);
     NSEC3Data* const param_data =
-        new(p) NSEC3Data(tree, rdata.getHashalg(), rdata.getFlags(),
-                         rdata.getIterations());
+        new(p) NSEC3Data(holder.release(), rdata.getHashalg(),
+                         rdata.getFlags(), rdata.getIterations());
     uint8_t* dp = param_data->getSaltBuf();
     *dp++ =  salt_len;
     memcpy(dp, &rdata.getSalt().at(0), salt_len); // use at for safety
@@ -86,10 +93,8 @@ NSEC3Data::destroy(util::MemorySegment& mem_sgmt, NSEC3Data* data,
 
 ZoneData*
 ZoneData::create(util::MemorySegment& mem_sgmt, const Name& zone_origin) {
-    // ZoneTree::insert() and ZoneData allocation can throw.  To avoid
-    // leaking the tree, we manage it in the holder.
-    // Note: we won't add any RdataSet, so we use the NO-OP deleter
-    // (with an assertion check for that).
+    // ZoneTree::insert() and ZoneData allocation can throw.  See also
+    // NSEC3Data::create().
     typedef boost::function<void(RdataSet*)> RdataSetDeleterType;
     detail::SegmentObjectHolder<ZoneTree, RdataSetDeleterType> holder(
         mem_sgmt, ZoneTree::create(mem_sgmt, true),
