@@ -20,8 +20,10 @@
 #include "rdataset.h"
 #include "rdata_encoder.h"
 #include "zone_data.h"
+#include "segment_object_holder.h"
 
 #include <boost/bind.hpp>
+#include <boost/function.hpp>
 
 #include <cassert>
 #include <new>                  // for the placement new
@@ -31,19 +33,6 @@ using namespace isc::dns;
 namespace isc {
 namespace datasrc {
 namespace memory {
-
-ZoneData*
-ZoneData::create(util::MemorySegment& mem_sgmt, const Name& zone_origin) {
-    ZoneTree* tree = ZoneTree::create(mem_sgmt, true);
-    ZoneNode* origin_node = NULL;
-    const ZoneTree::Result result =
-        tree->insert(mem_sgmt, zone_origin, &origin_node);
-    assert(result == ZoneTree::SUCCESS);
-    void* p = mem_sgmt.allocate(sizeof(ZoneData));
-    ZoneData* zone_data = new(p) ZoneData(tree, origin_node);
-
-    return (zone_data);
-}
 
 namespace {
 void
@@ -56,6 +45,33 @@ rdataSetDeleter(RRClass rrclass, util::MemorySegment* mem_sgmt,
         RdataSet::destroy(*mem_sgmt, rrclass, rdataset);
     }
 }
+
+void
+nullDeleter(RdataSet* rdataset_head) {
+    assert(rdataset_head == NULL);
+}
+}
+
+ZoneData*
+ZoneData::create(util::MemorySegment& mem_sgmt, const Name& zone_origin) {
+    // ZoneTree::insert() and ZoneData allocation can throw.  To avoid
+    // leaking the tree, we manage it in the holder.
+    // Note: we won't add any RdataSet, so we use the NO-OP deleter
+    // (with an assertion check for that).
+    typedef boost::function<void(RdataSet*)> RdataSetDeleterType;
+    detail::SegmentObjectHolder<ZoneTree, RdataSetDeleterType> holder(
+        mem_sgmt, ZoneTree::create(mem_sgmt, true),
+        boost::bind(nullDeleter, _1));
+
+    ZoneTree* tree = holder.get();
+    ZoneNode* origin_node = NULL;
+    const ZoneTree::Result result =
+        tree->insert(mem_sgmt, zone_origin, &origin_node);
+    assert(result == ZoneTree::SUCCESS);
+    void* p = mem_sgmt.allocate(sizeof(ZoneData));
+    ZoneData* zone_data = new(p) ZoneData(holder.release(), origin_node);
+
+    return (zone_data);
 }
 
 void
