@@ -44,17 +44,20 @@ namespace {
 // With this single fixture we'll test both NSEC3Data and ZoneData
 class ZoneDataTest : public ::testing::Test {
 protected:
-    ZoneDataTest() : nsec3_data_(NULL), param_rdata_("1 0 12 aabbccdd"),
-                     param_rdata_nosalt_("1 1 10 -"),
-                     param_rdata_largesalt_(
-                         "2 0 5 " + std::string(255 * 2, 'a')),
-                     nsec3_rdata_("1 0 12 aabbccdd TDK23RP6 SOA"),
-                     nsec3_rdata_nosalt_("1 1 10 - TDK23RP6 SOA"),
-                     nsec3_rdata_largesalt_(
-                         "2 0 5 " + std::string(255 * 2, 'a') +
-                         " TDK23RP6 SOA"),
-                     zname_("example.com"),
-                     zone_data_(ZoneData::create(mem_sgmt_, zname_))
+    ZoneDataTest() :
+        nsec3_data_(NULL), param_rdata_("1 0 12 aabbccdd"),
+        param_rdata_nosalt_("1 1 10 -"),
+        param_rdata_largesalt_("2 0 5 " + std::string(255 * 2, 'a')),
+        nsec3_rdata_("1 0 12 aabbccdd TDK23RP6 SOA"),
+        nsec3_rdata_nosalt_("1 1 10 - TDK23RP6 SOA"),
+        nsec3_rdata_largesalt_("2 0 5 " + std::string(255 * 2, 'a') +
+                               " TDK23RP6 SOA"),
+        zname_("example.com"),
+        zone_data_(ZoneData::create(mem_sgmt_, zname_)),
+        a_rrset_(textToRRset("www.example.com. 3600 IN A 192.0.2.1")),
+        aaaa_rrset_(textToRRset("www.example.com. 3600 IN AAAA 2001:db8::1")),
+        nsec3_rrset_(textToRRset("TDK23RP6.example.com. 3600 IN NSEC3 "
+                                 "1 0 12 aabbccdd TDK23RP6 SOA"))
     {}
     void TearDown() {
         if (nsec3_data_ != NULL) {
@@ -75,6 +78,7 @@ protected:
         nsec3_rdata_largesalt_;
     const Name zname_;
     ZoneData* zone_data_;
+    const ConstRRsetPtr a_rrset_, aaaa_rrset_, nsec3_rrset_;
     RdataEncoder encoder_;
 };
 
@@ -100,6 +104,16 @@ checkNSEC3Data(MemorySegmentTest& mem_sgmt, const RdataType& expect_rdata) {
     NSEC3Data::destroy(mem_sgmt, nsec3_data, RRClass::IN());
 }
 
+void
+checkFindRdataSet(const ZoneTree* tree, const Name& name, RRType type,
+                  const RdataSet* expected_set)
+{
+    ZoneNode* node = NULL;
+    tree->find(name, &node);
+    ASSERT_NE(static_cast<ZoneNode*>(NULL), node);
+    EXPECT_EQ(expected_set, findRdataSetOfType(node->getData(), type));
+}
+
 TEST_F(ZoneDataTest, createNSEC3Data) {
     // Create an NSEC3Data object from various types of RDATA (of NSEC3PARAM
     // and of NSEC3), check if the resulting parameters match.
@@ -117,15 +131,17 @@ TEST_F(ZoneDataTest, addNSEC3) {
     nsec3_data_ = NSEC3Data::create(mem_sgmt_, param_rdata_);
 
     ZoneNode* node = NULL;
-    nsec3_data_->insertName(mem_sgmt_, Name("example.com"), &node);
+    nsec3_data_->insertName(mem_sgmt_, nsec3_rrset_->getName(), &node);
     ASSERT_NE(static_cast<ZoneNode*>(NULL), node);
     EXPECT_TRUE(node->isEmpty()); // initially it should be empty
 
-    ConstRRsetPtr nsec3_rrset_ =
-        textToRRset("www.example.com. 3600 IN A 192.0.2.1");
     RdataSet* rdataset_nsec3 =
         RdataSet::create(mem_sgmt_, encoder_, nsec3_rrset_, ConstRRsetPtr());
     node->setData(rdataset_nsec3);
+
+    // Confirm we can find the added ones from the zone data.
+    checkFindRdataSet(nsec3_data_->getNSEC3Tree(), nsec3_rrset_->getName(),
+                      RRType::NSEC3(), rdataset_nsec3);
 
     // TearDown() will confirm there's no leak on destroy
 }
@@ -161,9 +177,6 @@ TEST_F(ZoneDataTest, addRdataSets) {
     // Insert a name to the zone, and add a couple the data (RdataSet) objects
     // to the corresponding node.
 
-    ConstRRsetPtr a_rrset_ =
-        textToRRset("www.example.com. 3600 IN A 192.0.2.1");
-
     ZoneNode* node = NULL;
     zone_data_->insertName(mem_sgmt_, a_rrset_->getName(), &node);
     ASSERT_NE(static_cast<ZoneNode*>(NULL), node);
@@ -173,13 +186,20 @@ TEST_F(ZoneDataTest, addRdataSets) {
         RdataSet::create(mem_sgmt_, encoder_, a_rrset_, ConstRRsetPtr());
     node->setData(rdataset_a);
 
-    ConstRRsetPtr aaaa_rrset_ =
-        textToRRset("www.example.com. 3600 IN AAAA 2001:db8::1");
     RdataSet* rdataset_aaaa =
         RdataSet::create(mem_sgmt_, encoder_, aaaa_rrset_, ConstRRsetPtr());
     // make a linked list and replace the list head
     rdataset_aaaa->next = rdataset_a;
     node->setData(rdataset_aaaa);
+
+    // Confirm we can find the added ones from the zone data.
+    checkFindRdataSet(zone_data_->getZoneTree(), a_rrset_->getName(),
+                      RRType::A(), rdataset_a);
+    checkFindRdataSet(zone_data_->getZoneTree(), a_rrset_->getName(),
+                      RRType::AAAA(), rdataset_aaaa);
+    // There's no NS (or anything other than AAAA or A) RdataSet in the list
+    checkFindRdataSet(zone_data_->getZoneTree(), a_rrset_->getName(),
+                      RRType::NS(), NULL);
 
     // TearDown() will confirm there's no leak on destroy
 }
