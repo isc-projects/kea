@@ -14,6 +14,8 @@
 
 #include "memory_segment_test.h"
 
+#include <dns/rdataclass.h>
+
 #include <exceptions/exceptions.h>
 
 #include <dns/name.h>
@@ -31,6 +33,7 @@
 #include <new>                  // for bad_alloc
 
 using namespace isc::dns;
+using namespace isc::dns::rdata;
 using namespace isc::datasrc::memory;
 using namespace isc::datasrc::memory::test;
 using namespace isc::testutils;
@@ -83,9 +86,9 @@ TEST_F(ZoneDataTest, addRdataSets) {
     ConstRRsetPtr a_rrset_ =
         textToRRset("www.example.com. 3600 IN A 192.0.2.1");
 
-    ZoneData::ZoneNode* node = NULL;
+    ZoneNode* node = NULL;
     zone_data_->insertName(mem_sgmt_, a_rrset_->getName(), &node);
-    ASSERT_NE(static_cast<ZoneData::ZoneNode*>(NULL), node);
+    ASSERT_NE(static_cast<ZoneNode*>(NULL), node);
     EXPECT_TRUE(node->isEmpty()); // initially it should be empty
 
     RdataSet* rdataset_a =
@@ -101,5 +104,31 @@ TEST_F(ZoneDataTest, addRdataSets) {
     node->setData(rdataset_aaaa);
 
     // TearDown() will confirm there's no leak on destroy
+}
+
+class NSEC3DataTest : public ::testing::Test {
+protected:
+    NSEC3DataTest() : param_rdata_("1 0 12 aabbccdd")
+    {}
+    void TearDown() {
+        // detect any memory leak in the test memory segment
+        EXPECT_TRUE(mem_sgmt_.allMemoryDeallocated());
+    }
+
+    MemorySegmentTest mem_sgmt_;
+    NSEC3Data* nsec3_data_;
+    const generic::NSEC3PARAM param_rdata_;
+};
+
+TEST_F(NSEC3DataTest, create) {
+    nsec3_data_ = NSEC3Data::create(mem_sgmt_, param_rdata_);
+    EXPECT_EQ(0, nsec3_data_->getNSEC3Tree()->getNodeCount());
+    EXPECT_EQ(1, nsec3_data_->hashalg);
+    EXPECT_EQ(0, nsec3_data_->flags);
+    EXPECT_EQ(12, nsec3_data_->iterations);
+    EXPECT_EQ(param_rdata_.getSalt().size(), nsec3_data_->getSaltLen());
+    EXPECT_EQ(0, memcmp(&param_rdata_.getSalt()[0], nsec3_data_->getSaltData(),
+                        param_rdata_.getSalt().size()));
+    NSEC3Data::destroy(mem_sgmt_, nsec3_data_, RRClass::IN());
 }
 }
