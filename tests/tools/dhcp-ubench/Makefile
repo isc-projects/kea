@@ -1,11 +1,21 @@
+# Linux switches
 CFLAGS=-g -O0 -Wall -pedantic -Wextra
+
+# Mac OS: We don't use pedantic as Mac OS version of MySQL (5.5.24) does use long long (not part of ISO C++)
+#CFLAGS=-g -O0 -Wall -Wextra -I/opt/local/include
+
+# Mac OS does not require -lrt
+# Linux requires -lrt
 LDFLAGS=-lrt
 
 MEMFILE_CFLAGS=
 MEMFILE_LDFLAGS=
 
-MYSQL_CFLAGS=`mysql_config --cflags`
-MYSQL_LDFLAGS=`mysql_config --libs`
+# It is mysql_config on most Linux systems and mysql_config5 on Mac OS
+MYSQL_CONFIG=mysql_config
+
+MYSQL_CFLAGS=`$(MYSQL_CONFIG) --cflags`
+MYSQL_LDFLAGS=`$(MYSQL_CONFIG) --libs`
 
 SQLITE_CFLAGS=`pkg-config sqlite3 --cflags`
 SQLITE_LDFLAGS=`pkg-config sqlite3 --libs`

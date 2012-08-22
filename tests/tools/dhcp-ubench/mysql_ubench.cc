@@ -18,7 +18,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
-#include <mysql/mysql.h>
+#include <mysql.h>
 
 #include "benchmark.h"
 #include "mysql_ubench.h"
