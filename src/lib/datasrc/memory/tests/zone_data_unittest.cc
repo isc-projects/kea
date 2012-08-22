@@ -203,4 +203,33 @@ TEST_F(ZoneDataTest, addRdataSets) {
 
     // TearDown() will confirm there's no leak on destroy
 }
+
+TEST_F(ZoneDataTest, getSetNSEC3Data) {
+    // Initially there's no NSEC3 data
+    EXPECT_EQ(static_cast<NSEC3Data*>(NULL), zone_data_->getNSEC3Data());
+
+    // Set a new one.  The set method should return NULL.  The get method
+    // should return the new one.
+    NSEC3Data* nsec3_data = NSEC3Data::create(mem_sgmt_, param_rdata_);
+    NSEC3Data* old_nsec3_data = zone_data_->setNSEC3Data(nsec3_data);
+    EXPECT_EQ(static_cast<NSEC3Data*>(NULL), old_nsec3_data);
+    EXPECT_EQ(nsec3_data, zone_data_->getNSEC3Data());
+
+    // Replace an existing one with a yet another one.
+    // We're responsible for destroying the old one.
+    NSEC3Data* nsec3_data2 = NSEC3Data::create(mem_sgmt_, nsec3_rdata_);
+    old_nsec3_data = zone_data_->setNSEC3Data(nsec3_data2);
+    EXPECT_EQ(nsec3_data, old_nsec3_data);
+    EXPECT_EQ(nsec3_data2, zone_data_->getNSEC3Data());
+    NSEC3Data::destroy(mem_sgmt_, old_nsec3_data, RRClass::IN());
+
+    // Setting NULL clears any existing one.
+    old_nsec3_data = zone_data_->setNSEC3Data(NULL);
+    EXPECT_EQ(nsec3_data2, old_nsec3_data);
+    EXPECT_EQ(static_cast<NSEC3Data*>(NULL), zone_data_->getNSEC3Data());
+
+    // Then set it again.  The zone data should destroy it on its own
+    // destruction.
+    zone_data_->setNSEC3Data(old_nsec3_data);
+}
 }
