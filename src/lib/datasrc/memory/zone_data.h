@@ -112,9 +112,18 @@ public:
 
     const ZoneTree* getZoneTree() const { return (zone_tree_.get()); }
 
+    const NSEC3Data* getNSEC3Data() const { return (nsec3_data_.get()); }
+    NSEC3Data* getNSEC3Data() { return (nsec3_data_.get()); }
+    NSEC3Data* setNSEC3Data(NSEC3Data* nsec3_data) {
+        NSEC3Data* old = nsec3_data_.get();
+        nsec3_data_ = nsec3_data;
+        return (old);
+    }
+
 private:
     const boost::interprocess::offset_ptr<ZoneTree> zone_tree_;
     const boost::interprocess::offset_ptr<ZoneNode> origin_node_;
+    boost::interprocess::offset_ptr<NSEC3Data> nsec3_data_;
 };
 
 } // namespace memory

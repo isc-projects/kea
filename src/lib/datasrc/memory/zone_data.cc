@@ -145,6 +145,9 @@ ZoneData::destroy(util::MemorySegment& mem_sgmt, RRClass zone_class,
     ZoneTree::destroy(mem_sgmt, zone_data->zone_tree_.get(),
                       boost::bind(rdataSetDeleter, zone_class, &mem_sgmt,
                                   _1));
+    if (zone_data->nsec3_data_) {
+        NSEC3Data::destroy(mem_sgmt, zone_data->nsec3_data_.get(), zone_class);
+    }
     mem_sgmt.deallocate(zone_data, sizeof(ZoneData));
 }
 
