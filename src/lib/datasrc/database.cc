@@ -601,7 +601,8 @@ DatabaseClient::Finder::findWildcardMatch(
                           DATASRC_DATABASE_WILDCARD_CANCEL_NS).
                     arg(accessor_->getDBName()).arg(wildcard).
                     arg(dresult.first_ns->getName());
-                return (ResultContext(DELEGATION, dresult.first_ns));
+                return (ResultContext(DELEGATION,
+                                      stripRRsigs(dresult.first_ns, options)));
             } else if (!hasSubdomains(name.split(i - 1).toText())) {
                 // The wildcard match is the best one, find the final result
                 // at it.  Note that wildcard should never be the zone origin.
@@ -637,7 +638,7 @@ DatabaseClient::Finder::findWildcardMatch(
 ZoneFinder::ResultContext
 DatabaseClient::Finder::logAndCreateResult(
     const Name& name, const string* wildname, const RRType& type,
-    ZoneFinder::Result code, ConstRRsetPtr rrset,
+    ZoneFinder::Result code, ConstRRsetPtr rrset, const FindOptions options,
     const isc::log::MessageID& log_id, FindResultFlags flags) const
 {
     if (rrset) {
@@ -661,7 +662,7 @@ DatabaseClient::Finder::logAndCreateResult(
                 arg(getClass()).arg(*wildname);
         }
     }
-    return (ResultContext(code, rrset, flags));
+    return (ResultContext(code, stripRRsigs(rrset, options), flags));
 }
 
 DatabaseClient::Finder::FindDNSSECContext::FindDNSSECContext(
@@ -809,7 +810,7 @@ DatabaseClient::Finder::findOnNameResult(const Name& name,
         // - when we are looking for glue records (FIND_GLUE_OK), or
         // - when the query type is DS (which cancels the delegation)
         return (logAndCreateResult(name, wildname, type, DELEGATION,
-                                   nsi->second,
+                                   nsi->second, options,
                                    wild ? DATASRC_DATABASE_WILDCARD_NS :
                                    DATASRC_DATABASE_FOUND_DELEGATION_EXACT,
                                    flags));
@@ -825,7 +826,8 @@ DatabaseClient::Finder::findOnNameResult(const Name& name,
                       cni->second->getRdataCount() << " rdata at " << name <<
                       ", expected 1");
         }
-        return (logAndCreateResult(name, wildname, type, CNAME, cni->second,
+        return (logAndCreateResult(name, wildname, type, CNAME,
+                                   cni->second, options,
                                    wild ? DATASRC_DATABASE_WILDCARD_CNAME :
                                    DATASRC_DATABASE_FOUND_CNAME,
                                    flags));
@@ -838,7 +840,7 @@ DatabaseClient::Finder::findOnNameResult(const Name& name,
                  it != found.second.end(); ++it) {
                 if (it->second) {
                     // Skip over the empty ANY
-                    target->push_back(it->second);
+                    target->push_back(stripRRsigs(it->second, options));
                 }
             }
             if (wild) {
@@ -866,7 +868,8 @@ DatabaseClient::Finder::findOnNameResult(const Name& name,
         // includes the case where we were explicitly querying for a CNAME and
         // found it.  It also includes the case where we were querying for an
         // NS RRset and found it at the apex of the zone.)
-        return (ResultContext(SUCCESS, wti->second, flags));
+        return (ResultContext(SUCCESS, stripRRsigs(wti->second, options),
+                              flags));
     }
 
     // If we get here, we have found something at the requested name but not
@@ -881,11 +884,13 @@ DatabaseClient::Finder::findOnNameResult(const Name& name,
     if (dnssec_rrset) {
         // This log message covers both normal and wildcard cases, so we pass
         // NULL for 'wildname'.
-        return (logAndCreateResult(name, NULL, type, NXRRSET, dnssec_rrset,
+        return (logAndCreateResult(name, NULL, type, NXRRSET,
+                                   dnssec_rrset, options,
                                    DATASRC_DATABASE_FOUND_NXRRSET_NSEC,
                                    flags | RESULT_NSEC_SIGNED));
     }
-    return (logAndCreateResult(name, wildname, type, NXRRSET, dnssec_rrset,
+    return (logAndCreateResult(name, wildname, type, NXRRSET,
+                               dnssec_rrset, options,
                                wild ? DATASRC_DATABASE_WILDCARD_NXRRSET :
                                DATASRC_DATABASE_FOUND_NXRRSET,
                                flags | dnssec_ctx.getResultFlags()));
@@ -964,7 +969,8 @@ DatabaseClient::Finder::findInternal(const Name& name, const RRType& type,
     const DelegationSearchResult dresult = findDelegationPoint(name, options);
     if (dresult.rrset) {
         // In this case no special flags are needed.
-        return (ResultContext(dresult.code, dresult.rrset));
+        return (ResultContext(dresult.code,
+                              stripRRsigs(dresult.rrset, options)));
     }
 
     // If there is no delegation, look for the exact match to the request
