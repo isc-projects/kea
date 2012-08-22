@@ -46,7 +46,12 @@ protected:
     NSEC3DataTest() : nsec3_data_(NULL), param_rdata_("1 0 12 aabbccdd"),
                       param_rdata_nosalt_("1 1 10 -"),
                       param_rdata_largesalt_(
-                          "2 0 5 " + std::string(255 * 2, 'a'))
+                          "2 0 5 " + std::string(255 * 2, 'a')),
+                      nsec3_rdata_("1 0 12 aabbccdd TDK23RP6 SOA"),
+                      nsec3_rdata_nosalt_("1 1 10 - TDK23RP6 SOA"),
+                      nsec3_rdata_largesalt_(
+                          "2 0 5 " + std::string(255 * 2, 'a') +
+                          " TDK23RP6 SOA")
     {}
     void TearDown() {
         if (nsec3_data_ != NULL) {
@@ -58,38 +63,45 @@ protected:
 
     MemorySegmentTest mem_sgmt_;
     NSEC3Data* nsec3_data_;
-    const generic::NSEC3PARAM param_rdata_;
-    const generic::NSEC3PARAM param_rdata_nosalt_;
-    const generic::NSEC3PARAM param_rdata_largesalt_;
+    const generic::NSEC3PARAM param_rdata_, param_rdata_nosalt_,
+        param_rdata_largesalt_;
+    const generic::NSEC3 nsec3_rdata_, nsec3_rdata_nosalt_,
+        nsec3_rdata_largesalt_;
 };
 
+// Shared by both test cases using NSEC3 and NSEC3PARAM Rdata
+template <typename RdataType>
 void
-check(const generic::NSEC3PARAM& expect_rdata, const NSEC3Data& nsec3_data) {
-    // Internal tree should be created and empty.
-    EXPECT_EQ(0, nsec3_data.getNSEC3Tree()->getNodeCount());
+checkNSEC3Data(MemorySegmentTest& mem_sgmt, const RdataType& expect_rdata) {
+    NSEC3Data* nsec3_data = NSEC3Data::create(mem_sgmt, expect_rdata);
 
-    EXPECT_EQ(expect_rdata.getHashalg(), nsec3_data.hashalg);
-    EXPECT_EQ(expect_rdata.getFlags(), nsec3_data.flags);
-    EXPECT_EQ(expect_rdata.getIterations(), nsec3_data.iterations);
-    EXPECT_EQ(expect_rdata.getSalt().size(), nsec3_data.getSaltLen());
+    // Internal tree should be created and empty.
+    EXPECT_EQ(0, nsec3_data->getNSEC3Tree()->getNodeCount());
+
+    EXPECT_EQ(expect_rdata.getHashalg(), nsec3_data->hashalg);
+    EXPECT_EQ(expect_rdata.getFlags(), nsec3_data->flags);
+    EXPECT_EQ(expect_rdata.getIterations(), nsec3_data->iterations);
+    EXPECT_EQ(expect_rdata.getSalt().size(), nsec3_data->getSaltLen());
     if (expect_rdata.getSalt().size() > 0) {
         EXPECT_EQ(0, memcmp(&expect_rdata.getSalt()[0],
-                            nsec3_data.getSaltData(),
+                            nsec3_data->getSaltData(),
                             expect_rdata.getSalt().size()));
     }
+
+    NSEC3Data::destroy(mem_sgmt, nsec3_data, RRClass::IN());
 }
 
 TEST_F(NSEC3DataTest, create) {
-    nsec3_data_ = NSEC3Data::create(mem_sgmt_, param_rdata_);
-    check(param_rdata_, *nsec3_data_);
-    NSEC3Data::destroy(mem_sgmt_, nsec3_data_, RRClass::IN());
+    // Create an NSEC3Data object from various types of RDATA (of NSEC3PARAM
+    // and of NSEC3), check if the resulting parameters match.
+    checkNSEC3Data(mem_sgmt_, param_rdata_); // one 'usual' form of params
+    checkNSEC3Data(mem_sgmt_, param_rdata_nosalt_); // empty salt
+    checkNSEC3Data(mem_sgmt_, param_rdata_largesalt_); // max-len salt
 
-    nsec3_data_ = NSEC3Data::create(mem_sgmt_, param_rdata_nosalt_);
-    check(param_rdata_nosalt_, *nsec3_data_);
-    NSEC3Data::destroy(mem_sgmt_, nsec3_data_, RRClass::IN());
-
-    nsec3_data_ = NSEC3Data::create(mem_sgmt_, param_rdata_largesalt_);
-    check(param_rdata_largesalt_, *nsec3_data_);
+    // Same concepts of the tests, using NSEC3 RDATA.
+    checkNSEC3Data(mem_sgmt_, nsec3_rdata_);
+    checkNSEC3Data(mem_sgmt_, nsec3_rdata_nosalt_);
+    checkNSEC3Data(mem_sgmt_, nsec3_rdata_largesalt_);
 }
 
 TEST_F(NSEC3DataTest, throwOnCreate) {
