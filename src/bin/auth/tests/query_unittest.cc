@@ -485,7 +485,7 @@ protected:
                                        isc::dns::ConstRRsetPtr rrset,
                                        FindResultFlags flags = RESULT_DEFAULT)
     {
-        ConstRRsetPtr rr = (rrset ? stripRRsigs(rrset, options) : rrset);
+        ConstRRsetPtr rr = stripRRsigs(rrset, options);
         return (ZoneFinderContextPtr(
                     new Context(*this, options,
                                 ResultContext(code, rr, flags))));
