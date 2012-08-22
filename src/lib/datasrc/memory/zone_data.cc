@@ -107,6 +107,17 @@ NSEC3Data::destroy(util::MemorySegment& mem_sgmt, NSEC3Data* data,
     mem_sgmt.deallocate(data, sizeof(NSEC3Data) + 1 + data->getSaltLen());
 }
 
+void
+NSEC3Data::insertName(util::MemorySegment& mem_sgmt, const Name& name,
+                      ZoneNode** node)
+{
+    const ZoneTree::Result result = nsec3_tree_->insert(mem_sgmt, name, node);
+
+    // This should be ensured by the API:
+    assert((result == ZoneTree::SUCCESS ||
+            result == ZoneTree::ALREADYEXISTS) && node!= NULL);
+}
+
 ZoneData*
 ZoneData::create(util::MemorySegment& mem_sgmt, const Name& zone_origin) {
     // ZoneTree::insert() and ZoneData allocation can throw.  See also

@@ -67,6 +67,7 @@ protected:
         param_rdata_largesalt_;
     const generic::NSEC3 nsec3_rdata_, nsec3_rdata_nosalt_,
         nsec3_rdata_largesalt_;
+    RdataEncoder encoder_;
 };
 
 // Shared by both test cases using NSEC3 and NSEC3PARAM Rdata
@@ -102,6 +103,23 @@ TEST_F(NSEC3DataTest, create) {
     checkNSEC3Data(mem_sgmt_, nsec3_rdata_);
     checkNSEC3Data(mem_sgmt_, nsec3_rdata_nosalt_);
     checkNSEC3Data(mem_sgmt_, nsec3_rdata_largesalt_);
+}
+
+TEST_F(NSEC3DataTest, addNSEC3) {
+    nsec3_data_ = NSEC3Data::create(mem_sgmt_, param_rdata_);
+
+    ZoneNode* node = NULL;
+    nsec3_data_->insertName(mem_sgmt_, Name("example.com"), &node);
+    ASSERT_NE(static_cast<ZoneNode*>(NULL), node);
+    EXPECT_TRUE(node->isEmpty()); // initially it should be empty
+
+    ConstRRsetPtr nsec3_rrset_ =
+        textToRRset("www.example.com. 3600 IN A 192.0.2.1");
+    RdataSet* rdataset_nsec3 =
+        RdataSet::create(mem_sgmt_, encoder_, nsec3_rrset_, ConstRRsetPtr());
+    node->setData(rdataset_nsec3);
+
+    // TearDown() will confirm there's no leak on destroy
 }
 
 TEST_F(NSEC3DataTest, throwOnCreate) {
