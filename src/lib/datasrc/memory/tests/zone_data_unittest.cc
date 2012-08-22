@@ -40,6 +40,43 @@ using namespace isc::testutils;
 
 namespace {
 
+class NSEC3DataTest : public ::testing::Test {
+protected:
+    NSEC3DataTest() : param_rdata_("1 0 12 aabbccdd")
+    {}
+    void TearDown() {
+        // detect any memory leak in the test memory segment
+        EXPECT_TRUE(mem_sgmt_.allMemoryDeallocated());
+    }
+
+    MemorySegmentTest mem_sgmt_;
+    NSEC3Data* nsec3_data_;
+    const generic::NSEC3PARAM param_rdata_;
+};
+
+TEST_F(NSEC3DataTest, create) {
+    nsec3_data_ = NSEC3Data::create(mem_sgmt_, param_rdata_);
+    EXPECT_EQ(0, nsec3_data_->getNSEC3Tree()->getNodeCount());
+    EXPECT_EQ(1, nsec3_data_->hashalg);
+    EXPECT_EQ(0, nsec3_data_->flags);
+    EXPECT_EQ(12, nsec3_data_->iterations);
+    EXPECT_EQ(param_rdata_.getSalt().size(), nsec3_data_->getSaltLen());
+    EXPECT_EQ(0, memcmp(&param_rdata_.getSalt()[0], nsec3_data_->getSaltData(),
+                        param_rdata_.getSalt().size()));
+    NSEC3Data::destroy(mem_sgmt_, nsec3_data_, RRClass::IN());
+}
+
+TEST_F(NSEC3DataTest, throwOnCreate) {
+    // Note: below, we use our knowledge of how memory allocation happens
+    // within the NSEC3Data.
+
+    // Creating internal NSEC3 tree will succeed, but allocation of NSEC3Data
+    // will fail due to bad_alloc.  It shouldn't cause memory leak
+    // (that would be caught in TearDown()).
+    mem_sgmt_.setThrowCount(2);
+    EXPECT_THROW(NSEC3Data::create(mem_sgmt_, param_rdata_), std::bad_alloc);
+}
+
 class ZoneDataTest : public ::testing::Test {
 protected:
     ZoneDataTest() : zname_("example.com"),
@@ -104,31 +141,5 @@ TEST_F(ZoneDataTest, addRdataSets) {
     node->setData(rdataset_aaaa);
 
     // TearDown() will confirm there's no leak on destroy
-}
-
-class NSEC3DataTest : public ::testing::Test {
-protected:
-    NSEC3DataTest() : param_rdata_("1 0 12 aabbccdd")
-    {}
-    void TearDown() {
-        // detect any memory leak in the test memory segment
-        EXPECT_TRUE(mem_sgmt_.allMemoryDeallocated());
-    }
-
-    MemorySegmentTest mem_sgmt_;
-    NSEC3Data* nsec3_data_;
-    const generic::NSEC3PARAM param_rdata_;
-};
-
-TEST_F(NSEC3DataTest, create) {
-    nsec3_data_ = NSEC3Data::create(mem_sgmt_, param_rdata_);
-    EXPECT_EQ(0, nsec3_data_->getNSEC3Tree()->getNodeCount());
-    EXPECT_EQ(1, nsec3_data_->hashalg);
-    EXPECT_EQ(0, nsec3_data_->flags);
-    EXPECT_EQ(12, nsec3_data_->iterations);
-    EXPECT_EQ(param_rdata_.getSalt().size(), nsec3_data_->getSaltLen());
-    EXPECT_EQ(0, memcmp(&param_rdata_.getSalt()[0], nsec3_data_->getSaltData(),
-                        param_rdata_.getSalt().size()));
-    NSEC3Data::destroy(mem_sgmt_, nsec3_data_, RRClass::IN());
 }
 }
