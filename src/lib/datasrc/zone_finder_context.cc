@@ -47,8 +47,7 @@ getAdditionalAddrs(ZoneFinder& finder, const Name& name,
     BOOST_FOREACH(RRType rrtype, requested_types) {
         ConstZoneFinderContextPtr ctx = finder.find(name, rrtype, options);
         if (ctx->code == ZoneFinder::SUCCESS) {
-            result_rrsets.push_back(ZoneFinder::stripRRsigs(ctx->rrset,
-                                                            options));
+            result_rrsets.push_back(ctx->rrset);
         }
     }
 }

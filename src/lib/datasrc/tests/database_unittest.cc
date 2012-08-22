@@ -1711,17 +1711,22 @@ doFindTest(ZoneFinder& finder,
         checkRRset(result->rrset, expected_name != Name(".") ? expected_name :
                    name, finder.getClass(), expected_type, expected_ttl,
                    expected_rdatas);
-
-        if (!expected_sig_rdatas.empty() && result->rrset->getRRsig()) {
-            checkRRset(result->rrset->getRRsig(), expected_name != Name(".") ?
-                       expected_name : name, finder.getClass(),
-                       isc::dns::RRType::RRSIG(), expected_ttl,
-                       expected_sig_rdatas);
-        } else if (expected_sig_rdatas.empty()) {
+        if ((options & ZoneFinder::FIND_DNSSEC) == ZoneFinder::FIND_DNSSEC) {
+            if (!expected_sig_rdatas.empty() && result->rrset->getRRsig()) {
+                checkRRset(result->rrset->getRRsig(),
+                           expected_name != Name(".") ? expected_name : name,
+                           finder.getClass(),
+                           isc::dns::RRType::RRSIG(), expected_ttl,
+                           expected_sig_rdatas);
+            } else if (expected_sig_rdatas.empty()) {
+                EXPECT_EQ(isc::dns::RRsetPtr(), result->rrset->getRRsig()) <<
+                    "Unexpected RRSIG: " << result->rrset->getRRsig()->toText();
+            } else {
+                ADD_FAILURE() << "Missing RRSIG";
+            }
+        } else if (result->rrset->getRRsig()) {
             EXPECT_EQ(isc::dns::RRsetPtr(), result->rrset->getRRsig()) <<
                 "Unexpected RRSIG: " << result->rrset->getRRsig()->toText();
-        } else {
-            ADD_FAILURE() << "Missing RRSIG";
         }
     } else if (expected_rdatas.empty()) {
         EXPECT_EQ(isc::dns::RRsetPtr(), result->rrset) <<
