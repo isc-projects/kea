@@ -62,9 +62,11 @@ public:
     // created per zone, the overhead should be acceptable.
 
     const ZoneTree* getNSEC3Tree() const { return (nsec3_tree_.get()); }
-    ZoneTree* getNSEC3Tree() { return (nsec3_tree_.get()); }
     size_t getSaltLen() const { return (*getSaltBuf()); }
     const uint8_t* getSaltData() const { return (getSaltBuf() + 1); }
+
+    void insertName(util::MemorySegment& mem_sgmt, const dns::Name& name,
+                    ZoneNode** node);
 
 private:
     // Common subroutine for the public versions of create().
