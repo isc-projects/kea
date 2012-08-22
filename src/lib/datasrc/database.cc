@@ -638,7 +638,7 @@ DatabaseClient::Finder::findWildcardMatch(
 ZoneFinder::ResultContext
 DatabaseClient::Finder::logAndCreateResult(
     const Name& name, const string* wildname, const RRType& type,
-    ZoneFinder::Result code, ConstRRsetPtr rrset, const FindOptions options,
+    ZoneFinder::Result code, ConstRRsetPtr rrset,
     const isc::log::MessageID& log_id, FindResultFlags flags) const
 {
     if (rrset) {
@@ -662,7 +662,7 @@ DatabaseClient::Finder::logAndCreateResult(
                 arg(getClass()).arg(*wildname);
         }
     }
-    return (ResultContext(code, stripRRsigs(rrset, options), flags));
+    return (ResultContext(code, rrset, flags));
 }
 
 DatabaseClient::Finder::FindDNSSECContext::FindDNSSECContext(
@@ -810,7 +810,7 @@ DatabaseClient::Finder::findOnNameResult(const Name& name,
         // - when we are looking for glue records (FIND_GLUE_OK), or
         // - when the query type is DS (which cancels the delegation)
         return (logAndCreateResult(name, wildname, type, DELEGATION,
-                                   nsi->second, options,
+                                   stripRRsigs(nsi->second, options),
                                    wild ? DATASRC_DATABASE_WILDCARD_NS :
                                    DATASRC_DATABASE_FOUND_DELEGATION_EXACT,
                                    flags));
@@ -827,7 +827,7 @@ DatabaseClient::Finder::findOnNameResult(const Name& name,
                       ", expected 1");
         }
         return (logAndCreateResult(name, wildname, type, CNAME,
-                                   cni->second, options,
+                                   stripRRsigs(cni->second, options),
                                    wild ? DATASRC_DATABASE_WILDCARD_CNAME :
                                    DATASRC_DATABASE_FOUND_CNAME,
                                    flags));
@@ -885,12 +885,12 @@ DatabaseClient::Finder::findOnNameResult(const Name& name,
         // This log message covers both normal and wildcard cases, so we pass
         // NULL for 'wildname'.
         return (logAndCreateResult(name, NULL, type, NXRRSET,
-                                   dnssec_rrset, options,
+                                   dnssec_rrset,
                                    DATASRC_DATABASE_FOUND_NXRRSET_NSEC,
                                    flags | RESULT_NSEC_SIGNED));
     }
     return (logAndCreateResult(name, wildname, type, NXRRSET,
-                               dnssec_rrset, options,
+                               dnssec_rrset,
                                wild ? DATASRC_DATABASE_WILDCARD_NXRRSET :
                                DATASRC_DATABASE_FOUND_NXRRSET,
                                flags | dnssec_ctx.getResultFlags()));

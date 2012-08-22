@@ -1336,7 +1336,6 @@ public:
                                          const isc::dns::RRType& type,
                                          ZoneFinder::Result code,
                                          isc::dns::ConstRRsetPtr rrset,
-                                         const FindOptions options,
                                          const isc::log::MessageID& log_id,
                                          FindResultFlags flags) const;
 
