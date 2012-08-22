@@ -31,6 +31,7 @@
 #include <gtest/gtest.h>
 
 #include <new>                  // for bad_alloc
+#include <string>
 
 using namespace isc::dns;
 using namespace isc::dns::rdata;
@@ -42,9 +43,15 @@ namespace {
 
 class NSEC3DataTest : public ::testing::Test {
 protected:
-    NSEC3DataTest() : param_rdata_("1 0 12 aabbccdd")
+    NSEC3DataTest() : nsec3_data_(NULL), param_rdata_("1 0 12 aabbccdd"),
+                      param_rdata_nosalt_("1 1 10 -"),
+                      param_rdata_largesalt_(
+                          "2 0 5 " + std::string(255 * 2, 'a'))
     {}
     void TearDown() {
+        if (nsec3_data_ != NULL) {
+            NSEC3Data::destroy(mem_sgmt_, nsec3_data_, RRClass::IN());
+        }
         // detect any memory leak in the test memory segment
         EXPECT_TRUE(mem_sgmt_.allMemoryDeallocated());
     }
@@ -52,18 +59,37 @@ protected:
     MemorySegmentTest mem_sgmt_;
     NSEC3Data* nsec3_data_;
     const generic::NSEC3PARAM param_rdata_;
+    const generic::NSEC3PARAM param_rdata_nosalt_;
+    const generic::NSEC3PARAM param_rdata_largesalt_;
 };
+
+void
+check(const generic::NSEC3PARAM& expect_rdata, const NSEC3Data& nsec3_data) {
+    // Internal tree should be created and empty.
+    EXPECT_EQ(0, nsec3_data.getNSEC3Tree()->getNodeCount());
+
+    EXPECT_EQ(expect_rdata.getHashalg(), nsec3_data.hashalg);
+    EXPECT_EQ(expect_rdata.getFlags(), nsec3_data.flags);
+    EXPECT_EQ(expect_rdata.getIterations(), nsec3_data.iterations);
+    EXPECT_EQ(expect_rdata.getSalt().size(), nsec3_data.getSaltLen());
+    if (expect_rdata.getSalt().size() > 0) {
+        EXPECT_EQ(0, memcmp(&expect_rdata.getSalt()[0],
+                            nsec3_data.getSaltData(),
+                            expect_rdata.getSalt().size()));
+    }
+}
 
 TEST_F(NSEC3DataTest, create) {
     nsec3_data_ = NSEC3Data::create(mem_sgmt_, param_rdata_);
-    EXPECT_EQ(0, nsec3_data_->getNSEC3Tree()->getNodeCount());
-    EXPECT_EQ(1, nsec3_data_->hashalg);
-    EXPECT_EQ(0, nsec3_data_->flags);
-    EXPECT_EQ(12, nsec3_data_->iterations);
-    EXPECT_EQ(param_rdata_.getSalt().size(), nsec3_data_->getSaltLen());
-    EXPECT_EQ(0, memcmp(&param_rdata_.getSalt()[0], nsec3_data_->getSaltData(),
-                        param_rdata_.getSalt().size()));
+    check(param_rdata_, *nsec3_data_);
     NSEC3Data::destroy(mem_sgmt_, nsec3_data_, RRClass::IN());
+
+    nsec3_data_ = NSEC3Data::create(mem_sgmt_, param_rdata_nosalt_);
+    check(param_rdata_nosalt_, *nsec3_data_);
+    NSEC3Data::destroy(mem_sgmt_, nsec3_data_, RRClass::IN());
+
+    nsec3_data_ = NSEC3Data::create(mem_sgmt_, param_rdata_largesalt_);
+    check(param_rdata_largesalt_, *nsec3_data_);
 }
 
 TEST_F(NSEC3DataTest, throwOnCreate) {
