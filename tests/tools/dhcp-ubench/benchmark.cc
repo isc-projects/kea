@@ -18,6 +18,15 @@
 #include <boost/lexical_cast.hpp>
 #include "benchmark.h"
 
+// The following headers are for getting precise time (clock_gettime on Linux or that mac os thingie)
+#include <time.h>
+#include <sys/time.h>
+#ifdef __MACH__
+#include <mach/clock.h>
+#include <mach/mach.h>
+#endif
+
+
 using namespace std;
 
 uBenchmark::uBenchmark(uint32_t iterations, const std::string& dbname,
@@ -140,19 +149,19 @@ int uBenchmark::run() {
     try {
         connect();
 
-        clock_gettime(CLOCK_REALTIME, &ts_[0]);
+        ts_[0] = get_time();
 
         createLease4Test();
-        clock_gettime(CLOCK_REALTIME, &ts_[1]);
+        ts_[1] = get_time();
 
         searchLease4Test();
-        clock_gettime(CLOCK_REALTIME, &ts_[2]);
+        ts_[2] = get_time();
 
         updateLease4Test();
-        clock_gettime(CLOCK_REALTIME, &ts_[3]);
+        ts_[3] = get_time();
 
         deleteLease4Test();
-        clock_gettime(CLOCK_REALTIME, &ts_[4]);
+        ts_[4] = get_time();
 
         disconnect();
 
@@ -167,4 +176,22 @@ int uBenchmark::run() {
     print_clock("Delete leases4", num_, ts_[3], ts_[4]);
 
     return (0);
+}
+
+struct timespec uBenchmark::get_time() {
+    struct timespec ts;
+
+#ifdef __MACH__ // OS X does not have clock_gettime, use clock_get_time
+    clock_serv_t cclock;
+    mach_timespec_t mts;
+    host_get_clock_service(mach_host_self(), CALENDAR_CLOCK, &cclock);
+    clock_get_time(cclock, &mts);
+    mach_port_deallocate(mach_task_self(), cclock);
+    ts.tv_sec = mts.tv_sec;
+    ts.tv_nsec = mts.tv_nsec;
+#else
+    clock_gettime(CLOCK_REALTIME, &ts);
+#endif
+
+    return ts;
 }

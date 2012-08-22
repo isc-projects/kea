@@ -172,6 +172,9 @@ protected:
     /// @brief prints out command-line help (list of parameters + version)
     void usage();
 
+    /// @brief a wrapper around OS-specific method for getting time
+    struct timespec get_time();
+
     /// Number of operations (e.g. insert lease num times)
     uint32_t num_;
 
@@ -189,9 +192,8 @@ protected:
 
     /// @brief hit ratio for search test (must be between 0.0 and 1.0)
     ///
-    /// This parameter is used in seatch. The formula causes the search
-    /// to find something a lease in 90% cases of hit ratio is 0.9.
-    ///
+    /// This parameter is used in search benchmark. The formula causes the
+    /// search to find something a lease in 90% cases of hit ratio is 0.9.
     float hitratio_;
 
     /// benchmarks must generate the leases starting from 1.0.0.0 address
