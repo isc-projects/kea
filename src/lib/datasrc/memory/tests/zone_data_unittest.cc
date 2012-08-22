@@ -41,21 +41,27 @@ using namespace isc::testutils;
 
 namespace {
 
-class NSEC3DataTest : public ::testing::Test {
+// With this single fixture we'll test both NSEC3Data and ZoneData
+class ZoneDataTest : public ::testing::Test {
 protected:
-    NSEC3DataTest() : nsec3_data_(NULL), param_rdata_("1 0 12 aabbccdd"),
-                      param_rdata_nosalt_("1 1 10 -"),
-                      param_rdata_largesalt_(
-                          "2 0 5 " + std::string(255 * 2, 'a')),
-                      nsec3_rdata_("1 0 12 aabbccdd TDK23RP6 SOA"),
-                      nsec3_rdata_nosalt_("1 1 10 - TDK23RP6 SOA"),
-                      nsec3_rdata_largesalt_(
-                          "2 0 5 " + std::string(255 * 2, 'a') +
-                          " TDK23RP6 SOA")
+    ZoneDataTest() : nsec3_data_(NULL), param_rdata_("1 0 12 aabbccdd"),
+                     param_rdata_nosalt_("1 1 10 -"),
+                     param_rdata_largesalt_(
+                         "2 0 5 " + std::string(255 * 2, 'a')),
+                     nsec3_rdata_("1 0 12 aabbccdd TDK23RP6 SOA"),
+                     nsec3_rdata_nosalt_("1 1 10 - TDK23RP6 SOA"),
+                     nsec3_rdata_largesalt_(
+                         "2 0 5 " + std::string(255 * 2, 'a') +
+                         " TDK23RP6 SOA"),
+                     zname_("example.com"),
+                     zone_data_(ZoneData::create(mem_sgmt_, zname_))
     {}
     void TearDown() {
         if (nsec3_data_ != NULL) {
             NSEC3Data::destroy(mem_sgmt_, nsec3_data_, RRClass::IN());
+        }
+        if (zone_data_ != NULL) {
+            ZoneData::destroy(mem_sgmt_, RRClass::IN(), zone_data_);
         }
         // detect any memory leak in the test memory segment
         EXPECT_TRUE(mem_sgmt_.allMemoryDeallocated());
@@ -67,6 +73,8 @@ protected:
         param_rdata_largesalt_;
     const generic::NSEC3 nsec3_rdata_, nsec3_rdata_nosalt_,
         nsec3_rdata_largesalt_;
+    const Name zname_;
+    ZoneData* zone_data_;
     RdataEncoder encoder_;
 };
 
@@ -92,7 +100,7 @@ checkNSEC3Data(MemorySegmentTest& mem_sgmt, const RdataType& expect_rdata) {
     NSEC3Data::destroy(mem_sgmt, nsec3_data, RRClass::IN());
 }
 
-TEST_F(NSEC3DataTest, create) {
+TEST_F(ZoneDataTest, createNSEC3Data) {
     // Create an NSEC3Data object from various types of RDATA (of NSEC3PARAM
     // and of NSEC3), check if the resulting parameters match.
     checkNSEC3Data(mem_sgmt_, param_rdata_); // one 'usual' form of params
@@ -105,7 +113,7 @@ TEST_F(NSEC3DataTest, create) {
     checkNSEC3Data(mem_sgmt_, nsec3_rdata_largesalt_);
 }
 
-TEST_F(NSEC3DataTest, addNSEC3) {
+TEST_F(ZoneDataTest, addNSEC3) {
     nsec3_data_ = NSEC3Data::create(mem_sgmt_, param_rdata_);
 
     ZoneNode* node = NULL;
@@ -122,43 +130,20 @@ TEST_F(NSEC3DataTest, addNSEC3) {
     // TearDown() will confirm there's no leak on destroy
 }
 
-TEST_F(NSEC3DataTest, throwOnCreate) {
-    // Note: below, we use our knowledge of how memory allocation happens
-    // within the NSEC3Data.
-
-    // Creating internal NSEC3 tree will succeed, but allocation of NSEC3Data
-    // will fail due to bad_alloc.  It shouldn't cause memory leak
-    // (that would be caught in TearDown()).
-    mem_sgmt_.setThrowCount(2);
-    EXPECT_THROW(NSEC3Data::create(mem_sgmt_, param_rdata_), std::bad_alloc);
-}
-
-class ZoneDataTest : public ::testing::Test {
-protected:
-    ZoneDataTest() : zname_("example.com"),
-                     zone_data_(ZoneData::create(mem_sgmt_, zname_))
-    {}
-    void TearDown() {
-        if (zone_data_ != NULL) {
-            ZoneData::destroy(mem_sgmt_, RRClass::IN(), zone_data_);
-        }
-        // detect any memory leak in the test memory segment
-        EXPECT_TRUE(mem_sgmt_.allMemoryDeallocated());
-    }
-
-    MemorySegmentTest mem_sgmt_;
-    const Name zname_;
-    ZoneData* zone_data_;
-    RdataEncoder encoder_;
-};
-
 TEST_F(ZoneDataTest, getOriginNode) {
     EXPECT_EQ(LabelSequence(zname_), zone_data_->getOriginNode()->getLabels());
 }
 
 TEST_F(ZoneDataTest, throwOnCreate) {
     // Note: below, we use our knowledge of how memory allocation happens
-    // within the zone data and the underlying domain tree implementation.
+    // within the NSEC3Data, the zone data and the underlying domain tree
+    // implementation.
+
+    // Creating internal NSEC3 tree will succeed, but allocation of NSEC3Data
+    // will fail due to bad_alloc.  It shouldn't cause memory leak
+    // (that would be caught in TearDown()).
+    mem_sgmt_.setThrowCount(2);
+    EXPECT_THROW(NSEC3Data::create(mem_sgmt_, param_rdata_), std::bad_alloc);
 
     // allocate() will throw on the insertion of the origin node.
     mem_sgmt_.setThrowCount(2);
