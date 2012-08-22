@@ -26,6 +26,8 @@
 #include <boost/interprocess/offset_ptr.hpp>
 #include <boost/noncopyable.hpp>
 
+#include <vector>
+
 namespace isc {
 namespace dns {
 namespace rdata {
@@ -45,6 +47,8 @@ class NSEC3Data : boost::noncopyable {
 public:
     static NSEC3Data* create(util::MemorySegment& mem_sgmt,
                              const dns::rdata::generic::NSEC3PARAM& rdata);
+    static NSEC3Data* create(util::MemorySegment& mem_sgmt,
+                             const dns::rdata::generic::NSEC3& rdata);
     static void destroy(util::MemorySegment& mem_sgmt, NSEC3Data* data,
                         dns::RRClass nsec3_class);
 
@@ -63,6 +67,11 @@ public:
     const uint8_t* getSaltData() const { return (getSaltBuf() + 1); }
 
 private:
+    // Common subroutine for the public versions of create().
+    static NSEC3Data* create(util::MemorySegment& mem_sgmt, uint8_t hashalg,
+                             uint8_t flags, uint16_t iterations,
+                             const std::vector<uint8_t>& salt);
+
     NSEC3Data(ZoneTree* nsec3_tree_param, uint8_t hashalg_param,
               uint8_t flags_param, uint16_t iterations_param) :
         nsec3_tree_(nsec3_tree_param), hashalg(hashalg_param),

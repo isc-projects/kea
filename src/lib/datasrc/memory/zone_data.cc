@@ -28,6 +28,7 @@
 
 #include <cassert>
 #include <new>                  // for the placement new
+#include <vector>
 
 using namespace isc::dns;
 using namespace isc::dns::rdata;
@@ -58,6 +59,21 @@ NSEC3Data*
 NSEC3Data::create(util::MemorySegment& mem_sgmt,
                   const generic::NSEC3PARAM& rdata)
 {
+    return (NSEC3Data::create(mem_sgmt, rdata.getHashalg(), rdata.getFlags(),
+                              rdata.getIterations(), rdata.getSalt()));
+}
+
+NSEC3Data*
+NSEC3Data::create(util::MemorySegment& mem_sgmt, const generic::NSEC3& rdata) {
+    return (NSEC3Data::create(mem_sgmt, rdata.getHashalg(), rdata.getFlags(),
+                              rdata.getIterations(), rdata.getSalt()));
+}
+
+NSEC3Data*
+NSEC3Data::create(util::MemorySegment& mem_sgmt, uint8_t hashalg,
+                  uint8_t flags, uint16_t iterations,
+                  const std::vector<uint8_t>& salt)
+{
     // NSEC3Data allocation can throw.  To avoid leaking the tree, we manage
     // it in the holder.
     // Note: we won't add any RdataSet, so we use the NO-OP deleter
@@ -67,16 +83,15 @@ NSEC3Data::create(util::MemorySegment& mem_sgmt,
         mem_sgmt, ZoneTree::create(mem_sgmt, true),
         boost::bind(nullDeleter, _1));
 
-    const size_t salt_len = rdata.getSalt().size();
+    const size_t salt_len = salt.size();
 
     void* p = mem_sgmt.allocate(sizeof(NSEC3Data) + salt_len + 1);
     NSEC3Data* const param_data =
-        new(p) NSEC3Data(holder.release(), rdata.getHashalg(),
-                         rdata.getFlags(), rdata.getIterations());
+        new(p) NSEC3Data(holder.release(), hashalg, flags, iterations);
     uint8_t* dp = param_data->getSaltBuf();
-    *dp++ =  salt_len;
+    *dp++ = salt_len;
     if (salt_len > 0) {
-        memcpy(dp, &rdata.getSalt().at(0), salt_len); // use at for safety
+        memcpy(dp, &salt.at(0), salt_len); // use at for safety
     }
 
     return (param_data);
