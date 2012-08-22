@@ -323,6 +323,45 @@ private:
     ~RdataSet() {}
 };
 
+// Shared by both mutable and immutable versions below
+template <typename RdataSetType>
+RdataSetType*
+findRdataSetOfType(RdataSetType* rdataset_head, dns::RRType type) {
+    for (RdataSetType* rdataset = rdataset_head;
+         rdataset != NULL;
+         rdataset = rdataset->getNext()) // use getNext() for efficiency
+    {
+        if (rdataset->type == type) {
+            return (rdataset);
+        }
+    }
+    return (NULL);
+}
+
+/// \brief Find \c RdataSet of given RR type from a list (const version).
+///
+/// This function is a convenient shortcut for commonly used operation of
+/// finding a given type of \c RdataSet from a linked list of them.
+///
+/// It follows the linked list of \c RdataSet objects (via their \c next
+/// member) starting the given head, until it finds an object of the
+/// given RR type.  If found, it returns a (bare) pointer to the object;
+/// if not found in the entire list, it returns NULL.  The head pointer
+/// can be NULL, in which case this function will simply return NULL.
+inline const RdataSet*
+findRdataSetOfType(const RdataSet* rdataset_head, dns::RRType type) {
+    return (findRdataSetOfType<const RdataSet>(rdataset_head, type));
+}
+
+/// \brief Find \c RdataSet of given RR type from a list (non const version).
+///
+/// This is similar to the const version, except it takes and returns non
+/// const pointers.
+inline RdataSet*
+findRdataSetOfType(RdataSet* rdataset_head, dns::RRType type) {
+    return (findRdataSetOfType<RdataSet>(rdataset_head, type));
+}
+
 } // namespace memory
 } // namespace datasrc
 } // namespace isc
