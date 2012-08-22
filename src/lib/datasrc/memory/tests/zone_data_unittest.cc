@@ -12,9 +12,9 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <exceptions/exceptions.h>
+#include "memory_segment_test.h"
 
-#include <util/memory_segment_local.h>
+#include <exceptions/exceptions.h>
 
 #include <dns/name.h>
 #include <dns/labelsequence.h>
@@ -28,8 +28,11 @@
 
 #include <gtest/gtest.h>
 
+#include <new>                  // for bad_alloc
+
 using namespace isc::dns;
 using namespace isc::datasrc::memory;
+using namespace isc::datasrc::memory::test;
 using namespace isc::testutils;
 
 namespace {
@@ -47,7 +50,7 @@ protected:
         EXPECT_TRUE(mem_sgmt_.allMemoryDeallocated());
     }
 
-    isc::util::MemorySegmentLocal mem_sgmt_;
+    MemorySegmentTest mem_sgmt_;
     const Name zname_;
     ZoneData* zone_data_;
     RdataEncoder encoder_;
@@ -55,6 +58,22 @@ protected:
 
 TEST_F(ZoneDataTest, getOriginNode) {
     EXPECT_EQ(LabelSequence(zname_), zone_data_->getOriginNode()->getLabels());
+}
+
+TEST_F(ZoneDataTest, throwOnCreate) {
+    // Note: below, we use our knowledge of how memory allocation happens
+    // within the zone data and the underlying domain tree implementation.
+
+    // allocate() will throw on the insertion of the origin node.
+    mem_sgmt_.setThrowCount(2);
+    EXPECT_THROW(ZoneData::create(mem_sgmt_, zname_), std::bad_alloc);
+
+    // allocate() will throw on creating the zone data.
+    mem_sgmt_.setThrowCount(3);
+    EXPECT_THROW(ZoneData::create(mem_sgmt_, zname_), std::bad_alloc);
+
+    // These incomplete create() attempts shouldn't cause memory leak
+    // (that would be caught in TearDown()).
 }
 
 TEST_F(ZoneDataTest, addRdataSets) {
