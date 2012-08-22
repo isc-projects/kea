@@ -16,6 +16,7 @@
 
 #include <dns/name.h>
 #include <dns/rrclass.h>
+#include <dns/rdataclass.h>
 
 #include "rdataset.h"
 #include "rdata_encoder.h"
@@ -29,6 +30,7 @@
 #include <new>                  // for the placement new
 
 using namespace isc::dns;
+using namespace isc::dns::rdata;
 
 namespace isc {
 namespace datasrc {
@@ -50,6 +52,36 @@ void
 nullDeleter(RdataSet* rdataset_head) {
     assert(rdataset_head == NULL);
 }
+}
+
+NSEC3Data*
+NSEC3Data::create(util::MemorySegment& mem_sgmt,
+                  const generic::NSEC3PARAM& rdata)
+{
+    ZoneTree* tree = ZoneTree::create(mem_sgmt, true);
+
+    const size_t salt_len = rdata.getSalt().size();
+
+    void* p = mem_sgmt.allocate(sizeof(NSEC3Data) + salt_len + 1);
+    NSEC3Data* const param_data =
+        new(p) NSEC3Data(tree, rdata.getHashalg(), rdata.getFlags(),
+                         rdata.getIterations());
+    uint8_t* dp = param_data->getSaltBuf();
+    *dp++ =  salt_len;
+    memcpy(dp, &rdata.getSalt().at(0), salt_len); // use at for safety
+
+    return (param_data);
+}
+
+void
+NSEC3Data::destroy(util::MemorySegment& mem_sgmt, NSEC3Data* data,
+                   RRClass nsec3_class)
+{
+    ZoneTree::destroy(mem_sgmt, data->nsec3_tree_.get(),
+                      boost::bind(rdataSetDeleter, nsec3_class, &mem_sgmt,
+                                  _1));
+
+    mem_sgmt.deallocate(data, sizeof(NSEC3Data) + 1 + data->getSaltLen());
 }
 
 ZoneData*
