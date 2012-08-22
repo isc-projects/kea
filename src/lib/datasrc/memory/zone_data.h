@@ -110,6 +110,8 @@ public:
         return (origin_node_.get());
     }
 
+    const ZoneTree* getZoneTree() const { return (zone_tree_.get()); }
+
 private:
     const boost::interprocess::offset_ptr<ZoneTree> zone_tree_;
     const boost::interprocess::offset_ptr<ZoneNode> origin_node_;
