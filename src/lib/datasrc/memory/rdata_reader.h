@@ -35,8 +35,30 @@ namespace memory {
 /// \brief Class to read serialized rdata
 ///
 /// This class allows you to read the data encoded by RDataEncoder.
-/// It is rather low-level -- it provides sequence of data fields
-/// and names. It does not give you convenient Rdata or RRset class.
+/// It is rather low-level -- it provides sequence of data fields.
+/// Each field is either opaque data, passed as a pointer and length,
+/// or a name, in the form of dns::LabelSequence (which is always
+/// absolute) and attributes.
+///
+/// Conceptually, these fields correspond to consecutive regions in
+/// wire-format representation of the RDATA, varying the type of above
+/// two cases depending on whether the region corresponds to a domain
+/// name or other data.  For example, for an MX RDATA the field
+/// sequence will be
+/// - 2 bytes of opaque data (which corresponds to the MX preference)
+/// - a domain name (which corresponds to the MX name)
+/// If the encoded data contain multiple MX RDATAs, the same type of
+/// sequence continues for the number of RDATAs.  Note that the opaque
+/// data field does not always correspond to a specific RDATA field
+/// as is the 2-byte preference field of MX.  For example, the field
+/// sequence for an SOA RDATA in terms of `RdataEncoder` will be:
+/// - a domain name (which corresponds to the SOA MNAME)
+/// - a domain name (which corresponds to the SOA RNAME)
+/// - 20 bytes of opaque data (for the rest of fields)
+///
+/// So, if you want to construct a general purpose dns::Rdata object
+/// from the field sequence, you'll need to build the complete
+/// wire-format data, and then construct a dns::Rdata object from it.
 ///
 /// To use it, contstruct it with the data you got from RDataEncoder,
 /// provide it with callbacks and then iterate through the data.
@@ -62,8 +84,8 @@ namespace memory {
 class RdataReader {
 public:
     /// \brief Function called on each name encountered in the data.
-    typedef boost::function<void(const dns::LabelSequence&, unsigned)>
-        NameAction;
+    typedef boost::function<void(const dns::LabelSequence&,
+                                 RdataNameAttributes)> NameAction;
     /// \brief Function called on each data field in the data.
     typedef boost::function<void(const uint8_t*, size_t)> DataAction;
 
@@ -96,7 +118,7 @@ public:
         RRSET_BOUNDARY  ///< At the end of the RRset (past the end)
     };
 
-    /// \brief Step to next piece of data.
+    /// \brief Step to next data field.
     ///
     /// Iterate over the next field and call appropriate hook (name_action
     /// or data_action, depending on the type) as passed to the constructor.
@@ -134,7 +156,7 @@ public:
             }
         }
     }
-    /// \brief Step to next piece of RRSig data.
+    /// \brief Step to next field of RRSig data.
     ///
     /// This is almost the same as next(), but it iterates through the
     /// associated RRSig data, not the data for the given RRType.
@@ -198,7 +220,7 @@ private:
     size_t data_pos_, spec_pos_, length_pos_;
     size_t sig_pos_, sig_data_pos_;
     Boundary nextInternal(const NameAction& name_action,
-                        const DataAction& data_action);
+                          const DataAction& data_action);
 };
 
 }
