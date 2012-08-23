@@ -34,7 +34,7 @@ namespace memory {
 
 /// \brief Class to read serialized rdata
 ///
-/// This class allows you to read the data encoded by RDataEncoder.
+/// This class allows you to read the data encoded by RdataEncoder.
 /// It is rather low-level -- it provides sequence of data fields.
 /// Each field is either opaque data, passed as a pointer and length,
 /// or a name, in the form of dns::LabelSequence (which is always
@@ -157,6 +157,7 @@ public:
             }
         }
     }
+
     /// \brief Step to next field of RRSig data.
     ///
     /// This is almost the same as next(), but it iterates through the
@@ -170,6 +171,7 @@ public:
     void iterateAllSigs() {
         while (nextSig() != RRSET_BOUNDARY) { }
     }
+
     /// \brief Iterate through the current RRSig Rdata.
     ///
     /// This is almote the same as iterateRdata, except it is for single
