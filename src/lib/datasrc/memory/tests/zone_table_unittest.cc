@@ -80,8 +80,7 @@ TEST_F(ZoneTableTest, create) {
     // tests.  We only check exception safety by letting the test memory
     // segment throw.
     mem_sgmt_.setThrowCount(2);
-    ZoneTable* table;
-    EXPECT_THROW(table = ZoneTable::create(mem_sgmt_), std::bad_alloc);
+    EXPECT_THROW(ZoneTable::create(mem_sgmt_), std::bad_alloc);
     // This shouldn't cause memory leak (that would be caught in TearDown()).
 }
 
