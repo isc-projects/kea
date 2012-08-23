@@ -400,7 +400,7 @@ void Netlink::rtnl_process_reply(NetlinkMessages& info) {
 void Netlink::release_list(NetlinkMessages& messages) {
     // let's free local copies of stored messages
     for (NetlinkMessages::iterator msg = messages.begin(); msg != messages.end(); ++msg) {
-        delete (*msg);
+        delete[] (*msg);
     }
 
     // ang get rid of the message pointers as well
