@@ -20,16 +20,6 @@ namespace isc {
 namespace datasrc {
 namespace memory {
 
-void
-RdataReader::emptyNameAction(const LabelSequence&, unsigned) {
-    // Do nothing here. On purpose, it's not unfinished.
-}
-
-void
-RdataReader::emptyDataAction(const uint8_t*, size_t) {
-    // Do nothing here. On purpose, it's not unfinished.
-}
-
 RdataReader::RdataReader(const RRClass& rrclass, const RRType& rrtype,
                          const uint8_t* data,
                          size_t rdata_count, size_t sig_count,
@@ -92,6 +82,20 @@ RdataReader::nextInternal(const NameAction& name_action,
 RdataReader::Boundary
 RdataReader::next() {
     return (nextInternal(name_action_, data_action_));
+}
+
+namespace {
+
+void
+emptyNameAction(const LabelSequence&, unsigned) {
+    // Do nothing here.
+}
+
+void
+emptyDataAction(const uint8_t*, size_t) {
+    // Do nothing here.
+}
+
 }
 
 RdataReader::Boundary
