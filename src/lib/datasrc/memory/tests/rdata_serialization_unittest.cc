@@ -110,7 +110,7 @@ renderNameField(MessageRenderer* renderer, bool additional_required,
 }
 
 void
-renderDataField(MessageRenderer* renderer, const uint8_t* data,
+renderDataField(MessageRenderer* renderer, const void* data,
                 size_t data_len)
 {
     renderer->writeData(data, data_len);
@@ -359,12 +359,13 @@ namespace {
 // a data buffer.
 void
 appendOrRenderData(vector<uint8_t>* where, MessageRenderer** renderer,
-                   const uint8_t* data, size_t size)
+                   const void* data, size_t size)
 {
     if (*renderer != NULL) {
         (*renderer)->writeData(data, size);
     } else {
-        where->insert(where->end(), data, data + size);
+        where->insert(where->end(), reinterpret_cast<const uint8_t*>(data),
+                      reinterpret_cast<const uint8_t*>(data) + size);
     }
 }
 
