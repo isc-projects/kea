@@ -130,7 +130,7 @@ bind10-devel-20120816 released on August 16, 2012
 	is 'Dhcp4 shutdown'.
 	(Trac #1651, git 7e16a5a50d3311e63d10a224ec6ebcab5f25f62c)
 
-bind10-devel-20120621 released on June 21. 2012
+bind10-devel-20120621 released on June 21, 2012
 
 449.	[bug]		muks
 	b10-xfin: fixed a bug where xfrin sent the wrong notification
@@ -191,7 +191,7 @@ bind10-devel-20120621 released on June 21. 2012
 	file) was removed.
 	(Trac #1281, git 900fc8b420789a8c636bcf20fdaffc60bc1041e0)
 
-bind10-devel-20120517 released on May 17. 2012
+bind10-devel-20120517 released on May 17, 2012
 
 440.	[func]		muks
 	bindctl: improved some error messages so they will be more
