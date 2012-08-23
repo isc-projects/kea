@@ -146,8 +146,7 @@ public:
 // Handle the "getstats" command.  The argument is a list.
 class GetStatsCommand : public AuthCommand {
 public:
-    virtual ConstElementPtr exec(AuthSrv& server,
-                                 isc::data::ConstElementPtr) {
+    virtual ConstElementPtr exec(AuthSrv& server, isc::data::ConstElementPtr) {
         return (createAnswer(0, server.getStatistics()));
     }
 };
