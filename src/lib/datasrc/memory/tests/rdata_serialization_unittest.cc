@@ -353,6 +353,61 @@ public:
     }
 };
 
+namespace {
+
+// Render the data to renderer, if one is set, or put it inside
+// a data buffer.
+void
+appendOrRenderData(vector<uint8_t>* where, MessageRenderer** renderer,
+                   const uint8_t* data, size_t size)
+{
+    if (*renderer != NULL) {
+        (*renderer)->writeData(data, size);
+    } else {
+        where->insert(where->end(), data, data + size);
+    }
+}
+
+}
+
+// Similar to IterateDecoder, but it first iterates a little and rewinds
+// before actual rendering.
+class RewindAndDecode {
+private:
+    static void writeName(MessageRenderer** renderer,
+                          const LabelSequence& labels, unsigned attributes)
+    {
+        (*renderer)->writeName(labels,
+                               (attributes & NAMEATTR_COMPRESSIBLE) != 0);
+    }
+public:
+    static void decode(const isc::dns::RRClass& rrclass,
+                       const isc::dns::RRType& rrtype,
+                       size_t rdata_count, size_t sig_count, size_t,
+                       const vector<uint8_t>& encoded_data, size_t,
+                       MessageRenderer& renderer)
+    {
+        MessageRenderer dump; // A place to dump the extra data from before
+                              // actual rendering.
+        MessageRenderer* current = &dump;
+        vector<uint8_t> placeholder; // boost::bind does not like NULL
+        RdataReader reader(rrclass, rrtype, &encoded_data[0],
+                           rdata_count, sig_count,
+                           boost::bind(writeName, &current, _1, _2),
+                           boost::bind(appendOrRenderData, &placeholder,
+                                       &current, _1, _2));
+        // Iterate a little and rewind
+        reader.next();
+        reader.nextSig();
+        reader.rewind();
+        // Do the actual rendering
+        current = &renderer;
+        reader.iterate();
+        renderer.writeName(dummy_name2);
+        reader.iterateAllSigs();
+    }
+};
+
 // Decode using the iteration over one rdata each time.
 // We also count there's the correct count of Rdatas.
 class SingleIterateDecoder {
@@ -388,19 +443,6 @@ public:
 // of rendering.
 template<bool start_data, bool start_sig>
 class HybridDecoder {
-private:
-    // Append data either to the renderer or to the vector passed.
-    // The double pointer is there so we can change the renderer to NULL
-    // and back during the test.
-    static void appendData(vector<uint8_t>* where, MessageRenderer** renderer,
-                           const uint8_t* data, size_t size)
-    {
-        if (*renderer != NULL) {
-            (*renderer)->writeData(data, size);
-        } else {
-            where->insert(where->end(), data, data + size);
-        }
-    }
 public:
     static void decode(const isc::dns::RRClass& rrclass,
                        const isc::dns::RRType& rrtype,
@@ -415,7 +457,8 @@ public:
                            rdata_count, sig_count,
                            boost::bind(renderNameField, &renderer,
                                        additionalRequired(rrtype), _1, _2),
-                           boost::bind(appendData, &data, &current, _1, _2));
+                           boost::bind(appendOrRenderData, &data, &current, _1,
+                                       _2));
         // The size matches
         EXPECT_EQ(encoded_data_len, reader.getSize());
         if (start_sig) {
