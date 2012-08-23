@@ -91,6 +91,19 @@ LabelSequence::getSerializedLength() const {
     return (1 + getLabelCount() + getDataLength());
 }
 
+namespace {
+// Check if buf is not in the range of [bp, ep), which means
+// - end of buffer is before bp, or
+// - beginning of buffer is on or after ep
+bool
+isOutOfRange(const uint8_t* bp, const uint8_t* ep,
+             const uint8_t* buf, size_t buf_len)
+{
+    return (bp >= buf + buf_len || // end of buffer is before bp
+            ep <= buf);            // beginning of buffer is on or after ep
+}
+}
+
 void
 LabelSequence::serialize(void* buf, size_t buf_len) const {
     const size_t expected_size = getSerializedLength();
@@ -101,12 +114,19 @@ LabelSequence::serialize(void* buf, size_t buf_len) const {
     const size_t offsets_len = getLabelCount();
     assert(offsets_len < 256);  // should be in the 8-bit range
 
+    // Overridden check.  Buffer shouldn't overwrap the offset of name data
+    // regions.
     uint8_t* bp = reinterpret_cast<uint8_t*>(buf);
+    const size_t ndata_len = getDataLength();
+    if (!isOutOfRange(offsets_, offsets_ + offsets_len, bp, buf_len) ||
+        !isOutOfRange(data_, data_ + ndata_len, bp, buf_len)) {
+        isc_throw(BadValue, "serialize would break the source sequence");
+    }
+
     *bp++ = offsets_len;
     for (size_t i = 0; i < offsets_len; ++i) {
         *bp++ = offsets_[first_label_ + i] - offsets_[first_label_];
     }
-    const size_t ndata_len = getDataLength();
     std::memcpy(bp, &data_[offsets_[first_label_]], ndata_len);
     bp += ndata_len;
 
