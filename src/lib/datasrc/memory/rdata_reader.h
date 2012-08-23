@@ -38,13 +38,13 @@ namespace memory {
 /// It is rather low-level -- it provides sequence of data fields
 /// and names. It does not give you convenient Rdata or RRset class.
 ///
-/// It allows two types of operation. First one is by providing callbacks
-/// to the constructor and then iterating by repeatedly calling next, or
-/// calling iterate once. The callbacks are then called with each part of
-/// the data.
+/// To use it, contstruct it with the data you got from RDataEncoder,
+/// provide it with callbacks and then iterate through the data.
+/// The callbacks are called with the data fields contained in the
+/// data.
 ///
 /// \code
-/// void handleLabel(const dns::LabelSequence& label, unsigned int flags) {
+/// void handleName(const dns::LabelSequence& labels, unsigned int flags) {
 ///     ...
 /// }
 /// void handleData(const uint8_t* data, size_t size) {
@@ -52,30 +52,8 @@ namespace memory {
 /// }
 ///
 /// RdataReader reader(RRClass::IN(), RRType::AAAA(), size, data,
-///                    &handleLabel, handleData);
+///                    &handleName, &handleData);
 /// reader.iterate();
-/// \endcode
-///
-/// The other way is to use the return value of next() and loop through
-/// it manually. It has the inconvenience of having the type condition, but
-/// the code is in one place. The used way is matter of personal preferrence,
-/// there's no much difference on the technical side.
-///
-/// \code
-/// RdataReader reader(RRClass::IN(), RRType::AAAA(), size, data,
-///                    &handleLabel, handleData);
-/// RdataReader::Result data;
-/// while (data = reader.next()) {
-///     switch(data.type()) {
-///         case RdataReader::NAME:
-///             ...
-///             break;
-///         case RdataReader::DATA:
-///             ...
-///             break;
-///         default: assert(0); // Can not happen
-///     }
-/// }
 /// \endcode
 ///
 /// \note It is caller's responsibility to pass valid data here. This means
@@ -88,18 +66,6 @@ public:
         NameAction;
     /// \brief Function called on each data field in the data.
     typedef boost::function<void(const uint8_t*, size_t)> DataAction;
-
-    /// \brief a NameAction that does nothing.
-    ///
-    /// This is a NameAction function that does nothing. It is used
-    /// as a default in the constructor.
-    static void emptyNameAction(const dns::LabelSequence& label,
-                                unsigned attributes);
-    /// \brief a DataAction that does nothing.
-    ///
-    /// This is a DataAction function that does nothing. It is used
-    /// as a default in the constructor.
-    static void emptyDataAction(const uint8_t* data, size_t size);
 
     /// \brief Constructor
     ///
@@ -117,8 +83,7 @@ public:
     /// \param data_action The callback to be called on each data chunk.
     RdataReader(const dns::RRClass& rrclass, const dns::RRType& rrtype,
                 const uint8_t* data, size_t rdata_count, size_t sig_count,
-                const NameAction& name_action = &emptyNameAction,
-                const DataAction& data_action = &emptyDataAction);
+                const NameAction& name_action, const DataAction& data_action);
 
     /// \brief Result of next() and nextSig()
     ///
