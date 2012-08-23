@@ -654,6 +654,22 @@ addRdataMultiCommon(const vector<ConstRdataPtr>& rrsigs) {
     checkEncode(RRClass::IN(), RRType::NAPTR(), rdata_list_, 1, rrsigs);
 }
 
+void ignoreName(const LabelSequence&, unsigned) {
+}
+
+void
+checkLargeData(const in::DHCID* decoded, bool* called, const void* encoded,
+               size_t length)
+{
+    EXPECT_FALSE(*called); // Called exactly once
+    *called = true;
+
+    // Reconstruct the Rdata and check it.
+    isc::util::InputBuffer ib(encoded, length);
+    const in::DHCID reconstructed(ib, ib.getLength());
+    EXPECT_EQ(0, reconstructed.compare(*decoded));
+}
+
 TEST_F(RdataSerializationTest, encodeLargeRdata) {
     // There should be no reason for a large RDATA to fail in encoding,
     // but we check such a case explicitly.
@@ -667,10 +683,15 @@ TEST_F(RdataSerializationTest, encodeLargeRdata) {
     encodeWrapper(encoder_.getStorageLength());
 
     // The encoded data should be identical to the original one.
-    ASSERT_LT(sizeof(uint16_t), encoder_.getStorageLength());
-    isc::util::InputBuffer ib(&encoded_data_[2], encoded_data_.size() - 2);
-    const in::DHCID encoded_dhcid(ib, ib.getLength());
-    EXPECT_EQ(0, encoded_dhcid.compare(large_dhcid));
+    bool called = false;
+    RdataReader reader(RRClass::IN(), RRType::DHCID(), &encoded_data_[0], 1, 0,
+                       ignoreName, boost::bind(checkLargeData, &large_dhcid,
+                                               &called, _1, _2));
+    reader.iterate();
+    EXPECT_TRUE(called);
+    called = false;
+    reader.iterateAllSigs();
+    EXPECT_FALSE(called);
 }
 
 TYPED_TEST(RdataEncodeDecodeTest, addRdataMulti) {
@@ -763,6 +784,19 @@ TEST_F(RdataSerializationTest, badAddRdata) {
                  isc::BadValue);
 }
 
+void
+checkSigData(const ConstRdataPtr& decoded, bool* called, const void* encoded,
+             size_t length)
+{
+    EXPECT_FALSE(*called); // Called exactly once
+    *called = true;
+
+    // Reconstruct the RRSig and check it.
+    isc::util::InputBuffer ib(encoded, length);
+    const generic::RRSIG reconstructed(ib, ib.getLength());
+    EXPECT_EQ(0, reconstructed.compare(*decoded));
+}
+
 TEST_F(RdataSerializationTest, addSIGRdataOnly) {
     // Encoded data that only contain RRSIGs.  Mostly useless, but can happen
     // (in a partially broken zone) and it's accepted.
@@ -771,10 +805,14 @@ TEST_F(RdataSerializationTest, addSIGRdataOnly) {
     encodeWrapper(encoder_.getStorageLength());
     ASSERT_LT(sizeof(uint16_t), encoder_.getStorageLength());
 
-    // The encoded data should be identical to the given one.
-    isc::util::InputBuffer ib(&encoded_data_[2], encoded_data_.size() - 2);
-    const generic::RRSIG encoded_sig(ib, ib.getLength());
-    EXPECT_EQ(0, encoded_sig.compare(*rrsig_rdata_));
+    bool called = false;
+    RdataReader reader(RRClass::IN(), RRType::A(), &encoded_data_[0], 0, 1,
+                       ignoreName, boost::bind(checkSigData, rrsig_rdata_,
+                                               &called, _1, _2));
+    reader.iterate();
+    EXPECT_FALSE(called);
+    reader.iterateAllSigs();
+    EXPECT_TRUE(called);
 }
 
 TEST_F(RdataSerializationTest, badAddSIGRdata) {
