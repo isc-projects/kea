@@ -139,8 +139,8 @@ ZoneData::create(util::MemorySegment& mem_sgmt, const Name& zone_origin) {
 }
 
 void
-ZoneData::destroy(util::MemorySegment& mem_sgmt, RRClass zone_class,
-                  ZoneData* zone_data)
+ZoneData::destroy(util::MemorySegment& mem_sgmt, ZoneData* zone_data,
+                  RRClass zone_class)
 {
     ZoneTree::destroy(mem_sgmt, zone_data->zone_tree_.get(),
                       boost::bind(rdataSetDeleter, zone_class, &mem_sgmt,

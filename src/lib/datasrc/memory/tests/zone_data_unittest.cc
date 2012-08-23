@@ -64,7 +64,7 @@ protected:
             NSEC3Data::destroy(mem_sgmt_, nsec3_data_, RRClass::IN());
         }
         if (zone_data_ != NULL) {
-            ZoneData::destroy(mem_sgmt_, RRClass::IN(), zone_data_);
+            ZoneData::destroy(mem_sgmt_, zone_data_, RRClass::IN());
         }
         // detect any memory leak in the test memory segment
         EXPECT_TRUE(mem_sgmt_.allMemoryDeallocated());
@@ -89,7 +89,7 @@ checkNSEC3Data(MemorySegmentTest& mem_sgmt, const RdataType& expect_rdata) {
     NSEC3Data* nsec3_data = NSEC3Data::create(mem_sgmt, expect_rdata);
 
     // Internal tree should be created and empty.
-    EXPECT_EQ(0, nsec3_data->getNSEC3Tree()->getNodeCount());
+    EXPECT_EQ(0, nsec3_data->getNSEC3Tree().getNodeCount());
 
     EXPECT_EQ(expect_rdata.getHashalg(), nsec3_data->hashalg);
     EXPECT_EQ(expect_rdata.getFlags(), nsec3_data->flags);
@@ -105,11 +105,11 @@ checkNSEC3Data(MemorySegmentTest& mem_sgmt, const RdataType& expect_rdata) {
 }
 
 void
-checkFindRdataSet(const ZoneTree* tree, const Name& name, RRType type,
+checkFindRdataSet(const ZoneTree& tree, const Name& name, RRType type,
                   const RdataSet* expected_set)
 {
     ZoneNode* node = NULL;
-    tree->find(name, &node);
+    tree.find(name, &node);
     ASSERT_NE(static_cast<ZoneNode*>(NULL), node);
     EXPECT_EQ(expected_set, findRdataSetOfType(node->getData(), type));
 }
