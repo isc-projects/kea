@@ -482,15 +482,9 @@ class DataSrcUpdater(unittest.TestCase):
                          rrset.to_text())
 
         rrset_to_delete = rrset;
-
-        # can't delete rrset with associated sig. Abuse that to force an
-        # exception first, then remove the sig, then delete the record
-        updater = dsc.get_updater(isc.dns.Name("example.com"), True)
-        self.assertRaises(isc.datasrc.Error, updater.delete_rrset,
-                          rrset_to_delete)
-
         rrset_to_delete.remove_rrsig()
 
+        updater = dsc.get_updater(isc.dns.Name("example.com"), True)
         updater.delete_rrset(rrset_to_delete)
 
         # The record should be gone in the updater, but not in the original
@@ -582,15 +576,9 @@ class DataSrcUpdater(unittest.TestCase):
                          rrset.to_text())
 
         rrset_to_delete = rrset;
-
-        # can't delete rrset with associated sig. Abuse that to force an
-        # exception first, then remove the sig, then delete the record
-        updater = dsc.get_updater(isc.dns.Name("example.com"), True)
-        self.assertRaises(isc.datasrc.Error, updater.delete_rrset,
-                          rrset_to_delete)
-
         rrset_to_delete.remove_rrsig()
 
+        updater = dsc.get_updater(isc.dns.Name("example.com"), True)
         updater.delete_rrset(rrset_to_delete)
 
         # The record should be gone in the updater, but not in the original
