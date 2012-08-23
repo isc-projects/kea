@@ -52,7 +52,6 @@ n=`expr $n + 1`
 
 echo "I:Checking BIND 10 statistics after a pause ($n)"
 # wait for 2sec to make sure b10-stats gets the latest statistics.
-# note that we set statistics-interval to 1.
 sleep 2
 echo 'Stats show
 ' | $RUN_BINDCTL \
