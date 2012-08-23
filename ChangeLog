@@ -1,3 +1,11 @@
+nnn.	[func]*		naokikambe, fujiwara
+	b10-stats polls the bind10 and b10-auth with new 'getstats' command
+	to retrieve statistics data.  The polling interval can be configured
+	by bindctl command. The 'sendstats' command was removed from bind10
+	and b10-auth. The 'statistics-interval' config item was removed from
+	b10-auth.
+	(Trac #2136, #2137 and #2138, git TBD)
+
 458.	[build]*	jinmei
 	BIND 10 now relies on Boost offset_ptr, which caused some new
 	portability issues.  Such issues are detected at ./configure time.
