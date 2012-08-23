@@ -120,125 +120,81 @@ public:
                 const NameAction& name_action = &emptyNameAction,
                 const DataAction& data_action = &emptyDataAction);
 
-    /// \brief The type of data returned from this iteration.
-    enum DataType {
-        NAME, ///< This iteration returns domain label
-        DATA, ///< This iteration returns unstructuder data
-        END   ///< No more data to return
-    };
-
-    /// \brief Data from one iteration
+    /// \brief Result of next() and nextSig()
     ///
-    /// Each time you call next() or nextSig(), it returns some data.
-    /// This holds the data.
-    ///
-    /// It is valid only for as long as the RdataReader that returned it.
-    ///
-    /// All the methods can be called under any circumstances. However,
-    /// if the required property is not valid for the given type (eg.
-    /// when calling size() on type() == NAME), it returns some "empty"
-    /// value (0, NULL, or the like).
-    class Result {
-    public:
-        /// \brief Default constructor
-        ///
-        /// It creates an empty result (with no data) of type END.
-        Result() :
-            // TODO: Do we maybe want to have a static one to copy
-            // instead of constructing new one from the root Name?
-            label_(dns::Name::ROOT_NAME()),
-            data_(NULL),
-            size_(0),
-            type_(END),
-            compressible_(false),
-            additional_(false)
-        {}
-        /// \brief Constructor from a domain label
-        ///
-        /// Creates the NAME type result. Used internally from RdataReader.
-        ///
-        /// \param label The label to hold
-        /// \param attributes The attributes, as stored by the serialized
-        ///     data.
-        Result(const dns::LabelSequence& label, unsigned attributes);
-        /// \brief Constructor from data
-        ///
-        /// Creates the DATA type result. Used internally from RdataReader.
-        ///
-        /// \param data The data pointer to hold.
-        /// \param size The size to hold.
-        Result(const uint8_t* data, size_t size);
-        /// \brief The type of data returned.
-        DataType type() const { return (type_); }
-        /// \brief The raw data.
-        ///
-        /// This is only valid if type() == DATA.
-        const uint8_t* data() const { return (data_); }
-        /// \brief The size of the raw data.
-        ///
-        /// This is the number of bytes the data takes. It is valid only
-        /// if type() == DATA.
-        size_t size() const { return (size_); }
-        /// \brief The domain label.
-        ///
-        /// This holds the domain label. It is only valid if type() == NAME.
-        const dns::LabelSequence& label() const { return (label_); }
-        /// \brief Is the name in label() compressible?
-        ///
-        /// This is valid only if type() == NAME.
-        bool compressible() const { return (compressible_); }
-        /// \brief Does the name expect additional processing?
-        ///
-        /// This is valid only if type() == NAME.
-        bool additional() const { return (additional_); }
-        /// \brief If there are data returned.
-        ///
-        /// This returns if there are any data at all returned. This is
-        /// equivalent to action != END, but it allows for more convenient
-        /// code of a loop through the data.
-        operator bool() const {
-            return (type() != END);
-        }
-    private:
-        dns::LabelSequence label_;
-        const uint8_t* data_;
-        size_t size_;
-        DataType type_;
-        bool compressible_;
-        bool additional_;
+    /// This specifies if there's any boundary in the data at the
+    /// place where the corresponding call to next() or nextSig()
+    /// finished.
+    enum Boundary {
+        NO_BOUNDARY,    ///< It is in the middle of Rdata
+        RDATA_BOUNDARY, ///< At the end of single Rdata
+        RRSET_BOUNDARY  ///< At the end of the RRset (past the end)
     };
 
     /// \brief Step to next piece of data.
     ///
-    /// This returns the next available data. Also, the apropriate hook
-    /// (name_action or data_action, depending on the data type) as passed
-    /// to the constructor is called.
+    /// Iterate over the next field and call appropriate hook (name_action
+    /// or data_action, depending on the type) as passed to the constructor.
     ///
-    /// If there are no more data, a Result with type END is returned and
-    /// no callback is called.
-    Result next();
+    /// \return It returns NO_BOUNDARY if the next call to next() will process
+    ///     data of the same rdata as this one. RDATA_BOUNDARY is returned when
+    ///     this field is the last of the current rdata. If there are no more
+    ///     data to process, no hook is called and RRSET_BOUNDARY is returned.
+    ///     Therefore, at the end of the whole data, once it processes the last
+    ///     field and returns RDATA_BOUNDARY and then it returns RRSET_BOUNDARY
+    ///     on the next call.
+    Boundary next();
     /// \brief Call next() until the end.
     ///
     /// This is just convenience method to iterate through all the data.
     /// It calls next until it reaches the end (it does not revind before,
     /// therefore if you already called next() yourself, it does not start
     /// at the beginning).
-    ///
-    /// The method only makes sense if you set the callbacks in constructor.
     void iterate() {
-        while (next()) { }
+        while (next() != RRSET_BOUNDARY) { }
+    }
+    /// \brief Call next() until the end of current rdata.
+    ///
+    /// This is a convenience method to iterate until the end of current
+    /// rdata. Notice this may cause more than one field being processed,
+    /// as some rrtypes are more complex.
+    ///
+    /// \return If there was Rdata to iterate through.
+    bool iterateRdata() {
+        while (true) {
+            switch(next()) {
+                case NO_BOUNDARY: break;
+                case RDATA_BOUNDARY: return (true);
+                case RRSET_BOUNDARY: return (false);
+            }
+        }
     }
     /// \brief Step to next piece of RRSig data.
     ///
     /// This is almost the same as next(), but it iterates through the
     /// associated RRSig data, not the data for the given RRType.
-    Result nextSig();
+    Boundary nextSig();
     /// \brief Iterate through all RRSig data.
     ///
     /// This is almost the same as iterate(), but it iterates through the
     /// RRSig data instead.
-    void iterateSig() {
-        while (nextSig()) { }
+    void iterateAllSigs() {
+        while (nextSig() != RRSET_BOUNDARY) { }
+    }
+    /// \brief Iterate through the current RRSig Rdata.
+    ///
+    /// This is almote the same as iterateRdata, except it is for single
+    /// signature Rdata.
+    ///
+    /// In practice, this should process one DATA field.
+    bool iterateSingleSig() {
+        while (true) {
+            switch(next()) {
+                case NO_BOUNDARY: break;
+                case RDATA_BOUNDARY: return (true);
+                case RRSET_BOUNDARY: return (false);
+            }
+        }
     }
     /// \brief Rewind the iterator to the beginnig of data.
     ///
@@ -276,7 +232,7 @@ private:
     // The positions in data.
     size_t data_pos_, spec_pos_, length_pos_;
     size_t sig_pos_, sig_data_pos_;
-    Result nextInternal(const NameAction& name_action,
+    Boundary nextInternal(const NameAction& name_action,
                         const DataAction& data_action);
 };
 
