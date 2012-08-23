@@ -47,11 +47,12 @@ namespace memory {
 /// sequence will be
 /// - 2 bytes of opaque data (which corresponds to the MX preference)
 /// - a domain name (which corresponds to the MX name)
+///
 /// If the encoded data contain multiple MX RDATAs, the same type of
 /// sequence continues for the number of RDATAs.  Note that the opaque
-/// data field does not always correspond to a specific RDATA field
+/// data field does not always corresponds to a specific RDATA field
 /// as is the 2-byte preference field of MX.  For example, the field
-/// sequence for an SOA RDATA in terms of `RdataEncoder` will be:
+/// sequence for an SOA RDATA in terms of RdataEncoder will be:
 /// - a domain name (which corresponds to the SOA MNAME)
 /// - a domain name (which corresponds to the SOA RNAME)
 /// - 20 bytes of opaque data (for the rest of fields)
@@ -135,12 +136,13 @@ public:
     /// \brief Call next() until the end.
     ///
     /// This is just convenience method to iterate through all the data.
-    /// It calls next until it reaches the end (it does not rewind before,
+    /// It calls next until it reaches the end (it does not rewind beforehand,
     /// therefore if you already called next() yourself, it does not start
     /// at the beginning).
     void iterate() {
-        while (next() != RRSET_BOUNDARY) { }
+        while (next() != RRSET_BOUNDARY) {}
     }
+
     /// \brief Call next() until the end of current rdata.
     ///
     /// This is a convenience method to iterate until the end of current
@@ -150,7 +152,7 @@ public:
     /// \return If there was Rdata to iterate through.
     bool iterateRdata() {
         while (true) {
-            switch(next()) {
+            switch (next()) {
                 case NO_BOUNDARY: break;
                 case RDATA_BOUNDARY: return (true);
                 case RRSET_BOUNDARY: return (false);
@@ -169,7 +171,7 @@ public:
     /// This is almost the same as iterate(), but it iterates through the
     /// RRSig data instead.
     void iterateAllSigs() {
-        while (nextSig() != RRSET_BOUNDARY) { }
+        while (nextSig() != RRSET_BOUNDARY) {}
     }
 
     /// \brief Iterate through the current RRSig Rdata.
@@ -180,7 +182,7 @@ public:
     /// In practice, this should process one DATA field.
     bool iterateSingleSig() {
         while (true) {
-            switch(nextSig()) {
+            switch (nextSig()) {
                 case NO_BOUNDARY: break;
                 case RDATA_BOUNDARY: return (true);
                 case RRSET_BOUNDARY: return (false);

@@ -102,23 +102,21 @@ const TestRdata test_rdata_list[] = {
 // from encoded representation of each RDATA.
 void
 renderNameField(MessageRenderer* renderer, bool additional_required,
-                const LabelSequence& labels, unsigned attributes)
+                const LabelSequence& labels, RdataNameAttributes attributes)
 {
     EXPECT_EQ(additional_required, (attributes & NAMEATTR_ADDITIONAL) != 0);
     renderer->writeName(labels, (attributes & NAMEATTR_COMPRESSIBLE) != 0);
 }
 
 void
-renderDataField(MessageRenderer* renderer, const void* data,
-                size_t data_len)
-{
+renderDataField(MessageRenderer* renderer, const void* data, size_t data_len) {
     renderer->writeData(data, data_len);
 }
 
 class RdataSerializationTest : public ::testing::Test {
 protected:
     RdataSerializationTest() : a_rdata_(createRdata(RRType::A(), RRClass::IN(),
-                                              "192.0.2.53")),
+                                                    "192.0.2.53")),
                          aaaa_rdata_(createRdata(RRType::AAAA(), RRClass::IN(),
                                                  "2001:db8::53")),
                          rrsig_rdata_(createRdata(
@@ -167,8 +165,8 @@ public:
 
 // Used across more classes and scopes. But it's just uninteresting
 // constant.
-const Name &dummyName2() {
-    static Name result("example.com");
+const Name& dummyName2() {
+    static const Name result("example.com");
     return (result);
 }
 
@@ -329,9 +327,9 @@ public:
                            boost::bind(renderNameField, &renderer,
                                        additionalRequired(rrtype), _1, _2),
                            boost::bind(renderDataField, &renderer, _1, _2));
-        while (reader.next() != RdataReader::RRSET_BOUNDARY) { }
+        while (reader.next() != RdataReader::RRSET_BOUNDARY) {}
         renderer.writeName(dummyName2());
-        while (reader.nextSig() != RdataReader::RRSET_BOUNDARY) { }
+        while (reader.nextSig() != RdataReader::RRSET_BOUNDARY) {}
     }
 };
 
@@ -378,7 +376,8 @@ appendOrRenderData(vector<uint8_t>* where, MessageRenderer** renderer,
 class RewindAndDecode {
 private:
     static void writeName(MessageRenderer** renderer,
-                          const LabelSequence& labels, unsigned attributes)
+                          const LabelSequence& labels,
+                          RdataNameAttributes attributes)
     {
         (*renderer)->writeName(labels,
                                (attributes & NAMEATTR_COMPRESSIBLE) != 0);
@@ -428,13 +427,13 @@ public:
                            boost::bind(renderDataField, &renderer, _1, _2));
         size_t actual_count = 0;
         while (reader.iterateRdata()) {
-            actual_count ++;
+            ++actual_count;
         }
         EXPECT_EQ(rdata_count, actual_count);
         actual_count = 0;
         renderer.writeName(dummyName2());
         while (reader.iterateSingleSig()) {
-            actual_count ++;
+            ++actual_count;
         }
         EXPECT_EQ(sig_count, actual_count);
     }
@@ -501,8 +500,8 @@ typedef ::testing::Types<ManualDecoderStyle,
     DecoderStyles;
 // Each decoder style must contain a decode() method. Such method is expected
 // to decode the passed data, first render the Rdata into the passed renderer,
-// then write the dummyName2() there and write the RRSig data after that. It may
-// do other checks too.
+// then write the dummyName2() there and write the RRSig data after that.
+// It may do other checks too.
 //
 // There are some slight differences to how to do the decoding, that's why we
 // have the typed test.

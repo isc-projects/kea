@@ -54,7 +54,6 @@ RdataReader::Boundary
 RdataReader::nextInternal(const NameAction& name_action,
                           const DataAction& data_action)
 {
-
     if (spec_pos_ < spec_count_) {
         const RdataFieldSpec& spec(spec_.fields[(spec_pos_++) %
                                                 spec_.field_count]);
@@ -64,7 +63,7 @@ RdataReader::nextInternal(const NameAction& name_action,
             name_action(sequence, spec.name_attributes);
         } else {
             const size_t length(spec.type == RdataFieldSpec::FIXEDLEN_DATA ?
-                                spec.fixeddata_len : lengths_[length_pos_ ++]);
+                                spec.fixeddata_len : lengths_[length_pos_++]);
             const uint8_t* const pos = data_ + data_pos_;
             data_pos_ += length;
             data_action(pos, length);
