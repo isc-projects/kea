@@ -180,6 +180,7 @@ private:
 
 DatabaseClient::Finder::FoundRRsets
 DatabaseClient::Finder::getRRsets(const string& name, const WantedTypes& types,
+                                  bool sigs,
                                   const string* construct_name, bool any,
                                   DatabaseAccessor::IteratorContextPtr context)
 {
@@ -276,10 +277,12 @@ DatabaseClient::Finder::getRRsets(const string& name, const WantedTypes& types,
         isc_throw(DataSourceError, "CNAME shares domain " << name <<
                   " with something else");
     }
-    // Add signatures to all found RRsets
-    for (std::map<RRType, RRsetPtr>::iterator i(result.begin());
-         i != result.end(); ++ i) {
-        sig_store.appendSignatures(i->second);
+    if (sigs) {
+        // Add signatures to all found RRsets
+        for (std::map<RRType, RRsetPtr>::iterator i(result.begin());
+             i != result.end(); ++ i) {
+            sig_store.appendSignatures(i->second);
+        }
     }
     if (records_found && any) {
         result[RRType::ANY()] = RRsetPtr();
@@ -448,7 +451,9 @@ DatabaseClient::Finder::findDelegationPoint(const isc::dns::Name& name,
         // Look if there's NS or DNAME at this point of the tree, but ignore
         // the NS RRs at the apex of the zone.
         const FoundRRsets found = getRRsets(superdomain.toText(),
-                                            DELEGATION_TYPES());
+                                            DELEGATION_TYPES(),
+                                            ((options & FIND_DNSSEC) ==
+                                             FIND_DNSSEC));
         if (found.first) {
             // This node contains either NS or DNAME RRs so it does exist.
             const FoundIterator nsi(found.second.find(RRType::NS()));
@@ -581,6 +586,8 @@ DatabaseClient::Finder::findWildcardMatch(
         // RFC 4592 section 4.4).
         // Search for a match.  The types are the same as with original query.
         const FoundRRsets found = getRRsets(wildcard, final_types,
+                                            ((options & FIND_DNSSEC) ==
+                                             FIND_DNSSEC),
                                             &construct_name,
                                             type == RRType::ANY());
         if (found.first) {
@@ -601,8 +608,7 @@ DatabaseClient::Finder::findWildcardMatch(
                           DATASRC_DATABASE_WILDCARD_CANCEL_NS).
                     arg(accessor_->getDBName()).arg(wildcard).
                     arg(dresult.first_ns->getName());
-                return (ResultContext(DELEGATION,
-                                      stripRRsigs(dresult.first_ns, options)));
+                return (ResultContext(DELEGATION, dresult.first_ns));
             } else if (!hasSubdomains(name.split(i - 1).toText())) {
                 // The wildcard match is the best one, find the final result
                 // at it.  Note that wildcard should never be the zone origin.
@@ -686,7 +692,7 @@ DatabaseClient::Finder::FindDNSSECContext::probe() {
             // such cases).
             const string origin = finder_.getOrigin().toText();
             const FoundRRsets nsec3_found =
-                finder_.getRRsets(origin, NSEC3PARAM_TYPES());
+                finder_.getRRsets(origin, NSEC3PARAM_TYPES(), true);
             const FoundIterator nfi=
                 nsec3_found.second.find(RRType::NSEC3PARAM());
             is_nsec3_ = (nfi != nsec3_found.second.end());
@@ -697,7 +703,7 @@ DatabaseClient::Finder::FindDNSSECContext::probe() {
             // described in Section 10.4 of RFC 5155.
             if (!is_nsec3_) {
                 const FoundRRsets nsec_found =
-                    finder_.getRRsets(origin, NSEC_TYPES());
+                    finder_.getRRsets(origin, NSEC_TYPES(), true);
                 const FoundIterator nfi =
                     nsec_found.second.find(RRType::NSEC());
                 is_nsec_ = (nfi != nsec_found.second.end());
@@ -750,7 +756,7 @@ DatabaseClient::Finder::FindDNSSECContext::getDNSSECRRset(const Name &name,
         const Name& nsec_name =
             covering ? finder_.findPreviousName(name) : name;
         const FoundRRsets found = finder_.getRRsets(nsec_name.toText(),
-                                                    NSEC_TYPES());
+                                                    NSEC_TYPES(), true);
         const FoundIterator nci = found.second.find(RRType::NSEC());
         if (nci != found.second.end()) {
             return (nci->second);
@@ -810,7 +816,7 @@ DatabaseClient::Finder::findOnNameResult(const Name& name,
         // - when we are looking for glue records (FIND_GLUE_OK), or
         // - when the query type is DS (which cancels the delegation)
         return (logAndCreateResult(name, wildname, type, DELEGATION,
-                                   stripRRsigs(nsi->second, options),
+                                   nsi->second,
                                    wild ? DATASRC_DATABASE_WILDCARD_NS :
                                    DATASRC_DATABASE_FOUND_DELEGATION_EXACT,
                                    flags));
@@ -826,8 +832,7 @@ DatabaseClient::Finder::findOnNameResult(const Name& name,
                       cni->second->getRdataCount() << " rdata at " << name <<
                       ", expected 1");
         }
-        return (logAndCreateResult(name, wildname, type, CNAME,
-                                   stripRRsigs(cni->second, options),
+        return (logAndCreateResult(name, wildname, type, CNAME, cni->second,
                                    wild ? DATASRC_DATABASE_WILDCARD_CNAME :
                                    DATASRC_DATABASE_FOUND_CNAME,
                                    flags));
@@ -840,7 +845,7 @@ DatabaseClient::Finder::findOnNameResult(const Name& name,
                  it != found.second.end(); ++it) {
                 if (it->second) {
                     // Skip over the empty ANY
-                    target->push_back(stripRRsigs(it->second, options));
+                    target->push_back(it->second);
                 }
             }
             if (wild) {
@@ -868,8 +873,7 @@ DatabaseClient::Finder::findOnNameResult(const Name& name,
         // includes the case where we were explicitly querying for a CNAME and
         // found it.  It also includes the case where we were querying for an
         // NS RRset and found it at the apex of the zone.)
-        return (ResultContext(SUCCESS, stripRRsigs(wti->second, options),
-                              flags));
+        return (ResultContext(SUCCESS, wti->second, flags));
     }
 
     // If we get here, we have found something at the requested name but not
@@ -884,13 +888,11 @@ DatabaseClient::Finder::findOnNameResult(const Name& name,
     if (dnssec_rrset) {
         // This log message covers both normal and wildcard cases, so we pass
         // NULL for 'wildname'.
-        return (logAndCreateResult(name, NULL, type, NXRRSET,
-                                   dnssec_rrset,
+        return (logAndCreateResult(name, NULL, type, NXRRSET, dnssec_rrset,
                                    DATASRC_DATABASE_FOUND_NXRRSET_NSEC,
                                    flags | RESULT_NSEC_SIGNED));
     }
-    return (logAndCreateResult(name, wildname, type, NXRRSET,
-                               dnssec_rrset,
+    return (logAndCreateResult(name, wildname, type, NXRRSET, dnssec_rrset,
                                wild ? DATASRC_DATABASE_WILDCARD_NXRRSET :
                                DATASRC_DATABASE_FOUND_NXRRSET,
                                flags | dnssec_ctx.getResultFlags()));
@@ -969,8 +971,7 @@ DatabaseClient::Finder::findInternal(const Name& name, const RRType& type,
     const DelegationSearchResult dresult = findDelegationPoint(name, options);
     if (dresult.rrset) {
         // In this case no special flags are needed.
-        return (ResultContext(dresult.code,
-                              stripRRsigs(dresult.rrset, options)));
+        return (ResultContext(dresult.code, dresult.rrset));
     }
 
     // If there is no delegation, look for the exact match to the request
@@ -982,6 +983,8 @@ DatabaseClient::Finder::findInternal(const Name& name, const RRType& type,
     WantedTypes final_types(FINAL_TYPES());
     final_types.insert(type);
     const FoundRRsets found = getRRsets(name.toText(), final_types,
+                                        ((options & FIND_DNSSEC) ==
+                                         FIND_DNSSEC),
                                         NULL, type == RRType::ANY());
     FindDNSSECContext dnssec_ctx(*this, options);
     if (found.first) {
@@ -1015,7 +1018,8 @@ DatabaseClient::Finder::findNSEC3(const Name& name, bool recursive) {
     // Now, we need to get the NSEC3 params from the apex and create the hash
     // creator for it.
     const FoundRRsets nsec3param(getRRsets(getOrigin().toText(),
-                                           NSEC3PARAM_TYPES()));
+                                           NSEC3PARAM_TYPES(),
+                                           true));
     const FoundIterator param(nsec3param.second.find(RRType::NSEC3PARAM()));
     if (!nsec3param.first || param == nsec3param.second.end()) {
         // No NSEC3 params? :-(
@@ -1055,6 +1059,7 @@ DatabaseClient::Finder::findNSEC3(const Name& name, bool recursive) {
         }
 
         const FoundRRsets nsec3(getRRsets(hash + "." + otext, NSEC3_TYPES(),
+                                          true,
                                           NULL, false, context));
 
         if (nsec3.first) {
@@ -1080,7 +1085,8 @@ DatabaseClient::Finder::findNSEC3(const Name& name, bool recursive) {
                 arg(labels).arg(prevHash);
             context = accessor_->getNSEC3Records(prevHash, zone_id_);
             const FoundRRsets prev_nsec3(getRRsets(prevHash + "." + otext,
-                                                   NSEC3_TYPES(), NULL, false,
+                                                   NSEC3_TYPES(), true,
+                                                   NULL, false,
                                                    context));
 
             if (!prev_nsec3.first) {
