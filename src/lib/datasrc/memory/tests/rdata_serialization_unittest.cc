@@ -173,8 +173,8 @@ const Name dummy_name2("example.com");
 bool
 additionalRequired(const RRType& type) {
     // The set of RR types that require additional section processing.
-    // We'll pass it to renderNameField to check the stored attribute matches
-    // our expectation.
+    // We'll use it to determine what value should the renderNameField get
+    // and, if the stored attributes are as expected.
     static std::set<RRType> need_additionals;
     if (need_additionals.empty()) {
         need_additionals.insert(RRType::NS());
@@ -496,6 +496,13 @@ typedef ::testing::Types<ManualDecoderStyle,
                          HybridDecoder<false, true>,
                          HybridDecoder<false, false> >
     DecoderStyles;
+// Each decoder style must contain a decode() method. Such method is expected
+// to decode the passed data, first render the Rdata into the passed renderer,
+// then write the dummy_name2 there and write the RRSig data after that. It may
+// do other checks too.
+//
+// There are some slight differences to how to do the decoding, that's why we
+// have the typed test.
 TYPED_TEST_CASE(RdataEncodeDecodeTest, DecoderStyles);
 
 void
