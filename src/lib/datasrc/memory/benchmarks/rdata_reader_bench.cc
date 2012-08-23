@@ -22,9 +22,8 @@
 #include <dns/rrclass.h>
 #include <dns/masterload.h>
 
-#include <datasrc/memory/rdata_field.h>
 #include <datasrc/memory/rdata_encoder.h>
-#include "rdata_reader.h"
+#include <datasrc/memory/rdata_reader.h>
 
 #include <boost/bind.hpp>
 
@@ -39,11 +38,6 @@ using namespace isc::datasrc::memory;
 using namespace isc::dns;
 
 namespace {
-// Encapsulating parameters for a RdataReader.  It extracts from the given
-// RRset and its RRSIGs parameters that are necessary construct an RdataReader.
-// RDATA data will be stored in the 'data' vector.
-// members are defined as non cost so we can use the object of this struct
-// in a vector.
 struct EncodeParam {
     EncodeParam(RdataEncoder& encoder, ConstRRsetPtr rrset,
                 ConstRRsetPtr sig_rrset = ConstRRsetPtr()) :
@@ -76,13 +70,15 @@ struct EncodeParam {
     vector<uint8_t> data;
 };
 
-// Benchmark for the "next" type of reader.  In its run() it iterates over
-// the list of EncodeParams, and render the corresponding RDATA to the
-// given message renderer.
-class NextReaderBenchMark {
+// Encapsulating parameters for a RdataReader.  It extracts from the given
+// RRset and its RRSIGs parameters that are necessary construct an RdataReader.
+// RDATA data will be stored in the 'data' vector.
+// members are defined as non const so we can use the object of this struct
+// in a vector.
+class ReaderBenchMark {
 public:
-    NextReaderBenchMark(const vector<EncodeParam>& encode_params,
-                        MessageRenderer& renderer) :
+    ReaderBenchMark(const vector<EncodeParam>& encode_params,
+                    MessageRenderer& renderer) :
         encode_params_(encode_params), renderer_(renderer)
     {}
     unsigned int run() {
@@ -91,124 +87,25 @@ public:
             encode_params_.end();
         renderer_.clear();
         for (it = encode_params_.begin(); it != it_end; ++it) {
-            RdataReader2 reader(it->rrclass, it->rrtype, &it->data[0],
-                                it->rdata_count, it->sig_count);
-            RdataReader2::Result data;
-            while ((data = reader.next())) {
-                switch (data.type()) {
-                case RdataReader2::NAME:
-                    renderer_.writeName(data.label(), data.compressible());
-                    break;
-                case RdataReader2::DATA:
-                    renderer_.writeData(data.data(), data.size());
-                    break;
-                default:
-                    assert(false);
-                }
-            }
-
-            while ((data = reader.nextSig())) {
-                switch (data.type()) {
-                case RdataReader2::DATA:
-                    renderer_.writeData(data.data(), data.size());
-                    break;
-                default:
-                    assert(false);
-                }
-            }
-        }
-        return (1);
-    }
-private:
-    const vector<EncodeParam>& encode_params_;
-    MessageRenderer& renderer_;
-};
-
-// Similar to NextReaderBenchMark, but avoid unnecessary default construction
-// of the result object and assignment operation after that.  It also avoids
-// relying on the type conversion operator.
-class NextReaderBenchMark2 {
-public:
-    NextReaderBenchMark2(const vector<EncodeParam>& encode_params,
-                         MessageRenderer& renderer) :
-        encode_params_(encode_params), renderer_(renderer)
-    {}
-    unsigned int run() {
-        vector<EncodeParam>::const_iterator it;
-        const vector<EncodeParam>::const_iterator it_end =
-            encode_params_.end();
-        renderer_.clear();
-        for (it = encode_params_.begin(); it != it_end; ++it) {
-            RdataReader2 reader(it->rrclass, it->rrtype, &it->data[0],
-                                it->rdata_count, it->sig_count);
-            bool reading = true;
-            while (reading) {
-                const RdataReader2::Result data = reader.next();
-                switch (data.type()) {
-                case RdataReader2::NAME:
-                    renderer_.writeName(data.label(), data.compressible());
-                    break;
-                case RdataReader2::DATA:
-                    renderer_.writeData(data.data(), data.size());
-                    break;
-                case RdataReader2::END:
-                    reading = false;
-                    break;
-                }
-            }
-
-            reading = true;
-            while (reading) {
-                const RdataReader2::Result data = reader.nextSig();
-                switch (data.type()) {
-                case RdataReader2::DATA:
-                    renderer_.writeData(data.data(), data.size());
-                    break;
-                case RdataReader2::END:
-                    reading = false;
-                    break;
-                default:
-                    assert(false);
-                }
-            }
-        }
-        return (1);
-    }
-private:
-    const vector<EncodeParam>& encode_params_;
-    MessageRenderer& renderer_;
-};
-
-// Similar to NextReaderBenchMark, but using the "iterate" type reader.
-class IterateBenchMark {
-public:
-    IterateBenchMark(const vector<EncodeParam>& encode_params,
-                     MessageRenderer& renderer) :
-        encode_params_(encode_params), renderer_(renderer)
-    {}
-    unsigned int run() {
-        vector<EncodeParam>::const_iterator it;
-        const vector<EncodeParam>::const_iterator it_end =
-            encode_params_.end();
-        renderer_.clear();
-        for (it = encode_params_.begin(); it != it_end; ++it) {
-            RdataReader2 reader(it->rrclass, it->rrtype, &it->data[0],
-                                it->rdata_count, it->sig_count,
-                                boost::bind(&IterateBenchMark::renderName,
-                                            this, _1, _2),
-                                boost::bind(&IterateBenchMark::renderData,
-                                            this, _1, _2));
+            RdataReader reader(it->rrclass, it->rrtype, &it->data[0],
+                               it->rdata_count, it->sig_count,
+                               boost::bind(&ReaderBenchMark::renderName,
+                                           this, _1, _2),
+                               boost::bind(&ReaderBenchMark::renderData,
+                                           this, _1, _2));
             reader.iterate();
-            reader.iterateSig();
+            reader.iterateAllSigs();
         }
         return (1);
     }
-    void renderName(const LabelSequence& labels, unsigned attributes) {
+    void renderName(const LabelSequence& labels,
+                    RdataNameAttributes attributes)
+    {
         const bool compress =
             (attributes & NAMEATTR_COMPRESSIBLE) != 0;
         renderer_.writeName(labels, compress);
     }
-    void renderData(const uint8_t* data, size_t data_len) {
+    void renderData(const void* data, size_t data_len) {
         renderer_.writeData(data, data_len);
     }
 private:
@@ -318,17 +215,8 @@ main(int argc, char* argv[]) {
     MessageRenderer renderer;
     renderer.setBuffer(&buffer);
 
-    std::cout << "Benchmark for next-based RdataReader" << std::endl;
-    BenchMark<NextReaderBenchMark>(iteration,
-                                   NextReaderBenchMark(encode_param_list,
-                                                       renderer));
-    std::cout << "Benchmark for next-based RdataReader without type conversion"
-              << std::endl;
-    BenchMark<NextReaderBenchMark2>(iteration,
-                                    NextReaderBenchMark2(encode_param_list,
-                                                         renderer));
-    std::cout << "Benchmark for iterator-based RdataReader" << std::endl;
-    BenchMark<IterateBenchMark>(iteration,
-                                IterateBenchMark(encode_param_list, renderer));
+    std::cout << "Benchmark for RdataReader" << std::endl;
+    BenchMark<ReaderBenchMark>(iteration,
+                                ReaderBenchMark(encode_param_list, renderer));
     return (0);
 }
