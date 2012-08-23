@@ -20,6 +20,7 @@
 #include <datasrc/result.h>
 #include <datasrc/memory/domaintree.h>
 
+#include <boost/noncopyable.hpp>
 #include <boost/interprocess/offset_ptr.hpp>
 
 namespace isc {
@@ -57,7 +58,7 @@ class ZoneData;
 ///
 /// This class is intended to be used as a backend for the \c MemoryDataSrc
 /// class, and is not intended to be used for other general purposes.
-class ZoneTable {
+class ZoneTable : boost::noncopyable {
 private:
     // The deleter for the zone data stored in the table.
     struct ZoneDataDeleter {
@@ -90,17 +91,7 @@ public:
         const ZoneData* const zone_data;
     };
 
-    ///
-    /// \name Constructors and Destructor.
-    ///
-    /// \b Note:
-    /// The copy constructor and the assignment operator are intentionally
-    /// defined as private, making this class non copyable.
-    //@{
 private:
-    ZoneTable(const ZoneTable& source);
-    ZoneTable& operator=(const ZoneTable& source);
-
     /// Constructor.
     ///
     /// An object of this class is always expected to be created by the
@@ -111,7 +102,6 @@ private:
     /// It never throws an exception otherwise.
     ZoneTable(ZoneTableTree* zones) : zones_(zones)
     {}
-    //@}
 
 public:
     /// \brief Allocate and construct \c ZoneTable
