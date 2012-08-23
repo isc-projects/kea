@@ -207,6 +207,8 @@ TEST_F(ZoneDataTest, addRdataSets) {
 TEST_F(ZoneDataTest, getSetNSEC3Data) {
     // Initially there's no NSEC3 data
     EXPECT_EQ(static_cast<NSEC3Data*>(NULL), zone_data_->getNSEC3Data());
+    // isNSEC3Signed is true iff zone data has non NULL NSEC3 data
+    EXPECT_FALSE(zone_data_->isNSEC3Signed());
 
     // Set a new one.  The set method should return NULL.  The get method
     // should return the new one.
@@ -214,6 +216,7 @@ TEST_F(ZoneDataTest, getSetNSEC3Data) {
     NSEC3Data* old_nsec3_data = zone_data_->setNSEC3Data(nsec3_data);
     EXPECT_EQ(static_cast<NSEC3Data*>(NULL), old_nsec3_data);
     EXPECT_EQ(nsec3_data, zone_data_->getNSEC3Data());
+    EXPECT_TRUE(zone_data_->isNSEC3Signed());
 
     // Replace an existing one with a yet another one.
     // We're responsible for destroying the old one.
@@ -221,15 +224,30 @@ TEST_F(ZoneDataTest, getSetNSEC3Data) {
     old_nsec3_data = zone_data_->setNSEC3Data(nsec3_data2);
     EXPECT_EQ(nsec3_data, old_nsec3_data);
     EXPECT_EQ(nsec3_data2, zone_data_->getNSEC3Data());
+    EXPECT_TRUE(zone_data_->isNSEC3Signed());
     NSEC3Data::destroy(mem_sgmt_, old_nsec3_data, RRClass::IN());
 
     // Setting NULL clears any existing one.
     old_nsec3_data = zone_data_->setNSEC3Data(NULL);
     EXPECT_EQ(nsec3_data2, old_nsec3_data);
     EXPECT_EQ(static_cast<NSEC3Data*>(NULL), zone_data_->getNSEC3Data());
+    EXPECT_FALSE(zone_data_->isNSEC3Signed());
 
     // Then set it again.  The zone data should destroy it on its own
     // destruction.
     zone_data_->setNSEC3Data(old_nsec3_data);
+}
+
+TEST_F(ZoneDataTest, isSigned) {
+    // By default it's considered unsigned
+    EXPECT_FALSE(zone_data_->isSigned());
+
+    // declare it's signed, the isSigned() says so too
+    zone_data_->setSigned(true);
+    EXPECT_TRUE(zone_data_->isSigned());
+
+    // change it to unsigned again
+    zone_data_->setSigned(false);
+    EXPECT_FALSE(zone_data_->isSigned());
 }
 }

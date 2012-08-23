@@ -33,6 +33,7 @@ namespace dns {
 namespace rdata {
 namespace generic {
 class NSEC3PARAM;
+class NSEC3;
 }
 }
 }
@@ -89,12 +90,22 @@ private:
 };
 
 class ZoneData : boost::noncopyable {
-public:
-
 private:
     ZoneData(ZoneTree* zone_tree, ZoneNode* origin_node) :
         zone_tree_(zone_tree), origin_node_(origin_node)
     {}
+
+    // Zone node flags.
+private:
+    // Set in the origin node (which always exists at the same address)
+    // to indicate whether the zone is signed or not.  Internal use,
+    // so defined as private.
+    static const ZoneNode::Flags DNSSEC_SIGNED = ZoneNode::FLAG_USER1;
+public:
+    /// \brief Node flag indicating it is at a "wildcard level"
+    ///
+    /// This means one of the node's immediate children is a wildcard.
+    static const ZoneNode::Flags WILD_NODE = ZoneNode::FLAG_USER2;
 
 public:
     static ZoneData* create(util::MemorySegment& mem_sgmt,
@@ -109,6 +120,17 @@ public:
     const ZoneNode* getOriginNode() const {
         return (origin_node_.get());
     }
+
+    bool isSigned() const { return (origin_node_->getFlag(DNSSEC_SIGNED)); }
+    void setSigned(bool on) {
+        origin_node_->setFlag(DNSSEC_SIGNED, on);
+    }
+
+    /// In the current implementation, the zone is considered signed with
+    /// NSEC3 if and only if it has non NULL NSEC3 data.
+    ///
+    /// This also means it's not considered NSEC3 signed by default.
+    bool isNSEC3Signed() const { return (nsec3_data_); }
 
     const ZoneTree* getZoneTree() const { return (zone_tree_.get()); }
 
