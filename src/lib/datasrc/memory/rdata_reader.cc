@@ -20,37 +20,8 @@ namespace isc {
 namespace datasrc {
 namespace memory {
 
-void
-RdataReader::emptyNameAction(const LabelSequence&, unsigned) {
-    // Do nothing here. On purpose, it's not unfinished.
-}
-
-void
-RdataReader::emptyDataAction(const uint8_t*, size_t) {
-    // Do nothing here. On purpose, it's not unfinished.
-}
-
-RdataReader::Result::Result(const LabelSequence& label,
-                            unsigned attributes) :
-    label_(label),
-    data_(NULL),
-    size_(0),
-    type_(NAME),
-    compressible_((attributes & NAMEATTR_COMPRESSIBLE) != 0),
-    additional_((attributes & NAMEATTR_ADDITIONAL) != 0)
-{}
-
-RdataReader::Result::Result(const uint8_t* data, size_t size) :
-    label_(Name::ROOT_NAME()),
-    data_(data),
-    size_(size),
-    type_(DATA),
-    compressible_(false),
-    additional_(false)
-{}
-
 RdataReader::RdataReader(const RRClass& rrclass, const RRType& rrtype,
-                         const uint8_t* data,
+                         const void* data,
                          size_t rdata_count, size_t sig_count,
                          const NameAction& name_action,
                          const DataAction& data_action) :
@@ -60,13 +31,11 @@ RdataReader::RdataReader(const RRClass& rrclass, const RRType& rrtype,
     var_count_total_(spec_.varlen_count * rdata_count),
     sig_count_(sig_count),
     spec_count_(spec_.field_count * rdata_count),
-    // The casts, well, C++ decided it doesn't like completely valid
-    // and explicitly allowed cast in C, so we need to fool it through
-    // void.
-    lengths_(static_cast<const uint16_t*>(
-             static_cast<const void*>(data))), // The lenghts are stored first
+    // The lenghts are stored first
+    lengths_(reinterpret_cast<const uint16_t*>(data)),
     // And the data just after all the lengths
-    data_(data + (var_count_total_ + sig_count_) * sizeof(uint16_t)),
+    data_(reinterpret_cast<const uint8_t*>(data) +
+          (var_count_total_ + sig_count_) * sizeof(uint16_t)),
     sigs_(NULL)
 {
     rewind();
@@ -81,10 +50,11 @@ RdataReader::rewind() {
     sig_pos_ = 0;
 }
 
-RdataReader::Result
+RdataReader::Boundary
 RdataReader::nextInternal(const NameAction& name_action,
                           const DataAction& data_action)
 {
+
     if (spec_pos_ < spec_count_) {
         const RdataFieldSpec& spec(spec_.fields[(spec_pos_++) %
                                                 spec_.field_count]);
@@ -92,27 +62,41 @@ RdataReader::nextInternal(const NameAction& name_action,
             const LabelSequence sequence(data_ + data_pos_);
             data_pos_ += sequence.getSerializedLength();
             name_action(sequence, spec.name_attributes);
-            return (Result(sequence, spec.name_attributes));
         } else {
             const size_t length(spec.type == RdataFieldSpec::FIXEDLEN_DATA ?
-                                spec.fixeddata_len : lengths_[length_pos_++]);
-            const Result result(data_ + data_pos_, length);
+                                spec.fixeddata_len : lengths_[length_pos_ ++]);
+            const uint8_t* const pos = data_ + data_pos_;
             data_pos_ += length;
-            data_action(result.data(), result.size());
-            return (result);
+            data_action(pos, length);
         }
+        return (spec_pos_ % spec_.field_count == 0 ?
+                RDATA_BOUNDARY : NO_BOUNDARY);
     } else {
         sigs_ = data_ + data_pos_;
-        return (Result());
+        return (RRSET_BOUNDARY);
     }
 }
 
-RdataReader::Result
+RdataReader::Boundary
 RdataReader::next() {
     return (nextInternal(name_action_, data_action_));
 }
 
-RdataReader::Result
+namespace {
+
+void
+emptyNameAction(const LabelSequence&, unsigned) {
+    // Do nothing here.
+}
+
+void
+emptyDataAction(const void*, size_t) {
+    // Do nothing here.
+}
+
+}
+
+RdataReader::Boundary
 RdataReader::nextSig() {
     if (sig_pos_ < sig_count_) {
         if (sigs_ == NULL) {
@@ -123,7 +107,8 @@ RdataReader::nextSig() {
             const size_t spec_pos = spec_pos_;
             const size_t length_pos = length_pos_;
             // When the next() gets to the last item, it sets the sigs_
-            while (nextInternal(emptyNameAction, emptyDataAction)) {}
+            while (nextInternal(emptyNameAction, emptyDataAction) !=
+                   RRSET_BOUNDARY) {}
             assert(sigs_ != NULL);
             // Return the state
             data_pos_ = data_pos;
@@ -131,16 +116,16 @@ RdataReader::nextSig() {
             length_pos_ = length_pos;
         }
         // Extract the result
-        const Result result(sigs_ + sig_data_pos_, lengths_[var_count_total_ +
-                                                            sig_pos_]);
+        const size_t length = lengths_[var_count_total_ + sig_pos_];
+        const uint8_t* const pos = sigs_ + sig_data_pos_;
         // Move the position of iterator.
         sig_data_pos_ += lengths_[var_count_total_ + sig_pos_];
         ++sig_pos_;
         // Call the callback
-        data_action_(result.data(), result.size());
-        return (result);
+        data_action_(pos, length);
+        return (RDATA_BOUNDARY);
     } else {
-        return (Result());
+        return (RRSET_BOUNDARY);
     }
 }
 
