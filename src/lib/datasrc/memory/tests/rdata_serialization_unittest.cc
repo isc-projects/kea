@@ -353,6 +353,35 @@ public:
     }
 };
 
+// Decode using the iteration over one rdata each time.
+// We also count there's the correct count of Rdatas.
+class SingleIterateDecoder {
+public:
+    static void decode(const isc::dns::RRClass& rrclass,
+                       const isc::dns::RRType& rrtype,
+                       size_t rdata_count, size_t sig_count, size_t,
+                       const vector<uint8_t>& encoded_data, size_t,
+                       MessageRenderer& renderer)
+    {
+        RdataReader reader(rrclass, rrtype, &encoded_data[0],
+                           rdata_count, sig_count,
+                           boost::bind(renderNameField, &renderer,
+                                       additionalRequired(rrtype), _1, _2),
+                           boost::bind(renderDataField, &renderer, _1, _2));
+        size_t actual_count = 0;
+        while (reader.iterateRdata()) {
+            actual_count ++;
+        }
+        EXPECT_EQ(rdata_count, actual_count);
+        actual_count = 0;
+        renderer.writeName(dummy_name2);
+        while (reader.iterateSingleSig()) {
+            actual_count ++;
+        }
+        EXPECT_EQ(sig_count, actual_count);
+    }
+};
+
 // This one does not adhere to the usual way the reader is used, trying
 // to confuse it. It iterates part of the data manually and then reads
 // the rest through iterate. It also reads the signatures in the middle
@@ -419,7 +448,7 @@ public:
 };
 
 typedef ::testing::Types<ManualDecoderStyle,
-                         CallbackDecoder, IterateDecoder,
+                         CallbackDecoder, IterateDecoder, SingleIterateDecoder,
                          HybridDecoder<true, true>, HybridDecoder<true, false>,
                          HybridDecoder<false, true>,
                          HybridDecoder<false, false> >

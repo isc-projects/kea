@@ -189,7 +189,7 @@ public:
     /// In practice, this should process one DATA field.
     bool iterateSingleSig() {
         while (true) {
-            switch(next()) {
+            switch(nextSig()) {
                 case NO_BOUNDARY: break;
                 case RDATA_BOUNDARY: return (true);
                 case RRSET_BOUNDARY: return (false);
