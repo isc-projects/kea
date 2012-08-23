@@ -21,7 +21,7 @@ namespace datasrc {
 namespace memory {
 
 RdataReader::RdataReader(const RRClass& rrclass, const RRType& rrtype,
-                         const uint8_t* data,
+                         const void* data,
                          size_t rdata_count, size_t sig_count,
                          const NameAction& name_action,
                          const DataAction& data_action) :
@@ -31,13 +31,11 @@ RdataReader::RdataReader(const RRClass& rrclass, const RRType& rrtype,
     var_count_total_(spec_.varlen_count * rdata_count),
     sig_count_(sig_count),
     spec_count_(spec_.field_count * rdata_count),
-    // The casts, well, C++ decided it doesn't like completely valid
-    // and explicitly allowed cast in C, so we need to fool it through
-    // void.
-    lengths_(static_cast<const uint16_t*>(
-             static_cast<const void*>(data))), // The lenghts are stored first
+    // The lenghts are stored first
+    lengths_(reinterpret_cast<const uint16_t*>(data)),
     // And the data just after all the lengths
-    data_(data + (var_count_total_ + sig_count_) * sizeof(uint16_t)),
+    data_(reinterpret_cast<const uint8_t*>(data) +
+          (var_count_total_ + sig_count_) * sizeof(uint16_t)),
     sigs_(NULL)
 {
     rewind();
@@ -92,7 +90,7 @@ emptyNameAction(const LabelSequence&, unsigned) {
 }
 
 void
-emptyDataAction(const uint8_t*, size_t) {
+emptyDataAction(const void*, size_t) {
     // Do nothing here.
 }
 

@@ -69,7 +69,7 @@ namespace memory {
 /// void handleName(const dns::LabelSequence& labels, unsigned int flags) {
 ///     ...
 /// }
-/// void handleData(const uint8_t* data, size_t size) {
+/// void handleData(const void* data, size_t size) {
 ///     ...
 /// }
 ///
@@ -87,7 +87,7 @@ public:
     typedef boost::function<void(const dns::LabelSequence&,
                                  RdataNameAttributes)> NameAction;
     /// \brief Function called on each data field in the data.
-    typedef boost::function<void(const uint8_t*, size_t)> DataAction;
+    typedef boost::function<void(const void*, size_t)> DataAction;
 
     /// \brief Constructor
     ///
@@ -104,7 +104,7 @@ public:
     /// \param name_action The callback to be called on each encountered name.
     /// \param data_action The callback to be called on each data chunk.
     RdataReader(const dns::RRClass& rrclass, const dns::RRType& rrtype,
-                const uint8_t* data, size_t rdata_count, size_t sig_count,
+                const void* data, size_t rdata_count, size_t sig_count,
                 const NameAction& name_action, const DataAction& data_action);
 
     /// \brief Result of next() and nextSig()
