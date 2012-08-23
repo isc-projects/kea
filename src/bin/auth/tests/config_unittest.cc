@@ -143,15 +143,4 @@ TEST_F(AuthConfigTest, listenAddressConfig) {
     EXPECT_EQ(DNSService::SERVER_SYNC_OK, dnss_.getUDPFdParams().at(1).options);
 }
 
-class StatisticsIntervalConfigTest : public AuthConfigTest {
-protected:
-    StatisticsIntervalConfigTest() :
-        parser(createAuthConfigParser(server, "statistics-interval"))
-    {}
-    ~StatisticsIntervalConfigTest() {
-        delete parser;
-    }
-    AuthConfigParser* parser;
-};
-
 }
