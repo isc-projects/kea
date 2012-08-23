@@ -179,6 +179,34 @@ public:
     /// the value returned by getSerializedLength() (it can be larger than
     /// that).
     ///
+    /// Be careful about where the buffer is located; due to the nature
+    /// of the buffer, it's quite possible that the memory region is being used
+    /// to construct another active \c LabelSequence.  In such a case
+    /// the serialization would silently break that sequence object, and
+    /// it will be very difficult to identify the cause.  This method
+    /// has minimal level checks to avoid such disruption: If the serialization
+    /// would break "this" \c LabelSequence object, it doesn't write anything
+    /// to the given buffer and throw a \c isc::BadValue exception.
+    ///
+    /// In general, it should be safe to call this method on a
+    /// \c LabelSequence object constructed from a \c Name object or
+    /// a copy of such \c LabelSequence.  When you construct \c LabelSequence
+    /// from pre-serialized data, calling this method on it can be unsafe.
+    /// One safe (but a bit less efficient) way in such a case is to make
+    /// the source \c LabelSequence temporary and immediately create a
+    /// local copy using an explicit buffer, and call this method on the
+    /// latter:
+    /// \code
+    ///    // don't do this, it's not safe (and would result in exception):
+    ///    // LabelSequence(buf).serialize(buf, buf_len);
+    ///
+    ///    // The following are the safe way:
+    ///    uint8_t ext_buf[LabelSequence::MAX_SERIALIZED_LENGTH];
+    ///    LabelSequence seq(LabelSequence(buf), ext_buf);
+    ///    ... (strip the labels, etc)
+    ///    seq.serialize(buf, buf_len); // it's safe to override buf here
+    /// \endcode
+    ///
     /// The serialized image would be as follows:
     /// - olen: number of offsets (1 byte)
     /// - binary sequence of offsets (olen bytes, verbatim copy of offsets_
@@ -186,13 +214,14 @@ public:
     /// - binary sequence of name data (length determined by itself, verbatim
     ///   copy of data_ of the corresponding size)
     ///
-    /// Applications must use the resulting image opaque value and must not
+    /// Applications must use the resulting image as opaque value and must not
     /// use it for other purposes than input to the corresponding constructor
     /// to restore it.  Application behavior that assumes the specific
     /// organization of the image is not guaranteed.
     ///
     /// \throw isc::BadValue buf_len is too short (this method never throws
-    /// otherwise)
+    /// otherwise) or the serialization would override internal data of
+    /// of the source LabelSequence.
     ///
     /// \param buf Pointer to the placeholder to dump the serialized image
     /// \param buf_len The size of available region in \c buf

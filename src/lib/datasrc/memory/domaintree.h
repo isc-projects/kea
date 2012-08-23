@@ -1648,8 +1648,12 @@ DomainTree<T, DT>::insert(util::MemorySegment& mem_sgmt,
     isc::dns::LabelSequence target_labels(target_name);
 
     int order = -1;
+    // For possible LabelSequence serialization we always store labels data
+    // in the separate local buffer.
+    uint8_t labels_buf[dns::LabelSequence::MAX_SERIALIZED_LENGTH];
     while (current != NULL) {
-        const dns::LabelSequence current_labels(current->getLabels());
+        const dns::LabelSequence current_labels(
+            dns::LabelSequence(current->getLabels(), labels_buf));
         const isc::dns::NameComparisonResult compare_result =
             target_labels.compare(current_labels);
         const isc::dns::NameComparisonResult::NameRelation relation =
