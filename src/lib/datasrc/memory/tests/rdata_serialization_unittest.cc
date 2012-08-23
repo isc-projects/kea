@@ -313,89 +313,6 @@ public:
     }
 };
 
-// Decode using reader with the return value of next
-class NextDecoder {
-public:
-    static void decode(const isc::dns::RRClass& rrclass,
-                       const isc::dns::RRType& rrtype,
-                       size_t rdata_count, size_t sig_count, size_t,
-                       const vector<uint8_t>& encoded_data, size_t,
-                       MessageRenderer& renderer)
-    {
-        RdataReader reader(rrclass, rrtype, &encoded_data[0], rdata_count,
-                           sig_count);
-        RdataReader::Result field;
-        while ((field = reader.next())) {
-            switch (field.type()) {
-                case RdataReader::DATA:
-                    renderer.writeData(field.data(), field.size());
-                    break;
-                case RdataReader::NAME:
-                    renderer.writeName(field.label(), field.compressible());
-                    break;
-                default:
-                    FAIL();
-            }
-        }
-
-        renderer.writeName(dummy_name2);
-
-        while ((field = reader.nextSig())) {
-            switch (field.type()) {
-                case RdataReader::DATA:
-                    renderer.writeData(field.data(), field.size());
-                    break;
-                default: // There are also no NAME fields in RRSigs
-                    FAIL();
-            }
-        }
-    }
-};
-
-// Decode using reader with the return value of next, but after the reader
-// was used and rewund.
-class RewundDecoder {
-public:
-    static void decode(const isc::dns::RRClass& rrclass,
-                       const isc::dns::RRType& rrtype,
-                       size_t rdata_count, size_t sig_count, size_t,
-                       const vector<uint8_t>& encoded_data, size_t,
-                       MessageRenderer& renderer)
-    {
-        RdataReader reader(rrclass, rrtype, &encoded_data[0], rdata_count,
-                           sig_count);
-        // Use the reader first and rewind it
-        reader.iterateSig();
-        reader.iterate();
-        reader.rewind();
-        RdataReader::Result field;
-        while ((field = reader.next())) {
-            switch (field.type()) {
-                case RdataReader::DATA:
-                    renderer.writeData(field.data(), field.size());
-                    break;
-                case RdataReader::NAME:
-                    renderer.writeName(field.label(), field.compressible());
-                    break;
-                default:
-                    FAIL();
-            }
-        }
-
-        renderer.writeName(dummy_name2);
-
-        while ((field = reader.nextSig())) {
-            switch (field.type()) {
-                case RdataReader::DATA:
-                    renderer.writeData(field.data(), field.size());
-                    break;
-                default: // There are also no NAME fields in RRSigs
-                    FAIL();
-            }
-        }
-    }
-};
-
 // Check using callbacks and calling next until the end.
 class CallbackDecoder {
 public:
@@ -410,9 +327,9 @@ public:
                            boost::bind(renderNameField, &renderer,
                                        additionalRequired(rrtype), _1, _2),
                            boost::bind(renderDataField, &renderer, _1, _2));
-        while (reader.next()) { }
+        while (reader.next() != RdataReader::RRSET_BOUNDARY) { }
         renderer.writeName(dummy_name2);
-        while (reader.nextSig()) { }
+        while (reader.nextSig() != RdataReader::RRSET_BOUNDARY) { }
     }
 };
 
@@ -432,7 +349,7 @@ public:
                            boost::bind(renderDataField, &renderer, _1, _2));
         reader.iterate();
         renderer.writeName(dummy_name2);
-        reader.iterateSig();
+        reader.iterateAllSigs();
     }
 };
 
@@ -485,14 +402,14 @@ public:
         // Now, we let all sigs to be copied to data. We disable the
         // renderer for this.
         current = NULL;
-        reader.iterateSig();
+        reader.iterateAllSigs();
         // Now return the renderer and render the rest of the data
         current = &renderer;
         reader.iterate();
         // Now, this should not break anything and should be valid, but should
         // return ends.
-        EXPECT_FALSE(reader.next());
-        EXPECT_FALSE(reader.nextSig());
+        EXPECT_EQ(RdataReader::RRSET_BOUNDARY, reader.next());
+        EXPECT_EQ(RdataReader::RRSET_BOUNDARY, reader.nextSig());
         // Render the name and the sigs
         renderer.writeName(dummy_name2);
         renderer.writeData(&data[0], data.size());
@@ -501,7 +418,7 @@ public:
     }
 };
 
-typedef ::testing::Types<ManualDecoderStyle, NextDecoder, RewundDecoder,
+typedef ::testing::Types<ManualDecoderStyle,
                          CallbackDecoder, IterateDecoder,
                          HybridDecoder<true, true>, HybridDecoder<true, false>,
                          HybridDecoder<false, true>,
@@ -795,45 +712,4 @@ TEST_F(RdataSerializationTest, badAddSIGRdata) {
     EXPECT_THROW(encoder_.addSIGRdata(big_sigrdata), RdataEncodingError);
 }
 
-// Test the result returns what it was constructed with.
-TEST_F(RdataSerializationTest, readerResult) {
-    // Default constructor
-    RdataReader::Result empty;
-    // Everything should be at the "empty" values, type END
-    EXPECT_EQ(RdataReader::END, empty.type());
-    EXPECT_EQ(NULL, empty.data());
-    EXPECT_EQ(0, empty.size());
-    EXPECT_TRUE(empty.label().equals(LabelSequence(Name::ROOT_NAME())));
-    EXPECT_FALSE(empty);
-    EXPECT_FALSE(empty.compressible());
-    EXPECT_FALSE(empty.additional());
-    // Constructor from label sequence
-    LabelSequence seq(Name("example.org"));
-    RdataReader::Result compressible(seq, NAMEATTR_COMPRESSIBLE);
-    EXPECT_EQ(RdataReader::NAME, compressible.type());
-    EXPECT_EQ(NULL, compressible.data());
-    EXPECT_EQ(0, compressible.size());
-    EXPECT_TRUE(compressible.label().equals(seq));
-    EXPECT_TRUE(compressible);
-    EXPECT_TRUE(compressible.compressible());
-    EXPECT_FALSE(compressible.additional());
-    RdataReader::Result incompressible(seq, NAMEATTR_ADDITIONAL);
-    EXPECT_EQ(RdataReader::NAME, incompressible.type());
-    EXPECT_EQ(NULL, incompressible.data());
-    EXPECT_EQ(0, incompressible.size());
-    EXPECT_TRUE(incompressible.label().equals(seq));
-    EXPECT_TRUE(incompressible);
-    EXPECT_FALSE(incompressible.compressible());
-    EXPECT_TRUE(incompressible.additional());
-    // Constructor from data
-    uint8_t byte;
-    RdataReader::Result data(&byte, 1);
-    EXPECT_EQ(RdataReader::DATA, data.type());
-    EXPECT_EQ(&byte, data.data());
-    EXPECT_EQ(1, data.size());
-    EXPECT_TRUE(data.label().equals(LabelSequence(Name::ROOT_NAME())));
-    EXPECT_TRUE(data);
-    EXPECT_FALSE(data.compressible());
-    EXPECT_FALSE(data.additional());
-}
 }
