@@ -168,7 +168,10 @@ public:
 
 // Used across more classes and scopes. But it's just uninteresting
 // constant.
-const Name dummy_name2("example.com");
+const Name &dummyName2() {
+    static Name result("example.com");
+    return (result);
+}
 
 bool
 additionalRequired(const RRType& type) {
@@ -306,7 +309,7 @@ public:
                           boost::bind(renderDataField, &renderer, _1, _2));
 
     // 2nd dummy name
-    renderer.writeName(dummy_name2);
+    renderer.writeName(dummyName2());
     // Finally, dump any RRSIGs in wire format.
     foreachRRSig(encoded_data, rrsiglen_list,
                  boost::bind(renderDataField, &renderer, _1, _2));
@@ -328,7 +331,7 @@ public:
                                        additionalRequired(rrtype), _1, _2),
                            boost::bind(renderDataField, &renderer, _1, _2));
         while (reader.next() != RdataReader::RRSET_BOUNDARY) { }
-        renderer.writeName(dummy_name2);
+        renderer.writeName(dummyName2());
         while (reader.nextSig() != RdataReader::RRSET_BOUNDARY) { }
     }
 };
@@ -348,7 +351,7 @@ public:
                                        additionalRequired(rrtype), _1, _2),
                            boost::bind(renderDataField, &renderer, _1, _2));
         reader.iterate();
-        renderer.writeName(dummy_name2);
+        renderer.writeName(dummyName2());
         reader.iterateAllSigs();
     }
 };
@@ -404,7 +407,7 @@ public:
         // Do the actual rendering
         current = &renderer;
         reader.iterate();
-        renderer.writeName(dummy_name2);
+        renderer.writeName(dummyName2());
         reader.iterateAllSigs();
     }
 };
@@ -430,7 +433,7 @@ public:
         }
         EXPECT_EQ(rdata_count, actual_count);
         actual_count = 0;
-        renderer.writeName(dummy_name2);
+        renderer.writeName(dummyName2());
         while (reader.iterateSingleSig()) {
             actual_count ++;
         }
@@ -484,7 +487,7 @@ public:
         EXPECT_EQ(RdataReader::RRSET_BOUNDARY, reader.next());
         EXPECT_EQ(RdataReader::RRSET_BOUNDARY, reader.nextSig());
         // Render the name and the sigs
-        renderer.writeName(dummy_name2);
+        renderer.writeName(dummyName2());
         renderer.writeData(&data[0], data.size());
         // The size matches even after use
         EXPECT_EQ(encoded_data_len, reader.getSize());
@@ -499,7 +502,7 @@ typedef ::testing::Types<ManualDecoderStyle,
     DecoderStyles;
 // Each decoder style must contain a decode() method. Such method is expected
 // to decode the passed data, first render the Rdata into the passed renderer,
-// then write the dummy_name2 there and write the RRSig data after that. It may
+// then write the dummyName2() there and write the RRSig data after that. It may
 // do other checks too.
 //
 // There are some slight differences to how to do the decoding, that's why we
@@ -533,8 +536,8 @@ checkEncode(RRClass rrclass, RRType rrtype,
     // These two names will be rendered before and after the test RDATA,
     // to check in case the RDATA contain a domain name whether it's
     // compressed or not correctly.  The names in the RDATA should basically
-    // a subdomain of example.com, so it can be compressed due to dummy_name.
-    // Likewise, dummy_name2 should be able to be fully compressed due to
+    // a subdomain of example.com, so it can be compressed due to dummyName2().
+    // Likewise, dummyName2() should be able to be fully compressed due to
     // the name in the RDATA.
     const Name dummy_name("com");
 
@@ -547,7 +550,7 @@ checkEncode(RRClass rrclass, RRType rrtype,
     BOOST_FOREACH(const ConstRdataPtr& rdata, rdata_list) {
         rdata->toWire(expected_renderer_);
     }
-    expected_renderer_.writeName(dummy_name2);
+    expected_renderer_.writeName(dummyName2());
     BOOST_FOREACH(const ConstRdataPtr& rdata, rrsig_list) {
         rdata->toWire(expected_renderer_);
     }
