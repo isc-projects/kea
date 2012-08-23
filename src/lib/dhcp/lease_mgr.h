@@ -15,8 +15,25 @@
 #include <string>
 #include <fstream>
 #include <vector>
+#include <map>
+#include <asiolink/io_address.h>
 #include <boost/shared_ptr.hpp>
-#include "benchmark.h"
+
+namespace isc {
+namespace dhcp {
+
+/// @brief Holds Client identifier
+class ClientId {
+ public:
+    ClientId(const std::vector<uint8_t>& duid);
+    ClientId(const char *duid, size_t len);
+    ClientId(uint32_t id);
+    ClientId(const isc::asiolink::IOAddress& addr);
+    const std::vector<uint8_t> getClientId() const;
+    bool operator == (const ClientId& other);
+ protected:
+    std::vector<uint8_t> clientid_;
+};
 
 /// @brief Holds DUID (DHCPv6 Unique Identifier)
 ///
@@ -41,8 +58,7 @@ class DUID {
     bool operator == (const DUID& other);
  protected:
     std::vector<uint8_t> duid_;
-    
-}
+};
 
 /// @brief Structure that holds a lease for IPv4 address
 ///
@@ -241,86 +257,125 @@ typedef boost::shared_ptr<Lease6> Lease6Ptr;
 typedef boost::shared_ptr<const Lease6> ConstLease6Ptr;
 
 
-/// @brief In-memory + lease file database implementation
+/// @brief Abstract Lease Manager
 ///
-/// This is a simplified in-memory database that mimics ISC DHCP4 implementation.
-/// It uses STL and boost: std::map for storage, boost::shared ptr for memory
-/// management. It does use C file operations (fopen, fwrite, etc.), because
-/// C++ streams does not offer any easy way to flush their contents, like
-/// fflush() and fsync() does.
-///
-/// IPv4 address is used as a key in the hash.
+/// This is an abstract API for lease database backends. It provides unified
+/// interface to all backends. As this is an abstract class, it should not
+/// be used directly, but rather specialized derived class should be used
+/// instead.
 class LeaseMgr {
 public:
 
+    /// Client Hardware address
+    typedef std::vector<uint8_t> HWAddr;
+
     /// @brief The sole lease manager constructor
     ///
-    /// @param filename name of the lease file (will be overwritten)
-    /// @param sync should operations be
-    LeaseMgr(const std::string& filename, bool sync);
+    /// dbconfig is a generic way of passing parameters. Parameters
+    /// are passed in the "name=value" format, separated by spaces.
+    /// Values may be enclosed in double quotes, if needed.
+    ///
+    /// @param dbconfig database configuration
+    LeaseMgr(const std::string& dbconfig);
 
     /// @brief Destructor (closes file)
-    ~LeaseMgr();
+    virtual ~LeaseMgr();
 
-    /// @brief adds an IPv4 lease
+    /// @brief Adds an IPv4 lease.
     ///
     /// @param lease lease to be added
-    bool addLease(Lease4Ptr lease);
+    virtual bool addLease(Lease4Ptr lease) = 0;
 
-    /// @brief adds a IPv6 lease
+    /// @brief Adds an IPv6 lease.
     ///
     /// @param lease lease to be added
-    bool addLease(Lease6Ptr lease);
+    virtual bool addLease(Lease6Ptr lease) = 0;
 
-    /// @brief returns existing IPv4 lease
+    /// @brief Returns existing IPv4 lease for specified IPv4 address.
     ///
     /// @param addr address of the searched lease
     ///
-    /// @return smart pointer to the lease (or NULL if lease is not found)
-    Lease4Ptr getLease4(isc::asiolink::IOAddress addr);
+    /// @return smart pointer to the lease (or NULL if a lease is not found)
+    virtual Lease4Ptr getLease4(isc::asiolink::IOAddress addr) const = 0;
 
-#error "Implement this"
-    Lease4Ptr getLease4(hwaddress );
+    /// @brief Returns existing IPv4 lease for specified hardware address.
+    ///
+    /// @param hwaddr hardware address of the client
+    ///
+    /// @return smart pointer to the lease (or NULL if a lease is not found)
+    virtual Lease4Ptr getLease4(const HWAddr& hwaddr) const = 0;
 
-    Lease4Ptr getLease4(client-id);
+    /// @brief Returns existing IPv4 lease for specified client-id
+    ///
+    /// @param clientid client identifier
+    virtual Lease4Ptr getLease4(const ClientId& clientid) const = 0;
 
-    /// @brief returns existing IPv4 lease
+    /// @brief Returns existing IPv6 lease for a given IPv6 address.
     ///
     /// @param addr address of the searched lease
     ///
-    /// @return smart pointer to the lease (or NULL if lease is not found)
-    Lease6Ptr getLease6(isc::asiolink::IOAddress addr);
+    /// @return smart pointer to the lease (or NULL if a lease is not found)
+    virtual Lease6Ptr getLease6(isc::asiolink::IOAddress addr) const = 0;
 
-#error "Implement this"
-    Lease6Ptr getLease6(DUID);
+    /// @brief Returns existing IPv6 lease for a given DUID+IA combination
+    ///
+    /// @param duid client DUID
+    /// @param iaid IA identifier
+    ///
+    /// @return smart pointer to the lease (or NULL if a lease is not found)
+    virtual Lease6Ptr getLease6(const DUID& duid, uint32_t iaid) const = 0;
 
-    Lease6Ptr getLease6(DUID, iaid);
+    /// @brief Updates IPv4 lease.
+    ///
+    /// @param lease4 The lease to be updated.
+    ///
+    /// If no such lease is present, an exception will be thrown.
+    virtual void updateLease4(Lease4Ptr lease4) = 0;
 
-
-#error "Implement this"
-    bool updateLease4(Lease4Ptr lease4);
-
-    bool updateLease6(Lease6Ptr lease6);
+    /// @brief Updates IPv4 lease.
+    ///
+    /// @param lease4 The lease to be updated.
+    ///
+    /// If no such lease is present, an exception will be thrown.
+    virtual void updateLease6(Lease6Ptr lease6) = 0;
 
     /// @brief Deletes a lease.
     ///
     /// @param addr IPv4 address of the lease to be deleted.
     ///
     /// @return true if deletion was successful, false if no such lease exists
-    bool deleteLease4(uint32_t addr);
+    virtual bool deleteLease4(uint32_t addr) = 0;
 
     /// @brief Deletes a lease.
     ///
     /// @param addr IPv4 address of the lease to be deleted.
     ///
     /// @return true if deletion was successful, false if no such lease exists
-    bool deleteLease6(isc::asiolink::IOAddress addr);
+    virtual bool deleteLease6(isc::asiolink::IOAddress addr) = 0;
 
+    /// @brief Returns backend name.
+    ///
+    /// Each backend have specific name, e.g. "mysql" or "sqlite".
+    virtual std::string getName() const = 0;
+
+    /// @brief Returns description of the backend.
+    ///
+    /// This description may be multiline text that describes the backend.
+    virtual std::string getDescription() const = 0;
+
+    /// @brief Returns backend version.
+    virtual std::string getVersion() const = 0;
+
+    /// @todo: Add pool management here
+
+    /// @todo: Add host management here
 protected:
 
+    /// @brief list of parameters passed in dbconfig
+    std::map<std::string, std::string> parameters_;
 };
 
 
+}; // end of isc::dhcp namespace
 
-
-};
+}; // end of isc namespace
