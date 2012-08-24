@@ -58,6 +58,8 @@ void SQLite_uBenchmark::disconnect() {
     if (db_) {
         sqlite3_close(db_);
         db_ = NULL;
+    } else {
+        throw "Can't close SQLite connection: it was never open.";
     }
 }
 
@@ -81,7 +83,7 @@ void SQLite_uBenchmark::createLease4Test() {
     bool fqdn_fwd = true;           // Let's pretend to do AAAA update
     bool fqdn_rev = true;           // Let's pretend to do PTR update
 
-    printf("CREATE:   ");
+    cout << "CREATE:   ";
 
     for (uint8_t i = 0; i < hwaddr_len; i++) {
         hwaddr[i] = 65 + i;
@@ -126,7 +128,6 @@ void SQLite_uBenchmark::createLease4Test() {
                     addr, hwaddr, client_id, valid_lft, recycle_time,
                     cltt, pool_id, (fixed?"true":"false"),
                     hostname.c_str(), (fqdn_fwd?"true":"false"), (fqdn_rev?"true":"false"));
-            // printf("QUERY=[%s]\n", query);
 
             int result = sqlite3_exec(db_, query, NULL, 0, &errorMsg);
 
@@ -204,7 +205,7 @@ void SQLite_uBenchmark::createLease4Test() {
         }
 
         if (verbose_) {
-            printf(".");
+            cout << ".";
         }
     }
 
@@ -215,23 +216,30 @@ void SQLite_uBenchmark::createLease4Test() {
         }
     }
 
-    printf("\n");
+    cout << endl;
 }
 
-static int search_callback(void *counter, int /*argc*/, char** /*argv*/,
-                           char** /*azColName*/){
+static int search_callback(void *counter, int argc, char** argv,
+                           char** azColName){
 
     int* cnt = static_cast<int*>(counter);
     (*cnt)++;
 
-#if 0
-    int i;
-    for(i=0; i<argc; i++){
-        printf("%s=%s ", azColName[i], argv[i] ? argv[i] : "NULL");
+    char buf[512];
+
+    // retrieved lease can be accessed here
+    for(int i = 0; i < argc; i++){
+        // pretend we do something with returned lease
+        if (argv[i]) {
+            strncpy(buf, azColName[i], 512);
+            strncpy(buf, argv[i], 512);
+        }
+
+        // Uncomment this to print out all contents
+        // cout << azColName[i] << "=" << (argv[i] ? argv[i] : "NULL") << endl;
     }
-    printf("\n");
-#endif
-    return 0;
+
+    return (0);
 }
 
 void SQLite_uBenchmark::searchLease4Test() {
@@ -239,7 +247,7 @@ void SQLite_uBenchmark::searchLease4Test() {
         throw "SQLite connection is closed.";
     }
 
-    printf("RETRIEVE: ");
+    cout << "RETRIEVE: ";
 
     sqlite3_stmt *stmt = NULL;
     if (compiled_stmt_) {
@@ -331,7 +339,7 @@ void SQLite_uBenchmark::searchLease4Test() {
         }
 
         if (verbose_) {
-            printf("%s", (cnt?".":"X"));
+            cout << (cnt?".":"X");
         }
     }
 
@@ -342,7 +350,7 @@ void SQLite_uBenchmark::searchLease4Test() {
         }
     }
 
-    printf("\n");
+    cout << endl;
 }
 
 void SQLite_uBenchmark::updateLease4Test() {
@@ -350,7 +358,7 @@ void SQLite_uBenchmark::updateLease4Test() {
         throw "SQLite connection is closed.";
     }
 
-    printf("UPDATE:   ");
+    cout << "UPDATE:   ";
 
     sqlite3_stmt *stmt = NULL;
     if (compiled_stmt_) {
@@ -400,7 +408,7 @@ void SQLite_uBenchmark::updateLease4Test() {
         }
 
         if (verbose_) {
-            printf(".");
+            cout << ".";
         }
     }
 
@@ -411,7 +419,7 @@ void SQLite_uBenchmark::updateLease4Test() {
         }
     }
 
-    printf("\n");
+    cout << endl;
 }
 
 void SQLite_uBenchmark::deleteLease4Test() {
@@ -419,7 +427,7 @@ void SQLite_uBenchmark::deleteLease4Test() {
         throw "SQLite connection is closed.";
     }
 
-    printf("DELETE:   ");
+    cout << "DELETE:   ";
 
     sqlite3_stmt *stmt = NULL;
     if (compiled_stmt_) {
@@ -467,7 +475,7 @@ void SQLite_uBenchmark::deleteLease4Test() {
 
         }
         if (verbose_) {
-            printf(".");
+            cout << ".";
         }
     }
 
@@ -478,7 +486,7 @@ void SQLite_uBenchmark::deleteLease4Test() {
         }
     }
 
-    printf("\n");
+    cout << endl;
 }
 
 void SQLite_uBenchmark::printInfo() {

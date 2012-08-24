@@ -101,7 +101,7 @@ void MySQL_uBenchmark::createLease4Test() {
     sprintf(cltt, "2012-07-11 15:43:00");
     cltt_len = strlen(cltt);
 
-    uint32_t pool_id = 1000;       // Let's use pools 0-99
+    uint32_t pool_id = 1000;       // Let's use pool-ids greater than zero
     bool fixed = false;
 
     char hostname[] = "foo";    // Will generate it dynamically
@@ -111,17 +111,18 @@ void MySQL_uBenchmark::createLease4Test() {
     bool fqdn_fwd = true;       // Let's pretend to do AAAA update
     bool fqdn_rev = true;       // Let's pretend to do PTR update
 
-    printf("CREATE:   ");
+    cout << "CREATE:   ";
 
-    for (uint8_t i = 0; i < 20; i++) {
-        hwaddr[i] = 65 + i;
+    for (uint8_t i = 0; i < hwaddr_len; i++) {
+        hwaddr[i] = 'A' + i; // let's make hwaddr consisting of letters
     }
-    hwaddr[19] = 0;
+    hwaddr[19] = 0; // make it is null-terminated
 
-    for (uint8_t i = 0; i < 128; i++) {
-        client_id[i] = 33 + i;
+    for (uint8_t i = 0; i < client_id_len; i++) {
+        client_id[i] = 33 + i; // 33 is being the first, non whitespace
+                               // printable ASCII character
     }
-    client_id[127] = 0;
+    client_id[127] = 0; // make it is null-terminated
 
     MYSQL_STMT * stmt = NULL;
     MYSQL_BIND bind[11]; // 11 parameters in the insert statement
@@ -262,7 +263,7 @@ void MySQL_uBenchmark::createLease4Test() {
         }
 
         if (verbose_) {
-            printf(".");
+            cout << ".";
         }
     }
 
@@ -272,7 +273,7 @@ void MySQL_uBenchmark::createLease4Test() {
         }
     }
 
-    printf("\n");
+    cout << endl;
 }
 
 void MySQL_uBenchmark::searchLease4Test() {
@@ -280,7 +281,7 @@ void MySQL_uBenchmark::searchLease4Test() {
         throw "Not connected to MySQL server.";
     }
 
-    printf("RETRIEVE: ");
+    cout << "RETRIEVE: ";
 
     uint32_t addr = 0;
 
@@ -348,12 +349,12 @@ void MySQL_uBenchmark::searchLease4Test() {
                 mysql_free_result(result);
 
                 if (verbose_) {
-                    printf("."); // hit
+                    cout << "."; // hit
                 }
 
             } else {
                 if (verbose_) {
-                    printf("x"); // miss
+                    cout << "x"; // miss
                 }
             }
         } else {
@@ -438,7 +439,7 @@ void MySQL_uBenchmark::searchLease4Test() {
 
             if (mysql_stmt_bind_result(stmt, response))
             {
-                printf("Error: %s\n", mysql_stmt_error(stmt));
+                cout << "Error:" << mysql_stmt_error(stmt) << endl;
                 failure("mysql_stmt_bind_result() failed");
             }
             int num_rows = 0;
@@ -456,11 +457,11 @@ void MySQL_uBenchmark::searchLease4Test() {
 
             if (num_rows) {
                 if (verbose_) {
-                    printf("."); // hit
+                    cout << "."; // hit
                 }
             } else {
                 if (verbose_) {
-                    printf("x"); // miss
+                    cout << "X"; // miss
                 }
             }
 
@@ -473,7 +474,7 @@ void MySQL_uBenchmark::searchLease4Test() {
         }
     }
 
-    printf("\n");
+    cout << endl;
 }
 
 void MySQL_uBenchmark::updateLease4Test() {
@@ -481,7 +482,7 @@ void MySQL_uBenchmark::updateLease4Test() {
         throw "Not connected to MySQL server.";
     }
 
-    printf("UPDATE:   ");
+    cout << "UPDATE:   ";
 
     uint32_t valid_lft = 1002; // just some dummy value
     char cltt[] = "now()";
@@ -541,7 +542,7 @@ void MySQL_uBenchmark::updateLease4Test() {
         }
 
         if (verbose_) {
-            printf(".");
+            cout << ".";
         }
     }
 
@@ -551,7 +552,7 @@ void MySQL_uBenchmark::updateLease4Test() {
         }
     }
 
-    printf("\n");
+    cout << endl;
 }
 
 void MySQL_uBenchmark::deleteLease4Test() {
@@ -559,7 +560,7 @@ void MySQL_uBenchmark::deleteLease4Test() {
         throw "Not connected to MySQL server.";
     }
 
-    printf("DELETE:   ");
+    cout << "DELETE:   ";
 
     uint32_t addr = 0;
 
@@ -612,7 +613,7 @@ void MySQL_uBenchmark::deleteLease4Test() {
         }
 
         if (verbose_) {
-            printf(".");
+            cout << ".";
         }
     }
 
@@ -622,7 +623,7 @@ void MySQL_uBenchmark::deleteLease4Test() {
         }
     }
 
-    printf("\n");
+    cout << endl;
 }
 
 void MySQL_uBenchmark::printInfo() {
