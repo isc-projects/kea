@@ -16,6 +16,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <unistd.h>
+#include <signal.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 
@@ -36,6 +37,8 @@ using namespace isc::asiolink;
 
 namespace isc {
 namespace perfdhcp {
+
+bool TestControl::interrupted_ = false;
 
 TestControl::TestControlSocket::TestControlSocket(int socket) :
     socket_(socket),
@@ -84,8 +87,11 @@ TestControl::TestControl() {
 
 bool
 TestControl::checkExitConditions() const {
+    if (interrupted_) {
+        return(true);
+    }
     CommandOptions& options = CommandOptions::instance();
-    // Check if test period passed..
+    // Check if test period passed.
     if (options.getPeriod() != 0) {
         if (options.getIpVersion() == 4) {
             time_period period(stats_mgr4_->getTestPeriod());
@@ -382,6 +388,11 @@ TestControl::getSentPacketsNum(const ExchangeType xchg_type) const {
     }
     return(stats_mgr6_->
            getSentPacketsNum(static_cast<StatsMgr6::ExchangeType>(xchg_type)));
+}
+
+void
+TestControl::handleInterrupt(int) {
+    interrupted_ = true;
 }
 
 void
@@ -692,6 +703,7 @@ TestControl::reset() {
     transid_gen_.reset();
     transid_gen_ = TransidGeneratorPtr(new TransidGenerator());
     first_packet_serverid_.clear();
+    interrupted_ = false;
 }
 
 void
@@ -721,6 +733,9 @@ TestControl::run() {
     if (options.isSeeded()) {
         srandom(options.getSeed());
     }
+
+    // If user interrupts the program we will exit gracefully.
+    signal(SIGINT, TestControl::handleInterrupt);
 
     // Preload server with number of packets.
     const bool do_preload = true;

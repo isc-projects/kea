@@ -584,6 +584,14 @@ private:
     /// \return number of sent packets.
     uint64_t getSentPacketsNum(const ExchangeType xchg_type) const;
 
+    /// \brief Handle interrupt signal.
+    ///
+    /// Function sets flag indicating that program has been
+    /// interupted.
+    ///
+    /// \param sig signal (ignored)
+    static void handleInterrupt(int sig);
+
     boost::posix_time::ptime send_due_;    ///< Due time to initiate next chunk
                                            ///< of exchanges.
     boost::posix_time::ptime last_sent_;   ///< Indicates when the last exchange
@@ -601,6 +609,8 @@ private:
 
     /// Packet template buffers.
     TemplateBufferList template_buffers_;
+
+    static bool interrupted_;
 
     uint64_t sent_packets_0_;
     uint64_t sent_packets_1_;
