@@ -140,32 +140,33 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
                     client(new_data_sources.back().data_src_client_);
                 for (vector<string>::const_iterator it(zones_origins.begin());
                      it != zones_origins.end(); ++it) {
-                    try {
-                        const Name origin(*it);
-                        shared_ptr<InMemoryZoneFinder>
-                            finder(new
-                                InMemoryZoneFinder(rrclass_, origin));
-                        if (type == "MasterFiles") {
+                    const Name origin(*it);
+                    shared_ptr<InMemoryZoneFinder>
+                        finder(new
+                            InMemoryZoneFinder(rrclass_, origin));
+                    if (type == "MasterFiles") {
+                        try {
                             finder->load(paramConf->get(*it)->stringValue());
-                        } else {
-                            ZoneIteratorPtr iterator;
-                            try {
-                                iterator = client->getIterator(origin);
-                            } catch (const DataSourceError&) {
-                                isc_throw(ConfigurationError, "Unable to "
-                                          "cache non-existent zone "
-                                          << origin);
-                            }
-                            if (!iterator) {
-                                isc_throw(isc::Unexpected, "Got NULL iterator "
-                                          "for zone " << origin);
-                            }
-                            finder->load(*iterator);
+                            cache->addZone(finder);
+                        } catch (const isc::dns::MasterLoadError& mle) {
+                            LOG_ERROR(logger, DATASRC_MASTERLOAD_ERROR)
+                                .arg(mle.what());
                         }
+                    } else {
+                        ZoneIteratorPtr iterator;
+                        try {
+                            iterator = client->getIterator(origin);
+                        } catch (const DataSourceError&) {
+                            isc_throw(ConfigurationError, "Unable to "
+                                      "cache non-existent zone "
+                                      << origin);
+                        }
+                        if (!iterator) {
+                            isc_throw(isc::Unexpected, "Got NULL iterator "
+                                      "for zone " << origin);
+                        }
+                        finder->load(*iterator);
                         cache->addZone(finder);
-                    } catch (const isc::dns::MasterLoadError& mle) {
-                        LOG_ERROR(logger, DATASRC_MASTERLOAD_ERROR)
-                            .arg(mle.what());
                     }
                 }
             }
