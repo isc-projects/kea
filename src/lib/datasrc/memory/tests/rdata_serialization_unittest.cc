@@ -12,10 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-// Note: This file tests both the rdata_encoder and rdata_reader. They are
-// tested together because they form kind the opposite sides of the same
-// functionality.
-
 #include <exceptions/exceptions.h>
 
 #include <util/buffer.h>
@@ -28,9 +24,7 @@
 #include <dns/rrclass.h>
 #include <dns/rrtype.h>
 
-#include <datasrc/memory/rdata_encoder.h>
-#include <datasrc/memory/rdata_field.h>
-#include <datasrc/memory/rdata_reader.h>
+#include <datasrc/memory/rdata_serialization.h>
 
 #include <util/unittests/wiredata.h>
 
@@ -51,6 +45,18 @@ using namespace isc::datasrc::memory;
 using isc::util::unittests::matchWireData;
 using std::string;
 using std::vector;
+
+// A trick to steal some private definitions of the implementation we use here
+
+namespace isc {
+namespace datasrc{
+namespace memory {
+
+#include "../rdata_serialization_priv.cc"
+
+}
+}
+}
 
 namespace {
 // This defines a tuple of test data used in test_rdata_list below.
