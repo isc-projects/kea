@@ -86,43 +86,43 @@ protected:
     void writeLease(Lease4Ptr lease);
 
     /// Name of the lease file.
-    std::string Filename_;
+    std::string filename_;
 
     /// should we do flush after each operation?
-    bool Sync_;
+    bool sync_;
 
     /// File handle to the open lease file.
-    FILE * File_;
+    FILE * file_;
 
     /// Hash table for IPv4 leases
     IPv4Hash ip4Hash_;
 };
 
 memfile_LeaseMgr::memfile_LeaseMgr(const std::string& filename, bool sync)
-    : Filename_(filename), Sync_(sync) {
-    File_ = fopen(filename.c_str(), "w");
-    if (!File_) {
+    : filename_(filename), sync_(sync) {
+    file_ = fopen(filename.c_str(), "w");
+    if (!file_) {
         throw "Failed to create file " + filename;
     }
 
 }
 
 memfile_LeaseMgr::~memfile_LeaseMgr() {
-    fclose(File_);
+    fclose(file_);
 }
 
 void memfile_LeaseMgr::writeLease(Lease4Ptr lease) {
-    fprintf(File_, "lease %d {\n  hw-addr ", lease->addr);
+    fprintf(file_, "lease %d {\n  hw-addr ", lease->addr);
     for (std::vector<uint8_t>::const_iterator it = lease->hwaddr.begin();
          it != lease->hwaddr.end(); ++it) {
-        fprintf(File_,"%02x:", *it);
+        fprintf(file_, "%02x:", *it);
     }
-    fprintf(File_, ";\n client-id ");
+    fprintf(file_, ";\n client-id ");
     for (std::vector<uint8_t>::const_iterator it = lease->client_id.begin();
          it != lease->client_id.end(); ++it) {
-        fprintf(File_, "%02x:", *it);
+        fprintf(file_, "%02x:", *it);
     }
-    fprintf(File_, ";\n  valid-lifetime %d;\n  recycle-time %d;\n"
+    fprintf(file_, ";\n  valid-lifetime %d;\n  recycle-time %d;\n"
             "  cltt %d;\n  pool-id %d;\n  fixed %s;  hostname %s;\n"
             "  fqdn_fwd %s;\n  fqdn_rev %s;\n};\n",
             lease->valid_lft, lease->recycle_time, (int)lease->cltt,
@@ -130,9 +130,9 @@ void memfile_LeaseMgr::writeLease(Lease4Ptr lease) {
             lease->hostname.c_str(), lease->fqdn_fwd?"true":"false",
             lease->fqdn_rev?"true":"false");
 
-    if (Sync_) {
-        fflush(File_);
-        fsync(fileno(File_));
+    if (sync_) {
+        fflush(file_);
+        fsync(fileno(file_));
     }
 }
 
@@ -219,21 +219,22 @@ void memfile_uBenchmark::createLease4Test() {
     bool fqdn_fwd = true;           // Let's pretend to do AAAA update
     bool fqdn_rev = true;           // Let's pretend to do PTR update
 
-    printf("CREATE:   ");
+    cout << "CREATE:   ";
 
     // While we could put the data directly into vector, I would like to
     // keep the code as  similar to other benchmarks as possible
-    for (uint8_t i = 0; i < hwaddr_len; i++) {
-        hwaddr_tmp[i] = 65 + i;
+    for (uint8_t i = 0; i < hwaddr_len; ++i) {
+        hwaddr_tmp[i] = 'A' + i; // let's make hwaddr consisting of letter
     }
-    vector<uint8_t> hwaddr(hwaddr_tmp, hwaddr_tmp + 19);
+    vector<uint8_t> hwaddr(hwaddr_tmp, hwaddr_tmp + hwaddr_len - 1);
 
     for (uint8_t i = 0; i < client_id_len; i++) {
-        client_id_tmp[i] = 33 + i;
+        client_id_tmp[i] = 33 + i; // 33 is being the first, non whitespace
+                                   // printable ASCII character
     }
-    vector<uint8_t> client_id(client_id_tmp, client_id_tmp + 19);
+    vector<uint8_t> client_id(client_id_tmp, client_id_tmp + client_id_len - 1);
 
-    for (uint32_t i = 0; i < num_; i++) {
+    for (uint32_t i = 0; i < num_; ++i) {
 
         cltt++;
 
@@ -254,13 +255,13 @@ void memfile_uBenchmark::createLease4Test() {
             failure("addLease() failed");
         } else {
             if (verbose_) {
-                printf(".");
+                cout << ".";
             }
         };
 
         addr++;
     }
-    printf("\n");
+    cout << endl;
 }
 
 void memfile_uBenchmark::searchLease4Test() {
@@ -268,25 +269,18 @@ void memfile_uBenchmark::searchLease4Test() {
         throw "No LeaseMgr instantiated.";
     }
 
-    // This formula should roughly find something a lease in 90% cases
-    float hitRatio = 0.5;
-
-    printf("RETRIEVE: ");
+    cout << "RETRIEVE: ";
 
     for (uint32_t i = 0; i < num_; i++) {
-        uint32_t x = BASE_ADDR4 + random() % int(num_ / hitRatio);
+        uint32_t x = BASE_ADDR4 + random() % int(num_ / hitratio_);
 
         Lease4Ptr lease = leaseMgr_->getLease(x);
         if (verbose_) {
-            if (lease) {
-                printf(".");
-            } else {
-                printf("X");
-            }
+            cout << (lease?".":"X");
         }
     }
 
-    printf("\n");
+    cout << endl;
 }
 
 void memfile_uBenchmark::updateLease4Test() {
@@ -294,7 +288,7 @@ void memfile_uBenchmark::updateLease4Test() {
         throw "No LeaseMgr instantiated.";
     }
 
-    printf("UPDATE:   ");
+    cout << "UPDATE:   ";
 
     time_t cltt = time(NULL);
 
@@ -309,11 +303,11 @@ void memfile_uBenchmark::updateLease4Test() {
             failure(tmp.str().c_str());
         }
         if (verbose_) {
-            printf(".");
+            cout << ".";
         }
     }
 
-    printf("\n");
+    cout << endl;
 }
 
 void memfile_uBenchmark::deleteLease4Test() {
@@ -321,7 +315,7 @@ void memfile_uBenchmark::deleteLease4Test() {
         throw "No LeaseMgr instantiated.";
     }
 
-    printf("DELETE:   ");
+    cout << "DELETE:   ";
 
     for (uint32_t i = 0; i < num_; i++) {
 
@@ -333,11 +327,11 @@ void memfile_uBenchmark::deleteLease4Test() {
             failure(tmp.str().c_str());
         }
         if (verbose_) {
-            printf(".");
+            cout << ".";
         }
     }
 
-    printf("\n");
+    cout << endl;
 }
 
 void memfile_uBenchmark::printInfo() {
