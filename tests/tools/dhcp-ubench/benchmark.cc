@@ -36,12 +36,11 @@ uBenchmark::uBenchmark(uint32_t iterations, const std::string& dbname,
                        const std::string& pass /* = "" */)
     :num_(iterations), sync_(sync), verbose_(verbose),
      hostname_(host), user_(user), passwd_(pass), dbname_(dbname),
-     compiled_stmt_(true)
+     hitratio_(0.9f), compiled_stmt_(true)
 {
     /// @todo: make compiled statements a configurable parameter
 
-    /// @todo: convert this to user-configurable parameter
-    hitratio_ = 0.9f;
+    /// @todo: convert hitratio_ to user-configurable parameter
 
     memset(ts_, 0, sizeof(ts_));
 }
@@ -57,9 +56,10 @@ void uBenchmark::usage() {
     cout << " -u username - specifies MySQL user name (MySQL backend only)" << endl;
     cout << " -p password - specifies MySQL passwod (MySQL backend only)" << endl;
     cout << " -f name - database or filename (MySQL, SQLite and memfile)" << endl;
-    cout << " -n integer - number of test repetitions (MySQL, SQLite and memfile)" << endl;
+    cout << " -n integer - number of test iterations (MySQL, SQLite and memfile)" << endl;
     cout << " -s yes|no - synchronous/asynchronous operation (MySQL, SQLite and memfile)" << endl;
     cout << " -v yes|no - verbose mode (MySQL, SQLite and memfile)" << endl;
+    cout << " -c yes|no - compiled statements (MySQL and SQLite)" << endl;
 
     exit(EXIT_FAILURE);
 }
@@ -85,9 +85,10 @@ void uBenchmark::parseCmdline(int argc, char* const argv[]) {
             break;
         case 'n':
             try {
-                num_ = boost::lexical_cast<int>(optarg);
+                num_ = boost::lexical_cast<unsigned int>(optarg);
             } catch (const boost::bad_lexical_cast &) {
-                cerr << "Failed to iterations (-n option)." << endl;
+                cerr << "Failed to parse number of iterations (-n option):"
+                     << optarg << endl;
                 usage();
             }
             break;
@@ -111,9 +112,9 @@ void uBenchmark::failure(const char* operation) {
     throw string(operation);
 }
 
-void uBenchmark::print_clock(const std::string& operation, uint32_t num,
-                 const struct timespec& before,
-                 const struct timespec& after) {
+void uBenchmark::printClock(const std::string& operation, uint32_t num,
+                            const struct timespec& before,
+                            const struct timespec& after) {
     long int tv_sec = after.tv_sec - before.tv_sec;
 
     long int tv_nsec = after.tv_nsec - before.tv_nsec;
@@ -149,19 +150,19 @@ int uBenchmark::run() {
     try {
         connect();
 
-        ts_[0] = get_time();
+        ts_[0] = getTime();
 
         createLease4Test();
-        ts_[1] = get_time();
+        ts_[1] = getTime();
 
         searchLease4Test();
-        ts_[2] = get_time();
+        ts_[2] = getTime();
 
         updateLease4Test();
-        ts_[3] = get_time();
+        ts_[3] = getTime();
 
         deleteLease4Test();
-        ts_[4] = get_time();
+        ts_[4] = getTime();
 
         disconnect();
 
@@ -170,15 +171,15 @@ int uBenchmark::run() {
         return (-1);
     }
 
-    print_clock("Create leases4", num_, ts_[0], ts_[1]);
-    print_clock("Search leases4", num_, ts_[1], ts_[2]);
-    print_clock("Update leases4", num_, ts_[2], ts_[3]);
-    print_clock("Delete leases4", num_, ts_[3], ts_[4]);
+    printClock("Create leases4", num_, ts_[0], ts_[1]);
+    printClock("Search leases4", num_, ts_[1], ts_[2]);
+    printClock("Update leases4", num_, ts_[2], ts_[3]);
+    printClock("Delete leases4", num_, ts_[3], ts_[4]);
 
     return (0);
 }
 
-struct timespec uBenchmark::get_time() {
+struct timespec uBenchmark::getTime() {
     struct timespec ts;
 
 #ifdef __MACH__ // OS X does not have clock_gettime, use clock_get_time

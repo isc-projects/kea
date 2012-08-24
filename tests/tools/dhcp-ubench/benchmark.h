@@ -67,11 +67,11 @@ public:
     ///
     /// That benchmark method will be called first.
     /// It is expected to create specific number of leases,
-    /// as specified by \ref Num_ parameter. Following
+    /// as specified by \ref num_ parameter. Following
     /// methods (searchLease4Test(), updateLease4Test(),
     /// and deleteLease4Test()) assume that lease creation
     /// is successful. The benchmark is expected to create leases
-    /// starting from BASE_ADDR4 and ending on BASE_ADDR4 + Num_.
+    /// starting from BASE_ADDR4 and ending on BASE_ADDR4 + num_.
     ///
     /// The implementation is provided by the DB-specific class.
     virtual void createLease4Test() = 0;
@@ -80,10 +80,10 @@ public:
     ///
     /// This is the second benchmark in a series of four.
     /// It is called after createLease4Test(), so it expects that the
-    /// database is populated with at least \ref Num_ leases.
-    /// It repeats search for a lease Num_ times.
+    /// database is populated with at least \ref num_ leases.
+    /// It repeats search for a lease num_ times.
     ///
-    /// The algorithm randomly picks a lease with HitRatio_ (typically 90%)
+    /// The algorithm randomly picks a lease with \ref hitratio_ (typically 90%)
     /// chance of finding a lease. During typical DHCP operation the server
     /// sometimes wants to check if specific lease is assigned or not and the
     /// lease is sometimes not present (e.g. when randomly trying to pick a new
@@ -98,15 +98,15 @@ public:
     ///
     /// This is the third benchmark in a series of four.
     /// It is called after createLease4Test(), so it expects that the
-    /// database is populated with at least \ref Num_ leases.
+    /// database is populated with at least \ref num_ leases.
     ///
     /// In a normal DHCP operation, search and update operations are used
     /// together, but for the benchmarking purposes they are executed
     /// separately here. Once a lease is found, it is being updated. Typically
     /// the update is just changing lease expiration timers, so that is what
-    /// the test does. It exploits the fact that there are Num_ leases
+    /// the test does. It exploits the fact that there are num_ leases
     /// in the database, so it picks randomly an address from
-    /// BASE_ADDR4 ... BASE_ADDR4+Num_ range and has a guarantee for the lease
+    /// BASE_ADDR4 ... BASE_ADDR4 + num_ range and has a guarantee for the lease
     /// to be present.
     ///
     /// The implementation is provided by the DB-specific class.
@@ -116,9 +116,9 @@ public:
     ///
     /// This is the last benchmark in a series of four.
     /// It is called after createLease4Test(), so it expects that the
-    /// database is populated with at least \ref Num_ leases.
+    /// database is populated with at least \ref num_ leases.
     ///
-    /// It is expected to iteratively delete all Num_ leases from
+    /// It is expected to iteratively delete all num_ leases from
     /// the database.
     ///
     /// The implementation is provided by the DB-specific class.
@@ -143,9 +143,9 @@ public:
     /// @param num number or iterations (used for statistics)
     /// @param before timestamp before execution
     /// @param after timestamp after execution
-    void print_clock(const std::string& operation, uint32_t num,
-                     const struct timespec& before,
-                     const struct timespec& after);
+    void printClock(const std::string& operation, uint32_t num,
+                    const struct timespec& before,
+                    const struct timespec& after);
 
     /// @brief Main benchmark execution routine
     ///
@@ -173,7 +173,7 @@ protected:
     void usage();
 
     /// @brief a wrapper around OS-specific method for getting time
-    struct timespec get_time();
+    struct timespec getTime();
 
     /// Number of operations (e.g. insert lease num times)
     uint32_t num_;

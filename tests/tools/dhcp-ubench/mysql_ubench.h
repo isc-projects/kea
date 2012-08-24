@@ -33,7 +33,7 @@ public:
     ///
     /// Synchronous operation means using InnDB, async is MyISAM.
     ///
-    /// @param hostname Name of the hostname to connect to
+    /// @param hostname Name of the host to connect to
     /// @param user usename used during MySQL connection
     /// @param pass password used during MySQL connection
     /// @param db name of the database to connect to
