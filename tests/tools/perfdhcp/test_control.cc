@@ -78,15 +78,27 @@ TestControl::instance() {
     return (test_control);
 }
 
-TestControl::TestControl() :
-    send_due_(microsec_clock::universal_time()),
-    last_sent_(send_due_),
-    transid_gen_(new TransidGenerator()) {
+TestControl::TestControl() {
+    reset();
 }
 
 bool
 TestControl::checkExitConditions() const {
     CommandOptions& options = CommandOptions::instance();
+    // Check if test period passed..
+    if (options.getPeriod() != 0) {
+        if (options.getIpVersion() == 4) {
+            time_period period(stats_mgr4_->getTestPeriod());
+            if (period.length().total_seconds() >= options.getPeriod()) {
+                return true;
+            }
+        } else if (options.getIpVersion() == 6) {
+            time_period period = stats_mgr6_->getTestPeriod();
+            if (period.length().total_seconds() >= options.getPeriod()) {
+                return true;
+            }
+        }
+    }
     // Check if we reached maximum number of DISCOVER/SOLICIT sent.
     if (options.getNumRequests().size() > 0) {
         if (options.getIpVersion() == 4) {
@@ -167,14 +179,14 @@ TestControl::checkExitConditions() const {
             if ((stats_mgr4_->getSentPacketsNum(StatsMgr4::XCHG_RA) > 10) &&
                 ((100. * stats_mgr4_->getDroppedPacketsNum(StatsMgr4::XCHG_RA) /
                  stats_mgr4_->getSentPacketsNum(StatsMgr4::XCHG_RA)) >=
-                 options.getMaxDropPercentage()[0])) {
+                 options.getMaxDropPercentage()[1])) {
                 return(true);
             }
         } else if (options.getIpVersion() == 6) {
             if ((stats_mgr6_->getSentPacketsNum(StatsMgr6::XCHG_RR) > 10) &&
                 ((100. * stats_mgr6_->getDroppedPacketsNum(StatsMgr6::XCHG_RR) /
                   stats_mgr6_->getSentPacketsNum(StatsMgr6::XCHG_RR)) >=
-                 options.getMaxDropPercentage()[0])) {
+                 options.getMaxDropPercentage()[1])) {
                 return(true);
             }
         }
@@ -373,6 +385,18 @@ TestControl::getSentPacketsNum(const ExchangeType xchg_type) const {
 }
 
 void
+TestControl::initPacketTemplates() {
+    CommandOptions& options = CommandOptions::instance();
+    std::vector<std::string> template_files = options.getTemplateFiles();
+    for (std::vector<std::string>::const_iterator it = template_files.begin();
+         it != template_files.end();
+         ++it) {
+
+        std::cout << "Open file " << *it << std::endl;
+    }
+}
+
+void
 TestControl::initializeStatsMgr() {
     CommandOptions& options = CommandOptions::instance();
     if (options.getIpVersion() == 4) {
@@ -394,10 +418,11 @@ TestControl::initializeStatsMgr() {
 }
 
 int
-TestControl::openSocket(uint16_t port) const {
+TestControl::openSocket() const {
     CommandOptions& options = CommandOptions::instance();
     std::string localname = options.getLocalName();
     std::string servername = options.getServerName();
+    uint16_t port = options.getLocalPort();
     uint8_t family = AF_INET;
     int sock = 0;
     IOAddress remoteaddr(servername);
@@ -522,18 +547,18 @@ TestControl::printStats() const {
 }
 
 void
-TestControl::receivePacket4(const TestControlSocket&,
+TestControl::receivePacket4(const TestControlSocket& socket,
                             const Pkt4Ptr& pkt4) {
-    switch(pkt4->getType()) {
-    case DHCPOFFER :
-        stats_mgr4_->passRcvdPacket(StatsMgr4::XCHG_DO, pkt4);
-        break;
-    case DHCPACK :
+    if (pkt4->getType() == DHCPOFFER) {
+        Pkt4Ptr discover_pkt4(stats_mgr4_->passRcvdPacket(StatsMgr4::XCHG_DO,
+                                                          pkt4));
+        CommandOptions::ExchangeMode xchg_mode =
+            CommandOptions::instance().getExchangeMode();
+        if ((xchg_mode == CommandOptions::DORA_SARR) && discover_pkt4) {
+            sendRequest4(socket, pkt4);
+        }
+    } else if (pkt4->getType() == DHCPACK) {
         stats_mgr4_->passRcvdPacket(StatsMgr4::XCHG_RA, pkt4);
-        break;
-    default:
-        isc_throw(BadValue, "unknown type " << pkt4->getType()
-                  << " of received DHCPv4 packet");
     }
 }
 
@@ -544,14 +569,13 @@ TestControl::receivePacket6(const TestControlSocket& socket,
     if (packet_type == DHCPV6_ADVERTISE) {
         Pkt6Ptr solicit_pkt6(stats_mgr6_->passRcvdPacket(StatsMgr6::XCHG_SA,
                                                          pkt6));
-        if (solicit_pkt6) {
+        CommandOptions::ExchangeMode xchg_mode =
+            CommandOptions::instance().getExchangeMode();
+        if ((xchg_mode == CommandOptions::DORA_SARR) && solicit_pkt6) {
             sendRequest6(socket, solicit_pkt6, pkt6);
         }
     } else if (packet_type == DHCPV6_REPLY) {
         stats_mgr6_->passRcvdPacket(StatsMgr6::XCHG_RR, pkt6);
-    } else {
-        isc_throw(BadValue, "unknown type " << pkt6->getType()
-                  << " of received DHCPv6 packet");
     }
 }
 
@@ -589,6 +613,9 @@ TestControl::registerOptionFactories4() const {
         LibDHCP::OptionFactoryRegister(Option::V4,
                                        DHO_DHCP_MESSAGE_TYPE,
                                        &TestControl::factoryGeneric);
+        LibDHCP::OptionFactoryRegister(Option::V4,
+                                       DHO_DHCP_SERVER_IDENTIFIER,
+                                       &TestControl::factoryGeneric);
         // DHCP_PARAMETER_REQUEST_LIST option factory.
         LibDHCP::OptionFactoryRegister(Option::V4,
                                        DHO_DHCP_PARAMETER_REQUEST_LIST,
@@ -613,7 +640,9 @@ TestControl::registerOptionFactories6() const {
         LibDHCP::OptionFactoryRegister(Option::V6,
                                        D6O_CLIENTID,
                                        &TestControl::factoryGeneric);
-
+        LibDHCP::OptionFactoryRegister(Option::V6,
+                                       D6O_SERVERID,
+                                       &TestControl::factoryGeneric);
         LibDHCP::OptionFactoryRegister(Option::V6,
                                        D6O_IA_NA,
                                        &TestControl::factoryIana6);
@@ -640,9 +669,22 @@ TestControl::registerOptionFactories() const {
 }
 
 void
+TestControl::reset() {
+    send_due_ = microsec_clock::universal_time();
+    last_sent_ = send_due_;
+    transid_gen_.reset();
+    transid_gen_ = TransidGeneratorPtr(new TransidGenerator());
+    first_packet_serverid_.clear();
+}
+
+void
 TestControl::run() {
     sent_packets_0_ = 0;
     sent_packets_1_ = 0;
+
+    // Reset singleton state before test starts.
+    reset();
+
     CommandOptions& options = CommandOptions::instance();
     // Ip version is not set ONLY in case the command options
     // were not parsed. This surely means that parse() function
@@ -655,7 +697,26 @@ TestControl::run() {
     registerOptionFactories();
     TestControlSocket socket(openSocket());
 
+    // Initialize packet templates.
+    initPacketTemplates();
+
+    // Initialize randomization seed.
+    if (options.isSeeded()) {
+        srandom(options.getSeed());
+    }
+
+    // Preload server with number of packets.
+    const bool do_preload = true;
+    for (int i = 0; i < options.getPreload(); ++i) {
+        if (options.getIpVersion() == 4) {
+            sendDiscover4(socket, do_preload);
+        } else if (options.getIpVersion() == 6) {
+            sendSolicit6(socket, do_preload);
+        }
+    }
+
     initializeStatsMgr();
+
     uint64_t packets_sent = 0;
     for (;;) {
         updateSendDue();
@@ -679,7 +740,8 @@ TestControl::run() {
 }
 
 void
-TestControl::sendDiscover4(const TestControlSocket& socket) {
+TestControl::sendDiscover4(const TestControlSocket& socket,
+                           const bool preload /*= false*/) {
     ++sent_packets_0_;
     last_sent_ = microsec_clock::universal_time();
     // Generate the MAC address to be passed in the packet.
@@ -703,18 +765,74 @@ TestControl::sendDiscover4(const TestControlSocket& socket) {
     setDefaults4(socket, pkt4);
     pkt4->pack();
     IfaceMgr::instance().send(pkt4);
+    if (!preload) {
+        if (!stats_mgr4_) {
+            isc_throw(InvalidOperation, "Statistics Manager for DHCPv4 "
+                      "hasn't been initialized");
+        }
+        stats_mgr4_->passSentPacket(StatsMgr4::XCHG_DO, pkt4);
+    }
+}
+
+void
+TestControl::sendRequest4(const TestControlSocket& socket,
+                          const dhcp::Pkt4Ptr& offer_pkt4) {
+    const uint32_t transid = generateTransid();
+    Pkt4Ptr pkt4(new Pkt4(DHCPREQUEST, transid));
+    OptionBuffer buf_msg_type;
+    buf_msg_type.push_back(DHCPREQUEST);
+    OptionPtr opt_msg_type = Option::factory(Option::V4, DHO_DHCP_MESSAGE_TYPE,
+                                             buf_msg_type);
+    pkt4->addOption(opt_msg_type);
+    if (first_packet_serverid_.size() > 0) {
+        pkt4->addOption(Option::factory(Option::V4, DHO_DHCP_SERVER_IDENTIFIER,
+                                        first_packet_serverid_));
+    } else {
+        OptionPtr opt_serverid =
+            offer_pkt4->getOption(DHO_DHCP_SERVER_IDENTIFIER);
+        if (!opt_serverid) {
+            isc_throw(BadValue, "there is no SERVER_IDENTIFIER option "
+                      << "in OFFER message");
+        }
+        if (CommandOptions::instance().isUseFirst() &&
+            stats_mgr4_->getRcvdPacketsNum(StatsMgr4::XCHG_DO) == 1) {
+            first_packet_serverid_ = opt_serverid->getData();
+        }
+        pkt4->addOption(opt_serverid);
+    }
+
+    /// Set client address.
+    asiolink::IOAddress yiaddr = offer_pkt4->getYiaddr();
+    if (!yiaddr.getAddress().is_v4()) {
+        isc_throw(BadValue, "the YIADDR returned in OFFER packet is not "
+                  " IPv4 address");
+    }
+    OptionPtr opt_requested_address =
+        OptionPtr(new Option(Option::V4, DHO_DHCP_REQUESTED_ADDRESS,
+                             OptionBuffer()));
+    opt_requested_address->setUint32(yiaddr);
+    pkt4->addOption(opt_requested_address);
+    OptionPtr opt_parameter_list =
+        Option::factory(Option::V4, DHO_DHCP_PARAMETER_REQUEST_LIST);
+    pkt4->addOption(opt_parameter_list);
+    // Set client's and server's ports as well as server's address,
+    // and local (relay) address.
+    setDefaults4(socket, pkt4);
+    pkt4->pack();
+    IfaceMgr::instance().send(pkt4);
     if (!stats_mgr4_) {
         isc_throw(InvalidOperation, "Statistics Manager for DHCPv4 "
                   "hasn't been initialized");
     }
-    stats_mgr4_->passSentPacket(StatsMgr4::XCHG_DO, pkt4);
+    stats_mgr4_->passSentPacket(StatsMgr4::XCHG_RA, pkt4);
 }
+
 
 void
 TestControl::sendRequest6(const TestControlSocket& socket,
                           const Pkt6Ptr& solicit_pkt6,
                           const Pkt6Ptr& advertise_pkt6) {
-    const uint32_t transid = static_cast<uint32_t>(random() % 0x00FFFFFF);
+    const uint32_t transid = generateTransid();
     Pkt6Ptr pkt6(new Pkt6(DHCPV6_REQUEST, transid));
     // Calculate elapsed time
     ptime solicit_time = solicit_pkt6->getTimestamp();
@@ -741,11 +859,20 @@ TestControl::sendRequest6(const TestControlSocket& socket,
         isc_throw(Unexpected, "client id not found in received packet");
     }
     pkt6->addOption(opt_clientid);
-    OptionPtr opt_serverid = advertise_pkt6->getOption(D6O_SERVERID);
-    if (!opt_serverid) {
-        isc_throw(Unexpected, "server id not found in received packet");
+    if (first_packet_serverid_.size() > 0) {
+        pkt6->addOption(Option::factory(Option::V6, D6O_SERVERID,
+                                        first_packet_serverid_));
+    } else {
+        OptionPtr opt_serverid = advertise_pkt6->getOption(D6O_SERVERID);
+        if (!opt_serverid) {
+            isc_throw(Unexpected, "server id not found in received packet");
+        }
+        if (CommandOptions::instance().isUseFirst() &&
+            stats_mgr6_->getRcvdPacketsNum(StatsMgr6::XCHG_SA) == 1) {
+            first_packet_serverid_ = opt_serverid->getData();
+        }
+        pkt6->addOption(opt_serverid);
     }
-    pkt6->addOption(opt_serverid);
     OptionPtr opt_ia_na = advertise_pkt6->getOption(D6O_IA_NA);
     if (!opt_ia_na) {
         isc_throw(Unexpected, "DHCPv6 IA_NA option not found in received "
@@ -764,7 +891,8 @@ TestControl::sendRequest6(const TestControlSocket& socket,
 }
 
 void
-TestControl::sendSolicit6(const TestControlSocket& socket) {
+TestControl::sendSolicit6(const TestControlSocket& socket,
+                          const bool preload /*= false*/) {
     ++sent_packets_0_;
     last_sent_ = microsec_clock::universal_time();
     // Generate the MAC address to be passed in the packet.
@@ -778,7 +906,9 @@ TestControl::sendSolicit6(const TestControlSocket& socket) {
         isc_throw(Unexpected, "failed to create SOLICIT packet");
     }
     pkt6->addOption(Option::factory(Option::V6, D6O_ELAPSED_TIME));
-    //    pkt6->addOption(Option::factory(Option::V6, D6O_RAPID_COMMIT));
+    if (CommandOptions::instance().isRapidCommit()) {
+        pkt6->addOption(Option::factory(Option::V6, D6O_RAPID_COMMIT));
+    }
     pkt6->addOption(Option::factory(Option::V6, D6O_CLIENTID, duid));
     pkt6->addOption(Option::factory(Option::V6, D6O_ORO));
     pkt6->addOption(Option::factory(Option::V6, D6O_IA_NA));
@@ -786,11 +916,13 @@ TestControl::sendSolicit6(const TestControlSocket& socket) {
     setDefaults6(socket, pkt6);
     pkt6->pack();
     IfaceMgr::instance().send(pkt6);
-    if (!stats_mgr6_) {
-        isc_throw(InvalidOperation, "Statistics Manager for DHCPv6 "
-                  "hasn't been initialized");
+    if (!preload) {
+        if (!stats_mgr6_) {
+            isc_throw(InvalidOperation, "Statistics Manager for DHCPv6 "
+                      "hasn't been initialized");
+        }
+        stats_mgr6_->passSentPacket(StatsMgr6::XCHG_SA, pkt6);
     }
-    stats_mgr6_->passSentPacket(StatsMgr6::XCHG_SA, pkt6);
 }
 
 void
@@ -811,6 +943,9 @@ TestControl::setDefaults4(const TestControlSocket& socket,
     pkt->setLocalAddr(IOAddress(socket.getAddress()));
     // Set relay (GIADDR) address to local address.
     pkt->setGiaddr(IOAddress(socket.getAddress()));
+    std::vector<uint8_t> mac = generateMacAddress();
+    // Set hardware address
+    pkt->setHWAddr(HTYPE_ETHER, mac.size(), mac);
     // Pretend that we have one relay (which is us).
     pkt->setHops(1);
 }

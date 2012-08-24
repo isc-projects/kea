@@ -310,7 +310,6 @@ public:
     void testPkt4Exchange(int iterations_num,
                           int receive_num,
                           int& iterations_performed) const {
-        uint16_t port = 10547;
         int sock_handle = 0;
         NakedTestControl tc;
         tc.initializeStatsMgr();
@@ -323,25 +322,26 @@ public:
             generator(new NakedTestControl::IncrementalGenerator());
         tc.setTransidGenerator(generator);
         // Socket is needed to send packets through the interface.
-        ASSERT_NO_THROW(sock_handle = tc.openSocket(port));
+        ASSERT_NO_THROW(sock_handle = tc.openSocket());
         TestControl::TestControlSocket sock(sock_handle);
-        int i = 0;
-        for (; i < iterations_num; ++i) {
-            if (tc.checkExitConditions()) {
-                break;
-            }
+        uint32_t transid = 0;
+        for (int i = 0; i < iterations_num; ++i) {
             ASSERT_NO_THROW(tc.sendDiscover4(sock));
+            ++transid;
             // Do not simulate responses for packets later
             // that specified as receive_num. This simulates
             // packet drops.
-            if (i - 1 < receive_num) {
-                boost::shared_ptr<Pkt4> offer_pkt4(createOfferPkt4(i));
-                // Receive OFFER and send REQUEST.
+            if (i < receive_num) {
+                boost::shared_ptr<Pkt4> offer_pkt4(createOfferPkt4(transid));
                 ASSERT_NO_THROW(tc.receivePacket4(sock, offer_pkt4));
+                ++transid;
             }
+            if (tc.checkExitConditions()) {
+                iterations_performed = i + 1;
+                break;
+            }
+            iterations_performed = i + 1;
         }
-        // Return the number of iterations performed.
-        iterations_performed = i;
     }
 
     /// \brief Test DHCPv6 exchanges.
@@ -360,7 +360,6 @@ public:
     void testPkt6Exchange(int iterations_num,
                           int receive_num,
                           int& iterations_performed) const {
-        uint16_t port = 10547;
         int sock_handle = 0;
         NakedTestControl tc;
         tc.initializeStatsMgr();
@@ -373,26 +372,28 @@ public:
             generator(new NakedTestControl::IncrementalGenerator());
         tc.setTransidGenerator(generator);
         // Socket is needed to send packets through the interface.
-        ASSERT_NO_THROW(sock_handle = tc.openSocket(port));
+        ASSERT_NO_THROW(sock_handle = tc.openSocket());
         TestControl::TestControlSocket sock(sock_handle);
-        int i = 0;
-        for (; i < iterations_num; ++i) {
-            if (tc.checkExitConditions()) {
-                break;
-            }
+        uint32_t transid = 0;
+        for (int i = 0; i < iterations_num; ++i) {
             // Do not simulate responses for packets later
             // that specified as receive_num. This simulates
             // packet drops.
             ASSERT_NO_THROW(tc.sendSolicit6(sock));
-            if (i - 1 < receive_num) {
-                boost::shared_ptr<Pkt6> advertise_pkt6(createAdvertisePkt6(i));
+            ++transid;
+            if (i < receive_num) {
+                boost::shared_ptr<Pkt6>
+                    advertise_pkt6(createAdvertisePkt6(transid));
                 // Receive ADVERTISE and send REQUEST.
                 ASSERT_NO_THROW(tc.receivePacket6(sock, advertise_pkt6));
+                ++transid;
             }
-
+            if (tc.checkExitConditions()) {
+                iterations_performed = i + 1;
+                break;
+            }
+            iterations_performed = i + 1;
         }
-        // Return the number of iterations performed.
-        iterations_performed = i;
     }
 
     /// \brief Test generation of multiple MAC addresses.
@@ -463,8 +464,12 @@ private:
         boost::shared_ptr<Pkt4> offer(new Pkt4(DHCPOFFER, transid));
         OptionPtr opt_msg_type = Option::factory(Option::V4, DHO_DHCP_MESSAGE_TYPE,
                                                  OptionBuffer(DHCPOFFER));
+        OptionPtr opt_serverid = Option::factory(Option::V4,
+                                                 DHO_DHCP_SERVER_IDENTIFIER,
+                                                 OptionBuffer(4, 1));
         offer->setYiaddr(asiolink::IOAddress("127.0.0.1"));
         offer->addOption(opt_msg_type);
+        offer->addOption(opt_serverid);
         offer->updateTimestamp();
         return(offer);
     }
@@ -671,13 +676,12 @@ TEST_F(TestControlTest, Packet4) {
     std::string loopback_iface(getLocalLoopback());
     if (!loopback_iface.empty()) {
         ASSERT_NO_THROW(processCmdLine("perfdhcp -l " + loopback_iface +
-                                       " all"));
-        uint16_t port = 10547;
+                                       " -L 10547 all"));
         NakedTestControl tc;
         int sock_handle = 0;
         // We have to create the socket to setup some parameters of
         // outgoing packet.
-        ASSERT_NO_THROW(sock_handle = tc.openSocket(port));
+        ASSERT_NO_THROW(sock_handle = tc.openSocket());
         TestControl::TestControlSocket sock(sock_handle);
         uint32_t transid = 123;
         boost::shared_ptr<Pkt4> pkt4(new Pkt4(DHCPDISCOVER, transid));
@@ -705,13 +709,12 @@ TEST_F(TestControlTest, Packet6) {
     std::string loopback_iface(getLocalLoopback());
     if (!loopback_iface.empty()) {
         ASSERT_NO_THROW(processCmdLine("perfdhcp -6 -l " + loopback_iface +
-                                       " servers"));
-        uint16_t port = 10547;
+                                       " -L 10547 servers"));
         NakedTestControl tc;
         int sock_handle = 0;
         // Create the socket. It will be needed to set packet's
         // parameters.
-        ASSERT_NO_THROW(sock_handle = tc.openSocket(port));
+        ASSERT_NO_THROW(sock_handle = tc.openSocket());
         TestControl::TestControlSocket sock(sock_handle);
         uint32_t transid = 123;
         boost::shared_ptr<Pkt6> pkt6(new Pkt6(DHCPV6_SOLICIT, transid));
@@ -744,7 +747,7 @@ TEST_F(TestControlTest, Packet4Exchange) {
     // Set number of iterations to some high value.
     const int iterations_num = 100;
     processCmdLine("perfdhcp -l " + loopback_iface
-                   + " -r 100 -n 10 -R 20 127.0.0.1");
+                   + " -r 100 -n 10 -R 20 -L 10547 127.0.0.1");
     // The actual number of iterations will be stored in the
     // following variable.
     int iterations_performed = 0;
@@ -756,7 +759,7 @@ TEST_F(TestControlTest, Packet4Exchange) {
     // With the following command line we restrict the maximum
     // number of dropped packets to 20% of all.
     processCmdLine("perfdhcp -l " + loopback_iface
-                   + " -r 100 -R 20 -n 20 -D 10% 127.0.0.1");
+                   + " -r 100 -R 20 -n 20 -D 10% -L 10547 127.0.0.1");
     // The number iterations is restricted by the percentage of
     // dropped packets (-D 10%). We also have to bump up the number
     // of iterations because the percentage limitation checks starts
@@ -781,7 +784,7 @@ TEST_F(TestControlTest, Packet6Exchange) {
     const int iterations_num = 100;
     // Set number of iterations to 10.
     processCmdLine("perfdhcp -l " + loopback_iface
-                   + " -6 -r 100 -n 10 -R 20 ::1");
+                   + " -6 -r 100 -n 10 -R 20 -L 10547 ::1");
     int iterations_performed = 0;
     // Set number of received packets equal to number of iterations.
     // This simulates no packet drops.
@@ -791,7 +794,7 @@ TEST_F(TestControlTest, Packet6Exchange) {
 
     // The maximum number of dropped packets is 3 (because of -D 3).
     processCmdLine("perfdhcp -l " + loopback_iface
-                   + " -6 -r 100 -n 10 -R 20 -D 3 ::1");
+                   + " -6 -r 100 -n 10 -R 20 -D 3 -L 10547 ::1");
     // For the first 3 packets we are simulating responses from server.
     // For other packets we don't so packet as 4,5,6 will be dropped and
     // then test should be interrupted and actual number of iterations will

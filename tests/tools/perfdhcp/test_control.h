@@ -58,6 +58,10 @@ public:
     typedef boost::shared_ptr<StatsMgr6> StatsMgr6Ptr;
     // Packet exchange type.
     typedef StatsMgr<>::ExchangeType ExchangeType;
+    // Packet template buffer.
+    typedef std::vector<uint8_t> TemplateBuffer;
+    //Packet template buffers list.
+    typedef std::list<TemplateBuffer> TemplateBufferList;
 
     /// \brief Socket wrapper class.
     ///
@@ -333,6 +337,8 @@ protected:
     /// \return number of exchanges to be started immediatelly.
     uint64_t getNextExchangesNum() const;
 
+    void initPacketTemplates();
+
     /// \brief Initializes Statistics Manager.
     ///
     /// This function initializes Statistics Manager. If there is
@@ -350,7 +356,6 @@ protected:
     /// (for DHCPv6) than broadcast or multicast option is set on
     /// the socket.
     ///
-    /// \param port port to bound socket to.
     /// \throw isc::BadValue if socket can't be created for given
     /// interface, local address or remote address.
     /// \throw isc::InvalidOperation if broadcast option can't be
@@ -358,7 +363,7 @@ protected:
     /// for the v6 socket.
     /// \throw isc::Unexpected if interal unexpected error occured.
     /// \return socket descriptor.
-    int openSocket(uint16_t port = 0) const;
+    int openSocket() const;
 
     /// \brief Print rate statistics.
     ///
@@ -436,6 +441,13 @@ protected:
     /// depending in whch mode test is currently running.
     void registerOptionFactories() const;
 
+
+    /// \brief Resets internal state of the object. 
+    ///
+    /// Method resets internal state of the object. It has to be 
+    /// called before new test is started.
+    void reset();
+
     /// \brief Send DHCPv4 DISCOVER message.
     ///
     /// Method creates and sends DHCPv4 DISCOVER message to the server
@@ -448,11 +460,25 @@ protected:
     /// on the number of clients specified from the command line.
     ///
     /// \param socket socket to be used to send the message.
+    /// \param preload preload mode, packets not included in statistics.
     /// \throw isc::Unexpected if failed to create new packet instance.
     /// \throw isc::BadValue if MAC address has invalid length.
-    void sendDiscover4(const TestControlSocket& socket);
+    void sendDiscover4(const TestControlSocket& socket,
+                       const bool preload = false);
 
-    /// \brief Sent DHCPv6 REQUEST message.
+    /// \brief Send DHCPv4 REQUEST message.
+    ///
+    /// Method creates and sends DHCPv4 REQUEST message to the server.
+    ///
+    /// \param socket socket to be used to send message.
+    /// \param offer_pkt4 OFFER packet object.
+    /// \throw isc::Unexpected if unexpected error occured.
+    /// \throw isc::InvalidOperation if Statistics Manager has not been
+    /// initialized.
+    void sendRequest4(const TestControlSocket& socket,
+                      const dhcp::Pkt4Ptr& offer_pkt4);
+
+    /// \brief Send DHCPv6 REQUEST message.
     ///
     /// Method creates and sends DHCPv6 REQUEST message to the server
     /// with the following options:
@@ -485,8 +511,10 @@ protected:
     /// - D6O_IA_NA.
     ///
     /// \param socket socket to be used to send the message.
+    /// \param preload mode, packets not included in statistics.
     /// \throw isc::Unexpected if failed to create new packet instance.
-    void sendSolicit6(const TestControlSocket& socket);
+    void sendSolicit6(const TestControlSocket& socket,
+                      const bool preload = false);
 
     /// \brief Set default DHCPv4 packet parameters.
     ///
@@ -557,8 +585,13 @@ private:
     StatsMgr4Ptr stats_mgr4_;  ///< Statistics Manager 4.
     StatsMgr6Ptr stats_mgr6_;  ///< Statistics Manager 6.
 
-    // Pointers to functions.
     TransidGeneratorPtr transid_gen_; ///< Transaction id generator.
+
+    /// Buffer holiding server id received in first packet
+    dhcp::OptionBuffer first_packet_serverid_; 
+
+    /// Packet template buffers.
+    TemplateBufferList template_buffers_;
 
     uint64_t sent_packets_0_;
     uint64_t sent_packets_1_;
