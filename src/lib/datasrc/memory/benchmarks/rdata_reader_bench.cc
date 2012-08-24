@@ -22,8 +22,7 @@
 #include <dns/rrclass.h>
 #include <dns/masterload.h>
 
-#include <datasrc/memory/rdata_encoder.h>
-#include <datasrc/memory/rdata_reader.h>
+#include <datasrc/memory/rdata_serialization.h>
 
 #include <boost/bind.hpp>
 

@@ -11,7 +11,6 @@ CLEANFILES = *.gcno *.gcda datasrc_messages.h datasrc_messages.cc
 noinst_LTLIBRARIES = libdatasrc_memory.la
 
 libdatasrc_memory_la_SOURCES = \
-	rdata_encoder.h rdata_encoder.cc \
-	rdata_field.h rdata_field.cc \
-	rdata_reader.h rdata_reader.cc \
+	rdata_serialization.h rdata_serialization.cc \
 	domaintree.h
+EXTRA_DIST  = rdata_serialization_priv.cc
