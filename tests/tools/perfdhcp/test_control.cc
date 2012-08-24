@@ -85,37 +85,55 @@ TestControl::TestControl() {
     reset();
 }
 
+std::string
+TestControl::byte2Hex(const uint8_t b) const {
+    const int b1 = b / 16;
+    const int b0 = b % 16;
+    ostringstream stream;
+    stream << std::hex << b1 << b0 << std::dec;
+    return stream.str();
+}
+
 bool
 TestControl::checkExitConditions() const {
     if (interrupted_) {
         return(true);
     }
     CommandOptions& options = CommandOptions::instance();
+    bool test_period_reached = false;
     // Check if test period passed.
     if (options.getPeriod() != 0) {
         if (options.getIpVersion() == 4) {
             time_period period(stats_mgr4_->getTestPeriod());
             if (period.length().total_seconds() >= options.getPeriod()) {
-                return true;
+                test_period_reached = true;
             }
         } else if (options.getIpVersion() == 6) {
             time_period period = stats_mgr6_->getTestPeriod();
             if (period.length().total_seconds() >= options.getPeriod()) {
-                return true;
+                test_period_reached = true;
             }
         }
     }
+    if (test_period_reached) {
+        if (testDiags('e')) {
+            std::cout << "Reached test period." << std::endl;
+        }
+        return(true);
+    }
+
+    bool max_requests = false;
     // Check if we reached maximum number of DISCOVER/SOLICIT sent.
     if (options.getNumRequests().size() > 0) {
         if (options.getIpVersion() == 4) {
             if (getSentPacketsNum(StatsMgr4::XCHG_DO) >=
                 options.getNumRequests()[0]) {
-                return(true);
+                max_requests = true;
             }
         } else if (options.getIpVersion() == 6) {
             if (stats_mgr6_->getSentPacketsNum(StatsMgr6::XCHG_SA) >=
                 options.getNumRequests()[0]) {
-                return(true);
+                max_requests = true;
             }
         }
     }
@@ -124,26 +142,34 @@ TestControl::checkExitConditions() const {
         if (options.getIpVersion() == 4) {
             if (stats_mgr4_->getSentPacketsNum(StatsMgr4::XCHG_RA) >=
                 options.getNumRequests()[1]) {
-                return(true);
+                max_requests = true;
             }
         } else if (options.getIpVersion() == 6) {
             if (stats_mgr6_->getSentPacketsNum(StatsMgr6::XCHG_RR) >=
                 options.getNumRequests()[1]) {
-                return(true);
+                max_requests = true;
             }
         }
     }
+    if (max_requests) {
+        if (testDiags('e')) {
+            std::cout << "Reached test period." << std::endl;
+        }
+        return(true);
+    }
+
     // Check if we reached maximum number of drops of OFFER/ADVERTISE packets.
+    bool max_drops = false;
     if (options.getMaxDrop().size() > 0) {
         if (options.getIpVersion() == 4) {
             if (stats_mgr4_->getDroppedPacketsNum(StatsMgr4::XCHG_DO) >=
                 options.getMaxDrop()[0]) {
-                return(true);
+                max_drops = true;
             }
         } else if (options.getIpVersion() == 6) {
             if (stats_mgr6_->getDroppedPacketsNum(StatsMgr6::XCHG_SA) >=
                 options.getMaxDrop()[0]) {
-                return(true);
+                max_drops = true;
             }
         }
     }
@@ -152,30 +178,39 @@ TestControl::checkExitConditions() const {
         if (options.getIpVersion() == 4) {
             if (stats_mgr4_->getDroppedPacketsNum(StatsMgr4::XCHG_RA) >=
                 options.getMaxDrop()[1]) {
-                return(true);
+                max_drops = true;
             }
         } else if (options.getIpVersion() == 6) {
             if (stats_mgr6_->getDroppedPacketsNum(StatsMgr6::XCHG_RR) >=
                 options.getMaxDrop()[1]) {
-                return(true);
+                max_drops = true;
             }
         }
     }
+    if (max_drops) {
+        if (testDiags('e')) {
+            std::cout << "Reached maximum drops number." << std::endl;
+        }
+        return(true);
+    }
+
     // Check if we reached maximum drops percentage of OFFER/ADVERTISE packets.
+    bool max_pdrops = false;
     if (options.getMaxDropPercentage().size() > 0) {
         if (options.getIpVersion() == 4) {
             if ((stats_mgr4_->getSentPacketsNum(StatsMgr4::XCHG_DO) > 10) &&
                 ((100. * stats_mgr4_->getDroppedPacketsNum(StatsMgr4::XCHG_DO) /
                  stats_mgr4_->getSentPacketsNum(StatsMgr4::XCHG_DO)) >=
                  options.getMaxDropPercentage()[0])) {
-                return(true);
+                max_pdrops = true;
+
             }
         } else if (options.getIpVersion() == 6) {
             if ((stats_mgr6_->getSentPacketsNum(StatsMgr6::XCHG_SA) > 10) &&
                 ((100. * stats_mgr6_->getDroppedPacketsNum(StatsMgr6::XCHG_SA) /
                   stats_mgr6_->getSentPacketsNum(StatsMgr6::XCHG_SA)) >=
                  options.getMaxDropPercentage()[0])) {
-                return(true);
+                max_pdrops = true;
             }
         }
     }
@@ -186,17 +221,24 @@ TestControl::checkExitConditions() const {
                 ((100. * stats_mgr4_->getDroppedPacketsNum(StatsMgr4::XCHG_RA) /
                  stats_mgr4_->getSentPacketsNum(StatsMgr4::XCHG_RA)) >=
                  options.getMaxDropPercentage()[1])) {
-                return(true);
+                max_pdrops = true;
             }
         } else if (options.getIpVersion() == 6) {
             if ((stats_mgr6_->getSentPacketsNum(StatsMgr6::XCHG_RR) > 10) &&
                 ((100. * stats_mgr6_->getDroppedPacketsNum(StatsMgr6::XCHG_RR) /
                   stats_mgr6_->getSentPacketsNum(StatsMgr6::XCHG_RR)) >=
                  options.getMaxDropPercentage()[1])) {
-                return(true);
+                max_pdrops = true;
             }
         }
     }
+    if (max_pdrops) {
+        if (testDiags('e')) {
+            std::cout << "Reached maximum percentage of drops." << std::endl;
+        }
+        return(true);
+    }
+
     return(false);
 }
 
@@ -335,9 +377,6 @@ TestControl::getNextExchangesNum() const {
     uint64_t due_exchanges = 0;
     // Get current time.
     ptime now(microsec_clock::universal_time());
-    // The due time indicates when we should start sending next chunk
-    // of packets. If it is already due time, we should calculate
-    // how many packets to send.
     if (now >= send_due_) {
         // If rate is specified from the command line we have to
         // synchornize with it.
@@ -424,6 +463,19 @@ TestControl::initializeStatsMgr() {
         stats_mgr6_->addExchangeStats(StatsMgr6::XCHG_SA);
         if (options.getExchangeMode() == CommandOptions::DORA_SARR) {
             stats_mgr6_->addExchangeStats(StatsMgr6::XCHG_RR);
+        }
+    }
+    if (testDiags('i')) {
+        if (options.getIpVersion() == 4) {
+            stats_mgr4_->addCustomCounter("latesend", "Late sent packets");
+            stats_mgr4_->addCustomCounter("shortwait", "Short waits for packets");
+            stats_mgr4_->addCustomCounter("multircvd", "Multiple packets receives");
+            //            stats_mgr4_->addCustomCounter("latercvd", "Late received packets");
+        } else if (options.getIpVersion() == 6) {
+            stats_mgr6_->addCustomCounter("latesend", "Late sent packets");
+            stats_mgr6_->addCustomCounter("shortwait", "Short waits for packets");
+            stats_mgr6_->addCustomCounter("multircvd", "Multiple packets receives");
+            //            stats_mgr6_->addCustomCounter("latercvd", "Late received packets");
         }
     }
 }
@@ -517,6 +569,23 @@ TestControl::openSocket() const {
 }
 
 void
+TestControl::printDiagnostics() const {
+    CommandOptions& options = CommandOptions::instance();
+    if (testDiags('a')) {
+        // Print all command line parameters.
+        options.printCommandLine();
+        
+        // Print MAC and DUID.
+        std::cout << "Set MAC to " << vector2Hex(options.getMacPrefix(), "::")
+                  << std::endl;
+        if (options.getDuidPrefix().size() > 0) {
+            std::cout << "Set DUID to " << vector2Hex(options.getDuidPrefix()) << std::endl; 
+        }
+
+    }
+}
+
+void
 TestControl::printRate() const {
     double rate = 0;
     CommandOptions& options = CommandOptions::instance();
@@ -564,13 +633,35 @@ TestControl::printStats() const {
                       "hasn't been initialized");
         }
         stats_mgr4_->printStats();
+        if (testDiags('i')) {
+            stats_mgr4_->printCustomCounters();
+        }
     } else if (options.getIpVersion() == 6) {
         if (!stats_mgr6_) {
             isc_throw(InvalidOperation, "Statistics Manager for DHCPv6 "
                       "hasn't been initialized");
         }
         stats_mgr6_->printStats();
+        if (testDiags('i')) {
+            stats_mgr6_->printCustomCounters();
+        }
     }
+}
+
+std::string
+TestControl::vector2Hex(const std::vector<uint8_t>& vec,
+                        const std::string& separator /* ="" */) const {
+    std::ostringstream stream;
+    for (std::vector<uint8_t>::const_iterator it = vec.begin();
+         it != vec.end();
+         ++it) {
+        if (it == vec.begin()) {
+            stream << byte2Hex(*it);
+        } else {
+            stream << separator << byte2Hex(*it);
+        }
+    }
+    return(stream.str());
 }
 
 void
@@ -610,12 +701,17 @@ void
 TestControl::receivePackets(const TestControlSocket& socket) {
     int timeout = 0;
     bool receiving = true;
+    uint64_t received = 0;
     while (receiving) {
         if (CommandOptions::instance().getIpVersion() == 4) {
             Pkt4Ptr pkt4 = IfaceMgr::instance().receive4(timeout);
             if (!pkt4) {
                 receiving = false;
             } else {
+                ++received;
+                if ((received > 1) && testDiags('i')) {
+                    stats_mgr4_->incrementCounter("multircvd");
+                }
                 pkt4->unpack();
                 receivePacket4(socket, pkt4);
             }
@@ -624,6 +720,10 @@ TestControl::receivePackets(const TestControlSocket& socket) {
             if (!pkt6) {
                 receiving  = false;
             } else {
+                ++received;
+                if ((received > 1) && testDiags('i')) {
+                    stats_mgr6_->incrementCounter("multircvd");
+                }
                 if (pkt6->unpack()) {
                     receivePacket6(socket, pkt6);
                 }
@@ -708,9 +808,6 @@ TestControl::reset() {
 
 void
 TestControl::run() {
-    sent_packets_0_ = 0;
-    sent_packets_1_ = 0;
-
     // Reset singleton state before test starts.
     reset();
 
@@ -723,6 +820,9 @@ TestControl::run() {
         isc_throw(InvalidOperation,
                   "command options must be parsed before running a test");
     }
+
+    printDiagnostics();
+
     registerOptionFactories();
     TestControlSocket socket(openSocket());
 
@@ -749,14 +849,22 @@ TestControl::run() {
 
     initializeStatsMgr();
 
-    uint64_t packets_sent = 0;
     for (;;) {
         updateSendDue();
         if (checkExitConditions()) {
             break;
         }
         uint64_t packets_due = getNextExchangesNum();
+        if ((packets_due == 0) && testDiags('i')) {
+            if (options.getIpVersion() == 4) {
+                stats_mgr4_->incrementCounter("shortwait");
+            } else if (options.getIpVersion() == 6) {
+                stats_mgr6_->incrementCounter("shortwait");
+            }
+        }
 
+        // @todo: set non-zero timeout for packets once we implement
+        // microseconds timeout in IfaceMgr.
         receivePackets(socket);
 
         for (uint64_t i = packets_due; i > 0; --i) {
@@ -765,19 +873,24 @@ TestControl::run() {
             } else {
                 sendSolicit6(socket);
             }
-            ++packets_sent;
         }
         if (options.getReportDelay() > 0) {
             printIntermediateStats();
         }
     }
     printStats();
+    if (testDiags('s') && (first_packet_serverid_.size() > 0)) {
+        std::cout << "Server id: " << vector2Hex(first_packet_serverid_) << std::endl;
+    }
+    // Diagnostics flag 'e' means show exit reason.
+    if (testDiags('e')) {
+        std::cout << "Interrupted" << std::endl;
+    }
 }
 
 void
 TestControl::sendDiscover4(const TestControlSocket& socket,
                            const bool preload /*= false*/) {
-    ++sent_packets_0_;
     last_sent_ = microsec_clock::universal_time();
     // Generate the MAC address to be passed in the packet.
     std::vector<uint8_t> mac_address = generateMacAddress();
@@ -819,7 +932,8 @@ TestControl::sendRequest4(const TestControlSocket& socket,
     OptionPtr opt_msg_type = Option::factory(Option::V4, DHO_DHCP_MESSAGE_TYPE,
                                              buf_msg_type);
     pkt4->addOption(opt_msg_type);
-    if (first_packet_serverid_.size() > 0) {
+    if (CommandOptions::instance().isUseFirst() &&
+        (first_packet_serverid_.size() > 0)) {
         pkt4->addOption(Option::factory(Option::V4, DHO_DHCP_SERVER_IDENTIFIER,
                                         first_packet_serverid_));
     } else {
@@ -829,8 +943,7 @@ TestControl::sendRequest4(const TestControlSocket& socket,
             isc_throw(BadValue, "there is no SERVER_IDENTIFIER option "
                       << "in OFFER message");
         }
-        if (CommandOptions::instance().isUseFirst() &&
-            stats_mgr4_->getRcvdPacketsNum(StatsMgr4::XCHG_DO) == 1) {
+        if (stats_mgr4_->getRcvdPacketsNum(StatsMgr4::XCHG_DO) == 1) {
             first_packet_serverid_ = opt_serverid->getData();
         }
         pkt4->addOption(opt_serverid);
@@ -894,7 +1007,8 @@ TestControl::sendRequest6(const TestControlSocket& socket,
         isc_throw(Unexpected, "client id not found in received packet");
     }
     pkt6->addOption(opt_clientid);
-    if (first_packet_serverid_.size() > 0) {
+    if (CommandOptions::instance().isUseFirst() &&
+        (first_packet_serverid_.size() > 0)) {
         pkt6->addOption(Option::factory(Option::V6, D6O_SERVERID,
                                         first_packet_serverid_));
     } else {
@@ -902,8 +1016,7 @@ TestControl::sendRequest6(const TestControlSocket& socket,
         if (!opt_serverid) {
             isc_throw(Unexpected, "server id not found in received packet");
         }
-        if (CommandOptions::instance().isUseFirst() &&
-            stats_mgr6_->getRcvdPacketsNum(StatsMgr6::XCHG_SA) == 1) {
+        if (stats_mgr6_->getRcvdPacketsNum(StatsMgr6::XCHG_SA) == 1) {
             first_packet_serverid_ = opt_serverid->getData();
         }
         pkt6->addOption(opt_serverid);
@@ -928,7 +1041,6 @@ TestControl::sendRequest6(const TestControlSocket& socket,
 void
 TestControl::sendSolicit6(const TestControlSocket& socket,
                           const bool preload /*= false*/) {
-    ++sent_packets_0_;
     last_sent_ = microsec_clock::universal_time();
     // Generate the MAC address to be passed in the packet.
     std::vector<uint8_t> mac_address = generateMacAddress();
@@ -1003,6 +1115,15 @@ TestControl::setDefaults6(const TestControlSocket& socket,
     pkt->setRemoteAddr(IOAddress(options.getServerName()));
 }
 
+bool
+TestControl::testDiags(const char diag) const {
+    std::string diags(CommandOptions::instance().getDiags());
+    if (diags.find(diag) != std::string::npos) {
+        return true;
+    }
+    return false;
+}
+
 void
 TestControl::updateSendDue() {
     // If default constructor was called, this should not happen but
@@ -1026,6 +1147,17 @@ TestControl::updateSendDue() {
     }
     // Calculate due time to initate next chunk of exchanges.
     send_due_ = last_sent_ + time_duration(0, 0, 0, duration);
+    // Check if it is already due.
+    ptime now(microsec_clock::universal_time());
+    if (now > send_due_) {
+        if (testDiags('i')) {
+            if (options.getIpVersion() == 4) {
+                stats_mgr4_->incrementCounter("latesend");
+            } else if (options.getIpVersion() == 6) {
+                stats_mgr6_->incrementCounter("latesend");
+            }
+        }
+    }
 }
 
 

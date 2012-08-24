@@ -552,6 +552,12 @@ protected:
     void setDefaults6(const TestControlSocket& socket,
                       const dhcp::Pkt6Ptr& pkt);
 
+    /// \brief Find of diagnostic flag has been set.
+    ///
+    /// \param diag diagnostic flag (a,e,i,s,r,t,T).
+    /// \return true if diagnostics flag has been set.
+    bool testDiags(const char diag) const;
+
     /// \brief Update due time to initiate next chunk of exchanges.
     ///
     /// Method updates due time to initiate next chunk of exchanges.
@@ -560,6 +566,12 @@ protected:
     void updateSendDue();
 
 private:
+
+    /// \brief Convert binary value to hex string.
+    ///
+    /// \param b byte to convert.
+    /// \return hex string.
+    std::string byte2Hex(const uint8_t b) const;
 
     /// \brief Generate transaction id using random function.
     ///
@@ -592,6 +604,18 @@ private:
     /// \param sig signal (ignored)
     static void handleInterrupt(int sig);
 
+    /// \brief Convert vector in hexadecimal string.
+    ///
+    /// \param vec vector to be converted.
+    /// \param separator separator.
+    std::string vector2Hex(const std::vector<uint8_t>& vec,
+                           const std::string& separator = "") const;
+
+    /// \brief Print main diagnostics data.
+    ///
+    /// Method prints main diagnostics data.
+    void printDiagnostics() const;
+
     boost::posix_time::ptime send_due_;    ///< Due time to initiate next chunk
                                            ///< of exchanges.
     boost::posix_time::ptime last_sent_;   ///< Indicates when the last exchange
@@ -610,10 +634,7 @@ private:
     /// Packet template buffers.
     TemplateBufferList template_buffers_;
 
-    static bool interrupted_;
-
-    uint64_t sent_packets_0_;
-    uint64_t sent_packets_1_;
+    static bool interrupted_;  ///< Is program interrupted.
 };
 
 } // namespace perfdhcp

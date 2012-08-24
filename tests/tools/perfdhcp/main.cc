@@ -38,7 +38,11 @@ main(int argc, char* argv[]) {
         TestControl& test_control = TestControl::instance();
         test_control.run();
     } catch (isc::Exception& e) {
-        std::cout << "Error starting perfdhcp: " << e.what() << std::endl;
+        std::cout << "Error running perfdhcp: " << e.what() << std::endl;
+        std::string diags(command_options.getDiags());
+        if (diags.find('e') != std::string::npos) {
+            std::cout << "Fatal error" << std::endl;
+        }
         return(1);
     }
     return(0);

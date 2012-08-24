@@ -230,6 +230,9 @@ public:
     ///
     /// \return server name
     std::string getServerName() const { return server_name_; }
+    
+    /// \brief Prints command line arguments.
+    void printCommandLine() const;
 
     /// \brief Print usage
     ///
