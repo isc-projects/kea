@@ -36,26 +36,10 @@ using namespace isc::util::io::internal;
 namespace isc {
 namespace dhcp {
 
-/// IfaceMgr is a singleton implementation
-IfaceMgr* IfaceMgr::instance_ = 0;
-
-void
-IfaceMgr::instanceCreate() {
-    if (instance_) {
-        // no need to do anything. Instance is already created.
-        // Who called it again anyway? Uh oh. Had to be us, as
-        // this is private method.
-        return;
-    }
-    instance_ = new IfaceMgr();
-}
-
 IfaceMgr&
 IfaceMgr::instance() {
-    if (instance_ == 0) {
-        instanceCreate();
-    }
-    return (*instance_);
+    static IfaceMgr iface_mgr;
+    return (iface_mgr);
 }
 
 IfaceMgr::Iface::Iface(const std::string& name, int ifindex)
