@@ -834,7 +834,7 @@ public:
     ///
     /// \param counter_key key poitinh to the counter in the counters map.
     /// \return pointer to specified counter after incrementation.
-    const CustomCounter& IncrementCounter(const std::string& counter_key) {
+    const CustomCounter& incrementCounter(const std::string& counter_key) {
         CustomCounterPtr counter = getCounter(counter_key);
         return(++(*counter));
     }

@@ -635,6 +635,98 @@ CommandOptions::nonEmptyString(const std::string& errmsg) const {
 }
 
 void
+CommandOptions::printCommandLine() const {
+    std::cout << "IPv" << static_cast<int>(ipversion_) << std::endl;
+    if (exchange_mode_ == DO_SA) {
+        if (ipversion_ == 4) {
+            std::cout << "DISCOVER-OFFER only" << std::endl;
+        } else {
+            std::cout << "SOLICIT-ADVERETISE only" << std::endl;
+        }
+    } 
+    if (rate_ != 0) {
+        std::cout << "rate[1/s]=" << rate_ <<  std::endl;
+    }
+    if (report_delay_ != 0) {
+        std::cout << "report[s]=" << report_delay_ << std::endl;
+    }
+    if (clients_num_ != 0) {
+        std::cout << "clients=" << clients_num_ << std::endl;
+    } 
+    for (int i = 0; i < base_.size(); ++i) {
+        std::cout << "base[" << i << "]=" << base_[i] <<  std::endl;
+    }
+    for (int i = 0; i < num_request_.size(); ++i) {
+        std::cout << "num-request[" << i << "]=" << num_request_[i] << std::endl;
+    }
+    if (period_ != 0) {
+        std::cout << "test-period=" << period_ << std::endl;
+    }
+    for (int i = 0; i < drop_time_.size(); ++i) {
+        std::cout << "drop-time[" << i << "]=" << drop_time_[i] << std::endl;
+    }
+    for (int i = 0; i < max_drop_.size(); ++i) {
+        std::cout << "max-drop{" << i << "]=" << max_drop_[i] << std::endl;
+    }
+    for (int i = 0; i < max_pdrop_.size(); ++i) {
+        std::cout << "max-pdrop{" << i << "]=" << max_pdrop_[i] << std::endl;
+    }
+    if (preload_ != 0) {
+        std::cout << "preload=" << preload_ <<  std::endl;
+    }
+    std::cout << "aggressivity=" << aggressivity_ << std::endl;
+    if (getLocalPort() != 0) {
+        std::cout << "local-port=" << local_port_ <<  std::endl;
+    }
+    if (seeded_) {
+        std::cout << "seed=" << seed_ << std::endl;
+    }
+    if (broadcast_) {
+        std::cout << "broadcast" << std::endl;
+    }
+    if (rapid_commit_) {
+        std::cout << "rapid-commit" << std::endl;
+    }
+    if (use_first_) {
+        std::cout << "use-first" << std::endl;
+    }
+    for (int i = 0; i < template_file_.size(); ++i) {
+        std::cout << "template-file[" << i << "]=" << template_file_[i] << std::endl;
+    }
+    for (int i = 0; i < xid_offset_.size(); ++i) {
+        std::cout << "xid-offset[" << i << "]=" << xid_offset_[i] << std::endl;
+    }
+    if (elp_offset_ != 0) {
+        std::cout << "elp-offset=" << elp_offset_ << std::endl;
+    }
+    for (int i = 0; i < rnd_offset_.size(); ++i) {
+        std::cout << "rnd-offset[" << i << "]=" << rnd_offset_[i] << std::endl;
+    }
+    if (sid_offset_ != 0) {
+        std::cout << "sid-offset=" << sid_offset_ << std::endl;
+    }
+    if (rip_offset_ != 0) {
+        std::cout << "rip-offset=" << rip_offset_ << std::endl;
+    }
+    if (!diags_.empty()) {
+        std::cout << "diagnostic-selectors=" << diags_ <<  std::endl;
+    }
+    if (!wrapped_.empty()) {
+        std::cout << "wrapped=" << wrapped_ << std::endl;
+    }
+    if (!localname_.empty()) {
+        if (is_interface_) {
+            std::cout << "interface=" << localname_ << std::endl;
+        } else {
+            std::cout << "local-addr=" << localname_ << std::endl;
+        }
+    }
+    if (!server_name_.empty()) {
+        std::cout << "server=" << server_name_ << std::endl;
+    }
+}
+
+void
 CommandOptions::usage() const {
 	fprintf(stdout, "%s",
 "perfdhcp [-hv] [-4|-6] [-r<rate>] [-t<report>] [-R<range>] [-b<base>]\n"
