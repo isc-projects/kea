@@ -151,8 +151,7 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
                             ZoneIteratorPtr iterator;
                             try {
                                 iterator = client->getIterator(origin);
-                            }
-                            catch (const DataSourceError&) {
+                            } catch (const DataSourceError&) {
                                 isc_throw(ConfigurationError, "Unable to "
                                           "cache non-existent zone "
                                           << origin);
