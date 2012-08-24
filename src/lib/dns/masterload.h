@@ -237,7 +237,7 @@ void masterLoad(const char* const filename, const Name& origin,
 /// or left out, the error will use the string '<unknown>'
 void masterLoad(std::istream& input, const Name& origin,
                 const RRClass& zone_class, MasterLoadCallback callback,
-                const char* source=NULL);
+                const char* source = NULL);
 }
 
 
