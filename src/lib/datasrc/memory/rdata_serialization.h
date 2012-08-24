@@ -322,7 +322,7 @@ public:
     /// therefore if you already called next() yourself, it does not start
     /// at the beginning).
     void iterate() {
-        while (next() != RRSET_BOUNDARY) {}
+        while (nextInternal(name_action_, data_action_) != RRSET_BOUNDARY) {}
     }
 
     /// \brief Call next() until the end of current rdata.
@@ -334,7 +334,7 @@ public:
     /// \return If there was Rdata to iterate through.
     bool iterateRdata() {
         while (true) {
-            switch (next()) {
+            switch (nextInternal(name_action_, data_action_)) {
                 case NO_BOUNDARY: break;
                 case RDATA_BOUNDARY: return (true);
                 case RRSET_BOUNDARY: return (false);
@@ -365,7 +365,9 @@ public:
     bool iterateSingleSig() {
         while (true) {
             switch (nextSig()) {
-                case NO_BOUNDARY: break;
+                case NO_BOUNDARY:
+                    isc_throw(isc::Unexpected, "NO_BOUNDARY inside an RRSig. "
+                              "Data corruption? Bug inside RdataReader?");
                 case RDATA_BOUNDARY: return (true);
                 case RRSET_BOUNDARY: return (false);
             }
