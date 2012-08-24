@@ -27,6 +27,69 @@
 
 #include <vector>
 
+/// \file rdata_serialization.h
+///
+/// This file defines a set of interfaces (classes, types, constants) to
+/// manipulate a given set of RDATA of the same type (normally associated with
+/// an RRset) that may be accompanied with RRSIGs in a memory efficient way.
+///
+/// The entire set of RDATA is stored in a packed form in a contiguous
+/// memory region.  It's opaque data, without containing non trivial
+/// data structures, so it can be located anywhere in the memory or even
+/// dumped to a file.
+///
+/// Two main classes are provided: one is
+/// \c isc::datasrc::memory::RdataEncoder, which allows
+/// the application to create encoded data for a set of RDATA;
+/// the isc::datasrc::memory::RdataReader provides an interface to iterate
+/// over encoded set of RDATA for purposes such as data lookups or rendering
+/// the data into the wire format to create a DNS message.
+///
+/// The actual encoding detail is private information to the implementation,
+/// and the application shouldn't assume anything about that except that
+/// each RDATA is considered to consist of one or more generic fields,
+/// and each field is typed as either opaque data or a domain name.
+/// A domain name field has additional attributes
+/// (see \c isc::datasrc::memory::RdataNameAttributes)
+/// so the application can change how the name should be handled in terms
+/// of the DNS protocol (e.g., whether it's subject to name compression).
+///
+/// The following are the current implementation of internal encoding, shown
+/// only for reference.  Applications must not assume this particular form
+/// for the encoded data; in fact, it can change in a future version of the
+/// implementation.
+/// \verbatim
+// The encoded data begin with a series of 16-bit length fields (values are
+// stored in the host byte order).  The sequence may be empty.
+// uint16_t n1_1: size of 1st variable len field (if any) of 1st RDATA
+// uint16_t n1_2: size of 2nd variable len field of 1st RDATA
+// ...
+// uint16_t nN_M: size of last (Mth) variable len field of last (Nth) RDATA
+// uint16_t ns1: size of 1st RRSIG (if any) data
+// ...
+// uint16_t nsL: size of last (Lth) RRSIG data
+// A sequence of packed data fields follows:
+// uint8_t[]: data field value, length specified by nI_J (in case it's
+//            variable-length) or by the per type field spec (in case it's
+//            fixed-length).
+// or
+// opaque data, LabelSequence::getSerializedLength() bytes: data for a name
+// uint8_t[ns1]: 1st RRSIG data
+// ...
+// uint8_t[nsL]: last RRSIG data
+// \endverbatim
+///
+/// As described above, this implementation treats RRSIGs as opaque data
+/// that don't contain any domain names.  Technically, it has a "signer"
+/// domain name field in the sense of RFC4034.  In practice, however, this
+/// field is essentially mere data; it's not subject to name compression,
+/// and since it's very likely to be a subdomain of (or equal to) the
+/// owner name of the corresponding RR (or, if used in a DNS message,
+/// some domain name that already appears before this field), so it won't
+/// be a target of name compression either.  By treating the entire RRSIG
+/// as single-field data we can make the implementation simpler, and probably
+/// make it faster in rendering it into a DNS message.
+
 namespace isc {
 namespace datasrc {
 namespace memory {
@@ -212,7 +275,8 @@ enum RdataNameAttributes {
                                                       ///< handling
 };
 
-class RdataEncodeSpec;
+// forward declaration, defined in a private implementation file.
+struct RdataEncodeSpec;
 
 /// \brief Class to read serialized rdata
 ///
