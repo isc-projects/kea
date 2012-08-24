@@ -365,6 +365,12 @@ protected:
     /// \return socket descriptor.
     int openSocket() const;
 
+    /// \brief Print intermediate statistics.
+    ///
+    /// Print brief statistics regarding number of sent packets,
+    /// received packets and dropped packets so far.
+    void printIntermediateStats();
+
     /// \brief Print rate statistics.
     ///
     /// Method print packet exchange rate statistics.
@@ -582,6 +588,9 @@ private:
                                            ///< of exchanges.
     boost::posix_time::ptime last_sent_;   ///< Indicates when the last exchange
                                            /// was initiated.
+
+    boost::posix_time::ptime last_report_; ///< Last intermediate report time.
+
     StatsMgr4Ptr stats_mgr4_;  ///< Statistics Manager 4.
     StatsMgr6Ptr stats_mgr6_;  ///< Statistics Manager 6.
 

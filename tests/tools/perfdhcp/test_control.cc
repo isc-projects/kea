@@ -528,6 +528,22 @@ TestControl::printRate() const {
 }
 
 void
+TestControl::printIntermediateStats() {
+    CommandOptions& options = CommandOptions::instance();
+    int delay = options.getReportDelay();
+    ptime now = microsec_clock::universal_time();
+    time_period time_since_report(last_report_, now);
+    if (time_since_report.length().total_seconds() >= delay) {
+        if (options.getIpVersion() == 4) {
+            stats_mgr4_->printIntermediateStats();
+        } else if (options.getIpVersion() == 6) {
+            stats_mgr6_->printIntermediateStats();
+        }
+        last_report_ = now;
+    }
+}
+
+void
 TestControl::printStats() const {
     printRate();
     CommandOptions& options = CommandOptions::instance();
@@ -672,6 +688,7 @@ void
 TestControl::reset() {
     send_due_ = microsec_clock::universal_time();
     last_sent_ = send_due_;
+    last_report_ = send_due_;
     transid_gen_.reset();
     transid_gen_ = TransidGeneratorPtr(new TransidGenerator());
     first_packet_serverid_.clear();
@@ -734,6 +751,9 @@ TestControl::run() {
                 sendSolicit6(socket);
             }
             ++packets_sent;
+        }
+        if (options.getReportDelay() > 0) {
+            printIntermediateStats();
         }
     }
     printStats();
