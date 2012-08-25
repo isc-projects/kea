@@ -24,8 +24,7 @@
 #include <dns/rrtype.h>
 #include <dns/rrttl.h>
 
-#include <datasrc/memory/rdata_encoder.h>
-#include <datasrc/memory/rdata_reader.h>
+#include <datasrc/memory/rdata_serialization.h>
 #include <datasrc/memory/rdataset.h>
 
 #include <testutils/dnsmessage_test.h>
@@ -75,7 +74,7 @@ restoreTTL(const void* ttl_data) {
 // is the expected in::A RDATA (the value is taken from the RdataSetTest
 // constructor).
 void
-checkData(const uint8_t* data, size_t size) {
+checkData(const void* data, size_t size) {
     isc::util::InputBuffer b(data, size);
     EXPECT_EQ(0, in::A(b, size).compare(in::A("192.0.2.1")));
 }

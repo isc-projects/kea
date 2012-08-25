@@ -21,8 +21,7 @@
 #include <dns/rrset.h>
 
 #include "rdataset.h"
-#include "rdata_encoder.h"
-#include "rdata_reader.h"
+#include "rdata_serialization.h"
 
 #include <boost/static_assert.hpp>
 
@@ -129,8 +128,9 @@ RdataSet::destroy(util::MemorySegment& mem_sgmt, RRClass rrclass,
     const size_t data_len =
         RdataReader(rrclass, rdataset->type,
                     reinterpret_cast<const uint8_t*>(rdataset->getDataBuf()),
-                    rdataset->getRdataCount(),
-                    rdataset->getSigRdataCount()).getSize();
+                    rdataset->getRdataCount(), rdataset->getSigRdataCount(),
+                    &RdataReader::emptyNameAction,
+                    &RdataReader::emptyDataAction).getSize();
     const size_t ext_rrsig_count_len =
         rdataset->sig_rdata_count_ == MANY_RRSIG_COUNT ? sizeof(uint16_t) : 0;
     rdataset->~RdataSet();

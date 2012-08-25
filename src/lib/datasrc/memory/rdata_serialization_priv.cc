@@ -12,39 +12,10 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef DATASRC_MEMORY_RDATA_FIELD
-#define DATASRC_MEMORY_RDATA_FIELD
+// This file is directly included from the rdata_serialization.cc. It would
+// be part of the file if we didn't need to steal some definitions from here
+// for the tests (which include it too).
 
-#include <stdint.h>
-
-/// \file rdata_field.h
-///
-/// This header should be considered private to the implementation and should
-/// not be used from outside.
-///
-/// It is used to share the definition of encoding for RRtypes.
-
-namespace isc {
-namespace dns {
-class RRType;
-class RRClass;
-}
-namespace datasrc {
-namespace memory {
-
-/// \brief Attributes of domain name fields of encoded RDATA.
-///
-/// The enum values define special traits of the name that can affect how
-/// it should be handled in rendering or query processing.
-enum RdataNameAttributes {
-    NAMEATTR_NONE = 0,          ///< No special attributes
-    NAMEATTR_COMPRESSIBLE = 1,  ///< Name should be compressed when rendered
-    NAMEATTR_ADDITIONAL = (NAMEATTR_COMPRESSIBLE << 1) ///< Name requires
-                                                      ///< Additional section
-                                                      ///< handling
-};
-
-/// Specification of a single RDATA field in terms of internal encoding.
 struct RdataFieldSpec {
     enum FieldType {
         FIXEDLEN_DATA = 0,      // fixed-length data field
@@ -90,10 +61,4 @@ struct RdataEncodeSpec {
 
 /// \brief Get the spec for given class and type
 const RdataEncodeSpec&
-getRdataEncodeSpec(const dns::RRClass& rrclass, const dns::RRType& rrtype);
-
-}
-}
-}
-
-#endif
+getRdataEncodeSpec(const RRClass& rrclass, const RRType& rrtype);
