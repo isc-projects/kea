@@ -123,7 +123,8 @@ TEST_F(ZoneTableTest, findZone) {
 
     EXPECT_EQ(result::NOTFOUND,
               zone_table->findZone(Name("example.org")).code);
-    EXPECT_EQ(NULL, zone_table->findZone(Name("example.org")).zone_data);
+    EXPECT_EQ(static_cast<ZoneData*>(NULL),
+              zone_table->findZone(Name("example.org")).zone_data);
 
     // there's no exact match.  the result should be the longest match,
     // and the code should be PARTIALMATCH.
