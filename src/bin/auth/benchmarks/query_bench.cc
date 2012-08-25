@@ -262,34 +262,39 @@ main(int argc, char* argv[]) {
         return (1);
     }
 
-    BenchQueries queries;
-    loadQueryData(query_data_file, queries, RRClass::IN());
-    OutputBuffer buffer(4096);
-    Message message(Message::PARSE);
+    try {
+        BenchQueries queries;
+        loadQueryData(query_data_file, queries, RRClass::IN());
+        OutputBuffer buffer(4096);
+        Message message(Message::PARSE);
 
-    cout << "Parameters:" << endl;
-    cout << "  Iterations: " << iteration << endl;
-    cout << "  Data Source: type=" << opt_datasrc_type << ", file=" <<
-        datasrc_file << endl;
-    if (origin != NULL) {
-        cout << "  Origin: " << origin << endl;
-    }
-    cout << "  Query data: file=" << query_data_file << " (" << queries.size()
-         << " queries)" << endl << endl;
+        cout << "Parameters:" << endl;
+        cout << "  Iterations: " << iteration << endl;
+        cout << "  Data Source: type=" << opt_datasrc_type << ", file=" <<
+            datasrc_file << endl;
+        if (origin != NULL) {
+            cout << "  Origin: " << origin << endl;
+        }
+        cout << "  Query data: file=" << query_data_file << " ("
+             << queries.size() << " queries)" << endl << endl;
 
-    switch (datasrc_type) {
-    case SQLITE3:
-        cout << "Benchmark with SQLite3" << endl;
-        BenchMark<Sqlite3QueryBenchMark>(
-            iteration, Sqlite3QueryBenchMark(datasrc_file, queries,
-                                             message, buffer));
-        break;
-    case MEMORY:
-        cout << "Benchmark with In Memory Data Source" << endl;
-        BenchMark<MemoryQueryBenchMark>(
-            iteration, MemoryQueryBenchMark(datasrc_file, origin, queries,
-                                            message, buffer));
-        break;
+        switch (datasrc_type) {
+        case SQLITE3:
+            cout << "Benchmark with SQLite3" << endl;
+            BenchMark<Sqlite3QueryBenchMark>(
+                iteration, Sqlite3QueryBenchMark(datasrc_file, queries,
+                                                 message, buffer));
+            break;
+        case MEMORY:
+            cout << "Benchmark with In Memory Data Source" << endl;
+            BenchMark<MemoryQueryBenchMark>(
+                iteration, MemoryQueryBenchMark(datasrc_file, origin, queries,
+                                                message, buffer));
+            break;
+        }
+    } catch (const std::exception& ex) {
+        cout << "Test unexpectedly failed: " << ex.what() << endl;
+        return (1);
     }
 
     return (0);
