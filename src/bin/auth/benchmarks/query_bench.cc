@@ -30,6 +30,7 @@
 
 #include <auth/auth_srv.h>
 #include <auth/auth_config.h>
+#include <auth/datasrc_configurator.h>
 #include <auth/query.h>
 
 #include <asiodns/asiodns.h>
@@ -124,8 +125,13 @@ public:
                           OutputBuffer& buffer) :
         QueryBenchMark(queries, query_message, buffer)
     {
-        server_->updateConfig(Element::fromJSON("{\"database_file\": \"" +
-                                                string(datasrc_file) + "\"}"));
+        DataSourceConfigurator::testReconfigure(
+            server_.get(),
+            Element::fromJSON("{\"IN\":"
+                              "  [{\"type\": \"sqlite3\","
+                              "    \"params\": {"
+                              "      \"database_file\": \"" +
+                              string(datasrc_file) + "\"}}]}"));
     }
 };
 
@@ -138,14 +144,14 @@ public:
                           OutputBuffer& buffer) :
         QueryBenchMark(queries, query_message, buffer)
     {
-        configureAuthServer(*server_,
-                            Element::fromJSON(
-                                "{\"datasources\": "
-                                " [{\"type\": \"memory\","
-                                "   \"zones\": [{\"origin\": \"" +
-                                string(zone_origin) + "\","
-                                "    \"file\": \"" +
-                                string(zone_file) + "\"}]}]}"));
+        DataSourceConfigurator::testReconfigure(
+            server_.get(),
+            Element::fromJSON("{\"IN\":"
+                              "  [{\"type\": \"MasterFiles\","
+                              "    \"cache-enable\": true, "
+                              "    \"params\": {\"" +
+                              string(zone_origin) + "\": \"" +
+                              string(zone_file) + "\"}}]}"));
     }
 };
 
