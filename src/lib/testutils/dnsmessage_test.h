@@ -272,7 +272,8 @@ rrsetsCheck(EXPECTED_ITERATOR expected_begin, EXPECTED_ITERATOR expected_end,
         EXPECT_EQ(std::distance(expected_begin, expected_end), rrset_matched);
 
 #if (0)
-        // Disabled by #2165. The RRSIG RRsets are no longer directly
+        // TODO: see bug #2223. The following code was
+        // disabled by #2165. The RRSIG RRsets are no longer directly
         // stored in the Message's rrsets, so the iterator will not find
         // them. The expected text used in many tests are flattened,
         // where the RRSIGs are inline. In other words, RRSIGs may occur
