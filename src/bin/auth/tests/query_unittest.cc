@@ -708,24 +708,8 @@ MockZoneFinder::find(const Name& name, const RRType& type,
         RRsetStore::const_iterator found_rrset =
             found_domain->second.find(type);
         if (found_rrset != found_domain->second.end()) {
-            ConstRRsetPtr rrset;
-            // Strip whatever signature there is in case DNSSEC is not required
-            // Just to make sure the Query asks for it when it is needed
-            if ((options & ZoneFinder::FIND_DNSSEC) != 0 &&
-                found_rrset->second->getRRsig()) {
-                rrset = found_rrset->second;
-            } else {
-                RRsetPtr noconst(new RRset(found_rrset->second->getName(),
-                                           found_rrset->second->getClass(),
-                                           found_rrset->second->getType(),
-                                           found_rrset->second->getTTL()));
-                for (RdataIteratorPtr
-                     i(found_rrset->second->getRdataIterator());
-                     !i->isLast(); i->next()) {
-                    noconst->addRdata(i->getCurrent());
-                }
-                rrset = noconst;
-            }
+            ConstRRsetPtr rrset = ZoneFinder::stripRRsigs(found_rrset->second,
+                                                          options);
             return (createContext(options, SUCCESS, rrset));
         }
 
