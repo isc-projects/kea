@@ -229,7 +229,7 @@ DatabaseClient::Finder::getRRsets(const string& name, const WantedTypes& types,
             if (types.find(cur_type) != types.end() || any) {
                 // This type is requested, so put it into result
                 const RRTTL cur_ttl(columns[DatabaseAccessor::TTL_COLUMN]);
-                // Ths sigtype column was an optimization for finding the
+                // The sigtype column was an optimization for finding the
                 // relevant RRSIG RRs for a lookup. Currently this column is
                 // not used in this revised datasource implementation. We
                 // should either start using it again, or remove it from use
