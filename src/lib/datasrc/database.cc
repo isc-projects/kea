@@ -157,7 +157,7 @@ public:
         const isc::dns::RRType& type_covered =
             static_cast<isc::dns::rdata::generic::RRSIG*>(
                 sig_rdata.get())->typeCovered();
-        sigs[type_covered].push_back(sig_rdata);
+        sigs_[type_covered].push_back(sig_rdata);
     }
 
     // If the store contains signatures for the type of the given
@@ -165,8 +165,8 @@ public:
     void appendSignatures(isc::dns::RRsetPtr& rrset) const {
         std::map<isc::dns::RRType,
                  std::vector<isc::dns::rdata::RdataPtr> >::const_iterator
-            found = sigs.find(rrset->getType());
-        if (found != sigs.end()) {
+            found = sigs_.find(rrset->getType());
+        if (found != sigs_.end()) {
             BOOST_FOREACH(isc::dns::rdata::RdataPtr sig, found->second) {
                 rrset->addRRsig(sig);
             }
@@ -174,7 +174,7 @@ public:
     }
 
 private:
-    std::map<isc::dns::RRType, std::vector<isc::dns::rdata::RdataPtr> > sigs;
+    std::map<isc::dns::RRType, std::vector<isc::dns::rdata::RdataPtr> > sigs_;
 };
 }
 
