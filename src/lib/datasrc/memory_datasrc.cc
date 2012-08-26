@@ -854,13 +854,13 @@ private:
                     // in case the caller has the same RRset but as a result
                     // of normal find() and needs to know they are of the same
                     // kind; otherwise we simply use the stored RBNodeRRset.
-                    ConstRRsetPtr rr;
+                    ConstRRsetPtr rp;
                     if (wild_expanded) {
-                        rr = found->second->getUnderlyingRRset();
+                        rp = found->second->getUnderlyingRRset();
                     } else {
-                        rr = found->second;
+                        rp = found->second;
                     }
-                    result.push_back(ZoneFinder::stripRRsigs(rr, options));
+                    result.push_back(ZoneFinder::stripRRsigs(rp, options));
                 }
             }
         }
