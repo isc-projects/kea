@@ -373,7 +373,7 @@ TEST_F(MessageTest, removeRRset) {
         RRClass::IN(), RRType::AAAA()));
     EXPECT_EQ(4, message_render.getRRCount(Message::SECTION_ANSWER));
 
-    // Locate the AAAA RRset and remove it; this has one RR in it.
+    // Locate the AAAA RRset and remove it and any associated RRSIGs
     RRsetIterator i = message_render.beginSection(Message::SECTION_ANSWER);
     if ((*i)->getType() == RRType::A()) {
         ++i;
