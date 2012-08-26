@@ -137,17 +137,17 @@ public:
     /// \brief A helper function to strip RRSIGs when FIND_DNSSEC is not
     /// requested.
     static isc::dns::ConstRRsetPtr
-    stripRRsigs(isc::dns::ConstRRsetPtr rr, const FindOptions options) {
-        if (rr) {
-            isc::dns::ConstRRsetPtr sig_rrset = rr->getRRsig();
+    stripRRsigs(isc::dns::ConstRRsetPtr rp, const FindOptions options) {
+        if (rp) {
+            isc::dns::ConstRRsetPtr sig_rrset = rp->getRRsig();
             if (sig_rrset &&
                 ((options & ZoneFinder::FIND_DNSSEC) == 0)) {
                 isc::dns::RRsetPtr result_base
-                    (new isc::dns::RRset(rr->getName(),
-                                         rr->getClass(),
-                                         rr->getType(),
-                                         rr->getTTL()));
-                for (isc::dns::RdataIteratorPtr i(rr->getRdataIterator());
+                    (new isc::dns::RRset(rp->getName(),
+                                         rp->getClass(),
+                                         rp->getType(),
+                                         rp->getTTL()));
+                for (isc::dns::RdataIteratorPtr i(rp->getRdataIterator());
                      !i->isLast();
                      i->next()) {
                     result_base->addRdata(i->getCurrent());
@@ -157,7 +157,7 @@ public:
             }
         }
 
-        return (rr);
+        return (rp);
     }
 
     /// \brief Context of the result of a find() call.
