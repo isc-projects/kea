@@ -173,6 +173,10 @@ public:
         }
     }
 
+    bool empty() const {
+        return (sigs_.empty());
+    }
+
 private:
     std::map<isc::dns::RRType, std::vector<isc::dns::rdata::RdataPtr> > sigs_;
 };
@@ -214,7 +218,7 @@ DatabaseClient::Finder::getRRsets(const string& name, const WantedTypes& types,
         try {
             const RRType cur_type(columns[DatabaseAccessor::TYPE_COLUMN]);
 
-            if (cur_type == RRType::RRSIG()) {
+            if (sigs && (cur_type == RRType::RRSIG())) {
                 // If we get signatures before we get the actual data, we
                 // can't know which ones to keep and which to drop...
                 // So we keep a separate store of any signature that may be
@@ -277,7 +281,7 @@ DatabaseClient::Finder::getRRsets(const string& name, const WantedTypes& types,
         isc_throw(DataSourceError, "CNAME shares domain " << name <<
                   " with something else");
     }
-    if (sigs) {
+    if (!sig_store.empty()) {
         // Add signatures to all found RRsets
         for (std::map<RRType, RRsetPtr>::iterator i(result.begin());
              i != result.end(); ++ i) {

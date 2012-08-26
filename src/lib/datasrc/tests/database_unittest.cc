@@ -3641,9 +3641,11 @@ TYPED_TEST(DatabaseClientTest, compoundUpdate) {
 TYPED_TEST(DatabaseClientTest, invalidRdata) {
     boost::shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
 
-    EXPECT_THROW(finder->find(Name("invalidrdata.example.org."), RRType::A()),
+    EXPECT_THROW(finder->find(Name("invalidrdata.example.org."),
+                              RRType::A()),
                  DataSourceError);
-    EXPECT_THROW(finder->find(Name("invalidrdata2.example.org."), RRType::A()),
+    EXPECT_THROW(finder->find(Name("invalidrdata2.example.org."),
+                              RRType::A(), ZoneFinder::FIND_DNSSEC),
                  DataSourceError);
 }
 
