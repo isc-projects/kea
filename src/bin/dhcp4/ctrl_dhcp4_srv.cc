@@ -86,7 +86,7 @@ void ControlledDhcpv4Srv::establishSession() {
     string specfile;
     if (getenv("B10_FROM_BUILD")) {
         specfile = string(getenv("B10_FROM_BUILD")) +
-            "/src/bin/auth/dhcp4.spec";
+            "/src/bin/dhcp4/dhcp4.spec";
     } else {
         specfile = string(DHCP4_SPECFILE_LOCATION);
     }

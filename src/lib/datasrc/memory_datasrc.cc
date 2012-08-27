@@ -623,6 +623,11 @@ RBNodeRRset::getRRsig() const {
     return (impl_->rrset_->getRRsig());
 }
 
+unsigned int
+RBNodeRRset::getRRsigDataCount() const {
+    return (impl_->rrset_->getRRsigDataCount());
+}
+
 void
 RBNodeRRset::addRRsig(const ConstRdataPtr& rdata) {
     AbstractRRset* p = const_cast<AbstractRRset*>(impl_->rrset_.get());

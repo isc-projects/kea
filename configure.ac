@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.59])
-AC_INIT(bind10-devel, 20120712, bind10-dev@isc.org)
+AC_INIT(bind10-devel, 20120817, bind10-dev@isc.org)
 AC_CONFIG_SRCDIR(README)
 AM_INIT_AUTOMAKE
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])dnl be backward compatible
@@ -1101,6 +1101,7 @@ AC_CONFIG_FILES([Makefile
                  src/bin/zonemgr/tests/Makefile
                  src/bin/stats/Makefile
                  src/bin/stats/tests/Makefile
+                 src/bin/stats/tests/testdata/Makefile
                  src/bin/usermgr/Makefile
                  src/bin/tests/Makefile
                  src/lib/Makefile
