@@ -121,13 +121,16 @@ TEST_F(RdataSetTest, getNext) {
                                           ConstRRsetPtr());
 
     // By default, the next pointer should be NULL (already tested in other
-    // test cases), which should be the case with getNext()
+    // test cases), which should be the case with getNext().  We test both
+    // mutable and immutable versions of getNext().
     EXPECT_EQ(static_cast<RdataSet*>(NULL), rdataset->getNext());
+    EXPECT_EQ(static_cast<const RdataSet*>(NULL),
+              static_cast<const RdataSet*>(rdataset)->getNext());
 
     // making a link (it would form an infinite loop, but it doesn't matter
     // in this test), and check the pointer returned by getNext().
     rdataset->next = rdataset;
-    EXPECT_EQ(rdataset, rdataset->getNext());
+    EXPECT_EQ(rdataset, static_cast<const RdataSet*>(rdataset)->getNext());
 
     RdataSet::destroy(mem_sgmt_, RRClass::IN(), rdataset);
 }
