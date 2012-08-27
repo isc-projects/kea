@@ -771,10 +771,6 @@ TEST_F(MessageTest, toWireSigned) {
 }
 
 TEST_F(MessageTest, toWireSignedAndTruncated) {
-    // EDNSPtr edns(new EDNS());
-    // edns->setUDPSize(256);
-    // message_render.setEDNS(edns);
-
     message_render.setQid(0x75c1);
     message_render.setOpcode(Opcode::QUERY());
     message_render.setRcode(Rcode::NOERROR());

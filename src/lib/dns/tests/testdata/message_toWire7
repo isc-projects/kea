@@ -2,7 +2,7 @@
 # A simple DNS query message (with a signed response)
 # ID = 0x75c1
 # QR=1 (response), Opcode=0, AA=1, RD=1 (other fields are 0)
-# QDCOUNT=1, ANCOUNT=2, ADCOUNT=1
+# QDCOUNT=1, ANCOUNT=1, ADCOUNT=0
 # Question: test.example.com. IN TXT
 # Answer:
 #  test.example.com. 3600 IN TXT aaaaa...
@@ -33,20 +33,3 @@ c0 0c
 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61
 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61
 61 61 61 61 61 61 61 61 61 61 61 61 61 61 61
-
-# ----- used while developing, commented out here:
-
-# # signature
-# # same name
-# c0 0c
-# # RRSIG, IN, TTL=3600, RDLENGTH=0x28 TYPE_COV=A ALGO=5 (RSA/SHA-1) LABELS=3 ORIG_TTL=3600
-# 002e 0001 00000e10 0028 0010 05 03 00000e10
-# # SIG_EXPIRY=20000101000000 SIG_INCEP=20000201000000 KEY_ID=12345
-# 386d4380 38962200 3039
-# #(7) e  x  a  m  p  l  e (3) c  o  m  .
-#  07 65 78 61 6d 70 6c 65 03 63 6f 6d 00
-# # FAKEFAKEFAKE
-# 14 02 84 14 02 84 14 02 84
-
-# # NAME = <root> (0), TYPE=OPT(EDNS0), PAYLOAD=256
-# 00 0029 0100 00 00 0000 00 00
