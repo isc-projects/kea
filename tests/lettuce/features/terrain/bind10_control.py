@@ -1,4 +1,4 @@
-# Copyright (C) 2011  Internet Systems Consortium.
+# Copyright (C) 2011-2012  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -391,19 +391,21 @@ def find_value(dictionary, key):
         for v in dictionary.values():
             return find_value(v, key)
 
-@step('The counter (\S+)(?: for the zone (\S+))? should be' + \
-          '(?:( greater than| less than))? (\d+)')
-def check_statistics(step, counter, zone, gtlt, number):
+@step('the statistics counter (\S+)(?: for the zone (\S+))? should be' + \
+          '(?:( greater than| less than| between))? (\-?\d+)(?: and (\-?\d+))?')
+def check_statistics(step, counter, zone, gtltbt, number, upper):
     """
     check the output of bindctl for statistics of specified counter
     and zone.
     Parameters:
     counter ('counter <counter>'): The counter name of statistics.
     zone ('zone <zone>', optional): The zone name.
-    gtlt (' greater than'|' less than', optional): greater than
-          <number> or less than <number>.
+    gtltbt (' greater than'|' less than'|' between', optional): greater than
+          <number> or less than <number> or between <number> and <upper>.
     number ('<number>): The expect counter number. <number> is assumed
           to be an unsigned integer.
+    upper ('<upper>, optional): The expect upper counter number when
+          using 'between'.
     """
     output = parse_bindctl_output_as_data_structure()
     found = None
@@ -416,10 +418,15 @@ def check_statistics(step, counter, zone, gtlt, number):
     assert found is not None, \
         'Not found statistics counter %s%s' % (counter, zone_str)
     msg = "Got %s, expected%s %s as counter %s%s" % \
-        (found, gtlt, number, counter, zone_str)
-    if gtlt and 'greater' in gtlt:
+        (found, gtltbt, number, counter, zone_str)
+    if gtltbt and 'between' in gtltbt and upper:
+        msg = "Got %s, expected%s %s and %s as counter %s%s" % \
+            (found, gtltbt, number, upper, counter, zone_str)
+        assert int(number) <= int(found) \
+            and int(found) <= int(upper), msg
+    elif gtltbt and 'greater' in gtltbt:
         assert int(found) > int(number), msg
-    elif gtlt and 'less' in gtlt:
+    elif gtltbt and 'less' in gtltbt:
         assert int(found) < int(number), msg
     else:
         assert int(found) == int(number), msg
