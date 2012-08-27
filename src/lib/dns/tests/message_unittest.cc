@@ -770,6 +770,54 @@ TEST_F(MessageTest, toWireSigned) {
                         renderer.getLength(), &data[0], data.size());
 }
 
+TEST_F(MessageTest, toWireSignedAndTruncated) {
+    // EDNSPtr edns(new EDNS());
+    // edns->setUDPSize(256);
+    // message_render.setEDNS(edns);
+
+    message_render.setQid(0x75c1);
+    message_render.setOpcode(Opcode::QUERY());
+    message_render.setRcode(Rcode::NOERROR());
+    message_render.setHeaderFlag(Message::HEADERFLAG_QR, true);
+    message_render.setHeaderFlag(Message::HEADERFLAG_RD, true);
+    message_render.setHeaderFlag(Message::HEADERFLAG_AA, true);
+    message_render.addQuestion(Question(Name("test.example.com"), RRClass::IN(),
+                                        RRType::TXT()));
+
+    RRsetPtr rrset_txt = RRsetPtr(new RRset(test_name, RRClass::IN(),
+                                            RRType::TXT(), RRTTL(3600)));
+    rrset_txt->addRdata(generic::TXT(string(255, 'a')));
+    rrset_txt->addRdata(generic::TXT(string(255, 'b')));
+    rrset_txt->addRdata(generic::TXT(string(255, 'c')));
+    rrset_txt->addRdata(generic::TXT(string(255, 'd')));
+    rrset_txt->addRdata(generic::TXT(string(255, 'e')));
+    rrset_txt->addRdata(generic::TXT(string(255, 'f')));
+    rrset_txt->addRdata(generic::TXT(string(255, 'g')));
+    rrset_txt->addRdata(generic::TXT(string(255, 'h')));
+
+    rrset_rrsig = RRsetPtr(new RRset(test_name, RRClass::IN(),
+                                     RRType::RRSIG(), RRTTL(3600)));
+    // one signature algorithm (5 = RSA/SHA-1)
+    rrset_rrsig->addRdata(generic::RRSIG("TXT 5 3 3600 "
+                                         "20000101000000 20000201000000 "
+                                         "12345 example.com. FAKEFAKEFAKE"));
+    rrset_txt->addRRsig(rrset_rrsig);
+    EXPECT_EQ(1, rrset_txt->getRRsigDataCount());
+
+    message_render.addRRset(Message::SECTION_ANSWER, rrset_txt);
+
+    EXPECT_EQ(1, message_render.getRRCount(Message::SECTION_QUESTION));
+    EXPECT_EQ(9, message_render.getRRCount(Message::SECTION_ANSWER));
+    EXPECT_EQ(0, message_render.getRRCount(Message::SECTION_AUTHORITY));
+    EXPECT_EQ(0, message_render.getRRCount(Message::SECTION_ADDITIONAL));
+
+    message_render.toWire(renderer);
+    vector<unsigned char> data;
+    UnitTestUtil::readWireData("message_toWire7", data);
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
+                        renderer.getLength(), &data[0], data.size());
+}
+
 TEST_F(MessageTest, toWireInParseMode) {
     // toWire() isn't allowed in the parse mode.
     EXPECT_THROW(message_parse.toWire(renderer), InvalidMessageOperation);

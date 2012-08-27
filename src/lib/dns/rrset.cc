@@ -263,6 +263,10 @@ RRset::toWire(OutputBuffer& buffer) const {
     unsigned int rrs_written;
 
     rrs_written = rrsetToWire<OutputBuffer>(*this, buffer, 0);
+    if (getRdataCount() > rrs_written) {
+        return (rrs_written);
+    }
+
     if (rrsig_) {
         rrs_written += rrsetToWire<OutputBuffer>(*(rrsig_.get()), buffer, 0);
     }
@@ -277,6 +281,11 @@ RRset::toWire(AbstractMessageRenderer& renderer) const {
     rrs_written =
         rrsetToWire<AbstractMessageRenderer>(*this, renderer,
                                              renderer.getLengthLimit());
+    if (getRdataCount() > rrs_written) {
+        renderer.setTruncated();
+        return (rrs_written);
+    }
+
     if (rrsig_) {
         rrs_written +=
             rrsetToWire<AbstractMessageRenderer>(*(rrsig_.get()), renderer,
