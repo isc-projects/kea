@@ -204,7 +204,7 @@ public:
     /// LabelSequence and another LabelSequence for equality.
     ///
     /// \param other The LabelSequence to compare with
-    /// \param case_sensitive If true, comparison is case-insensitive
+    /// \param case_sensitive If true, comparison is case-sensitive
     /// \return true if The label sequences consist are the same length,
     ///         and contain the same data.
     bool equals(const LabelSequence& other, bool case_sensitive = false) const;
