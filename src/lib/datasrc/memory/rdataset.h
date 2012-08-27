@@ -237,7 +237,11 @@ public:
     /// get the same result by directly calling get() on \c next, it would
     /// help encourage the use of more efficient usage if we provide an
     /// explicit accessor.
-    RdataSet* getNext() const { return (next.get()); }
+    //const RdataSet* getNext() const { return (next.get()); }
+    const RdataSet* getNext() const { return (next.get()); }
+
+    /// \brief Return the bare pointer to the next node, mutable version.
+    RdataSet* getNext() { return (next.get()); }
 
     /// \brief Return the number of RDATAs stored in the \c RdataSet.
     size_t getRdataCount() const { return (rdata_count_); }
