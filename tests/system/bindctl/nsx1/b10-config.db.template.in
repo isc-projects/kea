@@ -22,5 +22,8 @@
             "debuglevel": 99
         }
      ]
+ },
+ "Stats": {
+   "poll-interval": 1
  }
 }
