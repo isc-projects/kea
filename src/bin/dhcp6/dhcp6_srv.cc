@@ -45,25 +45,26 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t port) {
     // first call to instance() will create IfaceMgr (it's a singleton)
     // it may throw something if things go wrong
     try {
-        IfaceMgr::instance();
+
+        if (IfaceMgr::instance().countIfaces() == 0) {
+            cout << "Failed to detect any network interfaces. Aborting." << endl;
+            shutdown_ = true;
+            return;
+        }
+
+        IfaceMgr::instance().openSockets6(port);
+
+        setServerID();
+
+        /// @todo: instantiate LeaseMgr here once it is imlpemented.
+
     } catch (const std::exception &e) {
-        cout << "Failed to instantiate InterfaceManager:" << e.what() << ". Aborting." << endl;
-        shutdown = true;
+        cerr << "Error during DHCPv4 server startup: " << e.what() << endl;
+        shutdown_ = true;
+        return;
     }
 
-    if (IfaceMgr::instance().countIfaces() == 0) {
-        cout << "Failed to detect any network interfaces. Aborting." << endl;
-        shutdown = true;
-    }
-
-    // Now try to open IPv6 sockets on detected interfaces.
-    IfaceMgr::instance().openSockets6(port);
-
-    /// @todo: instantiate LeaseMgr here once it is imlpemented.
-
-    setServerID();
-
-    shutdown = false;
+    shutdown_ = false;
 }
 
 Dhcpv6Srv::~Dhcpv6Srv() {
@@ -72,11 +73,18 @@ Dhcpv6Srv::~Dhcpv6Srv() {
     IfaceMgr::instance().closeSockets();
 }
 
+void Dhcpv6Srv::shutdown() {
+    cout << "b10-dhcp6: DHCPv6 server shutdown." << endl;
+    shutdown_ = true;
+}
+
 bool Dhcpv6Srv::run() {
-    while (!shutdown) {
+    while (!shutdown_) {
+        /// @todo: calculate actual timeout once we have lease database
+        int timeout = 1000;
 
         // client's message and server's response
-        Pkt6Ptr query = IfaceMgr::instance().receive6();
+        Pkt6Ptr query = IfaceMgr::instance().receive6(timeout);
         Pkt6Ptr rsp;
 
         if (query) {

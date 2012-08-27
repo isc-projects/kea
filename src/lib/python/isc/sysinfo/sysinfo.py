@@ -25,26 +25,30 @@ import time
 
 class SysInfo:
     def __init__(self):
-        self._num_processors = -1
+        self._num_processors = None
         self._endianness = 'Unknown'
         self._hostname = ''
         self._platform_name = 'Unknown'
         self._platform_version = 'Unknown'
         self._platform_machine = 'Unknown'
-        self._platform_is_smp = False
-        self._uptime = -1
-        self._loadavg = [-1.0, -1.0, -1.0]
-        self._mem_total = -1
-        self._mem_free = -1
-        self._mem_cached = -1
-        self._mem_buffers = -1
-        self._mem_swap_total = -1
-        self._mem_swap_free = -1
-        self._platform_distro = 'Unknown'
+        self._platform_is_smp = None
+        self._uptime = None
+        self._loadavg = None
+        self._mem_total = None
+        self._mem_free = None
+        self._mem_swap_total = None
+        self._mem_swap_free = None
         self._net_interfaces = 'Unknown\n'
         self._net_routing_table = 'Unknown\n'
         self._net_stats = 'Unknown\n'
         self._net_connections = 'Unknown\n'
+
+        # The following are Linux speicific, and should eventually be removed
+        # from this level; for now we simply default to None (so they won't
+        # be printed)
+        self._platform_distro = None
+        self._mem_cached = None
+        self._mem_buffers = None
 
     def get_num_processors(self):
         """Returns the number of processors. This is the number of
@@ -77,7 +81,12 @@ class SysInfo:
         return self._platform_is_smp
 
     def get_platform_distro(self):
-        """Returns the name of the OS distribution in use."""
+        """Returns the name of the OS distribution in use.
+
+        Note: the concept of 'distribution' is Linux specific.  This shouldn't
+        be at this level.
+
+        """
         return self._platform_distro
 
     def get_uptime(self):
@@ -164,7 +173,7 @@ class SysInfoLinux(SysInfoPOSIX):
         with open('/proc/loadavg') as f:
             l = f.read().strip().split(' ')
             if len(l) >= 3:
-                self._loadavg = [float(l[0]), float(l[1]), float(l[2])]
+                self._loadavg = (float(l[0]), float(l[1]), float(l[2]))
 
         with open('/proc/meminfo') as f:
             m = f.readlines()
@@ -276,8 +285,6 @@ class SysInfoBSD(SysInfoPOSIX):
         except (subprocess.CalledProcessError, OSError):
             pass
 
-        self._platform_distro = self._platform_name + ' ' + self._platform_version
-
         try:
             s = subprocess.check_output(['ifconfig'])
             self._net_interfaces = s.decode('utf-8')
@@ -296,17 +303,18 @@ class SysInfoBSD(SysInfoPOSIX):
         except (subprocess.CalledProcessError, OSError):
             self._net_connections = 'Warning: "netstat -an" command failed.\n'
 
+        try:
+            s = subprocess.check_output(['netstat', '-nr'])
+            self._net_routing_table = s.decode('utf-8')
+        except (subprocess.CalledProcessError, OSError):
+            self._net_connections = 'Warning: "netstat -nr" command failed.\n'
+
 class SysInfoOpenBSD(SysInfoBSD):
     """OpenBSD implementation of the SysInfo class.
     See the SysInfo class documentation for more information.
     """
     def __init__(self):
         super().__init__()
-
-        # Don't know how to gather these
-        self._platform_is_smp = False
-        self._mem_cached = -1
-        self._mem_buffers = -1
 
         try:
             s = subprocess.check_output(['sysctl', '-n', 'kern.boottime'])
@@ -320,7 +328,7 @@ class SysInfoOpenBSD(SysInfoBSD):
             s = subprocess.check_output(['sysctl', '-n', 'vm.loadavg'])
             l = s.decode('utf-8').strip().split(' ')
             if len(l) >= 3:
-                self._loadavg = [float(l[0]), float(l[1]), float(l[2])]
+                self._loadavg = (float(l[0]), float(l[1]), float(l[2]))
         except (subprocess.CalledProcessError, OSError):
             pass
 
@@ -343,28 +351,12 @@ class SysInfoOpenBSD(SysInfoBSD):
         except (subprocess.CalledProcessError, OSError):
             pass
 
-        try:
-            s = subprocess.check_output(['route', '-n', 'show'])
-            self._net_routing_table = s.decode('utf-8')
-        except (subprocess.CalledProcessError, OSError):
-            self._net_routing_table = 'Warning: "route -n show" command failed.\n'
-
-class SysInfoFreeBSD(SysInfoBSD):
-    """FreeBSD implementation of the SysInfo class.
-    See the SysInfo class documentation for more information.
+class SysInfoFreeBSDOSX(SysInfoBSD):
+    """Shared code for the FreeBSD and OS X implementations of the SysInfo
+    class. See the SysInfo class documentation for more information.
     """
     def __init__(self):
         super().__init__()
-
-        # Don't know how to gather these
-        self._mem_cached = -1
-        self._mem_buffers = -1
-
-        try:
-            s = subprocess.check_output(['sysctl', '-n', 'kern.smp.active'])
-            self._platform_is_smp = int(s.decode('utf-8').strip()) > 0
-        except (subprocess.CalledProcessError, OSError):
-            pass
 
         try:
             s = subprocess.check_output(['sysctl', '-n', 'kern.boottime'])
@@ -385,7 +377,20 @@ class SysInfoFreeBSD(SysInfoBSD):
             else:
                 la = l.split(' ')
             if len(la) >= 3:
-                self._loadavg = [float(la[0]), float(la[1]), float(la[2])]
+                self._loadavg = (float(la[0]), float(la[1]), float(la[2]))
+        except (subprocess.CalledProcessError, OSError):
+            pass
+
+class SysInfoFreeBSD(SysInfoFreeBSDOSX):
+    """FreeBSD implementation of the SysInfo class.
+    See the SysInfo class documentation for more information.
+    """
+    def __init__(self):
+        super().__init__()
+
+        try:
+            s = subprocess.check_output(['sysctl', '-n', 'kern.smp.active'])
+            self._platform_is_smp = int(s.decode('utf-8').strip()) > 0
         except (subprocess.CalledProcessError, OSError):
             pass
 
@@ -408,11 +413,57 @@ class SysInfoFreeBSD(SysInfoBSD):
         except (subprocess.CalledProcessError, OSError):
             pass
 
+
+
+class SysInfoOSX(SysInfoFreeBSDOSX):
+    """OS X (Darwin) implementation of the SysInfo class.
+    See the SysInfo class documentation for more information.
+    """
+    def __init__(self):
+        super().__init__()
+
+        # note; this call overrides the value already set when hw.physmem
+        # was read. However, on OSX, physmem is not necessarily the correct
+        # value. But since it does not fail and does work on most BSD's, it's
+        # left in the base class and overwritten here
+        self._mem_total = None
         try:
-            s = subprocess.check_output(['netstat', '-nr'])
-            self._net_routing_table = s.decode('utf-8')
+            s = subprocess.check_output(['sysctl', '-n', 'hw.memsize'])
+            self._mem_total = int(s.decode('utf-8').strip())
         except (subprocess.CalledProcessError, OSError):
-            self._net_connections = 'Warning: "netstat -nr" command failed.\n'
+            pass
+
+        try:
+            s = subprocess.check_output(['vm_stat'])
+            lines = s.decode('utf-8').split('\n')
+            # store all values in a dict
+            values = {}
+            page_size = None
+            page_size_re = re.compile('.*page size of ([0-9]+) bytes')
+            for line in lines:
+                page_size_m = page_size_re.match(line)
+                if page_size_m:
+                    page_size = int(page_size_m.group(1))
+                else:
+                    key, _, value = line.partition(':')
+                    values[key] = value.strip()[:-1]
+            # Only calculate memory if page size is known
+            if page_size is not None:
+                self._mem_free = int(values['Pages free']) * page_size +\
+                                 int(values['Pages speculative']) * page_size
+        except (subprocess.CalledProcessError, OSError):
+            pass
+
+        try:
+            s = subprocess.check_output(['sysctl', '-n', 'vm.swapusage'])
+            l = s.decode('utf-8').strip()
+            r = re.match('^total = (\d+\.\d+)M\s+used = (\d+\.\d+)M\s+free = (\d+\.\d+)M', l)
+            if r:
+                self._mem_swap_total = float(r.group(1).strip()) * 1024
+                self._mem_swap_free = float(r.group(3).strip()) * 1024
+        except (subprocess.CalledProcessError, OSError):
+            pass
+
 
 class SysInfoTestcase(SysInfo):
     def __init__(self):
@@ -429,6 +480,8 @@ def SysInfoFromFactory():
         return SysInfoOpenBSD()
     elif osname == 'FreeBSD':
         return SysInfoFreeBSD()
+    elif osname == 'Darwin':
+        return SysInfoOSX()
     elif osname == 'BIND10Testcase':
         return SysInfoTestcase()
     else:
