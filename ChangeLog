@@ -1,13 +1,23 @@
-468.    [func]*         naokikambe, fujiwara
-        b10-stats polls bind10 and b10-auth for statistics data.  The
-        "poll-interval" parameter in b10-stats is for configuring the polling
-        interval.  All statistics data collected once are preserved while
-        b10-stats is running.  The "sendstats" command was removed from bind10
-        and b10-auth. The "statistics-interval" configuration item was removed
-        from b10-auth.
-        (Trac #2136, git dcb5ce50b4b4e50d28247d5f8b5cb8d90bda942a)
-        (Trac #2137, git d53bb65a43f6027b15a6edc08c137951e3ce5e0e)
-        (Trac #2138, git TBD)
+469.	[bug]		jelte
+	libdatasrc: the data source client list class now ignores zone
+	content problems (such as out-of-zone data) in MasterFiles type
+	zones, instead of aborting the entire configuration.  It only logs
+	an error, and all other zones and datasources are still loaded. The
+	error log message has been improved to include the zone origin and
+	source file name.  As a result of this change, b10-auth no longer
+	exits upon encountering such errors during startup.
+	(Trac #2178, git a75ed413e8a1c8e3702beea4811a46a1bf519bbd)
+
+468.	[func]*		naokikambe, fujiwara
+	b10-stats polls bind10 and b10-auth for statistics data.  The
+	"poll-interval" parameter in b10-stats is for configuring the
+	polling interval.  All statistics data collected once are preserved
+	while b10-stats is running.  The "sendstats" command was removed
+	from bind10 and b10-auth. The "statistics-interval" configuration
+	item was removed from b10-auth.
+	(Trac #2136, git dcb5ce50b4b4e50d28247d5f8b5cb8d90bda942a)
+	(Trac #2137, git d53bb65a43f6027b15a6edc08c137951e3ce5e0e)
+	(Trac #2138, git TBD)
 
 bind10-devel-20120816 released on August 16, 2012
 
