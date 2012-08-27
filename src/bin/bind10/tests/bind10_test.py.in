@@ -938,9 +938,10 @@ class TestStartStopProcessesBob(unittest.TestCase):
         #self.check_started_dhcp(bob, True, True)
 
 class MockComponent:
-    def __init__(self, name, pid):
+    def __init__(self, name, pid, address=None):
         self.name = lambda: name
         self.pid = lambda: pid
+        self.address = lambda: address
 
 
 class TestBossCmd(unittest.TestCase):
@@ -966,10 +967,10 @@ class TestBossCmd(unittest.TestCase):
         """
         bob = MockBob()
         bob.register_process(1, MockComponent('first', 1))
-        bob.register_process(2, MockComponent('second', 2))
+        bob.register_process(2, MockComponent('second', 2, 'Second'))
         answer = bob.command_handler("show_processes", None)
-        processes = [[1, 'first'],
-                     [2, 'second']]
+        processes = [[1, 'first', None],
+                     [2, 'second', 'Second']]
         self.assertEqual(answer, {'result': [0, processes]})
 
 class TestParseArgs(unittest.TestCase):

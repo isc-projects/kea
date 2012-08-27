@@ -1790,8 +1790,8 @@ Chapter 16. Statistics
    statistics data from various modules and aggregates it.
 
    This stats daemon provides commands to identify if it is running, show
-   specified or all statistics data, show specified or all statistics data
-   schema, and set specified statistics data. For example, using bindctl:
+   specified or all statistics data, and show specified or all statistics data
+   schema. For example, using bindctl:
 
  > Stats show
  {

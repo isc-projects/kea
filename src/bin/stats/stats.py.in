@@ -1,6 +1,6 @@
 #!@PYTHON@
 
-# Copyright (C) 2010, 2011  Internet Systems Consortium.
+# Copyright (C) 2010, 2011, 2012  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -23,6 +23,8 @@ import sys; sys.path.append ('@@PYTHONPATH@@')
 import os
 from time import time, strftime, gmtime
 from optparse import OptionParser, OptionValueError
+import errno
+import select
 
 import isc
 import isc.util.process
@@ -96,6 +98,45 @@ def get_spec_defaults(spec):
             return spec.get("item_default", None)
     return dict([ (s['item_name'], _get_spec_defaults(s)) for s in spec ])
 
+def _accum(a, b):
+    """If the first arg is dict or list type, two values
+    would be merged and accumlated. This is for internal use."""
+
+    # If both of args are dict or list type, two
+    # values are merged.
+    if type(a) is dict and type(b) is dict:
+        return dict([ (k, _accum(v, b[k])) \
+                          if k in b else (k, v) \
+                          for (k, v) in a.items() ] \
+                        + [ (k, v) \
+                                for (k, v) in b.items() \
+                                if k not in a ])
+    elif type(a) is list and type(b) is list:
+        return [ _accum(a[i], b[i]) \
+                     if len(b) > i else a[i] \
+                     for i in range(len(a)) ] \
+                     + [ b[i] \
+                             for i in range(len(b)) \
+                             if len(a) <= i ]
+    # If both of args are integer or float type, two
+    # values are added.
+    elif (type(a) is int and type(b) is int) \
+            or (type(a) is float or type(b) is float):
+        return a + b
+
+    # If both of args are string type,
+    # values are compared and bigger one is returned.
+    elif type(a) is str and type(b) is str:
+        if a < b: return b
+        return a
+
+    # If the first arg is None type, the second value is returned.
+    elif a is None:
+        return b
+
+    # Nothing matches above, the first arg is returned
+    return a
+
 class Callback():
     """
     A Callback handler class
@@ -129,8 +170,8 @@ class Stats:
         self.module_name = self.mccs.get_module_spec().get_module_name()
         self.modules = {}
         self.statistics_data = {}
-        # statistics data by each pid
-        self.statistics_data_bypid = {}
+        # statistics data by each mid
+        self.statistics_data_bymid = {}
         # get commands spec
         self.commands_spec = self.mccs.get_module_spec().get_commands_spec()
         # add event handler related command_handler of ModuleCCSession
@@ -144,51 +185,162 @@ class Stats:
                 self.callbacks[name] = Callback(command=callback, kwargs=kwargs)
             except AttributeError:
                 raise StatsError(STATS_UNKNOWN_COMMAND_IN_SPEC, cmd["command_name"])
+        self.config = {}
         self.mccs.start()
+        # setup my config
+        self.config = dict([
+                (itm['item_name'], self.mccs.get_value(itm['item_name'])[0])
+                for itm in self.mccs.get_module_spec().get_config_spec()
+                ])
+        # set a absolute timestamp polling at next time
+        self.next_polltime = get_timestamp() + self.get_interval()
+        # initialized Statistics data
+        self.update_modules()
+        if self.update_statistics_data(
+            self.module_name,
+            self.cc_session.lname,
+            {'lname': self.cc_session.lname,
+             'boot_time': get_datetime(_BASETIME),
+             'last_update_time': get_datetime()}):
+            logger.warn(STATS_RECEIVED_INVALID_STATISTICS_DATA,
+                        self.module_name)
+        # define the variable of the last time of polling
+        self._lasttime_poll = 0.0
+
+    def get_interval(self):
+        """return the current value of 'poll-interval'"""
+        return self.config['poll-interval']
+
+    def do_polling(self):
+        """Polls modules for statistics data. Return nothing. First
+           search multiple instances of same module. Second requests
+           each module to invoke 'getstats'. Finally updates internal
+           statistics data every time it gets from each instance."""
+
+        # It counts the number of instances of same module by
+        # examining the third value from the array result of
+        # 'show_processes' of Boss
+        seq = self.cc_session.group_sendmsg(
+            isc.config.ccsession.create_command("show_processes"),
+            'Boss')
+        (answer, env) = self.cc_session.group_recvmsg(False, seq)
+        modules = []
+        if answer:
+            (rcode, value) = isc.config.ccsession.parse_answer(answer)
+            if rcode == 0 and type(value) is list:
+                # NOTE: For example, the "show_processes" command
+                # of Boss is assumed to return the response in this
+                # format:
+                #  [
+                #  ...
+                #    [
+                #      20061,
+                #      "b10-auth",
+                #      "Auth"
+                #    ],
+                #    [
+                #      20103,
+                #      "b10-auth-2",
+                #      "Auth"
+                #    ]
+                #  ...
+                #  ]
+                # If multiple instances of the same module are
+                # running, the address names of them, which are at the
+                # third element, must be also same. Thus, the value of
+                # the third element of each outer element is read here
+                # for counting multiple instances.  This is a
+                # workaround for counting the instances. This should
+                # be fixed in another proper way in the future
+                # release.
+                modules = [ v[2] if type(v) is list and len(v) > 2 \
+                                else None for v in value ]
+        # start requesting each module to collect statistics data
+        sequences = []
+        for (module_name, data) in self.get_statistics_data().items():
+            # skip if module_name is 'Stats'
+            if module_name == self.module_name:
+                continue
+            logger.debug(DBG_STATS_MESSAGING, STATS_SEND_STATISTICS_REQUEST,
+                         module_name)
+            cmd = isc.config.ccsession.create_command(
+                "getstats", None) # no argument
+            seq = self.cc_session.group_sendmsg(cmd, module_name)
+            sequences.append((module_name, seq))
+            cnt = modules.count(module_name)
+            if cnt > 1:
+                sequences = sequences + [ (module_name, seq) \
+                                              for i in range(cnt-1) ]
+        # start receiving statistics data
+        _statistics_data = []
+        while len(sequences) > 0:
+            try:
+                (module_name, seq) = sequences.pop(0)
+                answer, env = self.cc_session.group_recvmsg(
+                    False, seq)
+                if answer:
+                    rcode, args = isc.config.ccsession.parse_answer(
+                        answer)
+                    if rcode == 0:
+                        _statistics_data.append(
+                            (module_name, env['from'], args))
+            # skip this module if SessionTimeout raised
+            except isc.cc.session.SessionTimeout:
+                pass
+
+        # update statistics data
+        self.update_modules()
+        while len(_statistics_data) > 0:
+            (_module_name, _lname, _args) = _statistics_data.pop(0)
+            if self.update_statistics_data(_module_name, _lname, _args):
+                logger.warn(
+                STATS_RECEIVED_INVALID_STATISTICS_DATA,
+                _module_name)
+            else:
+                if self.update_statistics_data(
+                    self.module_name,
+                    self.cc_session.lname,
+                    {'last_update_time': get_datetime()}):
+                    logger.warn(
+                        STATS_RECEIVED_INVALID_STATISTICS_DATA,
+                        self.module_name)
+        # if successfully done, set the last time of polling
+        self._lasttime_poll = get_timestamp()
 
     def start(self):
         """
         Start stats module
         """
-        self.running = True
         logger.info(STATS_STARTING)
 
-        # request Bob to send statistics data
-        logger.debug(DBG_STATS_MESSAGING, STATS_SEND_REQUEST_BOSS)
-        cmd = isc.config.ccsession.create_command("getstats", None)
-        seq = self.cc_session.group_sendmsg(cmd, 'Boss')
-        try:
-            answer, env = self.cc_session.group_recvmsg(False, seq)
-            if answer:
-                rcode, args = isc.config.ccsession.parse_answer(answer)
-                if rcode == 0:
-                    errors = self.update_statistics_data(
-                        args["owner"], **args["data"])
-                    if errors:
-                        raise StatsError("boss spec file is incorrect: "
-                                         + ", ".join(errors))
-                    errors = self.update_statistics_data(
-                                self.module_name,
-                                last_update_time=get_datetime())
-                    if errors:
-                        raise StatsError("stats spec file is incorrect: "
-                                         + ", ".join(errors))
-        except isc.cc.session.SessionTimeout:
-            pass
-
-        # initialized Statistics data
-        errors = self.update_statistics_data(
-            self.module_name,
-            lname=self.cc_session.lname,
-            boot_time=get_datetime(_BASETIME)
-            )
-        if errors:
-            raise StatsError("stats spec file is incorrect: "
-                             + ", ".join(errors))
+        def _check_command(nonblock=False):
+            """check invoked command by waiting for 'poll-interval'
+            seconds"""
+            # backup original timeout
+            orig_timeout = self.cc_session.get_timeout()
+            # set cc-session timeout to half of a second(500ms)
+            self.cc_session.set_timeout(500)
+            try:
+                answer, env = self.cc_session.group_recvmsg(nonblock)
+                self.mccs.check_command_without_recvmsg(answer, env)
+            except isc.cc.session.SessionTimeout:
+                pass # waited for poll-interval seconds
+            # restore timeout
+            self.cc_session.set_timeout(orig_timeout)
 
         try:
+            self.running = True
             while self.running:
-                self.mccs.check_command(False)
+                _check_command()
+                now = get_timestamp()
+                intval = self.get_interval()
+                if intval > 0 and now >= self.next_polltime:
+                    # decide the next polling timestamp
+                    self.next_polltime += intval
+                    # adjust next time
+                    if self.next_polltime < now:
+                        self.next_polltime = now
+                    self.do_polling()
         finally:
             self.mccs.send_stopping()
 
@@ -198,7 +350,21 @@ class Stats:
         """
         logger.debug(DBG_STATS_MESSAGING, STATS_RECEIVED_NEW_CONFIG,
                      new_config)
-        # do nothing currently
+        errors = []
+        if not self.mccs.get_module_spec().\
+                validate_config(False, new_config, errors):
+                return isc.config.ccsession.create_answer(
+                    1, ", ".join(errors))
+
+        if 'poll-interval' in new_config \
+                and new_config['poll-interval'] < 0:
+            return isc.config.ccsession.create_answer(
+                1, "Negative integer ignored")
+
+        self.config.update(new_config)
+        if 'poll-interval' in self.config:
+            # update next polling timestamp
+            self.next_polltime = get_timestamp() + self.get_interval()
         return isc.config.create_answer(0)
 
     def command_handler(self, command, kwargs):
@@ -248,7 +414,7 @@ class Stats:
         module. If it can't find specified statistics data, it raises
         StatsError.
         """
-        self.update_statistics_data()
+        self.update_modules()
         if owner and name:
             try:
                 return {owner:{name:self.statistics_data[owner][name]}}
@@ -267,14 +433,14 @@ class Stats:
                          + "owner: " + str(owner) + ", "
                          + "name: " + str(name))
 
-    def update_statistics_data(self, owner=None, pid=-1, **data):
+    def update_statistics_data(self, owner=None, mid=None, data=None):
         """
-        change statistics date of specified module into specified
+        change statistics data of specified module into specified
         data. It updates information of each module first, and it
         updates statistics data. If specified data is invalid for
         statistics spec of specified owner, it returns a list of error
         messages. If there is no error or if neither owner nor data is
-        specified in args, it returns None. pid is the process id of
+        specified in args, it returns None. The 'mid' argument is an identifier of
         the sender module in order for stats to identify which
         instance sends statistics data in the situation that multiple
         instances are working.
@@ -282,49 +448,32 @@ class Stats:
         # Note:
         # The fix of #1751 is for multiple instances working. It is
         # assumed here that they send different statistics data with
-        # each PID. Stats should save their statistics data by
-        # PID. The statistics data, which is the existing variable, is
-        # preserved by accumlating from statistics data by PID. This
+        # each sender module id (mid). Stats should save their statistics data by
+        # mid. The statistics data, which is the existing variable, is
+        # preserved by accumlating from statistics data by the mid. This
         # is an ad-hoc fix because administrators can not see
         # statistics by each instance via bindctl or HTTP/XML. These
         # interfaces aren't changed in this fix.
 
-        def _accum_bymodule(statistics_data_bypid):
-            # This is an internal function for the superordinate
-            # function. It accumulates statistics data of each PID by
-            # module. It returns the accumulation result.
-            def _accum(a, b):
-                # If the first arg is dict or list type, two values
-                # would be merged and accumlated.
-                if type(a) is dict:
-                    return dict([ (k, _accum(v, b[k])) \
-                                      if k in b else (k, v) \
-                                      for (k, v) in a.items() ] \
-                                    + [ (k, v) \
-                                            for (k, v) in b.items() \
-                                            if k not in a ])
-                elif type(a) is list:
-                    return [ _accum(a[i], b[i]) \
-                                 if len(b) > i else a[i] \
-                                 for i in range(len(a)) ] \
-                                 + [ b[i] \
-                                         for i in range(len(b)) \
-                                         if len(a) <= i ]
-                # If the first arg is integer or float type, two
-                # values are just added.
-                elif type(a) is int or type(a) is float:
-                    return a + b
-                # If the first arg is str or other types than above,
-                # then it just returns the first arg which is assumed
-                # to be the newer value.
-                return a
+        def _accum_bymodule(statistics_data_bymid):
+            """This is an internal method for the superordinate
+            method. It accumulates statistics data of each module id
+            by module. It returns a accumulated result."""
+            # FIXME: A issue might happen when consolidating
+            # statistics of the multiple instances. If they have
+            # different statistics data which are not for adding each
+            # other, this might happen: If these are integer or float,
+            # these are added each other. If these are string , these
+            # are compared and consolidated into bigger one.  If one
+            # of them is None type , these might be consolidated
+            # into not None-type one. Otherwise these are overwritten
+            # into one of them.
             ret = {}
-            for data in statistics_data_bypid.values():
+            for data in statistics_data_bymid.values():
                 ret.update(_accum(data, ret))
             return ret
 
         # Firstly, it gets default statistics data in each spec file.
-        self.update_modules()
         statistics_data = {}
         for (name, module) in self.modules.items():
             value = get_spec_defaults(module.get_statistics_spec())
@@ -333,62 +482,32 @@ class Stats:
         self.statistics_data = statistics_data
 
         # If the "owner" and "data" arguments in this function are
-        # specified, then the variable of statistics data of each pid
+        # specified, then the variable of statistics data of each module id
         # would be updated.
         errors = []
         if owner and data:
             try:
                 if self.modules[owner].validate_statistics(False, data, errors):
-                    if owner in self.statistics_data_bypid:
-                        if pid in self.statistics_data_bypid[owner]:
-                            self.statistics_data_bypid[owner][pid].update(data)
+                    if owner in self.statistics_data_bymid:
+                        if mid in self.statistics_data_bymid[owner]:
+                            self.statistics_data_bymid[owner][mid].update(data)
                         else:
-                            self.statistics_data_bypid[owner][pid] = data
+                            self.statistics_data_bymid[owner][mid] = data
                     else:
-                        self.statistics_data_bypid[owner] = { pid : data }
+                        self.statistics_data_bymid[owner] = { mid : data }
             except KeyError:
                 errors.append("unknown module name: " + str(owner))
 
-        # If there are inactive instances, which was actually running
-        # on the system before, their statistics data would be
-        # removed. To find inactive instances, it invokes the
-        # "show_processes" command to Boss via the cc session. Then it
-        # gets active instance list and compares its PIDs with PIDs in
-        # statistics data which it already has. If inactive instances
-        # are found, it would remove their statistics data.
-        seq = self.cc_session.group_sendmsg(
-            isc.config.ccsession.create_command("show_processes", None),
-            "Boss")
-        (answer, env) = self.cc_session.group_recvmsg(False, seq)
-        if answer:
-            (rcode, value) = isc.config.ccsession.parse_answer(answer)
-            if rcode == 0:
-                if type(value) is list and len(value) > 0 \
-                        and type(value[0]) is list and len(value[0]) > 1:
-                    mlist = [ k for k in self.statistics_data_bypid.keys() ]
-                    for m in mlist:
-                        # PID list which it has before except for -1
-                        plist1 = [ p for p in self.statistics_data_bypid[m]\
-                                       .keys() if p != -1]
-                        # PID list of active instances which is
-                        # received from Boss
-                        plist2 = [ v[0] for v in value \
-                                       if v[1].lower().find(m.lower()) \
-                                       >= 0 ]
-                        # get inactive instance list by the difference
-                        # between plist1 and plist2
-                        nplist = set(plist1).difference(set(plist2))
-                        for p in nplist:
-                            self.statistics_data_bypid[m].pop(p)
-                        if self.statistics_data_bypid[m]:
-                            if m in self.statistics_data:
-                                self.statistics_data[m].update(
-                                    _accum_bymodule(
-                                        self.statistics_data_bypid[m]))
-                        # remove statistics data of the module with no
-                        # PID
-                        else:
-                            self.statistics_data_bypid.pop(m)
+        # Just consolidate statistics data of each module without
+        # removing that of modules which have been already dead
+        mlist = [ k for k in self.statistics_data_bymid.keys() ]
+        for m in mlist:
+            if self.statistics_data_bymid[m]:
+                if m in self.statistics_data:
+                    self.statistics_data[m].update(
+                        _accum_bymodule(
+                            self.statistics_data_bymid[m]))
+
         if errors: return errors
 
     def command_status(self):
@@ -413,6 +532,13 @@ class Stats:
         """
         handle show command
         """
+        # decide if polling should be done based on the the last time of
+        # polling. If more than one second has passed since the last
+        # request to each module, the stats module requests each module
+        # statistics data and then shows the latest result. Otherwise,
+        # the stats module just shows statistics data which it has.
+        if get_timestamp() - self._lasttime_poll > 1.0:
+            self.do_polling()
         if owner or name:
             logger.debug(DBG_STATS_MESSAGING,
                          STATS_RECEIVED_SHOW_NAME_COMMAND,
@@ -422,8 +548,9 @@ class Stats:
                          STATS_RECEIVED_SHOW_ALL_COMMAND)
         errors = self.update_statistics_data(
             self.module_name,
-            timestamp=get_timestamp(),
-            report_time=get_datetime()
+            self.cc_session.lname,
+            {'timestamp': get_timestamp(),
+             'report_time': get_datetime()}
             )
         if errors:
             raise StatsError("stats spec file is incorrect: "
@@ -473,22 +600,6 @@ class Stats:
         return isc.config.create_answer(
                 1, "specified arguments are incorrect: " \
                     + "owner: " + str(owner) + ", name: " + str(name))
-
-    def command_set(self, owner, pid=-1, data={}):
-        """
-        handle set command
-        """
-        errors = self.update_statistics_data(owner, pid, **data)
-        if errors:
-            return isc.config.create_answer(
-                1, "errors while setting statistics data: " \
-                    + ", ".join(errors))
-        errors = self.update_statistics_data(
-            self.module_name, last_update_time=get_datetime() )
-        if errors:
-            raise StatsError("stats spec file is incorrect: "
-                             + ", ".join(errors))
-        return isc.config.create_answer(0)
 
 if __name__ == "__main__":
     try:

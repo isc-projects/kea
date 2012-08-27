@@ -164,6 +164,13 @@ class ComponentTests(BossUtils, unittest.TestCase):
         component = self.__create_component('core')
         self.assertEqual('No process', component.name())
 
+    def test_address(self):
+        """
+        Test the address provides whatever we passed to the constructor as process.
+        """
+        component = self.__create_component('core')
+        self.assertEqual("homeless", component.address())
+
     def test_guts(self):
         """
         Test the correct data are stored inside the component.

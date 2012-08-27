@@ -371,6 +371,14 @@ class BaseComponent:
         """
         pass
 
+    def address(self):
+        """
+        Provides the name of the address used on the message bus
+
+        You need to provide this method in a concrete implementation.
+        """
+        pass
+
 class Component(BaseComponent):
     """
     The most common implementation of a component. It can be used either
@@ -453,6 +461,12 @@ class Component(BaseComponent):
                 self._procinfo.process.kill()
             else:
                 self._procinfo.process.terminate()
+
+    def address(self):
+        """
+        Returns the name of the address used on the message bus
+        """
+        return self._address
 
 class Configurator:
     """
