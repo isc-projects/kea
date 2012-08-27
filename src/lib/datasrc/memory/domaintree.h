@@ -780,11 +780,21 @@ private:
  *  \brief \c DomainTree class represents all the domains with the same suffix.
  *      It can be used to store the domains in one zone, for example.
  *
- *  DomainTree is a generic map from domain names to any kind of
- *  data. Internally, it uses a red-black tree. However, it isn't one
- *  tree containing everything.  Subdomains are trees, so this structure
- *  is recursive - trees inside trees.  But, from the interface point of
- *  view, it is opaque data structure.
+ * DomainTree is a generic map from domain names to any kind of
+ * data. Internally, it uses a red-black tree. However, it isn't one
+ * tree containing everything.  Subdomains are trees, so this structure
+ * is recursive - trees inside trees.  But, from the interface point of
+ * view, it is opaque data structure.
+ *
+ * The data of DomainTree are set by the application via the
+ * DomainTreeNode::setData() method.  The ownership of the data isn't
+ * transferred to the DomainTree; if the application replaces existing
+ * data for a specific name in DomainTree by setData(), the application is
+ * responsible for releasing any resource for the old data.  When the
+ * application destroys the entire DomainTree by the \c destroy() method,
+ * it needs to pass a deleter object for any remained data in the DomainTree.
+ * The DomainTree will call that object with all the data in the tree so that
+ * the application complete the cleanup about the remaining data.
  *
  *  \c DomainTree splits the domain space into hierarchy red black trees; nodes
  * in one tree has the same base name. The benefit of this struct is that:
