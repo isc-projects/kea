@@ -27,8 +27,12 @@ namespace test {
 
 // A special memory segment that can be used for tests.  It normally behaves
 // like a "local" memory segment.  If "throw count" is set to non 0 via
-// setThrowCount(), it continues the normal behavior up to the specified
-// number of calls to allocate(), and throws an exception at the next call.
+// setThrowCount(), it continues the normal behavior until the specified
+// number of calls to allocate(), exclusive, and throws an exception at the
+// next call.  For example, if count is set to 3, the next two calls to
+// allocate() will succeed, and the 3rd call will fail with an exception.
+// This segment object can be used after the exception is thrown, and the
+// count is internally reset to 0.
 class MemorySegmentTest : public isc::util::MemorySegmentLocal {
 public:
     MemorySegmentTest() : throw_count_(0) {}
