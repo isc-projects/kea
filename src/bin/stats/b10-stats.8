@@ -1,13 +1,22 @@
 '\" t
 .\"     Title: b10-stats
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
-.\" Generator: DocBook XSL Stylesheets v1.75.2 <http://docbook.sf.net/>
+.\" Generator: DocBook XSL Stylesheets v1.77.1 <http://docbook.sf.net/>
 .\"      Date: June 20, 2012
 .\"    Manual: BIND10
 .\"    Source: BIND10
 .\"  Language: English
 .\"
 .TH "B10\-STATS" "8" "June 20, 2012" "BIND10" "BIND10"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -37,7 +46,12 @@ and communicates by using the Command Channel by
 with other modules like
 \fBbind10\fR,
 \fBb10\-auth\fR
-and so on\&. It waits for coming data from other modules, then other modules send data to stats module periodically\&. Other modules send stats data to stats module independently from implementation of stats module, so the frequency of sending data may not be constant\&. The stats module collects data and aggregates it\&.
+and so on\&.
+\fBb10\-stats\fR
+periodically requests statistics data to each module and receives\&. The interval time can be configured via
+\fBbindctl\fR\&.
+\fBb10\-stats\fR
+cannot accept any command from other modules for updating statistics data\&. The stats module collects data and aggregates it\&.
 \fBb10\-stats\fR
 invokes an internal command for
 \fBbind10\fR
@@ -53,15 +67,18 @@ This enables maximum debug logging\&.
 .RE
 .SH "CONFIGURATION AND COMMANDS"
 .PP
-The
+The configurable setting in
+stats\&.spec
+is:
+.PP
+\fIpoll\-interval\fR
+.RS 4
+is a timer interval in seconds for
 \fBb10\-stats\fR
-command does not have any configurable settings\&.
+to polling each module for its statistics data\&. The default is 60 second\&. Polling can be disabled by setting to 0\&. The type of the value should be an unsigned integer\&. Setting to a negative integer is ignored\&.
+.RE
 .PP
 The configuration commands are:
-.PP
-
-\fBset\fR
-will set new statistics data specified in arguments\&. Statistics data to be set and the module name which owns statistics data are required in argument\&. Pid of the module in argument is optional\&.
 .PP
 
 \fBshow\fR
@@ -93,7 +110,7 @@ statistics:
 .PP
 boot_time
 .RS 4
-The date and time when this daemon was started in ISO 8601 format\&. This is a constant which can\'t be reset except by restarting
+The date and time when this daemon was started in ISO 8601 format\&. This is a constant which can\*(Aqt be reset except by restarting
 \fBb10\-stats\fR\&.
 .RE
 .PP
@@ -106,7 +123,7 @@ lname
 .RS 4
 This is the name used for the
 \fBb10\-msgq\fR
-command\-control channel\&. (This is a constant which can\'t be reset except by restarting
+command\-control channel\&. (This is a constant which can\*(Aqt be reset except by restarting
 \fBb10\-stats\fR\&.)
 .RE
 .PP
