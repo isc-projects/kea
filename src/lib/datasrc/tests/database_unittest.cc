@@ -2847,6 +2847,35 @@ TYPED_TEST(DatabaseClientTest, anyFromFind) {
                                          RRType::ANY()), isc::Unexpected);
 }
 
+TYPED_TEST(DatabaseClientTest, findRRSIGsWithoutDNSSEC) {
+    // Trying to find RRSIG records directly should work even if
+    // FIND_DNSSEC flag is not specified.
+
+    boost::shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
+    ConstZoneFinderContextPtr result =
+        finder->find(isc::dns::Name("signed1.example.org."), RRType::RRSIG());
+
+    EXPECT_EQ(ZoneFinder::SUCCESS, result->code);
+
+    std::vector<std::string> expected_rdata;
+    expected_rdata.push_back(TEST_RECORDS[10][4]);
+    expected_rdata.push_back(TEST_RECORDS[11][4]);
+    expected_rdata.push_back(TEST_RECORDS[14][4]);
+
+    RdataIteratorPtr it(result->rrset->getRdataIterator());
+    std::vector<std::string> rdata;
+    while (!it->isLast()) {
+        rdata.push_back(it->getCurrent().toText());
+        it->next();
+    }
+    std::sort(rdata.begin(), rdata.end());
+    std::sort(expected_rdata.begin(), expected_rdata.end());
+    ASSERT_EQ(expected_rdata.size(), rdata.size());
+    for (size_t i(0); i < expected_rdata.size(); ++ i) {
+        EXPECT_EQ(expected_rdata[i], rdata[i]);
+    }
+}
+
 // Test the findAll method.
 TYPED_TEST(DatabaseClientTest, getAll) {
     // The domain doesn't exist, so we must get the right NSEC
