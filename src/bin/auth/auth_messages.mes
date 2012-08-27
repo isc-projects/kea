@@ -192,7 +192,7 @@ multiple lines of text. For this reason, it is suggested that this log message
 not be routed to the syslog file, where the multiple lines could confuse
 programs that expect a format of one message per line.
 
-% AUTH_SEND_NORMAL_RESPONSE sending an error response (%1 bytes):\n%2
+% AUTH_SEND_NORMAL_RESPONSE sending a normal response (%1 bytes):\n%2
 This is a debug message recording that the authoritative server is sending
 a response to the originator of a query.
 
