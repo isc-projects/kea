@@ -194,6 +194,43 @@ public:
     static void destroy(util::MemorySegment& mem_sgmt, dns::RRClass rrclass,
                         RdataSet* rdataset);
 
+    /// \brief Find \c RdataSet of given RR type from a list (const version).
+    ///
+    /// This function is a convenient shortcut for commonly used operation of
+    /// finding a given type of \c RdataSet from a linked list of them.
+    ///
+    /// It follows the linked list of \c RdataSet objects (via their \c next
+    /// member) starting the given head, until it finds an object of the
+    /// given RR type.  If found, it returns a (bare) pointer to the object;
+    /// if not found in the entire list, it returns NULL.  The head pointer
+    /// can be NULL, in which case this function will simply return NULL.
+    ///
+    /// \note This function is defined as a (static) class method to
+    /// clarify its an operation for \c RdataSet objects and to make the
+    /// name shorter.  But its implementation does not depend on private
+    /// members of the class, and it should be kept if and when this method
+    /// needs to be extended, unless there's a reason other than simply
+    /// because it's already a member function.
+    ///
+    /// \param rdata_head A pointer to \c RdataSet from which the search
+    /// starts.  It can be NULL.
+    /// \param type The RRType of \c RdataSet to find.
+    /// \return A pointer to the found \c RdataSet or NULL if none found.
+    static const RdataSet*
+    find(const RdataSet* rdataset_head, const dns::RRType& type) {
+        return (find<const RdataSet>(rdataset_head, type));
+    }
+
+    /// \brief Find \c RdataSet of given RR type from a list (non const
+    /// version).
+    ///
+    /// This is similar to the const version, except it takes and returns non
+    /// const pointers.
+    static RdataSet*
+    find(RdataSet* rdataset_head, const dns::RRType& type) {
+        return (find<RdataSet>(rdataset_head, type));
+    }
+
     typedef boost::interprocess::offset_ptr<RdataSet> RdataSetPtr;
     typedef boost::interprocess::offset_ptr<const RdataSet> ConstRdataSetPtr;
 
@@ -307,6 +344,21 @@ private:
         return (reinterpret_cast<uint16_t*>(this + 1));
     }
 
+    // Shared by both mutable and immutable versions of find()
+    template <typename RdataSetType>
+    static RdataSetType*
+    find(RdataSetType* rdataset_head, const dns::RRType& type) {
+        for (RdataSetType* rdataset = rdataset_head;
+             rdataset != NULL;
+             rdataset = rdataset->getNext()) // use getNext() for efficiency
+        {
+            if (rdataset->type == type) {
+                return (rdataset);
+            }
+        }
+        return (NULL);
+    }
+
     /// \brief The constructor.
     ///
     /// An object of this class is always expected to be created by the
@@ -325,45 +377,6 @@ private:
     /// it's intentionally defined as private.
     ~RdataSet() {}
 };
-
-// Shared by both mutable and immutable versions below
-template <typename RdataSetType>
-RdataSetType*
-findRdataSetOfType(RdataSetType* rdataset_head, dns::RRType type) {
-    for (RdataSetType* rdataset = rdataset_head;
-         rdataset != NULL;
-         rdataset = rdataset->getNext()) // use getNext() for efficiency
-    {
-        if (rdataset->type == type) {
-            return (rdataset);
-        }
-    }
-    return (NULL);
-}
-
-/// \brief Find \c RdataSet of given RR type from a list (const version).
-///
-/// This function is a convenient shortcut for commonly used operation of
-/// finding a given type of \c RdataSet from a linked list of them.
-///
-/// It follows the linked list of \c RdataSet objects (via their \c next
-/// member) starting the given head, until it finds an object of the
-/// given RR type.  If found, it returns a (bare) pointer to the object;
-/// if not found in the entire list, it returns NULL.  The head pointer
-/// can be NULL, in which case this function will simply return NULL.
-inline const RdataSet*
-findRdataSetOfType(const RdataSet* rdataset_head, dns::RRType type) {
-    return (findRdataSetOfType<const RdataSet>(rdataset_head, type));
-}
-
-/// \brief Find \c RdataSet of given RR type from a list (non const version).
-///
-/// This is similar to the const version, except it takes and returns non
-/// const pointers.
-inline RdataSet*
-findRdataSetOfType(RdataSet* rdataset_head, dns::RRType type) {
-    return (findRdataSetOfType<RdataSet>(rdataset_head, type));
-}
 
 } // namespace memory
 } // namespace datasrc

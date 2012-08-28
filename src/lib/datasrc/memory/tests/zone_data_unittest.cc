@@ -111,7 +111,7 @@ checkFindRdataSet(const ZoneTree& tree, const Name& name, RRType type,
     ZoneNode* node = NULL;
     tree.find(name, &node);
     ASSERT_NE(static_cast<ZoneNode*>(NULL), node);
-    EXPECT_EQ(expected_set, findRdataSetOfType(node->getData(), type));
+    EXPECT_EQ(expected_set, RdataSet::find(node->getData(), type));
 }
 
 TEST_F(ZoneDataTest, createNSEC3Data) {
