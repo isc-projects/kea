@@ -97,8 +97,7 @@ namespace memory {
 /// \brief General error in RDATA encoding.
 ///
 /// This is thrown when \c RdataEncoder encounters a rare, unsupported
-/// situation. a method is called for a name or RRset which
-/// is not in or below the zone.
+/// situation.
 class RdataEncodingError : public Exception {
 public:
     RdataEncodingError(const char* file, size_t line, const char* what) :
@@ -358,6 +357,21 @@ public:
                                  RdataNameAttributes)> NameAction;
     /// \brief Function called on each data field in the data.
     typedef boost::function<void(const void*, size_t)> DataAction;
+
+    /// \brief An NameAction that does intentionally nothing.
+    ///
+    /// This static method can be used as the name action parameter to
+    /// construct \c RdataReader when the caller does not have to anything
+    /// for name fields.
+    static void emptyNameAction(const dns::LabelSequence&,
+                                RdataNameAttributes);
+
+    /// \brief An DataAction that does intentionally nothing.
+    ///
+    /// This static method can be used as the data action parameter to
+    /// construct \c RdataReader when the caller does not have to anything
+    /// for opaque data fields.
+    static void emptyDataAction(const void*, size_t);
 
     /// \brief Constructor
     ///

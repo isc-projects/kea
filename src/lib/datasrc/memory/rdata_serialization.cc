@@ -547,18 +547,14 @@ RdataReader::next() {
     return (nextInternal(name_action_, data_action_));
 }
 
-namespace {
-
 void
-emptyNameAction(const LabelSequence&, unsigned) {
+RdataReader::emptyNameAction(const LabelSequence&, RdataNameAttributes) {
     // Do nothing here.
 }
 
 void
-emptyDataAction(const void*, size_t) {
+RdataReader::emptyDataAction(const void*, size_t) {
     // Do nothing here.
-}
-
 }
 
 RdataReader::Boundary
