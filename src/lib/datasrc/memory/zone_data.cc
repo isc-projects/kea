@@ -118,7 +118,7 @@ NSEC3Data::insertName(util::MemorySegment& mem_sgmt, const Name& name,
 
     // This should be ensured by the API:
     assert((result == ZoneTree::SUCCESS ||
-            result == ZoneTree::ALREADYEXISTS) && node!= NULL);
+            result == ZoneTree::ALREADYEXISTS) && node != NULL);
 }
 
 ZoneData*
@@ -162,7 +162,7 @@ ZoneData::insertName(util::MemorySegment& mem_sgmt, const Name& name,
 
     // This should be ensured by the API:
     assert((result == ZoneTree::SUCCESS ||
-            result == ZoneTree::ALREADYEXISTS) && node!= NULL);
+            result == ZoneTree::ALREADYEXISTS) && node != NULL);
 }
 
 } // namespace memory
