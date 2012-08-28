@@ -237,7 +237,6 @@ public:
     /// get the same result by directly calling get() on \c next, it would
     /// help encourage the use of more efficient usage if we provide an
     /// explicit accessor.
-    //const RdataSet* getNext() const { return (next.get()); }
     const RdataSet* getNext() const { return (next.get()); }
 
     /// \brief Return the bare pointer to the next node, mutable version.
