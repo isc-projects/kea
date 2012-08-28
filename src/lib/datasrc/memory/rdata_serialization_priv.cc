@@ -14,7 +14,8 @@
 
 // This file is directly included from the rdata_serialization.cc. It would
 // be part of the file if we didn't need to steal some definitions from here
-// for the tests (which include it too).
+// for the tests (which include it too). To make the intent clear, it is
+// named .cc, not .h.
 
 struct RdataFieldSpec {
     enum FieldType {
