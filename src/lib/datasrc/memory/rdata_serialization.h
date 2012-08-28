@@ -321,9 +321,32 @@ struct RdataEncodeSpec;
 /// }
 ///
 /// RdataReader reader(RRClass::IN(), RRType::AAAA(), size, data,
-///                    &handleName, &handleData);
+///                    rdata_count, sig_count, &handleName, &handleData);
 /// reader.iterate();
 /// \endcode
+///
+/// If you need to do the iteration per RDATA basis rather than per data field
+/// basis, you can use \c iterateRdata() as follows:
+///
+/// \code
+/// for (size_t i = 0; i < rdata_count; ++i)
+///     // maybe do something related to this RDATA
+///     reader.iterateRdata(); // specified actions called for this RDATA
+///     // maybe do some other thing related to this RDATA
+/// }
+/// if (reader.iterateRdata()) {
+///     isc_throw(Unexpected, "Inconsistent data");
+/// }
+/// \endcode
+///
+/// The check after the loop is primarily for consistency
+/// validation, but it would also help a possible subsequent call
+/// to \c iterateAllSigs() if you also want to iterate over RRSIGs;
+/// the final call to \c iterateRdata() updates the internal state of the
+/// reader object so \c iterateAllSigs() can find the RRSIG data more
+/// efficiently.  \c iterateAllSigs() will work correctly even with out
+/// this small optimization, but checking the consistency is a good practice
+/// anyway, and the optimization is an additional bonus.
 ///
 /// \note It is caller's responsibility to pass valid data here. This means
 ///     the data returned by RdataEncoder and the corresponding class and type.
