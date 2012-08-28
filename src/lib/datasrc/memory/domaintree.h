@@ -248,13 +248,22 @@ public:
 
     /// \brief Set the data stored in the node.
     ///
-    /// If there is old data, it will be simply dropped; unless the data
-    /// is managed outside the node and its resource is released (if needed),
-    /// it will leak.
+    /// If there is old data, a pointer to the data will be returned;
+    /// otherwise NULL will be returned.  The caller is responsible for
+    /// releasing any resource for the old data if it's not needed any more.
+    /// See also the note about data ownership in the \c DomainTree
+    /// description.
     ///
-    /// \param data The new data to set.
-    void setData(T* data) {
+    /// \c data can be NULL, in which case it effectively clears any existing
+    /// old data.
+    ///
+    /// \param data The new data to set.  It can be NULL.
+    /// \return A pointer to the old data or NULL if the node doesn't have
+    /// data.
+    T* setData(T* data) {
+        T* olddata = data_.get();
         data_ = data;
+        return (olddata);
     }
     //@}
 
