@@ -61,10 +61,12 @@ typedef DomainTreeNode<RdataSet> ZoneNode;
 /// this condition.  It's the caller's responsibility.
 ///
 /// Read-only access to the tree is possible via the \c getNSEC3Tree() method.
-/// Modifying the tree must be done by specific method; the application
-/// cannot directly change the content of the tree in an arbitrary way.
-/// This class does not have a strong reason to be that strict, but is
-/// defined this way mainly to be consistent with the \c ZoneData class.
+/// Modifying the tree must be done by a specific method (in the initial
+/// implementation, it's \c insertName().  There may be some more as we
+/// see the need); the application cannot directly change the content of the
+/// tree in an arbitrary way.  This class does not have a strong reason to be
+/// that strict, but is defined this way mainly to be consistent with the
+/// \c ZoneData class.
 ///
 /// Most of the hash parameters are maintained in the form of straightforward
 /// member variables, which can be directly referenced by the application.
