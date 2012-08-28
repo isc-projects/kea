@@ -44,18 +44,25 @@ public:
     RdataRenderBenchMark(const vector<T>& dataset) :
         dataset_(dataset)
     {}
+    RdataRenderBenchMark() {
+        delete renderer_;
+    }
     unsigned int run() {
+        if (renderer_ == NULL) {
+            renderer_ = new MessageRenderer();
+        }
         typename vector<T>::const_iterator data;
         typename vector<T>::const_iterator data_end = dataset_.end();
         for (data = dataset_.begin(); data != data_end; ++data) {
-            renderer_.clear();
-            (*data)->toWire(renderer_);
+            renderer_->clear();
+            (*data)->toWire(*renderer_);
         }
         return (dataset_.size());
     }
 private:
     const vector<T>& dataset_;
-    MessageRenderer renderer_;
+    // Just-in-time initialized pointer, so no copy
+    MessageRenderer* renderer_;
 };
 
 // This supplemental class emulates an RRset like class that internally
