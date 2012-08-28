@@ -787,10 +787,20 @@ example.com). However, this name is not contained in any zone in the
 data source. This is an error since it indicates a problem in the earlier
 processing of the query.
 
-% DATASRC_SQLITE_SETUP setting up SQLite database
+% DATASRC_SQLITE_SETUP setting up new SQLite3 database in '%1'
 The database for SQLite data source was found empty. It is assumed this is the
 first run and it is being initialized with current schema.  It'll still contain
-no data, but it will be ready for use.
+no data, but it will be ready for use. If this is indeed the first run of
+Bind10, it is to be expected and completely harmless. If you just configured
+a data source to point to an existing file and you see this, you may have
+misspelled the file name.
+
+% DATASRC_SQLITE_SETUP_OLD_API setting up new SQLite database
+The database for SQLite data source was found empty. It is assumed this is the
+first run and it is being initialized with current schema.  It'll still contain
+no data, but it will be ready for use. This is similar to DATASRC_SQLITE_SETUP
+message, but it is logged from the old API. You should never see it, since the
+API is deprecated.
 
 % DATASRC_STATIC_CLASS_NOT_CH static data source can handle CH class only
 An error message indicating that a query requesting a RR for a class other
