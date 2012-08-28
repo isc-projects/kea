@@ -117,9 +117,9 @@ public:
     /// It's necessary to destroy the stored \c RdataSet objects
     /// (see its class description).  This class doesn't hold this information;
     /// it's the caller's responsibility to associate an \c NSEC3Data
-    /// class object with its expected RR class, and pass it to \c
-    /// destroy().  (In practice, it will be passed via \c
-    /// ZoneData::destroy().)
+    /// class object with its expected RR class, and pass it to
+    /// \c destroy().  (In practice, it will be passed via
+    /// \c ZoneData::destroy().)
     ///
     /// \throw none
     ///
