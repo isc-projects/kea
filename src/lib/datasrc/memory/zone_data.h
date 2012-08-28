@@ -380,8 +380,8 @@ public:
     /// Note that an \c RRClass object must be passed to this method.
     /// It's used to destroy the stored \c RdataSet objects
     /// (see its class description).  This class doesn't hold this information;
-    /// it's the caller's responsibility to associate a \c ZoneData class object
-    /// with its expected RR class, and pass it to \c destroy().
+    /// it's the caller's responsibility to associate a \c ZoneData class
+    /// object with its expected RR class, and pass it to \c destroy().
     ///
     /// \throw none
     ///
@@ -395,6 +395,10 @@ public:
     static void destroy(util::MemorySegment& mem_sgmt, ZoneData* zone_data,
                         dns::RRClass zone_class);
 
+    ///
+    /// \name Getter methods
+    ///
+    //@{
     /// \brief Return zone's origin node.
     ///
     /// This is a convenience and efficient short cut to get access to the
@@ -445,7 +449,12 @@ public:
     ///
     /// \throw none
     const NSEC3Data* getNSEC3Data() const { return (nsec3_data_.get()); }
+    //@}
 
+    ///
+    /// \name Methods for modifying the tree
+    ///
+    //@{
     /// \brief Insert a name to the zone.
     ///
     /// It allocates resource for the given name in the internal storage
@@ -536,6 +545,7 @@ public:
         nsec3_data_ = nsec3_data;
         return (old);
     }
+    //@}
 
 private:
     const boost::interprocess::offset_ptr<ZoneTree> zone_tree_;
