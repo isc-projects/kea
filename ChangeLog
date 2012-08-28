@@ -1,9 +1,10 @@
-nnn.    [func]          naokikambe
-        The stats module was supported differential statistics updates. Each
-        module can return only statistics data which are updated since the last
-        time it sent to the stats module. The purpose of differential updating
-        is reducing amounts of statistics data sent in the message queue.
-        (Trac #2179, git TBD)
+nnn.	[func]		naokikambe
+	The stats module now supports partial statistics updates. Each
+	module can return only statistics data which have been updated since
+	the last time it sent them to the stats module. The purpose of partial
+	updates is to reduce the amount of statistics data sent through the
+	message queue.
+	(Trac #2179, git TBD)
 
 458.	[build]*	jinmei
 	BIND 10 now relies on Boost offset_ptr, which caused some new
