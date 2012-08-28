@@ -258,7 +258,8 @@ class TCPClient : public SimpleClient {
     // this includes connect, send message and recevice message
     static const unsigned int SERVER_TIME_OUT = 2;
     TCPClient(asio::io_service& service, const ip::tcp::endpoint& server)
-        : SimpleClient(service, SERVER_TIME_OUT)
+        : SimpleClient(service, SERVER_TIME_OUT),
+          send_data_(true), send_data_len_(true)
     {
         server_ = server;
         socket_.reset(new ip::tcp::socket(service));
@@ -280,13 +281,23 @@ class TCPClient : public SimpleClient {
                                 std::string(received_data_ + 2));
     }
 
+    // if set to false, does not actually send data length
+    void setSendDataLen(bool send_data_len) {
+        send_data_len_ = send_data_len;
+    }
+
+    // if set to false, does not actually send data
+    void setSendData(bool send_data) {
+        send_data_ = send_data;
+    }
+
     private:
     void stopWaitingforResponse() {
         socket_->close();
     }
 
     void connectHandler(const asio::error_code& error) {
-        if (!error) {
+        if (!error && send_data_len_) {
             data_to_send_len_ = htons(data_to_send_len_);
             socket_->async_send(buffer(&data_to_send_len_, 2),
                                 boost::bind(&TCPClient::sendMessageBodyHandler,
@@ -297,7 +308,7 @@ class TCPClient : public SimpleClient {
     void sendMessageBodyHandler(const asio::error_code& error,
                                 size_t send_bytes)
     {
-        if (!error && send_bytes == 2) {
+        if (!error && send_bytes == 2 && send_data_) {
             socket_->async_send(buffer(data_to_send_.c_str(),
                                        data_to_send_.size() + 1),
                     boost::bind(&TCPClient::finishSendHandler, this, _1, _2));
@@ -316,6 +327,8 @@ class TCPClient : public SimpleClient {
     ip::tcp::endpoint server_;
     std::string data_to_send_;
     uint16_t data_to_send_len_;
+    bool send_data_;
+    bool send_data_len_;
 };
 
 // \brief provide the context which including two clients and
@@ -565,6 +578,21 @@ TYPED_TEST(DNSServerTest, stopTCPServerAfterOneQuery) {
     EXPECT_TRUE(this->serverStopSucceed());
 }
 
+TYPED_TEST(DNSServerTest, TCPTimeoutOnLen) {
+    this->tcp_client_->setSendDataLen(false);
+    this->testStopServerByStopper(this->tcp_server_, this->tcp_client_,
+                                  this->tcp_client_);
+    EXPECT_EQ("", this->tcp_client_->getReceivedData());
+    EXPECT_FALSE(this->serverStopSucceed());
+}
+
+TYPED_TEST(DNSServerTest, TCPTimeout) {
+    this->tcp_client_->setSendData(false);
+    this->testStopServerByStopper(this->tcp_server_, this->tcp_client_,
+                                  this->tcp_client_);
+    EXPECT_EQ("", this->tcp_client_->getReceivedData());
+    EXPECT_FALSE(this->serverStopSucceed());
+}
 
 // Test whether tcp server stopped successfully before server start to serve
 TYPED_TEST(DNSServerTest, stopTCPServerBeforeItStartServing) {
