@@ -88,7 +88,7 @@ NSEC3Data::create(util::MemorySegment& mem_sgmt, uint8_t hashalg,
 
     const size_t salt_len = salt.size();
 
-    void* p = mem_sgmt.allocate(sizeof(NSEC3Data) + salt_len + 1);
+    void* p = mem_sgmt.allocate(sizeof(NSEC3Data) + 1 + salt_len);
     NSEC3Data* const param_data =
         new(p) NSEC3Data(holder.release(), hashalg, flags, iterations);
     uint8_t* dp = param_data->getSaltBuf();
