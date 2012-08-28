@@ -150,10 +150,12 @@ TEST_F(ZoneDataTest, getOriginNode) {
     EXPECT_EQ(LabelSequence(zname_), zone_data_->getOriginNode()->getLabels());
 }
 
-TEST_F(ZoneDataTest, throwOnCreate) {
+TEST_F(ZoneDataTest, exceptionSafetyOnCreate) {
     // Note: below, we use our knowledge of how memory allocation happens
     // within the NSEC3Data, the zone data and the underlying domain tree
-    // implementation.
+    // implementation.  We'll emulate rare situations where allocate() fails
+    // with an exception, and confirm it doesn't cause any harsh disruption
+    // or leak.
 
     // Creating internal NSEC3 tree will succeed, but allocation of NSEC3Data
     // will fail due to bad_alloc.  It shouldn't cause memory leak
