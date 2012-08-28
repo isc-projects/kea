@@ -354,7 +354,7 @@ public:
     /// \brief Node flag indicating it is at a "wildcard level"
     ///
     /// This means one of the node's immediate children is a wildcard.
-    static const ZoneNode::Flags WILD_NODE = ZoneNode::FLAG_USER2;
+    static const ZoneNode::Flags WILDCARD_NODE = ZoneNode::FLAG_USER2;
 
 public:
     /// \brief Allocate and construct \c ZoneData.
