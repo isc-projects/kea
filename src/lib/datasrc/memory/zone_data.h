@@ -58,13 +58,13 @@ typedef DomainTreeNode<RdataSet> ZoneNode;
 /// \c DomainTree object whose data type is (a list of) \c RdataSet.
 /// This tree is expected to store NSEC3 RRs only, so the RR type of
 /// \c RdataSet should be NSEC3.  But this class itself doesn't guarantee
-/// this condition.  It's caller's responsibility.
+/// this condition.  It's the caller's responsibility.
 ///
 /// Read-only access to the tree is possible via the \c getNSEC3Tree() method.
 /// Modifying the tree must be done by specific method; the application
 /// cannot directly change the content of the tree in an arbitrary way.
 /// This class does not have a strong reason to be that strict, but is
-/// defined this way mainly to be consistent with \c ZoneData class.
+/// defined this way mainly to be consistent with the \c ZoneData class.
 ///
 /// Most of the hash parameters are maintained in the form of straightforward
 /// member variables, which can be directly referenced by the application.
@@ -108,7 +108,7 @@ public:
 
     /// \brief Destruct and deallocate \c NSEC3Data.
     ///
-    /// It releases all resource allocated for the internal NSEC3 name space
+    /// It releases all resources allocated for the internal NSEC3 name space
     /// including NSEC3 RdataSet.  It assumes \c RdataSets objects stored
     /// in the space were allocated using the same memory segment as
     /// \c mem_sgmt.  The caller must ensure this assumption.
@@ -116,15 +116,16 @@ public:
     /// Note that an \c RRClass object must be passed to this method.
     /// It's necessary to destroy the stored \c RdataSet objects
     /// (see its class description).  This class doesn't hold this information;
-    /// it's caller's responsibility to associate an \c NSEC3Data class object
-    /// with its expected RR class, and pass it to \c destroy().  (In practice,
-    /// it will be passed via \c ZoneData::destroy())
+    /// it's the caller's responsibility to associate an \c NSEC3Data
+    /// class object with its expected RR class, and pass it to \c
+    /// destroy().  (In practice, it will be passed via \c
+    /// ZoneData::destroy().)
     ///
     /// \throw none
     ///
     /// \param mem_sgmt The \c MemorySegment that allocated memory for
     /// \c data.
-    /// \param data A non NULL pointer to a valid NSEC3Data object
+    /// \param data A non-NULL pointer to a valid NSEC3Data object
     /// that was originally created by the \c create() method (the behavior
     /// is undefined if this condition isn't met).
     /// \param nsec3_class The RR class of the \c RdataSet stored in the NSEC3
@@ -140,8 +141,8 @@ public:
     const uint8_t hashalg;      ///< Hash algorithm
     const uint8_t flags;        ///< NSEC3 parameter flags
     const uint16_t iterations;  ///< Hash iterations
-    // For 64-bit machines there'll be a padding space here, but since
-    // only at most one (or a few in very rare cases) instance will be
+    // For 64-bit machines there'll be padding space here, but since
+    // only at most one instance (or a few in very rare cases) will be
     // created per zone, the overhead should be acceptable.
 
     /// \brief Return \c ZoneTree for the NSEC3 name space.
@@ -223,8 +224,8 @@ private:
 /// data for memory efficiency.  Basically, this class should be considered
 /// a private part of some other classes within this module and should not
 /// be used directly from normal applications.  So it's not intended to hide
-/// much details of the underlying implementation details; rather, it tries
-/// to keep the representation is simple.
+/// much of the underlying implementation details; rather, it tries
+/// to keep the representation simple.
 ///
 /// The RRs are stored in a \c DomainTree object whose data type is
 /// (a list of) \c RdataSet.  The tree nodes correspond to owner names,
@@ -240,7 +241,7 @@ private:
 /// RRs when the zone is signed with NSEC3; they should be maintained
 /// in an associated \c NSEC3Data object.  But this class does not prevent
 /// the unexpected usage of adding an NSEC3 RdataSet directly in the tree.
-/// It's caller's responsibility to ensure this assumption.
+/// It's the caller's responsibility to ensure this assumption.
 ///
 /// This class maintains some other meta data and additional zone related
 /// content.  First, it automatically creates a \c DomainTree node for the
@@ -256,24 +257,24 @@ private:
 /// to an existing zone so an update attempt doesn't result in deleting
 /// the origin node.
 ///
-/// To ensure the integrity regarding the reference to the origin, write
+/// To ensure integrity regarding the reference to the origin, write
 /// access to the tree node can be done only by public methods; the member
 /// variable for the tree is hidden as private.  On the other hand, read-only
 /// access to the tree is allowed via the const version of \c getZoneTree()
 /// method for the convenience of the application.  So, it's intentional
-/// that there's no non const version of this method.  Do not add one
+/// that there's no non-const version of this method.  Do not add one
 /// when this class is to be extended.
 ///
 /// Another type of meta data is parameters and records of NSEC3 RRs
 /// when the zone is signed with NSEC3.  It's represented in the form of
-/// \c NSEC3Data object, and a \c ZoneData object may be associated with
-/// 0 or 1 \c NSEC3Data object using the \c setNSEC3Data() method, which
+/// an \c NSEC3Data object, and a \c ZoneData object may be associated with
+/// 0 or 1 \c NSEC3Data objects using the \c setNSEC3Data() method, which
 /// can be retrieved by the \c getNSEC3Data() method.  If the \c ZoneData
-/// object is not associated with an \c NSEC3Data, it's considered not
+/// object is not associated with an \c NSEC3Data object, it's considered not
 /// signed with NSEC3 RRs; otherwise it's considered to be signed with
 /// NSEC3 RRs and with the parameters stored in the \c NSEC3Data object.
 ///
-/// \note This interpretation may change in future as we support migration
+/// \note This interpretation may change in the future when we support migration
 /// from NSEC to NSEC3 or vice versa, support incremental signing, or support
 /// multiple sets of NSEC3 parameters.
 ///
@@ -286,7 +287,7 @@ private:
 /// The former status can be accessed via the \c isSigned() and \c setSigned()
 /// methods; the latter can be retrieved via the \c isNSEC3Signed() method.
 ///
-/// This class does not actually relate the status of signed or not to
+/// This class does not actually relate the status of signed-or-not to
 /// any of its other attributes; it's up to the application how to set or
 /// use this status and maintain it in a reasonable way.  One possible
 /// definition is to set this status if and only if the zone has a
@@ -315,7 +316,7 @@ private:
 ///   is true and \c isNSEC3Signed() is true.
 ///
 /// Note that even though \c isNSEC3Signed() being true should indicate
-/// \c isSgned() is true too in practice, the interfaces do not
+/// \c isSigned() is true too in practice, the interfaces do not
 /// automatically ensure that, so we'd need to check both conditions
 /// explicitly.  And, in fact, if we adopt the above definition of
 /// \c isSigned(), it's possible that a zone has a complete set of NSEC3
@@ -324,9 +325,9 @@ private:
 ///
 /// This class is designed so an instance can be stored in a shared
 /// memory region.  So the pointer member variables (the initial
-/// implementation only contain pointer member variables) are defined
+/// implementation only contains pointer member variables) are defined
 /// as offset pointers.  When this class is extended these properties must
-/// be preserved, and also meet other requirements so it can be stored
+/// be preserved, and must also meet other requirements so it can be stored
 /// in a shared memory region (see, for example, \c RdataSet description).
 /// Future extensions must also be conscious of placing the member variables
 /// so that they will not accidentally cause padding and increase memory
@@ -375,16 +376,16 @@ public:
     /// segment as \c mem_sgmt.  The caller must ensure this assumption.
     ///
     /// Note that an \c RRClass object must be passed to this method.
-    /// It's necessary to destroy the stored \c RdataSet objects
+    /// It's used to destroy the stored \c RdataSet objects
     /// (see its class description).  This class doesn't hold this information;
-    /// it's caller's responsibility to associate an \c ZoneData class object
+    /// it's the caller's responsibility to associate a \c ZoneData class object
     /// with its expected RR class, and pass it to \c destroy().
     ///
     /// \throw none
     ///
     /// \param mem_sgmt The \c MemorySegment that allocated memory for
     /// \c zone_data.
-    /// \param zone_data A non NULL pointer to a valid ZoneData object
+    /// \param zone_data A non-NULL pointer to a valid ZoneData object
     /// that was originally created by the \c create() method (the behavior
     /// is undefined if this condition isn't met).
     /// \param zone_class The RR class of the \c RdataSet stored in the
@@ -398,7 +399,7 @@ public:
     /// zone origin in the form of \c ZoneNode object.
     ///
     /// The class encapsulation ensures that the origin node always exists at
-    /// the same address, so this method always returns a non NULL valid
+    /// the same address, so this method always returns a non-NULL valid
     /// valid pointer.
     ///
     /// \throw none
@@ -408,7 +409,7 @@ public:
 
     /// \brief Return the zone's name space in the form of \c ZoneTree
     ///
-    /// \note It's intentional that non const version of this method
+    /// \note It's intentional that non-const version of this method
     /// isn't provided.  See the class description.
     ///
     /// \throw none
@@ -427,7 +428,7 @@ public:
     /// \brief Return whether or not the zone is signed with NSEC3 RRs.
     ///
     /// In the current implementation, the zone is considered signed with
-    /// NSEC3 if and only if it has non NULL NSEC3 data.
+    /// NSEC3 if and only if it has non-NULL NSEC3 data.
     ///
     /// This also means it's not considered NSEC3 signed by default.
     ///
@@ -436,7 +437,7 @@ public:
 
     /// \brief Return NSEC3Data of the zone.
     ///
-    /// This method returns non NULL valid pointer to \c NSEC3Data object
+    /// This method returns non-NULL valid pointer to \c NSEC3Data object
     /// associated to the \c ZoneData if it was set by \c setNSEC3Data();
     /// otherwise it returns NULL.
     ///
@@ -452,19 +453,19 @@ public:
     /// node.
     ///
     /// The name to be inserted by this method is expected to belong to
-    /// zone's "normal" (i.e., non NSEÇ3) name space.  If it's a name for
+    /// zone's "normal" (i.e., non-NSEÇ3) name space.  If it's a name for
     /// an NSEC3 RR, it must be set in the corresponding \c NSEC3Data for
     /// this zone data (if it doesn't exist it must be created and set
     /// by \c setNSEC3Data()).
     ///
-    /// The name is also expected to be a subdomain of or euqal to the
+    /// The name is also expected to be a subdomain of, or equal to the
     /// zone's origin name (specified on creation in \c create()), but
     /// this method does not check that condition.  The caller is responsible
     /// for ensuring this assumption.
     ///
-    /// Since this method doesn't check any semantics check, it always succeeds
-    /// (except for the rare case where memory allocation fails) and \c node
-    /// will be set to a valid pointer.
+    /// Since this method doesn't perform any semantics check, it always
+    /// succeeds (except for the rare case where memory allocation
+    /// fails) and \c node will be set to a valid pointer.
     ///
     /// \note We may want to differentiate between the case where the name is
     /// newly created and the case where it already existed.  Right now it's
@@ -488,7 +489,7 @@ public:
     /// \c isSigned() will return \c true) iff the parameter \c on is \c true.
     ///
     /// This class does not care what "signed" actually means; it does not
-    /// check any zone RRs to check if the given state makes sense (e.g.
+    /// check any zone RRs to verify if the given state makes sense (e.g.
     /// whether the zone has a DNSKEY RR at the origin).  The caller is
     /// expected to use this method and \c isSigned() in a reasonable,
     /// consistent way.
@@ -498,9 +499,9 @@ public:
         origin_node_->setFlag(DNSSEC_SIGNED, on);
     }
 
-    /// \brief Return NSEC3Data of the zone, non const version.
+    /// \brief Return NSEC3Data of the zone, non-const version.
     ///
-    /// This is similar to the const version, but return a non const pointer
+    /// This is similar to the const version, but return a non-const pointer
     /// so the caller can modify the content.
     ///
     /// \throw none
@@ -514,7 +515,7 @@ public:
     /// a NULL pointer will be returned.  \c nsec3_data can be NULL, in which
     /// case the zone will be disassociated with a \c NSEC3Data.
     ///
-    /// In general, if a non NULL pointer is passed, it's assumed that
+    /// In general, if a non-NULL pointer is passed, it's assumed that
     /// the \c NSEC3Data object was allocated in the same \c MemorySegment
     /// as that for the zone data, so the \c destroy() method can destroy
     /// both with the same memory segment.  If this condition is not met,
