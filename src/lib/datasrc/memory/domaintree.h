@@ -813,7 +813,7 @@ private:
  * the \c insert() method will still return \c ALREADYEXISTS regardless of
  * the search policy.
  *
- * The template parameters taken by \c DomainTree is \c T (the type of
+ * The template parameter taken by \c DomainTree is \c T (the type of
  * data which is stored by the tree).
  *
  * \anchor diagram
@@ -891,7 +891,7 @@ public:
     /// used to destroy data stored in the tree nodes.  It must have a
     /// <code>operator()</code> method, which is called on a \c DataDeleter
     /// instance and passed a pointer to the data (<code>T*</code>) to be
-    /// destroyed. This method should be written to accept \c NULL arguments.
+    /// destroyed. This method should be written to accept a \c NULL argument.
     ///
     /// \note The memory segment (\c mem_sgmt) must be the same one that
     /// was originally used to allocate memory for the tree (and for all
@@ -913,7 +913,7 @@ public:
     /// \param tree A non NULL pointer to a valid \c DomainTree object
     /// that was originally created by the \c create() method (the behavior
     /// is undefined if this condition isn't met).
-    /// \param deleter A deleter fanctor or function to delete node data.
+    /// \param deleter A deleter functor or function to delete node data.
     template <typename DataDeleter>
     static void destroy(util::MemorySegment& mem_sgmt,
                         DomainTree<T>* tree,
