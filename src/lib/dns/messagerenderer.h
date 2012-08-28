@@ -334,6 +334,7 @@ public:
     /// \param name A \c Name object to be written.
     /// \param compress A boolean indicating whether to enable name compression.
     virtual void writeName(const Name& name, bool compress = true) = 0;
+    virtual void writeName(const LabelSequence& ls, bool compress = true) = 0;
     //@}
 };
 
@@ -391,7 +392,7 @@ public:
     ///
     /// \param ls A \c LabelSequence object to be written.
     /// \param compress A boolean indicating whether to enable name compression.
-    void writeName(const LabelSequence& ls, bool compress = true);
+    virtual void writeName(const LabelSequence& ls, bool compress = true);
 
 private:
     struct MessageRendererImpl;
