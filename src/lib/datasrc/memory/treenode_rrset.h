@@ -16,7 +16,7 @@
 #define DATASRC_MEMORY_TREENODE_RRSET_H 1
 
 #include <util/buffer.h>
-#include <util/memory_segment.h>
+#include <util/memory_segment.h> // CLEAN UP: only for temporary setup
 
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
@@ -26,7 +26,7 @@
 #include <dns/rdata.h>
 #include <dns/rrset.h>
 
-#include <datasrc/memory/domaintree.h>
+#include <datasrc/memory/domaintree.h> // CLEAN UP: only for temporary setup
 #include <datasrc/memory/zone_data.h>
 #include <datasrc/memory/rdataset.h>
 
@@ -36,6 +36,7 @@ namespace isc {
 namespace datasrc {
 namespace memory {
 
+// Temporary definition: Until we merge #2107 we need the following
 class RdataSetDeleter {
 public:
     RdataSetDeleter() {}
@@ -52,12 +53,14 @@ public:
 
 typedef DomainTree<RdataSet, RdataSetDeleter> ZoneTree;
 typedef DomainTreeNode<RdataSet, RdataSetDeleter> ZoneNode;
+// end of temporary definition
 
 class TreeNodeRRset : public dns::AbstractRRset {
 public:
     TreeNodeRRset(dns::RRClass rrclass, const ZoneNode* node,
                   const RdataSet* rdataset, bool dnssec_ok) :
-        node_(node), rdataset_(rdataset), rrclass_(rrclass),
+        node_(node), rdataset_(rdataset),
+        rrsig_count_(rdataset_->getSigRdataCount()), rrclass_(rrclass),
         dnssec_ok_(dnssec_ok)
     {}
 
@@ -94,7 +97,7 @@ public:
     virtual dns::RRsetPtr getRRsig() const;
 
     virtual unsigned int getRRsigDataCount() const {
-        return (dnssec_ok_ ? rdataset_->getSigRdataCount() : 0);
+        return (dnssec_ok_ ? rrsig_count_ : 0);
     }
 
     virtual void addRRsig(const dns::rdata::ConstRdataPtr& rdata);
@@ -110,6 +113,7 @@ public:
 private:
     const ZoneNode* node_;
     const RdataSet* rdataset_;
+    const size_t rrsig_count_;
     const dns::RRClass rrclass_;
     const bool dnssec_ok_;
 };

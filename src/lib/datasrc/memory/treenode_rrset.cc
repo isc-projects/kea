@@ -25,7 +25,11 @@
 #include <dns/rrset.h>
 
 #include "treenode_rrset.h"
+#include "rdata_serialization.h"
 
+#include <boost/bind.hpp>
+
+#include <cassert>
 #include <string>
 
 using namespace isc::dns;
@@ -55,17 +59,80 @@ TreeNodeRRset::setTTL(const RRTTL&) {
     isc_throw(Unexpected, "unexpected method called on TreeNodeRRset");
 }
 
-    // needed
+// needed
 std::string
 TreeNodeRRset::toText() const {
     isc_throw(Unexpected, "unexpected method called on TreeNodeRRset");
 }
 
+namespace {
+void
+renderName(const LabelSequence& name_labels, RdataNameAttributes attr,
+           AbstractMessageRenderer* renderer)
+{
+    renderer->writeName(name_labels, (attr & NAMEATTR_COMPRESSIBLE) != 0);
+}
 
-// needed
+void
+renderData(const void* data, size_t data_len,
+           AbstractMessageRenderer* renderer)
+{
+    renderer->writeData(data, data_len);
+}
+}
+
 unsigned int
-TreeNodeRRset::toWire(AbstractMessageRenderer& /*renderer*/) const {
-    isc_throw(Unexpected, "unexpected method called on TreeNodeRRset");
+TreeNodeRRset::toWire(AbstractMessageRenderer& renderer) const {
+    RdataReader reader(rrclass_, rdataset_->type, rdataset_->getDataBuf(),
+                       rdataset_->getRdataCount(), rrsig_count_,
+                       boost::bind(renderName, _1, _2, &renderer),
+                       boost::bind(renderData, _1, _2, &renderer));
+
+    // Get the owner name of the RRset in the form of LabelSequence.
+    uint8_t labels_buf[LabelSequence::MAX_SERIALIZED_LENGTH];
+    const LabelSequence node_labels = node_->getAbsoluteLabels(labels_buf);
+
+    size_t i = 0;
+    for (; i < rdataset_->getRdataCount(); ++i) {
+        //const size_t pos0 = output.getLength();
+
+        renderer.writeName(node_labels, true);
+        rdataset_->type.toWire(renderer);
+        rrclass_.toWire(renderer);
+        renderer.writeData(rdataset_->getTTLData(), sizeof(uint32_t));
+
+        const size_t pos = renderer.getLength();
+        renderer.skip(sizeof(uint16_t)); // leave the space for RDLENGTH
+        const bool rendered = reader.iterateRdata();
+        assert(rendered == true);
+        renderer.writeUint16At(renderer.getLength() - pos - sizeof(uint16_t),
+                               pos);
+
+        // for truncation processing
+    }
+    const bool rendered = reader.iterateRdata();
+    assert(rendered == false); // we should've reached the end
+
+    size_t j = 0;
+    if (dnssec_ok_) {
+        for (; j < rrsig_count_; ++j) {
+            // TBD: truncation consideration
+
+            renderer.writeName(node_labels, true);
+            RRType::RRSIG().toWire(renderer);
+            rrclass_.toWire(renderer);
+            renderer.writeData(rdataset_->getTTLData(), sizeof(uint32_t));
+
+            const size_t pos = renderer.getLength();
+            renderer.skip(sizeof(uint16_t)); // leave the space for RDLENGTH
+            assert(reader.iterateSingleSig() == true);
+            renderer.writeUint16At(renderer.getLength() - pos -
+                                   sizeof(uint16_t), pos);
+        }
+        assert(reader.iterateSingleSig() == false);
+    }
+
+    return (i + j);
 }
 
 unsigned int
