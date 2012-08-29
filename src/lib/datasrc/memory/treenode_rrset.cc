@@ -41,7 +41,15 @@ namespace memory {
 
 const Name&
 TreeNodeRRset::getName() const {
-    isc_throw(Unexpected, "unexpected method called on TreeNodeRRset");
+    if (name_ == NULL) {
+        uint8_t labels_buf[LabelSequence::MAX_SERIALIZED_LENGTH];
+        const LabelSequence node_labels = node_->getAbsoluteLabels(labels_buf);
+        size_t data_len;
+        const uint8_t* data = node_labels.getData(&data_len);
+        util::InputBuffer buffer(data, data_len);
+        name_ = new Name(buffer);
+    }
+    return (*name_);
 }
 
 const RRTTL&
