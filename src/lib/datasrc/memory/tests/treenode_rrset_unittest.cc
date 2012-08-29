@@ -59,6 +59,9 @@ protected:
                                       "www.example.com. 3600 IN RRSIG AAAA 5 2"
                                       " 3600 20120814220826 20120715220826 "
                                       "4321 example.com. FAKE\n")),
+        txt_rrsig_rrset_(textToRRset("www.example.com. 3600 IN RRSIG TXT 5 2"
+                                     " 3600 20120814220826 20120715220826 "
+                                     "1234 example.com. FAKE\n")),
         zone_data_(NULL)
     {}
     void SetUp() {
@@ -83,6 +86,12 @@ protected:
         aaaa_rdataset_ = RdataSet::create(mem_sgmt_, encoder_, aaaa_rrset_,
                                           aaaa_rrsig_rrset_);
         a_rdataset_->next = aaaa_rdataset_;
+
+        // A rare (half broken) case of RRSIG-only set
+        rrsig_only_rdataset_ = RdataSet::create(mem_sgmt_, encoder_,
+                                                ConstRRsetPtr(),
+                                                txt_rrsig_rrset_);
+        aaaa_rdataset_->next = rrsig_only_rdataset_;
     }
     void TearDown() {
         ZoneData::destroy(mem_sgmt_, zone_data_, rrclass_);
@@ -96,7 +105,7 @@ protected:
     RdataEncoder encoder_;
     MessageRenderer renderer_, renderer_expected_;
     ConstRRsetPtr ns_rrset_, a_rrset_, aaaa_rrset_, dname_rrset_,
-        a_rrsig_rrset_, aaaa_rrsig_rrset_;
+        a_rrsig_rrset_, aaaa_rrsig_rrset_, txt_rrsig_rrset_;
     ZoneData* zone_data_;
     ZoneNode* origin_node_;
     ZoneNode* www_node_;
@@ -104,6 +113,7 @@ protected:
     RdataSet* dname_rdataset_;
     RdataSet* a_rdataset_;
     RdataSet* aaaa_rdataset_;
+    RdataSet* rrsig_only_rdataset_;
 };
 
 // Check some trivial fields of a constructed TreeNodeRRset (passed as
@@ -135,6 +145,15 @@ TEST_F(TreeNodeRRsetTest, create) {
     checkBasicFields(TreeNodeRRset(rrclass_, origin_node_, ns_rdataset_,
                                    false),
                      origin_name_, rrclass_, RRType::NS(), 1, 0);
+    // RRSIG-only case (note the RRset's type is covered type)
+    checkBasicFields(TreeNodeRRset(rrclass_, www_node_, rrsig_only_rdataset_,
+                                   true),
+                     www_name_, rrclass_, RRType::TXT(), 0, 1);
+    // RRSIG-only case (note the RRset's type is covered type), but it's
+    // invisible
+    checkBasicFields(TreeNodeRRset(rrclass_, www_node_, rrsig_only_rdataset_,
+                                   false),
+                     www_name_, rrclass_, RRType::TXT(), 0, 0);
 }
 
 // Templated if and when we support OutputBuffer version of toWire().
@@ -154,14 +173,16 @@ checkToWireResult(OutputType& expected_output, OutputType& actual_output,
     // Prepare "actual" rendered data.  We prepend a name to confirm the
     // owner name should be compressed in both cases.
     prepended_name.toWire(actual_output);
+    const size_t rdata_count = rrset ? rrset->getRdataCount() : 0;
     const int expected_ret = (dnssec_ok && rrsig_rrset) ?
-        rrset->getRdataCount() + rrsig_rrset->getRdataCount() :
-        rrset->getRdataCount();
+        rdata_count + rrsig_rrset->getRdataCount() : rdata_count;
     EXPECT_EQ(expected_ret, actual_rrset.toWire(actual_output));
 
     // Prepare "expected" data.
     prepended_name.toWire(expected_output);
-    rrset->toWire(expected_output);
+    if (rrset) {
+        rrset->toWire(expected_output);
+    }
     if (dnssec_ok && rrsig_rrset) {
         rrsig_rrset->toWire(expected_output);
     }
@@ -213,6 +234,29 @@ TEST_F(TreeNodeRRsetTest, toWire) {
                           Name("example.org"), dname_rrset_, ConstRRsetPtr(),
                           false);
     }
+
+    {
+        // Very unusual case: the set only contains RRSIG (already rare)
+        // and it's requested to be dumped to wire (can only happen in
+        // ANY or type-RRSIG queries, which are rare also).  But can still
+        // happen.
+        SCOPED_TRACE("RRSIG only, DNSSEC OK");
+        const TreeNodeRRset rrset6(rrclass_, www_node_, rrsig_only_rdataset_,
+                                   true);
+        checkToWireResult(expected_renderer, actual_renderer, rrset6,
+                          www_name_, ConstRRsetPtr(), txt_rrsig_rrset_,true);
+    }
+
+    {
+        // Similar to the previous case, but DNSSEC records aren't requested.
+        // In practice this case wouldn't happen, but API-wise possible, so
+        // we test it explicitly.
+        SCOPED_TRACE("RRSIG only, DNSSEC not OK");
+        const TreeNodeRRset rrset7(rrclass_, www_node_, rrsig_only_rdataset_,
+                                   false);
+        checkToWireResult(expected_renderer, actual_renderer, rrset7,
+                          www_name_, ConstRRsetPtr(), txt_rrsig_rrset_,false);
+    }
 }
 
 void
@@ -230,7 +274,9 @@ checkTruncationResult(MessageRenderer& expected_renderer,
     EXPECT_TRUE(actual_renderer.isTruncated()); // always true in this test
 
     expected_renderer.setLengthLimit(len_limit);
-    rrset->toWire(expected_renderer);
+    if (rrset) {
+        rrset->toWire(expected_renderer);
+    }
     if (!expected_renderer.isTruncated() && dnssec_ok && rrsig_rrset) {
         rrsig_rrset->toWire(expected_renderer);
     }
@@ -276,6 +322,14 @@ TEST_F(TreeNodeRRsetTest, toWireTruncated) {
                                         true),
                           aaaa_rrset_, aaaa_rrsig_rrset_, true, limit_len,
                           2);   // 1 main RR, 1 RRSIG
+
+    // RRSIG only case.  Render length limit being 1, so it won't fit,
+    // and will cause truncation.
+    checkTruncationResult(expected_renderer, actual_renderer,
+                          TreeNodeRRset(rrclass_, www_node_,
+                                        rrsig_only_rdataset_, true),
+                          ConstRRsetPtr(), txt_rrsig_rrset_, true, 1,
+                          0);   // no RR
 }
 
 void
@@ -294,7 +348,11 @@ checkRdataIterator(const vector<string>& expected, RdataIteratorPtr rit) {
 
     // move to the first RDATA again, and check the value.
     rit->first();
-    EXPECT_EQ(expected[0], rit->getCurrent().toText());
+    if (!expected.empty()) {
+        EXPECT_EQ(expected[0], rit->getCurrent().toText());
+    } else {
+        EXPECT_TRUE(rit->isLast());
+    }
 }
 
 TEST_F(TreeNodeRRsetTest, getRdataIterator) {
@@ -317,6 +375,12 @@ TEST_F(TreeNodeRRsetTest, getRdataIterator) {
     checkRdataIterator(expected,
                        TreeNodeRRset(rrclass_, origin_node_, ns_rdataset_,
                                      false).getRdataIterator());
+
+    // RRSIG only.  Iterator will be empty and shouldn't cause any disruption.
+    expected.clear();
+    checkRdataIterator(expected,
+                       TreeNodeRRset(rrclass_, www_node_, rrsig_only_rdataset_,
+                                     true).getRdataIterator());
 }
 
 void
@@ -343,5 +407,13 @@ TEST_F(TreeNodeRRsetTest, toText) {
     // Constructed without RRSIG, and it should be visible
     checkToText(TreeNodeRRset(rrclass_, origin_node_, ns_rdataset_, false),
                 ns_rrset_, ConstRRsetPtr());
+    // RRSIG case
+    checkToText(TreeNodeRRset(rrclass_, www_node_, rrsig_only_rdataset_,
+                              true),
+                ConstRRsetPtr(), txt_rrsig_rrset_);
+    // Similar to the previous case, but completely empty.
+    checkToText(TreeNodeRRset(rrclass_, www_node_, rrsig_only_rdataset_,
+                              false),
+                ConstRRsetPtr(), ConstRRsetPtr());
 }
 }
