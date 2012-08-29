@@ -47,6 +47,8 @@ namespace asiodns {
 /// The following functions implement the \c TCPServer class.
 ///
 /// The constructor
+// timeout is initialized to be sure, but it should be updated
+// quite immediately anyway
 TCPServer::TCPServer(io_service& io_service, int fd, int af,
                      const SimpleCallback* checkin,
                      const DNSLookup* lookup,
@@ -70,6 +72,9 @@ TCPServer::TCPServer(io_service& io_service, int fd, int af,
         // it
         isc_throw(IOError, exception.what());
     }
+    // Set it to some value. It should be set to the right one
+    // immediately, but set something non-zero just in case.
+    tcp_recv_timeout_.reset(new size_t(1000));
 }
 
 namespace {
@@ -82,7 +87,6 @@ namespace {
     {
         if (error != asio::error::operation_aborted) {
             socket.cancel();
-        } else {
         }
     }
 }
@@ -130,7 +134,8 @@ TCPServer::operator()(asio::error_code ec, size_t length) {
         data_.reset(new char[MAX_LENGTH]);
 
         timeout_.reset(new asio::deadline_timer(io_));
-        timeout_->expires_from_now(boost::posix_time::milliseconds(1000));
+        timeout_->expires_from_now(
+            boost::posix_time::milliseconds(*tcp_recv_timeout_));
         timeout_->async_wait(boost::bind(&do_timeout, boost::ref(*socket_),
                              asio::placeholders::error));
 

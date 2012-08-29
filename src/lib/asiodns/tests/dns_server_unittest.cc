@@ -259,7 +259,7 @@ class TCPClient : public SimpleClient {
     static const unsigned int SERVER_TIME_OUT = 2;
     TCPClient(asio::io_service& service, const ip::tcp::endpoint& server)
         : SimpleClient(service, SERVER_TIME_OUT),
-          send_data_(true), send_data_len_(true)
+          send_data_delay_(0), send_data_len_delay_(0)
     {
         server_ = server;
         socket_.reset(new ip::tcp::socket(service));
@@ -281,14 +281,12 @@ class TCPClient : public SimpleClient {
                                 std::string(received_data_ + 2));
     }
 
-    // if set to false, does not actually send data length
-    void setSendDataLen(bool send_data_len) {
-        send_data_len_ = send_data_len;
+    void setSendDataLenDelay(size_t send_data_len_delay) {
+        send_data_len_delay_ = send_data_len_delay;
     }
 
-    // if set to false, does not actually send data
-    void setSendData(bool send_data) {
-        send_data_ = send_data;
+    void setSendDataDelay(size_t send_data_delay) {
+        send_data_delay_ = send_data_delay;
     }
 
     private:
@@ -297,8 +295,9 @@ class TCPClient : public SimpleClient {
     }
 
     void connectHandler(const asio::error_code& error) {
-        if (!error && send_data_len_) {
+        if (!error) {
             data_to_send_len_ = htons(data_to_send_len_);
+            sleep(send_data_len_delay_);
             socket_->async_send(buffer(&data_to_send_len_, 2),
                                 boost::bind(&TCPClient::sendMessageBodyHandler,
                                             this, _1, _2));
@@ -308,7 +307,8 @@ class TCPClient : public SimpleClient {
     void sendMessageBodyHandler(const asio::error_code& error,
                                 size_t send_bytes)
     {
-        if (!error && send_bytes == 2 && send_data_) {
+        if (!error && send_bytes == 2 && send_data_len_delay_ == 0) {
+            sleep(send_data_delay_);
             socket_->async_send(buffer(data_to_send_.c_str(),
                                        data_to_send_.size() + 1),
                     boost::bind(&TCPClient::finishSendHandler, this, _1, _2));
@@ -327,8 +327,11 @@ class TCPClient : public SimpleClient {
     ip::tcp::endpoint server_;
     std::string data_to_send_;
     uint16_t data_to_send_len_;
-    bool send_data_;
-    bool send_data_len_;
+
+    // if 0, send body immediately
+    // if >0, send after the delay (in seconds)
+    size_t send_data_delay_;
+    size_t send_data_len_delay_;
 };
 
 // \brief provide the context which including two clients and
@@ -579,7 +582,8 @@ TYPED_TEST(DNSServerTest, stopTCPServerAfterOneQuery) {
 }
 
 TYPED_TEST(DNSServerTest, TCPTimeoutOnLen) {
-    this->tcp_client_->setSendDataLen(false);
+    this->tcp_server_->setTCPRecvTimeout(100);
+    this->tcp_client_->setSendDataLenDelay(2);
     this->testStopServerByStopper(this->tcp_server_, this->tcp_client_,
                                   this->tcp_client_);
     EXPECT_EQ("", this->tcp_client_->getReceivedData());
@@ -587,11 +591,23 @@ TYPED_TEST(DNSServerTest, TCPTimeoutOnLen) {
 }
 
 TYPED_TEST(DNSServerTest, TCPTimeout) {
-    this->tcp_client_->setSendData(false);
+    // set delay higher than timeout
+    this->tcp_server_->setTCPRecvTimeout(100);
+    this->tcp_client_->setSendDataDelay(2);
     this->testStopServerByStopper(this->tcp_server_, this->tcp_client_,
                                   this->tcp_client_);
     EXPECT_EQ("", this->tcp_client_->getReceivedData());
-    EXPECT_FALSE(this->serverStopSucceed());
+    EXPECT_TRUE(this->serverStopSucceed());
+}
+
+TYPED_TEST(DNSServerTest, TCPNoTimeout) {
+    // set delay lower than timeout
+    this->tcp_server_->setTCPRecvTimeout(3000);
+    this->tcp_client_->setSendDataDelay(1);
+    this->testStopServerByStopper(this->tcp_server_, this->tcp_client_,
+                                  this->tcp_client_);
+    EXPECT_EQ("BIND10 is awesome", this->tcp_client_->getReceivedData());
+    EXPECT_TRUE(this->serverStopSucceed());
 }
 
 // Test whether tcp server stopped successfully before server start to serve

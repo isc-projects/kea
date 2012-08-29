@@ -927,3 +927,8 @@ AuthSrv::getClientListClasses() const {
     }
     return (result);
 }
+
+void
+AuthSrv::setTCPRecvTimeout(size_t timeout) {
+    dnss_->setTCPRecvTimeout(timeout);
+}

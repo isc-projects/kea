@@ -90,6 +90,11 @@
             }
           ]
         }
+      },
+      { "item_name": "tcp_recv_timeout",
+        "item_type": "integer",
+        "item_optional": false,
+        "item_default": 1000
       }
     ],
     "commands": [

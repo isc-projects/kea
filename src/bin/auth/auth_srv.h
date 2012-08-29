@@ -319,6 +319,9 @@ public:
     ///     has been set by setClientList.
     std::vector<isc::dns::RRClass> getClientListClasses() const;
 
+    /// \brief Sets the timeout for incoming TCP connections
+    void setTCPRecvTimeout(size_t timeout);
+
 private:
     AuthSrvImpl* impl_;
     isc::asiolink::SimpleCallback* checkin_;
