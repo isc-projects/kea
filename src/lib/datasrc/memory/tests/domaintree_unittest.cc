@@ -156,7 +156,7 @@ TEST_F(DomainTreeTest, insertNames) {
                                                   Name("example.com"),
                                                   &dtnode));
     EXPECT_EQ(17, dtree.getNodeCount());
-    // ad data to it; also make sure it doesn't have data right now
+    // add data to it; also make sure it doesn't have data right now
     // (otherwise it would leak)
     EXPECT_EQ(static_cast<int*>(NULL), dtnode->setData(new int(12)));
 
