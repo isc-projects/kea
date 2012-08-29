@@ -1711,17 +1711,22 @@ doFindTest(ZoneFinder& finder,
         checkRRset(result->rrset, expected_name != Name(".") ? expected_name :
                    name, finder.getClass(), expected_type, expected_ttl,
                    expected_rdatas);
-
-        if (!expected_sig_rdatas.empty() && result->rrset->getRRsig()) {
-            checkRRset(result->rrset->getRRsig(), expected_name != Name(".") ?
-                       expected_name : name, finder.getClass(),
-                       isc::dns::RRType::RRSIG(), expected_ttl,
-                       expected_sig_rdatas);
-        } else if (expected_sig_rdatas.empty()) {
+        if ((options & ZoneFinder::FIND_DNSSEC) == ZoneFinder::FIND_DNSSEC) {
+            if (!expected_sig_rdatas.empty() && result->rrset->getRRsig()) {
+                checkRRset(result->rrset->getRRsig(),
+                           expected_name != Name(".") ? expected_name : name,
+                           finder.getClass(),
+                           isc::dns::RRType::RRSIG(), expected_ttl,
+                           expected_sig_rdatas);
+            } else if (expected_sig_rdatas.empty()) {
+                EXPECT_EQ(isc::dns::RRsetPtr(), result->rrset->getRRsig()) <<
+                    "Unexpected RRSIG: " << result->rrset->getRRsig()->toText();
+            } else {
+                ADD_FAILURE() << "Missing RRSIG";
+            }
+        } else if (result->rrset->getRRsig()) {
             EXPECT_EQ(isc::dns::RRsetPtr(), result->rrset->getRRsig()) <<
                 "Unexpected RRSIG: " << result->rrset->getRRsig()->toText();
-        } else {
-            ADD_FAILURE() << "Missing RRSIG";
         }
     } else if (expected_rdatas.empty()) {
         EXPECT_EQ(isc::dns::RRsetPtr(), result->rrset) <<
@@ -2842,6 +2847,35 @@ TYPED_TEST(DatabaseClientTest, anyFromFind) {
                                          RRType::ANY()), isc::Unexpected);
 }
 
+TYPED_TEST(DatabaseClientTest, findRRSIGsWithoutDNSSEC) {
+    // Trying to find RRSIG records directly should work even if
+    // FIND_DNSSEC flag is not specified.
+
+    boost::shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
+    ConstZoneFinderContextPtr result =
+        finder->find(isc::dns::Name("signed1.example.org."), RRType::RRSIG());
+
+    EXPECT_EQ(ZoneFinder::SUCCESS, result->code);
+
+    std::vector<std::string> expected_rdata;
+    expected_rdata.push_back(TEST_RECORDS[10][4]);
+    expected_rdata.push_back(TEST_RECORDS[11][4]);
+    expected_rdata.push_back(TEST_RECORDS[14][4]);
+
+    RdataIteratorPtr it(result->rrset->getRdataIterator());
+    std::vector<std::string> rdata;
+    while (!it->isLast()) {
+        rdata.push_back(it->getCurrent().toText());
+        it->next();
+    }
+    std::sort(rdata.begin(), rdata.end());
+    std::sort(expected_rdata.begin(), expected_rdata.end());
+    ASSERT_EQ(expected_rdata.size(), rdata.size());
+    for (size_t i(0); i < expected_rdata.size(); ++ i) {
+        EXPECT_EQ(expected_rdata[i], rdata[i]);
+    }
+}
+
 // Test the findAll method.
 TYPED_TEST(DatabaseClientTest, getAll) {
     // The domain doesn't exist, so we must get the right NSEC
@@ -3636,9 +3670,11 @@ TYPED_TEST(DatabaseClientTest, compoundUpdate) {
 TYPED_TEST(DatabaseClientTest, invalidRdata) {
     boost::shared_ptr<DatabaseClient::Finder> finder(this->getFinder());
 
-    EXPECT_THROW(finder->find(Name("invalidrdata.example.org."), RRType::A()),
+    EXPECT_THROW(finder->find(Name("invalidrdata.example.org."),
+                              RRType::A()),
                  DataSourceError);
-    EXPECT_THROW(finder->find(Name("invalidrdata2.example.org."), RRType::A()),
+    EXPECT_THROW(finder->find(Name("invalidrdata2.example.org."),
+                              RRType::A(), ZoneFinder::FIND_DNSSEC),
                  DataSourceError);
 }
 
@@ -4053,7 +4089,7 @@ TYPED_TEST(DatabaseClientTest, findNSEC3) {
     this->current_accessor_->enableNSEC3();
 
     // The rest is in the function, it is shared with in-memory tests
-    performNSEC3Test(*finder);
+    performNSEC3Test(*finder, true);
 }
 
 }

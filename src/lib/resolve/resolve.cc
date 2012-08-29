@@ -26,7 +26,7 @@ namespace {
             message_(message), section_(sect)
         {}
         void operator()(const RRsetPtr rrset) {
-            message_->addRRset(section_, rrset, true);
+            message_->addRRset(section_, rrset);
         }
         MessagePtr message_;
         const Message::Section section_;

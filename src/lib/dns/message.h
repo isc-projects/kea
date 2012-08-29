@@ -459,9 +459,6 @@ public:
     /// \brief Add a (pointer like object of) RRset to the given section
     /// of the message.
     ///
-    /// This interface takes into account the RRSIG possibly attached to
-    /// \c rrset.  This interface design needs to be revisited later.
-    ///
     /// Note that \c addRRset() does not currently check for duplicate
     /// data before inserting RRsets.  The caller is responsible for
     /// checking for these (see \c hasRRset() below).
@@ -473,9 +470,7 @@ public:
     ///
     /// \param section The message section to which the rrset is to be added
     /// \param rrset The rrset to be added.  Must not be NULL.
-    /// \param sign If true, and if \c rrset has associated RRSIGs, the
-    /// RRSIGs will also be added to the same section of the message.
-    void addRRset(const Section section, RRsetPtr rrset, bool sign = false);
+    void addRRset(const Section section, RRsetPtr rrset);
 
     /// \brief Determine whether the given section already has an RRset
     /// matching the given name, RR class and RR type.
