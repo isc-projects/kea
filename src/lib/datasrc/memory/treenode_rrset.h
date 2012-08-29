@@ -25,7 +25,6 @@
 #include <dns/rdata.h>
 #include <dns/rrset.h>
 
-#include <datasrc/memory/domaintree.h> // CLEAN UP: only for temporary setup
 #include <datasrc/memory/zone_data.h>
 #include <datasrc/memory/rdataset.h>
 
