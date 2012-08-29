@@ -47,10 +47,18 @@ protected:
         ns_rrset_(textToRRset("example.com. 3600 IN NS ns.example.com.")),
         a_rrset_(textToRRset("www.example.com. 3600 IN A 192.0.2.1\n"
                              "www.example.com. 3600 IN A 192.0.2.2")),
+        aaaa_rrset_(textToRRset("www.example.com. 3600 IN AAAA "
+                                "2001:db8::1\n")),
         dname_rrset_(textToRRset("example.com. 3600 IN DNAME d.example.org.")),
-        rrsig_rrset_(textToRRset("www.example.com. 3600 IN RRSIG "
-                                 "A 5 2 3600 20120814220826 20120715220826 "
-                                 "1234 example.com. FAKE")),
+        a_rrsig_rrset_(textToRRset("www.example.com. 3600 IN RRSIG "
+                                   "A 5 2 3600 20120814220826 20120715220826 "
+                                   "1234 example.com. FAKE")),
+        aaaa_rrsig_rrset_(textToRRset("www.example.com. 3600 IN RRSIG AAAA 5 2"
+                                      " 3600 20120814220826 20120715220826 "
+                                      "1234 example.com. FAKE\n"
+                                      "www.example.com. 3600 IN RRSIG AAAA 5 2"
+                                      " 3600 20120814220826 20120715220826 "
+                                      "4321 example.com. FAKE\n")),
         zone_data_(NULL)
     {}
     void SetUp() {
@@ -69,8 +77,12 @@ protected:
 
         zone_data_->insertName(mem_sgmt_, www_name_, &www_node_);
         a_rdataset_ = RdataSet::create(mem_sgmt_, encoder_, a_rrset_,
-                                       rrsig_rrset_);
+                                       a_rrsig_rrset_);
         www_node_->setData(a_rdataset_);
+
+        aaaa_rdataset_ = RdataSet::create(mem_sgmt_, encoder_, aaaa_rrset_,
+                                          aaaa_rrsig_rrset_);
+        a_rdataset_->next = aaaa_rdataset_;
     }
     void TearDown() {
         ZoneData::destroy(mem_sgmt_, zone_data_, rrclass_);
@@ -83,13 +95,15 @@ protected:
     isc::util::MemorySegmentLocal mem_sgmt_;
     RdataEncoder encoder_;
     MessageRenderer renderer_, renderer_expected_;
-    ConstRRsetPtr ns_rrset_, a_rrset_, dname_rrset_, rrsig_rrset_;
+    ConstRRsetPtr ns_rrset_, a_rrset_, aaaa_rrset_, dname_rrset_,
+        a_rrsig_rrset_, aaaa_rrsig_rrset_;
     ZoneData* zone_data_;
     ZoneNode* origin_node_;
     ZoneNode* www_node_;
     RdataSet* ns_rdataset_;
     RdataSet* dname_rdataset_;
     RdataSet* a_rdataset_;
+    RdataSet* aaaa_rdataset_;
 };
 
 TEST_F(TreeNodeRRsetTest, create) {
@@ -149,16 +163,14 @@ TEST_F(TreeNodeRRsetTest, toWire) {
         SCOPED_TRACE("with RRSIG, DNSSEC OK");
         const TreeNodeRRset rrset1(rrclass_, www_node_, a_rdataset_, true);
         checkToWireResult(expected_renderer, actual_renderer, rrset1,
-                          www_name_, a_rrset_, rrsig_rrset_, true);
-        EXPECT_FALSE(actual_renderer.isTruncated());
+                          www_name_, a_rrset_, a_rrsig_rrset_, true);
     }
 
     {
         SCOPED_TRACE("with RRSIG, DNSSEC not OK");
         const TreeNodeRRset rrset2(rrclass_, www_node_, a_rdataset_, false);
         checkToWireResult(expected_renderer, actual_renderer, rrset2,
-                          www_name_, a_rrset_, rrsig_rrset_, false);
-        EXPECT_FALSE(actual_renderer.isTruncated());
+                          www_name_, a_rrset_, a_rrsig_rrset_, false);
     }
 
     {
@@ -166,7 +178,6 @@ TEST_F(TreeNodeRRsetTest, toWire) {
         const TreeNodeRRset rrset3(rrclass_, origin_node_, ns_rdataset_, true);
         checkToWireResult(expected_renderer, actual_renderer, rrset3,
                           origin_name_, ns_rrset_, ConstRRsetPtr(), true);
-        EXPECT_FALSE(actual_renderer.isTruncated());
     }
 
     {
@@ -175,7 +186,6 @@ TEST_F(TreeNodeRRsetTest, toWire) {
                                    false);
         checkToWireResult(expected_renderer, actual_renderer, rrset4,
                           origin_name_, ns_rrset_, ConstRRsetPtr(), false);
-        EXPECT_FALSE(actual_renderer.isTruncated());
     }
 
     {
@@ -187,7 +197,6 @@ TEST_F(TreeNodeRRsetTest, toWire) {
         checkToWireResult(expected_renderer, actual_renderer, rrset5,
                           Name("example.org"), dname_rrset_, ConstRRsetPtr(),
                           false);
-        EXPECT_FALSE(actual_renderer.isTruncated());
     }
 }
 
@@ -224,17 +233,34 @@ TEST_F(TreeNodeRRsetTest, toWireTruncated) {
     checkTruncationResult(expected_renderer, actual_renderer,
                           TreeNodeRRset(rrclass_, www_node_, a_rdataset_,
                                         true),
-                          a_rrset_, rrsig_rrset_, true,
+                          a_rrset_, a_rrsig_rrset_, true,
                           www_name_.getLength() + 14,
-                          1);
+                          1);   // 1 main RR, no RRSIG
 
-    // The first normal RRs should fit in the renderer (the name will be
+    // The first main RRs should fit in the renderer (the name will be
     // fully compressed, so its size is 2 bytes), but the RRSIG doesn't.
     checkTruncationResult(expected_renderer, actual_renderer,
                           TreeNodeRRset(rrclass_, www_node_, a_rdataset_,
                                         true),
-                          a_rrset_, rrsig_rrset_, true,
-                          www_name_.getLength() + 14 + 2 + 14, 2);
+                          a_rrset_, a_rrsig_rrset_, true,
+                          www_name_.getLength() + 14 + 2 + 14,
+                          2);   // 2 main RR, no RRSIG
+
+    // This RRset has one main RR and two RRSIGs.  Rendering the second RRSIG
+    // causes truncation.
+    // First, compute the rendered length for the main RR and a single RRSIG.
+    // The length of the RRSIG should be the same if we "accidentally"
+    // rendered the RRSIG for the A RR (which only contains one RRSIG).
+    expected_renderer.clear();
+    aaaa_rrset_->toWire(expected_renderer);
+    a_rrsig_rrset_->toWire(expected_renderer);
+    const size_t limit_len = expected_renderer.getLength();
+    // Then perform the test
+    checkTruncationResult(expected_renderer, actual_renderer,
+                          TreeNodeRRset(rrclass_, www_node_, aaaa_rdataset_,
+                                        true),
+                          aaaa_rrset_, aaaa_rrsig_rrset_, true, limit_len,
+                          2);   // 1 main RR, 1 RRSIG
 }
 
 void
