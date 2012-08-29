@@ -194,6 +194,43 @@ public:
     static void destroy(util::MemorySegment& mem_sgmt, dns::RRClass rrclass,
                         RdataSet* rdataset);
 
+    /// \brief Find \c RdataSet of given RR type from a list (const version).
+    ///
+    /// This function is a convenient shortcut for commonly used operation of
+    /// finding a given type of \c RdataSet from a linked list of them.
+    ///
+    /// It follows the linked list of \c RdataSet objects (via their \c next
+    /// member) starting the given head, until it finds an object of the
+    /// given RR type.  If found, it returns a (bare) pointer to the object;
+    /// if not found in the entire list, it returns NULL.  The head pointer
+    /// can be NULL, in which case this function will simply return NULL.
+    ///
+    /// \note This function is defined as a (static) class method to
+    /// clarify its an operation for \c RdataSet objects and to make the
+    /// name shorter.  But its implementation does not depend on private
+    /// members of the class, and it should be kept if and when this method
+    /// needs to be extended, unless there's a reason other than simply
+    /// because it's already a member function.
+    ///
+    /// \param rdata_head A pointer to \c RdataSet from which the search
+    /// starts.  It can be NULL.
+    /// \param type The RRType of \c RdataSet to find.
+    /// \return A pointer to the found \c RdataSet or NULL if none found.
+    static const RdataSet*
+    find(const RdataSet* rdataset_head, const dns::RRType& type) {
+        return (find<const RdataSet>(rdataset_head, type));
+    }
+
+    /// \brief Find \c RdataSet of given RR type from a list (non const
+    /// version).
+    ///
+    /// This is similar to the const version, except it takes and returns non
+    /// const pointers.
+    static RdataSet*
+    find(RdataSet* rdataset_head, const dns::RRType& type) {
+        return (find<RdataSet>(rdataset_head, type));
+    }
+
     typedef boost::interprocess::offset_ptr<RdataSet> RdataSetPtr;
     typedef boost::interprocess::offset_ptr<const RdataSet> ConstRdataSetPtr;
 
@@ -228,6 +265,20 @@ private:
     static const size_t MANY_RRSIG_COUNT = (1 << 3) - 1;
 
 public:
+    /// \brief Return the bare pointer to the next node.
+    ///
+    /// In such an operation as iterating over a linked list of \c RdataSet
+    /// object, using this method is generally more efficient than using
+    /// the \c next member directly because it prevents unintentional
+    /// creation of offset pointer objects.  While the application can
+    /// get the same result by directly calling get() on \c next, it would
+    /// help encourage the use of more efficient usage if we provide an
+    /// explicit accessor.
+    const RdataSet* getNext() const { return (next.get()); }
+
+    /// \brief Return the bare pointer to the next node, mutable version.
+    RdataSet* getNext() { return (next.get()); }
+
     /// \brief Return the number of RDATAs stored in the \c RdataSet.
     size_t getRdataCount() const { return (rdata_count_); }
 
@@ -291,6 +342,21 @@ private:
     }
     uint16_t* getExtSIGCountBuf() {
         return (reinterpret_cast<uint16_t*>(this + 1));
+    }
+
+    // Shared by both mutable and immutable versions of find()
+    template <typename RdataSetType>
+    static RdataSetType*
+    find(RdataSetType* rdataset_head, const dns::RRType& type) {
+        for (RdataSetType* rdataset = rdataset_head;
+             rdataset != NULL;
+             rdataset = rdataset->getNext()) // use getNext() for efficiency
+        {
+            if (rdataset->type == type) {
+                return (rdataset);
+            }
+        }
+        return (NULL);
     }
 
     /// \brief The constructor.

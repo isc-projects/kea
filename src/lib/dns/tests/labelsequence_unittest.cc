@@ -177,6 +177,15 @@ TEST_F(LabelSequenceTest, equals_insensitive) {
     EXPECT_TRUE(ls11.equals(ls12));
 }
 
+// operator==().  This is mostly trivial wrapper, so it should suffice to
+// check some basic cases.
+TEST_F(LabelSequenceTest, operatorEqual) {
+    EXPECT_TRUE(ls1 == ls1);      // self equivalence
+    EXPECT_TRUE(ls1 == LabelSequence(n1)); // equivalent two different objects
+    EXPECT_FALSE(ls1 == ls2);      // non equivalent objects
+    EXPECT_TRUE(ls1 == ls5);       // it's always case insensitive
+}
+
 // Compare tests
 TEST_F(LabelSequenceTest, compare) {
     // "example.org." and "example.org.", case sensitive

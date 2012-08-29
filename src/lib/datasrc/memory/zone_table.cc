@@ -19,6 +19,10 @@
 #include <datasrc/memory/zone_data.h>
 #include <datasrc/memory/zone_table.h>
 #include <datasrc/memory/domaintree.h>
+#include <datasrc/memory/segment_object_holder.h>
+
+#include <boost/function.hpp>
+#include <boost/bind.hpp>
 
 #include <cassert>
 
@@ -28,43 +32,25 @@ using namespace isc::dns;
 namespace isc {
 namespace datasrc {
 namespace memory {
-namespace {
-// A simple holder to create and use some objects in this implementation
-// in an exception safe manner.   It works like std::auto_ptr but much
-// more simplified.
-template <typename T>
-class Holder {
-public:
-    Holder(util::MemorySegment& mem_sgmt, T* obj) :
-        mem_sgmt_(mem_sgmt), obj_(obj)
-    {}
-    ~Holder() {
-        if (obj_ != NULL) {
-            T::destroy(mem_sgmt_, obj_);
-        }
-    }
-    T* get() { return (obj_); }
-    T* release() {
-        T* ret = obj_;
-        obj_ = NULL;
-        return (ret);
-    }
-private:
-    util::MemorySegment& mem_sgmt_;
-    T* obj_;
-};
-}
+using detail::SegmentObjectHolder;
 
+namespace {
 void
-ZoneTable::ZoneDataDeleter::operator()(util::MemorySegment& mem_sgmt,
-                                       ZoneData* zone_data) const
+deleteZoneData(util::MemorySegment* mem_sgmt, ZoneData* zone_data,
+               RRClass rrclass)
 {
-    ZoneData::destroy(mem_sgmt, zone_data);
+    if (zone_data != NULL) {
+        ZoneData::destroy(*mem_sgmt, zone_data, rrclass);
+    }
+}
+typedef boost::function<void(ZoneData*)> ZoneDataDeleterType;
 }
 
 ZoneTable*
-ZoneTable::create(util::MemorySegment& mem_sgmt) {
-    Holder<ZoneTableTree> holder(mem_sgmt, ZoneTableTree::create(mem_sgmt));
+ZoneTable::create(util::MemorySegment& mem_sgmt, RRClass zone_class) {
+    SegmentObjectHolder<ZoneTableTree, ZoneDataDeleterType> holder(
+        mem_sgmt, ZoneTableTree::create(mem_sgmt),
+        boost::bind(deleteZoneData, &mem_sgmt, _1, zone_class));
     void* p = mem_sgmt.allocate(sizeof(ZoneTable));
     ZoneTable* zone_table = new(p) ZoneTable(holder.get());
     holder.release();
@@ -72,20 +58,27 @@ ZoneTable::create(util::MemorySegment& mem_sgmt) {
 }
 
 void
-ZoneTable::destroy(util::MemorySegment& mem_sgmt, ZoneTable* ztable) {
-    ZoneTableTree::destroy(mem_sgmt, ztable->zones_.get());
+ZoneTable::destroy(util::MemorySegment& mem_sgmt, ZoneTable* ztable,
+                   RRClass zone_class)
+{
+    ZoneTableTree::destroy(mem_sgmt, ztable->zones_.get(),
+                           boost::bind(deleteZoneData, &mem_sgmt, _1,
+                                       zone_class));
     mem_sgmt.deallocate(ztable, sizeof(ZoneTable));
 }
 
 ZoneTable::AddResult
-ZoneTable::addZone(util::MemorySegment& mem_sgmt, const Name& zone_name) {
+ZoneTable::addZone(util::MemorySegment& mem_sgmt, RRClass zone_class,
+                   const Name& zone_name)
+{
     // Create a new ZoneData instance first.  If the specified name already
     // exists in the table, the new data will soon be destroyed, but we want
     // to make sure if this allocation fails the tree won't be changed to
     // provide as strong guarantee as possible.  In practice, we generally
     // expect the caller tries to add a zone only when it's a new one, so
     // this should be a minor concern.
-    Holder<ZoneData> holder(mem_sgmt, ZoneData::create(mem_sgmt));
+    SegmentObjectHolder<ZoneData, RRClass> holder(
+        mem_sgmt, ZoneData::create(mem_sgmt, zone_name), zone_class);
 
     // Get the node where we put the zone
     ZoneTableNode* node(NULL);
@@ -103,7 +96,7 @@ ZoneTable::addZone(util::MemorySegment& mem_sgmt, const Name& zone_name) {
 
     // Is it empty? We either just created it or it might be nonterminal
     if (node->isEmpty()) {
-        node->setData(mem_sgmt, holder.get());
+        node->setData(holder.get());
         return (AddResult(result::SUCCESS, holder.release()));
     } else { // There's something there already
         return (AddResult(result::EXIST, node->getData()));
