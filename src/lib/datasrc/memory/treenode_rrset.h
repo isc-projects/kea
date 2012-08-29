@@ -61,10 +61,15 @@ public:
                   const RdataSet* rdataset, bool dnssec_ok) :
         node_(node), rdataset_(rdataset),
         rrsig_count_(rdataset_->getSigRdataCount()), rrclass_(rrclass),
-        dnssec_ok_(dnssec_ok), name_(NULL)
+        dnssec_ok_(dnssec_ok), name_(NULL), realname_buf_(NULL)
     {}
 
+    TreeNodeRRset(const dns::Name& realname, dns::RRClass rrclass,
+                  const ZoneNode* node, const RdataSet* rdataset,
+                  bool dnssec_ok);
+
     virtual ~TreeNodeRRset() {
+        delete[] realname_buf_;
         delete name_;
     }
 
@@ -116,6 +121,14 @@ private:
     dns::RdataIteratorPtr getSigRdataIterator() const;
     dns::RdataIteratorPtr getRdataIteratorInternal(bool is_rrsig,
                                                    size_t count) const;
+    dns::LabelSequence getOwnerLabels(
+        uint8_t labels_buf[dns::LabelSequence::MAX_SERIALIZED_LENGTH]) const
+    {
+        if (realname_buf_ != NULL) {
+            return (dns::LabelSequence(realname_buf_));
+        }
+        return (node_->getAbsoluteLabels(labels_buf));
+    }
 
     const ZoneNode* node_;
     const RdataSet* rdataset_;
@@ -123,6 +136,7 @@ private:
     const dns::RRClass rrclass_;
     const bool dnssec_ok_;
     mutable dns::Name* name_;
+    uint8_t* realname_buf_;
 };
 
 } // namespace memory
