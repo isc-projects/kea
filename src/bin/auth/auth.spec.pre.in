@@ -56,11 +56,6 @@
           }]
         }
       },
-      { "item_name": "statistics-interval",
-        "item_type": "integer",
-        "item_optional": true,
-        "item_default": 60
-      },
       {
         "item_name": "listen_on",
         "item_type": "list",
@@ -110,8 +105,8 @@
         ]
       },
       {
-        "command_name": "sendstats",
-        "command_description": "Send data to a statistics module at once",
+        "command_name": "getstats",
+        "command_description": "Retrieve statistics data",
         "command_args": []
       },
       {

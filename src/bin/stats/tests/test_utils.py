@@ -144,11 +144,71 @@ class MockBoss:
   "module_spec": {
     "module_name": "Boss",
     "module_description": "Mock Master process",
-    "config_data": [],
+    "config_data": [
+      {
+        "item_name": "components",
+        "item_type": "named_set",
+        "item_optional": false,
+        "item_default": {
+          "b10-stats": { "address": "Stats", "kind": "dispensable" },
+          "b10-cmdctl": { "special": "cmdctl", "kind": "needed" }
+        },
+        "named_set_item_spec": {
+          "item_name": "component",
+          "item_type": "map",
+          "item_optional": false,
+          "item_default": { },
+          "map_item_spec": [
+            {
+              "item_name": "special",
+              "item_optional": true,
+              "item_type": "string"
+            },
+            {
+              "item_name": "process",
+              "item_optional": true,
+              "item_type": "string"
+            },
+            {
+              "item_name": "kind",
+              "item_optional": false,
+              "item_type": "string",
+              "item_default": "dispensable"
+            },
+            {
+              "item_name": "address",
+              "item_optional": true,
+              "item_type": "string"
+            },
+            {
+              "item_name": "params",
+              "item_optional": true,
+              "item_type": "list",
+              "list_item_spec": {
+                "item_name": "param",
+                "item_optional": false,
+                "item_type": "string",
+                "item_default": ""
+              }
+            },
+            {
+              "item_name": "priority",
+              "item_optional": true,
+              "item_type": "integer"
+            }
+          ]
+        }
+      }
+    ],
     "commands": [
       {
-        "command_name": "sendstats",
-        "command_description": "Send data to a statistics module at once",
+        "command_name": "shutdown",
+        "command_description": "Shut down BIND 10",
+        "command_args": []
+      },
+      {
+        "command_name": "ping",
+        "command_description": "Ping the boss process",
         "command_args": []
       },
       {
@@ -185,10 +245,11 @@ class MockBoss:
         self.spec_file.close()
         self.cc_session = self.mccs._session
         self.got_command_name = ''
-        self.pid_list = [[ 9999, "b10-auth"   ],
-                         [ 9998, "b10-auth-2" ],
-                         [ 9997, "b10-auth-3" ],
-                         [ 9996, "b10-auth-4" ]]
+        self.pid_list = [[ 9999, "b10-auth", "Auth" ],
+                         [ 9998, "b10-auth-2", "Auth" ]]
+        self.statistics_data = {
+            'boot_time': time.strftime('%Y-%m-%dT%H:%M:%SZ', self._BASETIME)
+            }
 
     def run(self):
         self.mccs.start()
@@ -209,16 +270,9 @@ class MockBoss:
     def command_handler(self, command, *args, **kwargs):
         self._started.set()
         self.got_command_name = command
-        params = { "owner": "Boss",
-                   "data": {
-                'boot_time': time.strftime('%Y-%m-%dT%H:%M:%SZ', self._BASETIME)
-                }
-                   }
-        if command == 'sendstats':
-            send_command("set", "Stats", params=params, session=self.cc_session)
-            return isc.config.create_answer(0)
-        elif command == 'getstats':
-            return isc.config.create_answer(0, params)
+        sdata = self.statistics_data
+        if command == 'getstats':
+            return isc.config.create_answer(0, sdata)
         elif command == 'show_processes':
             # Return dummy pids
             return isc.config.create_answer(
@@ -232,13 +286,7 @@ class MockAuth:
     "module_name": "Auth",
     "module_description": "Mock Authoritative service",
     "config_data": [],
-    "commands": [
-      {
-        "command_name": "sendstats",
-        "command_description": "Send data to a statistics module at once",
-        "command_args": []
-      }
-    ],
+    "commands": [],
     "statistics": [
       {
         "item_name": "queries.tcp",
@@ -349,12 +397,11 @@ class MockAuth:
 
     def command_handler(self, command, *args, **kwargs):
         self.got_command_name = command
-        if command == 'sendstats':
-            params = { "owner": "Auth",
-                       "data": { 'queries.tcp': self.queries_tcp,
-                                 'queries.udp': self.queries_udp,
-                                 'queries.perzone' : self.queries_per_zone } }
-            return send_command("set", "Stats", params=params, session=self.cc_session)
+        sdata = { 'queries.tcp': self.queries_tcp,
+                  'queries.udp': self.queries_udp,
+                  'queries.perzone' : self.queries_per_zone }
+        if command == 'getstats':
+            return isc.config.create_answer(0, sdata)
         return isc.config.create_answer(1, "Unknown Command")
 
 class MyStats(stats.Stats):
@@ -428,9 +475,13 @@ class BaseModules:
         # MockAuth
         self.auth = ThreadingServerManager(MockAuth)
         self.auth.run()
+        self.auth2 = ThreadingServerManager(MockAuth)
+        self.auth2.run()
+
 
     def shutdown(self):
         # MockAuth
+        self.auth2.shutdown()
         self.auth.shutdown()
         # MockBoss
         self.boss.shutdown()

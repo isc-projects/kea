@@ -17,8 +17,9 @@
 
 #include <dns/opcode.h>
 #include <dns/rcode.h>
-
 #include <cc/session.h>
+#include <cc/data.h>
+
 #include <stdint.h>
 #include <boost/scoped_ptr.hpp>
 
@@ -34,14 +35,11 @@ class AuthCountersImpl;
 /// statistics module.
 ///
 /// This class is designed to be a part of \c AuthSrv.
-/// Call \c setStatisticsSession() to set a session to communicate with
-/// statistics module like Xfrin session.
 /// Call \c inc() to increment a counter for specific type of query in
 /// the query processing function. use \c enum \c CounterType to specify
 /// the type of query.
-/// Call \c submitStatistics() to submit statistics information to statistics
-/// module with statistics_session, periodically or at a time the command
-/// \c sendstats is received.
+/// Call \c getStatistics() to answer statistics information to statistics
+/// module with statistics_session, when the command \c getstats is received.
 ///
 /// We may eventually want to change the structure to hold values that are
 /// not counters (such as concurrent TCP connections), or seperate generic
@@ -108,43 +106,15 @@ public:
     /// \throw None
     void inc(const isc::dns::Rcode rcode);
 
-    /// \brief Submit statistics counters to statistics module.
-    ///
-    /// This method is desinged to be called periodically
-    /// with \c asio_link::StatisticsSendTimer, or arbitrary
-    /// by the command 'sendstats'.
-    ///
-    /// Note: Set the session to communicate with statistics module
-    /// by \c setStatisticsSession() before calling \c submitStatistics().
+    /// \brief Answers statistics counters to statistics module.
     ///
     /// This method is mostly exception free (error conditions are
     /// represented via the return value). But it may still throw
     /// a standard exception if memory allocation fails inside the method.
     ///
-    /// \return true on success, false on error.
+    /// \return statistics data
     ///
-    /// \todo Do not block message handling in auth_srv while submitting
-    /// statistics data.
-    ///
-    bool submitStatistics() const;
-
-    /// \brief Set the session to communicate with Statistics
-    /// module.
-    ///
-    /// This method never throws an exception.
-    ///
-    /// Note: this interface is tentative.  We'll revisit the ASIO and session
-    /// frameworks, at which point the session will probably be passed on
-    /// construction of the server.
-    ///
-    /// Ownership isn't transferred: the caller is responsible for keeping
-    /// this object to be valid while the server object is working and for
-    /// disconnecting the session and destroying the object when the server
-    /// is shutdown.
-    ///
-    /// \param statistics_session A pointer to the session
-    ///
-    void setStatisticsSession(isc::cc::AbstractSession* statistics_session);
+    isc::data::ConstElementPtr getStatistics() const;
 
     /// \brief Get the value of a counter in the AuthCounters.
     ///

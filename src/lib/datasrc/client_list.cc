@@ -17,6 +17,7 @@
 #include "factory.h"
 #include "memory_datasrc.h"
 #include "logger.h"
+#include <dns/masterload.h>
 
 #include <memory>
 #include <boost/foreach.hpp>
@@ -144,23 +145,29 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
                         finder(new
                             InMemoryZoneFinder(rrclass_, origin));
                     if (type == "MasterFiles") {
-                        finder->load(paramConf->get(*it)->stringValue());
+                        try {
+                            finder->load(paramConf->get(*it)->stringValue());
+                            cache->addZone(finder);
+                        } catch (const isc::dns::MasterLoadError& mle) {
+                            LOG_ERROR(logger, DATASRC_MASTERLOAD_ERROR)
+                                .arg(mle.what());
+                        }
                     } else {
                         ZoneIteratorPtr iterator;
                         try {
                             iterator = client->getIterator(origin);
-                        }
-                        catch (const DataSourceError&) {
-                            isc_throw(ConfigurationError, "Unable to cache "
-                                      "non-existent zone " << origin);
+                        } catch (const DataSourceError&) {
+                            isc_throw(ConfigurationError, "Unable to "
+                                      "cache non-existent zone "
+                                      << origin);
                         }
                         if (!iterator) {
-                            isc_throw(isc::Unexpected, "Got NULL iterator for "
-                                      "zone " << origin);
+                            isc_throw(isc::Unexpected, "Got NULL iterator "
+                                      "for zone " << origin);
                         }
                         finder->load(*iterator);
+                        cache->addZone(finder);
                     }
-                    cache->addZone(finder);
                 }
             }
         }
