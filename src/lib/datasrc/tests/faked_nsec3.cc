@@ -34,6 +34,11 @@ const char* const nsec3_common = " 300 IN NSEC3 1 1 12 aabbccdd "
     "2T7B4G4VSA5SMI47K61MV5BV1A22BOJR A RRSIG";
 const char* const nsec3_rrsig_common = " 300 IN RRSIG NSEC3 5 3 3600 "
     "20000101000000 20000201000000 12345 example.org. FAKEFAKEFAKE";
+const char* const nsec3_rrsig_common2 = " 300 IN RRSIG NSEC3 5 4 7200 "
+    "20100410172647 20100311172647 63192 example.org. gNIVj4T8t51fEU6k"
+    "OPpvK7HOGBFZGbalN5ZKmInyrww6UWZsUNdw07ge6/U6HfG+/s61RZ/Lis2M6yUWH"
+    "yXbNbj/QqwqgadG5dhxTArfuR02xP600x0fWX8LXzW4yLMdKVxGbzYT+vvGz71o8g"
+    "HSY5vYTtothcZQa4BMKhmGQEk=";
 const char* const apex_hash = "0P9MHAVEQVM6T7VBL5LOP2U3T2RP3TOM";
 const char* const apex_hash_lower = "0p9mhaveqvm6t7vbl5lop2u3t2rp3tom";
 const char* const ns1_hash = "2T7B4G4VSA5SMI47K61MV5BV1A22BOJR";
@@ -93,8 +98,7 @@ void
 findNSEC3Check(bool expected_matched, uint8_t expected_labels,
                const string& expected_closest,
                const string& expected_next,
-               const ZoneFinder::FindNSEC3Result& result,
-               bool expected_sig)
+               const ZoneFinder::FindNSEC3Result& result)
 {
     EXPECT_EQ(expected_matched, result.matched);
     // Convert to int so the error messages would be more readable:
@@ -104,9 +108,6 @@ findNSEC3Check(bool expected_matched, uint8_t expected_labels,
     vector<ConstRRsetPtr> actual_rrsets;
     ASSERT_TRUE(result.closest_proof);
     actual_rrsets.push_back(result.closest_proof);
-    if (expected_sig) {
-        actual_rrsets.push_back(result.closest_proof->getRRsig());
-    }
     rrsetsCheck(expected_closest, actual_rrsets.begin(),
                 actual_rrsets.end());
 
@@ -116,29 +117,37 @@ findNSEC3Check(bool expected_matched, uint8_t expected_labels,
     } else {
         ASSERT_TRUE(result.next_proof);
         actual_rrsets.push_back(result.next_proof);
-        if (expected_sig) {
-            actual_rrsets.push_back(result.next_proof->getRRsig());
-        }
         rrsetsCheck(expected_next, actual_rrsets.begin(),
                     actual_rrsets.end());
     }
 }
 
 void
-performNSEC3Test(ZoneFinder &finder) {
+performNSEC3Test(ZoneFinder &finder, bool rrsigs_exist) {
     // Parameter validation: the query name must be in or below the zone
     EXPECT_THROW(finder.findNSEC3(Name("example.com"), false), OutOfZone);
     EXPECT_THROW(finder.findNSEC3(Name("org"), true), OutOfZone);
 
     const Name origin("example.org");
-    const string apex_nsec3_text = string(apex_hash) + ".example.org." +
+    string apex_nsec3_text = string(apex_hash) + ".example.org." +
         string(nsec3_common);
-    const string ns1_nsec3_text = string(ns1_hash) + ".example.org." +
+    string ns1_nsec3_text = string(ns1_hash) + ".example.org." +
         string(nsec3_common);
-    const string w_nsec3_text = string(w_hash) + ".example.org." +
+    string w_nsec3_text = string(w_hash) + ".example.org." +
         string(nsec3_common);
-    const string zzz_nsec3_text = string(zzz_hash) + ".example.org." +
+    string zzz_nsec3_text = string(zzz_hash) + ".example.org." +
         string(nsec3_common);
+
+    if (rrsigs_exist) {
+        apex_nsec3_text += "\n" + string(apex_hash) + ".example.org." +
+            string(nsec3_rrsig_common2);
+        ns1_nsec3_text += "\n" + string(ns1_hash) + ".example.org." +
+            string(nsec3_rrsig_common2);
+        w_nsec3_text += "\n" + string(w_hash) + ".example.org." +
+            string(nsec3_rrsig_common2);
+        zzz_nsec3_text += "\n" + string(zzz_hash) + ".example.org." +
+            string(nsec3_rrsig_common2);
+    }
 
     // Apex name.  It should have a matching NSEC3.
     {
