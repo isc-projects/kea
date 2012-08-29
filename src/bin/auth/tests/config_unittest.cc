@@ -80,17 +80,29 @@ TEST_F(AuthConfigTest, versionConfig) {
 }
 
 TEST_F(AuthConfigTest, exceptionGuarantee) {
-    server.setStatisticsTimerInterval(1234);
-    EXPECT_EQ(1234, server.getStatisticsTimerInterval());
-    // This configuration contains an invalid item, which will trigger
-    // an exception.
+    using namespace isc::server_common::portconfig;
+    AddressList a;
+    a.push_back(AddressPair("127.0.0.1", 53210));
+    server.setListenAddresses(a);
+    const AddressList b = server.getListenAddresses();
+    EXPECT_EQ(a.size(), b.size());
+    EXPECT_EQ(a.at(0).first, b.at(0).first);
+    EXPECT_EQ(a.at(0).second, b.at(0).second);
+    // The test socket request will reject the second address (192.0.2.2)
+    // with an exception
     EXPECT_THROW(configureAuthServer(
                      server,
                      Element::fromJSON(
-                         "{ \"no_such_config_var\": 1}")),
+                         "{ \"listen_on\": ["
+                           "{\"address\": \"::1\", \"port\": 53210},"
+                           "{\"address\": \"192.0.2.2\", \"port\": 53210}"
+                         "]}")),
                  AuthConfigError);
     // The server state shouldn't change
-    EXPECT_EQ(1234, server.getStatisticsTimerInterval());
+    const AddressList c = server.getListenAddresses();
+    EXPECT_EQ(a.size(), c.size());
+    EXPECT_EQ(a.at(0).first, c.at(0).first);
+    EXPECT_EQ(a.at(0).second, c.at(0).second);
 }
 
 TEST_F(AuthConfigTest, badConfig) {
@@ -131,52 +143,4 @@ TEST_F(AuthConfigTest, listenAddressConfig) {
     EXPECT_EQ(DNSService::SERVER_SYNC_OK, dnss_.getUDPFdParams().at(1).options);
 }
 
-class StatisticsIntervalConfigTest : public AuthConfigTest {
-protected:
-    StatisticsIntervalConfigTest() :
-        parser(createAuthConfigParser(server, "statistics-interval"))
-    {}
-    ~StatisticsIntervalConfigTest() {
-        delete parser;
-    }
-    AuthConfigParser* parser;
-};
-
-TEST_F(StatisticsIntervalConfigTest, setInterval) {
-    // initially the timer is not configured.
-    EXPECT_EQ(0, server.getStatisticsTimerInterval());
-
-    // initialize the timer
-    parser->build(Element::fromJSON("5"));
-    parser->commit();
-    EXPECT_EQ(5, server.getStatisticsTimerInterval());
-
-    // reset the timer with a new interval
-    delete parser;
-    parser = createAuthConfigParser(server, "statistics-interval");
-    ASSERT_NE(static_cast<void*>(NULL), parser);
-    parser->build(Element::fromJSON("10"));
-    parser->commit();
-    EXPECT_EQ(10, server.getStatisticsTimerInterval());
-
-    // disable the timer again
-    delete parser;
-    parser = createAuthConfigParser(server, "statistics-interval");
-    ASSERT_NE(static_cast<void*>(NULL), parser);
-    parser->build(Element::fromJSON("0"));
-    parser->commit();
-    EXPECT_EQ(0, server.getStatisticsTimerInterval());
-}
-
-TEST_F(StatisticsIntervalConfigTest, badInterval) {
-    EXPECT_THROW(parser->build(Element::fromJSON("\"should be integer\"")),
-                 isc::data::TypeError);
-    EXPECT_THROW(parser->build(Element::fromJSON("2.5")),
-                 isc::data::TypeError);
-    EXPECT_THROW(parser->build(Element::fromJSON("-1")), AuthConfigError);
-    // bounds check: interval value must be equal to or shorter than
-    // 86400 seconds (1 day)
-    EXPECT_NO_THROW(parser->build(Element::fromJSON("86400")));
-    EXPECT_THROW(parser->build(Element::fromJSON("86401")), AuthConfigError);
-}
 }

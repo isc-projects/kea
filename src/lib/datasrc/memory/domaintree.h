@@ -229,37 +229,33 @@ public:
     ///
     /// You should not delete the data, it is deleted when the tree is
     /// destroyed.
-    T* getData() { return (data_); }
+    T* getData() { return (data_.get()); }
 
     /// \brief Return the data stored in this node (const).
-    const T* getData() const { return (data_); }
+    const T* getData() const { return (data_.get()); }
 
     /// \brief return whether the node has related data.
     ///
     /// There can be empty nodes inside the DomainTree. They are usually the
     /// non-terminal domains, but it is possible (yet probably meaningless)
     /// empty nodes anywhere.
-    bool isEmpty() const { return (data_ == NULL); }
+    bool isEmpty() const { return (!data_); }
     //@}
 
     /// \name Setter functions.
     //@{
 
-    /// \brief Set the data stored in the node. If there is old data, it
-    /// is either returned or destroyed based on what is passed in \c
-    /// old_data.
+    /// \brief Set the data stored in the node.
+    ///
+    /// Any old data is destroyed.
+    ///
     /// \param mem_sgmt The \c MemorySegment that allocated memory for
     ///                 the node data.
     /// \param data The new data to set.
-    /// \param old_data If \c NULL is passed here, any old data is
-    ///                 destroyed. Otherwise, the old data is returned
-    ///                 in this location.
-    void setData(util::MemorySegment& mem_sgmt, T* data, T** old_data = NULL) {
-        if (old_data != NULL) {
-            *old_data = data;
-        } else {
+    void setData(util::MemorySegment& mem_sgmt, T* data) {
+        if (data_) {
             const DT deleter;
-            deleter(mem_sgmt, data_);
+            deleter(mem_sgmt, data_.get());
         }
         data_ = data;
     }
@@ -476,7 +472,7 @@ private:
     }
 
     /// \brief Data stored here.
-    T* data_;
+    boost::interprocess::offset_ptr<T> data_;
 
     /// \brief Internal or user-configurable flags of node's properties.
     ///
@@ -930,7 +926,7 @@ private:
     /// \brief The destructor.
     ///
     /// An object of this class is always expected to be destroyed explicitly
-    /// by \c destroy(), so the constructor is hidden as private.
+    /// by \c destroy(), so the destructor is hidden as private.
     ///
     /// \note DomainTree is not intended to be inherited so the destructor
     /// is not virtual
@@ -1390,7 +1386,7 @@ DomainTree<T, DT>::deleteHelper(util::MemorySegment& mem_sgmt,
             // free this one and go back to its parent.
             DomainTreeNode<T, DT>* node = root;
             root = root->getParent();
-            deleter(mem_sgmt, node->data_);
+            deleter(mem_sgmt, node->data_.get());
             DomainTreeNode<T, DT>::destroy(mem_sgmt, node);
             --node_count_;
         }
@@ -1652,8 +1648,12 @@ DomainTree<T, DT>::insert(util::MemorySegment& mem_sgmt,
     isc::dns::LabelSequence target_labels(target_name);
 
     int order = -1;
+    // For possible LabelSequence serialization we always store labels data
+    // in the separate local buffer.
+    uint8_t labels_buf[dns::LabelSequence::MAX_SERIALIZED_LENGTH];
     while (current != NULL) {
-        const dns::LabelSequence current_labels(current->getLabels());
+        const dns::LabelSequence current_labels(
+            dns::LabelSequence(current->getLabels(), labels_buf));
         const isc::dns::NameComparisonResult compare_result =
             target_labels.compare(current_labels);
         const isc::dns::NameComparisonResult::NameRelation relation =

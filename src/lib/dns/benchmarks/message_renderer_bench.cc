@@ -35,21 +35,28 @@ template <typename T>
 class MessageRendererBenchMark {
 public:
     MessageRendererBenchMark(const vector<Name>& names) :
+        renderer_(NULL),
         names_(names)
     {}
+    MessageRendererBenchMark() {
+        delete renderer_;
+    }
     unsigned int run() {
-        renderer_.clear();
+        if (renderer_ == NULL) {
+            renderer_ = new T();
+        }
+        renderer_->clear();
         vector<Name>::const_iterator it = names_.begin();
         const vector<Name>::const_iterator it_end = names_.end();
         for (; it != it_end; ++it) {
-            renderer_.writeName(*it);
+            renderer_->writeName(*it);
         }
         // Make sure truncation didn't accidentally happen.
-        assert(!renderer_.isTruncated());
+        assert(!renderer_->isTruncated());
         return (names_.size());
     }
 private:
-    T renderer_;
+    T* renderer_; // It's pointer, so we won't need to copy it.
     const vector<Name>& names_;
 };
 

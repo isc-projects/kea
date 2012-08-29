@@ -420,16 +420,6 @@ This is a debug message reporting that an incoming NOTIFY was received.
 </para></listitem>
 </varlistentry>
 
-<varlistentry id="AUTH_RECEIVED_SENDSTATS">
-<term>AUTH_RECEIVED_SENDSTATS command 'sendstats' received</term>
-<listitem><para>
-This is a debug message issued when the authoritative server has received
-a command from the statistics module to send it data. The 'sendstats'
-command is handled differently to other commands, which is why the debug
-message associated with it has its own code.
-</para></listitem>
-</varlistentry>
-
 <varlistentry id="AUTH_RESPONSE_FAILURE">
 <term>AUTH_RESPONSE_FAILURE exception while building response to query: %1</term>
 <listitem><para>
