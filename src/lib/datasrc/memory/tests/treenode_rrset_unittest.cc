@@ -92,21 +92,24 @@ protected:
 };
 
 TEST_F(TreeNodeRRsetTest, create) {
-    const TreeNodeRRset rrset1(RRClass::IN(), www_node_, a_rdataset_, true);
-    EXPECT_EQ(RRClass::IN(), rrset1.getClass());
+    const TreeNodeRRset rrset1(rrclass_, www_node_, a_rdataset_, true);
+    EXPECT_EQ(rrclass_, rrset1.getClass());
     EXPECT_EQ(RRType::A(), rrset1.getType());
     EXPECT_EQ(www_name_, rrset1.getName());
     EXPECT_EQ(2, rrset1.getRdataCount());
     EXPECT_EQ(1, rrset1.getRRsigDataCount());
 
-    const TreeNodeRRset rrset2(RRClass::IN(), www_node_, a_rdataset_, false);
-    EXPECT_EQ(RRClass::IN(), rrset2.getClass());
+    const TreeNodeRRset rrset2(rrclass_, www_node_, a_rdataset_, false);
+    EXPECT_EQ(rrclass_, rrset2.getClass());
     EXPECT_EQ(RRType::A(), rrset2.getType());
     EXPECT_EQ(www_name_, rrset2.getName());
     EXPECT_EQ(2, rrset2.getRdataCount());
     EXPECT_EQ(0, rrset2.getRRsigDataCount());
 }
 
+// Templated if and when we support OutputBuffer version of toWire().
+// Right now, we take a minimalist approach, only implementing testing the
+// renderer version.
 template <typename OutputType>
 void
 checkToWireResult(OutputType& expected_output, OutputType& actual_output,
@@ -140,38 +143,97 @@ checkToWireResult(OutputType& expected_output, OutputType& actual_output,
 
 TEST_F(TreeNodeRRsetTest, toWire) {
     MessageRenderer expected_renderer, actual_renderer;
-    //OutputBuffer expected_buffer(0), actual_buffer(0);
 
-    // 1. with RRSIG, DNSSEC OK
-    const TreeNodeRRset rrset1(RRClass::IN(), www_node_, a_rdataset_, true);
-    checkToWireResult(expected_renderer, actual_renderer, rrset1, www_name_,
-                      a_rrset_, rrsig_rrset_, true);
-#ifdef notyet
-    checkToWireResult(expected_buffer, actual_buffer, rrset1,  www_name_,
-                      a_rrset_, rrsig_rrset_, true);
-#endif
+    {
+        SCOPED_TRACE("with RRSIG, DNSSEC OK");
+        const TreeNodeRRset rrset1(rrclass_, www_node_, a_rdataset_, true);
+        checkToWireResult(expected_renderer, actual_renderer, rrset1,
+                          www_name_, a_rrset_, rrsig_rrset_, true);
+        EXPECT_FALSE(actual_renderer.isTruncated());
+    }
 
-    // 2. with RRSIG, DNSSEC not OK
-    const TreeNodeRRset rrset2(rrclass_, www_node_, a_rdataset_, false);
-    checkToWireResult(expected_renderer, actual_renderer, rrset2, www_name_,
-                      a_rrset_, rrsig_rrset_, false);
+    {
+        SCOPED_TRACE("with RRSIG, DNSSEC not OK");
+        const TreeNodeRRset rrset2(rrclass_, www_node_, a_rdataset_, false);
+        checkToWireResult(expected_renderer, actual_renderer, rrset2,
+                          www_name_, a_rrset_, rrsig_rrset_, false);
+        EXPECT_FALSE(actual_renderer.isTruncated());
+    }
 
-    // 3. without RRSIG, DNSSEC OK
-    const TreeNodeRRset rrset3(rrclass_, origin_node_, ns_rdataset_, true);
-    checkToWireResult(expected_renderer, actual_renderer, rrset3, origin_name_,
-                      ns_rrset_, ConstRRsetPtr(), true);
+    {
+        SCOPED_TRACE("without RRSIG, DNSSEC OK");
+        const TreeNodeRRset rrset3(rrclass_, origin_node_, ns_rdataset_, true);
+        checkToWireResult(expected_renderer, actual_renderer, rrset3,
+                          origin_name_, ns_rrset_, ConstRRsetPtr(), true);
+        EXPECT_FALSE(actual_renderer.isTruncated());
+    }
 
-    // 4. without RRSIG, DNSSEC not OK
-    const TreeNodeRRset rrset4(rrclass_, origin_node_, ns_rdataset_, false);
-    checkToWireResult(expected_renderer, actual_renderer, rrset4, origin_name_,
-                      ns_rrset_, ConstRRsetPtr(), false);
+    {
+        SCOPED_TRACE("without RRSIG, DNSSEC not OK");
+        const TreeNodeRRset rrset4(rrclass_, origin_node_, ns_rdataset_,
+                                   false);
+        checkToWireResult(expected_renderer, actual_renderer, rrset4,
+                          origin_name_, ns_rrset_, ConstRRsetPtr(), false);
+        EXPECT_FALSE(actual_renderer.isTruncated());
+    }
 
-    // RDATA of DNAME RR shouldn't be compressed.  Prepending "example.org"
-    // will check that.
-    const TreeNodeRRset rrset5(rrclass_, origin_node_, dname_rdataset_, false);
-    checkToWireResult(expected_renderer, actual_renderer, rrset5,
-                      Name("example.org"), dname_rrset_, ConstRRsetPtr(),
-                      false);
+    {
+        // RDATA of DNAME DR shouldn't be compressed.  Prepending "example.org"
+        // will check that.
+        SCOPED_TRACE("uncompressed RDATA");
+        const TreeNodeRRset rrset5(rrclass_, origin_node_, dname_rdataset_,
+                                   false);
+        checkToWireResult(expected_renderer, actual_renderer, rrset5,
+                          Name("example.org"), dname_rrset_, ConstRRsetPtr(),
+                          false);
+        EXPECT_FALSE(actual_renderer.isTruncated());
+    }
+}
+
+void
+checkTruncationResult(MessageRenderer& expected_renderer,
+                      MessageRenderer& actual_renderer,
+                      const TreeNodeRRset& actual_rrset,
+                      ConstRRsetPtr rrset, ConstRRsetPtr rrsig_rrset,
+                      bool dnssec_ok, size_t len_limit, size_t expected_result)
+{
+    expected_renderer.clear();
+    actual_renderer.clear();
+
+    actual_renderer.setLengthLimit(len_limit);
+    EXPECT_EQ(expected_result, actual_rrset.toWire(actual_renderer));
+    EXPECT_TRUE(actual_renderer.isTruncated()); // always true in this test
+
+    expected_renderer.setLengthLimit(len_limit);
+    rrset->toWire(expected_renderer);
+    if (!expected_renderer.isTruncated() && dnssec_ok && rrsig_rrset) {
+        rrsig_rrset->toWire(expected_renderer);
+    }
+
+    matchWireData(expected_renderer.getData(), expected_renderer.getLength(),
+                  actual_renderer.getData(), actual_renderer.getLength());
+}
+
+TEST_F(TreeNodeRRsetTest, toWireTruncated) {
+    MessageRenderer expected_renderer, actual_renderer;
+
+    // Set the truncation limit to name len + 14 bytes of fixed data for A RR
+    // (type, class, TTL, rdlen, and 4-byte IPv4 address).  Then we can only
+    // render just one RR, without any garbage trailing data.
+    checkTruncationResult(expected_renderer, actual_renderer,
+                          TreeNodeRRset(rrclass_, www_node_, a_rdataset_,
+                                        true),
+                          a_rrset_, rrsig_rrset_, true,
+                          www_name_.getLength() + 14,
+                          1);
+
+    // The first normal RRs should fit in the renderer (the name will be
+    // fully compressed, so its size is 2 bytes), but the RRSIG doesn't.
+    checkTruncationResult(expected_renderer, actual_renderer,
+                          TreeNodeRRset(rrclass_, www_node_, a_rdataset_,
+                                        true),
+                          a_rrset_, rrsig_rrset_, true,
+                          www_name_.getLength() + 14 + 2 + 14, 2);
 }
 
 void
