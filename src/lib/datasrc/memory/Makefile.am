@@ -14,5 +14,6 @@ libdatasrc_memory_la_SOURCES = domaintree.h
 libdatasrc_memory_la_SOURCES += rdataset.h rdataset.cc
 libdatasrc_memory_la_SOURCES += rdata_serialization.h rdata_serialization.cc
 libdatasrc_memory_la_SOURCES += zone_data.h zone_data.cc
+libdatasrc_memory_la_SOURCES += segment_object_holder.h
 libdatasrc_memory_la_SOURCES += zone_table.h zone_table.cc
 EXTRA_DIST  = rdata_serialization_priv.cc
