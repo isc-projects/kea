@@ -16,7 +16,6 @@
 #define DATASRC_MEMORY_TREENODE_RRSET_H 1
 
 #include <util/buffer.h>
-#include <util/memory_segment.h> // CLEAN UP: only for temporary setup
 
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
@@ -35,25 +34,6 @@
 namespace isc {
 namespace datasrc {
 namespace memory {
-
-// Temporary definition: Until we merge #2107 we need the following
-class RdataSetDeleter {
-public:
-    RdataSetDeleter() {}
-    void operator()(util::MemorySegment& mem_sgmt,
-                    RdataSet* rdataset_head) const
-    {
-        for (RdataSet* rdataset = rdataset_head;
-             rdataset != NULL;
-             rdataset = rdataset->next.get()) {
-            RdataSet::destroy(mem_sgmt, dns::RRClass::IN(), rdataset);
-        }
-    }
-};
-
-typedef DomainTree<RdataSet> ZoneTree;
-typedef DomainTreeNode<RdataSet> ZoneNode;
-// end of temporary definition
 
 class TreeNodeRRset : public dns::AbstractRRset {
 public:
