@@ -16,6 +16,8 @@
 #define __LOCALIZED_OPTION_H
 
 #include <dhcp/pkt6.h>
+#include <dhcp/option6_ia.h>
+#include <util/buffer.h>
 
 namespace isc {
 namespace perfdhcp {
@@ -51,7 +53,7 @@ public:
                     uint16_t type,
                     const dhcp::OptionBuffer& data) :
         dhcp::Option(u, type, data),
-        offset_(0) {
+        offset_(0), option_valid_(true) {
     }
 
 
@@ -66,7 +68,49 @@ public:
                     const dhcp::OptionBuffer& data,
                     const size_t offset) :
         dhcp::Option(u, type, data),
-        offset_(offset) {
+        offset_(offset), option_valid_(true) {
+    }
+
+    /// \brief Copy constructor, creates LocalizedOption from Option6IA.
+    ///
+    /// This copy constructor creates regular option from Option6IA.
+    /// The data from Option6IA data members are copied to
+    /// option buffer in appropriate sequence.
+    ///
+    /// \param opt_ia option to be copied.
+    /// \param offset location of the option in a packet.
+    LocalizedOption(const boost::shared_ptr<dhcp::Option6IA>& opt_ia,
+                    const size_t offset) :
+        dhcp::Option(Option::V6, 0, dhcp::OptionBuffer()),
+        offset_(offset), option_valid_(false) {
+        // If given option is NULL we will mark this new option
+        // as invalid. User may query if option is valid when
+        // object is created.
+        if (opt_ia) {
+            // Set universe and type.
+            universe_ = opt_ia->getUniverse();
+            type_ = opt_ia->getType();
+            util::OutputBuffer buf(opt_ia->len() - opt_ia->getHeaderLen());
+            try {
+                // Try to pack option data into the temporary buffer.
+                opt_ia->pack(buf);
+                if (buf.getLength() > 0) {
+                    const char* buf_data = static_cast<const char*>(buf.getData());
+                    // Option has been packed along with option type flag
+                    // and transaction id so we have to skip first 4 bytes
+                    // when copying temporary buffer option buffer.
+                    data_.assign(buf_data + 4, buf_data + buf.getLength());
+                }
+                option_valid_ = true;
+            } catch (const Exception&) {
+                // If there was an exception somewhere when packing
+                // the data into the buffer we assume that option is
+                // not valid and should not be used.
+                option_valid_ = false;
+            }
+        } else {
+            option_valid_ = false;
+        }
     }
 
     /// \brief Constructor, sets default (0) option offset
@@ -84,7 +128,7 @@ public:
                     dhcp::OptionBufferConstIter first,
                     dhcp::OptionBufferConstIter last) :
         dhcp::Option(u, type, first, last),
-        offset_(0) {
+        offset_(0), option_valid_(true) {
     }
 
 
@@ -104,7 +148,7 @@ public:
                     dhcp::OptionBufferConstIter first,
                     dhcp::OptionBufferConstIter last, const size_t offset) :
         dhcp::Option(u, type, first, last),
-        offset_(offset) {
+        offset_(offset), option_valid_(true) {
     }
 
     /// \brief Returns offset of an option in a DHCP packet.
@@ -112,8 +156,16 @@ public:
     /// \return option offset in a packet
     size_t getOffset() const { return offset_; };
 
+    /// \brief Checks if option is valid.
+    ///
+    /// \return true, if option is valid.
+    virtual bool valid() {
+        return (Option::valid() && option_valid_);
+    }
+
 private:
     size_t offset_;   ///< Offset of DHCP option in a packet
+    bool option_valid_; ///< Is option valid.
 };
 
 
