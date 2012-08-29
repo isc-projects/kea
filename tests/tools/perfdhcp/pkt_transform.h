@@ -92,6 +92,33 @@ public:
                        const size_t transid_offset,
                        uint32_t& transid);
 
+    /// \brief Replace contents of buffer with vector.
+    ///
+    /// Function replaces data of the buffer with data from vector.
+    ///
+    /// \param in_buffer destination buffer.
+    /// \param dest_pos position in destination buffer.
+    /// \param first beginning of data range in source vector.
+    /// \param last end of data range in source vector.
+    static void writeAt(dhcp::OptionBuffer& in_buffer, size_t dest_pos,
+                        std::vector<uint8_t>::iterator first,
+                        std::vector<uint8_t>::iterator last);
+
+    /// \brief Replace contents of one vector with uint16 value.
+    ///
+    /// Function replaces data inside one vector with uint16_t value.
+    ///
+    /// \param in_buffer destination buffer.
+    /// \param dest_pos position in destination buffer.
+    /// \param val value to be written.
+    template<typename T>
+    static void writeValueAt(dhcp::OptionBuffer& in_buffer, size_t dest_pos,
+                        T val) {
+        for (int i = 0; i < sizeof(T); ++i) {
+            in_buffer[dest_pos + i] = (val >> (sizeof(T) - 8 * i - 1)) & 0xFF;
+        }
+    }
+
 private:
     /// \brief Replaces contents of options in a buffer.
     ///
@@ -131,6 +158,7 @@ private:
     /// \throw isc::Unexpected if options unpack failed.
     static void unpackOptions(const dhcp::OptionBuffer& in_buffer,
                               const dhcp::Option::OptionCollection& options);
+
 };
 
 } // namespace perfdhcp

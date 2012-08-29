@@ -60,7 +60,7 @@ public:
         ///
         /// \return generated transaction id.
         virtual uint32_t generate() {
-            return ++transid_;
+            return (++transid_);
         }
     private:
         uint32_t transid_; ///< Last generated transaction id.
@@ -76,6 +76,8 @@ public:
     using TestControl::generateDuid;
     using TestControl::generateMacAddress;
     using TestControl::getNextExchangesNum;
+    using TestControl::getTemplateBuffer;
+    using TestControl::initPacketTemplates;
     using TestControl::initializeStatsMgr;
     using TestControl::openSocket;
     using TestControl::receivePacket4;
@@ -109,7 +111,7 @@ public:
 
     static uint32_t generateTransidIncremental() {
         static uint32_t transid(1);
-        return ++transid;
+        return (++transid);
     }
 
     /// \brief Get local loopback interface name.
@@ -134,11 +136,11 @@ public:
                  ++addr_it) {
                 if (asiolink::IOAddress("127.0.0.1").getAddress() ==
                     addr_it->getAddress()) {
-                    return iface->getName();
+                    return (iface->getName());
                 }
             }
         }
-        return("");
+        return ("");
     }
 
     /// \brief Match requested options in the buffer with given list.
@@ -163,7 +165,7 @@ public:
                 }
             }
         }
-        return matched_num;
+        return (matched_num);
     }
 
     /// \brief Calculate the maximum vectors' mismatch position.
@@ -193,7 +195,7 @@ public:
                 n %= 256;
             }
         }
-        return unequal_pos;
+        return (unequal_pos);
     }
 
     /// brief Test generation of mulitple DUIDs
@@ -235,7 +237,8 @@ public:
                 new_duid = old_duid;
             } else {
                 std::swap(old_duid, new_duid);
-                new_duid = tc.generateDuid();
+                uint8_t randomized = 0;
+                new_duid = tc.generateDuid(randomized);
             }
             // The DUID-LLT is expected to start with DUID_LLT value
             // of 1 and hardware ethernet type equal to 1 (HWETHER_TYPE).
@@ -309,10 +312,19 @@ public:
     /// \param iterations_performed actual number of iterations.
     void testPkt4Exchange(int iterations_num,
                           int receive_num,
+                          bool use_templates,
                           int& iterations_performed) const {
         int sock_handle = 0;
         NakedTestControl tc;
         tc.initializeStatsMgr();
+
+        // Use templates files to crate packets.
+        if (use_templates) {
+            tc.initPacketTemplates();
+            ASSERT_GT(tc.getTemplateBuffer(0).size(), 0);
+            ASSERT_GT(tc.getTemplateBuffer(1).size(), 0);
+        }
+
         // Incremental transaction id generator will generate
         // predictable values of transaction id for each iteration.
         // This is important because we need to simulate reponses
@@ -326,7 +338,11 @@ public:
         TestControl::TestControlSocket sock(sock_handle);
         uint32_t transid = 0;
         for (int i = 0; i < iterations_num; ++i) {
-            ASSERT_NO_THROW(tc.sendDiscover4(sock));
+            if (use_templates) {
+                ASSERT_NO_THROW(tc.sendDiscover4(sock, tc.getTemplateBuffer(0)));
+            } else {
+                ASSERT_NO_THROW(tc.sendDiscover4(sock));
+            }
             ++transid;
             // Do not simulate responses for packets later
             // that specified as receive_num. This simulates
@@ -359,10 +375,19 @@ public:
     /// \param iterations_performed actual number of iterations.
     void testPkt6Exchange(int iterations_num,
                           int receive_num,
+                          bool use_templates,
                           int& iterations_performed) const {
         int sock_handle = 0;
         NakedTestControl tc;
         tc.initializeStatsMgr();
+
+        // Use templates files to crate packets.
+        if (use_templates) {
+            tc.initPacketTemplates();
+            ASSERT_GT(tc.getTemplateBuffer(0).size(), 0);
+            ASSERT_GT(tc.getTemplateBuffer(1).size(), 0);
+        }
+
         // Incremental transaction id generator will generate
         // predictable values of transaction id for each iteration.
         // This is important because we need to simulate reponses
@@ -379,7 +404,11 @@ public:
             // Do not simulate responses for packets later
             // that specified as receive_num. This simulates
             // packet drops.
-            ASSERT_NO_THROW(tc.sendSolicit6(sock));
+            if (use_templates) {
+                ASSERT_NO_THROW(tc.sendSolicit6(sock, tc.getTemplateBuffer(0)));
+            } else {
+                ASSERT_NO_THROW(tc.sendSolicit6(sock));
+            }
             ++transid;
             if (i < receive_num) {
                 boost::shared_ptr<Pkt6>
@@ -423,7 +452,8 @@ public:
         // Do many iterations to generate and test MAC address values.
         for (int i = 0; i < clients_num * 10; ++i) {
             // Generate new MAC address.
-            MacAddress new_mac(tc.generateMacAddress());
+            uint8_t randomized = 0;
+            MacAddress new_mac(tc.generateMacAddress(randomized));
             // Get the mismatch position (counting from the end) of
             // mismatched octet between previously generated MAC address
             // and current.
@@ -471,7 +501,7 @@ private:
         offer->addOption(opt_msg_type);
         offer->addOption(opt_serverid);
         offer->updateTimestamp();
-        return(offer);
+        return (offer);
     }
 
     boost::shared_ptr<Pkt6>
@@ -479,14 +509,15 @@ private:
         OptionPtr opt_ia_na = Option::factory(Option::V6, D6O_IA_NA);
         OptionPtr opt_serverid(new Option(Option::V6, D6O_SERVERID));
         NakedTestControl tc;
-        std::vector<uint8_t> duid(tc.generateDuid());
+        uint8_t randomized = 0;
+        std::vector<uint8_t> duid(tc.generateDuid(randomized));
         OptionPtr opt_clientid(Option::factory(Option::V6, D6O_CLIENTID, duid));
         boost::shared_ptr<Pkt6> advertise(new Pkt6(DHCPV6_ADVERTISE, transid));
         advertise->addOption(opt_ia_na);
         advertise->addOption(opt_serverid);
         advertise->addOption(opt_clientid);
         advertise->updateTimestamp();
-        return(advertise);
+        return (advertise);
     }
 
 };
@@ -634,8 +665,8 @@ TEST_F(TestControlTest, Options6) {
     OptionPtr opt_oro(Option::factory(Option::V6, D6O_ORO));
     // Prepare the reference buffer with requested options.
     const uint8_t requested_options[] = {
-        D6O_NAME_SERVERS,
-        D6O_DOMAIN_SEARCH
+        0, D6O_NAME_SERVERS,
+        0, D6O_DOMAIN_SEARCH
     };
     OptionBuffer
         requested_options_ref(requested_options,
@@ -751,22 +782,28 @@ TEST_F(TestControlTest, Packet4Exchange) {
     // The actual number of iterations will be stored in the
     // following variable.
     int iterations_performed = 0;
-    testPkt4Exchange(iterations_num, iterations_num, iterations_performed);
+    bool use_templates = false;
+    testPkt4Exchange(iterations_num, iterations_num, use_templates, iterations_performed);
     // The command line restricts the number of iterations to 10
     // with -n 10 parameter.
     EXPECT_EQ(10, iterations_performed);
 
     // With the following command line we restrict the maximum
     // number of dropped packets to 20% of all.
+    // Use templates for this test.
     processCmdLine("perfdhcp -l " + loopback_iface
-                   + " -r 100 -R 20 -n 20 -D 10% -L 10547 127.0.0.1");
+                   + " -r 100 -R 20 -n 20 -D 10% -L 10547"
+                   + " -T ../templates/discover-example.hex"
+                   + " -T ../templates/request4-example.hex"
+                   + " 127.0.0.1");
     // The number iterations is restricted by the percentage of
     // dropped packets (-D 10%). We also have to bump up the number
     // of iterations because the percentage limitation checks starts
     // at packet #10. We expect that at packet #12 the 10% threshold
     // will be reached.
     const int received_num = 10;
-    testPkt4Exchange(iterations_num, received_num, iterations_performed);
+    use_templates = true;
+    testPkt4Exchange(iterations_num, received_num, use_templates, iterations_performed);
     EXPECT_EQ(12, iterations_performed);
 }
 
@@ -788,20 +825,36 @@ TEST_F(TestControlTest, Packet6Exchange) {
     int iterations_performed = 0;
     // Set number of received packets equal to number of iterations.
     // This simulates no packet drops.
-    testPkt6Exchange(iterations_num, iterations_num, iterations_performed);
+    bool use_templates = false;
+    testPkt6Exchange(iterations_num, iterations_num, use_templates, iterations_performed);
     // Actual number of iterations should be 10.
     EXPECT_EQ(10, iterations_performed);
 
     // The maximum number of dropped packets is 3 (because of -D 3).
+    use_templates = true;
     processCmdLine("perfdhcp -l " + loopback_iface
-                   + " -6 -r 100 -n 10 -R 20 -D 3 -L 10547 ::1");
+                   + " -6 -r 100 -n 10 -R 20 -D 3 -L 10547"
+                   + " -T ../templates/solicit-example.hex"
+                   + " -T ../templates/request6-example.hex ::1");
     // For the first 3 packets we are simulating responses from server.
     // For other packets we don't so packet as 4,5,6 will be dropped and
     // then test should be interrupted and actual number of iterations will
     // be 6.
     const int received_num = 3;
-    testPkt6Exchange(iterations_num, received_num, iterations_performed);
+    testPkt6Exchange(iterations_num, received_num, use_templates, iterations_performed);
     EXPECT_EQ(6, iterations_performed);
+}
+
+TEST_F(TestControlTest, PacketTemplates) {
+    CommandOptions& options = CommandOptions::instance();
+    NakedTestControl tc;
+
+    ASSERT_NO_THROW(
+        processCmdLine("perfdhcp -l 127.0.0.1"
+                       " -T ../templates/discover-example.hex"
+                       " -T ../templates/request4-example.hex all")
+    );
+    ASSERT_NO_THROW(tc.initPacketTemplates());
 }
 
 TEST_F(TestControlTest, RateControl) {
