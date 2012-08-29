@@ -1082,7 +1082,7 @@ TEST_F(DomainTreeTest, getAbsoluteLabels) {
     // Explicitly add and find a root node, to see that getAbsoluteLabels
     // also works when getLabels() already returns an absolute LabelSequence
     dtree.insert(mem_sgmt_, Name("."), &dtnode);
-    dtnode->setData(mem_sgmt_, new int(1));
+    dtnode->setData(new int(1));
 
     EXPECT_EQ(TestDomainTree::EXACTMATCH, dtree.find(Name("."), &cdtnode));
 

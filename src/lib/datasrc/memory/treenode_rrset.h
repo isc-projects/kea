@@ -51,8 +51,8 @@ public:
     }
 };
 
-typedef DomainTree<RdataSet, RdataSetDeleter> ZoneTree;
-typedef DomainTreeNode<RdataSet, RdataSetDeleter> ZoneNode;
+typedef DomainTree<RdataSet> ZoneTree;
+typedef DomainTreeNode<RdataSet> ZoneNode;
 // end of temporary definition
 
 class TreeNodeRRset : public dns::AbstractRRset {
