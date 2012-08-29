@@ -4,7 +4,7 @@
 	the last time it sent them to the stats module. The purpose of partial
 	updates is to reduce the amount of statistics data sent through the
 	message queue.
-	(Trac #2179, git TBD)
+	(Trac #2179, git d659abdd9f3f369a29830831297f64484ac7b051)
 
 469.	[bug]		jelte
 	libdatasrc: the data source client list class now ignores zone
@@ -89,7 +89,6 @@ bind10-devel-20120816 released on August 16, 2012
 	(Trac #1708, git e0d7c52a71414f4de1361b09d3c70431c96daa3f)
 
 458.	[build]*		jinmei
->>>>>>> master
 	BIND 10 now relies on Boost offset_ptr, which caused some new
 	portability issues.  Such issues are detected at ./configure time.
 	If ./configure stops due to this, try the following workaround:
