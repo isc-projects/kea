@@ -40,7 +40,8 @@ namespace isc {
 namespace datasrc {
 namespace memory {
 
-TreeNodeRRset::TreeNodeRRset(const dns::Name& realname, dns::RRClass rrclass,
+TreeNodeRRset::TreeNodeRRset(const dns::Name& realname,
+                             const dns::RRClass& rrclass,
                              const ZoneNode* node, const RdataSet* rdataset,
                              bool dnssec_ok) :
     node_(node), rdataset_(rdataset),
@@ -329,10 +330,49 @@ TreeNodeRRset::removeRRsig() {
     isc_throw(Unexpected, "unexpected method called on TreeNodeRRset");
 }
 
-// needed
 bool
-TreeNodeRRset::isSameKind(const AbstractRRset& /*other*/) const {
-    isc_throw(Unexpected, "unexpected method called on TreeNodeRRset");
+TreeNodeRRset::isSameKind(const AbstractRRset& abs_other) const {
+    const TreeNodeRRset* other =
+        dynamic_cast<const TreeNodeRRset*>(&abs_other);
+    if (other != NULL) {
+        // If type is different, they are not the same kind
+        if (rdataset_ != other->rdataset_) {
+            return (false);
+        }
+        // Same for the owner name (note: in practice this method would be
+        // called for rrsets at different nodes, so we check that condition
+        // first).  Note also that based on the basic assumption of the
+        // ZoneTree, if the nodes are different their RR classes must be
+        // different.
+        if (node_ != other->node_ || !hasSameRealName(*other)) {
+            return (false);
+        }
+        return (true);
+    }
+    return (AbstractRRset::isSameKind(abs_other));
+}
+
+bool
+TreeNodeRRset::hasSameRealName(const TreeNodeRRset& other) const {
+    // If one is constructed with a "real name" and the other isn't
+    // *we consider* them different.
+    if ((realname_buf_ == NULL && other.realname_buf_ != NULL) ||
+        (realname_buf_ != NULL && other.realname_buf_ == NULL)) {
+        return (false);
+    }
+
+    // If both are constructed with a "real name", we compare their names
+    // (as label sequences) explicitly.
+    if (realname_buf_ != NULL && other.realname_buf_ != NULL) {
+        uint8_t labels_buf[LabelSequence::MAX_SERIALIZED_LENGTH];
+        uint8_t other_labels_buf[LabelSequence::MAX_SERIALIZED_LENGTH];
+        if (!getOwnerLabels(labels_buf).equals(
+                other.getOwnerLabels(other_labels_buf))) {
+            return (false);
+        }
+    }
+
+    return (true);
 }
 
 } // namespace memory

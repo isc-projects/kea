@@ -463,4 +463,65 @@ TEST_F(TreeNodeRRsetTest, toText) {
                               false),
                 ConstRRsetPtr(), ConstRRsetPtr());
 }
+
+TEST_F(TreeNodeRRsetTest, isSameKind) {
+    const TreeNodeRRset rrset(rrclass_, www_node_, a_rdataset_, true);
+
+    // Same name (node), same type (rdataset) => same kind
+    EXPECT_TRUE(rrset.isSameKind(TreeNodeRRset(rrclass_, www_node_,
+                                               a_rdataset_, true)));
+
+    // Same name (node), different type (rdataset) => not same kind
+    EXPECT_FALSE(rrset.isSameKind(TreeNodeRRset(rrclass_, www_node_,
+                                                aaaa_rdataset_, true)));
+
+    // Different name, different type => not same kind
+    EXPECT_FALSE(rrset.isSameKind(TreeNodeRRset(rrclass_, origin_node_,
+                                                ns_rdataset_, true)));
+
+    // Different name, same type => not same kind.
+    // Note: this shouldn't happen in our in-memory data source implementation,
+    // but API doesn't prohibit it.
+    EXPECT_FALSE(rrset.isSameKind(TreeNodeRRset(rrclass_, origin_node_,
+                                                a_rdataset_, true)));
+
+    // Wildcard and expanded RRset
+    const TreeNodeRRset wildcard_rrset(rrclass_, wildcard_node_,
+                                       wildcard_rdataset_, true);
+    const TreeNodeRRset match_rrset(match_name_, rrclass_, wildcard_node_,
+                                    wildcard_rdataset_, true);
+    EXPECT_FALSE(wildcard_rrset.isSameKind(match_rrset));
+    EXPECT_FALSE(match_rrset.isSameKind(wildcard_rrset));
+
+    // Both are wildcard expanded, and have different names
+    const TreeNodeRRset match2_rrset(Name("match2.example.com"), rrclass_,
+                                     wildcard_node_, wildcard_rdataset_, true);
+    EXPECT_FALSE(match_rrset.isSameKind(match2_rrset));
+    EXPECT_FALSE(match2_rrset.isSameKind(match_rrset));
+
+    // Pathological case.  "badwild" is constructed as if expanded due to
+    // a wildcard, but has the same owner name of the wildcard itself.
+    // Technically, they should be considered of the same kind, but this
+    // implementation considers they are not.  But this case shouldn't happen
+    // as long as the RRsets are only constructed inside the in-memory
+    // zone finder implementation.
+    const TreeNodeRRset badwild_rrset(wildcard_name_, rrclass_, wildcard_node_,
+                                      wildcard_rdataset_, true);
+    EXPECT_FALSE(wildcard_rrset.isSameKind(badwild_rrset));
+    EXPECT_EQ(wildcard_rrset.toText(), badwild_rrset.toText());
+
+    // Pathological case:  Same name, same type, but different class.
+    // This case should be impossible because if the RRsets share the same
+    // tree node, they must belong to the same RR class.  This case is
+    // a caller's bug, and the isSameKind() implementation returns the
+    // "wrong" (= true) answer.
+    EXPECT_TRUE(rrset.isSameKind(TreeNodeRRset(RRClass::CH(), www_node_,
+                                               a_rdataset_, true)));
+
+    // Same kind of different RRset class
+    EXPECT_TRUE(rrset.isSameKind(*a_rrset_));
+
+    // Different kind of different RRset class
+    EXPECT_FALSE(rrset.isSameKind(*aaaa_rrset_));
+}
 }
