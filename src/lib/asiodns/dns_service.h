@@ -84,6 +84,9 @@ public:
                                     ServerFlag options = SERVER_DEFAULT) = 0;
     virtual void clearServers() = 0;
 
+    /// Sets the timeout TODO
+    virtual void setTCPRecvTimeout(size_t timeout) = 0;
+
     virtual asiolink::IOService& getIOService() = 0;
 };
 
@@ -187,6 +190,7 @@ public:
     /// \return IOService object for this DNS service.
     virtual asiolink::IOService& getIOService() { return (io_service_);}
 
+    virtual void setTCPRecvTimeout(size_t timeout);
 private:
     DNSServiceImpl* impl_;
     asiolink::IOService& io_service_;

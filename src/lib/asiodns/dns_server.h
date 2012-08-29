@@ -81,7 +81,7 @@ public:
     /// \brief Stop current running server
     virtual void stop() { self_->stop();}
 
-    /// \brief Resume processing of the server coroutine after an 
+    /// \brief Resume processing of the server coroutine after an
     /// asynchronous call (e.g., to the DNS Lookup provider) has completed.
     ///
     /// \param done If true, this signals the system there is an answer
@@ -98,6 +98,8 @@ public:
     /// \return A deep copy of this DNSServer object
     virtual DNSServer* clone() { return (self_->clone()); }
     //@}
+
+    virtual void setTCPRecvTimeout(size_t) {}
 
 protected:
     /// \brief Lookup handler object.
