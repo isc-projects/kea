@@ -229,14 +229,24 @@ public:
 
     /// \brief Compares two label sequences for equality.
     ///
-    /// Performs a (optionally case-insensitive) comparison between this
+    /// Performs a (optionally case-sensitive) comparison between this
     /// LabelSequence and another LabelSequence for equality.
     ///
     /// \param other The LabelSequence to compare with
-    /// \param case_sensitive If true, comparison is case-insensitive
+    /// \param case_sensitive If true, comparison is case-sensitive
     /// \return true if The label sequences consist are the same length,
     ///         and contain the same data.
     bool equals(const LabelSequence& other, bool case_sensitive = false) const;
+
+    /// \brief Compares two label sequences for equality (case ignored).
+    ///
+    /// This is equivalent to <code>this->equals(other)</code>.
+    ///
+    /// The operator version is convenient some specific cases such as in
+    /// unit tests.
+    bool operator==(const LabelSequence& other) const {
+        return (equals(other));
+    }
 
     /// \brief Compares two label sequences.
     ///
