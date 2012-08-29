@@ -318,4 +318,30 @@ TEST_F(TreeNodeRRsetTest, getRdataIterator) {
                        TreeNodeRRset(rrclass_, origin_node_, ns_rdataset_,
                                      false).getRdataIterator());
 }
+
+void
+checkToText(const AbstractRRset& actual_rrset,
+            ConstRRsetPtr expected_rrset, ConstRRsetPtr expected_sig_rrset)
+{
+    const string actual_text = actual_rrset.toText();
+    const string expected_text =
+        (expected_rrset ? expected_rrset->toText() : "") +
+        (expected_sig_rrset ? expected_sig_rrset->toText() : "");
+    EXPECT_EQ(expected_text, actual_text);
+}
+
+TEST_F(TreeNodeRRsetTest, toText) {
+    // Constructed with RRSIG, and it should be visible.
+    checkToText(TreeNodeRRset(rrclass_, www_node_, a_rdataset_, true),
+                a_rrset_, a_rrsig_rrset_);
+    // Constructed with RRSIG, and it should be invisible.
+    checkToText(TreeNodeRRset(rrclass_, www_node_, a_rdataset_, false),
+                a_rrset_, ConstRRsetPtr());
+    // Constructed without RRSIG, and it would be visible (but of course won't)
+    checkToText(TreeNodeRRset(rrclass_, origin_node_, ns_rdataset_, true),
+                ns_rrset_, ConstRRsetPtr());
+    // Constructed without RRSIG, and it should be visible
+    checkToText(TreeNodeRRset(rrclass_, origin_node_, ns_rdataset_, false),
+                ns_rrset_, ConstRRsetPtr());
+}
 }

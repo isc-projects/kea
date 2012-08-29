@@ -113,6 +113,10 @@ public:
     virtual bool isSameKind(const dns::AbstractRRset& other) const;
 
 private:
+    dns::RdataIteratorPtr getSigRdataIterator() const;
+    dns::RdataIteratorPtr getRdataIteratorInternal(bool is_rrsig,
+                                                   size_t count) const;
+
     const ZoneNode* node_;
     const RdataSet* rdataset_;
     const size_t rrsig_count_;
