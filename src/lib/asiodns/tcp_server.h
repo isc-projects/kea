@@ -61,6 +61,16 @@ public:
         return (s);
     }
 
+    /// \brief Set the read timeout
+    ///
+    /// If the client does not send (all) query data within this
+    /// timeframe, the connection is dropped
+    ///
+    /// \param timeout in milliseconds
+    virtual void setTCPRecvTimeout(size_t timeout) {
+        *tcp_recv_timeout_ = timeout;
+    }
+
 private:
     enum { MAX_LENGTH = 65535 };
     static const size_t TCP_MESSAGE_LENGTHSIZE = 2;
@@ -128,6 +138,11 @@ private:
     // that outlives the operator() call and is copyable (for CORO_FORK)
     // even though it is only set after fork
     boost::shared_ptr<asio::deadline_timer> timeout_;
+
+    // Timeout value to use in the timer;
+    // this, too, is a pointer, so that it can be updated whithout restarting
+    // the server
+    boost::shared_ptr<size_t> tcp_recv_timeout_;
 };
 
 } // namespace asiodns
