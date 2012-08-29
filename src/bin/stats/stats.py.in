@@ -94,6 +94,9 @@ def get_spec_defaults(spec):
             return spec.get(
                     "item_default",
                     dict([ (s["item_name"], _get_spec_defaults(s)) for s in spec["map_item_spec"] ]) )
+        elif item_type == "named_set":
+            # in a named_set type, it returns {} as a default value
+            return spec.get("item_default", {})
         else:
             return spec.get("item_default", None)
     return dict([ (s['item_name'], _get_spec_defaults(s)) for s in spec ])
@@ -136,6 +139,33 @@ def _accum(a, b):
 
     # Nothing matches above, the first arg is returned
     return a
+
+def merge_oldnew(old, new):
+    """
+    Merges two arguments.  If old data contains the corresponding name
+    against new data, the value of the name is replaced with the
+    corresponding value in new data. Otherwise, the new date are added
+    at same name or same id. Both old data and new data should be same
+    data type. This method returns the merged result.
+    """
+    # If the first arg is dict or list type, two values
+    # would be merged
+    if type(old) is dict and type(new) is dict:
+        return dict([ (k, merge_oldnew(old[k], v)) \
+                          if k in old else (k, v) \
+                          for (k, v) in new.items() ] \
+                        + [ (k, v) \
+                                for (k, v) in old.items() \
+                                if k not in new ])
+    elif type(old) is list and type(new) is list:
+        return [ merge_oldnew(old[i], new[i]) \
+                     if len(old) > i else new[i] \
+                     for i in range(len(new)) ] \
+                     + [ old[i] \
+                             for i in range(len(old)) \
+                             if len(new) <= i ]
+    else:
+        return new
 
 class Callback():
     """
@@ -486,17 +516,48 @@ class Stats:
         # would be updated.
         errors = []
         if owner and data:
+            _data = self.statistics_data_bymid.copy()
             try:
-                if self.modules[owner].validate_statistics(False, data, errors):
-                    if owner in self.statistics_data_bymid:
-                        if mid in self.statistics_data_bymid[owner]:
-                            self.statistics_data_bymid[owner][mid].update(data)
+                for (_key, _val) in data.items():
+                    if self.modules[owner].validate_statistics(
+                        False, {_key: _val}, errors):
+                        if owner not in _data:
+                            _data[owner] = { mid: { _key: _val } }
+                        elif mid not in _data[owner]:
+                            _data[owner][mid] = { _key: _val }
                         else:
-                            self.statistics_data_bymid[owner][mid] = data
-                    else:
-                        self.statistics_data_bymid[owner] = { mid : data }
+                            # merge recursively old value and new
+                            # value each other
+                            _data[owner][mid] = \
+                                merge_oldnew(_data[owner][mid],
+                                             {_key: _val})
+                        continue
+                    # the key string might be a "xx/yy/zz[0]"
+                    # type. try it.
+                    if _key.find('/') >= 0 or \
+                            isc.cc.data.identifier_has_list_index(_key):
+                        # remove the last error
+                        if errors: errors.pop()
+                        # try updata and check validation in adavance
+                        __data = _data.copy()
+                        if owner not in _data:
+                            __data[owner] = {}
+                        if mid not in _data[owner]:
+                            __data[owner][mid] = {}
+                        # use the isc.cc.data.set method
+                        try:
+                            isc.cc.data.set(__data[owner][mid],
+                                            _key, _val)
+                            if self.modules[owner].validate_statistics(
+                                False, __data[owner][mid], errors):
+                                _data = __data
+                        except Exception as e:
+                            errors.append(
+                                "%s: %s" % (e.__class__.__name__, e))
             except KeyError:
                 errors.append("unknown module name: " + str(owner))
+            if not errors:
+                self.statistics_data_bymid = _data
 
         # Just consolidate statistics data of each module without
         # removing that of modules which have been already dead
@@ -504,7 +565,19 @@ class Stats:
         for m in mlist:
             if self.statistics_data_bymid[m]:
                 if m in self.statistics_data:
-                    self.statistics_data[m].update(
+                    # propagate the default values by times of
+                    # instances
+                    _len = len(self.statistics_data_bymid[m])
+                    for i in range(0, _len - 1):
+                        self.statistics_data[m] = _accum(
+                            self.statistics_data[m],
+                            self.statistics_data[m])
+                    # replace the default values with summaries of the
+                    # collected values of each module. But the default
+                    # values which are not included in collected
+                    # values are not replaced.
+                    self.statistics_data[m] = merge_oldnew(
+                        self.statistics_data[m],
                         _accum_bymodule(
                             self.statistics_data_bymid[m]))
 

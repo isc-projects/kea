@@ -1,3 +1,11 @@
+470.	[func]		naokikambe
+	The stats module now supports partial statistics updates. Each
+	module can return only statistics data which have been updated since
+	the last time it sent them to the stats module. The purpose of partial
+	updates is to reduce the amount of statistics data sent through the
+	message queue.
+	(Trac #2179, git TBD)
+
 469.	[bug]		jelte
 	libdatasrc: the data source client list class now ignores zone
 	content problems (such as out-of-zone data) in MasterFiles type
