@@ -550,13 +550,13 @@ DomainTreeNode<T>::getUpperNode() const {
     return (current->getParent());
 }
 
-template <typename T, typename DT>
+template <typename T>
 isc::dns::LabelSequence
-DomainTreeNode<T, DT>::getAbsoluteLabels(
+DomainTreeNode<T>::getAbsoluteLabels(
     uint8_t buf[isc::dns::LabelSequence::MAX_SERIALIZED_LENGTH]) const
 {
     isc::dns::LabelSequence result(getLabels(), buf);
-    const DomainTreeNode<T, DT>* upper = getUpperNode();
+    const DomainTreeNode<T>* upper = getUpperNode();
     while (upper != NULL) {
         result.extend(upper->getLabels(), buf);
         upper = upper->getUpperNode();
