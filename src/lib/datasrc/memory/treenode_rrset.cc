@@ -31,6 +31,7 @@
 
 #include <cassert>
 #include <string>
+#include <vector>
 
 using namespace isc::dns;
 using namespace isc::dns::rdata;
@@ -158,11 +159,67 @@ TreeNodeRRset::addRdata(const rdata::Rdata&) {
     isc_throw(Unexpected, "unexpected method called on TreeNodeRRset");
 }
 
+namespace {
+// In this namespace we define a set of helper stuff to implement the
+// RdataIterator for the TreeNodeRRset.  We should eventually optimize
+// the code so that performance sensitive path won't require the iterator,
+// so, at the moment, the implementation is straightforward, but less
+// efficient one: It builds a vector of Rdata objects on construction,
+// and its getCurrent() returns the stored data.
 
-// needed
+class TreeNodeRdataIterator : public RdataIterator {
+public:
+    TreeNodeRdataIterator(const std::vector<ConstRdataPtr>& rdata_list) :
+        rdata_list_(rdata_list), rdata_it_(rdata_list_.begin())
+    {}
+    virtual void first() { rdata_it_ = rdata_list_.begin(); }
+    virtual void next() {
+        ++rdata_it_;
+    }
+    virtual const rdata::Rdata& getCurrent() const {
+        return (**rdata_it_);
+    }
+    virtual bool isLast() const { return (rdata_it_ == rdata_list_.end()); }
+private:
+    const std::vector<ConstRdataPtr> rdata_list_;
+    std::vector<ConstRdataPtr>::const_iterator rdata_it_;
+};
+
+void
+renderNameToBuffer(const LabelSequence& name_labels, RdataNameAttributes,
+                   util::OutputBuffer* buffer)
+{
+    size_t data_len;
+    const uint8_t *data = name_labels.getData(&data_len);
+    buffer->writeData(data, data_len);
+}
+
+void
+renderDataToBuffer(const void* data, size_t data_len,
+                   util::OutputBuffer* buffer)
+{
+    buffer->writeData(data, data_len);
+}
+}
+
 RdataIteratorPtr
 TreeNodeRRset::getRdataIterator() const {
-    isc_throw(Unexpected, "unexpected method called on TreeNodeRRset");
+    util::OutputBuffer buffer(0);
+    RdataReader reader(rrclass_, rdataset_->type, rdataset_->getDataBuf(),
+                       rdataset_->getRdataCount(), rrsig_count_,
+                       boost::bind(renderNameToBuffer, _1, _2, &buffer),
+                       boost::bind(renderDataToBuffer, _1, _2, &buffer));
+
+    std::vector<ConstRdataPtr> rdata_list;
+    for (size_t i = 0; i < rdataset_->getRdataCount(); ++i) {
+        buffer.clear();
+        const bool rendered = reader.iterateRdata();
+        assert(rendered == true);
+        util::InputBuffer ib(buffer.getData(), buffer.getLength());
+        rdata_list.push_back(createRdata(rdataset_->type, rrclass_,
+                                         ib, ib.getLength()));
+    }
+    return (RdataIteratorPtr(new TreeNodeRdataIterator(rdata_list)));
 }
 
 RRsetPtr
