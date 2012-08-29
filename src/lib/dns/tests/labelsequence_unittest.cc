@@ -180,6 +180,7 @@ TEST_F(LabelSequenceTest, equals_insensitive) {
 // operator==().  This is mostly trivial wrapper, so it should suffice to
 // check some basic cases.
 TEST_F(LabelSequenceTest, operatorEqual) {
+    // cppcheck-suppress duplicateExpression
     EXPECT_TRUE(ls1 == ls1);      // self equivalence
     EXPECT_TRUE(ls1 == LabelSequence(n1)); // equivalent two different objects
     EXPECT_FALSE(ls1 == ls2);      // non equivalent objects
