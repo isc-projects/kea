@@ -24,6 +24,11 @@
 
 #include <gtest/gtest.h>
 
+#include <string>
+#include <vector>
+
+using std::vector;
+using std::string;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
 using namespace isc::datasrc::memory;
@@ -39,7 +44,8 @@ protected:
         rrclass_(RRClass::IN()),
         origin_name_("example.com"), www_name_("www.example.com"),
         ns_rrset_(textToRRset("example.com. 3600 IN NS ns.example.com.")),
-        a_rrset_(textToRRset("www.example.com. 3600 IN A 192.0.2.1")),
+        a_rrset_(textToRRset("www.example.com. 3600 IN A 192.0.2.1\n"
+                             "www.example.com. 3600 IN A 192.0.2.2")),
         dname_rrset_(textToRRset("example.com. 3600 IN DNAME d.example.org.")),
         rrsig_rrset_(textToRRset("www.example.com. 3600 IN RRSIG "
                                  "A 5 2 3600 20120814220826 20120715220826 "
@@ -90,14 +96,14 @@ TEST_F(TreeNodeRRsetTest, create) {
     EXPECT_EQ(RRClass::IN(), rrset1.getClass());
     EXPECT_EQ(RRType::A(), rrset1.getType());
     EXPECT_EQ(www_name_, rrset1.getName());
-    EXPECT_EQ(1, rrset1.getRdataCount());
+    EXPECT_EQ(2, rrset1.getRdataCount());
     EXPECT_EQ(1, rrset1.getRRsigDataCount());
 
     const TreeNodeRRset rrset2(RRClass::IN(), www_node_, a_rdataset_, false);
     EXPECT_EQ(RRClass::IN(), rrset2.getClass());
     EXPECT_EQ(RRType::A(), rrset2.getType());
     EXPECT_EQ(www_name_, rrset2.getName());
-    EXPECT_EQ(1, rrset2.getRdataCount());
+    EXPECT_EQ(2, rrset2.getRdataCount());
     EXPECT_EQ(0, rrset2.getRRsigDataCount());
 }
 
@@ -166,5 +172,46 @@ TEST_F(TreeNodeRRsetTest, toWire) {
     checkToWireResult(expected_renderer, actual_renderer, rrset5,
                       Name("example.org"), dname_rrset_, ConstRRsetPtr(),
                       false);
+}
+
+void
+checkRdataIterator(const vector<string>& expected, RdataIteratorPtr rit) {
+    
+    for (vector<string>::const_iterator it = expected.begin();
+         it != expected.end();
+         ++it)
+    {
+        ASSERT_FALSE(rit->isLast());
+        EXPECT_EQ(*it, rit->getCurrent().toText());
+        rit->next();
+    }
+    // We should have reached the end of RDATA
+    EXPECT_TRUE(rit->isLast());
+
+    // move to the first RDATA again, and check the value.
+    rit->first();
+    EXPECT_EQ(expected[0], rit->getCurrent().toText());
+}
+
+TEST_F(TreeNodeRRsetTest, getRdataIterator) {
+    // This RRset should have 2 A RDATAs
+    vector<string> expected;
+    expected.push_back("192.0.2.1");
+    expected.push_back("192.0.2.2");
+    checkRdataIterator(expected,
+                       TreeNodeRRset(rrclass_, www_node_, a_rdataset_, true).
+                       getRdataIterator());
+
+    // The iterator shouldn't work different with or without RRSIG
+    checkRdataIterator(expected,
+                       TreeNodeRRset(rrclass_, www_node_, a_rdataset_, false).
+                       getRdataIterator());
+
+    // This RRset should have 1 NS RDATA (containing name field)
+    expected.clear();
+    expected.push_back("ns.example.com.");
+    checkRdataIterator(expected,
+                       TreeNodeRRset(rrclass_, origin_node_, ns_rdataset_,
+                                     false).getRdataIterator());
 }
 }
