@@ -106,20 +106,35 @@ protected:
     RdataSet* aaaa_rdataset_;
 };
 
-TEST_F(TreeNodeRRsetTest, create) {
-    const TreeNodeRRset rrset1(rrclass_, www_node_, a_rdataset_, true);
-    EXPECT_EQ(rrclass_, rrset1.getClass());
-    EXPECT_EQ(RRType::A(), rrset1.getType());
-    EXPECT_EQ(www_name_, rrset1.getName());
-    EXPECT_EQ(2, rrset1.getRdataCount());
-    EXPECT_EQ(1, rrset1.getRRsigDataCount());
+// Check some trivial fields of a constructed TreeNodeRRset (passed as
+// AbstractRRset as we'd normally use it in polymorphic way).
+// Other complicated fields are checked through rendering tests.
+void
+checkBasicFields(const AbstractRRset& actual_rrset, const Name& expected_name,
+                 const RRClass& expected_class, const RRType& expected_type,
+                 size_t expected_rdatacount, size_t expected_sigcount)
+{
+    EXPECT_EQ(expected_name, actual_rrset.getName());
+    EXPECT_EQ(expected_class, actual_rrset.getClass());
+    EXPECT_EQ(expected_type, actual_rrset.getType());
+    EXPECT_EQ(expected_rdatacount, actual_rrset.getRdataCount());
+    EXPECT_EQ(expected_sigcount, actual_rrset.getRRsigDataCount());
+}
 
-    const TreeNodeRRset rrset2(rrclass_, www_node_, a_rdataset_, false);
-    EXPECT_EQ(rrclass_, rrset2.getClass());
-    EXPECT_EQ(RRType::A(), rrset2.getType());
-    EXPECT_EQ(www_name_, rrset2.getName());
-    EXPECT_EQ(2, rrset2.getRdataCount());
-    EXPECT_EQ(0, rrset2.getRRsigDataCount());
+TEST_F(TreeNodeRRsetTest, create) {
+    // Constructed with RRSIG, and it should be visible.
+    checkBasicFields(TreeNodeRRset(rrclass_, www_node_, a_rdataset_, true),
+                     www_name_, rrclass_, RRType::A(), 2, 1);
+    // Constructed with RRSIG, and it should be invisible.
+    checkBasicFields(TreeNodeRRset(rrclass_, www_node_, a_rdataset_, false),
+                     www_name_, rrclass_, RRType::A(), 2, 0);
+    // Constructed without RRSIG, and it would be visible (but of course won't)
+    checkBasicFields(TreeNodeRRset(rrclass_, origin_node_, ns_rdataset_, true),
+                     origin_name_, rrclass_, RRType::NS(), 1, 0);
+    // Constructed without RRSIG, and it should be visible
+    checkBasicFields(TreeNodeRRset(rrclass_, origin_node_, ns_rdataset_,
+                                   false),
+                     origin_name_, rrclass_, RRType::NS(), 1, 0);
 }
 
 // Templated if and when we support OutputBuffer version of toWire().
@@ -128,7 +143,7 @@ TEST_F(TreeNodeRRsetTest, create) {
 template <typename OutputType>
 void
 checkToWireResult(OutputType& expected_output, OutputType& actual_output,
-                  const TreeNodeRRset& actual_rrset,
+                  const AbstractRRset& actual_rrset,
                   const Name& prepended_name,
                   ConstRRsetPtr rrset, ConstRRsetPtr rrsig_rrset,
                   bool dnssec_ok)
@@ -203,7 +218,7 @@ TEST_F(TreeNodeRRsetTest, toWire) {
 void
 checkTruncationResult(MessageRenderer& expected_renderer,
                       MessageRenderer& actual_renderer,
-                      const TreeNodeRRset& actual_rrset,
+                      const AbstractRRset& actual_rrset,
                       ConstRRsetPtr rrset, ConstRRsetPtr rrsig_rrset,
                       bool dnssec_ok, size_t len_limit, size_t expected_result)
 {
