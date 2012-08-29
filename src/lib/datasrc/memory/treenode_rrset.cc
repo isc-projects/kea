@@ -88,6 +88,40 @@ renderData(const void* data, size_t data_len,
 {
     renderer->writeData(data, data_len);
 }
+
+// Common code logic for rendering a single (either main or RRSIG) RRset.
+size_t
+writeRRs(AbstractMessageRenderer& renderer, size_t rr_count,
+         const LabelSequence& name_labels, const RRType& rrtype,
+         const RRClass& rrclass, const void* ttl_data,
+         RdataReader& reader, bool (RdataReader::* rdata_iterate_fn)())
+{
+    for (size_t i = 0; i < rr_count; ++i) {
+        const size_t pos0 = renderer.getLength();
+
+        // Name, type, class, TTL
+        renderer.writeName(name_labels, true);
+        rrtype.toWire(renderer);
+        rrclass.toWire(renderer);
+        renderer.writeData(ttl_data, sizeof(uint32_t));
+
+        // RDLEN and RDATA
+        const size_t pos = renderer.getLength();
+        renderer.skip(sizeof(uint16_t)); // leave the space for RDLENGTH
+        const bool rendered = (reader.*rdata_iterate_fn)();
+        assert(rendered == true);
+        renderer.writeUint16At(renderer.getLength() - pos - sizeof(uint16_t),
+                               pos);
+
+        // Check if truncation would happen
+        if (renderer.getLength() > renderer.getLengthLimit()) {
+            renderer.trim(renderer.getLength() - pos0);
+            renderer.setTruncated();
+            return (i);
+        }
+    }
+    return (rr_count);
+}
 }
 
 unsigned int
@@ -101,47 +135,24 @@ TreeNodeRRset::toWire(AbstractMessageRenderer& renderer) const {
     uint8_t labels_buf[LabelSequence::MAX_SERIALIZED_LENGTH];
     const LabelSequence node_labels = node_->getAbsoluteLabels(labels_buf);
 
-    size_t i = 0;
-    for (; i < rdataset_->getRdataCount(); ++i) {
-        //const size_t pos0 = output.getLength();
-
-        renderer.writeName(node_labels, true);
-        rdataset_->type.toWire(renderer);
-        rrclass_.toWire(renderer);
-        renderer.writeData(rdataset_->getTTLData(), sizeof(uint32_t));
-
-        const size_t pos = renderer.getLength();
-        renderer.skip(sizeof(uint16_t)); // leave the space for RDLENGTH
-        const bool rendered = reader.iterateRdata();
-        assert(rendered == true);
-        renderer.writeUint16At(renderer.getLength() - pos - sizeof(uint16_t),
-                               pos);
-
-        // for truncation processing
+    // Render the main (non RRSIG) RRs
+    const size_t rendered_rdata_count =
+        writeRRs(renderer, rdataset_->getRdataCount(), node_labels,
+                 rdataset_->type, rrclass_, rdataset_->getTTLData(), reader,
+                 &RdataReader::iterateRdata);
+    if (renderer.isTruncated()) {
+        return (rendered_rdata_count);
     }
     const bool rendered = reader.iterateRdata();
     assert(rendered == false); // we should've reached the end
 
-    size_t j = 0;
-    if (dnssec_ok_) {
-        for (; j < rrsig_count_; ++j) {
-            // TBD: truncation consideration
+    // Render any RRSIGs, if we supposed to do so
+    const size_t rendered_rrsig_count = dnssec_ok_ ?
+        writeRRs(renderer, rrsig_count_, node_labels, RRType::RRSIG(),
+                 rrclass_, rdataset_->getTTLData(), reader,
+                 &RdataReader::iterateSingleSig) : 0;
 
-            renderer.writeName(node_labels, true);
-            RRType::RRSIG().toWire(renderer);
-            rrclass_.toWire(renderer);
-            renderer.writeData(rdataset_->getTTLData(), sizeof(uint32_t));
-
-            const size_t pos = renderer.getLength();
-            renderer.skip(sizeof(uint16_t)); // leave the space for RDLENGTH
-            assert(reader.iterateSingleSig() == true);
-            renderer.writeUint16At(renderer.getLength() - pos -
-                                   sizeof(uint16_t), pos);
-        }
-        assert(reader.iterateSingleSig() == false);
-    }
-
-    return (i + j);
+    return (rendered_rdata_count + rendered_rrsig_count);
 }
 
 unsigned int
