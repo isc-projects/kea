@@ -48,20 +48,41 @@ namespace perfdhcp {
 class TestControl : public boost::noncopyable {
 public:
 
-    // Statistics Manager for DHCPv4.
+    /// Default transaction id offset. 
+    static const size_t DHCPV4_TRANSID_OFFSET = 4;
+    /// Default offset of MAC's last octet.
+    static const size_t DHCPV4_RANDOMIZATION_OFFSET = 35;
+    /// Default elapsed time offset.
+    static const size_t DHCPV4_ELAPSED_TIME_OFFSET = 8;
+    /// Default server id offset.
+    static const size_t DHCPV4_SERVERID_OFFSET = 54;
+    /// Default requested ip offset.
+    static const size_t DHCPV4_REQUESTED_IP_OFFSET = 240;
+    /// Default DHCPV6 transaction id offset.
+    static const size_t DHCPV6_TRANSID_OFFSET = 1;
+    /// Default DHCPV6 randomization offset (last octet of DUID)
+    static const size_t DHCPV6_RANDOMIZATION_OFFSET = 21;
+    /// Default DHCPV6 elapsed time offset.
+    static const size_t DHCPV6_ELAPSED_TIME_OFFSET = 84;
+    /// Default DHCPV6 server id offset.
+    static const size_t DHCPV6_SERVERID_OFFSET = 22;
+    /// Default DHCPV6 IA_NA offset.
+    static const size_t DHCPV6_IA_NA_OFFSET = 40;
+
+    /// Statistics Manager for DHCPv4.
     typedef StatsMgr<dhcp::Pkt4> StatsMgr4;
-    // Pointer to Statistics Manager for DHCPv4;
+    /// Pointer to Statistics Manager for DHCPv4;
     typedef boost::shared_ptr<StatsMgr4> StatsMgr4Ptr;
-    // Statictics Manager for DHCPv6.
+    /// Statictics Manager for DHCPv6.
     typedef StatsMgr<dhcp::Pkt6> StatsMgr6;
-    // Pointer to Statistics Manager for DHCPv6.
+    /// Pointer to Statistics Manager for DHCPv6.
     typedef boost::shared_ptr<StatsMgr6> StatsMgr6Ptr;
-    // Packet exchange type.
+    /// Packet exchange type.
     typedef StatsMgr<>::ExchangeType ExchangeType;
-    // Packet template buffer.
+    /// Packet template buffer.
     typedef std::vector<uint8_t> TemplateBuffer;
-    //Packet template buffers list.
-    typedef std::list<TemplateBuffer> TemplateBufferList;
+    /// Packet template buffers list.
+    typedef std::vector<TemplateBuffer> TemplateBufferCollection;
 
     /// \brief Socket wrapper class.
     ///
@@ -302,9 +323,10 @@ protected:
     /// from the MAC address, this function uses \ref generateMacAddress
     /// internally to randomize the DUID.
     ///
+    /// \param randomized number of bytes randomized.
     /// \throw isc::BadValue if \ref generateMacAddress throws.
     /// \return vector representing DUID.
-    std::vector<uint8_t> generateDuid() const;
+    std::vector<uint8_t> generateDuid(uint8_t& randomized) const;
 
     /// \brief Generate MAC address.
     ///
@@ -315,10 +337,11 @@ protected:
     /// Based on this the random value is generated and added to
     /// the MAC address prefix (default MAC address).
     ///
+    /// \param randomized number of bytes randomized.
     /// \throw isc::BadValue if MAC address prefix (default or specified
     /// from the command line) has invalid size (expected 6 octets).
     /// \return generated MAC address.
-    std::vector<uint8_t> generateMacAddress() const;
+    std::vector<uint8_t> generateMacAddress(uint8_t& randomized) const;
 
     /// \brief generate transaction id.
     ///
@@ -337,6 +360,21 @@ protected:
     /// \return number of exchanges to be started immediatelly.
     uint64_t getNextExchangesNum() const;
 
+    /// \brief Return template buffer.
+    ///
+    /// Method returns template buffer at specified index.
+    ///
+    /// \param idx index of template buffer.
+    /// \return reference to template buffer or empty buffer if index
+    /// is out of bounds.
+    TemplateBuffer getTemplateBuffer(const size_t idx) const;
+
+    /// \brief Reads packet templates from files.
+    ///
+    /// Method iterates through all specified template files, reads
+    /// their content and stores it in class internal buffers
+    ///
+    /// \throw isc::BadValue if any of the template files does not exist
     void initPacketTemplates();
 
     /// \brief Initializes Statistics Manager.
@@ -448,9 +486,9 @@ protected:
     void registerOptionFactories() const;
 
 
-    /// \brief Resets internal state of the object. 
+    /// \brief Resets internal state of the object.
     ///
-    /// Method resets internal state of the object. It has to be 
+    /// Method resets internal state of the object. It has to be
     /// called before new test is started.
     void reset();
 
@@ -472,16 +510,46 @@ protected:
     void sendDiscover4(const TestControlSocket& socket,
                        const bool preload = false);
 
+    /// \brief Send DHCPv4 DISCOVER message from template.
+    ///
+    /// Method sends DHCPv4 DISCOVER message from template. The
+    /// template data is exepcted to be in binary format. Provided
+    /// buffer is copied and parts of it are replaced with actual
+    /// data (e.g. MAC address, transaction id etc.).
+    ///
+    /// \param socket socket to be used to send the message.
+    /// \param template_buf buffer holding template packet.
+    /// \param preload preload mode, packets not included in statistics.
+    /// \throw isc::OutOfRange if randomization offset is out of bounds.
+    void sendDiscover4(const TestControlSocket& socket,
+                       const std::vector<uint8_t>& template_buf,
+                       const bool preload = false);
+
     /// \brief Send DHCPv4 REQUEST message.
     ///
     /// Method creates and sends DHCPv4 REQUEST message to the server.
     ///
     /// \param socket socket to be used to send message.
+    /// \param discover_pkt4 DISCOVER packet sent.
     /// \param offer_pkt4 OFFER packet object.
     /// \throw isc::Unexpected if unexpected error occured.
     /// \throw isc::InvalidOperation if Statistics Manager has not been
     /// initialized.
     void sendRequest4(const TestControlSocket& socket,
+                      const dhcp::Pkt4Ptr& discover_pkt4,
+                      const dhcp::Pkt4Ptr& offer_pkt4);
+
+    /// \brief Send DHCPv4 REQUEST message from template.
+    ///
+    /// Method sends DHCPv4 REQUEST message from template.
+    ///
+    /// \param socket socket to be used to send message.
+    /// \param template_buf buffer holding template packet.
+    /// \param discover_pkt4 DISCOVER packet sent.
+    /// \param offer_pkt4 OFFER packet received.
+    void sendRequest4(const TestControlSocket& socket,
+                      const std::vector<uint8_t>& template_buf,
+                      const dhcp::Pkt4Ptr& discover_pkt4,
                       const dhcp::Pkt4Ptr& offer_pkt4);
 
     /// \brief Send DHCPv6 REQUEST message.
@@ -506,6 +574,19 @@ protected:
                       const dhcp::Pkt6Ptr& solicit_pkt6,
                       const dhcp::Pkt6Ptr& advertise_pkt6);
 
+    /// \brief Send DHCPv6 REQUEST message from template.
+    ///
+    /// Method sends DHCPv6 REQUEST message from template.
+    ///
+    /// \param socket socket to be used to send message.
+    /// \param template_buf packet template buffer.
+    /// \param solicit_pkt6 SOLICIT packet object.
+    /// \param advertise_pkt6 ADVERTISE packet object.
+    void sendRequest6(const TestControlSocket& socket,
+                      const std::vector<uint8_t>& template_buf,
+                      const dhcp::Pkt6Ptr& solicit_pkt6,
+                      const dhcp::Pkt6Ptr& advertise_pkt6);
+
     /// \brief Send DHCPv6 SOLICIT message.
     ///
     /// Method creates and sends DHCPv6 SOLICIT message to the server
@@ -520,6 +601,17 @@ protected:
     /// \param preload mode, packets not included in statistics.
     /// \throw isc::Unexpected if failed to create new packet instance.
     void sendSolicit6(const TestControlSocket& socket,
+                      const bool preload = false);
+
+    /// \brief Send DHCPv6 SOLICIT message from template.
+    ///
+    /// Method sends DHCPv6 SOLICIT message from template.
+    ///
+    /// \param socket socket to be used to send the message.
+    /// \param template_buf packet template buffer.
+    /// \param preload mode, packets not included in statistics.
+    void sendSolicit6(const TestControlSocket& socket,
+                      const std::vector<uint8_t>& template_buf,
                       const bool preload = false);
 
     /// \brief Set default DHCPv4 packet parameters.
@@ -573,10 +665,27 @@ private:
     /// \return hex string.
     std::string byte2Hex(const uint8_t b) const;
 
-    /// \brief Generate transaction id using random function.
+    /// \brief Calculate elapsed time between two packets.
     ///
-    /// \return generated transaction id value.
-    static uint32_t generateTransidRandom();
+    /// \param T Pkt4Ptr or Pkt6Ptr class.
+    /// \param pkt1 first packet.
+    /// \param pkt2 second packet.
+    /// \return elapsed time in milliseconds between pkt1 and pkt2.
+    template<class T>
+    uint32_t getElapsedTime(const T& pkt1, const T& pkt2) {
+        using namespace boost::posix_time;
+        ptime pkt1_time = pkt1->getTimestamp();
+        ptime pkt2_time = pkt2->getTimestamp();
+        if (pkt1_time.is_not_a_date_time() || 
+            pkt2_time.is_not_a_date_time()) {
+            return (0);
+        }
+        time_period elapsed_period(pkt1_time, pkt2_time);
+        if (elapsed_period.is_null()) {
+            return (0);
+        }
+        return(elapsed_period.length().total_milliseconds());
+    }
 
     /// \brief Get number of received packets.
     ///
@@ -604,17 +713,24 @@ private:
     /// \param sig signal (ignored)
     static void handleInterrupt(int sig);
 
+    /// \brief Print main diagnostics data.
+    ///
+    /// Method prints main diagnostics data.
+    void printDiagnostics() const;
+
+    /// \brief Read DHCP message template from file.
+    ///
+    /// Method reads DHCP message template from file and
+    /// converts it to binary format. Read data is appended
+    /// to template_buffers_ vector.
+    void readPacketTemplate(const std::string& file_name);
+
     /// \brief Convert vector in hexadecimal string.
     ///
     /// \param vec vector to be converted.
     /// \param separator separator.
     std::string vector2Hex(const std::vector<uint8_t>& vec,
                            const std::string& separator = "") const;
-
-    /// \brief Print main diagnostics data.
-    ///
-    /// Method prints main diagnostics data.
-    void printDiagnostics() const;
 
     boost::posix_time::ptime send_due_;    ///< Due time to initiate next chunk
                                            ///< of exchanges.
@@ -629,10 +745,10 @@ private:
     TransidGeneratorPtr transid_gen_; ///< Transaction id generator.
 
     /// Buffer holiding server id received in first packet
-    dhcp::OptionBuffer first_packet_serverid_; 
+    dhcp::OptionBuffer first_packet_serverid_;
 
     /// Packet template buffers.
-    TemplateBufferList template_buffers_;
+    TemplateBufferCollection template_buffers_;
 
     static bool interrupted_;  ///< Is program interrupted.
 };
