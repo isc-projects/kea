@@ -68,10 +68,46 @@ TreeNodeRRset::setTTL(const RRTTL&) {
     isc_throw(Unexpected, "unexpected method called on TreeNodeRRset");
 }
 
-// needed
 std::string
 TreeNodeRRset::toText() const {
-    isc_throw(Unexpected, "unexpected method called on TreeNodeRRset");
+    // Create TTL from internal data
+    util::InputBuffer ttl_buffer(rdataset_->getTTLData(), sizeof(uint32_t));
+    const RRTTL ttl(ttl_buffer);
+
+    // Dump the main RRset, if not empty
+    std::string ret;
+    RRsetPtr tmp_rrset;
+    for (RdataIteratorPtr rit = getRdataIterator();
+         !rit->isLast();
+         rit->next())
+    {
+        if (!tmp_rrset) {
+            tmp_rrset = RRsetPtr(new RRset(getName(), rrclass_, getType(),
+                                           ttl));
+        }
+        tmp_rrset->addRdata(rit->getCurrent());
+    }
+    if (tmp_rrset) {
+        ret = tmp_rrset->toText();
+    }
+
+    // Dump any RRSIGs
+    tmp_rrset.reset();
+    for (RdataIteratorPtr rit = getSigRdataIterator();
+         !rit->isLast();
+         rit->next())
+    {
+        if (!tmp_rrset) {
+            tmp_rrset = RRsetPtr(new RRset(getName(), rrclass_,
+                                           RRType::RRSIG(), ttl));
+        }
+        tmp_rrset->addRdata(rit->getCurrent());
+    }
+    if (tmp_rrset) {
+        ret += tmp_rrset->toText();
+    }
+
+    return (ret);
 }
 
 namespace {
@@ -214,7 +250,7 @@ renderDataToBuffer(const void* data, size_t data_len,
 }
 
 RdataIteratorPtr
-TreeNodeRRset::getRdataIterator() const {
+TreeNodeRRset::getRdataIteratorInternal(bool is_rrsig, size_t count) const {
     util::OutputBuffer buffer(0);
     RdataReader reader(rrclass_, rdataset_->type, rdataset_->getDataBuf(),
                        rdataset_->getRdataCount(), rrsig_count_,
@@ -222,15 +258,27 @@ TreeNodeRRset::getRdataIterator() const {
                        boost::bind(renderDataToBuffer, _1, _2, &buffer));
 
     std::vector<ConstRdataPtr> rdata_list;
-    for (size_t i = 0; i < rdataset_->getRdataCount(); ++i) {
+    for (size_t i = 0; i < count; ++i) {
         buffer.clear();
-        const bool rendered = reader.iterateRdata();
+        const bool rendered = is_rrsig ? reader.iterateSingleSig() :
+            reader.iterateRdata();
         assert(rendered == true);
         util::InputBuffer ib(buffer.getData(), buffer.getLength());
-        rdata_list.push_back(createRdata(rdataset_->type, rrclass_,
-                                         ib, ib.getLength()));
+        rdata_list.push_back(
+            createRdata(is_rrsig ? RRType::RRSIG() : rdataset_->type, rrclass_,
+                        ib, ib.getLength()));
     }
     return (RdataIteratorPtr(new TreeNodeRdataIterator(rdata_list)));
+}
+
+RdataIteratorPtr
+TreeNodeRRset::getRdataIterator() const {
+    return (getRdataIteratorInternal(false, rdataset_->getRdataCount()));
+}
+
+RdataIteratorPtr
+TreeNodeRRset::getSigRdataIterator() const {
+    return (getRdataIteratorInternal(true, dnssec_ok_ ? rrsig_count_ : 0));
 }
 
 RRsetPtr
