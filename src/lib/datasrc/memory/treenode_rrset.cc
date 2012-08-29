@@ -40,13 +40,26 @@ namespace isc {
 namespace datasrc {
 namespace memory {
 
+TreeNodeRRset::TreeNodeRRset(const dns::Name& realname, dns::RRClass rrclass,
+                             const ZoneNode* node, const RdataSet* rdataset,
+                             bool dnssec_ok) :
+    node_(node), rdataset_(rdataset),
+    rrsig_count_(rdataset_->getSigRdataCount()), rrclass_(rrclass),
+    dnssec_ok_(dnssec_ok), name_(NULL)
+{
+    const LabelSequence labels(realname);
+    const size_t labels_storangelen = labels.getSerializedLength();
+    realname_buf_ = new uint8_t[labels_storangelen];
+    labels.serialize(realname_buf_, labels_storangelen);
+}
+
 const Name&
 TreeNodeRRset::getName() const {
     if (name_ == NULL) {
         uint8_t labels_buf[LabelSequence::MAX_SERIALIZED_LENGTH];
-        const LabelSequence node_labels = node_->getAbsoluteLabels(labels_buf);
+        const LabelSequence name_labels = getOwnerLabels(labels_buf);
         size_t data_len;
-        const uint8_t* data = node_labels.getData(&data_len);
+        const uint8_t* data = name_labels.getData(&data_len);
         util::InputBuffer buffer(data, data_len);
         name_ = new Name(buffer);
     }
@@ -169,11 +182,11 @@ TreeNodeRRset::toWire(AbstractMessageRenderer& renderer) const {
 
     // Get the owner name of the RRset in the form of LabelSequence.
     uint8_t labels_buf[LabelSequence::MAX_SERIALIZED_LENGTH];
-    const LabelSequence node_labels = node_->getAbsoluteLabels(labels_buf);
+    const LabelSequence name_labels = getOwnerLabels(labels_buf);
 
     // Render the main (non RRSIG) RRs
     const size_t rendered_rdata_count =
-        writeRRs(renderer, rdataset_->getRdataCount(), node_labels,
+        writeRRs(renderer, rdataset_->getRdataCount(), name_labels,
                  rdataset_->type, rrclass_, rdataset_->getTTLData(), reader,
                  &RdataReader::iterateRdata);
     if (renderer.isTruncated()) {
@@ -184,7 +197,7 @@ TreeNodeRRset::toWire(AbstractMessageRenderer& renderer) const {
 
     // Render any RRSIGs, if we supposed to do so
     const size_t rendered_rrsig_count = dnssec_ok_ ?
-        writeRRs(renderer, rrsig_count_, node_labels, RRType::RRSIG(),
+        writeRRs(renderer, rrsig_count_, name_labels, RRType::RRSIG(),
                  rrclass_, rdataset_->getTTLData(), reader,
                  &RdataReader::iterateSingleSig) : 0;
 

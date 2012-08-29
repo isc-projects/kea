@@ -44,6 +44,7 @@ protected:
     TreeNodeRRsetTest() :
         rrclass_(RRClass::IN()),
         origin_name_("example.com"), www_name_("www.example.com"),
+        wildcard_name_("*.example.com"), match_name_("match.example.com"),
         ns_rrset_(textToRRset("example.com. 3600 IN NS ns.example.com.")),
         a_rrset_(textToRRset("www.example.com. 3600 IN A 192.0.2.1\n"
                              "www.example.com. 3600 IN A 192.0.2.2")),
@@ -62,6 +63,13 @@ protected:
         txt_rrsig_rrset_(textToRRset("www.example.com. 3600 IN RRSIG TXT 5 2"
                                      " 3600 20120814220826 20120715220826 "
                                      "1234 example.com. FAKE\n")),
+        wildmatch_rrset_(textToRRset(
+                             "match.example.com. 3600 IN A 192.0.2.1\n"
+                             "match.example.com. 3600 IN A 192.0.2.2")),
+        wildmatch_rrsig_rrset_(textToRRset(
+                                   "match.example.com. 3600 IN RRSIG "
+                                   "A 5 2 3600 20120814220826 20120715220826 "
+                                   "1234 example.com. FAKE")),
         zone_data_(NULL)
     {}
     void SetUp() {
@@ -92,6 +100,11 @@ protected:
                                                 ConstRRsetPtr(),
                                                 txt_rrsig_rrset_);
         aaaa_rdataset_->next = rrsig_only_rdataset_;
+
+        zone_data_->insertName(mem_sgmt_, wildcard_name_, &wildcard_node_);
+        wildcard_rdataset_ = RdataSet::create(mem_sgmt_, encoder_, a_rrset_,
+                                              a_rrsig_rrset_);
+        wildcard_node_->setData(wildcard_rdataset_);
     }
     void TearDown() {
         ZoneData::destroy(mem_sgmt_, zone_data_, rrclass_);
@@ -100,20 +113,23 @@ protected:
     }
 
     const RRClass rrclass_;
-    const Name origin_name_, www_name_;
+    const Name origin_name_, www_name_, wildcard_name_, match_name_;
     isc::util::MemorySegmentLocal mem_sgmt_;
     RdataEncoder encoder_;
     MessageRenderer renderer_, renderer_expected_;
     ConstRRsetPtr ns_rrset_, a_rrset_, aaaa_rrset_, dname_rrset_,
-        a_rrsig_rrset_, aaaa_rrsig_rrset_, txt_rrsig_rrset_;
+        a_rrsig_rrset_, aaaa_rrsig_rrset_, txt_rrsig_rrset_,
+        wildmatch_rrset_, wildmatch_rrsig_rrset_;
     ZoneData* zone_data_;
     ZoneNode* origin_node_;
     ZoneNode* www_node_;
+    ZoneNode* wildcard_node_;
     RdataSet* ns_rdataset_;
     RdataSet* dname_rdataset_;
     RdataSet* a_rdataset_;
     RdataSet* aaaa_rdataset_;
     RdataSet* rrsig_only_rdataset_;
+    RdataSet* wildcard_rdataset_; // for wildcard (type doesn't matter much)
 };
 
 // Check some trivial fields of a constructed TreeNodeRRset (passed as
@@ -154,6 +170,11 @@ TEST_F(TreeNodeRRsetTest, create) {
     checkBasicFields(TreeNodeRRset(rrclass_, www_node_, rrsig_only_rdataset_,
                                    false),
                      www_name_, rrclass_, RRType::TXT(), 0, 0);
+    // Wildcard substitution
+    checkBasicFields(TreeNodeRRset(match_name_, rrclass_,
+                                   wildcard_node_, wildcard_rdataset_,
+                                   true),
+                     match_name_, rrclass_, RRType::A(), 2, 1);
 }
 
 // Templated if and when we support OutputBuffer version of toWire().
@@ -233,6 +254,24 @@ TEST_F(TreeNodeRRsetTest, toWire) {
         checkToWireResult(expected_renderer, actual_renderer, rrset5,
                           Name("example.org"), dname_rrset_, ConstRRsetPtr(),
                           false);
+    }
+
+    {
+        SCOPED_TRACE("wildcard with RRSIG");
+        checkToWireResult(expected_renderer, actual_renderer,
+                          TreeNodeRRset(match_name_, rrclass_, wildcard_node_,
+                                        wildcard_rdataset_, true),
+                          origin_name_, wildmatch_rrset_,
+                          wildmatch_rrsig_rrset_, true);
+    }
+
+    {
+        SCOPED_TRACE("wildcard without RRSIG");
+        checkToWireResult(expected_renderer, actual_renderer,
+                          TreeNodeRRset(match_name_, rrclass_, wildcard_node_,
+                                        wildcard_rdataset_, false),
+                          origin_name_, wildmatch_rrset_,
+                          wildmatch_rrsig_rrset_, false);
     }
 
     {
@@ -407,6 +446,14 @@ TEST_F(TreeNodeRRsetTest, toText) {
     // Constructed without RRSIG, and it should be visible
     checkToText(TreeNodeRRset(rrclass_, origin_node_, ns_rdataset_, false),
                 ns_rrset_, ConstRRsetPtr());
+    // Wildcard expanded name with RRSIG
+    checkToText(TreeNodeRRset(match_name_, rrclass_, wildcard_node_,
+                              wildcard_rdataset_, true),
+                wildmatch_rrset_, wildmatch_rrsig_rrset_);
+    // Wildcard expanded name without RRSIG
+    checkToText(TreeNodeRRset(match_name_, rrclass_, wildcard_node_,
+                              wildcard_rdataset_, false),
+                wildmatch_rrset_, ConstRRsetPtr());
     // RRSIG case
     checkToText(TreeNodeRRset(rrclass_, www_node_, rrsig_only_rdataset_,
                               true),
