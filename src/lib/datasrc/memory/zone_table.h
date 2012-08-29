@@ -17,6 +17,8 @@
 
 #include <util/memory_segment.h>
 
+#include <dns/rrclass.h>
+
 #include <datasrc/result.h>
 #include <datasrc/memory/domaintree.h>
 
@@ -68,8 +70,8 @@ private:
     };
 
     // Type aliases to make it shorter
-    typedef DomainTree<ZoneData, ZoneDataDeleter> ZoneTableTree;
-    typedef DomainTreeNode<ZoneData, ZoneDataDeleter> ZoneTableNode;
+    typedef DomainTree<ZoneData> ZoneTableTree;
+    typedef DomainTreeNode<ZoneData> ZoneTableNode;
 
 public:
     /// \brief Result data of addZone() method.
@@ -114,18 +116,27 @@ public:
     ///
     /// \param mem_sgmt A \c MemorySegment from which memory for the new
     /// \c ZoneTable is allocated.
-    static ZoneTable* create(util::MemorySegment& mem_sgmt);
+    /// \param zone_class The RR class of the zone.  It must be the RR class
+    /// that is supposed to be associated to the zone table.
+    static ZoneTable* create(util::MemorySegment& mem_sgmt,
+                             dns::RRClass zone_class);
 
     /// \brief Destruct and deallocate \c ZoneTable
+    ///
+    /// This method releases all internal resources including all zone data
+    /// created via \c addZone() calls.
     ///
     /// \throw none
     ///
     /// \param mem_sgmt The \c MemorySegment that allocated memory for
-    /// \c ztable.
+    /// \c ztable and used for prior calls to \c addZone().
+    /// \param zone_class The RR class of the zone.  It must be the RR class
+    /// that is supposed to be associated to the zone table.
     /// \param ztable A non NULL pointer to a valid \c ZoneTable object
     /// that was originally created by the \c create() method (the behavior
     /// is undefined if this condition isn't met).
-    static void destroy(util::MemorySegment& mem_sgmt, ZoneTable* ztable);
+    static void destroy(util::MemorySegment& mem_sgmt, ZoneTable* ztable,
+                        dns::RRClass zone_class);
 
     /// Add a new zone to the \c ZoneTable.
     ///
@@ -135,14 +146,23 @@ public:
     /// zone name already exists in the table, a new data object won't be
     /// created; instead, the existing corresponding data will be returned.
     ///
+    /// The zone table keeps the ownership of the created zone data; the
+    /// caller must not try to destroy it directly.  (We'll eventually
+    /// add an interface to delete specific zone data from the table).
+    ///
     /// \throw std::bad_alloc Internal resource allocation fails.
     ///
+    /// \param mem_sgmt The \c MemorySegment to allocate zone data to be
+    /// created.  It must be the same segment that was used to create
+    /// the zone table at the time of create().
     /// \param zone_name The name of the zone to be added.
+    /// \param zone_class The RR class of the zone.  It must be the RR class
+    /// that is supposed to be associated to the zone table.
     /// \return \c result::SUCCESS If the zone is successfully
     /// added to the zone table.
     /// \return \c result::EXIST The zone table already contains
     /// zone of the same origin.
-    AddResult addZone(util::MemorySegment& mem_sgmt,
+    AddResult addZone(util::MemorySegment& mem_sgmt, dns::RRClass zone_class,
                       const dns::Name& zone_name);
 
     /// Find a zone that best matches the given name in the \c ZoneTable.

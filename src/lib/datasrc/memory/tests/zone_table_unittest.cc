@@ -55,21 +55,23 @@ private:
 
 class ZoneTableTest : public ::testing::Test {
 protected:
-    ZoneTableTest() : zname1(Name("example.com")),
+    ZoneTableTest() : zclass_(RRClass::IN()),
+                      zname1(Name("example.com")),
                       zname2(Name("example.net")),
                       zname3(Name("example")),
-                      zone_table(ZoneTable::create(mem_sgmt_))
+                      zone_table(ZoneTable::create(mem_sgmt_, zclass_))
     {}
     ~ZoneTableTest() {
         if (zone_table != NULL) {
-            ZoneTable::destroy(mem_sgmt_, zone_table);
+            ZoneTable::destroy(mem_sgmt_, zone_table, zclass_);
         }
     }
     void TearDown() {
-        ZoneTable::destroy(mem_sgmt_, zone_table);
+        ZoneTable::destroy(mem_sgmt_, zone_table, zclass_);
         zone_table = NULL;
         EXPECT_TRUE(mem_sgmt_.allMemoryDeallocated()); // catch any leak here.
     }
+    const RRClass zclass_;
     const Name zname1, zname2, zname3;
     TestMemorySegment mem_sgmt_;
     ZoneTable* zone_table;
@@ -80,41 +82,46 @@ TEST_F(ZoneTableTest, create) {
     // tests.  We only check exception safety by letting the test memory
     // segment throw.
     mem_sgmt_.setThrowCount(2);
-    EXPECT_THROW(ZoneTable::create(mem_sgmt_), std::bad_alloc);
+    EXPECT_THROW(ZoneTable::create(mem_sgmt_, zclass_), std::bad_alloc);
     // This shouldn't cause memory leak (that would be caught in TearDown()).
 }
 
 TEST_F(ZoneTableTest, addZone) {
     // Normal successful case.
     const ZoneTable::AddResult result1 =
-        zone_table->addZone(mem_sgmt_, zname1);
+        zone_table->addZone(mem_sgmt_, zclass_, zname1);
     EXPECT_EQ(result::SUCCESS, result1.code);
 
     // Duplicate add doesn't replace the existing data.
-    EXPECT_EQ(result::EXIST, zone_table->addZone(mem_sgmt_, zname1).code);
+    EXPECT_EQ(result::EXIST, zone_table->addZone(mem_sgmt_, zclass_,
+                                                 zname1).code);
     EXPECT_EQ(result1.zone_data,
-              zone_table->addZone(mem_sgmt_, zname1).zone_data);
+              zone_table->addZone(mem_sgmt_, zclass_, zname1).zone_data);
     // names are compared in a case insensitive manner.
-    EXPECT_EQ(result::EXIST, zone_table->addZone(mem_sgmt_,
+    EXPECT_EQ(result::EXIST, zone_table->addZone(mem_sgmt_, zclass_,
                                                  Name("EXAMPLE.COM")).code);
     // Add some more different ones.  Should just succeed.
-    EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, zname2).code);
-    EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, zname3).code);
+    EXPECT_EQ(result::SUCCESS,
+              zone_table->addZone(mem_sgmt_, zclass_, zname2).code);
+    EXPECT_EQ(result::SUCCESS,
+              zone_table->addZone(mem_sgmt_, zclass_, zname3).code);
 
     // Have the memory segment throw an exception in extending the internal
     // tree.  It still shouldn't cause memory leak (which would be detected
     // in TearDown()).
     mem_sgmt_.setThrowCount(2);
-    EXPECT_THROW(zone_table->addZone(mem_sgmt_, Name("example.org")),
+    EXPECT_THROW(zone_table->addZone(mem_sgmt_, zclass_, Name("example.org")),
                  std::bad_alloc);
 }
 
 TEST_F(ZoneTableTest, findZone) {
     const ZoneTable::AddResult add_result1 =
-        zone_table->addZone(mem_sgmt_, zname1);
+        zone_table->addZone(mem_sgmt_, zclass_, zname1);
     EXPECT_EQ(result::SUCCESS, add_result1.code);
-    EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, zname2).code);
-    EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, zname3).code);
+    EXPECT_EQ(result::SUCCESS,
+              zone_table->addZone(mem_sgmt_, zclass_, zname2).code);
+    EXPECT_EQ(result::SUCCESS,
+              zone_table->addZone(mem_sgmt_, zclass_, zname3).code);
 
     const ZoneTable::FindResult find_result1 =
         zone_table->findZone(Name("example.com"));
@@ -135,7 +142,7 @@ TEST_F(ZoneTableTest, findZone) {
 
     // make sure the partial match is indeed the longest match by adding
     // a zone with a shorter origin and query again.
-    EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_,
+    EXPECT_EQ(result::SUCCESS, zone_table->addZone(mem_sgmt_, zclass_,
                                                    Name("com")).code);
     EXPECT_EQ(add_result1.zone_data,
               zone_table->findZone(Name("www.example.com")).zone_data);
