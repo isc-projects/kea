@@ -37,14 +37,14 @@ namespace memory {
 
 class TreeNodeRRset : public dns::AbstractRRset {
 public:
-    TreeNodeRRset(dns::RRClass rrclass, const ZoneNode* node,
+    TreeNodeRRset(const dns::RRClass& rrclass, const ZoneNode* node,
                   const RdataSet* rdataset, bool dnssec_ok) :
         node_(node), rdataset_(rdataset),
         rrsig_count_(rdataset_->getSigRdataCount()), rrclass_(rrclass),
         dnssec_ok_(dnssec_ok), name_(NULL), realname_buf_(NULL)
     {}
 
-    TreeNodeRRset(const dns::Name& realname, dns::RRClass rrclass,
+    TreeNodeRRset(const dns::Name& realname, const dns::RRClass& rrclass,
                   const ZoneNode* node, const RdataSet* rdataset,
                   bool dnssec_ok);
 
@@ -94,8 +94,24 @@ public:
     virtual void addRRsig(const dns::RRsetPtr& sigs);
     virtual void removeRRsig();
 
-    // needed
-    virtual bool isSameKind(const dns::AbstractRRset& other) const;
+    /// \brief Specialized version of \c isSameKind() for \c TreeNodeRRset.
+    ///
+    /// As a kind of optimization, this implementation exploits the assumption
+    /// of how \c TreeNodeRRset objects are created: They must be always
+    /// created inside the in-memory data source finder implementation,
+    /// and they are constructed with the \c realname parameter if and only
+    /// if the corresponding query name is subject to wildcard substitution.
+    ///
+    /// So, if the given RRset is of \c TreeNodeRRset, and one and only one of
+    /// of them has \c realname, they are considered to have different names.
+    ///
+    /// Also, this implementation does not compare RR classes explicitly;
+    /// if two \c TreeNodeRRset objects belong to different RR classes,
+    /// they should belong to different zone trees (according to the assumption
+    /// of how the zone data are built), and therefore they cannot be at
+    /// same zone node.  So it's sufficient to compare the (address of the)
+    /// node; if they are different they cannot be of the same kind.
+    virtual bool isSameKind(const dns::AbstractRRset& abs_other) const;
 
 private:
     dns::RdataIteratorPtr getSigRdataIterator() const;
@@ -109,6 +125,11 @@ private:
         }
         return (node_->getAbsoluteLabels(labels_buf));
     }
+
+    // A helper for isSameKind() to check if 'this' and 'other' has
+    // the same "real" name in case at least either is constructed with
+    // a real name.
+    bool hasSameRealName(const TreeNodeRRset& other) const;
 
     const ZoneNode* node_;
     const RdataSet* rdataset_;
