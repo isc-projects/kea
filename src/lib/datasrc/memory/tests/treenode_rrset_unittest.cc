@@ -18,6 +18,7 @@
 #include <datasrc/memory/treenode_rrset.h>
 #include <datasrc/memory/rdataset.h>
 #include <datasrc/memory/rdata_serialization.h>
+#include <datasrc/memory/zone_data.h>
 
 #include <util/unittests/wiredata.h>
 #include <testutils/dnsmessage_test.h>
@@ -50,29 +51,29 @@ protected:
         rrsig_rrset_(textToRRset("www.example.com. 3600 IN RRSIG "
                                  "A 5 2 3600 20120814220826 20120715220826 "
                                  "1234 example.com. FAKE")),
-        tree_(NULL)
+        zone_data_(NULL)
     {}
     void SetUp() {
         // We create some common test data here in SetUp() so it will be
         // as exception safe as possible.
 
-        tree_ = ZoneTree::create(mem_sgmt_, true);
+        zone_data_ = ZoneData::create(mem_sgmt_, origin_name_);
 
-        tree_->insert(mem_sgmt_, origin_name_, &origin_node_);
+        zone_data_->insertName(mem_sgmt_, origin_name_, &origin_node_);
         ns_rdataset_ = RdataSet::create(mem_sgmt_, encoder_, ns_rrset_,
                                         ConstRRsetPtr());
-        origin_node_->setData(mem_sgmt_, ns_rdataset_);
+        origin_node_->setData(ns_rdataset_);
         dname_rdataset_ = RdataSet::create(mem_sgmt_, encoder_, dname_rrset_,
                                            ConstRRsetPtr());
         ns_rdataset_->next = dname_rdataset_;
 
-        tree_->insert(mem_sgmt_, www_name_, &www_node_);
+        zone_data_->insertName(mem_sgmt_, www_name_, &www_node_);
         a_rdataset_ = RdataSet::create(mem_sgmt_, encoder_, a_rrset_,
                                        rrsig_rrset_);
-        www_node_->setData(mem_sgmt_, a_rdataset_);
+        www_node_->setData(a_rdataset_);
     }
     void TearDown() {
-        ZoneTree::destroy(mem_sgmt_, tree_);
+        ZoneData::destroy(mem_sgmt_, zone_data_, rrclass_);
         // detect any memory leak
         EXPECT_TRUE(mem_sgmt_.allMemoryDeallocated());
     }
@@ -83,7 +84,7 @@ protected:
     RdataEncoder encoder_;
     MessageRenderer renderer_, renderer_expected_;
     ConstRRsetPtr ns_rrset_, a_rrset_, dname_rrset_, rrsig_rrset_;
-    ZoneTree* tree_;
+    ZoneData* zone_data_;
     ZoneNode* origin_node_;
     ZoneNode* www_node_;
     RdataSet* ns_rdataset_;
