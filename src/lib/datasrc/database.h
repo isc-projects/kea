@@ -963,6 +963,8 @@ public:
         ///
         /// \param name Which domain name should be scanned.
         /// \param types List of types the caller is interested in.
+        /// \param sigs Return RRSIGs if true is passed. Otherwise, no
+        ///     associated RRSIGs are set on the returned RRsets.
         /// \param construct_name If this is NULL, the resulting RRsets have
         ///     their name set to name. If it is not NULL, it overrides the
         ///     name and uses this one (this can be used for wildcard
@@ -984,6 +986,7 @@ public:
         ///     database or the database contains bad data.
         FoundRRsets getRRsets(const std::string& name,
                               const WantedTypes& types,
+                              bool sigs,
                               const std::string* construct_name = NULL,
                               bool any = false,
                               DatabaseAccessor::IteratorContextPtr srcContext =
