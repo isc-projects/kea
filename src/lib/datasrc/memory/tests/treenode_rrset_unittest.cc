@@ -89,11 +89,14 @@ TEST_F(TreeNodeRRsetTest, create) {
     const TreeNodeRRset rrset1(RRClass::IN(), www_node_, a_rdataset_, true);
     EXPECT_EQ(RRClass::IN(), rrset1.getClass());
     EXPECT_EQ(RRType::A(), rrset1.getType());
+    EXPECT_EQ(www_name_, rrset1.getName());
     EXPECT_EQ(1, rrset1.getRdataCount());
     EXPECT_EQ(1, rrset1.getRRsigDataCount());
 
     const TreeNodeRRset rrset2(RRClass::IN(), www_node_, a_rdataset_, false);
     EXPECT_EQ(RRClass::IN(), rrset2.getClass());
+    EXPECT_EQ(RRType::A(), rrset2.getType());
+    EXPECT_EQ(www_name_, rrset2.getName());
     EXPECT_EQ(1, rrset2.getRdataCount());
     EXPECT_EQ(0, rrset2.getRRsigDataCount());
 }

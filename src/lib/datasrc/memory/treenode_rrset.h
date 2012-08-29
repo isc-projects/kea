@@ -61,10 +61,12 @@ public:
                   const RdataSet* rdataset, bool dnssec_ok) :
         node_(node), rdataset_(rdataset),
         rrsig_count_(rdataset_->getSigRdataCount()), rrclass_(rrclass),
-        dnssec_ok_(dnssec_ok)
+        dnssec_ok_(dnssec_ok), name_(NULL)
     {}
 
-    virtual ~TreeNodeRRset() {}
+    virtual ~TreeNodeRRset() {
+        delete name_;
+    }
 
     virtual unsigned int getRdataCount() const {
         return (rdataset_->getRdataCount());
@@ -116,6 +118,7 @@ private:
     const size_t rrsig_count_;
     const dns::RRClass rrclass_;
     const bool dnssec_ok_;
+    mutable dns::Name* name_;
 };
 
 } // namespace memory
