@@ -84,7 +84,19 @@ public:
                                     ServerFlag options = SERVER_DEFAULT) = 0;
     virtual void clearServers() = 0;
 
-    /// Sets the timeout TODO
+    /// \brief Set the timeout for TCP DNS services
+    ///
+    /// The timeout is used for incoming TCP connections, so
+    /// that the connection is dropped if not all query data
+    /// is read.
+    ///
+    /// For existing DNSServer objects, where the timeout is
+    /// relevant (i.e. TCPServer instances), the timeout value
+    /// is updated.
+    /// The given value is also kept to use for DNSServer instances
+    /// which are created later
+    ///
+    /// \param timeout The timeout in milliseconds
     virtual void setTCPRecvTimeout(size_t timeout) = 0;
 
     virtual asiolink::IOService& getIOService() = 0;

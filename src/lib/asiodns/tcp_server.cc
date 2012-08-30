@@ -47,8 +47,6 @@ namespace asiodns {
 /// The following functions implement the \c TCPServer class.
 ///
 /// The constructor
-// timeout is initialized to be sure, but it should be updated
-// quite immediately anyway
 TCPServer::TCPServer(io_service& io_service, int fd, int af,
                      const SimpleCallback* checkin,
                      const DNSLookup* lookup,
@@ -73,7 +71,7 @@ TCPServer::TCPServer(io_service& io_service, int fd, int af,
         isc_throw(IOError, exception.what());
     }
     // Set it to some value. It should be set to the right one
-    // immediately, but set something non-zero just in case.
+    // immediately, but set it to something non-zero just in case.
     tcp_recv_timeout_.reset(new size_t(1000));
 }
 
@@ -133,11 +131,14 @@ TCPServer::operator()(asio::error_code ec, size_t length) {
         /// asynchronous read call.
         data_.reset(new char[MAX_LENGTH]);
 
-        timeout_.reset(new asio::deadline_timer(io_));
-        timeout_->expires_from_now(
-            boost::posix_time::milliseconds(*tcp_recv_timeout_));
-        timeout_->async_wait(boost::bind(&do_timeout, boost::ref(*socket_),
-                             asio::placeholders::error));
+        /// Start a timer to drop the connection if it is idle
+        if (*tcp_recv_timeout_ > 0) {
+            timeout_.reset(new asio::deadline_timer(io_));
+            timeout_->expires_from_now(
+                boost::posix_time::milliseconds(*tcp_recv_timeout_));
+            timeout_->async_wait(boost::bind(&do_timeout, boost::ref(*socket_),
+                                 asio::placeholders::error));
+        }
 
         /// Read the message, in two parts.  First, the message length:
         CORO_YIELD async_read(*socket_, asio::buffer(data_.get(),

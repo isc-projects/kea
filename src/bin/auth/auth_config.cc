@@ -117,6 +117,7 @@ private:
     AddrListPtr rollbackAddresses_;
 };
 
+/// \brief Configuration for TCP receive timeouts
 class TCPRecvTimeoutConfig : public AuthConfigParser {
 public:
     TCPRecvTimeoutConfig(AuthSrv& server) : server_(server)
