@@ -281,10 +281,16 @@ class TCPClient : public SimpleClient {
                                 std::string(received_data_ + 2));
     }
 
+    /// Set the delay before the data len is sent (in seconds)
+    /// If this is non-zero, the actual data is never sent
+    /// (it is used to test timeout, in which case the connection
+    /// should have been closed by the other side anyway)
     void setSendDataLenDelay(size_t send_data_len_delay) {
         send_data_len_delay_ = send_data_len_delay;
     }
 
+    /// Set the delay before the packet data itself is sent
+    /// (in seconds)
     void setSendDataDelay(size_t send_data_delay) {
         send_data_delay_ = send_data_delay;
     }
@@ -328,8 +334,6 @@ class TCPClient : public SimpleClient {
     std::string data_to_send_;
     uint16_t data_to_send_len_;
 
-    // if 0, send body immediately
-    // if >0, send after the delay (in seconds)
     size_t send_data_delay_;
     size_t send_data_len_delay_;
 };
