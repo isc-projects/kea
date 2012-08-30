@@ -239,8 +239,17 @@ Possible command-line parameters:
 
         <screen>&gt; <userinput>show engines;</userinput></screen>
 
-        in your mysql client. Two notable engines are MyISAM and InnoDB. mysql_ubench will
-        use MyISAM for synchronous mode and InnoDB for asynchronous.</para>
+        in your mysql client. Two notable engines are MyISAM and InnoDB. mysql_ubench uses
+        use MyISAM for synchronous mode and InnoDB for asynchronous. Please use
+        '-s 0|1' to choose whether you want synchronous or asynchronous operations.</para>
+
+        <para>Another parameter that affects performance are precompiled statements.
+        In a basic approach, the actual SQL query is passed as a text string that is
+        then parsed by the database engine. Alternative is a so called precompiled
+        statement. In this approach the SQL query is compiled an specific values are being
+        bound to it. In the next iteration the query remains the same, only bound values
+        are changing (e.g. searching for a different address). Usage of basic or precompiled
+        statements is controlled with '-c 0|1'.</para>
     </section>
     </section>
 
@@ -277,7 +286,7 @@ Possible command-line parameters:
           <listitem><para>-s yes|no - should the operations be performend in synchronous (yes)
           or asynchronous (no) manner (yes)</para></listitem>
           <listitem><para>-v yes|no - verbose mode. Should the test print out progress? (yes)</para></listitem>
-          <listitem><para>-c yes|no - compiled statements. Should the SQL statements be precompiled?</para></listitem>
+          <listitem><para>-c yes|no - precompiled statements. Should the SQL statements be precompiled?</para></listitem>
         </orderedlist>
         </para>
 
@@ -290,6 +299,10 @@ Possible command-line parameters:
         modified in SQLite_uBenchmark::connect().  See
         http://www.sqlite.org/pragma.html#pragma_journal_mode for
         detailed explanantion.</para>
+
+        <para>sqlite_bench supports precompiled statements. Please use
+        '-c 0|1' to define which should be used: basic SQL query (0) or
+        precompiled statement (1).</para>
       </section>
     </section>
 
@@ -325,17 +338,21 @@ Possible command-line parameters:
     </section>
 
     <section>
-      <title>Performance measurements</title>
+      <title>Basic performance measurements</title>
       <para>This section contains sample results for backend performance measurements,
       taken using microbenchmarks. Tests were conducted on reasonably powerful machine:
       <screen>
 CPU: Quad-core Intel(R) Core(TM) i7-2600K CPU @ 3.40GHz (8 logical cores)
-HDD: 1,5TB Seagate Barracuda ST31500341AS 7200rpm (used only one of them), ext4 partition
+HDD: 1,5TB Seagate Barracuda ST31500341AS 7200rpm, ext4 partition
 OS: Ubuntu 12.04, running kernel 3.2.0-26-generic SMP x86_64
 compiler: g++ (Ubuntu/Linaro 4.6.3-1ubuntu5) 4.6.3
 MySQL version: 5.5.24
 SQLite version: 3.7.9sourceid version is 2011-11-01 00:52:41 c7c6050ef060877ebe77b41d959e9df13f8c9b5e</screen>
       </para>
+
+      <para>Benchmarks were run without using precompiled statements.
+      The code was compiled wit -O0 flag (no code optimizations).
+      Each run was executed once.</para>
 
       <para>Benchmarks were run in two series: synchronous and
       asynchronous. As those modes offer radically different
@@ -344,7 +361,7 @@ SQLite version: 3.7.9sourceid version is 2011-11-01 00:52:41 c7c6050ef060877ebe7
       100000 (hundred thousand) repetitions.</para>
 
       <!-- raw results sync -->
-      <table><title>Synchronous results</title>
+      <table><title>Synchronous results (basic)</title>
       <tgroup cols='6' align='center' colsep='1' rowsep='1'>
         <colspec colname='Backend'/>
         <colspec colname='Num' />
@@ -388,11 +405,11 @@ SQLite version: 3.7.9sourceid version is 2011-11-01 00:52:41 c7c6050ef060877ebe7
           <row>
             <entry>memfile</entry>
             <entry>1000</entry>
-            <entry>41.711886s</entry>
-            <entry> 0.000724s</entry>
-            <entry>42.267578s</entry>
-            <entry>42.169679s</entry>
-            <entry>31.537467s</entry>
+            <entry>38.223757s</entry>
+            <entry> 0.000817s</entry>
+            <entry>38.041153s</entry>
+            <entry>38.017293s</entry>
+            <entry>28.570755s</entry>
           </row>
 
         </tbody>
@@ -404,7 +421,7 @@ SQLite version: 3.7.9sourceid version is 2011-11-01 00:52:41 c7c6050ef060877ebe7
       was run for 1 million repetitions due to much larger performance.</para>
 
       <!-- raw results async -->
-      <table><title>Asynchronous results</title>
+      <table><title>Asynchronous results (basic)</title>
       <tgroup cols='6' align='center' colsep='1' rowsep='1'>
         <colspec colname='Backend'/>
         <colspec colname='Num' />
@@ -447,12 +464,12 @@ SQLite version: 3.7.9sourceid version is 2011-11-01 00:52:41 c7c6050ef060877ebe7
 
           <row>
             <entry>memfile</entry>
-            <entry>1000000 (sic!)</entry>
-            <entry> 6.084131s</entry>
-            <entry> 0.862667s</entry>
-            <entry> 6.018585s</entry>
-            <entry> 5.146704s</entry>
-            <entry> 4.528022s</entry>
+            <entry>100000</entry>
+            <entry> 1.299642s</entry>
+            <entry> 0.039330s</entry>
+            <entry> 1.307112s</entry>
+            <entry> 1.277641s</entry>
+            <entry> 0.980931s</entry>
           </row>
 
         </tbody>
@@ -464,7 +481,7 @@ SQLite version: 3.7.9sourceid version is 2011-11-01 00:52:41 c7c6050ef060877ebe7
       over 3 orders of magnitude), it is difficult to create a simple, readable chart with
       that data.</para>
 
-      <table id="tbl-perf-results"><title>Estimated performance</title>
+      <table id="tbl-basic-perf-results"><title>Estimated basic performance</title>
       <tgroup cols='6' align='center' colsep='1' rowsep='1'>
         <colspec colname='Backend'/>
         <colspec colname='Create'/>
@@ -503,11 +520,11 @@ SQLite version: 3.7.9sourceid version is 2011-11-01 00:52:41 c7c6050ef060877ebe7
 
           <row>
             <entry>memfile (async)</entry>
-            <entry>164362.01</entry>
-            <entry>1159195.84</entry>
-            <entry>166152.01</entry>
-            <entry>194299.11</entry>
-            <entry>421002.24</entry>
+            <entry>76944.27</entry>
+            <entry>2542588.35</entry>
+            <entry>76504.54</entry>
+            <entry>78269.25</entry>
+            <entry>693576.60</entry>
           </row>
 
 
@@ -531,11 +548,11 @@ SQLite version: 3.7.9sourceid version is 2011-11-01 00:52:41 c7c6050ef060877ebe7
 
           <row>
             <entry>memfile (sync)</entry>
-            <entry>23.97</entry>
-            <entry>1381215.47</entry>
-            <entry>23.66</entry>
-            <entry>23.71</entry>
-            <entry>345321.70</entry>
+            <entry>26.16</entry>
+            <entry>1223990.21</entry>
+            <entry>26.29</entry>
+            <entry>26.30</entry>
+            <entry>306017.24</entry>
           </row>
 
         </tbody>
@@ -547,33 +564,340 @@ SQLite version: 3.7.9sourceid version is 2011-11-01 00:52:41 c7c6050ef060877ebe7
           <imagedata fileref="performance-results-graph1.png" format="PNG"/>
         </imageobject>
         <textobject>
-          <phrase>Performance measurements</phrase>
+          <phrase>Basic performance measurements</phrase>
         </textobject>
         <caption>
-          <para>Graphical representation of the performance results
-          presented in table <xref linkend="tbl-perf-results" />.</para>
+          <para>Graphical representation of the basic performance results
+          presented in table <xref linkend="tbl-basic-perf-results" />.</para>
         </caption>
       </mediaobject>
 
     </section>
 
     <section>
-      <title>Possible further optimizations</title>
+      <title>Optimized performance measurements</title>
+      <para>This section contains sample results for backend performance measurements,
+      taken using microbenchmarks. Tests were conducted on reasonably powerful machine:
+      <screen>
+CPU: Quad-core Intel(R) Core(TM) i7-2600K CPU @ 3.40GHz (8 logical cores)
+HDD: 1,5TB Seagate Barracuda ST31500341AS 7200rpm, ext4 partition
+OS: Ubuntu 12.04, running kernel 3.2.0-26-generic SMP x86_64
+compiler: g++ (Ubuntu/Linaro 4.6.3-1ubuntu5) 4.6.3
+MySQL version: 5.5.24
+SQLite version: 3.7.9sourceid version is 2011-11-01 00:52:41 c7c6050ef060877ebe77b41d959e9df13f8c9b5e</screen>
+      </para>
+
+      <para>Benchmarks were run with precompiled statements enabled.
+      The code was compiled wit -Ofast flag (optimize compilation for speed).
+      Each run was repeated 3 times and measured values were averaged.</para>
+
+      <para>Benchmarks were run in two series: synchronous and
+      asynchronous. As those modes offer radically different
+      performances, synchronous mode was conducted for 1000 (one
+      thousand) repetitions and asynchronous mode was conducted for
+      100000 (hundred thousand) repetitions.</para>
+
+      <!-- raw results sync -->
+      <table><title>Synchronous results (optimized)</title>
+      <tgroup cols='6' align='center' colsep='1' rowsep='1'>
+        <colspec colname='Backend'/>
+        <colspec colname='Num' />
+        <colspec colname='Create'/>
+        <colspec colname='Search'/>
+        <colspec colname='Update'/>
+        <colspec colname='Delete'/>
+        <colspec colname='Average'/>
+        <thead>
+          <row>
+            <entry>Backend</entry>
+            <entry>Operations</entry>
+            <entry>Create</entry>
+            <entry>Search</entry>
+            <entry>Update</entry>
+            <entry>Delete</entry>
+            <entry>Average</entry>
+          </row>
+        </thead>
+        <tbody>
+          <row>
+            <entry>MySQL</entry>
+            <entry>1000</entry>
+            <entry>27.887s</entry>
+            <entry> 0.106s</entry>
+            <entry>28.223s</entry>
+            <entry>27.696s</entry>
+            <entry>20.978s</entry>
+          </row>
+
+          <row>
+            <entry>SQLite</entry>
+            <entry>1000</entry>
+            <entry>61.299s</entry>
+            <entry> 0.015s</entry>
+            <entry>59.648s</entry>
+            <entry>61.098s</entry>
+            <entry>45.626s</entry>
+          </row>
+
+          <row>
+            <entry>memfile</entry>
+            <entry>1000</entry>
+            <entry>39.564s</entry>
+            <entry> 0.000724s</entry>
+            <entry>39.543s</entry>
+            <entry>39.326w</entry>
+            <entry>29.608s</entry>
+          </row>
+
+        </tbody>
+      </tgroup>
+      </table>
+
+      <para>Following parameters were measured for asynchronous mode.
+      MySQL and SQLite were run with 100 thousand repetitions. Memfile
+      was run for 1 million repetitions due to much larger performance.</para>
+
+      <!-- raw results async -->
+      <table><title>Asynchronous results (optimized)</title>
+      <tgroup cols='6' align='center' colsep='1' rowsep='1'>
+        <colspec colname='Backend'/>
+        <colspec colname='Num' />
+        <colspec colname='Create'/>
+        <colspec colname='Search'/>
+        <colspec colname='Update'/>
+        <colspec colname='Delete'/>
+        <colspec colname='Average'/>
+        <thead>
+          <row>
+            <entry>Backend</entry>
+            <entry>Operations</entry>
+            <entry>Create [s]</entry>
+            <entry>Search [s]</entry>
+            <entry>Update [s]</entry>
+            <entry>Delete [s]</entry>
+            <entry>Average [s]</entry>
+          </row>
+        </thead>
+        <tbody>
+          <row>
+            <entry>MySQL</entry>
+            <entry>100000</entry>
+            <entry>8.507s</entry>
+            <entry>9.698s</entry>
+            <entry>7.785s</entry>
+            <entry>8.326s</entry>
+            <entry>8.579s</entry>
+          </row>
+
+          <row>
+            <entry>SQLite</entry>
+            <entry>100000</entry>
+            <entry> 1.562s</entry>
+            <entry> 0.949s</entry>
+            <entry> 1.513s</entry>
+            <entry> 1.502s</entry>
+            <entry> 1.382s</entry>
+          </row>
+
+          <row>
+            <entry>memfile</entry>
+            <entry>100000</entry>
+            <entry>1.302s</entry>
+            <entry>0.038s</entry>
+            <entry>1.306s</entry>
+            <entry>1.263s</entry>
+            <entry>0.977s</entry>
+          </row>
+
+        </tbody>
+      </tgroup>
+      </table>
+
+      <para>Presented performance results can be computed into operations per second metrics.
+      It should be noted that due to large differences between various operations (sometime
+      over 3 orders of magnitude), it is difficult to create a simple, readable chart with
+      that data.</para>
+
+      <table id="tbl-optim-perf-results"><title>Estimated optimized performance</title>
+      <tgroup cols='6' align='center' colsep='1' rowsep='1'>
+        <colspec colname='Backend'/>
+        <colspec colname='Create'/>
+        <colspec colname='Search'/>
+        <colspec colname='Update'/>
+        <colspec colname='Delete'/>
+        <colspec colname='Average'/>
+        <thead>
+          <row>
+            <entry>Backend</entry>
+            <entry>Create [oper/s]</entry>
+            <entry>Search [oper/s]</entry>
+            <entry>Update [oper/s]</entry>
+            <entry>Delete [oper/s]</entry>
+            <entry>Average [oper/s]</entry>
+          </row>
+        </thead>
+        <tbody>
+          <row>
+            <entry>MySQL (async)</entry>
+            <entry>11754.84</entry>
+            <entry>10311.34</entry>
+            <entry>12845.35</entry>
+            <entry>12010.24</entry>
+            <entry>11730.44</entry>
+          </row>
+
+          <row>
+            <entry>SQLite (async)</entry>
+            <entry>64005.90</entry>
+            <entry>105391.29</entry>
+            <entry>66075.51</entry>
+            <entry>66566.43</entry>
+            <entry>75509.78</entry>
+          </row>
+
+          <row>
+            <entry>memfile (async)</entry>
+            <entry>76832.16</entry>
+            <entry>2636018.56</entry>
+            <entry>76542.50</entry>
+            <entry>79188.81</entry>
+            <entry>717145.51</entry>
+          </row>
+
+
+          <row>
+            <entry>MySQL (sync)</entry>
+            <entry>35.86</entry>
+            <entry>9461.10</entry>
+            <entry>35.43</entry>
+            <entry>36.11</entry>
+            <entry>2392.12</entry>
+          </row>
+
+          <row>
+            <entry>SQLite (sync)</entry>
+            <entry>16.31</entry>
+            <entry>67036.11</entry>
+            <entry>16.76</entry>
+            <entry>16.37</entry>
+            <entry>16771.39</entry>
+          </row>
+
+          <row>
+            <entry>memfile (sync)</entry>
+            <entry>25.28</entry>
+            <entry>3460207.61</entry>
+            <entry>25.29</entry>
+            <entry>25.43</entry>
+            <entry>865070.90</entry>
+          </row>
+
+        </tbody>
+      </tgroup>
+      </table>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="performance-results-graph2.png" format="PNG"/>
+        </imageobject>
+        <textobject>
+          <phrase>Optimized performance measurements</phrase>
+        </textobject>
+        <caption>
+          <para>Graphical representation of the optimized performance
+          results presented in table <xref linkend="tbl-optim-perf-results"
+          />.</para>
+        </caption>
+      </mediaobject>
+
+    </section>
+
+    <section>
+      <title>Conclusions</title>
       <para>
-        For debugging purposes the code was compiled with -g -O0
-        flags. While majority of the time was spent in backend
-        functions (that was probably compiled with -O2 flags), the
-        benchmark code could perform faster, when compiled with -O2,
-        rather than -O0. That is expected to affect memfile benchmark.
+        Improvements gained by introducing support for precompiled
+        statements in MySQL is somewhat disappointing - between 6 and
+        29%.  On the other hand, the improvement in SQLite is
+        surprisingly high - the efficiency is more than doubled.
       </para>
       <para>
-        Currently all operations were conducted on one by one
-        basis. Each operation was treated as a separate
+        Compiled statements do not have any measureable impact on
+        synchronous operations. That is as expected, because the major
+        bottleneck is the disk performance.
+      </para>
+      <para>
+        Compilation flags yield surprisingly high improvements for C++
+        STL code. The memfile backend is in some operations is almost
+        twice as fast.
+      </para>
+
+      <para>
+        If synchronous operation is required the current performance
+        results are likely to be deemed inadequate. The limiting
+        factor here is a disk access time. Even migrating to high
+        performance 15.000rpm disk is expected to only roughly double
+        number of leases per second, compared to the current results.
+        The reason is that to write a file to disk, at lease 2 writes
+        are required: the new content and i-node modification of the
+        file. The easiest way to boost synchronous performance is to
+        switch to SSD disks. Memory-backed RAM disks are also viable
+        solution. However, care should be taken to properly engineer
+        backup strategy for RAM disks.
+      </para>
+
+      <para>
+        While the custom made backend (memfile) provides the best
+        perfomance, it carries over all the limitations existing in
+        the ISC DHCP4 code: there are no external tools to query or
+        change database, the maintenance requires deep knowledge etc.
+        Those flaws are not shared by usage of a proper database
+        backend, like MySQL and SQLite. They both offer third party
+        tools for administrative tasks, they are well documented and
+        maintained. However, SQLite support for concurrent access is
+        limiting in certain cases. Since all three investigated
+        backends more than meet expected performance results, it is
+        recommended to use MySQL as a first concrete database backend.
+        Should this choice be rejected for any reason, the second
+        recommended choice is SQLite.
+      </para>
+
+      <para>
+        It should be emphaisized that obtained measurements indicate
+        only database performance and they cannot be directly
+        translated to expected leases per second or queries per second
+        performance by an actual server. The DHCP server must do much
+        more than just query the database to properly process client's
+        message. Provided results should be considered as only rough
+        estimates. They can also be used for relative comparisons
+        between backends.
+      </para>
+
+    </section>
+
+    <section>
+      <title>Possible further optimizations</title>
+      <para>
+        For basic measurements the code was compiled with -g -O0
+        flags. For optimized measurements the benchmarking code was
+        compiled with -Ofast (optimize for speed). In both cases, the
+        same backend (MySQL or SQLite) library was used. It may be
+        useful to recompile the libraries (or the whole server in case
+        of MySQL) with -Ofast.
+      </para>
+      <para>
+        There are many MySQL parameters that various sources recommend
+        to improve performance. They were not investigated further.
+      </para>
+      <para>
+        Currently all operations are conducted on one by one
+        basis. Each operation is treated as a separate
         transaction. Grouping X operations together will potentially
-        bring almost X fold increase in synchronous operations.
-        Extension for this benchmark in this regard should be considered.
-        That affects only write operations (insert, update and delete). Read
-        operations (search) are expected to be barely affected.
+        bring almost X fold increase in synchronous operations. Such a
+        feature is present in ISC DHCP4 and is called cache-threshold.
+        Extension for this benchmark in this regard should be
+        considered.  That affects only write operations (insert,
+        update and delete). Read operations (search) are expected to
+        be barely affected.
       </para>
       <para>
         Multi-threaded or multi-process benchmark may be considered in

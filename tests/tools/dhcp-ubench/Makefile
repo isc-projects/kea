@@ -1,5 +1,5 @@
 # Linux switches
-CFLAGS=-g -Ofast -Wall -pedantic -Wextra
+CFLAGS= -Ofast -Wall -pedantic -Wextra
 
 # Mac OS: We don't use pedantic as Mac OS version of MySQL (5.5.24) does use long long (not part of ISO C++)
 #CFLAGS=-g -O0 -Wall -Wextra -I/opt/local/include
