@@ -19,6 +19,7 @@
 #include <stdint.h>
 #include <unistd.h>
 #include <signal.h>
+#include <sys/wait.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 
@@ -464,6 +465,14 @@ TestControl::getTemplateBuffer(const size_t idx) const {
         return (template_buffers_[idx]);
     }
     isc_throw(OutOfRange, "invalid buffer index");
+}
+
+void
+TestControl::handleChild(int) {
+    int status = 0;
+    while (wait3(&status, WNOHANG, NULL) > 0) {
+        // continue
+    }
 }
 
 void
@@ -972,6 +981,12 @@ TestControl::run() {
             }
         }
     }
+
+    // Fork and run command specified with -w<wrapped-command>
+    if (!options.getWrapped().empty()) {
+        runWrapped();
+    }
+
     // Initialize Statistics Manager. Release previous if any.
     initializeStatsMgr();
     for (;;) {
@@ -1028,6 +1043,12 @@ TestControl::run() {
         }
     }
     printStats();
+
+    if (!options.getWrapped().empty()) {
+        const bool do_stop = true;
+        runWrapped(do_stop);
+    }
+
     // Print server id.
     if (testDiags('s') && (first_packet_serverid_.size() > 0)) {
         std::cout << "Server id: " << vector2Hex(first_packet_serverid_) << std::endl;
@@ -1035,6 +1056,23 @@ TestControl::run() {
     // Diagnostics flag 'e' means show exit reason.
     if (testDiags('e')) {
         std::cout << "Interrupted" << std::endl;
+    }
+}
+
+void
+TestControl::runWrapped(bool do_stop /*= false */) const {
+    CommandOptions& options = CommandOptions::instance();
+    if (!options.getWrapped().empty()) {
+        pid_t pid = 0;
+        signal(SIGCHLD, handleChild);
+        pid = fork();
+        if (pid < 0) {
+            isc_throw(Unexpected, "unable to fork");
+        } else if (pid == 0) {
+            execlp(options.getWrapped().c_str(), 
+                   do_stop ? "stop" : "start",
+                   NULL);
+        }
     }
 }
 

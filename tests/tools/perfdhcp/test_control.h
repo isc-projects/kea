@@ -746,6 +746,14 @@ private:
     /// \return number of sent packets.
     uint64_t getSentPacketsNum(const ExchangeType xchg_type) const;
 
+    /// \brief Handle child signal.
+    ///
+    /// Function handles child signal by waiting for
+    /// the process to complete.
+    ///
+    /// \param sig signal (ignored)
+    static void handleChild(int sig);
+
     /// \brief Handle interrupt signal.
     ///
     /// Function sets flag indicating that program has been
@@ -765,6 +773,11 @@ private:
     /// converts it to binary format. Read data is appended
     /// to template_buffers_ vector.
     void readPacketTemplate(const std::string& file_name);
+
+    /// \brief Run wrapped command.
+    ///
+    /// \param do_stop execute wrapped command with "stop" argument.
+    void runWrapped(bool do_stop = false) const;
 
     /// \brief Convert vector in hexadecimal string.
     ///
