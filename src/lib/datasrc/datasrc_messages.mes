@@ -791,7 +791,7 @@ processing of the query.
 The database for SQLite data source was found empty. It is assumed this is the
 first run and it is being initialized with current schema.  It'll still contain
 no data, but it will be ready for use. If this is indeed the first run of
-Bind10, it is to be expected and completely harmless. If you just configured
+BIND 10, it is to be expected and completely harmless. If you just configured
 a data source to point to an existing file and you see this, you may have
 misspelled the file name.
 
