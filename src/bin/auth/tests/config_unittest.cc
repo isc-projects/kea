@@ -143,6 +143,7 @@ TEST_F(AuthConfigTest, listenAddressConfig) {
     EXPECT_EQ(DNSService::SERVER_SYNC_OK, dnss_.getUDPFdParams().at(1).options);
 }
 
+// Try setting tcp receive timeout through config
 TEST_F(AuthConfigTest, tcpRecvTimeoutConfig) {
     configureAuthServer(server, Element::fromJSON(
     "{ \"tcp_recv_timeout\": 123 }"));

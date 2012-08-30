@@ -40,7 +40,7 @@ public:
     DNSServiceImpl(IOService& io_service, SimpleCallback* checkin,
                    DNSLookup* lookup, DNSAnswer* answer) :
             io_service_(io_service), checkin_(checkin), lookup_(lookup),
-            answer_(answer)
+            answer_(answer), tcp_recv_timeout_(1000)
     {}
 
     IOService& io_service_;
