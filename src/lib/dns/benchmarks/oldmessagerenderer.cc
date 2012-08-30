@@ -277,7 +277,9 @@ OldMessageRenderer::writeName(const Name& name, const bool compress) {
 
 void
 OldMessageRenderer::writeName(const LabelSequence&, const bool) {
-    // we don't use this mode for the benchmark
+    // We shouldn't use this version of writeName (and we internally
+    // control it, so we simply assert it here)
+    assert(false);
 }
 
 }
