@@ -34,6 +34,15 @@ MySQL_uBenchmark::MySQL_uBenchmark(const string& hostname, const string& user,
 
 }
 
+void MySQL_uBenchmark::stmt_failure(MYSQL_STMT * stmt, const char* operation) {
+    stringstream tmp;
+    tmp << "Error " << mysql_stmt_errno(stmt) << " during " << operation
+        << ": " << mysql_stmt_error(stmt);
+    throw tmp.str();
+}
+
+
+
 void MySQL_uBenchmark::failure(const char* operation) {
     stringstream tmp;
     tmp << "Error " << mysql_errno(conn_) << " during " << operation
@@ -408,6 +417,7 @@ void MySQL_uBenchmark::searchLease4Test() {
             // 4th parameter: Client-id
             response[3].buffer_type = MYSQL_TYPE_STRING;
             response[3].buffer = &client_id;
+            response[3].buffer_length = sizeof(client_id);
 
             // 5th parameter: valid-lifetime
             response[4].buffer_type = MYSQL_TYPE_LONG;
@@ -444,11 +454,24 @@ void MySQL_uBenchmark::searchLease4Test() {
             }
             int num_rows = 0;
 
-            if (!mysql_stmt_fetch(stmt)) {
+            int result = mysql_stmt_fetch(stmt);
+            switch (result) {
+            case 0: {
                 if (lease_addr != addr) {
                     failure("Returned data is bogus!");
                 }
                 num_rows++;
+                break;
+            }
+            case MYSQL_NO_DATA:
+            {
+                // that's ok. We randomized non-existing address
+                break;
+
+            }
+            default: {
+                stmt_failure(stmt, "RETRIEVE (mysql_stmt_fetch())");
+            }
             }
 
             // we could call mysql_stmt_fetch again to check that there are no
