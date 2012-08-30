@@ -373,7 +373,6 @@ TEST_F(TreeNodeRRsetTest, toWireTruncated) {
 
 void
 checkRdataIterator(const vector<string>& expected, RdataIteratorPtr rit) {
-    
     for (vector<string>::const_iterator it = expected.begin();
          it != expected.end();
          ++it)
