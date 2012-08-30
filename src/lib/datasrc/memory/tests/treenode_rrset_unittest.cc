@@ -70,7 +70,10 @@ protected:
                                    "match.example.com. 3600 IN RRSIG "
                                    "A 5 2 3600 20120814220826 20120715220826 "
                                    "1234 example.com. FAKE")),
-        zone_data_(NULL)
+        zone_data_(NULL), origin_node_(NULL), www_node_(NULL),
+        wildcard_node_(NULL), ns_rdataset_(NULL), dname_rdataset_(NULL),
+        a_rdataset_(NULL), aaaa_rdataset_(NULL), rrsig_only_rdataset_(NULL),
+        wildcard_rdataset_(NULL)
     {}
     void SetUp() {
         // We create some common test data here in SetUp() so it will be
