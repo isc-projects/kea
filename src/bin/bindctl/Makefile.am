@@ -14,7 +14,7 @@ pythondir = $(pyexecdir)/bindctl
 bindctldir = $(pkgdatadir)
 
 CLEANFILES = bindctl bindctl_main.pyc
-MAINTAINERCLEANFILES += $(man_MANS)
+MAINTAINERCLEANFILES = $(man_MANS)
 
 if GENERATE_DOCS
 
