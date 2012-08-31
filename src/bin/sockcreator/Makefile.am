@@ -13,7 +13,7 @@ pkglibexecdir = $(libexecdir)/@PACKAGE@
 CLEANFILES = *.gcno *.gcda
 
 man_MANS = b10-sockcreator.8
-MAINTAINERCLEANFILES += $(man_MANS)
+MAINTAINERCLEANFILES = $(man_MANS)
 EXTRA_DIST = $(man_MANS) b10-sockcreator.xml
 
 if GENERATE_DOCS

@@ -10,7 +10,7 @@ b10_cfgmgrdir = @localstatedir@/@PACKAGE@
 #B10_cfgmgr_DATA = 
 
 man_MANS = b10-cfgmgr.8
-MAINTAINERCLEANFILES += $(man_MANS)
+MAINTAINERCLEANFILES = $(man_MANS)
 EXTRA_DIST = $(man_MANS) b10-cfgmgr.xml
 
 if GENERATE_DOCS

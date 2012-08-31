@@ -14,7 +14,7 @@ CLEANFILES = b10-dbutil b10-dbutil.pyc
 CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/dbutil_messages.py
 CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/dbutil_messages.pyc
 CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/dbutil_messages.pyo
-MAINTAINERCLEANFILES += $(man_MANS)
+MAINTAINERCLEANFILES = $(man_MANS)
 
 if GENERATE_DOCS
 
