@@ -537,9 +537,6 @@ protected:
     /// List of available interfaces
     IfaceCollection ifaces_;
 
-    /// a pointer to a sole instance of this class (a singleton)
-    static IfaceMgr * instance_;
-
     // TODO: Also keep this interface on Iface once interface detection
     // is implemented. We may need it e.g. to close all sockets on
     // specific interface
@@ -579,10 +576,6 @@ protected:
     /// a callback that will be called when data arrives over session_socket_
     SessionCallback session_callback_;
 private:
-
-    /// @brief Creates a single instance of this class (a singleton implementation)
-    static void
-    instanceCreate();
 
     /// @brief Joins IPv6 multicast group on a socket.
     ///

@@ -788,7 +788,7 @@ private:
 
 // return db version
 pair<int, int> create_database(sqlite3* db) {
-    logger.info(DATASRC_SQLITE_SETUP);
+    logger.info(DATASRC_SQLITE_SETUP_OLD_API);
 
     // try to get an exclusive lock. Once that is obtained, do the version
     // check *again*, just in case this process was racing another

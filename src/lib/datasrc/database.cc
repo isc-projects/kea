@@ -157,7 +157,7 @@ public:
         const isc::dns::RRType& type_covered =
             static_cast<isc::dns::rdata::generic::RRSIG*>(
                 sig_rdata.get())->typeCovered();
-        sigs[type_covered].push_back(sig_rdata);
+        sigs_[type_covered].push_back(sig_rdata);
     }
 
     // If the store contains signatures for the type of the given
@@ -165,21 +165,26 @@ public:
     void appendSignatures(isc::dns::RRsetPtr& rrset) const {
         std::map<isc::dns::RRType,
                  std::vector<isc::dns::rdata::RdataPtr> >::const_iterator
-            found = sigs.find(rrset->getType());
-        if (found != sigs.end()) {
+            found = sigs_.find(rrset->getType());
+        if (found != sigs_.end()) {
             BOOST_FOREACH(isc::dns::rdata::RdataPtr sig, found->second) {
                 rrset->addRRsig(sig);
             }
         }
     }
 
+    bool empty() const {
+        return (sigs_.empty());
+    }
+
 private:
-    std::map<isc::dns::RRType, std::vector<isc::dns::rdata::RdataPtr> > sigs;
+    std::map<isc::dns::RRType, std::vector<isc::dns::rdata::RdataPtr> > sigs_;
 };
 }
 
 DatabaseClient::Finder::FoundRRsets
 DatabaseClient::Finder::getRRsets(const string& name, const WantedTypes& types,
+                                  bool sigs,
                                   const string* construct_name, bool any,
                                   DatabaseAccessor::IteratorContextPtr context)
 {
@@ -213,7 +218,7 @@ DatabaseClient::Finder::getRRsets(const string& name, const WantedTypes& types,
         try {
             const RRType cur_type(columns[DatabaseAccessor::TYPE_COLUMN]);
 
-            if (cur_type == RRType::RRSIG()) {
+            if (sigs && (cur_type == RRType::RRSIG())) {
                 // If we get signatures before we get the actual data, we
                 // can't know which ones to keep and which to drop...
                 // So we keep a separate store of any signature that may be
@@ -228,7 +233,7 @@ DatabaseClient::Finder::getRRsets(const string& name, const WantedTypes& types,
             if (types.find(cur_type) != types.end() || any) {
                 // This type is requested, so put it into result
                 const RRTTL cur_ttl(columns[DatabaseAccessor::TTL_COLUMN]);
-                // Ths sigtype column was an optimization for finding the
+                // The sigtype column was an optimization for finding the
                 // relevant RRSIG RRs for a lookup. Currently this column is
                 // not used in this revised datasource implementation. We
                 // should either start using it again, or remove it from use
@@ -276,10 +281,12 @@ DatabaseClient::Finder::getRRsets(const string& name, const WantedTypes& types,
         isc_throw(DataSourceError, "CNAME shares domain " << name <<
                   " with something else");
     }
-    // Add signatures to all found RRsets
-    for (std::map<RRType, RRsetPtr>::iterator i(result.begin());
-         i != result.end(); ++ i) {
-        sig_store.appendSignatures(i->second);
+    if (!sig_store.empty()) {
+        // Add signatures to all found RRsets
+        for (std::map<RRType, RRsetPtr>::iterator i(result.begin());
+             i != result.end(); ++ i) {
+            sig_store.appendSignatures(i->second);
+        }
     }
     if (records_found && any) {
         result[RRType::ANY()] = RRsetPtr();
@@ -448,7 +455,9 @@ DatabaseClient::Finder::findDelegationPoint(const isc::dns::Name& name,
         // Look if there's NS or DNAME at this point of the tree, but ignore
         // the NS RRs at the apex of the zone.
         const FoundRRsets found = getRRsets(superdomain.toText(),
-                                            DELEGATION_TYPES());
+                                            DELEGATION_TYPES(),
+                                            ((options & FIND_DNSSEC) ==
+                                             FIND_DNSSEC));
         if (found.first) {
             // This node contains either NS or DNAME RRs so it does exist.
             const FoundIterator nsi(found.second.find(RRType::NS()));
@@ -581,6 +590,8 @@ DatabaseClient::Finder::findWildcardMatch(
         // RFC 4592 section 4.4).
         // Search for a match.  The types are the same as with original query.
         const FoundRRsets found = getRRsets(wildcard, final_types,
+                                            ((options & FIND_DNSSEC) ==
+                                             FIND_DNSSEC),
                                             &construct_name,
                                             type == RRType::ANY());
         if (found.first) {
@@ -685,7 +696,7 @@ DatabaseClient::Finder::FindDNSSECContext::probe() {
             // such cases).
             const string origin = finder_.getOrigin().toText();
             const FoundRRsets nsec3_found =
-                finder_.getRRsets(origin, NSEC3PARAM_TYPES());
+                finder_.getRRsets(origin, NSEC3PARAM_TYPES(), true);
             const FoundIterator nfi=
                 nsec3_found.second.find(RRType::NSEC3PARAM());
             is_nsec3_ = (nfi != nsec3_found.second.end());
@@ -696,7 +707,7 @@ DatabaseClient::Finder::FindDNSSECContext::probe() {
             // described in Section 10.4 of RFC 5155.
             if (!is_nsec3_) {
                 const FoundRRsets nsec_found =
-                    finder_.getRRsets(origin, NSEC_TYPES());
+                    finder_.getRRsets(origin, NSEC_TYPES(), true);
                 const FoundIterator nfi =
                     nsec_found.second.find(RRType::NSEC());
                 is_nsec_ = (nfi != nsec_found.second.end());
@@ -749,7 +760,7 @@ DatabaseClient::Finder::FindDNSSECContext::getDNSSECRRset(const Name &name,
         const Name& nsec_name =
             covering ? finder_.findPreviousName(name) : name;
         const FoundRRsets found = finder_.getRRsets(nsec_name.toText(),
-                                                    NSEC_TYPES());
+                                                    NSEC_TYPES(), true);
         const FoundIterator nci = found.second.find(RRType::NSEC());
         if (nci != found.second.end()) {
             return (nci->second);
@@ -976,6 +987,8 @@ DatabaseClient::Finder::findInternal(const Name& name, const RRType& type,
     WantedTypes final_types(FINAL_TYPES());
     final_types.insert(type);
     const FoundRRsets found = getRRsets(name.toText(), final_types,
+                                        ((options & FIND_DNSSEC) ==
+                                         FIND_DNSSEC),
                                         NULL, type == RRType::ANY());
     FindDNSSECContext dnssec_ctx(*this, options);
     if (found.first) {
@@ -1009,7 +1022,8 @@ DatabaseClient::Finder::findNSEC3(const Name& name, bool recursive) {
     // Now, we need to get the NSEC3 params from the apex and create the hash
     // creator for it.
     const FoundRRsets nsec3param(getRRsets(getOrigin().toText(),
-                                           NSEC3PARAM_TYPES()));
+                                           NSEC3PARAM_TYPES(),
+                                           true));
     const FoundIterator param(nsec3param.second.find(RRType::NSEC3PARAM()));
     if (!nsec3param.first || param == nsec3param.second.end()) {
         // No NSEC3 params? :-(
@@ -1049,6 +1063,7 @@ DatabaseClient::Finder::findNSEC3(const Name& name, bool recursive) {
         }
 
         const FoundRRsets nsec3(getRRsets(hash + "." + otext, NSEC3_TYPES(),
+                                          true,
                                           NULL, false, context));
 
         if (nsec3.first) {
@@ -1074,7 +1089,8 @@ DatabaseClient::Finder::findNSEC3(const Name& name, bool recursive) {
                 arg(labels).arg(prevHash);
             context = accessor_->getNSEC3Records(prevHash, zone_id_);
             const FoundRRsets prev_nsec3(getRRsets(prevHash + "." + otext,
-                                                   NSEC3_TYPES(), NULL, false,
+                                                   NSEC3_TYPES(), true,
+                                                   NULL, false,
                                                    context));
 
             if (!prev_nsec3.first) {

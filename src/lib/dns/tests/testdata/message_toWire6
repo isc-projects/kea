@@ -2,7 +2,7 @@
 # A simple DNS query message (with a signed response)
 # ID = 0x75c1
 # QR=1 (response), Opcode=0, AA=1, RD=1 (other fields are 0)
-# QDCOUNT=1, ANCOUNT=2, other COUNTS=0
+# QDCOUNT=1, ANCOUNT=4, other COUNTS=0
 # Question: test.example.com. IN A
 # Answer:
 #  test.example.com. 3600 IN A 192.0.2.1

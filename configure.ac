@@ -1166,6 +1166,7 @@ AC_CONFIG_FILES([Makefile
                  src/lib/datasrc/Makefile
                  src/lib/datasrc/memory/Makefile
                  src/lib/datasrc/memory/tests/Makefile
+                 src/lib/datasrc/memory/benchmarks/Makefile
                  src/lib/datasrc/tests/Makefile
                  src/lib/datasrc/tests/testdata/Makefile
                  src/lib/xfr/Makefile

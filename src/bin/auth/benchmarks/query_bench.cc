@@ -14,13 +14,6 @@
 
 #include <config.h>
 
-#include <stdlib.h>
-
-#include <iostream>
-#include <vector>
-
-#include <boost/shared_ptr.hpp>
-
 #include <bench/benchmark.h>
 #include <bench/benchmark_util.h>
 
@@ -37,10 +30,18 @@
 
 #include <auth/auth_srv.h>
 #include <auth/auth_config.h>
+#include <auth/datasrc_configurator.h>
 #include <auth/query.h>
 
 #include <asiodns/asiodns.h>
 #include <asiolink/asiolink.h>
+
+#include <boost/shared_ptr.hpp>
+
+#include <stdlib.h>
+
+#include <iostream>
+#include <vector>
 
 using namespace std;
 using namespace isc;
@@ -124,8 +125,13 @@ public:
                           OutputBuffer& buffer) :
         QueryBenchMark(queries, query_message, buffer)
     {
-        server_->updateConfig(Element::fromJSON("{\"database_file\": \"" +
-                                                string(datasrc_file) + "\"}"));
+        DataSourceConfigurator::testReconfigure(
+            server_.get(),
+            Element::fromJSON("{\"IN\":"
+                              "  [{\"type\": \"sqlite3\","
+                              "    \"params\": {"
+                              "      \"database_file\": \"" +
+                              string(datasrc_file) + "\"}}]}"));
     }
 };
 
@@ -138,14 +144,14 @@ public:
                           OutputBuffer& buffer) :
         QueryBenchMark(queries, query_message, buffer)
     {
-        configureAuthServer(*server_,
-                            Element::fromJSON(
-                                "{\"datasources\": "
-                                " [{\"type\": \"memory\","
-                                "   \"zones\": [{\"origin\": \"" +
-                                string(zone_origin) + "\","
-                                "    \"file\": \"" +
-                                string(zone_file) + "\"}]}]}"));
+        DataSourceConfigurator::testReconfigure(
+            server_.get(),
+            Element::fromJSON("{\"IN\":"
+                              "  [{\"type\": \"MasterFiles\","
+                              "    \"cache-enable\": true, "
+                              "    \"params\": {\"" +
+                              string(zone_origin) + "\": \"" +
+                              string(zone_file) + "\"}}]}"));
     }
 };
 
@@ -187,8 +193,9 @@ enum DataSrcType {
 void
 usage() {
     cerr <<
-        "Usage: query_bench [-n iterations] [-t datasrc_type] [-o origin] "
-        "datasrc_file query_datafile\n"
+        "Usage: query_bench [-d] [-n iterations] [-t datasrc_type] [-o origin]"
+        " datasrc_file query_datafile\n"
+        "  -d Enable debug logging to stdout\n"
         "  -n Number of iterations per test case (default: "
          << ITERATION_DEFAULT << ")\n"
         "  -t Type of data source: sqlite3|memory (default: sqlite3)\n"
@@ -208,7 +215,8 @@ main(int argc, char* argv[]) {
     int iteration = ITERATION_DEFAULT;
     const char* opt_datasrc_type = "sqlite3";
     const char* origin = NULL;
-    while ((ch = getopt(argc, argv, "n:t:o:")) != -1) {
+    bool debug_log = false;
+    while ((ch = getopt(argc, argv, "dn:t:o:")) != -1) {
         switch (ch) {
         case 'n':
             iteration = atoi(optarg);
@@ -218,6 +226,9 @@ main(int argc, char* argv[]) {
             break;
         case 'o':
             origin = optarg;
+            break;
+        case 'd':
+            debug_log = true;
             break;
         case '?':
         default:
@@ -232,9 +243,9 @@ main(int argc, char* argv[]) {
     const char* const datasrc_file = argv[0];
     const char* const query_data_file = argv[1];
 
-    // We disable logging to avoid unwanted noise. (We may eventually want to
-    // make it more configurable)
-    initLogger("query-bench", isc::log::NONE);
+    // By default disable logging to avoid unwanted noise.
+    initLogger("query-bench", debug_log ? isc::log::DEBUG : isc::log::NONE,
+               isc::log::MAX_DEBUG_LEVEL, NULL);
 
     DataSrcType datasrc_type = SQLITE3;
     if (strcmp(opt_datasrc_type, "sqlite3") == 0) {
@@ -251,34 +262,39 @@ main(int argc, char* argv[]) {
         return (1);
     }
 
-    BenchQueries queries;
-    loadQueryData(query_data_file, queries, RRClass::IN());
-    OutputBuffer buffer(4096);
-    Message message(Message::PARSE);
+    try {
+        BenchQueries queries;
+        loadQueryData(query_data_file, queries, RRClass::IN());
+        OutputBuffer buffer(4096);
+        Message message(Message::PARSE);
 
-    cout << "Parameters:" << endl;
-    cout << "  Iterations: " << iteration << endl;
-    cout << "  Data Source: type=" << opt_datasrc_type << ", file=" <<
-        datasrc_file << endl;
-    if (origin != NULL) {
-        cout << "  Origin: " << origin << endl;
-    }
-    cout << "  Query data: file=" << query_data_file << " (" << queries.size()
-         << " queries)" << endl << endl;
+        cout << "Parameters:" << endl;
+        cout << "  Iterations: " << iteration << endl;
+        cout << "  Data Source: type=" << opt_datasrc_type << ", file=" <<
+            datasrc_file << endl;
+        if (origin != NULL) {
+            cout << "  Origin: " << origin << endl;
+        }
+        cout << "  Query data: file=" << query_data_file << " ("
+             << queries.size() << " queries)" << endl << endl;
 
-    switch (datasrc_type) {
-    case SQLITE3:
-        cout << "Benchmark with SQLite3" << endl;
-        BenchMark<Sqlite3QueryBenchMark>(
-            iteration, Sqlite3QueryBenchMark(datasrc_file, queries,
-                                             message, buffer));
-        break;
-    case MEMORY:
-        cout << "Benchmark with In Memory Data Source" << endl;
-        BenchMark<MemoryQueryBenchMark>(
-            iteration, MemoryQueryBenchMark(datasrc_file, origin, queries,
-                                            message, buffer));
-        break;
+        switch (datasrc_type) {
+        case SQLITE3:
+            cout << "Benchmark with SQLite3" << endl;
+            BenchMark<Sqlite3QueryBenchMark>(
+                iteration, Sqlite3QueryBenchMark(datasrc_file, queries,
+                                                 message, buffer));
+            break;
+        case MEMORY:
+            cout << "Benchmark with In Memory Data Source" << endl;
+            BenchMark<MemoryQueryBenchMark>(
+                iteration, MemoryQueryBenchMark(datasrc_file, origin, queries,
+                                                message, buffer));
+            break;
+        }
+    } catch (const std::exception& ex) {
+        cout << "Test unexpectedly failed: " << ex.what() << endl;
+        return (1);
     }
 
     return (0);
