@@ -120,11 +120,15 @@ private:
 /// \brief Configuration for TCP receive timeouts
 class TCPRecvTimeoutConfig : public AuthConfigParser {
 public:
-    TCPRecvTimeoutConfig(AuthSrv& server) : server_(server)
+    TCPRecvTimeoutConfig(AuthSrv& server) : server_(server), timeout_(0)
     {}
 
     virtual void build(ConstElementPtr config) {
-        timeout_ = config->intValue();
+        if (config->intValue() >= 0) {
+            timeout_ = config->intValue();
+        } else {
+            isc_throw(AuthConfigError, "tcp_recv_timeout must be 0 or higher");
+        }
     }
 
     virtual void commit() {
