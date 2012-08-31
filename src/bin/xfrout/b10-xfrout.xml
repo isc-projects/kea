@@ -205,6 +205,62 @@
         </simpara></listitem>
       </varlistentry>
 
+      <varlistentry>
+        <term>open</term>
+        <listitem><simpara>
+         Unix Domain sockets opened successfully
+        </simpara></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>openfail</term>
+        <listitem><simpara>
+         Unix Domain sockets open failures
+        </simpara></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>close</term>
+        <listitem><simpara>
+         Unix Domain sockets closed
+        </simpara></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>bindfail</term>
+        <listitem><simpara>
+         Unix Domain sockets bind failures
+        </simpara></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>acceptfail</term>
+        <listitem><simpara>
+         Unix Domain sockets incoming accept failures
+        </simpara></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>accept</term>
+        <listitem><simpara>
+         Unix Domain sockets incoming connections successfully accepted
+        </simpara></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>senderr</term>
+        <listitem><simpara>
+         Unix Domain sockets send errors
+        </simpara></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>recverr</term>
+        <listitem><simpara>
+         Unix Domain sockets receive errors
+        </simpara></listitem>
+      </varlistentry>
+
     </variablelist>
 
     <para>
