@@ -1,3 +1,12 @@
+472.	[build]		jreed
+	All generated documentation is removed from the git repository.
+	The ./configure --enable-man option is removed. A new option
+	-enable-generate-docs is added; it checks for required
+	documentation building dependencies. Dummy documentation is
+	built and installed if not used. Distributed tarballs will
+	contain the generated documentation.
+	(Trac #1687, git 2d4063b1a354f5048ca9dfb195e8e169650f43d0)
+
 471.    [bug]       vorner
 	Fixed a problem when b10-loadzone tried to tread semicolon in string data
 	as start of comment, which caused invalid data being loaded.
