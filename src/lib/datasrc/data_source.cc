@@ -564,12 +564,12 @@ addToMessage(Query& q, const Message::Section sect, RRsetPtr rrset,
         if (rrset->getType() == RRType::RRSIG() ||
             !m.hasRRset(sect, rrset->getName(), rrset->getClass(),
                         rrset->getType())) {
-            m.addRRset(sect, rrset, false);
+            m.addRRset(sect, rrset);
         }
     } else {
         if (!m.hasRRset(sect, rrset->getName(), rrset->getClass(),
                         rrset->getType())) {
-            m.addRRset(sect, rrset, q.wantDnssec());
+            m.addRRset(sect, rrset);
         }
     }
 }

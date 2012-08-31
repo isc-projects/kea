@@ -100,7 +100,6 @@ protected:
     {
         server.setDNSService(dnss_);
         server.setXfrinSession(&notify_session);
-        server.setStatisticsSession(&statistics_session);
         server.createDDNSForwarder();
     }
 
@@ -180,7 +179,6 @@ protected:
     }
 
     MockDNSService dnss_;
-    MockSession statistics_session;
     MockXfroutClient xfrout;
     MockSocketSessionForwarder ddns_forwarder;
     AuthSrv server;

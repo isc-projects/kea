@@ -20,25 +20,25 @@ CLEANFILES = *.gcno *.gcda datasrc_messages.h datasrc_messages.cc
 CLEANFILES += datasrc_config.h
 CLEANFILES += static.zone
 
-lib_LTLIBRARIES = libdatasrc.la
-libdatasrc_la_SOURCES = data_source.h data_source.cc
-libdatasrc_la_SOURCES += static_datasrc.h static_datasrc.cc
-libdatasrc_la_SOURCES += sqlite3_datasrc.h sqlite3_datasrc.cc
-libdatasrc_la_SOURCES += query.h query.cc
-libdatasrc_la_SOURCES += cache.h cache.cc
-libdatasrc_la_SOURCES += rbnode_rrset.h
-libdatasrc_la_SOURCES += rbtree.h
-libdatasrc_la_SOURCES += zonetable.h zonetable.cc
-libdatasrc_la_SOURCES += zone.h zone_finder_context.cc
-libdatasrc_la_SOURCES += result.h
-libdatasrc_la_SOURCES += logger.h logger.cc
-libdatasrc_la_SOURCES += client.h iterator.h
-libdatasrc_la_SOURCES += database.h database.cc
-libdatasrc_la_SOURCES += factory.h factory.cc
-libdatasrc_la_SOURCES += client_list.h client_list.cc
-libdatasrc_la_SOURCES += memory_datasrc.h memory_datasrc.cc
-nodist_libdatasrc_la_SOURCES = datasrc_messages.h datasrc_messages.cc
-libdatasrc_la_LDFLAGS = -no-undefined -version-info 1:0:1
+lib_LTLIBRARIES = libb10-datasrc.la
+libb10_datasrc_la_SOURCES = data_source.h data_source.cc
+libb10_datasrc_la_SOURCES += static_datasrc.h static_datasrc.cc
+libb10_datasrc_la_SOURCES += sqlite3_datasrc.h sqlite3_datasrc.cc
+libb10_datasrc_la_SOURCES += query.h query.cc
+libb10_datasrc_la_SOURCES += cache.h cache.cc
+libb10_datasrc_la_SOURCES += rbnode_rrset.h
+libb10_datasrc_la_SOURCES += rbtree.h
+libb10_datasrc_la_SOURCES += zonetable.h zonetable.cc
+libb10_datasrc_la_SOURCES += zone.h zone_finder.cc zone_finder_context.cc
+libb10_datasrc_la_SOURCES += result.h
+libb10_datasrc_la_SOURCES += logger.h logger.cc
+libb10_datasrc_la_SOURCES += client.h iterator.h
+libb10_datasrc_la_SOURCES += database.h database.cc
+libb10_datasrc_la_SOURCES += factory.h factory.cc
+libb10_datasrc_la_SOURCES += client_list.h client_list.cc
+libb10_datasrc_la_SOURCES += memory_datasrc.h memory_datasrc.cc
+nodist_libb10_datasrc_la_SOURCES = datasrc_messages.h datasrc_messages.cc
+libb10_datasrc_la_LDFLAGS = -no-undefined -version-info 1:0:1
 
 pkglib_LTLIBRARIES =  sqlite3_ds.la memory_ds.la static_ds.la
 
@@ -46,26 +46,26 @@ sqlite3_ds_la_SOURCES = sqlite3_accessor.h sqlite3_accessor.cc
 sqlite3_ds_la_SOURCES += sqlite3_accessor_link.cc
 sqlite3_ds_la_LDFLAGS = -module -avoid-version
 sqlite3_ds_la_LDFLAGS += -no-undefined -version-info 1:0:0
-sqlite3_ds_la_LIBADD = $(top_builddir)/src/lib/exceptions/libexceptions.la
-sqlite3_ds_la_LIBADD += libdatasrc.la
+sqlite3_ds_la_LIBADD = $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
+sqlite3_ds_la_LIBADD += libb10-datasrc.la
 sqlite3_ds_la_LIBADD += $(SQLITE_LIBS)
 
 memory_ds_la_SOURCES = memory_datasrc_link.cc
 memory_ds_la_LDFLAGS = -module -avoid-version
-memory_ds_la_LIBADD = $(top_builddir)/src/lib/exceptions/libexceptions.la
-memory_ds_la_LIBADD += libdatasrc.la
+memory_ds_la_LIBADD = $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
+memory_ds_la_LIBADD += libb10-datasrc.la
 
 static_ds_la_SOURCES = static_datasrc_link.cc
 static_ds_la_LDFLAGS = -module -avoid-version
-static_ds_la_LIBADD = $(top_builddir)/src/lib/exceptions/libexceptions.la
-static_ds_la_LIBADD += libdatasrc.la
+static_ds_la_LIBADD = $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
+static_ds_la_LIBADD += libb10-datasrc.la
 
-libdatasrc_la_LIBADD = $(top_builddir)/src/lib/exceptions/libexceptions.la
-libdatasrc_la_LIBADD += $(top_builddir)/src/lib/dns/libdns++.la
-libdatasrc_la_LIBADD += $(top_builddir)/src/lib/log/liblog.la
-libdatasrc_la_LIBADD += $(top_builddir)/src/lib/cc/libcc.la
-libdatasrc_la_LIBADD += memory/libdatasrc_memory.la # convenience library
-libdatasrc_la_LIBADD += $(SQLITE_LIBS)
+libb10_datasrc_la_LIBADD = $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
+libb10_datasrc_la_LIBADD += $(top_builddir)/src/lib/dns/libb10-dns++.la
+libb10_datasrc_la_LIBADD += $(top_builddir)/src/lib/log/libb10-log.la
+libb10_datasrc_la_LIBADD += $(top_builddir)/src/lib/cc/libb10-cc.la
+libb10_datasrc_la_LIBADD += memory/libdatasrc_memory.la # convenience library
+libb10_datasrc_la_LIBADD += $(SQLITE_LIBS)
 
 BUILT_SOURCES = datasrc_config.h datasrc_messages.h datasrc_messages.cc
 datasrc_messages.h datasrc_messages.cc: Makefile datasrc_messages.mes

@@ -30,7 +30,6 @@
 
 #include <dns/tests/unittest_util.h>
 
-using isc::UnitTestUtil;
 using namespace std;
 using namespace isc::cc;
 using namespace isc::dns;
@@ -77,11 +76,9 @@ private:
 
 protected:
     AuthCountersTest() : counters() {
-        counters.setStatisticsSession(&statistics_session_);
     }
     ~AuthCountersTest() {
     }
-    MockSession statistics_session_;
     AuthCounters counters;
     // no need to be inherited from the original class here.
     class MockModuleSpec {
@@ -195,25 +192,6 @@ TEST_F(AuthCountersTest, incrementRcodeCounter) {
     }
 }
 
-TEST_F(AuthCountersTest, submitStatisticsWithoutSession) {
-    // Set statistics_session to NULL and call submitStatistics().
-    // Expect to return false.
-    counters.setStatisticsSession(NULL);
-    EXPECT_FALSE(counters.submitStatistics());
-}
-
-TEST_F(AuthCountersTest, submitStatisticsWithException) {
-    // Exception SessionError and SessionTimeout will be thrown
-    // while sending statistics data.
-    // Both expect to return false.
-    statistics_session_.setThrowSessionError(true);
-    EXPECT_FALSE(counters.submitStatistics());
-    statistics_session_.setThrowSessionError(false);
-    statistics_session_.setThrowSessionTimeout(true);
-    EXPECT_FALSE(counters.submitStatistics());
-    statistics_session_.setThrowSessionTimeout(false);
-}
-
 void
 opcodeDataCheck(ConstElementPtr data, const int expected[16]) {
     const char* item_names[] = {
@@ -258,10 +236,9 @@ rcodeDataCheck(ConstElementPtr data, const int expected[17]) {
     ASSERT_EQ(static_cast<const char*>(NULL), item_names[i]);
 }
 
-
-TEST_F(AuthCountersTest, submitStatisticsWithoutValidator) {
-    // Submit statistics data.
-    // Validate if it submits correct data.
+TEST_F(AuthCountersTest, getStatisticsWithoutValidator) {
+    // Get statistics data.
+    // Validate if it answers correct data.
 
     // Counters should be initialized to 0.
     EXPECT_EQ(0, counters.getCounter(AuthCounters::SERVER_UDP_QUERY));
@@ -272,20 +249,8 @@ TEST_F(AuthCountersTest, submitStatisticsWithoutValidator) {
     counters.inc(AuthCounters::SERVER_UDP_QUERY);
     // TCP query counter is set to 1.
     counters.inc(AuthCounters::SERVER_TCP_QUERY);
-    counters.submitStatistics();
+    ConstElementPtr statistics_data = counters.getStatistics();
 
-    // Destination is "Stats".
-    EXPECT_EQ("Stats", statistics_session_.msg_destination);
-    // Command is "set".
-    EXPECT_EQ("set", statistics_session_.sent_msg->get("command")
-                         ->get(0)->stringValue());
-    EXPECT_EQ("Auth", statistics_session_.sent_msg->get("command")
-                         ->get(1)->get("owner")->stringValue());
-    EXPECT_EQ(statistics_session_.sent_msg->get("command")
-              ->get(1)->get("pid")->intValue(), getpid());
-    ConstElementPtr statistics_data = statistics_session_.sent_msg
-                                          ->get("command")->get(1)
-                                          ->get("data");
     // UDP query counter is 2 and TCP query counter is 1.
     EXPECT_EQ(2, statistics_data->get("queries.udp")->intValue());
     EXPECT_EQ(1, statistics_data->get("queries.tcp")->intValue());
@@ -318,61 +283,53 @@ updateRcodeCounters(AuthCounters &counters, const int expected[17]) {
     }
 }
 
-TEST_F(AuthCountersTest, submitStatisticsWithOpcodeCounters) {
+TEST_F(AuthCountersTest, getStatisticsWithOpcodeCounters) {
     // Increment some of the opcode counters.  Then they should appear in the
     // submitted data; others shouldn't
     const int opcode_results[16] = { 1, 2, 3, 0, 4, 5, 0, 0,
                                      0, 0, 0, 0, 0, 0, 0, 0 };
     updateOpcodeCounters(counters, opcode_results);
-    counters.submitStatistics();
-    ConstElementPtr statistics_data = statistics_session_.sent_msg
-        ->get("command")->get(1)->get("data");
+    ConstElementPtr statistics_data = counters.getStatistics();
     opcodeDataCheck(statistics_data, opcode_results);
 }
 
-TEST_F(AuthCountersTest, submitStatisticsWithAllOpcodeCounters) {
+TEST_F(AuthCountersTest, getStatisticsWithAllOpcodeCounters) {
     // Increment all opcode counters.  Then they should appear in the
     // submitted data.
     const int opcode_results[16] = { 1, 1, 1, 1, 1, 1, 1, 1,
                                      1, 1, 1, 1, 1, 1, 1, 1 };
     updateOpcodeCounters(counters, opcode_results);
-    counters.submitStatistics();
-    ConstElementPtr statistics_data = statistics_session_.sent_msg
-        ->get("command")->get(1)->get("data");
+    ConstElementPtr statistics_data = counters.getStatistics();
     opcodeDataCheck(statistics_data, opcode_results);
 }
 
-TEST_F(AuthCountersTest, submitStatisticsWithRcodeCounters) {
+TEST_F(AuthCountersTest, getStatisticsWithRcodeCounters) {
     // Increment some of the rcode counters.  Then they should appear in the
     // submitted data; others shouldn't
     const int rcode_results[17] = { 1, 2, 3, 4, 5, 6, 7, 8, 9,
                                     10, 0, 0, 0, 0, 0, 0, 11 };
     updateRcodeCounters(counters, rcode_results);
-    counters.submitStatistics();
-    ConstElementPtr statistics_data = statistics_session_.sent_msg
-        ->get("command")->get(1)->get("data");
+    ConstElementPtr statistics_data = counters.getStatistics();
     rcodeDataCheck(statistics_data, rcode_results);
 }
 
-TEST_F(AuthCountersTest, submitStatisticsWithAllRcodeCounters) {
+TEST_F(AuthCountersTest, getStatisticsWithAllRcodeCounters) {
     // Increment all rcode counters.  Then they should appear in the
     // submitted data.
     const int rcode_results[17] = { 1, 1, 1, 1, 1, 1, 1, 1, 1,
                                      1, 1, 1, 1, 1, 1, 1, 1 };
     updateOpcodeCounters(counters, rcode_results);
-    counters.submitStatistics();
-    ConstElementPtr statistics_data = statistics_session_.sent_msg
-        ->get("command")->get(1)->get("data");
+    ConstElementPtr statistics_data = counters.getStatistics();
     opcodeDataCheck(statistics_data, rcode_results);
 }
 
-TEST_F(AuthCountersTest, submitStatisticsWithValidator) {
+TEST_F(AuthCountersTest, getStatisticsWithValidator) {
 
     //a validator for the unittest
     AuthCounters::validator_type validator;
     ConstElementPtr el;
 
-    // Submit statistics data with correct statistics validator.
+    // Get statistics data with correct statistics validator.
     validator = boost::bind(
         &AuthCountersTest::MockModuleSpec::validateStatistics,
         &module_spec_, _1, true);
@@ -392,24 +349,14 @@ TEST_F(AuthCountersTest, submitStatisticsWithValidator) {
     // TCP query counter is set to 1.
     counters.inc(AuthCounters::SERVER_TCP_QUERY);
 
-    // checks the value returned by submitStatistics
-    EXPECT_TRUE(counters.submitStatistics());
+    // checks the value returned by getStatistics
+    ConstElementPtr statistics_data = counters.getStatistics();
 
-    // Destination is "Stats".
-    EXPECT_EQ("Stats", statistics_session_.msg_destination);
-    // Command is "set".
-    EXPECT_EQ("set", statistics_session_.sent_msg->get("command")
-                         ->get(0)->stringValue());
-    EXPECT_EQ("Auth", statistics_session_.sent_msg->get("command")
-                         ->get(1)->get("owner")->stringValue());
-    ConstElementPtr statistics_data = statistics_session_.sent_msg
-                                          ->get("command")->get(1)
-                                          ->get("data");
     // UDP query counter is 2 and TCP query counter is 1.
     EXPECT_EQ(2, statistics_data->get("queries.udp")->intValue());
     EXPECT_EQ(1, statistics_data->get("queries.tcp")->intValue());
 
-    // Submit statistics data with incorrect statistics validator.
+    // Get statistics data with incorrect statistics validator.
     validator = boost::bind(
         &AuthCountersTest::MockModuleSpec::validateStatistics,
         &module_spec_, _1, false);
@@ -418,7 +365,7 @@ TEST_F(AuthCountersTest, submitStatisticsWithValidator) {
 
     counters.registerStatisticsValidator(validator);
 
-    // checks the value returned by submitStatistics
-    EXPECT_FALSE(counters.submitStatistics());
+    // checks the value returned by getStatistics
+    EXPECT_FALSE(counters.getStatistics());
 }
 }

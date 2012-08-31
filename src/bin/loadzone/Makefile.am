@@ -27,10 +27,6 @@ b10-loadzone: b10-loadzone.py
 	       -e "s|@@LIBEXECDIR@@|$(pkglibexecdir)|" b10-loadzone.py >$@
 	chmod a+x $@
 
-install-data-local:
-	$(mkinstalldirs) $(DESTDIR)/@localstatedir@/@PACKAGE@
-# TODO: permissions handled later
-
 EXTRA_DIST += tests/normal/README
 EXTRA_DIST += tests/normal/dsset-subzone.example.com
 EXTRA_DIST += tests/normal/example.com

@@ -98,16 +98,27 @@ public:
     /// \c AuthCommandError when it encounters an internal error, such as
     /// semantics error on the command arguments.
     ///
+    /// This method should return the execution result in the form of
+    /// \c ConstElementPtr.  It will be transparently used as the return
+    /// value from the command handler called from the corresponding
+    /// \c CCSession object.  For a successful completion of the command,
+    /// it should suffice to return the return value of
+    /// \c isc::config::createAnswer() with no argument.
+    ///
     /// \param server The \c AuthSrv object on which the command is executed.
     /// \param args Command specific argument.
-    virtual void exec(AuthSrv& server, isc::data::ConstElementPtr args) = 0;
+    /// \return Command execution result.
+    virtual ConstElementPtr exec(AuthSrv& server,
+                                 isc::data::ConstElementPtr args) = 0;
 };
 
 // Handle the "shutdown" command. An optional parameter "pid" is used to
 // see if it is really for our instance.
 class ShutdownCommand : public AuthCommand {
 public:
-    virtual void exec(AuthSrv& server, isc::data::ConstElementPtr args) {
+    virtual ConstElementPtr exec(AuthSrv& server,
+                                 isc::data::ConstElementPtr args)
+    {
         // Is the pid argument provided?
         if (args && args->contains("pid")) {
             // If it is, we check it is the same as our PID
@@ -123,41 +134,47 @@ public:
                 // there are multiple instances of the server running and
                 // another instance is being shut down, we get the message
                 // too, due to the multicast nature of our message bus.
-                return;
+                return (createAnswer());
             }
         }
         LOG_DEBUG(auth_logger, DBG_AUTH_SHUT, AUTH_SHUTDOWN);
         server.stop();
+        return (createAnswer());
     }
 };
 
-// Handle the "sendstats" command.  No argument is assumed.
-class SendStatsCommand : public AuthCommand {
+// Handle the "getstats" command.  The argument is a list.
+class GetStatsCommand : public AuthCommand {
 public:
-    virtual void exec(AuthSrv& server, isc::data::ConstElementPtr) {
-        LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_RECEIVED_SENDSTATS);
-        server.submitStatistics();
+    virtual ConstElementPtr exec(AuthSrv& server, isc::data::ConstElementPtr) {
+        return (createAnswer(0, server.getStatistics()));
     }
 };
 
 class StartDDNSForwarderCommand : public AuthCommand {
 public:
-    virtual void exec(AuthSrv& server, isc::data::ConstElementPtr) {
+    virtual ConstElementPtr exec(AuthSrv& server,
+                                 isc::data::ConstElementPtr) {
         server.createDDNSForwarder();
+        return (createAnswer());
     }
 };
 
 class StopDDNSForwarderCommand : public AuthCommand {
 public:
-    virtual void exec(AuthSrv& server, isc::data::ConstElementPtr) {
+    virtual ConstElementPtr exec(AuthSrv& server,
+                                 isc::data::ConstElementPtr) {
         server.destroyDDNSForwarder();
+        return (createAnswer());
     }
 };
 
 // Handle the "loadzone" command.
 class LoadZoneCommand : public AuthCommand {
 public:
-    virtual void exec(AuthSrv& server, isc::data::ConstElementPtr args) {
+    virtual ConstElementPtr exec(AuthSrv& server,
+                                 isc::data::ConstElementPtr args)
+    {
         if (args == NULL) {
             isc_throw(AuthCommandError, "Null argument");
         }
@@ -185,7 +202,7 @@ public:
                 // Everything worked fine.
                 LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_LOAD_ZONE)
                     .arg(zone_class).arg(origin);
-                return;
+                return (createAnswer());
             case ConfigurableClientList::ZONE_NOT_FOUND:
                 isc_throw(AuthCommandError, "Zone " << origin << "/" <<
                           zone_class << " was not found in any configured "
@@ -202,6 +219,7 @@ public:
                 isc_throw(isc::Unexpected, "Cache disabled in client list of "
                           "class " << zone_class);
         }
+        return (createAnswer());
     }
 };
 
@@ -212,8 +230,8 @@ createAuthCommand(const string& command_id) {
     // (see also createAuthConfigParser())
     if (command_id == "shutdown") {
         return (new ShutdownCommand());
-    } else if (command_id == "sendstats") {
-        return (new SendStatsCommand());
+    } else if (command_id == "getstats") {
+        return (new GetStatsCommand());
     } else if (command_id == "loadzone") {
         return (new LoadZoneCommand());
     } else if (command_id == "start_ddns_forwarder") {
@@ -238,13 +256,11 @@ execAuthServerCommand(AuthSrv& server, const string& command_id,
 {
     LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_RECEIVED_COMMAND).arg(command_id);
     try {
-        scoped_ptr<AuthCommand>(createAuthCommand(command_id))->exec(server,
-                                                                     args);
+        return (scoped_ptr<AuthCommand>(
+                    createAuthCommand(command_id))->exec(server, args));
     } catch (const isc::Exception& ex) {
         LOG_ERROR(auth_logger, AUTH_COMMAND_FAILED).arg(command_id)
                                                    .arg(ex.what());
         return (createAnswer(1, ex.what()));
     }
-
-    return (createAnswer());
 }

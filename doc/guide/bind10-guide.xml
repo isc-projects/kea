@@ -1302,6 +1302,232 @@ TODO
 
   </chapter>
 
+  <chapter id="common">
+    <title>Common configuration elements</title>
+
+    <para>
+      Some things are configured in the same or similar manner across
+      many modules. So we show them here in one place.
+    </para>
+
+    <section id='common-acl'>
+      <title>ACLs</title>
+
+      <para>
+        An ACL, or Access Control List, is a way to describe if a request
+        is allowed or disallowed. The principle is, there's a list of rules.
+        Each rule is a name-value mapping (a dictionary, in the JSON
+        terminology). Each rule must contain exactly one mapping called
+        "action", which describes what should happen if the rule applies.
+        There may be more mappings, calld matches, which describe the
+        conditions under which the rule applies.
+      </para>
+
+      <para>
+        When there's a query, the first rule is examined. If it matches, the
+        action in it is taken. If not, next rule is examined. If there are no
+        more rules to examine, a default action is taken.
+      </para>
+
+      <para>
+        There are three possible "action" values. The "ACCEPT" value means
+        the query is handled. If it is "REJECT", the query is not answered,
+        but a polite error message is sent back (if that makes sense in the
+        context). The "DROP" action acts like a black hole. The query is
+        not answered and no error message is sent.
+      </para>
+
+      <para>
+        If there are multiple matching conditions inside the rule, all of
+        them must be satisfied for the rule to apply. This can be used,
+        for example, to require the query to be signed by a TSIG key and
+        originate from given address.
+      </para>
+
+      <para>
+        This is encoded in form of JSON. Semi-formal description could look
+        something like this. It is described in more details below.
+<!-- FIXME: Is <screen> really the correct one?-->
+        <screen>ACL := [ RULE, RULE, ... ]
+RULE := { "action": "ACCEPT"|"REJECT"|"DROP", MATCH, MATCH, ... }
+RULE_RAW := { MATCH, MATCH, ... }
+MATCH := FROM_MATCH|KEY_MATCH|NOT_MATCH|OR_MATCH|AND_MATCH|...
+FROM_MATCH := "from": [RANGE, RANGE, RANGE, ...] | RANGE
+RANGE := "&lt;ip range&gt;"
+KEY_MATCH := "key": [KEY, KEY, KEY, ...] | KEY
+KEY := "&lt;key name&gt;"
+NOT_MATCH := "NOT": RULE_RAW
+OR_MATCH := "ANY": [ RULE_RAW, RULE_RAW, ... ]
+AND_MATCH := "ALL": [ RULE_RAW, RULE_RAW, ... ]
+</screen>
+      </para>
+
+      <section>
+        <title>Matching properties</title>
+
+        <para>
+          The first thing you can check against is the source address
+          of request. The name is <varname>from</varname> and the value
+          is a string containing either a single IPv4 or IPv6 address,
+          or a range in the usual slash notation (eg. "192.0.2.0/24").
+        </para>
+
+        <para>
+          The other is TSIG key by which the message was signed. The ACL
+          contains only the name (under the name "key"), the key itself
+          must be stored in the global keyring. This property is applicable only
+          to the DNS context.
+<!-- TODO: Section for the keyring and link to it.-->
+        </para>
+
+        <para>
+          More properties to match are planned &mdash; the destination
+          address, ports, matches against the packet content.
+        </para>
+      </section>
+
+      <section>
+        <title>More complicated matches</title>
+
+        <para>
+          From time to time, you need to express something more complex
+          than just a single address or key.
+        </para>
+
+        <para>
+          You can specify a list of values instead of single value. Then
+          the property needs to match at least one of the values listed
+          &mdash; so you can say <quote>"from": ["192.0.2.0/24",
+          "2001:db8::/32"]</quote> to match any address in the ranges
+          set aside for documentation. The keys or any future properties
+          will work in a similar way.
+        </para>
+
+        <note>
+          <simpara>
+	    The list form is currently rejected due to an
+	    implementation bug.  There is a plan to fix it relatively
+	    soon, so the syntax is kept here, but note that it won't
+	    work until the bug is fixed.  To keep track of the status
+	    of the issue, see
+	    <ulink url="http://bind10.isc.org/ticket/2191">Trac #2191</ulink>.
+	    Until then, the value must be a single string.
+          </simpara>
+        </note>
+
+        <para>
+          If that is not enough, you can compose the matching conditions
+          to logical expressions. They are called "ANY", "ALL" and "NOT".
+          The "ANY" and "ALL" ones contain lists of subexpressions &mdash;
+          each subexpression is a similar dictionary, just not containing
+          the "action" element. The "NOT" contains single subexpression.
+          Their function should be obvious &mdash; "NOT" matches if and
+          only if the subexpression does not match. The "ALL" matches exactly
+          when each of the subexpressions matches and "ANY" when at least
+          one matches.
+        </para>
+      </section>
+
+      <section>
+        <title>Examples</title>
+
+        <para>
+          All the examples here is just the JSON representing the ACL,
+          nicely formatted and split across lines. They are out of any
+          surrounding context. This is similar to what you'd get from
+          <command>config show_json</command> called on the entry containing
+          the ACL.
+        </para>
+
+        <para>
+          In the first example, the ACL accepts queries from two known hosts.
+          Each host has an IP addresses (both IPv4 and IPv6) and a TSIG
+          key. Other queries are politely rejected. The last entry in the list
+          has no conditions &mdash; making it match any query.
+
+          <screen>[
+  {
+    "from": ["192.0.2.1", "2001:db8::1"],
+    "key": "first.key",
+    "action": "ACCEPT"
+  },
+  {
+    "from": ["192.0.2.2", "2001:db8::2"],
+    "key": "second.key",
+    "action": "ACCEPT"
+  },
+  {
+    "action": "REJECT"
+  }
+]</screen>
+        </para>
+
+        <para>
+          Now we show two ways to accept only the queries from private ranges.
+          This is the same as rejecting anything that is outside.
+
+          <screen>[
+  {
+    "from": [
+      "10.0.0.0/8",
+      "172.16.0.0/12",
+      "192.168.0.0/16",
+      "fc00::/7"
+    ],
+    "action": "ACCEPT"
+  },
+  {
+    "action": "REJECT"
+  }
+]</screen>
+
+          <screen>[
+  {
+    "NOT": {
+       "ANY": [
+         {"from": "10.0.0.0/8"},
+         {"from": "172.16.0.0/12"},
+         {"from": "192.168.0.0/16"},
+         {"from": "fc00::/7"}
+       ]
+    },
+    "action": "REJECT"
+  },
+  {
+    "action": "ACCEPT"
+  }
+]</screen>
+        </para>
+      </section>
+
+      <section>
+        <title>Interaction with <command>bindctl</command></title>
+
+        <para>
+          Currently, <command>bindctl</command> has hard time coping with
+          the variable nature of the ACL syntax. This technical limitation
+          makes it impossible to edit parts of the entries. You need to
+          set the whole entry at once, providing the whole JSON value.
+        </para>
+
+        <para>
+          This limitation is planned to be solved soon at least partially.
+        </para>
+
+        <para>
+          You'd do something like this to create the second example.
+          Note that the whole JSON must be on a single line.
+
+          <screen>&gt; <userinput>config add somewhere/acl</userinput>
+&gt; <userinput>config set somewhere/acl[0] { "from": [ "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "fc00::/7" ], "action": "ACCEPT" }</userinput>
+&gt; <userinput>config add somewhere/acl</userinput>
+&gt; <userinput>config set somewhere/acl[1] { "action": "REJECT" }</userinput>
+&gt; <userinput>config commit</userinput></screen>
+        </para>
+      </section>
+    </section>
+  </chapter>
+
   <chapter id="authserver">
     <title>Authoritative Server</title>
 
@@ -1407,21 +1633,6 @@ can use various data source backends.
               </simpara>
             </listitem>
           </varlistentry>
-
-          <varlistentry>
-            <term>statistics-interval</term>
-            <listitem>
-              <simpara>
-      <varname>statistics-interval</varname> is the timer interval
-      in seconds for <command>b10-auth</command> to share its
-      statistics information to
-      <citerefentry><refentrytitle>b10-stats</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
-      Statistics updates can be disabled by setting this to 0.
-      The default is 60.
-              </simpara>
-            </listitem>
-          </varlistentry>
-
         </variablelist>
 
       </para>
@@ -1454,13 +1665,14 @@ can use various data source backends.
           </varlistentry>
 
           <varlistentry>
-            <term>sendstats</term>
+            <term>getstats</term>
             <listitem>
               <simpara>
-      <command>sendstats</command> tells <command>b10-auth</command>
+      <command>getstats</command> requests <command>b10-auth</command>
       to send its statistics data to
-      <citerefentry><refentrytitle>b10-stats</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-      immediately.
+      <citerefentry><refentrytitle>b10-stats</refentrytitle>
+      <manvolnum>8</manvolnum></citerefentry>
+      as a response of the command.
               </simpara>
             </listitem>
           </varlistentry>
@@ -1485,133 +1697,164 @@ can use various data source backends.
 
     </section>
 
-    <section>
+    <section id='datasrc'>
       <title>Data Source Backends</title>
 
+      <para>
+        Bind 10 has the concept of data sources. A data source is a place
+        where authoritative zone data reside and where they can be served
+        from. This can be a master file, a database or something completely
+        different.
+      </para>
+
+      <para>
+        Once a query arrives, <command>b10-auth</command> goes through a
+        configured list of data sources and finds the one containing a best
+        matching zone. From the equally good ones, the first one is taken.
+        This data source is then used to answer the query.
+      </para>
+
       <note><para>
-        For the development prototype release, <command>b10-auth</command>
-        supports a SQLite3 data source backend and in-memory data source
-        backend.
+        In the development prototype release, <command>b10-auth</command>
+        can serve data from a SQLite3 data source backend and from master
+        files.
         Upcoming versions will be able to use multiple different
         data sources, such as MySQL and Berkeley DB.
       </para></note>
 
-
       <para>
-        By default, the SQLite3 backend uses the data file located at
+        The configuration is located in data_sources/classes. Each item there
+        represents one RR class and a list used to answer queries for that
+        class. The default contains two classes. The CH class contains a static
+        data source &mdash; one that serves things like
+        <quote>AUTHORS.BIND.</quote>. The IN class contains single SQLite3
+        data source with database file located at
         <filename>/usr/local/var/bind10-devel/zone.sqlite3</filename>.
-        (The full path is what was defined at build configure time for
-        <option>--localstatedir</option>.
-        The default is <filename>/usr/local/var/</filename>.)
-	This data file location may be changed by defining the
-	<quote>database_file</quote> configuration.
       </para>
 
-      <section id="in-memory-datasource">
-	<title>In-memory Data Source</title>
+      <para>
+        Each data source has several options. The first one is
+        <varname>type</varname>, which specifies the type of data source to
+        use. Valid types include the ones listed below, but bind10 uses
+        dynamically loaded modules for them, so there may be more in your
+        case. This option is mandatory.
+      </para>
 
-	<para>
-<!--	  How to configure it. -->
-	  The following commands to <command>bindctl</command>
-	  provide an example of configuring an in-memory data
-	  source containing the <quote>example.com</quote> zone
-	  with the zone file named <quote>example.com.zone</quote>:
+      <para>
+        Another option is <varname>params</varname>. This option is type
+        specific; it holds different data depending on the type
+        above. Also, depending on the type, it could be possible to omit it.
+      </para>
 
-<!--
-	  <screen>&gt; <userinput> config set Auth/datasources/ [{"type": "memory", "zones": [{"origin": "example.com", "file": "example.com.zone"}]}]</userinput></screen>
--->
+      <para>
+        There are two options related to the so-called cache. If you enable
+        cache, zone data from the data source are loaded into memory.
+        Then, when answering a query, <command>b10-auth</command> looks
+        into the memory only instead of the data source, which speeds
+        answering up. The first option is <varname>cache-enable</varname>,
+        a boolean value turning the cache on and off (off is the default).
+        The second one, <varname>cache-zones</varname>, is a list of zone
+        origins to load into in-memory. Remember that zones in the data source
+        not listed here will not be loaded and will not be available at all.
+      </para>
 
-          <screen>&gt; <userinput>config add Auth/datasources</userinput>
-&gt; <userinput>config set Auth/datasources[0]/type "<option>memory</option>"</userinput>
-&gt; <userinput>config add Auth/datasources[0]/zones</userinput>
-&gt; <userinput>config set Auth/datasources[0]/zones[0]/origin "<option>example.com</option>"</userinput>
-&gt; <userinput>config set Auth/datasources[0]/zones[0]/file "<option>example.com.zone</option>"</userinput>
-&gt; <userinput>config commit</userinput></screen>
-
-	  The authoritative server will begin serving it immediately
-	  after the zone data is loaded from the master text file.
-	</para>
-
-      </section>
-
-      <section id="in-memory-datasource-with-sqlite3-backend">
-	<title>In-memory Data Source with SQLite3 Backend</title>
-
-	<para>
-<!--	  How to configure it. -->
-	  The following commands to <command>bindctl</command>
-	  provide an example of configuring an in-memory data
-	  source containing the <quote>example.org</quote> zone
-	  with a SQLite3 backend file named <quote>example.org.sqlite3</quote>:
-
-<!--
-	  <screen>&gt; <userinput> config set Auth/datasources/ [{"type": "memory", "zones": [{"origin": "example.org", "file": "example.org.sqlite3", "filetype": "sqlite3"}]}]</userinput></screen>
--->
-
-          <screen>&gt; <userinput>config add Auth/datasources</userinput>
-&gt; <userinput>config set Auth/datasources[1]/type "<option>memory</option>"</userinput>
-&gt; <userinput>config add Auth/datasources[1]/zones</userinput>
-&gt; <userinput>config set Auth/datasources[1]/zones[0]/origin "<option>example.org</option>"</userinput>
-&gt; <userinput>config set Auth/datasources[1]/zones[0]/file "<option>example.org.sqlite3</option>"</userinput>
-&gt; <userinput>config set Auth/datasources[1]/zones[0]/filetype "<option>sqlite3</option>"</userinput>
-&gt; <userinput>config commit</userinput></screen>
-
-	  The authoritative server will begin serving it immediately
-	  after the zone data is loaded from the database file.
-	</para>
-
-      </section>
-
-      <section id="in-memory-datasource-loading">
-	<title>Reloading an In-memory Data Source</title>
-
-	<para>
-	  Use the <command>Auth loadzone</command> command in
-	  <command>bindctl</command> to reload a changed master
-	  file into memory; for example:
-
-	  <screen>&gt; <userinput>Auth loadzone origin="example.com"</userinput>
-</screen>
-
-	</para>
-
-<!--
+      <section id='datasource-types'>
+        <title>Data source types</title>
         <para>
-          The <varname>file</varname> may be an absolute path to the
-          master zone file or it is relative to the directory BIND 10 is
-          started from.
-	</para>
--->
-
-      </section>
-      <section id="in-memory-datasource-disabling">
-	<title>Disabling In-memory Data Sources</title>
+          As mentioned, the type used by default is <quote>sqlite3</quote>.
+          It has single configuration option inside <varname>params</varname>
+          &mdash; <varname>database_file</varname>, which contains the path
+          to the sqlite3 file containing the data.
+        </para>
 
         <para>
-	By default, the memory data source is disabled; it must be
-	configured explicitly.  To disable all the in-memory zones,
-	specify a null list for <varname>Auth/datasources</varname>:
-
-<!-- TODO: this assumes that Auth/datasources is for memory only -->
-
-	  <screen>&gt; <userinput>config set Auth/datasources/ []</userinput>
-&gt; <userinput>config commit</userinput></screen>
-	</para>
-
-	<para>
-          The following example stops serving a specific zone:
-
-	  <screen>&gt; <userinput>config remove Auth/datasources[<option>0</option>]/zones[<option>0</option>]</userinput>
-&gt; <userinput>config commit</userinput></screen>
-
-	  (Replace the list number(s) in
-	  <varname>datasources[<replaceable>0</replaceable>]</varname>
-	  and/or <varname>zones[<replaceable>0</replaceable>]</varname>
-	  for the relevant zone as needed.)
-
-	</para>
-
+          Another type is called <quote>MasterFiles</quote>. This one is
+          slightly special. The data are stored in RFC1034 master files.
+          Because answering directly from them would be impractical,
+          this type mandates the cache to be enabled. Also, the list of
+          zones (<varname>cache-zones</varname>) should be omitted. The
+          <varname>params</varname> is a dictionary mapping from zone
+          origins to the files they reside in.
+        </para>
       </section>
+
+      <section id='datasrc-examples'>
+        <title>Examples</title>
+        <para>
+          As this is one of the more complex configurations of Bind10,
+          we show some examples. They all assume they start with default
+          configuration.
+        </para>
+
+        <para>
+          First, let's disable the static data source
+          (<quote>VERSION.BIND</quote> and friends). As it is the only
+          data source in the CH class, we can remove the whole class.
+
+          <screen>&gt; <userinput>config remove data_sources/classes CH</userinput>
+&gt; <userinput>config commit</userinput></screen>
+        </para>
+
+        <para>
+          Another one, let's say our default data source contains zones
+          <quote>example.org.</quote> and <quote>example.net.</quote>.
+          We want them to be served from memory to make the answering
+          faster.
+
+          <screen>&gt; <userinput>config set data_sources/classes/IN[0]/cache-enable true</userinput>
+&gt; <userinput>config add data_sources/classes/IN[0]/cache-zones example.org.</userinput>
+&gt; <userinput>config add data_sources/classes/IN[0]/cache-zones example.net.</userinput>
+&gt; <userinput>config commit</userinput></screen>
+
+          Now every time the zone in the data source is changed by the
+          operator, Bind10 needs to be told to reload it, by
+          <screen>&gt; <userinput>Auth loadzone example.org</userinput></screen>
+          You don't need to do this when the zone is modified by
+          XfrIn, it does so automatically.
+        </para>
+
+        <para>
+          Now, the last example is when there are master files we want to
+          serve in addition to whatever is inside the sqlite3 database.
+
+          <screen>&gt; <userinput>config add data_sources/classes/IN</userinput>
+&gt; <userinput>config set data_sources/classes/IN[1]/type MasterFiles</userinput>
+&gt; <userinput>config set data_sources/classes/IN[1]/cache-enable true</userinput>
+&gt; <userinput>config set data_sources/classes/IN[1]/params { "example.org": "/path/to/example.org", "example.com": "/path/to/example.com" }</userinput>
+&gt; <userinput>config commit</userinput></screen>
+
+          Initially, a map value has to be set, but this value may be an
+          empty map. After that, key/value pairs can be added with 'config
+          add' and keys can be removed with 'config remove'. The initial
+          value may be an empty map, but it has to be set before zones are
+          added or removed.
+
+          <screen>
+&gt; <userinput>config set data_sources/classes/IN[1]/params {}</userinput>
+&gt; <userinput>config add data_sources/classes/IN[1]/params another.example.org /path/to/another.example.org</userinput>
+&gt; <userinput>config add data_sources/classes/IN[1]/params another.example.com /path/to/another.example.com</userinput>
+&gt; <userinput>config remove data_sources/classes/IN[1]/params another.example.org</userinput>
+          </screen>
+
+          <command>bindctl</command>. To reload a zone, you the same command
+          as above.
+        </para>
+      </section>
+
+      <note>
+      <para>
+        There's also <varname>Auth/database_file</varname> configuration
+        variable, pointing to a sqlite3 database file. This is no longer
+        used by <command>b10-auth</command>, but it is left in place for
+        now, since other modules use it. Once <command>b10-xfrin</command>,
+        <command>b10-xfrout</command> and <command>b10-ddns</command>
+        are ported to the new configuration, this will disappear. But for
+        now, make sure that if you use any of these modules, the new
+        and old configuration correspond. The defaults are consistent, so
+        unless you tweaked either the new or the old configuration, you're
+        good.
+      </para>
+      </note>
 
     </section>
 
@@ -1854,7 +2097,7 @@ http://bind10.isc.org/wiki/ScalableZoneLoadDesign#a7.2UpdatingaZone
 	The administrator doesn't have to do anything for
 	<command>b10-auth</command> to serve the new version of the
 	zone, except for the configuration such as the one described in
-	<xref linkend="in-memory-datasource-with-sqlite3-backend" />.
+	<xref linkend="datasrc" />.
       </para>
     </section>
 
@@ -1883,37 +2126,17 @@ http://bind10.isc.org/wiki/ScalableZoneLoadDesign#a7.2UpdatingaZone
       can be used to control accessibility of the outbound zone
       transfer service.
       By default, <command>b10-xfrout</command> allows any clients to
-      perform zone transfers for any zones:
+      perform zone transfers for any zones.
     </para>
 
       <screen>&gt; <userinput>config show Xfrout/transfer_acl</userinput>
 Xfrout/transfer_acl[0]	{"action": "ACCEPT"}	any	(default)</screen>
 
     <para>
-      You can change this to, for example, rejecting all transfer
-      requests by default while allowing requests for the transfer
-      of zone "example.com" from 192.0.2.1 and 2001:db8::1 as follows:
-    </para>
-
-      <screen>&gt; <userinput>config set Xfrout/transfer_acl[0] {"action": "REJECT"}</userinput>
-&gt; <userinput>config add Xfrout/zone_config</userinput>
-&gt; <userinput>config set Xfrout/zone_config[0]/origin "example.com"</userinput>
-&gt; <userinput>config set Xfrout/zone_config[0]/transfer_acl [{"action": "ACCEPT", "from": "192.0.2.1"},</userinput>
-<userinput>                                                 {"action": "ACCEPT", "from": "2001:db8::1"}]</userinput>
-&gt; <userinput>config commit</userinput></screen>
-
-    <note><simpara>
-        In the above example the lines
-        for <option>transfer_acl</option> were divided for
-        readability.  In the actual input it must be in a single line.
-    </simpara></note>
-
-    <para>
       If you want to require TSIG in access control, a system wide TSIG
       "key ring" must be configured.
-      For example, to change the previous example to allowing requests
-      from 192.0.2.1 signed by a TSIG with a key name of
-      "key.example", you'll need to do this:
+      In this example, we allow client matching both the IP address
+      and key.
     </para>
 
     <screen>&gt; <userinput>config set tsig_keys/keys ["key.example:&lt;base64-key&gt;"]</userinput>
@@ -1923,6 +2146,11 @@ Xfrout/transfer_acl[0]	{"action": "ACCEPT"}	any	(default)</screen>
     <para>Both <command>b10-xfrout</command> and <command>b10-auth</command>
       will use the system wide keyring to check
       TSIGs in the incoming messages and to sign responses.</para>
+
+    <para>
+      For further details on ACL configuration, see
+      <xref linkend="common-acl" />.
+    </para>
 
     <note><simpara>
         The way to specify zone specific configuration (ACLs, etc) is
@@ -1965,11 +2193,11 @@ what is XfroutClient xfr_client??
       notify <command>b10-xfrout</command> so that other secondary
       servers will be notified via the DNS NOTIFY protocol.
       In addition, if <command>b10-auth</command> serves the updated
-      zone from its in-memory cache (as described in
-      <xref linkend="in-memory-datasource-with-sqlite3-backend" />),
+      zone (as described in
+      <xref linkend="datasrc" />),
       <command>b10-ddns</command> will also
       notify <command>b10-auth</command> so that <command>b10-auth</command>
-      will re-cache the updated zone content.
+      will re-cache the updated zone content if necessary.
     </para>
 
     <para>
@@ -2130,29 +2358,7 @@ what is XfroutClient xfr_client??
       </para>
 
       <para>
-        Multiple rules can be specified in the ACL, and an ACL rule
-        can consist of multiple constraints, such as a combination of
-        IP address and TSIG.
-        The following configuration sequence will add a new rule to
-        the ACL created in the above example.  This additional rule
-	allows update requests sent from a client
-        using TSIG key name of "key.example" (different from the
-        key used in the previous example) and has an IPv6 address of ::1.
-      <screen>
-&gt; <userinput>config add DDNS/zones[0]/update_acl {"action": "ACCEPT", "from": "::1", "key": "key.example"}</userinput>
-&gt; <userinput>config show DDNS/zones[0]/update_acl</userinput>
-DDNS/zones[0]/update_acl[0]     {"action": "ACCEPT", "key": "key.example.org"} any (modified)
-DDNS/zones[0]/update_acl[1]     {"action": "ACCEPT", "from": "::1", "key": "key.example"} any (modified)
-&gt; <userinput>config commit</userinput>
-</screen>
-      (Note the "add" in the first line.  Before this sequence, we
-      have had only entry in <varname>zones[0]/update_acl</varname>.
-      The <command>add</command> command with a value (rule) adds
-      a new entry and sets it to the given rule.
-
-      Due to a limitation of the current implementation, it doesn't
-      work if you first try to just add a new entry and then set it to
-      a given rule.)
+        Full description of ACLs can be found in <xref linkend="common-acl" />.
       </para>
 
       <note><simpara>
@@ -2166,21 +2372,6 @@ DDNS/zones[0]/update_acl[1]     {"action": "ACCEPT", "from": "::1", "key": "key.
           its consequence, any update ACL rule that allows updates
           should have a TSIG key in its constraints.
       </simpara></note>
-
-      <para>
-	The ACL rules will be checked in the listed order, and the
-	first matching one will apply.
-	If none of the rules matches, the default rule will apply,
-	which is rejecting any requests in the case of
-	<command>b10-ddns</command>.
-      </para>
-<!-- TODO: what are the other defaults? -->
-
-      <para>
-	Other actions than "ACCEPT", namely "REJECT" and "DROP", can be
-	used, too.
-	See <xref linkend="resolverserver"/> about their effects.
-      </para>
 
       <para>
         Currently update ACL can only control updates per zone basis;
@@ -2321,58 +2512,31 @@ DDNS/zones[0]/update_acl[1]     {"action": "ACCEPT", "from": "::1", "key": "key.
         DNS queries from the localhost (127.0.0.1 and ::1).
         The <option>Resolver/query_acl</option> configuration may
         be used to reject, drop, or allow specific IPs or networks.
-        This configuration list is first match.
+        See <xref linkend="common-acl" />.
       </para>
 
       <para>
-        The configuration's <option>action</option> item may be
-        set to <quote>ACCEPT</quote> to allow the incoming query,
-        <quote>REJECT</quote> to respond with a DNS REFUSED return
-        code, or <quote>DROP</quote> to ignore the query without
-        any response (such as a blackhole).  For more information,
-        see the respective debugging messages:  <ulink
-        url="bind10-messages.html#RESOLVER_QUERY_ACCEPTED">RESOLVER_QUERY_ACCEPTED</ulink>,
-        <ulink
-        url="bind10-messages.html#RESOLVER_QUERY_REJECTED">RESOLVER_QUERY_REJECTED</ulink>,
-        and <ulink
-url="bind10-messages.html#RESOLVER_QUERY_DROPPED">RESOLVER_QUERY_DROPPED</ulink>.
+	The following session is an example of extending the ACL to also
+	allow queries from 192.0.2.0/24:
+        <screen>
+> <userinput>config show Resolver/query_acl</userinput>
+Resolver/query_acl[0]   {"action": "ACCEPT", "from": "127.0.0.1"}   any (default)
+Resolver/query_acl[1]   {"action": "ACCEPT", "from": "::1"} any (default)
+> <userinput>config add Resolver/query_acl</userinput>
+> <userinput>config set Resolver/query_acl[2] {"action": "ACCEPT", "from": "192.0.2.0/24"}</userinput>
+> <userinput>config add Resolver/query_acl</userinput>
+> <userinput>config show Resolver/query_acl</userinput>
+Resolver/query_acl[0]   {"action": "ACCEPT", "from": "127.0.0.1"}   any (modified)
+Resolver/query_acl[1]   {"action": "ACCEPT", "from": "::1"} any (modified)
+Resolver/query_acl[2]   {"action": "ACCEPT", "from": "192.0.2.0/24"}  any (modified)
+Resolver/query_acl[3]   {"action": "REJECT"}    any (modified)
+> <userinput>config commit</userinput></screen>
+	Note that we didn't set the value of the last final rule
+	(query_acl[3]) -- in the case of resolver, rejecting all queries is
+	the default value of a new rule.  In fact, this rule can even be
+	omitted completely, as the default, when a query falls off the list,
+	is rejection.
       </para>
-
-      <para>
-        The required configuration's <option>from</option> item is set
-        to an IPv4 or IPv6 address, addresses with an network mask, or to
-        the special lowercase keywords <quote>any6</quote> (for
-        any IPv6 address) or <quote>any4</quote> (for any IPv4
-        address).
-      </para>
-
-<!-- TODO:
-/0 is for any address in that address family
-does that need any address too?
-
-TODO: tsig
--->
-
-      <para>
-        For example to allow the <replaceable>192.168.1.0/24</replaceable>
-        network to use your recursive name server, at the
-        <command>bindctl</command> prompt run:
-      </para>
-
-      <screen>
-&gt; <userinput>config add Resolver/query_acl</userinput>
-&gt; <userinput>config set Resolver/query_acl[<replaceable>2</replaceable>]/action "ACCEPT"</userinput>
-&gt; <userinput>config set Resolver/query_acl[<replaceable>2</replaceable>]/from "<replaceable>192.168.1.0/24</replaceable>"</userinput>
-&gt; <userinput>config commit</userinput>
-</screen>
-
-     <simpara>(Replace the <quote><replaceable>2</replaceable></quote>
-       as needed; run <quote><userinput>config show
-       Resolver/query_acl</userinput></quote> if needed.)</simpara>
-
-<!-- TODO: check this -->
-      <note><simpara>This prototype access control configuration
-      syntax may be changed.</simpara></note>
 
     </section>
 
@@ -2479,7 +2643,7 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
 &gt; <userinput>config commit</userinput></screen></para>
 
       <para>
-        At start, the server will detect available network interfaces
+        During start-up the server will detect available network interfaces
         and will attempt to open UDP sockets on all interfaces that
         are up, running, are not loopback, and have IPv4 address
         assigned.
@@ -2489,17 +2653,8 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
         will respond to them with OFFER and ACK, respectively.
 
         Since the DHCPv4 server opens privileged ports, it requires root
-        access. Make sure you run this daemon as root.</para>
-
-        <note>
-          <para>
-            Integration with <command>bind10</command> is
-            planned. Ultimately, <command>b10-dhcp4</command> will not
-            be started directly, but rather via
-            <command>bind10</command>. Please be aware of this planned
-            change.
-          </para>
-        </note>
+        access. Make sure you run this daemon as root.
+      </para>
 
     </section>
 
@@ -2548,7 +2703,7 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
     </section>
 
     <section id="dhcp4-limit">
-      <title>DHCPv4 Server Limitations</title> 
+      <title>DHCPv4 Server Limitations</title>
       <para>These are the current limitations of the DHCPv4 server
       software. Most of them are reflections of the early stage of
       development and should be treated as <quote>not implemented
@@ -2664,22 +2819,25 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
       </para>
 
       <para>
-        The DHCPv6 server is implemented as <command>b10-dhcp6</command>
-        daemon. As it is not configurable yet, it is fully autonomous,
-        that is it does not interact with <command>b10-cfgmgr</command>.
-        To start DHCPv6 server, simply input:
+        <command>b10-dhcp6</command> is a BIND10 component and is being
+        run under BIND10 framework. To add a DHCPv6 process to the set of running
+        BIND10 services, you can use following commands in <command>bindctl</command>:
+        <screen>&gt; <userinput>config add Boss/components b10-dhcp6</userinput>
+&gt; <userinput>config set Boss/components/b10-dhcp6/kind dispensable</userinput>
+&gt; <userinput>config commit</userinput></screen>
+      </para>
 
-        <screen>
-#<userinput>cd src/bin/dhcp6</userinput>
-#<userinput>./b10-dhcp6</userinput>
-</screen>
+       <para>
+         To shutdown running <command>b10-dhcp6</command>, please use the
+         following command:
+         <screen>&gt; <userinput>Dhcp6 shutdown</userinput></screen>
+         or
+         <screen>&gt; <userinput>config remove Boss/components b10-dhcp6</userinput>
+&gt; <userinput>config commit</userinput></screen>
+       </para>
 
-        Depending on your installation, <command>b10-dhcp6</command>
-        binary may reside in src/bin/dhcp6 in your source code
-        directory, in /usr/local/bin/b10-dhcp6 or other directory
-        you specified during compilation.
-
-        At start, server will detect available network interfaces
+      <para>
+        During start-up the server will detect available network interfaces
         and will attempt to open UDP sockets on all interfaces that
         are up, running, are not loopback, are multicast-capable, and
         have IPv6 address assigned.
@@ -2691,16 +2849,6 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
         Since the DHCPv6 server opens privileged ports, it requires root
         access. Make sure you run this daemon as root.
       </para>
-
-        <note>
-          <para>
-            Integration with <command>bind10</command> is
-            planned. Ultimately, <command>b10-dhcp6</command> will not
-            be started directly, but rather via
-            <command>bind10</command>. Please be aware of this planned
-            change.
-          </para>
-        </note>
 
     </section>
 
@@ -2715,7 +2863,7 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
       <para>
         At this stage of development, the only way to alter server
         configuration is to tweak its source code. To do so, please
-        edit src/bin/dhcp6/dhcp6_srv.cc file and modify following
+        edit src/bin/dhcp6/dhcp6_srv.cc file, modify the following
         parameters and recompile:
         <screen>
 const std::string HARDCODED_LEASE = "2001:db8:1::1234:abcd";
@@ -2865,9 +3013,8 @@ const std::string HARDCODED_DNS_SERVER = "2001:db8:1::1";</screen>
     <para>
 
        This stats daemon provides commands to identify if it is
-       running, show specified or all statistics data, show specified
-       or all statistics data schema, and set specified statistics
-       data.
+       running, show specified or all statistics data, and show specified
+       or all statistics data schema.
 
        For example, using <command>bindctl</command>:
 

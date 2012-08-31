@@ -420,6 +420,15 @@ public:
     /// \return Pointer to the associated RRSIG RRset or null if there is none.
     virtual RRsetPtr getRRsig() const = 0;
 
+    /// \brief Returns the number of \c RRSIG records associated with
+    /// the \c RRset.
+    ///
+    /// Note that an \c RRset with no RRSIG records may exist, so this
+    /// method may return 0.
+    ///
+    /// \return The number of \c RRSIG records associated.
+    virtual unsigned int getRRsigDataCount() const = 0;
+
     /// \brief Adds RRSIG RRset RRs to the associated RRSIG RRset
     ///
     /// Adds the (assumed) RRSIG rdata the RRSIG RRset associated with this
@@ -764,6 +773,15 @@ public:
         return (RRsetPtr());
     }
 
+    /// \brief Returns the number of \c RRSIG records associated with
+    /// the \c RRset.
+    ///
+    /// \return Always returns 0. Associated RRSIG RRsets are not
+    ///         supported in this class.
+    virtual unsigned int getRRsigDataCount() const {
+        return (0);
+    }
+
     virtual void addRRsig(const rdata::ConstRdataPtr&) {
         isc_throw(NotImplemented,
                   "BasicRRset does not implement the addRRsig() method");
@@ -809,6 +827,17 @@ public:
           const RRType& rrtype, const RRTTL& ttl);
 
     virtual ~RRset();
+
+    /// \brief Render the RRset in the wire format with name compression and
+    /// truncation handling.
+    ///
+    /// See \c AbstractRRset::toWire(MessageRenderer&)const.
+    virtual unsigned int toWire(AbstractMessageRenderer& renderer) const;
+
+    /// \brief Render the RRset in the wire format without any compression.
+    ///
+    /// See \c AbstractRRset::toWire(OutputBuffer&)const.
+    virtual unsigned int toWire(isc::util::OutputBuffer& buffer) const;
 
     /// \brief Updates the owner name of the \c RRset, including RRSIGs if any
     virtual void setName(const Name& n) {
@@ -867,7 +896,17 @@ public:
     virtual void removeRRsig() { rrsig_ = RRsetPtr(); }
 
     /// \brief Return a pointer to this RRset's RRSIG RRset
-    RRsetPtr getRRsig() const { return (rrsig_); }
+    virtual RRsetPtr getRRsig() const { return (rrsig_); }
+
+    /// \brief Returns the number of \c RRSIG records associated with
+    /// the \c RRset.
+    ///
+    /// Note that an \c RRset with no RRSIG records may exist, so this
+    /// method may return 0.
+    ///
+    /// \return The number of \c RRSIG records associated.
+    virtual unsigned int getRRsigDataCount() const;
+
 private:
     RRsetPtr rrsig_;
 };

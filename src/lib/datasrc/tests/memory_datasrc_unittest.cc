@@ -1263,12 +1263,14 @@ TEST_F(InMemoryZoneFinderTest, loadFromIterator) {
     RRsetPtr expected_answer = textToRRset(soa_txt, RRClass::IN(), origin_);
     expected_answer->addRRsig(textToRRset(soa_sig_txt));
     findTest(origin_, RRType::SOA(), ZoneFinder::SUCCESS, true,
-             expected_answer);
+             expected_answer, ZoneFinder::RESULT_DEFAULT, NULL,
+             ZoneFinder::FIND_DNSSEC);
 
     expected_answer = textToRRset(a_txt);
     expected_answer->addRRsig(textToRRset(a_sig_txt));
     findTest(Name("ns1.example.org"), RRType::A(), ZoneFinder::SUCCESS, true,
-             expected_answer);
+             expected_answer, ZoneFinder::RESULT_DEFAULT, NULL,
+             ZoneFinder::FIND_DNSSEC);
 
     // File name should be (re)set to empty.
     EXPECT_TRUE(zone_finder_.getFileName().empty());
@@ -2065,7 +2067,7 @@ TEST_F(InMemoryZoneFinderTest, addNSEC3WithRRSIG) {
     // Then look for it.  The NSEC3 should have the RRSIG that was just added.
     findNSEC3Check(true, origin_.getLabelCount(),
                    nsec3_text + "\n" + nsec3_rrsig_text, "",
-                   zone_finder_.findNSEC3(Name("example.org"), false), true);
+                   zone_finder_.findNSEC3(Name("example.org"), false));
 
     // Duplicate add of RRSIG for the same NSEC3 is prohibited.
     EXPECT_THROW(zone_finder_.add(textToRRset(nsec3_rrsig_text)),

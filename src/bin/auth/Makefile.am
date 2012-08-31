@@ -67,19 +67,19 @@ b10_auth_SOURCES += ${top_srcdir}/src/lib/datasrc/memory_datasrc.cc
 nodist_b10_auth_SOURCES = auth_messages.h auth_messages.cc
 EXTRA_DIST += auth_messages.mes
 
-b10_auth_LDADD =  $(top_builddir)/src/lib/datasrc/libdatasrc.la
-b10_auth_LDADD += $(top_builddir)/src/lib/dns/libdns++.la
-b10_auth_LDADD += $(top_builddir)/src/lib/util/libutil.la
-b10_auth_LDADD += $(top_builddir)/src/lib/util/io/libutil_io.la
-b10_auth_LDADD += $(top_builddir)/src/lib/config/libcfgclient.la
-b10_auth_LDADD += $(top_builddir)/src/lib/cc/libcc.la
-b10_auth_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
-b10_auth_LDADD += $(top_builddir)/src/lib/asiodns/libasiodns.la
-b10_auth_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
-b10_auth_LDADD += $(top_builddir)/src/lib/log/liblog.la
-b10_auth_LDADD += $(top_builddir)/src/lib/xfr/libxfr.la
-b10_auth_LDADD += $(top_builddir)/src/lib/server_common/libserver_common.la
-b10_auth_LDADD += $(top_builddir)/src/lib/statistics/libstatistics.la
+b10_auth_LDADD =  $(top_builddir)/src/lib/datasrc/libb10-datasrc.la
+b10_auth_LDADD += $(top_builddir)/src/lib/dns/libb10-dns++.la
+b10_auth_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
+b10_auth_LDADD += $(top_builddir)/src/lib/util/io/libb10-util-io.la
+b10_auth_LDADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la
+b10_auth_LDADD += $(top_builddir)/src/lib/cc/libb10-cc.la
+b10_auth_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
+b10_auth_LDADD += $(top_builddir)/src/lib/asiodns/libb10-asiodns.la
+b10_auth_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
+b10_auth_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
+b10_auth_LDADD += $(top_builddir)/src/lib/xfr/libb10-xfr.la
+b10_auth_LDADD += $(top_builddir)/src/lib/server_common/libb10-server-common.la
+b10_auth_LDADD += $(top_builddir)/src/lib/statistics/libb10-statistics.la
 b10_auth_LDADD += $(SQLITE_LIBS)
 
 # TODO: config.h.in is wrong because doesn't honor pkgdatadir

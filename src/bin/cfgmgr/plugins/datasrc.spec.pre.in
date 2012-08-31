@@ -8,6 +8,14 @@
                 "item_type": "named_set",
                 "item_optional": false,
                 "item_default": {
+                    "IN": [
+                        {
+                            "type": "sqlite3",
+                            "params": {
+                                "database_file": "@@LOCALSTATEDIR@@/@PACKAGE@/zone.sqlite3"
+                            }
+                        }
+                    ],
                     "CH": [
                         {
                             "type": "static",

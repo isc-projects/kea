@@ -11,18 +11,18 @@ config_messages.h config_messages.cc: config_messages.mes
 
 BUILT_SOURCES = config_messages.h config_messages.cc
 
-lib_LTLIBRARIES = libcfgclient.la
-libcfgclient_la_SOURCES = config_data.h config_data.cc
-libcfgclient_la_SOURCES += module_spec.h module_spec.cc
-libcfgclient_la_SOURCES += ccsession.cc ccsession.h
-libcfgclient_la_SOURCES += config_log.h config_log.cc
+lib_LTLIBRARIES = libb10-cfgclient.la
+libb10_cfgclient_la_SOURCES = config_data.h config_data.cc
+libb10_cfgclient_la_SOURCES += module_spec.h module_spec.cc
+libb10_cfgclient_la_SOURCES += ccsession.cc ccsession.h
+libb10_cfgclient_la_SOURCES += config_log.h config_log.cc
 
-libcfgclient_la_LIBADD = $(top_builddir)/src/lib/cc/libcc.la
-libcfgclient_la_LIBADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
+libb10_cfgclient_la_LIBADD = $(top_builddir)/src/lib/cc/libb10-cc.la
+libb10_cfgclient_la_LIBADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 
-libcfgclient_la_LDFLAGS = -no-undefined -version-info 1:0:1
+libb10_cfgclient_la_LDFLAGS = -no-undefined -version-info 1:0:1
 
-nodist_libcfgclient_la_SOURCES  = config_messages.h config_messages.cc
+nodist_libb10_cfgclient_la_SOURCES  = config_messages.h config_messages.cc
 
 # The message file should be in the distribution.
 EXTRA_DIST = config_messages.mes

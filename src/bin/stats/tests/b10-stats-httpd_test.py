@@ -53,7 +53,13 @@ DUMMY_DATA = {
                 "zonename": "test.example",
                 "queries.tcp": 2,
                 "queries.udp": 3
-                }]
+                }],
+        "nds_queries.perzone": {
+                "test.example": {
+                    "queries.tcp": 2,
+                    "queries.udp": 3
+                  }
+                }
         },
     'Stats' : {
         "report_time": "2011-03-04T11:59:19Z",

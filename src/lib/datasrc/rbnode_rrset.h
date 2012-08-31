@@ -154,6 +154,8 @@ public:
 
     virtual isc::dns::RRsetPtr getRRsig() const;
 
+    virtual unsigned int getRRsigDataCount() const;
+
     // With all the RRsig methods, we have the problem that we store the
     // underlying RRset using a ConstRRsetPtr - a pointer to a "const" RRset -
     // but we need to modify it by adding or removing an RRSIG.  We overcome

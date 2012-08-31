@@ -204,6 +204,9 @@ def find_spec_part(element, identifier, strict_identifier = True):
     # always want the 'full' spec of the item
     for id_part in id_parts[:-1]:
         cur_el = _find_spec_part_single(cur_el, id_part)
+        # As soon as we find 'any', return that
+        if cur_el["item_type"] == "any":
+            return cur_el
         if strict_identifier and spec_part_is_list(cur_el) and\
            not isc.cc.data.identifier_has_list_index(id_part):
             raise isc.cc.data.DataNotFoundError(id_part +
@@ -553,7 +556,6 @@ class MultiConfigData:
             if 'item_default' in spec:
                 # one special case, named_set
                 if spec['item_type'] == 'named_set':
-                    print("is " + id_part + " in named set?")
                     return spec['item_default']
                 else:
                     return spec['item_default']
@@ -582,6 +584,14 @@ class MultiConfigData:
             value = self.get_default_value(identifier)
             if value is not None:
                 return value, self.DEFAULT
+            else:
+                # get_default_value returns None for both
+                # the cases where there is no default, and where
+                # it is set to null, so we need to catch the latter
+                spec_part = self.find_spec_part(identifier)
+                if spec_part and 'item_default' in spec_part and\
+                   spec_part['item_default'] is None:
+                    return None, self.DEFAULT
         return None, self.NONE
 
     def _append_value_item(self, result, spec_part, identifier, all, first = False):
@@ -742,6 +752,8 @@ class MultiConfigData:
                 # list
                 cur_list = cur_value
                 for list_index in list_indices:
+                    if type(cur_list) != list:
+                        raise isc.cc.data.DataTypeError(id + " is not a list")
                     if list_index >= len(cur_list):
                         raise isc.cc.data.DataNotFoundError("No item " +
                                   str(list_index) + " in " + id_part)
