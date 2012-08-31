@@ -17,7 +17,7 @@ b10_host_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
 b10_host_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 
 man_MANS = b10-host.1
-CLEANFILES += $(man_MANS)
+MAINTAINERCLEANFILES += $(man_MANS)
 EXTRA_DIST = $(man_MANS) b10-host.xml
 
 .PHONY: man
