@@ -1,4 +1,4 @@
-# Copyright (C) 2010  Internet Systems Consortium.
+# Copyright (C) 2010-2012  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -25,6 +25,7 @@ from isc.datasrc import DataSourceClient
 from isc.net import addr
 import isc
 from isc.log_messages.notify_out_messages import *
+from isc.statistics import counter
 
 logger = isc.log.Logger("notify_out")
 
@@ -127,8 +128,7 @@ class NotifyOut:
     notify message to its slaves). notify service can be started by
     calling  dispatcher(), and it can be stopped by calling shutdown()
     in another thread. '''
-    def __init__(self, datasrc_file, counter_handler=None, verbose=True,
-                 counter_notifyoutv4=None, counter_notifyoutv6=None):
+    def __init__(self, datasrc_file, counter_handler=None, verbose=True):
         self._notify_infos = {} # key is (zone_name, zone_class)
         self._waiting_zones = []
         self._notifying_zones = []
@@ -143,10 +143,6 @@ class NotifyOut:
         # Use nonblock event to eliminate busy loop
         # If there are no notifying zones, clear the event bit and wait.
         self._nonblock_event = threading.Event()
-        # Set counter handlers for counting notifies. An argument is
-        # required for zone name.
-        self._counter_notifyoutv4 = counter_notifyoutv4
-        self._counter_notifyoutv6 = counter_notifyoutv6
 
     def _init_notify_out(self, datasrc_file):
         '''Get all the zones name and its notify target's address.
@@ -484,14 +480,10 @@ class NotifyOut:
             sock = zone_notify_info.create_socket(addrinfo[0])
             sock.sendto(render.get_data(), 0, addrinfo)
             # count notifying by IPv4 or IPv6 for statistics
-            if zone_notify_info.get_socket().family \
-                    == socket.AF_INET \
-                    and self._counter_notifyoutv4 is not None:
-                self._counter_notifyoutv4(zone_notify_info.zone_name)
-            elif zone_notify_info.get_socket().family \
-                    == socket.AF_INET6 \
-                    and self._counter_notifyoutv6 is not None:
-                self._counter_notifyoutv6(zone_notify_info.zone_name)
+            if zone_notify_info.get_socket().family == socket.AF_INET:
+                counter.inc_notifyoutv4(zone_notify_info.zone_name)
+            elif zone_notify_info.get_socket().family == socket.AF_INET6:
+                counter.inc_notifyoutv6(zone_notify_info.zone_name)
             logger.info(NOTIFY_OUT_SENDING_NOTIFY, addrinfo[0],
                         addrinfo[1])
         except (socket.error, addr.InvalidAddress) as err:
