@@ -341,7 +341,7 @@ TreeNodeRRset::isSameKind(const AbstractRRset& abs_other) const {
             return (false);
         }
         // If both are constructed with a "real name", we compare their names
-        // (as label sequences) explicitly.
+        // explicitly.
         if (realname_ != NULL && other->realname_ != NULL &&
             realname_->nequals(*other->realname_)) {
             return (false);
