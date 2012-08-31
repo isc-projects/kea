@@ -5,12 +5,19 @@ b10_cmdctl_usermgrdir = $(pkgdatadir)
 CLEANFILES=	b10-cmdctl-usermgr
 
 man_MANS = b10-cmdctl-usermgr.8
+CLEANFILES += $(man_MANS)
 EXTRA_DIST = $(man_MANS) b10-cmdctl-usermgr.xml
 
-if ENABLE_MAN
+if GENERATE_DOCS
 
 b10-cmdctl-usermgr.8: b10-cmdctl-usermgr.xml
-	xsltproc --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/b10-cmdctl-usermgr.xml
+	@XSLTPROC@ --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/b10-cmdctl-usermgr.xml
+
+else
+
+$(man_MANS):
+	@echo Man generation disabled.  Creating dummy $@.  Configure with --enable-generate-docs to enable it.
+	@echo Man generation disabled.  Remove this file, configure with --enable-generate-docs, and rebuild BIND 10 > $@
 
 endif
 
