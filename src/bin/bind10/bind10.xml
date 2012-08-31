@@ -394,20 +394,12 @@ xfrin
       daemon.
       This is an internal command and not exposed to the administrator.
 <!-- not defined in spec -->
-<!-- TODO: explain difference with sendstat -->
     </para>
 
     <para>
       <command>ping</command> is used to check the connection with the
       <command>bind10</command> daemon.
       It returns the text <quote>pong</quote>.
-    </para>
-
-    <para>
-      <command>sendstats</command> tells <command>bind10</command>
-      to send its statistics data to the <command>b10-stats</command>
-      daemon immediately.
-<!-- TODO: compare with internal command getstats? -->
     </para>
 
     <para>
@@ -489,6 +481,9 @@ xfrin
       </citerefentry>,
       <citerefentry>
         <refentrytitle>b10-zonemgr</refentrytitle><manvolnum>8</manvolnum>
+      </citerefentry>,
+      <citerefentry>
+        <refentrytitle>b10-stats</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
       <citetitle>BIND 10 Guide</citetitle>.
     </para>

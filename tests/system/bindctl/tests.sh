@@ -52,7 +52,6 @@ n=`expr $n + 1`
 
 echo "I:Checking BIND 10 statistics after a pause ($n)"
 # wait for 2sec to make sure b10-stats gets the latest statistics.
-# note that we set statistics-interval to 1.
 sleep 2
 echo 'Stats show
 ' | $RUN_BINDCTL \
@@ -62,15 +61,10 @@ echo 'Stats show
 cnt_value1=`expr $cnt_value1 + 0`
 cnt_value2=`expr $cnt_value2 + 1`
 cnt_value3=`expr $cnt_value1 + $cnt_value2`
-# Further changes of Boss(#2137) and Auth(#2138) depends on this
-# change(#2136). So statistics tests in this system test make no
-# sense. Following statistics tests are disabled until codes of both
-# #2137 and #2138 are merged.
-#grep $cnt_name1".*\<"$cnt_value1"\>" bindctl.out.$n > /dev/null || status=1
-#grep $cnt_name2".*\<"$cnt_value2"\>" bindctl.out.$n > /dev/null || status=1
-#grep $cnt_name3".*\<"$cnt_value3"\>" bindctl.out.$n > /dev/null || status=1
-#if [ $status != 0 ]; then echo "I:failed"; fi
-echo "I:skipped"
+grep $cnt_name1".*\<"$cnt_value1"\>" bindctl.out.$n > /dev/null || status=1
+grep $cnt_name2".*\<"$cnt_value2"\>" bindctl.out.$n > /dev/null || status=1
+grep $cnt_name3".*\<"$cnt_value3"\>" bindctl.out.$n > /dev/null || status=1
+if [ $status != 0 ]; then echo "I:failed"; fi
 n=`expr $n + 1`
 
 echo "I:Stopping b10-auth and checking that ($n)"
@@ -110,15 +104,10 @@ echo 'Stats show
 cnt_value1=`expr $cnt_value1 + 0`
 cnt_value2=`expr $cnt_value2 + 1`
 cnt_value3=`expr $cnt_value1 + $cnt_value2`
-# Further changes of Boss(#2137) and Auth(#2138) depends on this
-# change(#2136). So statistics tests in this system test make no
-# sense. Following statistics tests are disabled until codes of both
-# #2137 and #2138 are merged.
-#grep $cnt_name1".*\<"$cnt_value1"\>" bindctl.out.$n > /dev/null || status=1
-#grep $cnt_name2".*\<"$cnt_value2"\>" bindctl.out.$n > /dev/null || status=1
-#grep $cnt_name3".*\<"$cnt_value3"\>" bindctl.out.$n > /dev/null || status=1
-#if [ $status != 0 ]; then echo "I:failed"; fi
-echo "I:skipped"
+grep $cnt_name1".*\<"$cnt_value1"\>" bindctl.out.$n > /dev/null || status=1
+grep $cnt_name2".*\<"$cnt_value2"\>" bindctl.out.$n > /dev/null || status=1
+grep $cnt_name3".*\<"$cnt_value3"\>" bindctl.out.$n > /dev/null || status=1
+if [ $status != 0 ]; then echo "I:failed"; fi
 n=`expr $n + 1`
 
 echo "I:Changing the data source from sqlite3 to in-memory ($n)"
@@ -143,15 +132,10 @@ echo 'Stats show
 cnt_value1=`expr $cnt_value1 + 0`
 cnt_value2=`expr $cnt_value2 + 1`
 cnt_value3=`expr $cnt_value1 + $cnt_value2`
-# Further changes of Boss(#2137) and Auth(#2138) depends on this
-# change(#2136). So statistics tests in this system test make no
-# sense. Following statistics tests are disabled until codes of both
-# #2137 and #2138 are merged.
-#grep $cnt_name1".*\<"$cnt_value1"\>" bindctl.out.$n > /dev/null || status=1
-#grep $cnt_name2".*\<"$cnt_value2"\>" bindctl.out.$n > /dev/null || status=1
-#grep $cnt_name3".*\<"$cnt_value3"\>" bindctl.out.$n > /dev/null || status=1
-#if [ $status != 0 ]; then echo "I:failed"; fi
-echo "I:skipped"
+grep $cnt_name1".*\<"$cnt_value1"\>" bindctl.out.$n > /dev/null || status=1
+grep $cnt_name2".*\<"$cnt_value2"\>" bindctl.out.$n > /dev/null || status=1
+grep $cnt_name3".*\<"$cnt_value3"\>" bindctl.out.$n > /dev/null || status=1
+if [ $status != 0 ]; then echo "I:failed"; fi
 n=`expr $n + 1`
 
 echo "I:Starting more b10-auths and checking that ($n)"
@@ -183,15 +167,10 @@ do
     # The statistics counters should keep being consistent even while
     # multiple b10-auths are running.
 
-    # Further changes of Boss(#2137) and Auth(#2138) depends on this
-    # change(#2136). So statistics tests in this system test make no
-    # sense. Following statistics tests are disabled until codes of both
-    # #2137 and #2138 are merged.
-    #grep $cnt_name1".*\<"$cnt_value1"\>" bindctl.out.$n > /dev/null || status=1
-    #grep $cnt_name2".*\<"$cnt_value2"\>" bindctl.out.$n > /dev/null || status=1
-    #grep $cnt_name3".*\<"$cnt_value3"\>" bindctl.out.$n > /dev/null || status=1
-    #if [ $status != 0 ]; then echo "I:failed "; break ; fi
-    echo "I:skipped"
+    grep $cnt_name1".*\<"$cnt_value1"\>" bindctl.out.$n > /dev/null || status=1
+    grep $cnt_name2".*\<"$cnt_value2"\>" bindctl.out.$n > /dev/null || status=1
+    grep $cnt_name3".*\<"$cnt_value3"\>" bindctl.out.$n > /dev/null || status=1
+    if [ $status != 0 ]; then echo "I:failed "; break ; fi
 done
 n=`expr $n + 1`
 

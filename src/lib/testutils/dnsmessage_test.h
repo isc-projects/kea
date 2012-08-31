@@ -168,6 +168,10 @@ public:
     {}
     void operator()(isc::dns::ConstRRsetPtr rrset) {
         output_ += "  " + rrset->toText();
+
+        if (rrset->getRRsig()) {
+            output_ += "  " + rrset->getRRsig()->toText();
+        }
     }
 private:
     std::string& output_;
@@ -256,6 +260,7 @@ rrsetsCheck(EXPECTED_ITERATOR expected_begin, EXPECTED_ITERATOR expected_end,
         if (found_rrset_it != expected_end) {
             rrsetCheck(*found_rrset_it, *it);
             ++rrset_matched;
+            rrset_matched += (*it)->getRRsigDataCount();
         }
     }
 
@@ -265,9 +270,20 @@ rrsetsCheck(EXPECTED_ITERATOR expected_begin, EXPECTED_ITERATOR expected_end,
                      "Expected:\n" + expected_text);
         // make sure all expected RRsets are in actual sets
         EXPECT_EQ(std::distance(expected_begin, expected_end), rrset_matched);
+
+#if (0)
+        // TODO: see bug #2223. The following code was
+        // disabled by #2165. The RRSIG RRsets are no longer directly
+        // stored in the Message's rrsets, so the iterator will not find
+        // them. The expected text used in many tests are flattened,
+        // where the RRSIGs are inline. In other words, RRSIGs may occur
+        // between (expected_begin, expected_end) but not between
+        // (actual_begin, actual_end).
+
         // make sure rrsets only contains expected RRsets
         EXPECT_EQ(std::distance(expected_begin, expected_end),
                   std::distance(actual_begin, actual_end));
+#endif
     }
 }
 
