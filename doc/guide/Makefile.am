@@ -6,7 +6,7 @@ dist_doc_DATA = $(DOCS)
 dist_html_DATA = $(HTMLDOCS) bind10-guide.css
 
 EXTRA_DIST = bind10-guide.xml
-CLEANFILES = $(HTMLDOCS) $(DOCS) bind10-messages.xml
+MAINTAINERCLEANFILES = $(HTMLDOCS) $(DOCS) bind10-messages.xml
 
 # This is not a "man" manual, but reuse this for now for docbook.
 if GENERATE_DOCS

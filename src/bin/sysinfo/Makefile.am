@@ -12,7 +12,7 @@ MAN1_FILES = \
 
 man_MANS = \
 	$(MAN1_FILES:.xml=.1)
-CLEANFILES += $(man_MANS)
+MAINTAINERCLEANFILES += $(man_MANS)
 
 if GENERATE_DOCS
 

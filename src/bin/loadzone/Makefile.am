@@ -5,7 +5,7 @@ noinst_SCRIPTS = run_loadzone.sh
 CLEANFILES = b10-loadzone
 
 man_MANS = b10-loadzone.8
-CLEANFILES += $(man_MANS)
+MAINTAINERCLEANFILES += $(man_MANS)
 EXTRA_DIST = $(man_MANS) b10-loadzone.xml
 
 if GENERATE_DOCS
