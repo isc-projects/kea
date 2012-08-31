@@ -16,6 +16,7 @@
 #define DATASRC_MEMORY_CLIENT_H 1
 
 #include <datasrc/client.h>
+#include <datasrc/memory/zone_table.h>
 #include <string>
 
 namespace isc {
@@ -174,7 +175,7 @@ public:
     ///
     /// This derived version of the method never throws an exception.
     /// For other details see \c DataSourceClient::findZone().
-    virtual FindResult findZone(const isc::dns::Name& name) const;
+    virtual ZoneTable::FindResult findZone(const isc::dns::Name& name) const;
 
     /// \brief Implementation of the getIterator method
     virtual ZoneIteratorPtr getIterator(const isc::dns::Name& name,
