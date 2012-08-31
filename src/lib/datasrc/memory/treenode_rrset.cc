@@ -195,7 +195,7 @@ TreeNodeRRset::toWire(AbstractMessageRenderer& renderer) const {
 }
 
 unsigned int
-TreeNodeRRset::toWire(isc::util::OutputBuffer& /*buffer*/) const {
+TreeNodeRRset::toWire(isc::util::OutputBuffer&) const {
     isc_throw(Unexpected, "unexpected method called on TreeNodeRRset");
 }
 
