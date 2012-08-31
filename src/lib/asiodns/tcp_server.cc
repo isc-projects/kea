@@ -72,7 +72,7 @@ TCPServer::TCPServer(io_service& io_service, int fd, int af,
     }
     // Set it to some value. It should be set to the right one
     // immediately, but set it to something non-zero just in case.
-    tcp_recv_timeout_.reset(new size_t(1000));
+    tcp_recv_timeout_.reset(new size_t(5000));
 }
 
 namespace {
