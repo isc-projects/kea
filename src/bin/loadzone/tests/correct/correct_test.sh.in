@@ -48,6 +48,9 @@ ${LOADZONE_PATH}/b10-loadzone -d ${TEST_OUTPUT_PATH}/zone.sqlite3 ttlext.db >> /
 echo "loadzone example.com. from example.db"
 ${LOADZONE_PATH}/b10-loadzone -d ${TEST_OUTPUT_PATH}/zone.sqlite3 example.db >> /dev/null
 
+echo "loadzone comment.example.com. from comment.db"
+${LOADZONE_PATH}/b10-loadzone -d ${TEST_OUTPUT_PATH}/zone.sqlite3 comment.db >> /dev/null
+
 echo "I:test master file \$INCLUDE semantics"
 echo "I:test master file BIND 8 compatibility TTL and \$TTL semantics"
 echo "I:test master file RFC1035 TTL and \$TTL semantics"
@@ -55,6 +58,7 @@ echo "I:test master file BIND8 compatibility and mixed \$INCLUDE with \$TTL sema
 echo "I:test master file RFC1035 TTL and mixed \$INCLUDE with \$TTL semantics"
 echo "I:test master file BIND9 extenstion of TTL"
 echo "I:test master file RFC1035 missing CLASS, TTL, NAME semantics"
+echo "I:test master file comments"
 
 ${PYTHON_EXEC} ${TEST_FILE_PATH}/get_zonedatas.py ${TEST_OUTPUT_PATH}/zone.sqlite3 > ${TEST_OUTPUT_PATH}/test.out
 echo "Compare test results."
