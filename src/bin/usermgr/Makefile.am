@@ -5,7 +5,7 @@ b10_cmdctl_usermgrdir = $(pkgdatadir)
 CLEANFILES=	b10-cmdctl-usermgr
 
 man_MANS = b10-cmdctl-usermgr.8
-MAINTAINERCLEANFILES = $(man_MANS)
+DISTCLEANFILES = $(man_MANS)
 EXTRA_DIST = $(man_MANS) b10-cmdctl-usermgr.xml
 
 if GENERATE_DOCS

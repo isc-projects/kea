@@ -20,7 +20,7 @@ CLEANFILES  = *.gcno *.gcda auth.spec spec_config.h
 CLEANFILES += auth_messages.h auth_messages.cc
 
 man_MANS = b10-auth.8
-MAINTAINERCLEANFILES = $(man_MANS)
+DISTCLEANFILES = $(man_MANS)
 EXTRA_DIST = $(man_MANS) b10-auth.xml
 
 if GENERATE_DOCS
