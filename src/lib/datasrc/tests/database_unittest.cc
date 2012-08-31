@@ -2153,7 +2153,7 @@ TYPED_TEST(DatabaseClientTest, findDelegation) {
                this->rrttl_, ZoneFinder::DELEGATION, this->expected_rdatas_,
                this->expected_sig_rdatas_);
 
-    // And when we ask direcly for the NS, we should still get delegation
+    // And when we ask directly for the NS, we should still get delegation
     doFindTest(*finder, isc::dns::Name("delegation.example.org."),
                isc::dns::RRType::NS(), isc::dns::RRType::NS(),
                this->rrttl_, ZoneFinder::DELEGATION, this->expected_rdatas_,
@@ -2184,7 +2184,7 @@ TYPED_TEST(DatabaseClientTest, findDelegation) {
                this->expected_sig_rdatas_, ZoneFinder::RESULT_DEFAULT,
                isc::dns::Name("dname.example.org."));
 
-    // Asking direcly for DNAME should give SUCCESS
+    // Asking directly for DNAME should give SUCCESS
     doFindTest(*finder, isc::dns::Name("dname.example.org."),
                isc::dns::RRType::DNAME(), isc::dns::RRType::DNAME(),
                this->rrttl_, ZoneFinder::SUCCESS, this->expected_rdatas_,
