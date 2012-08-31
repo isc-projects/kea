@@ -15,7 +15,7 @@ CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/xfrout_messages.py
 CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/xfrout_messages.pyc
 
 man_MANS = b10-xfrout.8
-MAINTAINERCLEANFILES += $(man_MANS)
+MAINTAINERCLEANFILES = $(man_MANS)
 EXTRA_DIST = $(man_MANS) b10-xfrout.xml xfrout_messages.mes
 
 if GENERATE_DOCS

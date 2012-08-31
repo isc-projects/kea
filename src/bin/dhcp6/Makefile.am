@@ -16,7 +16,7 @@ pkglibexecdir = $(libexecdir)/@PACKAGE@
 CLEANFILES = spec_config.h
 
 man_MANS = b10-dhcp6.8
-MAINTAINERCLEANFILES += $(man_MANS)
+MAINTAINERCLEANFILES = $(man_MANS)
 EXTRA_DIST = $(man_MANS) b10-dhcp6.xml dhcp6.spec
 
 if GENERATE_DOCS

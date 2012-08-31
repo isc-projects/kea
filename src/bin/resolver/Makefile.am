@@ -23,7 +23,7 @@ CLEANFILES += resolver.spec spec_config.h
 CLEANFILES += resolver_messages.cc resolver_messages.h
 
 man_MANS = b10-resolver.8
-MAINTAINERCLEANFILES += $(man_MANS)
+MAINTAINERCLEANFILES = $(man_MANS)
 EXTRA_DIST = $(man_MANS) b10-resolver.xml resolver_messages.mes
 
 if GENERATE_DOCS

@@ -15,7 +15,7 @@ CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/xfrin_messages.py
 CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/xfrin_messages.pyc
 
 man_MANS = b10-xfrin.8
-MAINTAINERCLEANFILES += $(man_MANS)
+MAINTAINERCLEANFILES = $(man_MANS)
 EXTRA_DIST = $(man_MANS) b10-xfrin.xml
 EXTRA_DIST += xfrin.spec xfrin_messages.mes
 
