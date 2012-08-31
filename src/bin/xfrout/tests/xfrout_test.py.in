@@ -1609,8 +1609,8 @@ class TestXfroutServer(unittest.TestCase):
 
     def test_getstats(self):
         self.assertEqual(
-            self.xfrout_server.command_handler('getstats', None),
-            isc.config.ccsession.create_answer(0,  {}))
+            self.xfrout_server.command_handler('getstats', None), \
+                create_answer(0,  {}))
 
 if __name__== "__main__":
     isc.log.resetUnitTestRootLogger()
