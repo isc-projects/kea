@@ -144,7 +144,7 @@ given host. This is because of ACLs.  The %2 represents the IP
 address and port of the peer requesting the transfer, and the %3
 represents the zone name and class.
 
-% XFROUT_RECEIVED_GETSTATS_COMMAND received command to get statistics data
+% XFROUT_RECEIVED_GETSTATS_COMMAND received command to send statistics data: %1
 The xfrout daemon received a command on the command channel that
 statistics data should be sent to the stats daemon.
 
