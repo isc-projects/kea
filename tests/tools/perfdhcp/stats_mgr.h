@@ -649,7 +649,7 @@ public:
                     idx.equal_range(hashTransid(rcvd_packet));
                 for (PktListTransidHashIterator it_archived = p.first;
                      it_archived != p.second;
-                     ++it) {
+                     ++it_archived) {
                     if ((*it_archived)->getTransid() ==
                         rcvd_packet->getTransid()) {
                         boost::shared_ptr<T> sent_packet = *it_archived;
