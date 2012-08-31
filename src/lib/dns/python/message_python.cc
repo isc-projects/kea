@@ -143,9 +143,7 @@ PyMethodDef Message_methods[] = {
     { "add_rrset", reinterpret_cast<PyCFunction>(Message_addRRset), METH_VARARGS,
       "Add an RRset to the given section of the message.\n"
       "The first argument is of type Section\n"
-      "The second is of type RRset\n"
-      "The third argument is an optional Boolean specifying whether "
-      "the RRset is signed"},
+      "The second is of type RRset"},
     { "clear", reinterpret_cast<PyCFunction>(Message_clear), METH_VARARGS,
       "Clears the message content (if any) and reinitialize the "
       "message in the given mode\n"
@@ -571,17 +569,15 @@ Message_addQuestion(s_Message* self, PyObject* args) {
 
 PyObject*
 Message_addRRset(s_Message* self, PyObject* args) {
-    PyObject *sign = Py_False;
     int section;
     PyObject* rrset;
-    if (!PyArg_ParseTuple(args, "iO!|O!", &section, &rrset_type, &rrset,
-                          &PyBool_Type, &sign)) {
+    if (!PyArg_ParseTuple(args, "iO!", &section, &rrset_type, &rrset)) {
         return (NULL);
     }
 
     try {
         self->cppobj->addRRset(static_cast<Message::Section>(section),
-                               PyRRset_ToRRsetPtr(rrset), sign == Py_True);
+                               PyRRset_ToRRsetPtr(rrset));
         Py_RETURN_NONE;
     } catch (const InvalidMessageOperation& imo) {
         PyErr_SetString(po_InvalidMessageOperation, imo.what());

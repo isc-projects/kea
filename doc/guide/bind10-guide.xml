@@ -1633,21 +1633,6 @@ can use various data source backends.
               </simpara>
             </listitem>
           </varlistentry>
-
-          <varlistentry>
-            <term>statistics-interval</term>
-            <listitem>
-              <simpara>
-      <varname>statistics-interval</varname> is the timer interval
-      in seconds for <command>b10-auth</command> to share its
-      statistics information to
-      <citerefentry><refentrytitle>b10-stats</refentrytitle><manvolnum>8</manvolnum></citerefentry>.
-      Statistics updates can be disabled by setting this to 0.
-      The default is 60.
-              </simpara>
-            </listitem>
-          </varlistentry>
-
         </variablelist>
 
       </para>
@@ -1680,13 +1665,14 @@ can use various data source backends.
           </varlistentry>
 
           <varlistentry>
-            <term>sendstats</term>
+            <term>getstats</term>
             <listitem>
               <simpara>
-      <command>sendstats</command> tells <command>b10-auth</command>
+      <command>getstats</command> requests <command>b10-auth</command>
       to send its statistics data to
-      <citerefentry><refentrytitle>b10-stats</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-      immediately.
+      <citerefentry><refentrytitle>b10-stats</refentrytitle>
+      <manvolnum>8</manvolnum></citerefentry>
+      as a response of the command.
               </simpara>
             </listitem>
           </varlistentry>

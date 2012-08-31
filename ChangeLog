@@ -1,16 +1,38 @@
-nnn.    [func]          naokikambe
-        Added Xfrout statistics counters: notifyoutv4, notifyoutv6, xfrrej, and
-        xfrreqdone. These are per-zone type counters. The value of these
-        counters can be seen with zone name by invoking "Stats show Xfrout" via
-        bindctl.
-        (Trac #2158, git TBD)
+nnn.	[func]		naokikambe
+	Added Xfrout statistics counters: notifyoutv4, notifyoutv6, xfrrej, and
+	xfrreqdone. These are per-zone type counters. The value of these
+	counters can be seen with zone name by invoking "Stats show Xfrout" via
+	bindctl.
+	(Trac #2158, git TBD)
 
-nnn.    [func]          naokikambe
-        The stats module was supported differential statistics updates. Each
-        module can return only statistics data which are updated since the last
-        time it sent to the stats module. The purpose of differential updating
-        is reducing amounts of statistics data sent in the message queue.
-        (Trac #2179, git TBD)
+470.	[func]		naokikambe
+	The stats module now supports partial statistics updates. Each
+	module can return only statistics data which have been updated since
+	the last time it sent them to the stats module. The purpose of partial
+	updates is to reduce the amount of statistics data sent through the
+	message queue.
+	(Trac #2179, git d659abdd9f3f369a29830831297f64484ac7b051)
+
+469.	[bug]		jelte
+	libdatasrc: the data source client list class now ignores zone
+	content problems (such as out-of-zone data) in MasterFiles type
+	zones, instead of aborting the entire configuration.  It only logs
+	an error, and all other zones and datasources are still loaded. The
+	error log message has been improved to include the zone origin and
+	source file name.  As a result of this change, b10-auth no longer
+	exits upon encountering such errors during startup.
+	(Trac #2178, git a75ed413e8a1c8e3702beea4811a46a1bf519bbd)
+
+468.	[func]*		naokikambe, fujiwara
+	b10-stats polls the bind10 and b10-auth with new 'getstats' command
+	to retrieve statistics data.  The "poll-interval" parameter in
+	b10-stats is for configuring the polling interval.  All statistics
+	data collected once are preserved while b10-stats is running.
+	The "sendstats" command was removed from bind10 and b10-auth. The
+	"statistics-interval" configuration item was removed from b10-auth.
+	(Trac #2136, git dcb5ce50b4b4e50d28247d5f8b5cb8d90bda942a)
+	(Trac #2137, git d53bb65a43f6027b15a6edc08c137951e3ce5e0e)
+	(Trac #2138, git b34e3313460eebc9c272ca8c1beb27297c195150)
 
 bind10-devel-20120816 released on August 16, 2012
 
@@ -144,7 +166,7 @@ bind10-devel-20120816 released on August 16, 2012
 	is 'Dhcp4 shutdown'.
 	(Trac #1651, git 7e16a5a50d3311e63d10a224ec6ebcab5f25f62c)
 
-bind10-devel-20120621 released on June 21. 2012
+bind10-devel-20120621 released on June 21, 2012
 
 449.	[bug]		muks
 	b10-xfin: fixed a bug where xfrin sent the wrong notification
@@ -205,7 +227,7 @@ bind10-devel-20120621 released on June 21. 2012
 	file) was removed.
 	(Trac #1281, git 900fc8b420789a8c636bcf20fdaffc60bc1041e0)
 
-bind10-devel-20120517 released on May 17. 2012
+bind10-devel-20120517 released on May 17, 2012
 
 440.	[func]		muks
 	bindctl: improved some error messages so they will be more

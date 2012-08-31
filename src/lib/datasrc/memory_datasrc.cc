@@ -738,7 +738,24 @@ prepareRRset(const Name& name, const ConstRBNodeRRsetPtr& rrset, bool rename,
         rrset->copyAdditionalNodes(*result);
         return (result);
     } else {
-        return (rrset);
+        ConstRRsetPtr sig_rrset = rrset->getRRsig();
+        if (sig_rrset &&
+            ((options & ZoneFinder::FIND_DNSSEC) == 0)) {
+            RRsetPtr result_base(new RRset(name, rrset->getClass(),
+                                           rrset->getType(),
+                                           rrset->getTTL()));
+            for (RdataIteratorPtr i(rrset->getRdataIterator());
+                 !i->isLast();
+                 i->next()) {
+                result_base->addRdata(i->getCurrent());
+            }
+
+            RBNodeRRsetPtr result(new RBNodeRRset(result_base));
+            rrset->copyAdditionalNodes(*result);
+            return (result);
+        } else {
+            return (rrset);
+        }
     }
 }
 
@@ -795,10 +812,10 @@ protected:
             }
             BOOST_FOREACH(const DomainPair& dom_it, *found_node_->getData()) {
                 getAdditionalForRRset(*dom_it.second, requested_types,
-                                      result);
+                                      result, options_);
             }
         } else {
-            getAdditionalForRRset(*rrset_, requested_types, result);
+            getAdditionalForRRset(*rrset_, requested_types, result, options_);
         }
     }
 
@@ -809,7 +826,8 @@ private:
     // type for each node.
     static void getAdditionalForRRset(const RBNodeRRset& rrset,
                                       const vector<RRType>& requested_types,
-                                      vector<ConstRRsetPtr>& result)
+                                      vector<ConstRRsetPtr>& result,
+                                      ZoneFinder::FindOptions options)
     {
         const vector<AdditionalNodeInfo>* additionals_ =
             rrset.getAdditionalNodes();
@@ -836,11 +854,13 @@ private:
                     // in case the caller has the same RRset but as a result
                     // of normal find() and needs to know they are of the same
                     // kind; otherwise we simply use the stored RBNodeRRset.
+                    ConstRRsetPtr rp;
                     if (wild_expanded) {
-                        result.push_back(found->second->getUnderlyingRRset());
+                        rp = found->second->getUnderlyingRRset();
                     } else {
-                        result.push_back(found->second);
+                        rp = found->second;
                     }
+                    result.push_back(ZoneFinder::stripRRsigs(rp, options));
                 }
             }
         }

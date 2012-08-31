@@ -413,20 +413,7 @@ class TestBoB(unittest.TestCase):
         # "getstats" command
         self.assertEqual(bob.command_handler("getstats", None),
                          isc.config.ccsession.create_answer(0,
-                            { "owner": "Boss",
-                              "data": {
-                                'boot_time': time.strftime('%Y-%m-%dT%H:%M:%SZ', _BASETIME)
-                            }}))
-        # "sendstats" command
-        self.assertEqual(bob.command_handler("sendstats", None),
-                         isc.config.ccsession.create_answer(0))
-        self.assertEqual(bob.cc_session.group, "Stats")
-        self.assertEqual(bob.cc_session.msg,
-                         isc.config.ccsession.create_command(
-                "set", { "owner": "Boss",
-                         "data": {
-                        "boot_time": time.strftime("%Y-%m-%dT%H:%M:%SZ", _BASETIME)
-                        }}))
+                            { 'boot_time': time.strftime('%Y-%m-%dT%H:%M:%SZ', _BASETIME) }))
         # "ping" command
         self.assertEqual(bob.command_handler("ping", None),
                          isc.config.ccsession.create_answer(0, "pong"))

@@ -55,8 +55,7 @@ public:
     }
     void inc(const std::string& zone,
              const AuthCounters::PerZoneCounterType type);
-    bool submitStatistics() const;
-    void setStatisticsSession(isc::cc::AbstractSession* statistics_session);
+    isc::data::ConstElementPtr getStatistics() const;
     void registerStatisticsValidator
     (AuthCounters::validator_type validator);
     // Currently for testing purpose only
@@ -74,7 +73,6 @@ private:
     Counter rcode_counter_;
     static const size_t NUM_RCODES = 17;
     CounterDictionary per_zone_counter_;
-    isc::cc::AbstractSession* statistics_session_;
     AuthCounters::validator_type validator_;
 };
 
@@ -84,8 +82,7 @@ AuthCountersImpl::AuthCountersImpl() :
     // size of per_zone_counter_: AuthCounters::PER_ZONE_COUNTER_TYPES
     server_counter_(AuthCounters::SERVER_COUNTER_TYPES),
     opcode_counter_(NUM_OPCODES), rcode_counter_(NUM_RCODES),
-    per_zone_counter_(AuthCounters::PER_ZONE_COUNTER_TYPES),
-    statistics_session_(NULL)
+    per_zone_counter_(AuthCounters::PER_ZONE_COUNTER_TYPES)
 {
     per_zone_counter_.addElement("_SERVER_");
 }
@@ -105,25 +102,13 @@ AuthCountersImpl::inc(const std::string& zone,
     per_zone_counter_[zone].inc(type);
 }
 
-bool
-AuthCountersImpl::submitStatistics() const {
-    if (statistics_session_ == NULL) {
-        LOG_ERROR(auth_logger, AUTH_NO_STATS_SESSION);
-        return (false);
-    }
+isc::data::ConstElementPtr
+AuthCountersImpl::getStatistics() const {
     std::stringstream statistics_string;
-    // add pid in order for stats to identify which auth sends
-    // statistics in the situation that multiple auth instances are
-    // working
-    statistics_string << "{\"command\": [\"set\","
-                      <<   "{ \"owner\": \"Auth\","
-                      <<   "  \"pid\":" << getpid()
-                      <<   ", \"data\":"
-                      <<     "{ \"queries.udp\": "
-                      <<     server_counter_.get(AuthCounters::SERVER_UDP_QUERY)
-                      <<     ", \"queries.tcp\": "
-                      <<     server_counter_.get(
-                          AuthCounters::SERVER_TCP_QUERY);
+    statistics_string << "{ \"queries.udp\": "
+                      << server_counter_.get(AuthCounters::SERVER_UDP_QUERY)
+                      << ", \"queries.tcp\": "
+                      << server_counter_.get(AuthCounters::SERVER_TCP_QUERY);
     // Insert non 0 Opcode counters.
     for (int i = 0; i < NUM_OPCODES; ++i) {
         const Counter::Type counter = opcode_counter_.get(i);
@@ -150,45 +135,18 @@ AuthCountersImpl::submitStatistics() const {
                               << counter;
         }
     }
-    statistics_string <<   " }"
-                      <<   "}"
-                      << "]}";
+    statistics_string << "}";
+
     isc::data::ConstElementPtr statistics_element =
         isc::data::Element::fromJSON(statistics_string);
     // validate the statistics data before send
     if (validator_) {
-        if (!validator_(
-                statistics_element->get("command")->get(1)->get("data"))) {
+        if (!validator_(statistics_element)) {
             LOG_ERROR(auth_logger, AUTH_INVALID_STATISTICS_DATA);
-            return (false);
+            return (isc::data::ElementPtr());
         }
     }
-    try {
-        // group_{send,recv}msg() can throw an exception when encountering
-        // an error, and group_recvmsg() will throw an exception on timeout.
-        // We don't want to kill the main server just due to this, so we
-        // handle them here.
-        const int seq =
-            statistics_session_->group_sendmsg(statistics_element, "Stats");
-        isc::data::ConstElementPtr env, answer;
-        // TODO: parse and check response from statistics module
-        // currently it just returns empty message
-        statistics_session_->group_recvmsg(env, answer, false, seq);
-    } catch (const isc::cc::SessionError& ex) {
-        LOG_ERROR(auth_logger, AUTH_STATS_COMMS).arg(ex.what());
-        return (false);
-    } catch (const isc::cc::SessionTimeout& ex) {
-        LOG_ERROR(auth_logger, AUTH_STATS_TIMEOUT).arg(ex.what());
-        return (false);
-    }
-    return (true);
-}
-
-void
-AuthCountersImpl::setStatisticsSession
-    (isc::cc::AbstractSession* statistics_session)
-{
-    statistics_session_ = statistics_session;
+    return (statistics_element);
 }
 
 void
@@ -224,16 +182,9 @@ AuthCounters::inc(const Rcode rcode) {
     impl_->inc(rcode);
 }
 
-bool
-AuthCounters::submitStatistics() const {
-    return (impl_->submitStatistics());
-}
-
-void
-AuthCounters::setStatisticsSession
-    (isc::cc::AbstractSession* statistics_session)
-{
-    impl_->setStatisticsSession(statistics_session);
+isc::data::ConstElementPtr
+AuthCounters::getStatistics() const {
+    return (impl_->getStatistics());
 }
 
 uint64_t
