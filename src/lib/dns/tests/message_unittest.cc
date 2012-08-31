@@ -289,32 +289,22 @@ TEST_F(MessageTest, getRRCount) {
 }
 
 TEST_F(MessageTest, addRRset) {
-    // default case
+    // initially, we have 0
+    EXPECT_EQ(0, message_render.getRRCount(Message::SECTION_ANSWER));
+
+    // add two A RRs (unsigned)
     message_render.addRRset(Message::SECTION_ANSWER, rrset_a);
     EXPECT_EQ(rrset_a,
               *message_render.beginSection(Message::SECTION_ANSWER));
     EXPECT_EQ(2, message_render.getRRCount(Message::SECTION_ANSWER));
 
-    // signed RRset, default case
     message_render.clear(Message::RENDER);
+
+    // add one AAAA RR (signed)
     message_render.addRRset(Message::SECTION_ANSWER, rrset_aaaa);
     EXPECT_EQ(rrset_aaaa,
               *message_render.beginSection(Message::SECTION_ANSWER));
-    EXPECT_EQ(1, message_render.getRRCount(Message::SECTION_ANSWER));
-
-    // signed RRset, add with the RRSIG.  getRRCount() should return 2
-    message_render.clear(Message::RENDER);
-    message_render.addRRset(Message::SECTION_ANSWER, rrset_aaaa, true);
-    EXPECT_EQ(rrset_aaaa,
-              *message_render.beginSection(Message::SECTION_ANSWER));
     EXPECT_EQ(2, message_render.getRRCount(Message::SECTION_ANSWER));
-
-    // signed RRset, add explicitly without RRSIG.
-    message_render.clear(Message::RENDER);
-    message_render.addRRset(Message::SECTION_ANSWER, rrset_aaaa, false);
-    EXPECT_EQ(rrset_aaaa,
-              *message_render.beginSection(Message::SECTION_ANSWER));
-    EXPECT_EQ(1, message_render.getRRCount(Message::SECTION_ANSWER));
 }
 
 TEST_F(MessageTest, badAddRRset) {
@@ -381,9 +371,9 @@ TEST_F(MessageTest, removeRRset) {
         RRClass::IN(), RRType::A()));
     EXPECT_TRUE(message_render.hasRRset(Message::SECTION_ANSWER, test_name,
         RRClass::IN(), RRType::AAAA()));
-    EXPECT_EQ(3, message_render.getRRCount(Message::SECTION_ANSWER));
+    EXPECT_EQ(4, message_render.getRRCount(Message::SECTION_ANSWER));
 
-    // Locate the AAAA RRset and remove it; this has one RR in it.
+    // Locate the AAAA RRset and remove it and any associated RRSIGs
     RRsetIterator i = message_render.beginSection(Message::SECTION_ANSWER);
     if ((*i)->getType() == RRType::A()) {
         ++i;
@@ -420,7 +410,7 @@ TEST_F(MessageTest, clearAnswerSection) {
         RRClass::IN(), RRType::A()));
     ASSERT_TRUE(message_render.hasRRset(Message::SECTION_ANSWER, test_name,
         RRClass::IN(), RRType::AAAA()));
-    ASSERT_EQ(3, message_render.getRRCount(Message::SECTION_ANSWER));
+    ASSERT_EQ(4, message_render.getRRCount(Message::SECTION_ANSWER));
 
     message_render.clearSection(Message::SECTION_ANSWER);
     EXPECT_FALSE(message_render.hasRRset(Message::SECTION_ANSWER, test_name,
@@ -439,7 +429,7 @@ TEST_F(MessageTest, clearAuthoritySection) {
         RRClass::IN(), RRType::A()));
     ASSERT_TRUE(message_render.hasRRset(Message::SECTION_AUTHORITY, test_name,
         RRClass::IN(), RRType::AAAA()));
-    ASSERT_EQ(3, message_render.getRRCount(Message::SECTION_AUTHORITY));
+    ASSERT_EQ(4, message_render.getRRCount(Message::SECTION_AUTHORITY));
 
     message_render.clearSection(Message::SECTION_AUTHORITY);
     EXPECT_FALSE(message_render.hasRRset(Message::SECTION_AUTHORITY, test_name,
@@ -458,7 +448,7 @@ TEST_F(MessageTest, clearAdditionalSection) {
         RRClass::IN(), RRType::A()));
     ASSERT_TRUE(message_render.hasRRset(Message::SECTION_ADDITIONAL, test_name,
         RRClass::IN(), RRType::AAAA()));
-    ASSERT_EQ(3, message_render.getRRCount(Message::SECTION_ADDITIONAL));
+    ASSERT_EQ(4, message_render.getRRCount(Message::SECTION_ADDITIONAL));
 
     message_render.clearSection(Message::SECTION_ADDITIONAL);
     EXPECT_FALSE(message_render.hasRRset(Message::SECTION_ADDITIONAL, test_name,
@@ -529,7 +519,7 @@ TEST_F(MessageTest, appendSection) {
         RRClass::IN(), RRType::A()));
 
     target.appendSection(Message::SECTION_ADDITIONAL, message_render);
-    EXPECT_EQ(3, target.getRRCount(Message::SECTION_ADDITIONAL));
+    EXPECT_EQ(4, target.getRRCount(Message::SECTION_ADDITIONAL));
     EXPECT_TRUE(target.hasRRset(Message::SECTION_ADDITIONAL, test_name,
         RRClass::IN(), RRType::A()));
     EXPECT_TRUE(target.hasRRset(Message::SECTION_ADDITIONAL, test_name,
@@ -539,7 +529,7 @@ TEST_F(MessageTest, appendSection) {
     Message source2(Message::RENDER);
     source2.addRRset(Message::SECTION_ANSWER, rrset_aaaa);
     target.appendSection(Message::SECTION_ANSWER, source2);
-    EXPECT_EQ(3, target.getRRCount(Message::SECTION_ANSWER));
+    EXPECT_EQ(4, target.getRRCount(Message::SECTION_ANSWER));
     EXPECT_TRUE(target.hasRRset(Message::SECTION_ANSWER, test_name,
         RRClass::IN(), RRType::A()));
     EXPECT_TRUE(target.hasRRset(Message::SECTION_ANSWER, test_name,
@@ -739,6 +729,87 @@ TEST_F(MessageTest, toWire) {
     message_render.toWire(renderer);
     vector<unsigned char> data;
     UnitTestUtil::readWireData("message_toWire1", data);
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
+                        renderer.getLength(), &data[0], data.size());
+}
+
+TEST_F(MessageTest, toWireSigned) {
+    message_render.setQid(0x75c1);
+    message_render.setOpcode(Opcode::QUERY());
+    message_render.setRcode(Rcode::NOERROR());
+    message_render.setHeaderFlag(Message::HEADERFLAG_QR, true);
+    message_render.setHeaderFlag(Message::HEADERFLAG_RD, true);
+    message_render.setHeaderFlag(Message::HEADERFLAG_AA, true);
+    message_render.addQuestion(Question(Name("test.example.com"), RRClass::IN(),
+                                        RRType::A()));
+
+    rrset_rrsig = RRsetPtr(new RRset(test_name, RRClass::IN(),
+                                     RRType::RRSIG(), RRTTL(3600)));
+    // one signature algorithm (5 = RSA/SHA-1)
+    rrset_rrsig->addRdata(generic::RRSIG("A 5 3 3600 "
+                                         "20000101000000 20000201000000 "
+                                         "12345 example.com. FAKEFAKEFAKE"));
+    // another signature algorithm (3 = DSA/SHA-1)
+    rrset_rrsig->addRdata(generic::RRSIG("A 3 3 3600 "
+                                         "20000101000000 20000201000000 "
+                                         "12345 example.com. FAKEFAKEFAKE"));
+    rrset_a->addRRsig(rrset_rrsig);
+    EXPECT_EQ(2, rrset_a->getRRsigDataCount());
+
+    message_render.addRRset(Message::SECTION_ANSWER, rrset_a);
+
+    EXPECT_EQ(1, message_render.getRRCount(Message::SECTION_QUESTION));
+    EXPECT_EQ(4, message_render.getRRCount(Message::SECTION_ANSWER));
+    EXPECT_EQ(0, message_render.getRRCount(Message::SECTION_AUTHORITY));
+    EXPECT_EQ(0, message_render.getRRCount(Message::SECTION_ADDITIONAL));
+
+    message_render.toWire(renderer);
+    vector<unsigned char> data;
+    UnitTestUtil::readWireData("message_toWire6", data);
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
+                        renderer.getLength(), &data[0], data.size());
+}
+
+TEST_F(MessageTest, toWireSignedAndTruncated) {
+    message_render.setQid(0x75c1);
+    message_render.setOpcode(Opcode::QUERY());
+    message_render.setRcode(Rcode::NOERROR());
+    message_render.setHeaderFlag(Message::HEADERFLAG_QR, true);
+    message_render.setHeaderFlag(Message::HEADERFLAG_RD, true);
+    message_render.setHeaderFlag(Message::HEADERFLAG_AA, true);
+    message_render.addQuestion(Question(Name("test.example.com"), RRClass::IN(),
+                                        RRType::TXT()));
+
+    RRsetPtr rrset_txt = RRsetPtr(new RRset(test_name, RRClass::IN(),
+                                            RRType::TXT(), RRTTL(3600)));
+    rrset_txt->addRdata(generic::TXT(string(255, 'a')));
+    rrset_txt->addRdata(generic::TXT(string(255, 'b')));
+    rrset_txt->addRdata(generic::TXT(string(255, 'c')));
+    rrset_txt->addRdata(generic::TXT(string(255, 'd')));
+    rrset_txt->addRdata(generic::TXT(string(255, 'e')));
+    rrset_txt->addRdata(generic::TXT(string(255, 'f')));
+    rrset_txt->addRdata(generic::TXT(string(255, 'g')));
+    rrset_txt->addRdata(generic::TXT(string(255, 'h')));
+
+    rrset_rrsig = RRsetPtr(new RRset(test_name, RRClass::IN(),
+                                     RRType::RRSIG(), RRTTL(3600)));
+    // one signature algorithm (5 = RSA/SHA-1)
+    rrset_rrsig->addRdata(generic::RRSIG("TXT 5 3 3600 "
+                                         "20000101000000 20000201000000 "
+                                         "12345 example.com. FAKEFAKEFAKE"));
+    rrset_txt->addRRsig(rrset_rrsig);
+    EXPECT_EQ(1, rrset_txt->getRRsigDataCount());
+
+    message_render.addRRset(Message::SECTION_ANSWER, rrset_txt);
+
+    EXPECT_EQ(1, message_render.getRRCount(Message::SECTION_QUESTION));
+    EXPECT_EQ(9, message_render.getRRCount(Message::SECTION_ANSWER));
+    EXPECT_EQ(0, message_render.getRRCount(Message::SECTION_AUTHORITY));
+    EXPECT_EQ(0, message_render.getRRCount(Message::SECTION_ADDITIONAL));
+
+    message_render.toWire(renderer);
+    vector<unsigned char> data;
+    UnitTestUtil::readWireData("message_toWire7", data);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
                         renderer.getLength(), &data[0], data.size());
 }

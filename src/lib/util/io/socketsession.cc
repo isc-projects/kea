@@ -163,7 +163,9 @@ SocketSessionForwarder::connectToReceiver() {
         if (setsockopt(impl_->fd_, SOL_SOCKET, SO_SNDBUF, &SOCKSESSION_BUFSIZE,
                        sizeof(SOCKSESSION_BUFSIZE)) == -1) {
             close();
-            isc_throw(SocketSessionError, "Failed to set send buffer size");
+            isc_throw(SocketSessionError,
+                      "Failed to set send buffer size to " <<
+                          SOCKSESSION_BUFSIZE);
         }
     }
     if (connect(impl_->fd_, convertSockAddr(&impl_->sock_un_),
@@ -286,7 +288,8 @@ struct SocketSessionReceiver::ReceiverImpl {
         if (setsockopt(fd_, SOL_SOCKET, SO_RCVBUF, &SOCKSESSION_BUFSIZE,
                        sizeof(SOCKSESSION_BUFSIZE)) == -1) {
             isc_throw(SocketSessionError,
-                      "Failed to set receive buffer size");
+                      "Failed to set receive buffer size to " <<
+                          SOCKSESSION_BUFSIZE);
         }
     }
 

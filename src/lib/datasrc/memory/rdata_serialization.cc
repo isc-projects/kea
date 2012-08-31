@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include "rdata_serialization.h"
+
 #include <exceptions/exceptions.h>
 
 #include <util/buffer.h>
@@ -23,15 +25,10 @@
 #include <dns/rrclass.h>
 #include <dns/rrtype.h>
 
-#include "rdata_encoder.h"
-
-#include <boost/static_assert.hpp>
-
 #include <cassert>
 #include <cstring>
 #include <vector>
-
-#include <stdint.h>
+#include <boost/static_assert.hpp>
 
 using namespace isc::dns;
 using std::vector;
@@ -40,50 +37,9 @@ namespace isc {
 namespace datasrc {
 namespace memory {
 
+#include "rdata_serialization_priv.cc"
+
 namespace {
-/// Specification of a single RDATA field in terms of internal encoding.
-struct RdataFieldSpec {
-    enum FieldType {
-        FIXEDLEN_DATA = 0,      // fixed-length data field
-        VARLEN_DATA,            // variable-length data field
-        DOMAIN_NAME             // domain name
-    };
-
-    const FieldType type;       // field type
-
-    // The length of fixed-length data field.  Only valid for FIXEDLEN_DATA.
-    // For type DOMAIN_NAME, set it to 0.
-    const uint16_t fixeddata_len;
-
-    // Attributes of the name.  Only valid for DOMAIN_NAME.
-    // For type _DATA, set it to NAMEATTR_NONE.
-    const RdataNameAttributes name_attributes;
-};
-
-/// Specification of RDATA in terms of internal encoding.
-///
-/// The fields must be a sequence of:
-/// <0 or 1 fixed/var-len data field>,
-/// <1 or more domain name fields>,
-/// <1 fixed/var-len data field>,
-/// <1 or more domain name fields>,
-/// <1 fixed/var-len data field>,
-/// ...and so on.
-/// There must not be more than one consecutive data fields (i.e., without
-/// interleaved by a domain name); it would just be inefficient in terms of
-/// memory footprint and iterating over the fields, and it would break
-/// some assumption within the encoder implementation.  For consecutive
-/// data fields in the DNS protocol, if all fields have fixed lengths, they
-/// should be combined into a single fixed-length field (like the last 20
-/// bytes of SOA RDATA).  If there's a variable length field, they should be
-/// combined into a single variable-length field (such as DNSKEY, which has
-/// 3 fixed-length fields followed by one variable-length field).
-struct RdataEncodeSpec {
-    const uint16_t field_count; // total number of fields (# of fields member)
-    const uint16_t name_count;  // number of domain name fields
-    const uint16_t varlen_count; // number of variable-length data fields
-    const RdataFieldSpec* const fields; // list of field specs
-};
 
 // Many types of RDATA can be treated as a single-field, variable length
 // field (in terms of our encoding).  The following define such most general
@@ -243,9 +199,11 @@ const size_t encode_spec_list_in_size =
     sizeof(encode_spec_list_in) / sizeof(encode_spec_list_in[0]);
 BOOST_STATIC_ASSERT(encode_spec_list_in_size == 48);
 
-inline
+}
+
+/// \brief Get the spec for given class and type
 const RdataEncodeSpec&
-getRdataEncodeSpec(RRClass rrclass, RRType rrtype) {
+getRdataEncodeSpec(const RRClass& rrclass, const RRType& rrtype) {
     // Special case: for classes other than IN, we treat RDATA of RR types
     // that are class-IN specific as generic opaque data.
     if (rrclass != RRClass::IN() &&
@@ -262,6 +220,8 @@ getRdataEncodeSpec(RRClass rrclass, RRType rrtype) {
     }
     return (generic_data_spec);
 }
+
+namespace {
 
 // This class is a helper for RdataEncoder to divide the content of RDATA
 // fields for encoding by "abusing" the  message rendering logic.
@@ -401,6 +361,7 @@ private:
     // Placeholder to convert a name object to a label sequence.
     uint8_t labels_placeholder_[LabelSequence::MAX_SERIALIZED_LENGTH];
 };
+
 } // end of unnamed namespace
 
 struct RdataEncoder::RdataEncoderImpl {
@@ -525,77 +486,145 @@ RdataEncoder::encode(void* buf, size_t buf_len) const {
     assert(buf_len >= dp - dp_beg);
 }
 
-namespace testing {
-void
-foreachRdataField(RRClass rrclass, RRType rrtype,
-                  size_t rdata_count,
-                  const vector<uint8_t>& encoded_data,
-                  const vector<uint16_t>& varlen_list,
-                  NameCallback name_callback, DataCallback data_callback)
+RdataReader::RdataReader(const RRClass& rrclass, const RRType& rrtype,
+                         const void* data,
+                         size_t rdata_count, size_t sig_count,
+                         const NameAction& name_action,
+                         const DataAction& data_action) :
+    name_action_(name_action),
+    data_action_(data_action),
+    spec_(getRdataEncodeSpec(rrclass, rrtype)),
+    var_count_total_(spec_.varlen_count * rdata_count),
+    sig_count_(sig_count),
+    spec_count_(spec_.field_count * rdata_count),
+    // The lenghts are stored first
+    lengths_(reinterpret_cast<const uint16_t*>(data)),
+    // And the data just after all the lengths
+    data_(reinterpret_cast<const uint8_t*>(data) +
+          (var_count_total_ + sig_count_) * sizeof(uint16_t)),
+    sigs_(NULL)
 {
-    const RdataEncodeSpec& encode_spec = getRdataEncodeSpec(rrclass, rrtype);
+    rewind();
+}
 
-    size_t off = 0;
-    size_t varlen_count = 0;
-    size_t name_count = 0;
-    for (size_t count = 0; count < rdata_count; ++count) {
-        for (size_t i = 0; i < encode_spec.field_count; ++i) {
-            const RdataFieldSpec& field_spec = encode_spec.fields[i];
-            switch (field_spec.type) {
-            case RdataFieldSpec::FIXEDLEN_DATA:
-                if (data_callback) {
-                    data_callback(&encoded_data.at(off),
-                                  field_spec.fixeddata_len);
-                }
-                off += field_spec.fixeddata_len;
-                break;
-            case RdataFieldSpec::VARLEN_DATA:
-            {
-                const size_t varlen = varlen_list.at(varlen_count);
-                if (data_callback && varlen > 0) {
-                    data_callback(&encoded_data.at(off), varlen);
-                }
-                off += varlen;
-                ++varlen_count;
-                break;
-            }
-            case RdataFieldSpec::DOMAIN_NAME:
-            {
-                ++name_count;
-                const LabelSequence labels(&encoded_data.at(off));
-                if (name_callback) {
-                    name_callback(labels, field_spec.name_attributes);
-                }
-                off += labels.getSerializedLength();
-                break;
-            }
-            }
+void
+RdataReader::rewind() {
+    data_pos_ = 0;
+    spec_pos_ = 0;
+    length_pos_ = 0;
+    sig_data_pos_ = 0;
+    sig_pos_ = 0;
+}
+
+RdataReader::Boundary
+RdataReader::nextInternal(const NameAction& name_action,
+                          const DataAction& data_action)
+{
+    if (spec_pos_ < spec_count_) {
+        const RdataFieldSpec& spec(spec_.fields[(spec_pos_++) %
+                                                spec_.field_count]);
+        if (spec.type == RdataFieldSpec::DOMAIN_NAME) {
+            const LabelSequence sequence(data_ + data_pos_);
+            data_pos_ += sequence.getSerializedLength();
+            name_action(sequence, spec.name_attributes);
+        } else {
+            const size_t length(spec.type == RdataFieldSpec::FIXEDLEN_DATA ?
+                                spec.fixeddata_len : lengths_[length_pos_++]);
+            const uint8_t* const pos = data_ + data_pos_;
+            data_pos_ += length;
+            data_action(pos, length);
+        }
+        return (spec_pos_ % spec_.field_count == 0 ?
+                RDATA_BOUNDARY : NO_BOUNDARY);
+    } else {
+        sigs_ = data_ + data_pos_;
+        return (RRSET_BOUNDARY);
+    }
+}
+
+RdataReader::Boundary
+RdataReader::next() {
+    return (nextInternal(name_action_, data_action_));
+}
+
+void
+RdataReader::emptyNameAction(const LabelSequence&, RdataNameAttributes) {
+    // Do nothing here.
+}
+
+void
+RdataReader::emptyDataAction(const void*, size_t) {
+    // Do nothing here.
+}
+
+RdataReader::Boundary
+RdataReader::nextSig() {
+    if (sig_pos_ < sig_count_) {
+        if (sigs_ == NULL) {
+            // We didn't find where the signatures start yet. We do it
+            // by iterating the whole data and then returning the state
+            // back.
+            const size_t data_pos = data_pos_;
+            const size_t spec_pos = spec_pos_;
+            const size_t length_pos = length_pos_;
+            // When the next() gets to the last item, it sets the sigs_
+            while (nextInternal(emptyNameAction, emptyDataAction) !=
+                   RRSET_BOUNDARY) {}
+            assert(sigs_ != NULL);
+            // Return the state
+            data_pos_ = data_pos;
+            spec_pos_ = spec_pos;
+            length_pos_ = length_pos;
+        }
+        // Extract the result
+        const size_t length = lengths_[var_count_total_ + sig_pos_];
+        const uint8_t* const pos = sigs_ + sig_data_pos_;
+        // Move the position of iterator.
+        sig_data_pos_ += lengths_[var_count_total_ + sig_pos_];
+        ++sig_pos_;
+        // Call the callback
+        data_action_(pos, length);
+        return (RDATA_BOUNDARY);
+    } else {
+        return (RRSET_BOUNDARY);
+    }
+}
+
+size_t
+RdataReader::getSize() const {
+    size_t storage_size = 0;    // this will be the end result
+    size_t data_pos = 0;
+    size_t length_pos = 0;
+
+    // Go over all data fields, adding their lengths to storage_size
+    for (size_t spec_pos = 0; spec_pos < spec_count_; ++spec_pos) {
+        const RdataFieldSpec& spec =
+            spec_.fields[spec_pos % spec_.field_count];
+        if (spec.type == RdataFieldSpec::DOMAIN_NAME) {
+            const size_t seq_len =
+                LabelSequence(data_ + data_pos).getSerializedLength();
+            data_pos += seq_len;
+            storage_size += seq_len;
+        } else {
+            const size_t data_len =
+                (spec.type == RdataFieldSpec::FIXEDLEN_DATA ?
+                 spec.fixeddata_len : lengths_[length_pos++]);
+            data_pos += data_len;
+            storage_size += data_len;
         }
     }
-    assert(name_count == encode_spec.name_count * rdata_count);
-    assert(varlen_count == encode_spec.varlen_count * rdata_count);
-}
-
-void
-foreachRRSig(const vector<uint8_t>& encoded_data,
-             const vector<uint16_t>& rrsiglen_list,
-             DataCallback data_callback)
-{
-    size_t rrsig_totallen = 0;
-    for (vector<uint16_t>::const_iterator it = rrsiglen_list.begin();
-         it != rrsiglen_list.end();
-         ++it) {
-        rrsig_totallen += *it;
+    // Same for all RRSIG data
+    for (size_t sig_pos = 0; sig_pos < sig_count_; ++sig_pos) {
+        const size_t sig_data_len = lengths_[length_pos++];
+        storage_size += sig_data_len;
     }
-    assert(encoded_data.size() >= rrsig_totallen);
 
-    const uint8_t* dp = &encoded_data[encoded_data.size() - rrsig_totallen];
-    for (size_t i = 0; i < rrsiglen_list.size(); ++i) {
-        data_callback(dp, rrsiglen_list[i]);
-        dp += rrsiglen_list[i];
-    }
+    // Finally, add the size for 16-bit length fields
+    storage_size += (var_count_total_ * sizeof(uint16_t) +
+                     sig_count_ * sizeof(uint16_t));
+
+    return (storage_size);
 }
-} // namespace testing
 
 } // namespace memory
 } // namespace datasrc

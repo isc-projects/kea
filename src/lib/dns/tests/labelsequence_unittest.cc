@@ -177,6 +177,16 @@ TEST_F(LabelSequenceTest, equals_insensitive) {
     EXPECT_TRUE(ls11.equals(ls12));
 }
 
+// operator==().  This is mostly trivial wrapper, so it should suffice to
+// check some basic cases.
+TEST_F(LabelSequenceTest, operatorEqual) {
+    // cppcheck-suppress duplicateExpression
+    EXPECT_TRUE(ls1 == ls1);      // self equivalence
+    EXPECT_TRUE(ls1 == LabelSequence(n1)); // equivalent two different objects
+    EXPECT_FALSE(ls1 == ls2);      // non equivalent objects
+    EXPECT_TRUE(ls1 == ls5);       // it's always case insensitive
+}
+
 // Compare tests
 TEST_F(LabelSequenceTest, compare) {
     // "example.org." and "example.org.", case sensitive
@@ -712,8 +722,9 @@ TEST_F(LabelSequenceTest, LeftShiftOperator) {
 }
 
 TEST_F(LabelSequenceTest, serialize) {
-    // placeholder for serialized data
-    uint8_t labels_buf[LabelSequence::MAX_SERIALIZED_LENGTH];
+    // placeholder for serialized data.  We use a sufficiently large space
+    // for testing the overwrapping cases below.
+    uint8_t labels_buf[LabelSequence::MAX_SERIALIZED_LENGTH * 3];
 
     // vector to store expected and actual data
     vector<LabelSequence> actual_labelseqs;
@@ -777,6 +788,32 @@ TEST_F(LabelSequenceTest, serialize) {
 
         EXPECT_EQ(NameComparisonResult::EQUAL,
                   LabelSequence(labels_buf).compare(*itl).getRelation());
+
+        // Shift the data to the middle of the buffer for overwrap check
+        uint8_t* const bp = labels_buf;
+        std::memcpy(bp + serialized_len, bp, serialized_len);
+        // Memory layout is now as follows:
+        //   <- ser_len ->          <- ser_len ------>
+        // bp             bp+ser_len                  bp+(ser_len*2)
+        //                           olen,odata,ndata
+
+        // end of buffer would be the first byte of offsets: invalid.
+        EXPECT_THROW(LabelSequence(bp + serialized_len).
+                     serialize(bp + 2, serialized_len),
+                     isc::BadValue);
+        // begin of buffer would be the last byte of ndata: invalid.
+        EXPECT_THROW(LabelSequence(bp + serialized_len).
+                     serialize(bp + (2 * serialized_len) - 1, serialized_len),
+                     isc::BadValue);
+        // A boundary safe case: buffer is placed after the sequence data.
+        // should cause no disruption.
+        LabelSequence(bp + serialized_len).
+                     serialize(bp + 2 * serialized_len, serialized_len);
+        // A boundary safe case: buffer is placed before the sequence data
+        // should cause no disruption. (but the original serialized data will
+        // be overridden, so it can't be used any more)
+        LabelSequence(bp + serialized_len).
+                     serialize(bp + 1, serialized_len);
     }
 
     EXPECT_THROW(ls1.serialize(labels_buf, ls1.getSerializedLength() - 1),

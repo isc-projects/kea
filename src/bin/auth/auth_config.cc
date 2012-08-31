@@ -53,37 +53,6 @@ public:
     virtual void commit() {};
 };
 
-/// A derived \c AuthConfigParser class for the "statistics-internal"
-/// configuration identifier.
-class StatisticsIntervalConfig : public AuthConfigParser {
-public:
-    StatisticsIntervalConfig(AuthSrv& server) :
-        server_(server), interval_(0)
-    {}
-    virtual void build(ConstElementPtr config_value) {
-        const int32_t config_interval = config_value->intValue();
-        if (config_interval < 0) {
-            isc_throw(AuthConfigError, "Negative statistics interval value: "
-                      << config_interval);
-        }
-        if (config_interval > 86400) {
-            isc_throw(AuthConfigError, "Statistics interval value "
-                      << config_interval
-                      << " must be equal to or shorter than 86400");
-        }
-        interval_ = config_interval;
-    }
-    virtual void commit() {
-        // setStatisticsTimerInterval() is not 100% exception free.  But
-        // exceptions should happen only in a very rare situation, so we
-        // let them be thrown and subsequently regard them as a fatal error.
-        server_.setStatisticsTimerInterval(interval_);
-    }
-private:
-    AuthSrv& server_;
-    uint32_t interval_;
-};
-
 /// A special parser for testing: it throws from commit() despite the
 /// suggested convention of the class interface.
 class ThrowerCommitConfig : public AuthConfigParser {
@@ -155,9 +124,7 @@ createAuthConfigParser(AuthSrv& server, const std::string& config_id) {
     // simplicity.  In future we'll probably generalize it using map-like
     // data structure, and may even provide external register interface so
     // that it can be dynamically customized.
-    if (config_id == "statistics-interval") {
-        return (new StatisticsIntervalConfig(server));
-    } else if (config_id == "listen_on") {
+    if (config_id == "listen_on") {
         return (new ListenAddressConfig(server));
     } else if (config_id == "_commit_throw") {
         // This is for testing purpose only and should not appear in the

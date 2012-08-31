@@ -12,6 +12,7 @@ EXTRA_DIST += ttl1.db
 EXTRA_DIST += ttl2.db
 EXTRA_DIST += ttlext.db
 EXTRA_DIST += example.db
+EXTRA_DIST += comment.db
 
 noinst_SCRIPTS = correct_test.sh
 

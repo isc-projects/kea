@@ -12,8 +12,8 @@
           "item_type": "map",
           "item_optional": true,
           "item_default": {
-	    "origin": "",
-	    "class": "IN",
+          "origin": "",
+          "class": "IN",
             "update_acl": []
           },
           "map_item_spec": [
@@ -33,11 +33,12 @@
               "item_name": "update_acl",
               "item_type": "list",
               "item_optional": false,
-	      "item_default": [],
+              "item_default": [],
               "list_item_spec": {
                 "item_name": "acl_element",
                 "item_type": "any",
-                "item_optional": true
+                "item_optional": true,
+                "item_default": {"action": "REJECT"}
               }
             }
           ]

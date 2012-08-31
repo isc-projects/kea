@@ -441,16 +441,13 @@ public:
         /// authority, and additional sections, and add them to their
         /// corresponding sections in the given message.  The RRsets are
         /// filtered such that a particular RRset appears only once in the
-        /// message.
-        ///
-        /// If \c dnssec is true, it tells the message to include any RRSIGs
-        /// attached to the RRsets.
+        /// message. Any RRSIGs attached to the RRsets will be included
+        /// when they are rendered.
         void create(
             isc::dns::Message& message,
             const std::vector<isc::dns::ConstRRsetPtr>& answers_,
             const std::vector<isc::dns::ConstRRsetPtr>& authorities_,
-            const std::vector<isc::dns::ConstRRsetPtr>& additionals_,
-            const bool dnssec);
+            const std::vector<isc::dns::ConstRRsetPtr>& additionals_);
 
     private:
         // \brief RRset comparison functor.
@@ -469,10 +466,9 @@ public:
         /// \param message Message to which the RRset is to be added
         /// \param section Section of the message in which the RRset is put
         /// \param rrset Pointer to RRset to be added to the message
-        /// \param dnssec Whether RRSIG records should be added as well
         void addRRset(isc::dns::Message& message,
                       const isc::dns::Message::Section section,
-                      const isc::dns::ConstRRsetPtr& rrset, const bool dnssec);
+                      const isc::dns::ConstRRsetPtr& rrset);
 
 
     private:
