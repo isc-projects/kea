@@ -210,7 +210,7 @@ public:
             case ConfigurableClientList::ZONE_NOT_CACHED:
                 isc_throw(AuthCommandError, "Zone " << origin << "/" <<
                           zone_class << " is not served from memory, but "
-                          "direcly from the data source. It is not possible "
+                          "directly from the data source. It is not possible "
                           "to reload it into memory. Configure it to be cached "
                           "first.");
             case ConfigurableClientList::CACHE_DISABLED:
