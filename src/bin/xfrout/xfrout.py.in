@@ -1163,8 +1163,7 @@ class XfroutServer:
             # daemon is periodically asking to the b10-xfrout daemon.
             logger.debug(DBG_XFROUT_TRACE, \
                              XFROUT_RECEIVED_GETSTATS_COMMAND)
-            answer = isc.config.ccsession.create_answer(
-                0, self._counter.get_statistics())
+            answer = create_answer(0, self._counter.get_statistics())
 
         else:
             answer = create_answer(1, "Unknown command:" + str(cmd))
