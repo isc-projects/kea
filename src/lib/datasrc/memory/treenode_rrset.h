@@ -105,7 +105,7 @@ public:
                   const RdataSet* rdataset, bool dnssec_ok) :
         node_(node), rdataset_(rdataset),
         rrsig_count_(rdataset_->getSigRdataCount()), rrclass_(rrclass),
-        dnssec_ok_(dnssec_ok), name_(NULL), realname_buf_(NULL)
+        dnssec_ok_(dnssec_ok), name_(NULL), realname_(NULL)
     {}
 
     /// \brief Constructor for wildcard-expanded owner name.
@@ -122,10 +122,14 @@ public:
     /// \throw std::bad_alloc Memory allocation fails
     TreeNodeRRset(const dns::Name& realname, const dns::RRClass& rrclass,
                   const ZoneNode* node, const RdataSet* rdataset,
-                  bool dnssec_ok);
+                  bool dnssec_ok) :
+        node_(node), rdataset_(rdataset),
+        rrsig_count_(rdataset_->getSigRdataCount()), rrclass_(rrclass),
+        dnssec_ok_(dnssec_ok), name_(NULL), realname_(new dns::Name(realname))
+    {}
 
     virtual ~TreeNodeRRset() {
-        delete[] realname_buf_;
+        delete realname_;
         delete name_;
     }
 
@@ -233,16 +237,11 @@ private:
     dns::LabelSequence getOwnerLabels(
         uint8_t labels_buf[dns::LabelSequence::MAX_SERIALIZED_LENGTH]) const
     {
-        if (realname_buf_ != NULL) {
-            return (dns::LabelSequence(realname_buf_));
+        if (realname_ != NULL) {
+            return (dns::LabelSequence(*realname_));
         }
         return (node_->getAbsoluteLabels(labels_buf));
     }
-
-    // A helper for isSameKind() to check if 'this' and 'other' has
-    // the same "real" name in case at least either is constructed with
-    // a real name.
-    bool hasSameRealName(const TreeNodeRRset& other) const;
 
     const ZoneNode* node_;
     const RdataSet* rdataset_;
@@ -250,7 +249,7 @@ private:
     const dns::RRClass rrclass_;
     const bool dnssec_ok_;
     mutable dns::Name* name_;
-    uint8_t* realname_buf_;
+    const dns::Name* const realname_;
 };
 
 } // namespace memory
