@@ -221,30 +221,30 @@ TEST_F(TreeNodeRRsetTest, toWire) {
 
     {
         SCOPED_TRACE("with RRSIG, DNSSEC OK");
-        const TreeNodeRRset rrset1(rrclass_, www_node_, a_rdataset_, true);
-        checkToWireResult(expected_renderer, actual_renderer, rrset1,
+        const TreeNodeRRset rrset(rrclass_, www_node_, a_rdataset_, true);
+        checkToWireResult(expected_renderer, actual_renderer, rrset,
                           www_name_, a_rrset_, a_rrsig_rrset_, true);
     }
 
     {
         SCOPED_TRACE("with RRSIG, DNSSEC not OK");
-        const TreeNodeRRset rrset2(rrclass_, www_node_, a_rdataset_, false);
-        checkToWireResult(expected_renderer, actual_renderer, rrset2,
+        const TreeNodeRRset rrset(rrclass_, www_node_, a_rdataset_, false);
+        checkToWireResult(expected_renderer, actual_renderer, rrset,
                           www_name_, a_rrset_, a_rrsig_rrset_, false);
     }
 
     {
         SCOPED_TRACE("without RRSIG, DNSSEC OK");
-        const TreeNodeRRset rrset3(rrclass_, origin_node_, ns_rdataset_, true);
-        checkToWireResult(expected_renderer, actual_renderer, rrset3,
+        const TreeNodeRRset rrset(rrclass_, origin_node_, ns_rdataset_, true);
+        checkToWireResult(expected_renderer, actual_renderer, rrset,
                           origin_name_, ns_rrset_, ConstRRsetPtr(), true);
     }
 
     {
         SCOPED_TRACE("without RRSIG, DNSSEC not OK");
-        const TreeNodeRRset rrset4(rrclass_, origin_node_, ns_rdataset_,
-                                   false);
-        checkToWireResult(expected_renderer, actual_renderer, rrset4,
+        const TreeNodeRRset rrset(rrclass_, origin_node_, ns_rdataset_,
+                                  false);
+        checkToWireResult(expected_renderer, actual_renderer, rrset,
                           origin_name_, ns_rrset_, ConstRRsetPtr(), false);
     }
 
@@ -252,9 +252,9 @@ TEST_F(TreeNodeRRsetTest, toWire) {
         // RDATA of DNAME DR shouldn't be compressed.  Prepending "example.org"
         // will check that.
         SCOPED_TRACE("uncompressed RDATA");
-        const TreeNodeRRset rrset5(rrclass_, origin_node_, dname_rdataset_,
-                                   false);
-        checkToWireResult(expected_renderer, actual_renderer, rrset5,
+        const TreeNodeRRset rrset(rrclass_, origin_node_, dname_rdataset_,
+                                  false);
+        checkToWireResult(expected_renderer, actual_renderer, rrset,
                           Name("example.org"), dname_rrset_, ConstRRsetPtr(),
                           false);
     }
@@ -283,9 +283,9 @@ TEST_F(TreeNodeRRsetTest, toWire) {
         // ANY or type-RRSIG queries, which are rare also).  But can still
         // happen.
         SCOPED_TRACE("RRSIG only, DNSSEC OK");
-        const TreeNodeRRset rrset6(rrclass_, www_node_, rrsig_only_rdataset_,
-                                   true);
-        checkToWireResult(expected_renderer, actual_renderer, rrset6,
+        const TreeNodeRRset rrset(rrclass_, www_node_, rrsig_only_rdataset_,
+                                  true);
+        checkToWireResult(expected_renderer, actual_renderer, rrset,
                           www_name_, ConstRRsetPtr(), txt_rrsig_rrset_,true);
     }
 
@@ -294,9 +294,9 @@ TEST_F(TreeNodeRRsetTest, toWire) {
         // In practice this case wouldn't happen, but API-wise possible, so
         // we test it explicitly.
         SCOPED_TRACE("RRSIG only, DNSSEC not OK");
-        const TreeNodeRRset rrset7(rrclass_, www_node_, rrsig_only_rdataset_,
-                                   false);
-        checkToWireResult(expected_renderer, actual_renderer, rrset7,
+        const TreeNodeRRset rrset(rrclass_, www_node_, rrsig_only_rdataset_,
+                                  false);
+        checkToWireResult(expected_renderer, actual_renderer, rrset,
                           www_name_, ConstRRsetPtr(), txt_rrsig_rrset_,false);
     }
 }
