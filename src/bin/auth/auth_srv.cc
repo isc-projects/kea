@@ -247,9 +247,6 @@ public:
     ModuleCCSession* config_session_;
     AbstractSession* xfrin_session_;
 
-    /// Interval timer for periodic submission of statistics counters.
-    IntervalTimer statistics_timer_;
-
     /// Query counters for statistics
     AuthCounters counters_;
 
@@ -320,7 +317,6 @@ AuthSrvImpl::AuthSrvImpl(AbstractXfroutClient& xfrout_client,
                          BaseSocketSessionForwarder& ddns_forwarder) :
     config_session_(NULL),
     xfrin_session_(NULL),
-    statistics_timer_(io_service_),
     counters_(),
     keyring_(NULL),
     ddns_base_forwarder_(ddns_forwarder),
@@ -479,41 +475,9 @@ AuthSrv::setConfigSession(ModuleCCSession* config_session) {
     impl_->registerStatisticsValidator();
 }
 
-void
-AuthSrv::setStatisticsSession(AbstractSession* statistics_session) {
-    impl_->counters_.setStatisticsSession(statistics_session);
-}
-
 ModuleCCSession*
 AuthSrv::getConfigSession() const {
     return (impl_->config_session_);
-}
-
-uint32_t
-AuthSrv::getStatisticsTimerInterval() const {
-    return (impl_->statistics_timer_.getInterval() / 1000);
-}
-
-void
-AuthSrv::setStatisticsTimerInterval(uint32_t interval) {
-    if (interval == impl_->statistics_timer_.getInterval()) {
-        return;
-    }
-    if (interval > 86400) {
-        // It can't occur since the value is checked in
-        // statisticsIntervalConfig::build().
-        isc_throw(InvalidParameter, "Too long interval: " << interval);
-    }
-    if (interval == 0) {
-        impl_->statistics_timer_.cancel();
-        LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_STATS_TIMER_DISABLED);
-    } else {
-        impl_->statistics_timer_.setup(boost::bind(&AuthSrv::submitStatistics,
-                                                   this),
-                                       interval * 1000);
-        LOG_DEBUG(auth_logger, DBG_AUTH_OPS, AUTH_STATS_TIMER_SET)
-                  .arg(interval);
-    }
 }
 
 void
@@ -882,8 +846,8 @@ AuthSrv::updateConfig(ConstElementPtr new_config) {
     }
 }
 
-bool AuthSrv::submitStatistics() const {
-    return (impl_->counters_.submitStatistics());
+ConstElementPtr AuthSrv::getStatistics() const {
+    return (impl_->counters_.getStatistics());
 }
 
 uint64_t

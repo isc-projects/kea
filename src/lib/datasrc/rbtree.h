@@ -1345,35 +1345,30 @@ RBTree<T>::~RBTree() {
 template <typename T>
 void
 RBTree<T>::deleteHelper(util::MemorySegment& mem_sgmt, RBNode<T>* root) {
-    if (root == NULL) {
-        return;
-    }
-
-    RBNode<T>* node = root;
-    while (root->getLeft() != NULL || root->getRight() != NULL) {
-        RBNode<T>* left(NULL);
-        RBNode<T>* right(NULL);
-        while ((left = node->getLeft()) != NULL ||
-               (right = node->getRight()) != NULL) {
-            node = (left != NULL) ? left : right;
-        }
-
-        RBNode<T>* parent = node->getParent();
-        if (parent->getLeft() == node) {
-            parent->left_ = NULL;
+    while (root != NULL) {
+        // If there is a left, right or down node, walk into it and
+        // iterate.
+        if (root->getLeft() != NULL) {
+            RBNode<T>* node = root;
+            root = root->getLeft();
+            node->left_ = NULL;
+        } else if (root->getRight() != NULL) {
+            RBNode<T>* node = root;
+            root = root->getRight();
+            node->right_ = NULL;
+        } else if (root->getDown() != NULL) {
+            RBNode<T>* node = root;
+            root = root->getDown();
+            node->down_ = NULL;
         } else {
-            parent->right_ = NULL;
+            // There are no left, right or down nodes, so we can
+            // free this one and go back to its parent.
+            RBNode<T>* node = root;
+            root = root->getParent();
+            RBNode<T>::destroy(mem_sgmt, node);
+            --node_count_;
         }
-
-        deleteHelper(mem_sgmt, node->getDown());
-        RBNode<T>::destroy(mem_sgmt, node);
-        --node_count_;
-        node = parent;
     }
-
-    deleteHelper(mem_sgmt, root->getDown());
-    RBNode<T>::destroy(mem_sgmt, root);
-    --node_count_;
 }
 
 template <typename T>
@@ -1627,8 +1622,12 @@ RBTree<T>::insert(util::MemorySegment& mem_sgmt,
     isc::dns::LabelSequence target_labels(target_name);
 
     int order = -1;
+    // For possible LabelSequence serialization we always store labels data
+    // in the separate local buffer.
+    uint8_t labels_buf[dns::LabelSequence::MAX_SERIALIZED_LENGTH];
     while (current != NULL) {
-        const dns::LabelSequence current_labels(current->getLabels());
+        const dns::LabelSequence current_labels(
+            dns::LabelSequence(current->getLabels(), labels_buf));
         const isc::dns::NameComparisonResult compare_result =
             target_labels.compare(current_labels);
         const isc::dns::NameComparisonResult::NameRelation relation =

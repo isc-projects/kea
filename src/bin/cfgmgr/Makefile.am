@@ -33,8 +33,9 @@ b10-cfgmgr: b10-cfgmgr.py
 
 install-data-local:
 	$(mkinstalldirs) $(DESTDIR)/@localstatedir@/@PACKAGE@
-# TODO: permissions handled later
 
+install-data-hook:
+	-chmod 2770 $(DESTDIR)/@localstatedir@/@PACKAGE@
 
 CLEANDIRS = __pycache__
 

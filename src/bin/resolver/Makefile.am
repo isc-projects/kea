@@ -63,20 +63,20 @@ b10_resolver_SOURCES += common.cc common.h
 nodist_b10_resolver_SOURCES = resolver_messages.cc resolver_messages.h
 
 
-b10_resolver_LDADD =  $(top_builddir)/src/lib/dns/libdns++.la
-b10_resolver_LDADD += $(top_builddir)/src/lib/config/libcfgclient.la
-b10_resolver_LDADD += $(top_builddir)/src/lib/cc/libcc.la
-b10_resolver_LDADD += $(top_builddir)/src/lib/util/libutil.la
-b10_resolver_LDADD += $(top_builddir)/src/lib/acl/libdnsacl.la
-b10_resolver_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
-b10_resolver_LDADD += $(top_builddir)/src/lib/asiodns/libasiodns.la
-b10_resolver_LDADD += $(top_builddir)/src/lib/asiolink/libasiolink.la
-b10_resolver_LDADD += $(top_builddir)/src/lib/xfr/libxfr.la
-b10_resolver_LDADD += $(top_builddir)/src/lib/log/liblog.la
-b10_resolver_LDADD += $(top_builddir)/src/lib/server_common/libserver_common.la
-b10_resolver_LDADD += $(top_builddir)/src/lib/cache/libcache.la
-b10_resolver_LDADD += $(top_builddir)/src/lib/nsas/libnsas.la
-b10_resolver_LDADD += $(top_builddir)/src/lib/resolve/libresolve.la
+b10_resolver_LDADD =  $(top_builddir)/src/lib/dns/libb10-dns++.la
+b10_resolver_LDADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la
+b10_resolver_LDADD += $(top_builddir)/src/lib/cc/libb10-cc.la
+b10_resolver_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
+b10_resolver_LDADD += $(top_builddir)/src/lib/acl/libb10-dnsacl.la
+b10_resolver_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
+b10_resolver_LDADD += $(top_builddir)/src/lib/asiodns/libb10-asiodns.la
+b10_resolver_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
+b10_resolver_LDADD += $(top_builddir)/src/lib/xfr/libb10-xfr.la
+b10_resolver_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
+b10_resolver_LDADD += $(top_builddir)/src/lib/server_common/libb10-server-common.la
+b10_resolver_LDADD += $(top_builddir)/src/lib/cache/libb10-cache.la
+b10_resolver_LDADD += $(top_builddir)/src/lib/nsas/libb10-nsas.la
+b10_resolver_LDADD += $(top_builddir)/src/lib/resolve/libb10-resolve.la
 b10_resolver_LDFLAGS = -pthread
 
 # TODO: config.h.in is wrong because doesn't honor pkgdatadir

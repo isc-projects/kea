@@ -134,6 +134,11 @@ protected:
     };
 
 public:
+    /// \brief A helper function to strip RRSIGs when FIND_DNSSEC is not
+    /// requested.
+    static isc::dns::ConstRRsetPtr
+    stripRRsigs(isc::dns::ConstRRsetPtr rp, const FindOptions options);
+
     /// \brief Context of the result of a find() call.
     ///
     /// This class encapsulates results and (possibly) associated context
@@ -299,7 +304,9 @@ public:
     private:
         ZoneFinder& finder_;
         const FindResultFlags flags_;
+    protected:
         const FindOptions options_;
+    private:
         std::vector<isc::dns::ConstRRsetPtr> all_set_;
     };
 

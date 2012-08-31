@@ -211,12 +211,18 @@ const char* const nonsec_a_txt =
     "nonsec.example.com. 3600 IN A 192.0.2.0\n";
 
 // NSEC3 RRs.  You may also need to add mapping to MockZoneFinder::hash_map_.
-const char* const nsec3_apex_txt =
+const string nsec3_apex_txt =
     "0p9mhaveqvm6t7vbl5lop2u3t2rp3tom.example.com. 3600 IN NSEC3 1 1 12 "
     "aabbccdd 2t7b4g4vsa5smi47k61mv5bv1a22bojr NS SOA NSEC3PARAM RRSIG\n";
-const char* const nsec3_www_txt =
+const string nsec3_apex_rrsig_txt =
+    "0p9mhaveqvm6t7vbl5lop2u3t2rp3tom.example.com. 3600 IN RRSIG NSEC3 5 3 "
+    "3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE";
+const string nsec3_www_txt =
     "q04jkcevqvmu85r014c7dkba38o0ji5r.example.com. 3600 IN NSEC3 1 1 12 "
     "aabbccdd r53bq7cc2uvmubfu5ocmm6pers9tk9en A RRSIG\n";
+const string nsec3_www_rrsig_txt =
+    "q04jkcevqvmu85r014c7dkba38o0ji5r.example.com. 3600 IN RRSIG NSEC3 5 3 "
+    "3600 20000101000000 20000201000000 12345 example.com. FAKEFAKEFAKE";
 
 // NSEC3 for wild.example.com (used in wildcard tests, will be added on
 // demand not to confuse other tests)
@@ -479,9 +485,10 @@ protected:
                                        isc::dns::ConstRRsetPtr rrset,
                                        FindResultFlags flags = RESULT_DEFAULT)
     {
+        ConstRRsetPtr rp = stripRRsigs(rrset, options);
         return (ZoneFinderContextPtr(
                     new Context(*this, options,
-                                ResultContext(code, rrset, flags))));
+                                ResultContext(code, rp, flags))));
     }
 
 private:
@@ -594,7 +601,7 @@ MockZoneFinder::findAll(const Name& name, std::vector<ConstRRsetPtr>& target,
                  found_domain->second.begin();
                  found_rrset != found_domain->second.end(); ++found_rrset) {
                 // Insert RRs under the domain name into target
-                target.push_back(found_rrset->second);
+                target.push_back(stripRRsigs(found_rrset->second, options));
             }
             return (ZoneFinderContextPtr(
                         new Context(*this, options,
@@ -701,25 +708,8 @@ MockZoneFinder::find(const Name& name, const RRType& type,
         RRsetStore::const_iterator found_rrset =
             found_domain->second.find(type);
         if (found_rrset != found_domain->second.end()) {
-            ConstRRsetPtr rrset;
-            // Strip whatever signature there is in case DNSSEC is not required
-            // Just to make sure the Query asks for it when it is needed
-            if ((options & ZoneFinder::FIND_DNSSEC) != 0 ||
-                include_rrsig_anyway_ ||
-                !found_rrset->second->getRRsig()) {
-                rrset = found_rrset->second;
-            } else {
-                RRsetPtr noconst(new RRset(found_rrset->second->getName(),
-                                           found_rrset->second->getClass(),
-                                           found_rrset->second->getType(),
-                                           found_rrset->second->getTTL()));
-                for (RdataIteratorPtr
-                     i(found_rrset->second->getRdataIterator());
-                     !i->isLast(); i->next()) {
-                    noconst->addRdata(i->getCurrent());
-                }
-                rrset = noconst;
-            }
+            ConstRRsetPtr rrset = ZoneFinder::stripRRsigs(found_rrset->second,
+                                                          options);
             return (createContext(options, SUCCESS, rrset));
         }
 
@@ -1985,14 +1975,16 @@ TEST_F(QueryTest, findNSEC3) {
     // Apex name.  It should have a matching NSEC3
     {
         SCOPED_TRACE("apex, non recursive");
-        nsec3Check(true, expected_closest_labels, nsec3_apex_txt,
+        nsec3Check(true, expected_closest_labels,
+                   nsec3_apex_txt + "\n" + nsec3_apex_rrsig_txt,
                    mock_finder->findNSEC3(Name("example.com"), false));
     }
 
     // Recursive mode doesn't change the result in this case.
     {
         SCOPED_TRACE("apex, recursive");
-        nsec3Check(true, expected_closest_labels, nsec3_apex_txt,
+        nsec3Check(true, expected_closest_labels,
+                   nsec3_apex_txt + "\n" + nsec3_apex_rrsig_txt,
                    mock_finder->findNSEC3(Name("example.com"), true));
     }
 
@@ -2000,7 +1992,8 @@ TEST_F(QueryTest, findNSEC3) {
     // returned.
     {
         SCOPED_TRACE("nxdomain, non recursive");
-        nsec3Check(false, 4, nsec3_www_txt,
+        nsec3Check(false, 4,
+                   nsec3_www_txt + "\n" + nsec3_www_rrsig_txt,
                    mock_finder->findNSEC3(Name("nxdomain.example.com"),
                                           false));
     }
@@ -2010,7 +2003,8 @@ TEST_F(QueryTest, findNSEC3) {
     {
         SCOPED_TRACE("nxdomain, recursive");
         nsec3Check(true, expected_closest_labels,
-                   string(nsec3_apex_txt) + string(nsec3_www_txt),
+                   nsec3_apex_txt + "\n" + nsec3_apex_rrsig_txt + "\n" +
+                   nsec3_www_txt + "\n" + nsec3_www_rrsig_txt,
                    mock_finder->findNSEC3(Name("nxdomain.example.com"), true));
     }
 
@@ -2019,7 +2013,8 @@ TEST_F(QueryTest, findNSEC3) {
     {
         SCOPED_TRACE("nxdomain, next closer != qname");
         nsec3Check(true, expected_closest_labels,
-                   string(nsec3_apex_txt) + string(nsec3_www_txt),
+                   nsec3_apex_txt + "\n" + nsec3_apex_rrsig_txt + "\n" +
+                   nsec3_www_txt + "\n" + nsec3_www_rrsig_txt,
                    mock_finder->findNSEC3(Name("nx.domain.example.com"),
                                           true));
     }
@@ -2027,13 +2022,15 @@ TEST_F(QueryTest, findNSEC3) {
     // In the rest of test we check hash comparison for wrap around cases.
     {
         SCOPED_TRACE("largest");
-        nsec3Check(false, 4, nsec3_apex_txt,
+        nsec3Check(false, 4,
+                   nsec3_apex_txt + "\n" + nsec3_apex_rrsig_txt,
                    mock_finder->findNSEC3(Name("nxdomain2.example.com"),
                                           false));
     }
     {
         SCOPED_TRACE("smallest");
-        nsec3Check(false, 4, nsec3_www_txt,
+        nsec3Check(false, 4,
+                   nsec3_www_txt + "\n" + nsec3_www_rrsig_txt,
                    mock_finder->findNSEC3(Name("nxdomain3.example.com"),
                                           false));
     }
@@ -2516,8 +2513,7 @@ TEST_F(QueryTest, DuplicateNameRemoval) {
     EXPECT_EQ(0, message.getRRCount(Message::SECTION_ADDITIONAL));
 
     // ... and fill it.
-    Query::ResponseCreator().create(message, answer, authority, additional,
-                                    false);
+    Query::ResponseCreator().create(message, answer, authority, additional);
 
     // Check counts in each section.  Note that these are RR counts,
     // not RRset counts.

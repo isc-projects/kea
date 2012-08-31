@@ -326,7 +326,11 @@ TEST_P(ZoneFinderContextTest, getAdditionalWithSIG) {
 
     ctx->getAdditional(REQUESTED_BOTH, result_sets_);
     rrsetsCheck("ns1.example.org. 3600 IN A 192.0.2.1\n"
+                "ns1.example.org. 3600 IN RRSIG	A 7 3 3600 20150420235959 "
+                "20051021000000 40430 example.org. FAKEFAKE\n"
                 "ns1.example.org. 3600 IN AAAA 2001:db8::1\n"
+                "ns1.example.org. 3600 IN RRSIG	AAAA 7 3 3600 20150420235959 "
+                "20051021000000 40430 example.org. FAKEFAKEFAKE\n"
                 "ns2.example.org. 3600 IN A 192.0.2.2\n",
                 result_sets_.begin(), result_sets_.end());
 

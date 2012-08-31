@@ -332,7 +332,7 @@ public:
                   shared_ptr<InMemoryClient>());
     }
     shared_ptr<TestedList> list_;
-    const ClientList::FindResult negativeResult_;
+    const ClientList::FindResult negative_result_;
     vector<shared_ptr<MockDataSourceClient> > ds_;
     vector<ConfigurableClientList::DataSourceInfo> ds_info_;
     const ConstElementPtr config_elem_, config_elem_zones_;
@@ -349,7 +349,7 @@ TEST_F(ListTest, selfTest) {
     EXPECT_EQ(result::NOTFOUND, ds_[0]->findZone(Name("zzz")).code);
     // Nothing to keep alive here.
     EXPECT_EQ(shared_ptr<ClientList::FindResult::LifeKeeper>(),
-                  negativeResult_.life_keeper_);
+                  negative_result_.life_keeper_);
 }
 
 // Test the list we create with empty configuration is, in fact, empty
@@ -365,14 +365,14 @@ TEST_F(ListTest, emptySearch) {
 
     // Note: we don't have operator<< for the result class, so we cannot use
     // EXPECT_EQ.  Same for other similar cases.
-    EXPECT_TRUE(negativeResult_ == list_->find(Name("example.org"), false,
-                                               false));
-    EXPECT_TRUE(negativeResult_ == list_->find(Name("example.org"), false,
-                                               true));
-    EXPECT_TRUE(negativeResult_ == list_->find(Name("example.org"), true,
-                                               false));
-    EXPECT_TRUE(negativeResult_ == list_->find(Name("example.org"), true,
-                                               true));
+    EXPECT_TRUE(negative_result_ == list_->find(Name("example.org"), false,
+                                                false));
+    EXPECT_TRUE(negative_result_ == list_->find(Name("example.org"), false,
+                                                true));
+    EXPECT_TRUE(negative_result_ == list_->find(Name("example.org"), true,
+                                                false));
+    EXPECT_TRUE(negative_result_ == list_->find(Name("example.org"), true,
+                                                true));
 }
 
 // Put a single data source inside the list and check it can find an
@@ -380,21 +380,21 @@ TEST_F(ListTest, emptySearch) {
 TEST_F(ListTest, singleDSExactMatch) {
     list_->getDataSources().push_back(ds_info_[0]);
     // This zone is not there
-    EXPECT_TRUE(negativeResult_ == list_->find(Name("org."), true));
+    EXPECT_TRUE(negative_result_ == list_->find(Name("org."), true));
     // But this one is, so check it.
     positiveResult(list_->find(Name("example.org"), true), ds_[0],
                    Name("example.org"), true, "Exact match");
     // When asking for a sub zone of a zone there, we get nothing
     // (we want exact match, this would be partial one)
-    EXPECT_TRUE(negativeResult_ == list_->find(Name("sub.example.org."),
-                                               true));
+    EXPECT_TRUE(negative_result_ == list_->find(Name("sub.example.org."),
+                                                true));
 }
 
 // When asking for a partial match, we get all that the exact one, but more.
 TEST_F(ListTest, singleDSBestMatch) {
     list_->getDataSources().push_back(ds_info_[0]);
     // This zone is not there
-    EXPECT_TRUE(negativeResult_ == list_->find(Name("org.")));
+    EXPECT_TRUE(negative_result_ == list_->find(Name("org.")));
     // But this one is, so check it.
     positiveResult(list_->find(Name("example.org")), ds_[0],
                    Name("example.org"), true, "Exact match");
@@ -417,7 +417,7 @@ TEST_F(ListTest, multiExactMatch) {
         SCOPED_TRACE(test_names[i]);
         multiConfiguration(i);
         // Something that is nowhere there
-        EXPECT_TRUE(negativeResult_ == list_->find(Name("org."), true));
+        EXPECT_TRUE(negative_result_ == list_->find(Name("org."), true));
         // This one is there exactly.
         positiveResult(list_->find(Name("example.org"), true), ds_[0],
                        Name("example.org"), true, "Exact match");
@@ -425,7 +425,7 @@ TEST_F(ListTest, multiExactMatch) {
         positiveResult(list_->find(Name("sub.example.org."), true), ds_[1],
                        Name("sub.example.org"), true, "Subdomain match");
         // But this one is in neither data source.
-        EXPECT_TRUE(negativeResult_ ==
+        EXPECT_TRUE(negative_result_ ==
                     list_->find(Name("sub.example.com."), true));
     }
 }
@@ -436,7 +436,7 @@ TEST_F(ListTest, multiBestMatch) {
         SCOPED_TRACE(test_names[i]);
         multiConfiguration(i);
         // Something that is nowhere there
-        EXPECT_TRUE(negativeResult_ == list_->find(Name("org.")));
+        EXPECT_TRUE(negative_result_ == list_->find(Name("org.")));
         // This one is there exactly.
         positiveResult(list_->find(Name("example.org")), ds_[0],
                        Name("example.org"), true, "Exact match");
@@ -712,7 +712,7 @@ TEST_F(ListTest, cacheZones) {
     positiveResult(list_->find(Name("sub.example.com.")), ds_[0],
                    Name("example.com."), false, "Subdomain of com", true);
     // For now, the ones not cached are ignored.
-    EXPECT_TRUE(negativeResult_ == list_->find(Name("example.cz.")));
+    EXPECT_TRUE(negative_result_ == list_->find(Name("example.cz.")));
 }
 
 // Check the caching handles misbehaviour from the data source and
@@ -784,6 +784,32 @@ TEST_F(ListTest, masterFiles) {
     // If cache is not enabled, nothing is loaded
     list_->configure(elem, false);
     EXPECT_EQ(0, list_->getDataSources().size());
+}
+
+TEST_F(ListTest, BadMasterFile) {
+    // Configure two zone correctly, and one with the wrong origin
+    // (resulting in an out-of-zone data error)
+    // Configuration should succeed, and the correct zones should
+    // be loaded. Neither the 'bad' origin or the zone it used
+    // should be loaded
+    const ConstElementPtr elem(Element::fromJSON("["
+        "{"
+        "   \"type\": \"MasterFiles\","
+        "   \"cache-enable\": true,"
+        "   \"params\": {"
+        "       \"example.com.\": \"" TEST_DATA_DIR "/example.com.flattened\","
+        "       \"foo.bar.\": \"" TEST_DATA_DIR "/example.org.nsec3-signed\","
+        "       \".\": \"" TEST_DATA_DIR "/root.zone\""
+        "   }"
+        "}]"));
+    list_->configure(elem, true);
+
+    positiveResult(list_->find(Name("example.com."), true), ds_[0],
+                   Name("example.com."), true, "example.com", true);
+    EXPECT_TRUE(negative_result_ == list_->find(Name("example.org."), true));
+    EXPECT_TRUE(negative_result_ == list_->find(Name("foo.bar"), true));
+    positiveResult(list_->find(Name(".")), ds_[0], Name("."), true, "root",
+                   true);
 }
 
 // Test we can reload a zone

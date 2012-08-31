@@ -23,18 +23,18 @@ noinst_PROGRAMS = logger_example
 logger_example_SOURCES = logger_example.cc
 logger_example_CPPFLAGS = $(AM_CPPFLAGS)
 logger_example_LDFLAGS = $(AM_LDFLAGS)
-logger_example_LDADD  = $(top_builddir)/src/lib/log/liblog.la
-logger_example_LDADD += $(top_builddir)/src/lib/util/libutil.la
-logger_example_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
+logger_example_LDADD  = $(top_builddir)/src/lib/log/libb10-log.la
+logger_example_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
+logger_example_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 logger_example_LDADD += $(AM_LDADD) $(LOG4CPLUS_LIBS)
 
 noinst_PROGRAMS += init_logger_test
 init_logger_test_SOURCES = init_logger_test.cc
 init_logger_test_CPPFLAGS = $(AM_CPPFLAGS)
 init_logger_test_LDFLAGS = $(AM_LDFLAGS)
-init_logger_test_LDADD  = $(top_builddir)/src/lib/log/liblog.la
-init_logger_test_LDADD += $(top_builddir)/src/lib/util/libutil.la
-init_logger_test_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
+init_logger_test_LDADD  = $(top_builddir)/src/lib/log/libb10-log.la
+init_logger_test_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
+init_logger_test_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 init_logger_test_LDADD += $(AM_LDADD) $(LOG4CPLUS_LIBS)
 
 noinst_PROGRAMS += logger_lock_test
@@ -42,9 +42,9 @@ logger_lock_test_SOURCES = logger_lock_test.cc
 nodist_logger_lock_test_SOURCES = log_test_messages.cc log_test_messages.h
 logger_lock_test_CPPFLAGS = $(AM_CPPFLAGS)
 logger_lock_test_LDFLAGS = $(AM_LDFLAGS)
-logger_lock_test_LDADD  = $(top_builddir)/src/lib/log/liblog.la
-logger_lock_test_LDADD += $(top_builddir)/src/lib/util/libutil.la
-logger_lock_test_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
+logger_lock_test_LDADD  = $(top_builddir)/src/lib/log/libb10-log.la
+logger_lock_test_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
+logger_lock_test_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 logger_lock_test_LDADD += $(AM_LDADD) $(LOG4CPLUS_LIBS)
 
 TESTS_ENVIRONMENT = \
@@ -61,10 +61,10 @@ endif
 AM_CPPFLAGS += $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)
 AM_LDFLAGS  += $(GTEST_LDFLAGS)
 
-AM_LDADD += $(top_builddir)/src/lib/util/libutil.la
-AM_LDADD += $(top_builddir)/src/lib/log/liblog.la
+AM_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
+AM_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
 AM_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
-AM_LDADD += $(top_builddir)/src/lib/exceptions/libexceptions.la
+AM_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 AM_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 AM_LDADD += $(GTEST_LDADD)
 
