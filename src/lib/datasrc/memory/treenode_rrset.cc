@@ -339,11 +339,12 @@ TreeNodeRRset::isSameKind(const AbstractRRset& abs_other) const {
         if (rdataset_ != other->rdataset_) {
             return (false);
         }
-        // Same for the owner name (note: in practice this method would be
-        // called for rrsets at different nodes, so we check that condition
-        // first).  Note also that based on the basic assumption of the
-        // ZoneTree, if the nodes are different their RR classes must be
-        // different.
+        // Same for the owner name.  Comparing the nodes also detect
+        // the case where RR classes are different (see the method description
+        // of the header for details).
+        // hasSameRealName() is a bit more complicated and we expect the
+        // two nodes are often different here in practice, so we check that
+        // condition first.
         if (node_ != other->node_ || !hasSameRealName(*other)) {
             return (false);
         }
