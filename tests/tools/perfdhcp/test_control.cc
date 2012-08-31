@@ -546,9 +546,13 @@ TestControl::initPacketTemplates() {
 void
 TestControl::initializeStatsMgr() {
     CommandOptions& options = CommandOptions::instance();
+    // Check if packet archive mode is required. If user
+    // requested diagnostics option -x t we have to enable
+    // it so as StatsMgr preserves all packets.
+    const bool archive_mode = testDiags('t') ? true : false;
     if (options.getIpVersion() == 4) {
         stats_mgr4_.reset();
-        stats_mgr4_ = StatsMgr4Ptr(new StatsMgr4());
+        stats_mgr4_ = StatsMgr4Ptr(new StatsMgr4(archive_mode));
         stats_mgr4_->addExchangeStats(StatsMgr4::XCHG_DO);
         if (options.getExchangeMode() == CommandOptions::DORA_SARR) {
             stats_mgr4_->addExchangeStats(StatsMgr4::XCHG_RA);
@@ -556,7 +560,7 @@ TestControl::initializeStatsMgr() {
 
     } else if (options.getIpVersion() == 6) {
         stats_mgr6_.reset();
-        stats_mgr6_ = StatsMgr6Ptr(new StatsMgr6());
+        stats_mgr6_ = StatsMgr6Ptr(new StatsMgr6(archive_mode));
         stats_mgr6_->addExchangeStats(StatsMgr6::XCHG_SA);
         if (options.getExchangeMode() == CommandOptions::DORA_SARR) {
             stats_mgr6_->addExchangeStats(StatsMgr6::XCHG_RR);
@@ -1182,10 +1186,20 @@ TestControl::run() {
         runWrapped(do_stop);
     }
 
+    // Print packet timestamps
+    if (testDiags('t')) {
+        if (options.getIpVersion() == 4) {
+            stats_mgr4_->printTimestamps();
+        } else if (options.getIpVersion() == 6) {
+            stats_mgr6_->printTimestamps();
+        }
+    }
+
     // Print server id.
     if (testDiags('s') && (first_packet_serverid_.size() > 0)) {
         std::cout << "Server id: " << vector2Hex(first_packet_serverid_) << std::endl;
     }
+
     // Diagnostics flag 'e' means show exit reason.
     if (testDiags('e')) {
         std::cout << "Interrupted" << std::endl;
