@@ -7,7 +7,7 @@ pkglibexec_SCRIPTS = b10-msgq
 CLEANFILES = b10-msgq msgq.pyc
 
 man_MANS = b10-msgq.8
-MAINTAINERCLEANFILES = $(man_MANS)
+DISTCLEANFILES = $(man_MANS)
 EXTRA_DIST = $(man_MANS) msgq.xml
 
 if GENERATE_DOCS

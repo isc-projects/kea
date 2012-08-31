@@ -20,7 +20,7 @@ CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/stats_httpd_messages.py
 CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/stats_httpd_messages.pyc
 
 man_MANS = b10-stats.8 b10-stats-httpd.8
-MAINTAINERCLEANFILES = $(man_MANS)
+DISTCLEANFILES = $(man_MANS)
 EXTRA_DIST = $(man_MANS) b10-stats.xml b10-stats-httpd.xml
 EXTRA_DIST += stats.spec stats-httpd.spec
 EXTRA_DIST += stats-httpd-xml.tpl stats-httpd-xsd.tpl stats-httpd-xsl.tpl
