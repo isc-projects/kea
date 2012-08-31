@@ -544,4 +544,25 @@ TEST_F(TreeNodeRRsetTest, isSameKind) {
     // Different kind of different RRset class
     EXPECT_FALSE(rrset.isSameKind(*aaaa_rrset_));
 }
+
+TEST_F(TreeNodeRRsetTest, unexpectedMethods) {
+    // Note: buffer version of toWire() is checked in the toWire test.
+
+    TreeNodeRRset rrset(rrclass_, www_node_, a_rdataset_, true);
+
+    EXPECT_THROW(rrset.getTTL(), isc::Unexpected);
+    EXPECT_THROW(rrset.setTTL(RRTTL(0)), isc::Unexpected);
+    EXPECT_THROW(rrset.setName(Name("example")), isc::Unexpected);
+    EXPECT_THROW(rrset.addRdata(createRdata(RRType::A(), rrclass_, "0.0.0.0")),
+                 isc::Unexpected);
+    EXPECT_THROW(rrset.getRRsig(), isc::Unexpected);
+    RdataPtr sig_rdata = createRdata(
+        RRType::RRSIG(), rrclass_,
+        "A 5 2 3600 20120814220826 20120715220826 5300 example.com. FAKE");
+    EXPECT_THROW(rrset.addRRsig(sig_rdata), isc::Unexpected);
+    EXPECT_THROW(rrset.addRRsig(*a_rrsig_rrset_), isc::Unexpected);
+    EXPECT_THROW(rrset.addRRsig(a_rrsig_rrset_), isc::Unexpected);
+    EXPECT_THROW(rrset.addRRsig(RRsetPtr()), isc::Unexpected);
+    EXPECT_THROW(rrset.removeRRsig(), isc::Unexpected);
+}
 }
