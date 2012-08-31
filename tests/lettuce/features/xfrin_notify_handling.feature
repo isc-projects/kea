@@ -40,6 +40,16 @@ Feature: Xfrin incoming notify handling
     Then the statistics counter axfr_running should be 0
     Then the statistics counter axfr_running should be 0
 
+    When I query statistics socket of bind10 module Xfrout with cmdctl port 47804
+    Then the statistics counter open should be 0
+    Then the statistics counter openfail should be 0
+    Then the statistics counter close should be 0
+    Then the statistics counter bindfail should be 0
+    Then the statistics counter acceptfail should be 0
+    Then the statistics counter accept should be 0
+    Then the statistics counter senderr should be 0
+    Then the statistics counter recverr should be 0
+
     When I send bind10 with cmdctl port 47804 the command Xfrout notify example.org IN
     Then wait for new master stderr message XFROUT_NOTIFY_COMMAND
     Then wait for new bind10 stderr message AUTH_RECEIVED_NOTIFY
@@ -72,6 +82,16 @@ Feature: Xfrin incoming notify handling
     Then the statistics counter xfrrej for the zone example.org. should be 0
     Then the statistics counter xfrreqdone for the zone _SERVER_ should be 1
     Then the statistics counter xfrreqdone for the zone example.org. should be 1
+
+    When I query statistics socket of bind10 module Xfrout with cmdctl port 47804
+    Then the statistics counter open should be 1
+    Then the statistics counter openfail should be 0
+    Then the statistics counter close should be 0
+    Then the statistics counter bindfail should be 0
+    Then the statistics counter acceptfail should be 0
+    Then the statistics counter accept should be 1
+    Then the statistics counter senderr should be 0
+    Then the statistics counter recverr should be 0
 
     #
     # Test for Xfr request rejected
