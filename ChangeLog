@@ -7,9 +7,10 @@
 	contain the generated documentation.
 	(Trac #1687, git 2d4063b1a354f5048ca9dfb195e8e169650f43d0)
 
-471.    [bug]       vorner
-	Fixed a problem when b10-loadzone tried to tread semicolon in string data
-	as start of comment, which caused invalid data being loaded.
+471.    [bug]		vorner
+	Fixed a problem when b10-loadzone tried to tread semicolon
+	in string data as start of comment, which caused invalid
+	data being loaded.
 	(Trac #2188, git 12efec3477feb62d7cbe36bdcfbfc7aa28a36f57)
 
 470.	[func]		naokikambe
