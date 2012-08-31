@@ -75,7 +75,7 @@ public:
     /// \brief Normal case constructor.
     ///
     /// This class object is basically defined with a \c ZoneNode and
-    /// \c RdataSet.  The former determine the owner name of the RRset,
+    /// \c RdataSet.  The former determines the owner name of the RRset,
     /// and the latter provides the rest of the RRset parameters.
     /// Since the RR class is maintained outside of the \c ZoneData,
     /// it must be explicitly given as a constructor parameter.
