@@ -1,3 +1,8 @@
+471.    [bug]       vorner
+	Fixed a problem when b10-loadzone tried to tread semicolon in string data
+	as start of comment, which caused invalid data being loaded.
+	(Trac #2188, git 12efec3477feb62d7cbe36bdcfbfc7aa28a36f57)
+
 470.	[func]		naokikambe
 	The stats module now supports partial statistics updates. Each
 	module can return only statistics data which have been updated since
