@@ -26,7 +26,7 @@ CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/cmdctl_messages.py
 CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/cmdctl_messages.pyc
 
 man_MANS = b10-cmdctl.8
-MAINTAINERCLEANFILES = $(man_MANS)
+DISTCLEANFILES = $(man_MANS)
 EXTRA_DIST += $(man_MANS) b10-cmdctl.xml cmdctl_messages.mes
 
 if GENERATE_DOCS
