@@ -180,34 +180,73 @@ TEST_F(TreeNodeRRsetTest, create) {
                      match_name_, rrclass_, RRType::A(), 2, 1);
 }
 
-// Templated if and when we support OutputBuffer version of toWire().
-// Right now, we take a minimalist approach, only implementing testing the
-// renderer version.
+// The following two templated functions are helper to encapsulate the
+// concept truncation and handle MessageRenderer and OutputBuffer transparently
+// in templated test cases.
+template <typename OutputType>
+void
+setOutputLengthLimit(OutputType& output, size_t len_limit) {
+    output.setLengthLimit(len_limit);
+}
+template <>
+void
+setOutputLengthLimit<OutputBuffer>(OutputBuffer&, size_t) {
+}
+
+template <typename OutputType>
+bool
+isOutputTruncated(OutputType& output) {
+    return (output.isTruncated());
+}
+template <>
+bool
+isOutputTruncated<OutputBuffer>(OutputBuffer&) {
+    return (false);
+}
+
+// Templated so we so can support OutputBuffer version of toWire().
+// We use the above helper templated functions for some renderer only methods.
+// We test two sets of cases: normal rendering case and case when truncation
+// is expected.  The latter is effectively for MessageRenderer only.
+// If len_limit == 0, we consider it the normal case; otherwise it's for
+// truncation.  prepended_name isn't used for the truncation case.
 template <typename OutputType>
 void
 checkToWireResult(OutputType& expected_output, OutputType& actual_output,
                   const AbstractRRset& actual_rrset,
                   const Name& prepended_name,
                   ConstRRsetPtr rrset, ConstRRsetPtr rrsig_rrset,
-                  bool dnssec_ok)
+                  bool dnssec_ok,
+                  size_t len_limit = 0,
+                  size_t expected_result = 0)
 {
     expected_output.clear();
     actual_output.clear();
 
-    // Prepare "actual" rendered data.  We prepend a name to confirm the
-    // owner name should be compressed in both cases.
-    prepended_name.toWire(actual_output);
-    const size_t rdata_count = rrset ? rrset->getRdataCount() : 0;
-    const int expected_ret = (dnssec_ok && rrsig_rrset) ?
-        rdata_count + rrsig_rrset->getRdataCount() : rdata_count;
-    EXPECT_EQ(expected_ret, actual_rrset.toWire(actual_output));
+    if (len_limit == 0) {       // normal rendering
+        // Prepare "actual" rendered data.  We prepend a name to confirm the
+        // owner name should be compressed in both cases.
+        prepended_name.toWire(actual_output);
+        const size_t rdata_count = rrset ? rrset->getRdataCount() : 0;
+        const int expected_ret = (dnssec_ok && rrsig_rrset) ?
+            rdata_count + rrsig_rrset->getRdataCount() : rdata_count;
+        EXPECT_EQ(expected_ret, actual_rrset.toWire(actual_output));
+    } else {                    // truncation
+        setOutputLengthLimit(actual_output, len_limit);
+        EXPECT_EQ(expected_result, actual_rrset.toWire(actual_output));
+        EXPECT_TRUE(isOutputTruncated(actual_output)); // always true here
+    }
 
     // Prepare "expected" data.
-    prepended_name.toWire(expected_output);
+    if (len_limit == 0) {       // normal rendering
+        prepended_name.toWire(expected_output);
+    } else {                    // truncation
+        setOutputLengthLimit(expected_output, len_limit);
+    }
     if (rrset) {
         rrset->toWire(expected_output);
     }
-    if (dnssec_ok && rrsig_rrset) {
+    if (!isOutputTruncated(expected_output) && dnssec_ok && rrsig_rrset) {
         rrsig_rrset->toWire(expected_output);
     }
 
@@ -218,12 +257,18 @@ checkToWireResult(OutputType& expected_output, OutputType& actual_output,
 
 TEST_F(TreeNodeRRsetTest, toWire) {
     MessageRenderer expected_renderer, actual_renderer;
+    OutputBuffer expected_buffer(0), actual_buffer(0);
 
     {
         SCOPED_TRACE("with RRSIG, DNSSEC OK");
         const TreeNodeRRset rrset(rrclass_, www_node_, a_rdataset_, true);
         checkToWireResult(expected_renderer, actual_renderer, rrset,
                           www_name_, a_rrset_, a_rrsig_rrset_, true);
+        // Currently the buffer version throws
+        EXPECT_THROW(
+            checkToWireResult(expected_buffer, actual_buffer, rrset,
+                              www_name_, a_rrset_, a_rrsig_rrset_, true),
+            isc::Unexpected);
     }
 
     {
@@ -301,53 +346,27 @@ TEST_F(TreeNodeRRsetTest, toWire) {
     }
 }
 
-void
-checkTruncationResult(MessageRenderer& expected_renderer,
-                      MessageRenderer& actual_renderer,
-                      const AbstractRRset& actual_rrset,
-                      ConstRRsetPtr rrset, ConstRRsetPtr rrsig_rrset,
-                      bool dnssec_ok, size_t len_limit, size_t expected_result)
-{
-    expected_renderer.clear();
-    actual_renderer.clear();
-
-    actual_renderer.setLengthLimit(len_limit);
-    EXPECT_EQ(expected_result, actual_rrset.toWire(actual_renderer));
-    EXPECT_TRUE(actual_renderer.isTruncated()); // always true in this test
-
-    expected_renderer.setLengthLimit(len_limit);
-    if (rrset) {
-        rrset->toWire(expected_renderer);
-    }
-    if (!expected_renderer.isTruncated() && dnssec_ok && rrsig_rrset) {
-        rrsig_rrset->toWire(expected_renderer);
-    }
-
-    matchWireData(expected_renderer.getData(), expected_renderer.getLength(),
-                  actual_renderer.getData(), actual_renderer.getLength());
-}
-
 TEST_F(TreeNodeRRsetTest, toWireTruncated) {
     MessageRenderer expected_renderer, actual_renderer;
+    // dummy parameter to checkToWireResult (unused for the this test case)
+    const Name& name = Name::ROOT_NAME();
 
     // Set the truncation limit to name len + 14 bytes of fixed data for A RR
     // (type, class, TTL, rdlen, and 4-byte IPv4 address).  Then we can only
     // render just one RR, without any garbage trailing data.
-    checkTruncationResult(expected_renderer, actual_renderer,
-                          TreeNodeRRset(rrclass_, www_node_, a_rdataset_,
-                                        true),
-                          a_rrset_, a_rrsig_rrset_, true,
-                          www_name_.getLength() + 14,
-                          1);   // 1 main RR, no RRSIG
+    checkToWireResult(expected_renderer, actual_renderer,
+                      TreeNodeRRset(rrclass_, www_node_, a_rdataset_, true),
+                      name, a_rrset_, a_rrsig_rrset_, true,
+                      www_name_.getLength() + 14,
+                      1);   // 1 main RR, no RRSIG
 
     // The first main RRs should fit in the renderer (the name will be
     // fully compressed, so its size is 2 bytes), but the RRSIG doesn't.
-    checkTruncationResult(expected_renderer, actual_renderer,
-                          TreeNodeRRset(rrclass_, www_node_, a_rdataset_,
-                                        true),
-                          a_rrset_, a_rrsig_rrset_, true,
-                          www_name_.getLength() + 14 + 2 + 14,
-                          2);   // 2 main RR, no RRSIG
+    checkToWireResult(expected_renderer, actual_renderer,
+                      TreeNodeRRset(rrclass_, www_node_, a_rdataset_, true),
+                      name, a_rrset_, a_rrsig_rrset_, true,
+                      www_name_.getLength() + 14 + 2 + 14,
+                      2);   // 2 main RR, no RRSIG
 
     // This RRset has one main RR and two RRSIGs.  Rendering the second RRSIG
     // causes truncation.
@@ -359,19 +378,18 @@ TEST_F(TreeNodeRRsetTest, toWireTruncated) {
     a_rrsig_rrset_->toWire(expected_renderer);
     const size_t limit_len = expected_renderer.getLength();
     // Then perform the test
-    checkTruncationResult(expected_renderer, actual_renderer,
-                          TreeNodeRRset(rrclass_, www_node_, aaaa_rdataset_,
-                                        true),
-                          aaaa_rrset_, aaaa_rrsig_rrset_, true, limit_len,
-                          2);   // 1 main RR, 1 RRSIG
+    checkToWireResult(expected_renderer, actual_renderer,
+                      TreeNodeRRset(rrclass_, www_node_, aaaa_rdataset_, true),
+                      name, aaaa_rrset_, aaaa_rrsig_rrset_, true, limit_len,
+                      2);   // 1 main RR, 1 RRSIG
 
     // RRSIG only case.  Render length limit being 1, so it won't fit,
     // and will cause truncation.
-    checkTruncationResult(expected_renderer, actual_renderer,
-                          TreeNodeRRset(rrclass_, www_node_,
-                                        rrsig_only_rdataset_, true),
-                          ConstRRsetPtr(), txt_rrsig_rrset_, true, 1,
-                          0);   // no RR
+    checkToWireResult(expected_renderer, actual_renderer,
+                      TreeNodeRRset(rrclass_, www_node_, rrsig_only_rdataset_,
+                                    true),
+                      name, ConstRRsetPtr(), txt_rrsig_rrset_, true, 1,
+                      0);   // no RR
 }
 
 void
