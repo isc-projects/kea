@@ -15,7 +15,7 @@ CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/zonemgr_messages.py
 CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/zonemgr_messages.pyc
 
 man_MANS = b10-zonemgr.8
-CLEANFILES += $(man_MANS)
+MAINTAINERCLEANFILES += $(man_MANS)
 EXTRA_DIST = $(man_MANS) b10-zonemgr.xml zonemgr_messages.mes
 
 if GENERATE_DOCS
