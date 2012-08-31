@@ -151,6 +151,9 @@ TEST_F(AuthConfigTest, tcpRecvTimeoutConfig) {
     configureAuthServer(server, Element::fromJSON(
     "{ \"tcp_recv_timeout\": 2000 }"));
     EXPECT_EQ(2000, dnss_.getTCPRecvTimeout());
+    EXPECT_THROW(configureAuthServer(server, Element::fromJSON(
+                    "{ \"tcp_recv_timeout\": -123 }")),
+                 AuthConfigError);
 }
 
 }
