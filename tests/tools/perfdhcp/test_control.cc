@@ -553,17 +553,21 @@ TestControl::initializeStatsMgr() {
     if (options.getIpVersion() == 4) {
         stats_mgr4_.reset();
         stats_mgr4_ = StatsMgr4Ptr(new StatsMgr4(archive_mode));
-        stats_mgr4_->addExchangeStats(StatsMgr4::XCHG_DO);
+        stats_mgr4_->addExchangeStats(StatsMgr4::XCHG_DO,
+                                      options.getDropTime()[0]);
         if (options.getExchangeMode() == CommandOptions::DORA_SARR) {
-            stats_mgr4_->addExchangeStats(StatsMgr4::XCHG_RA);
+            stats_mgr4_->addExchangeStats(StatsMgr4::XCHG_RA,
+                                          options.getDropTime()[1]);
         }
 
     } else if (options.getIpVersion() == 6) {
         stats_mgr6_.reset();
         stats_mgr6_ = StatsMgr6Ptr(new StatsMgr6(archive_mode));
-        stats_mgr6_->addExchangeStats(StatsMgr6::XCHG_SA);
+        stats_mgr6_->addExchangeStats(StatsMgr6::XCHG_SA,
+                                      options.getDropTime()[0]);
         if (options.getExchangeMode() == CommandOptions::DORA_SARR) {
-            stats_mgr6_->addExchangeStats(StatsMgr6::XCHG_RR);
+            stats_mgr6_->addExchangeStats(StatsMgr6::XCHG_RR,
+                                          options.getDropTime()[1]);
         }
     }
     if (testDiags('i')) {
@@ -768,8 +772,8 @@ TestControl::printRate() const {
     }
     std::cout << "***Rate statistics***" << std::endl;
     if (options.getRate() > 0) {
-        std::cout << "Rate: " << rate << ", expected rate: "
-                  << options.getRate() << std::endl << std::endl;
+        std::cout << "Rate: " << rate << " exchanges/second, expected rate: "
+                  << options.getRate() << " exchanges/second" <<  std::endl << std::endl;
     } else {
         std::cout << "Rate: " << rate << std::endl << std::endl;
     }
