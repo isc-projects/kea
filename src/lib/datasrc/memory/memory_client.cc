@@ -427,7 +427,8 @@ public:
      * Implementation of longer methods. We put them here, because the
      * access is without the impl_-> and it will get inlined anyway.
      */
-    // Implementation of InMemoryZoneFinder::add
+
+    // Implementation of InMemoryClient::add()
     result::Result add(const ConstRRsetPtr& rawrrset,
                        const Name& zone_name, ZoneData& zone_data,
                        vector<RBNodeRRset*>* need_additionals)
