@@ -31,6 +31,11 @@ namespace thread {
 /// live peacefully.
 ///
 /// The interface is minimalistic for now. We may need to extend it later.
+///
+/// \note While the objects of this class represent another thread, they
+///     are not thread-safe. You're not supposed to call wait() on the same
+///     object from multiple threads or so. They are reentrant (you can
+///     wait for different threads from different threads).
 class Thread : public boost::noncopyable {
 public:
     /// \brief There's an uncaught exception in a thread.
@@ -56,11 +61,12 @@ public:
     /// is considered an error. You should generally catch any exceptions form
     /// within there and handle them somehow.
     ///
-    /// \param body The code to run inside the thread.
+    /// \param main The code to run inside the thread.
     ///
     /// \throw std::bad_alloc if allocation of the new thread or other resources
     ///     fails.
-    Thread(boost::function<void()> body);
+    /// \throw isc::InvalidOperation for other errors (should not happen).
+    Thread(const boost::function<void()>& main);
     /// \brief Destructor.
     ///
     /// It is completely legitimate to destroy the thread without calling
