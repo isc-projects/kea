@@ -116,7 +116,6 @@ SyncUDPServer::handleRead(const asio::error_code& ec, const size_t length) {
 
     // Make sure the buffers are fresh
     output_buffer_->clear();
-    query_->clear(isc::dns::Message::PARSE);
     answer_->clear(isc::dns::Message::RENDER);
 
     // Mark that we don't have an answer yet.
