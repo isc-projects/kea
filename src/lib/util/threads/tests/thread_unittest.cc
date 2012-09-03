@@ -1,0 +1,82 @@
+// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+#include "../thread.h"
+
+#include <boost/bind.hpp>
+
+#include <gtest/gtest.h>
+
+// This file tests the Thread class. It's hard to test an actual thread is
+// started, but we at least check the function is run and exceptions are
+// propagated as they should.
+//
+// We run some tests mutiple times to see if there happen to be a race
+// condition (then it would have better chance showing up).
+//
+// The detached tests are not run multiple times to prevent many threads being
+// started in parallel (the other tests wait for the previous one to terminate
+// before starting new one).
+
+const size_t iterations = 100;
+
+using namespace isc::util::thread;
+
+namespace {
+
+void
+markRun(bool* mark) {
+    EXPECT_FALSE(*mark);
+    *mark = true;
+}
+
+// We just test that we can forget about the thread and nothing
+// bad will happen on our side.
+TEST(ThreadTest, detached) {
+    bool mark = false;
+    Thread thread(boost::bind(markRun, &mark));
+    // Can't check the mark - the thread might not have been run yet.
+}
+
+// Wait for a thread to end first. The variable must be set at the time.
+TEST(ThreadTest, wait) {
+    for (size_t i = 0; i < iterations; ++ i) {
+        bool mark = false;
+        Thread thread(boost::bind(markRun, &mark));
+        thread.wait();
+        ASSERT_TRUE(mark) << "Not finished yet in " << i << "th iteration";
+        // Can't wait second time
+        ASSERT_THROW(thread.wait(), isc::InvalidOperation);
+    }
+}
+
+void
+throwSomething() {
+    throw 42; // Throw something really unusual, to see everything is caught.
+}
+
+// Exception in the thread we forget about should not do anything to us
+TEST(ThreadTest, detachedException) {
+    Thread thread(throwSomething);
+}
+
+// An uncaught exception in the thread should propagate through wait
+TEST(ThreadTest, exception) {
+    for (size_t i = 0; i < iterations; ++ i) {
+        Thread thread(throwSomething);
+        ASSERT_THROW(thread.wait(), Thread::UncaughtException);
+    }
+}
+
+}
