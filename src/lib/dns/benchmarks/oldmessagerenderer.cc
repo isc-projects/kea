@@ -15,6 +15,7 @@
 #include <exceptions/exceptions.h>
 #include <util/buffer.h>
 #include <dns/name.h>
+#include <dns/labelsequence.h>
 #include <oldmessagerenderer.h>
 
 #include <cctype>
@@ -272,6 +273,13 @@ OldMessageRenderer::writeName(const Name& name, const bool compress) {
                                                 impl_->nbuffer_.getLength() -
                                                 j));
     }
+}
+
+void
+OldMessageRenderer::writeName(const LabelSequence&, const bool) {
+    // We shouldn't use this version of writeName (and we internally
+    // control it, so we simply assert it here)
+    assert(false);
 }
 
 }

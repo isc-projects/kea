@@ -226,6 +226,26 @@ public:
         return (dns::LabelSequence(getLabelsData()));
     }
 
+    /// \brief Return the absolute label sequence of the node.
+    ///
+    /// This method returns the label sequence corresponding to the full
+    /// name of the node; i.e. the entire name as it appears in the zone.
+    ///
+    /// It takes the (partial) name of the node itself, and extends it
+    /// with all upper nodes.
+    ///
+    /// \note Care must be taken with the buffer that is used here; this
+    /// method overwrites its data, so it should not be associated with
+    /// any other LabelSequence during the lifetime of the LabelSequence
+    /// returned by this method. See LabelSequence::extend(), which is used
+    /// by this method.
+    ///
+    /// \param buf A data buffer where the label sequence will be built.
+    ///            The data in this buffer will be overwritten by this call.
+    /// \return A LabelSequence with the absolute name of this node.
+    isc::dns::LabelSequence getAbsoluteLabels(
+        uint8_t buf[isc::dns::LabelSequence::MAX_SERIALIZED_LENGTH]) const;
+
     /// \brief Return the data stored in this node.
     ///
     /// You should not delete the data, it is deleted when the tree is
@@ -528,6 +548,21 @@ DomainTreeNode<T>::getUpperNode() const {
     }
 
     return (current->getParent());
+}
+
+template <typename T>
+isc::dns::LabelSequence
+DomainTreeNode<T>::getAbsoluteLabels(
+    uint8_t buf[isc::dns::LabelSequence::MAX_SERIALIZED_LENGTH]) const
+{
+    isc::dns::LabelSequence result(getLabels(), buf);
+    const DomainTreeNode<T>* upper = getUpperNode();
+    while (upper != NULL) {
+        result.extend(upper->getLabels(), buf);
+        upper = upper->getUpperNode();
+    }
+
+    return (result);
 }
 
 template <typename T>

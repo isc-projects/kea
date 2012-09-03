@@ -81,6 +81,7 @@ public:
     virtual void setTruncated() { truncated_ = true; }
     virtual void setLengthLimit(size_t len) { length_limit_ = len; }
     virtual void setCompressMode(CompressMode mode) { mode_ = mode; }
+    virtual void writeName(const LabelSequence&, bool) {}
     virtual void writeName(const Name& name, bool compress) {
         extendData();
         const RdataFields::Type field_type =
