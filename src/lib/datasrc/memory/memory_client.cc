@@ -125,7 +125,7 @@ public:
     // Add the necessary magic for any wildcard contained in 'name'
     // (including itself) to be found in the zone.
     //
-    // In order for wildcard matching to work correctly in find(),
+    // In order for wildcard matching to work correctly in the zone finder,
     // we must ensure that a node for the wildcarding level exists in the
     // backend RBTree.
     // E.g. if the wildcard name is "*.sub.example." then we must ensure
@@ -135,35 +135,32 @@ public:
     //
     // We also perform the same trick for empty wild card names possibly
     // contained in 'name' (e.g., '*.foo.example' in 'bar.*.foo.example').
-    void addWildcards(util::MemorySegment& mem_sgmt, ZoneTree& domains,
-                      const Name& name)
+    void addWildcards(const Name& zone_name, const Name& name)
     {
         Name wname(name);
         const unsigned int labels(wname.getLabelCount());
-        const unsigned int origin_labels(origin_.getLabelCount());
+        const unsigned int origin_labels(zone_name.getLabelCount());
         for (unsigned int l = labels;
              l > origin_labels;
              --l, wname = wname.split(1)) {
             if (wname.isWildcard()) {
                 LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_ADD_WILDCARD).
                     arg(name);
+
+                ZoneNode *node;
+
                 // Ensure a separate level exists for the "wildcarding" name,
                 // and mark the node as "wild".
-                DomainNode* node;
-                DomainTree::Result result(domains.insert(mem_sgmt,
-                                                         wname.split(1),
-                                                         &node));
-                assert(result == DomainTree::SUCCESS ||
-                       result == DomainTree::ALREADYEXISTS);
-                node->setFlag(domain_flag::WILD);
+                ZoneTree::Result result(zone_data_->insertName(local_mem_sgmt,
+                                                               wname.split(1),
+                                                               &node));
+                node->setFlag(ZoneData::WILDCARD_NODE);
 
                 // Ensure a separate level exists for the wildcard name.
                 // Note: for 'name' itself we do this later anyway, but the
                 // overhead should be marginal because wildcard names should
                 // be rare.
-                result = domains.insert(mem_sgmt, wname, &node);
-                assert(result == DomainTree::SUCCESS ||
-                       result == DomainTree::ALREADYEXISTS);
+                result = zone_data_->insertName(local_mem_sgmt, wname, &node);
             }
         }
     }
@@ -461,8 +458,7 @@ public:
         // tree.
         // Note: this can throw an exception, breaking strong exception
         // guarantee.  (see also the note for contextCheck() below).
-        addWildcards(zone_data.local_mem_sgmt_, zone_data.domains_,
-                     rrset->getName());
+        addWildcards(zone_name, rrset->getName());
 
         // Get the node
         DomainNode* node;
