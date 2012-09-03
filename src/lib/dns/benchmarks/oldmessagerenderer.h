@@ -42,6 +42,7 @@ public:
     virtual void setCompressMode(CompressMode mode);
     virtual void clear();
     virtual void writeName(const Name& name, bool compress = true);
+    virtual void writeName(const LabelSequence& labels, bool compress);
 private:
     struct MessageRendererImpl;
     MessageRendererImpl* impl_;

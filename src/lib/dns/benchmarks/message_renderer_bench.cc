@@ -15,6 +15,7 @@
 #include <bench/benchmark.h>
 
 #include <dns/name.h>
+#include <dns/labelsequence.h>
 #include <dns/messagerenderer.h>
 #include <oldmessagerenderer.h>
 
@@ -114,6 +115,11 @@ public:
     virtual void setCompressMode(const CompressMode) {}
     virtual void writeName(const Name& name, const bool = false) {
         name.toWire(getBuffer());
+    }
+    virtual void writeName(const LabelSequence&, const bool) {
+        // We shouldn't use this version of writeName (and we internally
+        // control it, so we simply assert it here)
+        assert(false);
     }
 };
 
