@@ -132,6 +132,21 @@ ZoneTable::findZone(const Name& name) const {
     return (FindResult(my_result, node->getData()));
 }
 
+ZoneData*
+ZoneTable::setZoneData(const Name& name, ZoneData* data)
+{
+    ZoneTableNode* node(NULL);
+
+    ZoneTableTree::Result result(zones_->find(name, &node));
+
+    if ((result != ZoneTableTree::EXACTMATCH) &&
+        (result != ZoneTableTree::PARTIALMATCH)) {
+        return (NULL);
+    }
+
+    return (node->setData(data));
+}
+
 } // end of namespace memory
 } // end of namespace datasrc
 } // end of namespace isc
