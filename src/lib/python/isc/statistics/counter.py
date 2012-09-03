@@ -27,7 +27,14 @@ def init(spec_file_name):
     module_spec = isc.config.module_spec_from_file(spec_file_name)
     class_name = '%sCounter' % module_spec.get_module_name()
     global _COUNTER
+    if issubclass(_COUNTER.__class__, Counter):
+        # already loaded
+        return _COUNTER
+    # create an instance once
     _COUNTER = globals()[class_name](module_spec)
+    # make globals
+    globals().update(_COUNTER._to_global)
+    return _COUNTER
 
 # These method are dummies for notify_out in case XfroutCounter is not
 # loaded.
@@ -40,15 +47,13 @@ class Counter():
     _statistics_data = {}
     _disabled = False
     _rlock = threading.RLock()
+    _to_global = {}
 
     def __init__(self, module_spec):
         self._statistics_spec = module_spec.get_statistics_spec()
-        global clear_counters
-        global disable
-        global enable
-        clear_counters = self.clear_counters
-        enable = self.enable
-        disable = self.disable
+        self._to_global['clear_counters'] = self.clear_counters
+        self._to_global['disable'] = self.disable
+        self._to_global['enable'] = self.enable
 
     def clear_counters(self):
         """clears all statistics data"""
@@ -108,10 +113,9 @@ class XfroutCounter(Counter):
         self._create_perzone_functors()
         self._create_xfrrunning_functors()
         self._create_unixsocket_functors()
-        global dump_default_statistics
-        global dump_statistics
-        dump_default_statistics = self.dump_default_statistics
-        dump_statistics = self.dump_statistics
+        self._to_global['dump_default_statistics'] = \
+            self.dump_default_statistics
+        self._to_global['dump_statistics'] = self.dump_statistics
 
     def _create_perzone_functors(self):
         """Creates increment method of each per-zone counter based on
@@ -142,8 +146,8 @@ class XfroutCounter(Counter):
                                    zone_name,
                                    counter_name )
                     )
-            globals()['inc_%s' % item] = __incrementer
-            globals()['get_%s' % item] = __getter
+            self._to_global['inc_%s' % item] = __incrementer
+            self._to_global['get_%s' % item] = __getter
 
     def _create_xfrrunning_functors(self):
         """Creates increment/decrement method of (a|i)xfr_running
@@ -172,9 +176,9 @@ class XfroutCounter(Counter):
                 """A getter method for xfr_running counters"""
                 return isc.cc.data.find(
                         self._statistics_data, counter_name )
-            globals()['inc_%s' % item] = __incrementer
-            globals()['dec_%s' % item] = __decrementer
-            globals()['get_%s' % item] = __getter
+            self._to_global['inc_%s' % item] = __incrementer
+            self._to_global['dec_%s' % item] = __decrementer
+            self._to_global['get_%s' % item] = __getter
 
     def _create_unixsocket_functors(self):
         """Creates increment/decrement method of (a|i)xfr_running
@@ -198,8 +202,8 @@ class XfroutCounter(Counter):
                 return isc.cc.data.find(
                     self._statistics_data,
                     'socket/unixdomain/%s' % counter_name )
-            globals()['inc_unixsocket_%s' % item] = __incrementer
-            globals()['get_unixsocket_%s' % item] = __getter
+            self._to_global['inc_unixsocket_%s' % item] = __incrementer
+            self._to_global['get_unixsocket_%s' % item] = __getter
 
     def _add_perzone_counter(self, zone):
         """Adds a named_set-type counter for each zone name."""
