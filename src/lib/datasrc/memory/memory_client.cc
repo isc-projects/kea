@@ -18,6 +18,7 @@
 #include <datasrc/memory/zone_data.h>
 #include <datasrc/memory/rdata_serialization.h>
 #include <datasrc/memory/rdataset.h>
+#include <datasrc/memory/domaintree.h>
 
 #include <util/memory_segment_local.h>
 
@@ -60,6 +61,8 @@ namespace memory {
 
 namespace {
 // Some type aliases
+typedef DomainTree<std::string> FileNameTree;
+typedef DomainTreeNode<std::string> FileNameNode;
 
 // A functor type used for loading.
 typedef boost::function<void(ConstRRsetPtr)> LoadCallback;
@@ -73,13 +76,26 @@ typedef boost::function<void(ConstRRsetPtr)> LoadCallback;
 /// consists of (pointers to) \c InMemoryZoneFinder objects, we may add more
 /// member variables later for new features.
 class InMemoryClient::InMemoryClientImpl {
+private:
+    // The deleter for the filenames stored in the tree.
+    struct FileNameDeleter {
+        FileNameDeleter() {}
+        void operator()(std::string* filename) const {
+            delete filename;
+        }
+    };
+
 public:
     InMemoryClientImpl(RRClass rrclass) :
         rrclass_(rrclass),
         zone_count(0),
-        zone_table_(ZoneTable::create(local_mem_sgmt, rrclass))
+        zone_table_(ZoneTable::create(local_mem_sgmt, rrclass)),
+        file_name_tree_(FileNameTree::create(local_mem_sgmt, false))
     {}
     ~InMemoryClientImpl() {
+        FileNameDeleter deleter;
+        FileNameTree::destroy(local_mem_sgmt, file_name_tree_, deleter);
+
         ZoneTable::destroy(local_mem_sgmt, zone_table_, rrclass_);
 
         // see above for the assert().
@@ -93,6 +109,7 @@ public:
     RRClass rrclass_;
     unsigned int zone_count;
     ZoneTable* zone_table_;
+    FileNameTree* file_name_tree_;
 
     // Common process for zone load.
     // rrset_installer is a functor that takes another functor as an argument,
@@ -590,6 +607,26 @@ InMemoryClient::InMemoryClientImpl::load(
         arg(zone_name).arg(getClass().toText());
 
     ++impl_->zone_count;
+
+    // Set the filename in file_name_tree_ now, so that getFileName()
+    // can use it (during zone reloading).
+    FileNameNode* node(NULL);
+    switch (impl_->file_name_tree_->insert(impl_->local_mem_sgmt,
+                                           zone_name, &node)) {
+    case FileNameTree::SUCCESS:
+    case FileNameTree::ALREADYEXISTS:
+        // These are OK
+        break;
+    default:
+        // Can Not Happen
+        assert(false);
+    }
+    // node must point to a valid node now
+    assert(node != NULL);
+
+    std::string* tstr = node->setData(new std::string(filename));
+    delete tstr;
+
     return (result.code);
 }
 
@@ -680,6 +717,18 @@ InMemoryClient::load(const isc::dns::Name& zone_name,
     return (impl_->load(zone_name, string(),
                         boost::bind(generateRRsetFromIterator,
                                     &iterator, _1)));
+}
+
+const std::string
+InMemoryClient::getFileName(const isc::dns::Name& zone_name) const {
+    FileNameNode* node(NULL);
+    FileNameTree::Result result = impl_->file_name_tree_->find(zone_name,
+                                                               &node);
+    if (result == FileNameTree::EXACTMATCH) {
+        return (*node->getData());
+    } else {
+        return (std::string());
+    }
 }
 
 result::Result
