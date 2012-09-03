@@ -19,6 +19,7 @@
 #include <datasrc/memory/rdata_serialization.h>
 #include <datasrc/memory/rdataset.h>
 #include <datasrc/memory/domaintree.h>
+#include <datasrc/memory/segment_object_holder.h>
 
 #include <util/memory_segment_local.h>
 
@@ -58,6 +59,8 @@ using boost::scoped_ptr;
 namespace isc {
 namespace datasrc {
 namespace memory {
+
+using detail::SegmentObjectHolder;
 
 namespace {
 // Some type aliases
@@ -562,18 +565,9 @@ InMemoryClient::InMemoryClientImpl::load(
 {
     vector<RBNodeRRset*> need_additionals;
 
-    ZoneTable::AddResult result = zone_table_->addZone(local_mem_sgmt,
-                                                       rrclass_,
-                                                       zone_name);
-    if (result.code != result::SUCCESS) {
-        // FIXME: This needs to be fixed for reloads to work. It would
-        // need changes in ZoneTable to allow resetting ZoneData for a
-        // table node, and we should swap the new ZoneData in only after
-        // it is ready.
-        isc_throw(DataSourceError, "Zone probably exists: " + zone_name.toText());
-    }
-
-    scoped_ptr<ZoneData> tmp(result.zone_data);
+    SegmentObjectHolder<ZoneData, RRClass> holder(
+        local_mem_sgmt, ZoneData::create(local_mem_sgmt, zone_name), rrclass_);
+    scoped_ptr<ZoneData> tmp(holder.get());
 
     rrset_installer(boost::bind(&InMemoryClientImpl::addFromLoad, this,
                                 _1, zone_name, tmp.get(), &need_additionals));
@@ -620,6 +614,13 @@ InMemoryClient::InMemoryClientImpl::load(
 
     std::string* tstr = node->setData(new std::string(filename));
     delete tstr;
+
+    ZoneTable::AddResult result(zone_table_->addZone(local_mem_sgmt,
+                                                     rrclass_, zone_name));
+    ZoneData *data = zone_table_->setZoneData(zone_name, holder.release());
+    if (data != NULL) {
+        ZoneData::destroy(local_mem_sgmt, data, rrclass_);
+    }
 
     return (result.code);
 }
