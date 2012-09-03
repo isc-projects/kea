@@ -135,7 +135,8 @@ public:
     //
     // We also perform the same trick for empty wild card names possibly
     // contained in 'name' (e.g., '*.foo.example' in 'bar.*.foo.example').
-    void addWildcards(const Name& zone_name, const Name& name)
+    void addWildcards(const Name& zone_name, ZoneData& zone_data,
+                      const Name& name)
     {
         Name wname(name);
         const unsigned int labels(wname.getLabelCount());
@@ -147,20 +148,17 @@ public:
                 LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_ADD_WILDCARD).
                     arg(name);
 
-                ZoneNode *node;
-
                 // Ensure a separate level exists for the "wildcarding" name,
                 // and mark the node as "wild".
-                ZoneTree::Result result(zone_data_->insertName(local_mem_sgmt,
-                                                               wname.split(1),
-                                                               &node));
+                ZoneNode *node;
+                zone_data.insertName(local_mem_sgmt, wname.split(1), &node);
                 node->setFlag(ZoneData::WILDCARD_NODE);
 
                 // Ensure a separate level exists for the wildcard name.
                 // Note: for 'name' itself we do this later anyway, but the
                 // overhead should be marginal because wildcard names should
                 // be rare.
-                result = zone_data_->insertName(local_mem_sgmt, wname, &node);
+                zone_data.insertName(local_mem_sgmt, wname, &node);
             }
         }
     }
@@ -458,7 +456,7 @@ public:
         // tree.
         // Note: this can throw an exception, breaking strong exception
         // guarantee.  (see also the note for contextCheck() below).
-        addWildcards(zone_name, rrset->getName());
+        addWildcards(zone_name, zone_data, rrset->getName());
 
         // Get the node
         DomainNode* node;
