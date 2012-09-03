@@ -21,6 +21,7 @@ run_unittests_SOURCES = run_unittests.cc
 run_unittests_SOURCES += rdata_serialization_unittest.cc
 run_unittests_SOURCES += rdataset_unittest.cc
 run_unittests_SOURCES += domaintree_unittest.cc
+run_unittests_SOURCES += treenode_rrset_unittest.cc
 run_unittests_SOURCES += zone_table_unittest.cc
 run_unittests_SOURCES += zone_data_unittest.cc
 run_unittests_SOURCES += memory_segment_test.h

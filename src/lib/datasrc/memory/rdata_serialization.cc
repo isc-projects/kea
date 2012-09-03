@@ -248,6 +248,10 @@ public:
     virtual void setTruncated() {}
     virtual void setLengthLimit(size_t) {}
     virtual void setCompressMode(CompressMode) {}
+    virtual void writeName(const LabelSequence&, bool) {
+        // We don't need this version of writeName
+        isc_throw(Unexpected, "unexpected version of writeName is called");
+    }
 
     // Called for each domain name in the RDATA, from the RDATA's toWire()
     // implementation.

@@ -114,6 +114,7 @@ protected:
     TestDomainTree& dtree_expose_empty_node;
     TestDomainTreeNode* dtnode;
     const TestDomainTreeNode* cdtnode;
+    uint8_t buf[LabelSequence::MAX_SERIALIZED_LENGTH];
 };
 
 TEST_F(DomainTreeTest, nodeCount) {
@@ -470,6 +471,11 @@ TEST_F(DomainTreeTest, chainLevel) {
               tree.find(node_name, &cdtnode, chain));
     EXPECT_EQ(1, chain.getLevelCount());
 
+    // Check the name of the found node (should have '.' as both non-absolute
+    // and absolute name
+    EXPECT_EQ(".", cdtnode->getLabels().toText());
+    EXPECT_EQ(".", cdtnode->getAbsoluteLabels(buf).toText());
+
     /*
      * Now creating a possibly deepest tree with MAX_LABELS levels.
      * it should look like:
@@ -493,6 +499,12 @@ TEST_F(DomainTreeTest, chainLevel) {
         EXPECT_EQ(TestDomainTree::EXACTMATCH,
                   tree.find(node_name, &cdtnode, found_chain));
         EXPECT_EQ(i, found_chain.getLevelCount());
+
+        // The non-absolute name should only have the first label
+        EXPECT_EQ("a", cdtnode->getLabels().toText());
+        // But the absolute name should have all labels
+        EXPECT_EQ(node_name.toText(),
+                  cdtnode->getAbsoluteLabels(buf).toText());
     }
 
     // Confirm the last inserted name has the possible maximum length with
@@ -1038,5 +1050,45 @@ TEST_F(DomainTreeTest, root) {
     EXPECT_EQ(TestDomainTree::PARTIALMATCH,
               root.find(Name("example.com"), &cdtnode));
     EXPECT_EQ(dtnode, cdtnode);
+}
+
+TEST_F(DomainTreeTest, getAbsoluteLabels) {
+    // The full absolute names of the nodes in the tree
+    // with the addition of the explicit root node
+    const char* const domain_names[] = {
+        "c", "b", "a", "x.d.e.f", "z.d.e.f", "g.h", "i.g.h", "o.w.y.d.e.f",
+        "j.z.d.e.f", "p.w.y.d.e.f", "q.w.y.d.e.f", "k.g.h"};
+    // The names of the nodes themselves, as they end up in the tree
+    const char* const first_labels[] = {
+        "c", "b", "a", "x", "z", "g.h", "i", "o",
+        "j", "p", "q", "k"};
+
+    const int name_count = sizeof(domain_names) / sizeof(domain_names[0]);
+    for (int i = 0; i < name_count; ++i) {
+        EXPECT_EQ(TestDomainTree::EXACTMATCH, dtree.find(Name(domain_names[i]),
+                  &cdtnode));
+
+        // First make sure the names themselves are not absolute
+        const LabelSequence ls(cdtnode->getLabels());
+        EXPECT_EQ(first_labels[i], ls.toText());
+        EXPECT_FALSE(ls.isAbsolute());
+
+        // Now check the absolute names
+        const LabelSequence abs_ls(cdtnode->getAbsoluteLabels(buf));
+        EXPECT_EQ(Name(domain_names[i]).toText(), abs_ls.toText());
+        EXPECT_TRUE(abs_ls.isAbsolute());
+    }
+
+    // Explicitly add and find a root node, to see that getAbsoluteLabels
+    // also works when getLabels() already returns an absolute LabelSequence
+    dtree.insert(mem_sgmt_, Name("."), &dtnode);
+    dtnode->setData(new int(1));
+
+    EXPECT_EQ(TestDomainTree::EXACTMATCH, dtree.find(Name("."), &cdtnode));
+
+    EXPECT_TRUE(cdtnode->getLabels().isAbsolute());
+    EXPECT_EQ(".", cdtnode->getLabels().toText());
+    EXPECT_TRUE(cdtnode->getAbsoluteLabels(buf).isAbsolute());
+    EXPECT_EQ(".", cdtnode->getAbsoluteLabels(buf).toText());
 }
 }
