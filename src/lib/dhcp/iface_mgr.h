@@ -89,7 +89,7 @@ public:
         /// @param ifindex interface index (unique integer identifier)
         Iface(const std::string& name, int ifindex);
 
-        /// @brief Closes all open sockets on interface
+        /// @brief Closes all open sockets on interface.
         void closeSockets();
 
         /// @brief Returns full interface name as "ifname/ifindex" string.
@@ -204,6 +204,8 @@ public:
         /// in this collection. Note that functions like
         /// @ref IfaceMgr::openSocketFromIface use
         /// @ref IfaceMgr::openSocket internally.
+        /// The returned reference is only valid during the lifetime of
+        /// the IfaceMgr object that returned it.
         ///
         /// @return collection of sockets added to interface
         const SocketCollection& getSockets() const { return sockets_; }

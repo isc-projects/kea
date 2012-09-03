@@ -70,7 +70,6 @@ void
 IfaceMgr::Iface::closeSockets() {
     for (SocketCollection::iterator sock = sockets_.begin();
          sock != sockets_.end(); ++sock) {
-        cout << "Closing socket " << sock->sockfd_ << endl;
         close(sock->sockfd_);
     }
     sockets_.clear();
