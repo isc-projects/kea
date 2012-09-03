@@ -56,7 +56,7 @@ LibDHCP::optionFactory(Option::Universe u,
         isc_throw(BadValue, "invalid universe specified (expected "
                   "Option::V4 or Option::V6");
     }
-    return(it->second(u, type, buf));
+    return (it->second(u, type, buf));
 }
 
 

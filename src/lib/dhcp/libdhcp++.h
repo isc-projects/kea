@@ -45,7 +45,6 @@ public:
                                               uint16_t type,
                                               const OptionBuffer& buf);
 
-
     /// Builds collection of options.
     ///
     /// Builds raw (on-wire) data for provided collection of options.

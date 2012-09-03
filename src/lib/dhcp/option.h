@@ -99,7 +99,6 @@ public:
         return factory(u, type, OptionBuffer());
     }
 
-
     /// @brief ctor, used for options constructed, usually during transmission
     ///
     /// @param u option universe (DHCPv4 or DHCPv6)
