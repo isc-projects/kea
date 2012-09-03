@@ -1527,16 +1527,20 @@ class DummySocketserverException(DummyBaseSocketserver):
 class TestUnixSockServerForCounter(unittest.TestCase):
 
     def setUp(self):
-        (self.orig_remove_unused_sock_file,
-         self.orig_update_config_data,
-         self.orig_socket_socketpair,
-         self.orig_NoPollMixIn,
-         self.orig_ThreadingUnixStreamServer ) = \
+        ( self.orig_remove_unused_sock_file,
+          self.orig_update_config_data,
+          self.orig_socket_socketpair,
+          self.orig_NoPollMixIn,
+          self.orig_ThreadingUnixStreamServer,
+          self.orig_process_request,
+          self.orig_select ) = \
          ( UnixSockServer._remove_unused_sock_file,
            UnixSockServer.update_config_data,
            xfrout.socket.socketpair,
            xfrout.socketserver_mixin.NoPollMixIn,
-           xfrout.ThreadingUnixStreamServer )
+           xfrout.ThreadingUnixStreamServer,
+           UnixSockServer.process_request,
+           xfrout.select.select )
         UnixSockServer._remove_unused_sock_file = lambda x,y: None
         UnixSockServer.update_config_data = lambda x,y: None
         xfrout.socket.socketpair = \
@@ -1544,7 +1548,8 @@ class TestUnixSockServerForCounter(unittest.TestCase):
         xfrout.socketserver_mixin.NoPollMixIn = DummySocketserver
         xfrout.ThreadingUnixStreamServer = DummySocketserver
         xfrout.super = lambda : DummySocketserver()
-        self.unix = UnixSockServer(None, None, None, None, None)
+        xfrout.select.select = lambda x,y,z: ([None],[None],[None])
+        self.unix = UnixSockServer(None, None, threading.Event(), None, None)
 
     def tearDown(self):
         ( UnixSockServer._remove_unused_sock_file,
@@ -1552,13 +1557,17 @@ class TestUnixSockServerForCounter(unittest.TestCase):
           xfrout.socket.socketpair,
           xfrout.socketserver_mixin.NoPollMixIn,
           xfrout.ThreadingUnixStreamServer,
-          xfrout.super ) = \
+          xfrout.super,
+          UnixSockServer.process_request,
+          xfrout.select.select ) = \
           ( self.orig_remove_unused_sock_file,
             self.orig_update_config_data,
             self.orig_socket_socketpair,
             self.orig_NoPollMixIn,
             self.orig_ThreadingUnixStreamServer,
-            super )
+            super,
+            self.orig_process_request,
+            self.orig_select )
         counter.clear_counters()
 
     def test_open(self):
@@ -1607,10 +1616,10 @@ class TestUnixSockServerForCounter(unittest.TestCase):
         # recverr
         self.assertRaises(isc.cc.data.DataNotFoundError,
                           counter.get_unixsocket_recverr)
-        def raise_socketerror():
+        def raise_socketerror(x,y):
             raise socket.error
-        self.unix.get_request = raise_socketerror
-        self.unix.handle_request()
+        self.unix.process_request = raise_socketerror
+        self.unix._select_loop(None)
         self.assertEqual(counter.get_unixsocket_recverr(), 1)
 
 class TestInitialization(unittest.TestCase):

@@ -732,8 +732,6 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
         try:
             request, client_address = self.get_request()
         except socket.error:
-            # count unixsockets receive errors
-            counter.inc_unixsocket_recverr()
             logger.error(XFROUT_FETCH_REQUEST_ERROR)
             return
         self._select_loop(request)
@@ -769,6 +767,8 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
                 if not self.process_request(request_sock):
                     break
             except Exception as pre:
+                # count unixsockets receive errors
+                counter.inc_unixsocket_recverr()
                 logger.error(XFROUT_PROCESS_REQUEST_ERROR, pre)
                 break
 
