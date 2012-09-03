@@ -53,8 +53,8 @@ class TestXfroutCounter(unittest.TestCase):
             xfrout.SPECFILE_LOCATION)
         self._statistics_spec = \
             self._module_spec.get_statistics_spec()
-        counter.init(xfrout.SPECFILE_LOCATION)
-        self.xfrout_counter = counter._COUNTER
+        self.xfrout_counter = \
+            counter.init(xfrout.SPECFILE_LOCATION)
         self._entire_server    = self.xfrout_counter._entire_server
         self._perzone_prefix   = self.xfrout_counter._perzone_prefix
         self._xfrrunning_names = self.xfrout_counter._xfrrunning_names
