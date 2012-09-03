@@ -185,6 +185,16 @@ public:
     /// \return A \c FindResult object enclosing the search result (see above).
     FindResult findZone(const isc::dns::Name& name) const;
 
+    /// Override the ZoneData for a node (zone) in the zone tree.
+    ///
+    /// \throw none
+    ///
+    /// \param name A domain name for which the zone data is set.
+    /// \param data The new zone data to set.
+    /// \return A \c ZoneData object containing the old data if the zone
+    /// was found, or \c NULL otherwise.
+    ZoneData* setZoneData(const isc::dns::Name& name, ZoneData* data);
+
 private:
     boost::interprocess::offset_ptr<ZoneTableTree> zones_;
 };
