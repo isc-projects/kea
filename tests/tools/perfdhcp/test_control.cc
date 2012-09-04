@@ -149,7 +149,7 @@ TestControl::checkExitConditions() const {
         }
     }
     // Check if we reached maximum number REQUEST packets.
-    if (options.getNumRequests().size() == 2) {
+    if (options.getNumRequests().size() > 1) {
         if (options.getIpVersion() == 4) {
             if (stats_mgr4_->getSentPacketsNum(StatsMgr4::XCHG_RA) >=
                 options.getNumRequests()[1]) {
@@ -185,7 +185,7 @@ TestControl::checkExitConditions() const {
         }
     }
     // Check if we reached maximum number of drops of ACK/REPLY packets.
-    if (options.getMaxDrop().size() == 2) {
+    if (options.getMaxDrop().size() > 1) {
         if (options.getIpVersion() == 4) {
             if (stats_mgr4_->getDroppedPacketsNum(StatsMgr4::XCHG_RA) >=
                 options.getMaxDrop()[1]) {
@@ -226,7 +226,7 @@ TestControl::checkExitConditions() const {
         }
     }
     // Check if we reached maximum drops percentage of ACK/REPLY packets.
-    if (options.getMaxDropPercentage().size() == 2) {
+    if (options.getMaxDropPercentage().size() > 1) {
         if (options.getIpVersion() == 4) {
             if ((stats_mgr4_->getSentPacketsNum(StatsMgr4::XCHG_RA) > 10) &&
                 ((100. * stats_mgr4_->getDroppedPacketsNum(StatsMgr4::XCHG_RA) /
