@@ -628,6 +628,10 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message, Message& message,
 
     try {
         const ConstQuestionPtr question = *message.beginQuestion();
+        // Lock the client lists and keep them under the lock until
+        // the processing is done (this is the same mutex as from
+        // AuthSrv::getClientListMutex()).
+        isc::util::thread::Mutex::Locker locker(mutex_);
         const boost::shared_ptr<datasrc::ClientList>
             list(getClientList(question->getClass()));
         if (list) {
