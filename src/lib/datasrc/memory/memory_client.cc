@@ -559,15 +559,15 @@ InMemoryClient::InMemoryClientImpl::load(
                                 _1, zone_name, tmp.get()));
 
     // If the zone is NSEC3-signed, check if it has NSEC3PARAM
-    if (tmp->nsec3_data_) {
+    if (tmp->isNSEC3Signed()) {
         // Note: origin_data_ is set on creation of ZoneData, and the load
         // process only adds new nodes (and their data), so this assertion
         // should hold.
-        assert(tmp->origin_data_ != NULL && !tmp->origin_data_->isEmpty());
-        if (tmp->origin_data_->getData()->find(RRType::NSEC3PARAM()) ==
-            tmp->origin_data_->getData()->end()) {
+        const ZoneNode* origin_node = tmp->getOriginNode();
+        const RdataSet* set = origin_node->getData();
+        if (RdataSet::find(set, RRType::NSEC3PARAM()) == NULL) {
             LOG_WARN(logger, DATASRC_MEM_NO_NSEC3PARAM).
-                arg(origin_).arg(client_.getClass());
+                arg(zone_name).arg(rrclass_);
         }
     }
 
