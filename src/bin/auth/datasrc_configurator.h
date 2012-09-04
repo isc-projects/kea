@@ -20,6 +20,7 @@
 #include <datasrc/client_list.h>
 #include <config/ccsession.h>
 #include <cc/data.h>
+#include <util/threads/lock.h>
 
 #include <set>
 
@@ -119,6 +120,8 @@ public:
             isc_throw(isc::InvalidOperation,
                       "Can't reconfigure while not initialized by init()");
         }
+        // Lock the client lists, we're going to manipulate them.
+        isc::util::thread::Mutex::Locker locker(server_->getClientListMutex());
         typedef std::map<std::string, isc::data::ConstElementPtr> Map;
         typedef std::pair<isc::dns::RRClass, ListPtr> RollbackPair;
         typedef std::pair<isc::dns::RRClass, isc::data::ConstElementPtr>
