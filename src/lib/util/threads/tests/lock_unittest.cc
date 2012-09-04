@@ -46,13 +46,17 @@ TEST(MutexTest, lockMultiple) {
 }
 
 // Destroying a locked mutex is a bad idea as well
-TEST(MutexTest, destroyLocked) {
+//
+// FIXME: The test is disabled, since it screws something up in the VM (other
+// tests fail then with rather cryptic messages, memory dumps and stuff).
+// Any idea how to make the test work and reasonably safe?
+TEST(MutexTest, DISABLED_destroyLocked) {
     // TODO: This probably won't work for non-debug mutexes. Disable on non-debug
     // compilation.
     Mutex* mutex = new Mutex;
-    Mutex::Locker* locker = new Mutex::Locker(*mutex);
+    new Mutex::Locker(*mutex);
     EXPECT_THROW(delete mutex, isc::InvalidOperation);
-    // Note: This maybe leaks the locker. But this is a test for development aid
+    // Note: This leaks the locker. But this is a test for development aid
     // exception. The exception won't happen in normal build anyway and seeing
     // it means there's a bug. And we can't delete the locker now, since it
     // would access uninitialized memory.
