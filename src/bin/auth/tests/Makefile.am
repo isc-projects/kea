@@ -80,6 +80,7 @@ run_unittests_LDADD += $(top_builddir)/src/lib/nsas/libb10-nsas.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 run_unittests_LDADD += $(top_builddir)/src/lib/statistics/libb10-statistics.la
 run_unittests_LDADD += $(top_builddir)/src/lib/config/tests/libfake_session.la
+run_unittests_LDADD += $(top_builddir)/src/lib/util/threads/libb10-threads.la
 run_unittests_LDADD += $(GTEST_LDADD)
 run_unittests_LDADD += $(SQLITE_LIBS)
 
