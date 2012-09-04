@@ -164,12 +164,6 @@ public:
         }
     }
 
-    // A helper predicate used in contextCheck() to check if a given domain
-    // name has a RRset of type different than NSEC.
-    static bool isNotNSEC(const DomainPair& element) {
-        return (element.second->getType() != RRType::NSEC());
-    }
-
     /*
      * Does some checks in context of the data that are already in the zone.
      * Currently checks for forbidden combinations of RRsets in the same
@@ -177,20 +171,20 @@ public:
      *
      * If such condition is found, it throws AddError.
      */
-    void contextCheck(const AbstractRRset& rrset, const RdataSet* set) const {
+    void contextCheck(const Name& zone_name, const AbstractRRset& rrset,
+                      const RdataSet* set) const {
         // Ensure CNAME and other type of RR don't coexist for the same
         // owner name except with NSEC, which is the only RR that can coexist
         // with CNAME (and also RRSIG, which is handled separately)
         if (rrset.getType() == RRType::CNAME()) {
-            if (find_if(domain.begin(), domain.end(), isNotNSEC)
-                != domain.end()) {
+            if (RdataSet::find(set, RRType::NSEC()) != NULL) {
                 LOG_ERROR(logger, DATASRC_MEM_CNAME_TO_NONEMPTY).
                     arg(rrset.getName());
                 isc_throw(AddError, "CNAME can't be added with other data for "
                           << rrset.getName());
             }
-        } else if (rrset.getType() != RRType::NSEC() &&
-                   domain.find(RRType::CNAME()) != domain.end()) {
+        } else if ((rrset.getType() != RRType::NSEC()) &&
+                   (RdataSet::find(set, RRType::CNAME()) != NULL)) {
             LOG_ERROR(logger, DATASRC_MEM_CNAME_COEXIST).arg(rrset.getName());
             isc_throw(AddError, "CNAME and " << rrset.getType() <<
                       " can't coexist for " << rrset.getName());
@@ -201,13 +195,13 @@ public:
          * non-apex domains.
          * RFC 2672 section 3 mentions that it is implied from it and RFC 2181
          */
-        if (rrset.getName() != origin_ &&
+        if (rrset.getName() != zone_name &&
             // Adding DNAME, NS already there
             ((rrset.getType() == RRType::DNAME() &&
-            domain.find(RRType::NS()) != domain.end()) ||
+              RdataSet::find(set, RRType::NS()) != NULL) ||
             // Adding NS, DNAME already there
             (rrset.getType() == RRType::NS() &&
-            domain.find(RRType::DNAME()) != domain.end())))
+             RdataSet::find(set, RRType::DNAME()) != NULL)))
         {
             LOG_ERROR(logger, DATASRC_MEM_DNAME_NS).arg(rrset.getName());
             isc_throw(AddError, "DNAME can't coexist with NS in non-apex "
@@ -464,7 +458,7 @@ public:
         // break strong exception guarantee.  At the moment we prefer
         // code simplicity and don't bother to introduce complicated
         // recovery code.
-        contextCheck(*rrset, set);
+        contextCheck(zone_name, *rrset, set);
 
         if (RdataSet::find(set, rrset->getType()) != NULL) {
             return (result::EXIST);
