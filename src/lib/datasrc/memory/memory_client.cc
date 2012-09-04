@@ -476,10 +476,10 @@ public:
         // indicating the need for callback in find().
         if (rrset->getType() == RRType::NS() &&
             rrset->getName() != zone_name) {
-            node->setFlag(DomainNode::FLAG_CALLBACK);
+            node->setFlag(ZoneNode::FLAG_CALLBACK);
             // If it is DNAME, we have a callback as well here
         } else if (rrset->getType() == RRType::DNAME()) {
-            node->setFlag(DomainNode::FLAG_CALLBACK);
+            node->setFlag(ZoneNode::FLAG_CALLBACK);
         }
 
         // If we've added NSEC3PARAM at zone origin, set up NSEC3 specific
