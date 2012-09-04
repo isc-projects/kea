@@ -429,21 +429,16 @@ public:
      */
 
     // Implementation of InMemoryClient::add()
-    result::Result add(const ConstRRsetPtr& rawrrset,
+    result::Result add(const ConstRRsetPtr& rrset,
                        const Name& zone_name, ZoneData& zone_data)
     {
         // Sanitize input.  This will cause an exception to be thrown
         // if the input RRset is empty.
-        addValidation(zone_name, rawrrset);
+        addValidation(zone_name, rrset);
 
         // OK, can add the RRset.
         LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_ADD_RRSET).
-            arg(rawrrset->getName()).arg(rawrrset->getType()).arg(zone_name);
-
-        // ... although instead of loading the RRset directly, we encapsulate
-        // it within an RBNodeRRset.  This contains additional information that
-        // speeds up queries.
-        RBNodeRRsetPtr rrset(new RBNodeRRset(rawrrset));
+            arg(rrset->getName()).arg(rrset->getType()).arg(zone_name);
 
         if (rrset->getType() == RRType::NSEC3()) {
             return (addNSEC3(rrset, zone_data));
