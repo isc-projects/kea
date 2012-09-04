@@ -666,11 +666,20 @@ InMemoryClient::getZoneCount() const {
     return (impl_->zone_count);
 }
 
-ZoneTable::FindResult
-InMemoryClient::findZone(const isc::dns::Name& zone_name) const {
+isc::datasrc::memory::ZoneTable::FindResult
+InMemoryClient::findZone2(const isc::dns::Name& zone_name) const {
     LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_FIND_ZONE).arg(zone_name);
     ZoneTable::FindResult result(impl_->zone_table_->findZone(zone_name));
     return (result);
+}
+
+isc::datasrc::DataSourceClient::FindResult
+InMemoryClient::findZone(const isc::dns::Name& zone_name) const {
+    // This variant of findZone() is not implemented and should be
+    // removed eventually. It currently throws an exception. It is
+    // required right now to derive from DataSourceClient.
+    isc_throw(isc::NotImplemented,
+	      "This variant of findZone() is not implemented.");
 }
 
 result::Result
