@@ -572,7 +572,7 @@ InMemoryClient::InMemoryClientImpl::load(
     }
 
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_ADD_ZONE).
-        arg(zone_name).arg(getClass().toText());
+        arg(zone_name).arg(rrclass_.toText());
 
     ++zone_count;
 
