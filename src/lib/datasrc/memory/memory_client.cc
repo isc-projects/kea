@@ -572,13 +572,13 @@ InMemoryClient::InMemoryClientImpl::load(
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_ADD_ZONE).
         arg(zone_name).arg(getClass().toText());
 
-    ++impl_->zone_count;
+    ++zone_count;
 
     // Set the filename in file_name_tree_ now, so that getFileName()
     // can use it (during zone reloading).
     FileNameNode* node(NULL);
-    switch (impl_->file_name_tree_->insert(impl_->local_mem_sgmt,
-                                           zone_name, &node)) {
+    switch (file_name_tree_->insert(local_mem_sgmt,
+                                    zone_name, &node)) {
     case FileNameTree::SUCCESS:
     case FileNameTree::ALREADYEXISTS:
         // These are OK
