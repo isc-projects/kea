@@ -21,6 +21,7 @@
 #include <config/ccsession.h>
 #include <exceptions/exceptions.h>
 #include <dns/rrclass.h>
+#include <util/threads/lock.h>
 
 #include <string>
 
@@ -189,6 +190,9 @@ public:
         }
         Name origin(origin_elem->stringValue());
 
+        // We're going to work with the client lists. They may be used
+        // from a different thread too, protect them.
+        isc::util::thread::Mutex::Locker locker(server.getClientListMutex());
         const boost::shared_ptr<isc::datasrc::ConfigurableClientList>
             list(server.getClientList(zone_class));
 
