@@ -321,8 +321,8 @@ public:
         // Use templates files to crate packets.
         if (use_templates) {
             tc.initPacketTemplates();
-            ASSERT_GT(tc.getTemplateBuffer(0).size(), 0);
-            ASSERT_GT(tc.getTemplateBuffer(1).size(), 0);
+            ASSERT_NO_THROW(tc.getTemplateBuffer(0));
+            ASSERT_NO_THROW(tc.getTemplateBuffer(1));
         }
 
         // Incremental transaction id generator will generate
@@ -384,8 +384,8 @@ public:
         // Use templates files to crate packets.
         if (use_templates) {
             tc.initPacketTemplates();
-            ASSERT_GT(tc.getTemplateBuffer(0).size(), 0);
-            ASSERT_GT(tc.getTemplateBuffer(1).size(), 0);
+            ASSERT_NO_THROW(tc.getTemplateBuffer(0));
+            ASSERT_NO_THROW(tc.getTemplateBuffer(1));
         }
 
         // Incremental transaction id generator will generate
@@ -720,14 +720,14 @@ TEST_F(TestControlTest, Packet4) {
         ASSERT_NO_THROW(tc.setDefaults4(sock, pkt4));
         // Validate that packet has been setup correctly.
         EXPECT_EQ(loopback_iface, pkt4->getIface());
-        EXPECT_EQ(sock.getIfIndex(), pkt4->getIndex());
+        EXPECT_EQ(sock.ifindex_, pkt4->getIndex());
         EXPECT_EQ(DHCP4_CLIENT_PORT, pkt4->getLocalPort());
         EXPECT_EQ(DHCP4_SERVER_PORT, pkt4->getRemotePort());
         EXPECT_EQ(1, pkt4->getHops());
         EXPECT_EQ(asiolink::IOAddress("255.255.255.255"),
                   pkt4->getRemoteAddr());
-        EXPECT_EQ(asiolink::IOAddress(sock.getAddress()), pkt4->getLocalAddr());
-        EXPECT_EQ(asiolink::IOAddress(sock.getAddress()), pkt4->getGiaddr());
+        EXPECT_EQ(asiolink::IOAddress(sock.addr_), pkt4->getLocalAddr());
+        EXPECT_EQ(asiolink::IOAddress(sock.addr_), pkt4->getGiaddr());
     } else {
         std::cout << "Unable to find the loopback interface. Skip test. "
                   << std::endl;
@@ -753,10 +753,10 @@ TEST_F(TestControlTest, Packet6) {
         ASSERT_NO_THROW(tc.setDefaults6(sock, pkt6));
         // Validate if parameters have been set correctly.
         EXPECT_EQ(loopback_iface, pkt6->getIface());
-        EXPECT_EQ(sock.getIfIndex(), pkt6->getIndex());
+        EXPECT_EQ(sock.ifindex_, pkt6->getIndex());
         EXPECT_EQ(DHCP6_CLIENT_PORT, pkt6->getLocalPort());
         EXPECT_EQ(DHCP6_SERVER_PORT, pkt6->getRemotePort());
-        EXPECT_EQ(sock.getAddress(), pkt6->getLocalAddr());
+        EXPECT_EQ(sock.addr_, pkt6->getLocalAddr());
         EXPECT_EQ(asiolink::IOAddress("FF05::1:3"), pkt6->getRemoteAddr());
     } else {
         std::cout << "Unable to find the loopback interface. Skip test. "
