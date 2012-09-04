@@ -34,7 +34,7 @@ namespace asiodns {
 /// \brief A TCP-specific \c DNSServer object.
 ///
 /// This class inherits from both \c DNSServer and from \c coroutine,
-/// defined in coroutine.h. 
+/// defined in coroutine.h.
 class TCPServer : public virtual DNSServer, public virtual coroutine {
 public:
     /// \brief Constructor
@@ -59,6 +59,16 @@ public:
     DNSServer* clone() {
         TCPServer* s = new TCPServer(*this);
         return (s);
+    }
+
+    /// \brief Set the read timeout
+    ///
+    /// If the client does not send (all) query data within this
+    /// timeframe, the connection is dropped
+    ///
+    /// \param timeout in milliseconds
+    virtual void setTCPRecvTimeout(size_t timeout) {
+        *tcp_recv_timeout_ = timeout;
     }
 
 private:
@@ -122,6 +132,17 @@ private:
 
     boost::shared_ptr<isc::asiolink::IOEndpoint> peer_;
     boost::shared_ptr<isc::asiolink::IOSocket> iosock_;
+
+    // Timer used to timeout on tcp connections
+    // This is a shared pointer because we need to have something
+    // that outlives the operator() call and is copyable (for CORO_FORK)
+    // even though it is only set after fork
+    boost::shared_ptr<asio::deadline_timer> timeout_;
+
+    // Timeout value to use in the timer;
+    // this, too, is a pointer, so that it can be updated whithout restarting
+    // the server
+    boost::shared_ptr<size_t> tcp_recv_timeout_;
 };
 
 } // namespace asiodns

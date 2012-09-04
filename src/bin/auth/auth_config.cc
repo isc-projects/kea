@@ -116,6 +116,29 @@ private:
      */
     AddrListPtr rollbackAddresses_;
 };
+
+/// \brief Configuration for TCP receive timeouts
+class TCPRecvTimeoutConfig : public AuthConfigParser {
+public:
+    TCPRecvTimeoutConfig(AuthSrv& server) : server_(server), timeout_(0)
+    {}
+
+    virtual void build(ConstElementPtr config) {
+        if (config->intValue() >= 0) {
+            timeout_ = config->intValue();
+        } else {
+            isc_throw(AuthConfigError, "tcp_recv_timeout must be 0 or higher");
+        }
+    }
+
+    virtual void commit() {
+        server_.setTCPRecvTimeout(timeout_);
+    }
+private:
+    AuthSrv& server_;
+    size_t timeout_;
+};
+
 } // end of unnamed namespace
 
 AuthConfigParser*
@@ -147,6 +170,8 @@ createAuthConfigParser(AuthSrv& server, const std::string& config_id) {
         // We need to return something. The VersionConfig is empty now,
         // so we may abuse that one, as it is a short-term solution only.
         return (new VersionConfig());
+    } else if (config_id == "tcp_recv_timeout") {
+        return (new TCPRecvTimeoutConfig(server));
     } else {
         isc_throw(AuthConfigError, "Unknown configuration identifier: " <<
                   config_id);

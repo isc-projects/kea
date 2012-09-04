@@ -1633,6 +1633,17 @@ can use various data source backends.
               </simpara>
             </listitem>
           </varlistentry>
+          <varlistentry>
+            <term>tcp_recv_timeout</term>
+            <listitem>
+              <simpara>
+                <varname>tcp_recv_timeout</varname> is the timeout used on
+                incoming TCP connections, in milliseconds. If the query
+                is not sent within this time, the connection is closed.
+                Setting this to 0 will disable TCP timeouts completely.
+              </simpara>
+            </listitem>
+          </varlistentry>
         </variablelist>
 
       </para>

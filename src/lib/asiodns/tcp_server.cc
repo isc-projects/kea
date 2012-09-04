@@ -70,6 +70,23 @@ TCPServer::TCPServer(io_service& io_service, int fd, int af,
         // it
         isc_throw(IOError, exception.what());
     }
+    // Set it to some value. It should be set to the right one
+    // immediately, but set it to something non-zero just in case.
+    tcp_recv_timeout_.reset(new size_t(5000));
+}
+
+namespace {
+    // Called by the timeout_ deadline timer if the client takes too long.
+    // If not aborted, cancels the given socket
+    // (in which case TCPServer::operator() will be called to continue,
+    // with an 'aborted' error code
+    void do_timeout(asio::ip::tcp::socket& socket,
+                    const asio::error_code& error)
+    {
+        if (error != asio::error::operation_aborted) {
+            socket.cancel();
+        }
+    }
 }
 
 void
@@ -113,6 +130,15 @@ TCPServer::operator()(asio::error_code ec, size_t length) {
         /// Instantiate the data buffer that will be used by the
         /// asynchronous read call.
         data_.reset(new char[MAX_LENGTH]);
+
+        /// Start a timer to drop the connection if it is idle
+        if (*tcp_recv_timeout_ > 0) {
+            timeout_.reset(new asio::deadline_timer(io_));
+            timeout_->expires_from_now(
+                boost::posix_time::milliseconds(*tcp_recv_timeout_));
+            timeout_->async_wait(boost::bind(&do_timeout, boost::ref(*socket_),
+                                 asio::placeholders::error));
+        }
 
         /// Read the message, in two parts.  First, the message length:
         CORO_YIELD async_read(*socket_, asio::buffer(data_.get(),
@@ -208,6 +234,9 @@ TCPServer::operator()(asio::error_code ec, size_t length) {
         // (though we have nothing further to do, so the coroutine
         // will simply exit at that time).
         CORO_YIELD async_write(*socket_, bufs, *this);
+
+        // All done, cancel the timeout timer
+        timeout_->cancel();
 
         // TODO: should we keep the connection open for a short time
         // to see if new requests come in?
