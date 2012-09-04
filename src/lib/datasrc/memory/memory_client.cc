@@ -493,15 +493,15 @@ public:
 
             NSEC3Data* nsec3_data = zone_data.getNSEC3Data();
             if (nsec3_data == NULL) {
-                nsec3_data = NSEC3Data::create(local_mem_sgmt_, nsec3_rdata);
+                nsec3_data = NSEC3Data::create(local_mem_sgmt_, param);
                 zone_data.setNSEC3Data(nsec3_data);
             } else {
                 size_t salt_len = nsec3_data->getSaltLen();
                 const uint8_t* salt_data = nsec3_data->getSaltData();
-                const vector<uint8_t>& salt_data_2 = nsec3_rdata.getSalt();
+                const vector<uint8_t>& salt_data_2 = param.getSalt();
 
-                if ((nsec3_rdata.getHashalg() != nsec3_data->hashalg) ||
-                    (nsec3_rdata.getIterations() != nsec3_data->iterations) ||
+                if ((param.getHashalg() != nsec3_data->hashalg) ||
+                    (param.getIterations() != nsec3_data->iterations) ||
                     (salt_data_2.size() != salt_len) ||
                     (std::memcmp(&salt_data_2[0], salt_data, salt_len) != 0)) {
                     isc_throw(AddError,
