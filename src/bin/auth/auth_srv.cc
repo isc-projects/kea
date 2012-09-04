@@ -26,6 +26,7 @@
 #include <exceptions/exceptions.h>
 
 #include <util/buffer.h>
+#include <util/threads/lock.h>
 
 #include <dns/edns.h>
 #include <dns/exceptions.h>
@@ -299,6 +300,8 @@ public:
     void resumeServer(isc::asiodns::DNSServer* server,
                       isc::dns::Message& message,
                       bool done);
+
+    mutable util::thread::Mutex mutex_;
 
 private:
     bool xfrout_connected_;
@@ -926,4 +929,9 @@ AuthSrv::getClientListClasses() const {
         result.push_back(it->first);
     }
     return (result);
+}
+
+util::thread::Mutex&
+AuthSrv::getClientListMutex() const {
+    return (impl_->mutex_);
 }
