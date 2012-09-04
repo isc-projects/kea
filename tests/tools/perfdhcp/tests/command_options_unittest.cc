@@ -86,7 +86,10 @@ protected:
         // DUID_LLT value, two octets of hardware type, 4 octets
         // of time value and 6 octets of variable link layer (MAC)
         // address.
-        const int duid_llt_size = 14; 
+        const int duid_llt_size = 14;
+        // DUID is not given from the command line but it is supposed
+        // to be initialized by the CommandOptions private method
+        // generateDuidTemplate().
         std::vector<uint8_t> v2 = opt.getDuidTemplate();
         ASSERT_EQ(duid_llt_size, opt.getDuidTemplate().size());
         EXPECT_TRUE(std::equal(v2.begin(), v2.begin() + 4,
@@ -548,6 +551,9 @@ TEST_F(CommandOptionsTest, Interface) {
     // In order to make this test portable we need to know
     // at least one interface name on OS where test is run.
     // Interface Manager has ability to detect interfaces.
+    // Altough we don't call initIsInterface explicitely
+    // here it is called by CommandOptions object interally
+    // so this function is covered by the test.
     dhcp::IfaceMgr& iface_mgr = dhcp::IfaceMgr::instance();
     const dhcp::IfaceMgr::IfaceCollection& ifaces = iface_mgr.getIfaces();
     std::string iface_name;
@@ -568,7 +574,7 @@ TEST_F(CommandOptionsTest, Interface) {
         // exception is expected to be thrown.
         EXPECT_THROW(process("perfdhcp -4"), isc::InvalidParameter);
     }
-}    
+}
 
 TEST_F(CommandOptionsTest, Server) {
     CommandOptions& opt = CommandOptions::instance();
