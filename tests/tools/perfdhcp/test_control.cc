@@ -45,14 +45,21 @@ namespace perfdhcp {
 
 bool TestControl::interrupted_ = false;
 
-TestControl::TestControlSocket::TestControlSocket(int socket) :
-    socket_(socket),
-    addr_("127.0.0.1") {
-    initSocketData();
+TestControl::TestControlSocket::TestControlSocket(const int socket) :
+    SocketInfo(socket, asiolink::IOAddress("127.0.0.1"), 0),
+    ifindex_(0), valid_(true) {
+    try {
+        initSocketData();
+    } catch (const Exception&) {
+        valid_ = false;
+    }
 }
 
 TestControl::TestControlSocket::~TestControlSocket() {
-    IfaceMgr::instance().closeSockets();
+    IfaceMgr::Iface* iface = IfaceMgr::instance().getIface(ifindex_);
+    if (iface) {
+        iface->delSocket(sockfd_);
+    }
 }
 
 void
@@ -68,8 +75,7 @@ TestControl::TestControlSocket::initSocketData() {
                  socket_collection.begin();
              s != socket_collection.end();
              ++s) {
-            if (s->sockfd_ == socket_) {
-                iface_ = it->getName();
+            if (s->sockfd_ == sockfd_) {
                 ifindex_ = it->getIndex();
                 addr_ = s->addr_;
                 return;
@@ -269,6 +275,7 @@ TestControl::factoryGeneric(Option::Universe u, uint16_t type,
 OptionPtr
 TestControl::factoryIana6(Option::Universe, uint16_t,
                           const OptionBuffer& buf) {
+    // @todo allow different values of T1, T2 and IAID.
     const uint8_t buf_array[] = {
         0, 0, 0, 1,                     // IAID = 1
         0, 0, 3600 >> 8, 3600 && 0xff,  // T1 = 3600
@@ -333,7 +340,7 @@ TestControl::generateMacAddress(uint8_t& randomized) const {
         isc_throw(BadValue, "invalid MAC address template specified");
     }
     uint32_t r = random();
-    // The random number must be in the range 0..clients_num. This
+    // The random number must be in the range 0..clients_num-1. This
     // will guarantee that every client has exactly one random MAC
     // address assigned.
     r %= clients_num;
@@ -370,12 +377,30 @@ TestControl::generateDuid(uint8_t& randomized) const {
     std::vector<uint8_t> duid(options.getDuidTemplate());
     // @todo: add support for DUIDs of different sizes.
     std::vector<uint8_t> mac_addr(generateMacAddress(randomized));
-    duid.resize(duid.size() - mac_addr.size());
-    for (int i = 0; i < mac_addr.size(); ++i) {
-        duid.push_back(mac_addr[i]);
-    }
+    duid.resize(duid.size());
+    std::copy(mac_addr.begin(), mac_addr.end(),
+              duid.begin() + duid.size() - mac_addr.size());
     return (duid);
 }
+
+template<class T>
+uint32_t
+TestControl::getElapsedTime(const T& pkt1, const T& pkt2) {
+    using namespace boost::posix_time;
+    ptime pkt1_time = pkt1->getTimestamp();
+    ptime pkt2_time = pkt2->getTimestamp();
+    if (pkt1_time.is_not_a_date_time() ||
+        pkt2_time.is_not_a_date_time()) {
+        isc_throw(InvalidOperation, "packet timestamp not set");;
+    }
+    time_period elapsed_period(pkt1_time, pkt2_time);
+    if (elapsed_period.is_null()) {
+        isc_throw(InvalidOperation, "unable to calculate time elapsed"
+                  " between packets");
+    }
+    return(elapsed_period.length().total_milliseconds());
+}
+
 
 uint64_t
 TestControl::getNextExchangesNum() const {
@@ -399,7 +424,9 @@ TestControl::getNextExchangesNum() const {
             // of exchanges to be initiated.
             due_exchanges = static_cast<uint64_t>(due_factor * options.getRate());
             // We want to make sure that at least one packet goes out.
-            due_exchanges += 1;
+            if (due_exchanges == 0) {
+                due_exchanges = 1;
+            }
             // We should not exceed aggressivity as it could have been
             // restricted from command line.
             if (due_exchanges > options.getAggressivity()) {
@@ -441,7 +468,7 @@ TestControl::getTemplateBuffer(const size_t idx) const {
     if (template_buffers_.size() > idx) {
         return (template_buffers_[idx]);
     }
-    return (TemplateBuffer());
+    isc_throw(OutOfRange, "invalid buffer index");
 }
 
 void
@@ -455,8 +482,7 @@ TestControl::initPacketTemplates() {
     CommandOptions& options = CommandOptions::instance();
     std::vector<std::string> template_files = options.getTemplateFiles();
     for (std::vector<std::string>::const_iterator it = template_files.begin();
-         it != template_files.end();
-         ++it) {
+         it != template_files.end(); ++it) {
         readPacketTemplate(*it);
     }
 }
@@ -738,10 +764,13 @@ TestControl::receivePacket6(const TestControlSocket& socket,
         CommandOptions::ExchangeMode xchg_mode =
             CommandOptions::instance().getExchangeMode();
         if ((xchg_mode == CommandOptions::DORA_SARR) && solicit_pkt6) {
+            // \todo check whether received ADVERTISE packet is sane.
+            // We might want to check if STATUS_CODE option is non-zero
+            // and if there is IAADR option in IA_NA.
             if (template_buffers_.size() < 2) {
-                sendRequest6(socket, solicit_pkt6, pkt6);
+                sendRequest6(socket, pkt6);
             } else {
-                sendRequest6(socket, template_buffers_[1], solicit_pkt6, pkt6);
+                sendRequest6(socket, template_buffers_[1], pkt6);
             }
         }
     } else if (packet_type == DHCPV6_REPLY) {
@@ -880,16 +909,25 @@ TestControl::run() {
                   "command options must be parsed before running a test");
     }
 
-    // Diagnostics is command line options mainly.
+    // Diagnostics are command line options mainly.
     printDiagnostics();
     // Option factories have to be registered.
     registerOptionFactories();
     TestControlSocket socket(openSocket());
+    if (!socket.valid_) {
+        isc_throw(Unexpected, "invalid socket descriptor");
+    }
     // Initialize packet templates.
     initPacketTemplates();
     // Initialize randomization seed.
     if (options.isSeeded()) {
         srandom(options.getSeed());
+    } else {
+        // Seed with current time.
+        time_period duration(from_iso_string("20111231T235959"),
+                             microsec_clock::universal_time());
+        srandom(duration.length().total_seconds()
+                + duration.length().fractional_seconds());
     }
     // If user interrupts the program we will exit gracefully.
     signal(SIGINT, TestControl::handleInterrupt);
@@ -898,10 +936,12 @@ TestControl::run() {
     for (int i = 0; i < options.getPreload(); ++i) {
         if (options.getIpVersion() == 4) {
             // No template buffer means no -T option specified.
-            // We will build packet ourselfs.
+            // We will build packet ourselves.
             if (template_buffers_.size() == 0) {
                 sendDiscover4(socket, do_preload);
             } else {
+                // Pick template #0 if Discover is being sent.
+                // For Request it would be #1.
                 const uint8_t template_idx = 0;
                 sendDiscover4(socket, template_buffers_[template_idx],
                               do_preload);
@@ -912,6 +952,8 @@ TestControl::run() {
             if (template_buffers_.size() == 0) {
                 sendSolicit6(socket, do_preload);
             } else {
+                // Pick template #0 if Solicit is being sent.
+                // For Request it would be #1.
                 const uint8_t template_idx = 0;
                 sendSolicit6(socket, template_buffers_[template_idx],
                              do_preload);
@@ -1187,7 +1229,7 @@ TestControl::sendRequest4(const TestControlSocket& socket,
     std::vector<uint8_t> mac_address(chaddr, chaddr + HW_ETHER_LEN);
     pkt4->writeAt(rand_offset, mac_address.begin(), mac_address.end());
 
-   // Set elapsed time.
+    // Set elapsed time.
     size_t elp_offset = 0;
     if (options.getElapsedTimeOffset() > 0) {
         elp_offset = options.getElapsedTimeOffset();
@@ -1266,16 +1308,12 @@ TestControl::sendRequest4(const TestControlSocket& socket,
 
 void
 TestControl::sendRequest6(const TestControlSocket& socket,
-                          const Pkt6Ptr& solicit_pkt6,
                           const Pkt6Ptr& advertise_pkt6) {
     const uint32_t transid = generateTransid();
     Pkt6Ptr pkt6(new Pkt6(DHCPV6_REQUEST, transid));
     // Set elapsed time.
-    const uint32_t elapsed_time =
-        getElapsedTime<Pkt6Ptr>(solicit_pkt6, advertise_pkt6);
     OptionPtr opt_elapsed_time =
         Option::factory(Option::V6, D6O_ELAPSED_TIME);
-    opt_elapsed_time->setUint16(static_cast<uint16_t>(elapsed_time / 10));
     pkt6->addOption(opt_elapsed_time);
     // Set client id.
     OptionPtr opt_clientid = advertise_pkt6->getOption(D6O_CLIENTID);
@@ -1323,7 +1361,6 @@ TestControl::sendRequest6(const TestControlSocket& socket,
 void
 TestControl::sendRequest6(const TestControlSocket& socket,
                           const std::vector<uint8_t>& template_buf,
-                          const Pkt6Ptr& solicit_pkt6,
                           const Pkt6Ptr& advertise_pkt6) {
     CommandOptions& options = CommandOptions::instance();
     // Get the second argument if multiple the same arguments specified
@@ -1343,12 +1380,9 @@ TestControl::sendRequest6(const TestControlSocket& socket,
     if (options.getElapsedTimeOffset() > 0) {
         elp_offset = options.getElapsedTimeOffset();
     }
-    uint32_t elapsed_time =
-        getElapsedTime<Pkt6Ptr>(solicit_pkt6, advertise_pkt6);
     boost::shared_ptr<LocalizedOption>
         opt_elapsed_time(new LocalizedOption(Option::V6, D6O_ELAPSED_TIME,
                                              OptionBuffer(), elp_offset));
-    opt_elapsed_time->setUint16(static_cast<uint16_t>(elapsed_time / 10));
     pkt6->addOption(opt_elapsed_time);
 
     // Get the actual server id offset.
@@ -1537,9 +1571,13 @@ TestControl::setDefaults4(const TestControlSocket& socket,
                           const Pkt4Ptr& pkt) {
     CommandOptions& options = CommandOptions::instance();
     // Interface name.
-    pkt->setIface(socket.getIface());
+    IfaceMgr::Iface* iface = IfaceMgr::instance().getIface(socket.ifindex_);
+    if (iface == NULL) {
+        isc_throw(BadValue, "unable to find interface with given index");
+    }
+    pkt->setIface(iface->getName());
     // Interface index.
-    pkt->setIndex(socket.getIfIndex());
+    pkt->setIndex(socket.ifindex_);
     // Local client's port (68)
     pkt->setLocalPort(DHCP4_CLIENT_PORT);
     // Server's port (67)
@@ -1547,9 +1585,9 @@ TestControl::setDefaults4(const TestControlSocket& socket,
     // The remote server's name or IP.
     pkt->setRemoteAddr(IOAddress(options.getServerName()));
     // Set local addresss.
-    pkt->setLocalAddr(IOAddress(socket.getAddress()));
+    pkt->setLocalAddr(IOAddress(socket.addr_));
     // Set relay (GIADDR) address to local address.
-    pkt->setGiaddr(IOAddress(socket.getAddress()));
+    pkt->setGiaddr(IOAddress(socket.addr_));
     // Pretend that we have one relay (which is us).
     pkt->setHops(1);
 }
@@ -1559,15 +1597,19 @@ TestControl::setDefaults6(const TestControlSocket& socket,
                           const Pkt6Ptr& pkt) {
     CommandOptions& options = CommandOptions::instance();
     // Interface name.
-    pkt->setIface(socket.getIface());
+    IfaceMgr::Iface* iface = IfaceMgr::instance().getIface(socket.ifindex_);
+    if (iface == NULL) {
+        isc_throw(BadValue, "unable to find interface with given index");
+    }
+    pkt->setIface(iface->getName());
     // Interface index.
-    pkt->setIndex(socket.getIfIndex());
+    pkt->setIndex(socket.ifindex_);
     // Local client's port (547)
     pkt->setLocalPort(DHCP6_CLIENT_PORT);
     // Server's port (548)
     pkt->setRemotePort(DHCP6_SERVER_PORT);
     // Set local address.
-    pkt->setLocalAddr(socket.getAddress());
+    pkt->setLocalAddr(socket.addr_);
     // The remote server's name or IP.
     pkt->setRemoteAddr(IOAddress(options.getServerName()));
 }
@@ -1606,6 +1648,10 @@ TestControl::updateSendDue() {
     send_due_ = last_sent_ + time_duration(0, 0, 0, duration);
     // Check if it is already due.
     ptime now(microsec_clock::universal_time());
+    // \todo verify if this condition is not too tight. In other words
+    // verify if this will not produce too many late sends.
+    // We might want to look at this once we are done implementing
+    // microsecond timeouts in IfaceMgr.
     if (now > send_due_) {
         if (testDiags('i')) {
             if (options.getIpVersion() == 4) {
