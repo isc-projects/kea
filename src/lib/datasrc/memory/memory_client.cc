@@ -23,8 +23,6 @@
 
 #include <util/memory_segment_local.h>
 
-#include <datasrc/rbtree.h>
-#include <datasrc/rbnode_rrset.h>
 #include <datasrc/logger.h>
 #include <datasrc/iterator.h>
 #include <datasrc/data_source.h>
