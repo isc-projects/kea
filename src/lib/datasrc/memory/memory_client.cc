@@ -430,8 +430,7 @@ public:
 
     // Implementation of InMemoryClient::add()
     result::Result add(const ConstRRsetPtr& rawrrset,
-                       const Name& zone_name, ZoneData& zone_data,
-                       vector<RBNodeRRset*>* need_additionals)
+                       const Name& zone_name, ZoneData& zone_data)
     {
         // Sanitize input.  This will cause an exception to be thrown
         // if the input RRset is empty.
@@ -502,12 +501,6 @@ public:
                 node->setFlag(DomainNode::FLAG_CALLBACK);
             }
 
-            if (need_additionals != NULL &&
-                (rrset->getType() == RRType::NS() ||
-                 rrset->getType() == RRType::MX())) {
-                need_additionals->push_back(rrset.get());
-            }
-
             // If we've added NSEC3PARAM at zone origin, set up NSEC3 specific
             // data or check consistency with already set up parameters.
             if (rrset->getType() == RRType::NSEC3PARAM() &&
@@ -541,10 +534,9 @@ public:
      * it throws.
      */
     void addFromLoad(const ConstRRsetPtr& set,
-                     const Name& zone_name, ZoneData* zone_data,
-                     vector<RBNodeRRset*>* need_additionals)
+                     const Name& zone_name, ZoneData* zone_data)
     {
-        switch (add(set, zone_name, *zone_data, need_additionals)) {
+        switch (add(set, zone_name, *zone_data)) {
         case result::EXIST:
             LOG_ERROR(logger, DATASRC_MEM_DUP_RRSET).
                 arg(set->getName()).arg(set->getType());
@@ -564,20 +556,12 @@ InMemoryClient::InMemoryClientImpl::load(
     const string& filename,
     boost::function<void(LoadCallback)> rrset_installer)
 {
-    vector<RBNodeRRset*> need_additionals;
-
     SegmentObjectHolder<ZoneData, RRClass> holder(
         local_mem_sgmt, ZoneData::create(local_mem_sgmt, zone_name), rrclass_);
     scoped_ptr<ZoneData> tmp(holder.get());
 
     rrset_installer(boost::bind(&InMemoryClientImpl::addFromLoad, this,
-                                _1, zone_name, tmp.get(), &need_additionals));
-
-    vector<RBNodeRRset*> wild_additionals;
-    for_each(need_additionals.begin(), need_additionals.end(),
-             boost::bind(addAdditional, _1, tmp.get(), &wild_additionals));
-    for_each(wild_additionals.begin(), wild_additionals.end(),
-             boost::bind(addWildAdditional, _1, tmp.get()));
+                                _1, zone_name, tmp.get()));
 
     // If the zone is NSEC3-signed, check if it has NSEC3PARAM
     if (tmp->nsec3_data_) {
