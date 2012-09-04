@@ -90,23 +90,23 @@ public:
     InMemoryClientImpl(RRClass rrclass) :
         rrclass_(rrclass),
         zone_count(0),
-        zone_table_(ZoneTable::create(local_mem_sgmt, rrclass)),
-        file_name_tree_(FileNameTree::create(local_mem_sgmt, false))
+        zone_table_(ZoneTable::create(local_mem_sgmt_, rrclass)),
+        file_name_tree_(FileNameTree::create(local_mem_sgmt_, false))
     {}
     ~InMemoryClientImpl() {
         FileNameDeleter deleter;
-        FileNameTree::destroy(local_mem_sgmt, file_name_tree_, deleter);
+        FileNameTree::destroy(local_mem_sgmt_, file_name_tree_, deleter);
 
-        ZoneTable::destroy(local_mem_sgmt, zone_table_, rrclass_);
+        ZoneTable::destroy(local_mem_sgmt_, zone_table_, rrclass_);
 
         // see above for the assert().
-        assert(local_mem_sgmt.allMemoryDeallocated());
+        assert(local_mem_sgmt_.allMemoryDeallocated());
     }
 
     // Memory segment to allocate/deallocate memory for the zone table.
     // (This will eventually have to be abstract; for now we hardcode the
     // specific derived segment class).
-    util::MemorySegmentLocal local_mem_sgmt;
+    util::MemorySegmentLocal local_mem_sgmt_;
     RRClass rrclass_;
     unsigned int zone_count;
     ZoneTable* zone_table_;
@@ -152,14 +152,14 @@ public:
                 // Ensure a separate level exists for the "wildcarding" name,
                 // and mark the node as "wild".
                 ZoneNode *node;
-                zone_data.insertName(local_mem_sgmt, wname.split(1), &node);
+                zone_data.insertName(local_mem_sgmt_, wname.split(1), &node);
                 node->setFlag(ZoneData::WILDCARD_NODE);
 
                 // Ensure a separate level exists for the wildcard name.
                 // Note: for 'name' itself we do this later anyway, but the
                 // overhead should be marginal because wildcard names should
                 // be rare.
-                zone_data.insertName(local_mem_sgmt, wname, &node);
+                zone_data.insertName(local_mem_sgmt_, wname, &node);
             }
         }
     }
@@ -386,7 +386,7 @@ public:
 
         NSEC3Data* nsec3_data = zone_data.getNSEC3Data();
         if (nsec3_data == NULL) {
-            nsec3_data = NSEC3Data::create(local_mem_sgmt, nsec3_rdata);
+            nsec3_data = NSEC3Data::create(local_mem_sgmt_, nsec3_rdata);
             zone_data.setNSEC3Data(nsec3_data);
         } else {
             size_t salt_len = nsec3_data->getSaltLen();
@@ -408,14 +408,14 @@ public:
                   ::toupper);
 
         ZoneNode *node;
-        nsec3_data->insertName(local_mem_sgmt, Name(fst_label), &node);
+        nsec3_data->insertName(local_mem_sgmt_, Name(fst_label), &node);
 
         RdataEncoder encoder;
-        RdataSet *set = RdataSet::create(local_mem_sgmt, encoder,
+        RdataSet *set = RdataSet::create(local_mem_sgmt_, encoder,
                                          rrset, ConstRRsetPtr());
         RdataSet *old_set = node->setData(set);
         if (old_set != NULL) {
-            RdataSet::destroy(local_mem_sgmt, rrclass_, old_set);
+            RdataSet::destroy(local_mem_sgmt_, rrclass_, old_set);
         }
 
         return (result::SUCCESS);
@@ -455,7 +455,7 @@ public:
         addWildcards(zone_name, zone_data, rrset->getName());
 
         ZoneNode* node;
-        zone_data.insertName(local_mem_sgmt, rrset->getName(), &node);
+        zone_data.insertName(local_mem_sgmt_, rrset->getName(), &node);
 
         RdataSet* set = node->getData();
 
@@ -471,7 +471,7 @@ public:
         }
 
         RdataEncoder encoder;
-        RdataSet *new_set = RdataSet::create(local_mem_sgmt, encoder,
+        RdataSet *new_set = RdataSet::create(local_mem_sgmt_, encoder,
                                          rrset, ConstRRsetPtr());
         new_set->next = set;
         node->setData(new_set);
@@ -499,7 +499,7 @@ public:
 
             NSEC3Data* nsec3_data = zone_data.getNSEC3Data();
             if (nsec3_data == NULL) {
-                nsec3_data = NSEC3Data::create(local_mem_sgmt, nsec3_rdata);
+                nsec3_data = NSEC3Data::create(local_mem_sgmt_, nsec3_rdata);
                 zone_data.setNSEC3Data(nsec3_data);
             } else {
                 size_t salt_len = nsec3_data->getSaltLen();
@@ -552,7 +552,7 @@ InMemoryClient::InMemoryClientImpl::load(
     boost::function<void(LoadCallback)> rrset_installer)
 {
     SegmentObjectHolder<ZoneData, RRClass> holder(
-        local_mem_sgmt, ZoneData::create(local_mem_sgmt, zone_name), rrclass_);
+        local_mem_sgmt_, ZoneData::create(local_mem_sgmt_, zone_name), rrclass_);
     scoped_ptr<ZoneData> tmp(holder.get());
 
     rrset_installer(boost::bind(&InMemoryClientImpl::addFromLoad, this,
@@ -579,7 +579,7 @@ InMemoryClient::InMemoryClientImpl::load(
     // Set the filename in file_name_tree_ now, so that getFileName()
     // can use it (during zone reloading).
     FileNameNode* node(NULL);
-    switch (file_name_tree_->insert(local_mem_sgmt,
+    switch (file_name_tree_->insert(local_mem_sgmt_,
                                     zone_name, &node)) {
     case FileNameTree::SUCCESS:
     case FileNameTree::ALREADYEXISTS:
@@ -595,11 +595,11 @@ InMemoryClient::InMemoryClientImpl::load(
     std::string* tstr = node->setData(new std::string(filename));
     delete tstr;
 
-    ZoneTable::AddResult result(zone_table_->addZone(local_mem_sgmt,
+    ZoneTable::AddResult result(zone_table_->addZone(local_mem_sgmt_,
                                                      rrclass_, zone_name));
     ZoneData *data = zone_table_->setZoneData(zone_name, holder.release());
     if (data != NULL) {
-        ZoneData::destroy(local_mem_sgmt, data, rrclass_);
+        ZoneData::destroy(local_mem_sgmt_, data, rrclass_);
     }
 
     return (result.code);
