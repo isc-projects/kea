@@ -25,28 +25,35 @@
 // We run some tests mutiple times to see if there happen to be a race
 // condition (then it would have better chance showing up).
 //
-// The detached tests are not run multiple times to prevent many threads being
+// The detached tests are not run as many times to prevent many threads being
 // started in parallel (the other tests wait for the previous one to terminate
 // before starting new one).
 
-const size_t iterations = 100;
+const size_t iterations = 200;
+const size_t detached_iterations = 25;
 
 using namespace isc::util::thread;
 
 namespace {
 
 void
-markRun(bool* mark) {
-    EXPECT_FALSE(*mark);
-    *mark = true;
+doSomething(int* x) {
+    delete[] x;
 }
 
 // We just test that we can forget about the thread and nothing
 // bad will happen on our side.
 TEST(ThreadTest, detached) {
-    bool mark = false;
-    Thread thread(boost::bind(markRun, &mark));
-    // Can't check the mark - the thread might not have been run yet.
+    for (size_t i = 0; i < detached_iterations; ++ i) {
+        int* x = new int[10];
+        Thread thread(boost::bind(&doSomething, x));
+    }
+}
+
+void
+markRun(bool* mark) {
+    EXPECT_FALSE(*mark);
+    *mark = true;
 }
 
 // Wait for a thread to end first. The variable must be set at the time.
@@ -68,7 +75,9 @@ throwSomething() {
 
 // Exception in the thread we forget about should not do anything to us
 TEST(ThreadTest, detachedException) {
-    Thread thread(throwSomething);
+    for (size_t i = 0; i < detached_iterations; ++ i) {
+        Thread thread(throwSomething);
+    }
 }
 
 // An uncaught exception in the thread should propagate through wait
