@@ -721,7 +721,7 @@ InMemoryClient::add(const isc::dns::Name& zone_name,
         isc_throw(DataSourceError, "No such zone: " + zone_name.toText());
     }
 
-    return (impl_->add(rrset, zone_name, *result.zone_data, NULL));
+    return (impl_->add(rrset, zone_name, *result.zone_data));
 }
 
 #if 0
