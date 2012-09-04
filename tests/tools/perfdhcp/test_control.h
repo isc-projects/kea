@@ -108,7 +108,7 @@ public:
         /// \brief Destriuctor of the socket wrapper class.
         ///
         /// Destructor closes all open sockets on all interfaces.
-        /// TODO: close only the socket being wrapped by this class.
+        /// \todo close only the socket being wrapped by this class.
         ~TestControlSocket();
 
         /// \brief Return name of the interface where socket is bound to.
@@ -254,7 +254,9 @@ protected:
     /// \brief Factory function to create IA_NA option.
     ///
     /// This factory function creates DHCPv6 IA_NA option instance.
-    /// \TODO: add support for IA Address options.
+    ///
+    /// \todo add support for IA Address options.
+    ///
     /// \param u universe (V6 or V4).
     /// \param type option-type.
     /// \param buf option-buffer.
@@ -322,6 +324,8 @@ protected:
     /// number of clinets. Since the last six octets of DUID are constructed
     /// from the MAC address, this function uses \ref generateMacAddress
     /// internally to randomize the DUID.
+    ///
+    /// \todo add support for other types of DUID.
     ///
     /// \param randomized number of bytes randomized.
     /// \throw isc::BadValue if \ref generateMacAddress throws.
