@@ -177,7 +177,7 @@ public:
      *
      * If such condition is found, it throws AddError.
      */
-    void contextCheck(const AbstractRRset& rrset, const Domain& domain) const {
+    void contextCheck(const AbstractRRset& rrset, const RdataSet* set) const {
         // Ensure CNAME and other type of RR don't coexist for the same
         // owner name except with NSEC, which is the only RR that can coexist
         // with CNAME (and also RRSIG, which is handled separately)
@@ -454,72 +454,74 @@ public:
         // guarantee.  (see also the note for contextCheck() below).
         addWildcards(zone_name, zone_data, rrset->getName());
 
-        // Get the node
-        DomainNode* node;
-        DomainTree::Result result =
-            zone_data.domains_.insert(zone_data.local_mem_sgmt_,
-                                      rrset->getName(), &node);
-        // Just check it returns reasonable results
-        assert((result == DomainTree::SUCCESS ||
-                result == DomainTree::ALREADYEXISTS) && node!= NULL);
+        ZoneNode* node;
+        zone_data.insertName(local_mem_sgmt, rrset->getName(), &node);
 
-        // Now get the domain
-        DomainPtr domain;
-        // It didn't exist yet, create it
-        if (node->isEmpty()) {
-            domain.reset(new Domain);
-            node->setData(domain);
-        } else { // Get existing one
-            domain = node->getData();
-        }
+        RdataSet* set = node->getData();
 
         // Checks related to the surrounding data.
         // Note: when the check fails and the exception is thrown, it may
         // break strong exception guarantee.  At the moment we prefer
         // code simplicity and don't bother to introduce complicated
         // recovery code.
-        contextCheck(*rrset, *domain);
+        contextCheck(*rrset, set);
 
-        // Try inserting the rrset there
-        if (domain->insert(DomainPair(rrset->getType(), rrset)).second) {
-            // Ok, we just put it in
-
-            // If this RRset creates a zone cut at this node, mark the node
-            // indicating the need for callback in find().
-            if (rrset->getType() == RRType::NS() &&
-                rrset->getName() != zone_name) {
-                node->setFlag(DomainNode::FLAG_CALLBACK);
-                // If it is DNAME, we have a callback as well here
-            } else if (rrset->getType() == RRType::DNAME()) {
-                node->setFlag(DomainNode::FLAG_CALLBACK);
-            }
-
-            // If we've added NSEC3PARAM at zone origin, set up NSEC3 specific
-            // data or check consistency with already set up parameters.
-            if (rrset->getType() == RRType::NSEC3PARAM() &&
-                rrset->getName() == zone_name) {
-                // We know rrset has exactly one RDATA
-                const generic::NSEC3PARAM& param =
-                    dynamic_cast<const generic::NSEC3PARAM&>(
-                        rrset->getRdataIterator()->getCurrent());
-
-                if (!zone_data.nsec3_data_) {
-                    zone_data.nsec3_data_.reset(
-                        new ZoneData::NSEC3Data(param));
-                } else if (!zone_data.nsec3_data_->hash_->match(param)) {
-                    isc_throw(AddError, "NSEC3PARAM with inconsistent "
-                              "parameters: " << rrset->toText());
-                }
-            } else if (rrset->getType() == RRType::NSEC()) {
-                // If it is NSEC signed zone, so we put a flag there
-                // (flag is enough)
-                zone_data.nsec_signed_ = true;
-            }
-            return (result::SUCCESS);
-        } else {
-            // The RRSet of given type was already there
+        if (RdataSet::find(set, rrset->getType()) != NULL) {
             return (result::EXIST);
         }
+
+        RdataEncoder encoder;
+        RdataSet *new_set = RdataSet::create(local_mem_sgmt, encoder,
+                                         rrset, ConstRRsetPtr());
+        new_set->next = set;
+        node->setData(new_set);
+
+        // Ok, we just put it in
+
+        // If this RRset creates a zone cut at this node, mark the node
+        // indicating the need for callback in find().
+        if (rrset->getType() == RRType::NS() &&
+            rrset->getName() != zone_name) {
+            node->setFlag(DomainNode::FLAG_CALLBACK);
+            // If it is DNAME, we have a callback as well here
+        } else if (rrset->getType() == RRType::DNAME()) {
+            node->setFlag(DomainNode::FLAG_CALLBACK);
+        }
+
+        // If we've added NSEC3PARAM at zone origin, set up NSEC3 specific
+        // data or check consistency with already set up parameters.
+        if (rrset->getType() == RRType::NSEC3PARAM() &&
+            rrset->getName() == zone_name) {
+            // We know rrset has exactly one RDATA
+            const generic::NSEC3PARAM& param =
+                dynamic_cast<const generic::NSEC3PARAM&>
+                (rrset->getRdataIterator()->getCurrent());
+
+            NSEC3Data* nsec3_data = zone_data.getNSEC3Data();
+            if (nsec3_data == NULL) {
+                nsec3_data = NSEC3Data::create(local_mem_sgmt, nsec3_rdata);
+                zone_data.setNSEC3Data(nsec3_data);
+            } else {
+                size_t salt_len = nsec3_data->getSaltLen();
+                const uint8_t* salt_data = nsec3_data->getSaltData();
+                const vector<uint8_t>& salt_data_2 = nsec3_rdata.getSalt();
+
+                if ((nsec3_rdata.getHashalg() != nsec3_data->hashalg) ||
+                    (nsec3_rdata.getIterations() != nsec3_data->iterations) ||
+                    (salt_data_2.size() != salt_len) ||
+                    (std::memcmp(&salt_data_2[0], salt_data, salt_len) != 0)) {
+                    isc_throw(AddError,
+                              "NSEC3PARAM with inconsistent parameters: " <<
+                              rrset->toText());
+                }
+            }
+        } else if (rrset->getType() == RRType::NSEC()) {
+            // If it is NSEC signed zone, so we put a flag there (flag
+            // is enough)
+            zone_data.setSigned(true);
+        }
+
+        return (result::SUCCESS);
     }
 
     /*
