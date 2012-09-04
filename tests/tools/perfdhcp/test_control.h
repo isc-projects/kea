@@ -23,6 +23,7 @@
 #include <boost/function.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
+#include <dhcp/iface_mgr.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
@@ -48,7 +49,7 @@ namespace perfdhcp {
 class TestControl : public boost::noncopyable {
 public:
 
-    /// Default transaction id offset. 
+    /// Default transaction id offset.
     static const size_t DHCPV4_TRANSID_OFFSET = 4;
     /// Default offset of MAC's last octet.
     static const size_t DHCPV4_RANDOMIZATION_OFFSET = 35;
@@ -84,55 +85,38 @@ public:
     /// Packet template buffers list.
     typedef std::vector<TemplateBuffer> TemplateBufferCollection;
 
-    /// \brief Socket wrapper class.
+    /// \brief Socket wrapper structure.
     ///
-    /// This is wrapper class that holds descriptor of the socket
-    /// used to run DHCP test. All sockets created with \ref IfaceMgr
-    /// are closed in the destructor. This ensures that socket is
-    /// closed when the function that created the socket ends
-    /// (normally or when exception occurs).
-    class TestControlSocket {
-    public:
+    /// This is the wrapper that holds descriptor of the socket
+    /// used to run DHCP test. The wrapped socket is closed in
+    /// the destructor. This prevents resource leaks when when
+    /// function that created the socket ends (normally or
+    /// when exception occurs). This structure extends parent
+    /// structure with new field ifindex_ that holds interface
+    /// index where socket is bound to.
+    struct TestControlSocket : public dhcp::IfaceMgr::SocketInfo {
+        /// Interface index.
+        uint16_t ifindex_;
+        /// Is socket valid. It will not be valid if the provided socket
+        /// descriptor does not point to valid socket.
+        bool valid_;
 
         /// \brief Constructor of socket wrapper class.
         ///
         /// This constructor uses provided socket descriptor to
         /// find the name of the interface where socket has been
-        /// bound to.
+        /// bound to. If provided socket descriptor is invalid then
+        /// valid_ field is set to false;
         ///
         /// \param socket socket descriptor.
-        /// \throw isc::BadValue if interface for specified
-        /// socket descriptor does not exist.
         TestControlSocket(const int socket);
 
         /// \brief Destriuctor of the socket wrapper class.
         ///
-        /// Destructor closes all open sockets on all interfaces.
-        /// \todo close only the socket being wrapped by this class.
+        /// Destructor closes wrapped socket.
         ~TestControlSocket();
 
-        /// \brief Return name of the interface where socket is bound to.
-        ///
-        /// \return name of the interface where socket is bound to.
-        const std::string& getIface() const { return(iface_); }
-
-        /// \brief Return interface index where socket is bound to.
-        ///
-        /// \return index fo the interface where sockert is bound to.
-        int getIfIndex() const { return(ifindex_); }
-
-        /// \brief Return address where socket is bound to.
-        ///
-        /// \return address where socket is bound to.
-        const asiolink::IOAddress& getAddress() const { return(addr_); }
-
     private:
-        /// \brief Private default constructor.
-        ///
-        /// Default constructor is private to make sure that valid
-        /// socket descriptor is passed to create object.
-        TestControlSocket();
-
         /// \brief Initialize socket data.
         ///
         /// This method initializes members of the class that Interface
@@ -141,11 +125,6 @@ public:
         /// \throw isc::BadValue if interface for specified socket
         /// descriptor does not exist.
         void initSocketData();
-
-        int socket_;               ///< Socket descirptor.
-        std::string iface_;        ///< Name of the interface.
-        int ifindex_;              ///< Index of the interface.
-        asiolink::IOAddress addr_; ///< Address bound.
     };
 
     /// \brief Default transaction id generator class.
@@ -169,6 +148,9 @@ public:
     typedef boost::shared_ptr<TransidGenerator> TransidGeneratorPtr;
 
     /// \brief Length of the Ethernet HW address (MAC) in bytes.
+    ///
+    /// \todo Make this variable length as there are cases when HW
+    /// address is longer than this (e.g. 20 bytes).
     static const uint8_t HW_ETHER_LEN = 6;
 
     /// TestControl is a singleton class. This method returns reference
@@ -195,22 +177,20 @@ public:
         transid_gen_ = generator;
     }
 
-protected:
-
-    // We would really like these methods and members to be private but
+    // We would really like following methods and members to be private but
     // they have to be accessible for unit-testing. Another, possibly better,
     // solution is to make this class friend of test class but this is not
     // what's followed in other classes.
-
+protected:
     /// \brief Default constructor.
     ///
     /// Default constructor is protected as the object can be created
     /// only via \ref instance method.
     TestControl();
 
-    /// \brief Check if test exit condtitions fulfiled.
+    /// \brief Check if test exit condtitions fulfilled.
     ///
-    /// Method checks if test exit conditions are fulfiled.
+    /// Method checks if the test exit conditions are fulfiled.
     /// Exit conditions are checked periodically from the
     /// main loop. Program should break the main loop when
     /// this method returns true. It is calling function
@@ -227,9 +207,10 @@ protected:
     /// to length 2 and values will be initialized to zeros. Otherwise
     /// function will initialize option buffer with values in passed buffer.
     ///
-    /// \param u universe (V6 or V4).
-    /// \param type option-type.
-    /// \param buf option-buffer.
+    /// \param u universe (ignored)
+    /// \param type option-type (ignored).
+    /// \param buf option-buffer containing option content (2 bytes) or
+    /// empty buffer if option content has to be set to default (0) value.
     /// \throw if elapsed time buffer size is neither 2 nor 0.
     /// \return instance o the option.
     static dhcp::OptionPtr
@@ -244,7 +225,7 @@ protected:
     /// the buffer contents, size  etc.
     ///
     /// \param u universe (V6 or V4).
-    /// \param type option-type.
+    /// \param type option-type (ignored).
     /// \param buf option-buffer.
     /// \return instance o the option.
     static dhcp::OptionPtr factoryGeneric(dhcp::Option::Universe u,
@@ -257,9 +238,9 @@ protected:
     ///
     /// \todo add support for IA Address options.
     ///
-    /// \param u universe (V6 or V4).
-    /// \param type option-type.
-    /// \param buf option-buffer.
+    /// \param u universe (ignored).
+    /// \param type option-type (ignored).
+    /// \param buf option-buffer carrying IANA suboptions.
     /// \return instance of IA_NA option.
     static dhcp::OptionPtr factoryIana6(dhcp::Option::Universe u,
                                         uint16_t type,
@@ -272,9 +253,9 @@ protected:
     /// - D6O_NAME_SERVERS
     /// - D6O_DOMAIN_SEARCH
     ///
-    /// \param u universe (V6 or V4).
-    /// \param type option-type.
-    /// \param buf option-buffer (ignored and should be empty).
+    /// \param u universe (ignored).
+    /// \param type option-type (ignored).
+    /// \param buf option-buffer (ignored).
     /// \return instance of ORO option.
     static dhcp::OptionPtr
     factoryOptionRequestOption6(dhcp::Option::Universe u,
@@ -287,9 +268,9 @@ protected:
     /// The buffer passed to this option must be empty because option does
     /// not have any payload.
     ///
-    /// \param u universe (V6 or V4).
-    /// \param type option-type.
-    /// \param buf option-buffer (ignored and should be empty).
+    /// \param u universe (ignored).
+    /// \param type option-type (ignored).
+    /// \param buf option-buffer (ignored).
     /// \return instance of RAPID_COMMIT option..
     static dhcp::OptionPtr factoryRapidCommit6(dhcp::Option::Universe u,
                                                uint16_t type,
@@ -308,9 +289,9 @@ protected:
     /// - DHO_DOMAIN_NAME_SERVERS,
     /// - DHO_HOST_NAME.
     ///
-    /// \param u universe (V6 or V4).
-    /// \param type option-type.
-    /// \param buf option-buffer (ignored and should be empty).
+    /// \param u universe (ignored).
+    /// \param type option-type (ignored).
+    /// \param buf option-buffer (ignored).
     /// \return instance o the generic option.
      static dhcp::OptionPtr factoryRequestList4(dhcp::Option::Universe u,
                                                uint16_t type,
@@ -319,15 +300,16 @@ protected:
     /// \brief Generate DUID.
     ///
     /// Method generates unique DUID. The number of DUIDs it can generate
-    /// depends on the number of simulated clinets, which is specified
+    /// depends on the number of simulated clients, which is specified
     /// from the command line. It uses \ref CommandOptions object to retrieve
-    /// number of clinets. Since the last six octets of DUID are constructed
+    /// number of clients. Since the last six octets of DUID are constructed
     /// from the MAC address, this function uses \ref generateMacAddress
     /// internally to randomize the DUID.
     ///
     /// \todo add support for other types of DUID.
     ///
-    /// \param randomized number of bytes randomized.
+    /// \param [out] randomized number of bytes randomized (initial value
+    /// is ignored).
     /// \throw isc::BadValue if \ref generateMacAddress throws.
     /// \return vector representing DUID.
     std::vector<uint8_t> generateDuid(uint8_t& randomized) const;
@@ -341,13 +323,17 @@ protected:
     /// Based on this the random value is generated and added to
     /// the MAC address template (default MAC address).
     ///
-    /// \param randomized number of bytes randomized.
+    /// \param [out] randomized number of bytes randomized (initial
+    /// value is ignored).
     /// \throw isc::BadValue if MAC address template (default or specified
     /// from the command line) has invalid size (expected 6 octets).
     /// \return generated MAC address.
     std::vector<uint8_t> generateMacAddress(uint8_t& randomized) const;
 
     /// \brief generate transaction id.
+    ///
+    /// Generate transaction id value (32-bit for DHCPv4,
+    /// 24-bit for DHCPv6).
     ///
     /// \return generated transaction id.
     uint32_t generateTransid() {
@@ -361,7 +347,7 @@ protected:
     /// is based on current time, due time calculated with
     /// \ref updateSendTime function and expected rate.
     ///
-    /// \return number of exchanges to be started immediatelly.
+    /// \return number of exchanges to be started immediately.
     uint64_t getNextExchangesNum() const;
 
     /// \brief Return template buffer.
@@ -369,14 +355,15 @@ protected:
     /// Method returns template buffer at specified index.
     ///
     /// \param idx index of template buffer.
-    /// \return reference to template buffer or empty buffer if index
-    /// is out of bounds.
+    /// \throw isc::OutOfRange if buffer index out of bounds.
+    /// \return reference to template buffer.
     TemplateBuffer getTemplateBuffer(const size_t idx) const;
 
     /// \brief Reads packet templates from files.
     ///
     /// Method iterates through all specified template files, reads
-    /// their content and stores it in class internal buffers
+    /// their content and stores it in class internal buffers. Template
+    /// file names are specified from the command line with -T option.
     ///
     /// \throw isc::BadValue if any of the template files does not exist
     void initPacketTemplates();
@@ -390,13 +377,13 @@ protected:
     /// \brief Open socket to communicate with DHCP server.
     ///
     /// Method opens socket and binds it to local address. Function will
-    /// can use either interface name, local address or server address
+    /// use either interface name, local address or server address
     /// to create a socket, depending on what is available (specified
     /// from the command line). If socket can't be created for any
     /// reason, exception is thrown.
     /// If destination address is broadcast (for DHCPv4) or multicast
     /// (for DHCPv6) than broadcast or multicast option is set on
-    /// the socket.
+    /// the socket. Opened socket is registered and managed by IfaceMgr.
     ///
     /// \throw isc::BadValue if socket can't be created for given
     /// interface, local address or remote address.
@@ -432,8 +419,11 @@ protected:
     /// when OFFER packet arrives, this function will initiate
     /// REQUEST message to the server.
     ///
-    /// \param socket socket to be used.
-    /// \param pkt4 object representing DHCPv4 packet received.
+    /// \warning this method does not check if provided socket is
+    /// valid (specifically if v4 socket for received v4 packet).
+    ///
+    /// \param [in] socket socket to be used.
+    /// \param [in] pkt4 object representing DHCPv4 packet received.
     /// \throw isc::BadValue if unknown message type received.
     /// \throw isc::Unexpected if unexpected error occured.
     void receivePacket4(const TestControlSocket& socket,
@@ -446,8 +436,11 @@ protected:
     /// when ADVERTISE packet arrives, this function will initiate
     /// REQUEST message to the server.
     ///
-    /// \param socket socket to be used.
-    /// \param pkt6 object representing DHCPv6 packet received.
+    /// \warning this method does not check if provided socket is
+    /// valid (specifically if v4 socket for received v4 packet).
+    ///
+    /// \param [in] socket socket to be used.
+    /// \param [in] pkt6 object representing DHCPv6 packet received.
     /// \throw isc::BadValue if unknown message type received.
     /// \throw isc::Unexpected if unexpected error occured.
     void receivePacket6(const TestControlSocket& socket,
@@ -459,6 +452,9 @@ protected:
     /// This function will call \ref receivePacket4 or
     /// \ref receivePacket6 depending if DHCPv4 or DHCPv6 packet
     /// has arrived.
+    ///
+    /// \warning this method does not check if provided socket is
+    /// valid. Ensure that it is valid prior to calling it.
     ///
     /// \param socket socket to be used.
     /// \throw::BadValue if unknown message type received.
@@ -506,6 +502,8 @@ protected:
     /// The transaction id and MAC address are randomly generated for
     /// the message. Range of unique MAC addresses generated depends
     /// on the number of clients specified from the command line.
+    /// Copy of sent packet is stored in the stats_mgr4_ object to
+    /// update statistics.
     ///
     /// \param socket socket to be used to send the message.
     /// \param preload preload mode, packets not included in statistics.
@@ -520,6 +518,8 @@ protected:
     /// template data is exepcted to be in binary format. Provided
     /// buffer is copied and parts of it are replaced with actual
     /// data (e.g. MAC address, transaction id etc.).
+    /// Copy of sent packet is stored in the stats_mgr4_ object to
+    /// update statistics.
     ///
     /// \param socket socket to be used to send the message.
     /// \param template_buf buffer holding template packet.
@@ -532,6 +532,8 @@ protected:
     /// \brief Send DHCPv4 REQUEST message.
     ///
     /// Method creates and sends DHCPv4 REQUEST message to the server.
+    /// Copy of sent packet is stored in the stats_mgr4_ object to
+    /// update statistics.
     ///
     /// \param socket socket to be used to send message.
     /// \param discover_pkt4 DISCOVER packet sent.
@@ -546,6 +548,8 @@ protected:
     /// \brief Send DHCPv4 REQUEST message from template.
     ///
     /// Method sends DHCPv4 REQUEST message from template.
+    /// Copy of sent packet is stored in the stats_mgr4_ object to
+    /// update statistics.
     ///
     /// \param socket socket to be used to send message.
     /// \param template_buf buffer holding template packet.
@@ -563,32 +567,28 @@ protected:
     /// - D6O_ELAPSED_TIME
     /// - D6O_CLIENTID
     /// - D6O_SERVERID
-    /// The elapsed time is calculated based on the duration between
-    /// sending a SOLICIT and receiving the ADVERTISE packet prior.
-    /// For this reason both solicit and advertise packet objects have
-    /// to be passed when calling this function.
+    /// Copy of sent packet is stored in the stats_mgr6_ object to
+    /// update statistics.
     ///
     /// \param socket socket to be used to send message.
-    /// \param solicit_pkt6 SOLICIT packet object.
     /// \param advertise_pkt6 ADVERTISE packet object.
     /// \throw isc::Unexpected if unexpected error occured.
     /// \throw isc::InvalidOperation if Statistics Manager has not been
     /// initialized.
     void sendRequest6(const TestControlSocket& socket,
-                      const dhcp::Pkt6Ptr& solicit_pkt6,
                       const dhcp::Pkt6Ptr& advertise_pkt6);
 
     /// \brief Send DHCPv6 REQUEST message from template.
     ///
     /// Method sends DHCPv6 REQUEST message from template.
+    /// Copy of sent packet is stored in the stats_mgr6_ object to
+    /// update statistics.
     ///
     /// \param socket socket to be used to send message.
     /// \param template_buf packet template buffer.
-    /// \param solicit_pkt6 SOLICIT packet object.
     /// \param advertise_pkt6 ADVERTISE packet object.
     void sendRequest6(const TestControlSocket& socket,
                       const std::vector<uint8_t>& template_buf,
-                      const dhcp::Pkt6Ptr& solicit_pkt6,
                       const dhcp::Pkt6Ptr& advertise_pkt6);
 
     /// \brief Send DHCPv6 SOLICIT message.
@@ -600,6 +600,8 @@ protected:
     /// - D6O_CLIENTID,
     /// - D6O_ORO (Option Request Option),
     /// - D6O_IA_NA.
+    /// Copy of sent packet is stored in the stats_mgr6_ object to
+    /// update statistics.
     ///
     /// \param socket socket to be used to send the message.
     /// \param preload mode, packets not included in statistics.
@@ -610,6 +612,8 @@ protected:
     /// \brief Send DHCPv6 SOLICIT message from template.
     ///
     /// Method sends DHCPv6 SOLICIT message from template.
+    /// Copy of sent packet is stored in the stats_mgr6_ object to
+    /// update statistics.
     ///
     /// \param socket socket to be used to send the message.
     /// \param template_buf packet template buffer.
@@ -648,7 +652,7 @@ protected:
     void setDefaults6(const TestControlSocket& socket,
                       const dhcp::Pkt6Ptr& pkt);
 
-    /// \brief Find of diagnostic flag has been set.
+    /// \brief Find if diagnostic flag has been set.
     ///
     /// \param diag diagnostic flag (a,e,i,s,r,t,T).
     /// \return true if diagnostics flag has been set.
@@ -674,22 +678,10 @@ private:
     /// \param T Pkt4Ptr or Pkt6Ptr class.
     /// \param pkt1 first packet.
     /// \param pkt2 second packet.
+    /// \throw InvalidOperation if packet timestamps are invalid.
     /// \return elapsed time in milliseconds between pkt1 and pkt2.
     template<class T>
-    uint32_t getElapsedTime(const T& pkt1, const T& pkt2) {
-        using namespace boost::posix_time;
-        ptime pkt1_time = pkt1->getTimestamp();
-        ptime pkt2_time = pkt2->getTimestamp();
-        if (pkt1_time.is_not_a_date_time() || 
-            pkt2_time.is_not_a_date_time()) {
-            return (0);
-        }
-        time_period elapsed_period(pkt1_time, pkt2_time);
-        if (elapsed_period.is_null()) {
-            return (0);
-        }
-        return(elapsed_period.length().total_milliseconds());
-    }
+    uint32_t getElapsedTime(const T& pkt1, const T& pkt2);
 
     /// \brief Get number of received packets.
     ///
