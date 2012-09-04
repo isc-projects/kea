@@ -38,6 +38,7 @@
 #include <auth/datasrc_configurator.h>
 
 #include <util/unittests/mock_socketsession.h>
+#include <util/threads/lock.h>
 #include <dns/tests/unittest_util.h>
 #include <testutils/dnsmessage_test.h>
 #include <testutils/srv_test.h>
@@ -1788,6 +1789,16 @@ TEST_F(AuthSrvTest, clientList) {
     ASSERT_EQ(1, classes.size());
     EXPECT_EQ(RRClass::IN(), classes[0]);
     EXPECT_EQ(list, server.getClientList(RRClass::IN()));
+}
+
+// We just test the mutex can be locked (exactly once).
+TEST_F(AuthSrvTest, mutex) {
+    isc::util::thread::Mutex::Locker l1(server.getClientListMutex());
+    // TODO: Once we have non-debug build, this one will not work.
+    // Skip then.
+    EXPECT_THROW({
+        isc::util::thread::Mutex::Locker l2(server.getClientListMutex());
+    }, isc::InvalidOperation);
 }
 
 }
