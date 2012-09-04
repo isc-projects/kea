@@ -1102,13 +1102,12 @@ public:
     /// Statistics includes sent, received and dropped packets
     /// counters.
     void printIntermediateStats() const {
-        std::ostringstream stream_sent("");
-        std::ostringstream stream_rcvd("");
-        std::ostringstream stream_drops("");
+        std::ostringstream stream_sent;
+        std::ostringstream stream_rcvd;
+        std::ostringstream stream_drops;
         std::string sep("");
         for (ExchangesMapIterator it = exchanges_.begin();
-             it != exchanges_.end();
-             ++it) {
+             it != exchanges_.end(); ++it) {
 
             if (it != exchanges_.begin()) {
                 sep = "/";

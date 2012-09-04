@@ -115,7 +115,7 @@ public:
     static void writeValueAt(dhcp::OptionBuffer& in_buffer, size_t dest_pos,
                         T val) {
         for (int i = 0; i < sizeof(T); ++i) {
-            in_buffer[dest_pos + i] = (val >> (sizeof(T) - 8 * i - 1)) & 0xFF;
+            in_buffer[dest_pos + i] = (val >> 8 * (sizeof(T) - i - 1)) & 0xFF;
         }
     }
 

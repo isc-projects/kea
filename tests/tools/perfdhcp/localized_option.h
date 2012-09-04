@@ -44,30 +44,43 @@ namespace perfdhcp {
 ///
 class LocalizedOption : public dhcp::Option {
 public:
-    /// \brief Constructor, sets default (0) option offset
-    ///
-    /// \param u specifies universe (V4 or V6)
-    /// \param type option type (0-255 for V4 and 0-65535 for V6)
-    /// \param data content of the option
-    LocalizedOption(dhcp::Option::Universe u,
-                    uint16_t type,
-                    const dhcp::OptionBuffer& data) :
-        dhcp::Option(u, type, data),
-        offset_(0), option_valid_(true) {
-    }
 
-
-    /// \brief Constructor, used to create localized option from buffer
+    /// \brief Constructor, used to create localized option from buffer.
     ///
-    /// \param u specifies universe (V4 or V6)
-    /// \param type option type (0-255 for V4 and 0-65535 for V6)
-    /// \param data content of the option
-    /// \param offset location of option in a packet (zero is default)
+    /// This constructor creates localized option using whole provided
+    /// option buffer.
+    ///
+    /// \param u universe (V4 or V6).
+    /// \param type option type (0-255 for V4 and 0-65535 for V6).
+    /// Option values 0 and 255 (v4) and 0 (v6) are not valid option
+    /// codes but they are accepted here for the server testing purposes.
+    /// \param data content of the option.
+    /// \param offset location of option in a packet (zero is default).
     LocalizedOption(dhcp::Option::Universe u,
                     uint16_t type,
                     const dhcp::OptionBuffer& data,
-                    const size_t offset) :
+                    const size_t offset = 0) :
         dhcp::Option(u, type, data),
+        offset_(offset), option_valid_(true) {
+    }
+
+    /// \brief Constructor, used to create option from buffer iterators.
+    ///
+    /// This constructor creates localized option using part of the
+    /// option buffer pointed by iterators.
+    ///
+    /// \param u specifies universe (V4 or V6)
+    /// \param type option type (0-255 for V4 and 0-65535 for V6)
+    /// \param first iterator to the first element that should be copied
+    /// \param last iterator to the next element after the last one
+    ///        to be copied.
+    /// \param offset offset of option in a packet (zero is default)
+    LocalizedOption(dhcp::Option::Universe u,
+                    uint16_t type,
+                    dhcp::OptionBufferConstIter first,
+                    dhcp::OptionBufferConstIter last,
+                    const size_t offset = 0) :
+        dhcp::Option(u, type, first, last),
         offset_(offset), option_valid_(true) {
     }
 
@@ -113,44 +126,6 @@ public:
         }
     }
 
-    /// \brief Constructor, sets default (0) option offset
-    ///
-    /// This contructor is similar to the previous one, but it does not take
-    /// the whole vector<uint8_t>, but rather subset of it.
-    ///
-    /// \param u specifies universe (V4 or V6)
-    /// \param type option type (0-255 for V4 and 0-65535 for V6)
-    /// \param first iterator to the first element that should be copied
-    /// \param last iterator to the next element after the last one
-    ///        to be copied.
-    LocalizedOption(dhcp::Option::Universe u,
-                    uint16_t type,
-                    dhcp::OptionBufferConstIter first,
-                    dhcp::OptionBufferConstIter last) :
-        dhcp::Option(u, type, first, last),
-        offset_(0), option_valid_(true) {
-    }
-
-
-    /// \brief Constructor, used to create option from buffer iterators
-    ///
-    /// This contructor is similar to the previous one, but it does not take
-    /// the whole vector<uint8_t>, but rather subset of it.
-    ///
-    /// \param u specifies universe (V4 or V6)
-    /// \param type option type (0-255 for V4 and 0-65535 for V6)
-    /// \param first iterator to the first element that should be copied
-    /// \param last iterator to the next element after the last one
-    ///        to be copied.
-    /// \param offset offset of option in a packet (zero is default)
-    LocalizedOption(dhcp::Option::Universe u,
-                    uint16_t type,
-                    dhcp::OptionBufferConstIter first,
-                    dhcp::OptionBufferConstIter last, const size_t offset) :
-        dhcp::Option(u, type, first, last),
-        offset_(offset), option_valid_(true) {
-    }
-
     /// \brief Returns offset of an option in a DHCP packet.
     ///
     /// \return option offset in a packet
@@ -169,7 +144,7 @@ private:
 };
 
 
-} // namespace perfdhcp
+} // namespace isc::perfdhcp
 } // namespace isc
 
 #endif // __LOCALIZED_OPTION_H
