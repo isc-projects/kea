@@ -674,12 +674,12 @@ InMemoryClient::findZone2(const isc::dns::Name& zone_name) const {
 }
 
 isc::datasrc::DataSourceClient::FindResult
-InMemoryClient::findZone(const isc::dns::Name& zone_name) const {
+InMemoryClient::findZone(const isc::dns::Name&) const {
     // This variant of findZone() is not implemented and should be
     // removed eventually. It currently throws an exception. It is
     // required right now to derive from DataSourceClient.
     isc_throw(isc::NotImplemented,
-	      "This variant of findZone() is not implemented.");
+              "This variant of findZone() is not implemented.");
 }
 
 result::Result
