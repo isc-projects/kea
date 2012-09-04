@@ -49,12 +49,13 @@ TEST(MutexTest, lockMultiple) {
 TEST(MutexTest, destroyLocked) {
     // TODO: This probably won't work for non-debug mutexes. Disable on non-debug
     // compilation.
-    auto_ptr<Mutex> mutex(new Mutex);
-    Mutex::Locker locker(*mutex);
-    // Note: This maybe leaks somewhere. But this is a test for development aid
+    Mutex* mutex = new Mutex;
+    Mutex::Locker* locker = new Mutex::Locker(*mutex);
+    EXPECT_THROW(delete mutex, isc::InvalidOperation);
+    // Note: This maybe leaks the locker. But this is a test for development aid
     // exception. The exception won't happen in normal build anyway and seeing
-    // it means there's a bug.
-    EXPECT_THROW(mutex.reset(), isc::InvalidOperation);
+    // it means there's a bug. And we can't delete the locker now, since it
+    // would access uninitialized memory.
 }
 
 // This test tries if a mutex really locks. We could try that with a deadlock,
@@ -73,9 +74,9 @@ TEST(MutexTest, destroyLocked) {
 // one will add something to the position another one have chosen and
 // the other one will then zero it, not taking the new value into account.
 // That'd lower the total value of the array.
-const unsigned long long length = 100000;
-const unsigned long long iterations = 1000000;
-const unsigned long long value = 200000;
+const unsigned long long length = 1000;
+const unsigned long long iterations = 10000;
+const unsigned long long value = 2000;
 void
 performStrangeOperation(long long unsigned* array, int direction,
                         Mutex* mutex)
@@ -90,7 +91,7 @@ performStrangeOperation(long long unsigned* array, int direction,
         unsigned long long p2 = position;
         while (value > 0) {
             p2 += direction;
-            if (p2 == position) {
+            if (p2 % length == position % length) {
                 continue;
             }
             array[p2 % length] ++;
