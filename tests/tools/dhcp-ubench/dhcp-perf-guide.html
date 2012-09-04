@@ -1,69 +1,71 @@
-<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>DHCP Performance Guide</title><link rel="stylesheet" type="text/css" href="bind10-guide.css"><meta name="generator" content="DocBook XSL Stylesheets V1.76.1"><meta name="description" content="BIND 10 is a framework that features Domain Name System (DNS) suite and Dynamic Host Configuration Protocol (DHCP) servers with development managed by Internet Systems Consortium (ISC). This document describes various aspects of DHCP performance, measurements and tuning. It covers BIND 10 DHCP (codename Kea), existing ISC DHCP4 software, perfdhcp (a DHCP performance measurement tool) and other related topics."></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="book" title="DHCP Performance Guide"><div class="titlepage"><div><div><h1 class="title"><a name="idp58352"></a>DHCP Performance Guide</h1></div><div><div class="author"><h3 class="author"><span class="firstname">Tomasz</span> <span class="surname">Mrugalski</span></h3></div></div><div><p class="releaseinfo">This is a companion document for BIND 10 version
-    20120817.</p></div><div><p class="copyright">Copyright © 2012 Internet Systems Consortium, Inc. ("ISC")</p></div><div><div class="abstract" title="Abstract"><p class="title"><b>Abstract</b></p><p>BIND 10 is a framework that features Domain Name System
-      (DNS) suite and Dynamic Host Configuration Protocol (DHCP)
-      servers with development managed by Internet Systems Consortium (ISC).
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>DHCP Performance Guide</title><link rel="stylesheet" href="bind10-guide.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"><meta name="description" content="BIND 10 is a framework that features Domain Name System (DNS) and Dynamic Host Configuration Protocol (DHCP) software with development managed by Internet Systems Consortium (ISC). This document describes various aspects of DHCP performance, measurements and tuning. It covers BIND 10 DHCP (codename Kea), existing ISC DHCP4 software, perfdhcp (a DHCP performance measurement tool) and other related topics."></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="book" title="DHCP Performance Guide"><div class="titlepage"><div><div><h1 class="title"><a name="idm14567104"></a>DHCP Performance Guide</h1></div><div><div class="author"><h3 class="author"><span class="firstname">Tomasz</span> <span class="surname">Mrugalski</span></h3></div></div><div><p class="releaseinfo">This is a companion document for BIND 10 version
+    20120405.</p></div><div><p class="copyright">Copyright © 2012 Internet Systems Consortium, Inc. ("ISC")</p></div><div><div class="abstract" title="Abstract"><p class="title"><b>Abstract</b></p><p>BIND 10 is a framework that features Domain Name System
+      (DNS) and Dynamic Host Configuration Protocol (DHCP)
+      software with development managed by Internet Systems Consortium (ISC).
       This document describes various aspects of DHCP performance,
       measurements and tuning. It covers BIND 10 DHCP (codename Kea),
       existing ISC DHCP4 software, perfdhcp (a DHCP performance
-      measurement tool) and other related topics.</p></div></div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="preface"><a href="#idp31760">Preface</a></span></dt><dd><dl><dt><span class="section"><a href="#acknowledgements">1. Acknowledgements</a></span></dt></dl></dd><dt><span class="chapter"><a href="#intro">1. Introduction</a></span></dt><dt><span class="chapter"><a href="#dhcp4">2. ISC DHCP 4.x</a></span></dt><dt><span class="chapter"><a href="#kea">3. Kea</a></span></dt><dd><dl><dt><span class="section"><a href="#idp40192">3.1. Backend performance evaluation</a></span></dt><dt><span class="section"><a href="#mysql-backend">3.2. MySQL backend</a></span></dt><dd><dl><dt><span class="section"><a href="#idp64480">3.2.1. MySQL tweaks</a></span></dt></dl></dd><dt><span class="section"><a href="#sqlite-ubench">3.3. SQLite-ubench</a></span></dt><dd><dl><dt><span class="section"><a href="#sqlite-tweaks">3.3.1. SQLite tweaks</a></span></dt></dl></dd><dt><span class="section"><a href="#memfile-ubench">3.4. memfile-ubench</a></span></dt><dd><dl><dt><span class="section"><a href="#memfile-tweaks">3.4.1. memfile tweaks</a></span></dt></dl></dd><dt><span class="section"><a href="#idp87984">3.5. Basic performance measurements</a></span></dt><dt><span class="section"><a href="#idp163488">3.6. Optimized performance measurements</a></span></dt><dt><span class="section"><a href="#idp238464">3.7. Conclusions</a></span></dt><dt><span class="section"><a href="#idm6832">3.8. Possible further optimizations</a></span></dt></dl></dd><dt><span class="chapter"><a href="#perfdhcp">4. perfdhcp</a></span></dt></dl></div><div class="list-of-tables"><p><b>List of Tables</b></p><dl><dt>3.1. <a href="#idp91600">Synchronous results (basic)</a></dt><dt>3.2. <a href="#idp112688">Asynchronous results (basic)</a></dt><dt>3.3. <a href="#tbl-basic-perf-results">Estimated basic performance</a></dt><dt>3.4. <a href="#idp167184">Synchronous results (optimized)</a></dt><dt>3.5. <a href="#idp187792">Asynchronous results (optimized)</a></dt><dt>3.6. <a href="#tbl-optim-perf-results">Estimated optimized performance</a></dt></dl></div><div class="preface" title="Preface"><div class="titlepage"><div><div><h2 class="title"><a name="idp31760"></a>Preface</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#acknowledgements">1. Acknowledgements</a></span></dt></dl></div><div class="section" title="1. Acknowledgements"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="acknowledgements"></a>1. Acknowledgements</h2></div></div></div><p>ISC would like to acknowledge generous support for
+      measurement tool) and other related topics.</p></div></div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="preface"><a href="#idp54032">Preface</a></span></dt><dd><dl><dt><span class="section"><a href="#acknowledgements">1. Acknowledgements</a></span></dt></dl></dd><dt><span class="chapter"><a href="#intro">1. Introduction</a></span></dt><dt><span class="chapter"><a href="#dhcp4">2. ISC DHCP 4.x</a></span></dt><dt><span class="chapter"><a href="#kea">3. Kea</a></span></dt><dd><dl><dt><span class="section"><a href="#idp58488">3.1. Backend performance evaluation</a></span></dt><dt><span class="section"><a href="#mysql-backend">3.2. MySQL backend</a></span></dt><dd><dl><dt><span class="section"><a href="#idp73456">3.2.1. MySQL tweaks</a></span></dt></dl></dd><dt><span class="section"><a href="#sqlite-ubench">3.3. SQLite-ubench</a></span></dt><dd><dl><dt><span class="section"><a href="#sqlite-tweaks">3.3.1. SQLite tweaks</a></span></dt></dl></dd><dt><span class="section"><a href="#memfile-ubench">3.4. memfile-ubench</a></span></dt><dd><dl><dt><span class="section"><a href="#memfile-tweaks">3.4.1. memfile tweaks</a></span></dt></dl></dd><dt><span class="section"><a href="#idp87992">3.5. Basic performance measurements</a></span></dt><dt><span class="section"><a href="#idp126264">3.6. Optimized performance measurements</a></span></dt><dt><span class="section"><a href="#idp164800">3.7. Conclusions</a></span></dt><dt><span class="section"><a href="#idp169880">3.8. Possible further optimizations</a></span></dt></dl></dd><dt><span class="chapter"><a href="#perfdhcp">4. perfdhcp</a></span></dt></dl></div><div class="list-of-tables"><p><b>List of Tables</b></p><dl><dt>3.1. <a href="#idp90320">Synchronous results (basic)</a></dt><dt>3.2. <a href="#idp100480">Asynchronous results (basic)</a></dt><dt>3.3. <a href="#tbl-basic-perf-results">Estimated basic performance</a></dt><dt>3.4. <a href="#idp128664">Synchronous results (optimized)</a></dt><dt>3.5. <a href="#idp139104">Asynchronous results (optimized)</a></dt><dt>3.6. <a href="#tbl-optim-perf-results">Estimated optimized performance</a></dt></dl></div><div class="preface" title="Preface"><div class="titlepage"><div><div><h2 class="title"><a name="idp54032"></a>Preface</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#acknowledgements">1. Acknowledgements</a></span></dt></dl></div><div class="section" title="1. Acknowledgements"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="acknowledgements"></a>1. Acknowledgements</h2></div></div></div><p>ISC would like to acknowledge generous support for
       BIND 10 development of DHCPv4 and DHCPv6 components provided
       by <a class="ulink" href="http://www.comcast.com/" target="_top">Comcast</a>.</p></div></div><div class="chapter" title="Chapter 1. Introduction"><div class="titlepage"><div><div><h2 class="title"><a name="intro"></a>Chapter 1. Introduction</h2></div></div></div><p>
-      This document is in its early stages of development. It is
-      expected to grow significantly in a near future. It will
+      This document is in the early stages of development. It is
+      expected to grow significantly in the near future. It will
       cover topics like database backend perfomance measurements,
-      pros an cons of various optimization techniques and
-      tools.
+      tools, and the pros an cons of various optimization techniques.
     </p></div><div class="chapter" title="Chapter 2. ISC DHCP 4.x"><div class="titlepage"><div><div><h2 class="title"><a name="dhcp4"></a>Chapter 2. ISC DHCP 4.x</h2></div></div></div><p>
       TODO: Write something about ISC DHCP4 here.
-    </p></div><div class="chapter" title="Chapter 3. Kea"><div class="titlepage"><div><div><h2 class="title"><a name="kea"></a>Chapter 3. Kea</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#idp40192">3.1. Backend performance evaluation</a></span></dt><dt><span class="section"><a href="#mysql-backend">3.2. MySQL backend</a></span></dt><dd><dl><dt><span class="section"><a href="#idp64480">3.2.1. MySQL tweaks</a></span></dt></dl></dd><dt><span class="section"><a href="#sqlite-ubench">3.3. SQLite-ubench</a></span></dt><dd><dl><dt><span class="section"><a href="#sqlite-tweaks">3.3.1. SQLite tweaks</a></span></dt></dl></dd><dt><span class="section"><a href="#memfile-ubench">3.4. memfile-ubench</a></span></dt><dd><dl><dt><span class="section"><a href="#memfile-tweaks">3.4.1. memfile tweaks</a></span></dt></dl></dd><dt><span class="section"><a href="#idp87984">3.5. Basic performance measurements</a></span></dt><dt><span class="section"><a href="#idp163488">3.6. Optimized performance measurements</a></span></dt><dt><span class="section"><a href="#idp238464">3.7. Conclusions</a></span></dt><dt><span class="section"><a href="#idm6832">3.8. Possible further optimizations</a></span></dt></dl></div><p>
+    </p></div><div class="chapter" title="Chapter 3. Kea"><div class="titlepage"><div><div><h2 class="title"><a name="kea"></a>Chapter 3. Kea</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#idp58488">3.1. Backend performance evaluation</a></span></dt><dt><span class="section"><a href="#mysql-backend">3.2. MySQL backend</a></span></dt><dd><dl><dt><span class="section"><a href="#idp73456">3.2.1. MySQL tweaks</a></span></dt></dl></dd><dt><span class="section"><a href="#sqlite-ubench">3.3. SQLite-ubench</a></span></dt><dd><dl><dt><span class="section"><a href="#sqlite-tweaks">3.3.1. SQLite tweaks</a></span></dt></dl></dd><dt><span class="section"><a href="#memfile-ubench">3.4. memfile-ubench</a></span></dt><dd><dl><dt><span class="section"><a href="#memfile-tweaks">3.4.1. memfile tweaks</a></span></dt></dl></dd><dt><span class="section"><a href="#idp87992">3.5. Basic performance measurements</a></span></dt><dt><span class="section"><a href="#idp126264">3.6. Optimized performance measurements</a></span></dt><dt><span class="section"><a href="#idp164800">3.7. Conclusions</a></span></dt><dt><span class="section"><a href="#idp169880">3.8. Possible further optimizations</a></span></dt></dl></div><p>
 
-    </p><div class="section" title="3.1. Backend performance evaluation"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idp40192"></a>3.1. Backend performance evaluation</h2></div></div></div><p>
+    </p><div class="section" title="3.1. Backend performance evaluation"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idp58488"></a>3.1. Backend performance evaluation</h2></div></div></div><p>
         Kea will support several different database backends, using
         both popular databases (like MySQL or SQLite) and
-        custom-developed solutions (like in-memory database).  BIND 10
-        source code features set of performance microbenchmarks.
-        These are small tools written in C/C++ that simulate expected
+        custom-developed solutions (such as an in-memory database).
+        To aid in the choice of backend, the BIND 10
+        source code features a set of performance microbenchmarks.
+         Written in C/C++, these are small tools that simulate expected
         DHCP server behaviour and evaluate the performance of
-        considered databases. As implemented benchmarks are not really
+        considered databases. As implemented, the benchmarks are not really
         simulating DHCP operation, but rather use set of primitives
-        that can be used by a real server, they are called
+        that can be used by a real server.  For this reason, they are called
         micro-benchmarks.
       </p><p>Although there are many operations and data types that
       server could store in a database, the most frequently used data
-      type is lease information. Although lease information for IPv4
-      and IPv6 differs slightly, it is expected that the performance
+      type is lease information. Although the information held for IPv4
+      and IPv6 leases differs slightly, it is expected that the performance
       differences will be minimal between IPv4 and IPv6 lease operations.
-      Therefore each test uses lease4 table for performance measurements.
+      Therefore each test uses the lease4 table (in which IPv4 leases are stored)
+      for performance measurements.
       </p><p>All benchmarks are implemented as single threaded applications
       that take advantage of a single database connection.</p><p>
         Those benchmarks are stored in tests/tools/dhcp-ubench
-        directory. This directory contains simplified prototypes for
-        various DB back-ends that are planned or considered as a
-        backend engine for BIND10 DHCP.  Athough trivial now, they are
+        directory of the BIND 10 source tree. This directory contains simplified prototypes for
+        the various database back-ends that are planned or considered as a
+        possibly for BIND10 DHCP.  Athough trivial now, the benchmarks are
         expected to evolve into useful tools that will allow users to
         measure performance in their specific environment.
       </p><p>
       Currently the following benchmarks are implemented:
-      </p><div class="itemizedlist"><ul class="itemizedlist" type="disc"><li class="listitem"><p>in memory+flat file</p></li><li class="listitem"><p>SQLite</p></li><li class="listitem"><p>MySQL</p></li></ul></div><p>
+      </p><div class="itemizedlist"><ul class="itemizedlist" type="disc"><li class="listitem"><p>In memory + flat file</p></li><li class="listitem"><p>SQLite</p></li><li class="listitem"><p>MySQL</p></li></ul></div><p>
     </p><p>
-      As they require additional (sometimes heavy) dependencies, they are not
-      built by default. Actually, their build system is completely separated.
-      It will be eventually merged with the main BIND10 makefile system, but
+      As the benchmarks require additional (sometimes heavy) dependencies, they are not
+      built by default. Actually, their build system is completely separate from that
+      of the rest of BIND 10.
+      It is anticipated that they will be eventually merged into the rest of BIND 10, but
       that is a low priority for now.
     </p><p>
       All benchmarks will follow the same pattern:
-      </p><div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>prepare operation (connect to a database, create a file etc.)</p></li><li class="listitem"><p>Measure timestamp 0</p></li><li class="listitem"><p>Commit new lease4 (repeated X times)</p></li><li class="listitem"><p>Measure timestamp 1</p></li><li class="listitem"><p>Search for random lease4 (repeated X times)</p></li><li class="listitem"><p>Measure timestamp 2</p></li><li class="listitem"><p>Update existing lease4 (repeated X times)</p></li><li class="listitem"><p>Measure timestamp 3</p></li><li class="listitem"><p>Delete existing lease4 (repeated X times)</p></li><li class="listitem"><p>Measure timestamp 4</p></li><li class="listitem"><p>Print out statistics, based on X and measured timestamps.</p></li></ol></div><p>
+      </p><div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>Prepare operation (connect to a database, create a file etc.)</p></li><li class="listitem"><p>Measure timestamp 0</p></li><li class="listitem"><p>Commit new lease4 record (repeated N times)</p></li><li class="listitem"><p>Measure timestamp 1</p></li><li class="listitem"><p>Search for random lease4 record (repeated N times)</p></li><li class="listitem"><p>Measure timestamp 2</p></li><li class="listitem"><p>Update existing lease4 record (repeated N times)</p></li><li class="listitem"><p>Measure timestamp 3</p></li><li class="listitem"><p>Delete existing lease4 record (repeated N times)</p></li><li class="listitem"><p>Measure timestamp 4</p></li><li class="listitem"><p>Print out statistics, based on N and measured timestamps.</p></li></ol></div><p>
 
       Although this approach does not attempt to simulate actual DHCP server
-      operation that has mix of all steps intervening, it answers the
-      questions about basic database strenghts and weak points. In particular
-      it can show what is the impact of specific DB optimizations, like
+      operation that has mix of all steps, it answers the
+      questions about basic database strengths and weak points. In particular
+      it can show what is the impact of specific database optimizations, such as
       changing engine, optimizing for writes/reads etc.
     </p><p>
-      The framework attempts to do the same amount of operations for every
+      The framework attempts to do the same amount of work for every
       backend thus allowing fair complarison between them.
-    </p></div><div class="section" title="3.2. MySQL backend"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="mysql-backend"></a>3.2. MySQL backend</h2></div></div></div><p>MySQL backend requires MySQL client development libraries. It uses
-      mysql_config tool (that works similar to pkg-config) to discover required
+    </p></div><div class="section" title="3.2. MySQL backend"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="mysql-backend"></a>3.2. MySQL backend</h2></div></div></div><p>The MySQL backend requires the MySQL client development libraries. It uses
+      the mysql_config tool (similar to pkg-config) to discover required
       compilation and linking options. To install required packages on Ubuntu,
       use the following command:
 
@@ -71,27 +73,27 @@
 
       Make sure that MySQL server is running. Make sure that you have your setup
       configured so there is a user that is able to modify used database.</p><p>Before running tests, you need to initialize your database. You can
-      use mysql.schema script for that purpose. WARNING: It will drop existing
-      Kea database. Do not run this on your production server. Assuming your
-      MySQL user is kea, you can initialize your test database by:
+      use mysql.schema script for that purpose.</p><p><span class="emphasis"><em>WARNING: It will drop existing
+      Kea database. Do not run this on your production server. </em></span></p><p>Assuming your
+      MySQL user is "kea", you can initialize your test database by:
 
       </p><pre class="screen">$ <strong class="userinput"><code>mysql -u kea -p &lt; mysql.schema</code></strong></pre><p>
-      </p><p>After database is initialized, you are ready to run the test:
+      </p><p>After the database is initialized, you are ready to run the test:
       </p><pre class="screen">$ <strong class="userinput"><code>./mysql_ubench</code></strong></pre><p>
 
       or
 
-      </p><pre class="screen">$ <strong class="userinput"><code>./mysql_ubench &gt; results-&gt;mysql.txt</code></strong></pre><p>
+      </p><pre class="screen">$ <strong class="userinput"><code>./mysql_ubench &gt; results-mysql.txt</code></strong></pre><p>
 
       Redirecting output to a file is important, because for each operation
       there is a single character printed to show progress. If you have a slow
-      terminal, this may considerably affect test perfromance. On the other hand,
-      printing something after each operation is required, as poor DB setting
-      may slow down operations to around 20 per second. Observant user is expected
-      to note that initial dots are printed too slowly and abort the test.</p><p>Currently all default parameters are hardcoded. Default values can be
-      overwritten using command line switches. Although all benchmarks take
-      the same list of parameters, some of them are specific to a given backend
-      type. To get a list of supported parameters, run your benchmark with -h option:
+      terminal, this may considerably affect test performance. On the other hand,
+      printing something after each operation is required as poor database settings
+      may slow down operations to around 20 per second. (The observant user is expected
+      to note that the initial dots are printed too slowly and abort the test.)</p><p>Currently all default parameters are hardcoded. Default values can be
+      overridden using command line switches. Although all benchmarks take
+      the same list of parameters, some of them are specific to a given backend.
+      To get a list of supported parameters, run the benchmark with the "-h" option:
 
       </p><pre class="screen">$ <strong class="userinput"><code>./mysql_ubench -h</code></strong>
 This is a benchmark designed to measure expected performance
@@ -111,20 +113,20 @@ Possible command-line parameters:
  -c yes|no - should compiled statements be used (MySQL only)
 </pre><p>
 
-      </p><div class="section" title="3.2.1. MySQL tweaks"><div class="titlepage"><div><div><h3 class="title"><a name="idp64480"></a>3.2.1. MySQL tweaks</h3></div></div></div><p>One parameter that has huge impact on performance is a a backend engine.
+      </p><div class="section" title="3.2.1. MySQL tweaks"><div class="titlepage"><div><div><h3 class="title"><a name="idp73456"></a>3.2.1. MySQL tweaks</h3></div></div></div><p>One parameter that has huge impact on performance is the choice of backend engine.
         You can get a list of engines of your MySQL implementation by using
 
         </p><pre class="screen">&gt; <strong class="userinput"><code>show engines;</code></strong></pre><p>
 
         in your mysql client. Two notable engines are MyISAM and InnoDB. mysql_ubench uses
         use MyISAM for synchronous mode and InnoDB for asynchronous. Please use
-        '-s 0|1' to choose whether you want synchronous or asynchronous operations.</p><p>Another parameter that affects performance are precompiled statements.
+        '-s yes|no' to choose whether you want synchronous or asynchronous operations.</p><p>Another parameter that affects performance are precompiled statements.
         In a basic approach, the actual SQL query is passed as a text string that is
         then parsed by the database engine. Alternative is a so called precompiled
         statement. In this approach the SQL query is compiled an specific values are being
         bound to it. In the next iteration the query remains the same, only bound values
         are changing (e.g. searching for a different address). Usage of basic or precompiled
-        statements is controlled with '-c 0|1'.</p></div></div><div class="section" title="3.3. SQLite-ubench"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="sqlite-ubench"></a>3.3. SQLite-ubench</h2></div></div></div><p>SQLite backend requires both sqlite3 development and run-time package. Their
+        statements is controlled with '-c no|yes'.</p></div></div><div class="section" title="3.3. SQLite-ubench"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="sqlite-ubench"></a>3.3. SQLite-ubench</h2></div></div></div><p>The SQLite backend requires both the sqlite3 development and run-time packages. Their
       names may vary from system to system, but on Ubuntu 12.04 they are called
       sqlite3 libsqlite3-dev. To install them, use the following command:
 
@@ -140,33 +142,33 @@ Possible command-line parameters:
       or
       </p><pre class="screen">&gt; <strong class="userinput"><code>./sqlite_ubench &gt; results-sqlite.txt</code></strong></pre><p>
       </p><div class="section" title="3.3.1. SQLite tweaks"><div class="titlepage"><div><div><h3 class="title"><a name="sqlite-tweaks"></a>3.3.1. SQLite tweaks</h3></div></div></div><p>To modify default sqlite_ubench parameters, command line
-        switches can be used. Currently supported parameters are
+        switches can be used. The currently supported switches are
         (default values specified in brackets):
-        </p><div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>-f filename - name of the database file ("sqlite.db")</p></li><li class="listitem"><p>-n num - number of iterations (100)</p></li><li class="listitem"><p>-s yes|no - should the operations be performend in synchronous (yes)
+        </p><div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>-f filename - name of the database file ("sqlite.db")</p></li><li class="listitem"><p>-n num - number of iterations (100)</p></li><li class="listitem"><p>-s yes|no - should the operations be performed in a synchronous (yes)
           or asynchronous (no) manner (yes)</p></li><li class="listitem"><p>-v yes|no - verbose mode. Should the test print out progress? (yes)</p></li><li class="listitem"><p>-c yes|no - precompiled statements. Should the SQL statements be precompiled?</p></li></ol></div><p>
         </p><p>SQLite can run in asynchronous or synchronous mode. This
-        mode can be controlled by using sync parameter. It is set
-        using (PRAGMA synchronous = ON or OFF).</p><p>Another tweakable feature is journal mode. It can be
+        mode can be controlled by using "synchronous" parameter. It is set
+        using the SQLite command:</p><p><span class="command"><strong>PRAGMA synchronous = ON|OFF</strong></span></p><p>Another tweakable feature is journal mode. It can be
         turned to several modes of operation. Its value can be
         modified in SQLite_uBenchmark::connect().  See
         http://www.sqlite.org/pragma.html#pragma_journal_mode for
         detailed explanantion.</p><p>sqlite_bench supports precompiled statements. Please use
-        '-c 0|1' to define which should be used: basic SQL query (0) or
-        precompiled statement (1).</p></div></div><div class="section" title="3.4. memfile-ubench"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="memfile-ubench"></a>3.4. memfile-ubench</h2></div></div></div><p>Memfile backend is custom developed prototype backend that
-      somewhat mimics operation of ISC DHCP4. It uses in-memory
+        '-c no|yes' to define which should be used: basic SQL query (no) or
+        precompiled statement (yes).</p></div></div><div class="section" title="3.4. memfile-ubench"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="memfile-ubench"></a>3.4. memfile-ubench</h2></div></div></div><p>The memfile backend is a custom backend that
+      somewhat mimics operation of ISC DHCP4. It implements in-memory
       storage using standard C++ and boost mechanisms (std::map and
       boost::shared_ptr&lt;&gt;). All database changes are also
-      written to a lease file. That file is strictly write-only. This
+      written to a lease file, which is strictly write-only. This
       approach takes advantage of the fact that simple append is faster
       than edition with potential whole file relocation.</p><div class="section" title="3.4.1. memfile tweaks"><div class="titlepage"><div><div><h3 class="title"><a name="memfile-tweaks"></a>3.4.1. memfile tweaks</h3></div></div></div><p>To modify default memfile_ubench parameters, command line
-        switches can be used. Currently supported parameters are
+        switches can be used. Currently supported switches are
         (default values specified in brackets):
-        </p><div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>-f filename - name of the database file ("dhcpd.leases")</p></li><li class="listitem"><p>-n num - number of iterations (100)</p></li><li class="listitem"><p>-s yes|no - should the operations be performend in synchronous (yes)
+        </p><div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>-f filename - name of the database file ("dhcpd.leases")</p></li><li class="listitem"><p>-n num - number of iterations (100)</p></li><li class="listitem"><p>-s yes|no - should the operations be performend in a synchronous (yes)
           or asynchronous (no) manner (yes)</p></li><li class="listitem"><p>-v yes|no - verbose mode. Should the test print out progress? (yes)</p></li></ol></div><p>
         </p><p>memfile can run in asynchronous or synchronous mode. This
         mode can be controlled by using sync parameter. It uses
         fflush() and fsync() in synchronous mode to make sure that
-        data is not buffered and physically stored on disk.</p></div></div><div class="section" title="3.5. Basic performance measurements"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idp87984"></a>3.5. Basic performance measurements</h2></div></div></div><p>This section contains sample results for backend performance measurements,
+        data is not buffered and physically stored on disk.</p></div></div><div class="section" title="3.5. Basic performance measurements"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idp87992"></a>3.5. Basic performance measurements</h2></div></div></div><p>This section contains sample results for backend performance measurements,
       taken using microbenchmarks. Tests were conducted on reasonably powerful machine:
       </p><pre class="screen">
 CPU: Quad-core Intel(R) Core(TM) i7-2600K CPU @ 3.40GHz (8 logical cores)
@@ -175,19 +177,19 @@ OS: Ubuntu 12.04, running kernel 3.2.0-26-generic SMP x86_64
 compiler: g++ (Ubuntu/Linaro 4.6.3-1ubuntu5) 4.6.3
 MySQL version: 5.5.24
 SQLite version: 3.7.9sourceid version is 2011-11-01 00:52:41 c7c6050ef060877ebe77b41d959e9df13f8c9b5e</pre><p>
-      </p><p>Benchmarks were run without using precompiled statements.
-      The code was compiled wit -O0 flag (no code optimizations).
-      Each run was executed once.</p><p>Benchmarks were run in two series: synchronous and
+      </p><p>The benchmarks were run without using precompiled statements.
+      The code was compiled with the -O0 flag (no code optimizations).
+      Each run was executed once.</p><p>Two series of measures were made, synchronous and
       asynchronous. As those modes offer radically different
-      performances, synchronous mode was conducted for 1000 (one
-      thousand) repetitions and asynchronous mode was conducted for
-      100000 (hundred thousand) repetitions.</p><div class="table"><a name="idp91600"></a><p class="title"><b>Table 3.1. Synchronous results (basic)</b></p><div class="table-contents"><table summary="Synchronous results (basic)" border="1"><colgroup><col align="center" class="Backend"><col align="center" class="Num"><col align="center" class="Create"><col align="center" class="Search"><col align="center" class="Update"><col align="center" class="Delete"></colgroup><thead><tr><th align="center">Backend</th><th align="center">Operations</th><th align="center">Create</th><th align="center">Search</th><th align="center">Update</th><th align="center">Delete</th><th align="center">Average</th></tr></thead><tbody><tr><td align="center">MySQL</td><td align="center">1000</td><td align="center">31.603978s</td><td align="center"> 0.116612s</td><td align="center">27.964191s</td><td align="center">27.695209s</td><td align="center">21.844998s</td></tr><tr><td align="center">SQLite</td><td align="center">1000</td><td align="center">61.421356s</td><td align="center"> 0.033283s</td><td align="center">59.476638s</td><td align="center">56.034150s</td><td align="center">44.241357s</td></tr><tr><td align="center">memfile</td><td align="center">1000</td><td align="center">38.223757s</td><td align="center"> 0.000817s</td><td align="center">38.041153s</td><td align="center">38.017293s</td><td align="center">28.570755s</td></tr></tbody></table></div></div><br class="table-break"><p>Following parameters were measured for asynchronous mode.
-      MySQL and SQLite were run with 100 thousand repetitions. Memfile
-      was run for 1 million repetitions due to much larger performance.</p><div class="table"><a name="idp112688"></a><p class="title"><b>Table 3.2. Asynchronous results (basic)</b></p><div class="table-contents"><table summary="Asynchronous results (basic)" border="1"><colgroup><col align="center" class="Backend"><col align="center" class="Num"><col align="center" class="Create"><col align="center" class="Search"><col align="center" class="Update"><col align="center" class="Delete"></colgroup><thead><tr><th align="center">Backend</th><th align="center">Operations</th><th align="center">Create [s]</th><th align="center">Search [s]</th><th align="center">Update [s]</th><th align="center">Delete [s]</th><th align="center">Average [s]</th></tr></thead><tbody><tr><td align="center">MySQL</td><td align="center">100000</td><td align="center">10.584842s</td><td align="center">10.386402s</td><td align="center">10.062384s</td><td align="center"> 8.890197s</td><td align="center"> 9.980956s</td></tr><tr><td align="center">SQLite</td><td align="center">100000</td><td align="center"> 3.710356s</td><td align="center"> 3.159129s</td><td align="center"> 2.865354s</td><td align="center"> 2.439406s</td><td align="center"> 3.043561s</td></tr><tr><td align="center">memfile</td><td align="center">100000</td><td align="center"> 1.299642s</td><td align="center"> 0.039330s</td><td align="center"> 1.307112s</td><td align="center"> 1.277641s</td><td align="center"> 0.980931s</td></tr></tbody></table></div></div><br class="table-break"><p>Presented performance results can be computed into operations per second metrics.
-      It should be noted that due to large differences between various operations (sometime
-      over 3 orders of magnitude), it is difficult to create a simple, readable chart with
-      that data.</p><div class="table"><a name="tbl-basic-perf-results"></a><p class="title"><b>Table 3.3. Estimated basic performance</b></p><div class="table-contents"><table summary="Estimated basic performance" border="1"><colgroup><col align="center" class="Backend"><col align="center" class="Create"><col align="center" class="Search"><col align="center" class="Update"><col align="center" class="Delete"><col align="center" class="Average"></colgroup><thead><tr><th align="center">Backend</th><th align="center">Create [oper/s]</th><th align="center">Search [oper/s]</th><th align="center">Update [oper/s]</th><th align="center">Delete [oper/s]</th><th align="center">Average [oper/s]</th></tr></thead><tbody><tr><td align="center">MySQL (async)</td><td align="center">9447.47</td><td align="center">9627.97</td><td align="center">9938.00</td><td align="center">11248.34</td><td align="center">10065.45</td></tr><tr><td align="center">SQLite (async)</td><td align="center">26951.59</td><td align="center">31654.29</td><td align="center">34899.70</td><td align="center">40993.59</td><td align="center">33624.79</td></tr><tr><td align="center">memfile (async)</td><td align="center">76944.27</td><td align="center">2542588.35</td><td align="center">76504.54</td><td align="center">78269.25</td><td align="center">693576.60</td></tr><tr><td align="center">MySQL (sync)</td><td align="center">31.64</td><td align="center">8575.45</td><td align="center">35.76</td><td align="center">36.11</td><td align="center">2169.74</td></tr><tr><td align="center">SQLite (sync)</td><td align="center">16.28</td><td align="center">20045.37</td><td align="center">16.81</td><td align="center">17.85</td><td align="center">7524.08</td></tr><tr><td align="center">memfile (sync)</td><td align="center">26.16</td><td align="center">1223990.21</td><td align="center">26.29</td><td align="center">26.30</td><td align="center">306017.24</td></tr></tbody></table></div></div><br class="table-break"><div class="mediaobject"><img src="performance-results-graph1.png" alt="Basic performance measurements"><div class="caption"><p>Graphical representation of the basic performance results
-          presented in table <a class="xref" href="#tbl-basic-perf-results" title="Table 3.3. Estimated basic performance">Table 3.3, &#8220;Estimated basic performance&#8221;</a>.</p></div></div></div><div class="section" title="3.6. Optimized performance measurements"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idp163488"></a>3.6. Optimized performance measurements</h2></div></div></div><p>This section contains sample results for backend performance measurements,
+      performances, synchronous mode was conducted for one
+      thousand repetitions and asynchronous mode was conducted for
+      one hundred thousand repetitions.</p><div class="table"><a name="idp90320"></a><p class="title"><b>Table 3.1. Synchronous results (basic)</b></p><div class="table-contents"><table summary="Synchronous results (basic)" border="1"><colgroup><col align="center"><col align="center"><col align="center"><col align="center"><col align="center"><col align="center"></colgroup><thead><tr><th align="center">Backend</th><th align="center">Operations</th><th align="center">Create [s]</th><th align="center">Search [s]</th><th align="center">Update [s]</th><th align="center">Delete [s]</th><th align="center">Average [s]</th></tr></thead><tbody><tr><td align="center">MySQL</td><td align="center">1,000</td><td align="center">31.603978</td><td align="center"> 0.116612</td><td align="center">27.964191</td><td align="center">27.695209</td><td align="center">21.844998</td></tr><tr><td align="center">SQLite</td><td align="center">1,000</td><td align="center">61.421356</td><td align="center"> 0.033283</td><td align="center">59.476638</td><td align="center">56.034150</td><td align="center">44.241357</td></tr><tr><td align="center">memfile</td><td align="center">1,000</td><td align="center">38.223757</td><td align="center"> 0.000817</td><td align="center">38.041153</td><td align="center">38.017293</td><td align="center">28.570755</td></tr></tbody></table></div></div><br class="table-break"><p>The following parameters were measured for asynchronous mode.
+      MySQL and SQLite were run with one hundred thousand repetitions. Memfile
+      was run for one million repetitions due to its much higher performance.</p><div class="table"><a name="idp100480"></a><p class="title"><b>Table 3.2. Asynchronous results (basic)</b></p><div class="table-contents"><table summary="Asynchronous results (basic)" border="1"><colgroup><col align="center"><col align="center"><col align="center"><col align="center"><col align="center"><col align="center"></colgroup><thead><tr><th align="center">Backend</th><th align="center">Operations</th><th align="center">Create [s]</th><th align="center">Search [s]</th><th align="center">Update [s]</th><th align="center">Delete [s]</th><th align="center">Average [s]</th></tr></thead><tbody><tr><td align="center">MySQL</td><td align="center">100,000</td><td align="center">10.584842</td><td align="center">10.386402</td><td align="center">10.062384</td><td align="center"> 8.890197</td><td align="center"> 9.980956</td></tr><tr><td align="center">SQLite</td><td align="center">100,000</td><td align="center"> 3.710356</td><td align="center"> 3.159129</td><td align="center"> 2.865354</td><td align="center"> 2.439406</td><td align="center"> 3.043561</td></tr><tr><td align="center">memfile</td><td align="center">1,000,000</td><td align="center"> 1.299642</td><td align="center"> 0.039330</td><td align="center"> 1.307112</td><td align="center"> 1.277641</td><td align="center"> 0.980931</td></tr></tbody></table></div></div><br class="table-break"><p>The presented performance results can be converted into operations per second metrics.
+      It should be noted that due to large differences between various operations (sometimes
+      over three orders of magnitude), it is difficult to create a simple, readable chart with
+      that data.</p><div class="table"><a name="tbl-basic-perf-results"></a><p class="title"><b>Table 3.3. Estimated basic performance</b></p><div class="table-contents"><table summary="Estimated basic performance" border="1"><colgroup><col align="center"><col align="center"><col align="center"><col align="center"><col align="center"><col align="center"></colgroup><thead><tr><th align="center">Backend</th><th align="center">Create [oper/s]</th><th align="center">Search [oper/s]</th><th align="center">Update [oper/s]</th><th align="center">Delete [oper/s]</th><th align="center">Average [oper/s]</th></tr></thead><tbody><tr><td align="center">MySQL (async)</td><td align="center">9447.47</td><td align="center">9627.97</td><td align="center">9938.00</td><td align="center">11248.34</td><td align="center">10065.45</td></tr><tr><td align="center">SQLite (async)</td><td align="center">26951.59</td><td align="center">31654.29</td><td align="center">34899.70</td><td align="center">40993.59</td><td align="center">33624.79</td></tr><tr><td align="center">memfile (async)</td><td align="center">76944.27</td><td align="center">2542588.35</td><td align="center">76504.54</td><td align="center">78269.25</td><td align="center">693576.60</td></tr><tr><td align="center">MySQL (sync)</td><td align="center">31.64</td><td align="center">8575.45</td><td align="center">35.76</td><td align="center">36.11</td><td align="center">2169.74</td></tr><tr><td align="center">SQLite (sync)</td><td align="center">16.28</td><td align="center">20045.37</td><td align="center">16.81</td><td align="center">17.85</td><td align="center">7524.08</td></tr><tr><td align="center">memfile (sync)</td><td align="center">26.16</td><td align="center">1223990.21</td><td align="center">26.29</td><td align="center">26.30</td><td align="center">306017.24</td></tr></tbody></table></div></div><br class="table-break"><div class="mediaobject"><img src="performance-results-graph1.png" alt="Basic performance measurements"><div class="caption"><p>Graphical representation of the basic performance results
+          presented in table <a class="xref" href="#tbl-basic-perf-results" title="Table 3.3. Estimated basic performance">Table 3.3, &#8220;Estimated basic performance&#8221;</a>.</p></div></div></div><div class="section" title="3.6. Optimized performance measurements"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idp126264"></a>3.6. Optimized performance measurements</h2></div></div></div><p>This section contains sample results for backend performance measurements,
       taken using microbenchmarks. Tests were conducted on reasonably powerful machine:
       </p><pre class="screen">
 CPU: Quad-core Intel(R) Core(TM) i7-2600K CPU @ 3.40GHz (8 logical cores)
@@ -196,19 +198,19 @@ OS: Ubuntu 12.04, running kernel 3.2.0-26-generic SMP x86_64
 compiler: g++ (Ubuntu/Linaro 4.6.3-1ubuntu5) 4.6.3
 MySQL version: 5.5.24
 SQLite version: 3.7.9sourceid version is 2011-11-01 00:52:41 c7c6050ef060877ebe77b41d959e9df13f8c9b5e</pre><p>
-      </p><p>Benchmarks were run with precompiled statements enabled.
-      The code was compiled wit -Ofast flag (optimize compilation for speed).
-      Each run was repeated 3 times and measured values were averaged.</p><p>Benchmarks were run in two series: synchronous and
+      </p><p>The benchmarks were run with precompiled statements enabled.
+      The code was compiled with the -Ofast flag (optimize compilation for speed).
+      Each run was repeated three times and measured values were averaged.</p><p>Again the benchmarks were run in two series, synchronous and
       asynchronous. As those modes offer radically different
-      performances, synchronous mode was conducted for 1000 (one
-      thousand) repetitions and asynchronous mode was conducted for
-      100000 (hundred thousand) repetitions.</p><div class="table"><a name="idp167184"></a><p class="title"><b>Table 3.4. Synchronous results (optimized)</b></p><div class="table-contents"><table summary="Synchronous results (optimized)" border="1"><colgroup><col align="center" class="Backend"><col align="center" class="Num"><col align="center" class="Create"><col align="center" class="Search"><col align="center" class="Update"><col align="center" class="Delete"></colgroup><thead><tr><th align="center">Backend</th><th align="center">Operations</th><th align="center">Create</th><th align="center">Search</th><th align="center">Update</th><th align="center">Delete</th><th align="center">Average</th></tr></thead><tbody><tr><td align="center">MySQL</td><td align="center">1000</td><td align="center">27.887s</td><td align="center"> 0.106s</td><td align="center">28.223s</td><td align="center">27.696s</td><td align="center">20.978s</td></tr><tr><td align="center">SQLite</td><td align="center">1000</td><td align="center">61.299s</td><td align="center"> 0.015s</td><td align="center">59.648s</td><td align="center">61.098s</td><td align="center">45.626s</td></tr><tr><td align="center">memfile</td><td align="center">1000</td><td align="center">39.564s</td><td align="center"> 0.000724s</td><td align="center">39.543s</td><td align="center">39.326w</td><td align="center">29.608s</td></tr></tbody></table></div></div><br class="table-break"><p>Following parameters were measured for asynchronous mode.
-      MySQL and SQLite were run with 100 thousand repetitions. Memfile
-      was run for 1 million repetitions due to much larger performance.</p><div class="table"><a name="idp187792"></a><p class="title"><b>Table 3.5. Asynchronous results (optimized)</b></p><div class="table-contents"><table summary="Asynchronous results (optimized)" border="1"><colgroup><col align="center" class="Backend"><col align="center" class="Num"><col align="center" class="Create"><col align="center" class="Search"><col align="center" class="Update"><col align="center" class="Delete"></colgroup><thead><tr><th align="center">Backend</th><th align="center">Operations</th><th align="center">Create [s]</th><th align="center">Search [s]</th><th align="center">Update [s]</th><th align="center">Delete [s]</th><th align="center">Average [s]</th></tr></thead><tbody><tr><td align="center">MySQL</td><td align="center">100000</td><td align="center">8.507s</td><td align="center">9.698s</td><td align="center">7.785s</td><td align="center">8.326s</td><td align="center">8.579s</td></tr><tr><td align="center">SQLite</td><td align="center">100000</td><td align="center"> 1.562s</td><td align="center"> 0.949s</td><td align="center"> 1.513s</td><td align="center"> 1.502s</td><td align="center"> 1.382s</td></tr><tr><td align="center">memfile</td><td align="center">100000</td><td align="center">1.302s</td><td align="center">0.038s</td><td align="center">1.306s</td><td align="center">1.263s</td><td align="center">0.977s</td></tr></tbody></table></div></div><br class="table-break"><p>Presented performance results can be computed into operations per second metrics.
+      performances, synchronous mode was conducted for one
+      thousand repetitions and asynchronous mode was conducted for
+      one hundred thousand repetitions.</p><div class="table"><a name="idp128664"></a><p class="title"><b>Table 3.4. Synchronous results (optimized)</b></p><div class="table-contents"><table summary="Synchronous results (optimized)" border="1"><colgroup><col align="center"><col align="center"><col align="center"><col align="center"><col align="center"><col align="center"></colgroup><thead><tr><th align="center">Backend</th><th align="center">Operations</th><th align="center">Create [s]</th><th align="center">Search [s]</th><th align="center">Update [s]</th><th align="center">Delete [s]</th><th align="center">Average [s]</th></tr></thead><tbody><tr><td align="center">MySQL</td><td align="center">1,000</td><td align="center">27.887</td><td align="center"> 0.106</td><td align="center">28.223</td><td align="center">27.696</td><td align="center">20.978</td></tr><tr><td align="center">SQLite</td><td align="center">1,000</td><td align="center">61.299</td><td align="center"> 0.015</td><td align="center">59.648</td><td align="center">61.098</td><td align="center">45.626</td></tr><tr><td align="center">memfile</td><td align="center">1,000</td><td align="center">39.564</td><td align="center"> 0.000724</td><td align="center">39.543</td><td align="center">39.326</td><td align="center">29.608</td></tr></tbody></table></div></div><br class="table-break"><p>The following parameters were measured for asynchronous mode.
+      MySQL and SQLite were run with one hundred thousand repetitions. Memfile
+      was run for one million repetitions due to its much higher performance.</p><div class="table"><a name="idp139104"></a><p class="title"><b>Table 3.5. Asynchronous results (optimized)</b></p><div class="table-contents"><table summary="Asynchronous results (optimized)" border="1"><colgroup><col align="center"><col align="center"><col align="center"><col align="center"><col align="center"><col align="center"></colgroup><thead><tr><th align="center">Backend</th><th align="center">Operations</th><th align="center">Create [s]</th><th align="center">Search [s]</th><th align="center">Update [s]</th><th align="center">Delete [s]</th><th align="center">Average [s]</th></tr></thead><tbody><tr><td align="center">MySQL</td><td align="center">100,000</td><td align="center">8.507</td><td align="center">9.698</td><td align="center">7.785</td><td align="center">8.326</td><td align="center">8.579</td></tr><tr><td align="center">SQLite</td><td align="center">100,000</td><td align="center"> 1.562</td><td align="center"> 0.949</td><td align="center"> 1.513</td><td align="center"> 1.502</td><td align="center"> 1.382</td></tr><tr><td align="center">memfile</td><td align="center">1,000,000</td><td align="center">1.302</td><td align="center">0.038</td><td align="center">1.306</td><td align="center">1.263</td><td align="center">0.977</td></tr></tbody></table></div></div><br class="table-break"><p>The presented performance results can be converted into operations per second metrics.
       It should be noted that due to large differences between various operations (sometime
-      over 3 orders of magnitude), it is difficult to create a simple, readable chart with
-      that data.</p><div class="table"><a name="tbl-optim-perf-results"></a><p class="title"><b>Table 3.6. Estimated optimized performance</b></p><div class="table-contents"><table summary="Estimated optimized performance" border="1"><colgroup><col align="center" class="Backend"><col align="center" class="Create"><col align="center" class="Search"><col align="center" class="Update"><col align="center" class="Delete"><col align="center" class="Average"></colgroup><thead><tr><th align="center">Backend</th><th align="center">Create [oper/s]</th><th align="center">Search [oper/s]</th><th align="center">Update [oper/s]</th><th align="center">Delete [oper/s]</th><th align="center">Average [oper/s]</th></tr></thead><tbody><tr><td align="center">MySQL (async)</td><td align="center">11754.84</td><td align="center">10311.34</td><td align="center">12845.35</td><td align="center">12010.24</td><td align="center">11730.44</td></tr><tr><td align="center">SQLite (async)</td><td align="center">64005.90</td><td align="center">105391.29</td><td align="center">66075.51</td><td align="center">66566.43</td><td align="center">75509.78</td></tr><tr><td align="center">memfile (async)</td><td align="center">76832.16</td><td align="center">2636018.56</td><td align="center">76542.50</td><td align="center">79188.81</td><td align="center">717145.51</td></tr><tr><td align="center">MySQL (sync)</td><td align="center">35.86</td><td align="center">9461.10</td><td align="center">35.43</td><td align="center">36.11</td><td align="center">2392.12</td></tr><tr><td align="center">SQLite (sync)</td><td align="center">16.31</td><td align="center">67036.11</td><td align="center">16.76</td><td align="center">16.37</td><td align="center">16771.39</td></tr><tr><td align="center">memfile (sync)</td><td align="center">25.28</td><td align="center">3460207.61</td><td align="center">25.29</td><td align="center">25.43</td><td align="center">865070.90</td></tr></tbody></table></div></div><br class="table-break"><div class="mediaobject"><img src="performance-results-graph2.png" alt="Optimized performance measurements"><div class="caption"><p>Graphical representation of the optimized performance
-          results presented in table <a class="xref" href="#tbl-optim-perf-results" title="Table 3.6. Estimated optimized performance">Table 3.6, &#8220;Estimated optimized performance&#8221;</a>.</p></div></div></div><div class="section" title="3.7. Conclusions"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idp238464"></a>3.7. Conclusions</h2></div></div></div><p>
+      over three orders of magnitude), it is difficult to create a simple, readable chart with
+      the data.</p><div class="table"><a name="tbl-optim-perf-results"></a><p class="title"><b>Table 3.6. Estimated optimized performance</b></p><div class="table-contents"><table summary="Estimated optimized performance" border="1"><colgroup><col align="center"><col align="center"><col align="center"><col align="center"><col align="center"><col align="center"></colgroup><thead><tr><th align="center">Backend</th><th align="center">Create [oper/s]</th><th align="center">Search [oper/s]</th><th align="center">Update [oper/s]</th><th align="center">Delete [oper/s]</th><th align="center">Average [oper/s]</th></tr></thead><tbody><tr><td align="center">MySQL (async)</td><td align="center">11754.84</td><td align="center">10311.34</td><td align="center">12845.35</td><td align="center">12010.24</td><td align="center">11730.44</td></tr><tr><td align="center">SQLite (async)</td><td align="center">64005.90</td><td align="center">105391.29</td><td align="center">66075.51</td><td align="center">66566.43</td><td align="center">75509.78</td></tr><tr><td align="center">memfile (async)</td><td align="center">76832.16</td><td align="center">2636018.56</td><td align="center">76542.50</td><td align="center">79188.81</td><td align="center">717145.51</td></tr><tr><td align="center">MySQL (sync)</td><td align="center">35.86</td><td align="center">9461.10</td><td align="center">35.43</td><td align="center">36.11</td><td align="center">2392.12</td></tr><tr><td align="center">SQLite (sync)</td><td align="center">16.31</td><td align="center">67036.11</td><td align="center">16.76</td><td align="center">16.37</td><td align="center">16771.39</td></tr><tr><td align="center">memfile (sync)</td><td align="center">25.28</td><td align="center">3460207.61</td><td align="center">25.29</td><td align="center">25.43</td><td align="center">865070.90</td></tr></tbody></table></div></div><br class="table-break"><div class="mediaobject"><img src="performance-results-graph2.png" alt="Optimized performance measurements"><div class="caption"><p>Graphical representation of the optimized performance
+          results presented in table <a class="xref" href="#tbl-optim-perf-results" title="Table 3.6. Estimated optimized performance">Table 3.6, &#8220;Estimated optimized performance&#8221;</a>.</p></div></div></div><div class="section" title="3.7. Conclusions"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idp164800"></a>3.7. Conclusions</h2></div></div></div><p>
         Improvements gained by introducing support for precompiled
         statements in MySQL is somewhat disappointing - between 6 and
         29%.  On the other hand, the improvement in SQLite is
@@ -222,15 +224,15 @@ SQLite version: 3.7.9sourceid version is 2011-11-01 00:52:41 c7c6050ef060877ebe7
         STL code. The memfile backend is in some operations is almost
         twice as fast.
       </p><p>
-        If synchronous operation is required the current performance
+        If synchronous operation is required, the current performance
         results are likely to be deemed inadequate. The limiting
         factor here is a disk access time. Even migrating to high
-        performance 15.000rpm disk is expected to only roughly double
+        performance 15,000 rpm disk is expected to only roughly double
         number of leases per second, compared to the current results.
-        The reason is that to write a file to disk, at lease 2 writes
+        The reason is that to write a file to disk, at least two writes
         are required: the new content and i-node modification of the
         file. The easiest way to boost synchronous performance is to
-        switch to SSD disks. Memory-backed RAM disks are also viable
+        switch to SSD disks. Memory-backed RAM disks are also a viable
         solution. However, care should be taken to properly engineer
         backup strategy for RAM disks.
       </p><p>
@@ -253,10 +255,10 @@ SQLite version: 3.7.9sourceid version is 2011-11-01 00:52:41 c7c6050ef060877ebe7
         translated to expected leases per second or queries per second
         performance by an actual server. The DHCP server must do much
         more than just query the database to properly process client's
-        message. Provided results should be considered as only rough
+        message. The provided results should be considered as only rough
         estimates. They can also be used for relative comparisons
         between backends.
-      </p></div><div class="section" title="3.8. Possible further optimizations"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idm6832"></a>3.8. Possible further optimizations</h2></div></div></div><p>
+      </p></div><div class="section" title="3.8. Possible further optimizations"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idp169880"></a>3.8. Possible further optimizations</h2></div></div></div><p>
         For basic measurements the code was compiled with -g -O0
         flags. For optimized measurements the benchmarking code was
         compiled with -Ofast (optimize for speed). In both cases, the
@@ -269,8 +271,8 @@ SQLite version: 3.7.9sourceid version is 2011-11-01 00:52:41 c7c6050ef060877ebe7
       </p><p>
         Currently all operations are conducted on one by one
         basis. Each operation is treated as a separate
-        transaction. Grouping X operations together will potentially
-        bring almost X fold increase in synchronous operations. Such a
+        transaction. Grouping N operations together will potentially
+        bring almost N fold increase in synchronous operations. Such a
         feature is present in ISC DHCP4 and is called cache-threshold.
         Extension for this benchmark in this regard should be
         considered.  That affects only write operations (insert,
