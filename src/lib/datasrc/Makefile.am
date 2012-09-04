@@ -1,4 +1,4 @@
-SUBDIRS = memory . tests
+SUBDIRS = . memory tests
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/dns -I$(top_builddir)/src/lib/dns
@@ -64,7 +64,7 @@ libb10_datasrc_la_LIBADD = $(top_builddir)/src/lib/exceptions/libb10-exceptions.
 libb10_datasrc_la_LIBADD += $(top_builddir)/src/lib/dns/libb10-dns++.la
 libb10_datasrc_la_LIBADD += $(top_builddir)/src/lib/log/libb10-log.la
 libb10_datasrc_la_LIBADD += $(top_builddir)/src/lib/cc/libb10-cc.la
-libb10_datasrc_la_LIBADD += memory/libdatasrc_memory.la # convenience library
+#libb10_datasrc_la_LIBADD += memory/libdatasrc_memory.la # convenience library
 libb10_datasrc_la_LIBADD += $(SQLITE_LIBS)
 
 BUILT_SOURCES = datasrc_config.h datasrc_messages.h datasrc_messages.cc

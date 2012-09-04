@@ -252,6 +252,8 @@ private:
     const dns::Name* const realname_;
 };
 
+typedef boost::shared_ptr<TreeNodeRRset> TreeNodeRRsetPtr;
+
 } // namespace memory
 } // namespace datasrc
 } // namespace isc
