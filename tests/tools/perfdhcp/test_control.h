@@ -335,10 +335,10 @@ protected:
     /// simulated DHCP clients specified from command line. It uses
     /// \ref CommandOptions object to retrieve number of clients.
     /// Based on this the random value is generated and added to
-    /// the MAC address prefix (default MAC address).
+    /// the MAC address template (default MAC address).
     ///
     /// \param randomized number of bytes randomized.
-    /// \throw isc::BadValue if MAC address prefix (default or specified
+    /// \throw isc::BadValue if MAC address template (default or specified
     /// from the command line) has invalid size (expected 6 octets).
     /// \return generated MAC address.
     std::vector<uint8_t> generateMacAddress(uint8_t& randomized) const;

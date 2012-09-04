@@ -215,7 +215,7 @@ public:
         // The old duid will be holding the previously generated DUID.
         // It will be used to compare against the new one. If we have
         // multiple clients we want to make sure that duids differ.
-        Duid old_duid(CommandOptions::instance().getDuidPrefix());
+        Duid old_duid(CommandOptions::instance().getDuidTemplate());
         Duid new_duid(0);
         // total_dist shows the total difference between generated duid.
         // It has to be greater than zero if multiple clients are simulated.
@@ -439,7 +439,7 @@ public:
         // MAC address. We will be comparing the newly generated one with it
         // to see if it changes when mulitple clients are simulated or if it
         // does not change when single client is simulated.
-        MacAddress old_mac(CommandOptions::instance().getMacPrefix());
+        MacAddress old_mac(CommandOptions::instance().getMacTemplate());
         // Holds the position if the octet on which two MAC addresses can
         // be different. If number of clients is 256 or less it is last MAC
         // octet (except for single client when subsequent MAC addresses
@@ -652,7 +652,7 @@ TEST_F(TestControlTest, Options6) {
     EXPECT_THROW(opt_rapid_commit->getUint8(), isc::OutOfRange);
 
     // Validate the D6O_CLIENTID option.
-    OptionBuffer duid(CommandOptions::instance().getDuidPrefix());
+    OptionBuffer duid(CommandOptions::instance().getDuidTemplate());
     OptionPtr opt_clientid(Option::factory(Option::V6, D6O_CLIENTID, duid));
     EXPECT_EQ(Option::V6, opt_clientid->getUniverse());
     EXPECT_EQ(D6O_CLIENTID, opt_clientid->getType());

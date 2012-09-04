@@ -113,7 +113,6 @@ public:
     void writeAt(size_t dest_pos,
                  std::vector<uint8_t>::iterator first,
                  std::vector<uint8_t>::iterator last);
-
     
     /// \brief Replace contents of buffer with value.
     ///

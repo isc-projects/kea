@@ -325,12 +325,12 @@ TestControl::generateMacAddress(uint8_t& randomized) const {
     CommandOptions& options = CommandOptions::instance();
     uint32_t clients_num = options.getClientsNum();
     if ((clients_num == 0) || (clients_num == 1)) {
-        return (options.getMacPrefix());
+        return (options.getMacTemplate());
     }
     // Get the base MAC address. We are going to randomize part of it.
-    std::vector<uint8_t> mac_addr(options.getMacPrefix());
+    std::vector<uint8_t> mac_addr(options.getMacTemplate());
     if (mac_addr.size() != HW_ETHER_LEN) {
-        isc_throw(BadValue, "invalid MAC address prefix specified");
+        isc_throw(BadValue, "invalid MAC address template specified");
     }
     uint32_t r = random();
     // The random number must be in the range 0..clients_num. This
@@ -364,10 +364,11 @@ TestControl::generateDuid(uint8_t& randomized) const {
     CommandOptions& options = CommandOptions::instance();
     uint32_t clients_num = options.getClientsNum();
     if ((clients_num == 0) || (clients_num == 1)) {
-        return (options.getDuidPrefix());
+        return (options.getDuidTemplate());
     }
     // Get the base DUID. We are going to randomize part of it.
-    std::vector<uint8_t> duid(options.getDuidPrefix());
+    std::vector<uint8_t> duid(options.getDuidTemplate());
+    // @todo: add support for DUIDs of different sizes.
     std::vector<uint8_t> mac_addr(generateMacAddress(randomized));
     duid.resize(duid.size() - mac_addr.size());
     for (int i = 0; i < mac_addr.size(); ++i) {
@@ -589,12 +590,11 @@ TestControl::printDiagnostics() const {
         // Print all command line parameters.
         options.printCommandLine();
         // Print MAC and DUID.
-        std::cout << "Set MAC to " << vector2Hex(options.getMacPrefix(), "::")
+        std::cout << "Set MAC to " << vector2Hex(options.getMacTemplate(), "::")
                   << std::endl;
-        if (options.getDuidPrefix().size() > 0) {
-            std::cout << "Set DUID to " << vector2Hex(options.getDuidPrefix()) << std::endl; 
+        if (options.getDuidTemplate().size() > 0) {
+            std::cout << "Set DUID to " << vector2Hex(options.getDuidTemplate()) << std::endl; 
         }
-
     }
 }
 
