@@ -214,15 +214,27 @@ public:
         /// }
         /// \endcode
         typedef boost::multi_index_container<
+            // Container holds shared_ptr<Pkt4> or shared_ptr<Pkt6> objects.
             boost::shared_ptr<T>,
+            // List container indexes.
             boost::multi_index::indexed_by<
+                // Sequenced index provides the way to use this container
+                // in the same way as std::list.
                 boost::multi_index::sequenced<>,
+                // The other index keeps products of transaction id.
                 boost::multi_index::hashed_non_unique<
-                        boost::multi_index::global_fun<
-                            const boost::shared_ptr<T>&,
-                            uint32_t,
-                            &ExchangeStats::hashTransid
-                        >
+                    // Specify hash function to get the product of
+                    // transaction id. This product is obtained by calling
+                    // hashTransid() function.
+                    boost::multi_index::global_fun<
+                        // Hashing function takes shared_ptr<Pkt4> or
+                        // shared_ptr<Pkt6> as argument.
+                        const boost::shared_ptr<T>&,
+                        // ... and returns uint32 value.
+                        uint32_t,
+                        // ... and here is a reference to it.
+                        &ExchangeStats::hashTransid
+                    >
                 >
             >
         > PktList;
