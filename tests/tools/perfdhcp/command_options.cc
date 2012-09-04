@@ -56,8 +56,8 @@ CommandOptions::reset() {
     rate_ = 0;
     report_delay_ = 0;
     clients_num_ = 0;
-    mac_prefix_.assign(mac, mac + 6);
-    duid_prefix_.clear();
+    mac_template_.assign(mac, mac + 6);
+    duid_template_.clear();
     base_.clear();
     num_request_.clear();
     period_ = 0;
@@ -84,8 +84,8 @@ CommandOptions::reset() {
     diags_.clear();
     wrapped_.clear();
     server_name_.clear();
-
-    generateDuidPrefix();
+    generateDuidTemplate();
+    commandline_.clear();
 }
 
 void
@@ -132,9 +132,16 @@ CommandOptions::initialize(int argc, char** argv) {
     int offset_arg = 0;         // Temporary variable holding offset arguments
     std::string sarg;           // Temporary variable for string args
 
+    std::ostringstream stream;
+    stream << "perfdhcp";
+
     // In this section we collect argument values from command line
     // they will be tuned and validated elsewhere
     while((opt = getopt(argc, argv, "hv46r:t:R:b:n:p:d:D:l:P:a:L:s:iBc1T:X:O:E:S:I:x:w:")) != -1) {
+        stream << " -" << opt;
+        if (optarg) {
+            stream << " " << optarg;
+        }  
         switch (opt) {
         case 'v':
             version();
@@ -318,6 +325,8 @@ CommandOptions::initialize(int argc, char** argv) {
         }
     }
 
+    std::cout << "Running: " << stream.str() << std::endl;
+
     // If the IP version was not specified in the
     // command line, assume IPv4.
     if (ipversion_ == 0) {
@@ -375,8 +384,8 @@ CommandOptions::initialize(int argc, char** argv) {
 
     // If DUID is not specified from command line we need to
     // generate one.
-    if (duid_prefix_.size() == 0) {
-        generateDuidPrefix();
+    if (duid_template_.size() == 0) {
+        generateDuidTemplate();
     }
 }
 
@@ -439,7 +448,7 @@ CommandOptions::decodeMac(const std::string& base) {
     // Decode mac address to vector of uint8_t
     std::istringstream s1(base.substr(found + 1));
     std::string token;
-    mac_prefix_.clear();
+    mac_template_.clear();
     // Get pieces of MAC address separated with : (or even ::)
     while (std::getline(s1, token, ':')) {
         unsigned int ui = 0;
@@ -454,17 +463,17 @@ CommandOptions::decodeMac(const std::string& base) {
 
             }
             // If conversion succeeded store byte value
-            mac_prefix_.push_back(ui);
+            mac_template_.push_back(ui);
         }
     }
     // MAC address must consist of 6 octets, otherwise it is invalid
-    check(mac_prefix_.size() != 6, errmsg);
+    check(mac_template_.size() != 6, errmsg);
 }
 
 void
 CommandOptions::decodeDuid(const std::string& base) {
     // Strip argument from duid=
-    std::vector<uint8_t> duid_prefix;
+    std::vector<uint8_t> duid_template;
     size_t found = base.find('=');
     check(found == std::string::npos, "expected -b<base> format for duid is -b duid=<duid>");
     std::string b = base.substr(found + 1);
@@ -484,26 +493,26 @@ CommandOptions::decodeDuid(const std::string& base) {
             isc_throw(isc::InvalidParameter,
                       "invalid characters in DUID provided, exepected hex digits");
         }
-        duid_prefix.push_back(static_cast<uint8_t>(ui));
+        duid_template.push_back(static_cast<uint8_t>(ui));
     }
     // Assign the new duid only if successfully generated.
-    std::swap(duid_prefix, duid_prefix_);
+    std::swap(duid_template, duid_template_);
 }
 
 void
-CommandOptions::generateDuidPrefix() {
+CommandOptions::generateDuidTemplate() {
     using namespace boost::posix_time;
-    // Duid prefix will be most likely generated only once but
+    // Duid template will be most likely generated only once but
     // it is ok if it is called more then once so we simply
     //  regenerate it and discard previous value.
-    duid_prefix_.clear();
-    const uint8_t duid_prefix_len = 14;
-    duid_prefix_.resize(duid_prefix_len);
+    duid_template_.clear();
+    const uint8_t duid_template_len = 14;
+    duid_template_.resize(duid_template_len);
     // The first four octets consist of DUID LLT and hardware type.
-    duid_prefix_[0] = DUID_LLT >> 8;
-    duid_prefix_[1] = DUID_LLT & 0xff;
-    duid_prefix_[2] = HWTYPE_ETHERNET >> 8;
-    duid_prefix_[3] = HWTYPE_ETHERNET & 0xff;
+    duid_template_[0] = DUID_LLT >> 8;
+    duid_template_[1] = DUID_LLT & 0xff;
+    duid_template_[2] = HWTYPE_ETHERNET >> 8;
+    duid_template_[3] = HWTYPE_ETHERNET & 0xff;
     
     // As described in RFC3315: 'the time value is the time
     // that the DUID is generated represented in seconds
@@ -512,12 +521,12 @@ CommandOptions::generateDuidPrefix() {
     ptime duid_epoch(from_iso_string("20000101T000000"));
     time_period period(duid_epoch, now);
     uint32_t duration_sec = htonl(period.length().total_seconds());
-    memcpy(&duid_prefix_[4], &duration_sec, 4);
+    memcpy(&duid_template_[4], &duration_sec, 4);
 
     // Set link layer address (6 octets). This value may be
     // randomized before sending a packet to simulate different
     // clients.
-    memcpy(&duid_prefix_[8], &mac_prefix_[0], 6);
+    memcpy(&duid_template_[8], &mac_template_[0], 6);
 }
 
 uint8_t

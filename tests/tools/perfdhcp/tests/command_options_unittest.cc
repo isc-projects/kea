@@ -16,6 +16,7 @@
 #include <stdint.h>
 #include <string>
 #include <gtest/gtest.h>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <dhcp/iface_mgr.h>
 #include <exceptions/exceptions.h>
@@ -25,6 +26,7 @@
 using namespace std;
 using namespace isc;
 using namespace isc::perfdhcp;
+using namespace boost::posix_time;
 
 /// \brief Test Fixture Class
 ///
@@ -72,7 +74,7 @@ protected:
 
         // default mac
         const uint8_t mac[6] = { 0x00, 0x0C, 0x01, 0x02, 0x03, 0x04 };
-        std::vector<uint8_t> v1 = opt.getMacPrefix();
+        std::vector<uint8_t> v1 = opt.getMacTemplate();
         ASSERT_EQ(6, v1.size());
         EXPECT_TRUE(std::equal(v1.begin(), v1.end(), mac));
 
@@ -85,10 +87,27 @@ protected:
         // of time value and 6 octets of variable link layer (MAC)
         // address.
         const int duid_llt_size = 14; 
-        std::vector<uint8_t> v2 = opt.getDuidPrefix();
-        ASSERT_EQ(duid_llt_size, opt.getDuidPrefix().size());
+        std::vector<uint8_t> v2 = opt.getDuidTemplate();
+        ASSERT_EQ(duid_llt_size, opt.getDuidTemplate().size());
         EXPECT_TRUE(std::equal(v2.begin(), v2.begin() + 4,
                                duid_llt_and_hw));
+        // Check time field contents.
+        ptime now = microsec_clock::universal_time();
+        ptime duid_epoch(from_iso_string("20000101T000000"));
+        time_period period(duid_epoch, now);
+        uint32_t duration_sec = period.length().total_seconds();
+        // Read time from the template generated.
+        uint32_t duration_from_template = 0;
+        memcpy(&duration_from_template, &v2[4], 4);
+        duration_from_template = htonl(duration_from_template);
+        // In special cases, we may have overflow in time field
+        // so we give ourselves the margin of 10 seconds here.
+        // If time value has been set more then 10 seconds back
+        // it is safe to compare it with the time value generated
+        // from now.
+        if (duration_from_template > 10) {
+            EXPECT_GE(duration_sec, duration_from_template);
+        }
 
         EXPECT_EQ(0, opt.getBase().size());
         EXPECT_EQ(0, opt.getNumRequests().size());
@@ -249,7 +268,7 @@ TEST_F(CommandOptionsTest, Base) {
                           0x01, 0x01, 0x01, 0x10, 0x11, 0x1F, 0x14 };
 
     // Test Mac
-    std::vector<uint8_t> v1 = opt.getMacPrefix();
+    std::vector<uint8_t> v1 = opt.getMacTemplate();
     ASSERT_EQ(6, v1.size());
     EXPECT_TRUE(std::equal(v1.begin(), v1.end(), mac));
     // "3x" is invalid value in MAC address
@@ -260,7 +279,7 @@ TEST_F(CommandOptionsTest, Base) {
     EXPECT_NO_THROW(
         process("perfdhcp -b duid=0101010101010101010110111F14 -l 127.0.0.1 all")
     );
-    std::vector<uint8_t> v2 = opt.getDuidPrefix();
+    std::vector<uint8_t> v2 = opt.getDuidTemplate();
     ASSERT_EQ(sizeof(duid) / sizeof(uint8_t), v2.size());
     EXPECT_TRUE(std::equal(v2.begin(), v2.end(), duid));
     // "t" is invalid character in DUID
