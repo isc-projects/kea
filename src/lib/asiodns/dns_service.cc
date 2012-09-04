@@ -40,7 +40,7 @@ public:
     DNSServiceImpl(IOService& io_service, SimpleCallback* checkin,
                    DNSLookup* lookup, DNSAnswer* answer) :
             io_service_(io_service), checkin_(checkin), lookup_(lookup),
-            answer_(answer)
+            answer_(answer), tcp_recv_timeout_(5000)
     {}
 
     IOService& io_service_;
@@ -53,12 +53,24 @@ public:
     SimpleCallback* checkin_;
     DNSLookup* lookup_;
     DNSAnswer* answer_;
+    size_t tcp_recv_timeout_;
 
     template<class Ptr, class Server> void addServerFromFD(int fd, int af) {
         Ptr server(new Server(io_service_.get_io_service(), fd, af, checkin_,
                               lookup_, answer_));
+        server->setTCPRecvTimeout(tcp_recv_timeout_);
         (*server)();
         servers_.push_back(server);
+    }
+
+    void setTCPRecvTimeout(size_t timeout) {
+        // Store it for future tcp connections
+        tcp_recv_timeout_ = timeout;
+        // Update existing (TCP) Servers
+        std::vector<DNSServerPtr>::iterator it = servers_.begin();
+        for (; it != servers_.end(); ++it) {
+            (*it)->setTCPRecvTimeout(timeout);
+        }
     }
 };
 
@@ -97,6 +109,11 @@ DNSService::clearServers() {
         s->stop();
     }
     impl_->servers_.clear();
+}
+
+void
+DNSService::setTCPRecvTimeout(size_t timeout) {
+    impl_->setTCPRecvTimeout(timeout);
 }
 
 } // namespace asiodns
