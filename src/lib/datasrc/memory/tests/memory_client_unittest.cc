@@ -77,7 +77,7 @@ TEST_F(MemoryClientTest, load) {
     ZoneIteratorPtr iterator(client_->getIterator(Name("example.org")));
 }
 
-TEST_F(MemoryClientTest, getIteratorNonExistent) {
+TEST_F(MemoryClientTest, getIteratorForNonExistentZone) {
     // Zone "." doesn't exist
     EXPECT_THROW(client_->getIterator(Name(".")), DataSourceError);
 }
