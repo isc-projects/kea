@@ -549,24 +549,23 @@ InMemoryClient::InMemoryClientImpl::load(
 {
     SegmentObjectHolder<ZoneData, RRClass> holder(
         local_mem_sgmt_, ZoneData::create(local_mem_sgmt_, zone_name), rrclass_);
-    scoped_ptr<ZoneData> tmp(holder.get());
 
     assert(!last_rrset_);
 
     rrset_installer(boost::bind(&InMemoryClientImpl::addFromLoad, this,
-                                _1, zone_name, tmp.get()));
+                                _1, zone_name, holder.get()));
 
     // Add any last RRset that was left
-    addRdataSet(zone_name, *tmp.get(), ConstRRsetPtr(), ConstRRsetPtr());
+    addRdataSet(zone_name, *holder.get(), ConstRRsetPtr(), ConstRRsetPtr());
 
     assert(!last_rrset_);
 
     // If the zone is NSEC3-signed, check if it has NSEC3PARAM
-    if (tmp->isNSEC3Signed()) {
+    if (holder.get()->isNSEC3Signed()) {
         // Note: origin_data_ is set on creation of ZoneData, and the load
         // process only adds new nodes (and their data), so this assertion
         // should hold.
-        const ZoneNode* origin_node = tmp->getOriginNode();
+        const ZoneNode* origin_node = holder.get()->getOriginNode();
         const RdataSet* set = origin_node->getData();
         if (RdataSet::find(set, RRType::NSEC3PARAM()) == NULL) {
             LOG_WARN(logger, DATASRC_MEM_NO_NSEC3PARAM).
