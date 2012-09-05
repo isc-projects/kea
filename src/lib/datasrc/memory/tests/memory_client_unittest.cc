@@ -98,6 +98,14 @@ TEST_F(MemoryClientTest, getIterator) {
     EXPECT_EQ(ConstRRsetPtr(), iterator->getNextRRset());
 }
 
+TEST_F(MemoryClientTest, getIteratorGetSOAThrowsNotImplemented) {
+    client_->load(Name("example.org"), TEST_DATA_DIR "/example.org-empty.zone");
+    ZoneIteratorPtr iterator(client_->getIterator(Name("example.org")));
+
+    // This method is not implemented.
+    EXPECT_THROW(iterator->getSOA(), isc::NotImplemented);
+}
+
 TEST_F(MemoryClientTest, getUpdaterThrowsNotImplemented) {
     // This method is not implemented.
     EXPECT_THROW(client_->getUpdater(Name("."), false, false),
