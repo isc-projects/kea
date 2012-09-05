@@ -26,6 +26,7 @@ run_unittests_SOURCES += zone_table_unittest.cc
 run_unittests_SOURCES += zone_data_unittest.cc
 run_unittests_SOURCES += memory_segment_test.h
 run_unittests_SOURCES += segment_object_holder_unittest.cc
+run_unittests_SOURCES += memory_client_unittest.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)
