@@ -80,6 +80,17 @@ TEST_F(MemoryClientTest, getZoneCount) {
     EXPECT_EQ(1, client_->getZoneCount());
 }
 
+TEST_F(MemoryClientTest, getFileNameForNonExistentZone) {
+    // Zone "example.org." doesn't exist
+    EXPECT_TRUE(client_->getFileName(Name("example.org.")).empty());
+}
+
+TEST_F(MemoryClientTest, getFileName) {
+    client_->load(Name("example.org"), TEST_DATA_DIR "/example.org-empty.zone");
+    EXPECT_EQ(TEST_DATA_DIR "/example.org-empty.zone",
+              client_->getFileName(Name("example.org")));
+}
+
 TEST_F(MemoryClientTest, getIteratorForNonExistentZone) {
     // Zone "." doesn't exist
     EXPECT_THROW(client_->getIterator(Name(".")), DataSourceError);
