@@ -114,7 +114,12 @@ SyncUDPServer::handleRead(const asio::error_code& ec, const size_t length) {
         return;
     }
 
-    // Make sure the buffers are fresh
+    // Make sure the buffers are fresh.  Note that we don't touch query_
+    // because it's supposed to be cleared in lookup_callback_.  We should
+    // eventually even remove this member variable (and remove it from
+    // the lookup_callback_ interface, but until then, any callback
+    // implementation should be careful that it's the responsibility of
+    // the callback implementation.  See also #2239).
     output_buffer_->clear();
     answer_->clear(isc::dns::Message::RENDER);
 
