@@ -66,6 +66,17 @@ protected:
     memory::ZoneTable* zone_table;
 };
 
+TEST_F(MemoryClientTest, load) {
+    // Zone "example.org." doesn't exist
+    EXPECT_THROW(client_->getIterator(Name("example.org")), DataSourceError);
+    EXPECT_EQ(0, client_->getZoneCount());
+
+    client_->load(Name("example.org"), TEST_DATA_DIR "/example.org-empty.zone");
+    EXPECT_EQ(1, client_->getZoneCount());
+
+    ZoneIteratorPtr iterator(client_->getIterator(Name("example.org")));
+}
+
 TEST_F(MemoryClientTest, getIteratorNonExistent) {
     // Zone "." doesn't exist
     EXPECT_THROW(client_->getIterator(Name(".")), DataSourceError);
