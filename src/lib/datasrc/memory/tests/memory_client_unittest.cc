@@ -67,6 +67,8 @@ protected:
 };
 
 TEST_F(MemoryClientTest, loadRRsetDoesntMatchOrigin) {
+    // Attempting to add example.org to example.com zone should result
+    // in an exception.
     EXPECT_THROW(client_->load(Name("example.com"),
                                TEST_DATA_DIR "/example.org-empty.zone"),
                  MasterLoadError);
@@ -89,11 +91,13 @@ TEST_F(MemoryClientTest, getIterator) {
 }
 
 TEST_F(MemoryClientTest, getUpdaterThrowsNotImplemented) {
+    // This method is not implemented.
     EXPECT_THROW(client_->getUpdater(Name("."), false, false),
                  isc::NotImplemented);
 }
 
 TEST_F(MemoryClientTest, getJournalReaderNotImplemented) {
+    // This method is not implemented.
     EXPECT_THROW(client_->getJournalReader(Name("."), 0, 0),
                  isc::NotImplemented);
 }
