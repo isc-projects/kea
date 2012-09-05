@@ -153,4 +153,8 @@ TEST_F(MemoryClientTest, getJournalReaderNotImplemented) {
     EXPECT_THROW(client_->getJournalReader(Name("."), 0, 0),
                  isc::NotImplemented);
 }
+
+// TODO:
+// Add test for add() with separate_rrs=true
+
 }
