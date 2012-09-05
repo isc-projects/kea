@@ -762,7 +762,7 @@ public:
         if (node_ != NULL && node_->getData() != NULL) {
             set_node_ = node_->getData();
             if (separate_rrs_ && set_node_ != NULL) {
- 	        rrset_.reset(new TreeNodeRRset(rrclass_, node_, set_node_, true));
+                rrset_.reset(new TreeNodeRRset(rrclass_, node_, set_node_, true));
                 rdata_iterator_ = rrset_->getRdataIterator();
             }
         }
@@ -786,10 +786,10 @@ public:
             if (node_ != NULL && node_->getData() != NULL) {
                 set_node_ = node_->getData();
                 // New RRset, so get a new rdata iterator
-		if (separate_rrs_ && set_node_ != NULL) {
-		    rrset_.reset(new TreeNodeRRset(rrclass_, node_, set_node_, true));
-		    rdata_iterator_ = rrset_->getRdataIterator();
-		}
+                if (separate_rrs_ && set_node_ != NULL) {
+                    rrset_.reset(new TreeNodeRRset(rrclass_, node_, set_node_, true));
+                    rdata_iterator_ = rrset_->getRdataIterator();
+                }
             }
         }
         if (node_ == NULL) {
@@ -809,11 +809,11 @@ public:
             rdata_iterator_->next();
             if (rdata_iterator_->isLast()) {
                 // all used up, next.
-	        set_node_ = set_node_->getNext();
+                set_node_ = set_node_->getNext();
                 // New RRset, so get a new rdata iterator, but only if this
                 // was not the final RRset in the chain
                 if (set_node_ != NULL) {
-		    rrset_.reset(new TreeNodeRRset(rrclass_, node_, set_node_, true));
+                    rrset_.reset(new TreeNodeRRset(rrclass_, node_, set_node_, true));
                     rdata_iterator_ = rrset_->getRdataIterator();
                 }
             }
