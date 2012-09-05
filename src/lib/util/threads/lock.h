@@ -125,7 +125,7 @@ public:
     bool locked() const;
 private:
     friend class Locker;
-    struct Impl;
+    class Impl;
     Impl* impl_;
     void lock();
     void unlock();
