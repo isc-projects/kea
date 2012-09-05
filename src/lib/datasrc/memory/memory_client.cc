@@ -25,7 +25,6 @@
 
 #include <util/memory_segment_local.h>
 
-#include <datasrc/iterator.h>
 #include <datasrc/data_source.h>
 #include <datasrc/factory.h>
 #include <datasrc/result.h>
