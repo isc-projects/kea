@@ -15,6 +15,7 @@
 #include <cstddef>
 #include <stdint.h>
 #include <string>
+#include <fstream>
 #include <gtest/gtest.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -45,11 +46,11 @@ public:
     /// the default transaction id generator that generates transaction
     /// ids using random function. This generator will generate values
     /// like: 1,2,3 etc.
-    class IncrementalGenerator : public TestControl::TransidGenerator {
+    class IncrementalGenerator : public TestControl::NumberGenerator {
     public:
         /// \brief Default constructor.
         IncrementalGenerator() :
-            TransidGenerator(),
+            NumberGenerator(),
             transid_(0) {
         }
 
@@ -88,7 +89,11 @@ public:
     using TestControl::setDefaults4;
     using TestControl::setDefaults6;
 
-    NakedTestControl() : TestControl() { };
+    NakedTestControl() : TestControl() {
+        uint32_t clients_num = CommandOptions::instance().getClientsNum() == 0 ?
+            1 : CommandOptions::instance().getClientsNum();
+        setMacAddrGenerator(NumberGeneratorPtr(new TestControl::SequencialGenerator(clients_num)));
+    };
 
 };
 
@@ -109,9 +114,27 @@ public:
     /// \brief Default Constructor
     TestControlTest() { }
 
-    static uint32_t generateTransidIncremental() {
-        static uint32_t transid(1);
-        return (++transid);
+    /// \brief Create packet template file from binary data.
+    ///
+    /// Function creates file containing data from the provided buffer
+    /// in hexadecimal format.
+    /// \param filename template file to be created.
+    /// \param buffer with binary datato be stored in file.
+    /// \return true if file creation successful.
+    bool createTemplateFile(const std::string& filename,
+                            const std::vector<uint8_t>& buf) const {
+        std::ofstream temp_file;
+        temp_file.open(filename.c_str(), ios::out | ios::trunc);
+        if (!temp_file.is_open()) {
+            return (false);
+        }
+        for (int i = 0; i < buf.size(); ++i) {
+            int first_digit = buf[i] / 16;
+            int second_digit = buf[i] % 16;
+            temp_file << std::hex << first_digit << second_digit << std::dec;
+        }
+        temp_file.close();
+        return (true);
     }
 
     /// \brief Get local loopback interface name.
@@ -130,14 +153,8 @@ public:
         for (IfaceMgr::IfaceCollection::const_iterator iface = ifaces.begin();
              iface != ifaces.end();
              ++iface) {
-            for (IfaceMgr::AddressCollection::const_iterator addr_it =
-                     iface->getAddresses().begin();
-                 addr_it != iface->getAddresses().end();
-                 ++addr_it) {
-                if (asiolink::IOAddress("127.0.0.1").getAddress() ==
-                    addr_it->getAddress()) {
-                    return (iface->getName());
-                }
+            if (iface->flag_loopback_) {
+                return (iface->getName());
             }
         }
         return ("");
@@ -147,7 +164,7 @@ public:
     ///
     /// This method iterates through options provided in the buffer
     /// and matches them with the options specified with first parameter.
-    /// Options in both vectors may be layed in different order.
+    /// Options in both vectors may be laid in different order.
     ///
     /// \param requested_options reference buffer with options.
     /// \param buf test buffer with options that will be matched.
@@ -159,6 +176,38 @@ public:
         for (size_t i = 0; i < buf.size(); ++i) {
             for (int j = 0; j < requested_options.size(); ++j) {
                 if (requested_options[j] == buf[i]) {
+                    // Requested option has been found.
+                    ++matched_num;
+                    break;
+                }
+            }
+        }
+        return (matched_num);
+    }
+
+    /// \brief Match requested DHCPv6 options in the buffer with given list.
+    ///
+    /// This method iterates through options provided in the buffer and
+    /// matches them with the options specified with first parameter.
+    /// Options in both vectors ma be laid in different order.
+    ///
+    /// \param requested_options reference buffer with options.
+    /// \param buf test buffer with options that will be matched.
+    /// \return number of options from the buffer matched with options in
+    /// the reference buffer or -1 if error occured.
+    int matchRequestedOptions6(const dhcp::OptionBuffer& requested_options,
+                               const dhcp::OptionBuffer& buf) const {
+        // Sanity check.
+        if ((requested_options.size() % 2 != 0) ||
+            (buf.size() % 2 != 0)) {
+            return -1;
+        }
+        size_t matched_num = 0;
+        for (size_t i = 0; i < buf.size(); i += 2) {
+            for (int j = 0; j < requested_options.size(); j += 2) {
+                uint16_t opt_i = buf[i + 1] << 8 + buf[i];
+                uint16_t opt_j = buf[j + 1] << 8 + buf[j];
+                if (opt_i == opt_j) {
                     // Requested option has been found.
                     ++matched_num;
                     break;
@@ -180,22 +229,20 @@ public:
     /// on two last positions so the returned value will be 2 and so on.
     ///
     /// \param clients_num number of simulated clinets
-    /// \param randomization range - for either MAC or DUID it is 6
     /// \return maximum mismatch position
-    int unequalOctetPosition(const int clients_num,
-                             const size_t random_size) const {
-        int unequal_pos = 0;
-        int n = clients_num - 1;
-        if (n > 0) {
-            for (int i = 0; i < random_size; ++i) {
-                if (n < 256) {
-                    unequal_pos = i + 1;
-                    break;
-                }
-                n %= 256;
-            }
+    int unequalOctetPosition(int clients_num) const {
+        if (!clients_num) {
+            return (0);
         }
-        return (unequal_pos);
+        clients_num--;
+
+        int cnt = 0;
+        while (clients_num) {
+            clients_num >>= 8;
+            ++cnt;
+        }
+
+        return (cnt);
     }
 
     /// brief Test generation of mulitple DUIDs
@@ -212,32 +259,32 @@ public:
     /// and do not change if single client is simulated.
     void testDuid() const {
         int clients_num = CommandOptions::instance().getClientsNum();
+        // Initialize Test Control class.
+        NakedTestControl tc;
         // The old duid will be holding the previously generated DUID.
         // It will be used to compare against the new one. If we have
         // multiple clients we want to make sure that duids differ.
-        Duid old_duid(CommandOptions::instance().getDuidTemplate());
+        uint8_t randomized = 0;
+        Duid old_duid(tc.generateDuid(randomized));
         Duid new_duid(0);
         // total_dist shows the total difference between generated duid.
         // It has to be greater than zero if multiple clients are simulated.
         size_t total_dist = 0;
+        // Number of unique DUIDs.
+        size_t unique_duids = 0;
         // Holds the position if the octet on which two DUIDS can be different.
         // If number of clients is 256 or less it is last DUID octet (except for
         // single client when subsequent DUIDs have to be equal). If number of
         // clients is between 257 and 65536 the last two octets can differ etc.
-        const size_t mac_addr_size = 6;
-        int unequal_pos = unequalOctetPosition(clients_num, mac_addr_size);
-
-        // Initialize Test Control class.
-        NakedTestControl tc;
+        int unequal_pos = unequalOctetPosition(clients_num);
+        // Keep generated DUIDs in this container.
+        std::list<std::vector<uint8_t> > duids;
         // Perform number of iterations to generate number of DUIDs.
-        // If single clinet is involved, try multiple times (10) and
-        // see if the same DUID is always generated.
-        for (int i = 0; i < clients_num * 10; ++i) {
+        for (int i = 0; i < 10 * clients_num; ++i) {
             if (new_duid.empty()) {
                 new_duid = old_duid;
             } else {
                 std::swap(old_duid, new_duid);
-                uint8_t randomized = 0;
                 new_duid = tc.generateDuid(randomized);
             }
             // The DUID-LLT is expected to start with DUID_LLT value
@@ -259,8 +306,8 @@ public:
             uint32_t duid_time = 0;
             // Pick 4 bytes of the time from generated DUID and put them
             // in reverse order (in DUID they are stored in network order).
-            for (int i = 4; i < 8; ++i) {
-                duid_time |= new_duid[i] << (i - 4);
+            for (int j = 4; j < 8; ++j) {
+                duid_time |= new_duid[j] << (j - 4);
             }
             // Calculate the duration since epoch time.
             ptime now = microsec_clock::universal_time();
@@ -288,11 +335,35 @@ public:
             // Mismatch may have occured on the DUID octet position
             // up to calculated earlier unequal_pos.
             ASSERT_LE(mismatch_dist, unequal_pos);
+            // unique will inform if tested DUID is unique.
+            bool unique = true;
+            for (std::list<std::vector<uint8_t> >::const_iterator it =
+                     duids.begin();
+                 it != duids.end(); ++it) {
+                // DUIDs should be of the same size if we want to compare them.
+                ASSERT_EQ(new_duid.size(), it->size());
+                // Check if DUID is unique.
+                if (std::equal(new_duid.begin(), new_duid.end(), it->begin())) {
+                    unique = false;
+                }
+            }
+            // Expecting that DUIDs will be unique only when
+            // first clients-num iterations is performed.
+            // After that, DUIDs become non unique.
+            if (unique) {
+                ++unique_duids;
+            }
+            // For number of iterations equal to clients_num,2*clients_num
+            // 3*clients_num ... we have to have number of unique duids
+            // equal to clients_num.
+            if ((i != 0) && (i % clients_num == 0)) {
+                ASSERT_EQ(clients_num, unique_duids);
+            }
+            // Remember generated DUID.
+            duids.push_back(new_duid);
         }
         // If we have more than one client at least one mismatch occured.
-        if (clients_num > 1) {
-            EXPECT_GT(total_dist, 0);
-        } else {
+        if (clients_num < 2) {
             EXPECT_EQ(0, total_dist);
         }
     }
@@ -327,10 +398,10 @@ public:
 
         // Incremental transaction id generator will generate
         // predictable values of transaction id for each iteration.
-        // This is important because we need to simulate reponses
+        // This is important because we need to simulate responses
         // from the server and use the same transaction ids as in
         // packets sent by client.
-        TestControl::TransidGeneratorPtr
+        TestControl::NumberGeneratorPtr
             generator(new NakedTestControl::IncrementalGenerator());
         tc.setTransidGenerator(generator);
         // Socket is needed to send packets through the interface.
@@ -393,7 +464,7 @@ public:
         // This is important because we need to simulate reponses
         // from the server and use the same transaction ids as in
         // packets sent by client.
-        TestControl::TransidGeneratorPtr
+        TestControl::NumberGeneratorPtr
             generator(new NakedTestControl::IncrementalGenerator());
         tc.setTransidGenerator(generator);
         // Socket is needed to send packets through the interface.
@@ -445,10 +516,14 @@ public:
         // octet (except for single client when subsequent MAC addresses
         // have to be equal). If number of clients is between 257 and 65536
         // the last two octets can differ etc.
-        int unequal_pos = unequalOctetPosition(clients_num, old_mac.size());;
-
+        int unequal_pos = unequalOctetPosition(clients_num);
+        // Number of unique MACs.
+        size_t unique_macs = 0;
+        // Initialize Test Controller.
         NakedTestControl tc;
         size_t total_dist = 0;
+        // Keep generated MACs in this container.
+        std::list<std::vector<uint8_t> > macs;
         // Do many iterations to generate and test MAC address values.
         for (int i = 0; i < clients_num * 10; ++i) {
             // Generate new MAC address.
@@ -470,11 +545,35 @@ public:
             // Mismatch may have occured on the MAC address'es octet position
             // up to calculated earlier unequal_pos.
             ASSERT_LE(mismatch_dist, unequal_pos);
+            // unique will inform if tested DUID is unique.
+            bool unique = true;
+            for (std::list<std::vector<uint8_t> >::const_iterator it =
+                     macs.begin();
+                 it != macs.end(); ++it) {
+                // MACs should be of the same size if we want to compare them.
+                ASSERT_EQ(new_mac.size(), it->size());
+                // Check if MAC is unique.
+                if (std::equal(new_mac.begin(), new_mac.end(), it->begin())) {
+                    unique = false;
+                }
+            }
+            // Expecting that MACs will be unique only when
+            // first clients-num iterations is performed.
+            // After that, MACs become non unique.
+            if (unique) {
+                ++unique_macs;
+            }
+            // For number of iterations equal to clients_num,2*clients_num
+            // 3*clients_num ... we have to have number of unique MACs
+            // equal to clients_num.
+            if ((i != 0) && (i % clients_num == 0)) {
+                ASSERT_EQ(clients_num, unique_macs);
+            }
+            // Remember generated MAC.
+            macs.push_back(new_mac);
+
         }
-        // If we have more than one client at least one mismatch occured.
-        if (clients_num > 1) {
-            EXPECT_GT(total_dist, 0);
-        } else {
+        if (clients_num < 2)  {
             EXPECT_EQ(total_dist, 0);
         }
     }
@@ -489,6 +588,10 @@ public:
     }
 
 private:
+    /// \brief Create DHCPv4 OFFER packet.
+    ///
+    /// \param transid transaction id.
+    /// \return instance of the packet.
     boost::shared_ptr<Pkt4>
     createOfferPkt4(uint32_t transid) const {
         boost::shared_ptr<Pkt4> offer(new Pkt4(DHCPOFFER, transid));
@@ -504,6 +607,10 @@ private:
         return (offer);
     }
 
+    /// \brief Create DHCPv6 ADVERTISE packet.
+    ///
+    /// \param transid transaction id.
+    /// \return instance of the packet.
     boost::shared_ptr<Pkt6>
     createAdvertisePkt6(uint32_t transid) const {
         OptionPtr opt_ia_na = Option::factory(Option::V6, D6O_IA_NA);
@@ -664,10 +771,12 @@ TEST_F(TestControlTest, Options6) {
     // Validate the D6O_ORO (Option Request Option).
     OptionPtr opt_oro(Option::factory(Option::V6, D6O_ORO));
     // Prepare the reference buffer with requested options.
-    const uint8_t requested_options[] = {
-        0, D6O_NAME_SERVERS,
-        0, D6O_DOMAIN_SEARCH
+    const uint16_t requested_options[] = {
+        htons(D6O_NAME_SERVERS),
+        htons(D6O_DOMAIN_SEARCH)
     };
+    int requested_options_num =
+        sizeof(requested_options) / sizeof(requested_options[0]);
     OptionBuffer
         requested_options_ref(requested_options,
                               requested_options + sizeof(requested_options));
@@ -677,9 +786,9 @@ TEST_F(TestControlTest, Options6) {
     // the same for comparison.
     EXPECT_EQ(requested_options_ref.size(), requested_options_buf.size());
     // Check if all options in the buffer are matched with reference buffer.
-    size_t matched_num = matchRequestedOptions(requested_options_ref,
-                                               requested_options_buf);
-    EXPECT_EQ(sizeof(requested_options), matched_num);
+    size_t matched_num = matchRequestedOptions6(requested_options_ref,
+                                                requested_options_buf);
+    EXPECT_EQ(requested_options_num, matched_num);
 
     // Validate the D6O_IA_NA option.
     OptionPtr opt_ia_na(Option::factory(Option::V6, D6O_IA_NA));
@@ -698,7 +807,7 @@ TEST_F(TestControlTest, Options6) {
     EXPECT_TRUE(std::equal(opt_ia_na_ref.begin(), opt_ia_na_ref.end(),
                            opt_ia_na_buf.begin()));
 
-    // TODO: Add more tests for IA address options.
+    // @todo Add more tests for IA address options.
 }
 
 TEST_F(TestControlTest, Packet4) {
@@ -826,7 +935,8 @@ TEST_F(TestControlTest, Packet6Exchange) {
     // Set number of received packets equal to number of iterations.
     // This simulates no packet drops.
     bool use_templates = false;
-    testPkt6Exchange(iterations_num, iterations_num, use_templates, iterations_performed);
+    testPkt6Exchange(iterations_num, iterations_num, use_templates,
+                     iterations_performed);
     // Actual number of iterations should be 10.
     EXPECT_EQ(10, iterations_performed);
 
@@ -841,20 +951,40 @@ TEST_F(TestControlTest, Packet6Exchange) {
     // then test should be interrupted and actual number of iterations will
     // be 6.
     const int received_num = 3;
-    testPkt6Exchange(iterations_num, received_num, use_templates, iterations_performed);
+    testPkt6Exchange(iterations_num, received_num, use_templates,
+                     iterations_performed);
     EXPECT_EQ(6, iterations_performed);
 }
 
 TEST_F(TestControlTest, PacketTemplates) {
+    std::vector<uint8_t> template1(256);
+    std::string file1("../templates/test1.hex");
+    std::vector<uint8_t> template2(233);
+    std::string file2("../templates/test2.hex");
+    for (int i = 0; i < template1.size(); ++i) {
+        template1[i] = static_cast<uint8_t>(random() % 256);
+    }
+    for (int i = 0; i < template2.size(); ++i) {
+        template2[i] = static_cast<uint8_t>(random() % 256);
+    }
+    ASSERT_TRUE(createTemplateFile(file1, template1));
+    ASSERT_TRUE(createTemplateFile(file2, template2));
     CommandOptions& options = CommandOptions::instance();
     NakedTestControl tc;
 
     ASSERT_NO_THROW(
         processCmdLine("perfdhcp -l 127.0.0.1"
-                       " -T ../templates/discover-example.hex"
-                       " -T ../templates/request4-example.hex all")
+                       " -T " + file1 + " -T " + file2 + " all")
     );
     ASSERT_NO_THROW(tc.initPacketTemplates());
+    TestControl::TemplateBuffer buf1;
+    TestControl::TemplateBuffer buf2;
+    ASSERT_NO_THROW(buf1 = tc.getTemplateBuffer(0));
+    ASSERT_NO_THROW(buf2 = tc.getTemplateBuffer(1));
+    ASSERT_EQ(template1.size(), buf1.size());
+    ASSERT_EQ(template2.size(), buf2.size());
+    EXPECT_TRUE(std::equal(template1.begin(), template1.end(), buf1.begin()));
+    EXPECT_TRUE(std::equal(template2.begin(), template2.end(), buf2.begin()));
 }
 
 TEST_F(TestControlTest, RateControl) {
@@ -879,4 +1009,5 @@ TEST_F(TestControlTest, RateControl) {
     xchgs_num = tc2.getNextExchangesNum();
     EXPECT_GT(xchgs_num, 0);
     EXPECT_LT(xchgs_num, options.getAggressivity());
+    // @todo add more thorough checks for rate values.
 }

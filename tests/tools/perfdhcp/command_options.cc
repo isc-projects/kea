@@ -495,6 +495,10 @@ CommandOptions::decodeDuid(const std::string& base) {
         }
         duid_template.push_back(static_cast<uint8_t>(ui));
     }
+    // @todo Get rid of this limitation when we manage add support
+    // for DUIDs other than LLT. Shorter DUIDs may be useful for
+    // server testing purposes.
+    check(duid_template.size() < 6, "DUID must be at least 6 octets long");
     // Assign the new duid only if successfully generated.
     std::swap(duid_template, duid_template_);
 }
