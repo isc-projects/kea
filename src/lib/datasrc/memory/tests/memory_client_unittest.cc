@@ -109,6 +109,15 @@ TEST_F(MemoryClientTest, getIteratorGetSOAThrowsNotImplemented) {
     EXPECT_THROW(iterator->getSOA(), isc::NotImplemented);
 }
 
+TEST_F(MemoryClientTest, addRRsetToNonExistentZoneThrows) {
+    // The zone "example.org" doesn't exist, so we can't add an RRset to
+    // it.
+    RRsetPtr rrset_a(new RRset(Name("example.org"), RRClass::IN(), RRType::A(),
+                               RRTTL(300)));
+    rrset_a->addRdata(rdata::in::A("192.0.2.1"));
+    EXPECT_THROW(client_->add(Name("example.org"), rrset_a), DataSourceError);
+}
+
 TEST_F(MemoryClientTest, getUpdaterThrowsNotImplemented) {
     // This method is not implemented.
     EXPECT_THROW(client_->getUpdater(Name("."), false, false),
