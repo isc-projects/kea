@@ -118,6 +118,30 @@ TEST_F(MemoryClientTest, addRRsetToNonExistentZoneThrows) {
     EXPECT_THROW(client_->add(Name("example.org"), rrset_a), DataSourceError);
 }
 
+TEST_F(MemoryClientTest, add) {
+    client_->load(Name("example.org"), TEST_DATA_DIR "/example.org-empty.zone");
+
+    // Add another RRset
+    RRsetPtr rrset_a(new RRset(Name("example.org"), RRClass::IN(), RRType::A(),
+                               RRTTL(300)));
+    rrset_a->addRdata(rdata::in::A("192.0.2.1"));
+    client_->add(Name("example.org"), rrset_a);
+
+    ZoneIteratorPtr iterator(client_->getIterator(Name("example.org")));
+
+    // First we have the SOA
+    ConstRRsetPtr rrset(iterator->getNextRRset());
+    EXPECT_TRUE(rrset);
+    EXPECT_EQ(RRType::A(), rrset->getType());
+
+    rrset = iterator->getNextRRset();
+    EXPECT_TRUE(rrset);
+    EXPECT_EQ(RRType::SOA(), rrset->getType());
+
+    // There's nothing else in this zone
+    EXPECT_EQ(ConstRRsetPtr(), iterator->getNextRRset());
+}
+
 TEST_F(MemoryClientTest, getUpdaterThrowsNotImplemented) {
     // This method is not implemented.
     EXPECT_THROW(client_->getUpdater(Name("."), false, false),
