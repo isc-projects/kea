@@ -115,6 +115,14 @@ public:
     private:
         Mutex* mutex_;
     };
+    /// \brief If the mutex is currently locked
+    ///
+    /// This is debug aiding method only. And it might be unavailable in
+    /// non-debug build (because keeping the state might be needlesly
+    /// slow).
+    ///
+    /// \todo Disable in non-debug build
+    bool locked() const;
 private:
     friend class Locker;
     struct Impl;
