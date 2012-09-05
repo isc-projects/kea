@@ -89,7 +89,7 @@ private:
 public:
     InMemoryClientImpl(RRClass rrclass) :
         rrclass_(rrclass),
-        zone_count(0),
+        zone_count_(0),
         zone_table_(ZoneTable::create(local_mem_sgmt_, rrclass)),
         file_name_tree_(FileNameTree::create(local_mem_sgmt_, false))
     {}
@@ -108,7 +108,7 @@ public:
     // specific derived segment class).
     util::MemorySegmentLocal local_mem_sgmt_;
     RRClass rrclass_;
-    unsigned int zone_count;
+    unsigned int zone_count_;
     ZoneTable* zone_table_;
     FileNameTree* file_name_tree_;
 
@@ -568,7 +568,7 @@ InMemoryClient::InMemoryClientImpl::load(
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_ADD_ZONE).
         arg(zone_name).arg(rrclass_.toText());
 
-    ++zone_count;
+    ++zone_count_;
 
     // Set the filename in file_name_tree_ now, so that getFileName()
     // can use it (during zone reloading).
@@ -659,7 +659,7 @@ InMemoryClient::getClass() const {
 
 unsigned int
 InMemoryClient::getZoneCount() const {
-    return (impl_->zone_count);
+    return (impl_->zone_count_);
 }
 
 isc::datasrc::memory::ZoneTable::FindResult
