@@ -127,25 +127,51 @@ public:
         void initSocketData();
     };
 
-    /// \brief Default transaction id generator class.
+    /// \brief Number generator class.
     ///
-    /// This is default transaction id generator class. The member
-    /// function is used to generate unique transaction id value.
-    /// Other generator classes should derive from this one to
-    /// override the standard generation algorithm (e.g. unit tests
-    /// override this class wih algorithm that produces more predictable
-    /// transaction id values).
-    class TransidGenerator {
+    /// This is default numbers generator class. The member function is
+    /// used to generate uint32_t values. Other generator classes should
+    /// derive from this one to implement generation algorithms
+    /// (e.g. sequencial or based on random function).
+    class NumberGenerator {
     public:
-        /// \brief generate transaction id.
+        /// \brief Generate number.
         ///
-        /// \return generated transazction id value.
-        virtual uint32_t generate() {
-            return static_cast<uint32_t>(random() % 0x00FFFFFF);
-        }
+        /// \return Generate number.
+        virtual uint32_t generate() = 0;
     };
 
-    typedef boost::shared_ptr<TransidGenerator> TransidGeneratorPtr;
+    /// The default generator pointer.
+    typedef boost::shared_ptr<NumberGenerator> NumberGeneratorPtr;
+
+    /// \brief Sequencial numbers generatorc class.
+    class SequencialGenerator : public NumberGenerator {
+    public:
+        /// \Constructor.
+        ///
+        /// \param range maximum number generated. If 0 is given then
+        /// range defaults to maximym uint32_t value.
+        SequencialGenerator(uint32_t range = 0xFFFFFFFF) :
+            NumberGenerator(),
+            num_(0),
+            range_(range) {
+            if (range_ == 0) {
+                range_ = 0xFFFFFFFF;
+            }
+        }
+
+        /// \brief Generate number sequencialy.
+        ///
+        /// \return generated number.
+        virtual uint32_t generate() {
+            uint32_t num = num_;
+            num_ = (num_ + 1) % range_;
+            return (num);
+        }
+    private:
+        uint32_t num_;   ///< Current number.
+        uint32_t range_; ///< Maximum number generated.
+    };
 
     /// \brief Length of the Ethernet HW address (MAC) in bytes.
     ///
@@ -172,9 +198,20 @@ public:
     /// \brief Set new transaction id generator.
     ///
     /// \param generator generator object to be used.
-    void setTransidGenerator(TransidGeneratorPtr& generator) {
+    void setTransidGenerator(const NumberGeneratorPtr& generator) {
         transid_gen_.reset();
         transid_gen_ = generator;
+    }
+
+    /// \brief Set new MAC address generator.
+    ///
+    /// Set numbers generator that will be used to generate various
+    /// MAC addresses to simulate number of clients.
+    ///
+    /// \param generator object to be used.
+    void setMacAddrGenerator(const NumberGeneratorPtr& generator) {
+        macaddr_gen_.reset();
+        macaddr_gen_ = generator;
     }
 
     // We would really like following methods and members to be private but
@@ -337,7 +374,7 @@ protected:
     ///
     /// \return generated transaction id.
     uint32_t generateTransid() {
-        return(transid_gen_->generate());
+        return (transid_gen_->generate());
     }
 
     /// \brief Returns number of exchanges to be started.
@@ -738,7 +775,8 @@ private:
     StatsMgr4Ptr stats_mgr4_;  ///< Statistics Manager 4.
     StatsMgr6Ptr stats_mgr6_;  ///< Statistics Manager 6.
 
-    TransidGeneratorPtr transid_gen_; ///< Transaction id generator.
+    NumberGeneratorPtr transid_gen_; ///< Transaction id generator.
+    NumberGeneratorPtr macaddr_gen_; ///< Numbers generator for MAC address.
 
     /// Buffer holiding server id received in first packet
     dhcp::OptionBuffer first_packet_serverid_;

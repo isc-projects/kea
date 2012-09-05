@@ -298,9 +298,9 @@ OptionPtr
 TestControl::factoryOptionRequestOption6(Option::Universe,
                                          uint16_t,
                                          const OptionBuffer&) {
-    const uint8_t buf_array[] = {
-        0, D6O_NAME_SERVERS,
-        0, D6O_DOMAIN_SEARCH
+    const uint16_t buf_array[] = {
+        htons(D6O_NAME_SERVERS),
+        htons(D6O_DOMAIN_SEARCH)
     };
     OptionBuffer buf_with_options(buf_array, buf_array + sizeof(buf_array));
     return (OptionPtr(new Option(Option::V6, D6O_ORO, buf_with_options)));
@@ -331,7 +331,7 @@ std::vector<uint8_t>
 TestControl::generateMacAddress(uint8_t& randomized) const {
     CommandOptions& options = CommandOptions::instance();
     uint32_t clients_num = options.getClientsNum();
-    if ((clients_num == 0) || (clients_num == 1)) {
+    if (clients_num < 2) {
         return (options.getMacTemplate());
     }
     // Get the base MAC address. We are going to randomize part of it.
@@ -339,11 +339,7 @@ TestControl::generateMacAddress(uint8_t& randomized) const {
     if (mac_addr.size() != HW_ETHER_LEN) {
         isc_throw(BadValue, "invalid MAC address template specified");
     }
-    uint32_t r = random();
-    // The random number must be in the range 0..clients_num-1. This
-    // will guarantee that every client has exactly one random MAC
-    // address assigned.
-    r %= clients_num;
+    uint32_t r = macaddr_gen_->generate();
     randomized = 0;
     // Randomize MAC address octets.
     for (std::vector<uint8_t>::iterator it = mac_addr.end() - 1;
@@ -889,7 +885,10 @@ TestControl::reset() {
     last_sent_ = send_due_;
     last_report_ = send_due_;
     transid_gen_.reset();
-    transid_gen_ = TransidGeneratorPtr(new TransidGenerator());
+    // Actual generators will have to be set later on because we need to
+    // get command line parameters first.
+    setTransidGenerator(NumberGeneratorPtr());
+    setMacAddrGenerator(NumberGeneratorPtr());
     first_packet_serverid_.clear();
     interrupted_ = false;
 }
@@ -907,7 +906,15 @@ TestControl::run() {
     if (options.getIpVersion() == 0) {
         isc_throw(InvalidOperation,
                   "command options must be parsed before running a test");
+    } else if (options.getIpVersion() == 4) {
+        setTransidGenerator(NumberGeneratorPtr(new SequencialGenerator()));
+    } else {
+        setTransidGenerator(NumberGeneratorPtr(new SequencialGenerator(0x00FFFFFF)));
     }
+
+    uint32_t clients_num = options.getClientsNum() == 0 ?
+        1 : options.getClientsNum();
+    setMacAddrGenerator(NumberGeneratorPtr(new SequencialGenerator(clients_num)));
 
     // Diagnostics are command line options mainly.
     printDiagnostics();
