@@ -68,4 +68,9 @@ TEST_F(MemoryClientTest, getUpdaterThrowsNotImplemented) {
     EXPECT_THROW(client_->getUpdater(Name("."), false, false),
 		 isc::NotImplemented);
 }
+
+TEST_F(MemoryClientTest, getJournalReaderNotImplemented) {
+    EXPECT_THROW(client_->getJournalReader(Name("."), 0, 0),
+		 isc::NotImplemented);
+}
 }
