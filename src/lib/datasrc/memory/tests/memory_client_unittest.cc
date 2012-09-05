@@ -20,6 +20,7 @@
 #include <dns/rrclass.h>
 
 #include <datasrc/result.h>
+#include <datasrc/data_source.h>
 #include <datasrc/memory/zone_data.h>
 #include <datasrc/memory/zone_table.h>
 #include <datasrc/memory/memory_client.h>
@@ -58,6 +59,8 @@ protected:
     memory::ZoneTable* zone_table;
 };
 
-TEST_F(MemoryClientTest, create) {
+TEST_F(MemoryClientTest, getIteratorNonExistent) {
+    // Zone "a." doesn't exist
+    EXPECT_THROW(client_->getIterator(Name("a")), DataSourceError);
 }
 }
