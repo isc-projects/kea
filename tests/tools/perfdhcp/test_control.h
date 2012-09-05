@@ -39,11 +39,11 @@ namespace perfdhcp {
 /// test end to end.
 ///
 /// Option factory functions are registered using
-/// \ref LibDHCP::OptionFactoryRegister. Registered factory functions
+/// \ref dhcp::LibDHCP::OptionFactoryRegister. Registered factory functions
 /// provide a way to create options of the same type in the same way.
 ///  When new option instance is needed the corresponding factory
 /// function is called to create it. This is done by calling
-/// \ref Option::factory with DHCP message type specified as one of
+/// \ref dhcp::Option::factory with DHCP message type specified as one of
 ///  parameters. Some of the parameters passed to factory function
 /// may be ignored (e.g. option buffer).
 class TestControl : public boost::noncopyable {
@@ -147,7 +147,7 @@ public:
     /// \brief Sequencial numbers generatorc class.
     class SequencialGenerator : public NumberGenerator {
     public:
-        /// \Constructor.
+        /// \brief Constructor.
         ///
         /// \param range maximum number generated. If 0 is given then
         /// range defaults to maximym uint32_t value.
@@ -382,7 +382,7 @@ protected:
     /// Method returns number of new exchanges to be started as soon
     /// as possible to satisfy expected rate. Calculation used here
     /// is based on current time, due time calculated with
-    /// \ref updateSendTime function and expected rate.
+    /// \ref updateSendDue function and expected rate.
     ///
     /// \return number of exchanges to be started immediately.
     uint64_t getNextExchangesNum() const;
@@ -494,15 +494,15 @@ protected:
     /// valid. Ensure that it is valid prior to calling it.
     ///
     /// \param socket socket to be used.
-    /// \throw::BadValue if unknown message type received.
-    /// \throw::Unexpected if unexpected error occured.
+    /// \throw isc::BadValue if unknown message type received.
+    /// \throw isc::Unexpected if unexpected error occured.
     void receivePackets(const TestControlSocket& socket);
 
     /// \brief Register option factory functions for DHCPv4
     ///
     /// Method registers option factory functions for DHCPv4.
     /// These functions are called to create instances of DHCPv4
-    /// options. Call \ref Option::factory to invoke factory
+    /// options. Call \ref dhcp::Option::factory to invoke factory
     /// function for particular option. Don't use this function directly.
     /// Use \ref registerOptionFactories instead.
     void registerOptionFactories4() const;
@@ -511,7 +511,7 @@ protected:
     ///
     /// Method registers option factory functions for DHCPv6.
     /// These functions are called to create instances of DHCPv6
-    /// options. Call \ref Option::factory to invoke factory
+    /// options. Call \ref dhcp::Option::factory to invoke factory
     /// function for particular option. Don't use this function directly.
     /// Use \ref registerOptionFactories instead.
     void registerOptionFactories6() const;
@@ -535,7 +535,7 @@ protected:
     /// with the following options:
     /// - MESSAGE_TYPE set to DHCPDISCOVER
     /// - PARAMETER_REQUEST_LIST with the same list of requested options
-    /// as described in \ref factoryRequestList.
+    /// as described in \ref factoryRequestList4.
     /// The transaction id and MAC address are randomly generated for
     /// the message. Range of unique MAC addresses generated depends
     /// on the number of clients specified from the command line.
