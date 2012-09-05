@@ -15,15 +15,16 @@
 #include <exceptions/exceptions.h>
 
 #include <datasrc/memory/memory_client.h>
+#include <datasrc/memory/logger.h>
 #include <datasrc/memory/zone_data.h>
 #include <datasrc/memory/rdata_serialization.h>
 #include <datasrc/memory/rdataset.h>
 #include <datasrc/memory/domaintree.h>
 #include <datasrc/memory/segment_object_holder.h>
+#include <datasrc/memory/treenode_rrset.h>
 
 #include <util/memory_segment_local.h>
 
-#include <datasrc/logger.h>
 #include <datasrc/iterator.h>
 #include <datasrc/data_source.h>
 #include <datasrc/factory.h>
@@ -107,7 +108,7 @@ public:
     // (This will eventually have to be abstract; for now we hardcode the
     // specific derived segment class).
     util::MemorySegmentLocal local_mem_sgmt_;
-    RRClass rrclass_;
+    const RRClass rrclass_;
     unsigned int zone_count_;
     ZoneTable* zone_table_;
     FileNameTree* file_name_tree_;
@@ -728,39 +729,42 @@ InMemoryClient::add(const isc::dns::Name& zone_name,
     return (impl_->add(rrset, zone_name, *result.zone_data));
 }
 
-#if 0
-
 namespace {
 
 class MemoryIterator : public ZoneIterator {
 private:
-    RBTreeNodeChain<Domain> chain_;
-    Domain::const_iterator dom_iterator_;
-    const DomainTree& tree_;
-    const DomainNode* node_;
+    ZoneChain chain_;
+    const RdataSet* set_node_;
+    const RRClass rrclass_;
+    const ZoneTree& tree_;
+    const ZoneNode* node_;
     // Only used when separate_rrs_ is true
+    ConstRRsetPtr rrset_;
     RdataIteratorPtr rdata_iterator_;
     bool separate_rrs_;
     bool ready_;
 public:
-    MemoryIterator(const DomainTree& tree, const Name& origin, bool separate_rrs) :
+    MemoryIterator(const RRClass rrclass,
+                   const ZoneTree& tree, const Name& origin, bool separate_rrs) :
+        rrclass_(rrclass),
         tree_(tree),
         separate_rrs_(separate_rrs),
         ready_(true)
     {
         // Find the first node (origin) and preserve the node chain for future
         // searches
-        DomainTree::Result result(tree_.find(origin, &node_, chain_));
+        ZoneTree::Result result(tree_.find(origin, &node_, chain_));
         // It can't happen that the origin is not in there
-        if (result != DomainTree::EXACTMATCH) {
+        if (result != ZoneTree::EXACTMATCH) {
             isc_throw(Unexpected,
                       "In-memory zone corrupted, missing origin node");
         }
         // Initialize the iterator if there's somewhere to point to
-        if (node_ != NULL && node_->getData() != DomainPtr()) {
-            dom_iterator_ = node_->getData()->begin();
-            if (separate_rrs_ && dom_iterator_ != node_->getData()->end()) {
-                rdata_iterator_ = dom_iterator_->second->getRdataIterator();
+        if (node_ != NULL && node_->getData() != NULL) {
+            set_node_ = node_->getData();
+            if (separate_rrs_ && set_node_ != NULL) {
+ 	        rrset_.reset(new TreeNodeRRset(rrclass_, node_, set_node_, true));
+                rdata_iterator_ = rrset_->getRdataIterator();
             }
         }
     }
@@ -770,21 +774,23 @@ public:
             isc_throw(Unexpected, "Iterating past the zone end");
         }
         /*
-         * This cycle finds the first nonempty node with yet unused RRset.
-         * If it is NULL, we run out of nodes. If it is empty, it doesn't
-         * contain any RRsets. If we are at the end, just get to next one.
+         * This cycle finds the first nonempty node with yet unused
+         * RdataSset.  If it is NULL, we run out of nodes. If it is
+         * empty, it doesn't contain any RdataSets. If we are at the
+         * end, just get to next one.
          */
-        while (node_ != NULL && (node_->getData() == DomainPtr() ||
-                                 dom_iterator_ == node_->getData()->end())) {
+        while (node_ != NULL &&
+               (node_->getData() == NULL || set_node_ == NULL)) {
             node_ = tree_.nextNode(chain_);
             // If there's a node, initialize the iterator and check next time
             // if the map is empty or not
             if (node_ != NULL && node_->getData() != NULL) {
-                dom_iterator_ = node_->getData()->begin();
+                set_node_ = node_->getData();
                 // New RRset, so get a new rdata iterator
-                if (separate_rrs_) {
-                    rdata_iterator_ = dom_iterator_->second->getRdataIterator();
-                }
+		if (separate_rrs_ && set_node_ != NULL) {
+		    rrset_.reset(new TreeNodeRRset(rrclass_, node_, set_node_, true));
+		    rdata_iterator_ = rrset_->getRdataIterator();
+		}
             }
         }
         if (node_ == NULL) {
@@ -796,28 +802,28 @@ public:
         if (separate_rrs_) {
             // For separate rrs, reconstruct a new RRset with just the
             // 'current' rdata
-            RRsetPtr result(new RRset(dom_iterator_->second->getName(),
-                                      dom_iterator_->second->getClass(),
-                                      dom_iterator_->second->getType(),
-                                      dom_iterator_->second->getTTL()));
+            RRsetPtr result(new RRset(rrset_->getName(),
+                                      rrset_->getClass(),
+                                      rrset_->getType(),
+                                      rrset_->getTTL()));
             result->addRdata(rdata_iterator_->getCurrent());
             rdata_iterator_->next();
             if (rdata_iterator_->isLast()) {
                 // all used up, next.
-                ++dom_iterator_;
+	        set_node_ = set_node_->getNext();
                 // New RRset, so get a new rdata iterator, but only if this
                 // was not the final RRset in the chain
-                if (dom_iterator_ != node_->getData()->end()) {
-                    rdata_iterator_ = dom_iterator_->second->getRdataIterator();
+                if (set_node_ != NULL) {
+		    rrset_.reset(new TreeNodeRRset(rrclass_, node_, set_node_, true));
+                    rdata_iterator_ = rrset_->getRdataIterator();
                 }
             }
             return (result);
         } else {
-            // The iterator points to the next yet unused RRset now
-            ConstRRsetPtr result(dom_iterator_->second);
+            ConstRRsetPtr result(new TreeNodeRRset(rrclass_, node_, set_node_, true));
 
             // This one is used, move it to the next time for next call
-            ++dom_iterator_;
+            set_node_ = set_node_->getNext();
 
             return (result);
         }
@@ -837,19 +843,9 @@ InMemoryClient::getIterator(const Name& name, bool separate_rrs) const {
         isc_throw(DataSourceError, "No such zone: " + name.toText());
     }
 
-    const ZoneData* data = result.zone_data;
-    if (zone == NULL) {
-        /*
-         * TODO: This can happen only during some of the tests and only as
-         * a temporary solution. This should be fixed by #1159 and then
-         * this cast and check shouldn't be necessary. We don't have
-         * test for handling a "can not happen" condition.
-         */
-        isc_throw(Unexpected, "The zone at " + name.toText() +
-                  " is not InMemoryZoneFinder");
-    }
     return (ZoneIteratorPtr(new MemoryIterator(
-                                zone->impl_->zone_data_->domains_, name,
+                                getClass(), 
+                                result.zone_data->getZoneTree(), name,
                                 separate_rrs)));
 }
 
@@ -865,8 +861,6 @@ InMemoryClient::getJournalReader(const isc::dns::Name&, uint32_t,
     isc_throw(isc::NotImplemented, "Journaling isn't supported for "
               "in memory data source");
 }
-
-#endif
 
 } // end of namespace memory
 } // end of namespace datasrc
