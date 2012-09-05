@@ -60,7 +60,7 @@ protected:
 };
 
 TEST_F(MemoryClientTest, getIteratorNonExistent) {
-    // Zone "a." doesn't exist
-    EXPECT_THROW(client_->getIterator(Name("a")), DataSourceError);
+    // Zone "." doesn't exist
+    EXPECT_THROW(client_->getIterator(Name(".")), DataSourceError);
 }
 }
