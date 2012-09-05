@@ -264,38 +264,64 @@ TEST_F(CommandOptionsTest, ClientsNum) {
 
 TEST_F(CommandOptionsTest, Base) {
     CommandOptions& opt = CommandOptions::instance();
-    process("perfdhcp -6 -b MAC=10::20::30::40::50::60 "
-            "-l ethx -b duiD=1AB7F5670901FF all");
     uint8_t mac[6] = {0x10, 0x20, 0x30, 0x40, 0x50, 0x60 };
     uint8_t duid[14] = {  0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,
                           0x01, 0x01, 0x01, 0x10, 0x11, 0x1F, 0x14 };
-
-    // Test Mac
+    // Test DUID and MAC together.
+    EXPECT_NO_THROW(process("perfdhcp -b DUID=0101010101010101010110111F14"
+                            " -b MAC=10::20::30::40::50::60"
+                            " -l 127.0.0.1 all"));
     std::vector<uint8_t> v1 = opt.getMacTemplate();
-    ASSERT_EQ(6, v1.size());
+    std::vector<uint8_t> v2 = opt.getDuidTemplate();
+    v2 = opt.getDuidTemplate();
     EXPECT_TRUE(std::equal(v1.begin(), v1.end(), mac));
-    // "3x" is invalid value in MAC address
-    EXPECT_THROW(process("perfdhcp -b mac=10::2::3x::4::5::6 -l ethx all"),
-                 isc::InvalidParameter);
-
-    // Test DUID
+    EXPECT_TRUE(std::equal(v2.begin(), v2.end(), duid));
+    // Test valid DUID.
     EXPECT_NO_THROW(
         process("perfdhcp -b duid=0101010101010101010110111F14 -l 127.0.0.1 all")
     );
-    std::vector<uint8_t> v2 = opt.getDuidTemplate();
+
     ASSERT_EQ(sizeof(duid) / sizeof(uint8_t), v2.size());
     EXPECT_TRUE(std::equal(v2.begin(), v2.end(), duid));
+    // Test mix of upper/lower case letters.
+    EXPECT_NO_THROW(process("perfdhcp -b DuiD=0101010101010101010110111F14"
+                            " -b Mac=10::20::30::40::50::60"
+                            " -l 127.0.0.1 all"));
+    v1 = opt.getMacTemplate();
+    v2 = opt.getDuidTemplate();
+    EXPECT_TRUE(std::equal(v1.begin(), v1.end(), mac));
+    EXPECT_TRUE(std::equal(v2.begin(), v2.end(), duid));
+    // Use "ether" instead of "mac".
+    EXPECT_NO_THROW(process("perfdhcp -b ether=10::20::30::40::50::60"
+                            " -l 127.0.0.1 all"));
+    v1 = opt.getMacTemplate();
+    EXPECT_TRUE(std::equal(v1.begin(), v1.end(), mac));
+    // Use "ETHER" in upper case.
+    EXPECT_NO_THROW(process("perfdhcp -b ETHER=10::20::30::40::50::60"
+                            " -l 127.0.0.1 all"));
+    v1 = opt.getMacTemplate();
+    EXPECT_TRUE(std::equal(v1.begin(), v1.end(), mac));
     // "t" is invalid character in DUID
     EXPECT_THROW(process("perfdhcp -6 -l ethx -b "
-                         "duiD=010101010101010101t110111F14 all"),
+                         "duid=010101010101010101t110111F14 all"),
                  isc::InvalidParameter);
-
-    // Some more negative test cases
+    // "3x" is invalid value in MAC address
+    EXPECT_THROW(process("perfdhcp -b mac=10::2::3x::4::5::6 -l ethx all"),
+                 isc::InvalidParameter);
     // Base is not specified
     EXPECT_THROW(process("perfdhcp -b -l ethx all"),
                  isc::InvalidParameter);
     // Typo: should be mac= instead of mc=
     EXPECT_THROW(process("perfdhcp -l ethx -b mc=00:01:02:03::04:05 all"),
+                 isc::InvalidParameter);
+    // Too short DUID (< 6).
+    EXPECT_THROW(process("perfdhcp -l ethx -b duid=00010203 all"),
+                 isc::InvalidParameter);
+    // Odd number of digits.
+    EXPECT_THROW(process("perfdhcp -l ethx -b duid=000102030405060 all"),
+                 isc::InvalidParameter);
+    // Too short MAC (!= 6).
+    EXPECT_THROW(process("perfdhcp -l ethx -b mac=00:01:02:04 all"),
                  isc::InvalidParameter);
 }
 
