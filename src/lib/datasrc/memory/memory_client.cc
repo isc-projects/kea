@@ -719,12 +719,22 @@ InMemoryClient::getFileName(const isc::dns::Name& zone_name) const {
 result::Result
 InMemoryClient::add(const isc::dns::Name& zone_name,
                     const ConstRRsetPtr& rrset) {
+    assert(!impl_->last_rrset_);
+
     ZoneTable::FindResult result(impl_->zone_table_->findZone(zone_name));
     if (result.code != result::SUCCESS) {
         isc_throw(DataSourceError, "No such zone: " + zone_name.toText());
     }
 
-    return (impl_->add(rrset, zone_name, *result.zone_data));
+    result::Result ret(impl_->add(rrset, zone_name, *result.zone_data));
+
+    // Add any last RRset that was left
+    impl_->addRdataSet(zone_name, *result.zone_data,
+                       ConstRRsetPtr(), ConstRRsetPtr());
+
+    assert(!impl_->last_rrset_);
+
+    return (ret);
 }
 
 namespace {
