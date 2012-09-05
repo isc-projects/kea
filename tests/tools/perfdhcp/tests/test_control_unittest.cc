@@ -178,7 +178,6 @@ public:
                 if (requested_options[j] == buf[i]) {
                     // Requested option has been found.
                     ++matched_num;
-                    break;
                 }
             }
         }
@@ -205,12 +204,11 @@ public:
         size_t matched_num = 0;
         for (size_t i = 0; i < buf.size(); i += 2) {
             for (int j = 0; j < requested_options.size(); j += 2) {
-                uint16_t opt_i = buf[i + 1] << 8 + buf[i];
-                uint16_t opt_j = buf[j + 1] << 8 + buf[j];
+                uint16_t opt_i = buf[i + 1] << 8 + buf[i] & 0xFF;
+                uint16_t opt_j = requested_options[j + 1] << 8 + requested_options[j] & 0xFF;
                 if (opt_i == opt_j) {
                     // Requested option has been found.
                     ++matched_num;
-                    break;
                 }
             }
         }
@@ -771,9 +769,9 @@ TEST_F(TestControlTest, Options6) {
     // Validate the D6O_ORO (Option Request Option).
     OptionPtr opt_oro(Option::factory(Option::V6, D6O_ORO));
     // Prepare the reference buffer with requested options.
-    const uint16_t requested_options[] = {
-        htons(D6O_NAME_SERVERS),
-        htons(D6O_DOMAIN_SEARCH)
+    const uint8_t requested_options[] = {
+        D6O_NAME_SERVERS, 0,
+        D6O_DOMAIN_SEARCH, 0,
     };
     int requested_options_num =
         sizeof(requested_options) / sizeof(requested_options[0]);
