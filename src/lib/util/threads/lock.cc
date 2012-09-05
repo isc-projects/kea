@@ -136,6 +136,12 @@ Mutex::unlock() {
     }
 }
 
+// TODO: Disable in non-debug build
+bool
+Mutex::locked() const {
+    return (impl_->locked != 0);
+}
+
 }
 }
 }
