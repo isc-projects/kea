@@ -104,10 +104,6 @@ protected:
     }
 
     ~AuthSrvTest() {
-        // Clear the message now; depending on the RTTI implementation,
-        // type information may be lost if the message is cleared
-        // automatically later, so as a precaution we do it now.
-        parse_message->clear(Message::PARSE);
         server.destroyDDNSForwarder();
     }
 
@@ -833,6 +829,9 @@ TEST_F(AuthSrvTest, builtInQueryViaDNSServer) {
                         response_obuffer->getData(),
                         response_obuffer->getLength(),
                         &response_data[0], response_data.size());
+
+    // After it has been run, the message should be cleared
+    EXPECT_EQ(0, parse_message->getRRCount(Message::SECTION_QUESTION));
 }
 
 // In the following tests we confirm the response data is rendered in
