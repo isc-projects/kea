@@ -174,6 +174,7 @@ TEST_F(AuthCommandTest, shutdownIncorrectPID) {
 // zones, and checks the zones are correctly loaded.
 void
 zoneChecks(AuthSrv& server) {
+    isc::util::thread::Mutex::Locker locker(server.getClientListMutex());
     EXPECT_EQ(ZoneFinder::SUCCESS, server.getClientList(RRClass::IN())->
               find(Name("ns.test1.example")).finder_->
               find(Name("ns.test1.example"), RRType::A())->code);
@@ -214,6 +215,7 @@ configureZones(AuthSrv& server) {
 
 void
 newZoneChecks(AuthSrv& server) {
+    isc::util::thread::Mutex::Locker locker(server.getClientListMutex());
     EXPECT_EQ(ZoneFinder::SUCCESS, server.getClientList(RRClass::IN())->
               find(Name("ns.test1.example")).finder_->
               find(Name("ns.test1.example"), RRType::A())->code);
@@ -271,30 +273,33 @@ TEST_F(AuthCommandTest,
         "}]}"));
     DataSourceConfigurator::testReconfigure(&server_, config);
 
-    // Check that the A record at www.example.org does not exist
-    EXPECT_EQ(ZoneFinder::NXDOMAIN, server_.getClientList(RRClass::IN())->
-              find(Name("example.org")).finder_->
-              find(Name("www.example.org"), RRType::A())->code);
+    {
+        isc::util::thread::Mutex::Locker locker(server_.getClientListMutex());
+        // Check that the A record at www.example.org does not exist
+        EXPECT_EQ(ZoneFinder::NXDOMAIN, server_.getClientList(RRClass::IN())->
+                  find(Name("example.org")).finder_->
+                  find(Name("www.example.org"), RRType::A())->code);
 
-    // Add the record to the underlying sqlite database, by loading
-    // it as a separate datasource, and updating it
-    ConstElementPtr sql_cfg = Element::fromJSON("{ \"type\": \"sqlite3\","
-                                                "\"database_file\": \""
-                                                + test_db + "\"}");
-    DataSourceClientContainer sql_ds("sqlite3", sql_cfg);
-    ZoneUpdaterPtr sql_updater =
-        sql_ds.getInstance().getUpdater(Name("example.org"), false);
-    RRsetPtr rrset(new RRset(Name("www.example.org."), RRClass::IN(),
-                             RRType::A(), RRTTL(60)));
-    rrset->addRdata(rdata::createRdata(rrset->getType(),
-                                       rrset->getClass(),
-                                       "192.0.2.1"));
-    sql_updater->addRRset(*rrset);
-    sql_updater->commit();
+        // Add the record to the underlying sqlite database, by loading
+        // it as a separate datasource, and updating it
+        ConstElementPtr sql_cfg = Element::fromJSON("{ \"type\": \"sqlite3\","
+                                                    "\"database_file\": \""
+                                                    + test_db + "\"}");
+        DataSourceClientContainer sql_ds("sqlite3", sql_cfg);
+        ZoneUpdaterPtr sql_updater =
+            sql_ds.getInstance().getUpdater(Name("example.org"), false);
+        RRsetPtr rrset(new RRset(Name("www.example.org."), RRClass::IN(),
+                                 RRType::A(), RRTTL(60)));
+        rrset->addRdata(rdata::createRdata(rrset->getType(),
+                                           rrset->getClass(),
+                                           "192.0.2.1"));
+        sql_updater->addRRset(*rrset);
+        sql_updater->commit();
 
-    EXPECT_EQ(ZoneFinder::NXDOMAIN, server_.getClientList(RRClass::IN())->
-              find(Name("example.org")).finder_->
-              find(Name("www.example.org"), RRType::A())->code);
+        EXPECT_EQ(ZoneFinder::NXDOMAIN, server_.getClientList(RRClass::IN())->
+                  find(Name("example.org")).finder_->
+                  find(Name("www.example.org"), RRType::A())->code);
+    }
 
     // Now send the command to reload it
     result_ = execAuthServerCommand(server_, "loadzone",
@@ -302,20 +307,26 @@ TEST_F(AuthCommandTest,
                                         "{\"origin\": \"example.org\"}"));
     checkAnswer(0, "Successful load");
 
-    // And now it should be present too.
-    EXPECT_EQ(ZoneFinder::SUCCESS, server_.getClientList(RRClass::IN())->
-              find(Name("example.org")).finder_->
-              find(Name("www.example.org"), RRType::A())->code);
+    {
+        isc::util::thread::Mutex::Locker locker(server_.getClientListMutex());
+        // And now it should be present too.
+        EXPECT_EQ(ZoneFinder::SUCCESS, server_.getClientList(RRClass::IN())->
+                  find(Name("example.org")).finder_->
+                  find(Name("www.example.org"), RRType::A())->code);
+    }
 
     // Some error cases. First, the zone has no configuration. (note .com here)
     result_ = execAuthServerCommand(server_, "loadzone",
         Element::fromJSON("{\"origin\": \"example.com\"}"));
     checkAnswer(1, "example.com");
 
-    // The previous zone is not hurt in any way
-    EXPECT_EQ(ZoneFinder::SUCCESS, server_.getClientList(RRClass::IN())->
-              find(Name("example.org")).finder_->
-              find(Name("example.org"), RRType::SOA())->code);
+    {
+        isc::util::thread::Mutex::Locker locker(server_.getClientListMutex());
+        // The previous zone is not hurt in any way
+        EXPECT_EQ(ZoneFinder::SUCCESS, server_.getClientList(RRClass::IN())->
+                  find(Name("example.org")).finder_->
+                  find(Name("example.org"), RRType::SOA())->code);
+    }
 
     const ConstElementPtr config2(Element::fromJSON("{"
         "\"IN\": [{"
@@ -331,6 +342,7 @@ TEST_F(AuthCommandTest,
         Element::fromJSON("{\"origin\": \"example.com\"}"));
     checkAnswer(1, "Unreadable");
 
+    isc::util::thread::Mutex::Locker locker(server_.getClientListMutex());
     // The previous zone is not hurt in any way
     EXPECT_EQ(ZoneFinder::SUCCESS, server_.getClientList(RRClass::IN())->
               find(Name("example.org")).finder_->

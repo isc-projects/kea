@@ -264,6 +264,10 @@ public:
     boost::shared_ptr<ConfigurableClientList> getClientList(const RRClass&
                                                             rrclass)
     {
+        // TODO: Debug-build only check
+        if (!mutex_.locked()) {
+            isc_throw(isc::Unexpected, "Not locked!");
+        }
         const std::map<RRClass, boost::shared_ptr<ConfigurableClientList> >::
             const_iterator it(client_lists_.find(rrclass));
         if (it == client_lists_.end()) {
@@ -913,6 +917,11 @@ AuthSrv::destroyDDNSForwarder() {
 void
 AuthSrv::setClientList(const RRClass& rrclass,
                        const boost::shared_ptr<ConfigurableClientList>& list) {
+    // TODO: Debug-build only check
+    if (!impl_->mutex_.locked()) {
+        isc_throw(isc::Unexpected, "Not locked");
+    }
+
     if (list) {
         impl_->client_lists_[rrclass] = list;
     } else {
@@ -926,6 +935,11 @@ AuthSrv::getClientList(const RRClass& rrclass) {
 
 vector<RRClass>
 AuthSrv::getClientListClasses() const {
+    // TODO: Debug-build only check
+    if (!impl_->mutex_.locked()) {
+        isc_throw(isc::Unexpected, "Not locked");
+    }
+
     vector<RRClass> result;
     for (std::map<RRClass, boost::shared_ptr<ConfigurableClientList> >::
          const_iterator it(impl_->client_lists_.begin());
