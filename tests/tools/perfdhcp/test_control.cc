@@ -298,9 +298,9 @@ OptionPtr
 TestControl::factoryOptionRequestOption6(Option::Universe,
                                          uint16_t,
                                          const OptionBuffer&) {
-    const uint16_t buf_array[] = {
-        htons(D6O_NAME_SERVERS),
-        htons(D6O_DOMAIN_SEARCH)
+    const uint8_t buf_array[] = {
+        D6O_NAME_SERVERS, 0,
+        D6O_DOMAIN_SEARCH, 0,
     };
     OptionBuffer buf_with_options(buf_array, buf_array + sizeof(buf_array));
     return (OptionPtr(new Option(Option::V6, D6O_ORO, buf_with_options)));
