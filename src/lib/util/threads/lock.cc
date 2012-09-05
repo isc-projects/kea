@@ -78,9 +78,7 @@ Mutex::Mutex(bool recursive) :
     if (recursive) {
         type = PTHREAD_MUTEX_RECURSIVE;
     }
-    // Stop on first error you find and store the result.
-    result = pthread_mutexattr_settype(&attributes, type) ||
-        pthread_mutexattr_setrobust(&attributes, PTHREAD_MUTEX_ROBUST);
+    result = pthread_mutexattr_settype(&attributes, type);
     if (result != 0) {
         isc_throw(isc::InvalidOperation, strerror(result));
     }
