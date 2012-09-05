@@ -161,6 +161,13 @@ TCPServer::operator()(asio::error_code ec, size_t length) {
             CORO_YIELD return;
         }
 
+        // Due to possible timeouts and other bad behaviour, after the
+        // timely reads are done, there is a chance the socket has
+        // been closed already. So before we move on to the actual
+        // processing, check that, and stop if so.
+        if (!socket_->is_open()) {
+            CORO_YIELD return;
+        }
 
         // Create an \c IOMessage object to store the query.
         //
