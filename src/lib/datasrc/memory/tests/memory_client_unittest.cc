@@ -67,7 +67,7 @@ protected:
 };
 
 TEST_F(MemoryClientTest, loadRRsetDoesntMatchOrigin) {
-    // Attempting to add example.org to example.com zone should result
+    // Attempting to load example.org to example.com zone should result
     // in an exception.
     EXPECT_THROW(client_->load(Name("example.com"),
                                TEST_DATA_DIR "/example.org-empty.zone"),
