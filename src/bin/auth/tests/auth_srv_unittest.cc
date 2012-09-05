@@ -1423,10 +1423,13 @@ TEST_F(AuthSrvTest,
 {
     // Set real inmem client to proxy
     updateInMemory(&server, "example.", CONFIG_INMEMORY_EXAMPLE);
-    boost::shared_ptr<isc::datasrc::ConfigurableClientList>
-        list(new FakeList(server.getClientList(RRClass::IN()), THROW_NEVER,
-                          false));
-    server.setClientList(RRClass::IN(), list);
+    {
+        isc::util::thread::Mutex::Locker locker(server.getClientListMutex());
+        boost::shared_ptr<isc::datasrc::ConfigurableClientList>
+            list(new FakeList(server.getClientList(RRClass::IN()), THROW_NEVER,
+                              false));
+        server.setClientList(RRClass::IN(), list);
+    }
 
     createDataFromFile("nsec3query_nodnssec_fromWire.wire");
     server.processMessage(*io_message, *parse_message, *response_obuffer,
@@ -1449,6 +1452,7 @@ setupThrow(AuthSrv* server, ThrowWhen throw_when, bool isc_exception,
 {
     updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE);
 
+    isc::util::thread::Mutex::Locker locker(server->getClientListMutex());
     boost::shared_ptr<isc::datasrc::ConfigurableClientList>
         list(new FakeList(server->getClientList(RRClass::IN()), throw_when,
                           isc_exception, rrset));
@@ -1761,6 +1765,10 @@ TEST_F(AuthSrvTest, DDNSForwardCreateDestroy) {
 
 // Check the client list accessors
 TEST_F(AuthSrvTest, clientList) {
+    // We need to lock the mutex to make the (get|set)ClientList happy.
+    // There's a debug-build only check in them to make sure everything
+    // locks them and we call them directly here.
+    isc::util::thread::Mutex::Locker locker(server.getClientListMutex());
     // The lists don't exist. Therefore, the list of RRClasses is empty.
     // We also have no IN list.
     EXPECT_TRUE(server.getClientListClasses().empty());
