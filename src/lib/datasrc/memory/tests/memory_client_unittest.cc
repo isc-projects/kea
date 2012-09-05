@@ -96,6 +96,9 @@ TEST_F(MemoryClientTest, getIterator) {
 
     // There's nothing else in this zone
     EXPECT_EQ(ConstRRsetPtr(), iterator->getNextRRset());
+
+    // Iterating past the end should result in an exception
+    EXPECT_THROW(iterator->getNextRRset(), isc::Unexpected);
 }
 
 TEST_F(MemoryClientTest, getIteratorGetSOAThrowsNotImplemented) {
