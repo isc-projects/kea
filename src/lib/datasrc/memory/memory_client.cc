@@ -111,6 +111,7 @@ public:
     unsigned int zone_count_;
     ZoneTable* zone_table_;
     FileNameTree* file_name_tree_;
+    ConstRRsetPtr last_rrset_;
 
     // Common process for zone load.
     // rrset_installer is a functor that takes another functor as an argument,
@@ -292,87 +293,9 @@ public:
         }
     }
 
-    result::Result addRRsig(const ConstRRsetPtr sig_rrset, ZoneData& zone_data)
-    {
-        // Check consistency of the type covered.
-        // We know the RRset isn't empty, so the following check is safe.
-        RdataIteratorPtr rit = sig_rrset->getRdataIterator();
-        const RRType covered = dynamic_cast<const generic::RRSIG&>(
-            rit->getCurrent()).typeCovered();
-        for (rit->next(); !rit->isLast(); rit->next()) {
-            if (dynamic_cast<const generic::RRSIG&>(
-                    rit->getCurrent()).typeCovered() != covered) {
-                isc_throw(AddError, "RRSIG contains mixed covered types: "
-                          << sig_rrset->toText());
-            }
-        }
-
-        // Find the RRset to be covered; if not found, treat it as an error
-        // for now.
-        ConstRRsetPtr covered_rrset;
-        if (covered != RRType::NSEC3()) {
-            DomainNode* node = NULL;
-            if (zone_data.domains_.find(sig_rrset->getName(), &node) !=
-                DomainTree::EXACTMATCH || node == NULL || !node->getData()) {
-                isc_throw(AddError,
-                          "RRSIG is being added, but no RR to be covered: "
-                          << sig_rrset->getName());
-            }
-            const Domain::const_iterator it = node->getData()->find(covered);
-            if (it != node->getData()->end()) {
-                covered_rrset = it->second;
-            }
-        } else {
-            // In case of NSEC3 if something is found it must be NSEC3 RRset
-            // under the assumption of our current implementation.
-            if (zone_data.nsec3_data_) {
-                // Convert the first label to upper-cased text.  Note that
-                // for a valid NSEC3 RR the label should only consist of
-                // positive 8-bit char values, so using toupper(int) should be
-                // safe (if it's a bogus label for NSEC3 the zone won't work
-                // anyway).  Also note the '::' below: g++'s STL implementation
-                // seems to require it to toupper to make this compile.
-                string fst_label =
-                    sig_rrset->getName().split(0, 1).toText(true);
-                transform(fst_label.begin(), fst_label.end(),
-                          fst_label.begin(), ::toupper);
-
-                NSEC3Map::const_iterator found =
-                    zone_data.nsec3_data_->map_.find(fst_label);
-                if (found != zone_data.nsec3_data_->map_.end()) {
-                    covered_rrset = found->second;
-                    assert(covered_rrset->getType() == covered);
-                }
-            }
-        }
-        if (!covered_rrset) {
-            isc_throw(AddError, "RRSIG is being added, but no RR of "
-                      "covered type found: " << sig_rrset->toText());
-        }
-
-        // The current implementation doesn't allow an existing RRSIG to be
-        // overridden (or updated with additional ones).
-        if (covered_rrset->getRRsig()) {
-            isc_throw(AddError,
-                      "RRSIG is being added to override an existing one: "
-                      << sig_rrset->toText());
-        }
-
-        // All okay, setting the RRSIG.
-        // XXX: we break const-ness of the covered RRsets.  In practice the
-        // ownership of these RRsets would have been given to us so it should
-        // be safe, but it's still a very bad practice.
-        // We'll fix this problem anyway when we update the underlying
-        // representation so that it's more space efficient.
-        // Note: there's a slight chance of getting an exception.
-        // As noted in add(), we give up strong exception guarantee in such
-        // cases.
-        boost::const_pointer_cast<AbstractRRset>(covered_rrset)->addRRsig(sig_rrset);
-
-        return (result::SUCCESS);
-    }
-
-    result::Result addNSEC3(const ConstRRsetPtr rrset, ZoneData& zone_data) {
+    void addNSEC3(const ConstRRsetPtr rrset,
+                  const ConstRRsetPtr rrsig,
+                  ZoneData& zone_data) {
         // We know rrset has exactly one RDATA
         const generic::NSEC3& nsec3_rdata =
             dynamic_cast<const generic::NSEC3&>(
@@ -405,13 +328,155 @@ public:
         nsec3_data->insertName(local_mem_sgmt_, Name(fst_label), &node);
 
         RdataEncoder encoder;
+
+        // We assume that rrsig has already been checked to match rrset
+        // by the caller.
         RdataSet *set = RdataSet::create(local_mem_sgmt_, encoder,
-                                         rrset, ConstRRsetPtr());
+                                         rrset, rrsig);
         RdataSet *old_set = node->setData(set);
         if (old_set != NULL) {
             RdataSet::destroy(local_mem_sgmt_, rrclass_, old_set);
         }
+    }
 
+    void addRdataSet(const Name& zone_name, ZoneData& zone_data,
+                     const ConstRRsetPtr rrset, const ConstRRsetPtr rrsig) {
+        // Only one of these can be passed at a time.
+        assert(!(rrset && rrsig));
+
+        // If rrsig is passed, validate it against the last-saved rrset.
+        if (rrsig) {
+            // The covered RRset should have been saved by now.
+            if (!last_rrset_) {
+                isc_throw(AddError,
+                          "RRSIG is being added, "
+                          "but doesn't follow its covered RR: "
+                          << rrsig->getName());
+            }
+
+            if (rrsig->getName() != last_rrset_->getName()) {
+                isc_throw(AddError,
+                          "RRSIG is being added, "
+                          "but doesn't match the last RR's name: "
+                          << last_rrset_->getName() << " vs. "
+                          << rrsig->getName());
+            }
+
+            // Consistency of other types in rrsig are checked in addRRsig().
+            RdataIteratorPtr rit = rrsig->getRdataIterator();
+            const RRType covered = dynamic_cast<const generic::RRSIG&>(
+                rit->getCurrent()).typeCovered();
+
+            if (covered != last_rrset_->getType()) {
+                isc_throw(AddError,
+                          "RRSIG is being added, "
+                          "but doesn't match the last RR's type: "
+                          << last_rrset_->getType() << " vs. "
+                          << rrsig->getType());
+            }
+        }
+
+        if (!last_rrset_) {
+            last_rrset_ = rrset;
+            return;
+        }
+
+        if (last_rrset_->getType() == RRType::NSEC3()) {
+            addNSEC3(last_rrset_, rrsig, zone_data);
+        } else {
+            ZoneNode* node;
+            zone_data.insertName(local_mem_sgmt_, last_rrset_->getName(), &node);
+
+            RdataSet* set = node->getData();
+
+            // Checks related to the surrounding data.
+            // Note: when the check fails and the exception is thrown,
+            // it may break strong exception guarantee.  At the moment
+            // we prefer code simplicity and don't bother to introduce
+            // complicated recovery code.
+            contextCheck(zone_name, *last_rrset_, set);
+
+            if (RdataSet::find(set, last_rrset_->getType()) != NULL) {
+                isc_throw(AddError,
+                          "RRset of the type already exists: "
+                          << last_rrset_->getName() << " (type: "
+                          << last_rrset_->getType() << ")");
+            }
+
+            RdataEncoder encoder;
+            RdataSet *new_set = RdataSet::create(local_mem_sgmt_, encoder,
+                                                 last_rrset_, rrsig);
+            new_set->next = set;
+            node->setData(new_set);
+
+            // Ok, we just put it in
+
+            // If this RRset creates a zone cut at this node, mark the
+            // node indicating the need for callback in find().
+            if (last_rrset_->getType() == RRType::NS() &&
+                last_rrset_->getName() != zone_name) {
+                node->setFlag(ZoneNode::FLAG_CALLBACK);
+                // If it is DNAME, we have a callback as well here
+            } else if (last_rrset_->getType() == RRType::DNAME()) {
+                node->setFlag(ZoneNode::FLAG_CALLBACK);
+            }
+
+            // If we've added NSEC3PARAM at zone origin, set up NSEC3
+            // specific data or check consistency with already set up
+            // parameters.
+            if (last_rrset_->getType() == RRType::NSEC3PARAM() &&
+                last_rrset_->getName() == zone_name) {
+                // We know rrset has exactly one RDATA
+                const generic::NSEC3PARAM& param =
+                    dynamic_cast<const generic::NSEC3PARAM&>
+                      (last_rrset_->getRdataIterator()->getCurrent());
+
+                NSEC3Data* nsec3_data = zone_data.getNSEC3Data();
+                if (nsec3_data == NULL) {
+                    nsec3_data = NSEC3Data::create(local_mem_sgmt_, param);
+                    zone_data.setNSEC3Data(nsec3_data);
+                } else {
+                    size_t salt_len = nsec3_data->getSaltLen();
+                    const uint8_t* salt_data = nsec3_data->getSaltData();
+                    const vector<uint8_t>& salt_data_2 = param.getSalt();
+
+                    if ((param.getHashalg() != nsec3_data->hashalg) ||
+                        (param.getIterations() != nsec3_data->iterations) ||
+                        (salt_data_2.size() != salt_len) ||
+                        (std::memcmp(&salt_data_2[0],
+                                     salt_data, salt_len) != 0)) {
+                        isc_throw(AddError,
+                                  "NSEC3PARAM with inconsistent parameters: "
+                                  << last_rrset_->toText());
+                    }
+                }
+            } else if (last_rrset_->getType() == RRType::NSEC()) {
+                // If it is NSEC signed zone, so we put a flag there
+                // (flag is enough)
+                zone_data.setSigned(true);
+            }
+        }
+
+        last_rrset_ = rrset;
+    }
+
+    result::Result addRRsig(const ConstRRsetPtr sig_rrset,
+                            const Name& zone_name, ZoneData& zone_data)
+    {
+        // Check consistency of the type covered.
+        // We know the RRset isn't empty, so the following check is safe.
+        RdataIteratorPtr rit = sig_rrset->getRdataIterator();
+        const RRType covered = dynamic_cast<const generic::RRSIG&>(
+            rit->getCurrent()).typeCovered();
+        for (rit->next(); !rit->isLast(); rit->next()) {
+            if (dynamic_cast<const generic::RRSIG&>(
+                    rit->getCurrent()).typeCovered() != covered) {
+                isc_throw(AddError, "RRSIG contains mixed covered types: "
+                          << sig_rrset->toText());
+            }
+        }
+
+        addRdataSet(zone_name, zone_data, ConstRRsetPtr(), sig_rrset);
         return (result::SUCCESS);
     }
 
@@ -433,13 +498,14 @@ public:
             arg(rrset->getName()).arg(rrset->getType()).arg(zone_name);
 
         if (rrset->getType() == RRType::NSEC3()) {
-            return (addNSEC3(rrset, zone_data));
+            addRdataSet(zone_name, zone_data, rrset, ConstRRsetPtr());
+            return (result::SUCCESS);
         }
 
         // RRSIGs are special in various points, so we handle it in a
         // separate dedicated method.
         if (rrset->getType() == RRType::RRSIG()) {
-            return (addRRsig(rrset, zone_data));
+            return (addRRsig(rrset, zone_name, zone_data));
         }
 
         // Add wildcards possibly contained in the owner name to the domain
@@ -448,72 +514,7 @@ public:
         // guarantee.  (see also the note for contextCheck() below).
         addWildcards(zone_name, zone_data, rrset->getName());
 
-        ZoneNode* node;
-        zone_data.insertName(local_mem_sgmt_, rrset->getName(), &node);
-
-        RdataSet* set = node->getData();
-
-        // Checks related to the surrounding data.
-        // Note: when the check fails and the exception is thrown, it may
-        // break strong exception guarantee.  At the moment we prefer
-        // code simplicity and don't bother to introduce complicated
-        // recovery code.
-        contextCheck(zone_name, *rrset, set);
-
-        if (RdataSet::find(set, rrset->getType()) != NULL) {
-            return (result::EXIST);
-        }
-
-        RdataEncoder encoder;
-        RdataSet *new_set = RdataSet::create(local_mem_sgmt_, encoder,
-                                         rrset, ConstRRsetPtr());
-        new_set->next = set;
-        node->setData(new_set);
-
-        // Ok, we just put it in
-
-        // If this RRset creates a zone cut at this node, mark the node
-        // indicating the need for callback in find().
-        if (rrset->getType() == RRType::NS() &&
-            rrset->getName() != zone_name) {
-            node->setFlag(ZoneNode::FLAG_CALLBACK);
-            // If it is DNAME, we have a callback as well here
-        } else if (rrset->getType() == RRType::DNAME()) {
-            node->setFlag(ZoneNode::FLAG_CALLBACK);
-        }
-
-        // If we've added NSEC3PARAM at zone origin, set up NSEC3 specific
-        // data or check consistency with already set up parameters.
-        if (rrset->getType() == RRType::NSEC3PARAM() &&
-            rrset->getName() == zone_name) {
-            // We know rrset has exactly one RDATA
-            const generic::NSEC3PARAM& param =
-                dynamic_cast<const generic::NSEC3PARAM&>
-                (rrset->getRdataIterator()->getCurrent());
-
-            NSEC3Data* nsec3_data = zone_data.getNSEC3Data();
-            if (nsec3_data == NULL) {
-                nsec3_data = NSEC3Data::create(local_mem_sgmt_, param);
-                zone_data.setNSEC3Data(nsec3_data);
-            } else {
-                size_t salt_len = nsec3_data->getSaltLen();
-                const uint8_t* salt_data = nsec3_data->getSaltData();
-                const vector<uint8_t>& salt_data_2 = param.getSalt();
-
-                if ((param.getHashalg() != nsec3_data->hashalg) ||
-                    (param.getIterations() != nsec3_data->iterations) ||
-                    (salt_data_2.size() != salt_len) ||
-                    (std::memcmp(&salt_data_2[0], salt_data, salt_len) != 0)) {
-                    isc_throw(AddError,
-                              "NSEC3PARAM with inconsistent parameters: " <<
-                              rrset->toText());
-                }
-            }
-        } else if (rrset->getType() == RRType::NSEC()) {
-            // If it is NSEC signed zone, so we put a flag there (flag
-            // is enough)
-            zone_data.setSigned(true);
-        }
+        addRdataSet(zone_name, zone_data, rrset, ConstRRsetPtr());
 
         return (result::SUCCESS);
     }
@@ -549,8 +550,15 @@ InMemoryClient::InMemoryClientImpl::load(
         local_mem_sgmt_, ZoneData::create(local_mem_sgmt_, zone_name), rrclass_);
     scoped_ptr<ZoneData> tmp(holder.get());
 
+    assert(!last_rrset_);
+
     rrset_installer(boost::bind(&InMemoryClientImpl::addFromLoad, this,
                                 _1, zone_name, tmp.get()));
+
+    // Add any last RRset that was left
+    addRdataSet(zone_name, *tmp.get(), ConstRRsetPtr(), ConstRRsetPtr());
+
+    assert(!last_rrset_);
 
     // If the zone is NSEC3-signed, check if it has NSEC3PARAM
     if (tmp->isNSEC3Signed()) {
