@@ -15,6 +15,7 @@
 #ifndef DATASRC_MEMORY_CLIENT_H
 #define DATASRC_MEMORY_CLIENT_H 1
 
+#include <datasrc/iterator.h>
 #include <datasrc/client.h>
 #include <datasrc/memory/zone_table.h>
 
@@ -205,8 +206,8 @@ public:
     findZone(const isc::dns::Name& name) const;
 
     /// \brief Implementation of the getIterator method
-    virtual ZoneIteratorPtr getIterator(const isc::dns::Name& name,
-                                        bool separate_rrs = false) const;
+    virtual isc::datasrc::ZoneIteratorPtr
+    getIterator(const isc::dns::Name& name, bool separate_rrs = false) const;
 
     /// In-memory data source doesn't write back peristently, so this
     /// derived method will result in a NotImplemented exception.
