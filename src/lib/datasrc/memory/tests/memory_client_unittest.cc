@@ -18,6 +18,13 @@
 
 #include <dns/name.h>
 #include <dns/rrclass.h>
+#include <dns/masterload.h>
+#include <dns/nsec3hash.h>
+#include <dns/rdata.h>
+#include <dns/rdataclass.h>
+#include <dns/rrsetlist.h>
+#include <dns/rrttl.h>
+#include <dns/masterload.h>
 
 #include <datasrc/result.h>
 #include <datasrc/data_source.h>
