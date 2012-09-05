@@ -88,6 +88,14 @@ TEST_F(MemoryClientTest, getIteratorForNonExistentZone) {
 TEST_F(MemoryClientTest, getIterator) {
     client_->load(Name("example.org"), TEST_DATA_DIR "/example.org-empty.zone");
     ZoneIteratorPtr iterator(client_->getIterator(Name("example.org")));
+
+    // First we have the SOA
+    ConstRRsetPtr rrset_soa(iterator->getNextRRset());
+    EXPECT_TRUE(rrset_soa);
+    EXPECT_EQ(RRType::SOA(), rrset_soa->getType());
+
+    // There's nothing else in this zone
+    EXPECT_EQ(ConstRRsetPtr(), iterator->getNextRRset());
 }
 
 TEST_F(MemoryClientTest, getUpdaterThrowsNotImplemented) {
