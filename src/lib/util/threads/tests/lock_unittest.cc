@@ -27,7 +27,9 @@ namespace {
 // Test a recursive mutex can be locked multiple times
 TEST(MutexTest, recursiveLockMultiple) {
     Mutex mutex(true);
+    EXPECT_FALSE(mutex.locked()); // Debug-only build
     Mutex::Locker l1(mutex);
+    EXPECT_TRUE(mutex.locked()); // Debug-only build
     Mutex::Locker l2(mutex);
     Mutex::Locker l3(mutex);
     Mutex::Locker l4(mutex);
@@ -39,10 +41,13 @@ TEST(MutexTest, lockMultiple) {
     // TODO: Once we support non-debug mutexes, disable the test if we compile
     // with them.
     Mutex mutex;
+    EXPECT_FALSE(mutex.locked()); // Debug-only build
     Mutex::Locker l1(mutex);
+    EXPECT_TRUE(mutex.locked()); // Debug-only build
     EXPECT_THROW({
         Mutex::Locker l2(mutex); // Attempt to lock again.
     }, isc::InvalidOperation);
+    EXPECT_TRUE(mutex.locked()); // Debug-only build
 }
 
 // Destroying a locked mutex is a bad idea as well
