@@ -63,4 +63,9 @@ TEST_F(MemoryClientTest, getIteratorNonExistent) {
     // Zone "." doesn't exist
     EXPECT_THROW(client_->getIterator(Name(".")), DataSourceError);
 }
+
+TEST_F(MemoryClientTest, getUpdaterThrowsNotImplemented) {
+    EXPECT_THROW(client_->getUpdater(Name("."), false, false),
+		 isc::NotImplemented);
+}
 }
