@@ -248,4 +248,5 @@ TEST_F(MemoryClientTest, getJournalReaderNotImplemented) {
 // TODO:
 // Add test for add() with separate_rrs=true
 // Add test for ZoneIterator variant of load()
+// Add test for leaks during allocation failures using TestMemorySegment
 }
