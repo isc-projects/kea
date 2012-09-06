@@ -144,6 +144,14 @@ TEST_F(MemoryClientTest, loadRRSIGNameUnmatched) {
     // Teardown checks for memory segment leaks
 }
 
+TEST_F(MemoryClientTest, loadRRSIGTypeUnmatched) {
+    EXPECT_THROW(client_->load(Name("example.org"),
+                               TEST_DATA_DIR
+                               "/example.org-rrsig-type-unmatched.zone"),
+                 InMemoryClient::AddError);
+    // Teardown checks for memory segment leaks
+}
+
 TEST_F(MemoryClientTest, getZoneCount) {
     EXPECT_EQ(0, client_->getZoneCount());
     client_->load(Name("example.org"), TEST_DATA_DIR "/example.org-empty.zone");
@@ -237,5 +245,5 @@ TEST_F(MemoryClientTest, getJournalReaderNotImplemented) {
 
 // TODO:
 // Add test for add() with separate_rrs=true
-
+// Add test for ZoneIterator variant of load()
 }
