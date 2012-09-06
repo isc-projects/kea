@@ -15,47 +15,48 @@
 $NAMESPACE isc::dhcp
 
 % DHCP4_CCSESSION_STARTED control channel session started on socket %1
-A debug message issued during startup after the IP4v DHCP server has
+A debug message issued during startup after the IPv4 DHCP server has
 successfully established a session with the BIND 10 control channel.
 
 % DHCP4_CCSESSION_STARTING starting control channel session, specfile: %1
-This debug message is issued just before the IPv4 DHCP server attempts to
-establish a session with the BIND 10 control channel.
+This debug message is issued just before the IPv4 DHCP server attempts
+to establish a session with the BIND 10 control channel.
 
 % DHCP4_COMMAND_RECEIVED received command %1, arguments: %2
-A debug message listing the command (and possible arguments) received from the
-BIND 10 control system.
+A debug message listing the command (and possible arguments) received
+from the BIND 10 control system by the IPv4 DHCP server.
 
 % DHCP4_CONFIG_UPDATE updated configuration received: %1
-A debug message indicating that the IPv4 DHCP server has received an updated
-configuration from the BIND 10 configuration system.
+A debug message indicating that the IPv4 DHCP server has received an
+updated configuration from the BIND 10 configuration system.
 
 % DHCP4_NOT_RUNNING IPv4 DHCP server is not running
-s warning message is issued when an attempt is made to shut down the IPv4 DHCP
-server but it is not running.
+A warning message is issued when an attempt is made to shut down the
+IPv4 DHCP server but it is not running.
 
 % DHCP4_OPEN_SOCKET opening sockets on port %1
 A debug message issued during startup, this indicates that the IPv4 DHCP
-server is about to open sockets on the named port.
+server is about to open sockets on the specified port.
 
 % DHCP4_PACKET_PARSE_FAIL failed to parse incoming packet: %1
-The server has received a packet that it is unable to interpret. The reason why
-the packet is invalid is include in the message.
+The IPv4 DHCP server has received a packet that it is unable to
+interpret. The reason why the packet is invalid is include in the message.
 
 % DHCP4_PACKET_RECEIVED %1 (type %2) packet received on interface %3
-A debug message noting that the server has received the specified type of packet
-on the specified interface.  Note that a packet marked as UNKNOWN may well be
-a valid DHCP packet, just a type not expected by the server (e.g. it will
-report a received OFFER packet as UNKNOWN).
+A debug message noting that the server has received the specified type of
+packet on the specified interface.  Note that a packet marked as UNKNOWN
+may well be a valid DHCP packet, just a type not expected by the server
+(e.g. it will report a received OFFER packet as UNKNOWN).
 
-% DHCP4_PACK_FAIL failed to assemble message to be returned correctly
-This error is output if the server failed to assemble the data to be returned to the client into
-a valid packet.  Additional messages will detail the reason.
+% DHCP4_PACK_FAIL failed to assemble response correctly
+This error is output if the server failed to assemble the data to be
+returned to the client into a valid packet.  Additional messages will
+detail the reason.
 
-% DHCP4_QUERY_DATA received packet type %1, data is <<%2>>
+% DHCP4_QUERY_DATA received packet type %1, data is <%2>
 A debug message listing the data received from the client.
 
-% DHCP4_RESPONSE_DATA responding with packet type %1, data is <<%2>>
+% DHCP4_RESPONSE_DATA responding with packet type %1, data is <%2>
 A debug message listing the data returned to the client.
 
 % DHCP4_SERVER_FAILED server failed: %1
@@ -63,32 +64,35 @@ The IPv4 DHCP server has encountered a fatal error and is terminating.
 The reason for the failure is included in the message.
 
 % DHCP4_SESSION_FAIL failed to establish BIND 10 session (%1), running stand-alone
-The server has failed to establish communication with the rest of BIND 10
-and is running in stand-alone mode.  (This behavior will change once the
-IPv4 DHCP server is properly integrated with the rest of BIND 10.)
+The server has failed to establish communication with the rest of BIND
+10 and is running in stand-alone mode.  (This behavior will change once
+the IPv4 DHCP server is properly integrated with the rest of BIND 10.)
 
 % DHCP4_SHUTDOWN server shutdown
 The IPv4 DHCP server has terminated normally.
 
 % DHCP4_SHUTDOWN_REQUEST shutdown of server requested
-This debug message indicates that a shutdown of the IPv4 server has been requested via a call
-to the 'shutdown' method of the core Dhcpv4Srv object.
+This debug message indicates that a shutdown of the IPv4 server has
+been requested via a call to the 'shutdown' method of the core Dhcpv4Srv
+object.
 
 % DHCP4_SRV_CONSTRUCT_ERROR error creating Dhcpv4Srv object, reason: %1
-This error message indicates that during startup, the construction of a core
-component within the IPv4 DHCP server (the Dhcpv4 server object) has failed.
-As a result, the server will exit.  The reason for the failure is given
-within the message.
+This error message indicates that during startup, the construction of a
+core component within the IPv4 DHCP server (the Dhcpv4 server object)
+has failed.  As a result, the server will exit.  The reason for the
+failure is given within the message.
 
 % DHCP4_STANDALONE skipping message queue, running standalone
-This is a debug message indicating that the IPv4 server is running in standalone mode, not
-connected to the message queue.  Standalone mode is only useful during program development,
-and should not be used in a production environment.
+This is a debug message indicating that the IPv4 server is running in
+standalone mode, not connected to the message queue.  Standalone mode
+is only useful during program development, and should not be used in a
+production environment.
 
 % DHCP4_STARTING server starting
-This informational message indicates that the IPv4 DHCP server has processed
-any command-line switches and is starting.
+This informational message indicates that the IPv4 DHCP server has
+processed any command-line switches and is starting.
 
 % DHCP4_START_INFO pid: %1, port: %2, verbose: %3, standalone: %4
-This is a debug message issued during the IPv4 DHCP server startup.  It lists
-some information about the parameters with which the server is running.
+This is a debug message issued during the IPv4 DHCP server startup.
+It lists some information about the parameters with which the server
+is running.
