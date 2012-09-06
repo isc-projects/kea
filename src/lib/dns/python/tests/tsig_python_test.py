@@ -122,15 +122,23 @@ class TSIGContextTest(unittest.TestCase):
         # And there should be no error code.
         self.assertEqual(TSIGError(Rcode.NOERROR()), self.tsig_ctx.get_error())
 
+        # No message signed yet
+        self.assertRaises(TSIGContextError, self.tsig_ctx.last_had_signature)
+
     # Note: intentionally use camelCase so that we can easily copy-paste
     # corresponding C++ tests.
     def commonVerifyChecks(self, ctx, record, data, expected_error,
                            expected_new_state=\
-                               TSIGContext.STATE_VERIFIED_RESPONSE):
+                               TSIGContext.STATE_VERIFIED_RESPONSE,
+                           last_should_throw=False):
         self.assertEqual(expected_error, ctx.verify(record, data))
         self.assertEqual(expected_error, ctx.get_error())
         self.assertEqual(expected_new_state, ctx.get_state())
-
+        if last_should_throw:
+            self.assertRaises(TSIGContextError, ctx.last_had_signature)
+        else:
+            self.assertEqual(record is not None,
+                             ctx.last_had_signature())
     def test_from_keyring(self):
         # Construct a TSIG context with an empty key ring.  Key shouldn't be
         # found, and the BAD_KEY error should be recorded.
@@ -354,7 +362,7 @@ class TSIGContextTest(unittest.TestCase):
 
         tsig = self.createMessageAndSign(self.qid, self.test_name,
                                          self.tsig_ctx, 0, RRType.SOA())
-                                         
+
         fix_current_time(0x4da8b9d6 + 301)
         self.assertEqual(TSIGError.BAD_TIME,
                          self.tsig_verify_ctx.verify(tsig, DUMMY_DATA))
@@ -454,7 +462,8 @@ class TSIGContextTest(unittest.TestCase):
         self.createMessageAndSign(self.qid, self.test_name, self.tsig_ctx)
 
         self.commonVerifyChecks(self.tsig_ctx, None, DUMMY_DATA,
-                           TSIGError.FORMERR, TSIGContext.STATE_SENT_REQUEST)
+                           TSIGError.FORMERR, TSIGContext.STATE_SENT_REQUEST,
+                           True)
 
         self.createMessageFromFile("tsig_verify5.wire")
         self.commonVerifyChecks(self.tsig_ctx, self.message.get_tsig_record(),

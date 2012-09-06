@@ -66,6 +66,7 @@ PyObject* TSIGContext_getState(s_TSIGContext* self);
 PyObject* TSIGContext_getError(s_TSIGContext* self);
 PyObject* TSIGContext_sign(s_TSIGContext* self, PyObject* args);
 PyObject* TSIGContext_verify(s_TSIGContext* self, PyObject* args);
+PyObject* TSIGContext_lastHadSignature(s_TSIGContext* self);
 
 // These are the functions we export
 // For a minimal support, we don't need them.
@@ -89,6 +90,9 @@ PyMethodDef TSIGContext_methods[] = {
     { "verify",
       reinterpret_cast<PyCFunction>(TSIGContext_verify), METH_VARARGS,
       "Verify a DNS message." },
+    { "last_had_signature",
+      reinterpret_cast<PyCFunction>(TSIGContext_lastHadSignature), METH_NOARGS,
+      "Return if the last verified message contained a signature" },
     { NULL, NULL, 0, NULL }
 };
 
@@ -230,6 +234,26 @@ TSIGContext_verify(s_TSIGContext* self, PyObject* args) {
         PyErr_SetString(po_IscException, ex_what.c_str());
     } catch (...) {
         PyErr_SetString(PyExc_SystemError, "Unexpected failure in TSIG verify");
+    }
+
+    return (NULL);
+}
+
+PyObject*
+TSIGContext_lastHadSignature(s_TSIGContext* self) {
+    try {
+        long result = self->cppobj->lastHadSignature();
+        return (PyBool_FromLong(result));
+    } catch (const TSIGContextError& ex) {
+        PyErr_SetString(po_TSIGContextError, ex.what());
+    } catch (const exception& ex) {
+        const string ex_what =
+            "Unexpected failure in TSIG lastHadSignature: " +
+            string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError,
+                        "Unexpected failure in TSIG lastHadSignature");
     }
 
     return (NULL);
