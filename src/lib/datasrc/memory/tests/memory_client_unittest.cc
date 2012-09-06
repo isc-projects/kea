@@ -41,6 +41,27 @@ using namespace isc::datasrc;
 using namespace isc::datasrc::memory;
 
 namespace {
+// Memory segment specified for tests.  It normally behaves like a "local"
+// memory segment.  If "throw count" is set to non 0 via setThrowCount(),
+// it continues the normal behavior up to the specified number of calls to
+// allocate(), and throws an exception at the next call.
+class TestMemorySegment : public isc::util::MemorySegmentLocal {
+public:
+    TestMemorySegment() : throw_count_(0) {}
+    virtual void* allocate(size_t size) {
+        if (throw_count_ > 0) {
+            if (--throw_count_ == 0) {
+                throw std::bad_alloc();
+            }
+        }
+        return (isc::util::MemorySegmentLocal::allocate(size));
+    }
+    void setThrowCount(size_t count) { throw_count_ = count; }
+
+private:
+    size_t throw_count_;
+};
+
 class MemoryClientTest : public ::testing::Test {
 protected:
     MemoryClientTest() : zclass_(RRClass::IN()),
@@ -61,7 +82,7 @@ protected:
     }
     const RRClass zclass_;
     const Name zname1, zname2, zname3;
-    isc::util::MemorySegmentLocal mem_sgmt_;
+    TestMemorySegment mem_sgmt_;
     InMemoryClient* client_;
     memory::ZoneTable* zone_table;
 };
