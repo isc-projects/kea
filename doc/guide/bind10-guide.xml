@@ -785,7 +785,7 @@ as a dependency earlier -->
   </chapter>
 
   <chapter id="bind10">
-    <title>Starting BIND10 with <command>bind10</command></title>
+    <title>Starting BIND 10 with <command>bind10</command></title>
     <para>
       BIND 10 provides the <command>bind10</command> command which
       starts up the required processes.
@@ -1746,7 +1746,7 @@ can use various data source backends.
       <para>
         Each data source has several options. The first one is
         <varname>type</varname>, which specifies the type of data source to
-        use. Valid types include the ones listed below, but bind10 uses
+        use. Valid types include the ones listed below, but BIND 10 uses
         dynamically loaded modules for them, so there may be more in your
         case. This option is mandatory.
       </para>
@@ -1794,7 +1794,7 @@ can use various data source backends.
       <section id='datasrc-examples'>
         <title>Examples</title>
         <para>
-          As this is one of the more complex configurations of Bind10,
+          As this is one of the more complex configurations of BIND 10,
           we show some examples. They all assume they start with default
           configuration.
         </para>
@@ -1820,7 +1820,7 @@ can use various data source backends.
 &gt; <userinput>config commit</userinput></screen>
 
           Now every time the zone in the data source is changed by the
-          operator, Bind10 needs to be told to reload it, by
+          operator, the authoritative server needs to be told to reload it, by
           <screen>&gt; <userinput>Auth loadzone example.org</userinput></screen>
           You don't need to do this when the zone is modified by
           XfrIn, it does so automatically.
@@ -2602,18 +2602,18 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
     be deployed that facilitate communication between servers and
     clients. Even though principles of both DHCPv4 and DHCPv6 are
     somewhat similar, these are two radically different
-    protocols. BIND10 offers server implementations for both DHCPv4
+    protocols. BIND 10 offers server implementations for both DHCPv4
     and DHCPv6. This chapter is about DHCP for IPv4. For a description
     of the DHCPv6 server, see <xref linkend="dhcp6"/>.</para>
 
     <para>The DHCPv4 server component is currently under intense
     development. You may want to check out <ulink
-    url="http://bind10.isc.org/wiki/Kea">BIND10 DHCP (Kea) wiki</ulink>
+    url="http://bind10.isc.org/wiki/Kea">BIND 10 DHCP (Kea) wiki</ulink>
     and recent posts on <ulink
-    url="https://lists.isc.org/mailman/listinfo/bind10-dev">BIND10
+    url="https://lists.isc.org/mailman/listinfo/bind10-dev">BIND 10
     developers mailing list</ulink>.</para>
 
-    <para>The DHCPv4 and DHCPv6 components in BIND10 architecture are
+    <para>The DHCPv4 and DHCPv6 components in BIND 10 architecture are
     internally code named <quote>Kea</quote>.</para>
 
     <note>
@@ -2631,7 +2631,7 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
 
     <section id="dhcp4-usage">
       <title>DHCPv4 Server Usage</title>
-      <para>BIND10 provides the DHCPv4 server component since December
+      <para>BIND 10 provides the DHCPv4 server component since December
       2011. It is a skeleton server and can be described as an early
       prototype that is not fully functional yet. It is mature enough
       to conduct first tests in lab environment, but it has
@@ -2640,9 +2640,9 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
       </para>
 
       <para>
-        <command>b10-dhcp4</command> is a BIND10 component and is being
-        run under BIND10 framework. To add a DHCPv4 process to the set of running
-        BIND10 services, you can use following commands in <command>bindctl</command>:
+        <command>b10-dhcp4</command> is a BIND 10 component and is being
+        run under BIND 10 framework. To add a DHCPv4 process to the set of running
+        BIND 10 services, you can use following commands in <command>bindctl</command>:
         <screen>&gt; <userinput>config add Boss/components b10-dhcp4</userinput>
 &gt; <userinput>config set Boss/components/b10-dhcp4/kind dispensable</userinput>
 &gt; <userinput>config commit</userinput></screen></para>
@@ -2792,19 +2792,19 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
   <chapter id="dhcp6">
     <title>DHCPv6 Server</title>
     <para>Dynamic Host Configuration Protocol for IPv6 (DHCPv6) is
-    specified in RFC3315. BIND10 provides DHCPv6 server implementation
+    specified in RFC3315. BIND 10 provides DHCPv6 server implementation
     that is described in this chapter. For a description of the DHCPv4
     server implementation, see <xref linkend="dhcp4"/>.
     </para>
 
     <para>The DHCPv6 server component is currently under intense
     development. You may want to check out <ulink
-    url="http://bind10.isc.org/wiki/Kea">BIND10 DHCP (Kea) wiki</ulink>
+    url="http://bind10.isc.org/wiki/Kea">BIND 10 DHCP (Kea) wiki</ulink>
     and recent posts on <ulink
-    url="https://lists.isc.org/mailman/listinfo/bind10-dev">BIND10
+    url="https://lists.isc.org/mailman/listinfo/bind10-dev">BIND 10
     developers mailing list</ulink>.</para>
 
-    <para>The DHCPv4 and DHCPv6 components in BIND10 architecture are
+    <para>The DHCPv4 and DHCPv6 components in BIND 10 architecture are
     internally code named <quote>Kea</quote>.</para>
 
     <note>
@@ -2823,7 +2823,7 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
     <section id="dhcp6-usage">
       <title>DHCPv6 Server Usage</title>
       <para>
-        BIND10 provides the DHCPv6 server component since September
+        BIND 10 provides the DHCPv6 server component since September
         2011. It is a skeleton server and can be described as an early
         prototype that is not fully functional yet. It is mature
         enough to conduct first tests in lab environment, but it has
@@ -2832,9 +2832,9 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";</screen>
       </para>
 
       <para>
-        <command>b10-dhcp6</command> is a BIND10 component and is being
-        run under BIND10 framework. To add a DHCPv6 process to the set of running
-        BIND10 services, you can use following commands in <command>bindctl</command>:
+        <command>b10-dhcp6</command> is a BIND 10 component and is being
+        run under BIND 10 framework. To add a DHCPv6 process to the set of running
+        BIND 10 services, you can use following commands in <command>bindctl</command>:
         <screen>&gt; <userinput>config add Boss/components b10-dhcp6</userinput>
 &gt; <userinput>config set Boss/components/b10-dhcp6/kind dispensable</userinput>
 &gt; <userinput>config commit</userinput></screen>
@@ -3001,7 +3001,7 @@ const std::string HARDCODED_DNS_SERVER = "2001:db8:1::1";</screen>
       <para>For non-Linux systems, there is currently stub
       implementation provided. Interface manager detects loopback
       interfaces only as their name (lo or lo0) can be easily predicted.
-      Please contact BIND10 development team if you are interested
+      Please contact the BIND 10 development team if you are interested
       in running DHCP components on systems other than Linux.</para>
     </section>
 
