@@ -14,13 +14,15 @@
 
 #include <config.h>
 #include <iostream>
+
+#include <boost/lexical_cast.hpp>
+
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/dhcp4_log.h>
 #include <log/logger_support.h>
-#include <boost/lexical_cast.hpp>
 
-using namespace std;
 using namespace isc::dhcp;
+using namespace std;
 
 /// This file contains entry point (main() function) for standard DHCPv4 server
 /// component for BIND10 framework. It parses command-line arguments and
@@ -37,11 +39,10 @@ const char* const DHCP4_NAME = "b10-dhcp4";
 
 void
 usage() {
-    cerr << "Usage:  b10-dhcp4 [-v]"
-         << endl;
-    cerr << "\t-v: verbose output" << endl;
-    cerr << "\t-s: stand-alone mode (don't connect to BIND10)" << endl;
-    cerr << "\t-p number: specify non-standard port number 1-65535 "
+    cerr << "Usage: " << DHCP4_NAME << " [-v] [-s] [-p number]" << endl;
+    cerr << "  -v: verbose output" << endl;
+    cerr << "  -s: stand-alone mode (don't connect to BIND10)" << endl;
+    cerr << "  -p number: specify non-standard port number 1-65535 "
          << "(useful for testing only)" << endl;
     exit(EXIT_FAILURE);
 }
@@ -50,10 +51,10 @@ usage() {
 int
 main(int argc, char* argv[]) {
     int ch;
-    bool verbose_mode = false; // should server be verbose?
     int port_number = DHCP4_SERVER_PORT; // The default. any other values are
                                          // useful for testing only.
-    bool stand_alone = false; // should be connect to BIND10 msgq?
+    bool stand_alone = false;  // Should be connect to BIND10 msgq?
+    bool verbose_mode = false; // Should server be verbose?
 
     while ((ch = getopt(argc, argv, "vsp:")) != -1) {
         switch (ch) {
@@ -86,7 +87,7 @@ main(int argc, char* argv[]) {
     }
 
     // Check for extraneous parameters.
-    if ((argc - optind) > 0) {
+    if (argc > optind) {
         usage();
     }
 
@@ -118,8 +119,8 @@ main(int argc, char* argv[]) {
         LOG_INFO(dhcp4_logger, DHCP4_SHUTDOWN);
 
     } catch (const std::exception& ex) {
-        ret = EXIT_FAILURE;
         LOG_FATAL(dhcp4_logger, DHCP4_SERVER_FAILED).arg(ex.what());
+        ret = EXIT_FAILURE;
     }
 
     return (ret);
