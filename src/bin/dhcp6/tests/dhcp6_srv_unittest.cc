@@ -223,4 +223,49 @@ TEST_F(Dhcpv6SrvTest, Solicit_basic) {
     // more checks to be implemented
 }
 
+TEST_F(Dhcpv6SrvTest, serverReceivedPacketName) {
+    // Check all possible packet types
+    for (int itype = 0; itype < 256; ++itype) {
+        uint8_t type = itype;
+
+        switch (type) {
+        case DHCPV6_CONFIRM:
+            EXPECT_STREQ("CONFIRM", Dhcpv6Srv::serverReceivedPacketName(type));
+            break;
+
+        case DHCPV6_DECLINE:
+            EXPECT_STREQ("DECLINE", Dhcpv6Srv::serverReceivedPacketName(type));
+            break;
+
+        case DHCPV6_INFORMATION_REQUEST:
+            EXPECT_STREQ("INFORMATION_REQUEST",
+                         Dhcpv6Srv::serverReceivedPacketName(type));
+            break;
+
+        case DHCPV6_REBIND:
+            EXPECT_STREQ("REBIND", Dhcpv6Srv::serverReceivedPacketName(type));
+            break;
+
+        case DHCPV6_RELEASE:
+            EXPECT_STREQ("RELEASE", Dhcpv6Srv::serverReceivedPacketName(type));
+            break;
+
+        case DHCPV6_RENEW:
+            EXPECT_STREQ("RENEW", Dhcpv6Srv::serverReceivedPacketName(type));
+            break;
+
+        case DHCPV6_REQUEST:
+            EXPECT_STREQ("REQUEST", Dhcpv6Srv::serverReceivedPacketName(type));
+            break;
+
+        case DHCPV6_SOLICIT:
+            EXPECT_STREQ("SOLICIT", Dhcpv6Srv::serverReceivedPacketName(type));
+            break;
+
+        default:
+            EXPECT_STREQ("UNKNOWN", Dhcpv6Srv::serverReceivedPacketName(type));
+        }
+    }
 }
+
+}   // oF ANONYMOUS NAMESPACE
