@@ -727,6 +727,9 @@ InMemoryClient::add(const isc::dns::Name& zone_name,
     }
 
     result::Result ret(impl_->add(rrset, zone_name, *result.zone_data));
+    if ((ret == result::SUCCESS) && rrset->getRRsig()) {
+        impl_->add(rrset->getRRsig(), zone_name, *result.zone_data);
+    }
 
     // Add any last RRset that was left
     impl_->addRdataSet(zone_name, *result.zone_data,
