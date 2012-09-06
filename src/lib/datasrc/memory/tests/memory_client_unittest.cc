@@ -37,6 +37,7 @@
 #include <new>                  // for bad_alloc
 
 using namespace isc::dns;
+using namespace isc::dns::rdata;
 using namespace isc::datasrc;
 using namespace isc::datasrc::memory;
 
@@ -152,6 +153,29 @@ TEST_F(MemoryClientTest, loadRRSIGs) {
     client_->load(Name("example.org"),
 		  TEST_DATA_DIR "/example.org-rrsigs.zone");
     EXPECT_EQ(1, client_->getZoneCount());
+}
+
+TEST_F(MemoryClientTest, loadRRSIGsRdataMixedCoveredTypes) {
+    client_->load(Name("example.org"),
+                  TEST_DATA_DIR "/example.org-rrsigs.zone");
+
+    RRsetPtr rrset(new RRset(Name("example.org"),
+                             RRClass::IN(), RRType::A(), RRTTL(3600)));
+    rrset->addRdata(in::A("192.0.2.1"));
+    rrset->addRdata(in::A("192.0.2.2"));
+
+    RRsetPtr rrsig(new RRset(Name("example.org"), zclass_,
+                             RRType::RRSIG(), RRTTL(300)));
+    rrsig->addRdata(generic::RRSIG("A 5 3 3600 20000101000000 20000201000000 "
+                                   "12345 example.org. FAKEFAKEFAKE"));
+    rrsig->addRdata(generic::RRSIG("NS 5 3 3600 20000101000000 20000201000000 "
+                                   "54321 example.org. FAKEFAKEFAKEFAKE"));
+    rrset->addRRsig(rrsig);
+
+    EXPECT_THROW(client_->add(Name("example.org"), rrset),
+                 InMemoryClient::AddError);
+
+    // Teardown checks for memory segment leaks
 }
 
 TEST_F(MemoryClientTest, getZoneCount) {
