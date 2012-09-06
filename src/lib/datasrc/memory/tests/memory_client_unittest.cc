@@ -151,7 +151,7 @@ TEST_F(MemoryClientTest, loadRRSIGTypeUnmatched) {
 
 TEST_F(MemoryClientTest, loadRRSIGs) {
     client_->load(Name("example.org"),
-		  TEST_DATA_DIR "/example.org-rrsigs.zone");
+                  TEST_DATA_DIR "/example.org-rrsigs.zone");
     EXPECT_EQ(1, client_->getZoneCount());
 }
 
