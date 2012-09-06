@@ -233,6 +233,16 @@ TEST_F(MemoryClientTest, addRRsetToNonExistentZoneThrows) {
     EXPECT_THROW(client_->add(Name("example.org"), rrset_a), DataSourceError);
 }
 
+TEST_F(MemoryClientTest, addNullRRsetThrows) {
+    client_->load(Name("example.org"),
+                  TEST_DATA_DIR "/example.org-rrsigs.zone");
+
+    EXPECT_THROW(client_->add(Name("example.org"), ConstRRsetPtr()),
+                 InMemoryClient::NullRRset);
+
+    // Teardown checks for memory segment leaks
+}
+
 TEST_F(MemoryClientTest, add) {
     client_->load(Name("example.org"), TEST_DATA_DIR "/example.org-empty.zone");
 
