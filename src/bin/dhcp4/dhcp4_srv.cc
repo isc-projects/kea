@@ -39,12 +39,11 @@ const std::string HARDCODED_SERVER_ID = "192.0.2.1";
 Dhcpv4Srv::Dhcpv4Srv(uint16_t port) {
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_OPEN_SOCKET).arg(port);
     try {
-        // first call to instance() will create IfaceMgr (it's a singleton)
+        // First call to instance() will create IfaceMgr (it's a singleton)
         // it may throw something if things go wrong
         IfaceMgr::instance();
 
         /// @todo: instantiate LeaseMgr here once it is imlpemented.
-
         IfaceMgr::instance().openSockets4(port);
 
         setServerID();
@@ -87,9 +86,12 @@ Dhcpv4Srv::run() {
                           DHCP4_PACKET_PARSE_FAIL).arg(e.what());
                 continue;
             }
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_UNKNOWN)
+                      .arg(serverReceivedPacketName(query->getType()))
+                      .arg(query->getType())
+                      .arg(query->getIface());
             LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_QUERY_DATA)
                       .arg(query->toText());
-
 
             switch (query->getType()) {
             case DHCPDISCOVER:
@@ -113,8 +115,10 @@ Dhcpv4Srv::run() {
                 break;
 
             default:
-                LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_UNKNOWN)
-                          .arg(query->getType()).arg(query->getIface());
+                // Only action is to output a message if debug is enabled,
+                // and that will be covered by the debug statement before
+                // the "switch" statement.
+                ;
             }
 
             if (rsp) {
@@ -243,8 +247,6 @@ void Dhcpv4Srv::tryAssignLease(Pkt4Ptr& msg) {
 }
 
 Pkt4Ptr Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
-    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_DISCOVER)
-              .arg(discover->getIface());
     Pkt4Ptr offer = Pkt4Ptr
         (new Pkt4(DHCPOFFER, discover->getTransid()));
 
@@ -258,8 +260,6 @@ Pkt4Ptr Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
 }
 
 Pkt4Ptr Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
-    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_REQUEST)
-              .arg(request->getIface());
     Pkt4Ptr ack = Pkt4Ptr
         (new Pkt4(DHCPACK, request->getTransid()));
 
@@ -273,20 +273,45 @@ Pkt4Ptr Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
 }
 
 void Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
-    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_RELEASE)
-              .arg(release->getIface());
     /// TODO: Implement this.
 }
 
 void Dhcpv4Srv::processDecline(Pkt4Ptr& decline) {
-    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_DECLINE)
-              .arg(decline->getIface());
     /// TODO: Implement this.
 }
 
 Pkt4Ptr Dhcpv4Srv::processInform(Pkt4Ptr& inform) {
-    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_INFORM)
-              .arg(inform->getIface());
     /// TODO: Currently implemented echo mode. Implement this for real
     return (inform);
+}
+
+const char*
+Dhcpv4Srv::serverReceivedPacketName(uint8_t type) {
+    static const char* DISCOVER = "DISCOVER";
+    static const char* REQUEST = "REQUEST";
+    static const char* RELEASE = "RELEASE";
+    static const char* DECLINE = "DECLINE";
+    static const char* INFORM = "INFORM";
+    static const char* UNKNOWN = "UNKNOWN";
+
+    switch (type) {
+    case DHCPDISCOVER:
+        return (DISCOVER);
+
+    case DHCPREQUEST:
+        return (REQUEST);
+
+    case DHCPRELEASE:
+        return (RELEASE);
+
+    case DHCPDECLINE:
+        return (DECLINE);
+
+    case DHCPINFORM:
+        return (INFORM);
+
+    default:
+        ;
+    }
+    return (UNKNOWN);
 }
