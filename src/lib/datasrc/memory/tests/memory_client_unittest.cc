@@ -95,6 +95,26 @@ TEST_F(MemoryClientTest, loadRRsetDoesntMatchOrigin) {
                  MasterLoadError);
 }
 
+TEST_F(MemoryClientTest, loadErrorsInParsingZoneMustNotLeak1) {
+    // Attempting to load broken example.org zone should result in an
+    // exception. This should not leak ZoneData and other such
+    // allocations.
+    EXPECT_THROW(client_->load(Name("example.org"),
+                               TEST_DATA_DIR "/example.org-broken1.zone"),
+                 MasterLoadError);
+    // Teardown checks for memory segment leaks
+}
+
+TEST_F(MemoryClientTest, loadErrorsInParsingZoneMustNotLeak2) {
+    // Attempting to load broken example.org zone should result in an
+    // exception. This should not leak ZoneData and other such
+    // allocations.
+    EXPECT_THROW(client_->load(Name("example.org"),
+                               TEST_DATA_DIR "/example.org-broken2.zone"),
+                 MasterLoadError);
+    // Teardown checks for memory segment leaks
+}
+
 TEST_F(MemoryClientTest, getZoneCount) {
     EXPECT_EQ(0, client_->getZoneCount());
     client_->load(Name("example.org"), TEST_DATA_DIR "/example.org-empty.zone");
