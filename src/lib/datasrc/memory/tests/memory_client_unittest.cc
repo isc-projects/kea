@@ -65,10 +65,7 @@ private:
 class MemoryClientTest : public ::testing::Test {
 protected:
     MemoryClientTest() : zclass_(RRClass::IN()),
-                      zname1(Name("example.com")),
-                      zname2(Name("example.net")),
-                      zname3(Name("example")),
-                      client_(new InMemoryClient(zclass_))
+                         client_(new InMemoryClient(zclass_))
     {}
     ~MemoryClientTest() {
         if (client_ != NULL) {
@@ -81,7 +78,6 @@ protected:
         EXPECT_TRUE(mem_sgmt_.allMemoryDeallocated()); // catch any leak here.
     }
     const RRClass zclass_;
-    const Name zname1, zname2, zname3;
     TestMemorySegment mem_sgmt_;
     InMemoryClient* client_;
     memory::ZoneTable* zone_table;
