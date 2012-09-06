@@ -115,6 +115,13 @@ TEST_F(MemoryClientTest, loadErrorsInParsingZoneMustNotLeak2) {
     // Teardown checks for memory segment leaks
 }
 
+TEST_F(MemoryClientTest, loadNonExistentZoneFile) {
+    EXPECT_THROW(client_->load(Name("example.org"),
+                               TEST_DATA_DIR "/somerandomfilename"),
+                 MasterLoadError);
+    // Teardown checks for memory segment leaks
+}
+
 TEST_F(MemoryClientTest, load) {
     // This is a simple load check for a "full" and correct zone that
     // should not result in any exceptions.
