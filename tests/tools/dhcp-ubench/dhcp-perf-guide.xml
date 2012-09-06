@@ -237,6 +237,14 @@ Possible command-line parameters:
 
       </para>
 
+      <para>Synchronous operation requires database backend to
+      physically store changes to disk before proceeding. This
+      property ensures that no data is lost in case of the server
+      failure.  Unfortunately, it slows operation
+      considerably. Asynchronous mode allows database to write data at
+      a later time (usually controlled by the database engine on OS
+      disk buffering mechanism).</para>
+
       <section>
         <title>MySQL tweaks</title>
 
@@ -315,14 +323,16 @@ Possible command-line parameters:
     </section>
 
     <section id="memfile-ubench">
-      <title>memfile-ubench</title>
-      <para>The memfile backend is a custom backend that
-      somewhat mimics operation of ISC DHCP4. It implements in-memory
-      storage using standard C++ and boost mechanisms (std::map and
-      boost::shared_ptr&lt;&gt;). All database changes are also
-      written to a lease file, which is strictly write-only. This
-      approach takes advantage of the fact that simple append is faster
-      than edition with potential whole file relocation.</para>
+      <title>memfile-ubench</title> <para>The memfile backend is a
+      custom backend that somewhat mimics operation of ISC DHCP4. It
+      implements in-memory storage using standard C++ and boost
+      mechanisms (std::map and boost::shared_ptr&lt;&gt;). All
+      database changes are also written to a lease file, which is
+      strictly write-only. This approach takes advantage of the fact
+      that file append operation is faster than modifications introduced
+      in the middle of the file (as it often requires moving all data
+      after modified point, effectively requiring writing large parts of
+      the whole file, not just changed fragment).</para>
 
       <section id="memfile-tweaks">
         <title>memfile tweaks</title>
@@ -393,31 +403,31 @@ SQLite version: 3.7.9sourceid version is 2011-11-01 00:52:41 c7c6050ef060877ebe7
           <row>
             <entry>MySQL</entry>
             <entry>1,000</entry>
-            <entry>31.603978</entry>
-            <entry> 0.116612</entry>
-            <entry>27.964191</entry>
-            <entry>27.695209</entry>
-            <entry>21.844998</entry>
+            <entry>31.604</entry>
+            <entry> 0.117</entry>
+            <entry>27.964</entry>
+            <entry>27.695</entry>
+            <entry>21.845</entry>
           </row>
 
           <row>
             <entry>SQLite</entry>
             <entry>1,000</entry>
-            <entry>61.421356</entry>
-            <entry> 0.033283</entry>
-            <entry>59.476638</entry>
-            <entry>56.034150</entry>
-            <entry>44.241357</entry>
+            <entry>61.421</entry>
+            <entry> 0.033</entry>
+            <entry>59.477</entry>
+            <entry>56.034</entry>
+            <entry>44.241</entry>
           </row>
 
           <row>
             <entry>memfile</entry>
             <entry>1,000</entry>
-            <entry>38.223757</entry>
-            <entry> 0.000817</entry>
-            <entry>38.041153</entry>
-            <entry>38.017293</entry>
-            <entry>28.570755</entry>
+            <entry>38.224</entry>
+            <entry> 0.001</entry>
+            <entry>38.041</entry>
+            <entry>38.017</entry>
+            <entry>28.571</entry>
           </row>
 
         </tbody>
@@ -453,31 +463,31 @@ SQLite version: 3.7.9sourceid version is 2011-11-01 00:52:41 c7c6050ef060877ebe7
           <row>
             <entry>MySQL</entry>
             <entry>100,000</entry>
-            <entry>10.584842</entry>
-            <entry>10.386402</entry>
-            <entry>10.062384</entry>
-            <entry> 8.890197</entry>
-            <entry> 9.980956</entry>
+            <entry>10.585</entry>
+            <entry>10.386</entry>
+            <entry>10.062</entry>
+            <entry> 8.890</entry>
+            <entry> 9.981</entry>
           </row>
 
           <row>
             <entry>SQLite</entry>
             <entry>100,000</entry>
-            <entry> 3.710356</entry>
-            <entry> 3.159129</entry>
-            <entry> 2.865354</entry>
-            <entry> 2.439406</entry>
-            <entry> 3.043561</entry>
+            <entry> 3.710</entry>
+            <entry> 3.159</entry>
+            <entry> 2.865</entry>
+            <entry> 2.439</entry>
+            <entry> 3.044</entry>
           </row>
 
           <row>
             <entry>memfile</entry>
             <entry>1,000,000</entry>
-            <entry> 1.299642</entry>
-            <entry> 0.039330</entry>
-            <entry> 1.307112</entry>
-            <entry> 1.277641</entry>
-            <entry> 0.980931</entry>
+            <entry> 1.300</entry>
+            <entry> 0.039</entry>
+            <entry> 1.307</entry>
+            <entry> 1.278</entry>
+            <entry> 0.981</entry>
           </row>
 
         </tbody>
@@ -651,7 +661,7 @@ SQLite version: 3.7.9sourceid version is 2011-11-01 00:52:41 c7c6050ef060877ebe7
             <entry>memfile</entry>
             <entry>1,000</entry>
             <entry>39.564</entry>
-            <entry> 0.000724</entry>
+            <entry> 0.001</entry>
             <entry>39.543</entry>
             <entry>39.326</entry>
             <entry>29.608</entry>
