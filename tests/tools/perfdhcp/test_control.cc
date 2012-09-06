@@ -278,7 +278,7 @@ TestControl::factoryIana6(Option::Universe, uint16_t,
     // @todo allow different values of T1, T2 and IAID.
     const uint8_t buf_array[] = {
         0, 0, 0, 1,                     // IAID = 1
-        0, 0, 3600 >> 8, 3600 && 0xff,  // T1 = 3600
+        0, 0, 3600 >> 8, 3600 & 0xff,  // T1 = 3600
         0, 0, 5400 >> 8, 5400 & 0xff,   // T2 = 5400
     };
     OptionBuffer buf_ia_na(buf_array, buf_array + sizeof(buf_array));
