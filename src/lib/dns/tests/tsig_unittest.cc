@@ -166,16 +166,20 @@ TSIGTest::createMessageAndSign(uint16_t id, const Name& qname,
         message.addRRset(Message::SECTION_ANSWER, answer_rrset);
     }
     renderer.clear();
-    message.toWire(renderer);
 
     TSIGContext::State expected_new_state =
         (ctx->getState() == TSIGContext::INIT) ?
         TSIGContext::SENT_REQUEST : TSIGContext::SENT_RESPONSE;
-    ConstTSIGRecordPtr tsig = ctx->sign(id, renderer.getData(),
-                                        renderer.getLength());
+
+    message.toWire(renderer, *ctx);
+
+    message.clear(Message::PARSE);
+    InputBuffer buffer(renderer.getData(), renderer.getLength());
+    message.fromWire(buffer);
+
     EXPECT_EQ(expected_new_state, ctx->getState());
 
-    return (tsig);
+    return (ConstTSIGRecordPtr(new TSIGRecord(*message.getTSIGRecord())));
 }
 
 void
@@ -1012,6 +1016,70 @@ TEST_F(TSIGTest, getTSIGLength) {
                            TSIGContext::RECEIVED_REQUEST);
     }
     EXPECT_EQ(91, tsig_ctx->getTSIGLength());
+}
+
+// Verify a stream of multiple messages. Some of them have a signature omitted.
+//
+// We have two contexts, one that signs, another that verifies.
+TEST_F(TSIGTest, verifyMulti) {
+    isc::util::detail::gettimeFunction = testGetTime<0x4da8877a>;
+
+    {
+        SCOPED_TRACE("First message");
+        ConstTSIGRecordPtr tsig = createMessageAndSign(1234, test_name,
+                                                       tsig_ctx.get());
+        commonVerifyChecks(*tsig_verify_ctx, tsig.get(),
+                           renderer.getData(), renderer.getLength(),
+                           TSIGError(Rcode::NOERROR()),
+                           TSIGContext::RECEIVED_REQUEST);
+        EXPECT_TRUE(tsig_verify_ctx->lastHadSignature());
+    }
+
+    {
+        SCOPED_TRACE("Second message");
+        ConstTSIGRecordPtr tsig = createMessageAndSign(1234, test_name,
+                                                       tsig_ctx.get());
+        commonVerifyChecks(*tsig_verify_ctx, tsig.get(),
+                           renderer.getData(), renderer.getLength(),
+                           TSIGError(Rcode::NOERROR()),
+                           TSIGContext::RECEIVED_REQUEST);
+        EXPECT_TRUE(tsig_verify_ctx->lastHadSignature());
+    }
+
+    {
+        SCOPED_TRACE("Third message. Unsigned.");
+        // Another message does not carry the TSIG on it. But it should
+        // be OK, it's in the middle of stream.
+        message.clear(Message::RENDER);
+        message.setQid(1234);
+        message.setOpcode(Opcode::QUERY());
+        message.setRcode(Rcode::NOERROR());
+        RRsetPtr answer_rrset(new RRset(test_name, test_class, RRType::A(),
+                                        test_ttl));
+        answer_rrset->addRdata(createRdata(RRType::A(), test_class,
+                                           "192.0.2.1"));
+        message.addRRset(Message::SECTION_ANSWER, answer_rrset);
+        message.toWire(renderer, *tsig_ctx);
+        commonVerifyChecks(*tsig_verify_ctx, NULL,
+                           renderer.getData(), renderer.getLength(),
+                           TSIGError(Rcode::NOERROR()),
+                           TSIGContext::RECEIVED_REQUEST);
+
+        EXPECT_TRUE(tsig_verify_ctx->lastHadSignature());
+    }
+
+    {
+        SCOPED_TRACE("Fourth message. Signed again.");
+        ConstTSIGRecordPtr tsig = createMessageAndSign(1234, test_name,
+                                                       tsig_ctx.get());
+        commonVerifyChecks(*tsig_verify_ctx, tsig.get(),
+                           renderer.getData(), renderer.getLength(),
+                           TSIGError(Rcode::NOERROR()),
+                           TSIGContext::RECEIVED_REQUEST);
+        EXPECT_TRUE(tsig_verify_ctx->lastHadSignature());
+    }
+    // TODO: Fill in 99 unsigned messages and then try the 100th and see
+    // it is rejected (probably with FORMERR)
 }
 
 } // end namespace
