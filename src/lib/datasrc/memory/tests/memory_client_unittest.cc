@@ -292,10 +292,14 @@ TEST_F(MemoryClientTest, findZone2) {
     isc::datasrc::memory::ZoneTable::FindResult
         result(client_->findZone2(Name("example.com")));
     EXPECT_EQ(result::NOTFOUND, result.code);
+    EXPECT_EQ(static_cast<ZoneData*>(NULL),
+              result.zone_data);
 
     isc::datasrc::memory::ZoneTable::FindResult
         result2(client_->findZone2(Name("example.org")));
     EXPECT_EQ(result::SUCCESS, result2.code);
+    EXPECT_NE(static_cast<ZoneData*>(NULL),
+              result2.zone_data);
 }
 
 TEST_F(MemoryClientTest, getUpdaterThrowsNotImplemented) {
