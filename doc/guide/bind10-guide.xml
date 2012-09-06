@@ -1777,7 +1777,7 @@ can use various data source backends.
           As mentioned, the type used by default is <quote>sqlite3</quote>.
           It has single configuration option inside <varname>params</varname>
           &mdash; <varname>database_file</varname>, which contains the path
-          to the sqlite3 file containing the data.
+          to the SQLite3 file containing the data.
         </para>
 
         <para>
@@ -1828,7 +1828,7 @@ can use various data source backends.
 
         <para>
           Now, the last example is when there are master files we want to
-          serve in addition to whatever is inside the sqlite3 database.
+          serve in addition to whatever is inside the SQLite3 database.
 
           <screen>&gt; <userinput>config add data_sources/classes/IN</userinput>
 &gt; <userinput>config set data_sources/classes/IN[1]/type MasterFiles</userinput>
@@ -1857,7 +1857,7 @@ can use various data source backends.
       <note>
       <para>
         There's also <varname>Auth/database_file</varname> configuration
-        variable, pointing to a sqlite3 database file. This is no longer
+        variable, pointing to a SQLite3 database file. This is no longer
         used by <command>b10-auth</command>, but it is left in place for
         now, since other modules use it. Once <command>b10-xfrin</command>,
         <command>b10-xfrout</command> and <command>b10-ddns</command>
