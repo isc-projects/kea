@@ -128,6 +128,14 @@ TEST_F(MemoryClientTest, load) {
     client_->load(Name("example.org"), TEST_DATA_DIR "/example.org.zone");
 }
 
+TEST_F(MemoryClientTest, loadRRSIGFollowsNothing) {
+    EXPECT_THROW(client_->load(Name("example.org"),
+                               TEST_DATA_DIR
+                               "/example.org-rrsig-follows-nothing.zone"),
+                 InMemoryClient::AddError);
+    // Teardown checks for memory segment leaks
+}
+
 TEST_F(MemoryClientTest, getZoneCount) {
     EXPECT_EQ(0, client_->getZoneCount());
     client_->load(Name("example.org"), TEST_DATA_DIR "/example.org-empty.zone");
