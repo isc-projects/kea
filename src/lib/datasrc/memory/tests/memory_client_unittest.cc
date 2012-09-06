@@ -243,6 +243,18 @@ TEST_F(MemoryClientTest, addNullRRsetThrows) {
     // Teardown checks for memory segment leaks
 }
 
+TEST_F(MemoryClientTest, addEmptyRRsetThrows) {
+    client_->load(Name("example.org"),
+                  TEST_DATA_DIR "/example.org-rrsigs.zone");
+
+    RRsetPtr rrset_a(new RRset(Name("example.org"), RRClass::IN(), RRType::A(),
+                               RRTTL(300)));
+    EXPECT_THROW(client_->add(Name("example.org"), rrset_a),
+                 InMemoryClient::AddError);
+
+    // Teardown checks for memory segment leaks
+}
+
 TEST_F(MemoryClientTest, add) {
     client_->load(Name("example.org"), TEST_DATA_DIR "/example.org-empty.zone");
 
