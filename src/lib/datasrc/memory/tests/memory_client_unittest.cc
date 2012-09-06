@@ -152,6 +152,11 @@ TEST_F(MemoryClientTest, loadRRSIGTypeUnmatched) {
     // Teardown checks for memory segment leaks
 }
 
+TEST_F(MemoryClientTest, loadRRSIGs) {
+    client_->load(Name("example.org"), TEST_DATA_DIR "/example.org-rrsigs.zone");
+    EXPECT_EQ(1, client_->getZoneCount());
+}
+
 TEST_F(MemoryClientTest, getZoneCount) {
     EXPECT_EQ(0, client_->getZoneCount());
     client_->load(Name("example.org"), TEST_DATA_DIR "/example.org-empty.zone");
