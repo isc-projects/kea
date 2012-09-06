@@ -61,7 +61,8 @@ struct TSIGContext::TSIGContextImpl {
     TSIGContextImpl(const TSIGKey& key,
                     TSIGError error = TSIGError::NOERROR()) :
         state_(INIT), key_(key), error_(error),
-        previous_timesigned_(0), digest_len_(0)
+        previous_timesigned_(0), digest_len_(0),
+        last_sig_dist_(-1)
     {
         if (error == TSIGError::NOERROR()) {
             // In normal (NOERROR) case, the key should be valid, and we
@@ -152,6 +153,10 @@ struct TSIGContext::TSIGContextImpl {
     uint64_t previous_timesigned_; // only meaningful for response with BADTIME
     size_t digest_len_;
     HMACPtr hmac_;
+    // This is the distance from the last verified signed message. Value of 0
+    // means the last message was signed. Special value -1 means there was no
+    // signed message yet.
+    int last_sig_dist_;
 };
 
 void
@@ -433,6 +438,9 @@ TSIGContext::verify(const TSIGRecord* const record, const void* const data,
         isc_throw(InvalidParameter, "TSIG verify: empty data is invalid");
     }
 
+    // This message is signed and we won't throw any more.
+    impl_->last_sig_dist_ = 0;
+
     // Check key: whether we first verify it with a known key or we verify
     // it using the consistent key in the context.  If the check fails we are
     // done with BADKEY.
@@ -518,6 +526,14 @@ TSIGContext::verify(const TSIGRecord* const record, const void* const data,
     }
 
     return (impl_->postVerifyUpdate(TSIGError::BAD_SIG(), NULL, 0));
+}
+
+bool
+TSIGContext::lastHadSignature() const {
+    if (impl_->last_sig_dist_ == -1) {
+        isc_throw(TSIGContextError, "No message was verified yet");
+    }
+    return (impl_->last_sig_dist_ == 0);
 }
 
 } // namespace dns
