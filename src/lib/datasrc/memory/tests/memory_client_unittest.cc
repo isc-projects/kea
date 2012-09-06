@@ -279,6 +279,12 @@ TEST_F(MemoryClientTest, add) {
     EXPECT_EQ(ConstRRsetPtr(), iterator->getNextRRset());
 }
 
+TEST_F(MemoryClientTest, findZoneThrowsNotImplemented) {
+    // This method is not implemented.
+    EXPECT_THROW(client_->findZone(Name(".")),
+                 isc::NotImplemented);
+}
+
 TEST_F(MemoryClientTest, getUpdaterThrowsNotImplemented) {
     // This method is not implemented.
     EXPECT_THROW(client_->getUpdater(Name("."), false, false),
