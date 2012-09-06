@@ -372,7 +372,7 @@ public:
                           "RRSIG is being added, "
                           "but doesn't match the last RR's type: "
                           << last_rrset_->getType() << " vs. "
-                          << rrsig->getType());
+                          << covered);
             }
         }
 
