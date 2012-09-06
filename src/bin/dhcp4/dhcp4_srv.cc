@@ -86,7 +86,7 @@ Dhcpv4Srv::run() {
                           DHCP4_PACKET_PARSE_FAIL).arg(e.what());
                 continue;
             }
-            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_UNKNOWN)
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_RECEIVED)
                       .arg(serverReceivedPacketName(query->getType()))
                       .arg(query->getType())
                       .arg(query->getIface());
@@ -139,10 +139,12 @@ Dhcpv4Srv::run() {
                 LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL_DATA,
                           DHCP4_RESPONSE_DATA)
                           .arg(rsp->getType()).arg(rsp->toText());
-                if (!rsp->pack()) {
+
+                if (rsp->pack()) {
+                    IfaceMgr::instance().send(rsp);
+                } else {
                     LOG_ERROR(dhcp4_logger, DHCP4_PACK_FAIL);
                 }
-                IfaceMgr::instance().send(rsp);
             }
         }
 

@@ -27,7 +27,7 @@ import fcntl
 
 class TestDhcpv4Daemon(unittest.TestCase):
     def setUp(self):
-        # don't redirect stdout/stderr here as we want to print out things
+        # Don't redirect stdout/stderr here as we want to print out things
         # during the test
         #
         # However, we do want to set the logging lock directory to somewhere
@@ -152,7 +152,7 @@ class TestDhcpv4Daemon(unittest.TestCase):
     def test_portnumber_missing(self):
         print("Check that -p option requires a parameter.")
 
-        (returncode, output, error) = self.runCommand(['../b10-dhcp4', '-v', '-p'])
+        (returncode, output, error) = self.runCommand(['../b10-dhcp4', '-p'])
 
         # When invalid port number is specified, return code must not be success
         self.assertTrue(returncode != 0)
@@ -163,7 +163,7 @@ class TestDhcpv4Daemon(unittest.TestCase):
     def test_portnumber_invalid1(self):
         print("Check that -p option is check against bogus port number (999999).")
 
-        (returncode, output, error) = self.runCommand(['../b10-dhcp4', '-v', '-p','999999'])
+        (returncode, output, error) = self.runCommand(['../b10-dhcp4', '-p','999999'])
 
         # When invalid port number is specified, return code must not be success
         self.assertTrue(returncode != 0)
@@ -174,7 +174,7 @@ class TestDhcpv4Daemon(unittest.TestCase):
     def test_portnumber_invalid2(self):
         print("Check that -p option is check against bogus port number (123garbage).")
 
-        (returncode, output, error) = self.runCommand(['../b10-dhcp4', '-v', '-p','123garbage'])
+        (returncode, output, error) = self.runCommand(['../b10-dhcp4', '-p','123garbage'])
 
         # When invalid port number is specified, return code must not be success
         self.assertTrue(returncode != 0)
