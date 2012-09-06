@@ -13,20 +13,21 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
+
 #include <cassert>
 #include <iostream>
 
-#include <cc/session.h>
+#include <asiolink/asiolink.h>
 #include <cc/data.h>
-#include <exceptions/exceptions.h>
+#include <cc/session.h>
 #include <cc/session.h>
 #include <config/ccsession.h>
-#include <util/buffer.h>
-#include <dhcp4/spec_config.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/dhcp4_log.h>
+#include <dhcp4/spec_config.h>
 #include <dhcp/iface_mgr.h>
-#include <asiolink/asiolink.h>
+#include <exceptions/exceptions.h>
+#include <util/buffer.h>
 
 using namespace isc::asiolink;
 using namespace isc::cc;
@@ -55,6 +56,7 @@ ConstElementPtr
 ControlledDhcpv4Srv::dhcp4CommandHandler(const string& command, ConstElementPtr args) {
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_COMMAND, DHCP4_COMMAND_RECEIVED)
               .arg(command).arg(args->str());
+
     if (command == "shutdown") {
         if (ControlledDhcpv4Srv::server_) {
             ControlledDhcpv4Srv::server_->shutdown();
