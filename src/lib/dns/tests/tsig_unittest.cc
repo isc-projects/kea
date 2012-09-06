@@ -218,11 +218,17 @@ void
 commonVerifyChecks(TSIGContext& ctx, const TSIGRecord* record,
                    const void* data, size_t data_len, TSIGError expected_error,
                    TSIGContext::State expected_new_state =
-                   TSIGContext::VERIFIED_RESPONSE)
+                   TSIGContext::VERIFIED_RESPONSE,
+                   bool last_should_throw = false)
 {
     EXPECT_EQ(expected_error, ctx.verify(record, data, data_len));
     EXPECT_EQ(expected_error, ctx.getError());
     EXPECT_EQ(expected_new_state, ctx.getState());
+    if (last_should_throw) {
+        EXPECT_THROW(ctx.lastHadSignature(), TSIGContextError);
+    } else {
+        EXPECT_EQ(record != NULL, ctx.lastHadSignature());
+    }
 }
 
 TEST_F(TSIGTest, initialState) {
@@ -231,6 +237,9 @@ TEST_F(TSIGTest, initialState) {
 
     // And there should be no error code.
     EXPECT_EQ(TSIGError(Rcode::NOERROR()), tsig_ctx->getError());
+
+    // Nothing verified yet
+    EXPECT_THROW(tsig_ctx->lastHadSignature(), TSIGContextError);
 }
 
 TEST_F(TSIGTest, constructFromKeyRing) {
@@ -354,10 +363,17 @@ TEST_F(TSIGTest, verifyBadData) {
                                   12 + dummy_record.getLength() - 1),
                  InvalidParameter);
 
+    // Still nothing verified
+    EXPECT_THROW(tsig_ctx->lastHadSignature(), TSIGContextError);
+
     // And the data must not be NULL.
     EXPECT_THROW(tsig_ctx->verify(&dummy_record, NULL,
                                   12 + dummy_record.getLength()),
                  InvalidParameter);
+
+    // Still nothing verified
+    EXPECT_THROW(tsig_ctx->lastHadSignature(), TSIGContextError);
+
 }
 
 #ifdef ENABLE_CUSTOM_OPERATOR_NEW
@@ -806,7 +822,7 @@ TEST_F(TSIGTest, nosigThenValidate) {
         SCOPED_TRACE("Verify a response without TSIG that should exist");
         commonVerifyChecks(*tsig_ctx, NULL, &dummy_data[0],
                            dummy_data.size(), TSIGError::FORMERR(),
-                           TSIGContext::SENT_REQUEST);
+                           TSIGContext::SENT_REQUEST, true);
     }
 
     createMessageFromFile("tsig_verify5.wire");
