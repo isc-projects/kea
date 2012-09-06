@@ -420,6 +420,9 @@ class XfrinIXFRAdd(XfrinState):
             conn.get_transfer_stats().ixfr_changeset_count += 1
             soa_serial = get_soa_serial(rr.get_rdata()[0])
             if soa_serial == conn._end_serial:
+                # FIXME: It's insecure to do a full commit here, due
+                # to the fact that the message we're working on might not
+                # be signed right now.
                 conn._diff.commit()
                 self.set_xfrstate(conn, XfrinIXFREnd())
                 return True
@@ -429,6 +432,8 @@ class XfrinIXFRAdd(XfrinState):
                                          str(conn._current_serial) +
                                          ', got ' + str(soa_serial))
             else:
+                raise Exception()
+                conn._check_response_tsig_last()
                 conn._diff.commit()
                 self.set_xfrstate(conn, XfrinIXFRDeleteSOA())
                 return False
@@ -494,6 +499,7 @@ class XfrinAXFREnd(XfrinState):
         indicating there will be no more message to receive.
 
         """
+        conn._check_response_tsig_last()
         conn._diff.commit()
         return False
 
@@ -781,6 +787,15 @@ class XfrinConnection(asyncore.dispatcher):
             # part of security mechanism, it's probably better to be more
             # strict.
             raise XfrinProtocolError('Unexpected TSIG in response')
+
+    def _check_response_tsig_last(self):
+        """
+        Check there's a signature at the last message.
+        """
+        if self._tsig_ctx is not None:
+            if not self._tsig_ctx.last_has_signature():
+                raise XfrinProtocolError('TSIG verify fail: no TSIG on last '+
+                                         'message')
 
     def __parse_soa_response(self, msg, response_data):
         '''Parse a response to SOA query and extract the SOA from answer.

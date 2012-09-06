@@ -51,3 +51,6 @@ class MockTSIGContext(TSIGContext):
         if hasattr(self.error, '__call__'):
             return self.error(self)
         return self.error
+
+    def last_has_signature(self):
+        return True
