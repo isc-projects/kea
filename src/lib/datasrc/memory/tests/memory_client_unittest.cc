@@ -285,6 +285,19 @@ TEST_F(MemoryClientTest, findZoneThrowsNotImplemented) {
                  isc::NotImplemented);
 }
 
+TEST_F(MemoryClientTest, findZone2) {
+    client_->load(Name("example.org"),
+                  TEST_DATA_DIR "/example.org-rrsigs.zone");
+
+    isc::datasrc::memory::ZoneTable::FindResult
+        result(client_->findZone2(Name("example.com")));
+    EXPECT_EQ(result::NOTFOUND, result.code);
+
+    isc::datasrc::memory::ZoneTable::FindResult
+        result2(client_->findZone2(Name("example.org")));
+    EXPECT_EQ(result::SUCCESS, result2.code);
+}
+
 TEST_F(MemoryClientTest, getUpdaterThrowsNotImplemented) {
     // This method is not implemented.
     EXPECT_THROW(client_->getUpdater(Name("."), false, false),
