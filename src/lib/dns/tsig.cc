@@ -426,11 +426,21 @@ TSIGContext::verify(const TSIGRecord* const record, const void* const data,
                   "TSIG verify attempt after sending a response");
     }
 
-    // This case happens when we sent a signed request and have received an
-    // unsigned response.  According to RFC2845 Section 4.6 this case should be
-    // considered a "format error" (although the specific error code
-    // wouldn't matter much for the caller).
     if (record == NULL) {
+        if (impl_->last_sig_dist_ >= 0 && impl_->last_sig_dist_ < 99) {
+            // It is not signed, but in the middle of TCP stream. We just
+            // update the HMAC state and consider this message OK.
+            update(data, data_len);
+            // This one is not signed, the last signed is one message further
+            // now.
+            impl_->last_sig_dist_++;
+            // No digest to return now. Just say it's OK.
+            return (impl_->postVerifyUpdate(TSIGError::NOERROR(), NULL, 0));
+        }
+        // This case happens when we sent a signed request and have received an
+        // unsigned response.  According to RFC2845 Section 4.6 this case should be
+        // considered a "format error" (although the specific error code
+        // wouldn't matter much for the caller).
         return (impl_->postVerifyUpdate(TSIGError::FORMERR(), NULL, 0));
     }
 
