@@ -1174,4 +1174,10 @@ TEST_F(ExtendableLabelSequenceTest, extendBadData) {
     check_equal(full_ls2, els);
 }
 
+// Check the static fixed 'wildcard' LabelSequence
+TEST(WildCardLabelSequence, wildcard) {
+    ASSERT_FALSE(LabelSequence::WILDCARD_LABEL().isAbsolute());
+    ASSERT_EQ("*", LabelSequence::WILDCARD_LABEL().toText());
+}
+
 }
