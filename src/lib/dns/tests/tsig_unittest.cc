@@ -1089,7 +1089,7 @@ TEST_F(TSIGTest, verifyMulti) {
                            TSIGError(Rcode::NOERROR()),
                            TSIGContext::RECEIVED_REQUEST);
 
-        EXPECT_TRUE(tsig_verify_ctx->lastHadSignature());
+        EXPECT_FALSE(tsig_verify_ctx->lastHadSignature());
     }
 
     {
