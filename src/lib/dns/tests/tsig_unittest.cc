@@ -1114,8 +1114,38 @@ TEST_F(TSIGTest, verifyMulti) {
                            TSIGContext::VERIFIED_RESPONSE);
         EXPECT_TRUE(tsig_verify_ctx->lastHadSignature());
     }
-    // TODO: Fill in 99 unsigned messages and then try the 100th and see
-    // it is rejected (probably with FORMERR)
+
+    {
+        SCOPED_TRACE("Filling in bunch of unsigned messages");
+        for (size_t i = 0; i < 100; ++i) {
+            SCOPED_TRACE(i);
+            // Another message does not carry the TSIG on it. But it should
+            // be OK, it's in the middle of stream.
+            message.clear(Message::RENDER);
+            message.setQid(1234);
+            message.setOpcode(Opcode::QUERY());
+            message.setRcode(Rcode::NOERROR());
+            RRsetPtr answer_rrset(new RRset(test_name, test_class, RRType::A(),
+                                            test_ttl));
+            answer_rrset->addRdata(createRdata(RRType::A(), test_class,
+                                               "192.0.2.1"));
+            message.addRRset(Message::SECTION_ANSWER, answer_rrset);
+            message.toWire(renderer);
+            // Update the internal state. We abuse the knowledge of
+            // internals here a little bit to generate correct test data
+            tsig_ctx->update(renderer.getData(), renderer.getLength());
+
+            // 99 unsigned messages is OK. But the 100th must be signed, according
+            // to the RFC2845, section 4.4
+            commonVerifyChecks(*tsig_verify_ctx, NULL,
+                               renderer.getData(), renderer.getLength(),
+                               i == 99 ? TSIGError::FORMERR() :
+                                   TSIGError(Rcode::NOERROR()),
+                               TSIGContext::VERIFIED_RESPONSE);
+
+            EXPECT_FALSE(tsig_verify_ctx->lastHadSignature());
+        }
+    }
 }
 
 } // end namespace
