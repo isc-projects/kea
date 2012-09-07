@@ -154,9 +154,67 @@ TEST_F(MemoryClientTest, loadReloadZone) {
 		  client_->getFileName(Name("example.org")));
     EXPECT_EQ(1, client_->getZoneCount());
 
+    isc::datasrc::memory::ZoneTable::FindResult
+        result(client_->findZone2(Name("example.org")));
+    EXPECT_EQ(result::SUCCESS, result.code);
+    EXPECT_NE(static_cast<ZoneData*>(NULL),
+              result.zone_data);
+
+    /* Check SOA */
+    const ZoneNode* node = result.zone_data->getOriginNode();
+    EXPECT_NE(static_cast<const ZoneNode*>(NULL), node);
+
+    const RdataSet* set = node->getData();
+    EXPECT_NE(static_cast<const RdataSet*>(NULL), set);
+    EXPECT_EQ(RRType::SOA(), set->type);
+
+    set = set->getNext();
+    EXPECT_EQ(static_cast<const RdataSet*>(NULL), set);
+
+    /* Check ns1.example.org */
+    const ZoneTree& tree = result.zone_data->getZoneTree();
+    ZoneTree::Result zresult(tree.find(Name("ns1.example.org"), &node));
+    EXPECT_NE(ZoneTree::EXACTMATCH, zresult);
+
+    // Reload zone with different data
+
     client_->load(Name("example.org"),
 		  TEST_DATA_DIR "/example.org-rrsigs.zone");
     EXPECT_EQ(1, client_->getZoneCount());
+
+    isc::datasrc::memory::ZoneTable::FindResult
+        result2(client_->findZone2(Name("example.org")));
+    EXPECT_EQ(result::SUCCESS, result2.code);
+    EXPECT_NE(static_cast<ZoneData*>(NULL),
+              result2.zone_data);
+
+    /* Check SOA */
+    node = result2.zone_data->getOriginNode();
+    EXPECT_NE(static_cast<const ZoneNode*>(NULL), node);
+
+    set = node->getData();
+    EXPECT_NE(static_cast<const RdataSet*>(NULL), set);
+    EXPECT_EQ(RRType::SOA(), set->type);
+
+    set = set->getNext();
+    EXPECT_EQ(static_cast<const RdataSet*>(NULL), set);
+
+    /* Check ns1.example.org */
+    const ZoneTree& tree2 = result2.zone_data->getZoneTree();
+    ZoneTree::Result zresult2(tree2.find(Name("ns1.example.org"), &node));
+    EXPECT_EQ(ZoneTree::EXACTMATCH, zresult2);
+    EXPECT_NE(static_cast<const ZoneNode*>(NULL), node);
+
+    set = node->getData();
+    EXPECT_NE(static_cast<const RdataSet*>(NULL), set);
+    EXPECT_EQ(RRType::AAAA(), set->type);
+
+    set = set->getNext();
+    EXPECT_NE(static_cast<const RdataSet*>(NULL), set);
+    EXPECT_EQ(RRType::A(), set->type);
+
+    set = set->getNext();
+    EXPECT_EQ(static_cast<const RdataSet*>(NULL), set);
 
     // Teardown checks for memory segment leaks
 }
