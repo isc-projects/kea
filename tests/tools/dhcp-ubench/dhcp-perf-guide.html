@@ -1,23 +1,25 @@
-<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>DHCP Performance Guide</title><link rel="stylesheet" type="text/css" href="bind10-guide.css"><meta name="generator" content="DocBook XSL Stylesheets V1.76.1"><meta name="description" content="BIND 10 is a framework that features Domain Name System (DNS) suite and Dynamic Host Configuration Protocol (DHCP) servers with development managed by Internet Systems Consortium (ISC). This document describes various aspects of DHCP performance, measurements and tuning. It covers BIND 10 DHCP (codename Kea), existing ISC DHCP4 software, perfdhcp (a DHCP performance measurement tool) and other related topics."></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="book" title="DHCP Performance Guide"><div class="titlepage"><div><div><h1 class="title"><a name="idp61184"></a>DHCP Performance Guide</h1></div><div><div class="author"><h3 class="author"><span class="firstname">Tomasz</span> <span class="surname">Mrugalski</span></h3></div></div><div><p class="releaseinfo">This is a companion document for BIND 10 version
-    20120712.</p></div><div><p class="copyright">Copyright © 2012 Internet Systems Consortium, Inc. ("ISC")</p></div><div><div class="abstract" title="Abstract"><p class="title"><b>Abstract</b></p><p>BIND 10 is a framework that features Domain Name System
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+   <title>DHCP Performance Guide</title><link rel="stylesheet" type="text/css" href="bind10-guide.css"><meta name="generator" content="DocBook XSL Stylesheets V1.76.1"><meta name="description" content="BIND 10 is a framework that features Domain Name System (DNS) suite and Dynamic Host Configuration Protocol (DHCP) servers with development managed by Internet Systems Consortium (ISC). This document describes various aspects of DHCP performance, measurements and tuning. It covers BIND 10 DHCP (codename Kea), existing ISC DHCP4 software, perfdhcp (a DHCP performance measurement tool) and other related topics."></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="book" title="DHCP Performance Guide"><div class="titlepage"><div><div><h1 class="title"><a name="d0e3"></a>DHCP Performance Guide</h1></div><div><div class="author"><h3 class="author"><span class="firstname">Tomasz</span> <span class="surname">Mrugalski</span></h3></div></div><div><div class="author"><h3 class="author"><span class="firstname">Marcin</span> <span class="surname">Siodelski</span></h3></div></div><div><p class="releaseinfo">This is a companion document for BIND 10 version
+    20120712.</p></div><div><p class="copyright">Copyright &copy; 2012 Internet Systems Consortium, Inc. ("ISC")</p></div><div><div class="abstract" title="Abstract"><p class="title"><b>Abstract</b></p><p>BIND 10 is a framework that features Domain Name System
       (DNS) suite and Dynamic Host Configuration Protocol (DHCP)
       servers with development managed by Internet Systems Consortium (ISC).
       This document describes various aspects of DHCP performance,
       measurements and tuning. It covers BIND 10 DHCP (codename Kea),
       existing ISC DHCP4 software, perfdhcp (a DHCP performance
-      measurement tool) and other related topics.</p></div></div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="preface"><a href="#idp67504">Preface</a></span></dt><dd><dl><dt><span class="section"><a href="#acknowledgements">1. Acknowledgements</a></span></dt></dl></dd><dt><span class="chapter"><a href="#intro">1. Introduction</a></span></dt><dt><span class="chapter"><a href="#dhcp4">2. ISC DHCP 4.x</a></span></dt><dt><span class="chapter"><a href="#kea">3. Kea</a></span></dt><dd><dl><dt><span class="section"><a href="#idp75568">3.1. Backend performance evaluation</a></span></dt><dt><span class="section"><a href="#mysql-backend">3.2. MySQL backend</a></span></dt><dd><dl><dt><span class="section"><a href="#idp99824">3.2.1. MySQL tweaks</a></span></dt></dl></dd><dt><span class="section"><a href="#sqlite-ubench">3.3. SQLite-ubench</a></span></dt><dd><dl><dt><span class="section"><a href="#sqlite-tweaks">3.3.1. SQLite tweaks</a></span></dt></dl></dd><dt><span class="section"><a href="#memfile-ubench">3.4. memfile-ubench</a></span></dt><dd><dl><dt><span class="section"><a href="#memfile-tweaks">3.4.1. memfile tweaks</a></span></dt></dl></dd><dt><span class="section"><a href="#idp121776">3.5. Performance measurements</a></span></dt><dt><span class="section"><a href="#idp196720">3.6. Possible further optimizations</a></span></dt></dl></dd><dt><span class="chapter"><a href="#perfdhcp">4. perfdhcp</a></span></dt></dl></div><div class="list-of-tables"><p><b>List of Tables</b></p><dl><dt>3.1. <a href="#idp124880">Synchronous results</a></dt><dt>3.2. <a href="#idp145952">Asynchronous results</a></dt><dt>3.3. <a href="#tbl-perf-results">Estimated performance</a></dt></dl></div><div class="preface" title="Preface"><div class="titlepage"><div><div><h2 class="title"><a name="idp67504"></a>Preface</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#acknowledgements">1. Acknowledgements</a></span></dt></dl></div><div class="section" title="1. Acknowledgements"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="acknowledgements"></a>1. Acknowledgements</h2></div></div></div><p>ISC would like to acknowledge generous support for
+      measurement tool) and other related topics.</p></div></div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="preface"><a href="#d0e28">Preface</a></span></dt><dd><dl><dt><span class="section"><a href="#acknowledgements">Acknowledgements</a></span></dt></dl></dd><dt><span class="chapter"><a href="#intro">1. Introduction</a></span></dt><dt><span class="chapter"><a href="#dhcp4">2. ISC DHCP 4.x</a></span></dt><dt><span class="chapter"><a href="#kea">3. Kea</a></span></dt><dd><dl><dt><span class="section"><a href="#d0e54">Backend performance evaluation</a></span></dt><dt><span class="section"><a href="#mysql-backend">MySQL backend</a></span></dt><dd><dl><dt><span class="section"><a href="#d0e156">MySQL tweaks</a></span></dt></dl></dd><dt><span class="section"><a href="#sqlite-ubench">SQLite-ubench</a></span></dt><dd><dl><dt><span class="section"><a href="#sqlite-tweaks">SQLite tweaks</a></span></dt></dl></dd><dt><span class="section"><a href="#memfile-ubench">memfile-ubench</a></span></dt><dd><dl><dt><span class="section"><a href="#memfile-tweaks">memfile tweaks</a></span></dt></dl></dd><dt><span class="section"><a href="#d0e245">Performance measurements</a></span></dt><dt><span class="section"><a href="#d0e521">Possible further optimizations</a></span></dt></dl></dd><dt><span class="chapter"><a href="#perfdhcp">4. perfdhcp</a></span></dt><dd><dl><dt><span class="section"><a href="#d0e533">Purpose</a></span></dt><dt><span class="section"><a href="#d0e538">Key features</a></span></dt><dt><span class="section"><a href="#perfdhcp-command-line">Command line options</a></span></dt><dt><span class="section"><a href="#d0e574">Running a test</a></span></dt></dl></dd></dl></div><div class="list-of-tables"><p><b>List of Tables</b></p><dl><dt>3.1. <a href="#d0e256">Synchronous results</a></dt><dt>3.2. <a href="#d0e332">Asynchronous results</a></dt><dt>3.3. <a href="#tbl-perf-results">Estimated performance</a></dt></dl></div><div class="preface" title="Preface"><div class="titlepage"><div><div><h2 class="title"><a name="d0e28"></a>Preface</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#acknowledgements">Acknowledgements</a></span></dt></dl></div><div class="section" title="Acknowledgements"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="acknowledgements"></a>Acknowledgements</h2></div></div></div><p>ISC would like to acknowledge generous support for
       BIND 10 development of DHCPv4 and DHCPv6 components provided
-      by <a class="ulink" href="http://www.comcast.com/" target="_top">Comcast</a>.</p></div></div><div class="chapter" title="Chapter 1. Introduction"><div class="titlepage"><div><div><h2 class="title"><a name="intro"></a>Chapter 1. Introduction</h2></div></div></div><p>
+      by <a class="ulink" href="http://www.comcast.com/" target="_top">Comcast</a>.</p></div></div><div class="chapter" title="Chapter&nbsp;1.&nbsp;Introduction"><div class="titlepage"><div><div><h2 class="title"><a name="intro"></a>Chapter&nbsp;1.&nbsp;Introduction</h2></div></div></div><p>
       This document is in its early stages of development. It is
       expected to grow significantly in a near future. It will
       cover topics like database backend perfomance measurements,
       pros an cons of various optimization techniques and
       tools.
-    </p></div><div class="chapter" title="Chapter 2. ISC DHCP 4.x"><div class="titlepage"><div><div><h2 class="title"><a name="dhcp4"></a>Chapter 2. ISC DHCP 4.x</h2></div></div></div><p>
+    </p></div><div class="chapter" title="Chapter&nbsp;2.&nbsp;ISC DHCP 4.x"><div class="titlepage"><div><div><h2 class="title"><a name="dhcp4"></a>Chapter&nbsp;2.&nbsp;ISC DHCP 4.x</h2></div></div></div><p>
       TODO: Write something about ISC DHCP4 here.
-    </p></div><div class="chapter" title="Chapter 3. Kea"><div class="titlepage"><div><div><h2 class="title"><a name="kea"></a>Chapter 3. Kea</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#idp75568">3.1. Backend performance evaluation</a></span></dt><dt><span class="section"><a href="#mysql-backend">3.2. MySQL backend</a></span></dt><dd><dl><dt><span class="section"><a href="#idp99824">3.2.1. MySQL tweaks</a></span></dt></dl></dd><dt><span class="section"><a href="#sqlite-ubench">3.3. SQLite-ubench</a></span></dt><dd><dl><dt><span class="section"><a href="#sqlite-tweaks">3.3.1. SQLite tweaks</a></span></dt></dl></dd><dt><span class="section"><a href="#memfile-ubench">3.4. memfile-ubench</a></span></dt><dd><dl><dt><span class="section"><a href="#memfile-tweaks">3.4.1. memfile tweaks</a></span></dt></dl></dd><dt><span class="section"><a href="#idp121776">3.5. Performance measurements</a></span></dt><dt><span class="section"><a href="#idp196720">3.6. Possible further optimizations</a></span></dt></dl></div><p>
+    </p></div><div class="chapter" title="Chapter&nbsp;3.&nbsp;Kea"><div class="titlepage"><div><div><h2 class="title"><a name="kea"></a>Chapter&nbsp;3.&nbsp;Kea</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#d0e54">Backend performance evaluation</a></span></dt><dt><span class="section"><a href="#mysql-backend">MySQL backend</a></span></dt><dd><dl><dt><span class="section"><a href="#d0e156">MySQL tweaks</a></span></dt></dl></dd><dt><span class="section"><a href="#sqlite-ubench">SQLite-ubench</a></span></dt><dd><dl><dt><span class="section"><a href="#sqlite-tweaks">SQLite tweaks</a></span></dt></dl></dd><dt><span class="section"><a href="#memfile-ubench">memfile-ubench</a></span></dt><dd><dl><dt><span class="section"><a href="#memfile-tweaks">memfile tweaks</a></span></dt></dl></dd><dt><span class="section"><a href="#d0e245">Performance measurements</a></span></dt><dt><span class="section"><a href="#d0e521">Possible further optimizations</a></span></dt></dl></div><p>
 
-    </p><div class="section" title="3.1. Backend performance evaluation"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idp75568"></a>3.1. Backend performance evaluation</h2></div></div></div><p>
+    </p><div class="section" title="Backend performance evaluation"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="d0e54"></a>Backend performance evaluation</h2></div></div></div><p>
         Kea will support several different database backends, using
         both popular databases (like MySQL or SQLite) and
         custom-developed solutions (like in-memory database).  BIND 10
@@ -62,7 +64,7 @@
     </p><p>
       The framework attempts to do the same amount of operations for every
       backend thus allowing fair complarison between them.
-    </p></div><div class="section" title="3.2. MySQL backend"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="mysql-backend"></a>3.2. MySQL backend</h2></div></div></div><p>MySQL backend requires MySQL client development libraries. It uses
+    </p></div><div class="section" title="MySQL backend"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="mysql-backend"></a>MySQL backend</h2></div></div></div><p>MySQL backend requires MySQL client development libraries. It uses
       mysql_config tool (that works similar to pkg-config) to discover required
       compilation and linking options. To install required packages on Ubuntu,
       use the following command:
@@ -111,13 +113,13 @@ Possible command-line parameters:
  -c yes|no - should compiled statements be used (MySQL only)
 </pre><p>
 
-      </p><div class="section" title="3.2.1. MySQL tweaks"><div class="titlepage"><div><div><h3 class="title"><a name="idp99824"></a>3.2.1. MySQL tweaks</h3></div></div></div><p>One parameter that has huge impact on performance is a a backend engine.
+      </p><div class="section" title="MySQL tweaks"><div class="titlepage"><div><div><h3 class="title"><a name="d0e156"></a>MySQL tweaks</h3></div></div></div><p>One parameter that has huge impact on performance is a a backend engine.
         You can get a list of engines of your MySQL implementation by using
 
         </p><pre class="screen">&gt; <strong class="userinput"><code>show engines;</code></strong></pre><p>
 
         in your mysql client. Two notable engines are MyISAM and InnoDB. mysql_ubench will
-        use MyISAM for synchronous mode and InnoDB for asynchronous.</p></div></div><div class="section" title="3.3. SQLite-ubench"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="sqlite-ubench"></a>3.3. SQLite-ubench</h2></div></div></div><p>SQLite backend requires both sqlite3 development and run-time package. Their
+        use MyISAM for synchronous mode and InnoDB for asynchronous.</p></div></div><div class="section" title="SQLite-ubench"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="sqlite-ubench"></a>SQLite-ubench</h2></div></div></div><p>SQLite backend requires both sqlite3 development and run-time package. Their
       names may vary from system to system, but on Ubuntu 12.04 they are called
       sqlite3 libsqlite3-dev. To install them, use the following command:
 
@@ -132,7 +134,7 @@ Possible command-line parameters:
       </p><pre class="screen">&gt; <strong class="userinput"><code>./sqlite_ubench</code></strong></pre><p>
       or
       </p><pre class="screen">&gt; <strong class="userinput"><code>./sqlite_ubench &gt; results-sqlite.txt</code></strong></pre><p>
-      </p><div class="section" title="3.3.1. SQLite tweaks"><div class="titlepage"><div><div><h3 class="title"><a name="sqlite-tweaks"></a>3.3.1. SQLite tweaks</h3></div></div></div><p>To modify default sqlite_ubench parameters, command line
+      </p><div class="section" title="SQLite tweaks"><div class="titlepage"><div><div><h3 class="title"><a name="sqlite-tweaks"></a>SQLite tweaks</h3></div></div></div><p>To modify default sqlite_ubench parameters, command line
         switches can be used. Currently supported parameters are
         (default values specified in brackets):
         </p><div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>-f filename - name of the database file ("sqlite.db")</p></li><li class="listitem"><p>-n num - number of iterations (100)</p></li><li class="listitem"><p>-s yes|no - should the operations be performend in synchronous (yes)
@@ -143,13 +145,13 @@ Possible command-line parameters:
         turned to several modes of operation. Its value can be
         modified in SQLite_uBenchmark::connect().  See
         http://www.sqlite.org/pragma.html#pragma_journal_mode for
-        detailed explanantion.</p></div></div><div class="section" title="3.4. memfile-ubench"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="memfile-ubench"></a>3.4. memfile-ubench</h2></div></div></div><p>Memfile backend is custom developed prototype backend that
+        detailed explanantion.</p></div></div><div class="section" title="memfile-ubench"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="memfile-ubench"></a>memfile-ubench</h2></div></div></div><p>Memfile backend is custom developed prototype backend that
       somewhat mimics operation of ISC DHCP4. It uses in-memory
       storage using standard C++ and boost mechanisms (std::map and
       boost::shared_ptr&lt;&gt;). All database changes are also
       written to a lease file. That file is strictly write-only. This
       approach takes advantage of the fact that simple append is faster
-      than edition with potential whole file relocation.</p><div class="section" title="3.4.1. memfile tweaks"><div class="titlepage"><div><div><h3 class="title"><a name="memfile-tweaks"></a>3.4.1. memfile tweaks</h3></div></div></div><p>To modify default memfile_ubench parameters, command line
+      than edition with potential whole file relocation.</p><div class="section" title="memfile tweaks"><div class="titlepage"><div><div><h3 class="title"><a name="memfile-tweaks"></a>memfile tweaks</h3></div></div></div><p>To modify default memfile_ubench parameters, command line
         switches can be used. Currently supported parameters are
         (default values specified in brackets):
         </p><div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>-f filename - name of the database file ("dhcpd.leases")</p></li><li class="listitem"><p>-n num - number of iterations (100)</p></li><li class="listitem"><p>-s yes|no - should the operations be performend in synchronous (yes)
@@ -157,7 +159,7 @@ Possible command-line parameters:
         </p><p>memfile can run in asynchronous or synchronous mode. This
         mode can be controlled by using sync parameter. It uses
         fflush() and fsync() in synchronous mode to make sure that
-        data is not buffered and physically stored on disk.</p></div></div><div class="section" title="3.5. Performance measurements"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idp121776"></a>3.5. Performance measurements</h2></div></div></div><p>This section contains sample results for backend performance measurements,
+        data is not buffered and physically stored on disk.</p></div></div><div class="section" title="Performance measurements"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="d0e245"></a>Performance measurements</h2></div></div></div><p>This section contains sample results for backend performance measurements,
       taken using microbenchmarks. Tests were conducted on reasonably powerful machine:
       </p><pre class="screen">
 CPU: Quad-core Intel(R) Core(TM) i7-2600K CPU @ 3.40GHz (8 logical cores)
@@ -170,13 +172,13 @@ SQLite version: 3.7.9sourceid version is 2011-11-01 00:52:41 c7c6050ef060877ebe7
       asynchronous. As those modes offer radically different
       performances, synchronous mode was conducted for 1000 (one
       thousand) repetitions and asynchronous mode was conducted for
-      100000 (hundred thousand) repetitions.</p><div class="table"><a name="idp124880"></a><p class="title"><b>Table 3.1. Synchronous results</b></p><div class="table-contents"><table summary="Synchronous results" border="1"><colgroup><col align="center" class="Backend"><col align="center" class="Num"><col align="center" class="Create"><col align="center" class="Search"><col align="center" class="Update"><col align="center" class="Delete"></colgroup><thead><tr><th align="center">Backend</th><th align="center">Operations</th><th align="center">Create</th><th align="center">Search</th><th align="center">Update</th><th align="center">Delete</th><th align="center">Average</th></tr></thead><tbody><tr><td align="center">MySQL</td><td align="center">1000</td><td align="center">31.603978s</td><td align="center"> 0.116612s</td><td align="center">27.964191s</td><td align="center">27.695209s</td><td align="center">21.844998s</td></tr><tr><td align="center">SQLite</td><td align="center">1000</td><td align="center">61.421356s</td><td align="center"> 0.033283s</td><td align="center">59.476638s</td><td align="center">56.034150s</td><td align="center">44.241357s</td></tr><tr><td align="center">memfile</td><td align="center">1000</td><td align="center">41.711886s</td><td align="center"> 0.000724s</td><td align="center">42.267578s</td><td align="center">42.169679s</td><td align="center">31.537467s</td></tr></tbody></table></div></div><br class="table-break"><p>Following parameters were measured for asynchronous mode.
+      100000 (hundred thousand) repetitions.</p><div class="table"><a name="d0e256"></a><p class="title"><b>Table&nbsp;3.1.&nbsp;Synchronous results</b></p><div class="table-contents"><table summary="Synchronous results" border="1"><colgroup><col align="center" class="Backend"><col align="center" class="Num"><col align="center" class="Create"><col align="center" class="Search"><col align="center" class="Update"><col align="center" class="Delete"></colgroup><thead><tr><th align="center">Backend</th><th align="center">Operations</th><th align="center">Create</th><th align="center">Search</th><th align="center">Update</th><th align="center">Delete</th><th align="center">Average</th></tr></thead><tbody><tr><td align="center">MySQL</td><td align="center">1000</td><td align="center">31.603978s</td><td align="center"> 0.116612s</td><td align="center">27.964191s</td><td align="center">27.695209s</td><td align="center">21.844998s</td></tr><tr><td align="center">SQLite</td><td align="center">1000</td><td align="center">61.421356s</td><td align="center"> 0.033283s</td><td align="center">59.476638s</td><td align="center">56.034150s</td><td align="center">44.241357s</td></tr><tr><td align="center">memfile</td><td align="center">1000</td><td align="center">41.711886s</td><td align="center"> 0.000724s</td><td align="center">42.267578s</td><td align="center">42.169679s</td><td align="center">31.537467s</td></tr></tbody></table></div></div><br class="table-break"><p>Following parameters were measured for asynchronous mode.
       MySQL and SQLite were run with 100 thousand repetitions. Memfile
-      was run for 1 million repetitions due to much larger performance.</p><div class="table"><a name="idp145952"></a><p class="title"><b>Table 3.2. Asynchronous results</b></p><div class="table-contents"><table summary="Asynchronous results" border="1"><colgroup><col align="center" class="Backend"><col align="center" class="Num"><col align="center" class="Create"><col align="center" class="Search"><col align="center" class="Update"><col align="center" class="Delete"></colgroup><thead><tr><th align="center">Backend</th><th align="center">Operations</th><th align="center">Create [s]</th><th align="center">Search [s]</th><th align="center">Update [s]</th><th align="center">Delete [s]</th><th align="center">Average [s]</th></tr></thead><tbody><tr><td align="center">MySQL</td><td align="center">100000</td><td align="center">10.584842s</td><td align="center">10.386402s</td><td align="center">10.062384s</td><td align="center"> 8.890197s</td><td align="center"> 9.980956s</td></tr><tr><td align="center">SQLite</td><td align="center">100000</td><td align="center"> 3.710356s</td><td align="center"> 3.159129s</td><td align="center"> 2.865354s</td><td align="center"> 2.439406s</td><td align="center"> 3.043561s</td></tr><tr><td align="center">memfile</td><td align="center">1000000 (sic!)</td><td align="center"> 6.084131s</td><td align="center"> 0.862667s</td><td align="center"> 6.018585s</td><td align="center"> 5.146704s</td><td align="center"> 4.528022s</td></tr></tbody></table></div></div><br class="table-break"><p>Presented performance results can be computed into operations per second metrics.
+      was run for 1 million repetitions due to much larger performance.</p><div class="table"><a name="d0e332"></a><p class="title"><b>Table&nbsp;3.2.&nbsp;Asynchronous results</b></p><div class="table-contents"><table summary="Asynchronous results" border="1"><colgroup><col align="center" class="Backend"><col align="center" class="Num"><col align="center" class="Create"><col align="center" class="Search"><col align="center" class="Update"><col align="center" class="Delete"></colgroup><thead><tr><th align="center">Backend</th><th align="center">Operations</th><th align="center">Create [s]</th><th align="center">Search [s]</th><th align="center">Update [s]</th><th align="center">Delete [s]</th><th align="center">Average [s]</th></tr></thead><tbody><tr><td align="center">MySQL</td><td align="center">100000</td><td align="center">10.584842s</td><td align="center">10.386402s</td><td align="center">10.062384s</td><td align="center"> 8.890197s</td><td align="center"> 9.980956s</td></tr><tr><td align="center">SQLite</td><td align="center">100000</td><td align="center"> 3.710356s</td><td align="center"> 3.159129s</td><td align="center"> 2.865354s</td><td align="center"> 2.439406s</td><td align="center"> 3.043561s</td></tr><tr><td align="center">memfile</td><td align="center">1000000 (sic!)</td><td align="center"> 6.084131s</td><td align="center"> 0.862667s</td><td align="center"> 6.018585s</td><td align="center"> 5.146704s</td><td align="center"> 4.528022s</td></tr></tbody></table></div></div><br class="table-break"><p>Presented performance results can be computed into operations per second metrics.
       It should be noted that due to large differences between various operations (sometime
       over 3 orders of magnitude), it is difficult to create a simple, readable chart with
-      that data.</p><div class="table"><a name="tbl-perf-results"></a><p class="title"><b>Table 3.3. Estimated performance</b></p><div class="table-contents"><table summary="Estimated performance" border="1"><colgroup><col align="center" class="Backend"><col align="center" class="Create"><col align="center" class="Search"><col align="center" class="Update"><col align="center" class="Delete"><col align="center" class="Average"></colgroup><thead><tr><th align="center">Backend</th><th align="center">Create [oper/s]</th><th align="center">Search [oper/s]</th><th align="center">Update [oper/s]</th><th align="center">Delete [oper/s]</th><th align="center">Average [oper/s]</th></tr></thead><tbody><tr><td align="center">MySQL (async)</td><td align="center">9447.47</td><td align="center">9627.97</td><td align="center">9938.00</td><td align="center">11248.34</td><td align="center">10065.45</td></tr><tr><td align="center">SQLite (async)</td><td align="center">26951.59</td><td align="center">31654.29</td><td align="center">34899.70</td><td align="center">40993.59</td><td align="center">33624.79</td></tr><tr><td align="center">memfile (async)</td><td align="center">164362.01</td><td align="center">1159195.84</td><td align="center">166152.01</td><td align="center">194299.11</td><td align="center">421002.24</td></tr><tr><td align="center">MySQL (sync)</td><td align="center">31.64</td><td align="center">8575.45</td><td align="center">35.76</td><td align="center">36.11</td><td align="center">2169.74</td></tr><tr><td align="center">SQLite (sync)</td><td align="center">16.28</td><td align="center">20045.37</td><td align="center">16.81</td><td align="center">17.85</td><td align="center">7524.08</td></tr><tr><td align="center">memfile (sync)</td><td align="center">23.97</td><td align="center">1381215.47</td><td align="center">23.66</td><td align="center">23.71</td><td align="center">345321.70</td></tr></tbody></table></div></div><br class="table-break"><div class="mediaobject"><img src="performance-results-graph1.png" alt="Performance measurements"><div class="caption"><p>Graphical representation of the performance results
-          presented in table <a class="xref" href="#tbl-perf-results" title="Table 3.3. Estimated performance">Table 3.3, &#8220;Estimated performance&#8221;</a>.</p></div></div></div><div class="section" title="3.6. Possible further optimizations"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idp196720"></a>3.6. Possible further optimizations</h2></div></div></div><p>
+      that data.</p><div class="table"><a name="tbl-perf-results"></a><p class="title"><b>Table&nbsp;3.3.&nbsp;Estimated performance</b></p><div class="table-contents"><table summary="Estimated performance" border="1"><colgroup><col align="center" class="Backend"><col align="center" class="Create"><col align="center" class="Search"><col align="center" class="Update"><col align="center" class="Delete"><col align="center" class="Average"></colgroup><thead><tr><th align="center">Backend</th><th align="center">Create [oper/s]</th><th align="center">Search [oper/s]</th><th align="center">Update [oper/s]</th><th align="center">Delete [oper/s]</th><th align="center">Average [oper/s]</th></tr></thead><tbody><tr><td align="center">MySQL (async)</td><td align="center">9447.47</td><td align="center">9627.97</td><td align="center">9938.00</td><td align="center">11248.34</td><td align="center">10065.45</td></tr><tr><td align="center">SQLite (async)</td><td align="center">26951.59</td><td align="center">31654.29</td><td align="center">34899.70</td><td align="center">40993.59</td><td align="center">33624.79</td></tr><tr><td align="center">memfile (async)</td><td align="center">164362.01</td><td align="center">1159195.84</td><td align="center">166152.01</td><td align="center">194299.11</td><td align="center">421002.24</td></tr><tr><td align="center">MySQL (sync)</td><td align="center">31.64</td><td align="center">8575.45</td><td align="center">35.76</td><td align="center">36.11</td><td align="center">2169.74</td></tr><tr><td align="center">SQLite (sync)</td><td align="center">16.28</td><td align="center">20045.37</td><td align="center">16.81</td><td align="center">17.85</td><td align="center">7524.08</td></tr><tr><td align="center">memfile (sync)</td><td align="center">23.97</td><td align="center">1381215.47</td><td align="center">23.66</td><td align="center">23.71</td><td align="center">345321.70</td></tr></tbody></table></div></div><br class="table-break"><div class="mediaobject"><img src="performance-results-graph1.png" alt="Performance measurements"><div class="caption"><p>Graphical representation of the performance results
+          presented in table <a class="xref" href="#tbl-perf-results" title="Table&nbsp;3.3.&nbsp;Estimated performance">Table&nbsp;3.3, &#8220;Estimated performance&#8221;</a>.</p></div></div></div><div class="section" title="Possible further optimizations"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="d0e521"></a>Possible further optimizations</h2></div></div></div><p>
         For debugging purposes the code was compiled with -g -O0
         flags. While majority of the time was spent in backend
         functions (that was probably compiled with -O2 flags), the
@@ -194,6 +196,209 @@ SQLite version: 3.7.9sourceid version is 2011-11-01 00:52:41 c7c6050ef060877ebe7
         Multi-threaded or multi-process benchmark may be considered in
         the future. It may be somewhat difficult as only some backends
         support concurrent access.
-      </p></div></div><div class="chapter" title="Chapter 4. perfdhcp"><div class="titlepage"><div><div><h2 class="title"><a name="perfdhcp"></a>Chapter 4. perfdhcp</h2></div></div></div><p>
-      TODO: Write something about perfdhcp here.
-    </p></div></div></body></html>
+      </p></div></div><div class="chapter" title="Chapter&nbsp;4.&nbsp;perfdhcp"><div class="titlepage"><div><div><h2 class="title"><a name="perfdhcp"></a>Chapter&nbsp;4.&nbsp;perfdhcp</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#d0e533">Purpose</a></span></dt><dt><span class="section"><a href="#d0e538">Key features</a></span></dt><dt><span class="section"><a href="#perfdhcp-command-line">Command line options</a></span></dt><dt><span class="section"><a href="#d0e574">Running a test</a></span></dt></dl></div><div class="section" title="Purpose"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="d0e533"></a>Purpose</h2></div></div></div><p>
+        There is a growing need to evaluate performance of DHCP servers in
+        different traffic conditions to understand their bottle necks.
+        This helps to elimante bugs in existing DHCP software as well
+        as make informed decisions regarding new DHCP software designs
+        to significantly improve its performance. The perfdhcp tool has
+        been created to fill the gap in performance measurement capabilities
+        mostly. However, the number of implemented features and parameters
+        exposed to the user make this tool useful for functional testing as
+        well.
+      </p></div><div class="section" title="Key features"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="d0e538"></a>Key features</h2></div></div></div><p>
+        The perfdhcp exposes the number of command line parameters to
+        control DHCP message exchanges. Currently they fall back to
+        the following categories:
+        </p><div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>
+              Rate control - control how many DHCP exchanges
+              are initiated within a period of time. Tool can also simulate
+              best effort conditions where it attempts to start as many
+              exchanges as possible.
+            </p></li><li class="listitem"><p>
+              Test exit specifiers - control the conditions when test
+              completes including number of initiated exchanges, test period or
+              maximum number of dropped packets.
+            </p></li><li class="listitem"><p>
+              Packet templates - specify files containing packet templates that
+              are used by perfdhcp to create custom DHCP messages instead of
+              default. Tool also allows to specify number of values indicating
+              offsets of variable values within a packet that are modified in
+              flight by the tool.
+            </p></li><li class="listitem"><p>
+              Reporting - for each test produce the set of performance data
+              including achieved packet exchange rate (server performance).
+              There is also a number of diagnostic selectors available that
+              enable periodic (intermediate) reporting, packet timestamps
+              printing and detailed information about perfdhcp internal
+              states (for debugging).
+            </p></li><li class="listitem"><p>
+              Different mode of operations - specify DHCP version used
+              (v4 or v6), 2-way or 4-way exchanges, use Rapid Commit option
+              for DHCPv6.
+            </p></li><li class="listitem"><p>
+              IP layer options - specify local/remote address, local interface
+              and local port to be used for communication with DHCP server.
+            </p></li></ol></div><p>
+      </p></div><div class="section" title="Command line options"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="perfdhcp-command-line"></a>Command line options</h2></div></div></div><p>
+        The following command line options may be used with perfdhcp tool.
+        This summary also presents its possible exit codes as well as
+        error counters printed along when test is complete:
+        </p><pre class="screen">$ <strong class="userinput"><code>./perfdhcp -h</code></strong>
+perfdhcp [-hv] [-4|-6] [-r&lt;rate&gt;] [-t&lt;report&gt;] [-R&lt;range&gt;] [-b&lt;base&gt;]
+    [-n&lt;num-request&gt;] [-p&lt;test-period&gt;] [-d&lt;drop-time&gt;] [-D&lt;max-drop&gt;]
+    [-l&lt;local-addr|interface&gt;] [-P&lt;preload&gt;] [-a&lt;aggressivity&gt;]
+    [-L&lt;local-port&gt;] [-s&lt;seed&gt;] [-i] [-B] [-c] [-1]
+    [-T&lt;template-file&gt;] [-X&lt;xid-offset&gt;] [-O&lt;random-offset]
+    [-E&lt;time-offset&gt;] [-S&lt;srvid-offset&gt;] [-I&lt;ip-offset&gt;]
+    [-x&lt;diagnostic-selector&gt;] [-w&lt;wrapped&gt;] [server]
+
+The [server] argument is the name/address of the DHCP server to
+contact.  For DHCPv4 operation, exchanges are initiated by
+transmitting a DHCP DISCOVER to this address.
+
+For DHCPv6 operation, exchanges are initiated by transmitting a DHCP
+SOLICIT to this address.  In the DHCPv6 case, the special name 'all'
+can be used to refer to All_DHCP_Relay_Agents_and_Servers (the
+multicast address FF02::1:2), or the special name 'servers' to refer
+to All_DHCP_Servers (the multicast address FF05::1:3).  The [server]
+argument is optional only in the case that -l is used to specify an
+interface, in which case [server] defaults to 'all'.
+
+The default is to perform a single 4-way exchange, effectively pinging
+the server.
+The -r option is used to set up a performance test, without
+it exchanges are initiated as fast as possible.
+
+Options:
+-1: Take the server-ID option from the first received message.
+-4: DHCPv4 operation (default). This is incompatible with the -6 option.
+-6: DHCPv6 operation. This is incompatible with the -4 option.
+-a&lt;aggressivity&gt;: When the target sending rate is not yet reached,
+    control how many exchanges are initiated before the next pause.
+-b&lt;base&gt;: The base mac, duid, IP, etc, used to simulate different
+    clients.  This can be specified multiple times, each instance is
+    in the &lt;type&gt;=&lt;value&gt; form, for instance:
+    (and default) mac=00:0c:01:02:03:04.
+-d&lt;drop-time&gt;: Specify the time after which a request is treated as
+    having been lost.  The value is given in seconds and may contain a
+    fractional component.  The default is 1 second.
+-E&lt;time-offset&gt;: Offset of the (DHCPv4) secs field / (DHCPv6)
+    elapsed-time option in the (second/request) template.
+    The value 0 disables it.
+-h: Print this help.
+-i: Do only the initial part of an exchange: DO or SA, depending on
+    whether -6 is given.
+-I&lt;ip-offset&gt;: Offset of the (DHCPv4) IP address in the requested-IP
+    option / (DHCPv6) IA_NA option in the (second/request) template.
+-l&lt;local-addr|interface&gt;: For DHCPv4 operation, specify the local
+    hostname/address to use when communicating with the server.  By
+    default, the interface address through which traffic would
+    normally be routed to the server is used.
+    For DHCPv6 operation, specify the name of the network interface
+    via which exchanges are initiated.
+-L&lt;local-port&gt;: Specify the local port to use
+    (the value 0 means to use the default).
+-O&lt;random-offset&gt;: Offset of the last octet to randomize in the template.
+-P&lt;preload&gt;: Initiate first &lt;preload&gt; exchanges back to back at startup.
+-r&lt;rate&gt;: Initiate &lt;rate&gt; DORA/SARR (or if -i is given, DO/SA)
+    exchanges per second.  A periodic report is generated showing the
+    number of exchanges which were not completed, as well as the
+    average response latency.  The program continues until
+    interrupted, at which point a final report is generated.
+-R&lt;range&gt;: Specify how many different clients are used. With 1
+    (the default), all requests seem to come from the same client.
+-s&lt;seed&gt;: Specify the seed for randomization, making it repeatable.
+-S&lt;srvid-offset&gt;: Offset of the server-ID option in the
+    (second/request) template.
+-T&lt;template-file&gt;: The name of a file containing the template to use
+    as a stream of hexadecimal digits.
+-v: Report the version number of this program.
+-w&lt;wrapped&gt;: Command to call with start/stop at the beginning/end of
+    the program.
+-x&lt;diagnostic-selector&gt;: Include extended diagnostics in the output.
+    &lt;diagnostic-selector&gt; is a string of single-keywords specifying
+    the operations for which verbose output is desired.  The selector
+    keyletters are:
+   * 'a': print the decoded command line arguments
+   * 'e': print the exit reason
+   * 'i': print rate processing details
+   * 'r': print randomization details
+   * 's': print first server-id
+   * 't': when finished, print timers of all successful exchanges
+   * 'T': when finished, print templates
+-X&lt;xid-offset&gt;: Transaction ID (aka. xid) offset in the template.
+
+DHCPv4 only options:
+-B: Force broadcast handling.
+
+DHCPv6 only options:
+-c: Add a rapid commit option (exchanges will be SA).
+
+The remaining options are used only in conjunction with -r:
+
+-D&lt;max-drop&gt;: Abort the test if more than &lt;max-drop&gt; requests have
+    been dropped.  Use -D0 to abort if even a single request has been
+    dropped.  If &lt;max-drop&gt; includes the suffix '%', it specifies a
+    maximum percentage of requests that may be dropped before abort.
+    In this case, testing of the threshold begins after 10 requests
+    have been expected to be received.
+-n&lt;num-request&gt;: Initiate &lt;num-request&gt; transactions.  No report is
+    generated until all transactions have been initiated/waited-for,
+    after which a report is generated and the program terminates.
+-p&lt;test-period&gt;: Send requests for the given test period, which is
+    specified in the same manner as -d.  This can be used as an
+    alternative to -n, or both options can be given, in which case the
+    testing is completed when either limit is reached.
+-t&lt;report&gt;: Delay in seconds between two periodic reports.
+
+Errors:
+- tooshort: received a too short message
+- orphans: received a message which doesn't match an exchange
+   (duplicate, late or not related)
+- locallimit: reached to local system limits when sending a message.
+
+Exit status:
+The exit status is:
+0 on complete success.
+1 for a general error.
+2 if an error is found in the command line arguments.
+3 if there are no general failures in operation, but one or more
+  exchanges are not successfully completed.
+
+        </pre><p>
+      </p></div><div class="section" title="Running a test"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="d0e574"></a>Running a test</h2></div></div></div><p>
+        In order to run performance test at least two separate systems
+        have to be installed: client and server. The first one has to have
+        perfdhcp tool installed, the latter has to have DHCP server
+        running (v4 or v6). If only single system is available the client
+        and server can be run on virtual machines (running on the same
+        phisical system) but in this case performance data may be heavily
+        impacted by the performance of VMs.
+      </p><p>
+        The DHCP operates on low port numbers (67 for DHCPv4 relays and
+        547 for DHCPv6) running perfdhcp with non-root priviliges will
+        usually result in the error message similar to this:
+        </p><pre class="screen"><strong class="userinput"><code>$./perfdhcp -4 -l eth3 -r 100 all</code></strong>
+Error running perfdhcp: Failed to bind socket 3 to 172.16.1.2/port=67
+        </pre><p>
+        perfdhcp exposes '-L' command line option that
+        imposes use of custom local port and the following command line will
+        work:
+        </p><pre class="screen"><strong class="userinput"><code>$./perfdhcp -4 -l eth3 -r 100 -L 10067 all</code></strong></pre><p>
+        but in the standard configuration no responses will be received
+        from the ISC DHCP server because server responds to default relay
+        port 67.
+      </p><p>
+        Alternative way to overcome the issue with lack of privileges
+        to use default DHCP port number is to run perfdhcp as root.
+      </p><p>
+        In this section the perfdhcp command line options examples
+        are presented as a quick start guide for new users. For the
+        detailed list of command line options refer to
+        <a class="xref" href="#perfdhcp-command-line" title="Command line options">the section called &#8220;Command line options&#8221;</a>.
+      </p><p>
+        </p><pre class="screen">
+          <strong class="userinput"><code></code></strong>
+        </pre><p>
+      </p></div></div></div></body></html>
