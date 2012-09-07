@@ -34,16 +34,23 @@ namespace datasrc {
 namespace memory {
 
 namespace {
-// (temporary?) convenience function to create a treenoderrset
-// given an rdataset; we should probably have some pool so these
-// do not need to be allocated dynamically
-// For now they are still dynamically allocated, and have a fixed rrclass (...)
+/// Creates a TreeNodeRRsetPtr for the given RdataSet at the given Node, for
+/// the given RRClass
+///
+/// We should probably have some pool so these  do not need to be allocated
+/// dynamically.
+///
+/// \param node The ZoneNode found by the find() calls
+/// \param rdataset The RdataSet to create the RRsetPtr for
+/// \param rrclass The RRClass as passed by the client
+///
+/// Returns an empty TreeNodeRRsetPtr is either node or rdataset is NULL.
 TreeNodeRRsetPtr
 createTreeNodeRRset(const ZoneNode* node,
                     const RdataSet* rdataset,
                     const RRClass& rrclass)
 {
-    if (rdataset != NULL) {
+    if (node != NULL && rdataset != NULL) {
         return TreeNodeRRsetPtr(new TreeNodeRRset(rrclass, node,
                                                   rdataset, true));
     } else {
@@ -51,6 +58,11 @@ createTreeNodeRRset(const ZoneNode* node,
     }
 }
 
+/// Maintain intermediate data specific to the search context used in
+/// \c find().
+///
+/// It will be passed to \c cutCallback() (see below) and record a possible
+/// zone cut node and related RRset (normally NS or DNAME).
 struct FindState {
     FindState(bool glue_ok) :
         zonecut_node_(NULL),
@@ -67,7 +79,6 @@ struct FindState {
     const ZoneNode* dname_node_;
 
     // Delegation RRset (NS or DNAME), if found.
-    //TreeNodeRRsetPtr rrset_;
     const RdataSet* rrset_;
 
     // Whether to continue search below a delegation point.
@@ -82,7 +93,8 @@ bool cutCallback(const ZoneNode& node, FindState* state) {
     // DNAME and NS coexist in the apex. DNAME is the one to notice,
     // the NS is authoritative, not delegation (corner case explicitly
     // allowed by section 3 of 2672)
-    const RdataSet* found_dname = RdataSet::find(node.getData(), RRType::DNAME());
+    const RdataSet* found_dname = RdataSet::find(node.getData(),
+                                                 RRType::DNAME());
 
     if (found_dname != NULL) {
         LOG_DEBUG(logger, DBG_TRACE_DETAILED, DATASRC_MEM_DNAME_ENCOUNTERED);
@@ -126,6 +138,15 @@ bool cutCallback(const ZoneNode& node, FindState* state) {
 }
 
 // convenience function to fill in the final details
+//
+// Set up ZoneFinderResultContext object as a return value of find(),
+// taking into account wildcard matches and DNSSEC information.  We set
+// the NSEC/NSEC3 flag when applicable regardless of the find option; the
+// caller would simply ignore these when they didn't request DNSSEC
+// related results.
+//
+// Also performs the conversion of node + RdataSet into a TreeNodeRRsetPtr
+//
 isc::datasrc::memory::ZoneFinderResultContext
 createFindResult(const RRClass& rrclass,
                  const ZoneData& zone_data,
@@ -146,23 +167,49 @@ createFindResult(const RRClass& rrclass,
         }
     }
 
-    return (ZoneFinderResultContext(code, createTreeNodeRRset(node, rrset, rrclass), flags, node));
+    return (ZoneFinderResultContext(code, createTreeNodeRRset(node,
+                                                              rrset,
+                                                              rrclass),
+                                    flags, node));
 }
 
+// A helper function for NSEC-signed zones.  It searches the zone for
+// the "closest" NSEC corresponding to the search context stored in
+// node_path (it should contain sufficient information to identify the
+// previous name of the query name in the zone).  In some cases the
+// immediate closest name may not have NSEC (when it's under a zone cut
+// for glue records, or even when the zone is partly broken), so this
+// method continues the search until it finds a name that has NSEC,
+// and returns the one found first.  Due to the prerequisite (see below),
+// it should always succeed.
+//
+// node_path must store valid search context (in practice, it's expected
+// to be set by findNode()); otherwise the underlying RBTree implementation
+// throws.
+//
+// If the zone is not considered NSEC-signed or DNSSEC records were not
+// required in the original search context (specified in options), this
+// method doesn't bother to find NSEC, and simply returns NULL.  So, by
+// definition of "NSEC-signed", when it really tries to find an NSEC it
+// should succeed; there should be one at least at the zone origin.
 const RdataSet*
 getClosestNSEC(const ZoneData& zone_data,
-               ZoneNodeChain& chain,
+               ZoneNodeChain& node_path,
                const ZoneNode** nsec_node,
                ZoneFinder::FindOptions options)
 {
-    if (!zone_data.isSigned() || (options & ZoneFinder::FIND_DNSSEC) == 0 || zone_data.isNSEC3Signed()) {
+    if (!zone_data.isSigned() ||
+        (options & ZoneFinder::FIND_DNSSEC) == 0 ||
+        zone_data.isNSEC3Signed()) {
         return (NULL);
     }
 
     const ZoneNode* prev_node;
-    while ((prev_node = zone_data.getZoneTree().previousNode(chain)) != NULL) {
+    while ((prev_node = zone_data.getZoneTree().previousNode(node_path))
+           != NULL) {
         if (!prev_node->isEmpty()) {
-            const RdataSet* found = RdataSet::find(prev_node->getData(), RRType::NSEC());
+            const RdataSet* found =
+                RdataSet::find(prev_node->getData(), RRType::NSEC());
             if (found != NULL) {
                 *nsec_node = prev_node;
                 return (found);
@@ -189,7 +236,8 @@ getNSECForNXRRSET(const ZoneData& zone_data,
     if (zone_data.isSigned() &&
         !zone_data.isNSEC3Signed() &&
         (options & ZoneFinder::FIND_DNSSEC) != 0) {
-        const RdataSet* found = RdataSet::find(node->getData(), RRType::NSEC());
+        const RdataSet* found = RdataSet::find(node->getData(),
+                                               RRType::NSEC());
         if (found != NULL) {
             return (found);
         }
@@ -197,7 +245,7 @@ getNSECForNXRRSET(const ZoneData& zone_data,
     return (NULL);
 }
 
-
+// Structure to hold result data of the findNode() call
 class FindNodeResult {
 public:
     // Bitwise flags to represent supplemental information of the
@@ -223,9 +271,67 @@ public:
     const unsigned int flags;
 };
 
+// Implementation notes: this method identifies an ZoneNode that best matches
+// the give name in terms of DNS query handling.  In many cases,
+// DomainTree::find() will result in EXACTMATCH or PARTIALMATCH (note that
+// the given name is generally expected to be contained in the zone, so
+// even if it doesn't exist, it should at least match the zone origin).
+// If it finds an exact match, that's obviously the best one.  The partial
+// match case is more complicated.
+//
+// We first need to consider the case where search hits a delegation point,
+// either due to NS or DNAME.  They are indicated as either dname_node_ or
+// zonecut_node_ being non NULL.  Usually at most one of them will be
+// something else than NULL (it might happen both are NULL, in which case we
+// consider it NOT FOUND). There's one corner case when both might be
+// something else than NULL and it is in case there's a DNAME under a zone
+// cut and we search in glue OK mode ‒ in that case we don't stop on the
+// domain with NS and ignore it for the answer, but it gets set anyway. Then
+// we find the DNAME and we need to act by it, therefore we first check for
+// DNAME and then for NS. In all other cases it doesn't matter, as at least
+// one of them is NULL.
+//
+// Next, we need to check if the ZoneTree search stopped at a node for a
+// subdomain of the search name (so the comparison result that stopped the
+// search is "SUPERDOMAIN"), it means the stopping node is an empty
+// non-terminal node.  In this case the search name is considered to exist
+// but no data should be found there.
+//
+// (TODO: check this part when doing #2110)
+// If none of above is the case, we then consider whether there's a matching
+// wildcard.  DomainTree::find() records the node if it encounters a
+// "wildcarding" node, i.e., the immediate ancestor of a wildcard name
+// (e.g., wild.example.com for *.wild.example.com), and returns it if it
+// doesn't find any node that better matches the query name.  In this case
+// we'll check if there's indeed a wildcard below the wildcarding node.
+//
+// Note, first, that the wildcard is checked after the empty
+// non-terminal domain case above, because if that one triggers, it
+// means we should not match according to 4.3.3 of RFC 1034 (the query
+// name is known to exist).
+//
+// Before we try to find a wildcard, we should check whether there's
+// an existing node that would cancel the wildcard match.  If
+// DomainTree::find() stopped at a node which has a common ancestor
+// with the query name, it might mean we are comparing with a
+// non-wildcard node. In that case, we check which part is common. If
+// we have something in common that lives below the node we got (the
+// one above *), then we should cancel the match according to section
+// 4.3.3 of RFC 1034 (as the name between the wildcard domain and the
+// query name is known to exist).
+//
+// If there's no node below the wildcarding node that shares a common ancestor
+// of the query name, we can conclude the wildcard is the best match.
+// We'll then identify the wildcard node via an incremental search.  Note that
+// there's no possibility that the query name is at an empty non terminal
+// node below the wildcarding node at this stage; that case should have been
+// caught above.
+//
+// If none of the above succeeds, we conclude the name doesn't exist in
+// the zone, and throw an OutOfZone exception.
 FindNodeResult findNode(const ZoneData& zone_data,
                         const Name& name,
-                        ZoneNodeChain& chain,
+                        ZoneNodeChain& node_path,
                         ZoneFinder::FindOptions options)
 {
     ZoneNode* node = NULL;
@@ -233,7 +339,8 @@ FindNodeResult findNode(const ZoneData& zone_data,
 
     const ZoneTree& tree(zone_data.getZoneTree());
     ZoneTree::Result result = tree.find(isc::dns::LabelSequence(name),
-                                        &node, chain, cutCallback, &state);
+                                        &node, node_path, cutCallback,
+                                        &state);
     const unsigned int zonecut_flag =
         (state.zonecut_node_ != NULL) ? FindNodeResult::FIND_ZONECUT : 0;
     if (result == ZoneTree::EXACTMATCH) {
@@ -244,25 +351,34 @@ FindNodeResult findNode(const ZoneData& zone_data,
         if (state.dname_node_ != NULL) { // DNAME
             LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_DNAME_FOUND).
                 arg(state.dname_node_->getName());
-            return (FindNodeResult(ZoneFinder::DNAME, state.dname_node_, state.rrset_));
+            return (FindNodeResult(ZoneFinder::DNAME, state.dname_node_,
+                                   state.rrset_));
         }
         if (state.zonecut_node_ != NULL) { // DELEGATION due to NS
             LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_DELEG_FOUND).
                 arg(state.zonecut_node_->getName());
-            return (FindNodeResult(ZoneFinder::DELEGATION, state.zonecut_node_, state.rrset_));
+            return (FindNodeResult(ZoneFinder::DELEGATION,
+                                   state.zonecut_node_,
+                                   state.rrset_));
         }
-        if (chain.getLastComparisonResult().getRelation() ==
+        if (node_path.getLastComparisonResult().getRelation() ==
             NameComparisonResult::SUPERDOMAIN) { // empty node, so NXRRSET
-            LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_SUPER_STOP).arg(name);
+            LOG_DEBUG(logger, DBG_TRACE_DATA,
+                      DATASRC_MEM_SUPER_STOP).arg(name);
             const ZoneNode* nsec_node;
-            const RdataSet* nsec_rds = getClosestNSEC(zone_data, chain, &nsec_node, options);
-            return (FindNodeResult(ZoneFinder::NXRRSET, nsec_node, nsec_rds));
+            const RdataSet* nsec_rds = getClosestNSEC(zone_data,
+                                                      node_path,
+                                                      &nsec_node,
+                                                      options);
+            return (FindNodeResult(ZoneFinder::NXRRSET, nsec_node,
+                                   nsec_rds));
         }
-        // TODO: wildcard (see memory_datasrc.cc:480)
+        // TODO: wildcard (see memory_datasrc.cc:480 and ticket #2110)
         // Nothing really matched.
         LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_NOT_FOUND).arg(name);
         const ZoneNode* nsec_node;
-        const RdataSet* nsec_rds = getClosestNSEC(zone_data, chain, &nsec_node, options);
+        const RdataSet* nsec_rds = getClosestNSEC(zone_data, node_path,
+                                                  &nsec_node, options);
         return (FindNodeResult(ZoneFinder::NXDOMAIN, nsec_node, nsec_rds));
     } else {
         // If the name is neither an exact or partial match, it is
@@ -274,6 +390,7 @@ FindNodeResult findNode(const ZoneData& zone_data,
 
 } // end anonymous namespace
 
+// Specialization of the ZoneFinder::Context for the in-memory finder.
 class InMemoryZoneFinder::Context : public ZoneFinder::Context {
 public:
     /// \brief Constructor.
@@ -300,7 +417,6 @@ InMemoryZoneFinder::find(const isc::dns::Name& name,
                 const isc::dns::RRType& type,
                 const FindOptions options)
 {
-    // call find_internal, and wrap the result in a ContextPtr
     return ZoneFinderContextPtr(new Context(*this, options,
                                             find_internal(name,
                                                           type,
@@ -313,7 +429,6 @@ InMemoryZoneFinder::findAll(const isc::dns::Name& name,
         std::vector<isc::dns::ConstRRsetPtr>& target,
         const FindOptions options)
 {
-    // call find_internal, and wrap the result in a ContextPtr
     return ZoneFinderContextPtr(new Context(*this, options,
                                             find_internal(name,
                                                           RRType::ANY(),
@@ -329,11 +444,12 @@ InMemoryZoneFinder::find_internal(const isc::dns::Name& name,
 {
     // Get the node.  All other cases than an exact match are handled
     // in findNode().  We simply construct a result structure and return.
-    ZoneNodeChain chain;
+    ZoneNodeChain node_path;
     const FindNodeResult node_result =
-        findNode(zone_data_, name, chain, options);
+        findNode(zone_data_, name, node_path, options);
     if (node_result.code != SUCCESS) {
-        return (createFindResult(rrclass_, zone_data_, node_result.code, node_result.rrset, node_result.node));
+        return (createFindResult(rrclass_, zone_data_, node_result.code,
+                                 node_result.rrset, node_result.node));
     }
 
     const ZoneNode* node = node_result.node;
@@ -347,7 +463,8 @@ InMemoryZoneFinder::find_internal(const isc::dns::Name& name,
         LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_DOMAIN_EMPTY).
             arg(name);
         const ZoneNode* nsec_node;
-        const RdataSet* nsec_rds = getClosestNSEC(zone_data_, chain, &nsec_node, options);
+        const RdataSet* nsec_rds = getClosestNSEC(zone_data_, node_path,
+                                                  &nsec_node, options);
         return (createFindResult(rrclass_, zone_data_, NXRRSET,
                                  nsec_rds,
                                  nsec_node));
@@ -366,7 +483,8 @@ InMemoryZoneFinder::find_internal(const isc::dns::Name& name,
             LOG_DEBUG(logger, DBG_TRACE_DATA,
                       DATASRC_MEM_EXACT_DELEGATION).arg(name);
             // TODO: rename argument (wildcards, see #2110)
-            return (createFindResult(rrclass_, zone_data_, DELEGATION, found, node));
+            return (createFindResult(rrclass_, zone_data_, DELEGATION,
+                                     found, node));
         }
     }
 
@@ -402,7 +520,9 @@ InMemoryZoneFinder::find_internal(const isc::dns::Name& name,
         }
     }
     // No exact match or CNAME.  Get NSEC if necessary and return NXRRSET.
-    return (createFindResult(rrclass_, zone_data_, NXRRSET, getNSECForNXRRSET(zone_data_, options, node), node));
+    return (createFindResult(rrclass_, zone_data_, NXRRSET,
+                             getNSECForNXRRSET(zone_data_, options, node),
+                             node));
 }
 
 isc::datasrc::ZoneFinder::FindNSEC3Result
