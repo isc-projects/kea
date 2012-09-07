@@ -575,8 +575,6 @@ InMemoryClient::InMemoryClientImpl::load(
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_ADD_ZONE).
         arg(zone_name).arg(rrclass_.toText());
 
-    ++zone_count_;
-
     // Set the filename in file_name_tree_ now, so that getFileName()
     // can use it (during zone reloading).
     FileNameNode* node(NULL);
@@ -598,6 +596,12 @@ InMemoryClient::InMemoryClientImpl::load(
 
     ZoneTable::AddResult result(zone_table_->addZone(local_mem_sgmt_,
                                                      rrclass_, zone_name));
+    if (result.code == result::SUCCESS) {
+        // Only increment the zone count if the zone doesn't already
+        // exist.
+        ++zone_count_;
+    }
+
     ZoneData *data = zone_table_->setZoneData(zone_name, holder.release());
     if (data != NULL) {
         ZoneData::destroy(local_mem_sgmt_, data, rrclass_);
