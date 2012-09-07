@@ -528,11 +528,6 @@ public:
                      const Name& zone_name, ZoneData* zone_data)
     {
         switch (add(set, zone_name, *zone_data)) {
-        case result::EXIST:
-            LOG_ERROR(logger, DATASRC_MEM_DUP_RRSET).
-                arg(set->getName()).arg(set->getType());
-            isc_throw(dns::MasterLoadError, "Duplicate rrset: " <<
-                      set->toText());
         case result::SUCCESS:
             return;
         default:
