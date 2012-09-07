@@ -1044,6 +1044,18 @@ TEST_F(TSIGTest, getTSIGLength) {
 TEST_F(TSIGTest, verifyMulti) {
     isc::util::detail::gettimeFunction = testGetTime<0x4da8877a>;
 
+    // First, send query from the verify one to the normal one, so
+    // we initialize something like AXFR
+    {
+        SCOPED_TRACE("Query");
+        ConstTSIGRecordPtr tsig = createMessageAndSign(1234, test_name,
+                                                       tsig_verify_ctx.get());
+        commonVerifyChecks(*tsig_ctx, tsig.get(),
+                           renderer.getData(), renderer.getLength(),
+                           TSIGError(Rcode::NOERROR()),
+                           TSIGContext::RECEIVED_REQUEST);
+    }
+
     {
         SCOPED_TRACE("First message");
         ConstTSIGRecordPtr tsig = createMessageAndSign(1234, test_name,
@@ -1051,7 +1063,7 @@ TEST_F(TSIGTest, verifyMulti) {
         commonVerifyChecks(*tsig_verify_ctx, tsig.get(),
                            renderer.getData(), renderer.getLength(),
                            TSIGError(Rcode::NOERROR()),
-                           TSIGContext::RECEIVED_REQUEST);
+                           TSIGContext::VERIFIED_RESPONSE);
         EXPECT_TRUE(tsig_verify_ctx->lastHadSignature());
     }
 
@@ -1062,7 +1074,7 @@ TEST_F(TSIGTest, verifyMulti) {
         commonVerifyChecks(*tsig_verify_ctx, tsig.get(),
                            renderer.getData(), renderer.getLength(),
                            TSIGError(Rcode::NOERROR()),
-                           TSIGContext::RECEIVED_REQUEST);
+                           TSIGContext::VERIFIED_RESPONSE);
         EXPECT_TRUE(tsig_verify_ctx->lastHadSignature());
     }
 
@@ -1087,7 +1099,7 @@ TEST_F(TSIGTest, verifyMulti) {
         commonVerifyChecks(*tsig_verify_ctx, NULL,
                            renderer.getData(), renderer.getLength(),
                            TSIGError(Rcode::NOERROR()),
-                           TSIGContext::RECEIVED_REQUEST);
+                           TSIGContext::VERIFIED_RESPONSE);
 
         EXPECT_FALSE(tsig_verify_ctx->lastHadSignature());
     }
@@ -1099,7 +1111,7 @@ TEST_F(TSIGTest, verifyMulti) {
         commonVerifyChecks(*tsig_verify_ctx, tsig.get(),
                            renderer.getData(), renderer.getLength(),
                            TSIGError(Rcode::NOERROR()),
-                           TSIGContext::RECEIVED_REQUEST);
+                           TSIGContext::VERIFIED_RESPONSE);
         EXPECT_TRUE(tsig_verify_ctx->lastHadSignature());
     }
     // TODO: Fill in 99 unsigned messages and then try the 100th and see
