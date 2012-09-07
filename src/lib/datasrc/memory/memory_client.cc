@@ -877,7 +877,7 @@ InMemoryClient::getIterator(const Name& name, bool separate_rrs) const {
     }
 
     return (ZoneIteratorPtr(new MemoryIterator(
-                                getClass(), 
+                                getClass(),
                                 result.zone_data->getZoneTree(), name,
                                 separate_rrs)));
 }
