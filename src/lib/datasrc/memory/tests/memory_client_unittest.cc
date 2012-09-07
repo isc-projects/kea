@@ -125,6 +125,26 @@ TEST_F(MemoryClientTest, load) {
     client_->load(Name("example.org"), TEST_DATA_DIR "/example.org.zone");
 }
 
+TEST_F(MemoryClientTest, loadReloadZone) {
+    // Because we reload the same zone, also check that the zone count
+    // doesn't increase.
+    EXPECT_EQ(0, client_->getZoneCount());
+
+    client_->load(Name("example.org"),
+		  TEST_DATA_DIR "/example.org-empty.zone");
+    EXPECT_EQ(1, client_->getZoneCount());
+
+    client_->load(Name("example.org"),
+		  client_->getFileName(Name("example.org")));
+    EXPECT_EQ(1, client_->getZoneCount());
+
+    client_->load(Name("example.org"),
+		  TEST_DATA_DIR "/example.org-rrsigs.zone");
+    EXPECT_EQ(1, client_->getZoneCount());
+
+    // Teardown checks for memory segment leaks
+}
+
 TEST_F(MemoryClientTest, loadRRSIGFollowsNothing) {
     EXPECT_THROW(client_->load(Name("example.org"),
                                TEST_DATA_DIR
