@@ -13,39 +13,16 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include "memory_segment_test.h"
-
 #include "../../tests/faked_nsec3.h"
-
-#include <exceptions/exceptions.h>
-
-#include <dns/masterload.h>
-#include <dns/name.h>
-#include <dns/nsec3hash.h>
-#include <dns/rdata.h>
-#include <dns/rdataclass.h>
-#include <dns/rrclass.h>
-#include <dns/rrsetlist.h>
-#include <dns/rrttl.h>
-#include <dns/masterload.h>
-
-#include <datasrc/client.h>
-#include <datasrc/memory_datasrc.h>
 #include <datasrc/data_source.h>
-#include <datasrc/iterator.h>
-
 #include <testutils/dnsmessage_test.h>
-
-#include <gtest/gtest.h>
-
-#include <boost/bind.hpp>
-#include <boost/foreach.hpp>
-#include <boost/shared_ptr.hpp>
-
-#include <sstream>
-#include <vector>
 
 #include <datasrc/memory/zone_finder.h>
 #include <datasrc/memory/rdata_serialization.h>
+
+#include <boost/foreach.hpp>
+
+#include <gtest/gtest.h>
 
 using namespace std;
 using namespace isc::dns;
@@ -266,14 +243,13 @@ public:
     }
 
     // NSEC3-specific call for 'loading' data
+    // This needs to be updated and checked when implementing #2118
     void addZoneDataNSEC3(const ConstRRsetPtr rrset) {
-        // we're only adding one anyway so this is a simplified version
-        // base nsec3 chain of rrset rdata
-        // TODO: add if already exists?
         assert(rrset->getType() == RRType::NSEC3());
 
         const Rdata* rdata = &rrset->getRdataIterator()->getCurrent();
-        const generic::NSEC3* nsec3_rdata = dynamic_cast<const generic::NSEC3*>(rdata);
+        const generic::NSEC3* nsec3_rdata =
+            dynamic_cast<const generic::NSEC3*>(rdata);
         NSEC3Data* nsec3_data = NSEC3Data::create(mem_sgmt_, *nsec3_rdata);
         // in case we happen to be replacing, destroy old
         NSEC3Data* old_data = zone_data_->setNSEC3Data(nsec3_data);

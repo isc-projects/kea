@@ -48,40 +48,74 @@ public:
     const ZoneNode* const found_node;
 };
 
+/// A derived zone finder class intended to be used with the memory data
+/// source, using ZoneData for its contents.
 class InMemoryZoneFinder : boost::noncopyable, public ZoneFinder {
 public:
-    InMemoryZoneFinder(const ZoneData& zone_data, const isc::dns::RRClass& rrclass) : zone_data_(zone_data), rrclass_(rrclass) {}
+    /// \brief Constructor.
+    ///
+    /// Since ZoneData does not keep RRClass information, but this
+    /// information is needed in order to construct actual RRsets,
+    /// this needs to be passed here (the datasource client should
+    /// have this information). In the future, this may be replaced
+    /// by some construction to pull TreeNodeRRsets from a pool, but
+    /// currently, these are created dynamically with the given RRclass
+    ///
+    /// \param zone_data The ZoneData containing the zone.
+    /// \param rrclass The RR class of the zone
+    InMemoryZoneFinder(const ZoneData& zone_data,
+                       const isc::dns::RRClass& rrclass) :
+        zone_data_(zone_data),
+        rrclass_(rrclass)
+    {}
 
+    /// \brief Find an RRset in the datasource
     virtual boost::shared_ptr<ZoneFinder::Context> find(
         const isc::dns::Name& name,
         const isc::dns::RRType& type,
         const FindOptions options = FIND_DEFAULT);
 
+    /// \brief Version of find that returns all types at once
+    ///
+    /// It acts the same as find, just that when the correct node is found,
+    /// all the RRsets are filled into the target parameter instead of being
+    /// returned by the result.
     virtual boost::shared_ptr<ZoneFinder::Context> findAll(
         const isc::dns::Name& name,
         std::vector<isc::dns::ConstRRsetPtr>& target,
         const FindOptions options = FIND_DEFAULT);
 
+    /// Look for NSEC3 for proving (non)existence of given name.
+    ///
+    /// See documentation in \c Zone.
     virtual FindNSEC3Result
     findNSEC3(const isc::dns::Name& name, bool recursive);
 
+    /// \brief Returns the origin of the zone.
     virtual isc::dns::Name getOrigin() const {
         return zone_data_.getOriginNode()->getName();
     }
 
+    /// \brief Returns the RR class of the zone.
     virtual isc::dns::RRClass getClass() const {
-        isc_throw(isc::NotImplemented, "this method is not relevant and should "
-                                       "probably be removed from the API");
+        return rrclass_;
     }
 
-    class Context;
 
 private:
-    ZoneFinderResultContext find_internal(const isc::dns::Name& name,
-                                          const isc::dns::RRType& type,
-                                          std::vector<isc::dns::ConstRRsetPtr>* target,
-                                          const FindOptions options =
-                                          FIND_DEFAULT);
+    /// \brief In-memory version of finder context.
+    ///
+    /// The implementation (and any specialized interface) is completely local
+    /// to the InMemoryZoneFinder class, so it's defined as private
+    class Context;
+
+    /// Actual implementation for both find() and findAll()
+    ZoneFinderResultContext find_internal(
+        const isc::dns::Name& name,
+        const isc::dns::RRType& type,
+        std::vector<isc::dns::ConstRRsetPtr>* target,
+        const FindOptions options =
+        FIND_DEFAULT);
 
     const ZoneData& zone_data_;
     const isc::dns::RRClass& rrclass_;
