@@ -123,7 +123,7 @@ public:
     /// have to be revisited fundamentally, and at that point this restriction
     /// probably won't matter.
     result::Result load(const isc::dns::Name& zone_name,
-			ZoneIterator& iterator);
+                        ZoneIterator& iterator);
 
     /// Return the master file name of the zone
     ///
