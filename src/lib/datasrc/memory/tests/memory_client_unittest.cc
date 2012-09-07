@@ -300,6 +300,34 @@ TEST_F(MemoryClientTest, findZone2) {
     EXPECT_EQ(result::SUCCESS, result2.code);
     EXPECT_NE(static_cast<ZoneData*>(NULL),
               result2.zone_data);
+
+    /* Check SOA */
+    const ZoneNode* node = result2.zone_data->getOriginNode();
+    EXPECT_NE(static_cast<const ZoneNode*>(NULL), node);
+
+    const RdataSet* set = node->getData();
+    EXPECT_NE(static_cast<const RdataSet*>(NULL), set);
+    EXPECT_EQ(RRType::SOA(), set->type);
+
+    set = set->getNext();
+    EXPECT_EQ(static_cast<const RdataSet*>(NULL), set);
+
+    /* Check ns1.example.org */
+    const ZoneTree& tree = result2.zone_data->getZoneTree();
+    ZoneTree::Result result3(tree.find(Name("ns1.example.org"), &node));
+    EXPECT_EQ(ZoneTree::EXACTMATCH, result3);
+    EXPECT_NE(static_cast<const ZoneNode*>(NULL), node);
+
+    set = node->getData();
+    EXPECT_NE(static_cast<const RdataSet*>(NULL), set);
+    EXPECT_EQ(RRType::AAAA(), set->type);
+
+    set = set->getNext();
+    EXPECT_NE(static_cast<const RdataSet*>(NULL), set);
+    EXPECT_EQ(RRType::A(), set->type);
+
+    set = set->getNext();
+    EXPECT_EQ(static_cast<const RdataSet*>(NULL), set);
 }
 
 TEST_F(MemoryClientTest, getUpdaterThrowsNotImplemented) {
