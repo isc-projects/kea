@@ -245,7 +245,7 @@ TEST_F(MemoryClientTest, loadDuplicateType) {
     // Teardown checks for memory segment leaks
 }
 
-TEST_F(MemoryClientTest, loadMultipleCNAME) {
+TEST_F(MemoryClientTest, loadMultipleCNAMEThrows) {
     // Multiple CNAME RRs should throw.
     EXPECT_THROW(client_->load(Name("example.org"),
                                TEST_DATA_DIR
@@ -254,7 +254,7 @@ TEST_F(MemoryClientTest, loadMultipleCNAME) {
     // Teardown checks for memory segment leaks
 }
 
-TEST_F(MemoryClientTest, loadMultipleDNAME) {
+TEST_F(MemoryClientTest, loadMultipleDNAMEThrows) {
     // Multiple DNAME RRs should throw.
     EXPECT_THROW(client_->load(Name("example.org"),
                                TEST_DATA_DIR
@@ -263,7 +263,7 @@ TEST_F(MemoryClientTest, loadMultipleDNAME) {
     // Teardown checks for memory segment leaks
 }
 
-TEST_F(MemoryClientTest, loadMultipleNSEC3) {
+TEST_F(MemoryClientTest, loadMultipleNSEC3Throws) {
     // Multiple NSEC3 RRs should throw.
     EXPECT_THROW(client_->load(Name("example.org"),
                                TEST_DATA_DIR
@@ -272,7 +272,7 @@ TEST_F(MemoryClientTest, loadMultipleNSEC3) {
     // Teardown checks for memory segment leaks
 }
 
-TEST_F(MemoryClientTest, loadMultipleNSEC3PARAM) {
+TEST_F(MemoryClientTest, loadMultipleNSEC3PARAMThrows) {
     // Multiple NSEC3PARAM RRs should throw.
     EXPECT_THROW(client_->load(Name("example.org"),
                                TEST_DATA_DIR
