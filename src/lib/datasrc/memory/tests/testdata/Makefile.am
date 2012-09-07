@@ -12,3 +12,4 @@ EXTRA_DIST += example.org-rrsigs.zone
 EXTRA_DIST += example.org-duplicate-type.zone
 EXTRA_DIST += example.org-duplicate-type-bad.zone
 EXTRA_DIST += example.org-multiple-cname.zone
+EXTRA_DIST += example.org-multiple-dname.zone

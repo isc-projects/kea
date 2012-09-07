@@ -1,0 +1,3 @@
+example.org. 3600 IN SOA	ns1.example.org. bugs.x.w.example.org. 79 3600 300 3600000 3600
+ns1.example.org.		      3600 IN DNAME	foo.example.com.
+ns1.example.org.		      3600 IN DNAME	bar.example.com.
