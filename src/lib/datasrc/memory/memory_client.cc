@@ -385,7 +385,8 @@ public:
             addNSEC3(last_rrset_, rrsig, zone_data);
         } else {
             ZoneNode* node;
-            zone_data.insertName(local_mem_sgmt_, last_rrset_->getName(), &node);
+            zone_data.insertName(local_mem_sgmt_,
+                                 last_rrset_->getName(), &node);
 
             RdataSet* set = node->getData();
 
@@ -547,7 +548,8 @@ InMemoryClient::InMemoryClientImpl::load(
     boost::function<void(LoadCallback)> rrset_installer)
 {
     SegmentObjectHolder<ZoneData, RRClass> holder(
-        local_mem_sgmt_, ZoneData::create(local_mem_sgmt_, zone_name), rrclass_);
+        local_mem_sgmt_, ZoneData::create(local_mem_sgmt_, zone_name),
+        rrclass_);
 
     assert(!last_rrset_);
 
@@ -763,7 +765,8 @@ private:
     bool ready_;
 public:
     MemoryIterator(const RRClass rrclass,
-                   const ZoneTree& tree, const Name& origin, bool separate_rrs) :
+                   const ZoneTree& tree, const Name& origin,
+                   bool separate_rrs) :
         rrclass_(rrclass),
         tree_(tree),
         separate_rrs_(separate_rrs),
@@ -781,7 +784,8 @@ public:
         if (node_ != NULL && node_->getData() != NULL) {
             set_node_ = node_->getData();
             if (separate_rrs_ && set_node_ != NULL) {
-                rrset_.reset(new TreeNodeRRset(rrclass_, node_, set_node_, true));
+                rrset_.reset(new TreeNodeRRset(rrclass_,
+                                               node_, set_node_, true));
                 rdata_iterator_ = rrset_->getRdataIterator();
             }
         }
@@ -806,7 +810,8 @@ public:
                 set_node_ = node_->getData();
                 // New RRset, so get a new rdata iterator
                 if (separate_rrs_ && set_node_ != NULL) {
-                    rrset_.reset(new TreeNodeRRset(rrclass_, node_, set_node_, true));
+                    rrset_.reset(new TreeNodeRRset(rrclass_,
+                                                   node_, set_node_, true));
                     rdata_iterator_ = rrset_->getRdataIterator();
                 }
             }
@@ -832,13 +837,15 @@ public:
                 // New RRset, so get a new rdata iterator, but only if this
                 // was not the final RRset in the chain
                 if (set_node_ != NULL) {
-                    rrset_.reset(new TreeNodeRRset(rrclass_, node_, set_node_, true));
+                    rrset_.reset(new TreeNodeRRset(rrclass_,
+                                                   node_, set_node_, true));
                     rdata_iterator_ = rrset_->getRdataIterator();
                 }
             }
             return (result);
         } else {
-            ConstRRsetPtr result(new TreeNodeRRset(rrclass_, node_, set_node_, true));
+            ConstRRsetPtr result(new TreeNodeRRset(rrclass_,
+                                                   node_, set_node_, true));
 
             // This one is used, move it to the next time for next call
             set_node_ = set_node_->getNext();
