@@ -1765,10 +1765,14 @@ can use various data source backends.
         answering up. The first option is <varname>cache-enable</varname>,
         a boolean value turning the cache on and off (off is the default).
         The second one, <varname>cache-zones</varname>, is a list of zone
-        origins to load into in-memory. Once the cache is enabled,
+        origins to load into in-memory.
+
+<!-- NOT YET:  http://bind10.isc.org/ticket/2240
+ Once the cache is enabled,
         the zones in the data source not listed in
         <varname>cache-zones</varname> will not be loaded and will
         not be available at all.
+-->
       </para>
 
       <section id='datasource-types'>
