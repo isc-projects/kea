@@ -49,7 +49,7 @@ public:
         bool should_delete(false);
         { // We need to make sure the mutex is unlocked before it is deleted
             Mutex::Locker locker(impl->mutex);
-            if (-- impl->waiting_ == 0) {
+            if (--impl->waiting_ == 0) {
                 should_delete = true;
             }
         }
@@ -62,13 +62,11 @@ public:
         Impl* impl = reinterpret_cast<Impl*>(impl_raw);
         try {
             impl->main_();
-        }
-        catch (const exception& e) {
+        } catch (const exception& e) {
             Mutex::Locker locker(impl->mutex);
             impl->exception_ = true;
             impl->exception_text_ = e.what();
-        }
-        catch (...) {
+        } catch (...) {
             Mutex::Locker locker(impl->mutex);
             impl->exception_ = true;
         }
@@ -93,7 +91,8 @@ Thread::Thread(const boost::function<void ()>& main) :
     impl_(NULL)
 {
     auto_ptr<Impl> impl(new Impl(main));
-    int result = pthread_create(&impl->tid, NULL, &Impl::run, impl.get());
+    const int result = pthread_create(&impl->tid, NULL, &Impl::run,
+                                      impl.get());
     // Any error here?
     switch (result) {
         case 0: // All 0K
@@ -106,10 +105,10 @@ Thread::Thread(const boost::function<void ()>& main) :
     }
 }
 
-Thread::~ Thread() {
+Thread::~Thread() {
     if (impl_ != NULL) {
         // In case we didn't call wait yet
-        int result = pthread_detach(impl_->tid);
+        const int result = pthread_detach(impl_->tid);
         Impl::done(impl_);
         impl_ = NULL;
         if (result != 0) {
@@ -125,10 +124,11 @@ Thread::~ Thread() {
 void
 Thread::wait() {
     if (impl_ == NULL) {
-        isc_throw(isc::InvalidOperation, "Wait called and no thread to wait for");
+        isc_throw(isc::InvalidOperation,
+                  "Wait called and no thread to wait for");
     }
 
-    int result = pthread_join(impl_->tid, NULL);
+    const int result = pthread_join(impl_->tid, NULL);
     if (result != 0) {
         isc_throw(isc::InvalidOperation, strerror(result));
     }

@@ -45,8 +45,8 @@ struct Deinitializer {
     Deinitializer(pthread_mutexattr_t& attributes):
         attributes_(attributes)
     {}
-    ~ Deinitializer() {
-        int result = pthread_mutexattr_destroy(&attributes_);
+    ~Deinitializer() {
+        const int result = pthread_mutexattr_destroy(&attributes_);
         if (result != 0) {
             // This really should not happen. We might as well
             // try to use assert here.
@@ -96,10 +96,10 @@ Mutex::Mutex(bool recursive) :
     }
 }
 
-Mutex::~ Mutex() {
+Mutex::~Mutex() {
     if (impl_ != NULL) {
-        int result = pthread_mutex_destroy(&impl_->mutex);
-        bool locked = impl_->locked != 0;
+        const int result = pthread_mutex_destroy(&impl_->mutex);
+        const bool locked = impl_->locked != 0;
         delete impl_;
         if (result != 0) {
             // Yes, really throwing from the destructor.
@@ -117,18 +117,18 @@ Mutex::~ Mutex() {
 void
 Mutex::lock() {
     assert(impl_ != NULL);
-    int result = pthread_mutex_lock(&impl_->mutex);
+    const int result = pthread_mutex_lock(&impl_->mutex);
     if (result != 0) {
         isc_throw(isc::InvalidOperation, strerror(result));
     }
-    impl_->locked ++; // Only in debug mode
+    ++impl_->locked; // Only in debug mode
 }
 
 void
 Mutex::unlock() {
     assert(impl_ != NULL);
-    impl_->locked --; // Only in debug mode
-    int result = pthread_mutex_unlock(&impl_->mutex);
+    --impl_->locked; // Only in debug mode
+    const int result = pthread_mutex_unlock(&impl_->mutex);
     if (result != 0) {
         isc_throw(isc::InvalidOperation, strerror(result));
     }
