@@ -561,17 +561,25 @@ InMemoryClient::InMemoryClientImpl::load(
 
     assert(!last_rrset_);
 
+    const ZoneNode* origin_node = holder.get()->getOriginNode();
+    const RdataSet* set = origin_node->getData();
     // If the zone is NSEC3-signed, check if it has NSEC3PARAM
     if (holder.get()->isNSEC3Signed()) {
         // Note: origin_data_ is set on creation of ZoneData, and the load
         // process only adds new nodes (and their data), so this assertion
         // should hold.
-        const ZoneNode* origin_node = holder.get()->getOriginNode();
-        const RdataSet* set = origin_node->getData();
         if (RdataSet::find(set, RRType::NSEC3PARAM()) == NULL) {
             LOG_WARN(logger, DATASRC_MEM_NO_NSEC3PARAM).
                 arg(zone_name).arg(rrclass_);
         }
+    }
+
+    // When an empty zone file is loaded, the origin doesn't even have
+    // an SOA RR. This condition should be avoided, and hence load()
+    // should throw when an empty zone is loaded.
+    if (RdataSet::find(set, RRType::SOA()) == NULL) {
+        isc_throw(EmptyZone,
+                  "Won't create an empty zone for: " << zone_name);
     }
 
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_ADD_ZONE).
