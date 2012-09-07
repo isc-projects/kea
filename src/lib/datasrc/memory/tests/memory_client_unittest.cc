@@ -123,9 +123,15 @@ TEST_F(MemoryClientTest, loadEmptyZoneFileThrows) {
     // When an empty zone file is loaded, the origin doesn't even have
     // an SOA RR. This condition should be avoided, and hence load()
     // should throw when an empty zone is loaded.
+
+    EXPECT_EQ(0, client_->getZoneCount());
+
     EXPECT_THROW(client_->load(Name("."),
                                TEST_DATA_DIR "/empty.zone"),
                  InMemoryClient::EmptyZone);
+
+    EXPECT_EQ(0, client_->getZoneCount());
+
     // Teardown checks for memory segment leaks
 }
 
