@@ -138,7 +138,18 @@ TEST_F(MemoryClientTest, loadEmptyZoneFileThrows) {
 TEST_F(MemoryClientTest, load) {
     // This is a simple load check for a "full" and correct zone that
     // should not result in any exceptions.
-    client_->load(Name("example.org"), TEST_DATA_DIR "/example.org.zone");
+    client_->load(Name("example.org"),
+                  TEST_DATA_DIR "/example.org.zone");
+}
+
+TEST_F(MemoryClientTest, loadNSEC3Signed) {
+    client_->load(Name("example.org"),
+                  TEST_DATA_DIR "/example.org-nsec3-signed.zone");
+}
+
+TEST_F(MemoryClientTest, loadNSEC3SignedNoParam) {
+    client_->load(Name("example.org"),
+                  TEST_DATA_DIR "/example.org-nsec3-signed-no-param.zone");
 }
 
 TEST_F(MemoryClientTest, loadReloadZone) {
