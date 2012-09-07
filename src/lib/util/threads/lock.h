@@ -61,6 +61,7 @@ public:
     /// \throw isc::InvalidOperation Other unspecified errors around the mutex.
     ///     This should be rare.
     Mutex(bool recursive = false);
+
     /// \brief Destructor.
     ///
     /// Destroyes the mutex. It is not allowed to destroy a mutex which is
@@ -70,7 +71,8 @@ public:
     /// \throw isc::InvalidOperation when the OS reports an error. This should
     ///     generally happen only when the Mutex was used in a wrong way,
     ///     meaning programmer error.
-    ~ Mutex();
+    ~Mutex();
+
     /// \brief This holds a lock on a Mutex.
     ///
     /// To lock a mutex, create a locket. It'll get unlocked when the locker
@@ -100,6 +102,7 @@ public:
             mutex.lock();
             mutex_ = &mutex;
         }
+
         /// \brief Destructor.
         ///
         /// Unlocks the mutex.
@@ -107,7 +110,7 @@ public:
         /// \throw isc::InvalidOperation when OS repotrs error. This usually
         ///     means an attempt to use the mutex in a wrong way (unlocking
         ///     a mutex belonging to a differen thread).
-        ~ Locker() {
+        ~Locker() {
             if (mutex_ != NULL) {
                 mutex_->unlock();
             }
