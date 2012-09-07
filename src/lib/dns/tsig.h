@@ -413,6 +413,19 @@ public:
     static const uint16_t DEFAULT_FUDGE = 300;
     //@}
 
+protected:
+    /// \brief Update internal HMAC state by more data.
+    ///
+    /// This is used mostly internaly, when we need to verify a message without
+    /// TSIG signature in the middle of signed TCP stream. However, it is also
+    /// used in tests, so it's protected instead of private, to allow tests
+    /// in.
+    ///
+    /// It doesn't contain sanity checks, and it is not tested directly. But
+    /// we may want to add these one day to allow generating the skipped TSIG
+    /// messages too. Until then, do not use this method.
+    void update(const void* const data, size_t len);
+
 private:
     struct TSIGContextImpl;
     TSIGContextImpl* impl_;

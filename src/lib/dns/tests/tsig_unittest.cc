@@ -66,6 +66,22 @@ testGetTime() {
     return (NOW);
 }
 
+// Thin wrapper around TSIGContext to allow access to the
+// update method.
+class TestTSIGContext : public TSIGContext {
+public:
+    TestTSIGContext(const TSIGKey& key) :
+        TSIGContext(key)
+    {}
+    TestTSIGContext(const Name& key_name, const Name& algorithm_name,
+                    const TSIGKeyRing& keyring) :
+        TSIGContext(key_name, algorithm_name, keyring)
+    {}
+    void update(const void* const data, size_t len) {
+        TSIGContext::update(data, len);
+    }
+};
+
 class TSIGTest : public ::testing::Test {
 protected:
     TSIGTest() :
@@ -83,9 +99,10 @@ protected:
         isc::util::detail::gettimeFunction = NULL;
 
         decodeBase64("SFuWd/q99SzF8Yzd1QbB9g==", secret);
-        tsig_ctx.reset(new TSIGContext(TSIGKey(test_name,
-                                               TSIGKey::HMACMD5_NAME(),
-                                               &secret[0], secret.size())));
+        tsig_ctx.reset(new TestTSIGContext(TSIGKey(test_name,
+                                                   TSIGKey::HMACMD5_NAME(),
+                                                   &secret[0],
+                                                   secret.size())));
         tsig_verify_ctx.reset(new TSIGContext(TSIGKey(test_name,
                                                       TSIGKey::HMACMD5_NAME(),
                                                       &secret[0],
@@ -116,7 +133,7 @@ protected:
     static const unsigned int AA_FLAG = 0x2;
     static const unsigned int RD_FLAG = 0x4;
 
-    boost::scoped_ptr<TSIGContext> tsig_ctx;
+    boost::scoped_ptr<TestTSIGContext> tsig_ctx;
     boost::scoped_ptr<TSIGContext> tsig_verify_ctx;
     TSIGKeyRing keyring;
     const uint16_t qid;
@@ -746,8 +763,8 @@ TEST_F(TSIGTest, badsigResponse) {
 TEST_F(TSIGTest, badkeyResponse) {
     // A similar test as badsigResponse but for BADKEY
     isc::util::detail::gettimeFunction = testGetTime<0x4da8877a>;
-    tsig_ctx.reset(new TSIGContext(badkey_name, TSIGKey::HMACMD5_NAME(),
-                                   keyring));
+    tsig_ctx.reset(new TestTSIGContext(badkey_name, TSIGKey::HMACMD5_NAME(),
+                                       keyring));
     {
         SCOPED_TRACE("Verify resulting in BADKEY");
         commonVerifyChecks(*tsig_ctx, &dummy_record, &dummy_data[0],
@@ -956,45 +973,47 @@ TEST_F(TSIGTest, getTSIGLength) {
     EXPECT_EQ(85, tsig_ctx->getTSIGLength());
 
     // hmac-sha1: n2=11, x=20
-    tsig_ctx.reset(new TSIGContext(TSIGKey(test_name, TSIGKey::HMACSHA1_NAME(),
-                                           &dummy_data[0], 20)));
+    tsig_ctx.reset(new TestTSIGContext(TSIGKey(test_name,
+                                               TSIGKey::HMACSHA1_NAME(),
+                                               &dummy_data[0], 20)));
     EXPECT_EQ(74, tsig_ctx->getTSIGLength());
 
     // hmac-sha256: n2=13, x=32
-    tsig_ctx.reset(new TSIGContext(TSIGKey(test_name,
-                                           TSIGKey::HMACSHA256_NAME(),
-                                           &dummy_data[0], 32)));
+    tsig_ctx.reset(new TestTSIGContext(TSIGKey(test_name,
+                                               TSIGKey::HMACSHA256_NAME(),
+                                               &dummy_data[0], 32)));
     EXPECT_EQ(88, tsig_ctx->getTSIGLength());
 
     // hmac-sha224: n2=13, x=28
-    tsig_ctx.reset(new TSIGContext(TSIGKey(test_name,
-                                           TSIGKey::HMACSHA224_NAME(),
-                                           &dummy_data[0], 28)));
+    tsig_ctx.reset(new TestTSIGContext(TSIGKey(test_name,
+                                               TSIGKey::HMACSHA224_NAME(),
+                                               &dummy_data[0], 28)));
     EXPECT_EQ(84, tsig_ctx->getTSIGLength());
 
     // hmac-sha384: n2=13, x=48
-    tsig_ctx.reset(new TSIGContext(TSIGKey(test_name,
-                                           TSIGKey::HMACSHA384_NAME(),
-                                           &dummy_data[0], 48)));
+    tsig_ctx.reset(new TestTSIGContext(TSIGKey(test_name,
+                                               TSIGKey::HMACSHA384_NAME(),
+                                               &dummy_data[0], 48)));
     EXPECT_EQ(104, tsig_ctx->getTSIGLength());
 
     // hmac-sha512: n2=13, x=64
-    tsig_ctx.reset(new TSIGContext(TSIGKey(test_name,
-                                           TSIGKey::HMACSHA512_NAME(),
-                                           &dummy_data[0], 64)));
+    tsig_ctx.reset(new TestTSIGContext(TSIGKey(test_name,
+                                               TSIGKey::HMACSHA512_NAME(),
+                                               &dummy_data[0], 64)));
     EXPECT_EQ(120, tsig_ctx->getTSIGLength());
 
     // bad key case: n1=len(badkey.example.com)=20, n2=26, x=0
-    tsig_ctx.reset(new TSIGContext(badkey_name, TSIGKey::HMACMD5_NAME(),
-                                   keyring));
+    tsig_ctx.reset(new TestTSIGContext(badkey_name, TSIGKey::HMACMD5_NAME(),
+                                       keyring));
     EXPECT_EQ(72, tsig_ctx->getTSIGLength());
 
     // bad sig case: n1=17, n2=26, x=0
     isc::util::detail::gettimeFunction = testGetTime<0x4da8877a>;
     createMessageFromFile("message_toWire2.wire");
-    tsig_ctx.reset(new TSIGContext(TSIGKey(test_name, TSIGKey::HMACMD5_NAME(),
-                                           &dummy_data[0],
-                                           dummy_data.size())));
+    tsig_ctx.reset(new TestTSIGContext(TSIGKey(test_name,
+                                               TSIGKey::HMACMD5_NAME(),
+                                               &dummy_data[0],
+                                               dummy_data.size())));
     {
         SCOPED_TRACE("Verify resulting in BADSIG");
         commonVerifyChecks(*tsig_ctx, message.getTSIGRecord(),
@@ -1005,9 +1024,10 @@ TEST_F(TSIGTest, getTSIGLength) {
 
     // bad time case: n1=17, n2=26, x=16, y=6
     isc::util::detail::gettimeFunction = testGetTime<0x4da8877a - 1000>;
-    tsig_ctx.reset(new TSIGContext(TSIGKey(test_name, TSIGKey::HMACMD5_NAME(),
-                                           &dummy_data[0],
-                                           dummy_data.size())));
+    tsig_ctx.reset(new TestTSIGContext(TSIGKey(test_name,
+                                               TSIGKey::HMACMD5_NAME(),
+                                               &dummy_data[0],
+                                               dummy_data.size())));
     {
         SCOPED_TRACE("Verify resulting in BADTIME");
         commonVerifyChecks(*tsig_ctx, message.getTSIGRecord(),
@@ -1059,7 +1079,11 @@ TEST_F(TSIGTest, verifyMulti) {
         answer_rrset->addRdata(createRdata(RRType::A(), test_class,
                                            "192.0.2.1"));
         message.addRRset(Message::SECTION_ANSWER, answer_rrset);
-        message.toWire(renderer, *tsig_ctx);
+        message.toWire(renderer);
+        // Update the internal state. We abuse the knowledge of
+        // internals here a little bit to generate correct test data
+        tsig_ctx->update(renderer.getData(), renderer.getLength());
+
         commonVerifyChecks(*tsig_verify_ctx, NULL,
                            renderer.getData(), renderer.getLength(),
                            TSIGError(Rcode::NOERROR()),
