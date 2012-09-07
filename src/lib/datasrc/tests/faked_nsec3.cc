@@ -156,7 +156,6 @@ performNSEC3Test(ZoneFinder &finder, bool rrsigs_exist) {
                        finder.findNSEC3(origin, false));
     }
 
-/*
     // Recursive mode doesn't change the result in this case.
     {
         SCOPED_TRACE("apex, recursive mode");
@@ -212,7 +211,6 @@ performNSEC3Test(ZoneFinder &finder, bool rrsigs_exist) {
                        zzz_nsec3_text, "",
                        finder.findNSEC3(largest_name, false));
     }
-*/
 }
 
 }
