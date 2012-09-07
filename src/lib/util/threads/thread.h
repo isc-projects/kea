@@ -49,6 +49,7 @@ public:
             Exception(file, line, what)
         {}
     };
+
     /// \brief Create and start a thread.
     ///
     /// Create a new thread and run body inside it.
@@ -63,10 +64,11 @@ public:
     ///
     /// \param main The code to run inside the thread.
     ///
-    /// \throw std::bad_alloc if allocation of the new thread or other resources
-    ///     fails.
+    /// \throw std::bad_alloc if allocation of the new thread or other
+    /// resources fails.
     /// \throw isc::InvalidOperation for other errors (should not happen).
     Thread(const boost::function<void()>& main);
+
     /// \brief Destructor.
     ///
     /// It is completely legitimate to destroy the thread without calling
@@ -77,7 +79,8 @@ public:
     /// \throw isc::InvalidOperation in the rare case of OS reporting a
     ///     problem. This should not happen unless you messed up with the raw
     ///     thread by the low-level API.
-    ~ Thread();
+    ~Thread();
+
     /// \brief Wait for the thread to terminate.
     ///
     /// Waits until the thread terminates. Must be called at most once.
