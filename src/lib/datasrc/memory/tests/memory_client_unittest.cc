@@ -263,6 +263,24 @@ TEST_F(MemoryClientTest, loadMultipleDNAME) {
     // Teardown checks for memory segment leaks
 }
 
+TEST_F(MemoryClientTest, loadMultipleNSEC3) {
+    // Multiple NSEC3 RRs should throw.
+    EXPECT_THROW(client_->load(Name("example.org"),
+                               TEST_DATA_DIR
+                               "/example.org-multiple-nsec3.zone"),
+                 InMemoryClient::AddError);
+    // Teardown checks for memory segment leaks
+}
+
+TEST_F(MemoryClientTest, loadMultipleNSEC3PARAM) {
+    // Multiple NSEC3PARAM RRs should throw.
+    EXPECT_THROW(client_->load(Name("example.org"),
+                               TEST_DATA_DIR
+                               "/example.org-multiple-nsec3param.zone"),
+                 InMemoryClient::AddError);
+    // Teardown checks for memory segment leaks
+}
+
 TEST_F(MemoryClientTest, loadRRSIGFollowsNothing) {
     EXPECT_THROW(client_->load(Name("example.org"),
                                TEST_DATA_DIR
