@@ -182,7 +182,7 @@ public:
         class_(RRClass::IN()),
         origin_("example.org"),
         zone_data_(ZoneData::create(mem_sgmt_, origin_)),
-        zone_finder_(*zone_data_)
+        zone_finder_(*zone_data_, class_)
     {
         // Build test RRsets.  Below, we construct an RRset for
         // each textual RR(s) of zone_data, and assign it to the corresponding
