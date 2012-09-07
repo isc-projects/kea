@@ -147,11 +147,13 @@ TEST_F(MemoryClientTest, loadReloadZone) {
     EXPECT_EQ(0, client_->getZoneCount());
 
     client_->load(Name("example.org"),
-		  TEST_DATA_DIR "/example.org-empty.zone");
+                  TEST_DATA_DIR "/example.org-empty.zone");
     EXPECT_EQ(1, client_->getZoneCount());
 
+    // Reload zone with same data
+
     client_->load(Name("example.org"),
-		  client_->getFileName(Name("example.org")));
+                  client_->getFileName(Name("example.org")));
     EXPECT_EQ(1, client_->getZoneCount());
 
     isc::datasrc::memory::ZoneTable::FindResult
@@ -179,7 +181,7 @@ TEST_F(MemoryClientTest, loadReloadZone) {
     // Reload zone with different data
 
     client_->load(Name("example.org"),
-		  TEST_DATA_DIR "/example.org-rrsigs.zone");
+                  TEST_DATA_DIR "/example.org-rrsigs.zone");
     EXPECT_EQ(1, client_->getZoneCount());
 
     isc::datasrc::memory::ZoneTable::FindResult
