@@ -234,6 +234,15 @@ TEST_F(MemoryClientTest, loadDuplicateType) {
     // Teardown checks for memory segment leaks
 }
 
+TEST_F(MemoryClientTest, loadMultipleCNAME) {
+    // Multiple CNAME RRs should throw.
+    EXPECT_THROW(client_->load(Name("example.org"),
+                               TEST_DATA_DIR
+                               "/example.org-multiple-cname.zone"),
+                 InMemoryClient::AddError);
+    // Teardown checks for memory segment leaks
+}
+
 TEST_F(MemoryClientTest, loadRRSIGFollowsNothing) {
     EXPECT_THROW(client_->load(Name("example.org"),
                                TEST_DATA_DIR
