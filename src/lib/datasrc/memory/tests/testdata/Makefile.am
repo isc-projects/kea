@@ -13,3 +13,5 @@ EXTRA_DIST += example.org-duplicate-type.zone
 EXTRA_DIST += example.org-duplicate-type-bad.zone
 EXTRA_DIST += example.org-multiple-cname.zone
 EXTRA_DIST += example.org-multiple-dname.zone
+EXTRA_DIST += example.org-nsec3-signed.zone
+EXTRA_DIST += example.org-nsec3-signed-no-param.zone
