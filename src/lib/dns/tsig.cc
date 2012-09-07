@@ -138,7 +138,7 @@ struct TSIGContext::TSIGContextImpl {
     // performance bottleneck, we could have this class a buffer as a member
     // variable and reuse it throughout the object's lifetime.  Right now,
     // we prefer keeping the scope for local things as small as possible.
-    void digestPreviousMAC(HMACPtr hmac) const;
+    void digestPreviousMAC(HMACPtr hmac);
     void digestTSIGVariables(HMACPtr hmac, uint16_t rrclass, uint32_t rrttl,
                              uint64_t time_signed, uint16_t fudge,
                              uint16_t error, uint16_t otherlen,
@@ -160,10 +160,17 @@ struct TSIGContext::TSIGContextImpl {
 };
 
 void
-TSIGContext::TSIGContextImpl::digestPreviousMAC(HMACPtr hmac) const {
+TSIGContext::TSIGContextImpl::digestPreviousMAC(HMACPtr hmac) {
     // We should have ensured the digest size fits 16 bits within this class
     // implementation.
     assert(previous_digest_.size() <= 0xffff);
+
+    if (previous_digest_.empty()) {
+        // The previous digest was already used. We're in the middle of
+        // TCP stream somewhere and we already pushed some unsigned message
+        // into the HMAC state.
+        return;
+    }
 
     OutputBuffer buffer(sizeof(uint16_t) + previous_digest_.size());
     const uint16_t previous_digest_len(previous_digest_.size());
@@ -534,6 +541,17 @@ TSIGContext::lastHadSignature() const {
         isc_throw(TSIGContextError, "No message was verified yet");
     }
     return (impl_->last_sig_dist_ == 0);
+}
+
+void
+TSIGContext::update(const void* const data, size_t len) {
+    HMACPtr hmac(impl_->createHMAC());
+    // Use the previous digest and never use it again
+    impl_->digestPreviousMAC(hmac);
+    impl_->previous_digest_.clear();
+    // Push the message there
+    hmac->update(data, len);
+    impl_->hmac_ = hmac;
 }
 
 } // namespace dns
