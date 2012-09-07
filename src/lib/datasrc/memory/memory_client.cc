@@ -727,6 +727,9 @@ InMemoryClient::add(const isc::dns::Name& zone_name,
     }
 
     result::Result ret(impl_->add(rrset, zone_name, *result.zone_data));
+    // Add any associated RRSIG too. This has to be done here, as both
+    // the RRset and its RRSIG have to be passed when constructing an
+    // RdataSet.
     if ((ret == result::SUCCESS) && rrset->getRRsig()) {
         impl_->add(rrset->getRRsig(), zone_name, *result.zone_data);
     }
