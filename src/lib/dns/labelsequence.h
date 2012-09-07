@@ -53,6 +53,14 @@ public:
     static const size_t MAX_SERIALIZED_LENGTH =
         Name::MAX_WIRE + Name::MAX_LABELS + 1;
 
+    ///
+    /// \name Well-known LabelSequence constants
+    ///
+    //@{
+    /// Wildcard label ("*")
+    static const LabelSequence& WILDCARD_LABEL();
+    //@}
+
     /// \brief Constructs a LabelSequence for the given name
     ///
     /// \note The associated Name MUST remain in scope during the lifetime
@@ -409,6 +417,13 @@ private:
 /// parameter \c os after the insertion operation.
 std::ostream&
 operator<<(std::ostream& os, const LabelSequence& label_sequence);
+
+inline const LabelSequence&
+LabelSequence::WILDCARD_LABEL() {
+    static const uint8_t wildcard_buf[4] = { 0x01, 0x00, 0x01, '*' };
+    static const LabelSequence wild_ls(wildcard_buf);
+    return (wild_ls);
+}
 
 } // end namespace dns
 } // end namespace isc
