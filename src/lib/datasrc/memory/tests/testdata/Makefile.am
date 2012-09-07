@@ -9,3 +9,5 @@ EXTRA_DIST += example.org-rrsig-follows-nothing.zone
 EXTRA_DIST += example.org-rrsig-name-unmatched.zone
 EXTRA_DIST += example.org-rrsig-type-unmatched.zone
 EXTRA_DIST += example.org-rrsigs.zone
+EXTRA_DIST += example.org-duplicate-type.zone
+EXTRA_DIST += example.org-duplicate-type-bad.zone

@@ -1,0 +1,4 @@
+example.org. 3600 IN SOA	ns1.example.org. bugs.x.w.example.org. 77 3600 300 3600000 3600
+ns1.example.org.		      3600 IN A	 	192.168.0.1
+ns1.example.org.		      3600 IN AAAA 	::1
+ns1.example.org.		      3600 IN A	 	192.168.0.2

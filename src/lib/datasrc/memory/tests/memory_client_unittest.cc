@@ -221,6 +221,19 @@ TEST_F(MemoryClientTest, loadReloadZone) {
     // Teardown checks for memory segment leaks
 }
 
+TEST_F(MemoryClientTest, loadDuplicateType) {
+    // This should not result in any exceptions:
+    client_->load(Name("example.org"),
+                  TEST_DATA_DIR "/example.org-duplicate-type.zone");
+
+    // This should throw:
+    EXPECT_THROW(client_->load(Name("example.org"),
+                               TEST_DATA_DIR
+                               "/example.org-duplicate-type-bad.zone"),
+                 InMemoryClient::AddError);
+    // Teardown checks for memory segment leaks
+}
+
 TEST_F(MemoryClientTest, loadRRSIGFollowsNothing) {
     EXPECT_THROW(client_->load(Name("example.org"),
                                TEST_DATA_DIR
