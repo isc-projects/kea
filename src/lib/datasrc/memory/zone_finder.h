@@ -50,7 +50,7 @@ public:
 
 class InMemoryZoneFinder : boost::noncopyable, public ZoneFinder {
 public:
-    InMemoryZoneFinder(const ZoneData& zone_data) : zone_data_(zone_data) {}
+    InMemoryZoneFinder(const ZoneData& zone_data, const isc::dns::RRClass& rrclass) : zone_data_(zone_data), rrclass_(rrclass) {}
 
     virtual boost::shared_ptr<ZoneFinder::Context> find(
         const isc::dns::Name& name,
@@ -84,6 +84,7 @@ private:
                                           FIND_DEFAULT);
 
     const ZoneData& zone_data_;
+    const isc::dns::RRClass& rrclass_;
 };
 
 } // namespace memory
