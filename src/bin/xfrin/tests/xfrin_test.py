@@ -2948,7 +2948,7 @@ class TestFormatting(unittest.TestCase):
         self.assertEqual("example.org/IN",
                          format_zone_str(isc.dns.Name("example.org"),
                          isc.dns.RRClass("IN")))
-    
+
     def test_format_addrinfo(self):
         # This test may need to be updated if the input type is changed,
         # right now it is a nested tuple:

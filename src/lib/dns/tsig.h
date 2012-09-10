@@ -352,11 +352,11 @@ public:
     TSIGError verify(const TSIGRecord* const record, const void* const data,
                      const size_t data_len);
 
-    /// \brief If the last verified message was signed.
+    /// \brief Check whether the last verified message was signed.
     ///
-    /// The RFC2845 allows for some of the messages not to be signed. However,
-    /// the last message must be signed and the class has knowledge if a given
-    /// message is last, therefore it can't check that.
+    /// RFC2845 allows for some of the messages not to be signed. However,
+    /// the last message must be signed and the class has no knowledge if a
+    /// given message is the last one, therefore it can't check directly.
     ///
     /// It is up to the caller to check if the last verified message was signed
     /// after all are verified by calling this function.
