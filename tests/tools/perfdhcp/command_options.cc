@@ -12,6 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -866,7 +867,7 @@ CommandOptions::usage() const {
 
 void
 CommandOptions::version() const {
-	fprintf(stdout, "version 0.01\n");
+    std::cout << "VERSION: " << VERSION << std::endl;
 }
 
 

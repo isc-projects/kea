@@ -299,8 +299,8 @@ TestControl::factoryOptionRequestOption6(Option::Universe,
                                          uint16_t,
                                          const OptionBuffer&) {
     const uint8_t buf_array[] = {
-        D6O_NAME_SERVERS, 0,
-        D6O_DOMAIN_SEARCH, 0,
+        0, D6O_NAME_SERVERS,
+        0, D6O_DOMAIN_SEARCH,
     };
     OptionBuffer buf_with_options(buf_array, buf_array + sizeof(buf_array));
     return (OptionPtr(new Option(Option::V6, D6O_ORO, buf_with_options)));
@@ -731,7 +731,7 @@ TestControl::readPacketTemplate(const std::string& file_name) {
 }
 
 void
-TestControl::receivePacket4(const TestControlSocket& socket,
+TestControl::processReceivedPacket4(const TestControlSocket& socket,
                             const Pkt4Ptr& pkt4) {
     if (pkt4->getType() == DHCPOFFER) {
         Pkt4Ptr discover_pkt4(stats_mgr4_->passRcvdPacket(StatsMgr4::XCHG_DO,
@@ -742,6 +742,8 @@ TestControl::receivePacket4(const TestControlSocket& socket,
             if (template_buffers_.size() < 2) {
                 sendRequest4(socket, discover_pkt4, pkt4);
             } else {
+                // @todo add defines for packet type index that can be
+                // used to access template_buffers_.
                 sendRequest4(socket, template_buffers_[1], discover_pkt4, pkt4);
             }
         }
@@ -751,7 +753,7 @@ TestControl::receivePacket4(const TestControlSocket& socket,
 }
 
 void
-TestControl::receivePacket6(const TestControlSocket& socket,
+TestControl::processReceivedPacket6(const TestControlSocket& socket,
                             const Pkt6Ptr& pkt6) {
     uint8_t packet_type = pkt6->getType();
     if (packet_type == DHCPV6_ADVERTISE) {
@@ -766,6 +768,8 @@ TestControl::receivePacket6(const TestControlSocket& socket,
             if (template_buffers_.size() < 2) {
                 sendRequest6(socket, pkt6);
             } else {
+                // @todo add defines for packet type index that can be
+                // used to access template_buffers_.
                 sendRequest6(socket, template_buffers_[1], pkt6);
             }
         }
@@ -790,7 +794,7 @@ TestControl::receivePackets(const TestControlSocket& socket) {
                     stats_mgr4_->incrementCounter("multircvd");
                 }
                 pkt4->unpack();
-                receivePacket4(socket, pkt4);
+                processReceivedPacket4(socket, pkt4);
             }
         } else if (CommandOptions::instance().getIpVersion() == 6) {
             Pkt6Ptr pkt6 = IfaceMgr::instance().receive6(timeout);
@@ -802,7 +806,7 @@ TestControl::receivePackets(const TestControlSocket& socket) {
                     stats_mgr6_->incrementCounter("multircvd");
                 }
                 if (pkt6->unpack()) {
-                    receivePacket6(socket, pkt6);
+                    processReceivedPacket6(socket, pkt6);
                 }
             }
         }
@@ -949,8 +953,9 @@ TestControl::run() {
             } else {
                 // Pick template #0 if Discover is being sent.
                 // For Request it would be #1.
-                const uint8_t template_idx = 0;
-                sendDiscover4(socket, template_buffers_[template_idx],
+                // @todo add defines for packet type index that can be
+                // used to access template_buffers_.
+                sendDiscover4(socket, template_buffers_[0],
                               do_preload);
             }
         } else if (options.getIpVersion() == 6) {
@@ -961,8 +966,9 @@ TestControl::run() {
             } else {
                 // Pick template #0 if Solicit is being sent.
                 // For Request it would be #1.
-                const uint8_t template_idx = 0;
-                sendSolicit6(socket, template_buffers_[template_idx],
+                // @todo add defines for packet type index that can be
+                // used to access template_buffers_.
+                sendSolicit6(socket, template_buffers_[0],
                              do_preload);
             }
         }
@@ -1000,8 +1006,9 @@ TestControl::run() {
                 if (template_buffers_.size() == 0) {
                     sendDiscover4(socket);
                 } else {
-                    const uint8_t template_idx = 0;
-                    sendDiscover4(socket, template_buffers_[template_idx]);
+                    // @todo add defines for packet type index that can be
+                    // used to access template_buffers_.
+                    sendDiscover4(socket, template_buffers_[0]);
                 }
             } else {
                 // No template packets means that no -T option was specified.
@@ -1009,8 +1016,9 @@ TestControl::run() {
                 if (template_buffers_.size() == 0) {
                     sendSolicit6(socket);
                 } else {
-                    const uint8_t template_idx = 0;
-                    sendSolicit6(socket, template_buffers_[template_idx]);
+                    // @todo add defines for packet type index that can be
+                    // used to access template_buffers_.
+                    sendSolicit6(socket, template_buffers_[0]);
                 }
             }
         }

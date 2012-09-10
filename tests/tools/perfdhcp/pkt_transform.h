@@ -114,6 +114,8 @@ public:
     template<typename T>
     static void writeValueAt(dhcp::OptionBuffer& in_buffer, size_t dest_pos,
                         T val) {
+        // @todo consider replacing the loop with switch statement
+        // checking sizeof(T).
         for (int i = 0; i < sizeof(T); ++i) {
             in_buffer[dest_pos + i] = (val >> 8 * (sizeof(T) - i - 1)) & 0xFF;
         }
