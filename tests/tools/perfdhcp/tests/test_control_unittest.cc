@@ -81,8 +81,8 @@ public:
     using TestControl::initPacketTemplates;
     using TestControl::initializeStatsMgr;
     using TestControl::openSocket;
-    using TestControl::receivePacket4;
-    using TestControl::receivePacket6;
+    using TestControl::processReceivedPacket4;
+    using TestControl::processReceivedPacket6;
     using TestControl::registerOptionFactories;
     using TestControl::sendDiscover4;
     using TestControl::sendSolicit6;
@@ -418,7 +418,7 @@ public:
             // packet drops.
             if (i < receive_num) {
                 boost::shared_ptr<Pkt4> offer_pkt4(createOfferPkt4(transid));
-                ASSERT_NO_THROW(tc.receivePacket4(sock, offer_pkt4));
+                ASSERT_NO_THROW(tc.processReceivedPacket4(sock, offer_pkt4));
                 ++transid;
             }
             if (tc.checkExitConditions()) {
@@ -483,7 +483,7 @@ public:
                 boost::shared_ptr<Pkt6>
                     advertise_pkt6(createAdvertisePkt6(transid));
                 // Receive ADVERTISE and send REQUEST.
-                ASSERT_NO_THROW(tc.receivePacket6(sock, advertise_pkt6));
+                ASSERT_NO_THROW(tc.processReceivedPacket6(sock, advertise_pkt6));
                 ++transid;
             }
             if (tc.checkExitConditions()) {
@@ -770,8 +770,8 @@ TEST_F(TestControlTest, Options6) {
     OptionPtr opt_oro(Option::factory(Option::V6, D6O_ORO));
     // Prepare the reference buffer with requested options.
     const uint8_t requested_options[] = {
-        D6O_NAME_SERVERS, 0,
-        D6O_DOMAIN_SEARCH, 0,
+        0, D6O_NAME_SERVERS,
+        0, D6O_DOMAIN_SEARCH,
     };
     int requested_options_num =
         sizeof(requested_options) / sizeof(requested_options[0]);
