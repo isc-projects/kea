@@ -335,6 +335,21 @@ TEST_F(MemoryClientTest, loadNSEC3WithMoreLabelsThrows) {
     // Teardown checks for memory segment leaks
 }
 
+TEST_F(MemoryClientTest, loadCNAMEAndNotNSECThrows) {
+    // CNAME and not NSEC should throw
+    EXPECT_THROW(client_->load(Name("example.org"),
+                               TEST_DATA_DIR
+                               "/example.org-cname-and-not-nsec-1.zone"),
+                 InMemoryClient::AddError);
+
+    EXPECT_THROW(client_->load(Name("example.org"),
+                               TEST_DATA_DIR
+                               "/example.org-cname-and-not-nsec-2.zone"),
+                 InMemoryClient::AddError);
+
+    // Teardown checks for memory segment leaks
+}
+
 TEST_F(MemoryClientTest, loadRRSIGFollowsNothing) {
     EXPECT_THROW(client_->load(Name("example.org"),
                                TEST_DATA_DIR
