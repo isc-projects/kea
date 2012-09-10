@@ -15,6 +15,8 @@
 #ifndef DATASRC_MEMORY_CLIENT_H
 #define DATASRC_MEMORY_CLIENT_H 1
 
+#include <util/memory_segment.h>
+
 #include <datasrc/iterator.h>
 #include <datasrc/client.h>
 #include <datasrc/memory/zone_table.h>
@@ -62,7 +64,8 @@ public:
     /// This constructor internally involves resource allocation, and if
     /// it fails, a corresponding standard exception will be thrown.
     /// It never throws an exception otherwise.
-    InMemoryClient(isc::dns::RRClass rrclass);
+    InMemoryClient(util::MemorySegment& mem_sgmt,
+                   isc::dns::RRClass rrclass);
 
     /// The destructor.
     ~InMemoryClient();
