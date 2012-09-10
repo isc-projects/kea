@@ -21,3 +21,5 @@ EXTRA_DIST += example.org-out-of-zone.zone
 EXTRA_DIST += example.org-wildcard-ns.zone
 EXTRA_DIST += example.org-wildcard-dname.zone
 EXTRA_DIST += example.org-wildcard-nsec3.zone
+EXTRA_DIST += example.org-nsec3-fewer-labels.zone
+EXTRA_DIST += example.org-nsec3-more-labels.zone
