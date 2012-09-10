@@ -24,3 +24,7 @@ EXTRA_DIST += example.org-wildcard-nsec3.zone
 EXTRA_DIST += example.org-nsec3-fewer-labels.zone example.org-nsec3-more-labels.zone
 EXTRA_DIST += example.org-cname-and-not-nsec-1.zone
 EXTRA_DIST += example.org-cname-and-not-nsec-2.zone
+EXTRA_DIST += example.org-dname-ns-nonapex-1.zone
+EXTRA_DIST += example.org-dname-ns-nonapex-2.zone
+EXTRA_DIST += example.org-dname-ns-apex-1.zone
+EXTRA_DIST += example.org-dname-ns-apex-2.zone
