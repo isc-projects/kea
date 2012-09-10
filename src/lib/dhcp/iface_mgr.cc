@@ -498,11 +498,15 @@ IfaceMgr::getLocalAddress(const IOAddress& remote_addr, const uint16_t port) {
     asio::error_code err_code;
     // If remote address is broadcast address we have to
     // allow this on the socket.
-    if (remote_addr.getAddress().is_v4() && 
+    if (remote_addr.getAddress().is_v4() &&
         (remote_addr == IOAddress("255.255.255.255"))) {
         // Socket has to be open prior to setting the broadcast
         // option. Otherwise set_option will complain about
         // bad file descriptor.
+
+        // @todo: We don't specify interface in any way here. 255.255.255.255
+        // We can very easily end up with a socket working on a different
+        // interface.
         sock.open(asio::ip::udp::v4(), err_code);
         if (err_code) {
             isc_throw(Unexpected, "failed to open UDPv4 socket");
@@ -580,8 +584,10 @@ int IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, uint16_t port) {
     struct sockaddr_in6 addr6;
     memset(&addr6, 0, sizeof(addr6));
     addr6.sin6_family = AF_INET6;
-    addr6.sin6_port = htons(port);    if (addr.toText() != "::1")
-      addr6.sin6_scope_id = if_nametoindex(iface.getName().c_str());
+    addr6.sin6_port = htons(port);
+    if (addr.toText() != "::1") {
+        addr6.sin6_scope_id = if_nametoindex(iface.getName().c_str());
+    }
 
     memcpy(&addr6.sin6_addr,
            addr.getAddress().to_v6().to_bytes().data(),

@@ -72,7 +72,9 @@ public:
     };
 
     /// type that holds a list of socket informations
+    /// @todo: Add SocketCollectionConstIter type
     typedef std::list<SocketInfo> SocketCollection;
+
 
     /// @brief represents a single network interface
     ///
