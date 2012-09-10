@@ -432,7 +432,6 @@ class XfrinIXFRAdd(XfrinState):
                                          str(conn._current_serial) +
                                          ', got ' + str(soa_serial))
             else:
-                raise Exception()
                 conn._check_response_tsig_last()
                 conn._diff.commit()
                 self.set_xfrstate(conn, XfrinIXFRDeleteSOA())
