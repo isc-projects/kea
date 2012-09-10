@@ -839,7 +839,7 @@ public:
             RRsetPtr result(new RRset(rrset_->getName(),
                                       rrset_->getClass(),
                                       rrset_->getType(),
-                                      rrset_->getTTL()));
+                                      RRTTL(0)));
             result->addRdata(rdata_iterator_->getCurrent());
             rdata_iterator_->next();
             if (rdata_iterator_->isLast()) {
