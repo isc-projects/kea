@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
+<!ENTITY mdash  "&#x2014;" >
+<!ENTITY % version SYSTEM "version.ent">
+%version;
+]>
+
+<!--
+ - Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+ -
+ - Permission to use, copy, modify, and/or distribute this software for any
+ - purpose with or without fee is hereby granted, provided that the above
+ - copyright notice and this permission notice appear in all copies.
+ -
+ - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ - AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ - LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ - PERFORMANCE OF THIS SOFTWARE.
+-->
+
+<?xml-stylesheet href="bind10-guide.css" type="text/css"?>
+
+<book>
+  <bookinfo>
+    <title>perfdhcp objects breakdown</title>
+    <!-- <subtitle>perfdhcp objects breakdown</subtitle> -->
+
+    <copyright>
+      <year>2012</year>
+      <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
+    </copyright>
+    <author>
+      <firstname>Marcin</firstname>
+      <surname>Siodelski</surname>
+    </author>
+    <abstract>
+      <para>This document briefly describes C++ classes being part of the
+      perfdhcp tool. </para>
+    </abstract>
+
+    <releaseinfo>This is a companion document for BIND 10 version
+    &__VERSION__;.</releaseinfo>
+
+  </bookinfo>
+
+  <chapter id="perfdhcp-classes">
+    <title>Classes</title>
+    <section id="command-options">
+      <title>CommandOptions (command_options (.h, cc)</title>
+      <para>
+        CommandOptions is a singleton class that parses perfdhcp command line
+        parameters and initializes its members accordingly. If parsed parameters
+        are invalid the parser function throws exception.
+        <screen>
+<![CDATA[main(int argc, char* argv[]) {
+    try {
+        CommandOptions& command_options = CommandOptions::instance();
+        command_options.parse(argc, argv);
+    catch(const Exception& e) {
+        ...
+    }
+    ...
+}]]>
+        </screen>
+        If argument parsing is successful than parsed values can be read from
+        CommandOptions singleton from any class or function in the program:
+        <screen>
+<![CDATA[
+    ...
+    int rate = CommandOptions::instance().getRate();
+    ...
+]]>
+        </screen>
+      </para>
+    </section>
+  </chapter>
+</book>
