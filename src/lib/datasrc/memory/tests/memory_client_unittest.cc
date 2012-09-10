@@ -290,6 +290,15 @@ TEST_F(MemoryClientTest, loadOutOfZoneThrows) {
     // Teardown checks for memory segment leaks
 }
 
+TEST_F(MemoryClientTest, loadWildcardNSThrows) {
+    // Wildcard NS names should throw
+    EXPECT_THROW(client_->load(Name("example.org"),
+                               TEST_DATA_DIR
+                               "/example.org-wildcard-ns.zone"),
+                 InMemoryClient::AddError);
+    // Teardown checks for memory segment leaks
+}
+
 TEST_F(MemoryClientTest, loadRRSIGFollowsNothing) {
     EXPECT_THROW(client_->load(Name("example.org"),
                                TEST_DATA_DIR
