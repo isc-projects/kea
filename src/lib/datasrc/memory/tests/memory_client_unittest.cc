@@ -468,7 +468,7 @@ TEST_F(MemoryClientTest, getIterator) {
     EXPECT_TRUE(rrset_soa);
     EXPECT_EQ(RRType::SOA(), rrset_soa->getType());
 
-    // There's nothing else in this zone
+    // There's nothing else in this iterator
     EXPECT_EQ(ConstRRsetPtr(), iterator->getNextRRset());
 
     // Iterating past the end should result in an exception
