@@ -1,29 +1,126 @@
 <html><head>
       <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
-   <title>perfdhcp objects breakdown</title><link rel="stylesheet" type="text/css" href="bind10-guide.css"><meta name="generator" content="DocBook XSL Stylesheets V1.76.1"><meta name="description" content="This document briefly describes C++ classes being part of the perfdhcp tool."></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="book" title="perfdhcp objects breakdown"><div class="titlepage"><div><div><h1 class="title"><a name="d0e3"></a>perfdhcp objects breakdown</h1></div><div><div class="author"><h3 class="author"><span class="firstname">Marcin</span> <span class="surname">Siodelski</span></h3></div></div><div><p class="releaseinfo">This is a companion document for BIND 10 version
-    20120712.</p></div><div><p class="copyright">Copyright &copy; 2012 Internet Systems Consortium, Inc. ("ISC")</p></div><div><div class="abstract" title="Abstract"><p class="title"><b>Abstract</b></p><p>This document briefly describes C++ classes being part of the
-      perfdhcp tool. </p></div></div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="chapter"><a href="#perfdhcp-classes">1. Classes</a></span></dt><dd><dl><dt><span class="section"><a href="#command-options">CommandOptions (command_options (.h, cc)</a></span></dt></dl></dd></dl></div><div class="chapter" title="Chapter&nbsp;1.&nbsp;Classes"><div class="titlepage"><div><div><h2 class="title"><a name="perfdhcp-classes"></a>Chapter&nbsp;1.&nbsp;Classes</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#command-options">CommandOptions (command_options (.h, cc)</a></span></dt></dl></div><div class="section" title="CommandOptions (command_options (.h, cc)"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="command-options"></a>CommandOptions (command_options (.h, cc)</h2></div></div></div><p>
+   <title>perfdhcp objects breakdown</title><link rel="stylesheet" href="../../../doc/guide/bind10-guide.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"><meta name="description" content="This document briefly describes C++ classes being part of the perfdhcp tool."></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="book" title="perfdhcp objects breakdown"><div class="titlepage"><div><div><h1 class="title"><a name="d0e3"></a>perfdhcp objects breakdown</h1></div><div><div class="author"><h3 class="author"><span class="firstname">Marcin</span> <span class="surname">Siodelski</span></h3></div></div><div><p class="releaseinfo">This is a companion document for BIND 10 version
+    20120817.</p></div><div><p class="copyright">Copyright &copy; 2012 Internet Systems Consortium, Inc. ("ISC")</p></div><div><div class="abstract" title="Abstract"><p class="title"><b>Abstract</b></p><p>This document briefly describes C++ classes being part of the
+      perfdhcp tool. </p></div></div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="chapter"><a href="#perfdhcp-refactoring">1. Introduction</a></span></dt><dt><span class="chapter"><a href="#perfdhcp-classes">2. Classes</a></span></dt><dd><dl><dt><span class="section"><a href="#command-options">CommandOptions (command_options.h .cc)</a></span></dt><dt><span class="section"><a href="#test-control">TestControl (test_control.h .cc)</a></span></dt><dt><span class="section"><a href="#stats-mgr">StatsMgr (stats_mgr.h)</a></span></dt><dt><span class="section"><a href="#perf-pkt">PerfPkt4, PerfPkt6 (perf_pkt4.h .cc, perf_pkt6.h .cc)</a></span></dt><dt><span class="section"><a href="#localized-option">LocalizedOption (localized_option.h)</a></span></dt><dt><span class="section"><a href="#pkt-transform.h">PktTransform (pkt_transform.h .cc)</a></span></dt></dl></dd></dl></div><div class="chapter" title="Chapter&nbsp;1.&nbsp;Introduction"><div class="titlepage"><div><div><h2 class="title"><a name="perfdhcp-refactoring"></a>Chapter&nbsp;1.&nbsp;Introduction</h2></div></div></div><p>
+      The source code of perfdhcp tool has been refactored from C to C++.
+      There is a bunch of new C++ classes. in the refactored code.
+      All of them are well documented in Doxygen. This document is
+      limited to brief overview of major classes to help understand
+      their purpose.
+    </p></div><div class="chapter" title="Chapter&nbsp;2.&nbsp;Classes"><div class="titlepage"><div><div><h2 class="title"><a name="perfdhcp-classes"></a>Chapter&nbsp;2.&nbsp;Classes</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#command-options">CommandOptions (command_options.h .cc)</a></span></dt><dt><span class="section"><a href="#test-control">TestControl (test_control.h .cc)</a></span></dt><dt><span class="section"><a href="#stats-mgr">StatsMgr (stats_mgr.h)</a></span></dt><dt><span class="section"><a href="#perf-pkt">PerfPkt4, PerfPkt6 (perf_pkt4.h .cc, perf_pkt6.h .cc)</a></span></dt><dt><span class="section"><a href="#localized-option">LocalizedOption (localized_option.h)</a></span></dt><dt><span class="section"><a href="#pkt-transform.h">PktTransform (pkt_transform.h .cc)</a></span></dt></dl></div><div class="section" title="CommandOptions (command_options.h .cc)"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="command-options"></a>CommandOptions (command_options.h .cc)</h2></div></div></div><p>
         CommandOptions is a singleton class that parses perfdhcp command line
         parameters and initializes its members accordingly. If parsed parameters
         are invalid the parser function throws exception.
         </p><pre class="screen">
 main(int argc, char* argv[]) {
-    try {
-        CommandOptions&amp; command_options = CommandOptions::instance();
-        command_options.parse(argc, argv);
-    catch(const Exception&amp; e) {
-        ...
-    }
+try {
+    CommandOptions&amp; command_options = CommandOptions::instance();
+    command_options.parse(argc, argv);
+catch(const Exception&amp; e) {
     ...
+}
+...
 }
         </pre><p>
         If argument parsing is successful than parsed values can be read from
         CommandOptions singleton from any class or function in the program:
         </p><pre class="screen">
 
-    ...
-    int rate = CommandOptions::instance().getRate();
-    ...
+...
+int rate = CommandOptions::instance().getRate();
+...
 
         </pre><p>
+      </p></div><div class="section" title="TestControl (test_control.h .cc)"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="test-control"></a>TestControl (test_control.h .cc)</h2></div></div></div><p>
+        TestControl singleton is responsible for test execution coordination.
+        It relies on CommandOptions object to get all required test parameters. For
+        this reason CommandOptions has to be initialized and CommandOptions::parse()
+        has to be called prior to calling TestControl::run(). The latter function
+        performs initialization of TestControl internals and execues the main program
+        loop. The TestControl::run() function performs the following major operations:
+        </p><div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>check if command line has been parsed,</p></li><li class="listitem"><p>prints diagnostics if specified from command line,</p></li><li class="listitem"><p>register DHCP options factory functions,</p></li><li class="listitem"><p>read packet templates from files,</p></li><li class="listitem"><p>initialize Statistics Manager object,</p></li><li class="listitem"><p>set interrupt signal handler (handle ^C),</p></li><li class="listitem"><p>open and close socket for communication with server,</p></li><li class="listitem"><p>coordinate sending and receiving packets,</p></li><li class="listitem"><p>coordinate intermediate reporting,</p></li><li class="listitem"><p>prints test statistics.</p></li></ol></div><p>
+      </p><p>
+        TestControl is a singleton object so there is one sole instance of
+        it throughout the program. In order to allow running performance test
+        multiple times (using different command line options) with single instance
+        of the TestControl object it uses TestControl::reset() function internally
+        to reset state of the class members. Also, functions that initialize
+        various class members like Statistics Manager will release any objects
+        existing from previous test runs.
+      </p></div><div class="section" title="StatsMgr (stats_mgr.h)"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="stats-mgr"></a>StatsMgr (stats_mgr.h)</h2></div></div></div><p>
+        StatsMgr is a class that holds all performance statistics gathered throughout
+        the test execution. Statistics Manager is created in TestControl. The
+        TestControl class posts all sent and received packets to StatsMgr.
+        Collected packets are used to match packets received from the server with
+        corresponding sent packets, calculate round trip time, number of packet
+        drops etc. Apart from the standard counters implemented in StatsMgr,
+        custom (named) counters can be specified and incremented by the calling
+        class. StatsMgr also exposes multiple functions that print gathered
+        statistics into the console.
+      </p><p>
+        The StatsMgr is a template class that takes Pkt4, Pkt6, PerfPkt4 or
+        PerfPkt6 as a typename. The instance of the StatsMgr can be created
+        as follows:
+        </p><pre class="screen">
+
+typedef StatsMgr&lt;Pkt4&gt; StatsMgr4;
+StatsMgr4 stats_mgr4 = boost::shared_ptr&lt;StatsMgr4&gt;(new StatsMgr4());
+try {
+    stats_mgr-&gt;addExchangeStats(StatsMgr4::XCHG_DO);
+} catch(const Exception&amp; e) {
+    std::cout &lt;&lt; e.what() &lt;&lt; std::endl;
+}
+
+        </pre><p>
+        The StatsMgr instance created in the example above will be used for
+        DHCPv4 testing (collect DHCPv4 packets) and will be configured to
+        monitor statistics for DISCOVER-OFFER packet exchanges.
+      </p></div><div class="section" title="PerfPkt4, PerfPkt6 (perf_pkt4.h .cc, perf_pkt6.h .cc)"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="perf-pkt"></a>PerfPkt4, PerfPkt6 (perf_pkt4.h .cc, perf_pkt6.h .cc)</h2></div></div></div><p>
+        The PerfPkt4 and PerfPkt6 classes are derived from dhcp::Pkt4 and
+        dhcp::Pkt6 (src/lib/dhcp). They extend parent class functionality
+        by adding support for template files. The instance of these classes
+        can be created using raw buffer (read from packet template file).
+        Once packet object is initialized it is possible to replace
+        parts of the on-wire data by using LocalizedOption mechanism.
+      </p></div><div class="section" title="LocalizedOption (localized_option.h)"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="localized-option"></a>LocalizedOption (localized_option.h)</h2></div></div></div><p>
+        LocalizedOption derives from dhcp::Option class. It represents the
+        DHCP option (v4 or v6) to be placed at specified position in the
+        packet buffer (see <a class="xref" href="#perf-pkt" title="PerfPkt4, PerfPkt6 (perf_pkt4.h .cc, perf_pkt6.h .cc)">the section called &#8220;PerfPkt4, PerfPkt6 (perf_pkt4.h .cc, perf_pkt6.h .cc)&#8221;</a>). Such option is added
+        to option collection in PerfPkt4 or PerfPkt6 object and when any of
+        PerfPktX::rawPack() function is called their content is stored in
+        the packet output buffer at the position pointed to by
+        LocalizedOption object. The LocalizedOption also allows to read the
+        on wire data in received packet at the specified position. In this
+        case LocalizedOption has to be created and added to recived packet.
+        When PerfPktX::rawUnpack() is called the contents of the buffer
+        will be read and stored in LocalizedOption object for further
+        processing.
+      </p><p>
+        The following code shows how to create a packet from (template)
+        buffer and replace option data in the buffer with LocalizedOption.
+        </p><pre class="screen">
+
+OptionBuffer buf;
+// fill buf with data here.
+...
+boost::scoped_ptr&lt;PerfPkt4&gt; pkt(new PerfPkt4(&amp;buf[0], buf.size());
+const size_t offset_hostname = 240;
+OptionBuffer vec_hostname;
+// fill the hostname vector with data
+...
+LocalizedOptionPtr opt_hostname(new LocalizedOption(Option::V4, DHO_HOST_NAME, vec_hostname,
+                                                    offset_hostname));
+pkt-&gt;addOption(opt_hostname);
+// by calling rawPack() we replace packet contents with option contents at
+// buffer position 240.
+pkt-&gt;rawPack();
+
+        </pre><p>
+      </p></div><div class="section" title="PktTransform (pkt_transform.h .cc)"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="pkt-transform.h"></a>PktTransform (pkt_transform.h .cc)</h2></div></div></div><p>
+        This helper class contains the static functions to pack and unpack
+        DHCP options (specifically LocalizedOption) to and from the packet
+        buffer. This logic has been moved away from PerfPkt4 and PerfPkt6
+        classes to PktTransform because PerfPktX classes share the logic
+        here.
       </p></div></div></div></body></html>
