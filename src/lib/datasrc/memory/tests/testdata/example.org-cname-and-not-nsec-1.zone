@@ -1,4 +1,4 @@
-;; NSEC3 names with labels != (origin_labels + 1)
+;; CNAME + other is an error
 example.org.				      86400 IN SOA	ns.example.org. ns.example.org. 2012091009 7200 3600 2592000 1200
 a.example.org.				      7200  IN A	192.168.0.1
 a.example.org.				      3600  IN CNAME	foo.example.com.
