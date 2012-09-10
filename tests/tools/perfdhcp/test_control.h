@@ -46,6 +46,12 @@ namespace perfdhcp {
 /// \ref dhcp::Option::factory with DHCP message type specified as one of
 ///  parameters. Some of the parameters passed to factory function
 /// may be ignored (e.g. option buffer).
+/// Please note that naming convention for factory functions within this
+/// class is as follows:
+/// - factoryABC4 - factory function for DHCPv4 option,
+/// - factoryDEF6 - factory function for DHCPv6 option,
+/// - factoryGHI - factory function that can be used to create either
+/// DHCPv4 or DHCPv6 option.
 class TestControl : public boost::noncopyable {
 public:
 
@@ -449,11 +455,11 @@ protected:
     /// not initialized.
     void printStats() const;
 
-    /// \brief Receive DHCPv4 packet.
+    /// \brief Process received DHCPv4 packet.
     ///
-    /// Method performs reception of the DHCPv4 packet, updates
-    /// statistics and responsds to the server if required, e.g.
-    /// when OFFER packet arrives, this function will initiate
+    /// Method performs processing of the received DHCPv4 packet,
+    /// updates statistics and responds to the server if required,
+    /// e.g. when OFFER packet arrives, this function will initiate
     /// REQUEST message to the server.
     ///
     /// \warning this method does not check if provided socket is
@@ -463,14 +469,14 @@ protected:
     /// \param [in] pkt4 object representing DHCPv4 packet received.
     /// \throw isc::BadValue if unknown message type received.
     /// \throw isc::Unexpected if unexpected error occured.
-    void receivePacket4(const TestControlSocket& socket,
-                        const dhcp::Pkt4Ptr& pkt4);
+    void processReceivedPacket4(const TestControlSocket& socket,
+                                const dhcp::Pkt4Ptr& pkt4);
 
-    /// \brief Receive DHCPv6 packet.
+    /// \brief Process received DHCPv6 packet.
     ///
-    /// Method performs reception of the DHCPv6 packet, updates
-    /// statistics and responsds to the server if required, e.g.
-    /// when ADVERTISE packet arrives, this function will initiate
+    /// Method performs processing of the received DHCPv6 packet,
+    /// updates statistics and responsds to the server if required,
+    /// e.g. when ADVERTISE packet arrives, this function will initiate
     /// REQUEST message to the server.
     ///
     /// \warning this method does not check if provided socket is
@@ -480,8 +486,8 @@ protected:
     /// \param [in] pkt6 object representing DHCPv6 packet received.
     /// \throw isc::BadValue if unknown message type received.
     /// \throw isc::Unexpected if unexpected error occured.
-    void receivePacket6(const TestControlSocket& socket,
-                        const dhcp::Pkt6Ptr& pkt6);
+    void processReceivedPacket6(const TestControlSocket& socket,
+                                const dhcp::Pkt6Ptr& pkt6);
 
     /// \brief Receive DHCPv4 or DHCPv6 packets from the server.
     ///
@@ -706,6 +712,8 @@ private:
 
     /// \brief Convert binary value to hex string.
     ///
+    /// \todo Consider moving this function to src/lib/util.
+    ///
     /// \param b byte to convert.
     /// \return hex string.
     std::string byte2Hex(const uint8_t b) const;
@@ -759,6 +767,8 @@ private:
     void readPacketTemplate(const std::string& file_name);
 
     /// \brief Convert vector in hexadecimal string.
+    ///
+    /// \todo Consider moving this function to src/lib/util.
     ///
     /// \param vec vector to be converted.
     /// \param separator separator.
