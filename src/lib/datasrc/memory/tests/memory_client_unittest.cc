@@ -300,7 +300,7 @@ TEST_F(MemoryClientTest, loadWildcardNSThrows) {
 }
 
 TEST_F(MemoryClientTest, loadWildcardDNAMEThrows) {
-    // Wildcard NS names should throw
+    // Wildcard DNAME names should throw
     EXPECT_THROW(client_->load(Name("example.org"),
                                TEST_DATA_DIR
                                "/example.org-wildcard-dname.zone"),
