@@ -178,11 +178,14 @@ public:
         // owner name except with NSEC, which is the only RR that can coexist
         // with CNAME (and also RRSIG, which is handled separately)
         if (rrset.getType() == RRType::CNAME()) {
-            if (RdataSet::find(set, RRType::NSEC()) != NULL) {
-                LOG_ERROR(logger, DATASRC_MEM_CNAME_TO_NONEMPTY).
-                    arg(rrset.getName());
-                isc_throw(AddError, "CNAME can't be added with other data for "
-                          << rrset.getName());
+            for (const RdataSet* sp = set; sp != NULL; sp = sp->getNext()) {
+                if (sp->type != RRType::NSEC()) {
+                    LOG_ERROR(logger, DATASRC_MEM_CNAME_TO_NONEMPTY).
+                        arg(rrset.getName());
+                    isc_throw(AddError, "CNAME can't be added with "
+                              << sp->type << " RRType for "
+                              << rrset.getName());
+                }
             }
         } else if ((rrset.getType() != RRType::NSEC()) &&
                    (RdataSet::find(set, RRType::CNAME()) != NULL)) {
