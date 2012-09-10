@@ -1,0 +1,4 @@
+;; test zone file with wildcard NS names
+
+example.org. 3600 IN SOA	ns1.example.org. bugs.x.w.example.org. 79 3600 300 3600000 3600
+*.example.org. 1200 IN NSEC3	1 0 10 AABBCCDD RKOF8QMFRB5F2V9EJHFBVB2JPVSA0DJD A RRSIG
