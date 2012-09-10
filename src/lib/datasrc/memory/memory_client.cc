@@ -147,8 +147,8 @@ public:
              l > origin_labels;
              --l, wname = wname.split(1)) {
             if (wname.isWildcard()) {
-                LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEMORY_MEM_ADD_WILDCARD).
-                    arg(name);
+                LOG_DEBUG(logger, DBG_TRACE_DATA,
+                          DATASRC_MEMORY_MEM_ADD_WILDCARD).arg(name);
 
                 // Ensure a separate level exists for the "wildcarding" name,
                 // and mark the node as "wild".
@@ -189,7 +189,8 @@ public:
             }
         } else if ((rrset.getType() != RRType::NSEC()) &&
                    (RdataSet::find(set, RRType::CNAME()) != NULL)) {
-            LOG_ERROR(logger, DATASRC_MEMORY_MEM_CNAME_COEXIST).arg(rrset.getName());
+            LOG_ERROR(logger,
+                      DATASRC_MEMORY_MEM_CNAME_COEXIST).arg(rrset.getName());
             isc_throw(AddError, "CNAME and " << rrset.getType() <<
                       " can't coexist for " << rrset.getName());
         }
@@ -233,7 +234,8 @@ public:
             // XXX: this is not only for CNAME or DNAME. We should generalize
             // this code for all other "singleton RR types" (such as SOA) in a
             // separate task.
-            LOG_ERROR(logger, DATASRC_MEMORY_MEM_SINGLETON).arg(rrset->getName()).
+            LOG_ERROR(logger,
+                      DATASRC_MEMORY_MEM_SINGLETON).arg(rrset->getName()).
                 arg(rrset->getType());
             isc_throw(AddError, "multiple RRs of singleton type for "
                       << rrset->getName());
@@ -251,7 +253,8 @@ public:
         if (compare.getRelation() != NameComparisonResult::SUPERDOMAIN &&
             compare.getRelation() != NameComparisonResult::EQUAL)
         {
-            LOG_ERROR(logger, DATASRC_MEMORY_MEM_OUT_OF_ZONE).arg(rrset->getName()).
+            LOG_ERROR(logger,
+                      DATASRC_MEMORY_MEM_OUT_OF_ZONE).arg(rrset->getName()).
                 arg(zone_name);
             isc_throw(OutOfZone, "The name " << rrset->getName() <<
                 " is not contained in zone " << zone_name);
@@ -688,7 +691,8 @@ InMemoryClient::getZoneCount() const {
 
 isc::datasrc::memory::ZoneTable::FindResult
 InMemoryClient::findZone2(const isc::dns::Name& zone_name) const {
-    LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEMORY_MEM_FIND_ZONE).arg(zone_name);
+    LOG_DEBUG(logger, DBG_TRACE_DATA,
+              DATASRC_MEMORY_MEM_FIND_ZONE).arg(zone_name);
     ZoneTable::FindResult result(impl_->zone_table_->findZone(zone_name));
     return (result);
 }
