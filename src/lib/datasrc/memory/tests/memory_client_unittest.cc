@@ -281,6 +281,15 @@ TEST_F(MemoryClientTest, loadMultipleNSEC3PARAMThrows) {
     // Teardown checks for memory segment leaks
 }
 
+TEST_F(MemoryClientTest, loadOutOfZoneThrows) {
+    // Out of zone names should throw.
+    EXPECT_THROW(client_->load(Name("example.org"),
+                               TEST_DATA_DIR
+                               "/example.org-out-of-zone.zone"),
+                 MasterLoadError);
+    // Teardown checks for memory segment leaks
+}
+
 TEST_F(MemoryClientTest, loadRRSIGFollowsNothing) {
     EXPECT_THROW(client_->load(Name("example.org"),
                                TEST_DATA_DIR
@@ -387,6 +396,20 @@ TEST_F(MemoryClientTest, addRRsetToNonExistentZoneThrows) {
                                RRTTL(300)));
     rrset_a->addRdata(rdata::in::A("192.0.2.1"));
     EXPECT_THROW(client_->add(Name("example.org"), rrset_a), DataSourceError);
+}
+
+TEST_F(MemoryClientTest, addOutOfZoneThrows) {
+    // Out of zone names should throw.
+    client_->load(Name("example.org"),
+                  TEST_DATA_DIR "/example.org-empty.zone");
+
+    RRsetPtr rrset_a(new RRset(Name("a.example.com"),
+                               RRClass::IN(), RRType::A(), RRTTL(300)));
+    rrset_a->addRdata(rdata::in::A("192.0.2.1"));
+
+    EXPECT_THROW(client_->add(Name("example.org"), rrset_a),
+                 OutOfZone);
+    // Teardown checks for memory segment leaks
 }
 
 TEST_F(MemoryClientTest, addNullRRsetThrows) {
