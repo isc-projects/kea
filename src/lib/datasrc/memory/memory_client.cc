@@ -548,11 +548,16 @@ InMemoryClient::InMemoryClientImpl::load(
 
     assert(!last_rrset_);
 
-    rrset_installer(boost::bind(&InMemoryClientImpl::addFromLoad, this,
-                                _1, zone_name, holder.get()));
-
-    // Add any last RRset that was left
-    addRdataSet(zone_name, *holder.get(), ConstRRsetPtr(), ConstRRsetPtr());
+    try {
+        rrset_installer(boost::bind(&InMemoryClientImpl::addFromLoad, this,
+                                    _1, zone_name, holder.get()));
+        // Add any last RRset that was left
+        addRdataSet(zone_name, *holder.get(),
+                    ConstRRsetPtr(), ConstRRsetPtr());
+    } catch (...) {
+        last_rrset_ = ConstRRsetPtr();
+        throw;
+    }
 
     assert(!last_rrset_);
 
