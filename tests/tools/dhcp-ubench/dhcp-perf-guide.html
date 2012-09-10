@@ -7,7 +7,7 @@
       This document describes various aspects of DHCP performance,
       measurements and tuning. It covers BIND 10 DHCP (codename Kea),
       existing ISC DHCP4 software, perfdhcp (a DHCP performance
-      measurement tool) and other related topics.</p></div></div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="preface"><a href="#d0e28">Preface</a></span></dt><dd><dl><dt><span class="section"><a href="#acknowledgements">Acknowledgements</a></span></dt></dl></dd><dt><span class="chapter"><a href="#intro">1. Introduction</a></span></dt><dt><span class="chapter"><a href="#dhcp4">2. ISC DHCP 4.x</a></span></dt><dt><span class="chapter"><a href="#kea">3. Kea</a></span></dt><dd><dl><dt><span class="section"><a href="#d0e54">Backend performance evaluation</a></span></dt><dt><span class="section"><a href="#mysql-backend">MySQL backend</a></span></dt><dd><dl><dt><span class="section"><a href="#d0e156">MySQL tweaks</a></span></dt></dl></dd><dt><span class="section"><a href="#sqlite-ubench">SQLite-ubench</a></span></dt><dd><dl><dt><span class="section"><a href="#sqlite-tweaks">SQLite tweaks</a></span></dt></dl></dd><dt><span class="section"><a href="#memfile-ubench">memfile-ubench</a></span></dt><dd><dl><dt><span class="section"><a href="#memfile-tweaks">memfile tweaks</a></span></dt></dl></dd><dt><span class="section"><a href="#d0e245">Performance measurements</a></span></dt><dt><span class="section"><a href="#d0e521">Possible further optimizations</a></span></dt></dl></dd><dt><span class="chapter"><a href="#perfdhcp">4. perfdhcp</a></span></dt><dd><dl><dt><span class="section"><a href="#d0e533">Purpose</a></span></dt><dt><span class="section"><a href="#d0e538">Key features</a></span></dt><dt><span class="section"><a href="#perfdhcp-command-line">Command line options</a></span></dt><dt><span class="section"><a href="#d0e574">Running a test</a></span></dt></dl></dd></dl></div><div class="list-of-tables"><p><b>List of Tables</b></p><dl><dt>3.1. <a href="#d0e256">Synchronous results</a></dt><dt>3.2. <a href="#d0e332">Asynchronous results</a></dt><dt>3.3. <a href="#tbl-perf-results">Estimated performance</a></dt></dl></div><div class="preface" title="Preface"><div class="titlepage"><div><div><h2 class="title"><a name="d0e28"></a>Preface</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#acknowledgements">Acknowledgements</a></span></dt></dl></div><div class="section" title="Acknowledgements"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="acknowledgements"></a>Acknowledgements</h2></div></div></div><p>ISC would like to acknowledge generous support for
+      measurement tool) and other related topics.</p></div></div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="preface"><a href="#d0e28">Preface</a></span></dt><dd><dl><dt><span class="section"><a href="#acknowledgements">Acknowledgements</a></span></dt></dl></dd><dt><span class="chapter"><a href="#intro">1. Introduction</a></span></dt><dt><span class="chapter"><a href="#dhcp4">2. ISC DHCP 4.x</a></span></dt><dt><span class="chapter"><a href="#kea">3. Kea</a></span></dt><dd><dl><dt><span class="section"><a href="#d0e54">Backend performance evaluation</a></span></dt><dt><span class="section"><a href="#mysql-backend">MySQL backend</a></span></dt><dd><dl><dt><span class="section"><a href="#d0e156">MySQL tweaks</a></span></dt></dl></dd><dt><span class="section"><a href="#sqlite-ubench">SQLite-ubench</a></span></dt><dd><dl><dt><span class="section"><a href="#sqlite-tweaks">SQLite tweaks</a></span></dt></dl></dd><dt><span class="section"><a href="#memfile-ubench">memfile-ubench</a></span></dt><dd><dl><dt><span class="section"><a href="#memfile-tweaks">memfile tweaks</a></span></dt></dl></dd><dt><span class="section"><a href="#d0e245">Performance measurements</a></span></dt><dt><span class="section"><a href="#d0e521">Possible further optimizations</a></span></dt></dl></dd><dt><span class="chapter"><a href="#perfdhcp">4. perfdhcp</a></span></dt><dd><dl><dt><span class="section"><a href="#d0e533">Purpose</a></span></dt><dt><span class="section"><a href="#perfdhcp-key-features">Key features</a></span></dt><dt><span class="section"><a href="#perfdhcp-command-line">Command line options</a></span></dt><dt><span class="section"><a href="#starting-perfdhcp">Starting perfdhcp</a></span></dt><dt><span class="section"><a href="#perfdhcp-commandline-examples">perfdhcp command line examples</a></span></dt><dd><dl><dt><span class="section"><a href="#perfdhcp-basic-usage">Example: basic usage</a></span></dt><dt><span class="section"><a href="#perfdhcp-rate-control">Example: rate control</a></span></dt><dt><span class="section"><a href="#perfdhcp-templates">Example: templates</a></span></dt></dl></dd></dl></dd></dl></div><div class="list-of-tables"><p><b>List of Tables</b></p><dl><dt>3.1. <a href="#d0e256">Synchronous results</a></dt><dt>3.2. <a href="#d0e332">Asynchronous results</a></dt><dt>3.3. <a href="#tbl-perf-results">Estimated performance</a></dt></dl></div><div class="preface" title="Preface"><div class="titlepage"><div><div><h2 class="title"><a name="d0e28"></a>Preface</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#acknowledgements">Acknowledgements</a></span></dt></dl></div><div class="section" title="Acknowledgements"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="acknowledgements"></a>Acknowledgements</h2></div></div></div><p>ISC would like to acknowledge generous support for
       BIND 10 development of DHCPv4 and DHCPv6 components provided
       by <a class="ulink" href="http://www.comcast.com/" target="_top">Comcast</a>.</p></div></div><div class="chapter" title="Chapter&nbsp;1.&nbsp;Introduction"><div class="titlepage"><div><div><h2 class="title"><a name="intro"></a>Chapter&nbsp;1.&nbsp;Introduction</h2></div></div></div><p>
       This document is in its early stages of development. It is
@@ -196,7 +196,7 @@ SQLite version: 3.7.9sourceid version is 2011-11-01 00:52:41 c7c6050ef060877ebe7
         Multi-threaded or multi-process benchmark may be considered in
         the future. It may be somewhat difficult as only some backends
         support concurrent access.
-      </p></div></div><div class="chapter" title="Chapter&nbsp;4.&nbsp;perfdhcp"><div class="titlepage"><div><div><h2 class="title"><a name="perfdhcp"></a>Chapter&nbsp;4.&nbsp;perfdhcp</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#d0e533">Purpose</a></span></dt><dt><span class="section"><a href="#d0e538">Key features</a></span></dt><dt><span class="section"><a href="#perfdhcp-command-line">Command line options</a></span></dt><dt><span class="section"><a href="#d0e574">Running a test</a></span></dt></dl></div><div class="section" title="Purpose"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="d0e533"></a>Purpose</h2></div></div></div><p>
+      </p></div></div><div class="chapter" title="Chapter&nbsp;4.&nbsp;perfdhcp"><div class="titlepage"><div><div><h2 class="title"><a name="perfdhcp"></a>Chapter&nbsp;4.&nbsp;perfdhcp</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#d0e533">Purpose</a></span></dt><dt><span class="section"><a href="#perfdhcp-key-features">Key features</a></span></dt><dt><span class="section"><a href="#perfdhcp-command-line">Command line options</a></span></dt><dt><span class="section"><a href="#starting-perfdhcp">Starting perfdhcp</a></span></dt><dt><span class="section"><a href="#perfdhcp-commandline-examples">perfdhcp command line examples</a></span></dt><dd><dl><dt><span class="section"><a href="#perfdhcp-basic-usage">Example: basic usage</a></span></dt><dt><span class="section"><a href="#perfdhcp-rate-control">Example: rate control</a></span></dt><dt><span class="section"><a href="#perfdhcp-templates">Example: templates</a></span></dt></dl></dd></dl></div><div class="section" title="Purpose"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="d0e533"></a>Purpose</h2></div></div></div><p>
         There is a growing need to evaluate performance of DHCP servers in
         different traffic conditions to understand their bottle necks.
         This helps to elimante bugs in existing DHCP software as well
@@ -206,15 +206,15 @@ SQLite version: 3.7.9sourceid version is 2011-11-01 00:52:41 c7c6050ef060877ebe7
         mostly. However, the number of implemented features and parameters
         exposed to the user make this tool useful for functional testing as
         well.
-      </p></div><div class="section" title="Key features"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="d0e538"></a>Key features</h2></div></div></div><p>
+      </p></div><div class="section" title="Key features"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="perfdhcp-key-features"></a>Key features</h2></div></div></div><p>
         The perfdhcp exposes the number of command line parameters to
         control DHCP message exchanges. Currently they fall back to
         the following categories:
         </p><div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>
               Rate control - control how many DHCP exchanges
               are initiated within a period of time. Tool can also simulate
-              best effort conditions where it attempts to start as many
-              exchanges as possible.
+              best effort conditions attempting to initiate as many DHCP
+              packet exchanges within a unit of time as possible.
             </p></li><li class="listitem"><p>
               Test exit specifiers - control the conditions when test
               completes including number of initiated exchanges, test period or
@@ -367,7 +367,7 @@ The exit status is:
   exchanges are not successfully completed.
 
         </pre><p>
-      </p></div><div class="section" title="Running a test"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="d0e574"></a>Running a test</h2></div></div></div><p>
+      </p></div><div class="section" title="Starting perfdhcp"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="starting-perfdhcp"></a>Starting perfdhcp</h2></div></div></div><p>
         In order to run performance test at least two separate systems
         have to be installed: client and server. The first one has to have
         perfdhcp tool installed, the latter has to have DHCP server
@@ -377,28 +377,224 @@ The exit status is:
         impacted by the performance of VMs.
       </p><p>
         The DHCP operates on low port numbers (67 for DHCPv4 relays and
-        547 for DHCPv6) running perfdhcp with non-root priviliges will
+        547 for DHCPv6). Running perfdhcp with non-root priviliges will
         usually result in the error message similar to this:
         </p><pre class="screen"><strong class="userinput"><code>$./perfdhcp -4 -l eth3 -r 100 all</code></strong>
 Error running perfdhcp: Failed to bind socket 3 to 172.16.1.2/port=67
         </pre><p>
-        perfdhcp exposes '-L' command line option that
-        imposes use of custom local port and the following command line will
-        work:
+        perfdhcp has the '-L' command line option that
+        imposes use of custom local port. Thus the following command
+        line will work:
         </p><pre class="screen"><strong class="userinput"><code>$./perfdhcp -4 -l eth3 -r 100 -L 10067 all</code></strong></pre><p>
         but in the standard configuration no responses will be received
         from the ISC DHCP server because server responds to default relay
         port 67.
+        Alternative way to overcome this issue  is to run perfdhcp as root.
       </p><p>
-        Alternative way to overcome the issue with lack of privileges
-        to use default DHCP port number is to run perfdhcp as root.
-      </p><p>
-        In this section the perfdhcp command line options examples
+        Currently, perfdhcp is seen from the server perspective as relay agent.
+        This simplifies its implementation (specifically there is no need to
+        receive traffic sent to braodcast addresses). This imposes that IPv4
+        address has to be set manually on the interface that will be used to
+        communicate with the server. For example, if DHCPv4 server is listening
+        on the interface connected to 172.16.1.0 subnet, interface on client
+        machine has to have network address assigned from the same subnet
+        on one of its interfaces connected to this subnet:
+        </p><pre class="screen"><strong class="userinput"><code>#ifconfig eth3 172.16.1.2. netmask 255.255.255.0 up</code></strong></pre><p>
+      </p></div><div class="section" title="perfdhcp command line examples"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="perfdhcp-commandline-examples"></a>perfdhcp command line examples</h2></div></div></div><p>
+        In this section the perfdhcp command line examples
         are presented as a quick start guide for new users. For the
         detailed list of command line options refer to
         <a class="xref" href="#perfdhcp-command-line" title="Command line options">the section called &#8220;Command line options&#8221;</a>.
-      </p><p>
-        </p><pre class="screen">
-          <strong class="userinput"><code></code></strong>
-        </pre><p>
-      </p></div></div></div></body></html>
+      </p><div class="section" title="Example: basic usage"><div class="titlepage"><div><div><h3 class="title"><a name="perfdhcp-basic-usage"></a>Example: basic usage</h3></div></div></div><p>
+          If server is listening on interface with IPv4 address 172.16.1.1
+          the simpliest perfdhcp command line will look like this:
+          </p><pre class="screen"><strong class="userinput"><code>#./perfdhcp 172.16.1.1</code></strong>
+***Rate statistics***
+Rate: 206.345
+
+***Statistics for: DISCOVER-OFFER***
+sent packets: 21641
+received packets: 350
+drops: 21291
+orphans: 0
+
+min delay: 9.022 ms
+avg delay: 143.100 ms
+max delay: 259.303 ms
+std deviation: 56.074 ms
+collected packets: 30
+
+***Statistics for: REQUEST-ACK***
+sent packets: 350
+received packets: 268
+drops: 82
+orphans: 0
+
+min delay: 3.010 ms
+avg delay: 152.470 ms
+max delay: 258.634 ms
+std deviation: 56.936 ms
+collected packets: 0
+          </pre><p>
+          In this case perfdhcp will use remote address 172.16.1.1 as a
+          destination address and will use suitable local interface for
+          communication. Since, no rate control parameters have been specified
+          it will be initiating DHCP exchanges with the maximum possible
+          rate (it will try to initiate maximum number of exchanges per
+          second and count number of completed exchanged). Due to server's
+          performance constraints, many DHCP packets sent to server are likely
+          to be dropped. The performance test will be running until it is
+          not interrupted by the user (with ^C).
+        </p><p>
+          The default performance statistics reported by perfdhcp have the
+          following meaning:
+          </p><div class="itemizedlist"><ul class="itemizedlist" type="disc"><li class="listitem"><p>Rate - number of packet exchanges (packet sent
+            to the server and matching response received from the server)
+            completed within a second.</p></li><li class="listitem"><p>sent packets - total number of DHCP packets of
+            a specific type sent to the server.</p></li><li class="listitem"><p>received packets - total number of DHCP packets
+            of specific type received from the server.</p></li><li class="listitem"><p>drops - number of dropped packets for the
+            particular exchange. Number of dropped packets is calculated as
+            a difference between number of sent packets and number of
+            response packets received from the server. It is likely that
+            server sent the reponse but perfdhcp execution had ended before
+            reponse arrived. In such case this packet will be assumed
+            dropped.</p></li><li class="listitem"><p>orphans - number of packets that have been
+            received from the server and did not match any packet sent by
+            perfdhcp. This may occur if received packet has been sent
+            to some other host or if exchange time out has occured and
+            has been been garbage collected.</p></li><li class="listitem"><p>min delay - minimum delay that occured between
+            sending the packet to the server and receiving reponse from
+            it.</p></li><li class="listitem"><p>avg delay - average delay between sending the
+            packet of the specific type the server and receiving response
+            from it.</p></li><li class="listitem"><p>max delay - maximum delat that occured between
+            sedning the packet to the server and receiveing response from
+            it.</p></li><li class="listitem"><p>std deviation - standard deviation of delay
+            between sending the packet of a specific type to the server and
+            receiving response from it.</p></li><li class="listitem"><p>collected packets - number of garbage collected
+            sent packets. Packets may get garbage collected when waiting time
+            for server response exceeds value set with
+            -d&lt;drop-time&gt;.</p></li></ul></div><p>
+        </p><p>
+          perfdhcp allows to run the test using specified interface:
+          </p><pre class="screen"><strong class="userinput"><code>#./perfdhcp -l eth3</code></strong></pre><p>
+          or local address assigned to it:
+          </p><pre class="screen"><strong class="userinput"><code>#./perfdhcp -l 172.16.1.2</code></strong></pre><p>
+        </p></div><div class="section" title="Example: rate control"><div class="titlepage"><div><div><h3 class="title"><a name="perfdhcp-rate-control"></a>Example: rate control</h3></div></div></div><p>
+          In the examples above perfdhcp initiates new exchanges with best
+          effort rate. In this case many packets is expected to be dropped by the
+          server due to performance limitations. Many times it is desired to set
+          the expected (reasonable) rate and verify if generated traffic is
+          handled without packet dropes by DHCP server. The following command will
+          make perfdhcp to initiate 300 4-way exchanges per second and test will
+          last for 60 seconds:
+          </p><pre class="screen"><strong class="userinput"><code>#./perfdhcp -l eth3 -p 60 -r 300</code></strong>
+***Rate statistics***
+Rate: 256.683 exchanges/second, expected rate: 300 exchanges/second
+
+***Statistics for: DISCOVER-OFFER***
+sent packets: 17783
+received packets: 15401
+drops: 2382
+orphans: 0
+
+min delay: 0.109 ms
+avg delay: 75.756 ms
+max delay: 575.614 ms
+std deviation: 60.513 ms
+collected packets: 11
+
+***Statistics for: REQUEST-ACK***
+sent packets: 15401
+received packets: 15317
+drops: 84
+orphans: 0
+
+min delay: 0.536 ms
+avg delay: 72.072 ms
+max delay: 576.749 ms
+std deviation: 58.189 ms
+collected packets: 0
+          </pre><p>
+          Note that in this example the packet drops have been significantly
+          reduced thanks to setting reasonable rate. The non-zero number of
+          packet drops and achived rate (256/s) below expected rate (300/s)
+          indicate that server's measured performance is lower than 300 leases
+          per second. Further rate decrease should eliminate most of the packet
+          drops and bring achived rate close to expected rate:
+          </p><pre class="screen"><strong class="userinput"><code>#./perfdhcp -l eth3 -p 60 -r 100 -R 30</code></strong>
+***Rate statistics***
+Rate: 99.8164 exchanges/second, expected rate: 100 exchanges/second
+
+***Statistics for: DISCOVER-OFFER***
+sent packets: 5989
+received packets: 5989
+drops: 0
+orphans: 0
+
+min delay: 0.023 ms
+avg delay: 2.198 ms
+max delay: 181.760 ms
+std deviation: 9.429 ms
+collected packets: 0
+
+***Statistics for: REQUEST-ACK***
+sent packets: 5989
+received packets: 5989
+drops: 0
+orphans: 0
+
+min delay: 0.473 ms
+avg delay: 2.355 ms
+max delay: 189.658 ms
+std deviation: 5.876 ms
+collected packets: 0
+          </pre><p>
+          Note that the last parameter (-R 30) configures perfdhcp to simulate
+          traffic from distinct 30 clients.
+        </p></div><div class="section" title="Example: templates"><div class="titlepage"><div><div><h3 class="title"><a name="perfdhcp-templates"></a>Example: templates</h3></div></div></div><p>
+          By default the DHCP messages are formed in-flight with default options.
+          If desired, there is a way to define custom packet format with template
+          files. Content in template files is encoded in hexadecimal format. The
+          perfdhcp forms the packet by replacing parts of the binary stream read
+          from the file with variable data such as elapsed time, HW address, DUID
+          etc. The offsets where such variable data is placed is specific to the
+          template file and have to be specified from the command line. Refer to
+          <a class="xref" href="#perfdhcp-command-line" title="Command line options">the section called &#8220;Command line options&#8221;</a> to find out how to
+          specify offsets for particular options and fields. With the following
+          command line the DHCPv6 SOLICIT and REQUEST packets will be formed from
+          solicit-example.hex and request6-example.hex packets:
+          </p><pre class="screen"><strong class="userinput"><code>#./perfdhcp -6 -l eth3 -r 100 -R 20 -T templates/solicit-example.hex -T templates/request6-example.hex -O 21 -E 84 -S 22 -I 40 servers</code></strong>
+***Rate statistics***
+Rate: 99.5398 exchanges/second, expected rate: 100 exchanges/second
+
+***Statistics for: SOLICIT-ADVERTISE***
+sent packets: 570
+received packets: 569
+drops: 1
+orphans: 0
+
+min delay: 0.259 ms
+avg delay: 0.912 ms
+max delay: 6.979 ms
+std deviation: 0.709 ms
+collected packets: 0
+
+***Statistics for: REQUEST-REPLY***
+sent packets: 569
+received packets: 569
+drops: 0
+orphans: 0
+
+min delay: 0.084 ms
+avg delay: 0.607 ms
+max delay: 6.490 ms
+std deviation: 0.518 ms
+collected packets: 0
+          </pre><p>
+          where:
+          </p><div class="itemizedlist"><ul class="itemizedlist" type="disc"><li class="listitem"><p>two occurences of -O 21 - DUID's last octet
+            positions in SOLICIT and REQUEST respectively.</p></li><li class="listitem"><p>-E 84 - elapsed time option position in
+            REQUEST template</p></li><li class="listitem"><p>-S 22 - server id position in REQUEST
+            template</p></li><li class="listitem"><p>-I 40 - IA_NA option position in REQUEST
+            template</p></li></ul></div><p>
+        </p></div></div></div></div></body></html>
