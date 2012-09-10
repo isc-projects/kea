@@ -308,6 +308,15 @@ TEST_F(MemoryClientTest, loadWildcardDNAMEThrows) {
     // Teardown checks for memory segment leaks
 }
 
+TEST_F(MemoryClientTest, loadWildcardNSEC3Throws) {
+    // Wildcard NSEC3 names should throw
+    EXPECT_THROW(client_->load(Name("example.org"),
+                               TEST_DATA_DIR
+                               "/example.org-wildcard-nsec3.zone"),
+                 InMemoryClient::AddError);
+    // Teardown checks for memory segment leaks
+}
+
 TEST_F(MemoryClientTest, loadRRSIGFollowsNothing) {
     EXPECT_THROW(client_->load(Name("example.org"),
                                TEST_DATA_DIR
