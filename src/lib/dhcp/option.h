@@ -63,6 +63,9 @@ public:
     /// @param type option type
     /// @param buf pointer to a buffer
     ///
+    /// @todo Passing a separate buffer for each option means that a copy
+    ///       was done. We can avoid it by passing 2 iterators.
+    ///
     /// @return a pointer to a created option object
     typedef OptionPtr Factory(Option::Universe u, uint16_t type, const OptionBuffer& buf);
 
