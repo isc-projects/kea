@@ -107,7 +107,7 @@ public:
 class MemoryClientTest : public ::testing::Test {
 protected:
     MemoryClientTest() : zclass_(RRClass::IN()),
-                         client_(new InMemoryClient(zclass_))
+                         client_(new InMemoryClient(mem_sgmt_, zclass_))
     {}
     ~MemoryClientTest() {
         if (client_ != NULL) {

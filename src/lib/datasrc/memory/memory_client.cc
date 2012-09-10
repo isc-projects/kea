@@ -87,7 +87,9 @@ private:
     };
 
 public:
-    InMemoryClientImpl(RRClass rrclass) :
+    InMemoryClientImpl(util::MemorySegment& mem_sgmt,
+                       RRClass rrclass) :
+        local_mem_sgmt_(mem_sgmt),
         rrclass_(rrclass),
         zone_count_(0),
         zone_table_(ZoneTable::create(local_mem_sgmt_, rrclass)),
@@ -106,7 +108,7 @@ public:
     // Memory segment to allocate/deallocate memory for the zone table.
     // (This will eventually have to be abstract; for now we hardcode the
     // specific derived segment class).
-    util::MemorySegmentLocal local_mem_sgmt_;
+    util::MemorySegment& local_mem_sgmt_;
     const RRClass rrclass_;
     unsigned int zone_count_;
     ZoneTable* zone_table_;
@@ -671,8 +673,9 @@ generateRRsetFromIterator(ZoneIterator* iterator, LoadCallback callback) {
 }
 }
 
-InMemoryClient::InMemoryClient(RRClass rrclass) :
-    impl_(new InMemoryClientImpl(rrclass))
+InMemoryClient::InMemoryClient(util::MemorySegment& mem_sgmt,
+                               RRClass rrclass) :
+    impl_(new InMemoryClientImpl(mem_sgmt, rrclass))
 {}
 
 InMemoryClient::~InMemoryClient() {
