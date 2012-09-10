@@ -17,3 +17,4 @@ EXTRA_DIST += example.org-multiple-nsec3.zone
 EXTRA_DIST += example.org-multiple-nsec3param.zone
 EXTRA_DIST += example.org-nsec3-signed.zone
 EXTRA_DIST += example.org-nsec3-signed-no-param.zone
+EXTRA_DIST += example.org-out-of-zone.zone
