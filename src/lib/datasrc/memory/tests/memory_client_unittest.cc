@@ -32,6 +32,8 @@
 #include <datasrc/memory/zone_table.h>
 #include <datasrc/memory/memory_client.h>
 
+#include <testutils/dnsmessage_test.h>
+
 #include <gtest/gtest.h>
 
 #include <new>                  // for bad_alloc
@@ -40,6 +42,7 @@ using namespace isc::dns;
 using namespace isc::dns::rdata;
 using namespace isc::datasrc;
 using namespace isc::datasrc::memory;
+using namespace isc::testutils;
 
 namespace {
 // Memory segment specified for tests.  It normally behaves like a "local"
@@ -61,6 +64,44 @@ public:
 
 private:
     size_t throw_count_;
+};
+
+static const char* rrset_data[] = {
+    "example.org. 3600 IN SOA   ns1.example.org. bugs.x.w.example.org. 68 3600 300 3600000 3600",
+    "a.example.org.		   	 3600 IN A	192.168.0.1",
+    "a.example.org.		   	 3600 IN MX	10 mail.example.org.",
+    NULL
+};
+
+class MockIterator : public ZoneIterator {
+private:
+    MockIterator() :
+        rrset_data_ptr_(rrset_data)
+    {
+    }
+
+    const char** rrset_data_ptr_;
+
+public:
+    virtual ConstRRsetPtr getNextRRset() {
+        if (*rrset_data_ptr_ == NULL) {
+             return (ConstRRsetPtr());
+        }
+
+        RRsetPtr result(textToRRset(*rrset_data_ptr_,
+                                    RRClass::IN(), Name("example.org")));
+        rrset_data_ptr_++;
+
+        return (result);
+    }
+
+    virtual ConstRRsetPtr getSOA() const {
+        isc_throw(isc::NotImplemented, "Not implemented");
+    }
+
+    static ZoneIteratorPtr makeIterator(void) {
+        return (ZoneIteratorPtr(new MockIterator()));
+    }
 };
 
 class MemoryClientTest : public ::testing::Test {
@@ -140,6 +181,34 @@ TEST_F(MemoryClientTest, load) {
     // should not result in any exceptions.
     client_->load(Name("example.org"),
                   TEST_DATA_DIR "/example.org.zone");
+}
+
+TEST_F(MemoryClientTest, loadFromIterator) {
+    client_->load(Name("example.org"),
+                  *MockIterator::makeIterator());
+
+    ZoneIteratorPtr iterator(client_->getIterator(Name("example.org")));
+
+    // First we have the SOA
+    ConstRRsetPtr rrset(iterator->getNextRRset());
+    EXPECT_TRUE(rrset);
+    EXPECT_EQ(RRType::SOA(), rrset->getType());
+
+    // RRType::MX() RRset
+    rrset = iterator->getNextRRset();
+    EXPECT_TRUE(rrset);
+    EXPECT_EQ(RRType::MX(), rrset->getType());
+
+    // RRType::A() RRset
+    rrset = iterator->getNextRRset();
+    EXPECT_TRUE(rrset);
+    EXPECT_EQ(RRType::A(), rrset->getType());
+
+    // There's nothing else in this iterator
+    EXPECT_EQ(ConstRRsetPtr(), iterator->getNextRRset());
+
+    // Iterating past the end should result in an exception
+    EXPECT_THROW(iterator->getNextRRset(), isc::Unexpected);
 }
 
 TEST_F(MemoryClientTest, loadNSEC3Signed) {
