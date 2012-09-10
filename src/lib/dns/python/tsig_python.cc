@@ -92,7 +92,7 @@ PyMethodDef TSIGContext_methods[] = {
       "Verify a DNS message." },
     { "last_had_signature",
       reinterpret_cast<PyCFunction>(TSIGContext_lastHadSignature), METH_NOARGS,
-      "Return if the last verified message contained a signature" },
+      "Return True if the last verified message contained a signature" },
     { NULL, NULL, 0, NULL }
 };
 
