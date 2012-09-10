@@ -16,62 +16,62 @@ $NAMESPACE isc::datasrc::memory
 
 # \brief Messages for the data source memory library
 
-% DATASRC_MEM_ADD_WILDCARD adding wildcards for '%1'
+% DATASRC_MEMORY_MEM_ADD_WILDCARD adding wildcards for '%1'
 This is a debug message issued during the processing of a wildcard
 name. The internal domain name tree is scanned and some nodes are
 specially marked to allow the wildcard lookup to succeed.
 
-% DATASRC_MEM_CNAME_TO_NONEMPTY can't add CNAME to domain with other data in '%1'
+% DATASRC_MEMORY_MEM_CNAME_TO_NONEMPTY can't add CNAME to domain with other data in '%1'
 Someone or something tried to add a CNAME into a domain that already contains
 some other data. But the protocol forbids coexistence of CNAME with anything
 (RFC 1034, section 3.6.2). This indicates a problem with provided data.
 
-% DATASRC_MEM_CNAME_COEXIST can't add data to CNAME in domain '%1'
+% DATASRC_MEMORY_MEM_CNAME_COEXIST can't add data to CNAME in domain '%1'
 This is the same problem as in MEM_CNAME_TO_NONEMPTY, but it happened the
 other way around -- adding some other data to CNAME.
 
-% DATASRC_MEM_DNAME_NS DNAME and NS can't coexist in non-apex domain '%1'
+% DATASRC_MEMORY_MEM_DNAME_NS DNAME and NS can't coexist in non-apex domain '%1'
 A request was made for DNAME and NS records to be put into the same
 domain which is not the apex (the top of the zone). This is forbidden
 by RFC 2672 (section 3) and indicates a problem with provided data.
 
-% DATASRC_MEM_SINGLETON trying to add multiple RRs for domain '%1' and type '%2'
+% DATASRC_MEMORY_MEM_SINGLETON trying to add multiple RRs for domain '%1' and type '%2'
 Some resource types are singletons -- only one is allowed in a domain
 (for example CNAME or SOA). This indicates a problem with provided data.
 
-% DATASRC_MEM_OUT_OF_ZONE domain '%1' doesn't belong to zone '%2'
+% DATASRC_MEMORY_MEM_OUT_OF_ZONE domain '%1' doesn't belong to zone '%2'
 It was attempted to add the domain into a zone that shouldn't have it
 (eg. the domain is not subdomain of the zone origin). This indicates a
 problem with provided data.
 
-% DATASRC_MEM_WILDCARD_NS NS record in wildcard domain '%1'
+% DATASRC_MEMORY_MEM_WILDCARD_NS NS record in wildcard domain '%1'
 The software refuses to load NS records into a wildcard domain.  It isn't
 explicitly forbidden, but the protocol is ambiguous about how this should
 behave and BIND 9 refuses that as well. Please describe your intention using
 different tools.
 
-% DATASRC_MEM_WILDCARD_DNAME DNAME record in wildcard domain '%1'
+% DATASRC_MEMORY_MEM_WILDCARD_DNAME DNAME record in wildcard domain '%1'
 The software refuses to load DNAME records into a wildcard domain.  It isn't
 explicitly forbidden, but the protocol is ambiguous about how this should
 behave and BIND 9 refuses that as well. Please describe your intention using
 different tools.
 
-% DATASRC_BAD_NSEC3_NAME NSEC3 record has a bad owner name '%1'
+% DATASRC_MEMORY_BAD_NSEC3_NAME NSEC3 record has a bad owner name '%1'
 The software refuses to load NSEC3 records into a wildcard domain or
 the owner name has two or more labels below the zone origin.
 It isn't explicitly forbidden, but no sane zone wouldn have such names
 for NSEC3.  BIND 9 also refuses NSEC3 at wildcard, so this behavior is
 compatible with BIND 9.
 
-% DATASRC_MEM_ADD_RRSET adding RRset '%1/%2' into zone '%3'
+% DATASRC_MEMORY_MEM_ADD_RRSET adding RRset '%1/%2' into zone '%3'
 Debug information. An RRset is being added to the in-memory data source.
 
-% DATASRC_MEM_DUP_RRSET duplicate RRset '%1/%2'
+% DATASRC_MEMORY_MEM_DUP_RRSET duplicate RRset '%1/%2'
 An RRset is being inserted into in-memory data source for a second time.  The
 original version must be removed first. Note that loading master files where an
 RRset is split into multiple locations is not supported yet.
 
-% DATASRC_MEM_NO_NSEC3PARAM NSEC3PARAM is missing for NSEC3-signed zone %1/%2
+% DATASRC_MEMORY_MEM_NO_NSEC3PARAM NSEC3PARAM is missing for NSEC3-signed zone %1/%2
 The in-memory data source has loaded a zone signed with NSEC3 RRs,
 but it doesn't have a NSEC3PARAM RR at the zone origin.  It's likely that
 the zone is somehow broken, but this RR is not necessarily needed for
@@ -79,12 +79,12 @@ handling lookups with NSEC3 in this data source, so it accepts the given
 content of the zone.  Nevertheless the administrator should look into
 the integrity of the zone data.
 
-% DATASRC_MEM_ADD_ZONE adding zone '%1/%2'
+% DATASRC_MEMORY_MEM_ADD_ZONE adding zone '%1/%2'
 Debug information. A zone is being added into the in-memory data source.
 
-% DATASRC_MEM_FIND_ZONE looking for zone '%1'
+% DATASRC_MEMORY_MEM_FIND_ZONE looking for zone '%1'
 Debug information. A zone object for this zone is being searched for in the
 in-memory data source.
 
-% DATASRC_MEM_LOAD loading zone '%1' from file '%2'
+% DATASRC_MEMORY_MEM_LOAD loading zone '%1' from file '%2'
 Debug information. The content of master file is being loaded into the memory.

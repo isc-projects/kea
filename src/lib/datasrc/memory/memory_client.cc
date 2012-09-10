@@ -147,7 +147,7 @@ public:
              l > origin_labels;
              --l, wname = wname.split(1)) {
             if (wname.isWildcard()) {
-                LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_ADD_WILDCARD).
+                LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEMORY_MEM_ADD_WILDCARD).
                     arg(name);
 
                 // Ensure a separate level exists for the "wildcarding" name,
@@ -180,7 +180,7 @@ public:
         if (rrset.getType() == RRType::CNAME()) {
             for (const RdataSet* sp = set; sp != NULL; sp = sp->getNext()) {
                 if (sp->type != RRType::NSEC()) {
-                    LOG_ERROR(logger, DATASRC_MEM_CNAME_TO_NONEMPTY).
+                    LOG_ERROR(logger, DATASRC_MEMORY_MEM_CNAME_TO_NONEMPTY).
                         arg(rrset.getName());
                     isc_throw(AddError, "CNAME can't be added with "
                               << sp->type << " RRType for "
@@ -189,7 +189,7 @@ public:
             }
         } else if ((rrset.getType() != RRType::NSEC()) &&
                    (RdataSet::find(set, RRType::CNAME()) != NULL)) {
-            LOG_ERROR(logger, DATASRC_MEM_CNAME_COEXIST).arg(rrset.getName());
+            LOG_ERROR(logger, DATASRC_MEMORY_MEM_CNAME_COEXIST).arg(rrset.getName());
             isc_throw(AddError, "CNAME and " << rrset.getType() <<
                       " can't coexist for " << rrset.getName());
         }
@@ -207,7 +207,7 @@ public:
             (rrset.getType() == RRType::NS() &&
              RdataSet::find(set, RRType::DNAME()) != NULL)))
         {
-            LOG_ERROR(logger, DATASRC_MEM_DNAME_NS).arg(rrset.getName());
+            LOG_ERROR(logger, DATASRC_MEMORY_MEM_DNAME_NS).arg(rrset.getName());
             isc_throw(AddError, "DNAME can't coexist with NS in non-apex "
                 "domain " << rrset.getName());
         }
@@ -233,7 +233,7 @@ public:
             // XXX: this is not only for CNAME or DNAME. We should generalize
             // this code for all other "singleton RR types" (such as SOA) in a
             // separate task.
-            LOG_ERROR(logger, DATASRC_MEM_SINGLETON).arg(rrset->getName()).
+            LOG_ERROR(logger, DATASRC_MEMORY_MEM_SINGLETON).arg(rrset->getName()).
                 arg(rrset->getType());
             isc_throw(AddError, "multiple RRs of singleton type for "
                       << rrset->getName());
@@ -251,7 +251,7 @@ public:
         if (compare.getRelation() != NameComparisonResult::SUPERDOMAIN &&
             compare.getRelation() != NameComparisonResult::EQUAL)
         {
-            LOG_ERROR(logger, DATASRC_MEM_OUT_OF_ZONE).arg(rrset->getName()).
+            LOG_ERROR(logger, DATASRC_MEMORY_MEM_OUT_OF_ZONE).arg(rrset->getName()).
                 arg(zone_name);
             isc_throw(OutOfZone, "The name " << rrset->getName() <<
                 " is not contained in zone " << zone_name);
@@ -267,13 +267,13 @@ public:
         // behavior.
         if (rrset->getName().isWildcard()) {
             if (rrset->getType() == RRType::NS()) {
-                LOG_ERROR(logger, DATASRC_MEM_WILDCARD_NS).
+                LOG_ERROR(logger, DATASRC_MEMORY_MEM_WILDCARD_NS).
                     arg(rrset->getName());
                 isc_throw(AddError, "Invalid NS owner name (wildcard): " <<
                           rrset->getName());
             }
             if (rrset->getType() == RRType::DNAME()) {
-                LOG_ERROR(logger, DATASRC_MEM_WILDCARD_DNAME).
+                LOG_ERROR(logger, DATASRC_MEMORY_MEM_WILDCARD_DNAME).
                     arg(rrset->getName());
                 isc_throw(AddError, "Invalid DNAME owner name (wildcard): " <<
                           rrset->getName());
@@ -289,7 +289,7 @@ public:
             (rrset->getName().isWildcard() ||
              rrset->getName().getLabelCount() !=
              zone_name.getLabelCount() + 1)) {
-            LOG_ERROR(logger, DATASRC_BAD_NSEC3_NAME).
+            LOG_ERROR(logger, DATASRC_MEMORY_BAD_NSEC3_NAME).
                 arg(rrset->getName());
             isc_throw(AddError, "Invalid NSEC3 owner name: " <<
                       rrset->getName());
@@ -498,7 +498,7 @@ public:
         addValidation(zone_name, rrset);
 
         // OK, can add the RRset.
-        LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_ADD_RRSET).
+        LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEMORY_MEM_ADD_RRSET).
             arg(rrset->getName()).arg(rrset->getType()).arg(zone_name);
 
         if (rrset->getType() == RRType::NSEC3()) {
@@ -572,7 +572,7 @@ InMemoryClient::InMemoryClientImpl::load(
         // process only adds new nodes (and their data), so this assertion
         // should hold.
         if (RdataSet::find(set, RRType::NSEC3PARAM()) == NULL) {
-            LOG_WARN(logger, DATASRC_MEM_NO_NSEC3PARAM).
+            LOG_WARN(logger, DATASRC_MEMORY_MEM_NO_NSEC3PARAM).
                 arg(zone_name).arg(rrclass_);
         }
     }
@@ -585,7 +585,7 @@ InMemoryClient::InMemoryClientImpl::load(
                   "Won't create an empty zone for: " << zone_name);
     }
 
-    LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_ADD_ZONE).
+    LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEMORY_MEM_ADD_ZONE).
         arg(zone_name).arg(rrclass_.toText());
 
     // Set the filename in file_name_tree_ now, so that getFileName()
@@ -688,7 +688,7 @@ InMemoryClient::getZoneCount() const {
 
 isc::datasrc::memory::ZoneTable::FindResult
 InMemoryClient::findZone2(const isc::dns::Name& zone_name) const {
-    LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEM_FIND_ZONE).arg(zone_name);
+    LOG_DEBUG(logger, DBG_TRACE_DATA, DATASRC_MEMORY_MEM_FIND_ZONE).arg(zone_name);
     ZoneTable::FindResult result(impl_->zone_table_->findZone(zone_name));
     return (result);
 }
@@ -705,7 +705,7 @@ InMemoryClient::findZone(const isc::dns::Name&) const {
 result::Result
 InMemoryClient::load(const isc::dns::Name& zone_name,
                      const std::string& filename) {
-    LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEM_LOAD).arg(zone_name).
+    LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEMORY_MEM_LOAD).arg(zone_name).
         arg(filename);
 
     return (impl_->load(zone_name, filename,
