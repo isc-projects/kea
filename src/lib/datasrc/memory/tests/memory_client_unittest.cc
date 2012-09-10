@@ -350,6 +350,40 @@ TEST_F(MemoryClientTest, loadCNAMEAndNotNSECThrows) {
     // Teardown checks for memory segment leaks
 }
 
+TEST_F(MemoryClientTest, loadDNAMEAndNSApex1) {
+    // DNAME + NS (apex) is OK
+    client_->load(Name("example.org"),
+                  TEST_DATA_DIR
+                  "/example.org-dname-ns-apex-1.zone");
+    // Teardown checks for memory segment leaks
+}
+
+TEST_F(MemoryClientTest, loadDNAMEAndNSApex2) {
+    // DNAME + NS (apex) is OK (reverse order)
+    client_->load(Name("example.org"),
+                  TEST_DATA_DIR
+                  "/example.org-dname-ns-apex-2.zone");
+    // Teardown checks for memory segment leaks
+}
+
+TEST_F(MemoryClientTest, loadDNAMEAndNSNonApex1) {
+    // DNAME + NS (non-apex) must throw
+    EXPECT_THROW(client_->load(Name("example.org"),
+                               TEST_DATA_DIR
+                               "/example.org-dname-ns-nonapex-1.zone"),
+                 InMemoryClient::AddError);
+    // Teardown checks for memory segment leaks
+}
+
+TEST_F(MemoryClientTest, loadDNAMEAndNSNonApex2) {
+    // DNAME + NS (non-apex) must throw (reverse order)
+    EXPECT_THROW(client_->load(Name("example.org"),
+                               TEST_DATA_DIR
+                               "/example.org-dname-ns-nonapex-2.zone"),
+                 InMemoryClient::AddError);
+    // Teardown checks for memory segment leaks
+}
+
 TEST_F(MemoryClientTest, loadRRSIGFollowsNothing) {
     EXPECT_THROW(client_->load(Name("example.org"),
                                TEST_DATA_DIR
