@@ -46,7 +46,7 @@ TreeNodeRRset::TreeNodeRRset(const dns::Name& realname,
                              bool dnssec_ok) :
     node_(node), rdataset_(rdataset),
     rrsig_count_(rdataset_->getSigRdataCount()), rrclass_(rrclass),
-    dnssec_ok_(dnssec_ok), name_(NULL)
+    dnssec_ok_(dnssec_ok), name_(NULL), ttl_(NULL)
 {
     const LabelSequence labels(realname);
     const size_t labels_storangelen = labels.getSerializedLength();
@@ -69,7 +69,13 @@ TreeNodeRRset::getName() const {
 
 const RRTTL&
 TreeNodeRRset::getTTL() const {
-    isc_throw(Unexpected, "unexpected method called on TreeNodeRRset");
+    if (ttl_ == NULL) {
+        util::InputBuffer ttl_buffer(rdataset_->getTTLData(),
+                                     sizeof(uint32_t));
+        ttl_ = new RRTTL(ttl_buffer);
+    }
+
+    return (*ttl_);
 }
 
 void
