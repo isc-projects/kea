@@ -475,6 +475,49 @@ TEST_F(MemoryClientTest, getIterator) {
     EXPECT_THROW(iterator->getNextRRset(), isc::Unexpected);
 }
 
+TEST_F(MemoryClientTest, getIteratorSeparateRRs) {
+    client_->load(Name("example.org"),
+                  TEST_DATA_DIR "/example.org-multiple.zone");
+
+    // separate_rrs = false
+    ZoneIteratorPtr iterator(client_->getIterator(Name("example.org")));
+
+    // First we have the SOA
+    ConstRRsetPtr rrset(iterator->getNextRRset());
+    EXPECT_TRUE(rrset);
+    EXPECT_EQ(RRType::SOA(), rrset->getType());
+
+    // Only one RRType::A() RRset
+    rrset = iterator->getNextRRset();
+    EXPECT_TRUE(rrset);
+    EXPECT_EQ(RRType::A(), rrset->getType());
+
+    // There's nothing else in this zone
+    EXPECT_EQ(ConstRRsetPtr(), iterator->getNextRRset());
+
+
+    // separate_rrs = true
+    ZoneIteratorPtr iterator2(client_->getIterator(Name("example.org"), true));
+
+    // First we have the SOA
+    rrset = iterator2->getNextRRset();
+    EXPECT_TRUE(rrset);
+    EXPECT_EQ(RRType::SOA(), rrset->getType());
+
+    // First RRType::A() RRset
+    rrset = iterator2->getNextRRset();
+    EXPECT_TRUE(rrset);
+    EXPECT_EQ(RRType::A(), rrset->getType());
+
+    // Second RRType::A() RRset
+    rrset = iterator2->getNextRRset();
+    EXPECT_TRUE(rrset);
+    EXPECT_EQ(RRType::A(), rrset->getType());
+
+    // There's nothing else in this iterator
+    EXPECT_EQ(ConstRRsetPtr(), iterator2->getNextRRset());
+}
+
 TEST_F(MemoryClientTest, getIteratorGetSOAThrowsNotImplemented) {
     client_->load(Name("example.org"), TEST_DATA_DIR "/example.org-empty.zone");
     ZoneIteratorPtr iterator(client_->getIterator(Name("example.org")));
