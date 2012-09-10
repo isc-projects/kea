@@ -211,6 +211,18 @@ TEST_F(MemoryClientTest, loadFromIterator) {
     EXPECT_THROW(iterator->getNextRRset(), isc::Unexpected);
 }
 
+TEST_F(MemoryClientTest, loadMemoryAllocationFailures) {
+    // Just to check that things get cleaned up
+
+    for (int i = 1; i < 16; i++) {
+        mem_sgmt_.setThrowCount(i);
+        EXPECT_THROW(client_->load(Name("example.org"),
+                                   TEST_DATA_DIR "/example.org.zone"),
+                     std::bad_alloc);
+    }
+    // Teardown checks for memory segment leaks
+}
+
 TEST_F(MemoryClientTest, loadNSEC3Signed) {
     client_->load(Name("example.org"),
                   TEST_DATA_DIR "/example.org-nsec3-signed.zone");
