@@ -317,6 +317,24 @@ TEST_F(MemoryClientTest, loadWildcardNSEC3Throws) {
     // Teardown checks for memory segment leaks
 }
 
+TEST_F(MemoryClientTest, loadNSEC3WithFewerLabelsThrows) {
+    // NSEC3 names with labels != (origin_labels + 1) should throw
+    EXPECT_THROW(client_->load(Name("example.org"),
+                               TEST_DATA_DIR
+                               "/example.org-nsec3-fewer-labels.zone"),
+                 InMemoryClient::AddError);
+    // Teardown checks for memory segment leaks
+}
+
+TEST_F(MemoryClientTest, loadNSEC3WithMoreLabelsThrows) {
+    // NSEC3 names with labels != (origin_labels + 1) should throw
+    EXPECT_THROW(client_->load(Name("example.org"),
+                               TEST_DATA_DIR
+                               "/example.org-nsec3-more-labels.zone"),
+                 InMemoryClient::AddError);
+    // Teardown checks for memory segment leaks
+}
+
 TEST_F(MemoryClientTest, loadRRSIGFollowsNothing) {
     EXPECT_THROW(client_->load(Name("example.org"),
                                TEST_DATA_DIR
