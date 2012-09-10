@@ -1,0 +1,29 @@
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+   <title>perfdhcp objects breakdown</title><link rel="stylesheet" type="text/css" href="bind10-guide.css"><meta name="generator" content="DocBook XSL Stylesheets V1.76.1"><meta name="description" content="This document briefly describes C++ classes being part of the perfdhcp tool."></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="book" title="perfdhcp objects breakdown"><div class="titlepage"><div><div><h1 class="title"><a name="d0e3"></a>perfdhcp objects breakdown</h1></div><div><div class="author"><h3 class="author"><span class="firstname">Marcin</span> <span class="surname">Siodelski</span></h3></div></div><div><p class="releaseinfo">This is a companion document for BIND 10 version
+    20120712.</p></div><div><p class="copyright">Copyright &copy; 2012 Internet Systems Consortium, Inc. ("ISC")</p></div><div><div class="abstract" title="Abstract"><p class="title"><b>Abstract</b></p><p>This document briefly describes C++ classes being part of the
+      perfdhcp tool. </p></div></div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="chapter"><a href="#perfdhcp-classes">1. Classes</a></span></dt><dd><dl><dt><span class="section"><a href="#command-options">CommandOptions (command_options (.h, cc)</a></span></dt></dl></dd></dl></div><div class="chapter" title="Chapter&nbsp;1.&nbsp;Classes"><div class="titlepage"><div><div><h2 class="title"><a name="perfdhcp-classes"></a>Chapter&nbsp;1.&nbsp;Classes</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#command-options">CommandOptions (command_options (.h, cc)</a></span></dt></dl></div><div class="section" title="CommandOptions (command_options (.h, cc)"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="command-options"></a>CommandOptions (command_options (.h, cc)</h2></div></div></div><p>
+        CommandOptions is a singleton class that parses perfdhcp command line
+        parameters and initializes its members accordingly. If parsed parameters
+        are invalid the parser function throws exception.
+        </p><pre class="screen">
+main(int argc, char* argv[]) {
+    try {
+        CommandOptions&amp; command_options = CommandOptions::instance();
+        command_options.parse(argc, argv);
+    catch(const Exception&amp; e) {
+        ...
+    }
+    ...
+}
+        </pre><p>
+        If argument parsing is successful than parsed values can be read from
+        CommandOptions singleton from any class or function in the program:
+        </p><pre class="screen">
+
+    ...
+    int rate = CommandOptions::instance().getRate();
+    ...
+
+        </pre><p>
+      </p></div></div></div></body></html>
