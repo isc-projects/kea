@@ -349,6 +349,7 @@ public:
     /// @param timeout_usec specifies fractional part of the timeout
     /// (in microseconds)
     ///
+    /// @throw isc::BadValue if timeout_usec is greater than one million
     /// @return Pkt6 object representing received packet (or NULL)
     Pkt6Ptr receive6(uint32_t timeout_sec, uint32_t timeout_usec = 0);
 
@@ -362,6 +363,7 @@ public:
     /// @param timeout_usec specifies fractional part of the timeout
     /// (in microseconds)
     ///
+    /// @throw isc::BadValue if timeout_usec is greater than one million
     /// @return Pkt4 object representing received packet (or NULL)
     Pkt4Ptr receive4(uint32_t timeout_sec, uint32_t timeout_usec = 0);
 
