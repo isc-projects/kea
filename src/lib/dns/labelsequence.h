@@ -58,7 +58,7 @@ public:
     ///
     //@{
     /// Wildcard label ("*")
-    static const LabelSequence& WILDCARD_LABEL();
+    static const LabelSequence& WILDCARD();
     //@}
 
     /// \brief Constructs a LabelSequence for the given name
@@ -419,7 +419,7 @@ std::ostream&
 operator<<(std::ostream& os, const LabelSequence& label_sequence);
 
 inline const LabelSequence&
-LabelSequence::WILDCARD_LABEL() {
+LabelSequence::WILDCARD() {
     static const uint8_t wildcard_buf[4] = { 0x01, 0x00, 0x01, '*' };
     static const LabelSequence wild_ls(wildcard_buf);
     return (wild_ls);
