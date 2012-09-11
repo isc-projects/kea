@@ -240,7 +240,8 @@ TEST_F(IfaceMgrTest, receiveTimeout6) {
     // Remember when we call receive6().
     gettimeofday(&start_time, NULL);
     // Call receive with timeout of 1s + 1000us.
-    Pkt6Ptr pkt = ifacemgr->receive6(1, 1000);
+    Pkt6Ptr pkt;
+    ASSERT_NO_THROW(pkt = ifacemgr->receive6(1, 1000));
     // Remember when call to receive6() ended.
     gettimeofday(&stop_time, NULL);
     // We did not send a packet to lo interface so we expect that
@@ -256,7 +257,7 @@ TEST_F(IfaceMgrTest, receiveTimeout6) {
 
     // Test timeout shorter than 1s.
     gettimeofday(&start_time, NULL);
-    pkt = ifacemgr->receive6(0, 500);
+    ASSERT_NO_THROW(pkt = ifacemgr->receive6(0, 500));
     gettimeofday(&stop_time, NULL);
     ASSERT_FALSE(pkt);
     stop_time.tv_sec -= start_time.tv_sec;
@@ -268,6 +269,10 @@ TEST_F(IfaceMgrTest, receiveTimeout6) {
     // should be investigated.
     EXPECT_EQ(0, stop_time.tv_sec);
     EXPECT_GT(stop_time.tv_usec, 500);
+
+    // Test with invalid fractional timeout values.
+    EXPECT_THROW(ifacemgr->receive6(0, 1000000), isc::BadValue);
+    EXPECT_THROW(ifacemgr->receive6(1, 1000010), isc::BadValue);
 }
 
 TEST_F(IfaceMgrTest, receiveTimeout4) {
@@ -293,7 +298,8 @@ TEST_F(IfaceMgrTest, receiveTimeout4) {
     // Remember when we call receive4().
     gettimeofday(&start_time, NULL);
     // Call receive with timeout of 2s + 150us.
-    Pkt4Ptr pkt = ifacemgr->receive4(2, 150);
+    Pkt4Ptr pkt;
+    ASSERT_NO_THROW(pkt = ifacemgr->receive4(2, 150));
     // Remember when call to receive4() ended.
     gettimeofday(&stop_time, NULL);
     // We did not send a packet to lo interface so we expect that
@@ -309,7 +315,7 @@ TEST_F(IfaceMgrTest, receiveTimeout4) {
 
     // Test timeout shorter than 1s.
     gettimeofday(&start_time, NULL);
-    pkt = ifacemgr->receive4(0, 350);
+    ASSERT_NO_THROW(pkt = ifacemgr->receive4(0, 350));
     gettimeofday(&stop_time, NULL);
     ASSERT_FALSE(pkt);
     stop_time.tv_sec -= start_time.tv_sec;
@@ -321,6 +327,10 @@ TEST_F(IfaceMgrTest, receiveTimeout4) {
     // should be investigated.
     EXPECT_EQ(0, stop_time.tv_sec);
     EXPECT_GT(stop_time.tv_usec, 350);
+
+    // Test with invalid fractional timeout values.
+    EXPECT_THROW(ifacemgr->receive6(0, 1000000), isc::BadValue);
+    EXPECT_THROW(ifacemgr->receive6(2, 1000005), isc::BadValue);
 }
 
 TEST_F(IfaceMgrTest, sockets6) {
