@@ -217,6 +217,112 @@ TEST_F(IfaceMgrTest, getIface) {
 
 }
 
+TEST_F(IfaceMgrTest, receiveTimeout6) {
+    std::cout << "Testing DHCPv6 packet reception timeouts."
+              << " Test will block for a few seconds when waiting"
+              << " for timeout to occur." << std::endl;
+
+    boost::scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
+    // Open socket on the lo interface.
+    IOAddress loAddr("::1");
+    int socket1 = 0;
+    ASSERT_NO_THROW(
+        socket1 = ifacemgr->openSocket(LOOPBACK, loAddr, 10547)
+    );
+    // Socket is open if its descriptor is greater than zero.
+    ASSERT_GT(socket1, 0);
+
+    // Time when call to IfaceMgr::receive6() started.
+    timeval start_time;
+    // Time when call to IfaceMgr::receive6() ended.
+    timeval stop_time;
+
+    // Remember when we call receive6().
+    gettimeofday(&start_time, NULL);
+    // Call receive with timeout of 1s + 1000us.
+    Pkt6Ptr pkt = ifacemgr->receive6(1, 1000);
+    // Remember when call to receive6() ended.
+    gettimeofday(&stop_time, NULL);
+    // We did not send a packet to lo interface so we expect that
+    // nothing has been received and timeout has been reached.
+    ASSERT_FALSE(pkt);
+    // Calculate duration of call to receive6().
+    stop_time.tv_sec -= start_time.tv_sec;
+    stop_time.tv_usec -= start_time.tv_usec;
+    // Duration should be equal or greater than timeout specified
+    // for the receive6() call.
+    EXPECT_EQ(stop_time.tv_sec, 1);
+    EXPECT_GT(stop_time.tv_usec, 1000);
+
+    // Test timeout shorter than 1s.
+    gettimeofday(&start_time, NULL);
+    pkt = ifacemgr->receive6(0, 500);
+    gettimeofday(&stop_time, NULL);
+    ASSERT_FALSE(pkt);
+    stop_time.tv_sec -= start_time.tv_sec;
+    stop_time.tv_usec -= start_time.tv_usec;
+    // The timeout has been set to 500us. Even though the way we measure
+    // duration of receive6() may result in durations slightly longer than
+    // timeout it is safe to assume that measured value will not exceed 1s
+    // when timeout is only 500us. If it exceeds, this is an error and
+    // should be investigated.
+    EXPECT_EQ(0, stop_time.tv_sec);
+    EXPECT_GT(stop_time.tv_usec, 500);
+}
+
+TEST_F(IfaceMgrTest, receiveTimeout4) {
+    std::cout << "Testing DHCPv6 packet reception timeouts."
+              << " Test will block for a few seconds when waiting"
+              << " for timeout to occur." << std::endl;
+
+    boost::scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
+    // Open socket on the lo interface.
+    IOAddress loAddr("127.0.0.1");
+    int socket1 = 0;
+    ASSERT_NO_THROW(
+        socket1 = ifacemgr->openSocket(LOOPBACK, loAddr, 10067)
+    );
+    // Socket is open if its descriptor is greater than zero.
+    ASSERT_GT(socket1, 0);
+
+    // Time when call to IfaceMgr::receive4() started.
+    timeval start_time;
+    // Time when call to IfaceMgr::receive4() ended.
+    timeval stop_time;
+
+    // Remember when we call receive4().
+    gettimeofday(&start_time, NULL);
+    // Call receive with timeout of 2s + 150us.
+    Pkt4Ptr pkt = ifacemgr->receive4(2, 150);
+    // Remember when call to receive4() ended.
+    gettimeofday(&stop_time, NULL);
+    // We did not send a packet to lo interface so we expect that
+    // nothing has been received and timeout has been reached.
+    ASSERT_FALSE(pkt);
+    // Calculate duration of call to receive4().
+    stop_time.tv_sec -= start_time.tv_sec;
+    stop_time.tv_usec -= start_time.tv_usec;
+    // Duration should be equal or greater than timeout specified
+    // for the receive4() call.
+    EXPECT_EQ(stop_time.tv_sec, 2);
+    EXPECT_GT(stop_time.tv_usec, 150);
+
+    // Test timeout shorter than 1s.
+    gettimeofday(&start_time, NULL);
+    pkt = ifacemgr->receive4(0, 350);
+    gettimeofday(&stop_time, NULL);
+    ASSERT_FALSE(pkt);
+    stop_time.tv_sec -= start_time.tv_sec;
+    stop_time.tv_usec -= start_time.tv_usec;
+    // The timeout has been set to 350us. Even though the way we measure
+    // duration of receive4() may result in durations slightly longer than
+    // timeout it is safe to assume that measured value will not exceed 1s
+    // when timeout is only 350us. If it exceeds, this is an error and
+    // should be investigated.
+    EXPECT_EQ(0, stop_time.tv_sec);
+    EXPECT_GT(stop_time.tv_usec, 350);
+}
+
 TEST_F(IfaceMgrTest, sockets6) {
     // testing socket operation in a portable way is tricky
     // without interface detection implemented
