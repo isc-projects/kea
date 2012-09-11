@@ -454,6 +454,40 @@ TEST_F(DomainTreeTest, callbackLabelSequence) {
     performCallbackTest(dtree, mem_sgmt_, ls1, ls2);
 }
 
+TEST_F(DomainTreeTest, findInSubTree) {
+    // For the version that takes a node chain, the chain must be empty.
+    DomainTreeNodeChain<int> chain;
+    bool flag;
+
+    // First, find a sub-tree node
+    const Name n1("w.y.d.e.f");
+    const LabelSequence ls1(n1);
+    DomainTree<int>::Result result =
+        dtree_expose_empty_node.find(ls1, &cdtnode, chain,
+                                     testCallback, &flag);
+    EXPECT_EQ(DomainTree<int>::EXACTMATCH, result);
+    EXPECT_EQ(n1, chain.getAbsoluteName());
+
+    // Searching for an absolute label sequence when chain is already
+    // populated should throw.
+    const Name n2a("o");
+    const LabelSequence ls2a(n2a);
+    EXPECT_THROW(dtree_expose_empty_node.find(ls2a, &cdtnode, chain,
+                                              testCallback, &flag),
+                 isc::BadValue);
+
+    // Now, find "o.w.y.d.e.f." by right-stripping the "w.y.d.e.f."
+    // suffix.
+    const Name n2("o.w.y.d.e.f");
+    LabelSequence ls2(n2);
+    ls2.stripRight(6);
+
+    result = dtree_expose_empty_node.find(ls2, &cdtnode, chain,
+                                          testCallback, &flag);
+    EXPECT_EQ(DomainTree<int>::EXACTMATCH, result);
+    EXPECT_EQ(n2, chain.getAbsoluteName());
+}
+
 TEST_F(DomainTreeTest, chainLevel) {
     TestDomainTreeNodeChain chain;
 
