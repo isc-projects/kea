@@ -120,12 +120,12 @@
       that take advantage of a single database connection.</para>
 
       <para>
-        Those benchmarks are stored in tests/tools/dhcp-ubench
-        directory of the BIND 10 source tree. This directory contains simplified prototypes for
+        Those benchmarks are stored in tests/tools/dhcp-ubench directory of the
+        BIND 10 source tree. This directory contains simplified prototypes for
         the various database back-ends that are planned or considered as a
-        possibly for BIND10 DHCP.  Athough trivial now, the benchmarks are
-        expected to evolve into useful tools that will allow users to
-        measure performance in their specific environment.
+        possibly for BIND10 DHCP.  These benchmarks are expected to evolve into
+        useful tools that will allow users to measure performance in their
+        specific environment.
       </para>
 
     <para>
@@ -138,11 +138,10 @@
     </para>
 
     <para>
-      As the benchmarks require additional (sometimes heavy) dependencies, they are not
-      built by default. Actually, their build system is completely separate from that
-      of the rest of BIND 10.
-      It is anticipated that they will be eventually merged into the rest of BIND 10, but
-      that is a low priority for now.
+      As the benchmarks require additional (sometimes heavy) dependencies, they
+      are not built by default. Actually, their build system is completely
+      separate from that of the rest of BIND 10.  It will be eventually merged
+      with the main BIND 10 build system.
     </para>
 
     <para>
@@ -188,10 +187,10 @@
 
       <para>Before running tests, you need to initialize your database. You can
       use mysql.schema script for that purpose.</para>
-      
+
       <para><emphasis>WARNING: It will drop existing
       Kea database. Do not run this on your production server. </emphasis></para>
-      
+
       <para>Assuming your
       MySQL user is "kea", you can initialize your test database by:
 
@@ -217,24 +216,7 @@
       the same list of parameters, some of them are specific to a given backend.
       To get a list of supported parameters, run the benchmark with the "-h" option:
 
-      <screen>$ <userinput>./mysql_ubench -h</userinput>
-This is a benchmark designed to measure expected performance
-of several backends. This particular version identifies itself
-as following:
-MySQL client version is 5.5.24
-
-Possible command-line parameters:
- -h - help (you are reading this)
- -m hostname - specifies MySQL server to connect (MySQL backend only)
- -u username - specifies MySQL user name (MySQL backend only)
- -p password - specifies MySQL passwod (MySQL backend only)
- -f name - database or filename (MySQL, SQLite and memfile)
- -n integer - number of test repetitions (MySQL, SQLite and memfile)
- -s yes|no - synchronous/asynchronous operation (MySQL, SQLite and memfile)
- -v yes|no - verbose mode (MySQL, SQLite and memfile)
- -c yes|no - should compiled statements be used (MySQL only)
-</screen>
-
+      <screen>$ <userinput>./mysql_ubench -h</userinput></screen>
       </para>
 
       <para>Synchronous operation requires database backend to
@@ -247,6 +229,23 @@ Possible command-line parameters:
 
       <section>
         <title>MySQL tweaks</title>
+
+        <para>To modify the default mysql_ubench parameters, command line
+        switches can be used. The currently supported switches are
+        (default values specified in brackets):
+        <orderedlist>
+          <listitem><para>-f name - name of the database ("kea")</para></listitem>
+          <listitem><para>-m hostname - name of the database host ("localhost")</para></listitem>
+          <listitem><para>-u user - MySQL username  ("root")</para></listitem>
+          <listitem><para>-p password - MySQL password ("secret")</para></listitem>
+          <listitem><para>-n num - number of iterations (100)</para></listitem>
+          <listitem><para>-s yes|no - should the operations be performed in a synchronous (yes)
+          or asynchronous (no) manner (yes)</para></listitem>
+          <listitem><para>-v yes|no - verbose mode. Should the test print out progress? (yes)</para></listitem>
+          <listitem><para>-c yes|no - precompiled statements. Should the SQL statements be precompiled? (yes)</para></listitem>
+        </orderedlist>
+        </para>
+
 
         <para>One parameter that has huge impact on performance is the choice of backend engine.
         You can get a list of engines of your MySQL implementation by using
@@ -300,14 +299,14 @@ Possible command-line parameters:
           <listitem><para>-s yes|no - should the operations be performed in a synchronous (yes)
           or asynchronous (no) manner (yes)</para></listitem>
           <listitem><para>-v yes|no - verbose mode. Should the test print out progress? (yes)</para></listitem>
-          <listitem><para>-c yes|no - precompiled statements. Should the SQL statements be precompiled?</para></listitem>
+          <listitem><para>-c yes|no - precompiled statements. Should the SQL statements be precompiled? (yes)</para></listitem>
         </orderedlist>
         </para>
 
         <para>SQLite can run in asynchronous or synchronous mode. This
         mode can be controlled by using "synchronous" parameter. It is set
         using the SQLite command:</para>
-        
+
         <para><command>PRAGMA synchronous = ON|OFF</command></para>
 
         <para>Another tweakable feature is journal mode. It can be
@@ -333,6 +332,15 @@ Possible command-line parameters:
       in the middle of the file (as it often requires moving all data
       after modified point, effectively requiring writing large parts of
       the whole file, not just changed fragment).</para>
+
+      <para>There are no preparatory steps required for memfile benchmark.
+      The only requirement is the ability to create and write specified lease
+      file (dhcpd.leases in the current directory). The tests can be run
+      as follows:
+      <screen>&gt; <userinput>./memfile_ubench</userinput></screen>
+      or
+      <screen>&gt; <userinput>./memfile_ubench > results-memfile.txt</userinput></screen>
+      </para>
 
       <section id="memfile-tweaks">
         <title>memfile tweaks</title>
@@ -435,8 +443,7 @@ SQLite version: 3.7.9sourceid version is 2011-11-01 00:52:41 c7c6050ef060877ebe7
       </table>
 
       <para>The following parameters were measured for asynchronous mode.
-      MySQL and SQLite were run with one hundred thousand repetitions. Memfile
-      was run for one million repetitions due to its much higher performance.</para>
+      MySQL and SQLite were run with one hundred thousand repetitions.</para>
 
       <!-- raw results async -->
       <table><title>Asynchronous results (basic)</title>
@@ -482,7 +489,7 @@ SQLite version: 3.7.9sourceid version is 2011-11-01 00:52:41 c7c6050ef060877ebe7
 
           <row>
             <entry>memfile</entry>
-            <entry>1,000,000</entry>
+            <entry>100,000</entry>
             <entry> 1.300</entry>
             <entry> 0.039</entry>
             <entry> 1.307</entry>
@@ -577,13 +584,21 @@ SQLite version: 3.7.9sourceid version is 2011-11-01 00:52:41 c7c6050ef060877ebe7
       </tgroup>
       </table>
 
+      <!-- that is obsolete approach that is going to be removed in docbook 5.0.
+      Its only advantage is that it actually works with docbook2pdf -->
+      <!--
+      <figure>
+        <title>Graphical representation of the basic performance
+        results presented in table <xref linkend="tbl-basic-perf-results" />.</title>
+        <graphic scale="100" fileref="performance-results-graph1.png" />
+      </figure>-->
+
+      <!-- this works great for HTML export, but is silently ignored by docbook2pdf
+      and docbook2ps tools. -->
       <mediaobject>
         <imageobject>
-          <imagedata fileref="performance-results-graph1.png" format="PNG"/>
+          <imagedata fileref="performance-results-graph1.png" format="PNG" />
         </imageobject>
-        <textobject>
-          <phrase>Basic performance measurements</phrase>
-        </textobject>
         <caption>
           <para>Graphical representation of the basic performance results
           presented in table <xref linkend="tbl-basic-perf-results" />.</para>
@@ -672,8 +687,7 @@ SQLite version: 3.7.9sourceid version is 2011-11-01 00:52:41 c7c6050ef060877ebe7
       </table>
 
       <para>The following parameters were measured for asynchronous mode.
-      MySQL and SQLite were run with one hundred thousand repetitions. Memfile
-      was run for one million repetitions due to its much higher performance.</para>
+      MySQL and SQLite were run with one hundred thousand repetitions.</para>
 
       <!-- raw results async -->
       <table><title>Asynchronous results (optimized)</title>
@@ -719,7 +733,7 @@ SQLite version: 3.7.9sourceid version is 2011-11-01 00:52:41 c7c6050ef060877ebe7
 
           <row>
             <entry>memfile</entry>
-            <entry>1,000,000</entry>
+            <entry>100,000</entry>
             <entry>1.302</entry>
             <entry>0.038</entry>
             <entry>1.306</entry>
@@ -855,12 +869,13 @@ SQLite version: 3.7.9sourceid version is 2011-11-01 00:52:41 c7c6050ef060877ebe7
         factor here is a disk access time. Even migrating to high
         performance 15,000 rpm disk is expected to only roughly double
         number of leases per second, compared to the current results.
-        The reason is that to write a file to disk, at least two writes
+        The reason is that to write a file to disk, at least two disk
+        sector writes
         are required: the new content and i-node modification of the
         file. The easiest way to boost synchronous performance is to
         switch to SSD disks. Memory-backed RAM disks are also a viable
         solution. However, care should be taken to properly engineer
-        backup strategy for RAM disks.
+        backup strategy for such RAM disks.
       </para>
 
       <para>
