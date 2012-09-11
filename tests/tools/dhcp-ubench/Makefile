@@ -62,4 +62,4 @@ dhcp-perf-guide.html: dhcp-perf-guide.xml version.ent
 		dhcp-perf-guide.xml
 
 dhcp-perf-guide.pdf: dhcp-perf-guide.xml
-	docbook2pdf $<
+	dblatex -P doc.collab.show=0 -P latex.output.revhistory=0 $<
