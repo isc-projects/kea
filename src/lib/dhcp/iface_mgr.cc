@@ -786,7 +786,11 @@ IfaceMgr::send(const Pkt4Ptr& pkt)
 
 boost::shared_ptr<Pkt4>
 IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec) {
-
+    // Sanity check for microsecond timeout.
+    if (timeout_usec >= 1000000) {
+        isc_throw(BadValue, "fractional timeout must be shorter than"
+                  " one million microseconds");
+    }
     const SocketInfo* candidate = 0;
     IfaceCollection::const_iterator iface;
     fd_set sockets;
@@ -953,6 +957,11 @@ IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec) {
 }
 
 Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec) {
+    // Sanity check for microsecond timeout.
+    if (timeout_usec >= 1000000) {
+        isc_throw(BadValue, "fractional timeout must be shorter than"
+                  " one million microseconds");
+    }
 
     const SocketInfo* candidate = 0;
     fd_set sockets;
