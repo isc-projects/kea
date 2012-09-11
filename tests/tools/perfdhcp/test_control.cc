@@ -34,7 +34,6 @@
 #include "perf_pkt6.h"
 
 using namespace std;
-using namespace boost;
 using namespace boost::posix_time;
 using namespace isc;
 using namespace isc::dhcp;
@@ -1123,11 +1122,11 @@ TestControl::sendDiscover4(const TestControlSocket& socket,
     // Replace MAC address in the template with actual MAC address.
     pkt4->writeAt(rand_offset, mac_address.begin(), mac_address.end());
     // Create a packet from the temporary buffer.
-    setDefaults4(socket, static_pointer_cast<Pkt4>(pkt4));
+    setDefaults4(socket, boost::static_pointer_cast<Pkt4>(pkt4));
     // Pack the input packet buffer to output buffer so as it can
     // be sent to server.
     pkt4->rawPack();
-    IfaceMgr::instance().send(static_pointer_cast<Pkt4>(pkt4));
+    IfaceMgr::instance().send(boost::static_pointer_cast<Pkt4>(pkt4));
     if (!preload) {
         if (!stats_mgr4_) {
             isc_throw(InvalidOperation, "Statistics Manager for DHCPv4 "
@@ -1135,7 +1134,7 @@ TestControl::sendDiscover4(const TestControlSocket& socket,
         }
         // Update packet stats.
         stats_mgr4_->passSentPacket(StatsMgr4::XCHG_DO,
-                                    static_pointer_cast<Pkt4>(pkt4));
+                                    boost::static_pointer_cast<Pkt4>(pkt4));
     }
 }
 
@@ -1308,17 +1307,17 @@ TestControl::sendRequest4(const TestControlSocket& socket,
     opt_requested_ip->setUint32(static_cast<uint32_t>(yiaddr));
     pkt4->addOption(opt_requested_ip);
 
-    setDefaults4(socket, static_pointer_cast<Pkt4>(pkt4));
+    setDefaults4(socket, boost::static_pointer_cast<Pkt4>(pkt4));
     // Prepare on-wire data.
     pkt4->rawPack();
-    IfaceMgr::instance().send(static_pointer_cast<Pkt4>(pkt4));
+    IfaceMgr::instance().send(boost::static_pointer_cast<Pkt4>(pkt4));
     if (!stats_mgr4_) {
         isc_throw(InvalidOperation, "Statistics Manager for DHCPv4 "
                   "hasn't been initialized");
     }
     // Update packet stats.
     stats_mgr4_->passSentPacket(StatsMgr4::XCHG_RA,
-                                static_pointer_cast<Pkt4>(pkt4));
+                                boost::static_pointer_cast<Pkt4>(pkt4));
 }
 
 void
@@ -1435,7 +1434,7 @@ TestControl::sendRequest6(const TestControlSocket& socket,
     }
     // Set IA_NA
     boost::shared_ptr<Option6IA> opt_ia_na_advertise =
-       static_pointer_cast<Option6IA>(advertise_pkt6->getOption(D6O_IA_NA));
+        boost::static_pointer_cast<Option6IA>(advertise_pkt6->getOption(D6O_IA_NA));
     if (!opt_ia_na_advertise) {
         isc_throw(Unexpected, "DHCPv6 IA_NA option not found in received "
                   "packet");
