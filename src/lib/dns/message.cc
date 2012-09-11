@@ -254,6 +254,13 @@ MessageImpl::toWire(AbstractMessageRenderer& renderer, TSIGContext* tsig_ctx) {
     const size_t orig_msg_len_limit = renderer.getLengthLimit();
     const AbstractMessageRenderer::CompressMode orig_compress_mode =
         renderer.getCompressMode();
+
+    // We are going to skip soon, so we need to clear the renderer
+    // But we'll leave the length limit  and the compress mode intact
+    // (or shortened in case of TSIG)
+    renderer.clear();
+    renderer.setCompressMode(orig_compress_mode);
+
     if (tsig_len > 0) {
         if (tsig_len > orig_msg_len_limit) {
             isc_throw(InvalidParameter, "Failed to render DNS message: "
@@ -261,6 +268,8 @@ MessageImpl::toWire(AbstractMessageRenderer& renderer, TSIGContext* tsig_ctx) {
                       orig_msg_len_limit << ")");
         }
         renderer.setLengthLimit(orig_msg_len_limit - tsig_len);
+    } else {
+        renderer.setLengthLimit(orig_msg_len_limit);
     }
 
     // reserve room for the header

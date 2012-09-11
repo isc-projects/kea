@@ -556,6 +556,10 @@ public:
     /// \c Rcode must have been set beforehand; otherwise, an exception of
     /// class \c InvalidMessageOperation will be thrown.
     ///
+    /// \note The renderer's internal buffers and data are automatically
+    /// cleared, keeping the length limit and the compression mode intact.
+    /// In case truncation is triggered, the renderer is cleared completely.
+    ///
     /// \param renderer DNS message rendering context that encapsulates the
     /// output buffer and name compression information.
     void toWire(AbstractMessageRenderer& renderer);
@@ -580,6 +584,10 @@ public:
     /// internally makes sure this doesn't happen, so if that ever occurs
     /// it should mean a bug either in the TSIG context or in the renderer
     /// implementation.
+    ///
+    /// \note The renderer's internal buffers and data are automatically
+    /// cleared, keeping the length limit and the compression mode intact.
+    /// In case truncation is triggered, the renderer is cleared completely.
     ///
     /// \param renderer See the other version
     /// \param tsig_ctx A TSIG context that is to be used for signing the
