@@ -173,7 +173,8 @@ class XfroutSession():
         # incrementing or decrementing Xfr running. An argument
         # is required for zone name in counting Xfr requests.
         for (k, v) in counters.items():
-            if 'counter_' in k or 'inc_' in k or 'dec_' in k:
+            if k.find('counter_') == 0 or k.find('inc_') == 0 \
+                    or k.find('dec_') == 0:
                 setattr(self, "_%s" % k, v)
         self._handle()
 
@@ -975,10 +976,10 @@ class XfroutCounter:
         self._statistics_data = {}
         self._counters_for_xfroutsession = {}
         self._counters_for_notifyout = {}
-        self._xfrrunning_names = [ \
-            n for n in \
-                isc.config.spec_name_list(self._statistics_spec) \
-                if 'xfr_running' in n ]
+        self._xfrrunning_names = [
+            n for n in isc.config.spec_name_list\
+                (self._statistics_spec) \
+                if n.find('xfr_running') == 1 ]
         self._lock = threading.RLock()
         self._create_perzone_incrementers()
         self._create_xfrrunning_xxcrementers()
