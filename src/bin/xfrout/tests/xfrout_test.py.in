@@ -321,7 +321,8 @@ class TestXfroutSessionBase(unittest.TestCase):
             'dec_axfr_running': _dec_axfr_running
             }
         self.get_counter = lambda n: \
-            self._statistics_data[n] if 'ixfr_' in n or 'axfr_' in n \
+            self._statistics_data[n] \
+            if n.find('ixfr_') == 0 or n.find('axfr_') == 0 \
             else self._statistics_data['zones'][TEST_ZONE_NAME_STR][n]
 
     def tearDown(self):
