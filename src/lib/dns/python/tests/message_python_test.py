@@ -453,7 +453,7 @@ class MessageTest(unittest.TestCase):
 
     def test_to_text(self):
         message_render = create_message()
-        
+
         msg_str =\
 """;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 4149
 ;; flags: qr aa rd; QUERY: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 0
@@ -484,7 +484,7 @@ test.example.com. 3600 IN A 192.0.2.2
                           Message.from_wire, self.p, bytes())
 
         test_name = Name("test.example.com");
-        
+
         message_parse = Message(0)
         factoryFromFile(message_parse, "message_fromWire1")
         self.assertEqual(0x1035, message_parse.get_qid())
@@ -493,7 +493,7 @@ test.example.com. 3600 IN A 192.0.2.2
         self.assertTrue(message_parse.get_header_flag(Message.HEADERFLAG_QR))
         self.assertTrue(message_parse.get_header_flag(Message.HEADERFLAG_RD))
         self.assertTrue(message_parse.get_header_flag(Message.HEADERFLAG_AA))
-    
+
         #QuestionPtr q = *message_parse.beginQuestion()
         q = message_parse.get_question()[0]
         self.assertEqual(test_name, q.get_name())
@@ -503,7 +503,7 @@ test.example.com. 3600 IN A 192.0.2.2
         self.assertEqual(2, message_parse.get_rr_count(Message.SECTION_ANSWER))
         self.assertEqual(0, message_parse.get_rr_count(Message.SECTION_AUTHORITY))
         self.assertEqual(0, message_parse.get_rr_count(Message.SECTION_ADDITIONAL))
-    
+
         #RRsetPtr rrset = *message_parse.beginSection(Message.SECTION_ANSWER)
         rrset = message_parse.get_section(Message.SECTION_ANSWER)[0]
         self.assertEqual(test_name, rrset.get_name())
@@ -569,12 +569,12 @@ test.example.com. 3600 IN A 192.0.2.2
         message_parse = Message(Message.PARSE)
         factoryFromFile(message_parse, "message_fromWire10.wire")
         self.assertEqual(Rcode.BADVERS(), message_parse.get_rcode())
-    
+
         # Maximum extended Rcode
         message_parse.clear(Message.PARSE)
         factoryFromFile(message_parse, "message_fromWire11.wire")
         self.assertEqual(0xfff, message_parse.get_rcode().get_code())
-    
+
     def test_BadEDNS0(self):
         message_parse = Message(Message.PARSE)
         # OPT RR in the answer section
@@ -596,7 +596,7 @@ test.example.com. 3600 IN A 192.0.2.2
                           factoryFromFile,
                           message_parse,
                           "message_fromWire6")
-                          
+
         # Compressed owner name of OPT RR points to a root name.
         # Not necessarily bogus, but very unusual and mostly pathological.
         # We accept it, but is it okay?
