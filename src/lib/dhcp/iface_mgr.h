@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2012  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -345,10 +345,12 @@ public:
     /// to not wait infinitely, but rather do something useful
     /// (e.g. remove expired leases)
     ///
-    /// @param timeout specifies timeout (in seconds)
+    /// @param timeout_sec specifies integral part of the timeout (in seconds)
+    /// @param timeout_usec specifies fractional part of the timeout
+    /// (in microseconds)
     ///
     /// @return Pkt6 object representing received packet (or NULL)
-    Pkt6Ptr receive6(uint32_t timeout);
+    Pkt6Ptr receive6(uint32_t timeout_sec, uint32_t timeout_usec = 0);
 
     /// @brief Tries to receive IPv4 packet over open IPv4 sockets.
     ///
@@ -356,10 +358,12 @@ public:
     /// If reception is successful and all information about its sender
     /// are obtained, Pkt4 object is created and returned.
     ///
-    /// @param timeout specifies timeout (in seconds)
+    /// @param timeout_sec specifies integral part of the timeout (in seconds)
+    /// @param timeout_usec specifies fractional part of the timeout
+    /// (in microseconds)
     ///
     /// @return Pkt4 object representing received packet (or NULL)
-    Pkt4Ptr receive4(uint32_t timeout);
+    Pkt4Ptr receive4(uint32_t timeout_sec, uint32_t timeout_usec = 0);
 
     /// Opens UDP/IP socket and binds it to address, interface and port.
     ///
