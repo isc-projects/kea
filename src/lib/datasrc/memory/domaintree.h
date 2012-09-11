@@ -1153,9 +1153,11 @@ public:
     /// Another special feature of this version is the ability to record
     /// more detailed information regarding the search result.
     ///
-    /// This information will be returned via the \c node_path parameter,
-    /// which is an object of class \c DomainTreeNodeChain.
-    /// The passed parameter must be empty.
+    /// This information will be returned via the \c node_path
+    /// parameter, which is an object of class \c DomainTreeNodeChain.
+    /// The passed parameter must be empty if the label sequence is
+    /// absolute. If the label sequence is not absolute, then find()
+    /// will begin from the top of the node chain.
     ///
     /// On success, the node sequence stored in \c node_path will contain all
     /// the ancestor nodes from the found node towards the root.
@@ -1462,12 +1464,23 @@ DomainTree<T>::find(const isc::dns::LabelSequence& target_labels_orig,
                     bool (*callback)(const DomainTreeNode<T>&, CBARG),
                     CBARG callback_arg) const
 {
-    if (!node_path.isEmpty()) {
+    if (node_path.isEmpty() ^ target_labels_orig.isAbsolute()) {
         isc_throw(isc::BadValue,
-                  "DomainTree::find is given a non empty chain");
+                  "DomainTree::find() is given mismatched node chain"
+                  " and label sequence");
     }
 
-    DomainTreeNode<T>* node = root_.get();
+    DomainTreeNode<T>* node;
+
+    if (!node_path.isEmpty()) {
+        // Get the top node in the node chain
+        node = const_cast<DomainTreeNode<T>*>(node_path.top());
+        // Start searching from its down pointer
+        node = node->getDown();
+    } else {
+        node = root_.get();
+    }
+
     Result ret = NOTFOUND;
     dns::LabelSequence target_labels(target_labels_orig);
 
