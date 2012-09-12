@@ -427,18 +427,18 @@ def check_statistics(step, counter, category, zone, gtltbt, number, upper):
         'Not found statistics counter %s%s%s' % \
             (counter, category_str, zone_str)
     msg = "Got %s, expected%s %s as counter %s%s" % \
-        (found, gtltbt, number, counter, zone_str)
+        (found, '' if gtltbt is None else gtltbt, number, counter, zone_str)
     if gtltbt and 'between' in gtltbt and upper:
         msg = "Got %s, expected%s %s and %s as counter %s%s" % \
             (found, gtltbt, number, upper, counter, zone_str)
-        assert int(number) <= int(found) \
-            and int(found) <= int(upper), msg
+        assert float(number) <= float(found) \
+            and float(found) <= float(upper), msg
     elif gtltbt and 'greater' in gtltbt:
-        assert int(found) > int(number), msg
+        assert float(found) > float(number), msg
     elif gtltbt and 'less' in gtltbt:
-        assert int(found) < int(number), msg
+        assert float(found) < float(number), msg
     else:
-        assert int(found) == int(number), msg
+        assert float(found) == float(number), msg
 
 @step('statistics counters are 0 in category (\S+)( except for the' + \
           ' following items)?')
