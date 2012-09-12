@@ -53,8 +53,8 @@ a received OFFER packet as UNKNOWN).
 
 % DHCP6_PACK_FAIL failed to assemble response correctly
 This error is output if the server failed to assemble the data to be
-returned to the client into a valid packet.  Additional messages will
-detail the reason.
+returned to the client into a valid packet.  The reason is most likely
+to be to a programming error: please raise a bug report.
 
 % DHCP6_QUERY_DATA received packet length %1, data length %2, data is <%3>
 A debug message listing the data received from the client or relay.

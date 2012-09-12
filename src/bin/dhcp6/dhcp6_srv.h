@@ -72,10 +72,10 @@ public:
 
     /// @brief Return textual type of packet received by server
     ///
-    /// Returns the name of valid packet received by the server (e.g. DISCOVER).
+    /// Returns the name of valid packet received by the server (e.g. SOLICIT).
     /// If the packet is unknown - or if it is a valid DHCP packet but not one
-    /// expected to be received by the server (such as an OFFER), the string
-    /// "UNKNOWN" is returned.  This methos is used in debug messages.
+    /// expected to be received by the server (such as an ADVERTISE), the string
+    /// "UNKNOWN" is returned.  This method is used in debug messages.
     ///
     /// As the operation of the method does not depend on any server state, it
     /// is declared static.

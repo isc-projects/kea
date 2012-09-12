@@ -268,4 +268,4 @@ TEST_F(Dhcpv6SrvTest, serverReceivedPacketName) {
     }
 }
 
-}   // anonymous namespace
+}   // end of anonymous namespace

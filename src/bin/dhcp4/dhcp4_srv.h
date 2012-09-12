@@ -44,7 +44,7 @@ class Dhcpv4Srv : public boost::noncopyable {
     public:
     /// @brief Default constructor.
     ///
-    /// Instantiates necessary services, required to run DHCPv6 server.
+    /// Instantiates necessary services, required to run DHCPv4 server.
     /// In particular, creates IfaceMgr that will be responsible for
     /// network interaction. Will instantiate lease manager, and load
     /// old or create new DUID. It is possible to specify alternate
@@ -54,7 +54,7 @@ class Dhcpv4Srv : public boost::noncopyable {
     /// @param port specifies port number to listen on
     Dhcpv4Srv(uint16_t port = DHCP4_SERVER_PORT);
 
-    /// @brief Destructor. Used during DHCPv6 service shutdown.
+    /// @brief Destructor. Used during DHCPv4 service shutdown.
     ~Dhcpv4Srv();
 
     /// @brief Main server processing loop.
@@ -75,7 +75,7 @@ class Dhcpv4Srv : public boost::noncopyable {
     /// Returns the name of valid packet received by the server (e.g. DISCOVER).
     /// If the packet is unknown - or if it is a valid DHCP packet but not one
     /// expected to be received by the server (such as an OFFER), the string
-    /// "UNKNOWN" is returned.  This methos is used in debug messages.
+    /// "UNKNOWN" is returned.  This method is used in debug messages.
     ///
     /// As the operation of the method does not depend on any server state, it
     /// is declared static.
@@ -106,11 +106,11 @@ protected:
     /// is valid, not expired, not reserved, not used by other client and
     /// that requesting client is allowed to use it.
     ///
-    /// Returns ACK message, NACK message, or NULL
+    /// Returns ACK message, NAK message, or NULL
     ///
     /// @param request a message received from client
     ///
-    /// @return ACK or NACK message
+    /// @return ACK or NAK message
     Pkt4Ptr processRequest(Pkt4Ptr& request);
 
     /// @brief Stub function that will handle incoming RELEASE messages.
