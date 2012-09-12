@@ -20,9 +20,9 @@ Feature: Xfrin incoming notify handling
     A query for www.example.org to [::1]:47806 should have rcode NXDOMAIN
 
     #
-    # Test for statistics
+    # Test1 for Xfrout statistics
     #
-    # check for initial statistics
+    # check initial statistics
     #
     When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
     last bindctl output should not contain "error"
@@ -48,6 +48,24 @@ Feature: Xfrin incoming notify handling
     Then the statistics counter senderr should be 0
     Then the statistics counter recverr should be 0
 
+    #
+    # Test2 for Xfrin statistics
+    #
+    # check initial statistics
+    #
+    When I query statistics zones of bind10 module Xfrin with cmdctl
+    last bindctl output should not contain "error"
+    Then the statistics counter soaoutv4 for the zone _SERVER_ should be 0
+    Then the statistics counter soaoutv6 for the zone _SERVER_ should be 0
+    Then the statistics counter axfrreqv4 for the zone _SERVER_ should be 0
+    Then the statistics counter axfrreqv6 for the zone _SERVER_ should be 0
+    Then the statistics counter ixfrreqv4 for the zone _SERVER_ should be 0
+    Then the statistics counter ixfrreqv6 for the zone _SERVER_ should be 0
+    Then the statistics counter xfrsuccess for the zone _SERVER_ should be 0
+    Then the statistics counter xfrfail for the zone _SERVER_ should be 0
+    Then the statistics counter time_to_ixfr for the zone _SERVER_ should be 0.0
+    Then the statistics counter time_to_axfr for the zone _SERVER_ should be 0.0
+
     When I send bind10 with cmdctl port 47804 the command Xfrout notify example.org IN
     Then wait for new master stderr message XFROUT_NOTIFY_COMMAND
     Then wait for new bind10 stderr message AUTH_RECEIVED_NOTIFY
@@ -61,9 +79,9 @@ Feature: Xfrin incoming notify handling
     A query for www.example.org to [::1]:47806 should have rcode NOERROR
 
     #
-    # Test for statistics
+    # Test3 for Xfrout statistics
     #
-    # check for statistics change
+    # check statistics change
     #
 
     # wait until the last stats requesting is finished
@@ -92,6 +110,35 @@ Feature: Xfrin incoming notify handling
     Then the statistics counter recverr should be 0
 
     #
+    # Test4 for Xfrin statistics
+    #
+    # check statistics change
+    #
+    When I query statistics zones of bind10 module Xfrin with cmdctl
+    Then wait for new bind10 stderr message XFRIN_RECEIVED_GETSTATS_COMMAND
+    last bindctl output should not contain "error"
+    Then the statistics counter soaoutv4 for the zone _SERVER_ should be 0
+    Then the statistics counter soaoutv4 for the zone example.org. should be 0
+    Then the statistics counter soaoutv6 for the zone _SERVER_ should be 1
+    Then the statistics counter soaoutv6 for the zone example.org. should be 1
+    Then the statistics counter axfrreqv4 for the zone _SERVER_ should be 0
+    Then the statistics counter axfrreqv4 for the zone example.org. should be 0
+    Then the statistics counter axfrreqv6 for the zone _SERVER_ should be 1
+    Then the statistics counter axfrreqv6 for the zone example.org. should be 1
+    Then the statistics counter ixfrreqv4 for the zone _SERVER_ should be 0
+    Then the statistics counter ixfrreqv4 for the zone example.org. should be 0
+    Then the statistics counter ixfrreqv6 for the zone _SERVER_ should be 0
+    Then the statistics counter ixfrreqv6 for the zone example.org. should be 0
+    Then the statistics counter xfrsuccess for the zone _SERVER_ should be 1
+    Then the statistics counter xfrsuccess for the zone example.org. should be 1
+    Then the statistics counter xfrfail for the zone _SERVER_ should be 0
+    Then the statistics counter xfrfail for the zone example.org. should be 0
+    Then the statistics counter time_to_ixfr for the zone _SERVER_ should be 0.0
+    Then the statistics counter time_to_ixfr for the zone example.org. should be 0.0
+    Then the statistics counter time_to_axfr for the zone _SERVER_ should be greater than 0.0
+    Then the statistics counter time_to_axfr for the zone example.org. should be greater than 0.0
+
+    #
     # Test for Xfr request rejected
     #
     Scenario: Handle incoming notify (XFR request rejected)
@@ -113,9 +160,9 @@ Feature: Xfrin incoming notify handling
     A query for www.example.org to [::1]:47806 should have rcode NXDOMAIN
 
     #
-    # Test1 for statistics
+    # Test5 for Xfrout statistics
     #
-    # check for initial statistics
+    # check initial statistics
     #
     When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
     last bindctl output should not contain "error"
@@ -142,6 +189,24 @@ Feature: Xfrin incoming notify handling
     Then the statistics counter recverr should be 0
 
     #
+    # Test6 for Xfrin statistics
+    #
+    # check initial statistics
+    #
+    When I query statistics zones of bind10 module Xfrin with cmdctl
+    last bindctl output should not contain "error"
+    Then the statistics counter soaoutv4 for the zone _SERVER_ should be 0
+    Then the statistics counter soaoutv6 for the zone _SERVER_ should be 0
+    Then the statistics counter axfrreqv4 for the zone _SERVER_ should be 0
+    Then the statistics counter axfrreqv6 for the zone _SERVER_ should be 0
+    Then the statistics counter ixfrreqv4 for the zone _SERVER_ should be 0
+    Then the statistics counter ixfrreqv6 for the zone _SERVER_ should be 0
+    Then the statistics counter xfrsuccess for the zone _SERVER_ should be 0
+    Then the statistics counter xfrfail for the zone _SERVER_ should be 0
+    Then the statistics counter time_to_ixfr for the zone _SERVER_ should be 0.0
+    Then the statistics counter time_to_axfr for the zone _SERVER_ should be 0.0
+
+    #
     # set transfer_acl rejection
     # Local xfr requests from Xfrin module would be rejected here.
     #
@@ -165,9 +230,9 @@ Feature: Xfrin incoming notify handling
     A query for www.example.org to [::1]:47806 should have rcode NXDOMAIN
 
     #
-    # Test2 for statistics
+    # Test7 for Xfrout statistics
     #
-    # check for statistics change
+    # check statistics change
     #
 
     # wait until the last stats requesting is finished
