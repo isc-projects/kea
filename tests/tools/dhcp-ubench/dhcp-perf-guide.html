@@ -1,25 +1,23 @@
-<html><head>
-      <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
-   <title>DHCP Performance Guide</title><link rel="stylesheet" type="text/css" href="bind10-guide.css"><meta name="generator" content="DocBook XSL Stylesheets V1.76.1"><meta name="description" content="BIND 10 is a framework that features Domain Name System (DNS) suite and Dynamic Host Configuration Protocol (DHCP) servers with development managed by Internet Systems Consortium (ISC). This document describes various aspects of DHCP performance, measurements and tuning. It covers BIND 10 DHCP (codename Kea), existing ISC DHCP4 software, perfdhcp (a DHCP performance measurement tool) and other related topics."></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="book" title="DHCP Performance Guide"><div class="titlepage"><div><div><h1 class="title"><a name="d0e3"></a>DHCP Performance Guide</h1></div><div><div class="author"><h3 class="author"><span class="firstname">Tomasz</span> <span class="surname">Mrugalski</span></h3></div></div><div><div class="author"><h3 class="author"><span class="firstname">Marcin</span> <span class="surname">Siodelski</span></h3></div></div><div><p class="releaseinfo">This is a companion document for BIND 10 version
-    20120712.</p></div><div><p class="copyright">Copyright &copy; 2012 Internet Systems Consortium, Inc. ("ISC")</p></div><div><div class="abstract" title="Abstract"><p class="title"><b>Abstract</b></p><p>BIND 10 is a framework that features Domain Name System
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>DHCP Performance Guide</title><link rel="stylesheet" href="bind10-guide.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"><meta name="description" content="BIND 10 is a framework that features Domain Name System (DNS) suite and Dynamic Host Configuration Protocol (DHCP) servers with development managed by Internet Systems Consortium (ISC). This document describes various aspects of DHCP performance, measurements and tuning. It covers BIND 10 DHCP (codename Kea), existing ISC DHCP4 software, perfdhcp (a DHCP performance measurement tool) and other related topics."></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="book" title="DHCP Performance Guide"><div class="titlepage"><div><div><h1 class="title"><a name="idm14563976"></a>DHCP Performance Guide</h1></div><div><div class="author"><h3 class="author"><span class="firstname">Tomasz</span> <span class="surname">Mrugalski</span></h3></div></div><div><div class="author"><h3 class="author"><span class="firstname">Marcin</span> <span class="surname">Siodelski</span></h3></div></div><div><p class="releaseinfo">This is a companion document for BIND 10 version
+    20120817.</p></div><div><p class="copyright">Copyright © 2012 Internet Systems Consortium, Inc. ("ISC")</p></div><div><div class="abstract" title="Abstract"><p class="title"><b>Abstract</b></p><p>BIND 10 is a framework that features Domain Name System
       (DNS) suite and Dynamic Host Configuration Protocol (DHCP)
       servers with development managed by Internet Systems Consortium (ISC).
       This document describes various aspects of DHCP performance,
       measurements and tuning. It covers BIND 10 DHCP (codename Kea),
       existing ISC DHCP4 software, perfdhcp (a DHCP performance
-      measurement tool) and other related topics.</p></div></div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="preface"><a href="#d0e28">Preface</a></span></dt><dd><dl><dt><span class="section"><a href="#acknowledgements">Acknowledgements</a></span></dt></dl></dd><dt><span class="chapter"><a href="#intro">1. Introduction</a></span></dt><dt><span class="chapter"><a href="#dhcp4">2. ISC DHCP 4.x</a></span></dt><dt><span class="chapter"><a href="#kea">3. Kea</a></span></dt><dd><dl><dt><span class="section"><a href="#d0e54">Backend performance evaluation</a></span></dt><dt><span class="section"><a href="#mysql-backend">MySQL backend</a></span></dt><dd><dl><dt><span class="section"><a href="#d0e156">MySQL tweaks</a></span></dt></dl></dd><dt><span class="section"><a href="#sqlite-ubench">SQLite-ubench</a></span></dt><dd><dl><dt><span class="section"><a href="#sqlite-tweaks">SQLite tweaks</a></span></dt></dl></dd><dt><span class="section"><a href="#memfile-ubench">memfile-ubench</a></span></dt><dd><dl><dt><span class="section"><a href="#memfile-tweaks">memfile tweaks</a></span></dt></dl></dd><dt><span class="section"><a href="#d0e245">Performance measurements</a></span></dt><dt><span class="section"><a href="#d0e521">Possible further optimizations</a></span></dt></dl></dd><dt><span class="chapter"><a href="#perfdhcp">4. perfdhcp</a></span></dt><dd><dl><dt><span class="section"><a href="#d0e533">Purpose</a></span></dt><dt><span class="section"><a href="#perfdhcp-key-features">Key features</a></span></dt><dt><span class="section"><a href="#perfdhcp-command-line">Command line options</a></span></dt><dt><span class="section"><a href="#starting-perfdhcp">Starting perfdhcp</a></span></dt><dt><span class="section"><a href="#perfdhcp-commandline-examples">perfdhcp command line examples</a></span></dt><dd><dl><dt><span class="section"><a href="#perfdhcp-basic-usage">Example: basic usage</a></span></dt><dt><span class="section"><a href="#perfdhcp-rate-control">Example: rate control</a></span></dt><dt><span class="section"><a href="#perfdhcp-templates">Example: templates</a></span></dt></dl></dd></dl></dd></dl></div><div class="list-of-tables"><p><b>List of Tables</b></p><dl><dt>3.1. <a href="#d0e256">Synchronous results</a></dt><dt>3.2. <a href="#d0e332">Asynchronous results</a></dt><dt>3.3. <a href="#tbl-perf-results">Estimated performance</a></dt></dl></div><div class="preface" title="Preface"><div class="titlepage"><div><div><h2 class="title"><a name="d0e28"></a>Preface</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#acknowledgements">Acknowledgements</a></span></dt></dl></div><div class="section" title="Acknowledgements"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="acknowledgements"></a>Acknowledgements</h2></div></div></div><p>ISC would like to acknowledge generous support for
+      measurement tool) and other related topics.</p></div></div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="preface"><a href="#idp54712">Preface</a></span></dt><dd><dl><dt><span class="section"><a href="#acknowledgements">1. Acknowledgements</a></span></dt></dl></dd><dt><span class="chapter"><a href="#intro">1. Introduction</a></span></dt><dt><span class="chapter"><a href="#dhcp4">2. ISC DHCP 4.x</a></span></dt><dt><span class="chapter"><a href="#kea">3. Kea</a></span></dt><dd><dl><dt><span class="section"><a href="#idp59168">3.1. Backend performance evaluation</a></span></dt><dt><span class="section"><a href="#mysql-backend">3.2. MySQL backend</a></span></dt><dd><dl><dt><span class="section"><a href="#idp73360">3.2.1. MySQL tweaks</a></span></dt></dl></dd><dt><span class="section"><a href="#sqlite-ubench">3.3. SQLite-ubench</a></span></dt><dd><dl><dt><span class="section"><a href="#sqlite-tweaks">3.3.1. SQLite tweaks</a></span></dt></dl></dd><dt><span class="section"><a href="#memfile-ubench">3.4. memfile-ubench</a></span></dt><dd><dl><dt><span class="section"><a href="#memfile-tweaks">3.4.1. memfile tweaks</a></span></dt></dl></dd><dt><span class="section"><a href="#idp86448">3.5. Performance measurements</a></span></dt><dt><span class="section"><a href="#idp124368">3.6. Possible further optimizations</a></span></dt></dl></dd><dt><span class="chapter"><a href="#perfdhcp">4. perfdhcp</a></span></dt><dd><dl><dt><span class="section"><a href="#idp126928">4.1. Purpose</a></span></dt><dt><span class="section"><a href="#perfdhcp-key-features">4.2. Key features</a></span></dt><dt><span class="section"><a href="#perfdhcp-command-line">4.3. Command line options</a></span></dt><dt><span class="section"><a href="#starting-perfdhcp">4.4. Starting perfdhcp</a></span></dt><dt><span class="section"><a href="#perfdhcp-commandline-examples">4.5. perfdhcp command line examples</a></span></dt><dd><dl><dt><span class="section"><a href="#perfdhcp-basic-usage">4.5.1. Example: basic usage</a></span></dt><dt><span class="section"><a href="#perfdhcp-rate-control">4.5.2. Example: rate control</a></span></dt><dt><span class="section"><a href="#perfdhcp-templates">4.5.3. Example: templates</a></span></dt></dl></dd></dl></dd></dl></div><div class="list-of-tables"><p><b>List of Tables</b></p><dl><dt>3.1. <a href="#idp88352">Synchronous results</a></dt><dt>3.2. <a href="#idp98680">Asynchronous results</a></dt><dt>3.3. <a href="#tbl-perf-results">Estimated performance</a></dt></dl></div><div class="preface" title="Preface"><div class="titlepage"><div><div><h2 class="title"><a name="idp54712"></a>Preface</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#acknowledgements">1. Acknowledgements</a></span></dt></dl></div><div class="section" title="1. Acknowledgements"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="acknowledgements"></a>1. Acknowledgements</h2></div></div></div><p>ISC would like to acknowledge generous support for
       BIND 10 development of DHCPv4 and DHCPv6 components provided
-      by <a class="ulink" href="http://www.comcast.com/" target="_top">Comcast</a>.</p></div></div><div class="chapter" title="Chapter&nbsp;1.&nbsp;Introduction"><div class="titlepage"><div><div><h2 class="title"><a name="intro"></a>Chapter&nbsp;1.&nbsp;Introduction</h2></div></div></div><p>
+      by <a class="ulink" href="http://www.comcast.com/" target="_top">Comcast</a>.</p></div></div><div class="chapter" title="Chapter 1. Introduction"><div class="titlepage"><div><div><h2 class="title"><a name="intro"></a>Chapter 1. Introduction</h2></div></div></div><p>
       This document is in its early stages of development. It is
       expected to grow significantly in a near future. It will
       cover topics like database backend perfomance measurements,
       pros an cons of various optimization techniques and
       tools.
-    </p></div><div class="chapter" title="Chapter&nbsp;2.&nbsp;ISC DHCP 4.x"><div class="titlepage"><div><div><h2 class="title"><a name="dhcp4"></a>Chapter&nbsp;2.&nbsp;ISC DHCP 4.x</h2></div></div></div><p>
+    </p></div><div class="chapter" title="Chapter 2. ISC DHCP 4.x"><div class="titlepage"><div><div><h2 class="title"><a name="dhcp4"></a>Chapter 2. ISC DHCP 4.x</h2></div></div></div><p>
       TODO: Write something about ISC DHCP4 here.
-    </p></div><div class="chapter" title="Chapter&nbsp;3.&nbsp;Kea"><div class="titlepage"><div><div><h2 class="title"><a name="kea"></a>Chapter&nbsp;3.&nbsp;Kea</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#d0e54">Backend performance evaluation</a></span></dt><dt><span class="section"><a href="#mysql-backend">MySQL backend</a></span></dt><dd><dl><dt><span class="section"><a href="#d0e156">MySQL tweaks</a></span></dt></dl></dd><dt><span class="section"><a href="#sqlite-ubench">SQLite-ubench</a></span></dt><dd><dl><dt><span class="section"><a href="#sqlite-tweaks">SQLite tweaks</a></span></dt></dl></dd><dt><span class="section"><a href="#memfile-ubench">memfile-ubench</a></span></dt><dd><dl><dt><span class="section"><a href="#memfile-tweaks">memfile tweaks</a></span></dt></dl></dd><dt><span class="section"><a href="#d0e245">Performance measurements</a></span></dt><dt><span class="section"><a href="#d0e521">Possible further optimizations</a></span></dt></dl></div><p>
+    </p></div><div class="chapter" title="Chapter 3. Kea"><div class="titlepage"><div><div><h2 class="title"><a name="kea"></a>Chapter 3. Kea</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#idp59168">3.1. Backend performance evaluation</a></span></dt><dt><span class="section"><a href="#mysql-backend">3.2. MySQL backend</a></span></dt><dd><dl><dt><span class="section"><a href="#idp73360">3.2.1. MySQL tweaks</a></span></dt></dl></dd><dt><span class="section"><a href="#sqlite-ubench">3.3. SQLite-ubench</a></span></dt><dd><dl><dt><span class="section"><a href="#sqlite-tweaks">3.3.1. SQLite tweaks</a></span></dt></dl></dd><dt><span class="section"><a href="#memfile-ubench">3.4. memfile-ubench</a></span></dt><dd><dl><dt><span class="section"><a href="#memfile-tweaks">3.4.1. memfile tweaks</a></span></dt></dl></dd><dt><span class="section"><a href="#idp86448">3.5. Performance measurements</a></span></dt><dt><span class="section"><a href="#idp124368">3.6. Possible further optimizations</a></span></dt></dl></div><p>
 
-    </p><div class="section" title="Backend performance evaluation"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="d0e54"></a>Backend performance evaluation</h2></div></div></div><p>
+    </p><div class="section" title="3.1. Backend performance evaluation"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idp59168"></a>3.1. Backend performance evaluation</h2></div></div></div><p>
         Kea will support several different database backends, using
         both popular databases (like MySQL or SQLite) and
         custom-developed solutions (like in-memory database).  BIND 10
@@ -64,7 +62,7 @@
     </p><p>
       The framework attempts to do the same amount of operations for every
       backend thus allowing fair complarison between them.
-    </p></div><div class="section" title="MySQL backend"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="mysql-backend"></a>MySQL backend</h2></div></div></div><p>MySQL backend requires MySQL client development libraries. It uses
+    </p></div><div class="section" title="3.2. MySQL backend"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="mysql-backend"></a>3.2. MySQL backend</h2></div></div></div><p>MySQL backend requires MySQL client development libraries. It uses
       mysql_config tool (that works similar to pkg-config) to discover required
       compilation and linking options. To install required packages on Ubuntu,
       use the following command:
@@ -113,13 +111,13 @@ Possible command-line parameters:
  -c yes|no - should compiled statements be used (MySQL only)
 </pre><p>
 
-      </p><div class="section" title="MySQL tweaks"><div class="titlepage"><div><div><h3 class="title"><a name="d0e156"></a>MySQL tweaks</h3></div></div></div><p>One parameter that has huge impact on performance is a a backend engine.
+      </p><div class="section" title="3.2.1. MySQL tweaks"><div class="titlepage"><div><div><h3 class="title"><a name="idp73360"></a>3.2.1. MySQL tweaks</h3></div></div></div><p>One parameter that has huge impact on performance is a a backend engine.
         You can get a list of engines of your MySQL implementation by using
 
         </p><pre class="screen">&gt; <strong class="userinput"><code>show engines;</code></strong></pre><p>
 
         in your mysql client. Two notable engines are MyISAM and InnoDB. mysql_ubench will
-        use MyISAM for synchronous mode and InnoDB for asynchronous.</p></div></div><div class="section" title="SQLite-ubench"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="sqlite-ubench"></a>SQLite-ubench</h2></div></div></div><p>SQLite backend requires both sqlite3 development and run-time package. Their
+        use MyISAM for synchronous mode and InnoDB for asynchronous.</p></div></div><div class="section" title="3.3. SQLite-ubench"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="sqlite-ubench"></a>3.3. SQLite-ubench</h2></div></div></div><p>SQLite backend requires both sqlite3 development and run-time package. Their
       names may vary from system to system, but on Ubuntu 12.04 they are called
       sqlite3 libsqlite3-dev. To install them, use the following command:
 
@@ -134,7 +132,7 @@ Possible command-line parameters:
       </p><pre class="screen">&gt; <strong class="userinput"><code>./sqlite_ubench</code></strong></pre><p>
       or
       </p><pre class="screen">&gt; <strong class="userinput"><code>./sqlite_ubench &gt; results-sqlite.txt</code></strong></pre><p>
-      </p><div class="section" title="SQLite tweaks"><div class="titlepage"><div><div><h3 class="title"><a name="sqlite-tweaks"></a>SQLite tweaks</h3></div></div></div><p>To modify default sqlite_ubench parameters, command line
+      </p><div class="section" title="3.3.1. SQLite tweaks"><div class="titlepage"><div><div><h3 class="title"><a name="sqlite-tweaks"></a>3.3.1. SQLite tweaks</h3></div></div></div><p>To modify default sqlite_ubench parameters, command line
         switches can be used. Currently supported parameters are
         (default values specified in brackets):
         </p><div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>-f filename - name of the database file ("sqlite.db")</p></li><li class="listitem"><p>-n num - number of iterations (100)</p></li><li class="listitem"><p>-s yes|no - should the operations be performend in synchronous (yes)
@@ -145,13 +143,13 @@ Possible command-line parameters:
         turned to several modes of operation. Its value can be
         modified in SQLite_uBenchmark::connect().  See
         http://www.sqlite.org/pragma.html#pragma_journal_mode for
-        detailed explanantion.</p></div></div><div class="section" title="memfile-ubench"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="memfile-ubench"></a>memfile-ubench</h2></div></div></div><p>Memfile backend is custom developed prototype backend that
+        detailed explanantion.</p></div></div><div class="section" title="3.4. memfile-ubench"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="memfile-ubench"></a>3.4. memfile-ubench</h2></div></div></div><p>Memfile backend is custom developed prototype backend that
       somewhat mimics operation of ISC DHCP4. It uses in-memory
       storage using standard C++ and boost mechanisms (std::map and
       boost::shared_ptr&lt;&gt;). All database changes are also
       written to a lease file. That file is strictly write-only. This
       approach takes advantage of the fact that simple append is faster
-      than edition with potential whole file relocation.</p><div class="section" title="memfile tweaks"><div class="titlepage"><div><div><h3 class="title"><a name="memfile-tweaks"></a>memfile tweaks</h3></div></div></div><p>To modify default memfile_ubench parameters, command line
+      than edition with potential whole file relocation.</p><div class="section" title="3.4.1. memfile tweaks"><div class="titlepage"><div><div><h3 class="title"><a name="memfile-tweaks"></a>3.4.1. memfile tweaks</h3></div></div></div><p>To modify default memfile_ubench parameters, command line
         switches can be used. Currently supported parameters are
         (default values specified in brackets):
         </p><div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>-f filename - name of the database file ("dhcpd.leases")</p></li><li class="listitem"><p>-n num - number of iterations (100)</p></li><li class="listitem"><p>-s yes|no - should the operations be performend in synchronous (yes)
@@ -159,7 +157,7 @@ Possible command-line parameters:
         </p><p>memfile can run in asynchronous or synchronous mode. This
         mode can be controlled by using sync parameter. It uses
         fflush() and fsync() in synchronous mode to make sure that
-        data is not buffered and physically stored on disk.</p></div></div><div class="section" title="Performance measurements"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="d0e245"></a>Performance measurements</h2></div></div></div><p>This section contains sample results for backend performance measurements,
+        data is not buffered and physically stored on disk.</p></div></div><div class="section" title="3.5. Performance measurements"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idp86448"></a>3.5. Performance measurements</h2></div></div></div><p>This section contains sample results for backend performance measurements,
       taken using microbenchmarks. Tests were conducted on reasonably powerful machine:
       </p><pre class="screen">
 CPU: Quad-core Intel(R) Core(TM) i7-2600K CPU @ 3.40GHz (8 logical cores)
@@ -172,13 +170,13 @@ SQLite version: 3.7.9sourceid version is 2011-11-01 00:52:41 c7c6050ef060877ebe7
       asynchronous. As those modes offer radically different
       performances, synchronous mode was conducted for 1000 (one
       thousand) repetitions and asynchronous mode was conducted for
-      100000 (hundred thousand) repetitions.</p><div class="table"><a name="d0e256"></a><p class="title"><b>Table&nbsp;3.1.&nbsp;Synchronous results</b></p><div class="table-contents"><table summary="Synchronous results" border="1"><colgroup><col align="center" class="Backend"><col align="center" class="Num"><col align="center" class="Create"><col align="center" class="Search"><col align="center" class="Update"><col align="center" class="Delete"></colgroup><thead><tr><th align="center">Backend</th><th align="center">Operations</th><th align="center">Create</th><th align="center">Search</th><th align="center">Update</th><th align="center">Delete</th><th align="center">Average</th></tr></thead><tbody><tr><td align="center">MySQL</td><td align="center">1000</td><td align="center">31.603978s</td><td align="center"> 0.116612s</td><td align="center">27.964191s</td><td align="center">27.695209s</td><td align="center">21.844998s</td></tr><tr><td align="center">SQLite</td><td align="center">1000</td><td align="center">61.421356s</td><td align="center"> 0.033283s</td><td align="center">59.476638s</td><td align="center">56.034150s</td><td align="center">44.241357s</td></tr><tr><td align="center">memfile</td><td align="center">1000</td><td align="center">41.711886s</td><td align="center"> 0.000724s</td><td align="center">42.267578s</td><td align="center">42.169679s</td><td align="center">31.537467s</td></tr></tbody></table></div></div><br class="table-break"><p>Following parameters were measured for asynchronous mode.
+      100000 (hundred thousand) repetitions.</p><div class="table"><a name="idp88352"></a><p class="title"><b>Table 3.1. Synchronous results</b></p><div class="table-contents"><table summary="Synchronous results" border="1"><colgroup><col align="center"><col align="center"><col align="center"><col align="center"><col align="center"><col align="center"></colgroup><thead><tr><th align="center">Backend</th><th align="center">Operations</th><th align="center">Create</th><th align="center">Search</th><th align="center">Update</th><th align="center">Delete</th><th align="center">Average</th></tr></thead><tbody><tr><td align="center">MySQL</td><td align="center">1000</td><td align="center">31.603978s</td><td align="center"> 0.116612s</td><td align="center">27.964191s</td><td align="center">27.695209s</td><td align="center">21.844998s</td></tr><tr><td align="center">SQLite</td><td align="center">1000</td><td align="center">61.421356s</td><td align="center"> 0.033283s</td><td align="center">59.476638s</td><td align="center">56.034150s</td><td align="center">44.241357s</td></tr><tr><td align="center">memfile</td><td align="center">1000</td><td align="center">41.711886s</td><td align="center"> 0.000724s</td><td align="center">42.267578s</td><td align="center">42.169679s</td><td align="center">31.537467s</td></tr></tbody></table></div></div><br class="table-break"><p>Following parameters were measured for asynchronous mode.
       MySQL and SQLite were run with 100 thousand repetitions. Memfile
-      was run for 1 million repetitions due to much larger performance.</p><div class="table"><a name="d0e332"></a><p class="title"><b>Table&nbsp;3.2.&nbsp;Asynchronous results</b></p><div class="table-contents"><table summary="Asynchronous results" border="1"><colgroup><col align="center" class="Backend"><col align="center" class="Num"><col align="center" class="Create"><col align="center" class="Search"><col align="center" class="Update"><col align="center" class="Delete"></colgroup><thead><tr><th align="center">Backend</th><th align="center">Operations</th><th align="center">Create [s]</th><th align="center">Search [s]</th><th align="center">Update [s]</th><th align="center">Delete [s]</th><th align="center">Average [s]</th></tr></thead><tbody><tr><td align="center">MySQL</td><td align="center">100000</td><td align="center">10.584842s</td><td align="center">10.386402s</td><td align="center">10.062384s</td><td align="center"> 8.890197s</td><td align="center"> 9.980956s</td></tr><tr><td align="center">SQLite</td><td align="center">100000</td><td align="center"> 3.710356s</td><td align="center"> 3.159129s</td><td align="center"> 2.865354s</td><td align="center"> 2.439406s</td><td align="center"> 3.043561s</td></tr><tr><td align="center">memfile</td><td align="center">1000000 (sic!)</td><td align="center"> 6.084131s</td><td align="center"> 0.862667s</td><td align="center"> 6.018585s</td><td align="center"> 5.146704s</td><td align="center"> 4.528022s</td></tr></tbody></table></div></div><br class="table-break"><p>Presented performance results can be computed into operations per second metrics.
+      was run for 1 million repetitions due to much larger performance.</p><div class="table"><a name="idp98680"></a><p class="title"><b>Table 3.2. Asynchronous results</b></p><div class="table-contents"><table summary="Asynchronous results" border="1"><colgroup><col align="center"><col align="center"><col align="center"><col align="center"><col align="center"><col align="center"></colgroup><thead><tr><th align="center">Backend</th><th align="center">Operations</th><th align="center">Create [s]</th><th align="center">Search [s]</th><th align="center">Update [s]</th><th align="center">Delete [s]</th><th align="center">Average [s]</th></tr></thead><tbody><tr><td align="center">MySQL</td><td align="center">100000</td><td align="center">10.584842s</td><td align="center">10.386402s</td><td align="center">10.062384s</td><td align="center"> 8.890197s</td><td align="center"> 9.980956s</td></tr><tr><td align="center">SQLite</td><td align="center">100000</td><td align="center"> 3.710356s</td><td align="center"> 3.159129s</td><td align="center"> 2.865354s</td><td align="center"> 2.439406s</td><td align="center"> 3.043561s</td></tr><tr><td align="center">memfile</td><td align="center">1000000 (sic!)</td><td align="center"> 6.084131s</td><td align="center"> 0.862667s</td><td align="center"> 6.018585s</td><td align="center"> 5.146704s</td><td align="center"> 4.528022s</td></tr></tbody></table></div></div><br class="table-break"><p>Presented performance results can be computed into operations per second metrics.
       It should be noted that due to large differences between various operations (sometime
       over 3 orders of magnitude), it is difficult to create a simple, readable chart with
-      that data.</p><div class="table"><a name="tbl-perf-results"></a><p class="title"><b>Table&nbsp;3.3.&nbsp;Estimated performance</b></p><div class="table-contents"><table summary="Estimated performance" border="1"><colgroup><col align="center" class="Backend"><col align="center" class="Create"><col align="center" class="Search"><col align="center" class="Update"><col align="center" class="Delete"><col align="center" class="Average"></colgroup><thead><tr><th align="center">Backend</th><th align="center">Create [oper/s]</th><th align="center">Search [oper/s]</th><th align="center">Update [oper/s]</th><th align="center">Delete [oper/s]</th><th align="center">Average [oper/s]</th></tr></thead><tbody><tr><td align="center">MySQL (async)</td><td align="center">9447.47</td><td align="center">9627.97</td><td align="center">9938.00</td><td align="center">11248.34</td><td align="center">10065.45</td></tr><tr><td align="center">SQLite (async)</td><td align="center">26951.59</td><td align="center">31654.29</td><td align="center">34899.70</td><td align="center">40993.59</td><td align="center">33624.79</td></tr><tr><td align="center">memfile (async)</td><td align="center">164362.01</td><td align="center">1159195.84</td><td align="center">166152.01</td><td align="center">194299.11</td><td align="center">421002.24</td></tr><tr><td align="center">MySQL (sync)</td><td align="center">31.64</td><td align="center">8575.45</td><td align="center">35.76</td><td align="center">36.11</td><td align="center">2169.74</td></tr><tr><td align="center">SQLite (sync)</td><td align="center">16.28</td><td align="center">20045.37</td><td align="center">16.81</td><td align="center">17.85</td><td align="center">7524.08</td></tr><tr><td align="center">memfile (sync)</td><td align="center">23.97</td><td align="center">1381215.47</td><td align="center">23.66</td><td align="center">23.71</td><td align="center">345321.70</td></tr></tbody></table></div></div><br class="table-break"><div class="mediaobject"><img src="performance-results-graph1.png" alt="Performance measurements"><div class="caption"><p>Graphical representation of the performance results
-          presented in table <a class="xref" href="#tbl-perf-results" title="Table&nbsp;3.3.&nbsp;Estimated performance">Table&nbsp;3.3, &#8220;Estimated performance&#8221;</a>.</p></div></div></div><div class="section" title="Possible further optimizations"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="d0e521"></a>Possible further optimizations</h2></div></div></div><p>
+      that data.</p><div class="table"><a name="tbl-perf-results"></a><p class="title"><b>Table 3.3. Estimated performance</b></p><div class="table-contents"><table summary="Estimated performance" border="1"><colgroup><col align="center"><col align="center"><col align="center"><col align="center"><col align="center"><col align="center"></colgroup><thead><tr><th align="center">Backend</th><th align="center">Create [oper/s]</th><th align="center">Search [oper/s]</th><th align="center">Update [oper/s]</th><th align="center">Delete [oper/s]</th><th align="center">Average [oper/s]</th></tr></thead><tbody><tr><td align="center">MySQL (async)</td><td align="center">9447.47</td><td align="center">9627.97</td><td align="center">9938.00</td><td align="center">11248.34</td><td align="center">10065.45</td></tr><tr><td align="center">SQLite (async)</td><td align="center">26951.59</td><td align="center">31654.29</td><td align="center">34899.70</td><td align="center">40993.59</td><td align="center">33624.79</td></tr><tr><td align="center">memfile (async)</td><td align="center">164362.01</td><td align="center">1159195.84</td><td align="center">166152.01</td><td align="center">194299.11</td><td align="center">421002.24</td></tr><tr><td align="center">MySQL (sync)</td><td align="center">31.64</td><td align="center">8575.45</td><td align="center">35.76</td><td align="center">36.11</td><td align="center">2169.74</td></tr><tr><td align="center">SQLite (sync)</td><td align="center">16.28</td><td align="center">20045.37</td><td align="center">16.81</td><td align="center">17.85</td><td align="center">7524.08</td></tr><tr><td align="center">memfile (sync)</td><td align="center">23.97</td><td align="center">1381215.47</td><td align="center">23.66</td><td align="center">23.71</td><td align="center">345321.70</td></tr></tbody></table></div></div><br class="table-break"><div class="mediaobject"><img src="performance-results-graph1.png" alt="Performance measurements"><div class="caption"><p>Graphical representation of the performance results
+          presented in table <a class="xref" href="#tbl-perf-results" title="Table 3.3. Estimated performance">Table 3.3, &#8220;Estimated performance&#8221;</a>.</p></div></div></div><div class="section" title="3.6. Possible further optimizations"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idp124368"></a>3.6. Possible further optimizations</h2></div></div></div><p>
         For debugging purposes the code was compiled with -g -O0
         flags. While majority of the time was spent in backend
         functions (that was probably compiled with -O2 flags), the
@@ -196,54 +194,51 @@ SQLite version: 3.7.9sourceid version is 2011-11-01 00:52:41 c7c6050ef060877ebe7
         Multi-threaded or multi-process benchmark may be considered in
         the future. It may be somewhat difficult as only some backends
         support concurrent access.
-      </p></div></div><div class="chapter" title="Chapter&nbsp;4.&nbsp;perfdhcp"><div class="titlepage"><div><div><h2 class="title"><a name="perfdhcp"></a>Chapter&nbsp;4.&nbsp;perfdhcp</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#d0e533">Purpose</a></span></dt><dt><span class="section"><a href="#perfdhcp-key-features">Key features</a></span></dt><dt><span class="section"><a href="#perfdhcp-command-line">Command line options</a></span></dt><dt><span class="section"><a href="#starting-perfdhcp">Starting perfdhcp</a></span></dt><dt><span class="section"><a href="#perfdhcp-commandline-examples">perfdhcp command line examples</a></span></dt><dd><dl><dt><span class="section"><a href="#perfdhcp-basic-usage">Example: basic usage</a></span></dt><dt><span class="section"><a href="#perfdhcp-rate-control">Example: rate control</a></span></dt><dt><span class="section"><a href="#perfdhcp-templates">Example: templates</a></span></dt></dl></dd></dl></div><div class="section" title="Purpose"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="d0e533"></a>Purpose</h2></div></div></div><p>
-        There is a growing need to evaluate performance of DHCP servers in
-        different traffic conditions to understand their bottle necks.
-        This helps to elimante bugs in existing DHCP software as well
-        as make informed decisions regarding new DHCP software designs
-        to significantly improve its performance. The perfdhcp tool has
-        been created to fill the gap in performance measurement capabilities
-        mostly. However, the number of implemented features and parameters
-        exposed to the user make this tool useful for functional testing as
-        well.
-      </p></div><div class="section" title="Key features"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="perfdhcp-key-features"></a>Key features</h2></div></div></div><p>
-        The perfdhcp exposes the number of command line parameters to
-        control DHCP message exchanges. Currently they fall back to
+      </p></div></div><div class="chapter" title="Chapter 4. perfdhcp"><div class="titlepage"><div><div><h2 class="title"><a name="perfdhcp"></a>Chapter 4. perfdhcp</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#idp126928">4.1. Purpose</a></span></dt><dt><span class="section"><a href="#perfdhcp-key-features">4.2. Key features</a></span></dt><dt><span class="section"><a href="#perfdhcp-command-line">4.3. Command line options</a></span></dt><dt><span class="section"><a href="#starting-perfdhcp">4.4. Starting perfdhcp</a></span></dt><dt><span class="section"><a href="#perfdhcp-commandline-examples">4.5. perfdhcp command line examples</a></span></dt><dd><dl><dt><span class="section"><a href="#perfdhcp-basic-usage">4.5.1. Example: basic usage</a></span></dt><dt><span class="section"><a href="#perfdhcp-rate-control">4.5.2. Example: rate control</a></span></dt><dt><span class="section"><a href="#perfdhcp-templates">4.5.3. Example: templates</a></span></dt></dl></dd></dl></div><div class="section" title="4.1. Purpose"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="idp126928"></a>4.1. Purpose</h2></div></div></div><p>
+        Evaluation of the performance of a DHCP server requires that it
+        be tested under varying traffic loads.  perfdhcp is a testing
+        tool with the capability to create traffic loads
+        and generate statistics from the results.  Additional features,
+        such as the ability to send customised DHCP packets, allow it to
+        be used in a wide range of functional testing.
+      </p></div><div class="section" title="4.2. Key features"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="perfdhcp-key-features"></a>4.2. Key features</h2></div></div></div><p>
+        perfdhcp has a number of command line switches to
+        control DHCP message exchanges. Currently they fall into
         the following categories:
-        </p><div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem"><p>
+        </p><div class="itemizedlist"><ul class="itemizedlist" type="disc"><li class="listitem"><p>
               Rate control - control how many DHCP exchanges
-              are initiated within a period of time. Tool can also simulate
-              best effort conditions attempting to initiate as many DHCP
-              packet exchanges within a unit of time as possible.
+              are initiated within a period of time. The tool can also simulate
+              best effort conditions by attempting to initiate as many DHCP
+              packet exchanges as possible within a unit of time.
             </p></li><li class="listitem"><p>
-              Test exit specifiers - control the conditions when test
-              completes including number of initiated exchanges, test period or
-              maximum number of dropped packets.
+              Test exit specifiers - control the conditions for test
+              completion, including the number of initiated exchanges,
+              the test period orthe maximum number of dropped packets.
             </p></li><li class="listitem"><p>
               Packet templates - specify files containing packet templates that
-              are used by perfdhcp to create custom DHCP messages instead of
-              default. Tool also allows to specify number of values indicating
-              offsets of variable values within a packet that are modified in
-              flight by the tool.
+              are used by perfdhcp to create custom DHCP messages. The tool
+              allows the specification of a number of values indicating
+              offsets of values within a packet that are set by the tool.
             </p></li><li class="listitem"><p>
-              Reporting - for each test produce the set of performance data
-              including achieved packet exchange rate (server performance).
-              There is also a number of diagnostic selectors available that
-              enable periodic (intermediate) reporting, packet timestamps
-              printing and detailed information about perfdhcp internal
+              Reporting - for each test produce a set of performance data
+              including the achieved packet exchange rate (server performance).
+              There are a number of diagnostic selectors available that
+              enable periodic (intermediate) reporting, printing of packet timestamps,
+              and the listing of detailed information about internal perfdhcp
               states (for debugging).
             </p></li><li class="listitem"><p>
-              Different mode of operations - specify DHCP version used
-              (v4 or v6), 2-way or 4-way exchanges, use Rapid Commit option
-              for DHCPv6.
+              Different mode of operations - specify the DHCP protocol used
+              (v4 or v6), two-way or four-way exchanges, use of the
+              Rapid Commit option for DHCPv6.
             </p></li><li class="listitem"><p>
-              IP layer options - specify local/remote address, local interface
+              IP layer options - specify the local/remote address, local interface
               and local port to be used for communication with DHCP server.
-            </p></li></ol></div><p>
-      </p></div><div class="section" title="Command line options"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="perfdhcp-command-line"></a>Command line options</h2></div></div></div><p>
-        The following command line options may be used with perfdhcp tool.
-        This summary also presents its possible exit codes as well as
-        error counters printed along when test is complete:
+            </p></li></ul></div><p>
+      </p></div><div class="section" title="4.3. Command line options"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="perfdhcp-command-line"></a>4.3. Command line options</h2></div></div></div><p>
+        The following "help" output from the tool describes the
+        command line switches.  This summary also lists the tool's
+        possible exit codes as well as describing the
+        error counters printed when the test is complete:
         </p><pre class="screen">$ <strong class="userinput"><code>./perfdhcp -h</code></strong>
 perfdhcp [-hv] [-4|-6] [-r&lt;rate&gt;] [-t&lt;report&gt;] [-R&lt;range&gt;] [-b&lt;base&gt;]
     [-n&lt;num-request&gt;] [-p&lt;test-period&gt;] [-d&lt;drop-time&gt;] [-D&lt;max-drop&gt;]
@@ -367,47 +362,51 @@ The exit status is:
   exchanges are not successfully completed.
 
         </pre><p>
-      </p></div><div class="section" title="Starting perfdhcp"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="starting-perfdhcp"></a>Starting perfdhcp</h2></div></div></div><p>
-        In order to run performance test at least two separate systems
-        have to be installed: client and server. The first one has to have
-        perfdhcp tool installed, the latter has to have DHCP server
-        running (v4 or v6). If only single system is available the client
+      </p></div><div class="section" title="4.4. Starting perfdhcp"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="starting-perfdhcp"></a>4.4. Starting perfdhcp</h2></div></div></div><p>
+        In order to run a performance test, at least two separate systems
+        have to be installed: client and server. The first one must have
+        perfdhcp installed, and the latter must be running the DHCP server
+        (either v4 or v6). If only single system is available the client
         and server can be run on virtual machines (running on the same
-        phisical system) but in this case performance data may be heavily
-        impacted by the performance of VMs.
+        physical system) but in this case performance data may be heavily
+        impacted by the overhead involved in running such the virtual
+        machines.
       </p><p>
-        The DHCP operates on low port numbers (67 for DHCPv4 relays and
-        547 for DHCPv6). Running perfdhcp with non-root priviliges will
+        Currently, perfdhcp is seen from the server perspective as relay agent.
+        This simplifies its implementation: specifically there is no need to
+        receive traffic sent to braodcast addresses. However, it does impose
+        a requirement that the IPv4
+        address has to be set manually on the interface that will be used to
+        communicate with the server. For example, if the DHCPv4 server is listening
+        on the interface connected to the 172.16.1.0 subnet, the interface on client
+        machine has to have network address assigned from the same subnet, e.g.
+        </p><pre class="screen"><strong class="userinput"><code>#ifconfig eth3 172.16.1.2. netmask 255.255.255.0 up</code></strong></pre><p>
+      </p><p>
+        As DHCP uses low port numbers (67 for DHCPv4 relays and
+        547 for DHCPv6), running perfdhcp with non-root privileges will
         usually result in the error message similar to this:
+        
         </p><pre class="screen"><strong class="userinput"><code>$./perfdhcp -4 -l eth3 -r 100 all</code></strong>
 Error running perfdhcp: Failed to bind socket 3 to 172.16.1.2/port=67
         </pre><p>
-        perfdhcp has the '-L' command line option that
-        imposes use of custom local port. Thus the following command
-        line will work:
+        
+        The '-L' command line switch allows the use of a custom local port.
+        However, although the following command line will work:
+        
         </p><pre class="screen"><strong class="userinput"><code>$./perfdhcp -4 -l eth3 -r 100 -L 10067 all</code></strong></pre><p>
-        but in the standard configuration no responses will be received
-        from the ISC DHCP server because server responds to default relay
-        port 67.
-        Alternative way to overcome this issue  is to run perfdhcp as root.
-      </p><p>
-        Currently, perfdhcp is seen from the server perspective as relay agent.
-        This simplifies its implementation (specifically there is no need to
-        receive traffic sent to braodcast addresses). This imposes that IPv4
-        address has to be set manually on the interface that will be used to
-        communicate with the server. For example, if DHCPv4 server is listening
-        on the interface connected to 172.16.1.0 subnet, interface on client
-        machine has to have network address assigned from the same subnet
-        on one of its interfaces connected to this subnet:
-        </p><pre class="screen"><strong class="userinput"><code>#ifconfig eth3 172.16.1.2. netmask 255.255.255.0 up</code></strong></pre><p>
-      </p></div><div class="section" title="perfdhcp command line examples"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="perfdhcp-commandline-examples"></a>perfdhcp command line examples</h2></div></div></div><p>
-        In this section the perfdhcp command line examples
+        
+        in the standard configuration no responses will be received
+        from the DHCP server because the server responds to default relay
+        port 67.  A way to overcome this issue is to run
+        perfdhcp as root.
+      </p></div><div class="section" title="4.5. perfdhcp command line examples"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="perfdhcp-commandline-examples"></a>4.5. perfdhcp command line examples</h2></div></div></div><p>
+        In this section, a number of perfdhcp command line examples
         are presented as a quick start guide for new users. For the
         detailed list of command line options refer to
-        <a class="xref" href="#perfdhcp-command-line" title="Command line options">the section called &#8220;Command line options&#8221;</a>.
-      </p><div class="section" title="Example: basic usage"><div class="titlepage"><div><div><h3 class="title"><a name="perfdhcp-basic-usage"></a>Example: basic usage</h3></div></div></div><p>
-          If server is listening on interface with IPv4 address 172.16.1.1
-          the simpliest perfdhcp command line will look like this:
+        <a class="xref" href="#perfdhcp-command-line" title="4.3. Command line options">Section 4.3, &#8220;Command line options&#8221;</a>.
+      </p><div class="section" title="4.5.1. Example: basic usage"><div class="titlepage"><div><div><h3 class="title"><a name="perfdhcp-basic-usage"></a>4.5.1. Example: basic usage</h3></div></div></div><p>
+          If server is listening on interface with IPv4 address 172.16.1.1,
+          the simplest perfdhcp command line will look like:
           </p><pre class="screen"><strong class="userinput"><code>#./perfdhcp 172.16.1.1</code></strong>
 ***Rate statistics***
 Rate: 206.345
@@ -436,15 +435,13 @@ max delay: 258.634 ms
 std deviation: 56.936 ms
 collected packets: 0
           </pre><p>
-          In this case perfdhcp will use remote address 172.16.1.1 as a
-          destination address and will use suitable local interface for
-          communication. Since, no rate control parameters have been specified
-          it will be initiating DHCP exchanges with the maximum possible
-          rate (it will try to initiate maximum number of exchanges per
-          second and count number of completed exchanged). Due to server's
-          performance constraints, many DHCP packets sent to server are likely
-          to be dropped. The performance test will be running until it is
-          not interrupted by the user (with ^C).
+          Here, perfdhcp uses remote address 172.16.1.1 as a
+          destination address and will use a suitable local interface for
+          communication. Since, no rate control parameters have been specified,
+          it will initiate DHCP exchanges at the maximum possible rate. Due to the server's
+          performance limitation, it is likely that many of the packets will be dropped.
+          The performance test will continue running until it is
+          interrupted by the user (with ^C).
         </p><p>
           The default performance statistics reported by perfdhcp have the
           following meaning:
@@ -453,40 +450,44 @@ collected packets: 0
             completed within a second.</p></li><li class="listitem"><p>sent packets - total number of DHCP packets of
             a specific type sent to the server.</p></li><li class="listitem"><p>received packets - total number of DHCP packets
             of specific type received from the server.</p></li><li class="listitem"><p>drops - number of dropped packets for the
-            particular exchange. Number of dropped packets is calculated as
-            a difference between number of sent packets and number of
-            response packets received from the server. It is likely that
-            server sent the reponse but perfdhcp execution had ended before
-            reponse arrived. In such case this packet will be assumed
-            dropped.</p></li><li class="listitem"><p>orphans - number of packets that have been
+            particular exchange. The number of dropped packets is calculated as
+            the difference between the number of sent packets and number of
+            response packets received from the server.  In some cases, the
+            server will have sent a reponse but perfdhcp execution ended before
+            the reponse arrived. In such case this packet will be counted
+            as dropped.</p></li><li class="listitem"><p>orphans - number of packets that have been
             received from the server and did not match any packet sent by
             perfdhcp. This may occur if received packet has been sent
-            to some other host or if exchange time out has occured and
-            has been been garbage collected.</p></li><li class="listitem"><p>min delay - minimum delay that occured between
-            sending the packet to the server and receiving reponse from
+            to some other host or if then exchange timed out and
+            the sent packet was removed from perfdhcp's list of packets
+            awaiting a response.</p></li><li class="listitem"><p>min delay - minimum delay that occured between
+            sending the packet to the server and receiving a reponse from
             it.</p></li><li class="listitem"><p>avg delay - average delay between sending the
-            packet of the specific type the server and receiving response
-            from it.</p></li><li class="listitem"><p>max delay - maximum delat that occured between
-            sedning the packet to the server and receiveing response from
-            it.</p></li><li class="listitem"><p>std deviation - standard deviation of delay
+            packet of the specific type the server and receiving a response
+            from it.</p></li><li class="listitem"><p>max delay - maximum delay that occured between
+            sending the packet to the server and receiving a response from
+            it.</p></li><li class="listitem"><p>std deviation - standard deviation of the delay
             between sending the packet of a specific type to the server and
-            receiving response from it.</p></li><li class="listitem"><p>collected packets - number of garbage collected
-            sent packets. Packets may get garbage collected when waiting time
-            for server response exceeds value set with
+            receiving response from it.</p></li><li class="listitem"><p>collected packets - number of sent packets that
+            were garbage collected. Packets may get garbage collected when
+            the waiting time for server a response exceeds value set with the
+            '-d' (drop time) switch.
             -d&lt;drop-time&gt;.</p></li></ul></div><p>
         </p><p>
-          perfdhcp allows to run the test using specified interface:
+          Note: should multiple interfaces on the system running perfdhcp be
+          connected to the same subnet, the interface to be used for the test
+          can be specified using either the interface name:
           </p><pre class="screen"><strong class="userinput"><code>#./perfdhcp -l eth3</code></strong></pre><p>
-          or local address assigned to it:
+          or a local address assigned to it:
           </p><pre class="screen"><strong class="userinput"><code>#./perfdhcp -l 172.16.1.2</code></strong></pre><p>
-        </p></div><div class="section" title="Example: rate control"><div class="titlepage"><div><div><h3 class="title"><a name="perfdhcp-rate-control"></a>Example: rate control</h3></div></div></div><p>
-          In the examples above perfdhcp initiates new exchanges with best
-          effort rate. In this case many packets is expected to be dropped by the
-          server due to performance limitations. Many times it is desired to set
-          the expected (reasonable) rate and verify if generated traffic is
-          handled without packet dropes by DHCP server. The following command will
-          make perfdhcp to initiate 300 4-way exchanges per second and test will
-          last for 60 seconds:
+        </p></div><div class="section" title="4.5.2. Example: rate control"><div class="titlepage"><div><div><h3 class="title"><a name="perfdhcp-rate-control"></a>4.5.2. Example: rate control</h3></div></div></div><p>
+          In the examples above perfdhcp initiates new exchanges with a best
+          effort rate. With this setting, many packets are expected to be dropped
+          by the server due to performance limitations. In many cases though, it is
+          desired to verify that the server can handle an expected (reasonable) rate
+          without dropping any packets. The following command is an example of such
+          a test: it causes perfdhcp to initiate 300 four-way exchanges
+          per second, and runs the test for 60 seconds:
           </p><pre class="screen"><strong class="userinput"><code>#./perfdhcp -l eth3 -p 60 -r 300</code></strong>
 ***Rate statistics***
 Rate: 256.683 exchanges/second, expected rate: 300 exchanges/second
@@ -515,12 +516,13 @@ max delay: 576.749 ms
 std deviation: 58.189 ms
 collected packets: 0
           </pre><p>
-          Note that in this example the packet drops have been significantly
-          reduced thanks to setting reasonable rate. The non-zero number of
-          packet drops and achived rate (256/s) below expected rate (300/s)
-          indicate that server's measured performance is lower than 300 leases
-          per second. Further rate decrease should eliminate most of the packet
-          drops and bring achived rate close to expected rate:
+          Note that here, the packet drops for the DISCOVER-OFFER
+          exchange have been significantly reduced (when compared with the
+          output from the previous example) thanks to the setting of a
+          reasonable rate. The non-zero number of packet drops and achieved
+          rate (256/s) indicate that server's measured performance is lower than 300 leases
+          per second. A further rate decrease should eliminate most of the packet
+          drops and bring the achieved rate close to expected rate:
           </p><pre class="screen"><strong class="userinput"><code>#./perfdhcp -l eth3 -p 60 -r 100 -R 30</code></strong>
 ***Rate statistics***
 Rate: 99.8164 exchanges/second, expected rate: 100 exchanges/second
@@ -549,21 +551,24 @@ max delay: 189.658 ms
 std deviation: 5.876 ms
 collected packets: 0
           </pre><p>
+          There are now no packet drops, confirming that the server is able to
+          handle a load of 100 leases/second.  
           Note that the last parameter (-R 30) configures perfdhcp to simulate
-          traffic from distinct 30 clients.
-        </p></div><div class="section" title="Example: templates"><div class="titlepage"><div><div><h3 class="title"><a name="perfdhcp-templates"></a>Example: templates</h3></div></div></div><p>
-          By default the DHCP messages are formed in-flight with default options.
-          If desired, there is a way to define custom packet format with template
-          files. Content in template files is encoded in hexadecimal format. The
+          traffic from 30 distinct clients.
+        </p></div><div class="section" title="4.5.3. Example: templates"><div class="titlepage"><div><div><h3 class="title"><a name="perfdhcp-templates"></a>4.5.3. Example: templates</h3></div></div></div><p>
+          By default the DHCP messages are formed with default options.  With
+          template files, it is possible to define a custom packet format.
+          </p><p>
+          The content in template files is encoded in hexadecimal format.
           perfdhcp forms the packet by replacing parts of the binary stream read
-          from the file with variable data such as elapsed time, HW address, DUID
+          from the file with variable data such as elapsed time, hardware address, DUID
           etc. The offsets where such variable data is placed is specific to the
           template file and have to be specified from the command line. Refer to
-          <a class="xref" href="#perfdhcp-command-line" title="Command line options">the section called &#8220;Command line options&#8221;</a> to find out how to
+          <a class="xref" href="#perfdhcp-command-line" title="4.3. Command line options">Section 4.3, &#8220;Command line options&#8221;</a> to find out how to
           specify offsets for particular options and fields. With the following
           command line the DHCPv6 SOLICIT and REQUEST packets will be formed from
-          solicit-example.hex and request6-example.hex packets:
-          </p><pre class="screen"><strong class="userinput"><code>#./perfdhcp -6 -l eth3 -r 100 -R 20 -T templates/solicit-example.hex -T templates/request6-example.hex -O 21 -E 84 -S 22 -I 40 servers</code></strong>
+          solicit.hex and request6.hex packets:
+          </p><pre class="screen"><strong class="userinput"><code>#./perfdhcp -6 -l eth3 -r 100 -R 20 -T solicit.hex -T request6.hex -O 21 -E 84 -S 22 -I 40 servers</code></strong>
 ***Rate statistics***
 Rate: 99.5398 exchanges/second, expected rate: 100 exchanges/second
 
@@ -591,10 +596,10 @@ max delay: 6.490 ms
 std deviation: 0.518 ms
 collected packets: 0
           </pre><p>
-          where:
+          where the switches have the following meaning:
           </p><div class="itemizedlist"><ul class="itemizedlist" type="disc"><li class="listitem"><p>two occurences of -O 21 - DUID's last octet
-            positions in SOLICIT and REQUEST respectively.</p></li><li class="listitem"><p>-E 84 - elapsed time option position in
-            REQUEST template</p></li><li class="listitem"><p>-S 22 - server id position in REQUEST
-            template</p></li><li class="listitem"><p>-I 40 - IA_NA option position in REQUEST
+            positions in SOLICIT and REQUEST respectively.</p></li><li class="listitem"><p>-E 84 - elapsed time option position in the
+            REQUEST template</p></li><li class="listitem"><p>-S 22 - server id position in the REQUEST
+            template</p></li><li class="listitem"><p>-I 40 - IA_NA option position in the REQUEST
             template</p></li></ul></div><p>
         </p></div></div></div></div></body></html>
