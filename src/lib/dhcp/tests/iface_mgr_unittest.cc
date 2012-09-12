@@ -59,6 +59,7 @@ public:
 
     ~IfaceMgrTest() {
     }
+
 };
 
 // We need some known interface to work reliably. Loopback interface
@@ -217,6 +218,94 @@ TEST_F(IfaceMgrTest, getIface) {
 
 }
 
+TEST_F(IfaceMgrTest, multipleSockets) {
+    boost::scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
+
+    // container for initialized socket descriptors
+    std::list<uint16_t> init_sockets;
+
+    // create socket #1
+    int socket1 = 0;
+    ASSERT_NO_THROW(
+        socket1 = ifacemgr->openSocketFromIface(LOOPBACK, PORT1, AF_INET);
+    );
+    ASSERT_GT(socket1, 0);
+    init_sockets.push_back(socket1);
+
+    // create socket #2
+    IOAddress loAddr("127.0.0.1");
+    int socket2 = 0;
+    ASSERT_NO_THROW(
+        socket2 = ifacemgr->openSocketFromRemoteAddress(loAddr, PORT2);
+    );
+    ASSERT_GT(socket2, 0);
+    init_sockets.push_back(socket2);
+
+    // Get loopback interface. If we don't find one we are unable to run
+    // this test but we don't want to fail.
+    IfaceMgr::Iface* iface_ptr = ifacemgr->getIface(LOOPBACK);
+    if (iface_ptr == NULL) {
+        cout << "Local loopback interface not found. Skipping test. " << endl;
+        return;
+    }
+    // Once sockets have been sucessfully opened, they are supposed to
+    // be on the list. Here we start to test if all expected sockets
+    // are on the list and no other (unexpected) socket is there.
+    IfaceMgr::SocketCollection sockets = iface_ptr->getSockets();
+    int matched_sockets = 0;
+    for (std::list<uint16_t>::iterator init_sockets_it =
+             init_sockets.begin();
+         init_sockets_it != init_sockets.end(); ++init_sockets_it) {
+        // Set socket descriptors non blocking in order to be able
+        // to call recv() on them without hang.
+        int flags = fcntl(*init_sockets_it, F_GETFL, 0);
+        ASSERT_GE(flags, 0);
+        ASSERT_GE(fcntl(*init_sockets_it, F_SETFL, flags | O_NONBLOCK), 0);
+        // recv() is expected to result in EWOULDBLOCK error on non-blocking
+        // socket in case socket is valid but simply no data are coming in.
+        char buf;
+        recv(*init_sockets_it, &buf, 1, MSG_PEEK);
+        EXPECT_EQ(EWOULDBLOCK, errno);
+        // Apart from the ability to use the socket we want to make
+        // sure that socket on the list is the one that we created.
+        for (IfaceMgr::SocketCollection::const_iterator socket_it =
+                 sockets.begin(); socket_it != sockets.end(); ++socket_it) {
+            if (*init_sockets_it == socket_it->sockfd_) {
+                // This socket is the one that we created.
+                ++matched_sockets;
+                break;
+            }
+        }
+    }
+    // all created sockets have been matched if this condition works.
+    EXPECT_EQ(sockets.size(), matched_sockets);
+
+    // closeSockets() is the other function that we want to test. It
+    // is supposed to close all sockets so as we will not be able to use
+    // them anymore communication.
+    ifacemgr->closeSockets();
+
+    // closed sockets are supposed to be removed from the list
+    sockets = iface_ptr->getSockets();
+    ASSERT_EQ(0, sockets.size());
+
+    // We are still in posession of socket descriptors that we created
+    // on the beginning of this test. We can use them to check whether
+    // closeSockets() only removed them from the list or they have been
+    // really closed.
+    for (std::list<uint16_t>::const_iterator init_sockets_it =
+             init_sockets.begin();
+         init_sockets_it != init_sockets.end(); ++init_sockets_it) {
+        // recv() must result in error when using invalid socket.
+        char buf;
+        recv(*init_sockets_it, &buf, 1, MSG_PEEK);
+        // EWOULDBLOCK would mean that socket is valid/open but
+        // simply no data is received so we have to check for
+        // other errors.
+        EXPECT_NE(EWOULDBLOCK, errno);
+    }
+}
+
 TEST_F(IfaceMgrTest, sockets6) {
     // testing socket operation in a portable way is tricky
     // without interface detection implemented
@@ -317,6 +406,21 @@ TEST_F(IfaceMgrTest, socketsFromRemoteAddress) {
     );
     EXPECT_GT(socket2, 0);
     close(socket2);
+
+    // The following test is currently disabled for OSes other than
+    // Linux because interface detection is not implemented on them.
+    // @todo enable this test for all OSes once interface detection
+    // is implemented.
+#if defined(OS_LINUX)
+    // Open v4 socket to connect to broadcast address.
+    int socket3  = 0;
+    IOAddress bcastAddr("255.255.255.255");
+    EXPECT_NO_THROW(
+        socket3 = ifacemgr->openSocketFromRemoteAddress(bcastAddr, PORT2);
+    );
+    EXPECT_GT(socket3, 0);
+    close(socket3);
+#endif
 }
 
 // TODO: disabled due to other naming on various systems
