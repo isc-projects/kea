@@ -31,6 +31,10 @@ using namespace isc::dhcp;
 
 LeaseMgr::LeaseMgr(const std::string& dbconfig) {
 
+    if (dbconfig.length() == 0) {
+        return;
+    }
+
     vector<string> tokens;
 
     boost::split(tokens, dbconfig, boost::is_any_of("\t "));
@@ -47,8 +51,14 @@ LeaseMgr::LeaseMgr(const std::string& dbconfig) {
         }
 
     }
+}
 
-    /// @todo: Parse dbconfig string
+std::string LeaseMgr::getParameter(const std::string& name) const {
+    map<string, string>::const_iterator param = parameters_.find(name);
+    if (param == parameters_.end()) {
+        isc_throw(BadValue, "Parameter not found");
+    }
+    return (param->second);
 }
 
 LeaseMgr::~LeaseMgr() {
