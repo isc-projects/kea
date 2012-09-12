@@ -1,6 +1,6 @@
 #!@PYTHON@
 
-# Copyright (C) 2009-2011  Internet Systems Consortium.
+# Copyright (C) 2009-2012  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -28,6 +28,7 @@ import time
 from functools import reduce
 from optparse import OptionParser, OptionValueError
 from isc.config.ccsession import *
+from isc.statistics import counter
 from isc.notify import notify_out
 import isc.util.process
 from isc.datasrc import DataSourceClient, ZoneFinder
@@ -85,6 +86,9 @@ __version__ = 'BIND10'
 # Internal result codes of an xfr session
 XFRIN_OK = 0                    # normal success
 XFRIN_FAIL = 1                  # general failure (internal/external)
+
+# setup statistics counter
+counter.init(SPECFILE_LOCATION)
 
 class XfrinException(Exception):
     pass
@@ -891,6 +895,13 @@ class XfrinConnection(asyncore.dispatcher):
         # All okay, return it
         return soa
 
+    def get_ipver_str(self):
+        """Returns a 'v4' or 'v6' string representing a IP version
+        depending on the socket family"""
+        if self.socket.family == socket.AF_INET:
+            return 'v4'
+        elif self.socket.family == socket.AF_INET6:
+            return 'v6'
 
     def _check_soa_serial(self):
         '''Send SOA query and compare the local and remote serials.
@@ -902,6 +913,10 @@ class XfrinConnection(asyncore.dispatcher):
         '''
 
         self._send_query(RRType.SOA)
+        # count soaoutv4 or soaoutv6 requests
+        getattr(counter,
+                'inc_soaout%s' % self.get_ipver_str())\
+                (self._zone_name)
         data_len = self._get_request_response(2)
         msg_len = socket.htons(struct.unpack('H', data_len)[0])
         soa_response = self._get_request_response(msg_len)
@@ -943,6 +958,13 @@ class XfrinConnection(asyncore.dispatcher):
 
             logger.info(XFRIN_XFR_TRANSFER_STARTED, req_str, self.zone_str())
             self._send_query(self._request_type)
+            # count (A|X)IXFR requests for statistics
+            getattr(counter,
+                    'inc_%sreq%s' % (req_str.lower(), self.get_ipver_str()))\
+                    (self._zone_name)
+            # start statistics timer
+            getattr(counter,
+                    'start_time_to_%s' % req_str.lower())(self._zone_name)
             self.__state = XfrinInitialSOA()
             self._handle_xfrin_responses()
             # Depending what data was found, we log different status reports
@@ -1008,6 +1030,16 @@ class XfrinConnection(asyncore.dispatcher):
             # (if not yet - possible in case of xfr-level exception) as soon
             # as possible
             self._diff = None
+            if ret == XFRIN_OK:
+                # count successful xfer requests
+                counter.inc_xfrsuccess(self._zone_name)
+                # stop timer
+                getattr(counter,
+                        'stop_time_to_%s' % req_str.lower())\
+                        (self._zone_name)
+            elif ret == XFRIN_FAIL:
+                # count failed xfer requests
+                counter.inc_xfrfail(self._zone_name)
 
         return ret
 
@@ -1551,6 +1583,17 @@ class Xfrin:
                                        tsig_key, request_type,
                                        (False if command == 'retransfer' else True))
                 answer = create_answer(ret[0], ret[1])
+
+            # return statistics data to the stats daemon
+            elif command == "getstats":
+                # The log level is here set to debug in order to avoid
+                # that a log becomes too verbose. Because the
+                # b10-stats daemon is periodically asking to the
+                # b10-xfrin daemon.
+                answer = create_answer(0, counter.dump_statistics())
+                logger.debug(DBG_XFRIN_TRACE, \
+                                 XFRIN_RECEIVED_GETSTATS_COMMAND, \
+                                 str(answer))
 
             else:
                 answer = create_answer(1, 'unknown command: ' + command)
