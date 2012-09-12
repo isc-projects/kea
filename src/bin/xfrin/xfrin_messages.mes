@@ -274,3 +274,8 @@ The zone was received successfully, but when checking it, it was discovered
 there's some issue with it. It might be correct, but it should be checked
 and possibly fixed on the remote server. The problem is described in the
 message. The problem does not stop the zone from being used.
+
+% XFRIN_RECEIVED_GETSTATS_COMMAND received command to send statistics data: %1
+The xfrin daemon received a command on the command channel that
+statistics data should be sent to the stats daemon.
+
