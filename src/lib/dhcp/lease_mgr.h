@@ -31,7 +31,8 @@ namespace dhcp {
 /// would be required. As this is a critical part of the code that will be used
 /// extensively, direct access is warranted.
 struct Lease4 {
-    uint32_t addr_; /// IPv4 address
+    /// IPv4 address
+    isc::asiolink::IOAddress addr_;
 
     /// @brief Address extension
     ///
@@ -40,13 +41,13 @@ struct Lease4 {
     /// Port-restricted Addresses), where several clients may get the same address, but
     /// different port ranges. This feature is not expected to be widely used.
     /// Under normal circumstances, the value should be 0.
-    uint32_t ext_; /// address extension
+    uint32_t ext_;
 
     /// @brief hardware address
     std::vector<uint8_t> hwaddr_;
 
     /// @brief client identifier
-    std::vector<uint8_t> client_id_;
+    boost::shared_ptr<ClientId> client_id_;
 
     /// @brief valid lifetime
     ///
@@ -140,7 +141,7 @@ struct Lease6 {
     /// client has its own unique DUID (DHCP Unique IDentifier). Furthermore, client's
     /// HW address is not always available, because client may be behind a relay (relay
     /// stores only link-local address).
-    std::vector<uint8_t> hwaddr;
+    std::vector<uint8_t> hwaddr_;
 
     /// @brief client identifier
     boost::shared_ptr<DUID> duid_;
@@ -149,17 +150,21 @@ struct Lease6 {
     ///
     /// This parameter specifies preferred lifetime since the lease was assigned/renewed
     /// (cltt), expressed in seconds.
-    uint32_t preferred_lft;
+    uint32_t preferred_lft_;
 
     /// @brief valid lifetime
-    uint32_t valid_lft;
+    ///
+    /// This parameter specified valid lifetime since the lease was assigned/renewed
+    /// (cltt), expressed in seconds.
+    uint32_t valid_lft_;
 
     /// @brief T1 timer
     ///
     /// Specifies renewal time. Although technically it is a property of IA container,
     /// not the address itself, since our data model does not define separate IA
     /// entity, we are keeping it in the lease. In case of multiple addresses/prefixes
-    /// for the same IA, each must have consistent T1 and T2 values.
+    /// for the same IA, each must have consistent T1 and T2 values. Specified in
+    /// seconds since cltt.
     uint32_t t1_;
 
     /// @brief T2 timer
@@ -167,7 +172,8 @@ struct Lease6 {
     /// Specifies rebinding time. Although technically it is a property of IA container,
     /// not the address itself, since our data model does not define separate IA
     /// entity, we are keeping it in the lease. In case of multiple addresses/prefixes
-    /// for the same IA, each must have consistent T1 and T2 values.
+    /// for the same IA, each must have consistent T1 and T2 values. Specified in
+    /// seconds since cltt.
     uint32_t t2_;
 
     /// @brief Recycle timer
@@ -176,45 +182,45 @@ struct Lease6 {
     /// or expired. This timer specifies number of seconds that it should be kept
     /// after release or expiration, in case the client returns. This feature is not
     /// currently used and this value is set to 0.
-    uint32_t recycle_time;
+    uint32_t recycle_time_;
 
     /// @brief client last transmission time
     ///
     /// Specifies a timestamp, when last transmission from a client was received.
-    time_t cltt;
+    time_t cltt_;
 
     /// @brief Pool identifier
     ///
     /// Specifies pool-id of the pool that the lease belongs to
-    uint32_t pool_id;
+    uint32_t pool_id_;
 
     /// @brief Is this a fixed lease?
     ///
     /// Fixed leases are kept after they are released/expired.
-    bool fixed;
+    bool fixed_;
 
     /// @brief client hostname
     ///
     /// This field may be empty
-    std::string hostname;
+    std::string hostname_;
 
     /// @brief did we update AAAA record for this lease?
-    bool fqdn_fwd;
+    bool fqdn_fwd_;
 
     /// @brief did we update PTR record for this lease?
-    bool fqdn_rev;
+    bool fqdn_rev_;
 
     /// @brief additional options stored with this lease
     ///
     /// That field is currently not used. We may keep extra options assigned
     /// for leasequery and possibly other purposes.
-    /// @todo: Define this as a container of options
-    std::string options;
+    /// @todo We need a way to store options in the databased.
+    Option::OptionCollection options_;
 
-    /// @brief /// comments on that lease
+    /// @brief Lease comments
     ///
-    /// (currently not used)
-    std::string comments;
+    /// This field is currently not used.
+    std::string comments_;
 };
 
 /// @brief Pointer to a Lease6 structure.
@@ -331,14 +337,31 @@ public:
     virtual std::string getDescription() const = 0;
 
     /// @brief Returns backend version.
+    ///
+    /// @todo: We will need to implement 3 version functions eventually:
+    /// A. abstract API version
+    /// B. backend version
+    /// C. database version (stored in the database scheme)
+    ///
+    /// and then check that:
+    /// B>=A and B=C (it is ok to have newer backend, as it should be backward
+    /// compatible)
+    /// Also if B>C, some database upgrade procedure may happen
     virtual std::string getVersion() const = 0;
 
-    /// @todo: Add pool management here
-
     /// @todo: Add host management here
+    /// As host reservation is outside of scope for 2012, support for hosts
+    /// is currently postponed.
+
 protected:
+    /// @brief returns value of the parameter
+    std::string getParameter(const std::string& name) const;
 
     /// @brief list of parameters passed in dbconfig
+    ///
+    /// That will be mostly used for storing database name, username,
+    /// password and other parameters required for DB access. It is not
+    /// intended to keep any DHCP-related parameters.
     std::map<std::string, std::string> parameters_;
 };
 
