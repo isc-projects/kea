@@ -407,6 +407,11 @@ TEST_F(IfaceMgrTest, socketsFromRemoteAddress) {
     EXPECT_GT(socket2, 0);
     close(socket2);
 
+    // The following test is currently disabled for OSes other than
+    // Linux because interface detection is not implemented on them.
+    // @todo enable this test for all OSes once interface detection
+    // is implemented.
+#if defined(OS_LINUX)
     // Open v4 socket to connect to broadcast address.
     int socket3  = 0;
     IOAddress bcastAddr("255.255.255.255");
@@ -415,6 +420,7 @@ TEST_F(IfaceMgrTest, socketsFromRemoteAddress) {
     );
     EXPECT_GT(socket3, 0);
     close(socket3);
+#endif
 }
 
 // TODO: disabled due to other naming on various systems

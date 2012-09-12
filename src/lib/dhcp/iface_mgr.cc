@@ -513,6 +513,7 @@ IfaceMgr::getLocalAddress(const IOAddress& remote_addr, const uint16_t port) {
         }
         sock.set_option(asio::socket_base::broadcast(true), err_code);
         if (err_code) {
+            sock.close();
             isc_throw(Unexpected, "failed to enable broadcast on the socket");
         }
     }
@@ -520,6 +521,7 @@ IfaceMgr::getLocalAddress(const IOAddress& remote_addr, const uint16_t port) {
     // Try to connect to remote endpoint and check if attempt is successful.
     sock.connect(remote_endpoint->getASIOEndpoint(), err_code);
     if (err_code) {
+        sock.close();
         isc_throw(Unexpected,"failed to connect to remote endpoint.");
     }
 
@@ -527,6 +529,9 @@ IfaceMgr::getLocalAddress(const IOAddress& remote_addr, const uint16_t port) {
     asio::ip::udp::socket::endpoint_type local_endpoint =
         sock.local_endpoint();
     asio::ip::address local_address(local_endpoint.address());
+
+    // Close the socket.
+    sock.close();
 
     // Return address of local endpoint.
     return IOAddress(local_address);
