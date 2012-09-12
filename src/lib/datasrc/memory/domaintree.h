@@ -1214,6 +1214,14 @@ public:
     }
     //@}
 
+    /// \brief return the largest node (right-most last node) in the
+    /// tree.
+    ///
+    /// \return A \c DomainTreeNode that is largest in the tree. If the
+    /// tree has no nodes, NULL will be returned.
+    const DomainTreeNode<T>*
+    getLargestNode() const;
+
     /// \brief return the next bigger node in DNSSEC order from a given node
     /// chain.
     ///
@@ -1706,6 +1714,21 @@ DomainTree<T>::previousNode(DomainTreeNodeChain<T>& node_path) const {
 
     // Now, if the current node has no down_ pointer any more, it's the
     // correct one.
+    return (node);
+}
+
+template <typename T>
+const DomainTreeNode<T>*
+DomainTree<T>::getLargestNode() const {
+    const DomainTreeNode<T>* node = root_.get();
+    if (root_ == NULL) {
+        return (NULL);
+    }
+
+    while (node->getRight() != NULL) {
+        node = node->getRight();
+    }
+
     return (node);
 }
 
