@@ -25,6 +25,11 @@ using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
 
+// This is a concrete implementation of a Lease database.
+// It does not do anything useful now, and is used for abstract LeaseMgr
+// class testing. It may later evolve into more useful backend if the
+// need arises. We can reuse code from memfile benchmark. See code in
+// tests/tools/dhcp-ubench/memfile_bench.{cc|h}
 class Memfile_LeaseMgr : public LeaseMgr {
 public:
 
@@ -124,6 +129,9 @@ public:
 
     /// @brief Returns backend version.
     std::string getVersion() const { return "test-version"; }
+
+    using LeaseMgr::getParameter;
+
 protected:
 
 
@@ -185,51 +193,6 @@ std::string Memfile_LeaseMgr::getDescription() const {
                    "purpose is to test abstract lease manager API."));
 }
 
-#if 0
-bool Memfile_LeaseMgr::addLease(Lease4Ptr lease) {
-    if (ip4Hash_.find(lease->addr) != ip4Hash_.end()) {
-        // there is such an address already in the hash
-        return false;
-    }
-    ip4Hash_.insert(pair<uint32_t, Lease4Ptr>(lease->addr, lease));
-    lease->hostname = "add";
-    writeLease(lease);
-    return (true);
-}
-
-Lease4Ptr Memfile_LeaseMgr::getLease(uint32_t addr) {
-    leaseIt x = ip4Hash_.find(addr);
-    if (x != ip4Hash_.end()) {
-        return x->second; // found
-    }
-
-    // not found
-    return Lease4Ptr();
-}
-
-Lease4Ptr Memfile_LeaseMgr::updateLease(uint32_t addr, uint32_t new_cltt) {
-    leaseIt x = ip4Hash_.find(addr);
-    if (x != ip4Hash_.end()) {
-        x->second->cltt = new_cltt;
-        x->second->hostname = "update";
-        writeLease(x->second);
-        return x->second;
-    }
-    return Lease4Ptr();
-}
-
-bool Memfile_LeaseMgr::deleteLease(uint32_t addr) {
-    leaseIt x = ip4Hash_.find(addr);
-    if (x != ip4Hash_.end()) {
-        x->second->hostname = "delete";
-        writeLease(x->second);
-        ip4Hash_.erase(x);
-        return true;
-    }
-    return false;
-}
-#endif
-
 namespace {
 // empty class for now, but may be extended once Addr6 becomes bigger
 class LeaseMgrTest : public ::testing::Test {
@@ -240,9 +203,20 @@ public:
 
 TEST_F(LeaseMgrTest, constructor) {
 
-    LeaseMgr * leaseMgr = new Memfile_LeaseMgr("param1=value1");
+    // should not throw any exceptions here
+    Memfile_LeaseMgr * leaseMgr = new Memfile_LeaseMgr("");
+    delete leaseMgr;
+
+    leaseMgr = new Memfile_LeaseMgr("param1=value1 param2=value2");
+
+    EXPECT_EQ("value1", leaseMgr->getParameter("param1"));
+    EXPECT_EQ("value2", leaseMgr->getParameter("param2"));
+    EXPECT_THROW(leaseMgr->getParameter("param3"), BadValue);
 
     delete leaseMgr;
 }
+
+// There's no point in calling any other methods in LeaseMgr, as they
+// are purely virtual, so we would only call Memfile_LeaseMgr methods.
 
 }; // end of anonymous namespace
