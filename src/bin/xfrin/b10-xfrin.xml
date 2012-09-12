@@ -213,6 +213,95 @@ operation
 -->
 
   </refsect1>
+  <refsect1>
+    <title>STATISTICS DATA</title>
+
+    <para>
+      The statistics data collected by the <command>b10-xfrin</command>
+      daemon for <quote>Xfrin</quote> include:
+    </para>
+
+    <variablelist>
+
+      <varlistentry>
+        <term>soaoutv4</term>
+        <listitem><simpara>
+          Number of IPv4 SOA queries sent from Xfrin
+        </simpara></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>soaoutv6</term>
+        <listitem><simpara>
+          Number of IPv6 SOA queries sent from Xfrin
+        </simpara></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>axfrreqv4</term>
+        <listitem><simpara>
+          Number of IPv4 AXFR requests sent from Xfrin
+        </simpara></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>axfrreqv6</term>
+        <listitem><simpara>
+          Number of IPv6 AXFR requests sent from Xfrin
+        </simpara></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>ixfrreqv4</term>
+        <listitem><simpara>
+          Number of IPv4 IXFR requests sent from Xfrin
+        </simpara></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>ixfrreqv6</term>
+        <listitem><simpara>
+          Number of IPv6 IXFR requests sent from Xfrin
+        </simpara></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>xfrsuccess</term>
+        <listitem><simpara>
+          Number of zone transfer requests succeeded
+        </simpara></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>xfrfail</term>
+        <listitem><simpara>
+          Number of zone transfer requests failed
+        </simpara></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>time_to_ixfr</term>
+        <listitem><simpara>
+          Elapsed time in second to do the last IXFR
+        </simpara></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>time_to_axfr</term>
+        <listitem><simpara>
+          Elapsed time in second to do the last AXFR
+        </simpara></listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <para>
+      In per-zone counters the special zone name '_SERVER_' exists. It doesn't
+      mean a specific zone. It represents an entire server and its value means
+      a total count of all zones.
+    </para>
+
+  </refsect1>
 
 <!--
   <refsect1>
