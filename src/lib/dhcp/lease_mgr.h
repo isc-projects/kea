@@ -24,19 +24,6 @@
 namespace isc {
 namespace dhcp {
 
-/// @brief Holds Client identifier
-class ClientId {
- public:
-    ClientId(const std::vector<uint8_t>& duid);
-    ClientId(const char *duid, size_t len);
-    ClientId(uint32_t id);
-    ClientId(const isc::asiolink::IOAddress& addr);
-    const std::vector<uint8_t> getClientId() const;
-    bool operator == (const ClientId& other);
- protected:
-    std::vector<uint8_t> clientid_;
-};
-
 /// @brief Structure that holds a lease for IPv4 address
 ///
 /// For performance reasons it is a simple structure, not a class. If we chose

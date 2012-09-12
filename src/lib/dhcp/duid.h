@@ -15,6 +15,8 @@
 #include <stdint.h>
 #include <unistd.h>
 #include <vector>
+#include <asiolink/io_address.h>
+
 
 namespace isc {
 namespace dhcp {
@@ -63,6 +65,45 @@ class DUID {
  protected:
     /// the actual content of the DUID
     std::vector<uint8_t> duid_;
+};
+
+/// @brief Holds Client identifier or client IPv4 address
+///
+/// This class is intended to be a generic IPv4 client identifier. It can hold
+/// a client-id
+class ClientId : DUID {
+ public:
+
+    /// constructor based on vector<uint8_t>
+    ClientId(const std::vector<uint8_t>& clientid);
+
+    /// constructor based on C-style data
+    ClientId(const uint8_t *clientid, size_t len);
+
+    /// constructor based on IOAddress
+    ///
+    /// @throw BadValue if specified address is not IPv4
+    ClientId(const isc::asiolink::IOAddress& addr);
+
+    /// @brief returns reference to the client-id data
+    ///
+    /// This reference is only valid as long as the object
+    /// that returned it.
+    const std::vector<uint8_t> getClientId() const;
+
+    /// @brief return an IPv4 address represented by this client-id
+    ///
+    /// @throw BadValue if this client-id is not an IPv4 address
+    isc::asiolink::IOAddress getAddress() const;
+
+    /// @brief returns if client-id is an address
+    bool isAddress() const;
+
+    // compares two client-ids
+    bool operator == (const ClientId& other) const;
+
+    // compares two client-ids
+    bool operator != (const ClientId& other) const;
 };
 
 }; // end of isc::dhcp namespace
