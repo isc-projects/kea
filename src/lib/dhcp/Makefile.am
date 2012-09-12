@@ -29,6 +29,7 @@ libb10_dhcp___la_SOURCES += option4_addrlst.cc option4_addrlst.h
 libb10_dhcp___la_SOURCES += dhcp6.h dhcp4.h
 libb10_dhcp___la_SOURCES += pkt6.cc pkt6.h
 libb10_dhcp___la_SOURCES += pkt4.cc pkt4.h
+libb10_dhcp___la_SOURCES += duid.cc duid.h
 
 EXTRA_DIST  = README
 #EXTRA_DIST += log_messages.mes

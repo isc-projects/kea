@@ -39,6 +39,7 @@ libdhcp___unittests_SOURCES += ../option4_addrlst.cc ../option4_addrlst.h option
 libdhcp___unittests_SOURCES += ../option.h ../option.cc option_unittest.cc
 libdhcp___unittests_SOURCES += ../pkt6.h ../pkt6.cc pkt6_unittest.cc
 libdhcp___unittests_SOURCES += ../pkt4.h ../pkt4.cc pkt4_unittest.cc
+libdhcp___unittests_SOURCES += ../duid.h ../duid.cc duid_unittest.cc
 
 libdhcp___unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)
 libdhcp___unittests_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)
