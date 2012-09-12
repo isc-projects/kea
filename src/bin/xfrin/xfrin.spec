@@ -94,6 +94,119 @@
           }
         ]
       }
+    ],
+    "statistics": [
+      {
+        "item_name": "zones",
+        "item_type": "named_set",
+        "item_optional": false,
+        "item_default": {
+          "_SERVER_" : {
+	    "soaoutv4": 0,
+	    "soaoutv6": 0,
+	    "axfrreqv4": 0,
+	    "axfrreqv6": 0,
+	    "ixfrreqv4": 0,
+	    "ixfrreqv6": 0,
+	    "xfrsuccess": 0,
+	    "xfrfail": 0,
+	    "time_to_ixfr": 0.0,
+	    "time_to_axfr": 0.0
+          }
+        },
+        "item_title": "Zone names",
+        "item_description": "Zone names for Xfrout statistics",
+        "named_set_item_spec": {
+          "item_name": "zonename",
+          "item_type": "map",
+          "item_optional": false,
+          "item_default": {},
+          "item_title": "Zone name",
+          "item_description": "Zone name for Xfrout statistics",
+          "map_item_spec": [
+            {
+              "item_name": "soaoutv4",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "SOAOutv4",
+              "item_description": "Number of IPv4 SOA queries sent from Xfrin"
+            },
+            {
+              "item_name": "soaoutv6",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "SOAOutv6",
+              "item_description": "Number of IPv6 SOA queries sent from Xfrin"
+            },
+            {
+              "item_name": "axfrreqv4",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "AXFRReqv4",
+              "item_description": "Number of IPv4 AXFR requests sent from Xfrin"
+            },
+            {
+              "item_name": "axfrreqv6",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "AXFRReqv6",
+              "item_description": "Number of IPv6 AXFR requests sent from Xfrin"
+            },
+            {
+              "item_name": "ixfrreqv4",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "IXFRReqv4",
+              "item_description": "Number of IPv4 IXFR requests sent from Xfrin"
+            },
+            {
+              "item_name": "ixfrreqv6",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "IXFRReqv6",
+              "item_description": "Number of IPv6 IXFR requests sent from Xfrin"
+            },
+            {
+              "item_name": "xfrsuccess",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "XfrSuccess",
+              "item_description": "Number of zone transfer requests succeeded"
+            },
+            {
+              "item_name": "xfrfail",
+              "item_type": "integer",
+              "item_optional": false,
+              "item_default": 0,
+              "item_title": "XfrFail",
+              "item_description": "Number of zone transfer requests failed"
+            },
+            {
+              "item_name": "time_to_ixfr",
+              "item_type": "real",
+              "item_optional": false,
+              "item_default": 0.0,
+              "item_title": "Time to IXFR",
+              "item_description": "Elapsed time in seconds to do the last IXFR"
+            },
+            {
+              "item_name": "time_to_axfr",
+              "item_type": "real",
+              "item_optional": false,
+              "item_default": 0.0,
+              "item_title": "Time to AXFR",
+              "item_description": "Elapsed time in seconds to do the last AXFR"
+            }
+          ]
+        }
+      }
     ]
   }
 }
