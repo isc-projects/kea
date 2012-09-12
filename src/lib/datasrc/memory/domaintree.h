@@ -1721,7 +1721,7 @@ template <typename T>
 const DomainTreeNode<T>*
 DomainTree<T>::getLargestNode() const {
     const DomainTreeNode<T>* node = root_.get();
-    if (root_ == NULL) {
+    if (node == NULL) {
         return (NULL);
     }
 
