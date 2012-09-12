@@ -50,6 +50,15 @@ IfaceMgr::Iface::Iface(const std::string& name, int ifindex)
     memset(mac_, 0, sizeof(mac_));
 }
 
+void
+IfaceMgr::Iface::closeSockets() {
+    for (SocketCollection::iterator sock = sockets_.begin();
+         sock != sockets_.end(); ++sock) {
+        close(sock->sockfd_);
+    }
+    sockets_.clear();
+}
+
 std::string
 IfaceMgr::Iface::getFullName() const {
     ostringstream tmp;
@@ -138,15 +147,8 @@ IfaceMgr::IfaceMgr()
 void IfaceMgr::closeSockets() {
     for (IfaceCollection::iterator iface = ifaces_.begin();
          iface != ifaces_.end(); ++iface) {
-
-        for (SocketCollection::iterator sock = iface->sockets_.begin();
-             sock != iface->sockets_.end(); ++sock) {
-            cout << "Closing socket " << sock->sockfd_ << endl;
-            close(sock->sockfd_);
-        }
-        iface->sockets_.clear();
+        iface->closeSockets();
     }
-
 }
 
 IfaceMgr::~IfaceMgr() {
@@ -477,17 +479,43 @@ IfaceMgr::getLocalAddress(const IOAddress& remote_addr, const uint16_t port) {
     asio::io_service io_service;
     asio::ip::udp::socket sock(io_service);
 
-    // Try to connect to remote endpoint and check if attempt is successful.
     asio::error_code err_code;
+    // If remote address is broadcast address we have to
+    // allow this on the socket.
+    if (remote_addr.getAddress().is_v4() &&
+        (remote_addr == IOAddress("255.255.255.255"))) {
+        // Socket has to be open prior to setting the broadcast
+        // option. Otherwise set_option will complain about
+        // bad file descriptor.
+
+        // @todo: We don't specify interface in any way here. 255.255.255.255
+        // We can very easily end up with a socket working on a different
+        // interface.
+        sock.open(asio::ip::udp::v4(), err_code);
+        if (err_code) {
+            isc_throw(Unexpected, "failed to open UDPv4 socket");
+        }
+        sock.set_option(asio::socket_base::broadcast(true), err_code);
+        if (err_code) {
+            sock.close();
+            isc_throw(Unexpected, "failed to enable broadcast on the socket");
+        }
+    }
+
+    // Try to connect to remote endpoint and check if attempt is successful.
     sock.connect(remote_endpoint->getASIOEndpoint(), err_code);
     if (err_code) {
-        isc_throw(Unexpected,"Failed to connect to remote endpoint.");
+        sock.close();
+        isc_throw(Unexpected,"failed to connect to remote endpoint.");
     }
 
     // Once we are connected socket object holds local endpoint.
     asio::ip::udp::socket::endpoint_type local_endpoint =
         sock.local_endpoint();
     asio::ip::address local_address(local_endpoint.address());
+
+    // Close the socket.
+    sock.close();
 
     // Return address of local endpoint.
     return IOAddress(local_address);
@@ -546,8 +574,9 @@ int IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, uint16_t port) {
     memset(&addr6, 0, sizeof(addr6));
     addr6.sin6_family = AF_INET6;
     addr6.sin6_port = htons(port);
-    if (addr.toText() != "::1")
-      addr6.sin6_scope_id = if_nametoindex(iface.getName().c_str());
+    if (addr.toText() != "::1") {
+        addr6.sin6_scope_id = if_nametoindex(iface.getName().c_str());
+    }
 
     memcpy(&addr6.sin6_addr,
            addr.getAddress().to_v6().to_bytes().data(),
@@ -724,7 +753,6 @@ IfaceMgr::send(const Pkt6Ptr& pkt) {
 bool
 IfaceMgr::send(const Pkt4Ptr& pkt)
 {
-
     Iface* iface = getIface(pkt->getIface());
     if (!iface) {
         isc_throw(BadValue, "Unable to send Pkt4. Invalid interface ("
@@ -800,8 +828,9 @@ IfaceMgr::receive4(uint32_t timeout) {
     /// provided set to indicated which sockets have something to read.
     for (iface = ifaces_.begin(); iface != ifaces_.end(); ++iface) {
 
-        for (SocketCollection::const_iterator s = iface->sockets_.begin();
-             s != iface->sockets_.end(); ++s) {
+        const SocketCollection& socket_collection = iface->getSockets();
+        for (SocketCollection::const_iterator s = socket_collection.begin();
+             s != socket_collection.end(); ++s) {
 
             // Only deal with IPv4 addresses.
             if (s->addr_.getFamily() == AF_INET) {
@@ -864,8 +893,9 @@ IfaceMgr::receive4(uint32_t timeout) {
 
     // Let's find out which interface/socket has the data
     for (iface = ifaces_.begin(); iface != ifaces_.end(); ++iface) {
-        for (SocketCollection::const_iterator s = iface->sockets_.begin();
-             s != iface->sockets_.end(); ++s) {
+        const SocketCollection& socket_collection = iface->getSockets();
+        for (SocketCollection::const_iterator s = socket_collection.begin();
+             s != socket_collection.end(); ++s) {
             if (FD_ISSET(s->sockfd_, &sockets)) {
                 candidate = &(*s);
                 break;
@@ -967,9 +997,9 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout) {
     /// provided set to indicated which sockets have something to read.
     IfaceCollection::const_iterator iface;
     for (iface = ifaces_.begin(); iface != ifaces_.end(); ++iface) {
-
-        for (SocketCollection::const_iterator s = iface->sockets_.begin();
-             s != iface->sockets_.end(); ++s) {
+        const SocketCollection& socket_collection = iface->getSockets();
+        for (SocketCollection::const_iterator s = socket_collection.begin();
+             s != socket_collection.end(); ++s) {
 
             // Only deal with IPv4 addresses.
             if (s->addr_.getFamily() == AF_INET6) {
@@ -1032,8 +1062,9 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout) {
 
     // Let's find out which interface/socket has the data
     for (iface = ifaces_.begin(); iface != ifaces_.end(); ++iface) {
-        for (SocketCollection::const_iterator s = iface->sockets_.begin();
-             s != iface->sockets_.end(); ++s) {
+        const SocketCollection& socket_collection = iface->getSockets();
+        for (SocketCollection::const_iterator s = socket_collection.begin();
+             s != socket_collection.end(); ++s) {
             if (FD_ISSET(s->sockfd_, &sockets)) {
                 candidate = &(*s);
                 break;
@@ -1168,8 +1199,9 @@ uint16_t IfaceMgr::getSocket(const isc::dhcp::Pkt6& pkt) {
                   << pkt.getIface());
     }
 
+    const SocketCollection& socket_collection = iface->getSockets();
     SocketCollection::const_iterator s;
-    for (s = iface->sockets_.begin(); s != iface->sockets_.end(); ++s) {
+    for (s = socket_collection.begin(); s != socket_collection.end(); ++s) {
         if ((s->family_ == AF_INET6) &&
             (!s->addr_.getAddress().to_v6().is_multicast())) {
             return (s->sockfd_);
@@ -1190,8 +1222,9 @@ uint16_t IfaceMgr::getSocket(isc::dhcp::Pkt4 const& pkt) {
                   << pkt.getIface());
     }
 
+    const SocketCollection& socket_collection = iface->getSockets();
     SocketCollection::const_iterator s;
-    for (s = iface->sockets_.begin(); s != iface->sockets_.end(); ++s) {
+    for (s = socket_collection.begin(); s != socket_collection.end(); ++s) {
         if (s->family_ == AF_INET) {
             return (s->sockfd_);
         }
