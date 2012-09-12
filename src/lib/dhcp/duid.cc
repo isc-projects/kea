@@ -14,6 +14,8 @@
 
 #include <vector>
 #include <exceptions/exceptions.h>
+#include <stdint.h>
+#include <util/io_utilities.h>
 #include <dhcp/duid.h>
 
 namespace isc {
@@ -56,6 +58,52 @@ bool DUID::operator == (const DUID& other) const {
 }
 
 bool DUID::operator != (const DUID& other) const {
+    return (this->duid_ != other.duid_);
+}
+
+/// constructor based on vector<uint8_t>
+ClientId::ClientId(const std::vector<uint8_t>& clientid)
+    :DUID(clientid) {
+}
+
+/// constructor based on C-style data
+ClientId::ClientId(const uint8_t *clientid, size_t len)
+    :DUID(clientid, len) {
+}
+
+/// constructor based on IOAddress
+ClientId::ClientId(const isc::asiolink::IOAddress& addr)
+    :DUID(std::vector<uint8_t>(4, 0)) {
+    if (addr.getFamily() != AF_INET) {
+        isc_throw(BadValue, "Client-id supports only IPv4 addresses");
+    }
+    isc::util::writeUint32(addr, &duid_[0]);
+}
+
+/// @brief returns reference to the client-id data
+const std::vector<uint8_t> ClientId::getClientId() const {
+    return duid_;
+}
+
+isc::asiolink::IOAddress ClientId::getAddress() const {
+    if (duid_.size() != sizeof(uint32_t)) {
+        isc_throw(BadValue, "This client-id is not an IPv4 address");
+    }
+
+    return isc::asiolink::IOAddress( isc::util::readUint32(&duid_[0]) );
+}
+
+bool ClientId::isAddress() const {
+    return (duid_.size() == sizeof(uint32_t));
+}
+
+// compares two client-ids
+bool ClientId::operator == (const ClientId& other) const {
+    return (this->duid_ == other.duid_);
+}
+
+// compares two client-ids
+bool ClientId::operator != (const ClientId& other) const {
     return (this->duid_ != other.duid_);
 }
 
