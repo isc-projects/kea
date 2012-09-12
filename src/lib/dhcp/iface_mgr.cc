@@ -834,7 +834,8 @@ IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec) {
     select_timeout.tv_usec = timeout_usec;
 
     cout << "Trying to receive data on sockets: " << names.str()
-         << ". Timeout is " << timeout_sec << " seconds." << endl;
+         << ". Timeout is " << timeout_sec << "." << setw(6) << setfill('0')
+         << timeout_usec << " seconds." << endl;
     int result = select(maxfd + 1, &sockets, NULL, NULL, &select_timeout);
     cout << "select returned " << result << endl;
 
@@ -1001,8 +1002,9 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec) {
         names << session_socket_ << "(session)";
     }
 
-    cout << "Trying to receive data on sockets:" << names.str()
-         << ".Timeout is " << timeout_sec << " seconds." << endl;
+    cout << "Trying to receive data on sockets: " << names.str()
+         << ". Timeout is " << timeout_sec << "." << setw(6) << setfill('0')
+         << timeout_usec << " seconds." << endl;
 
     struct timeval select_timeout;
     select_timeout.tv_sec = timeout_sec;

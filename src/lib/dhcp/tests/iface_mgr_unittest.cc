@@ -238,10 +238,12 @@ TEST_F(IfaceMgrTest, receiveTimeout6) {
     timeval stop_time;
 
     // Remember when we call receive6().
+    memset(&start_time, 0, sizeof(start_time));
+    memset(&stop_time, 0, sizeof(start_time));
     gettimeofday(&start_time, NULL);
-    // Call receive with timeout of 1s + 1000us.
+    // Call receive with timeout of 1s + 400000us = 1.4s.
     Pkt6Ptr pkt;
-    ASSERT_NO_THROW(pkt = ifacemgr->receive6(1, 1000));
+    ASSERT_NO_THROW(pkt = ifacemgr->receive6(1, 400000));
     // Remember when call to receive6() ended.
     gettimeofday(&stop_time, NULL);
     // We did not send a packet to lo interface so we expect that
@@ -250,25 +252,26 @@ TEST_F(IfaceMgrTest, receiveTimeout6) {
     // Calculate duration of call to receive6().
     stop_time.tv_sec -= start_time.tv_sec;
     stop_time.tv_usec -= start_time.tv_usec;
-    // Duration should be equal or greater than timeout specified
+    // Duration should be equal or greater or equal timeout specified
     // for the receive6() call.
-    EXPECT_EQ(stop_time.tv_sec, 1);
-    EXPECT_GT(stop_time.tv_usec, 1000);
+    EXPECT_EQ(1, stop_time.tv_sec);
+    EXPECT_GE(stop_time.tv_usec, 400000);
 
     // Test timeout shorter than 1s.
+    memset(&start_time, 0, sizeof(start_time));
+    memset(&stop_time, 0, sizeof(start_time));
     gettimeofday(&start_time, NULL);
-    ASSERT_NO_THROW(pkt = ifacemgr->receive6(0, 500));
+    ASSERT_NO_THROW(pkt = ifacemgr->receive6(0, 500000));
     gettimeofday(&stop_time, NULL);
     ASSERT_FALSE(pkt);
     stop_time.tv_sec -= start_time.tv_sec;
     stop_time.tv_usec -= start_time.tv_usec;
-    // The timeout has been set to 500us. Even though the way we measure
-    // duration of receive6() may result in durations slightly longer than
-    // timeout it is safe to assume that measured value will not exceed 1s
-    // when timeout is only 500us. If it exceeds, this is an error and
-    // should be investigated.
+    // Even though the way we measure duration of receive6() may result in
+    // durations slightly longer than timeout it is safe to assume that
+    // measured value will not exceed 1s when timeout is 0.5s.
+    // If it exceeds, this is an error and should be investigated.
     EXPECT_EQ(0, stop_time.tv_sec);
-    EXPECT_GT(stop_time.tv_usec, 500);
+    EXPECT_GE(stop_time.tv_usec, 500000);
 
     // Test with invalid fractional timeout values.
     EXPECT_THROW(ifacemgr->receive6(0, 1000000), isc::BadValue);
@@ -296,10 +299,12 @@ TEST_F(IfaceMgrTest, receiveTimeout4) {
     timeval stop_time;
 
     // Remember when we call receive4().
+    memset(&start_time, 0, sizeof(start_time));
+    memset(&stop_time, 0, sizeof(start_time));
     gettimeofday(&start_time, NULL);
-    // Call receive with timeout of 2s + 150us.
+    // Call receive with timeout of 2s + 300000us = 2.3s.
     Pkt4Ptr pkt;
-    ASSERT_NO_THROW(pkt = ifacemgr->receive4(2, 150));
+    ASSERT_NO_THROW(pkt = ifacemgr->receive4(2, 300000));
     // Remember when call to receive4() ended.
     gettimeofday(&stop_time, NULL);
     // We did not send a packet to lo interface so we expect that
@@ -310,23 +315,24 @@ TEST_F(IfaceMgrTest, receiveTimeout4) {
     stop_time.tv_usec -= start_time.tv_usec;
     // Duration should be equal or greater than timeout specified
     // for the receive4() call.
-    EXPECT_EQ(stop_time.tv_sec, 2);
-    EXPECT_GT(stop_time.tv_usec, 150);
+    EXPECT_EQ(2, stop_time.tv_sec);
+    EXPECT_GE(stop_time.tv_usec, 300000);
 
     // Test timeout shorter than 1s.
+    memset(&start_time, 0, sizeof(start_time));
+    memset(&stop_time, 0, sizeof(start_time));
     gettimeofday(&start_time, NULL);
-    ASSERT_NO_THROW(pkt = ifacemgr->receive4(0, 350));
+    ASSERT_NO_THROW(pkt = ifacemgr->receive4(0, 400000));
     gettimeofday(&stop_time, NULL);
     ASSERT_FALSE(pkt);
     stop_time.tv_sec -= start_time.tv_sec;
     stop_time.tv_usec -= start_time.tv_usec;
-    // The timeout has been set to 350us. Even though the way we measure
-    // duration of receive4() may result in durations slightly longer than
-    // timeout it is safe to assume that measured value will not exceed 1s
-    // when timeout is only 350us. If it exceeds, this is an error and
-    // should be investigated.
+    // Even though the way we measure duration of receive4() may result
+    // in durations slightly longer than timeout it is safe to assume
+    // that measured value will not exceed 1s when timeout is only 0.4s.
+    // If it exceeds, this is an error and should be investigated.
     EXPECT_EQ(0, stop_time.tv_sec);
-    EXPECT_GT(stop_time.tv_usec, 350);
+    EXPECT_GE(stop_time.tv_usec, 400000);
 
     // Test with invalid fractional timeout values.
     EXPECT_THROW(ifacemgr->receive6(0, 1000000), isc::BadValue);
