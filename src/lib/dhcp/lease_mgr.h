@@ -18,6 +18,8 @@
 #include <map>
 #include <asiolink/io_address.h>
 #include <boost/shared_ptr.hpp>
+#include <dhcp/option.h>
+#include <dhcp/duid.h>
 
 namespace isc {
 namespace dhcp {
@@ -33,31 +35,6 @@ class ClientId {
     bool operator == (const ClientId& other);
  protected:
     std::vector<uint8_t> clientid_;
-};
-
-/// @brief Holds DUID (DHCPv6 Unique Identifier)
-///
-/// This class holds DUID, that is used in client-id, server-id and
-/// several other options. It is used to identify DHCPv6 entity.
-class DUID {
-
-    /// @brief specifies DUID type
-    typedef enum {
-        DUID_UNKNOWN = 0, // invalid/unknown type
-        DUID_LLT = 1, // link-layer + time, see RFC3315, section 9.2
-        DUID_EN = 2,  // enterprise-id, see RFC3315, section 9.3
-        DUID_LL = 3,  // link-layer, see RFC3315, section 9.4
-        DUID_UUID = 4, // UUID, see RFC6355
-    } DUIDType;
-
- public:
-    DUID(const std::vector<uint8_t>& duid);
-    DUID(const char *duid, size_t len);
-    const std::vector<uint8_t> getDuid() const;
-    DUIDType getType();
-    bool operator == (const DUID& other);
- protected:
-    std::vector<uint8_t> duid_;
 };
 
 /// @brief Structure that holds a lease for IPv4 address
@@ -79,13 +56,15 @@ struct Lease4 {
     uint32_t ext_; /// address extension
 
     /// @brief hardware address
-    std::vector<uint8_t> hwaddr;
+    std::vector<uint8_t> hwaddr_;
 
     /// @brief client identifier
-    std::vector<uint8_t> client_id; 
+    std::vector<uint8_t> client_id_;
 
-    /// valid lifetime timestamp
-    uint32_t valid_lft;
+    /// @brief valid lifetime
+    ///
+    /// Expressed as number of seconds since cltt
+    uint32_t valid_lft_;
 
     /// @brief Recycle timer
     ///
@@ -93,44 +72,45 @@ struct Lease4 {
     /// or expired. This timer specifies number of seconds that it should be kept
     /// after release or expiration, in case the client returns. This feature is not
     /// currently used and this value is set to 0.
-    uint32_t recycle_time; 
+    uint32_t recycle_time_;
 
     /// @brief client last transmission time
     ///
     /// Specifies a timestamp, when last transmission from a client was received.
-    time_t cltt;
+    time_t cltt_;
 
     /// @brief Pool identifier
     ///
     /// Specifies pool-id of the pool that the lease belongs to
-    uint32_t pool_id;
+    uint32_t pool_id_;
 
     /// @brief Is this a fixed lease?
     ///
     /// Fixed leases are kept after they are released/expired.
-    bool fixed;
+    bool fixed_;
 
     /// @brief client hostname
     ///
     /// This field may be empty
-    std::string hostname;
+    std::string hostname_;
 
     /// @brief did we update AAAA record for this lease?
-    bool fqdn_fwd;
+    bool fqdn_fwd_;
 
-    /// @brief did we update PTR record for this lease? 
-    bool fqdn_rev;
+    /// @brief did we update PTR record for this lease?
+    bool fqdn_rev_;
 
     /// @brief additional options stored with this lease
     ///
-    /// Currently not used.
-    std::string options; 
+    /// This field is currently not used.
+    /// @todo We need a way to store options in the databased.
+    Option::OptionCollection options_;
 
     /// @brief Lease comments.
     ///
     /// Currently not used. It may be used for keeping comments made by the
     /// system administrator.
-    std::string comments; 
+    std::string comments_;
 };
 
 /// @brief Pointer to a Lease4 structure.
@@ -209,7 +189,7 @@ struct Lease6 {
     /// or expired. This timer specifies number of seconds that it should be kept
     /// after release or expiration, in case the client returns. This feature is not
     /// currently used and this value is set to 0.
-    uint32_t recycle_time; 
+    uint32_t recycle_time;
 
     /// @brief client last transmission time
     ///
@@ -234,7 +214,7 @@ struct Lease6 {
     /// @brief did we update AAAA record for this lease?
     bool fqdn_fwd;
 
-    /// @brief did we update PTR record for this lease? 
+    /// @brief did we update PTR record for this lease?
     bool fqdn_rev;
 
     /// @brief additional options stored with this lease
@@ -242,12 +222,12 @@ struct Lease6 {
     /// That field is currently not used. We may keep extra options assigned
     /// for leasequery and possibly other purposes.
     /// @todo: Define this as a container of options
-    std::string options; 
+    std::string options;
 
     /// @brief /// comments on that lease
     ///
     /// (currently not used)
-    std::string comments; 
+    std::string comments;
 };
 
 /// @brief Pointer to a Lease6 structure.
