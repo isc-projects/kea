@@ -592,80 +592,77 @@ SQLite version: 3.7.9sourceid version is 2011-11-01 00:52:41 c7c6050ef060877ebe7
     <section>
       <title>Purpose</title>
       <para>
-        There is a growing need to evaluate performance of DHCP servers in
-        different traffic conditions to understand their bottle necks.
-        This helps to elimante bugs in existing DHCP software as well
-        as make informed decisions regarding new DHCP software designs
-        to significantly improve its performance. The perfdhcp tool has
-        been created to fill the gap in performance measurement capabilities
-        mostly. However, the number of implemented features and parameters
-        exposed to the user make this tool useful for functional testing as
-        well.
+        Evaluation of the performance of a DHCP server requires that it
+        be tested under varying traffic loads.  perfdhcp is a testing
+        tool with the capability to create traffic loads
+        and generate statistics from the results.  Additional features,
+        such as the ability to send customised DHCP packets, allow it to
+        be used in a wide range of functional testing.
       </para>
     </section>
     <section id="perfdhcp-key-features">
       <title>Key features</title>
       <para>
-        The perfdhcp exposes the number of command line parameters to
-        control DHCP message exchanges. Currently they fall back to
+        perfdhcp has a number of command line switches to
+        control DHCP message exchanges. Currently they fall into
         the following categories:
-        <orderedlist>
+        <itemizedlist>
           <listitem>
             <para>
               Rate control - control how many DHCP exchanges
-              are initiated within a period of time. Tool can also simulate
-              best effort conditions attempting to initiate as many DHCP
-              packet exchanges within a unit of time as possible.
+              are initiated within a period of time. The tool can also simulate
+              best effort conditions by attempting to initiate as many DHCP
+              packet exchanges as possible within a unit of time.
             </para>
           </listitem>
           <listitem>
             <para>
-              Test exit specifiers - control the conditions when test
-              completes including number of initiated exchanges, test period or
-              maximum number of dropped packets.
+              Test exit specifiers - control the conditions for test
+              completion, including the number of initiated exchanges,
+              the test period orthe maximum number of dropped packets.
             </para>
           </listitem>
           <listitem>
             <para>
               Packet templates - specify files containing packet templates that
-              are used by perfdhcp to create custom DHCP messages instead of
-              default. Tool also allows to specify number of values indicating
-              offsets of variable values within a packet that are modified in
-              flight by the tool.
+              are used by perfdhcp to create custom DHCP messages. The tool
+              allows the specification of a number of values indicating
+              offsets of values within a packet that are set by the tool.
             </para>
           </listitem>
           <listitem>
             <para>
-              Reporting - for each test produce the set of performance data
-              including achieved packet exchange rate (server performance).
-              There is also a number of diagnostic selectors available that
-              enable periodic (intermediate) reporting, packet timestamps
-              printing and detailed information about perfdhcp internal
+              Reporting - for each test produce a set of performance data
+              including the achieved packet exchange rate (server performance).
+              There are a number of diagnostic selectors available that
+              enable periodic (intermediate) reporting, printing of packet timestamps,
+              and the listing of detailed information about internal perfdhcp
               states (for debugging).
             </para>
           </listitem>
           <listitem>
             <para>
-              Different mode of operations - specify DHCP version used
-              (v4 or v6), 2-way or 4-way exchanges, use Rapid Commit option
-              for DHCPv6.
+              Different mode of operations - specify the DHCP protocol used
+              (v4 or v6), two-way or four-way exchanges, use of the
+              Rapid Commit option for DHCPv6.
             </para>
           </listitem>
           <listitem>
             <para>
-              IP layer options - specify local/remote address, local interface
+              IP layer options - specify the local/remote address, local interface
               and local port to be used for communication with DHCP server.
             </para>
           </listitem>
-        </orderedlist>
+        </itemizedlist>
       </para>
     </section>
     <section id="perfdhcp-command-line">
       <title>Command line options</title>
       <para>
-        The following command line options may be used with perfdhcp tool.
-        This summary also presents its possible exit codes as well as
-        error counters printed along when test is complete:
+        The following "help" output from the tool describes the
+        command line switches.  This summary also lists the tool's
+        possible exit codes as well as describing the
+        error counters printed when the test is complete:
         <screen>$ <userinput>./perfdhcp -h</userinput>
 <![CDATA[perfdhcp [-hv] [-4|-6] [-r<rate>] [-t<report>] [-R<range>] [-b<base>]
     [-n<num-request>] [-p<test-period>] [-d<drop-time>] [-D<max-drop>]
@@ -794,46 +791,51 @@ The exit status is:
     <section id="starting-perfdhcp">
       <title>Starting perfdhcp</title>
       <para>
-        In order to run performance test at least two separate systems
-        have to be installed: client and server. The first one has to have
-        perfdhcp tool installed, the latter has to have DHCP server
-        running (v4 or v6). If only single system is available the client
+        In order to run a performance test, at least two separate systems
+        have to be installed: client and server. The first one must have
+        perfdhcp installed, and the latter must be running the DHCP server
+        (either v4 or v6). If only single system is available the client
         and server can be run on virtual machines (running on the same
-        phisical system) but in this case performance data may be heavily
-        impacted by the performance of VMs.
-      </para>
-      <para>
-        The DHCP operates on low port numbers (67 for DHCPv4 relays and
-        547 for DHCPv6). Running perfdhcp with non-root priviliges will
-        usually result in the error message similar to this:
-        <screen><userinput>$./perfdhcp -4 -l eth3 -r 100 all</userinput>
-Error running perfdhcp: Failed to bind socket 3 to 172.16.1.2/port=67
-        </screen>
-        perfdhcp has the '-L' command line option that
-        imposes use of custom local port. Thus the following command
-        line will work:
-        <screen><userinput>$./perfdhcp -4 -l eth3 -r 100 -L 10067 all</userinput></screen>
-        but in the standard configuration no responses will be received
-        from the ISC DHCP server because server responds to default relay
-        port 67.
-        Alternative way to overcome this issue  is to run perfdhcp as root.
+        physical system) but in this case performance data may be heavily
+        impacted by the overhead involved in running such the virtual
+        machines.
       </para>
       <para>
         Currently, perfdhcp is seen from the server perspective as relay agent.
-        This simplifies its implementation (specifically there is no need to
-        receive traffic sent to braodcast addresses). This imposes that IPv4
+        This simplifies its implementation: specifically there is no need to
+        receive traffic sent to braodcast addresses. However, it does impose
+        a requirement that the IPv4
         address has to be set manually on the interface that will be used to
-        communicate with the server. For example, if DHCPv4 server is listening
-        on the interface connected to 172.16.1.0 subnet, interface on client
-        machine has to have network address assigned from the same subnet
-        on one of its interfaces connected to this subnet:
+        communicate with the server. For example, if the DHCPv4 server is listening
+        on the interface connected to the 172.16.1.0 subnet, the interface on client
+        machine has to have network address assigned from the same subnet, e.g.
         <screen><userinput>#ifconfig eth3 172.16.1.2. netmask 255.255.255.0 up</userinput></screen>
       </para>
+      <para>
+        As DHCP uses low port numbers (67 for DHCPv4 relays and
+        547 for DHCPv6), running perfdhcp with non-root privileges will
+        usually result in the error message similar to this:
+        
+        <screen><userinput>$./perfdhcp -4 -l eth3 -r 100 all</userinput>
+Error running perfdhcp: Failed to bind socket 3 to 172.16.1.2/port=67
+        </screen>
+        
+        The '-L' command line switch allows the use of a custom local port.
+        However, although the following command line will work:
+        
+        <screen><userinput>$./perfdhcp -4 -l eth3 -r 100 -L 10067 all</userinput></screen>
+        
+        in the standard configuration no responses will be received
+        from the DHCP server because the server responds to default relay
+        port 67.  A way to overcome this issue is to run
+        perfdhcp as root.
+      </para>
+
     </section>
     <section id="perfdhcp-commandline-examples">
       <title>perfdhcp command line examples</title>
       <para>
-        In this section the perfdhcp command line examples
+        In this section, a number of perfdhcp command line examples
         are presented as a quick start guide for new users. For the
         detailed list of command line options refer to
         <xref linkend="perfdhcp-command-line"/>.
@@ -841,8 +843,8 @@ Error running perfdhcp: Failed to bind socket 3 to 172.16.1.2/port=67
       <section id="perfdhcp-basic-usage">
         <title>Example: basic usage</title>
         <para>
-          If server is listening on interface with IPv4 address 172.16.1.1
-          the simpliest perfdhcp command line will look like this:
+          If server is listening on interface with IPv4 address 172.16.1.1,
+          the simplest perfdhcp command line will look like:
           <screen><userinput>#./perfdhcp 172.16.1.1</userinput>
 ***Rate statistics***
 Rate: 206.345
@@ -871,15 +873,13 @@ max delay: 258.634 ms
 std deviation: 56.936 ms
 collected packets: 0
           </screen>
-          In this case perfdhcp will use remote address 172.16.1.1 as a
-          destination address and will use suitable local interface for
-          communication. Since, no rate control parameters have been specified
-          it will be initiating DHCP exchanges with the maximum possible
-          rate (it will try to initiate maximum number of exchanges per
-          second and count number of completed exchanged). Due to server's
-          performance constraints, many DHCP packets sent to server are likely
-          to be dropped. The performance test will be running until it is
-          not interrupted by the user (with ^C).
+          Here, perfdhcp uses remote address 172.16.1.1 as a
+          destination address and will use a suitable local interface for
+          communication. Since, no rate control parameters have been specified,
+          it will initiate DHCP exchanges at the maximum possible rate. Due to the server's
+          performance limitation, it is likely that many of the packets will be dropped.
+          The performance test will continue running until it is
+          interrupted by the user (with ^C).
         </para>
         <para>
           The default performance statistics reported by perfdhcp have the
@@ -893,52 +893,56 @@ collected packets: 0
             <listitem><para>received packets - total number of DHCP packets
             of specific type received from the server.</para></listitem>
             <listitem><para>drops - number of dropped packets for the
-            particular exchange. Number of dropped packets is calculated as
-            a difference between number of sent packets and number of
-            response packets received from the server. It is likely that
-            server sent the reponse but perfdhcp execution had ended before
-            reponse arrived. In such case this packet will be assumed
-            dropped.</para></listitem>
+            particular exchange. The number of dropped packets is calculated as
+            the difference between the number of sent packets and number of
+            response packets received from the server.  In some cases, the
+            server will have sent a reponse but perfdhcp execution ended before
+            the reponse arrived. In such case this packet will be counted
+            as dropped.</para></listitem>
             <listitem><para>orphans - number of packets that have been
             received from the server and did not match any packet sent by
             perfdhcp. This may occur if received packet has been sent
-            to some other host or if exchange time out has occured and
-            has been been garbage collected.</para></listitem>
+            to some other host or if then exchange timed out and
+            the sent packet was removed from perfdhcp's list of packets
+            awaiting a response.</para></listitem>
             <listitem><para>min delay - minimum delay that occured between
-            sending the packet to the server and receiving reponse from
+            sending the packet to the server and receiving a reponse from
             it.</para></listitem>
             <listitem><para>avg delay - average delay between sending the
-            packet of the specific type the server and receiving response
+            packet of the specific type the server and receiving a response
             from it.</para></listitem>
-            <listitem><para>max delay - maximum delat that occured between
-            sedning the packet to the server and receiveing response from
+            <listitem><para>max delay - maximum delay that occured between
+            sending the packet to the server and receiving a response from
             it.</para></listitem>
-            <listitem><para>std deviation - standard deviation of delay
+            <listitem><para>std deviation - standard deviation of the delay
             between sending the packet of a specific type to the server and
             receiving response from it.</para></listitem>
-            <listitem><para>collected packets - number of garbage collected
-            sent packets. Packets may get garbage collected when waiting time
-            for server response exceeds value set with
+            <listitem><para>collected packets - number of sent packets that
+            were garbage collected. Packets may get garbage collected when
+            the waiting time for server a response exceeds value set with the
+            '-d' (drop time) switch.
             <![CDATA[-d<drop-time>]]>.</para></listitem>
           </itemizedlist>
         </para>
         <para>
-          perfdhcp allows to run the test using specified interface:
+          Note: should multiple interfaces on the system running perfdhcp be
+          connected to the same subnet, the interface to be used for the test
+          can be specified using either the interface name:
           <screen><userinput>#./perfdhcp -l eth3</userinput></screen>
-          or local address assigned to it:
+          or a local address assigned to it:
           <screen><userinput>#./perfdhcp -l 172.16.1.2</userinput></screen>
         </para>
       </section>
       <section id="perfdhcp-rate-control">
         <title>Example: rate control</title>
         <para>
-          In the examples above perfdhcp initiates new exchanges with best
-          effort rate. In this case many packets is expected to be dropped by the
-          server due to performance limitations. Many times it is desired to set
-          the expected (reasonable) rate and verify if generated traffic is
-          handled without packet dropes by DHCP server. The following command will
-          make perfdhcp to initiate 300 4-way exchanges per second and test will
-          last for 60 seconds:
+          In the examples above perfdhcp initiates new exchanges with a best
+          effort rate. With this setting, many packets are expected to be dropped
+          by the server due to performance limitations. In many cases though, it is
+          desired to verify that the server can handle an expected (reasonable) rate
+          without dropping any packets. The following command is an example of such
+          a test: it causes perfdhcp to initiate 300 four-way exchanges
+          per second, and runs the test for 60 seconds:
           <screen><userinput>#./perfdhcp -l eth3 -p 60 -r 300</userinput>
 ***Rate statistics***
 Rate: 256.683 exchanges/second, expected rate: 300 exchanges/second
@@ -967,12 +971,13 @@ max delay: 576.749 ms
 std deviation: 58.189 ms
 collected packets: 0
           </screen>
-          Note that in this example the packet drops have been significantly
-          reduced thanks to setting reasonable rate. The non-zero number of
-          packet drops and achived rate (256/s) below expected rate (300/s)
-          indicate that server's measured performance is lower than 300 leases
-          per second. Further rate decrease should eliminate most of the packet
-          drops and bring achived rate close to expected rate:
+          Note that here, the packet drops for the DISCOVER-OFFER
+          exchange have been significantly reduced (when compared with the
+          output from the previous example) thanks to the setting of a
+          reasonable rate. The non-zero number of packet drops and achieved
+          rate (256/s) indicate that server's measured performance is lower than 300 leases
+          per second. A further rate decrease should eliminate most of the packet
+          drops and bring the achieved rate close to expected rate:
           <screen><userinput>#./perfdhcp -l eth3 -p 60 -r 100 -R 30</userinput>
 ***Rate statistics***
 Rate: 99.8164 exchanges/second, expected rate: 100 exchanges/second
@@ -1001,25 +1006,29 @@ max delay: 189.658 ms
 std deviation: 5.876 ms
 collected packets: 0
           </screen>
+          There are now no packet drops, confirming that the server is able to
+          handle a load of 100 leases/second.  
           Note that the last parameter (-R 30) configures perfdhcp to simulate
-          traffic from distinct 30 clients.
+          traffic from 30 distinct clients.
         </para>
       </section>
       <section id="perfdhcp-templates">
         <title>Example: templates</title>
         <para>
-          By default the DHCP messages are formed in-flight with default options.
-          If desired, there is a way to define custom packet format with template
-          files. Content in template files is encoded in hexadecimal format. The
+          By default the DHCP messages are formed with default options.  With
+          template files, it is possible to define a custom packet format.
+          </para>
+          <para>
+          The content in template files is encoded in hexadecimal format.
           perfdhcp forms the packet by replacing parts of the binary stream read
-          from the file with variable data such as elapsed time, HW address, DUID
+          from the file with variable data such as elapsed time, hardware address, DUID
           etc. The offsets where such variable data is placed is specific to the
           template file and have to be specified from the command line. Refer to
           <xref linkend="perfdhcp-command-line"/> to find out how to
           specify offsets for particular options and fields. With the following
           command line the DHCPv6 SOLICIT and REQUEST packets will be formed from
-          solicit-example.hex and request6-example.hex packets:
-          <screen><userinput>#./perfdhcp -6 -l eth3 -r 100 -R 20 -T templates/solicit-example.hex -T templates/request6-example.hex -O 21 -E 84 -S 22 -I 40 servers</userinput>
+          solicit.hex and request6.hex packets:
+          <screen><userinput>#./perfdhcp -6 -l eth3 -r 100 -R 20 -T solicit.hex -T request6.hex -O 21 -E 84 -S 22 -I 40 servers</userinput>
 ***Rate statistics***
 Rate: 99.5398 exchanges/second, expected rate: 100 exchanges/second
 
@@ -1047,15 +1056,15 @@ max delay: 6.490 ms
 std deviation: 0.518 ms
 collected packets: 0
           </screen>
-          where:
+          where the switches have the following meaning:
           <itemizedlist>
             <listitem><para>two occurences of -O 21 - DUID's last octet
             positions in SOLICIT and REQUEST respectively.</para></listitem>
-            <listitem><para>-E 84 - elapsed time option position in
+            <listitem><para>-E 84 - elapsed time option position in the
             REQUEST template</para></listitem>
-            <listitem><para>-S 22 - server id position in REQUEST
+            <listitem><para>-S 22 - server id position in the REQUEST
             template</para></listitem>
-            <listitem><para>-I 40 - IA_NA option position in REQUEST
+            <listitem><para>-I 40 - IA_NA option position in the REQUEST
             template</para></listitem>
           </itemizedlist>
         </para>
