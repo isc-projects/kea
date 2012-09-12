@@ -381,4 +381,50 @@ TEST_F(PerfPkt4Test, UnpackTransactionId) {
     EXPECT_FALSE(pkt2->rawUnpack());
 }
 
+TEST_F(PerfPkt4Test, Writes) {
+    // Initialize intput buffer with 260 elements set to value 1.
+    dhcp::OptionBuffer in_data(260, 1);
+    // Initialize buffer to be used for write: 1,2,3,4,...,9
+    dhcp::OptionBuffer write_buf(10);
+    for (int i = 0; i < write_buf.size(); ++i) {
+        write_buf[i] = i;
+    }
+    // Create packet from the input buffer.
+    const size_t transid_offset = 4;
+    boost::scoped_ptr<PerfPkt4> pkt1(new PerfPkt4(&in_data[0],
+                                                  in_data.size(),
+                                                  transid_offset));
+    // Write numbers 4,5,6,7 to the packet's input buffer at position 10.
+    pkt1->writeAt(10, write_buf.begin() + 3, write_buf.begin() + 7);
+    // We have to pack data to output buffer here because Pkt4 provides no
+    // way to retrieve input buffer. If we pack data it will go to
+    // output buffer that has getter available.
+    ASSERT_TRUE(pkt1->rawPack());
+    const util::OutputBuffer& out_buf = pkt1->getBuffer();
+    ASSERT_EQ(in_data.size(), out_buf.getLength());
+    // Verify that 4,5,6,7 has been written to the packet's buffer.
+    const char* out_data = static_cast<const char*>(out_buf.getData());
+    EXPECT_TRUE(std::equal(write_buf.begin() + 3, write_buf.begin() + 7,
+                          out_data + 10));
+    // Write 1 octet (0x51) at position 10.
+    pkt1->writeValueAt<uint8_t>(10, 0x51);
+    ASSERT_TRUE(pkt1->rawPack());
+    ASSERT_EQ(in_data.size(), pkt1->getBuffer().getLength());
+    EXPECT_EQ(0x51, pkt1->getBuffer()[10]);
+    // Write 2 octets (0x5251) at position 20.
+    pkt1->writeValueAt<uint16_t>(20, 0x5251);
+    ASSERT_TRUE(pkt1->rawPack());
+    ASSERT_EQ(in_data.size(), pkt1->getBuffer().getLength());
+    EXPECT_EQ(0x52, pkt1->getBuffer()[20]);
+    EXPECT_EQ(0x51, pkt1->getBuffer()[21]);
+    // Write 4 octets (0x54535251) at position 30.
+    pkt1->writeValueAt<uint32_t>(30, 0x54535251);
+    ASSERT_TRUE(pkt1->rawPack());
+    ASSERT_EQ(in_data.size(), pkt1->getBuffer().getLength());
+    EXPECT_EQ(0x54, pkt1->getBuffer()[30]);
+    EXPECT_EQ(0x53, pkt1->getBuffer()[31]);
+    EXPECT_EQ(0x52, pkt1->getBuffer()[32]);
+    EXPECT_EQ(0x51, pkt1->getBuffer()[33]);
+}
+
 }

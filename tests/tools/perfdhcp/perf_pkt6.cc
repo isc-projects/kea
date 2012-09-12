@@ -60,5 +60,13 @@ PerfPkt6::rawUnpack() {
     return (res);
 }
 
+void
+PerfPkt6::writeAt(size_t dest_pos,
+                     std::vector<uint8_t>::iterator first,
+                     std::vector<uint8_t>::iterator last) {
+    return (PktTransform::writeAt(data_, dest_pos, first, last));
+}
+
+
 } // namespace perfdhcp
 } // namespace isc

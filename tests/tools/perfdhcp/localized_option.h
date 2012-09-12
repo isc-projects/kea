@@ -16,6 +16,8 @@
 #define __LOCALIZED_OPTION_H
 
 #include <dhcp/pkt6.h>
+#include <dhcp/option6_ia.h>
+#include <util/buffer.h>
 
 namespace isc {
 namespace perfdhcp {
@@ -42,56 +44,30 @@ namespace perfdhcp {
 ///
 class LocalizedOption : public dhcp::Option {
 public:
-    /// \brief Constructor, sets default (0) option offset
-    ///
-    /// \param u specifies universe (V4 or V6)
-    /// \param type option type (0-255 for V4 and 0-65535 for V6)
-    /// \param data content of the option
-    LocalizedOption(dhcp::Option::Universe u,
-                    uint16_t type,
-                    const dhcp::OptionBuffer& data) :
-        dhcp::Option(u, type, data),
-        offset_(0) {
-    }
 
-
-    /// \brief Constructor, used to create localized option from buffer
+    /// \brief Constructor, used to create localized option from buffer.
     ///
-    /// \param u specifies universe (V4 or V6)
-    /// \param type option type (0-255 for V4 and 0-65535 for V6)
-    /// \param data content of the option
-    /// \param offset location of option in a packet (zero is default)
+    /// This constructor creates localized option using whole provided
+    /// option buffer.
+    ///
+    /// \param u universe (V4 or V6).
+    /// \param type option type (0-255 for V4 and 0-65535 for V6).
+    /// Option values 0 and 255 (v4) and 0 (v6) are not valid option
+    /// codes but they are accepted here for the server testing purposes.
+    /// \param data content of the option.
+    /// \param offset location of option in a packet (zero is default).
     LocalizedOption(dhcp::Option::Universe u,
                     uint16_t type,
                     const dhcp::OptionBuffer& data,
-                    const size_t offset) :
+                    const size_t offset = 0) :
         dhcp::Option(u, type, data),
-        offset_(offset) {
+        offset_(offset), option_valid_(true) {
     }
 
-    /// \brief Constructor, sets default (0) option offset
+    /// \brief Constructor, used to create option from buffer iterators.
     ///
-    /// This contructor is similar to the previous one, but it does not take
-    /// the whole vector<uint8_t>, but rather subset of it.
-    ///
-    /// \param u specifies universe (V4 or V6)
-    /// \param type option type (0-255 for V4 and 0-65535 for V6)
-    /// \param first iterator to the first element that should be copied
-    /// \param last iterator to the next element after the last one
-    ///        to be copied.
-    LocalizedOption(dhcp::Option::Universe u,
-                    uint16_t type,
-                    dhcp::OptionBufferConstIter first,
-                    dhcp::OptionBufferConstIter last) :
-        dhcp::Option(u, type, first, last),
-        offset_(0) {
-    }
-
-
-    /// \brief Constructor, used to create option from buffer iterators
-    ///
-    /// This contructor is similar to the previous one, but it does not take
-    /// the whole vector<uint8_t>, but rather subset of it.
+    /// This constructor creates localized option using part of the
+    /// option buffer pointed by iterators.
     ///
     /// \param u specifies universe (V4 or V6)
     /// \param type option type (0-255 for V4 and 0-65535 for V6)
@@ -102,9 +78,52 @@ public:
     LocalizedOption(dhcp::Option::Universe u,
                     uint16_t type,
                     dhcp::OptionBufferConstIter first,
-                    dhcp::OptionBufferConstIter last, const size_t offset) :
+                    dhcp::OptionBufferConstIter last,
+                    const size_t offset = 0) :
         dhcp::Option(u, type, first, last),
-        offset_(offset) {
+        offset_(offset), option_valid_(true) {
+    }
+
+    /// \brief Copy constructor, creates LocalizedOption from Option6IA.
+    ///
+    /// This copy constructor creates regular option from Option6IA.
+    /// The data from Option6IA data members are copied to
+    /// option buffer in appropriate sequence.
+    ///
+    /// \param opt_ia option to be copied.
+    /// \param offset location of the option in a packet.
+    LocalizedOption(const boost::shared_ptr<dhcp::Option6IA>& opt_ia,
+                    const size_t offset) :
+        dhcp::Option(Option::V6, 0, dhcp::OptionBuffer()),
+        offset_(offset), option_valid_(false) {
+        // If given option is NULL we will mark this new option
+        // as invalid. User may query if option is valid when
+        // object is created.
+        if (opt_ia) {
+            // Set universe and type.
+            universe_ = opt_ia->getUniverse();
+            type_ = opt_ia->getType();
+            util::OutputBuffer buf(opt_ia->len() - opt_ia->getHeaderLen());
+            try {
+                // Try to pack option data into the temporary buffer.
+                opt_ia->pack(buf);
+                if (buf.getLength() > 0) {
+                    const char* buf_data = static_cast<const char*>(buf.getData());
+                    // Option has been packed along with option type flag
+                    // and transaction id so we have to skip first 4 bytes
+                    // when copying temporary buffer option buffer.
+                    data_.assign(buf_data + 4, buf_data + buf.getLength());
+                }
+                option_valid_ = true;
+            } catch (const Exception&) {
+                // If there was an exception somewhere when packing
+                // the data into the buffer we assume that option is
+                // not valid and should not be used.
+                option_valid_ = false;
+            }
+        } else {
+            option_valid_ = false;
+        }
     }
 
     /// \brief Returns offset of an option in a DHCP packet.
@@ -112,12 +131,20 @@ public:
     /// \return option offset in a packet
     size_t getOffset() const { return offset_; };
 
+    /// \brief Checks if option is valid.
+    ///
+    /// \return true, if option is valid.
+    virtual bool valid() {
+        return (Option::valid() && option_valid_);
+    }
+
 private:
     size_t offset_;   ///< Offset of DHCP option in a packet
+    bool option_valid_; ///< Is option valid.
 };
 
 
-} // namespace perfdhcp
+} // namespace isc::perfdhcp
 } // namespace isc
 
 #endif // __LOCALIZED_OPTION_H
