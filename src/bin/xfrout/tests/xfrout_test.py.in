@@ -1129,15 +1129,14 @@ class TestXfroutSessionWithSQLite3(TestXfroutSessionBase):
     def test_axfr_normal_session(self):
         self.assertRaises(isc.cc.data.DataNotFoundError,
                           counter.get_axfr_running)
-        self.assertRaises(isc.cc.data.DataNotFoundError,
-                          counter.get_ixfr_running)
         XfroutSession._handle(self.xfrsess)
         response = self.sock.read_msg(Message.PRESERVE_ORDER);
         self.assertEqual(Rcode.NOERROR(), response.get_rcode())
         self.check_axfr_stream(response)
         self.assertEqual(self.xfrsess._request_type, RRType.AXFR())
         self.assertNotEqual(self.xfrsess._request_type, RRType.IXFR())
-        self.assertEqual(counter.get_ixfr_running(), 0)
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          counter.get_ixfr_running)
         self.assertEqual(counter.get_axfr_running(), 0)
 
     def test_ixfr_to_axfr(self):
@@ -1178,7 +1177,8 @@ class TestXfroutSessionWithSQLite3(TestXfroutSessionBase):
             self.assertTrue(rrsets_equal(expected_rr, actual_rr))
         self.assertNotEqual(self.xfrsess._request_type, RRType.AXFR())
         self.assertEqual(self.xfrsess._request_type, RRType.IXFR())
-        self.assertEqual(counter.get_axfr_running(), 0)
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          counter.get_axfr_running)
         self.assertEqual(counter.get_ixfr_running(), 0)
 
     def ixfr_soa_only_common_checks(self, request_serial):
