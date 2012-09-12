@@ -23,6 +23,7 @@ run_unittests_SOURCES += perf_pkt4_unittest.cc
 run_unittests_SOURCES += localized_option_unittest.cc
 run_unittests_SOURCES += stats_mgr_unittest.cc
 run_unittests_SOURCES += test_control_unittest.cc
+run_unittests_SOURCES += command_options_helper.h
 run_unittests_SOURCES += $(top_builddir)/tests/tools/perfdhcp/command_options.cc
 run_unittests_SOURCES += $(top_builddir)/tests/tools/perfdhcp/pkt_transform.cc
 run_unittests_SOURCES += $(top_builddir)/tests/tools/perfdhcp/perf_pkt6.cc
