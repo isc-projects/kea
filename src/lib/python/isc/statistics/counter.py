@@ -72,7 +72,9 @@ future. For adding or modifying such accessor, we need to implement in
 """
 import threading
 import isc.config
+from datetime import datetime
 
+# container of a counter object
 _COUNTER = None
 
 def init(spec_file_name):
@@ -100,16 +102,93 @@ def inc_notifyoutv6(self, arg):
     """An empty method to be disclosed"""
     pass
 
+# static internal functions
+def _add_counter(element, spec, identifier):
+    """Returns value of the identifier if the identifier is in the
+    element. Otherwise, sets a default value from the spec then
+    returns it. If the top-level type of the identifier is named_set
+    and the second-level type is map, it sets a set of default values
+    under the level and then returns the default value of the
+    identifier. Raises DataNotFoundError if the element is invalid for
+    spec."""
+    try:
+        return isc.cc.data.find(element, identifier)
+    except isc.cc.data.DataNotFoundError:
+        pass
+    try:
+        isc.config.find_spec_part(spec, identifier)
+    except isc.cc.data.DataNotFoundError:
+        # spec or identifier is wrong
+        raise
+    # examine spec of the top-level item first
+    spec_ = isc.config.find_spec_part(
+        spec, '%s' % identifier.split('/')[0])
+    if spec_['item_type'] == 'named_set' and \
+            spec_['named_set_item_spec']['item_type'] ==  'map':
+        map_spec = spec_['named_set_item_spec']['map_item_spec']
+        for name in isc.config.spec_name_list(map_spec):
+            spec_ = isc.config.find_spec_part(map_spec, name)
+            id_str = '%s/%s/%s' % \
+                tuple(identifier.split('/')[0:2] + [name])
+            isc.cc.data.set(element, id_str, spec_['item_default'])
+    else:
+        spec_ = isc.config.find_spec_part(spec, identifier)
+        isc.cc.data.set(element, identifier, spec_['item_default'])
+    return isc.cc.data.find(element, identifier)
+
+def _set_counter(element, spec, identifier, value):
+    """Invokes _add_counter() for checking whether the identifier is
+    in the element. If not, it creates a new identifier in the element
+    and set the default value from the spec. After that, it sets the
+    value specified in the arguments."""
+    _add_counter(element, spec, identifier)
+    isc.cc.data.set(element, identifier, value)
+
+def _get_counter(element, identifier):
+    """Returns the value of the identifier in the element"""
+    return isc.cc.data.find(element, identifier)
+
+def _inc_counter(element, spec, identifier, step=1):
+    """Increments the value of the identifier in the element to the
+    step from the current value. If the identifier isn't in the
+    element, it creates a new identifier in the element."""
+    isc.cc.data.set(element, identifier,
+                    _add_counter(element, spec, identifier) + step)
+
+def _start_timer():
+    """Returns the current datetime as a datetime object."""
+    return datetime.now()
+
+def _stop_timer(start_time, element, spec, identifier):
+    """Sets duration time in seconds as a value of the identifier in
+    the element, which is in seconds between start_time and the
+    current time and is float-type."""
+    delta = datetime.now() - start_time
+    sec = round(delta.days * 86400 + delta.seconds + \
+                    delta.microseconds * 1E-6, 6)
+    _set_counter(element, spec, identifier, sec)
+
 class Counter():
     """A basic counter class for concrete classes"""
-    _statistics_spec = {}
-    _statistics_data = {}
-    _disabled = False
-    _rlock = threading.RLock()
-    _to_global = {}
 
-    def __init__(self, module_spec):
-        self._statistics_spec = module_spec.get_statistics_spec()
+    # '_SERVER_' is a special zone name representing an entire
+    # count. It doesn't mean a specific zone, but it means an
+    # entire count in the server.
+    _entire_server = '_SERVER_'
+    # zone names are contained under this dirname in the spec file.
+    _perzone_prefix = 'zones'
+
+    def __init__(self):
+        # for exporting to the global scope
+        self._to_global = {}
+        self._statistics_spec = {}
+        self._statistics_data = {}
+        self._zones_item_list = []
+        self._xfrrunning_names = []
+        self._unixsocket_names = []
+        self._start_time = {}
+        self._disabled = False
+        self._rlock = threading.RLock()
         self._to_global['clear_counters'] = self.clear_counters
         self._to_global['disable'] = self.disable
         self._to_global['enable'] = self.enable
@@ -126,6 +205,105 @@ class Counter():
     def enable(self):
         """enables incrementing/decrementing counters"""
         self._disabled = False
+
+    def _incrementer(self, identifier, step=1):
+        """A per-zone incrementer for counter_name. Locks the
+        thread because it is considered to be invoked by a
+        multi-threading caller."""
+        if self._disabled: return
+        with self._rlock:
+            _inc_counter(self._statistics_data,
+                         self._statistics_spec,
+                         identifier, step)
+
+    def _decrementer(self, identifier, step=-1):
+        """A decrementer for axfr or ixfr running. Locks the
+        thread because it is considered to be invoked by a
+        multi-threading caller."""
+        self._incrementer(identifier, step)
+
+    def _getter(self, identifier):
+        """A getter method for perzone counters"""
+        return _get_counter(self._statistics_data, identifier)
+
+    def _starttimer(self, identifier):
+        """Sets the value returned from _start_timer() as a value of
+        the identifier in the self._start_time which is dict-type"""
+        isc.cc.data.set(self._start_time, identifier, _start_timer())
+
+    def _stoptimer(self, identifier):
+        """Sets duration time between corresponding time in
+        self._start_time and current time into the value of the
+        identifier. It deletes corresponding time in self._start_time
+        after setting is successfully done. If DataNotFoundError is
+        raised while invoking _stop_timer(), it stops setting and
+        ignores the exception."""
+        try:
+            _stop_timer(
+                isc.cc.data.find(self._start_time, identifier),
+                self._statistics_data,
+                self._statistics_spec,
+                identifier)
+            del isc.cc.data.find(
+                self._start_time,
+                '/'.join(identifier.split('/')[0:-1]))\
+                [identifier.split('/')[-1]]
+        except isc.cc.data.DataNotFoundError:
+            # do not set end time if it's not started
+            pass
+
+    def _create_perzone_functors(self):
+        """Creates increment method of each per-zone counter based on
+        the spec file. Incrementer can be accessed by name
+        "inc_${item_name}".Incrementers are passed to the
+        XfrinConnection class as counter handlers."""
+        for item in self._zones_item_list:
+            if item.find('time_to_') == 0: continue
+            def __incrementer(zone_name, counter_name=item, step=1):
+                """A per-zone incrementer for counter_name."""
+                self._incrementer(
+                    '%s/%s/%s' % \
+                        (self._perzone_prefix, zone_name, counter_name),
+                    step)
+            def __getter(zone_name, counter_name=item):
+                """A getter method for perzone counters"""
+                return self._getter(
+                    '%s/%s/%s' % \
+                        (self._perzone_prefix, zone_name, counter_name))
+            self._to_global['inc_%s' % item] = __incrementer
+            self._to_global['get_%s' % item] = __getter
+
+    def dump_statistics(self):
+        """Calculates an entire server counts, and returns statistics
+        data format to send out the stats module including each
+        counter. If there is no counts, then it returns an empty
+        dictionary."""
+        # entire copy
+        statistics_data = self._statistics_data.copy()
+        # If self.statistics_data contains nothing of zone name, it
+        # returns an empty dict.
+        if self._perzone_prefix not in statistics_data:
+            return statistics_data
+        zones = statistics_data[self._perzone_prefix]
+        # Start calculation for '_SERVER_' counts
+        zones_spec = isc.config.find_spec_part(self._statistics_spec,
+                                               self._perzone_prefix)
+        zones_attrs = zones_spec['item_default'][self._entire_server]
+        zones_data = {}
+        for attr in zones_attrs:
+            id_str = '%s/%s' % (self._entire_server, attr)
+            sum_ = 0
+            for name in zones:
+                if attr in zones[name]:
+                    sum_ += zones[name][attr]
+            if  sum_ > 0:
+                _set_counter(zones_data, zones_spec,
+                             id_str, sum_)
+        # insert entire-sever counts
+        statistics_data[self._perzone_prefix] = dict(
+            statistics_data[self._perzone_prefix],
+            **zones_data)
+        return statistics_data
 
 class XfroutCounter(Counter):
     """A module for holding all statistics counters of Xfrout. The
@@ -149,64 +327,28 @@ class XfroutCounter(Counter):
         socket/unixdomain/recverr
     """
 
-    # '_SERVER_' is a special zone name representing an entire
-    # count. It doesn't mean a specific zone, but it means an
-    # entire count in the server.
-    _entire_server = '_SERVER_'
-    # zone names are contained under this dirname in the spec file.
-    _perzone_prefix = 'zones'
-    _xfrrunning_names = []
-    _unixsocket_names = []
-
     def __init__(self, module_spec):
-        Counter.__init__(self, module_spec)
-        self._xfrrunning_names = [ \
-            n for n in \
-                isc.config.spec_name_list(self._statistics_spec) \
-                if 'xfr_running' in n ]
+        """Creates an instance. A module_spec object for the target
+        module Xfrout is required in the argument."""
+        Counter.__init__(self)
+        self._statistics_spec = module_spec.get_statistics_spec()
+        self._zones_item_list = isc.config.spec_name_list(
+            isc.config.find_spec_part(
+                self._statistics_spec, self._perzone_prefix)\
+                ['named_set_item_spec']['map_item_spec'])
+        self._xfrrunning_names = [
+            n for n in isc.config.spec_name_list\
+                (self._statistics_spec) \
+                if n.find('xfr_running') == 1 ]
         self._unixsocket_names = [ \
             n.split('/')[-1] for n in \
-                isc.config.spec_name_list(\
+                isc.config.spec_name_list(
                 self._statistics_spec, "", True) \
                 if n.find('socket/unixdomain/') == 0 ]
         self._create_perzone_functors()
         self._create_xfrrunning_functors()
         self._create_unixsocket_functors()
-        self._to_global['dump_default_statistics'] = \
-            self.dump_default_statistics
         self._to_global['dump_statistics'] = self.dump_statistics
-
-    def _create_perzone_functors(self):
-        """Creates increment method of each per-zone counter based on
-        the spec file. Incrementer can be accessed by name
-        "inc_${item_name}".Incrementers are passed to the
-        XfroutSession and NotifyOut class as counter handlers."""
-        # add a new element under the named_set item for the zone
-        zones_spec = isc.config.find_spec_part(
-            self._statistics_spec, self._perzone_prefix)
-        item_list =  isc.config.spec_name_list(\
-            zones_spec['named_set_item_spec']['map_item_spec'])
-        # can be accessed by the name 'inc_xxx'
-        for item in item_list:
-            def __incrementer(zone_name, counter_name=item, step=1):
-                """A per-zone incrementer for counter_name. Locks the
-                thread because it is considered to be invoked by a
-                multi-threading caller."""
-                if self._disabled: return
-                with self._rlock:
-                    self._add_perzone_counter(zone_name)
-                    self._statistics_data[self._perzone_prefix]\
-                        [zone_name][counter_name] += step
-            def __getter(zone_name, counter_name=item):
-                """A getter method for perzone counters"""
-                return isc.cc.data.find(
-                    self._statistics_data,
-                    '%s/%s/%s' % ( self._perzone_prefix,
-                                   zone_name,
-                                   counter_name )
-                    )
-            self._to_global['inc_%s' % item] = __incrementer
-            self._to_global['get_%s' % item] = __getter
 
     def _create_xfrrunning_functors(self):
         """Creates increment/decrement method of (a|i)xfr_running
@@ -214,27 +356,16 @@ class XfroutCounter(Counter):
         "inc_${item_name}". Decrementer can be accessed by name
         "dec_${item_name}". Both of them are passed to the
         XfroutSession as counter handlers."""
-        # can be accessed by the name 'inc_xxx' or 'dec_xxx'
         for item in self._xfrrunning_names:
             def __incrementer(counter_name=item, step=1):
-                """A incrementer for axfr or ixfr running. Locks the
-                thread because it is considered to be invoked by a
-                multi-threading caller."""
-                if self._disabled: return
-                with self._rlock:
-                    self._add_xfrrunning_counter(counter_name)
-                    self._statistics_data[counter_name] += step
+                """A incrementer for axfr or ixfr running."""
+                self._incrementer(counter_name, step)
             def __decrementer(counter_name=item, step=-1):
-                """A decrementer for axfr or ixfr running. Locks the
-                thread because it is considered to be invoked by a
-                multi-threading caller."""
-                if self._disabled: return
-                with self._rlock:
-                    self._statistics_data[counter_name] += step
+                """A decrementer for axfr or ixfr running."""
+                self._decrementer(counter_name, step)
             def __getter(counter_name=item):
                 """A getter method for xfr_running counters"""
-                return isc.cc.data.find(
-                        self._statistics_data, counter_name )
+                return self._getter(counter_name)
             self._to_global['inc_%s' % item] = __incrementer
             self._to_global['dec_%s' % item] = __decrementer
             self._to_global['get_%s' % item] = __getter
@@ -245,119 +376,76 @@ class XfroutCounter(Counter):
         "inc_${item_name}". Decrementer can be accessed by name
         "dec_${item_name}". Both of them are passed to the
         XfroutSession as counter handlers."""
-        # can be accessed by the name 'inc_xxx' or 'dec_xxx'
         for item in self._unixsocket_names:
             def __incrementer(counter_name=item, step=1):
-                """A incrementer for axfr or ixfr running. Locks the
-                thread because it is considered to be invoked by a
-                multi-threading caller."""
-                if self._disabled: return
-                with self._rlock:
-                    self._add_unixsocket_counter(counter_name)
-                    self._statistics_data['socket']['unixdomain']\
-                       [counter_name] += step
+                """A incrementer for axfr or ixfr running."""
+                self._incrementer(
+                    'socket/unixdomain/%s' % counter_name,
+                    step)
             def __getter(counter_name=item):
                 """A getter method for unixsockets counters"""
-                return isc.cc.data.find(
-                    self._statistics_data,
-                    'socket/unixdomain/%s' % counter_name )
+                return self._getter(
+                    'socket/unixdomain/%s' % counter_name)
             self._to_global['inc_unixsocket_%s' % item] = __incrementer
             self._to_global['get_unixsocket_%s' % item] = __getter
 
-    def _add_perzone_counter(self, zone):
-        """Adds a named_set-type counter for each zone name."""
-        try:
-            self._statistics_data[self._perzone_prefix][zone]
-        except KeyError:
-            # add a new element under the named_set item for the zone
-            map_spec = isc.config.find_spec_part(
-                self._statistics_spec, '%s/%s' % \
-                    (self._perzone_prefix, zone))['map_item_spec']
-            id_list =  isc.config.spec_name_list(map_spec)
-            for id_ in id_list:
-                spec = isc.config.find_spec_part(map_spec, id_)
-                isc.cc.data.set(self._statistics_data,
-                                '%s/%s/%s' % \
-                                    (self._perzone_prefix, zone, id_),
-                                spec['item_default'])
+class XfrinCounter(Counter):
+    """A module for holding all statistics counters of Xfrin. The
+    counter numbers can be accessed by the accesseers defined
+    according to a spec file. In this class, the structure of per-zone
+    counters is assumed to be like this:
 
-    def _add_xfrrunning_counter(self, counter_name):
-        """Adds a counter for counting (a|i)xfr_running"""
-        try:
-            self._statistics_data[counter_name]
-        except KeyError:
-            # examines the names of xfer running
-            for n in self._xfrrunning_names:
-                spec = isc.config.find_spec_part\
-                    (self._statistics_spec, n)
-                isc.cc.data.set(self._statistics_data, n, \
-                                spec['item_default'])
+	zones/example.com./soaoutv4
+	zones/example.com./soaoutv6
+	zones/example.com./axfrreqv4
+	zones/example.com./axfrreqv6
+	zones/example.com./ixfrreqv4
+	zones/example.com./ixfrreqv6
+	zones/example.com./xfrsuccess
+	zones/example.com./xfrfail
+	zones/example.com./time_to_ixfr
+	zones/example.com./time_to_axfr
+    """
 
-    def _add_unixsocket_counter(self, counter_name):
-        """Adds a counter for counting unix sockets"""
-        try:
-            self._statistics_data['socket']['unixdomain'][counter_name]
-        except KeyError:
-            # examines the name of unixsocket
-            name = 'socket/unixdomain/%s' % counter_name
-            spec = isc.config.find_spec_part\
-                (self._statistics_spec, name)
-            isc.cc.data.set(self._statistics_data, name, \
-                                spec['item_default'])
+    def __init__(self, module_spec):
+        """Creates an instance. A module_spec object for the target
+        module Xfrin is required in the argument."""
+        Counter.__init__(self)
+        self._statistics_spec = module_spec.get_statistics_spec()
+        self._zones_item_list = isc.config.spec_name_list(\
+            isc.config.find_spec_part(
+            self._statistics_spec, self._perzone_prefix)\
+                ['named_set_item_spec']['map_item_spec'])
+        self._create_perzone_functors()
+        self._create_perzone_timer_functors()
+        self._to_global['dump_statistics'] = self.dump_statistics
 
-    def dump_default_statistics(self):
-        """Returns default statistics data from the spec file"""
-        statistics_data = {}
-        for id_ in isc.config.spec_name_list(self._statistics_spec):
-            spec = isc.config.find_spec_part(\
-                self._statistics_spec, id_)
-            if 'item_default' in spec:
-                statistics_data.update({id_: spec['item_default']})
-        return statistics_data
-
-    def dump_statistics(self):
-        """Calculates an entire server counts, and returns statistics
-        data format to send out the stats module including each
-        counter. If there is no counts, then it returns an empty
-        dictionary."""
-        # If self.statistics_data contains nothing of zone name, it
-        # returns an empty dict.
-        if len(self._statistics_data) == 0: return {}
-        # for per-zone counter
-        zones = self._statistics_data[self._perzone_prefix]
-        # Start calculation for '_SERVER_' counts
-        attrs = self.dump_default_statistics()\
-            [self._perzone_prefix][self._entire_server]
-        statistics_data = {self._perzone_prefix: {}}
-        for attr in attrs:
-            sum_ = 0
-            for name in zones:
-                if name == self._entire_server: continue
-                if attr in zones[name]:
-                    if  name not in \
-                            statistics_data[self._perzone_prefix]:
-                        statistics_data[self._perzone_prefix][name]\
-                            = {}
-                    statistics_data[self._perzone_prefix][name].\
-                        update({attr: zones[name][attr]})
-                    sum_ += zones[name][attr]
-            if  sum_ > 0:
-                if self._entire_server not in \
-                        statistics_data[self._perzone_prefix]:
-                    statistics_data[self._perzone_prefix][self._entire_server]\
-                        = {}
-                statistics_data[self._perzone_prefix][self._entire_server]\
-                    .update({attr:sum_})
-
-        # for xfrrunning incrementer/decrementer
-        for name in self._xfrrunning_names:
-            if name in self._statistics_data:
-                statistics_data[name] = self._statistics_data[name]
-
-        # for unixsocket incrementer/decrementer
-        if 'socket' in self._statistics_data:
-            statistics_data['socket'] = \
-                self._statistics_data['socket']
-
-        return statistics_data
-
+    def _create_perzone_timer_functors(self):
+        """Creates timer method of each per-zone counter based on the
+        spec file. Starter of the timer can be accessed by the name
+        "start_${item_name}".  Stopper of the timer can be accessed by
+        the name "stop_${item_name}".  These starter and stopper are
+        passed to the XfrinConnection class as timer handlers."""
+        for item in self._zones_item_list:
+            if item.find('time_to_') == -1: continue
+            def __getter(zone_name, counter_name=item):
+                """A getter method for perzone timer. A zone name in
+                string is required in argument."""
+                return self._getter(
+                    '%s/%s/%s' % \
+                        (self._perzone_prefix, zone_name, counter_name))
+            def __starttimer(zone_name, counter_name=item):
+                """A starter method for perzone timer. A zone name in
+                string is required in argument."""
+                self._starttimer(
+                    '%s/%s/%s' % \
+                        (self._perzone_prefix, zone_name, counter_name))
+            def __stoptimer(zone_name, counter_name=item):
+                """A stopper method for perzone timer. A zone name in
+                string is required in argument."""
+                self._stoptimer(
+                    '%s/%s/%s' % \
+                        (self._perzone_prefix, zone_name, counter_name))
+            self._to_global['start_%s' % item] = __starttimer
+            self._to_global['stop_%s' % item] = __stoptimer
+            self._to_global['get_%s' % item] = __getter
