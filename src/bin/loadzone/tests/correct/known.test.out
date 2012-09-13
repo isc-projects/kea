@@ -77,3 +77,9 @@ ns2.example.com.		80	IN	A	1.1.1.1
 ns3.example.com.		60	IN	A	2.2.2.2
 ns4.example.com.		60	IN	A	3.3.3.3
 ns5.example.com.		90	IN	A	4.4.4.4
+comment.example.com.		60	IN	SOA	ns1.example.com. hostmaster.example.com. 1 43200 900 1814400 7200
+comment.example.com.		60	IN	NS	ns1.example.com.
+comment.example.com.		60	IN	TXT	"Simple text"
+comment.example.com.		60	IN	TXT	"; No comment"
+comment.example.com.		60	IN	TXT	"Also no comment here"
+comment.example.com.		60	IN	TXT	"A combination ; see?"

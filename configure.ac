@@ -1027,10 +1027,32 @@ AC_SUBST(PERL)
 AC_PATH_PROGS(AWK, gawk awk)
 AC_SUBST(AWK)
 
-AC_ARG_ENABLE(man, [AC_HELP_STRING([--enable-man],
-  [regenerate man pages [default=no]])], enable_man=$enableval, enable_man=no)
+AC_ARG_ENABLE(generate_docs, [AC_HELP_STRING([--enable-generate-docs],
+  [regenerate documentation using Docbook [default=no]])],
+  enable_generate_docs=$enableval, enable_generate_docs=no)
 
-AM_CONDITIONAL(ENABLE_MAN, test x$enable_man != xno)
+# Check for xsltproc
+if test "x$enable_generate_docs" != xno ; then
+  AC_PATH_PROG([XSLTPROC], [xsltproc])
+  if test -z "$XSLTPROC"; then
+    AC_MSG_ERROR("xsltproc not found; it is required for --enable-generate-docs")
+  else
+    AC_MSG_CHECKING([if $XSLTPROC works])
+    # run xsltproc to see if works
+    $XSLTPROC --novalid --xinclude --nonet http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl
+    if test $? -ne 0 ; then
+      AC_MSG_ERROR("Error with $XSLTPROC using release/xsl/current/manpages/docbook.xsl")
+    fi
+    $XSLTPROC --novalid --xinclude --nonet http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl
+    if test $? -ne 0 ; then
+      AC_MSG_ERROR("Error with $XSLTPROC using release/xsl/current/html/docbook.xsl")
+    fi
+    AC_MSG_RESULT(yes)
+  fi
+fi
+
+
+AM_CONDITIONAL(GENERATE_DOCS, test x$enable_generate_docs != xno)
 
 AC_ARG_ENABLE(install-configurations,
   [AC_HELP_STRING([--disable-install-configurations],
@@ -1201,6 +1223,7 @@ AC_CONFIG_FILES([Makefile
                  tests/tools/badpacket/tests/Makefile
                  tests/tools/perfdhcp/Makefile
                  tests/tools/perfdhcp/tests/Makefile
+                 tests/tools/perfdhcp/templates/Makefile
                  dns++.pc
                ])
 AC_OUTPUT([doc/version.ent
@@ -1376,7 +1399,7 @@ Developer:
   C++ Code Coverage: $USE_LCOV
   Python Code Coverage: $USE_PYCOVERAGE
   Logger checks: $enable_logger_checks
-  Generate Manuals: $enable_man
+  Generate Documentation: $enable_generate_docs
 
 END
 

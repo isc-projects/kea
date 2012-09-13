@@ -113,8 +113,12 @@ systest:
 	cd tests/system; \
 	sh $(abs_srcdir)/tests/system/runall.sh
 
+### include tool to generate documentation from log message specifications
+### in the distributed tarball:
+EXTRA_DIST = tools/system_messages.py
+
 #### include external sources in the distributed tarball:
-EXTRA_DIST = ext/asio/README
+EXTRA_DIST += ext/asio/README
 EXTRA_DIST += ext/asio/README
 EXTRA_DIST += ext/asio/asio.hpp
 EXTRA_DIST += ext/asio/asio/basic_socket.hpp

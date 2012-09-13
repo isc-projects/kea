@@ -17,14 +17,21 @@ b10_host_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
 b10_host_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 
 man_MANS = b10-host.1
+DISTCLEANFILES = $(man_MANS)
 EXTRA_DIST = $(man_MANS) b10-host.xml
 
 .PHONY: man
-if ENABLE_MAN
+if GENERATE_DOCS
 
 man: b10-host.1
 
 b10-host.1: b10-host.xml
-	xsltproc --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/b10-host.xml
+	@XSLTPROC@ --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/b10-host.xml
+
+else
+
+$(man_MANS):
+	@echo Man generation disabled.  Creating dummy $@.  Configure with --enable-generate-docs to enable it.
+	@echo Man generation disabled.  Remove this file, configure with --enable-generate-docs, and rebuild BIND 10 > $@
 
 endif

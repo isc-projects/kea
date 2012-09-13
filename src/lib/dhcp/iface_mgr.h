@@ -72,7 +72,9 @@ public:
     };
 
     /// type that holds a list of socket informations
+    /// @todo: Add SocketCollectionConstIter type
     typedef std::list<SocketInfo> SocketCollection;
+
 
     /// @brief represents a single network interface
     ///
@@ -88,6 +90,9 @@ public:
         /// @param name name of the interface
         /// @param ifindex interface index (unique integer identifier)
         Iface(const std::string& name, int ifindex);
+
+        /// @brief Closes all open sockets on interface.
+        void closeSockets();
 
         /// @brief Returns full interface name as "ifname/ifindex" string.
         ///
@@ -192,11 +197,25 @@ public:
         /// @return true if there was such socket, false otherwise
         bool delSocket(uint16_t sockfd);
 
-        /// socket used to sending data
-        /// TODO: this should be protected
-        SocketCollection sockets_;
+        /// @brief Returns collection of all sockets added to interface.
+        ///
+        /// When new socket is created with @ref IfaceMgr::openSocket
+        /// it is added to sockets collection on particular interface.
+        /// If socket is opened by other means (e.g. function that does
+        /// not use @ref IfaceMgr::openSocket) it will not be available
+        /// in this collection. Note that functions like
+        /// @ref IfaceMgr::openSocketFromIface use
+        /// @ref IfaceMgr::openSocket internally.
+        /// The returned reference is only valid during the lifetime of
+        /// the IfaceMgr object that returned it.
+        ///
+        /// @return collection of sockets added to interface
+        const SocketCollection& getSockets() const { return sockets_; }
 
     protected:
+        /// socket used to sending data
+        SocketCollection sockets_;
+
         /// network interface name
         std::string name_;
 

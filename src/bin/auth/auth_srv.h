@@ -319,6 +319,16 @@ public:
     ///     has been set by setClientList.
     std::vector<isc::dns::RRClass> getClientListClasses() const;
 
+    /// \brief Sets the timeout for incoming TCP connections
+    ///
+    /// Incoming TCP connections that have not sent their data
+    /// withing this time are dropped.
+    ///
+    /// \param timeout The timeout (in milliseconds). If se to
+    /// zero, no timeouts are used, and the connection will remain
+    /// open forever.
+    void setTCPRecvTimeout(size_t timeout);
+
 private:
     AuthSrvImpl* impl_;
     isc::asiolink::SimpleCallback* checkin_;

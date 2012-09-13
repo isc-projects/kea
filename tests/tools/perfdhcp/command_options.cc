@@ -12,6 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <config.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -20,9 +21,11 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
-#include "exceptions/exceptions.h"
-
+#include <exceptions/exceptions.h>
+#include <dhcp/dhcp6.h>
+#include <dhcp/iface_mgr.h>
 #include "command_options.h"
 
 using namespace std;
@@ -54,9 +57,10 @@ CommandOptions::reset() {
     rate_ = 0;
     report_delay_ = 0;
     clients_num_ = 0;
-    mac_prefix_.assign(mac, mac + 6);
-    base_.resize(0);
-    num_request_.resize(0);
+    mac_template_.assign(mac, mac + 6);
+    duid_template_.clear();
+    base_.clear();
+    num_request_.clear();
     period_ = 0;
     drop_time_set_ = 0;
     drop_time_.assign(dt, dt + 2);
@@ -81,6 +85,8 @@ CommandOptions::reset() {
     diags_.clear();
     wrapped_.clear();
     server_name_.clear();
+    generateDuidTemplate();
+    commandline_.clear();
 }
 
 void
@@ -127,9 +133,16 @@ CommandOptions::initialize(int argc, char** argv) {
     int offset_arg = 0;         // Temporary variable holding offset arguments
     std::string sarg;           // Temporary variable for string args
 
+    std::ostringstream stream;
+    stream << "perfdhcp";
+
     // In this section we collect argument values from command line
     // they will be tuned and validated elsewhere
     while((opt = getopt(argc, argv, "hv46r:t:R:b:n:p:d:D:l:P:a:L:s:iBc1T:X:O:E:S:I:x:w:")) != -1) {
+        stream << " -" << opt;
+        if (optarg) {
+            stream << " " << optarg;
+        }  
         switch (opt) {
         case 'v':
             version();
@@ -219,6 +232,7 @@ CommandOptions::initialize(int argc, char** argv) {
 
         case 'l':
             localname_ = std::string(optarg);
+            initIsInterface();
             break;
 
         case 'L':
@@ -312,6 +326,8 @@ CommandOptions::initialize(int argc, char** argv) {
         }
     }
 
+    std::cout << "Running: " << stream.str() << std::endl;
+
     // If the IP version was not specified in the
     // command line, assume IPv4.
     if (ipversion_ == 0) {
@@ -351,7 +367,27 @@ CommandOptions::initialize(int argc, char** argv) {
         }
     }
 
-    // TODO handle -l option with IfaceManager when it is created
+    // Handle the local '-l' address/interface
+    if (!localname_.empty()) {
+        if (server_name_.empty()) {
+            if (is_interface_ && (ipversion_ == 4)) {
+                broadcast_ = 1;
+                server_name_ = "255.255.255.255";
+            } else if (is_interface_ && (ipversion_ == 6)) {
+                server_name_ = "FF02::1:2";
+            }
+        }
+    }
+    if (server_name_.empty()) {
+        isc_throw(InvalidParameter,
+                  "without an inteface server is required");
+    }
+
+    // If DUID is not specified from command line we need to
+    // generate one.
+    if (duid_template_.size() == 0) {
+        generateDuidTemplate();
+    }
 }
 
 void
@@ -373,6 +409,17 @@ CommandOptions::initClientsNum() {
         clients_num_ = boost::lexical_cast<uint32_t>(optarg);
     } catch (boost::bad_lexical_cast&) {
         isc_throw(isc::InvalidParameter, errmsg);
+    }
+}
+
+void
+CommandOptions::initIsInterface() {
+    is_interface_ = false;
+    if (!localname_.empty()) {
+        dhcp::IfaceMgr& iface_mgr = dhcp::IfaceMgr::instance();
+        if (iface_mgr.getIface(localname_) != NULL)  {
+            is_interface_ = true;
+        }
     }
 }
 
@@ -402,7 +449,7 @@ CommandOptions::decodeMac(const std::string& base) {
     // Decode mac address to vector of uint8_t
     std::istringstream s1(base.substr(found + 1));
     std::string token;
-    mac_prefix_.clear();
+    mac_template_.clear();
     // Get pieces of MAC address separated with : (or even ::)
     while (std::getline(s1, token, ':')) {
         unsigned int ui = 0;
@@ -417,16 +464,17 @@ CommandOptions::decodeMac(const std::string& base) {
 
             }
             // If conversion succeeded store byte value
-            mac_prefix_.push_back(ui);
+            mac_template_.push_back(ui);
         }
     }
     // MAC address must consist of 6 octets, otherwise it is invalid
-    check(mac_prefix_.size() != 6, errmsg);
+    check(mac_template_.size() != 6, errmsg);
 }
 
 void
 CommandOptions::decodeDuid(const std::string& base) {
     // Strip argument from duid=
+    std::vector<uint8_t> duid_template;
     size_t found = base.find('=');
     check(found == std::string::npos, "expected -b<base> format for duid is -b duid=<duid>");
     std::string b = base.substr(found + 1);
@@ -446,8 +494,44 @@ CommandOptions::decodeDuid(const std::string& base) {
             isc_throw(isc::InvalidParameter,
                       "invalid characters in DUID provided, exepected hex digits");
         }
-        duid_prefix_.push_back(static_cast<uint8_t>(ui));
+        duid_template.push_back(static_cast<uint8_t>(ui));
     }
+    // @todo Get rid of this limitation when we manage add support
+    // for DUIDs other than LLT. Shorter DUIDs may be useful for
+    // server testing purposes.
+    check(duid_template.size() < 6, "DUID must be at least 6 octets long");
+    // Assign the new duid only if successfully generated.
+    std::swap(duid_template, duid_template_);
+}
+
+void
+CommandOptions::generateDuidTemplate() {
+    using namespace boost::posix_time;
+    // Duid template will be most likely generated only once but
+    // it is ok if it is called more then once so we simply
+    //  regenerate it and discard previous value.
+    duid_template_.clear();
+    const uint8_t duid_template_len = 14;
+    duid_template_.resize(duid_template_len);
+    // The first four octets consist of DUID LLT and hardware type.
+    duid_template_[0] = DUID_LLT >> 8;
+    duid_template_[1] = DUID_LLT & 0xff;
+    duid_template_[2] = HWTYPE_ETHERNET >> 8;
+    duid_template_[3] = HWTYPE_ETHERNET & 0xff;
+    
+    // As described in RFC3315: 'the time value is the time
+    // that the DUID is generated represented in seconds
+    // since midnight (UTC), January 1, 2000, modulo 2^32.'
+    ptime now = microsec_clock::universal_time();
+    ptime duid_epoch(from_iso_string("20000101T000000"));
+    time_period period(duid_epoch, now);
+    uint32_t duration_sec = htonl(period.length().total_seconds());
+    memcpy(&duid_template_[4], &duration_sec, 4);
+
+    // Set link layer address (6 octets). This value may be
+    // randomized before sending a packet to simulate different
+    // clients.
+    memcpy(&duid_template_[8], &mac_template_[0], 6);
 }
 
 uint8_t
@@ -562,6 +646,98 @@ CommandOptions::nonEmptyString(const std::string& errmsg) const {
         isc_throw(isc::InvalidParameter, errmsg);
     }
     return sarg;
+}
+
+void
+CommandOptions::printCommandLine() const {
+    std::cout << "IPv" << static_cast<int>(ipversion_) << std::endl;
+    if (exchange_mode_ == DO_SA) {
+        if (ipversion_ == 4) {
+            std::cout << "DISCOVER-OFFER only" << std::endl;
+        } else {
+            std::cout << "SOLICIT-ADVERETISE only" << std::endl;
+        }
+    } 
+    if (rate_ != 0) {
+        std::cout << "rate[1/s]=" << rate_ <<  std::endl;
+    }
+    if (report_delay_ != 0) {
+        std::cout << "report[s]=" << report_delay_ << std::endl;
+    }
+    if (clients_num_ != 0) {
+        std::cout << "clients=" << clients_num_ << std::endl;
+    } 
+    for (int i = 0; i < base_.size(); ++i) {
+        std::cout << "base[" << i << "]=" << base_[i] <<  std::endl;
+    }
+    for (int i = 0; i < num_request_.size(); ++i) {
+        std::cout << "num-request[" << i << "]=" << num_request_[i] << std::endl;
+    }
+    if (period_ != 0) {
+        std::cout << "test-period=" << period_ << std::endl;
+    }
+    for (int i = 0; i < drop_time_.size(); ++i) {
+        std::cout << "drop-time[" << i << "]=" << drop_time_[i] << std::endl;
+    }
+    for (int i = 0; i < max_drop_.size(); ++i) {
+        std::cout << "max-drop{" << i << "]=" << max_drop_[i] << std::endl;
+    }
+    for (int i = 0; i < max_pdrop_.size(); ++i) {
+        std::cout << "max-pdrop{" << i << "]=" << max_pdrop_[i] << std::endl;
+    }
+    if (preload_ != 0) {
+        std::cout << "preload=" << preload_ <<  std::endl;
+    }
+    std::cout << "aggressivity=" << aggressivity_ << std::endl;
+    if (getLocalPort() != 0) {
+        std::cout << "local-port=" << local_port_ <<  std::endl;
+    }
+    if (seeded_) {
+        std::cout << "seed=" << seed_ << std::endl;
+    }
+    if (broadcast_) {
+        std::cout << "broadcast" << std::endl;
+    }
+    if (rapid_commit_) {
+        std::cout << "rapid-commit" << std::endl;
+    }
+    if (use_first_) {
+        std::cout << "use-first" << std::endl;
+    }
+    for (int i = 0; i < template_file_.size(); ++i) {
+        std::cout << "template-file[" << i << "]=" << template_file_[i] << std::endl;
+    }
+    for (int i = 0; i < xid_offset_.size(); ++i) {
+        std::cout << "xid-offset[" << i << "]=" << xid_offset_[i] << std::endl;
+    }
+    if (elp_offset_ != 0) {
+        std::cout << "elp-offset=" << elp_offset_ << std::endl;
+    }
+    for (int i = 0; i < rnd_offset_.size(); ++i) {
+        std::cout << "rnd-offset[" << i << "]=" << rnd_offset_[i] << std::endl;
+    }
+    if (sid_offset_ != 0) {
+        std::cout << "sid-offset=" << sid_offset_ << std::endl;
+    }
+    if (rip_offset_ != 0) {
+        std::cout << "rip-offset=" << rip_offset_ << std::endl;
+    }
+    if (!diags_.empty()) {
+        std::cout << "diagnostic-selectors=" << diags_ <<  std::endl;
+    }
+    if (!wrapped_.empty()) {
+        std::cout << "wrapped=" << wrapped_ << std::endl;
+    }
+    if (!localname_.empty()) {
+        if (is_interface_) {
+            std::cout << "interface=" << localname_ << std::endl;
+        } else {
+            std::cout << "local-addr=" << localname_ << std::endl;
+        }
+    }
+    if (!server_name_.empty()) {
+        std::cout << "server=" << server_name_ << std::endl;
+    }
 }
 
 void
@@ -691,7 +867,7 @@ CommandOptions::usage() const {
 
 void
 CommandOptions::version() const {
-	fprintf(stdout, "version 0.01\n");
+    std::cout << "VERSION: " << VERSION << std::endl;
 }
 
 

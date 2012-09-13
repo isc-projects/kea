@@ -152,6 +152,13 @@
       The default is 60.
     </para>
 
+    <para>
+      <varname>tcp_recv_timeout</varname> is the timeout used on
+      incoming TCP connections, in milliseconds. If the query
+      is not sent within this time, the connection is closed.
+      Setting this to 0 will disable TCP timeouts completely.
+    </para>
+
 <!-- TODO: formating -->
     <para>
       The configuration commands are:
