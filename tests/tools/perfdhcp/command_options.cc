@@ -83,7 +83,6 @@ CommandOptions::reset() {
     wrapped_.clear();
     server_name_.clear();
     generateDuidTemplate();
-    commandline_.clear();
 }
 
 void

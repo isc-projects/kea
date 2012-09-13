@@ -199,7 +199,9 @@ public:
     ///
     /// \throw isc::InvalidOperation if command line options are not parsed.
     /// \throw isc::Unexpected if internal Test Controler error occured.
-    void run();
+    /// \return error_code, 3 if number of received packets is not equal
+    /// to number of sent packets, 0 if everything is ok.
+    int run();
 
     /// \brief Set new transaction id generator.
     ///
