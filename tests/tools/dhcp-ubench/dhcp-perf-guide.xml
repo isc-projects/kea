@@ -1025,7 +1025,7 @@ collected packets: 0
           holds data for exactly one DHCP message type. Templates for multiple
           message types must not be combined in the single file.
           The content in template files is encoded in hexadecimal format.
-          perfdhcp forms the packet by replacing parts of the binary stream read
+          perfdhcp forms the packet by replacing parts of the message buffer read
           from the file with variable data such as elapsed time, hardware address, DUID
           etc. The offsets where such variable data is placed is specific to the
           template file and have to be specified from the command line. Refer to
